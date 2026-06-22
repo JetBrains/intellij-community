@@ -372,10 +372,6 @@
     <module name="intellij.platform.collaborationTools"/>
     <module name="intellij.platform.collaborationTools.auth"/>
     <module name="intellij.platform.collaborationTools.auth.base"/>
-    <module name="intellij.platform.tasks"/>
-    <module name="intellij.platform.tasks.impl"/>
-    <module name="intellij.platform.tasks.impl.bookmarks"/>
-    <module name="intellij.platform.tasks.impl.debugger"/>
     <module name="intellij.platform.scriptDebugger.ui"/>
     <module name="intellij.platform.scriptDebugger.backend"/>
     <module name="intellij.platform.scriptDebugger.protocolReaderRuntime"/>

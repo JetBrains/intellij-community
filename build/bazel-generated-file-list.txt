@@ -898,6 +898,7 @@ platform/syntax/syntax-tree
 platform/syntax/syntax-util
 platform/tasks-platform-api
 platform/tasks-platform-impl
+platform/tasks-platform-impl/plugin
 platform/tasks-platform-impl/tasks.impl.bookmarks
 platform/tasks-platform-impl/tasks.impl.debugger
 platform/testFramework

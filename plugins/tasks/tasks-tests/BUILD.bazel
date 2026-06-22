@@ -26,6 +26,8 @@ jvm_library(
         "//spellchecker",
         "//java/debugger/openapi:java-debugger",
         "//libraries/gson",
+        "//platform/tasks-platform-impl/plugin",
+        "//platform/vcs/plugin",
         "//platform/core-ui",
     ],
 )
@@ -53,6 +55,8 @@ jvm_library(
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//spellchecker:spellchecker_test_lib",
+        "//platform/tasks-platform-impl/plugin:plugin_test_lib",
+        "//platform/vcs/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

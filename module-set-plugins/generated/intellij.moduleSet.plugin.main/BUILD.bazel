@@ -12,6 +12,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
+        "//platform/vcs/plugin",
         "//grid/api:grid",
         "//grid/core-impl",
         "//grid/csv:csv-core-impl",
@@ -48,7 +49,7 @@ jvm_library(
         "//platform/navbar/plugin",
         "//platform/bookmarks/plugin",
         "//platform/problemsView/plugin",
-        "//platform/vcs/plugin",
+        "//platform/tasks-platform-impl/plugin",
     ],
 )
 
@@ -64,6 +65,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":moduleSet-plugin-main",
+        "//platform/vcs/plugin:plugin_test_lib",
         "//grid/api:grid_test_lib",
         "//grid/core-impl:core-impl_test_lib",
         "//grid/csv:csv-core-impl_test_lib",
@@ -100,7 +102,7 @@ jvm_library(
         "//platform/navbar/plugin:plugin_test_lib",
         "//platform/bookmarks/plugin:plugin_test_lib",
         "//platform/problemsView/plugin:plugin_test_lib",
-        "//platform/vcs/plugin:plugin_test_lib",
+        "//platform/tasks-platform-impl/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.moduleSet.plugin.main` end

@@ -2,10 +2,6 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.bookmarks"/>
-    <module name="intellij.platform.core"/>
-    <module name="intellij.platform.editor.ui"/>
-    <module name="intellij.platform.lang"/>
-    <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.tasks"/>
     <module name="intellij.platform.tasks.impl"/>
   </dependencies>
