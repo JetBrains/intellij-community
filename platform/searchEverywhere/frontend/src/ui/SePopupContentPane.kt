@@ -346,7 +346,7 @@ class SePopupContentPane(
             }
           }
 
-          throttledResultEventFlow.coalesceWhileAvailable().onCompletion {
+          throttledResultEventFlow.coalesceWhileAvailable(MAX_COALESCING_BATCH_SIZE).onCompletion {
             withContext(Dispatchers.EDT) {
               SeLog.log(SeLog.THROTTLING) { "Throttled flow completed" }
               isSearchCompleted.store(true)
@@ -1218,6 +1218,7 @@ class SePopupContentPane(
   companion object {
     const val DEFAULT_FROZEN_VISIBLE_PART: Double = 1.1
     const val DEFAULT_FREEZING_DELAY_MS: Long = 800
+    private const val MAX_COALESCING_BATCH_SIZE: Int = 30
   }
 }
 
@@ -1228,7 +1229,7 @@ class SePopupContentPane(
  * (as the non-throttled path produces them) pays one EDT context switch and one list/view refresh per item. By draining
  * everything currently buffered into a single batch, a slow collector processes N ready items in one EDT hop instead of N.
  */
-private fun <T> Flow<T>.coalesceWhileAvailable(): Flow<List<T>> = channelFlow {
+private fun <T> Flow<T>.coalesceWhileAvailable(maxBatchSize: Int): Flow<List<T>> = channelFlow {
   val buffer = Channel<T>(Channel.UNLIMITED)
   launch {
     try {
@@ -1243,7 +1244,7 @@ private fun <T> Flow<T>.coalesceWhileAvailable(): Flow<List<T>> = channelFlow {
     val first = buffer.receiveCatching().getOrNull() ?: break
     val batch = ArrayList<T>()
     batch.add(first)
-    while (true) {
+    while (batch.size < maxBatchSize) {
       batch.add(buffer.tryReceive().getOrNull() ?: break)
     }
     send(batch)
