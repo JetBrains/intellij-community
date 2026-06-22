@@ -1,6 +1,7 @@
 from collections.abc import Callable, Iterable
 from datetime import timedelta
 from logging import Logger
+from re import Pattern
 from typing import Any
 
 import flask
@@ -13,7 +14,7 @@ class CORS:
         app: flask.Flask | flask.Blueprint | None = None,
         *,
         resources: dict[str, dict[str, Any]] | list[str] | str | None = ...,
-        origins: str | list[str] | None = ...,
+        origins: str | Pattern[str] | Iterable[str | Pattern[str]] = ...,
         methods: str | list[str] | None = ...,
         expose_headers: str | list[str] | None = ...,
         allow_headers: str | list[str] | None = ...,
@@ -28,7 +29,7 @@ class CORS:
         app: flask.Flask,
         *,
         resources: dict[str, dict[str, Any]] | list[str] | str = ...,
-        origins: str | list[str] = ...,
+        origins: str | Pattern[str] | Iterable[str | Pattern[str]] = ...,
         methods: str | list[str] = ...,
         expose_headers: str | list[str] = ...,
         allow_headers: str | list[str] = ...,
