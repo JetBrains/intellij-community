@@ -2,7 +2,6 @@
 package com.intellij.agent.workbench.codex.chat
 
 import com.intellij.agent.workbench.chat.AgentChatBehaviorFile
-import com.intellij.agent.workbench.chat.AgentChatBehaviorTerminalTab
 import com.intellij.agent.workbench.chat.AgentChatInitialMessageDispatchContext
 import com.intellij.agent.workbench.chat.AgentChatInitialMessageRetryDecision
 import com.intellij.agent.workbench.chat.AgentChatInitialMessageSendObservation
@@ -10,16 +9,9 @@ import com.intellij.agent.workbench.chat.AgentChatProviderBehavior
 import com.intellij.agent.workbench.chat.AgentChatProviderBehaviorContributor
 import com.intellij.agent.workbench.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
-import com.intellij.agent.workbench.sessions.core.providers.isBusyForExistingThreadPlanMode
-import com.intellij.openapi.diagnostic.logger
 import kotlin.math.min
-
-private class CodexAgentChatProviderBehaviorLog
-
-private val LOG = logger<CodexAgentChatProviderBehaviorLog>()
 
 internal class CodexAgentChatProviderBehaviorContributor : AgentChatProviderBehaviorContributor {
   override val provider: AgentSessionProvider
@@ -56,33 +48,8 @@ internal object CodexAgentChatProviderBehavior : AgentChatProviderBehavior {
 
   override fun isConcreteNewThreadRebindCommand(command: String): Boolean = command == "/new"
 
-  override suspend fun beforeInitialMessageSend(
-    file: AgentChatBehaviorFile,
-    tab: AgentChatBehaviorTerminalTab,
-    dispatch: AgentChatInitialMessageDispatchContext,
-    retryAttempt: Int,
-  ): AgentChatInitialMessageRetryDecision {
-    if (dispatch.completionPolicy != AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY) {
-      return AgentChatInitialMessageRetryDecision.PROCEED
-    }
-    return if (file.threadActivity.isBusyForExistingThreadPlanMode()) {
-      AgentChatInitialMessageRetryDecision.RetryWithoutReadiness(calculateCodexPlanModeRetryBackoffMs(retryAttempt))
-    }
-    else {
-      AgentChatInitialMessageRetryDecision.PROCEED
-    }
-  }
-
-  override suspend fun isInitialMessageDispatchAlreadySatisfied(
-    tab: AgentChatBehaviorTerminalTab,
-    dispatch: AgentChatInitialMessageDispatchContext,
-  ): Boolean {
-    return dispatch.action == AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE && isCodexPlanModeVisible(tab.readRecentOutputTail())
-  }
-
   override fun requiresPostSendObservation(dispatch: AgentChatInitialMessageDispatchContext): Boolean {
-    return dispatch.action == AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE ||
-           dispatch.completionPolicy == AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY
+    return dispatch.completionPolicy == AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY
   }
 
   override fun afterInitialMessageSendObservation(
@@ -91,28 +58,25 @@ internal object CodexAgentChatProviderBehavior : AgentChatProviderBehavior {
     observation: AgentChatInitialMessageSendObservation,
     retryAttempt: Int,
   ): AgentChatInitialMessageRetryDecision {
-    if (dispatch.action == AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE) {
-      if (isCodexPlanModeVisible(observation.textWithRecentOutputTail)) {
-        return AgentChatInitialMessageRetryDecision.PROCEED
-      }
-      if (isCodexPlanModeTransientBusyOutput(observation.outputText)) {
-        return AgentChatInitialMessageRetryDecision.RetryTransientBusyWithoutReadiness(calculateCodexPlanModeRetryBackoffMs(retryAttempt))
-      }
-      if (retryAttempt < CODEX_PLAN_MODE_CONFIRMATION_RETRY_LIMIT) {
-        return AgentChatInitialMessageRetryDecision.RetryWithoutReadiness(calculateCodexPlanModeRetryBackoffMs(retryAttempt))
-      }
-      LOG.warn("Codex plan mode was not confirmed after ${retryAttempt + 1} attempts; stopping initial message dispatch")
-      return AgentChatInitialMessageRetryDecision.Stop
-    }
     if (dispatch.completionPolicy != AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY) {
       return AgentChatInitialMessageRetryDecision.PROCEED
     }
-    return if (isCodexPlanModeTransientBusyOutput(observation.outputText)) {
-      AgentChatInitialMessageRetryDecision.RetryTransientBusyWithoutReadiness(calculateCodexPlanModeRetryBackoffMs(retryAttempt))
+    if (isCodexPlanCommandBusyOutput(observation.outputText)) {
+      return AgentChatInitialMessageRetryDecision.RetryTransientBusyWithoutReadiness(calculateCodexPlanModeRetryBackoffMs(retryAttempt))
     }
-    else {
-      AgentChatInitialMessageRetryDecision.PROCEED
+    if (isCodexPlanCommandUnavailableOutput(observation.outputText)) {
+      return AgentChatInitialMessageRetryDecision.Stop
     }
+    if (isCodexPlanCommandUnsupportedOutput(observation.outputText)) {
+      return AgentChatInitialMessageRetryDecision.Stop
+    }
+    if (isCodexPlanCommandBlankOutput(observation.outputText)) {
+      if (retryAttempt < CODEX_PLAN_COMMAND_BLANK_OUTPUT_RETRY_LIMIT) {
+        return AgentChatInitialMessageRetryDecision.RetryWithoutReadiness(calculateCodexPlanModeRetryBackoffMs(retryAttempt))
+      }
+      return AgentChatInitialMessageRetryDecision.Stop
+    }
+    return AgentChatInitialMessageRetryDecision.PROCEED
   }
 
 }
@@ -122,38 +86,24 @@ private fun calculateCodexPlanModeRetryBackoffMs(retryAttempt: Int): Long {
   return (CODEX_PLAN_MODE_RETRY_BACKOFF_MS * (1L shl cappedAttempt)).coerceAtMost(CODEX_PLAN_MODE_MAX_RETRY_BACKOFF_MS)
 }
 
-internal fun isCodexPlanModeVisible(text: String): Boolean {
-  return normalizeCodexTerminalOutput(text).contains(CODEX_PLAN_MODE_VISIBLE_MARKER, ignoreCase = true)
+private fun isCodexPlanCommandBusyOutput(text: String): Boolean {
+  return CODEX_PLAN_MODE_BUSY_MESSAGE_REGEX.containsMatchIn(normalizeCodexTerminalOutput(text))
 }
 
-private fun isCodexPlanModeTransientBusyOutput(text: String): Boolean {
-  if (CODEX_PLAN_MODE_BUSY_MESSAGE_REGEX.containsMatchIn(normalizeCodexTerminalOutput(text))) {
-    return true
-  }
-  val lines = codexTerminalLines(text)
-  return isCodexHookRunningInOutput(lines) || lines.any { line ->
-    line.contains(CODEX_PLAN_MODE_MCP_STARTUP_SINGLE_MESSAGE, ignoreCase = true) ||
-    line.contains(CODEX_PLAN_MODE_MCP_STARTUP_MULTI_MESSAGE, ignoreCase = true) ||
-    line.contains(CODEX_PLAN_MODE_QUEUE_HINT_MESSAGE, ignoreCase = true) ||
-    line.contains(CODEX_PLAN_MODE_WORKING_STATUS_MARKER, ignoreCase = true)
-  }
+private fun isCodexPlanCommandUnavailableOutput(text: String): Boolean {
+  val normalized = normalizeCodexTerminalOutput(text)
+  return normalized.contains(CODEX_PLAN_MODE_UNAVAILABLE_MESSAGE, ignoreCase = true) ||
+         normalized.contains(CODEX_COLLABORATION_MODES_DISABLED_MESSAGE, ignoreCase = true)
 }
 
-private fun isCodexHookRunningInOutput(lines: List<String>): Boolean {
-  val latestHookStatusLine = lines.lastOrNull { line ->
-    CODEX_PLAN_MODE_HOOK_RUNNING_STATUS_REGEX.containsMatchIn(line) ||
-    CODEX_PLAN_MODE_HOOK_TERMINAL_STATUS_REGEX.containsMatchIn(line)
-  }
-  return latestHookStatusLine?.let(CODEX_PLAN_MODE_HOOK_RUNNING_STATUS_REGEX::containsMatchIn) == true
+private fun isCodexPlanCommandUnsupportedOutput(text: String): Boolean {
+  val normalized = normalizeCodexTerminalOutput(text)
+  return normalized.contains(CODEX_PLAN_COMMAND, ignoreCase = true) &&
+         CODEX_PLAN_COMMAND_UNSUPPORTED_MARKERS.any { marker -> normalized.contains(marker, ignoreCase = true) }
 }
 
-private fun codexTerminalLines(text: String): List<String> {
-  return stripCodexTerminalAnsi(text)
-    .replace("\r", "\n")
-    .lineSequence()
-    .map(::sanitizeCodexTerminalText)
-    .filter(String::isNotEmpty)
-    .toList()
+private fun isCodexPlanCommandBlankOutput(text: String): Boolean {
+  return normalizeCodexTerminalOutput(text).isEmpty()
 }
 
 private fun normalizeCodexTerminalOutput(text: String): String {
@@ -178,18 +128,23 @@ private fun stripCodexTerminalAnsi(text: String): String = CODEX_TERMINAL_ANSI_E
 
 private const val CODEX_PLAN_MODE_RETRY_BACKOFF_MS: Long = 250
 private const val CODEX_PLAN_MODE_MAX_RETRY_BACKOFF_MS: Long = 1_000
-private const val CODEX_PLAN_MODE_CONFIRMATION_RETRY_LIMIT: Int = 5
+private const val CODEX_PLAN_COMMAND_BLANK_OUTPUT_RETRY_LIMIT: Int = 2
+private const val CODEX_PLAN_COMMAND: String = "/plan"
 private val CODEX_PLAN_MODE_BUSY_MESSAGE_REGEX: Regex =
   Regex("'\\s*/plan\\s*'\\s+is disabled while a task is in progress\\.", RegexOption.IGNORE_CASE)
-private const val CODEX_PLAN_MODE_MCP_STARTUP_SINGLE_MESSAGE: String = "Booting MCP server:"
-private const val CODEX_PLAN_MODE_MCP_STARTUP_MULTI_MESSAGE: String = "Starting MCP servers"
-private const val CODEX_PLAN_MODE_QUEUE_HINT_MESSAGE: String = "tab to queue"
-private const val CODEX_PLAN_MODE_WORKING_STATUS_MARKER: String = "Working ("
-private const val CODEX_PLAN_MODE_VISIBLE_MARKER: String = "Plan mode"
-private val CODEX_PLAN_MODE_HOOK_RUNNING_STATUS_REGEX: Regex = Regex("(?:^| )Running .+ hook(?::|$)", RegexOption.IGNORE_CASE)
-private val CODEX_PLAN_MODE_HOOK_TERMINAL_STATUS_REGEX: Regex = Regex(
-  "(?:^| ).+ hook \\((?:completed|failed|blocked|stopped)\\)",
-  RegexOption.IGNORE_CASE,
+private const val CODEX_PLAN_MODE_UNAVAILABLE_MESSAGE: String = "Plan mode unavailable right now."
+private const val CODEX_COLLABORATION_MODES_DISABLED_MESSAGE: String = "Collaboration modes are disabled."
+private val CODEX_PLAN_COMMAND_UNSUPPORTED_MARKERS: List<String> = listOf(
+  "unknown command",
+  "unknown slash command",
+  "unrecognized command",
+  "unrecognized slash command",
+  "unsupported command",
+  "invalid command",
+  "no such command",
+  "command not found",
+  "not a recognized command",
+  "not recognized as a command",
 )
 
 private val CODEX_TERMINAL_ANSI_ESCAPE_REGEX: Regex = Regex("\\u001B\\[[0-9;?]*[ -/]*[@-~]")

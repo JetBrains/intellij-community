@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
@@ -59,6 +60,10 @@ class RecordingAgentChatTerminalHarness {
     terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
   }
 
+  fun setSentTextOutputTexts(texts: List<String>) {
+    terminalTabs.tab.setSentTextOutputTexts(texts)
+  }
+
   suspend fun activateAgentChatEditor(project: Project, file: VirtualFile): Int {
     return withContext(Dispatchers.UiWithModelAccess) {
       val chatFile = file as? AgentChatVirtualFile ?: return@withContext 0
@@ -70,12 +75,6 @@ class RecordingAgentChatTerminalHarness {
   suspend fun awaitCreateCalls(expected: Int, timeoutMs: Long = TERMINAL_HARNESS_WAIT_TIMEOUT_MS) {
     withTimeout(timeoutMs.milliseconds) {
       terminalTabs.createCallsFlow.first { calls -> calls >= expected }
-    }
-  }
-
-  suspend fun awaitBackTabCalls(expected: Int, timeoutMs: Long = TERMINAL_HARNESS_WAIT_TIMEOUT_MS) {
-    withTimeout(timeoutMs.milliseconds) {
-      terminalTabs.tab.backTabCallsFlow.first { calls -> calls >= expected }
     }
   }
 
@@ -194,9 +193,15 @@ private class RecordingAgentChatTerminalTab : AgentChatTerminalTab {
 
   private val outputVersion: AtomicLong = AtomicLong()
   private val outputChunks: CopyOnWriteArrayList<RecordingTerminalOutputChunk> = CopyOnWriteArrayList()
+  private val sentTextOutputTexts: ConcurrentLinkedQueue<String> = ConcurrentLinkedQueue()
 
   fun setSessionState(state: TerminalViewSessionState) {
     mutableSessionState.value = state
+  }
+
+  fun setSentTextOutputTexts(texts: List<String>) {
+    sentTextOutputTexts.clear()
+    sentTextOutputTexts.addAll(texts)
   }
 
   override suspend fun captureOutputCheckpoint(): AgentChatTerminalOutputCheckpoint {
@@ -253,16 +258,17 @@ private class RecordingAgentChatTerminalTab : AgentChatTerminalTab {
   override fun sendText(text: String, shouldExecute: Boolean, useBracketedPasteMode: Boolean) {
     sentTexts += RecordingTerminalSentText(text, shouldExecute, useBracketedPasteMode)
     sentTextsFlow.value = sentTexts.toList()
+    sentTextOutputTexts.poll()?.let(::emitTerminalOutput)
   }
 
   override fun sendBackTab(): Boolean {
     backTabCallsFlow.value = backTabCalls.incrementAndGet()
-    emitPlanModeOutput()
+    emitTerminalOutput("Plan mode")
     return true
   }
 
-  private fun emitPlanModeOutput() {
-    recentOutputTail = "Plan mode"
+  private fun emitTerminalOutput(text: String) {
+    recentOutputTail = text
     val nextVersion = outputVersion.incrementAndGet()
     outputChunks += RecordingTerminalOutputChunk(version = nextVersion, text = recentOutputTail)
   }

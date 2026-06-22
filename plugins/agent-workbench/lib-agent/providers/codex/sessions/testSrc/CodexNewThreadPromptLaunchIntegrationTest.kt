@@ -44,8 +44,8 @@ class CodexNewThreadPromptLaunchIntegrationTest {
       .containsExactlyElementsOf(CODEX_BASE_COMMAND)
     assertThat(observation.startupLaunchSpecOverride).isNull()
     assertThat(observation.postStartDispatchSteps.map { it.action })
-      .containsExactly(AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE, AgentInitialMessageDispatchAction.SEND_TEXT)
-    assertThat(observation.postStartDispatchSteps.map { it.text }).containsExactly("", PLAN_PROMPT)
+      .containsExactly(AgentInitialMessageDispatchAction.SEND_TEXT, AgentInitialMessageDispatchAction.SEND_TEXT)
+    assertThat(observation.postStartDispatchSteps.map { it.text }).containsExactly("/plan", PLAN_PROMPT)
     assertThat(observation.initialMessageToken).isNotNull()
   }
 
@@ -72,8 +72,8 @@ class CodexNewThreadPromptLaunchIntegrationTest {
       .containsExactlyElementsOf(CODEX_BASE_COMMAND)
     assertThat(observation.startupLaunchSpecOverride).isNull()
     assertThat(observation.postStartDispatchSteps.map { it.action })
-      .containsExactly(AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE, AgentInitialMessageDispatchAction.SEND_TEXT)
-    assertThat(observation.postStartDispatchSteps.map { it.text }).containsExactly("", "Refactor selected code")
+      .containsExactly(AgentInitialMessageDispatchAction.SEND_TEXT, AgentInitialMessageDispatchAction.SEND_TEXT)
+    assertThat(observation.postStartDispatchSteps.map { it.text }).containsExactly("/plan", "Refactor selected code")
     assertThat(observation.initialMessageToken).isNotNull()
   }
 

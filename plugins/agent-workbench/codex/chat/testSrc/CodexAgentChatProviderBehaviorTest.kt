@@ -27,38 +27,8 @@ class CodexAgentChatProviderBehaviorTest {
   }
 
   @Test
-  fun planModeEnsureIsSatisfiedWhenCodexPlanModeIsVisible(): Unit = kotlinx.coroutines.runBlocking {
-    val dispatch = ensurePlanModeDispatch()
-    val tab = TestBehaviorTerminalTab(recentOutputTail = "gpt-5.3-codex medium Plan mode (shift+tab to cycle)")
-
-    assertThat(CodexAgentChatProviderBehavior.isInitialMessageDispatchAlreadySatisfied(tab, dispatch)).isTrue()
-  }
-
-  @Test
-  fun planModeEnsureRetriesUntilVisibleAndThenStops(): Unit = kotlinx.coroutines.runBlocking {
-    val dispatch = ensurePlanModeDispatch()
-    val file = TestBehaviorFile()
-
-    assertThat(CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(file,
-                                                                                 dispatch,
-                                                                                 observation("Default mode"),
-                                                                                 retryAttempt = 0))
-      .isInstanceOf(AgentChatInitialMessageRetryDecision.RetryWithoutReadiness::class.java)
-    assertThat(CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(file,
-                                                                                 dispatch,
-                                                                                 observation("Plan mode"),
-                                                                                 retryAttempt = 0))
-      .isSameAs(AgentChatInitialMessageRetryDecision.PROCEED)
-    assertThat(CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(file,
-                                                                                 dispatch,
-                                                                                 observation("Default mode"),
-                                                                                 retryAttempt = 5))
-      .isSameAs(AgentChatInitialMessageRetryDecision.Stop)
-  }
-
-  @Test
-  fun planModeRetryWaitsWhileThreadIsBusy(): Unit = kotlinx.coroutines.runBlocking {
-    val dispatch = ensurePlanModeDispatch()
+  fun planCommandRetryIgnoresThreadActivityBeforeSend(): Unit = kotlinx.coroutines.runBlocking {
+    val dispatch = planCommandDispatch()
 
     assertThat(
       CodexAgentChatProviderBehavior.beforeInitialMessageSend(
@@ -67,12 +37,16 @@ class CodexAgentChatProviderBehaviorTest {
         dispatch = dispatch,
         retryAttempt = 0,
       )
-    ).isInstanceOf(AgentChatInitialMessageRetryDecision.RetryWithoutReadiness::class.java)
+    ).isSameAs(AgentChatInitialMessageRetryDecision.PROCEED)
+  }
 
+  @Test
+  fun planCommandRetryIgnoresStartupTerminalOutputBeforeSend(): Unit = kotlinx.coroutines.runBlocking {
+    val dispatch = planCommandDispatch()
     assertThat(
       CodexAgentChatProviderBehavior.beforeInitialMessageSend(
         file = TestBehaviorFile(threadActivity = AgentThreadActivity.READY),
-        tab = TestBehaviorTerminalTab(recentOutputTail = "Booting MCP server: idea"),
+        tab = TestBehaviorTerminalTab(recentOutputTail = "Running SessionStart hook:\nhook output"),
         dispatch = dispatch,
         retryAttempt = 0,
       )
@@ -80,8 +54,91 @@ class CodexAgentChatProviderBehaviorTest {
   }
 
   @Test
-  fun planModeRetryTreatsFreshSessionStartHookAsTransientBusy(): Unit = kotlinx.coroutines.runBlocking {
-    val dispatch = ensurePlanModeDispatch()
+  fun planCommandRetryTreatsDisabledPlanCommandAsTransientBusy(): Unit = kotlinx.coroutines.runBlocking {
+    val dispatch = planCommandDispatch()
+
+    assertThat(
+      CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(
+        file = TestBehaviorFile(),
+        dispatch = dispatch,
+        observation = observation("'/plan' is disabled while a task is in progress."),
+        retryAttempt = 0,
+      )
+    ).isInstanceOf(AgentChatInitialMessageRetryDecision.RetryTransientBusyWithoutReadiness::class.java)
+  }
+
+  @Test
+  fun planCommandRetryStopsWhenPlanModeIsUnavailable(): Unit = kotlinx.coroutines.runBlocking {
+    val dispatch = planCommandDispatch()
+
+    assertThat(
+      CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(
+        file = TestBehaviorFile(),
+        dispatch = dispatch,
+        observation = observation("Plan mode unavailable right now."),
+        retryAttempt = 0,
+      )
+    ).isSameAs(AgentChatInitialMessageRetryDecision.Stop)
+
+    assertThat(
+      CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(
+        file = TestBehaviorFile(),
+        dispatch = dispatch,
+        observation = observation("Collaboration modes are disabled."),
+        retryAttempt = 0,
+      )
+    ).isSameAs(AgentChatInitialMessageRetryDecision.Stop)
+  }
+
+  @Test
+  fun planCommandRetryStopsWhenPlanCommandIsUnsupported(): Unit = kotlinx.coroutines.runBlocking {
+    val dispatch = planCommandDispatch()
+
+    assertThat(
+      CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(
+        file = TestBehaviorFile(),
+        dispatch = dispatch,
+        observation = observation("Unknown command: /plan"),
+        retryAttempt = 0,
+      )
+    ).isSameAs(AgentChatInitialMessageRetryDecision.Stop)
+
+    assertThat(
+      CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(
+        file = TestBehaviorFile(),
+        dispatch = dispatch,
+        observation = observation("/plan is not a recognized command"),
+        retryAttempt = 0,
+      )
+    ).isSameAs(AgentChatInitialMessageRetryDecision.Stop)
+  }
+
+  @Test
+  fun planCommandRetryRetriesBlankOutputBeforeStopping(): Unit = kotlinx.coroutines.runBlocking {
+    val dispatch = planCommandDispatch()
+
+    assertThat(
+      CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(
+        file = TestBehaviorFile(),
+        dispatch = dispatch,
+        observation = observation("\u001B[0m \n\t"),
+        retryAttempt = 0,
+      )
+    ).isInstanceOf(AgentChatInitialMessageRetryDecision.RetryWithoutReadiness::class.java)
+
+    assertThat(
+      CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(
+        file = TestBehaviorFile(),
+        dispatch = dispatch,
+        observation = observation(""),
+        retryAttempt = 2,
+      )
+    ).isSameAs(AgentChatInitialMessageRetryDecision.Stop)
+  }
+
+  @Test
+  fun planCommandRetryDoesNotTreatSessionStartHookOutputAsTransientBusy(): Unit = kotlinx.coroutines.runBlocking {
+    val dispatch = planCommandDispatch()
     val outputText = buildString {
       appendLine("Running SessionStart hook:")
       repeat(12) { lineIndex ->
@@ -96,35 +153,20 @@ class CodexAgentChatProviderBehaviorTest {
         observation = observation(outputText),
         retryAttempt = 0,
       )
-    ).isInstanceOf(AgentChatInitialMessageRetryDecision.RetryTransientBusyWithoutReadiness::class.java)
+    ).isSameAs(AgentChatInitialMessageRetryDecision.PROCEED)
   }
 
   @Test
-  fun planModeRetryDoesNotTreatStaleSessionStartHookTailAsTransientBusy(): Unit = kotlinx.coroutines.runBlocking {
-    val dispatch = ensurePlanModeDispatch()
-    val terminalTail = """
-      Running SessionStart hook:
-      hook output
-    """.trimIndent()
-
-    assertThat(
-      CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(
-        file = TestBehaviorFile(),
-        dispatch = dispatch,
-        observation = observation(outputText = "", recentOutputTail = terminalTail),
-        retryAttempt = 0,
-      )
-    ).isInstanceOf(AgentChatInitialMessageRetryDecision.RetryWithoutReadiness::class.java)
-  }
-
-  @Test
-  fun planModeRetryContinuesAfterFreshSessionStartHookCompletes(): Unit = kotlinx.coroutines.runBlocking {
-    val dispatch = ensurePlanModeDispatch()
-    val outputText = """
-      Running SessionStart hook:
-      SessionStart hook (completed)
-      Type your prompt
-    """.trimIndent()
+  fun planCommandRetryDoesNotTreatQueueHintOutputAsTransientBusy(): Unit = kotlinx.coroutines.runBlocking {
+    val dispatch = planCommandDispatch()
+    val outputText = listOf(
+      "Working (0s - esc to interrupt)",
+      "",
+      "",
+      "> Ask Codex to do anything",
+      "",
+      "  tab to queue message - Plan mode",
+    ).joinToString(separator = "\n")
 
     assertThat(
       CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(
@@ -133,7 +175,7 @@ class CodexAgentChatProviderBehaviorTest {
         observation = observation(outputText),
         retryAttempt = 0,
       )
-    ).isInstanceOf(AgentChatInitialMessageRetryDecision.RetryWithoutReadiness::class.java)
+    ).isSameAs(AgentChatInitialMessageRetryDecision.PROCEED)
   }
 }
 
@@ -141,9 +183,9 @@ private fun observation(outputText: String, recentOutputTail: String = ""): Agen
   return AgentChatInitialMessageSendObservation(outputText = outputText, recentOutputTail = recentOutputTail)
 }
 
-private fun ensurePlanModeDispatch(): TestDispatch {
+private fun planCommandDispatch(): TestDispatch {
   return TestDispatch(
-    action = AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE,
+    action = AgentInitialMessageDispatchAction.SEND_TEXT,
     completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
   )
 }

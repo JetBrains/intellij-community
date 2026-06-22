@@ -31,7 +31,7 @@ class CodexNewThreadPromptLaunchTerminalIntegrationTest {
   private val fileEditorManagerFixture = projectFixture.fileEditorManagerFixture()
 
   @Test
-  fun globalPromptNewTaskPlanModeStartsCodexThenDispatchesPromptInTerminal(@TestDisposable disposable: Disposable): Unit =
+  fun globalPromptNewTaskPlanModeDispatchesPlanCommandThenPromptInTerminal(@TestDisposable disposable: Disposable): Unit =
     timeoutRunBlocking {
       val descriptor = descriptor()
       val terminalHarness = RecordingAgentChatTerminalHarness()
@@ -63,8 +63,7 @@ class CodexNewThreadPromptLaunchTerminalIntegrationTest {
       ) {
         terminalHarness.awaitCreateCalls(1)
         terminalHarness.setRunning()
-        terminalHarness.awaitBackTabCalls(1)
-        terminalHarness.awaitSentTexts(1)
+        terminalHarness.awaitSentTexts(2)
         val finalSnapshot = terminalHarness.awaitInitialMessageSent()
         assertThat(finalSnapshot.initialMessageDispatchStepIndex).isZero()
       }
@@ -73,9 +72,54 @@ class CodexNewThreadPromptLaunchTerminalIntegrationTest {
       assertThat(startupCommand).containsExactlyElementsOf(CODEX_BASE_COMMAND)
       assertThat(startupCommand).doesNotContain("--")
       assertThat(startupCommand).doesNotContain(PLAN_PROMPT)
-      assertThat(terminalHarness.backTabCalls).isEqualTo(1)
+      assertThat(terminalHarness.backTabCalls).isZero()
       assertThat(terminalHarness.sentTexts)
-        .containsExactly(RecordingTerminalSentText(PLAN_PROMPT, shouldExecute = true, useBracketedPasteMode = true))
+        .containsExactly(
+          RecordingTerminalSentText("/plan", shouldExecute = true, useBracketedPasteMode = true),
+          RecordingTerminalSentText(PLAN_PROMPT, shouldExecute = true, useBracketedPasteMode = true),
+        )
+    }
+
+  @Test
+  fun globalPromptNewTaskPlanModeRetriesWhenPlanCommandIsBusy(@TestDisposable disposable: Disposable): Unit =
+    timeoutRunBlocking {
+      val descriptor = descriptor()
+      val terminalHarness = RecordingAgentChatTerminalHarness()
+      terminalHarness.setSentTextOutputTexts(listOf("'/plan' is disabled while a task is in progress.", "Plan mode"))
+      runInUi {
+        fileEditorManagerFixture.get()
+        terminalHarness.registerEditorFactory(disposable)
+      }
+
+      val projectPath = checkNotNull(project.basePath)
+      val request = captureNewTaskPromptLaunchRequest(
+        descriptor = descriptor,
+        prompt = PLAN_PROMPT,
+        workingProjectPath = projectPath,
+        project = project,
+      ).copy(preferredDedicatedFrame = false)
+
+      launchNewThreadPromptRequestWithDefaultChatOpenExecutor(
+        descriptor = descriptor,
+        request = request,
+        openedChatHandler = { openedProject, openedFile ->
+          check(terminalHarness.activateAgentChatEditor(project = openedProject, file = openedFile) == 1)
+        },
+      ) {
+        terminalHarness.awaitCreateCalls(1)
+        terminalHarness.setRunning()
+        terminalHarness.awaitSentTexts(3)
+        val finalSnapshot = terminalHarness.awaitInitialMessageSent()
+        assertThat(finalSnapshot.initialMessageDispatchStepIndex).isZero()
+      }
+
+      assertThat(terminalHarness.backTabCalls).isZero()
+      assertThat(terminalHarness.sentTexts)
+        .containsExactly(
+          RecordingTerminalSentText("/plan", shouldExecute = true, useBracketedPasteMode = true),
+          RecordingTerminalSentText("/plan", shouldExecute = true, useBracketedPasteMode = true),
+          RecordingTerminalSentText(PLAN_PROMPT, shouldExecute = true, useBracketedPasteMode = true),
+        )
     }
 }
 
