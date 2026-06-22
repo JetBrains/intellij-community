@@ -10,7 +10,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.python.common.tools.ToolId
+import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentYmlSdkUtils
 import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser

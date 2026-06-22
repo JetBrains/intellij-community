@@ -82,7 +82,7 @@
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.semver" />
     <orderEntry type="module" module-name="intellij.platform.ide.nonModalWelcomeScreen" />
-    <orderEntry type="module" module-name="intellij.python.common" />
+    <orderEntry type="module" module-name="intellij.python.community.common" />
     <orderEntry type="module" module-name="intellij.platform.ide.nonModalWelcomeScreen.backend" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" />

@@ -8,8 +8,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.snapshots.SnapshotStateSet
 import androidx.compose.ui.state.ToggleableState
-import com.intellij.python.common.tools.ToolId
-import com.intellij.python.common.tools.getIcon
+import com.intellij.python.community.common.tools.ToolId
+import com.intellij.python.community.common.tools.getIcon
 import com.intellij.python.sdkConfigurator.common.impl.ModuleDTO
 import com.intellij.python.sdkConfigurator.common.impl.ModuleName
 import com.intellij.python.sdkConfigurator.common.impl.ModulesDTO

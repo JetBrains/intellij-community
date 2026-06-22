@@ -23,7 +23,7 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.python.common.tools.ToolId
+import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlWorkspaceEntity
 import com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlWorkspaceEntityBuilder
 

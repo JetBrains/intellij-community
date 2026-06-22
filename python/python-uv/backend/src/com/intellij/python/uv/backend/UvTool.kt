@@ -4,7 +4,7 @@ package com.intellij.python.uv.backend
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.getPathMatcher
-import com.intellij.python.common.tools.ToolId
+import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.internal.pyProjectToml.TomlDependencySpecification
 import com.intellij.python.pyproject.model.spi.ProjectDependencies

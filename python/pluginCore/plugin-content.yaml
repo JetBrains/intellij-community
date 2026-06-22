@@ -11,12 +11,12 @@
 - name: lib/modules/intellij.python.black.jar
   contentModules:
   - name: intellij.python.black
-- name: lib/modules/intellij.python.common.jar
-  contentModules:
-  - name: intellij.python.common
 - name: lib/modules/intellij.python.community.aliasProvider.jar
   contentModules:
   - name: intellij.python.community.aliasProvider
+- name: lib/modules/intellij.python.community.common.jar
+  contentModules:
+  - name: intellij.python.community.common
 - name: lib/modules/intellij.python.community.communityOnly.jar
   contentModules:
   - name: intellij.python.community.communityOnly

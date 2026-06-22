@@ -18,7 +18,7 @@
     <module name="intellij.platform.testFramework.common"/>
     <module name="intellij.platform.testFramework.junit5"/>
     <module name="intellij.python.black"/>
-    <module name="intellij.python.common"/>
+    <module name="intellij.python.community.common"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.impl"/>
     <module name="intellij.python.psi"/>

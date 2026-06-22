@@ -2,7 +2,7 @@
 package com.jetbrains.python.uv.sdk.configuration
 
 import com.intellij.openapi.module.Module
-import com.intellij.python.common.tools.ToolId
+import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.uv.common.UV_TOOL_ID
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary

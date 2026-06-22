@@ -14,6 +14,6 @@
     <orderEntry type="module" module-name="intellij.python.community" />
     <orderEntry type="module" module-name="intellij.python.pyproject" />
     <orderEntry type="module" module-name="intellij.platform.util.base.multiplatform" />
-    <orderEntry type="module" module-name="intellij.python.common" />
+    <orderEntry type="module" module-name="intellij.python.community.common" />
   </component>
 </module>

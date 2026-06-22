@@ -3,7 +3,7 @@ package com.intellij.python.pyproject.model.api
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.guessModuleDir
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.python.common.tools.ToolId
+import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.model.internal.suggestSdkImpl
 import com.intellij.python.pyproject.statistics.PyProjectTomlCollector
 import com.jetbrains.python.errorProcessing.PyResult

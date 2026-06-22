@@ -17,7 +17,7 @@ import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.python.common.tools.ToolId
+import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.impl.conda.icons.PythonCommunityImplCondaIcons
 import com.intellij.python.community.impl.pipenv.PIPENV_ICON
 import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID

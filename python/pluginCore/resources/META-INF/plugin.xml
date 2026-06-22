@@ -31,7 +31,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <!--<module name="intellij.grid.charts.impl"/>-->
 
     <!-- Frontend-safe modules: keep loading="required" -->
-    <module name="intellij.python.common" loading="required"/>
+    <module name="intellij.python.community.common" loading="required"/>
     <module name="intellij.python.parser" loading="required"/>
     <module name="intellij.python.ast" loading="required"/>
     <module name="intellij.python.syntax.core" loading="required"/>

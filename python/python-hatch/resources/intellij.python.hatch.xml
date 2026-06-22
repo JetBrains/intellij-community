@@ -1,7 +1,7 @@
 <idea-plugin>
   <dependencies>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <module name="intellij.python.common"/>
+    <module name="intellij.python.community.common"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.community.execService.python"/>
@@ -22,7 +22,7 @@
     <tool implementation="com.intellij.python.hatch.impl.HatchTool"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
-    <python.common.toolToIconMapper implementation="com.intellij.python.hatch.impl.HatchIdMapper"/>
+    <python.community.common.toolToIconMapper implementation="com.intellij.python.hatch.impl.HatchIdMapper"/>
     <python.processOutput.common.processOutputIconMapping implementation="com.intellij.python.hatch.impl.HatchIconMapping"/>
   </extensions>
 </idea-plugin>

@@ -41,7 +41,7 @@
     <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.helpersLocator" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.sdk" scope="TEST" />
