@@ -63,7 +63,11 @@ Rules:
 
 #### Kotlin stdlib — mandatory for any Kotlin module
 
-`intellij.platform.core.impl` **must** be a direct IML dependency of every new Kotlin module. It is the only module in the dependency graph that explicitly exports `kotlin-stdlib`, making the stdlib available on the Bazel compilation classpath. Without it, the Kotlin compiler fails with:
+Every new Kotlin module needs the `kotlin-stdlib` library on its Bazel compilation classpath. Add it as a direct IML library dependency:
+
+```xml
+<orderEntry type="library" name="kotlin-stdlib" level="project" />
+```
 
 ```
 Cannot access built-in declaration 'kotlin.Any'. Ensure that you have a dependency on the Kotlin standard library.
@@ -89,10 +93,13 @@ If the new module calls a method whose **return type** comes from a third module
 
 ### 3. Write the module descriptor XML
 
-Add `visibility="public"` to the `<idea-plugin>` root **if any class in the new module is used directly by another plugin** (not just another module within the same plugin). For example, if a class is subclassed or called from a plugin with a separate `<plugin id="...">`:
+If a class in the new module is used directly by another plugin (not just another module within the same plugin), set the module's `visibility` on the `<idea-plugin>` root. Choose the level by who the consumer is:
+
+- `visibility="internal"` — the consumer is another plugin **inside this monorepo** (a separate `<plugin id="...">`, e.g. a class subclassed or called from it). This is the common case.
+- `visibility="public"` — the class is part of API meant for **external third-party plugins**.
 
 ```xml
-<idea-plugin visibility="public">
+<idea-plugin visibility="internal">
   ...
 </idea-plugin>
 ```
@@ -152,10 +159,9 @@ interface MyFeatureHelper {
     @JvmField
     val EP = ExtensionPointName.create<MyFeatureHelper>("com.intellij.<language>.<epName>")
 
-    @JvmStatic fun getInstance(): MyFeatureHelper? = EP.extensionList.firstOrNull()
-
+    // An EP can have several registered extensions — process all of them, not just the first.
     @JvmStatic fun checkSomething(element: PsiElement?): Boolean =
-      if (element == null) false else getInstance()?.doSomething(element) ?: false
+      element != null && EP.extensionList.any { it.doSomething(element) }
   }
 }
 ```
