@@ -1189,6 +1189,115 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
+    @TestFor(issues = ["PY-63737"])
+    fun `generic descriptor subclass used as decorator accessed on instance`() = test("""
+      from typing import Any, Callable, Generic, TypeVar, Union, overload
+
+      _T = TypeVar("_T")
+
+      class base(Generic[_T]):
+          def __init__(self, fget: Callable[..., _T]): ...
+          @overload
+          def __get__(self, obj: None, cls: Any) -> "base[_T]": ...
+          @overload
+          def __get__(self, obj: object, cls: Any) -> _T: ...
+          def __get__(self, obj: Any, cls: Any) -> Union["base[_T]", _T]: ...
+
+      class memo(base[_T]):
+          pass
+
+      class C:
+          @memo
+          def x(self) -> int: ...
+
+      c = C()
+      expr = c.x
+      #└ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-63737"])
+    fun `generic descriptor TYPE_CHECKING alias used as decorator accessed on instance`() = test("""
+      from typing import Any, Callable, Generic, TypeVar, Union, overload, TYPE_CHECKING
+
+      _T = TypeVar("_T")
+
+      class generic_fn_descriptor(Generic[_T]):
+          def __init__(self, fget: Callable[..., _T]): ...
+          @overload
+          def __get__(self, obj: None, cls: Any) -> "generic_fn_descriptor[_T]": ...
+          @overload
+          def __get__(self, obj: object, cls: Any) -> _T: ...
+          def __get__(self, obj: Any, cls: Any) -> Union["generic_fn_descriptor[_T]", _T]: ...
+
+      if TYPE_CHECKING:
+          memoized_property = generic_fn_descriptor
+      else:
+          memoized_property = generic_fn_descriptor
+
+      class C:
+          @memoized_property
+          def x(self) -> int: ...
+
+      c = C()
+      expr = c.x
+      #└ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-63737"])
+    fun `generic descriptor subclass used as decorator accessed on class`() = test("""
+      from typing import Any, Callable, Generic, TypeVar, Union, overload
+
+      _T = TypeVar("_T")
+
+      class base(Generic[_T]):
+          def __init__(self, fget: Callable[..., _T]): ...
+          @overload
+          def __get__(self, obj: None, cls: Any) -> "base[_T]": ...
+          @overload
+          def __get__(self, obj: object, cls: Any) -> _T: ...
+          def __get__(self, obj: Any, cls: Any) -> Union["base[_T]", _T]: ...
+
+      class memo(base[_T]):
+          pass
+
+      class C:
+          @memo
+          def x(self) -> int: ...
+
+      expr = C.x
+      #└ TYPE base[int]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-63737"])
+    fun `covariant generic descriptor subclass used as decorator accessed on instance`() = test("""
+      from typing import Any, Callable, Generic, TypeVar, Union, overload
+
+      _T_co = TypeVar("_T_co", covariant=True)
+
+      class base(Generic[_T_co]):
+          def __init__(self, fget: Callable[..., _T_co]): ...
+          @overload
+          def __get__(self, obj: None, cls: Any) -> "base[_T_co]": ...
+          @overload
+          def __get__(self, obj: object, cls: Any) -> _T_co: ...
+          def __get__(self, obj: Any, cls: Any) -> Union["base[_T_co]", _T_co]: ...
+
+      class memo(base[_T_co]):
+          pass
+
+      class C:
+          @memo
+          def x(self) -> int: ...
+
+      c = C()
+      expr = c.x
+      #└ TYPE int
+      """)
+
+    @Test
     @TestFor(issues = ["PY-26184"])
     fun `generic type from descriptor with type annotation only`() = test("""
       import typing

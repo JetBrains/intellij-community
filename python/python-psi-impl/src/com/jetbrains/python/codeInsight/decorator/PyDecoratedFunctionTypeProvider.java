@@ -17,9 +17,11 @@ import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyCallableParameterImpl;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyCallableTypeImpl;
 import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.PyConcatenateType;
 import com.jetbrains.python.psi.types.PyParamSpecType;
 import com.jetbrains.python.psi.types.PySyntheticCallHelper;
@@ -144,7 +146,8 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
           return false;
         }
       }
-      else if (res instanceof PyClass) {
+      // A class, or an alias to one, is a typed decorator, not an identity one.
+      else if (resolveDecoratorClass(res, context) != null) {
         return false;
       }
     }
@@ -304,13 +307,19 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
     if (resolvedElements.size() == 1) {
       PyTypedElement resolvedElement = resolvedElements.getFirst();
       PyType type;
-      if (resolvedElement instanceof PyClass pyClass) {
-        type = PyTypeChecker.findGenericDefinitionType(pyClass, context);
+      // A decorator may be a class or an alias to one; treat both as a constructor call.
+      PyClass decoratorClass = resolveDecoratorClass(resolvedElement, context);
+      if (decoratorClass != null) {
+        PyCallableType constructorType = buildGenericConstructorType(decoratorClass, context);
+        if (constructorType != null) {
+          return constructorType;
+        }
+        type = PyTypeChecker.findGenericDefinitionType(decoratorClass, context);
         if (type instanceof PyClassType classType) {
           type = classType.toClass();
         }
         if (type == null) {
-          type = pyClass.getType(context);
+          type = decoratorClass.getType(context);
         }
       }
       else {
@@ -321,5 +330,38 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
       }
     }
     return null;
+  }
+
+  /** Returns the class a decorator denotes directly or through a {@code Name = SomeClass} alias, else null. */
+  private static @Nullable PyClass resolveDecoratorClass(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+    if (element instanceof PyClass pyClass) {
+      return pyClass;
+    }
+    if (element instanceof PyTypedElement typedElement &&
+        context.getType(typedElement) instanceof PyClassType classType && classType.isDefinition()) {
+      return classType.getPyClass();
+    }
+    return null;
+  }
+
+  /**
+   * Constructor callable of a generic class decorator: result is the generic definition ({@code C[_T]}) with
+   * the (possibly inherited) constructor params remapped to the class's own type parameters. Null if not
+   * generic or no usable constructor.
+   */
+  private static @Nullable PyCallableType buildGenericConstructorType(@NotNull PyClass pyClass, @NotNull TypeEvalContext context) {
+    PyClassType genericDefinition = PyTypeChecker.findGenericDefinitionType(pyClass, context);
+    if (genericDefinition == null) return null;
+
+    List<PyCallableParameter> constructorParameters = new PyClassTypeImpl(pyClass, true).getParameters(context);
+    if (constructorParameters == null || constructorParameters.isEmpty()) return null;
+
+    PyTypeChecker.GenericSubstitutions substitutions = PyTypeChecker.INSTANCE.collectTypeSubstitutions(genericDefinition, context);
+    List<PyCallableParameter> remappedParameters = ContainerUtil.map(
+      constructorParameters,
+      parameter -> PyCallableParameterImpl.nonPsi(parameter.getName(),
+                                                  PyTypeChecker.substitute(parameter.getType(context), substitutions, context),
+                                                  parameter.getDefaultValue()));
+    return new PyCallableTypeImpl(remappedParameters, genericDefinition);
   }
 }
