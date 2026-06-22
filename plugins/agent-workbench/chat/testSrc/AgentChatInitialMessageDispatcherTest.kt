@@ -81,7 +81,7 @@ class AgentChatInitialMessageDispatcherTest {
   fun planModePreSendRetriesDoNotConsumePostSendConfirmationBudget(): Unit = timeoutRunBlocking {
     val behavior = DelayedPlanModeBehavior(preSendRetryCount = 6)
     val file = createFile(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.JUNIE,
       steps = listOf(
         terminalPlanModeStep(),
         AgentInitialMessageDispatchStep(
@@ -106,7 +106,7 @@ class AgentChatInitialMessageDispatcherTest {
   fun transientBusyRetriesDoNotConsumePostSendConfirmationBudget(): Unit = timeoutRunBlocking {
     val behavior = TransientBusyPlanModeBehavior(transientBusyRetryCount = 2)
     val file = createFile(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.JUNIE,
       steps = listOf(
         terminalPlanModeStep(),
         AgentInitialMessageDispatchStep(
@@ -169,7 +169,7 @@ class AgentChatInitialMessageDispatcherTest {
   @Test
   fun stoppedPlanModeDispatchReportsPromptNotSent(): Unit = timeoutRunBlocking {
     val file = createFile(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.JUNIE,
       steps = listOf(
         terminalPlanModeStep(),
         AgentInitialMessageDispatchStep(

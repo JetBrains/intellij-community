@@ -29,7 +29,6 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameAction
 import com.intellij.agent.workbench.sessions.core.providers.buildPlanModeInitialMessagePlan
-import com.intellij.agent.workbench.sessions.core.providers.buildTerminalPlanModePostStartDispatchSteps
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import java.nio.file.Path
@@ -253,9 +252,19 @@ internal class CodexAgentSessionProviderDescriptor(
       return super.buildPostStartDispatchSteps(initialMessagePlan)
     }
 
-    return buildTerminalPlanModePostStartDispatchSteps(
-      initialMessagePlan = initialMessagePlan,
-      completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
+    val message = initialMessagePlan.message.orEmpty()
+    return listOfNotNull(
+      AgentInitialMessageDispatchStep(
+        text = CODEX_PLAN_COMMAND,
+        timeoutPolicy = initialMessagePlan.timeoutPolicy,
+        completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
+      ),
+      message.takeIf(String::isNotEmpty)?.let { prompt ->
+        AgentInitialMessageDispatchStep(
+          text = prompt,
+          timeoutPolicy = initialMessagePlan.timeoutPolicy,
+        )
+      },
     )
   }
 
@@ -354,6 +363,7 @@ private fun String?.normalizeCodexToken(): String {
 }
 
 private const val CODEX_AUTO_UPDATE_CONFIG: String = "check_for_update_on_startup=false"
+private const val CODEX_PLAN_COMMAND: String = "/plan"
 
 // The dedicated thread-id title item is the stable UUID signal. The thread item keeps the human title/fallback visible.
 private const val CODEX_TERMINAL_TITLE_CONFIG: String = "tui.terminal_title=[\"thread-id\",\"thread\"]"

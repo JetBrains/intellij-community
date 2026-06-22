@@ -385,7 +385,7 @@ class CodexAgentSessionProviderDescriptorTest {
   }
 
   @Test
-  fun planModeBuildsPlanModeEnsureAndPromptPostStartDispatchSteps() {
+  fun planModeBuildsPlanCommandAndPromptPostStartDispatchSteps() {
     val steps = bridge.buildPostStartDispatchSteps(
       AgentInitialMessagePlan(
         message = "Refactor this",
@@ -396,7 +396,7 @@ class CodexAgentSessionProviderDescriptorTest {
 
     assertThat(steps).containsExactly(
       AgentInitialMessageDispatchStep(
-        action = AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE,
+        text = "/plan",
         timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
         completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
       ),
@@ -408,7 +408,7 @@ class CodexAgentSessionProviderDescriptorTest {
   }
 
   @Test
-  fun emptyPlanModeBuildsPlanModeEnsureOnlyPostStartDispatchStep() {
+  fun emptyPlanModeBuildsPlanCommandOnlyPostStartDispatchStep() {
     val steps = bridge.buildPostStartDispatchSteps(
       AgentInitialMessagePlan(
         message = "",
@@ -419,7 +419,7 @@ class CodexAgentSessionProviderDescriptorTest {
 
     assertThat(steps).containsExactly(
       AgentInitialMessageDispatchStep(
-        action = AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE,
+        text = "/plan",
         timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
         completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
       ),
