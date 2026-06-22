@@ -432,6 +432,15 @@ class MultiModuleGenerationTest(FunctionalGeneratorTestCase):
                                if m['message'].startswith('Updating skeleton for mod')]
         self.assertEqual(2, len(subprocess_messages))
 
+    def test_binaries_alongside_pure_namesake_modules_are_ignored(self):
+        # There are "mod1.py" both in "binaries/" alongside "mod1.so" and in "mocks/"
+        # because otherwise on an attempt to import "mod1" for redeclaration, if there
+        # is no corresponding stub in "mocks/", the interpreter will fail with
+        # an ImportError because it prioritizes ".so" files over ".py" and "mod1.so"
+        # there is not a valid binary module. In other words, the test will pass
+        # (no skeleton for mod1.so is generated) regardless of the new discovery logic.
+        self.check_generator_output()
+
 
 class StatePassingGenerationTest(FunctionalGeneratorTestCase):
     default_generator_extra_args = ['--state-file', '-',

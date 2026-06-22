@@ -2,6 +2,7 @@
 from __future__ import print_function
 
 import fnmatch
+import os.path
 import sys
 from copy import deepcopy
 
@@ -505,8 +506,18 @@ class SkeletonGenerator(object):
                 prefix = root[(len(path) + len(SEP)):].replace(SEP, '.')
                 if prefix:
                     prefix += '.'
-                binaries = ((f, cut_binary_lib_suffix(root, f)) for f in files)
-                binaries = [(f, name) for (f, name) in binaries if name]
+
+                binaries = []
+                for f in files:
+                    mod_name = cut_binary_lib_suffix(root, f)
+                    if not mod_name:
+                        continue
+                    # If a pure Python module exists alongside a binary, don't generate a skeleton for it.
+                    # It happens e.g. with mypyc-compiled sources
+                    if os.path.exists(os.path.join(root, mod_name + ".py")):
+                        continue
+                    binaries.append((f, mod_name))
+
                 if binaries:
                     trace("root: %s path: %s prefix: %s preprefix: %s", root, path, prefix, preprefix)
                     for f, name in binaries:
