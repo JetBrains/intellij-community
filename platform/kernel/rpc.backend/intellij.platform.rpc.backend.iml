@@ -14,5 +14,6 @@
     <orderEntry type="module" module-name="intellij.platform.rpc" exported="" />
     <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="fleet.rpc.server" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
   </component>
 </module>

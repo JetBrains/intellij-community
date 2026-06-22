@@ -9,6 +9,11 @@
     <extensionPoint qualifiedName="com.intellij.platform.rpc.backend.remoteApiProvider"
                     interface="com.intellij.platform.rpc.backend.RemoteApiProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.rpc.backend.remoteApi"
+                    beanClass="com.intellij.platform.rpc.backend.RemoteApiRegistration"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="fleet.rpc.RemoteApi"/>
+    </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.platform.rpc.backend.documentSync"
                     interface="com.intellij.platform.rpc.backend.impl.DocumentSync"
                     dynamic="true"/>
