@@ -16,6 +16,7 @@ import com.intellij.xdebugger.hotswap.HotSwapProvider
 import com.intellij.xdebugger.hotswap.HotSwapSession
 import com.intellij.xdebugger.hotswap.SourceFileChangesCollector
 import com.intellij.xdebugger.hotswap.SourceFileChangesListener
+import com.intellij.xdebugger.impl.hotswap.HotSwapDebugSessionManager
 import com.intellij.xdebugger.impl.hotswap.SourceFileChangeFilter
 import com.intellij.xdebugger.impl.hotswap.SourceFileChangesCollectorImpl
 import kotlinx.coroutines.CoroutineScope
@@ -28,22 +29,29 @@ internal class JvmHotSwapProvider(private val debuggerSession: DebuggerSession) 
   ): SourceFileChangesCollector<VirtualFile> {
     val jvmExtensions = listJvmFileExtensions()
     val filtersFromProviders = HotSwapSourceFileFilterProvider.findSourceFiltersForSession(debuggerSession)
+    val compatibilityCheckers = HotSwapSourceChangeCompatibilityCheckerProvider.findCompatibilityCheckersForSession(debuggerSession)
     return SourceFileChangesCollectorImpl(
       coroutineScope,
       listener,
-      listOf(FileExtensionFilter(jvmExtensions), InProjectFilter(session.project)) + filtersFromProviders,
+      filters = listOf(FileExtensionFilter(jvmExtensions), InProjectFilter(session.project)) + filtersFromProviders,
+      compatibilityCheckers = compatibilityCheckers,
     )
   }
 
   override fun performHotSwap(session: HotSwapSession<VirtualFile>) {
     HotSwapUI.getInstance(session.project).compileAndReload(debuggerSession, *session.getChanges().toTypedArray())
   }
+
+  override fun restart() {
+    val process = debuggerSession.process.xdebugProcess ?: return
+    HotSwapDebugSessionManager.getInstance(debuggerSession.project).restart(process)
+  }
 }
 
 private fun listJvmFileExtensions(): List<@NlsSafe String> {
   val typeManager = FileTypeManager.getInstance()
   return Language.findInstance(JvmMetaLanguage::class.java).getMatchingLanguages().flatMap { language ->
-    val fileType = language.associatedFileType ?: return@flatMap emptyList<String>()
+    val fileType = language.associatedFileType ?: return@flatMap emptyList()
     val associatedExtensions = typeManager.getAssociations(fileType).mapNotNull { (it as? ExtensionFileNameMatcher)?.extension }
     (associatedExtensions + fileType.defaultExtension).distinct()
   }

@@ -77,6 +77,8 @@
                     interface="com.intellij.debugger.engine.DebuggerAgentParametersModifier" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.debugger.hotSwapSourceFileFilterProvider"
                     interface="com.intellij.debugger.impl.hotswap.HotSwapSourceFileFilterProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.debugger.hotSwapSourceChangeCompatibilityCheckerProvider"
+                    interface="com.intellij.debugger.impl.hotswap.HotSwapSourceChangeCompatibilityCheckerProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.debugger.jvmHotSwapListener"
                     interface="com.intellij.debugger.impl.hotswap.JvmHotSwapListener" dynamic="true"/>
   </extensionPoints>
@@ -91,6 +93,8 @@
     <applicationService serviceImplementation="com.intellij.debugger.settings.TraceSettings"/>
     <projectService serviceInterface="com.intellij.debugger.ui.HotSwapUI" serviceImplementation="com.intellij.debugger.ui.HotSwapUIImpl"/>
     <xdebugger.hotSwapInDebugSessionEnabler implementation="com.intellij.debugger.impl.hotswap.JvmHotSwapInDebugSessionEnabler"/>
+    <debugger.hotSwapSourceChangeCompatibilityCheckerProvider
+      implementation="com.intellij.debugger.impl.hotswap.JavaHotSwapSourceChangeCompatibilityCheckerProvider"/>
     <projectService serviceInterface="com.intellij.debugger.DebuggerManager"
                     serviceImplementation="com.intellij.debugger.impl.DebuggerManagerImpl"/>
     <applicationService serviceInterface="com.intellij.debugger.ui.breakpoints.MethodBreakpointProgressSupport"
@@ -210,6 +214,8 @@
                  description="When enabled uses unique coroutine id to filter stepping"/>
     <registryKey key="debugger.how.to.switch.to.suspend.all" defaultValue="[IMMEDIATE_PAUSE*|PAUSE_WAITING_EVALUATION|METHOD_BREAKPOINT|DISABLE]"
                  description="It is a way how the debugger engine will switch from suspend-thread context to suspend-all context"/>
+    <registryKey key="debugger.hotswap.source.change.compatibility.checks.enabled" defaultValue="false"
+                 description="Enable HotSwap source change compatibility checks before reload"/>
     <registryKey key="coroutine.panel.live.update" defaultValue="false"
                  description="When enabled, Coroutine View will update its contents after every step. By default, the Coroutine View is collapsed after every step in favor of stepping performance."/>
     <registryKey key="coroutine.panel.show.jobs.hierarchy" defaultValue="true"
