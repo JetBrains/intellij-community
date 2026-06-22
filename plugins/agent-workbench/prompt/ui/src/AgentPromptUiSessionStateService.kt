@@ -2,6 +2,8 @@
 package com.intellij.agent.workbench.prompt.ui
 
 import com.dynatrace.hash4j.hashing.HashValue128
+import com.intellij.agent.workbench.core.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.openapi.components.SerializablePersistentStateComponent
 import com.intellij.openapi.components.Service
@@ -57,12 +59,19 @@ internal data class AgentPromptUiContextRestoreSnapshot(
   @JvmField val manualContextItemsBySourceId: Map<String, List<AgentPromptContextItem>> = emptyMap(),
 )
 
+internal data class AgentPromptSelectedProviderSelection(
+  val provider: AgentSessionProvider,
+  val launchMode: AgentSessionLaunchMode,
+)
+
 @Serializable
 internal data class AgentPromptUiState(
   @JvmField val draft: AgentPromptUiDraft = AgentPromptUiDraft(),
   @JvmField val promptHistory: List<AgentPromptHistoryEntry> = emptyList(),
   @JvmField val savedPrompts: List<AgentPromptSavedPromptEntry> = emptyList(),
   @JvmField val autoClose: Boolean = true,
+  @JvmField val selectedProviderId: String? = null,
+  @JvmField val selectedLaunchMode: String? = null,
 )
 
 @Service(Service.Level.PROJECT)
@@ -84,6 +93,23 @@ internal class AgentPromptUiSessionStateService
 
   fun saveDraft(newDraft: AgentPromptUiDraft) {
     updateState { current -> current.copy(draft = newDraft) }
+  }
+
+  fun loadSelectedProviderSelection(): AgentPromptSelectedProviderSelection? {
+    val provider = AgentSessionProvider.fromOrNull(state.selectedProviderId ?: return null) ?: return null
+    return AgentPromptSelectedProviderSelection(
+      provider = provider,
+      launchMode = state.selectedLaunchMode.toLaunchModeOrStandard(),
+    )
+  }
+
+  fun saveSelectedProviderSelection(provider: AgentSessionProvider, launchMode: AgentSessionLaunchMode) {
+    updateState { current ->
+      current.copy(
+        selectedProviderId = provider.value,
+        selectedLaunchMode = launchMode.name,
+      )
+    }
   }
 
   fun loadPromptHistory(): List<AgentPromptHistoryEntry> {
@@ -168,4 +194,9 @@ internal class AgentPromptUiSessionStateService
 
 internal fun normalizeAgentPromptText(promptText: String): String {
   return promptText.replace("\r\n", "\n").replace('\r', '\n').trim()
+}
+
+private fun String?.toLaunchModeOrStandard(): AgentSessionLaunchMode {
+  if (this == null) return AgentSessionLaunchMode.STANDARD
+  return runCatching { AgentSessionLaunchMode.valueOf(this) }.getOrDefault(AgentSessionLaunchMode.STANDARD)
 }
