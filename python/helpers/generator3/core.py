@@ -14,7 +14,7 @@ from generator3.util_methods import *
 # with Python 3.5.1 (https://mypy.readthedocs.io/en/latest/common_issues.html#import-cycles).
 TYPE_CHECKING = False
 if TYPE_CHECKING:
-    from typing import List, Dict, Any, NewType, Tuple, Optional, TextIO
+    from typing import Generator, List, Dict, Any, NewType, Tuple, Optional, TextIO
 
     SkeletonStatusId = NewType('SkeletonStatusId', str)
     GenerationStatusId = NewType('GenerationStatusId', str)
@@ -52,6 +52,7 @@ def is_pregeneration_mode():
 
 # find_binaries functionality
 def cut_binary_lib_suffix(path, f):
+    # type: (str, str) -> Optional[str]
     """
     @param path where f lives
     @param f file name of a possible binary lib file (no path)
@@ -127,6 +128,7 @@ def is_module(d, root):
 
 
 def walk_python_path(path):
+    # type: (str) -> Generator[Tuple[str, List[str]], None, None]
     for root, dirs, files in os.walk(path):
         if root.endswith('__pycache__'):
             continue
@@ -495,46 +497,45 @@ class SkeletonGenerator(object):
         if not self.roots:
             return []
         # TODO Move to future InterpreterHandler
-        paths = sorted_no_case(self.roots)
-        for path in paths:
-            for root, files in walk_python_path(path):
-                cutpoint = path.rfind(SEP)
+        for root in sorted_no_case(self.roots):
+            for dir_path, file_names in walk_python_path(root):
+                cutpoint = root.rfind(SEP)
                 if cutpoint > 0:
-                    preprefix = path[(cutpoint + len(SEP)):] + '.'
+                    preprefix = root[(cutpoint + len(SEP)):] + '.'
                 else:
                     preprefix = ''
-                prefix = root[(len(path) + len(SEP)):].replace(SEP, '.')
+                prefix = dir_path[(len(root) + len(SEP)):].replace(SEP, '.')
                 if prefix:
                     prefix += '.'
 
                 binaries = []
-                for f in files:
-                    mod_name = cut_binary_lib_suffix(root, f)
-                    if not mod_name:
+                for file_name in file_names:
+                    short_mod_name = cut_binary_lib_suffix(dir_path, file_name)
+                    if not short_mod_name:
                         continue
                     # If a pure Python module exists alongside a binary, don't generate a skeleton for it.
                     # It happens e.g. with mypyc-compiled sources
-                    if os.path.exists(os.path.join(root, mod_name + ".py")):
+                    if os.path.exists(os.path.join(dir_path, short_mod_name + ".py")):
                         continue
-                    binaries.append((f, mod_name))
+                    binaries.append((file_name, short_mod_name))
 
                 if binaries:
-                    trace("root: %s path: %s prefix: %s preprefix: %s", root, path, prefix, preprefix)
-                    for f, name in binaries:
-                        the_name = prefix + name
-                        if is_skipped_module(root, f, the_name):
-                            trace('skipping module %s', the_name)
+                    trace("root: %s dir: %s prefix: %s preprefix: %s", root, dir_path, prefix, preprefix)
+                    for file_name, short_mod_name in binaries:
+                        full_mod_name = prefix + short_mod_name
+                        if is_skipped_module(dir_path, file_name, full_mod_name):
+                            trace('skipping module %s', full_mod_name)
                             continue
-                        trace("cutout: %s", name)
+                        trace("cutout: %s", short_mod_name)
                         if preprefix:
                             trace("prefixes: %s %s", prefix, preprefix)
-                            pre_name = (preprefix + prefix + name).upper()
+                            pre_name = (preprefix + prefix + short_mod_name).upper()
                             if pre_name in res:
                                 res.pop(pre_name)  # there might be a dupe, if paths got both a/b and a/b/c
-                            trace("done with %s", name)
-                        file_path = os.path.join(root, f)
+                            trace("done with %s", short_mod_name)
+                        file_path = os.path.join(dir_path, file_name)
 
-                        res[the_name.upper()] = BinaryModule(the_name, file_path)
+                        res[full_mod_name.upper()] = BinaryModule(full_mod_name, file_path)
         return list(res.values())
 
     def process_module(self, mod_name, mod_path=None):
