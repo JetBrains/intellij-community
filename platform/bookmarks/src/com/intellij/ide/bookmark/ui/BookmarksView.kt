@@ -59,14 +59,12 @@ import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
 import javax.swing.tree.TreePath
 
-class BookmarksView(val project: Project, showToolbar: Boolean?)
+class BookmarksView(val project: Project, val isPopup: Boolean)
   : Disposable, UiDataProvider, OccurenceNavigator, OnePixelSplitter(false, .3f, .1f, .9f) {
 
   companion object {
     val BOOKMARKS_VIEW: DataKey<BookmarksView> = DataKey.create("BOOKMARKS_VIEW")
   }
-
-  val isPopup: Boolean = showToolbar == null
 
   fun interface EditSourceListener { fun onEditSource() }
   private val editSourceListeners: MutableList<EditSourceListener> = mutableListOf()
