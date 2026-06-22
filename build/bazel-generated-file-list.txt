@@ -394,6 +394,7 @@ libraries/caffeine
 libraries/classgraph
 libraries/cli-parser
 libraries/clikt
+libraries/cloud-config-client
 libraries/coil
 libraries/commons/cli
 libraries/commons/codec

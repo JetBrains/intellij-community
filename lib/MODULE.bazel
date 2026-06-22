@@ -302,20 +302,6 @@ http_file(
 )
 
 http_file(
-    name = "com_jetbrains_cloudconfig-cloudconfig-2023_9_http",
-    downloaded_file_path = "cloudconfig-2023.9.jar",
-    sha256 = "e51ee1761684a946b9d5a0caaec2b92cf4598860cf231dbaf495f268fda35d10",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/cloudconfig/cloudconfig/2023.9/cloudconfig-2023.9.jar",
-)
-
-http_file(
-    name = "com_jetbrains_cloudconfig-cloudconfig-2023_9-sources_http",
-    downloaded_file_path = "cloudconfig-2023.9-sources.jar",
-    sha256 = "86c94c625ccc61677a07bb5c7646cd0186a8b1f1f7bbf9238019caae4500d0e9",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/cloudconfig/cloudconfig/2023.9/cloudconfig-2023.9-sources.jar",
-)
-
-http_file(
     name = "org_jetbrains_patronus-codeowners-lib-ownership-2026_04_09-1517_http",
     downloaded_file_path = "codeowners-lib-ownership-2026.04.09-1517.jar",
     sha256 = "2f155bba83f73e89e84685bbb3597d7316bdcb1e69142652638c212af5f94fc0",
@@ -7957,6 +7943,20 @@ http_file(
     downloaded_file_path = "mordant-core-jvm-3.0.2-sources.jar",
     sha256 = "c71b0c271e475972ed804f7abe0d22d62bc40e36fec8fdd49e2d15646c5b9c8b",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/ajalt/mordant/mordant-core-jvm/3.0.2/mordant-core-jvm-3.0.2-sources.jar",
+)
+
+http_file(
+    name = "com_jetbrains_cloudconfig-cloudconfig-2023_9_http",
+    downloaded_file_path = "cloudconfig-2023.9.jar",
+    sha256 = "e51ee1761684a946b9d5a0caaec2b92cf4598860cf231dbaf495f268fda35d10",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/cloudconfig/cloudconfig/2023.9/cloudconfig-2023.9.jar",
+)
+
+http_file(
+    name = "com_jetbrains_cloudconfig-cloudconfig-2023_9-sources_http",
+    downloaded_file_path = "cloudconfig-2023.9-sources.jar",
+    sha256 = "86c94c625ccc61677a07bb5c7646cd0186a8b1f1f7bbf9238019caae4500d0e9",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/cloudconfig/cloudconfig/2023.9/cloudconfig-2023.9-sources.jar",
 )
 
 http_file(

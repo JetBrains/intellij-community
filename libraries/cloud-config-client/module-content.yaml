@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.cloud.config.client.jar
+  modules:
+  - name: intellij.libraries.cloud.config.client
+    libraries:
+      cloud-config-client:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/cloudconfig/cloudconfig/2023/cloudconfig-2023.jar
