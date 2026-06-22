@@ -461,6 +461,7 @@ libraries/jediterm-ui
 libraries/jettison
 libraries/jgoodies/common
 libraries/jgoodies/forms
+libraries/jline
 libraries/joni
 libraries/jsch-agent-proxy
 libraries/jsonpath

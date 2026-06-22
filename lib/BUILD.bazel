@@ -11993,6 +11993,21 @@ jvm_import(
 )
 
 copy_file(
+    name = "org.jline/jline-3.24.1.jar_copy",
+    src = "@org_jline-jline-3_24_1_http//file",
+    out = "org.jline/jline-3.24.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-jline-jline",
+    jar = "@org_jline-jline-3_24_1_http//file",
+    source_jar = "@org_jline-jline-3_24_1-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "org.jruby.joni/joni-2.2.7.jar_copy",
     src = "@org_jruby_joni-joni-2_2_7_http//file",
     out = "org.jruby.joni/joni-2.2.7.jar",
