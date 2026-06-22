@@ -5,6 +5,9 @@
     <applicationService serviceInterface="com.intellij.execution.wsl.GatewayNativeWslProjectOpener"
                         serviceImplementation="com.intellij.execution.wsl.GatewayNativeWslProjectOpenerImpl"/>
 
+    <applicationService serviceInterface="com.intellij.refactoring.move.moveClassesOrPackages.MovedFileProvider"
+                        serviceImplementation="com.intellij.refactoring.move.moveClassesOrPackages.DefaultMovedFileProvider"/>
+
     <applicationService
       serviceInterface="com.intellij.diagnostic.StartUpPerformanceService"
       serviceImplementation="com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.IdeStartUpPerformanceService"

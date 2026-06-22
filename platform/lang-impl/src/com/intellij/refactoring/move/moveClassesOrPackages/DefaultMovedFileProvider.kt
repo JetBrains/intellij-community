@@ -4,6 +4,6 @@ package com.intellij.refactoring.move.moveClassesOrPackages
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 
-internal class DefaultMoveFileInvalidationStrategy : MoveFileInvalidationStrategy {
-  override fun invalidateFile(directory: PsiDirectory, file: PsiFile): PsiFile? = directory.findFile(file.name)
+internal class DefaultMovedFileProvider : MovedFileProvider {
+  override fun getUpdatedFile(destination: PsiDirectory, file: PsiFile): PsiFile? = destination.findFile(file.name)
 }
