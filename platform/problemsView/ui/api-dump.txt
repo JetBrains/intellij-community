@@ -132,7 +132,6 @@ c:com.intellij.analysis.problemsView.toolWindow.ProblemsViewState
 - f:getProportion():F
 - f:getSelectedTabId():java.lang.String
 - f:getShowPreview():Z
-- f:getShowToolbar():Z
 - f:getSortByName():Z
 - f:getSortBySeverity():Z
 - f:getSortFoldersFirst():Z
@@ -143,7 +142,6 @@ c:com.intellij.analysis.problemsView.toolWindow.ProblemsViewState
 - f:setProportion(F):V
 - f:setSelectedTabId(java.lang.String):V
 - f:setShowPreview(Z):V
-- f:setShowToolbar(Z):V
 - f:setSortByName(Z):V
 - f:setSortBySeverity(Z):V
 - f:setSortFoldersFirst(Z):V

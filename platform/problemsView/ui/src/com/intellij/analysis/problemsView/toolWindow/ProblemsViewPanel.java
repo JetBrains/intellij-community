@@ -222,7 +222,6 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, U
     JComponent centerComponent = createCenterComponent();
     myToolbar = createToolbar();
     myToolbar.setTargetComponent(centerComponent);
-    myToolbar.getComponent().setVisible(state.getShowToolbar());
     myPanel = new JPanel(new BorderLayout());
     myScrollPane = createScrollPane(centerComponent, true);
     if (ExperimentalUI.isNewUI()) {

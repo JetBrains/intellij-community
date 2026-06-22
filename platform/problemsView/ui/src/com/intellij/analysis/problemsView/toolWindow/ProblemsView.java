@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow;
 
-import com.intellij.ide.actions.ToggleToolbarAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -157,7 +156,6 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow window) {
     ThreadingAssertions.assertEventDispatchThread();
     ProblemsViewState state = ProblemsViewState.getInstance(project);
-    state.setShowToolbar(ToggleToolbarAction.isToolbarVisible(window, project));
     ContentManager manager = window.getContentManager();
 
     CompletableFuture<?> result = CompletableFuture.completedFuture(null);
