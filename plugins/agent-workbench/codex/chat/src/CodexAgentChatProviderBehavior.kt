@@ -68,7 +68,7 @@ internal object CodexAgentChatProviderBehavior : AgentChatProviderBehavior {
       return AgentChatInitialMessageRetryDecision.PROCEED
     }
     if (isCodexPlanCommandBusyOutput(observation.outputText)) {
-      return AgentChatInitialMessageRetryDecision.RetryTransientBusyWithoutReadiness(calculateCodexPlanModeRetryBackoffMs(retryAttempt))
+      return AgentChatInitialMessageRetryDecision.RetryTransientBusyAfterReadiness(calculateCodexPlanModeRetryBackoffMs(retryAttempt))
     }
     if (isCodexPlanCommandUnavailableOutput(observation.outputText)) {
       return AgentChatInitialMessageRetryDecision.Stop
