@@ -4,7 +4,6 @@ package com.intellij.agent.workbench.sessions.actions
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.chat.resolveAgentChatEditorTabActionContext
 import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
-import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.service.buildAgentSessionProjectPathCandidates
 import com.intellij.agent.workbench.sessions.service.collectOpenAgentSessionProjectPaths
@@ -35,29 +34,6 @@ internal class AgentSessionsEditorTabNewThreadContext(
 internal sealed class AgentSessionsEditorTabNewThreadTarget {
   data class Direct(val path: String) : AgentSessionsEditorTabNewThreadTarget()
   data class Candidates(val candidates: List<AgentPromptProjectPathCandidate>) : AgentSessionsEditorTabNewThreadTarget()
-}
-
-internal fun resolveAgentSessionsEditorTabNewThreadContext(
-  event: AnActionEvent,
-  isDedicatedProject: (Project) -> Boolean = AgentWorkbenchDedicatedFrameProjectManager::isDedicatedProject,
-  openInDedicatedFrame: () -> Boolean = ::openChatInDedicatedFrame,
-  openProjectPaths: () -> List<String> = ::collectOpenAgentSessionProjectPaths,
-  resolveChatContext: (AnActionEvent) -> AgentChatEditorTabActionContext? = ::resolveAgentChatEditorTabActionContext,
-): AgentSessionsEditorTabNewThreadContext? {
-  val project = event.project ?: return null
-  val chatContext = resolveChatContext(event)
-  return when {
-    isDedicatedProject(project) -> AgentSessionsEditorTabNewThreadContext(
-      project = project,
-      resolveTarget = { resolveDedicatedFrameNewThreadTarget(chatContext, openProjectPaths) },
-      resolveTargetForUpdate = { null },
-    )
-    openInDedicatedFrame() -> null
-    else -> {
-      val target = resolveProjectFrameNewThreadTarget(project, chatContext) ?: return null
-      AgentSessionsEditorTabNewThreadContext(project) { target }
-    }
-  }
 }
 
 internal fun resolveAgentSessionsMainToolbarNewThreadContext(
@@ -96,14 +72,6 @@ private fun resolveDedicatedFrameNewThreadTarget(
   }
 }
 
-private fun resolveProjectFrameNewThreadTarget(
-  project: Project,
-  chatContext: AgentChatEditorTabActionContext?,
-): AgentSessionsEditorTabNewThreadTarget? {
-  val path = chatContext?.path ?: normalizeOpenableSourceProjectPath(project.basePath) ?: return null
-  return AgentSessionsEditorTabNewThreadTarget.Direct(path)
-}
-
 private fun resolveMainToolbarProjectFrameNewThreadTarget(
   project: Project,
   chatContext: AgentChatEditorTabActionContext?,
@@ -119,8 +87,4 @@ private fun resolveMainToolbarProjectFrameNewThreadTarget(
 internal fun resolveQuickStartProjectPopupAnchor(e: AnActionEvent): JComponent? {
   return (e.inputEvent?.component as? JComponent)
          ?: (e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? JComponent)
-}
-
-private fun openChatInDedicatedFrame(): Boolean {
-  return AgentChatOpenModeSettings.openInDedicatedFrame()
 }

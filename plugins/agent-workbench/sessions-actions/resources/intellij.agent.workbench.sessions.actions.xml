@@ -61,12 +61,6 @@
       <add-to-group group-id="MainToolbarRight" anchor="after" relative-to-action="NewUiRunWidget"/>
     </action>
     <action
-      id="AgentWorkbenchSessions.EditorTab.NewThread"
-      icon="AllIcons.General.Add"
-      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadAction">
-      <add-to-group group-id="EditorTabsToolbarActions" anchor="first"/>
-    </action>
-    <action
       id="AgentWorkbenchSessions.RenameThreadFromEditorTab"
       class="com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabRenameThreadAction">
       <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="AgentWorkbenchSessions.CopyThreadIdFromEditorTab"/>

@@ -23,10 +23,6 @@ object AgentWorkbenchActionIds {
       const val ARCHIVE: String = "AgentWorkbenchSessions.TreePopup.Archive"
     }
 
-    object EditorTab {
-      const val NEW_THREAD: String = "AgentWorkbenchSessions.EditorTab.NewThread"
-    }
-
     object ThreadOutline {
       const val POPUP_GROUP: String = "AgentWorkbenchSessions.ThreadOutline.Popup"
       const val START_NEW_CONVERSATION_FROM_HERE: String = "AgentWorkbenchSessions.ThreadOutline.StartNewConversationFromHere"

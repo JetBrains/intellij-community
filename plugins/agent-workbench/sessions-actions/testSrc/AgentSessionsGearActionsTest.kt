@@ -7,7 +7,6 @@ import com.intellij.agent.workbench.sessions.actions.AgentSessionsConfigureProvi
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsCopyThreadIdFromEditorTabAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsDedicatedFrameToggleAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabArchiveThreadAction
-import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabRenameThreadAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsGoToSourceProjectFromEditorTabAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsGoToSourceProjectFromToolbarAction
@@ -325,28 +324,6 @@ class AgentSessionsGearActionsTest {
       .contains("<keyboard-shortcut keymap=\"Default for KDE\" first-keystroke=\"control alt DELETE\" remove=\"true\"/>")
       .contains("<keyboard-shortcut keymap=\"Default for KDE\" first-keystroke=\"alt shift F4\"/>")
       .contains("<keyboard-shortcut keymap=\"Mac OS X 10.5+\" first-keystroke=\"meta alt DELETE\"/>")
-  }
-
-  @Test
-  fun editorTabNewThreadActionIsRegisteredInActionSystem() {
-    val actionManager = ActionManager.getInstance()
-    val actionId = AgentWorkbenchActionIds.Sessions.EditorTab.NEW_THREAD
-
-    assertThat(actionManager.getAction(actionId))
-      .isNotNull
-      .isInstanceOf(AgentSessionsEditorTabNewThreadAction::class.java)
-    assertThat(actionManager.getAction(actionId)?.templatePresentation?.icon)
-      .isEqualTo(AllIcons.General.Add)
-    assertThat(actionManager.getAction(actionId)?.actionUpdateThread)
-      .isEqualTo(ActionUpdateThread.BGT)
-    assertThat(actionManager.getAction("EditorTabsToolbarActions"))
-      .isNotNull
-    assertThat(actionManager.childActionIds("EditorTabsToolbarActions"))
-      .contains(actionId)
-    assertThat(actionManager.childActionIds("EditorTabsToolbarActions").count { it == actionId })
-      .isEqualTo(1)
-    assertThat(actionManager.childActionIds("EditorTabActionGroup"))
-      .doesNotContain(actionId)
   }
 
   @Test
