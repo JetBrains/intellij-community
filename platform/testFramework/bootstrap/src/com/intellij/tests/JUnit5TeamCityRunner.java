@@ -82,6 +82,7 @@ public final class JUnit5TeamCityRunner {
   private static final String REVERSE_ORDER = System.getProperty("intellij.build.test.reverse.order");
   private static final String INCLUDE_TAGS = System.getProperty("intellij.build.test.tags");
   private static final String EXCLUDE_TAGS = System.getProperty("intellij.build.test.excluded.tags");
+  private static final String RIDER_TEST_EXECUTION_LISTENER = System.getProperty("intellij.build.test.rider.test.execution.listener");
 
   static boolean isUnderTeamCity() {
     var teamCityVersion = System.getenv("TEAMCITY_VERSION");
@@ -217,12 +218,11 @@ public final class JUnit5TeamCityRunner {
 
   private static TestExecutionListenerEx getTeamCityListener()
     throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-    String tcListenerClassName = System.getProperty("intellij.build.test.tc.listener.override");
-    if (tcListenerClassName == null)
+    if (RIDER_TEST_EXECUTION_LISTENER == null)
       return new TCExecutionListener();
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     //noinspection unchecked
-    Class<TestExecutionListenerEx> tcListenerClass = (Class<TestExecutionListenerEx>) Class.forName(tcListenerClassName, true, classLoader);
+    Class<TestExecutionListenerEx> tcListenerClass = (Class<TestExecutionListenerEx>) Class.forName(RIDER_TEST_EXECUTION_LISTENER, true, classLoader);
     return tcListenerClass.getDeclaredConstructor().newInstance();
   }
 
