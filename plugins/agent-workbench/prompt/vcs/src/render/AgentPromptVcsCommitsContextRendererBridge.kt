@@ -22,7 +22,7 @@ class AgentPromptVcsCommitsContextRendererBridge : AgentPromptContextRendererBri
 
   override fun renderEnvelope(input: AgentPromptEnvelopeRenderInput): String {
     val item = input.item
-    val commits = extractCommitEntries(item).map { entry -> entry.hash }
+    val commits = extractEnvelopeLines(item)
     return buildString {
       append("commits:")
       append(renderTruncationSuffix(item))
@@ -73,6 +73,19 @@ class AgentPromptVcsCommitsContextRendererBridge : AgentPromptContextRendererBri
       .map { hash -> CommitRenderEntry(hash = hash) }
       .toList()
   }
+
+  private fun extractEnvelopeLines(item: AgentPromptContextItem): List<String> {
+    val bodyLines = item.body
+      .lineSequence()
+      .map { it.trim() }
+      .filter { it.isNotEmpty() }
+      .toList()
+    if (bodyLines.isNotEmpty()) {
+      return bodyLines
+    }
+
+    return extractCommitEntries(item).map { entry -> entry.formatEnvelopeEntry() }
+  }
 }
 
 private data class CommitRenderEntry(
@@ -83,6 +96,11 @@ private data class CommitRenderEntry(
   @JvmField val rootName: String? = null,
 ) {
   fun shortHash(): String = hash.take(8)
+
+  fun formatEnvelopeEntry(): String {
+    val normalizedSubject = subject?.trim()?.takeIf { it.isNotEmpty() && it != hash }
+    return if (normalizedSubject == null) hash else "$hash | $normalizedSubject"
+  }
 }
 
 private fun renderTruncationSuffix(item: AgentPromptContextItem): String {
