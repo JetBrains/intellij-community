@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
-import kotlin.coroutines.coroutineContext
+import kotlin.time.Duration.Companion.milliseconds
 
 internal class AgentChatTerminalRestoreContextController(
   private val file: AgentChatVirtualFile,
@@ -37,8 +37,8 @@ internal class AgentChatTerminalRestoreContextController(
     attachedTab = tab
     installRestoreContextComponent(tab = tab, descriptor = descriptor)
     cwdSnapshotJob = tab.coroutineScope.launch {
-      while (coroutineContext.isActive) {
-        delay(CWD_SNAPSHOT_INTERVAL_MS)
+      while (isActive) {
+        delay(CWD_SNAPSHOT_INTERVAL)
         recordWorkingDirectory(tab = tab, descriptor = descriptor)
       }
     }
@@ -106,4 +106,4 @@ private fun createTerminalRestoreContextComponent(text: String): JComponent {
   }
 }
 
-private const val CWD_SNAPSHOT_INTERVAL_MS = 60_000L
+private val CWD_SNAPSHOT_INTERVAL = 60_000L.milliseconds

@@ -35,6 +35,7 @@ open class TestAgentSessionProviderDescriptor(
   override val suppressArchivedThreadsDuringRefresh: Boolean = false,
   override val supportsArchiveThread: Boolean = false,
   override val supportsUnarchiveThread: Boolean = false,
+  private val displayNameKeyOverride: String? = null,
   private val newSessionLabelKeyOverride: String? = null,
   override val quickStartActionTextKey: String = "action.AgentWorkbenchSessions.NewThreadQuick.text",
   override val quickStartActionDescriptionKey: String = "action.AgentWorkbenchSessions.NewThreadQuick.description",
@@ -48,7 +49,8 @@ open class TestAgentSessionProviderDescriptor(
   private val unarchiveThreadHandler: suspend (String, String) -> Boolean = { _, _ -> false },
 ) : AgentSessionProviderDescriptor {
   override val displayNameKey: String
-    get() = if (provider == AgentSessionProvider.CLAUDE) "toolwindow.provider.claude" else "toolwindow.provider.codex"
+    get() = displayNameKeyOverride
+            ?: if (provider == AgentSessionProvider.CLAUDE) "toolwindow.provider.claude" else "toolwindow.provider.codex"
 
   override val newSessionLabelKey: String
     get() = newSessionLabelKeyOverride

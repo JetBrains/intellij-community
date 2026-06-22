@@ -38,6 +38,7 @@ import com.intellij.agent.workbench.sessions.util.agentSessionCliMissingMessageK
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -86,8 +87,12 @@ internal class AgentSessionRefreshCoordinator(
   private val threadLoadSupport = AgentSessionThreadLoadSupport(
     sessionSourcesProvider = sessionSourcesProvider,
     applyArchiveSuppressions = archiveSuppressionSupport::apply,
-    resolveErrorMessage = ::resolveErrorMessage,
-    resolveProviderWarningMessage = ::resolveProviderWarningMessage,
+    resolveErrorMessage = { provider, throwable ->
+      resolveErrorMessage(providerDescriptorProvider = providerDescriptorProvider, provider = provider, t = throwable)
+    },
+    resolveProviderWarningMessage = { provider, throwable ->
+      resolveProviderWarningMessage(providerDescriptorProvider = providerDescriptorProvider, provider = provider, t = throwable)
+    },
     providerDescriptorProvider = providerDescriptorProvider,
   )
   private val onDemandLoadSupport = AgentSessionOnDemandLoadSupport(
@@ -108,7 +113,9 @@ internal class AgentSessionRefreshCoordinator(
     contentRepository = contentRepository,
     archiveSuppressionSupport = archiveSuppressionSupport,
     refreshSupportProvider = ::refreshSupportFor,
-    resolveProviderWarningMessage = ::resolveProviderWarningMessage,
+    resolveProviderWarningMessage = { provider, throwable ->
+      resolveProviderWarningMessage(providerDescriptorProvider = providerDescriptorProvider, provider = provider, t = throwable)
+    },
     openAgentChatSnapshotProvider = openAgentChatSnapshotProvider,
     presentationModel = presentationModel,
   )
@@ -298,115 +305,94 @@ internal class AgentSessionRefreshCoordinator(
 
       coroutineScope {
         for ((entryPath, _, entryProject, _, _, worktreeEntries) in bootstrap.entries) {
+          val normalizedEntryPath = normalizeAgentWorkbenchPath(entryPath)
           launch {
-            val normalizedEntryPath = normalizeAgentWorkbenchPath(entryPath)
-            val shouldLoadProject = entryProject != null && normalizedEntryPath in bootstrap.loadPaths
-            if (!shouldLoadProject) {
-              stateStore.updateProject(normalizedEntryPath) { project ->
-                project.withLoadingProvidersFailed()
-              }
-              return@launch
-            }
-            val finalResult = threadLoadSupport.loadSourcesIncrementally(
-              sessionSources = availableSessionSources,
-              normalizedPath = normalizedEntryPath,
-              project = entryProject,
+            loadOpenPathThreads(
+              target = RefreshThreadLoadTarget(
+                normalizedPath = normalizedEntryPath,
+                originalPath = entryPath,
+                project = entryProject,
+                updateLoadingFailed = {
+                  stateStore.updateProject(normalizedEntryPath) { project -> project.withLoadingProvidersFailed() }
+                },
+                updateResult = { result, includeErrorMessage ->
+                  stateStore.updateProject(normalizedEntryPath) { project ->
+                    project.withRefreshResult(
+                      normalizedPath = normalizedEntryPath,
+                      result = result,
+                      includeErrorMessage = includeErrorMessage,
+                      applyArchiveSuppressions = archiveSuppressionSupport::apply,
+                    )
+                  }
+                },
+              ),
+              loadPaths = bootstrap.loadPaths,
+              availableSessionSources = availableSessionSources,
               prefetchedByProvider = prefetchedByProvider,
-              originalPath = entryPath,
               cliAvailabilityByProvider = cliAvailabilityByProvider,
-            ) { partial, _ ->
-              stateStore.updateProject(normalizedEntryPath) { project ->
-                val refreshedThreads = preserveThreadCosts(
-                  existingThreads = project.threads,
-                  newThreads = archiveSuppressionSupport.apply(normalizedEntryPath, partial.threads),
-                )
-                val providerLoadMetadata = mergeProviderLoadMetadata(
-                  currentProviderLoadStates = project.providerLoadStates,
-                  currentProvidersWithUnknownThreadCount = project.providersWithUnknownThreadCount,
-                  providerLoadStateUpdates = partial.providerLoadStates,
-                  updatedProvidersWithUnknownThreadCount = partial.providersWithUnknownThreadCount,
-                )
-                project.copy(
-                  threads = refreshedThreads,
-                  providerWarnings = partial.providerWarnings,
-                  providerLoadStates = providerLoadMetadata.providerLoadStates,
-                  providersWithUnknownThreadCount = providerLoadMetadata.providersWithUnknownThreadCount,
-                )
-              }
-            }
-            stateStore.updateProject(normalizedEntryPath) { project ->
-              val refreshedThreads = preserveThreadCosts(
-                existingThreads = project.threads,
-                newThreads = archiveSuppressionSupport.apply(normalizedEntryPath, finalResult.threads),
-              )
-              project.copy(
-                threads = refreshedThreads,
-                errorMessage = finalResult.errorMessage,
-                providerWarnings = finalResult.providerWarnings,
-                providerLoadStates = finalResult.providerLoadStates,
-                providersWithUnknownThreadCount = finalResult.providersWithUnknownThreadCount,
-              )
-            }
-            contentRepository.syncWarmSnapshotFromRuntime(normalizedEntryPath)
+            )
           }
           for ((worktreePath, _, _, worktreeProject) in worktreeEntries) {
+            val normalizedWorktreePath = normalizeAgentWorkbenchPath(worktreePath)
             launch {
-              val normalizedEntryPath = normalizeAgentWorkbenchPath(entryPath)
-              val normalizedWorktreePath = normalizeAgentWorkbenchPath(worktreePath)
-              val shouldLoadWorktree = worktreeProject != null && normalizedWorktreePath in bootstrap.loadPaths
-              if (!shouldLoadWorktree) {
-                stateStore.updateWorktree(normalizedEntryPath, normalizedWorktreePath) { worktree ->
-                  worktree.withLoadingProvidersFailed()
-                }
-                return@launch
-              }
-              val finalResult = threadLoadSupport.loadSourcesIncrementally(
-                sessionSources = availableSessionSources,
-                normalizedPath = normalizedWorktreePath,
-                project = worktreeProject,
+              loadOpenPathThreads(
+                target = RefreshThreadLoadTarget(
+                  normalizedPath = normalizedWorktreePath,
+                  originalPath = worktreePath,
+                  project = worktreeProject,
+                  updateLoadingFailed = {
+                    stateStore.updateWorktree(normalizedEntryPath, normalizedWorktreePath) { worktree ->
+                      worktree.withLoadingProvidersFailed()
+                    }
+                  },
+                  updateResult = { result, includeErrorMessage ->
+                    stateStore.updateWorktree(normalizedEntryPath, normalizedWorktreePath) { worktree ->
+                      worktree.withRefreshResult(
+                        normalizedPath = normalizedWorktreePath,
+                        result = result,
+                        includeErrorMessage = includeErrorMessage,
+                        applyArchiveSuppressions = archiveSuppressionSupport::apply,
+                      )
+                    }
+                  },
+                ),
+                loadPaths = bootstrap.loadPaths,
+                availableSessionSources = availableSessionSources,
                 prefetchedByProvider = prefetchedByProvider,
-                originalPath = worktreePath,
                 cliAvailabilityByProvider = cliAvailabilityByProvider,
-              ) { partial, _ ->
-                stateStore.updateWorktree(normalizedEntryPath, normalizedWorktreePath) { worktree ->
-                  val refreshedThreads = preserveThreadCosts(
-                    existingThreads = worktree.threads,
-                    newThreads = archiveSuppressionSupport.apply(normalizedWorktreePath, partial.threads),
-                  )
-                  val providerLoadMetadata = mergeProviderLoadMetadata(
-                    currentProviderLoadStates = worktree.providerLoadStates,
-                    currentProvidersWithUnknownThreadCount = worktree.providersWithUnknownThreadCount,
-                    providerLoadStateUpdates = partial.providerLoadStates,
-                    updatedProvidersWithUnknownThreadCount = partial.providersWithUnknownThreadCount,
-                  )
-                  worktree.copy(
-                    threads = refreshedThreads,
-                    providerWarnings = partial.providerWarnings,
-                    providerLoadStates = providerLoadMetadata.providerLoadStates,
-                    providersWithUnknownThreadCount = providerLoadMetadata.providersWithUnknownThreadCount,
-                  )
-                }
-              }
-              stateStore.updateWorktree(normalizedEntryPath, normalizedWorktreePath) { worktree ->
-                val refreshedThreads = preserveThreadCosts(
-                  existingThreads = worktree.threads,
-                  newThreads = archiveSuppressionSupport.apply(normalizedWorktreePath, finalResult.threads),
-                )
-                worktree.copy(
-                  threads = refreshedThreads,
-                  errorMessage = finalResult.errorMessage,
-                  providerWarnings = finalResult.providerWarnings,
-                  providerLoadStates = finalResult.providerLoadStates,
-                  providersWithUnknownThreadCount = finalResult.providersWithUnknownThreadCount,
-                )
-              }
-              contentRepository.syncWarmSnapshotFromRuntime(normalizedWorktreePath)
+              )
             }
           }
         }
       }
       stateStore.update { it.copy(lastUpdatedAt = System.currentTimeMillis()) }
     }
+  }
+
+  private suspend fun loadOpenPathThreads(
+    target: RefreshThreadLoadTarget,
+    loadPaths: Set<String>,
+    availableSessionSources: List<AgentSessionSource>,
+    prefetchedByProvider: Map<AgentSessionProvider, Map<String, List<AgentSessionThread>>>,
+    cliAvailabilityByProvider: Map<AgentSessionProvider, Boolean>,
+  ) {
+    val project = target.project
+    if (project == null || target.normalizedPath !in loadPaths) {
+      target.updateLoadingFailed()
+      return
+    }
+    val finalResult = threadLoadSupport.loadSourcesIncrementally(
+      sessionSources = availableSessionSources,
+      normalizedPath = target.normalizedPath,
+      project = project,
+      prefetchedByProvider = prefetchedByProvider,
+      originalPath = target.originalPath,
+      cliAvailabilityByProvider = cliAvailabilityByProvider,
+    ) { partial, _ ->
+      target.updateResult(partial, false)
+    }
+    target.updateResult(finalResult, true)
+    contentRepository.syncWarmSnapshotFromRuntime(target.normalizedPath)
   }
 
   private suspend fun resolveCliAvailabilityByProvider(
@@ -507,7 +493,10 @@ internal class AgentSessionRefreshCoordinator(
   }
 
   fun appendProviderUnavailableWarning(path: String, provider: AgentSessionProvider) {
-    val warning = AgentSessionProviderWarning(provider = provider, message = providerUnavailableMessage(provider))
+    val warning = AgentSessionProviderWarning(
+      provider = provider,
+      message = providerUnavailableMessage(providerDescriptorProvider = providerDescriptorProvider, provider = provider),
+    )
     stateStore.update { state ->
       var updated = false
       val nextProjects = state.projects.map { project ->
@@ -542,8 +531,109 @@ internal class AgentSessionRefreshCoordinator(
 
 }
 
+private data class RefreshThreadLoadTarget(
+  @JvmField val normalizedPath: String,
+  @JvmField val originalPath: String,
+  @JvmField val project: Project?,
+  @JvmField val updateLoadingFailed: () -> Unit,
+  @JvmField val updateResult: (AgentSessionLoadResult, includeErrorMessage: Boolean) -> Unit,
+)
+
+private fun AgentProjectSessions.withRefreshResult(
+  normalizedPath: String,
+  result: AgentSessionLoadResult,
+  includeErrorMessage: Boolean,
+  applyArchiveSuppressions: (String, List<AgentSessionThread>) -> List<AgentSessionThread>,
+): AgentProjectSessions {
+  val update = buildPathRefreshUpdate(
+    normalizedPath = normalizedPath,
+    existingThreads = threads,
+    currentProviderLoadStates = providerLoadStates,
+    currentProvidersWithUnknownThreadCount = providersWithUnknownThreadCount,
+    result = result,
+    includeErrorMessage = includeErrorMessage,
+    applyArchiveSuppressions = applyArchiveSuppressions,
+  )
+  return copy(
+    threads = update.threads,
+    errorMessage = if (includeErrorMessage) update.errorMessage else errorMessage,
+    providerWarnings = update.providerWarnings,
+    providerLoadStates = update.providerLoadStates,
+    providersWithUnknownThreadCount = update.providersWithUnknownThreadCount,
+  )
+}
+
+private fun AgentWorktree.withRefreshResult(
+  normalizedPath: String,
+  result: AgentSessionLoadResult,
+  includeErrorMessage: Boolean,
+  applyArchiveSuppressions: (String, List<AgentSessionThread>) -> List<AgentSessionThread>,
+): AgentWorktree {
+  val update = buildPathRefreshUpdate(
+    normalizedPath = normalizedPath,
+    existingThreads = threads,
+    currentProviderLoadStates = providerLoadStates,
+    currentProvidersWithUnknownThreadCount = providersWithUnknownThreadCount,
+    result = result,
+    includeErrorMessage = includeErrorMessage,
+    applyArchiveSuppressions = applyArchiveSuppressions,
+  )
+  return copy(
+    threads = update.threads,
+    errorMessage = if (includeErrorMessage) update.errorMessage else errorMessage,
+    providerWarnings = update.providerWarnings,
+    providerLoadStates = update.providerLoadStates,
+    providersWithUnknownThreadCount = update.providersWithUnknownThreadCount,
+  )
+}
+
+private fun buildPathRefreshUpdate(
+  normalizedPath: String,
+  existingThreads: List<AgentSessionThread>,
+  currentProviderLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
+  currentProvidersWithUnknownThreadCount: Set<AgentSessionProvider>,
+  result: AgentSessionLoadResult,
+  includeErrorMessage: Boolean,
+  applyArchiveSuppressions: (String, List<AgentSessionThread>) -> List<AgentSessionThread>,
+): PathRefreshUpdate {
+  val refreshedThreads = preserveThreadCosts(
+    existingThreads = existingThreads,
+    newThreads = applyArchiveSuppressions(normalizedPath, result.threads),
+  )
+  if (includeErrorMessage) {
+    return PathRefreshUpdate(
+      threads = refreshedThreads,
+      errorMessage = result.errorMessage,
+      providerWarnings = result.providerWarnings,
+      providerLoadStates = result.providerLoadStates,
+      providersWithUnknownThreadCount = result.providersWithUnknownThreadCount,
+    )
+  }
+  val providerLoadMetadata = mergeProviderLoadMetadata(
+    currentProviderLoadStates = currentProviderLoadStates,
+    currentProvidersWithUnknownThreadCount = currentProvidersWithUnknownThreadCount,
+    providerLoadStateUpdates = result.providerLoadStates,
+    updatedProvidersWithUnknownThreadCount = result.providersWithUnknownThreadCount,
+  )
+  return PathRefreshUpdate(
+    threads = refreshedThreads,
+    errorMessage = null,
+    providerWarnings = result.providerWarnings,
+    providerLoadStates = providerLoadMetadata.providerLoadStates,
+    providersWithUnknownThreadCount = providerLoadMetadata.providersWithUnknownThreadCount,
+  )
+}
+
+private data class PathRefreshUpdate(
+  @JvmField val threads: List<AgentSessionThread>,
+  @JvmField val errorMessage: String?,
+  @JvmField val providerWarnings: List<AgentSessionProviderWarning>,
+  @JvmField val providerLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
+  @JvmField val providersWithUnknownThreadCount: Set<AgentSessionProvider>,
+)
+
 private fun AgentProjectSessions.withLoadingProvidersFailed(): AgentProjectSessions {
-  val providerLoadMetadata = failLoadingProviderLoadMetadata(
+  val providerLoadMetadata = buildFailedProviderLoadMetadata(
     providerLoadStates = providerLoadStates,
     providersWithUnknownThreadCount = providersWithUnknownThreadCount,
   )
@@ -558,7 +648,7 @@ private fun AgentProjectSessions.withLoadingProvidersFailed(): AgentProjectSessi
 }
 
 private fun AgentWorktree.withLoadingProvidersFailed(): AgentWorktree {
-  val providerLoadMetadata = failLoadingProviderLoadMetadata(
+  val providerLoadMetadata = buildFailedProviderLoadMetadata(
     providerLoadStates = providerLoadStates,
     providersWithUnknownThreadCount = providersWithUnknownThreadCount,
   )
@@ -569,6 +659,16 @@ private fun AgentWorktree.withLoadingProvidersFailed(): AgentWorktree {
   return copy(
     providerLoadStates = providerLoadMetadata.providerLoadStates,
     providersWithUnknownThreadCount = providerLoadMetadata.providersWithUnknownThreadCount,
+  )
+}
+
+private fun buildFailedProviderLoadMetadata(
+  providerLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
+  providersWithUnknownThreadCount: Set<AgentSessionProvider>,
+): AgentSessionProviderLoadMetadata {
+  return failLoadingProviderLoadMetadata(
+    providerLoadStates = providerLoadStates,
+    providersWithUnknownThreadCount = providersWithUnknownThreadCount,
   )
 }
 
@@ -826,36 +926,57 @@ private fun AgentSessionThread.matchesProviderAndThreadIds(provider: AgentSessio
   return this.provider == provider && (id in threadIds || subAgents.any { subAgent -> subAgent.id in threadIds })
 }
 
-private fun resolveErrorMessage(provider: AgentSessionProvider, t: Throwable): String {
-  return if (isCliMissingError(provider, t)) resolveCliMissingMessage(provider)
+private fun resolveErrorMessage(
+  providerDescriptorProvider: (AgentSessionProvider) -> AgentSessionProviderDescriptor?,
+  provider: AgentSessionProvider,
+  t: Throwable,
+): String {
+  return if (isCliMissingError(providerDescriptorProvider, provider, t)) resolveCliMissingMessage(providerDescriptorProvider, provider)
   else AgentSessionsBundle.message("toolwindow.error")
 }
 
-private fun resolveCliMissingMessage(provider: AgentSessionProvider): String {
-  return if (AgentSessionProviders.find(provider) != null) {
+private fun resolveCliMissingMessage(
+  providerDescriptorProvider: (AgentSessionProvider) -> AgentSessionProviderDescriptor?,
+  provider: AgentSessionProvider,
+): String {
+  return if (providerDescriptorProvider(provider) != null) {
     AgentSessionsBundle.message(agentSessionCliMissingMessageKey(provider))
   }
   else {
-    providerUnavailableMessage(provider)
+    providerUnavailableMessage(providerDescriptorProvider, provider)
   }
 }
 
-private fun resolveProviderWarningMessage(provider: AgentSessionProvider, t: Throwable): String {
-  return if (isCliMissingError(provider, t)) resolveCliMissingMessage(provider)
-  else AgentSessionsBundle.message("toolwindow.warning.provider.unavailable", resolveProviderLabel(provider))
+private fun resolveProviderWarningMessage(
+  providerDescriptorProvider: (AgentSessionProvider) -> AgentSessionProviderDescriptor?,
+  provider: AgentSessionProvider,
+  t: Throwable,
+): String {
+  return if (isCliMissingError(providerDescriptorProvider, provider, t)) resolveCliMissingMessage(providerDescriptorProvider, provider)
+  else AgentSessionsBundle.message("toolwindow.warning.provider.unavailable", resolveProviderLabel(providerDescriptorProvider, provider))
 }
 
-private fun isCliMissingError(provider: AgentSessionProvider, t: Throwable): Boolean {
-  return AgentSessionProviders.find(provider)?.isCliMissingError(t) == true
+private fun isCliMissingError(
+  providerDescriptorProvider: (AgentSessionProvider) -> AgentSessionProviderDescriptor?,
+  provider: AgentSessionProvider,
+  t: Throwable,
+): Boolean {
+  return providerDescriptorProvider(provider)?.isCliMissingError(t) == true
 }
 
-private fun resolveProviderLabel(provider: AgentSessionProvider): String {
-  val bridge = AgentSessionProviders.find(provider)
+private fun resolveProviderLabel(
+  providerDescriptorProvider: (AgentSessionProvider) -> AgentSessionProviderDescriptor?,
+  provider: AgentSessionProvider,
+): String {
+  val bridge = providerDescriptorProvider(provider)
   return if (bridge != null) AgentSessionsBundle.message(bridge.displayNameKey) else provider.value
 }
 
-private fun providerUnavailableMessage(provider: AgentSessionProvider): String {
-  return AgentSessionsBundle.message("toolwindow.warning.provider.unavailable", resolveProviderLabel(provider))
+private fun providerUnavailableMessage(
+  providerDescriptorProvider: (AgentSessionProvider) -> AgentSessionProviderDescriptor?,
+  provider: AgentSessionProvider,
+): String {
+  return AgentSessionsBundle.message("toolwindow.warning.provider.unavailable", resolveProviderLabel(providerDescriptorProvider, provider))
 }
 
 private fun mergeProviderWarning(
