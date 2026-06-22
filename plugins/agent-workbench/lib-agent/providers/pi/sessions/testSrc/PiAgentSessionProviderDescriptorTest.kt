@@ -1002,7 +1002,11 @@ private fun omlxSelection(reasoning: Boolean = true): PiOmlxModelSelection {
 
 private fun jbCentralSelection(
   modelId: String = "gpt-5.5",
-  agent: PiJbCentralAgent = if (modelId.startsWith("claude")) PiJbCentralAgent.CLAUDE_CODE else PiJbCentralAgent.CODEX,
+  agent: PiJbCentralAgent = when {
+    modelId.startsWith("claude") -> PiJbCentralAgent.CLAUDE_CODE
+    modelId.startsWith("gemini") -> PiJbCentralAgent.GEMINI_CLI
+    else -> PiJbCentralAgent.CODEX
+  },
 ): PiJbCentralModelSelection {
   return PiJbCentralModelSelection(
     provider = PI_JBCENTRAL_PROVIDER_NAME,

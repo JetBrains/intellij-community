@@ -85,7 +85,8 @@ internal class PiJbCentralModelCatalog(
     return PiJbCentralLaunchMetadata(
       jbCentralExecutable = jbCentralExecutable,
       proxyPort = statusResult.proxyPort ?: PI_JBCENTRAL_DEFAULT_PROXY_PORT,
-      agents = statusResult.agents,
+      // `status` reports terminal CLI wiring only; use Workbench-supported proxy routes for model discovery.
+      proxyAgents = statusResult.wiredCliAgents + PI_JBCENTRAL_DEFAULT_PROXY_AGENTS,
     )
   }
 
@@ -97,7 +98,7 @@ internal class PiJbCentralModelCatalog(
         return null
       }
       val status = parseJbCentralStatus(result.stdout + "\n" + result.stderr)
-      return status.takeIf { it.agents.isNotEmpty() }
+      return status
     }
     catch (e: CancellationException) {
       throw e
@@ -184,20 +185,21 @@ internal data class PiJbCentralCommandResult(
 )
 
 internal data class PiJbCentralStatus(
-  val agents: Set<PiJbCentralAgent>,
+  val wiredCliAgents: Set<PiJbCentralAgent>,
   val proxyPort: Int?,
 )
 
 @ApiStatus.Internal
-enum class PiJbCentralAgent(val id: String, statusName: String) {
+enum class PiJbCentralAgent(val id: String, vararg statusNames: String) {
   CODEX("codex", "Codex"),
   CLAUDE_CODE("claude-code", "Claude Code"),
+  GEMINI_CLI("gemini-cli", "Gemini CLI", "Gemini", "gemini-cli"),
   ;
 
-  private val statusRegex = Regex("""(?is)\bAgents\b.*\b${Regex.escape(statusName)}\b""")
+  private val statusRegexes = statusNames.map { statusName -> Regex("""(?is)\bAgents\b.*\b${Regex.escape(statusName)}\b""") }
 
   fun isPresentInStatus(output: String): Boolean {
-    return statusRegex.containsMatchIn(output)
+    return statusRegexes.any { regex -> regex.containsMatchIn(output) }
   }
 
   companion object {
@@ -212,7 +214,7 @@ data class PiJbCentralLaunchMetadata(
   val jbCentralExecutable: String,
   val proxyPort: Int = PI_JBCENTRAL_DEFAULT_PROXY_PORT,
   val provider: String = PI_JBCENTRAL_PROVIDER_NAME,
-  val agents: Set<PiJbCentralAgent> = PI_JBCENTRAL_DEFAULT_AGENTS,
+  val proxyAgents: Set<PiJbCentralAgent> = PI_JBCENTRAL_DEFAULT_PROXY_AGENTS,
 )
 
 @ApiStatus.Internal
@@ -251,7 +253,7 @@ internal const val PI_JBCENTRAL_PROVIDER_ENVIRONMENT_VARIABLE: String = "AGENT_W
 internal fun parseJbCentralStatus(output: String): PiJbCentralStatus {
   val normalizedOutput = stripAnsiControlSequences(output)
   return PiJbCentralStatus(
-    agents = parseJbCentralStatusAgents(normalizedOutput),
+    wiredCliAgents = parseJbCentralStatusAgents(normalizedOutput),
     proxyPort = JBCENTRAL_PROXY_PORT_REGEX.find(normalizedOutput)?.groupValues?.getOrNull(1)?.toIntOrNull(),
   )
 }
@@ -276,7 +278,7 @@ internal fun parsePiListModels(output: String, launchMetadata: PiJbCentralLaunch
       if (!row.provider.isJbCentralListModelsProvider(launchMetadata)) {
         return@mapNotNull null
       }
-      val agent = row.modelId.toJbCentralAgent(launchMetadata.agents) ?: return@mapNotNull null
+      val agent = row.modelId.toJbCentralAgent(launchMetadata.proxyAgents) ?: return@mapNotNull null
       PiJbCentralModelCandidate(
         PiJbCentralModelSelection(
           provider = launchMetadata.provider,
@@ -332,12 +334,16 @@ private fun PiJbCentralAgent.toPromptGenerationModelGroup(): AgentPromptGenerati
   return when (this) {
     PiJbCentralAgent.CODEX -> AgentPromptGenerationModelGroup.OPENAI
     PiJbCentralAgent.CLAUDE_CODE -> AgentPromptGenerationModelGroup.CLAUDE_CODE
+    PiJbCentralAgent.GEMINI_CLI -> AgentPromptGenerationModelGroup.OTHER
   }
 }
 
 internal fun String.toJbCentralAgent(availableAgents: Set<PiJbCentralAgent>): PiJbCentralAgent? {
   if (startsWith("claude", ignoreCase = true)) {
     return PiJbCentralAgent.CLAUDE_CODE.takeIf { it in availableAgents }
+  }
+  if (startsWith("gemini", ignoreCase = true)) {
+    return PiJbCentralAgent.GEMINI_CLI.takeIf { it in availableAgents }
   }
   return PiJbCentralAgent.CODEX.takeIf { it in availableAgents }
 }
@@ -347,7 +353,7 @@ private fun Map<*, *>.toJbCentralProfileCandidate(launchMetadata: PiJbCentralLau
   if (profileId.contains(THIRD_PARTY_PROFILE_ID_DELIMITER) || isDeprecatedOrExperimental()) {
     return null
   }
-  val agent = toJbCentralProfileAgent(launchMetadata.agents) ?: return null
+  val agent = toJbCentralProfileAgent(launchMetadata.proxyAgents) ?: return null
   val modelId = (stringValue("providerModelID") ?: stringValue("providerModelId"))
                   ?.trim()
                   ?.takeIf { it.isNotBlank() }
@@ -388,7 +394,19 @@ private fun Map<*, *>.toJbCentralProfileAgent(availableAgents: Set<PiJbCentralAg
       it in availableAgents && supportsFeature("Chat") && supportsToolCalling() && supportsSystemMessage()
     }
   }
+  if (provider.isGoogleVertexProfileProvider()) {
+    return PiJbCentralAgent.GEMINI_CLI.takeIf {
+      it in availableAgents && supportsFeature("Chat") && supportsToolCalling() && supportsSystemMessage()
+    }
+  }
   return null
+}
+
+private fun String?.isGoogleVertexProfileProvider(): Boolean {
+  return equals("Google", ignoreCase = true) ||
+         equals("Google Vertex", ignoreCase = true) ||
+         equals("Google Vertex AI", ignoreCase = true) ||
+         equals("Vertex AI", ignoreCase = true)
 }
 
 private fun Map<*, *>.supportsFeature(featureName: String): Boolean {
@@ -652,7 +670,7 @@ private fun PiJbCentralLaunchMetadata.toJsonString(): String {
     generator.writeStringField("provider", provider)
     generator.writeStringField("jbCentralExecutable", jbCentralExecutable)
     generator.writeNumberField("proxyPort", proxyPort)
-    generator.writeJbCentralAgentsField(agents)
+    generator.writeJbCentralAgentsField(proxyAgents)
     generator.writeEndObject()
   }
   return writer.toString()
@@ -700,7 +718,11 @@ private val PI_JBCENTRAL_STATUS_TIMEOUT = 3.seconds
 private val PI_JBCENTRAL_LIST_MODELS_TIMEOUT = 10.seconds
 private val PI_JBCENTRAL_PROFILE_KEY_TIMEOUT = 10.seconds
 private val PI_JBCENTRAL_PROFILE_HTTP_TIMEOUT = JavaDuration.ofSeconds(10)
-val PI_JBCENTRAL_DEFAULT_AGENTS: Set<PiJbCentralAgent> = setOf(PiJbCentralAgent.CODEX)
+internal val PI_JBCENTRAL_DEFAULT_PROXY_AGENTS: Set<PiJbCentralAgent> = setOf(
+  PiJbCentralAgent.CODEX,
+  PiJbCentralAgent.CLAUDE_CODE,
+  PiJbCentralAgent.GEMINI_CLI,
+)
 private const val THIRD_PARTY_PROFILE_ID_DELIMITER: Char = '/'
 
 internal fun String.isJbCentralListModelsProvider(launchMetadata: PiJbCentralLaunchMetadata): Boolean {

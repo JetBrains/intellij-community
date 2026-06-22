@@ -16,7 +16,7 @@ export type AgentWorkbenchOmlxProvider = {
   modelType?: string;
 };
 
-export type AgentWorkbenchJbCentralAgent = "codex" | "claude-code";
+export type AgentWorkbenchJbCentralAgent = "codex" | "claude-code" | "gemini-cli";
 
 export type AgentWorkbenchJbCentralProvider = {
   formatVersion: 2;
