@@ -15,12 +15,12 @@ Additional supported Markdown, via extensions:
 * Tables ([GitHub Flavored Markdown](https://github.github.com/gfm/#tables-extension-)) — see [
   `extension-gfm-tables`](extension/gfm-tables)
 * Strikethrough ([GitHub Flavored Markdown](https://github.github.com/gfm/#strikethrough-extension-))
+* Image loading (via [Coil 3](https://coil-kt.github.io/coil/upgrading_to_coil3/)) — see [`extension-images`](extension/images)
 
 [alerts-specs]: https://github.com/orgs/community/discussions/16925
 
 On the roadmap, but not currently supported — in no particular order:
 
-* Image loading (via [Coil 3](https://coil-kt.github.io/coil/upgrading_to_coil3/))
 * Task list items ([GitHub Flavored Markdown](https://github.github.com/gfm/#task-list-items-extension-))
 * Keyboard shortcuts highlighting (specialized HTML handling)
 * Collapsing sections ([GitHub Flavored Markdown][details-specs])
@@ -121,10 +121,6 @@ By default, the processor will ignore any kind of Markdown it doesn't support. T
 ones found in GitHub Flavored Markdown, you can use extensions. If you don't specify any extension, the processor will
 be restricted to the [CommonMark specs](https://specs.commonmark.org) as supported by
 [`commonmark-java`](https://github.com/commonmark/commonmark-java).
-
-> [!NOTE]
-> Images are not supported yet, even if they are part of the CommonMark specs.
-> See https://github.com/JetBrains/Jewel/issues/472 for status updates.
 
 Extensions are composed of two parts: a parsing and a rendering part. The two parts need to be passed to the
 `MarkdownProcessor` and `MarkdownBlockRenderer`, respectively. For example, in a standalone project:

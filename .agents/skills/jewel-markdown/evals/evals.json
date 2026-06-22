@@ -1,0 +1,115 @@
+{
+  "skill_name": "jewel-markdown",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "I need a side-by-side Markdown editor and preview in a Jewel Compose Desktop app. Give me a concise implementation plan and mention which Markdown extensions I should consider for GitHub-like Markdown.",
+      "expected_output": "A plan that uses a dedicated MarkdownProcessor in MarkdownMode.EditorPreview, renders the preview with LazyMarkdown, keeps raw editor state and parsed blocks outside leaf composition, and suggests relevant extensions for GitHub-like Markdown without inventing non-existent autolink/image pairs.",
+      "files": [],
+      "expectations": [
+        "Uses MarkdownMode.EditorPreview for the live preview rather than a plain shared Standalone processor.",
+        "States that an editor-preview MarkdownProcessor is stateful/not thread-safe and should be per document/preview stream, not shared globally.",
+        "Recommends LazyMarkdown for document/preview rendering.",
+        "Keeps parsing/state projection outside hot LazyColumn item bodies or leaf preview composition.",
+        "Suggests relevant extensions for GitHub-like Markdown: autolink as processor-only, tables/strikethrough/alerts as processor plus renderer, and images as renderer/image-loading support.",
+        "Mentions scroll synchronization only through Jewel's editor-preview/scrolling support or as an optional dedicated concern, not ad-hoc scrolling hacks."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "In Jewel Markdown, I want rendered Markdown to show images and GitHub tables. What do I need to wire?",
+      "expected_output": "An answer that names the images and GFM tables extension points and explains that parser and renderer extensions must both be wired for tables, while images need an ImageRendererExtension such as Coil3ImageRendererExtension and any required image source/loading setup.",
+      "files": [],
+      "expectations": [
+        "Names GitHubTableProcessorExtension for parsing tables.",
+        "Names GitHubTableRendererExtension for rendering tables.",
+        "Mentions table styling such as GfmTableStyling or theme-specific table styling.",
+        "Names ImageRendererExtension or Coil3ImageRendererExtension for images.",
+        "Explains that images are not solved by a table/block extension and require image-loading/source resolver wiring where applicable.",
+        "Warns to keep processor and renderer extension lists paired for features that produce custom nodes."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Why aren't plain URLs like https://example.com clickable when I render Markdown with Jewel? Links written as [label](https://example.com) work, but bare URLs do not.",
+      "expected_output": "A troubleshooting answer that explains bare URL autolinking is extension-backed and recommends adding AutolinkProcessorExtension to the MarkdownProcessor, while retaining normal onUrlClick handling for link clicks.",
+      "files": [],
+      "expectations": [
+        "Identifies missing autolink support as the likely cause for bare URLs.",
+        "Recommends AutolinkProcessorExtension on the MarkdownProcessor.",
+        "Distinguishes bare URLs from explicit Markdown links, which already parse as links.",
+        "Mentions providing/keeping onUrlClick handling for click behavior.",
+        "Does not recommend regex-rewriting Markdown text in composition as the primary fix."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I need Jewel Markdown to render GitHub task list items like '- [ ] todo' and '- [x] done'. Please outline the implementation approach; assume this is for upstream Jewel work and mention how to validate it.",
+      "expected_output": "A plan that does not assume task lists already exist. It proposes a new extension inspired by existing GFM extensions, models checked/unchecked state explicitly, renders native Jewel read-only checkbox-like visuals, and validates processor and renderer behavior, including editor-preview cases if relevant.",
+      "files": [],
+      "expectations": [
+        "States or implies that task lists are not currently a built-in Jewel Markdown extension and must be implemented.",
+        "Mentions checking current issue/source context such as JEWEL-475 without relying on memory alone.",
+        "Proposes a MarkdownProcessorExtension and suitable processor model for checked/unchecked task items.",
+        "Proposes a renderer path using native Jewel checkbox-like/read-only visuals rather than leaving literal '[ ]' text.",
+        "Uses existing extensions such as gfm-tables, gfm-alerts, or gfm-strikethrough as implementation guides.",
+        "Requires validation of parser output and rendering behavior, and considers editor-preview incremental parsing if list/task syntax can merge or change neighboring blocks.",
+        "Proposes handling the click events on the checkboxes and updating the underlying Markdown value."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "How do I create an AI chat UI in Compose Desktop where assistant messages support Markdown? I care about architecture, not just the Markdown call.",
+      "expected_output": "A Compose Desktop architecture answer that recommends a LazyColumn chat timeline, message-row composables that render Markdown, and a strong separation where presenter/coordinator/state holder owns message state, streaming, parsing policy, and business logic while UI renders projected state and callbacks.",
+      "files": [],
+      "expectations": [
+        "Recommends LazyColumn for the chat timeline with stable keys/content types or equivalent lazy-list discipline.",
+        "Uses Markdown or LazyMarkdown inside message rows rather than making Markdown own the entire chat screen.",
+        "Keeps presenter/coordinator/state holder responsible for message state, streaming status, and business logic.",
+        "Keeps Markdown parsing policy or parsed block projection outside leaf composables for non-trivial chat output.",
+        "Mentions onUrlClick/link handling as a UI callback boundary.",
+        "Avoids Android-specific ViewModel/lifecycle prescriptions unless explicitly framed as an analogy."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "I want Jewel Markdown to support inline file markup like ::file:/my/path/foo.kt:: and render it as the file icon plus the file name. How should I implement that?",
+      "expected_output": "An answer that proposes custom inline parsing plus renderer customization for InlineTextContent. It should explain that a simple MarkdownDelimitedInlineRendererExtension returning AnnotatedString is not enough for icons; text-bearing block rendering must pass an inlineContent map to Text, with scope limitations documented.",
+      "files": [],
+      "expectations": [
+        "Proposes a custom inline extension/model for the ::file:/path:: syntax.",
+        "Notes that MarkdownDelimitedInlineRendererExtension returns AnnotatedString and alone is insufficient for an icon InlineTextContent solution.",
+        "Recommends custom inline renderer and/or block renderer overrides for text-bearing blocks so Text receives inlineContent placeholders and a matching inlineContent map.",
+        "Mentions using Jewel/IntelliJ icon APIs or file-type icon lookup for the icon instead of text/emoji glyphs.",
+        "Calls out supported contexts such as paragraphs/headings/table cells and says unsupported contexts should be documented or explicitly handled.",
+        "Keeps processor and renderer responsibilities separate instead of suggesting a regex replacement in the composable."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "I'm writing a custom Jewel MarkdownBlockRenderer because I want paragraphs to have extra padding. I'll override the paragraph rendering and emit my own Text. Anything I need to be careful about so I don't break existing behavior?",
+      "expected_output": "An answer that warns a custom paragraph/text renderer must preserve the default renderer's wiring: forward the current text alignment (LocalTextAlignment) to Text, keep the content-color fallback, keep the inlineContent map for images, and honor the enabled flag. It should recommend subclassing DefaultMarkdownBlockRenderer and overriding only the targeted method rather than reimplementing block rendering and dropping these behaviors.",
+      "files": [],
+      "expectations": [
+        "Explicitly says the custom text rendering must apply the text alignment provided by LocalTextAlignment (or the renderer's current text alignment), not drop it.",
+        "Recommends subclassing DefaultMarkdownBlockRenderer and overriding only the targeted Render method instead of reimplementing rendering from scratch.",
+        "Mentions preserving the inlineContent map so images/inline content still render.",
+        "Mentions preserving content color fallback (LocalContentColor) and honoring the enabled flag.",
+        "Frames the general rule that overriding one Render method should mirror the default implementation's wiring and change only the intended behavior."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "My Markdown contains embedded HTML, including some <table> elements and a few <div align=\"center\"> wrappers. When I render it with Jewel Markdown, the HTML is just ignored or shown as raw text. How does Jewel handle embedded HTML, and what do I need to do?",
+      "expected_output": "An explanation that embedded HTML is opt-in via parseEmbeddedHtml on MarkdownProcessor, that a fixed set of built-in tags is converted to native Markdown blocks, that custom tags like <table> require a MarkdownHtmlConverterExtension (as gfm-tables does), and that unconverted/inline HTML is shown as raw text rather than interpreted as native UI.",
+      "files": [],
+      "expectations": [
+        "States that embedded HTML support is off by default and must be enabled with parseEmbeddedHtml = true on the MarkdownProcessor.",
+        "Explains that only a fixed set of built-in HTML tags is converted to native Markdown blocks.",
+        "Says custom tags such as <table> require a MarkdownHtmlConverterExtension (exposed from a MarkdownProcessorExtension), and points to gfm-tables as the reference.",
+        "Notes that unconverted or inline HTML is preserved as raw HTML (HtmlBlock / inline HTML) and not interpreted as native UI.",
+        "Does not claim Jewel does general inline-HTML rendering or that enabling a flag alone renders arbitrary HTML."
+      ]
+    }
+  ]
+}

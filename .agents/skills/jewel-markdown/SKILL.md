@@ -1,0 +1,231 @@
+---
+name: jewel-markdown
+description:
+  Use when building, modifying, troubleshooting, or extending JetBrains Jewel Markdown rendering in Compose Desktop or IntelliJ-plugin UI: Markdown previews, Markdown chat output, GFM tables/alerts/strikethrough/autolinks/images, custom Markdown syntax, custom renderers, or MarkdownStyling.
+---
+
+# Jewel Markdown
+
+Jewel Markdown is a two-stage renderer: parse raw Markdown into Jewel's `MarkdownBlock` / `InlineMarkdown` model, then render that model
+with Jewel Compose renderers. Choose the smallest customization point that matches the job.
+
+The Jewel Markdown sources live in JetBrains `intellij-community` under `platform/jewel/markdown/`. Confirm exact API/file/symbol names by reading those sources (grep/read) rather than trusting memory before proposing code. For deeper topic detail, read the matching reference only when that topic is in play:
+
+- `references/CODE-HIGHLIGHTING.md` — fenced/indented code highlighting, `CodeHighlighter`, why code is unstyled by default.
+- `references/IMAGE-LOADING.md` — `ImageRendererExtension` + `ImageSourceResolver`, Coil3, path resolution.
+- `references/SCROLL-SYNC.md` — editor-preview scroll synchronization and its `ScrollState`-only limitation.
+- `references/HTML-PARSING.md` — embedded HTML, built-in tag conversion, `MarkdownHtmlConverterExtension`, alignment.
+
+## First decision: what are you changing?
+
+1. Visual styling only — customize `MarkdownStyling` and theme-specific styling helpers.
+2. Existing block UI behavior — use a custom `MarkdownBlockRenderer`, usually by subclassing `DefaultMarkdownBlockRenderer` and overriding
+   the specific `Render*` method.
+3. Existing inline text behavior — use a custom `InlineMarkdownRenderer`, usually by subclassing `DefaultInlineMarkdownRenderer`.
+4. New Markdown syntax — write a processor extension and a renderer extension.
+5. Images — use an `ImageRendererExtension`, not a general block renderer.
+6. Embedded HTML — enable `parseEmbeddedHtml` on the `MarkdownProcessor`, and for custom HTML→Markdown mapping add a
+   `MarkdownHtmlConverterExtension`.
+7. A live editor preview — use `MarkdownMode.EditorPreview` with a dedicated `MarkdownProcessor` instance and render with `LazyMarkdown`.
+
+Do not start with a custom renderer when styling or an extension solves the problem.
+
+## High-level rendering flow
+
+1. `MarkdownProcessor` parses raw Markdown into `List<MarkdownBlock>`.
+2. Blocks may contain `InlineMarkdown` nodes.
+3. `Markdown` renders short/simple content in a `Column`; `LazyMarkdown` renders larger or editor-preview content in a `LazyColumn`.
+4. `MarkdownBlockRenderer` renders block nodes and delegates inline content to `InlineMarkdownRenderer`.
+5. `ProvideMarkdownStyling` wires `LocalMarkdownStyling`, `LocalMarkdownProcessor`, `LocalMarkdownBlockRenderer`, and code/image support
+   into `JewelTheme`.
+6. Extensions can plug into processing, block rendering, and inline rendering (with some limitations).
+
+Prefer processing Markdown outside composition for non-trivial or frequently changing text. The string-taking `Markdown(...)` overload is
+convenient, but it parses from composition and is best for small, mostly static snippets.
+
+## Built-in and existing extension choices
+
+Use the existing extension modules before inventing syntax:
+
+- Plain URLs are not becoming links: add `AutolinkProcessorExtension` to the `MarkdownProcessor`.
+- GFM tables: add `GitHubTableProcessorExtension` and `GitHubTableRendererExtension`. The processor extension also bundles a
+  `MarkdownHtmlConverterExtension` for `<table>` (active when `parseEmbeddedHtml = true`).
+- GFM strikethrough: add `GitHubStrikethroughProcessorExtension` and `GitHubStrikethroughRendererExtension`. The processor extension also
+  bundles a `MarkdownHtmlConverterExtension` for `<s>`, `<strike>`, and `<del>` (active when `parseEmbeddedHtml = true`).
+- GFM alerts: add `GitHubAlertProcessorExtension` and `GitHubAlertRendererExtension`.
+- Images: add an `ImageRendererExtension`, commonly `Coil3ImageRendererExtension`, to the renderer extensions and provide an image source
+  resolver where needed. For details read `references/IMAGE-LOADING.md`.
+- Code syntax highlighting: in a plugin, use the `Project`-aware bridge `ProvideMarkdownStyling`, which wires an IJPL-backed highlighter by
+  default; in standalone (or a bridge overload without a `Project`) the default is a no-op and you must provide a `CodeHighlighter`. For
+  details read `references/CODE-HIGHLIGHTING.md`.
+
+For a worked example of combining several extensions (processor + renderer + theme-specific styling, parsing off composition, `LazyMarkdown`), read the standalone sample at `platform/jewel/samples/standalone/src/main/kotlin/org/jetbrains/jewel/samples/standalone/markdown/MarkdownPreview.kt`.
+
+Keep parser and renderer extensions paired when a feature has both sides. If a processor creates a custom block or inline node and no
+renderer extension claims it, the content will not render usefully. Do not invent renderer extensions for parse-only features such as
+autolink, and do not invent processor extensions for renderer-only image loading.
+
+## Embedded HTML
+
+HTML support is off by default: a `MarkdownProcessor` ignores embedded HTML unless you construct it with `parseEmbeddedHtml = true`. There
+are two distinct HTML paths, do not conflate them:
+
+- Native HTML mapped to Markdown: when `parseEmbeddedHtml` is on, a fixed set of built-in tags is converted into normal `MarkdownBlock`s (
+  `p`, `li`, `ol`, `ul`, `h1`-`h6`, `code`, `pre`, `img`). These render through the standard block/inline renderers, not through a raw-HTML
+  renderer.
+- Custom tag conversion: to map an additional HTML tag onto a Markdown block your code understands (e.g., `<table>` to a tables block),
+  implement a `MarkdownHtmlConverterExtension` and expose it from your `MarkdownProcessorExtension.htmlConverterExtension`. It declares
+  `supportedTags` and returns an `HtmlElementConverter` per tag; the converter turns an HTML element into a `MarkdownBlock` (or inline
+  list), delegating children/inlines via the provided lambdas. Existing GFM extensions ship these: `gfm-tables` converts `<table>` (block),
+  and `gfm-strikethrough` converts `<s>`/`<strike>`/`<del>` (inline). Use them as references and add the extension whose tags you need
+  rather than reimplementing it.
+
+For full details, models, and wiring, read `references/HTML-PARSING.md`.
+
+Key points and gotchas:
+
+- `htmlConverterExtension`s are only collected when `parseEmbeddedHtml = true`; adding one without enabling embedded HTML does nothing.
+- HTML that is not converted is preserved as an `HtmlBlock` (raw HTML string) or inline HTML; the default renderer shows it via the
+  `htmlBlock` styling, it is not interpreted as native UI. Jewel does not do general inline-HTML rendering.
+- HTML carrying layout attributes (e.g., an `align` attribute) becomes a `MarkdownBlock.HtmlBlockWithAttributes` wrapping the converted
+  block; the default renderer reads the `align` attribute and propagates text alignment to children. A custom renderer that overrides this
+  path must preserve that alignment behavior (see Gotchas for custom renderers).
+- Custom HTML conversion is parse-side only. If a converter emits a custom block type, you still need a matching renderer extension to
+  display it.
+
+## Live Markdown editor/preview
+
+`MarkdownMode.EditorPreview` optimizes for small, frequent edits (a user typing): the `MarkdownProcessor` keeps state between calls and
+re-parses only the block(s) that changed instead of the whole document. That statefulness is why an editor-preview processor is tied to one
+evolving document and must not be shared across unrelated documents (doing so busts the cache and is slower than `Standalone`). Use
+`MarkdownMode.Standalone` (the default, stateless) for content that is parsed once and doesn't change.
+
+For a side-by-side editor and preview:
+
+1. Keep raw text/editing state in the presenter or state holder, not hidden inside the preview leaf.
+2. Create one `MarkdownProcessor(markdownMode = MarkdownMode.EditorPreview(scrollingSynchronizer = ...))` per editable document/preview
+   stream. Do not share editor-preview processors across unrelated documents.
+3. Process edits off the UI path when practical, debounce/drop stale work if the editor can emit faster than rendering.
+4. Render with `LazyMarkdown` for documents and previews.
+5. Add the expected dialect extensions: autolink is processor-only, tables/strikethrough/alerts need processor and renderer pieces, and
+   images need an image renderer extension.
+6. If scroll sync matters, use the scrolling synchronizer/rendering support rather than ad-hoc list scrolling. Read `references/SCROLL-SYNC.md` — note the synchronizer currently supports `ScrollState`, not `LazyListState`.
+
+## AI chat with Markdown
+
+For chat timelines, do not make Markdown own the chat architecture.
+
+Use a presenter/coordinator to project message state, roles, streaming status, and parsed Markdown blocks. The UI should render a
+`LazyColumn` of message rows and use `Markdown` or `LazyMarkdown` inside text-bearing rows as appropriate. Keep networking, agent protocol,
+message mutation, and Markdown parsing policy outside leaf composables. Use stable lazy-list keys and content types for heterogeneous chat
+rows.
+
+## Custom syntax: extension or renderer?
+
+Write a custom extension when the Markdown input language changes, e.g., task list items, custom admonitions, `::file:/path/foo.kt::`, or
+another syntax that must parse into a domain model.
+
+Write a custom renderer when the existing parsed model is right, but the UI should change, e.g., headings need link buttons, code blocks
+need copy buttons, list markers need different layout, or inline images need product-specific treatment.
+
+Many features need both: an extension to parse syntax into model nodes, and a renderer to display those nodes. Some may need more than two
+parts. See the examples below.
+
+## How to write a custom block extension
+
+Use `gfm-alerts` and `gfm-tables` as templates.
+
+1. Define a model type implementing `MarkdownBlock.CustomBlock`.
+2. Add a `MarkdownProcessorExtension`.
+3. If CommonMark needs help recognizing the syntax, expose a CommonMark `ParserExtension`.
+4. Expose a `MarkdownBlockProcessorExtension` that checks `canProcess(CustomBlock)` and returns your `MarkdownBlock.CustomBlock` from
+   `processMarkdownBlock`.
+5. Set `allowsMergingWithNextBlock = true` only when incremental editor parsing must reparse a following block that can merge into this one,
+   as tables do.
+6. Add a `MarkdownRendererExtension` exposing a `MarkdownBlockRendererExtension`.
+7. In `RenderCustomBlock`, render native Jewel Compose UI and delegate nested Markdown back to the provided `MarkdownBlockRenderer` /
+   `InlineMarkdownRenderer` where possible.
+8. Add standalone and bridge styling helpers when the feature has colors, spacing, borders, or icons.
+9. If the block will be used in an editor preview and should be a scroll-sync target, opt in: the scroll-sync renderer does not wrap custom
+   blocks automatically. Wrap your content in `AutoScrollableBlock` in `RenderCustomBlock`. See `references/SCROLL-SYNC.md`.
+10. Add processor tests and renderer tests or validated sample coverage.
+
+## How to write a custom delimited inline extension
+
+Use `gfm-strikethrough` as the template.
+
+1. Define a model type implementing `InlineMarkdown.CustomDelimitedNode`.
+2. Add a `MarkdownProcessorExtension` with a CommonMark parser extension if needed.
+3. Expose a `MarkdownDelimitedInlineProcessorExtension` that turns supported CommonMark `Delimited` nodes into your custom inline node.
+4. Add a `MarkdownRendererExtension` exposing `MarkdownDelimitedInlineRendererExtension`.
+5. Render to an `AnnotatedString`, recursively delegating nested inline content to the supplied `InlineMarkdownRenderer`.
+6. Add an HTML converter only if embedded HTML should map to the same inline model.
+
+### Example: inline icons and rich inline content
+
+`MarkdownDelimitedInlineRendererExtension` returns only an `AnnotatedString`. If custom inline syntax must show an icon or other
+`InlineTextContent` — for example `::file:/my/path/foo.kt::` with the file icon and name — plan for an extension encompassing parsing plus
+renderer customization:
+
+1. Parse the syntax into a custom inline node.
+2. Provide an inline renderer or block renderer path that appends inline-content placeholders for those nodes.
+3. Override the block rendering for text-bearing blocks (`Paragraph`, headings, table cells, or whichever contexts you support) so the Jewel
+   `Text` receives the matching `inlineContent` map.
+4. Use Jewel icon APIs (`IconKey`, `AllIconsKeys`, or platform file-type icon APIs in bridge/plugin context) inside the `InlineTextContent`.
+5. Document supported contexts rather than pretending every Markdown block can host the custom inline content automatically.
+
+## Example: GFM task lists
+
+Do not claim Jewel already supports GFM task lists. They are listed as missing/roadmap in Jewel docs. To support `- [ ]` / `- [x]` task list
+items, create and validate a new extension:
+
+1. Decide whether the model is a custom block/list item wrapper or an extension of list rendering.
+2. Parse checked/unchecked state into an explicit model.
+3. Render with native Jewel checkbox-like visuals, preserving Markdown semantics and disabled/read-only behavior as appropriate.
+4. Validate both processor output and rendering. Include editor-preview incremental parsing if task-list syntax can interact with
+   neighboring list blocks.
+5. If you're rendering interactive components such as checkboxes, make sure their status is managed, and that changes are reflected in the
+   underlying Markdown (e.g., checked state for a checkbox should manifest as `[ ]` or `[x]` in text).
+
+## Gotchas for custom renderers
+
+When overriding or replacing rendering, preserve the behaviors the default renderer relies on. Each item below is something a custom
+renderer can silently break.
+
+- Text alignment: every text-bearing block in `DefaultMarkdownBlockRenderer` passes `textAlign = LocalTextAlignment.current` to its Jewel
+  `Text`. That composition local is set when an aligned block (e.g., an HTML block with an `align` attribute) wraps its children, so
+  alignment propagates into nested text. A custom `Render*` override or a renderer written from scratch that emits `Text` without forwarding
+  the current text alignment will silently lose center/right alignment. Always apply the provided text alignment in custom text rendering.
+  Note `LocalTextAlignment` is internal to `DefaultMarkdownBlockRenderer`; prefer subclassing it (and still forwarding `textAlign` in your
+  override) rather than reimplementing block rendering and dropping this wiring.
+- Content color: text-bearing rendering resolves color via the styling text style falling back to `LocalContentColor`. Preserve that
+  fallback instead of hardcoding a color.
+- Inline content / images: paragraphs that contain images render through an `inlineContent` map. If you override paragraph or other
+  text-bearing rendering, keep passing the `inlineContent` map so images and other inline placeholders still appear.
+- Enabled/disabled state: honor the `enabled` flag (links non-interactive, disabled styling) rather than always rendering the enabled
+  appearance.
+- Delegation: render nested blocks/inlines through the provided `MarkdownBlockRenderer` / `InlineMarkdownRenderer` so styling, extensions,
+  and these behaviors stay consistent.
+- Editor-preview scroll sync: scroll sync is implemented entirely by `ScrollSyncMarkdownBlockRenderer` (a `DefaultMarkdownBlockRenderer`
+  subclass that wraps blocks in `AutoScrollableBlock` and reports layout). If you supply your own block renderer for an editor preview, you
+  bypass that subclass and lose scroll sync. Subclass `ScrollSyncMarkdownBlockRenderer` instead of `DefaultMarkdownBlockRenderer` (calling
+  `super` from your overrides), or re-implement the `AutoScrollableBlock` wiring yourself. See `references/SCROLL-SYNC.md`.
+
+General rule: when you override one `Render*` method, mirror the default implementation's wiring (alignment, color, inline content, enabled
+state, and editor-preview scroll sync) and change only what you intend to change.
+
+## Validation checklist
+
+Before finishing Jewel Markdown work:
+
+- Confirm runtime context: standalone uses int-ui standalone styling; IntelliJ plugin/bridge uses IDE LaF bridge styling.
+- Confirm required processor and renderer extensions are both wired.
+- Confirm `MarkdownProcessor` editor-preview instances are not shared across unrelated documents.
+- Confirm heavy parsing is not happening in a hot `LazyColumn` item body.
+- Confirm code highlighting, image loading, and URL click handling are provided where the UX requires them.
+- Confirm custom syntax has tests for parsing and rendering; for new extensions, use existing extension tests as guides.
+- Confirm task lists or other missing GFM features were implemented/validated, not merely mentioned as supported.
+- Confirm custom text rendering forwards `LocalTextAlignment` (text alignment), preserves the content-color fallback, keeps the
+  `inlineContent` map, and honors `enabled`.
+- Confirm HTML expectations: embedded HTML needs `parseEmbeddedHtml = true`; custom tag mapping needs a `MarkdownHtmlConverterExtension`;
+  and unconverted/inline HTML is shown as raw text, not interpreted as native UI.
