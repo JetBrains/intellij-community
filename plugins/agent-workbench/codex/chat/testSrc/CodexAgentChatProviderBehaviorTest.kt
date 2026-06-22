@@ -72,7 +72,7 @@ class CodexAgentChatProviderBehaviorTest {
   }
 
   @Test
-  fun planCommandRetryTreatsDisabledPlanCommandAsTransientBusy(): Unit = kotlinx.coroutines.runBlocking {
+  fun planCommandRetryTreatsDisabledPlanCommandAsTransientBusyAfterReadiness(): Unit = kotlinx.coroutines.runBlocking {
     val dispatch = planCommandDispatch()
 
     assertThat(
@@ -82,7 +82,7 @@ class CodexAgentChatProviderBehaviorTest {
         observation = observation("'/plan' is disabled while a task is in progress."),
         retryAttempt = 0,
       )
-    ).isInstanceOf(AgentChatInitialMessageRetryDecision.RetryTransientBusyWithoutReadiness::class.java)
+    ).isInstanceOf(AgentChatInitialMessageRetryDecision.RetryTransientBusyAfterReadiness::class.java)
   }
 
   @Test
