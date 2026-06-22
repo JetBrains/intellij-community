@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator
+import com.intellij.internal.statistic.config.eventLog.EventLogBuildType
 import com.intellij.internal.statistic.eventLog.connection.StatisticsResult
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataLoadException
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataParseException
@@ -36,7 +37,7 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
     // Increase the group's versions locally
     // and not increase the versions in all StatisticsEventLoggerProvider
     // in case of any changes in the groups
-    eventLoggerProvider.version + 4,
+    eventLoggerProvider.version + 5,
     eventLoggerProvider.recorderId
   )
   override fun getGroup(): EventLogGroup = GROUP
@@ -101,6 +102,12 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
     stageMetadataUpdateFailedField, errorMetadataUpdateFailedField, codeMetadataUpdateFailedField
   )
 
+  private val fileDeletedEvent = GROUP.registerVarargEvent(
+    "file.deleted",
+    deletedFileAgeMsField, deletedFileSizeBytesField, deletedFileFirstEventMsField, deletedFileLastEventMsField,
+    deletedFileEventCountField, deletedFileBytesPerEventField, deletedFileBuildTypeField
+  )
+
   fun logMetadataLoaded(version: String?) = metadataLoadedEvent.log(version)
   fun logMetadataUpdated(version: String?) = metadataUpdatedEvent.log(version)
   fun logMetadataLoadFailed(error: EventLogMetadataUpdateError) {
@@ -162,6 +169,26 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
 
   fun logFileMetricsCalculated(fileSizeBytes: Long, eventsCount: Int,) {
     fileMetricsCalculated.log(fileSizeBytes, eventsCount)
+  }
+
+  fun logFileDeleted(
+    ageMs: Long,
+    sizeBytes: Long,
+    firstEventMs: Long,
+    lastEventMs: Long,
+    eventCount: Int,
+    bytesPerEvent: Long,
+    buildType: EventLogBuildType,
+  ) {
+    fileDeletedEvent.log(
+      deletedFileAgeMsField.with(ageMs),
+      deletedFileSizeBytesField.with(sizeBytes),
+      deletedFileFirstEventMsField.with(firstEventMs),
+      deletedFileLastEventMsField.with(lastEventMs),
+      deletedFileEventCountField.with(eventCount),
+      deletedFileBytesPerEventField.with(bytesPerEvent),
+      deletedFileBuildTypeField.with(buildType),
+    )
   }
 
   fun logDictionaryListLoadFailed(error: EventLogMetadataUpdateError) {
@@ -245,5 +272,12 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
     private val fileSizeBytes = EventFields.Long("file_size_bytes", "File size in bytes")
     private val eventsCount = EventFields.Int("events_count", "Number of events in the file")
 
+    private val deletedFileAgeMsField = EventFields.Long("file_age_ms", "Age of the data in the deleted file: now minus the timestamp of its oldest event, in milliseconds (-1 if unknown)")
+    private val deletedFileSizeBytesField = EventFields.Long("file_size_bytes", "Size of the deleted file in bytes")
+    private val deletedFileFirstEventMsField = EventFields.Long("file_first_event_ms", "Timestamp of the oldest event in the deleted file, in milliseconds")
+    private val deletedFileLastEventMsField = EventFields.Long("file_last_event_ms", "Timestamp of the newest event in the deleted file, in milliseconds")
+    private val deletedFileEventCountField = EventFields.Int("file_event_count", "Number of events the deleted file contained")
+    private val deletedFileBytesPerEventField = EventFields.Long("file_bytes_per_event", "Average bytes per event in the deleted file")
+    private val deletedFileBuildTypeField = EventFields.Enum<EventLogBuildType>("file_build_type", "Build type (EAP, RELEASE, etc.)")
   }
 }
