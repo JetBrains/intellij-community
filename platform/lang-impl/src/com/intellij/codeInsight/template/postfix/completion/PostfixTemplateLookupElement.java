@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.completion;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -8,10 +8,11 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.impl.CustomLiveTemplateLookupElement;
 import com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate;
-import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixModExpander;
+import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
@@ -60,6 +61,8 @@ public class PostfixTemplateLookupElement extends CustomLiveTemplateLookupElemen
   @ApiStatus.Experimental
   @Override
   public @NotNull IntentionPreviewInfo preview(@NotNull ActionContext ctx) {
+    //todo disabled for now
+    if (InjectedLanguageManager.getInstance(ctx.project()).isInjectedFragment(ctx.file())) return IntentionPreviewInfo.EMPTY;
     PostfixModExpander expander = myTemplate.createModExpander();
     if (myTemplate.isApplicableForModCommand() && expander != null) {
       String key = PostfixLiveTemplate.computeTemplateKeyWithoutContextChecking(
