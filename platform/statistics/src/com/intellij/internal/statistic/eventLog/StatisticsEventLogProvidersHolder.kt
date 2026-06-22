@@ -45,8 +45,14 @@ internal class StatisticsEventLogProvidersHolder(coroutineScope: CoroutineScope)
     return emptyProviders.computeIfAbsent(recorderId) { EmptyStatisticsEventLoggerProvider(recorderId) }
   }
 
-  fun getEventLogProvider(recorderId: String): StatisticsEventLoggerProvider =
-    eventLoggerProviders.get()[recorderId] ?: getOrCreateEmptyProvider(recorderId)
+  fun getEventLogProvider(recorderId: String): StatisticsEventLoggerProvider {
+    val cached = eventLoggerProviders.get()[recorderId]
+    if (cached != null) return cached
+    // The provider may have registered after the cache was built due to deferred EP
+    // notifications during the initial plugin-loading batch. Refresh synchronously.
+    updateProviders()
+    return eventLoggerProviders.get()[recorderId] ?: getOrCreateEmptyProvider(recorderId)
+  }
 
   fun getEventLogProviders(): Collection<StatisticsEventLoggerProvider> =
     eventLoggerProviders.get().values
