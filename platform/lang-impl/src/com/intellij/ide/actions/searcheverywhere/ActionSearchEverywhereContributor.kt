@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.GotoActionAction
+import com.intellij.ide.actions.SearchEverywhereBaseAction
 import com.intellij.ide.actions.SetShortcutAction
 import com.intellij.ide.actions.searcheverywhere.footer.ActionHistoryManager
 import com.intellij.ide.actions.searcheverywhere.footer.createActionExtendedInfo
@@ -191,7 +192,8 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
     }
 
     GotoActionAction.openOptionOrPerformAction(selected, text, myProject, myContextComponent.get(), modifiers, myDataContextProvider)
-    val inplaceChange = (selected is GotoActionModel.ActionWrapper && selected.action is ToggleAction)
+    val inplaceChange = (selected is GotoActionModel.ActionWrapper && (selected.action is ToggleAction ||
+                                                                       selected.action is SearchEverywhereBaseAction))
     return !inplaceChange
   }
 
