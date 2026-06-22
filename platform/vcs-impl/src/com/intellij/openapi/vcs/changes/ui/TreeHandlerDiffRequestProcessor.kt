@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.diagnostic.Checks.fail
@@ -57,6 +57,10 @@ open class TreeHandlerDiffRequestProcessor(
 
   final override fun iterateAllChanges(): Iterable<Wrapper> {
     return handler.iterateAllChanges(tree)
+  }
+
+  final override fun iterateChangesInSameGroup(change: Wrapper): Iterable<Wrapper> {
+    return handler.iterateChangesFromSameGroup(tree, change)
   }
 
   final override fun selectChange(change: Wrapper) {
@@ -329,6 +333,13 @@ abstract class ChangesTreeDiffPreviewHandler {
   abstract fun iterateSelectedChanges(tree: ChangesTree): Iterable<@JvmWildcard Wrapper>
 
   abstract fun iterateAllChanges(tree: ChangesTree): Iterable<@JvmWildcard Wrapper>
+
+  /**
+   * Changes that belong to the same group (e.g. changelist) as [change].
+   * Used to scope the file counter / "Go to change" popup to the current change's group.
+   * Defaults to all changes for trees without grouping.
+   */
+  open fun iterateChangesFromSameGroup(tree: ChangesTree, change: Wrapper): Iterable<@JvmWildcard Wrapper> = iterateAllChanges(tree)
 
   abstract fun selectChange(tree: ChangesTree, change: Wrapper)
 
