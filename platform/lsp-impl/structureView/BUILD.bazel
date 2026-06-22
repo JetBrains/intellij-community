@@ -21,7 +21,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:eclipse-lsp4j",
+        "//libraries/lsp4j",
         "//platform/core-api:core",
         "//platform/core-impl",
         "//platform/editor-ui-api:editor-ui",
@@ -48,6 +48,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":structureView",
+        "//libraries/lsp4j:lsp4j_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",

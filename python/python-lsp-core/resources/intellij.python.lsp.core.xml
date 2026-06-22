@@ -1,12 +1,12 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.community.impl"/>
     <module name="intellij.python.pytools"/>
     <module name="intellij.python.pytools.ui"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.python.lsp.typeEngineConfigurable"
                     interface="com.intellij.python.lsp.core.typeEngine.PyTypeEngineProvider"

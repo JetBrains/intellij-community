@@ -22,8 +22,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:eclipse-lsp4j",
-        "@lib//:eclipse-lsp4j-jsonrpc",
+        "//libraries/lsp4j",
+        "//libraries/lsp4j/jsonrpc",
         "//platform/core-impl",
         "//libraries/gson",
         "//platform/analysis-api:analysis",
@@ -75,6 +75,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":lsp-impl",
+        "//libraries/lsp4j:lsp4j_test_lib",
+        "//libraries/lsp4j/jsonrpc:jsonrpc_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//libraries/gson:gson_test_lib",
         "//platform/analysis-api:analysis_test_lib",

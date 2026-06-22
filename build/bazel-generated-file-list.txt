@@ -506,6 +506,10 @@ libraries/ktor/io
 libraries/ktor/network-tls
 libraries/ktor/server-cio
 libraries/ktor/utils
+libraries/lsp4j
+libraries/lsp4j/debug
+libraries/lsp4j/jsonrpc
+libraries/lsp4j/jsonrpc-debug
 libraries/lucene.common
 libraries/lz4
 libraries/markdown

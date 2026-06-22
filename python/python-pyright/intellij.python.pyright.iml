@@ -32,7 +32,7 @@
     <orderEntry type="module" module-name="intellij.platform.lsp.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.json" />
-    <orderEntry type="library" name="eclipse.lsp4j" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.eclipse.lsp4j" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.python.lsp.core" />
     <orderEntry type="module" module-name="intellij.python.pytools.ui" />

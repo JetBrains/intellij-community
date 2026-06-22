@@ -1,5 +1,7 @@
 <idea-plugin visibility="public">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.eclipse.lsp4j"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.editor.ui"/>
@@ -11,6 +13,7 @@
     <module name="intellij.platform.lsp.impl"/>
     <module name="intellij.platform.structureView"/>
     <module name="intellij.platform.util.ui"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
