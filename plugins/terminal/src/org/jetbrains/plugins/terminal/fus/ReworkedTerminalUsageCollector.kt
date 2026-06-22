@@ -33,9 +33,8 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val EXIT_CODE_FIELD = EventFields.Int("exit_code")
   private val EXECUTION_TIME_FIELD = EventFields.Long("execution_time", "Time in milliseconds")
   private val HYPERLINK_INFO_CLASS = EventFields.Class("hyperlink_info_class")
-  private val TERMINAL_OPENING_WAY = EventFields.Enum<TerminalOpeningWay>("opening_way")
-  private val TABS_COUNT = EventFields.Int("tab_count")
   private val TERMINAL_TAB_OPENING_WAY = EventFields.Enum<TerminalTabOpeningWay>("opening_way")
+  private val TABS_COUNT = EventFields.Int("tab_count", "Total number of terminal tabs including the newly added one")
   private val FOCUS = StringEventField.ValidatedByCustomValidationRule("counterpart", TerminalFocusRule::class.java)
   private val AGENT_WORKBENCH_PROVIDER_FIELD = EventFields.String("provider", listOf("codex", "claude"))
   private val TERMINAL_AI_AGENT_FIELD = EventFields.Enum<FusTerminalAiAgent>("agent")
@@ -49,7 +48,11 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val THIRD_LARGEST_DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "third_largest_duration_ms")
   private val TEXT_LENGTH_90_FIELD = EventFields.Int("text_length_90", "90% percentile")
 
-  private val tabOpenedEvent = GROUP.registerEvent("tab.opened", TABS_COUNT)
+  private val tabOpenedEvent = GROUP.registerVarargEvent(
+    "tab.opened",
+    TERMINAL_TAB_OPENING_WAY,
+    TABS_COUNT
+  )
 
   private val focusGainedEvent = GROUP.registerEvent("focus.gained", FOCUS)
 
@@ -154,8 +157,12 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   )
 
   @JvmStatic
-  fun logTabOpened(project: Project, tabCount: Int) {
-    tabOpenedEvent.log(project, tabCount)
+  fun logTabOpened(project: Project, openingWay: TerminalTabOpeningWay?, tabCount: Int) {
+    val fields = listOfNotNull(
+      if (openingWay != null) TERMINAL_TAB_OPENING_WAY with openingWay else null,
+      TABS_COUNT with tabCount,
+    )
+    tabOpenedEvent.log(project, fields)
   }
 
   @JvmStatic
