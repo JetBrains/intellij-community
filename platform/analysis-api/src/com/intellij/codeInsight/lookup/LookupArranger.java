@@ -5,6 +5,7 @@ package com.intellij.codeInsight.lookup;
 import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.completion.LookupElementListPresenter;
 import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.ApiStatus;
@@ -19,11 +20,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import static com.intellij.openapi.diagnostic.LoggerKt.fatalErrorWithWarnDetails;
+
 /**
  * An object holding the items to be shown in a {@link Lookup} and determining their order.
  * If accessed from multiple threads, it needs to take care of proper synchronization itself.
  */
 public abstract class LookupArranger implements WeighingContext {
+  private static final Logger LOG = Logger.getInstance(LookupArranger.class);
+
   //not static!
   private final Key<Runnable> ADDING_CALLBACK = Key.create("on_adding_callback");
 
@@ -113,8 +118,10 @@ public abstract class LookupArranger implements WeighingContext {
   public @NotNull PrefixMatcher itemMatcher(@NotNull LookupElement item) {
     PrefixMatcher matcher = item.getUserData(myMatcherKey);
     if (matcher == null) {
-      throw new AssertionError("Item not in lookup: item=" + item + "; lookup items=" + myItems);
+      // this method throws
+      fatalErrorWithWarnDetails(LOG, "Item not in lookup", "item=" + item + "; lookup items=" + myItems, null);
     }
+    //noinspection DataFlowIssue
     return matcher;
   }
 
