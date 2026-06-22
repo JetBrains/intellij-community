@@ -23,10 +23,10 @@ import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.PyRichSdk
+import com.jetbrains.python.sdk.PythonInterpreter
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.moduleIfExists
-import com.jetbrains.python.sdk.pyRichSdk
+import com.jetbrains.python.sdk.pythonInterpreter
 import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -46,7 +46,7 @@ suspend fun PyTool.getExecutableWithBaseArgs(
 
   val toolBinaryPath = when (state.discoveryMode) {
     ExecutableDiscoveryMode.INTERPRETER -> {
-      val pyRichSdk = moduleOrProject.moduleIfExists?.pythonSdk?.pyRichSdk()
+      val pyRichSdk = moduleOrProject.moduleIfExists?.pythonSdk?.pythonInterpreter()
       pyRichSdk?.let { findExecutableInSdk(it, executableName) } ?: findExecutableInPath(state, executableName)
     }
     ExecutableDiscoveryMode.PATH -> findExecutableInPath(state, executableName)
@@ -122,8 +122,8 @@ private fun EelOsFamily.getOsSpecificBinaryName(binaryName: String): String = wh
 /**
  * only local sdks are supported currently
  */
-fun PyTool.findExecutableInSdk(pyRichSdk: PyRichSdk, executableName: String = packageName.name): Path? {
-  return pyRichSdk.pythonBinaryPath?.let { basePythonBinaryPath ->
+fun PyTool.findExecutableInSdk(pythonInterpreter: PythonInterpreter, executableName: String = packageName.name): Path? {
+  return pythonInterpreter.pythonBinaryPath?.let { basePythonBinaryPath ->
     val osFamily = basePythonBinaryPath.getEelDescriptor().osFamily
     basePythonBinaryPath.resolveSibling(osFamily.getOsSpecificBinaryName(executableName)).takeIf { it.isExecutable() }
   }

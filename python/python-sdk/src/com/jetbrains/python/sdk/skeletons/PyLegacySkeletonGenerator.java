@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +33,7 @@ public class PyLegacySkeletonGenerator extends PySkeletonGenerator {
    * @param pySdk         SDK
    * @param currentFolder current folder (some flavors may search for binary files there) or null if unknown
    */
-  public PyLegacySkeletonGenerator(@NotNull String skeletonPath,
+  public PyLegacySkeletonGenerator(@NotNull Path skeletonPath,
                                    @NotNull Sdk pySdk,
                                    @Nullable String currentFolder) {
     super(skeletonPath, pySdk, currentFolder);
@@ -82,7 +83,7 @@ public class PyLegacySkeletonGenerator extends PySkeletonGenerator {
       commandLine.add(mySdk.getHomePath());
       commandLine.add(PythonHelpersLocator.findPathStringInHelpers(GENERATOR3));
       commandLine.add("-d");
-      commandLine.add(mySkeletonsPath);
+      commandLine.add(mySkeletonsPath.toString());
       if (!ContainerUtil.isEmpty(myExtraSysPath)) {
         commandLine.add("-s");
         commandLine.add(StringUtil.join(myExtraSysPath, File.pathSeparator));

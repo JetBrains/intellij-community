@@ -8,12 +8,11 @@ import javax.swing.Icon
 
 
 /**
- * Pre-computed SDK label + icon for renderers (status bar, SDK popup, interpreter dropdown).
- * Built via `Sdk.pyInterpreterPresentation()`.
+ * Pre-computed Python Interpreter label and icon for renderers (status bar, SDK popup, interpreter dropdown).
  *
  * @property name Main label: `sdk.name` or a caller-supplied override.
  * @property suffix Trailing info shown in brackets (e.g. `sudo / 3.12.1`), or `null`.
- * @property description SDK home path (or `[invalid]` if missing). Used in tooltips.
+ * @property description Python Binary Path (SDK.homePath) (or `[invalid]` if missing). Used in tooltips.
  * @property modifier `"invalid"` / `"unsupported"` if the SDK is flagged, otherwise `null`.
  * @property icon Flavor icon, pre-decorated with a warning cross when flagged.
  * @property isPathDerivedName `true` when [name] is the canonical path-derived label produced
@@ -28,7 +27,7 @@ data class PythonInterpreterPresentation(
   val description: @NlsSafe String,
   val modifier: @NlsSafe String?,
   val icon: Icon,
-  val isPathDerivedName: Boolean = true,
+  val isPathDerivedName: Boolean,
 ) {
   /** `name [suffix]` or `name` when [suffix] is null. Example: `~/Projects/myapp/long/path/.venv [3.12.1]`. */
   val fullName: @NlsSafe String = if (suffix == null) name else "$name [$suffix]"
@@ -68,6 +67,10 @@ data class PythonInterpreterPresentation(
       if (name.length <= availableForName) name else name.trimMiddle(availableForName)
     }
     return shortened + suffix
+  }
+
+  override fun toString(): String {
+    return "$name [$suffix] ($description)"
   }
 }
 

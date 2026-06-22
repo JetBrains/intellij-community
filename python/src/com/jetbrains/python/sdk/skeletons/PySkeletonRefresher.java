@@ -20,20 +20,21 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.sdk.InvalidSdkException;
+import com.jetbrains.python.sdk.SdkExtKt;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader;
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.NlsContexts.ProgressDetails;
 import static com.intellij.openapi.util.NlsContexts.ProgressText;
@@ -52,7 +53,7 @@ public class PySkeletonRefresher {
   private final @Nullable Project myProject;
   private final @Nullable ProgressIndicator myIndicator;
   private final @NotNull Sdk mySdk;
-  private String mySkeletonsPath;
+  private Path mySkeletonsPath;
   private List<String> myExtraSyspath;
   private int myGeneratorVersion = -1;
   private final PySkeletonGenerator mySkeletonsGenerator;
@@ -66,7 +67,7 @@ public class PySkeletonRefresher {
   }
 
   public static void refreshSkeletonsOfSdk(@Nullable Project project,
-                                           @Nullable String skeletonsPath,
+                                           @Nullable Path skeletonsPath,
                                            @NotNull Sdk sdk)
     throws InvalidSdkException {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -104,7 +105,7 @@ public class PySkeletonRefresher {
    */
   public PySkeletonRefresher(@Nullable Project project,
                              @NotNull Sdk sdk,
-                             @Nullable String skeletonsPath,
+                             @Nullable Path skeletonsPath,
                              @Nullable ProgressIndicator indicator,
                              @Nullable String folder)
     throws InvalidSdkException {
@@ -116,10 +117,13 @@ public class PySkeletonRefresher {
   }
 
   public @NotNull List<String> regenerateSkeletons() throws InvalidSdkException, ExecutionException {
-    final String skeletonsPath = getSkeletonsPath();
-    final File skeletonsDir = new File(skeletonsPath);
-    //noinspection ResultOfMethodCallIgnored
-    skeletonsDir.mkdirs();
+    final Path skeletonsPath = getSkeletonsPath();
+    try {
+      Files.createDirectories(skeletonsPath);
+    }
+    catch (IOException e) {
+      throw new InvalidSdkException(PyBundle.message("sdk.gen.cannot.create.skeleton.dir", mySdk.getHomePath()), e);
+    }
 
     mySkeletonsGenerator.prepare();
 
@@ -129,9 +133,9 @@ public class PySkeletonRefresher {
       PyPregeneratedSkeletonsProvider.findPregeneratedSkeletonsForSdk(mySdk, myGeneratorVersion);
 
     final String builtinsFileName = PySkeletonUtil.getBuiltinsFileName(mySdk);
-    final File builtinsFile = new File(skeletonsPath, builtinsFileName);
+    final var builtinsFilePath = skeletonsPath.resolve(builtinsFileName);
 
-    final PySkeletonHeader oldHeader = PySkeletonHeader.readSkeletonHeader(builtinsFile.toPath());
+    final PySkeletonHeader oldHeader = PySkeletonHeader.readSkeletonHeader(builtinsFilePath);
     final boolean oldOrNonExisting = oldHeader == null || oldHeader.getVersion() == 0;
 
     if (preGeneratedSkeletons != null && oldOrNonExisting) {
@@ -154,7 +158,7 @@ public class PySkeletonRefresher {
     mySkeletonsGenerator.refreshGeneratedSkeletons();
 
     indicate(PyBundle.message("sdk.gen.cleaning.up"));
-    cleanUpSkeletons(skeletonsDir);
+    cleanUpSkeletons(skeletonsPath);
 
     if ((builtinsUpdated || PythonSdkUtil.isRemote(mySdk)) && myProject != null) {
       ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(myProject).restart(this), myProject.getDisposed());
@@ -164,8 +168,8 @@ public class PySkeletonRefresher {
   }
 
   private static int readGeneratorVersion() {
-    File versionFile = PythonHelpersLocator.findPathInHelpers("generator3/version.txt").toFile();
-    try (Reader reader = new InputStreamReader(new FileInputStream(versionFile), StandardCharsets.UTF_8)) {
+    Path versionFile = PythonHelpersLocator.findPathInHelpers("generator3/version.txt");
+    try (Reader reader = Files.newBufferedReader(versionFile, StandardCharsets.UTF_8)) {
       return PySkeletonHeader.fromVersionString(StreamUtil.readText(reader).trim());
     }
     catch (IOException e) {
@@ -189,21 +193,21 @@ public class PySkeletonRefresher {
     }
   }
 
-  private static List<String> calculateExtraSysPath(final @NotNull Sdk sdk, final @Nullable String skeletonsPath) {
-    final File skeletons = skeletonsPath != null ? new File(skeletonsPath) : null;
+  private static List<String> calculateExtraSysPath(final @NotNull Sdk sdk, final @Nullable Path skeletonsPath) {
+    final String skeletonsPathStr = skeletonsPath != null ? skeletonsPath.toString() : null;
 
     final VirtualFile remoteSourcesDir = PythonSdkUtil.findAnyRemoteLibrary(sdk);
-    final File remoteSources = remoteSourcesDir != null ? new File(remoteSourcesDir.getPath()) : null;
+    final String remoteSourcesStr = remoteSourcesDir != null ? remoteSourcesDir.getPath() : null;
 
     return ContainerUtil.mapNotNull(sdk.getRootProvider().getFiles(OrderRootType.CLASSES), file -> {
       if (file.isInLocalFileSystem()) {
-        // We compare canonical files, not strings because "c:/some/folder" equals "c:\\some\\bin\\..\\folder\\"
-        final File canonicalFile = new File(file.getPath());
-        if (canonicalFile.exists() &&
-            !FileUtil.filesEqual(canonicalFile, skeletons) &&
+        // We compare normalized paths, not raw strings, because "c:/some/folder" equals "c:\\some\\bin\\..\\folder\\"
+        final String path = file.getPath();
+        if (Files.exists(Path.of(path)) &&
+            !FileUtil.pathsEqual(path, skeletonsPathStr) &&
             !PyTypeShed.INSTANCE.isInside(file) &&
-            !FileUtil.filesEqual(canonicalFile, remoteSources)) {
-          return file.getPath();
+            !FileUtil.pathsEqual(path, remoteSourcesStr)) {
+          return path;
         }
       }
       return null;
@@ -215,15 +219,15 @@ public class PySkeletonRefresher {
    *
    * @return path name of skeleton dir for the SDK, guaranteed to be already created.
    */
-  public @NotNull String getSkeletonsPath() throws InvalidSdkException {
+  public @NotNull Path getSkeletonsPath() throws InvalidSdkException {
     if (mySkeletonsPath == null) {
-      mySkeletonsPath = Objects.requireNonNull(PythonSdkUtil.getSkeletonsPath(mySdk));
-      final File skeletonsDir = new File(mySkeletonsPath);
-      if (!skeletonsDir.exists() && !skeletonsDir.mkdirs()) {
-        throw new InvalidSdkException(PyBundle.message("sdk.gen.cannot.create.skeleton.dir", mySkeletonsPath));
+      try {
+        mySkeletonsPath = SdkExtKt.createSkeletonsRootDirectory(mySdk);
+      } catch (IOException e) {
+        throw new InvalidSdkException(PyBundle.message("sdk.gen.cannot.create.skeleton.dir", mySdk.getHomePath()), e);
       }
     }
-    return mySkeletonsPath;
+    return Objects.requireNonNull(mySkeletonsPath);
   }
 
   private @NotNull List<PySkeletonGenerator.GenerationResult> updateOrCreateSkeletons() throws InvalidSdkException, ExecutionException {
@@ -242,38 +246,38 @@ public class PySkeletonRefresher {
    * and remove the skeleton if the module file does not exist.
    * Works recursively starting from dir. Removes dirs that become empty.
    */
-  private void cleanUpSkeletons(final File dir) {
-    indicateMinor(dir.getPath());
-    final File[] files = dir.listFiles();
+  private void cleanUpSkeletons(final Path dir) {
+    indicateMinor(dir.toString());
+    final List<Path> files = listChildren(dir);
     if (files == null) {
       return;
     }
-    for (File item : files) {
-      if (item.isDirectory()) {
+    for (Path item : files) {
+      if (Files.isDirectory(item)) {
         cleanUpSkeletons(item);
         // was the dir emptied?
-        File[] remaining = item.listFiles();
-        if (remaining != null && remaining.length == 0) {
-          mySkeletonsGenerator.deleteOrLog(item);
+        final List<Path> remaining = listChildren(item);
+        if (remaining != null && remaining.isEmpty()) {
+          deleteOrLog(item);
         }
-        else if (remaining != null && remaining.length == 1) { //clean also if contains only __init__.py
-          File lastFile = remaining[0];
-          if (PyNames.INIT_DOT_PY.equals(lastFile.getName()) && lastFile.length() == 0) {
-            boolean deleted = mySkeletonsGenerator.deleteOrLog(lastFile);
-            if (deleted) mySkeletonsGenerator.deleteOrLog(item);
+        else if (remaining != null && remaining.size() == 1) { //clean also if contains only __init__.py
+          final Path lastFile = remaining.getFirst();
+          if (PyNames.INIT_DOT_PY.equals(lastFile.getFileName().toString()) && isEmptyFile(lastFile)) {
+            boolean deleted = deleteOrLog(lastFile);
+            if (deleted) deleteOrLog(item);
           }
         }
       }
-      else if (item.isFile()) {
+      else if (Files.isRegularFile(item)) {
         // clean up an individual file
-        final String itemName = item.getName();
-        if (PyNames.INIT_DOT_PY.equals(itemName) && item.length() == 0) continue; // these are versionless
+        final String itemName = item.getFileName().toString();
+        if (PyNames.INIT_DOT_PY.equals(itemName) && isEmptyFile(item)) continue; // these are versionless
         if (PySkeletonGenerator.BLACKLIST_FILE_NAME.equals(itemName)) continue; // don't touch the blacklist
         if (PySkeletonGenerator.STATE_MARKER_FILE.equals(itemName)) continue;
         if (PySkeletonUtil.getBuiltinsFileName(mySdk).equals(itemName)) {
           continue;
         }
-        final PySkeletonHeader header = PySkeletonHeader.readSkeletonHeader(item.toPath());
+        final PySkeletonHeader header = PySkeletonHeader.readSkeletonHeader(item);
         String binaryFile = null;
         boolean canLive = header != null;
         if (canLive) {
@@ -284,9 +288,41 @@ public class PySkeletonRefresher {
         }
         if (!canLive) {
           LOG.debug("Cleaning up skeleton " + item + (binaryFile != null ? " for non existing binary " + binaryFile : ""));
-          mySkeletonsGenerator.deleteOrLog(item);
+          deleteOrLog(item);
         }
       }
+    }
+  }
+
+  private static boolean deleteOrLog(@NotNull Path item) {
+    try {
+      boolean deleted = Files.deleteIfExists(item);
+      if (!deleted) LOG.warn("Failed to delete skeleton file " + item);
+      return deleted;
+    }
+    catch (IOException e) {
+      LOG.warn("Failed to delete skeleton file " + item, e);
+      return false;
+    }
+  }
+
+  private static @Nullable List<Path> listChildren(@NotNull Path dir) {
+    try (Stream<Path> children = Files.list(dir)) {
+      return children.toList();
+    }
+    catch (IOException e) {
+      LOG.warn("Failed to list skeleton directory " + dir, e);
+      return null;
+    }
+  }
+
+  private static boolean isEmptyFile(@NotNull Path file) {
+    try {
+      return Files.size(file) == 0;
+    }
+    catch (IOException e) {
+      LOG.warn("Failed to read size of skeleton file " + file, e);
+      return false;
     }
   }
 

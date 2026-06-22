@@ -3,12 +3,21 @@ package com.jetbrains.python.sdk
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyNames
 import org.jetbrains.annotations.ApiStatus.Internal
+
+@Internal
+@Deprecated("try to avoid Sdk API usage, use PythonInterpreter extensions instead", ReplaceWith("PythonInterpreterExt.kt"))
+fun PythonInterpreter.getSdkAPI(): Sdk = sdk
+
+val PythonInterpreter.presentation: PythonInterpreterPresentation
+  @Internal
+  get() = sdk.pyInterpreterPresentation()
 
 /**
  * The Python `lib/` directory backing this SDK, or `null` when it cannot be located.
@@ -18,11 +27,12 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * directory via [stdlibLibDirectory].
  */
 @RequiresBackgroundThread
-private fun PyRichSdk.libDirectory(): VirtualFile? = when (pythonEnvironment) {
+private fun PythonInterpreter.libDirectory(): VirtualFile? = when (pythonEnvironment) {
   is PythonEnvironment.Venv -> venvLibDirectory()
   is PythonEnvironment.Conda,
   is PythonEnvironment.SystemPython,
-  null -> stdlibLibDirectory()
+  null,
+    -> stdlibLibDirectory()
 }
 
 /**
@@ -36,7 +46,7 @@ private fun PyRichSdk.libDirectory(): VirtualFile? = when (pythonEnvironment) {
  */
 @Internal
 @RequiresBackgroundThread
-fun PyRichSdk.sitePackagesDirectory(): VirtualFile? = libDirectory()?.findChild(PyNames.SITE_PACKAGES)
+fun PythonInterpreter.sitePackagesDirectory(): VirtualFile? = libDirectory()?.findChild(PyNames.SITE_PACKAGES)
 
 /**
  * The interpreter's standard library directory, or `null` when none of this SDK's class roots
@@ -49,8 +59,8 @@ fun PyRichSdk.sitePackagesDirectory(): VirtualFile? = libDirectory()?.findChild(
  */
 @Internal
 @RequiresBackgroundThread
-fun PyRichSdk.stdlibLibDirectory(): VirtualFile? {
-  for (file in sdkClassRoots()) {
+fun PythonInterpreter.stdlibLibDirectory(): VirtualFile? {
+  for (file in sdkClassRoots) {
     if (!file.isValid) continue
     if ((file.findChild("__future__.py") != null || file.findChild("__future__.pyc") != null) &&
         file.findChild("xml") != null && file.findChild("email") != null) {
@@ -75,10 +85,10 @@ fun PyRichSdk.stdlibLibDirectory(): VirtualFile? {
  */
 @Internal
 @RequiresBackgroundThread
-fun PyRichSdk.venvLibDirectory(): VirtualFile? {
+fun PythonInterpreter.venvLibDirectory(): VirtualFile? {
   val venv = pythonEnvironment as? PythonEnvironment.Venv ?: return null
   val libRoot = venv.libRoot
-  val classRoots = sdkClassRoots()
+  val classRoots = sdkClassRoots
   // Empty in case of a temporary empty SDK created to install package management.
   if (classRoots.isEmpty()) {
     return LocalFileSystem.getInstance().findFileByNioFile(libRoot)
@@ -93,5 +103,5 @@ fun PyRichSdk.venvLibDirectory(): VirtualFile? {
   return null
 }
 
-private fun PyRichSdk.sdkClassRoots(): Array<VirtualFile> =
-  runReadActionBlocking { sdk.rootProvider.getFiles(OrderRootType.CLASSES) }
+private val PythonInterpreter.sdkClassRoots: Array<VirtualFile>
+  get() = runReadActionBlocking { sdk.rootProvider.getFiles(OrderRootType.CLASSES) }

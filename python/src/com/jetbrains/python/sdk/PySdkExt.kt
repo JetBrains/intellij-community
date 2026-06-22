@@ -12,7 +12,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.isNonToolVirtualEnv
@@ -81,7 +80,9 @@ var Project.pythonSdk: Sdk?
 
 @Internal
 fun Module.excludeInnerVirtualEnv(sdk: Sdk) {
-  val root = getInnerVirtualEnvRoot(sdk.pyRichSdk()) ?: return
+  val root = sdk.pythonInterpreter().pythonHomePath?.let {
+    LocalFileSystem.getInstance().findFileByNioFile(it)
+  } ?: return
 
   runInEdt {
     MarkRootsManager.modifyRoots(this, arrayOf(root)) { vFile, entry ->
@@ -93,11 +94,6 @@ fun Module.excludeInnerVirtualEnv(sdk: Sdk) {
 internal fun Project.excludeInnerVirtualEnv(sdk: Sdk) {
   val binary = sdk.homeDirectory ?: return
   ModuleUtil.findModuleForFile(binary, this)?.excludeInnerVirtualEnv(sdk)
-}
-
-@Internal
-fun getInnerVirtualEnvRoot(sdk: PyRichSdk): VirtualFile? = sdk.pythonHomePath?.let {
-  LocalFileSystem.getInstance().findFileByNioFile(it)
 }
 
 internal val Sdk.isSystemWide: Boolean

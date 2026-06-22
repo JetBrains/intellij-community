@@ -91,8 +91,8 @@ import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
-import com.jetbrains.python.sdk.PyRichSdk;
-import com.jetbrains.python.sdk.PyRichSdkKt;
+import com.jetbrains.python.sdk.PythonInterpreter;
+import com.jetbrains.python.sdk.PythonInterpreterKt;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.conda.CondaPythonExecKt;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
@@ -778,8 +778,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
     Sdk sdk = runParams.getSdk();
     if (sdk == null) return;
 
-    PyRichSdk pyRichSdk = PyRichSdkKt.pyRichSdk(sdk, false);
-    boolean shouldActivate = (Registry.is("python.activate.virtualenv.on.run") && pyRichSdk.isActivatable());
+    PythonInterpreter pythonInterpreter = PythonInterpreterKt.pythonInterpreter(sdk, false);
+    boolean shouldActivate = (Registry.is("python.activate.virtualenv.on.run") && pythonInterpreter.isActivatable());
     if (!shouldActivate) return;
 
     Map<String, String> activated = PySdkUtil.activateVirtualEnv(sdk);

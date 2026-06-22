@@ -32,7 +32,7 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
-import com.jetbrains.python.sdk.pyRichSdk
+import com.jetbrains.python.sdk.pythonInterpreter
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -101,7 +101,7 @@ internal suspend fun PyCondaCommand.createCondaSdkFromExistingEnvironment(
   val name = SdkConfigurationUtil.createUniqueSdkName(sdkType.suggestSdkName(null, interpreterPath), existingSdks)
   val sdk = creationRequest.createSdk( name).getOr { return it }
 
-  sdk.pyRichSdk()
+  sdk.pythonInterpreter()
   if (targetConfig == null) {
     saveLocalPythonCondaPath(Path.of(fullCondaPathOnTarget))
   }

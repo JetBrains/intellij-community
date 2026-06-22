@@ -26,7 +26,7 @@ import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.Activatable
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonEnvironment
-import com.jetbrains.python.sdk.pyRichSdk
+import com.jetbrains.python.sdk.pythonInterpreter
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.terminal.Shell
 import org.jetbrains.annotations.ApiStatus
@@ -211,7 +211,7 @@ class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
       return
     }
 
-    val pythonEnvironment = sdk.pyRichSdk().environmentResult?.orLogException(logger) ?: run {
+    val pythonEnvironment = sdk.pythonInterpreter().environmentResult?.orLogException(logger) ?: run {
       logger.warn("Cannot detect Python environment for SDK ${sdk.homePath}, skipping activation")
       return
     }

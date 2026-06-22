@@ -26,7 +26,7 @@ import com.intellij.python.pytools.ui.PyToolDetailConfigurableProvider
 import com.intellij.python.pytools.ui.icons.PythonPytoolsUIIcons
 import com.jetbrains.python.Result
 import com.intellij.python.pytools.validateCustomPath
-import com.jetbrains.python.sdk.pyRichSdk
+import com.jetbrains.python.sdk.pythonInterpreter
 import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -320,6 +320,6 @@ internal fun snapshotProjectSdks(project: Project): List<ProjectSdkSnapshot> {
 internal fun PyTool.detectInSdks(snapshot: List<ProjectSdkSnapshot>): SdkAvailability {
   if (snapshot.isEmpty()) return SdkAvailability.NoProjectSdks
   return SdkAvailability(snapshot.map { sdk ->
-    SdkEntry(sdkLabel = sdk.label, binaryPath = findExecutableInSdk(sdk.sdk.pyRichSdk()))
+    SdkEntry(sdkLabel = sdk.label, binaryPath = findExecutableInSdk(sdk.sdk.pythonInterpreter()))
   })
 }

@@ -128,7 +128,7 @@ public final class GenerateBinaryStubsFix implements LocalQuickFix {
               .runGeneration(indicator);
           }
           final VirtualFile skeletonDir;
-          skeletonDir = LocalFileSystem.getInstance().findFileByPath(refresher.getSkeletonsPath());
+          skeletonDir = LocalFileSystem.getInstance().findFileByNioFile(refresher.getSkeletonsPath());
           if (skeletonDir != null) {
             skeletonDir.refresh(true, true);
           }

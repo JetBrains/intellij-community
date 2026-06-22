@@ -35,7 +35,7 @@ internal class PyVirtualEnvVcsCustomizer : VcsEnvCustomizer() {
       else -> if (context.type != ExecutableType.LOCAL) return
     }
 
-    val pyRichSdk = sdk.pyRichSdk()
+    val pyRichSdk = sdk.pythonInterpreter()
     if (pyRichSdk.isActivatable) {
       // in case of virtualenv sdk on unix we activate virtualenv
       envs.putAll(PySdkUtil.activateVirtualEnv(sdk))
