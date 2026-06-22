@@ -209,9 +209,11 @@ public final class JBCefApp {
       myStarter.initCefApp();
 
       if (myIsRemoteEnabled) {
-        // Add internal JCEF-restart actions (convenient for debugging)
-        if (ApplicationManager.getApplication().isInternal())
+        // Add internal JCEF-related actions (convenient for debugging)
+        if (ApplicationManager.getApplication().isInternal()) {
           myStarter.registerRestartActions();
+          TestUtils.registerJCEFTestActions();
+        }
       }
     }
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
