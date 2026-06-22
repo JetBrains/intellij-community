@@ -34,7 +34,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.NoAccessDuringPsiEvents;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
-import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.Condition;
@@ -1064,8 +1064,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   private static void scheduleIndexRescanningForAllProjects(@NotNull String reason) {
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      new UnindexedFilesScanner(project, reason).queue();
+    for (Iterator<@NotNull Project> it = ProjectUtil.getOpenedProjects().iterator(); it.hasNext(); ) {
+      Project project = it.next();
+      if (!project.isDisposed()) {
+        new UnindexedFilesScanner(project, reason).queue();
+      }
     }
   }
 
@@ -2440,15 +2443,19 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       }
 
       //Scanning/Highlighting is in progress (they actively use IndexingStamps & indexes):
-      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      for (Iterator<@NotNull Project> it = ProjectUtil.getOpenedProjects().iterator(); it.hasNext(); ) {
+        Project project = it.next();
+        if (project.isDisposed()) {
+          continue;
+        }
+
         UnindexedFilesScannerExecutor scannerExecutor = project.getServiceIfCreated(UnindexedFilesScannerExecutor.class);
-        if (scannerExecutor == null) continue;
-        Boolean scanningInProgress = scannerExecutor.isRunning().getValue();
-        if (scanningInProgress) {
+        if (scannerExecutor != null && Boolean.TRUE.equals(scannerExecutor.isRunning().getValue())) {
           return true;
         }
 
-        if (DaemonCodeAnalyzer.getInstance(project).isRunning()) {//=highlighting
+        DaemonCodeAnalyzer daemonCodeAnalyzer = project.getServiceIfCreated(DaemonCodeAnalyzer.class);
+        if (daemonCodeAnalyzer != null && daemonCodeAnalyzer.isRunning()) {//=highlighting
           return true;
         }
       }
