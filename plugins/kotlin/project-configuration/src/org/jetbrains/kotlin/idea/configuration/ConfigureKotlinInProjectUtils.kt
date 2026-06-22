@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.externalSystem.JavaModuleData
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
@@ -64,7 +63,6 @@ import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.vfilefinder.IdeVirtualFileFinder
 import org.jetbrains.kotlin.idea.vfilefinder.KlibMetaFileIndex
-import org.jetbrains.kotlin.idea.vfilefinder.KotlinJavaScriptMetaFileIndex
 import org.jetbrains.kotlin.idea.vfilefinder.hasSomethingInPackage
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.isCommon
@@ -376,7 +374,6 @@ fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {
         val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
         DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
             scope.hasKotlinJvmRuntime(module.project)
-                    || runReadAction { hasKotlinJsKjsmFile(LibraryKindSearchScope(module, scope, KotlinJavaScriptLibraryKind)) }
                     || hasKotlinCommonRuntimeInScope(module)
                     || hasKotlinCommonLegacyRuntimeInScope(scope, module.project)
                     || hasKotlinJsRuntimeInScope(module)
@@ -426,15 +423,6 @@ fun hasKotlinJvmRuntimeInScope(module: Module): Boolean {
         val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
         DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode<Boolean, Throwable> {
             scope.hasKotlinJvmRuntime(module.project)
-        }
-    }
-}
-
-fun hasKotlinJsLegacyRuntimeInScope(module: Module): Boolean {
-    return syncNonBlockingReadAction(module.project) {
-        val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
-        runReadAction {
-            hasKotlinJsKjsmFile(LibraryKindSearchScope(module, scope, KotlinJavaScriptLibraryKind))
         }
     }
 }
@@ -609,10 +597,6 @@ private val KOTLIN_WASM_JS_FQ_NAME = FqName("kotlin.wasm.js")
 private val KOTLIN_WASM_WASI_FQ_NAME = FqName("kotlin.wasm.wasi")
 
 private val KOTLIN_NATIVE_FQ_NAME = FqName("kotlin.native")
-
-private fun hasKotlinJsKjsmFile(scope: GlobalSearchScope): Boolean {
-    return hasSomethingInPackage(KotlinJavaScriptMetaFileIndex.NAME, KOTLIN_JS_FQ_NAME, scope)
-}
 
 class LibraryKindSearchScope(
     val module: Module,

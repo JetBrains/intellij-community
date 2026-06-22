@@ -11,16 +11,17 @@ import com.intellij.util.containers.sequenceOfNotNull
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaUnificationSubstitutorPolicy
+import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.canBeAnalysed
 import org.jetbrains.kotlin.analysis.api.components.createSubstitutor
-import org.jetbrains.kotlin.analysis.api.components.createUnificationSubstitutor
+import org.jetbrains.kotlin.analysis.api.components.createSubtypingUnificationSubstitutor
 import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.components.isSubClassOf
 import org.jetbrains.kotlin.analysis.api.components.lowerBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.components.memberScope
 import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
+import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.components.substitute
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
@@ -30,6 +31,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.findClass
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -40,6 +42,7 @@ import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsert
 import org.jetbrains.kotlin.idea.completion.api.serialization.ensureSerializable
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalElementOfSelf
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.WithImportInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.isAfterRangeOperator
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.ImportStrategy
@@ -52,6 +55,7 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleParameterPositionContext
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
@@ -265,14 +269,16 @@ internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P
             .toMap()
             .let { createSubstitutor(it) }
 
+        val fixedTypeParameters: List<KaTypeParameterSymbol> by lazy(LazyThreadSafetyMode.NONE) {
+            getAccessibleTypeParameters()
+        }
+
         val substituted = components.mapNotNull { callableSymbol ->
             val substitutor = if (callableSymbol.isExtension) {
                 val receiverType = callableSymbol.receiverType ?: return@mapNotNull null
-                createUnificationSubstitutor(
-                    parameterType,
-                    receiverType,
-                    KaUnificationSubstitutorPolicy.UNIVERSAL
-                ) ?: return@mapNotNull null
+                createSubtypingUnificationSubstitutor(listOf(parameterType to receiverType)) { typeParameter ->
+                    typeParameter !in fixedTypeParameters
+                } ?: return@mapNotNull null
             } else {
                 defaultSubstitutor
             }
@@ -320,6 +326,27 @@ internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P
         ) return emptyList()
 
         return symbolsByIndex.values
+    }
+
+    /**
+     * Returns a list of type parameters that are accessible from the completion position.
+     * Type parameters are taken from the original file to ensure proper PSI equality.
+     */
+    context(_: KaSession, context: K2CompletionSectionContext<P>)
+    private fun getAccessibleTypeParameters(): List<KaTypeParameterSymbol> {
+        /**
+         * Position is located in the copy file, while all KaTypes for the subtyping check are taken from the original one.
+         * To have a proper PSI equality on type parameter symbols, we need to search for available type parameters
+         * in the original file. For this purpose, the enclosing lambda is taken as an anchor to find the corresponding original KtElement.
+         */
+        val enclosingLambda = context.positionContext.position.parentOfType<KtBlockExpression>(withSelf = true) ?: return emptyList()
+        val originalFile = context.completionContext.originalFile
+        val originalLambda = getOriginalElementOfSelf(enclosingLambda, originalFile)
+        return originalFile.scopeContext(originalLambda).scopes.filter { scopeWithKind ->
+            scopeWithKind.kind is KaScopeKind.TypeParameterScope
+        }.flatMap { scopeWithKind ->
+            scopeWithKind.scope.classifiers.filterIsInstance<KaTypeParameterSymbol>()
+        }
     }
 }
 

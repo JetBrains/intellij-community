@@ -91,7 +91,6 @@ class KotlinPartialPackageNamesIndex : FileBasedIndexExtension<FqName, Name?>() 
             KotlinFileType.INSTANCE -> this.psiFile.safeAs<KtFile>()?.packageFqName
             JavaClassFileType.INSTANCE -> ClsKotlinBinaryClassCache.getInstance()
                 .getKotlinBinaryClassHeaderData(this.file, this.content)?.packageNameWithFallback
-            KotlinJavaScriptMetaFileType -> this.fqNameFromJsMetadata()
             KotlinBuiltInFileType -> this.classIdFromKotlinMetadata()?.packageFqName
             KlibMetaFileType -> KlibLoadingMetadataCache.getInstance().getCachedPackageFragment(file)
                 ?.getExtension(KlibMetadataProtoBuf.fqName)?.let(::FqName)

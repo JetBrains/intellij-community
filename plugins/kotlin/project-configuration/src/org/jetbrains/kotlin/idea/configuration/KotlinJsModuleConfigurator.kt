@@ -30,7 +30,7 @@ open class KotlinJsModuleConfigurator : KotlinWithLibraryConfigurator<DummyLibra
     override val presentableText: String
         get() = KotlinProjectConfigurationBundle.message("language.name.javascript")
 
-    override fun isConfigured(module: Module): Boolean = hasKotlinJsLegacyRuntimeInScope(module)
+    override fun isConfigured(module: Module): Boolean = false
 
     override val libraryName: String
         get() = JSLibraryStdDescription.LIBRARY_NAME
