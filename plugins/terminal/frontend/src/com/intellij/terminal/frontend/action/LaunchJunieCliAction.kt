@@ -6,8 +6,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.terminal.agent.TerminalAgent
-import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
+import org.jetbrains.plugins.terminal.fus.TerminalTabOpeningWay
 
 /**
  * Launches the Junie CLI agent in a new terminal session.
@@ -42,7 +42,7 @@ internal class LaunchJunieCliAction : DumbAwareAction(), ActionRemoteBehaviorSpe
 
     // Launch Junie directly via the shared helper (which also records it as the last launched agent),
     // instead of re-dispatching LaunchSelectedAgentAction.
-    launchTerminalAgent(project, junieAgentKey, null, TerminalStartupFusInfo(TerminalOpeningWay.AI_AGENTS_BUTTON))
+    launchTerminalAgent(project, junieAgentKey, null, TerminalStartupFusInfo(TerminalTabOpeningWay.AI_AGENTS_BUTTON))
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

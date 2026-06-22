@@ -7,12 +7,12 @@ import kotlin.time.TimeSource
 
 @ApiStatus.Internal
 data class TerminalStartupFusInfo @JvmOverloads constructor(
-  val way: TerminalOpeningWay,
+  val way: TerminalTabOpeningWay,
   val triggerTime: TimeMark = TimeSource.Monotonic.markNow(),
 )
 
 @ApiStatus.Internal
-enum class TerminalOpeningWay {
+enum class TerminalTabOpeningWay {
   OPEN_TOOLWINDOW,
   OPEN_NEW_TAB,
   START_NEW_PREDEFINED_SESSION,

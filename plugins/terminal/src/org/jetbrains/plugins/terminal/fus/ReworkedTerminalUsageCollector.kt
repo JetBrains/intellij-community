@@ -35,6 +35,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val HYPERLINK_INFO_CLASS = EventFields.Class("hyperlink_info_class")
   private val TERMINAL_OPENING_WAY = EventFields.Enum<TerminalOpeningWay>("opening_way")
   private val TABS_COUNT = EventFields.Int("tab_count")
+  private val TERMINAL_TAB_OPENING_WAY = EventFields.Enum<TerminalTabOpeningWay>("opening_way")
   private val FOCUS = StringEventField.ValidatedByCustomValidationRule("counterpart", TerminalFocusRule::class.java)
   private val AGENT_WORKBENCH_PROVIDER_FIELD = EventFields.String("provider", listOf("codex", "claude"))
   private val TERMINAL_AI_AGENT_FIELD = EventFields.Enum<FusTerminalAiAgent>("agent")
@@ -111,17 +112,17 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
 
   private val startupCursorShowingLatency = GROUP.registerVarargEvent(
     "startup.cursor.showing.latency",
-    TERMINAL_OPENING_WAY, DURATION_FIELD,
+    TERMINAL_TAB_OPENING_WAY, DURATION_FIELD,
   )
 
   private val startupShellStartingLatency = GROUP.registerVarargEvent(
     "startup.shell.starting.latency",
-    TERMINAL_OPENING_WAY, DURATION_FIELD,
+    TERMINAL_TAB_OPENING_WAY, DURATION_FIELD,
   )
 
   private val startupFirstOutputLatency = GROUP.registerVarargEvent(
     "startup.first.output.latency",
-    TERMINAL_OPENING_WAY, DURATION_FIELD,
+    TERMINAL_TAB_OPENING_WAY, DURATION_FIELD,
   )
 
   private val tabClosingCheckLatency = GROUP.registerVarargEvent("tab.closing.check.latency", DURATION_FIELD)
@@ -264,23 +265,23 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     hyperlinkFollowedEvent.log(javaClass)
   }
 
-  fun logStartupCursorShowingLatency(openingWay: TerminalOpeningWay, duration: Duration) {
+  fun logStartupCursorShowingLatency(openingWay: TerminalTabOpeningWay, duration: Duration) {
     startupCursorShowingLatency.log(
-      TERMINAL_OPENING_WAY with openingWay,
+      TERMINAL_TAB_OPENING_WAY with openingWay,
       DURATION_FIELD with duration,
     )
   }
 
-  fun logStartupShellStartingLatency(openingWay: TerminalOpeningWay, duration: Duration) {
+  fun logStartupShellStartingLatency(openingWay: TerminalTabOpeningWay, duration: Duration) {
     startupShellStartingLatency.log(
-      TERMINAL_OPENING_WAY with openingWay,
+      TERMINAL_TAB_OPENING_WAY with openingWay,
       DURATION_FIELD with duration,
     )
   }
 
-  fun logStartupFirstOutputLatency(openingWay: TerminalOpeningWay, duration: Duration) {
+  fun logStartupFirstOutputLatency(openingWay: TerminalTabOpeningWay, duration: Duration) {
     startupFirstOutputLatency.log(
-      TERMINAL_OPENING_WAY with openingWay,
+      TERMINAL_TAB_OPENING_WAY with openingWay,
       DURATION_FIELD with duration,
     )
   }

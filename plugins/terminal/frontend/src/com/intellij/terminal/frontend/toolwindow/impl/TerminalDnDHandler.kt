@@ -23,8 +23,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
+import org.jetbrains.plugins.terminal.fus.TerminalTabOpeningWay
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 
@@ -83,7 +83,7 @@ internal object TerminalDnDHandler {
         return@launch
 
       val dir = getDirectory(filePath) ?: return@launch
-      val fusInfo = TerminalStartupFusInfo(TerminalOpeningWay.DND_FILE_TO_TOOLWINDOW)
+      val fusInfo = TerminalStartupFusInfo(TerminalTabOpeningWay.DND_FILE_TO_TOOLWINDOW)
       withContext(Dispatchers.EDT) {
         createTerminalTab(
           window.project,
