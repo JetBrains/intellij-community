@@ -24,7 +24,6 @@ open class ProblemsViewState : BaseState() {
 
   var autoscrollToSource: Boolean by property(false)
   var showPreview: Boolean by property(false)
-  var showToolbar: Boolean by property(true)
 
   var groupByToolId: Boolean by property(false)
   var sortFoldersFirst: Boolean by property(true)
