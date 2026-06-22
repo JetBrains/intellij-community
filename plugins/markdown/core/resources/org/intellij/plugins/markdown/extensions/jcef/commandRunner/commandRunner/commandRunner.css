@@ -21,3 +21,10 @@
 .hidden {
   display: none;
 }
+
+.run-icon::before,
+.run-icon::after,
+.run-icon-line::before,
+.run-icon-line::after {
+  content: none;
+}
