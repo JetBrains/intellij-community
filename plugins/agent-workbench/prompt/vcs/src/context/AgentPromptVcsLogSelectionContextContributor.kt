@@ -14,15 +14,24 @@ import com.intellij.agent.workbench.prompt.core.dataContextOrNull
 import com.intellij.agent.workbench.prompt.vcs.AgentPromptVcsBundle
 import com.intellij.agent.workbench.prompt.vcs.context.AgentPromptVcsIssueUrls.buildVcsCommitPayloadEntry
 import com.intellij.agent.workbench.prompt.vcs.context.AgentPromptVcsIssueUrls.resolveIssueUrls
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.vcs.log.VcsLogCommitSelection
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.data.LoadingDetails
+import com.intellij.vcs.log.ui.render.GraphCommitCell
 import com.intellij.vcs.log.util.VcsUserUtil
+import com.intellij.util.ui.UIUtil
+import java.awt.Component
+import javax.swing.JTable
 
 private const val MAX_INCLUDED_SELECTION_COMMITS = 20
+private const val CONTEXT_COMPONENT_DATA_ID = "contextComponent"
+private const val VCS_LOG_GRAPH_TABLE_CLASS_NAME = "com.intellij.vcs.log.ui.table.VcsLogGraphTable"
+private val CONTEXT_COMPONENT_DATA_KEY: DataKey<Component> = DataKey.create(CONTEXT_COMPONENT_DATA_ID)
 
 private data class SelectedCommit(
   @JvmField val hash: String,
@@ -47,8 +56,8 @@ internal class AgentPromptVcsLogSelectionContextContributor : AgentPromptContext
 
     val totalSelected = selectedCommits.size
     val included = selectedCommits.take(MAX_INCLUDED_SELECTION_COMMITS)
-    val fullContent = selectedCommits.joinToString(separator = "\n") { it.hash }
-    val content = included.joinToString(separator = "\n") { it.hash }
+    val fullContent = selectedCommits.joinToString(separator = "\n") { it.renderPromptLine() }
+    val content = included.joinToString(separator = "\n") { it.renderPromptLine() }
     if (content.isBlank()) {
       return emptyList()
     }
@@ -116,6 +125,11 @@ internal class AgentPromptVcsLogSelectionContextContributor : AgentPromptContext
       return normalizeSelectedCommits(fromCommitSelection)
     }
 
+    val fromVcsLogTable = extractSelectedCommitsFromVcsLogTable(dataContext)
+    if (fromVcsLogTable.isNotEmpty()) {
+      return normalizeSelectedCommits(fromVcsLogTable)
+    }
+
     val fromRevisionNumbers = VcsDataKeys.VCS_REVISION_NUMBERS
       .getData(dataContext)
       ?.mapNotNull(::toSelectedCommit)
@@ -130,6 +144,37 @@ internal class AgentPromptVcsLogSelectionContextContributor : AgentPromptContext
       ?.let(::listOf)
       .orEmpty()
     return normalizeSelectedCommits(fromSingleRevision)
+  }
+
+  private fun extractSelectedCommitsFromVcsLogTable(dataContext: DataContext): List<SelectedCommit> {
+    val table = findVcsLogTable(CONTEXT_COMPONENT_DATA_KEY.getData(dataContext)) ?: return emptyList()
+    if (table.selectedRowCount <= 0) {
+      return emptyList()
+    }
+
+    val commits = ArrayList<SelectedCommit>()
+    table.selectedRows.forEach { row ->
+      extractSelectedCommitFromVcsLogTableRow(table, row)?.let(commits::add)
+    }
+    return commits
+  }
+
+  private fun findVcsLogTable(component: Component?): JTable? {
+    component ?: return null
+    if (component is JTable && component.javaClass.name == VCS_LOG_GRAPH_TABLE_CLASS_NAME) {
+      return component
+    }
+    return UIUtil.uiTraverser(component)
+      .filter { candidate -> candidate is JTable && candidate.javaClass.name == VCS_LOG_GRAPH_TABLE_CLASS_NAME }
+      .firstOrNull() as? JTable
+  }
+
+  private fun extractSelectedCommitFromVcsLogTableRow(table: JTable, row: Int): SelectedCommit? {
+    for (column in 0 until table.columnCount) {
+      val commit = extractVcsLogTableCommit(table.getValueAt(row, column)) ?: continue
+      return SelectedCommit(hash = commit.hash, rootPath = null, subject = commit.subject)
+    }
+    return null
   }
 
   private fun toSelectedCommit(revisionNumber: VcsRevisionNumber): SelectedCommit? {
@@ -180,6 +225,12 @@ internal class AgentPromptVcsLogSelectionContextContributor : AgentPromptContext
     return subject != null || author != null || commitTimeMs != null || rootName != null
   }
 
+  private fun SelectedCommit.renderPromptLine(): String {
+    val normalizedHash = hash.trim()
+    val normalizedSubject = subject?.trim()?.takeIf { it.isNotEmpty() && it != normalizedHash }
+    return if (normalizedSubject == null) normalizedHash else "$normalizedHash | $normalizedSubject"
+  }
+
   private fun SelectedCommit.resolveIssueUrls(project: Project): List<String> {
     val commitSelection = selection ?: return emptyList()
     val index = selectionIndex ?: return emptyList()
@@ -211,4 +262,17 @@ internal class AgentPromptVcsLogSelectionContextContributor : AgentPromptContext
                                                                     ?: cachedMetadata
                                                                       .getOrNull(index)
                                                                       ?.takeUnless { metadata -> metadata is LoadingDetails }
+}
+
+internal data class VcsLogTableCommitContext(
+  @JvmField val hash: String,
+  @JvmField val subject: String?,
+)
+
+internal fun extractVcsLogTableCommit(value: Any?): VcsLogTableCommitContext? {
+  val commit = value as? GraphCommitCell.RealCommit ?: return null
+  val commitId = commit.commitId ?: return null
+  val hash = commitId.hash.asString().trim().takeIf { it.isNotEmpty() } ?: return null
+  val subject = commit.text.trim().takeIf { it.isNotEmpty() && it != hash }
+  return VcsLogTableCommitContext(hash = hash, subject = subject)
 }
