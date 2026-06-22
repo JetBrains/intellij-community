@@ -263,7 +263,7 @@ public final class TerminalToolWindowManager implements Disposable {
     }
 
     int tabsCount = toolWindow.getContentManager().getContentsRecursively().size();
-    ReworkedTerminalUsageCollector.logTabOpened(myProject, tabsCount);
+    ReworkedTerminalUsageCollector.logTabOpened(myProject, null, tabsCount);
 
     return content;
   }

@@ -162,6 +162,11 @@ internal class TerminalToolWindowTabsManagerImpl(
     addToTabsList(tab)
     if (builder.shouldAddToToolWindow) {
       addTabToToolWindow(tab, builder.contentManager, builder.requestFocus)
+      ReworkedTerminalUsageCollector.logTabOpened(
+        project = project,
+        openingWay = builder.startupFusInfo?.way,
+        tabCount = getToolWindow().contentManager.contentsRecursively.size
+      )
     }
     return tab
   }
