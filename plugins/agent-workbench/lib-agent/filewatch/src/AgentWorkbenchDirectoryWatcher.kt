@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.filewatch
+package com.intellij.platform.ai.agent.filewatch
 
-import com.intellij.agent.workbench.filewatch.impl.DirectoryChangeEvent
-import com.intellij.agent.workbench.filewatch.impl.DirectoryChangeListener
-import com.intellij.agent.workbench.filewatch.impl.DirectoryWatcher
+import com.intellij.platform.ai.agent.filewatch.impl.DirectoryChangeEvent
+import com.intellij.platform.ai.agent.filewatch.impl.DirectoryChangeListener
+import com.intellij.platform.ai.agent.filewatch.impl.DirectoryWatcher
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

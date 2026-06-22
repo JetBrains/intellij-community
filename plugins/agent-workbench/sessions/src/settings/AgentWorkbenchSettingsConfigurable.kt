@@ -2,7 +2,7 @@
 package com.intellij.agent.workbench.sessions.settings
 
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.settings.AGENT_WORKBENCH_CHAT_SETTINGS_COMPONENT_ID
 import com.intellij.agent.workbench.settings.AGENT_WORKBENCH_PROVIDERS_SETTINGS_CONFIGURABLE_ID
 import com.intellij.agent.workbench.settings.AGENT_WORKBENCH_SETTINGS_CONFIGURABLE_ID

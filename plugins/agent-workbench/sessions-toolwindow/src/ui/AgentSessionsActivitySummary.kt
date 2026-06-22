@@ -3,13 +3,13 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 
 // @spec community/plugins/agent-workbench/spec/sessions/agent-sessions-tree.spec.md
 
-import com.intellij.agent.workbench.core.AgentThreadActivity
-import com.intellij.agent.workbench.core.AgentThreadActivityBucket
-import com.intellij.agent.workbench.core.chromeBucket
-import com.intellij.agent.workbench.core.session.AgentSessionThread
-import com.intellij.agent.workbench.common.statusColor
-import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentation
-import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationKey
+import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityBucket
+import com.intellij.platform.ai.agent.core.chromeBucket
+import com.intellij.platform.ai.agent.core.session.AgentSessionThread
+import com.intellij.platform.ai.agent.common.statusColor
+import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentation
+import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationKey
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree

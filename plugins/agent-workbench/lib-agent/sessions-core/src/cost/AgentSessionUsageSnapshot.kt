@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.sessions.core.cost
+package com.intellij.platform.ai.agent.sessions.core.cost
 
-import com.intellij.agent.workbench.core.session.AgentSessionCost
-import com.intellij.agent.workbench.core.session.AgentSessionCostKind
+import com.intellij.platform.ai.agent.core.session.AgentSessionCost
+import com.intellij.platform.ai.agent.core.session.AgentSessionCostKind
 import com.intellij.openapi.extensions.ExtensionPointName
 import java.math.BigDecimal
 

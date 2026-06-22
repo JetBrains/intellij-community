@@ -29,7 +29,7 @@ jvm_library(
         "//platform/util",
         "//plugins/agent-workbench/lib-agent/common",
         "//plugins/agent-workbench/lib-agent/core",
-        "//plugins/agent-workbench/lib-agent/sessions-core:agent-workbench-sessions-core",
+        "//plugins/agent-workbench/lib-agent/sessions-core:ai-agent-sessions-core",
     ],
 )
 
@@ -52,7 +52,7 @@ jvm_library(
         "//platform/util:util_test_lib",
         "//plugins/agent-workbench/lib-agent/common:common_test_lib",
         "//plugins/agent-workbench/lib-agent/core:core_test_lib",
-        "//plugins/agent-workbench/lib-agent/sessions-core:agent-workbench-sessions-core_test_lib",
+        "//plugins/agent-workbench/lib-agent/sessions-core:ai-agent-sessions-core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.agent.workbench.settings` end

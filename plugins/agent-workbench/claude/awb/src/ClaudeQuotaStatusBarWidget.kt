@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.claude.sessions
+package com.intellij.platform.ai.agent.claude.sessions
 
-import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
+import com.intellij.platform.ai.agent.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.agent.workbench.ui.AgentWorkbenchQuotaStatusBarPanel
 import com.intellij.agent.workbench.ui.AgentWorkbenchQuotaStatusBarRefreshLoop
 import com.intellij.agent.workbench.ui.AgentWorkbenchQuotaStatusBarUi

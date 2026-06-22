@@ -1,0 +1,4 @@
+kotlin/jvm/internal/DefaultConstructorMarker
+tools/jackson/core/JsonGenerator
+tools/jackson/core/JsonParser
+tools/jackson/core/JsonToken

@@ -1,0 +1,19 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.ai.agent.common"/>
+    <module name="intellij.platform.ai.agent.core"/>
+    <module name="intellij.agent.workbench.prompt.core"/>
+    <module name="intellij.platform.ai.agent.sessions.core"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <agent.workbench.sessionProvider
+      id="agentWorkbenchTerminal"
+      order="after agentWorkbenchPi"
+      implementation="com.intellij.platform.ai.agent.terminal.sessions.TerminalAgentSessionProviderDescriptor"/>
+    <agent.workbench.sessionLaunchContributor implementation="com.intellij.platform.ai.agent.terminal.sessions.TerminalSessionLaunchContributor"/>
+    <applicationSettings service="com.intellij.platform.ai.agent.terminal.sessions.TerminalSessionStateService"/>
+  </extensions>
+</idea-plugin>

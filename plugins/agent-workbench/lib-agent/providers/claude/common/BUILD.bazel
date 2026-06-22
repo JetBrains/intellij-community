@@ -1,6 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.agent.workbench.claude.common` start
+### auto-generated section `build intellij.platform.ai.agent.claude.common` start
 
 jvm_library(
     name = "common",
@@ -12,7 +12,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.agent.workbench.claude.common",
+    module_name = "intellij.platform.ai.agent.claude.common",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -35,7 +35,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    module_name = "intellij.agent.workbench.claude.common",
+    module_name = "intellij.platform.ai.agent.claude.common",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -46,13 +46,13 @@ jvm_library(
         "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
     ],
 )
-### auto-generated section `build intellij.agent.workbench.claude.common` end
+### auto-generated section `build intellij.platform.ai.agent.claude.common` end
 
-### auto-generated section `iml intellij.agent.workbench.claude.common` start
+### auto-generated section `iml intellij.platform.ai.agent.claude.common` start
 exports_files(
     [
-        "intellij.agent.workbench.claude.common.iml",
+        "intellij.platform.ai.agent.claude.common.iml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml intellij.agent.workbench.claude.common` end
+### auto-generated section `iml intellij.platform.ai.agent.claude.common` end

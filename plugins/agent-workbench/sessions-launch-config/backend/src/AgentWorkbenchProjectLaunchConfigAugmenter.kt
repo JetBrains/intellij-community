@@ -3,10 +3,10 @@ package com.intellij.agent.workbench.sessions.launch.config.backend
 
 // @spec community/plugins/agent-workbench/spec/launch/agent-project-launch-config.spec.md
 
-import com.intellij.agent.workbench.core.parseAgentWorkbenchPathOrNull
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchSpecAugmenter
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.platform.ai.agent.core.parseAgentWorkbenchPathOrNull
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchSpecAugmenter
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger

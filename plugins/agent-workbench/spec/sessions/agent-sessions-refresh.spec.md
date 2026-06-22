@@ -72,7 +72,7 @@ Session refresh is event-driven and provider-agnostic. It merges provider result
 ## Testing / Local Run
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test "com.intellij.agent.workbench.sessions.AgentSessionRefresh*Test"`
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionLoadAggregationTest`
-- `./tests.cmd --module intellij.agent.workbench.filewatch.tests --test com.intellij.agent.workbench.filewatch.AgentWorkbenchDirectoryWatcherTest`
+- `./tests.cmd --module intellij.platform.ai.agent.filewatch.tests --test com.intellij.platform.ai.agent.filewatch.AgentWorkbenchDirectoryWatcherTest`
 
 ## References
 - `agent-sessions.spec.md`

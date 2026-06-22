@@ -1,6 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package com.intellij.agent.workbench.codex.sessions.backend.rollout
+package com.intellij.platform.ai.agent.codex.sessions.backend.rollout
 
 // @spec community/plugins/agent-workbench/spec/chat/agent-chat-structure-view.spec.md
 
@@ -8,31 +8,31 @@ import tools.jackson.core.JsonParser
 import tools.jackson.core.JsonToken
 import tools.jackson.core.ObjectReadContext
 import tools.jackson.core.json.JsonFactory
-import com.intellij.agent.workbench.codex.common.CodexThread
-import com.intellij.agent.workbench.codex.common.CodexThreadActivityProjection
-import com.intellij.agent.workbench.codex.common.CodexThreadActivitySignal
-import com.intellij.agent.workbench.codex.common.CodexThreadSourceKind
-import com.intellij.agent.workbench.codex.common.CodexThreadStatusKind
-import com.intellij.agent.workbench.codex.common.forEachObjectField
-import com.intellij.agent.workbench.codex.common.normalizeRootPath
-import com.intellij.agent.workbench.codex.common.readLongOrNull
-import com.intellij.agent.workbench.codex.common.readStringOrNull
-import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
-import com.intellij.agent.workbench.codex.sessions.backend.isResponseRequired
-import com.intellij.agent.workbench.codex.sessions.backend.toCodexSessionActivity
-import com.intellij.agent.workbench.codex.sessions.codexUserPromptOutlineItemId
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.core.session.agentSessionOutlinePhaseTitle
-import com.intellij.agent.workbench.core.session.compactAgentSessionOutlineText
-import com.intellij.agent.workbench.core.session.dedupeAgentSessionOutlineText
-import com.intellij.agent.workbench.core.session.normalizeAgentSessionOutlinePreview
-import com.intellij.agent.workbench.core.session.summarizeAgentSessionOutlineChildren
-import com.intellij.agent.workbench.json.WorkbenchJsonlScanner
-import com.intellij.agent.workbench.json.createJsonParser
-import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
-import com.intellij.agent.workbench.core.session.AgentSessionOutlineItem
-import com.intellij.agent.workbench.core.session.AgentSessionOutlineItemKind
-import com.intellij.agent.workbench.core.session.AgentSessionThreadOutline
+import com.intellij.platform.ai.agent.codex.common.CodexThread
+import com.intellij.platform.ai.agent.codex.common.CodexThreadActivityProjection
+import com.intellij.platform.ai.agent.codex.common.CodexThreadActivitySignal
+import com.intellij.platform.ai.agent.codex.common.CodexThreadSourceKind
+import com.intellij.platform.ai.agent.codex.common.CodexThreadStatusKind
+import com.intellij.platform.ai.agent.codex.common.forEachObjectField
+import com.intellij.platform.ai.agent.codex.common.normalizeRootPath
+import com.intellij.platform.ai.agent.codex.common.readLongOrNull
+import com.intellij.platform.ai.agent.codex.common.readStringOrNull
+import com.intellij.platform.ai.agent.codex.sessions.backend.CodexBackendThread
+import com.intellij.platform.ai.agent.codex.sessions.backend.isResponseRequired
+import com.intellij.platform.ai.agent.codex.sessions.backend.toCodexSessionActivity
+import com.intellij.platform.ai.agent.codex.sessions.codexUserPromptOutlineItemId
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.core.session.agentSessionOutlinePhaseTitle
+import com.intellij.platform.ai.agent.core.session.compactAgentSessionOutlineText
+import com.intellij.platform.ai.agent.core.session.dedupeAgentSessionOutlineText
+import com.intellij.platform.ai.agent.core.session.normalizeAgentSessionOutlinePreview
+import com.intellij.platform.ai.agent.core.session.summarizeAgentSessionOutlineChildren
+import com.intellij.platform.ai.agent.json.WorkbenchJsonlScanner
+import com.intellij.platform.ai.agent.json.createJsonParser
+import com.intellij.platform.ai.agent.sessions.core.cost.AgentSessionUsageSnapshot
+import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItem
+import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItemKind
+import com.intellij.platform.ai.agent.core.session.AgentSessionThreadOutline
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import java.io.BufferedReader

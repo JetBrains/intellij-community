@@ -2,10 +2,10 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
-import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
-import com.intellij.agent.workbench.core.normalizeAgentWorkbenchPath
-import com.intellij.agent.workbench.core.session.AgentSessionLaunchMode
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.common.AgentWorkbenchActionIds
+import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
+import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfileKind
@@ -18,8 +18,8 @@ import com.intellij.agent.workbench.sessions.actions.AgentSessionsMainToolbarNew
 import com.intellij.agent.workbench.sessions.actions.ProfileQuickStartAction
 import com.intellij.agent.workbench.sessions.actions.resolveAgentSessionsMainToolbarNewThreadContext
 import com.intellij.agent.workbench.sessions.actions.resolveQuickStartProjectPopupAnchor
-import com.intellij.agent.workbench.sessions.core.providers.builtInLaunchProfileId
-import com.intellij.agent.workbench.sessions.core.providers.initialMessageRequestForLaunchProfile
+import com.intellij.platform.ai.agent.sessions.core.providers.builtInLaunchProfileId
+import com.intellij.platform.ai.agent.sessions.core.providers.initialMessageRequestForLaunchProfile
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.agent.workbench.ui.AgentWorkbenchPopupStep

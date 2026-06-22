@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package com.intellij.agent.workbench.codex.sessions.backend.rollout
+package com.intellij.platform.ai.agent.codex.sessions.backend.rollout
 
-import com.intellij.agent.workbench.filewatch.AgentWorkbenchWatchEvent
-import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
-import com.intellij.agent.workbench.json.filebacked.FileBackedSessionWatcher
-import com.intellij.agent.workbench.json.filebacked.FileBackedSessionWatcherSpec
-import com.intellij.agent.workbench.json.filebacked.classifyFileBackedSessionEvent
-import com.intellij.agent.workbench.json.filebacked.normalizeFileBackedSessionPath
+import com.intellij.platform.ai.agent.filewatch.AgentWorkbenchWatchEvent
+import com.intellij.platform.ai.agent.json.filebacked.FileBackedSessionChangeSet
+import com.intellij.platform.ai.agent.json.filebacked.FileBackedSessionWatcher
+import com.intellij.platform.ai.agent.json.filebacked.FileBackedSessionWatcherSpec
+import com.intellij.platform.ai.agent.json.filebacked.classifyFileBackedSessionEvent
+import com.intellij.platform.ai.agent.json.filebacked.normalizeFileBackedSessionPath
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.CoroutineScope
 import java.nio.file.Path

@@ -1,25 +1,25 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("SSBasedInspection")
 
-package com.intellij.agent.workbench.claude.sessions.backend.store
+package com.intellij.platform.ai.agent.claude.sessions.backend.store
 
-import com.intellij.agent.workbench.claude.common.ClaudeSessionsStore
-import com.intellij.agent.workbench.claude.common.ClaudeSessionIndexEntry
-import com.intellij.agent.workbench.claude.common.ClaudeSessionThread
-import com.intellij.agent.workbench.claude.common.ClaudeSessionTitleSource
-import com.intellij.agent.workbench.claude.common.ClaudeUsageSnapshot
-import com.intellij.agent.workbench.claude.common.ClaudeSessionUsageFile
-import com.intellij.agent.workbench.claude.common.isClaudeArchivedThreadTitle
-import com.intellij.agent.workbench.claude.common.resolveClaudeThreadTitleState
-import com.intellij.agent.workbench.claude.sessions.ClaudeBackendThread
-import com.intellij.agent.workbench.json.filebacked.FileBackedSessionCachedFile
-import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
-import com.intellij.agent.workbench.json.filebacked.FileBackedSessionFileStat
-import com.intellij.agent.workbench.json.filebacked.FileBackedSessionInvalidationState
-import com.intellij.agent.workbench.json.filebacked.FileBackedSessionRescanPlan
-import com.intellij.agent.workbench.json.filebacked.buildFileBackedSessionFileStat
-import com.intellij.agent.workbench.json.filebacked.toFileBackedSessionPathKey
-import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
+import com.intellij.platform.ai.agent.claude.common.ClaudeSessionsStore
+import com.intellij.platform.ai.agent.claude.common.ClaudeSessionIndexEntry
+import com.intellij.platform.ai.agent.claude.common.ClaudeSessionThread
+import com.intellij.platform.ai.agent.claude.common.ClaudeSessionTitleSource
+import com.intellij.platform.ai.agent.claude.common.ClaudeUsageSnapshot
+import com.intellij.platform.ai.agent.claude.common.ClaudeSessionUsageFile
+import com.intellij.platform.ai.agent.claude.common.isClaudeArchivedThreadTitle
+import com.intellij.platform.ai.agent.claude.common.resolveClaudeThreadTitleState
+import com.intellij.platform.ai.agent.claude.sessions.ClaudeBackendThread
+import com.intellij.platform.ai.agent.json.filebacked.FileBackedSessionCachedFile
+import com.intellij.platform.ai.agent.json.filebacked.FileBackedSessionChangeSet
+import com.intellij.platform.ai.agent.json.filebacked.FileBackedSessionFileStat
+import com.intellij.platform.ai.agent.json.filebacked.FileBackedSessionInvalidationState
+import com.intellij.platform.ai.agent.json.filebacked.FileBackedSessionRescanPlan
+import com.intellij.platform.ai.agent.json.filebacked.buildFileBackedSessionFileStat
+import com.intellij.platform.ai.agent.json.filebacked.toFileBackedSessionPathKey
+import com.intellij.platform.ai.agent.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import java.nio.file.Files

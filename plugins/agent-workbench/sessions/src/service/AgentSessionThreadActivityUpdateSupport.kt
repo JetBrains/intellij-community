@@ -1,14 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.service
 
-import com.intellij.agent.workbench.core.AgentThreadActivityReport
-import com.intellij.agent.workbench.core.session.AgentSessionThread
-import com.intellij.agent.workbench.sessions.core.normalizeAgentSessionTitle
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadPresentationUpdate
-import com.intellij.agent.workbench.sessions.core.providers.mergeAgentSessionThreadPresentationUpdates
-import com.intellij.agent.workbench.sessions.core.providers.toPresentationUpdate
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
+import com.intellij.platform.ai.agent.core.session.AgentSessionThread
+import com.intellij.platform.ai.agent.sessions.core.normalizeAgentSessionTitle
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshHints
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadActivityUpdate
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadPresentationUpdate
+import com.intellij.platform.ai.agent.sessions.core.providers.mergeAgentSessionThreadPresentationUpdates
+import com.intellij.platform.ai.agent.sessions.core.providers.toPresentationUpdate
 
 internal data class ResolvedAgentThreadActivityReportUpdate(
   @JvmField val activityReport: AgentThreadActivityReport,

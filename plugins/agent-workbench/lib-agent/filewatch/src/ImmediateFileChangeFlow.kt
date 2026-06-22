@@ -1,17 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.filewatch
+package com.intellij.platform.ai.agent.filewatch
 
-import com.intellij.agent.workbench.filewatch.impl.watchservice.jna.KEvent
-import com.intellij.agent.workbench.filewatch.impl.watchservice.jna.K_EVENT_ADD
-import com.intellij.agent.workbench.filewatch.impl.watchservice.jna.K_EVENT_CLEAR
-import com.intellij.agent.workbench.filewatch.impl.watchservice.jna.K_EVENT_FILTER_VNODE
-import com.intellij.agent.workbench.filewatch.impl.watchservice.jna.K_NOTE_DELETE
-import com.intellij.agent.workbench.filewatch.impl.watchservice.jna.K_NOTE_EXTEND
-import com.intellij.agent.workbench.filewatch.impl.watchservice.jna.K_NOTE_RENAME
-import com.intellij.agent.workbench.filewatch.impl.watchservice.jna.K_NOTE_REVOKE
-import com.intellij.agent.workbench.filewatch.impl.watchservice.jna.K_NOTE_WRITE
-import com.intellij.agent.workbench.filewatch.impl.watchservice.jna.K_QUEUE_OPEN_EVENT_ONLY
-import com.intellij.agent.workbench.filewatch.impl.watchservice.jna.macKQueueApi
+import com.intellij.platform.ai.agent.filewatch.impl.watchservice.jna.KEvent
+import com.intellij.platform.ai.agent.filewatch.impl.watchservice.jna.K_EVENT_ADD
+import com.intellij.platform.ai.agent.filewatch.impl.watchservice.jna.K_EVENT_CLEAR
+import com.intellij.platform.ai.agent.filewatch.impl.watchservice.jna.K_EVENT_FILTER_VNODE
+import com.intellij.platform.ai.agent.filewatch.impl.watchservice.jna.K_NOTE_DELETE
+import com.intellij.platform.ai.agent.filewatch.impl.watchservice.jna.K_NOTE_EXTEND
+import com.intellij.platform.ai.agent.filewatch.impl.watchservice.jna.K_NOTE_RENAME
+import com.intellij.platform.ai.agent.filewatch.impl.watchservice.jna.K_NOTE_REVOKE
+import com.intellij.platform.ai.agent.filewatch.impl.watchservice.jna.K_NOTE_WRITE
+import com.intellij.platform.ai.agent.filewatch.impl.watchservice.jna.K_QUEUE_OPEN_EVENT_ONLY
+import com.intellij.platform.ai.agent.filewatch.impl.watchservice.jna.macKQueueApi
 import com.intellij.openapi.util.SystemInfoRt.isMac
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow

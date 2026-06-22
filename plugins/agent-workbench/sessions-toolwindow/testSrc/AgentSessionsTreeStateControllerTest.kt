@@ -4,10 +4,10 @@ package com.intellij.agent.workbench.sessions.toolwindow
 import com.intellij.agent.workbench.chat.AgentChatOpenPendingTabsState
 import com.intellij.agent.workbench.chat.AgentChatPendingTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatTabSelection
-import com.intellij.agent.workbench.core.AgentThreadActivity
-import com.intellij.agent.workbench.core.buildAgentThreadIdentity
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.core.session.AgentSessionThread
+import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.buildAgentThreadIdentity
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.model.AgentArchivedSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentSessionArchivedRangePreset
 import com.intellij.agent.workbench.sessions.model.AgentSessionThreadViewMode

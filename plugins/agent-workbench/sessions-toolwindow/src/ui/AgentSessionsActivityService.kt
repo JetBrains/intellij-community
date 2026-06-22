@@ -4,9 +4,9 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 // @spec community/plugins/agent-workbench/spec/sessions/agent-sessions-tree.spec.md
 
 import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
-import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentation
-import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationKey
-import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationModel
+import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentation
+import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationKey
+import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationModel
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.isTerminal
 import com.intellij.ide.ActivityTracker

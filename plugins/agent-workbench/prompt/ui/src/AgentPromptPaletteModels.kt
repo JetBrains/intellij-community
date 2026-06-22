@@ -2,14 +2,14 @@
 package com.intellij.agent.workbench.prompt.ui
 
 import com.dynatrace.hash4j.hashing.HashValue128
-import com.intellij.agent.workbench.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.agent.workbench.prompt.core.AgentPromptChipRenderInput
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormatter
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRenderers
 import com.intellij.agent.workbench.prompt.core.AgentPromptManualContextSourceBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptPaletteExtension
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.SimpleColoredComponent

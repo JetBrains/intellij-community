@@ -1,10 +1,10 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.agent.workbench.codex.common"/>
-    <module name="intellij.agent.workbench.common"/>
-    <module name="intellij.agent.workbench.core"/>
-    <module name="intellij.agent.workbench.json"/>
+    <module name="intellij.platform.ai.agent.codex.common"/>
+    <module name="intellij.platform.ai.agent.common"/>
+    <module name="intellij.platform.ai.agent.core"/>
+    <module name="intellij.platform.ai.agent.json"/>
     <module name="intellij.agent.workbench.prompt.core"/>
   </dependencies>
   <!-- endregion -->

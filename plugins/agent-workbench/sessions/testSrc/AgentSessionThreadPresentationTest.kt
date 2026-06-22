@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-import com.intellij.agent.workbench.sessions.core.formatAgentSessionRelativeTimeShort
-import com.intellij.agent.workbench.sessions.core.formatAgentSessionThreadTitle
-import com.intellij.agent.workbench.sessions.core.formatCompactAgentSessionThreadTitle
-import com.intellij.agent.workbench.sessions.core.formatCompactAgentSessionTitle
+import com.intellij.platform.ai.agent.sessions.core.formatAgentSessionRelativeTimeShort
+import com.intellij.platform.ai.agent.sessions.core.formatAgentSessionThreadTitle
+import com.intellij.platform.ai.agent.sessions.core.formatCompactAgentSessionThreadTitle
+import com.intellij.platform.ai.agent.sessions.core.formatCompactAgentSessionTitle
 import com.intellij.openapi.util.text.StringUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

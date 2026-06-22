@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.jbcentral
 
-import com.intellij.agent.workbench.sessions.core.util.JbCentralCliSupport
-import com.intellij.agent.workbench.sessions.core.util.JbCentralCliSupportTestHook
+import com.intellij.platform.ai.agent.sessions.core.util.JbCentralCliSupport
+import com.intellij.platform.ai.agent.sessions.core.util.JbCentralCliSupportTestHook
 import org.jetbrains.annotations.TestOnly
 
 internal const val AGENT_WORKBENCH_JBCENTRAL_PATH_PROPERTY: String = "agent.workbench.sessions.jbcentral.path"

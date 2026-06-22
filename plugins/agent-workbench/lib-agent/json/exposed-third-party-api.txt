@@ -1,0 +1,5 @@
+kotlin/jvm/internal/DefaultConstructorMarker
+tools/jackson/core/JsonGenerator
+tools/jackson/core/JsonParser
+tools/jackson/core/PrettyPrinter
+tools/jackson/core/json/JsonFactory

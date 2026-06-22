@@ -3,11 +3,11 @@
 
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.agent.workbench.common"/>
-    <module name="intellij.agent.workbench.core"/>
-    <module name="intellij.agent.workbench.json"/>
+    <module name="intellij.platform.ai.agent.common"/>
+    <module name="intellij.platform.ai.agent.core"/>
+    <module name="intellij.platform.ai.agent.json"/>
     <module name="intellij.agent.workbench.sessions.actions"/>
-    <module name="intellij.agent.workbench.sessions.core"/>
+    <module name="intellij.platform.ai.agent.sessions.core"/>
     <module name="intellij.agent.workbench.settings"/>
     <module name="intellij.agent.workbench.ui"/>
   </dependencies>
@@ -16,19 +16,19 @@
   <extensions defaultExtensionNs="com.intellij">
     <statusBarWidgetFactory
       id="claude.quota"
-      implementation="com.intellij.agent.workbench.claude.sessions.ClaudeQuotaStatusBarWidgetFactory"/>
-    <applicationSettings service="com.intellij.agent.workbench.claude.sessions.ClaudeQuotaHintStateService"/>
+      implementation="com.intellij.platform.ai.agent.claude.sessions.ClaudeQuotaStatusBarWidgetFactory"/>
+    <applicationSettings service="com.intellij.platform.ai.agent.claude.sessions.ClaudeQuotaHintStateService"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.agent.workbench">
-    <settingsContributor implementation="com.intellij.agent.workbench.claude.sessions.ClaudeQuotaSettingsContributor"/>
-    <sessionProviderUiContributor implementation="com.intellij.agent.workbench.claude.sessions.ClaudeQuotaSessionProviderUiContributor"/>
+    <settingsContributor implementation="com.intellij.platform.ai.agent.claude.sessions.ClaudeQuotaSettingsContributor"/>
+    <sessionProviderUiContributor implementation="com.intellij.platform.ai.agent.claude.sessions.ClaudeQuotaSessionProviderUiContributor"/>
   </extensions>
 
   <actions resource-bundle="messages.ClaudeSessionsBundle">
     <action
       id="AgentWorkbenchSessions.ToggleClaudeQuotaWidget"
-      class="com.intellij.agent.workbench.claude.sessions.AgentSessionsToggleClaudeQuotaWidgetAction">
+      class="com.intellij.platform.ai.agent.claude.sessions.AgentSessionsToggleClaudeQuotaWidgetAction">
       <add-to-group group-id="AgentWorkbenchSessions.ToolWindow.GearActions" anchor="before" relative-to-action="AgentWorkbenchSessions.ToggleDedicatedFrame"/>
     </action>
   </actions>

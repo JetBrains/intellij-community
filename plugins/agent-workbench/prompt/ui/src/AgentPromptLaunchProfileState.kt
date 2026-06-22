@@ -4,9 +4,9 @@ package com.intellij.agent.workbench.prompt.ui
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfileKind
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
-import com.intellij.agent.workbench.sessions.core.providers.effectiveLaunchProfiles
-import com.intellij.agent.workbench.sessions.core.providers.launchProfileMatchesBuiltIn
-import com.intellij.agent.workbench.sessions.core.providers.normalizedUserLaunchProfile
+import com.intellij.platform.ai.agent.sessions.core.providers.effectiveLaunchProfiles
+import com.intellij.platform.ai.agent.sessions.core.providers.launchProfileMatchesBuiltIn
+import com.intellij.platform.ai.agent.sessions.core.providers.normalizedUserLaunchProfile
 
 internal class AgentPromptLaunchProfileState(
   private val builtInProfiles: () -> List<AgentPromptLaunchProfile>,

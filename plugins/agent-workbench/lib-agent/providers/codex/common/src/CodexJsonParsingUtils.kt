@@ -1,12 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.codex.common
+package com.intellij.platform.ai.agent.codex.common
 
-import com.intellij.agent.workbench.json.readJsonLongOrNull
-import com.intellij.agent.workbench.json.readJsonStringOrNull
+import com.intellij.platform.ai.agent.json.readJsonLongOrNull
+import com.intellij.platform.ai.agent.json.readJsonStringOrNull
 import tools.jackson.core.JsonGenerator
 import tools.jackson.core.JsonParser
 import tools.jackson.core.JsonToken
-import com.intellij.agent.workbench.json.forEachJsonObjectField as forEachWorkbenchJsonObjectField
+import com.intellij.platform.ai.agent.json.forEachJsonObjectField as forEachWorkbenchJsonObjectField
 
 inline fun forEachObjectField(parser: JsonParser, onField: (String) -> Boolean) {
   forEachWorkbenchJsonObjectField(parser, onField)

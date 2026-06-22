@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.filewatch.impl
+package com.intellij.platform.ai.agent.filewatch.impl
 
-import com.intellij.agent.workbench.filewatch.impl.watchservice.AbstractWatchKey
-import com.intellij.agent.workbench.filewatch.impl.watchservice.AbstractWatchService
-import com.intellij.agent.workbench.filewatch.impl.watchservice.WatchablePath
+import com.intellij.platform.ai.agent.filewatch.impl.watchservice.AbstractWatchKey
+import com.intellij.platform.ai.agent.filewatch.impl.watchservice.AbstractWatchService
+import com.intellij.platform.ai.agent.filewatch.impl.watchservice.WatchablePath
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelAndJoin

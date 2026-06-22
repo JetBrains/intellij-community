@@ -1,18 +1,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.filewatch.impl.watchservice
+package com.intellij.platform.ai.agent.filewatch.impl.watchservice
 
-import com.intellij.agent.workbench.filewatch.impl.DefaultFileTreeVisitor
-import com.intellij.agent.workbench.filewatch.impl.FileTreeVisitor
-import com.intellij.agent.workbench.filewatch.impl.recursiveListFiles
-import com.intellij.agent.workbench.filewatch.impl.watchservice.jna.CFArrayRef
-import com.intellij.agent.workbench.filewatch.impl.watchservice.jna.FSEventStreamRef
-import com.intellij.agent.workbench.filewatch.impl.watchservice.jna.K_FSEVENT_STREAM_CREATE_FLAG_FILE_EVENTS
-import com.intellij.agent.workbench.filewatch.impl.watchservice.jna.K_FSEVENT_STREAM_CREATE_FLAG_NO_DEFER
-import com.intellij.agent.workbench.filewatch.impl.watchservice.jna.MacFSEventsApi
-import com.intellij.agent.workbench.filewatch.impl.watchservice.jna.cfIndex
-import com.intellij.agent.workbench.filewatch.impl.watchservice.jna.libDispatchApi
-import com.intellij.agent.workbench.filewatch.impl.watchservice.jna.macFSEventsApi
-import com.intellij.agent.workbench.filewatch.impl.watchservice.jna.toCFString
+import com.intellij.platform.ai.agent.filewatch.impl.DefaultFileTreeVisitor
+import com.intellij.platform.ai.agent.filewatch.impl.FileTreeVisitor
+import com.intellij.platform.ai.agent.filewatch.impl.recursiveListFiles
+import com.intellij.platform.ai.agent.filewatch.impl.watchservice.jna.CFArrayRef
+import com.intellij.platform.ai.agent.filewatch.impl.watchservice.jna.FSEventStreamRef
+import com.intellij.platform.ai.agent.filewatch.impl.watchservice.jna.K_FSEVENT_STREAM_CREATE_FLAG_FILE_EVENTS
+import com.intellij.platform.ai.agent.filewatch.impl.watchservice.jna.K_FSEVENT_STREAM_CREATE_FLAG_NO_DEFER
+import com.intellij.platform.ai.agent.filewatch.impl.watchservice.jna.MacFSEventsApi
+import com.intellij.platform.ai.agent.filewatch.impl.watchservice.jna.cfIndex
+import com.intellij.platform.ai.agent.filewatch.impl.watchservice.jna.libDispatchApi
+import com.intellij.platform.ai.agent.filewatch.impl.watchservice.jna.macFSEventsApi
+import com.intellij.platform.ai.agent.filewatch.impl.watchservice.jna.toCFString
 import com.sun.jna.NativeLong
 import com.sun.jna.Pointer
 import java.nio.file.Files

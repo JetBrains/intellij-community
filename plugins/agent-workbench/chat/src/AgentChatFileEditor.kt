@@ -4,19 +4,19 @@ package com.intellij.agent.workbench.chat
 // @spec community/plugins/agent-workbench/spec/chat/agent-chat-editor.spec.md
 
 import com.intellij.CommonBundle
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.core.session.AgentSessionThread
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormatter
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeSummary
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
-import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy
-import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchIntent
-import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchOperation
-import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchPlanner
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialPromptDeliveryChannel
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadRebindPolicy
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchIntent
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchOperation
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchPlanner
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryChannel
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager

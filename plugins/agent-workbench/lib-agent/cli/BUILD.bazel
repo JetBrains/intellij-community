@@ -1,7 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.agent.workbench.cli` start
+### auto-generated section `build intellij.platform.ai.agent.cli` start
 
 jvm_library(
     name = "cli",
@@ -13,7 +13,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.agent.workbench.cli",
+    module_name = "intellij.platform.ai.agent.cli",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -38,7 +38,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    module_name = "intellij.agent.workbench.cli",
+    module_name = "intellij.platform.ai.agent.cli",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -51,31 +51,31 @@ jvm_library(
         "//plugins/terminal:terminal_test_lib",
     ],
 )
-### auto-generated section `build intellij.agent.workbench.cli` end
+### auto-generated section `build intellij.platform.ai.agent.cli` end
 
-### auto-generated section `iml intellij.agent.workbench.cli` start
+### auto-generated section `iml intellij.platform.ai.agent.cli` start
 exports_files(
     [
-        "intellij.agent.workbench.cli.iml",
+        "intellij.platform.ai.agent.cli.iml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml intellij.agent.workbench.cli` end
+### auto-generated section `iml intellij.platform.ai.agent.cli` end
 
-### auto-generated section `build intellij.agent.workbench.cli.tests` start
+### auto-generated section `build intellij.platform.ai.agent.cli.tests` start
 
 jvm_library(
-    name = "agent-workbench-cli-tests",
+    name = "ai-agent-cli-tests",
     srcs = glob(
         [],
         allow_empty = True,
     ),
-    module_name = "intellij.agent.workbench.cli.tests",
+    module_name = "intellij.platform.ai.agent.cli.tests",
     visibility = ["//visibility:public"],
 )
 
 jvm_library(
-    name = "agent-workbench-cli-tests_test_lib",
+    name = "ai-agent-cli-tests_test_lib",
     testonly = True,
     srcs = glob(
         [
@@ -92,7 +92,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":agent-workbench-cli-tests",
+        ":ai-agent-cli-tests",
         "//platform/platform-util-io:ide-util-io_test_lib",
     ],
     deps = [
@@ -113,21 +113,21 @@ jvm_library(
         "//libraries/assertj-core:assertj-core_test_lib",
     ],
 )
-### auto-generated section `build intellij.agent.workbench.cli.tests` end
+### auto-generated section `build intellij.platform.ai.agent.cli.tests` end
 
-### auto-generated section `iml intellij.agent.workbench.cli.tests` start
+### auto-generated section `iml intellij.platform.ai.agent.cli.tests` start
 exports_files(
     [
-        "intellij.agent.workbench.cli.tests.iml",
+        "intellij.platform.ai.agent.cli.tests.iml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml intellij.agent.workbench.cli.tests` end
+### auto-generated section `iml intellij.platform.ai.agent.cli.tests` end
 
-### auto-generated section `test intellij.agent.workbench.cli.tests` start
+### auto-generated section `test intellij.platform.ai.agent.cli.tests` start
 
 jps_test(
-    name = "agent-workbench-cli-tests_test",
-    runtime_deps = [":agent-workbench-cli-tests_test_lib"],
+    name = "ai-agent-cli-tests_test",
+    runtime_deps = [":ai-agent-cli-tests_test_lib"],
 )
-### auto-generated section `test intellij.agent.workbench.cli.tests` end
+### auto-generated section `test intellij.platform.ai.agent.cli.tests` end

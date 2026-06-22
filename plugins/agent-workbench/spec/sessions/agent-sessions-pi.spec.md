@@ -3,8 +3,8 @@ name: Agent Workbench Pi Sessions
 description: Requirements for first-class pi.dev session support in Agent Workbench.
 targets:
   - ../../common/src/session/AgentSessionModels.kt
-  - ../../pi/sessions/resources/intellij.agent.workbench.pi.sessions.xml
-  - ../../pi/sessions-filewatch/resources/intellij.agent.workbench.pi.sessions.filewatch.xml
+  - ../../pi/sessions/resources/intellij.platform.ai.agent.pi.sessions.xml
+  - ../../pi/sessions-filewatch/resources/intellij.platform.ai.agent.pi.sessions.filewatch.xml
   - ../../pi/sessions/resources/pi-extension/agent-workbench-extension.ts
   - ../../pi/sessions/resources/pi-extension/control.ts
   - ../../pi/sessions/src/**/*.kt
@@ -99,8 +99,8 @@ Agent Workbench treats Pi as a first-class terminal-backed provider. Pi sessions
 - Any hardcoded or blended color should be treated as a documented fallback, not as the primary mapping. Prefer replacing such values with stable IDE/editor color keys when a suitable source becomes available.
 
 ## Testing / Local Run
-- `./tests.cmd --module intellij.agent.workbench.pi.sessions.tests --test 'com.intellij.agent.workbench.pi.sessions.*Test'`
-- `./tests.cmd --module intellij.agent.workbench.pi.sessions.filewatch.tests --test 'com.intellij.agent.workbench.pi.sessions.*Test'`
+- `./tests.cmd --module intellij.platform.ai.agent.pi.sessions.tests --test 'com.intellij.platform.ai.agent.pi.sessions.*Test'`
+- `./tests.cmd --module intellij.platform.ai.agent.pi.sessions.filewatch.tests --test 'com.intellij.platform.ai.agent.pi.sessions.*Test'`
 - `./tests.cmd --module intellij.agent.workbench.plugin.tests --test com.intellij.agent.workbench.plugin.AgentWorkbenchProviderRegistrationTest`
 
 ## References

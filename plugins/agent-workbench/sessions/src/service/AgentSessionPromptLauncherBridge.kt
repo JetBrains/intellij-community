@@ -3,8 +3,8 @@ package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.agent.workbench.chat.addContextToOpenTopLevelAgentChat
 import com.intellij.agent.workbench.chat.collectOpenAgentChatAddContextTargetCandidates
-import com.intellij.agent.workbench.core.normalizeAgentWorkbenchPath
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextTargetCandidate
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetResult
@@ -22,7 +22,7 @@ import com.intellij.agent.workbench.prompt.core.getAgentPromptProjectPathContext
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.sortAgentSessionThreadsForDisplay
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchTelemetry
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId

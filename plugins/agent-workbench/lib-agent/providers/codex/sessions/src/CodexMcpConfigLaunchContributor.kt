@@ -1,18 +1,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.codex.sessions
+package com.intellij.platform.ai.agent.codex.sessions
 
 import com.electronwill.nightconfig.core.CommentedConfig
 import com.electronwill.nightconfig.core.UnmodifiableConfig
 import com.electronwill.nightconfig.core.io.ParsingMode
 import com.electronwill.nightconfig.toml.TomlFormat
-import com.intellij.agent.workbench.codex.common.CodexCliUtils
-import com.intellij.agent.workbench.core.normalizeAgentWorkbenchPathOrNull
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchContributor
-import com.intellij.agent.workbench.sessions.core.launch.AwbMcpConfigBuilder
-import com.intellij.agent.workbench.sessions.core.launch.McpStreamUrlProvider
-import com.intellij.agent.workbench.sessions.core.launch.insertArgumentsBefore
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.platform.ai.agent.codex.common.CodexCliUtils
+import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPathOrNull
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchContributor
+import com.intellij.platform.ai.agent.sessions.core.launch.AwbMcpConfigBuilder
+import com.intellij.platform.ai.agent.sessions.core.launch.McpStreamUrlProvider
+import com.intellij.platform.ai.agent.sessions.core.launch.insertArgumentsBefore
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path

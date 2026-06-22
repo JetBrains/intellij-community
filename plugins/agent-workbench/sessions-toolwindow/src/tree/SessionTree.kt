@@ -4,13 +4,13 @@ package com.intellij.agent.workbench.sessions.toolwindow.tree
 // @spec community/plugins/agent-workbench/spec/sessions/agent-sessions-thread-visibility.spec.md
 
 import com.intellij.agent.workbench.chat.AgentChatTabSelection
-import com.intellij.agent.workbench.core.normalizeAgentWorkbenchPath
-import com.intellij.agent.workbench.core.parseAgentThreadIdentity
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.core.session.AgentSessionThread
-import com.intellij.agent.workbench.core.session.AgentSubAgent
+import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
+import com.intellij.platform.ai.agent.core.parseAgentThreadIdentity
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.core.session.AgentSessionThread
+import com.intellij.platform.ai.agent.core.session.AgentSubAgent
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
-import com.intellij.agent.workbench.sessions.core.formatAgentSessionRelativeTimeShort
+import com.intellij.platform.ai.agent.sessions.core.formatAgentSessionRelativeTimeShort
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
 import com.intellij.agent.workbench.sessions.model.AgentWorktree

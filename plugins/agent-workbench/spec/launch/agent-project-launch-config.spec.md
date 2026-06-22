@@ -7,7 +7,7 @@ targets:
   - ../../sessions-launch-config/backend/testSrc/*.kt
   - ../../sessions-core/src/config/*.kt
   - ../../sessions-core/src/launch/*.kt
-  - ../../sessions-core/resources/intellij.agent.workbench.sessions.core.xml
+  - ../../sessions-core/resources/intellij.platform.ai.agent.sessions.core.xml
   - ../../sessions/src/service/AgentSessionRefreshCoordinator.kt
   - ../../sessions/src/service/AgentSessionLaunchService.kt
   - ../../sessions-core/src/launch/AgentSessionChatOpenPlan.kt

@@ -2,7 +2,7 @@
 // @spec community/plugins/agent-workbench/spec/chat/agent-chat-editor.spec.md
 package com.intellij.agent.workbench.chat
 
-import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationChangeSet
+import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationChangeSet
 import com.intellij.openapi.application.EDT
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

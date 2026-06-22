@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("TestOnlyProblems")
 
-package com.intellij.agent.workbench.junie.common
+package com.intellij.platform.ai.agent.junie.common
 
-import com.intellij.agent.workbench.cli.resolveExecutableFromPathOrLocalBin
-import com.intellij.agent.workbench.cli.resolveExecutableOrDefaultViaTerminalResolver as resolveCliExecutableOrDefaultViaTerminalResolver
-import com.intellij.agent.workbench.cli.resolveExecutableViaTerminalResolver as findCliExecutableViaTerminalResolver
+import com.intellij.platform.ai.agent.cli.resolveExecutableFromPathOrLocalBin
+import com.intellij.platform.ai.agent.cli.resolveExecutableOrDefaultViaTerminalResolver as resolveCliExecutableOrDefaultViaTerminalResolver
+import com.intellij.platform.ai.agent.cli.resolveExecutableViaTerminalResolver as findCliExecutableViaTerminalResolver
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.EelProcess

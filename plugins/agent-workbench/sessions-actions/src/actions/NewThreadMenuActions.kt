@@ -3,10 +3,10 @@ package com.intellij.agent.workbench.sessions.actions
 
 // @spec community/plugins/agent-workbench/spec/sessions/agent-terminal-sessions.spec.md
 
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
-import com.intellij.agent.workbench.sessions.core.providers.generationSettingsForPlanMode
-import com.intellij.agent.workbench.sessions.core.providers.initialMessageRequestForLaunchProfile
+import com.intellij.platform.ai.agent.sessions.core.providers.generationSettingsForPlanMode
+import com.intellij.platform.ai.agent.sessions.core.providers.initialMessageRequestForLaunchProfile
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.openapi.components.service

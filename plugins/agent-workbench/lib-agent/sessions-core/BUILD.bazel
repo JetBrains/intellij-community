@@ -1,9 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.agent.workbench.sessions.core` start
+### auto-generated section `build intellij.platform.ai.agent.sessions.core` start
 
 jvm_library(
-    name = "agent-workbench-sessions-core",
+    name = "ai-agent-sessions-core",
     srcs = glob(
         [
             "src/**/*.kt",
@@ -12,7 +12,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.agent.workbench.sessions.core",
+    module_name = "intellij.platform.ai.agent.sessions.core",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -36,17 +36,17 @@ jvm_library(
 )
 
 jvm_library(
-    name = "agent-workbench-sessions-core_test_lib",
+    name = "ai-agent-sessions-core_test_lib",
     testonly = True,
     srcs = glob(
         [],
         allow_empty = True,
     ),
-    module_name = "intellij.agent.workbench.sessions.core",
+    module_name = "intellij.platform.ai.agent.sessions.core",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":agent-workbench-sessions-core",
+        ":ai-agent-sessions-core",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/core-ui:core-ui_test_lib",
@@ -60,13 +60,13 @@ jvm_library(
         "//plugins/agent-workbench/lib-agent/json:json_test_lib",
     ],
 )
-### auto-generated section `build intellij.agent.workbench.sessions.core` end
+### auto-generated section `build intellij.platform.ai.agent.sessions.core` end
 
-### auto-generated section `iml intellij.agent.workbench.sessions.core` start
+### auto-generated section `iml intellij.platform.ai.agent.sessions.core` start
 exports_files(
     [
-        "intellij.agent.workbench.sessions.core.iml",
+        "intellij.platform.ai.agent.sessions.core.iml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml intellij.agent.workbench.sessions.core` end
+### auto-generated section `iml intellij.platform.ai.agent.sessions.core` end

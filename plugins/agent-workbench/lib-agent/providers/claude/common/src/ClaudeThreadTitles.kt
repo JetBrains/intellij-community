@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.claude.common
+package com.intellij.platform.ai.agent.claude.common
 
-import com.intellij.agent.workbench.core.session.AGENT_SESSION_ARCHIVED_THREAD_TITLE_PREFIX
-import com.intellij.agent.workbench.core.session.AgentSessionArchivedTitleState
-import com.intellij.agent.workbench.core.session.buildAgentSessionArchivedThreadTitle
-import com.intellij.agent.workbench.core.session.isAgentSessionArchivedThreadTitle
-import com.intellij.agent.workbench.core.session.normalizeAgentSessionStoredThreadTitle
-import com.intellij.agent.workbench.core.session.resolveAgentSessionArchivedTitleState
-import com.intellij.agent.workbench.core.session.stripAgentSessionArchivedThreadTitlePrefix
+import com.intellij.platform.ai.agent.core.session.AGENT_SESSION_ARCHIVED_THREAD_TITLE_PREFIX
+import com.intellij.platform.ai.agent.core.session.AgentSessionArchivedTitleState
+import com.intellij.platform.ai.agent.core.session.buildAgentSessionArchivedThreadTitle
+import com.intellij.platform.ai.agent.core.session.isAgentSessionArchivedThreadTitle
+import com.intellij.platform.ai.agent.core.session.normalizeAgentSessionStoredThreadTitle
+import com.intellij.platform.ai.agent.core.session.resolveAgentSessionArchivedTitleState
+import com.intellij.platform.ai.agent.core.session.stripAgentSessionArchivedThreadTitlePrefix
 
 @Suppress("unused")
 const val CLAUDE_ARCHIVED_THREAD_TITLE_PREFIX: String = AGENT_SESSION_ARCHIVED_THREAD_TITLE_PREFIX

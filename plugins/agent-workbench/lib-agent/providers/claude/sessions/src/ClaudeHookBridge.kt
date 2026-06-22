@@ -1,23 +1,23 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.claude.sessions
+package com.intellij.platform.ai.agent.claude.sessions
 
 // @spec community/plugins/agent-workbench/spec/sessions/agent-sessions-claude-hooks.spec.md
 
-import com.intellij.agent.workbench.core.AgentThreadActivity
-import com.intellij.agent.workbench.core.AgentThreadActivityReport
-import com.intellij.agent.workbench.core.normalizeAgentWorkbenchPath
-import com.intellij.agent.workbench.core.parseAgentWorkbenchPathOrNull
-import com.intellij.agent.workbench.claude.common.CLAUDE_HOOK_PROJECT_MUTATING_TOOL_MATCHER
-import com.intellij.agent.workbench.claude.common.CLAUDE_USER_INTERACTION_TOOL_MATCHER
-import com.intellij.agent.workbench.claude.common.isClaudeHookProjectMutatingToolName
-import com.intellij.agent.workbench.claude.common.isClaudeUserInteractionToolName
-import com.intellij.agent.workbench.json.createJsonGenerator
-import com.intellij.agent.workbench.json.createJsonParser
-import com.intellij.agent.workbench.json.forEachJsonObjectField
-import com.intellij.agent.workbench.json.readJsonStringOrNull
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
+import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
+import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
+import com.intellij.platform.ai.agent.core.parseAgentWorkbenchPathOrNull
+import com.intellij.platform.ai.agent.claude.common.CLAUDE_HOOK_PROJECT_MUTATING_TOOL_MATCHER
+import com.intellij.platform.ai.agent.claude.common.CLAUDE_USER_INTERACTION_TOOL_MATCHER
+import com.intellij.platform.ai.agent.claude.common.isClaudeHookProjectMutatingToolName
+import com.intellij.platform.ai.agent.claude.common.isClaudeUserInteractionToolName
+import com.intellij.platform.ai.agent.json.createJsonGenerator
+import com.intellij.platform.ai.agent.json.createJsonParser
+import com.intellij.platform.ai.agent.json.forEachJsonObjectField
+import com.intellij.platform.ai.agent.json.readJsonStringOrNull
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadActivityUpdate
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger

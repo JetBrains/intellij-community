@@ -40,8 +40,8 @@ This spec maps Agent Workbench behavior specs to their primary module tests. It 
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test "com.intellij.agent.workbench.sessions.AgentSessionRefresh*Test"`
 - `./tests.cmd --module intellij.agent.workbench.sessions.toolwindow.tests --test "com.intellij.agent.workbench.sessions.toolwindow.AgentSessionsSwing*Test"`
 - `./tests.cmd --module intellij.agent.workbench.chat.tests --test "com.intellij.agent.workbench.chat.AgentChat*Test"`
-- `./tests.cmd --module intellij.agent.workbench.codex.sessions.tests --test "com.intellij.agent.workbench.codex.sessions.CodexRollout*Test"`
-- `./tests.cmd --module intellij.agent.workbench.codex.sessions.tests --test com.intellij.agent.workbench.codex.sessions.backend.appserver.CodexAppServerRefreshHintsProviderTest`
+- `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test "com.intellij.platform.ai.agent.codex.sessions.CodexRollout*Test"`
+- `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test com.intellij.platform.ai.agent.codex.sessions.backend.appserver.CodexAppServerRefreshHintsProviderTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.CodexAppServerClientTest`
 
 ## References

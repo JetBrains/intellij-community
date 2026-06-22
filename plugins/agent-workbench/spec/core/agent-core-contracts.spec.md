@@ -108,9 +108,9 @@ These contracts keep shared identity, command mapping, provider capabilities, pr
   [@test] ../../sessions/testSrc/AgentSessionRefreshOnDemandIntegrationTest.kt
 
 ## Testing / Local Run
-- `./tests.cmd --module intellij.agent.workbench.codex.sessions.tests --test com.intellij.agent.workbench.codex.sessions.CodexAgentSessionProviderDescriptorTest`
-- `./tests.cmd --module intellij.agent.workbench.claude.sessions.tests --test com.intellij.agent.workbench.claude.sessions.ClaudeAgentSessionProviderDescriptorTest`
-- `./tests.cmd --module intellij.agent.workbench.junie.sessions.tests --test com.intellij.agent.workbench.junie.sessions.JunieAgentSessionProviderDescriptorTest`
+- `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test com.intellij.platform.ai.agent.codex.sessions.CodexAgentSessionProviderDescriptorTest`
+- `./tests.cmd --module intellij.platform.ai.agent.claude.sessions.tests --test com.intellij.platform.ai.agent.claude.sessions.ClaudeAgentSessionProviderDescriptorTest`
+- `./tests.cmd --module intellij.platform.ai.agent.junie.sessions.tests --test com.intellij.platform.ai.agent.junie.sessions.JunieAgentSessionProviderDescriptorTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.actions.tests --test com.intellij.agent.workbench.sessions.AgentSessionsEditorTabActionsTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.toolwindow.tests --test com.intellij.agent.workbench.sessions.toolwindow.SessionTreeSelectionSyncTest`
 

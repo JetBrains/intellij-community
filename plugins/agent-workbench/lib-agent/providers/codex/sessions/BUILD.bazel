@@ -1,7 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.agent.workbench.codex.sessions` start
+### auto-generated section `build intellij.platform.ai.agent.codex.sessions` start
 
 jvm_library(
     name = "sessions",
@@ -13,7 +13,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.agent.workbench.codex.sessions",
+    module_name = "intellij.platform.ai.agent.codex.sessions",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -21,7 +21,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:agent-workbench-codex-sessions-night-config-toml",
+        "@lib//:platform-ai-agent-codex-sessions-night-config-toml",
         "@lib//:kotlin-stdlib",
         "//libraries/fastutil",
         "//libraries/kotlinx/serialization/core",
@@ -37,7 +37,7 @@ jvm_library(
         "//plugins/agent-workbench/lib-agent/core",
         "//plugins/agent-workbench/lib-agent/json",
         "//plugins/agent-workbench/prompt/core",
-        "//plugins/agent-workbench/lib-agent/sessions-core:agent-workbench-sessions-core",
+        "//plugins/agent-workbench/lib-agent/sessions-core:ai-agent-sessions-core",
         "//libraries/jackson3/jackson:libraries-jackson3",
     ],
 )
@@ -49,7 +49,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    module_name = "intellij.agent.workbench.codex.sessions",
+    module_name = "intellij.platform.ai.agent.codex.sessions",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -68,7 +68,7 @@ jvm_library(
         "//plugins/agent-workbench/lib-agent/core:core_test_lib",
         "//plugins/agent-workbench/lib-agent/json:json_test_lib",
         "//plugins/agent-workbench/prompt/core:core_test_lib",
-        "//plugins/agent-workbench/lib-agent/sessions-core:agent-workbench-sessions-core_test_lib",
+        "//plugins/agent-workbench/lib-agent/sessions-core:ai-agent-sessions-core_test_lib",
         "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
@@ -82,31 +82,31 @@ jvm_library(
         "//libraries/pty4j:pty4j_test_lib",
     ],
 )
-### auto-generated section `build intellij.agent.workbench.codex.sessions` end
+### auto-generated section `build intellij.platform.ai.agent.codex.sessions` end
 
-### auto-generated section `iml intellij.agent.workbench.codex.sessions` start
+### auto-generated section `iml intellij.platform.ai.agent.codex.sessions` start
 exports_files(
     [
-        "intellij.agent.workbench.codex.sessions.iml",
+        "intellij.platform.ai.agent.codex.sessions.iml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml intellij.agent.workbench.codex.sessions` end
+### auto-generated section `iml intellij.platform.ai.agent.codex.sessions` end
 
-### auto-generated section `build intellij.agent.workbench.codex.sessions.tests` start
+### auto-generated section `build intellij.platform.ai.agent.codex.sessions.tests` start
 
 jvm_library(
-    name = "agent-workbench-codex-sessions-tests",
+    name = "ai-agent-codex-sessions-tests",
     srcs = glob(
         [],
         allow_empty = True,
     ),
-    module_name = "intellij.agent.workbench.codex.sessions.tests",
+    module_name = "intellij.platform.ai.agent.codex.sessions.tests",
     visibility = ["//visibility:public"],
 )
 
 jvm_library(
-    name = "agent-workbench-codex-sessions-tests_test_lib",
+    name = "ai-agent-codex-sessions-tests_test_lib",
     testonly = True,
     srcs = glob(
         [
@@ -127,7 +127,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":agent-workbench-codex-sessions-tests",
+        ":ai-agent-codex-sessions-tests",
         "//platform/platform-util-io:ide-util-io_test_lib",
     ],
     deps = [
@@ -172,8 +172,8 @@ jvm_library(
         "//plugins/agent-workbench/sessions:agent-workbench-sessions-tests_test_lib",
         "//plugins/agent-workbench/prompt/ui:agent-workbench-prompt-ui-tests",
         "//plugins/agent-workbench/prompt/ui:agent-workbench-prompt-ui-tests_test_lib",
-        "//plugins/agent-workbench/lib-agent/sessions-core:agent-workbench-sessions-core",
-        "//plugins/agent-workbench/lib-agent/sessions-core:agent-workbench-sessions-core_test_lib",
+        "//plugins/agent-workbench/lib-agent/sessions-core:ai-agent-sessions-core",
+        "//plugins/agent-workbench/lib-agent/sessions-core:ai-agent-sessions-core_test_lib",
         "//plugins/agent-workbench/sessions-cost:agent-workbench-sessions-cost",
         "//plugins/agent-workbench/sessions-cost:agent-workbench-sessions-cost_test_lib",
         "//libraries/jackson3/jackson:libraries-jackson3",
@@ -190,21 +190,21 @@ jvm_library(
         "//libraries/pty4j:pty4j_test_lib",
     ],
 )
-### auto-generated section `build intellij.agent.workbench.codex.sessions.tests` end
+### auto-generated section `build intellij.platform.ai.agent.codex.sessions.tests` end
 
-### auto-generated section `iml intellij.agent.workbench.codex.sessions.tests` start
+### auto-generated section `iml intellij.platform.ai.agent.codex.sessions.tests` start
 exports_files(
     [
-        "intellij.agent.workbench.codex.sessions.tests.iml",
+        "intellij.platform.ai.agent.codex.sessions.tests.iml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml intellij.agent.workbench.codex.sessions.tests` end
+### auto-generated section `iml intellij.platform.ai.agent.codex.sessions.tests` end
 
-### auto-generated section `test intellij.agent.workbench.codex.sessions.tests` start
+### auto-generated section `test intellij.platform.ai.agent.codex.sessions.tests` start
 
 jps_test(
-    name = "agent-workbench-codex-sessions-tests_test",
-    runtime_deps = [":agent-workbench-codex-sessions-tests_test_lib"],
+    name = "ai-agent-codex-sessions-tests_test",
+    runtime_deps = [":ai-agent-codex-sessions-tests_test_lib"],
 )
-### auto-generated section `test intellij.agent.workbench.codex.sessions.tests` end
+### auto-generated section `test intellij.platform.ai.agent.codex.sessions.tests` end

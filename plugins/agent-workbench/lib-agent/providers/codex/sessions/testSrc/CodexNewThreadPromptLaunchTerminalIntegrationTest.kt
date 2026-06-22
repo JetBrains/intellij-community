@@ -1,14 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.codex.sessions
+package com.intellij.platform.ai.agent.codex.sessions
 
-import com.intellij.agent.workbench.codex.common.CodexCliUtils
+import com.intellij.platform.ai.agent.codex.common.CodexCliUtils
 import com.intellij.agent.workbench.chat.RecordingAgentChatTerminalHarness
 import com.intellij.agent.workbench.chat.RecordingTerminalSentText
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.ui.captureNewTaskPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.ScriptedSessionSource
 import com.intellij.agent.workbench.sessions.launchNewThreadPromptRequestWithDefaultChatOpenExecutor
-import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
+import com.intellij.platform.ai.agent.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -35,6 +35,7 @@ class CodexNewThreadPromptLaunchTerminalIntegrationTest {
     timeoutRunBlocking {
       val descriptor = descriptor()
       val terminalHarness = RecordingAgentChatTerminalHarness()
+      terminalHarness.setSentTextOutputTexts(listOf("Plan mode"))
       runInUi {
         fileEditorManagerFixture.get()
         terminalHarness.registerEditorFactory(disposable)

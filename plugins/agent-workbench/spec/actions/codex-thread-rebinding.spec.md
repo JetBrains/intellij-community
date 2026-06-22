@@ -67,7 +67,7 @@ Codex starts new threads before the concrete provider thread id is known. Workbe
 - `./tests.cmd --module intellij.agent.workbench.chat.tests --test com.intellij.agent.workbench.chat.AgentChatConcreteThreadRebindControllerTest`
 - `./tests.cmd --module intellij.agent.workbench.chat.tests --test com.intellij.agent.workbench.chat.AgentChatFileEditorLifecycleTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionRefreshCoordinatorTest`
-- `./tests.cmd --module intellij.agent.workbench.codex.sessions.tests --test com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutRefreshHintsProviderTest`
+- `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test com.intellij.platform.ai.agent.codex.sessions.backend.rollout.CodexRolloutRefreshHintsProviderTest`
 
 ## References
 - `new-thread.spec.md`

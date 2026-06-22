@@ -1,22 +1,22 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.claude.common
+package com.intellij.platform.ai.agent.claude.common
 
 // @spec community/plugins/agent-workbench/spec/chat/agent-chat-structure-view.spec.md
 
-import com.intellij.agent.workbench.core.session.AgentSessionOutlineItem
-import com.intellij.agent.workbench.core.session.AgentSessionOutlineItemKind
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.core.session.AgentSessionThreadOutline
-import com.intellij.agent.workbench.core.session.agentSessionOutlinePhaseTitle
-import com.intellij.agent.workbench.core.session.normalizeAgentSessionOutlinePreview
-import com.intellij.agent.workbench.core.session.summarizeAgentSessionOutlineChildren
-import com.intellij.agent.workbench.json.createJsonParser
+import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItem
+import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItemKind
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.core.session.AgentSessionThreadOutline
+import com.intellij.platform.ai.agent.core.session.agentSessionOutlinePhaseTitle
+import com.intellij.platform.ai.agent.core.session.normalizeAgentSessionOutlinePreview
+import com.intellij.platform.ai.agent.core.session.summarizeAgentSessionOutlineChildren
+import com.intellij.platform.ai.agent.json.createJsonParser
 import tools.jackson.core.JsonParser
 import tools.jackson.core.JsonToken
 import tools.jackson.core.json.JsonFactory
-import com.intellij.agent.workbench.json.WorkbenchJsonlScanner
-import com.intellij.agent.workbench.json.forEachJsonObjectField
-import com.intellij.agent.workbench.json.readJsonStringOrNull
+import com.intellij.platform.ai.agent.json.WorkbenchJsonlScanner
+import com.intellij.platform.ai.agent.json.forEachJsonObjectField
+import com.intellij.platform.ai.agent.json.readJsonStringOrNull
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant

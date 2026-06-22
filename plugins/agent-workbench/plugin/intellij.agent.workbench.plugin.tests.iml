@@ -29,16 +29,16 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.cli" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.common" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.cli" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.chat" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.claude.common" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.codex.common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.claude.common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.codex.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.chat" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.ide" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.junie.common" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.sessions.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.junie.common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.sessions.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.ui" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.vcs" scope="RUNTIME" />
@@ -48,14 +48,14 @@
     <orderEntry type="module" module-name="intellij.agent.workbench.vcs.merge" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.actions" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.toolwindow" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.codex.sessions" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.claude.sessions" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.codex.sessions" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.claude.sessions" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.claude.awb" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.junie.sessions" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.opencode.sessions" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.pi.sessions" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.junie.sessions" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.opencode.sessions" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.pi.sessions" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.pi.awb" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.terminal.sessions" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.terminal.sessions" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.launch.config.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.suites" scope="TEST" />
@@ -64,18 +64,18 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.plugin" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.common.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.common.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.chat.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.chat.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.claude.sessions.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.claude.sessions.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.claude.awb.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.ide.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.codex.sessions.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.junie.sessions.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.opencode.sessions.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.pi.sessions.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.pi.sessions.filewatch.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.terminal.sessions.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.codex.sessions.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.junie.sessions.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.opencode.sessions.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.pi.sessions.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.pi.sessions.filewatch.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.terminal.sessions.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.ui.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.vcs.tests" scope="TEST" />
@@ -84,14 +84,14 @@
     <orderEntry type="module" module-name="intellij.agent.workbench.vcs.merge.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.actions.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.toolwindow.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.filewatch.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.filewatch.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.ui.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.cli.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.cli.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.prompt.suggestions.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.core.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.core.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.settings.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.cost.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.codex.common.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.codex.common.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.launch.config.backend.tests" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.agent.workbench.plugin" />

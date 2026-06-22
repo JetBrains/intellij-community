@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.codex.sessions.backend.rollout
+package com.intellij.platform.ai.agent.codex.sessions.backend.rollout
 
 internal const val ROLLOUT_FILE_PREFIX = "rollout-"
 internal const val ROLLOUT_FILE_SUFFIX = ".jsonl"

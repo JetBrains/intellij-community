@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.codex.sessions.backend
+package com.intellij.platform.ai.agent.codex.sessions.backend
 
-import com.intellij.agent.workbench.codex.sessions.CodexThreadPathIndex
-import com.intellij.agent.workbench.codex.sessions.CodexThreadPathIndexService
-import com.intellij.agent.workbench.codex.sessions.backend.appserver.CodexAppServerSessionBackend
+import com.intellij.platform.ai.agent.codex.sessions.CodexThreadPathIndex
+import com.intellij.platform.ai.agent.codex.sessions.CodexThreadPathIndexService
+import com.intellij.platform.ai.agent.codex.sessions.backend.appserver.CodexAppServerSessionBackend
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger

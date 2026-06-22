@@ -1,12 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package com.intellij.agent.workbench.codex.sessions.backend
+package com.intellij.platform.ai.agent.codex.sessions.backend
 
-import com.intellij.agent.workbench.codex.common.CodexAppServerStartedThread
-import com.intellij.agent.workbench.codex.common.CodexThread
-import com.intellij.agent.workbench.codex.common.CodexThreadActiveFlag
-import com.intellij.agent.workbench.codex.common.CodexThreadActivitySnapshot
-import com.intellij.agent.workbench.codex.common.CodexThreadStatusKind
+import com.intellij.platform.ai.agent.codex.common.CodexAppServerStartedThread
+import com.intellij.platform.ai.agent.codex.common.CodexThread
+import com.intellij.platform.ai.agent.codex.common.CodexThreadActiveFlag
+import com.intellij.platform.ai.agent.codex.common.CodexThreadActivitySnapshot
+import com.intellij.platform.ai.agent.codex.common.CodexThreadStatusKind
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout

@@ -2,22 +2,22 @@
   modules:
   - name: intellij.agent.workbench.plugin
   contentModules:
-  - name: intellij.agent.workbench.cli
-  - name: intellij.agent.workbench.core
-  - name: intellij.agent.workbench.common
-  - name: intellij.agent.workbench.json
-  - name: intellij.agent.workbench.claude.common
-  - name: intellij.agent.workbench.claude.sessions
-  - name: intellij.agent.workbench.codex.common
+  - name: intellij.platform.ai.agent.cli
+  - name: intellij.platform.ai.agent.core
+  - name: intellij.platform.ai.agent.common
+  - name: intellij.platform.ai.agent.json
+  - name: intellij.platform.ai.agent.claude.common
+  - name: intellij.platform.ai.agent.claude.sessions
+  - name: intellij.platform.ai.agent.codex.common
   - name: intellij.agent.workbench.codex.ide
   - name: intellij.agent.workbench.container
-  - name: intellij.agent.workbench.filewatch
-  - name: intellij.agent.workbench.codex.sessions
-  - name: intellij.agent.workbench.junie.sessions
-  - name: intellij.agent.workbench.opencode.sessions
-  - name: intellij.agent.workbench.pi.sessions
-  - name: intellij.agent.workbench.terminal.sessions
-  - name: intellij.agent.workbench.sessions.core
+  - name: intellij.platform.ai.agent.filewatch
+  - name: intellij.platform.ai.agent.codex.sessions
+  - name: intellij.platform.ai.agent.junie.sessions
+  - name: intellij.platform.ai.agent.opencode.sessions
+  - name: intellij.platform.ai.agent.pi.sessions
+  - name: intellij.platform.ai.agent.terminal.sessions
+  - name: intellij.platform.ai.agent.sessions.core
   - name: intellij.agent.workbench.sessions.cost
   - name: intellij.agent.workbench.sessions.launch.config.backend
   - name: intellij.agent.workbench.prompt.core

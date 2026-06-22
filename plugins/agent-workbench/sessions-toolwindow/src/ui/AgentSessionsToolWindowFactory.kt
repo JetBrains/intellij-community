@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.toolwindow.ui
 
-import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
+import com.intellij.platform.ai.agent.common.AgentWorkbenchActionIds
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.components.service

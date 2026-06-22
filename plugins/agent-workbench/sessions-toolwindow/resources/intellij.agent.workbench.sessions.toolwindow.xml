@@ -4,12 +4,12 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.agent.workbench.chat"/>
-    <module name="intellij.agent.workbench.common"/>
-    <module name="intellij.agent.workbench.core"/>
+    <module name="intellij.platform.ai.agent.common"/>
+    <module name="intellij.platform.ai.agent.core"/>
     <module name="intellij.agent.workbench.prompt.core"/>
     <module name="intellij.agent.workbench.sessions"/>
     <module name="intellij.agent.workbench.sessions.actions"/>
-    <module name="intellij.agent.workbench.sessions.core"/>
+    <module name="intellij.platform.ai.agent.sessions.core"/>
     <module name="intellij.agent.workbench.sessions.jbcentral"/>
     <module name="intellij.agent.workbench.settings"/>
     <module name="intellij.agent.workbench.ui"/>

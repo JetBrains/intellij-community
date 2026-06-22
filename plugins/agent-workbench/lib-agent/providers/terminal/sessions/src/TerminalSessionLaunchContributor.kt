@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.terminal.sessions
+package com.intellij.platform.ai.agent.terminal.sessions
 
 // @spec community/plugins/agent-workbench/spec/sessions/agent-terminal-sessions.spec.md
 
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchContributor
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchContributor
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.components.service
 
 internal class TerminalSessionLaunchContributor(

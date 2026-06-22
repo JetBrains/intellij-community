@@ -1,14 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.junie.sessions
+package com.intellij.platform.ai.agent.junie.sessions
 
 import tools.jackson.core.JsonParser
 import tools.jackson.core.JsonToken
 import tools.jackson.core.json.JsonFactory
-import com.intellij.agent.workbench.core.session.AgentSessionCost
-import com.intellij.agent.workbench.core.session.AgentSessionCostKind
-import com.intellij.agent.workbench.json.WorkbenchJsonlScanner
-import com.intellij.agent.workbench.json.forEachJsonObjectField
-import com.intellij.agent.workbench.json.readJsonStringOrNull
+import com.intellij.platform.ai.agent.core.session.AgentSessionCost
+import com.intellij.platform.ai.agent.core.session.AgentSessionCostKind
+import com.intellij.platform.ai.agent.json.WorkbenchJsonlScanner
+import com.intellij.platform.ai.agent.json.forEachJsonObjectField
+import com.intellij.platform.ai.agent.json.readJsonStringOrNull
 import com.intellij.openapi.diagnostic.logger
 import java.math.BigDecimal
 import java.nio.file.Files

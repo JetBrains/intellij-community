@@ -1,6 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.agent.workbench.junie.common` start
+### auto-generated section `build intellij.platform.ai.agent.junie.common` start
 
 jvm_library(
     name = "common",
@@ -12,7 +12,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.agent.workbench.junie.common",
+    module_name = "intellij.platform.ai.agent.junie.common",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -38,7 +38,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    module_name = "intellij.agent.workbench.junie.common",
+    module_name = "intellij.platform.ai.agent.junie.common",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -52,13 +52,13 @@ jvm_library(
         "//platform/eel-provider:eel-provider_test_lib",
     ],
 )
-### auto-generated section `build intellij.agent.workbench.junie.common` end
+### auto-generated section `build intellij.platform.ai.agent.junie.common` end
 
-### auto-generated section `iml intellij.agent.workbench.junie.common` start
+### auto-generated section `iml intellij.platform.ai.agent.junie.common` start
 exports_files(
     [
-        "intellij.agent.workbench.junie.common.iml",
+        "intellij.platform.ai.agent.junie.common.iml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml intellij.agent.workbench.junie.common` end
+### auto-generated section `iml intellij.platform.ai.agent.junie.common` end

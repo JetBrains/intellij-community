@@ -3,20 +3,20 @@ package com.intellij.agent.workbench.codex.prompt.suggestions
 
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-suggestions.spec.md
 
-import com.intellij.agent.workbench.codex.common.CodexAppServerException
-import com.intellij.agent.workbench.codex.common.CodexCliNotFoundException
-import com.intellij.agent.workbench.codex.common.CodexCliUtils
-import com.intellij.agent.workbench.codex.common.currentToken
-import com.intellij.agent.workbench.codex.common.forEachObjectField
-import com.intellij.agent.workbench.codex.common.readStringOrNull
-import com.intellij.agent.workbench.codex.common.writeArrayField
-import com.intellij.agent.workbench.codex.common.writeBooleanField
-import com.intellij.agent.workbench.codex.common.writeFieldName
-import com.intellij.agent.workbench.codex.common.writeObject
-import com.intellij.agent.workbench.codex.common.writeObjectField
-import com.intellij.agent.workbench.codex.common.writeStringField
-import com.intellij.agent.workbench.json.createJsonGenerator
-import com.intellij.agent.workbench.json.createJsonParser
+import com.intellij.platform.ai.agent.codex.common.CodexAppServerException
+import com.intellij.platform.ai.agent.codex.common.CodexCliNotFoundException
+import com.intellij.platform.ai.agent.codex.common.CodexCliUtils
+import com.intellij.platform.ai.agent.codex.common.currentToken
+import com.intellij.platform.ai.agent.codex.common.forEachObjectField
+import com.intellij.platform.ai.agent.codex.common.readStringOrNull
+import com.intellij.platform.ai.agent.codex.common.writeArrayField
+import com.intellij.platform.ai.agent.codex.common.writeBooleanField
+import com.intellij.platform.ai.agent.codex.common.writeFieldName
+import com.intellij.platform.ai.agent.codex.common.writeObject
+import com.intellij.platform.ai.agent.codex.common.writeObjectField
+import com.intellij.platform.ai.agent.codex.common.writeStringField
+import com.intellij.platform.ai.agent.json.createJsonGenerator
+import com.intellij.platform.ai.agent.json.createJsonParser
 import com.intellij.agent.workbench.prompt.core.AgentPromptSuggestionAiResult
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.OSProcessUtil
