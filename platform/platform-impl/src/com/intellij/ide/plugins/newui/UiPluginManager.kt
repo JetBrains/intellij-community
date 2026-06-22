@@ -246,7 +246,7 @@ class UiPluginManager {
     return DefaultUiPluginManagerController
   }
 
-  fun subscribeToPluginUpdates(sessionId: String, callback: (List<PluginUiModel>) -> Unit): PluginUpdateSubscription {
+  fun subscribeToPluginUpdatesFiltered(sessionId: String, callback: (List<PluginUiModel>) -> Unit): PluginUpdateSubscription {
     val session = PluginManagerSessionService.getInstance().createSession(sessionId)
     return PluginUpdatesService.getInstance().subscribe { updatedPlugins -> callback(updatedPlugins.all.filter { session.isPluginEnabled(it.pluginId) }) }
   }

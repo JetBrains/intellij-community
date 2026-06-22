@@ -39,6 +39,7 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ModalityState.any
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
@@ -130,11 +131,6 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
     pluginModelFacade.getModel().coroutineScope = childScope
     coroutineScope = childScope
 
-    updateSubscription =
-      UiPluginManager.getInstance().subscribeToPluginUpdates(pluginModelFacade.getModel().sessionId) { pluginUpdates ->
-        coroutineScope.launch(Dispatchers.EDT + any().asContextElement()) { onPluginUpdatesRecalculation(pluginUpdates) }
-      }
-
     CustomPluginRepositoryService.getInstance().clearCache()
 
     marketplaceTab = createMarketplaceTab()
@@ -161,6 +157,11 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
     if (pluginManagerCustomizer != null) {
       pluginManagerCustomizer.initCustomizer(cardPanel)
     }
+
+    updateSubscription =
+      UiPluginManager.getInstance().subscribeToPluginUpdatesFiltered(pluginModelFacade.getModel().sessionId) { pluginUpdates ->
+        coroutineScope.launch(Dispatchers.UI + any().asContextElement()) { onPluginUpdatesRecalculation(pluginUpdates) }
+      }
   }
 
   @RequiresEdt
