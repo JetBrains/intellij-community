@@ -20,6 +20,7 @@ import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.CommandProcessorEx
 import com.intellij.openapi.command.UndoConfirmationPolicy
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
@@ -59,6 +60,7 @@ import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getAllFilesRecursively
 import org.jetbrains.kotlin.j2k.ConverterSettings
+import org.jetbrains.kotlin.j2k.J2KKotlinConfigurationService
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
 import org.jetbrains.kotlin.j2k.J2kPostprocessorExtension
 import org.jetbrains.kotlin.j2k.J2kPreprocessorExtension
@@ -101,9 +103,9 @@ open class JavaToKotlinAction : AnAction() {
             showNothingToConvertErrorMessage(project)
             return
         }
-        val j2kConverterExtension = J2kConverterExtension.extension()
+        val configurationService = project.service<J2KKotlinConfigurationService>()
         if (shouldSkipConversionOfErroneousCode(javaFiles, project)) return
-        if (j2kConverterExtension.doCheckBeforeConversion(project, module)) {
+        if (configurationService.checkKotlinIsConfigured(module)) {
             val launch = e.coroutineScope.launch {
                 JavaToKotlinActionHandler.convertFiles(
                     files = javaFiles,
@@ -113,7 +115,7 @@ open class JavaToKotlinAction : AnAction() {
             }
             j2kJob?.set(launch)
         } else {
-            j2kConverterExtension.setUpAndConvert(project, module, javaFiles) { files, project, module ->
+            configurationService.setUpAndConvert(module, javaFiles) { files, project, module ->
                 val launch = e.coroutineScope.launch {
                     JavaToKotlinActionHandler.convertFiles(
                         files = files,

@@ -2,8 +2,8 @@
 
 package org.jetbrains.kotlin.j2k.copyPaste
 
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.application.readAction
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
@@ -43,8 +43,8 @@ data class JavaContextDeclarationStubs(
  */
 object JavaContextDeclarationRenderer {
     fun render(contextElement: KtElement): JavaContextDeclarationStubs {
-        val task: () -> JavaContextDeclarationStubs = {
-            runReadAction {
+        return runWithModalProgressBlocking(contextElement.project, KotlinNJ2KBundle.message("copy.text.rendering.declaration.stubs")) {
+            readAction {
                 analyze(contextElement) {
                     val localDeclarations = getLocalDeclarations(contextElement)
                     val memberDeclarations = getMemberDeclarations(contextElement)
@@ -54,10 +54,6 @@ object JavaContextDeclarationRenderer {
                 }
             }
         }
-
-        return ProgressManager.getInstance().runProcessWithProgressSynchronously<JavaContextDeclarationStubs, Exception>(
-            task, KotlinNJ2KBundle.message("copy.text.rendering.declaration.stubs"), /* canBeCanceled = */ true, contextElement.project
-        )
     }
 
     private fun KaSession.getLocalDeclarations(contextElement: KtElement): List<KaDeclarationSymbol> {

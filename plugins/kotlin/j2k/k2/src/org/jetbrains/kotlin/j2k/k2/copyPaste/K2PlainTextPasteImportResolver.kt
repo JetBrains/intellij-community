@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.j2k.k2.copyPaste
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementFactory
@@ -57,12 +57,12 @@ internal class K2PlainTextPasteImportResolver(private val conversionData: Conver
     private val failedToResolveReferenceNames: MutableSet<String> = mutableSetOf()
     private val importsToAddToKotlinFile: MutableList<PsiImportStatementBase> = mutableListOf()
 
-    override fun generateRequiredImports(): List<PsiImportStatementBase> {
+    override suspend fun generateRequiredImports(): List<PsiImportStatementBase> {
         ThreadingAssertions.assertBackgroundThread()
 
         if (javaFileImportList !in conversionData.elementsAndTexts.toList()) {
             addImportsToJavaFileFromKotlinFile()
-            ProgressManager.checkCanceled()
+            checkCanceled()
         }
         tryToResolveShortReferencesByAddingImports()
         return importsToAddToKotlinFile
@@ -70,23 +70,20 @@ internal class K2PlainTextPasteImportResolver(private val conversionData: Conver
 
     // TODO removing this function doesn't affect existing tests
     //  investigate is this needed or not
-    private fun addImportsToJavaFileFromKotlinFile() {
+    private suspend fun addImportsToJavaFileFromKotlinFile() {
         val collectedJavaImports = mutableListOf<PsiImportStatementBase>()
+        val kotlinImports = readAction { targetKotlinFile.importDirectives.toList() }
+        kotlinImports.forEachIndexed { index, kotlinImport ->
+            checkCanceled()
+            ProgressManager.getInstance().progressIndicator?.fraction = 1.0 * index / kotlinImports.size
 
-        runReadAction {
-            val kotlinImports = targetKotlinFile.importDirectives
-            kotlinImports.forEachIndexed { index, kotlinImport ->
-                ProgressManager.checkCanceled()
-                ProgressManager.getInstance().progressIndicator?.fraction = 1.0 * index / kotlinImports.size
-
-                val javaImport = tryToConvertKotlinImportToJava(kotlinImport)
-                if (javaImport != null) {
-                    collectedJavaImports.add(javaImport)
-                }
+            val javaImport = readAction { tryToConvertKotlinImportToJava(kotlinImport) }
+            if (javaImport != null) {
+                collectedJavaImports.add(javaImport)
             }
         }
 
-        runWriteActionOnEDTSync {
+        edtWriteAction {
             for (javaImport in collectedJavaImports) {
                 addImport(javaImport, shouldAddToKotlinFile = false)
             }
@@ -135,16 +132,19 @@ internal class K2PlainTextPasteImportResolver(private val conversionData: Conver
         if (shouldAddToKotlinFile) importsToAddToKotlinFile.add(javaImport)
     }
 
-    private fun tryToResolveShortReferencesByAddingImports() {
+    private suspend fun tryToResolveShortReferencesByAddingImports() {
         val progressIndicator = ProgressManager.getInstance().progressIndicator
         progressIndicator?.isIndeterminate = false
         val elementPointersWithUnresolvedReferences = findUnresolvedReferencesInFile()
 
         for ((index, pointer) in elementPointersWithUnresolvedReferences.withIndex()) {
             progressIndicator?.fraction = 1.0 * index / elementPointersWithUnresolvedReferences.size
-            val reference = runReadAction { pointer.element?.reference as? PsiQualifiedReference } ?: continue
+            val (reference, referenceName) = readAction {
+                val reference = pointer.element?.reference as? PsiQualifiedReference ?: return@readAction null
+                reference to reference.referenceName
+            } ?: continue
             if (tryToResolveShortNameReference(reference)) continue
-            val referenceName = runReadAction { reference.referenceName } ?: continue
+            if (referenceName == null) continue
             failedToResolveReferenceNames += referenceName
         }
     }
@@ -163,24 +163,27 @@ internal class K2PlainTextPasteImportResolver(private val conversionData: Conver
      * Attempts to resolve a given unqualified (short name) reference and add the necessary import.
      * @return `true` if the reference is resolved successfully, `false` otherwise.
      */
-    private fun tryToResolveShortNameReference(reference: PsiQualifiedReference): Boolean {
-        ProgressManager.checkCanceled()
+    private suspend fun tryToResolveShortNameReference(reference: PsiQualifiedReference): Boolean {
+        checkCanceled()
         if (reference.isResolved()) return true
 
-        val referenceName = runReadAction { reference.referenceName } ?: return false
+        val (referenceName, qualifier) = readAction { reference.referenceName to reference.qualifier }
+        if (referenceName == null) return false
         if (referenceName in failedToResolveReferenceNames) return false
-        if (runReadAction { reference.qualifier } != null) return false
+        if (qualifier != null) return false
 
         val psiClasses = findClassesByShortName(referenceName)
-        ProgressManager.checkCanceled()
+        checkCanceled()
 
         // Case 1, Java class mapped to Kotlin: add import only to the Java file, because in Kotlin it will be imported by default
-        val mappedClass = psiClasses.find { psiClass ->
-            val fqName = runReadAction { psiClass.kotlinFqName } ?: return@find false
-            JavaToKotlinClassMap.mapJavaToKotlin(fqName) != null
+        val mappedClass = readAction {
+            psiClasses.find { psiClass ->
+                val fqName = psiClass.kotlinFqName ?: return@find false
+                JavaToKotlinClassMap.mapJavaToKotlin(fqName) != null
+            }
         }
         if (mappedClass != null) {
-            runWriteActionOnEDTSync {
+            edtWriteAction {
                 val import = psiElementFactory.createImportStatement(mappedClass)
                 addImport(import, shouldAddToKotlinFile = false)
             }
@@ -190,7 +193,7 @@ internal class K2PlainTextPasteImportResolver(private val conversionData: Conver
 
         // Case 2, Regular unique Java class: add imports both to Java and Kotlin files
         psiClasses.singleOrNull()?.let { psiClass ->
-            runWriteActionOnEDTSync {
+            edtWriteAction {
                 val import = psiElementFactory.createImportStatement(psiClass)
                 addImport(import, shouldAddToKotlinFile = true)
             }
@@ -203,9 +206,9 @@ internal class K2PlainTextPasteImportResolver(private val conversionData: Conver
 
         // Case 4, Regular unique Java member: add imports both to Java and Kotlin files
         val psiMember = findUniqueMemberByShortName(referenceName)
-        ProgressManager.checkCanceled()
+        checkCanceled()
         if (psiMember != null) {
-            runWriteActionOnEDTSync {
+            edtWriteAction {
                 val import = psiElementFactory.createImportStaticStatement(psiMember.containingClass!!, psiMember.name!!)
                 addImport(import, shouldAddToKotlinFile = true)
             }
@@ -214,12 +217,12 @@ internal class K2PlainTextPasteImportResolver(private val conversionData: Conver
         return reference.isResolved()
     }
 
-    private fun PsiQualifiedReference.isResolved(): Boolean =
-        runReadAction { this.resolve() } != null
+    private suspend fun PsiQualifiedReference.isResolved(): Boolean =
+        readAction { this.resolve() } != null
 
     @OptIn(KaExperimentalApi::class)
-    private fun findClassesByShortName(name: String): List<PsiClass> {
-        return runReadAction {
+    private suspend fun findClassesByShortName(name: String): List<PsiClass> {
+        return readAction {
             analyze(targetKotlinFile) {
                 val candidateClasses = shortNameCache.getClassesByName(name, scope)
                 val visibilityChecker = createUseSiteVisibilityChecker(targetKotlinFile.symbol, position = targetKotlinFile)
@@ -237,8 +240,8 @@ internal class K2PlainTextPasteImportResolver(private val conversionData: Conver
     }
 
     @OptIn(KaExperimentalApi::class)
-    private fun findUniqueMemberByShortName(name: String): PsiMember? {
-        return runReadAction {
+    private suspend fun findUniqueMemberByShortName(name: String): PsiMember? {
+        return readAction {
             analyze(targetKotlinFile) {
                 val candidateMembers: List<PsiMember> =
                     shortNameCache.getMethodsByName(name, scope).asList() + shortNameCache.getFieldsByName(name, scope).asList()
@@ -258,7 +261,4 @@ internal class K2PlainTextPasteImportResolver(private val conversionData: Conver
         return symbol.importableFqName != null && visibilityChecker.isVisible(symbol)
     }
 
-    private fun runWriteActionOnEDTSync(runnable: () -> Unit) {
-        ApplicationManager.getApplication().invokeAndWait { runWriteAction { runnable() } }
-    }
 }

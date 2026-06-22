@@ -4,15 +4,12 @@ package org.jetbrains.kotlin.j2k.k2
 
 // import removed: forbidAnalysis no longer used during application phase
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.checkCanceled
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
-import org.jetbrains.kotlin.analysis.api.permissions.forbidAnalysis
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.InspectionLikeProcessingGroup
@@ -58,13 +55,15 @@ internal class K2J2KPostProcessor : PostProcessor {
 
     override suspend fun doAdditionalProcessing(
         target: PostProcessingTarget,
-        converterContext: ConverterContext?
+        converterContext: ConverterContext?,
+        onPhaseChanged: ((Int, String) -> Unit)?
     ) {
         if (converterContext == null) error("Invalid converter context for K2 J2K")
         val contextElement = target.files().firstOrNull() ?: return
 
-        for (group in processings) {
+        for ((i, group) in processings.withIndex()) {
             checkCanceled()
+            onPhaseChanged?.invoke(i, group.description)
             val appliers = mutableListOf<PostProcessingApplier>()
 
             // Step 1: compute appliers
@@ -92,55 +91,6 @@ internal class K2J2KPostProcessor : PostProcessor {
                         throw e
                     } catch (t: Throwable) {
                         LOG.error(t)
-                    }
-                }
-            }
-        }
-    }
-
-    override fun doAdditionalProcessing(
-        target: PostProcessingTarget,
-        converterContext: ConverterContext?,
-        onPhaseChanged: ((Int, String) -> Unit)?
-    ) {
-        if (converterContext !is ConverterContext) error("Invalid converter context for K2 J2K")
-        val contextElement = target.files().firstOrNull() ?: return
-
-        // Run analysis and apply the post-processings for each group separately
-        // so that later groups can depend on the results of earlier groups
-        for ((i, group) in processings.withIndex()) {
-            ProgressManager.checkCanceled()
-            onPhaseChanged?.invoke(i, group.description)
-            val appliers = mutableListOf<PostProcessingApplier>()
-
-            // Step 1: compute appliers
-            runReadAction {
-                analyze(contextElement) {
-                    for (processing in group.processings) {
-                        ProgressManager.checkCanceled()
-                        try {
-                            appliers += processing.computeAppliers(target, converterContext)
-                        } catch (e: ProcessCanceledException) {
-                            throw e
-                        } catch (t: Throwable) {
-                            LOG.error(t)
-                        }
-                    }
-                }
-            }
-
-            // Step 2: apply them
-            forbidAnalysis("Apply J2K post-processings") {
-                for (applier in appliers) {
-                    ProgressManager.checkCanceled()
-                    runUndoTransparentActionInEdt(inWriteAction = true) {
-                        try {
-                            applier.apply()
-                        } catch (e: ProcessCanceledException) {
-                            throw e
-                        } catch (t: Throwable) {
-                            LOG.error(t)
-                        }
                     }
                 }
             }

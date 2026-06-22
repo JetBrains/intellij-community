@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.j2k
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
@@ -30,18 +29,6 @@ abstract class J2kConverterExtension {
     ): JavaToKotlinConverter
 
     abstract fun createPostProcessor(formatCode: Boolean = true): PostProcessor
-
-    open fun doCheckBeforeConversion(project: Project, module: Module): Boolean =
-        project.service<J2KKotlinConfigurationService>().checkKotlinIsConfigured(module)
-
-    open fun setUpAndConvert(
-        project: Project,
-        module: Module,
-        javaFiles: List<PsiJavaFile>,
-        convertFunction: (List<PsiJavaFile>, Project, Module) -> Unit
-    ) {
-        project.service<J2KKotlinConfigurationService>().setUpAndConvert(module, javaFiles, convertFunction)
-    }
 
     abstract fun createWithProgressProcessor(
         progress: ProgressIndicator?,

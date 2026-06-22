@@ -4,12 +4,14 @@ package org.jetbrains.kotlin.idea.k2.refactoring.inline
 
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.Key
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiJavaFile
@@ -122,28 +124,32 @@ private fun JavaToKotlinConverter.convertToKotlinNamedDeclaration(
         phasesCount = phasesCount + postProcessor.phasesCount,
     )
 
-    val (j2kResults, _, j2kContext) = ActionUtil.underModalProgress(project, KotlinBundle.message("action.j2k.name")) {
-        elementsToKotlin(
-            inputElements = listOf(referenced),
-            bodyFilter = { it == referenced },
-            forInlining = true
-        )
-    }
+    val file = runWithModalProgressBlocking(project, KotlinBundle.message("action.j2k.name")) {
+        val (j2kResults, _, j2kContext) = readAction {
+            elementsToKotlin(
+                inputElements = listOf(referenced),
+                bodyFilter = { it == referenced },
+                forInlining = true
+            )
+        }
 
-    val file = runReadAction {
-        val factory = KtPsiFactory.contextual(context)
-        val className = referenced.containingClass?.qualifiedName
-        val j2kResult = j2kResults.first() ?: error("Can't convert to Kotlin ${referenced.text}")
-        factory.createFile("dummy.kt", text = "class DuMmY_42_ : $className {\n${j2kResult.text}\n}")
-            .also { it.addImports(j2kResult.importsToAdd) }
-    }
+        val file = readAction {
+            val factory = KtPsiFactory.contextual(context)
+            val className = referenced.containingClass?.qualifiedName
+            val j2kResult = j2kResults.first() ?: error("Can't convert to Kotlin ${referenced.text}")
+            factory.createFile("dummy.kt", text = "class DuMmY_42_ : $className {\n${j2kResult.text}\n}")
+                .also { it.addImports(j2kResult.importsToAdd) }
+        }
 
-    allowAnalysisOnEdt { //under potemkin progress
-        postProcessor.doAdditionalProcessing(
-            target = PostProcessingTarget.MultipleFilesPostProcessingTarget(files = listOf(file)),
-            converterContext = j2kContext,
-            onPhaseChanged = { i, s -> processor.updateState(null, phasesCount + i, s) },
-        )
+        allowAnalysisOnEdt {
+            postProcessor.doAdditionalProcessing(
+                target = PostProcessingTarget.MultipleFilesPostProcessingTarget(files = listOf(file)),
+                converterContext = j2kContext,
+                onPhaseChanged = { i, s -> processor.updateState(null, phasesCount + i, s) },
+            )
+        }
+
+        file
     }
 
     val fakeClass = file.declarations.singleOrNull() as? KtClass ?: error("Can't find dummy class in ${file.text}")

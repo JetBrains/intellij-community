@@ -1,15 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.j2k.copyPaste
 
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.asTextRange
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.util.application
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
 import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle
 import org.jetbrains.kotlin.psi.KtFile
@@ -27,7 +25,6 @@ internal class J2KTextCopyPasteConverter(
 ) {
     fun convert() {
         val additionalImports = tryToResolveImports(conversionData, targetData.file)
-        ProgressManager.checkCanceled()
 
         val importsInsertOffset = targetData.file.importList?.endOffset ?: 0
         var convertedImportsText = additionalImports.convertCodeToKotlin(project, targetData.file).text
@@ -37,7 +34,6 @@ internal class J2KTextCopyPasteConverter(
 
         val conversionResult = conversionData.elementsAndTexts.convertCodeToKotlin(project, targetData.file)
         val convertedText = conversionResult.text
-        ProgressManager.checkCanceled()
 
         val boundsAfterReplace = runWriteAction {
             if (convertedImportsText.isNotBlank()) {
@@ -58,27 +54,20 @@ internal class J2KTextCopyPasteConverter(
             postProcessor.insertImport(targetData.file, fqName)
         }
 
-        ProgressManager.checkCanceled()
         runPostProcessing(project, targetData.file, boundsAfterReplace.asTextRange, conversionResult.converterContext)
     }
 
     private fun tryToResolveImports(conversionData: ConversionData, targetFile: KtFile): ElementAndTextList {
-        return ProgressManager.getInstance().runProcessWithProgressSynchronously(
-            ThrowableComputable {
-                val resolver = application.runReadAction(Computable {
-                    J2kConverterExtension.extension().createPlainTextPasteImportResolver(conversionData, targetFile)
-                })
-                val imports = resolver.generateRequiredImports()
-                val newlineSeparatedImports = imports.flatMap { importStatement ->
-                    listOf("\n", importStatement)
-                } + "\n\n"
+        return runWithModalProgressBlocking(project, KotlinNJ2KBundle.message("copy.text.adding.imports")) {
+            val resolver = readAction {
+                J2kConverterExtension.extension().createPlainTextPasteImportResolver(conversionData, targetFile)
+            }
+            val imports = resolver.generateRequiredImports()
+            val newlineSeparatedImports = imports.flatMap { importStatement ->
+                listOf("\n", importStatement)
+            } + "\n\n"
 
-                ElementAndTextList(newlineSeparatedImports)
-
-            },
-            KotlinNJ2KBundle.message("copy.text.adding.imports"),
-            /* canBeCanceled = */ true,
-            project
-        )
+            ElementAndTextList(newlineSeparatedImports)
+        }
     }
 }

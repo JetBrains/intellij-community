@@ -2,11 +2,10 @@
 package org.jetbrains.kotlin.j2k.copyPaste
 
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
@@ -48,18 +47,16 @@ fun ElementAndTextList.convertCodeToKotlin(
     )
 
     val inputElements = this.toList().filterIsInstance<PsiElement>()
-    val (results, _, converterContext) = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        ThrowableComputable {
+    val (results, _, converterContext) = runWithModalProgressBlocking(
+        project,
+        KotlinNJ2KBundle.message("copy.text.convert.java.to.kotlin.title")
+    ) {
             // A non-blocking read action is essential here 
             // to be able to show a modal progress window right away
             ReadAction.nonBlocking(Callable {
                 converter.elementsToKotlin(inputElements, null)
             }).executeSynchronously()
-        },
-        KotlinNJ2KBundle.message("copy.text.convert.java.to.kotlin.title"),
-        true,
-        project
-    )
+    }
     val importsToAdd = mutableSetOf<FqName>()
     val convertedCodeBuilder = StringBuilder()
     val originalCodeBuilder = StringBuilder()
@@ -147,13 +144,7 @@ fun runPostProcessing(
     converterContext: ConverterContext?
 ) {
     val postProcessor = J2kConverterExtension.extension().createPostProcessor()
-    val runnable = {
+    runWithModalProgressBlocking(project, KotlinNJ2KBundle.message("copy.text.convert.java.to.kotlin.title")) {
         J2KPostProcessingRunner.run(postProcessor, file, converterContext, bounds)
     }
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        runnable,
-        KotlinNJ2KBundle.message("copy.text.convert.java.to.kotlin.title"),
-        /* canBeCanceled = */ true,
-        project
-    )
 }
