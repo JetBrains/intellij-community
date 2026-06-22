@@ -6,6 +6,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -58,6 +59,7 @@ sealed class AddContextParameterFix(
             targetFunction.addBefore(psiFactory.createNewLine(), anchor)
             PsiTreeUtil.findChildOfType(inserted, KtParameter::class.java) ?: return
         }
+        shortenReferences(addedParameter)
         if (updatesCaret) {
             updater.select(addedParameter.nameIdentifier ?: return)
         }
