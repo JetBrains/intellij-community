@@ -77,6 +77,7 @@ open class NewProjectDialogUI(data: ComponentData) : UiComponent(data) {
   }
 
   val nameTextField = textField { and(byAccessibleName("Name:"), byType(JTextField::class.java)) }
+  val locationTextField = textField { and(byAccessibleName("Location:"), byType(JTextField::class.java)) }
   val groupField = textField { and(byAccessibleName("Group:"), byType(JTextField::class.java)) }
   val artifactField = textField { and(byAccessibleName("Artifact:"), byType(JTextField::class.java)) }
   val nextButton = x("//div[@text='Next']")
