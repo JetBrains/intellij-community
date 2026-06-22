@@ -29,6 +29,18 @@ class CodexTerminalTitleThreadRebindContributorTest {
   }
 
   @Test
+  fun extractsThreadTitleFromConfiguredTerminalTitle() {
+    val threadId = "018f4b30-f1b2-7000-9b4d-abcdef123456"
+
+    assertThat(contributor.extractThreadSignal("$threadId | Fix indexing bug")?.threadTitle)
+      .isEqualTo("Fix indexing bug")
+    assertThat(contributor.extractThreadSignal(threadId)?.threadTitle)
+      .isNull()
+    assertThat(contributor.extractThreadSignal("Codex · $threadId · /work/project-a")?.threadTitle)
+      .isNull()
+  }
+
+  @Test
   fun contributorIsRegistered() {
     assertThat(AgentChatTerminalTitleThreadRebindContributors.find(AgentSessionProvider.CODEX))
       .isInstanceOf(CodexTerminalTitleThreadRebindContributor::class.java)

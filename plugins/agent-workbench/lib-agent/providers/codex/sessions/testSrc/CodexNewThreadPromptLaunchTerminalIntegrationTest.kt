@@ -76,7 +76,7 @@ class CodexNewThreadPromptLaunchTerminalIntegrationTest {
       assertThat(terminalHarness.backTabCalls).isZero()
       assertThat(terminalHarness.sentTexts)
         .containsExactly(
-          RecordingTerminalSentText("/plan", shouldExecute = true, useBracketedPasteMode = true),
+          RecordingTerminalSentText("/plan", shouldExecute = true, useBracketedPasteMode = false),
           RecordingTerminalSentText(PLAN_PROMPT, shouldExecute = true, useBracketedPasteMode = true),
         )
     }
@@ -117,8 +117,8 @@ class CodexNewThreadPromptLaunchTerminalIntegrationTest {
       assertThat(terminalHarness.backTabCalls).isZero()
       assertThat(terminalHarness.sentTexts)
         .containsExactly(
-          RecordingTerminalSentText("/plan", shouldExecute = true, useBracketedPasteMode = true),
-          RecordingTerminalSentText("/plan", shouldExecute = true, useBracketedPasteMode = true),
+          RecordingTerminalSentText("/plan", shouldExecute = true, useBracketedPasteMode = false),
+          RecordingTerminalSentText("/plan", shouldExecute = true, useBracketedPasteMode = false),
           RecordingTerminalSentText(PLAN_PROMPT, shouldExecute = true, useBracketedPasteMode = true),
         )
     }
