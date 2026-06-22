@@ -382,9 +382,7 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
         }
 
         override fun onCancel() {
-          if (host.isShowing &&
-              progressIndicatorWhenSearchStarted === progress &&
-              !progressIndicatorWhenSearchStarted.isCanceled) {
+          if (host.isShowing && progressIndicatorWhenSearchStarted === progress) {
             host.scheduleResultsUpdate()
           }
         }
