@@ -137,8 +137,7 @@ class AgentSessionRefreshService internal constructor(
         }
       })
       connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
-        @Deprecated("Deprecated in Java")
-        @Suppress("removal")
+        @Suppress("removal", "OVERRIDE_DEPRECATION")
         override fun projectOpened(project: Project) {
           refreshCatalogAndLoadNewlyOpened()
         }
