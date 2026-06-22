@@ -3,10 +3,12 @@ package com.intellij.ide.minimap
 
 import com.intellij.ide.minimap.geometry.MinimapGeometryData
 import com.intellij.ide.minimap.thumb.MinimapThumb
+import org.jetbrains.annotations.ApiStatus
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-internal object MinimapScrollUtil {
+@ApiStatus.Internal
+object MinimapScrollUtil {
   fun targetScrollOffsetForPoint(
     y: Int,
     geometry: MinimapGeometryData,

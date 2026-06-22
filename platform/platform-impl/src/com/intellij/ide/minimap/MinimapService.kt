@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.BorderLayout
 import javax.swing.JLayeredPane
 import javax.swing.JPanel
@@ -48,20 +49,21 @@ class MinimapService(private val scope: CoroutineScope) : Disposable {
     updateMinimap(editorImpl)
   }
 
+  /** Whether a [MinimapPanel] is currently attached to [editor]. Exposed for tests of the activation path. */
+  @VisibleForTesting
+  fun isMinimapInstalled(editor: Editor): Boolean {
+    val editorImpl = getMainEditorImpl(editor) ?: return false
+    if (editorImpl.getUserData(MINI_MAP_PANEL_KEY) != null) return true
+    val panel = getPanel(editorImpl) ?: return false
+    return panel.components.filterIsInstance<MinimapPanel>().isNotEmpty()
+  }
+
   fun updateAllEditors() {
     EditorFactory.getInstance().allEditors.forEach { editor ->
       getMainEditorImpl(editor)?.let {
         updateMinimap(it)
       }
     }
-  }
-
-  fun repaintGutter(editor: Editor) {
-    val editorImpl = getMainEditorImpl(editor) ?: return
-    val minimapPanel = editorImpl.getUserData(MINI_MAP_PANEL_KEY)
-                      ?: getPanel(editorImpl)?.components?.filterIsInstance<MinimapPanel>()?.firstOrNull()
-                      ?: return
-    minimapPanel.repaintGutter()
   }
 
   fun repaint(editor: Editor) {
