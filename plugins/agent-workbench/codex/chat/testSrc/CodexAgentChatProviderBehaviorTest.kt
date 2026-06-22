@@ -27,6 +27,16 @@ class CodexAgentChatProviderBehaviorTest {
   }
 
   @Test
+  fun concreteThreadRebindCommandsAreExactNewOrFork() {
+    assertThat(CodexAgentChatProviderBehavior.isConcreteNewThreadRebindCommand("/new")).isTrue()
+    assertThat(CodexAgentChatProviderBehavior.isConcreteNewThreadRebindCommand("/fork")).isTrue()
+
+    assertThat(CodexAgentChatProviderBehavior.isConcreteNewThreadRebindCommand("/fork now")).isFalse()
+    assertThat(CodexAgentChatProviderBehavior.isConcreteNewThreadRebindCommand("/forkx")).isFalse()
+    assertThat(CodexAgentChatProviderBehavior.isConcreteNewThreadRebindCommand("echo /fork")).isFalse()
+  }
+
+  @Test
   fun planCommandRetryIgnoresThreadActivityBeforeSend(): Unit = kotlinx.coroutines.runBlocking {
     val dispatch = planCommandDispatch()
 

@@ -465,8 +465,16 @@ class AgentChatFileEditorLifecycleTest {
 
   @Test
   fun terminalTitleRebindsConcreteTabAfterNewThreadCommand() {
+    assertTerminalTitleRebindsConcreteTabAfterConcreteThreadCommand("Fresh /new thread")
+  }
+
+  @Test
+  fun terminalTitleRebindsConcreteTabAfterForkCommand() {
+    assertTerminalTitleRebindsConcreteTabAfterConcreteThreadCommand("Fresh /fork thread")
+  }
+
+  private fun assertTerminalTitleRebindsConcreteTabAfterConcreteThreadCommand(threadTitle: String) {
     val threadId = "018f4b30-f1b2-7000-9b4d-abcdef123456"
-    val threadTitle = "Fresh /new thread"
     val file = testFile()
     file.updateNewThreadRebindRequestedAtMs(2_000L)
     val title = TerminalTitle()
@@ -2622,7 +2630,7 @@ private object TestCodexAgentChatProviderBehavior : AgentChatProviderBehavior {
     return descriptor?.supportsNewThreadRebind == true && !file.isPendingThread && file.subAgentId == null
   }
 
-  override fun isConcreteNewThreadRebindCommand(command: String): Boolean = command == "/new"
+  override fun isConcreteNewThreadRebindCommand(command: String): Boolean = command == "/new" || command == "/fork"
 
   override fun requiresPostSendObservation(dispatch: AgentChatInitialMessageDispatchContext): Boolean {
     return dispatch.completionPolicy == AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY

@@ -34,6 +34,15 @@ import kotlin.time.Duration.Companion.milliseconds
 class AgentChatConcreteThreadRebindControllerTest {
   @Test
   fun slashNewPersistsAnchorAndRetriesScopedRefresh(): Unit = runBlocking {
+    assertConcreteThreadRebindCommandPersistsAnchorAndRetriesScopedRefresh("/new")
+  }
+
+  @Test
+  fun slashForkPersistsAnchorAndRetriesScopedRefresh(): Unit = runBlocking {
+    assertConcreteThreadRebindCommandPersistsAnchorAndRetriesScopedRefresh("/fork")
+  }
+
+  private fun assertConcreteThreadRebindCommandPersistsAnchorAndRetriesScopedRefresh(command: String) {
     val file = concreteCodexFile()
     val tab = ConcreteRebindTestTerminalTab()
     val snapshots = ConcreteRebindRecordingSnapshotWriter()
@@ -50,7 +59,7 @@ class AgentChatConcreteThreadRebindControllerTest {
     try {
       tab.setSessionState(TerminalViewSessionState.Running)
       controller.attach(tab = tab, descriptor = null)
-      tab.emitCommand("/new")
+      tab.emitCommand(command)
 
       waitForCondition {
         file.newThreadRebindRequestedAtMs == 1_000L &&
@@ -210,7 +219,7 @@ private object TestConcreteThreadRebindBehavior : AgentChatProviderBehavior {
     return file.provider == AgentSessionProvider.CODEX && !file.isPendingThread && file.subAgentId == null
   }
 
-  override fun isConcreteNewThreadRebindCommand(command: String): Boolean = command == "/new"
+  override fun isConcreteNewThreadRebindCommand(command: String): Boolean = command == "/new" || command == "/fork"
 }
 
 private class ConcreteRebindTestTerminalTab : AgentChatTerminalTab {

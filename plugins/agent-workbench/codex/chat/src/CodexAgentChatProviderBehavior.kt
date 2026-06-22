@@ -46,7 +46,9 @@ internal object CodexAgentChatProviderBehavior : AgentChatProviderBehavior {
     return descriptor?.supportsNewThreadRebind == true && !file.isPendingThread && file.subAgentId == null
   }
 
-  override fun isConcreteNewThreadRebindCommand(command: String): Boolean = command == "/new"
+  override fun isConcreteNewThreadRebindCommand(command: String): Boolean {
+    return command == CODEX_NEW_THREAD_COMMAND || command == CODEX_FORK_THREAD_COMMAND
+  }
 
   override fun shouldUseBracketedPasteMode(text: String): Boolean {
     return text.trim() != CODEX_PLAN_COMMAND
@@ -133,6 +135,8 @@ private fun stripCodexTerminalAnsi(text: String): String = CODEX_TERMINAL_ANSI_E
 private const val CODEX_PLAN_MODE_RETRY_BACKOFF_MS: Long = 250
 private const val CODEX_PLAN_MODE_MAX_RETRY_BACKOFF_MS: Long = 1_000
 private const val CODEX_PLAN_COMMAND_BLANK_OUTPUT_RETRY_LIMIT: Int = 2
+private const val CODEX_NEW_THREAD_COMMAND: String = "/new"
+private const val CODEX_FORK_THREAD_COMMAND: String = "/fork"
 private const val CODEX_PLAN_COMMAND: String = "/plan"
 private val CODEX_PLAN_MODE_BUSY_MESSAGE_REGEX: Regex =
   Regex("'\\s*/plan\\s*'\\s+is disabled while a task is in progress\\.", RegexOption.IGNORE_CASE)
