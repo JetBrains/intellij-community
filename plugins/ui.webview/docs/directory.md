@@ -104,6 +104,7 @@ Use the same status legend everywhere; don't invent new icons.
 - ⬜ Windows WebView2 off-EDT Stage 2 (`AttachThreadInput`) — [backends/windows-webview2-off-edt-plan](backends/windows-webview2-off-edt-plan.md#stage-status)
 - ⬜ Windows WebView2 off-EDT Stage 3 (`assert_owning_thread`) — closes rust-review H1
 - ✅ Windows WebView2 application-mode defaults — disable browser-like UI behavior by default; [backends/windows-webview2-application-mode-plan](backends/windows-webview2-application-mode-plan.md)
+- ✅ macOS WKWebView application-mode defaults — disable browser-like UI behavior by default; [backends/macos-wkwebview-application-mode-plan](backends/macos-wkwebview-application-mode-plan.md)
 - ⬜ Architecture Review cleanup #1–7 (pure cleanup, no public API break)
 - ⬜ Architecture Review cleanup #8 (`WebViewMessageRegistration` → `AutoCloseable`)
 - ⬜ Architecture Review cleanup #10–13 (engine type unification, first-class `WebViewTransport`, `WebViewMessageContext` decision)
@@ -165,6 +166,7 @@ Use the same status legend everywhere; don't invent new icons.
 ### `backends/` — Native rendering / engine impls
 - [Windows WebView2 Implementation](backends/windows-webview2-implementation-plan.md) — ✅ done.
 - [Windows WebView2 Application Mode](backends/windows-webview2-application-mode-plan.md) — ✅ implemented.
+- [macOS WKWebView Application Mode](backends/macos-wkwebview-application-mode-plan.md) — ✅ implemented.
 - [Windows WebView2 Off-EDT](backends/windows-webview2-off-edt-plan.md) — Stage 1 ✅, Stages 2–3 ⬜.
 - [Windows WebView2 Rust Bridge Review](backends/windows-webview2-rust-review.md) — issues catalogued with status table; C1/C2/C3/H1–H3 + M/L items mostly ⬜.
 - [Linux WebKitGTK Runtime](backends/linux-webkitgtk-runtime.md) — ⏳ Wayland snapshot display-only; interactive input / asset serving / X11 ⬜.

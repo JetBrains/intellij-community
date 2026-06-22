@@ -16,9 +16,11 @@ import com.intellij.ui.mac.foundation.Foundation.registerObjcClassPair
 import com.intellij.ui.mac.foundation.Foundation.toStringViaUTF8
 import com.intellij.ui.mac.foundation.ID
 import com.intellij.ui.webview.impl.WebViewAssetResponse
+import com.intellij.ui.webview.impl.WebViewLogger
 import com.intellij.ui.webview.impl.WEBVIEW_ASSET_CUSTOM_SCHEME
 import com.sun.jna.Callback
 import com.sun.jna.Memory
+import com.sun.jna.Pointer
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 
@@ -44,6 +46,7 @@ internal object WKWebViewBridge {
   private const val CLS_NSDATA = "NSData"
   private const val CLS_NSMUTABLE_DICTIONARY = "NSMutableDictionary"
   private const val CLS_NSOBJECT = "NSObject"
+  private const val CLS_WKUSER_SCRIPT = "WKUserScript"
   // endregion
 
   // region ObjC selectors (centralized, no scattered magic strings)
@@ -58,7 +61,7 @@ internal object WKWebViewBridge {
 
   // WKPreferences
   private val SEL_SET_JAVA_SCRIPT_ENABLED = createSelector("setJavaScriptEnabled:")
-  private val SEL_SET_VALUE_FOR_KEY = createSelector("setValue:forKey:")
+  private val SEL_SET_JAVA_SCRIPT_CAN_OPEN_WINDOWS_AUTOMATICALLY = createSelector("setJavaScriptCanOpenWindowsAutomatically:")
 
   // WKWebView
   private val SEL_INIT_WITH_FRAME_CONFIGURATION = createSelector("initWithFrame:configuration:")
@@ -69,6 +72,12 @@ internal object WKWebViewBridge {
   private val SEL_SET_FRAME = createSelector("setFrame:")
   private val SEL_SET_HIDDEN = createSelector("setHidden:")
   private val SEL_SET_AUTORESIZING_MASK = createSelector("setAutoresizingMask:")
+  private val SEL_SET_ALLOWS_BACK_FORWARD_NAVIGATION_GESTURES = createSelector("setAllowsBackForwardNavigationGestures:")
+  private val SEL_SET_ALLOWS_MAGNIFICATION = createSelector("setAllowsMagnification:")
+  private val SEL_SET_PAGE_ZOOM = createSelector("setPageZoom:")
+  private val SEL_SET_INSPECTABLE = createSelector("setInspectable:")
+  private val SEL_SET_CAN_USE_CREDENTIAL_STORAGE = createSelector("_setCanUseCredentialStorage:")
+  private val SEL_SET_RUBBER_BANDING_ENABLED = createSelector("_setRubberBandingEnabled:")
   private val SEL_REMOVE_FROM_SUPERVIEW = createSelector("removeFromSuperview")
 
   // NSWindow
@@ -100,8 +109,12 @@ internal object WKWebViewBridge {
   private val SEL_DID_FINISH = createSelector("didFinish")
 
   // WKUserContentController
+  private val SEL_ADD_USER_SCRIPT = createSelector("addUserScript:")
   private val SEL_ADD_SCRIPT_MESSAGE_HANDLER = createSelector("addScriptMessageHandler:name:")
   private val SEL_REMOVE_SCRIPT_MESSAGE_HANDLER = createSelector("removeScriptMessageHandlerForName:")
+
+  // WKUserScript
+  private val SEL_INIT_WITH_SOURCE_INJECTION_TIME_FOR_MAIN_FRAME_ONLY = createSelector("initWithSource:injectionTime:forMainFrameOnly:")
 
   // WKScriptMessage
   private val SEL_BODY = createSelector("body")
@@ -109,6 +122,52 @@ internal object WKWebViewBridge {
 
   /** Name used for the JS→JVM postMessage channel. JS calls: `window.webkit.messageHandlers.webviewIpc.postMessage(...)` */
   const val IPC_HANDLER_NAME = "webviewIpc"
+
+  private const val WK_RECT_EDGE_NONE = 0L
+  private const val WK_USER_SCRIPT_INJECTION_TIME_AT_DOCUMENT_START = 0L
+
+  @Language("JavaScript")
+  private val APPLICATION_MODE_USER_SCRIPT = """
+    (function() {
+      const formControlSelector = 'input, textarea, select';
+
+      function configureFormControl(element) {
+        element.setAttribute('autocomplete', 'off');
+        element.setAttribute('autocorrect', 'off');
+        element.setAttribute('autocapitalize', 'off');
+        element.setAttribute('spellcheck', 'false');
+        element.spellcheck = false;
+      }
+
+      function configureFormControls(root) {
+        if (!root) {
+          return;
+        }
+        if (root.nodeType === Node.ELEMENT_NODE && root.matches(formControlSelector)) {
+          configureFormControl(root);
+        }
+        if (typeof root.querySelectorAll !== 'function') {
+          return;
+        }
+        for (const element of root.querySelectorAll(formControlSelector)) {
+          configureFormControl(element);
+        }
+      }
+
+      function preventCancelableDefault(event) {
+        if (event.cancelable) {
+          event.preventDefault();
+        }
+      }
+
+      document.addEventListener('contextmenu', preventCancelableDefault, true);
+
+      configureFormControls(document.documentElement || document);
+      document.addEventListener('DOMContentLoaded', function() {
+        configureFormControls(document.documentElement);
+      }, { once: true });
+    })();
+  """.trimIndent()
 
   /**
    * Registered ObjC class acting as WKScriptMessageHandler. Created once, reused across instances.
@@ -155,36 +214,22 @@ internal object WKWebViewBridge {
     // 2. Configure preferences
     val preferences = invoke(configuration, SEL_PREFERENCES)
     invoke(preferences, SEL_SET_JAVA_SCRIPT_ENABLED, true)
-    // Enable developer extras for debugging in POC
-    invoke(preferences, SEL_SET_VALUE_FOR_KEY, invoke("NSNumber", "numberWithBool:", true), nsString("developerExtrasEnabled"))
+    invoke(preferences, SEL_SET_JAVA_SCRIPT_CAN_OPEN_WINDOWS_AUTOMATICALLY, false)
 
     // 3. Set up user content controller with message handler
     val userContentController = invoke(configuration, SEL_USER_CONTENT_CONTROLLER)
+    installApplicationModeUserScript(userContentController)
     val handlerInstance = createAndRegisterMessageHandler(onMessage)
     invoke(userContentController, SEL_ADD_SCRIPT_MESSAGE_HANDLER, handlerInstance, nsString(IPC_HANDLER_NAME))
 
     val urlSchemeHandlerInstance = createAndRegisterUrlSchemeHandler(resolveAssetUrl)
     invoke(configuration, SEL_SET_URL_SCHEME_HANDLER_FOR_URL_SCHEME, urlSchemeHandlerInstance, nsString(WEBVIEW_ASSET_CUSTOM_SCHEME))
 
-    // TODO: suppress the browser right-click context menu at this layer instead of
-    //  relying on each page injecting `preventDefault` on the `contextmenu` DOM event.
-    //  Two native options, both doable without leaving this bridge:
-    //    1) Register an ObjC class pair conforming to WKUIDelegate (mirror
-    //       `IdeaWKMessageHandler` below) that implements
-    //       `webView:contextMenuConfigurationForElement:completionHandler:` and
-    //       returns nil. Then `setUIDelegate:` on the WKWebView. Cleanest, public API.
-    //    2) Inject a document-start WKUserScript that calls `preventDefault` on
-    //       `contextmenu`. Simpler, but needs care with JNA arg ABI — passing the
-    //       `WKUserScriptInjectionTime` enum (NSInteger, 64-bit) from a Kotlin Int
-    //       through `Foundation.invoke(...)` varargs previously corrupted init and
-    //       left WebView in a broken state, so cast to Long explicitly.
-    //  Gate behind a `suppressContextMenu: Boolean` flag on `createMacOsEngine` so
-    //  consumers that need native menus (e.g. debug tools) can opt out.
-
     // 4. Allocate WKWebView with zero frame (will be set when attached)
     val webView = invoke(getObjcClass(CLS_WKWEBVIEW), SEL_ALLOC)
     val initializedWebView = invoke(webView, SEL_INIT_WITH_FRAME_CONFIGURATION,
                                     NSRect(0.0, 0.0, 0.0, 0.0), configuration)
+    configureWebViewApplicationMode(initializedWebView)
 
     // 5. Keep Swing host geometry as the only frame source. The WebView is attached
     // to the window content view, so AppKit autoresizing would follow the whole window.
@@ -337,6 +382,41 @@ internal object WKWebViewBridge {
   }
 
   // region Message handler class registration
+
+  private fun installApplicationModeUserScript(userContentController: ID) {
+    val userScript = invoke(
+      invoke(getObjcClass(CLS_WKUSER_SCRIPT), SEL_ALLOC),
+      SEL_INIT_WITH_SOURCE_INJECTION_TIME_FOR_MAIN_FRAME_ONLY,
+      nsString(APPLICATION_MODE_USER_SCRIPT),
+      WK_USER_SCRIPT_INJECTION_TIME_AT_DOCUMENT_START,
+      false,
+    )
+    invoke(userContentController, SEL_ADD_USER_SCRIPT, userScript)
+    invoke(userScript, SEL_RELEASE)
+  }
+
+  private fun configureWebViewApplicationMode(webView: ID) {
+    invoke(webView, SEL_SET_ALLOWS_BACK_FORWARD_NAVIGATION_GESTURES, false)
+    invoke(webView, SEL_SET_ALLOWS_MAGNIFICATION, false)
+    invokeIfResponds(webView, SEL_SET_PAGE_ZOOM, 1.0, "setPageZoom:")
+    invokeIfResponds(webView, SEL_SET_INSPECTABLE, false, "setInspectable:")
+    invokeIfResponds(webView, SEL_SET_CAN_USE_CREDENTIAL_STORAGE, false, "_setCanUseCredentialStorage:")
+    invokeIfResponds(webView, SEL_SET_RUBBER_BANDING_ENABLED, WK_RECT_EDGE_NONE, "_setRubberBandingEnabled:")
+  }
+
+  private fun invokeIfResponds(target: ID, selector: Pointer, value: Any, settingName: String) {
+    if (!respondsTo(target, selector)) return
+    try {
+      invoke(target, selector, value)
+    }
+    catch (t: Throwable) {
+      WebViewLogger.LOG.debug("Failed to apply WKWebView application-mode setting $settingName", t)
+    }
+  }
+
+  private fun respondsTo(target: ID, selector: Pointer): Boolean {
+    return !isNil(target) && invoke(target, SEL_RESPONDS_TO_SELECTOR, selector).booleanValue()
+  }
 
   private fun createAndRegisterMessageHandler(onMessage: (String) -> Unit): ID {
     ensureMessageHandlerClassRegistered()

@@ -101,6 +101,67 @@ class MacWebViewSmokeTest {
   }
 
   @Test
+  fun applicationMode_preventsContextMenuDefault(): Unit = runBlocking {
+    val facade = createMacWebViewEngine(scope!!)
+
+    SwingUtilities.invokeAndWait {
+      val host = createHost(scope!!, facade)
+      frame!!.contentPane.add(host)
+      frame!!.revalidate()
+    }
+
+    delay(1000.milliseconds)
+
+    facade.loadHtml(/*language=HTML*/ "<html><body>menu target</body></html>")
+    delay(500.milliseconds)
+
+    val result = facade.evaluateJavaScript(/*language=JavaScript*/ """
+      (function() {
+        const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+        document.body.dispatchEvent(event);
+        return String(event.defaultPrevented);
+      })()
+    """.trimIndent())
+    assertEquals("true", result)
+
+    facade.close()
+  }
+
+  @Test
+  @Suppress("HtmlDeprecatedAttribute")
+  fun applicationMode_disablesInputAssistForFormControls(): Unit = runBlocking {
+    val facade = createMacWebViewEngine(scope!!)
+
+    SwingUtilities.invokeAndWait {
+      val host = createHost(scope!!, facade)
+      frame!!.contentPane.add(host)
+      frame!!.revalidate()
+    }
+
+    delay(1000.milliseconds)
+
+    facade.loadHtml(/*language=HTML*/ """
+      <html>
+      <body>
+        <input id="existing" autocomplete="email" autocorrect="on" autocapitalize="sentences" spellcheck="true">
+      </body>
+      </html>
+    """.trimIndent())
+    delay(500.milliseconds)
+
+    val result = facade.evaluateJavaScript(/*language=JavaScript*/ """
+      (function() {
+        const attributeNames = ['autocomplete', 'autocorrect', 'autocapitalize', 'spellcheck'];
+        const existing = document.getElementById('existing');
+        return attributeNames.map(name => existing.getAttribute(name)).join('|');
+      })()
+    """.trimIndent())
+    assertEquals("off|off|off|false", result)
+
+    facade.close()
+  }
+
+  @Test
   fun loadHtml_beforeAttach_isAppliedAfterAttach(): Unit = runBlocking {
     val facade = createMacWebViewEngine(scope!!)
     facade.loadHtml(/*language=HTML*/ "<html><body>queued-before-attach</body></html>")
