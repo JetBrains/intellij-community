@@ -26,7 +26,6 @@ import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.UField
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.UQualifiedReferenceExpression
 import org.jetbrains.uast.USimpleNameReferenceExpression
@@ -38,7 +37,7 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 @VisibleForTesting
 @ApiStatus.Internal
-class SplitModeApiUsageInspection : DevKitUastInspectionBase(UClass::class.java, UField::class.java, UMethod::class.java) {
+class SplitModeApiUsageInspection : DevKitUastInspectionBase(UClass::class.java, UMethod::class.java) {
 
   override fun isAllowed(holder: ProblemsHolder): Boolean {
     return super.isAllowed(holder)
