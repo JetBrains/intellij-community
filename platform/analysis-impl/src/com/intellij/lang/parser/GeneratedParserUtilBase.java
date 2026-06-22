@@ -261,12 +261,12 @@ public class GeneratedParserUtilBase {
   }
 
   public static boolean consumeToken(PsiBuilder builder, TokenSet tokens) {
-    addVariantSmart(builder, tokens.getTypes(), true);
+    for (IElementType type : tokens.getTypes()) addVariantSmart(builder, type, true);
     return consumeTokenFast(builder, tokens);
   }
 
   public static boolean consumeTokenSmart(PsiBuilder builder, TokenSet tokens) {
-    addCompletionVariantSmart(builder, tokens.getTypes());
+    for (IElementType type : tokens.getTypes()) addCompletionVariantSmart(builder, type);
     return consumeTokenFast(builder, tokens);
   }
 
