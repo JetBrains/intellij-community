@@ -628,6 +628,8 @@ jvm_library(
         "//xml/dom-tests:dom-tests_test_lib",
         "//plugins/IntelliLang/tests",
         "//plugins/IntelliLang/tests:tests_test_lib",
+        "//platform/recentFiles/tests",
+        "//platform/recentFiles/tests:tests_test_lib",
         "//xml/tests",
         "//xml/tests:tests_test_lib",
         "//jps/model-serialization:model-serialization-tests",

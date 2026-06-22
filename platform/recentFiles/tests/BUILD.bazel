@@ -1,0 +1,88 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.platform.recentFiles.tests` start
+
+jvm_library(
+    name = "tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.recentFiles.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/recentFiles/plugin",
+    ],
+)
+
+jvm_library(
+    name = "tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//platform/recentFiles/backend",
+        "//platform/recentFiles/backend:backend_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":tests",
+        "//platform/recentFiles/plugin:plugin_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/platform-impl/rpc:rpc_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/recentFiles/frontend",
+        "//platform/recentFiles/frontend:frontend_test_lib",
+        "//platform/recentFiles/shared:recentFiles",
+        "//platform/recentFiles/shared:recentFiles_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/util/concurrency",
+        "//platform/util/concurrency:concurrency_test_lib",
+        "//platform/platform-impl:ide-impl",
+        "//platform/platform-impl/rpc",
+        "//platform/kernel/rpc.backend",
+        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
+        "//platform/util:util-ui",
+        "//platform/util:util-ui_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.recentFiles.tests` end
+
+### auto-generated section `iml intellij.platform.recentFiles.tests` start
+exports_files(
+    [
+        "intellij.platform.recentFiles.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.recentFiles.tests` end
+
+### auto-generated section `test intellij.platform.recentFiles.tests` start
+
+jps_test(
+    name = "tests_test",
+    runtime_deps = [":tests_test_lib"],
+)
+### auto-generated section `test intellij.platform.recentFiles.tests` end

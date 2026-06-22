@@ -1614,6 +1614,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/recentFiles/backend/intellij.platform.recentFiles.backend.iml" filepath="$PROJECT_DIR$/platform/recentFiles/backend/intellij.platform.recentFiles.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/recentFiles/frontend/intellij.platform.recentFiles.frontend.iml" filepath="$PROJECT_DIR$/platform/recentFiles/frontend/intellij.platform.recentFiles.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/recentFiles/plugin/intellij.platform.recentFiles.plugin.iml" filepath="$PROJECT_DIR$/platform/recentFiles/plugin/intellij.platform.recentFiles.plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/recentFiles/tests/intellij.platform.recentFiles.tests.iml" filepath="$PROJECT_DIR$/platform/recentFiles/tests/intellij.platform.recentFiles.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/refactoring/intellij.platform.refactoring.iml" filepath="$PROJECT_DIR$/platform/refactoring/intellij.platform.refactoring.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/remote-core/intellij.platform.remote.core.iml" filepath="$PROJECT_DIR$/platform/remote-core/intellij.platform.remote.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/remote-servers/api/intellij.platform.remoteServers.iml" filepath="$PROJECT_DIR$/platform/remote-servers/api/intellij.platform.remoteServers.iml" />
