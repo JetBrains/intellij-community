@@ -130,7 +130,7 @@
     <orderEntry type="module" module-name="intellij.platform.todo.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.communityOnly" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.json.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.json.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.aliasProvider" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide" scope="TEST" />
