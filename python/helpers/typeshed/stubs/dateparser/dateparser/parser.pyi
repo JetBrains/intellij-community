@@ -1,12 +1,14 @@
 import datetime
 import re
-from _typeshed import Incomplete
 from collections import OrderedDict
 from collections.abc import Callable, Iterable, Iterator
 from io import StringIO
-from typing import Final, Literal, overload
+from typing import ClassVar, Final, Literal, TypeAlias, overload
 
 from dateparser.conf import Settings
+
+_TokenType: TypeAlias = Literal[0, 1, 2]
+_Component: TypeAlias = Literal["year", "month", "day"]
 
 NSP_COMPATIBLE: Final[re.Pattern[str]]
 MERIDIAN: Final[re.Pattern[str]]
@@ -15,14 +17,12 @@ EIGHT_DIGIT: Final[re.Pattern[str]]
 HOUR_MINUTE_REGEX: Final[re.Pattern[str]]
 
 def no_space_parser_eligibile(datestring: str) -> bool: ...
-def get_unresolved_attrs(
-    parser_object: object,
-) -> tuple[list[Literal["year", "month", "day"]], list[Literal["year", "month", "day"]]]: ...
+def get_unresolved_attrs(parser_object: object) -> tuple[list[_Component], list[_Component]]: ...
 
 date_order_chart: Final[dict[str, str]]
 
 @overload
-def resolve_date_order(order: str, lst: Literal[True]) -> list[str]: ...
+def resolve_date_order(order: str, lst: Literal[True]) -> list[_Component]: ...
 @overload
 def resolve_date_order(order: str, lst: Literal[False] | None = None) -> str: ...
 
@@ -40,19 +40,21 @@ class _no_spaces_parser:
     def parse(cls, datestring: str, settings: Settings) -> tuple[datetime.datetime, str]: ...
 
 class _parser:
-    alpha_directives: OrderedDict[str, list[str]]
-    num_directives: dict[str, list[str]]
+    alpha_directives: ClassVar[dict[str, list[str]]]
+    num_directives: ClassVar[dict[str, list[str]]]
+
     settings: Settings
-    tokens: list[tuple[Incomplete, Incomplete]]
-    filtered_tokens: list[tuple[Incomplete, Incomplete, int]]
-    unset_tokens: list[tuple[Incomplete, Incomplete, Incomplete]]
+    tokens: list[tuple[str, _TokenType]]
+    filtered_tokens: list[tuple[str, _TokenType, int]]
+    unset_tokens: list[tuple[str, _TokenType, _Component]]
     day: int | None
     month: int | None
     year: int | None
     time: Callable[[], datetime.time] | None
     auto_order: list[str]
     ordered_num_directives: OrderedDict[str, list[str]]
-    def __init__(self, tokens: Iterable[Incomplete], settings: Settings) -> None: ...
+
+    def __init__(self, tokens: Iterable[tuple[str, _TokenType]], settings: Settings) -> None: ...
     @classmethod
     def parse(
         cls, datestring: str, settings: Settings, tz: datetime.tzinfo | None = None
@@ -63,4 +65,4 @@ class tokenizer:
     letters: Literal["abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"]
     instream: StringIO
     def __init__(self, ds: str) -> None: ...
-    def tokenize(self) -> Iterator[tuple[str, Literal[0, 1, 2]]]: ...
+    def tokenize(self) -> Iterator[tuple[str, _TokenType]]: ...

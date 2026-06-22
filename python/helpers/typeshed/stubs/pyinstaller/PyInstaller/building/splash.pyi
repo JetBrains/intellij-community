@@ -1,6 +1,7 @@
 from _typeshed import StrPath
 
 from PyInstaller.building.datastruct import Target, _TOCTuple
+from PyInstaller.utils.hooks.tcl_tk import TclTkInfo
 
 # Referenced in https://pyinstaller.org/en/stable/spec-files.html#example-merge-spec-file
 # Not to be imported during runtime, but is the type reference for spec files which are executed as python code
@@ -42,4 +43,7 @@ class Splash(Target):
         always_on_top: bool = True,
     ) -> None: ...
     def assemble(self) -> None: ...
+    # This private method is the only way to match Splash Screen support validation without triggering an actual build
+    @staticmethod
+    def _check_tcl_tk_compatibility(tcltk_info: TclTkInfo) -> None: ...
     def generate_script(self) -> str: ...
