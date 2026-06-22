@@ -2,5 +2,5 @@ package target
 
 class Ctx
 
-context(ctx: Ctx)
+context(ctx: target.Ctx)
 fun f1() {}
