@@ -1,5 +1,5 @@
 // "Add context parameter to function" "true"
-// COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters -XXLanguage:+ExplicitContextArguments
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments
 // K2_ERROR: [NAMED_PARAMETER_NOT_FOUND] No parameter with name 'ctx' found.
 package caller
 

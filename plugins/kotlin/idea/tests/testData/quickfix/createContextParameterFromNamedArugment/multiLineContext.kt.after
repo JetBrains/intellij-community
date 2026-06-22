@@ -1,5 +1,5 @@
 // "Add context parameter to function" "true"
-// COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters -XXLanguage:+ExplicitContextArguments
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments
 // K2_ERROR: No context argument for 'a: A' found.
 // K2_ERROR: No context argument for 'b: B' found.
 // K2_ERROR: No parameter with name 'ctx2' found.
