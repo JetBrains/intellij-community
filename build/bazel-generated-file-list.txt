@@ -836,6 +836,7 @@ platform/recentFiles/backend
 platform/recentFiles/frontend
 platform/recentFiles/plugin
 platform/recentFiles/shared
+platform/recentFiles/tests
 platform/refactoring
 platform/remote-core
 platform/remote-driver/client
