@@ -1,12 +1,15 @@
 package com.intellij.python.pyrefly.typeProvider
 
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.lsp.api.LspClient
+import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.util.getOffsetInDocument
 import com.intellij.platform.lsp.util.getLsp4jPosition
 import com.intellij.psi.PsiFile
@@ -44,7 +47,9 @@ import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyNeverType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
+import org.eclipse.lsp4j.TextDocumentIdentifier
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Unmodifiable
@@ -367,30 +372,38 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
   override fun requestTypes(pyTypedElements: @Unmodifiable Collection<PyTypedElement>): List<String?>? {
     val file = psiFile.virtualFile ?: return null
     val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
-    val textDocument = lspClient.getDocumentIdentifier(file)
+    val documentRequests = pyTypedElements.mapNotNull { psiElement ->
+      getDocumentRequest(file, document, psiElement)
+    }
+    if (documentRequests.isEmpty()) return emptyList()
 
-    val positions = pyTypedElements.mapNotNull { psiElement ->
-      if (psiElement is PsiFile) return@mapNotNull null
-
-      val textRange = psiElement.textRange
-      if (textRange.isEmpty) return@mapNotNull null
-
-      val offsetDetector = PyreflyOffsetDetectorVisitor()
-      psiElement.accept(offsetDetector)
-      val offset = offsetDetector.offset
-      getLsp4jPosition(document, offset)
+    val groupedRequests = LinkedHashMap<String, MutableList<IndexedValue<DocumentRequest>>>()
+    documentRequests.forEachIndexed { index, request ->
+      groupedRequests.computeIfAbsent(request.textDocument.uri) { mutableListOf() }.add(IndexedValue(index, request))
     }
 
-    val response = try {
-      lspClient.sendRequestSync {
-        (it as PyreflyLsp4jServer).provideType(textDocument, positions)
+    val contents = arrayOfNulls<String?>(documentRequests.size)
+    for (group in groupedRequests.values) {
+      val textDocument = group.first().value.textDocument
+      val positions = group.map { it.value.position }
+
+      val response = try {
+        lspClient.sendRequestSync {
+          (it as PyreflyLsp4jServer).provideType(textDocument, positions)
+        }
+      }
+      catch (e: ResponseErrorException) {
+        e.responseError?.code
+        return null
+      }
+      val groupContents = response?.contents?.map { it.value } ?: return null
+      if (groupContents.size != group.size) return null
+
+      group.zip(groupContents).forEach { (indexedRequest, content) ->
+        contents[indexedRequest.index] = content
       }
     }
-    catch (e: ResponseErrorException) {
-      e.responseError?.code
-      return null
-    }
-    return response?.contents?.map { it.value }
+    return contents.toList()
   }
 
   override fun resolveStringType(element: PyTypedElement, stringType: String): Ref<PyType?>? {
@@ -421,5 +434,34 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
       PyreflyUsageCollector.logStringTypeResolutionTime(duration)
       return result
     }
+  }
+
+  private data class DocumentRequest(val textDocument: TextDocumentIdentifier, val position: Position)
+
+  private fun getDocumentRequest(
+    file: VirtualFile,
+    document: Document,
+    psiElement: PyTypedElement,
+  ): DocumentRequest? {
+    if (psiElement is PsiFile) return null
+
+    val textRange = psiElement.textRange
+    if (textRange.isEmpty) return null
+
+    val offsetDetector = PyreflyOffsetDetectorVisitor()
+    psiElement.accept(offsetDetector)
+    return getDocumentPosition(file, document, offsetDetector.offset)
+  }
+
+  private fun getDocumentPosition(
+    file: VirtualFile,
+    document: Document,
+    offset: Int,
+  ): DocumentRequest {
+    val mappedPosition = (lspClient as? LspClientImpl)?.documentMapping?.getDocumentPosition(file, document, offset)
+    if (mappedPosition != null) {
+      return DocumentRequest(mappedPosition.document.id, mappedPosition.position)
+    }
+    return DocumentRequest(lspClient.getDocumentIdentifier(file), getLsp4jPosition(document, offset))
   }
 }

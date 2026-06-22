@@ -1,14 +1,19 @@
 package com.intellij.python.pyrefly.lsp
 
+import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.execution.process.BaseProcessHandler
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.lsp.api.Lsp4jServer
+import com.intellij.platform.lsp.api.customization.LspCompletionCustomizer
+import com.intellij.platform.lsp.api.customization.LspCompletionSupport
 import com.intellij.platform.lsp.api.customization.LspFoldingRangeCustomizer
 import com.intellij.platform.lsp.api.customization.LspFoldingRangeDisabled
 import com.intellij.python.lsp.core.PyLspToolCustomization
 import com.intellij.python.lsp.core.PyLspToolDescriptor
+import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProjectSettings
+import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
 import com.intellij.python.lsp.core.utils.PyLspServerModificationTracker
 import com.intellij.python.pyrefly.PyreflyConfiguration
@@ -16,6 +21,7 @@ import com.intellij.python.pyrefly.PyreflyPyTool
 import com.intellij.python.pyrefly.PyreflyUsageCollector
 import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
 import com.intellij.python.pytools.getState
+import com.intellij.python.pytools.isEnabledOn
 import com.intellij.python.pytools.lsp.PyLspToolSettings
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
 import com.jetbrains.python.sdk.pythonSdk
@@ -32,6 +38,14 @@ class PyreflyLspClientDescriptor(module: Module) : PyLspToolDescriptor(module, P
 
   override val lspCustomization: PyLspToolCustomization = object : PyLspToolCustomization(toolConfig, pyTool, project) {
     override val foldingRangeCustomizer: LspFoldingRangeCustomizer = LspFoldingRangeDisabled
+
+    override val completionCustomizer: LspCompletionCustomizer = object : LspCompletionSupport() {
+      override fun shouldRunCodeCompletion(parameters: CompletionParameters): Boolean =
+        pyTool.isEnabledOn(project) && (toolConfig.completions == true || isPyreflyTypeEngineActive())
+    }
+
+    private fun isPyreflyTypeEngineActive(): Boolean =
+      PyTypeEngineProjectSettings.getInstance(project).typeEngine == PyTypeEngineType.PYREFLY
   }
 
   override val lspServerListener: PyLspToolDescriptorLspServerListener = object : PyLspToolDescriptorLspServerListener() {
