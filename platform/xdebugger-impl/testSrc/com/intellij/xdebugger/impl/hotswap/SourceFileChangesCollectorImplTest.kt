@@ -7,6 +7,7 @@ import com.intellij.history.Label
 import com.intellij.history.LocalHistory
 import com.intellij.history.LocalHistoryAction
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.Document
@@ -66,7 +67,7 @@ class SourceFileChangesCollectorImplTest {
     val file = createTestFile(fileName, content)
     try {
       runBlocking {
-        val document = requireNotNull(ReadAction.computeBlocking<Document?, RuntimeException> { FileDocumentManager.getInstance().getDocument(file) })
+        val document = requireNotNull(readAction { FileDocumentManager.getInstance().getDocument(file) })
         test(this, document)
       }
     }
@@ -198,7 +199,7 @@ private class MockListener(private val scope: CoroutineScope, private val channe
 private class MockLocalHistory(val bytes: ByteArray) : LocalHistory() {
   override val isEnabled: Boolean = true
 
-  override fun getByteContent(file: VirtualFile, condition: FileRevisionTimestampComparator): ByteArray? = bytes
+  override fun getByteContent(file: VirtualFile, condition: FileRevisionTimestampComparator): ByteArray = bytes
   override fun startAction(name: @NlsContexts.Label String?, activityId: ActivityId?): LocalHistoryAction = LocalHistoryAction.NULL
   override fun putEventLabel(project: Project, name: String, activityId: ActivityId): Label = Label.NULL_INSTANCE
   override fun putSystemLabel(project: Project, name: @NlsContexts.Label String, color: Int): Label = Label.NULL_INSTANCE

@@ -5,68 +5,70 @@ import com.intellij.history.LocalHistory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.event.BulkAwareDocumentListener
 import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.containers.DisposableWrapperList
 import com.intellij.xdebugger.hotswap.SourceFileChangesCollector
 import com.intellij.xdebugger.hotswap.SourceFileChangesListener
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 @Service(Service.Level.APP)
-private class ChangesProcessingService(private val coroutineScope: CoroutineScope) : Disposable.Default {
+private class ChangesProcessingService(coroutineScope: CoroutineScope) : Disposable.Default {
   private val collectors = DisposableWrapperList<SourceFileChangesCollectorImpl>()
   private val listenersCount = AtomicInteger()
 
-  @OptIn(ExperimentalCoroutinesApi::class)
-  private val documentChangeDispatcher = Dispatchers.Default.limitedParallelism(1)
+  private val events = Channel<ChangesProcessingEvent>(Channel.UNLIMITED)
   private val allCache = Long2ObjectOpenHashMap<Object2IntOpenHashMap<VirtualFile>>()
   private val queueSizeEstimate = AtomicInteger()
   private var lastSearchTimeNs = -1L
 
-  private val documentListener = object : DocumentListener {
-    override fun documentChanged(event: DocumentEvent) {
+  init {
+    coroutineScope.launch {
+      events.consumeEach { processEvent(it) }
+    }
+  }
+
+  private val documentListener = object : BulkAwareDocumentListener {
+    override fun documentChangedNonBulk(event: DocumentEvent) = onChange(event.document)
+    override fun bulkUpdateFinished(document: Document) = onChange(document)
+
+    private fun onChange(document: Document) {
       queueSizeEstimate.incrementAndGet()
-      coroutineScope.launch(documentChangeDispatcher) {
-        try {
-          onDocumentChange(event.document)
-        }
-        finally {
-          if (queueSizeEstimate.decrementAndGet() == 0) {
-            lastSearchTimeNs = -1L
-          }
-        }
+      val send = events.trySend(ChangesProcessingEvent.DocumentChanged(document))
+      if (send.isFailure) {
+        onDocumentChangeProcessed()
       }
     }
   }
 
   fun addCollector(collector: SourceFileChangesCollectorImpl) {
     Disposer.register(collector, Disposable {
-      coroutineScope.launch(documentChangeDispatcher) {
-        // clear cache
-        allCache.remove(collector.lastResetTimeStamp)
-      }
+      dropTimestamp(collector.lastTimestamp)
       if (listenersCount.decrementAndGet() == 0) {
         val eventMulticaster = EditorFactory.getInstance().eventMulticaster
         eventMulticaster.removeDocumentListener(documentListener)
@@ -79,20 +81,47 @@ private class ChangesProcessingService(private val coroutineScope: CoroutineScop
     collectors.add(collector, collector)
   }
 
-  private suspend fun onDocumentChange(document: Document) = coroutineScope {
-    val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return@coroutineScope
+  fun dropTimestamp(timestamp: Long) {
+    events.trySend(ChangesProcessingEvent.Clear(timestamp))
+  }
+
+  private suspend fun processEvent(event: ChangesProcessingEvent) {
+    when (event) {
+      is ChangesProcessingEvent.DocumentChanged -> {
+        try {
+          onDocumentChange(event.document)
+        }
+        catch (e: Throwable) {
+          if (e is CancellationException || e is ControlFlowException) throw e
+          logger.error(e)
+        }
+        finally {
+          onDocumentChangeProcessed()
+        }
+      }
+      is ChangesProcessingEvent.Clear -> allCache.remove(event.timestamp)
+    }
+  }
+
+  private fun onDocumentChangeProcessed() {
+    if (queueSizeEstimate.decrementAndGet() == 0) {
+      lastSearchTimeNs = -1L
+    }
+  }
+
+  private suspend fun onDocumentChange(document: Document) {
+    val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return
     logger.debug { "Document changed: ${virtualFile}" }
     val filteredCollectors = collectors
-      .map { collector -> collector to async(Dispatchers.Default) { collector.filters.all { it.isApplicable(virtualFile) } } }
-      .filter { it.second.await() }
-      .map { it.first }
+      .filter { collector -> collector.filters.all { it.isApplicable(virtualFile) } }
+
     if (filteredCollectors.isEmpty()) {
       logger.debug { "Document change skipped as filtered: $virtualFile" }
-      return@coroutineScope
+      return
     }
     logger.debug { "Document change processing: $virtualFile" }
     val contentHash = Strings.stringHashCode(document.immutableCharSequence)
-    val groupedByTimeStamp = filteredCollectors.groupBy { it.lastResetTimeStamp }
+    val groupedByTimeStamp = filteredCollectors.groupBy { it.lastTimestamp }
     dropUnusedTimestamps(groupedByTimeStamp.keys)
 
     for ((timestamp, collectors) in groupedByTimeStamp) {
@@ -127,6 +156,11 @@ private class ChangesProcessingService(private val coroutineScope: CoroutineScop
   companion object {
     fun getInstance() = service<ChangesProcessingService>()
   }
+
+  private sealed interface ChangesProcessingEvent {
+    data class DocumentChanged(val document: Document) : ChangesProcessingEvent
+    data class Clear(val timestamp: Long) : ChangesProcessingEvent
+  }
 }
 
 @ApiStatus.Internal
@@ -141,32 +175,46 @@ private val logger = logger<SourceFileChangesCollectorImpl>()
  */
 @ApiStatus.Internal
 class SourceFileChangesCollectorImpl(
-  private val coroutineScope: CoroutineScope,
+  coroutineScope: CoroutineScope,
   internal val listener: SourceFileChangesListener,
   internal vararg val filters: SourceFileChangeFilter<VirtualFile>,
-) : SourceFileChangesCollector<VirtualFile>, Disposable.Default {
-  @OptIn(ExperimentalCoroutinesApi::class)
-  private val limitedDispatcher = Dispatchers.Default.limitedParallelism(1)
+) : SourceFileChangesCollector<VirtualFile>, Disposable {
+  private val events = Channel<SourceFileChangesCollectorEvent>(Channel.UNLIMITED)
   private val lock = ReentrantLock()
+  private val cs = coroutineScope.childScope("SourceFileChangesCollectorImpl")
 
   @Volatile
   private var currentChanges: MutableSet<VirtualFile> = hashSetOf()
 
-  @Volatile
-  internal var lastResetTimeStamp: Long = System.currentTimeMillis()
-    private set
+  private val lastResetTimeStamp = AtomicLong(System.currentTimeMillis())
+  val lastTimestamp: Long
+    get() = lastResetTimeStamp.get()
 
   init {
+    cs.launch {
+      events.consumeEach { (hasChanges, file) ->
+        processDocumentChangeInternal(hasChanges, file)
+      }
+    }
     ChangesProcessingService.getInstance().addCollector(this)
+  }
+
+  override fun dispose() {
+    cs.cancel()
   }
 
   override fun getChanges(): Set<VirtualFile> = lock.withLock { currentChanges.toHashSet() }
   override fun resetChanges() {
-    lastResetTimeStamp = System.currentTimeMillis()
+    val previousTimeStamp = lastResetTimeStamp.getAndSet(System.currentTimeMillis())
     currentChanges = hashSetOf()
+    ChangesProcessingService.getInstance().dropTimestamp(previousTimeStamp)
   }
 
-  internal fun processDocumentChange(hasChangesSinceLastReset: Boolean, file: VirtualFile) = coroutineScope.launch(limitedDispatcher) {
+  internal fun processDocumentChange(hasChangesSinceLastReset: Boolean, file: VirtualFile) {
+    events.trySend(SourceFileChangesCollectorEvent(hasChangesSinceLastReset, file))
+  }
+
+  private fun processDocumentChangeInternal(hasChangesSinceLastReset: Boolean, file: VirtualFile) {
     val currentChanges = currentChanges
     lock.withLock {
       if (hasChangesSinceLastReset) {
@@ -192,6 +240,11 @@ class SourceFileChangesCollectorImpl(
     @TestOnly
     internal var customLocalHistory: LocalHistory? = null
   }
+
+  private data class SourceFileChangesCollectorEvent(
+    val hasChangesSinceLastReset: Boolean,
+    val file: VirtualFile,
+  )
 }
 
 private fun hasChangesSinceLastReset(
