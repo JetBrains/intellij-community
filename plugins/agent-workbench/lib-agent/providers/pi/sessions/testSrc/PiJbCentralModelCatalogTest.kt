@@ -20,20 +20,22 @@ class PiJbCentralModelCatalogTest {
       """.trimIndent()
     )
 
-    assertThat(status.agents).containsExactly(PiJbCentralAgent.CODEX)
+    assertThat(status.wiredCliAgents).containsExactly(PiJbCentralAgent.CODEX)
     assertThat(status.proxyPort).isEqualTo(19517)
     val esc = "\u001B"
     val coloredStatus = parseJbCentralStatus(
       """
-        ${esc}[1mAgents${esc}[m    ${esc}[38;2;117;117;117mClaude Code, Codex${esc}[m
+        ${esc}[1mAgents${esc}[m    ${esc}[38;2;117;117;117mClaude Code, Codex, Gemini${esc}[m
         Proxy running on port 19516
       """.trimIndent()
     )
-    assertThat(coloredStatus.agents).containsExactly(PiJbCentralAgent.CODEX, PiJbCentralAgent.CLAUDE_CODE)
+    assertThat(coloredStatus.wiredCliAgents).containsExactly(PiJbCentralAgent.CODEX, PiJbCentralAgent.CLAUDE_CODE, PiJbCentralAgent.GEMINI_CLI)
     assertThat(coloredStatus.proxyPort).isEqualTo(19516)
     val claudeOnlyStatus = parseJbCentralStatus("Agents: Claude Code on port 19516")
-    assertThat(claudeOnlyStatus.agents).containsExactly(PiJbCentralAgent.CLAUDE_CODE)
-    assertThat(parseJbCentralStatus("Agents: Junie on port 19516").agents).isEmpty()
+    assertThat(claudeOnlyStatus.wiredCliAgents).containsExactly(PiJbCentralAgent.CLAUDE_CODE)
+    assertThat(parseJbCentralStatus("Agents: Gemini CLI on port 19516").wiredCliAgents).containsExactly(PiJbCentralAgent.GEMINI_CLI)
+    assertThat(parseJbCentralStatus("Agents: gemini-cli on port 19516").wiredCliAgents).containsExactly(PiJbCentralAgent.GEMINI_CLI)
+    assertThat(parseJbCentralStatus("Agents: Junie on port 19516").wiredCliAgents).isEmpty()
     assertThat(parseJbCentralStatus("Agents: Codex").proxyPort).isNull()
   }
 
@@ -63,7 +65,11 @@ class PiJbCentralModelCatalogTest {
 
     assertThat(extension).contains(
       "api: \"openai-responses\"",
+      "api: \"google-vertex\"",
+      "gemini-cli/vertex",
+      "v1beta1/projects/wire-project/locations/wire-location",
       "streamSimpleOpenAIResponses",
+      "streamSimpleGoogleVertex",
     )
     assertThat(extension).doesNotContain(
       "openai-codex-responses",
@@ -133,7 +139,7 @@ class PiJbCentralModelCatalogTest {
     val metadata = PiJbCentralLaunchMetadata(
       jbCentralExecutable = "/usr/local/bin/jbcentral",
       proxyPort = 19516,
-      agents = setOf(PiJbCentralAgent.CODEX, PiJbCentralAgent.CLAUDE_CODE),
+      proxyAgents = setOf(PiJbCentralAgent.CODEX, PiJbCentralAgent.CLAUDE_CODE, PiJbCentralAgent.GEMINI_CLI),
     )
 
     val models = parsePiListModels(
@@ -149,11 +155,17 @@ class PiJbCentralModelCatalogTest {
         JetBrains Central       claude-sonnet-4-6-20250929    200000   64000    false     true
         JetBrains Central       claude-sonnet-4-6             200000   64000    false     true
         JetBrains Central       claude-opus-4-8               200000   64000    false     true
+        JetBrains Central       gemini-2.5-flash              1000000  64000    true      true
       """.trimIndent(),
       metadata,
     )
 
-    assertThat(models.map { it.selection.modelId }).containsExactly("gpt-5.5", "claude-sonnet-4-6", "claude-opus-4-8")
+    assertThat(models.map { it.selection.modelId }).containsExactly(
+      "gpt-5.5",
+      "claude-sonnet-4-6",
+      "claude-opus-4-8",
+      "gemini-2.5-flash",
+    )
     assertThat(models.map { it.selection.provider }).containsOnly("JetBrains Central")
     assertThat(models.map { it.selection.jbCentralExecutable }).containsOnly("/usr/local/bin/jbcentral")
     assertThat(models.map { it.selection.proxyPort }).containsOnly(19516)
@@ -161,9 +173,10 @@ class PiJbCentralModelCatalogTest {
       PiJbCentralAgent.CODEX,
       PiJbCentralAgent.CLAUDE_CODE,
       PiJbCentralAgent.CLAUDE_CODE,
+      PiJbCentralAgent.GEMINI_CLI,
     )
-    assertThat(models.map { it.selection.reasoning }).containsExactly(true, false, false)
-    assertThat(models.map { it.selection.supportsImages }).containsExactly(true, true, true)
+    assertThat(models.map { it.selection.reasoning }).containsExactly(true, false, false, true)
+    assertThat(models.map { it.selection.supportsImages }).containsExactly(true, true, true, true)
   }
 
   @Test
@@ -171,7 +184,7 @@ class PiJbCentralModelCatalogTest {
     val metadata = PiJbCentralLaunchMetadata(
       jbCentralExecutable = "/usr/local/bin/jbcentral",
       proxyPort = 19516,
-      agents = setOf(PiJbCentralAgent.CODEX, PiJbCentralAgent.CLAUDE_CODE),
+      proxyAgents = setOf(PiJbCentralAgent.CODEX, PiJbCentralAgent.CLAUDE_CODE, PiJbCentralAgent.GEMINI_CLI),
     )
 
     val models = parseJbCentralProfiles(
@@ -234,6 +247,37 @@ class PiJbCentralModelCatalogTest {
               "lifeCycle": {"experimental": true}
             },
             {
+              "id": "google-gemini-2-5-flash",
+              "providerModelID": "gemini-2.5-flash",
+              "features": ["Chat", "Proxy"],
+              "chatDefinition": {
+                "roles": ["user", "assistant", "system", "tool"],
+                "parameters": [
+                  {"fqdn": "llm.parameters.tools"},
+                  {"fqdn": "llm.parameters.reasoning-effort"}
+                ],
+                "multimediaDataDefinition": {
+                  "supportedTypes": ["image/png"]
+                }
+              },
+              "deprecated": false,
+              "contextLimit": 1000000,
+              "maxOutputTokens": 64000,
+              "experimental": false,
+              "provider": "Google Vertex AI",
+              "modelName": "Gemini 2.5 Flash"
+            },
+            {
+              "id": "google-gemini-2-5-flash-no-tools",
+              "providerModelID": "gemini-2.5-flash",
+              "features": ["Chat", "Proxy"],
+              "chatDefinition": {
+                "roles": ["user", "assistant", "system"]
+              },
+              "provider": "Google Vertex AI",
+              "modelName": "Gemini 2.5 Flash without tools"
+            },
+            {
               "id": "third-party/openai-gpt-5-5",
               "providerModelID": "gpt-5.5",
               "features": ["Responses"],
@@ -246,14 +290,22 @@ class PiJbCentralModelCatalogTest {
       metadata,
     )
 
-    assertThat(models.map { it.selection.modelId }).containsExactly("gpt-5.5", "anthropic-claude-4-5-sonnet")
-    assertThat(models.map { it.selection.displayName }).containsExactly("GPT-5.5", "Claude 4.5 Sonnet")
-    assertThat(models.map { it.selection.agent }).containsExactly(PiJbCentralAgent.CODEX, PiJbCentralAgent.CLAUDE_CODE)
-    assertThat(models.map { it.selection.reasoning }).containsExactly(true, false)
-    assertThat(models.map { it.selection.supportsImages }).containsExactly(true, false)
-    assertThat(models.map { it.selection.contextWindow }).containsExactly(400_000, 200_000)
-    assertThat(models.map { it.selection.maxTokens }).containsExactly(128_000, 64_000)
-    assertThat(models.map { it.selection.profileId }).containsExactly("openai-gpt-5-5", "anthropic-claude-4-5-sonnet")
+    assertThat(models.map { it.selection.modelId }).containsExactly("gpt-5.5", "anthropic-claude-4-5-sonnet", "gemini-2.5-flash")
+    assertThat(models.map { it.selection.displayName }).containsExactly("GPT-5.5", "Claude 4.5 Sonnet", "Gemini 2.5 Flash")
+    assertThat(models.map { it.selection.agent }).containsExactly(
+      PiJbCentralAgent.CODEX,
+      PiJbCentralAgent.CLAUDE_CODE,
+      PiJbCentralAgent.GEMINI_CLI,
+    )
+    assertThat(models.map { it.selection.reasoning }).containsExactly(true, false, true)
+    assertThat(models.map { it.selection.supportsImages }).containsExactly(true, false, true)
+    assertThat(models.map { it.selection.contextWindow }).containsExactly(400_000, 200_000, 1_000_000)
+    assertThat(models.map { it.selection.maxTokens }).containsExactly(128_000, 64_000, 64_000)
+    assertThat(models.map { it.selection.profileId }).containsExactly(
+      "openai-gpt-5-5",
+      "anthropic-claude-4-5-sonnet",
+      "google-gemini-2-5-flash",
+    )
   }
 
   @Test
@@ -324,6 +376,7 @@ class PiJbCentralModelCatalogTest {
             anthropic               claude-fable-5                200000   64000    false     true
             JetBrains Central       gpt-5.5                       400000   128000   true      true
             JetBrains Central       claude-opus-4-8               200000   64000    false     true
+            JetBrains Central       gemini-2.5-flash              1000000  64000    true      true
           """.trimIndent(),
         )
       },
@@ -341,20 +394,22 @@ class PiJbCentralModelCatalogTest {
         metadata = PiJbCentralLaunchMetadata(
           jbCentralExecutable = "/usr/local/bin/jbcentral",
           proxyPort = 19517,
-          agents = setOf(PiJbCentralAgent.CODEX, PiJbCentralAgent.CLAUDE_CODE),
+          proxyAgents = setOf(PiJbCentralAgent.CODEX, PiJbCentralAgent.CLAUDE_CODE, PiJbCentralAgent.GEMINI_CLI),
         ),
       )
     )
     assertThat(models.map { it.displayName }).containsExactly(
       "gpt-5.5 (JetBrains Central)",
       "claude-opus-4-8 (JetBrains Central)",
+      "gemini-2.5-flash (JetBrains Central)",
     )
     assertThat(models.map { it.supportedReasoningEfforts })
       .containsExactly(
         PI_SUPPORTED_REASONING_EFFORTS,
         emptySet(),
+        PI_SUPPORTED_REASONING_EFFORTS,
       )
-    assertThat(models.map { it.isDefault }).containsExactly(true, false)
+    assertThat(models.map { it.isDefault }).containsExactly(true, false, false)
     assertThat(PiJbCentralModelCatalog.decodeGenerationModelId(models[0].id)).isEqualTo(
       PiJbCentralModelSelection(
         provider = "JetBrains Central",
@@ -382,7 +437,7 @@ class PiJbCentralModelCatalogTest {
   }
 
   @Test
-  fun resolvesLaunchMetadataWithoutPiCatalogProbe(): Unit = runBlocking(Dispatchers.Default) {
+  fun resolvesLaunchMetadataWithDefaultCentralProxyAgentsWithoutPiCatalogProbe(): Unit = runBlocking(Dispatchers.Default) {
     var piCatalogQueried = false
     val catalog = PiJbCentralModelCatalog(
       jbCentralExecutableResolver = { "/usr/local/bin/jbcentral" },
@@ -403,7 +458,7 @@ class PiJbCentralModelCatalogTest {
       PiJbCentralLaunchMetadata(
         jbCentralExecutable = "/usr/local/bin/jbcentral",
         proxyPort = 19517,
-        agents = setOf(PiJbCentralAgent.CLAUDE_CODE),
+        proxyAgents = setOf(PiJbCentralAgent.CODEX, PiJbCentralAgent.CLAUDE_CODE, PiJbCentralAgent.GEMINI_CLI),
       )
     )
     assertThat(piCatalogQueried).isFalse()
@@ -421,19 +476,28 @@ class PiJbCentralModelCatalogTest {
   }
 
   @Test
-  fun returnsEmptyWhenJbCentralDoesNotExposeSupportedAgents(): Unit = runBlocking(Dispatchers.Default) {
+  fun usesDefaultCentralProxyAgentsWhenStatusOnlyReportsOtherWiredAgents(): Unit = runBlocking(Dispatchers.Default) {
     var piCatalogQueried = false
     val catalog = PiJbCentralModelCatalog(
       jbCentralExecutableResolver = { "/usr/local/bin/jbcentral" },
       statusRunner = { PiJbCentralCommandResult(exitCode = 0, stdout = "Agents: Junie on port 19516") },
       piListModelsRunner = { _, _, _ ->
         piCatalogQueried = true
-        PiJbCentralCommandResult(exitCode = 0, stdout = "")
+        PiJbCentralCommandResult(
+          exitCode = 0,
+          stdout = """
+            provider                model                         context  max-out  thinking  images
+            JetBrains Central       gemini-2.5-flash              1000000  64000    true      true
+          """.trimIndent(),
+        )
       },
     )
 
-    assertThat(catalog.listAvailableGenerationModels("pi", "/tmp/extension.ts")).isEmpty()
-    assertThat(piCatalogQueried).isFalse()
+    val models = catalog.listAvailableGenerationModels("pi", "/tmp/extension.ts")
+
+    assertThat(models.map { it.displayName }).containsExactly("gemini-2.5-flash (JetBrains Central)")
+    assertThat(PiJbCentralModelCatalog.decodeGenerationModelId(models.single().id)?.agent).isEqualTo(PiJbCentralAgent.GEMINI_CLI)
+    assertThat(piCatalogQueried).isTrue()
   }
 
   @Test

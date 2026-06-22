@@ -217,8 +217,9 @@ private fun AgentPromptGenerationModel.isProfileBackedJbCentralModel(): Boolean 
 
 private fun PiKnownModelSelection.isJbCentralFallbackModel(launchMetadata: PiJbCentralLaunchMetadata): Boolean {
   return provider.isJbCentralListModelsProvider(launchMetadata) ||
-         (provider == PI_OPENAI_CODEX_PROVIDER && PiJbCentralAgent.CODEX in launchMetadata.agents) ||
-         (provider == PI_ANTHROPIC_PROVIDER && PiJbCentralAgent.CLAUDE_CODE in launchMetadata.agents)
+         (provider == PI_OPENAI_CODEX_PROVIDER && PiJbCentralAgent.CODEX in launchMetadata.proxyAgents) ||
+         (provider == PI_ANTHROPIC_PROVIDER && PiJbCentralAgent.CLAUDE_CODE in launchMetadata.proxyAgents) ||
+         (provider == PI_GOOGLE_VERTEX_PROVIDER && PiJbCentralAgent.GEMINI_CLI in launchMetadata.proxyAgents)
 }
 
 private fun List<PiKnownModelCandidate>.toJbCentralGenerationModels(
@@ -233,7 +234,7 @@ private fun PiKnownModelCandidate.toJbCentralModelCandidate(launchMetadata: PiJb
   // When Central profiles are unavailable, the Pi extension wires Central into PI built-ins for a static fallback catalog.
   // Recode those rows to the single JetBrains Central provider before exposing them in Agent Workbench.
   val knownSelection = selection.takeIf { it.isJbCentralFallbackModel(launchMetadata) } ?: return null
-  val agent = knownSelection.toJbCentralFallbackAgent(launchMetadata.agents) ?: return null
+  val agent = knownSelection.toJbCentralFallbackAgent(launchMetadata.proxyAgents) ?: return null
   return PiJbCentralModelCandidate(
     PiJbCentralModelSelection(
       provider = launchMetadata.provider,
@@ -251,6 +252,7 @@ private fun PiKnownModelSelection.toJbCentralFallbackAgent(availableAgents: Set<
   return when (provider) {
     PI_OPENAI_CODEX_PROVIDER -> PiJbCentralAgent.CODEX.takeIf { it in availableAgents }
     PI_ANTHROPIC_PROVIDER -> PiJbCentralAgent.CLAUDE_CODE.takeIf { it in availableAgents }
+    PI_GOOGLE_VERTEX_PROVIDER -> PiJbCentralAgent.GEMINI_CLI.takeIf { it in availableAgents }
     else -> modelId.toJbCentralAgent(availableAgents)
   }
 }
@@ -481,6 +483,7 @@ private val CLAUDE_VERSION_NUMBER_REGEX = Regex("""\d+""")
 private val PI_LIST_MODELS_COLUMNS_REGEX = Regex("\\s+")
 private const val PI_OPENAI_CODEX_PROVIDER: String = "openai-codex"
 private const val PI_ANTHROPIC_PROVIDER: String = "anthropic"
+private const val PI_GOOGLE_VERTEX_PROVIDER: String = "google-vertex"
 private const val PI_EXTENSION_FLAG: String = "--extension"
 private const val PI_LIST_MODELS_FLAG: String = "--list-models"
 private const val PI_KNOWN_GENERATION_MODEL_ID_PREFIX: String = "pi:"

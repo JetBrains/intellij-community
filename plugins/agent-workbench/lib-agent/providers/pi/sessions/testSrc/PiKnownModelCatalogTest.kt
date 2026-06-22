@@ -169,7 +169,7 @@ class PiKnownModelCatalogTest {
     val launchMetadata = PiJbCentralLaunchMetadata(
       jbCentralExecutable = "/usr/local/bin/jbcentral",
       proxyPort = 19517,
-      agents = setOf(PiJbCentralAgent.CODEX, PiJbCentralAgent.CLAUDE_CODE),
+      proxyAgents = setOf(PiJbCentralAgent.CODEX, PiJbCentralAgent.CLAUDE_CODE, PiJbCentralAgent.GEMINI_CLI),
     )
     val requests = mutableListOf<PiKnownListModelsRequest>()
     val catalog = PiKnownModelCatalog(
@@ -185,6 +185,7 @@ class PiKnownModelCatalogTest {
             JetBrains Central       claude-sonnet-4-5              200K     64K      no        true
             JetBrains Central       claude-sonnet-4-6-20250929     200K     64K      no        true
             JetBrains Central       claude-opus-4-8               200K     64K      no        true
+            google-vertex           gemini-2.5-flash              1M       64K      yes       true
           """.trimIndent(),
         )
       }
@@ -204,30 +205,34 @@ class PiKnownModelCatalogTest {
         "\"provider\":\"JetBrains Central\"",
         "\"jbCentralExecutable\":\"/usr/local/bin/jbcentral\"",
         "\"proxyPort\":19517",
-        "\"agents\":[\"codex\",\"claude-code\"]",
+        "\"agents\":[\"codex\",\"claude-code\",\"gemini-cli\"]",
       )
     assertThat(models.map { it.displayName }).containsExactly(
       "gpt-5.4 (JetBrains Central)",
       "gpt-5.4 (openai)",
       "gpt-5.5 (JetBrains Central)",
       "claude-opus-4-8 (JetBrains Central)",
+      "gemini-2.5-flash (JetBrains Central)",
     )
     assertThat(models.map { it.group }).containsExactly(
       AgentPromptGenerationModelGroup.OPENAI,
       AgentPromptGenerationModelGroup.OPENAI,
       AgentPromptGenerationModelGroup.OPENAI,
       AgentPromptGenerationModelGroup.CLAUDE_CODE,
+      AgentPromptGenerationModelGroup.OTHER,
     )
     assertThat(PiJbCentralModelCatalog.decodeGenerationModelId(models[0].id)?.modelId).isEqualTo("gpt-5.4")
     assertThat(PiKnownModelCatalog.decodeGenerationModelId(models[1].id)?.modelId).isEqualTo("gpt-5.4")
     assertThat(PiJbCentralModelCatalog.decodeGenerationModelId(models[2].id)?.modelId).isEqualTo("gpt-5.5")
     assertThat(PiJbCentralModelCatalog.decodeGenerationModelId(models[3].id)?.modelId).isEqualTo("claude-opus-4-8")
-    assertThat(models.map { it.isDefault }).containsExactly(false, false, true, false)
+    assertThat(PiJbCentralModelCatalog.decodeGenerationModelId(models[4].id)?.agent).isEqualTo(PiJbCentralAgent.GEMINI_CLI)
+    assertThat(models.map { it.isDefault }).containsExactly(false, false, true, false, false)
     assertThat(models.map { it.supportedReasoningEfforts }).containsExactly(
       PI_SUPPORTED_REASONING_EFFORTS,
       PI_SUPPORTED_REASONING_EFFORTS,
       PI_SUPPORTED_REASONING_EFFORTS,
       emptySet(),
+      PI_SUPPORTED_REASONING_EFFORTS,
     )
   }
 
@@ -236,7 +241,7 @@ class PiKnownModelCatalogTest {
     val launchMetadata = PiJbCentralLaunchMetadata(
       jbCentralExecutable = "/usr/local/bin/jbcentral",
       proxyPort = 19517,
-      agents = setOf(PiJbCentralAgent.CODEX, PiJbCentralAgent.CLAUDE_CODE),
+      proxyAgents = setOf(PiJbCentralAgent.CODEX, PiJbCentralAgent.CLAUDE_CODE, PiJbCentralAgent.GEMINI_CLI),
     )
     val profileBackedJbCentralModel = AgentPromptGenerationModel(
       id = PiJbCentralModelCatalog.encodeGenerationModelId(jbCentralSelection(profileId = "openai-gpt-5-5")),
@@ -251,6 +256,7 @@ class PiKnownModelCatalogTest {
           anthropic               claude-fable-5                200K     64K      no        true
           openai                  gpt-5.4                       400K     128K     yes       true
           JetBrains Central       claude-opus-4-8               200K     64K      no        true
+          google-vertex           gemini-2.5-flash              1M       64K      yes       true
         """.trimIndent()
       ),
       listOf(profileBackedJbCentralModel),
@@ -267,7 +273,7 @@ class PiKnownModelCatalogTest {
     val launchMetadata = PiJbCentralLaunchMetadata(
       jbCentralExecutable = "/usr/local/bin/jbcentral",
       proxyPort = 19517,
-      agents = setOf(PiJbCentralAgent.CODEX, PiJbCentralAgent.CLAUDE_CODE),
+      proxyAgents = setOf(PiJbCentralAgent.CODEX, PiJbCentralAgent.CLAUDE_CODE, PiJbCentralAgent.GEMINI_CLI),
     )
     val omlxModel = AgentPromptGenerationModel(
       id = PiOmlxModelCatalog.encodeGenerationModelId(omlxSelection()),
@@ -285,6 +291,7 @@ class PiKnownModelCatalogTest {
           openai-codex            gpt-5.4                       400K     128K     yes       true
           anthropic               claude-fable-5                200K     64K      no        true
           JetBrains Central       claude-opus-4-8               200K     64K      no        true
+          google-vertex           gemini-2.5-flash              1M       64K      yes       true
         """.trimIndent()
       ),
       listOf(omlxModel, profileBackedJbCentralModel),

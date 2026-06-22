@@ -5,6 +5,7 @@ import {join} from "node:path";
 import {promisify} from "node:util";
 import {
   streamSimpleAnthropic,
+  streamSimpleGoogleVertex,
   streamSimpleOpenAIResponses,
   type Model,
 } from "@earendil-works/pi-ai";
@@ -30,8 +31,12 @@ const DEFAULT_JBCENTRAL_MAX_TOKENS = 64000;
 const JBCENTRAL_API_KEY = "wire-proxy";
 const JBCENTRAL_CODEX_FALLBACK_PROVIDER_NAME = "openai-codex";
 const JBCENTRAL_CLAUDE_FALLBACK_PROVIDER_NAME = "anthropic";
+const JBCENTRAL_GEMINI_FALLBACK_PROVIDER_NAME = "google-vertex";
 const JBCENTRAL_CODEX_BASE_PATH = "codex/openai";
 const JBCENTRAL_CLAUDE_BASE_PATH = "claude-code/anthropic";
+const JBCENTRAL_GEMINI_BASE_PATH = "gemini-cli/vertex";
+const JBCENTRAL_GEMINI_VERTEX_API_PATH = "v1beta1/projects/wire-project/locations/wire-location";
+const JBCENTRAL_GEMINI_MODEL_BASE_PATH = `${JBCENTRAL_GEMINI_BASE_PATH}/${JBCENTRAL_GEMINI_VERTEX_API_PATH}`;
 const JBCENTRAL_ADAPTIVE_THINKING_MODEL_MARKERS = [
   "opus-4-6",
   "opus-4.6",
@@ -146,7 +151,7 @@ function isJbCentralProviderMetadata(value: unknown): value is {
     typeof metadata.displayName === "string" && metadata.displayName.trim() !== "" &&
     typeof metadata.jbCentralExecutable === "string" && metadata.jbCentralExecutable.trim() !== "" &&
     typeof metadata.proxyPort === "number" && Number.isInteger(metadata.proxyPort) && metadata.proxyPort > 0 &&
-    (metadata.agent === "codex" || metadata.agent === "claude-code");
+    isJbCentralAgent(metadata.agent);
 }
 
 function parseJbCentralLaunchMetadata(value: string | undefined): AgentWorkbenchJbCentralLaunchMetadata | undefined {
@@ -190,7 +195,7 @@ function isJbCentralLaunchMetadata(value: unknown): value is {
 }
 
 function isJbCentralAgent(value: unknown): value is AgentWorkbenchJbCentralAgent {
-  return value === "codex" || value === "claude-code";
+  return value === "codex" || value === "claude-code" || value === "gemini-cli";
 }
 
 async function resolveJbCentralProxyAccess(provider: AgentWorkbenchJbCentralProxyMetadata): Promise<AgentWorkbenchJbCentralProxyAccess | undefined> {
@@ -231,6 +236,14 @@ function registerJbCentralFallbackProviders(
       api: "anthropic-messages",
     });
   }
+  if (launchMetadata.agents.includes("gemini-cli")) {
+    pi.registerProvider(JBCENTRAL_GEMINI_FALLBACK_PROVIDER_NAME, {
+      baseUrl: buildJbCentralBaseUrl(proxyAccess, JBCENTRAL_GEMINI_MODEL_BASE_PATH),
+      apiKey: JBCENTRAL_API_KEY,
+      api: "google-vertex",
+      authHeader: true,
+    });
+  }
 }
 
 async function readJbCentralProxyConfig(): Promise<AgentWorkbenchJbCentralProxyConfig | undefined> {
@@ -264,6 +277,9 @@ function toJbCentralProviderConfig(models: AgentWorkbenchJbCentralProvider[], pr
       if (providerModel.api === "anthropic-messages") {
         return streamSimpleAnthropic(providerModel as Model<"anthropic-messages">, context, options);
       }
+      if (providerModel.api === "google-vertex") {
+        return streamSimpleGoogleVertex(providerModel as Model<"google-vertex">, context, options);
+      }
       return streamSimpleOpenAIResponses(providerModel as Model<"openai-responses">, context, options);
     },
     models: models.map((model) => toJbCentralProviderModel(model, proxyAccess)),
@@ -281,12 +297,19 @@ function toJbCentralProviderModel(model: AgentWorkbenchJbCentralProvider, proxyA
     cost: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0},
     contextWindow: model.contextWindow ?? DEFAULT_JBCENTRAL_CONTEXT_WINDOW,
     maxTokens: model.maxTokens ?? DEFAULT_JBCENTRAL_MAX_TOKENS,
+    ...(model.agent === "gemini-cli" ? {headers: {Authorization: `Bearer ${JBCENTRAL_API_KEY}`}} : {}),
     ...(isJbCentralAdaptiveThinkingModel(model) ? {compat: {forceAdaptiveThinking: true}} : {}),
   };
 }
 
-function toJbCentralProviderApi(model: AgentWorkbenchJbCentralProvider): "anthropic-messages" | "openai-responses" {
-  return model.agent === "claude-code" ? "anthropic-messages" : "openai-responses";
+function toJbCentralProviderApi(model: AgentWorkbenchJbCentralProvider): "anthropic-messages" | "google-vertex" | "openai-responses" {
+  if (model.agent === "claude-code") {
+    return "anthropic-messages";
+  }
+  if (model.agent === "gemini-cli") {
+    return "google-vertex";
+  }
+  return "openai-responses";
 }
 
 function isJbCentralAdaptiveThinkingModel(model: AgentWorkbenchJbCentralProvider): boolean {
@@ -298,10 +321,17 @@ function isJbCentralAdaptiveThinkingModel(model: AgentWorkbenchJbCentralProvider
 }
 
 function buildJbCentralModelBaseUrl(model: AgentWorkbenchJbCentralProvider, proxyAccess: AgentWorkbenchJbCentralProxyAccess): string {
-  return buildJbCentralBaseUrl(
-    proxyAccess,
-    model.agent === "claude-code" ? JBCENTRAL_CLAUDE_BASE_PATH : JBCENTRAL_CODEX_BASE_PATH,
-  );
+  return buildJbCentralBaseUrl(proxyAccess, toJbCentralBasePath(model.agent));
+}
+
+function toJbCentralBasePath(agent: AgentWorkbenchJbCentralAgent): string {
+  if (agent === "claude-code") {
+    return JBCENTRAL_CLAUDE_BASE_PATH;
+  }
+  if (agent === "gemini-cli") {
+    return JBCENTRAL_GEMINI_MODEL_BASE_PATH;
+  }
+  return JBCENTRAL_CODEX_BASE_PATH;
 }
 
 function buildJbCentralBaseUrl(

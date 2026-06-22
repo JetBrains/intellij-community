@@ -1,5 +1,3 @@
-f:com.intellij.platform.ai.agent.pi.sessions.PiJbCentralModelCatalogKt
-- sf:getPI_JBCENTRAL_DEFAULT_AGENTS():java.util.Set
 f:com.intellij.platform.ai.agent.pi.sessions.PiJbCentralSupportSettings
 - sf:INSTANCE:com.intellij.platform.ai.agent.pi.sessions.PiJbCentralSupportSettings
 - f:isEnabled():Z
