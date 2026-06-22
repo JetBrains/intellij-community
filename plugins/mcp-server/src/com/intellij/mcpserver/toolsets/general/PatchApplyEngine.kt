@@ -1,5 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
+@file:Suppress("DestructuringDeclaration")
+
 package com.intellij.mcpserver.toolsets.general
 
 import com.intellij.mcpserver.mcpFail
@@ -294,8 +296,7 @@ private class PatchParser(
   }
 
   private fun isStrictPairBlockStart(line: String): Boolean {
-    if (isPatchHeaderLine(line) || isHunkHeaderLine(line)) return false
-    return !isPrefixedDiffLine(line)
+    return !(isPatchHeaderLine(line) || isHunkHeaderLine(line) || isPrefixedDiffLine(line))
   }
 
   private fun isPrefixedDiffLine(line: String): Boolean {
@@ -707,18 +708,15 @@ private fun normalizeCharacter(char: Char): Char {
 private fun isPatchHeaderLine(line: String): Boolean {
   if (line.isEmpty() || isDiffPrefix(line.first())) return false
   val trimmed = line.trimStart()
-  if (trimmed == END_OF_FILE) return false
-  return trimmed.startsWith("*** ")
+  return trimmed != END_OF_FILE && trimmed.startsWith("*** ")
 }
 
 private fun isHunkHeaderLine(line: String): Boolean {
-  if (line.isEmpty() || isDiffPrefix(line.first())) return false
-  return line.trimStart().startsWith("@@")
+  return !(line.isEmpty() || isDiffPrefix(line.first())) && line.trimStart().startsWith("@@")
 }
 
 private fun isDiffLine(line: String): Boolean {
-  if (line.isEmpty()) return true
-  return isDiffPrefix(line.first())
+  return line.isEmpty() || isDiffPrefix(line.first())
 }
 
 private fun isDiffPrefix(prefix: Char): Boolean {
