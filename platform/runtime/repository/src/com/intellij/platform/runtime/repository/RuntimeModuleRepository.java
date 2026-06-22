@@ -30,8 +30,10 @@ public interface RuntimeModuleRepository {
   @NotNull RuntimeModuleDescriptor getModule(@NotNull RuntimeModuleId moduleId);
 
   /**
-   * Tries to resolve the module by the given {@code moduleId} and returns the resolution result. 
+   * Tries to resolve the module by the given {@code moduleId} and returns the resolution result.
+   * @deprecated use {@link #findModuleHeader(RuntimeModuleId)} instead
    */
+  @Deprecated
   @NotNull ResolveResult resolveModule(@NotNull RuntimeModuleId moduleId);
 
   /**

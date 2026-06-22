@@ -54,18 +54,11 @@ class RepositoryTest {
       createModuleDescriptor("ij.bar", emptyList(), listOf("ij.foo", "unresolved")),
       createModuleDescriptor("ij.baz", emptyList(), listOf("ij.bar")),
     )
-    fun RuntimeModuleId.assertUnresolved(vararg pathToFailed: RuntimeModuleId) {
-      val result = repository.resolveModule(this)
-      assertNull(result.resolvedModule)
-      assertEquals(pathToFailed.toList(), result.failedDependencyPath)
-    }
     val unresolvedId = moduleId("unresolved")
     val barId = moduleId("ij.bar")
     val bazId = moduleId("ij.baz")
-    unresolvedId.assertUnresolved(unresolvedId)
-    barId.assertUnresolved(barId, unresolvedId)
-    bazId.assertUnresolved(bazId, barId, unresolvedId)
-    
+    assertNull(repository.findModuleHeader(unresolvedId))
+
     val exception = assertThrows(MalformedRepositoryException::class.java) {
       repository.getModule(bazId)
     }
