@@ -14078,6 +14078,104 @@ jvm_import(
 )
 
 copy_file(
+    name = "org.testcontainers/testcontainers-1.21.4.jar_copy",
+    src = "@org_testcontainers-testcontainers-1_21_4_http//file",
+    out = "org.testcontainers/testcontainers-1.21.4.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.rnorth.duct-tape/duct-tape-1.0.8.jar_copy",
+    src = "@org_rnorth_duct-tape-duct-tape-1_0_8_http//file",
+    out = "org.rnorth.duct-tape/duct-tape-1.0.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.github.docker-java/docker-java-api-3.4.2.jar_copy",
+    src = "@com_github_docker-java-docker-java-api-3_4_2_http//file",
+    out = "com.github.docker-java/docker-java-api-3.4.2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.github.docker-java/docker-java-transport-zerodep-3.4.2.jar_copy",
+    src = "@com_github_docker-java-docker-java-transport-zerodep-3_4_2_http//file",
+    out = "com.github.docker-java/docker-java-transport-zerodep-3.4.2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.github.docker-java/docker-java-transport-3.4.2.jar_copy",
+    src = "@com_github_docker-java-docker-java-transport-3_4_2_http//file",
+    out = "com.github.docker-java/docker-java-transport-3.4.2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-testcontainers-testcontainers",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":org_testcontainers-testcontainers-1_21_4_http_import",
+        ":org_rnorth_duct-tape-duct-tape-1_0_8_http_import",
+        ":com_github_docker-java-docker-java-api-3_4_2_http_import",
+        ":com_github_docker-java-docker-java-transport-zerodep-3_4_2_http_import",
+        ":com_github_docker-java-docker-java-transport-3_4_2_http_import",
+    ],
+)
+
+jvm_import(
+    name = "org_testcontainers-testcontainers-1_21_4_http_import",
+    jar = "@org_testcontainers-testcontainers-1_21_4_http//file",
+    source_jar = "@org_testcontainers-testcontainers-1_21_4-sources_http//file",
+)
+
+jvm_import(
+    name = "org_rnorth_duct-tape-duct-tape-1_0_8_http_import",
+    jar = "@org_rnorth_duct-tape-duct-tape-1_0_8_http//file",
+    source_jar = "@org_rnorth_duct-tape-duct-tape-1_0_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_github_docker-java-docker-java-api-3_4_2_http_import",
+    jar = "@com_github_docker-java-docker-java-api-3_4_2_http//file",
+    source_jar = "@com_github_docker-java-docker-java-api-3_4_2-sources_http//file",
+)
+
+jvm_import(
+    name = "com_github_docker-java-docker-java-transport-zerodep-3_4_2_http_import",
+    jar = "@com_github_docker-java-docker-java-transport-zerodep-3_4_2_http//file",
+    source_jar = "@com_github_docker-java-docker-java-transport-zerodep-3_4_2-sources_http//file",
+)
+
+jvm_import(
+    name = "com_github_docker-java-docker-java-transport-3_4_2_http_import",
+    jar = "@com_github_docker-java-docker-java-transport-3_4_2_http//file",
+    source_jar = "@com_github_docker-java-docker-java-transport-3_4_2-sources_http//file",
+)
+
+copy_file(
+    name = "org.testcontainers/junit-jupiter-1.21.4.jar_copy",
+    src = "@org_testcontainers-junit-jupiter-1_21_4_http//file",
+    out = "org.testcontainers/junit-jupiter-1.21.4.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-testcontainers-testcontainers-junit-jupiter",
+    jar = "@org_testcontainers-junit-jupiter-1_21_4_http//file",
+    source_jar = "@org_testcontainers-junit-jupiter-1_21_4-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "io.consensys.tuweni/tuweni-toml-2.7.1.jar_copy",
     src = "@io_consensys_tuweni-tuweni-toml-2_7_1_http//file",
     out = "io.consensys.tuweni/tuweni-toml-2.7.1.jar",
@@ -20372,104 +20470,6 @@ java_library(
     neverlink = True,
     visibility = ["//visibility:public"],
     exports = [":test_n_g"],
-)
-
-copy_file(
-    name = "org.testcontainers/testcontainers-1.21.4.jar_copy",
-    src = "@org_testcontainers-testcontainers-1_21_4_http//file",
-    out = "org.testcontainers/testcontainers-1.21.4.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.rnorth.duct-tape/duct-tape-1.0.8.jar_copy",
-    src = "@org_rnorth_duct-tape-duct-tape-1_0_8_http//file",
-    out = "org.rnorth.duct-tape/duct-tape-1.0.8.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.github.docker-java/docker-java-api-3.4.2.jar_copy",
-    src = "@com_github_docker-java-docker-java-api-3_4_2_http//file",
-    out = "com.github.docker-java/docker-java-api-3.4.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.github.docker-java/docker-java-transport-zerodep-3.4.2.jar_copy",
-    src = "@com_github_docker-java-docker-java-transport-zerodep-3_4_2_http//file",
-    out = "com.github.docker-java/docker-java-transport-zerodep-3.4.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.github.docker-java/docker-java-transport-3.4.2.jar_copy",
-    src = "@com_github_docker-java-docker-java-transport-3_4_2_http//file",
-    out = "com.github.docker-java/docker-java-transport-3.4.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "testcontainers",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":org_testcontainers-testcontainers-1_21_4_http_import",
-        ":org_rnorth_duct-tape-duct-tape-1_0_8_http_import",
-        ":com_github_docker-java-docker-java-api-3_4_2_http_import",
-        ":com_github_docker-java-docker-java-transport-zerodep-3_4_2_http_import",
-        ":com_github_docker-java-docker-java-transport-3_4_2_http_import",
-    ],
-)
-
-jvm_import(
-    name = "org_testcontainers-testcontainers-1_21_4_http_import",
-    jar = "@org_testcontainers-testcontainers-1_21_4_http//file",
-    source_jar = "@org_testcontainers-testcontainers-1_21_4-sources_http//file",
-)
-
-jvm_import(
-    name = "org_rnorth_duct-tape-duct-tape-1_0_8_http_import",
-    jar = "@org_rnorth_duct-tape-duct-tape-1_0_8_http//file",
-    source_jar = "@org_rnorth_duct-tape-duct-tape-1_0_8-sources_http//file",
-)
-
-jvm_import(
-    name = "com_github_docker-java-docker-java-api-3_4_2_http_import",
-    jar = "@com_github_docker-java-docker-java-api-3_4_2_http//file",
-    source_jar = "@com_github_docker-java-docker-java-api-3_4_2-sources_http//file",
-)
-
-jvm_import(
-    name = "com_github_docker-java-docker-java-transport-zerodep-3_4_2_http_import",
-    jar = "@com_github_docker-java-docker-java-transport-zerodep-3_4_2_http//file",
-    source_jar = "@com_github_docker-java-docker-java-transport-zerodep-3_4_2-sources_http//file",
-)
-
-jvm_import(
-    name = "com_github_docker-java-docker-java-transport-3_4_2_http_import",
-    jar = "@com_github_docker-java-docker-java-transport-3_4_2_http//file",
-    source_jar = "@com_github_docker-java-docker-java-transport-3_4_2-sources_http//file",
-)
-
-copy_file(
-    name = "org.testcontainers/junit-jupiter-1.21.4.jar_copy",
-    src = "@org_testcontainers-junit-jupiter-1_21_4_http//file",
-    out = "org.testcontainers/junit-jupiter-1.21.4.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "testcontainers-junit-jupiter",
-    jar = "@org_testcontainers-junit-jupiter-1_21_4_http//file",
-    source_jar = "@org_testcontainers-junit-jupiter-1_21_4-sources_http//file",
-    visibility = ["//visibility:public"],
 )
 
 copy_file(

@@ -73,7 +73,7 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log" />
     <orderEntry type="module" module-name="intellij.libraries.jsoup" />
-    <orderEntry type="library" scope="TEST" name="testcontainers" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.testcontainers" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
