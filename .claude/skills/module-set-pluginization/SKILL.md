@@ -37,6 +37,12 @@ Create a new JPS module at `<feature-root>/plugin/`, e.g. `community/platform/<f
   </module>
   ```
 
+  After creating the `.iml`, register it with the project-file helper instead of editing `modules.xml` by hand:
+
+  ```bash
+  bun build/jps-module.mjs register community/platform/<feature>/plugin/intellij.platform.<feature>.plugin.iml --fix-iml-eof
+  ```
+
 - `resources/META-INF/plugin.xml` — a minimal `<idea-plugin>` listing the content modules. Mirror the navbar wrapper (replace `FEATURE` with the actual short name; the description must be at least 40 characters):
 
   ```text
@@ -110,7 +116,7 @@ bazel run //platform/buildScripts:plugin-model-tool
 Expected diffs:
 
 - `community/platform/platform-resources/generated/META-INF/intellij.moduleSets.essential.xml`, `…ide.common.xml`, and `licenseCommon/generated/META-INF/intellij.moduleSets.ide.ultimate.xml` no longer list the pluginized modules.
-- `community/.idea/modules.xml` and `.idea/modules.xml` gain the new `intellij.<feature>.plugin.iml` module.
+- `community/.idea/modules.xml` and `.idea/modules.xml` gain the new `intellij.<feature>.plugin.iml` module in helper-generated canonical order.
 - `build/bazel-generated-file-list.txt` and `community/build/bazel-generated-file-list.txt` gain the new plugin directory.
 - Product content snapshots (`build/expected/ultimate-content-platform.yaml`, `dbe/build/datagrip-content.yaml`, etc.) gain the wrapper plugin entry.
 - `tests/ideaProjectStructure/testResources/com/intellij/ideaProjectStructure/fast/available-in-idea-free-mode.txt` gains the new module if it is free-mode available.

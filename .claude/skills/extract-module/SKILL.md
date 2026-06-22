@@ -204,7 +204,11 @@ internal class MyLifecycleHelperImpl : MyLifecycleHelper {
 
 **`plugin/plugin-content.yaml`** — add a jar entry.
 
-**`.idea/modules.xml`** — register the new module (follow the existing entries).
+**Project module files** — register the new module with the helper; it updates `.idea/modules.xml`, updates `community/.idea/modules.xml` for community modules, preserves canonical entry order, and removes the `.iml` trailing newline:
+
+```bash
+bun build/jps-module.mjs register plugins/<plugin-name>/<module-dir>/intellij.<module-name>.iml --fix-iml-eof
+```
 
 ### 7. Fix downstream consumers of the removed transitive dependency
 
@@ -298,6 +302,7 @@ All three must pass before the work is done.
 | Package doesn't match module name | `IntelliJProjectPackageNamesTest` fails | Rename to `com.<module-name>` and move files |
 | EP registered with `name` instead of `qualifiedName` | EP not found | Use `qualifiedName="com.intellij.<language>.epName"` |
 | Manual `<dependencies>` block as a separate tag (not inside the region's block) | `AllProductsPackagingTest#suiteValidations`: "Generated file is out of sync" | Merge into one `<dependencies>` block; manual entries go before `<!-- region -->` |
+| Module registered by appending to `modules.xml` | noisy project-file diff or project-structure drift | Use `bun build/jps-module.mjs register <path-to-iml> --fix-iml-eof`; order is by `.iml` basename |
 | New files not `git add`ed | Build/tests miss new sources | `git add` new module directory |
 | Skipped `plugin-model-tool` | Generated XML has stale/missing deps | Run `./bazel.cmd run //platform/buildScripts:plugin-model-tool` |
 | New source file created as Java | Style violation | Always use `.kt` for new code |
