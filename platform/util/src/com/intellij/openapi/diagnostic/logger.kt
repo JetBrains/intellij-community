@@ -3,6 +3,7 @@ package com.intellij.openapi.diagnostic
 
 import com.intellij.util.ExceptionUtilRt
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
 import java.lang.invoke.MethodHandles
 import java.util.concurrent.CancellationException
@@ -84,6 +85,7 @@ fun Logger.errorWithWarnDetails(message: @NonNls String, details: @NonNls String
  *
  * Use for unrecoverable "should never happen" conditions where the caller cannot meaningfully continue.
  */
+@Contract("_, _, _ -> fail")
 fun Logger.fatalErrorWithWarnDetails(message: @NonNls String, details: @NonNls String, t: Throwable? = null): Nothing {
   warn(message, details, t)
   val attachment = Attachment("details.txt", details).also { it.isIncluded = true }
