@@ -2,6 +2,7 @@
 package com.intellij.ide.todo.rpc
 
 import com.intellij.ide.todo.TodoFilter
+import com.intellij.ide.todo.model.TodoScope
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 suspend fun collectWatchedTodoFiles(
   project: Project,
+  scope: TodoScope,
   filter: TodoFilter?,
   file: VirtualFile? = null, // not null if scope is current file
   collector: suspend (TodoFileEvent) -> Unit,
@@ -28,7 +30,7 @@ suspend fun collectWatchedTodoFiles(
       fileId = file?.rpcId(),
     )
 
-    TodoRemoteApi.getInstance().watchTodoFiles(projectId, request).collect { event ->
+    TodoRemoteApi.getInstance().watchTodoFiles(projectId, scope, request).collect { event ->
      collector(event)
     }
   }

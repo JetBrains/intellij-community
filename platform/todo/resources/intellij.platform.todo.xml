@@ -44,7 +44,7 @@
                              bundle="messages.IdeBundle"/>
 
     <daemon.changeLocalityDetector implementation="com.intellij.ide.todo.MultiLineTodoLocalityDetector"/>
-    <projectService serviceImplementation="com.intellij.ide.todo.TodoCoroutineScopeHolder" open="true" client="all"/>
+    <projectService serviceImplementation="com.intellij.ide.todo.TodoCoroutineScopeProvider" open="true" client="all"/>
     <projectService serviceImplementation="com.intellij.ide.todo.nodes.TodoTreeHelper" open="true"/>
     <projectService serviceImplementation="com.intellij.ide.todo.TodoView" open="true" client="all"/>
 

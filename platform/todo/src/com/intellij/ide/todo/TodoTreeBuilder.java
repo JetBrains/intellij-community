@@ -3,6 +3,7 @@
 package com.intellij.ide.todo;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.ide.todo.model.TodoScope;
 import com.intellij.ide.todo.nodes.LeafTodoItemNode;
 import com.intellij.ide.todo.nodes.TodoFileNode;
 import com.intellij.ide.todo.nodes.TodoItemNode;
@@ -137,6 +138,11 @@ public abstract class TodoTreeBuilder implements Disposable {
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(new MyPsiTreeChangeListener(), this);
 
     //setCanYieldUpdate(true);
+  }
+
+  @ApiStatus.Internal
+  public @Nullable TodoScope getScope() {
+    return null;
   }
 
   protected @NotNull PsiTodoSearchHelper getSearchHelper() {

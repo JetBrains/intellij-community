@@ -3,7 +3,8 @@ package com.intellij.platform.todo.backend.rpc
 
 import com.intellij.ide.todo.TodoConfiguration
 import com.intellij.ide.todo.TodoFilter
-import com.intellij.ide.todo.rpc.TodoFileEvent
+import com.intellij.ide.todo.model.TodoScope
+import com.intellij.ide.todo.rpc.TodoEvent
 import com.intellij.ide.todo.rpc.TodoFileResult
 import com.intellij.ide.todo.rpc.TodoFilesWatchRequest
 import com.intellij.ide.todo.rpc.TodoFilterConfig
@@ -55,6 +56,7 @@ private const val TODO_WATCH_INCREMENTAL_BATCH_DELAY_MS = 100L
 internal class TodoRemoteApiImpl : TodoRemoteApi {
   override fun watchTodoFiles(
     projectId: ProjectId,
+    scope: TodoScope,
     request: TodoFilesWatchRequest,
   ): Flow<TodoFileEvent> = channelFlow {
     val project = projectId.findProjectOrNull() ?: return@channelFlow

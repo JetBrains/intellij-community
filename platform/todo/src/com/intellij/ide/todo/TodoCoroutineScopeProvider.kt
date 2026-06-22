@@ -5,6 +5,6 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-internal class TodoCoroutineScopeHolder(
+internal class TodoCoroutineScopeProvider(
   val coroutineScope: CoroutineScope,
 )

@@ -2,6 +2,7 @@
 
 package com.intellij.ide.todo;
 
+import com.intellij.ide.todo.model.TodoScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -13,6 +14,7 @@ import javax.swing.JTree;
 import java.util.function.Consumer;
 
 import static com.intellij.ide.todo.TodoImplementationChooserKt.shouldUseSplitTodo;
+import static com.intellij.ide.vfs.VirtualFileIdKt.rpcId;
 
 @ApiStatus.Internal
 public final class CurrentFileTodosTreeBuilder extends TodoTreeBuilder {
@@ -20,6 +22,13 @@ public final class CurrentFileTodosTreeBuilder extends TodoTreeBuilder {
   public CurrentFileTodosTreeBuilder(@NotNull JTree tree,
                                      @NotNull Project project) {
     super(tree, project);
+  }
+
+  @Override
+  public @Nullable TodoScope getScope() {
+    VirtualFile file = getCurrentFile();
+    if (file == null) return null;
+    return new TodoScope.CurrentFile(rpcId(file));
   }
 
   @Override
