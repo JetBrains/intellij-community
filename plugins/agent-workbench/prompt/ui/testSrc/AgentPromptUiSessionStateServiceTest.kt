@@ -2,6 +2,8 @@
 package com.intellij.agent.workbench.prompt.ui
 
 import com.dynatrace.hash4j.hashing.Hashing
+import com.intellij.agent.workbench.core.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
 import org.assertj.core.api.Assertions.assertThat
@@ -101,6 +103,19 @@ class AgentPromptUiSessionStateServiceTest {
     )
 
     assertThat(service.loadContextRestoreSnapshot()).isEqualTo(snapshot)
+  }
+
+  @Test
+  fun selectedProviderSelectionRoundTripUsesProjectState() {
+    val service = AgentPromptUiSessionStateService()
+
+    service.saveSelectedProviderSelection(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.YOLO)
+
+    val reloaded = AgentPromptUiSessionStateService()
+    reloaded.loadState(service.state)
+    assertThat(reloaded.loadSelectedProviderSelection()).isEqualTo(
+      AgentPromptSelectedProviderSelection(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.YOLO)
+    )
   }
 
   @Test
