@@ -785,9 +785,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-90345"])
     fun `parameterized union TypeAlias with class-object arm PEP695`() = test("""
-      from typing import Generic, TypeVar
-      T = TypeVar('T')
-      class Role(Generic[T]): ...
+      class Role[T]: ...
       type Alias[T] = Role[T] | type[T]
       expr: Alias[int]
       #└ TYPE Role[int] | type[int]
