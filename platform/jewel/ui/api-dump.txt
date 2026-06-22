@@ -2818,6 +2818,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Debugger
 - sf:Frame:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Freeze:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:FreezeAll:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InspectionSeverity:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:KillProcess:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:LambdaBreakpoint:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:MultipleBreakpoints:org.jetbrains.jewel.ui.icon.IntelliJIconKey
