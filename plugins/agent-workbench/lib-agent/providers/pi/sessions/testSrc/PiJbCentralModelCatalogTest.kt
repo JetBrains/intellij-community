@@ -58,6 +58,20 @@ class PiJbCentralModelCatalogTest {
   }
 
   @Test
+  fun centralOpenAiUsesResponsesApi() {
+    val extension = readBundledJbCentralExtension()
+
+    assertThat(extension).contains(
+      "api: \"openai-responses\"",
+      "streamSimpleOpenAIResponses",
+    )
+    assertThat(extension).doesNotContain(
+      "openai-codex-responses",
+      "streamSimpleOpenAICodexResponses",
+    )
+  }
+
+  @Test
   fun resolvesProxyAccessFromCommandKeyAndConfigPort(): Unit = runBlocking(Dispatchers.Default) {
     val access = resolveJbCentralProxyAccess(
       launchMetadata = PiJbCentralLaunchMetadata(jbCentralExecutable = "/usr/local/bin/jbcentral", proxyPort = 19516),
@@ -456,6 +470,12 @@ private data class PiListModelsRequest(
   val extensionPath: String,
   val metadata: PiJbCentralLaunchMetadata,
 )
+
+private fun readBundledJbCentralExtension(): String {
+  return checkNotNull(PiJbCentralModelCatalogTest::class.java.classLoader.getResource("pi-extension/jbcentral.ts")) {
+    "Cannot find bundled JetBrains Central PI extension resource"
+  }.readText()
+}
 
 private inline fun withDirectProfilesProperty(value: String?, action: () -> Unit) {
   val oldValue = System.getProperty(PI_JBCENTRAL_DIRECT_PROFILES_PROPERTY)

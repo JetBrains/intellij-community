@@ -5,7 +5,6 @@ import {join} from "node:path";
 import {promisify} from "node:util";
 import {
   streamSimpleAnthropic,
-  streamSimpleOpenAICodexResponses,
   streamSimpleOpenAIResponses,
   type Model,
 } from "@earendil-works/pi-ai";
@@ -19,7 +18,6 @@ import {
   type AgentWorkbenchJbCentralProxyMetadata,
   type AgentWorkbenchModelCatalog,
   JBCENTRAL_PROVIDER_NAME,
-  normalizeBaseUrl,
   optionalNumber,
   optionalPositiveInteger,
   optionalString,
@@ -223,7 +221,7 @@ function registerJbCentralFallbackProviders(
     pi.registerProvider(JBCENTRAL_CODEX_FALLBACK_PROVIDER_NAME, {
       baseUrl: buildJbCentralBaseUrl(proxyAccess, JBCENTRAL_CODEX_BASE_PATH),
       apiKey: JBCENTRAL_API_KEY,
-      api: "openai-codex-responses",
+      api: "openai-responses",
     });
   }
   if (launchMetadata.agents.includes("claude-code")) {
@@ -266,11 +264,7 @@ function toJbCentralProviderConfig(models: AgentWorkbenchJbCentralProvider[], pr
       if (providerModel.api === "anthropic-messages") {
         return streamSimpleAnthropic(providerModel as Model<"anthropic-messages">, context, options);
       }
-      const codexModel = providerModel as Model<"openai-codex-responses">;
-      if (isJbCentralCodexModel(codexModel)) {
-        return streamSimpleOpenAIResponses(codexModel as Model<"openai-responses">, context, options);
-      }
-      return streamSimpleOpenAICodexResponses(codexModel, context, options);
+      return streamSimpleOpenAIResponses(providerModel as Model<"openai-responses">, context, options);
     },
     models: models.map((model) => toJbCentralProviderModel(model, proxyAccess)),
   };
@@ -291,8 +285,8 @@ function toJbCentralProviderModel(model: AgentWorkbenchJbCentralProvider, proxyA
   };
 }
 
-function toJbCentralProviderApi(model: AgentWorkbenchJbCentralProvider): "anthropic-messages" | "openai-codex-responses" {
-  return model.agent === "claude-code" ? "anthropic-messages" : "openai-codex-responses";
+function toJbCentralProviderApi(model: AgentWorkbenchJbCentralProvider): "anthropic-messages" | "openai-responses" {
+  return model.agent === "claude-code" ? "anthropic-messages" : "openai-responses";
 }
 
 function isJbCentralAdaptiveThinkingModel(model: AgentWorkbenchJbCentralProvider): boolean {
@@ -315,8 +309,4 @@ function buildJbCentralBaseUrl(
   basePath: string,
 ): string {
   return `http://127.0.0.1:${proxyAccess.proxyPort}/wire/${proxyAccess.proxySecret}/${basePath}`;
-}
-
-function isJbCentralCodexModel(model: Model<"openai-codex-responses">): boolean {
-  return model.provider === JBCENTRAL_PROVIDER_NAME && normalizeBaseUrl(model.baseUrl).endsWith(`/${JBCENTRAL_CODEX_BASE_PATH}`);
 }
