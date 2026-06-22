@@ -60,8 +60,8 @@ import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
-import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
+import org.jetbrains.plugins.terminal.fus.TerminalTabOpeningWay
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.createDefaultTabName
 import java.lang.ref.WeakReference
@@ -140,7 +140,7 @@ internal class TerminalToolWindowTabsManagerImpl(
   }
 
   private suspend fun createNewTabIfEmpty(toolWindow: ToolWindow) {
-    val fusInfo = TerminalStartupFusInfo(TerminalOpeningWay.OPEN_TOOLWINDOW)
+    val fusInfo = TerminalStartupFusInfo(TerminalTabOpeningWay.OPEN_TOOLWINDOW)
 
     if (toolWindow.isVisible && toolWindow.contentManager.isEmpty) {
       if (tabsRestoredDeferred.isCompleted) {

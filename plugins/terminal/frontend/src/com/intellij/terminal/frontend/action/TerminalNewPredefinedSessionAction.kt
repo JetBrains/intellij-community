@@ -20,8 +20,8 @@ import com.intellij.terminal.frontend.toolwindow.impl.createTerminalTab
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
+import org.jetbrains.plugins.terminal.fus.TerminalTabOpeningWay
 import org.jetbrains.plugins.terminal.shellDetection.DetectedShellInfo
 import org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetectionService
 import org.jetbrains.plugins.terminal.ui.OpenPredefinedTerminalActionProvider
@@ -125,7 +125,7 @@ internal class TerminalNewPredefinedSessionAction : DumbAwareAction() {
     override fun actionPerformed(e: AnActionEvent) {
       val project = e.project ?: return
       val contentManager = e.getData(PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER)
-      val startupFusInfo = TerminalStartupFusInfo(TerminalOpeningWay.START_NEW_PREDEFINED_SESSION)
+      val startupFusInfo = TerminalStartupFusInfo(TerminalTabOpeningWay.START_NEW_PREDEFINED_SESSION)
       createTerminalTab(
         project,
         shellCommand = myCommand,
