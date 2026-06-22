@@ -273,7 +273,9 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
       override fun editorContextsChanged(event: EditorContextManager.ChangeEvent) {
         if (editor == event.editor) {
           application.invokeLater {
-            onContextChanged()
+            editorLifetime.executeIfAlive {
+              onContextChanged()
+            }
           }
         }
       }
