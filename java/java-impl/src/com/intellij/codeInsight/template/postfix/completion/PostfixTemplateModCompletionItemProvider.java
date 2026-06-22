@@ -16,6 +16,7 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils;
 import com.intellij.icons.AllIcons;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcompletion.ModCompletionItem;
@@ -50,6 +51,8 @@ public final class PostfixTemplateModCompletionItemProvider implements ModComple
     if (!settings.isPostfixTemplatesEnabled()) return;
 
     PsiFile file = context.originalFile();
+    //todo disabled for now
+    if (InjectedLanguageManager.getInstance(context.getProject()).isInjectedFragment(file)) return;
     int offset = context.offset();
     if (offset <= 0) return;
 
