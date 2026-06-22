@@ -4,14 +4,6 @@ package com.intellij.collaboration.ui.codereview.timeline.comment
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.openapi.actionSystem.DataSink
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
-import com.intellij.openapi.fileTypes.FileTypes
-import com.intellij.openapi.project.Project
-import com.intellij.ui.EditorTextField
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets
 import java.awt.Component
@@ -29,12 +21,6 @@ import kotlin.math.min
 
 object CommentTextFieldFactory {
 
-  sealed class ScrollOnChangePolicy {
-    object DontScroll : ScrollOnChangePolicy()
-    object ScrollToField : ScrollOnChangePolicy()
-    class ScrollToComponent(val component: JComponent) : ScrollOnChangePolicy()
-  }
-
   internal fun wrapWithLeftIcon(config: IconConfig, item: JComponent, minimalItemHeightCalculator: () -> Int): JComponent {
     val (icon, iconGap) = config
     val iconLabel = JLabel(icon)
@@ -50,36 +36,6 @@ object CommentTextFieldFactory {
       fun <T> of(type: CodeReviewChatItemUIUtil.ComponentType, iconsProvider: IconsProvider<T>, iconKey: T): IconConfig =
         IconConfig(iconsProvider.getIcon(iconKey, type.iconSize), type.iconGap)
     }
-  }
-}
-
-private class CommentTextField(
-  project: Project?,
-  document: Document,
-) : EditorTextField(document, project, FileTypes.PLAIN_TEXT) {
-  init {
-    isOneLineMode = false
-  }
-
-  //always paint pretty border
-  override fun updateBorder(editor: EditorEx) = setupBorder(editor)
-
-  override fun createEditor(): EditorEx {
-    // otherwise border background is painted from multiple places
-    return super.createEditor().apply {
-      //TODO: fix in editor
-      //com.intellij.openapi.editor.impl.EditorImpl.getComponent() == non-opaque JPanel
-      // which uses default panel color
-      component.isOpaque = false
-      //com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder.paintBorder
-      scrollPane.isOpaque = false
-    }
-  }
-
-  override fun uiDataSnapshot(sink: DataSink) {
-    super.uiDataSnapshot(sink)
-    val editor = editor ?: return
-    sink[PlatformCoreDataKeys.FILE_EDITOR] = TextEditorProvider.getInstance().getTextEditor(editor)
   }
 }
 
