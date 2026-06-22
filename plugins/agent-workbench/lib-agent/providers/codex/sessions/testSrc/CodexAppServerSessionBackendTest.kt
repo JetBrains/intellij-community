@@ -1,14 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.codex.sessions
+package com.intellij.platform.ai.agent.codex.sessions
 
-import com.intellij.agent.workbench.codex.common.CodexAppServerException
-import com.intellij.agent.workbench.codex.common.CodexThread
-import com.intellij.agent.workbench.codex.common.CodexThreadActiveFlag
-import com.intellij.agent.workbench.codex.common.CodexThreadSourceKind
-import com.intellij.agent.workbench.codex.common.CodexThreadStatusKind
-import com.intellij.agent.workbench.codex.common.normalizeRootPath
-import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity
-import com.intellij.agent.workbench.codex.sessions.backend.appserver.CodexAppServerSessionBackend
+import com.intellij.platform.ai.agent.codex.common.CodexAppServerException
+import com.intellij.platform.ai.agent.codex.common.CodexThread
+import com.intellij.platform.ai.agent.codex.common.CodexThreadActiveFlag
+import com.intellij.platform.ai.agent.codex.common.CodexThreadSourceKind
+import com.intellij.platform.ai.agent.codex.common.CodexThreadStatusKind
+import com.intellij.platform.ai.agent.codex.common.normalizeRootPath
+import com.intellij.platform.ai.agent.codex.sessions.backend.CodexSessionActivity
+import com.intellij.platform.ai.agent.codex.sessions.backend.appserver.CodexAppServerSessionBackend
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat

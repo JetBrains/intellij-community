@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.ui
 
-import com.intellij.agent.workbench.core.AgentThreadActivity
-import com.intellij.agent.workbench.core.session.AgentSessionLaunchMode
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.core.session.AgentSessionThread
+import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeSummary
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
@@ -18,15 +18,15 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
-import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
-import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
-import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderOption
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
-import com.intellij.agent.workbench.sessions.core.providers.buildPlanModeInitialMessagePlan
+import com.intellij.platform.ai.agent.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
+import com.intellij.platform.ai.agent.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageStartupPolicy
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentPromptProviderOption
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.platform.ai.agent.sessions.core.providers.buildPlanModeInitialMessagePlan
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.agent.workbench.settings.AgentSessionProviderSettingsService
 import com.intellij.openapi.components.service

@@ -3,14 +3,14 @@ package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.chat.AgentChatThreadCoordinates
-import com.intellij.agent.workbench.core.normalizeAgentWorkbenchPath
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsCopyThreadIdFromEditorTabAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabArchiveThreadAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabRenameThreadAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsGoToSourceProjectFromEditorTabAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsSelectThreadInToolWindowAction
-import com.intellij.agent.workbench.sessions.core.SessionActionTarget
+import com.intellij.platform.ai.agent.sessions.core.SessionActionTarget
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
 import com.intellij.openapi.project.ProjectManager

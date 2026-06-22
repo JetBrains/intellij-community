@@ -1,24 +1,24 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.claude.sessions
+package com.intellij.platform.ai.agent.claude.sessions
 
-import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
-import com.intellij.agent.workbench.core.session.AgentSessionLaunchMode
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.core.session.AgentSessionThread
+import com.intellij.platform.ai.agent.common.AgentWorkbenchActionIds
+import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModelGroup
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
-import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
-import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageMode
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.platform.ai.agent.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
+import com.intellij.platform.ai.agent.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageStartupPolicy
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageTimeoutPolicy
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers

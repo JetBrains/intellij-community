@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.opencode.sessions
+package com.intellij.platform.ai.agent.opencode.sessions
 
-import com.intellij.agent.workbench.core.normalizeAgentSessionProjectPath
-import com.intellij.agent.workbench.core.normalizeAgentSessionTitle
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.core.session.AgentSessionThread
-import com.intellij.agent.workbench.opencode.sessions.server.SharedOpenCodeServerService
-import com.intellij.agent.workbench.sessions.core.providers.BaseAgentSessionSource
-import com.intellij.agent.workbench.sessions.core.providers.resolveReadTrackedActivity
+import com.intellij.platform.ai.agent.core.normalizeAgentSessionProjectPath
+import com.intellij.platform.ai.agent.core.normalizeAgentSessionTitle
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.core.session.AgentSessionThread
+import com.intellij.platform.ai.agent.opencode.sessions.server.SharedOpenCodeServerService
+import com.intellij.platform.ai.agent.sessions.core.providers.BaseAgentSessionSource
+import com.intellij.platform.ai.agent.sessions.core.providers.resolveReadTrackedActivity
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CancellationException

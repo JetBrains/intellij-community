@@ -5,23 +5,23 @@ package com.intellij.agent.workbench.chat
 
 // @spec community/plugins/agent-workbench/spec/chat/agent-chat-editor.spec.md
 
-import com.intellij.agent.workbench.core.AgentThreadActivity
-import com.intellij.agent.workbench.core.AgentThreadActivityReport
-import com.intellij.agent.workbench.core.normalizeAgentWorkbenchPath
-import com.intellij.agent.workbench.core.session.AgentSessionLaunchMode
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
+import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
+import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
-import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchIntent
-import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchOperation
-import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchPlanner
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchIntent
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchOperation
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchPlanner
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchPlan
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadActivityUpdate
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI

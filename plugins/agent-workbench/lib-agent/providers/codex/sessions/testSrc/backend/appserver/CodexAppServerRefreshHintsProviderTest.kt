@@ -1,20 +1,20 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package com.intellij.agent.workbench.codex.sessions.backend.appserver
+package com.intellij.platform.ai.agent.codex.sessions.backend.appserver
 
-import com.intellij.agent.workbench.codex.common.CodexAppServerNotification
-import com.intellij.agent.workbench.codex.common.CodexAppServerNotificationKind
-import com.intellij.agent.workbench.codex.common.CodexAppServerStartedThread
-import com.intellij.agent.workbench.codex.common.CodexAppServerException
-import com.intellij.agent.workbench.codex.common.CodexThreadActiveFlag
-import com.intellij.agent.workbench.codex.common.CodexThreadActivitySnapshot
-import com.intellij.agent.workbench.codex.common.CodexThreadStatusKind
-import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHints
-import com.intellij.agent.workbench.core.AgentThreadActivity
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
-import com.intellij.agent.workbench.sessions.core.providers.UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT
+import com.intellij.platform.ai.agent.codex.common.CodexAppServerNotification
+import com.intellij.platform.ai.agent.codex.common.CodexAppServerNotificationKind
+import com.intellij.platform.ai.agent.codex.common.CodexAppServerStartedThread
+import com.intellij.platform.ai.agent.codex.common.CodexAppServerException
+import com.intellij.platform.ai.agent.codex.common.CodexThreadActiveFlag
+import com.intellij.platform.ai.agent.codex.common.CodexThreadActivitySnapshot
+import com.intellij.platform.ai.agent.codex.common.CodexThreadStatusKind
+import com.intellij.platform.ai.agent.codex.sessions.backend.CodexRefreshHints
+import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshThreadSeed
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.platform.ai.agent.sessions.core.providers.UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel

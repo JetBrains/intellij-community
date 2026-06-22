@@ -1,7 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.agent.workbench.terminal.sessions` start
+### auto-generated section `build intellij.platform.ai.agent.terminal.sessions` start
 
 jvm_library(
     name = "sessions",
@@ -13,7 +13,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.agent.workbench.terminal.sessions",
+    module_name = "intellij.platform.ai.agent.terminal.sessions",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -30,7 +30,7 @@ jvm_library(
         "//plugins/agent-workbench/lib-agent/common",
         "//plugins/agent-workbench/lib-agent/core",
         "//plugins/agent-workbench/prompt/core",
-        "//plugins/agent-workbench/lib-agent/sessions-core:agent-workbench-sessions-core",
+        "//plugins/agent-workbench/lib-agent/sessions-core:ai-agent-sessions-core",
     ],
 )
 
@@ -41,7 +41,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    module_name = "intellij.agent.workbench.terminal.sessions",
+    module_name = "intellij.platform.ai.agent.terminal.sessions",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -54,7 +54,7 @@ jvm_library(
         "//plugins/agent-workbench/lib-agent/common:common_test_lib",
         "//plugins/agent-workbench/lib-agent/core:core_test_lib",
         "//plugins/agent-workbench/prompt/core:core_test_lib",
-        "//plugins/agent-workbench/lib-agent/sessions-core:agent-workbench-sessions-core_test_lib",
+        "//plugins/agent-workbench/lib-agent/sessions-core:ai-agent-sessions-core_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//platform/testFramework",
@@ -65,31 +65,31 @@ jvm_library(
         "//libraries/assertj-core:assertj-core_test_lib",
     ],
 )
-### auto-generated section `build intellij.agent.workbench.terminal.sessions` end
+### auto-generated section `build intellij.platform.ai.agent.terminal.sessions` end
 
-### auto-generated section `iml intellij.agent.workbench.terminal.sessions` start
+### auto-generated section `iml intellij.platform.ai.agent.terminal.sessions` start
 exports_files(
     [
-        "intellij.agent.workbench.terminal.sessions.iml",
+        "intellij.platform.ai.agent.terminal.sessions.iml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml intellij.agent.workbench.terminal.sessions` end
+### auto-generated section `iml intellij.platform.ai.agent.terminal.sessions` end
 
-### auto-generated section `build intellij.agent.workbench.terminal.sessions.tests` start
+### auto-generated section `build intellij.platform.ai.agent.terminal.sessions.tests` start
 
 jvm_library(
-    name = "agent-workbench-terminal-sessions-tests",
+    name = "ai-agent-terminal-sessions-tests",
     srcs = glob(
         [],
         allow_empty = True,
     ),
-    module_name = "intellij.agent.workbench.terminal.sessions.tests",
+    module_name = "intellij.platform.ai.agent.terminal.sessions.tests",
     visibility = ["//visibility:public"],
 )
 
 jvm_library(
-    name = "agent-workbench-terminal-sessions-tests_test_lib",
+    name = "ai-agent-terminal-sessions-tests_test_lib",
     testonly = True,
     srcs = glob(
         [
@@ -104,7 +104,7 @@ jvm_library(
         "//plugins/agent-workbench/lib-agent/providers/terminal/sessions:sessions_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [":agent-workbench-terminal-sessions-tests"],
+    runtime_deps = [":ai-agent-terminal-sessions-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -124,8 +124,8 @@ jvm_library(
         "//plugins/agent-workbench/lib-agent/core:core_test_lib",
         "//plugins/agent-workbench/prompt/core",
         "//plugins/agent-workbench/prompt/core:core_test_lib",
-        "//plugins/agent-workbench/lib-agent/sessions-core:agent-workbench-sessions-core",
-        "//plugins/agent-workbench/lib-agent/sessions-core:agent-workbench-sessions-core_test_lib",
+        "//plugins/agent-workbench/lib-agent/sessions-core:ai-agent-sessions-core",
+        "//plugins/agent-workbench/lib-agent/sessions-core:ai-agent-sessions-core_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//platform/testFramework",
@@ -136,21 +136,21 @@ jvm_library(
         "//libraries/assertj-core:assertj-core_test_lib",
     ],
 )
-### auto-generated section `build intellij.agent.workbench.terminal.sessions.tests` end
+### auto-generated section `build intellij.platform.ai.agent.terminal.sessions.tests` end
 
-### auto-generated section `iml intellij.agent.workbench.terminal.sessions.tests` start
+### auto-generated section `iml intellij.platform.ai.agent.terminal.sessions.tests` start
 exports_files(
     [
-        "intellij.agent.workbench.terminal.sessions.tests.iml",
+        "intellij.platform.ai.agent.terminal.sessions.tests.iml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml intellij.agent.workbench.terminal.sessions.tests` end
+### auto-generated section `iml intellij.platform.ai.agent.terminal.sessions.tests` end
 
-### auto-generated section `test intellij.agent.workbench.terminal.sessions.tests` start
+### auto-generated section `test intellij.platform.ai.agent.terminal.sessions.tests` start
 
 jps_test(
-    name = "agent-workbench-terminal-sessions-tests_test",
-    runtime_deps = [":agent-workbench-terminal-sessions-tests_test_lib"],
+    name = "ai-agent-terminal-sessions-tests_test",
+    runtime_deps = [":ai-agent-terminal-sessions-tests_test_lib"],
 )
-### auto-generated section `test intellij.agent.workbench.terminal.sessions.tests` end
+### auto-generated section `test intellij.platform.ai.agent.terminal.sessions.tests` end

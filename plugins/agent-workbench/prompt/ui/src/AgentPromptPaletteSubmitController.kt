@@ -3,8 +3,8 @@ package com.intellij.agent.workbench.prompt.ui
 
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-entry.spec.md
 
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.common.session.isClaudeMenuCommandPrompt
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.common.session.isClaudeMenuCommandPrompt
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
@@ -16,9 +16,9 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.prompt.core.dataContextOrNull
 import com.intellij.agent.workbench.prompt.ui.context.buildExtensionActionDataContext
-import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderOptionTarget
-import com.intellij.agent.workbench.sessions.core.providers.isPlanModeBlockedForExistingThread
-import com.intellij.agent.workbench.sessions.core.providers.resolveEffectiveProviderOptionIds
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentPromptProviderOptionTarget
+import com.intellij.platform.ai.agent.sessions.core.providers.isPlanModeBlockedForExistingThread
+import com.intellij.platform.ai.agent.sessions.core.providers.resolveEffectiveProviderOptionIds
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUiKind

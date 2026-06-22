@@ -1,0 +1,13 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.ai.agent.filewatch"/>
+    <module name="intellij.platform.ai.agent.pi.sessions"/>
+    <module name="intellij.platform.ai.agent.sessions.core"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij.agent.workbench.pi">
+    <sessionUpdateEventsContributor implementation="com.intellij.platform.ai.agent.pi.sessions.filewatch.PiSessionFileWatchUpdateEventsContributor"/>
+  </extensions>
+</idea-plugin>

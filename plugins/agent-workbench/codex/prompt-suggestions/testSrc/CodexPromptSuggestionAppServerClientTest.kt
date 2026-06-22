@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.codex.prompt.suggestions
 
-import com.intellij.agent.workbench.codex.common.CodexAppServerException
-import com.intellij.agent.workbench.codex.common.writeObject
-import com.intellij.agent.workbench.codex.common.writeObjectField
-import com.intellij.agent.workbench.codex.common.writeStringArrayField
+import com.intellij.platform.ai.agent.codex.common.CodexAppServerException
+import com.intellij.platform.ai.agent.codex.common.writeObject
+import com.intellij.platform.ai.agent.codex.common.writeObjectField
+import com.intellij.platform.ai.agent.codex.common.writeStringArrayField
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart

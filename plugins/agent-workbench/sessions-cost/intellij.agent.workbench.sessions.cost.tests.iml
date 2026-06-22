@@ -10,9 +10,9 @@
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.common" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.core" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.sessions.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.sessions.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />

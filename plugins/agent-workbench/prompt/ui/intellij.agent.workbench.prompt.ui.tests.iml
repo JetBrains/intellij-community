@@ -45,12 +45,12 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.common" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.context" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.settings" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.sessions.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.sessions.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions" scope="TEST" />
     <orderEntry type="module" module-name="intellij.markdown" scope="TEST" />

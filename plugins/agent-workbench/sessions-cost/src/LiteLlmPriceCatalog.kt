@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.cost
 
-import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
+import com.intellij.platform.ai.agent.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.platform.eel.fs.EelFiles
 import tools.jackson.core.JsonParser
 import tools.jackson.core.JsonToken

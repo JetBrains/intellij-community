@@ -2,12 +2,12 @@
 package com.intellij.agent.workbench.sessions.settings
 
 import com.intellij.agent.workbench.sessions.AgentSessionCostPresentationSettings
-import com.intellij.agent.workbench.core.session.AgentSessionLaunchMode
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.TestAgentSessionProviderDescriptor
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
-import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
+import com.intellij.platform.ai.agent.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.agent.workbench.settings.AGENT_WORKBENCH_CHAT_SETTINGS_COMPONENT_ID
 import com.intellij.agent.workbench.settings.AgentWorkbenchCheckboxSetting
 import com.intellij.agent.workbench.settings.AgentWorkbenchSettings

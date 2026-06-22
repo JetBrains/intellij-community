@@ -1,17 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.service
 
-import com.intellij.agent.workbench.core.normalizeAgentWorkbenchPath
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadPresentationUpdate
-import com.intellij.agent.workbench.sessions.core.providers.describeScope
-import com.intellij.agent.workbench.sessions.core.providers.isUnscoped
-import com.intellij.agent.workbench.sessions.core.providers.mergeAgentSessionThreadPresentationUpdates
-import com.intellij.agent.workbench.sessions.core.providers.toPresentationUpdate
+import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadActivityUpdate
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadPresentationUpdate
+import com.intellij.platform.ai.agent.sessions.core.providers.describeScope
+import com.intellij.platform.ai.agent.sessions.core.providers.isUnscoped
+import com.intellij.platform.ai.agent.sessions.core.providers.mergeAgentSessionThreadPresentationUpdates
+import com.intellij.platform.ai.agent.sessions.core.providers.toPresentationUpdate
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.CancellationException

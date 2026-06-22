@@ -1,17 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.toolwindow
 
-import com.intellij.agent.workbench.core.session.AgentSessionLaunchMode
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.core.session.AgentSessionThread
-import com.intellij.agent.workbench.core.session.AgentSubAgent
+import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.core.session.AgentSessionThread
+import com.intellij.platform.ai.agent.core.session.AgentSubAgent
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfileKind
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.TestAgentSessionProviderDescriptor
-import com.intellij.agent.workbench.sessions.core.providers.builtInLaunchProfileId
+import com.intellij.platform.ai.agent.sessions.core.providers.builtInLaunchProfileId
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
@@ -411,10 +411,10 @@ class AgentSessionsTreePopupActionsTest {
       ),
       node = SessionTreeNode.Thread(project = project, thread = thread(id = "thread-1", provider = AgentSessionProvider.CODEX)),
     )
-    val target = context.target as com.intellij.agent.workbench.sessions.core.SessionActionTarget.Thread
+    val target = context.target as com.intellij.platform.ai.agent.sessions.core.SessionActionTarget.Thread
     var promptedProjectName: String? = null
     var promptedTitle: String? = null
-    var renamedTarget: com.intellij.agent.workbench.sessions.core.SessionActionTarget.Thread? = null
+    var renamedTarget: com.intellij.platform.ai.agent.sessions.core.SessionActionTarget.Thread? = null
     var renamedTo: String? = null
 
     val action = AgentSessionsTreePopupRenameThreadAction(

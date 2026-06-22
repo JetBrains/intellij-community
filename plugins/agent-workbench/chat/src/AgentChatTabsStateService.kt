@@ -3,10 +3,10 @@
 
 package com.intellij.agent.workbench.chat
 
-import com.intellij.agent.workbench.core.AgentThreadActivity
-import com.intellij.agent.workbench.core.normalizeAgentWorkbenchPath
+import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
-import com.intellij.agent.workbench.sessions.core.isAgentSessionPendingThreadId
+import com.intellij.platform.ai.agent.sessions.core.isAgentSessionPendingThreadId
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.SerializablePersistentStateComponent
 import com.intellij.openapi.components.Service

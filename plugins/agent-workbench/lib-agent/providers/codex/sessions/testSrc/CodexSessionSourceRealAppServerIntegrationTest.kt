@@ -1,17 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.codex.sessions
+package com.intellij.platform.ai.agent.codex.sessions
 
-import com.intellij.agent.workbench.codex.common.CodexAppServerNotification
-import com.intellij.agent.workbench.codex.common.CodexWebSocketAppServerClient
-import com.intellij.agent.workbench.codex.common.normalizeRootPath
-import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHints
-import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHintsProvider
-import com.intellij.agent.workbench.codex.sessions.backend.appserver.CodexAppServerRefreshHintsProvider
-import com.intellij.agent.workbench.codex.sessions.backend.appserver.CodexAppServerSessionBackend
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.platform.ai.agent.codex.common.CodexAppServerNotification
+import com.intellij.platform.ai.agent.codex.common.CodexWebSocketAppServerClient
+import com.intellij.platform.ai.agent.codex.common.normalizeRootPath
+import com.intellij.platform.ai.agent.codex.sessions.backend.CodexRefreshHints
+import com.intellij.platform.ai.agent.codex.sessions.backend.CodexRefreshHintsProvider
+import com.intellij.platform.ai.agent.codex.sessions.backend.appserver.CodexAppServerRefreshHintsProvider
+import com.intellij.platform.ai.agent.codex.sessions.backend.appserver.CodexAppServerSessionBackend
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshThreadSeed
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async

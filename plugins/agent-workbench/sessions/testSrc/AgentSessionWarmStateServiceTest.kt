@@ -1,10 +1,10 @@
 package com.intellij.agent.workbench.sessions
 
-import com.intellij.agent.workbench.core.AgentThreadActivity
-import com.intellij.agent.workbench.core.session.AgentSessionCost
-import com.intellij.agent.workbench.core.session.AgentSessionCostKind
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.core.session.AgentSubAgent
+import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.session.AgentSessionCost
+import com.intellij.platform.ai.agent.core.session.AgentSessionCostKind
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.core.session.AgentSubAgent
 import com.intellij.agent.workbench.sessions.state.AgentSessionWarmPathSnapshot
 import com.intellij.agent.workbench.sessions.state.AgentSessionWarmStateService
 import org.assertj.core.api.Assertions.assertThat

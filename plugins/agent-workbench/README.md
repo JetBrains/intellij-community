@@ -193,7 +193,7 @@ When diagnosing a Codex thread started from `Cmd+\` or `Ctrl+\` that falls back 
 
 - `#com.intellij.agent.workbench.sessions.launch.config.backend.AgentWorkbenchProjectLaunchConfigLogCategory` for `.agent-workbench.yaml` discovery, parsed config summaries, shim preparation, and provider launch augmentation.
 - `#com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService` for sanitized new-thread launch handoff summaries.
-- `#com.intellij.agent.workbench.codex.common.CodexAppServerClient` for Codex app-server startup summaries and forwarded stderr.
+- `#com.intellij.platform.ai.agent.codex.common.CodexAppServerClient` for Codex app-server startup summaries and forwarded stderr.
 - `#com.intellij.mcpserver.impl.McpServerService:trace` for IDE MCP server and session startup.
 - `#com.intellij.mcpserver.impl.McpSessionHandler:trace` for MCP tool list updates and actual tool calls.
 - Optional: `#com.intellij.mcpserver.impl.util.network.RoutingContext:trace` for stdio and session transport issues.

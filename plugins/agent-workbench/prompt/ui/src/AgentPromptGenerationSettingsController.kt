@@ -10,10 +10,10 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfileKind
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
-import com.intellij.agent.workbench.core.session.AgentSessionLaunchMode
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuItem
-import com.intellij.agent.workbench.sessions.core.providers.generationSettingsForPlanMode
+import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderMenuItem
+import com.intellij.platform.ai.agent.sessions.core.providers.generationSettingsForPlanMode
 import com.intellij.agent.workbench.sessions.providerItemMonochromeIconWithMode
 import com.intellij.agent.workbench.sessions.setLaunchProfileIcon
 import com.intellij.agent.workbench.ui.AgentWorkbenchPopupRow

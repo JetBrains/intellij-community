@@ -1,32 +1,32 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.claude.sessions.backend.store
+package com.intellij.platform.ai.agent.claude.sessions.backend.store
 
 // @spec community/plugins/agent-workbench/spec/chat/agent-chat-structure-view.spec.md
 
-import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
-import com.intellij.agent.workbench.claude.common.ClaudeProjectFileChangeEvidence
-import com.intellij.agent.workbench.claude.common.ClaudeSessionOutline
-import com.intellij.agent.workbench.claude.common.ClaudeSessionOutlineItem
-import com.intellij.agent.workbench.claude.common.ClaudeSessionOutlineItemKind
-import com.intellij.agent.workbench.claude.common.ClaudeSessionThread
-import com.intellij.agent.workbench.claude.common.ClaudeSessionsStore
-import com.intellij.agent.workbench.claude.sessions.ClaudeBackendThread
-import com.intellij.agent.workbench.claude.sessions.ClaudeBackendThreadRefreshResult
-import com.intellij.agent.workbench.claude.sessions.ClaudeHookBridge
-import com.intellij.agent.workbench.claude.sessions.ClaudeSessionBackend
-import com.intellij.agent.workbench.core.AgentThreadActivity
-import com.intellij.agent.workbench.core.AgentThreadActivityReport
-import com.intellij.agent.workbench.core.normalizeAgentWorkbenchPath
-import com.intellij.agent.workbench.core.parseAgentWorkbenchPathOrNull
-import com.intellij.agent.workbench.core.session.AgentSessionOutlineItem
-import com.intellij.agent.workbench.core.session.AgentSessionOutlineItemKind
-import com.intellij.agent.workbench.core.session.AgentSessionThreadOutline
-import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
-import com.intellij.agent.workbench.json.filebacked.createFileBackedSessionChangeFlow
-import com.intellij.agent.workbench.json.filebacked.toFileBackedSessionPathKey
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
+import com.intellij.platform.ai.agent.claude.common.ClaudeSessionActivity
+import com.intellij.platform.ai.agent.claude.common.ClaudeProjectFileChangeEvidence
+import com.intellij.platform.ai.agent.claude.common.ClaudeSessionOutline
+import com.intellij.platform.ai.agent.claude.common.ClaudeSessionOutlineItem
+import com.intellij.platform.ai.agent.claude.common.ClaudeSessionOutlineItemKind
+import com.intellij.platform.ai.agent.claude.common.ClaudeSessionThread
+import com.intellij.platform.ai.agent.claude.common.ClaudeSessionsStore
+import com.intellij.platform.ai.agent.claude.sessions.ClaudeBackendThread
+import com.intellij.platform.ai.agent.claude.sessions.ClaudeBackendThreadRefreshResult
+import com.intellij.platform.ai.agent.claude.sessions.ClaudeHookBridge
+import com.intellij.platform.ai.agent.claude.sessions.ClaudeSessionBackend
+import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
+import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
+import com.intellij.platform.ai.agent.core.parseAgentWorkbenchPathOrNull
+import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItem
+import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItemKind
+import com.intellij.platform.ai.agent.core.session.AgentSessionThreadOutline
+import com.intellij.platform.ai.agent.json.filebacked.FileBackedSessionChangeSet
+import com.intellij.platform.ai.agent.json.filebacked.createFileBackedSessionChangeFlow
+import com.intellij.platform.ai.agent.json.filebacked.toFileBackedSessionPathKey
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadActivityUpdate
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -325,7 +325,7 @@ private fun ClaudeSessionThread.toAgentThreadActivityHint(): AgentThreadActivity
 
 private fun ClaudeSessionOutline.toAgentSessionThreadOutline(): AgentSessionThreadOutline {
   return AgentSessionThreadOutline(
-    provider = com.intellij.agent.workbench.core.session.AgentSessionProvider.CLAUDE,
+    provider = com.intellij.platform.ai.agent.core.session.AgentSessionProvider.CLAUDE,
     threadId = sessionId,
     title = title,
     updatedAt = updatedAt,

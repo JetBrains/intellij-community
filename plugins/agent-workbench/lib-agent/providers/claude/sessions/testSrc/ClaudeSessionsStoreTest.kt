@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.claude.sessions
+package com.intellij.platform.ai.agent.claude.sessions
 
-import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
-import com.intellij.agent.workbench.claude.common.ClaudeSessionOutlineItemKind
-import com.intellij.agent.workbench.claude.common.ClaudeSessionTitleSource
-import com.intellij.agent.workbench.claude.common.ClaudeSessionsStore
+import com.intellij.platform.ai.agent.claude.common.ClaudeSessionActivity
+import com.intellij.platform.ai.agent.claude.common.ClaudeSessionOutlineItemKind
+import com.intellij.platform.ai.agent.claude.common.ClaudeSessionTitleSource
+import com.intellij.platform.ai.agent.claude.common.ClaudeSessionsStore
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -640,7 +640,7 @@ class ClaudeSessionsStoreTest {
 
     assertThat(usageFile).isNotNull
     assertThat(usageFile!!.usageSnapshots).containsExactly(
-      com.intellij.agent.workbench.claude.common.ClaudeUsageSnapshot(
+      com.intellij.platform.ai.agent.claude.common.ClaudeUsageSnapshot(
         modelId = "claude-opus-4-8",
         inputTokens = 2,
         outputTokens = 158,

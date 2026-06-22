@@ -2,7 +2,7 @@
 package com.intellij.agent.workbench.sessions.tree
 
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
-import com.intellij.agent.workbench.sessions.core.formatAgentSessionThreadTitle
+import com.intellij.platform.ai.agent.sessions.core.formatAgentSessionThreadTitle
 import com.intellij.openapi.util.NlsSafe
 
 fun threadDisplayTitle(threadId: String, title: String): @NlsSafe String {

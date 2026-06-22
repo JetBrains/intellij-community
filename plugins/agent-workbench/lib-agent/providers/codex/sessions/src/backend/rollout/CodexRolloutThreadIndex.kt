@@ -1,20 +1,20 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("SSBasedInspection")
 
-package com.intellij.agent.workbench.codex.sessions.backend.rollout
+package com.intellij.platform.ai.agent.codex.sessions.backend.rollout
 
-import com.intellij.agent.workbench.codex.common.CodexSubAgent
-import com.intellij.agent.workbench.codex.common.CodexThreadSourceKind
-import com.intellij.agent.workbench.codex.common.normalizeRootPath
-import com.intellij.agent.workbench.codex.sessions.resolveProjectDirectoryFromPath
-import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
-import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity
-import com.intellij.agent.workbench.json.filebacked.FileBackedSessionCachedFile
-import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
-import com.intellij.agent.workbench.json.filebacked.FileBackedSessionFileStat
-import com.intellij.agent.workbench.json.filebacked.buildFileBackedSessionFileStat
-import com.intellij.agent.workbench.json.filebacked.toFileBackedSessionPathKey
-import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
+import com.intellij.platform.ai.agent.codex.common.CodexSubAgent
+import com.intellij.platform.ai.agent.codex.common.CodexThreadSourceKind
+import com.intellij.platform.ai.agent.codex.common.normalizeRootPath
+import com.intellij.platform.ai.agent.codex.sessions.resolveProjectDirectoryFromPath
+import com.intellij.platform.ai.agent.codex.sessions.backend.CodexBackendThread
+import com.intellij.platform.ai.agent.codex.sessions.backend.CodexSessionActivity
+import com.intellij.platform.ai.agent.json.filebacked.FileBackedSessionCachedFile
+import com.intellij.platform.ai.agent.json.filebacked.FileBackedSessionChangeSet
+import com.intellij.platform.ai.agent.json.filebacked.FileBackedSessionFileStat
+import com.intellij.platform.ai.agent.json.filebacked.buildFileBackedSessionFileStat
+import com.intellij.platform.ai.agent.json.filebacked.toFileBackedSessionPathKey
+import com.intellij.platform.ai.agent.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap

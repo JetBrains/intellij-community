@@ -3,9 +3,9 @@ package com.intellij.agent.workbench.sessions.actions
 
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
-import com.intellij.agent.workbench.sessions.core.SessionActionTarget
-import com.intellij.agent.workbench.sessions.core.formatCompactAgentSessionThreadTitle
-import com.intellij.agent.workbench.sessions.core.formatCompactAgentSessionTitle
+import com.intellij.platform.ai.agent.sessions.core.SessionActionTarget
+import com.intellij.platform.ai.agent.sessions.core.formatCompactAgentSessionThreadTitle
+import com.intellij.platform.ai.agent.sessions.core.formatCompactAgentSessionTitle
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 
 internal fun resolveEditorTabConversationTarget(context: AgentChatEditorTabActionContext): SessionActionTarget.Conversation? {

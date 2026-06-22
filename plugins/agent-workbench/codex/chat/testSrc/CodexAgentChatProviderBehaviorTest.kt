@@ -7,10 +7,10 @@ import com.intellij.agent.workbench.chat.AgentChatInitialMessageDispatchContext
 import com.intellij.agent.workbench.chat.AgentChatInitialMessageRetryDecision
 import com.intellij.agent.workbench.chat.AgentChatInitialMessageSendObservation
 import com.intellij.agent.workbench.chat.AgentChatProviderBehaviors
-import com.intellij.agent.workbench.core.AgentThreadActivity
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
+import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

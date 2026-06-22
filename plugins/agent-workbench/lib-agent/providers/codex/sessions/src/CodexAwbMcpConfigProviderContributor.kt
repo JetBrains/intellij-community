@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.codex.sessions
+package com.intellij.platform.ai.agent.codex.sessions
 
-import com.intellij.agent.workbench.sessions.core.launch.AwbMcpConfigProviderContributor
+import com.intellij.platform.ai.agent.sessions.core.launch.AwbMcpConfigProviderContributor
 
 /**
  * Codex's contribution to the AWB-managed JSON MCP merge contract used by other

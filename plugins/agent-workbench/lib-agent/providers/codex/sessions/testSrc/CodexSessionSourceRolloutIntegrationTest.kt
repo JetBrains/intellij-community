@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.codex.sessions
+package com.intellij.platform.ai.agent.codex.sessions
 
-import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity
-import com.intellij.agent.workbench.core.AgentThreadActivity
-import com.intellij.agent.workbench.core.session.AgentSessionCost
-import com.intellij.agent.workbench.core.session.AgentSessionCostKind
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRefreshRequest
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.platform.ai.agent.codex.sessions.backend.CodexSessionActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.session.AgentSessionCost
+import com.intellij.platform.ai.agent.core.session.AgentSessionCostKind
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceRefreshRequest
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat

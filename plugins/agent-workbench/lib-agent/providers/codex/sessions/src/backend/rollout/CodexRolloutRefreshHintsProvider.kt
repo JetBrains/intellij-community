@@ -1,16 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package com.intellij.agent.workbench.codex.sessions.backend.rollout
+package com.intellij.platform.ai.agent.codex.sessions.backend.rollout
 
-import com.intellij.agent.workbench.codex.common.CodexThreadSourceKind
-import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshActivityHint
-import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHints
-import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHintsProvider
-import com.intellij.agent.workbench.codex.sessions.backend.toAgentThreadActivity
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadPresentationUpdate
+import com.intellij.platform.ai.agent.codex.common.CodexThreadSourceKind
+import com.intellij.platform.ai.agent.codex.sessions.backend.CodexRefreshActivityHint
+import com.intellij.platform.ai.agent.codex.sessions.backend.CodexRefreshHints
+import com.intellij.platform.ai.agent.codex.sessions.backend.CodexRefreshHintsProvider
+import com.intellij.platform.ai.agent.codex.sessions.backend.toAgentThreadActivity
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRebindCandidate
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshThreadSeed
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadPresentationUpdate
 import kotlinx.coroutines.flow.Flow
 
 internal class CodexRolloutRefreshHintsProvider(

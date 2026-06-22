@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.claude.sessions
+package com.intellij.platform.ai.agent.claude.sessions
 
 // @spec community/plugins/agent-workbench/spec/chat/agent-chat-structure-view.spec.md
 
-import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
-import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
-import com.intellij.agent.workbench.core.session.AgentSessionThreadOutline
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.platform.ai.agent.claude.common.ClaudeSessionActivity
+import com.intellij.platform.ai.agent.sessions.core.cost.AgentSessionUsageSnapshot
+import com.intellij.platform.ai.agent.core.session.AgentSessionThreadOutline
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow

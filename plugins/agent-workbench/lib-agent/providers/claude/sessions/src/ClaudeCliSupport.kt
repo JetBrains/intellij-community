@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.claude.sessions
+package com.intellij.platform.ai.agent.claude.sessions
 
-import com.intellij.agent.workbench.cli.resolveExecutableFromPathOrLocalBin
-import com.intellij.agent.workbench.cli.resolveExecutableOrDefaultViaTerminalResolver as resolveCliExecutableOrDefaultViaTerminalResolver
-import com.intellij.agent.workbench.cli.resolveExecutableViaTerminalResolver as findCliExecutableViaTerminalResolver
+import com.intellij.platform.ai.agent.cli.resolveExecutableFromPathOrLocalBin
+import com.intellij.platform.ai.agent.cli.resolveExecutableOrDefaultViaTerminalResolver as resolveCliExecutableOrDefaultViaTerminalResolver
+import com.intellij.platform.ai.agent.cli.resolveExecutableViaTerminalResolver as findCliExecutableViaTerminalResolver
 
 private const val CLAUDE_MISSING_TERMINAL_AGENT_MESSAGE: String =
   "Claude terminal agent extension is not registered; falling back to local PATH lookup"

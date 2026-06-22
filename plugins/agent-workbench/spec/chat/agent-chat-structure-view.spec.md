@@ -89,14 +89,14 @@ Agent Chat Structure View exposes an outline of persisted provider session histo
 ## Testing / Local Run
 - `./tests.cmd --module intellij.agent.workbench.chat.tests --test com.intellij.agent.workbench.chat.AgentChatFileEditorProviderTest`
 - `./tests.cmd --module intellij.agent.workbench.chat.tests --test com.intellij.agent.workbench.chat.AgentChatFileEditorLifecycleTest`
-- `./tests.cmd --module intellij.agent.workbench.codex.sessions.tests --test com.intellij.agent.workbench.codex.sessions.CodexSessionSourceTest`
-- `./tests.cmd --module intellij.agent.workbench.codex.sessions.tests --test com.intellij.agent.workbench.codex.sessions.CodexAppServerSessionBackendTest`
-- `./tests.cmd --module intellij.agent.workbench.pi.sessions.tests --test com.intellij.agent.workbench.pi.sessions.PiExtensionControlWebSocketHandlerTest`
-- `./tests.cmd --module intellij.agent.workbench.codex.sessions.tests --test com.intellij.agent.workbench.codex.sessions.CodexRolloutSessionBackendTest`
-- `./tests.cmd --module intellij.agent.workbench.claude.sessions.tests --test com.intellij.agent.workbench.claude.sessions.ClaudeAgentSessionProviderDescriptorTest`
-- `./tests.cmd --module intellij.agent.workbench.claude.sessions.tests --test com.intellij.agent.workbench.claude.sessions.ClaudeSessionSourceTest`
-- `./tests.cmd --module intellij.agent.workbench.claude.sessions.tests --test com.intellij.agent.workbench.claude.sessions.ClaudeSessionsStoreTest`
-- `./tests.cmd --module intellij.agent.workbench.pi.sessions.tests --test com.intellij.agent.workbench.pi.sessions.PiSessionSourceTest`
+- `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test com.intellij.platform.ai.agent.codex.sessions.CodexSessionSourceTest`
+- `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test com.intellij.platform.ai.agent.codex.sessions.CodexAppServerSessionBackendTest`
+- `./tests.cmd --module intellij.platform.ai.agent.pi.sessions.tests --test com.intellij.platform.ai.agent.pi.sessions.PiExtensionControlWebSocketHandlerTest`
+- `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test com.intellij.platform.ai.agent.codex.sessions.CodexRolloutSessionBackendTest`
+- `./tests.cmd --module intellij.platform.ai.agent.claude.sessions.tests --test com.intellij.platform.ai.agent.claude.sessions.ClaudeAgentSessionProviderDescriptorTest`
+- `./tests.cmd --module intellij.platform.ai.agent.claude.sessions.tests --test com.intellij.platform.ai.agent.claude.sessions.ClaudeSessionSourceTest`
+- `./tests.cmd --module intellij.platform.ai.agent.claude.sessions.tests --test com.intellij.platform.ai.agent.claude.sessions.ClaudeSessionsStoreTest`
+- `./tests.cmd --module intellij.platform.ai.agent.pi.sessions.tests --test com.intellij.platform.ai.agent.pi.sessions.PiSessionSourceTest`
 
 ## References
 - `agent-chat-editor.spec.md`

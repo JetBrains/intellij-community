@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.core
+package com.intellij.platform.ai.agent.core
 
-import com.intellij.agent.workbench.core.session.AGENT_SESSION_ARCHIVED_THREAD_TITLE_PREFIX
-import com.intellij.agent.workbench.core.session.buildAgentSessionArchivedThreadTitle
-import com.intellij.agent.workbench.core.session.resolveAgentSessionArchivedTitleState
+import com.intellij.platform.ai.agent.core.session.AGENT_SESSION_ARCHIVED_THREAD_TITLE_PREFIX
+import com.intellij.platform.ai.agent.core.session.buildAgentSessionArchivedThreadTitle
+import com.intellij.platform.ai.agent.core.session.resolveAgentSessionArchivedTitleState
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 

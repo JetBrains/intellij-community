@@ -1,16 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.opencode.sessions
+package com.intellij.platform.ai.agent.opencode.sessions
 
-import com.intellij.agent.workbench.core.AgentThreadActivity
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.opencode.sessions.server.OpenCodeServerProject
-import com.intellij.agent.workbench.opencode.sessions.server.OpenCodeServerSession
-import com.intellij.agent.workbench.opencode.sessions.server.OpenCodeServerSessionBackend
-import com.intellij.agent.workbench.opencode.sessions.server.OpenCodeServerTransport
-import com.intellij.agent.workbench.opencode.sessions.server.createOpenCodeHttpClient
-import com.intellij.agent.workbench.opencode.sessions.server.parseOpenCodeServerProjectDirectories
-import com.intellij.agent.workbench.opencode.sessions.server.parseOpenCodeServerProjects
-import com.intellij.agent.workbench.opencode.sessions.server.parseOpenCodeServerSessions
+import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.opencode.sessions.server.OpenCodeServerProject
+import com.intellij.platform.ai.agent.opencode.sessions.server.OpenCodeServerSession
+import com.intellij.platform.ai.agent.opencode.sessions.server.OpenCodeServerSessionBackend
+import com.intellij.platform.ai.agent.opencode.sessions.server.OpenCodeServerTransport
+import com.intellij.platform.ai.agent.opencode.sessions.server.createOpenCodeHttpClient
+import com.intellij.platform.ai.agent.opencode.sessions.server.parseOpenCodeServerProjectDirectories
+import com.intellij.platform.ai.agent.opencode.sessions.server.parseOpenCodeServerProjects
+import com.intellij.platform.ai.agent.opencode.sessions.server.parseOpenCodeServerSessions
 import com.sun.net.httpserver.HttpServer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking

@@ -63,7 +63,7 @@ Agent Workbench can start a regular IDE Terminal shell from the same new-thread 
 - Per-provider FUS telemetry tags exist for Codex, Claude, Junie, and Terminal; the generic launch path emits provider-tagged events without per-provider code in each descriptor.
 
 ## Testing / Local Run
-- `./tests.cmd --module intellij.agent.workbench.terminal.sessions.tests --test "com.intellij.agent.workbench.terminal.sessions.*Test"`
+- `./tests.cmd --module intellij.platform.ai.agent.terminal.sessions.tests --test "com.intellij.platform.ai.agent.terminal.sessions.*Test"`
 - `./tests.cmd --module intellij.agent.workbench.chat.tests --test com.intellij.agent.workbench.chat.AgentChatTerminalTabBuilderConfigurationTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.actions.tests --test "com.intellij.agent.workbench.sessions.*ActionsTest"`
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionLaunchServiceTest`

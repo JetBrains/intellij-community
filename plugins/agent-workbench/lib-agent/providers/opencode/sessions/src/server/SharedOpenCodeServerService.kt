@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.opencode.sessions.server
+package com.intellij.platform.ai.agent.opencode.sessions.server
 
-import com.intellij.agent.workbench.opencode.sessions.OpenCodeSessionBackend
-import com.intellij.agent.workbench.opencode.sessions.OpenCodeSessionIndexEntry
-import com.intellij.agent.workbench.opencode.sessions.normalizeOpenCodeProjectPath
-import com.intellij.agent.workbench.opencode.sessions.normalizeOpenCodeSessionTitle
+import com.intellij.platform.ai.agent.opencode.sessions.OpenCodeSessionBackend
+import com.intellij.platform.ai.agent.opencode.sessions.OpenCodeSessionIndexEntry
+import com.intellij.platform.ai.agent.opencode.sessions.normalizeOpenCodeProjectPath
+import com.intellij.platform.ai.agent.opencode.sessions.normalizeOpenCodeSessionTitle
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug

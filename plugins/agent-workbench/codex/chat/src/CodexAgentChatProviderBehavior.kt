@@ -7,10 +7,10 @@ import com.intellij.agent.workbench.chat.AgentChatInitialMessageRetryDecision
 import com.intellij.agent.workbench.chat.AgentChatInitialMessageSendObservation
 import com.intellij.agent.workbench.chat.AgentChatProviderBehavior
 import com.intellij.agent.workbench.chat.AgentChatProviderBehaviorContributor
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadRebindPolicy
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import kotlin.math.min
 
 internal class CodexAgentChatProviderBehaviorContributor : AgentChatProviderBehaviorContributor {

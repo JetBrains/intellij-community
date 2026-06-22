@@ -2,7 +2,7 @@
 package com.intellij.agent.workbench.codex.chat
 
 import com.intellij.agent.workbench.chat.AgentChatTerminalTitleThreadRebindContributor
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import java.util.Locale
 
 internal class CodexTerminalTitleThreadRebindContributor : AgentChatTerminalTitleThreadRebindContributor {

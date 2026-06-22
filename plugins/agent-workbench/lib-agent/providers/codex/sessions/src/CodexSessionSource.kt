@@ -1,51 +1,51 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.codex.sessions
+package com.intellij.platform.ai.agent.codex.sessions
 
 // @spec community/plugins/agent-workbench/spec/sessions/agent-sessions.spec.md
 // @spec community/plugins/agent-workbench/spec/sessions/agent-sessions-codex-rollout-source.spec.md
 // @spec community/plugins/agent-workbench/spec/chat/agent-chat-structure-view.spec.md
 
-import com.intellij.agent.workbench.codex.common.CodexThread
-import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
-import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshActivityHint
-import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHints
-import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHintsProvider
-import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity
-import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
-import com.intellij.agent.workbench.codex.sessions.backend.appserver.CodexAppServerRefreshHintsProvider
-import com.intellij.agent.workbench.codex.sessions.backend.appserver.SharedCodexAppServerService
-import com.intellij.agent.workbench.codex.sessions.backend.createDefaultCodexSessionBackend
-import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexExactRolloutThreadLoader
-import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutRefreshHintsProvider
-import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutParser
-import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutSessionBackend
-import com.intellij.agent.workbench.codex.sessions.backend.toAgentSessionRefreshHints
-import com.intellij.agent.workbench.codex.sessions.backend.toAgentThreadActivity
-import com.intellij.agent.workbench.core.AgentThreadActivity
-import com.intellij.agent.workbench.core.AgentThreadActivityReport
-import com.intellij.agent.workbench.core.isWorking
-import com.intellij.agent.workbench.core.session.AgentSessionCost
-import com.intellij.agent.workbench.core.session.AgentSessionCostKind
-import com.intellij.agent.workbench.core.session.AgentSessionOutlineItem
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.core.session.AgentSessionThread
-import com.intellij.agent.workbench.core.session.AgentSessionThreadOutline
-import com.intellij.agent.workbench.core.session.AgentSubAgent
-import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageCostCalculators
-import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
-import com.intellij.agent.workbench.sessions.core.cost.aggregateAgentSessionUsageCost
-import com.intellij.agent.workbench.sessions.core.normalizeConcreteAgentSessionThreadId
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionOutlineForkResult
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRefreshRequest
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRefreshResult
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadPresentationUpdate
-import com.intellij.agent.workbench.sessions.core.providers.BaseAgentSessionSource
-import com.intellij.agent.workbench.sessions.core.providers.mergeAgentSessionThreadPresentationUpdates
+import com.intellij.platform.ai.agent.codex.common.CodexThread
+import com.intellij.platform.ai.agent.codex.sessions.backend.CodexBackendThread
+import com.intellij.platform.ai.agent.codex.sessions.backend.CodexRefreshActivityHint
+import com.intellij.platform.ai.agent.codex.sessions.backend.CodexRefreshHints
+import com.intellij.platform.ai.agent.codex.sessions.backend.CodexRefreshHintsProvider
+import com.intellij.platform.ai.agent.codex.sessions.backend.CodexSessionActivity
+import com.intellij.platform.ai.agent.codex.sessions.backend.CodexSessionBackend
+import com.intellij.platform.ai.agent.codex.sessions.backend.appserver.CodexAppServerRefreshHintsProvider
+import com.intellij.platform.ai.agent.codex.sessions.backend.appserver.SharedCodexAppServerService
+import com.intellij.platform.ai.agent.codex.sessions.backend.createDefaultCodexSessionBackend
+import com.intellij.platform.ai.agent.codex.sessions.backend.rollout.CodexExactRolloutThreadLoader
+import com.intellij.platform.ai.agent.codex.sessions.backend.rollout.CodexRolloutRefreshHintsProvider
+import com.intellij.platform.ai.agent.codex.sessions.backend.rollout.CodexRolloutParser
+import com.intellij.platform.ai.agent.codex.sessions.backend.rollout.CodexRolloutSessionBackend
+import com.intellij.platform.ai.agent.codex.sessions.backend.toAgentSessionRefreshHints
+import com.intellij.platform.ai.agent.codex.sessions.backend.toAgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
+import com.intellij.platform.ai.agent.core.isWorking
+import com.intellij.platform.ai.agent.core.session.AgentSessionCost
+import com.intellij.platform.ai.agent.core.session.AgentSessionCostKind
+import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItem
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.core.session.AgentSessionThread
+import com.intellij.platform.ai.agent.core.session.AgentSessionThreadOutline
+import com.intellij.platform.ai.agent.core.session.AgentSubAgent
+import com.intellij.platform.ai.agent.sessions.core.cost.AgentSessionUsageCostCalculators
+import com.intellij.platform.ai.agent.sessions.core.cost.AgentSessionUsageSnapshot
+import com.intellij.platform.ai.agent.sessions.core.cost.aggregateAgentSessionUsageCost
+import com.intellij.platform.ai.agent.sessions.core.normalizeConcreteAgentSessionThreadId
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRebindCandidate
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshHints
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshThreadSeed
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionOutlineForkResult
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceRefreshRequest
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceRefreshResult
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadPresentationUpdate
+import com.intellij.platform.ai.agent.sessions.core.providers.BaseAgentSessionSource
+import com.intellij.platform.ai.agent.sessions.core.providers.mergeAgentSessionThreadPresentationUpdates
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -561,7 +561,7 @@ internal class CodexSessionSource internal constructor(
       .mapTo(LinkedHashSet()) { thread -> thread.threadId }
     val cwdFilter = resolveProjectDirectoryFromPath(path)
       ?.let { workingDirectory ->
-        com.intellij.agent.workbench.codex.common.normalizeRootPath(workingDirectory.toString().replace('\\', '/'))
+        com.intellij.platform.ai.agent.codex.common.normalizeRootPath(workingDirectory.toString().replace('\\', '/'))
       }
     return exactRolloutThreadLoader.loadThreads(
       cwdFilter = cwdFilter,

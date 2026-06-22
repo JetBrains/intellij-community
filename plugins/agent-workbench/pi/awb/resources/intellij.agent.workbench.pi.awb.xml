@@ -1,14 +1,14 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.agent.workbench.core"/>
-    <module name="intellij.agent.workbench.pi.sessions"/>
+    <module name="intellij.platform.ai.agent.core"/>
+    <module name="intellij.platform.ai.agent.pi.sessions"/>
     <module name="intellij.agent.workbench.sessions"/>
     <module name="intellij.agent.workbench.settings"/>
   </dependencies>
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij.agent.workbench">
-    <settingsContributor implementation="com.intellij.agent.workbench.pi.sessions.PiProviderSettingsContributor"/>
+    <settingsContributor implementation="com.intellij.platform.ai.agent.pi.sessions.PiProviderSettingsContributor"/>
   </extensions>
 </idea-plugin>

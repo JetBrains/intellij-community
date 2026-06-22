@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.claude.sessions
+package com.intellij.platform.ai.agent.claude.sessions
 
-import com.intellij.agent.workbench.json.createJsonParser
+import com.intellij.platform.ai.agent.json.createJsonParser
 import tools.jackson.core.JsonParser
 import tools.jackson.core.JsonToken
 import tools.jackson.core.json.JsonFactory

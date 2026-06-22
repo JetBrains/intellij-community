@@ -19,10 +19,10 @@ import com.intellij.agent.workbench.sessions.launchQuickStartProfile
 import com.intellij.agent.workbench.sessions.projectLabelForPath
 import com.intellij.agent.workbench.sessions.providerItemMonochromeIconWithMode
 import com.intellij.agent.workbench.sessions.resolveAgentSessionLaunchProfileSelection
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuModel
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
-import com.intellij.agent.workbench.sessions.core.providers.hasEntries
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderMenuModel
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
+import com.intellij.platform.ai.agent.sessions.core.providers.hasEntries
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.agent.workbench.ui.AgentWorkbenchPopupRow

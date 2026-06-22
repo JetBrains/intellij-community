@@ -3,8 +3,8 @@ package com.intellij.agent.workbench.sessions
 
 // @spec community/plugins/agent-workbench/spec/sessions/agent-terminal-sessions.spec.md
 
-import com.intellij.agent.workbench.core.session.AgentSessionLaunchMode
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuItem
+import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderMenuItem
 import com.intellij.agent.workbench.ui.withYoloModeBadge
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.Toggleable

@@ -35,9 +35,9 @@
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.common" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.core" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.sessions.core" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.common" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.core" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.sessions.core" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3.dataformat.yaml" />

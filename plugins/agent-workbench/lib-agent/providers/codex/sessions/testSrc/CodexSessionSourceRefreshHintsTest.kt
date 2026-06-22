@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.codex.sessions
+package com.intellij.platform.ai.agent.codex.sessions
 
-import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshActivityHint
-import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHints
-import com.intellij.agent.workbench.codex.sessions.backend.toAgentSessionRefreshHints
-import com.intellij.agent.workbench.core.AgentThreadActivity
-import com.intellij.agent.workbench.core.AgentThreadActivityReport
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadPresentationUpdate
+import com.intellij.platform.ai.agent.codex.sessions.backend.CodexRefreshActivityHint
+import com.intellij.platform.ai.agent.codex.sessions.backend.CodexRefreshHints
+import com.intellij.platform.ai.agent.codex.sessions.backend.toAgentSessionRefreshHints
+import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRebindCandidate
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadPresentationUpdate
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout

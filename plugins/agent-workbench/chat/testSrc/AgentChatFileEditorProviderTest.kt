@@ -2,31 +2,31 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.icons.AllIcons
-import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
-import com.intellij.agent.workbench.core.AgentThreadActivity
-import com.intellij.agent.workbench.core.AgentThreadActivityReport
-import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
-import com.intellij.agent.workbench.core.session.AgentSessionLaunchMode
-import com.intellij.agent.workbench.core.session.AgentSessionOutlineItem
-import com.intellij.agent.workbench.core.session.AgentSessionOutlineItemKind
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.core.session.AgentSessionThread
-import com.intellij.agent.workbench.core.session.AgentSessionThreadOutline
-import com.intellij.agent.workbench.common.withAgentThreadActivityBadge
+import com.intellij.platform.ai.agent.common.AgentWorkbenchActionIds
+import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
+import com.intellij.platform.ai.agent.common.icons.AgentWorkbenchCommonIcons
+import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
+import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItem
+import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItemKind
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.core.session.AgentSessionThread
+import com.intellij.platform.ai.agent.core.session.AgentSessionThreadOutline
+import com.intellij.platform.ai.agent.common.withAgentThreadActivityBadge
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
-import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentation
-import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationKey
-import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationModel
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionOutlineForkResult
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
-import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
+import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentation
+import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationKey
+import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationModel
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionOutlineForkResult
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.platform.ai.agent.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.agent.workbench.ui.agentSessionThreadStatusIcon
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -362,7 +362,7 @@ class AgentChatFileEditorProviderTest {
     assertThat(descriptor)
       .contains("<fileIconProvider implementation=\"com.intellij.agent.workbench.chat.AgentChatFileIconProvider\"/>")
       .contains(
-        "<applicationService serviceInterface=\"com.intellij.agent.workbench.sessions.core.providers.AgentOpenTopLevelThreadDispatchService\"",
+        "<applicationService serviceInterface=\"com.intellij.platform.ai.agent.sessions.core.providers.AgentOpenTopLevelThreadDispatchService\"",
       )
       .contains(
         "serviceImplementation=\"com.intellij.agent.workbench.chat.AgentChatOpenTopLevelThreadDispatchService\"/>",
@@ -1037,7 +1037,7 @@ class AgentChatFileEditorProviderTest {
       val changeSet = model.updateActivityHints(
         provider = AgentSessionProvider.CODEX,
         updates = listOf(
-          com.intellij.agent.workbench.sessions.core.AgentSessionThreadActivityPresentationUpdate(
+          com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadActivityPresentationUpdate(
             path = "/work/project-a",
             threadId = "thread-1",
             activity = AgentThreadActivity.UNREAD,

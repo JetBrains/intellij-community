@@ -3,11 +3,11 @@ package com.intellij.agent.workbench.codex.prompt.suggestions
 
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-suggestions.spec.md
 
-import com.intellij.agent.workbench.codex.common.CodexAppServerException
-import com.intellij.agent.workbench.codex.common.CodexCliNotFoundException
-import com.intellij.agent.workbench.codex.common.invokeOnCompletionOrWarn
-import com.intellij.agent.workbench.codex.common.normalizeRootPath
-import com.intellij.agent.workbench.core.extensions.OverridableValue
+import com.intellij.platform.ai.agent.codex.common.CodexAppServerException
+import com.intellij.platform.ai.agent.codex.common.CodexCliNotFoundException
+import com.intellij.platform.ai.agent.codex.common.invokeOnCompletionOrWarn
+import com.intellij.platform.ai.agent.codex.common.normalizeRootPath
+import com.intellij.platform.ai.agent.core.extensions.OverridableValue
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextTruncation
 import com.intellij.agent.workbench.prompt.core.AgentPromptSuggestionAiBackend

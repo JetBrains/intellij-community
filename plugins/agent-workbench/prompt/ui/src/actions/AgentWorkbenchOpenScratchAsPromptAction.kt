@@ -3,12 +3,12 @@ package com.intellij.agent.workbench.prompt.ui.actions
 
 import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_INITIAL_TEXT_DATA_KEY
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuItem
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuModel
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
-import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderMenuModel
-import com.intellij.agent.workbench.sessions.core.providers.buildBuiltInLaunchProfiles
-import com.intellij.agent.workbench.sessions.core.providers.effectiveLaunchProfiles
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderMenuItem
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderMenuModel
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
+import com.intellij.platform.ai.agent.sessions.core.providers.buildAgentSessionProviderMenuModel
+import com.intellij.platform.ai.agent.sessions.core.providers.buildBuiltInLaunchProfiles
+import com.intellij.platform.ai.agent.sessions.core.providers.effectiveLaunchProfiles
 import com.intellij.agent.workbench.sessions.providerItemMonochromeIconWithMode
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.agent.workbench.settings.AgentSessionProviderSettingsService

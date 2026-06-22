@@ -42,21 +42,21 @@
     <orderEntry type="module" module-name="intellij.platform.ide.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.common" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.core" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.common" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.core" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core" />
     <orderEntry type="module" module-name="intellij.agent.workbench.settings" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.sessions.core" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.sessions.core" />
     <orderEntry type="module" module-name="intellij.agent.workbench.ui" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.codex.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.codex.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.cost" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.codex.sessions" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.claude.sessions" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.codex.sessions" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.claude.sessions" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.chat" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.jbcentral" />

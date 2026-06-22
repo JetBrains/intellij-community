@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.junie.sessions
+package com.intellij.platform.ai.agent.junie.sessions
 
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.junie.common.JunieCliInfo
-import com.intellij.agent.workbench.junie.common.JunieCliSupport
-import com.intellij.agent.workbench.junie.common.JunieCliVersion
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.junie.common.JunieCliInfo
+import com.intellij.platform.ai.agent.junie.common.JunieCliSupport
+import com.intellij.platform.ai.agent.junie.common.JunieCliVersion
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.sessions.ScriptedSessionSource

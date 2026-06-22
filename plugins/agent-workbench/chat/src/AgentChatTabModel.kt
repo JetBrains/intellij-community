@@ -1,15 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.chat
 
-import com.intellij.agent.workbench.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialPromptDeliveryChannel
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialPromptDeliveryStatus
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialPromptRecord
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
-import com.intellij.agent.workbench.sessions.core.providers.AgentTerminalPromptDispatch
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryChannel
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryStatus
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptRecord
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageTimeoutPolicy
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentTerminalPromptDispatch
 
 internal data class AgentChatTabIdentity(
   @JvmField val projectHash: String,

@@ -1,7 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.agent.workbench.pi.sessions` start
+### auto-generated section `build intellij.platform.ai.agent.pi.sessions` start
 
 jvm_library(
     name = "sessions",
@@ -13,7 +13,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.agent.workbench.pi.sessions",
+    module_name = "intellij.platform.ai.agent.pi.sessions",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -39,7 +39,7 @@ jvm_library(
         "//plugins/agent-workbench/lib-agent/core",
         "//plugins/agent-workbench/lib-agent/json",
         "//plugins/agent-workbench/prompt/core",
-        "//plugins/agent-workbench/lib-agent/sessions-core:agent-workbench-sessions-core",
+        "//plugins/agent-workbench/lib-agent/sessions-core:ai-agent-sessions-core",
         "//libraries/jackson3/jackson:libraries-jackson3",
         "//libraries/netty/buffer",
         "//libraries/netty/codec-http:libraries-netty-codec-http",
@@ -55,7 +55,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    module_name = "intellij.agent.workbench.pi.sessions",
+    module_name = "intellij.platform.ai.agent.pi.sessions",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -77,7 +77,7 @@ jvm_library(
         "//plugins/agent-workbench/lib-agent/core:core_test_lib",
         "//plugins/agent-workbench/lib-agent/json:json_test_lib",
         "//plugins/agent-workbench/prompt/core:core_test_lib",
-        "//plugins/agent-workbench/lib-agent/sessions-core:agent-workbench-sessions-core_test_lib",
+        "//plugins/agent-workbench/lib-agent/sessions-core:ai-agent-sessions-core_test_lib",
         "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
         "//libraries/netty/buffer:buffer_test_lib",
         "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
@@ -93,31 +93,31 @@ jvm_library(
         "//libraries/assertj-core:assertj-core_test_lib",
     ],
 )
-### auto-generated section `build intellij.agent.workbench.pi.sessions` end
+### auto-generated section `build intellij.platform.ai.agent.pi.sessions` end
 
-### auto-generated section `iml intellij.agent.workbench.pi.sessions` start
+### auto-generated section `iml intellij.platform.ai.agent.pi.sessions` start
 exports_files(
     [
-        "intellij.agent.workbench.pi.sessions.iml",
+        "intellij.platform.ai.agent.pi.sessions.iml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml intellij.agent.workbench.pi.sessions` end
+### auto-generated section `iml intellij.platform.ai.agent.pi.sessions` end
 
-### auto-generated section `build intellij.agent.workbench.pi.sessions.tests` start
+### auto-generated section `build intellij.platform.ai.agent.pi.sessions.tests` start
 
 jvm_library(
-    name = "agent-workbench-pi-sessions-tests",
+    name = "ai-agent-pi-sessions-tests",
     srcs = glob(
         [],
         allow_empty = True,
     ),
-    module_name = "intellij.agent.workbench.pi.sessions.tests",
+    module_name = "intellij.platform.ai.agent.pi.sessions.tests",
     visibility = ["//visibility:public"],
 )
 
 jvm_library(
-    name = "agent-workbench-pi-sessions-tests_test_lib",
+    name = "ai-agent-pi-sessions-tests_test_lib",
     testonly = True,
     srcs = glob(
         [
@@ -134,7 +134,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":agent-workbench-pi-sessions-tests",
+        ":ai-agent-pi-sessions-tests",
         "//platform/platform-util-netty:ide-util-netty_test_lib",
     ],
     deps = [
@@ -175,8 +175,8 @@ jvm_library(
         "//plugins/agent-workbench/sessions:sessions_test_lib",
         "//plugins/agent-workbench/settings",
         "//plugins/agent-workbench/settings:settings_test_lib",
-        "//plugins/agent-workbench/lib-agent/sessions-core:agent-workbench-sessions-core",
-        "//plugins/agent-workbench/lib-agent/sessions-core:agent-workbench-sessions-core_test_lib",
+        "//plugins/agent-workbench/lib-agent/sessions-core:ai-agent-sessions-core",
+        "//plugins/agent-workbench/lib-agent/sessions-core:ai-agent-sessions-core_test_lib",
         "//libraries/jackson3/jackson:libraries-jackson3",
         "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
         "//plugins/terminal",
@@ -193,21 +193,21 @@ jvm_library(
         "//libraries/assertj-core:assertj-core_test_lib",
     ],
 )
-### auto-generated section `build intellij.agent.workbench.pi.sessions.tests` end
+### auto-generated section `build intellij.platform.ai.agent.pi.sessions.tests` end
 
-### auto-generated section `iml intellij.agent.workbench.pi.sessions.tests` start
+### auto-generated section `iml intellij.platform.ai.agent.pi.sessions.tests` start
 exports_files(
     [
-        "intellij.agent.workbench.pi.sessions.tests.iml",
+        "intellij.platform.ai.agent.pi.sessions.tests.iml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml intellij.agent.workbench.pi.sessions.tests` end
+### auto-generated section `iml intellij.platform.ai.agent.pi.sessions.tests` end
 
-### auto-generated section `test intellij.agent.workbench.pi.sessions.tests` start
+### auto-generated section `test intellij.platform.ai.agent.pi.sessions.tests` start
 
 jps_test(
-    name = "agent-workbench-pi-sessions-tests_test",
-    runtime_deps = [":agent-workbench-pi-sessions-tests_test_lib"],
+    name = "ai-agent-pi-sessions-tests_test",
+    runtime_deps = [":ai-agent-pi-sessions-tests_test_lib"],
 )
-### auto-generated section `test intellij.agent.workbench.pi.sessions.tests` end
+### auto-generated section `test intellij.platform.ai.agent.pi.sessions.tests` end

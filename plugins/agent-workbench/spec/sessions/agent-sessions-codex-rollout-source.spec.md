@@ -48,9 +48,9 @@ Codex session listing is app-server backed. Rollout files remain an internal ref
 - Rollout parsing, watching, and refresh-hint consumption are specified in `agent-sessions-codex-rollout-hints.spec.md`.
 
 ## Testing / Local Run
-- `./tests.cmd --module intellij.agent.workbench.codex.sessions.tests --test com.intellij.agent.workbench.codex.sessions.CodexSessionBackendSelectorTest`
-- `./tests.cmd --module intellij.agent.workbench.codex.sessions.tests --test com.intellij.agent.workbench.codex.sessions.CodexAppServerSessionBackendTest`
-- `./tests.cmd --module intellij.agent.workbench.codex.sessions.tests --test com.intellij.agent.workbench.codex.sessions.CodexAgentSessionProviderDescriptorTest`
+- `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test com.intellij.platform.ai.agent.codex.sessions.CodexSessionBackendSelectorTest`
+- `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test com.intellij.platform.ai.agent.codex.sessions.CodexAppServerSessionBackendTest`
+- `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test com.intellij.platform.ai.agent.codex.sessions.CodexAgentSessionProviderDescriptorTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.CodexAppServerClientTest`
 
 ## References

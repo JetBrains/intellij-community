@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.codex.common
+package com.intellij.platform.ai.agent.codex.common
 
-import com.intellij.agent.workbench.cli.resolveExecutableFromPathOrLocalBin
-import com.intellij.agent.workbench.cli.resolveExecutableOrDefaultViaTerminalResolver as resolveCliExecutableOrDefaultViaTerminalResolver
-import com.intellij.agent.workbench.cli.resolveExecutableViaTerminalResolver as findCliExecutableViaTerminalResolver
-import com.intellij.agent.workbench.cli.terminalAgentBinaryNameOrDefault
+import com.intellij.platform.ai.agent.cli.resolveExecutableFromPathOrLocalBin
+import com.intellij.platform.ai.agent.cli.resolveExecutableOrDefaultViaTerminalResolver as resolveCliExecutableOrDefaultViaTerminalResolver
+import com.intellij.platform.ai.agent.cli.resolveExecutableViaTerminalResolver as findCliExecutableViaTerminalResolver
+import com.intellij.platform.ai.agent.cli.terminalAgentBinaryNameOrDefault
 import com.intellij.util.SystemProperties
 import java.nio.file.Path
 

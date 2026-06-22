@@ -1,16 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.codex.sessions
+package com.intellij.platform.ai.agent.codex.sessions
 
-import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity
-import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutParser
-import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutSessionBackend
-import com.intellij.agent.workbench.core.AgentThreadActivity
-import com.intellij.agent.workbench.core.AgentThreadActivityReport
-import com.intellij.agent.workbench.core.session.AgentSessionOutlineItemKind
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
-import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.platform.ai.agent.codex.sessions.backend.CodexSessionActivity
+import com.intellij.platform.ai.agent.codex.sessions.backend.rollout.CodexRolloutParser
+import com.intellij.platform.ai.agent.codex.sessions.backend.rollout.CodexRolloutSessionBackend
+import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
+import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItemKind
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.json.filebacked.FileBackedSessionChangeSet
+import com.intellij.platform.ai.agent.sessions.core.cost.AgentSessionUsageSnapshot
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
@@ -461,7 +461,7 @@ class CodexRolloutSessionBackendTest {
       }
 
       val backend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
-      var threads = emptyList<com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread>()
+      var threads = emptyList<com.intellij.platform.ai.agent.codex.sessions.backend.CodexBackendThread>()
       val elapsedMs = measureTimeMillis {
         threads = backend.listThreads(path = projectDir.toString(), openProject = null)
       }

@@ -1,16 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.pi.sessions
+package com.intellij.platform.ai.agent.pi.sessions
 
-import com.intellij.agent.workbench.core.AgentThreadActivity
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.core.session.AgentSessionThread
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
-import com.intellij.agent.workbench.json.createJsonGenerator
-import com.intellij.agent.workbench.json.createJsonParser
-import com.intellij.agent.workbench.json.forEachJsonObjectField
-import com.intellij.agent.workbench.json.readJsonLongOrNull
-import com.intellij.agent.workbench.json.readJsonStringOrNull
+import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.core.session.AgentSessionThread
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.platform.ai.agent.json.createJsonGenerator
+import com.intellij.platform.ai.agent.json.createJsonParser
+import com.intellij.platform.ai.agent.json.forEachJsonObjectField
+import com.intellij.platform.ai.agent.json.readJsonLongOrNull
+import com.intellij.platform.ai.agent.json.readJsonStringOrNull
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Key
 import io.netty.buffer.ByteBufUtil

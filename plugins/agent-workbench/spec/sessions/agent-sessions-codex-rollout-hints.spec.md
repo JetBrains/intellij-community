@@ -51,10 +51,10 @@ Codex rollout files are parsed for refresh hints only: pending/concrete tab rebi
   [@test] ../../codex/sessions/testSrc/CodexSessionSourceRealTuiIntegrationTest.kt
 
 ## Testing / Local Run
-- `./tests.cmd --module intellij.agent.workbench.codex.sessions.tests --test "com.intellij.agent.workbench.codex.sessions.CodexRollout*Test"`
-- `./tests.cmd --module intellij.agent.workbench.codex.sessions.tests --test com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutRefreshHintsProviderTest`
-- `./tests.cmd --module intellij.agent.workbench.codex.sessions.tests --test com.intellij.agent.workbench.codex.sessions.CodexSessionSourceRealTuiIntegrationTest`
-- `./tests.cmd --module intellij.agent.workbench.filewatch.tests --test com.intellij.agent.workbench.filewatch.AgentWorkbenchDirectoryWatcherTest`
+- `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test "com.intellij.platform.ai.agent.codex.sessions.CodexRollout*Test"`
+- `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test com.intellij.platform.ai.agent.codex.sessions.backend.rollout.CodexRolloutRefreshHintsProviderTest`
+- `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test com.intellij.platform.ai.agent.codex.sessions.CodexSessionSourceRealTuiIntegrationTest`
+- `./tests.cmd --module intellij.platform.ai.agent.filewatch.tests --test com.intellij.platform.ai.agent.filewatch.AgentWorkbenchDirectoryWatcherTest`
 
 ## References
 - `agent-sessions-codex-rollout-source.spec.md`

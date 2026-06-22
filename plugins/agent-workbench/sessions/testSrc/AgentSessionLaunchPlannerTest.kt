@@ -1,17 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-import com.intellij.agent.workbench.core.session.AgentSessionLaunchMode
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
-import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchIntent
-import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchOperation
-import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchPlanner
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
-import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchIntent
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchOperation
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchPlanner
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.platform.ai.agent.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers

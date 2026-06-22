@@ -57,7 +57,7 @@ machine-local preferences, and project workspace state stores the prompt draft o
 
 -
 `./tests.cmd --module intellij.agent.workbench.sessions.tests --test "com.intellij.agent.workbench.sessions.AgentSession*StateServiceTest"`
-- `./tests.cmd --module intellij.agent.workbench.terminal.sessions.tests --test "com.intellij.agent.workbench.terminal.sessions.*Test"`
+- `./tests.cmd --module intellij.platform.ai.agent.terminal.sessions.tests --test "com.intellij.platform.ai.agent.terminal.sessions.*Test"`
 -
 `./tests.cmd --module intellij.agent.workbench.prompt.ui.tests --test com.intellij.agent.workbench.prompt.ui.AgentPromptUiSessionStateServiceTest`
 - `./tests.cmd --module intellij.agent.workbench.chat.tests --test com.intellij.agent.workbench.chat.AgentChatFileEditorProviderTest`

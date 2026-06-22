@@ -1,14 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.codex.sessions.backend.appserver
+package com.intellij.platform.ai.agent.codex.sessions.backend.appserver
 
-import com.intellij.agent.workbench.codex.common.CodexAppServerNotification
-import com.intellij.agent.workbench.codex.common.CodexGenerationModel
-import com.intellij.agent.workbench.codex.common.CodexSkill
-import com.intellij.agent.workbench.codex.common.CodexThread
-import com.intellij.agent.workbench.codex.common.CodexThreadActivitySnapshot
-import com.intellij.agent.workbench.codex.common.CodexWebSocketAppServerClient
-import com.intellij.agent.workbench.codex.common.normalizeRootPath
-import com.intellij.agent.workbench.codex.sessions.registerShutdownOnCancellation
+import com.intellij.platform.ai.agent.codex.common.CodexAppServerNotification
+import com.intellij.platform.ai.agent.codex.common.CodexGenerationModel
+import com.intellij.platform.ai.agent.codex.common.CodexSkill
+import com.intellij.platform.ai.agent.codex.common.CodexThread
+import com.intellij.platform.ai.agent.codex.common.CodexThreadActivitySnapshot
+import com.intellij.platform.ai.agent.codex.common.CodexWebSocketAppServerClient
+import com.intellij.platform.ai.agent.codex.common.normalizeRootPath
+import com.intellij.platform.ai.agent.codex.sessions.registerShutdownOnCancellation
 import com.intellij.openapi.components.Service
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow

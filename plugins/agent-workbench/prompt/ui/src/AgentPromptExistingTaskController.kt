@@ -1,12 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.ui
 
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.core.session.AgentSessionThread
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.agent.workbench.prompt.core.AgentPromptExistingThreadsSnapshot
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
-import com.intellij.agent.workbench.sessions.core.formatAgentSessionRelativeTimeShort
-import com.intellij.agent.workbench.sessions.core.formatAgentSessionThreadTitle
+import com.intellij.platform.ai.agent.sessions.core.formatAgentSessionRelativeTimeShort
+import com.intellij.platform.ai.agent.sessions.core.formatAgentSessionThreadTitle
 import com.intellij.ui.components.JBList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job

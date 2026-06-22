@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.chat
 
-import com.intellij.agent.workbench.core.AgentThreadActivityReport
-import com.intellij.agent.workbench.core.buildAgentThreadIdentity
-import com.intellij.agent.workbench.core.extensions.SnapshotExtensionPointCache
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
+import com.intellij.platform.ai.agent.core.buildAgentThreadIdentity
+import com.intellij.platform.ai.agent.core.extensions.SnapshotExtensionPointCache
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadRebindPolicy
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger

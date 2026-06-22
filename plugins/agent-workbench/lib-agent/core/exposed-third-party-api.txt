@@ -1,0 +1,2 @@
+java/math/BigDecimal
+kotlin/jvm/internal/DefaultConstructorMarker

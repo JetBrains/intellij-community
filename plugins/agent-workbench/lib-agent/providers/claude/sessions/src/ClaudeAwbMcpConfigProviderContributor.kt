@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.claude.sessions
+package com.intellij.platform.ai.agent.claude.sessions
 
-import com.intellij.agent.workbench.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.launch.AwbMcpConfig
-import com.intellij.agent.workbench.sessions.core.launch.AwbMcpConfigProviderContributor
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.sessions.core.launch.AwbMcpConfig
+import com.intellij.platform.ai.agent.sessions.core.launch.AwbMcpConfigProviderContributor
 
 /**
  * Claude Code's contribution to the AWB-managed MCP launch contract:

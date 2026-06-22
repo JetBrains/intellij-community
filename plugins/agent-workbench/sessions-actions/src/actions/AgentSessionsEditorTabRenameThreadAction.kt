@@ -3,7 +3,7 @@ package com.intellij.agent.workbench.sessions.actions
 
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.chat.resolveAgentChatEditorTabActionContext
-import com.intellij.agent.workbench.sessions.core.SessionActionTarget
+import com.intellij.platform.ai.agent.sessions.core.SessionActionTarget
 import com.intellij.agent.workbench.sessions.service.AgentSessionRenameService
 import com.intellij.agent.workbench.sessions.service.showRenameThreadDialog
 import com.intellij.openapi.actionSystem.AnActionEvent

@@ -65,9 +65,9 @@ Workbench shows normalized activity (`NEEDS_INPUT`, `UNREAD`, `REVIEWING`, `PROC
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsCodexActivityRenderingIntegrationTest.kt
 
 ## Testing / Local Run
-- `./tests.cmd --module intellij.agent.workbench.codex.sessions.tests --test com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivityResolverTest`
-- `./tests.cmd --module intellij.agent.workbench.codex.sessions.tests --test com.intellij.agent.workbench.codex.sessions.backend.appserver.CodexAppServerRefreshHintsProviderTest`
-- `./tests.cmd --module intellij.agent.workbench.codex.sessions.tests --test com.intellij.agent.workbench.codex.sessions.CodexSessionSourceRefreshHintsTest`
+- `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test com.intellij.platform.ai.agent.codex.sessions.backend.CodexSessionActivityResolverTest`
+- `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test com.intellij.platform.ai.agent.codex.sessions.backend.appserver.CodexAppServerRefreshHintsProviderTest`
+- `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test com.intellij.platform.ai.agent.codex.sessions.CodexSessionSourceRefreshHintsTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionRefreshCoordinatorTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.toolwindow.tests --test com.intellij.agent.workbench.sessions.toolwindow.AgentSessionsCodexActivityRenderingIntegrationTest`
 

@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.claude.common
+package com.intellij.platform.ai.agent.claude.common
 
 const val CLAUDE_USER_INTERACTION_TOOL_MATCHER: String = "AskUserQuestion|ExitPlanMode"
 const val CLAUDE_HOOK_PROJECT_MUTATING_TOOL_MATCHER: String = "Write|Edit|MultiEdit|NotebookEdit"

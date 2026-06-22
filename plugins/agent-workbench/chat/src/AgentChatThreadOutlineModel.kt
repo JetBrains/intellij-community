@@ -3,10 +3,10 @@ package com.intellij.agent.workbench.chat
 
 // @spec community/plugins/agent-workbench/spec/chat/agent-chat-structure-view.spec.md
 
-import com.intellij.agent.workbench.core.session.AgentSessionOutlineItem
-import com.intellij.agent.workbench.core.session.AgentSessionOutlineItemKind
-import com.intellij.agent.workbench.core.session.AgentSessionThreadOutline
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
+import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItem
+import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItemKind
+import com.intellij.platform.ai.agent.core.session.AgentSessionThreadOutline
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.util.NlsSafe

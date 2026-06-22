@@ -6,7 +6,7 @@ targets:
   - ../../claude/sessions/src/ClaudeHookBridge.kt
   - ../../claude/sessions/src/ClaudeHookHttpRequestHandler.kt
   - ../../claude/sessions/src/backend/store/ClaudeStoreSessionBackend.kt
-  - ../../claude/sessions/resources/intellij.agent.workbench.claude.sessions.xml
+  - ../../claude/sessions/resources/intellij.platform.ai.agent.claude.sessions.xml
 ---
 
 # Agent Sessions Claude Hooks
@@ -73,7 +73,7 @@ Agent Workbench must use Claude Code hooks for immediate Claude session status a
 
 ## Testing / Local Run
 
-- Focused tests: `./tests.cmd --module intellij.agent.workbench.claude.sessions.tests --test com.intellij.agent.workbench.claude.sessions.ClaudeAgentSessionProviderDescriptorTest;com.intellij.agent.workbench.claude.sessions.ClaudeHookBridgeTest;com.intellij.agent.workbench.claude.sessions.ClaudeStoreSessionBackendTest`
+- Focused tests: `./tests.cmd --module intellij.platform.ai.agent.claude.sessions.tests --test com.intellij.platform.ai.agent.claude.sessions.ClaudeAgentSessionProviderDescriptorTest;com.intellij.platform.ai.agent.claude.sessions.ClaudeHookBridgeTest;com.intellij.platform.ai.agent.claude.sessions.ClaudeStoreSessionBackendTest`
 
 ## Open Questions / Risks
 

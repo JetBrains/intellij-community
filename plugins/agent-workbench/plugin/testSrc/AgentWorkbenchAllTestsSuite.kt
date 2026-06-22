@@ -6,12 +6,12 @@ import org.junit.platform.suite.api.Suite
 
 @Suite
 @SelectPackages(
-  "com.intellij.agent.workbench.common",
+  "com.intellij.platform.ai.agent.common",
   "com.intellij.agent.workbench.chat",
-  "com.intellij.agent.workbench.claude.sessions",
+  "com.intellij.platform.ai.agent.claude.sessions",
   "com.intellij.agent.workbench.codex.ide",
-  "com.intellij.agent.workbench.codex.sessions",
-  "com.intellij.agent.workbench.junie.sessions",
+  "com.intellij.platform.ai.agent.codex.sessions",
+  "com.intellij.platform.ai.agent.junie.sessions",
   "com.intellij.agent.workbench.prompt.core",
   "com.intellij.agent.workbench.prompt.ui",
   "com.intellij.agent.workbench.prompt.vcs",

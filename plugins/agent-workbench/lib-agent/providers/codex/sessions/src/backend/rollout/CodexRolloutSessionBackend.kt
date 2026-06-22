@@ -2,27 +2,27 @@
 
 @file:Suppress("ReplaceGetOrSet")
 
-package com.intellij.agent.workbench.codex.sessions.backend.rollout
+package com.intellij.platform.ai.agent.codex.sessions.backend.rollout
 
 // @spec community/plugins/agent-workbench/spec/sessions/agent-sessions-codex-rollout-source.spec.md
 
-import com.intellij.agent.workbench.codex.common.normalizeRootPath
-import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
-import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThreadRefreshResult
-import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
-import com.intellij.agent.workbench.codex.sessions.backend.toAgentThreadActivity
-import com.intellij.agent.workbench.core.AgentThreadActivity
-import com.intellij.agent.workbench.core.AgentThreadActivityReport
-import com.intellij.agent.workbench.codex.sessions.resolveProjectDirectoryFromPath
-import com.intellij.agent.workbench.filewatch.agentWorkbenchImmediateFileChangeFlow
-import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
-import com.intellij.agent.workbench.json.filebacked.createFileBackedSessionChangeFlow
-import com.intellij.agent.workbench.json.filebacked.toFileBackedSessionPathKey
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadPresentationUpdate
-import com.intellij.agent.workbench.core.session.AgentSessionThreadOutline
+import com.intellij.platform.ai.agent.codex.common.normalizeRootPath
+import com.intellij.platform.ai.agent.codex.sessions.backend.CodexBackendThread
+import com.intellij.platform.ai.agent.codex.sessions.backend.CodexBackendThreadRefreshResult
+import com.intellij.platform.ai.agent.codex.sessions.backend.CodexSessionBackend
+import com.intellij.platform.ai.agent.codex.sessions.backend.toAgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
+import com.intellij.platform.ai.agent.codex.sessions.resolveProjectDirectoryFromPath
+import com.intellij.platform.ai.agent.filewatch.agentWorkbenchImmediateFileChangeFlow
+import com.intellij.platform.ai.agent.json.filebacked.FileBackedSessionChangeSet
+import com.intellij.platform.ai.agent.json.filebacked.createFileBackedSessionChangeFlow
+import com.intellij.platform.ai.agent.json.filebacked.toFileBackedSessionPathKey
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadActivityUpdate
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadPresentationUpdate
+import com.intellij.platform.ai.agent.core.session.AgentSessionThreadOutline
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project

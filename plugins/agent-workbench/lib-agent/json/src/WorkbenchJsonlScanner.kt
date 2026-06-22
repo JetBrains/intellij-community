@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("PackageDirectoryMismatch", "unused")
 
-package com.intellij.agent.workbench.json
+package com.intellij.platform.ai.agent.json
 
 import tools.jackson.core.JsonParser
 import tools.jackson.core.JsonToken

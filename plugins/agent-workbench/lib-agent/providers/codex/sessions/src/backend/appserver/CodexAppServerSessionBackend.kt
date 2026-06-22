@@ -1,19 +1,19 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.codex.sessions.backend.appserver
+package com.intellij.platform.ai.agent.codex.sessions.backend.appserver
 
-import com.intellij.agent.workbench.codex.common.CodexSubAgent
-import com.intellij.agent.workbench.codex.common.CodexThread
-import com.intellij.agent.workbench.codex.common.CodexThreadSourceKind
-import com.intellij.agent.workbench.codex.common.normalizeRootPath
-import com.intellij.agent.workbench.codex.sessions.CodexThreadPathIndex
-import com.intellij.agent.workbench.codex.sessions.InMemoryCodexThreadPathIndex
-import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
-import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThreadRefreshResult
-import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
-import com.intellij.agent.workbench.codex.sessions.backend.isResponseRequired
-import com.intellij.agent.workbench.codex.sessions.backend.toCodexSessionActivity
-import com.intellij.agent.workbench.codex.sessions.resolveProjectDirectoryFromPath
-import com.intellij.agent.workbench.sessions.core.normalizeConcreteAgentSessionThreadId
+import com.intellij.platform.ai.agent.codex.common.CodexSubAgent
+import com.intellij.platform.ai.agent.codex.common.CodexThread
+import com.intellij.platform.ai.agent.codex.common.CodexThreadSourceKind
+import com.intellij.platform.ai.agent.codex.common.normalizeRootPath
+import com.intellij.platform.ai.agent.codex.sessions.CodexThreadPathIndex
+import com.intellij.platform.ai.agent.codex.sessions.InMemoryCodexThreadPathIndex
+import com.intellij.platform.ai.agent.codex.sessions.backend.CodexBackendThread
+import com.intellij.platform.ai.agent.codex.sessions.backend.CodexBackendThreadRefreshResult
+import com.intellij.platform.ai.agent.codex.sessions.backend.CodexSessionBackend
+import com.intellij.platform.ai.agent.codex.sessions.backend.isResponseRequired
+import com.intellij.platform.ai.agent.codex.sessions.backend.toCodexSessionActivity
+import com.intellij.platform.ai.agent.codex.sessions.resolveProjectDirectoryFromPath
+import com.intellij.platform.ai.agent.sessions.core.normalizeConcreteAgentSessionThreadId
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
