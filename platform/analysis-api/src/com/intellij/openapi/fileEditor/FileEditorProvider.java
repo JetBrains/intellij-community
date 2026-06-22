@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  * Synchronous providers are queried and constructed on the UI thread, so {@link #accept(Project, VirtualFile)} and
  * {@link #createEditor(Project, VirtualFile)} must remain lightweight. If editor creation needs indexing, PSI, or other
  * expensive work, implement {@link AsyncFileEditorProvider} to offload preparation to a background thread and only build
- * UI on the EDT.
+ * the UI on the EDT.
  *
  * @see DumbAware
  */
@@ -35,6 +35,7 @@ public interface FileEditorProvider extends PossiblyDumbAware {
    *
    * @param file file to be tested for acceptance.
    * @return {@code true} if provider can create valid editor for the specified {@code file}.
+   * @see #acceptRequiresReadAction()
    */
   boolean accept(@NotNull Project project, @NotNull VirtualFile file);
 
