@@ -4677,34 +4677,6 @@ http_file(
 )
 
 http_file(
-    name = "io_grpc-grpc-netty-shaded-1_73_0_http",
-    downloaded_file_path = "grpc-netty-shaded-1.73.0.jar",
-    sha256 = "8328289ba6b73445e982a1cadf8e651ea65354e288c825a43e7c77f16da8a056",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-netty-shaded/1.73.0/grpc-netty-shaded-1.73.0.jar",
-)
-
-http_file(
-    name = "io_grpc-grpc-util-1_73_0_http",
-    downloaded_file_path = "grpc-util-1.73.0.jar",
-    sha256 = "b7df6cbcc30b7a3219f06483a9a9d320a431beda8a1ace5b16d879f84112373f",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-util/1.73.0/grpc-util-1.73.0.jar",
-)
-
-http_file(
-    name = "io_grpc-grpc-netty-shaded-1_73_0-sources_http",
-    downloaded_file_path = "grpc-netty-shaded-1.73.0-sources.jar",
-    sha256 = "dde30e64fb8e9422d865269f9baba7bd377539abe935e93e92a6d43d2d7950b6",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-netty-shaded/1.73.0/grpc-netty-shaded-1.73.0-sources.jar",
-)
-
-http_file(
-    name = "io_grpc-grpc-util-1_73_0-sources_http",
-    downloaded_file_path = "grpc-util-1.73.0-sources.jar",
-    sha256 = "389d6934884e5cd8a27cd88adf7038bb8e23dede661294e8391b3ca8a389f12d",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-util/1.73.0/grpc-util-1.73.0-sources.jar",
-)
-
-http_file(
     name = "io_grpc-grpc-protobuf-1_73_0_http",
     downloaded_file_path = "grpc-protobuf-1.73.0.jar",
     sha256 = "5c0ca9e321c02845c47dc6edcef9f22e49015cef7753c54012f5398425163c08",
@@ -8853,6 +8825,34 @@ http_file(
     downloaded_file_path = "groovy-xml-3.0.25-sources.jar",
     sha256 = "ee46401c496777d432bce20b2747fdfd7d4b1a3fbd856366253721bd4b99afbb",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/groovy/groovy-xml/3.0.25/groovy-xml-3.0.25-sources.jar",
+)
+
+http_file(
+    name = "io_grpc-grpc-netty-shaded-1_73_0_http",
+    downloaded_file_path = "grpc-netty-shaded-1.73.0.jar",
+    sha256 = "8328289ba6b73445e982a1cadf8e651ea65354e288c825a43e7c77f16da8a056",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-netty-shaded/1.73.0/grpc-netty-shaded-1.73.0.jar",
+)
+
+http_file(
+    name = "io_grpc-grpc-util-1_73_0_http",
+    downloaded_file_path = "grpc-util-1.73.0.jar",
+    sha256 = "b7df6cbcc30b7a3219f06483a9a9d320a431beda8a1ace5b16d879f84112373f",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-util/1.73.0/grpc-util-1.73.0.jar",
+)
+
+http_file(
+    name = "io_grpc-grpc-netty-shaded-1_73_0-sources_http",
+    downloaded_file_path = "grpc-netty-shaded-1.73.0-sources.jar",
+    sha256 = "dde30e64fb8e9422d865269f9baba7bd377539abe935e93e92a6d43d2d7950b6",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-netty-shaded/1.73.0/grpc-netty-shaded-1.73.0-sources.jar",
+)
+
+http_file(
+    name = "io_grpc-grpc-util-1_73_0-sources_http",
+    downloaded_file_path = "grpc-util-1.73.0-sources.jar",
+    sha256 = "389d6934884e5cd8a27cd88adf7038bb8e23dede661294e8391b3ca8a389f12d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-util/1.73.0/grpc-util-1.73.0-sources.jar",
 )
 
 http_file(

@@ -5917,44 +5917,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "io.grpc/grpc-netty-shaded-1.73.0.jar_copy",
-    src = "@io_grpc-grpc-netty-shaded-1_73_0_http//file",
-    out = "io.grpc/grpc-netty-shaded-1.73.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.grpc/grpc-util-1.73.0.jar_copy",
-    src = "@io_grpc-grpc-util-1_73_0_http//file",
-    out = "io.grpc/grpc-util-1.73.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "grpc-netty-shaded",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":io_grpc-grpc-netty-shaded-1_73_0_http_import",
-        ":io_grpc-grpc-util-1_73_0_http_import",
-    ],
-)
-
-jvm_import(
-    name = "io_grpc-grpc-netty-shaded-1_73_0_http_import",
-    jar = "@io_grpc-grpc-netty-shaded-1_73_0_http//file",
-    source_jar = "@io_grpc-grpc-netty-shaded-1_73_0-sources_http//file",
-)
-
-jvm_import(
-    name = "io_grpc-grpc-util-1_73_0_http_import",
-    jar = "@io_grpc-grpc-util-1_73_0_http//file",
-    source_jar = "@io_grpc-grpc-util-1_73_0-sources_http//file",
-)
-
-copy_file(
     name = "io.grpc/grpc-protobuf-1.73.0.jar_copy",
     src = "@io_grpc-grpc-protobuf-1_73_0_http//file",
     out = "io.grpc/grpc-protobuf-1.73.0.jar",
@@ -11394,6 +11356,44 @@ jvm_import(
     jar = "@org_codehaus_groovy-groovy-xml-3_0_25_http//file",
     source_jar = "@org_codehaus_groovy-groovy-xml-3_0_25-sources_http//file",
     visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.grpc/grpc-netty-shaded-1.73.0.jar_copy",
+    src = "@io_grpc-grpc-netty-shaded-1_73_0_http//file",
+    out = "io.grpc/grpc-netty-shaded-1.73.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.grpc/grpc-util-1.73.0.jar_copy",
+    src = "@io_grpc-grpc-util-1_73_0_http//file",
+    out = "io.grpc/grpc-util-1.73.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-grpc-netty-shaded-grpc-netty-shaded",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":io_grpc-grpc-netty-shaded-1_73_0_http_import",
+        ":io_grpc-grpc-util-1_73_0_http_import",
+    ],
+)
+
+jvm_import(
+    name = "io_grpc-grpc-netty-shaded-1_73_0_http_import",
+    jar = "@io_grpc-grpc-netty-shaded-1_73_0_http//file",
+    source_jar = "@io_grpc-grpc-netty-shaded-1_73_0-sources_http//file",
+)
+
+jvm_import(
+    name = "io_grpc-grpc-util-1_73_0_http_import",
+    jar = "@io_grpc-grpc-util-1_73_0_http//file",
+    source_jar = "@io_grpc-grpc-util-1_73_0-sources_http//file",
 )
 
 copy_file(
