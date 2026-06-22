@@ -15,7 +15,9 @@ import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.TerminalTitleListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<AgentChatTerminalTitleThreadRebindController>()
@@ -137,7 +139,10 @@ internal class AgentChatTerminalTitleThreadRebindController(
     AgentSessionProvider,
     Map<String, List<AgentChatConcreteTabRebindRequest>>,
   ) -> AgentChatConcreteTabRebindReport = ::rebindOpenConcreteAgentChatTabs,
-  private val notifyRefresh: (AgentSessionProvider, String, String?, AgentThreadActivityReport?) -> Unit = ::notifyAgentChatScopedRefresh,
+  private val notifyRefresh: (AgentSessionProvider, String, String?, String?, AgentThreadActivityReport?) -> Unit =
+    { provider, projectPath, threadId, threadTitle, activityReport ->
+      notifyAgentChatScopedRefresh(provider, projectPath, threadId, threadTitle, activityReport)
+    },
   private val currentTimeProvider: () -> Long = System::currentTimeMillis,
 ) : AgentChatDisposableController {
   private var listenerDisposable: Disposable? = null
@@ -183,28 +188,30 @@ internal class AgentChatTerminalTitleThreadRebindController(
     ) ?: return false
 
     val job = parentScope.launch {
-      val rebindResult = when (request) {
-        is AgentChatTerminalTitleRebindRequest.Pending -> rebindPendingTabs(
-          provider,
-          mapOf(projectPath to listOf(request.request)),
-        ).toTerminalTitleRebindResult()
+      withContext(NonCancellable) {
+        val rebindResult = when (request) {
+          is AgentChatTerminalTitleRebindRequest.Pending -> rebindPendingTabs(
+            provider,
+            mapOf(projectPath to listOf(request.request)),
+          ).toTerminalTitleRebindResult()
 
-        is AgentChatTerminalTitleRebindRequest.Concrete -> rebindConcreteTabs(
-          provider,
-          mapOf(projectPath to listOf(request.request)),
-        ).toTerminalTitleRebindResult()
-      }
-      if (rebindResult.reboundBindings > 0) {
-        tabSnapshotWriter.upsert(file.toSnapshot())
-        synchronized(this@AgentChatTerminalTitleThreadRebindController) {
-          reboundThreadId = threadId
+          is AgentChatTerminalTitleRebindRequest.Concrete -> rebindConcreteTabs(
+            provider,
+            mapOf(projectPath to listOf(request.request)),
+          ).toTerminalTitleRebindResult()
         }
-      }
-      notifyRefresh(provider, projectPath, threadId, null)
-      LOG.debug {
-        "Agent Chat terminal title rebind requested for provider=${provider.value} path=$projectPath threadId=$threadId " +
-        "requestedBindings=${rebindResult.requestedBindings}, reboundBindings=${rebindResult.reboundBindings}, " +
-        "outcomes=${rebindResult.outcomesByPath}"
+        if (rebindResult.reboundBindings > 0) {
+          tabSnapshotWriter.upsert(file.toSnapshot())
+          synchronized(this@AgentChatTerminalTitleThreadRebindController) {
+            reboundThreadId = threadId
+          }
+        }
+        notifyRefresh(provider, projectPath, threadId, signal.threadTitle, null)
+        LOG.debug {
+          "Agent Chat terminal title rebind requested for provider=${provider.value} path=$projectPath threadId=$threadId " +
+          "requestedBindings=${rebindResult.requestedBindings}, reboundBindings=${rebindResult.reboundBindings}, " +
+          "outcomes=${rebindResult.outcomesByPath}"
+        }
       }
     }
     rebindJob = job

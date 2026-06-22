@@ -21,6 +21,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProvid
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadActivityUpdate
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadPresentationUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -60,10 +61,33 @@ private object AgentChatScopedRefreshSignalBus {
     threadId: String? = null,
     activityReport: AgentThreadActivityReport? = null,
   ): Boolean {
+    return signal(
+      provider = provider,
+      projectPath = projectPath,
+      threadId = threadId,
+      threadTitle = null,
+      activityReport = activityReport,
+    )
+  }
+
+  fun signal(
+    provider: AgentSessionProvider,
+    projectPath: String,
+    threadId: String?,
+    threadTitle: String?,
+    activityReport: AgentThreadActivityReport?,
+  ): Boolean {
     val normalizedPath = normalizeAgentWorkbenchPath(projectPath)
     val normalizedThreadId = threadId?.trim()?.takeIf { it.isNotEmpty() }
+    val normalizedThreadTitle = threadTitle?.trim()?.takeIf { it.isNotEmpty() }
     val activityUpdatesByThreadId = if (normalizedThreadId != null && activityReport != null) {
       mapOf(normalizedThreadId to AgentSessionThreadActivityUpdate(activityReport))
+    }
+    else {
+      emptyMap()
+    }
+    val presentationUpdatesByThreadId = if (normalizedThreadId != null && normalizedThreadTitle != null) {
+      mapOf(normalizedThreadId to AgentSessionThreadPresentationUpdate(title = normalizedThreadTitle))
     }
     else {
       emptyMap()
@@ -80,6 +104,7 @@ private object AgentChatScopedRefreshSignalBus {
         scopedPaths = setOf(normalizedPath),
         threadIds = if (activityUpdatesByThreadId.isEmpty()) normalizedThreadId?.let { setOf(it) } else null,
         activityUpdatesByThreadId = activityUpdatesByThreadId,
+        presentationUpdatesByThreadId = presentationUpdatesByThreadId,
       ),
     )
   }
@@ -458,6 +483,16 @@ fun notifyAgentChatScopedRefresh(
   activityReport: AgentThreadActivityReport? = null,
 ) {
   AgentChatScopedRefreshSignalBus.signal(provider, projectPath, threadId, activityReport)
+}
+
+fun notifyAgentChatScopedRefresh(
+  provider: AgentSessionProvider,
+  projectPath: String,
+  threadId: String?,
+  threadTitle: String?,
+  activityReport: AgentThreadActivityReport?,
+) {
+  AgentChatScopedRefreshSignalBus.signal(provider, projectPath, threadId, threadTitle, activityReport)
 }
 
 fun notifyAgentChatScopedRefresh(

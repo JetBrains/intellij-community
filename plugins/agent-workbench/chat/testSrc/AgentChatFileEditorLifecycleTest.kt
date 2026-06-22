@@ -53,6 +53,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.junit.jupiter.api.AfterEach
@@ -142,7 +143,7 @@ class AgentChatFileEditorLifecycleTest {
           outcomesByPath = emptyMap(),
         )
       },
-      notifyRefresh = { _, _, refreshedThreadId, _ ->
+      notifyRefresh = { _, _, refreshedThreadId, _, _ ->
         refreshThreadIds += refreshedThreadId
       },
     )
@@ -203,7 +204,7 @@ class AgentChatFileEditorLifecycleTest {
           pendingRebindReport(file.projectPath, request, AgentChatPendingTabRebindStatus.REBOUND)
         }
       },
-      notifyRefresh = { _, _, refreshedThreadId, _ ->
+      notifyRefresh = { _, _, refreshedThreadId, _, _ ->
         refreshThreadIds += refreshedThreadId
       },
     )
@@ -471,7 +472,7 @@ class AgentChatFileEditorLifecycleTest {
     val title = TerminalTitle()
     val snapshotWriter = RecordingSnapshotWriter()
     val requests = mutableListOf<AgentChatConcreteTabRebindRequest>()
-    val refreshThreadIds = mutableListOf<String?>()
+    val refreshSignals = mutableListOf<Pair<String?, String?>>()
     val controllerScope = unconfinedTestScope()
     val controller = AgentChatTerminalTitleThreadRebindController(
       file = file,
@@ -495,8 +496,8 @@ class AgentChatFileEditorLifecycleTest {
           outcomesByPath = emptyMap(),
         )
       },
-      notifyRefresh = { _, _, refreshedThreadId, _ ->
-        refreshThreadIds += refreshedThreadId
+      notifyRefresh = { _, _, refreshedThreadId, refreshedThreadTitle, _ ->
+        refreshSignals += refreshedThreadId to refreshedThreadTitle
       },
       currentTimeProvider = { 2_100L },
     )
@@ -517,7 +518,58 @@ class AgentChatFileEditorLifecycleTest {
       assertThat(file.threadTitle).isEqualTo(threadTitle)
       assertThat(file.newThreadRebindRequestedAtMs).isNull()
       assertThat(snapshotWriter.snapshots.single().identity.threadIdentity).isEqualTo("codex:$threadId")
-      assertThat(refreshThreadIds).containsExactly(threadId)
+      assertThat(refreshSignals).containsExactly(threadId to threadTitle)
+    }
+    finally {
+      controller.dispose()
+      controllerScope.cancel()
+    }
+  }
+
+  @Test
+  fun terminalTitleRebindCompletesWhenConcreteTabRestartDisposesController() {
+    val threadId = "018f4b30-f1b2-7000-9b4d-abcdef123456"
+    val threadTitle = "Fresh /new thread"
+    val file = testFile()
+    file.updateNewThreadRebindRequestedAtMs(2_000L)
+    val snapshotWriter = RecordingSnapshotWriter()
+    val requests = mutableListOf<AgentChatConcreteTabRebindRequest>()
+    val refreshSignals = mutableListOf<Pair<String?, String?>>()
+    val controllerScope = unconfinedTestScope()
+    lateinit var controller: AgentChatTerminalTitleThreadRebindController
+    controller = AgentChatTerminalTitleThreadRebindController(
+      file = file,
+      contributor = terminalTitleThreadRebindContributor(AgentSessionProvider.CODEX),
+      tabSnapshotWriter = snapshotWriter,
+      rebindConcreteTabs = { _, requestsByPath ->
+        val request = requestsByPath.getValue(file.projectPath).single()
+        requests += request
+        file.rebindConcreteThread(
+          threadIdentity = request.target.threadIdentity,
+          threadId = request.target.threadId,
+          threadTitle = request.target.threadTitle,
+          threadActivity = request.target.threadActivity,
+        )
+        controller.dispose()
+        withContext(Dispatchers.Default) {}
+        concreteRebindReport(file.projectPath, request, AgentChatConcreteTabRebindStatus.REBOUND)
+      },
+      notifyRefresh = { _, _, refreshedThreadId, refreshedThreadTitle, _ ->
+        refreshSignals += refreshedThreadId to refreshedThreadTitle
+      },
+      currentTimeProvider = { 2_100L },
+    )
+
+    try {
+      assertThat(controller.bindFromApplicationTitle(terminalTitle(threadId, threadTitle), controllerScope)).isTrue()
+
+      waitForCondition { snapshotWriter.snapshots.isNotEmpty() && refreshSignals.isNotEmpty() }
+
+      assertThat(requests).hasSize(1)
+      assertThat(file.threadIdentity).isEqualTo("codex:$threadId")
+      assertThat(file.threadTitle).isEqualTo(threadTitle)
+      assertThat(snapshotWriter.snapshots.single().identity.threadIdentity).isEqualTo("codex:$threadId")
+      assertThat(refreshSignals).containsExactly(threadId to threadTitle)
     }
     finally {
       controller.dispose()
@@ -556,7 +608,7 @@ class AgentChatFileEditorLifecycleTest {
           concreteRebindReport(file.projectPath, request, AgentChatConcreteTabRebindStatus.REBOUND)
         }
       },
-      notifyRefresh = { _, _, refreshedThreadId, _ ->
+      notifyRefresh = { _, _, refreshedThreadId, _, _ ->
         refreshThreadIds += refreshedThreadId
       },
       currentTimeProvider = { 2_100L },
@@ -603,7 +655,7 @@ class AgentChatFileEditorLifecycleTest {
       rebindConcreteTabs = { _, _ ->
         error("Expired /new anchor must not rebind a concrete chat tab")
       },
-      notifyRefresh = { _, _, refreshedThreadId, _ ->
+      notifyRefresh = { _, _, refreshedThreadId, _, _ ->
         refreshThreadIds += refreshedThreadId
       },
       currentTimeProvider = { 2_000L + AgentSessionThreadRebindPolicy.CONCRETE_NEW_THREAD_REBIND_MAX_AGE_MS },
