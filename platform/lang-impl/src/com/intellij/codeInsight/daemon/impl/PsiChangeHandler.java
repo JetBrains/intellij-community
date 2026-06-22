@@ -71,6 +71,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
     myProject = project;
     myFileStatusMap = fileStatusMap;
     myIsDocumentWorthBothering = isDocumentWorthBothering;
+    myUpdateFileStatusAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable);
     DocumentAfterCommitListener.listen(project, parentDisposable, document -> updateChangesForDocumentOnCommit(document));
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(ProjectDisposeAwareDocumentListener.create(project, new DocumentListener() {
       @Override
@@ -78,7 +79,6 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
         myFileStatusMap.addDocumentCompositeDirtyRange(event);
       }
     }), parentDisposable);
-    myUpdateFileStatusAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable);
     PsiManager.getInstance(project).addPsiTreeChangeListener(this, parentDisposable);
   }
 
