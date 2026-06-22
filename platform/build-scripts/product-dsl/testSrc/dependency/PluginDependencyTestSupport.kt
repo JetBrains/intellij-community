@@ -313,6 +313,8 @@ private suspend fun generatePluginDependency(
       val generation = planContentModuleDependenciesWithBothSets(
         contentModuleName = contentModule,
         descriptorCache = descriptorCache,
+        outputProvider = outputProvider,
+        projectLibraryToModuleMap = outputProvider.getProjectLibraryToModuleMap(),
         pluginGraph = graph,
         allRealProductNames = allRealProductNames,
         isTestDescriptor = isTestModule,
