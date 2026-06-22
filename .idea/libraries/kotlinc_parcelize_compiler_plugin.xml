@@ -1,11 +1,18 @@
 <component name="libraryTable">
-  <library name="kotlinc.parcelize-compiler-plugin">
+  <library name="kotlinc.parcelize-compiler-plugin" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:parcelize-compiler-plugin-for-ide:2.4.20-dev-7381">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.4.20-dev-7381/parcelize-compiler-plugin-for-ide-2.4.20-dev-7381.jar">
+          <sha256sum>1a0711db8c6e36480f3ff6a8318a57f896be5daf7a1bd0f12f72fef4eb07888c</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.4.255-dev-255/parcelize-compiler-plugin-for-ide-2.4.255-dev-255.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.4.20-dev-7381/parcelize-compiler-plugin-for-ide-2.4.20-dev-7381.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.4.255-dev-255/parcelize-compiler-plugin-for-ide-2.4.255-dev-255-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.4.20-dev-7381/parcelize-compiler-plugin-for-ide-2.4.20-dev-7381-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
