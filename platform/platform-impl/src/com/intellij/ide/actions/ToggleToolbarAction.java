@@ -22,9 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.ContentManagerEvent;
-import com.intellij.ui.content.ContentManagerListener;
-import com.intellij.ui.content.impl.ContentManagerImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
@@ -44,9 +41,9 @@ import java.util.function.Supplier;
  * @author gregsh
  */
 public final class ToggleToolbarAction extends ToggleAction implements DumbAware {
+  @SuppressWarnings("unused") // published API, can't change the signature
   public static @NotNull DefaultActionGroup createToggleToolbarGroup(@NotNull Project project, @NotNull ToolWindow toolWindow) {
-    return new DefaultActionGroup(new OptionsGroup(toolWindow),
-                                  createToolWindowAction(toolWindow, PropertiesComponent.getInstance(project)));
+    return new DefaultActionGroup(new OptionsGroup(toolWindow));
   }
 
   public static @NotNull ToggleToolbarAction createAction(@NotNull String id,
@@ -55,52 +52,18 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
     return new ToggleToolbarAction(properties, getShowToolbarProperty(id), components);
   }
 
-  public static @NotNull ToggleToolbarAction createToolWindowAction(@NotNull ToolWindow toolWindow,
-                                                                    @NotNull PropertiesComponent properties) {
-    updateToolbarsVisibility(toolWindow, properties);
-    toolWindow.addContentManagerListener(new ContentManagerListener() {
-      @Override
-      public void contentAdded(@NotNull ContentManagerEvent event) {
-        JComponent component = event.getContent().getComponent();
-        setToolbarVisible(Collections.singletonList(component), isToolbarVisible(toolWindow, properties));
-
-        // support nested content managers, e.g. RunnerLayoutUi as content component
-        ContentManager contentManager = ContentManagerImpl.getContentManager(component);
-        if (contentManager != null) {
-          contentManager.addContentManagerListener(this);
-        }
-      }
-
-      @Override
-      public void selectionChanged(@NotNull ContentManagerEvent event) {
-        if (event.getOperation() != ContentManagerEvent.ContentOperation.remove) {
-          updateToolbarsVisibility(toolWindow, properties);
-        }
-      }
-    });
-    return new ToggleToolbarAction(properties, getShowToolbarProperty(toolWindow), () -> {
-      ContentManager manager = toolWindow.getContentManagerIfCreated();
-      return ContainerUtil.createMaybeSingletonList(manager == null ? null : manager.getComponent());
-    });
-  }
-
-  private static void updateToolbarsVisibility(@NotNull ToolWindow toolWindow,
-                                               @NotNull PropertiesComponent properties) {
-    if (toolWindow.getContentManagerIfCreated() == null) return;
-    setToolbarVisible(Collections.singletonList(toolWindow.getComponent()), isToolbarVisible(toolWindow, properties));
-  }
-
-  public static void updateToolbarVisibility(@NotNull ToolWindow toolWindow,
-                                             @NotNull ActionToolbar toolbar,
-                                             @NotNull PropertiesComponent properties) {
-    setToolbarVisible(toolbar, isToolbarVisible(toolWindow, properties));
-  }
-
+  /**
+   * No-op since 2026.3.
+   * @param toolWindow
+   * @param properties
+   * @param visible
+   * @deprecated The Show Toolbar action is dropped in 2026.3, so toolbars are always visible.
+   */
+  @Deprecated
+  @SuppressWarnings("unused") // published API, can't change the signature
   public static void setToolbarVisible(@NotNull ToolWindow toolWindow,
                                        @NotNull PropertiesComponent properties,
                                        @Nullable Boolean visible) {
-    boolean state = visible == null ? isToolbarVisible(toolWindow, properties) : visible;
-    setToolbarVisibleImpl(getShowToolbarProperty(toolWindow), properties, Collections.singletonList(toolWindow.getComponent()), state);
   }
 
   public static void setToolbarVisible(@NotNull String id,
@@ -148,7 +111,7 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
   }
 
   public static boolean isToolbarVisible(@NotNull ToolWindow toolWindow, @NotNull PropertiesComponent properties) {
-    return isSelectedImpl(properties, getShowToolbarProperty(toolWindow));
+    return true;
   }
 
   private final PropertiesComponent myPropertiesComponent;
