@@ -219,7 +219,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   public final Lock writeLock;
 
   private IndexConfiguration getState() {
-    return myRegisteredIndexes.getConfigurationState();
+    final RegisteredIndexes registeredIndexes = myRegisteredIndexes;
+    if (registeredIndexes == null) {
+      throw IndexNotReadyException.create();
+    }
+    return registeredIndexes.getConfigurationState();
   }
 
   void dropRegisteredIndexes() {
