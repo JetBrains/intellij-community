@@ -513,9 +513,12 @@ class SkeletonGenerator(object):
                     short_mod_name = cut_binary_lib_suffix(dir_path, file_name)
                     if not short_mod_name:
                         continue
-                    # If a pure Python module exists alongside a binary, don't generate a skeleton for it.
-                    # It happens e.g. with mypyc-compiled sources
-                    if os.path.exists(os.path.join(dir_path, short_mod_name + ".py")):
+                    # If a pure Python module exists alongside a binary,
+                    # don't generate a skeleton for it.
+                    # It happens e.g. with mypyc-compiled sources.
+                    pure_mod_path = os.path.join(dir_path, short_mod_name + ".py")
+                    if os.path.exists(pure_mod_path):
+                        trace("skipping %s because %s exists", file_name, pure_mod_path)
                         continue
                     binaries.append((file_name, short_mod_name))
 
