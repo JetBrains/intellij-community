@@ -3,6 +3,7 @@ package com.intellij.terminal.frontend.toolwindow.impl
 import com.intellij.ide.DataManager
 import com.intellij.ide.dnd.DnDDropHandler
 import com.intellij.ide.dnd.DnDEvent
+import com.intellij.ide.dnd.DnDNativeTarget
 import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.dnd.FileCopyPasteUtil.getFileListFromAttachedObject
 import com.intellij.ide.dnd.TransferableWrapper
@@ -76,6 +77,12 @@ internal object TerminalDnDHandler {
     val contentManager = dataContext.getData(PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER) ?: return
     val data = TerminalDropData(event)
 
+    val openingWay = if (event.attachedObject is DnDNativeTarget.EventInfo) {
+      TerminalTabOpeningWay.DND_FILE_TO_TOOLWINDOW_FROM_EXTERNAL_APP
+    }
+    else TerminalTabOpeningWay.DND_FILE_TO_TOOLWINDOW_FROM_IDE
+    val fusInfo = TerminalStartupFusInfo(openingWay)
+
     coroutineScope.launch {
       val droppedFiles = data.virtualFiles?.mapNotNull { it.toNioPathOrNull() } ?: data.paths
       val filePath = droppedFiles.firstOrNull()
@@ -83,7 +90,6 @@ internal object TerminalDnDHandler {
         return@launch
 
       val dir = getDirectory(filePath) ?: return@launch
-      val fusInfo = TerminalStartupFusInfo(TerminalTabOpeningWay.DND_FILE_TO_TOOLWINDOW)
       withContext(Dispatchers.EDT) {
         createTerminalTab(
           window.project,
