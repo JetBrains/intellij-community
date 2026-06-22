@@ -148,7 +148,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   public void testImplicitIoImport2() {
     implicitIoImport();
   }
-  
+
   public void testImplicitIoImport3() {
     implicitIoImport();
   }
@@ -406,7 +406,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     CodeStyle.doWithTemporarySettings(getProject(), temp, () -> doTest());
   }
 
-  public void testScratch() throws Exception {
+  public void testScratch() {
     myFixture.enableInspections(new UnusedImportInspection());
     VirtualFile scratch =
       ScratchRootType.getInstance()
@@ -423,7 +423,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     myFixture.checkResult("class Scratch { }");
   }
 
-  public void testLeavesDocumentUnblocked() throws Exception {
+  public void testLeavesDocumentUnblocked() {
     myFixture.enableInspections(new UnusedImportInspection());
     myFixture.configureByText("a.java", "import static java.ut<caret>il.List.*; class Foo {}");
     runOptimizeImports();
@@ -587,7 +587,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     assertNull(intention);
   }
 
-  public void testRemovingAllUnusedImports() throws Exception {
+  public void testRemovingAllUnusedImports() {
     myFixture.enableInspections(new UnusedImportInspection());
     myFixture.configureByText("a.java", """
       package p;
