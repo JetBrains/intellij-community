@@ -1115,7 +1115,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       }
       else {
         // after some time kill highlighters for invalid elements automatically, because it seems they are not going to be reused
-        future = AppExecutorUtil.getAppScheduledExecutorService().schedule(() ->
+        future = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
           ProgressManager.getInstance().executeProcessUnderProgress(() -> {
             // grab RA first, to avoid deadlock when InvalidPsi.toString() tries to obtain RA again from within this monitor
             ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
@@ -1129,8 +1129,8 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
                 incinerateAndRemoveFromDataAtomically(invalidPsiRecycler, "(invalidPsiRecycler session timed-out)");
               }
             });
-          }, session.getProgressIndicator())
-          , Registry.intValue("highlighting.delay.invalid.psi.info.kill.ms"), TimeUnit.MILLISECONDS);
+          }, session.getProgressIndicator());
+        }, Registry.intValue("highlighting.delay.invalid.psi.info.kill.ms"), TimeUnit.MILLISECONDS);
       }
 
       try {
@@ -1158,16 +1158,16 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
    * for each info in `newInfos` retrieve the RH from recycler (and then invalidElementRecycler if not found) or create new RH
    * could be reentrant, be careful to avoid leaking/blinking RHs
    */
-  private static @NotNull @Unmodifiable List<? extends HighlightInfo> assignRangeHighlighters(@NotNull PsiElement visitedPsiElement,
-                                                                                              @NotNull List<? extends HighlightInfo> oldInfos,
-                                                                                              @NotNull List<? extends HighlightInfo> newInfos,
-                                                                                              @NotNull Object toolId,
-                                                                                              @NotNull HighlightingSession session,
-                                                                                              @NotNull PsiFile psiFile,
-                                                                                              @NotNull Document hostDocument,
-                                                                                              @NotNull ManagedHighlighterRecycler invalidElementRecycler,
-                                                                                              @NotNull ManagedHighlighterRecycler recycler,
-                                                                                              @NotNull Map<Object, ToolHighlights> data) {
+  private @NotNull @Unmodifiable List<? extends HighlightInfo> assignRangeHighlighters(@NotNull PsiElement visitedPsiElement,
+                                                                                       @NotNull List<? extends HighlightInfo> oldInfos,
+                                                                                       @NotNull List<? extends HighlightInfo> newInfos,
+                                                                                       @NotNull Object toolId,
+                                                                                       @NotNull HighlightingSession session,
+                                                                                       @NotNull PsiFile psiFile,
+                                                                                       @NotNull Document hostDocument,
+                                                                                       @NotNull ManagedHighlighterRecycler invalidElementRecycler,
+                                                                                       @NotNull ManagedHighlighterRecycler recycler,
+                                                                                       @NotNull Map<Object, ToolHighlights> data) {
     MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(hostDocument, session.getProject(), true);
 
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(session.getProject());
@@ -1266,18 +1266,18 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     return sorted;
   }
 
-  private static @NotNull RangeHighlighterEx changeRangeHighlighterAttributes(@NotNull HighlightingSession session,
-                                                                              @NotNull PsiFile psiFile,
-                                                                              @NotNull MarkupModelEx markup,
-                                                                              @NotNull HighlightInfo newInfo,
-                                                                              @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
-                                                                              long finalInfoRange,
-                                                                              @Nullable InvalidPsi recycled,
-                                                                              boolean isFileLevel,
-                                                                              int infoStartOffset,
-                                                                              int infoEndOffset,
-                                                                              int newLayer,
-                                                                              @NotNull SeverityRegistrar severityRegistrar) {
+  private @NotNull RangeHighlighterEx changeRangeHighlighterAttributes(@NotNull HighlightingSession session,
+                                                                       @NotNull PsiFile psiFile,
+                                                                       @NotNull MarkupModelEx markup,
+                                                                       @NotNull HighlightInfo newInfo,
+                                                                       @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
+                                                                       long finalInfoRange,
+                                                                       @Nullable InvalidPsi recycled,
+                                                                       boolean isFileLevel,
+                                                                       int infoStartOffset,
+                                                                       int infoEndOffset,
+                                                                       int newLayer,
+                                                                       @NotNull SeverityRegistrar severityRegistrar) {
     CodeInsightContext context = session.getCodeInsightContext();
     TextAttributes infoAttributes = newInfo.getTextAttributes(psiFile, session.getColorsScheme());
     com.intellij.util.Consumer<RangeHighlighterEx> changeAttributes = finalHighlighter ->
@@ -1326,12 +1326,12 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     return highlighter;
   }
 
-  public static @NotNull RangeHighlighterEx createOrReuseFakeFileLevelHighlighter(int group,
-                                                                                  @NotNull HighlightInfo info,
-                                                                                  @Nullable RangeHighlighterEx toReuse,
-                                                                                  @NotNull MarkupModelEx markupModel,
-                                                                                  @NotNull Project project,
-                                                                                  @Nullable CodeInsightContext context) {
+  public synchronized @NotNull RangeHighlighterEx createOrReuseFakeFileLevelHighlighter(int group,
+                                                                                        @NotNull HighlightInfo info,
+                                                                                        @Nullable RangeHighlighterEx toReuse,
+                                                                                        @NotNull MarkupModelEx markupModel,
+                                                                                        @NotNull Project project,
+                                                                                        @Nullable CodeInsightContext context) {
     Document document = markupModel.getDocument();
     RangeHighlighterEx highlighter;
     if (toReuse != null && toReuse.isValid()) {
