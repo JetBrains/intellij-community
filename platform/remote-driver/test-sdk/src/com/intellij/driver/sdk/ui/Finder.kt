@@ -23,26 +23,59 @@ interface Finder {
 
   /**
    * Creates UiComponent, the actual component will be requested lazily.
+   * Consider using the version with the readable name and QueryBuilder instead
    */
   fun x(@Language("xpath") xpath: String): UiComponent {
-    return UiComponent(ComponentData(xpath, driver, searchService, robotProvider, searchContext, null))
+    return x(xpath, readableName = null)
   }
 
+  /** Consider using the version with the readable name instead */
   fun x(init: QueryBuilder.() -> String): UiComponent {
-    return x(xQuery { init() })
+    return x(readableName = null, init = init)
   }
 
+  fun x(readableName: String?, init: QueryBuilder.() -> String): UiComponent {
+    return x(xpath = xQuery { init() }, readableName = readableName)
+  }
+
+  /** Consider using the version with the readable name instead */
   fun <T : UiComponent> x(type: Class<T>, init: QueryBuilder.() -> String): T {
-    return x(xQuery { init() }, type)
+    return x(type, readableName = null, init = init)
   }
 
+  fun <T : UiComponent> x(type: Class<T>, readableName: String?, init: QueryBuilder.() -> String): T {
+    return x(xQuery { init() }, type, readableName = readableName)
+  }
+
+  /** Consider using the version with the readable name instead */
   fun <T : UiComponent> x(@Language("xpath") xpath: String, type: Class<T>): T {
+    return x(xpath, type, null)
+  }
+
+  /** Consider using the version with the readable name and QueryBuilder instead */
+  fun x(@Language("xpath") xpath: String, readableName: String?): UiComponent {
+    return UiComponent(ComponentData(xpath,
+                                     driver,
+                                     searchService,
+                                     robotProvider,
+                                     searchContext,
+                                     foundComponent = null,
+                                     readableName = readableName))
+  }
+
+  fun <T : UiComponent> x(@Language("xpath") xpath: String, type: Class<T>, readableName: String?): T {
     val constructor = type.getConstructor(
       ComponentData::class.java
     )
     // support private Kotlin classes declared in the same file as test
     constructor.isAccessible = true
-    return constructor.newInstance(ComponentData(xpath, driver, searchService, robotProvider, searchContext, null))
+    return constructor.newInstance(ComponentData(xpath,
+                                                 driver,
+                                                 searchService,
+                                                 robotProvider,
+                                                 searchContext,
+                                                 foundComponent = null,
+                                                 readableName = readableName))
   }
 
   /**

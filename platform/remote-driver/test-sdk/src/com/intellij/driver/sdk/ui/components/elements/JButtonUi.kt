@@ -8,9 +8,12 @@ import com.intellij.driver.sdk.ui.components.UiComponent
 import org.intellij.lang.annotations.Language
 
 fun Finder.button(text: String) =
-  x("//div[@class='JButton' and @visible_text='$text']", JButtonUiComponent::class.java)
+  x("//div[@class='JButton' and @visible_text='$text']", JButtonUiComponent::class.java, readableName = "'$text' button")
 
 fun Finder.button(locator: QueryBuilder.() -> String) = x(JButtonUiComponent::class.java) { locator() }
+
+fun Finder.button(readableName: String? = null, locator: QueryBuilder.() -> String): JButtonUiComponent =
+  x(JButtonUiComponent::class.java, readableName, locator)
 
 fun Finder.buttons(@Language("xpath") xpath: String? = null) =
   xx(xpath ?: "//div[@class='JButton']", JButtonUiComponent::class.java)

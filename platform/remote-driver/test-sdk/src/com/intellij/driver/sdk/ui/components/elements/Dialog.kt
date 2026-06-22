@@ -56,11 +56,13 @@ open class DialogUiComponent(data: ComponentData) : WindowUiComponent(data) {
   protected open val cancelButtonText: String = "Cancel"
 
   val okButton: UiComponent
-    get() = x { byAccessibleName(primaryButtonText) }
+    get() = x("'$primaryButtonText' button") { byAccessibleName(primaryButtonText) }
   val cancelButton: UiComponent
-    get() = x { byAccessibleName(cancelButtonText) }
+    get() = x("'$cancelButtonText' button") { byAccessibleName(cancelButtonText) }
 
-  fun pressButton(text: String) = x("//div[@class='JButton' and @visible_text='$text']").click()
+  fun pressButton(text: String) {
+    x("//div[@class='JButton' and @visible_text='$text']", readableName = "'$text' button").click()
+  }
 
   fun closeDialog() {
     super.dispose()
