@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="intellij-plugin-structure" type="repository">
-    <properties maven-id="org.jetbrains.intellij.plugins:structure-intellij:3.329">
+    <properties maven-id="org.jetbrains.intellij.plugins:structure-intellij:3.330">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.329/structure-intellij-3.329.jar">
-          <sha256sum>1e250d452c4779006c0d8350d97e2c4601a7dcd365374df2f2d18ff6ab47b950</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.330/structure-intellij-3.330.jar">
+          <sha256sum>33e816ab74eb8348a50b2ad5b724856c50db27e475a762d80cdad2a9d11a3c4e</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.329/structure-base-3.329.jar">
-          <sha256sum>b2034a294db6bde4c8b904aaa7eb23f5388fa521ad28a21180f081bcfbd617e9</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.330/structure-base-3.330.jar">
+          <sha256sum>bd77c0d5118b0726a75f1ea539fb9b1821535f6f47529d248475983897840559</sha256sum>
         </artifact>
         <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/trove4j/1.0.20200330/trove4j-1.0.20200330.jar">
           <sha256sum>c5fd725bffab51846bf3c77db1383c60aaaebfe1b7fe2f00d23fe1b7df0a439d</sha256sum>
@@ -47,8 +47,8 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.329/structure-intellij-3.329.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.329/structure-base-3.329.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.330/structure-intellij-3.330.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.330/structure-base-3.330.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/trove4j/1.0.20200330/trove4j-1.0.20200330.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/atteo/evo-inflector/1.3/evo-inflector-1.3.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jdom/jdom2/2.0.6.1/jdom2-2.0.6.1.jar!/" />
@@ -59,8 +59,8 @@
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.329/structure-intellij-3.329-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.329/structure-base-3.329-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.330/structure-intellij-3.330-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.330/structure-base-3.330-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/trove4j/1.0.20200330/trove4j-1.0.20200330-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/atteo/evo-inflector/1.3/evo-inflector-1.3-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jdom/jdom2/2.0.6.1/jdom2-2.0.6.1-sources.jar!/" />
