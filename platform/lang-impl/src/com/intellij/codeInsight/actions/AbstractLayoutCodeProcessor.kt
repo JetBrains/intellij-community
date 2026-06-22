@@ -519,9 +519,14 @@ abstract class AbstractLayoutCodeProcessor private constructor(
       if (files.isEmpty()) return true
       val totalFiles = files.size
       if (!application.isUnitTestMode()) {
-        val shouldContinue = invokeAndWaitIfNeeded {
+        val shouldContinue = invokeAndWaitIfNeeded<Boolean?> {
           val status = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(files)
           !status.hasReadonlyFiles()
+        } ?: run {
+          // If on BGT, invokeAndWaitIfNeeded can swallow PCEs that happen on EDT and return null here on BGT.
+          ProgressManager.checkCanceled()
+          LOG.error("invokeAndWaitIfNeeded returned null, but processing is not canceled.")
+          false
         }
         if (!shouldContinue) return false
       }
