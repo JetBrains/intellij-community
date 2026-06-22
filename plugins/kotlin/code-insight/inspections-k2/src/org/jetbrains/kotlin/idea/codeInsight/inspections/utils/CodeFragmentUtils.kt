@@ -12,27 +12,19 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.idea.k2.refactoring.util.findContextToAnalyze
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
-import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 /**
  * Creates a code fragment for testing if a function resolves to stdlib, handling special syntax transformations.
@@ -162,7 +154,7 @@ internal fun isCollectionLiteralSafeAsArgument(
     element: KtCallExpression,
     expressionType: KaType,
 ): Boolean {
-    val context = findContextToAnalyze(element) ?: return false
+    val context = element.findContextToAnalyze() ?: return false
 
     val literal = buildCodeFragmentWithCollectionLiteral(element, context) ?: return false
 
@@ -174,19 +166,4 @@ internal fun isCollectionLiteralSafeAsArgument(
         val outerCall = literal.getParentOfType<KtCallExpression>(strict = true) ?: return true
         outerCall.resolveCall() != null
     }
-}
-
-private fun findContextToAnalyze(expression: KtExpression): KtExpression? {
-    for (element in expression.parentsWithSelf) {
-        when (element) {
-            is KtFunctionLiteral -> continue
-            is KtParameter -> continue
-            is KtPropertyAccessor -> continue
-            is KtProperty -> if (element.parent is KtClassBody) continue else return element
-            is KtFunction -> if (element.hasModifier(KtTokens.OVERRIDE_KEYWORD)) continue else return element
-            is KtDeclaration -> return element
-            else -> continue
-        }
-    }
-    return null
 }
