@@ -448,6 +448,83 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
+    @TestFor(issues = ["PY-85768"])
+    fun `infer parameter from generic decorator constrained by outer decorator`() = test("""
+      from collections.abc import Callable
+
+      def d1[T](fn: Callable[[T], object]) -> T: ...
+      def d2(i: int) -> None: ...
+
+      @d2
+      @d1
+      def f(i):
+          expr = i
+      #   └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85768"])
+    fun `infer parameter from generic decorator through a generic middle decorator`() = test("""
+      from collections.abc import Callable
+
+      def d1[T](fn: Callable[[T], object]) -> T: ...
+      def d2[U](g: U) -> U: ...
+      def d3(i: int) -> None: ...
+
+      @d3
+      @d2
+      @d1
+      def f(i):
+          expr = i
+      #   └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85768"])
+    fun `infer parameter from generic decorator past a transparent decorator`() = test("""
+      from collections.abc import Callable
+
+      def d1[T](fn: Callable[[T], object]) -> T: ...
+      def ident(f): return f
+      def d2(i: int) -> None: ...
+
+      @d2
+      @ident
+      @d1
+      def f(i):
+          expr = i
+      #   └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85768"])
+    fun `infer parameter wrapped in a container from generic decorator`() = test("""
+      from collections.abc import Callable
+
+      def d1[T](fn: Callable[[list[T]], object]) -> T: ...
+      def d2(i: int) -> None: ...
+
+      @d2
+      @d1
+      def f(i):
+          expr = i
+      #   └ TYPE list[int]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85768"])
+    fun `generic decorator parameter is left unbound without an outer constraint`() = test("""
+      from collections.abc import Callable
+
+      def d1[T](fn: Callable[[T], object]) -> T: ...
+
+      @d1
+      def f(i):
+          expr = i
+      #   └ TYPE T
+      """)
+
+    @Test
     @TestFor(issues = ["PY-79204"])
     fun `infer parameter from decorator called`() = test("""
       from collections.abc import Callable
@@ -618,7 +695,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       @d1
       def f(i):
           expr = i
-      #   └ TYPE T FIXME int
+      #   └ TYPE int
       """)
 
     @Test
