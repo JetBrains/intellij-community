@@ -8,7 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 
 internal class AccessibilityStateCollector : ApplicationUsagesCollector() {
-  private val group = EventLogGroup("accessibility", 3)
+  private val group = EventLogGroup("accessibility.state", 1)
   private val screenReaderSupportInVmOptions = group.registerEvent("screen.reader.support.enabled.in.vmoptions", EventFields.Boolean("enabled"))
 
   override fun getGroup(): EventLogGroup = group
