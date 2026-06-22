@@ -1,9 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commit
 
-import com.github.benmanes.caffeine.cache.AsyncLoadingCache
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.checkCanceled
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -21,26 +24,28 @@ import git4idea.repo.GitRepoInfo
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.repo.GitRepositoryStateChangeListener
-import git4idea.util.CaffeineUtil
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.future.await
-import kotlinx.coroutines.future.future
+import kotlinx.coroutines.asExecutor
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import kotlin.collections.emptyList
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.measureTimedValue
 
 /**
  * A caching loader for recent commits in Git repositories
  *
- * It retrieves commit metadata asynchronously and offers options
- * to filter commits based on specific criteria.
- *
- * @param limit The maximum number of commits to retrieve per repository.
+ * @param limit The maximum number of commits to retrieve per repository
  * @param userScope Specifies whether to filter commits by the user
  * @param stopAtFirstMergeCommit If true, only return commits from HEAD until (but not including) the first merge commit
  * @param unpublishedOnly If true, only return commits that haven't been pushed to a protected remote branch
- * @param preload If true, preload cache entries for existing and newly created repositories
+ * @param preload If true, preload cache entries for existing and changed/created repositories
  */
 @ApiStatus.Experimental
 class GitRecentCommitsProvider(
@@ -59,19 +64,19 @@ class GitRecentCommitsProvider(
 
   private val limitedDispatcher = Dispatchers.IO.limitedParallelism(1)
 
-  private val cache: AsyncLoadingCache<VirtualFile, List<VcsCommitMetadata>> = CaffeineUtil.withIoExecutor()
+  private val cache: Cache<VirtualFile, Deferred<List<VcsCommitMetadata>>> = Caffeine.newBuilder()
     .maximumSize(MAX_REPOSITORIES.toLong())
-    .buildAsync { root, _ ->
-      scope.future {
-        readRecentCommits(root)
-      }
+    .removalListener { _: VirtualFile?, deferred: Deferred<List<VcsCommitMetadata>>?, _ ->
+      deferred?.cancel()
     }
+    .executor(Dispatchers.Default.asExecutor())
+    .build()
 
   init {
     project.messageBus.connect(scope).subscribe(GitRepository.GIT_REPO_STATE_CHANGE, object : GitRepositoryStateChangeListener {
       override fun repositoryCreated(repository: GitRepository, info: GitRepoInfo) {
-        if (preload && cache.asMap().size < MAX_REPOSITORIES) {
-          cache.synchronous().refresh(repository.root)
+        if (preload && cache.estimatedSize() < MAX_REPOSITORIES) {
+          cache.put(repository.root, scheduleRefresh(repository.root))
         }
       }
 
@@ -80,29 +85,59 @@ class GitRecentCommitsProvider(
         previousInfo: GitRepoInfo,
         info: GitRepoInfo,
       ) {
+        LOG.debug { "Repository changed, handling cache entry for ${repository.root}" }
         if (preload) {
-          LOG.debug { "Repository changed, refreshing cache entry for ${repository.root}" }
-          cache.synchronous().refresh(repository.root)
+          cache.put(repository.root, scheduleRefresh(repository.root))
         }
         else {
-          cache.synchronous().invalidate(repository.root)
+          cache.invalidate(repository.root)
         }
       }
     })
+
     if (preload) {
       val repositories = GitRepositoryManager.getInstance(project).repositories
-      cache.synchronous().refreshAll(repositories.take(MAX_REPOSITORIES).map { it.root })
+      repositories.take(MAX_REPOSITORIES).forEach {
+        cache.put(it.root, scheduleRefresh(it.root))
+      }
     }
   }
 
   suspend fun getRecentCommits(root: VirtualFile): List<VcsCommitMetadata> {
-    return cache.get(root).await()
+    while (true) {
+      val deferred = cache.get(root) { scheduleRefresh(root, immediate = true) }
+
+      try {
+        return deferred.await()
+      }
+      catch (@Suppress("IncorrectCancellationExceptionHandling") _: CancellationException) {
+        checkCanceled()
+
+        if (!scope.isActive) {
+          LOG.warn("Provider got cancelled, failed to read recent commits for $root")
+          return emptyList()
+        }
+        // refresh canceled by removal from the cache, retry
+      }
+      catch (e: Exception) {
+        LOG.warn("Failed to read recent commits for $root", e)
+        cache.asMap().remove(root, deferred)
+        return emptyList()
+      }
+    }
+  }
+
+  private fun scheduleRefresh(root: VirtualFile, immediate: Boolean = false): Deferred<List<VcsCommitMetadata>> {
+    return scope.async {
+      if (!immediate) delay(200.milliseconds)
+      readRecentCommits(root)
+    }
   }
 
   private suspend fun readRecentCommits(root: VirtualFile): List<VcsCommitMetadata> = withContext(limitedDispatcher) {
     LOG.debug("Reading recent commits for $root (limit: $limit, userScope: $userScope, stopAtFirstMergeCommit: $stopAtFirstMergeCommit, filterNotPublished: $unpublishedOnly)")
 
-    val commits = loadCommits(root)
+    val commits = coroutineToIndicator { loadCommits(root) }
 
     LOG.debug { "Loaded ${commits.size} commits for $root" }
 
