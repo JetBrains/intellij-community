@@ -3,7 +3,7 @@ package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.testplan
 
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
-import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.SEP
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.ExpectedModule
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTomlSyncFixture
 import com.intellij.testFramework.TestDataPath
@@ -30,9 +30,9 @@ internal class UvWorkspaceExtrasAndTransitiveTest {
     assertThrows<AssertionError> {
       f.assertProjectStructure(
         ExpectedModule("pythonproject", contentRoot = ".", deps = listOf("sub-project-a", "sub-project-b"), sourceRoots = listOf("src")),
-        ExpectedModule("sub-project-a", contentRoot = "sub-projects${SEP}sub-project-a", deps = listOf("extra-utils", "sub-project-b"), sourceRoots = listOf("src")),
-        ExpectedModule("sub-project-b", contentRoot = "sub-projects${SEP}sub-project-b", deps = emptyList(), sourceRoots = listOf("src")),
-        ExpectedModule("extra-utils", contentRoot = "local-libs${SEP}extra-utils", deps = emptyList(), sourceRoots = emptyList()),
+        ExpectedModule("sub-project-a", contentRoot = "sub-projects" / "sub-project-a", deps = listOf("extra-utils", "sub-project-b"), sourceRoots = listOf("src")),
+        ExpectedModule("sub-project-b", contentRoot = "sub-projects" / "sub-project-b", deps = emptyList(), sourceRoots = listOf("src")),
+        ExpectedModule("extra-utils", contentRoot = "local-libs" / "extra-utils", deps = emptyList(), sourceRoots = emptyList()),
       )
       }
   }

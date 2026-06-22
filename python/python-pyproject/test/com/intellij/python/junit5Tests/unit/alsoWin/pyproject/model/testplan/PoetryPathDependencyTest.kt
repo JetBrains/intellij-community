@@ -3,7 +3,7 @@ package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.testplan
 
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
-import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.SEP
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.ExpectedModule
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.PYTHON
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTomlSyncFixture
@@ -28,8 +28,8 @@ internal class PoetryPathDependencyTest {
     f.reloadProject()
     f.assertProjectStructure(
       ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
-      ExpectedModule("subpoetry1", contentRoot = "subpoetry1", sourceRoots = listOf("subpoetry1${SEP}src")),
-      ExpectedModule("subpoetry2", contentRoot = "subpoetry2", deps = listOf("subpoetry1"), sourceRoots = listOf("subpoetry2${SEP}src")),
+      ExpectedModule("subpoetry1", contentRoot = "subpoetry1", sourceRoots = listOf("subpoetry1" / "src")),
+      ExpectedModule("subpoetry2", contentRoot = "subpoetry2", deps = listOf("subpoetry1"), sourceRoots = listOf("subpoetry2" / "src")),
     )
   }
 }
