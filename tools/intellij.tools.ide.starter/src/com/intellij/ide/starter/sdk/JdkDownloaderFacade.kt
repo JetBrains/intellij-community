@@ -6,10 +6,13 @@ import com.intellij.ide.starter.runner.targets.TargetIdentifier
 import com.intellij.ide.starter.runner.targets.isLocal
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallRequest
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerWSL
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerEel.unpackJdkOnEel
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkItem
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkListDownloader
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPredicate
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.tools.ide.util.common.withRetryBlocking
 import java.net.URL
@@ -127,10 +130,6 @@ object JdkDownloaderFacade {
     val item = request.item
     val targetDir = request.installDir
 
-    val wslDistribution = wslDistributionFromPath(targetDir)
-    if (wslDistribution != null && item.os != "linux") {
-      error("Cannot install non-linux JDK into WSL environment to $targetDir from $item")
-    }
     val temp = GlobalPaths.instance.testHomePath.resolve("tmp/jdk").toAbsolutePath().toString()
     val downloadFile = Path.of(temp, "jdk-${System.nanoTime()}-${item.archiveFileName}")
     try {
@@ -145,8 +144,11 @@ object JdkDownloaderFacade {
       }
 
       try {
-        if (wslDistribution != null) {
-          JdkInstallerWSL.unpackJdkOnWsl(wslDistribution, item.packageType, downloadFile, targetDir, item.packageRootPrefix)
+        // getEelDescriptor() is a lightweight, app-independent lookup; the EEL (via eelFromPath ->
+        // toEelApi) is resolved only for a non-local target, so local installs don't require EEL
+        // infrastructure (which a headless test harness may not have).
+        if (targetDir.getEelDescriptor() !is LocalEelDescriptor) {
+          unpackJdkOnEel(eelFromPath(targetDir).eel, downloadFile, targetDir.asEelPath(), item.packageRootPrefix)
         }
         else {
           item.packageType.openDecompressor(downloadFile).let {
