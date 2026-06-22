@@ -3,7 +3,7 @@ package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.testplan
 
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
-import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.SEP
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.ExpectedModule
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTomlSyncFixture
 import com.intellij.testFramework.TestDataPath
@@ -27,8 +27,8 @@ internal class JoshExampleTest {
     f.reloadProject()
     f.assertProjectStructure(
       ExpectedModule("josh_example", contentRoot = ".", sourceRoots = listOf(".")),
-      ExpectedModule("josh_example_bar", contentRoot = "packages${SEP}josh_example_bar", sourceRoots = listOf("packages${SEP}josh_example_bar${SEP}src")),
-      ExpectedModule("josh_example_foo", contentRoot = "packages${SEP}josh_example_foo", sourceRoots = listOf("packages${SEP}josh_example_foo${SEP}src")),
+      ExpectedModule("josh_example_bar", contentRoot = "packages" / "josh_example_bar", sourceRoots = listOf("packages" / "josh_example_bar" / "src")),
+      ExpectedModule("josh_example_foo", contentRoot = "packages" / "josh_example_foo", sourceRoots = listOf("packages" / "josh_example_foo" / "src")),
     )
   }
 }

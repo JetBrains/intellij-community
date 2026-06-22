@@ -3,7 +3,7 @@ package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.testplan
 
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
-import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.SEP
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.ExpectedModule
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTomlSyncFixture
 import com.intellij.testFramework.TestDataPath
@@ -28,8 +28,8 @@ internal class MonorepoWithSeparatePyprojectForPytestTest {
     f.assertProjectStructure(
       ExpectedModule("monorepo-with-a-separate-pyproject-for-pytest", contentRoot = ".", sourceRoots = listOf(".")),
       ExpectedModule("tests", contentRoot = "tests"),
-      ExpectedModule("uvlib1", contentRoot = "lib${SEP}uvlib1"),
-      ExpectedModule("uvlib2", contentRoot = "lib${SEP}uvlib2"),
+      ExpectedModule("uvlib1", contentRoot = "lib" / "uvlib1"),
+      ExpectedModule("uvlib2", contentRoot = "lib" / "uvlib2"),
     )
   }
 }
