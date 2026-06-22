@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.util
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunction
@@ -24,7 +23,7 @@ fun KtExpression.findContextToAnalyze(): KtExpression? {
             is KtFunctionLiteral -> continue
             is KtParameter -> continue
             is KtPropertyAccessor -> continue
-            is KtProperty -> if (element.parent is KtClassBody) continue else return element
+            is KtProperty -> if (element.isLocal) continue else return element
             is KtFunction -> if (element.hasModifier(KtTokens.OVERRIDE_KEYWORD)) continue else return element
             is KtDeclaration -> return element
             else -> continue
