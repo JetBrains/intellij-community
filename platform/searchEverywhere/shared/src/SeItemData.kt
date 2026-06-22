@@ -8,11 +8,10 @@ import com.intellij.platform.searchEverywhere.impl.SeItemEntity
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.computeCatchingOrNull
-import com.jetbrains.rhizomedb.DbContext
 import fleet.kernel.DurableRef
+import fleet.kernel.rete.UnsatisfiedMatchException
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Serializable data interface for search everywhere results
@@ -90,12 +89,8 @@ class SeItemDataImpl internal constructor(
     try {
       itemRef.derefOrNull()?.findItemOrNull()
     }
-    catch (e: CancellationException) {
-      // `poison` is the Throwable the read tripped over; for the match-invalidation case it is a
-      // `fleet.kernel.rete.UnsatisfiedMatchException` ("match invalidated by rete"). It also serves
-      // as the discriminator: a non-poisoned context means this is a real cancellation -> rethrow.
-      val poison = DbContext.threadBoundOrNull?.poison ?: throw e
-      SeLog.warn("Couldn't fetch SE item ${providerId.value}/$uuid, DB context is poisoned: $poison")
+    catch (e: UnsatisfiedMatchException) {
+      SeLog.warn("Couldn't fetch SE item ${providerId.value}/$uuid", e)
       null
     }
 
