@@ -66,7 +66,6 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
@@ -92,8 +91,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.HintHint;
-import com.intellij.ui.IslandsState;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.RemoteTransferUIManager;
@@ -249,15 +246,7 @@ public abstract class DiffRequestProcessor
     // only needed for lux to transfer the BG color correctly
     var topPanelWrapper = new Wrapper(myTopPanel);
     topPanelWrapper.setOpaque(true);
-    topPanelWrapper.setBackground(JBColor.lazy(() -> {
-      if (IslandsState.Companion.isEnabled()) {
-        EditorColorsManager manager = EditorColorsManager.getInstance();
-        return manager.getGlobalScheme().getDefaultBackground();
-      }
-      else {
-        return UIUtil.getPanelBackground();
-      }
-    }));
+    topPanelWrapper.setBackground(DiffUtil.getDiffContentBackground());
     RemoteTransferUIManager.forceDirectTransfer(topPanelWrapper);
 
     myMainPanel.add(topPanelWrapper, BorderLayout.NORTH);

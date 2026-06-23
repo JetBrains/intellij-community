@@ -79,6 +79,7 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
@@ -146,6 +147,7 @@ import com.intellij.testFramework.LightVirtualFileBase;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.IslandsState;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBLabel;
@@ -619,6 +621,22 @@ public final class DiffUtil {
     return panel;
   }
 
+  @ApiStatus.Internal
+  public static @NotNull Color getDiffContentBackground() {
+    return JBColor.lazy(() -> {
+      if (IslandsState.Companion.isEnabled()) {
+        return EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
+      }
+      return UIUtil.getPanelBackground();
+    });
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Color getDiffContentForeground() {
+    return JBColor.lazy(() -> EditorColorsUtil.getColorSchemeForBackground(
+      getDiffContentBackground()).getDefaultForeground());
+  }
+
   public static void addActionBlock(@NotNull DefaultActionGroup group, AnAction... actions) {
     addActionBlock(group, Arrays.asList(actions));
   }
@@ -855,8 +873,16 @@ public final class DiffUtil {
     panel.setOpaque(false);
     BorderLayoutPanel labelWithIcon = new BorderLayoutPanel().andTransparent();
     labelWithIcon.setName("Diff Editor Title Label Panel");
-    JComponent titleLabel = titleCustomizer != null ? titleCustomizer.getLabel()
-                                                    : new JBLabel(StringUtil.notNullize(title)).setCopyable(true);
+    JComponent titleLabel;
+    if (titleCustomizer != null) {
+      titleLabel = titleCustomizer.getLabel();
+    }
+    else {
+      JBLabel label = new JBLabel(StringUtil.notNullize(title));
+      label.setCopyable(true);
+      label.setForeground(getDiffContentForeground());
+      titleLabel = label;
+    }
     if (titleCustomizer != null && titleLabel instanceof Disposable disposableTitleLabel) {
       if (viewer != null) {
         Disposer.register(viewer, disposableTitleLabel);
@@ -909,7 +935,7 @@ public final class DiffUtil {
       label.setForeground(JBColor.RED);
     }
     else {
-      label.setForeground(JBColor.BLACK);
+      label.setForeground(getDiffContentForeground());
     }
     return label;
   }
@@ -927,7 +953,7 @@ public final class DiffUtil {
       color = JBColor.MAGENTA;
     }
     else {
-      color = JBColor.BLACK;
+      color = getDiffContentForeground();
     }
     label.setForeground(color);
     return label;
