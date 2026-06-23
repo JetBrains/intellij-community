@@ -117,7 +117,7 @@ internal fun PsiFile.configureKaptForLombokIfNeeded(sourceModule: Module, change
 
 internal fun PsiFile.configureKotlinLombokConfigIfNeeded(sourceModule: Module, changedFiles: ChangedConfiguratorFiles) {
     val configFile = sourceModule.findLombokConfigFile(this) ?: return
-    val parentDirectory = virtualFile.parent ?: return
+    val parentDirectory = (virtualFile ?: originalFile.virtualFile )?.parent ?: return
     val relativePath = VfsUtilCore.getRelativePath(configFile, parentDirectory, '/') ?: return
 
     GradleBuildScriptSupport.getManipulator(this).configurePluginOptions(
@@ -127,9 +127,11 @@ internal fun PsiFile.configureKotlinLombokConfigIfNeeded(sourceModule: Module, c
     )
 }
 
-private fun Module.findLombokConfigFile(buildScript: PsiFile): VirtualFile? =
-    buildScript.virtualFile?.parent?.findChild("lombok.config")
+private fun Module.findLombokConfigFile(buildScript: PsiFile): VirtualFile? {
+    val virtualFile = buildScript.virtualFile ?: buildScript.originalFile.virtualFile
+    return virtualFile?.parent?.findChild("lombok.config")
         ?: project.getTopLevelBuildScriptPsiFile()?.virtualFile?.parent?.findChild("lombok.config")
+}
 
 private fun String.isLombokProcessorPath(): Boolean =
   substringAfterLast('/').substringAfterLast('\\').contains("lombok", ignoreCase = true)
