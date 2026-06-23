@@ -7,6 +7,7 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.common.session.isClaudeMenuCommandPrompt
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -90,6 +91,8 @@ interface AgentChatBehaviorFile {
   val pendingFirstInputAtMs: Long?
 
   val threadActivity: AgentThreadActivity
+
+  val initialMessageMode: AgentInitialMessageMode?
 }
 
 @ApiStatus.Internal
@@ -102,6 +105,10 @@ interface AgentChatInitialMessageDispatchContext {
   val action: AgentInitialMessageDispatchAction
 
   val completionPolicy: AgentInitialMessageDispatchCompletionPolicy
+
+  val message: String
+
+  val stepIndex: Int
 }
 
 @ApiStatus.Internal

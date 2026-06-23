@@ -15,7 +15,6 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.platform.ai.agent.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.platform.ai.agent.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
@@ -398,7 +397,6 @@ class CodexAgentSessionProviderDescriptorTest {
       AgentInitialMessageDispatchStep(
         text = "/plan",
         timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
-        completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
       ),
       AgentInitialMessageDispatchStep(
         text = "Refactor this",
@@ -421,7 +419,6 @@ class CodexAgentSessionProviderDescriptorTest {
       AgentInitialMessageDispatchStep(
         text = "/plan",
         timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
-        completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
       ),
     )
   }

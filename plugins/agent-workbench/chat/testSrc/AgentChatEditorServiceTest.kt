@@ -5,7 +5,6 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationModel
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageTimeoutPolicy
@@ -2205,7 +2204,6 @@ class AgentChatEditorServiceTest {
       AgentInitialMessageDispatchStep(
         text = "/plan",
         timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
-        completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
       ),
       AgentInitialMessageDispatchStep(
         text = prompt,
