@@ -17767,6 +17767,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/when/contextSensitiveResolution/addRemainingBranchesEnumAllMissing.kt");
             }
 
+            @TestMetadata("addRemainingBranchesSealedClasses.kt")
+            public void testAddRemainingBranchesSealedClasses() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/when/contextSensitiveResolution/addRemainingBranchesSealedClasses.kt");
+            }
+
+            @TestMetadata("addRemainingBranchesSealedClassesAllMissing.kt")
+            public void testAddRemainingBranchesSealedClassesAllMissing() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/when/contextSensitiveResolution/addRemainingBranchesSealedClassesAllMissing.kt");
+            }
+
             @TestMetadata("addRemainingBranchesSealedObjects.kt")
             public void testAddRemainingBranchesSealedObjects() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/when/contextSensitiveResolution/addRemainingBranchesSealedObjects.kt");

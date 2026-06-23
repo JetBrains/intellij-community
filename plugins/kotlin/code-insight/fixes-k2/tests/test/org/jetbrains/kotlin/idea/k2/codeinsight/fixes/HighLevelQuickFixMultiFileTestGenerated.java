@@ -1470,6 +1470,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             public void testAddRemainingBranchesEnumAnotherPackage() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/when/contextSensitiveResolution/addRemainingBranchesEnumAnotherPackage.before.Main.kt");
             }
+
+            @TestMetadata("addRemainingBranchesSealedClassesAnotherPackage.before.Main.kt")
+            public void testAddRemainingBranchesSealedClassesAnotherPackage() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/when/contextSensitiveResolution/addRemainingBranchesSealedClassesAnotherPackage.before.Main.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
