@@ -14,9 +14,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 
 internal object AIReviewCollector : CounterUsagesCollector() {
-  private val group = EventLogGroup("agent.workbench.ai.review", 6)
+  private val group = EventLogGroup("agent.workbench.ai.review", 4)
 
   private val REQUEST_ID = EventFields.Long("request_id", "ID of the review request.")
   private val RATING = EventFields.Enum("rating", ReviewRating::class.java)
@@ -44,6 +45,13 @@ internal object AIReviewCollector : CounterUsagesCollector() {
   private val CHARS_REMOVED = EventFields.RoundedInt("chars_removed")
 
   private val SUCCESS = EventFields.Boolean("success")
+
+  private val AVAILABLE_AI_REVIEW_AGENT_PROVIDERS: List<AgentSessionProvider> = listOf(
+    AgentSessionProvider.CODEX,
+    AgentSessionProvider.CLAUDE,
+    AgentSessionProvider.JUNIE,
+    AgentSessionProvider.OPENCODE,
+  )
 
   private val AGENT = EventFields.String("agent", AVAILABLE_AI_REVIEW_AGENT_PROVIDERS.map { it.value })
   private val YOLO = EventFields.Boolean("yolo", "Whether the agent was launched in YOLO (skip-permissions / full-auto) mode.")
@@ -235,4 +243,5 @@ internal object AIReviewCollector : CounterUsagesCollector() {
       charsRemoved = charsRemoved,
     )
   }
+
 }

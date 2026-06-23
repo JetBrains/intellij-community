@@ -3,8 +3,11 @@
 
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.agent.workbench.prompt.core"/>
+    <plugin id="intellij.problemView.plugin"/>
     <module name="intellij.platform.ai.agent.core"/>
+    <module name="intellij.agent.workbench.prompt.core"/>
+    <module name="intellij.platform.problemView.shared"/>
+    <module name="intellij.platform.problemView.ui"/>
     <module name="intellij.platform.vcs"/>
   </dependencies>
   <!-- endregion -->
