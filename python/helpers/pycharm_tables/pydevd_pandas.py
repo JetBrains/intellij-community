@@ -286,7 +286,7 @@ def get_inspection_duplicate_column_names(table):
             if len(columns_indexes) > 1:
                 results_per_column_name.append({
                     "columnName": str(col),
-                    "value": "Indexes: %s" % (", ".join(columns_indexes))
+                    "value": "Columns: %s" % (", ".join(columns_indexes))
                 })
 
         is_triggered = len(results_per_column_name) > 0
