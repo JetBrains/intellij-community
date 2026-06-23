@@ -3,7 +3,7 @@ package com.jetbrains.python.inspections.unusedLocal
 
 /**
  * Reports unused local functions. Unused local variables and other local symbols are reported separately by
- * [PyUnusedLocalInspection]; both inspections share [PyUnusedLocalInspectionVisitor] for the analysis.
+ * [PyUnusedLocalVariableInspection]; both inspections share [PyUnusedLocalInspectionVisitor] for the analysis.
  */
 class PyUnusedFunctionInspection : PyUnusedSymbolInspection() {
   override val reportTarget: PyUnusedLocalInspectionVisitor.ReportTarget

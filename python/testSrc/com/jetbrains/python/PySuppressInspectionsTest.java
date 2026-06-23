@@ -19,7 +19,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyInspection;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
-import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
+import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalVariableInspection;
 
 import java.util.List;
 
@@ -37,7 +37,7 @@ public class PySuppressInspectionsTest extends PyTestCase {
   }
 
   public void testSuppressedUnusedLocal() {
-    doTestHighlighting(PyUnusedLocalInspection.class);
+    doTestHighlighting(PyUnusedLocalVariableInspection.class);
   }
 
   public void testSuppressForImport() {  // PY-2240

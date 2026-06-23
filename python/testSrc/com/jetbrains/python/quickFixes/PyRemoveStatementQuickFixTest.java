@@ -22,7 +22,7 @@ import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.inspections.PyReturnFromInitInspection;
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedFunctionInspection;
-import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
+import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalVariableInspection;
 
 @TestDataPath("$CONTENT_ROOT/../testData//quickFixes/PyRemoveStatementQuickFixTest/")
 @Subsystems.QuickFixes
@@ -42,7 +42,7 @@ public class PyRemoveStatementQuickFixTest extends PyQuickFixTestCase {
   }
 
   public void testVariable() {
-    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.statement"));
+    doQuickFixTest(PyUnusedLocalVariableInspection.class, PyPsiBundle.message("QFIX.NAME.remove.statement"));
   }
 
 }

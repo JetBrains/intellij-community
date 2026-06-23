@@ -233,7 +233,7 @@
       "codeQualityCategory": "Reliability"
     },
     {
-      "id": "PyUnusedLocalInspection",
+      "id": "PyUnusedLocalVariableInspection",
       "codeQualityCategory": "Code Style"
     },
     {
