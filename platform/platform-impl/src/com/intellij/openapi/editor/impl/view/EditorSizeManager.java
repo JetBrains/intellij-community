@@ -389,7 +389,7 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
       assert !myInlayModel.isInBatchMode();
       var grid = myEditor.getCharacterGrid();
       var columns = grid == null ? 0 : grid.getColumns();
-      if (columns > 0) {
+      if (columns > 0 && mySoftWrapModel.isSoftWrappingEnabled()) {
         myWidthInPixels = (int)Math.ceil(columns * grid.getCharWidth());
         myWidthDefiningLineNumber = 0; // not used anyway
       }
