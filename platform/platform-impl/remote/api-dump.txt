@@ -35,3 +35,14 @@ f:com.intellij.remote.VagrantNotStartedException
 - getVagrantFolder():java.lang.String
 a:com.intellij.remote.ext.LanguageCaseCollector
 - <init>():V
+com.intellij.remote.ui.CredentialsEditorProvider
+- a:createEditor(com.intellij.openapi.project.Project,com.intellij.remote.ext.CredentialsLanguageContribution,com.intellij.remote.ui.RemoteSdkEditorForm):com.intellij.remote.ext.CredentialsEditor
+- a:getDefaultInterpreterPath(com.intellij.remote.ui.BundleAccessor):java.lang.String
+- a:isAvailable(com.intellij.remote.ext.CredentialsLanguageContribution):Z
+com.intellij.remote.ui.RemoteSdkEditorForm
+- a:getBundleAccessor():com.intellij.remote.ui.BundleAccessor
+- a:getDisposable():com.intellij.openapi.Disposable
+- a:getParentContainer():com.intellij.remote.ui.RemoteSdkEditorContainer
+- a:getSdkScopeController():com.intellij.remote.ui.SdkScopeController
+- a:getValidator():java.lang.Runnable
+- a:isSdkInConsistentState(com.intellij.remote.CredentialsType):Z
