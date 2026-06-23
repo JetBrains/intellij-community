@@ -132,7 +132,8 @@ public final class TerminateRemoteProcessDialog {
     if (sessionNames.size() == 1) {
       return ExecutionBundle.message("terminate.process.confirmation.text", sessionNames.getFirst());
     }
-    return ExecutionBundle.message("terminate.processes.confirmation.text", String.join(", ", sessionNames));
+    List<String> namesInQuotes = ContainerUtil.map(sessionNames, name -> "'%s'".formatted(name));
+    return ExecutionBundle.message("terminate.processes.confirmation.text", String.join(", ", namesInQuotes));
   }
 
   private static ProcessCloseConfirmation getConfirmation(int button, boolean withDisconnect) {
