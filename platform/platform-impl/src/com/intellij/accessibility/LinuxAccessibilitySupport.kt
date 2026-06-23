@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.impl.LinuxUiUtil.isGnomeZoomEnabled
 import com.intellij.openapi.wm.impl.LinuxUiUtil.isOrcaProcessRunning
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.ui.accessibility.ScreenReader
 import com.intellij.util.ui.accessibility.ScreenReader.ASSISTIVE_TECHNOLOGIES_PROPERTY
 import com.intellij.util.ui.accessibility.ScreenReader.ATK_WRAPPER
@@ -122,12 +123,9 @@ object LinuxAccessibilitySupport {
       serviceAsync<GeneralSettings>().isSupportScreenReaders = true
     }
 
-    val vmOptionsUpdated = linuxAccessibilitySupportRequested && !atkWrapperEnabledInConfig && runCatching {
-      VMOptions.setProperty(ASSISTIVE_TECHNOLOGIES_PROPERTY, ATK_WRAPPER)
-    }.onFailure {
-      LOG.warn("Failed to update custom VM options for Java ATK Wrapper support. " +
-               "Could not persist '$ASSISTIVE_TECHNOLOGIES_PROPERTY=$ATK_WRAPPER'.", it)
-    }.isSuccess
+    val vmOptionsUpdated = linuxAccessibilitySupportRequested &&
+                           !atkWrapperEnabledInConfig &&
+                           updateAtkWrapperVmOption(shouldEnableAtkWrapper = true)
 
     val restartRequired = atkWrapperActivatedInCurrentSession || vmOptionsUpdated
     if (restartRequired) {
@@ -137,16 +135,81 @@ object LinuxAccessibilitySupport {
     return restartRequired
   }
 
+  @JvmStatic
+  fun syncAtkWrapperVmOption(isScreenReaderSupportEnabled: Boolean) {
+    updateAtkWrapperVmOption(shouldEnableAtkWrapper = isScreenReaderSupportEnabled)
+  }
+
+  private fun updateAtkWrapperVmOption(shouldEnableAtkWrapper: Boolean): Boolean {
+    if (!SystemInfoRt.isLinux || !VMOptions.canWriteOptions()) {
+      return false
+    }
+
+    val currentOptionValue = VMOptions.readOption(ASSISTIVE_TECHNOLOGIES_VM_OPTION_PREFIX, false)
+    val fallbackOptionValue = VMOptions.readOption(ASSISTIVE_TECHNOLOGIES_VM_OPTION_PREFIX, true)
+    val newOptionValue = computeUpdatedAssistiveTechnologiesOptionValue(
+      currentOptionValue = currentOptionValue,
+      fallbackOptionValue = fallbackOptionValue,
+      shouldEnableAtkWrapper = shouldEnableAtkWrapper,
+    )
+
+    return newOptionValue != currentOptionValue && runCatching {
+      VMOptions.setProperty(ASSISTIVE_TECHNOLOGIES_PROPERTY, newOptionValue)
+    }.onFailure {
+      LOG.warn("Failed to update custom VM options for Java ATK Wrapper support. " +
+               "Could not persist '$ASSISTIVE_TECHNOLOGIES_PROPERTY'.", it)
+    }.isSuccess
+  }
+
   fun isLinuxScreenReaderEnabled(): Boolean {
     return isGnomeScreenReaderSettingEnabled() || isOrcaProcessRunning()
+  }
+
+  private fun computeUpdatedAssistiveTechnologiesOptionValue(
+    currentOptionValue: String?,
+    fallbackOptionValue: String?,
+    shouldEnableAtkWrapper: Boolean,
+  ): String? {
+    val fallbackAssistiveTechnologies = parseAssistiveTechnologiesOptionValue(fallbackOptionValue)
+
+    val updatedAssistiveTechnologies = parseAssistiveTechnologiesOptionValue(currentOptionValue ?: fallbackOptionValue)
+    if (shouldEnableAtkWrapper) {
+      updatedAssistiveTechnologies.add(ATK_WRAPPER)
+    }
+    else {
+      updatedAssistiveTechnologies.remove(ATK_WRAPPER)
+    }
+
+    if (currentOptionValue == null && updatedAssistiveTechnologies == fallbackAssistiveTechnologies) {
+      return null
+    }
+
+    return when {
+      updatedAssistiveTechnologies.isNotEmpty() -> updatedAssistiveTechnologies.joinToString(",")
+      fallbackOptionValue != null -> ""
+      else -> null
+    }
   }
 
   private fun isLinuxScreenMagnifierEnabled(): Boolean {
     return isGnomeZoomEnabled()
   }
 
+  /**
+   * `javax.accessibility.assistive_technologies` is comma-delimited list (https://docs.oracle.com/en/java/javase/21/access/accessibility-properties.html)
+   */
+  private fun parseAssistiveTechnologiesOptionValue(optionValue: String?): LinkedHashSet<String> {
+    return optionValue
+             ?.split(',')
+             ?.asSequence()
+             ?.map(String::trim)
+             ?.filter(String::isNotEmpty)
+             ?.toCollection(LinkedHashSet())
+           ?: LinkedHashSet()
+  }
+
   private fun isAtkWrapperEnabled(): Boolean {
-    return System.getProperty(ASSISTIVE_TECHNOLOGIES_PROPERTY)?.contains(ATK_WRAPPER) == true ||
+    return ATK_WRAPPER in parseAssistiveTechnologiesOptionValue(System.getProperty(ASSISTIVE_TECHNOLOGIES_PROPERTY)) ||
            ScreenReader.isEnabled(ATK_WRAPPER)
   }
 
@@ -175,17 +238,24 @@ object LinuxAccessibilitySupport {
   }
 
   /**
-   * Sets Java ATK Wrapper as the assistive technology, and tries to activate it for the current session.
+   * Ensures Java ATK Wrapper is configured in assistive technologies, and tries to activate it for the current session.
    */
   private fun configureAndTryActivateLinuxAtkWrapper() {
-    System.setProperty(ASSISTIVE_TECHNOLOGIES_PROPERTY, ATK_WRAPPER)
+    val currentPropertyValue = System.getProperty(ASSISTIVE_TECHNOLOGIES_PROPERTY)
+    val fallbackPropertyValue = VMOptions.readOption(ASSISTIVE_TECHNOLOGIES_VM_OPTION_PREFIX, true)
+
+    val assistiveTechnologies = parseAssistiveTechnologiesOptionValue(currentPropertyValue ?: fallbackPropertyValue)
+    assistiveTechnologies.add(ATK_WRAPPER)
+
+    val updatedOptionValue = assistiveTechnologies.joinToString(",")
+    System.setProperty(ASSISTIVE_TECHNOLOGIES_PROPERTY, updatedOptionValue)
 
     atkWrapperActivatedInCurrentSession = runCatching {
       val assistiveTechnologyClass = Class.forName(ATK_WRAPPER, false, ClassLoader.getSystemClassLoader())
       assistiveTechnologyClass.getConstructor().newInstance()
     }.onFailure {
       LOG.warn("Failed to activate Java ATK Wrapper for the current IDE session. " +
-               "The '$ASSISTIVE_TECHNOLOGIES_PROPERTY' system property was set to '$ATK_WRAPPER', " +
+               "The '$ASSISTIVE_TECHNOLOGIES_PROPERTY' system property was set to '$updatedOptionValue', " +
                "but runtime activation failed.", it)
     }.isSuccess
   }
