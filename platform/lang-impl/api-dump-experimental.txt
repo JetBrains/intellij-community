@@ -237,6 +237,13 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
 - a:findOffsetToCall(I,com.intellij.psi.PsiFile):java.lang.Integer
 - p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+*a:com.intellij.codeInsight.completion.command.commands.AbstractInlineVariableCompletionCommandProvider
+- com.intellij.codeInsight.completion.command.CommandProvider
+- <init>():V
+- pa:findElementToInline(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,Z):com.intellij.psi.PsiElement
+- f:getCommands(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):java.util.List
+- p:getHighlightRange(I,com.intellij.psi.PsiFile):com.intellij.openapi.util.TextRange
+- pa:getPresentableName():java.lang.String
 *a:com.intellij.codeInsight.completion.command.commands.AbstractMoveCompletionCommandProvider
 - com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 - <init>():V
