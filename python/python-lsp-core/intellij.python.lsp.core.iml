@@ -10,8 +10,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
-    <orderEntry type="library" exported="" name="eclipse.lsp4j" level="project" />
-    <orderEntry type="library" exported="" name="eclipse.lsp4j.jsonrpc" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.eclipse.lsp4j" exported="" />
+    <orderEntry type="module" module-name="intellij.libraries.eclipse.lsp4j.jsonrpc" exported="" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />

@@ -151,7 +151,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":build-scripts",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//libraries/commons/cli:cli_test_lib",
         "//platform/build-scripts/downloader:downloader_test_lib",
         "//libraries/commons/compress:compress_test_lib",

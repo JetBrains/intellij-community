@@ -3,6 +3,7 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <orderEntry type="inheritedJdk" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.plugin" scope="RUNTIME" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.grid" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.grid.core.impl" scope="RUNTIME" />
@@ -40,6 +41,6 @@
     <orderEntry type="module" module-name="intellij.platform.navbar.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.bookmarks.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.problemView.plugin" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.vcs.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.tasks.plugin" scope="RUNTIME" />
   </component>
 </module>

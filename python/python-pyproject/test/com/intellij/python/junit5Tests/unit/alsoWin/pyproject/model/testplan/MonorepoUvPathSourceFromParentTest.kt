@@ -3,7 +3,7 @@ package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.testplan
 
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
-import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.SEP
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.ExpectedModule
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTomlSyncFixture
 import com.intellij.testFramework.TestDataPath
@@ -38,7 +38,7 @@ internal class MonorepoUvPathSourceFromParentTest {
     f.assertProjectStructure(
       ExpectedModule("monorepo-root", contentRoot = ".", sourceRoots = listOf("."), deps = listOf("external_lib")),
       ExpectedModule("external_lib", contentRoot = "external_lib"),
-      ExpectedModule("frontend", contentRoot = "apps${SEP}frontend", deps = listOf("external_lib")),
+      ExpectedModule("frontend", contentRoot = "apps" / "frontend", deps = listOf("external_lib")),
     )
   }
 }

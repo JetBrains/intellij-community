@@ -302,20 +302,6 @@ http_file(
 )
 
 http_file(
-    name = "com_jetbrains_cloudconfig-cloudconfig-2023_9_http",
-    downloaded_file_path = "cloudconfig-2023.9.jar",
-    sha256 = "e51ee1761684a946b9d5a0caaec2b92cf4598860cf231dbaf495f268fda35d10",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/cloudconfig/cloudconfig/2023.9/cloudconfig-2023.9.jar",
-)
-
-http_file(
-    name = "com_jetbrains_cloudconfig-cloudconfig-2023_9-sources_http",
-    downloaded_file_path = "cloudconfig-2023.9-sources.jar",
-    sha256 = "86c94c625ccc61677a07bb5c7646cd0186a8b1f1f7bbf9238019caae4500d0e9",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/cloudconfig/cloudconfig/2023.9/cloudconfig-2023.9-sources.jar",
-)
-
-http_file(
     name = "org_jetbrains_patronus-codeowners-lib-ownership-2026_04_09-1517_http",
     downloaded_file_path = "codeowners-lib-ownership-2026.04.09-1517.jar",
     sha256 = "2f155bba83f73e89e84685bbb3597d7316bdcb1e69142652638c212af5f94fc0",
@@ -1076,34 +1062,6 @@ http_file(
     downloaded_file_path = "easymock-5.6.0-sources.jar",
     sha256 = "42a5f5b70878719fe17f1d73486a3e11457ba949359890621d008e3472a187b6",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/easymock/easymock/5.6.0/easymock-5.6.0-sources.jar",
-)
-
-http_file(
-    name = "org_eclipse_lsp4j-org_eclipse_lsp4j-0_24_0_http",
-    downloaded_file_path = "org.eclipse.lsp4j-0.24.0.jar",
-    sha256 = "2caea31ffa2abd13c6f5d13489be071ad08f108eae83a34473ac72d96cf72922",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j/0.24.0/org.eclipse.lsp4j-0.24.0.jar",
-)
-
-http_file(
-    name = "org_eclipse_lsp4j-org_eclipse_lsp4j-0_24_0-sources_http",
-    downloaded_file_path = "org.eclipse.lsp4j-0.24.0-sources.jar",
-    sha256 = "057e8f7a9f1cac74257dca2070a030c0366a78a14b2946635b5a00f422982775",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j/0.24.0/org.eclipse.lsp4j-0.24.0-sources.jar",
-)
-
-http_file(
-    name = "org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc-0_24_0_http",
-    downloaded_file_path = "org.eclipse.lsp4j.jsonrpc-0.24.0.jar",
-    sha256 = "7721572e849d4f359b46ede55d5604b982ff498d0d92ebc70e18029f59823c08",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j.jsonrpc/0.24.0/org.eclipse.lsp4j.jsonrpc-0.24.0.jar",
-)
-
-http_file(
-    name = "org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc-0_24_0-sources_http",
-    downloaded_file_path = "org.eclipse.lsp4j.jsonrpc-0.24.0-sources.jar",
-    sha256 = "08ea295d4dfec646d3db5b4f6e8ae66d5acfb511f36ca66905916d7ce2773986",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j.jsonrpc/0.24.0/org.eclipse.lsp4j.jsonrpc-0.24.0-sources.jar",
 )
 
 http_file(
@@ -2234,17 +2192,17 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps-gradle-api-9_6_0-rc-1_http",
-    downloaded_file_path = "gradle-api-9.6.0-rc-1.jar",
-    sha256 = "20c7f87f93b829c777a472c4aca1711ab534bbd9a05ca2103f63221638db1c74",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/gradle-api/9.6.0-rc-1/gradle-api-9.6.0-rc-1.jar",
+    name = "org_jetbrains_intellij_deps-gradle-api-9_6_0_http",
+    downloaded_file_path = "gradle-api-9.6.0.jar",
+    sha256 = "4db7e13a2cf5ecf2eb45bf1bb71df7b56cdf4f835da49ef02cd03f1a798f9f9a",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/gradle-api/9.6.0/gradle-api-9.6.0.jar",
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps-gradle-api-9_6_0-rc-1-sources_http",
-    downloaded_file_path = "gradle-api-9.6.0-rc-1-sources.jar",
-    sha256 = "5b880e9a0f17657accc1e62d3e7b09091df0213c1a64c941a09c1c16d566ec7d",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/gradle-api/9.6.0-rc-1/gradle-api-9.6.0-rc-1-sources.jar",
+    name = "org_jetbrains_intellij_deps-gradle-api-9_6_0-sources_http",
+    downloaded_file_path = "gradle-api-9.6.0-sources.jar",
+    sha256 = "e85277d7d3d4aa34e0bb8412167920cac64b37342d12e7caa7aab7dc30d434bd",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/gradle-api/9.6.0/gradle-api-9.6.0-sources.jar",
 )
 
 http_file(
@@ -4866,17 +4824,17 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_intellij_plugins-structure-intellij-3_329_http",
-    downloaded_file_path = "structure-intellij-3.329.jar",
-    sha256 = "1e250d452c4779006c0d8350d97e2c4601a7dcd365374df2f2d18ff6ab47b950",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/plugins/structure-intellij/3.329/structure-intellij-3.329.jar",
+    name = "org_jetbrains_intellij_plugins-structure-intellij-3_330_http",
+    downloaded_file_path = "structure-intellij-3.330.jar",
+    sha256 = "33e816ab74eb8348a50b2ad5b724856c50db27e475a762d80cdad2a9d11a3c4e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/plugins/structure-intellij/3.330/structure-intellij-3.330.jar",
 )
 
 http_file(
-    name = "org_jetbrains_intellij_plugins-structure-base-3_329_http",
-    downloaded_file_path = "structure-base-3.329.jar",
-    sha256 = "b2034a294db6bde4c8b904aaa7eb23f5388fa521ad28a21180f081bcfbd617e9",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/plugins/structure-base/3.329/structure-base-3.329.jar",
+    name = "org_jetbrains_intellij_plugins-structure-base-3_330_http",
+    downloaded_file_path = "structure-base-3.330.jar",
+    sha256 = "bd77c0d5118b0726a75f1ea539fb9b1821535f6f47529d248475983897840559",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/plugins/structure-base/3.330/structure-base-3.330.jar",
 )
 
 http_file(
@@ -4922,17 +4880,17 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_intellij_plugins-structure-intellij-3_329-sources_http",
-    downloaded_file_path = "structure-intellij-3.329-sources.jar",
-    sha256 = "b252e81b34158e5eef0b93f1fc4851fe077d9cf6e76ea989c459378e47dd1aa8",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/plugins/structure-intellij/3.329/structure-intellij-3.329-sources.jar",
+    name = "org_jetbrains_intellij_plugins-structure-intellij-3_330-sources_http",
+    downloaded_file_path = "structure-intellij-3.330-sources.jar",
+    sha256 = "f342ea276594bddd642a83bce678736afed09545d597484e8cb7968ce1cdd327",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/plugins/structure-intellij/3.330/structure-intellij-3.330-sources.jar",
 )
 
 http_file(
-    name = "org_jetbrains_intellij_plugins-structure-base-3_329-sources_http",
-    downloaded_file_path = "structure-base-3.329-sources.jar",
-    sha256 = "c0d8aadae8c4f81661e3cc1a907280b8b2c213da53d67abd55323cb5c2518384",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/plugins/structure-base/3.329/structure-base-3.329-sources.jar",
+    name = "org_jetbrains_intellij_plugins-structure-base-3_330-sources_http",
+    downloaded_file_path = "structure-base-3.330-sources.jar",
+    sha256 = "4caa9af804e036f9ef8eca0f265403fae13dd0e68f2d060e603001ad978174b6",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/plugins/structure-base/3.330/structure-base-3.330-sources.jar",
 )
 
 http_file(
@@ -6074,20 +6032,6 @@ http_file(
     downloaded_file_path = "json-schema-validator-1.3.1-sources.jar",
     sha256 = "ef9dd0dafdba630e1eb3b41013cb1bd66fec9ff5a208358f68d7ef8f011a4d99",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/networknt/json-schema-validator/1.3.1/json-schema-validator-1.3.1-sources.jar",
-)
-
-http_file(
-    name = "junit-junit-4_13_2_http",
-    downloaded_file_path = "junit-4.13.2.jar",
-    sha256 = "8e495b634469d64fb8acfa3495a065cbacc8a0fff55ce1e31007be4c16dc57d3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/junit/junit/4.13.2/junit-4.13.2.jar",
-)
-
-http_file(
-    name = "junit-junit-4_13_2-sources_http",
-    downloaded_file_path = "junit-4.13.2-sources.jar",
-    sha256 = "34181df6482d40ea4c046b063cb53c7ffae94bdf1b1d62695bdf3adf9dea7e3a",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/junit/junit/4.13.2/junit-4.13.2-sources.jar",
 )
 
 http_file(
@@ -7974,6 +7918,20 @@ http_file(
 )
 
 http_file(
+    name = "com_jetbrains_cloudconfig-cloudconfig-2023_9_http",
+    downloaded_file_path = "cloudconfig-2023.9.jar",
+    sha256 = "e51ee1761684a946b9d5a0caaec2b92cf4598860cf231dbaf495f268fda35d10",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/cloudconfig/cloudconfig/2023.9/cloudconfig-2023.9.jar",
+)
+
+http_file(
+    name = "com_jetbrains_cloudconfig-cloudconfig-2023_9-sources_http",
+    downloaded_file_path = "cloudconfig-2023.9-sources.jar",
+    sha256 = "86c94c625ccc61677a07bb5c7646cd0186a8b1f1f7bbf9238019caae4500d0e9",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/cloudconfig/cloudconfig/2023.9/cloudconfig-2023.9-sources.jar",
+)
+
+http_file(
     name = "io_coil-kt_coil3-coil-compose-jvm-3_2_0_http",
     downloaded_file_path = "coil-compose-jvm-3.2.0.jar",
     sha256 = "b135eafcff7545cba7e39c0c8d4e724c0f42e91050b10df5d635a6c7dfd3fb42",
@@ -8744,6 +8702,62 @@ http_file(
 )
 
 http_file(
+    name = "org_eclipse_lsp4j-org_eclipse_lsp4j_debug-0_24_0_http",
+    downloaded_file_path = "org.eclipse.lsp4j.debug-0.24.0.jar",
+    sha256 = "df9927dd2d5d4279ffd7096bca2efe9dc914ba0439bbe835e32ec332b8f21793",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j.debug/0.24.0/org.eclipse.lsp4j.debug-0.24.0.jar",
+)
+
+http_file(
+    name = "org_eclipse_lsp4j-org_eclipse_lsp4j_debug-0_24_0-sources_http",
+    downloaded_file_path = "org.eclipse.lsp4j.debug-0.24.0-sources.jar",
+    sha256 = "64abb402f61ef1c2cdd687ed3342f75a0b7a754bcd52f9a66a0a660e4e571124",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j.debug/0.24.0/org.eclipse.lsp4j.debug-0.24.0-sources.jar",
+)
+
+http_file(
+    name = "org_eclipse_lsp4j-org_eclipse_lsp4j-0_24_0_http",
+    downloaded_file_path = "org.eclipse.lsp4j-0.24.0.jar",
+    sha256 = "2caea31ffa2abd13c6f5d13489be071ad08f108eae83a34473ac72d96cf72922",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j/0.24.0/org.eclipse.lsp4j-0.24.0.jar",
+)
+
+http_file(
+    name = "org_eclipse_lsp4j-org_eclipse_lsp4j-0_24_0-sources_http",
+    downloaded_file_path = "org.eclipse.lsp4j-0.24.0-sources.jar",
+    sha256 = "057e8f7a9f1cac74257dca2070a030c0366a78a14b2946635b5a00f422982775",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j/0.24.0/org.eclipse.lsp4j-0.24.0-sources.jar",
+)
+
+http_file(
+    name = "org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc_debug-0_24_0_http",
+    downloaded_file_path = "org.eclipse.lsp4j.jsonrpc.debug-0.24.0.jar",
+    sha256 = "946997b27d3fc4693323edd014ecdd8cd51f03731f3368de6bbfb65ff0a22972",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j.jsonrpc.debug/0.24.0/org.eclipse.lsp4j.jsonrpc.debug-0.24.0.jar",
+)
+
+http_file(
+    name = "org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc_debug-0_24_0-sources_http",
+    downloaded_file_path = "org.eclipse.lsp4j.jsonrpc.debug-0.24.0-sources.jar",
+    sha256 = "bf9e8ad088f5f535993ec149b1e91288242757c23c563b21d7c4f4291ab2ac22",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j.jsonrpc.debug/0.24.0/org.eclipse.lsp4j.jsonrpc.debug-0.24.0-sources.jar",
+)
+
+http_file(
+    name = "org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc-0_24_0_http",
+    downloaded_file_path = "org.eclipse.lsp4j.jsonrpc-0.24.0.jar",
+    sha256 = "7721572e849d4f359b46ede55d5604b982ff498d0d92ebc70e18029f59823c08",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j.jsonrpc/0.24.0/org.eclipse.lsp4j.jsonrpc-0.24.0.jar",
+)
+
+http_file(
+    name = "org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc-0_24_0-sources_http",
+    downloaded_file_path = "org.eclipse.lsp4j.jsonrpc-0.24.0-sources.jar",
+    sha256 = "08ea295d4dfec646d3db5b4f6e8ae66d5acfb511f36ca66905916d7ce2773986",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j.jsonrpc/0.24.0/org.eclipse.lsp4j.jsonrpc-0.24.0-sources.jar",
+)
+
+http_file(
     name = "org_jetbrains_intellij_deps_fastutil-intellij-deps-fastutil-8_5_18-jb1_http",
     downloaded_file_path = "intellij-deps-fastutil-8.5.18-jb1.jar",
     sha256 = "fdb9053d8584253099300e0196fc0d3ec5b828535b0f39b0f97cf66f629df356",
@@ -9381,6 +9395,20 @@ http_file(
 )
 
 http_file(
+    name = "org_jline-jline-3_24_1_http",
+    downloaded_file_path = "jline-3.24.1.jar",
+    sha256 = "bd0e64bc24b21a975d47f9d12d73119ab51dce7639f0b45889d89f6325679c6d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline/3.24.1/jline-3.24.1.jar",
+)
+
+http_file(
+    name = "org_jline-jline-3_24_1-sources_http",
+    downloaded_file_path = "jline-3.24.1-sources.jar",
+    sha256 = "27767056354a9e48a856e8d74ce61a55e5ec9bab2292fd6846dc72148e567cfd",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline/3.24.1/jline-3.24.1-sources.jar",
+)
+
+http_file(
     name = "org_jruby_joni-joni-2_2_7_http",
     downloaded_file_path = "joni-2.2.7.jar",
     sha256 = "6054ab5bbf2dcc633fe62a359f1b39518e591fa76c90f9d50c7abb987d1f6774",
@@ -9574,6 +9602,20 @@ http_file(
     downloaded_file_path = "jsvg-2.1.0-sources.jar",
     sha256 = "6616050e4b185d5a7313f8ea9f4c5446a1d26ac880e1c35cccf44c9176bbd866",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/weisj/jsvg/2.1.0/jsvg-2.1.0-sources.jar",
+)
+
+http_file(
+    name = "junit-junit-4_13_2_http",
+    downloaded_file_path = "junit-4.13.2.jar",
+    sha256 = "8e495b634469d64fb8acfa3495a065cbacc8a0fff55ce1e31007be4c16dc57d3",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/junit/junit/4.13.2/junit-4.13.2.jar",
+)
+
+http_file(
+    name = "junit-junit-4_13_2-sources_http",
+    downloaded_file_path = "junit-4.13.2-sources.jar",
+    sha256 = "34181df6482d40ea4c046b063cb53c7ffae94bdf1b1d62695bdf3adf9dea7e3a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/junit/junit/4.13.2/junit-4.13.2-sources.jar",
 )
 
 http_file(
@@ -11023,6 +11065,90 @@ http_file(
     downloaded_file_path = "intellij-test-discovery-agent-1.0.776-sources.jar",
     sha256 = "7089ed25f22538cd79ff2b6ea40084bca50397fb320130b64fc4acb88e7acfa5",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.776/intellij-test-discovery-agent-1.0.776-sources.jar",
+)
+
+http_file(
+    name = "org_testcontainers-testcontainers-1_21_4_http",
+    downloaded_file_path = "testcontainers-1.21.4.jar",
+    sha256 = "ea81a9ca337bbae7ee83f372b92d55140c7ab976bce73ff1b79f2dd151ca9610",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/testcontainers/testcontainers/1.21.4/testcontainers-1.21.4.jar",
+)
+
+http_file(
+    name = "org_rnorth_duct-tape-duct-tape-1_0_8_http",
+    downloaded_file_path = "duct-tape-1.0.8.jar",
+    sha256 = "31cef12ddec979d1f86d7cf708c41a17da523d05c685fd6642e9d0b2addb7240",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/rnorth/duct-tape/duct-tape/1.0.8/duct-tape-1.0.8.jar",
+)
+
+http_file(
+    name = "com_github_docker-java-docker-java-api-3_4_2_http",
+    downloaded_file_path = "docker-java-api-3.4.2.jar",
+    sha256 = "6789d68f95904cf274a6410fdfcc5530976bc94197c856909459bb8c64db557b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/docker-java/docker-java-api/3.4.2/docker-java-api-3.4.2.jar",
+)
+
+http_file(
+    name = "com_github_docker-java-docker-java-transport-zerodep-3_4_2_http",
+    downloaded_file_path = "docker-java-transport-zerodep-3.4.2.jar",
+    sha256 = "582b772e0c52fa9d24710617ef610655465edd9a2930b0db75fc8667d6a8d02b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/docker-java/docker-java-transport-zerodep/3.4.2/docker-java-transport-zerodep-3.4.2.jar",
+)
+
+http_file(
+    name = "com_github_docker-java-docker-java-transport-3_4_2_http",
+    downloaded_file_path = "docker-java-transport-3.4.2.jar",
+    sha256 = "bc9981224fdc2d4726566fc723470601ceb14378265c865b4c203146a4e39765",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/docker-java/docker-java-transport/3.4.2/docker-java-transport-3.4.2.jar",
+)
+
+http_file(
+    name = "org_testcontainers-testcontainers-1_21_4-sources_http",
+    downloaded_file_path = "testcontainers-1.21.4-sources.jar",
+    sha256 = "a72d55e776d8d15848bfd8ee8d457f01b6dd54c037d851b894a8db286cfcc4bc",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/testcontainers/testcontainers/1.21.4/testcontainers-1.21.4-sources.jar",
+)
+
+http_file(
+    name = "org_rnorth_duct-tape-duct-tape-1_0_8-sources_http",
+    downloaded_file_path = "duct-tape-1.0.8-sources.jar",
+    sha256 = "b385fd2c2b435c313b3f02988d351503230c9631bfb432261cbd8ce9765d2a26",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/rnorth/duct-tape/duct-tape/1.0.8/duct-tape-1.0.8-sources.jar",
+)
+
+http_file(
+    name = "com_github_docker-java-docker-java-api-3_4_2-sources_http",
+    downloaded_file_path = "docker-java-api-3.4.2-sources.jar",
+    sha256 = "1a407574c5c7bf2170d7c9bb76db7341b43b3ee06dc44e215c31356a1d9f3c91",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/docker-java/docker-java-api/3.4.2/docker-java-api-3.4.2-sources.jar",
+)
+
+http_file(
+    name = "com_github_docker-java-docker-java-transport-zerodep-3_4_2-sources_http",
+    downloaded_file_path = "docker-java-transport-zerodep-3.4.2-sources.jar",
+    sha256 = "c88c4745337a54eeae73788cdba9b1a80cebbd3cadfc701c3f8a9e7d217da314",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/docker-java/docker-java-transport-zerodep/3.4.2/docker-java-transport-zerodep-3.4.2-sources.jar",
+)
+
+http_file(
+    name = "com_github_docker-java-docker-java-transport-3_4_2-sources_http",
+    downloaded_file_path = "docker-java-transport-3.4.2-sources.jar",
+    sha256 = "a50fd13efc29146e047ac2a34403172ed62bf52752252286335df1b3e5cf1d18",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/docker-java/docker-java-transport/3.4.2/docker-java-transport-3.4.2-sources.jar",
+)
+
+http_file(
+    name = "org_testcontainers-junit-jupiter-1_21_4_http",
+    downloaded_file_path = "junit-jupiter-1.21.4.jar",
+    sha256 = "92df2a6fd67c30acb5b3521118558033f711c7973fab5f4597211ff3fd13f416",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/testcontainers/junit-jupiter/1.21.4/junit-jupiter-1.21.4.jar",
+)
+
+http_file(
+    name = "org_testcontainers-junit-jupiter-1_21_4-sources_http",
+    downloaded_file_path = "junit-jupiter-1.21.4-sources.jar",
+    sha256 = "897b13ab18d4faf950d29563c55a66081a0809435072a3c47953fc6d38f13070",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/testcontainers/junit-jupiter/1.21.4/junit-jupiter-1.21.4-sources.jar",
 )
 
 http_file(
@@ -15720,90 +15846,6 @@ http_file(
     downloaded_file_path = "jquery-3.6.1-sources.jar",
     sha256 = "9f6acaa801d60f0316d995c396a487295c349549db51f52ce095e38ad3066106",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/webjars/jquery/3.6.1/jquery-3.6.1-sources.jar",
-)
-
-http_file(
-    name = "org_testcontainers-testcontainers-1_21_4_http",
-    downloaded_file_path = "testcontainers-1.21.4.jar",
-    sha256 = "ea81a9ca337bbae7ee83f372b92d55140c7ab976bce73ff1b79f2dd151ca9610",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/testcontainers/testcontainers/1.21.4/testcontainers-1.21.4.jar",
-)
-
-http_file(
-    name = "org_rnorth_duct-tape-duct-tape-1_0_8_http",
-    downloaded_file_path = "duct-tape-1.0.8.jar",
-    sha256 = "31cef12ddec979d1f86d7cf708c41a17da523d05c685fd6642e9d0b2addb7240",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/rnorth/duct-tape/duct-tape/1.0.8/duct-tape-1.0.8.jar",
-)
-
-http_file(
-    name = "com_github_docker-java-docker-java-api-3_4_2_http",
-    downloaded_file_path = "docker-java-api-3.4.2.jar",
-    sha256 = "6789d68f95904cf274a6410fdfcc5530976bc94197c856909459bb8c64db557b",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/docker-java/docker-java-api/3.4.2/docker-java-api-3.4.2.jar",
-)
-
-http_file(
-    name = "com_github_docker-java-docker-java-transport-zerodep-3_4_2_http",
-    downloaded_file_path = "docker-java-transport-zerodep-3.4.2.jar",
-    sha256 = "582b772e0c52fa9d24710617ef610655465edd9a2930b0db75fc8667d6a8d02b",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/docker-java/docker-java-transport-zerodep/3.4.2/docker-java-transport-zerodep-3.4.2.jar",
-)
-
-http_file(
-    name = "com_github_docker-java-docker-java-transport-3_4_2_http",
-    downloaded_file_path = "docker-java-transport-3.4.2.jar",
-    sha256 = "bc9981224fdc2d4726566fc723470601ceb14378265c865b4c203146a4e39765",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/docker-java/docker-java-transport/3.4.2/docker-java-transport-3.4.2.jar",
-)
-
-http_file(
-    name = "org_testcontainers-testcontainers-1_21_4-sources_http",
-    downloaded_file_path = "testcontainers-1.21.4-sources.jar",
-    sha256 = "a72d55e776d8d15848bfd8ee8d457f01b6dd54c037d851b894a8db286cfcc4bc",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/testcontainers/testcontainers/1.21.4/testcontainers-1.21.4-sources.jar",
-)
-
-http_file(
-    name = "org_rnorth_duct-tape-duct-tape-1_0_8-sources_http",
-    downloaded_file_path = "duct-tape-1.0.8-sources.jar",
-    sha256 = "b385fd2c2b435c313b3f02988d351503230c9631bfb432261cbd8ce9765d2a26",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/rnorth/duct-tape/duct-tape/1.0.8/duct-tape-1.0.8-sources.jar",
-)
-
-http_file(
-    name = "com_github_docker-java-docker-java-api-3_4_2-sources_http",
-    downloaded_file_path = "docker-java-api-3.4.2-sources.jar",
-    sha256 = "1a407574c5c7bf2170d7c9bb76db7341b43b3ee06dc44e215c31356a1d9f3c91",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/docker-java/docker-java-api/3.4.2/docker-java-api-3.4.2-sources.jar",
-)
-
-http_file(
-    name = "com_github_docker-java-docker-java-transport-zerodep-3_4_2-sources_http",
-    downloaded_file_path = "docker-java-transport-zerodep-3.4.2-sources.jar",
-    sha256 = "c88c4745337a54eeae73788cdba9b1a80cebbd3cadfc701c3f8a9e7d217da314",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/docker-java/docker-java-transport-zerodep/3.4.2/docker-java-transport-zerodep-3.4.2-sources.jar",
-)
-
-http_file(
-    name = "com_github_docker-java-docker-java-transport-3_4_2-sources_http",
-    downloaded_file_path = "docker-java-transport-3.4.2-sources.jar",
-    sha256 = "a50fd13efc29146e047ac2a34403172ed62bf52752252286335df1b3e5cf1d18",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/docker-java/docker-java-transport/3.4.2/docker-java-transport-3.4.2-sources.jar",
-)
-
-http_file(
-    name = "org_testcontainers-junit-jupiter-1_21_4_http",
-    downloaded_file_path = "junit-jupiter-1.21.4.jar",
-    sha256 = "92df2a6fd67c30acb5b3521118558033f711c7973fab5f4597211ff3fd13f416",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/testcontainers/junit-jupiter/1.21.4/junit-jupiter-1.21.4.jar",
-)
-
-http_file(
-    name = "org_testcontainers-junit-jupiter-1_21_4-sources_http",
-    downloaded_file_path = "junit-jupiter-1.21.4-sources.jar",
-    sha256 = "897b13ab18d4faf950d29563c55a66081a0809435072a3c47953fc6d38f13070",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/testcontainers/junit-jupiter/1.21.4/junit-jupiter-1.21.4-sources.jar",
 )
 
 http_file(

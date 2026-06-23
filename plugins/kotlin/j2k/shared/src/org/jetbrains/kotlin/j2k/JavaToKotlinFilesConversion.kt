@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaFile
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
 
 @ApiStatus.Internal
 suspend fun convertJavaFilesToKotlin(
@@ -17,9 +16,8 @@ suspend fun convertJavaFilesToKotlin(
     settings: ConverterSettings = ConverterSettings.defaultSettings,
     preprocessorExtensions: List<J2kPreprocessorExtension> = J2kPreprocessorExtension.EP_NAME.extensionList,
     postprocessorExtensions: List<J2kPostprocessorExtension> = J2kPostprocessorExtension.EP_NAME.extensionList,
-    j2kKind: J2kConverterExtension.Kind = getJ2kKind(),
 ): ConversionResult {
-    val j2kConverterExtension = J2kConverterExtension.extension(j2kKind)
+    val j2kConverterExtension = J2kConverterExtension.extension()
     val converter = j2kConverterExtension.createJavaToKotlinConverter(project, module, settings)
     val postProcessor = j2kConverterExtension.createPostProcessor()
 
@@ -32,5 +30,3 @@ suspend fun convertJavaFilesToKotlin(
     )
 }
 
-@ApiStatus.Internal
-fun getJ2kKind(): J2kConverterExtension.Kind = K2

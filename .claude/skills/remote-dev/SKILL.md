@@ -44,6 +44,15 @@ Detailed documentation in [docs/IntelliJ-Platform/4_man/Remote-Development/](../
 
 
 ### Creating Remote Development Modules
+
+After creating any new remote-dev `.iml`, register it with the project-file helper instead of editing `modules.xml` by hand:
+
+```bash
+bun build/jps-module.mjs register <path-to-iml> --fix-iml-eof
+```
+
+The helper updates `.idea/modules.xml`, also updates `community/.idea/modules.xml` for community modules, and uses the canonical order by `.iml` basename.
+
 #### Module Types and Naming Conventions
 
 - **Standard Module**: `intellij.<pluginGroup>.<frameworkName>`

@@ -221,6 +221,7 @@ public object IntUiLightTheme : ThemeDescriptor {
                     "Purple9" to Color(0xFFF5EDFF),
                     "Purple10" to Color(0xFFFAF5FF),
                 ),
+            isIslands = false,
         )
 
     override val iconData: ThemeIconData =

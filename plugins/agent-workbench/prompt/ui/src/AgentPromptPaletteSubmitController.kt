@@ -47,6 +47,7 @@ internal class AgentPromptPaletteSubmitController(
   private val onSubmitBlocked: (@Nls String) -> Unit,
   private val onSubmitSucceeded: () -> Unit,
   private val onPromptSubmitted: (AgentPromptHistoryEntry) -> Unit = {},
+  private val onProviderSubmitted: () -> Unit = {},
   private val generationSettingsProvider: () -> AgentPromptGenerationSettings = { AgentPromptGenerationSettings.AUTO },
   private val generationModelCatalogProvider: () -> List<AgentPromptGenerationModel> = { emptyList() },
   private val isContainerModeSelected: () -> Boolean = { false },
@@ -139,6 +140,7 @@ internal class AgentPromptPaletteSubmitController(
           )
           val event = AnActionEvent.createEvent(action, dataContext, null, invocationData.actionPlace ?: "", ActionUiKind.NONE, null)
           action.actionPerformed(event)
+          onProviderSubmitted()
           launchState.clearDraftOnClose = true
           onSubmitSucceeded()
           return
@@ -243,6 +245,7 @@ internal class AgentPromptPaletteSubmitController(
           launchMode = providerSelector.selectedLaunchMode.name,
         )
       )
+      onProviderSubmitted()
       launchState.clearDraftOnClose = true
       onSubmitSucceeded()
       return

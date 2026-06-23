@@ -225,7 +225,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:jmock",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/util/concurrency",

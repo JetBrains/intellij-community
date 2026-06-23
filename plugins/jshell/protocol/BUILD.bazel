@@ -31,7 +31,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":protocol",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//libraries/hamcrest",
         "//libraries/hamcrest:hamcrest_test_lib",
     ],
@@ -78,7 +79,8 @@ jvm_library(
     runtime_deps = [":java-jshell-protocol-tests"],
     deps = [
         # do not sort,
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//libraries/hamcrest",
         "//libraries/hamcrest:hamcrest_test_lib",
     ],

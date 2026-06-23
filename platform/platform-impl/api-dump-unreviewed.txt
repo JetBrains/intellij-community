@@ -1052,12 +1052,8 @@ f:com.intellij.ide.actions.TogglePresentationModeAction
 f:com.intellij.ide.actions.ToggleToolbarAction
 - s:createAction(java.lang.String,com.intellij.ide.util.PropertiesComponent,java.util.function.Supplier):com.intellij.ide.actions.ToggleToolbarAction
 - s:createToggleToolbarGroup(com.intellij.openapi.project.Project,com.intellij.openapi.wm.ToolWindow):com.intellij.openapi.actionSystem.DefaultActionGroup
-- s:createToolWindowAction(com.intellij.openapi.wm.ToolWindow,com.intellij.ide.util.PropertiesComponent):com.intellij.ide.actions.ToggleToolbarAction
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
-- s:isToolbarVisible(com.intellij.openapi.wm.ToolWindow):Z
-- s:isToolbarVisible(com.intellij.openapi.wm.ToolWindow,com.intellij.ide.util.PropertiesComponent):Z
-- s:isToolbarVisible(com.intellij.openapi.wm.ToolWindow,com.intellij.openapi.project.Project):Z
 - s:isToolbarVisible(java.lang.String):Z
 - s:isToolbarVisible(java.lang.String,com.intellij.ide.util.PropertiesComponent):Z
 - s:isToolbarVisible(java.lang.String,com.intellij.openapi.project.Project):Z
@@ -1066,7 +1062,6 @@ f:com.intellij.ide.actions.ToggleToolbarAction
 - s:setToolbarVisible(java.lang.Iterable,Z):V
 - s:setToolbarVisible(java.lang.String,com.intellij.ide.util.PropertiesComponent,java.lang.Iterable,java.lang.Boolean):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-- s:updateToolbarVisibility(com.intellij.openapi.wm.ToolWindow,com.intellij.openapi.actionSystem.ActionToolbar,com.intellij.ide.util.PropertiesComponent):V
 c:com.intellij.ide.actions.ToolWindowTabRenameActionBase
 - <init>(java.lang.String,java.lang.String):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.wm.ToolWindow,com.intellij.ui.content.Content):V

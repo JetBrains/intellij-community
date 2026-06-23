@@ -35,7 +35,7 @@
     <orderEntry type="module" module-name="intellij.xml.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xpath.rt" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jaxen" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.dom.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.util.nanoxml" scope="TEST" />

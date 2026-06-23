@@ -19,7 +19,6 @@ public final class PyUnusedLocalInspection extends PyInspection {
   private static final Key<PyUnusedLocalInspectionVisitor> KEY = Key.create("PyUnusedLocal.Visitor");
 
   public boolean ignoreTupleUnpacking = true;
-  public boolean ignoreLambdaParameters = true;
   public boolean ignoreLoopIterationVariables = true;
   public boolean ignoreVariablesStartingWithUnderscore = true;
 
@@ -29,9 +28,11 @@ public final class PyUnusedLocalInspection extends PyInspection {
                                                  @NotNull LocalInspectionToolSession session) {
     final PyUnusedLocalInspectionVisitor visitor = new PyUnusedLocalInspectionVisitor(holder,
                                                                                       ignoreTupleUnpacking,
-                                                                                      ignoreLambdaParameters,
+                                                                                      true,
                                                                                       ignoreLoopIterationVariables,
                                                                                       ignoreVariablesStartingWithUnderscore,
+                                                                                      PyUnusedLocalInspectionVisitor.ReportTarget.LOCALS,
+                                                                                      PyUnusedLocalInspectionVisitor.getSharedAnalysis(session),
                                                                                       PyInspectionVisitor.getContext(session));
     // buildVisitor() will be called on injected files in the same session - don't overwrite if we already have one
     final PyUnusedLocalInspectionVisitor existingVisitor = session.getUserData(KEY);
@@ -54,7 +55,6 @@ public final class PyUnusedLocalInspection extends PyInspection {
   public @NotNull OptPane getOptionsPane() {
     return pane(
       checkbox("ignoreTupleUnpacking", PyPsiBundle.message("INSP.unused.locals.ignore.variables.used.in.tuple.unpacking")),
-      checkbox("ignoreLambdaParameters", PyPsiBundle.message("INSP.unused.locals.ignore.lambda.parameters")),
       checkbox("ignoreLoopIterationVariables", PyPsiBundle.message("INSP.unused.locals.ignore.range.iteration.variables")),
       checkbox("ignoreVariablesStartingWithUnderscore", PyPsiBundle.message("INSP.unused.locals.ignore.variables.starting.with"))
     );

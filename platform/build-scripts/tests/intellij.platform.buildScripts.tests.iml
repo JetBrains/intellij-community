@@ -10,7 +10,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.runtime.product" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.opentelemetry" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.opentelemetry.semconv" scope="TEST" />
@@ -48,7 +48,6 @@
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.productDsl.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.runtime.repository" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.buildScripts" />

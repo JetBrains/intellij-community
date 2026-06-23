@@ -440,7 +440,7 @@ public class JobUtilTest extends LightPlatformTestCase {
       ProgressIndicator wrapper = new DaemonProgressIndicator();
       try {
         // avoid "attach listener"/"write action" race
-        ReadAction.run(() -> {
+        ReadAction.runBlocking(() -> {
           wrapper.start();
           ProgressIndicatorUtils.forceWriteActionPriority(wrapper, disposable);
           // there is a chance we are racing with write action, in which case just registered listener might not be called, retry.
@@ -450,7 +450,7 @@ public class JobUtilTest extends LightPlatformTestCase {
         });
         // use wrapper here to cancel early when write action start but do not affect the original indicator
         ((JobLauncherImpl)JobLauncher.getInstance()).processQueue(queue, failedQueue, wrapper, TOMB_STONE, _ -> {
-          ReadAction.run(() -> {
+          ReadAction.runBlocking(() -> {
             ProgressManager.checkCanceled();
             //TimeoutUtil.sleep(1);
             ProgressManager.checkCanceled();

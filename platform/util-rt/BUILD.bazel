@@ -32,7 +32,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":util-rt",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.util.rt` end
@@ -78,7 +79,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:jetbrains-annotations",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.util.rt.tests` end

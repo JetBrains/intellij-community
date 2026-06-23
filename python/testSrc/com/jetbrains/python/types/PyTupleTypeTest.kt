@@ -708,6 +708,160 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
           expr = test_seq(p)
       #   └ TYPE Sequence[int | complex | float | str]
       """)
+
+    @Test
+    @TestFor(issues = ["PY-43585"])
+    fun `tuple literal splicing a list`() = test(noAny, """
+      def f(first: int, rest: list[int]):
+          expr = (first, *rest)
+      #   └ TYPE tuple[int, *tuple[int, ...]]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-43585"])
+    fun `tuple literal splicing a homogeneous tuple`() = test("""
+      def f(first: int, rest: tuple[str, ...]):
+          expr = (first, *rest)
+      #   └ TYPE tuple[int, *tuple[str, ...]]
+      """)
+  }
+
+  @Nested
+  inner class UnpackingDiagnostics {
+    @Test
+    @TestFor(issues = ["PY-39258"])
+    fun `nested tuple unpacking balance`() = test("""
+      def func(args: tuple[str, tuple[int, int, int]]):
+          s, (x, y) = args # WARNING Too many values to unpack from 'tuple[int, int, int]': expected 2, got 3
+
+      def func2(args: tuple[str, tuple[int, int]]):
+          s, (x, y, z) = args # WARNING Not enough values to unpack from 'tuple[int, int]': expected 3, got 2
+
+      def func3(args: tuple[str, tuple[int, int]]):
+          s, (x, y) = args
+
+      def func4(args: tuple[str, tuple[int, ...]]):
+          s, (x, y) = args
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85232"])
+    fun `for loop unpacking a non iterable item`() = test("""
+      for a, b in [1]: # WARNING Expected an iterable, got 'int'
+          pass
+
+      for c in [1]:
+          pass
+
+      for x, y in [(1, 2)]:
+          pass
+
+      for k, v in [[1, 2]]:
+          pass
+
+      def f(rows: list[str]):
+          for first, second in rows:
+              pass
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90173"])
+    fun `annotated target unpacked from list assignment is type checked`() = test(noAny, """
+      x: int
+      x, _ = ["foo", "bar"] # WARNING Expected type 'int', got 'str' instead
+
+      y: str
+      y, _ = ["foo", "bar"]
+
+      def f(items: list[int]):
+          z: str
+          z, _ = items # WARNING Expected type 'str', got 'int' instead
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90173"])
+    fun `annotated target unpacked in for loop is type checked`() = test("""
+      x: int
+      for x, _ in [("a", "b")]: # WARNING Expected type 'int', got 'str' instead
+          pass
+
+      y: int
+      for y, _ in [(1, 2)]:
+          pass
+
+      def f(matrix: list[list[int]]):
+          a: str
+          for a, b in matrix: # WARNING Expected type 'str', got 'int' instead
+              pass
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-39258"])
+    fun `nested tuple unpacking balance in for loop`() = test("""
+      def func(rows: list[tuple[str, tuple[int, int, int]]]):
+          for s, (x, y) in rows: # WARNING Too many values to unpack from 'tuple[int, int, int]': expected 2, got 3
+              pass
+
+      def func2(rows: list[tuple[str, tuple[int, int]]]):
+          for s, (x, y, z) in rows: # WARNING Not enough values to unpack from 'tuple[int, int]': expected 3, got 2
+              pass
+
+      def func3(rows: list[tuple[str, tuple[int, int]]]):
+          for s, (x, y) in rows:
+              pass
+
+      def func4(rows: list[tuple[str, tuple[int, ...]]]):
+          for s, (x, y) in rows:
+              pass
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-27205"])
+    fun `tuple literal splicing a fixed tuple matches its target type`() = test("""
+      def f(t: tuple[int, int]):
+          expr = (1, *t)
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-40735"])
+    fun `unpacked tuple argument fills parameters`() = test("""
+      def foo(a: str, b: int): ...
+
+      a = "1",
+      foo(*("1",), 1)
+      foo(*a, 1)
+      foo(*("1", 2))
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-40735"])
+    fun `unpacked tuple variable argument overfills parameters`() = test("""
+      def foo(a: str, b: int): ...
+
+      xe = "1", 2
+      foo(*xe, 3) # WARNING Unexpected argument
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-40735"])
+    fun `unpacked tuple literal argument is type checked`() = test("""
+      def foo(a: str, b: int): ...
+
+      foo(*("1",), 1)
+      foo(*("1", 2))
+      foo(*("1",), "2") # WARNING Expected type 'int', got 'Literal["2"]' instead
+      foo(*("1", "2")) # WARNING Expected type 'int', got 'Literal["2"]' instead
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-40735"])
+    fun `unpacked tuple variable argument is type checked`() = test("""
+      def foo(a: str, b: int): ...
+
+      xe = "1",
+      foo(*xe, 2)
+      foo(*xe, "2") # WARNING Expected type 'int', got 'Literal["2"]' instead
+      """)
   }
 
   @Nested

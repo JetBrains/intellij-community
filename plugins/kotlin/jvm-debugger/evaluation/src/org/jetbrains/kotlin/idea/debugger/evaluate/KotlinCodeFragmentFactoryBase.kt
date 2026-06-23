@@ -18,7 +18,7 @@ import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.j2k.ConverterSettings
-import org.jetbrains.kotlin.nj2k.NewJavaToKotlinConverter
+import org.jetbrains.kotlin.nj2k.JavaToKotlinConverter
 import org.jetbrains.kotlin.psi.KtBlockCodeFragment
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
@@ -45,9 +45,9 @@ abstract class KotlinCodeFragmentFactoryBase : JavaDebuggerCodeFragmentFactory()
             null
         }
         val convertedFragment = try {
-            val converter = NewJavaToKotlinConverter(project, javaExpression?.module, ConverterSettings.defaultSettings)
+            val converter = JavaToKotlinConverter(project, javaExpression?.module, ConverterSettings.defaultSettings)
             val convertedExpression = ActionUtil.underModalProgress(project, KotlinDebuggerEvaluationBundle.message("progress.title.converting.java.expression.to.kotlin")) {
-                converter.elementsToKotlin(listOfNotNull(javaExpression))
+                converter.elementsToKotlin(listOfNotNull(javaExpression), null)
             }
             val newText = convertedExpression.results.singleOrNull()?.text
             val newImports = importList?.text

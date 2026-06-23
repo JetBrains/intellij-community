@@ -59,18 +59,17 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
     coroutineScope.launch {
       val data = MarkdownLinkOpenerRemoteApi.Companion.getInstance().fetchLinkNavigationData(link, containingFile?.rpcId())
       val uri = createUri(data.uri) ?: return@launch
-      if (!BrowserUtil.isAbsoluteURL(link) && data.virtualFileId == null) {
-        val project = currentProject ?: data.projectId?.findProject() ?: return@launch
-        val name = link.substringBefore('#').substringAfterLast('/')
-        withContext(Dispatchers.EDT) { showUnresolvedFileNotification(project, name) }
-        return@launch
-      }
-      if (uri.scheme != "file") {
+      if (BrowserUtil.isAbsoluteURL(link) && uri.scheme != "file") {
         openExternalLink(currentProject, uri)
         return@launch
       }
       val project = currentProject ?: data.projectId?.findProject() ?: return@launch
-      val fileToOpen = data.virtualFileId?.virtualFile() ?: return@launch
+      val fileToOpen = data.virtualFileId?.virtualFile()
+      if (fileToOpen == null) {
+        val name = link.substringBefore('#').substringAfterLast('/')
+        withContext(Dispatchers.EDT) { showUnresolvedFileNotification(project, name) }
+        return@launch
+      }
       val anchor = uri.fragment
       if (!fileToOpen.fileType.isMarkdownType()) {
         withContext(Dispatchers.EDT) {

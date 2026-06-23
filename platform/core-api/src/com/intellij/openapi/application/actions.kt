@@ -61,6 +61,10 @@ fun <T> invokeAndWaitIfNeeded(modalityState: ModalityState? = null, runnable: ()
   else {
     var resultRef: T? = null
     app.invokeAndWait({ resultRef = runnable() }, modalityState ?: ModalityState.defaultModalityState())
+    // Beware: resultRef may be null if runnable threw a PCE. (IJPL-248007)
+    //         Such PCE is silently swallowed by `ApplicationImpl.doInvokeAndWait`,
+    //         and the `resultRef` is never set.
+    //         This cast is therefore unsafe and may result in a NPE down the line.
     @Suppress("UNCHECKED_CAST")
     return resultRef as T
   }

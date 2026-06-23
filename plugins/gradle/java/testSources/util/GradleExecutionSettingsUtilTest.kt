@@ -120,7 +120,7 @@ class GradleExecutionSettingsUtilTest : GradleExecutionSettingsUtilTestCase() {
   }
 
   fun `test filter generation for the Junit 4 parametrized tests`() {
-    val junitLibrary = IntelliJProjectConfiguration.getProjectLibrary("JUnit4")
+    val junitLibrary = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4")
     for (classesUrl in junitLibrary.classesUrls) {
       ModuleRootModificationUtil.addModuleLibrary(module, classesUrl)
     }

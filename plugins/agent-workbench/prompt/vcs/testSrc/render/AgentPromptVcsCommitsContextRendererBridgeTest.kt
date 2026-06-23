@@ -116,7 +116,7 @@ class AgentPromptVcsCommitsContextRendererBridgeTest {
   }
 
   @Test
-  fun renderEnvelopeKeepsHashOnlyOutputWhenPayloadHasMetadata() {
+  fun renderEnvelopeUsesSubjectWhenPayloadHasMetadata() {
     val item = contextItem(
       body = "",
       payload = AgentPromptPayload.obj(
@@ -131,7 +131,26 @@ class AgentPromptVcsCommitsContextRendererBridgeTest {
 
     val rendered = renderer.renderEnvelope(AgentPromptEnvelopeRenderInput(item = item, projectPath = null))
 
-    assertThat(rendered).isEqualTo("commits:\nabc12345abcdef")
+    assertThat(rendered).isEqualTo("commits:\nabc12345abcdef | Fix TEST-101 regression")
+  }
+
+  @Test
+  fun renderEnvelopePrefersBodyOverPayloadMetadata() {
+    val item = contextItem(
+      body = "abc12345abcdef | Body subject",
+      payload = AgentPromptPayload.obj(
+        "entries" to AgentPromptPayload.arr(
+          AgentPromptPayload.obj(
+            "hash" to AgentPromptPayload.str("abc12345abcdef"),
+            "subject" to AgentPromptPayload.str("Payload subject"),
+          ),
+        )
+      )
+    )
+
+    val rendered = renderer.renderEnvelope(AgentPromptEnvelopeRenderInput(item = item, projectPath = null))
+
+    assertThat(rendered).isEqualTo("commits:\nabc12345abcdef | Body subject")
   }
 
   private fun contextItem(

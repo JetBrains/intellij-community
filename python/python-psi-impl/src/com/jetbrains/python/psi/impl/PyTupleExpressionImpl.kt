@@ -6,12 +6,18 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyElementGenerator
 import com.jetbrains.python.psi.PyElementVisitor
 import com.jetbrains.python.psi.PyParenthesizedExpression
+import com.jetbrains.python.psi.PyStarExpression
 import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.PyNames
+import com.jetbrains.python.psi.types.PyABCUtil
+import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.PyUnpackedTupleTypeImpl
 import com.jetbrains.python.psi.types.getLiteralType
 import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isAnyOrUnknown
 
 class PyTupleExpressionImpl(astNode: ASTNode) : PySequenceExpressionImpl(astNode), PyTupleExpression {
   override fun acceptPyVisitor(pyVisitor: PyElementVisitor) {
@@ -20,10 +26,28 @@ class PyTupleExpressionImpl(astNode: ASTNode) : PySequenceExpressionImpl(astNode
 
   override fun getType(context: TypeEvalContext, key: TypeEvalContext.Key): PyType? {
     val inferLiteralTypes = PyLiteralType.inferLiteralTypeForLiteralExpressions()
-    return PyTupleType.create(
-      this,
-      elements.map { (if (inferLiteralTypes) it.getLiteralType(context) else null) ?: context.getType(it) }
-    )
+    val elementTypes = buildList {
+      for (element in elements) {
+        val starOperand = (element as? PyStarExpression)?.expression
+        if (starOperand != null) {
+          val operandType = context.getType(starOperand)
+          // A fixed-length tuple operand splices its elements in directly: `(1, *a)` with `a: tuple[int, int]` is `tuple[int, int, int]`.
+          if (operandType is PyTupleType && !operandType.isHomogeneous) {
+            addAll(operandType.elementTypes)
+            continue
+          }
+          // Any other iterable contributes an unbounded `*tuple[T, ...]` portion of its item type.
+          if (!operandType.isAnyOrUnknown && !PyTypeChecker.isUnknown(operandType, context) &&
+              PyABCUtil.isSubtype(operandType, PyNames.ITERABLE, context)) {
+            val itemType = PyTargetExpressionImpl.getIterationType(operandType, starOperand, this@PyTupleExpressionImpl, false, context)
+            add(PyUnpackedTupleTypeImpl(listOf(itemType), true))
+            continue
+          }
+        }
+        add((if (inferLiteralTypes) element.getLiteralType(context) else null) ?: context.getType(element))
+      }
+    }
+    return PyTupleType.create(this, elementTypes)
   }
 
   override fun deleteChildInternal(child: ASTNode) {

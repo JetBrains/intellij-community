@@ -3,7 +3,7 @@ package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.testplan
 
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
-import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.SEP
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.ExpectedModule
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.PYTHON
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTomlSyncFixture
@@ -40,10 +40,10 @@ internal class UvWorkspace2CopiesWithDependenciesTest {
       ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
       ExpectedModule("my-uv-monorepo", contentRoot = "copy1", deps = listOf("package_a")),
       ExpectedModule("my-uv-monorepo@1", contentRoot = "copy2", deps = listOf("package_a@1")),
-      ExpectedModule("package_a", contentRoot = "copy1${SEP}packages${SEP}package_a"),
-      ExpectedModule("package_a@1", contentRoot = "copy2${SEP}packages${SEP}package_a"),
-      ExpectedModule("package_b", contentRoot = "copy1${SEP}packages${SEP}package_b", deps = listOf("package_a")),
-      ExpectedModule("package_b@1", contentRoot = "copy2${SEP}packages${SEP}package_b", deps = listOf("package_a@1")),
+      ExpectedModule("package_a", contentRoot = "copy1" / "packages" / "package_a"),
+      ExpectedModule("package_a@1", contentRoot = "copy2" / "packages" / "package_a"),
+      ExpectedModule("package_b", contentRoot = "copy1" / "packages" / "package_b", deps = listOf("package_a")),
+      ExpectedModule("package_b@1", contentRoot = "copy2" / "packages" / "package_b", deps = listOf("package_a@1")),
     )
   }
 }

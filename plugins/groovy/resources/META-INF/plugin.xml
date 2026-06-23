@@ -21,6 +21,10 @@
     <module name="intellij.groovy.copyright"/>
     <module name="intellij.groovy.byteCodeViewer"/>
   </content>
+  <content>
+    <module name="intellij.libraries.hamcrest" loading="embedded"/>
+    <module name="intellij.libraries.junit4" loading="embedded"/>
+  </content>
   <dependencies>
     <plugin id="com.intellij.properties"/>
     <plugin id="com.intellij.groovy.scripting"/>

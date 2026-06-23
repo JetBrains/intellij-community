@@ -402,7 +402,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
                         && !myTextLabel.isAllowAutoWrapping()
                         && myTextLabel.getWidth() > 0
                         && myTextLabel.getPreferredSize().width > myTextLabel.getWidth();
-    HtmlChunk tooltip = truncated ? HtmlChunk.text(text) : null;
+    HtmlChunk tooltip = truncated ? HtmlChunk.raw(text) : null;
     if (Objects.equals(myTextLabel.getToolTipText(), myTruncationTooltip)) {
       HelpTooltipKt.setToolTipText(myTextLabel, tooltip);
       myTruncationTooltip = myTextLabel.getToolTipText();
@@ -507,7 +507,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   }
 
   public void clear() {
-    myTextLabel.setText("");
+    this.setText("");
     myLinksPanel.removeAll();
   }
 

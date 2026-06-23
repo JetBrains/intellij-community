@@ -72,6 +72,7 @@ import com.jetbrains.python.psi.impl.PyCallExpressionHelper.analyzeArguments
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper.mapArguments
 import com.jetbrains.python.psi.impl.PyPsiUtils.flattenParens
 import com.jetbrains.python.psi.impl.PySubscriptionExpressionImpl
+import com.jetbrains.python.psi.impl.PyTargetExpressionImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyABCUtil.isSubtype
 import com.jetbrains.python.psi.types.PyAnyType.Companion.unknown
@@ -95,6 +96,7 @@ import com.jetbrains.python.psi.types.PySentinelType
 import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions
+import com.jetbrains.python.psi.types.PyTypeChecker.containsAny
 import com.jetbrains.python.psi.types.PyTypeChecker.getTargetTypeFromTupleAssignment
 import com.jetbrains.python.psi.types.PyTypeChecker.hasGenerics
 import com.jetbrains.python.psi.types.PyTypeChecker.isUnknown
@@ -117,6 +119,7 @@ import com.jetbrains.python.psi.types.PyUnpackedTupleType
 import com.jetbrains.python.psi.types.PyUnpackedTupleTypeImpl
 import com.jetbrains.python.psi.types.PyUnpackedTypedDictType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isAnyOrUnknown
 import com.jetbrains.python.psi.types.isNoneType
 import com.jetbrains.python.psi.types.isObject
 import com.jetbrains.python.pyi.PyiUtil.isOverload
@@ -190,7 +193,57 @@ open class PyTypeCheckerInspection : PyInspection() {
     }
 
     override fun visitPyForStatement(node: PyForStatement) {
-      checkIteratedValue(node.forPart.source, node.isAsync)
+      if (checkIteratedValue(node.forPart.source, node.isAsync)) return
+      checkForTargetUnpacking(node)
+    }
+
+    private fun checkForTargetUnpacking(node: PyForStatement) {
+      val forPart = node.forPart
+      val target = flattenParens(forPart.target)
+      if (target !is PyTupleExpression && target !is PyListLiteralExpression) return
+      val source = forPart.source ?: return
+      val sourceType = myTypeEvalContext.getType(source) ?: return
+      if (sourceType.containsAny(context = myTypeEvalContext)) return
+      val itemType = PyTargetExpressionImpl.getIterationType(sourceType, source, source, node.isAsync, myTypeEvalContext)
+      if (!itemType.isAnyOrUnknown && !itemType.containsAny(context = myTypeEvalContext) &&
+          !isSubtype(itemType, PyNames.ITERABLE, myTypeEvalContext)) {
+        registerProblem(target,
+                        PyPsiBundle.message("INSP.type.checker.unpack.expected.iterable",
+                                            PythonDocumentationProvider.getTypeName(itemType, myTypeEvalContext)),
+                        effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
+        return
+      }
+      if (itemType is PyTupleType && !itemType.isHomogeneous) {
+        checkNestedUnpackingBalance(target.elements, itemType)
+      }
+      if (itemType != null) checkUnpackedTargetTypes(target, itemType, target)
+    }
+
+    private fun checkUnpackedTargetTypes(targetSeq: PySequenceExpression, valueType: PyType, highlight: PsiElement) {
+      if (valueType.containsAny(context = myTypeEvalContext)) return
+      for (target in targetSeq.elements) {
+        val leaf = flattenParens(target)
+        if (leaf !is PyTargetExpression) continue
+        val annotatedType = resolvedDeclaredType(leaf) ?: continue
+        if (annotatedType.containsAny(context = myTypeEvalContext)) continue
+        val received = if (valueType is PyTupleType && !valueType.isHomogeneous) {
+          getTargetTypeFromTupleAssignment(leaf, targetSeq, valueType)
+        }
+        else {
+          (valueType as? PyCollectionType)?.iteratedItemType
+        } ?: continue
+        if (received.containsAny(context = myTypeEvalContext)) continue
+        val actual = upcastLiteralToClass(received)
+        if (!match(annotatedType, actual, myTypeEvalContext)) {
+          registerProblem(highlight,
+                          PyPsiBundle.problemMessage("INSP.type.checker.expected.type.got.type.instead",
+                                                     PythonDocumentationProvider.getVerboseTypeName(annotatedType, myTypeEvalContext),
+                                                     PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext)),
+                          effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
+          // report only the first mismatch per value
+          return
+        }
+      }
     }
 
     override fun visitPyWithStatement(node: PyWithStatement) {
@@ -325,7 +378,11 @@ open class PyTypeCheckerInspection : PyInspection() {
       if (checkUnpackIterableValue(rhs)) return
 
       val rhsType = myTypeEvalContext.getType(rhs)
-      if (rhsType !is PyTupleType || rhsType.isHomogeneous) return
+      if (rhsType !is PyTupleType || rhsType.isHomogeneous) {
+        // Non-tuple/homogeneous iterable: the balance is unknown, so only validate the annotated targets' types.
+        if (rhsType != null) checkUnpackedTargetTypes(lhsSeq, rhsType, rhs)
+        return
+      }
 
       val targets = lhsSeq.elements
       val lhsStarCount = targets.filterIsInstance<PyStarExpression>().size
@@ -339,29 +396,10 @@ open class PyTypeCheckerInspection : PyInspection() {
       else {
         rhsType.elementCount
       }
-      if (rhsCount >= 0) {
-        if (lhsStarCount > 1) {
-          registerProblem(lhs, PyPsiBundle.message("INSP.tuple.assignment.balance.only.one.starred.expression.allowed.in.assignment"))
-          return
-        }
-        if (lhsStarCount == 0 && targets.size != rhsCount) {
-          val key = if (targets.size < rhsCount) {
-            "INSP.tuple.assignment.balance.too.many.values.to.unpack"
-          }
-          else {
-            "INSP.tuple.assignment.balance.need.more.values.to.unpack"
-          }
-          registerProblem(rhs, PyPsiBundle.message(key, targets.size, rhsCount),
-                          effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
-          return
-        }
-        if (lhsStarCount == 1 && targets.size - 1 > rhsCount) {
-          registerProblem(rhs, PyPsiBundle.message("INSP.tuple.assignment.balance.need.more.values.to.unpack",
-                                                   targets.size - 1, rhsCount),
-                          effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
-          return
-        }
-      }
+      if (rhsCount >= 0 && checkUnpackBalance(targets.size, lhsStarCount, rhsCount, rhs, lhs,
+                                              PythonDocumentationProvider.getTypeName(rhsType, myTypeEvalContext))) return
+
+      checkNestedUnpackingBalance(targets, rhsType)
 
       // Per-element type mismatch check for annotated targets with a non-tuple RHS (`x, y = expr` / `[x] = expr`).
       // findAssignedValue() yields a synthetic subscription for these, so the mismatch is reported on the RHS itself.
@@ -895,6 +933,25 @@ open class PyTypeCheckerInspection : PyInspection() {
     }
 
     /**
+     * The declared type of [target] from its annotation. Unlike `getType(target)`, this is not narrowed by the value
+     * of the current unpacking, so it is safe to compare an unpacked value against the declared annotation.
+     */
+    private fun resolvedDeclaredType(target: PyTargetExpression): PyType? {
+      var current: PsiElement = target
+      while (current is PyTargetExpression) {
+        val annotationValue = current.annotation?.value
+        if (annotationValue != null) {
+          return Ref.deref(PyTypingTypeProvider.getType(annotationValue, myTypeEvalContext))
+        }
+        if (current.typeCommentAnnotation != null) return myTypeEvalContext.getType(current)
+        val resolved = current.getReference(PyResolveContext.defaultContext(myTypeEvalContext)).resolve()
+        if (resolved === current || resolved == null) break
+        current = resolved
+      }
+      return null
+    }
+
+    /**
      * Number of values produced by a tuple expression used as the right-hand side of an unpacking assignment.
      * A starred element contributes the length of its operand only when the operand is a statically known
      * (heterogeneous, bounded) tuple; if any starred operand has an indeterminate length, returns `-1`.
@@ -915,6 +972,56 @@ open class PyTypeCheckerInspection : PyInspection() {
         }
       }
       return count
+    }
+
+    private fun checkUnpackBalance(targetCount: Int, starCount: Int, valueCount: Int,
+                                   balanceHighlight: PsiElement, starHighlight: PsiElement,
+                                   valueTypeName: String): Boolean {
+      if (starCount > 1) {
+        registerProblem(starHighlight,
+                        PyPsiBundle.message("INSP.tuple.assignment.balance.only.one.starred.expression.allowed.in.assignment"))
+        return true
+      }
+      // A starred target absorbs any surplus, so it only constrains the minimum number of values.
+      val expectedCount = if (starCount == 1) targetCount - 1 else targetCount
+      val tooMany = starCount == 0 && expectedCount < valueCount
+      val notEnough = expectedCount > valueCount
+      if (tooMany || notEnough) {
+        val key = if (tooMany) "INSP.tuple.assignment.balance.too.many.values.to.unpack"
+        else "INSP.tuple.assignment.balance.need.more.values.to.unpack"
+        registerProblem(balanceHighlight, PyPsiBundle.problemMessage(key, expectedCount, valueCount, valueTypeName),
+                        effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
+        return true
+      }
+      return false
+    }
+
+    private fun checkNestedUnpackingBalance(targets: Array<PyExpression>, assignedTupleType: PyTupleType) {
+      if (assignedTupleType.isHomogeneous) return
+      val count = assignedTupleType.elementCount
+      val starIndex = targets.indexOfFirst { it is PyStarExpression }
+      for (i in targets.indices) {
+        if (i == starIndex) continue
+        val nested = flattenParens(targets[i])
+        if (nested !is PyTupleExpression && nested !is PyListLiteralExpression) continue
+        val effectiveIndex = if (starIndex in 0..<i) count - (targets.size - i) else i
+        if (effectiveIndex !in 0..<count) continue
+        val elementType = assignedTupleType.getElementType(effectiveIndex)
+        if (elementType is PyTupleType) {
+          checkUnpackingTargetBalance(nested, elementType)
+        }
+      }
+    }
+
+    private fun checkUnpackingTargetBalance(targetSeq: PySequenceExpression, assignedTupleType: PyTupleType) {
+      if (assignedTupleType.isHomogeneous) return
+      val valueCount = assignedTupleType.elementCount
+      if (valueCount < 0) return
+      val targets = targetSeq.elements
+      val starCount = targets.count { it is PyStarExpression }
+      val valueTypeName = PythonDocumentationProvider.getTypeName(assignedTupleType, myTypeEvalContext)
+      if (checkUnpackBalance(targets.size, starCount, valueCount, targetSeq, targetSeq, valueTypeName)) return
+      checkNestedUnpackingBalance(targets, assignedTupleType)
     }
 
     private fun checkContextManagerValue(iteratedValue: PyExpression?, isAsync: Boolean) {

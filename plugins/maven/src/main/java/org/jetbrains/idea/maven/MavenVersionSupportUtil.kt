@@ -27,9 +27,4 @@ internal object MavenVersionSupportUtil {
     get() = isMaven2PluginInstalled && isDisabled(
       PluginId.getId(MAVEN_2_PLUGIN_ID))
 
-  fun isMaven2Used(project: Project): Boolean {
-    val version = MavenDistributionsCache.getInstance(project).getSettingsDistribution().version
-    if (version == null) return false
-    return StringUtil.compareVersionNumbers(version, "3") < 0
-  }
 }

@@ -24,6 +24,22 @@ The repository uses a hybrid build system:
 - **Bazel (BUILD files)**: Auto-generated from *.iml files
 - **Generator**: run `build/jpsModelToBazel.cmd` after changing .iml files
 
+## JPS Module Registration Helper
+
+When creating or editing a JPS module `.iml`, use the helper instead of hand-editing project module lists:
+
+```bash
+bun build/jps-module.mjs register <path-to-iml> --fix-iml-eof
+```
+
+The helper:
+- registers the module in `.idea/modules.xml`
+- also registers `community/...` modules in `community/.idea/modules.xml`
+- inserts entries in the canonical order: `.iml` basename without the `.iml` suffix, matching `org.jetbrains.intellij.build.ModulesXml`
+- removes trailing line breaks from the listed `.iml` files when `--fix-iml-eof` is passed
+
+Use `bun build/jps-module.mjs check <path-to-iml> --fix-iml-eof` to verify without writing.
+
 ## Running the IML-to-Bazel Generator
 
 To manually run the converter that generates Bazel BUILD files from .iml files:
@@ -91,9 +107,8 @@ Test plugin resolution is different because tests often do not run with the full
 
 ## Important Notes
 
-⚠️ **DO NOT manually edit .iml files via JetBrains MCP** - The IDE's automatic converter runs concurrently and can interfere with edits.
-
 When you need to fix missing dependencies:
-1. Use the standard `Edit` tool (not `mcp__jetbrains__replace_text_in_file`) for .iml files
-2. The converter will automatically update BUILD.bazel files
-3. Verify compilation with `./bazel-build-all.cmd`
+1. Edit the `.iml` with the repo-approved edit tool.
+2. Run `bun build/jps-module.mjs register <path-to-iml> --fix-iml-eof` for every changed module file.
+3. Run `./build/jpsModelToBazel.cmd` so generated `BUILD.bazel` files match the `.iml` source of truth.
+4. Verify compilation or tests for the affected module.

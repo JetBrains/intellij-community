@@ -89,6 +89,7 @@ public final class JBCefScrollbarsHelper {
     int trackSizePx = getTrackSizePx();
     int thumbPaddingPx = getThumbPaddingPx();
     int thumbRadiusPx = getThumbRadiusPx();
+    int thumbBorderWidthPx = 1;
 
     return
       String.format(
@@ -124,10 +125,10 @@ public final class JBCefScrollbarsHelper {
             border-style: solid;
             border-color: %s;
             background-clip: padding-box;
-            outline: 1px solid %s;
+            outline: %dpx solid %s;
             outline-offset: -%dpx;
           }
-          """, thumbColor, thumbRadiusPx, thumbPaddingPx, transparent, thumbBorderColor, thumbPaddingPx) +
+          """, thumbColor, thumbRadiusPx, thumbPaddingPx, transparent, thumbBorderWidthPx, thumbBorderColor, thumbPaddingPx + thumbBorderWidthPx) +
       String.format(
         Locale.ROOT,
         """
@@ -138,10 +139,10 @@ public final class JBCefScrollbarsHelper {
             border-style: solid;
             border-color: %s;
             background-clip: padding-box;
-            outline: 1px solid %s;
+            outline: %dpx solid %s;
             outline-offset: -%dpx;
           }
-          """, thumbHoveredColor, thumbRadiusPx, thumbPaddingPx, transparent, thumbBorderHoveredColor, thumbPaddingPx) +
+          """, thumbHoveredColor, thumbRadiusPx, thumbPaddingPx, transparent, thumbBorderWidthPx, thumbBorderHoveredColor, thumbPaddingPx + thumbBorderWidthPx) +
       String.format(
         Locale.ROOT,
         """
@@ -229,7 +230,7 @@ public final class JBCefScrollbarsHelper {
 
     return ".os-scrollbar {\n" +
            "  --os-size: " + trackSizePx + "px;\n" +
-           "  --os-padding-perpendicular: " + (thumbPaddingPx + thumbBorderWidthPx) + "px;\n" +
+           "  --os-padding-perpendicular: " + thumbPaddingPx + "px;\n" +
            "  --os-handle-border-radius: " + thumbRadiusPx + "px;\n" +
            "  --os-track-border-radius: 0;" +
 
@@ -246,26 +247,29 @@ public final class JBCefScrollbarsHelper {
            "}\n" +
            ".os-scrollbar-handle {" +
            "  outline: " + thumbBorderWidthPx + "px solid " + thumbBorderColor + ";\n" +
+           "  outline-offset: -" + thumbBorderWidthPx + "px;\n" +
            "}" +
            ".os-scrollbar-handle:hover {" +
            "  outline: " + thumbBorderWidthPx + "px solid " + thumbBorderHoveredColor + ";\n" +
+           "  outline-offset: -" + thumbBorderWidthPx + "px;\n" +
            "}" +
            ".os-scrollbar-handle:active {" +
            "  outline: " + thumbBorderWidthPx + "px solid " + thumbBorderHoveredColor + ";\n" +
+           "  outline-offset: -" + thumbBorderWidthPx + "px;\n" +
            "}"
       ;
   }
 
   private static int getTrackSizePx() {
-    return (int)(JBCefApp.normalizeScaledSize(SystemInfo.isMac ? 14 : 10) * UISettingsUtils.getInstance().getCurrentIdeScale());
+    return (int)(JBCefApp.normalizeScaledSize(14) * UISettingsUtils.getInstance().getCurrentIdeScale());
   }
 
   private static int getThumbPaddingPx() {
-    return (int)(JBCefApp.normalizeScaledSize(SystemInfo.isMac ? 3 : 1) * UISettingsUtils.getInstance().getCurrentIdeScale());
+    return (int)(JBCefApp.normalizeScaledSize(3) * UISettingsUtils.getInstance().getCurrentIdeScale());
   }
 
   private static int getThumbRadiusPx() {
-    return (int)(JBCefApp.normalizeScaledSize(SystemInfo.isMac ? 7 : 0) * UISettingsUtils.getInstance().getCurrentIdeScale());
+    return (int)(JBCefApp.normalizeScaledSize(7) * UISettingsUtils.getInstance().getCurrentIdeScale());
   }
 
 

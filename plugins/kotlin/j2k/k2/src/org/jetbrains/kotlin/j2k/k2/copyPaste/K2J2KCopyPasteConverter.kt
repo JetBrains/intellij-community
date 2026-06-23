@@ -11,7 +11,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.j2k.ConverterContext
-import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind
 import org.jetbrains.kotlin.j2k.copyPaste.ElementAndTextList
 import org.jetbrains.kotlin.j2k.copyPaste.J2KCopyPasteConverter
 import org.jetbrains.kotlin.j2k.copyPaste.TargetData
@@ -62,13 +61,13 @@ internal class K2J2KCopyPasteConverter(
         }
 
         val newBounds = insertImports(boundsAfterReplace, importsToAdd)
-        runPostProcessing(project, targetData.file, newBounds, converterContext, Kind.K2)
+        runPostProcessing(project, targetData.file, newBounds, converterContext)
     }
 
     override fun convertAndRestoreReferencesIfTextIsUnchanged(): Boolean {
         ThreadingAssertions.assertEventDispatchThread()
 
-        val conversionResult = elementsAndTexts.convertCodeToKotlin(project, targetData.file, Kind.K2)
+        val conversionResult = elementsAndTexts.convertCodeToKotlin(project, targetData.file)
         val (text, _, importsToAdd, isTextChanged, converterContext) = conversionResult
         val changedText = if (isTextChanged) text else null
         result = Result(changedText, importsToAdd, converterContext)

@@ -394,6 +394,7 @@ libraries/caffeine
 libraries/classgraph
 libraries/cli-parser
 libraries/clikt
+libraries/cloud-config-client
 libraries/coil
 libraries/commons/cli
 libraries/commons/codec
@@ -461,6 +462,7 @@ libraries/jediterm-ui
 libraries/jettison
 libraries/jgoodies/common
 libraries/jgoodies/forms
+libraries/jline
 libraries/joni
 libraries/jsch-agent-proxy
 libraries/jsonpath
@@ -504,6 +506,10 @@ libraries/ktor/io
 libraries/ktor/network-tls
 libraries/ktor/server-cio
 libraries/ktor/utils
+libraries/lsp4j
+libraries/lsp4j/debug
+libraries/lsp4j/jsonrpc
+libraries/lsp4j/jsonrpc-debug
 libraries/lucene.common
 libraries/lz4
 libraries/markdown
@@ -892,6 +898,7 @@ platform/syntax/syntax-tree
 platform/syntax/syntax-util
 platform/tasks-platform-api
 platform/tasks-platform-impl
+platform/tasks-platform-impl/plugin
 platform/tasks-platform-impl/tasks.impl.bookmarks
 platform/tasks-platform-impl/tasks.impl.debugger
 platform/testFramework

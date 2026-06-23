@@ -16,6 +16,7 @@ import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.knownMissingModuleDependencies
 import org.jetbrains.intellij.build.productLayout.CommunityModuleSets
 import org.jetbrains.intellij.build.productLayout.CommunityProductFragments
+import org.jetbrains.intellij.build.productLayout.CoreModuleSets
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 import org.jetbrains.intellij.build.productLayout.productModules
 import org.jetbrains.intellij.build.windowsCustomizer
@@ -73,6 +74,7 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
     embeddedModule("intellij.platform.lsp.impl")
 
     // Module sets
+    moduleSet(CoreModuleSets.librariesLsp4j())
     moduleSet(CommunityModuleSets.ideCommon())
     moduleSet(CommunityModuleSets.rdCommon())
 

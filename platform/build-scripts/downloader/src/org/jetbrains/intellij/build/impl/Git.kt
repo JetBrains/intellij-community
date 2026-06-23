@@ -3,15 +3,29 @@ package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.annotations.ApiStatus
 import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import java.lang.ProcessBuilder.Redirect
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
-import kotlin.io.path.Path
-import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.pathString
 
 @ApiStatus.Internal
 class Git(private val dir: Path) {
+  companion object {
+    /**
+     * Whether the git tree-entry mode in [line]`[0, end)` (octal digits such as `100755`) has any
+     * executable bit set. Reads the digits in place so [listTree] needs no mode string per entry.
+     */
+    @Suppress("GrazieInspection")
+    fun isExecutableGitMode(line: CharSequence, end: Int): Boolean {
+      var mode = 0
+      for (i in 0 until end) {
+        mode = (mode shl 3) or (line[i].code - '0'.code)
+      }
+      return (mode and 0b001_001_001) != 0 // any x bit
+    }
+  }
+
   fun log(commitCount: Int): List<String> {
     @Suppress("SpellCheckingInspection")
     return execute("git", "log", "-$commitCount", "--pretty=tformat:%H")
@@ -21,22 +35,25 @@ class Git(private val dir: Path) {
     return execute("git", "log", "--pretty=format:$format", "-n", "1").joinToString("\n")
   }
 
-  data class Entry(val path: String, val mode: String) {
-    val isExecutable: Boolean get() = (mode.toInt(8) and 0b001_001_001) != 0 // any x bit
-  }
+  data class Entry(val path: String, val isExecutable: Boolean)
 
   fun listTree(refSpec: String = "HEAD"): List<Entry> {
-    return executeWithNullSeparatedOutput("git", "ls-tree", "-z", "-r", refSpec)
-      .map { line ->
+    return executeWithNullSeparatedOutput("git", "ls-tree", "-z", "-r", refSpec) { lines ->
+      lines.map { line ->
         val tabIndex = line.indexOf('\t')
-        val mode = line.substring(0, tabIndex).substringBefore(' ')
+        // We only need the executable bit, so read it straight from the octal mode digits (before
+        // the first space) — no mode string is allocated per entry.
+        val isExecutable = isExecutableGitMode(line, line.indexOf(' '))
+        // git ls-tree -z emits forward-slash, unquoted, repo-relative paths, so the substring is
+        // already the invariant-separators path — no Path round-trip or extra string is needed.
         val path = line.substring(tabIndex + 1)
-        Entry(Path(path).invariantSeparatorsPathString, mode)
-      }
+        Entry(path, isExecutable)
+      }.toList()
+    }
   }
 
   fun listStagingFiles(): List<String> {
-    return executeWithNullSeparatedOutput("git", "ls-files", "-z")
+    return executeWithNullSeparatedOutput("git", "ls-files", "-z") { it.toList() }
   }
 
   fun rm(files: List<Path>) {
@@ -76,27 +93,76 @@ class Git(private val dir: Path) {
     return ExecutionResult(process.exitValue(), output)
   }
 
-  private fun executeWithNullSeparatedOutput(vararg command: String): List<String> {
+  /**
+   * Runs [command] and streams its NUL-separated stdout to [handler] as a lazy [Sequence] of
+   * records, decoding each record (UTF-8) on demand. Unlike reading the whole output into a single
+   * byte array / String and splitting it, this never materializes the full output: for `git ls-tree
+   * -z` over the whole VCS tree that otherwise costs a ~200 MB transient buffer plus an equally
+   * large String. Only the records the [handler] retains stay in memory.
+   *
+   * [handler] must fully consume the sequence before returning (e.g. via `toList()`): it is
+   * single-pass and tied to the process stdout, which is closed once [handler] returns.
+   */
+  private fun <T> executeWithNullSeparatedOutput(vararg command: String, handler: (Sequence<String>) -> T): T {
     val process = ProcessBuilder(*command)
       .redirectError(Redirect.INHERIT)
       .directory(@Suppress("IO_FILE_USAGE")dir.toFile())
       .start()
     process.outputStream.close()
+    try {
+      val result = process.inputStream.use { handler(nullSeparatedSequence(it)) }
 
-    val memoryStream = ByteArrayOutputStream()
-    process.inputStream.copyTo(memoryStream)
-
-    if (!process.waitFor(5, TimeUnit.MINUTES)) {
-      process.destroyForcibly().waitFor()
-      throw IllegalStateException("Cannot execute ${command.toList()}: 5 minutes timeout")
+      if (!process.waitFor(5, TimeUnit.MINUTES)) {
+        process.destroyForcibly().waitFor()
+        throw IllegalStateException("Cannot execute ${command.toList()}: 5 minutes timeout")
+      }
+      val exitCode = process.exitValue()
+      if (exitCode != 0) {
+        throw IllegalStateException("Cannot execute ${command.toList()}: exit code $exitCode")
+      }
+      return result
     }
-
-    val exitCode = process.exitValue()
-    if (exitCode != 0) {
-      throw IllegalStateException("Cannot execute ${command.toList()}: exit code $exitCode")
+    finally {
+      process.destroyForcibly()
     }
+  }
 
-    return memoryStream.toByteArray().decodeToString().split('\u0000').filter { it.isNotEmpty() }
+  /**
+   * Lazily splits [input] on the NUL byte, yielding each non-empty record decoded as UTF-8.
+   * Reads in fixed-size chunks and only buffers a record that straddles a chunk boundary, so peak
+   * memory stays at one chunk regardless of the total output size. Splitting on the `0x00` byte is
+   * equivalent to splitting the decoded text on `U+0000`, since `0x00` never occurs inside a
+   * multibyte UTF-8 sequence; each record is decoded from contiguous bytes, so sequences are never
+   * decoded split.
+   */
+  private fun nullSeparatedSequence(input: InputStream): Sequence<String> = sequence {
+    val buffer = ByteArray(64 * 1024)
+    val carry = ByteArrayOutputStream()
+    while (true) {
+      val read = input.read(buffer)
+      if (read < 0) break
+      var segmentStart = 0
+      for (i in 0 until read) {
+        if (buffer[i].toInt() != 0) continue
+        if (carry.size() == 0) {
+          if (i > segmentStart) {
+            yield(String(buffer, segmentStart, i - segmentStart, Charsets.UTF_8))
+          }
+        }
+        else {
+          carry.write(buffer, segmentStart, i - segmentStart)
+          yield(String(carry.toByteArray(), Charsets.UTF_8))
+          carry.reset()
+        }
+        segmentStart = i + 1
+      }
+      if (segmentStart < read) {
+        carry.write(buffer, segmentStart, read - segmentStart)
+      }
+    }
+    if (carry.size() > 0) {
+      yield(String(carry.toByteArray(), Charsets.UTF_8))
+    }
   }
 
   private fun execute(vararg command: String): List<String> {

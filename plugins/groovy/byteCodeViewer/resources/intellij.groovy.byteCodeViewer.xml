@@ -1,10 +1,12 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="ByteCodeViewer"/>
     <module name="intellij.java.psi"/>
-    <!-- endregion -->
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.platform.core"/>
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="ByteCodeViewer">
     <classSearcher implementation="com.intellij.groovy.byteCodeViewer.GroovyScriptClassSearcher"/>
   </extensions>

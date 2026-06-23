@@ -3,7 +3,7 @@ package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.testplan
 
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
-import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.SEP
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.ExpectedModule
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTomlSyncFixture
 import com.intellij.testFramework.TestDataPath
@@ -27,9 +27,9 @@ internal class UvWorkspaceTwoFoldersWithMembersTest {
     f.reloadProject()
     f.assertProjectStructure(
       ExpectedModule("workspace", contentRoot = ".", deps = listOf("nebula", "quasar", "abyss"), sourceRoots = listOf(".")),
-      ExpectedModule("nebula", contentRoot = "cosmos${SEP}nebula", sourceRoots = listOf("cosmos${SEP}nebula${SEP}src")),
-      ExpectedModule("quasar", contentRoot = "cosmos${SEP}quasar", sourceRoots = listOf("cosmos${SEP}quasar${SEP}src")),
-      ExpectedModule("abyss", contentRoot = "ocean${SEP}abyss", deps = listOf("nebula", "quasar"), sourceRoots = listOf("ocean${SEP}abyss${SEP}src")),
+      ExpectedModule("nebula", contentRoot = "cosmos" / "nebula", sourceRoots = listOf("cosmos" / "nebula" / "src")),
+      ExpectedModule("quasar", contentRoot = "cosmos" / "quasar", sourceRoots = listOf("cosmos" / "quasar" / "src")),
+      ExpectedModule("abyss", contentRoot = "ocean" / "abyss", deps = listOf("nebula", "quasar"), sourceRoots = listOf("ocean" / "abyss" / "src")),
     )
   }
 }

@@ -1039,6 +1039,7 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/classgraph/intellij.libraries.classgraph.iml" filepath="$PROJECT_DIR$/libraries/classgraph/intellij.libraries.classgraph.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/cli-parser/intellij.libraries.cli.parser.iml" filepath="$PROJECT_DIR$/libraries/cli-parser/intellij.libraries.cli.parser.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/clikt/intellij.libraries.clikt.iml" filepath="$PROJECT_DIR$/libraries/clikt/intellij.libraries.clikt.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/cloud-config-client/intellij.libraries.cloud.config.client.iml" filepath="$PROJECT_DIR$/libraries/cloud-config-client/intellij.libraries.cloud.config.client.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/coil/intellij.libraries.coil.iml" filepath="$PROJECT_DIR$/libraries/coil/intellij.libraries.coil.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/commons/cli/intellij.libraries.commons.cli.iml" filepath="$PROJECT_DIR$/libraries/commons/cli/intellij.libraries.commons.cli.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/commons/codec/intellij.libraries.commons.codec.iml" filepath="$PROJECT_DIR$/libraries/commons/codec/intellij.libraries.commons.codec.iml" />
@@ -1054,6 +1055,10 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/dokka/intellij.libraries.dokka.iml" filepath="$PROJECT_DIR$/libraries/dokka/intellij.libraries.dokka.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/download-pgp-verifier/intellij.libraries.download.pgp.verifier.iml" filepath="$PROJECT_DIR$/libraries/download-pgp-verifier/intellij.libraries.download.pgp.verifier.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/ec4j/core/intellij.libraries.ec4j.core.iml" filepath="$PROJECT_DIR$/libraries/ec4j/core/intellij.libraries.ec4j.core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/lsp4j/intellij.libraries.eclipse.lsp4j.iml" filepath="$PROJECT_DIR$/libraries/lsp4j/intellij.libraries.eclipse.lsp4j.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/lsp4j/debug/intellij.libraries.eclipse.lsp4j.debug.iml" filepath="$PROJECT_DIR$/libraries/lsp4j/debug/intellij.libraries.eclipse.lsp4j.debug.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/lsp4j/jsonrpc/intellij.libraries.eclipse.lsp4j.jsonrpc.iml" filepath="$PROJECT_DIR$/libraries/lsp4j/jsonrpc/intellij.libraries.eclipse.lsp4j.jsonrpc.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/lsp4j/jsonrpc-debug/intellij.libraries.eclipse.lsp4j.jsonrpc.debug.iml" filepath="$PROJECT_DIR$/libraries/lsp4j/jsonrpc-debug/intellij.libraries.eclipse.lsp4j.jsonrpc.debug.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/fastutil/intellij.libraries.fastutil.iml" filepath="$PROJECT_DIR$/libraries/fastutil/intellij.libraries.fastutil.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/groovy/intellij.libraries.groovy.iml" filepath="$PROJECT_DIR$/libraries/groovy/intellij.libraries.groovy.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/groovy/ant/intellij.libraries.groovy.ant.iml" filepath="$PROJECT_DIR$/libraries/groovy/ant/intellij.libraries.groovy.ant.iml" />
@@ -1105,6 +1110,7 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/jettison/intellij.libraries.jettison.iml" filepath="$PROJECT_DIR$/libraries/jettison/intellij.libraries.jettison.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jgoodies/common/intellij.libraries.jgoodies.common.iml" filepath="$PROJECT_DIR$/libraries/jgoodies/common/intellij.libraries.jgoodies.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jgoodies/forms/intellij.libraries.jgoodies.forms.iml" filepath="$PROJECT_DIR$/libraries/jgoodies/forms/intellij.libraries.jgoodies.forms.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/jline/intellij.libraries.jline.iml" filepath="$PROJECT_DIR$/libraries/jline/intellij.libraries.jline.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/joni/intellij.libraries.joni.iml" filepath="$PROJECT_DIR$/libraries/joni/intellij.libraries.joni.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jsch-agent-proxy/intellij.libraries.jsch.agent.proxy.iml" filepath="$PROJECT_DIR$/libraries/jsch-agent-proxy/intellij.libraries.jsch.agent.proxy.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jsonpath/intellij.libraries.jsonpath.iml" filepath="$PROJECT_DIR$/libraries/jsonpath/intellij.libraries.jsonpath.iml" />
@@ -1701,6 +1707,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/tasks-platform-impl/intellij.platform.tasks.impl.iml" filepath="$PROJECT_DIR$/platform/tasks-platform-impl/intellij.platform.tasks.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/tasks-platform-impl/tasks.impl.bookmarks/intellij.platform.tasks.impl.bookmarks.iml" filepath="$PROJECT_DIR$/platform/tasks-platform-impl/tasks.impl.bookmarks/intellij.platform.tasks.impl.bookmarks.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/tasks-platform-impl/tasks.impl.debugger/intellij.platform.tasks.impl.debugger.iml" filepath="$PROJECT_DIR$/platform/tasks-platform-impl/tasks.impl.debugger/intellij.platform.tasks.impl.debugger.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/tasks-platform-impl/plugin/intellij.platform.tasks.plugin.iml" filepath="$PROJECT_DIR$/platform/tasks-platform-impl/plugin/intellij.platform.tasks.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/extensions/intellij.platform.testExtensions.iml" filepath="$PROJECT_DIR$/platform/testFramework/extensions/intellij.platform.testExtensions.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/intellij.platform.testFramework.iml" filepath="$PROJECT_DIR$/platform/testFramework/intellij.platform.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/common/intellij.platform.testFramework.common.iml" filepath="$PROJECT_DIR$/platform/testFramework/common/intellij.platform.testFramework.common.iml" />

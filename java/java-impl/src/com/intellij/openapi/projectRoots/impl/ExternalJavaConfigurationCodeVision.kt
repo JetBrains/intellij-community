@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
@@ -80,7 +80,7 @@ public class ExternalJavaConfigurationCodeVision : CodeVisionProvider<Unit> {
       val service = project.service<ExternalJavaConfigurationService>()
       val virtualFile = psiFile.virtualFile
       @Suppress("UNCHECKED_CAST")
-      service.updateFromConfig(provider as ExternalJavaConfigurationProvider<Any?>, virtualFile)
+      service.updateFromConfig(provider as ExternalJavaConfigurationProvider<JdkReleaseData>, virtualFile)
       val status = service.statuses[virtualFile.fileSystem.getNioPath(virtualFile)] ?: JavaConfigurationStatus.Unknown
 
       val entry = buildEntry(project, provider, status)
@@ -97,7 +97,7 @@ public class ExternalJavaConfigurationCodeVision : CodeVisionProvider<Unit> {
     ))
   }
 
-  private fun <T> buildEntry(project: Project,
+  private fun <T : JdkReleaseData> buildEntry(project: Project,
                              provider: ExternalJavaConfigurationProvider<T>,
                              status: JavaConfigurationStatus): CodeVisionEntry? {
     return when (status) {
@@ -120,7 +120,7 @@ public class ExternalJavaConfigurationCodeVision : CodeVisionProvider<Unit> {
         val onClick: (MouseEvent?, Editor) -> Unit = { _, _ ->
           val service = project.service<ExternalJavaConfigurationService>()
           @Suppress("UNCHECKED_CAST")
-          service.updateFromConfig(provider as ExternalJavaConfigurationProvider<Any?>, true)
+          service.updateFromConfig(provider as ExternalJavaConfigurationProvider<JdkReleaseData>, true)
         }
         ClickableTextCodeVisionEntry(text, ID, onClick = onClick, icon = AllIcons.General.Gear)
       }

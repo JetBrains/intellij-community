@@ -3,10 +3,15 @@ package com.intellij.xdebugger.impl.hotswap
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.debugger.impl.rpc.HotSwapVisibleStatus
+import com.intellij.platform.debugger.impl.rpc.XDebugHotSwapSessionId
+import com.intellij.platform.kernel.ids.BackendValueIdType
+import com.intellij.platform.kernel.ids.findValueById
+import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.hotswap.HotSwapProvider
 import com.intellij.xdebugger.hotswap.HotSwapResultListener
@@ -109,6 +114,13 @@ private val logger = logger<HotSwapSession<*>>()
 private val COMPLETED_STATUS: HotSwapVisibleStatus? = null
 
 @ApiStatus.Internal
+fun XDebugHotSwapSessionId.findHotSwapSession(): HotSwapSessionImpl<*>? {
+  return findValueById(this, type = HowSwapSessionValueIdType)
+}
+
+private object HowSwapSessionValueIdType : BackendValueIdType<XDebugHotSwapSessionId, HotSwapSessionImpl<*>>(::XDebugHotSwapSessionId)
+
+@ApiStatus.Internal
 class HotSwapSessionImpl<T> internal constructor(
   override val project: Project,
   private val provider: HotSwapProvider<T>,
@@ -116,6 +128,7 @@ class HotSwapSessionImpl<T> internal constructor(
 ) : HotSwapSession<T>, Disposable {
 
   private val coroutineScope = parentScope.childScope("HotSwapSession $this")
+  val id: XDebugHotSwapSessionId = storeValueGlobally(coroutineScope, this, HowSwapSessionValueIdType)
   private lateinit var changesCollector: SourceFileChangesCollector<T>
 
   internal val currentStatus: HotSwapVisibleStatus get() = _currentStatus.get() ?: HotSwapVisibleStatus.NO_CHANGES
@@ -128,9 +141,7 @@ class HotSwapSessionImpl<T> internal constructor(
       if (curStatus == COMPLETED_STATUS) return
       if (_currentStatus.compareAndSet(curStatus, status)) break
     }
-    if (logger.isDebugEnabled) {
-      logger.debug("Session status changed: $status (fire=$fireUpdate)")
-    }
+    logger.debug { "Session status changed: $status (fire=$fireUpdate)" }
     if (fireUpdate) {
       HotSwapSessionManagerImpl.getInstance(project).fireStatusChanged(this)
     }

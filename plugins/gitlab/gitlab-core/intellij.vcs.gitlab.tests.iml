@@ -58,7 +58,7 @@
     <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jackson.databind" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
@@ -75,7 +75,7 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jsoup" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="testcontainers" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.testcontainers" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.mockk" scope="TEST" />

@@ -56,6 +56,8 @@ import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus
 import java.util.Collections
 import java.util.Optional
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 import kotlin.jvm.optionals.getOrElse
 
 object PyTypeChecker {
@@ -182,7 +184,7 @@ object PyTypeChecker {
       return Optional.of(match(expected, actual, context))
     }
 
-    if (expected.isAnyOrUnknown || actual.isAnyOrUnknown || isUnknown(actual, context.context)) {
+    if (expected.isAnyOrUnknown || actual.containsAny(context = context.context)) {
       return Optional.of(true)
     }
 
@@ -294,9 +296,9 @@ object PyTypeChecker {
     }
 
     if (PyNumericTowerUtil.isEnabled) {
-      return Optional.of(false);
+      return Optional.of(false)
     }
-    return Optional.of(matchNumericTypes(expected, actual));
+    return Optional.of(matchNumericTypes(expected, actual))
   }
 
   private fun match(
@@ -517,10 +519,10 @@ object PyTypeChecker {
 
   private fun enrichVariadicType(variadic: PyPositionalVariadicType): PyPositionalVariadicType {
     if (variadic is PyUnpackedTupleType) {
-      val enrichedElements = variadic.getElementTypes().map(PyNumericTowerUtil::enrich);
-      return PyUnpackedTupleTypeImpl(enrichedElements, variadic.isUnbound());
+      val enrichedElements = variadic.getElementTypes().map(PyNumericTowerUtil::enrich)
+      return PyUnpackedTupleTypeImpl(enrichedElements, variadic.isUnbound())
     }
-    return variadic;
+    return variadic
   }
 
   private fun replaceLiteralStringWithStr(actual: PyType?, context: TypeEvalContext): PyType? {
@@ -1414,33 +1416,52 @@ object PyTypeChecker {
     }
   }
 
-  @JvmStatic
-  fun isUnknown(type: PyType?, context: TypeEvalContext): Boolean {
-    return isUnknown(type, true, context)
-  }
-
-  @JvmStatic
-  fun isUnknown(type: PyType?, genericsAreUnknown: Boolean, context: TypeEvalContext): Boolean {
+  @JvmOverloads
+  @OptIn(ExperimentalContracts::class)
+  fun PyType?.containsAny(genericsAreUnknown: Boolean = true, context: TypeEvalContext): Boolean {
+    contract {
+      returns(false) implies (this@containsAny != null)
+    }
     // TODO Don't consider other type parameters unknown (PY-85653)
     // Since Self is always bound, don't consider it unknown, e.g. in Py3TypeCheckerInspectionTest.testSelfAssignedToOtherTypeBad
-    if (type == null || (genericsAreUnknown && type is PyTypeParameterType && (type !is PySelfType))) {
+    if (isAnyOrUnknown || (genericsAreUnknown && this is PyTypeParameterType && (this !is PySelfType))) {
       return true
     }
-    return when (type) {
+    return when (this) {
       is PyUnionType -> {
         if (!PyUnionType.isStrictSemanticsEnabled()) {
-          type.members.any { member: PyType? -> isUnknown(member, genericsAreUnknown, context) }
+          members.any { it.containsAny(genericsAreUnknown, context) }
         }
-        else type.members.all { member: PyType? -> isUnknown(member, genericsAreUnknown, context) }
+        else members.all { it.containsAny(genericsAreUnknown, context) }
       }
       is PyUnsafeUnionType -> {
-        type.members.any { member: PyType? -> isUnknown(member, genericsAreUnknown, context) }
+        members.any { it.containsAny(genericsAreUnknown, context) }
       }
       is PyIntersectionType -> {
-        type.members.any { member: PyType? -> isUnknown(member, genericsAreUnknown, context) }
+        members.any { it.containsAny(genericsAreUnknown, context) }
       }
       else -> false
     }
+  }
+
+  @Deprecated("use containsAny", ReplaceWith("type.containsAny(context = context)"))
+  @OptIn(ExperimentalContracts::class)
+  @JvmStatic
+  fun isUnknown(type: PyType?, context: TypeEvalContext): Boolean {
+    contract {
+      returns(false) implies (type != null)
+    }
+    return type.containsAny(context = context)
+  }
+
+  @Deprecated("use containsAny", ReplaceWith("type.containsAny(genericsAreUnknown, context)"))
+  @OptIn(ExperimentalContracts::class)
+  @JvmStatic
+  fun isUnknown(type: PyType?, genericsAreUnknown: Boolean, context: TypeEvalContext): Boolean {
+    contract {
+      returns(false) implies (type != null)
+    }
+    return type.containsAny(genericsAreUnknown, context)
   }
 
   @JvmStatic
@@ -1550,7 +1571,13 @@ object PyTypeChecker {
       }
 
       override fun visitPyTypeParameterType(typeParameterType: PyTypeParameterType): PyRecursiveTypeVisitor.Traversal {
-        generics.allTypeParameters.add(typeParameterType)
+        // Record a type variable in its instance form, so that a variable used both as `T` and as `type[T]`
+        // is the same parameter rather than two distinct ones
+        val normalized = if (typeParameterType is PyTypeVarType && typeParameterType.isDefinition)
+          typeParameterType.toInstance()
+        else
+          typeParameterType
+        generics.allTypeParameters.add(normalized)
         return PyRecursiveTypeVisitor.Traversal.PRUNE
       }
     })
@@ -1633,6 +1660,11 @@ object PyTypeChecker {
           if (sameScopeSubstitution != null && substitution.defaultType != null) {
             return clone(sameScopeSubstitution)
           }
+        }
+        // Keep the class-object form when the type variable stands for `type[T]`, so that e.g.
+        // `Alias = type[T]` parameterized with `int` yields `type[int]`, not `int` (PY-60614).
+        if (typeVarType.isDefinition && substitution is PyInstantiableType<*> && !substitution.isDefinition) {
+          substitution = substitution.toClass()
         }
         // TODO remove !typeVar.equals(substitution) part, it's necessary due to the logic in unifyReceiverWithParamSpecs
         if ((typeVarType != substitution) && (substitution !is PySelfType) && substitution.hasGenerics(context)) {
@@ -1784,9 +1816,7 @@ object PyTypeChecker {
         val firstParamTypeSubs = concatenateType.firstTypes.flatMap {
           flattenUnpackedTuple(clone(it))
         }
-        val paramSpecSubs = clone<PyCallableParameterVariadicType>(concatenateType.paramSpec)
-
-        return when (paramSpecSubs) {
+        return when (val paramSpecSubs = clone<PyCallableParameterVariadicType>(concatenateType.paramSpec)) {
           is PyCallableParameterListType -> {
             PyCallableParameterListTypeImpl(
               firstParamTypeSubs.map { PyCallableParameterImpl.nonPsi(it) } + paramSpecSubs.parameters
@@ -2031,7 +2061,7 @@ object PyTypeChecker {
         if (type.isDefinition) {
           true
         }
-        else isCallable(type.getEffectiveBound())
+        else isCallable(type.effectiveBound)
       }
       else -> false
     }
@@ -2328,19 +2358,19 @@ object PyTypeChecker {
       typeVarTuples: Map<PyTypeVarTupleType, PyPositionalVariadicType>?,
       paramSpecs: Map<PyParamSpecType, PyCallableParameterVariadicType>?,
     ): GenericSubstitutions {
-      val newTypeVars = LinkedHashMap(this.typeVars);
+      val newTypeVars = LinkedHashMap(this.typeVars)
       if (typeVars != null) {
-        newTypeVars.putAll(typeVars);
+        newTypeVars.putAll(typeVars)
       }
-      val newTypeVarTuples = LinkedHashMap(this.typeVarTuples);
+      val newTypeVarTuples = LinkedHashMap(this.typeVarTuples)
       if (typeVarTuples != null) {
-        newTypeVarTuples.putAll(typeVarTuples);
+        newTypeVarTuples.putAll(typeVarTuples)
       }
-      val newParamSpecs = LinkedHashMap(this.paramSpecs);
+      val newParamSpecs = LinkedHashMap(this.paramSpecs)
       if (paramSpecs != null) {
-        newParamSpecs.putAll(paramSpecs);
+        newParamSpecs.putAll(paramSpecs)
       }
-      return GenericSubstitutions(newTypeVars, newTypeVarTuples, newParamSpecs, qualifierType);
+      return GenericSubstitutions(newTypeVars, newTypeVarTuples, newParamSpecs, qualifierType)
     }
 
     @ApiStatus.Internal

@@ -17,6 +17,7 @@ import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewTh
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsMainToolbarNewThreadAction
 import com.intellij.agent.workbench.sessions.actions.ProfileQuickStartAction
 import com.intellij.agent.workbench.sessions.actions.resolveAgentSessionsMainToolbarNewThreadContext
+import com.intellij.agent.workbench.sessions.actions.resolveQuickStartProjectPopupAnchor
 import com.intellij.agent.workbench.sessions.core.providers.builtInLaunchProfileId
 import com.intellij.agent.workbench.sessions.core.providers.initialMessageRequestForLaunchProfile
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
@@ -53,7 +54,9 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import java.awt.event.MouseEvent
 import java.util.concurrent.TimeUnit
+import javax.swing.JPanel
 
 @TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
@@ -1051,6 +1054,49 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     assertThat(event.presentation.description).contains(
       AgentSessionsBundle.message("action.AgentWorkbenchSessions.MainToolbar.NewThread.target.choose"),
     )
+  }
+
+  @Test
+  fun quickNewThreadPopupAnchorPrefersInputEventComponent() {
+    val action = AgentSessionsMainToolbarNewThreadAction(resolveContext = { null }, allBridges = { emptyList() })
+    val inputComponent = JPanel()
+    val contextComponent = JPanel()
+    val event = AnActionEvent(
+      { dataId -> if (dataId == PlatformCoreDataKeys.CONTEXT_COMPONENT.name) contextComponent else null },
+      action.templatePresentation.clone(),
+      "",
+      ActionUiKind.NONE,
+      MouseEvent(inputComponent, MouseEvent.MOUSE_CLICKED, 0, 0, 0, 0, 1, false),
+      0,
+      ActionManager.getInstance(),
+    )
+
+    assertThat(resolveQuickStartProjectPopupAnchor(event)).isSameAs(inputComponent)
+  }
+
+  @Test
+  fun quickNewThreadPopupAnchorFallsBackToContextComponent() {
+    val action = AgentSessionsMainToolbarNewThreadAction(resolveContext = { null }, allBridges = { emptyList() })
+    val contextComponent = JPanel()
+    val event = AnActionEvent(
+      { dataId -> if (dataId == PlatformCoreDataKeys.CONTEXT_COMPONENT.name) contextComponent else null },
+      action.templatePresentation.clone(),
+      "",
+      ActionUiKind.NONE,
+      null,
+      0,
+      ActionManager.getInstance(),
+    )
+
+    assertThat(resolveQuickStartProjectPopupAnchor(event)).isSameAs(contextComponent)
+  }
+
+  @Test
+  fun quickNewThreadPopupAnchorReturnsNullWithoutUiComponent() {
+    val action = AgentSessionsMainToolbarNewThreadAction(resolveContext = { null }, allBridges = { emptyList() })
+    val event = TestActionEvent.createTestEvent(action)
+
+    assertThat(resolveQuickStartProjectPopupAnchor(event)).isNull()
   }
 
   @Test

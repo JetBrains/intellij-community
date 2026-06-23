@@ -57,7 +57,8 @@ jvm_library(
         "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
         "//platform/util",
         "//platform/util:util_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.guiForms.compiler` end
@@ -123,7 +124,8 @@ jvm_library(
         "//platform/util/multiplatform",
         "//platform/util/multiplatform:multiplatform_test_lib",
         "@lib//:jetbrains-annotations",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.guiForms.compiler.tests` end

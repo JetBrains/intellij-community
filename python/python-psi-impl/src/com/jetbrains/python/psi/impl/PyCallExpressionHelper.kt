@@ -71,6 +71,7 @@ import com.jetbrains.python.psi.types.PyNeverType
 import com.jetbrains.python.psi.types.PyParamSpecType
 import com.jetbrains.python.psi.types.PySelfType
 import com.jetbrains.python.psi.types.PyStructuralType
+import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyTypeChecker.getSubstitutionsWithUnresolvedReturnGenerics
@@ -79,6 +80,7 @@ import com.jetbrains.python.psi.types.PyTypeMember
 import com.jetbrains.python.psi.types.PyTypeUtil.components
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.psi.types.PyUnionType
+import com.jetbrains.python.psi.types.PyUnpackedTupleType
 import com.jetbrains.python.psi.types.PyUnsafeUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isAny
@@ -1257,7 +1259,7 @@ object PyCallExpressionHelper {
     val parametersMappedToVariadicPositionalArguments = mutableListOf<PyCallableParameter?>()
     val tupleMappedParameters = mutableMapOf<PyExpression?, PyCallableParameter?>()
 
-    val positionalResults = filterPositionalAndVariadicArguments(arguments)
+    val positionalResults = filterPositionalAndVariadicArguments(arguments, context)
     val keywordArguments = arguments.filterIsInstanceTo(mutableListOf<PyKeywordArgument>())
     val variadicPositionalArguments = positionalResults.variadicPositionalArguments
     val positionalComponentsOfVariadicArguments = positionalResults.componentsOfVariadicPositionalArguments.toSet()
@@ -1330,9 +1332,15 @@ object PyCallExpressionHelper {
           // expansion. For those, consume from arguments reserved at the `*args` branch above;
           // otherwise (no preceding `*args`) consume from the regular positional pool.
           val source = if (keywordOnlyMode) reservedForPostArgs else allPositionalArguments
-          val positionalArgument = source.removeFirstOrNull()
-          if (positionalArgument != null) {
-            mappedParameters[positionalArgument] = parameter
+          if (source.isNotEmpty()) {
+            val positionalArgument = source.removeFirst()
+            if (positionalArgument != null) {
+              mappedParameters[positionalArgument] = parameter
+            }
+            else {
+              // null = placeholder for a value already supplied by a fixed-length `*tuple` spread; no argument to map here.
+              parametersMappedToVariadicPositionalArguments.add(parameter)
+            }
           }
           else if (!variadicPositionalArguments.isEmpty()) {
             parametersMappedToVariadicPositionalArguments.add(parameter)
@@ -1365,11 +1373,16 @@ object PyCallExpressionHelper {
           variadicKeywordArguments.clear()
         }
         else if (!allPositionalArguments.isEmpty()) {
-          val positionalArgument = allPositionalArguments.removeFirstOrNull()
-          require(positionalArgument != null)
-          mappedParameters[positionalArgument] = parameter
-          if (positionalComponentsOfVariadicArguments.contains(positionalArgument)) {
+          val positionalArgument = allPositionalArguments.removeFirst()
+          if (positionalArgument == null) {
+            // null = placeholder for a value already supplied by a fixed-length `*tuple` spread; no argument to map here.
             parametersMappedToVariadicPositionalArguments.add(parameter)
+          }
+          else {
+            mappedParameters[positionalArgument] = parameter
+            if (positionalComponentsOfVariadicArguments.contains(positionalArgument)) {
+              parametersMappedToVariadicPositionalArguments.add(parameter)
+            }
           }
         }
         else {
@@ -1392,13 +1405,19 @@ object PyCallExpressionHelper {
         }
       }
       else if (psi is PyTupleParameter) {
-        val positionalArgument = allPositionalArguments.removeFirstOrNull()
-        if (positionalArgument != null) {
-          tupleMappedParameters[positionalArgument] = parameter
-          val tupleMappingResults = mapComponentsOfTupleParameter(positionalArgument, psi)
-          mappedParameters.putAll(tupleMappingResults.parameters)
-          unmappedParameters.addAll(tupleMappingResults.unmappedParameters)
-          unmappedArguments.addAll(tupleMappingResults.unmappedArguments)
+        if (allPositionalArguments.isNotEmpty()) {
+          val positionalArgument = allPositionalArguments.removeFirst()
+          if (positionalArgument != null) {
+            tupleMappedParameters[positionalArgument] = parameter
+            val tupleMappingResults = mapComponentsOfTupleParameter(positionalArgument, psi)
+            mappedParameters.putAll(tupleMappingResults.parameters)
+            unmappedParameters.addAll(tupleMappingResults.unmappedParameters)
+            unmappedArguments.addAll(tupleMappingResults.unmappedArguments)
+          }
+          else {
+            // null = placeholder for a value already supplied by a fixed-length `*tuple` spread; no argument to map here.
+            mappedVariadicArgumentsToParameters = true
+          }
         }
         else if (variadicPositionalArguments.isEmpty()) {
           if (!parameter.hasDefaultValue()) {
@@ -1419,7 +1438,8 @@ object PyCallExpressionHelper {
       variadicKeywordArguments.clear()
     }
 
-    unmappedArguments.addAll(allPositionalArguments)
+    // Drop the `*tuple` placeholder slots: they stand for already-supplied values, not surplus arguments.
+    unmappedArguments.addAll(allPositionalArguments.filterNotNull())
     unmappedArguments.addAll(keywordArguments)
     unmappedArguments.addAll(variadicPositionalArguments)
     unmappedArguments.addAll(variadicKeywordArguments)
@@ -1577,20 +1597,19 @@ object PyCallExpressionHelper {
     return result
   }
 
-  private fun filterPositionalAndVariadicArguments(expressions: List<PyExpression>): PositionalArgumentsAnalysisResults {
+  private fun filterPositionalAndVariadicArguments(expressions: List<PyExpression>, context: TypeEvalContext): PositionalArgumentsAnalysisResults {
     val variadicArguments = ArrayList<PyExpression>()
     val allPositionalArguments = ArrayList<PyExpression?>()
     val componentsOfVariadicPositionalArguments = ArrayList<PyExpression?>()
     var seenVariadicPositionalArgument = false
     var seenVariadicKeywordArgument = false
     var seenKeywordArgument = false
-    for (argument in expressions) {
+    for ((index, argument) in expressions.withIndex()) {
       if (argument is PyStarArgument) {
         if (argument.isKeyword) {
           seenVariadicKeywordArgument = true
         }
         else {
-          seenVariadicPositionalArgument = true
           val expr: PsiElement? = PyPsiUtils.flattenParens(PsiTreeUtil.getChildOfType(argument, PyExpression::class.java))
           if (expr is PySequenceExpression) {
             val elements = expr.elements.toList()
@@ -1598,7 +1617,21 @@ object PyCallExpressionHelper {
             componentsOfVariadicPositionalArguments.addAll(elements)
           }
           else {
-            variadicArguments.add(argument)
+            // A fixed-length `*x` spread followed by positional arguments occupies known leading positions: reserve
+            // them with `null` placeholders so the following arguments still map to the correct parameters (PY-40735),
+            // e.g. `"2"` binding to `b` in `baz(*xe, "2")` where `xe: tuple[str]`.
+            val knownLength = (expr as? PyExpression)?.let { knownFixedTupleSpreadLength(it, context) } ?: -1
+            val followedByPositional = (index + 1..expressions.lastIndex).any {
+              val next = expressions[it]
+              next !is PyStarArgument && next !is PyKeywordArgument
+            }
+            if (knownLength >= 0 && followedByPositional) {
+              repeat(knownLength) { allPositionalArguments.add(null) }
+            }
+            else {
+              seenVariadicPositionalArgument = true
+              variadicArguments.add(argument)
+            }
           }
         }
       }
@@ -1613,6 +1646,14 @@ object PyCallExpressionHelper {
       }
     }
     return PositionalArgumentsAnalysisResults(allPositionalArguments, componentsOfVariadicPositionalArguments, variadicArguments)
+  }
+
+  /** Number of values a `*operand` spread contributes for a fixed-length tuple, or `-1` when the length is indeterminate. */
+  private fun knownFixedTupleSpreadLength(operand: PyExpression, context: TypeEvalContext): Int {
+    val type = context.getType(operand)
+    if (type !is PyTupleType || type.isHomogeneous) return -1
+    if (type.elementTypes.any { it is PyUnpackedTupleType }) return -1
+    return type.elementCount
   }
 
   private fun filterVariadicKeywordArguments(expressions: List<PyExpression?>): MutableList<PyExpression> {

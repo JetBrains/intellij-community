@@ -359,7 +359,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       
       def f(p: Enum):
           expr = p.value
-      #   └ TYPE () -> Any FIXME Any
+      #   └ TYPE Any
       """)
 
     @Test

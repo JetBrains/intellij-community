@@ -148,7 +148,7 @@ internal class LspDocumentSyncManager(private val client: LspClientImpl) {
     val didSaveOptions = client.getDidSaveOptions(file) ?: return
     val manager = LspClientManagerImpl.getInstanceImpl(client.project)
     manager.cs.launch {
-      // Using `readAction` guarantees that the write action in which `beforeDocumentSaving()` was called has finished,
+      // Using `readAction` guarantees that the write action in which calling `beforeDocumentSaving()` was called has finished,
       // so the file has been physically saved, therefore it's now good time to send `textDocument/didSave`
       readAction {
         client.documentMapping.getAdapterForFile(file).sendDidSave(client, file, document, didSaveOptions.includeText == true)

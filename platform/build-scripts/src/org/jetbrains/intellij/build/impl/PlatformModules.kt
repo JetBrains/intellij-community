@@ -106,19 +106,6 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     "jaxb-api",
   ))
 
-  // TODO(Shumaf.Lovpache): IJPL-1014 convert lsp4j to product modules after merge into master
-  if (context.project.libraryCollection.findLibrary("eclipse.lsp4j") != null) {
-    layout.withProjectLibraries(
-      sequenceOf(
-        "eclipse.lsp4j",
-        "eclipse.lsp4j.jsonrpc",
-      ) + sequenceOf(
-        "eclipse.lsp4j.debug",
-        "eclipse.lsp4j.jsonrpc.debug",
-      ).filter { context.project.libraryCollection.findLibrary(it) != null }
-    )
-  }
-
   // platform-loader.jar is loaded by JVM classloader as part of loading our custom PathClassLoader class - reduce file size
   addModule(PLATFORM_LOADER_JAR, sequenceOf(
     "intellij.platform.util.rt.java8",

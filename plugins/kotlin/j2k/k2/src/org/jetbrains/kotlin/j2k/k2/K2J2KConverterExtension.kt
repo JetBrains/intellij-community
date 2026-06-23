@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
-import org.jetbrains.kotlin.j2k.JavaToKotlinConverter
 import org.jetbrains.kotlin.j2k.PostProcessor
 import org.jetbrains.kotlin.j2k.WithProgressProcessor
 import org.jetbrains.kotlin.j2k.copyPaste.ConversionData
@@ -23,7 +22,7 @@ import org.jetbrains.kotlin.j2k.k2.copyPaste.K2J2KCopyPasteConverter
 import org.jetbrains.kotlin.j2k.k2.copyPaste.K2PlainTextPasteImportResolver
 import org.jetbrains.kotlin.nj2k.Conversion
 import org.jetbrains.kotlin.nj2k.NewJ2kWithProgressProcessor
-import org.jetbrains.kotlin.nj2k.NewJavaToKotlinConverter
+import org.jetbrains.kotlin.nj2k.JavaToKotlinConverter
 import org.jetbrains.kotlin.psi.KtFile
 
 // TODO: reuse NewJ2kConverterExtension.checkEverythingIsSetUpBeforeConversion() and NewJ2kConverterExtension.setUpAndConvert()
@@ -37,7 +36,7 @@ class K2J2KConverterExtension : J2kConverterExtension() {
         targetFile: KtFile?
     ): JavaToKotlinConverter =
         // TODO: rename/refactor
-        NewJavaToKotlinConverter(project, targetModule, settings, targetFile)
+        JavaToKotlinConverter(project, targetModule, settings, targetFile)
 
     override fun createPostProcessor(formatCode: Boolean): PostProcessor =
         K2J2KPostProcessor()

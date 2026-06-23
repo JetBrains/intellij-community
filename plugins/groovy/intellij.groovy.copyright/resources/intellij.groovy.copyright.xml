@@ -1,12 +1,14 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="org.intellij.groovy"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.intellij.copyright"/>
     <module name="intellij.java.copyright"/>
     <module name="intellij.java.psi"/>
-    <!-- endregion -->
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij.copyright">
     <updater filetype="Groovy" implementationClass="org.intellij.groovy.copyright.UpdateGroovyCopyrightsProvider"/>

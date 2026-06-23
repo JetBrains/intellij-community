@@ -202,7 +202,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       myDisposed = true;
     });
     myDaemonListenerPublisher = project.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC);
-    myListeners = new DaemonListeners(project, this);
+    myListeners = new DaemonListeners(project, this, coroutineScope);
     Disposer.register(this, myListeners);
     repaintIconHelper = new DaemonCodeAnalyzerRepaintIconHelper(coroutineScope);
   }
@@ -386,7 +386,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           Document document = textEditor.getEditor().getDocument();
           MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true);
           // todo do we need to create a new highlighter if toReuse is not-null?
-          HighlightInfoUpdaterImpl.createOrReuseFakeFileLevelHighlighter(group, info, (RangeHighlighterEx)toReuse, markupModel, myProject, context);
+          ((HighlightInfoUpdaterImpl)HighlightInfoUpdater.getInstance(myProject)).createOrReuseFakeFileLevelHighlighter(group, info, (RangeHighlighterEx)toReuse, markupModel, myProject, context);
           fileLevelInfos.add(info);
           addFileLevelInfoComponentToEditor(info, psiFile, textEditor);
           if (LOG.isDebugEnabled()) {
@@ -425,7 +425,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         Document document = textEditor.getEditor().getDocument();
         MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true);
         if (toReuse == null) {
-          HighlightInfoUpdaterImpl.createOrReuseFakeFileLevelHighlighter(newInfo.getGroup(), newInfo, null, markupModel, myProject, context);
+          ((HighlightInfoUpdaterImpl)HighlightInfoUpdater.getInstance(myProject)).createOrReuseFakeFileLevelHighlighter(newInfo.getGroup(), newInfo, null, markupModel, myProject, context);
         }
         fileLevelInfos.add(newInfo);
         addFileLevelInfoComponentToEditor(newInfo, psiFile, textEditor);

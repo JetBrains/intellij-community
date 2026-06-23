@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
-import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtClass
@@ -133,13 +132,11 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
 
         val copiedJavaCode = prepareCopiedJavaCodeByContext(text, javaConversionContext, pasteTarget)
         val conversionData = ConversionData.prepare(copiedJavaCode, project)
-        val j2kKind = getJ2kKind()
 
-        val converter = J2KTextCopyPasteConverter(project, editor, conversionData, targetData, j2kKind)
+        val converter = J2KTextCopyPasteConverter(project, editor, conversionData, targetData)
         val conversionTime = measureTimeMillis { converter.convert() }
         J2KFusCollector.log(
             type = ConversionType.TEXT_EXPRESSION,
-            isNewJ2k = j2kKind == K1_NEW,
             conversionTime,
             linesCount = conversionData.elementsAndTexts.lineCount(),
             filesCount = 1

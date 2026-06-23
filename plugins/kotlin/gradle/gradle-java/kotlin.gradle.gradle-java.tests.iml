@@ -81,7 +81,7 @@
     <orderEntry type="module" module-name="intellij.gradle.java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-test-junit" level="project" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.backend.observation" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.utils" scope="TEST" />

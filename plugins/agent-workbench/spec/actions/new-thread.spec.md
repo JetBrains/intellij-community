@@ -1,6 +1,6 @@
 ---
 name: Agent Sessions New-Thread Actions
-description: Requirements for new-thread affordances in the Sessions tree, editor tabs, and main toolbar.
+description: Requirements for new-thread affordances in the Sessions tree and main toolbar.
 targets:
   - ../../sessions-toolwindow/src/**/*.kt
   - ../../sessions-actions/src/**/*.kt
@@ -19,7 +19,7 @@ Status: Draft
 Date: 2026-05-09
 
 ## Summary
-New-thread actions let users start provider-backed threads from project/worktree rows, editor tabs, and the main toolbar. This spec owns action availability, launch-profile menus, target resolution, and launch deduplication. Codex pending/concrete rebind behavior is specified separately.
+New-thread actions let users start provider-backed threads from project/worktree rows and the main toolbar. This spec owns action availability, launch-profile menus, target resolution, and launch deduplication. Codex pending/concrete rebind behavior is specified separately.
 
 ## Requirements
 - Project/worktree rows expose new-thread controls only while hovered or selected, and suppress them while the row is loading.
@@ -31,37 +31,33 @@ New-thread actions let users start provider-backed threads from project/worktree
 - Provider menus include Standard entries and YOLO entries only for providers that support the requested launch mode.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
-  [@test] ../../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
 
 - Provider availability for synchronous new-thread surfaces is read from the project-level provider availability cache. A project-startup activity prewarms the cache so menus render the launch-time answer on first paint without blocking the EDT; first paint treats unknown providers optimistically until the async refresh publishes the resolved state.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
 
 - Provider/mode menu items render disabled when their CLI is unavailable. The label is suffixed with the resolved `cliMissingMessageKey` text (e.g. "Junie — Junie CLI not found. Install Junie CLI or add it to your PATH.") so the reason is visible inline, not only as a status-bar tooltip.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
-  [@test] ../../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
 
 - Tree-row quick-create overlay falls back from a disabled `lastUsedProvider` to the next available standard provider, and hides the `+` button entirely when no provider is runnable. The main-toolbar new-thread action pins the button to `lastUsedProvider` (no silent substitution) and disables it with the `cliMissingMessageKey` description when that provider's CLI is unavailable.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
   [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
 
-- Tree popup new-thread actions resolve context from tree rows only; editor-tab context uses editor-tab actions.
+- Tree popup new-thread actions resolve context from tree rows only.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
 
-- Editor-tab new-thread is contributed to `EditorTabsToolbarActions` as one split-button entry: primary click quick-launches when the source project and active launch profile are eligible, and the chevron opens the launch-profile picker. It is visible in dedicated Agent frames and hidden in normal project frames when dedicated-frame mode is enabled.
-  [@test] ../../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
-  [@test] ../../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
+- Dedicated Agent frame main-toolbar new-thread resolves source projects lazily on click or popup expansion. Multiple source candidates require explicit selection; a single candidate may be used directly; selected chat-tab source path is a fallback when no open source-project candidate exists.
+  [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
 
-- Dedicated Agent frame new-thread actions resolve source projects lazily on click or popup expansion. Multiple source candidates require explicit selection; a single candidate may be used directly; selected chat-tab source path is a fallback when no open source-project candidate exists.
-  [@test] ../../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
-
-- Source-project labels in dedicated-frame popups reuse Sessions tree naming and fall back to full normalized paths for collisions.
+- Source-project labels in dedicated-frame new-thread popups reuse Sessions tree naming and fall back to full normalized paths for collisions.
   [@test] ../../sessions/testSrc/AgentSessionProjectCatalogTest.kt
-  [@test] ../../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
 
 - Main-toolbar new-thread is one split-button action on `MainToolbarRight`, after `NewUiRunWidget`. Icon click quick-launches only for a direct eligible target; otherwise it opens the same launch-profile picker as the chevron.
   [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
 
-- Main-toolbar target resolution prefers chat context path, selected chat source project path, then `project.basePath`; in dedicated Agent frames it uses the same lazy source-candidate path as editor-tab actions.
+- Main-toolbar target resolution prefers chat context path, selected chat source project path, then `project.basePath`; in dedicated Agent frames it uses the lazy source-candidate path.
   [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
 
 - Launching must go through `AgentSessionLaunchService.createNewSession(...)`, update persisted provider-option state on accepted prompt-capable launches, and deduplicate semantically identical in-flight launches with single-flight drop semantics.
@@ -82,7 +78,7 @@ New-thread actions let users start provider-backed threads from project/worktree
 ## Testing / Local Run
 - `./tests.cmd --module intellij.agent.workbench.sessions.toolwindow.tests --test com.intellij.agent.workbench.sessions.toolwindow.AgentSessionsSwingNewSessionActionsTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.toolwindow.tests --test com.intellij.agent.workbench.sessions.toolwindow.AgentSessionsTreePopupActionsTest`
-- `./tests.cmd --module intellij.agent.workbench.sessions.actions.tests --test com.intellij.agent.workbench.sessions.AgentSessionsEditorTabActionsTest`
+- `./tests.cmd --module intellij.agent.workbench.sessions.actions.tests --test com.intellij.agent.workbench.sessions.AgentSessionsGearActionsTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.actions.tests --test com.intellij.agent.workbench.sessions.AgentSessionsMainToolbarNewThreadActionsTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionPromptLauncherBridgeTest`
 

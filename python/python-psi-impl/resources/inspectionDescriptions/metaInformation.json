@@ -237,6 +237,14 @@
       "codeQualityCategory": "Code Style"
     },
     {
+      "id": "PyUnusedParameterInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyUnusedFunctionInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
       "id": "PyMethodFirstArgAssignmentInspection",
       "codeQualityCategory": "Reliability"
     },

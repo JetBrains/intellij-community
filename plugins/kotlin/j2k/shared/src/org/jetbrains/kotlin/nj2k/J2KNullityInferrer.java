@@ -98,7 +98,7 @@ import static org.jetbrains.kotlin.nj2k.NullabilityUtilsKt.isUsedInAutoUnboxingC
  *  convert to Kotlin
  */
 @SuppressWarnings("DuplicatedCode")
-class J2KNullityInferrer {
+public class J2KNullityInferrer {
     private static final int MAX_PASSES = 10;
     private int numAnnotationsAdded;
 
@@ -127,7 +127,7 @@ class J2KNullityInferrer {
         return notNullTypes;
     }
 
-    Set<PsiType> getNullableTypes() {
+    public Set<PsiType> getNullableTypes() {
         return nullableTypes;
     }
 
@@ -473,11 +473,27 @@ class J2KNullityInferrer {
     }
 
     private class NullityInferrerVisitor extends JavaRecursiveElementWalkingVisitor {
+        private void applyExtensionNullability(
+                @NotNull PsiModifierListOwner owner,
+                @NotNull org.jetbrains.kotlin.j2k.Nullability nullability
+        ) {
+            if (nullability == org.jetbrains.kotlin.j2k.Nullability.Nullable) {
+                registerNullableAnnotation(owner);
+            } else if (nullability == org.jetbrains.kotlin.j2k.Nullability.NotNull) {
+                registerNotNullAnnotation(owner);
+            }
+        }
 
         @Override
         public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             if (method.isConstructor() || method.getReturnType() instanceof PsiPrimitiveType) {
+                return;
+            }
+
+            org.jetbrains.kotlin.j2k.Nullability extensionNullability = J2KNullabilityInferenceExtension.getNullability(method);
+            if (extensionNullability != null) {
+                applyExtensionNullability(method, extensionNullability);
                 return;
             }
 
@@ -679,6 +695,12 @@ class J2KNullityInferrer {
         public void visitParameter(@NotNull PsiParameter parameter) {
             super.visitParameter(parameter);
             if (parameter.getType() instanceof PsiPrimitiveType) {
+                return;
+            }
+
+            org.jetbrains.kotlin.j2k.Nullability extensionNullability = J2KNullabilityInferenceExtension.getNullability(parameter);
+            if (extensionNullability != null) {
+                applyExtensionNullability(parameter, extensionNullability);
                 return;
             }
 
@@ -936,6 +958,12 @@ class J2KNullityInferrer {
 
             PsiType fieldType = field.getType();
             if (fieldType instanceof PsiPrimitiveType) return;
+
+            org.jetbrains.kotlin.j2k.Nullability extensionNullability = J2KNullabilityInferenceExtension.getNullability(field);
+            if (extensionNullability != null) {
+                applyExtensionNullability(field, extensionNullability);
+                return;
+            }
 
             if (!hasRawNullability(fieldType)) {
                 registerAnnotationByNullAssignmentStatus(field);

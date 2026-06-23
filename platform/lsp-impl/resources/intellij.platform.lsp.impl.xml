@@ -3,6 +3,8 @@
 
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.eclipse.lsp4j"/>
+    <module name="intellij.libraries.eclipse.lsp4j.jsonrpc"/>
     <module name="intellij.libraries.gson"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.codeStyle"/>

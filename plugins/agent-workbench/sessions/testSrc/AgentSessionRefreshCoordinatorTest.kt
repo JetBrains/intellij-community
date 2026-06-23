@@ -1810,6 +1810,55 @@ class AgentSessionRefreshCoordinatorTest {
   }
 
   @Test
+  fun providerWarningUsesInjectedProviderDescriptorPresentation() = runBlocking(Dispatchers.Default) {
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.PI,
+      listFromClosedProject = { path ->
+        if (path == PROJECT_PATH) throw IllegalStateException("pi failed") else emptyList()
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+      providerDescriptors = listOf(
+        TestAgentSessionProviderDescriptor(
+          provider = AgentSessionProvider.PI,
+          supportedModes = emptySet(),
+          cliAvailable = true,
+          displayNameKeyOverride = "toolwindow.provider.pi",
+        )
+      ),
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.PI),
+            threads = listOf(thread(id = "pi-1", updatedAt = 100L, provider = AgentSessionProvider.PI)),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.refreshProviderScope(provider = AgentSessionProvider.PI, scopedPaths = setOf(PROJECT_PATH))
+      val expectedWarningMessage = AgentSessionsBundle.message(
+        "toolwindow.warning.provider.unavailable",
+        AgentSessionsBundle.message("toolwindow.provider.pi"),
+      )
+
+      waitForCondition {
+        stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
+          ?.providerWarnings
+          ?.singleOrNull()
+          ?.message == expectedWarningMessage
+      }
+    }
+  }
+
+  @Test
   fun providerRefreshKeepsHealthyPathWhenAnotherPathFails() = runBlocking(Dispatchers.Default) {
     val projectB = "/work/project-b"
     val source = ScriptedSessionSource(

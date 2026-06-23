@@ -14,7 +14,6 @@
     <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.collector" />
     <orderEntry type="module" module-name="intellij.tools.ide.util.common" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" />

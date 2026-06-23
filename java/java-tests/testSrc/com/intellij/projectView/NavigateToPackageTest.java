@@ -26,7 +26,7 @@ public final class NavigateToPackageTest extends LightJavaCodeInsightFixtureTest
                                      @NotNull ModifiableRootModel model,
                                      @NotNull ContentEntry contentEntry) {
         super.configureModule(module, model, contentEntry);
-        IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getProjectLibrary("JUnit4");
+        IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4");
         ModuleRootModificationUtil.addModuleLibrary(module, "JUnit4", 
                                                     junit4Library.getClassesUrls(), 
                                                     junit4Library.getSourcesUrls(), 

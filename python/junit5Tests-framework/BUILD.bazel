@@ -51,7 +51,8 @@ jvm_library(
     ],
     deps = [
         # do not sort,
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "@lib//:io-qameta-allure-java-commons",

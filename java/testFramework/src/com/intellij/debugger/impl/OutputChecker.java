@@ -226,7 +226,7 @@ public class OutputChecker {
         result = replacePath(result, DebuggerUtilsImpl.getIdeaRtPath(), "!RT_JAR!");
       }
 
-      var junit4JarPaths = StringUtil.join(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit4"), java.io.File.pathSeparator);
+      var junit4JarPaths = StringUtil.join(IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4").getClassesPaths(), java.io.File.pathSeparator);
       result = replacePath(result, junit4JarPaths, "!JUNIT4_JARS!");
 
       @SuppressWarnings("removal") var homeDirectory = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getHomeDirectory();

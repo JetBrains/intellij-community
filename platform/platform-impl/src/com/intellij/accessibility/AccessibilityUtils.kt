@@ -37,7 +37,6 @@ object AccessibilityUtils {
     }
 
     if (isSupportScreenReadersOverridden()) {
-      AccessibilityUsageTrackerCollector.featureTriggered(AccessibilityUsageTrackerCollector.SCREEN_READER_SUPPORT_ENABLED_VM)
       return
     }
 

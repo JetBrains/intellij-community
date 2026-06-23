@@ -49,15 +49,20 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
     val EP_NAME: ExtensionPointName<WorkspaceFileIndexContributor<*>> = ExtensionPointName("com.intellij.workspaceModel.fileIndexContributor")
 
     /**
-     * Retrieves the [WorkspaceFileSet] corresponding to the given [WorkspaceFileInternalInfo].
+     * Retrieves the [WorkspaceFileSetWithCustomData] corresponding to the given [WorkspaceFileInternalInfo].
      */
     @ApiStatus.Internal
-    fun fileSetByWorkspaceInfo(info: WorkspaceFileInternalInfo): WorkspaceFileSet? {
-      return when (info) {
-        is WorkspaceFileSetImpl -> info
-        is MultipleWorkspaceFileSets -> info.find(null)
+    fun <D : WorkspaceFileSetData> fileSetWithCustomDataByWorkspaceInfo(
+      info: WorkspaceFileInternalInfo,
+      customDataClass: Class<out D>,
+    ): WorkspaceFileSetWithCustomData<D>? {
+      val result = when (info) {
+        is WorkspaceFileSetWithCustomData<*> -> info.takeIf { customDataClass.isInstance(it.data) }
+        is MultipleWorkspaceFileSets -> info.find(customDataClass)
         else -> null
       }
+      @Suppress("UNCHECKED_CAST")
+      return result as? WorkspaceFileSetWithCustomData<D>
     }
   }
 
@@ -303,7 +308,11 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
       file, honorExclusion, includeContentSets, includeContentNonIndexableSets, includeExternalSets, includeExternalSourceSets,
       includeExternalNonIndexableSets, includeCustomKindSets
     )
-    return fileSetByWorkspaceInfo(info)
+    return when (info) {
+      is WorkspaceFileSetImpl -> info
+      is MultipleWorkspaceFileSets -> info.find(null)
+      else -> null
+    }
   }
 
   override fun findFileSets(
@@ -360,13 +369,8 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
       file, honorExclusion, includeContentSets, includeContentNonIndexableSets, includeExternalSets, includeExternalSourceSets,
       includeExternalNonIndexableSets, includeCustomKindSets
     )
-    val result = when (info) {
-      is WorkspaceFileSetWithCustomData<*> -> info.takeIf { customDataClass.isInstance(it.data) }
-      is MultipleWorkspaceFileSets -> info.find(customDataClass)
-      else -> null
-    }
-    @Suppress("UNCHECKED_CAST")
-    return result as? WorkspaceFileSetWithCustomData<D>
+
+    return fileSetWithCustomDataByWorkspaceInfo(info, customDataClass)
   }
 
   override fun <D : WorkspaceFileSetData> findFileSetsWithCustomData(

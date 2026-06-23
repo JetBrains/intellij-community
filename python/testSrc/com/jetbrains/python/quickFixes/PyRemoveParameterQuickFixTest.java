@@ -8,7 +8,7 @@ import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
-import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
+import com.jetbrains.python.inspections.unusedLocal.PyUnusedParameterInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 
 @TestDataPath("$CONTENT_ROOT/../testData//quickFixes/PyRemoveParameterQuickFixTest/")
@@ -17,26 +17,26 @@ import com.jetbrains.python.psi.LanguageLevel;
 public class PyRemoveParameterQuickFixTest extends PyQuickFixTestCase {
 
   public void testParam() {
-    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.parameter"));
+    doQuickFixTest(PyUnusedParameterInspection.class, PyPsiBundle.message("QFIX.NAME.remove.parameter"));
   }
 
   public void testKwParam() {
-    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.parameter"));
+    doQuickFixTest(PyUnusedParameterInspection.class, PyPsiBundle.message("QFIX.NAME.remove.parameter"));
   }
 
   public void testDocstring() {
     runWithDocStringFormat(DocStringFormat.REST, () ->
-      doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.parameter"))
+      doQuickFixTest(PyUnusedParameterInspection.class, PyPsiBundle.message("QFIX.NAME.remove.parameter"))
     );
   }
 
   public void testUsage() {
-    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.parameter"));
+    doQuickFixTest(PyUnusedParameterInspection.class, PyPsiBundle.message("QFIX.NAME.remove.parameter"));
   }
 
   public void testSingleStarTwoParam() {
     runWithDocStringFormat(DocStringFormat.REST, () ->
-      doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.parameter"), LanguageLevel.PYTHON34)
+      doQuickFixTest(PyUnusedParameterInspection.class, PyPsiBundle.message("QFIX.NAME.remove.parameter"), LanguageLevel.PYTHON34)
     );
   }
 
@@ -45,7 +45,7 @@ public class PyRemoveParameterQuickFixTest extends PyQuickFixTestCase {
       LanguageLevel.PYTHON34,
       () -> {
         final String testFileName = getTestName(true);
-        myFixture.enableInspections(PyUnusedLocalInspection.class);
+        myFixture.enableInspections(PyUnusedParameterInspection.class);
         myFixture.configureByFile(testFileName + ".py");
         myFixture.checkHighlighting(true, false, false);
         final IntentionAction intentionAction = myFixture.getAvailableIntention(PyPsiBundle.message("QFIX.NAME.remove.parameter"));
@@ -56,11 +56,11 @@ public class PyRemoveParameterQuickFixTest extends PyQuickFixTestCase {
 
   // PY-22971
   public void testTopLevelOverloadsAndImplementation() {
-    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.parameter"), LanguageLevel.PYTHON35);
+    doQuickFixTest(PyUnusedParameterInspection.class, PyPsiBundle.message("QFIX.NAME.remove.parameter"), LanguageLevel.PYTHON35);
   }
 
   // PY-22971
   public void testOverloadsAndImplementationInClass() {
-    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.parameter"), LanguageLevel.PYTHON35);
+    doQuickFixTest(PyUnusedParameterInspection.class, PyPsiBundle.message("QFIX.NAME.remove.parameter"), LanguageLevel.PYTHON35);
   }
 }

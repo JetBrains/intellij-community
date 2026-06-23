@@ -167,6 +167,7 @@ internal class AgentPromptPaletteSessionController(
       onSubmitBlocked = ::showError,
       onSubmitSucceeded = ::closeAfterSuccessfulSubmit,
       onPromptSubmitted = uiStateService::saveSubmittedPromptHistoryEntry,
+      onProviderSubmitted = ::saveSelectedProviderSelection,
       generationSettingsProvider = generationSettingsController::currentLaunchSettings,
       generationModelCatalogProvider = generationSettingsController::currentGenerationModelCatalog,
       isContainerModeSelected = ::isContainerModeSelectedForCurrentState,
@@ -187,6 +188,7 @@ internal class AgentPromptPaletteSessionController(
     generationSettingsController.restoreLaunchProfiles(
       launcherProvider()?.loadProviderPreferences() ?: AgentPromptLauncherBridge.ProviderPreferences()
     )
+    restoreSelectedProviderSelection()
     refreshExtensionTaskDraftsFromContext()
 
     if (invocationData.attributes[com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_INVOCATION_PREFER_EXTENSIONS_KEY] == true) {
@@ -253,6 +255,7 @@ internal class AgentPromptPaletteSessionController(
       uiStateService.clearDraft()
     }
     else {
+      saveSelectedProviderSelection()
       draftController.saveDraft(currentTargetMode())
     }
   }
@@ -695,6 +698,18 @@ internal class AgentPromptPaletteSessionController(
 
   private fun updateSendAvailability() {
     submitController.updateSendAvailability()
+  }
+
+  private fun restoreSelectedProviderSelection() {
+    val selection = uiStateService.loadSelectedProviderSelection() ?: return
+    providerSelector.selectProvider(selection.provider, selection.launchMode)
+    generationSettingsController.refreshPresentation()
+    updateProviderOptionsVisibility()
+  }
+
+  private fun saveSelectedProviderSelection() {
+    val provider = providerSelector.selectedProvider?.bridge?.provider ?: return
+    uiStateService.saveSelectedProviderSelection(provider, providerSelector.selectedLaunchMode)
   }
 
   private fun refreshSuggestions() {

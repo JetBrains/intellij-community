@@ -21,6 +21,7 @@ import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.inspections.PyReturnFromInitInspection;
+import com.jetbrains.python.inspections.unusedLocal.PyUnusedFunctionInspection;
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
 
 @TestDataPath("$CONTENT_ROOT/../testData//quickFixes/PyRemoveStatementQuickFixTest/")
@@ -37,7 +38,7 @@ public class PyRemoveStatementQuickFixTest extends PyQuickFixTestCase {
   }
 
   public void testFunction() {
-    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.statement"));
+    doQuickFixTest(PyUnusedFunctionInspection.class, PyPsiBundle.message("QFIX.NAME.remove.statement"));
   }
 
   public void testVariable() {

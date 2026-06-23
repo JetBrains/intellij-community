@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
@@ -280,7 +281,8 @@ internal class AgentChatInitialMessageDispatcher(
     LOG.debug("Stopped initial message dispatch at step ${dispatch.stepIndex}, action=${dispatch.action}")
     file.clearInitialMessageDispatchMetadata()
     tabSnapshotWriter.upsert(file.toSnapshot())
-    if (dispatch.action == AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE) {
+    if (dispatch.action == AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE ||
+        dispatch.completionPolicy == AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY) {
       planModeInitialPromptStopReporter(project, file)
     }
     return AgentChatInitialMessageSendResult(progressed = false, stopDispatching = true)

@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.jline.jar
+  modules:
+  - name: intellij.libraries.jline
+    libraries:
+      jline:
+      - name: $MAVEN_REPOSITORY$/org/jline/jline/3/jline-3.jar

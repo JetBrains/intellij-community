@@ -62,6 +62,12 @@ exports_files(
 
 ### auto-generated section `local-libs` end
 
+alias(
+    name = "junit4",
+    actual = ":libraries-junit4-_j_unit4",
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `maven libs` start
 
 copy_file(
@@ -661,21 +667,6 @@ jvm_import(
     name = "assertj-swing",
     jar = "@org_assertj-assertj-swing-3_17_1_http//file",
     source_jar = "@org_assertj-assertj-swing-3_17_1-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.jetbrains.cloudconfig/cloudconfig-2023.9.jar_copy",
-    src = "@com_jetbrains_cloudconfig-cloudconfig-2023_9_http//file",
-    out = "com.jetbrains.cloudconfig/cloudconfig-2023.9.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "cloud-config-client",
-    jar = "@com_jetbrains_cloudconfig-cloudconfig-2023_9_http//file",
-    source_jar = "@com_jetbrains_cloudconfig-cloudconfig-2023_9-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -1587,36 +1578,6 @@ jvm_import(
     name = "easymock",
     jar = "@org_easymock-easymock-5_6_0_http//file",
     source_jar = "@org_easymock-easymock-5_6_0-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.eclipse.lsp4j/org.eclipse.lsp4j-0.24.0.jar_copy",
-    src = "@org_eclipse_lsp4j-org_eclipse_lsp4j-0_24_0_http//file",
-    out = "org.eclipse.lsp4j/org.eclipse.lsp4j-0.24.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "eclipse-lsp4j",
-    jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j-0_24_0_http//file",
-    source_jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j-0_24_0-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.eclipse.lsp4j/org.eclipse.lsp4j.jsonrpc-0.24.0.jar_copy",
-    src = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc-0_24_0_http//file",
-    out = "org.eclipse.lsp4j/org.eclipse.lsp4j.jsonrpc-0.24.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "eclipse-lsp4j-jsonrpc",
-    jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc-0_24_0_http//file",
-    source_jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc-0_24_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -2916,17 +2877,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps/gradle-api-9.6.0-rc-1.jar_copy",
-    src = "@org_jetbrains_intellij_deps-gradle-api-9_6_0-rc-1_http//file",
-    out = "org.jetbrains.intellij.deps/gradle-api-9.6.0-rc-1.jar",
+    name = "org.jetbrains.intellij.deps/gradle-api-9.6.0.jar_copy",
+    src = "@org_jetbrains_intellij_deps-gradle-api-9_6_0_http//file",
+    out = "org.jetbrains.intellij.deps/gradle-api-9.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "gradle",
-    jar = "@org_jetbrains_intellij_deps-gradle-api-9_6_0-rc-1_http//file",
-    source_jar = "@org_jetbrains_intellij_deps-gradle-api-9_6_0-rc-1-sources_http//file",
+    jar = "@org_jetbrains_intellij_deps-gradle-api-9_6_0_http//file",
+    source_jar = "@org_jetbrains_intellij_deps-gradle-api-9_6_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -6144,17 +6105,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.plugins/structure-intellij-3.329.jar_copy",
-    src = "@org_jetbrains_intellij_plugins-structure-intellij-3_329_http//file",
-    out = "org.jetbrains.intellij.plugins/structure-intellij-3.329.jar",
+    name = "org.jetbrains.intellij.plugins/structure-intellij-3.330.jar_copy",
+    src = "@org_jetbrains_intellij_plugins-structure-intellij-3_330_http//file",
+    out = "org.jetbrains.intellij.plugins/structure-intellij-3.330.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.plugins/structure-base-3.329.jar_copy",
-    src = "@org_jetbrains_intellij_plugins-structure-base-3_329_http//file",
-    out = "org.jetbrains.intellij.plugins/structure-base-3.329.jar",
+    name = "org.jetbrains.intellij.plugins/structure-base-3.330.jar_copy",
+    src = "@org_jetbrains_intellij_plugins-structure-base-3_330_http//file",
+    out = "org.jetbrains.intellij.plugins/structure-base-3.330.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -6212,8 +6173,8 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":org_jetbrains_intellij_plugins-structure-intellij-3_329_http_import",
-        ":org_jetbrains_intellij_plugins-structure-base-3_329_http_import",
+        ":org_jetbrains_intellij_plugins-structure-intellij-3_330_http_import",
+        ":org_jetbrains_intellij_plugins-structure-base-3_330_http_import",
         ":org_jetbrains_intellij_deps-trove4j-1_0_20200330_http_import",
         ":org_atteo-evo-inflector-1_3_http_import",
         ":org_jdom-jdom2-2_0_6_1_http_import",
@@ -6225,15 +6186,15 @@ java_library(
 )
 
 jvm_import(
-    name = "org_jetbrains_intellij_plugins-structure-intellij-3_329_http_import",
-    jar = "@org_jetbrains_intellij_plugins-structure-intellij-3_329_http//file",
-    source_jar = "@org_jetbrains_intellij_plugins-structure-intellij-3_329-sources_http//file",
+    name = "org_jetbrains_intellij_plugins-structure-intellij-3_330_http_import",
+    jar = "@org_jetbrains_intellij_plugins-structure-intellij-3_330_http//file",
+    source_jar = "@org_jetbrains_intellij_plugins-structure-intellij-3_330-sources_http//file",
 )
 
 jvm_import(
-    name = "org_jetbrains_intellij_plugins-structure-base-3_329_http_import",
-    jar = "@org_jetbrains_intellij_plugins-structure-base-3_329_http//file",
-    source_jar = "@org_jetbrains_intellij_plugins-structure-base-3_329-sources_http//file",
+    name = "org_jetbrains_intellij_plugins-structure-base-3_330_http_import",
+    jar = "@org_jetbrains_intellij_plugins-structure-base-3_330_http//file",
+    source_jar = "@org_jetbrains_intellij_plugins-structure-base-3_330-sources_http//file",
 )
 
 jvm_import(
@@ -7688,28 +7649,6 @@ jvm_import(
     jar = "@com_google_code_findbugs-jsr305-3_0_2_http//file",
     source_jar = "@com_google_code_findbugs-jsr305-3_0_2-sources_http//file",
     visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "junit/junit-4.13.2.jar_copy",
-    src = "@junit-junit-4_13_2_http//file",
-    out = "junit/junit-4.13.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "junit4",
-    jar = "@junit-junit-4_13_2_http//file",
-    source_jar = "@junit-junit-4_13_2-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "junit4-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":junit4"],
 )
 
 copy_file(
@@ -10374,6 +10313,21 @@ jvm_import(
 )
 
 copy_file(
+    name = "com.jetbrains.cloudconfig/cloudconfig-2023.9.jar_copy",
+    src = "@com_jetbrains_cloudconfig-cloudconfig-2023_9_http//file",
+    out = "com.jetbrains.cloudconfig/cloudconfig-2023.9.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-cloud-config-client-cloud-config-client",
+    jar = "@com_jetbrains_cloudconfig-cloudconfig-2023_9_http//file",
+    source_jar = "@com_jetbrains_cloudconfig-cloudconfig-2023_9-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "io.coil-kt.coil3/coil-compose-jvm-3.2.0.jar_copy",
     src = "@io_coil-kt_coil3-coil-compose-jvm-3_2_0_http//file",
     out = "io.coil-kt.coil3/coil-compose-jvm-3.2.0.jar",
@@ -11278,6 +11232,66 @@ jvm_import(
 )
 
 copy_file(
+    name = "org.eclipse.lsp4j/org.eclipse.lsp4j.debug-0.24.0.jar_copy",
+    src = "@org_eclipse_lsp4j-org_eclipse_lsp4j_debug-0_24_0_http//file",
+    out = "org.eclipse.lsp4j/org.eclipse.lsp4j.debug-0.24.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-eclipse-lsp4j-debug-eclipse-lsp4j-debug",
+    jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j_debug-0_24_0_http//file",
+    source_jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j_debug-0_24_0-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.eclipse.lsp4j/org.eclipse.lsp4j-0.24.0.jar_copy",
+    src = "@org_eclipse_lsp4j-org_eclipse_lsp4j-0_24_0_http//file",
+    out = "org.eclipse.lsp4j/org.eclipse.lsp4j-0.24.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-eclipse-lsp4j-eclipse-lsp4j",
+    jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j-0_24_0_http//file",
+    source_jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j-0_24_0-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.eclipse.lsp4j/org.eclipse.lsp4j.jsonrpc.debug-0.24.0.jar_copy",
+    src = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc_debug-0_24_0_http//file",
+    out = "org.eclipse.lsp4j/org.eclipse.lsp4j.jsonrpc.debug-0.24.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-eclipse-lsp4j-jsonrpc-debug-eclipse-lsp4j-jsonrpc-debug",
+    jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc_debug-0_24_0_http//file",
+    source_jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc_debug-0_24_0-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.eclipse.lsp4j/org.eclipse.lsp4j.jsonrpc-0.24.0.jar_copy",
+    src = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc-0_24_0_http//file",
+    out = "org.eclipse.lsp4j/org.eclipse.lsp4j.jsonrpc-0.24.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-eclipse-lsp4j-jsonrpc-eclipse-lsp4j-jsonrpc",
+    jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc-0_24_0_http//file",
+    source_jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc-0_24_0-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "org.jetbrains.intellij.deps.fastutil/intellij-deps-fastutil-8.5.18-jb1.jar_copy",
     src = "@org_jetbrains_intellij_deps_fastutil-intellij-deps-fastutil-8_5_18-jb1_http//file",
     out = "org.jetbrains.intellij.deps.fastutil/intellij-deps-fastutil-8.5.18-jb1.jar",
@@ -11993,6 +12007,21 @@ jvm_import(
 )
 
 copy_file(
+    name = "org.jline/jline-3.24.1.jar_copy",
+    src = "@org_jline-jline-3_24_1_http//file",
+    out = "org.jline/jline-3.24.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-jline-jline",
+    jar = "@org_jline-jline-3_24_1_http//file",
+    source_jar = "@org_jline-jline-3_24_1-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "org.jruby.joni/joni-2.2.7.jar_copy",
     src = "@org_jruby_joni-joni-2_2_7_http//file",
     out = "org.jruby.joni/joni-2.2.7.jar",
@@ -12223,6 +12252,21 @@ jvm_import(
     name = "libraries-jsvg-jsvg",
     jar = "@com_github_weisj-jsvg-2_1_0_http//file",
     source_jar = "@com_github_weisj-jsvg-2_1_0-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "junit/junit-4.13.2.jar_copy",
+    src = "@junit-junit-4_13_2_http//file",
+    out = "junit/junit-4.13.2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-junit4-_j_unit4",
+    jar = "@junit-junit-4_13_2_http//file",
+    source_jar = "@junit-junit-4_13_2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -14030,6 +14074,104 @@ jvm_import(
     name = "libraries-test-discovery-intellij-test-discovery",
     jar = "@org_jetbrains_intellij_deps-intellij-test-discovery-agent-1_0_776_http//file",
     source_jar = "@org_jetbrains_intellij_deps-intellij-test-discovery-agent-1_0_776-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.testcontainers/testcontainers-1.21.4.jar_copy",
+    src = "@org_testcontainers-testcontainers-1_21_4_http//file",
+    out = "org.testcontainers/testcontainers-1.21.4.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.rnorth.duct-tape/duct-tape-1.0.8.jar_copy",
+    src = "@org_rnorth_duct-tape-duct-tape-1_0_8_http//file",
+    out = "org.rnorth.duct-tape/duct-tape-1.0.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.github.docker-java/docker-java-api-3.4.2.jar_copy",
+    src = "@com_github_docker-java-docker-java-api-3_4_2_http//file",
+    out = "com.github.docker-java/docker-java-api-3.4.2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.github.docker-java/docker-java-transport-zerodep-3.4.2.jar_copy",
+    src = "@com_github_docker-java-docker-java-transport-zerodep-3_4_2_http//file",
+    out = "com.github.docker-java/docker-java-transport-zerodep-3.4.2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.github.docker-java/docker-java-transport-3.4.2.jar_copy",
+    src = "@com_github_docker-java-docker-java-transport-3_4_2_http//file",
+    out = "com.github.docker-java/docker-java-transport-3.4.2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-testcontainers-testcontainers",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":org_testcontainers-testcontainers-1_21_4_http_import",
+        ":org_rnorth_duct-tape-duct-tape-1_0_8_http_import",
+        ":com_github_docker-java-docker-java-api-3_4_2_http_import",
+        ":com_github_docker-java-docker-java-transport-zerodep-3_4_2_http_import",
+        ":com_github_docker-java-docker-java-transport-3_4_2_http_import",
+    ],
+)
+
+jvm_import(
+    name = "org_testcontainers-testcontainers-1_21_4_http_import",
+    jar = "@org_testcontainers-testcontainers-1_21_4_http//file",
+    source_jar = "@org_testcontainers-testcontainers-1_21_4-sources_http//file",
+)
+
+jvm_import(
+    name = "org_rnorth_duct-tape-duct-tape-1_0_8_http_import",
+    jar = "@org_rnorth_duct-tape-duct-tape-1_0_8_http//file",
+    source_jar = "@org_rnorth_duct-tape-duct-tape-1_0_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_github_docker-java-docker-java-api-3_4_2_http_import",
+    jar = "@com_github_docker-java-docker-java-api-3_4_2_http//file",
+    source_jar = "@com_github_docker-java-docker-java-api-3_4_2-sources_http//file",
+)
+
+jvm_import(
+    name = "com_github_docker-java-docker-java-transport-zerodep-3_4_2_http_import",
+    jar = "@com_github_docker-java-docker-java-transport-zerodep-3_4_2_http//file",
+    source_jar = "@com_github_docker-java-docker-java-transport-zerodep-3_4_2-sources_http//file",
+)
+
+jvm_import(
+    name = "com_github_docker-java-docker-java-transport-3_4_2_http_import",
+    jar = "@com_github_docker-java-docker-java-transport-3_4_2_http//file",
+    source_jar = "@com_github_docker-java-docker-java-transport-3_4_2-sources_http//file",
+)
+
+copy_file(
+    name = "org.testcontainers/junit-jupiter-1.21.4.jar_copy",
+    src = "@org_testcontainers-junit-jupiter-1_21_4_http//file",
+    out = "org.testcontainers/junit-jupiter-1.21.4.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-testcontainers-testcontainers-junit-jupiter",
+    jar = "@org_testcontainers-junit-jupiter-1_21_4_http//file",
+    source_jar = "@org_testcontainers-junit-jupiter-1_21_4-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -20328,104 +20470,6 @@ java_library(
     neverlink = True,
     visibility = ["//visibility:public"],
     exports = [":test_n_g"],
-)
-
-copy_file(
-    name = "org.testcontainers/testcontainers-1.21.4.jar_copy",
-    src = "@org_testcontainers-testcontainers-1_21_4_http//file",
-    out = "org.testcontainers/testcontainers-1.21.4.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.rnorth.duct-tape/duct-tape-1.0.8.jar_copy",
-    src = "@org_rnorth_duct-tape-duct-tape-1_0_8_http//file",
-    out = "org.rnorth.duct-tape/duct-tape-1.0.8.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.github.docker-java/docker-java-api-3.4.2.jar_copy",
-    src = "@com_github_docker-java-docker-java-api-3_4_2_http//file",
-    out = "com.github.docker-java/docker-java-api-3.4.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.github.docker-java/docker-java-transport-zerodep-3.4.2.jar_copy",
-    src = "@com_github_docker-java-docker-java-transport-zerodep-3_4_2_http//file",
-    out = "com.github.docker-java/docker-java-transport-zerodep-3.4.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.github.docker-java/docker-java-transport-3.4.2.jar_copy",
-    src = "@com_github_docker-java-docker-java-transport-3_4_2_http//file",
-    out = "com.github.docker-java/docker-java-transport-3.4.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "testcontainers",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":org_testcontainers-testcontainers-1_21_4_http_import",
-        ":org_rnorth_duct-tape-duct-tape-1_0_8_http_import",
-        ":com_github_docker-java-docker-java-api-3_4_2_http_import",
-        ":com_github_docker-java-docker-java-transport-zerodep-3_4_2_http_import",
-        ":com_github_docker-java-docker-java-transport-3_4_2_http_import",
-    ],
-)
-
-jvm_import(
-    name = "org_testcontainers-testcontainers-1_21_4_http_import",
-    jar = "@org_testcontainers-testcontainers-1_21_4_http//file",
-    source_jar = "@org_testcontainers-testcontainers-1_21_4-sources_http//file",
-)
-
-jvm_import(
-    name = "org_rnorth_duct-tape-duct-tape-1_0_8_http_import",
-    jar = "@org_rnorth_duct-tape-duct-tape-1_0_8_http//file",
-    source_jar = "@org_rnorth_duct-tape-duct-tape-1_0_8-sources_http//file",
-)
-
-jvm_import(
-    name = "com_github_docker-java-docker-java-api-3_4_2_http_import",
-    jar = "@com_github_docker-java-docker-java-api-3_4_2_http//file",
-    source_jar = "@com_github_docker-java-docker-java-api-3_4_2-sources_http//file",
-)
-
-jvm_import(
-    name = "com_github_docker-java-docker-java-transport-zerodep-3_4_2_http_import",
-    jar = "@com_github_docker-java-docker-java-transport-zerodep-3_4_2_http//file",
-    source_jar = "@com_github_docker-java-docker-java-transport-zerodep-3_4_2-sources_http//file",
-)
-
-jvm_import(
-    name = "com_github_docker-java-docker-java-transport-3_4_2_http_import",
-    jar = "@com_github_docker-java-docker-java-transport-3_4_2_http//file",
-    source_jar = "@com_github_docker-java-docker-java-transport-3_4_2-sources_http//file",
-)
-
-copy_file(
-    name = "org.testcontainers/junit-jupiter-1.21.4.jar_copy",
-    src = "@org_testcontainers-junit-jupiter-1_21_4_http//file",
-    out = "org.testcontainers/junit-jupiter-1.21.4.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "testcontainers-junit-jupiter",
-    jar = "@org_testcontainers-junit-jupiter-1_21_4_http//file",
-    source_jar = "@org_testcontainers-junit-jupiter-1_21_4-sources_http//file",
-    visibility = ["//visibility:public"],
 )
 
 copy_file(

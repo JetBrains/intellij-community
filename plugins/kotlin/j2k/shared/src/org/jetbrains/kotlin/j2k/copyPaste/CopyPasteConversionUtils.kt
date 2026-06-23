@@ -16,8 +16,6 @@ import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.J2KPostProcessingRunner
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
-import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_OLD
-import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
 import org.jetbrains.kotlin.j2k.ParseContext
 import org.jetbrains.kotlin.j2k.ParseContext.CODE_BLOCK
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -40,10 +38,9 @@ data class ConversionResult(
 
 fun ElementAndTextList.convertCodeToKotlin(
     project: Project,
-    targetFile: KtFile,
-    j2kKind: J2kConverterExtension.Kind
+    targetFile: KtFile
 ): ConversionResult {
-    val converter = J2kConverterExtension.extension(j2kKind).createJavaToKotlinConverter(
+    val converter = J2kConverterExtension.extension().createJavaToKotlinConverter(
         project,
         targetFile.module,
         ConverterSettings.defaultSettings,
@@ -56,7 +53,7 @@ fun ElementAndTextList.convertCodeToKotlin(
             // A non-blocking read action is essential here 
             // to be able to show a modal progress window right away
             ReadAction.nonBlocking(Callable {
-                converter.elementsToKotlin(inputElements)
+                converter.elementsToKotlin(inputElements, null)
             }).executeSynchronously()
         },
         KotlinNJ2KBundle.message("copy.text.convert.java.to.kotlin.title"),
@@ -143,27 +140,20 @@ fun ElementAndTextList.lineCount(): Int {
     return elements.sumOf { StringUtil.getLineBreakCount(it.text) }
 }
 
-fun getJ2kKind(): J2kConverterExtension.Kind = K2
-
 fun runPostProcessing(
     project: Project,
     file: KtFile,
     bounds: TextRange?,
-    converterContext: ConverterContext?,
-    j2kKind: J2kConverterExtension.Kind
+    converterContext: ConverterContext?
 ) {
-    val postProcessor = J2kConverterExtension.extension(j2kKind).createPostProcessor()
-    if (j2kKind != K1_OLD) {
-        val runnable = {
-            J2KPostProcessingRunner.run(postProcessor, file, converterContext, bounds)
-        }
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(
-            runnable,
-            KotlinNJ2KBundle.message("copy.text.convert.java.to.kotlin.title"),
-            /* canBeCanceled = */ true,
-            project
-        )
-    } else {
+    val postProcessor = J2kConverterExtension.extension().createPostProcessor()
+    val runnable = {
         J2KPostProcessingRunner.run(postProcessor, file, converterContext, bounds)
     }
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        runnable,
+        KotlinNJ2KBundle.message("copy.text.convert.java.to.kotlin.title"),
+        /* canBeCanceled = */ true,
+        project
+    )
 }

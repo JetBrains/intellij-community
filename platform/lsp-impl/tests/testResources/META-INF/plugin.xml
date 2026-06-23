@@ -5,6 +5,8 @@
   <depends>com.intellij.modules.lang</depends>
 
   <content namespace="jetbrains">
+    <module name="intellij.libraries.eclipse.lsp4j" loading="embedded"/>
+    <module name="intellij.libraries.eclipse.lsp4j.jsonrpc" loading="embedded"/>
     <module name="intellij.platform.lsp" loading="embedded"/>
     <module name="intellij.platform.lsp.impl" loading="embedded"/>
   </content>

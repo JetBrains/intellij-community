@@ -237,7 +237,7 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
     createModuleWithJUnit5(module1Content);
 
     Module module = getModule(3);
-    IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getProjectLibrary("JUnit4");
+    IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4");
     ModuleRootModificationUtil.addModuleLibrary(module, "JUnit4", junit4Library.getClassesUrls(), junit4Library.getSourcesUrls());
 
     JUnitConfiguration configuration = new JUnitConfiguration("", myProject);
@@ -428,7 +428,7 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
     assertThat(classPath).containsOnlyOnce(getOutput(module2, true));
     assertThat(classPath).containsOnlyOnce(getOutput(module3, false));
     assertThat(classPath).containsOnlyOnce(getOutput(module3, true));
-    IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getProjectLibrary("JUnit4");
+    IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4");
     for (File file : junit4Library.getClasses()) {
       assertThat(classPath).containsOnlyOnce(file.getPath());
     }

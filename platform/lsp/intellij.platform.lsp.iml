@@ -9,8 +9,8 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" name="eclipse.lsp4j" level="project" />
-    <orderEntry type="library" name="eclipse.lsp4j.jsonrpc" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.eclipse.lsp4j" />
+    <orderEntry type="module" module-name="intellij.libraries.eclipse.lsp4j.jsonrpc" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />

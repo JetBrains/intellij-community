@@ -23,7 +23,7 @@ internal class MySampleTest {
     f.reloadProject()
     f.assertProjectStructure(
       ExpectedModule("root", contentRoot = ".", deps = listOf("child"), sourceRoots = listOf(".")),
-      ExpectedModule("child", contentRoot = "sub${SEP}child", sourceRoots = listOf("sub${SEP}child${SEP}src")),
+      ExpectedModule("child", contentRoot = "sub" / "child", sourceRoots = listOf("sub" / "child" / "src")),
     )
   }
 }
@@ -33,8 +33,9 @@ internal class MySampleTest {
 
 - The `$$"..."` Kotlin multi-dollar raw string on `@TestDataPath` is intentional
   (it keeps `$CONTENT_ROOT` literal). IDE may flag it as a syntax error — ignore.
-- Use `${SEP}` (from `...alsoWin.pyproject.SEP`) in `contentRoot` / `sourceRoots`
-  for cross-platform path matching. Never hardcode `/` or `\`.
+- Join path segments with the `/` operator (from `...alsoWin.pyproject.div`) in
+  `contentRoot` / `sourceRoots` for cross-platform path matching, e.g.
+  `"sub" / "child"`. Never put a literal separator inside the string (no `"sub/child"`).
 - `ExpectedModule` defaults to `type = PYPROJECT`. The implicit module created
   by `PyDefaultTestApplication` is `PYTHON` — reference it as
   `ExpectedModule(f.implicitModuleName, type = PYTHON, ...)`.

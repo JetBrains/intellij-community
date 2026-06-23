@@ -45,6 +45,7 @@ class AgentPromptPaletteSessionControllerTest {
   fun clearPromptState() {
     val project = ProjectManager.getInstance().defaultProject
     project.service<AgentPromptUiSessionStateService>().clearDraft()
+    project.service<AgentPromptUiSessionStateService>().loadState(AgentPromptUiState())
     project.service<AgentSessionProviderAvailabilityService>().clearAvailabilityForTest()
   }
 
@@ -96,11 +97,58 @@ class AgentPromptPaletteSessionControllerTest {
     }
   }
 
+  @Test
+  fun initializeRestoresSelectedProviderFromProjectState() {
+    runInEdtAndWait {
+      val project = ProjectManager.getInstance().defaultProject
+      project.service<AgentPromptUiSessionStateService>().saveSelectedProviderSelection(
+        AgentSessionProvider.CLAUDE,
+        AgentSessionLaunchMode.STANDARD,
+      )
+      val fixture = createSessionControllerFixture()
+      try {
+        fixture.controller.initialize()
+
+        assertThat(fixture.providerSelector.selectedProvider?.bridge?.provider).isEqualTo(AgentSessionProvider.CLAUDE)
+      }
+      finally {
+        fixture.dispose()
+      }
+    }
+  }
+
+  @Test
+  fun closeWithDraftPersistsSelectedProviderForNextPopup() {
+    runInEdtAndWait {
+      val firstPopup = createSessionControllerFixture()
+      try {
+        firstPopup.controller.initialize()
+        firstPopup.controller.installHandlers()
+        firstPopup.promptArea.text = "draft"
+        firstPopup.providerSelector.selectProvider(AgentSessionProvider.JUNIE)
+      }
+      finally {
+        firstPopup.dispose()
+      }
+
+      val reopenedPopup = createSessionControllerFixture()
+      try {
+        reopenedPopup.controller.initialize()
+
+        assertThat(reopenedPopup.providerSelector.selectedProvider?.bridge?.provider).isEqualTo(AgentSessionProvider.JUNIE)
+      }
+      finally {
+        reopenedPopup.dispose()
+      }
+    }
+  }
+
   private fun createSessionControllerFixture(): SessionControllerFixture {
     val project = ProjectManager.getInstance().defaultProject
     val providers = listOf(
       testProviderDescriptor(AgentSessionProvider.CODEX),
       testProviderDescriptor(AgentSessionProvider.CLAUDE),
+      testProviderDescriptor(AgentSessionProvider.JUNIE),
     )
     providers.forEach { provider ->
       service<AgentSessionProviderSettingsService>().setProviderEnabled(provider.provider, true)
@@ -168,6 +216,7 @@ class AgentPromptPaletteSessionControllerTest {
     controllerRef = controller
     return SessionControllerFixture(
       controller = controller,
+      promptArea = promptArea,
       providerSelector = providerSelector,
       existingTaskController = existingTaskController,
       view = view,
@@ -264,6 +313,7 @@ class AgentPromptPaletteSessionControllerTest {
 
   private data class SessionControllerFixture(
     @JvmField val controller: AgentPromptPaletteSessionController,
+    @JvmField val promptArea: AgentPromptTextField,
     @JvmField val providerSelector: AgentPromptProviderSelector,
     @JvmField val existingTaskController: AgentPromptExistingTaskController,
     @JvmField val view: AgentPromptPaletteView,

@@ -40,7 +40,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:jetbrains-annotations",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//python/python-test-env/core",
         "//python/python-test-env/core:core_test_lib",
         "@lib//:kotlin-stdlib",

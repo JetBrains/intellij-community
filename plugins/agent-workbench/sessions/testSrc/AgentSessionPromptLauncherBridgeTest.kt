@@ -23,7 +23,6 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathContext
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageMode
@@ -1095,7 +1094,7 @@ class AgentSessionPromptLauncherBridgeTest {
           assertThat(openRequest.startupLaunchSpecOverride).isNull()
           assertThat(openRequest.postStartDispatchSteps).containsExactly(
             AgentInitialMessageDispatchStep(
-              action = AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE,
+              text = "/plan",
               timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
               completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
             ),
@@ -2491,7 +2490,7 @@ private class RecordingPromptLaunchProviderBridge(
     val message = initialMessagePlan.message.orEmpty()
     return listOfNotNull(
       AgentInitialMessageDispatchStep(
-        action = AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE,
+        text = "/plan",
         timeoutPolicy = initialMessagePlan.timeoutPolicy,
         completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
       ),

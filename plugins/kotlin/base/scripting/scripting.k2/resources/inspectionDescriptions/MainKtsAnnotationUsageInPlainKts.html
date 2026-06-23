@@ -1,0 +1,29 @@
+<html>
+<body>
+<p>
+    Reports the <code>@DependsOn</code>, <code>@Repository</code>, and <code>@Import</code> annotations
+    when they are used in a plain Kotlin script (<code>.kts</code>) rather than a main Kotlin script (<code>.main.kts</code>).
+</p>
+<p>
+    These annotations are contributed only by the main Kotlin Scripting definition, so they are supported
+    exclusively in <code>.main.kts</code> files. A plain <code>.kts</code> script has no functionality that processes them:
+    the references do not resolve, and the dependencies or script imports they would declare never take effect.
+</p>
+<p>
+    The quick fix renames the file to <code>.main.kts</code>, which switches the script definition so that
+    the annotations resolve and work as intended.
+</p>
+<pre><code>
+@file:DependsOn("com.example:my-library:1.0")
+@file:Import("helper.main.kts")
+
+// In a plain .kts script these annotations are unresolved and have no effect.
+println("Hello")
+</code></pre>
+<!-- tooltip end -->
+<p>
+    If you do not actually need external dependencies, you can keep the file as a plain <code>.kts</code> script
+    and remove the annotations instead.
+</p>
+</body>
+</html>

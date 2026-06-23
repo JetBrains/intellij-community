@@ -41,7 +41,7 @@ public class IntroduceFieldWithSetUpInitializationTest extends LightJavaCodeInsi
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       super.configureModule(module, model, contentEntry);
       PsiTestUtil
-        .addProjectLibrary(model, "JUnit4", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit4"));
+        .addProjectLibrary(model, "JUnit4", IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4").getClassesPaths());
     }
   };
 

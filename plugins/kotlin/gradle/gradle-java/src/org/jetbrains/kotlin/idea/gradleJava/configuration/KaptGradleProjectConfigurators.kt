@@ -5,6 +5,7 @@ import com.intellij.compiler.CompilerConfiguration
 import com.intellij.java.library.JavaLibraryUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.base.util.isGradleModule
@@ -115,19 +116,20 @@ internal fun PsiFile.configureKaptForLombokIfNeeded(sourceModule: Module, change
 }
 
 internal fun PsiFile.configureKotlinLombokConfigIfNeeded(sourceModule: Module, changedFiles: ChangedConfiguratorFiles) {
-  val configFile = sourceModule.findLombokConfigFile(this) ?: return
-  val relativePath = VfsUtilCore.getRelativePath(configFile, virtualFile.parent, '/') ?: return
+    val configFile = sourceModule.findLombokConfigFile(this) ?: return
+    val parentDirectory = virtualFile.parent ?: return
+    val relativePath = VfsUtilCore.getRelativePath(configFile, parentDirectory, '/') ?: return
 
-  GradleBuildScriptSupport.getManipulator(this).configurePluginOptions(
-    "kotlinLombok",
-    changedFiles,
-    "lombokConfigurationFile(file(\"$relativePath\"))",
-  )
+    GradleBuildScriptSupport.getManipulator(this).configurePluginOptions(
+        "kotlinLombok",
+        changedFiles,
+        "lombokConfigurationFile(file(\"$relativePath\"))",
+    )
 }
 
-private fun Module.findLombokConfigFile(buildScript: PsiFile) =
-  buildScript.virtualFile.parent.findChild("lombok.config")
-    ?: project.getTopLevelBuildScriptPsiFile()?.virtualFile?.parent?.findChild("lombok.config")
+private fun Module.findLombokConfigFile(buildScript: PsiFile): VirtualFile? =
+    buildScript.virtualFile?.parent?.findChild("lombok.config")
+        ?: project.getTopLevelBuildScriptPsiFile()?.virtualFile?.parent?.findChild("lombok.config")
 
 private fun String.isLombokProcessorPath(): Boolean =
   substringAfterLast('/').substringAfterLast('\\').contains("lombok", ignoreCase = true)

@@ -704,6 +704,92 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       expr = foo(MyClass)
       #└ TYPE type[MyClass]
       """)
+
+    @Test
+    @TestFor(issues = ["PY-60614"])
+    fun `parameterized TypeAlias for type of TypeVar`() = test("""
+      from typing import TypeVar
+      T = TypeVar('T')
+      TypeAlias = type[T]
+      expr: TypeAlias[int]
+      #└ TYPE type[int]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-60614"])
+    fun `call return type inferred via parameterized TypeAlias for type of TypeVar`() = test("""
+      from typing import TypeVar
+      T = TypeVar('T')
+      TypeAlias = type[T]
+      def f(x: TypeAlias[T]) -> T: ...
+      expr = f(int)
+      #└ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-60614"])
+    fun `parameterized TypeAlias for type of TypeVar with PEP695 syntax`() = test("""
+      type TypeAlias[T] = type[T]
+      expr: TypeAlias[int]
+      #└ TYPE type[int]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90345"])
+    fun `call inference via union TypeAlias with class-object arm`() = test("""
+      from typing import Generic, TypeVar
+      T = TypeVar('T')
+      class Role(Generic[T]): ...
+      Alias = Role[T] | type[T]
+      def f(x: Alias[T]) -> T: ...
+      expr = f(int)
+      #└ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90345"])
+    fun `call inference via union TypeAlias with class-object arm first`() = test("""
+      from typing import Generic, TypeVar
+      T = TypeVar('T')
+      class Role(Generic[T]): ...
+      Alias = type[T] | Role[T]
+      def f(x: Alias[T]) -> T: ...
+      expr = f(int)
+      #└ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90345"])
+    fun `call inference via three-arm union TypeAlias with class-object`() = test("""
+      from typing import Generic, TypeVar
+      T = TypeVar('T')
+      class A(Generic[T]): ...
+      class B(Generic[T]): ...
+      Alias = A[T] | B[T] | type[T]
+      def f(x: Alias[T]) -> T: ...
+      expr = f(int)
+      #└ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90345"])
+    fun `parameterized union TypeAlias with class-object arm`() = test("""
+      from typing import Generic, TypeVar
+      T = TypeVar('T')
+      class Role(Generic[T]): ...
+      Alias = Role[T] | type[T]
+      expr: Alias[int]
+      #└ TYPE Role[int] | type[int]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90345"])
+    fun `parameterized union TypeAlias with class-object arm PEP695`() = test("""
+      class Role[T]: ...
+      type Alias[T] = Role[T] | type[T]
+      expr: Alias[int]
+      #└ TYPE Role[int] | type[int]
+      """)
   }
 
   @Nested
@@ -1791,4 +1877,5 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
     # FIXME PY-37876: an error is expected here but is not produced; documents current behavior.
     func(42, accepts_anything)
     """)
+
 }

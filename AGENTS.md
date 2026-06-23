@@ -17,6 +17,7 @@ repository: monorepo
 - The repository is a large monorepo with multiple IDE products and plugins.
 - Module/plugin directories may contain their own AGENTS/CLAUDE instructions; follow them when present.
 - `*.iml` files are the source of truth and auto-generate `BUILD.bazel` files.
+- When adding or editing a JPS module `.iml`, run `bun build/jps-module.mjs register <path-to-iml> --fix-iml-eof` before `./build/jpsModelToBazel.cmd`. This keeps `.idea/modules.xml` and `community/.idea/modules.xml` in canonical order.
 - User-visible strings belong in `*.properties` for localization.
 
 ## Module-specific rules
@@ -60,6 +61,8 @@ Preserve IDE-serialized .iml files in canonical form. Do not:
 - add a trailing newline at end of file
 - prune (remove) empty tags
 - reorder elements or attributes
+
+Use `bun build/jps-module.mjs register <path-to-iml> --fix-iml-eof` for module registration and `.iml` EOF cleanup instead of hand-editing `.idea/modules.xml`. The canonical `modules.xml` order is by `.iml` basename without the `.iml` suffix, matching `org.jetbrains.intellij.build.ModulesXml`.
 
 ## Tools (use in this order)
 

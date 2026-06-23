@@ -21,6 +21,14 @@
                      level="WARNING"
                      bundle="messages.KotlinBaseScriptingBundle" key="inspection.script.definition.not.registered.name"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.core.script.k2.inspections.MainKtsAnnotationUsageInPlainKtsInspection"
+                     language="kotlin"
+                     groupPath="Kotlin"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     bundle="messages.KotlinBaseScriptingBundle" key="inspection.main.kts.annotation.in.plain.script.name"/>
+
     <notificationGroup id="KotlinScriptNotificationGroup"
                        displayType="BALLOON"
                        bundle="messages.KotlinBaseScriptingBundle"

@@ -21,7 +21,7 @@
     <orderEntry type="module" module-name="intellij.java.debugger.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tasks.compatibility" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl" />
@@ -39,6 +39,8 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.tasks" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.tasks.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.tasks.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.plugin" scope="RUNTIME" />
     <orderEntry type="library" scope="TEST" name="easymock" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.objenesis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.http.client" scope="TEST" />

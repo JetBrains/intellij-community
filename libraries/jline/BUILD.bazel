@@ -1,0 +1,43 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.jline` start
+
+jvm_library(
+    name = "jline",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.jline",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jline-jline"],
+    runtime_deps = ["@lib//:libraries-jline-jline"],
+)
+
+jvm_library(
+    name = "jline_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.jline",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jline-jline"],
+    runtime_deps = [":jline"],
+)
+### auto-generated section `build intellij.libraries.jline` end
+
+### auto-generated section `iml intellij.libraries.jline` start
+exports_files(
+    [
+        "intellij.libraries.jline.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.jline` end

@@ -17,7 +17,6 @@
       <with attribute="implementationClass" implements="com.intellij.refactoring.memberPushDown.PushDownDelegate"/>
     </extensionPoint>
     <extensionPoint name="refactoring.moveDirectoryWithClassesHelper" interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesHelper" dynamic="true"/>
-    <extensionPoint name="refactoring.moveFileInvalidationStrategy" interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveFileInvalidationStrategy" dynamic="true"/>
     <extensionPoint name="refactoring.safeDeleteProcessor" interface="com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegate" dynamic="true"/>
     <extensionPoint name="refactoring.safeDeleteAvailability" interface="com.intellij.refactoring.safeDelete.SafeDeleteAvailability" dynamic="true"/>
     <extensionPoint name="refactoring.extractIncludeHandler" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">

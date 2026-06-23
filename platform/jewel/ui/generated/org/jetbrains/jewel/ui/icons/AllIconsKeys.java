@@ -1006,6 +1006,9 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey FreezeAll = new IntelliJIconKey("debugger/freezeAll.svg", "expui/debugger/freezeAll.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey InspectionSeverity = new IntelliJIconKey("expui/debugger/inspectionSeverity.svg", "expui/debugger/inspectionSeverity.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey KillProcess = new IntelliJIconKey("debugger/killProcess.svg", "expui/run/killProcess.svg", AllIconsKeys.class);
     /** 12x12 */ 
     @GeneratedFromIntelliJSources
