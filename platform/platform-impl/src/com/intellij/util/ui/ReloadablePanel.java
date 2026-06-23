@@ -20,7 +20,6 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.util.Set;
 
-@ApiStatus.Internal
 public abstract class ReloadablePanel<T> {
   public interface DataProvider<T> {
 
@@ -44,6 +43,7 @@ public abstract class ReloadablePanel<T> {
   private volatile @Nullable DataProvider<T> myDataProvider;
   private volatile @Nullable UpdateStatus myUpdateStatus;
 
+  @ApiStatus.Internal
   protected JPanel myActionPanel;
   public ReloadablePanel() {
     myErrorMessage.setForeground(JBColor.RED);
