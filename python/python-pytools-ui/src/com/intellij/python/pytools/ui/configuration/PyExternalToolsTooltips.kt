@@ -103,7 +103,7 @@ private fun lookupStrategyText(mode: com.intellij.python.pytools.configuration.E
  */
 private fun toolColumnTooltip(toolRow: ToolRow, host: TooltipHost, eventX: Int, cellRect: Rectangle): String {
   val onGear = isOverIcon(eventX, cellRect, PythonPytoolsUIIcons.Settings.iconWidth)
-  if (onGear && toolRow.staged.enabled && toolRow.tool.detailConfigurable != null) {
+  if (onGear && toolRow.staged.enabled && toolRow.detailConfigurableProvider != null) {
     return PyToolsUiBundle.message("settings.external.tools.edit.tooltip", toolRow.tool.presentableName)
   }
   // Match the cell-rendering rule: a disabled tool's options aren't surfaced anywhere — its

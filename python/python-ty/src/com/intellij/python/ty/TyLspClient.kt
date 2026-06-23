@@ -4,20 +4,15 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.Lsp4jServer
-import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspGoToDefinitionDisabled
 import com.intellij.python.lsp.core.PyLspToolCustomization
 import com.intellij.python.lsp.core.PyLspToolIntegrationProvider
 import com.intellij.python.lsp.core.PyLspToolDescriptor
 import com.intellij.python.pytools.lsp.PyLspToolSettings
-import javax.swing.Icon
 
 class TyLspIntegrationProvider : PyLspToolIntegrationProvider() {
   override fun getDescriptor(module: Module): PyLspToolDescriptor =
     TyLspClientDescriptor(module)
-
-  override fun getIcon(lspClient: LspClient): Icon =
-    TyUtil.getDefaultTyIcon()
 }
 
 class TyLspClientDescriptor(module: Module) : PyLspToolDescriptor(module, TyPyTool.getInstance()) {

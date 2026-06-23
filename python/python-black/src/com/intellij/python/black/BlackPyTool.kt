@@ -9,6 +9,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.PyToolsState
 import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
+import com.intellij.python.pytools.ui.PyToolDetailConfigurableProvider
 import com.intellij.python.black.PyBlackBundle.message
 import com.intellij.python.black.configuration.BlackFormatterConfigurable
 import com.intellij.python.black.configuration.BlackFormatterConfiguration
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus
 import kotlin.io.path.Path
 
 @ApiStatus.Internal
-class BlackPyTool : PyTool {
+class BlackPyTool : PyTool, PyToolDetailConfigurableProvider {
   override val presentableName: String = "Black"
   override val description: String get() = message("black.tool.description")
   override val packageName: PyPackageName = PyPackageName.from("black")
@@ -45,7 +46,7 @@ class BlackPyTool : PyTool {
     return entry
   }
 
-  override val detailConfigurable: (Project) -> UnnamedConfigurable = ::BlackFormatterConfigurable
+  override fun createConfigurable(project: Project): UnnamedConfigurable = BlackFormatterConfigurable(project)
 
   override fun summaryFor(project: Project): String {
     val cfg = BlackFormatterConfiguration.getBlackConfiguration(project)

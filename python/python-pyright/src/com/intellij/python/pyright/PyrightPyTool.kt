@@ -2,58 +2,30 @@
 package com.intellij.python.pyright
 
 import com.intellij.openapi.components.service
-import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
-import com.intellij.platform.lsp.api.LspClientManager
-import com.intellij.python.pytools.InstallInfo
 import com.intellij.python.pytools.PyTool
-import com.intellij.python.pytools.PyToolsState
-import com.intellij.python.pytools.statistics.PyToolFusSnapshot
-import com.intellij.python.pytools.ui.PyToolsUiBundle
+import com.intellij.python.pytools.lsp.PyLspTool
+import com.intellij.python.pytools.ui.PyToolDetailConfigurableProvider
+import com.intellij.python.pytools.ui.pyLspToolFeaturesSummary
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.Icon
 
 @ApiStatus.Internal
-class PyrightPyTool : PyTool {
+class PyrightPyTool : PyLspTool<PyrightConfiguration>(), PyToolDetailConfigurableProvider {
   override val presentableName: String = "Pyright"
   override val description: String get() = PyrightBundle.message("pyright.tool.description")
   override val packageName: PyPackageName = PyPackageName.from("pyright")
-  override val aliases: List<PyPackageName> = listOf(packageName, PyPackageName.from("basedpyright"))
 
-  override val installInfo: InstallInfo = InstallInfo(
-    packageName = PyPackageName.from("basedpyright"),
-    installHelp = PyrightBundle.message("basedpyright.help"),
-  )
+  override fun configuration(project: Project): PyrightConfiguration = project.service<PyrightConfiguration>()
 
-  override fun migrateLegacyState(project: Project): PyToolsState.ToolEntry = project.service<PyrightConfiguration>().migrateToPyToolState()
+  override val icon: Icon = PyrightUtil.getDefaultPyrightIcon()
 
-  override val detailConfigurable: (Project) -> UnnamedConfigurable = ::PyrightConfigurable
+  override fun createConfigurable(project: Project): PyrightConfigurable = PyrightConfigurable(project)
 
-  override fun summaryFor(project: Project): String {
-    val cfg = project.service<PyrightConfiguration>()
-    return buildList {
-      if (cfg.inspections) add(PyToolsUiBundle.message("checkbox.inspections"))
-      if (cfg.completions == true) add(PyToolsUiBundle.message("checkbox.completions"))
-      if (cfg.inlayHints == true) add(PyrightBundle.message("checkbox.inlay.hints.basedpyright.only"))
-      if (cfg.documentation == true) add(PyToolsUiBundle.message("checkbox.documentation"))
-    }.joinToString(", ")
-  }
+  override fun summaryFor(project: Project): String = pyLspToolFeaturesSummary(configuration(project))
 
-  override fun onEnabledChanged(project: Project, enabled: Boolean) {
-    val manager = LspClientManager.getInstance(project)
-    if (enabled) manager.startClientsIfNeeded(PyrightLspIntegrationProvider::class.java)
-    else manager.stopClients(PyrightLspIntegrationProvider::class.java)
-  }
-
-  override fun configurationFusSnapshot(project: Project): PyToolFusSnapshot {
-    val cfg = project.service<PyrightConfiguration>()
-    return super.configurationFusSnapshot(project).copy(
-      inspections = cfg.inspections,
-      completions = cfg.completions,
-      inlayHints = cfg.inlayHints,
-      documentation = cfg.documentation,
-    )
-  }
+  override fun onEnabledChanged(project: Project, enabled: Boolean): Unit = restartOrStopPyrightProvider(project)
 
   @Suppress("CompanionObjectInExtension")
   companion object {

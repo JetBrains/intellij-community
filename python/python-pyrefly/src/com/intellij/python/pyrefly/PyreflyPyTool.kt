@@ -9,46 +9,31 @@ import com.intellij.platform.lsp.api.stopAndRestartClientsIfNeeded
 import com.intellij.platform.lsp.api.stopClients
 import com.intellij.python.pyrefly.lsp.PyreflyLspIntegrationProvider
 import com.intellij.python.pytools.PyTool
-import com.intellij.python.pytools.PyToolsState
-import com.intellij.python.pytools.statistics.PyToolFusSnapshot
-import com.intellij.python.pytools.ui.PyToolsUiBundle
+import com.intellij.python.pytools.lsp.PyLspTool
+import com.intellij.python.pytools.ui.PyToolDetailConfigurableProvider
+import com.intellij.python.pytools.ui.pyLspToolFeaturesSummary
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.Icon
 
 @ApiStatus.Internal
-class PyreflyPyTool : PyTool {
+class PyreflyPyTool : PyLspTool<PyreflyConfiguration>(), PyToolDetailConfigurableProvider {
   override val presentableName: String = "Pyrefly"
   override val description: String get() = PyreflyBundle.message("pyrefly.tool.description")
   override val packageName: PyPackageName = PyPackageName.from("pyrefly")
 
-  override fun migrateLegacyState(project: Project): PyToolsState.ToolEntry = project.service<PyreflyConfiguration>().migrateToPyToolState()
+  override fun configuration(project: Project): PyreflyConfiguration = project.service<PyreflyConfiguration>()
 
-  override val detailConfigurable: (Project) -> UnnamedConfigurable = ::PyreflyDetailConfigurable
+  override val icon: Icon = PyreflyUtil.getDefaultPyreflyIcon()
 
-  override fun summaryFor(project: Project): String {
-    val cfg = project.service<PyreflyConfiguration>()
-    return buildList {
-      if (cfg.inspections) add(PyToolsUiBundle.message("checkbox.inspections"))
-      if (cfg.completions == true) add(PyToolsUiBundle.message("checkbox.completions"))
-      if (cfg.inlayHints == true) add(PyToolsUiBundle.message("checkbox.inlay.hints"))
-      if (cfg.documentation == true) add(PyToolsUiBundle.message("checkbox.documentation"))
-    }.joinToString(", ")
-  }
+  override fun createConfigurable(project: Project): UnnamedConfigurable = PyreflyDetailConfigurable(project)
+
+  override fun summaryFor(project: Project): String = pyLspToolFeaturesSummary(configuration(project))
 
   override fun onEnabledChanged(project: Project, enabled: Boolean) {
     val manager = LspClientManager.getInstance(project)
     if (enabled) manager.stopAndRestartClientsIfNeeded<PyreflyLspIntegrationProvider>()
     else manager.stopClients<PyreflyLspIntegrationProvider>()
-  }
-
-  override fun configurationFusSnapshot(project: Project): PyToolFusSnapshot {
-    val cfg = project.service<PyreflyConfiguration>()
-    return super.configurationFusSnapshot(project).copy(
-      inspections = cfg.inspections,
-      completions = cfg.completions,
-      inlayHints = cfg.inlayHints,
-      documentation = cfg.documentation,
-    )
   }
 
   @Suppress("CompanionObjectInExtension")

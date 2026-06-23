@@ -4,7 +4,6 @@ package com.intellij.python.ruff
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.python.pytools.lsp.LSP_TOOLS_STORAGE_FILE
 import com.intellij.python.pytools.lsp.PyLspToolConfiguration
@@ -21,9 +20,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
  * `External Tools` table; this dialog only exposes the tool-specific feature toggles.
  */
 class RuffConfigurable(project: Project) :
-  PyLspToolDetailConfigurable(project, RuffPyTool.getInstance()) {
-
-  override val settings: RuffConfiguration get() = project.service<RuffConfiguration>()
+  PyLspToolDetailConfigurable<RuffConfiguration>(project, RuffPyTool.getInstance()) {
 
   override fun Panel.extraRows() {
     row("") {

@@ -23,10 +23,10 @@ object LspToolVersions {
   }
 
   /**
-   * The pinned PEP 508 requirement (e.g. `ruff==0.15.18`) for [tool], keyed by the PyPI package the
-   * tool actually installs ([PyTool.installInfo] — note e.g. `pyright` installs `basedpyright`).
+   * The pinned PEP 508 requirement (e.g. `ruff==0.15.18`) for [tool], keyed by its PyPI
+   * package ([PyTool.packageName]).
    */
-  fun requirement(tool: PyTool): String = requirement(tool.installInfo.packageName.name)
+  fun requirement(tool: PyTool): String = requirement(tool.packageName.name)
 
   /** The pinned PEP 508 requirement (e.g. `pandas==3.0.2`) for the PyPI package [pypiPackage]. */
   fun requirement(pypiPackage: String): String {

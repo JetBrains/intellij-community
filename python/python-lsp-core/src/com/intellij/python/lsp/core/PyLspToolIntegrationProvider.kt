@@ -36,10 +36,10 @@ import com.intellij.openapi.util.text.plus
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspClientDescriptor
-import com.intellij.platform.lsp.api.LspServerListener
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.LspIntegrationProvider
 import com.intellij.platform.lsp.api.LspIntegrationProvider.LspClientStarter
+import com.intellij.platform.lsp.api.LspServerListener
 import com.intellij.platform.lsp.api.customization.LspCodeLensCustomizer
 import com.intellij.platform.lsp.api.customization.LspCodeLensDisabled
 import com.intellij.platform.lsp.api.customization.LspCompletionCustomizer
@@ -61,6 +61,7 @@ import com.intellij.python.community.execService.asGeneralCommandLine
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.getExecutableWithBaseArgs
 import com.intellij.python.pytools.isEnabledOn
+import com.intellij.python.pytools.lsp.PyLspTool
 import com.intellij.python.pytools.lsp.PyLspToolSettings
 import com.intellij.python.pytools.ui.configuration.PyExternalToolsConfigurable
 import com.intellij.python.pytools.ui.getInstalledToolPackage
@@ -107,7 +108,7 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
     }
 
     runBlockingMaybeCancellable {
-      descriptor.pyTool.getExecutableWithBaseArgs(moduleOrProject, descriptor.executableNames, isUvxSupported = descriptor.isUvxSupported)
+      descriptor.pyTool.getExecutableWithBaseArgs(moduleOrProject, descriptor.executableName)
     }.onFailure { return }
 
     clientStarter.ensureClientStarted(descriptor)
@@ -127,10 +128,10 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
 
   abstract fun getDescriptor(module: Module): PyLspToolDescriptor
 
-  abstract fun getIcon(lspClient: LspClient): Icon
+  fun getIcon(lspClient: LspClient): Icon = (lspClient.descriptor as PyLspToolDescriptor).pyTool.icon
 
-  open fun presentableName(lspClient: LspClient): @NlsSafe String = lspClient.initializeResult?.serverInfo?.name
-                                                                    ?: lspClient.descriptor.presentableName
+  fun presentableName(lspClient: LspClient): @NlsSafe String = lspClient.initializeResult?.serverInfo?.name
+                                                               ?: lspClient.descriptor.presentableName
 
   protected open fun subscribeOnChanges(pyTool: PyTool, project: Project, parentDisposable: Disposable) {
     project.messageBus.connect(parentDisposable)
@@ -167,7 +168,7 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
  */
 abstract class PyLspToolDescriptor(
   val module: Module,
-  val pyTool: PyTool,
+  val pyTool: PyLspTool<*>,
 ) : LspClientDescriptor(module.project, pyTool.presentableName, *ModuleRootManager.getInstance(module).contentRoots) {
   /**
    * Whether this python LSP tool can serve Jupyter notebooks. Defaults to `true` because all current Python LSP tools support notebooks.
@@ -182,16 +183,14 @@ abstract class PyLspToolDescriptor(
 
   abstract val toolConfig: PyLspToolSettings
 
-  open val executableNames: List<String> get() = pyTool.aliases.map { it.name }
-
-  open val isUvxSupported: Boolean = true
+  open val executableName: String get() = pyTool.packageName.name
 
   abstract fun lspArguments(): List<String>
 
   override fun createCommandLine(): GeneralCommandLine {
     val moduleOrProject = ModuleOrProject.ModuleAndProject(module)
     val executable = runBlockingMaybeCancellable {
-      pyTool.getExecutableWithBaseArgs(moduleOrProject, executableNames, isUvxSupported = isUvxSupported)
+      pyTool.getExecutableWithBaseArgs(moduleOrProject, executableName)
     }
     val (binary, baseArgs) = executable.getOr { throw ExecutionException(it.error.message) }
     val cmd = binary.asGeneralCommandLine().getOr { throw ExecutionException(it.error.message) }

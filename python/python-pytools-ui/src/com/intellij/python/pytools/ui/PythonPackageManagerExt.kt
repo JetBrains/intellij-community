@@ -6,6 +6,6 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.getInstalledPackageSnapshot
 
 fun PythonPackageManager.getInstalledToolPackage(pyTool: PyTool): PythonPackage? {
-  return pyTool.aliases.firstNotNullOfOrNull { getInstalledPackageSnapshot(it.name) }
+  return getInstalledPackageSnapshot(pyTool.packageName.name)
 }
 

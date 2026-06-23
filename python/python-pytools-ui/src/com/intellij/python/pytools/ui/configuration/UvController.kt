@@ -109,25 +109,10 @@ internal class UvController(
   private var attemptedUpgrades: Set<String> = emptySet()
 
   /**
-   * Package name uv knows this row's tool by — a single value, never a set. Derived from the
-   * basename of the detected binary, matched against the tool's `aliases`: for Pyright
-   * (aliases `[pyright, basedpyright]`) this resolves to whichever of the two was actually
-   * found on disk, and every uv operation (lookup, install/upgrade, attempted-upgrade tracking)
-   * targets that same package. When nothing is detected the row is showing INSTALL and we fall
-   * back to `installInfo.packageName.name` — the package the INSTALL click would put on disk.
+   * Package name uv knows this row's tool by. Each tool maps 1:1 to a single PyPI package, so every uv
+   * operation (lookup, install/upgrade, attempted-upgrade tracking) targets the tool's package name.
    */
-  private fun ToolRow.uvPackageName(): String {
-    val detectedPath = when (val pfv = pathFieldValue) {
-      is PathFieldValue.Custom -> pfv.path
-      is PathFieldValue.AutoDetected -> pfv.path
-      else -> null
-    }
-    if (detectedPath != null) {
-      val baseName = detectedPath.fileName.toString().removeSuffix(".exe")
-      tool.aliases.firstOrNull { it.name == baseName }?.let { return it.name }
-    }
-    return tool.installInfo.packageName.name
-  }
+  private fun ToolRow.uvPackageName(): String = tool.packageName.name
 
   /** True iff the detected package is currently installed by uv (per the cached list). */
   fun isUvManaged(toolRow: ToolRow): Boolean =

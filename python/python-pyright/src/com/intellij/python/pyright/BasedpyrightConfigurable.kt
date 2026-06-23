@@ -10,22 +10,23 @@ import com.intellij.python.pytools.lsp.PyLspToolConfiguration
 import com.intellij.python.pytools.ui.PyLspToolDetailConfigurable
 import com.intellij.util.xmlb.XmlSerializerUtil
 
-class PyrightConfigurable(
-  project: Project
-) : PyLspToolDetailConfigurable<PyrightConfiguration>(
+class BasedpyrightConfigurable(
+  project: Project,
+) : PyLspToolDetailConfigurable<BasedpyrightConfiguration>(
   project = project,
-  tool = PyrightPyTool.getInstance()
+  tool = BasedpyrightPyTool.getInstance()
 )
 
 @Service(Service.Level.PROJECT)
 @State(
-  name = "PyrightConfiguration",
+  name = "BasedpyrightConfiguration",
   storages = [Storage(LSP_TOOLS_STORAGE_FILE)]
 )
-data class PyrightConfiguration(
+data class BasedpyrightConfiguration(
+  override var inlayHints: Boolean? = true,
   override var completions: Boolean? = true,
-) : PyLspToolConfiguration<PyrightConfiguration>() {
-  override fun loadState(state: PyrightConfiguration) {
+) : PyLspToolConfiguration<BasedpyrightConfiguration>() {
+  override fun loadState(state: BasedpyrightConfiguration) {
     XmlSerializerUtil.copyBean(state, this)
   }
 }

@@ -5,7 +5,6 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspFormattingSupport
 import com.intellij.python.lsp.core.PyLspService
 import com.intellij.python.lsp.core.PyLspToolCustomization
@@ -16,7 +15,6 @@ import com.intellij.python.ruff.RuffConfiguration
 import com.intellij.python.ruff.RuffPyTool
 import com.intellij.python.ruff.RuffService
 import com.intellij.python.ruff.RuffSettings
-import com.intellij.python.ruff.RuffUtil
 import com.intellij.python.ruff.codeinsight.actions.RuffDisableRuleForFileIntentionAction
 import com.intellij.python.ruff.codeinsight.actions.RuffDisableRuleIntentionAction
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
@@ -24,13 +22,10 @@ import kotlinx.coroutines.launch
 import org.eclipse.lsp4j.Diagnostic
 import org.eclipse.lsp4j.InitializeResult
 import org.jetbrains.annotations.Nls
-import javax.swing.Icon
 
 class RuffLspIntegrationProvider : PyLspToolIntegrationProvider() {
   override fun getDescriptor(module: Module): RuffLspClientDescriptor =
     RuffLspClientDescriptor(module)
-
-  override fun getIcon(lspClient: LspClient): Icon = RuffUtil.getDefaultRuffIcon()
 }
 
 class RuffLspClientDescriptor(module: Module) : PyLspToolDescriptor(module, RuffPyTool.getInstance()) {

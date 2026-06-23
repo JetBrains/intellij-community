@@ -3,9 +3,9 @@ package com.intellij.python.junit5Tests.env.tests.interpreters.lspTools
 
 import com.intellij.openapi.components.service
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
-import com.intellij.python.pyright.PyrightConfiguration
+import com.intellij.python.pyright.BasedpyrightConfiguration
+import com.intellij.python.pyright.BasedpyrightPyTool
 import com.intellij.python.pyright.PyrightLspIntegrationProvider
-import com.intellij.python.pyright.PyrightPyTool
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.jetbrains.python.allure.Layers
@@ -19,8 +19,8 @@ import kotlin.time.Duration.Companion.minutes
 /**
  * End-to-end test of the Pyright LSP tool support against the real `basedpyright` language server.
  *
- * `basedpyright` is the package the integration installs (see [PyrightPyTool.installInfo]); the
- * binary is resolved as `basedpyright-langserver`. The test verifies that a type error reported via
+ * [BasedpyrightPyTool] installs the `basedpyright` package and the binary is resolved as
+ * `basedpyright-langserver`. The test verifies that a type error reported via
  * `textDocument/publishDiagnostics` is surfaced as an editor error highlight.
  */
 @Subsystems.LspTools
@@ -31,10 +31,10 @@ import kotlin.time.Duration.Companion.minutes
 class BasedpyrightLspToolEnvTest {
   private suspend fun enablePyrightAndInstall() = module.enableLspToolAndInstall(
     project = project,
-    pyTool = PyrightPyTool.getInstance(),
+    pyTool = BasedpyrightPyTool.getInstance(),
     toolInstalled = fixtures.toolInstalled,
   ) {
-    project.service<PyrightConfiguration>().apply {
+    project.service<BasedpyrightConfiguration>().apply {
       inspections = true
     }
   }

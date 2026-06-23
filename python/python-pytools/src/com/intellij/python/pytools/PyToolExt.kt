@@ -39,18 +39,17 @@ fun PyTool.isEnabledOn(project: Project): Boolean = getState(project).enabled
 
 suspend fun PyTool.getExecutableWithBaseArgs(
   moduleOrProject: ModuleOrProject,
-  executableNames: List<String> = aliases.map { it.name },
+  executableName: String = packageName.name,
   workingDir: Path? = null,
-  isUvxSupported: Boolean = true
 ): PyResult<Pair<BinaryToExec, List<String>>> {
   val state = getState(moduleOrProject.project)
 
   val toolBinaryPath = when (state.discoveryMode) {
     ExecutableDiscoveryMode.INTERPRETER -> {
       val pyRichSdk = moduleOrProject.moduleIfExists?.pythonSdk?.pyRichSdk()
-      pyRichSdk?.let { findExecutableInSdk(it, executableNames) } ?: findExecutableInPath(state, executableNames)
+      pyRichSdk?.let { findExecutableInSdk(it, executableName) } ?: findExecutableInPath(state, executableName)
     }
-    ExecutableDiscoveryMode.PATH -> findExecutableInPath(state, executableNames)
+    ExecutableDiscoveryMode.PATH -> findExecutableInPath(state, executableName)
     ExecutableDiscoveryMode.UVX -> null
   }
 
@@ -62,14 +61,13 @@ suspend fun PyTool.getExecutableWithBaseArgs(
     BinOnEel(toolBinaryPath, workDir = workDir).let { PyResult.success(it to emptyList()) }
   }
   else {
-    if (!isUvxSupported) {
-      return PyResult.localizedError(message("uvx.is.not.installed"))
-    }
-
     val uvxPath = localEel.exec.where("uvx")
                   ?: return PyResult.localizedError(message("uvx.is.not.installed"))
 
-    val uvxArgs = listOf(packageName.name)
+    // `uvx <pkg>` only works when the package's entry point matches its name. When the executable
+    // differs (e.g. pyright → pyright-langserver) uvx needs `--from <pkg> <executable>`.
+    val uvxArgs = if (executableName == packageName.name) listOf(executableName)
+                  else listOf("--from", packageName.name, executableName)
     BinOnEel(uvxPath.asNioPath(), workDir = workDir).let { PyResult.success(it to uvxArgs) }
   }
 }
@@ -116,11 +114,6 @@ suspend fun PyTool.resolveVersion(moduleOrProject: ModuleOrProject): PyResult<Ve
   return versionOutput.parseVersion(packageName.name)
 }
 
-private fun EelOsFamily.getOsSpecificBinaryFileNames(executableNames: List<String>): Sequence<String> {
-  return executableNames.asSequence().map { getOsSpecificBinaryName(it) }
-}
-
-
 private fun EelOsFamily.getOsSpecificBinaryName(binaryName: String): String = when (this) {
   EelOsFamily.Posix -> binaryName
   EelOsFamily.Windows -> "$binaryName.exe"
@@ -129,22 +122,18 @@ private fun EelOsFamily.getOsSpecificBinaryName(binaryName: String): String = wh
 /**
  * only local sdks are supported currently
  */
-fun PyTool.findExecutableInSdk(pyRichSdk: PyRichSdk, executableNames: List<String> = aliases.map { it.name }): Path? {
+fun PyTool.findExecutableInSdk(pyRichSdk: PyRichSdk, executableName: String = packageName.name): Path? {
   return pyRichSdk.pythonBinaryPath?.let { basePythonBinaryPath ->
     val osFamily = basePythonBinaryPath.getEelDescriptor().osFamily
-    osFamily.getOsSpecificBinaryFileNames(executableNames).firstNotNullOfOrNull { binaryFileName ->
-      basePythonBinaryPath.resolveSibling(binaryFileName).takeIf { it.isExecutable() }
-    }
+    basePythonBinaryPath.resolveSibling(osFamily.getOsSpecificBinaryName(executableName)).takeIf { it.isExecutable() }
   }
 }
 
-private fun PyTool.findExecutableInPath(state: PyToolsState.ToolEntry, executableNames: List<String> = aliases.map { it.name }): Path? {
-  return state.customToolBinaryPath ?: findExecutableInPath(executableNames)
+private fun PyTool.findExecutableInPath(state: PyToolsState.ToolEntry, executableName: String = packageName.name): Path? {
+  return state.customToolBinaryPath ?: findExecutableInPath(executableName)
 }
 
 fun PyTool.findExecutableInPath(
-  executableNames: List<String> = aliases.map { it.name },
+  executableName: String = packageName.name,
   osFamily: EelOsFamily = LocalEelDescriptor.osFamily,
-): Path? = osFamily.getOsSpecificBinaryFileNames(executableNames).firstNotNullOfOrNull {
-  PathEnvironmentVariableUtil.findInPath(it)?.toPath()
-}
+): Path? = PathEnvironmentVariableUtil.findInPath(osFamily.getOsSpecificBinaryName(executableName))?.toPath()

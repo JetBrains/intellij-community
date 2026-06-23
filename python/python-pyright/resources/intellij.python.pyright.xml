@@ -13,6 +13,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <platform.lsp.integrationProvider implementation="com.intellij.python.pyright.PyrightLspIntegrationProvider"/>
     <projectSettings service="com.intellij.python.pyright.PyrightConfiguration"/>
+    <projectSettings service="com.intellij.python.pyright.BasedpyrightConfiguration"/>
     <python.pytools.pyTool implementation="com.intellij.python.pyright.PyrightPyTool"/>
+    <python.pytools.pyTool implementation="com.intellij.python.pyright.BasedpyrightPyTool"/>
   </extensions>
 </idea-plugin>

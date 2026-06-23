@@ -2,29 +2,32 @@
 package com.intellij.python.ruff
 
 import com.intellij.openapi.components.service
-import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.python.pytools.PyTool
-import com.intellij.python.pytools.PyToolsState
 import com.intellij.python.pytools.statistics.PyToolFusSnapshot
+import com.intellij.python.pytools.lsp.PyLspTool
+import com.intellij.python.pytools.ui.PyToolDetailConfigurableProvider
 import com.intellij.python.pytools.ui.PyToolsUiBundle
 import com.intellij.python.ruff.server.RuffLspIntegrationProvider
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.Icon
 
 @ApiStatus.Internal
-class RuffPyTool : PyTool {
+class RuffPyTool : PyLspTool<RuffConfiguration>(), PyToolDetailConfigurableProvider {
   override val presentableName: String = "Ruff"
   override val description: String get() = RuffBundle.message("ruff.tool.description")
   override val packageName: PyPackageName = PyPackageName.from("ruff")
 
-  override fun migrateLegacyState(project: Project): PyToolsState.ToolEntry = project.service<RuffConfiguration>().migrateToPyToolState()
+  override fun configuration(project: Project): RuffConfiguration = project.service<RuffConfiguration>()
 
-  override val detailConfigurable: (Project) -> UnnamedConfigurable = ::RuffConfigurable
+  override val icon: Icon = RuffUtil.getDefaultRuffIcon()
+
+  override fun createConfigurable(project: Project): RuffConfigurable = RuffConfigurable(project)
 
   override fun summaryFor(project: Project): String {
-    val cfg = project.service<RuffConfiguration>()
+    val cfg = configuration(project)
     return buildList {
       if (cfg.inspections) add(PyToolsUiBundle.message("checkbox.inspections"))
       if (cfg.formatting) add(RuffBundle.message("checkbox.formatting"))
@@ -42,12 +45,8 @@ class RuffPyTool : PyTool {
   }
 
   override fun configurationFusSnapshot(project: Project): PyToolFusSnapshot {
-    val cfg = project.service<RuffConfiguration>()
+    val cfg = configuration(project)
     return super.configurationFusSnapshot(project).copy(
-      inspections = cfg.inspections,
-      completions = cfg.completions,
-      inlayHints = cfg.inlayHints,
-      documentation = cfg.documentation,
       formatting = cfg.formatting,
       sortImports = cfg.sortImports,
     )

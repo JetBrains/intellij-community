@@ -241,7 +241,7 @@ internal class PyExternalToolsTable(
           // opens the detail dialog. Disabled tools surface no actions — including double
           // click — to match the missing gear icon and keep the row visually inert.
           val row = rows[viewRow]
-          if (row.tool.detailConfigurable == null || !row.staged.enabled) return
+          if (row.detailConfigurableProvider == null || !row.staged.enabled) return
           val onGear = isOverGearIcon(e, viewRow)
           if (onGear || e.clickCount == 2) {
             openDetailDialog(row)
@@ -304,7 +304,7 @@ internal class PyExternalToolsTable(
         // visibly behaves like a clickable affordance. Tools without settings get a disabled
         // gear and keep the default cursor.
         val overGear = effective >= 0 &&
-                       rows[effective].tool.detailConfigurable != null &&
+                       rows[effective].detailConfigurableProvider != null &&
                        isOverGearIcon(e, effective)
         val isIconWithAction = pathIconAtHover(pathEffective).let {
           it == PathIconKind.INSTALL || it == PathIconKind.UPGRADE || it == PathIconKind.RESET
@@ -455,7 +455,7 @@ internal class PyExternalToolsTable(
 
   /** Open the per-tool detail dialog for [toolRow]; refresh the row on commit. */
   private fun openDetailDialog(toolRow: ToolRow) {
-    val configurable = toolRow.detail ?: toolRow.tool.detailConfigurable?.invoke(project) ?: return
+    val configurable = toolRow.detail ?: toolRow.detailConfigurableProvider?.createConfigurable(project) ?: return
     toolRow.detail = configurable
     val component = configurable.createComponent() ?: return
     configurable.reset()

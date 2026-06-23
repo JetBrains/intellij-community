@@ -15,18 +15,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.util.NlsSafe
+import com.intellij.python.pyright.BasedpyrightPyTool
 import com.intellij.python.pyright.PyrightPyTool
-import com.intellij.python.pyright.PyrightUtil
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.PyToolsState
+import com.intellij.python.pytools.lsp.PyLspTool
 import com.intellij.python.pytools.ui.configuration.PyExternalToolsConfigurable
 import com.intellij.python.ruff.RuffPyTool
-import com.intellij.python.ruff.RuffUtil
 import com.intellij.python.ty.TyPyTool
-import com.intellij.python.ty.TyUtil
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.sdk.findPythonSdk
@@ -34,42 +31,17 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.Icon
 import kotlin.time.Duration.Companion.seconds
 
 private const val NOTIFICATION_GROUP_ID = "Python LSP Tools"
 private const val DONT_ASK_PROPERTY_PREFIX = "python.lsp.tool.dont.ask."
 
-private data class LspToolInfo(
-  val tool: PyTool,
-  val icon: Icon,
-  val aliasIcons: Map<PyPackageName, Icon> = emptyMap(),
-)
-
-private data class AdvertisedTool(
-  val info: LspToolInfo,
-  val displayName: @NlsSafe String,
-  val icon: Icon,
-)
-
-private fun lspTools(): List<LspToolInfo> = listOf(
-  LspToolInfo(
-    tool = RuffPyTool.getInstance(),
-    icon = RuffUtil.getDefaultRuffIcon(),
-  ),
-  //LspToolInfo(
-  //  tool = PyreflyPyTool.getInstance(),
-  //  icon = PyreflyUtil.getDefaultPyreflyIcon(),
-  //),
-  LspToolInfo(
-    tool = PyrightPyTool.getInstance(),
-    icon = PyrightUtil.getDefaultPyrightIcon(),
-    aliasIcons = mapOf(PyPackageName.from("basedpyright") to PyrightUtil.getDefaultBasedPyrightIcon()),
-  ),
-  LspToolInfo(
-    tool = TyPyTool.getInstance(),
-    icon = TyUtil.getDefaultTyIcon(),
-  ),
+private fun lspTools(): List<PyLspTool<*>> = listOf(
+  RuffPyTool.getInstance(),
+  //PyreflyPyTool.getInstance(),
+  BasedpyrightPyTool.getInstance(),
+  PyrightPyTool.getInstance(),
+  TyPyTool.getInstance(),
 )
 
 /**
@@ -112,39 +84,33 @@ class PyLspToolAdvertiserService(private val project: Project, private val cs: C
     val installedPackages = getInstalledPackages()
     val pyToolsState = PyToolsState.getInstance(project)
 
-    val toolsToAdvertise = lspTools().mapNotNull { info ->
-      val tool = info.tool
-      // Detect which alias is actually installed; a tool may have several (e.g. pyright / basedpyright).
-      val installedAlias = tool.aliases.firstOrNull { it.name in installedPackages }
+    val toolsToAdvertise = lspTools().mapNotNull { tool ->
+      val isInstalled = tool.packageName.name in installedPackages
       val name = tool.presentableName
       val isEnabled = pyToolsState.isEnabled(tool)
-      if (installedAlias != null && (isEnabled || isDontAskSet(tool))) {
+      if (isInstalled && (isEnabled || isDontAskSet(tool))) {
         thisLogger().debug("LSP tool '$name': installed=true, enabled=$isEnabled, dontAsk=${isDontAskSet(tool)}")
       }
       // shownForTools (keyed on the stable presentable name) suppresses repeat notifications when
       // checkAndAdvertise re-runs on package-change events.
-      if (installedAlias == null || isEnabled || isDontAskSet(tool) || name in shownForTools) {
+      if (!isInstalled || isEnabled || isDontAskSet(tool) || name in shownForTools) {
         return@mapNotNull null
       }
-      // Show the package the user installed: an installed alias keeps its own name, while the
-      // canonical package falls back to the tool's presentable name (proper casing, e.g. "Pyright").
-      val displayName = if (installedAlias == tool.packageName) name else installedAlias.name
-      val icon = info.aliasIcons[installedAlias] ?: info.icon
-      AdvertisedTool(info, displayName, icon)
+      tool
     }
 
     if (toolsToAdvertise.size > 1) {
-      for (advertised in toolsToAdvertise) {
-        thisLogger().info("LSP tool '${advertised.info.tool.presentableName}' installed but not enabled")
-        shownForTools.add(advertised.info.tool.presentableName)
+      for (tool in toolsToAdvertise) {
+        thisLogger().info("LSP tool '${tool.presentableName}' installed but not enabled")
+        shownForTools.add(tool.presentableName)
       }
       showMultipleToolsNotification(toolsToAdvertise)
     }
     else if (toolsToAdvertise.size == 1) {
-      val advertised = toolsToAdvertise.single()
-      thisLogger().info("LSP tool '${advertised.info.tool.presentableName}' installed but not enabled, showing notification")
-      shownForTools.add(advertised.info.tool.presentableName)
-      showNotification(advertised)
+      val tool = toolsToAdvertise.single()
+      thisLogger().info("LSP tool '${tool.presentableName}' installed but not enabled, showing notification")
+      shownForTools.add(tool.presentableName)
+      showNotification(tool)
     }
   }
 
@@ -159,9 +125,9 @@ class PyLspToolAdvertiserService(private val project: Project, private val cs: C
         .map { it.name.lowercase() }
     }
 
-  private fun showMultipleToolsNotification(tools: List<AdvertisedTool>) {
-    val toolNames = tools.dropLast(1).joinToString { it.displayName } +
-                    " and " + tools.last().displayName
+  private fun showMultipleToolsNotification(tools: List<PyLspTool<*>>) {
+    val toolNames = tools.dropLast(1).joinToString { it.presentableName } +
+                    " and " + tools.last().presentableName
     thisLogger().info("Notifying user about multiple LSP tools: $toolNames")
     val notification = NotificationGroupManager.getInstance()
       .getNotificationGroup(NOTIFICATION_GROUP_ID)
@@ -175,16 +141,15 @@ class PyLspToolAdvertiserService(private val project: Project, private val cs: C
       })
       .addAction(NotificationAction.createSimpleExpiring(PyBundle.message("lsp.tool.advertiser.ignore")) {
         for (tool in tools) {
-          setDontAsk(tool.info.tool)
+          setDontAsk(tool)
         }
       })
 
     notification.notify(project)
   }
 
-  private fun showNotification(advertised: AdvertisedTool) {
-    val info = advertised.info
-    val name = advertised.displayName
+  private fun showNotification(tool: PyLspTool<*>) {
+    val name = tool.presentableName
     thisLogger().info("Notifying user about LSP tool: $name")
     val notification = NotificationGroupManager.getInstance()
       .getNotificationGroup(NOTIFICATION_GROUP_ID)
@@ -193,15 +158,15 @@ class PyLspToolAdvertiserService(private val project: Project, private val cs: C
         PyBundle.message("lsp.tool.advertiser.message", name),
         NotificationType.INFORMATION
       )
-      .setIcon(advertised.icon)
+      .setIcon(tool.icon)
       .addAction(NotificationAction.createSimpleExpiring(PyBundle.message("lsp.tool.advertiser.yes")) {
         // Mirror the External Tools page's "Enable" toggle: flip the framework-level state and
         // run the tool's lifecycle hook (which starts the LSP server).
-        PyToolsState.getInstance(project).setEnabled(info.tool, true)
-        info.tool.onEnabledChanged(project, true)
+        PyToolsState.getInstance(project).setEnabled(tool, true)
+        tool.onEnabledChanged(project, true)
       })
       .addAction(NotificationAction.createSimpleExpiring(PyBundle.message("lsp.tool.advertiser.no")) {
-        setDontAsk(info.tool)
+        setDontAsk(tool)
       })
       .addAction(NotificationAction.createSimpleExpiring(PyBundle.message("lsp.tool.advertiser.settings")) {
         ShowSettingsUtil.getInstance().showSettingsDialog(project, PyExternalToolsConfigurable::class.java)
