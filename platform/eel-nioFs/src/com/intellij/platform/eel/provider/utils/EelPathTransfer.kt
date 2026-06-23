@@ -50,6 +50,7 @@ import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption.CREATE
 import java.nio.file.StandardOpenOption.READ
@@ -467,7 +468,7 @@ object EelPathTransfer {
                   // to be able to compare both relative paths are converted to have the same separator
                   val sourceTarget = (sourceEntry.type as WalkDirectoryEntry.Type.Symlink.Relative).symlinkRelativePath.replace("\\", "/")
                   val targetTarget = (targetEntry.type as WalkDirectoryEntry.Type.Symlink.Relative).symlinkRelativePath.replace("\\", "/")
-                  val areEqual = compareRelativePathComponents(Path.of(sourceTarget), Path.of(targetTarget)) == 0
+                  val areEqual = compareRelativePathComponents(Paths.get(sourceTarget), Paths.get(targetTarget)) == 0
                   if (!areEqual) {
                     emit(DiffOperation.ReplaceFile(sourceEntry, targetEntry))
                     opEmitted = true

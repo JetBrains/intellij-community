@@ -153,7 +153,7 @@ suspend fun EelReceiveChannel.readAllBytes(bufferSize: Int = DEFAULT_BUFFER_SIZE
     // Redundant copy isn't optimal but ok for now
     val tmpBuffer = ByteArray(buffer.limit())
     buffer.get(tmpBuffer)
-    result.writeBytes(tmpBuffer)
+    result.write(tmpBuffer)
     buffer.clear()
   }
   return@withContext result.toByteArray()

@@ -230,7 +230,8 @@ internal class InputStreamAdapterImpl(
       return -1
     }
     else {
-      return oneByte.flip().get().toInt()
+      oneByte.flip()
+      return oneByte.get().toInt()
     }
   }
 
@@ -288,7 +289,9 @@ internal class OutputStreamAdapterImpl(
 ) : OutputStream() {
   private val oneByte = ByteBuffer.allocate(1)
   override fun write(b: Int) {
-    oneByte.clear().put(b.toByte()).flip()
+    oneByte.clear()
+    oneByte.put(b.toByte())
+    oneByte.flip()
     write(oneByte)
   }
 
@@ -328,7 +331,8 @@ internal fun CoroutineScope.consumeReceiveChannelAsKotlinImpl(receiveChannel: Ee
           }
           ReadResult.NOT_EOF -> {
             // Direct buffers are likely to get lost from the pool and collected by GC, but it just brings a tiny performance penalty.
-            channel.send(buffer.flip())
+            buffer.flip()
+            channel.send(buffer)
           }
         }
       }
@@ -362,7 +366,8 @@ internal fun EelReceiveChannel.linesImpl(charset: Charset): Flow<String> = flow 
       emitBuffer()
       return@flow
     }
-    val b = tmpBuffer.flip().get().toInt()
+    tmpBuffer.flip()
+    val b = tmpBuffer.get().toInt()
     result.write(b)
     if (b == 10) {
       emitBuffer()

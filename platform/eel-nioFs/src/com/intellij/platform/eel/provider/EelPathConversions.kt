@@ -14,6 +14,7 @@ import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.utils.WindowsPathUtils
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.logging.Logger
 
 private val LOG = Logger.getLogger("com.intellij.platform.eel.provider.EelNioBridge")
@@ -44,7 +45,7 @@ fun EelPath.asNioPath(): @MultiRoutingFileSystemPath Path {
 @ApiStatus.Experimental
 fun EelPath.asNioPathOrNull(): @MultiRoutingFileSystemPath Path? {
   if (descriptor === LocalEelDescriptor) {
-    return Path.of(toString())
+    return Paths.get(toString())
   }
 
   // Comparing strings because `Path.of("\\wsl.localhost\distro\").equals(Path.of("\\wsl$\distro\")) == true`

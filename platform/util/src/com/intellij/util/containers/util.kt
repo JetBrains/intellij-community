@@ -418,15 +418,10 @@ fun <K, V> Iterable<Pair<K, V>>.toMultiMap(multiMap: MultiMap<K, V>): MultiMap<K
   return multiMap
 }
 
-inline fun <K, V, R> MultiMap<out K, V>.mapValues(transform: (Pair<K, V>) -> R): MultiMap<K, R> {
+inline fun <K, V, R> MultiMap<out K, V>.mapValues(crossinline transform: (Pair<K, V>) -> R): MultiMap<K, R> {
   return mapValuesTo(MultiMap.createLinked<K,R>(), transform)
 }
 
-inline fun <K, V, R, M : MultiMap<in K, in R>> MultiMap<out K, V>.mapValuesTo(destination: M, transform: (Pair<K, V>) -> R): M {
-  for (entry in entrySet()) {
-    for (value in entry.value) {
-      destination.putValue(entry.key, transform(entry.key to value))
-    }
-  }
-  return destination
+inline fun <K, V, R, M : MultiMap<in K, in R>> MultiMap<out K, V>.mapValuesTo(destination: M, crossinline transform: (Pair<K, V>) -> R): M {
+  return mapValuesTo(destination) { key, value -> transform(key to value) }
 }

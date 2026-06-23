@@ -133,7 +133,7 @@ suspend fun PeekableEelReceiveChannel.readUntil(untilByte: Byte, dataConsumer: s
           if (b == untilByte) {
             prepend(buffer.slice())
             buffer.flip()
-            dataConsumer(buffer.slice().run { limit(limit() - 1) }, true)
+            dataConsumer(buffer.slice().apply { limit(limit() - 1) }, true)
             break@mainLoop
           }
         }

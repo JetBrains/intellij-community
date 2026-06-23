@@ -22,6 +22,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 /**
@@ -381,6 +382,15 @@ public class MultiMap<K, V> implements Serializable {
   public static @NotNull <K, V> MultiMap<K, V> empty() {
     //noinspection unchecked
     return (MultiMap<K, V>)EMPTY;
+  }
+
+  public final <R, M extends MultiMap<? super K, ? super R>> M mapValuesTo(M destination, BiFunction<? super K, ? super V, R> transform) {
+    for (Map.Entry<K, Collection<V>> entry : entrySet()) {
+      for (V value : entry.getValue()) {
+        destination.putValue(entry.getKey(), transform.apply(entry.getKey(), value));
+      }
+    }
+    return destination;
   }
 
   private static final class EmptyMap extends MultiMap<Object, Object> {

@@ -61,7 +61,7 @@ class ToolingSerializerTest {
   fun setUp() {
     myRandomParameters = EasyRandomParameters()
       .seed(Random.nextLong())
-      .collectionSizeRange(Random.nextInt(0, 2), 3)
+      .collectionSizeRange(Random.nextInt(2), 3)
       .objectPoolSize(5)
       .objectFactory(MyObjectFactory())
       .overrideDefaultInitialization(true)
@@ -77,7 +77,7 @@ class ToolingSerializerTest {
     myRandomParameters.randomize(DefaultGradleBuildScriptClasspathModel::class.java) {
       val result = DefaultGradleBuildScriptClasspathModel()
       result.gradleVersion = myRandom.nextObject(String::class.java)
-      result.classpath = myRandom.objects(ClasspathEntryModel::class.java, myRandom.nextInt(1, 10))
+      result.classpath = myRandom.objects(ClasspathEntryModel::class.java, myRandom.nextInt(9) + 1)
         .collect(Collectors.toList())
       return@randomize result
     }
@@ -104,7 +104,7 @@ class ToolingSerializerTest {
   fun `repository models serialization test`() {
     myRandomParameters.randomize(DefaultRepositoryModels::class.java) {
       DefaultRepositoryModels(myRandom
-                                .objects(MavenRepositoryModel::class.java, myRandom.nextInt(1, 10))
+                                .objects(MavenRepositoryModel::class.java, myRandom.nextInt(9) + 1)
                                 .collect(Collectors.toList()))
     }
     doTest(DefaultRepositoryModels::class.java)
