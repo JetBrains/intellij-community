@@ -335,6 +335,74 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
                     runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/expressions/sealedSubObjectNoExpectedType.kt");
                 }
             }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types")
+            public static class Types extends AbstractFirShortenRefsTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTestWithMuting, this, testDataFilePath);
+                }
+
+                @TestMetadata("asExpression.kt")
+                public void testAsExpression() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/asExpression.kt");
+                }
+
+                @TestMetadata("asSafeExpression.kt")
+                public void testAsSafeExpression() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/asSafeExpression.kt");
+                }
+
+                @TestMetadata("isExpression.kt")
+                public void testIsExpression() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/isExpression.kt");
+                }
+
+                @TestMetadata("isExpressionInWhen.kt")
+                public void testIsExpressionInWhen() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/isExpressionInWhen.kt");
+                }
+
+                @TestMetadata("isExpressionUnrelatedLhs.kt")
+                public void testIsExpressionUnrelatedLhs() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/isExpressionUnrelatedLhs.kt");
+                }
+
+                @TestMetadata("negatedIsExpression.kt")
+                public void testNegatedIsExpression() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/negatedIsExpression.kt");
+                }
+
+                @TestMetadata("nestedSealedHierarchy.kt")
+                public void testNestedSealedHierarchy() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/nestedSealedHierarchy.kt");
+                }
+
+                @TestMetadata("typeArgumentPartialSelection.kt")
+                public void testTypeArgumentPartialSelection() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/typeArgumentPartialSelection.kt");
+                }
+
+                @TestMetadata("typeFeatureDisabled.kt")
+                public void testTypeFeatureDisabled() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/typeFeatureDisabled.kt");
+                }
+
+                @TestMetadata("typeNotApplicable.kt")
+                public void testTypeNotApplicable() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/typeNotApplicable.kt");
+                }
+
+                @TestMetadata("typeOutsideTypeOperator.kt")
+                public void testTypeOutsideTypeOperator() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/typeOutsideTypeOperator.kt");
+                }
+
+                @TestMetadata("typePartialSelection.kt")
+                public void testTypePartialSelection() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/typePartialSelection.kt");
+                }
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
