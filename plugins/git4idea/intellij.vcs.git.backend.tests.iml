@@ -136,6 +136,7 @@
     <orderEntry type="module" module-name="fleet.rhizomedb" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.plugin" scope="RUNTIME" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.vcs.git.backend" />
 </module>

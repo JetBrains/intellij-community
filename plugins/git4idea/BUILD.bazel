@@ -85,6 +85,7 @@ jvm_library(
         "//plugins/git4idea:vcs-git",
         "//platform/lvcs-impl",
         "//fleet/rhizomedb",
+        "//platform/vcs/plugin",
     ],
 )
 
@@ -130,6 +131,7 @@ jvm_library(
         "//platform/platform-impl/recentProjects:recentProjects_test_lib",
         "//platform/platform-impl/eel:ide-impl-wsl_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//platform/vcs/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,
