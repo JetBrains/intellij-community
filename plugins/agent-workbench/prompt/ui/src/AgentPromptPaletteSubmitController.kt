@@ -134,6 +134,7 @@ internal class AgentPromptPaletteSubmitController(
           val dataContext = buildExtensionActionDataContext(
             baseDataContext = baseDataContext,
             selectedProviderId = providerSelector.selectedProvider?.bridge?.provider?.value,
+            selectedLaunchMode = providerSelector.selectedLaunchMode,
             messageRequest = messageRequest,
             generationSettings = if (showsGenerationControls) generationSettingsProvider() else null,
             generationModelCatalog = if (showsGenerationControls) generationModelCatalogProvider() else emptyList(),
