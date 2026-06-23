@@ -88,6 +88,12 @@ public class PyTypingTest extends PyTestCase {
         """);
   }
 
+  @TestFor(issues="PY-90391")
+  public void testNoInjectionWithClassKeywordArguments() {
+    doTestNoInjectedText("class A(a=\"te<caret>st\"): ...");
+    doTestNoInjectedText("class A(a=[\"te<caret>st\"]): ...");
+  }
+
   // PY-15810
   public void testNoStringLiteralInjectionForNonTypingStrings() {
     doTestNoInjectedText("""
