@@ -19,6 +19,7 @@ internal fun publishCompiler(preferences: GeneratorPreferences) {
         *gradleWrapperExecutable,
         "publishIdeArtifacts",
         ":prepare:ide-plugin-dependencies:kotlin-dist-for-ide:publish",
+        "publishGradlePluginArtifacts",
         "-Ppublish.ide.plugin.dependencies=true",
         "-PdeployVersion=$BOOTSTRAP_VERSION",
         "-Pbuild.number=$BOOTSTRAP_VERSION",

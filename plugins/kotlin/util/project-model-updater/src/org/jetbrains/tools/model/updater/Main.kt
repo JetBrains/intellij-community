@@ -12,8 +12,10 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
     val jpsPluginArtifactsMode: ArtifactMode by MandatoryPreference(ArtifactMode::valueOf)
 
     val kotlincVersion: String by MandatoryPreference
-    val kotlinGradlePluginVersion: String by MandatoryPreference
     val kotlincArtifactsMode: ArtifactMode by MandatoryPreference(ArtifactMode::valueOf)
+
+    val kotlinGradlePluginVersion: String? by OptionalPreference
+    val kotlinNativeVersion: String? by OptionalPreference
 
     /**
      * YouTrack ticket for performing kt-master/master merge

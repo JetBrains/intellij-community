@@ -49,8 +49,8 @@ internal fun updateProjectModel(preferences: GeneratorPreferences) {
     val communityLibraries = generateKotlincLibraries(preferences, isCommunity = true)
     processRoot(communityRoot, communityLibraries)
     regenerateCompilerDependenciesIml(communityRoot, communityLibraries)
-    updateLatestGradlePluginVersion(communityRoot, preferences.kotlinGradlePluginVersion)
-    updateKGPVersionForKotlinNativeTests(communityRoot, preferences.kotlinGradlePluginVersion)
+    updateLatestGradlePluginVersion(communityRoot, preferences.kotlinGradlePluginArtifactVersion)
+    updateKGPVersionForKotlinNativeTests(communityRoot, preferences.kotlinNativeArtifactVersion)
 
     if (monorepoRoot != null && preferences.convertJpsToBazel == true) {
         convertJpsToBazel(monorepoRoot)

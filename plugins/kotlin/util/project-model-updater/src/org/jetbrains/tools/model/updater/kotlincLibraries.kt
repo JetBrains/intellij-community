@@ -50,6 +50,12 @@ internal val GeneratorPreferences.jpsArtifactCoordinates: ArtifactCoordinates
         kotlincArtifactCoordinates
     }
 
+internal val GeneratorPreferences.kotlinGradlePluginArtifactVersion: String
+    get() = kotlinGradlePluginVersion ?: kotlincArtifactCoordinates.version
+
+internal val GeneratorPreferences.kotlinNativeArtifactVersion: String
+    get() = kotlinNativeVersion ?: kotlincArtifactCoordinates.version
+
 internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommunity: Boolean): List<JpsLibrary> {
     val kotlincCoordinates = preferences.kotlincArtifactCoordinates
     val jpsPluginCoordinates = preferences.jpsArtifactCoordinates
