@@ -3,6 +3,8 @@ package com.intellij.driver.sdk.ui.components.common.toolwindows
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.JEditorUiComponent
+import com.intellij.driver.sdk.ui.components.elements.JButtonUiComponent
+import com.intellij.driver.sdk.ui.components.elements.button
 import com.intellij.driver.sdk.ui.components.vcs.JChangesListViewUi
 import com.intellij.driver.sdk.ui.shouldBe
 
@@ -14,6 +16,7 @@ class CommitToolWindowUi(data: ComponentData) : ToolWindowUiComponent(data) {
     x(CommitActionsPanelUi::class.java) { byClass("CommitActionsPanel") }
   val commitButton: UiComponent get() = commitActionsPanel.commitButton
   val commitAndPushButton: UiComponent get() = commitActionsPanel.commitAndPushButton
+  val amendSpecificCommitLink: JButtonUiComponent get() = button { byClass("AmendCommitModeDropDownLink") }
 
   val rollbackToolbarButton: UiComponent =
     x {
