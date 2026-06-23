@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
+import org.jetbrains.kotlin.psi.KtBackingField
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtConstructorCalleeExpression
@@ -45,6 +46,7 @@ import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtLoopExpression
 import org.jetbrains.kotlin.psi.KtOperationExpression
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtReferenceExpression
@@ -215,9 +217,10 @@ abstract class KotlinIntroduceVariableHandler : RefactoringActionHandler {
         val physicalExpression = expression.substringContextOrThis
         val parent = physicalExpression.parent
 
-        val isApplicable = when {
-            parent is KtQualifiedExpression -> parent.receiverExpression == physicalExpression
-            parent is KtOperationExpression && parent.operationReference == physicalExpression -> false
+        val isApplicable = when (parent) {
+            is KtProperty -> expression !is KtBackingField
+            is KtQualifiedExpression -> parent.receiverExpression == physicalExpression
+            is KtOperationExpression if parent.operationReference == physicalExpression -> false
             else -> physicalExpression !is KtStatementExpression
         }
         if (!isApplicable) {
