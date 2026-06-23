@@ -307,8 +307,6 @@ internal class AgentChatInitialMessageDispatcher(
           true
         }
       }
-
-      AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE -> tab.sendBackTab()
     }
   }
 
@@ -362,7 +360,6 @@ internal class AgentChatInitialMessageDispatcher(
   private suspend fun stopInitialMessageDispatch(dispatch: AgentChatInitialMessageDispatch): AgentChatInitialMessageSendResult {
     LOG.debug("Stopped initial message dispatch at step ${dispatch.stepIndex}, action=${dispatch.action}")
     val shouldReportPlanModeInitialPromptStop =
-      dispatch.action == AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE ||
       dispatch.completionPolicy == AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY ||
       file.initialMessageMode == AgentInitialMessageMode.PLAN
     file.clearInitialMessageDispatchMetadata()

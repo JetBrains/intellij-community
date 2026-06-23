@@ -142,12 +142,58 @@ fun assertExistingThreadLaunchUsesPostStartDispatch(
   }
 }
 
+fun assertExistingThreadLaunchUsesNoInitialPromptDelivery(
+  descriptor: AgentSessionProviderDescriptor,
+  request: AgentPromptLaunchRequest,
+  projectPath: String,
+  threadId: String,
+  projectName: String = "Project A",
+) {
+  val provider = descriptor.provider
+  val chatOpenExecutor = RecordingChatOpenExecutor()
+  AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+    runBlocking(Dispatchers.Default) {
+      withTestServiceAndLaunch(
+        sessionSourcesProvider = { listOf(descriptor.sessionSource) },
+        projectEntriesProvider = { listOf(openTestProjectEntry(projectPath, projectName)) },
+        chatOpenExecutor = chatOpenExecutor,
+      ) { service, launchService ->
+        service.refresh()
+        waitForCondition(timeoutMs = PROMPT_LAUNCH_WAIT_TIMEOUT_MS) {
+          val project = service.state.value.projects.firstOrNull { it.path == projectPath } ?: return@waitForCondition false
+          project.providerLoadStates[provider] == AgentSessionProviderLoadState.LOADED &&
+          project.threads.any { thread -> thread.id == threadId }
+        }
+
+        val result = launchService.launchPromptRequest(request)
+
+        assertThat(result.launched).isTrue()
+        assertThat(result.error).isNull()
+        chatOpenExecutor.awaitOpenChatCalls(1)
+
+        val openRequest = checkNotNull(chatOpenExecutor.lastOpenChatRequest.get())
+
+        assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
+        assertThat(openRequest.normalizedPath).isEqualTo(projectPath)
+        assertThat(openRequest.thread.id).isEqualTo(threadId)
+        assertThat(openRequest.thread.provider).isEqualTo(provider)
+        assertThat(openRequest.subAgent).isNull()
+        assertThat(openRequest.startupLaunchSpecOverride).isNull()
+        assertThat(openRequest.postStartDispatchSteps).isEmpty()
+        assertThat(openRequest.initialMessageToken).isNull()
+        assertThat(openRequest.initialPromptMessage).isNull()
+      }
+    }
+  }
+}
+
 fun assertExistingThreadLaunchUsesStartupOverride(
   descriptor: AgentSessionProviderDescriptor,
   request: AgentPromptLaunchRequest,
   projectPath: String,
   threadId: String,
   projectName: String = "Project A",
+  expectInitialMessageToken: Boolean = true,
 ): ExistingThreadPromptLaunchObservation {
   val provider = descriptor.provider
   val chatOpenExecutor = RecordingChatOpenExecutor()
@@ -183,7 +229,12 @@ fun assertExistingThreadLaunchUsesStartupOverride(
         assertThat(openRequest.startupLaunchSpecOverride).isNotNull()
         assertThat(openRequest.postStartDispatchSteps).isEmpty()
         assertThat(openRequest.initialPromptMessage).isEqualTo(initialMessagePlan.message)
-        assertThat(openRequest.initialMessageToken).isNotNull()
+        if (expectInitialMessageToken) {
+          assertThat(openRequest.initialMessageToken).isNotNull()
+        }
+        else {
+          assertThat(openRequest.initialMessageToken).isNull()
+        }
         observation = ExistingThreadPromptLaunchObservation(
           launchResult = result,
           normalizedPath = openRequest.normalizedPath,

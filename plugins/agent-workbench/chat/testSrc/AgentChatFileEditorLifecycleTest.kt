@@ -69,7 +69,6 @@ import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Proxy
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import javax.swing.JButton
 import javax.swing.JComponent
@@ -1465,39 +1464,6 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
-  fun juniePlanModeInitialMessageSwitchesModeBeforeSending() {
-    val terminalTabs = FakeAgentChatTerminalTabs()
-    val file = testFile(
-      threadIdentity = "junie:new-plan",
-      shellCommand = listOf("junie", "--skip-update-check"),
-    ).also {
-      it.updateInitialMessageMetadata(
-        initialMessageDispatchSteps = juniePlanDispatchSteps("Plan the feature"),
-        initialMessageDispatchStepIndex = 0,
-        initialMessageToken = "token-junie-plan",
-        initialMessageSent = false,
-      )
-    }
-    val editor = testEditor(file = file, terminalTabs = terminalTabs)
-
-    editor.selectNotify()
-    terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
-    terminalTabs.tab.emitMeaningfulOutput("Welcome to Junie Type your prompt...")
-    waitForCondition { terminalTabs.tab.backTabCount.get() == 1 }
-
-    assertThat(file.initialMessageSent).isFalse()
-    assertThat(terminalTabs.tab.sentTexts).isEmpty()
-
-    terminalTabs.tab.emitMeaningfulOutput("Junie switched to Plan Mode Type your prompt...")
-    waitForCondition { terminalTabs.tab.sentTexts.size == 1 }
-
-    assertThat(terminalTabs.tab.backTabCount.get()).isEqualTo(1)
-    assertThat(file.initialMessageSent).isTrue()
-    assertThat(terminalTabs.tab.sentTexts)
-      .containsExactly(SentTerminalText("Plan the feature", shouldExecute = true))
-  }
-
-  @Test
   fun codexPlanModeTimeoutReadinessWaitsWithoutSending() {
     val terminalTabs = FakeAgentChatTerminalTabs()
     terminalTabs.tab.readinessResult = AgentChatTerminalInputReadiness.TIMEOUT
@@ -1675,7 +1641,6 @@ class AgentChatFileEditorLifecycleTest {
     terminalTabs.tab.emitMeaningfulOutput("Codex ready")
 
     waitForCondition(timeoutMs = 5_000) { file.initialMessageSent && terminalTabs.tab.sentTexts.size == 2 }
-    assertThat(terminalTabs.tab.backTabCount.get()).isZero()
     assertThat(file.initialMessageSent).isTrue()
     assertThat(file.initialMessageDispatchStepIndex).isZero()
     assertThat(file.initialMessageDispatchSteps).isEmpty()
@@ -2235,8 +2200,6 @@ private class FakeAgentChatTerminalTab : AgentChatTerminalTab {
   val focusRequests: Int
     get() = focusableComponent.requestFocusInWindowCalls
 
-  @JvmField
-  val backTabCount: AtomicInteger = AtomicInteger()
 
   fun enqueuePostSendOutput(vararg outputs: String) {
     postSendOutputQueue.addAll(outputs.map { output -> PostSendOutput(text = output, delayMs = 0) })
@@ -2306,12 +2269,6 @@ private class FakeAgentChatTerminalTab : AgentChatTerminalTab {
   override fun sendText(text: String, shouldExecute: Boolean, useBracketedPasteMode: Boolean) {
     sentTexts += SentTerminalText(text, shouldExecute, useBracketedPasteMode)
     emitNextPostSendOutput()
-  }
-
-  override fun sendBackTab(): Boolean {
-    backTabCount.incrementAndGet()
-    emitNextPostSendOutput()
-    return true
   }
 
   private fun emitNextPostSendOutput() {
@@ -2557,34 +2514,6 @@ private object TestJunieAgentChatProviderBehavior : AgentChatProviderBehavior {
     }
   }
 
-  override suspend fun isInitialMessageDispatchAlreadySatisfied(
-    tab: AgentChatBehaviorTerminalTab,
-    dispatch: AgentChatInitialMessageDispatchContext,
-  ): Boolean {
-    return dispatch.action == AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE &&
-           testJuniePlanModeVisible(tab.readRecentOutputTail())
-  }
-
-  override fun requiresPostSendObservation(dispatch: AgentChatInitialMessageDispatchContext): Boolean {
-    return dispatch.action == AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE
-  }
-
-  override fun afterInitialMessageSendObservation(
-    file: AgentChatBehaviorFile,
-    dispatch: AgentChatInitialMessageDispatchContext,
-    observation: AgentChatInitialMessageSendObservation,
-    retryAttempt: Int,
-  ): AgentChatInitialMessageRetryDecision {
-    if (dispatch.action != AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE) {
-      return AgentChatInitialMessageRetryDecision.PROCEED
-    }
-    return if (testJuniePlanModeVisible(observation.textWithRecentOutputTail)) {
-      AgentChatInitialMessageRetryDecision.PROCEED
-    }
-    else {
-      AgentChatInitialMessageRetryDecision.Stop
-    }
-  }
 }
 
 private object TestCodexAgentChatProviderBehavior : AgentChatProviderBehavior {
@@ -2639,10 +2568,6 @@ private fun testProviderRetryBackoffMs(retryAttempt: Int): Long {
 private fun testJuniePromptInputReady(text: String): Boolean {
   val normalized = testSanitizeTerminalText(text)
   return normalized.contains("Type your prompt", ignoreCase = true)
-}
-
-private fun testJuniePlanModeVisible(text: String): Boolean {
-  return testSanitizeTerminalText(text).contains("Plan Mode", ignoreCase = true)
 }
 
 private fun testSanitizeTerminalText(text: String): String {
@@ -2737,20 +2662,6 @@ private fun AgentChatVirtualFile.updateCodexPlanInitialMessageMetadata(
       steps = steps,
       stepIndex = initialMessageDispatchStepIndex,
     ).takeUnless { initialMessageSent },
-  )
-}
-
-@Suppress("SameParameterValue")
-private fun juniePlanDispatchSteps(prompt: String): List<AgentInitialMessageDispatchStep> {
-  return listOf(
-    AgentInitialMessageDispatchStep(
-      action = AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE,
-      timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
-    ),
-    AgentInitialMessageDispatchStep(
-      text = prompt,
-      timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
-    ),
   )
 }
 

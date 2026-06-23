@@ -73,7 +73,6 @@ class CodexNewThreadPromptLaunchTerminalIntegrationTest {
       assertThat(startupCommand).containsExactlyElementsOf(CODEX_BASE_COMMAND)
       assertThat(startupCommand).doesNotContain("--")
       assertThat(startupCommand).doesNotContain(PLAN_PROMPT)
-      assertThat(terminalHarness.backTabCalls).isZero()
       assertThat(terminalHarness.sentTexts)
         .containsExactly(
           RecordingTerminalSentText("/plan", shouldExecute = true, useBracketedPasteMode = false),
@@ -114,7 +113,6 @@ class CodexNewThreadPromptLaunchTerminalIntegrationTest {
         assertThat(finalSnapshot.initialMessageDispatchStepIndex).isZero()
       }
 
-      assertThat(terminalHarness.backTabCalls).isZero()
       assertThat(terminalHarness.sentTexts)
         .containsExactly(
           RecordingTerminalSentText("/plan", shouldExecute = true, useBracketedPasteMode = false),

@@ -14,7 +14,6 @@ import com.intellij.agent.workbench.prompt.ui.captureNewTaskPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.ScriptedSessionSource
 import com.intellij.agent.workbench.sessions.assertNewThreadPromptLaunchOpensNewChat
 import com.intellij.platform.ai.agent.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -139,11 +138,11 @@ class JunieNewThreadPromptLaunchIntegrationTest {
     )
     assertThat(observation.postStartDispatchSteps).isEmpty()
     assertThat(observation.initialPromptMessage).isEqualTo("Plan the Junie flow")
-    assertThat(observation.initialMessageToken).isNotNull()
+    assertThat(observation.initialMessageToken).isNull()
   }
 
   @Test
-  fun oldJunieNewThreadPlanModePromptUsesTerminalPlanModeDispatch() {
+  fun oldJunieNewThreadPlanModePromptIsNotDispatched() {
     val descriptor = descriptor(cliVersion = JunieCliVersion(1962, 1))
 
     val observation = assertNewThreadPromptLaunchOpensNewChat(
@@ -158,12 +157,9 @@ class JunieNewThreadPromptLaunchIntegrationTest {
     assertThat(observation.identity).startsWith("junie:new-")
     assertThat(observation.launchSpec.command).containsExactly("junie", "--skip-update-check")
     assertThat(observation.startupLaunchSpecOverride).isNull()
-    assertThat(observation.postStartDispatchSteps.map { it.action }).containsExactly(
-      AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE,
-      AgentInitialMessageDispatchAction.SEND_TEXT,
-    )
-    assertThat(observation.postStartDispatchSteps.map { it.text }).containsExactly("", "Plan the Junie flow")
-    assertThat(observation.initialMessageToken).isNotNull()
+    assertThat(observation.postStartDispatchSteps).isEmpty()
+    assertThat(observation.initialPromptMessage).isNull()
+    assertThat(observation.initialMessageToken).isNull()
   }
 }
 

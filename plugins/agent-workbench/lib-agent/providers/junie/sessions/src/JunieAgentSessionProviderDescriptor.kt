@@ -24,7 +24,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentThreadRenameAction
 import com.intellij.platform.ai.agent.sessions.core.providers.buildPlanModeInitialMessagePlan
-import com.intellij.platform.ai.agent.sessions.core.providers.buildTerminalPlanModePostStartDispatchSteps
+import com.intellij.platform.ai.agent.sessions.core.providers.isPlanModeRequested
 import com.intellij.openapi.project.Project
 import javax.swing.Icon
 
@@ -68,7 +68,7 @@ internal class JunieAgentSessionProviderDescriptor(
     get() = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO)
 
   override val promptOptions: List<AgentPromptProviderOption>
-    get() = listOf(JUNIE_PROMPT_PROVIDER_PLAN_MODE_OPTION)
+    get() = if (supportsInteractivePromptLaunch()) listOf(JUNIE_PROMPT_PROVIDER_PLAN_MODE_OPTION) else emptyList()
 
   override val supportedReasoningEfforts: Set<AgentPromptReasoningEffort>
     get() = setOf(
@@ -170,14 +170,12 @@ internal class JunieAgentSessionProviderDescriptor(
   }
 
   override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {
+    if (request.isPlanModeRequested() && !supportsInteractivePromptLaunch()) {
+      return AgentInitialMessagePlan.EMPTY
+    }
     return buildPlanModeInitialMessagePlan(
       request = request,
-      startupPolicyWhenPlanModeEnabled = if (supportsInteractivePromptLaunch()) {
-        AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND
-      }
-      else {
-        AgentInitialMessageStartupPolicy.POST_START_ONLY
-      },
+      startupPolicyWhenPlanModeEnabled = AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND,
     )
   }
 
@@ -199,11 +197,10 @@ internal class JunieAgentSessionProviderDescriptor(
   }
 
   override fun buildPostStartDispatchSteps(initialMessagePlan: AgentInitialMessagePlan): List<AgentInitialMessageDispatchStep> {
-    if (initialMessagePlan.mode != AgentInitialMessageMode.PLAN) {
-      return super.buildPostStartDispatchSteps(initialMessagePlan)
+    if (initialMessagePlan.mode == AgentInitialMessageMode.PLAN) {
+      return emptyList()
     }
-
-    return buildTerminalPlanModePostStartDispatchSteps(initialMessagePlan)
+    return super.buildPostStartDispatchSteps(initialMessagePlan)
   }
 
   override suspend fun archiveThread(path: String, threadId: String): Boolean {

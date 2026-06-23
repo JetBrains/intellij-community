@@ -39,7 +39,6 @@ enum class AgentInitialMessageDispatchCompletionPolicy {
 
 enum class AgentInitialMessageDispatchAction {
   SEND_TEXT,
-  ENSURE_TERMINAL_PLAN_MODE,
 }
 
 /**
@@ -78,7 +77,7 @@ data class AgentInitialMessageDispatchStep(
   @JvmField val action: AgentInitialMessageDispatchAction = AgentInitialMessageDispatchAction.SEND_TEXT,
 ) {
   fun isDispatchable(): Boolean {
-    return action != AgentInitialMessageDispatchAction.SEND_TEXT || text.isNotBlank()
+    return text.isNotBlank()
   }
 }
 
@@ -150,11 +149,11 @@ data class AgentInitialPromptDeliveryPlan(
     if (startupLaunchSpecOverride == null) {
       return this
     }
-    val fallbackDispatch = terminalDispatch ?: startupFallbackTerminalDispatch ?: buildTerminalDispatch(record)
+    val fallbackDispatch = terminalDispatch ?: startupFallbackTerminalDispatch ?: buildTerminalDispatch(record) ?: return EMPTY
     return AgentInitialPromptDeliveryPlan(
       promptRecord = record.copy(
         deliveryStatus = AgentInitialPromptDeliveryStatus.PENDING,
-        deliveryChannel = fallbackDispatch?.let { AgentInitialPromptDeliveryChannel.TERMINAL },
+        deliveryChannel = AgentInitialPromptDeliveryChannel.TERMINAL,
       ),
       terminalDispatch = fallbackDispatch,
     )
@@ -168,19 +167,10 @@ data class AgentInitialPromptDeliveryPlan(
 
 private fun buildTerminalDispatch(promptRecord: AgentInitialPromptRecord): AgentTerminalPromptDispatch? {
   val message = promptRecord.message?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-  val steps = when (promptRecord.mode) {
-    AgentInitialMessageMode.STANDARD -> listOf(AgentInitialMessageDispatchStep(text = message))
-    AgentInitialMessageMode.PLAN -> listOf(
-      AgentInitialMessageDispatchStep(
-        action = AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE,
-        timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
-      ),
-      AgentInitialMessageDispatchStep(
-        text = message,
-        timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
-      ),
-    )
+  if (promptRecord.mode == AgentInitialMessageMode.PLAN) {
+    return null
   }
+  val steps = listOf(AgentInitialMessageDispatchStep(text = message))
   return AgentTerminalPromptDispatch(steps = steps).normalized()
 }
 
