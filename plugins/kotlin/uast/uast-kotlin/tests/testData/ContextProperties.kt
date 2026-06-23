@@ -12,6 +12,11 @@ var topLevelMutableProp: C1
     get() = C1()
     set(value) {}
 
+context(_: C1, _: C2)
+var topLevelMutablePropUnnamedContexts: C1
+    get() = C1()
+    set(value) {}
+
 class Cls {
     context(c3: C3)
     val memberProp: C4

@@ -11,6 +11,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiParameterList
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -46,8 +47,8 @@ import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
 import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtConstructorDelegationCall
 import org.jetbrains.kotlin.psi.KtContainerNode
-import org.jetbrains.kotlin.psi.KtContextParameterList
 import org.jetbrains.kotlin.psi.KtContinueExpression
+import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDeclarationModifierList
 import org.jetbrains.kotlin.psi.KtDelegatedSuperTypeEntry
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
@@ -511,27 +512,58 @@ interface BaseKotlinConverter {
         element: KtParameter,
         givenParent: UElement?,
     ): Array<UElementAlternative<KotlinContextUParameter>> {
-        if (element.parent !is KtContextParameterList) return emptyArray()
+        if (!element.isContextParameter) return emptyArray()
         val ownerProperty = element.ownerDeclaration as? KtProperty ?: return emptyArray()
         val lightAccessors = LightClassUtil.getLightClassPropertyMethods(ownerProperty)
-        val getter = lightAccessors.getter
-        val setter = lightAccessors.setter
-        if (getter == null && setter == null) return emptyArray()
+        val lightGetter = lightAccessors.getter
+        val lightSetter = lightAccessors.setter
+        if (lightGetter == null && lightSetter == null) return emptyArray()
 
         return listOfNotNull(
-            getter?.let { alternative { convertAccessorContextParameterToUElement(element, getter, givenParent) } },
-            setter?.let { alternative { convertAccessorContextParameterToUElement(element, setter, givenParent) } },
+            lightGetter?.let { alternative {
+                convertAccessorContextParameterToUElement(
+                    ktParameter = element,
+                    orderedSourceParameters = getOrderedAccessorParameters(ownerProperty, isGetter = true),
+                    accessorLightMethod = lightGetter,
+                    givenParent = givenParent,
+                )
+            }},
+            lightSetter?.let { alternative {
+                convertAccessorContextParameterToUElement(
+                    ktParameter = element,
+                    orderedSourceParameters = getOrderedAccessorParameters(ownerProperty, isGetter = false),
+                    accessorLightMethod = lightSetter,
+                    givenParent = givenParent,
+                )
+            }},
         ).toTypedArray()
     }
 
     private fun convertAccessorContextParameterToUElement(
         ktParameter: KtParameter,
-        accessor: PsiMethod,
+        orderedSourceParameters: List<KtElement?>,
+        accessorLightMethod: PsiMethod,
         givenParent: UElement?,
     ): KotlinContextUParameter? {
-        val lightParameter = accessor.parameters.firstOrNull { it.name == ktParameter.name } ?: return null
-        if (lightParameter !is PsiParameter) return null
+        val lightParameter = findLightParameterForSourceParameter(ktParameter, orderedSourceParameters, accessorLightMethod)
+            ?: return null
         return KotlinContextUParameter(lightParameter, ktParameter, givenParent)
+    }
+
+    private fun findLightParameterForSourceParameter(
+        sourceParameter: KtElement,
+        orderedSourceParameters: List<KtElement?>,
+        lightMethod: PsiMethod,
+    ): PsiParameter? {
+        val lightParameters = lightMethod.parameterList.parameters
+        return if (orderedSourceParameters.size == lightParameters.size) {
+            val lightParameter = orderedSourceParameters.zip(lightMethod.parameterList.parameters)
+                .firstNotNullOfOrNull { (parameter, lightParameter) -> lightParameter.takeIf { parameter == sourceParameter } }
+            lightParameter
+        } else {
+            // fall back to names in case of unexpected length mismatch
+            lightParameters.firstOrNull { it.name == sourceParameter.name }
+        }
     }
 
     fun convertNonLocalProperty(
@@ -572,7 +604,8 @@ interface BaseKotlinConverter {
     ): Sequence<UElement> =
         requiredTypes.accommodate(
             alternative uParam@{
-                when (val ownerDeclaration = element.ownerDeclaration) {
+                val ownerDeclaration = element.ownerDeclaration
+                when (ownerDeclaration) {
                     is KtFunction -> LightClassUtil.getLightClassMethod(ownerDeclaration)
                         ?: getLightClassForFakeMethod(ownerDeclaration)
                             ?.takeIf { !it.isAnnotationType }
@@ -581,7 +614,11 @@ interface BaseKotlinConverter {
                     is KtPropertyAccessor -> LightClassUtil.getLightClassAccessorMethod(ownerDeclaration)
                     else -> null
                 }?.let { lightMethod ->
-                    val lightParameter = lightMethod.parameterList.parameters.find { it.name == element.name } ?: return@uParam null
+                    val orderedParameters = ownerDeclaration?.getOrderedParameters() ?: return@uParam null
+                    val lightParameter = findLightParameterForSourceParameter(
+                        sourceParameter = element, orderedSourceParameters = orderedParameters, lightMethod = lightMethod,
+                    ) ?: return@uParam null
+
                     if (element.isContextParameter) {
                         KotlinContextUParameter(lightParameter, element, givenParent)
                     } else {
@@ -616,6 +653,47 @@ interface BaseKotlinConverter {
         val call = (receiver.parent as? KtCallableDeclaration) ?: return null
         if (call.receiverTypeReference != receiver) return null
         return call.toUElementOfType<UMethod>()?.uastParameters?.firstOrNull()
+    }
+
+    /**
+     * Returns a list of PSI elements corresponding to declaration's parameters.
+     * The order matches the order of the parameters in the signature: context parameters, extension receiver, value parameters.
+     */
+    private fun KtDeclaration.getOrderedParameters(): List<KtElement?>? = when (this) {
+        is KtFunction -> getOrderedFunctionParameters(this)
+        is KtPropertyAccessor -> getOrderedAccessorParameters(this)
+        else -> null
+    }
+
+    private fun getOrderedFunctionParameters(function: KtFunction): List<KtElement?> {
+        return buildList {
+            addAll(function.contextParameters)
+            addIfNotNull(function.receiverTypeReference)
+            addAll(function.valueParameters)
+            if (function.modifierList?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true) {
+                add(null) // continuation
+            }
+        }
+    }
+
+    private fun getOrderedAccessorParameters(propertyAccessor: KtPropertyAccessor): List<KtElement> {
+        return buildList {
+            addAll(propertyAccessor.property.contextParameters)
+            addIfNotNull(propertyAccessor.property.receiverTypeReference)
+            addAll(propertyAccessor.valueParameters)
+        }
+    }
+
+    private fun getOrderedAccessorParameters(property: KtProperty, isGetter: Boolean): List<KtElement?> {
+        val accessor = if (isGetter) { property.getter } else { property.setter }
+        if (accessor != null) return getOrderedAccessorParameters(accessor)
+        return buildList {
+            addAll(property.contextParameters)
+            addIfNotNull(property.receiverTypeReference)
+            if (!isGetter) {
+                add(null) // value parameter placeholder for implicit setter
+            }
+        }
     }
 
     fun forceUInjectionHost(): Boolean

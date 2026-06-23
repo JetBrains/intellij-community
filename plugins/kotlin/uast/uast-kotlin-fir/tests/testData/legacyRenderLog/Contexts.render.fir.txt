@@ -1,6 +1,10 @@
 public final class ContextsKt {
     public static final fun topLevel(@org.jetbrains.annotations.NotNull context1: Type1, @org.jetbrains.annotations.NotNull context2: Type2, @org.jetbrains.annotations.NotNull $this$topLevel: Type3, @org.jetbrains.annotations.NotNull param1: Type4, @org.jetbrains.annotations.NotNull param2: Type5) : void {
     }
+    public static final fun topLevelAnonymousContexts(@org.jetbrains.annotations.NotNull <unused var>: Type1, @org.jetbrains.annotations.NotNull <unused var>: Type2, @org.jetbrains.annotations.NotNull $this$topLevelAnonymousContexts: Type3, @org.jetbrains.annotations.NotNull param1: Type4, @org.jetbrains.annotations.NotNull param2: Type5) : void {
+    }
+    public static final fun topLevelSuspendMixedContexts(@org.jetbrains.annotations.NotNull c1: Type1, @org.jetbrains.annotations.NotNull <unused var>: Type2, @org.jetbrains.annotations.NotNull $this$topLevelSuspendMixedContexts: Type3, @org.jetbrains.annotations.NotNull param1: Type4, @org.jetbrains.annotations.NotNull param2: Type5, @org.jetbrains.annotations.NotNull $completion: kotlin.coroutines.Continuation<? super kotlin.Unit>) : java.lang.Object {
+    }
 }
 
 public final class Type1 {

@@ -7,6 +7,12 @@ class Type5
 context(context1: Type1, context2: Type2)
 fun Type3.topLevel(param1: Type4, param2: Type5) {}
 
+context(_: Type1, _: Type2)
+fun Type3.topLevelAnonymousContexts(param1: Type4, param2: Type5) {}
+
+context(c1: Type1, _: Type2)
+suspend fun Type3.topLevelSuspendMixedContexts(param1: Type4, param2: Type5) {}
+
 class Cls {
     context(context1: Type1, context2: Type2)
     fun Type3.member(param1: Type4, param2: Type5) {}
