@@ -8,7 +8,7 @@ import com.intellij.platform.ai.agent.junie.common.JunieCliVersion
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.sessions.ScriptedSessionSource
-import com.intellij.agent.workbench.sessions.assertExistingThreadLaunchUsesPostStartDispatch
+import com.intellij.agent.workbench.sessions.assertExistingThreadLaunchUsesNoInitialPromptDelivery
 import com.intellij.agent.workbench.sessions.assertExistingThreadLaunchUsesStartupOverride
 import com.intellij.agent.workbench.sessions.existingThreadPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.thread
@@ -33,6 +33,7 @@ class JunieExistingThreadPromptLaunchIntegrationTest {
       ),
       projectPath = PROJECT_PATH,
       threadId = EXISTING_THREAD_ID,
+      expectInitialMessageToken = false,
     )
 
     assertThat(observation.startupLaunchSpecOverride?.command).containsExactly(
@@ -64,6 +65,7 @@ class JunieExistingThreadPromptLaunchIntegrationTest {
       ),
       projectPath = PROJECT_PATH,
       threadId = EXISTING_THREAD_ID,
+      expectInitialMessageToken = false,
     )
 
     assertThat(observation.startupLaunchSpecOverride?.command).containsExactly(
@@ -83,8 +85,8 @@ class JunieExistingThreadPromptLaunchIntegrationTest {
   }
 
   @Test
-  fun oldJunieExistingThreadPlanModePromptUsesPostStartDispatch() {
-    assertExistingThreadLaunchUsesPostStartDispatch(
+  fun oldJunieExistingThreadPlanModePromptIsNotDispatched() {
+    assertExistingThreadLaunchUsesNoInitialPromptDelivery(
       descriptor = descriptor(cliVersion = JunieCliVersion(1962, 1)),
       request = existingThreadPromptLaunchRequest(
         provider = AgentSessionProvider.JUNIE,

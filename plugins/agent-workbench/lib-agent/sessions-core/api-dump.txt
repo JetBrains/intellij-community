@@ -360,7 +360,6 @@ f:com.intellij.platform.ai.agent.sessions.core.launch.McpStreamUrlProvider$Compa
 - f:resolve():java.lang.String
 e:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
 - java.lang.Enum
-- sf:ENSURE_TERMINAL_PLAN_MODE:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
 - sf:SEND_TEXT:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
@@ -674,8 +673,6 @@ f:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderMen
 f:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderPlanModeKt
 - sf:buildPlanModeInitialMessagePlan(com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageStartupPolicy,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageStartupPolicy):com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
 - bs:buildPlanModeInitialMessagePlan$default(com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageStartupPolicy,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageStartupPolicy,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
-- sf:buildTerminalPlanModePostStartDispatchSteps(com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy):java.util.List
-- bs:buildTerminalPlanModePostStartDispatchSteps$default(com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy,I,java.lang.Object):java.util.List
 - sf:isBlockedForExistingThreadPlanMode(com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan,com.intellij.platform.ai.agent.core.AgentThreadActivity):Z
 - sf:isBusyForExistingThreadPlanMode(com.intellij.platform.ai.agent.core.AgentThreadActivity):Z
 - sf:isPlanModeBlockedForExistingThread(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor,com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest,com.intellij.platform.ai.agent.core.AgentThreadActivity):Z
