@@ -261,12 +261,20 @@ public class GeneratedParserUtilBase {
   }
 
   public static boolean consumeToken(PsiBuilder builder, TokenSet tokens) {
-    for (IElementType type : tokens.getTypes()) addVariantSmart(builder, type, true);
+    ErrorState state = ErrorState.get(builder);
+    builder.eof(); // skip whitespaces
+    if (!state.suppressErrors && state.predicateCount < 2) {
+      for (IElementType type : tokens.getTypes()) addVariant(builder, state, type);
+    }
     return consumeTokenFast(builder, tokens);
   }
 
   public static boolean consumeTokenSmart(PsiBuilder builder, TokenSet tokens) {
-    for (IElementType type : tokens.getTypes()) addCompletionVariantSmart(builder, type);
+    ErrorState state = ErrorState.get(builder);
+    CompletionState completionState = state.completionState;
+    if (completionState != null && state.predicateSign) {
+      for (IElementType type : tokens.getTypes()) addCompletionVariant(builder, completionState, type);
+    }
     return consumeTokenFast(builder, tokens);
   }
 
