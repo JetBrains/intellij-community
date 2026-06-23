@@ -16,7 +16,7 @@
 package com.intellij.uiDesigner.core;
 
 import com.intellij.util.CurrentJavaVersion;
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -27,12 +27,15 @@ import java.awt.Dimension;
 import java.awt.Insets;
 
 import static com.intellij.uiDesigner.core.SpansTest.setDefaults;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
-public final class TextAreasTest extends TestCase {
+public final class TextAreasTest {
   /**
    * label   |    label
    * text area (span 2)
    */
+  @Test
   public void test1() {
     final JPanel panel = new JPanel(new GridLayoutManager(2,2, new Insets(0,0,0,0), 0, 0));
 
@@ -57,7 +60,7 @@ public final class TextAreasTest extends TestCase {
 
     int textAreaWidth = CurrentJavaVersion.currentJavaVersion().feature >= 9 ? 101 : 100;
 
-    assertFalse(UIManager.getLookAndFeel().getName().equals("Windows"));
+    assertNotEquals("Windows", UIManager.getLookAndFeel().getName());
     // This check fails for Windows LaF due to its default TextArea settings, so it's not expected here. By default it's Metal on Windows.
     assertEquals(textAreaWidth, textArea.getPreferredSize().width);
 
@@ -77,6 +80,7 @@ public final class TextAreasTest extends TestCase {
    *
    * important: hspan should be greater than 0
    */
+  @Test
   public void test2() {
     final JPanel panel = new JPanel(new GridLayoutManager(2,2, new Insets(0,0,0,0), 11, 0));
 

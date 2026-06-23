@@ -1,14 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.core;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import java.awt.Dimension;
 import java.awt.Insets;
 
-public final class Layout5Test extends TestCase{
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public final class Layout5Test {
+  @Test
   public void test1() {
     final JPanel panel = new JPanel(new GridLayoutManager(2,3, new Insets(0,0,0,0), 0, 0));
 
@@ -41,6 +44,7 @@ public final class Layout5Test extends TestCase{
   }
 
 
+  @Test
   public void test2() {
     final GridLayoutManager layoutManager = new GridLayoutManager(2,3, new Insets(0,0,0,0), 0, 0);
     final JPanel panel = new JPanel(layoutManager);
@@ -80,6 +84,7 @@ public final class Layout5Test extends TestCase{
     assertEquals(400, field2.getWidth());
   }
 
+  @Test
   public void test3() {
     final GridLayoutManager layoutManager = new GridLayoutManager(2,3, new Insets(0,0,0,0), 0, 0);
     final JPanel panel = new JPanel(layoutManager);
