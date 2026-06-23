@@ -1,0 +1,9 @@
+// RUNTIME_WITH_SOURCES
+
+// FILE: before.kt
+fun test() {
+    val xs = listO<caret>f("x")
+}
+
+// FILE: after.kt
+public actual interface <caret>List<out E> : Collection<E> {
