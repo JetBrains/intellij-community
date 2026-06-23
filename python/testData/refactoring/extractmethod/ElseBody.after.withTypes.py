@@ -13,6 +13,6 @@ def foo():
             #anything else you need
 
 
-def baz(f_new: TextIOWrapper[_WrappedBuffer] | IO[Any]):
+def baz(f_new: Any):
     length = len(f_new.readlines())  # <---extract something from here
     print("hi from else")

@@ -496,43 +496,56 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
                                                        @NotNull PyQualifiedExpression anchor,
                                                        @NotNull PyResolveContext resolveContext,
                                                        @Nullable List<@InspectionMessage String> errors) {
-    List<@Nullable PyType> members = new ArrayList<>();
-    for (PyType subType : SequencesKt.asIterable(PyTypeUtil.asUnionSequence(type))) {
-      if (subType instanceof PyClassType classType) {
-        Ref<@Nullable PyType> memberType = getTypeOfMethod(classType, classType, attrName, anchor, resolveContext, errors);
-        if (memberType != null) {
-          members.add(memberType.get());
-        }
-      }
-      else if (subType instanceof PyTypeVarType typeVarType) {
-        for (PyType typeVarBound : SequencesKt.asIterable(PyTypeUtil.asUnionSequence(typeVarType.getEffectiveBound()))) {
-          if (typeVarBound instanceof PyClassType) {
-            Ref<@Nullable PyType> memberType =
-              getTypeOfMethod((PyClassType)typeVarBound, typeVarType, attrName, anchor, resolveContext, errors);
-            if (memberType != null) {
-              members.add(memberType.get());
-            }
-          }
-        }
-      }
-      else if (subType instanceof PyIntersectionType intersectionType) {
-        List<@Nullable PyType> intersection = new ArrayList<>();
-        for (PyType member : intersectionType.getMembers()) {
-          Ref<PyType> partType = getTypeOfMember(member, attrName, anchor, resolveContext, errors);
-          if (partType != null) {
-            intersection.add(partType.get());
-          }
-        }
-        if (!intersection.isEmpty()) {
-          members.add(PyIntersectionType.intersection(intersection));
-        }
-      }
-      else {
-        // TODO: Handle `PyModuleType`, etc
+    if (type instanceof PyUnionType union) {
+      var result = StreamEx.of(union.getMembers())
+          .map(it -> getTypeOfMember(it, attrName, anchor, resolveContext, errors))
+          .nonNull()
+          .map(it -> it.get())
+          .toList();
+      if (!result.isEmpty()) {
+        return new Ref<>(PyUnionType.union(result));
       }
     }
-    if (!members.isEmpty()) {
-      return Ref.create(PyUnionType.union(members));
+    else if (type instanceof PyUnsafeUnionType union) {
+      var result = StreamEx.of(union.getMembers())
+          .map(it -> getTypeOfMember(it, attrName, anchor, resolveContext, errors))
+          .nonNull()
+          .map(it -> it.get())
+          .toList();
+      if (!result.isEmpty()) {
+        return new Ref<>(PyUnsafeUnionType.unsafeUnion(result));
+      }
+    }
+    else if (type instanceof PyClassType classType) {
+      Ref<@Nullable PyType> memberType = getTypeOfMethod(classType, classType, attrName, anchor, resolveContext, errors);
+      if (memberType != null) {
+        return new Ref<>(memberType.get());
+      }
+    }
+    else if (type instanceof PyTypeVarType typeVarType) {
+      var result = PyTypeUtil.toStream(typeVarType.getEffectiveBound())
+        .map(it -> it instanceof PyClassType classType ? getTypeOfMethod(classType, typeVarType, attrName, anchor, resolveContext, errors) : null)
+        .nonNull()
+        .map(it -> it.get())
+        .toList();
+      if (!result.isEmpty()) {
+        return new Ref<>(PyUnionType.union(result));
+      }
+    }
+    else if (type instanceof PyIntersectionType intersectionType) {
+      List<@Nullable PyType> intersection = new ArrayList<>();
+      for (PyType member : intersectionType.getMembers()) {
+        Ref<PyType> partType = getTypeOfMember(member, attrName, anchor, resolveContext, errors);
+        if (partType != null) {
+          intersection.add(partType.get());
+        }
+      }
+      if (!intersection.isEmpty()) {
+        return new Ref<>(PyIntersectionType.intersection(intersection));
+      }
+    }
+    else {
+      // TODO: Handle `PyModuleType`, etc
     }
 
     return null;

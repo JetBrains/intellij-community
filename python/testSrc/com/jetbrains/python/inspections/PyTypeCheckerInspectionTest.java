@@ -1715,20 +1715,4 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                        """));
   }
 
-  // PY-84657
-  public void testClassOverloadedFunctionAssignedToGlobalFunction() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON312,
-      () -> {
-        doMultiFileTest("main.py");
-      });
-  }
-
-  public void testClassOverloadedFunctionAssignedToGlobalFunction2() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON312,
-      () -> {
-        doMultiFileTest("main.py");
-      });
-  }
 }

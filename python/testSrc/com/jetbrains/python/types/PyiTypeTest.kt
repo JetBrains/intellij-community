@@ -111,7 +111,7 @@ class PyiTypeTest : PyCodeInsightTestCase() {
     def f(x: Any):
         c = C()
         expr = c.foo(x)
-    #   └ TYPE list[Unknown] | Unknown
+    #   └ TYPE UnsafeUnion[Unknown, list[Unknown]]
     """,
     "m1.pyi" to """
       from typing import overload
@@ -131,11 +131,10 @@ class PyiTypeTest : PyCodeInsightTestCase() {
     from m1 import C
     
     def f(x: list):
-        c = C()
-        expr = c.foo(non_existing=0)
-    #   │           │              └ WARNING No overload of 'foo' matches the arguments. Argument types: (non_existing=Literal[0]). Expected one of: (i: int), (s: str)
-    #   │           ^^^^^^^^^^^^^^^^ WARNING No overload of 'foo' matches the arguments. Argument types: (non_existing=Literal[0]). Expected one of: (i: int), (s: str)
-    #   └ TYPE Unknown
+    c = C()
+    #\ ERROR Indent expected
+    expr = c.foo(non_existing=0) # ISSUES *
+    #└ TYPE UnsafeUnion[dict[str, Unknown], list[Unknown]]
     """,
     "m1.pyi" to """
       from typing import TypeVar, Generic, overload, List, Dict

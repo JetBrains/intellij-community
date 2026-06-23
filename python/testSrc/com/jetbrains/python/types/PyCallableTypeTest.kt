@@ -608,6 +608,21 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
+    fun `bound method returning generic of type var`() = test("""
+      class Box[U]:
+        def get(self) -> U: ...
+  
+  
+      def foo[T: Box[int], Y: Box[int] | Box[str], Z: (Box[int], Box[str])](t: T, y: Y, z: Z):
+          v1 = t.get()
+      #   └ TYPE int
+          v2 = y.get()
+      #   └ TYPE int | str
+          v3 = z.get()
+      #   └ TYPE int | str
+      """)
+
+    @Test
     fun `metaclass method call on class`() = test("""
       class Meta(type):
           def foo(cls) -> int: ...
