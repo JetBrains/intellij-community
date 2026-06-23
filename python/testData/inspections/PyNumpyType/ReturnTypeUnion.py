@@ -1,3 +1,6 @@
+from typing import assert_type
+
+
 def test_explicit_union():
     """
     Returns
@@ -34,10 +37,7 @@ def test_pep604_union():
     ...
 
 
-def expect_int_or_str(x: int | str):  ...
-def expect_list_or_tuple(x: list[int] | tuple[int, int]):  ...
-
-expect_int_or_str(test_explicit_union())
-expect_int_or_str(test_implicit_union())
-expect_list_or_tuple(test_union_with_parameterized())
-expect_int_or_str(test_pep604_union())
+assert_type(test_explicit_union(), int | str)
+assert_type(test_implicit_union(), int | str)
+assert_type(test_union_with_parameterized(), list[int] | tuple[int, int])
+assert_type(test_pep604_union(), int | str)

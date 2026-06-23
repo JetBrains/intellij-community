@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, assert_type
 
 
 def test_callable_from_docstring():
@@ -19,8 +19,5 @@ def test_triple_tuple_from_docstring():
     ...
 
 
-def expect_callable(cb: Callable[[str, str, str], str]):  ...
-def expect_triple_tuple(t: tuple[int, int, int]):  ...
-
-expect_callable(test_callable_from_docstring())
-expect_triple_tuple(test_triple_tuple_from_docstring())
+assert_type(test_callable_from_docstring(), Callable[[str, str, str], str])
+assert_type(test_triple_tuple_from_docstring(), tuple[int, int, int])
