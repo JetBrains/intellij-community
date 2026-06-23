@@ -114,7 +114,7 @@ class PyConsoleOptionsConfigurable(private val myProject: Project) : SearchableC
     settings: PyConsoleOptions.PyConsoleSettings,
     helpReference: String,
   ): SearchableConfigurable {
-    return object : SearchableConfigurable {
+    return object : SearchableConfigurable, Configurable.NoScroll {
       override fun getId(): String = "PyConsoleConfigurable.$name"
       override fun getDisplayName(): @NlsContexts.ConfigurableName String = name
       override fun getHelpTopic(): String = helpReference
