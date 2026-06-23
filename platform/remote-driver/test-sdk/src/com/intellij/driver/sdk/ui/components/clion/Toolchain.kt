@@ -209,7 +209,7 @@ enum class Debugger {
   },
 
   CUSTOM_CYGWIN_GDB {
-    override fun getDebuggerPath(): String = "C:/Tools/cygwin/bin/gdbserver.exe"
+    override fun getDebuggerPath(): String = "C:\\Tools\\cygwin\\bin\\gdbserver.exe"
     override fun getDebuggerFieldName(): String = "Custom GDB executable"
     override fun toString(): String = "Custom Cygwin GDB"
     override fun type(): String = "GDB"
