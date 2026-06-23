@@ -403,7 +403,6 @@ class AgentPromptPaletteSubmitControllerTest {
     runInEdtAndWait {
       val project = ProjectManager.getInstance().defaultProject
       val submittedHistory = mutableListOf<AgentPromptHistoryEntry>()
-      var providerSubmittedCount = 0
       val fixture = createFixture(
         project = project,
         launcherProvider = {
@@ -418,7 +417,6 @@ class AgentPromptPaletteSubmitControllerTest {
         providersProvider = { listOf(testProviderBridge(provider = AgentSessionProvider.CODEX)) },
         currentTargetMode = { PromptTargetMode.NEW_TASK },
         onPromptSubmitted = submittedHistory::add,
-        onProviderSubmitted = { providerSubmittedCount++ },
       )
       fixture.providerSelector.refresh()
       fixture.providerSelector.selectProvider(AgentSessionProvider.CODEX)
@@ -432,7 +430,6 @@ class AgentPromptPaletteSubmitControllerTest {
       assertThat(submittedHistory.single().providerId).isEqualTo("codex")
       assertThat(submittedHistory.single().targetMode).isEqualTo(PromptTargetMode.NEW_TASK)
       assertThat(submittedHistory.single().launchMode).isEqualTo(AgentSessionLaunchMode.STANDARD.name)
-      assertThat(providerSubmittedCount).isEqualTo(1)
     }
   }
 
@@ -441,7 +438,6 @@ class AgentPromptPaletteSubmitControllerTest {
     runInEdtAndWait {
       val project = ProjectManager.getInstance().defaultProject
       val submittedHistory = mutableListOf<AgentPromptHistoryEntry>()
-      var providerSubmittedCount = 0
       val fixture = createFixture(
         project = project,
         launcherProvider = {
@@ -456,7 +452,6 @@ class AgentPromptPaletteSubmitControllerTest {
         providersProvider = { listOf(testProviderBridge(provider = AgentSessionProvider.CODEX)) },
         currentTargetMode = { PromptTargetMode.NEW_TASK },
         onPromptSubmitted = submittedHistory::add,
-        onProviderSubmitted = { providerSubmittedCount++ },
       )
       fixture.providerSelector.refresh()
       fixture.providerSelector.selectProvider(AgentSessionProvider.CODEX)
@@ -466,7 +461,6 @@ class AgentPromptPaletteSubmitControllerTest {
       fixture.controller.submit()
 
       assertThat(submittedHistory).isEmpty()
-      assertThat(providerSubmittedCount).isZero()
     }
   }
 
@@ -550,7 +544,6 @@ class AgentPromptPaletteSubmitControllerTest {
     onSubmitBlocked: (String) -> Unit = {},
     onSubmitSucceeded: () -> Unit = {},
     onPromptSubmitted: (AgentPromptHistoryEntry) -> Unit = {},
-    onProviderSubmitted: () -> Unit = {},
     generationSettingsProvider: () -> AgentPromptGenerationSettings = { AgentPromptGenerationSettings.AUTO },
     generationModelCatalogProvider: () -> List<AgentPromptGenerationModel> = { emptyList() },
     isContainerModeSelected: () -> Boolean = { false },
@@ -605,7 +598,6 @@ class AgentPromptPaletteSubmitControllerTest {
       onSubmitBlocked = onSubmitBlocked,
       onSubmitSucceeded = onSubmitSucceeded,
       onPromptSubmitted = onPromptSubmitted,
-      onProviderSubmitted = onProviderSubmitted,
       generationSettingsProvider = generationSettingsProvider,
       generationModelCatalogProvider = generationModelCatalogProvider,
       isContainerModeSelected = isContainerModeSelected,
