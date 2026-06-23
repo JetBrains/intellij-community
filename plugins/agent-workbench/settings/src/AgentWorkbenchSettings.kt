@@ -15,6 +15,8 @@ interface AgentWorkbenchSettingsListener {
 
   fun openInDedicatedFrameChanged(): Unit = Unit
 
+  fun agentThreadsCurrentProjectOnlyChanged(): Unit = Unit
+
   companion object {
     @JvmField
     @Topic.AppLevel
@@ -45,6 +47,9 @@ class AgentWorkbenchSettings : SerializablePersistentStateComponent<AgentWorkben
 
   val showAgentActivityInMainToolbarOverride: Boolean?
     get() = state.showAgentActivityInMainToolbar
+
+  val agentThreadsCurrentProjectOnlyOverride: Boolean?
+    get() = state.agentThreadsCurrentProjectOnly
 
   fun setColorTabsBySourceProject(enabled: Boolean) {
     val previousValue = colorTabsBySourceProject
@@ -84,6 +89,13 @@ class AgentWorkbenchSettings : SerializablePersistentStateComponent<AgentWorkben
     updateState { current -> current.copy(showAgentActivityInMainToolbar = storedValue) }
   }
 
+  fun setAgentThreadsCurrentProjectOnlyOverride(value: Boolean?) {
+    if (state.agentThreadsCurrentProjectOnly == value) return
+    updateState { current -> current.copy(agentThreadsCurrentProjectOnly = value) }
+    ApplicationManager.getApplication().messageBus.syncPublisher(AgentWorkbenchSettingsListener.TOPIC)
+      .agentThreadsCurrentProjectOnlyChanged()
+  }
+
   override fun loadState(state: SettingsState) {
     super.loadState(state.normalized())
   }
@@ -93,6 +105,7 @@ class AgentWorkbenchSettings : SerializablePersistentStateComponent<AgentWorkben
     @JvmField val colorTabsBySourceProject: Boolean? = null,
     @JvmField val openInDedicatedFrame: Boolean? = null,
     @JvmField val showAgentActivityInMainToolbar: Boolean? = null,
+    @JvmField val agentThreadsCurrentProjectOnly: Boolean? = null,
   ) {
     fun normalized(): SettingsState {
       return copy(
@@ -102,6 +115,7 @@ class AgentWorkbenchSettings : SerializablePersistentStateComponent<AgentWorkben
           showAgentActivityInMainToolbar,
           SHOW_AGENT_ACTIVITY_IN_MAIN_TOOLBAR_DEFAULT,
         ),
+        agentThreadsCurrentProjectOnly = agentThreadsCurrentProjectOnly,
       )
     }
   }

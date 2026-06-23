@@ -12,6 +12,8 @@ import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.AgentSessionArchivedRangePreset
 import com.intellij.agent.workbench.sessions.model.AgentSessionThreadViewMode
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
+import com.intellij.agent.workbench.sessions.service.openableSourceProjectPath
+import com.intellij.agent.workbench.sessions.settings.AgentThreadsProjectScopeSettings
 import com.intellij.agent.workbench.sessions.state.AgentSessionThreadViewStateService
 import com.intellij.agent.workbench.sessions.toolwindow.tree.formatRelativeTimeShort
 import com.intellij.agent.workbench.sessions.tree.threadDisplayTitle
@@ -37,15 +39,16 @@ import javax.swing.JComponent
 private const val MAX_POPUP_ROW_TITLE_LENGTH: Int = 60
 private val ACTIVITY_COUNTER_LOG = logger<AgentSessionsActivityCounterAction>()
 
-internal fun createAgentSessionsTitleActions(): List<AnAction> {
-  return listOf(
-    AgentSessionsActivityCounterAction(AgentSessionsActivityBucket.ATTENTION),
-    AgentSessionsActivityCounterAction(AgentSessionsActivityBucket.RUNNING),
-    AgentSessionsActivityCounterAction(AgentSessionsActivityBucket.DONE),
-    AgentSessionsShowActiveThreadsHeaderAction(),
-    AgentSessionsArchivedContextHeaderAction(),
-    AgentSessionsArchivedRangeHeaderAction(),
-  )
+internal fun createAgentSessionsTitleActions(projectScopeAction: AnAction? = null): List<AnAction> {
+  return buildList {
+    add(AgentSessionsActivityCounterAction(AgentSessionsActivityBucket.ATTENTION))
+    add(AgentSessionsActivityCounterAction(AgentSessionsActivityBucket.RUNNING))
+    add(AgentSessionsActivityCounterAction(AgentSessionsActivityBucket.DONE))
+    projectScopeAction?.let(::add)
+    add(AgentSessionsShowActiveThreadsHeaderAction())
+    add(AgentSessionsArchivedContextHeaderAction())
+    add(AgentSessionsArchivedRangeHeaderAction())
+  }
 }
 
 internal class AgentSessionsShowActiveThreadsHeaderAction : DumbAwareAction() {
@@ -257,8 +260,10 @@ internal class AgentSessionsActivityCounterAction(
 }
 
 private fun defaultActivityRowsFor(project: Project?, bucket: AgentSessionsActivityBucket): List<AgentSessionsActivityThreadRow> {
-  val service = project?.service<AgentSessionsActivityService>() ?: return emptyList()
-  return service.latestChromeSummary().rowsFor(bucket)
+  project ?: return emptyList()
+  val rows = project.service<AgentSessionsActivityService>().latestChromeSummary().rowsFor(bucket)
+  if (!AgentThreadsProjectScopeSettings.isCurrentProjectOnly()) return rows
+  return rows.filterToCurrentProjectActivityRows(openableSourceProjectPath(project))
 }
 
 private fun isActiveThreadViewMode(): Boolean {

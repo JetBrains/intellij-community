@@ -3,7 +3,6 @@ package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.agent.workbench.chat.AgentChatTabSelection
 import com.intellij.agent.workbench.chat.toAgentChatTabSelection
-import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.core.parseAgentThreadIdentity
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
@@ -120,7 +119,7 @@ internal fun markAgentChatSelectionThreadAsReadIfUnread(
                  ?.firstOrNull { thread ->
                    thread.provider == provider &&
                    thread.id == selection.threadId &&
-                   thread.activity == AgentThreadActivity.UNREAD
+                   thread.hasUnreadActivitySignal()
                  }
                ?: return false
   markThreadAsRead(path, provider, thread.id, thread.updatedAt)

@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.chat.AgentChatTabSelection
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
@@ -43,6 +44,28 @@ class AgentChatUnreadAcknowledgementServiceTest {
 
     assertThat(changed).isTrue()
     assertThat(marks).containsExactly(ReadMark(ACK_WORKTREE_PATH, AgentSessionProvider.CODEX, ACK_THREAD_ID, 300))
+  }
+
+  @Test
+  fun marksSelectedThreadWithUnreadChromeActivityAsRead() {
+    val marks = mutableListOf<ReadMark>()
+
+    val changed = markAgentChatSelectionThreadAsReadIfUnread(
+      selection = selection(),
+      state = stateWithProjectThread(
+        thread(
+          activityReport = AgentThreadActivityReport(
+            rowActivity = AgentThreadActivity.READY,
+            chromeActivity = AgentThreadActivity.UNREAD,
+          ),
+          updatedAt = 250,
+        )
+      ),
+      markThreadAsRead = { path, provider, threadId, updatedAt -> marks += ReadMark(path, provider, threadId, updatedAt) },
+    )
+
+    assertThat(changed).isTrue()
+    assertThat(marks).containsExactly(ReadMark(ACK_PROJECT_PATH, AgentSessionProvider.CODEX, ACK_THREAD_ID, 250))
   }
 
   @Test
@@ -140,12 +163,19 @@ private fun stateWithUnreadWorktreeThread(): AgentSessionsState {
 }
 
 private fun thread(activity: AgentThreadActivity, updatedAt: Long): AgentSessionThread {
+  return thread(
+    activityReport = AgentThreadActivityReport(activity),
+    updatedAt = updatedAt,
+  )
+}
+
+private fun thread(activityReport: AgentThreadActivityReport, updatedAt: Long): AgentSessionThread {
   return AgentSessionThread(
     id = ACK_THREAD_ID,
     title = "Thread 1",
     updatedAt = updatedAt,
     archived = false,
     provider = AgentSessionProvider.CODEX,
-    activity = activity,
+    activityReport = activityReport,
   )
 }

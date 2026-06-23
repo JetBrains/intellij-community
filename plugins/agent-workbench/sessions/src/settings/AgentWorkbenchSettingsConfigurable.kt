@@ -38,6 +38,7 @@ internal class AgentWorkbenchSettingsConfigurable : BoundSearchableConfigurable(
       }
 
       group(AgentSessionsBundle.message("settings.agent.workbench.general.group")) {
+        renderCheckboxSetting(agentThreadsCurrentProjectOnlySetting())
         renderCheckboxSetting(mainToolbarActivitySetting())
         renderCheckboxSetting(sleepPreventionSetting())
         renderCheckboxSettings(AgentWorkbenchSettingsContributors.checkboxSettings())
@@ -128,6 +129,15 @@ private fun mainToolbarActivitySetting(): AgentWorkbenchCheckboxSetting {
       AgentWorkbenchSettings.getInstance().setShowAgentActivityInMainToolbar(enabled)
       ActivityTracker.getInstance().inc()
     },
+  )
+}
+
+private fun agentThreadsCurrentProjectOnlySetting(): AgentWorkbenchCheckboxSetting {
+  return AgentWorkbenchCheckboxSetting(
+    text = AgentSessionsBundle.message("settings.agent.workbench.agent.threads.current.project.only"),
+    description = AgentSessionsBundle.message("settings.agent.workbench.agent.threads.current.project.only.description"),
+    isSelected = AgentThreadsProjectScopeSettings::isCurrentProjectOnly,
+    setSelected = AgentThreadsProjectScopeSettings::setCurrentProjectOnly,
   )
 }
 

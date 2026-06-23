@@ -102,6 +102,12 @@ fun selectedChatSourceProjectPath(project: Project): String? {
 }
 
 @ApiStatus.Internal
+fun openableSourceProjectPath(project: Project): String? {
+    val managerPath = RecentProjectsManagerBase.getInstanceEx().getProjectPath(project)?.invariantSeparatorsPathString
+    return normalizeOpenableSourceProjectPath(managerPath ?: project.basePath)
+}
+
+@ApiStatus.Internal
 fun normalizeOpenableSourceProjectPath(path: String?): String? {
     val normalizedPath = path
         ?.let(::normalizeAgentWorkbenchPath)

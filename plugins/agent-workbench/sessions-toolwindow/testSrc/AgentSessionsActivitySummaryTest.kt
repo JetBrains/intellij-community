@@ -22,6 +22,7 @@ import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsSystemNo
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsSystemNotificationTracker
 import com.intellij.agent.workbench.sessions.toolwindow.ui.agentSessionsActivityPopupRowText
 import com.intellij.agent.workbench.sessions.toolwindow.ui.buildAgentSessionsActivitySummary
+import com.intellij.agent.workbench.sessions.toolwindow.ui.filterToCurrentProjectActivityRows
 import com.intellij.agent.workbench.sessions.toolwindow.ui.freshAgentSessionsActivitySummary
 import com.intellij.agent.workbench.sessions.toolwindow.ui.hasLoadedActivityBaseline
 import com.intellij.agent.workbench.sessions.toolwindow.ui.resolveAgentSessionsSystemNotificationThread
@@ -77,6 +78,34 @@ class AgentSessionsActivitySummaryTest {
     assertThat(summary.doneRows.map { it.thread.id }).containsExactly("done")
     assertThat(summary.runningRows.first().path).isEqualTo("/work/project-a-feature")
     assertThat(summary.runningRows.first().locationLabel).isEqualTo("Project A / feature")
+  }
+
+  @Test
+  fun filtersActivityRowsToCurrentProjectPath() {
+    val summary = buildAgentSessionsActivitySummary(
+      AgentSessionsState(
+        projects = listOf(
+          AgentProjectSessions(
+            path = "/work/project-a",
+            name = "Project A",
+            isOpen = true,
+            threads = listOf(thread("thread-a", AgentThreadActivity.NEEDS_INPUT, 100)),
+          ),
+          AgentProjectSessions(
+            path = "/work/project-b",
+            name = "Project B",
+            isOpen = true,
+            threads = listOf(thread("thread-b", AgentThreadActivity.NEEDS_INPUT, 200)),
+          ),
+        ),
+        lastUpdatedAt = 1,
+      )
+    )
+
+    val rows = summary.attentionRows.filterToCurrentProjectActivityRows("/work/project-b")
+
+    assertThat(rows.map { it.path }).containsExactly("/work/project-b")
+    assertThat(rows.map { it.thread.id }).containsExactly("thread-b")
   }
 
   @Test

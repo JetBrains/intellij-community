@@ -442,11 +442,14 @@ private fun markThreadAsRead(
 ): List<AgentSessionThread> {
   var changed = false
   val nextThreads = threads.map { thread ->
-    if (thread.provider == provider && thread.id == threadId && thread.activity == AgentThreadActivity.UNREAD && thread.updatedAt <= updatedAt) {
+    if (thread.provider == provider &&
+        thread.id == threadId &&
+        thread.updatedAt <= updatedAt &&
+        thread.hasUnreadActivitySignal()) {
       changed = true
       thread.copy(
         activityReport = AgentThreadActivityReport(
-          rowActivity = AgentThreadActivity.READY,
+          rowActivity = thread.activity.takeUnless { it == AgentThreadActivity.UNREAD } ?: AgentThreadActivity.READY,
           chromeActivity = thread.summaryActivity?.takeUnless { it == AgentThreadActivity.UNREAD } ?: AgentThreadActivity.READY,
         ),
       )

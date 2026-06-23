@@ -195,6 +195,76 @@ class AgentWorkbenchSettingsTest {
   }
 
   @Test
+  fun agentThreadsCurrentProjectOnlyFollowsDedicatedFrameByDefault() {
+    assertThat(AgentThreadsProjectScopeSettings.isCurrentProjectOnly()).isFalse()
+    assertThat(settings.agentThreadsCurrentProjectOnlyOverride).isNull()
+
+    AgentChatOpenModeSettings.setOpenInDedicatedFrame(false)
+
+    assertThat(AgentThreadsProjectScopeSettings.isCurrentProjectOnly()).isTrue()
+    assertThat(settings.agentThreadsCurrentProjectOnlyOverride).isNull()
+  }
+
+  @Test
+  fun agentThreadsCurrentProjectOnlyOverrideSurvivesDedicatedFrameChanges() {
+    AgentThreadsProjectScopeSettings.setCurrentProjectOnly(true)
+
+    assertThat(AgentThreadsProjectScopeSettings.isCurrentProjectOnly()).isTrue()
+    assertThat(settings.agentThreadsCurrentProjectOnlyOverride).isTrue()
+
+    AgentChatOpenModeSettings.setOpenInDedicatedFrame(false)
+
+    assertThat(AgentThreadsProjectScopeSettings.isCurrentProjectOnly()).isTrue()
+    assertThat(settings.agentThreadsCurrentProjectOnlyOverride).isTrue()
+
+    AgentChatOpenModeSettings.setOpenInDedicatedFrame(true)
+
+    assertThat(AgentThreadsProjectScopeSettings.isCurrentProjectOnly()).isTrue()
+    assertThat(settings.agentThreadsCurrentProjectOnlyOverride).isTrue()
+  }
+
+  @Test
+  fun agentThreadsCurrentProjectOnlyClearsOverrideWhenValueMatchesDefault() {
+    AgentThreadsProjectScopeSettings.setCurrentProjectOnly(true)
+    assertThat(settings.agentThreadsCurrentProjectOnlyOverride).isTrue()
+
+    AgentThreadsProjectScopeSettings.setCurrentProjectOnly(false)
+    assertThat(settings.agentThreadsCurrentProjectOnlyOverride).isNull()
+
+    AgentChatOpenModeSettings.setOpenInDedicatedFrame(false)
+    AgentThreadsProjectScopeSettings.setCurrentProjectOnly(false)
+    assertThat(settings.agentThreadsCurrentProjectOnlyOverride).isFalse()
+
+    AgentThreadsProjectScopeSettings.setCurrentProjectOnly(true)
+    assertThat(settings.agentThreadsCurrentProjectOnlyOverride).isNull()
+  }
+
+  @Test
+  fun agentThreadsCurrentProjectOnlyChangeEventFiresOnlyWhenStoredOverrideChanges(@TestDisposable disposable: Disposable) {
+    var events = 0
+    ApplicationManager.getApplication().messageBus.connect(disposable).subscribe(
+      AgentWorkbenchSettingsListener.TOPIC,
+      object : AgentWorkbenchSettingsListener {
+        override fun agentThreadsCurrentProjectOnlyChanged() {
+          events++
+        }
+      },
+    )
+
+    AgentThreadsProjectScopeSettings.setCurrentProjectOnly(false)
+    assertThat(events).isZero()
+
+    AgentThreadsProjectScopeSettings.setCurrentProjectOnly(true)
+    assertThat(events).isEqualTo(1)
+
+    AgentThreadsProjectScopeSettings.setCurrentProjectOnly(true)
+    assertThat(events).isEqualTo(1)
+
+    AgentThreadsProjectScopeSettings.setCurrentProjectOnly(false)
+    assertThat(events).isEqualTo(2)
+  }
+
+  @Test
   fun showAgentActivityInMainToolbarIsDisabledByDefault() {
     assertThat(settings.showAgentActivityInMainToolbar).isFalse()
     assertThat(settings.showAgentActivityInMainToolbarOverride).isNull()
