@@ -164,7 +164,7 @@ class PluginUiModelAdapter(
           pluginDescriptor.setReviewComments(PageContainer(0, 0))
           return
         }
-        val container = PageContainer(value.myPageSize, value.myCurrentPage, value.items)
+        val container = PageContainer(value.pageSize, value.currentPage, value.items)
         pluginDescriptor.setReviewComments(container)
       }
     }

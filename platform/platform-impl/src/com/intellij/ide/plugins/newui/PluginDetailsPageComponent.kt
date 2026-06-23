@@ -768,7 +768,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
         nextPageButton.icon = null
         nextPageButton.isEnabled = true
-        nextPageButton.isVisible = reviewComments.isNextPage
+        nextPageButton.isVisible = reviewComments.hasNextPage
       }
     }
 
@@ -1226,7 +1226,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     reviewNextPageButton!!.icon = null
     reviewNextPageButton!!.isEnabled = true
-    reviewNextPageButton!!.isVisible = comments != null && comments.isNextPage
+    reviewNextPageButton!!.isVisible = comments != null && comments.hasNextPage
   }
 
   private fun createUninstallAction(): UninstallAction<PluginDetailsPageComponent> {

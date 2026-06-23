@@ -8,20 +8,18 @@ import org.jetbrains.annotations.ApiStatus
 
 @Serializable
 @ApiStatus.Internal
-class ReviewsPageContainer(val myPageSize: Int, var myCurrentPage: Int, val items: MutableList<PluginReviewComment> = mutableListOf()) {
-  private var myLastPage = false
+class ReviewsPageContainer(val pageSize: Int, var currentPage: Int, val items: MutableList<PluginReviewComment> = mutableListOf()) {
+  var hasNextPage: Boolean = true
+    private set
 
   fun addItems(itemsToAdd: List<PluginReviewComment>) {
     items.addAll(itemsToAdd)
-    myCurrentPage++
-    myLastPage = itemsToAdd.size < myPageSize
+    currentPage++
+    hasNextPage = itemsToAdd.size >= pageSize
   }
 
-  val isNextPage: Boolean
-    get() = !myLastPage
-
   fun getNextPage(): Int {
-    return myCurrentPage + 1
+    return currentPage + 1
   }
 
   companion object {
