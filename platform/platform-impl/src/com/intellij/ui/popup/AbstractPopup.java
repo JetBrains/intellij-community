@@ -2513,7 +2513,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
   }
 
   boolean isCancelOnWindowDeactivation() {
-    return myCancelOnWindowDeactivation;
+    return myCancelOnWindowDeactivation && !StartupUiUtil.isOhosToolkit();
   }
 
   @ApiStatus.Internal

@@ -184,6 +184,11 @@ object StartupUiUtil {
   fun isWaylandToolkit(): Boolean =
     OS.isGenericUnix() && "sun.awt.wl.WLToolkit" == Toolkit.getDefaultToolkit().javaClass.name
 
+  @ApiStatus.Internal
+  @JvmStatic
+  fun isOhosToolkit(): Boolean =
+    OS.CURRENT == OS.OHOS && "sun.awt.oh.OHToolkit" == Toolkit.getDefaultToolkit().javaClass.name
+
   @JvmStatic
   fun isXToolkit(): Boolean =
     OS.isGenericUnix() && "sun.awt.X11.XToolkit" == Toolkit.getDefaultToolkit().javaClass.name
