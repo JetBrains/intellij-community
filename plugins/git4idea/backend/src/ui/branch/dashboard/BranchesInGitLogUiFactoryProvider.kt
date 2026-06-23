@@ -24,6 +24,7 @@ import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy
+import com.intellij.vcs.git.branch.GitGroupBranchDataKeys
 import com.intellij.vcs.log.VcsLogBranchLikeFilter
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogProvider
@@ -204,6 +205,7 @@ internal class BranchesVcsLogUi(
         }
       }.let { panel ->
         UiDataProvider.wrapComponent(panel) { sink ->
+          sink[GitGroupBranchDataKeys.MULTIPLE_REPOSITORIES] = roots.size > 1
           sink[VcsLogInternalDataKeys.LOG_UI_PROPERTIES] = properties
           sink[QuickActionProvider.KEY] = object : QuickActionProvider {
             override fun getName(): @NlsActions.ActionText String? = null

@@ -107,20 +107,3 @@ internal fun hasTrackingConflicts(conflictingLocalBranches: Map<GitRepository, G
     val trackInfo = GitBranchUtil.getTrackInfoForBranch(repo, branch)
     trackInfo != null && !GitReference.BRANCH_NAME_HASHING_STRATEGY.equals(remoteBranchName, trackInfo.remoteBranch.name)
   }
-
-internal abstract class BranchGroupingAction(private val key: GroupingKey,
-                                             icon: Icon? = null) : ToggleAction(key.text, key.description, icon), DumbAware {
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
-
-  override fun isSelected(e: AnActionEvent): Boolean {
-    val project = e.project ?: return false
-    return GitVcsSettings.getInstance(project).branchSettings.isGroupingEnabled(key)
-  }
-
-  override fun setSelected(e: AnActionEvent, state: Boolean) {
-    val project = e.project ?: return
-    GitVcsSettings.getInstance(project).setBranchGroupingSettings(key, state)
-  }
-}
