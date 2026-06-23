@@ -3,6 +3,7 @@ package com.intellij.gradle.toolingExtension.tests.modelBuilder
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException
 import com.intellij.util.ExceptionUtil
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 @Suppress("checkReturnValue")
@@ -194,5 +195,21 @@ class MessageBuilderTest : MessageBuilderTestCase() {
       withException(exception)
       withProject(rootProject)
     }
+  }
+
+  @Test
+  fun `test failure with exception building by message builder`() {
+    val causeException = Exception("Exception cause")
+    val exception = Exception("Exception message", causeException)
+
+    val message = buildMessage {
+      withGroup(TEST_MESSAGE_GROUP)
+      withException(exception)
+    }
+
+    assertEquals("Exception message", message.failure?.message)
+    assertEquals(ExceptionUtil.getThrowableText(exception), message.failure?.description)
+    assertEquals("Exception cause", message.failure?.causes?.single()?.message)
+    assertEquals(ExceptionUtil.getThrowableText(causeException), message.failure?.causes?.single()?.description)
   }
 }
