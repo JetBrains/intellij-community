@@ -57,14 +57,8 @@ public final class GradleSourceSetDependencyResolver {
 
   public @NotNull Collection<ExternalDependency> resolveDependencies(@NotNull SourceSet sourceSet) {
     Collection<ExternalDependency> dependencies = GradleSourceSetDependencyMerger.mergeDependencies(
-      GradleSourceSetDependencyMerger.enrichDependencies(
-        resolveClasspathDependencies(getCompileClasspath(sourceSet), COMPILE_SCOPE),
-        resolveConfigurationDependencies(sourceSet.getCompileClasspathConfigurationName(), COMPILE_SCOPE)
-      ),
-      GradleSourceSetDependencyMerger.enrichDependencies(
-        resolveClasspathDependencies(sourceSet.getRuntimeClasspath(), RUNTIME_SCOPE),
-        resolveConfigurationDependencies(sourceSet.getRuntimeClasspathConfigurationName(), RUNTIME_SCOPE)
-      ),
+      resolveSourceSetDependencies(getCompileClasspath(sourceSet), sourceSet.getCompileClasspathConfigurationName(), COMPILE_SCOPE),
+      resolveSourceSetDependencies(sourceSet.getRuntimeClasspath(), sourceSet.getRuntimeClasspathConfigurationName(), RUNTIME_SCOPE),
       resolveSourceSetProvidedDependencies(sourceSet)
     );
 
@@ -75,13 +69,28 @@ public final class GradleSourceSetDependencyResolver {
     return dependencies;
   }
 
-  private @NotNull Collection<? extends ExternalDependency> resolveClasspathDependencies(
+  private @NotNull Collection<? extends ExternalDependency> resolveSourceSetDependencies(
+    @NotNull FileCollection classpath,
+    @NotNull String configurationName,
+    @NotNull String scope
+  ) {
+    ClasspathDependencies classpathDependencies = resolveClasspathDependencies(classpath, scope);
+    if (!classpathDependencies.needsConfigurationEnrichment) {
+      return classpathDependencies.dependencies;
+    }
+    return GradleSourceSetDependencyMerger.enrichDependencies(
+      classpathDependencies.dependencies,
+      resolveConfigurationDependencies(configurationName, scope)
+    );
+  }
+
+  private @NotNull ClasspathDependencies resolveClasspathDependencies(
     @NotNull FileCollection classpath,
     @NotNull String scope
   ) {
     GradleSourceSetClasspathDependencyVisitor visitor = new GradleSourceSetClasspathDependencyVisitor(scope);
     GradleSourceSetDependencyVisitor.traverse(myContext, myProject, classpath, visitor);
-    return visitor.getDependencies();
+    return new ClasspathDependencies(visitor.getDependencies(), visitor.needsConfigurationEnrichment());
   }
 
   /**
@@ -224,10 +233,25 @@ public final class GradleSourceSetDependencyResolver {
     return new DefaultFileCollectionDependency(Collections.singleton(file.getAsFile()));
   }
 
+  private static final class ClasspathDependencies {
+
+    private final @NotNull Collection<ExternalDependency> dependencies;
+    private final boolean needsConfigurationEnrichment;
+
+    private ClasspathDependencies(
+      @NotNull Collection<ExternalDependency> dependencies,
+      boolean needsConfigurationEnrichment
+    ) {
+      this.dependencies = dependencies;
+      this.needsConfigurationEnrichment = needsConfigurationEnrichment;
+    }
+  }
+
   private class GradleSourceSetClasspathDependencyVisitor implements GradleSourceSetDependencyVisitor {
 
     private final @NotNull String scope;
     private final @NotNull Collection<ExternalDependency> dependencies = new LinkedHashSet<>();
+    private boolean needsConfigurationEnrichment;
 
     private GradleSourceSetClasspathDependencyVisitor(@NotNull String scope) {
       this.scope = scope;
@@ -235,6 +259,10 @@ public final class GradleSourceSetDependencyResolver {
 
     private @NotNull Collection<ExternalDependency> getDependencies() {
       return dependencies;
+    }
+
+    private boolean needsConfigurationEnrichment() {
+      return needsConfigurationEnrichment;
     }
 
     @Override
@@ -249,11 +277,13 @@ public final class GradleSourceSetDependencyResolver {
 
     @Override
     public void visitFileCollection(@NotNull FileCollection fileCollection) {
+      needsConfigurationEnrichment = true;
       dependencies.add(resolveFileCollectionDependency(fileCollection));
     }
 
     @Override
     public void visitFile(@NotNull FileSystemLocation file) {
+      needsConfigurationEnrichment = true;
       dependencies.add(resolveFileDependency(file));
     }
   }

@@ -8,14 +8,17 @@ import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.connection.GradleConnectorService.Companion.USE_PRODUCTION_TTL_FOR_TESTS_KEY
+import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilderCore
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleProjectRootFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.projectFixture
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleProjectInfo
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleProjectInfoAssertions.assertProjectStructure
+import org.jetbrains.plugins.gradle.testFramework.projectInfo.buildFile
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.file
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleProjectInfo
+import org.jetbrains.plugins.gradle.testFramework.projectInfo.settingsFile
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleJavaModuleInfo
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleSettingsFile
 import org.junit.jupiter.api.Nested
@@ -68,25 +71,56 @@ class GradleJavaSyncPerformanceTest(private val gradleVersion: GradleVersion) {
   }
 
   enum class TestProjectParameters(
-    private val numHolderModules: Int,
+    val projectInfo: (GradleVersion) -> GradleProjectInfo,
   ) {
-    SIMPLE_PROJECT(1000);
+    SIMPLE_PROJECT({ simpleJavaProjectInfo(it, 1000) }),
+    SOURCE_SET_DEPENDENCY_PROJECT({ sourceSetDependencyProjectInfo(it, 300) });
 
-    fun projectInfo(gradleVersion: GradleVersion): GradleProjectInfo =
-      gradleProjectInfo(gradleVersion) {
-        file("gradle.properties", """
-          |org.gradle.jvmargs=-Xmx3g
-        """.trimMargin())
-        simpleSettingsFile {
-          addCode {
-            call("repeat", int(numHolderModules)) {
-              call("include", $$"module-$it")
+    companion object {
+
+      private fun simpleJavaProjectInfo(gradleVersion: GradleVersion, numHolderModules: Int): GradleProjectInfo =
+        gradleProjectInfo(gradleVersion) {
+          file("gradle.properties", """
+            |org.gradle.jvmargs=-Xmx3g
+          """.trimMargin())
+          simpleSettingsFile {
+            includeModules(numHolderModules)
+          }
+          for (i in 0 until numHolderModules) {
+            simpleJavaModuleInfo("$projectName.module-$i", "module-$i")
+          }
+        }
+
+      private fun sourceSetDependencyProjectInfo(gradleVersion: GradleVersion, numHolderModules: Int): GradleProjectInfo =
+        gradleProjectInfo(gradleVersion) {
+          file("gradle.properties", """
+            |org.gradle.jvmargs=-Xmx3g
+          """.trimMargin())
+          settingsFile {
+            setProjectName(projectName)
+            includeModules(numHolderModules)
+          }
+          for (holderModuleIndex in 0 until numHolderModules) {
+            moduleInfo("$projectName.module-$holderModuleIndex", "module-$holderModuleIndex") {
+              sourceSetInfo("main")
+              sourceSetInfo("test")
+              buildFile {
+                withJavaPlugin()
+                for (dependencyIndex in 0 until holderModuleIndex) {
+                  addImplementationDependency(call("project", ":module-$dependencyIndex"))
+                }
+              }
             }
           }
         }
-        for (i in 0 until numHolderModules) {
-          simpleJavaModuleInfo("${projectName}.module-$i", "module-$i")
+
+      private fun GradleSettingScriptBuilderCore<*>.includeModules(numHolderModules: Int) {
+        addCode {
+          call("repeat", int(numHolderModules)) {
+            call("include", $$"module-$it")
+          }
         }
       }
+    }
   }
 }
