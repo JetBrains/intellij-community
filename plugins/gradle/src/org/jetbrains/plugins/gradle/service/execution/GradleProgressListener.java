@@ -21,12 +21,14 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.events.ProgressEvent;
 import org.gradle.tooling.events.ProgressListener;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.issue.GradleIssueChecker;
 import org.jetbrains.plugins.gradle.issue.GradleIssueData;
 import org.jetbrains.plugins.gradle.issue.GradleIssueFailure;
@@ -46,7 +48,7 @@ import static com.intellij.openapi.util.text.StringUtil.formatDuration;
  * @author Vladislav.Soroka
  */
 @ApiStatus.Internal
-final class GradleProgressListener implements ProgressListener, org.gradle.tooling.ProgressListener {
+public final class GradleProgressListener implements ProgressListener, org.gradle.tooling.ProgressListener {
   private static final Logger LOG = Logger.getInstance(GradleProgressListener.class);
   public static final String SEND_PROGRESS_EVENTS_TO_OUTPUT_KEY = "gradle.output.sync.progress.events";
   private final GradleDownloadProgressMapper myDownloadProgressMapper;
@@ -59,7 +61,7 @@ final class GradleProgressListener implements ProgressListener, org.gradle.tooli
   private ExternalSystemTaskNotificationEvent myLastStatusChange = null;
   private final boolean sendProgressEventsToOutput;
 
-  GradleProgressListener(
+  public GradleProgressListener(
     @NotNull GradleExecutionContext context,
     @NotNull String buildRootDir
   ) {
@@ -198,7 +200,7 @@ final class GradleProgressListener implements ProgressListener, org.gradle.tooli
    */
   private @NotNull BuildEvent getModelBuilderIssueOrMessage(@NotNull Message message) {
     // Build a synthetic GradleIssueData from the message
-    GradleIssueData issueData = getGradleIssueData(message);
+    GradleIssueData issueData = createGradleIssueFailure(message);
 
     for (var checker : GradleIssueChecker.getKnownIssuesCheckList()) {
       BuildIssue buildIssue = checker.check(issueData);
@@ -212,10 +214,26 @@ final class GradleProgressListener implements ProgressListener, org.gradle.tooli
     return getModelBuilderMessage(message);
   }
 
-  private @NotNull GradleIssueData getGradleIssueData(@NotNull Message message) {
-    String errorText = StringUtil.notNullize(message.getText(), message.getTitle());
-    GradleIssueFailure failure = GradleIssueFailure.createIssueFailure(errorText);
+  private @NotNull GradleIssueData createGradleIssueData(@NotNull Message message) {
+    GradleIssueFailure failure = createGradleIssueFailure(message);
     return GradleIssueData.createIssueData(getBuildRoot(myContext), failure, null, null);
+  }
+
+  @VisibleForTesting
+  public static @NotNull GradleIssueFailure createGradleIssueFailure(@NotNull Message message) {
+    Message.Failure failure = message.getFailure();
+    if (failure == null) {
+      return GradleIssueFailure.createIssueFailure(message.getTitle(), message.getText());
+    }
+    return createGradleIssueFailure(failure);
+  }
+
+  private static @NotNull GradleIssueFailure createGradleIssueFailure(@NotNull Message.Failure failure) {
+    return GradleIssueFailure.createIssueFailure(
+      failure.getMessage(),
+      failure.getDescription(),
+      ContainerUtil.map(failure.getCauses(), GradleProgressListener::createGradleIssueFailure)
+    );
   }
 
   private void sendProgressEventToOutput(ExternalSystemTaskNotificationEvent event) {

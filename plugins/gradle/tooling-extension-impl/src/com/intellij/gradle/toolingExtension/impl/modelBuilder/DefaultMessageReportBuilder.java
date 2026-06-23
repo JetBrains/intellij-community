@@ -66,8 +66,7 @@ public class DefaultMessageReportBuilder implements MessageReportBuilder {
 
   @Override
   public @NotNull MessageReportBuilder withStackTrace() {
-    myException = new IllegalStateException();
-    return this;
+    return withException(new IllegalStateException());
   }
 
   @Override
