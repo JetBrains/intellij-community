@@ -23,22 +23,21 @@ import org.jetbrains.annotations.ApiStatus
 private val LOG = logger<LinuxAccessibilitySupport>()
 
 private enum class LinuxA11yChoice(private val dialogCode: Int) {
-  Cancel(0),
-  EnableAtkWrapper(1),
-  EnableAtkWrapperAndScreenReader(2);
+  CANCEL(0),
+  ENABLE_ATK_WRAPPER(1),
+  ENABLE_ATK_WRAPPER_AND_SCREEN_READER(2);
 
   fun toDialogCode(): Int = dialogCode
 
   companion object {
-    fun fromDialogCode(code: Int): LinuxA11yChoice {
-      return entries.firstOrNull { it.dialogCode == code } ?: Cancel
-    }
+    fun fromDialogCode(code: Int): LinuxA11yChoice =
+      entries.firstOrNull { it.dialogCode == code } ?: CANCEL
 
     fun fromDialogResult(exitCode: Int, enableAccessibilityExitCode: Int, isScreenReaderCheckboxSelected: Boolean): LinuxA11yChoice {
       return when {
-        exitCode != enableAccessibilityExitCode -> Cancel
-        isScreenReaderCheckboxSelected -> EnableAtkWrapperAndScreenReader
-        else -> EnableAtkWrapper
+        exitCode != enableAccessibilityExitCode -> CANCEL
+        isScreenReaderCheckboxSelected -> ENABLE_ATK_WRAPPER_AND_SCREEN_READER
+        else -> ENABLE_ATK_WRAPPER
       }
     }
   }
@@ -47,6 +46,7 @@ private enum class LinuxA11yChoice(private val dialogCode: Int) {
 @ApiStatus.Internal
 object LinuxAccessibilitySupport {
   private const val ENABLE_ACCESSIBILITY_BUTTON_INDEX = 0
+  private const val ASSISTIVE_TECHNOLOGIES_VM_OPTION_PREFIX = "-D$ASSISTIVE_TECHNOLOGIES_PROPERTY="
   private const val FORCE_SCREEN_READER_DETECTION_PROPERTY = "force.screen.reader.detection"
 
   @Volatile
@@ -94,14 +94,14 @@ object LinuxAccessibilitySupport {
     }
 
     when (askToEnableLinuxAccessibilitySupport(screenReaderDetected)) {
-      LinuxA11yChoice.EnableAtkWrapper -> {
+      LinuxA11yChoice.ENABLE_ATK_WRAPPER -> {
         linuxAccessibilitySupportRequested = true
       }
-      LinuxA11yChoice.EnableAtkWrapperAndScreenReader -> {
+      LinuxA11yChoice.ENABLE_ATK_WRAPPER_AND_SCREEN_READER -> {
         linuxAccessibilitySupportRequested = true
         screenReaderSupportRequested = true
       }
-      LinuxA11yChoice.Cancel -> Unit
+      LinuxA11yChoice.CANCEL -> Unit
     }
 
     if (linuxAccessibilitySupportRequested) {
