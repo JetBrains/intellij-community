@@ -49,6 +49,7 @@
 
     "Island.arc": 0,
     "Island.arc.compact": 0,
+    "Islands.emptyGap": 0,
 
     "ActionButton": {
       "hoverBackground": "#000000",

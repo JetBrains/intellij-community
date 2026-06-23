@@ -936,6 +936,10 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   private fun getLastOffset(component: JComponent): Point {
+    if (uiSettings.hideToolStripes) {
+      return Point()
+    }
+
     val rootPane = component.rootPane
 
     val componentStart = Point()
