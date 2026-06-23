@@ -89,7 +89,7 @@ fun createTreePathFor(model: GitBranchesTreeModel, value: Any): TreePath? {
       add(refType)
     }
   }
-  val nameParts = if (model.isPrefixGrouping) reference.name.split('/') else listOf(reference.name)
+  val nameParts = if (model.isDirectoryGrouping) reference.name.split('/') else listOf(reference.name)
   val currentPrefix = mutableListOf<String>()
   for (prefixPart in nameParts.init()) {
     currentPrefix.add(prefixPart)
@@ -238,7 +238,7 @@ open class LazyHolder<N>(nodes: List<N>,
 class LazyRefsSubtreeHolder<out T : GitReference>(
   unsortedRefs: Collection<T>,
   matcher: MinusculeMatcher?,
-  isPrefixGrouping: () -> Boolean,
+  isDirectoryGrouping: () -> Boolean,
   exceptRefFilter: (T) -> Boolean = { false },
   refComparatorGetter: () -> Comparator<GitReference>,
 ) {
@@ -255,7 +255,7 @@ class LazyRefsSubtreeHolder<out T : GitReference>(
   val tree: Map<String, Any> by lazy {
     val infoList = matchingResult.matchedNodes
     TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(GitBranchesPopupSpan.BuildingTree.getName()).use { span ->
-      buildSubTree(infoList.map { (if (isPrefixGrouping()) it.name.split('/') else listOf(it.name)) to it })
+      buildSubTree(infoList.map { (if (isDirectoryGrouping()) it.name.split('/') else listOf(it.name)) to it })
     }
   }
 

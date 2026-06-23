@@ -109,8 +109,8 @@ abstract class GitBranchesPopupStepBase(
       }
       is GitBranchesTreeModel.BranchesPrefixGroup -> value.prefix.last()
       is GitBranchesTreeModel.RefTypeUnderRepository -> value.type.getText()
-      is RefUnderRepository -> getRefText(value.ref, treeModel.isPrefixGrouping)
-      is GitReference -> getRefText(value, treeModel.isPrefixGrouping)
+      is RefUnderRepository -> getRefText(value.ref, treeModel.isDirectoryGrouping)
+      is GitReference -> getRefText(value, treeModel.isDirectoryGrouping)
       is PopupFactoryImpl.ActionItem -> value.text
       is GitBranchesTreeModel.PresentableNode -> value.presentableText
       else -> null

@@ -152,24 +152,24 @@ internal class GitBranchesTreeMultiRepoFilteringModel(
   private inner class LazyRepositoryBranchesSubtreeHolder(private val repository: GitRepositoryModel) {
     val localBranches by lazy {
       LazyRefsSubtreeHolder(
-        repository.state.localBranchesOrCurrent,
-        nameMatcher,
-        ::isPrefixGrouping,
+        unsortedRefs = repository.state.localBranchesOrCurrent,
+        matcher = nameMatcher,
+        isDirectoryGrouping = ::isDirectoryGrouping,
         refComparatorGetter = { getRefComparator(listOf(repository)) })
     }
     val remoteBranches by lazy {
       LazyRefsSubtreeHolder(
-        repository.state.remoteBranches,
-        nameMatcher,
-        ::isPrefixGrouping,
+        unsortedRefs = repository.state.remoteBranches,
+        matcher = nameMatcher,
+        isDirectoryGrouping = ::isDirectoryGrouping,
         refComparatorGetter = { getRefComparator(listOf(repository)) })
     }
 
     val tags by lazy {
       LazyRefsSubtreeHolder(
-        repository.state.tags,
-        nameMatcher,
-        ::isPrefixGrouping,
+        unsortedRefs = repository.state.tags,
+        matcher = nameMatcher,
+        isDirectoryGrouping = ::isDirectoryGrouping,
         refComparatorGetter = { getRefComparator(listOf(repository)) })
     }
   }
