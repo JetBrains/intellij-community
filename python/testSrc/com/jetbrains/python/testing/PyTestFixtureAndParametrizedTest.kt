@@ -4,7 +4,7 @@ package com.jetbrains.python.testing
 import com.intellij.idea.TestFor
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.jetbrains.python.fixtures.PyTestCase
-import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection
+import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalVariableInspection
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedParameterInspection
 import com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedInspection
 
@@ -16,7 +16,7 @@ class PyTestFixtureAndParametrizedTest : PyTestCase() {
     const val testSubfolder = "/testCompletion"
     fun testInspectionStatic(fixture: CodeInsightTestFixture) {
       fixture.configureByFile("test_for_inspection_test.py")
-      fixture.enableInspections(PyUnusedLocalInspection::class.java, PyUnusedParameterInspection::class.java,
+      fixture.enableInspections(PyUnusedLocalVariableInspection::class.java, PyUnusedParameterInspection::class.java,
                                 PyTestParametrizedInspection::class.java)
       fixture.checkHighlighting(true, false, true)
     }

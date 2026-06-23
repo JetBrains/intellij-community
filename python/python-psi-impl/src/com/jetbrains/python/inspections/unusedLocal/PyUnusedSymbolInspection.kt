@@ -13,7 +13,7 @@ import com.jetbrains.python.inspections.PyInspectionVisitor
  * Base class for the unused-parameter and unused-function inspections. Both report a single kind of unused symbol via the shared
  * [PyUnusedLocalInspectionVisitor]; the actual control-flow analysis is shared across all unused-symbol inspections running on the
  * same session (see [PyUnusedLocalInspectionVisitor.SharedAnalysis]). Unused local variables and other local symbols are reported
- * separately by [PyUnusedLocalInspection].
+ * separately by [PyUnusedLocalVariableInspection].
  */
 abstract class PyUnusedSymbolInspection : PyInspection() {
   private val visitorKey = Key.create<PyUnusedLocalInspectionVisitor>("${javaClass.simpleName}.Visitor")

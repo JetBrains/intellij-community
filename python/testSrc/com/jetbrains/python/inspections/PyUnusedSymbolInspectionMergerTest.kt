@@ -38,6 +38,7 @@ class PyUnusedSymbolInspectionMergerTest : PyTestCase() {
         <option name="myName" value="Test" />
         <inspection_tool class="PyUnusedLocalInspection" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
       </profile>"""))
+    assertFalse(profile.getToolsOrNull("PyUnusedLocalVariableInspection", null)!!.isEnabled)
     assertFalse(profile.getToolsOrNull("PyUnusedParameterInspection", null)!!.isEnabled)
     assertFalse(profile.getToolsOrNull("PyUnusedFunctionInspection", null)!!.isEnabled)
   }
