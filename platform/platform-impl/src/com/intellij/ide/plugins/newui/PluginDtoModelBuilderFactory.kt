@@ -113,8 +113,7 @@ class PluginDtoModelBuilder(pluginId: PluginId) : PluginUiModelBuilder {
   }
 
   override fun setDependencies(dependencies: List<PluginDependencyModel>): PluginUiModelBuilder {
-    resultDto.dependencies.clear()
-    resultDto.dependencies.addAll(dependencies)
+    resultDto.dependencies = dependencies.toList()
     return this
   }
 
