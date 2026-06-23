@@ -10,7 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-internal class SettingsBasedMcpToolFilterProvider : McpToolFilterProvider {
+internal class SettingsBasedMcpToolFilterProvider : UserConfigurableMcpToolFilterProvider {
   override fun applyFilters(context: McpToolFilterContext, clientInfo: Implementation?, sessionOptions: McpServerService.McpSessionOptions?, invocationMode: McpToolInvocationMode) {
     val settings = McpToolFilterSettings.getInstance()
     applyMaskFilter(context, settings.toolsFilter)

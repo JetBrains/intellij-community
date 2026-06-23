@@ -8,6 +8,7 @@ import com.intellij.mcpserver.McpTool
 import com.intellij.mcpserver.McpToolCategory
 import com.intellij.mcpserver.McpToolsMarkdownExporter
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.impl.UserConfigurableMcpToolFilterProvider
 import com.intellij.mcpserver.toolsets.general.UniversalToolset
 import com.intellij.mcpserver.settings.McpToolDisallowListSettings.ToolState
 import com.intellij.openapi.fileChooser.FileChooserFactory
@@ -464,8 +465,7 @@ class McpToolFilterConfigurable : SearchableConfigurable {
     emptyStateLabel = null
 
     allTools = McpServerService.getInstance().getMcpToolsFiltered(
-      useFiltersFromEP = false,
-      excludeProviders = emptySet(),
+      excludeProviders = setOf(UserConfigurableMcpToolFilterProvider::class.java),
     )
     initialToolStates = normalizeToolStateKeys(initialToolStates)
     val normalizedToolStates = normalizeToolStateKeys(allToolStates)
