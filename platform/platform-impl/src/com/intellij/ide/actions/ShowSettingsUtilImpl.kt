@@ -15,9 +15,9 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableGroup
+import com.intellij.openapi.options.NonModalSettingsPolicy
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.TabbedConfigurable
-import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
 import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.ex.ConfigurableWrapper
@@ -131,16 +131,10 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
   }
 
   @ApiStatus.Internal
-  protected open fun isNonModalSettingsEnabled(): Boolean = useNonModalSettingsWindow()
-
-  @ApiStatus.Internal
-  open fun isNonModalSettingsWindowVisible(): Boolean = true
-
-  @ApiStatus.Internal
   protected open fun doShow(project: Project?, groups: List<ConfigurableGroup>, toSelect: Configurable?, filter: String?) {
     val isModal = !(project != null &&
                     project != ProjectManager.getInstance().defaultProject &&
-                    isNonModalSettingsEnabled() &&
+                    NonModalSettingsPolicy.isNonModalSettingsEnabledByAllPolicies() &&
                     ModalityState.current() == ModalityState.nonModal())
 
     val filteredGroups = filterEmptyGroups(groups)
@@ -163,8 +157,8 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     // We want to ensure that clients don’t simply replace one API with another,
     // but actually rework the invocation to be performed not in EDT.
     ThreadingAssertions.assertBackgroundThread()
-
-    val isModal = project.isDefault || !isNonModalSettingsEnabled()
+ 
+    val isModal = project.isDefault || !NonModalSettingsPolicy.isNonModalSettingsEnabledByAllPolicies()
     withContext(Dispatchers.EDT) {
       if (!isModal) {
         SettingsNonModalDialogFactory.getInstance().show(project, filterEmptyGroups(groups), null, null)
@@ -365,11 +359,6 @@ private fun <T : Configurable> editConfigurable(
     })
   }
   return editor.showAndGet()
-}
-
-private fun useNonModalSettingsWindow(): Boolean {
-  return System.getProperty("ide.ui.non.modal.settings.window")?.toBoolean()
-         ?: AdvancedSettings.getBoolean("ide.ui.non.modal.settings.window")
 }
 
 internal fun scheduleDoShowSettingsDialogWithACheckThatProjectIsInitialized(project: Project) {
