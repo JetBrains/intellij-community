@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 package com.intellij.codeInsight.actions;
-import org.jetbrains.annotations.ApiStatus;
 
-@ApiStatus.Internal
 public interface OptionalReformatActions {
 
   boolean isOptimizeImports();
