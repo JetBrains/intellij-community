@@ -693,7 +693,7 @@ object PyCallExpressionHelper {
     if (matchingOverloads.isEmpty()) {
       return types
         .map { it.getCallType(context, callSite) }
-        .let { PyUnionType.union(it) }
+        .let { PyUnsafeUnionType.unsafeUnion(it) }
     }
     if (matchingOverloads.size == 1) {
       return matchingOverloads[0].getCallType(context, callSite)
@@ -704,7 +704,7 @@ object PyCallExpressionHelper {
     if (someArgumentsHaveUnknownType) {
       return matchingOverloads
         .map { it.getCallType(context, callSite) }
-        .let { PyUnionType.union(it) }
+        .let { PyUnsafeUnionType.unsafeUnion(it) }
     }
     return matchingOverloads.firstOrNull()?.getCallType(context, callSite) ?: PyAnyType.unknown
   }
@@ -1244,8 +1244,8 @@ object PyCallExpressionHelper {
   fun analyzeArguments(
     arguments: List<PyExpression>,
     parameters: List<PyCallableParameter>,
-  context: TypeEvalContext,
-): ArgumentMappingResults {
+    context: TypeEvalContext,
+  ): ArgumentMappingResults {
     val hasSlashParameter = parameters.any { it.isPositionOnlySeparator }
     val firstExplicitParam = parameters.dropWhile { it.isSelf }.firstOrNull()
     val oldStylePositionalOnly = firstExplicitParam != null && isLegacyPositionalOnly(firstExplicitParam)

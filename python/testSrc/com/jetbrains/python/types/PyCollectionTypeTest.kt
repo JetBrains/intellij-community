@@ -183,7 +183,7 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
       def foo(x: List[List]):
           expr = x[y]
       #   │        └ ERROR Unresolved reference 'y'
-      #   └ TYPE list | list[list]
+      #   └ TYPE UnsafeUnion[list, list[list]]
       """)
 
     @Test

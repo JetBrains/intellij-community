@@ -276,7 +276,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
           return iter(xs)
       
       expr = f1([1, 2, 3])
-      #└ TYPE SupportsNext[Any] | Iterator[Unknown] FIXME Iterator[int]
+      #└ TYPE UnsafeUnion[SupportsNext[Any], Iterator[Unknown]] FIXME Iterator[int]
       """)
 
     @Test

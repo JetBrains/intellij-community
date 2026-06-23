@@ -109,7 +109,7 @@ class PyiTypeTest : PyCodeInsightTestCase() {
     def f(x: Any):
         c = C()
         expr = c.foo(x)
-    #   └ TYPE list[Unknown] | Unknown
+    #   └ TYPE UnsafeUnion[Unknown, list[Unknown]]
     """,
     "m1.pyi" to """
       from typing import overload
@@ -133,7 +133,7 @@ class PyiTypeTest : PyCodeInsightTestCase() {
     c = C()
     #\ ERROR Indent expected
     expr = c.foo(non_existing=0) # ISSUES *
-    #└ TYPE dict[str, Unknown] | list[Unknown]
+    #└ TYPE UnsafeUnion[dict[str, Unknown], list[Unknown]]
     """,
     "m1.pyi" to """
       from typing import TypeVar, Generic, overload, List, Dict

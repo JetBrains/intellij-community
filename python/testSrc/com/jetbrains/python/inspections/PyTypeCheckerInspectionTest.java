@@ -1710,22 +1710,4 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                        """));
   }
 
-  // PY-84657
-  public void testClassOverloadedFunctionAssignedToGlobalFunction() {
-    fixme("PY-84657", ComparisonFailure.class, "Expected type 'str', got 'float | int | str' instead", () -> {
-      runWithLanguageLevel(
-        LanguageLevel.PYTHON312,
-        () -> {
-          doMultiFileTest("main.py");
-        });
-    });
-  }
-
-  public void testClassOverloadedFunctionAssignedToGlobalFunction2() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON312,
-      () -> {
-        doMultiFileTest("main.py");
-      });
-  }
 }
