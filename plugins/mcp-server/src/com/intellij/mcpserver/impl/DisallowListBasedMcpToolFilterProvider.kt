@@ -9,7 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-internal class DisallowListBasedMcpToolFilterProvider : McpToolFilterProvider {
+internal class DisallowListBasedMcpToolFilterProvider : UserConfigurableMcpToolFilterProvider {
   override fun applyFilters(context: McpToolFilterContext, clientInfo: Implementation?, sessionOptions: McpServerService.McpSessionOptions?, invocationMode: McpToolInvocationMode) {
     val settings = McpToolDisallowListSettings.getInstance()
 
