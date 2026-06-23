@@ -102,7 +102,7 @@ class RepositoryTest {
       createModuleDescriptor("ij.foo", listOf("foo.jar"), listOf("unresolved")),
     )
     assertEquals(listOf(tempDirectory.rootPath.resolve("foo.jar")), 
-                 repository.getModuleResourcePaths(moduleId("ij.foo")))
+                 repository.findModuleHeader(moduleId("ij.foo"))!!.ownClasspath)
   }
 
   @Test

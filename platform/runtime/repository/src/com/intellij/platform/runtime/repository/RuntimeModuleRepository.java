@@ -44,7 +44,9 @@ public interface RuntimeModuleRepository {
 
   /**
    * Computes resource paths of a module with the given {@code moduleId} without resolving its dependencies.
+   * @deprecated use {@link #findModuleHeader(RuntimeModuleId)} instead
    */
+  @Deprecated
   @NotNull List<Path> getModuleResourcePaths(@NotNull RuntimeModuleId moduleId);
   
   interface ResolveResult {
