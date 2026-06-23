@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.base.projectStructure
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileTypes.FileType
-import org.jetbrains.kotlin.analysis.decompiler.js.KotlinJavaScriptMetaFileType
 import org.jetbrains.kotlin.analysis.decompiler.konan.KlibMetaFileType
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.idea.KotlinModuleFileType
@@ -22,7 +21,6 @@ abstract class KotlinBinaryExtension(val fileType: FileType) {
 class JavaClassBinary : KotlinBinaryExtension(JavaClassFileType.INSTANCE)
 class KotlinBuiltInBinary : KotlinBinaryExtension(KotlinBuiltInFileType)
 class KotlinModuleBinary : KotlinBinaryExtension(KotlinModuleFileType.INSTANCE)
-class KotlinJsMetaBinary : KotlinBinaryExtension(KotlinJavaScriptMetaFileType)
 class KlibMetaBinary : KotlinBinaryExtension(KlibMetaFileType)
 
 val FileType.isKotlinBinary: Boolean
