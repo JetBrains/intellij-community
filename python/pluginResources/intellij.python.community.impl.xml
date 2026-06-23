@@ -511,6 +511,12 @@
                              instance="com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersConfigurable"
                              key="configurable.PyUserTypeRenderersConfigurable.display.name"/> <!--id is used in PyCharmCorePluginConfigurator-->
 
+    <applicationConfigurable groupId="editor"
+                             id="com.jetbrains.python.codeInsight.PythonTypeCheckingConfigurable"
+                             instance="com.jetbrains.python.codeInsight.PythonTypeCheckingConfigurable"
+                             bundle="messages.PyBundle"
+                             key="configurable.PythonTypeCheckingConfigurable.display.name"/>
+
     <projectConfigurable groupId="tools"
                          id="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
                          instance="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
