@@ -5,27 +5,40 @@ import com.intellij.application.options.CodeStyle
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.elementType
+import com.intellij.psi.util.parentsOfType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallCandidate
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
+import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.useSiteModule
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.analysis.api.symbols.contextParameters
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.idea.base.psi.appendValueArgument
 import org.jetbrains.kotlin.idea.base.util.reformat
 import org.jetbrains.kotlin.idea.formatter.KotlinCommonCodeStyleSettings
 import org.jetbrains.kotlin.idea.formatter.kotlinCommonSettings
 import org.jetbrains.kotlin.idea.util.isLineBreak
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
@@ -76,25 +89,54 @@ object SpecifyRemainingArgumentsByNameUtil {
      * Adds arguments with TODO() placeholders to the argument list.
      * If [anchor] is provided, arguments are inserted before it, otherwise they are appended at the end.
      * Returns the list of added TODO() expressions for template fields.
+     * If [suggestions] is non-empty, the suggested expression is used in place of TODO().
      */
     private fun addArguments(
         argumentNames: List<Name>,
         element: KtValueArgumentList,
         anchor: KtValueArgument?,
         psiFactory: KtPsiFactory,
-        codeStyle: KotlinCommonCodeStyleSettings
+        codeStyle: KotlinCommonCodeStyleSettings,
+        suggestions: Map<Name, Name> = emptyMap()
     ): List<KtExpression> {
         return argumentNames.mapNotNull { argumentName ->
-            val todoExpression = psiFactory.createExpression("TODO()")
-            val argument = psiFactory.createArgument(expression = todoExpression, name = argumentName)
+            val suggested = suggestions[argumentName]?.asString()
+            val expression = psiFactory.createExpression(suggested ?: "TODO()")
+            val argument = psiFactory.createArgument(expression = expression, name = argumentName)
             val addedArgument = if (anchor != null) {
                 element.addArgumentBefore(argument, anchor)
             } else {
-                element.addArgument(argument)
+                element.addArgumentWithCommentsPreserve(argument, psiFactory)
             }
             addedArgument.addNewlineBeforeIfNeeded(psiFactory, codeStyle)
             addedArgument.getArgumentExpression()
         }
+    }
+
+    private fun KtValueArgumentList.addArgumentWithCommentsPreserve(
+        argument: KtValueArgument,
+        psiFactory: KtPsiFactory,
+    ): KtValueArgument {
+        val rpar = rightParenthesis ?: return appendValueArgument(argument)
+        val lastArgument = arguments.lastOrNull() ?: return appendValueArgument(argument)
+
+        val trailingElements = generateSequence(lastArgument.nextSibling) { it.nextSibling }
+            .takeWhile { it !== rpar }
+            .toList()
+
+        if (trailingElements.none { it is PsiComment }) {
+            return appendValueArgument(argument)
+        }
+
+        val hasComma = trailingElements.any { it.elementType == KtTokens.COMMA }
+
+        if (!hasComma) {
+            addAfter(psiFactory.createComma(), lastArgument)
+        }
+
+        val anchor = trailingElements.lastOrNull { it !is PsiWhiteSpace } ?: lastArgument
+
+        return addAfter(argument, anchor) as KtValueArgument
     }
 
     /**
@@ -107,13 +149,70 @@ object SpecifyRemainingArgumentsByNameUtil {
         }
     }
 
+    @ApiStatus.Internal
+    @OptIn(KaExperimentalApi::class)
+    context(_: KaSession)
+    fun contextSuggestedNames(
+        candidateCall: KaFunctionCall<*>,
+        remainingArguments: RemainingArgumentsData,
+        callExpression: KtCallExpression
+    ): Map<Name, Name> {
+        val alreadySuggestedNames = mutableSetOf<Name>()
+        for (arg in callExpression.valueArguments) {
+            (arg.getArgumentExpression() as? KtNameReferenceExpression)
+                ?.getReferencedNameAsName()
+                ?.let(alreadySuggestedNames::add)
+        }
+
+        val candidatesPool: List<KaContextParameterSymbol> = buildList {
+            val seenNames = hashSetOf<Name>()
+            for (decl in callExpression.parentsOfType<KtCallableDeclaration>()) {
+                val params = when (val symbol = decl.symbol) {
+                    is KaNamedFunctionSymbol, is KaPropertySymbol -> symbol.contextParameters
+                    else -> emptyList()
+                }
+                for (p in params) {
+                    if (seenNames.add(p.name)) add(p)
+                }
+            }
+        }
+
+        val remainingNames = remainingArguments.allContextRemainingArguments.toHashSet()
+        val result = linkedMapOf<Name, Name>()
+
+        val candidateFunction = candidateCall.symbol as? KaNamedFunctionSymbol ?: return emptyMap()
+        val contextArguments = candidateCall.partiallyAppliedSymbol.contextArguments
+
+        // shadowing context case
+        val nearestContextParameterByName = candidatesPool.distinctBy { it.name }.associateBy { it.name }
+
+        for ((index, contextParam) in candidateFunction.contextParameters.withIndex()) {
+            if (contextParam.name !in remainingNames) continue
+
+            val contextArgument = contextArguments.getOrNull(index) as? KaImplicitReceiverValue ?: continue
+            if (!contextArgument.type.isSubtypeOf(contextParam.returnType)) continue
+
+            val symbol = contextArgument.symbol as? KaContextParameterSymbol ?: continue
+
+            val suggestion = symbol.name
+            if (suggestion.isSpecial || suggestion in alreadySuggestedNames) continue
+
+            if (nearestContextParameterByName[suggestion] != symbol) continue
+
+            alreadySuggestedNames += suggestion
+            result[contextParam.name] = suggestion
+        }
+        return result
+    }
+
     /**
      * Calculates the [RemainingArgumentsData] for the call.
      * See [RemainingArgumentsData] for details.
      */
+    @ApiStatus.Internal
     @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
-    private fun KaFunctionCall<*>.getRemainingArgumentsData(existingArgumentsCount: Int): RemainingArgumentsData? {
+    fun KaFunctionCall<*>.getRemainingArgumentsData(existingArgumentsCount: Int): RemainingArgumentsData? {
         if (!symbol.hasStableParameterNames) return null
 
         // if the mapping is unreliable, we don't suggest anything to avoid increasing inconsistency
@@ -211,7 +310,8 @@ object SpecifyRemainingArgumentsByNameUtil {
         remainingValueArguments: List<Name>,
         remainingContextArguments: List<Name>,
         allContextParameterNames: Set<Name>,
-        updater: ModPsiUpdater
+        updater: ModPsiUpdater,
+        nameSuggestions: Map<Name, Name> = emptyMap()
     ) {
         val psiFactory = KtPsiFactory(project, markGenerated = true)
         val codeStyle = CodeStyle.getSettings(project).kotlinCommonSettings
@@ -224,7 +324,7 @@ object SpecifyRemainingArgumentsByNameUtil {
 
         val templateFields =
             addArguments(remainingValueArguments, element, firstContextArg, psiFactory, codeStyle) +
-            addArguments(remainingContextArguments, element, anchor = null, psiFactory, codeStyle)
+            addArguments(remainingContextArguments, element, anchor = null, psiFactory, codeStyle, nameSuggestions)
 
         // Add newlines before existing arguments if we added any new arguments
         if (remainingValueArguments.isNotEmpty() || remainingContextArguments.isNotEmpty()) {
