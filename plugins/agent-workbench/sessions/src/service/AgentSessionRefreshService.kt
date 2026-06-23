@@ -246,13 +246,19 @@ class AgentSessionRefreshService internal constructor(
   }
 
   private fun markThreadPresentationAsRead(path: String, provider: AgentSessionProvider, threadId: String, updatedAt: Long) {
-    service<AgentSessionThreadPresentationModel>().updateActivityHints(
+    val normalizedPath = normalizeAgentWorkbenchPath(path)
+    val activityReport = resolveAgentSessionPathState(stateStore.snapshot(), normalizedPath)
+                           ?.threads
+                           ?.firstOrNull { thread -> thread.provider == provider && thread.id == threadId }
+                           ?.activityReport
+                         ?: AgentThreadActivityReport.READY
+    presentationModel.updateActivityHints(
       provider = provider,
       updates = listOf(
         AgentSessionThreadActivityPresentationUpdate(
-          path = path,
+          path = normalizedPath,
           threadId = threadId,
-          activityReport = AgentThreadActivityReport.READY,
+          activityReport = activityReport,
           updatedAt = updatedAt,
         )
       ),

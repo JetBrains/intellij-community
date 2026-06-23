@@ -165,6 +165,155 @@ class AgentSessionsTreeStateControllerTest {
   }
 
   @Test
+  fun currentProjectScopeFiltersActiveTreeToCurrentProject() {
+    runBlocking {
+      val harness = createHarness()
+      try {
+        harness.currentProjectOnly = true
+        harness.currentProjectPath = PROJECT_PATH
+        runInEdtAndWait { harness.controller.start() }
+
+        harness.sessionsState.value = AgentSessionsState(
+          projects = listOf(
+            projectWithThread(PROJECT_PATH, "Project A", "current-thread"),
+            projectWithThread(OTHER_PROJECT_PATH, "Project B", "other-thread"),
+          ),
+          lastUpdatedAt = 1,
+        )
+
+        waitForCondition {
+          harness.model.entriesById.containsKey(SessionTreeId.Thread(PROJECT_PATH, AgentSessionProvider.CODEX, "current-thread")) &&
+          !harness.model.entriesById.containsKey(SessionTreeId.Thread(OTHER_PROJECT_PATH, AgentSessionProvider.CODEX, "other-thread"))
+        }
+        assertThat(harness.controller.displayedStateSnapshot().projects.map { it.path }).containsExactly(PROJECT_PATH)
+      }
+      finally {
+        runInEdtAndWait { harness.controller.dispose() }
+      }
+    }
+  }
+
+  @Test
+  fun currentProjectScopeChangeRebuildsTree() = runBlocking {
+    val harness = createHarness()
+    try {
+      harness.currentProjectPath = PROJECT_PATH
+      runInEdtAndWait { harness.controller.start() }
+      harness.sessionsState.value = AgentSessionsState(
+        projects = listOf(
+          projectWithThread(PROJECT_PATH, "Project A", "current-thread"),
+          projectWithThread(OTHER_PROJECT_PATH, "Project B", "other-thread"),
+        ),
+        lastUpdatedAt = 1,
+      )
+
+      waitForCondition {
+        harness.model.entriesById.containsKey(SessionTreeId.Thread(OTHER_PROJECT_PATH, AgentSessionProvider.CODEX, "other-thread"))
+      }
+
+      harness.currentProjectOnly = true
+      runInEdtAndWait { harness.controller.projectScopeChanged() }
+
+      waitForCondition {
+        !harness.model.entriesById.containsKey(SessionTreeId.Thread(OTHER_PROJECT_PATH, AgentSessionProvider.CODEX, "other-thread")) &&
+        harness.model.entriesById.containsKey(SessionTreeId.Thread(PROJECT_PATH, AgentSessionProvider.CODEX, "current-thread"))
+      }
+    }
+    finally {
+      runInEdtAndWait { harness.controller.dispose() }
+    }
+  }
+
+  @Test
+  fun currentProjectScopeKeepsOnlyMatchingWorktreeUnderParentProject() {
+    runBlocking {
+      val harness = createHarness()
+      try {
+        harness.currentProjectOnly = true
+        harness.currentProjectPath = WORKTREE_PATH
+        runInEdtAndWait { harness.controller.start() }
+        harness.sessionsState.value = AgentSessionsState(
+          projects = listOf(
+            AgentProjectSessions(
+              path = PROJECT_PATH,
+              name = "Project A",
+              isOpen = true,
+              providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+              threads = listOf(thread("parent-thread")),
+              worktrees = listOf(
+                AgentWorktree(
+                  path = WORKTREE_PATH,
+                  name = "feature",
+                  branch = "feature",
+                  isOpen = true,
+                  threads = listOf(thread("worktree-thread")),
+                ),
+                AgentWorktree(
+                  path = OTHER_WORKTREE_PATH,
+                  name = "other",
+                  branch = "other",
+                  isOpen = false,
+                  threads = listOf(thread("other-worktree-thread")),
+                ),
+              ),
+            ),
+          ),
+          lastUpdatedAt = 1,
+        )
+
+        waitForCondition {
+          harness.model.entriesById.containsKey(SessionTreeId.WorktreeThread(PROJECT_PATH,
+                                                                             WORKTREE_PATH,
+                                                                             AgentSessionProvider.CODEX,
+                                                                             "worktree-thread"))
+        }
+        assertThat(harness.model.entriesById).containsKey(SessionTreeId.Project(PROJECT_PATH))
+        assertThat(harness.model.entriesById).doesNotContainKey(SessionTreeId.Thread(PROJECT_PATH,
+                                                                                     AgentSessionProvider.CODEX,
+                                                                                     "parent-thread"))
+        assertThat(harness.model.entriesById)
+          .doesNotContainKey(SessionTreeId.WorktreeThread(PROJECT_PATH,
+                                                          OTHER_WORKTREE_PATH,
+                                                          AgentSessionProvider.CODEX,
+                                                          "other-worktree-thread"))
+        assertThat(harness.controller.displayedStateSnapshot().projects.single().worktrees.map { it.path }).containsExactly(WORKTREE_PATH)
+      }
+      finally {
+        runInEdtAndWait { harness.controller.dispose() }
+      }
+    }
+  }
+
+  @Test
+  fun currentProjectScopeFiltersArchivedTreeToCurrentProject() = runBlocking {
+    val harness = createHarness()
+    try {
+      harness.currentProjectOnly = true
+      harness.currentProjectPath = PROJECT_PATH
+      runInEdtAndWait { harness.controller.start() }
+      harness.archivedSessionsState.value = AgentArchivedSessionsState(
+        projects = listOf(
+          projectWithThread(PROJECT_PATH, "Project A", "current-archived"),
+          projectWithThread(OTHER_PROJECT_PATH, "Project B", "other-archived"),
+        ),
+        lastUpdatedAt = 1,
+      )
+      harness.threadViewState.value = AgentSessionThreadViewState(
+        mode = AgentSessionThreadViewMode.ARCHIVED,
+        archivedRangePreset = AgentSessionArchivedRangePreset.ALL,
+      )
+
+      waitForCondition {
+        harness.model.entriesById.containsKey(SessionTreeId.Thread(PROJECT_PATH, AgentSessionProvider.CODEX, "current-archived")) &&
+        !harness.model.entriesById.containsKey(SessionTreeId.Thread(OTHER_PROJECT_PATH, AgentSessionProvider.CODEX, "other-archived"))
+      }
+    }
+    finally {
+      runInEdtAndWait { harness.controller.dispose() }
+    }
+  }
+
+  @Test
   fun contentOnlyDiffWithUnchangedSelectionDoesNotNeedSelectionApply() {
     val selected = listOf(SessionTreeId.Thread(PROJECT_PATH, AgentSessionProvider.CODEX, "thread-1"))
     val diff = SessionTreeModelDiff(
@@ -192,6 +341,9 @@ class AgentSessionsTreeStateControllerTest {
 }
 
 private const val PROJECT_PATH = "/work/project-a"
+private const val OTHER_PROJECT_PATH = "/work/project-b"
+private const val WORKTREE_PATH = "/work/project-a-feature"
+private const val OTHER_WORKTREE_PATH = "/work/project-a-other"
 
 private class ControllerHarness {
   val sessionsState = MutableStateFlow(AgentSessionsState())
@@ -205,6 +357,12 @@ private class ControllerHarness {
   @Volatile
   var model: SessionTreeModel = SessionTreeModel.EMPTY
 
+  @Volatile
+  var currentProjectOnly: Boolean = false
+
+  @Volatile
+  var currentProjectPath: String? = PROJECT_PATH
+
   val controller = AgentSessionsTreeStateController(
     sessionsStateFlow = sessionsState,
     archivedSessionsStateFlow = archivedSessionsState,
@@ -216,6 +374,8 @@ private class ControllerHarness {
     getSessionTreeModel = { model },
     setSessionTreeModel = { model = it },
     onNewThreadProfileMenuChanged = {},
+    isCurrentProjectScopeEnabled = { currentProjectOnly },
+    currentProjectPathProvider = { currentProjectPath },
     onBeforeModelSwap = {},
     invalidateTreeModel = { diff ->
       invalidatedDiffs += diff
@@ -269,6 +429,31 @@ private fun openProjectStateWithoutThreads(): AgentSessionsState {
       )
     ),
     lastUpdatedAt = 1,
+  )
+}
+
+private fun projectWithThread(path: String, name: String, threadId: String): AgentProjectSessions {
+  return AgentProjectSessions(
+    path = path,
+    name = name,
+    isOpen = true,
+    providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+    threads = listOf(thread(threadId)),
+  )
+}
+
+private fun thread(
+  threadId: String,
+  activity: AgentThreadActivity = AgentThreadActivity.READY,
+  updatedAt: Long = 100,
+): AgentSessionThread {
+  return AgentSessionThread(
+    id = threadId,
+    title = threadId,
+    updatedAt = updatedAt,
+    archived = false,
+    provider = AgentSessionProvider.CODEX,
+    activity = activity,
   )
 }
 

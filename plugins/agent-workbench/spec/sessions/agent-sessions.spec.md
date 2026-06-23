@@ -82,6 +82,14 @@ behavior; refresh mechanics and detailed tree rendering/interaction contracts li
   [@test] ../../claude/sessions/testSrc/ClaudeSessionSourceTest.kt
   [@test] ../../junie/sessions/testSrc/JunieSessionSourceTest.kt
 
+- Agent Threads must support a current-project-only scope for both active and archived views. The automatic default is all projects when
+  chat opens in the dedicated frame and current project when chats open in the source project frame; an explicit user override must persist
+  until the user returns to the current automatic default. Worktree projects keep the parent project row only as a container for the
+  matching worktree.
+  [@test] ../../sessions/testSrc/settings/AgentWorkbenchSettingsTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreeStateControllerTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsToolWindowFactorySwingTest.kt
+
 - Claude quota hint visibility and acknowledgement must be gated by eligibility, acknowledgement state, and widget availability.
   [@test] ../../claude/sessions/testSrc/AgentSessionsSwingQuotaHintTest.kt
   [@test] ../../claude/sessions/testSrc/AgentSessionsClaudeQuotaWidgetActionRegistrationTest.kt
@@ -93,6 +101,8 @@ behavior; refresh mechanics and detailed tree rendering/interaction contracts li
 - Single-click selects normal rows. Opening/focusing happens through Enter, double-click, or explicit actions.
 - Active view keeps the title header focused on thread activity counters. Archived view replaces those counters with a direct
   return-to-active icon, an archived context label, and a separate range selector.
+- The title header exposes the current-project-only scope toggle as a direct toolbar action so users can narrow a crowded dock without
+  opening settings.
 
 ## Testing / Local Run
 

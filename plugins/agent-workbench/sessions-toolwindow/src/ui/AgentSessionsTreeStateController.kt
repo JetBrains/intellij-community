@@ -46,6 +46,8 @@ internal class AgentSessionsTreeStateController(
   private val getSessionTreeModel: () -> SessionTreeModel,
   private val setSessionTreeModel: (SessionTreeModel) -> Unit,
   private val onNewThreadProfileMenuChanged: () -> Unit,
+  private val isCurrentProjectScopeEnabled: () -> Boolean,
+  private val currentProjectPathProvider: () -> String?,
   private val onBeforeModelSwap: () -> Unit,
   private val invalidateTreeModel: (SessionTreeModelDiff) -> CompletableFuture<*>,
   private val expandNode: (SessionTreeId) -> Unit,
@@ -135,7 +137,7 @@ internal class AgentSessionsTreeStateController(
   }
 
   fun displayedStateSnapshot(): AgentSessionsState {
-    return when (threadViewState.mode) {
+    val state = when (threadViewState.mode) {
       AgentSessionThreadViewMode.ACTIVE -> overlayPendingAgentChatTabs(
         state = activeSessionsState,
         pendingTabsState = pendingChatTabsState,
@@ -146,6 +148,11 @@ internal class AgentSessionsTreeStateController(
         nowMs = nowProvider(),
       )
     }
+    return state.filterToCurrentProjectSessions(currentProjectPathForScope())
+  }
+
+  fun projectScopeChanged() {
+    rebuildTree(SessionTreeRebuildReason.PROJECT_SCOPE_CHANGED)
   }
 
   fun dispose() {
@@ -290,19 +297,27 @@ internal class AgentSessionsTreeStateController(
 
   private fun updateEmptyText() {
     val displayedState = displayedStateSnapshot()
+    val currentProjectScope = currentProjectPathForScope() != null
     val message = when (threadViewState.mode) {
       AgentSessionThreadViewMode.ACTIVE -> when {
         displayedState.projects.isEmpty() && displayedState.lastUpdatedAt == null -> AgentSessionsBundle.message("toolwindow.loading")
+        displayedState.projects.isEmpty() && currentProjectScope -> AgentSessionsBundle.message("toolwindow.empty.current.project")
         displayedState.projects.isEmpty() -> AgentSessionsBundle.message("toolwindow.empty.global")
         else -> ""
       }
       AgentSessionThreadViewMode.ARCHIVED -> when {
         archivedSessionsState.projects.isEmpty() && archivedSessionsState.lastUpdatedAt == null -> AgentSessionsBundle.message("toolwindow.loading.archived")
+        displayedState.projects.isEmpty() && currentProjectScope -> AgentSessionsBundle.message("toolwindow.empty.archived.current.project")
         displayedState.projects.isEmpty() -> AgentSessionsBundle.message("toolwindow.empty.archived")
         else -> ""
       }
     }
     tree.emptyText.text = message
+  }
+
+  private fun currentProjectPathForScope(): String? {
+    if (!isCurrentProjectScopeEnabled()) return null
+    return currentProjectPathProvider()
   }
 
   private fun applyDefaultExpansion(
@@ -351,6 +366,7 @@ internal enum class SessionTreeRebuildReason {
   CHAT_TAB_SELECTION_CHANGED,
   PENDING_CHAT_TABS_CHANGED,
   THREAD_VIEW_CHANGED,
+  PROJECT_SCOPE_CHANGED,
 }
 
 internal fun SessionTreeModelDiff.isEmpty(): Boolean {
@@ -373,6 +389,10 @@ internal fun coalesceSessionTreeRebuildReason(
   if (current == SessionTreeRebuildReason.THREAD_VIEW_CHANGED ||
       next == SessionTreeRebuildReason.THREAD_VIEW_CHANGED) {
     return SessionTreeRebuildReason.THREAD_VIEW_CHANGED
+  }
+  if (current == SessionTreeRebuildReason.PROJECT_SCOPE_CHANGED ||
+      next == SessionTreeRebuildReason.PROJECT_SCOPE_CHANGED) {
+    return SessionTreeRebuildReason.PROJECT_SCOPE_CHANGED
   }
   return SessionTreeRebuildReason.SESSION_STATE_CHANGED
 }
@@ -406,6 +426,7 @@ internal fun sessionTreeSelectionTargetsAfterModelSwap(
     SessionTreeRebuildReason.SESSION_STATE_CHANGED,
     SessionTreeRebuildReason.PENDING_CHAT_TABS_CHANGED,
     SessionTreeRebuildReason.THREAD_VIEW_CHANGED,
+    SessionTreeRebuildReason.PROJECT_SCOPE_CHANGED,
       -> {
       when {
         preservedSelection.isNotEmpty() -> preservedSelection

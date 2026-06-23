@@ -24,7 +24,10 @@ import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailab
 import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
 import com.intellij.agent.workbench.sessions.service.AgentSessionsToolWindowVisibilityService
+import com.intellij.agent.workbench.sessions.service.openableSourceProjectPath
+import com.intellij.agent.workbench.sessions.settings.AgentThreadsProjectScopeSettings
 import com.intellij.agent.workbench.settings.AgentSessionProviderSettingsListener
+import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsListener
 import com.intellij.agent.workbench.sessions.state.AgentSessionThreadViewStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
@@ -32,6 +35,7 @@ import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModel
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModelDiff
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
+import com.intellij.ide.ActivityTracker
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
@@ -191,6 +195,8 @@ internal class AgentSessionsToolWindowPanel(
         tree.repaint()
       }
     },
+    isCurrentProjectScopeEnabled = AgentThreadsProjectScopeSettings::isCurrentProjectOnly,
+    currentProjectPathProvider = { openableSourceProjectPath(project) },
     onBeforeModelSwap = {
       rowActionsOverlay.clearTransientState()
     },
@@ -229,6 +235,7 @@ internal class AgentSessionsToolWindowPanel(
     )
 
     installProviderAvailabilityRefresh()
+    installProjectScopeRefresh()
     configureTree()
     add(northPanel, BorderLayout.NORTH)
     add(createSessionTreeScrollPane(tree), BorderLayout.CENTER)
@@ -255,6 +262,24 @@ internal class AgentSessionsToolWindowPanel(
           tree.repaint()
         }
       })
+  }
+
+  private fun installProjectScopeRefresh() {
+    ApplicationManager.getApplication().messageBus.connect(this)
+      .subscribe(AgentWorkbenchSettingsListener.TOPIC, object : AgentWorkbenchSettingsListener {
+        override fun openInDedicatedFrameChanged() {
+          refreshProjectScope()
+        }
+
+        override fun agentThreadsCurrentProjectOnlyChanged() {
+          refreshProjectScope()
+        }
+      })
+  }
+
+  private fun refreshProjectScope() {
+    stateController.projectScopeChanged()
+    ActivityTracker.getInstance().inc()
   }
 
   private fun installToolWindowVisibilityTracker() {

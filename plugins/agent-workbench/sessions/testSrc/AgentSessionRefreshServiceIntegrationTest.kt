@@ -8,6 +8,7 @@ import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindStatus
 import com.intellij.agent.workbench.chat.AgentChatPendingTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionCost
 import com.intellij.platform.ai.agent.core.session.AgentSessionCostKind
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
@@ -1276,9 +1277,75 @@ class AgentSessionRefreshServiceIntegrationTest {
       ).isEqualTo(AgentThreadActivity.READY)
       assertThat(warmState.getPathSnapshot(PROJECT_PATH)?.threads?.firstOrNull()?.activity)
         .isEqualTo(AgentThreadActivity.READY)
-      val presentationKey = checkNotNull(AgentSessionThreadPresentationKey.create(PROJECT_PATH, AgentSessionProvider.CLAUDE, "claude-1"))
+      val presentationKey = checkNotNull(
+        AgentSessionThreadPresentationKey.create(PROJECT_PATH, AgentSessionProvider.CLAUDE, "claude-1")
+      )
       assertThat(service<AgentSessionThreadPresentationModel>().resolve(presentationKey)?.activity)
         .isEqualTo(AgentThreadActivity.READY)
+    }
+  }
+
+  @Test
+  fun markThreadAsReadClearsUnreadChromeActivityWithoutChangingNonUnreadRowActivity() = runBlocking(Dispatchers.Default) {
+    val warmState = InMemorySessionWarmState()
+
+    withService(
+      sessionSourcesProvider = {
+        listOf(
+          ScriptedSessionSource(
+            provider = AgentSessionProvider.CLAUDE,
+            listFromOpenProject = { path, _ ->
+              if (path == PROJECT_PATH) {
+                listOf(
+                  thread(
+                    id = "claude-1",
+                    updatedAt = 100,
+                    provider = AgentSessionProvider.CLAUDE,
+                    activity = AgentThreadActivity.PROCESSING,
+                    summaryActivity = AgentThreadActivity.UNREAD,
+                  )
+                )
+              }
+              else {
+                emptyList()
+              }
+            },
+          )
+        )
+      },
+      projectEntriesProvider = {
+        listOf(openProjectEntry(PROJECT_PATH, "Project A"))
+      },
+      warmState = warmState,
+    ) { service ->
+      service.refresh()
+      waitForCondition {
+        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
+          ?.threads
+          ?.firstOrNull()
+          ?.summaryActivity == AgentThreadActivity.UNREAD
+      }
+
+      service.markThreadAsRead(PROJECT_PATH, AgentSessionProvider.CLAUDE, "claude-1", 100)
+
+      val runtimeThread = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
+        ?.threads
+        ?.firstOrNull()
+      assertThat(runtimeThread?.activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(runtimeThread?.summaryActivity).isEqualTo(AgentThreadActivity.READY)
+
+      val warmThread = warmState.getPathSnapshot(PROJECT_PATH)?.threads?.firstOrNull()
+      assertThat(warmThread?.activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(warmThread?.summaryActivity).isEqualTo(AgentThreadActivity.READY)
+
+      val presentationKey = checkNotNull(AgentSessionThreadPresentationKey.create(PROJECT_PATH, AgentSessionProvider.CLAUDE, "claude-1"))
+      assertThat(service<AgentSessionThreadPresentationModel>().resolve(presentationKey)?.activityReport)
+        .isEqualTo(
+          AgentThreadActivityReport(
+            rowActivity = AgentThreadActivity.PROCESSING,
+            chromeActivity = AgentThreadActivity.READY,
+          )
+        )
     }
   }
 

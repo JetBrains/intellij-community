@@ -85,17 +85,21 @@ class AgentWorkbenchSettingsConfigurableTest {
 
         val dedicatedFrameCheckBox =
           component.checkBox(AgentSessionsBundle.message("advanced.setting.agent.workbench.chat.open.in.dedicated.frame"))
+        val currentProjectOnlyCheckBox =
+          component.checkBox(AgentSessionsBundle.message("settings.agent.workbench.agent.threads.current.project.only"))
         val mainToolbarActivityCheckBox =
           component.checkBox(AgentSessionsBundle.message("settings.agent.workbench.show.activity.in.main.toolbar"))
         val sleepPreventionCheckBox =
           component.checkBox(AgentSessionsBundle.message("advanced.setting.agent.workbench.prevent.system.sleep.while.working"))
 
         assertThat(dedicatedFrameCheckBox.isSelected).isFalse()
+        assertThat(currentProjectOnlyCheckBox.isSelected).isTrue()
         assertThat(mainToolbarActivityCheckBox.isSelected).isFalse()
         assertThat(sleepPreventionCheckBox.isSelected).isTrue()
         assertThat(configurable.isModified).isFalse()
 
         dedicatedFrameCheckBox.isSelected = true
+        currentProjectOnlyCheckBox.isSelected = true
         mainToolbarActivityCheckBox.isSelected = true
         sleepPreventionCheckBox.isSelected = false
 
@@ -109,6 +113,7 @@ class AgentWorkbenchSettingsConfigurableTest {
 
     assertThat(AgentWorkbenchSettings.getInstance().openInDedicatedFrame).isTrue()
     assertThat(AgentWorkbenchSettings.getInstance().openInDedicatedFrameOverride).isNull()
+    assertThat(AgentWorkbenchSettings.getInstance().agentThreadsCurrentProjectOnlyOverride).isTrue()
     assertThat(AgentWorkbenchSettings.getInstance().showAgentActivityInMainToolbar).isTrue()
     assertThat(AgentWorkbenchSettings.getInstance().showAgentActivityInMainToolbarOverride).isTrue()
     assertThat(AdvancedSettings.getBoolean(PREVENT_SYSTEM_SLEEP_WHILE_WORKING_SETTING_ID)).isFalse()

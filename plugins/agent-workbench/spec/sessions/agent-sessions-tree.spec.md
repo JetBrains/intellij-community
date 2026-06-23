@@ -39,6 +39,8 @@ The Agent Threads tree follows IntelliJ tree conventions while adding provider-s
   `Needs attention` uses the strongest treatment with a bold count; `Running` and `Done` use normal foreground counts;
   zero-count buckets render disabled rather than disappearing.
   Clicking a counter opens a popup listing only that bucket's threads.
+  In current-project-only scope, title counters and their popups include only rows whose source path matches the current project or
+  current worktree.
   The stripe button icon uses collapsed notification precedence: it carries a `Needs attention` badge whenever any
   thread is in `NEEDS_INPUT` or `REVIEWING`, otherwise a `Running` badge whenever any thread is `PROCESSING`, otherwise a
   `Done` badge whenever any thread is `UNREAD`, otherwise no badge. Stripe badges use platform `IconBadge` activity colors
@@ -52,6 +54,7 @@ The Agent Threads tree follows IntelliJ tree conventions while adding provider-s
   that support exact native activation callbacks, clicking the OS notification opens/focuses the matching chat tab by
   stable path/provider/thread id. Initial loaded rows and `Running` transitions do not notify.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsActivitySummaryTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreeStateControllerTest.kt
 
 - Source-frame main-toolbar Agent activity reuses these counter visuals and popup primitives, but its global scope and placement are owned by `../frame/agent-main-toolbar-activity.spec.md`.
 
