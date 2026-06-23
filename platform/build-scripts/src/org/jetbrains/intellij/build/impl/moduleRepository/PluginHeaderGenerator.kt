@@ -117,7 +117,7 @@ private fun generateRuntimePluginHeader(
           val requiredIfAvailableId = contentModuleData?.requiredIfAvailable
           val jpsModuleName = moduleName.removeSuffix("._test") //todo remove this after IJPL-242652 is fixed
           val jpsModule = project.findModuleByName(jpsModuleName) ?: error("Cannot find module by name: $jpsModuleName")
-          val moduleId = createIdForModule(jpsModule, pluginDescriptorData, elementsIncludedInMultiplePlugins, existingIdsToReuse)
+          val moduleId = createIdForModule(jpsModule, contentModuleData, pluginDescriptorData, elementsIncludedInMultiplePlugins, existingIdsToReuse)
           if (moduleId !in moduleIdToJpsElement) {
             moduleIdToJpsElement[moduleId] = jpsModule
             visibilityOfModules[moduleId] = contentModuleData?.visibility ?: RuntimeModuleVisibility.PUBLIC
@@ -186,7 +186,13 @@ private fun generateRuntimePluginHeader(
   }
 
   val pluginDescriptorModule = project.findModuleByName(pluginDescriptorData.pluginDescriptorJpsModuleName) ?: error("Cannot find module ${pluginDescriptorData.pluginDescriptorJpsModuleName}")
-  val pluginDescriptorModuleId = createIdForModule(pluginDescriptorModule, pluginDescriptorData, elementsIncludedInMultiplePlugins, existingIdsToReuse)
+  val pluginDescriptorModuleId = createIdForModule(
+    pluginDescriptorModule,
+    pluginDescriptorData.contentModules[pluginDescriptorModule.name],
+    pluginDescriptorData,
+    elementsIncludedInMultiplePlugins,
+    existingIdsToReuse
+  )
   val header = RuntimePluginHeaderImpl(pluginDescriptorData.pluginId, pluginDescriptorModuleId, includedModules)
   val dependenciesOnPluginDescriptorModules = LinkedHashMap<RuntimeModuleId, List<RuntimeModuleId>>()
   if (pluginDescriptorData.pluginDescriptorDependenciesOnPluginDescriptorModules.isNotEmpty()) {
@@ -217,6 +223,7 @@ private fun shouldIncludeInPluginHeader(moduleId: RuntimeModuleId, outputPathRel
 
 private fun createIdForModule(
   module: JpsModule,
+  contentModuleData: ContentModuleRegistrationDataForHeader?,
   pluginDescriptorData: PluginDescriptorDataForHeader,
   elementsIncludedInMultiplePlugins: Set<JpsNamedElement>,
   existingIdsToReuse: Map<JpsNamedElement, RuntimeModuleId>
@@ -224,7 +231,6 @@ private fun createIdForModule(
   val idToReuse = existingIdsToReuse[module]
   if (idToReuse != null) return idToReuse
 
-  val contentModuleData = pluginDescriptorData.contentModules[module.name]
   if (contentModuleData != null) {
     return RuntimeModuleId.contentModule(contentModuleData.name, contentModuleData.namespace)
   }
