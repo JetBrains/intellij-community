@@ -22,9 +22,18 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 
-@GradleProjectTestApplication
-@ParameterizedClass(name = "source set {0}")
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
 @ValueSource(strings = [COMMON_MAIN, ANDROID_MAIN, IOS_MAIN])
+annotation class ComposeResourcesAllSourceSets
+
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+@ValueSource(strings = [COMMON_MAIN])
+annotation class ComposeResourcesCommonMainOnly
+
+@ParameterizedClass(name = "source set {0}")
+@GradleProjectTestApplication
 abstract class ComposeResourcesCodeInsightTestCase : GradleCodeInsightBaseTestCase() {
   @Parameter
   protected lateinit var sourceSetName: String
