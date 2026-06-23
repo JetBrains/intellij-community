@@ -18,8 +18,9 @@ internal class ForwardPortAndOpenInBrowserAction :
     val project = e.project ?: return
     val item = e.getData(PortForwardingItem.KEY) as? PortForwardingItem.NotForwarded ?: return
     val model = e.getData(PortForwardingViewModel.KEY) ?: return
+    val manager = e.getData(TerminalPortForwardingManager.DATA_KEY) ?: return
     e.coroutineScope.launch {
-      val localPort = TerminalPortForwardingManager.getInstance().forwardPort(model.eelDescriptor, item.remotePort)
+      val localPort = manager.forwardPort(model.eelDescriptor, item.remotePort)
                       ?: return@launch
       TerminalPortForwardingPersistenceService.getInstance(project).persistPort(item.remotePort)
       BrowserUtil.browse("http://127.0.0.1:$localPort")
