@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, assert_type
 
 
 def test_explicit_type() -> Callable[[str, str, str], str]:
@@ -32,9 +32,6 @@ def test_numpy_docstring():
     ...
 
 
-def expect_callable(cb: Callable[[str, str, str], str]):  ...
-def expect_int(x: int):  ...
-
-expect_callable(test_explicit_type())
-expect_callable(test_explicit_type_comment())
-expect_int(test_numpy_docstring())
+assert_type(test_explicit_type(), Callable[[str, str, str], str])
+assert_type(test_explicit_type_comment(), Callable[[str, str, str], str])
+assert_type(test_numpy_docstring(), int)

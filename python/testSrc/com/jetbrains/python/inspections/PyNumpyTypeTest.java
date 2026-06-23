@@ -46,7 +46,7 @@ public class PyNumpyTypeTest extends PyTestCase {
         settings.setFormat(DocStringFormat.NUMPY);
       }
       myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
-      myFixture.enableInspections(PyTypeCheckerInspection.class);
+      myFixture.enableInspections(PyTypeCheckerInspection.class, PyAssertTypeInspection.class);
       myFixture.checkHighlighting(true, false, true);
     }
     finally {
