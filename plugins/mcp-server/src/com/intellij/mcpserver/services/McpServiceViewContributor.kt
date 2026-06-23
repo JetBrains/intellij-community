@@ -14,8 +14,11 @@ import com.intellij.mcpserver.toolwindow.McpSessionInfo
 import com.intellij.mcpserver.toolwindow.McpToolCallsPanel
 import com.intellij.mcpserver.toolwindow.TransportType
 import com.intellij.navigation.ItemPresentation
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
@@ -42,6 +45,7 @@ private class McpServerRootDescriptor(
   private val project: Project,
 ) : SimpleServiceViewDescriptor(McpServerBundle.message("mcp.service.view.root.name"), AllIcons.Nodes.McpServerWidget),
     ServiceViewToolWindowDescriptor {
+  private var contentComponent: JComponent? = null
 
   override fun getToolWindowId(): String = McpServerBundle.message("mcp.service.view.root.name")
 
@@ -52,9 +56,15 @@ private class McpServerRootDescriptor(
   override fun isExclusionAllowed(): Boolean = false
 
   override fun getContentComponent(): JComponent {
+    return contentComponent ?: createContentComponent().also { contentComponent = it }
+  }
+
+  private fun createContentComponent(): JComponent {
     val diagnosticService = service<McpDiagnosticService>()
     val tabbedPane = com.intellij.ui.components.JBTabbedPane()
-    tabbedPane.addTab(McpServerBundle.message("mcp.toolwindow.tab.tool.calls"), McpToolCallsPanel(diagnosticService))
+    val toolCallsPanel = McpToolCallsPanel(diagnosticService)
+    Disposer.register(project.service<McpServiceViewProjectDisposable>(), toolCallsPanel)
+    tabbedPane.addTab(McpServerBundle.message("mcp.toolwindow.tab.tool.calls"), toolCallsPanel)
     tabbedPane.addTab(McpServerBundle.message("mcp.toolwindow.tab.configuration"), McpConfigurationPanel(project))
     val panel = JPanel(BorderLayout())
     panel.add(tabbedPane, BorderLayout.CENTER)
@@ -63,6 +73,8 @@ private class McpServerRootDescriptor(
 }
 
 private class McpSessionDescriptor(private val session: McpSessionInfo) : ServiceViewDescriptor {
+  private var contentComponent: JComponent? = null
+
   override fun getPresentation(): ItemPresentation {
     val clientName = session.clientInfo?.name ?: "..." //NON-NLS
     val transport = session.transportType.displayName()
@@ -71,12 +83,19 @@ private class McpSessionDescriptor(private val session: McpSessionInfo) : Servic
   }
 
   override fun getContentComponent(): JComponent {
+    return contentComponent ?: createContentComponent().also { contentComponent = it }
+  }
+
+  private fun createContentComponent(): JComponent {
     val diagnosticService = service<McpDiagnosticService>()
     val tabbedPane = com.intellij.ui.components.JBTabbedPane()
 
     val durationLabel = javax.swing.JLabel(StringUtil.formatDuration(System.currentTimeMillis() - session.startTimeMs))
     val timer = javax.swing.Timer(1000) {
       durationLabel.text = StringUtil.formatDuration(System.currentTimeMillis() - session.startTimeMs)
+    }
+    Disposer.register(session) {
+      timer.stop()
     }
     timer.start()
 
@@ -95,14 +114,11 @@ private class McpSessionDescriptor(private val session: McpSessionInfo) : Servic
         cell(durationLabel)
       }
     }.apply { border = JBUI.Borders.empty(8) }, BorderLayout.NORTH)
-    infoPanel.addHierarchyListener { e ->
-      if (e.id == java.awt.event.HierarchyEvent.HIERARCHY_CHANGED && (e.changeFlags and java.awt.event.HierarchyEvent.SHOWING_CHANGED.toLong()) != 0L) {
-        if (!infoPanel.isShowing) timer.stop()
-      }
-    }
     tabbedPane.addTab(McpServerBundle.message("mcp.toolwindow.tab.session"), infoPanel)
 
-    tabbedPane.addTab(McpServerBundle.message("mcp.toolwindow.tab.tool.calls"), McpToolCallsPanel(diagnosticService, session.sessionId))
+    val toolCallsPanel = McpToolCallsPanel(diagnosticService, session.sessionId)
+    Disposer.register(session, toolCallsPanel)
+    tabbedPane.addTab(McpServerBundle.message("mcp.toolwindow.tab.tool.calls"), toolCallsPanel)
 
     val panel = JPanel(BorderLayout())
     panel.add(tabbedPane, BorderLayout.CENTER)
@@ -114,4 +130,9 @@ private fun TransportType.displayName(): String = when (this) {
   TransportType.SSE -> "SSE"
   TransportType.STREAMABLE_HTTP -> "HTTP Stream"
   TransportType.STDIO -> "Stdio"
+}
+
+@Service(Service.Level.PROJECT)
+private class McpServiceViewProjectDisposable : Disposable {
+  override fun dispose() = Unit
 }
