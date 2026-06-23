@@ -11,6 +11,8 @@
                     interface="com.intellij.terminal.frontend.action.TerminalEscapeHandler" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.terminalSettingsProvider" dynamic="true"
                     interface="com.intellij.terminal.frontend.settings.TerminalSettingsProvider"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.portForwardingManager" dynamic="true"
+                    interface="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingManager"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -50,10 +52,6 @@
       serviceInterface="com.intellij.terminal.frontend.session.TerminalActivityTracker"
       serviceImplementation="com.intellij.terminal.frontend.session.TerminalNoOpActivityTracker"
       open="true"/>
-    <applicationService
-      serviceInterface="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingManager"
-      serviceImplementation="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingManagerImpl"
-      open="true"/>
     <projectService
       serviceInterface="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingPersistenceService"
       serviceImplementation="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingNoOpPersistenceService"
@@ -76,6 +74,8 @@
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
     <toolWindowInitializer implementation="com.intellij.terminal.frontend.toolwindow.impl.TerminalToolWindowTabsManagerImpl$Initializer"/>
+
+    <portForwardingManager implementation="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingManagerImpl"/>
 
     <escapeHandler implementation="com.intellij.terminal.frontend.action.CancelSelection"/>
     <escapeHandler implementation="com.intellij.terminal.frontend.action.CloseSearch"/>
