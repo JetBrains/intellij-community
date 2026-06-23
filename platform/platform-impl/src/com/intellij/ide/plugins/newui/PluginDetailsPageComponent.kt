@@ -759,8 +759,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
         if (items == null || showComponent != component) return@launch
 
+        val updatedReviewComments = ReviewsPageContainer.withNextPage(reviewComments, items)
+        node.reviewComments = updatedReviewComments
+
         if (items.isNotEmpty()) {
-          reviewComments.addItems(items)
           val reviewPanel = reviewPanel ?: return@launch
           reviewPanel.addComments(items)
           reviewPanel.fullRepaint()
@@ -768,7 +770,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
         nextPageButton.icon = null
         nextPageButton.isEnabled = true
-        nextPageButton.isVisible = reviewComments.hasNextPage
+        nextPageButton.isVisible = updatedReviewComments.hasNextPage
       }
     }
 
@@ -1796,10 +1798,8 @@ suspend fun loadAllPluginDetails(existingModel: PluginUiModel, targetModel: Plug
 
 @ApiStatus.Internal
 suspend fun loadReviews(existingModel: PluginUiModel): PluginUiModel? {
-  val reviewComments = ReviewsPageContainer(20, 0)
-  val reviews = UiPluginManager.getInstance().loadPluginReviews(existingModel.pluginId, reviewComments.getNextPage()) ?: emptyList()
-  reviewComments.addItems(reviews)
-  existingModel.reviewComments = reviewComments
+  val reviews = UiPluginManager.getInstance().loadPluginReviews(existingModel.pluginId, 1) ?: emptyList()
+  existingModel.reviewComments = ReviewsPageContainer.firstPage(reviews)
   return existingModel
 }
 

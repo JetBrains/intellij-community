@@ -8,23 +8,39 @@ import org.jetbrains.annotations.ApiStatus
 
 @Serializable
 @ApiStatus.Internal
-class ReviewsPageContainer(val pageSize: Int, var currentPage: Int, val items: MutableList<PluginReviewComment> = mutableListOf()) {
-  var hasNextPage: Boolean = true
-    private set
-
-  fun addItems(itemsToAdd: List<PluginReviewComment>) {
-    items.addAll(itemsToAdd)
-    currentPage++
-    hasNextPage = itemsToAdd.size >= pageSize
-  }
+class ReviewsPageContainer private constructor(
+  val pageSize: Int,
+  val currentPage: Int,
+  val hasNextPage: Boolean,
+  val items: List<PluginReviewComment>,
+) {
 
   fun getNextPage(): Int {
     return currentPage + 1
   }
 
   companion object {
+    /**
+     * [com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls.getPluginReviewsUrl]
+     */
+    private const val DEFAULT_MARKETPLACE_PAGE_SIDE = 20
+
     fun fromPageContainer(container: PageContainer<PluginReviewComment>): ReviewsPageContainer {
-      return ReviewsPageContainer(container.pageSize, container.currentPage, container.items)
+      return ReviewsPageContainer(container.pageSize, container.currentPage, false, container.items)
     }
+
+    fun firstPage(items: List<PluginReviewComment>): ReviewsPageContainer {
+      val hasNextPage = items.size >= DEFAULT_MARKETPLACE_PAGE_SIDE
+      return ReviewsPageContainer(DEFAULT_MARKETPLACE_PAGE_SIDE, 1, hasNextPage, items)
+    }
+
+    fun withNextPage(pageContainer: ReviewsPageContainer, itemsToAdd: List<PluginReviewComment>): ReviewsPageContainer {
+      val hasNextPage = itemsToAdd.size >= pageContainer.pageSize
+      return ReviewsPageContainer(pageSize = pageContainer.pageSize,
+                                  currentPage = pageContainer.currentPage + 1,
+                                  hasNextPage = hasNextPage,
+                                  items = pageContainer.items + itemsToAdd)
+    }
+
   }
 }
