@@ -978,8 +978,6 @@
     <!-- Poetry -->
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.poetry.PyPoetrySdkFlavorProvider"/>
 
-    <!-- Uv -->
-    <pythonFlavorProvider implementation="com.jetbrains.python.sdk.uv.UvSdkFlavorProvider"/>
 
     <!-- Hatch -->
     <pySdkProvider implementation="com.jetbrains.python.hatch.sdk.HatchSdkProvider"/>

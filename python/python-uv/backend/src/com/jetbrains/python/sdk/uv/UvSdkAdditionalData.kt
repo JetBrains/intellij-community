@@ -1,26 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.uv
 
 import com.intellij.execution.target.FullPathOnTarget
-import com.intellij.execution.target.TargetedCommandLineBuilder
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.python.uv.common.icons.PythonUvCommonIcons
-import com.intellij.remote.RemoteSdkPropertiesPaths
-import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
-import com.jetbrains.python.sdk.flavors.PyFlavorData
-import com.jetbrains.python.sdk.flavors.PythonFlavorProvider
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import javax.swing.Icon
 import kotlin.io.path.pathString
 
-internal class UvSdkAdditionalData : PythonSdkAdditionalData {
-  internal val flavorData: UvSdkFlavorData
+@ApiStatus.Internal
+class UvSdkAdditionalData : PythonSdkAdditionalData {
+  val flavorData: UvSdkFlavorData
 
   constructor(uvWorkingDirectory: Path?, usePip: Boolean?, venvPath: FullPathOnTarget?, uvPath: FullPathOnTarget?) : this(UvSdkFlavorData(
     uvWorkingDirectory,
@@ -89,43 +79,5 @@ internal class UvSdkAdditionalData : PythonSdkAdditionalData {
     fun copy(data: PythonSdkAdditionalData): UvSdkAdditionalData {
       return UvSdkAdditionalData(data)
     }
-  }
-}
-
-// TODO PY-87712 Move to a separate storage
-internal data class UvSdkFlavorData(
-  val uvWorkingDirectory: Path?,
-  val usePip: Boolean?,
-  val venvPath: FullPathOnTarget?,
-  val uvPath: FullPathOnTarget?,
-) : PyFlavorData {
-
-  override fun prepareTargetCommandLine(sdk: Sdk, targetCommandLineBuilder: TargetedCommandLineBuilder) {
-    val interpreterPath = sdk.sdkAdditionalData?.let { (it as? RemoteSdkPropertiesPaths)?.interpreterPath } ?: sdk.homePath
-    if (interpreterPath.isNullOrBlank()) {
-      throw IllegalArgumentException("Sdk ${sdk} doesn't have interpreter path set")
-    }
-    targetCommandLineBuilder.setExePath(interpreterPath)
-    targetCommandLineBuilder.addEnvironmentVariable("UV_PROJECT_ENVIRONMENT", venvPath)
-    if (!PythonSdkUtil.isRemote(sdk)) {
-      PySdkUtil.activateVirtualEnv(sdk)
-    }
-  }
-}
-
-
-internal object UvSdkFlavor : CPythonSdkFlavor<UvSdkFlavorData>() {
-  override fun getIcon(): Icon = PythonUvCommonIcons.UV
-  override fun getFlavorDataClass(): Class<UvSdkFlavorData> = UvSdkFlavorData::class.java
-
-  override fun isValidSdkPath(pythonBinaryPath: Path): Boolean {
-    return false
-  }
-}
-
-
-internal class UvSdkFlavorProvider : PythonFlavorProvider {
-  override fun getFlavor(): PythonSdkFlavor<*> {
-    return UvSdkFlavor
   }
 }
