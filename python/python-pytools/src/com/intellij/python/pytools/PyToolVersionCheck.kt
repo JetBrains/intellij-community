@@ -68,16 +68,8 @@ suspend fun BinaryToExec.getToolVersion(toolVersionPrefix: String): PyResult<Ver
 /**
  * Convenience: validate a user-supplied custom path for [this] tool against its known names.
  * Returns a localized failure if `<path> --version` does not match.
- *
- * The expected version-prefix is derived from [path]'s basename matched against [PyTool.aliases] —
- * required for tools where the primary [PyTool.packageName] differs from the actually-installed
- * alias (e.g. Pyright is integrated as `pyright` but `basedpyright --version` prints
- * `basedpyright X.Y.Z`, which would never match the `pyright` prefix). When the basename
- * matches no known alias we fall back to the primary [PyTool.packageName] for backward compatibility.
  */
 @ApiStatus.Internal
 suspend fun PyTool.validateCustomPath(path: Path): PyResult<Version> {
-  val baseName = path.fileName.toString().removeSuffix(".exe")
-  val versionPrefix = aliases.firstOrNull { it.name == baseName }?.name ?: packageName.name
-  return BinOnEel(path).getToolVersion(versionPrefix)
+  return BinOnEel(path).getToolVersion(packageName.name)
 }

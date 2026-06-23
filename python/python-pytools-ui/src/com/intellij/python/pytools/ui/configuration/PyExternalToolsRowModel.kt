@@ -22,6 +22,7 @@ import com.intellij.python.pytools.findExecutableInPath
 import com.intellij.python.pytools.findExecutableInSdk
 import com.jetbrains.python.sdk.pyInterpreterPresentation
 import com.intellij.python.pytools.ui.PyToolsUiBundle
+import com.intellij.python.pytools.ui.PyToolDetailConfigurableProvider
 import com.intellij.python.pytools.ui.icons.PythonPytoolsUIIcons
 import com.jetbrains.python.Result
 import com.intellij.python.pytools.validateCustomPath
@@ -91,7 +92,10 @@ internal class ToolRow(
    * glyph next to `Sdk`, plus a tooltip listing the resolved binary path per SDK.
    */
   var sdkAvailability: SdkAvailability? = null,
-)
+) {
+  /** This tool's detail-panel provider, or `null` when the tool has no detail configurable. */
+  val detailConfigurableProvider: PyToolDetailConfigurableProvider? = tool as? PyToolDetailConfigurableProvider
+}
 
 /**
  * Project-SDK detection snapshot for one [ToolRow]: an ordered list of SDKs with the tool's

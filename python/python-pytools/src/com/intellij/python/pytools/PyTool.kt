@@ -2,7 +2,6 @@
 package com.intellij.python.pytools
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.pytools.statistics.PyToolFusSnapshot
@@ -10,15 +9,9 @@ import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.Nls
 import com.intellij.openapi.util.Version as PlatformVersion
 
-data class InstallInfo(
-  val packageName: PyPackageName,
-  val installHelp: @Nls String? = null,
-)
-
 interface PyTool {
   val presentableName: @NlsSafe String
   val packageName: PyPackageName
-  val aliases: List<PyPackageName> get() = listOf(packageName)
 
   /**
    * One-line user-facing description of the tool (e.g. "Linter and code formatter for Python").
@@ -26,8 +19,6 @@ interface PyTool {
    * localized message from its own resource bundle.
    */
   val description: @Nls String
-
-  val installInfo: InstallInfo get() = InstallInfo(packageName)
 
   /**
    * Provides a unique identifier (python package name) for the feature usage statistics (FUS) system.
@@ -53,13 +44,6 @@ interface PyTool {
    * old values), and return the equivalent [PyToolsState.ToolEntry] — or `null` if there is nothing to migrate.
    */
   fun migrateLegacyState(project: Project): PyToolsState.ToolEntry? = null
-
-  /**
-   * Factory that builds the per-tool detail UI shown in the Edit dialog of the External Tools
-   * table. `null` (the default) means the tool has no extra options — the table uses this to dim
-   * and disable the gear icon for the row.
-   */
-  val detailConfigurable: ((Project) -> UnnamedConfigurable)? get() = null
 
   /**
    * Compact, comma-separated summary of currently-activated features for the External Tools table

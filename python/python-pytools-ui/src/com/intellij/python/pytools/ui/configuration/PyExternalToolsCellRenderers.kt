@@ -176,7 +176,7 @@ internal class ToolCellRenderer(private val host: ToolCellHost) : JPanel(null), 
     // handler exits early, and the cursor stays default. Same rule mirrored in
     // hover hit-testing and the table mouseClicked listener.
     paintGear = (row == host.hoveredRow) && (toolRow?.staged?.enabled == true)
-    gearEnabled = toolRow?.tool?.detailConfigurable != null
+    gearEnabled = toolRow?.detailConfigurableProvider != null
     return this
   }
 
