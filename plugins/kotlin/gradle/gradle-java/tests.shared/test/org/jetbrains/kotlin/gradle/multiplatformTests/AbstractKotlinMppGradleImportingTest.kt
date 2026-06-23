@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.UsefulTestCase.LOG
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.utils.io.deleteRecursively
@@ -53,6 +54,7 @@ import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
+import org.jetbrains.kotlin.tooling.core.isDev
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.junit.Assert
 import org.junit.Assume.assumeTrue
@@ -176,7 +178,7 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
         runAll(
             {
                 runForEnabledFeatures { context.beforeTestExecution() }
-                createLocalPropertiesFile()
+                createLocalPropertiesFiles()
                 configureByFiles()
                 runForEnabledFeatures { context.beforeImport() }
                 if (runImport) {
@@ -196,16 +198,6 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
         enabledFeatures.combineMultipleFailures { feature ->
             with(feature) { action() }
         }
-    }
-
-    private fun createLocalPropertiesFile() {
-        createProjectSubFile(
-            "local.properties",
-            """
-                |sdk.dir=${KotlinTestUtils.getAndroidSdkSystemIndependentPath()}
-                |org.gradle.java.home=${requireJdkHome()}
-            """.trimMargin()
-        )
     }
 
     final override fun requireJdkHome(): String {
@@ -341,6 +333,59 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
     }
 
     companion object {
+        fun KotlinMppTestsContext.createLocalPropertiesFiles() = WriteAction.runAndWait<Throwable> {
+            createLocalPropertiesFiles(testProjectRoot.toPath(), testDataDirectory.toPath(), gradleJdkPath.path, testProperties)
+        }
+
+        fun createLocalPropertiesFiles(
+            testProjectRoot: Path,
+            testDataDirectory: Path,
+            gradleJdkHome: String,
+            testProperties: KotlinMppTestProperties,
+        ) {
+            val content = localPropertiesContent(gradleJdkHome, testProperties)
+
+            val buildRoots = buildSet {
+                add(testProjectRoot) // main project root
+                testDataDirectory.walk()
+                    .filter { it.isRegularFile() && (it.name == "settings.gradle" || it.name == "settings.gradle.kts") }
+                    .forEach { add(testProjectRoot.resolve(testDataDirectory.relativize(it.parent))) }
+            }
+
+            for (buildRoot in buildRoots) {
+                val target = buildRoot.resolve("local.properties")
+                target.parent.createDirectories()
+                target.writeText(content)
+                LocalFileSystem.getInstance().refreshAndFindFileByNioFile(target)
+            }
+        }
+
+        private fun localPropertiesContent(gradleJdkHome: String, testProperties: KotlinMppTestProperties): String = buildString {
+            appendLine("sdk.dir=${KotlinTestUtils.getAndroidSdkSystemIndependentPath()}")
+            appendLine("org.gradle.java.home=$gradleJdkHome")
+            appendLine(testProperties.agpVersion)
+            if (IS_UNDER_TEAMCITY && testProperties.kotlinVersion.version.isDev) {
+                when {
+                    HostManager.hostIsMac -> "KOTLIN_NATIVE_PREBUILT_MACOS_AARCH64"
+                    HostManager.hostIsLinux -> "KOTLIN_NATIVE_PREBUILT_LINUX_X86_64"
+                    else -> null
+                }?.let { env ->
+                    val kotlinNativeHome = System.getenv(env)
+                    if (kotlinNativeHome == null) {
+                        LOG.warn("$env is not set")
+                        return@let
+                    }
+
+                    val kotlinNativeHomeDir = Path(kotlinNativeHome)
+                    check(kotlinNativeHomeDir.isDirectory()) {
+                        "$env points to a non-existing directory: $kotlinNativeHome"
+                    }
+
+                    appendLine("kotlin.native.home=$kotlinNativeHome")
+                }
+            }
+        }
+
         fun KotlinSyncTestsContext.configureByFiles() = WriteAction.runAndWait<Throwable> {
             configureByFiles(testProjectRoot.toPath(), testDataDirectory.toPath(), testConfiguration, testProperties, testFeatures)
         }

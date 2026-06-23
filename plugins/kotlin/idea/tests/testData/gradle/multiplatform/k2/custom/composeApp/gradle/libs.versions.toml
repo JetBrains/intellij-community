@@ -1,10 +1,10 @@
 [versions]
 
-kotlin = "2.1.0"
-compose = "1.7.3"
-agp = "8.6.1"
-androidx-activityCompose = "1.9.3"
-androidx-uiTest = "1.7.4"
+kotlin = "{{kgp_version}}"
+compose = "1.11.1"
+agp = "{{agp_version}}"
+androidx-activityCompose = "1.13.0"
+androidx-uiTest = "1.11.2"
 
 [libraries]
 
