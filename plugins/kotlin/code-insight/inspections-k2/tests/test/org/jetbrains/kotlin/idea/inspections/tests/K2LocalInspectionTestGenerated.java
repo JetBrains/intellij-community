@@ -16521,11 +16521,6 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                     runTest("testData/inspectionsLocal/coroutines/mapAwaitOnCollectionOfDeferred/basicCall.kt");
                 }
 
-                @TestMetadata("basicCall_caretInsideLambda.kt")
-                public void testBasicCall_caretInsideLambda() throws Exception {
-                    runTest("testData/inspectionsLocal/coroutines/mapAwaitOnCollectionOfDeferred/basicCall_caretInsideLambda.kt");
-                }
-
                 @TestMetadata("basicCall_withStarImport.kt")
                 public void testBasicCall_withStarImport() throws Exception {
                     runTest("testData/inspectionsLocal/coroutines/mapAwaitOnCollectionOfDeferred/basicCall_withStarImport.kt");

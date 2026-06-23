@@ -5,7 +5,7 @@ import kotlin.test.assertFalse
 fun foo() {
     val a = "a"
     val b = "b"
-    assertFalse(<caret>a == b, "message")
+    assertF<caret>alse(a == b, "message")
 }
 
 fun bar() {

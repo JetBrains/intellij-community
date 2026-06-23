@@ -4,12 +4,14 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -63,5 +65,9 @@ internal class ConvertPairConstructorToToFunctionInspection : KotlinApplicableIn
             val args = element.valueArguments.mapNotNull { it.getArgumentExpression() }.toTypedArray()
             element.replace(KtPsiFactory(project).createExpressionByPattern("$0 to $1", *args))
         }
+    }
+
+    override fun getApplicableRanges(element: KtCallExpression): List<TextRange> {
+        return ApplicabilityRanges.calleeExpression(element)
     }
 }

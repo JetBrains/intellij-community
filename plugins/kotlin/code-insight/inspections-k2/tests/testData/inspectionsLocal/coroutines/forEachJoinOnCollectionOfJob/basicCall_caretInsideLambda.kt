@@ -3,5 +3,5 @@
 import kotlinx.coroutines.Job
 
 suspend fun test(jobs: List<Job>) {
-    jobs.forEach { <caret>it.join() }
+    jobs.for<caret>Each { it.join() }
 }

@@ -5,6 +5,6 @@ package test
 import kotlinx.coroutines.*
 
 suspend fun takeWithTransformation(asyncList: List<Deferred<Int>>) {
-    val results = asyncList.map { it.<caret>await() }
+    val results = asyncList.m<caret>ap { it.await() }
     println(results)
 }
