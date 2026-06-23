@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.local;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
@@ -360,6 +359,11 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
       } else {
         return true;
       }
+    }
+
+    @Override
+    public boolean ignoreTestUsages() {
+      return deadCodeInspection != null && !deadCodeInspection.isTestEntryPoints();
     }
   }
 }

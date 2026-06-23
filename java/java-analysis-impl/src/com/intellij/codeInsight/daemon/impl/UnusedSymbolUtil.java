@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
@@ -17,6 +17,7 @@ import com.intellij.find.findUsages.JavaVariableFindUsagesOptions;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiClass;
@@ -37,6 +38,7 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
@@ -197,7 +199,7 @@ public final class UnusedSymbolUtil {
 
     final PsiFile ignoreFile = helper.isCurrentFileAlreadyChecked() ? containingFile : null;
 
-    boolean sure = processUsages(project, containingFile, member, ignoreFile, info -> {
+    boolean sure = processUsages(project, containingFile, getUseScope(member, helper), member, ignoreFile, info -> {
       PsiFile psiFile = info.getFile();
       if (psiFile == ignoreFile || psiFile == null) {
         return true; // ignore usages in containingFile because isLocallyUsed() method would have caught that
@@ -218,13 +220,23 @@ public final class UnusedSymbolUtil {
   }
 
   public static @NotNull SearchScope getUseScope(@NotNull PsiMember member) {
+    return getUseScope(member, null);
+  }
+
+  private static @NotNull SearchScope getUseScope(@NotNull PsiMember member, GlobalUsageHelper helper) {
     Project project = member.getProject();
     SearchScope useScope = PsiSearchHelper.getInstance(project).getUseScope(member);
-    // some classes may have references from within XML outside dependent modules, e.g. our actions
-    if (useScope instanceof GlobalSearchScope globalUseScope && member instanceof PsiClass) {
-      GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
-      GlobalSearchScope xmlFilesScope = GlobalSearchScope.getScopeRestrictedByFileTypes(projectScope, XmlFileType.INSTANCE);
-      useScope = globalUseScope.uniteWith(xmlFilesScope);
+    if (useScope instanceof GlobalSearchScope globalUseScope) {
+      if (member instanceof PsiClass) {
+        // some classes may have references from within XML outside dependent modules, e.g. our actions
+        GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
+        GlobalSearchScope xmlFilesScope = GlobalSearchScope.getScopeRestrictedByFileTypes(projectScope, XmlFileType.INSTANCE);
+        useScope = globalUseScope.uniteWith(xmlFilesScope);
+      }
+      if (helper != null && helper.ignoreTestUsages()
+          && !TestSourcesFilter.isTestSources(member.getContainingFile().getVirtualFile(), project)) {
+        useScope = useScope.intersectWith(GlobalSearchScope.notScope(GlobalSearchScopesCore.projectTestScope(project)));
+      }
     }
     return useScope;
   }
