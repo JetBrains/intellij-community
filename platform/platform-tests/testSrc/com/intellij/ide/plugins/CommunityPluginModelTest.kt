@@ -53,6 +53,7 @@ val communityPluginValidationOptions: PluginValidationOptions = PluginValidation
     "com.intellij.designer.DesignerToolWindowManager",
     "com.intellij.designer.palette.PaletteToolWindowManager",
   ),
+  moduleLevelServicesToIgnore = existingModuleLevelServicesInCommunity,
 )
 
 class CommunityPluginModelTest {

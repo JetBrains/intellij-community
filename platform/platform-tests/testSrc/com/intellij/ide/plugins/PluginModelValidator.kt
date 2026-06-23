@@ -86,6 +86,11 @@ data class PluginValidationOptions(
    */
   val componentImplementationClassesToIgnore: Set<String> = emptySet(),
 
+  /**
+   * Set of implementation classes of existing module-level services that shouldn't be reported as errors.
+   */
+  val moduleLevelServicesToIgnore: Set<String> = emptySet(),
+
   val filesNamedLikeContentModuleDescriptorsButIncludedViaXiInclude: Set<String> = emptySet(),
 
   /**
@@ -784,6 +789,16 @@ internal class PluginModelValidator(
           "descriptorFile" to descriptorFile,
         ),
       )
+    }
+    for (moduleService in moduleDescriptor.moduleElementsContainer.services) {
+      if (moduleService.serviceImplementation !in validationOptions.moduleLevelServicesToIgnore) {
+        reportError("""
+                    |Module-level service '${moduleService.serviceImplementation}' is defined in '${sourceModule.name}'.  
+                    |Module-level services are deprecated in intellij monorepo.
+                    |Use application-level or project-level services instead, and pass 'Module' instance as a parameter if needed.
+                    |If you need to store user-defined configuration in *.iml file, use `CustomImlComponentService`.
+                    |""".trimMargin())
+      }
     }
 
     for (extensionPointElement in moduleDescriptor.moduleElementsContainer.extensionPoints) {
