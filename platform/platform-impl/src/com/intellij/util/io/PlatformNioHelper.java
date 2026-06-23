@@ -5,7 +5,8 @@ import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.impl.local.windows.WindowsBufferedDirectoryStream;
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2.FetchAttributesFilter;
-import com.intellij.util.system.OS;
+import com.intellij.platform.eel.EelOsFamily;
+import com.intellij.platform.eel.provider.utils.JEelUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +50,9 @@ public final class PlatformNioHelper {
   ) throws IOException, SecurityException {
     if (filter != null && filter.isEmpty()) return;  // nothing to read
 
-    if (OS.CURRENT == OS.Windows && Registry.is("vfs.windows.use.buffered.directory.stream", true)) {
+    var eelPath = JEelUtils.toEelPath(directory);
+    var osFamily = eelPath != null ? eelPath.getDescriptor().getOsFamily() : null;
+    if (EelOsFamily.Windows.equals(osFamily) && Registry.is("vfs.windows.use.buffered.directory.stream", true)) {
       try (final var dirStream = new WindowsBufferedDirectoryStream(directory)) {
         for (final var pathAttrs : dirStream) {
           final var path = pathAttrs.getFirst();
