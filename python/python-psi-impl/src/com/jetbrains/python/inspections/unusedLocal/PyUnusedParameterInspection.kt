@@ -7,7 +7,7 @@ import com.jetbrains.python.PyPsiBundle
 
 /**
  * Reports unused function parameters. Unused local variables and other local symbols are reported separately by
- * [PyUnusedLocalInspection]; both inspections share [PyUnusedLocalInspectionVisitor] for the analysis.
+ * [PyUnusedLocalVariableInspection]; both inspections share [PyUnusedLocalInspectionVisitor] for the analysis.
  */
 class PyUnusedParameterInspection : PyUnusedSymbolInspection() {
   @JvmField

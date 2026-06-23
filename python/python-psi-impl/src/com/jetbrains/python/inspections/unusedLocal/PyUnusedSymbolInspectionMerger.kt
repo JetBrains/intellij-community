@@ -6,13 +6,16 @@ import org.jdom.Element
 
 /**
  * Migrates user inspection-profile settings (enabled state, severity, and shared options such as `ignoreLambdaParameters`) from
- * the former combined `PyUnusedLocalInspection` to the inspection that took over part of its reporting after PY-9687 split it into
- * separate unused-local / unused-parameter / unused-function inspections. Without this, a user who had disabled or reconfigured
- * `PyUnusedLocalInspection` would silently get the new inspections back at their defaults.
+ * the former combined `PyUnusedLocalInspection` to one of the inspections it was split into by PY-9687: the unused local-variable,
+ * unused-parameter, and unused-function inspections. Without this, a user who had disabled or reconfigured `PyUnusedLocalInspection`
+ * would silently get the new inspections back at their defaults.
  *
- * Suppression is intentionally NOT inherited: `# noinspection PyUnusedLocal` no longer silences parameters or functions (the split
- * is a deliberate clean break), so [getSuppressIds] returns only this inspection's own id instead of letting the base fall back to
- * the source tool name.
+ * `PyUnusedLocalInspection` is deliberately no longer a live inspection short name — it is retired into a pure migration source.
+ * If it stayed live it would consume its own serialized settings while it initialized, and because inspection initialization order
+ * is not deterministic the mergers would often run after the settings were already gone, dropping the migration.
+ *
+ * Suppression is intentionally NOT inherited across the split: each merged inspection only answers to its own suppress id, so
+ * [getSuppressIds] returns that id instead of letting the base fall back to the source tool name.
  */
 abstract class PyUnusedSymbolInspectionMerger : InspectionElementsMergerBase() {
   /** Suppress id of the merged (new) inspection. */
@@ -46,6 +49,11 @@ abstract class PyUnusedSymbolInspectionMerger : InspectionElementsMergerBase() {
     const val ENABLED_BY_DEFAULT_ATTR = "enabled_by_default"
     const val LEVEL_ATTR = "level"
   }
+}
+
+class PyUnusedLocalVariableInspectionMerger : PyUnusedSymbolInspectionMerger() {
+  override fun getMergedToolName(): String = "PyUnusedLocalVariableInspection"
+  override val mergedSuppressId: String get() = "PyUnusedLocal"
 }
 
 class PyUnusedParameterInspectionMerger : PyUnusedSymbolInspectionMerger() {
