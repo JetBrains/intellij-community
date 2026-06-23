@@ -1,9 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.branch
 
-import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.openapi.components.BaseState
-import com.intellij.openapi.util.NlsActions
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.annotations.ApiStatus
@@ -31,9 +29,9 @@ class DvcsBranchSettings : BaseState() {
 
 private val defaultGroupingKey = GroupingKey.GROUPING_BY_DIRECTORY
 
-enum class GroupingKey(val id: @NonNls String,
-                       val text: @NlsActions.ActionText String? = null,
-                       val description: @NlsActions.ActionDescription String? = null) {
-  GROUPING_BY_DIRECTORY("directory", DvcsBundle.message("action.text.branch.group.by.directory")),
-  GROUPING_BY_REPOSITORY("repository", DvcsBundle.message("action.text.branch.group.by.repository"))
+enum class GroupingKey(
+  @ApiStatus.Internal val id: @NonNls String,
+) {
+  GROUPING_BY_DIRECTORY(id = "directory"),
+  GROUPING_BY_REPOSITORY(id = "repository")
 }

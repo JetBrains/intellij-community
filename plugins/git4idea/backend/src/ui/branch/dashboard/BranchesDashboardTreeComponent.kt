@@ -192,7 +192,6 @@ object BranchesDashboardTreeComponent {
     group.add(actionManager.getAction("Git.Log.Branches.Toolbar.Actions"))
     group.add(Separator())
     group.add(settings)
-    group.add(actionManager.getAction("Git.Log.Branches.Grouping.Settings"))
     group.add(expandAllAction)
     group.add(collapseAllAction)
     return group
