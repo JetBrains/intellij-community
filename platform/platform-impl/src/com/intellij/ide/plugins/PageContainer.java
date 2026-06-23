@@ -13,18 +13,17 @@ import java.util.List;
 @ApiStatus.Internal
 public final class PageContainer<T> {
   private final List<T> myItems = new ArrayList<>();
-  private final int myPageSize;
   private int myCurrentPage;
-  private boolean myLastPage;
+  private boolean myHasNextPage;
 
-  public PageContainer(int pageSize, int firstPage) {
-    myPageSize = pageSize;
+  public PageContainer(int firstPage, boolean hasNextPage) {
     myCurrentPage = firstPage;
+    myHasNextPage = hasNextPage;
   }
 
-  public PageContainer(int pageSize, int firstPage, List<T> items) {
-    myPageSize = pageSize;
+  public PageContainer(int firstPage, boolean hasNextPage, List<T> items) {
     myCurrentPage = firstPage;
+    myHasNextPage = hasNextPage;
     myItems.addAll(items);
   }
 
@@ -32,25 +31,11 @@ public final class PageContainer<T> {
     return myItems;
   }
 
-  public void addItems(@NotNull List<? extends T> items) {
-    myItems.addAll(items);
-    myCurrentPage++;
-    myLastPage = items.size() < myPageSize;
-  }
-
-  public boolean isNextPage() {
-    return !myLastPage;
-  }
-
-  public int getNextPage() {
-    return myCurrentPage + 1;
-  }
-
-  public int getPageSize() {
-    return myPageSize;
-  }
-
   public int getCurrentPage() {
     return myCurrentPage;
+  }
+
+  public boolean hasNextPage() {
+    return myHasNextPage;
   }
 }
