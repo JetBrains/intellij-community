@@ -4,8 +4,11 @@
   <dependencies>
     <module name="intellij.platform.frontend"/>
     <module name="intellij.vcs.git.shared"/>
-    <module name="intellij.platform.vcs.dvcs.impl.shared"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.searchEverywhere.frontend"/>
+    <module name="intellij.platform.vcs.dvcs.impl.shared"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
+    <!-- endregion -->
   </dependencies>
 
   <actions resource-bundle="messages.GitFrontendBundle">

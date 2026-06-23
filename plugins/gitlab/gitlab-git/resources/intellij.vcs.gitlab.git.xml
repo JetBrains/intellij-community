@@ -4,6 +4,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="Git4Idea"/>
+    <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.vcs.git.backend"/>
     <module name="intellij.vcs.git.shared"/>
   </dependencies>

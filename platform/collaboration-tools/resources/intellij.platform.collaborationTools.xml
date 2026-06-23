@@ -11,6 +11,7 @@
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.credentialStore"/>
     <module name="intellij.platform.diff"/>
+    <module name="intellij.platform.diff.impl"/>
     <module name="intellij.platform.editor.ex"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.ide"/>
@@ -23,8 +24,12 @@
     <module name="intellij.platform.util.diff"/>
     <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.vcs"/>
     <module name="intellij.platform.vcs.dvcs.impl"/>
     <module name="intellij.platform.vcs.dvcs.impl.shared"/>
+    <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
+    <module name="intellij.platform.vcs.log"/>
     <module name="intellij.platform.vcs.log.impl"/>
   </dependencies>
   <!-- endregion -->
