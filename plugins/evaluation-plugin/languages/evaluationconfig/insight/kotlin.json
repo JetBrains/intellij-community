@@ -67,7 +67,6 @@
       "plugins/llm/integration-tests/tests/testSrc/com/intellij/ml/llm/integration/tests/nextEdit/NextEditFiltersTest.kt",
       "plugins/llm/integration-tests/tests/testSrc/com/intellij/ml/llm/integration/tests/nextEdit/NextEditStateTest.kt",
       "plugins/llm/junie/src/com/intellij/ml/llm/junie/JunieChatMessageHandler.kt",
-      "plugins/llm/minichat/src/com/intellij/ml/llm/riderNext/latest/miniAiChat/agentOrchestration/MiniChatOrchestrator.kt",
       "plugins/llm/nextEdits/src/com/intellij/ml/llm/nextEdits/language/UniversalLanguageNextEditSettings.kt",
       "plugins/llm/nextEdits/src/com/intellij/ml/llm/nextEdits/session/NextEditSession.kt",
       "plugins/llm/nextEdits/tests/test/editor/CaretMovementNextEditTest.kt",
