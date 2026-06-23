@@ -164,3 +164,17 @@ internal class McpDiagnosticService(private val cs: CoroutineScope) {
       .handle(ServiceEventListener.ServiceEvent.createResetEvent(McpServiceViewContributor::class.java))
   }
 }
+
+internal data class McpSessionInfo(
+  val sessionId: String,
+  val clientInfo: ClientInfo?,
+  val transportType: TransportType,
+  val startTimeMs: Long,
+  val localAgentId: String?,
+)
+
+internal enum class TransportType {
+  SSE,
+  STREAMABLE_HTTP,
+  STDIO,
+}

@@ -24,6 +24,7 @@ import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.table.JBTable
+import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -334,4 +335,8 @@ internal data class McpToolCallEntry(
 
 internal enum class ToolCallStatus {
   IN_PROGRESS, SUCCESS, ERROR, CANCELLED,
+}
+
+private fun formatTime(timeMs: Long): String {
+  return DateFormatUtil.formatTimeWithSeconds(timeMs)
 }
