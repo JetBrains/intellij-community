@@ -4,8 +4,6 @@ package com.intellij.agent.workbench.prompt.ui
 import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
-import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
-import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -103,19 +101,6 @@ class AgentPromptUiSessionStateServiceTest {
     )
 
     assertThat(service.loadContextRestoreSnapshot()).isEqualTo(snapshot)
-  }
-
-  @Test
-  fun selectedProviderSelectionRoundTripUsesProjectState() {
-    val service = AgentPromptUiSessionStateService()
-
-    service.saveSelectedProviderSelection(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.YOLO)
-
-    val reloaded = AgentPromptUiSessionStateService()
-    reloaded.loadState(service.state)
-    assertThat(reloaded.loadSelectedProviderSelection()).isEqualTo(
-      AgentPromptSelectedProviderSelection(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.YOLO)
-    )
   }
 
   @Test

@@ -97,52 +97,6 @@ class AgentPromptPaletteSessionControllerTest {
     }
   }
 
-  @Test
-  fun initializeRestoresSelectedProviderFromProjectState() {
-    runInEdtAndWait {
-      val project = ProjectManager.getInstance().defaultProject
-      project.service<AgentPromptUiSessionStateService>().saveSelectedProviderSelection(
-        AgentSessionProvider.CLAUDE,
-        AgentSessionLaunchMode.STANDARD,
-      )
-      val fixture = createSessionControllerFixture()
-      try {
-        fixture.controller.initialize()
-
-        assertThat(fixture.providerSelector.selectedProvider?.bridge?.provider).isEqualTo(AgentSessionProvider.CLAUDE)
-      }
-      finally {
-        fixture.dispose()
-      }
-    }
-  }
-
-  @Test
-  fun closeWithDraftPersistsSelectedProviderForNextPopup() {
-    runInEdtAndWait {
-      val firstPopup = createSessionControllerFixture()
-      try {
-        firstPopup.controller.initialize()
-        firstPopup.controller.installHandlers()
-        firstPopup.promptArea.text = "draft"
-        firstPopup.providerSelector.selectProvider(AgentSessionProvider.JUNIE)
-      }
-      finally {
-        firstPopup.dispose()
-      }
-
-      val reopenedPopup = createSessionControllerFixture()
-      try {
-        reopenedPopup.controller.initialize()
-
-        assertThat(reopenedPopup.providerSelector.selectedProvider?.bridge?.provider).isEqualTo(AgentSessionProvider.JUNIE)
-      }
-      finally {
-        reopenedPopup.dispose()
-      }
-    }
-  }
-
   private fun createSessionControllerFixture(): SessionControllerFixture {
     val project = ProjectManager.getInstance().defaultProject
     val providers = listOf(
