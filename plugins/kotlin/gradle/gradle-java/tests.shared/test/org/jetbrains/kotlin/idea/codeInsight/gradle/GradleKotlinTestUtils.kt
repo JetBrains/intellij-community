@@ -4,12 +4,18 @@ package org.jetbrains.kotlin.idea.codeInsight.gradle
 import com.intellij.jarRepository.RemoteRepositoriesConfiguration
 import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.project.Project
+import com.intellij.testFramework.PlatformTestUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
+import org.jetbrains.kotlin.tooling.core.isDev
 import org.jetbrains.kotlin.tooling.core.isSnapshot
 import org.jetbrains.kotlin.tooling.core.isStable
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
 import java.io.File
+import kotlin.io.path.Path
+import kotlin.io.path.div
+import kotlin.io.path.exists
+import kotlin.io.resolve
 
 object GradleKotlinTestUtils {
 
@@ -53,6 +59,11 @@ object GradleKotlinTestUtils {
                 "bootstrap",
                 "Jetbrains Bootstrap Repository",
                 "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap/"
+            ),
+            RemoteRepositoryDescription(
+                "experimental",
+                "experimental repository for dev versions",
+                "https://packages.jetbrains.team/maven/p/kt/experimental"
             )
         )
     }
@@ -76,6 +87,47 @@ object GradleKotlinTestUtils {
         }
 
         if (!kotlinVersion.isStable) {
+
+            if (isCooperativeDevelopmentEnabled(kotlinVersion)) {
+                +"""
+                    maven {
+                        url = uri("${Path(PlatformTestUtil.getCommunityPath()).resolve("lib").resolve("kotlin-snapshot")}")
+
+                        content {
+                            includeVersionByRegex(".*jetbrains.*", ".*", "$kotlinVersion")
+                        }
+                    }
+                    ivy {
+                        url = uri("https://download.jetbrains.com/kotlin/native/builds/releases")
+                        patternLayout {
+                            artifact("[revision]/[classifier]/[artifact]-[classifier]-[revision].[ext]")
+                        }
+                        metadataSources {
+                            artifact()
+                        }
+                    }
+                    ivy {
+                        url = uri("https://download.jetbrains.com/kotlin/native/builds/dev")
+                        patternLayout {
+                            artifact("[revision]/[classifier]/[artifact]-[classifier]-[revision].[ext]")
+                        }
+                        metadataSources {
+                            artifact()
+                        }
+                    }
+                """.trimIndent()
+            } else if (kotlinVersion.isDev) {
+                +"""
+                     maven {
+                        url = uri("https://packages.jetbrains.team/maven/p/kt/experimental")
+
+                        content {
+                            includeVersionByRegex(".*jetbrains.*", ".*", "$kotlinVersion")
+                        }
+                    }
+                """.trimIndent()
+            }
+
             if (localKotlinGradlePluginExists(kotlinVersion)) {
                 +mavenLocal
             } else +"""
@@ -121,5 +173,11 @@ private fun localKotlinGradlePluginExists(kotlinGradlePluginVersion: KotlinTooli
         .resolve(".m2/repository")
         .resolve("org/jetbrains/kotlin/kotlin-gradle-plugin/$kotlinGradlePluginVersion")
 
+    return localKotlinGradlePlugin.exists()
+}
+
+private fun isCooperativeDevelopmentEnabled(kotlinGradlePluginVersion: KotlinToolingVersion): Boolean {
+    val localKotlinGradlePlugin =
+        Path(PlatformTestUtil.getCommunityPath()) / "lib" / "kotlin-snapshot" / "org/jetbrains/kotlin/kotlin-gradle-plugin/$kotlinGradlePluginVersion"
     return localKotlinGradlePlugin.exists()
 }
