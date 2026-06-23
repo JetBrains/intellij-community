@@ -23,9 +23,9 @@ class MarkdownAlertTest : BasePlatformTestCase() {
   fun testWarningAlertGutterIconPresent() = doGutterIconTest("[!WARNING]", AllIcons.General.BalloonWarning)
   fun testCautionAlertGutterIconPresent() = doGutterIconTest("[!CAUTION]", AllIcons.General.BalloonError)
 
-  fun testAlertRenderedAsBlockquoteInPreview() = doPreviewTest()
-  fun testAlertNotRenderedAsGitHubAlertMarkupInPreview() = doPreviewTest()
-  fun testMultipleAlertsEachRenderedAsBlockquoteInPreview() = doPreviewTest()
+  fun testNoteAlertRenderedInPreview() = doPreviewTest()
+  fun testWarningAlertRenderedInPreview() = doPreviewTest()
+  fun testMultipleAlertsRenderedInPreview() = doPreviewTest()
 
   private fun doPreviewTest() {
     val expectedHtml = myFixture.configureByFile("${getTestName(true)}.html").text
