@@ -78,7 +78,7 @@ project.jsMain
     mppVersion = M3
     dependsOnModuleNames = project:commonMain
     targetPlatform = JS
-    compilerSettings = -main call
+    compilerSettings = -main call -nopack
 
 project.jsTest
     externalProjectId = project
@@ -88,7 +88,7 @@ project.jsTest
     dependsOnModuleNames = project:commonTest
     additionalVisibleModuleNames = project:commonMain, project:jsMain
     targetPlatform = JS
-    compilerSettings = -main call
+    compilerSettings = -main call -nopack
 
 project.jvmAndNativeMain
     externalProjectId = project

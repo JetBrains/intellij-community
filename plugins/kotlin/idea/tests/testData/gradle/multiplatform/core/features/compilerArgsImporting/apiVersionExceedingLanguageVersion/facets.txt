@@ -52,12 +52,12 @@ project.iosX64Test
 project.jsMain
     languageLevel = 1.7
     apiLevel = 1.8
-    compilerSettings = -main call
+    compilerSettings = -main call -nopack
 
 project.jsTest
     languageLevel = 1.7
     apiLevel = 1.8
-    compilerSettings = -main call
+    compilerSettings = -main call -nopack
 
 project.jvmAndroidMain
     languageLevel = 1.7

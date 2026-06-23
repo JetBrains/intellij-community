@@ -7,18 +7,18 @@ project.androidTest
     compilerSettings = -opt-in OptInAnnotation
 
 project.appleMain
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
-    compilerSettings = -language-version=2.0 -api-version=2.0 -opt-in=OptInAnnotation
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in=OptInAnnotation
 
 project.appleTest
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
 
 project.commonMain
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
-    compilerSettings = -language-version=2.0 -api-version=2.0 -opt-in=OptInAnnotation
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in=OptInAnnotation
 
 project.commonTest
     languageLevel = {{LATEST_STABLE}}
@@ -35,9 +35,9 @@ project.iosArm64Test
     compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in OptInAnnotation
 
 project.iosMain
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
-    compilerSettings = -language-version=2.0 -api-version=2.0 -opt-in=OptInAnnotation
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in=OptInAnnotation
 
 project.iosTest
     languageLevel = {{LATEST_STABLE}}
@@ -56,17 +56,17 @@ project.iosX64Test
 project.jsMain
     languageLevel = {{MINIMAL_SUPPORTED}}
     apiLevel = {{MINIMAL_SUPPORTED}}
-    compilerSettings = -main call -nopack -opt-in OptInAnnotation
+    compilerSettings = -main call -opt-in OptInAnnotation
 
 project.jsTest
     languageLevel = {{MINIMAL_SUPPORTED}}
     apiLevel = {{MINIMAL_SUPPORTED}}
-    compilerSettings = -main call -nopack -opt-in OptInAnnotation
+    compilerSettings = -main call -opt-in OptInAnnotation
 
 project.jvmAndroidMain
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
-    compilerSettings = -language-version=2.0 -api-version=2.0 -opt-in=OptInAnnotation
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in=OptInAnnotation
 
 project.jvmAndroidTest
     languageLevel = {{LATEST_STABLE}}
@@ -88,9 +88,9 @@ project.main
     compilerSettings = -opt-in OptInAnnotation
 
 project.nativeMain
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
-    compilerSettings = -language-version=2.0 -api-version=2.0 -opt-in=OptInAnnotation
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in=OptInAnnotation
 
 project.nativeTest
     languageLevel = {{LATEST_STABLE}}
