@@ -1607,7 +1607,6 @@ Fc:com.intellij.util.containers.MultiMap
 - f:hashCode():I
 - f:isEmpty():Z
 - f:keySet():java.util.Set
-- f:mapValuesTo(com.intellij.util.containers.MultiMap,java.util.function.BiFunction):com.intellij.util.containers.MultiMap
 - f:putAllValues(com.intellij.util.containers.MultiMap):V
 - f:putAllValues(java.util.Map):V
 - f:remove(java.lang.Object):java.util.Collection
@@ -1700,8 +1699,6 @@ f:com.intellij.util.containers.UtilKt
 - sf:headTailOrNull(java.util.List):kotlin.Pair
 - sf:isEmpty(java.util.stream.Stream):Z
 - sf:isNullOrEmpty(java.util.Collection):Z
-- sf:mapValues(com.intellij.util.containers.MultiMap,kotlin.jvm.functions.Function1):com.intellij.util.containers.MultiMap
-- sf:mapValuesTo(com.intellij.util.containers.MultiMap,com.intellij.util.containers.MultiMap,kotlin.jvm.functions.Function1):com.intellij.util.containers.MultiMap
 - sf:notNullize(java.util.stream.Stream):java.util.stream.Stream
 - sf:nullize(java.util.List):java.util.List
 - sf:orNull(java.util.Optional):java.lang.Object
@@ -1711,10 +1708,6 @@ f:com.intellij.util.containers.UtilKt
 - sf:tail(java.util.List):java.util.List
 - sf:tailOrEmpty(java.util.List):java.util.List
 - sf:toMutableSmartList(java.util.List):java.util.List
-f:com.intellij.util.containers.UtilKt$sam$i$java_util_function_BiFunction$0
-- java.util.function.BiFunction
-- <init>(kotlin.jvm.functions.Function2):V
-- bf:apply(java.lang.Object,java.lang.Object):java.lang.Object
 f:com.intellij.util.containers.WeakList
 - com.intellij.util.containers.UnsafeWeakList
 - <init>():V
