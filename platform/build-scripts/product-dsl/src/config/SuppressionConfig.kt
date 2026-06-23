@@ -22,16 +22,6 @@ data class ContentModuleSuppression(
   /** Plugin IDs to suppress from the descriptor's `<depends>` elements */
   @JvmField val suppressPlugins: Set<PluginId> = emptySet(),
   /**
-   * Library names to NOT replace with library modules in the IML file.
-   *
-   * Auto-populated by `--update-suppressions`. Remove entries one-by-one to enable
-   * replacements incrementally.
-   *
-   * Example: `["kotlin-test"]` prevents replacing `kotlin-test` library
-   * with `intellij.libraries.kotlinTest` module in this module's IML.
-   */
-  @JvmField val suppressLibraries: Set<String> = emptySet(),
-  /**
    * Test library names to NOT change scope to TEST in the IML file.
    *
    * Auto-populated by `--update-suppressions`. Remove entries one-by-one to enable
@@ -83,7 +73,7 @@ data class SuppressionConfig(
    * Content module suppressions (unified).
    *
    * Key: Content module name (e.g., "intellij.python.junit5Tests")
-   * Value: All suppressions for this module (modules + plugins)
+   * Value: All suppressions for this module
    */
   @JvmField val contentModules: Map<ContentModuleName, ContentModuleSuppression> = emptyMap(),
 

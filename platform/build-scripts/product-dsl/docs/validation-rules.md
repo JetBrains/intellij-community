@@ -72,7 +72,7 @@ Suppressions are explicit contracts: dependencies intentionally omitted from XML
 - `pluginAllowedMissingDependencies` (config): allow missing module deps for a plugin.
 - `allowedMissingPluginIds` (DSL test plugins): allow missing plugin IDs for specific DSL-defined test modules or the whole test plugin.
 - `suppressions.json` (`contentModules.<module>.suppressPlugins`): allow missing plugin IDs for non-DSL content modules.
-- `suppressions.json`: suppress module deps, plugin deps, library replacements, or test-library scope fixes.
+- `suppressions.json`: suppress module deps, plugin deps, or test-library scope fixes.
 
 ## See also
 

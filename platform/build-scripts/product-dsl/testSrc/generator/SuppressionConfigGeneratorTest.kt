@@ -72,8 +72,6 @@ class SuppressionConfigGeneratorTest {
     ctx.publish(Slots.CONTENT_MODULE_PLAN, ContentModuleDependencyPlanOutput(plans = emptyList()))
     ctx.initSlot(Slots.PLUGIN_DEPENDENCY_PLAN)
     ctx.publish(Slots.PLUGIN_DEPENDENCY_PLAN, PluginDependencyPlanOutput(plans = emptyList()))
-    ctx.initSlot(Slots.LIBRARY_SUPPRESSIONS)
-    ctx.publish(Slots.LIBRARY_SUPPRESSIONS, emptyList())
     ctx.initSlot(Slots.TEST_LIBRARY_SCOPE_SUPPRESSIONS)
     ctx.publish(Slots.TEST_LIBRARY_SCOPE_SUPPRESSIONS, emptyList())
 
@@ -376,8 +374,6 @@ private suspend fun runSuppressionConfigGenerator(
   ctx.publish(Slots.CONTENT_MODULE_PLAN, ContentModuleDependencyPlanOutput(plans = contentPlans))
   ctx.initSlot(Slots.PLUGIN_DEPENDENCY_PLAN)
   ctx.publish(Slots.PLUGIN_DEPENDENCY_PLAN, PluginDependencyPlanOutput(plans = pluginPlans))
-  ctx.initSlot(Slots.LIBRARY_SUPPRESSIONS)
-  ctx.publish(Slots.LIBRARY_SUPPRESSIONS, emptyList())
   ctx.initSlot(Slots.TEST_LIBRARY_SCOPE_SUPPRESSIONS)
   ctx.publish(Slots.TEST_LIBRARY_SCOPE_SUPPRESSIONS, emptyList())
 
