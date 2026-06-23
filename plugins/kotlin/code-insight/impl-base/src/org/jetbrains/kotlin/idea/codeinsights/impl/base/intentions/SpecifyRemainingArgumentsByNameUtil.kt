@@ -113,15 +113,18 @@ object SpecifyRemainingArgumentsByNameUtil {
      */
     @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
-    private fun KaFunctionCall<*>.getRemainingArgumentsData(): RemainingArgumentsData? {
+    private fun KaFunctionCall<*>.getRemainingArgumentsData(existingArgumentsCount: Int): RemainingArgumentsData? {
         if (!symbol.hasStableParameterNames) return null
 
-        val existingValueArguments = this.valueArgumentMapping
+        // if the mapping is unreliable, we don't suggest anything to avoid increasing inconsistency
+        if (valueArgumentMapping.size + contextArgumentMapping.size != existingArgumentsCount) return null
+
+        val existingValueArguments = valueArgumentMapping
             .mapNotNullTo(hashSetOf()) { arg ->
                 arg.value.name.takeIf { !it.isSpecial }?.identifier
             }
 
-        val existingContextArguments = this.contextArgumentMapping
+        val existingContextArguments = contextArgumentMapping
             .mapNotNullTo(hashSetOf()) { arg ->
                 arg.value.name.takeIf { !it.isSpecial }?.identifier
             }
@@ -168,7 +171,7 @@ object SpecifyRemainingArgumentsByNameUtil {
      * The largest overload is determined by value parameter count.
      */
     @OptIn(KaExperimentalApi::class)
-    private fun KaSession.getRemainingArgumentsData(allCalls: List<KaCallCandidate>): RemainingArgumentsData? {
+    private fun KaSession.getRemainingArgumentsData(allCalls: List<KaCallCandidate>, existingArgumentsCount: Int): RemainingArgumentsData? {
         val allFunctionCalls = allCalls.map { info ->
             // If any of the calls cannot be resolved, we do not want to continue
             info.candidate as? KaFunctionCall<*> ?: return null
@@ -177,8 +180,11 @@ object SpecifyRemainingArgumentsByNameUtil {
         if (validPossibleCalls.isEmpty()) return null
 
         val smallestData =
-            validPossibleCalls.minBy { call -> call.symbol.valueParameters.count { !it.hasDeclaredDefaultValue } }.getRemainingArgumentsData() ?: return null
-        val largestData = validPossibleCalls.maxBy { it.symbol.valueParameters.size }.getRemainingArgumentsData() ?: return null
+            validPossibleCalls.minBy { call -> call.symbol.valueParameters.count { !it.hasDeclaredDefaultValue } }
+                .getRemainingArgumentsData(existingArgumentsCount) ?: return null
+        val largestData =
+            validPossibleCalls.maxBy { it.symbol.valueParameters.size }
+                .getRemainingArgumentsData(existingArgumentsCount) ?: return null
 
         return RemainingArgumentsData(
             smallestData.remainingRequiredArguments,
@@ -195,11 +201,13 @@ object SpecifyRemainingArgumentsByNameUtil {
     fun KaSession.findRemainingNamedArguments(element: KtValueArgumentList): RemainingArgumentsData? {
         val functionCall = element.parent as? KtCallExpression ?: return null
         val resolvedCall = functionCall.resolveCall()
+        val existingArgumentsCount = functionCall.valueArguments.size
+
         return if (resolvedCall != null) {
             // If we can unambiguously resolve the call, we get the data for it to avoid resolving all the candidates
-            resolvedCall.getRemainingArgumentsData() ?: return null
+            resolvedCall.getRemainingArgumentsData(existingArgumentsCount) ?: return null
         } else {
-            getRemainingArgumentsData(functionCall.collectCallCandidates())
+            getRemainingArgumentsData(functionCall.collectCallCandidates(), existingArgumentsCount)
         }
     }
 
