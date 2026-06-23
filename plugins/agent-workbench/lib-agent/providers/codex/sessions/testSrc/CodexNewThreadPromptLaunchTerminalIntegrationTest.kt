@@ -81,11 +81,11 @@ class CodexNewThreadPromptLaunchTerminalIntegrationTest {
     }
 
   @Test
-  fun globalPromptNewTaskPlanModeIgnoresBusyPlanCommandOutput(@TestDisposable disposable: Disposable): Unit =
+  fun globalPromptNewTaskPlanModeRetriesBusyPlanCommandOutput(@TestDisposable disposable: Disposable): Unit =
     timeoutRunBlocking {
       val descriptor = descriptor()
       val terminalHarness = RecordingAgentChatTerminalHarness()
-      terminalHarness.setSentTextOutputTexts(listOf("'/plan' is disabled while a task is in progress."))
+      terminalHarness.setSentTextOutputTexts(listOf("'/plan' is disabled while a task is in progress.", "Plan mode"))
       runInUi {
         fileEditorManagerFixture.get()
         terminalHarness.registerEditorFactory(disposable)
@@ -108,13 +108,14 @@ class CodexNewThreadPromptLaunchTerminalIntegrationTest {
       ) {
         terminalHarness.awaitCreateCalls(1)
         terminalHarness.setRunning()
-        terminalHarness.awaitSentTexts(2)
+        terminalHarness.awaitSentTexts(3)
         val finalSnapshot = terminalHarness.awaitInitialMessageSent()
         assertThat(finalSnapshot.initialMessageDispatchStepIndex).isZero()
       }
 
       assertThat(terminalHarness.sentTexts)
         .containsExactly(
+          RecordingTerminalSentText("/plan", shouldExecute = true, useBracketedPasteMode = false),
           RecordingTerminalSentText("/plan", shouldExecute = true, useBracketedPasteMode = false),
           RecordingTerminalSentText(PLAN_PROMPT, shouldExecute = true, useBracketedPasteMode = true),
         )
