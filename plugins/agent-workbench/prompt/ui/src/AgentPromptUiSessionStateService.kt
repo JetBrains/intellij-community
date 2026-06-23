@@ -34,6 +34,7 @@ internal data class AgentPromptUiDraft(
   @JvmField val taskDrafts: Map<String, String> = emptyMap(),
   @JvmField val providerOptionsByProviderId: Map<String, Set<String>> = emptyMap(),
   @JvmField val containerModeEnabled: Boolean = false,
+  @JvmField val selectedLaunchProfileId: String? = null,
 )
 
 @Serializable

@@ -51,6 +51,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.TestOnly
 import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.event.ChangeListener
@@ -187,6 +188,7 @@ internal class AgentPromptPaletteSessionController(
     generationSettingsController.restoreLaunchProfiles(
       launcherProvider()?.loadProviderPreferences() ?: AgentPromptLauncherBridge.ProviderPreferences()
     )
+    generationSettingsController.restoreDraftLaunchProfile(draft.selectedLaunchProfileId)
     refreshExtensionTaskDraftsFromContext()
 
     if (invocationData.attributes[com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_INVOCATION_PREFER_EXTENSIONS_KEY] == true) {
@@ -253,7 +255,7 @@ internal class AgentPromptPaletteSessionController(
       uiStateService.clearDraft()
     }
     else {
-      draftController.saveDraft(currentTargetMode())
+      draftController.saveDraft(currentTargetMode(), generationSettingsController.selectedLaunchProfileIdForDraft())
     }
   }
 
@@ -296,7 +298,7 @@ internal class AgentPromptPaletteSessionController(
   }
 
   fun onProviderSelectionChanged() {
-    generationSettingsController.refreshPresentation()
+    generationSettingsController.onProviderSelectionChanged()
     updateProviderOptionsVisibility()
     if (contextState.activeExtensionTab == null && currentTargetMode() == PromptTargetMode.EXISTING_TASK) {
       reloadExistingTasks()
@@ -317,6 +319,11 @@ internal class AgentPromptPaletteSessionController(
   fun codexSkillCompletionEntriesForCompletion(): List<AgentPromptReusableSourceEntry> = codexSkillCompletionEntries
 
   fun resolveWorkingProjectPath(): String? = submitController.resolveWorkingProjectPath()
+
+  @TestOnly
+  internal fun applyLaunchProfileForTest(profileId: String): Boolean {
+    return generationSettingsController.applyLaunchProfileForTest(profileId)
+  }
 
   fun applyAddContextRequest(request: AgentPromptAddContextRequest): AgentPromptAddContextApplyResult {
     val result = contextController.addExternalContextItems(request.contextItems)
