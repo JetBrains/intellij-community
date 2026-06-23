@@ -7,8 +7,9 @@
     <module name="intellij.java.ui"/>
     <module name="intellij.kotlin.base.scripting.shared"/>
     <module name="intellij.kotlin.codeInsight.shared"/>
-    <module name="intellij.kotlin.runConfigurations.jvm"/>
     <module name="intellij.kotlin.highlighting"/>
+    <module name="intellij.kotlin.runConfigurations.jvm"/>
+    <module name="intellij.platform.lvcs.impl"/>
   </dependencies>
   <!-- endregion -->
 
