@@ -221,7 +221,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private IndexConfiguration getState() {
     final RegisteredIndexes registeredIndexes = myRegisteredIndexes;
     if (registeredIndexes == null) {
-      throw IndexNotReadyException.create();
+      throw new ServiceNotReadyException();
     }
     return registeredIndexes.getConfigurationState();
   }
