@@ -17,6 +17,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceKind
 import com.intellij.agent.workbench.prompt.core.withGroup
 import com.intellij.platform.ai.agent.sessions.core.launch.insertArgumentsBefore
 import com.intellij.platform.ai.agent.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
@@ -252,6 +253,7 @@ internal class CodexAgentSessionProviderDescriptor(
       AgentInitialMessageDispatchStep(
         text = CODEX_PLAN_COMMAND,
         timeoutPolicy = initialMessagePlan.timeoutPolicy,
+        completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
       ),
       message.takeIf(String::isNotEmpty)?.let { prompt ->
         AgentInitialMessageDispatchStep(

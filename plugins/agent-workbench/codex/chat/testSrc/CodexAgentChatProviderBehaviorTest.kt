@@ -47,18 +47,53 @@ class CodexAgentChatProviderBehaviorTest {
   }
 
   @Test
-  fun planCommandDoesNotRequestTerminalOutputObservation() {
+  fun generatedPlanCommandRequestsTerminalOutputObservation() {
+    assertThat(
+      CodexAgentChatProviderBehavior.requiresPostSendObservation(
+        planCommandDispatch(completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY),
+      )
+    ).isTrue()
+
     assertThat(CodexAgentChatProviderBehavior.requiresPostSendObservation(planCommandDispatch())).isFalse()
+    assertThat(CodexAgentChatProviderBehavior.requiresPostSendObservation(promptDispatch())).isFalse()
   }
 
   @Test
-  fun terminalOutputObservationIsIgnoredIfCalled() {
-    val dispatch = planCommandDispatch()
+  fun generatedPlanCommandBusyOutputRetriesAfterFreshReadiness() {
+    val dispatch = planCommandDispatch(completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY)
+
+    assertThat(
+      CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(
+        file = TestBehaviorFile(),
+        dispatch = dispatch,
+        observation = observation("'/plan' is disabled while a task is in progress."),
+        retryAttempt = 0,
+      )
+    ).isEqualTo(AgentChatInitialMessageRetryDecision.RetryTransientBusyAfterReadiness(backoffMs = 250))
+  }
+
+  @Test
+  fun generatedPlanCommandFormattedBusyOutputRetriesAfterFreshReadiness() {
+    val dispatch = planCommandDispatch(completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY)
+
+    assertThat(
+      CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(
+        file = TestBehaviorFile(),
+        dispatch = dispatch,
+        observation = observation("\u001B[31m'/plan'\u001B[0m   is disabled while a\n task is in progress."),
+        retryAttempt = 0,
+      )
+    ).isEqualTo(AgentChatInitialMessageRetryDecision.RetryTransientBusyAfterReadiness(backoffMs = 250))
+  }
+
+  @Test
+  fun nonBusyPlanCommandOutputProceeds() {
+    val dispatch = planCommandDispatch(completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY)
     val ignoredOutputs = listOf(
-      "'/plan' is disabled while a task is in progress.",
       "Plan mode unavailable right now.",
       "Collaboration modes are disabled.",
       "Unknown command: /plan",
+      "'/permissions' is disabled while a task is in progress.",
       "\u001B[0m \n\t",
       "Running SessionStart hook:\nhook output",
     )
@@ -73,6 +108,18 @@ class CodexAgentChatProviderBehaviorTest {
         )
       ).isSameAs(AgentChatInitialMessageRetryDecision.PROCEED)
     }
+  }
+
+  @Test
+  fun nonRetryablePlanCommandOutputProceedsIfObserved() {
+    assertThat(
+      CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(
+        file = TestBehaviorFile(),
+        dispatch = planCommandDispatch(),
+        observation = observation("'/plan' is disabled while a task is in progress."),
+        retryAttempt = 0,
+      )
+    ).isSameAs(AgentChatInitialMessageRetryDecision.PROCEED)
   }
 
   @Test
@@ -137,11 +184,15 @@ private fun observation(outputText: String, recentOutputTail: String = ""): Agen
   return AgentChatInitialMessageSendObservation(outputText = outputText, recentOutputTail = recentOutputTail)
 }
 
-private fun planCommandDispatch(stepIndex: Int = 0): TestDispatch {
+private fun planCommandDispatch(
+  stepIndex: Int = 0,
+  completionPolicy: AgentInitialMessageDispatchCompletionPolicy = AgentInitialMessageDispatchCompletionPolicy.IMMEDIATE,
+): TestDispatch {
   return TestDispatch(
     action = AgentInitialMessageDispatchAction.SEND_TEXT,
     message = "/plan",
     stepIndex = stepIndex,
+    completionPolicy = completionPolicy,
   )
 }
 
