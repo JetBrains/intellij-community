@@ -3,8 +3,8 @@ package com.intellij.agent.workbench.sessions
 
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
-import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadContext
-import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadTarget
+import com.intellij.agent.workbench.sessions.actions.AgentSessionsNewThreadContext
+import com.intellij.agent.workbench.sessions.actions.AgentSessionsNewThreadTarget
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUiKind
@@ -80,14 +80,14 @@ internal fun newThreadContext(
   path: String = "/tmp/project",
   project: Project = ProjectManager.getInstance().defaultProject,
   projectPathCandidates: List<AgentPromptProjectPathCandidate> = emptyList(),
-): AgentSessionsEditorTabNewThreadContext {
+): AgentSessionsNewThreadContext {
   val target = if (projectPathCandidates.isEmpty()) {
-    AgentSessionsEditorTabNewThreadTarget.Direct(normalizeAgentWorkbenchPath(path))
+    AgentSessionsNewThreadTarget.Direct(normalizeAgentWorkbenchPath(path))
   }
   else {
-    AgentSessionsEditorTabNewThreadTarget.Candidates(projectPathCandidates)
+    AgentSessionsNewThreadTarget.Candidates(projectPathCandidates)
   }
-  return AgentSessionsEditorTabNewThreadContext(project = project) { target }
+  return AgentSessionsNewThreadContext(project = project) { target }
 }
 
 internal fun eventWithProject(project: Project): AnActionEvent {

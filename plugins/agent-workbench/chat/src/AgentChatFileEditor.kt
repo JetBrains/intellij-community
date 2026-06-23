@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.chat
 // @spec community/plugins/agent-workbench/spec/chat/agent-chat-editor.spec.md
 
 import com.intellij.CommonBundle
+import com.intellij.agent.workbench.ui.AgentWorkbenchActionIds
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormatter
@@ -80,7 +81,11 @@ internal class AgentChatFileEditor(
 
   private fun buildEditorTabActions(): ActionGroup? {
     val actionManager = ActionManager.getInstance()
-    val providerActionIds = providerDescriptor?.editorTabActionIds.orEmpty()
+    val providerActionIds = buildList {
+      if (providerDescriptor?.supportsPendingEditorTabRebind == true) {
+        add(AgentWorkbenchActionIds.Sessions.BIND_PENDING_AGENT_THREAD_FROM_EDITOR_TAB)
+      }
+    }
     val actions = buildList {
       providerActionIds.forEach { actionId ->
         actionManager.getAction(actionId)?.let(::add)

@@ -5,7 +5,6 @@ import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindRequest
 import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 import com.intellij.agent.workbench.chat.resolveAgentChatEditorTabActionContext
-import com.intellij.platform.ai.agent.common.AgentWorkbenchActionIds
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
@@ -62,9 +61,6 @@ private fun resolvePendingRebindProvider(context: AgentChatEditorTabActionContex
   val provider = threadCoordinates.provider
   val descriptor = AgentSessionProviders.find(provider) ?: return null
   if (!descriptor.supportsPendingEditorTabRebind) {
-    return null
-  }
-  if (AgentWorkbenchActionIds.Sessions.BIND_PENDING_AGENT_THREAD_FROM_EDITOR_TAB !in descriptor.editorTabActionIds) {
     return null
   }
   return provider

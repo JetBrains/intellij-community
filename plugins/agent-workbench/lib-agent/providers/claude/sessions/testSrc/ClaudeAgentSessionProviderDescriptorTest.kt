@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ai.agent.claude.sessions
 
-import com.intellij.platform.ai.agent.common.AgentWorkbenchActionIds
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
@@ -310,8 +309,6 @@ class ClaudeAgentSessionProviderDescriptorTest {
     assertThat(bridge.supportsUnarchiveThread).isTrue()
     assertThat(bridge.suppressArchivedThreadsDuringRefresh).isTrue()
     assertThat(bridge.archiveRefreshDelayMs).isEqualTo(1_000L)
-    assertThat(bridge.editorTabActionIds)
-      .containsExactly(AgentWorkbenchActionIds.Sessions.BIND_PENDING_AGENT_THREAD_FROM_EDITOR_TAB)
   }
 
   @Test

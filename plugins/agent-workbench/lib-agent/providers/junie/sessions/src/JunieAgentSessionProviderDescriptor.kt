@@ -2,7 +2,6 @@
 package com.intellij.platform.ai.agent.junie.sessions
 
 import com.intellij.platform.ai.agent.common.icons.AgentWorkbenchCommonIcons
-import com.intellij.platform.ai.agent.common.AgentWorkbenchActionIds
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.junie.common.BRAVE_FLAG
@@ -81,9 +80,6 @@ internal class JunieAgentSessionProviderDescriptor(
 
   override val supportsGenerationModelSelection: Boolean
     get() = true
-
-  override val editorTabActionIds: List<String>
-    get() = listOf(AgentWorkbenchActionIds.Sessions.BIND_PENDING_AGENT_THREAD_FROM_EDITOR_TAB)
 
   override val supportsPendingEditorTabRebind: Boolean
     get() = true
