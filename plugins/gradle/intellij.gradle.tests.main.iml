@@ -16,5 +16,6 @@
     <orderEntry type="module" module-name="intellij.gradle.native.tooling.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.completion.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.completion.toml.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.toolingProxy.tests" scope="TEST" />
   </component>
 </module>

@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.gradle.execution.target
 
 import com.intellij.execution.target.HostPort
-import com.intellij.gradle.toolingExtension.impl.serializer.GradleToolingExtensionSerializer
-import com.intellij.gradle.toolingExtension.impl.serializer.GradleToolingProxySerializerFactory
+import org.jetbrains.plugins.gradle.tooling.proxy.serializer.GradleToolingProxySerializer
+import org.jetbrains.plugins.gradle.tooling.proxy.serializer.GradleToolingProxySerializerFactory
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.util.wsl.connectRetrying
@@ -30,7 +30,7 @@ import java.net.InetAddress
 
 internal class ToolingProxyConnector(
   private val hostPort: HostPort,
-  private val serializer: GradleToolingExtensionSerializer
+  private val serializer: GradleToolingProxySerializer
 ) {
 
   private companion object {

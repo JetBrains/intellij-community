@@ -530,6 +530,8 @@ jvm_library(
         "//plugins/gradle/completion:completion-tests_test_lib",
         "//plugins/gradle/completion/toml:gradle-completion-toml-tests",
         "//plugins/gradle/completion/toml:gradle-completion-toml-tests_test_lib",
+        "//plugins/gradle/tooling-proxy:toolingProxy-tests",
+        "//plugins/gradle/tooling-proxy:toolingProxy-tests_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.tests.main` end
