@@ -34,6 +34,7 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.appendLines
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
+import kotlin.io.path.pathString
 
 class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : IdeInstaller {
   private val projectRoot by lazy { Path.of(PathManager.getHomePath(false)) }
@@ -43,7 +44,7 @@ class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : I
 
     return if (ideInfo.platformPrefix == PlatformUtils.JETBRAINS_CLIENT_PREFIX) {
       val moduleRepository = RuntimeModuleRepository.create(installationDirectory.resolve("modules").resolve("module-descriptors.jar"))
-      moduleRepository.getModule(RuntimeModuleId.legacyJpsModule("intellij.platform.runtime.loader")).moduleClasspath.map { it.toString() }
+      moduleRepository.computeModuleClasspath(RuntimeModuleId.legacyJpsModule("intellij.platform.runtime.loader")).map { it.pathString }
     }
     else {
       Files.readAllLines(coreClassPathFile)
