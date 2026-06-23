@@ -1,6 +1,5 @@
 // "Add name to argument: 's = 42'" "false"
-// COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters -XXLanguage:+ExplicitContextArguments
-// IGNORE_K1
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments
 // DISABLE_K2_ERRORS
 context(s: String)
 fun bar(a: Int): String = ""

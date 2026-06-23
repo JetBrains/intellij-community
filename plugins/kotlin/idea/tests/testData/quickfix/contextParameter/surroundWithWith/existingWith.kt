@@ -1,5 +1,5 @@
 // "Surround call with 'with'" "false"
-// COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
+// COMPILER_ARGUMENTS: -Xcontext-parameters
 // API_VERSION: 2.1
 // K2_ERROR: No context argument for 's: String' found.
 // K2_AFTER_ERROR: No context argument for 's: String' found.

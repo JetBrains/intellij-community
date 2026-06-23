@@ -1,6 +1,5 @@
 // "Add explicit context arguments" "true"
-// COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters -XXLanguage:+ExplicitContextArguments
-// IGNORE_K1
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments
 // DISABLE_K2_ERRORS
 context(first: String, second: String)
 fun greet(): String = ""
