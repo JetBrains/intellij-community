@@ -2,7 +2,6 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
-import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
@@ -39,6 +38,7 @@ internal fun readAgentChatFileEditorState(sourceElement: Element, file: VirtualF
       pendingFirstInputAtMs = sourceElement.getAttributeLongValueOrNull(ATTR_PENDING_FIRST_INPUT_AT_MS),
       pendingLaunchMode = sourceElement.getAttributeValue(ATTR_PENDING_LAUNCH_MODE),
       launchMode = normalizeAgentChatLaunchMode(sourceElement.getAttributeValue(ATTR_LAUNCH_MODE)),
+      launchProfileId = sourceElement.getAttributeValue(ATTR_LAUNCH_PROFILE_ID),
       newThreadRebindRequestedAtMs = sourceElement.getAttributeLongValueOrNull(ATTR_NEW_THREAD_REBIND_REQUESTED_AT_MS),
       // Prompt text, tokens, delivery state, and dispatch queues are live-session metadata. Do not restore them from editor state:
       // persisted prompt data is a privacy risk, and restoring queued terminal input can duplicate prompts.
@@ -46,7 +46,11 @@ internal fun readAgentChatFileEditorState(sourceElement: Element, file: VirtualF
       terminalPromptDispatch = null,
     ),
   )
-  val startupIntent = readStartupIntent(sourceElement, identity.threadIdentity)
+  val startupIntent = readStartupIntent(
+    sourceElement = sourceElement,
+    threadIdentity = identity.threadIdentity,
+    pendingLaunchMode = snapshot.runtime.pendingLaunchMode,
+  )
   if (file is AgentChatVirtualFile) {
     file.updateRestoreOnRestart(true)
     file.updateFromResolution(AgentChatTabResolution.Resolved(snapshot))
@@ -74,12 +78,17 @@ internal fun writeAgentChatFileEditorState(state: AgentChatFileEditorState, targ
   targetElement.setNullableAttribute(ATTR_PENDING_FIRST_INPUT_AT_MS, runtime.pendingFirstInputAtMs?.toString())
   targetElement.setNullableAttribute(ATTR_PENDING_LAUNCH_MODE, runtime.pendingLaunchMode)
   targetElement.setNullableAttribute(ATTR_LAUNCH_MODE, runtime.launchMode)
+  targetElement.setNullableAttribute(ATTR_LAUNCH_PROFILE_ID, runtime.launchProfileId)
   targetElement.setNullableAttribute(ATTR_NEW_THREAD_REBIND_REQUESTED_AT_MS, runtime.newThreadRebindRequestedAtMs?.toString())
   // Prompt text, tokens, delivery state, and terminal dispatch metadata are live-session-only and must not be persisted.
   writeStartupIntent(state.startupIntent, targetElement)
 }
 
-private fun readStartupIntent(sourceElement: Element, threadIdentity: String): AgentChatStartupIntent? {
+private fun readStartupIntent(
+  sourceElement: Element,
+  threadIdentity: String,
+  pendingLaunchMode: String?,
+): AgentChatStartupIntent? {
   val kind = sourceElement.getAttributeValue(ATTR_STARTUP_KIND) ?: return null
   if (kind != STARTUP_KIND_NEW_SESSION) {
     return null
@@ -90,7 +99,8 @@ private fun readStartupIntent(sourceElement: Element, threadIdentity: String): A
                  ?: return null
   return AgentChatStartupIntent.NewSession(
     provider = provider,
-    launchMode = parseEnum(sourceElement.getAttributeValue(ATTR_STARTUP_LAUNCH_MODE), AgentSessionLaunchMode.STANDARD),
+    launchMode = parseEnum(sourceElement.getAttributeValue(ATTR_STARTUP_LAUNCH_MODE), parseAgentChatLaunchMode(pendingLaunchMode)),
+    launchProfileId = sourceElement.getAttributeValue(ATTR_STARTUP_LAUNCH_PROFILE_ID),
   )
 }
 
@@ -100,6 +110,7 @@ private fun writeStartupIntent(startupIntent: AgentChatStartupIntent?, targetEle
       targetElement.setAttribute(ATTR_STARTUP_KIND, STARTUP_KIND_NEW_SESSION)
       targetElement.setAttribute(ATTR_STARTUP_PROVIDER, startupIntent.provider.value)
       targetElement.setAttribute(ATTR_STARTUP_LAUNCH_MODE, startupIntent.launchMode.name)
+      targetElement.setNullableAttribute(ATTR_STARTUP_LAUNCH_PROFILE_ID, startupIntent.launchProfileId)
     }
     null -> Unit
   }
@@ -117,7 +128,7 @@ private fun Element.setNullableAttribute(name: String, value: String?) {
   }
 }
 
-private const val STATE_VERSION = 4
+private const val STATE_VERSION = 5
 private const val ATTR_VERSION = "version"
 private const val ATTR_PROJECT_HASH = "projectHash"
 private const val ATTR_PROJECT_PATH = "projectPath"
@@ -130,8 +141,10 @@ private const val ATTR_PENDING_CREATED_AT_MS = "pendingCreatedAtMs"
 private const val ATTR_PENDING_FIRST_INPUT_AT_MS = "pendingFirstInputAtMs"
 private const val ATTR_PENDING_LAUNCH_MODE = "pendingLaunchMode"
 private const val ATTR_LAUNCH_MODE = "launchMode"
+private const val ATTR_LAUNCH_PROFILE_ID = "launchProfileId"
 private const val ATTR_NEW_THREAD_REBIND_REQUESTED_AT_MS = "newThreadRebindRequestedAtMs"
 private const val ATTR_STARTUP_KIND = "startupKind"
 private const val ATTR_STARTUP_PROVIDER = "startupProvider"
 private const val ATTR_STARTUP_LAUNCH_MODE = "startupLaunchMode"
+private const val ATTR_STARTUP_LAUNCH_PROFILE_ID = "startupLaunchProfileId"
 private const val STARTUP_KIND_NEW_SESSION = "newSession"

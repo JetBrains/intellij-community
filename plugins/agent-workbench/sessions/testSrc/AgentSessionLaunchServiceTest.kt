@@ -10,7 +10,9 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.core.session.AgentSubAgent
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchError
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
@@ -20,6 +22,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.InMemoryAgentSessi
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
+import com.intellij.agent.workbench.sessions.state.AgentSessionLaunchProfileStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.openapi.application.ApplicationManager
@@ -278,6 +281,112 @@ class AgentSessionLaunchServiceTest {
           val openRequest = checkNotNull(chatOpenExecutor.lastOpenChatRequest.get())
           assertThat(openRequest.thread.id).isEqualTo(activeThread.id)
           assertThat(openRequest.launchMode).isEqualTo(AgentSessionLaunchMode.YOLO)
+        }
+      }
+    }
+  }
+
+  @Test
+  fun promptExistingThreadResolvesLaunchProfilePayload() {
+    val descriptor = testDescriptor(
+      supportsUnarchiveThread = true,
+      unarchiveThreadHandler = { _, _ -> false },
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
+    )
+    val profileId = "profile:codex-yolo"
+    val profileSettings = AgentPromptGenerationSettings(
+      modelId = "gpt-5",
+    )
+    val uiPreferencesState = uiPreferencesStateWithProfiles(
+      AgentPromptLaunchProfile(
+        id = profileId,
+        name = "Codex Yolo",
+        providerId = AgentSessionProvider.CODEX.value,
+        launchMode = AgentSessionLaunchMode.YOLO,
+        generationSettings = profileSettings,
+      )
+    )
+    val chatOpenExecutor = RecordingChatOpenExecutor()
+    val activeThread = thread(id = "codex-active", updatedAt = 200, provider = AgentSessionProvider.CODEX)
+
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+      runBlocking(Dispatchers.Default) {
+        withTestServiceAndLaunch(
+          sessionSourcesProvider = { listOf(sourceForActiveThreads(listOf(activeThread))) },
+          projectEntriesProvider = { listOf(openTestProjectEntry(PROJECT_PATH, "Project A")) },
+          uiPreferencesState = uiPreferencesState,
+          chatOpenExecutor = chatOpenExecutor,
+        ) { service, launchService ->
+          service.refresh()
+          waitForCondition { activeThreadIds(service.state.value).contains(activeThread.id) }
+
+          val result = launchService.launchPromptRequest(
+            AgentPromptLaunchRequest(
+              launchProfileId = profileId,
+              provider = AgentSessionProvider.CODEX,
+              projectPath = PROJECT_PATH,
+              launchMode = AgentSessionLaunchMode.STANDARD,
+              initialMessageRequest = AgentPromptInitialMessageRequest(prompt = "Continue this thread"),
+              targetThreadId = activeThread.id,
+            )
+          )
+
+          assertThat(result.launched).isTrue()
+          assertThat(result.error).isNull()
+          waitForCondition { chatOpenExecutor.openChatCalls.get() == 1 }
+
+          val openRequest = checkNotNull(chatOpenExecutor.lastOpenChatRequest.get())
+          assertThat(openRequest.thread.id).isEqualTo(activeThread.id)
+          assertThat(openRequest.launchMode).isEqualTo(AgentSessionLaunchMode.YOLO)
+          assertThat(openRequest.launchProfileId).isEqualTo(profileId)
+          assertThat(openRequest.generationSettings).isEqualTo(profileSettings)
+        }
+      }
+    }
+  }
+
+  @Test
+  fun createNewSessionResolvesLaunchProfilePayload() {
+    val descriptor = testDescriptor(
+      supportsUnarchiveThread = true,
+      unarchiveThreadHandler = { _, _ -> false },
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
+    )
+    val profileId = "profile:codex-new-yolo"
+    val profileSettings = AgentPromptGenerationSettings(
+      modelId = "gpt-5",
+    )
+    val uiPreferencesState = uiPreferencesStateWithProfiles(
+      AgentPromptLaunchProfile(
+        id = profileId,
+        name = "Codex New Yolo",
+        providerId = AgentSessionProvider.CODEX.value,
+        launchMode = AgentSessionLaunchMode.YOLO,
+        generationSettings = profileSettings,
+      )
+    )
+    val chatOpenExecutor = RecordingChatOpenExecutor()
+
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+      runBlocking(Dispatchers.Default) {
+        withTestServiceAndLaunch(
+          sessionSourcesProvider = { listOf(descriptor.sessionSource) },
+          projectEntriesProvider = { listOf(openTestProjectEntry(PROJECT_PATH, "Project A")) },
+          uiPreferencesState = uiPreferencesState,
+          chatOpenExecutor = chatOpenExecutor,
+        ) { _, launchService ->
+          launchService.createNewSession(
+            path = PROJECT_PATH,
+            launchProfileId = profileId,
+            entryPoint = AgentWorkbenchEntryPoint.TREE_ROW,
+          )
+
+          waitForCondition { chatOpenExecutor.openNewChatCalls.get() == 1 }
+          val openRequest = checkNotNull(chatOpenExecutor.lastOpenNewChatRequest.get())
+          assertThat(openRequest.identity).startsWith("codex:new-")
+          assertThat(openRequest.launchMode).isEqualTo(AgentSessionLaunchMode.YOLO)
+          assertThat(openRequest.launchProfileId).isEqualTo(profileId)
+          assertThat(openRequest.generationSettings).isEqualTo(profileSettings)
         }
       }
     }
@@ -779,6 +888,15 @@ class AgentSessionLaunchServiceTest {
       }
     }
   }
+}
+
+private fun uiPreferencesStateWithProfiles(vararg profiles: AgentPromptLaunchProfile): AgentSessionUiPreferencesStateService {
+  val launchProfileStateService = AgentSessionLaunchProfileStateService()
+  launchProfileStateService.setLaunchProfiles(
+    profiles = profiles.toList(),
+    defaultProfileId = null,
+  )
+  return AgentSessionUiPreferencesStateService(launchProfileStateService)
 }
 
 private fun successfulPendingRebindReport(

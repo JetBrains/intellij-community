@@ -33,6 +33,7 @@ import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveBackgrou
 import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveService
 import com.intellij.agent.workbench.sessions.service.AgentSessionChatOpenExecutor
 import com.intellij.agent.workbench.sessions.service.AgentSessionContentRepository
+import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchProfileResolverImpl
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
@@ -641,12 +642,14 @@ internal suspend fun withServiceAndArchiveAndLaunch(
       stateStore = stateStore,
       syncService = syncService,
     )
+    val launchProfileResolver = AgentSessionLaunchProfileResolverImpl(uiPreferencesState)
     val launchService = if (chatOpenExecutor == null) {
       AgentSessionLaunchService(
         serviceScope = scope,
         stateStore = stateStore,
         syncService = syncService,
         uiPreferencesState = uiPreferencesState,
+        launchProfileResolver = launchProfileResolver,
         openPendingAgentChatTabsProvider = openPendingAgentChatTabsProvider,
         openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinderWithProvider,
         archivedSessionsRefreshIfLoaded = archivedSessionsRefreshIfLoaded,
@@ -659,6 +662,7 @@ internal suspend fun withServiceAndArchiveAndLaunch(
         stateStore = stateStore,
         syncService = syncService,
         uiPreferencesState = uiPreferencesState,
+        launchProfileResolver = launchProfileResolver,
         chatOpenExecutor = chatOpenExecutor,
         openPendingAgentChatTabsProvider = openPendingAgentChatTabsProvider,
         openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinderWithProvider,

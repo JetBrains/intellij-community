@@ -29,6 +29,9 @@ Agent Chat tabs are protocol-backed editor tabs around terminal-backed agent ses
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../../chat/testSrc/AgentChatOpenTopLevelDispatchTest.kt
 
+- New Agent Chat editor tabs must follow platform editor-tab placement: after the selected tab by default, or at the end when the IDE's `Open new tabs at the end` setting is enabled. Opening, pending-thread rebinding, and concrete-thread rebinding must reuse and update matching existing tabs in place without moving them or passing a custom `FileEditorOpenOptions.index`.
+  [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
+
 - Restore must restore all previously open Agent Chat tabs from editor state, tolerate unresolved URL materialization before provider state is applied, reconstruct pending new-session startup from provider/mode metadata instead of persisted shell commands, restore the stored resume launch mode and generation settings for concrete tabs, prune stale/invalid legacy tab state, and use persisted title/activity only as bootstrap fallback until live shared thread presentation is available. Restored terminal commands must be rebuilt through the shared session launch planner so provider-specific generation settings, model catalogs, launch augmenters, and launch contributors are applied consistently for new and resumed tabs.
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../../chat/testSrc/AgentChatFileEditorProviderTest.kt

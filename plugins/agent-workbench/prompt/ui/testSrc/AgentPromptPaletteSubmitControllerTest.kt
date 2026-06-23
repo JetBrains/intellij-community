@@ -166,6 +166,36 @@ class AgentPromptPaletteSubmitControllerTest {
   }
 
   @Test
+  fun submitIncludesLaunchProfileId() {
+    runInEdtAndWait {
+      var capturedRequest: AgentPromptLaunchRequest? = null
+      val fixture = createFixture(
+        project = ProjectManager.getInstance().defaultProject,
+        launcherProvider = {
+          object : AgentPromptLauncherBridge {
+            override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+              capturedRequest = request
+              return AgentPromptLaunchResult.SUCCESS
+            }
+
+            override fun resolveWorkingProjectPath(invocationData: AgentPromptInvocationData): String = "/launcher/path"
+          }
+        },
+        currentTargetMode = { PromptTargetMode.NEW_TASK },
+        launchProfileIdProvider = { "profile:codex-fast" },
+      )
+      fixture.providerSelector.refresh()
+      fixture.providerSelector.selectProvider(AgentSessionProvider.CODEX)
+      fixture.promptArea.text = "Plan the change"
+      fixture.launchState.selectedWorkingProjectPath = "/repo"
+
+      fixture.controller.submit()
+
+      assertThat(checkNotNull(capturedRequest).launchProfileId).isEqualTo("profile:codex-fast")
+    }
+  }
+
+  @Test
   fun submitKeepsPlanModeEnabledForNewTaskCodexLaunch() {
     runInEdtAndWait {
       val project = ProjectManager.getInstance().defaultProject
@@ -544,6 +574,7 @@ class AgentPromptPaletteSubmitControllerTest {
     onSubmitBlocked: (String) -> Unit = {},
     onSubmitSucceeded: () -> Unit = {},
     onPromptSubmitted: (AgentPromptHistoryEntry) -> Unit = {},
+    launchProfileIdProvider: () -> String? = { null },
     generationSettingsProvider: () -> AgentPromptGenerationSettings = { AgentPromptGenerationSettings.AUTO },
     generationModelCatalogProvider: () -> List<AgentPromptGenerationModel> = { emptyList() },
     isContainerModeSelected: () -> Boolean = { false },
@@ -598,6 +629,7 @@ class AgentPromptPaletteSubmitControllerTest {
       onSubmitBlocked = onSubmitBlocked,
       onSubmitSucceeded = onSubmitSucceeded,
       onPromptSubmitted = onPromptSubmitted,
+      launchProfileIdProvider = launchProfileIdProvider,
       generationSettingsProvider = generationSettingsProvider,
       generationModelCatalogProvider = generationModelCatalogProvider,
       isContainerModeSelected = isContainerModeSelected,

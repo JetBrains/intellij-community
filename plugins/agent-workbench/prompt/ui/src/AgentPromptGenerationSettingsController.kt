@@ -168,6 +168,10 @@ internal class AgentPromptGenerationSettingsController(
     )
   }
 
+  fun currentLaunchProfileId(): String? {
+    return launchProfileState.profileForPresentation(currentProfileDraft())?.id
+  }
+
   fun refreshPresentation() {
     val selectedProvider = providerSelector.selectedProvider
     val showGenerationControls = generationControlsVisible

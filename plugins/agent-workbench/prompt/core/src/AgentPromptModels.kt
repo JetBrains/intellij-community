@@ -146,6 +146,7 @@ data class AgentPromptContextEnvelopeSummary(
 )
 
 data class AgentPromptLaunchRequest(
+  @JvmField val launchProfileId: String? = null,
   val provider: AgentSessionProvider,
   @JvmField val projectPath: String,
   @JvmField val launchMode: AgentSessionLaunchMode,

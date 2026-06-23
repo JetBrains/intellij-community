@@ -5,7 +5,6 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
-import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.platform.ai.agent.sessions.core.isAgentSessionPendingThreadId
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.SerializablePersistentStateComponent
@@ -24,7 +23,7 @@ import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import kotlin.time.Duration.Companion.minutes
 
-private const val AGENT_CHAT_TABS_STATE_VERSION = 11
+private const val AGENT_CHAT_TABS_STATE_VERSION = 12
 private const val AGENT_CHAT_TABS_STATE_TTL_MILLIS = 30L * 24 * 60 * 60 * 1000
 private const val AGENT_CHAT_LEGACY_METADATA_DIR_NAME = "agent-workbench-chat-frame"
 private const val AGENT_CHAT_LEGACY_METADATA_TABS_DIR_NAME = "tabs"
@@ -214,7 +213,7 @@ internal data class PersistedAgentChatTabState(
   @JvmField val pendingFirstInputAtMs: Long? = null,
   @JvmField val pendingLaunchMode: String? = null,
   @JvmField val launchMode: String? = null,
-  @JvmField val generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
+  @JvmField val launchProfileId: String? = null,
   @JvmField val newThreadRebindRequestedAtMs: Long? = null,
   @JvmField val updatedAt: Long,
 )
@@ -245,10 +244,7 @@ private fun isExpired(updatedAt: Long): Boolean {
 }
 
 private fun isExpired(updatedAt: Long, now: Long): Boolean {
-  if (updatedAt <= 0) {
-    return true
-  }
-  return now - updatedAt > AGENT_CHAT_TABS_STATE_TTL_MILLIS
+  return updatedAt <= 0 || now - updatedAt > AGENT_CHAT_TABS_STATE_TTL_MILLIS
 }
 
 private fun PersistedAgentChatTabState.toSnapshot(tabKey: AgentChatTabKey): AgentChatTabSnapshot {
@@ -270,7 +266,7 @@ private fun PersistedAgentChatTabState.toSnapshot(tabKey: AgentChatTabKey): Agen
       pendingFirstInputAtMs = pendingFirstInputAtMs,
       pendingLaunchMode = pendingLaunchMode,
       launchMode = normalizeAgentChatLaunchMode(launchMode),
-      generationSettings = generationSettings,
+      launchProfileId = launchProfileId,
       newThreadRebindRequestedAtMs = newThreadRebindRequestedAtMs,
       // Prompt text, tokens, delivery state, and dispatch queues are live-session metadata and are intentionally not restored.
       initialPromptRecord = null,
@@ -292,7 +288,7 @@ private fun AgentChatTabSnapshot.toPersisted(updatedAt: Long): PersistedAgentCha
     pendingFirstInputAtMs = runtime.pendingFirstInputAtMs,
     pendingLaunchMode = runtime.pendingLaunchMode,
     launchMode = runtime.launchMode,
-    generationSettings = runtime.generationSettings,
+    launchProfileId = runtime.launchProfileId,
     newThreadRebindRequestedAtMs = runtime.newThreadRebindRequestedAtMs,
     updatedAt = updatedAt,
   )
@@ -300,10 +296,7 @@ private fun AgentChatTabSnapshot.toPersisted(updatedAt: Long): PersistedAgentCha
 
 private fun isPersistedPendingThreadIdentity(threadIdentity: String): Boolean {
   val separator = threadIdentity.indexOf(':')
-  if (separator <= 0 || separator == threadIdentity.lastIndex) {
-    return false
-  }
-  return isAgentSessionPendingThreadId(threadIdentity.substring(separator + 1))
+  return separator > 0 && isAgentSessionPendingThreadId(threadIdentity.substring(separator + 1))
 }
 
 private fun parseThreadActivity(value: String): AgentThreadActivity {
