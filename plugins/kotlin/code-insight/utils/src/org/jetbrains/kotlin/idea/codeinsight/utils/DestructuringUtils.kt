@@ -4,9 +4,13 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.lowerBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.config.LanguageFeature.DeprecateNameMismatchInShortDestructuringWithParentheses
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -24,7 +28,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 fun KaSession.extractPrimaryParameters(
     declaration: KtDestructuringDeclaration,
 ): List<KaValueParameterSymbol>? {
-    val type = getClassType(declaration) ?: return null
+    val type = declaration.getDestructuredClassType() ?: return null
     return extractDataClassParameters(type)?.takeIf { parameters ->
         declaration.entries.size <= parameters.size
     }
@@ -44,10 +48,15 @@ fun KaSession.extractDataClassParameters(type: KaClassType): List<KaValueParamet
     } else null
 }
 
-private fun KaSession.getClassType(declaration: KtDestructuringDeclaration): KaClassType? {
-    val type = declaration.initializer?.expressionType
-        ?: (declaration.parent as? KtParameter)?.symbol?.returnType
-        ?: return null
+/**
+ * Returns the class type of the value being destructured: either the initializer expression's type
+ * or the destructured parameter's type (lambda case)
+ */
+@OptIn(KaContextParameterApi::class)
+@ApiStatus.Internal
+context(_: KaSession)
+fun KtDestructuringDeclaration.getDestructuredClassType(): KaClassType? {
+    val type = initializer?.expressionType ?: (parent as? KtParameter)?.symbol?.returnType ?: return null
     return type.lowerBoundIfFlexible() as? KaClassType
 }
 
@@ -64,9 +73,10 @@ private val POSITIONAL_DESTRUCTURING_CLASSES: Set<ClassId> = setOf(
  * Checks if the destructured type is intended for positional destructuring (Pair, Triple, IndexedValue).
  * These types should use bracket syntax [x, y] instead of name-based destructuring.
  */
+@ApiStatus.Internal
 context(session: KaSession)
 fun KtDestructuringDeclaration.isPositionalDestructuringType(): Boolean {
-    val classType = session.getClassType(this) ?: return false
+    val classType = this.getDestructuredClassType() ?: return false
     return session.isPositionalDestructuringType(classType)
 }
 
