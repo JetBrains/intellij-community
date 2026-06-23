@@ -288,35 +288,45 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("../../completion/testData/handlers/basic/contextSensitiveResolution")
-            public static class Uncategorized extends AbstractHighLevelBasicCompletionHandlerTest {
+            @TestMetadata("../../completion/testData/handlers/basic/contextSensitiveResolution/types")
+            public static class Types extends AbstractHighLevelBasicCompletionHandlerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
 
+                @TestMetadata("dontShortenSealedSubclassInIsFeatureDisabled.kt")
+                public void testDontShortenSealedSubclassInIsFeatureDisabled() throws Exception {
+                    runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/types/dontShortenSealedSubclassInIsFeatureDisabled.kt");
+                }
+
+                @TestMetadata("dontShortenSealedSubclassInIsUnrelatedLhs.kt")
+                public void testDontShortenSealedSubclassInIsUnrelatedLhs() throws Exception {
+                    runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/types/dontShortenSealedSubclassInIsUnrelatedLhs.kt");
+                }
+
                 @TestMetadata("shortenSealedSubclassInAs.kt")
                 public void testShortenSealedSubclassInAs() throws Exception {
-                    runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/shortenSealedSubclassInAs.kt");
+                    runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/types/shortenSealedSubclassInAs.kt");
                 }
 
                 @TestMetadata("shortenSealedSubclassInAsSafe.kt")
                 public void testShortenSealedSubclassInAsSafe() throws Exception {
-                    runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/shortenSealedSubclassInAsSafe.kt");
+                    runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/types/shortenSealedSubclassInAsSafe.kt");
                 }
 
                 @TestMetadata("shortenSealedSubclassInIs.kt")
                 public void testShortenSealedSubclassInIs() throws Exception {
-                    runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/shortenSealedSubclassInIs.kt");
+                    runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/types/shortenSealedSubclassInIs.kt");
                 }
 
                 @TestMetadata("shortenSealedSubclassInNegatedIs.kt")
                 public void testShortenSealedSubclassInNegatedIs() throws Exception {
-                    runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/shortenSealedSubclassInNegatedIs.kt");
+                    runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/types/shortenSealedSubclassInNegatedIs.kt");
                 }
 
                 @TestMetadata("shortenSealedSubclassInWhenIsBranch.kt")
                 public void testShortenSealedSubclassInWhenIsBranch() throws Exception {
-                    runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/shortenSealedSubclassInWhenIsBranch.kt");
+                    runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/types/shortenSealedSubclassInWhenIsBranch.kt");
                 }
             }
         }
