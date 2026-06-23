@@ -34,7 +34,6 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiSyntheticClass;
 import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
-import com.intellij.psi.impl.file.PsiPackageImplUtil;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -306,7 +305,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
        return false;
      }
      for (PsiElement element : elements) {
-       if (!PsiPackageImplUtil.isDirectoryUnderPackage(element)) return false;
+       if (!(element instanceof PsiDirectory directory && PackageUtil.isDirectoryUnderPackage(directory))) return false;
      }
      return true;
    }
