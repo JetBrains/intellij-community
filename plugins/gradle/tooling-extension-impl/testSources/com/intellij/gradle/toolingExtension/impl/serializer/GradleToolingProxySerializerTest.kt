@@ -2,6 +2,7 @@
 package com.intellij.gradle.toolingExtension.impl.serializer
 
 import com.intellij.gradle.toolingExtension.impl.serializer.GradleToolingProxySerializerFactory.getSerializer
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildEnvironment
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalGradleEnvironment
@@ -11,13 +12,14 @@ import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.dsl.I
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.dsl.InternalKotlinDslBaseScriptModel
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertInstanceOf
+import org.junit.jupiter.api.assertThrows
 import java.io.File
 
-internal class GradleToolingProxySerializerFactoryTest {
+internal class GradleToolingProxySerializerTest {
 
   @Test
   fun `test gradle build environment serde`() {
-    val serializer = getSerializer(GradleToolingProxySerializerFactoryTest::class.java.classLoader)
+    val serializer = getSerializer(GradleToolingProxySerializerTest::class.java.classLoader)
     val buildEnvironment = InternalBuildEnvironment(
       { InternalBuildIdentifier(File("identifier")) },
       { InternalGradleEnvironment(File("userHome"), "gradleVersion") },
@@ -27,11 +29,14 @@ internal class GradleToolingProxySerializerFactoryTest {
     val bytes = serializer.serialize(buildEnvironment)
     val deserialized = serializer.deserialize(bytes)
     assertInstanceOf<InternalBuildEnvironment>(deserialized)
+    assertThat(deserialized)
+      .usingRecursiveComparison()
+      .isEqualTo(buildEnvironment)
   }
 
   @Test
   fun `test gradle dsl buildscript model serde`() {
-    val serializer = getSerializer(GradleToolingProxySerializerFactoryTest::class.java.classLoader)
+    val serializer = getSerializer(GradleToolingProxySerializerTest::class.java.classLoader)
     val model = InternalGradleDslBaseScriptModel(
       InternalGroovyDslBaseScriptModel(
         listOf(File("first"), File("second")),
@@ -47,5 +52,24 @@ internal class GradleToolingProxySerializerFactoryTest {
     val bytes = serializer.serialize(model)
     val deserialized = serializer.deserialize(bytes)
     assertInstanceOf<InternalGradleDslBaseScriptModel>(deserialized)
+    assertThat(deserialized)
+      .usingRecursiveComparison()
+      .isEqualTo(model)
   }
+
+  @Test
+  fun `test unregistered object serde`() {
+    val serializer = getSerializer(GradleToolingProxySerializerTest::class.java.classLoader)
+    assertThrows<IllegalArgumentException>("Class is not registered: Object") {
+      serializer.serialize(Any())
+    }
+    assertThrows<IllegalArgumentException>("Class is not registered: Dummy") {
+      serializer.serialize(Dummy())
+    }
+    assertThrows<IllegalArgumentException>("Class is not registered: ArrayDeque") {
+      serializer.serialize(ArrayDeque<Any>())
+    }
+  }
+
+  private class Dummy
 }
