@@ -92,7 +92,7 @@ internal fun appendJsonl(file: Path, lines: List<String>) {
   Files.write(file, lines, StandardOpenOption.CREATE, StandardOpenOption.APPEND)
 }
 
-internal fun drainUpdateChannel(updates: Channel<Unit>) {
+internal fun <T> drainUpdateChannel(updates: Channel<T>) {
   while (true) {
     if (!updates.tryReceive().isSuccess) {
       break
@@ -100,12 +100,17 @@ internal fun drainUpdateChannel(updates: Channel<Unit>) {
   }
 }
 
-internal suspend fun awaitWatcherUpdate(
-  updates: Channel<Unit>,
+internal suspend fun <T> awaitWatcherUpdate(
+  updates: Channel<T>,
   timeout: Duration = DEFAULT_WATCHER_UPDATE_TIMEOUT,
+  predicate: (T) -> Boolean = { true },
 ): Boolean {
-  val update = withTimeoutOrNull(timeout) {
-    updates.receive()
-  }
-  return update != null
+  return withTimeoutOrNull(timeout) {
+    while (true) {
+      val update = updates.receive()
+      if (predicate(update)) {
+        return@withTimeoutOrNull true
+      }
+    }
+  } == true
 }
