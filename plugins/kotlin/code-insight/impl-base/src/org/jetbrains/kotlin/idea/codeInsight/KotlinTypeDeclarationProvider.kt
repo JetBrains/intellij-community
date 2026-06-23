@@ -117,10 +117,16 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationPlaceAwareProvider
         callSiteReferenceProvider: (() -> PsiReference?)? = null,
         typeFromSymbol: (KaCallableSymbol) -> KaType?
     ): Array<PsiElement> {
+        val callSiteReferenceElement = callSiteReferenceProvider?.invoke()?.element as? KtElement
+
+        val smartCastType = (callSiteReferenceElement as? KtExpression)?.let { expression ->
+            analyze(expression) {
+                expression.smartCastInfo?.smartCastType
+            }
+        }
+
         analyze(this) {
             val symbol = symbol as? KaCallableSymbol ?: return PsiElement.EMPTY_ARRAY
-            val callSiteReferenceElement = callSiteReferenceProvider?.invoke()?.element as? KtElement
-            val smartCastType = (callSiteReferenceElement as? KtExpression)?.smartCastInfo?.smartCastType
             val type = smartCastType ?: typeFromSymbol(symbol) ?: return PsiElement.EMPTY_ARRAY
             val unwrappedType = type.upperBoundIfFlexible().abbreviationOrSelf
             val targetPsiElement = unwrappedType.symbol?.psi
