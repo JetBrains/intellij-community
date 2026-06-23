@@ -83,6 +83,8 @@
     <applicationSettings service="com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService"/>
     <applicationSettings service="com.intellij.agent.workbench.sessions.state.AgentSessionWarmStateService"/>
     <applicationSettings service="com.intellij.agent.workbench.sessions.AgentSessionCostHintStateService"/>
+    <applicationService serviceInterface="com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionLaunchProfileResolver"
+                        serviceImplementation="com.intellij.agent.workbench.sessions.service.AgentSessionLaunchProfileResolverImpl"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.agent.workbench">

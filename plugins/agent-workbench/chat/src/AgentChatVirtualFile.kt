@@ -111,6 +111,9 @@ internal class AgentChatVirtualFile internal constructor(
   var launchMode: String? = null
     private set
 
+  var launchProfileId: String? = null
+    private set
+
   var generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO
     private set
 
@@ -318,6 +321,15 @@ internal class AgentChatVirtualFile internal constructor(
       return false
     }
     this.launchMode = normalized
+    return true
+  }
+
+  fun updateLaunchProfileId(launchProfileId: String?): Boolean {
+    val normalized = launchProfileId?.trim()?.takeIf(String::isNotEmpty)
+    if (this.launchProfileId == normalized) {
+      return false
+    }
+    this.launchProfileId = normalized
     return true
   }
 
@@ -634,6 +646,7 @@ internal class AgentChatVirtualFile internal constructor(
       pendingLaunchMode = snapshot.runtime.pendingLaunchMode,
     )
     updateLaunchMode(snapshot.runtime.launchMode)
+    updateLaunchProfileId(snapshot.runtime.launchProfileId)
     updateGenerationSettings(snapshot.runtime.generationSettings)
     updateNewThreadRebindRequestedAtMs(snapshot.runtime.newThreadRebindRequestedAtMs)
     updateInitialPromptDelivery(
@@ -666,6 +679,7 @@ internal class AgentChatVirtualFile internal constructor(
         pendingFirstInputAtMs = pendingFirstInputAtMs,
         pendingLaunchMode = pendingLaunchMode,
         launchMode = launchMode,
+        launchProfileId = launchProfileId,
         generationSettings = generationSettings,
         newThreadRebindRequestedAtMs = newThreadRebindRequestedAtMs,
         initialPromptRecord = initialPromptRecord,

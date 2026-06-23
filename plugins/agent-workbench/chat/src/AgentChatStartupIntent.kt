@@ -9,6 +9,7 @@ internal sealed interface AgentChatStartupIntent {
   data class NewSession(
     val provider: AgentSessionProvider,
     val launchMode: AgentSessionLaunchMode,
+    val launchProfileId: String? = null,
   ) : AgentChatStartupIntent
 }
 
@@ -17,6 +18,7 @@ internal fun resolveAgentChatNewSessionStartupIntent(file: AgentChatVirtualFile)
   return AgentChatStartupIntent.NewSession(
     provider = provider,
     launchMode = parseAgentChatLaunchMode(file.pendingLaunchMode),
+    launchProfileId = file.launchProfileId,
   )
 }
 

@@ -235,6 +235,7 @@ suspend fun openChat(
   pendingFirstInputAtMs: Long? = null,
   pendingLaunchMode: String? = null,
   launchMode: String? = null,
+  launchProfileId: String? = null,
   newSessionProvider: AgentSessionProvider? = null,
   newSessionLaunchMode: AgentSessionLaunchMode? = null,
   initialMessageDispatchPlan: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
@@ -263,6 +264,7 @@ suspend fun openChat(
   else {
     generationSettings
   }
+  val effectiveLaunchProfileId = launchProfileId?.trim()?.takeIf(String::isNotEmpty) ?: existing?.launchProfileId
   val startupOverrideForTab = if (isNewTab) {
     initialMessageDispatchPlan.startupLaunchSpecOverride ?: launchSpec.takeIf(::shouldUseStartupLaunchSpecOverride)
   }
@@ -273,8 +275,11 @@ suspend fun openChat(
     buildNewSessionStartupIntent(
       provider = newSessionProvider,
       launchMode = newSessionLaunchMode,
+      launchProfileId = effectiveLaunchProfileId,
     ) ?: pendingProviderForThreadIdentity(threadIdentity)?.let { provider ->
-      AgentChatStartupIntent.NewSession(provider = provider, launchMode = parseAgentChatLaunchMode(pendingLaunchMode))
+      AgentChatStartupIntent.NewSession(provider = provider,
+                                        launchMode = parseAgentChatLaunchMode(pendingLaunchMode),
+                                        launchProfileId = effectiveLaunchProfileId)
     }
   }
   else {
@@ -301,6 +306,7 @@ suspend fun openChat(
     pendingFirstInputAtMs = pendingFirstInputAtMs,
     pendingLaunchMode = pendingLaunchMode,
     launchMode = launchMode ?: existing?.launchMode,
+    launchProfileId = effectiveLaunchProfileId,
     generationSettings = effectiveGenerationSettings,
     newThreadRebindRequestedAtMs = existing?.newThreadRebindRequestedAtMs,
     initialPromptRecord = snapshotInitialPromptRecord,
@@ -400,11 +406,13 @@ private fun shouldUseStartupLaunchSpecOverride(launchSpec: AgentSessionTerminalL
 private fun buildNewSessionStartupIntent(
   provider: AgentSessionProvider?,
   launchMode: AgentSessionLaunchMode?,
+  launchProfileId: String?,
 ): AgentChatStartupIntent.NewSession? {
   val resolvedProvider = provider ?: return null
   return AgentChatStartupIntent.NewSession(
     provider = resolvedProvider,
     launchMode = launchMode ?: AgentSessionLaunchMode.STANDARD,
+    launchProfileId = launchProfileId,
   )
 }
 
@@ -459,6 +467,7 @@ suspend fun updateAgentChatDeferredStartState(
         buildNewSessionStartupIntent(
           provider = newSessionProvider,
           launchMode = newSessionLaunchMode,
+          launchProfileId = chatFile.launchProfileId,
         ) ?: resolveAgentChatNewSessionStartupIntent(chatFile)
       )
     }

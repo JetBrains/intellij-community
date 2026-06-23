@@ -47,6 +47,7 @@ internal class AgentPromptPaletteSubmitController(
   private val onSubmitBlocked: (@Nls String) -> Unit,
   private val onSubmitSucceeded: () -> Unit,
   private val onPromptSubmitted: (AgentPromptHistoryEntry) -> Unit = {},
+  private val launchProfileIdProvider: () -> String? = { null },
   private val generationSettingsProvider: () -> AgentPromptGenerationSettings = { AgentPromptGenerationSettings.AUTO },
   private val generationModelCatalogProvider: () -> List<AgentPromptGenerationModel> = { emptyList() },
   private val isContainerModeSelected: () -> Boolean = { false },
@@ -204,11 +205,12 @@ internal class AgentPromptPaletteSubmitController(
       targetMode == PromptTargetMode.NEW_TASK -> null
       else -> existingTaskController.selectedExistingTaskId ?: return
     }
-    val generationSettings =
-      if (targetMode == PromptTargetMode.NEW_TASK) generationSettingsProvider() else AgentPromptGenerationSettings.AUTO
-    val generationModelCatalog = if (targetMode == PromptTargetMode.NEW_TASK) generationModelCatalogProvider() else emptyList()
+    val isNewTaskLaunch = targetThreadId == null
+    val generationSettings = if (isNewTaskLaunch) generationSettingsProvider() else AgentPromptGenerationSettings.AUTO
+    val generationModelCatalog = if (isNewTaskLaunch) generationModelCatalogProvider() else emptyList()
 
     val request = AgentPromptLaunchRequest(
+      launchProfileId = launchProfileIdProvider(),
       provider = providerEntry.bridge.provider,
       projectPath = effectiveProjectPath,
       launchMode = providerSelector.selectedLaunchMode,

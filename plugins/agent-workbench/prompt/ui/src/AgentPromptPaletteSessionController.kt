@@ -168,6 +168,7 @@ internal class AgentPromptPaletteSessionController(
       onSubmitBlocked = ::showError,
       onSubmitSucceeded = ::closeAfterSuccessfulSubmit,
       onPromptSubmitted = uiStateService::saveSubmittedPromptHistoryEntry,
+      launchProfileIdProvider = generationSettingsController::currentLaunchProfileId,
       generationSettingsProvider = generationSettingsController::currentLaunchSettings,
       generationModelCatalogProvider = generationSettingsController::currentGenerationModelCatalog,
       isContainerModeSelected = ::isContainerModeSelectedForCurrentState,
