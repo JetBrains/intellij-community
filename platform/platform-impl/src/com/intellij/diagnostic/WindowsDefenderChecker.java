@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
@@ -182,10 +182,24 @@ public class WindowsDefenderChecker {
   private enum AntivirusProduct {DisplayName, ProductState}
   private enum MpComputerStatus {RealTimeProtectionEnabled}
 
+  /// Returns `true` if the given path should not be put on the Defender's exclusion list
+  /// (either because it may host suspicious files or is too broad).
   public final boolean isUntrustworthyLocation(@NotNull Path path) {
-    var tempVar = System.getenv("TEMP");
-    if (tempVar != null && path.startsWith(Path.of(tempVar))) {
+    if (path.getParent() == null) {
       return true;
+    }
+
+    var homeDir = Path.of(System.getProperty("user.home"));
+    if (homeDir.startsWith(path)) {
+      return true;
+    }
+
+    var tempVar = System.getenv("TEMP");
+    if (tempVar != null) {
+      var tempDir = Path.of(tempVar);
+      if (path.startsWith(tempDir) || tempDir.startsWith(path)) {
+        return true;
+      }
     }
 
     var downloadDir = (Path)null;
@@ -198,7 +212,7 @@ public class WindowsDefenderChecker {
       }
     }
     if (downloadDir == null) {
-      downloadDir = Path.of(System.getProperty("user.home"), "Downloads");
+      downloadDir = homeDir.resolve("Downloads");
     }
     if (path.startsWith(downloadDir)) {
       return true;
