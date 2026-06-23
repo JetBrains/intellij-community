@@ -1,10 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.types
 
+import com.intellij.idea.TestFor
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
-
-import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.inspections.PyTypeHintsInspection
 import com.jetbrains.python.psi.LanguageLevel
@@ -2367,6 +2366,14 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                ^^ WARNING Type variable 'P1' is out of scope
     class Clazz8[T = [int]]: ...
     #                ^^^^^ WARNING Default type must be a type expression
+    """)
+
+  @Test
+  @TestFor(issues = ["PY-90365"])
+  fun `class with list literal default used as another default`() = test("""
+    class A[T = [int]]: ...
+    #           ^^^^^ WARNING Default type must be a type expression
+    class B[T = A]: ...
     """)
 
   @Test
