@@ -9,6 +9,7 @@ import com.intellij.platform.ai.agent.core.session.AgentSubAgent
 import com.intellij.platform.ai.agent.common.statusColor
 import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentation
 import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationKey
+import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AGENT_SESSIONS_CHROME_ACTIVITY_FRESHNESS_MILLIS
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityBucket
@@ -354,7 +355,7 @@ class AgentSessionsActivitySummaryTest {
   }
 
   @Test
-  fun stripeBadgeShowsDoneWhenThereIsUnreadOutputAndNoAttention() {
+  fun stripeBadgeShowsRunningWhenThereIsProcessingAndNoAttention() {
     val summary = buildAgentSessionsActivitySummary(
       AgentSessionsState(
         projects = listOf(
@@ -372,11 +373,32 @@ class AgentSessionsActivitySummaryTest {
       )
     )
 
+    assertThat(summary.stripeBadge()).isEqualTo(AgentSessionsStripeBadge.RUNNING)
+  }
+
+  @Test
+  fun stripeBadgeShowsDoneWhenThereIsUnreadOutputAndNoAttentionOrRunning() {
+    val summary = buildAgentSessionsActivitySummary(
+      AgentSessionsState(
+        projects = listOf(
+          AgentProjectSessions(
+            path = "/work/project-a",
+            name = "Project A",
+            isOpen = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            threads = listOf(
+              thread("done", AgentThreadActivity.UNREAD, 400),
+            ),
+          )
+        ),
+      )
+    )
+
     assertThat(summary.stripeBadge()).isEqualTo(AgentSessionsStripeBadge.DONE)
   }
 
   @Test
-  fun stripeBadgeIgnoresRunningReadyAndNewSessionRows() {
+  fun stripeBadgeShowsRunningAndIgnoresReadyAndNewSessionRows() {
     val summary = buildAgentSessionsActivitySummary(
       AgentSessionsState(
         projects = listOf(
@@ -395,17 +417,18 @@ class AgentSessionsActivitySummaryTest {
       )
     )
 
-    assertThat(summary.stripeBadge()).isNull()
+    assertThat(summary.stripeBadge()).isEqualTo(AgentSessionsStripeBadge.RUNNING)
   }
 
   @Test
   fun stripeBadgeUsesAgentWorkbenchActivityColors() {
     assertThat(AgentSessionsStripeBadge.ATTENTION.color().rgb).isEqualTo(AgentThreadActivity.NEEDS_INPUT.statusColor()?.rgb)
+    assertThat(AgentSessionsStripeBadge.RUNNING.color().rgb).isEqualTo(AgentThreadActivity.PROCESSING.statusColor()?.rgb)
     assertThat(AgentSessionsStripeBadge.DONE.color().rgb).isEqualTo(AgentThreadActivity.UNREAD.statusColor()?.rgb)
   }
 
   @Test
-  fun popupRowTextIncludesTitleLocationAndRelativeTime() {
+  fun popupRowTextIncludesTitleStatusLocationAndRelativeTime() {
     val summary = buildAgentSessionsActivitySummary(
       AgentSessionsState(
         projects = listOf(
@@ -431,6 +454,7 @@ class AgentSessionsActivitySummaryTest {
     val text = agentSessionsActivityPopupRowText(summary.attentionRows.single(), now = 500)
 
     assertThat(text).contains("Confirm tool call")
+    assertThat(text).contains(AgentSessionsBundle.message("toolwindow.thread.status.needs.input"))
     assertThat(text).contains("Project A / feature")
     assertThat(text).contains("now")
   }

@@ -177,9 +177,6 @@ internal class AgentSessionsToolWindowPanel(
     threadViewStateFlow = service<AgentSessionThreadViewStateService>().state,
     selectedChatTabFlow = project.service<AgentChatTabSelectionService>().selectedChatTab,
     pendingChatTabsStateFlow = service<AgentChatOpenPendingTabsStateService>().state,
-    markThreadAsRead = { path, provider, threadId, updatedAt ->
-      service<AgentSessionRefreshService>().markThreadAsRead(path, provider, threadId, updatedAt)
-    },
     ensureArchivedSessionsLoaded = { service<AgentArchivedSessionsService>().ensureLoaded() },
     tree = tree,
     getSessionTreeModel = { sessionTreeModel },

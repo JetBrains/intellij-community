@@ -3,9 +3,6 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 
 import com.intellij.agent.workbench.chat.AgentChatTabSelection
 import com.intellij.agent.workbench.chat.AgentChatOpenPendingTabsState
-import com.intellij.platform.ai.agent.core.AgentThreadActivity
-import com.intellij.platform.ai.agent.core.parseAgentThreadIdentity
-import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.model.AgentArchivedSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentSessionThreadViewMode
@@ -44,7 +41,6 @@ internal class AgentSessionsTreeStateController(
   private val threadViewStateFlow: StateFlow<AgentSessionThreadViewState>,
   private val selectedChatTabFlow: StateFlow<AgentChatTabSelection?>,
   private val pendingChatTabsStateFlow: StateFlow<AgentChatOpenPendingTabsState>,
-  private val markThreadAsRead: (String, AgentSessionProvider, String, Long) -> Unit,
   private val ensureArchivedSessionsLoaded: () -> Unit,
   private val tree: Tree,
   private val getSessionTreeModel: () -> SessionTreeModel,
@@ -98,12 +94,7 @@ internal class AgentSessionsTreeStateController(
 
     scope.launch {
       selectedChatTabFlow.collect { selection ->
-        val previousSelection = selectedChatTab
         selectedChatTab = selection
-        if (previousSelection != selection) {
-          markChatTabThreadAsRead(previousSelection)
-        }
-        markChatTabThreadAsRead(selection)
         applyChatSelection(selection)
       }
     }
@@ -164,24 +155,6 @@ internal class AgentSessionsTreeStateController(
 
   @TestOnly
   internal fun hasPendingModelUpdateForTest(): Boolean = pendingRebuildReason != null
-
-  private fun markChatTabThreadAsRead(selection: AgentChatTabSelection?) {
-    if (selection == null) return
-    val provider = AgentSessionProvider.fromOrNull(
-      parseAgentThreadIdentity(selection.threadIdentity)?.providerId ?: return
-    ) ?: return
-    val thread = activeSessionsState.projects
-                   .asSequence()
-                   .flatMap { project ->
-                     when {
-                       project.path == selection.projectPath -> project.threads.asSequence()
-                       else -> project.worktrees.firstOrNull { it.path == selection.projectPath }?.threads?.asSequence() ?: emptySequence()
-                     }
-                   }
-                   .firstOrNull { it.id == selection.threadId && it.provider == provider && it.activity == AgentThreadActivity.UNREAD }
-                 ?: return
-    markThreadAsRead(selection.projectPath, provider, thread.id, thread.updatedAt)
-  }
 
   private fun rebuildTree(reason: SessionTreeRebuildReason) {
     if (!modelUpdatesVisible) {

@@ -1,0 +1,151 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.agent.workbench.sessions
+
+import com.intellij.agent.workbench.chat.AgentChatTabSelection
+import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.core.session.AgentSessionThread
+import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
+import com.intellij.agent.workbench.sessions.model.AgentSessionsState
+import com.intellij.agent.workbench.sessions.model.AgentWorktree
+import com.intellij.agent.workbench.sessions.service.markAgentChatSelectionThreadAsReadIfUnread
+import com.intellij.testFramework.junit5.TestApplication
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
+
+@TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
+class AgentChatUnreadAcknowledgementServiceTest {
+  @Test
+  fun marksUnreadSelectedProjectThreadAsRead() {
+    val marks = mutableListOf<ReadMark>()
+
+    val changed = markAgentChatSelectionThreadAsReadIfUnread(
+      selection = selection(projectPath = "$ACK_PROJECT_PATH/"),
+      state = stateWithUnreadProjectThread(),
+      markThreadAsRead = { path, provider, threadId, updatedAt -> marks += ReadMark(path, provider, threadId, updatedAt) },
+    )
+
+    assertThat(changed).isTrue()
+    assertThat(marks).containsExactly(ReadMark(ACK_PROJECT_PATH, AgentSessionProvider.CODEX, ACK_THREAD_ID, 200))
+  }
+
+  @Test
+  fun marksUnreadSelectedWorktreeThreadAsRead() {
+    val marks = mutableListOf<ReadMark>()
+    val changed = markAgentChatSelectionThreadAsReadIfUnread(
+      selection = selection(projectPath = ACK_WORKTREE_PATH),
+      state = stateWithUnreadWorktreeThread(),
+      markThreadAsRead = { path, provider, threadId, updatedAt -> marks += ReadMark(path, provider, threadId, updatedAt) },
+    )
+
+    assertThat(changed).isTrue()
+    assertThat(marks).containsExactly(ReadMark(ACK_WORKTREE_PATH, AgentSessionProvider.CODEX, ACK_THREAD_ID, 300))
+  }
+
+  @Test
+  fun doesNotMarkThreadThatIsNotUnread() {
+    val marks = mutableListOf<ReadMark>()
+
+    val changed = markAgentChatSelectionThreadAsReadIfUnread(
+      selection = selection(),
+      state = stateWithReadyProjectThread(),
+      markThreadAsRead = { path, provider, threadId, updatedAt -> marks += ReadMark(path, provider, threadId, updatedAt) },
+    )
+
+    assertThat(changed).isFalse()
+    assertThat(marks).isEmpty()
+  }
+
+  @Test
+  fun ignoresSelectionWithUnknownProviderIdentity() {
+    val marks = mutableListOf<ReadMark>()
+
+    val changed = markAgentChatSelectionThreadAsReadIfUnread(
+      selection = selection(threadIdentity = "unknown:$ACK_THREAD_ID"),
+      state = stateWithUnreadProjectThread(),
+      markThreadAsRead = { path, provider, threadId, updatedAt -> marks += ReadMark(path, provider, threadId, updatedAt) },
+    )
+
+    assertThat(changed).isFalse()
+    assertThat(marks).isEmpty()
+  }
+}
+
+private const val ACK_PROJECT_PATH = "/work/project-a"
+private const val ACK_WORKTREE_PATH = "/work/project-a-feature"
+private const val ACK_THREAD_ID = "thread-1"
+
+private data class ReadMark(
+  val path: String,
+  val provider: AgentSessionProvider,
+  val threadId: String,
+  val updatedAt: Long,
+)
+
+private fun selection(
+  projectPath: String = ACK_PROJECT_PATH,
+  threadIdentity: String = "codex:$ACK_THREAD_ID",
+): AgentChatTabSelection {
+  return AgentChatTabSelection(
+    projectPath = projectPath,
+    threadIdentity = threadIdentity,
+    threadId = ACK_THREAD_ID,
+    subAgentId = null,
+  )
+}
+
+private fun stateWithUnreadProjectThread(): AgentSessionsState {
+  return stateWithProjectThread(thread(activity = AgentThreadActivity.UNREAD, updatedAt = 200))
+}
+
+private fun stateWithReadyProjectThread(): AgentSessionsState {
+  return stateWithProjectThread(thread(activity = AgentThreadActivity.READY, updatedAt = 200))
+}
+
+private fun stateWithProjectThread(thread: AgentSessionThread): AgentSessionsState {
+  return AgentSessionsState(
+    projects = listOf(
+      AgentProjectSessions(
+        path = ACK_PROJECT_PATH,
+        name = "Project A",
+        isOpen = true,
+        threads = listOf(thread),
+      )
+    ),
+  )
+}
+
+private fun stateWithUnreadWorktreeThread(): AgentSessionsState {
+  return AgentSessionsState(
+    projects = listOf(
+      AgentProjectSessions(
+        path = ACK_PROJECT_PATH,
+        name = "Project A",
+        isOpen = true,
+        worktrees = listOf(
+          AgentWorktree(
+            path = ACK_WORKTREE_PATH,
+            name = "project-a-feature",
+            branch = "feature",
+            isOpen = true,
+            threads = listOf(thread(activity = AgentThreadActivity.UNREAD, updatedAt = 300)),
+          )
+        ),
+      )
+    ),
+  )
+}
+
+private fun thread(activity: AgentThreadActivity, updatedAt: Long): AgentSessionThread {
+  return AgentSessionThread(
+    id = ACK_THREAD_ID,
+    title = "Thread 1",
+    updatedAt = updatedAt,
+    archived = false,
+    provider = AgentSessionProvider.CODEX,
+    activity = activity,
+  )
+}

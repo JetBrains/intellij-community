@@ -102,6 +102,7 @@ class AgentSessionsCodexActivityRenderingIntegrationTest {
       assertThat(processingRenderer.getCharSequence(true).toString())
         .doesNotContain(AgentSessionsBundle.message("toolwindow.thread.status.in.progress"))
         .doesNotContain("ACTIVE")
+      assertThat(processingRenderer.trailingThreadPaintForTest?.timeLabel).isEqualTo("now")
 
       val readyRenderer = createRenderer { id ->
         when (id) {

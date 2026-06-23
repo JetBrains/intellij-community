@@ -56,33 +56,33 @@ private val READY_PRESENTATION = AgentThreadActivityPresentation(
 
 // Active work in progress.
 private val PROCESSING_PRESENTATION = threadActivityPresentation(
-  namedColorKey = "AgentWorkbench.ThreadStatus.processing",
-  lightFallbackColor = Color(0xFFAF0F).rgb,
-  darkFallbackColor = Color(0xF2C55C).rgb,
+  namedColorKey = "IconBadge.successBackground",
+  lightFallbackColor = Color(0x55A76A).rgb,
+  darkFallbackColor = Color(0x5FAD65).rgb,
   statusMessageKey = "toolwindow.thread.status.in.progress",
 )
 
 // Review-mode output waiting for user attention.
 private val REVIEWING_PRESENTATION = threadActivityPresentation(
-  namedColorKey = "AgentWorkbench.ThreadStatus.reviewing",
-  lightFallbackColor = Color(0x8F5AE5).rgb,
-  darkFallbackColor = Color(0x8F5AE5).rgb,
+  namedColorKey = "IconBadge.warningBackground",
+  lightFallbackColor = Color(0xFFAF0F).rgb,
+  darkFallbackColor = Color(0xF2C55C).rgb,
   statusMessageKey = "toolwindow.thread.status.needs.review",
 )
 
 // Completed assistant output waiting to be seen.
 private val UNREAD_PRESENTATION = threadActivityPresentation(
-  namedColorKey = "AgentWorkbench.ThreadStatus.unread",
-  lightFallbackColor = Color(0x55A76A).rgb,
-  darkFallbackColor = Color(0x5FAD65).rgb,
+  namedColorKey = "IconBadge.infoBackground",
+  lightFallbackColor = Color(0x588CF3).rgb,
+  darkFallbackColor = Color(0x548AF7).rgb,
   statusMessageKey = "toolwindow.thread.status.done",
 )
 
 // Explicit user action required.
 private val NEEDS_INPUT_PRESENTATION = threadActivityPresentation(
-  namedColorKey = "AgentWorkbench.ThreadStatus.needsInput",
-  lightFallbackColor = Color(0x588CF3).rgb,
-  darkFallbackColor = Color(0x548AF7).rgb,
+  namedColorKey = "IconBadge.warningBackground",
+  lightFallbackColor = Color(0xFFAF0F).rgb,
+  darkFallbackColor = Color(0xF2C55C).rgb,
   statusMessageKey = "toolwindow.thread.status.needs.input",
 )
 

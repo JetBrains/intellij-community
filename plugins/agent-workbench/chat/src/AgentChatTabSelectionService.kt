@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import org.jetbrains.annotations.ApiStatus
 
 data class AgentChatTabSelection(
   @JvmField val projectPath: String,
@@ -39,7 +40,12 @@ class AgentChatTabSelectionService(private val project: Project, cs: CoroutineSc
 }
 
 internal fun FileEditor?.toAgentChatTabSelection(): AgentChatTabSelection? {
-  val file = this?.file as? AgentChatVirtualFile ?: return null
+  return this?.file.toAgentChatTabSelection()
+}
+
+@ApiStatus.Internal
+fun VirtualFile?.toAgentChatTabSelection(): AgentChatTabSelection? {
+  val file = this as? AgentChatVirtualFile ?: return null
   return AgentChatTabSelection(
     projectPath = file.projectPath,
     threadIdentity = file.threadIdentity,
