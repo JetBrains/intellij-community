@@ -23,7 +23,6 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathContext
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
@@ -723,7 +722,7 @@ class AgentSessionPromptLauncherBridgeTest {
           assertThat(result.launched).isTrue()
           waitForCondition {
             uiPreferencesState.getProviderPreferences().providerOptionsByProviderId[AgentSessionProvider.CLAUDE.value] ==
-            setOf(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE)
+              setOf(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE)
           }
         }
       }
@@ -1096,7 +1095,6 @@ class AgentSessionPromptLauncherBridgeTest {
             AgentInitialMessageDispatchStep(
               text = "/plan",
               timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
-              completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
             ),
             AgentInitialMessageDispatchStep(
               text = "Refactor selected code",
@@ -2492,7 +2490,6 @@ private class RecordingPromptLaunchProviderBridge(
       AgentInitialMessageDispatchStep(
         text = "/plan",
         timeoutPolicy = initialMessagePlan.timeoutPolicy,
-        completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
       ),
       message.takeIf(String::isNotEmpty)?.let { prompt ->
         AgentInitialMessageDispatchStep(

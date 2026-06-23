@@ -5,7 +5,12 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageTimeoutPolicy
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryChannel
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryStatus
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptRecord
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentTerminalPromptDispatch
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.terminal.frontend.view.TerminalKeyEvent
@@ -132,6 +137,30 @@ class AgentChatInitialMessageDispatcherTest {
   }
 
   @Test
+  fun transientBusyRewindRetriesFromFirstInitialMessageStep(): Unit = timeoutRunBlocking {
+    val behavior = RewindOnceOnPromptStepBehavior()
+    val file = createFile(
+      provider = AgentSessionProvider.CODEX,
+      steps = listOf(
+        AgentInitialMessageDispatchStep(
+          text = "/plan",
+          timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
+        ),
+        AgentInitialMessageDispatchStep(
+          text = "Refactor this",
+          timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
+        ),
+      )
+    )
+    val tab = FakeTerminalTab(coroutineScope = this)
+
+    createDispatcher(file, behavior = behavior).schedule(tab)
+
+    waitForCondition { file.initialMessageSent }
+    assertThat(tab.events).containsExactly("text:/plan", "text:/plan", "text:Refactor this")
+  }
+
+  @Test
   fun persistedPromptDataIsNotRestoredForDispatch() {
     val identity = AgentChatTabIdentity(
       projectHash = "hash",
@@ -192,6 +221,37 @@ class AgentChatInitialMessageDispatcherTest {
 
     waitForCondition { file.initialMessageDispatchSteps.isEmpty() }
     assertThat(tab.events).containsExactly("backtab")
+    assertThat(file.initialMessageSent).isFalse()
+    assertThat(reportedFiles).containsExactly(file)
+  }
+
+  @Test
+  fun stoppedPlanModeTextDispatchReportsPromptNotSent(): Unit = timeoutRunBlocking {
+    val file = createFile(
+      provider = AgentSessionProvider.CODEX,
+      initialMessageMode = AgentInitialMessageMode.PLAN,
+      steps = listOf(
+        AgentInitialMessageDispatchStep(
+          text = "/plan",
+          timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
+        ),
+        AgentInitialMessageDispatchStep(
+          text = "Refactor this",
+          timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
+        ),
+      )
+    )
+    val tab = FakeTerminalTab(coroutineScope = this)
+    val reportedFiles = mutableListOf<AgentChatVirtualFile>()
+
+    createDispatcher(
+      file = file,
+      behavior = StopBeforeSendBehavior,
+      planModeInitialPromptStopReporter = { _, stoppedFile -> reportedFiles += stoppedFile },
+    ).schedule(tab)
+
+    waitForCondition { file.initialMessageDispatchSteps.isEmpty() }
+    assertThat(tab.events).isEmpty()
     assertThat(file.initialMessageSent).isFalse()
     assertThat(reportedFiles).containsExactly(file)
   }
@@ -263,6 +323,23 @@ private class TransientBusyPlanModeBehavior(
   }
 }
 
+private class RewindOnceOnPromptStepBehavior : AgentChatProviderBehavior {
+  private var rewound: Boolean = false
+
+  override suspend fun beforeInitialMessageSend(
+    file: AgentChatBehaviorFile,
+    tab: AgentChatBehaviorTerminalTab,
+    dispatch: AgentChatInitialMessageDispatchContext,
+    retryAttempt: Int,
+  ): AgentChatInitialMessageRetryDecision {
+    if (!rewound && dispatch.stepIndex == 1) {
+      rewound = true
+      return AgentChatInitialMessageRetryDecision.RetryTransientBusyAfterRewindAndReadiness(backoffMs = 1)
+    }
+    return AgentChatInitialMessageRetryDecision.PROCEED
+  }
+}
+
 private fun createDispatcher(
   file: AgentChatVirtualFile,
   provider: AgentSessionProvider = AgentSessionProvider.JUNIE,
@@ -298,9 +375,19 @@ private object StopPlanModeBehavior : AgentChatProviderBehavior {
   }
 }
 
+private object StopBeforeSendBehavior : AgentChatProviderBehavior {
+  override suspend fun beforeInitialMessageSend(
+    file: AgentChatBehaviorFile,
+    tab: AgentChatBehaviorTerminalTab,
+    dispatch: AgentChatInitialMessageDispatchContext,
+    retryAttempt: Int,
+  ): AgentChatInitialMessageRetryDecision = AgentChatInitialMessageRetryDecision.Stop
+}
+
 private fun createFile(
   steps: List<AgentInitialMessageDispatchStep>,
   provider: AgentSessionProvider = AgentSessionProvider.JUNIE,
+  initialMessageMode: AgentInitialMessageMode = AgentInitialMessageMode.STANDARD,
 ): AgentChatVirtualFile {
   return AgentChatVirtualFile(
     projectPath = "/project",
@@ -310,11 +397,18 @@ private fun createFile(
     threadTitle = provider.value,
     subAgentId = null,
   ).also { file ->
-    file.updateInitialMessageMetadata(
-      initialMessageDispatchSteps = steps,
-      initialMessageDispatchStepIndex = 0,
-      initialMessageToken = "token",
-      initialMessageSent = false,
+    file.updateInitialPromptDelivery(
+      promptRecord = AgentInitialPromptRecord(
+        message = steps.lastOrNull { step -> step.action == AgentInitialMessageDispatchAction.SEND_TEXT && step.text.isNotBlank() }?.text,
+        mode = initialMessageMode,
+        token = "token",
+        deliveryStatus = AgentInitialPromptDeliveryStatus.PENDING,
+        deliveryChannel = AgentInitialPromptDeliveryChannel.TERMINAL,
+      ),
+      terminalDispatch = AgentTerminalPromptDispatch(
+        steps = steps,
+        stepIndex = 0,
+      ),
     )
   }
 }

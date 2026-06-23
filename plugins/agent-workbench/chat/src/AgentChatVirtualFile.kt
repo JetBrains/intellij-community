@@ -10,6 +10,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPrompt
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentTerminalPromptDispatch
@@ -131,6 +132,9 @@ internal class AgentChatVirtualFile internal constructor(
 
   val initialMessageToken: String?
     get() = initialPromptRecord?.token
+
+  override val initialMessageMode: AgentInitialMessageMode?
+    get() = initialPromptRecord?.mode
 
   val initialMessageSent: Boolean
     get() = initialPromptRecord?.deliveryStatus == AgentInitialPromptDeliveryStatus.DELIVERED
@@ -492,6 +496,20 @@ internal class AgentChatVirtualFile internal constructor(
   }
 
   @Synchronized
+  fun rewindInitialMessageDispatch(dispatch: AgentChatInitialMessageDispatch): Boolean {
+    if (initialMessageDispatchInFlight !== dispatch) {
+      return false
+    }
+    val terminalDispatch = terminalPromptDispatch ?: run {
+      initialMessageDispatchInFlight = null
+      return false
+    }
+    terminalPromptDispatch = terminalDispatch.copy(stepIndex = 0)
+    initialMessageDispatchInFlight = null
+    return true
+  }
+
+  @Synchronized
   private fun currentPendingInitialMessageStep(): AgentInitialMessageDispatchStep? {
     if (initialMessageSent) {
       return null
@@ -663,8 +681,8 @@ private fun buildInitialPromptRecord(
   sent: Boolean,
 ): AgentInitialPromptRecord? {
   val message = steps.lastOrNull { step -> step.action == AgentInitialMessageDispatchAction.SEND_TEXT && step.text.isNotBlank() }
-    ?.text
-    ?: return null
+                  ?.text
+                ?: return null
   return AgentInitialPromptRecord(
     message = message,
     token = token,
@@ -675,9 +693,9 @@ private fun buildInitialPromptRecord(
 
 internal class AgentChatInitialMessageDispatch internal constructor(
   override val action: AgentInitialMessageDispatchAction,
-  val message: String,
+  override val message: String,
   val token: String?,
-  val stepIndex: Int,
+  override val stepIndex: Int,
   override val completionPolicy: AgentInitialMessageDispatchCompletionPolicy,
 ) : AgentChatInitialMessageDispatchContext
 
