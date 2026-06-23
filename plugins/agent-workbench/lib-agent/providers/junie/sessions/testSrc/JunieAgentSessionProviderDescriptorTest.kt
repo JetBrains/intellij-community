@@ -3,7 +3,6 @@ package com.intellij.platform.ai.agent.junie.sessions
 
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
-import com.intellij.platform.ai.agent.common.AgentWorkbenchActionIds
 import com.intellij.platform.ai.agent.junie.common.JunieCliInfo
 import com.intellij.platform.ai.agent.junie.common.JunieCliSupport
 import com.intellij.platform.ai.agent.junie.common.JunieCliVersion
@@ -45,7 +44,6 @@ class JunieAgentSessionProviderDescriptorTest {
     assertThat(descriptor.promptOptions.map { it.id }).containsExactly(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE)
     assertThat(descriptor.promptOptions.single().defaultSelected).isFalse()
     assertThat(descriptor.supportsGenerationModelSelection).isTrue()
-    assertThat(descriptor.editorTabActionIds).containsExactly(AgentWorkbenchActionIds.Sessions.BIND_PENDING_AGENT_THREAD_FROM_EDITOR_TAB)
     assertThat(descriptor.supportsPendingEditorTabRebind).isTrue()
     assertThat(descriptor.supportsNewThreadRebind).isFalse()
     assertThat(descriptor.emitsScopedRefreshSignals).isTrue()

@@ -14,26 +14,26 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.project.Project
 import javax.swing.JComponent
 
-internal class AgentSessionsEditorTabNewThreadContext(
+internal class AgentSessionsNewThreadContext(
   val project: Project,
-  private val resolveTarget: () -> AgentSessionsEditorTabNewThreadTarget?,
-  private val resolveTargetForUpdate: () -> AgentSessionsEditorTabNewThreadTarget? = resolveTarget,
+  private val resolveTarget: () -> AgentSessionsNewThreadTarget?,
+  private val resolveTargetForUpdate: () -> AgentSessionsNewThreadTarget? = resolveTarget,
 ) {
   constructor(
     project: Project,
-    resolveTarget: () -> AgentSessionsEditorTabNewThreadTarget?,
+    resolveTarget: () -> AgentSessionsNewThreadTarget?,
   ) : this(project = project, resolveTarget = resolveTarget, resolveTargetForUpdate = resolveTarget)
 
-  val target: AgentSessionsEditorTabNewThreadTarget?
+  val target: AgentSessionsNewThreadTarget?
     get() = resolveTarget()
 
-  val targetForUpdate: AgentSessionsEditorTabNewThreadTarget?
+  val targetForUpdate: AgentSessionsNewThreadTarget?
     get() = resolveTargetForUpdate()
 }
 
-internal sealed class AgentSessionsEditorTabNewThreadTarget {
-  data class Direct(val path: String) : AgentSessionsEditorTabNewThreadTarget()
-  data class Candidates(val candidates: List<AgentPromptProjectPathCandidate>) : AgentSessionsEditorTabNewThreadTarget()
+internal sealed class AgentSessionsNewThreadTarget {
+  data class Direct(val path: String) : AgentSessionsNewThreadTarget()
+  data class Candidates(val candidates: List<AgentPromptProjectPathCandidate>) : AgentSessionsNewThreadTarget()
 }
 
 internal fun resolveAgentSessionsMainToolbarNewThreadContext(
@@ -42,11 +42,11 @@ internal fun resolveAgentSessionsMainToolbarNewThreadContext(
   openProjectPaths: () -> List<String> = ::collectOpenAgentSessionProjectPaths,
   resolveChatContext: (AnActionEvent) -> AgentChatEditorTabActionContext? = ::resolveAgentChatEditorTabActionContext,
   selectedSourcePath: (Project) -> String? = ::selectedChatSourceProjectPath,
-): AgentSessionsEditorTabNewThreadContext? {
+): AgentSessionsNewThreadContext? {
   val project = event.project ?: return null
   val chatContext = resolveChatContext(event)
   return if (isDedicatedProject(project)) {
-    AgentSessionsEditorTabNewThreadContext(
+    AgentSessionsNewThreadContext(
       project = project,
       resolveTarget = { resolveDedicatedFrameNewThreadTarget(chatContext, openProjectPaths) },
       resolveTargetForUpdate = { null },
@@ -54,21 +54,21 @@ internal fun resolveAgentSessionsMainToolbarNewThreadContext(
   }
   else {
     val target = resolveMainToolbarProjectFrameNewThreadTarget(project, chatContext, selectedSourcePath) ?: return null
-    AgentSessionsEditorTabNewThreadContext(project) { target }
+    AgentSessionsNewThreadContext(project) { target }
   }
 }
 
 private fun resolveDedicatedFrameNewThreadTarget(
   chatContext: AgentChatEditorTabActionContext?,
   openProjectPaths: () -> List<String>,
-): AgentSessionsEditorTabNewThreadTarget? {
+): AgentSessionsNewThreadTarget? {
   // Source-project candidates are resolved lazily on click/popup open. In a multi-project dedicated frame,
   // require an explicit choice instead of silently using the active Agent tab's source path.
   val candidates = buildAgentSessionProjectPathCandidates(openProjectPaths())
   return when (candidates.size) {
-    0 -> chatContext?.let { AgentSessionsEditorTabNewThreadTarget.Direct(it.path) }
-    1 -> AgentSessionsEditorTabNewThreadTarget.Direct(candidates.single().path)
-    else -> AgentSessionsEditorTabNewThreadTarget.Candidates(candidates)
+    0 -> chatContext?.let { AgentSessionsNewThreadTarget.Direct(it.path) }
+    1 -> AgentSessionsNewThreadTarget.Direct(candidates.single().path)
+    else -> AgentSessionsNewThreadTarget.Candidates(candidates)
   }
 }
 
@@ -76,12 +76,12 @@ private fun resolveMainToolbarProjectFrameNewThreadTarget(
   project: Project,
   chatContext: AgentChatEditorTabActionContext?,
   selectedSourcePath: (Project) -> String?,
-): AgentSessionsEditorTabNewThreadTarget? {
+): AgentSessionsNewThreadTarget? {
   val path = chatContext?.path
              ?: normalizeOpenableSourceProjectPath(selectedSourcePath(project))
              ?: normalizeOpenableSourceProjectPath(project.basePath)
              ?: return null
-  return AgentSessionsEditorTabNewThreadTarget.Direct(path)
+  return AgentSessionsNewThreadTarget.Direct(path)
 }
 
 internal fun resolveQuickStartProjectPopupAnchor(e: AnActionEvent): JComponent? {

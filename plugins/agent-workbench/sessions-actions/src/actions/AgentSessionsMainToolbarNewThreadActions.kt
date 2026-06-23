@@ -59,7 +59,7 @@ import javax.swing.JComponent
  * single icon + chevron, no vertical line.
  */
 internal class AgentSessionsMainToolbarNewThreadAction private constructor(
-  private val resolveContext: (AnActionEvent) -> AgentSessionsEditorTabNewThreadContext?,
+  private val resolveContext: (AnActionEvent) -> AgentSessionsNewThreadContext?,
   private val allBridges: () -> List<AgentSessionProviderDescriptor>,
   createNewSession: (String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit,
   private val userLaunchProfiles: () -> List<AgentPromptLaunchProfile>,
@@ -82,7 +82,7 @@ internal class AgentSessionsMainToolbarNewThreadAction private constructor(
 
   @JvmOverloads
   constructor(
-    resolveContext: (AnActionEvent) -> AgentSessionsEditorTabNewThreadContext? = { event ->
+    resolveContext: (AnActionEvent) -> AgentSessionsNewThreadContext? = { event ->
       resolveAgentSessionsMainToolbarNewThreadContext(event)
     },
     allBridges: () -> List<AgentSessionProviderDescriptor> = AgentSessionProviders::allProviders,
@@ -153,7 +153,7 @@ internal class AgentSessionsMainToolbarNewThreadAction private constructor(
 }
 
 private class ProfilePickerActionGroup(
-  private val resolveContext: (AnActionEvent) -> AgentSessionsEditorTabNewThreadContext?,
+  private val resolveContext: (AnActionEvent) -> AgentSessionsNewThreadContext?,
   private val allBridges: () -> List<AgentSessionProviderDescriptor>,
   private val createNewSession: (String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit,
   private val userLaunchProfiles: () -> List<AgentPromptLaunchProfile>,
@@ -169,14 +169,14 @@ private class ProfilePickerActionGroup(
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val content = e?.let(::resolveContent) ?: return emptyArray()
     return when (val target = content.target) {
-      is AgentSessionsEditorTabNewThreadTarget.Direct -> buildAgentSessionLaunchProfileMenuActions(
+      is AgentSessionsNewThreadTarget.Direct -> buildAgentSessionLaunchProfileMenuActions(
         path = target.path,
         project = content.context.project,
         selection = content.selection,
         entryPoint = entryPoint,
         createNewSession = createNewSession,
       )
-      is AgentSessionsEditorTabNewThreadTarget.Candidates -> target.candidates.mapTo(mutableListOf<AnAction>()) { candidate ->
+      is AgentSessionsNewThreadTarget.Candidates -> target.candidates.mapTo(mutableListOf<AnAction>()) { candidate ->
         DefaultActionGroup(candidate.displayName, true).apply {
           buildAgentSessionLaunchProfileMenuActions(
             path = candidate.path,
@@ -194,7 +194,7 @@ private class ProfilePickerActionGroup(
   fun createRows(e: AnActionEvent): List<AgentWorkbenchPopupRow> {
     val content = resolveContent(e) ?: return emptyList()
     return when (val target = content.target) {
-      is AgentSessionsEditorTabNewThreadTarget.Direct -> buildAgentSessionLaunchProfileMenuRows(
+      is AgentSessionsNewThreadTarget.Direct -> buildAgentSessionLaunchProfileMenuRows(
         path = target.path,
         project = content.context.project,
         selection = content.selection,
@@ -202,7 +202,7 @@ private class ProfilePickerActionGroup(
         createNewSession = createNewSession,
         event = e,
       )
-      is AgentSessionsEditorTabNewThreadTarget.Candidates -> target.candidates.map { candidate ->
+      is AgentSessionsNewThreadTarget.Candidates -> target.candidates.map { candidate ->
         AgentWorkbenchPopupRow(
           text = candidate.displayName,
           tooltipText = candidate.path.takeIf { path -> path != candidate.displayName },
@@ -232,14 +232,14 @@ private class ProfilePickerActionGroup(
   }
 
   private data class ProfilePickerContent(
-    val context: AgentSessionsEditorTabNewThreadContext,
-    val target: AgentSessionsEditorTabNewThreadTarget,
+    val context: AgentSessionsNewThreadContext,
+    val target: AgentSessionsNewThreadTarget,
     val selection: AgentSessionLaunchProfileSelection,
   )
 }
 
 internal class ProfileQuickStartAction(
-  private val resolveContext: (AnActionEvent) -> AgentSessionsEditorTabNewThreadContext?,
+  private val resolveContext: (AnActionEvent) -> AgentSessionsNewThreadContext?,
   private val allBridges: () -> List<AgentSessionProviderDescriptor>,
   private val createNewSession: (String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit,
   private val userLaunchProfiles: () -> List<AgentPromptLaunchProfile>,
@@ -272,7 +272,7 @@ internal class ProfileQuickStartAction(
   override fun actionPerformed(e: AnActionEvent) {
     val context = resolveContext(e) ?: return
     when (val target = context.target) {
-      is AgentSessionsEditorTabNewThreadTarget.Direct -> {
+      is AgentSessionsNewThreadTarget.Direct -> {
         val quickStart = resolveQuickStartItem(context)
         if (quickStart == null || !quickStart.menuItem.isEnabled) {
           showPicker(pickerGroup, e)
@@ -280,13 +280,13 @@ internal class ProfileQuickStartAction(
         }
         createNewSession(target.path, quickStart.profile, context.project, entryPoint)
       }
-      is AgentSessionsEditorTabNewThreadTarget.Candidates, null -> showPicker(pickerGroup, e)
+      is AgentSessionsNewThreadTarget.Candidates, null -> showPicker(pickerGroup, e)
     }
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  private fun resolveQuickStartItem(context: AgentSessionsEditorTabNewThreadContext): AgentSessionLaunchProfileMenuItem? {
+  private fun resolveQuickStartItem(context: AgentSessionsNewThreadContext): AgentSessionLaunchProfileMenuItem? {
     val menuModel = buildAgentSessionLaunchProfileMenuModel(allBridges(), context.project)
     return resolveAgentSessionLaunchProfileSelection(menuModel, userLaunchProfiles(), defaultLaunchProfileId()).quickStartItem
   }
@@ -486,14 +486,14 @@ private fun describeMissingDefaultProfileTooltip(): @Nls String {
 
 private fun describeProfileTooltip(
   quickStart: AgentSessionLaunchProfileMenuItem?,
-  target: AgentSessionsEditorTabNewThreadTarget?,
+  target: AgentSessionsNewThreadTarget?,
 ): @Nls String {
   if (quickStart == null) {
     return AgentSessionsBundle.message("action.AgentWorkbenchSessions.MainToolbar.NewThread.empty.description")
   }
   val projectLabel = when (target) {
-    is AgentSessionsEditorTabNewThreadTarget.Direct -> projectLabelForPath(target.path)
-    is AgentSessionsEditorTabNewThreadTarget.Candidates, null ->
+    is AgentSessionsNewThreadTarget.Direct -> projectLabelForPath(target.path)
+    is AgentSessionsNewThreadTarget.Candidates, null ->
       AgentSessionsBundle.message("action.AgentWorkbenchSessions.MainToolbar.NewThread.target.choose")
   }
   return launchProfileActionDescription(quickStart, projectLabel)

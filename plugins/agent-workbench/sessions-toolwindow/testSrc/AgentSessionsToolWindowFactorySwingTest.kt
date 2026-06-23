@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.sessions.toolwindow
 import com.intellij.agent.workbench.sessions.AgentSessionCostHintBanner
 import com.intellij.agent.workbench.sessions.AgentSessionCostPresentationSettings
 import com.intellij.agent.workbench.sessions.AgentSessionCostHintStateService
+import com.intellij.agent.workbench.ui.AgentWorkbenchActionIds
 import com.intellij.agent.workbench.sessions.ScriptedSessionSource
 import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaHintBanner
 import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaHintStateService
@@ -386,14 +387,14 @@ class AgentSessionsToolWindowFactorySwingTest {
   @Test
   fun descriptorRegistersTreePopupActions() {
     val actionManager = ActionManager.getInstance()
-    val entries = actionManager.childActionEntries("AgentWorkbenchSessions.TreePopup")
+    val entries = actionManager.childActionEntries(AgentWorkbenchActionIds.Sessions.TreePopup.GROUP)
 
     assertThat(entries)
       .contains("AgentWorkbenchSessions.TreePopup.Open")
       .contains("AgentWorkbenchSessions.TreePopup.More")
-      .contains("AgentWorkbenchSessions.TreePopup.NewThread")
+      .contains(AgentWorkbenchActionIds.Sessions.TreePopup.NEW_THREAD)
       .contains("AgentWorkbenchSessions.TreePopup.Rename")
-      .contains("AgentWorkbenchSessions.TreePopup.Archive")
+      .contains(AgentWorkbenchActionIds.Sessions.TreePopup.ARCHIVE)
       .contains("AgentWorkbenchSessions.TreePopup.Unarchive")
       .contains("CopyReferencePopupGroup")
 

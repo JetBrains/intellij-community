@@ -289,9 +289,6 @@ interface AgentSessionProviderDescriptor {
   val suppressPromptExistingTaskSelectionHint: Boolean
     get() = false
 
-  val editorTabActionIds: List<String>
-    get() = emptyList()
-
   val supportsPendingEditorTabRebind: Boolean
     get() = false
 

@@ -586,7 +586,6 @@ com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescr
 - getDisplayNameFallback():java.lang.String
 - a:getDisplayNameKey():java.lang.String
 - getDisplayPriority():I
-- getEditorTabActionIds():java.util.List
 - getEmitsScopedRefreshSignals():Z
 - a:getIcon():javax.swing.Icon
 - getMonochromeIcon():javax.swing.Icon

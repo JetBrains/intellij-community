@@ -148,7 +148,6 @@ relocates coupling; it does not remove it.
 
 ```text
 lib-agent/common
-|- AgentWorkbenchActionIds
 |- AgentThreadActivityPresentation        uses UI color presentation
 |- AgentThreadActivityIcons               badges Swing icons
 `- icons/AgentWorkbenchCommonIcons        shared provider logos

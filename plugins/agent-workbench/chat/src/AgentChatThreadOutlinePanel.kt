@@ -3,7 +3,7 @@ package com.intellij.agent.workbench.chat
 
 // @spec community/plugins/agent-workbench/spec/chat/agent-chat-structure-view.spec.md
 
-import com.intellij.platform.ai.agent.common.AgentWorkbenchActionIds
+import com.intellij.agent.workbench.ui.AgentWorkbenchActionIds
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
