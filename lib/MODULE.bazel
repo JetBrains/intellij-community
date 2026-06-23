@@ -5573,17 +5573,17 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps-intellij-deps-java-atk-wrapper-262_31_http",
-    downloaded_file_path = "intellij-deps-java-atk-wrapper-262.31.jar",
-    sha256 = "9738631c363b906825a179a2130f47b20ae3534efe02aaa975f3d44d72f94118",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/intellij-deps-java-atk-wrapper/262.31/intellij-deps-java-atk-wrapper-262.31.jar",
+    name = "org_jetbrains_intellij_deps-intellij-deps-java-atk-wrapper-263_33_http",
+    downloaded_file_path = "intellij-deps-java-atk-wrapper-263.33.jar",
+    sha256 = "effd191bd2589daa12c1d6a11dbdd84529ad290808c8effbb02e86d758d069a3",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/intellij-deps-java-atk-wrapper/263.33/intellij-deps-java-atk-wrapper-263.33.jar",
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps-intellij-deps-java-atk-wrapper-262_31-sources_http",
-    downloaded_file_path = "intellij-deps-java-atk-wrapper-262.31-sources.jar",
-    sha256 = "a08678c063a5f6b321ea9c5eabc25f538d1c611df4cc5851fc469ba0ce439b88",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/intellij-deps-java-atk-wrapper/262.31/intellij-deps-java-atk-wrapper-262.31-sources.jar",
+    name = "org_jetbrains_intellij_deps-intellij-deps-java-atk-wrapper-263_33-sources_http",
+    downloaded_file_path = "intellij-deps-java-atk-wrapper-263.33-sources.jar",
+    sha256 = "1e1e745d570e68d9044a417695294ee1f9b0ecfb7fde99d3d87843a688ef5479",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/intellij-deps-java-atk-wrapper/263.33/intellij-deps-java-atk-wrapper-263.33-sources.jar",
 )
 
 http_file(
