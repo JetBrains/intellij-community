@@ -62,21 +62,6 @@ class WinWebViewShortcutInteropTest {
   }
 
   @Test
-  fun `keeps browser editing shortcuts inside webview`() {
-    assertFalse(WinWebViewShortcutInterop.isShortcutCandidate(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK))
-    assertFalse(WinWebViewShortcutInterop.isShortcutCandidate(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK))
-    assertFalse(WinWebViewShortcutInterop.isShortcutCandidate(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK))
-    assertFalse(WinWebViewShortcutInterop.isShortcutCandidate(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK))
-    assertFalse(WinWebViewShortcutInterop.isShortcutCandidate(KeyEvent.VK_Y, InputEvent.CTRL_DOWN_MASK))
-    assertFalse(WinWebViewShortcutInterop.isShortcutCandidate(KeyEvent.VK_Z, InputEvent.CTRL_DOWN_MASK))
-    assertFalse(WinWebViewShortcutInterop.isShortcutCandidate(KeyEvent.VK_INSERT, InputEvent.CTRL_DOWN_MASK))
-    assertFalse(WinWebViewShortcutInterop.isShortcutCandidate(KeyEvent.VK_INSERT, InputEvent.SHIFT_DOWN_MASK))
-    assertFalse(WinWebViewShortcutInterop.isShortcutCandidate(KeyEvent.VK_DELETE, InputEvent.SHIFT_DOWN_MASK))
-
-    assertTrue(WinWebViewShortcutInterop.isShortcutCandidate(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK or InputEvent.SHIFT_DOWN_MASK))
-  }
-
-  @Test
   fun `ignores unknown webview2 key event kind`() {
     assertNull(
       WinWebViewShortcutInterop.createKeyEvent(

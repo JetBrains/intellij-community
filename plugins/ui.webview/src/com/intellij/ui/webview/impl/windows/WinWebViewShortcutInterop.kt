@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.webview.impl.windows
 
+import com.intellij.ui.webview.impl.WebViewEditCommand
 import java.awt.Component
 import java.awt.KeyboardFocusManager
 import java.awt.Toolkit
@@ -56,19 +57,11 @@ internal object WinWebViewShortcutInterop {
     return modifiersEx and commandModifiers != 0 || keyCode in KeyEvent.VK_F1..KeyEvent.VK_F24 || keyCode == KeyEvent.VK_ESCAPE
   }
 
+  // A keystroke is "browser editing" when the active keymap binds it to one of the shared WebView edit
+  // commands (Copy/Paste/Cut/SelectAll/Undo/Redo). Such keystrokes are kept for WebView2's native editing
+  // rather than forwarded to the IDE. Source of truth: WebViewEditCommand (shared across all OS backends).
   private fun isBrowserEditingShortcut(keyCode: Int, modifiersEx: Int): Boolean {
-    val relevantModifiers = modifiersEx and (InputEvent.CTRL_DOWN_MASK or InputEvent.SHIFT_DOWN_MASK or InputEvent.ALT_DOWN_MASK or InputEvent.META_DOWN_MASK)
-    return when (keyCode) {
-      KeyEvent.VK_A,
-      KeyEvent.VK_C,
-      KeyEvent.VK_V,
-      KeyEvent.VK_X,
-      KeyEvent.VK_Y,
-      KeyEvent.VK_Z -> relevantModifiers == InputEvent.CTRL_DOWN_MASK
-      KeyEvent.VK_INSERT -> relevantModifiers == InputEvent.CTRL_DOWN_MASK || relevantModifiers == InputEvent.SHIFT_DOWN_MASK
-      KeyEvent.VK_DELETE -> relevantModifiers == InputEvent.SHIFT_DOWN_MASK
-      else -> false
-    }
+    return WebViewEditCommand.matchingCommand(keyCode, modifiersEx, WebViewEditCommand.DEFAULTS) != null
   }
 
   private fun modifierFlagsToJavaModifiers(modifierFlags: Int): Int {
