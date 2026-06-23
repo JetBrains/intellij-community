@@ -42,7 +42,7 @@ import org.junit.jupiter.params.support.ParameterDeclarations
 @ParameterizedClass
 @AllGradleVersionsSource
 @TargetVersions("9.3+")
-@RegistryKey("gradle.use.resilient.model.fetch", true.toString())
+@RegistryKey("gradle.use.resilient.model.fetch.unstable", true.toString())
 class GradleResilientSyncTest(private val gradleVersion: GradleVersion) {
 
   private val testPath by tempPathFixture()
