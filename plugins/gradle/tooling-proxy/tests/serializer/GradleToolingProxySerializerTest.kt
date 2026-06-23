@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.gradle.toolingExtension.impl.serializer
+package org.jetbrains.plugins.gradle.tooling.proxy.serializer
 
-import com.intellij.gradle.toolingExtension.impl.serializer.GradleToolingProxySerializerFactory.getSerializer
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.plugins.gradle.tooling.proxy.serializer.GradleToolingProxySerializerFactory.getSerializer
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildEnvironment
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalGradleEnvironment

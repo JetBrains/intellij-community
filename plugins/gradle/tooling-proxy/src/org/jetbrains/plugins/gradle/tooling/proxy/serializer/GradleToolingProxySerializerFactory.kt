@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.gradle.toolingExtension.impl.serializer
+package org.jetbrains.plugins.gradle.tooling.proxy.serializer
 
 import com.esotericsoftware.kryo.kryo5.Kryo
 import com.esotericsoftware.kryo.kryo5.Serializer
@@ -12,7 +12,6 @@ import com.intellij.gradle.toolingExtension.modelAction.GradleBaseScriptModelFet
 import com.intellij.gradle.toolingExtension.modelAction.GradleBuildFinishedModelFetchPhase
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.gradle.toolingExtension.modelAction.GradleProjectLoadedModelFetchPhase
-import org.gradle.plugins.ide.internal.tooling.model.DefaultGradleBuild
 import org.gradle.tooling.internal.gradle.DefaultBuildIdentifier
 import org.gradle.tooling.internal.gradle.DefaultProjectIdentifier
 import org.gradle.tooling.internal.gradle.GradleProjectIdentity
@@ -36,12 +35,12 @@ import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.dsl.I
 @ApiStatus.Internal
 object GradleToolingProxySerializerFactory {
 
-  fun getSerializer(classLoader: ClassLoader): GradleToolingExtensionSerializer {
+  fun getSerializer(classLoader: ClassLoader): GradleToolingProxySerializer {
     val kryo = getKryo(classLoader)
     kryo.registerGradleDslBaseScriptModelClasses()
     kryo.registerModelHolderClasses()
     kryo.registerBuildEnvironmentClasses()
-    return KryoGradleToolingExtensionSerializer(kryo)
+    return KryoGradleToolingProxySerializer(kryo)
   }
 
   private fun Kryo.registerGradleDslBaseScriptModelClasses() {

@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.proxy
 
-import com.intellij.gradle.toolingExtension.impl.serializer.GradleToolingExtensionSerializer
-import com.intellij.gradle.toolingExtension.impl.serializer.GradleToolingProxySerializerFactory
+import org.jetbrains.plugins.gradle.tooling.proxy.serializer.GradleToolingProxySerializer
+import org.jetbrains.plugins.gradle.tooling.proxy.serializer.GradleToolingProxySerializerFactory
 import org.gradle.internal.remote.internal.inet.InetEndpoint
 import org.gradle.launcher.daemon.protocol.BuildEvent
 import org.gradle.launcher.daemon.protocol.DaemonMessageSerializer
@@ -32,7 +32,7 @@ object Main {
   private lateinit var serverConnector: TargetTcpServerConnector
   private lateinit var incomingConnectionHandler: TargetIncomingConnectionHandler
 
-  private val serializer: GradleToolingExtensionSerializer by lazy { GradleToolingProxySerializerFactory.getSerializer(Main::class.java.classLoader) }
+  private val serializer: GradleToolingProxySerializer by lazy { GradleToolingProxySerializerFactory.getSerializer(Main::class.java.classLoader) }
 
   @JvmStatic
   fun main(args: Array<String>) {
