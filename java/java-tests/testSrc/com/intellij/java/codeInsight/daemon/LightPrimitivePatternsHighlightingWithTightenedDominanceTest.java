@@ -1,9 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.pom.java.JavaFeature;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -68,4 +66,6 @@ public class LightPrimitivePatternsHighlightingWithTightenedDominanceTest extend
   public void testSwitchPrimitivePatternDominatedTightened() { doTest(); }
 
   public void testSwitchPrimitivePatternListTightened() { doTest(); }
+
+  public void testMixFloatingPointWithIntegralLiterals() { doTest(); }
 }

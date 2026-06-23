@@ -1,14 +1,14 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pom.java
 
 import com.intellij.java.syntax.JavaSyntaxBundle
 import com.intellij.java.syntax.JavaSyntaxBundle.message
+import com.intellij.util.ThreadLocalKmp
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
-import com.intellij.util.ThreadLocalKmp
-import org.jetbrains.annotations.ApiStatus
 import kotlin.jvm.JvmStatic
 
 /**
@@ -268,7 +268,7 @@ enum class JavaFeature {
     override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
       return super.isSufficient(useSiteLevel) ||
              useSiteLevel.isAtLeast(LanguageLevel.JDK_25) ||
-             LanguageLevel.JDK_24_PREVIEW == useSiteLevel; //jep 494
+             LanguageLevel.JDK_24_PREVIEW == useSiteLevel //jep 494
     }
 
     override val standardLevel: LanguageLevel = LanguageLevel.JDK_25
@@ -306,6 +306,7 @@ enum class JavaFeature {
 
   /**
    * JEP 530
+   * JEP 532 (without any changes)
    * @see PRIMITIVE_TYPES_IN_PATTERNS
    */
   PATTERNS_WITH_TIGHTENED_DOMINANCE(LanguageLevel.JDK_26_PREVIEW, "feature.patterns.with.tightened.dominance"),
