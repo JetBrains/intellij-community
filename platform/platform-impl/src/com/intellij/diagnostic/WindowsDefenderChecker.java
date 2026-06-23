@@ -51,11 +51,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * Sources:
- * <a href="https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/configure-extension-file-exclusions-microsoft-defender-antivirus">Defender Settings</a>,
- * <a href="https://learn.microsoft.com/en-us/powershell/module/defender/">Defender PowerShell Module</a>.
- */
+/// Sources:
+/// [Defender Settings](https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/configure-extension-file-exclusions-microsoft-defender-antivirus),
+/// [Defender PowerShell Module](https://learn.microsoft.com/en-us/powershell/module/defender/).
 @SuppressWarnings("MethodMayBeStatic")
 public class WindowsDefenderChecker {
   private static final Logger LOG = Logger.getInstance(WindowsDefenderChecker.class);
@@ -65,9 +63,7 @@ public class WindowsDefenderChecker {
   private static final int WMIC_COMMAND_TIMEOUT_MS = 10_000, POWERSHELL_COMMAND_TIMEOUT_MS = 60_000;
   private static final ExtensionPointName<Extension> EP_NAME = ExtensionPointName.create("com.intellij.defender.config");
 
-  /**
-   * Use the extension to propose technology-specific paths (e.g., {@code $GRADLE_USER_HOME}) to be added to the Defender's exclusion list.
-   */
+  /// Use the extension to propose technology-specific paths (e.g., `$GRADLE_USER_HOME`) to be added to the Defender's exclusion list.
   public interface Extension {
     @NotNull Collection<Path> getPaths(@Nullable Project project, @Nullable Path projectPath);
   }
@@ -81,10 +77,11 @@ public class WindowsDefenderChecker {
   private final Map<Path, @Nullable ProjectStatus> myProjectPaths = Collections.synchronizedMap(new HashMap<>());
 
   public final boolean isStatusCheckIgnored(@Nullable Project project) {
-    return
+    return (
       !Registry.is("ide.check.windows.defender.rules") ||
       PropertiesComponent.getInstance().isTrueValue(IGNORE_STATUS_CHECK) ||
-      (project != null && PropertiesComponent.getInstance(project).isTrueValue(IGNORE_STATUS_CHECK));
+      (project != null && PropertiesComponent.getInstance(project).isTrueValue(IGNORE_STATUS_CHECK))
+    );
   }
 
   public final void ignoreStatusCheck(@Nullable Project project, boolean ignore) {
@@ -126,11 +123,9 @@ public class WindowsDefenderChecker {
     return projectDir != null && projectDir.isInLocalFileSystem() ? projectDir.toNioPath() : null;
   }
 
-  /**
-   * {@link Boolean#TRUE} means Defender is present, active, and real-time protection check is enabled.
-   * {@link Boolean#FALSE} means something from the above list is not true.
-   * {@code null} means the IDE cannot detect the status.
-   */
+  /// [Boolean#TRUE] means Defender is present, active, and the real-time protection check is enabled.
+  /// [Boolean#FALSE] means something from the above list is not true.
+  /// `null` means the IDE cannot detect the status.
   public final @Nullable Boolean isRealTimeProtectionEnabled() {
     if (!JnaLoader.isLoaded()) {
       LOG.debug("isRealTimeProtectionEnabled: JNA is not loaded");
@@ -268,7 +263,7 @@ public class WindowsDefenderChecker {
     }
   }
 
-  @SuppressWarnings("SpellCheckingInspection") private static final int FSCTL_QUERY_PERSISTENT_VOLUME_STATE = 0x9023C;
+  private static final int FSCTL_QUERY_PERSISTENT_VOLUME_STATE = 0x9023C;
   private static final int PERSISTENT_VOLUME_STATE_DEV_VOLUME = 0x00002000;
   private static final int PERSISTENT_VOLUME_STATE_TRUSTED_VOLUME = 0x00004000;
 
@@ -337,7 +332,7 @@ public class WindowsDefenderChecker {
     try {
       var script = PathManager.findBinFile(HELPER_SCRIPT_NAME);
       if (script == null) {
-        LOG.info("'" + HELPER_SCRIPT_NAME + "' is missing from '" + PathManager.getBinDir() + "'");
+        LOG.info("'%s' is missing from '%s'".formatted(HELPER_SCRIPT_NAME, PathManager.getBinDir()));
         return false;
       }
 
