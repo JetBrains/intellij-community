@@ -147,14 +147,10 @@ override fun getProductContentDescriptor() = productModules {
 }
 ```
 
-**Fix:** Use Plugin Model Analyzer MCP to check transitive deps:
+**Fix:** Use the Plugin Model Analyzer skill to check transitive deps through the Bazel JSON analyzer:
 
-```kotlin
-// Check ALL transitive dependencies
-get_module_dependencies(
-  moduleName = "fleet.andel",
-  includeTransitive = true
-)
+```bash
+bazel run --ui_event_filters=-info --noshow_progress //platform/buildScripts:plugin-model-tool -- --json='{"filter":"moduleDependencies","module":"fleet.andel","includeTransitive":true}'
 ```
 
 **Pitfall 3: Forgetting includeDependencies only gets implementation modules**

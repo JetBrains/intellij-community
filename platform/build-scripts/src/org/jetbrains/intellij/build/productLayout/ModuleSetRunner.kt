@@ -23,8 +23,13 @@ import org.jetbrains.intellij.build.productLayout.tooling.ProductSpec
 import org.jetbrains.intellij.build.telemetry.withoutTracer
 import org.jetbrains.jps.model.serialization.JpsMavenSettings
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.system.exitProcess
+
+private val jsonFilterParser = Json {
+  ignoreUnknownKeys = true
+}
 
 data class DiscoveredModuleSetSource(
   @JvmField val moduleSets: List<ModuleSet>,
@@ -87,7 +92,13 @@ suspend fun runModuleSetMain(
     coroutineScope {
       val outputProvider = createModuleOutputProvider(projectRoot = projectRoot, scope = this)
       if (options.jsonFilter != null) {
-        val filter = parseJsonArgument(options.jsonFilter)
+        val filter = try {
+          parseJsonArgument(options.jsonFilter)
+        }
+        catch (e: IllegalArgumentException) {
+          System.err.println(e.message)
+          exitProcess(1)
+        }
         val pluginGraph = graphConfigProvider?.let { buildPluginGraphForJson(it(outputProvider, options)) }
                           ?: error("PluginGraph is required for --json output; graphConfigProvider was not supplied")
         jsonResponse(
@@ -197,27 +208,46 @@ private suspend fun jsonResponse(
 }
 
 /**
- * Parses JSON argument from command line in the format `--json` or `--json='{"filter":"...","value":"..."}'`.
+ * Parses JSON argument from command line in the format `--json`, `--json='{"filter":"...","value":"..."}'`,
+ * `--json=-`, or `--json=@/path/to/query.json`.
  * Returns null for full JSON output, or JsonFilter for filtered output.
- *
- * @param arg The command line argument (e.g., "--json" or "--json={...}")
- * @return JsonFilter if filter is specified, null for full JSON output
  */
-private fun parseJsonArgument(arg: String): JsonFilter? {
-  if (arg.contains('=')) {
-    val filterJson = arg.substringAfter("=")
-    try {
-      return Json.decodeFromString<JsonFilter>(filterJson)
-    }
-    catch (e: Exception) {
-      System.err.println("Failed to parse JSON filter: $filterJson")
-      System.err.println("Error: ${e.message}")
-      return null
-    }
-  }
-  else {
-    // Full JSON output
+internal fun parseJsonArgument(
+  arg: String,
+  stdinReader: () -> String = { System.`in`.bufferedReader().readText() },
+  fileReader: (Path) -> String = { Files.readString(it) },
+): JsonFilter? {
+  if (arg == "--json") {
     return null
+  }
+
+  if (!arg.startsWith("--json=")) {
+    throw IllegalArgumentException("Invalid JSON argument: $arg. Use --json, --json=<payload>, --json=-, or --json=@<file>.")
+  }
+
+  val rawValue = arg.substringAfter('=')
+  val filterJson = when {
+    rawValue == "-" -> stdinReader()
+    rawValue.startsWith("@") -> {
+      val path = rawValue.removePrefix("@")
+      if (path.isEmpty()) {
+        throw IllegalArgumentException("Invalid JSON argument: --json=@ requires a file path.")
+      }
+      try {
+        fileReader(Path.of(path))
+      }
+      catch (e: Exception) {
+        throw IllegalArgumentException("Failed to read JSON filter from $path: ${e.message}")
+      }
+    }
+    else -> rawValue
+  }
+
+  try {
+    return jsonFilterParser.decodeFromString<JsonFilter>(filterJson)
+  }
+  catch (e: Exception) {
+    throw IllegalArgumentException("Failed to parse JSON filter: $filterJson\nError: ${e.message}")
   }
 }
 

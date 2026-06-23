@@ -270,163 +270,45 @@ override fun getProductContentModules(): ProductModulesContentSpec {
 
 ## JSON Analysis Endpoint
 
-The module set system provides a JSON analysis endpoint for programmatic querying and tooling integration. This endpoint is used by the Plugin Model Analyzer MCP server and other build tools. The JSON export is generated from the in-memory PluginGraph built from product DSL and module sets (no disk parsing of plugin.xml or descriptors).
+The module set system provides a JSON analysis endpoint for programmatic querying and tooling integration. The JSON export is generated from the in-memory PluginGraph built from product DSL and module sets; it does not parse generated plugin.xml files or descriptors from disk.
 
 ### Usage
 
-Run the module set main function with the `--json` flag:
+Run the analyzer through Bazel from the repository root:
 
 ```bash
-# Generate complete analysis for all products and module sets
-UltimateModuleSets.main(args = ["--json"])
-
-# Community products only
-CommunityModuleSets.main(args = ["--json"])
+bazel run --ui_event_filters=-info --noshow_progress //platform/buildScripts:plugin-model-tool -- --json='<request-json>'
 ```
 
-### Filtering Output
-
-Use the `--json` flag with a filter to get specific sections:
+Transport options:
 
 ```bash
-# Get only products
---json='{"filter":"products"}'
-
-# Get only module sets
---json='{"filter":"moduleSets"}'
-
-# Include duplicate analysis
---json='{"includeDuplicates":true}'
+--json='{"filter":"summary","limit":5}'
+--json=-
+--json=@/private/tmp/plugin-model-query.json
 ```
+
+Plain `--json` emits the complete model and is usually too large for routine investigation. Prefer compact filters.
+
+### Common Filters
+
+```json
+{"filter":"summary","limit":5}
+{"filter":"moduleInfo","module":"intellij.platform.vcs.impl","limit":20}
+{"filter":"moduleDependencies","module":"fleet.andel","includeTransitive":true}
+{"filter":"dependencyPath","fromModule":"intellij.platform.vcs.impl","toModule":"intellij.platform.projectModel.impl","includeScopes":true}
+{"filter":"moduleSetQuery","moduleSet":"ide.common","limit":50}
+{"filter":"productQuery","usesModuleSet":"ide.common","limit":30}
+{"filter":"validation","check":"embedded_dependency_closure","pluginSourceOnly":true}
+```
+
+See the `plugin-model-analyzer` skill for the full agent-facing request catalog.
 
 ### Output Structure
 
-The JSON output contains comprehensive analysis of the module system:
+The JSON output always contains a `timestamp` and one result property named after the requested filter. Compact results include counts and truncated item lists by default; pass a higher `limit` or `details:true` when expanded arrays are needed.
 
-#### 1. Module Distribution
-
-Maps each module to the module sets and products that include it:
-
-```json
-{
-  "moduleDistribution": {
-    "intellij.platform.vcs.impl": {
-      "inModuleSets": ["vcs", "ide.common"],
-      "inProducts": ["WebStorm", "GoLand", "CLion", "PyCharm", ...]
-    }
-  }
-}
-```
-
-**Use case:** Find where a specific module is used across the codebase.
-
-#### 2. Module Set Hierarchy
-
-Shows the include relationships between module sets:
-
-```json
-{
-  "moduleSetHierarchy": {
-    "ide.common": {
-      "includes": ["essential", "vcs"],
-      "includedBy": ["ide.ultimate"],
-      "moduleCount": 145
-    }
-  }
-}
-```
-
-**Use case:** Understand module set dependencies and nesting structure.
-
-#### 3. Module Usage Index
-
-Comprehensive reverse lookup with source file paths:
-
-```json
-{
-  "moduleUsageIndex": {
-    "modules": {
-      "intellij.platform.vcs.impl": {
-        "moduleSets": [
-          {
-            "name": "vcs",
-            "location": "community",
-            "sourceFile": "community/platform/build-scripts/product-dsl/src/CommunityModuleSets.kt"
-          }
-        ],
-        "products": [
-          {
-            "name": "WebStorm",
-            "sourceFile": "platform/buildScripts/src/productLayout/UltimateModuleSets.kt"
-          }
-        ]
-      }
-    }
-  }
-}
-```
-
-**Use case:** Trace module ownership and find where to make changes.
-
-#### 4. Product Composition Analysis
-
-Detailed breakdown of each product's composition:
-
-```json
-{
-  "productCompositionAnalysis": {
-    "CLion": {
-      "composition": {
-        "totalAliases": 3,
-        "totalModuleSets": 12,
-        "totalDirectModules": 45,
-        "totalModules": 523
-      },
-      "operations": [
-        {"type": "alias", "value": "com.jetbrains.modules.cidr.lang"},
-        {"type": "moduleSet", "value": "commercial"},
-        {"type": "module", "value": "intellij.clion.core"}
-      ]
-    }
-  }
-}
-```
-
-**Use case:** Analyze product composition and optimize module dependencies.
-
-#### 5. Duplicate Analysis (Optional)
-
-When `includeDuplicates: true` is set, detects duplicate xi:include elements:
-
-```json
-{
-  "duplicateAnalysis": {
-    "ReSharper Backend": {
-      "/META-INF/intellij.moduleSets.essential.xml": [
-        {
-          "directInclude": true,
-          "deprecatedIncludeRefs": [
-            "intellij.platform.resources -> /META-INF/PlatformLangPlugin.xml"
-          ]
-        }
-      ]
-    }
-  }
-}
-```
-
-**Use case:** Identify redundant includes that can be removed.
-
-### Integration with MCP Server
-
-The Plugin Model Analyzer MCP server (`build/mcp-servers/module-analyzer`) uses this JSON endpoint to provide:
-
-- `analyze_module_structure` - Complete module system analysis
-- `get_module_info` - Query specific module details
-- `find_module_paths` - Trace module to product paths
-- `get_module_set_hierarchy` - Query module set relationships
-- `list_products` - List products filtered by criteria
-- `validate_community_products` - Ensure community/ultimate separation
+Legacy full-model filters are still available for bulk analysis: `products`, `moduleSets`, `composition`, `duplicates`, `product`, `moduleSet`, `modulePaths`, `moduleDependencies`, `moduleOwners`, `moduleReachability`, `dependencyPath`, `productUsage`, `embeddedDependencyClosure`, and `mergeImpact`.
 
 ### Implementation
 
