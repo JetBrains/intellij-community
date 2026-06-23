@@ -1,5 +1,5 @@
 // "Add 'extraLogger' as 'MyLogger' to existing context" "false"
-// COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
+// COMPILER_ARGUMENTS: -Xcontext-parameters
 // IGNORE_K1
 // DISABLE_K2_ERRORS
 interface MyLogger { fun log(msg: String) }

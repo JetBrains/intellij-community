@@ -1,5 +1,5 @@
 // "Add 'paramLogger' as 'MyLogger' to existing context" "true"
-// COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
+// COMPILER_ARGUMENTS: -Xcontext-parameters
 // IGNORE_K1
 // DISABLE_K2_ERRORS
 // SHOULD_BE_AVAILABLE_AFTER_EXECUTION

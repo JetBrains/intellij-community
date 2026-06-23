@@ -1,5 +1,5 @@
 // "Surround call with 'context'" "false"
-// COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
+// COMPILER_ARGUMENTS: -Xcontext-parameters
 // K2_ERROR: No context argument for 'l: MyLogger' found.
 // K2_AFTER_ERROR: No context argument for 'l: MyLogger' found.
 interface MyLogger { fun log(msg: String) }
