@@ -13,7 +13,7 @@ import org.jetbrains.concurrency.Promise
 interface GitBranchesPopup: TreePopup {
   val userResized: Boolean
 
-  var groupByPrefix: Boolean
+  var groupByDirectory: Boolean
 
   fun restoreDefaultSize()
 
