@@ -33,7 +33,7 @@ object AccessibilityUtils {
 @ApiStatus.Internal
 suspend fun enableScreenReaderSupportIfNecessary() {
   if (OS.CURRENT == OS.Linux) {
-    LinuxAccessibilitySupport.enableLinuxAtkWrapper()
+    LinuxAccessibilitySupport.detectAndConfigureLinuxAtkWrapper()
     return
   }
 

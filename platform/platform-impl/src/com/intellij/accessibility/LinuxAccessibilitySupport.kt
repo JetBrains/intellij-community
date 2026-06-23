@@ -47,6 +47,7 @@ private enum class LinuxA11yChoice(private val dialogCode: Int) {
 @ApiStatus.Internal
 object LinuxAccessibilitySupport {
   private const val ENABLE_ACCESSIBILITY_BUTTON_INDEX = 0
+  private const val FORCE_SCREEN_READER_DETECTION_PROPERTY = "force.screen.reader.detection"
 
   @Volatile
   private var screenReaderSupportRequested = false
@@ -66,15 +67,14 @@ object LinuxAccessibilitySupport {
   @Volatile
   private var magnifierDetected = false
 
-  fun enableLinuxAtkWrapper() {
-    screenReaderDetected = isLinuxScreenReaderEnabled() || System.getProperty("force.screen.reader.detection").toBoolean()
+  fun detectAndConfigureLinuxAtkWrapper() {
+    screenReaderDetected = isLinuxScreenReaderEnabled() || System.getProperty(FORCE_SCREEN_READER_DETECTION_PROPERTY).toBoolean()
     magnifierDetected = isLinuxScreenMagnifierEnabled()
     atkWrapperEnabledInConfig = isAtkWrapperEnabled()
     if ((isSupportScreenReadersOverridden() || screenReaderDetected || magnifierDetected) && !atkWrapperEnabledInConfig) {
       configureAndTryActivateLinuxAtkWrapper()
     }
   }
-
 
   suspend fun showLinuxAccessibilityDialog() {
     if (isSupportScreenReadersOverridden()) {
