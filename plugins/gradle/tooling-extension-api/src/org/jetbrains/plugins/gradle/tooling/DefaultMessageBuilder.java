@@ -8,9 +8,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.util.ExceptionUtilRt.findCause;
 
@@ -75,7 +76,8 @@ public final class DefaultMessageBuilder implements MessageBuilder {
     String group = buildGroup();
     Message.Kind kind = buildKind();
     String targetPath = buildTargetPath();
-    return new Message(title, text, group, kind, targetPath, myInternal);
+    Message.Failure failure = buildFailure();
+    return new Message(title, text, group, kind, targetPath, failure, myInternal);
   }
 
   private @NotNull String buildTitle() {
@@ -134,6 +136,19 @@ public final class DefaultMessageBuilder implements MessageBuilder {
     return myProject == null ? null : myProject.getProjectDir().getAbsolutePath();
   }
 
+  private @Nullable Message.Failure buildFailure() {
+    if (myException == null) {
+      return null;
+    }
+    return buildFailure(myException);
+  }
+
+  private static @NotNull Message.Failure buildFailure(@NotNull Throwable exception) {
+    Throwable cause = exception.getCause();
+    List<Message.Failure> causes = cause == null || cause == exception ? Collections.emptyList() : Collections.singletonList(buildFailure(cause));
+    return new Message.Failure(getExceptionMessage(exception), buildExceptionStacktrace(exception), causes);
+  }
+
   private static @NotNull String buildExceptionStacktrace(@NotNull Throwable exception) {
     if (exception.getStackTrace().length == 0) {
       return getRootCauseExceptionMessage(exception);
@@ -162,6 +177,14 @@ public final class DefaultMessageBuilder implements MessageBuilder {
     return sw.toString();
   }
 
+  private static @NotNull String getExceptionMessage(@NotNull Throwable exception) {
+    String message = exception.getMessage();
+    if (message == null) {
+      message = exception.getClass().getName();
+    }
+    return message;
+  }
+
   private static @NotNull String getRootCauseExceptionMessage(@NotNull Throwable exception) {
     Throwable rootCauseException = exception;
     while (rootCauseException.getCause() != null) {
@@ -169,10 +192,7 @@ public final class DefaultMessageBuilder implements MessageBuilder {
     }
     String message = rootCauseException.getMessage();
     if (message == null) {
-      message = exception.getMessage();
-    }
-    if (message == null) {
-      message = exception.getClass().getName();
+      message = getExceptionMessage(exception);
     }
     return message;
   }

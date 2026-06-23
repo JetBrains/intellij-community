@@ -5,7 +5,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @ApiStatus.Experimental
 public final class Message {
@@ -14,6 +16,7 @@ public final class Message {
   private final @Nullable String myGroup;
   private final @NotNull Kind myKind;
   private final @Nullable String myTargetPath;
+  private final @Nullable Failure myFailure;
 
   private final boolean myInternal;
 
@@ -23,6 +26,7 @@ public final class Message {
     @Nullable String group,
     @NotNull Kind kind,
     @Nullable String targetPath,
+    @Nullable Failure failure,
     boolean isInternal
   ) {
     myTitle = title;
@@ -31,6 +35,7 @@ public final class Message {
     myInternal = isInternal;
     myKind = kind;
     myTargetPath = targetPath;
+    myFailure = failure;
   }
 
   public @NotNull String getTitle() {
@@ -53,6 +58,10 @@ public final class Message {
     return myTargetPath;
   }
 
+  public @Nullable Failure getFailure() {
+    return myFailure;
+  }
+
   public boolean isInternal() {
     return myInternal;
   }
@@ -61,5 +70,40 @@ public final class Message {
     ERROR,
     WARNING,
     INFO
+  }
+
+  public static final class Failure {
+    private final @Nullable String myMessage;
+    private final @Nullable String myDescription;
+    private final @Nullable List<Failure> myCauses;
+
+    public Failure(
+      @Nullable String message,
+      @Nullable String description
+    ) {
+      this(message, description, Collections.emptyList());
+    }
+
+    public Failure(
+      @Nullable String message,
+      @Nullable String description,
+      @NotNull List<Failure> causes
+    ) {
+      myMessage = message;
+      myDescription = description;
+      myCauses = Collections.unmodifiableList(new ArrayList<>(causes));
+    }
+
+    public @Nullable String getMessage() {
+      return myMessage;
+    }
+
+    public @Nullable String getDescription() {
+      return myDescription;
+    }
+
+    public @NotNull List<Failure> getCauses() {
+      return myCauses == null ? Collections.emptyList() : myCauses;
+    }
   }
 }
