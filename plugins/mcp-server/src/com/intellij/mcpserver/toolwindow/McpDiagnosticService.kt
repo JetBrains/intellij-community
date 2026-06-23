@@ -127,7 +127,13 @@ internal class McpDiagnosticService(private val cs: CoroutineScope) {
       startTimeMs = startTimeMs,
       localAgentId = localAgentId,
     )
-    _sessions.update { it + info }
+    val previousSession = _sessions.value.firstOrNull { it.sessionId == sessionId }
+    if (previousSession != null) {
+      disposeSessionInfo(previousSession)
+    }
+    _sessions.update { sessions ->
+      sessions.filter { it.sessionId != sessionId } + info
+    }
     McpServerCounterUsagesCollector.logSessionStarted(
       clientName = clientInfo?.name ?: "unknown",
       clientVersion = clientInfo?.version ?: "unknown",
@@ -151,11 +157,25 @@ internal class McpDiagnosticService(private val cs: CoroutineScope) {
     _sessions.update { list ->
       list.filter { it.sessionId != sessionId }
     }
+    if (ended != null) {
+      disposeSessionInfo(ended)
+    }
     fireServiceViewReset()
   }
 
   fun clearToolCalls() {
     _toolCalls.update { emptyList() }
+  }
+
+  private fun disposeSessionInfo(sessionInfo: McpSessionInfo) {
+    if (application.isDispatchThread) {
+      Disposer.dispose(sessionInfo)
+    }
+    else {
+      application.invokeLater {
+        Disposer.dispose(sessionInfo)
+      }
+    }
   }
 
   private fun fireServiceViewReset() {
@@ -165,13 +185,24 @@ internal class McpDiagnosticService(private val cs: CoroutineScope) {
   }
 }
 
-internal data class McpSessionInfo(
+internal class McpSessionInfo(
   val sessionId: String,
   val clientInfo: ClientInfo?,
   val transportType: TransportType,
   val startTimeMs: Long,
+  @Suppress("unused")
   val localAgentId: String?,
-)
+) : Disposable {
+  override fun dispose() = Unit
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is McpSessionInfo) return false
+    return sessionId == other.sessionId
+  }
+
+  override fun hashCode(): Int = sessionId.hashCode()
+}
 
 internal enum class TransportType {
   SSE,
