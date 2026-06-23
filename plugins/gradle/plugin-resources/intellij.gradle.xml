@@ -243,8 +243,10 @@
                  description="Disable attempt to fix unknown JDK in Gradle configuration on project open"/>
     <registryKey key="gradle.dependency.completion.service" defaultValue="true"
                  description="Use dependency completion service for dependency completion in gradle scripts"/>
-    <registryKey key="gradle.use.resilient.model.fetch" defaultValue="false"
-                 description="Use gradle resilient model fetch API to resolve gradle models"/>
+    <registryKey key="gradle.use.resilient.model.fetch" defaultValue="true"
+                 description="Use gradle stable resilient model fetch API to resolve gradle models"/>
+    <registryKey key="gradle.use.resilient.model.fetch.unstable" defaultValue="false"
+                 description="Use gradle unstable resilient model fetch API to resolve gradle models"/>
 
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator"/>
     <warmupConfigurator implementation="org.jetbrains.plugins.gradle.GradleWarmupConfigurator"/>
