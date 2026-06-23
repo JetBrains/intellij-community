@@ -48,7 +48,6 @@ import com.intellij.cce.metric.PrecisionMetric
 import com.intellij.cce.metric.PreservedApi
 import com.intellij.cce.metric.RelatedFileValidationSuccess
 import com.intellij.cce.metric.SessionsCountMetric
-import com.intellij.cce.metric.WasAskAICalledMetric
 import com.intellij.cce.metric.WithoutHighlightErrorsSessionRatio
 import com.intellij.cce.metric.WithoutSyntaxErrorsSessionRatio
 import com.intellij.cce.metric.context.MeanContextLines
@@ -591,11 +590,6 @@ object Metrics {
     threshold = 1.0,
     dependencies = MetricDependencies(Analysis.FAILED_RELATED_FILE_VALIDATIONS)
   ) { RelatedFileValidationSuccess() }
-
-  val WAS_ASK_AI_CALLED: EvalMetric = EvalMetric(
-    threshold = 1.0,
-    dependencies = MetricDependencies(Execution.ACTUAL_SMART_CHAT_ENDPOINTS)
-  ) { WasAskAICalledMetric() }
 
   val FUNCTION_CALLING: EvalMetric = EvalMetric(
     threshold = 1.0,
