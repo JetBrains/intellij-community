@@ -31,6 +31,8 @@
     <postStartupActivity implementation="com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerStatusBarUpdater"/>
     <backgroundPostStartupActivity implementation="com.intellij.codeInsight.daemon.impl.ResetAutoReparseSettingsActivity"/>
 
+    <backgroundPostStartupActivity implementation="com.intellij.ide.actions.searcheverywhere.SearchEverywhereWarmupActivity"/>
+
     <vfs.asyncListenerBackgroundable order="first" implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelRootWatcher"/>
     <projectService
       serviceInterface="com.intellij.openapi.module.ModuleManager" open="true"
