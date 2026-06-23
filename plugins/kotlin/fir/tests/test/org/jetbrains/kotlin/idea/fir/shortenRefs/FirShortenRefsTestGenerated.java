@@ -277,59 +277,63 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution")
-        public static class ContextSensitiveResolution extends AbstractFirShortenRefsTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestWithMuting, this, testDataFilePath);
-            }
+        public abstract static class ContextSensitiveResolution extends AbstractFirShortenRefsTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/expressions")
+            public static class Expressions extends AbstractFirShortenRefsTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTestWithMuting, this, testDataFilePath);
+                }
 
-            @TestMetadata("enumEntryFeatureDisabled.kt")
-            public void testEnumEntryFeatureDisabled() throws Exception {
-                runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/enumEntryFeatureDisabled.kt");
-            }
+                @TestMetadata("enumEntryFeatureDisabled.kt")
+                public void testEnumEntryFeatureDisabled() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/expressions/enumEntryFeatureDisabled.kt");
+                }
 
-            @TestMetadata("enumEntryFromDifferentPackage.kt")
-            public void testEnumEntryFromDifferentPackage() throws Exception {
-                runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/enumEntryFromDifferentPackage.kt");
-            }
+                @TestMetadata("enumEntryFromDifferentPackage.kt")
+                public void testEnumEntryFromDifferentPackage() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/expressions/enumEntryFromDifferentPackage.kt");
+                }
 
-            @TestMetadata("enumEntryInEquality.kt")
-            public void testEnumEntryInEquality() throws Exception {
-                runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/enumEntryInEquality.kt");
-            }
+                @TestMetadata("enumEntryInEquality.kt")
+                public void testEnumEntryInEquality() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/expressions/enumEntryInEquality.kt");
+                }
 
-            @TestMetadata("enumEntryInFunctionParameter.kt")
-            public void testEnumEntryInFunctionParameter() throws Exception {
-                runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/enumEntryInFunctionParameter.kt");
-            }
+                @TestMetadata("enumEntryInFunctionParameter.kt")
+                public void testEnumEntryInFunctionParameter() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/expressions/enumEntryInFunctionParameter.kt");
+                }
 
-            @TestMetadata("enumEntryInVariableDeclaration.kt")
-            public void testEnumEntryInVariableDeclaration() throws Exception {
-                runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/enumEntryInVariableDeclaration.kt");
-            }
+                @TestMetadata("enumEntryInVariableDeclaration.kt")
+                public void testEnumEntryInVariableDeclaration() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/expressions/enumEntryInVariableDeclaration.kt");
+                }
 
-            @TestMetadata("enumEntryInWhenCondition.kt")
-            public void testEnumEntryInWhenCondition() throws Exception {
-                runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/enumEntryInWhenCondition.kt");
-            }
+                @TestMetadata("enumEntryInWhenCondition.kt")
+                public void testEnumEntryInWhenCondition() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/expressions/enumEntryInWhenCondition.kt");
+                }
 
-            @TestMetadata("enumEntryNoExpectedType.kt")
-            public void testEnumEntryNoExpectedType() throws Exception {
-                runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/enumEntryNoExpectedType.kt");
-            }
+                @TestMetadata("enumEntryNoExpectedType.kt")
+                public void testEnumEntryNoExpectedType() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/expressions/enumEntryNoExpectedType.kt");
+                }
 
-            @TestMetadata("sealedSubObjectInFunctionParameter.kt")
-            public void testSealedSubObjectInFunctionParameter() throws Exception {
-                runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/sealedSubObjectInFunctionParameter.kt");
-            }
+                @TestMetadata("sealedSubObjectInFunctionParameter.kt")
+                public void testSealedSubObjectInFunctionParameter() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/expressions/sealedSubObjectInFunctionParameter.kt");
+                }
 
-            @TestMetadata("sealedSubObjectInVariableDeclaration.kt")
-            public void testSealedSubObjectInVariableDeclaration() throws Exception {
-                runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/sealedSubObjectInVariableDeclaration.kt");
-            }
+                @TestMetadata("sealedSubObjectInVariableDeclaration.kt")
+                public void testSealedSubObjectInVariableDeclaration() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/expressions/sealedSubObjectInVariableDeclaration.kt");
+                }
 
-            @TestMetadata("sealedSubObjectNoExpectedType.kt")
-            public void testSealedSubObjectNoExpectedType() throws Exception {
-                runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/sealedSubObjectNoExpectedType.kt");
+                @TestMetadata("sealedSubObjectNoExpectedType.kt")
+                public void testSealedSubObjectNoExpectedType() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/expressions/sealedSubObjectNoExpectedType.kt");
+                }
             }
         }
 
