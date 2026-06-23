@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.ai.review
 
-import com.intellij.agent.workbench.ai.review.model.AIReviewAgent
 import com.intellij.agent.workbench.ai.review.model.AIReviewViewModel
 import com.intellij.agent.workbench.ai.review.model.AIReviewViewModel.State
 import com.intellij.agent.workbench.ai.review.model.ReviewRating
@@ -15,9 +14,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 
 internal object AIReviewCollector : CounterUsagesCollector() {
-  private val group = EventLogGroup("agent.workbench.ai.review", 3)
+  private val group = EventLogGroup("agent.workbench.ai.review", 4)
 
   private val REQUEST_ID = EventFields.Long("request_id", "ID of the review request.")
   private val RATING = EventFields.Enum("rating", ReviewRating::class.java)
@@ -46,7 +46,15 @@ internal object AIReviewCollector : CounterUsagesCollector() {
 
   private val SUCCESS = EventFields.Boolean("success")
 
-  private val AGENT = EventFields.Enum("agent", AIReviewAgentFus::class.java)
+  private val AVAILABLE_AI_REVIEW_AGENT_PROVIDERS: List<AgentSessionProvider> = listOf(
+    AgentSessionProvider.CODEX,
+    AgentSessionProvider.CLAUDE,
+    AgentSessionProvider.JUNIE,
+    AgentSessionProvider.OPENCODE,
+  )
+
+  private val AGENT = EventFields.String("agent", AVAILABLE_AI_REVIEW_AGENT_PROVIDERS.map { it.value })
+  private val YOLO = EventFields.Boolean("yolo", "Whether the agent was launched in YOLO (skip-permissions / full-auto) mode.")
 
   private data class ChangeMetrics(
     val changesCount: Int,
@@ -62,15 +70,15 @@ internal object AIReviewCollector : CounterUsagesCollector() {
   )
 
   internal val reviewActivity = group.registerIdeActivity("review",
-                                                          startEventAdditionalFields =
-                                                            arrayOf(REQUEST_ID, CHANGES_COUNT, NEW_FILES, DELETED_FILES, MODIFIED_FILES,
-                                                                    MOVED_FILES, RENAMED_FILES, LINES_ADDED, LINES_REMOVED,
-                                                                    CHARS_ADDED, CHARS_REMOVED,
-                                                                    LANGUAGE1, LANGUAGE_PERCENTAGE1,
-                                                                    LANGUAGE2, LANGUAGE_PERCENTAGE2,
-                                                                    LANGUAGE3, LANGUAGE_PERCENTAGE3,
-                                                                    FILES_COUNT, LANGUAGES_COUNT, AGENT),
-                                                          finishEventAdditionalFields = arrayOf(REQUEST_ID, SUCCESS))
+                                                           startEventAdditionalFields =
+                                                             arrayOf(REQUEST_ID, CHANGES_COUNT, NEW_FILES, DELETED_FILES, MODIFIED_FILES,
+                                                                     MOVED_FILES, RENAMED_FILES, LINES_ADDED, LINES_REMOVED,
+                                                                     CHARS_ADDED, CHARS_REMOVED,
+                                                                     LANGUAGE1, LANGUAGE_PERCENTAGE1,
+                                                                     LANGUAGE2, LANGUAGE_PERCENTAGE2,
+                                                                     LANGUAGE3, LANGUAGE_PERCENTAGE3,
+                                                                     FILES_COUNT, LANGUAGES_COUNT, AGENT, YOLO),
+                                                           finishEventAdditionalFields = arrayOf(REQUEST_ID, SUCCESS))
 
   override fun getGroup(): EventLogGroup = group
 
@@ -135,8 +143,12 @@ internal object AIReviewCollector : CounterUsagesCollector() {
       mostUsedLanguage3?.let { language -> LANGUAGE3 with language },
       languagePercentage3?.let { percentage -> LANGUAGE_PERCENTAGE3 with percentage },
       totalFilesCount?.let { filesCount -> FILES_COUNT with filesCount },
-      model.getCurrentRequest().selectedAgent?.let { AGENT with it.toFusAgent() }
     ).toMutableList()
+
+    model.getCurrentRequest().selectedAgent?.let { agent ->
+      agent.provider?.let { eventPairs += AGENT with it.value }
+      eventPairs += YOLO with agent.yolo
+    }
 
     calculateChangeMetrics(model.changes.value).apply {
       eventPairs += listOf(
@@ -232,18 +244,4 @@ internal object AIReviewCollector : CounterUsagesCollector() {
     )
   }
 
-  @Suppress("HardCodedStringLiteral")
-  private fun AIReviewAgent.toFusAgent(): AIReviewAgentFus {
-    return when {
-      displayName.contains("Codex", ignoreCase = true) -> AIReviewAgentFus.Codex
-      displayName.contains("Claude Code", ignoreCase = true) -> AIReviewAgentFus.ClaudeCode
-      else -> AIReviewAgentFus.Unknown
-    }
-  }
-
-  internal enum class AIReviewAgentFus {
-    Codex,
-    ClaudeCode,
-    Unknown,
-  }
 }

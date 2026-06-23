@@ -39,6 +39,7 @@ jvm_library(
         "//platform/statistics",
         "//platform/markdown-utils",
         "//libraries/markdown",
+        "//plugins/agent-workbench/lib-agent/core",
         "//plugins/agent-workbench/prompt/core",
     ],
 )
@@ -72,6 +73,7 @@ jvm_library(
         "//platform/statistics:statistics_test_lib",
         "//platform/markdown-utils:markdown-utils_test_lib",
         "//libraries/markdown:markdown_test_lib",
+        "//plugins/agent-workbench/lib-agent/core:core_test_lib",
         "//plugins/agent-workbench/prompt/core:core_test_lib",
     ],
 )

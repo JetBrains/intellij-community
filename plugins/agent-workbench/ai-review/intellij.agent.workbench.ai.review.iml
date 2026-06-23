@@ -26,6 +26,7 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.markdown.utils" />
     <orderEntry type="module" module-name="intellij.libraries.markdown" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.core" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core" />
   </component>
 </module>

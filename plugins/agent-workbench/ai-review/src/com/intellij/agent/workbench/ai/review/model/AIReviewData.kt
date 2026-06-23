@@ -13,6 +13,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.Random
@@ -49,6 +50,10 @@ data class AIReviewAgent(
   val configKey: String,
   val displayName: @Nls String,
   val icon: Icon? = null,
+  /** Provider backing this agent (e.g. `codex`, `claude`, `junie`, `opencode`), used for analytics. */
+  val provider: AgentSessionProvider? = null,
+  /** `true` when the agent is launched in YOLO (skip-permissions / full-auto / brave) mode. */
+  val yolo: Boolean = false,
 )
 
 /**
