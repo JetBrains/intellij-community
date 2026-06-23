@@ -137,7 +137,7 @@ internal class SessionTreeCellRenderer(
           tree = tree,
           actionRightPadding = actionRightPadding,
           timeLabel = threadRowPresentation.timeLabel,
-          statusLabel = threadRowPresentation.costLabel,
+          statusLabel = threadRowPresentation.trailingMetadataLabel,
           fontMetrics = baseFontMetrics,
           sharedTimeColumnWidth = sharedTimeColumnWidth,
         )

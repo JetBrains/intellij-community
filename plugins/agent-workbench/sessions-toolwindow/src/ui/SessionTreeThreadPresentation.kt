@@ -27,6 +27,7 @@ internal data class SessionTreeThreadRowPresentation(
   @JvmField val timeLabel: @NlsSafe String,
   @JvmField val statusLabel: @NlsSafe String,
   @JvmField val costLabel: @NlsSafe String?,
+  @JvmField val trailingMetadataLabel: @NlsSafe String?,
   @JvmField val branchMismatchMessage: @NlsSafe String?,
   @JvmField val accessibleStatusText: @NlsSafe String?,
 )
@@ -39,8 +40,13 @@ internal fun buildSessionTreeThreadRowPresentation(
   val timeLabel = treeNode.thread.updatedAt.takeIf { it > 0 }?.let { timestamp ->
     formatRelativeTimeShort(timestamp, now)
   } ?: AgentSessionsBundle.message("toolwindow.time.unknown")
-  val statusLabel = threadActivityDisplayName(treeNode.thread.activity)
+  val activity = treeNode.thread.activity
+  val statusLabel = threadActivityDisplayName(activity)
   val costLabel = treeNode.thread.cost.takeIf { AgentSessionCostPresentationSettings.isEnabled() }?.toDisplayLabel()
+  val trailingMetadataLabel = listOfNotNull(
+    statusLabel.takeIf { activity.hasVisibleTrailingStatus() },
+    costLabel,
+  ).joinToString(separator = " · ").takeIf { it.isNotEmpty() }
   val originBranch = treeNode.thread.originBranch
   val parentBranch = treeNode.parentWorktreeBranch
   val branchMismatchMessage = if (originBranch != null && parentBranch != null && originBranch != parentBranch) {
@@ -62,6 +68,7 @@ internal fun buildSessionTreeThreadRowPresentation(
     timeLabel = timeLabel,
     statusLabel = statusLabel,
     costLabel = costLabel,
+    trailingMetadataLabel = trailingMetadataLabel,
     branchMismatchMessage = branchMismatchMessage,
     accessibleStatusText = accessibleStatusText,
   )
@@ -87,6 +94,18 @@ internal fun buildSessionTreeThreadTooltipHtml(
 
 private fun threadActivityDisplayName(activity: AgentThreadActivity): @NlsSafe String {
   return AgentSessionsBundle.message(activity.statusMessageKey())
+}
+
+private fun AgentThreadActivity.hasVisibleTrailingStatus(): Boolean {
+  return when (this) {
+    AgentThreadActivity.REVIEWING,
+    AgentThreadActivity.NEEDS_INPUT,
+      -> true
+    AgentThreadActivity.PROCESSING,
+    AgentThreadActivity.UNREAD,
+    AgentThreadActivity.READY,
+      -> false
+  }
 }
 
 private fun AgentSessionCost.toDisplayLabel(): @NlsSafe String? {

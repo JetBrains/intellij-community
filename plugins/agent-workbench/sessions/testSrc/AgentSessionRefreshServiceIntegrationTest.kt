@@ -11,6 +11,8 @@ import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.session.AgentSessionCost
 import com.intellij.platform.ai.agent.core.session.AgentSessionCostKind
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationKey
+import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationModel
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceRefreshResult
@@ -22,6 +24,7 @@ import com.intellij.agent.workbench.sessions.state.AgentSessionWarmStateService
 import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_THREAD_COUNT
 import com.intellij.agent.workbench.sessions.state.InMemorySessionWarmState
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
+import com.intellij.openapi.components.service
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -47,11 +50,13 @@ class AgentSessionRefreshServiceIntegrationTest {
   @BeforeEach
   fun setUp() {
     AgentSessionCostPresentationSettings.setEnabled(true)
+    service<AgentSessionThreadPresentationModel>().clearForTests()
   }
 
   @AfterEach
   fun tearDown() {
     AgentSessionCostPresentationSettings.setEnabled(false)
+    service<AgentSessionThreadPresentationModel>().clearForTests()
   }
 
   @Test
@@ -172,9 +177,9 @@ class AgentSessionRefreshServiceIntegrationTest {
       service.refresh()
       waitForCondition {
         val thread = service.state.value.projects
-          .firstOrNull { it.path == PROJECT_PATH }
-          ?.threads
-          ?.singleOrNull() ?: return@waitForCondition false
+                       .firstOrNull { it.path == PROJECT_PATH }
+                       ?.threads
+                       ?.singleOrNull() ?: return@waitForCondition false
         thread.updatedAt == 200L && thread.cost?.amountUsd == BigDecimal.valueOf(2)
       }
       assertThat(costLoadCount.get()).isEqualTo(2)
@@ -1270,6 +1275,9 @@ class AgentSessionRefreshServiceIntegrationTest {
           ?.activity
       ).isEqualTo(AgentThreadActivity.READY)
       assertThat(warmState.getPathSnapshot(PROJECT_PATH)?.threads?.firstOrNull()?.activity)
+        .isEqualTo(AgentThreadActivity.READY)
+      val presentationKey = checkNotNull(AgentSessionThreadPresentationKey.create(PROJECT_PATH, AgentSessionProvider.CLAUDE, "claude-1"))
+      assertThat(service<AgentSessionThreadPresentationModel>().resolve(presentationKey)?.activity)
         .isEqualTo(AgentThreadActivity.READY)
     }
   }

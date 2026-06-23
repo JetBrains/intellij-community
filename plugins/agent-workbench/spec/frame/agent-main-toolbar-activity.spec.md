@@ -29,7 +29,7 @@ The group is a lightweight global Agent activity switcher: it helps users notice
 
 ## Non-goals
 - Filtering Agent activity by the current source project path.
-- Changing Agent Threads title counters, collapsed stripe badge, or OS notification behavior.
+- Defining Agent Threads title counters, collapsed stripe badge, or OS notification behavior; those stay owned by the tree spec.
 
 ## Requirements
 - Sessions toolwindow plugin must register `AgentWorkbenchSessions.MainToolbar.Activity` in `MainToolbarLeft` after `MainToolbarVCSGroup`.

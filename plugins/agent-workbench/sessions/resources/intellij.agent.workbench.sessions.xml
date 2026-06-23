@@ -23,6 +23,7 @@
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchFusCollector"/>
     <postStartupActivity implementation="com.intellij.agent.workbench.sessions.sleep.AgentSessionSleepPreventionStartupActivity"/>
+    <postStartupActivity implementation="com.intellij.agent.workbench.sessions.service.AgentChatUnreadAcknowledgementStartupActivity"/>
     <notificationGroup id="Agent Workbench Sessions" displayType="BALLOON" bundle="messages.AgentSessionsBundle"
                        key="notification.group.agent.workbench.sessions"/>
     <applicationConfigurable

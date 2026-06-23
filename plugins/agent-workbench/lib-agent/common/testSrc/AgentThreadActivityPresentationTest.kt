@@ -22,27 +22,27 @@ class AgentThreadActivityPresentationTest {
         showBadge = false,
       ),
       AgentThreadActivity.PROCESSING to AgentThreadActivityPresentation(
-        namedColorKey = "AgentWorkbench.ThreadStatus.processing",
-        lightFallbackRgb = Color(0xFFAF0F).rgb,
-        darkFallbackRgb = Color(0xF2C55C).rgb,
+        namedColorKey = "IconBadge.successBackground",
+        lightFallbackRgb = Color(0x55A76A).rgb,
+        darkFallbackRgb = Color(0x5FAD65).rgb,
         statusMessageKey = "toolwindow.thread.status.in.progress",
       ),
       AgentThreadActivity.REVIEWING to AgentThreadActivityPresentation(
-        namedColorKey = "AgentWorkbench.ThreadStatus.reviewing",
-        lightFallbackRgb = Color(0x8F5AE5).rgb,
-        darkFallbackRgb = Color(0x8F5AE5).rgb,
+        namedColorKey = "IconBadge.warningBackground",
+        lightFallbackRgb = Color(0xFFAF0F).rgb,
+        darkFallbackRgb = Color(0xF2C55C).rgb,
         statusMessageKey = "toolwindow.thread.status.needs.review",
       ),
       AgentThreadActivity.UNREAD to AgentThreadActivityPresentation(
-        namedColorKey = "AgentWorkbench.ThreadStatus.unread",
-        lightFallbackRgb = Color(0x55A76A).rgb,
-        darkFallbackRgb = Color(0x5FAD65).rgb,
+        namedColorKey = "IconBadge.infoBackground",
+        lightFallbackRgb = Color(0x588CF3).rgb,
+        darkFallbackRgb = Color(0x548AF7).rgb,
         statusMessageKey = "toolwindow.thread.status.done",
       ),
       AgentThreadActivity.NEEDS_INPUT to AgentThreadActivityPresentation(
-        namedColorKey = "AgentWorkbench.ThreadStatus.needsInput",
-        lightFallbackRgb = Color(0x588CF3).rgb,
-        darkFallbackRgb = Color(0x548AF7).rgb,
+        namedColorKey = "IconBadge.warningBackground",
+        lightFallbackRgb = Color(0xFFAF0F).rgb,
+        darkFallbackRgb = Color(0xF2C55C).rgb,
         statusMessageKey = "toolwindow.thread.status.needs.input",
       ),
     )
@@ -75,7 +75,7 @@ class AgentThreadActivityPresentationTest {
   }
 
   private fun withTemporaryNeedsInputUiColor(color: Color, action: () -> Unit) {
-    val key = "AgentWorkbench.ThreadStatus.needsInput"
+    val key = "IconBadge.warningBackground"
     val defaults = UIManager.getDefaults()
     val previous = defaults[key]
     UIManager.put(key, color)

@@ -8,6 +8,7 @@ import com.intellij.platform.ai.agent.core.AgentThreadActivityBucket
 import com.intellij.platform.ai.agent.core.chromeBucket
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.common.statusColor
+import com.intellij.platform.ai.agent.common.withAgentThreadActivityBadge
 import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentation
 import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationKey
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
@@ -16,7 +17,6 @@ import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.toolwindow.icons.AgentWorkbenchSessionsToolwindowIcons
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.IconManager
 import java.awt.Color
 import javax.swing.Icon
 
@@ -39,9 +39,10 @@ internal enum class AgentSessionsActivityBucket {
 }
 
 internal enum class AgentSessionsStripeBadge(
-  private val activity: AgentThreadActivity,
+  @JvmField val activity: AgentThreadActivity,
 ) {
   ATTENTION(AgentThreadActivity.NEEDS_INPUT),
+  RUNNING(AgentThreadActivity.PROCESSING),
   DONE(AgentThreadActivity.UNREAD),
   ;
 
@@ -66,6 +67,7 @@ internal data class AgentSessionsActivitySummary(
   fun stripeBadge(): AgentSessionsStripeBadge? {
     return when {
       attentionRows.isNotEmpty() -> AgentSessionsStripeBadge.ATTENTION
+      runningRows.isNotEmpty() -> AgentSessionsStripeBadge.RUNNING
       doneRows.isNotEmpty() -> AgentSessionsStripeBadge.DONE
       else -> null
     }
@@ -86,11 +88,7 @@ internal fun agentSessionsActivityIcon(summary: AgentSessionsActivitySummary): I
 
 internal fun agentSessionsActivityIcon(badge: AgentSessionsStripeBadge?): Icon {
   val emptyIcon = AgentWorkbenchSessionsToolwindowIcons.Alien
-  return when (badge) {
-    AgentSessionsStripeBadge.ATTENTION -> IconManager.getInstance().withIconBadge(emptyIcon, AgentSessionsStripeBadge.ATTENTION.color())
-    AgentSessionsStripeBadge.DONE -> IconManager.getInstance().withIconBadge(emptyIcon, AgentSessionsStripeBadge.DONE.color())
-    null -> emptyIcon
-  }
+  return badge?.let { withAgentThreadActivityBadge(emptyIcon, it.activity) } ?: emptyIcon
 }
 
 internal fun buildAgentSessionsActivitySummary(

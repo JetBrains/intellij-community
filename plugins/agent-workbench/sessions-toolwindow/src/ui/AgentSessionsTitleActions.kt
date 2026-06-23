@@ -5,6 +5,7 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.common.statusColor
+import com.intellij.platform.ai.agent.common.statusMessageKey
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.ui.agentSessionThreadStatusIcon
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
@@ -299,7 +300,8 @@ internal fun agentSessionsActivityPopupRowText(
   val timeLabel = row.thread.updatedAt.takeIf { it > 0 }?.let { timestamp ->
     formatRelativeTimeShort(timestamp, now)
   } ?: AgentSessionsBundle.message("toolwindow.time.unknown")
-  return AgentSessionsBundle.message("toolwindow.activity.popup.row", title, row.locationLabel, timeLabel)
+  val statusLabel = AgentSessionsBundle.message(row.thread.activity.statusMessageKey())
+  return AgentSessionsBundle.message("toolwindow.activity.popup.row", title, statusLabel, row.locationLabel, timeLabel)
 }
 
 private val AgentSessionsActivityBucket.tooltipKey: String
