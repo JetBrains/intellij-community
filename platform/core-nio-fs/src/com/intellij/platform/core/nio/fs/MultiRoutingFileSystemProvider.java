@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.core.nio.fs;
 
 import org.jetbrains.annotations.Contract;
@@ -173,14 +173,14 @@ public final class MultiRoutingFileSystemProvider
   @Contract("null -> null; !null -> !null")
   @Override
   @VisibleForTesting
-  public @Nullable Path wrapDelegatePath(@Nullable Path delegatePath) {
+  public @Nullable MultiRoutingFsPath wrapDelegatePath(@Nullable Path delegatePath) {
     if (delegatePath == null) {
       return null;
     }
-    else if (delegatePath instanceof MultiRoutingFsPath) {
+    else if (delegatePath instanceof MultiRoutingFsPath mrfsp) {
       // `MultiRoutingFsPath` is encapsulated and can't be created outside this package.
       // Tricks with classloaders are not expected here.
-      return delegatePath;
+      return mrfsp;
     }
     else {
       return new MultiRoutingFsPath(myFileSystem, delegatePath);
