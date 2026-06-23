@@ -38,6 +38,7 @@ import java.nio.file.StandardOpenOption.WRITE
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.random.Random
 
 
@@ -367,6 +368,67 @@ class WriteAheadLogFileChannelOverCircularBufferTest {
   }
 
   @Test
+  fun `applyUnfinished does not deadlock with concurrent flush`(@TempDir tempDir: Path) {
+    val storagePath = tempDir.resolve("storage.bin").toAbsolutePath()
+    val circularBuffer = ApplyUnfinishedFlushDeadlockCircularBytesBuffer()
+    WriteAheadLogOverCircularBuffer(circularBuffer, singlePathEnumerator(storagePath), { _, _, _ -> }).use { writeAheadLog ->
+      val fileWriter = writeAheadLog.openFor(storagePath)
+      fileWriter.write(0, byteArrayOf(42), 0, 1)
+
+      val applyFinished = CountDownLatch(1)
+      val applyFailure = AtomicReference<Throwable>()
+      val applyThread = Thread {
+        try {
+          fileWriter.applyUnfinished(0, 1, ByteBuffer.allocate(1), 0)
+        }
+        catch (t: Throwable) {
+          applyFailure.set(t)
+        }
+        finally {
+          applyFinished.countDown()
+        }
+      }.also {
+        it.name = "test-apply-unfinished"
+        it.isDaemon = true
+        it.start()
+      }
+
+      assertTrue(circularBuffer.awaitReadEntered(), "applyUnfinished must enter circular buffer read")
+
+      val flushFinished = CountDownLatch(1)
+      val flushFailure = AtomicReference<Throwable>()
+      val flushThread = Thread {
+        try {
+          writeAheadLog.flush()
+        }
+        catch (t: Throwable) {
+          flushFailure.set(t)
+        }
+        finally {
+          flushFinished.countDown()
+        }
+      }.also {
+        it.name = "test-wal-flush"
+        it.isDaemon = true
+        it.start()
+      }
+
+      val completed = try {
+        applyFinished.await(5, TimeUnit.SECONDS) && flushFinished.await(5, TimeUnit.SECONDS)
+      }
+      finally {
+        circularBuffer.releaseRead()
+        applyThread.join(5_000)
+        flushThread.join(5_000)
+      }
+
+      assertTrue(completed, "applyUnfinished and flush must not deadlock")
+      applyFailure.get()?.let { throw AssertionError("applyUnfinished failed", it) }
+      flushFailure.get()?.let { throw AssertionError("flush failed", it) }
+    }
+  }
+
+  @Test
   fun `unfinished records are applied after reopen`(@TempDir tempDir: Path) {
     val caseDir = tempDir.resolve("wal")
     Files.createDirectories(caseDir)
@@ -632,7 +694,9 @@ private class CapacityOnlyCircularBytesBuffer(
     throw AssertionError("Too large WAL record must be rejected before appending to circular buffer")
   }
 
-  override fun read(reader: CircularBytesBuffer.DataReader): Int = 0
+  override fun read(reader: CircularBytesBuffer.DataReader) = Unit
+
+  override fun readConsuming(reader: CircularBytesBuffer.ConsumingDataReader): Int = 0
 
   override fun close() = Unit
 
@@ -654,7 +718,63 @@ private class QueueFullOnceCircularBytesBuffer : CircularBytesBuffer {
     writer.write(ByteBuffer.allocate(entrySize))
   }
 
-  override fun read(reader: CircularBytesBuffer.DataReader): Int = 0
+  override fun read(reader: CircularBytesBuffer.DataReader) = Unit
+
+  override fun readConsuming(reader: CircularBytesBuffer.ConsumingDataReader): Int = 0
+
+  override fun close() = Unit
+
+  override fun flush() = Unit
+}
+
+private class ApplyUnfinishedFlushDeadlockCircularBytesBuffer : CircularBytesBuffer {
+  private val readEntered = CountDownLatch(1)
+  private val flushEntered = CountDownLatch(1)
+  private val flushFinished = CountDownLatch(1)
+  private val releaseRead = CountDownLatch(1)
+  @Volatile
+  private var entry: ByteArray? = null
+
+  fun awaitReadEntered(): Boolean = readEntered.await(5, TimeUnit.SECONDS)
+
+  fun releaseRead() {
+    releaseRead.countDown()
+  }
+
+  override fun hasUnprocessedRecords(): Boolean = entry != null
+
+  override fun maxEntrySize(): Int = 1024
+
+  override fun append(writer: ByteBufferWriter, entrySize: Int) {
+    val buffer = ByteBuffer.allocate(entrySize)
+    writer.write(buffer)
+    entry = buffer.array()
+  }
+
+  override fun read(reader: CircularBytesBuffer.DataReader) {
+    readEntered.countDown()
+    flushEntered.await()
+    while (flushFinished.count > 0 && releaseRead.count > 0) {
+      releaseRead.await(10, TimeUnit.MILLISECONDS)
+    }
+    entry?.let { reader.read(ByteBuffer.wrap(it)) }
+  }
+
+  override fun readConsuming(reader: CircularBytesBuffer.ConsumingDataReader): Int {
+    check(readEntered.await(5, TimeUnit.SECONDS)) { "applyUnfinished must enter circular buffer read before flush" }
+    flushEntered.countDown()
+    val currentEntry = entry ?: return 0
+    val consumed = try {
+      reader.read(ByteBuffer.wrap(currentEntry))
+    }
+    finally {
+      flushFinished.countDown()
+    }
+    if (consumed) {
+      entry = null
+    }
+    return if (consumed) 1 else 0
+  }
 
   override fun close() = Unit
 
@@ -667,6 +787,23 @@ private fun singlePathEnumerator(): DurableDataEnumerator<Path> = object : Durab
   override fun valueOf(idx: Int): Path? = null
 
   override fun tryEnumerate(value: Path?): Int = throw UnsupportedOperationException("not implemented")
+
+  override fun close() = Unit
+
+  override fun force() = Unit
+
+  override fun isDirty() = false
+}
+
+private fun singlePathEnumerator(path: Path): DurableDataEnumerator<Path> = object : DurableDataEnumerator<Path> {
+  override fun enumerate(value: Path?): Int {
+    require(value == path) { "Only [$path] could be enumerated, but [$value] requested" }
+    return 1
+  }
+
+  override fun valueOf(idx: Int): Path? = if (idx == 1) path else null
+
+  override fun tryEnumerate(value: Path?): Int = if (value == path) 1 else DataEnumerator.NULL_ID
 
   override fun close() = Unit
 

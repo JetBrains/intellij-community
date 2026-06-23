@@ -10,6 +10,9 @@ import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit.SECONDS
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -30,32 +33,30 @@ class CircularBytesBufferOverMMappedFileTest {
 
       assertTrue("Must have 1 unprocessed record") { queue.hasUnprocessedRecords() }
 
-      queue.read { /*consume: */false }
+      queue.read { }
 
       assertTrue("Must still have 1 unprocessed record") { queue.hasUnprocessedRecords() }
 
-      queue.read { /*consume: */ true }
+      queue.readConsuming { /*consume: */ true }
       assertFalse("Must have no unprocessed record") { queue.hasUnprocessedRecords() }
     }
   }
 
   @Test
-  fun `read returning false keeps entries but continues scanning`(@TempDir tempDir: Path) {
+  fun `read-only keeps entries but continues scanning`(@TempDir tempDir: Path) {
     withQueue(tempDir) { queue ->
       queue.append("one".toByteArray(UTF_8))
       queue.append("two".toByteArray(UTF_8))
 
       val firstPass = ArrayList<String>()
-      val consumed = queue.read { entryData ->
+      queue.read { entryData ->
         firstPass += readString(entryData)
-        false
       }
 
-      assertThat(consumed).isEqualTo(0)
       assertThat(firstPass).containsExactly("one", "two")
 
       val secondPass = ArrayList<String>()
-      val consumedOnSecondPass = queue.read { entryData ->
+      val consumedOnSecondPass = queue.readConsuming { entryData ->
         secondPass += readString(entryData)
         true
       }
@@ -73,7 +74,7 @@ class CircularBytesBufferOverMMappedFileTest {
       queue.append("three".toByteArray(UTF_8))
 
       val firstPass = ArrayList<String>()
-      val consumed = queue.read { entryData ->
+      val consumed = queue.readConsuming { entryData ->
         firstPass += readString(entryData)
         firstPass.size != 2
       }
@@ -82,7 +83,7 @@ class CircularBytesBufferOverMMappedFileTest {
       assertThat(firstPass).containsExactly("one", "two", "three")
 
       val secondPass = ArrayList<String>()
-      queue.read { entryData ->
+      queue.readConsuming { entryData ->
         secondPass += readString(entryData)
         true
       }
@@ -98,7 +99,7 @@ class CircularBytesBufferOverMMappedFileTest {
       queue.append(record(size = 8, marker = 2))
       queue.append(record(size = 8, marker = 3))
 
-      queue.read { entryData ->
+      queue.readConsuming { entryData ->
         readBytes(entryData)[0] != 3.toByte()
       }
 
@@ -106,7 +107,7 @@ class CircularBytesBufferOverMMappedFileTest {
       queue.append(record(size = 4, marker = 5))
 
       val records = ArrayList<ByteArray>()
-      queue.read { entryData ->
+      queue.readConsuming { entryData ->
         records += readBytes(entryData)
         true
       }
@@ -145,6 +146,66 @@ class CircularBytesBufferOverMMappedFileTest {
   }
 
   @Test
+  fun `append is not blocked by active reader callback`(@TempDir tempDir: Path) {
+    withQueue(tempDir) { queue ->
+      queue.append("one".toByteArray(UTF_8))
+
+      val readerStarted = CountDownLatch(1)
+      val readerCanFinish = CountDownLatch(1)
+      val readerError = AtomicReference<Throwable?>()
+      val readerThread = Thread {
+        try {
+          queue.readConsuming { entryData ->
+            assertThat(readString(entryData)).isEqualTo("one")
+            readerStarted.countDown()
+            assertTrue("Reader callback must be released by the test") {
+              readerCanFinish.await(5, SECONDS)
+            }
+            true
+          }
+        }
+        catch (t: Throwable) {
+          readerError.set(t)
+        }
+      }
+
+      readerThread.start()
+      assertTrue("Reader callback must start") { readerStarted.await(5, SECONDS) }
+
+      val appendCompleted = CountDownLatch(1)
+      val appendError = AtomicReference<Throwable?>()
+      val appendThread = Thread {
+        try {
+          queue.append("two".toByteArray(UTF_8))
+          appendCompleted.countDown()
+        }
+        catch (t: Throwable) {
+          appendError.set(t)
+        }
+      }
+      appendThread.start()
+
+      assertTrue("append() must not wait until reader callback exits") { appendCompleted.await(5, SECONDS) }
+
+      readerCanFinish.countDown()
+      readerThread.join(5_000)
+      appendThread.join(5_000)
+
+      assertFalse("Reader thread must finish") { readerThread.isAlive }
+      assertFalse("Append thread must finish") { appendThread.isAlive }
+      appendError.get()?.let { throw AssertionError("append() failed", it) }
+      readerError.get()?.let { throw AssertionError("readConsuming() failed", it) }
+
+      val remainingRecords = ArrayList<String>()
+      queue.readConsuming { entryData ->
+        remainingRecords += readString(entryData)
+        true
+      }
+      assertThat(remainingRecords).containsExactly("two")
+    }
+  }
+
+  @Test
   fun `full buffer is distinguished from empty buffer when offsets match`(@TempDir tempDir: Path) {
     withQueue(tempDir, capacity = 64) { queue ->
       repeat(4) {
@@ -156,7 +217,7 @@ class CircularBytesBufferOverMMappedFileTest {
       }
 
       val records = ArrayList<ByteArray>()
-      queue.read { entryData ->
+      queue.readConsuming { entryData ->
         records += readBytes(entryData)
         true
       }
@@ -167,7 +228,7 @@ class CircularBytesBufferOverMMappedFileTest {
       queue.append(record(size = 12, marker = 4))
 
       val recordsAfterDrain = ArrayList<ByteArray>()
-      queue.read { entryData ->
+      queue.readConsuming { entryData ->
         recordsAfterDrain += readBytes(entryData)
         true
       }
@@ -188,7 +249,7 @@ class CircularBytesBufferOverMMappedFileTest {
       queue = openQueue(storagePath)
 
       val records = ArrayList<String>()
-      queue.read { entryData ->
+      queue.readConsuming { entryData ->
         records += readString(entryData)
         true
       }
