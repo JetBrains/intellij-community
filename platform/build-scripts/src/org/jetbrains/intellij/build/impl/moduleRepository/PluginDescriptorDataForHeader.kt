@@ -1,13 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.moduleRepository
 
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.repository.RuntimeModuleVisibility
-import org.jdom.Element
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
 import org.jetbrains.intellij.build.impl.PRODUCT_DESCRIPTOR_META_PATH
@@ -22,6 +21,8 @@ internal class PluginDescriptorDataForHeader(
   val pluginDescriptorJpsModuleName: String,
   val additionalFrontendOnlyPlugin: Boolean,
   val contentModules: Map<String, ContentModuleRegistrationDataForHeader>,
+  /** dependencies of this plugin descriptor on other plugin descriptor modules (via `<dependencies><plugin>` tag in `plugin.xml`) */
+  val pluginDescriptorDependenciesOnPluginDescriptorModules: List<RuntimeModuleId>,
 ) {
   override fun toString(): String {
     return "PluginDescriptorDataForHeader{pluginId=$pluginId, pluginDescriptorJpsModuleName=$pluginDescriptorJpsModuleName, additionalFrontendOnlyPlugin=$additionalFrontendOnlyPlugin}"
@@ -34,6 +35,8 @@ internal data class ContentModuleRegistrationDataForHeader(
   val loadingRule: RuntimeModuleLoadingRule,
   val requiredIfAvailable: RuntimeModuleId?,
   val visibility: RuntimeModuleVisibility,
+  /** dependencies of this content module on other plugin descriptor modules (via `<dependencies><plugin>` tag) */
+  val dependenciesOnPluginDescriptorModules: List<RuntimeModuleId>,
 )
 
 /**
@@ -104,22 +107,24 @@ private fun fetchPluginDescriptorDataForHeader(
       moduleXmlData = additionalContainersForEmbeddedFrontend.firstNotNullOfOrNull { it.getCachedFileData(descriptorName) }
     }
     require(moduleXmlData != null) { "Cannot find $descriptorName descriptor for plugin.xml in $pluginDescriptorJpsModuleName" }
-    val moduleXmlRoot = JDOMUtil.load(moduleXmlData)
-    val visibility = parseVisibility(moduleXmlRoot)
     val loadingRule = contentModuleElement.loadingRule.toRuntimeModuleLoadingRule()
     val requiredIfAvailable = contentModuleElement.requiredIfAvailable?.let { RuntimeModuleId.contentModule(it, RuntimeModuleId.DEFAULT_NAMESPACE) }
-    ContentModuleRegistrationDataForHeader(contentModuleElement.name, namespace, loadingRule, requiredIfAvailable, visibility)
+    val rawModuleDescriptorData = parseContentAndXIncludes(moduleXmlData, locationSource = "cached data for $descriptorName")
+    val visibility = rawModuleDescriptorData.moduleVisibility.toRuntimeModuleVisibility()
+    val dependenciesOnPluginDescriptorModules = rawModuleDescriptorData.pluginDependencies.map {
+      RuntimeModuleId.pluginDescriptorModule(it)
+    }
+    ContentModuleRegistrationDataForHeader(contentModuleElement.name, namespace, loadingRule, requiredIfAvailable, visibility, dependenciesOnPluginDescriptorModules)
   }
-  return PluginDescriptorDataForHeader(pluginId, pluginDescriptorJpsModuleName, additionalFrontendOnlyPlugin, contentModules.associateBy { it.name })
+  val pluginDescriptorDependenciesOnPluginDescriptorModules = parsedContent.pluginDependencies.map { RuntimeModuleId.pluginDescriptorModule(it) }
+  return PluginDescriptorDataForHeader(pluginId, pluginDescriptorJpsModuleName, additionalFrontendOnlyPlugin, contentModules.associateBy { it.name }, pluginDescriptorDependenciesOnPluginDescriptorModules)
 }
 
-private fun parseVisibility(moduleXmlRoot: Element): RuntimeModuleVisibility {
-  val visibilityString = moduleXmlRoot.getAttributeValue("visibility")
-  return when (visibilityString) {
-    "public" -> RuntimeModuleVisibility.PUBLIC
-    "internal" -> RuntimeModuleVisibility.INTERNAL
-    "private" -> RuntimeModuleVisibility.PRIVATE
-    else -> RuntimeModuleVisibility.PRIVATE
+private fun ModuleVisibilityValue.toRuntimeModuleVisibility(): RuntimeModuleVisibility {
+  return when (this) {
+    ModuleVisibilityValue.PRIVATE -> RuntimeModuleVisibility.PRIVATE
+    ModuleVisibilityValue.INTERNAL -> RuntimeModuleVisibility.INTERNAL
+    ModuleVisibilityValue.PUBLIC -> RuntimeModuleVisibility.PUBLIC
   }
 }
 

@@ -69,6 +69,10 @@ private fun generateDependenciesForModule(
       }
     }
   )
+  val additional = pluginHeaderData.dependenciesOnPluginDescriptorModules[moduleId]
+  if (!additional.isNullOrEmpty()) {
+    dependencies.addAll(additional)
+  }
   return dependencies
 }
 

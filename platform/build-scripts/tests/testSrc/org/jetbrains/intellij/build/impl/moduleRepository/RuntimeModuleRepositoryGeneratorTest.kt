@@ -161,6 +161,41 @@ class RuntimeModuleRepositoryGeneratorTest {
     }
   }
 
+  @Test
+  fun `dependencies on plugin aliases`() {
+    addModule("foo.plugin")
+    addModule("foo.core")
+    val barAlias = RuntimeModuleId.pluginDescriptorModule("com.intellij.modules.bar")
+    val bazAlias = RuntimeModuleId.pluginDescriptorModule("com.intellij.modules.baz")
+    val plugin = PluginDescriptorDataForHeader(
+      pluginId = "com.foo.plugin",
+      pluginDescriptorJpsModuleName = "foo.plugin",
+      additionalFrontendOnlyPlugin = false,
+      contentModules = mapOf("foo.core" to
+        ContentModuleRegistrationDataForHeader(
+          "foo.core",
+          namespace = DEFAULT_NAMESPACE,
+          RuntimeModuleLoadingRule.OPTIONAL,
+          requiredIfAvailable = null,
+          visibility = RuntimeModuleVisibility.PUBLIC,
+          dependenciesOnPluginDescriptorModules = listOf(barAlias),
+        )
+      ),
+      pluginDescriptorDependenciesOnPluginDescriptorModules = listOf(bazAlias),
+    )
+    val distributionEntries = listOf(
+      moduleOutput("foo.plugin"),
+      moduleOutput("foo.core"),
+    )
+    generateAndCheck(plugin, distributionEntries) {
+      descriptor(legacyJpsModule("foo.plugin"), listOf("../lib/foo.plugin.jar"), dependencies = listOf(bazAlias))
+      descriptor(contentModule("foo.core"), listOf("../lib/foo.core.jar"), dependencies = listOf(barAlias))
+      pluginHeader("com.foo.plugin", legacyJpsModule("foo.plugin"),
+                   includedJpsModule("foo.plugin"), includedContentModule("foo.core")
+      )
+    }
+  }
+
   private fun generateAndCheck(
     plugin: PluginDescriptorDataForHeader,
     distributionEntries: List<DistributionFileEntry>,
@@ -197,9 +232,11 @@ class RuntimeModuleRepositoryGeneratorTest {
           namespace = DEFAULT_NAMESPACE,
           RuntimeModuleLoadingRule.OPTIONAL,
           requiredIfAvailable = null,
-          visibility = RuntimeModuleVisibility.PUBLIC
+          visibility = RuntimeModuleVisibility.PUBLIC,
+          dependenciesOnPluginDescriptorModules = emptyList(),
         )
-      }
+      },
+      pluginDescriptorDependenciesOnPluginDescriptorModules = emptyList(),
     )
   }
 

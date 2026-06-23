@@ -35,6 +35,8 @@ internal class RuntimePluginHeaderData(
   val projectLibrariesToIncludingContentModules: MultiMap<JpsLibrary, RuntimeModuleId>,
   /** Mapping from ID of a module to the list of paths from its classpath (relative to the root of the installation directory) */
   val classpathEntries: MultiMap<RuntimeModuleId, String>,
+  /** Mapping from ID of an included module to the list of its dependencies on plugin descriptor modules (via `<dependencies><plugin>` tag) */
+  val dependenciesOnPluginDescriptorModules: LinkedHashMap<RuntimeModuleId, List<RuntimeModuleId>>,
 ) {
   override fun toString(): String {
     return "RuntimePluginHeaderData{pluginId=${header.pluginId}, pluginDescriptorModuleId=${header.pluginDescriptorModuleId}}"
@@ -186,7 +188,19 @@ private fun generateRuntimePluginHeader(
   val pluginDescriptorModule = project.findModuleByName(pluginDescriptorData.pluginDescriptorJpsModuleName) ?: error("Cannot find module ${pluginDescriptorData.pluginDescriptorJpsModuleName}")
   val pluginDescriptorModuleId = createIdForModule(pluginDescriptorModule, pluginDescriptorData, elementsIncludedInMultiplePlugins, existingIdsToReuse)
   val header = RuntimePluginHeaderImpl(pluginDescriptorData.pluginId, pluginDescriptorModuleId, includedModules)
-  return RuntimePluginHeaderData(header, additionalModules, visibilityOfModules, includedElementToId, moduleIdToJpsElement, projectLibrariesToIncludingContentModules, classpathEntries)
+  val dependenciesOnPluginDescriptorModules = LinkedHashMap<RuntimeModuleId, List<RuntimeModuleId>>()
+  if (pluginDescriptorData.pluginDescriptorDependenciesOnPluginDescriptorModules.isNotEmpty()) {
+    dependenciesOnPluginDescriptorModules[pluginDescriptorModuleId] = pluginDescriptorData.pluginDescriptorDependenciesOnPluginDescriptorModules
+  }
+  for (includedModule in header.includedModules) {
+    val dependencies = pluginDescriptorData.contentModules[includedModule.moduleId.name]?.dependenciesOnPluginDescriptorModules
+    if (!dependencies.isNullOrEmpty()) {
+      val existing = dependenciesOnPluginDescriptorModules[includedModule.moduleId]
+      dependenciesOnPluginDescriptorModules[includedModule.moduleId] = if (existing == null) dependencies else existing + dependencies
+    }
+  }
+  return RuntimePluginHeaderData(header, additionalModules, visibilityOfModules, includedElementToId, moduleIdToJpsElement, projectLibrariesToIncludingContentModules, classpathEntries,
+                                 dependenciesOnPluginDescriptorModules)
 }
 
 /**
