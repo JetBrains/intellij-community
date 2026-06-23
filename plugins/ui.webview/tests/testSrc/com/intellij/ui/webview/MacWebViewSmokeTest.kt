@@ -149,14 +149,118 @@ class MacWebViewSmokeTest {
     """.trimIndent())
     delay(500.milliseconds)
 
-    val result = facade.evaluateJavaScript(/*language=JavaScript*/ """
+    val initialResult = facade.evaluateJavaScript(/*language=JavaScript*/ """
       (function() {
-        const attributeNames = ['autocomplete', 'autocorrect', 'autocapitalize', 'spellcheck'];
         const existing = document.getElementById('existing');
-        return attributeNames.map(name => existing.getAttribute(name)).join('|');
+        return inputAssistState(existing);
+
+        function inputAssistState(element) {
+          const attributeNames = ['autocomplete', 'autocorrect', 'autocapitalize', 'spellcheck'];
+          return attributeNames.map(name => element.getAttribute(name)).join('|') + '|' + String(element.spellcheck);
+        }
       })()
     """.trimIndent())
-    assertEquals("off|off|off|false", result)
+    assertEquals("off|off|off|false|false", initialResult)
+
+    facade.evaluateJavaScript(/*language=JavaScript*/ """
+      (function() {
+        const dynamic = document.createElement('input');
+        dynamic.id = 'dynamic';
+        setInputAssistEnabled(dynamic);
+        document.body.appendChild(dynamic);
+
+        const host = document.createElement('div');
+        host.id = 'shadow-host';
+        document.body.appendChild(host);
+
+        const shadow = host.attachShadow({ mode: 'open' });
+        const shadowInput = document.createElement('input');
+        shadowInput.id = 'shadow';
+        setInputAssistEnabled(shadowInput);
+        shadow.appendChild(shadowInput);
+
+        return 'created';
+
+        function setInputAssistEnabled(element) {
+          element.setAttribute('autocomplete', 'email');
+          element.setAttribute('autocorrect', 'on');
+          element.setAttribute('autocapitalize', 'sentences');
+          element.setAttribute('spellcheck', 'true');
+          element.spellcheck = true;
+        }
+      })()
+    """.trimIndent())
+    delay(100.milliseconds)
+
+    val dynamicResult = facade.evaluateJavaScript(/*language=JavaScript*/ """
+      (function() {
+        return [
+          inputAssistState(document.getElementById('existing')),
+          inputAssistState(document.getElementById('dynamic')),
+          inputAssistState(document.getElementById('shadow-host').shadowRoot.getElementById('shadow'))
+        ].join(';');
+
+        function inputAssistState(element) {
+          const attributeNames = ['autocomplete', 'autocorrect', 'autocapitalize', 'spellcheck'];
+          return attributeNames.map(name => element.getAttribute(name)).join('|') + '|' + String(element.spellcheck);
+        }
+      })()
+    """.trimIndent())
+    assertEquals("off|off|off|false|false;off|off|off|false|false;off|off|off|false|false", dynamicResult)
+
+    val eventResult = facade.evaluateJavaScript(/*language=JavaScript*/ """
+      (function() {
+        const existing = document.getElementById('existing');
+        const dynamic = document.getElementById('dynamic');
+        const shadowInput = document.getElementById('shadow-host').shadowRoot.getElementById('shadow');
+        for (const element of [existing, dynamic, shadowInput]) {
+          setInputAssistEnabled(element);
+        }
+
+        const eventLog = [];
+        document.addEventListener('focusin', function() { eventLog.push('focusin'); }, { once: true });
+        document.addEventListener('beforeinput', function() { eventLog.push('beforeinput'); }, { once: true });
+        document.addEventListener('input', function() { eventLog.push('input'); }, { once: true });
+
+        const focusEvent = new Event('focusin', { bubbles: true, composed: true });
+        const beforeInputEvent = new Event('beforeinput', { bubbles: true, composed: true, cancelable: true });
+        const inputEvent = new Event('input', { bubbles: true, composed: true });
+        shadowInput.dispatchEvent(focusEvent);
+        shadowInput.dispatchEvent(beforeInputEvent);
+        shadowInput.dispatchEvent(inputEvent);
+
+        window['__inputAssistEventState'] = eventLog.join(',') + '|' + String(beforeInputEvent.defaultPrevented) + '|' + String(inputEvent.defaultPrevented);
+        return window['__inputAssistEventState'];
+
+        function setInputAssistEnabled(element) {
+          element.setAttribute('autocomplete', 'email');
+          element.setAttribute('autocorrect', 'on');
+          element.setAttribute('autocapitalize', 'sentences');
+          element.setAttribute('spellcheck', 'true');
+          element.spellcheck = true;
+        }
+      })()
+    """.trimIndent())
+    assertEquals("focusin,beforeinput,input|false|false", eventResult)
+
+    delay(100.milliseconds)
+
+    val resetResult = facade.evaluateJavaScript(/*language=JavaScript*/ """
+      (function() {
+        return [
+          inputAssistState(document.getElementById('existing')),
+          inputAssistState(document.getElementById('dynamic')),
+          inputAssistState(document.getElementById('shadow-host').shadowRoot.getElementById('shadow')),
+          window['__inputAssistEventState']
+        ].join(';');
+
+        function inputAssistState(element) {
+          const attributeNames = ['autocomplete', 'autocorrect', 'autocapitalize', 'spellcheck'];
+          return attributeNames.map(name => element.getAttribute(name)).join('|') + '|' + String(element.spellcheck);
+        }
+      })()
+    """.trimIndent())
+    assertEquals("off|off|off|false|false;off|off|off|false|false;off|off|off|false|false;focusin,beforeinput,input|false|false", resetResult)
 
     facade.close()
   }

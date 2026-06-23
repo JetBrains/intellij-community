@@ -23,10 +23,11 @@ Do not use blind private KVC keys for this work. Unknown KVC keys can raise Obje
 
 ## Runtime Script
 
-Install a document-start `WKUserScript` through `WKUserContentController` for browser-like behavior that WebKit does not expose as stable macOS settings:
+Install the shared internal application-mode DOM hardening script as a document-start `WKUserScript` through `WKUserContentController` for browser-like behavior that WebKit does not expose as stable macOS settings. The script is backend-reusable, but this plan installs it only in the macOS WKWebView backend.
 
 - Prevent cancelable `contextmenu` defaults in capture phase without stopping propagation.
-- Set public DOM input-assist hints on form controls present at load, applied at document-start and once on `DOMContentLoaded`: `autocomplete="off"`, `autocorrect="off"`, `autocapitalize="off"`, and `spellcheck="false"`. Controls inserted into the DOM later are intentionally not covered.
+- Set public DOM input-assist hints on form controls in light DOM and open shadow roots, including controls inserted later and framework rerenders that restore browser-like values: `autocomplete="off"`, `autocorrect="off"`, `autocapitalize="off"`, and `spellcheck="false"`.
+- Closed shadow roots remain component-owned because page scripts cannot inspect them after creation; components using closed roots must render disabled native input-assist hints themselves.
 
 Browser page zoom and elastic overscroll are handled entirely by the native defaults above (`allowsMagnification`, `pageZoom`, `_setRubberBandingEnabled:`), so the script carries no wheel, scroll, or keyboard listeners.
 
@@ -38,6 +39,7 @@ The DOM input hints remain installed even when `_setCanUseCredentialStorage:fals
 - Do not disable WebKit security protections such as fraudulent-content warnings.
 - Do not add blind private KVC, native Objective-C exception wrappers, or WebKit SPI beyond the guarded `_setRubberBandingEnabled:` and `_setCanUseCredentialStorage:` selectors used here.
 - Do not change user agent, download policy, or PDF behavior.
+- Do not roll the shared DOM hardening script out to Windows WebView2, Linux WebKitGTK, or JCEF in this change; those backends need separate injection paths and tests.
 
 ## Verification
 

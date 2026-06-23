@@ -17,6 +17,7 @@ import com.intellij.ui.mac.foundation.Foundation.toStringViaUTF8
 import com.intellij.ui.mac.foundation.ID
 import com.intellij.ui.webview.impl.WebViewEditCommand
 import com.intellij.ui.webview.impl.WebViewAssetResponse
+import com.intellij.ui.webview.impl.WebViewApplicationModeScripts
 import com.intellij.ui.webview.impl.WebViewLogger
 import com.intellij.ui.webview.impl.WEBVIEW_ASSET_CUSTOM_SCHEME
 import com.sun.jna.Callback
@@ -137,49 +138,6 @@ internal object WKWebViewBridge {
 
   private const val WK_RECT_EDGE_NONE = 0L
   private const val WK_USER_SCRIPT_INJECTION_TIME_AT_DOCUMENT_START = 0L
-
-  @Language("JavaScript")
-  private val APPLICATION_MODE_USER_SCRIPT = """
-    (function() {
-      const formControlSelector = 'input, textarea, select';
-
-      function configureFormControl(element) {
-        element.setAttribute('autocomplete', 'off');
-        element.setAttribute('autocorrect', 'off');
-        element.setAttribute('autocapitalize', 'off');
-        element.setAttribute('spellcheck', 'false');
-        element.spellcheck = false;
-      }
-
-      function configureFormControls(root) {
-        if (!root) {
-          return;
-        }
-        if (root.nodeType === Node.ELEMENT_NODE && root.matches(formControlSelector)) {
-          configureFormControl(root);
-        }
-        if (typeof root.querySelectorAll !== 'function') {
-          return;
-        }
-        for (const element of root.querySelectorAll(formControlSelector)) {
-          configureFormControl(element);
-        }
-      }
-
-      function preventCancelableDefault(event) {
-        if (event.cancelable) {
-          event.preventDefault();
-        }
-      }
-
-      document.addEventListener('contextmenu', preventCancelableDefault, true);
-
-      configureFormControls(document.documentElement || document);
-      document.addEventListener('DOMContentLoaded', function() {
-        configureFormControls(document.documentElement);
-      }, { once: true });
-    })();
-  """.trimIndent()
 
   /**
    * Registered ObjC class acting as WKScriptMessageHandler. Created once, reused across instances.
@@ -411,7 +369,7 @@ internal object WKWebViewBridge {
     val userScript = invoke(
       invoke(getObjcClass(CLS_WKUSER_SCRIPT), SEL_ALLOC),
       SEL_INIT_WITH_SOURCE_INJECTION_TIME_FOR_MAIN_FRAME_ONLY,
-      nsString(APPLICATION_MODE_USER_SCRIPT),
+      nsString(WebViewApplicationModeScripts.DOM_HARDENING_SCRIPT),
       WK_USER_SCRIPT_INJECTION_TIME_AT_DOCUMENT_START,
       false,
     )
