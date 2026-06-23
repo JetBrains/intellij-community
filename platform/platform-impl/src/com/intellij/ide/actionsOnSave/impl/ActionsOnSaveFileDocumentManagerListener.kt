@@ -49,7 +49,6 @@ import kotlin.coroutines.CoroutineContext
 
 private val EP_NAME = ExtensionPointName<ActionsOnSaveFileDocumentManagerListener.ActionOnSave>("com.intellij.actionOnSave")
 
-@ApiStatus.Internal
 class ActionsOnSaveFileDocumentManagerListener private constructor(private val project: Project) : FileDocumentManagerListener {
   /**
    * **Note:** If the Action on Save is going to update file contents, for example, to format a file on save,
@@ -87,6 +86,7 @@ class ActionsOnSaveFileDocumentManagerListener private constructor(private val p
    * [DocumentUpdatingActionOnSave.updateDocument] runs with cancelable background progress.
    */
   abstract class DocumentUpdatingActionOnSave : ActionOnSave() {
+    @ApiStatus.Internal
     final override fun processDocuments(project: Project, documents: Array<Document>) {}
 
     /**
@@ -131,6 +131,7 @@ class ActionsOnSaveFileDocumentManagerListener private constructor(private val p
     abstract suspend fun updateDocument(project: Project, document: Document)
   }
 
+  @ApiStatus.Internal
   override fun beforeDocumentSaving(document: Document) {
     if (!ActionsOnSaveManager.getInstance(project).runningSaveDocumentAction) {
       // There are hundreds of places in IntelliJ codebase where saveDocument() is called. IDE and plugins may decide to save some specific
@@ -149,6 +150,7 @@ class ActionsOnSaveFileDocumentManagerListener private constructor(private val p
     }
   }
 
+  @ApiStatus.Internal
   override fun beforeAllDocumentsSaving() {
     val documents = FileDocumentManager.getInstance().unsavedDocuments
     if (documents.isEmpty()) {
