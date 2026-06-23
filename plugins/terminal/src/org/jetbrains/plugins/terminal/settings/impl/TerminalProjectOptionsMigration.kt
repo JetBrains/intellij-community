@@ -18,6 +18,7 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.project.projectId
+import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -55,6 +56,12 @@ internal class TerminalProjectOptionsMigration(
     if (PlatformProjectOpenProcessor.isNewProject(project)) {
       props.setValue(MIGRATION_ATTEMPTED_KEY, true)
       LOG.info("Terminal project options migration skipped for project $project: it's a new project")
+      return null
+    }
+
+    if (!service<RemoteApiProviderService>().isServiceOperational()) {
+      props.setValue(MIGRATION_ATTEMPTED_KEY, true)
+      LOG.info("Terminal project options migration skipped for project $project: no connection to the backend")
       return null
     }
 
