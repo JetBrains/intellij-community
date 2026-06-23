@@ -40,7 +40,10 @@ public interface RuntimeModuleDescriptor {
   InputStream readFile(@NotNull String relativePath) throws IOException;
 
   /**
-   * Returns paths to resource roots of this module and its dependencies (including transitive) which contain *.class files. 
+   * Returns paths to resource roots of this module and its dependencies (including transitive) which contain *.class files.
+   * @deprecated use {@link RuntimeModuleRepository#computeModuleClasspath(RuntimeModuleId)} instead
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   @NotNull List<Path> getModuleClasspath();
 }

@@ -57,7 +57,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       val moduleRepository = RuntimeModuleIntrospection.moduleRepository ?: return null
       val moduleRepositoryPath = RuntimeModuleIntrospection.moduleRepositoryPath ?: return null
       try {
-        moduleRepository.getModule(getRootFrontendModule())
+        moduleRepository.computeModuleClasspath(getRootFrontendModule())
       }
       catch (e: Exception) {
         LOG.warn("Failed to load embedded client: " + e.message, e)
@@ -224,7 +224,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     passProperties(javaParameters.vmParametersList)
     javaParameters.mainClass = "com.intellij.platform.runtime.loader.IntellijLoader"
     val runtimeLoaderModule = RuntimeModuleId.legacyJpsModule("intellij.platform.runtime.loader")
-    javaParameters.classPath.addAllFiles(moduleRepository.getModule(runtimeLoaderModule).moduleClasspath.map { it.toFile() })
+    javaParameters.classPath.addAllPaths(moduleRepository.computeModuleClasspath(runtimeLoaderModule))
     addVmOptions(javaParameters.vmParametersList, moduleRepositoryPath)
     javaParameters.programParametersList.addAll(arguments)
     return javaParameters

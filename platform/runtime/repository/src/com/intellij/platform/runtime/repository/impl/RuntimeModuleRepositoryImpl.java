@@ -59,6 +59,11 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
     return resolveHeader(moduleId);
   }
 
+  @Override
+  public @NotNull List<@NotNull Path> computeModuleClasspath(@NotNull RuntimeModuleId moduleId) {
+    return getModule(moduleId).getModuleClasspath();
+  }
+
   private @Nullable RuntimeModuleHeaderImpl resolveHeader(@NotNull RuntimeModuleId moduleId) {
     RuntimeModuleHeaderImpl cached = myHeadersCache.get(moduleId);
     if (cached != null) return cached != UNRESOLVED_HEADER ? cached : null;
@@ -166,7 +171,7 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
       catch (IOException ignore) {
       }
     }
-    return getModule(RuntimeModuleId.legacyJpsModule(bootstrapModuleName)).getModuleClasspath();
+    return computeModuleClasspath(RuntimeModuleId.legacyJpsModule(bootstrapModuleName));
   }
 
   @Override

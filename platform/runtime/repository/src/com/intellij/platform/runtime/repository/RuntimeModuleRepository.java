@@ -26,7 +26,10 @@ public interface RuntimeModuleRepository {
   /**
    * Returns the module by the given {@code moduleId} or throws an exception if this module or any module from its dependencies is not 
    * found in the repository.
+   * @deprecated use {@link #findModuleHeader(RuntimeModuleId)} instead; transitive dependencies should be resolved by the plugin model
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   @NotNull RuntimeModuleDescriptor getModule(@NotNull RuntimeModuleId moduleId);
 
   /**
@@ -41,6 +44,15 @@ public interface RuntimeModuleRepository {
    */
   @ApiStatus.Internal
   @Nullable RuntimeModuleHeader findModuleHeader(@NotNull RuntimeModuleId moduleId);
+
+  /**
+   * Computes the full classpath with transitive dependencies for the given {@code moduleId} or throws an exception if this module or any
+   * module from its dependencies is not found in the repository.
+   * Note that the plugin model may load different modules using different classloaders, so this method can be used to form the classpath
+   * only if it's known that all modules from the dependencies are loaded by the same classloader to avoid inconsistencies.
+   */
+  @ApiStatus.Internal
+  @NotNull List<@NotNull Path> computeModuleClasspath(@NotNull RuntimeModuleId moduleId);
 
   /**
    * Computes resource paths of a module with the given {@code moduleId} without resolving its dependencies.
@@ -64,7 +76,7 @@ public interface RuntimeModuleRepository {
 
   /**
    * Returns the classpath for the bootstrap module {@code bootstrapModuleName}.
-   * This works faster than calculating classpath via {@link RuntimeModuleDescriptor#getModuleClasspath()} if the classpath for this 
+   * This works faster than calculating classpath via {@link #computeModuleClasspath(RuntimeModuleId)} if the classpath for this
    * bootstrap module is cached in MANIFEST.MF, because in that case it isn't needed to read and parse module descriptors.
    */
   @NotNull List<@NotNull Path> getBootstrapClasspath(@NotNull String bootstrapModuleName);

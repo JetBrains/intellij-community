@@ -156,7 +156,7 @@ class RepositoryTest {
       createModuleDescriptor("ij.baz", listOf("baz.jar"), listOf("ij.foo")),
       createModuleDescriptor("ij.main", emptyList(), listOf("ij.bar", "ij.baz")),
     )
-    val classpath = repository.getModule(moduleId("ij.main")).moduleClasspath
+    val classpath = repository.computeModuleClasspath(moduleId("ij.main"))
     assertEquals(listOf("bar.jar", "foo.jar", "baz.jar").map { tempDirectory.rootPath.resolve(it) }, classpath)
   }
 
