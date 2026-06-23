@@ -334,6 +334,25 @@ blockquote > :last-child {
   margin-bottom: 0;
 }
 
+.markdown-alert-title {
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.markdown-alert-title + * {
+  margin-top: 0;
+}
+
+.markdown-alert-title .markdown-alert-icon {
+  width: 1.2em;
+  height: 1.2em;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
 table {
   display: block;
   width: 100%;

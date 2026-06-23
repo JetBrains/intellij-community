@@ -39,7 +39,7 @@ object MarkdownUtil {
     val linkMap = LinkMap.buildLinkMap(parsedTree, text)
     val footnoteMap = FootnoteMap.build(parsedTree, text)
     val map = MarkdownParserManager.FLAVOUR.createHtmlGeneratingProviders(linkMap, baseUri).toMutableMap()
-    map[GFMElementTypes.ALERT] = map[MarkdownElementTypes.BLOCK_QUOTE]!!
+    map[GFMElementTypes.ALERT] = MarkdownAlertGeneratingProvider(map[MarkdownElementTypes.BLOCK_QUOTE]!!)
     map[MarkdownElementTypes.CODE_FENCE] = createCodeFenceProvider(project, file, cacheCollector)
     if (project != null) {
       map[MarkdownElementTypes.IMAGE] = IntelliJImageGeneratingProvider(linkMap)

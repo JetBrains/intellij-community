@@ -21,9 +21,8 @@ internal class MarkdownAlertLineMarkerProvider : LineMarkerProviderDescriptor() 
 
   override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? {
     val type = (element as? MarkdownAlertTitle)?.getType() ?: return null
-    val icon = getIcon(type) ?: return null
     val tooltip = type.name.lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase(getDefault()) else it.toString() }
-    return AlertLineMarkerInfo(element, icon, tooltip)
+    return AlertLineMarkerInfo(element, type.icon, tooltip)
   }
 
   private class AlertLineMarkerInfo(element: PsiElement, icon: Icon, @param:NlsSafe private val tooltip: String) :
@@ -42,14 +41,5 @@ internal class MarkdownAlertLineMarkerProvider : LineMarkerProviderDescriptor() 
           )
       }
     }
-  }
-
-  private fun getIcon(type: MarkdownAlertTitle.AlertType?): Icon? = when (type) {
-    MarkdownAlertTitle.AlertType.NOTE -> AllIcons.General.BalloonInformation
-    MarkdownAlertTitle.AlertType.TIP -> AllIcons.Actions.IntentionBulb
-    MarkdownAlertTitle.AlertType.IMPORTANT -> AllIcons.General.Balloon
-    MarkdownAlertTitle.AlertType.WARNING -> AllIcons.General.BalloonWarning
-    MarkdownAlertTitle.AlertType.CAUTION -> AllIcons.General.BalloonError
-    null -> null
   }
 }

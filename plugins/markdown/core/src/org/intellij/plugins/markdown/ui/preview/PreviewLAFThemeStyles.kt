@@ -29,7 +29,7 @@ internal object PreviewLAFThemeStyles {
 
     val backgroundColor = scheme.backgroundColor.webRgba()
     // language=CSS
-    return """
+    val baseStyles = """
     :root {
       ${Variables.FontSize}: ${scheme.fontSize}px;
     }
@@ -78,6 +78,22 @@ internal object PreviewLAFThemeStyles {
     ${JBCefScrollbarsHelper.buildScrollbarsStyle()}
     
     """.trimIndent()
+
+    val alertStyles = scheme.alertColors.entries.joinToString(separator = "\n\n") { (type, color) ->
+      val rgba = color.webRgba()
+      // language=CSS
+      """
+      blockquote.markdown-alert-$type {
+        border-left-color: $rgba;
+      }
+
+      blockquote.markdown-alert-$type .markdown-alert-title {
+        color: $rgba;
+      }
+      """.trimIndent()
+    }
+
+    return baseStyles + "\n\n" + alertStyles
   }
 
   private fun Color.webRgba(alpha: Double = this.alpha.toDouble()): String {

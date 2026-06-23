@@ -25,6 +25,14 @@ import org.intellij.plugins.markdown.util.isFootnoteLabelText
 @Suppress("RegExpRedundantEscape")
 private val FOOTNOTE_REF_IN_TEXT = Regex("""\[\^[^\]\n\t ]+]""")
 
+internal fun alertTitleColorKey(type: MarkdownAlertTitle.AlertType): TextAttributesKey = when (type) {
+  MarkdownAlertTitle.AlertType.NOTE -> MarkdownHighlighterColors.ALERT_TITLE_NOTE
+  MarkdownAlertTitle.AlertType.TIP -> MarkdownHighlighterColors.ALERT_TITLE_TIP
+  MarkdownAlertTitle.AlertType.IMPORTANT -> MarkdownHighlighterColors.ALERT_TITLE_IMPORTANT
+  MarkdownAlertTitle.AlertType.WARNING -> MarkdownHighlighterColors.ALERT_TITLE_WARNING
+  MarkdownAlertTitle.AlertType.CAUTION -> MarkdownHighlighterColors.ALERT_TITLE_CAUTION
+}
+
 internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
   private val syntaxHighlighter = MarkdownSyntaxHighlighter()
 
@@ -162,14 +170,7 @@ internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
   }
 
   private fun getAlertAttributeKey(element: MarkdownAlertTitle): TextAttributesKey? {
-    return when (element.getType()) {
-      MarkdownAlertTitle.AlertType.NOTE -> MarkdownHighlighterColors.ALERT_TITLE_NOTE
-      MarkdownAlertTitle.AlertType.TIP -> MarkdownHighlighterColors.ALERT_TITLE_TIP
-      MarkdownAlertTitle.AlertType.IMPORTANT -> MarkdownHighlighterColors.ALERT_TITLE_IMPORTANT
-      MarkdownAlertTitle.AlertType.WARNING -> MarkdownHighlighterColors.ALERT_TITLE_WARNING
-      MarkdownAlertTitle.AlertType.CAUTION -> MarkdownHighlighterColors.ALERT_TITLE_CAUTION
-      null -> null
-    }
+    return element.getType()?.let(::alertTitleColorKey)
   }
 
   private fun isFootnoteDefinitionLinkDef(linkDef: PsiElement): Boolean {
