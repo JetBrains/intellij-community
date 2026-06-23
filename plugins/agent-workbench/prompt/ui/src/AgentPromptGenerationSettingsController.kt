@@ -73,6 +73,8 @@ internal class AgentPromptGenerationSettingsController(
   private var providerSelectorVisible = true
   private var activeModelPopup: JBPopup? = null
   private var activeModelPopupProviderId: String? = null
+  private var applyingLaunchProfile = false
+  private var draftSelectedLaunchProfileId: String? = null
   private val launchProfileState = AgentPromptLaunchProfileState(
     builtInProfiles = ::builtInLaunchProfiles,
     canApplyProfile = ::canApplyProfile,
@@ -102,9 +104,30 @@ internal class AgentPromptGenerationSettingsController(
     )
     val activeProfile = launchProfileState.selectedProfile()
     if (activeProfile != null) {
-      if (!applyProfile(activeProfile)) {
+      if (!applyProfile(activeProfile, persistForDraft = false)) {
         launchProfileState.clearSelectedProfile()
       }
+    }
+    refreshPresentation()
+  }
+
+  fun restoreDraftLaunchProfile(profileId: String?) {
+    val profile = findProfile(profileId) ?: return
+    applyProfile(profile, persistForDraft = true)
+  }
+
+  fun selectedLaunchProfileIdForDraft(): String? {
+    val profileId = draftSelectedLaunchProfileId ?: return null
+    if (profileId == launchProfileState.effectiveDefaultProfileId) return null
+    val profile = findProfile(profileId) ?: return null
+    val draft = currentProfileDraft() ?: return null
+    if (profile.profilePayload() != draft.profilePayload()) return null
+    return profileId
+  }
+
+  fun onProviderSelectionChanged() {
+    if (!applyingLaunchProfile) {
+      draftSelectedLaunchProfileId = null
     }
     refreshPresentation()
   }
@@ -637,15 +660,22 @@ internal class AgentPromptGenerationSettingsController(
     return group
   }
 
-  private fun applyProfile(profile: AgentPromptLaunchProfile): Boolean {
+  private fun applyProfile(profile: AgentPromptLaunchProfile, persistForDraft: Boolean = true): Boolean {
     val providerEntry = findApplicableProviderEntry(profile) ?: return false
     val provider = providerEntry.bridge.provider
     val planModeSelected = providerSelector.isPlanModeSelected()
-    providerSelector.selectProvider(provider, profile.launchMode)
-    providerSelector.setPlanModeSelected(planModeSelected)
+    applyingLaunchProfile = true
+    try {
+      providerSelector.selectProvider(provider, profile.launchMode)
+      providerSelector.setPlanModeSelected(planModeSelected)
+    }
+    finally {
+      applyingLaunchProfile = false
+    }
     onLaunchProfileApplied()
     transientSettingsByProviderId[profile.providerId] = profile.generationSettings
     launchProfileState.selectProfile(profile)
+    draftSelectedLaunchProfileId = if (persistForDraft) profile.id else null
     refreshPresentation()
     return true
   }
@@ -883,6 +913,12 @@ internal class AgentPromptGenerationSettingsController(
     val profile = findProfile(profileId) ?: return false
     setDefaultProfile(profile)
     return true
+  }
+
+  @TestOnly
+  internal fun applyLaunchProfileForTest(profileId: String): Boolean {
+    val profile = findProfile(profileId) ?: return false
+    return applyProfile(profile)
   }
 
   private fun launchableProfiles(): List<AgentPromptLaunchProfile> {

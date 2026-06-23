@@ -149,7 +149,7 @@ internal class AgentPromptPaletteDraftController(
     )
   }
 
-  fun saveDraft(currentTargetMode: PromptTargetMode) {
+  fun saveDraft(currentTargetMode: PromptTargetMode, selectedLaunchProfileId: String?) {
     savePromptTextForSelectedTab()
 
     val allTaskDrafts = LinkedHashMap<String, String>(draftState.taskPromptStates.size)
@@ -172,6 +172,7 @@ internal class AgentPromptPaletteDraftController(
       }
       allTaskDrafts.putAll(extensionDrafts)
     }
+    val hasPersistedDraftText = allTaskDrafts.values.any { text -> normalizeAgentPromptText(text).isNotBlank() }
 
     uiStateService.saveDraft(
       AgentPromptUiDraft(
@@ -183,6 +184,7 @@ internal class AgentPromptPaletteDraftController(
         taskDrafts = allTaskDrafts,
         providerOptionsByProviderId = providerSelector.providerOptionSelections(),
         containerModeEnabled = getContainerModeSelected(),
+        selectedLaunchProfileId = selectedLaunchProfileId.takeIf { hasPersistedDraftText },
       )
     )
     uiStateService.saveContextRestoreSnapshot(
