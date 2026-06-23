@@ -192,11 +192,14 @@ def get_inspection_none_count(table):
         """Calculate missing values per column"""
         results_per_column = []
         for col, missing_count in cur_table.isna().sum().items():
-            if missing_count > 0:
-                results_per_column.append({
-                    "columnName": str(col),
-                    "value": str(missing_count)
-                })
+            try:
+                if missing_count > 0:
+                    results_per_column.append({
+                        "columnName": str(col),
+                        "value": str(missing_count)
+                    })
+            except:
+                pass
 
         is_triggered = len(results_per_column) > 0
         details = __create_per_column_details(results_per_column) if is_triggered else None
@@ -219,25 +222,28 @@ def get_inspection_outliers(table):
     def _calculate_outliers(cur_table):
         results_per_column = []
         for column_index, column_name in enumerate(cur_table.columns):
-            column = cur_table.iloc[:, column_index]
-            if pd.api.types.is_numeric_dtype(column):
-                q1 = column.quantile(0.25)
-                q3 = column.quantile(0.75)
-                iqr = q3 - q1
-                lower_bound = q1 - 1.5 * iqr
-                upper_bound = q3 + 1.5 * iqr
+            try:
+                column = cur_table.iloc[:, column_index]
+                if pd.api.types.is_numeric_dtype(column) and not pd.api.types.is_bool_dtype(column):
+                    q1 = column.quantile(0.25)
+                    q3 = column.quantile(0.75)
+                    iqr = q3 - q1
+                    lower_bound = q1 - 1.5 * iqr
+                    upper_bound = q3 + 1.5 * iqr
 
-                # Boolean mask for outliers
-                mask = (column < lower_bound) | (column > upper_bound)
-                outliers_count = column[mask].count()
+                    # Boolean mask for outliers
+                    mask = (column < lower_bound) | (column > upper_bound)
+                    outliers_count = column[mask].count()
 
-                if outliers_count > 0:
-                    results_per_column.append({
-                        "columnName": str(column_name),
-                        "value": str(outliers_count),
-                        "detailFirst": str(lower_bound),
-                        "detailSecond": str(upper_bound)
-                    })
+                    if outliers_count > 0:
+                        results_per_column.append({
+                            "columnName": str(column_name),
+                            "value": str(outliers_count),
+                            "detailFirst": str(lower_bound),
+                            "detailSecond": str(upper_bound)
+                        })
+            except:
+                pass
 
         is_triggered = len(results_per_column) > 0
         details = __create_per_column_details(results_per_column) if is_triggered else None
@@ -250,12 +256,15 @@ def get_inspection_constant_columns(table):
     def _calculate_constant_columns(cur_table):
         results_per_column = []
         for column_index, column_name in enumerate(cur_table.columns):
-            column = cur_table.iloc[:, column_index]
-            if column.nunique(dropna=False) == 1:
-                results_per_column.append({
-                    "columnName": str(column_name),
-                    "value": str(column.iloc[0])
-                })
+            try:
+                column = cur_table.iloc[:, column_index]
+                if column.nunique(dropna=False) == 1:
+                    results_per_column.append({
+                        "columnName": str(column_name),
+                        "value": str(column.iloc[0])
+                    })
+            except:
+                pass
 
         is_triggered = len(results_per_column) > 0
         details = __create_per_column_details(results_per_column) if is_triggered else None
