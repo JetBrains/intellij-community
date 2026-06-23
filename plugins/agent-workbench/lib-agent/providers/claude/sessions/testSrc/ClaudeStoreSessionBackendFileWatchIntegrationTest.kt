@@ -3,6 +3,7 @@ package com.intellij.platform.ai.agent.claude.sessions
 
 import com.intellij.platform.ai.agent.claude.common.ClaudeSessionActivity
 import com.intellij.platform.ai.agent.claude.sessions.backend.store.ClaudeStoreSessionBackend
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
@@ -17,6 +18,7 @@ import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.time.Instant
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -43,10 +45,10 @@ class ClaudeStoreSessionBackendFileWatchIntegrationTest {
       )
 
       val backend = ClaudeStoreSessionBackend(claudeHomeProvider = { tempDir.resolve(".claude") })
-      val updates = Channel<Unit>(capacity = Channel.CONFLATED)
+      val updates = Channel<AgentSessionSourceUpdateEvent>(capacity = Channel.UNLIMITED)
       val updatesJob = launch {
-        backend.updates.collect {
-          updates.trySend(Unit)
+        backend.sessionUpdates.collect { update ->
+          updates.trySend(update)
         }
       }
 
@@ -56,7 +58,7 @@ class ClaudeStoreSessionBackendFileWatchIntegrationTest {
         assertThat(initialThreads.single().title).isEqualTo("Initial title")
         assertThat(initialThreads.single().activity).isEqualTo(ClaudeSessionActivity.READY)
 
-        primeWatcher(updates, jsonl)
+        primeWatcher(updates, jsonl, "session-watch")
 
         writeJsonl(
           jsonl,
@@ -66,7 +68,7 @@ class ClaudeStoreSessionBackendFileWatchIntegrationTest {
           ),
         )
 
-        awaitWatcherUpdate(updates)
+        awaitWatcherUpdate(updates) { update -> update.threadIds?.contains("session-watch") == true }
 
         val refreshedThread = awaitThread(backend, projectPath, "session-watch")
         assertThat(refreshedThread).isNotNull
@@ -105,10 +107,10 @@ class ClaudeStoreSessionBackendFileWatchIntegrationTest {
       )
 
       val backend = ClaudeStoreSessionBackend(claudeHomeProvider = { tempDir.resolve(".claude") })
-      val updates = Channel<Unit>(capacity = Channel.CONFLATED)
+      val updates = Channel<AgentSessionSourceUpdateEvent>(capacity = Channel.UNLIMITED)
       val updatesJob = launch {
-        backend.updates.collect {
-          updates.trySend(Unit)
+        backend.sessionUpdates.collect { update ->
+          updates.trySend(update)
         }
       }
 
@@ -117,14 +119,14 @@ class ClaudeStoreSessionBackendFileWatchIntegrationTest {
         assertThat(initialThread.activity).isEqualTo(ClaudeSessionActivity.READY)
         assertThat(initialThread.gitBranch).isEqualTo(gitBranch)
 
-        primeWatcher(updates, jsonl)
+        primeWatcher(updates, jsonl, sessionId)
 
         appendJsonl(
           jsonl,
           listOf(claudeAssistantPartialLine("2026-02-19T11:00:01.000Z", sessionId, projectPath, "Thinking")),
         )
 
-        assertThat(awaitWatcherUpdate(updates)).isTrue()
+        assertThat(awaitWatcherUpdate(updates) { update -> update.threadIds?.contains(sessionId) == true }).isTrue()
 
         val partialThread = awaitThread(
           backend = backend,
@@ -147,7 +149,7 @@ class ClaudeStoreSessionBackendFileWatchIntegrationTest {
           ),
         )
 
-        assertThat(awaitWatcherUpdate(updates)).isTrue()
+        assertThat(awaitWatcherUpdate(updates) { update -> update.threadIds?.contains(sessionId) == true }).isTrue()
 
         val backgroundThread = awaitThread(
           backend = backend,
@@ -165,7 +167,7 @@ class ClaudeStoreSessionBackendFileWatchIntegrationTest {
           listOf(claudeAssistantLine("2026-02-19T11:00:06.000Z", sessionId, projectPath, "Done")),
         )
 
-        assertThat(awaitWatcherUpdate(updates)).isTrue()
+        assertThat(awaitWatcherUpdate(updates) { update -> update.threadIds?.contains(sessionId) == true }).isTrue()
 
         val completedThread = awaitThread(
           backend = backend,
@@ -210,15 +212,17 @@ private suspend fun awaitThread(
   return resolved
 }
 
-private suspend fun primeWatcher(updates: Channel<Unit>, watchedFile: Path) {
+private suspend fun primeWatcher(updates: Channel<AgentSessionSourceUpdateEvent>, watchedFile: Path, threadId: String) {
   drainUpdateChannel(updates)
 
   var attempt = 0
   val primed = withTimeoutOrNull(FILE_WATCH_UPDATE_TIMEOUT) {
     while (true) {
       attempt++
-      writeWatcherPrimeFile(watchedFile, attempt)
-      if (awaitWatcherUpdate(updates, timeout = WATCHER_PRIME_ATTEMPT_TIMEOUT)) {
+      rewriteWatcherPrimeFile(watchedFile, attempt)
+      if (awaitWatcherUpdate(updates, timeout = WATCHER_PRIME_ATTEMPT_TIMEOUT) { update ->
+          update.threadIds?.contains(threadId) == true
+        }) {
         return@withTimeoutOrNull true
       }
       delay(WATCHER_PRIME_RETRY_DELAY)
@@ -226,12 +230,18 @@ private suspend fun primeWatcher(updates: Channel<Unit>, watchedFile: Path) {
   } == true
 
   assertThat(primed)
-    .withFailMessage("Timed out waiting for watcher startup refresh ping under %s", watchedFile.parent)
+    .withFailMessage("Timed out waiting for watcher to observe prime rewrite of %s", watchedFile)
     .isTrue()
   drainUpdateChannel(updates)
 }
 
-private fun writeWatcherPrimeFile(watchedFile: Path, attempt: Int) {
-  val primeFile = watchedFile.resolveSibling("${watchedFile.fileName}.watcher-prime-$attempt.tmp")
-  Files.writeString(primeFile, "prime-$attempt")
+private fun rewriteWatcherPrimeFile(watchedFile: Path, attempt: Int) {
+  val temporaryFile = watchedFile.resolveSibling("${watchedFile.fileName}.watcher-prime-$attempt.tmp")
+  Files.write(temporaryFile, Files.readAllBytes(watchedFile))
+  Files.move(
+    temporaryFile,
+    watchedFile,
+    StandardCopyOption.REPLACE_EXISTING,
+    StandardCopyOption.ATOMIC_MOVE,
+  )
 }
