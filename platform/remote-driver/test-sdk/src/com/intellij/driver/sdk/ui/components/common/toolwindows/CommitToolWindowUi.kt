@@ -5,16 +5,15 @@ import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.JEditorUiComponent
 import com.intellij.driver.sdk.ui.components.vcs.JChangesListViewUi
 import com.intellij.driver.sdk.ui.shouldBe
-import com.intellij.driver.sdk.ui.xQuery
 
 class CommitToolWindowUi(data: ComponentData) : ToolWindowUiComponent(data) {
 
   val changeListView: JChangesListViewUi =
     x(JChangesListViewUi::class.java) { byJavaClass("com.intellij.openapi.vcs.changes.LocalChangesListView") }
-  val commitButton: UiComponent =
-    x { componentWithChild(byClass("CommitActionsPanel"), byClass("MainButton") and byVisibleText("Commit")) }
-  val commitAndPushButton: UiComponent =
-    x { componentWithChild(byClass("CommitActionsPanel"), byVisibleText("Commit and Push…")) }
+  private val commitActionsPanel: CommitActionsPanelUi =
+    x(CommitActionsPanelUi::class.java) { byClass("CommitActionsPanel") }
+  val commitButton: UiComponent get() = commitActionsPanel.commitButton
+  val commitAndPushButton: UiComponent get() = commitActionsPanel.commitAndPushButton
 
   val rollbackToolbarButton: UiComponent =
     x {
@@ -57,5 +56,10 @@ class CommitToolWindowUi(data: ComponentData) : ToolWindowUiComponent(data) {
 
   fun clickRollbackToolbarButton() {
     rollbackToolbarButton.click()
+  }
+
+  private class CommitActionsPanelUi(data: ComponentData) : UiComponent(data) {
+    val commitButton: UiComponent = x { byClass("MainButton") and byVisibleText("Commit") }
+    val commitAndPushButton: UiComponent = x { byVisibleText("Commit and Push…") }
   }
 }
