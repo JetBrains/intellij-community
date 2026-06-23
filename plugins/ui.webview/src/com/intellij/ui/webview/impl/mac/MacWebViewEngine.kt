@@ -5,6 +5,7 @@ import com.intellij.ui.mac.foundation.ID
 import com.intellij.ui.webview.api.WebViewAssetPath
 import com.intellij.ui.webview.api.WebViewAssetRoot
 import com.intellij.ui.webview.impl.WebViewEngineBridge
+import com.intellij.ui.webview.impl.WebViewEditCommand
 import com.intellij.ui.webview.impl.MacMainThreadDispatcher
 import com.intellij.ui.webview.impl.WebViewAssetResolver
 import com.intellij.ui.webview.impl.WebViewAssetResponse
@@ -294,6 +295,18 @@ internal class MacWebViewEngine(
   internal fun clearFocus() {
     val wv = handles?.webView ?: return
     WKWebViewBridge.clearFocus(wv)
+  }
+
+  internal fun performEditCommand(command: WebViewEditCommand): Boolean {
+    val wv = handles?.webView ?: return false
+    if (state.get() != State.Active) return false
+
+    scope.launch(MacMainThreadDispatcher) {
+      if (state.get() == State.Active) {
+        WKWebViewBridge.performEditCommand(wv, command)
+      }
+    }
+    return true
   }
 
   internal suspend fun firstResponderState(): MacWebViewFirstResponderState? {

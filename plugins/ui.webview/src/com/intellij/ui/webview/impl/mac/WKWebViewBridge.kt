@@ -15,6 +15,7 @@ import com.intellij.ui.mac.foundation.Foundation.nsString
 import com.intellij.ui.mac.foundation.Foundation.registerObjcClassPair
 import com.intellij.ui.mac.foundation.Foundation.toStringViaUTF8
 import com.intellij.ui.mac.foundation.ID
+import com.intellij.ui.webview.impl.WebViewEditCommand
 import com.intellij.ui.webview.impl.WebViewAssetResponse
 import com.intellij.ui.webview.impl.WebViewLogger
 import com.intellij.ui.webview.impl.WEBVIEW_ASSET_CUSTOM_SCHEME
@@ -46,6 +47,7 @@ internal object WKWebViewBridge {
   private const val CLS_NSDATA = "NSData"
   private const val CLS_NSMUTABLE_DICTIONARY = "NSMutableDictionary"
   private const val CLS_NSOBJECT = "NSObject"
+  private const val CLS_NSAPPLICATION = "NSApplication"
   private const val CLS_WKUSER_SCRIPT = "WKUserScript"
   // endregion
 
@@ -79,10 +81,20 @@ internal object WKWebViewBridge {
   private val SEL_SET_CAN_USE_CREDENTIAL_STORAGE = createSelector("_setCanUseCredentialStorage:")
   private val SEL_SET_RUBBER_BANDING_ENABLED = createSelector("_setRubberBandingEnabled:")
   private val SEL_REMOVE_FROM_SUPERVIEW = createSelector("removeFromSuperview")
+  private val SEL_COPY = createSelector("copy:")
+  private val SEL_PASTE = createSelector("paste:")
+  private val SEL_CUT = createSelector("cut:")
+  private val SEL_SELECT_ALL = createSelector("selectAll:")
+  private val SEL_UNDO = createSelector("undo:")
+  private val SEL_REDO = createSelector("redo:")
 
   // NSWindow
   private val SEL_FIRST_RESPONDER = createSelector("firstResponder")
   private val SEL_MAKE_FIRST_RESPONDER = createSelector("makeFirstResponder:")
+
+  // NSApplication
+  private val SEL_SHARED_APPLICATION = createSelector("sharedApplication")
+  private val SEL_SEND_ACTION_TO_FROM = createSelector("sendAction:to:from:")
 
   // NSView
   private val SEL_ADD_SUBVIEW = createSelector("addSubview:")
@@ -336,6 +348,20 @@ internal object WKWebViewBridge {
     }
   }
 
+  /**
+   * Dispatches an AppKit edit action through `NSApplication.sendAction(_:to:from:)`.
+   *
+   * `to = nil` preserves normal responder-chain routing, including WebKit's private editor
+   * responders. The first-responder containment check prevents a command from leaking to another
+   * native control in the same window when Swing focus state is stale.
+   */
+  fun performEditCommand(webView: ID, command: WebViewEditCommand): Boolean {
+    val selector = editCommandSelector(command) ?: return false
+    if (!firstResponderIsInsideWebView(webView)) return false
+    val application = invoke(getObjcClass(CLS_NSAPPLICATION), SEL_SHARED_APPLICATION)
+    return invoke(application, SEL_SEND_ACTION_TO_FROM, selector, ID.NIL, ID.NIL).booleanValue()
+  }
+
   fun firstResponderState(webView: ID): MacWebViewFirstResponderState {
     val window = invoke(webView, SEL_WINDOW)
     if (isNil(window)) {
@@ -348,9 +374,7 @@ internal object WKWebViewBridge {
     }
 
     val isWebViewResponder = firstResponder == webView
-    val isDescendantOfWebView = !isWebViewResponder &&
-                                invoke(firstResponder, SEL_RESPONDS_TO_SELECTOR, SEL_IS_DESCENDANT_OF).booleanValue() &&
-                                invoke(firstResponder, SEL_IS_DESCENDANT_OF, webView).booleanValue()
+    val isDescendantOfWebView = isDescendantOfWebView(firstResponder, webView)
     return MacWebViewFirstResponderState(
       hasResponder = true,
       isInsideWebView = isWebViewResponder || isDescendantOfWebView,
@@ -566,6 +590,40 @@ internal object WKWebViewBridge {
 
   private fun describeResponder(responder: ID): String {
     return toStringViaUTF8(invoke(responder, SEL_DESCRIPTION)) ?: "<unknown>"
+  }
+
+  private fun editCommandSelector(command: WebViewEditCommand): Pointer? {
+    return when (command) {
+      WebViewEditCommand.COPY -> SEL_COPY
+      WebViewEditCommand.PASTE -> SEL_PASTE
+      WebViewEditCommand.CUT -> SEL_CUT
+      WebViewEditCommand.SELECT_ALL -> SEL_SELECT_ALL
+      WebViewEditCommand.UNDO -> SEL_UNDO
+      WebViewEditCommand.REDO -> SEL_REDO
+      else -> null
+    }
+  }
+
+  /**
+   * Requires AppKit's current first responder to be this WebView or one of its private subviews
+   * before we send a responder-chain edit action on behalf of the Swing host.
+   */
+  private fun firstResponderIsInsideWebView(webView: ID): Boolean {
+    val window = invoke(webView, SEL_WINDOW)
+    if (isNil(window)) return false
+
+    val firstResponder = invoke(window, SEL_FIRST_RESPONDER)
+    return !isNil(firstResponder) && isInsideWebView(firstResponder, webView)
+  }
+
+  private fun isInsideWebView(responder: ID, webView: ID): Boolean {
+    return responder == webView || isDescendantOfWebView(responder, webView)
+  }
+
+  private fun isDescendantOfWebView(responder: ID, webView: ID): Boolean {
+    return responder != webView &&
+           invoke(responder, SEL_RESPONDS_TO_SELECTOR, SEL_IS_DESCENDANT_OF).booleanValue() &&
+           invoke(responder, SEL_IS_DESCENDANT_OF, webView).booleanValue()
   }
 
   // endregion

@@ -6,14 +6,17 @@ import com.intellij.ui.mac.foundation.ID
 import com.intellij.ui.mac.foundation.MacUtil
 import com.intellij.ui.webview.impl.SwingWebViewHostPanel
 import com.intellij.ui.webview.impl.MacMainThreadDispatcher
+import com.intellij.ui.webview.impl.WebViewEditCommand
 import com.intellij.ui.webview.impl.WebViewLogger
 import com.intellij.ui.webview.impl.host.NativeWebViewHostPeer
+import com.intellij.ui.webview.impl.host.WebViewEditShortcutPolicy
 import com.intellij.util.ui.update.DebouncedUpdates
 import com.intellij.util.ui.update.UpdateQueue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
+import java.awt.event.KeyEvent
 import javax.swing.SwingUtilities
 import javax.swing.Timer
 import kotlin.time.Duration.Companion.milliseconds
@@ -60,6 +63,12 @@ internal class MacNativeWebViewHostPeer(
     .forScope<SwingWebViewHostPanel.NativeFrame>(scope, "webview-native-frame", 16.milliseconds)
     .withContext(MacMainThreadDispatcher)
     .runLatest { frame -> applyFrame(frame) }
+
+  /**
+   * WKWebView edit shortcuts are AppKit actions, not key events that can be safely replayed after
+   * the IDE dispatcher sees them. The peer therefore dispatches commands through the responder chain.
+   */
+  override val editShortcutPolicy: WebViewEditShortcutPolicy = WebViewEditShortcutPolicy.HANDLE_IN_NATIVE_PEER
 
   override fun attach(host: Component): Boolean {
     if (attached) return true
@@ -174,6 +183,14 @@ internal class MacNativeWebViewHostPeer(
     scope.launch(MacMainThreadDispatcher) {
       engine.makeFirstResponder(focusTarget)
     }
+  }
+
+  /**
+   * Accepts the key press that matched the IDE shortcut and lets AppKit route the edit command to
+   * WKWebView or its current private editor responder.
+   */
+  override fun handleWebViewShortcut(event: KeyEvent, command: WebViewEditCommand): Boolean {
+    return attached && event.id == KeyEvent.KEY_PRESSED && engine.performEditCommand(command)
   }
 
   private fun applyFrame(frame: SwingWebViewHostPanel.NativeFrame) {

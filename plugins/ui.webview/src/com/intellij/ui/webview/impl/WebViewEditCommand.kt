@@ -9,9 +9,9 @@ import javax.swing.KeyStroke
 
 /**
  * The shared catalog of WebView-owned edit shortcuts — the single source of truth for every OS backend:
- * the macOS/Linux key-forward filter (which shortcuts the IDE leaves for the web view) and the Windows
- * accelerator-key filter (which shortcuts the browser keeps). Each command is the IDE action id whose
- * keymap shortcut triggers it. Open class (not an `enum`) so the catalog can be extended.
+ * native-host shortcut policy and the Windows accelerator-key filter (which shortcuts the browser keeps).
+ * Each command is the IDE action id whose keymap shortcut triggers it. Open class (not an `enum`) so the
+ * catalog can be extended.
  */
 @ApiStatus.Internal
 open class WebViewEditCommand(val ideActionId: String) {
@@ -28,8 +28,8 @@ open class WebViewEditCommand(val ideActionId: String) {
 
     /**
      * Returns the [enabled] command whose IDE-action keymap shortcut matches the keystroke
-     * (`keyCode` + `modifiersEx`, AWT `InputEvent` masks), or `null` if none. Used by the Windows
-     * accelerator filter to keep a keystroke for the WebView instead of forwarding it to the IDE.
+     * (`keyCode` + `modifiersEx`, AWT `InputEvent` masks), or `null` if none. Used by native-host
+     * shortcut policies and the Windows accelerator filter.
      * Returns `null` if there is no [com.intellij.openapi.application.Application] (no keymap available).
      */
     fun matchingCommand(keyCode: Int, modifiersEx: Int, enabled: Collection<WebViewEditCommand>): WebViewEditCommand? {

@@ -38,7 +38,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.condition.DisabledIfSystemProperty
+import org.junit.jupiter.api.condition.EnabledIf
 import org.junit.jupiter.api.condition.EnabledOnOs
 import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.api.io.TempDir
@@ -68,12 +68,12 @@ import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
 @EnabledOnOs(OS.MAC)
-@DisabledIfSystemProperty(named = "java.awt.headless", matches = "true")
 internal class MacWebViewHotkeysInIdeTest {
   @TempDir
   private lateinit var tempDir: Path
 
   @Test
+  @EnabledIf("isUiEnvironmentAvailable", disabledReason = "AWT Robot requires a non-headless graphics environment")
   fun copyShortcutInsideWebViewUsesNativeSelection(): Unit = runBlocking {
     val robot = createRobotOrSkip()
     writeCopyPage(tempDir)
@@ -522,6 +522,9 @@ internal class MacWebViewHotkeysInIdeTest {
         return selection.toString();
       })()
     """.trimIndent()
+
+    @JvmStatic
+    fun isUiEnvironmentAvailable(): Boolean = !GraphicsEnvironment.isHeadless()
 
     @JvmStatic
     @BeforeAll

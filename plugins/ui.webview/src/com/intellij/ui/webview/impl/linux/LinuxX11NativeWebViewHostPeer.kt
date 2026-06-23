@@ -3,6 +3,7 @@ package com.intellij.ui.webview.impl.linux
 
 import com.intellij.ui.webview.impl.SwingWebViewHostPanel
 import com.intellij.ui.webview.impl.host.NativeWebViewHostPeer
+import com.intellij.ui.webview.impl.host.WebViewEditShortcutPolicy
 import java.awt.Component
 
 internal class LinuxX11NativeWebViewHostPeer(
@@ -11,6 +12,11 @@ internal class LinuxX11NativeWebViewHostPeer(
 
   private var attached = false
   private var lastAppliedFrame: AppliedFrame? = null
+
+  /**
+   * Linux WebKit receives the original native key event; Swing only opts out of IDE action dispatch.
+   */
+  override val editShortcutPolicy: WebViewEditShortcutPolicy = WebViewEditShortcutPolicy.BYPASS_IDE_DISPATCHER
 
   override fun attach(host: Component): Boolean {
     val parentXid = LinuxX11WindowUtil.resolveWindowXid(host) ?: return false

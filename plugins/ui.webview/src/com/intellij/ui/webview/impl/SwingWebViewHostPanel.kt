@@ -4,10 +4,10 @@ package com.intellij.ui.webview.impl
 import com.intellij.ide.KeyboardAwareFocusOwner
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.webview.impl.engine.WebViewFocusDirection
 import com.intellij.ui.webview.impl.host.NativeWebViewHostPeer
+import com.intellij.ui.webview.impl.host.WebViewEditShortcutPolicy
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineScope
@@ -164,18 +164,17 @@ internal class SwingWebViewHostPanel(
     get() = this
 
   override fun skipKeyEventDispatcher(event: KeyEvent): Boolean {
-    // Forward webview-owned editing shortcuts INTO the native web view: stop the IDE from consuming them
-    // so the real keystroke reaches the focused WebView (browser default / page JS handles copy/paste/etc.).
-    val skip = forwardsShortcutsToWebView && focusInsideHost &&
-               WebViewEditCommand.matchingCommand(event.keyCode, event.modifiersEx, WebViewEditCommand.DEFAULTS) != null
-    if (event.id == KeyEvent.KEY_PRESSED && event.modifiersEx != 0) {
-      // TEMP diagnostic: pinpoint whether the IDE consults us for ⌘C and what we decide.
-      WebViewLogger.LOG.info(
-        "WebView skipKeyEventDispatcher: keyCode=${event.keyCode} modsEx=${event.modifiersEx} " +
-        "forwards=$forwardsShortcutsToWebView focusInside=$focusInsideHost skip=$skip"
-      )
+    val peer = nativePeer ?: return false
+    val policy = peer.editShortcutPolicy
+    if (policy == WebViewEditShortcutPolicy.NONE || !focusInsideHost) return false
+
+    val command = WebViewEditCommand.matchingCommand(event.keyCode, event.modifiersEx, WebViewEditCommand.DEFAULTS) ?: return false
+    // Returning true only keeps the IDE dispatcher out of this shortcut. The backend policy decides
+    // whether the original native event path handles it or an explicit native command is required.
+    if (policy == WebViewEditShortcutPolicy.HANDLE_IN_NATIVE_PEER && peer.handleWebViewShortcut(event, command)) {
+      event.consume()
     }
-    return skip
+    return true
   }
 
   private var hierarchyListener: HierarchyListener? = null
@@ -188,10 +187,6 @@ internal class SwingWebViewHostPanel(
   private var snapshotImage: BufferedImage? = null
   private val componentBackedEngine = engine as? ComponentBackedWebViewEngine
   private val nativePeer = if (componentBackedEngine == null) nativeHostPeer else null
-  // IDE-first native backends (macOS WKWebView, Linux WebKitGTK) forward webview-owned shortcuts into the
-  // web view via skipKeyEventDispatcher. Windows WebView2 is browser-first (forwards unhandled keys out
-  // itself), so it is excluded.
-  private val forwardsShortcutsToWebView: Boolean = nativePeer != null && !SystemInfo.isWindows
   private var focusInsideHost = false
   private var pendingExitDirection: WebViewFocusDirection? = null
   private var pageFocusHandledForCurrentActivation = false

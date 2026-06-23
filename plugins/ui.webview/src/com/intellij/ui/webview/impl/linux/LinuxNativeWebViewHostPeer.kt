@@ -2,6 +2,7 @@
 package com.intellij.ui.webview.impl.linux
 
 import com.intellij.ui.webview.impl.host.NativeWebViewHostPeer
+import com.intellij.ui.webview.impl.host.WebViewEditShortcutPolicy
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 
@@ -14,6 +15,9 @@ internal class LinuxNativeWebViewHostPeer(
     LinuxWebKitBackend.X11 -> LinuxX11NativeWebViewHostPeer(engine)
     LinuxWebKitBackend.WaylandSnapshot -> LinuxWaylandSnapshotWebViewHostPeer(engine)
   }
+
+  override val editShortcutPolicy: WebViewEditShortcutPolicy
+    get() = delegate.editShortcutPolicy
 
   override fun attach(host: Component): Boolean = delegate.attach(host)
 
