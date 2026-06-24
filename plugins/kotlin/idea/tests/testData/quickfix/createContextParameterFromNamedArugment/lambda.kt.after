@@ -1,8 +1,9 @@
 // "Add context parameter to function" "true"
 // COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments
 // K2_ERROR: No parameter with name 'callback' found.
+// WITH_STDLIB
 
-context(callback: (kotlin.Int) -> kotlin.String)
+context(callback: (Int) -> String)
 fun f1() {}
 
 fun fdemo() {

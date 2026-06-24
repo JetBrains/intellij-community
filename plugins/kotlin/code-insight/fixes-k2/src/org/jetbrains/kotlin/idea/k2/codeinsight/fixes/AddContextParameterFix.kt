@@ -12,11 +12,14 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsi
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.render
+import org.jetbrains.kotlin.psi.KtContextParameterList
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtModifierList
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.visibilityModifier
 
 sealed class AddContextParameterFix(
     element: KtElement,
@@ -38,8 +41,7 @@ sealed class AddContextParameterFix(
         val targetFunction = targetFunction(element, updater) ?: return
 
         val psiFactory = KtPsiFactory(context.project)
-        val existingParameters = targetFunction.contextParameters
-        val contextClause = existingParameters.firstOrNull()?.parent
+        val contextClause = targetFunction.modifierList?.contextParameterList
 
         val addedParameter: KtParameter = if (contextClause != null) {
             val rParen = contextClause.node.findChildByType(KtTokens.RPAR)?.psi ?: return
@@ -53,11 +55,21 @@ sealed class AddContextParameterFix(
             val template = psiFactory.createFunction(
                 "context(${contextParameter.render()})\nfun stub() {}"
             )
-            val newContextClause  = template.contextParameters.firstOrNull()?.parent ?: return
-            val anchor = targetFunction.modifierList ?: targetFunction.funKeyword ?: return
-            val inserted = targetFunction.addBefore(newContextClause, anchor)
-            targetFunction.addBefore(psiFactory.createNewLine(), anchor)
-            PsiTreeUtil.findChildOfType(inserted, KtParameter::class.java) ?: return
+            val funKeyword = targetFunction.funKeyword ?: return
+            val targetModifierList = targetFunction.modifierList
+            val templateModifierList = template.modifierList ?: return
+            val inserted = if (targetModifierList == null) {
+                (targetFunction.addBefore(templateModifierList, funKeyword) as? KtModifierList)?.contextParameterList
+            } else {
+                val newContextClause = templateModifierList.contextParameterList ?: return
+                val visibilityModifier = targetModifierList.visibilityModifier()
+                if (visibilityModifier != null) {
+                    targetModifierList.addBefore( newContextClause, visibilityModifier)
+                } else {
+                    targetModifierList.add(newContextClause)
+                } as? KtContextParameterList
+            } ?: return
+            inserted.contextParameters.firstOrNull() ?: return
         }
         shortenReferences(addedParameter)
         if (updatesCaret) {
