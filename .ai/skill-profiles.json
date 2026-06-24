@@ -20,7 +20,7 @@
     "build": ["bazel-test-migration", "convert-lib-to-product-module", "module-set-pluginization", "plugin-model-analyzer"],
     "clion": ["clion-test-in-tc"],
     "dotnet": ["dotnet"],
-    "jewel": ["jewel-markdown", "jewel-release"],
+    "jewel": ["jewel-markdown", "jewel-release", "jewel-swing-interop", "jewel-ui", "jewel-ui-audit"],
     "kotlin-mpp": ["kmt-tc-duty"],
     "python": ["compare-python-typecheckers", "py-junit5-tests", "pycharm-dev-workflow"],
     "remote-dev": [
