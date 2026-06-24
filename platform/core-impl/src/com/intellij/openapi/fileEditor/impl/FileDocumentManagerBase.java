@@ -256,7 +256,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
 
   @TestOnly
   @ApiStatus.Internal
-  public @Nullable Document getFileCachedDocument(@NotNull VirtualFile virtualFile) {
+  public @Nullable Document getDocumentFromCacheInTests(@NotNull VirtualFile virtualFile) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       throw new IllegalStateException("This method is only for unit tests");
     }
