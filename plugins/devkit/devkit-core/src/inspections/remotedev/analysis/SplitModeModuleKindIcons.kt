@@ -81,8 +81,8 @@ object SplitModeModuleKindIcons {
   private fun inferModuleKindFromFileName(descriptorFileName: @NlsSafe String): SplitModeApiRestrictionsService.ModuleKind? {
     return when {
       descriptorFileName == "plugin.xml" -> SplitModeApiRestrictionsService.ModuleKind.SHARED
-      descriptorFileName.endsWith(".frontend.xml") -> SplitModeApiRestrictionsService.ModuleKind.FRONTEND
-      descriptorFileName.endsWith(".backend.xml") -> SplitModeApiRestrictionsService.ModuleKind.BACKEND
+      descriptorFileName.endsWith(".frontend.xml") || descriptorFileName.endsWith(".frontend.split.xml") -> SplitModeApiRestrictionsService.ModuleKind.FRONTEND
+      descriptorFileName.endsWith(".backend.xml") || descriptorFileName.endsWith(".backend.split.xml") -> SplitModeApiRestrictionsService.ModuleKind.BACKEND
       followsSharedModuleNamingConvention(descriptorFileName) -> SplitModeApiRestrictionsService.ModuleKind.SHARED
       else -> null
     }
