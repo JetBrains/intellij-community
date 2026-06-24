@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.junit.JUnitConfiguration
 import com.intellij.execution.junit.JUnitUtil
 import com.intellij.junit4.JUnitTestTreeNodeManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
@@ -25,19 +26,22 @@ class SpockRunConfigurationExtension : RunConfigurationExtension() {
     if (configuration !is JUnitConfiguration) {
       return
     }
-    val module = configuration.configurationModule.module ?: return
-    val scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)
     val mainClass = configuration.persistentData.MAIN_CLASS_NAME ?: return
-    DumbService.getInstance(module.project).runWithAlternativeResolveEnabled<Throwable> {
-      val clazz = JavaPsiFacade.getInstance(module.project).findClass(mainClass, scope) ?: return@runWithAlternativeResolveEnabled
-      if (!clazz.isSpockSpecification() || !(JUnitUtil.isJUnit4TestClass(clazz) || JUnitUtil.isJUnit3TestClass(clazz))) {
-        // JUnit 5 relies on testId rather than method names, so custom testLocation is redundant
-        return@runWithAlternativeResolveEnabled
+    val shouldUseSpockTestTreeNodeManager = ReadAction.nonBlocking<Boolean> {
+      val module = configuration.configurationModule.module ?: return@nonBlocking false
+      val scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)
+      DumbService.getInstance(module.project).computeWithAlternativeResolveEnabled<Boolean, RuntimeException> {
+        val clazz = JavaPsiFacade.getInstance(module.project).findClass(mainClass, scope) ?: return@computeWithAlternativeResolveEnabled false
+        clazz.isSpockSpecification() && (JUnitUtil.isJUnit4TestClass(clazz) || JUnitUtil.isJUnit3TestClass(clazz))
       }
-      params.classPath.add(PathUtil.getJarPathForClass(SpockJUnitTestTreeNodeManager::class.java))
-      params.vmParametersList.addNotEmptyProperty(JUnitTestTreeNodeManager.JUNIT_TEST_TREE_NODE_MANAGER_ARGUMENT,
-                                                  SpockJUnitTestTreeNodeManager::class.java.name)
+    }.executeSynchronously()
+    if (!shouldUseSpockTestTreeNodeManager) {
+      // JUnit 5 relies on testId rather than method names, so custom testLocation is redundant
+      return
     }
+    params.classPath.add(PathUtil.getJarPathForClass(SpockJUnitTestTreeNodeManager::class.java))
+    params.vmParametersList.addNotEmptyProperty(JUnitTestTreeNodeManager.JUNIT_TEST_TREE_NODE_MANAGER_ARGUMENT,
+                                                SpockJUnitTestTreeNodeManager::class.java.name)
     return
   }
 }

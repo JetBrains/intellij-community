@@ -36,6 +36,7 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.util.download.DownloadableFileService
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.idea.devkit.run.usesJetBrainsRuntime
 import org.jetbrains.idea.devkit.util.PsiUtil.isPluginProject
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionContext
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension
@@ -239,10 +240,7 @@ internal class DevkitHotReloadCommandLinePatcher : RunConfigurationExtension() {
       return
     }
 
-    val module = configuration.configurationModule.module ?: return
-    val jdk = JavaParameters.getJdkToRunModule(module, true) ?: return
-    val versionString = jdk.versionString ?: ""
-    if (!versionString.contains("JetBrains Runtime")) {
+    if (!usesJetBrainsRuntime(configuration)) {
       // we may only expect -XX:+AllowEnhancedClassRedefinition on JBR
       return
     }

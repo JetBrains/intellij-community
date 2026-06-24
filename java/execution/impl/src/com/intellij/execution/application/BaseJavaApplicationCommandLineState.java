@@ -21,7 +21,6 @@ import com.intellij.execution.target.TargetProgressIndicator;
 import com.intellij.execution.target.TargetedCommandLine;
 import com.intellij.execution.target.TargetedCommandLineBuilder;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,8 +40,8 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   }
 
   protected void setupJavaParameters(@NotNull JavaParameters params) throws ExecutionException {
-    ReadAction.run(() -> JavaRunConfigurationExtensionManager.getInstance()
-      .updateJavaParameters(getConfiguration(), params, getRunnerSettings(), getEnvironment().getExecutor()));
+    JavaRunConfigurationExtensionManager.getInstance()
+      .updateJavaParameters(getConfiguration(), params, getRunnerSettings(), getEnvironment().getExecutor());
   }
 
   @Override

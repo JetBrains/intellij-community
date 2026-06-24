@@ -5,6 +5,7 @@ import com.intellij.execution.JavaTestConfigurationBase
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.configurations.ModuleBasedConfiguration
 import com.intellij.execution.configurations.RunConfigurationBase
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.vfs.JarFileSystem
@@ -27,10 +28,12 @@ object CoroutineAgentConnector {
     val KOTLINX_COROUTINES_CORE_JVM_JAR_REGEX: Regex = Regex(""".+$KOTLINX_COROUTINES_CORE(-jvm)?-(\d[\w.\-]+)?\.jar""")
 
     fun attachCoroutineAgent(project: Project, configuration: RunConfigurationBase<*>?,  params: JavaParameters): Boolean {
-        val searchResult = findKotlinxCoroutinesCoreJar(project, configuration)
-        if (searchResult.debuggerMode == CoroutineDebuggerMode.VERSION_1_3_8_AND_UP &&
-            searchResult.jarPath != null) {
-            return initializeCoroutineAgent(params, searchResult.jarPath)
+        val searchResult = ReadAction.nonBlocking<KotlinxCoroutinesSearchResult> {
+            findKotlinxCoroutinesCoreJar(project, configuration)
+        }.executeSynchronously()
+        val jarPath = searchResult.jarPath
+        if (searchResult.debuggerMode == CoroutineDebuggerMode.VERSION_1_3_8_AND_UP && jarPath != null) {
+            return initializeCoroutineAgent(params, jarPath)
         }
         return false
     }

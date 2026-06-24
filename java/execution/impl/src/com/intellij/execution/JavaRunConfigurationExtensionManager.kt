@@ -7,11 +7,13 @@ import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.ui.ConsoleView
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.project.IndexNotReadyException
 
 @Service
 class JavaRunConfigurationExtensionManager : RunConfigurationExtensionsManager<RunConfigurationBase<*>, RunConfigurationExtension>(RunConfigurationExtension.EP_NAME) {
@@ -39,8 +41,19 @@ class JavaRunConfigurationExtensionManager : RunConfigurationExtensionsManager<R
                                                          runnerSettings: RunnerSettings?,
                                                          executor: Executor) {
     // only for enabled extensions
-    processEnabledExtensions(configuration, runnerSettings) {
-      it.updateJavaParameters(configuration, params, runnerSettings, executor)
+    val extensions = ReadAction.nonBlocking<List<RunConfigurationExtension>> {
+      buildList {
+        processEnabledExtensions(configuration, runnerSettings) {
+          add(it)
+        }
+      }
+    }.executeSynchronously()
+
+    for (extension in extensions) {
+      try {
+        extension.updateJavaParameters(configuration, params, runnerSettings, executor)
+      } catch (_: IndexNotReadyException) {
+      }
     }
   }
 

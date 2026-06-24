@@ -38,8 +38,7 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
 
     passDataAboutBuiltInServer(javaParameters, project)
     val vmParameters = javaParameters.vmParametersList
-    val module = configuration.configurationModule.module ?: return
-    val jdk = JavaParameters.getJdkToRunModule(module, true) ?: return
+    val (module, jdk) = getRunConfigurationModuleAndJdk(configuration) ?: return
     if (!vmParameters.getPropertyValue("intellij.devkit.skip.automatic.add.opens").toBoolean()) {
       DevKitPatcherHelper.appendAddOpensWhenNeeded(project, jdk, vmParameters)
     }
