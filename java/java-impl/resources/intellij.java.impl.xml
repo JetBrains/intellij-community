@@ -95,6 +95,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <vfsUrlImageSourceRemapper implementation="com.intellij.codeInsight.documentation.JrtImageSourceRemapper"/>
+
     <applicationService
       open="true"
       serviceImplementation="com.intellij.refactoring.introduceVariable.JavaIntroduceVariableService"/>
