@@ -47,8 +47,12 @@
       "lineSeparatorColor": "#6A6173"
     },
 
-    "Island.arc": 0,
-    "Island.arc.compact": 0,
+    "Island": {
+      "arc": 0,
+      "arc.compact": 0,
+      "ToolWindow.insets": "1,0,0,0",
+      "Editor.insets": "0,0,0,0"
+    },
     "Islands.emptyGap": 0,
 
     "ActionButton": {

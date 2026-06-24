@@ -861,7 +861,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   private fun createToolWindowBorderPainter(toolwindow: ToolWindow, component: XNextIslandHolder) {
-    component.border = JBEmptyBorder(JBUI.insets("Island.ToolWindow.border", JBUI.insets(3)))
+    component.border = JBEmptyBorder(JBUI.insets("Island.ToolWindow.insets", JBUI.insets(3)))
 
     component.borderPainter = object : AbstractBorderPainter() {
       override fun paintAfterChildren(component: JComponent, g: Graphics) {
@@ -873,7 +873,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   private fun createEditorBorderPainter(component: EditorsSplitters) {
-    component.border = JBEmptyBorder(JBUI.insets("Island.Editor.border", JBUI.insets(2)))
+    component.border = JBEmptyBorder(JBUI.insets("Island.Editor.insets", JBUI.insets(2)))
 
     configureBackgroundPainting(component, recursive = true)
 
@@ -936,10 +936,6 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   private fun getLastOffset(component: JComponent): Point {
-    if (uiSettings.hideToolStripes) {
-      return Point()
-    }
-
     val rootPane = component.rootPane
 
     val componentStart = Point()
