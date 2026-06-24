@@ -191,7 +191,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     //noinspection TestOnlyProblems
     DaemonProgressIndicator.setDebug(LOG.isDebugEnabled());
 
-    myDisposed = false;
     myFileStatusMap.markAllFilesDirty("DaemonCodeAnalyzer init");
     Disposer.register(this, () -> {
       assert !myDisposed : "Double dispose";
@@ -794,6 +793,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   private long getDelta() {
     long u = updateRequests.get();
     long diff = (queuedRequests(u) - executedRequests(u) + 0x1_0000_0000L/*Assume not more than one wraparound*/) & 0x0000_0000_ffff_ffffL;
+    //noinspection ConstantValue
     assert diff >= 0 : diff + ":" + Long.toHexString(u);
     return diff;
   }
