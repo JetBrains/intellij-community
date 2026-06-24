@@ -4,6 +4,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.application.ArchivedCompilationContextUtil
+import com.intellij.openapi.application.PathManager
 import com.intellij.util.io.URLUtil
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineScope
@@ -28,6 +29,7 @@ import org.jetbrains.jps.model.module.JpsModuleReference
 import java.net.URI
 import java.nio.file.Path
 import kotlin.io.path.inputStream
+import kotlin.io.path.name
 import kotlin.io.path.pathString
 
 @Internal
@@ -36,7 +38,7 @@ class BazelCompilationContext(
   private val scope: CoroutineScope?,
   @JvmField val outputProviderState: BazelModuleOutputProviderState = BazelModuleOutputProviderState(
     modules = delegate.project.modules,
-    projectHome = delegate.paths.projectHome,
+    projectHome = computeProjectHomeForModuleOutputs(delegate.paths.projectHome),
     bazelOutputRoot = requireNotNull(bazelOutputRoot) { "Bazel output root is not available" },
   ),
 ) : CompilationContext {
@@ -118,6 +120,14 @@ class BazelCompilationContext(
   }
 
   override suspend fun withCompilationLock(block: suspend () -> Unit): Unit = delegate.withCompilationLock(block)
+}
+
+private fun computeProjectHomeForModuleOutputs(projectHome: Path): Path {
+  //if build scripts for intellij-community project are started from the ultimate monorepo, we need to take compiled classes from the parent project; otherwise outputs won't be found
+  if (projectHome.name == "community" && PathManager.getHomeDir() == projectHome.parent) {
+    return projectHome.parent
+  }
+  return projectHome
 }
 
 @Internal
