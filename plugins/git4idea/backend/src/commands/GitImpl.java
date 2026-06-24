@@ -943,7 +943,7 @@ public class GitImpl extends GitImplBase {
       }
       catch (IOException e) {
         LOG.warn("Failed to prepare stdin file for git hook '" + hookName + "', skipping the hook", e);
-        return GitCommandResult.error(GitBundle.message("hook.didnt.run.failed.to.create.stdin.file", hookName));
+        return GitCommandResult.error(GitBundle.message("hook.did.not.run.failed.to.create.stdin.file", hookName));
       }
     }
 
