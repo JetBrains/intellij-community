@@ -461,6 +461,7 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
     var messageContent: String? = null
     var messageHasToolUse = false
     var messageNeedsInputToolUse = false
+    var messageNeedsInputToolResult = false
     var messageHasToolResult = false
     var messageProjectMutatingToolUsesById: Map<String, Set<String>?> = emptyMap()
     var messageCompletedToolUseIds: Set<String> = emptySet()
@@ -492,6 +493,7 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
             messageContent = parsedMessage.contentPreview
             messageHasToolUse = parsedMessage.hasToolUse
             messageNeedsInputToolUse = parsedMessage.needsInputToolUse
+            messageNeedsInputToolResult = parsedMessage.needsInputToolResult
             messageHasToolResult = parsedMessage.hasToolResult
             messageProjectMutatingToolUsesById = parsedMessage.projectMutatingToolUsesById
             messageCompletedToolUseIds = parsedMessage.completedToolUseIds
@@ -514,6 +516,7 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
     val activityEvent = when (type) {
       "user" -> when {
         messageRole != "user" -> ClaudeActivityEvent.OTHER
+        messageNeedsInputToolResult -> ClaudeActivityEvent.ASSISTANT_NEEDS_INPUT
         messageHasToolResult || hasBackgroundTaskId || isTaskNotification -> ClaudeActivityEvent.TOOL_CONTINUATION
         else -> ClaudeActivityEvent.USER_PROMPT
       }
@@ -583,6 +586,7 @@ private fun readMessageObject(parser: JsonParser): ParsedMessageObject {
   var contentPreview: String? = null
   var hasToolUse = false
   var needsInputToolUse = false
+  var needsInputToolResult = false
   var hasToolResult = false
   var projectMutatingToolUsesById: Map<String, Set<String>?> = emptyMap()
   var completedToolUseIds: Set<String> = emptySet()
@@ -601,6 +605,7 @@ private fun readMessageObject(parser: JsonParser): ParsedMessageObject {
         contentPreview = result.contentPreview
         hasToolUse = result.hasToolUse
         needsInputToolUse = result.needsInputToolUse
+        needsInputToolResult = result.needsInputToolResult
         hasToolResult = result.hasToolResult
         projectMutatingToolUsesById = result.projectMutatingToolUsesById
         completedToolUseIds = result.completedToolUseIds
@@ -621,6 +626,7 @@ private fun readMessageObject(parser: JsonParser): ParsedMessageObject {
     contentPreview = contentPreview,
     hasToolUse = hasToolUse,
     needsInputToolUse = needsInputToolUse,
+    needsInputToolResult = needsInputToolResult,
     hasToolResult = hasToolResult,
     projectMutatingToolUsesById = projectMutatingToolUsesById,
     completedToolUseIds = completedToolUseIds,
@@ -727,6 +733,7 @@ private fun readFirstTextAndToolUseFromArray(parser: JsonParser): ParsedMessageC
   var firstText: String? = null
   var hasToolUse = false
   var needsInputToolUse = false
+  var needsInputToolResult = false
   var hasToolResult = false
   val projectMutatingToolUsesById = LinkedHashMap<String, Set<String>?>()
   val completedToolUseIds = LinkedHashSet<String>()
@@ -735,6 +742,7 @@ private fun readFirstTextAndToolUseFromArray(parser: JsonParser): ParsedMessageC
       contentPreview = firstText,
       hasToolUse = hasToolUse,
       needsInputToolUse = needsInputToolUse,
+      needsInputToolResult = needsInputToolResult,
       hasToolResult = hasToolResult,
       projectMutatingToolUsesById = projectMutatingToolUsesById,
       completedToolUseIds = completedToolUseIds,
@@ -743,6 +751,7 @@ private fun readFirstTextAndToolUseFromArray(parser: JsonParser): ParsedMessageC
       contentPreview = firstText,
       hasToolUse = hasToolUse,
       needsInputToolUse = needsInputToolUse,
+      needsInputToolResult = needsInputToolResult,
       hasToolResult = hasToolResult,
       projectMutatingToolUsesById = projectMutatingToolUsesById,
       completedToolUseIds = completedToolUseIds,
@@ -756,7 +765,8 @@ private fun readFirstTextAndToolUseFromArray(parser: JsonParser): ParsedMessageC
     var itemId: String? = null
     var itemName: String? = null
     var itemToolUseId: String? = null
-    var itemChangedProjectFilePaths: Set<String> = emptySet()
+    var itemInput = ParsedToolInput()
+    var itemNeedsInputToolReference = false
     forEachJsonObjectField(parser) { fieldName ->
       when (fieldName) {
         "type" -> itemType = readJsonStringOrNull(parser)
@@ -764,27 +774,32 @@ private fun readFirstTextAndToolUseFromArray(parser: JsonParser): ParsedMessageC
         "name" -> itemName = readJsonStringOrNull(parser)
         "tool_use_id" -> itemToolUseId = readJsonStringOrNull(parser)
         "text" -> itemText = readJsonStringOrNull(parser)
-        "input" -> itemChangedProjectFilePaths = readToolInputProjectFilePaths(parser)
+        "input" -> itemInput = readToolInput(parser)
+        "content" -> itemNeedsInputToolReference = readToolReferenceNeedsInput(parser)
         else -> parser.skipChildren()
       }
       true
     }
     if (itemType == "tool_use") {
       hasToolUse = true
-      if (isClaudeUserInteractionToolName(itemName)) {
+      if (isClaudeUserInteractionToolName(itemName) ||
+          isClaudeToolSearchForUserInteractionTool(itemName, itemInput.selectedToolName)) {
         needsInputToolUse = true
       }
       if (isClaudeTranscriptProjectMutatingToolName(itemName)) {
         normalizeToolUseId(itemId)?.let { toolUseId ->
           projectMutatingToolUsesById[toolUseId] = preciseProjectFilePathsForToolUse(
             toolName = itemName,
-            toolInputProjectFilePaths = itemChangedProjectFilePaths,
+            toolInputProjectFilePaths = itemInput.projectFilePaths,
           )
         }
       }
     }
     if (itemType == "tool_result") {
       hasToolResult = true
+      if (itemNeedsInputToolReference) {
+        needsInputToolResult = true
+      }
       normalizeToolUseId(itemToolUseId)?.let(completedToolUseIds::add)
     }
     if (firstText == null && itemType == "text" && !itemText.isNullOrBlank()) {
@@ -811,22 +826,88 @@ private fun preciseProjectFilePathsForToolUse(toolName: String?, toolInputProjec
   return toolInputProjectFilePaths.takeIf { it.isNotEmpty() }
 }
 
-private fun readToolInputProjectFilePaths(parser: JsonParser): Set<String> {
-  if (parser.currentToken() != JsonToken.START_OBJECT) {
-    parser.skipChildren()
-    return emptySet()
-  }
+private fun isClaudeToolSearchForUserInteractionTool(toolName: String?, selectedToolName: String?): Boolean {
+  return toolName?.trim() == "ToolSearch" && isClaudeUserInteractionToolName(selectedToolName)
+}
 
-  val paths = LinkedHashSet<String>()
+private fun selectedDeferredToolNameFromToolSearchQuery(query: String?): String? {
+  val normalizedQuery = query?.trim() ?: return null
+  return normalizedQuery.removePrefix("select:")
+    .takeIf { it.length != normalizedQuery.length }
+    ?.trim()
+    ?.takeIf { it.isNotEmpty() }
+}
+
+private fun readToolReferenceNeedsInput(parser: JsonParser): Boolean {
+  return when (parser.currentToken()) {
+    JsonToken.START_ARRAY -> readToolReferenceArrayNeedsInput(parser)
+    JsonToken.START_OBJECT -> readToolReferenceObjectNeedsInput(parser)
+    else -> {
+      parser.skipChildren()
+      false
+    }
+  }
+}
+
+private fun readToolReferenceArrayNeedsInput(parser: JsonParser): Boolean {
+  var needsInput = false
+  while (true) {
+    val token = parser.nextToken() ?: return needsInput
+    if (token == JsonToken.END_ARRAY) {
+      return needsInput
+    }
+    if (token == JsonToken.START_OBJECT) {
+      needsInput = readToolReferenceObjectNeedsInput(parser) || needsInput
+    }
+    else {
+      parser.skipChildren()
+    }
+  }
+}
+
+private fun readToolReferenceObjectNeedsInput(parser: JsonParser): Boolean {
+  var itemType: String? = null
+  var toolName: String? = null
   forEachJsonObjectField(parser) { fieldName ->
     when (fieldName) {
-      "file_path", "notebook_path" -> readJsonStringOrNull(parser)?.trim()?.takeIf { it.isNotEmpty() }?.let(paths::add)
+      "type" -> itemType = readJsonStringOrNull(parser)
+      "tool_name", "toolName" -> toolName = readJsonStringOrNull(parser)
       else -> parser.skipChildren()
     }
     true
   }
-  return paths
+  return itemType == "tool_reference" && isClaudeUserInteractionToolName(toolName)
 }
+
+private fun readToolInput(parser: JsonParser): ParsedToolInput {
+  if (parser.currentToken() != JsonToken.START_OBJECT) {
+    parser.skipChildren()
+    return ParsedToolInput()
+  }
+
+  val paths = LinkedHashSet<String>()
+  var selectedToolName: String? = null
+  forEachJsonObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "file_path", "notebook_path" -> readJsonStringOrNull(parser)
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
+        ?.let(paths::add)
+      "query" -> selectedToolName = selectedDeferredToolNameFromToolSearchQuery(readJsonStringOrNull(parser))
+      else -> parser.skipChildren()
+    }
+    true
+  }
+  return ParsedToolInput(
+    projectFilePaths = paths,
+    selectedToolName = selectedToolName,
+  )
+}
+
+private data class ParsedToolInput(
+  @JvmField val projectFilePaths: Set<String> = emptySet(),
+  @JvmField val selectedToolName: String? = null,
+)
 
 private fun readToolUseResultObject(parser: JsonParser): Boolean {
   if (parser.currentToken() != JsonToken.START_OBJECT) {
@@ -1104,6 +1185,7 @@ private data class ParsedMessageObject(
   @JvmField val contentPreview: String?,
   @JvmField val hasToolUse: Boolean = false,
   @JvmField val needsInputToolUse: Boolean = false,
+  @JvmField val needsInputToolResult: Boolean = false,
   @JvmField val hasToolResult: Boolean = false,
   @JvmField val projectMutatingToolUsesById: Map<String, Set<String>?> = emptyMap(),
   @JvmField val completedToolUseIds: Set<String> = emptySet(),
@@ -1136,6 +1218,7 @@ private data class ParsedMessageContent(
   @JvmField val contentPreview: String? = null,
   @JvmField val hasToolUse: Boolean = false,
   @JvmField val needsInputToolUse: Boolean = false,
+  @JvmField val needsInputToolResult: Boolean = false,
   @JvmField val hasToolResult: Boolean = false,
   @JvmField val projectMutatingToolUsesById: Map<String, Set<String>?> = emptyMap(),
   @JvmField val completedToolUseIds: Set<String> = emptySet(),

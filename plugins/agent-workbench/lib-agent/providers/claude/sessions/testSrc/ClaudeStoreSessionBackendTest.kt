@@ -114,16 +114,36 @@ class ClaudeStoreSessionBackendTest {
           claudeAssistantUserInteractionToolLine("2026-02-10T10:03:01.000Z", "session-needs-input", projectPath, "AskUserQuestion"),
         ),
       )
+      writeJsonl(
+        projectDir.resolve("session-plan-approval.jsonl"),
+        listOf(
+          claudeUserLine("2026-02-10T10:04:00.000Z", "session-plan-approval", projectPath, "Make a plan"),
+          claudeAssistantLine("2026-02-10T10:04:01.000Z", "session-plan-approval", projectPath, "Plan written"),
+          claudeAssistantToolSearchLine(
+            "2026-02-10T10:04:02.000Z",
+            "session-plan-approval",
+            projectPath,
+            "select:ExitPlanMode",
+          ),
+          claudeToolReferenceResultLine(
+            "2026-02-10T10:04:03.000Z",
+            "session-plan-approval",
+            projectPath,
+            "ExitPlanMode",
+          ),
+        ),
+      )
 
       val backend = ClaudeStoreSessionBackend(claudeHomeProvider = { tempDir.resolve(".claude") })
       val threads = backend.listThreads(path = projectPath, openProject = null)
 
-      assertThat(threads).hasSize(4)
+      assertThat(threads).hasSize(5)
       val activityById = threads.associate { it.id to it.activity }
       assertThat(activityById["session-unread"]).isEqualTo(ClaudeSessionActivity.READY)
       assertThat(activityById["session-processing"]).isEqualTo(ClaudeSessionActivity.PROCESSING)
       assertThat(activityById["session-ready"]).isEqualTo(ClaudeSessionActivity.READY)
       assertThat(activityById["session-needs-input"]).isEqualTo(ClaudeSessionActivity.NEEDS_INPUT)
+      assertThat(activityById["session-plan-approval"]).isEqualTo(ClaudeSessionActivity.NEEDS_INPUT)
     }
   }
 

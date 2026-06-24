@@ -194,6 +194,9 @@ internal fun createClaudeHookSettingsText(endpoint: String, token: String): Stri
     generator.writeStartObject()
     generator.writeName("PreToolUse")
     generator.writeStartArray()
+    // ToolSearch is intentionally excluded from the broad PreToolUse matcher. Add it only with
+    // a verified input-aware hook condition so ordinary deferred-tool lookups do not call this endpoint.
+    // Deferred plan-approval status is reconciled from Claude JSONL transcripts instead.
     generator.writeHookEntry(matcher = CLAUDE_USER_INTERACTION_TOOL_MATCHER, endpoint = endpoint, token = token)
     generator.writeEndArray()
     generator.writeName("PostToolUse")
