@@ -202,20 +202,20 @@ public class FileEncodingTest implements TestDialog {
   }
 
   private @NotNull VirtualFile createTempFile(@NotNull String ext, byte @NotNull [] BOM, @NotNull String content, @NotNull Charset charset) throws IOException {
-    Path file = Files.createTempFile(tempDir.getRootPath(), "copy", '.' + ext);
-    try (OutputStream stream = Files.newOutputStream(file)) {
+    Path path = Files.createTempFile(tempDir.getRootPath(), "copy", '.' + ext);
+    try (OutputStream stream = Files.newOutputStream(path)) {
       stream.write(BOM);
       stream.write(content.getBytes(charset));
     }
     Disposer.register(getTestRootDisposable(), () -> {
       try {
-        Files.delete(file);
+        Files.delete(path);
       }
       catch (IOException e) {
         throw new UncheckedIOException(e);
       }
     });
-    return refreshAndFindFile(file);
+    return refreshAndFindFile(path);
   }
 
   @Test
@@ -276,11 +276,11 @@ public class FileEncodingTest implements TestDialog {
   @Test
   public void testChangeToUtfProlog() throws IOException {
     VirtualFile src = getTestRoot().findChild("xWin1251.xml");
-    Path file = tempDir.getRootPath().resolve("copy.xml");
-    Files.copy(src.toNioPath(), file, StandardCopyOption.REPLACE_EXISTING);
+    Path path = tempDir.getRootPath().resolve("copy.xml");
+    Files.copy(src.toNioPath(), path, StandardCopyOption.REPLACE_EXISTING);
 
     WriteCommandAction.writeCommandAction(getProject()).run(() -> {
-      VirtualFile xml = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file);
+      VirtualFile xml = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path);
       Document document = getDocument(xml);
 
       setText(document, UTF8_XML_PROLOG + XML_TEST_BODY);
@@ -288,7 +288,7 @@ public class FileEncodingTest implements TestDialog {
       //ensure pending VFS IOps are finished before reading files via Path API:
       PlatformTestUtil.flushAllPendingVFSUpdates();
 
-      byte[] savedBytes = Files.readAllBytes(file);
+      byte[] savedBytes = Files.readAllBytes(path);
       String saved = new String(savedBytes, StandardCharsets.UTF_8).replace("\r\n", "\n");
       String expected = (UTF8_XML_PROLOG + XML_TEST_BODY).replace("\r\n", "\n");
 
@@ -567,14 +567,16 @@ public class FileEncodingTest implements TestDialog {
     assertArrayEquals(CharsetToolkit.UTF8_BOM, file.getBOM());
 
     Document document = getDocument(file);
-    setText(document, "horseradish");
+    String text = "horseradish";
+    setText(document, text);
     FileDocumentManager.getInstance().saveAllDocuments();
 
     assertEquals(StandardCharsets.UTF_8, file.getCharset());
     assertArrayEquals(CharsetToolkit.UTF8_BOM, file.getBOM());
 
     byte[] bytes = FileUtil.loadFileBytes(VfsUtilCore.virtualToIoFile(file));
-    assertTrue(CharsetToolkit.hasUTF8Bom(bytes));
+    assertTrue(Arrays.toString(bytes), CharsetToolkit.hasUTF8Bom(bytes));
+    assertEquals(text, CharsetToolkit.decodeString(bytes, StandardCharsets.UTF_8));
   }
 
   @Test
@@ -595,7 +597,8 @@ public class FileEncodingTest implements TestDialog {
     assertEquals(StandardCharsets.UTF_8, charset);
     assertArrayEquals(CharsetToolkit.UTF8_BOM, file.getBOM());
 
-    assertTrue(CharsetToolkit.hasUTF8Bom(bytes));
+    assertTrue(Arrays.toString(bytes), CharsetToolkit.hasUTF8Bom(bytes));
+    assertEquals(newContent, CharsetToolkit.decodeString(bytes, StandardCharsets.UTF_8));
   }
 
   @Test
@@ -641,7 +644,7 @@ public class FileEncodingTest implements TestDialog {
     assertEquals(StandardCharsets.UTF_8, file.getCharset());
     assertNull(file.getBOM());
 
-    assertFalse(CharsetToolkit.hasUTF8Bom(bytes));
+    assertFalse(Arrays.toString(bytes), CharsetToolkit.hasUTF8Bom(bytes));
   }
 
   @Test
@@ -1329,12 +1332,12 @@ public class FileEncodingTest implements TestDialog {
   @Test
   public void testCharsetToolkitMustDetectBinaryEvenThoughItThinksThereAreInvalidUTF8There() {
     {
-      byte[] bytes = new byte[]{-1, -2, -3};
+      byte[] bytes = {-1, -2, -3};
       CharsetToolkit toolkit = new CharsetToolkit(bytes, StandardCharsets.UTF_16BE, false);
       assertEquals(CharsetToolkit.GuessedEncoding.INVALID_UTF8, toolkit.guessFromContent(bytes.length));
     }
     {
-      byte[] bytes = new byte[]{-1, -2, -3, 0,0,0,0,0,0,0,0,0};
+      byte[] bytes = {-1, -2, -3, 0, 0, 0, 0, 0, 0, 0, 0, 0};
       CharsetToolkit toolkit = new CharsetToolkit(bytes, StandardCharsets.UTF_16BE, false);
       assertEquals(CharsetToolkit.GuessedEncoding.BINARY, toolkit.guessFromContent(bytes.length));
     }
