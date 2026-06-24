@@ -1503,4 +1503,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.platform.ai.agent.terminal.sessions.tests",
   "intellij.agent.workbench.prompt.core.tests",
   "intellij.agent.workbench.prompt.testrunner.tests",
+  "intellij.agent.workbench.prompt.vcs.tests",
 )
