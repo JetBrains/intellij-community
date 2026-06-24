@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useExternalStoreRuntime, type AppendMessage, type ThreadMessageLike } from "@assistant-ui/react"
 import { AcpSession, type AcpEventSink } from "../acp/client"
 import { acpBridgeHost } from "../bridge/webviewApi"
-import type { AgentInfo, PendingPermission, PlanEntryView, ToolCallView } from "../model/types"
+import type { AuthChoice, AgentInfo, PendingAuth, PendingPermission, PlanEntryView, ToolCallView } from "../model/types"
 
 interface Turn {
   reasoning: string
@@ -20,6 +20,7 @@ export interface AcpChat {
   status: string
   plan: PlanEntryView[]
   permission: PendingPermission | null
+  auth: PendingAuth | null
   selectAgent: (agentId: string) => void
 }
 
@@ -32,10 +33,13 @@ export function useAcpChat(): AcpChat {
   const [status, setStatus] = useState("")
   const [plan, setPlan] = useState<PlanEntryView[]>([])
   const [permission, setPermission] = useState<PendingPermission | null>(null)
+  const [auth, setAuth] = useState<PendingAuth | null>(null)
 
   const sessionRef = useRef<AcpSession | null>(null)
   const turnRef = useRef<Turn | null>(null)
   const assistantSeqRef = useRef(0)
+  // Resolver for the select-phase auth prompt, so a dying agent (or unmount) can unblock the prompt instead of hanging.
+  const authResolveRef = useRef<((choice: AuthChoice | null) => void) | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -43,6 +47,12 @@ export function useAcpChat(): AcpChat {
       .then(result => { if (!cancelled) setAgents(result.agents) })
       .catch(error => { if (!cancelled) setStatus(errorText(error)) })
     return () => { cancelled = true }
+  }, [])
+
+  // On unmount, unblock any pending auth prompt and stop the agent so the process is not orphaned.
+  useEffect(() => () => {
+    authResolveRef.current?.(null)
+    void sessionRef.current?.stop()
   }, [])
 
   const flushTurn = useCallback(() => {
@@ -113,9 +123,14 @@ export function useAcpChat(): AcpChat {
         setPermission({ view, resolve: optionId => { setPermission(null); resolve(optionId) } })
       })
     },
+    onAuthUpdate(authUri) {
+      setAuth(previous => (previous ? { ...previous, authUri } : previous))
+    },
     onAgentExit(code) {
       setStatus(`Agent exited (code ${code ?? "unknown"})`)
       setIsRunning(false)
+      // Unblock a pending auth prompt so the selection loop does not wait on a dead agent forever.
+      authResolveRef.current?.(null)
     },
   }), [flushTurn])
 
@@ -180,11 +195,59 @@ export function useAcpChat(): AcpChat {
         setMessages([])
         setPlan([])
         setPermission(null)
+        setAuth(null)
+        // The previous session was just stopped; drop the stale selection until this one is ready.
+        setSelectedAgentId(null)
         turnRef.current = null
-        await session.start(agentId, sink)
+        let outcome = await session.start(agentId, sink)
+        let authError: string | undefined
+        // Interactive authorization: keep prompting until the agent lets us open a session, the user cancels, or it fails.
+        while (outcome.kind === "auth-required") {
+          const { methods, message } = outcome
+          const choice = await new Promise<AuthChoice | null>(resolve => {
+            authResolveRef.current = resolve
+            setAuth({ methods, message, phase: "select", error: authError, onChoose: resolve })
+          })
+          authResolveRef.current = null
+          if (!choice) {
+            await session.stop()
+            setAuth(null)
+            setStatus("Authentication cancelled.")
+            return
+          }
+          let cancelledDuringAuth = false
+          setAuth({ methods, message, phase: "authenticating", onChoose: () => { cancelledDuringAuth = true; void session.stop() } })
+          try {
+            // env_var methods need the credential present at spawn, so re-spawn with it before authenticating.
+            if (choice.env) await session.reconnectWithEnv(agentId, choice.env, sink)
+            await session.authenticate(choice.methodId)
+            outcome = await session.openSession()
+            authError = undefined
+          }
+          catch (error) {
+            if (cancelledDuringAuth) {
+              setAuth(null)
+              setStatus("Authentication cancelled.")
+              return
+            }
+            authError = errorText(error)
+            outcome = { kind: "auth-required", methods, message }
+          }
+          if (cancelledDuringAuth) {
+            setAuth(null)
+            setStatus("Authentication cancelled.")
+            return
+          }
+        }
+        setAuth(null)
+        if (outcome.kind === "error") {
+          setStatus(outcome.message)
+          return
+        }
         setSelectedAgentId(agentId)
       }
       catch (error) {
+        setAuth(null)
         setStatus(errorText(error))
       }
       finally {
@@ -193,7 +256,7 @@ export function useAcpChat(): AcpChat {
     })()
   }, [sink])
 
-  return { runtime, agents, selectedAgentId, starting, status, plan, permission, selectAgent }
+  return { runtime, agents, selectedAgentId, starting, status, plan, permission, auth, selectAgent }
 }
 
 function errorText(error: unknown): string {

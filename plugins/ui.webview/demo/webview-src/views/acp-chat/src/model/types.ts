@@ -43,3 +43,38 @@ export interface PendingPermission {
   view: PermissionView
   resolve: (optionId: string | null) => void
 }
+
+/** One environment variable an env_var auth method asks the client to provide (e.g. OPENAI_API_KEY). */
+export interface AuthEnvVarView {
+  name: string
+  label?: string
+  secret: boolean
+  optional: boolean
+}
+
+/** An authentication method advertised by the agent in its `initialize` response (or in an auth_required error). */
+export interface AuthMethodView {
+  id: string
+  name: string
+  description?: string
+  vars: AuthEnvVarView[]
+}
+
+export interface AuthChoice {
+  methodId: string
+  /** For env_var methods: credentials to inject as the spawned agent's environment on re-spawn. */
+  env?: Record<string, string>
+}
+
+export type AuthPhase = "select" | "authenticating"
+
+/** Drives the in-chat authorization UI; mirrors {@link PendingPermission}. */
+export interface PendingAuth {
+  methods: AuthMethodView[]
+  message?: string
+  phase: AuthPhase
+  /** Verification URL for an OAuth device flow, pushed by the agent while `authenticate` is pending. */
+  authUri?: string
+  error?: string
+  onChoose: (choice: AuthChoice | null) => void
+}

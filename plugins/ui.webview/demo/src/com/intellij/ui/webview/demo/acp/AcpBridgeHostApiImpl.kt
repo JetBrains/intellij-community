@@ -19,7 +19,7 @@ internal class AcpBridgeHostApiImpl(
     val agent = runCatching { AcpConfig.loadAgents() }.getOrDefault(emptyList()).find { it.id == params.agentId }
                ?: return@withContext StartAgentResult(ok = false, error = "Agent not found: ${params.agentId}")
     try {
-      val cwd = bridge.start(agent)
+      val cwd = bridge.start(agent, params.extraEnv)
       StartAgentResult(ok = true, cwd = cwd)
     }
     catch (t: Throwable) {

@@ -5,6 +5,7 @@ import { AssistantRuntimeProvider, ComposerPrimitive, MessagePrimitive, ThreadPr
 import { useAcpChat } from "../runtime/useAcpChat"
 import { AgentSelector } from "./AgentSelector"
 import { ApprovalPrompt } from "./ApprovalPrompt"
+import { AuthPrompt } from "./AuthPrompt"
 import { PlanView } from "./PlanView"
 import { ThinkingBlock } from "./ThinkingBlock"
 import { ToolCallCard } from "./ToolCallCard"
@@ -37,6 +38,7 @@ export function ChatView() {
           </ComposerPrimitive.Root>
         </ThreadPrimitive.Root>
         {chat.permission ? <ApprovalPrompt permission={chat.permission} /> : null}
+        {chat.auth ? <AuthPrompt auth={chat.auth} /> : null}
       </div>
     </AssistantRuntimeProvider>
   )

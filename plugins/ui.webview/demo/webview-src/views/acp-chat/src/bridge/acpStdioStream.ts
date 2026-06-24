@@ -11,6 +11,8 @@ import { acpBridgeHost, setBridgePageHandlers, type ExitDto, type LineDto } from
 export interface AgentStdioStream {
   stream: Stream
   onExit(callback: (code: number | null) => void): void
+  /** Tears down the input stream so the SDK rejects any in-flight request (e.g. a hanging `authenticate`). */
+  close(): void
 }
 
 export function createAgentStdioStream(): AgentStdioStream {
@@ -61,6 +63,17 @@ export function createAgentStdioStream(): AgentStdioStream {
     stream: ndJsonStream(output, input),
     onExit(callback) {
       exitCallback = callback
+    },
+    close() {
+      try {
+        // Erroring the readable end makes the SDK's read loop fail and reject pending requests, instead of hanging.
+        inputController?.error(new Error("ACP connection closed"))
+      }
+      catch {
+        // already closed/errored
+      }
+      inputController = null
+      setBridgePageHandlers(null)
     },
   }
 }

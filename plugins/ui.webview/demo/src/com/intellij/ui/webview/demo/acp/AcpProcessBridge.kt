@@ -24,12 +24,16 @@ internal class AcpProcessBridge(
   @Volatile private var process: Process? = null
   @Volatile private var writer: BufferedWriter? = null
   @Volatile private var readerJob: Job? = null
+  // Bumped on every start/stop; the reader emits onAgentExit only for the still-current generation, so a deliberate
+  // stop or restart (e.g. re-spawn with credentials for an env_var auth method) does not surface as "agent exited".
+  @Volatile private var generation = 0
 
   // ProcessBuilder requires a java.io.File working directory; this is a local-only demo spawn (GeneralCommandLine is not on the demo classpath).
   @Suppress("IO_FILE_USAGE")
   @Synchronized
-  fun start(agent: AcpAgent): String {
+  fun start(agent: AcpAgent, extraEnv: Map<String, String> = emptyMap()): String {
     stop()
+    val myGeneration = ++generation
     val command = buildList {
       add(agent.command)
       addAll(agent.args)
@@ -38,6 +42,8 @@ internal class AcpProcessBridge(
     val cwd = project.basePath
     if (cwd != null) builder.directory(java.io.File(cwd))
     builder.environment().putAll(agent.env)
+    // Credentials entered for an env_var auth method are injected here on re-spawn; they win over the config env.
+    builder.environment().putAll(extraEnv)
     val started = builder.start()
     process = started
     writer = BufferedWriter(OutputStreamWriter(started.outputStream, StandardCharsets.UTF_8))
@@ -55,8 +61,10 @@ internal class AcpProcessBridge(
         LOG.warn("[${agent.name}] ACP agent stdout reader stopped", t)
       }
       finally {
-        val code = runCatching { started.exitValue() }.getOrNull()
-        pageApi.onAgentExit(ExitDto(code))
+        if (generation == myGeneration) {
+          val code = runCatching { started.exitValue() }.getOrNull()
+          pageApi.onAgentExit(ExitDto(code))
+        }
       }
     }
 
@@ -85,6 +93,7 @@ internal class AcpProcessBridge(
 
   @Synchronized
   fun stop() {
+    generation++
     readerJob?.cancel()
     readerJob = null
     runCatching { writer?.close() }

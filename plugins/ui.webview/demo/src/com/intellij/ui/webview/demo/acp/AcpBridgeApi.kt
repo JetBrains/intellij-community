@@ -45,7 +45,7 @@ internal data class AgentDto(val id: String, val name: String)
 internal data class AgentListDto(val agents: List<AgentDto>)
 
 @Serializable
-internal data class StartAgentRequest(val agentId: String)
+internal data class StartAgentRequest(val agentId: String, val extraEnv: Map<String, String> = emptyMap())
 
 @Serializable
 internal data class StartAgentResult(val ok: Boolean, val cwd: String? = null, val error: String? = null)

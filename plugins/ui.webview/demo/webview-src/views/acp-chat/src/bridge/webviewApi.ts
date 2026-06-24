@@ -15,6 +15,8 @@ export interface AgentListDto {
 
 export interface StartAgentRequest {
   agentId: string
+  /** Extra environment variables for the spawned process (e.g. an API key entered for an env_var auth method). */
+  extraEnv?: Record<string, string>
 }
 
 export interface StartAgentResult {

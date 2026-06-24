@@ -345,4 +345,119 @@ body {
   border-color: var(--acp-error);
   color: var(--acp-error);
 }
+
+.acpAuth {
+  max-width: 460px;
+}
+
+.acpAuthError {
+  margin-bottom: 10px;
+  color: var(--acp-error);
+}
+
+.acpAuthMethods {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.acpAuthMethod {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--acp-border);
+  border-radius: 6px;
+  background: var(--acp-bg-alt);
+}
+
+.acpAuthMethodHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.acpAuthMethodName {
+  font-weight: 600;
+}
+
+.acpAuthMethodDesc {
+  color: var(--acp-text-muted);
+}
+
+.acpAuthVar {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.acpAuthVarLabel {
+  color: var(--acp-text-muted);
+  font-size: 12px;
+}
+
+.acpAuthVarInput {
+  background: var(--acp-bg);
+  color: var(--acp-text);
+  border: 1px solid var(--acp-border);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font: inherit;
+}
+
+.acpAuthVarRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.acpAuthVarRow .acpAuthVarInput {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.acpAuthVarName {
+  flex: 0 0 40%;
+  font-family: var(--acp-mono);
+  font-size: 12px;
+}
+
+.acpAuthActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.acpAuthAddVar {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--acp-accent);
+  cursor: pointer;
+  font: inherit;
+}
+
+.acpAuthUri {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  word-break: break-all;
+}
+
+.acpAuthUriLink {
+  color: var(--acp-accent);
+  font-family: var(--acp-mono);
+  font-size: 12px;
+  user-select: all;
+}
+
+.acpAuthHint {
+  margin-bottom: 12px;
+  color: var(--acp-text-muted);
+}
 /*$vite$:1*/
