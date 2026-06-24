@@ -3,6 +3,7 @@ fixup! Add MSVC support
 fixup! Add MSVC support
 fixup! Add MSVC support
 fixup! Add MSVC support
+fixup! Add MSVC support
 Add MSVC support
 ---
 Index: 3rd_party/llvm-project/x.x/compiler-rt/compiler-rt.BUILD.bazel
@@ -1001,7 +1002,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/toolchain/BUILD.bazel b/toolchain/BUILD.bazel
 --- a/toolchain/BUILD.bazel	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/toolchain/BUILD.bazel	(revision d2bbe0e1a23b21e63f03996343ea5e62d3770ee6)
++++ b/toolchain/BUILD.bazel	(revision ad3a38f76603f0f699a0027c59eee7ae58aebab7)
 @@ -150,10 +150,17 @@
          "@platforms//os:linux": [
              "//toolchain/args:crt_search_directory",
@@ -1177,7 +1178,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/toolchain/args/BUILD.bazel b/toolchain/args/BUILD.bazel
 --- a/toolchain/args/BUILD.bazel	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/toolchain/args/BUILD.bazel	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
++++ b/toolchain/args/BUILD.bazel	(revision 646bfe8c28460b1f273a0b9d492e3c7c47241d2e)
 @@ -1,7 +1,7 @@
  load("@bazel_lib//:bzl_library.bzl", "bzl_library")
  load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
@@ -1217,262 +1218,26 @@ diff --git a/toolchain/args/BUILD.bazel b/toolchain/args/BUILD.bazel
          "-Wno-module-import-in-extern-c",
          # This warning would mean we had an error configuring the toolchain or modulemap
          "-Werror=incomplete-umbrella",
-@@ -235,9 +239,12 @@
-     actions = [
-         "@rules_cc//cc/toolchains/actions:link_actions",
-     ],
--    args = [
--        "-fsanitize=undefined",
--    ],
-+    args = select({
-+        "@llvm//constraints/windows/abi:msvc": [],
-+        "//conditions:default": [
-+            "-fsanitize=undefined",
-+        ],
-+    }),
- )
-
- cc_args_list(
-@@ -280,14 +287,17 @@
-     actions = [
-         "@rules_cc//cc/toolchains/actions:link_actions",
-     ],
--    args = [
--        "-fsanitize=cfi-icall",
--        "-flto",
--        "-fvisibility=hidden",
--        "-fno-sanitize-trap=cfi",
--        "-fno-sanitize-ignorelist",
--        "-fsanitize-ignorelist={cfi_ignore}",
--    ],
-+    args = select({
-+        "@llvm//constraints/windows/abi:msvc": [],
-+        "//conditions:default": [
-+            "-fsanitize=cfi-icall",
-+            "-flto",
-+            "-fvisibility=hidden",
-+            "-fno-sanitize-trap=cfi",
-+            "-fno-sanitize-ignorelist",
-+            "-fsanitize-ignorelist={cfi_ignore}",
-+        ],
-+    }),
-     data = ["//sanitizers:cfi_ignore"],
-     format = {
-         "cfi_ignore": "//sanitizers:cfi_ignore",
-@@ -330,9 +340,12 @@
-     actions = [
-         "@rules_cc//cc/toolchains/actions:link_actions",
-     ],
--    args = [
--        "-fsanitize=memory",
--    ],
-+    args = select({
-+        "@llvm//constraints/windows/abi:msvc": [],
-+        "//conditions:default": [
-+            "-fsanitize=memory",
-+        ],
-+    }),
- )
-
- cc_args_list(
-@@ -377,9 +390,12 @@
-     actions = [
-         "@rules_cc//cc/toolchains/actions:link_actions",
-     ],
--    args = [
--        "-fsanitize=dataflow",
--    ],
-+    args = select({
-+        "@llvm//constraints/windows/abi:msvc": [],
-+        "//conditions:default": [
-+            "-fsanitize=dataflow",
-+        ],
-+    }),
- )
-
- cc_args_list(
-@@ -418,9 +434,12 @@
-     actions = [
-         "@rules_cc//cc/toolchains/actions:link_actions",
-     ],
--    args = [
--        "-fsanitize=numerical",
--    ],
-+    args = select({
-+        "@llvm//constraints/windows/abi:msvc": [],
-+        "//conditions:default": [
-+            "-fsanitize=numerical",
-+        ],
-+    }),
- )
-
- cc_args_list(
-@@ -459,9 +478,12 @@
-     actions = [
-         "@rules_cc//cc/toolchains/actions:link_actions",
-     ],
--    args = [
--        "-fsanitize=safe-stack",
--    ],
-+    args = select({
-+        "@llvm//constraints/windows/abi:msvc": [],
-+        "//conditions:default": [
-+            "-fsanitize=safe-stack",
-+        ],
-+    }),
- )
-
- cc_args_list(
-@@ -500,9 +522,12 @@
-     actions = [
-         "@rules_cc//cc/toolchains/actions:link_actions",
-     ],
--    args = [
--        "-fsanitize=realtime",
--    ],
-+    args = select({
-+        "@llvm//constraints/windows/abi:msvc": [],
-+        "//conditions:default": [
-+            "-fsanitize=realtime",
-+        ],
-+    }),
- )
-
- cc_args_list(
-@@ -541,9 +566,12 @@
-     actions = [
-         "@rules_cc//cc/toolchains/actions:link_actions",
-     ],
--    args = [
--        "-fsanitize=type",
--    ],
-+    args = select({
-+        "@llvm//constraints/windows/abi:msvc": [],
-+        "//conditions:default": [
-+            "-fsanitize=type",
-+        ],
-+    }),
- )
-
- cc_args_list(
-@@ -582,9 +610,12 @@
-     actions = [
-         "@rules_cc//cc/toolchains/actions:link_actions",
-     ],
--    args = [
--        "-fsanitize=thread",
--    ],
-+    args = select({
-+        "@llvm//constraints/windows/abi:msvc": [],
-+        "//conditions:default": [
-+            "-fsanitize=thread",
-+        ],
-+    }),
- )
-
- cc_args_list(
-@@ -623,9 +654,12 @@
-     actions = [
-         "@rules_cc//cc/toolchains/actions:link_actions",
-     ],
--    args = [
--        "-fsanitize=address",
--    ],
-+    args = select({
-+        "@llvm//constraints/windows/abi:msvc": [],
-+        "//conditions:default": [
-+            "-fsanitize=address",
-+        ],
-+    }),
- )
-
- cc_args_list(
-@@ -664,9 +698,12 @@
-     actions = [
-         "@rules_cc//cc/toolchains/actions:link_actions",
-     ],
--    args = [
--        "-fsanitize=leak",
--    ],
-+    args = select({
-+        "@llvm//constraints/windows/abi:msvc": [],
-+        "//conditions:default": [
-+            "-fsanitize=leak",
-+        ],
-+    }),
- )
-
- cc_args_list(
-@@ -702,10 +739,13 @@
-     actions = [
-         "@rules_cc//cc/toolchains/actions:link_actions",
-     ],
--    args = [
--        "-fxray-instrument",
--        "-fxray-modes=xray-basic",
--    ],
-+    args = select({
-+        "@llvm//constraints/windows/abi:msvc": [],
-+        "//conditions:default": [
-+            "-fxray-instrument",
-+            "-fxray-modes=xray-basic",
-+        ],
-+    }),
- )
-
- cc_args_list(
-@@ -738,9 +778,12 @@
-     actions = [
-         "@rules_cc//cc/toolchains/actions:link_actions",
-     ],
--    args = [
--        "-fsanitize=fuzzer",
--    ],
-+    args = select({
-+        "@llvm//constraints/windows/abi:msvc": [],
-+        "//conditions:default": [
-+            "-fsanitize=fuzzer",
-+        ],
-+    }),
- )
-
- cc_args(
-@@ -758,9 +801,12 @@
-     actions = [
-         "@rules_cc//cc/toolchains/actions:link_actions",
-     ],
--    args = [
--        "-fprofile-instr-generate",
--    ],
-+    args = select({
-+        "@llvm//constraints/windows/abi:msvc": [],
-+        "//conditions:default": [
-+            "-fprofile-instr-generate",
-+        ],
-+    }),
- )
-
- cc_args(
-@@ -769,10 +815,17 @@
+@@ -769,10 +773,17 @@
          "@rules_cc//cc/toolchains/actions:link_actions",
      ],
      args = select({
 -        "@platforms//os:windows": [
 +        "@llvm//constraints/windows/abi:gnu": [
-             "-Wl,-u,__llvm_profile_runtime",
-             "-Wl,/include:__llvm_profile_runtime",
-         ],
-+        "@llvm//constraints/windows/abi:gnullvm": [
 +            "-Wl,-u,__llvm_profile_runtime",
 +            "-Wl,/include:__llvm_profile_runtime",
 +        ],
++        "@llvm//constraints/windows/abi:gnullvm": [
+             "-Wl,-u,__llvm_profile_runtime",
+             "-Wl,/include:__llvm_profile_runtime",
+         ],
 +        "@llvm//constraints/windows/abi:msvc": [
 +            "/include:__llvm_profile_runtime",
 +        ],
          "//conditions:default": [],
      }),
  )
-@@ -811,6 +864,29 @@
+@@ -811,6 +822,29 @@
      }),
  )
 
@@ -1502,7 +1267,7 @@ diff --git a/toolchain/args/BUILD.bazel b/toolchain/args/BUILD.bazel
  #######
 
  cc_args(
-@@ -823,11 +899,16 @@
+@@ -823,11 +857,16 @@
          "@rules_cc//cc/toolchains/actions:objc_compile",
          "@rules_cc//cc/toolchains/actions:objcpp_compile",
      ],
@@ -1524,7 +1289,7 @@ diff --git a/toolchain/args/BUILD.bazel b/toolchain/args/BUILD.bazel
  )
 
  config_setting(
-@@ -846,6 +927,7 @@
+@@ -846,6 +885,7 @@
          "@rules_cc//cc/toolchains/actions:link_actions",
      ],
      args = select({
@@ -1532,7 +1297,7 @@ diff --git a/toolchain/args/BUILD.bazel b/toolchain/args/BUILD.bazel
          ":empty_sysroot": [
              "--sysroot=/dev/null",
          ],
-@@ -955,7 +1037,15 @@
+@@ -955,7 +995,15 @@
      actions = [
          "@rules_cc//cc/toolchains/actions:lto_backend",
          "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
@@ -1852,7 +1617,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/toolchain/cc_toolchain.bzl b/toolchain/cc_toolchain.bzl
 --- a/toolchain/cc_toolchain.bzl	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/toolchain/cc_toolchain.bzl	(revision 92b65f13a2af6af3407c0fb2414a4d3bf6315ddb)
++++ b/toolchain/cc_toolchain.bzl	(revision ef3855557d86656f6cd8542f7c9a8c085055267b)
 @@ -47,8 +47,12 @@
                  "@llvm//toolchain/features:targets_windows",
              ],
@@ -1963,7 +1728,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/toolchain/features/BUILD.bazel b/toolchain/features/BUILD.bazel
 --- a/toolchain/features/BUILD.bazel	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/toolchain/features/BUILD.bazel	(revision d009b391cfd7243ac644e6cbc2c81a992de13523)
++++ b/toolchain/features/BUILD.bazel	(revision 32909d553e9b7611102b0684ead04030d360196d)
 @@ -1,6 +1,8 @@
  load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
  load("@rules_cc//cc/toolchains:feature.bzl", "cc_feature")
@@ -3306,7 +3071,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/toolchain/runtimes/BUILD.bazel b/toolchain/runtimes/BUILD.bazel
 --- a/toolchain/runtimes/BUILD.bazel	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/toolchain/runtimes/BUILD.bazel	(revision d2bbe0e1a23b21e63f03996343ea5e62d3770ee6)
++++ b/toolchain/runtimes/BUILD.bazel	(revision ad3a38f76603f0f699a0027c59eee7ae58aebab7)
 @@ -7,6 +7,7 @@
      name = "hermetic_link_flags",
      args = select({
@@ -3406,7 +3171,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/toolchain/runtimes/args/BUILD.bazel b/toolchain/runtimes/args/BUILD.bazel
 --- a/toolchain/runtimes/args/BUILD.bazel	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/toolchain/runtimes/args/BUILD.bazel	(revision d2bbe0e1a23b21e63f03996343ea5e62d3770ee6)
++++ b/toolchain/runtimes/args/BUILD.bazel	(revision ad3a38f76603f0f699a0027c59eee7ae58aebab7)
 @@ -198,6 +198,27 @@
      }),
  )
@@ -3522,8 +3287,8 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/toolchain/features/runtime_library_search_directories/BUILD.bazel b/toolchain/features/runtime_library_search_directories/BUILD.bazel
---- a/toolchain/features/runtime_library_search_directories/BUILD.bazel	(revision ae32f549b1d6e8401d84e839c5a49d22737fee47)
-+++ b/toolchain/features/runtime_library_search_directories/BUILD.bazel	(revision d2bbe0e1a23b21e63f03996343ea5e62d3770ee6)
+--- a/toolchain/features/runtime_library_search_directories/BUILD.bazel	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
++++ b/toolchain/features/runtime_library_search_directories/BUILD.bazel	(revision ad3a38f76603f0f699a0027c59eee7ae58aebab7)
 @@ -28,7 +28,10 @@
  cc_args(
      name = "runtime_library_search_directories_args",
