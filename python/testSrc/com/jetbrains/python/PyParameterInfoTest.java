@@ -1605,6 +1605,57 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("*, a: int", ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
+  @TestFor(issues = "PY-89183")
+  public void testPydanticFieldValidationAlias() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("*, my_alias: str", ArrayUtilRt.EMPTY_STRING_ARRAY);
+  }
+
+  @TestFor(issues = {"PY-89183", "PY-89184"})
+  public void testPydanticFieldValidationAliasTakesPrecedenceOverAlias() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("*, my_validation_alias: str", ArrayUtilRt.EMPTY_STRING_ARRAY);
+  }
+
+  @TestFor(issues = {"PY-89183", "PY-89184"})
+  public void testPydanticFieldValidationAliasChoices() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("*, alias1: str", ArrayUtilRt.EMPTY_STRING_ARRAY);
+  }
+
+  @TestFor(issues = {"PY-89183", "PY-89184"})
+  public void testPydanticFieldValidationAliasChoicesAlternativeQualifiedName() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("*, alias1: str", ArrayUtilRt.EMPTY_STRING_ARRAY);
+  }
+
+  @TestFor(issues = "PY-89183")
+  public void testPydanticFieldValidationAliasPath() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    // AliasPath is a nested-dict path, not a usable keyword, so the field falls back to its own name.
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("*, my_field: str", ArrayUtilRt.EMPTY_STRING_ARRAY);
+  }
+
+  @TestFor(issues = "PY-89183")
+  public void testPydanticFieldValidationAliasNonLiteralIgnored() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    // Non-literal validation_alias should be ignored; we fall back to the field name.
+    feignCtrlP(marks.get("<arg1>").getTextOffset())
+      .check("*, a: str", ArrayUtilRt.EMPTY_STRING_ARRAY);
+  }
+
   @NotNull
   private Collector feignCtrlP(int offset) {
     return feignCtrlP(offset, myFixture.getFile(), true, myFixture.getEditor());

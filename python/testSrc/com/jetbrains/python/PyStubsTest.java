@@ -1445,6 +1445,19 @@ public class PyStubsTest extends PyTestCase {
     assertNotParsed(file);
   }
 
+  @TestFor(issues = "PY-89183")
+  public void testPydanticFieldValidationAlias() {
+    myFixture.copyDirectoryToProject("pydantic", "pydantic");
+    final PyFile file = getTestFile();
+    final PyClass cls = file.findTopLevelClass("Model");
+    PyDataclassFieldStub fieldStub = cls.findClassAttribute("b", false, null)
+      .getStub()
+      .getCustomStub(PyDataclassFieldStub.class);
+    assertNotNull(fieldStub);
+    assertNotEmpty(fieldStub.validationAliases());
+    assertNotParsed(file);
+  }
+
   private void doTestTypingTypedDictArguments() {
     doTestTypedDict("name", Arrays.asList("x", "y"), Arrays.asList("str", "int"), QualifiedName.fromComponents("TypedDict"));
   }

@@ -143,6 +143,9 @@ object PyDataclassNames {
       "factory",
       "kw_only",
       "alias",
+
+      // field specifier that is part of Pydantic-only extension
+      Pydantic.VALIDATION_ALIAS
     )
   }
 
@@ -150,14 +153,23 @@ object PyDataclassNames {
     const val BASE_MODEL: String = "pydantic.BaseModel"
     const val BASE_MODEL_MAIN: String = "pydantic.main.BaseModel"
     const val GENERIC_MODEL: String = "pydantic.generics.GenericModel"
+    val BASE_MODEL_QUALIFIED_NAMES: Set<String> = setOf(BASE_MODEL, BASE_MODEL_MAIN, GENERIC_MODEL)
+
     const val MODEL_CONFIG: String = "model_config"
     const val PYDANTIC_CONFIG: String = "__pydantic_config__"
     const val MODEL_METACLASS: String = "pydantic._internal._model_construction.ModelMetaclass"
-    val BASE_MODEL_QUALIFIED_NAMES: Set<String> = setOf(BASE_MODEL, BASE_MODEL_MAIN, GENERIC_MODEL)
+
     const val PYDANTIC_FIELD: String = "pydantic.Field"
     const val PYDANTIC_FIELDS_FIELD: String = "pydantic.fields.Field"
     val PYDANTIC_FIELD_QUALIFIED_NAMES: Set<String> = setOf(PYDANTIC_FIELD, PYDANTIC_FIELDS_FIELD)
+
     const val DATACLASS_DECORATOR: String = "pydantic.dataclasses.dataclass"
+
+    const val VALIDATION_ALIAS: String= "validation_alias"
+
+    const val ALIAS_CHOICES: String = "pydantic.AliasChoices"
+    const val ALIASES_ALIAS_CHOICES: String = "pydantic.aliases.AliasChoices"
+    val ALIAS_CHOICES_QUALIFIED_NAMES: Set<String> = setOf(ALIAS_CHOICES, ALIASES_ALIAS_CHOICES)
 
     val DECORATOR_PARAMETERS: Set<String> = setOf(
       "config"
@@ -847,6 +859,7 @@ data class PyDataclassFieldParameters(
   val initValue: Boolean,
   val kwOnly: Boolean,
   val alias: String?,
+  val validationAliases: List<String> = emptyList(),
 )
 
 fun resolveDataclassFieldParameters(
@@ -870,6 +883,7 @@ fun resolveDataclassFieldParameters(
         initValue = dataclassParams.init,
         kwOnly = dataclassParams.kwOnly,
         alias = null,
+        validationAliases = emptyList(),
       )
     }
   }
@@ -889,6 +903,7 @@ fun resolveDataclassFieldParameters(
         initValue = fieldStub.initValue(),
         kwOnly = fieldStub.kwOnly() ?: false,
         alias = fieldStub.alias,
+        validationAliases = fieldStub.validationAliases(),
       )
     }
   }
@@ -931,6 +946,7 @@ fun resolveDataclassFieldParameters(
     initValue = fieldStub?.initValue() ?: getArgumentDefault("init", resolvedCallable) ?: true,
     kwOnly = fieldStub?.kwOnly() ?: getArgumentDefault("kw_only", resolvedCallable) ?: dataclassParams.kwOnly,
     alias = fieldStub?.alias,
+    validationAliases = fieldStub?.validationAliases() ?: emptyList(),
   )
 }
 
@@ -942,7 +958,7 @@ private fun getArgumentDefault(paramName: String, function: PyFunction): Boolean
   }
 }
 
-private fun isPydanticModel(
+fun isPydanticModel(
   pyClass: PyClass,
   context: TypeEvalContext
 ): Boolean {

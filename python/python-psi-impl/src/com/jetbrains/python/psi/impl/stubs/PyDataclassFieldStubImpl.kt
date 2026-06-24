@@ -15,6 +15,7 @@ import com.jetbrains.python.codeInsight.PyDataclassParameters
 import com.jetbrains.python.codeInsight.resolvesToOmittedDefault
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyStringLiteralExpression
@@ -35,6 +36,7 @@ class PyDataclassFieldStubImpl private constructor(
   private val kwOnly: Boolean?,
   private val alias: String?,
   private val frozen: Boolean? = null,
+  private val validationAliases: List<String> = emptyList(),
 ) : PyDataclassFieldStub {
   companion object {
     fun create(expression: PyTargetExpression): PyDataclassFieldStub? {
@@ -80,6 +82,7 @@ class PyDataclassFieldStubImpl private constructor(
       val kwOnly = DataInputOutputUtil.readNullable(stream, stream::readBoolean)
       val alias = stream.readNameString()
       val frozen = DataInputOutputUtil.readNullable(stream, stream::readBoolean)
+      val validationAliases = DataInputOutputUtil.readSeq(stream) { stream.readNameString() }.filterNotNull()
 
       return PyDataclassFieldStubImpl(
         calleeName = QualifiedName.fromDottedString(calleeName),
@@ -89,6 +92,7 @@ class PyDataclassFieldStubImpl private constructor(
         kwOnly = kwOnly,
         alias = alias,
         frozen = frozen,
+        validationAliases = validationAliases,
       )
     }
 
@@ -111,6 +115,30 @@ class PyDataclassFieldStubImpl private constructor(
       return null
     }
 
+    fun extractValidationAliases(expression: PyExpression?): List<String> = when (expression) {
+      is PyStringLiteralExpression -> listOf(expression.stringValue)
+      is PyCallExpression -> extractValidationAliasesFromAliasChoicesCall(expression)
+      else -> emptyList()
+    }
+
+    private fun extractValidationAliasesFromAliasChoicesCall(call: PyCallExpression): List<String> {
+      val callee = call.callee as? PyReferenceExpression ?: return emptyList()
+
+      val isAliasChoicesCall = PyResolveUtil
+        .resolveImportedElementQNameLocally(callee)
+        .map { it.toString() }
+        .any { it in PyDataclassNames.Pydantic.ALIAS_CHOICES_QUALIFIED_NAMES }
+
+      // We intentionally ignore AliasPath arguments: we only support simple string aliases here,
+      // AliasPath represents a nested lookup path rather than a single alias name.
+      // see: https://pydantic.dev/docs/validation/latest/concepts/alias/
+      if (!isAliasChoicesCall) return emptyList()
+
+      return call.arguments
+        .filterIsInstance<PyStringLiteralExpression>()
+        .map { it.stringValue }
+    }
+
     private fun analyzeArguments(call: PyCallExpression, type: PyDataclassParameters.PredefinedType): PyDataclassFieldStub? {
       val qualifiedName = (call.callee as? PyReferenceExpression)?.asQualifiedName() ?: return null
       val initValue = PyEvaluator.evaluateAsBooleanNoResolve(call.getKeywordArgument("init"), true)
@@ -122,6 +150,7 @@ class PyDataclassFieldStubImpl private constructor(
       val defaultFactory = call.getKeywordArgument("default_factory")
       val factory = call.getKeywordArgument("factory")
       val alias = (call.getKeywordArgument("alias") as? PyStringLiteralExpression)?.stringValue
+      val validationAliases = extractValidationAliases(call.getKeywordArgument(PyDataclassNames.Pydantic.VALIDATION_ALIAS))
 
       return when (type) {
         PyDataclassParameters.PredefinedType.STD -> PyDataclassFieldStubImpl(
@@ -170,6 +199,7 @@ class PyDataclassFieldStubImpl private constructor(
           kwOnly = kwOnly,
           alias = alias,
           frozen = PyEvaluator.evaluateAsBooleanNoResolve(call.getKeywordArgument("frozen")),
+          validationAliases = validationAliases,
         )
       }
     }
@@ -187,6 +217,7 @@ class PyDataclassFieldStubImpl private constructor(
     DataInputOutputUtil.writeNullable(stream, kwOnly, stream::writeBoolean)
     stream.writeName(alias)
     DataInputOutputUtil.writeNullable(stream, frozen, stream::writeBoolean)
+    DataInputOutputUtil.writeSeq(stream, validationAliases) { stream.writeName(it) }
   }
 
   override fun getCalleeName(): QualifiedName = calleeName
@@ -196,6 +227,7 @@ class PyDataclassFieldStubImpl private constructor(
   override fun kwOnly(): Boolean? = kwOnly
   override fun getAlias(): String? = alias
   override fun frozen(): Boolean? = frozen
+  override fun validationAliases(): List<String> = validationAliases
 
   override fun toString(): String {
     return "PyDataclassFieldStubImpl(" +
@@ -206,6 +238,7 @@ class PyDataclassFieldStubImpl private constructor(
            "kwOnly=$kwOnly, " +
            "alias=$alias, " +
            "frozen=$frozen, " +
+           "validationAliases=$validationAliases," +
            ")"
   }
 }

@@ -11,6 +11,7 @@ import com.jetbrains.python.codeInsight.PyDataclassFieldParameters
 import com.jetbrains.python.codeInsight.PyDataclassNames.Attrs
 import com.jetbrains.python.codeInsight.PyDataclassNames.Dataclasses
 import com.jetbrains.python.codeInsight.PyDataclassParameters
+import com.jetbrains.python.codeInsight.isPydanticModel
 import com.jetbrains.python.codeInsight.parseDataclassParameters
 import com.jetbrains.python.codeInsight.parseStdDataclassParameters
 import com.jetbrains.python.codeInsight.resolveDataclassFieldParameters
@@ -270,11 +271,11 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
             .filterNot { it.parameterName in seenNames }
             .toList()
 
-          val indexOfKeywordOnlyAttribute = fieldsInfo.indexOfLast { (_, _, parameter, _) ->
-            parameter != null && isKwOnlyMarkerField(parameter, context)
+          val indexOfKeywordOnlyAttribute = fieldsInfo.indexOfLast {
+            it.parameter != null && isKwOnlyMarkerField(it.parameter, context)
           }
 
-          fieldsInfo.forEachIndexed { index, (aliasOrFieldName, kwOnly, parameter, fieldName) ->
+          fieldsInfo.forEachIndexed { index, (aliasOrFieldName, kwOnly, parameter, fieldName, _) ->
             // note: attributes are visited from inheritors to ancestors, in reversed order for every of them
 
             if ((seenKeywordOnlyClass && (parameters.type == PyDataclassParameters.PredefinedType.ATTRS || kwOnly != false)
@@ -364,7 +365,8 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       val parameterName: String,
       val kwOnly: Boolean?,
       val parameter: PyCallableParameter?,
-      val fieldName: String
+      val fieldName: String,
+      val validationAliases: List<String> = emptyList(),
     )
 
     private fun fieldToParameter(
@@ -382,13 +384,24 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
 
       val type = dataclassParameters.type
       val predefinedType = type.asPredefinedType
-      val parameterName = when {
+      val parameterName = when (predefinedType) {
         // Fields starting with more than one underscore will be mangled into ClassName__field_name, but we don't support that
-        predefinedType == PyDataclassParameters.PredefinedType.ATTRS -> fieldParams?.alias ?: fieldName.removePrefix("_")
-        predefinedType == PyDataclassParameters.PredefinedType.DATACLASS_TRANSFORM -> fieldParams?.alias ?: fieldName
-        predefinedType == PyDataclassParameters.PredefinedType.STD -> fieldName
+        PyDataclassParameters.PredefinedType.ATTRS -> fieldParams?.alias ?: fieldName.removePrefix("_")
+        PyDataclassParameters.PredefinedType.DATACLASS_TRANSFORM -> {
+          if (isPydanticModel(cls, context)) {
+            // Pydantic: prefer validation_alias (first AliasChoices (PY-89184) entry), then Field(alias=...), then the field name
+            // see: https://pydantic.dev/docs/validation/latest/concepts/fields#field-aliases
+            fieldParams?.validationAliases?.firstOrNull() ?: fieldParams?.alias ?: fieldName
+          }
+          else {
+            fieldParams?.alias ?: fieldName
+          }
+        }
+        PyDataclassParameters.PredefinedType.STD -> fieldName
         else -> fieldName
       }
+
+      val validationAliases = fieldParams?.validationAliases ?: emptyList()
 
       val parameter = PyCallableParameterImpl.nonPsi(
         parameterName,
@@ -397,7 +410,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
         field
       )
 
-      return FieldParameterInfo(parameterName, fieldParams?.kwOnly, parameter, fieldName)
+      return FieldParameterInfo(parameterName, fieldParams?.kwOnly, parameter, fieldName, validationAliases)
     }
 
     private fun getTypeForParameter(
