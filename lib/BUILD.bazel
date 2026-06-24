@@ -1634,6 +1634,44 @@ jvm_import(
 )
 
 copy_file(
+    name = "org.jetbrains.diogen/diogen-analysis-0.1.0.jar_copy",
+    src = "@org_jetbrains_diogen-diogen-analysis-0_1_0_http//file",
+    out = "org.jetbrains.diogen/diogen-analysis-0.1.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.hankcs/aho-corasick-double-array-trie-1.2.3.jar_copy",
+    src = "@com_hankcs-aho-corasick-double-array-trie-1_2_3_http//file",
+    out = "com.hankcs/aho-corasick-double-array-trie-1.2.3.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "diogen-analysis",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":org_jetbrains_diogen-diogen-analysis-0_1_0_http_import",
+        ":com_hankcs-aho-corasick-double-array-trie-1_2_3_http_import",
+    ],
+)
+
+jvm_import(
+    name = "org_jetbrains_diogen-diogen-analysis-0_1_0_http_import",
+    jar = "@org_jetbrains_diogen-diogen-analysis-0_1_0_http//file",
+    source_jar = "@org_jetbrains_diogen-diogen-analysis-0_1_0-sources_http//file",
+)
+
+jvm_import(
+    name = "com_hankcs-aho-corasick-double-array-trie-1_2_3_http_import",
+    jar = "@com_hankcs-aho-corasick-double-array-trie-1_2_3_http//file",
+    source_jar = "@com_hankcs-aho-corasick-double-array-trie-1_2_3-sources_http//file",
+)
+
+copy_file(
     name = "org.easymock/easymock-5.6.0.jar_copy",
     src = "@org_easymock-easymock-5_6_0_http//file",
     out = "org.easymock/easymock-5.6.0.jar",
@@ -3773,14 +3811,6 @@ jvm_import(
     name = "grazie-core-com-carrotsearch-hppc",
     jar = "@com_carrotsearch-hppc-0_9_1_http//file",
     source_jar = "@com_carrotsearch-hppc-0_9_1-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.hankcs/aho-corasick-double-array-trie-1.2.3.jar_copy",
-    src = "@com_hankcs-aho-corasick-double-array-trie-1_2_3_http//file",
-    out = "com.hankcs/aho-corasick-double-array-trie-1.2.3.jar",
-    allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
@@ -18740,13 +18770,6 @@ jvm_import(
     name = "com_soywiz_korlibs_krypto-krypto-jvm-4_0_10_http_import",
     jar = "@com_soywiz_korlibs_krypto-krypto-jvm-4_0_10_http//file",
     source_jar = "@com_soywiz_korlibs_krypto-krypto-jvm-4_0_10-sources_http//file",
-)
-
-jvm_import(
-    name = "performance_testing-freezes-com-hankcs-aho-corasick-double-array-trie",
-    jar = "@com_hankcs-aho-corasick-double-array-trie-1_2_3_http//file",
-    source_jar = "@com_hankcs-aho-corasick-double-array-trie-1_2_3-sources_http//file",
-    visibility = ["//visibility:public"],
 )
 
 java_library(

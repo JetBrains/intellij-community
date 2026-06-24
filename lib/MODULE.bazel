@@ -1121,6 +1121,34 @@ http_file(
 )
 
 http_file(
+    name = "org_jetbrains_diogen-diogen-analysis-0_1_0_http",
+    downloaded_file_path = "diogen-analysis-0.1.0.jar",
+    sha256 = "911185567a8dacb8c90c81c98ec08663c4414887ae097819bdde4ecf191e75c0",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/diogen/diogen-analysis/0.1.0/diogen-analysis-0.1.0.jar",
+)
+
+http_file(
+    name = "com_hankcs-aho-corasick-double-array-trie-1_2_3_http",
+    downloaded_file_path = "aho-corasick-double-array-trie-1.2.3.jar",
+    sha256 = "564f0fc690d50702a313510b9a72e9505ace6e81108e84f65de4feb0da244eb8",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/hankcs/aho-corasick-double-array-trie/1.2.3/aho-corasick-double-array-trie-1.2.3.jar",
+)
+
+http_file(
+    name = "org_jetbrains_diogen-diogen-analysis-0_1_0-sources_http",
+    downloaded_file_path = "diogen-analysis-0.1.0-sources.jar",
+    sha256 = "c3cda6679e9d0f27863783d6eb80dfe7fabf350c9b71a92e8acb295b9e4b9fd4",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/diogen/diogen-analysis/0.1.0/diogen-analysis-0.1.0-sources.jar",
+)
+
+http_file(
+    name = "com_hankcs-aho-corasick-double-array-trie-1_2_3-sources_http",
+    downloaded_file_path = "aho-corasick-double-array-trie-1.2.3-sources.jar",
+    sha256 = "c8913fd1a8927c8a4c0be5c66a3eabfb4f5c6a29b07891b990c9a25979ade771",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/hankcs/aho-corasick-double-array-trie/1.2.3/aho-corasick-double-array-trie-1.2.3-sources.jar",
+)
+
+http_file(
     name = "org_easymock-easymock-5_6_0_http",
     downloaded_file_path = "easymock-5.6.0.jar",
     sha256 = "63efc00da99774fb0253330ef9b5788b261022ba73f36bf76889ce7edf3d2b31",
@@ -3001,20 +3029,6 @@ http_file(
     downloaded_file_path = "hppc-0.9.1-sources.jar",
     sha256 = "cfbf1945a51d9c4bfb25c6092cd1199b6e5d02251075dce38977551a922d342e",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/carrotsearch/hppc/0.9.1/hppc-0.9.1-sources.jar",
-)
-
-http_file(
-    name = "com_hankcs-aho-corasick-double-array-trie-1_2_3_http",
-    downloaded_file_path = "aho-corasick-double-array-trie-1.2.3.jar",
-    sha256 = "564f0fc690d50702a313510b9a72e9505ace6e81108e84f65de4feb0da244eb8",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/hankcs/aho-corasick-double-array-trie/1.2.3/aho-corasick-double-array-trie-1.2.3.jar",
-)
-
-http_file(
-    name = "com_hankcs-aho-corasick-double-array-trie-1_2_3-sources_http",
-    downloaded_file_path = "aho-corasick-double-array-trie-1.2.3-sources.jar",
-    sha256 = "c8913fd1a8927c8a4c0be5c66a3eabfb4f5c6a29b07891b990c9a25979ade771",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/hankcs/aho-corasick-double-array-trie/1.2.3/aho-corasick-double-array-trie-1.2.3-sources.jar",
 )
 
 http_file(
