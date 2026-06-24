@@ -1,31 +1,15 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.hatch.sdk
 
-import com.intellij.python.hatch.icons.PythonHatchIcons
+import com.intellij.python.hatch.impl.sdk.HatchSdkFlavor
+import com.intellij.python.hatch.impl.sdk.HatchSdkFlavorData
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
-import com.jetbrains.python.sdk.flavors.PyFlavorData
-import com.jetbrains.python.sdk.flavors.PythonFlavorProvider
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import javax.swing.Icon
 
-typealias HatchSdkFlavorData = PyFlavorData.Empty
-
-internal object HatchSdkFlavor : CPythonSdkFlavor<HatchSdkFlavorData>() {
-  override fun getIcon(): Icon = PythonHatchIcons.Logo
-  override fun getFlavorDataClass(): Class<HatchSdkFlavorData> = HatchSdkFlavorData::class.java
-  override fun isValidSdkPath(pythonBinaryPath: Path): Boolean = false
-  override fun isPlatformIndependent(): Boolean = true
-}
-
-internal class HatchSdkFlavorProvider : PythonFlavorProvider {
-  override fun getFlavor(): PythonSdkFlavor<*> = HatchSdkFlavor
-}
-
-internal class HatchSdkAdditionalData(
+@ApiStatus.Internal
+class HatchSdkAdditionalData(
   val hatchWorkingDirectory: Path?,
   val hatchEnvironmentName: String?,
 ) : PythonSdkAdditionalData(PyFlavorAndData(data = HatchSdkFlavorData, flavor = HatchSdkFlavor)) {

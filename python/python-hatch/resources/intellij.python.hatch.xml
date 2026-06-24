@@ -17,6 +17,9 @@
     <evoTreeElementProvider id="HatchEvoProvider"
                             order="after CondaEvoProvider"
                             implementation="com.intellij.python.hatch.sdk.evolution.HatchSelectSdkProvider"/>
+
+    <pySdkProvider implementation="com.intellij.python.hatch.impl.sdk.HatchSdkProvider"/>
+    <pythonFlavorProvider implementation="com.intellij.python.hatch.impl.sdk.HatchSdkFlavorProvider"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.python.pyproject.model">
     <pyprojectmanager implementation="com.intellij.python.hatch.impl.HatchPyProjectManager"/>

@@ -15,5 +15,8 @@
     <orderEntry type="module" module-name="intellij.python.pyproject" />
     <orderEntry type="module" module-name="intellij.platform.util.base.multiplatform" />
     <orderEntry type="module" module-name="intellij.python.community.common" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.python.sdk" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
   </component>
 </module>

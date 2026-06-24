@@ -1,16 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.flavors.PyFlavorAndData
+import com.jetbrains.python.sdk.flavors.PyFlavorData
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 /**
  *  This source code is edited by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
  */
 
-internal class PyPoetrySdkAdditionalData : PythonSdkAdditionalData {
-  constructor(associatedModulePath: Path?) : super(PyPoetrySdkFlavor) {
+@ApiStatus.Internal
+class PyPoetrySdkAdditionalData : PythonSdkAdditionalData {
+  constructor(associatedModulePath: Path?) : super(PyFlavorAndData(PyFlavorData.Empty, PyPoetrySdkFlavor)) {
     this.associatedModulePath = associatedModulePath?.toString()
   }
 
