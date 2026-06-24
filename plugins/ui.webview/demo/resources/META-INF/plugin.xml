@@ -31,5 +31,12 @@
                 secondary="true"
                 doNotActivateOnStart="false"
                 icon="/icons/toolWindowWebViewDemo.svg"/>
+
+    <!--suppress SplitModeXmlApiUsage -->
+    <toolWindow id="AI Chat (Webview)"
+                factoryClass="com.intellij.ui.webview.demo.acp.AcpChatToolWindowFactory"
+                anchor="right"
+                doNotActivateOnStart="false"
+                icon="/icons/toolWindowWebViewDemo.svg"/>
   </extensions>
 </idea-plugin>

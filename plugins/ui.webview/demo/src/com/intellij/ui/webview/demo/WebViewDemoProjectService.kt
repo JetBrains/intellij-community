@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.ui.webview.demo.acp.AcpChatPanel
 import com.intellij.ui.webview.markdown.linkgraph.MarkdownLinkGraphPanel
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
@@ -33,6 +34,11 @@ internal class WebViewDemoProjectService(
 
   fun createMarkdownLinkGraphContent(): WebViewDemoContent = createContent("WebViewDemoMarkdownLinkGraph(${project.name})") { scope ->
     val panel = MarkdownLinkGraphPanel(project, scope)
+    WebViewDemoContentPanel(panel.component, panel::dispose)
+  }
+
+  fun createAcpChatContent(): WebViewDemoContent = createContent("WebViewDemoAcpChat(${project.name})") { scope ->
+    val panel = AcpChatPanel(project, scope)
     WebViewDemoContentPanel(panel.component, panel::dispose)
   }
 

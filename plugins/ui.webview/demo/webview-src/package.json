@@ -7,6 +7,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@agentclientprotocol/sdk": "^1.0.0",
+    "@assistant-ui/react": "^0.14.0",
     "@jetbrains/intellij-webview": "file:../../webview-src",
     "@jetbrains/intellij-webview-controls": "file:../../webview-src/packages/controls",
     "cytoscape": "^3.33.1",
@@ -14,7 +16,8 @@
     "marked": "^15.0.0",
     "mermaid": "^11.4.1",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "zod": "^4.4.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

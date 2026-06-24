@@ -3,5 +3,5 @@
   "compilerOptions": {
     "types": ["node"]
   },
-  "include": ["build.ts", "vite.config.ts", "views/**/*.ts", "views/**/*.d.ts"]
+  "include": ["build.ts", "vite.config.ts", "views/**/*.ts", "views/**/*.tsx", "views/**/*.d.ts"]
 }

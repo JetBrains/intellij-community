@@ -1,0 +1,201 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useExternalStoreRuntime, type AppendMessage, type ThreadMessageLike } from "@assistant-ui/react"
+import { AcpSession, type AcpEventSink } from "../acp/client"
+import { acpBridgeHost } from "../bridge/webviewApi"
+import type { AgentInfo, PendingPermission, PlanEntryView, ToolCallView } from "../model/types"
+
+interface Turn {
+  reasoning: string
+  text: string
+  tools: ToolCallView[]
+}
+
+export interface AcpChat {
+  runtime: ReturnType<typeof useExternalStoreRuntime>
+  agents: AgentInfo[]
+  selectedAgentId: string | null
+  starting: boolean
+  status: string
+  plan: PlanEntryView[]
+  permission: PendingPermission | null
+  selectAgent: (agentId: string) => void
+}
+
+export function useAcpChat(): AcpChat {
+  const [messages, setMessages] = useState<ThreadMessageLike[]>([])
+  const [isRunning, setIsRunning] = useState(false)
+  const [agents, setAgents] = useState<AgentInfo[]>([])
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null)
+  const [starting, setStarting] = useState(false)
+  const [status, setStatus] = useState("")
+  const [plan, setPlan] = useState<PlanEntryView[]>([])
+  const [permission, setPermission] = useState<PendingPermission | null>(null)
+
+  const sessionRef = useRef<AcpSession | null>(null)
+  const turnRef = useRef<Turn | null>(null)
+  const assistantSeqRef = useRef(0)
+
+  useEffect(() => {
+    let cancelled = false
+    acpBridgeHost.listAgents()
+      .then(result => { if (!cancelled) setAgents(result.agents) })
+      .catch(error => { if (!cancelled) setStatus(errorText(error)) })
+    return () => { cancelled = true }
+  }, [])
+
+  const flushTurn = useCallback(() => {
+    const turn = turnRef.current
+    if (!turn) return
+    const parts: unknown[] = []
+    if (turn.reasoning) {
+      parts.push({ type: "reasoning", text: turn.reasoning })
+    }
+    for (const tool of turn.tools) {
+      parts.push({
+        type: "tool-call",
+        toolCallId: tool.toolCallId,
+        toolName: tool.kind,
+        args: {},
+        argsText: tool.title,
+        result: { status: tool.status, title: tool.title, kind: tool.kind, text: tool.text, diff: tool.diff },
+      })
+    }
+    if (turn.text || parts.length === 0) {
+      parts.push({ type: "text", text: turn.text })
+    }
+    setMessages(previous => {
+      const next = previous.slice()
+      for (let i = next.length - 1; i >= 0; i--) {
+        if (next[i].role === "assistant") {
+          next[i] = { ...next[i], content: parts as ThreadMessageLike["content"] }
+          return next
+        }
+      }
+      return next
+    })
+  }, [])
+
+  const sink = useMemo<AcpEventSink>(() => ({
+    onMessageChunk(text) {
+      const turn = turnRef.current
+      if (turn) { turn.text += text; flushTurn() }
+    },
+    onThoughtChunk(text) {
+      const turn = turnRef.current
+      if (turn) { turn.reasoning += text; flushTurn() }
+    },
+    onToolCall(view) {
+      const turn = turnRef.current
+      if (!turn) return
+      const index = turn.tools.findIndex(t => t.toolCallId === view.toolCallId)
+      if (index >= 0) {
+        const existing = turn.tools[index]
+        turn.tools[index] = {
+          ...existing,
+          ...view,
+          title: view.title || existing.title,
+          text: view.text ?? existing.text,
+          diff: view.diff ?? existing.diff,
+        }
+      }
+      else {
+        turn.tools.push(view)
+      }
+      flushTurn()
+    },
+    onPlan(entries) {
+      setPlan(entries)
+    },
+    requestPermission(view) {
+      return new Promise<string | null>(resolve => {
+        setPermission({ view, resolve: optionId => { setPermission(null); resolve(optionId) } })
+      })
+    },
+    onAgentExit(code) {
+      setStatus(`Agent exited (code ${code ?? "unknown"})`)
+      setIsRunning(false)
+    },
+  }), [flushTurn])
+
+  const onNew = useCallback(async (message: AppendMessage) => {
+    const session = sessionRef.current
+    if (!session || !session.isActive) {
+      setStatus("Select an agent to start a session first.")
+      return
+    }
+    const text = message.content
+      .filter((part): part is { type: "text", text: string } => part.type === "text")
+      .map(part => part.text)
+      .join("")
+    const assistantId = `assistant-${++assistantSeqRef.current}`
+    setMessages(previous => [
+      ...previous,
+      { id: `user-${assistantSeqRef.current}`, role: "user", content: [{ type: "text", text }] },
+      { id: assistantId, role: "assistant", content: [] },
+    ])
+    turnRef.current = { reasoning: "", text: "", tools: [] }
+    setPlan([])
+    setStatus("")
+    setIsRunning(true)
+    try {
+      await session.prompt(text)
+    }
+    catch (error) {
+      setStatus(errorText(error))
+    }
+    finally {
+      setIsRunning(false)
+    }
+  }, [])
+
+  const onCancel = useCallback(async () => {
+    try {
+      await sessionRef.current?.cancel()
+    }
+    catch (error) {
+      setStatus(errorText(error))
+    }
+    setIsRunning(false)
+  }, [])
+
+  const runtime = useExternalStoreRuntime({
+    isRunning,
+    messages,
+    convertMessage: (message: ThreadMessageLike) => message,
+    onNew,
+    onCancel,
+  })
+
+  const selectAgent = useCallback((agentId: string) => {
+    setStarting(true)
+    setStatus("")
+    const previous = sessionRef.current
+    const session = new AcpSession()
+    sessionRef.current = session
+    void (async () => {
+      try {
+        await previous?.stop()
+        setMessages([])
+        setPlan([])
+        setPermission(null)
+        turnRef.current = null
+        await session.start(agentId, sink)
+        setSelectedAgentId(agentId)
+      }
+      catch (error) {
+        setStatus(errorText(error))
+      }
+      finally {
+        setStarting(false)
+      }
+    })()
+  }, [sink])
+
+  return { runtime, agents, selectedAgentId, starting, status, plan, permission, selectAgent }
+}
+
+function errorText(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
