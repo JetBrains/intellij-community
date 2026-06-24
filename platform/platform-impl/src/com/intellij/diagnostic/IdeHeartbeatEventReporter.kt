@@ -30,6 +30,7 @@ import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit.NANOSECONDS
 import kotlin.math.roundToInt
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -73,7 +74,7 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
   }
 
   private suspend fun heartBeatRoutine() {
-    delay(Registry.intValue("ide.heartbeat.delay").toLong())
+    delay(Registry.intValue("ide.heartbeat.delay").toLong().milliseconds)
 
     val cpuTimeDiffer = LongDiffer(0)//cpu time is in nanoseconds
     //other durations are in milliseconds by default:

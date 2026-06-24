@@ -17,7 +17,6 @@ import com.intellij.openapi.actionSystem.impl.actionholder.createActionRef
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.icons.getMenuBarIcon
