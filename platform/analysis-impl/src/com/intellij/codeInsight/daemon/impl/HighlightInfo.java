@@ -11,6 +11,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.IntentionActionWithOptions;
 import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInsight.quickfix.LazyQuickFixUpdater;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.CustomSuppressableInspectionTool;
 import com.intellij.codeInspection.ExternalSourceProblemGroup;
@@ -1542,13 +1543,27 @@ public class HighlightInfo implements Segment {
         Future<List<IntentionActionDescriptor>> future = description.future();
         if (future == null) {
           Consumer<? super QuickFixActionRegistrar> computer = description.fixesComputer();
-          future = ReadAction.nonBlocking(() -> doComputeLazyQuickFixes(document, project, description.psiModificationStamp(), computer)).wrapProgress(progressIndicator.get()).submit(ForkJoinPool.commonPool());
+          future = ReadAction.nonBlocking(() -> {
+              List<IntentionActionDescriptor> descriptors = doComputeLazyQuickFixes(document, project, description.psiModificationStamp(), computer);
+              fireQuickFixesAvailable(descriptors, project, document);
+              return descriptors;
+            })
+            .wrapProgress(progressIndicator.get())
+            .submit(ForkJoinPool.commonPool());
           return new LazyFixDescription(computer, PsiManager.getInstance(project).getModificationTracker().getModificationCount(), future);
         }
         return description;
       });
       return oldStore.withLazyQuickFixes(newLazyFixes);
     });
+  }
+
+
+  private void fireQuickFixesAvailable(@NotNull List<IntentionActionDescriptor> descriptors, @NotNull Project project, @NotNull Document document) {
+    if (descriptors.isEmpty() || project.isDisposed()) {
+      return;
+    }
+    project.getMessageBus().syncPublisher(LazyQuickFixUpdater.TOPIC).quickFixesAvailable(this, document);
   }
 
   final void copyComputedLazyFixesTo(@NotNull HighlightInfo newInfo, @NotNull Document document) {

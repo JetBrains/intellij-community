@@ -1,11 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.problemsView.backend
 
+import com.intellij.analysis.problemsView.Problem
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewHighlightingFileRoot
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewPanel
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewState
 import com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemEvent
 import com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemEventDto
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.quickfix.LazyQuickFixUpdater
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.Disposable
@@ -40,7 +43,9 @@ class HighlightingProblemsBackendService(private val project: Project) : Disposa
   private val fileRootCache = ConcurrentHashMap<VirtualFile, ProblemsViewHighlightingFileRoot>()
 
   init {
-    project.messageBus.connect(this).subscribe(
+    val connection = project.messageBus.connect(this)
+
+    connection.subscribe(
       FileEditorManagerListener.FILE_EDITOR_MANAGER,
       object : FileEditorManagerListener {
         override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
@@ -48,6 +53,22 @@ class HighlightingProblemsBackendService(private val project: Project) : Disposa
         }
       }
     )
+
+    connection.subscribe(
+      LazyQuickFixUpdater.TOPIC,
+      LazyQuickFixUpdater.QuickFixesAvailableListener { info, document ->
+        refreshProblemForAvailableQuickFixes(info, document)
+      }
+    )
+  }
+
+  private fun refreshProblemForAvailableQuickFixes(info: HighlightInfo, document: Document) {
+    val highlighter = info.highlighter ?: return
+    val file = FileDocumentManager.getInstance().getFile(document) ?: return
+    val root = fileRootCache[file] ?: return
+    val problem = root.findProblem(highlighter) ?: return
+
+    root.problemUpdated(problem)
   }
 
   suspend fun getOrCreateEventFlowForFile(fileId: VirtualFileId): Flow<List<ProblemEventDto>> {
