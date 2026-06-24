@@ -874,11 +874,6 @@ object PyCallExpressionHelper {
     return metaClassType !== PyBuiltinCache.getInstance(this).typeType
   }
 
-  /**
-   * Tries to infer implicit offset from the `callSite` and `callable`.
-   *
-   * @see mapArguments
-   */
   @JvmStatic
   fun mapArguments(expression: PyCallSiteOwner, callable: PyCallable, context: TypeEvalContext): PyArgumentsMapping {
     val callableType = context.getType(callable) as? PyCallableType?
