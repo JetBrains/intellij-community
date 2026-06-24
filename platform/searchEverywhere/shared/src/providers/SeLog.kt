@@ -60,8 +60,8 @@ enum class SeLog {
       logger.debug(messageProvider().withSePrefix(category))
     }
 
-    fun warn(message: String, exception: Throwable? = null) {
-      logger.warn(message.withSePrefix(WARNING), exception)
+    fun warn(message: String) {
+      logger.warn(message.withSePrefix(WARNING))
     }
 
     fun error(message: String) {
