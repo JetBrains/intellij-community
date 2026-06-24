@@ -61,6 +61,10 @@ class RecordingAgentChatTerminalHarness {
     terminalTabs.tab.setSentTextOutputTexts(texts)
   }
 
+  fun emitTerminalOutput(text: String) {
+    terminalTabs.tab.emitTerminalOutput(text)
+  }
+
   suspend fun activateAgentChatEditor(project: Project, file: VirtualFile): Int {
     return withContext(Dispatchers.UiWithModelAccess) {
       val chatFile = file as? AgentChatVirtualFile ?: return@withContext 0
@@ -86,6 +90,14 @@ class RecordingAgentChatTerminalHarness {
       openedFileSnapshotsFlow.first { snapshots ->
         snapshots.any { snapshot -> snapshot.initialMessageSent }
       }.single { snapshot -> snapshot.initialMessageSent }
+    }
+  }
+
+  suspend fun awaitInitialMessageDispatchCleared(timeoutMs: Long = TERMINAL_HARNESS_WAIT_TIMEOUT_MS): RecordingAgentChatOpenedFileSnapshot {
+    return withTimeout(timeoutMs.milliseconds) {
+      openedFileSnapshotsFlow.first { snapshots ->
+        snapshots.any { snapshot -> !snapshot.initialMessageSent && snapshot.initialMessageDispatchStepCount == 0 }
+      }.single { snapshot -> !snapshot.initialMessageSent && snapshot.initialMessageDispatchStepCount == 0 }
     }
   }
 
@@ -126,6 +138,7 @@ data class RecordingAgentChatOpenedFileSnapshot(
   @JvmField val threadId: String,
   @JvmField val threadTitle: String,
   @JvmField val initialMessageDispatchStepIndex: Int,
+  @JvmField val initialMessageDispatchStepCount: Int,
   @JvmField val initialMessageSent: Boolean,
 )
 
@@ -256,7 +269,7 @@ private class RecordingAgentChatTerminalTab : AgentChatTerminalTab {
     sentTextOutputTexts.poll()?.let(::emitTerminalOutput)
   }
 
-  private fun emitTerminalOutput(text: String) {
+  fun emitTerminalOutput(text: String) {
     recentOutputTail = text
     val nextVersion = outputVersion.incrementAndGet()
     outputChunks += RecordingTerminalOutputChunk(version = nextVersion, text = recentOutputTail)
@@ -283,6 +296,7 @@ private fun recordingSnapshot(snapshot: AgentChatTabSnapshot): RecordingAgentCha
     threadId = snapshot.runtime.threadId,
     threadTitle = snapshot.runtime.threadTitle,
     initialMessageDispatchStepIndex = snapshot.runtime.initialMessageDispatchStepIndex,
+    initialMessageDispatchStepCount = snapshot.runtime.initialMessageDispatchSteps.size,
     initialMessageSent = snapshot.runtime.initialMessageSent,
   )
 }

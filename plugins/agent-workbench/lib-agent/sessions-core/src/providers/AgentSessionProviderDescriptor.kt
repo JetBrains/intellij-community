@@ -75,6 +75,7 @@ data class AgentInitialMessageDispatchStep(
   @JvmField val timeoutPolicy: AgentInitialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK,
   @JvmField val completionPolicy: AgentInitialMessageDispatchCompletionPolicy = AgentInitialMessageDispatchCompletionPolicy.IMMEDIATE,
   @JvmField val action: AgentInitialMessageDispatchAction = AgentInitialMessageDispatchAction.SEND_TEXT,
+  @JvmField val recordsPrompt: Boolean = true,
 ) {
   fun isDispatchable(): Boolean {
     return text.isNotBlank()
@@ -179,9 +180,11 @@ private fun buildPromptRecord(
   token: String?,
   deliveredByStartupCommand: Boolean,
 ): AgentInitialPromptRecord? {
-  val message = steps.lastOrNull { step -> step.action == AgentInitialMessageDispatchAction.SEND_TEXT && step.text.isNotBlank() }
-                  ?.text
-                ?: return null
+  val message = steps.lastOrNull { step ->
+    step.recordsPrompt &&
+    step.action == AgentInitialMessageDispatchAction.SEND_TEXT &&
+    step.text.isNotBlank()
+  }?.text ?: return null
   return AgentInitialPromptRecord(
     message = message,
     token = token,

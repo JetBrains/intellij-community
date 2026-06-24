@@ -46,6 +46,8 @@ class CodexNewThreadPromptLaunchIntegrationTest {
     assertThat(observation.postStartDispatchSteps.map { it.action })
       .containsExactly(AgentInitialMessageDispatchAction.SEND_TEXT, AgentInitialMessageDispatchAction.SEND_TEXT)
     assertThat(observation.postStartDispatchSteps.map { it.text }).containsExactly("/plan", PLAN_PROMPT)
+    assertThat(observation.postStartDispatchSteps.map { it.recordsPrompt }).containsExactly(false, true)
+    assertThat(observation.initialPromptMessage).isEqualTo(PLAN_PROMPT)
     assertThat(observation.initialMessageToken).isNotNull()
   }
 
@@ -74,6 +76,8 @@ class CodexNewThreadPromptLaunchIntegrationTest {
     assertThat(observation.postStartDispatchSteps.map { it.action })
       .containsExactly(AgentInitialMessageDispatchAction.SEND_TEXT, AgentInitialMessageDispatchAction.SEND_TEXT)
     assertThat(observation.postStartDispatchSteps.map { it.text }).containsExactly("/plan", "Refactor selected code")
+    assertThat(observation.postStartDispatchSteps.map { it.recordsPrompt }).containsExactly(false, true)
+    assertThat(observation.initialPromptMessage).isEqualTo("Refactor selected code")
     assertThat(observation.initialMessageToken).isNotNull()
   }
 

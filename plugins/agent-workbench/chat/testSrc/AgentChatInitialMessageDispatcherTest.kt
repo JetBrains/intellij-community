@@ -85,6 +85,33 @@ class AgentChatInitialMessageDispatcherTest {
   }
 
   @Test
+  fun postSendObservationWaitsWithoutResendingDispatch(): Unit = timeoutRunBlocking {
+    val behavior = AwaitMoreObservedDispatchBehavior(awaitMoreCount = 2)
+    val file = createFile(
+      steps = listOf(
+        AgentInitialMessageDispatchStep(
+          text = "/plan",
+          timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
+        ),
+      )
+    )
+    val tab = FakeTerminalTab(
+      coroutineScope = this,
+      outputObservations = listOf(
+        AgentChatTerminalOutputObservation(AgentChatTerminalInputReadiness.READY, "Running SessionStart hook"),
+        AgentChatTerminalOutputObservation(AgentChatTerminalInputReadiness.READY, "still starting"),
+        AgentChatTerminalOutputObservation(AgentChatTerminalInputReadiness.READY, "Plan Mode"),
+      ),
+    )
+
+    createDispatcher(file, behavior = behavior).schedule(tab)
+
+    waitForCondition { file.initialMessageSent }
+    assertThat(tab.events).containsExactly("text:/plan")
+    assertThat(behavior.afterSendRetryAttempts).containsExactly(0, 1, 2)
+  }
+
+  @Test
   fun transientBusyRewindRetriesFromFirstInitialMessageStep(): Unit = timeoutRunBlocking {
     val behavior = RewindOnceOnPromptStepBehavior()
     val file = createFile(
@@ -241,6 +268,32 @@ private class TransientBusyObservedDispatchBehavior(
   }
 }
 
+private class AwaitMoreObservedDispatchBehavior(
+  private val awaitMoreCount: Int,
+) : AgentChatProviderBehavior {
+  val afterSendRetryAttempts: MutableList<Int> = mutableListOf()
+  private var afterSendCalls: Int = 0
+
+  override fun requiresPostSendObservation(dispatch: AgentChatInitialMessageDispatchContext): Boolean {
+    return true
+  }
+
+  override fun afterInitialMessageSendObservation(
+    file: AgentChatBehaviorFile,
+    dispatch: AgentChatInitialMessageDispatchContext,
+    observation: AgentChatInitialMessageSendObservation,
+    retryAttempt: Int,
+  ): AgentChatInitialMessageRetryDecision {
+    afterSendRetryAttempts += retryAttempt
+    if (afterSendCalls < awaitMoreCount) {
+      afterSendCalls++
+      return AgentChatInitialMessageRetryDecision.AwaitMorePostSendOutput(backoffMs = 1)
+    }
+    afterSendCalls++
+    return AgentChatInitialMessageRetryDecision.PROCEED
+  }
+}
+
 private class RewindOnceOnPromptStepBehavior : AgentChatProviderBehavior {
   private var rewound: Boolean = false
 
@@ -297,7 +350,11 @@ private fun createFile(
   ).also { file ->
     file.updateInitialPromptDelivery(
       promptRecord = AgentInitialPromptRecord(
-        message = steps.lastOrNull { step -> step.action == AgentInitialMessageDispatchAction.SEND_TEXT && step.text.isNotBlank() }?.text,
+        message = steps.lastOrNull { step ->
+          step.recordsPrompt &&
+          step.action == AgentInitialMessageDispatchAction.SEND_TEXT &&
+          step.text.isNotBlank()
+        }?.text,
         mode = initialMessageMode,
         token = "token",
         deliveryStatus = AgentInitialPromptDeliveryStatus.PENDING,

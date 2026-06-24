@@ -254,6 +254,7 @@ internal class CodexAgentSessionProviderDescriptor(
         text = CODEX_PLAN_COMMAND,
         timeoutPolicy = initialMessagePlan.timeoutPolicy,
         completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
+        recordsPrompt = false,
       ),
       message.takeIf(String::isNotEmpty)?.let { prompt ->
         AgentInitialMessageDispatchStep(

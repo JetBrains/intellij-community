@@ -31,7 +31,7 @@ Codex starts new threads before the concrete provider thread id is known. Workbe
   [@test] ../../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
   [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
 
-- Codex plan-mode launches with a non-empty stripped prompt use the normal pending PTY path and enqueue ordered post-start dispatch: first send the `/plan` command, then submit the plain prompt body. Busy output from the `/plan` command is ignored once the command has been dispatched.
+- Codex plan-mode launches with a non-empty stripped prompt use the normal pending PTY path and enqueue ordered post-start dispatch: first send the `/plan` command as a non-prompt control step, then submit the plain prompt body. Startup noise after `/plan` must not duplicate the command; an exact Codex busy refusal for `/plan` stops the initial prompt dispatch without sending the prompt body.
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
   [@test] ../../codex/sessions/testSrc/CodexNewThreadPromptLaunchIntegrationTest.kt
   [@test] ../../chat/testSrc/AgentChatInitialMessageDispatcherTest.kt

@@ -8,12 +8,14 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.coroutines.cancellation.CancellationException
 
 internal object AgentChatRestoreNotificationService {
   fun reportRestoreFailure(project: Project, file: AgentChatVirtualFile, reason: String) {
@@ -86,6 +88,9 @@ private fun reportWarning(
       )
       .notify(project)
   }.onFailure { error ->
+    if (error is ProcessCanceledException || error is CancellationException) {
+      return@onFailure
+    }
     logger<AgentChatRestoreNotificationService>().warn(failureLogMessage, error)
   }
 }

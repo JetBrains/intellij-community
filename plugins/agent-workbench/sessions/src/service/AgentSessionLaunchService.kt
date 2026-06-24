@@ -1283,7 +1283,7 @@ private fun estimateCommandSizeBytes(command: List<String>): Int {
 
 private fun buildInitialMessageToken(identity: String, steps: List<AgentInitialMessageDispatchStep>): String {
   val sequenceKey = steps.joinToString(separator = "\u0000") { step ->
-    listOf(step.text, step.timeoutPolicy.name, step.completionPolicy.name).joinToString(separator = "\u0001")
+    listOf(step.text, step.timeoutPolicy.name, step.completionPolicy.name, step.recordsPrompt.toString()).joinToString(separator = "\u0001")
   }
   return "$identity:${sequenceKey.hashCode()}:${System.nanoTime()}"
 }

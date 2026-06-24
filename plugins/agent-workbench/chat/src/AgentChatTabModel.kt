@@ -151,7 +151,11 @@ private fun buildLegacyInitialPromptRecord(
   sent: Boolean,
 ): AgentInitialPromptRecord? {
   val message = initialComposedMessage?.trim()?.takeIf { it.isNotEmpty() }
-                ?: dispatchSteps.lastOrNull { step -> step.action == AgentInitialMessageDispatchAction.SEND_TEXT && step.text.isNotBlank() }?.text
+                ?: dispatchSteps.lastOrNull { step ->
+                  step.recordsPrompt &&
+                  step.action == AgentInitialMessageDispatchAction.SEND_TEXT &&
+                  step.text.isNotBlank()
+                }?.text
                 ?: return null
   return AgentInitialPromptRecord(
     message = message,
