@@ -9,10 +9,12 @@ import com.intellij.formatting.Spacing
 import com.intellij.formatting.SpacingBuilder
 import com.intellij.formatting.Wrap
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.formatter.common.AbstractBlock
 import com.intellij.psi.formatter.common.SettingsAwareBlock
 import com.intellij.psi.tree.TokenSet
+import com.intellij.util.text.CharArrayUtil
 import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
@@ -50,6 +52,25 @@ internal open class MarkdownFormattingBlock(
   }
 
   override fun isLeaf(): Boolean = subBlocks.isEmpty()
+
+  /**
+   * The Markdown lexer folds a nested list item's leading indentation into its `LIST_BULLET`/`LIST_NUMBER` token
+   * (e.g. `"  - "`), so a list / list-item block would otherwise start inside the line's indentation. Trim that
+   * leading whitespace here so the block starts at its real content; otherwise offset-based consumers such as
+   * indent auto-detection (`FormatterBasedLineIndentInfoBuilder`) undercount the indent of nested list lines.
+   */
+  private val actualTextRange by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    val range = node.textRange
+    if (node.elementType == MarkdownElementTypes.LIST_ITEM || node.elementType in MarkdownTokenTypeSets.LISTS) {
+      val leading = CharArrayUtil.shiftForward(node.chars, 0, " \t")
+      if (1 <= leading && leading < range.length) {
+        return@lazy TextRange(range.startOffset + leading, range.endOffset)
+      }
+    }
+    range
+  }
+
+  override fun getTextRange(): TextRange = actualTextRange
 
   override fun getSpacing(child1: Block?, child2: Block): Spacing? {
     val continuation = (child1 as? AbstractBlock)?.node?.takeIf { it.isBlockQuoteContinuationWhitespace() }
