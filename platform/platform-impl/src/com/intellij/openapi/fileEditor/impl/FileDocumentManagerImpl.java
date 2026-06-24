@@ -94,6 +94,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.Action;
 import javax.swing.JComponent;
@@ -511,8 +512,10 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     LOG.assertTrue(!myUnsavedDocuments.contains(document));
   }
 
-  private static boolean isSaveNeeded(@NotNull Document document, @NotNull VirtualFile file) throws IOException {
-    if (document.getUserData(FORCE_SAVE_DOCUMENT_KEY)== Boolean.TRUE) {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static boolean isSaveNeeded(@NotNull Document document, @NotNull VirtualFile file) throws IOException {
+    if (document.getUserData(FORCE_SAVE_DOCUMENT_KEY) == Boolean.TRUE) {
       return true;
     }
 

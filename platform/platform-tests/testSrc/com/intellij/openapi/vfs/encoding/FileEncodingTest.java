@@ -284,6 +284,7 @@ public class FileEncodingTest implements TestDialog {
       Document document = getDocument(xml);
 
       setText(document, UTF8_XML_PROLOG + XML_TEST_BODY);
+      assertTrue(FileDocumentManagerImpl.isSaveNeeded(document, xml));
       FileDocumentManager.getInstance().saveAllDocuments();
       //ensure pending VFS IOps are finished before reading files via Path API:
       PlatformTestUtil.flushAllPendingVFSUpdates();
@@ -354,6 +355,7 @@ public class FileEncodingTest implements TestDialog {
     //assertTrue(CharsetToolkit.hasUTF16LEBom(fileCopy.getBOM()));
 
     setText(document, "\u04ab\u04cd\u04ef");
+    assertTrue(FileDocumentManagerImpl.isSaveNeeded(document, fileCopy));
 
     FileDocumentManager.getInstance().saveAllDocuments();
     //ensure pending VFS IOps are finished before reading files via Path API:
@@ -381,14 +383,14 @@ public class FileEncodingTest implements TestDialog {
   }
 
   private void doHtmlTest(@Language("HTML") String metaWithWindowsEncoding, @Language("HTML") String metaWithUtf8Encoding) throws IOException {
-    VirtualFile
-      file = createTempFile("html", NO_BOM, "<html><head>" + metaWithWindowsEncoding + "</head>" + THREE_RUSSIAN_LETTERS + "</html>", WINDOWS_1252);
+    VirtualFile file = createTempFile("html", NO_BOM, "<html><head>" + metaWithWindowsEncoding + "</head>" + THREE_RUSSIAN_LETTERS + "</html>", WINDOWS_1252);
     assertEquals(WINDOWS_1252, file.getCharset());
 
     Document document = getDocument(file);
     @Language("HTML")
     String text = "<html><head>" + metaWithUtf8Encoding + "</head>" + THREE_RUSSIAN_LETTERS + "</html>";
     setText(document, text);
+    assertTrue(FileDocumentManagerImpl.isSaveNeeded(document, file));
     FileDocumentManager.getInstance().saveAllDocuments();
     assertEquals(StandardCharsets.UTF_8, file.getCharset());
   }
@@ -443,10 +445,12 @@ public class FileEncodingTest implements TestDialog {
 
     Document document = getDocument(file);
     setText(document, xmlProlog(WINDOWS_1251) + document.getText());
+    assertTrue(FileDocumentManagerImpl.isSaveNeeded(document, file));
     FileDocumentManager.getInstance().saveAllDocuments();
     assertEquals(WINDOWS_1251, file.getCharset());
 
     setText(document, xmlProlog(StandardCharsets.US_ASCII) + "\n<xxx></xxx>");
+    assertTrue(FileDocumentManagerImpl.isSaveNeeded(document, file));
     FileDocumentManager.getInstance().saveAllDocuments();
     assertEquals(StandardCharsets.US_ASCII, file.getCharset());
 
@@ -569,6 +573,7 @@ public class FileEncodingTest implements TestDialog {
     Document document = getDocument(file);
     String text = "horseradish";
     setText(document, text);
+    assertTrue(FileDocumentManagerImpl.isSaveNeeded(document, file));
     FileDocumentManager.getInstance().saveAllDocuments();
 
     assertEquals(StandardCharsets.UTF_8, file.getCharset());
@@ -589,6 +594,7 @@ public class FileEncodingTest implements TestDialog {
     Document document = getDocument(file);
     String newContent = "horseradish";
     setText(document, newContent);
+    assertTrue(FileDocumentManagerImpl.isSaveNeeded(document, file));
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
@@ -633,6 +639,7 @@ public class FileEncodingTest implements TestDialog {
     Document document = getDocument(file);
     String newContent = "horseradish";
     setText(document, newContent);
+    assertTrue(FileDocumentManagerImpl.isSaveNeeded(document, file));
     FileDocumentManager.getInstance().saveAllDocuments();
     assertEquals(StandardCharsets.UTF_16BE, file.getCharset());
     assertArrayEquals(CharsetToolkit.UTF16BE_BOM, file.getBOM());
@@ -709,6 +716,7 @@ public class FileEncodingTest implements TestDialog {
 
     text = "xxx";
     setText(document, text);
+    assertTrue(FileDocumentManagerImpl.isSaveNeeded(document, file));
     assertNotSame(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(file, text, bytes, WINDOWS_1251));
     assertNotSame(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(file, text, bytes, StandardCharsets.US_ASCII));
 
@@ -719,6 +727,7 @@ public class FileEncodingTest implements TestDialog {
 
     text = "qqq";
     setText(document, text);
+    assertTrue(FileDocumentManagerImpl.isSaveNeeded(document, file));
     assertNotSame(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(file, text, bytes, WINDOWS_1251));
     assertNotSame(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(file, text, bytes, StandardCharsets.US_ASCII));
 
