@@ -18046,6 +18046,34 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/redundantDestructuringRename")
+        public static class RedundantDestructuringRename extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("fullForm.kt")
+            public void testFullForm() throws Exception {
+                runTest("testData/inspectionsLocal/redundantDestructuringRename/fullForm.kt");
+            }
+
+            @TestMetadata("mismatchedName.kt")
+            public void testMismatchedName() throws Exception {
+                runTest("testData/inspectionsLocal/redundantDestructuringRename/mismatchedName.kt");
+            }
+
+            @TestMetadata("mixedMappings.kt")
+            public void testMixedMappings() throws Exception {
+                runTest("testData/inspectionsLocal/redundantDestructuringRename/mixedMappings.kt");
+            }
+
+            @TestMetadata("shortFormComplete.kt")
+            public void testShortFormComplete() throws Exception {
+                runTest("testData/inspectionsLocal/redundantDestructuringRename/shortFormComplete.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantEmptyInitializerBlock")
         public static class RedundantEmptyInitializerBlock extends AbstractK2LocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
