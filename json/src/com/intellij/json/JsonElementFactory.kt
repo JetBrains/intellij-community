@@ -15,7 +15,6 @@ import com.intellij.lang.tree.util.parents
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.syntax.CancellationProvider
 import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.lexer.TokenList
@@ -33,19 +32,10 @@ import com.intellij.psi.tree.IReparseableElementType
 object JsonElementFactory {
   @JvmStatic
   fun getType(name: String): IElementType = when (name) {
-    "OBJECT" -> if (JsonLazyParsingIJ) LAZY_OBJECT else OBJECT
-    "ARRAY" -> if (JsonLazyParsingIJ) LAZY_ARRAY else ARRAY
+    "OBJECT" -> if (JsonLazyParsing) LAZY_OBJECT else OBJECT
+    "ARRAY" -> if (JsonLazyParsing) LAZY_ARRAY else ARRAY
     else -> throw IllegalArgumentException(name)
   }
-
-  /**
-   * Handles lazy parsing switch of JSON files in IntelliJ platform.
-   *
-   * @see JsonLazyParsing
-   */
-  @JvmStatic
-  val JsonLazyParsingIJ: Boolean =
-    JsonLazyParsing || Registry.get("json.lazy.parsing").isBoolean
 
   private val LAZY_OBJECT: IElementType = lazyElementType(
     name = "OBJECT",
