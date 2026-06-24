@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "skill": "jewel-markdown",
+  "attribution": "Adapted from JetBrains intellij-community (https://github.com/JetBrains/intellij-community), Apache-2.0.",
+  "sources": [
+    {
+      "type": "upstream-skill",
+      "role": "upstream-source",
+      "label": "JetBrains intellij-community jewel-markdown",
+      "url": "https://github.com/JetBrains/intellij-community/tree/master/.agents/skills/jewel-markdown",
+      "version": "6cfe2ebdf8990b1ac587dec6567647bc9542a7f0",
+      "versionSource": "gitCommit",
+      "fetchedAt": "2026-06-22",
+      "license": "Apache-2.0",
+      "check": {
+        "type": "github",
+        "repository": "JetBrains/intellij-community",
+        "path": ".agents/skills/jewel-markdown",
+        "trackingRef": "master",
+        "localCheckoutHint": "/Users/sebp/src/intellij-community-jewel-markdown-skill"
+      }
+    }
+  ]
+}

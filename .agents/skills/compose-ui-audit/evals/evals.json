@@ -1,0 +1,229 @@
+{
+  "skill_name": "compose-ui-audit",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Audit this hypothetical desktop Compose UI surface and return a concise report. Surface: ConversationPanel collects raw ConversationState plus workspaceRoot plus providerDiscovery in separate collectAsState calls; a LaunchedEffect(Unit) parses permission payload JSON and updates local mutable state; LazyColumn items use mixed row types without contentType; rows use index keys. Report the top findings and top fixes.",
+      "expected_output": "An evidence-style audit report with severity-ranked findings, desktop Compose architecture categories, top three fixes, and no Android lifecycle/Material/Navigation scoring assumptions.",
+      "files": [],
+      "expectations": [
+        "Uses severity-ranked findings or top findings rather than default Android-style numeric scoring.",
+        "Flags separate raw flow collections as a coherent presenter projection problem.",
+        "Flags JSON parsing and local state mutation in LaunchedEffect as a boundary/effects problem and routes it to presenter/coordinator or a state holder as appropriate.",
+        "Flags missing contentType and index keys for heterogeneous/dynamic LazyColumn rows.",
+        "Names destination layers for fixes: presenter/coordinator, state holder, composition, or interop helper.",
+        "Avoids Android lifecycle, Navigation, Material, Accompanist, baseline profile, and R8 recommendations."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Give a focused audit of a desktop Compose interop change. Surface: a reusable IntegrationRow composable directly opens JFileChooser, writes SettingsStore settings, calls Desktop.getDesktop().browse, and has a global shortcut handler that bypasses the same presenter method used by the button. Produce a concise audit with top fixes.",
+      "expected_output": "A desktop-specific audit that identifies interop leakage, direct app-state mutation from UI, shortcut/button path divergence, and recommends helper/callback seams and presenter-owned state mutations.",
+      "files": [],
+      "expectations": [
+        "Classifies JFileChooser and Desktop.getDesktop().browse usage in a reusable row as desktop interop leakage or seam problem.",
+        "Flags direct SettingsStore/settings mutation from UI and routes it through presenter/coordinator APIs.",
+        "Flags shortcut behavior bypassing the button/presenter path as an inconsistency risk.",
+        "Recommends small callback/helper seams for file picker and open-URI behavior so tests can fake them.",
+        "Keeps the report concise with top fixes and confidence/limits or equivalent scope caveat.",
+        "Avoids Android-specific lifecycle/navigation/material advice."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "The user says: 'I finished the UI changes; run a quick review pass and clean up anything obvious.' Decide which agent capability or skill should be used, and explain the routing briefly.",
+      "expected_output": "A routing answer that prefers an available cleanup/refactoring review workflow for cleanup-oriented post-change review, not compose-ui-audit as a replacement for general review workflows.",
+      "files": [],
+      "expectations": [
+        "Routes the request to an available review/cleanup workflow rather than treating compose-ui-audit as the primary workflow.",
+        "Chooses a cleanup/refactoring pass or explains why that fits cleanup/consolidation after implementation.",
+        "Mentions a read-only reviewer as the quick second-opinion alternative if no cleanup is desired.",
+        "Does not suggest manually inlining diffs or spawning nested review workflows outside the available workflow contracts."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Give a focused audit of AccountHeaderContent.kt's architecture shape: local hover state, FocusRequester + LaunchedEffect(Unit), TextFieldState for API key editing, and callbacks for save/remove/login/logout. Do not nitpick Jewel component choice.",
+      "expected_output": "A healthy or low-finding audit that preserves UI-local hover/focus/editing state, notes callbacks keep app behavior out of the leaf component, and avoids forced findings.",
+      "files": [
+        "src/main/kotlin/example/ui/AccountHeaderContent.kt"
+      ],
+      "expectations": [
+        "Reports no critical/high architecture issue or says the shape is broadly healthy.",
+        "Treats hover/focus/editing state as acceptable UI-local state.",
+        "Recognizes callbacks for save/remove/login/logout as the presenter boundary.",
+        "Does not audit Jewel component choice or labels.",
+        "Includes confidence/limits or equivalent scope caveat."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Give this hypothetical surface a numeric desktop Compose UI architecture score: a screen collects one presenter-owned ScreenState, uses stable LazyColumn key/contentType, has one local expanded boolean for UI only, and opens URLs through an injected onOpenUrl callback. Include the number and caveats.",
+      "expected_output": "A heuristic score using project-specific desktop Compose categories, likely high, with caveats that scoring is source-review confidence and findings still matter more than the number.",
+      "files": [],
+      "expectations": [
+        "Labels numeric scoring as heuristic rather than measured runtime truth.",
+        "Uses desktop Compose architecture categories or explains them instead of Android release/app metrics.",
+        "Gives a high score or healthy assessment based on the described good patterns.",
+        "Does not mention Android baseline profiles, R8, Material, Navigation, or collectAsStateWithLifecycle.",
+        "Still prioritizes findings/caveats over the number."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "The user asks: 'My Jewel popup click-through is weird; should I use Popup or a Compose overlay?' Decide whether compose-ui-audit is the right skill, and answer briefly.",
+      "expected_output": "A routing answer that defers low-level popup/AWT mechanics to jewel-swing-interop, with compose-ui-audit only relevant if auditing whether those mechanics leaked into leaf components.",
+      "files": [],
+      "expectations": [
+        "Defers low-level popup/AWT click-through mechanics to jewel-swing-interop.",
+        "Does not produce a full compose-ui-audit report.",
+        "May say compose-ui-audit is relevant only for architecture boundary review of where interop mechanics live."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Audit this hypothetical desktop Compose animation change and return top findings. Surface: ProjectList wraps each row in its own SharedTransitionLayout; both list rows and details panes call rememberSharedContentState(key = \"project\"); sharedElement is used for a card whose text weight, background shape, and bounds all change; the source has padding before sharedElement but the target has padding after it; selectedProject is remembered in a leaf row; and the details pane opens a Swing file chooser during the transition callback.",
+      "expected_output": "A concise desktop Compose audit that flags shared transition scope placement, non-unique keys, sharedElement vs sharedBounds misuse, modifier-order mismatch, leaf-owned selection state, and interop leakage during the transition.",
+      "files": [],
+      "expectations": [
+        "Flags per-row SharedTransitionLayout as wrong scope placement and recommends a common ancestor scope for matched elements.",
+        "Flags reused rememberSharedContentState key = \"project\" and requires stable unique keys using item identity and element role.",
+        "Recommends sharedBounds rather than sharedElement for visually different bounds/text/shape transitions, or clearly explains the distinction.",
+        "Flags inconsistent padding/size modifier order around sharedElement/sharedBounds as causing visual jumps or mismatched bounds.",
+        "Routes selectedProject ownership to presenter/coordinator or state holder instead of a leaf row composable.",
+        "Flags Swing file chooser work in the transition/leaf UI path as desktop interop leakage and routes it through a callback/helper seam."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Audit these Compose snippets for API hygiene. `@Composable fun userRow(name: String) { Text(name) }`; `@Composable fun ActionIcon(m: Modifier = Modifier, enabled: Boolean = true) { Icon(..., modifier = m); Text(\"label\", modifier = m) }`; `@Composable fun TagList(tags: List<String>, modifier: Modifier = Modifier) { Row { tags.forEach { Text(it) } } }`. Return top findings only.",
+      "expected_output": "Flags PascalCase naming, missing/wrong/reused modifier contract, and treats List stability as a contextual lead rather than an automatic severe bug.",
+      "files": [],
+      "expectations": [
+        "Flags `userRow` as a Unit-returning content composable that should be PascalCase.",
+        "Flags `userRow` as missing a caller-controlled `modifier` if it is reusable/cross-file.",
+        "Flags `ActionIcon` for naming the main modifier `m` instead of `modifier`.",
+        "Flags `ActionIcon` for reusing the caller modifier on multiple emitted children.",
+        "Treats `List<String>` in `TagList` as a stability/hot-path lead and recommends immutable collections or a stable row model only if recomposition churn matters.",
+        "Avoids Android Material or lifecycle advice."
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Audit this component contract: `@Composable fun ApiKeyEditor(text: MutableState<String>, isSaving: Boolean, onSaved: () -> Unit, modifier: Modifier = Modifier)`. The body mutates `text.value` directly and calls `onSaved` from its Save button; the caller's `onSaved` writes settings. What should the audit report?",
+      "expected_output": "Identifies shared MutableState ownership and value/event API replacement while preserving the callback boundary for persistence.",
+      "files": [],
+      "expectations": [
+        "Flags `MutableState<String>` as a reusable composable parameter smell.",
+        "Recommends passing `text: String` plus `onTextChange: (String) -> Unit` or a domain state holder.",
+        "Does not flag `onSaved` itself as a composition violation when it is an explicit caller/presenter callback boundary.",
+        "Keeps local text editing state acceptable when clearly UI-local and synchronized intentionally.",
+        "Mentions state ownership/UDF rather than just generic style."
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "Audit this effect code: `@Composable fun LoginBanner(onTimeout: () -> Unit, accountId: String) { val latest by rememberUpdatedState(onTimeout); val action = remember { val captured = latest; Runnable { captured() } }; LaunchedEffect(Unit) { delay(5000); onTimeout() } }`. Produce a focused finding and fix.",
+      "expected_output": "Catches stale callback/effect-key problems and the eager rememberUpdatedState read inside remember, recommending deferred reads or correct keys.",
+      "files": [],
+      "expectations": [
+        "Flags `LaunchedEffect(Unit)` calling `onTimeout()` directly instead of the `rememberUpdatedState` value or a deliberate restart key.",
+        "Flags `val captured = latest` inside `remember {}` as an eager read that captures the initial callback.",
+        "Recommends either keying the effect on `onTimeout` when restart is desired or using `latest` inside the effect when restart is not desired.",
+        "Mentions effect restart semantics and stale callbacks.",
+        "Does not recommend Android lifecycle APIs."
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Audit this reusable composable: `@Composable fun ProviderStatus(provider: Provider): StatusHandle { Text(provider.name); Icon(...); return remember(provider.id) { StatusHandle(provider.id) } }`. What are the Compose API contract issues?",
+      "expected_output": "Flags emit-and-return, multiple root emitters, and recommends callback/state-holder or cohesive root layout.",
+      "files": [],
+      "expectations": [
+        "Flags that a composable should either emit UI or return a value, not both.",
+        "Flags multiple sibling content emitters without a cohesive root layout or explicit parent scope.",
+        "Recommends exposing callbacks/state holder instead of returning a handle from content emission.",
+        "Recommends wrapping emitted content in a cohesive root if it is a reusable component.",
+        "Frames as API/runtime contract, not visual design."
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "Audit this modifier API: `@Composable fun ProviderCard(provider: Provider, modifier: Modifier = Modifier.padding(8.dp)) { Column(Modifier.border(1.dp, Color.Red)) { Text(provider.name, modifier); Button(modifier = modifier.clickable { }) { Text(\"Open\") } } }`.",
+      "expected_output": "Flags non-empty default modifier, not applying caller modifier to the root, and reusing caller modifier on children.",
+      "files": [],
+      "expectations": [
+        "Flags that the `modifier` default should be exactly `Modifier`, with defaults chained in the implementation.",
+        "Flags that the passed `modifier` is not applied to the outermost/root layout.",
+        "Flags caller modifier reuse on internal child nodes.",
+        "Mentions modifier order or caller control implications, not just style.",
+        "Suggests `Column(modifier.padding(...).border(...))` or equivalent root application while using fresh child modifiers."
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "Audit this UI file shape: one public `@Composable fun SettingsPanel(...)` has 180 lines, five nested Columns/Rows in the main branch, a private helper with KDoc explaining what it does, and repeated string literal test tags. The UI otherwise uses callbacks and a presenter state. What should be high vs low priority?",
+      "expected_output": "Distinguishes low/medium maintainability findings from boundary bugs, recommends concrete extraction boundaries and better private names/KDoc handling.",
+      "files": [],
+      "expectations": [
+        "Does not invent a high-severity architecture bug when presenter boundaries are healthy.",
+        "Flags long/deeply nested composable as maintainability/recomposition-reasoning risk with concrete extraction boundaries.",
+        "Treats KDoc on a private helper as a naming/scope smell rather than simply demanding more docs.",
+        "Flags repeated test-tag strings as low-priority constants if they affect tests/maintenance.",
+        "Keeps the report proportional and evidence-style."
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "Audit this hot lazy row model path: every row composable receives `items: List<RowItem>`, builds `Regex(query)` in the body, then does `items.map { ... }.filter { ... }.joinToString()` before rendering. The project has no stability config. Report the finding and fix priority.",
+      "expected_output": "Flags unstable collection parameter contextually plus hot-path regex/collection work in composition, recommending presenter projection/memoization/immutable models.",
+      "files": [],
+      "expectations": [
+        "Treats `List<RowItem>` as a stability lead that becomes more important because the path is hot and no stability config exists.",
+        "Flags `Regex(query)` construction in composition as avoidable hot-path work.",
+        "Flags chained collection transforms/joining in composition as presenter projection or memoized derived data work.",
+        "Recommends moving projection to presenter/state holder or using correctly keyed `remember`/`derivedStateOf` only for UI-local cheap derivations.",
+        "Does not overstate as measured jank without measurement."
+      ]
+    },
+    {
+      "id": 14,
+      "prompt": "Audit this suspending UI callback path: `onClick = { scope.launch { try { repository.save(); delay(1000) } catch (t: Throwable) { showError(t) } } }`, where `scope` is `GlobalScope` and the code catches all failures as UI errors. Produce the top finding and fix.",
+      "expected_output": "Flags GlobalScope/structured concurrency and swallowed cancellation risks from broad catch handling, routing durable save work to presenter/coordinator or a caller-owned suspending callback with CancellationException rethrow.",
+      "files": [],
+      "expectations": [
+        "Flags `GlobalScope` as wrong for UI-triggered work.",
+        "Flags `catch (Throwable)` or similarly broad failure handling around suspend calls as a cancellation-swallowing risk.",
+        "Requires `CancellationException` to be rethrown before converting failures to UI state.",
+        "Routes durable save workflow to presenter/coordinator or a caller-owned suspending callback rather than merely moving repository writes to a composition-managed scope.",
+        "Mentions that broad failure handling should become state-driven UI feedback."
+      ]
+    },
+    {
+      "id": 15,
+      "prompt": "Audit these CompositionLocal usages: `val LocalProviderClient = staticCompositionLocalOf<ProviderClient> { error(\"missing\") }`; leaf rows read it directly to perform login/logout. Another `LocalSpacing` is used for density-independent spacing tokens. What should be reported?",
+      "expected_output": "Allows ambient UI tokens while flagging service/client CompositionLocal dependency leakage in leaves.",
+      "files": [],
+      "expectations": [
+        "Does not flag `LocalSpacing` as inherently bad when used for UI environment/tokens.",
+        "Flags `LocalProviderClient` as an implicit service dependency in reusable leaf UI.",
+        "Recommends passing explicit state/callbacks or presenter methods instead of reading clients from leaves.",
+        "Mentions CompositionLocal naming/allowlist only as secondary, not the main issue.",
+        "Keeps the boundary distinction clear."
+      ]
+    },
+    {
+      "id": 16,
+      "prompt": "Audit this slot API: `@Composable fun Shell(content: @Composable () -> Unit, onClose: () -> Unit, modifier: Modifier = Modifier)` and the body calls `if (expanded) content() else content()`. What API issues should be caught?",
+      "expected_output": "Flags content slot ordering, event lambda placement, and content slot reuse across branches/lifecycle.",
+      "files": [],
+      "expectations": [
+        "Flags that the main content slot should be the trailing lambda, not the first parameter.",
+        "Flags or discusses event callback placement so `onClose` is not mistaken for a content trailing lambda.",
+        "Flags calling the same content slot from multiple branches as a slot lifecycle/state preservation risk.",
+        "Recommends `movableContentOf` with freshness state created outside the unkeyed remembered movable lambda, or a layout API that preserves slot lifecycle when appropriate.",
+        "Keeps modifier as first optional parameter after required params."
+      ]
+    }
+  ]
+}
