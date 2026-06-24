@@ -9137,21 +9137,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.kotlinx/kotlinx-datetime-jvm-0.7.1-0.6.x-compat.jar_copy",
-    src = "@org_jetbrains_kotlinx-kotlinx-datetime-jvm-0_7_1-0_6_x-compat_http//file",
-    out = "org.jetbrains.kotlinx/kotlinx-datetime-jvm-0.7.1-0.6.x-compat.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "kotlinx-datetime-jvm",
-    jar = "@org_jetbrains_kotlinx-kotlinx-datetime-jvm-0_7_1-0_6_x-compat_http//file",
-    source_jar = "@org_jetbrains_kotlinx-kotlinx-datetime-jvm-0_7_1-0_6_x-compat-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "org.jetbrains.kotlinx/kotlinx-io-core-jvm-0.7.0.jar_copy",
     src = "@org_jetbrains_kotlinx-kotlinx-io-core-jvm-0_7_0_http//file",
     out = "org.jetbrains.kotlinx/kotlinx-io-core-jvm-0.7.0.jar",
@@ -12669,6 +12654,21 @@ jvm_import(
     name = "libraries-jzlib-jzlib",
     jar = "@com_jcraft-jzlib-1_1_3_http//file",
     source_jar = "@com_jcraft-jzlib-1_1_3-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.kotlinx/kotlinx-datetime-jvm-0.7.1-0.6.x-compat.jar_copy",
+    src = "@org_jetbrains_kotlinx-kotlinx-datetime-jvm-0_7_1-0_6_x-compat_http//file",
+    out = "org.jetbrains.kotlinx/kotlinx-datetime-jvm-0.7.1-0.6.x-compat.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-kotlinx-datetime-kotlinx-datetime-jvm",
+    jar = "@org_jetbrains_kotlinx-kotlinx-datetime-jvm-0_7_1-0_6_x-compat_http//file",
+    source_jar = "@org_jetbrains_kotlinx-kotlinx-datetime-jvm-0_7_1-0_6_x-compat-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
