@@ -67,6 +67,7 @@ import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.TestTimeOut;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.text.ByteArrayCharSequence;
@@ -97,6 +98,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.Objects.requireNonNull;
@@ -766,16 +768,20 @@ public class FileEncodingTest implements TestDialog {
   }
 
   @Test
-  public void testExternalChangeClearsAutoDetectedFromBytesFlag() throws IOException {
+  public void testExternalChangeClearsAutoDetectedFromBytesFlag() throws IOException, InterruptedException {
     VirtualFile file = createTempFile("txt", NO_BOM, THREE_RUSSIAN_LETTERS, StandardCharsets.UTF_8);
     getDocument(file);
 
     assertEquals(LoadTextUtil.AutoDetectionReason.FROM_BYTES, LoadTextUtil.getCharsetAutoDetectionReason(file));
 
     Files.writeString(file.toNioPath(), THREE_RUSSIAN_LETTERS, WINDOWS_1251);
-    file.refresh(false, false);
-
-    assertNull(LoadTextUtil.getCharsetAutoDetectionReason(file));
+    // clearing of LoadTextUtil.getCharsetAutoDetectionReason(file) happens in background
+    TestTimeOut t = TestTimeOut.setTimeout(10, TimeUnit.SECONDS);
+    while (LoadTextUtil.getCharsetAutoDetectionReason(file) != null) {
+      file.refresh(false, false);
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      t.assertNoTimeout("getCharsetAutoDetectionReason");
+    }
   }
 
   @Test
