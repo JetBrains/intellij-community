@@ -119,9 +119,6 @@ abstract class NonModalWindowWrapper(
   private var windowListener: WindowAdapter? = null
   private var windowDisposable: Disposable? = null
 
-  /** Captured at [initWindow] time; used as Float-mode [JDialog] owner across mode switches. */
-  private var savedOwnerWindow: Window? = null
-
   protected var isFloat: Boolean
     get() = PropertiesComponent.getInstance().getBoolean(floatModeKey, true)
     set(value) { PropertiesComponent.getInstance().setValue(floatModeKey, value, true) }
@@ -209,7 +206,6 @@ abstract class NonModalWindowWrapper(
   protected fun initWindow(content: JComponent, minSize: Dimension, initialSize: Dimension) {
     this.content = content
     this.minWindowSize = minSize
-    savedOwnerWindow = WindowManager.getInstance().suggestParentWindow(project) ?: getIdeJFrame()
     activeWindow = createAwtWindow(isFloat, content, minSize, initialSize)
     loadAndRegisterWindowState(activeWindow)
     fitWindowToScreen(activeWindow)
@@ -263,7 +259,7 @@ abstract class NonModalWindowWrapper(
   ): Window {
     val title = getWindowTitle()
     return if (float) {
-      FloatDialog(savedOwnerWindow ?: getIdeJFrame(), title).also { dialog ->
+      FloatDialog(getIdeJFrame(), title).also { dialog ->
         dialog.contentPane.layout = BorderLayout()
         val dialogContent = if (IdeFrameDecorator.isCustomDecorationActive())
           CustomFrameDialogContent.getCustomContentHolder(dialog, content, false) else content
