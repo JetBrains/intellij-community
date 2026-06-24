@@ -85,6 +85,7 @@ import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.IndentedCodeBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.CustomBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.Heading
 import org.jetbrains.jewel.markdown.MarkdownBlock.HtmlBlock
+import org.jetbrains.jewel.markdown.MarkdownBlock.HtmlBlockWithAttributes
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.OrderedList
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.UnorderedList
@@ -122,6 +123,8 @@ public open class DefaultMarkdownBlockRenderer(
     override val rendererExtensions: List<MarkdownRendererExtension> = emptyList(),
     override val inlineRenderer: InlineMarkdownRenderer = InlineMarkdownRenderer.create(rendererExtensions),
 ) : MarkdownBlockRenderer {
+    private val unsupportedBlockTypes = mutableSetOf<String>()
+
     @Composable
     override fun render(
         blocks: List<MarkdownBlock>,
@@ -171,14 +174,12 @@ public open class DefaultMarkdownBlockRenderer(
             is ListItem -> RenderListItem(block, enabled, onUrlClick, modifier)
             is Paragraph -> RenderParagraph(block, rootStyling.paragraph, enabled, onUrlClick, modifier)
             ThematicBreak -> RenderThematicBreak(rootStyling.thematicBreak, enabled, modifier)
-            is MarkdownBlock.HtmlBlockWithAttributes ->
-                RenderHtmlBlockWithAttributes(block, enabled, onUrlClick, modifier)
-
+            is HtmlBlockWithAttributes -> RenderHtmlBlockWithAttributes(block, enabled, onUrlClick, modifier)
             is CustomBlock -> {
-                rendererExtensions
-                    .find { it.blockRenderer?.canRender(block) == true }
-                    ?.blockRenderer
-                    ?.RenderCustomBlock(
+                val blockRenderer =
+                    rendererExtensions.find { it.blockRenderer?.canRender(block) == true }?.blockRenderer
+                if (blockRenderer != null) {
+                    blockRenderer.RenderCustomBlock(
                         block = block,
                         blockRenderer = this,
                         inlineRenderer = inlineRenderer,
@@ -186,7 +187,19 @@ public open class DefaultMarkdownBlockRenderer(
                         modifier = modifier,
                         onUrlClick = onUrlClick,
                     )
+                } else {
+                    logUnsupportedBlock(block)
+                }
             }
+        }
+    }
+
+    private fun logUnsupportedBlock(block: MarkdownBlock) {
+        // We do not render unsupported blocks; emit a one-off log per renderer instance (best-effort).
+        val simpleName = block::class.simpleName
+        if (simpleName != null && simpleName !in unsupportedBlockTypes) {
+            JewelLogger.getInstance(javaClass).warn("Cannot render unsupported block type: $simpleName.")
+            unsupportedBlockTypes += simpleName
         }
     }
 
@@ -790,7 +803,7 @@ public open class DefaultMarkdownBlockRenderer(
         }
 
     @Composable
-    private fun renderedImages(blockInlineContent: WithInlineMarkdown): Map<String, InlineTextContent> {
+    protected open fun renderedImages(blockInlineContent: WithInlineMarkdown): Map<String, InlineTextContent> {
         val map = remember(blockInlineContent) { mutableStateMapOf<String, InlineTextContent>() }
 
         val imagesRenderer = rendererExtensions.firstNotNullOfOrNull { it.imageRendererExtension }
@@ -813,8 +826,8 @@ public open class DefaultMarkdownBlockRenderer(
         modifier: Modifier = Modifier,
         content: @Composable () -> Unit,
     ) {
-        // We use movableContent so changing the flag doesn't reset the content
-        val movableContent = remember { movableContentOf { content() } }
+        // We use movableContent, so changing the flag doesn't reset the content
+        val movableContent = remember(content) { movableContentOf { content() } }
         if (isScrollable) {
             HorizontallyScrollableContainer(modifier) { movableContent() }
         } else {
@@ -823,12 +836,21 @@ public open class DefaultMarkdownBlockRenderer(
     }
 
     @Composable
-    private fun RenderHtmlBlockWithAttributes(
-        block: MarkdownBlock.HtmlBlockWithAttributes,
+    override fun RenderHtmlBlockWithAttributes(
+        block: HtmlBlockWithAttributes,
         enabled: Boolean,
         onUrlClick: (String) -> Unit,
-        modifier: Modifier = Modifier,
+        modifier: Modifier,
     ) {
+        val mdBlock = block.mdBlock
+        if (
+            block.attributes.isEmpty() &&
+                mdBlock is Paragraph &&
+                mdBlock.inlineContent.singleOrNull() is InlineMarkdown.HtmlInline
+        ) {
+            return
+        }
+
         val textAlignment: TextAlign =
             when (block.attributes["align"]) {
                 "left" -> TextAlign.Start
@@ -1160,8 +1182,11 @@ public open class DefaultMarkdownBlockRenderer(
         DefaultMarkdownBlockRenderer(rootStyling, rendererExtensions = rendererExtensions + extension, inlineRenderer)
 
     public companion object {
-        @Suppress("VariableNaming")
-        private val LocalTextAlignment: ProvidableCompositionLocal<TextAlign> = staticCompositionLocalOf {
+        /**
+         * Holds the current text alignment for the subtree of the composition. Used by the HTML parsing path to
+         * transmit text alignment down the tree.
+         */
+        protected val LocalTextAlignment: ProvidableCompositionLocal<TextAlign> = staticCompositionLocalOf {
             TextAlign.Start
         }
     }
