@@ -472,7 +472,7 @@ public class FileEncodingTest implements TestDialog {
     UIUtil.dispatchAllInvocationEvents();
 
     Document document = getDocument(file);
-    boolean[] changed = new boolean[]{false};
+    boolean[] changed = {false};
     document.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent event) {
@@ -768,7 +768,7 @@ public class FileEncodingTest implements TestDialog {
   }
 
   @Test
-  public void testExternalChangeClearsAutoDetectedFromBytesFlag() throws IOException, InterruptedException {
+  public void testExternalChangeClearsAutoDetectedFromBytesFlag() throws IOException {
     VirtualFile file = createTempFile("txt", NO_BOM, THREE_RUSSIAN_LETTERS, StandardCharsets.UTF_8);
     getDocument(file);
 
@@ -1157,8 +1157,8 @@ public class FileEncodingTest implements TestDialog {
 
   @Test
   public void testEncodingDetectionRequestsRunAtMostOneThreadForEachDocument() throws Throwable {
-    ConcurrentHashMap<VirtualFile, Thread> detectThreads = new ConcurrentHashMap<VirtualFile, Thread>();
-    AtomicReference<Throwable> exception = new AtomicReference<Throwable>();
+    ConcurrentHashMap<VirtualFile, Thread> detectThreads = new ConcurrentHashMap<>();
+    AtomicReference<Throwable> exception = new AtomicReference<>();
     class MyFT extends LanguageFileType implements FileTypeIdentifiableByVirtualFile {
       private MyFT() { super(new com.intellij.lang.Language("my") {}); }
       @Override public boolean isMyFileType(@NotNull VirtualFile file) { return getDefaultExtension().equals(file.getExtension()); }
