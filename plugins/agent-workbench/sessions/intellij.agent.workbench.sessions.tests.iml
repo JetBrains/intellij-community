@@ -72,6 +72,7 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.jbcentral" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.plugin" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.agent.workbench.sessions" />
 </module>
