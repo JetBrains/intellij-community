@@ -22,7 +22,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupChooserBuilder
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.components.JBList
+import com.intellij.ui.render.RenderingUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -180,23 +182,35 @@ internal class AgentPromptVcsCommitManualContextSource(
                           .take(2)
                           .count() > 1
     val chooserList = createCommitPickerList(entries, selectedHashes)
-    PopupChooserBuilder(chooserList)
-      .setTitle(AgentPromptVcsBundle.message("manual.context.vcs.chooser.title"))
-      .setRenderer(AgentPromptVcsCommitListCellRenderer(showRootNames))
-      .setNamerForFiltering { entry -> entry.filterText }
-      .setVisibleRowCount(12)
-      .setItemsChosenCallback { selectedEntries: Set<CommitPickerEntry> ->
-        val selectedSet = LinkedHashSet(selectedEntries)
-        val orderedSelection = entries.filter { entry -> entry in selectedSet }
-        if (orderedSelection.isEmpty()) {
-          return@setItemsChosenCallback
-        }
-        request.onSelected(buildManualVcsContextItem(orderedSelection))
+    val popupBuilder = createCommitPickerPopupBuilder(chooserList, showRootNames) { selectedEntries ->
+      val selectedSet = LinkedHashSet(selectedEntries)
+      val orderedSelection = entries.filter { entry -> entry in selectedSet }
+      if (orderedSelection.isEmpty()) {
+        return@createCommitPickerPopupBuilder
       }
-      .createPopup()
+      request.onSelected(buildManualVcsContextItem(orderedSelection))
+    }
+
+    popupBuilder.createPopup()
       .showUnderneathOf(request.anchorComponent)
   }
 
+}
+
+internal fun createCommitPickerPopupBuilder(
+  chooserList: JBList<CommitPickerEntry>,
+  showRootNames: Boolean,
+  onItemsChosen: (Set<CommitPickerEntry>) -> Unit,
+): PopupChooserBuilder<CommitPickerEntry> {
+  val builder = PopupChooserBuilder(chooserList)
+  builder.setTitle(AgentPromptVcsBundle.message("manual.context.vcs.chooser.title"))
+  builder.setRenderer(AgentPromptVcsCommitListCellRenderer(showRootNames))
+  builder.setNamerForFiltering { entry -> entry.filterText }
+  builder.setVisibleRowCount(12)
+  builder.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION)
+  builder.setAutoselectOnMouseMove(false)
+  builder.setItemsChosenCallback { selectedEntries: Set<CommitPickerEntry> -> onItemsChosen(selectedEntries) }
+  return builder
 }
 
 internal fun createCommitPickerList(
@@ -206,6 +220,7 @@ internal fun createCommitPickerList(
   return JBList(entries).apply {
     fixedCellWidth = JBUI.scale(COMMIT_CHOOSER_CELL_WIDTH)
     selectionMode = ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
+    ClientProperty.put(this, RenderingUtil.ALWAYS_PAINT_SELECTION_AS_FOCUSED, true)
     val selectedIndices = entries.mapIndexedNotNull { index, entry ->
       index.takeIf { entry.hash in selectedHashes }
     }
