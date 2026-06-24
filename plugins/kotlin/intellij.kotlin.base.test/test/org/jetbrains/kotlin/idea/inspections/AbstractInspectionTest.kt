@@ -59,6 +59,8 @@ abstract class AbstractInspectionTest : KotlinLightCodeInsightFixtureTestCase() 
 
     }
 
+    protected open fun processKotlinScriptIfNeeded(psiFile: PsiFile) {}
+
     protected open val forceUsePackageFolder: Boolean = false //workaround for IDEA-176033
 
     protected open fun inspectionClassDirective(): String = "// INSPECTION_CLASS: "
@@ -133,6 +135,8 @@ abstract class AbstractInspectionTest : KotlinLightCodeInsightFixtureTestCase() 
                         }
                     }
                 }.toList()
+
+                psiFiles.forEach { processKotlinScriptIfNeeded(it) }
 
                 configureCodeStyleAndRun(
                     project,
