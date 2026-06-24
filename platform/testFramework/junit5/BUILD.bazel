@@ -39,7 +39,6 @@ jvm_library(
         "@lib//:jetbrains-annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
-        "@lib//:opentest4j",
         "//java/java-runtime:rt",
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
