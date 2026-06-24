@@ -48,6 +48,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.TreeNodeProcessingResult;
+import com.intellij.util.io.PlatformNioHelper;
 import com.intellij.util.io.URLUtil;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
@@ -790,7 +791,7 @@ final class RefreshWorker {
     };
 
     try {
-      Files.walkFileTree(root, visitor);
+      PlatformNioHelper.walkFileTree(root, visitor);
     }
     catch (IOException e) {
       LOG.warn(e);

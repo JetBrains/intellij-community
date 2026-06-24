@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.DiskQueryRelay;
 import com.intellij.openapi.vfs.VFileProperty;
@@ -411,8 +410,9 @@ public class LocalFileSystemImpl
     if (!dir.isDirectory()) {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
-    if (OS.CURRENT == OS.Windows && Registry.is("vfs.windows.use.buffered.directory.stream", true)) {
-      try (var dirStream = new WindowsBufferedDirectoryStream(Path.of(toIoPath(dir)))) {
+    var nioPath = Path.of(toIoPath(dir));
+    if (PlatformNioHelper.useWindowsBufferedDirectoryStream(nioPath)) {
+      try (var dirStream = new WindowsBufferedDirectoryStream(nioPath)) {
         return StreamSupport.stream(dirStream.spliterator(), false)
           .map(it -> it.getFirst().getFileName().toString())
           .toArray(String[]::new);
@@ -421,7 +421,7 @@ public class LocalFileSystemImpl
       catch (IOException | RuntimeException e) { LOG.warn(e); }
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
-    try (var dirStream = Files.newDirectoryStream(Path.of(toIoPath(dir)))) {
+    try (var dirStream = Files.newDirectoryStream(nioPath)) {
       return StreamSupport.stream(dirStream.spliterator(), false)
         .map(it -> it.getFileName().toString())
         .toArray(String[]::new);
