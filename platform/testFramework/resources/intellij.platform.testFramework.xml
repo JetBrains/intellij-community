@@ -35,6 +35,7 @@
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.util.ui"/>
+    <module name="intellij.regexp"/>
   </dependencies>
   <!-- endregion -->
 

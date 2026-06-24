@@ -7,7 +7,6 @@
     <plugin id="com.intellij.modules.xml"/>
     <plugin id="com.intellij.modules.java-capable"/>
     <module name="intellij.spellchecker"/>
-    <module name="intellij.regexp"/>
     <module name="intellij.java.typeMigration"/>
     <module name="intellij.java.manifest"/>
     <module name="intellij.java.frontback.impl"/>

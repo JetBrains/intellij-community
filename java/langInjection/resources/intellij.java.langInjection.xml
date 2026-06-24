@@ -2,7 +2,6 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.langInjection.backend"/>
-    <module name="intellij.regexp"/>
     <module name="intellij.java"/>
     <module name="intellij.java.compiler.impl"/>
     <module name="intellij.java.impl"/>

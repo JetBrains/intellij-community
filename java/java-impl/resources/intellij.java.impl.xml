@@ -3,15 +3,11 @@
   <dependencies>
     <plugin id="com.intellij.modules.xml"/>
     <plugin id="com.intellij.modules.java-capable"/>
-    <module name="intellij.regexp"/>
     <module name="intellij.platform.externalSystem"/>
     <module name="intellij.platform.externalSystem.impl"/>
     <module name="intellij.platform.todo.backend"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.java.frontback.impl"/>
-    <module name="intellij.java.psi"/>
-    <module name="intellij.java.psi.impl"/>
-    <module name="intellij.java.syntax"/>
     <module name="intellij.java"/>
     <module name="intellij.java.analysis.impl"/>
     <module name="intellij.java.codeserver.core"/>
@@ -20,7 +16,10 @@
     <module name="intellij.java.execution"/>
     <module name="intellij.java.indexing"/>
     <module name="intellij.java.indexing.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.psi.impl"/>
     <module name="intellij.java.structureView"/>
+    <module name="intellij.java.syntax"/>
     <module name="intellij.jsp"/>
     <module name="intellij.jsp.spi"/>
     <module name="intellij.platform.structureView"/>
