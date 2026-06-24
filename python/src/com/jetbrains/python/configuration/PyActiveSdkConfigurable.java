@@ -12,7 +12,6 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -40,6 +39,7 @@ import com.jetbrains.python.sdk.PyTransferredSdkRootsKt;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.SdkExtKt;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
+import com.jetbrains.python.sdk.ProjectExtKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,10 +67,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   private final @NotNull Project myProject;
 
   private final @Nullable Module myModule;
-
-  private final @NotNull PyConfigurableInterpreterList myInterpreterList;
-
-  private final @NotNull ProjectSdksModel myProjectSdksModel;
 
   private final @NotNull JPanel myMainPanel;
 
@@ -113,9 +109,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       buildPanel(project, mySdkCombo, myAddInterpreterLink, freeTier ? myPanelWithPromo.getPanel() : myPackagesPanel,
                  packagesNotificationPanel,
                  customizer);
-
-    myInterpreterList = PyConfigurableInterpreterList.getInstance(myProject);
-    myProjectSdksModel = myInterpreterList.getModel();
 
     // Reflect the SDK configuration mutex reactively: disable the controls only while the lock is
     // held and refresh the combo once it is released, since a background configuration may have
@@ -196,7 +189,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       // do not use `getOriginalSelectedSdk()` here since `model` won't find original sdk for selected item due to applying
       final Sdk currentSelectedSdk = getEditableSelectedSdk();
 
-      if (currentSelectedSdk != null && myProjectSdksModel.findSdk(currentSelectedSdk.getName()) != null) {
+      if (currentSelectedSdk != null && getEditableSdkUsingOriginal(currentSelectedSdk) != null) {
         // nothing has been selected but previously selected sdk still exists, stay with it
         updateSdkListAndSelect(currentSelectedSdk);
       }
@@ -219,8 +212,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   @Nullable
   private Sdk getOriginalSelectedSdk() {
-    final Sdk editableSdk = getEditableSelectedSdk();
-    return editableSdk == null ? null : myProjectSdksModel.findSdk(editableSdk);
+    // The combo holds the real SDKs from the live table, so the selected item is already the original.
+    return getEditableSelectedSdk();
   }
 
   @Nullable
@@ -271,17 +264,13 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   @Override
   public final void reset() {
-    // The SDK model is cached per project (see PyConfigurableInterpreterList) and may have been
-    // populated before a new interpreter was created — e.g. by the interpreter widget popup, which
-    // builds its list from the same model. Refresh it from the live SDK table so a just-created
-    // interpreter is present and selectable instead of the combo showing "<No interpreter>".
-    myProjectSdksModel.reset(myProject);
+    // The combo reads the live SDK table, so a just-created interpreter is present without any extra refresh.
     updateSdkListAndSelect(getSdk());
   }
 
   @NotNull
   private List<Sdk> getAvailableSdks() {
-    return myInterpreterList.getAllPythonSdks(myModule);
+    return ProjectExtKt.getAssignablePythonSdks(myProject, myModule);
   }
 
   private void updateSdkListAndSelect(@Nullable Sdk selectedSdk) {
@@ -317,12 +306,16 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   @Nullable
   private Sdk getEditableSdkUsingOriginal(@Nullable Sdk sdk) {
-    return sdk == null ? null : myProjectSdksModel.findSdk(sdk.getName());
+    if (sdk == null) return null;
+    // The SDK may come from the "Python Interpreters" dialog as an editable copy; match the live table SDK by name.
+    for (Sdk available : getAvailableSdks()) {
+      if (available.getName().equals(sdk.getName())) return available;
+    }
+    return null;
   }
 
   @Override
   public final void disposeUIResources() {
-    myInterpreterList.disposeModel();
     if (myDisposable != null) {
       Disposer.dispose(myDisposable);
     }

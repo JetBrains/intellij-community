@@ -18,7 +18,6 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.SlowOperations
 import com.intellij.util.ui.SwingHelper
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.inspections.interpreter.InterpreterSettingsQuickFix
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
@@ -53,9 +52,8 @@ class PySdkPopupFactory(val module: Module) {
   fun createPopup(context: DataContext): ListPopup {
     val group = DefaultActionGroup()
 
-    val interpreterList = PyConfigurableInterpreterList.getInstance(module.project)
     val moduleSdksByTypes = SlowOperations.knownIssue("PY-76167").use {
-      groupModuleSdksByTypes(interpreterList.getAllPythonSdks(module), module) {
+      groupModuleSdksByTypes(module.project.getAssignablePythonSdks(module), module) {
         !it.isSdkSeemsValid || !LanguageLevel.SUPPORTED_LEVELS.contains(PythonSdkType.getLanguageLevelForSdk(it))
       }
     }

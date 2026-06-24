@@ -18,6 +18,7 @@ import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.InputValidatorEx
 import com.intellij.openapi.ui.MasterDetailsComponent
 import com.intellij.openapi.ui.Messages
@@ -32,6 +33,7 @@ import com.jetbrains.python.sdk.ModuleOrProject.ProjectOnly
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.collectAddInterpreterActions
 import com.jetbrains.python.sdk.customizeWithSdkValue
+import com.jetbrains.python.sdk.filterAssignablePythonSdks
 import com.jetbrains.python.sdk.isAssociatedWithAnotherModule
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.noInterpreterMarker
@@ -48,8 +50,6 @@ import javax.swing.tree.TreePath
  * the list.
  */
 internal class PythonInterpreterMasterDetails(private val moduleOrProject: ModuleOrProject, private val parentConfigurable: Configurable) : MasterDetailsComponent() {
-  private val pythonConfigurableInterpreterList: PyConfigurableInterpreterList = PyConfigurableInterpreterList.getInstance(moduleOrProject.project)
-
   private val project = moduleOrProject.project
 
   // Temporary hack as lots of legacy code accept nullable module. Remove after legacy code migrated to ModuleOrProject.
@@ -58,7 +58,9 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
     is ProjectOnly -> null
   }
 
-  internal val projectSdksModel = pythonConfigurableInterpreterList.model
+  // The dialog owns a short-lived editable SDK model instead of sharing a cached project-level one. It is reloaded
+  // from the live SDK table in `reset()` and disposed in `disposeUIResources()` (PY-90077).
+  internal val projectSdksModel = ProjectSdksModel()
 
   /**
    * Indicates whether Python paths of one or more interpreters have been changed by user via Python Paths dialog.
@@ -116,10 +118,14 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
   }
 
   private val allPythonSdksInEdit: List<Sdk>
-    get() = pythonConfigurableInterpreterList.getAllPythonSdks(module)
+    get() = project.filterAssignablePythonSdks(projectSdksModel.sdks.toList(), module)
 
   override fun reset() {
     pythonPathsModified = false
+
+    // Reload the editable model from the live SDK table so interpreters added elsewhere (e.g. the "Add Interpreter"
+    // link or the status-bar widget) appear immediately; the tree is then built from these editable copies.
+    projectSdksModel.reset(project)
 
     myRoot.removeAllChildren()
 
@@ -150,6 +156,11 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
     // Do not use `projectSdksModel.isModified` flag solely to optimize the method, because `isModified` remains `false` in case of
     // non-structural changes (f.e. if a JDK has been changed)
     projectSdksModel.apply(this)
+  }
+
+  override fun disposeUIResources() {
+    super.disposeUIResources()
+    projectSdksModel.disposeUIResources()
   }
 
   override fun createActions(fromPopup: Boolean): List<AnAction> =

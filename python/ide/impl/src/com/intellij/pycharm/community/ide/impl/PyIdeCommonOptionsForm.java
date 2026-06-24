@@ -2,21 +2,20 @@
 package com.intellij.pycharm.community.ide.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.util.PathMappingSettings;
+import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.PyCommonOptionsFormData;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
@@ -95,11 +94,21 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   @Override
-  public void subscribe() {
-    PyConfigurableInterpreterList myInterpreterList = PyConfigurableInterpreterList.getInstance(myProject);
-    ProjectSdksModel myProjectSdksModel = myInterpreterList.getModel();
-    myProjectSdksModel.addListener(new MyListener(this, myInterpreterList));
-    updateSdkList(true, myInterpreterList);
+  public void subscribe(@NotNull Disposable parentDisposable) {
+    // Refresh the interpreter combo from the live SDK table whenever it changes. The connection is tied to
+    // `parentDisposable`, so the listener does not outlive the owning UI.
+    MessageBusConnection connection = myProject.getMessageBus().connect(parentDisposable);
+    connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, new ProjectJdkTable.Listener() {
+      @Override
+      public void jdkAdded(@NotNull Sdk jdk) { updateSdkList(true); }
+
+      @Override
+      public void jdkRemoved(@NotNull Sdk jdk) { updateSdkList(true); }
+
+      @Override
+      public void jdkNameChanged(@NotNull Sdk jdk, @NotNull String previousName) { updateSdkList(true); }
+    });
+    updateSdkList(true);
   }
 
   @Override
@@ -193,7 +202,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
     );
   }
 
-  public void updateSdkList(boolean preserveSelection, PyConfigurableInterpreterList myInterpreterList) {
+  public void updateSdkList(boolean preserveSelection) {
     myPythonSdks = new ArrayList<>(PythonSdkUtil.getAllSdks());
     Sdk selection = preserveSelection ? (Sdk)content.interpreterComboBox.getSelectedItem() : null;
     if (!myPythonSdks.contains(selection)) {
@@ -317,36 +326,6 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   @Override
   public void setEnvFilePaths(@NotNull List<String> strings) {
     myEnvPaths = strings;
-  }
-
-  private static class MyListener implements SdkModel.Listener {
-    private final PyIdeCommonOptionsForm myForm;
-    private final PyConfigurableInterpreterList myInterpreterList;
-
-    MyListener(PyIdeCommonOptionsForm form, PyConfigurableInterpreterList interpreterList) {
-      myForm = form;
-      myInterpreterList = interpreterList;
-    }
-
-
-    private void update() {
-      myForm.updateSdkList(true, myInterpreterList);
-    }
-
-    @Override
-    public void sdkAdded(@NotNull Sdk sdk) {
-      update();
-    }
-
-    @Override
-    public void beforeSdkRemove(@NotNull Sdk sdk) {
-      update();
-    }
-
-    @Override
-    public void sdkChanged(@NotNull Sdk sdk, String previousName) {
-      update();
-    }
   }
 
   @Override

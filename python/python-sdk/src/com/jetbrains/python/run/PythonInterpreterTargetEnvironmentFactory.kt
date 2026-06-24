@@ -96,7 +96,7 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
 
   companion object {
     @JvmStatic
-    val EP_NAME = ExtensionPointName<PythonInterpreterTargetEnvironmentFactory>("Pythonid.interpreterTargetEnvironmentFactory")
+    val EP_NAME: ExtensionPointName<PythonInterpreterTargetEnvironmentFactory> = ExtensionPointName("Pythonid.interpreterTargetEnvironmentFactory")
 
     @JvmStatic
     fun findPythonTargetInterpreter(sdk: Sdk, project: Project): HelpersAwareTargetEnvironmentRequest =
@@ -137,7 +137,7 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
      * Target provides access to its filesystem using VFS (like WSL)
      */
     @JvmStatic
-    fun getTargetWithMappedLocalVfs(targetEnvironmentConfiguration: TargetEnvironmentConfiguration) = EP_NAME.extensionList.asSequence().mapNotNull {
+    fun getTargetWithMappedLocalVfs(targetEnvironmentConfiguration: TargetEnvironmentConfiguration): TargetWithMappedLocalVfs? = EP_NAME.extensionList.asSequence().mapNotNull {
       it.asTargetWithMappedLocalVfs(targetEnvironmentConfiguration)
     }.firstOrNull()
 
