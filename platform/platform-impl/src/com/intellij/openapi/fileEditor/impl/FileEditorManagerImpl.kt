@@ -603,7 +603,9 @@ open class FileEditorManagerImpl(
       }
 
       for (provider in item.newProviders) {
-        composite.addEditor(editor = provider.createEditor(project, item.composite.file), provider = provider)
+        val editor = provider.createEditor(project, item.composite.file)
+        postProcessFileEditorWithProvider(editorWithProvider = FileEditorWithProvider(editor, provider), editorPropertyChangeListener = editorPropertyChangeListener)
+        composite.addEditor(editor = editor, provider = provider)
       }
 
       for (splitters in getAllSplitters()) {
