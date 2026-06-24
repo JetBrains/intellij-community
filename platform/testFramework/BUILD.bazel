@@ -46,11 +46,7 @@ jvm_library(
         "//platform/testFramework/common",
         "//platform/testFramework/core",
     ],
-    runtime_deps = [
-        # do not sort,
-        "//images",
-        "//RegExpSupport:regexp",
-    ],
+    runtime_deps = ["//images"],
     deps = [
         # do not sort,
         "@lib//:jet_check",
@@ -235,7 +231,6 @@ jvm_library(
         "//platform/util/jdom:jdom_test_lib",
         "//platform/workspace/jps:jps_test_lib",
         "//platform/workspace/storage:storage_test_lib",
-        "//RegExpSupport:regexp_test_lib",
         "//platform/testFramework/bootstrap:tools-testsBootstrap",
         "//platform/testFramework/bootstrap:tools-testsBootstrap_test_lib",
         "@lib//:platform-test_framework-okhttp3-mockwebserver",
