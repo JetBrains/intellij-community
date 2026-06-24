@@ -13,8 +13,11 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.api.extension.AnnotatedElementContext
+import org.junit.jupiter.api.extension.ExtensionContext
 import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.io.TempDir
+import org.junit.jupiter.api.io.TempDirFactory
 import java.io.IOException
 import java.net.ConnectException
 import java.net.StandardProtocolFamily
@@ -30,221 +33,243 @@ import java.nio.file.attribute.PosixFilePermissions
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
+private class ShortUnixSocketTempDirFactory : TempDirFactory {
+  override fun createTempDirectory(elementContext: AnnotatedElementContext, extensionContext: ExtensionContext): Path {
+    return if (SystemInfoRt.isWindows) {
+      Files.createTempDirectory("cdx-ipc-")
+    }
+    else {
+      Files.createTempDirectory(Path.of("/tmp"), "cdx-ipc-")
+    }
+  }
+}
+
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
 class CodexIdeContextUnixIpcTransportTest {
   @Test
-  fun servesCodexIdeContextRequest(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
-    assumeFalse(SystemInfoRt.isWindows)
-    val socketPath = tempDir.resolve("codex.sock")
+  fun servesCodexIdeContextRequest(@TempDir(factory = ShortUnixSocketTempDirFactory::class) tempDir: Path): Unit =
+    runBlocking(Dispatchers.Default) {
+      assumeFalse(SystemInfoRt.isWindows)
+      val socketPath = tempDir.resolve("codex.sock")
 
-    withRunningServer(socketPath) {
-      val response = requestResponse(socketPath)
+      withRunningServer(socketPath) {
+        val response = requestResponse(socketPath)
 
-      assertThat(response).contains("\"resultType\":\"success\"")
-      assertThat(response).contains("\"openTabs\":[{\"label\":\"README.md\",\"path\":\"README.md\"")
-    }
-  }
-
-  @Test
-  fun keepsServingAfterMalformedClientFrame(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
-    assumeFalse(SystemInfoRt.isWindows)
-    val socketPath = tempDir.resolve("codex.sock")
-
-    withRunningServer(socketPath) {
-      openClient(socketPath).use { channel ->
-        writeFully(channel, ByteBuffer.allocate(Int.SIZE_BYTES).order(ByteOrder.LITTLE_ENDIAN).putInt(-1).flip())
+        assertThat(response).contains("\"resultType\":\"success\"")
+        assertThat(response).contains("\"openTabs\":[{\"label\":\"README.md\",\"path\":\"README.md\"")
       }
-
-      val response = requestResponse(socketPath)
-
-      assertThat(response).contains("\"resultType\":\"success\"")
     }
-  }
 
   @Test
-  fun keepsServingAfterOversizedClientFrame(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
-    assumeFalse(SystemInfoRt.isWindows)
-    val socketPath = tempDir.resolve("codex.sock")
+  fun keepsServingAfterMalformedClientFrame(@TempDir(factory = ShortUnixSocketTempDirFactory::class) tempDir: Path): Unit =
+    runBlocking(Dispatchers.Default) {
+      assumeFalse(SystemInfoRt.isWindows)
+      val socketPath = tempDir.resolve("codex.sock")
 
-    withRunningServer(socketPath, settings = CodexIdeContextIpcTransportSettings(maxRequestFrameBytes = 256)) {
-      openClient(socketPath).use { channel ->
-        writeFully(channel, ByteBuffer.allocate(Int.SIZE_BYTES).order(ByteOrder.LITTLE_ENDIAN).putInt(257).flip())
-      }
-
-      val response = requestResponse(socketPath)
-
-      assertThat(response).contains("\"resultType\":\"success\"")
-    }
-  }
-
-  @Test
-  fun manyIdleClientsDoNotBlockRequestsOrTimeOut(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
-    assumeFalse(SystemInfoRt.isWindows)
-    val socketPath = tempDir.resolve("codex.sock")
-
-    withRunningServer(
-      socketPath = socketPath,
-      settings = CodexIdeContextIpcTransportSettings(maxActiveClients = 128, readTimeout = 100.milliseconds),
-    ) {
-      val idleClients = ArrayList<SocketChannel>()
-      try {
-        repeat(64) {
-          idleClients += openClient(socketPath)
+      withRunningServer(socketPath) {
+        openClient(socketPath).use { channel ->
+          writeFully(channel, ByteBuffer.allocate(Int.SIZE_BYTES).order(ByteOrder.LITTLE_ENDIAN).putInt(-1).flip())
         }
 
         val response = requestResponse(socketPath)
-        assertThat(response).contains("\"resultType\":\"success\"")
 
-        val firstIdleClient = idleClients.first()
-        writeFrame(firstIdleClient, request())
-        assertThat(readFrame(firstIdleClient).toString(StandardCharsets.UTF_8)).contains("\"resultType\":\"success\"")
+        assertThat(response).contains("\"resultType\":\"success\"")
+      }
+    }
+
+  @Test
+  fun keepsServingAfterOversizedClientFrame(@TempDir(factory = ShortUnixSocketTempDirFactory::class) tempDir: Path): Unit =
+    runBlocking(Dispatchers.Default) {
+      assumeFalse(SystemInfoRt.isWindows)
+      val socketPath = tempDir.resolve("codex.sock")
+
+      withRunningServer(socketPath, settings = CodexIdeContextIpcTransportSettings(maxRequestFrameBytes = 256)) {
+        openClient(socketPath).use { channel ->
+          writeFully(channel, ByteBuffer.allocate(Int.SIZE_BYTES).order(ByteOrder.LITTLE_ENDIAN).putInt(257).flip())
+        }
+
+        val response = requestResponse(socketPath)
+
+        assertThat(response).contains("\"resultType\":\"success\"")
+      }
+    }
+
+  @Test
+  fun manyIdleClientsDoNotBlockRequestsOrTimeOut(@TempDir(factory = ShortUnixSocketTempDirFactory::class) tempDir: Path): Unit =
+    runBlocking(Dispatchers.Default) {
+      assumeFalse(SystemInfoRt.isWindows)
+      val socketPath = tempDir.resolve("codex.sock")
+
+      withRunningServer(
+        socketPath = socketPath,
+        settings = CodexIdeContextIpcTransportSettings(maxActiveClients = 128, readTimeout = 100.milliseconds),
+      ) {
+        val idleClients = ArrayList<SocketChannel>()
+        try {
+          repeat(64) {
+            idleClients += openClient(socketPath)
+          }
+
+          val response = requestResponse(socketPath)
+          assertThat(response).contains("\"resultType\":\"success\"")
+
+          val firstIdleClient = idleClients.first()
+          writeFrame(firstIdleClient, request())
+          assertThat(readFrame(firstIdleClient).toString(StandardCharsets.UTF_8)).contains("\"resultType\":\"success\"")
+        }
+        finally {
+          idleClients.forEach(::closeIgnoringErrors)
+        }
+      }
+    }
+
+  @Test
+  fun partialClientFrameTimesOutWithoutStoppingServer(@TempDir(factory = ShortUnixSocketTempDirFactory::class) tempDir: Path): Unit =
+    runBlocking(Dispatchers.Default) {
+      assumeFalse(SystemInfoRt.isWindows)
+      val socketPath = tempDir.resolve("codex.sock")
+
+      withRunningServer(socketPath, settings = CodexIdeContextIpcTransportSettings(readTimeout = 100.milliseconds)) {
+        openClient(socketPath).use { channel ->
+          writeFully(channel, ByteBuffer.wrap(byteArrayOf(1, 0)))
+          assertEventuallyClosed(channel)
+        }
+
+        val response = requestResponse(socketPath)
+
+        assertThat(response).contains("\"resultType\":\"success\"")
+      }
+    }
+
+  @Test
+  fun servesPipelinedClientRequestsSequentially(@TempDir(factory = ShortUnixSocketTempDirFactory::class) tempDir: Path): Unit =
+    runBlocking(Dispatchers.Default) {
+      assumeFalse(SystemInfoRt.isWindows)
+      val socketPath = tempDir.resolve("codex.sock")
+
+      withRunningServer(socketPath) {
+        openClient(socketPath).use { channel ->
+          writeFrame(channel, request("request-1"))
+          writeFrame(channel, request("request-2"))
+
+          assertThat(readFrame(channel).toString(StandardCharsets.UTF_8)).contains("\"requestId\":\"request-1\"")
+          assertThat(readFrame(channel).toString(StandardCharsets.UTF_8)).contains("\"requestId\":\"request-2\"")
+        }
+      }
+    }
+
+  @Test
+  fun failedSecondTransportDoesNotDeleteLiveSocket(@TempDir(factory = ShortUnixSocketTempDirFactory::class) tempDir: Path): Unit =
+    runBlocking(Dispatchers.Default) {
+      assumeFalse(SystemInfoRt.isWindows)
+      val socketPath = tempDir.resolve("codex.sock")
+
+      withRunningServer(socketPath) {
+        UnixCodexIdeContextIpcTransport(socketPath = socketPath).use { secondTransport ->
+          val failure = runCatching { withTimeout(5.seconds) { secondTransport.serve(protocol()) } }.exceptionOrNull()
+
+          assertThat(failure).isInstanceOf(CodexIdeContextIpcAddressInUseException::class.java)
+          secondTransport.close()
+          assertThat(Files.exists(socketPath)).isTrue()
+          assertThat(requestResponse(socketPath)).contains("\"resultType\":\"success\"")
+        }
+      }
+    }
+
+  @Test
+  fun closeStopsServingSelector(@TempDir(factory = ShortUnixSocketTempDirFactory::class) tempDir: Path): Unit =
+    runBlocking(Dispatchers.Default) {
+      assumeFalse(SystemInfoRt.isWindows)
+      val socketPath = tempDir.resolve("codex.sock")
+      val transport = UnixCodexIdeContextIpcTransport(socketPath = socketPath)
+      val serverJob = launch { transport.serve(protocol()) }
+
+      try {
+        withTimeout(5.seconds) {
+          while (!Files.exists(socketPath)) {
+            delay(10.milliseconds)
+          }
+        }
+
+        transport.close()
+
+        withTimeout(5.seconds) {
+          serverJob.join()
+        }
       }
       finally {
-        idleClients.forEach(::closeIgnoringErrors)
+        transport.close()
+        serverJob.cancelAndJoin()
       }
     }
-  }
 
   @Test
-  fun partialClientFrameTimesOutWithoutStoppingServer(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
-    assumeFalse(SystemInfoRt.isWindows)
-    val socketPath = tempDir.resolve("codex.sock")
+  fun closeClosesActiveClients(@TempDir(factory = ShortUnixSocketTempDirFactory::class) tempDir: Path): Unit =
+    runBlocking(Dispatchers.Default) {
+      assumeFalse(SystemInfoRt.isWindows)
+      val socketPath = tempDir.resolve("codex.sock")
+      val transport = UnixCodexIdeContextIpcTransport(socketPath = socketPath)
+      val serverJob = launch { transport.serve(protocol()) }
 
-    withRunningServer(socketPath, settings = CodexIdeContextIpcTransportSettings(readTimeout = 100.milliseconds)) {
-      openClient(socketPath).use { channel ->
-        writeFully(channel, ByteBuffer.wrap(byteArrayOf(1, 0)))
-        assertEventuallyClosed(channel)
+      try {
+        withTimeout(5.seconds) {
+          while (!Files.exists(socketPath)) {
+            delay(10.milliseconds)
+          }
+        }
+        openClient(socketPath).use { channel ->
+          transport.close()
+
+          assertEventuallyClosed(channel)
+        }
+        withTimeout(5.seconds) {
+          serverJob.join()
+        }
       }
-
-      val response = requestResponse(socketPath)
-
-      assertThat(response).contains("\"resultType\":\"success\"")
-    }
-  }
-
-  @Test
-  fun servesPipelinedClientRequestsSequentially(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
-    assumeFalse(SystemInfoRt.isWindows)
-    val socketPath = tempDir.resolve("codex.sock")
-
-    withRunningServer(socketPath) {
-      openClient(socketPath).use { channel ->
-        writeFrame(channel, request("request-1"))
-        writeFrame(channel, request("request-2"))
-
-        assertThat(readFrame(channel).toString(StandardCharsets.UTF_8)).contains("\"requestId\":\"request-1\"")
-        assertThat(readFrame(channel).toString(StandardCharsets.UTF_8)).contains("\"requestId\":\"request-2\"")
+      finally {
+        transport.close()
+        serverJob.cancelAndJoin()
       }
     }
-  }
 
   @Test
-  fun failedSecondTransportDoesNotDeleteLiveSocket(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
-    assumeFalse(SystemInfoRt.isWindows)
-    val socketPath = tempDir.resolve("codex.sock")
+  fun createsOwnerOnlySocketParentAndSocket(@TempDir(factory = ShortUnixSocketTempDirFactory::class) tempDir: Path): Unit =
+    runBlocking(Dispatchers.Default) {
+      assumeFalse(SystemInfoRt.isWindows)
+      val socketParent = tempDir.resolve("codex-ipc")
+      val socketPath = socketParent.resolve("ipc-test.sock")
 
-    withRunningServer(socketPath) {
-      UnixCodexIdeContextIpcTransport(socketPath = socketPath).use { secondTransport ->
-        val failure = runCatching { withTimeout(5.seconds) { secondTransport.serve(protocol()) } }.exceptionOrNull()
+      withRunningServer(socketPath) {
+        val parentPermissions = Files.getPosixFilePermissions(socketParent)
+        val socketPermissions = Files.getPosixFilePermissions(socketPath)
 
-        assertThat(failure).isInstanceOf(CodexIdeContextIpcAddressInUseException::class.java)
-        secondTransport.close()
-        assertThat(Files.exists(socketPath)).isTrue()
+        assertThat(parentPermissions).containsExactlyInAnyOrder(
+          PosixFilePermission.OWNER_READ,
+          PosixFilePermission.OWNER_WRITE,
+          PosixFilePermission.OWNER_EXECUTE,
+        )
+        assertThat(socketPermissions).containsExactlyInAnyOrder(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE)
+      }
+    }
+
+  @Test
+  fun repairsPermissiveSocketParent(@TempDir(factory = ShortUnixSocketTempDirFactory::class) tempDir: Path): Unit =
+    runBlocking(Dispatchers.Default) {
+      assumeFalse(SystemInfoRt.isWindows)
+      val socketParent = tempDir.resolve("codex-ipc")
+      Files.createDirectories(socketParent)
+      Files.setPosixFilePermissions(socketParent, PosixFilePermissions.fromString("rwxrwxrwx"))
+      val socketPath = socketParent.resolve("ipc-test.sock")
+
+      withRunningServer(socketPath) {
+        assertThat(Files.getPosixFilePermissions(socketParent)).containsExactlyInAnyOrder(
+          PosixFilePermission.OWNER_READ,
+          PosixFilePermission.OWNER_WRITE,
+          PosixFilePermission.OWNER_EXECUTE,
+        )
         assertThat(requestResponse(socketPath)).contains("\"resultType\":\"success\"")
       }
     }
-  }
-
-  @Test
-  fun closeStopsServingSelector(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
-    assumeFalse(SystemInfoRt.isWindows)
-    val socketPath = tempDir.resolve("codex.sock")
-    val transport = UnixCodexIdeContextIpcTransport(socketPath = socketPath)
-    val serverJob = launch { transport.serve(protocol()) }
-
-    try {
-      withTimeout(5.seconds) {
-        while (!Files.exists(socketPath)) {
-          delay(10.milliseconds)
-        }
-      }
-
-      transport.close()
-
-      withTimeout(5.seconds) {
-        serverJob.join()
-      }
-    }
-    finally {
-      transport.close()
-      serverJob.cancelAndJoin()
-    }
-  }
-
-  @Test
-  fun closeClosesActiveClients(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
-    assumeFalse(SystemInfoRt.isWindows)
-    val socketPath = tempDir.resolve("codex.sock")
-    val transport = UnixCodexIdeContextIpcTransport(socketPath = socketPath)
-    val serverJob = launch { transport.serve(protocol()) }
-
-    try {
-      withTimeout(5.seconds) {
-        while (!Files.exists(socketPath)) {
-          delay(10.milliseconds)
-        }
-      }
-      openClient(socketPath).use { channel ->
-        transport.close()
-
-        assertEventuallyClosed(channel)
-      }
-      withTimeout(5.seconds) {
-        serverJob.join()
-      }
-    }
-    finally {
-      transport.close()
-      serverJob.cancelAndJoin()
-    }
-  }
-
-  @Test
-  fun createsOwnerOnlySocketParentAndSocket(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
-    assumeFalse(SystemInfoRt.isWindows)
-    val socketParent = tempDir.resolve("codex-ipc")
-    val socketPath = socketParent.resolve("ipc-test.sock")
-
-    withRunningServer(socketPath) {
-      val parentPermissions = Files.getPosixFilePermissions(socketParent)
-      val socketPermissions = Files.getPosixFilePermissions(socketPath)
-
-      assertThat(parentPermissions).containsExactlyInAnyOrder(
-        PosixFilePermission.OWNER_READ,
-        PosixFilePermission.OWNER_WRITE,
-        PosixFilePermission.OWNER_EXECUTE,
-      )
-      assertThat(socketPermissions).containsExactlyInAnyOrder(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE)
-    }
-  }
-
-  @Test
-  fun repairsPermissiveSocketParent(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
-    assumeFalse(SystemInfoRt.isWindows)
-    val socketParent = tempDir.resolve("codex-ipc")
-    Files.createDirectories(socketParent)
-    Files.setPosixFilePermissions(socketParent, PosixFilePermissions.fromString("rwxrwxrwx"))
-    val socketPath = socketParent.resolve("ipc-test.sock")
-
-    withRunningServer(socketPath) {
-      assertThat(Files.getPosixFilePermissions(socketParent)).containsExactlyInAnyOrder(
-        PosixFilePermission.OWNER_READ,
-        PosixFilePermission.OWNER_WRITE,
-        PosixFilePermission.OWNER_EXECUTE,
-      )
-      assertThat(requestResponse(socketPath)).contains("\"resultType\":\"success\"")
-    }
-  }
 
   private suspend fun withRunningServer(
     socketPath: Path,
