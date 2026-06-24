@@ -27,6 +27,7 @@ import java.io.ByteArrayOutputStream
 import java.io.Flushable
 import java.io.IOException
 import java.io.InputStream
+import java.io.InterruptedIOException
 import java.io.OutputStream
 import java.net.Socket
 import java.nio.ByteBuffer
@@ -264,8 +265,14 @@ internal class InputStreamAdapterImpl(
         receiveChannel.receiveAvailable(dst)
       }
       else {
-        runBlocking(blockingContext) {
-          receiveChannel.receive(dst)
+        try {
+          runBlocking(blockingContext) {
+            receiveChannel.receive(dst)
+          }
+        } catch (e: InterruptedException) {
+          throw InterruptedIOException().apply {
+            addSuppressed(e)
+          }
         }
       }
       when (r) {
