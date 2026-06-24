@@ -1,8 +1,14 @@
 import sys
 import traceback
+from collections import namedtuple
 
 ERROR_WRONG_USAGE = 1
 ERROR_EXCEPTION = 4
+
+# Conda's package metadata is exposed via two very different shapes — a dict-like entry from the
+# legacy ``get_index`` and a ``PackageRecord`` attribute object from conda 25's ``SubdirData``.
+# Normalise both into a single record so the printing loop doesn't care which API produced them.
+Pkg = namedtuple("Pkg", ["name", "version", "depends"])
 
 
 def usage():
@@ -24,6 +30,26 @@ def do_list_available_packages():
     major_version = int(version_splitted[0])
     minor_version = int(version_splitted[1])
 
+    for pkg in _iter_packages(major_version, minor_version):
+        sys.stdout.write("\t".join([pkg.name, pkg.version, ":".join(pkg.depends)]) + chr(10))
+        sys.stdout.flush()
+
+
+def _iter_packages(major_version, minor_version):
+    """Yield [Pkg] entries from the current conda's package index.
+
+    Picks the right import path based on the conda version because the index API has been
+    renamed/moved several times. conda 25 removed ``get_index`` from ``conda.core.index`` and
+    moved package metadata under ``conda.core.subdir_data``, which returns ``PackageRecord``
+    objects (attribute access) instead of the legacy dict-like entries returned by ``get_index``.
+    """
+    if major_version >= 25:
+        init_context()
+        from conda.core.subdir_data import SubdirData
+        for pkg in SubdirData.query_all('*'):
+            yield Pkg(name=pkg.name, version=pkg.version, depends=pkg.depends)
+        return
+
     if major_version >= 22 or (major_version >= 4 and minor_version >= 4):
         init_context()
         from conda.core.index import get_index
@@ -39,8 +65,7 @@ def do_list_available_packages():
         index = common.get_index_trap()
 
     for pkg in index.values():
-        sys.stdout.write("\t".join([pkg["name"], pkg["version"], ":".join(pkg["depends"])]) + chr(10))
-        sys.stdout.flush()
+        yield Pkg(name=pkg["name"], version=pkg["version"], depends=pkg["depends"])
 
 
 def do_list_channels():
