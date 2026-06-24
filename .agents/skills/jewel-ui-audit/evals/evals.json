@@ -1,0 +1,619 @@
+{
+  "skill_name": "jewel-ui-audit",
+  "evals": [
+    {
+      "id": 1,
+      "name": "card-color-elevation-divider",
+      "prompt": "Review this Jewel component for an IntelliJ tool window. Focus on whether the visuals are themeable and idiomatic for the IDE. File: fixture_1.kt",
+      "files": [
+        "evals/files/fixture_1.kt"
+      ],
+      "expected_output": "A design-review report identifying the border-color-as-background misuse, the Material elevation/shadow on a non-interactive card, the hardcoded Color.DarkGray separator, the non-idiomatic 6.dp-thick divider built from a background slab instead of Jewel's Divider, and the additive/asymmetric spacing between cards.",
+      "expectations": [
+        "Flags that JewelTheme.globalColors.borders.normal (a border-role token) is used as a .background() fill, and recommends a content/panel background role instead.",
+        "Flags the shadowElevation / drop shadow as a Material concept foreign to Int UI and recommends a flat alternative (border or background-fill delta).",
+        "Flags the hover elevation as a false affordance because the card is not interactive (does nothing on click).",
+        "Flags the hardcoded Color.DarkGray and recommends a themed color source.",
+        "Flags the section separator (a background slab acting as a thick divider) and recommends Jewel's built-in Divider, noting 1px is the idiomatic IDE separator weight.",
+        "Identifies additive vertical spacing between notes (row vertical padding plus the parent Column spacedBy) and/or the per-axis spacing asymmetry.",
+        "Does not flag the heading/body Text usage itself as a problem."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "scroll-derived-selection-and-list",
+      "prompt": "Review this section-outline side panel from a Jewel-based viewer. The last section never highlights in the outline when the user scrolls to the bottom; also evaluate the list implementation generally. File: fixture_2.kt",
+      "files": [
+        "evals/files/fixture_2.kt"
+      ],
+      "expected_output": "A report explaining that deriving the active section from firstVisibleItemIndex structurally cannot select trailing items, and that the outline should be a SingleSelectionLazyColumn (or MultiSelectionLazyColumn) rather than a hand-rolled Column + SimpleListItem + clickable.",
+      "expectations": [
+        "Explains that activeSection = sections[firstVisibleItemIndex] can never select the last/trailing section because once scrolled to the end the last item is not the first visible item.",
+        "Recommends a threshold-based scroll-spy with an explicit end-of-scroll special case, or removing scroll-derived selection in favor of a jump-list.",
+        "Flags that the list is a Column with manual selected + clickable instead of a SingleSelectionLazyColumn (or MultiSelectionLazyColumn), and that this drops keyboard navigation, focus, and speed search.",
+        "Notes that SimpleListItem is the correct row composable but is in the wrong container.",
+        "Does not claim Jewel lacks a selectable-list component."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "async-image-states",
+      "prompt": "Review this contributor card that shows a remote avatar in a Jewel panel. Focus on loading, error, and offline behavior. File: fixture_3.kt",
+      "files": [
+        "evals/files/fixture_3.kt"
+      ],
+      "expected_output": "A report identifying the missing loading placeholder (and resulting layout shift), the silent permanent failure on error, and the ad-hoc network fetch with no offline story / standard image-loading path.",
+      "expectations": [
+        "Flags that the avatar renders nothing while loading (returns with no reserved space), causing layout shift, and recommends a reserved fixed-ratio placeholder with a loading indicator/shimmer.",
+        "Flags that a fetch failure only logs and leaves the image permanently absent, with no alt-text/broken-image affordance, and recommends a visible error state.",
+        "Flags the ad-hoc HttpRequests fetch-and-decode and recommends the platform's standard image-loading path (threading, caching, bounded cache, error states).",
+        "Notes the inconsistency that bio/name are bundled/offline but the avatar requires the network."
+      ]
+    },
+    {
+      "id": 4,
+      "name": "precision-do-not-over-flag",
+      "prompt": "Review this Jewel heading-style helper and status row for design-system fidelity. File: fixture_4.kt",
+      "files": [
+        "evals/files/fixture_4.kt"
+      ],
+      "expected_output": "A report that recognizes the code is largely correct: font sizes are themeable-by-derivation, colors come from the theme, and the small custom status dot is a justified primitive. It should not invent violations.",
+      "expectations": [
+        "Does NOT flag the fontSize/lineHeight multipliers (base.fontSize * 1.5 etc.) as hardcoded, and ideally notes they are correctly themeable-by-derivation.",
+        "Does NOT claim the status dot must be replaced by a built-in, recognizing there is no Jewel primitive for a colored status dot and the fill color is theme-provided by the caller.",
+        "Includes a 'Justified as-is' style acknowledgement rather than a list of fabricated problems.",
+        "Does not invent a hardcoded-color finding where colors derive from JewelTheme or are provided by the caller."
+      ]
+    },
+    {
+      "id": 5,
+      "name": "trigger-positive-broad-review",
+      "prompt": "I just built a new tool window in Jewel for our IntelliJ plugin. Can you review the cards and the side list to make sure the colors, hover effects, and spacing feel right for the IDE before I send it for review? File: fixture_5.kt",
+      "files": [
+        "evals/files/fixture_5.kt"
+      ],
+      "expected_output": "The agent recognizes this as a Jewel/IDE design-system fidelity review and applies this skill's four questions (themeable, role-correct, justified custom treatment, idiomatic/expected), surfacing the same class of findings as eval 1.",
+      "expectations": [
+        "Treats the request as a design-system fidelity / idiomatic-UX review rather than only an architecture or accessibility review.",
+        "Applies themeability and semantic-role checks to the colors.",
+        "Evaluates the hover effect against Int UI conventions and interactivity."
+      ]
+    },
+    {
+      "id": 6,
+      "name": "trigger-negative-pure-logic",
+      "prompt": "Review the parsing logic in this Kotlin file that converts a flat list of Markdown blocks into grouped sections. I care about correctness of the grouping algorithm and its unit tests. File: fixture_6.kt",
+      "files": ["evals/files/fixture_6.kt"],
+      "expected_output": "The agent recognizes this is not a Jewel design-system review (it is algorithm/correctness work) and does not force this skill's color/spacing/component checks onto pure data-transformation logic.",
+      "expectations": [
+        "Does not apply design-system fidelity checks (color tokens, spacing, components) to non-UI parsing logic.",
+        "Focuses on algorithm correctness and tests, or routes to a more appropriate skill, rather than invoking jewel-ui-audit."
+      ]
+    },
+    {
+      "id": 7,
+      "name": "bridge-laf-read-fallbacks",
+      "prompt": "Review this status badge from a Jewel-based IntelliJ plugin tool window. It is also exercised in a standalone UI unit test. Focus on theming correctness across themes. File: fixture_7.kt",
+      "files": [
+        "evals/files/fixture_7.kt"
+      ],
+      "expected_output": "A report flagging the LaF read without a fallback, the single light/dark value, the frozen JBColor snapshot captured across theme changes, and the standalone-with-no-LaF risk; recommends a layered fallback and a theming container.",
+      "expectations": [
+        "Flags that retrieveColorOrUnspecified is read with no fallback and will return Unspecified for absent keys or when no LaF is present (standalone test), and recommends a layered fallback ending in a hardcoded default.",
+        "Flags that the background/foreground provide no separate light and dark values.",
+        "Flags that the JBColor is captured into a Compose color once and frozen, so it goes stale on theme switch (not keyed on JewelTheme.name/instanceUuid).",
+        "Notes the standalone-vs-bridge concern: this composable can run with no IntelliJ LaF, so reads must degrade to defaults.",
+        "Recommends centralizing the reads in a theming-container object rather than inline at the call site."
+      ]
+    },
+    {
+      "id": 8,
+      "name": "editor-scheme-vs-ui-laf",
+      "prompt": "Review this code-excerpt renderer from a Jewel-based IntelliJ plugin panel that shows code snippets. File: fixture_8.kt",
+      "files": [
+        "evals/files/fixture_8.kt"
+      ],
+      "expected_output": "A report explaining that code/editor content should source colors from the editor color scheme (EditorColorsManager/EditorColorsScheme), not UI LaF panel keys; that editor darkness is independent of UI theme darkness; and that the cached value is not keyed to react to editor-scheme changes.",
+      "expectations": [
+        "Flags sourcing the code background from a UI LaF key (Panel.background) instead of the editor color scheme, and recommends EditorColorsManager/EditorColorsScheme (or the bridge editor-scheme read).",
+        "Flags deciding code-content contrast from JewelTheme.isDark instead of the editor scheme's own darkness (e.g. EditorColorsManager.isDarkEditor), noting the UI theme and editor scheme can diverge.",
+        "Flags that the value is captured without keying on theme/scheme change, so it will not update when the editor scheme changes (a system independent of the UI LaF, with its own change topic)."
+      ]
+    },
+    {
+      "id": 9,
+      "name": "editor-policy-and-seen-state",
+      "prompt": "Review this editor provider for a release-notes informational screen in an IntelliJ plugin. File: fixture_9.kt",
+      "files": [
+        "evals/files/fixture_9.kt"
+      ],
+      "expected_output": "A report flagging HIDE_OTHER_EDITORS as an inappropriate takeover for a non-modal informational screen, and the absence of any seen/unread tracking for a release-notes (changelog) surface.",
+      "expectations": [
+        "Flags FileEditorPolicy.HIDE_OTHER_EDITORS as a heavy takeover unsuitable for a non-modal informational screen, and recommends a less disruptive policy (e.g. PLACE_BEFORE/AFTER_DEFAULT_EDITOR).",
+        "Raises the absence of 'new since last seen' / seen-state tracking as a finding for a changelog/release-notes surface, with the user-facing consequence, even though there is no code line to cite.",
+        "Frames editor/window policy as a UX decision rather than ignoring it as provider plumbing."
+      ]
+    },
+    {
+      "id": 10,
+      "name": "precision-theming-container-clean",
+      "prompt": "Review this theming container and card from a Jewel-based IntelliJ plugin for theming correctness. File: fixture_10.kt",
+      "files": [
+        "evals/files/fixture_10.kt"
+      ],
+      "expected_output": "A report recognizing the code is largely correct: layered fallbacks, explicit light/dark, theme-change keying, and a centralized theming container. It should not invent hardcoded-color or missing-fallback findings.",
+      "expectations": [
+        "Does NOT flag the hardcoded default colors as a violation, recognizing they are the final fallback in a layered primary-key -> palette-key -> default chain.",
+        "Does NOT claim a missing fallback or missing light/dark handling, recognizing both are present.",
+        "Recognizes the theming-container pattern and theme-change keying (JewelTheme.name/isDark) as correct, and includes a 'Justified as-is' style acknowledgement rather than fabricated findings."
+      ]
+    },
+    {
+      "id": 11,
+      "name": "icon-classloader-cross-plugin-psifile",
+      "prompt": "Review this tool-window file row from a Jewel-based IntelliJ plugin. It renders the icon for files whose type may be owned by another plugin (e.g. a KtFile from the Kotlin plugin), and this plugin does not depend on that plugin. Focus on whether the icon will ship correctly. File: fixture_11.kt",
+      "files": [
+        "evals/files/fixture_11.kt"
+      ],
+      "expected_output": "A report explaining that naming another plugin's icon class fails in a packaged build (isolated classloaders), that fromPlatformIcon(psiFile.getIcon(0)) will throw on a wrapped/deferred icon, and that the icon should be obtained via the platform's IconProvider extension points instead.",
+      "expectations": [
+        "Flags that referencing KotlinIcons (another plugin's icon holder class) requires classloading that class from this plugin's classloader, which works from sources (flat classpath) but fails silently in a packaged build (isolated per-plugin classloaders).",
+        "Flags that IntelliJIconKey.fromPlatformIcon(file.getIcon(0)) will throw because PsiFile.getIcon typically returns a wrapped/DeferredIcon/CompositeIcon, not an IconPathProvider; the icon must be unwrapped to the path-backed sub-icon first.",
+        "Recommends obtaining the icon by asking the platform (PsiElement.getIcon(flags) or PsiIconUtil.getIconFromProviders(element, flags)) so the owning plugin's IconProvider supplies it on its own classloader, without naming the other plugin's icon class.",
+        "Notes that 'the icon shows in an IDE-from-sources run' is not sufficient evidence it ships correctly."
+      ]
+    },
+    {
+      "id": 12,
+      "name": "icon-filename-variant-hardcoded",
+      "prompt": "Review this Jewel toolbar from an IntelliJ plugin. Focus on how it references icon files for dark theme and HiDPI. File: fixture_12.kt",
+      "files": [
+        "evals/files/fixture_12.kt"
+      ],
+      "expected_output": "A report explaining that dark and HiDPI icon variants must not be referenced by filename directly (the PainterHint pipeline selects them), and that the Jewel render path does not use @2x for SVG.",
+      "expectations": [
+        "Flags hardcoding the _dark path by theme: the _dark suffix is resolved automatically by the Dark hint in the PainterHint pipeline; referencing it directly defeats automatic dark selection and graceful fallback.",
+        "Flags hardcoding foo@2x.svg: on the Jewel render path the HiDpi hint applies only to bitmaps, not SVG; SVG scaling comes from intrinsic width/height or an explicit @WxH size variant, so foo@2x.svg is never looked up on the Jewel path (even though the Swing loader does look for it).",
+        "Recommends referencing only the base name (icons/action.svg) and shipping action_dark.svg (and action@2x.png for raster) beside it so the hint pipeline selects variants automatically.",
+        "Notes the Swing-vs-Jewel divergence: behavior verified on the Swing loader does not carry over to the Jewel render path."
+      ]
+    },
+    {
+      "id": 13,
+      "name": "portability-content-reads-laf-directly",
+      "prompt": "Review this reusable search-results panel from a Jewel-based IntelliJ plugin. It is also rendered in a standalone UI unit test and an @Preview. Focus on how it is structured for portability across the bridge and standalone contexts. File: fixture_13.kt",
+      "files": [
+        "evals/files/fixture_13.kt"
+      ],
+      "expected_output": "A report flagging that the content composable reads the LaF directly and imports a com.intellij.* class (breaking standalone use), that SwingBridgeTheme is nested redundantly, and recommending a content-vs-wiring split with an injected theming abstraction.",
+      "expectations": [
+        "Flags that retrieveColorOrUnspecified is called directly inside a content composable, making it bridge-only and breaking in standalone UI tests/previews where no IJPL LaF exists; the read belongs in a wiring layer.",
+        "Flags that importing UIThemeBasedLookAndFeelInfo (a com.intellij.* class) in the content module creates a hard platform dependency that prevents standalone use; the content module should be free of ide-laf-bridge/platform imports.",
+        "Recommends extracting a small theming abstraction with a bridge implementation (reads the LaF) and a standalone implementation (hardcodes Int UI defaults), injected via CompositionLocal or parameter from the wiring layer.",
+        "Notes that JewelComposePanel already wraps content in SwingBridgeTheme, so wrapping the content in SwingBridgeTheme itself is redundant when hosted that way."
+      ]
+    },
+    {
+      "id": 14,
+      "name": "tooltip-missing-icon-only-controls",
+      "prompt": "Review this Jewel action toolbar of icon-only buttons from an IntelliJ plugin tool window. Focus on the interaction affordances. File: fixture_14.kt",
+      "files": [
+        "evals/files/fixture_14.kt"
+      ],
+      "expected_output": "A report flagging the absence of tooltips on the icon-only buttons and recommending Jewel's Tooltip, noting the accessibility overlap.",
+      "expectations": [
+        "Flags the absence of a Tooltip on each icon-only IconButton: without a label or tooltip the controls are unidentifiable until clicked, and unnarratable to screen readers.",
+        "Recommends wrapping each IconButton in Jewel's Tooltip(tooltip = { Text(...) }) { ... } (not a hand-rolled hover popup), naming the action and ideally the keyboard shortcut.",
+        "Notes the accessibility overlap: icon-only controls also need an accessible name (contentDescription is null here); routes the semantics depth to ui-accessibility.",
+        "Does NOT flag the AllIconsKeys usage or icon loading as incorrect."
+      ]
+    },
+    {
+      "id": 15,
+      "name": "text-selection-scope-i-beam-bleed",
+      "prompt": "Review this file-results feed from a Jewel-based IntelliJ plugin. The whole feed is wrapped in a SelectionContainer so users can copy file paths. Focus on selection scope and pointer behavior. File: fixture_15.kt",
+      "files": [
+        "evals/files/fixture_15.kt"
+      ],
+      "expected_output": "A report flagging the over-broad SelectionContainer (I-beam over non-text regions, selection bleeding across cards) and recommending tightly-scoped selection plus DisableSelection on the icon button.",
+      "expectations": [
+        "Flags the root-level SelectionContainer wrapping the whole LazyColumn: it shows the text I-beam cursor over non-text parts (icons, padding, the icon button), signaling an editor/text field where there is none.",
+        "Flags that rubber-band selection bleeds across discrete card rows and separators, producing highlights that span elements meant to read as separate.",
+        "Recommends scoping selection to the specific text runs (the Text composables) where copy is a real use case, not the entire layout.",
+        "Notes the nested IconButton should be wrapped in DisableSelection and show the arrow pointer even inside a SelectionContainer."
+      ]
+    },
+    {
+      "id": 16,
+      "name": "focus-ring-missing-custom-interactive",
+      "prompt": "Review this row of clickable, keyboard-focusable tag chips from a Jewel-based IntelliJ plugin. Focus on interaction affordances and theming. File: fixture_16.kt",
+      "files": [
+        "evals/files/fixture_16.kt"
+      ],
+      "expected_output": "A report flagging that the focusable chip shows no focus indicator and recommending Modifier.focusOutline with the themed outline color, plus the hardcoded shape/accent.",
+      "expectations": [
+        "Flags that although .focusable() makes the chip reachable by Tab, there is no visible focus indicator, so keyboard focus is invisible to the user.",
+        "Recommends Modifier.focusOutline(state, shape) using JewelTheme.globalColors.outlines.focused, with a shape matching the chip, rather than a hand-rolled border or no indicator.",
+        "Flags the hardcoded accent Color(0xFF3574F0) as a literal that should come from the theme, and ideally the magic-number RoundedCornerShape(12.dp) as an un-tokened shape.",
+        "Notes the keyboard/focus concern overlaps ui-accessibility and routes the semantics depth there."
+      ]
+    },
+    {
+      "id": 17,
+      "name": "remember-keyed-on-name-not-instanceuuid",
+      "prompt": "Review this helper that resolves a search-highlight color for a Jewel-on-bridge plugin panel. Focus on whether it reacts correctly to theme changes. File: fixture_17.kt",
+      "files": [
+        "evals/files/fixture_17.kt"
+      ],
+      "expected_output": "A report explaining that keying the remember on JewelTheme.name is insufficient (a theme hot-update can keep the name), recommending JewelTheme.instanceUuid, and flagging the single light/dark value.",
+      "expectations": [
+        "Flags JewelTheme.name as an unsafe remember key: a theme hot-update can replace the active LaF while keeping the display name identical, so the block never re-runs and the color goes stale.",
+        "Recommends JewelTheme.instanceUuid (minted fresh on every ThemeDefinition change) as the catch-all key, or keying on the specific themed value the block consumes.",
+        "Flags that a single resolved color is used for both light and dark with no light/dark split.",
+        "Does NOT credit the name-only key as correct."
+      ]
+    },
+    {
+      "id": 18,
+      "name": "speed-search-missing-searchable-list",
+      "prompt": "Review this installed-plugins list (~100 rows) from a Jewel-based IntelliJ plugin settings panel. File: fixture_18.kt",
+      "files": [
+        "evals/files/fixture_18.kt"
+      ],
+      "expected_output": "A report that recognizes the container/row choice as correct but flags the missing speed search for a long list, recommending SpeedSearchArea/SpeedSearchableLazyColumn.",
+      "expectations": [
+        "Acknowledges that SingleSelectionLazyColumn + SimpleListItem is the correct selection container and row, and does NOT flag it as incorrect or recommend the deprecated SelectableLazyColumn.",
+        "Flags the absence of speed search: for a ~100-item list the user would expect type-to-filter, which is not built into SingleSelectionLazyColumn.",
+        "Recommends wrapping with SpeedSearchArea or using SpeedSearchableLazyColumn, noting they are currently experimental (@ExperimentalJewelApi).",
+        "Does not invent theming or spacing findings for this list."
+      ]
+    },
+    {
+      "id": 19,
+      "name": "swing-compat-hand-rolled-hover-bridge",
+      "prompt": "Review this file-list row from a Jewel-based IntelliJ plugin tool window (hosted via JewelComposePanel). Focus on the hover treatment. File: fixture_19.kt",
+      "files": [
+        "evals/files/fixture_19.kt"
+      ],
+      "expected_output": "A report flagging the hand-rolled hover highlight on a plain row in the bridge, where swingCompatMode suppresses hover and the platform equivalent stays flat.",
+      "expectations": [
+        "Flags the hand-rolled hover highlight: in the bridge, swingCompatMode is on by default and suppresses hovered/pressed visual states on most controls (plain rows included) to match the flatter IDE behavior.",
+        "Notes that IJPL plain-label rows do not hover-highlight, so this hand-rolled hover makes the plugin's UI stand out rather than fit in.",
+        "Notes that the controls which do hover in the bridge even under swingCompatMode (tabs, scrollbars, icon buttons) are exceptions that don't gate on the flag, and a plain row is not one of them.",
+        "Recommends removing the collectIsHoveredAsState hover and letting selection state (e.g. a SelectableLazyColumn) drive the visual."
+      ]
+    },
+    {
+      "id": 20,
+      "name": "theme-key-resolution-wildcard-os-default",
+      "prompt": "Review this plugin theme file. The author reports the *.borderColor override doesn't take on buttons, and the Menu border override doesn't show on macOS. File: fixture_20.theme.json",
+      "files": [
+        "evals/files/fixture_20.theme.json"
+      ],
+      "expected_output": "A report explaining that a direct key shadows the wildcard, that a per-OS key with no os.default resolves to nothing on other OSes, and that a LaF component key placed under colors becomes a ColorPalette entry rather than an override.",
+      "expectations": [
+        "Explains that the direct Button.borderColor key always wins over the *.borderColor wildcard, so the wildcard is shadowed on buttons (the wildcard applies only where no direct key exists).",
+        "Flags that Menu.borderColor with only os.windows and no os.default resolves to nothing on macOS and Linux; per-OS values need an os.default fallback.",
+        "Flags that Panel.background placed under colors becomes a ColorPalette.Panel.background palette entry, not the Panel.background LaF component key; component overrides must be under ui.",
+        "Does not claim the wildcard mechanism itself is broken."
+      ]
+    },
+    {
+      "id": 21,
+      "name": "stateful-icon-missing-base",
+      "prompt": "Review this custom checkbox from a Jewel-based IntelliJ plugin that renders its own stateful SVG icons. It renders visibly broken (magenta) when unchecked. File: fixture_21.kt",
+      "files": [
+        "evals/files/fixture_21.kt"
+      ],
+      "expected_output": "A report explaining that specialized state variants fall back to the base icon, that the missing base checkBox.svg causes the magenta error painter, and that the base must be shipped.",
+      "expectations": [
+        "Explains that state variants (checkBoxSelected.svg, checkBoxDisabled.svg) fall back through the hint pipeline toward the base checkBox.svg; because the base is absent, the branch fails and Jewel substitutes the magenta error painter.",
+        "Explains the fallback order (most-specific variant down to base) and that the base must exist while specialized variants are optional.",
+        "Notes that magenta is a Jewel-path load-failure tell (on the Swing path a missing icon is typically blank), useful for diagnosis.",
+        "Recommends shipping the base checkBox.svg alongside the state variants."
+      ]
+    },
+    {
+      "id": 22,
+      "name": "empty-state-absent-list",
+      "prompt": "Review this notifications tool window from a Jewel-based IntelliJ plugin. It is frequently empty after the user dismisses everything. File: fixture_22.kt",
+      "files": [
+        "evals/files/fixture_22.kt"
+      ],
+      "expected_output": "A report flagging the absent empty state (a blank panel when the list is empty) and recommending a designed empty state, without flagging the list container.",
+      "expectations": [
+        "Flags the absent empty state: a legitimately emptyable list that renders a blank panel looks broken rather than informing the user there is nothing to show.",
+        "States the user-facing consequence: a user who dismissed everything (or a first run) gets no signal whether the panel is loading, broken, or intentionally empty.",
+        "Recommends an explicit empty-state composable (message plus optional icon/illustration and optional action) rendered when the list is empty.",
+        "Does NOT flag the SingleSelectionLazyColumn container choice as incorrect."
+      ]
+    },
+    {
+      "id": 23,
+      "name": "precision-correct-fork-with-issue-link",
+      "prompt": "Review this collapsible list item from a Jewel-based IntelliJ plugin for design-system fidelity. File: fixture_23.kt",
+      "files": [
+        "evals/files/fixture_23.kt"
+      ],
+      "expected_output": "A report recognizing this as a justified, documented, issue-tracked fork that correctly reuses the built-in and theming; it should not recommend a non-existent built-in or flag the fork as unjustified.",
+      "expectations": [
+        "Does NOT flag the fork as unjustified or recommend replacing it with a built-in that does not exist (SimpleListItem has no disclosure affordance).",
+        "Recognizes the TODO + YouTrack issue link as the correct form for a tracked, temporary fork.",
+        "Acknowledges in a 'Justified as-is' style that the fork is legitimate given the built-in's API limitation and that it reuses SimpleListItem for the row body to preserve styling/selection/keyboard semantics.",
+        "Does NOT invent hardcoded-color or theming findings (colors/icons come from the theme and AllIconsKeys)."
+      ]
+    },
+    {
+      "id": 24,
+      "name": "precision-correct-svg-png-variants",
+      "prompt": "Review this Jewel toolbar and its icon variant setup from an IntelliJ plugin for correctness. File: fixture_24.kt",
+      "files": [
+        "evals/files/fixture_24.kt"
+      ],
+      "expected_output": "A report recognizing the icon variant setup as correct: base-name reference, @2x.png for raster HiDPI, intrinsic-size SVG with no @2x.svg. It should not over-flag any of these.",
+      "expectations": [
+        "Does NOT flag action@2x.png as incorrect: @2x for raster PNG is the correct HiDPI convention and Jewel's HiDpi hint applies to bitmaps.",
+        "Does NOT flag the absence of action@2x.svg: SVG is scaled via intrinsic size or a @WxH variant, not @2x, on the Jewel path.",
+        "Does NOT flag referencing only the base name action.svg: the hint pipeline selects _dark/@2x variants automatically.",
+        "Includes a 'Justified as-is' acknowledgement that the icon setup follows Jewel's filename variant conventions."
+      ]
+    },
+    {
+      "id": 25,
+      "name": "icon-experimental-framework-hard-dep",
+      "prompt": "Review this composite plugin icon built with the com.intellij.platform.icons framework, used in shipping Jewel UI. File: fixture_25.kt",
+      "files": [
+        "evals/files/fixture_25.kt"
+      ],
+      "expected_output": "A report flagging the hard dependency on the experimental/internal com.intellij.platform.icons API in shipping plugin code, and recommending the supported IconKey path, without claiming the framework is unbundled.",
+      "expectations": [
+        "Flags the hard dependency on com.intellij.platform.icons IconManager/IconDesigner: these entry points are @ApiStatus.Internal/@ApiStatus.Experimental, an API-stability risk for shipping plugin code.",
+        "Notes the supported icon paths are the Jewel IconKey + PainterHint pipeline and the classic AllIcons/IconLoader; the experimental framework should not be depended on until its API stabilizes.",
+        "Does NOT claim the framework is 'unbundled' (the modules are present in the IDE); the concern is the Internal/Experimental API status.",
+        "Recommends achieving the same result via a Jewel IconKey and the standard Icon composable where possible."
+      ]
+    },
+    {
+      "id": 26,
+      "name": "content-rhythm-token-as-layout-margin",
+      "prompt": "Review the spacing in this Markdown card feed from a Jewel-based IntelliJ plugin. File: fixture_26.kt",
+      "files": [
+        "evals/files/fixture_26.kt"
+      ],
+      "expected_output": "A report flagging that a Markdown content-rhythm token (blockVerticalSpacing) is reused as a layout margin, coupling content density to layout gutters, and recommending a separate layout-spacing token.",
+      "expectations": [
+        "Flags that blockVerticalSpacing is a content-rhythm token (inter-paragraph spacing) reused as the card's outer layout margin, so changing content density silently changes layout gutters.",
+        "Distinguishes this from additive-stacking: the issue is semantic coupling between unrelated spacing concerns, not values stacking.",
+        "Recommends a separate layout-spacing token for the card's outer margin.",
+        "Does NOT flag the specific dp amount as wrong if it happens to be a reasonable gutter."
+      ]
+    },
+    {
+      "id": 27,
+      "name": "palette-index-portability",
+      "prompt": "Review this accent label from a Jewel-based IntelliJ plugin that reads colors from the color palette by index. File: fixture_27.kt",
+      "files": [
+        "evals/files/fixture_27.kt"
+      ],
+      "expected_output": "A report flagging the deprecated throwing palette accessors, the assumption that Blue4 is always primary (it differs in dark), and the Islands empty-palette risk; recommends *OrNull with fallbacks or semantic role tokens.",
+      "expectations": [
+        "Flags blue(4)/gray(1) (the deprecated accessors that throw on a partial palette) and recommends blueOrNull(4)/grayOrNull(1) with a fallback.",
+        "Flags the assumption 'Blue4 is always the primary blue': the primary #3574F0 is Blue4 in light but Blue6 in dark, so the role-to-index mapping differs per mode; supply both a light and dark index or use a semantic role token.",
+        "Notes that under Islands Darcula the palette may be empty despite isIslands being true (key-format mismatch), so grayOrNull may return null even under Islands; the null case must be handled.",
+        "Recommends semantic role tokens over raw palette indices where available."
+      ]
+    },
+    {
+      "id": 28,
+      "name": "form-validation-missing-inline-feedback",
+      "prompt": "Review this connection settings form from a Jewel-based IntelliJ plugin. Focus on how validation errors are surfaced. File: fixture_28.kt",
+      "files": [
+        "evals/files/fixture_28.kt"
+      ],
+      "expected_output": "A report flagging the absence of inline field-level validation (only a disabled button with a vague tooltip) and recommending Outline.Error plus field-level messages using the themed error role.",
+      "expectations": [
+        "Flags the absent inline validation: validity is only reflected by the disabled button, forcing the user to guess which field failed and why.",
+        "Recommends field-level error messages plus Outline.Error on the offending field, surfaced as the user types or on focus loss.",
+        "Flags the 'Fill in all fields' button tooltip as too vague: it does not name the failing field or the specific constraint (e.g. port must be numeric).",
+        "Recommends the themed error role/outline rather than hardcoding red, consistent with theming-and-color.md."
+      ]
+    },
+    {
+      "id": 29,
+      "name": "nested-splitter-no-minimums-unhoisted-state",
+      "prompt": "Review this three-way (nested) split layout from a Jewel-based IntelliJ plugin tool window. Focus on the split-pane setup. File: fixture_29.kt",
+      "files": [
+        "evals/files/fixture_29.kt"
+      ],
+      "expected_output": "A report flagging the missing per-pane minimums on both splitters (panes can be dragged to zero) and the inline, un-hoisted SplitLayoutState instances that cannot be reset together; it should recognize the two-nested-2-way structure as the correct way to build a three-way split.",
+      "expectations": [
+        "Flags that neither HorizontalSplitLayout sets firstPaneMinWidth/secondPaneMinWidth, so any pane (tree, editor, inspector) can be dragged to zero width and collapse its content.",
+        "Flags that the inner SplitLayoutState is created with remember inside the second slot and the outer one inline, so neither is hoisted; a 'reset layout' action cannot restore both dividers together.",
+        "Recommends hoisting both SplitLayoutStates to the caller (or a state holder) so the layout is resettable and persistable.",
+        "Recognizes that composing two 2-way HorizontalSplitLayouts is the correct way to build a three-way split, and does NOT recommend a hand-rolled draggable divider."
+      ]
+    },
+    {
+      "id": 30,
+      "name": "resizable-pane-no-minimum-size",
+      "prompt": "Review this resizable detail pane from a Jewel-based IntelliJ plugin tool window. The user can widen or narrow the surrounding split. Focus on resize behavior. File: fixture_30.kt",
+      "files": [
+        "evals/files/fixture_30.kt"
+      ],
+      "expected_output": "A report flagging that the pane defines no minimum size, so when the surface is narrowed the header row's title and button collide/overflow instead of the pane clipping at a sane floor; recommends a content-derived minimum with clip-below behavior.",
+      "expectations": [
+        "Flags that the pane has no minimum size (only fillMaxWidth), so as the parent narrows the layout keeps shrinking until the header title and the Configure button collide or the button is pushed off-edge, rather than clipping at a floor.",
+        "States that the desired behavior below the floor is to clip (or scroll) at a minimum size, not to keep reflowing into a broken layout.",
+        "Recommends a minimum size derived from the content (the narrowest the header row can be before title and button collide), e.g. via widthIn(min = ...)/a size-clamp modifier, rather than a round guess.",
+        "Does NOT invent a spacing-stacking finding; the spacedBy/padding here is single-sourced."
+      ]
+    },
+    {
+      "id": 31,
+      "name": "prose-full-width-no-measure-cap",
+      "prompt": "Review this release-notes / documentation panel from a Jewel-based IntelliJ plugin. It renders long-form Markdown prose. Focus on the text layout. File: fixture_31.kt",
+      "files": [
+        "evals/files/fixture_31.kt"
+      ],
+      "expected_output": "A report flagging that long-form prose fills the full panel width with no maximum measure, so on a wide tool window line length runs far past the readable range; recommends a widthIn(max=...) cap on the text column, start-aligned.",
+      "expectations": [
+        "Flags that the prose Text fillMaxWidth()s with no widthIn(max = ...) cap, so on a widened tool window each line runs well past the ~50-75 (max ~80) characters-per-line readable range, hurting readability.",
+        "Recommends capping the text column's measure with widthIn(max = ...) (or a max-width wrapper) sized to a sane character-based measure, while letting the container still fill the width.",
+        "Notes the capped column should stay start-aligned in an LTR panel, not centered.",
+        "Does NOT recommend capping non-prose UI (labels, single-line controls); the finding is scoped to the long-form running text."
+      ]
+    },
+    {
+      "id": 32,
+      "name": "laf-fallback-standard-swing-key-unsafe",
+      "prompt": "Review this reusable status badge from a Jewel-based IntelliJ plugin. The author intends it to be portable (bridge tool window plus @Preview and standalone UI tests) via a 'read the LaF key with a hardcoded fallback' strategy. Focus on whether that strategy holds. File: fixture_32.kt",
+      "files": [
+        "evals/files/fixture_32.kt"
+      ],
+      "expected_output": "A report that distinguishes the two reads: the custom key (a) is a safe use of the read-with-fallback trick, but the standard Swing key (b) Label.foreground is unsafe because it exists in the standalone Swing LaF and resolves to the Swing default instead of falling back to the intended Int UI value; and that referencing retrieveColor at all makes this content composable non-portable. It should NOT blanket-flag both reads as 'missing fallback'.",
+      "expectations": [
+        "Distinguishes the two reads rather than treating them identically: recognizes that the read-with-fallback strategy is valid for a custom/plugin-owned key and only broken for the standard Swing key.",
+        "Flags that Label.foreground (b) is a standard Swing LaF key present in the default Swing LaF standalone, so the read succeeds and returns the Swing default instead of missing and falling back to the intended Int UI defaultDark/default value -- a silently wrong, un-Int-UI color with no error.",
+        "Confirms that the custom key MyPlugin.Badge.background (a) is safe under this trick: no plain Swing LaF defines it, so standalone the read misses and the hardcoded fallback applies as intended.",
+        "Notes that Jewel exposes retrieveColor* only in the bridge module, so a content composable importing org.jetbrains.jewel.bridge is inherently non-portable (cannot run in standalone/preview/tests without ide-laf-bridge), independent of whether the fallbacks are correct.",
+        "Recommends an injected theming abstraction (interface with a bridge LaF-reading implementation and a standalone hardcoded light/dark implementation, provided via CompositionLocal) so content never calls retrieveColor directly; does NOT merely tell the author to 'add a fallback' (both reads already have one).",
+        "Does NOT claim both reads are missing a fallback, and does NOT claim the custom-key read (a) is broken."
+      ]
+    },
+    {
+      "id": 33,
+      "name": "raw-scroll-no-themed-scrollbar",
+      "prompt": "Review this build-log panel from a Jewel-based IntelliJ plugin tool window. It streams an unbounded number of log lines into a fixed-height tool window. Focus on the scrolling. File: fixture_33.kt",
+      "files": [
+        "evals/files/fixture_33.kt"
+      ],
+      "expected_output": "A report flagging that the panel scrolls via a raw Modifier.verticalScroll with no themed scrollbar, and recommending Jewel's VerticallyScrollableContainer (and, for an unbounded/large stream, a lazy list) so the scrollbar matches the IDE's native look and behavior.",
+      "expectations": [
+        "Flags that scrolling is done with a raw Modifier.verticalScroll(rememberScrollState()) and there is no themed scrollbar, so the user gets no visible, platform-styled scroll indicator (unlike the IDE's native scrollbars).",
+        "Recommends Jewel's VerticallyScrollableContainer (org.jetbrains.jewel.ui.component) so the scrollbar matches the platform look (macOS beside content, Windows/Linux overlay) and tracks the theme; or VerticalScrollbar if placing the bar manually.",
+        "Notes that a Column + verticalScroll materializes every line; for an unbounded/large log stream a lazy list (LazyColumn/LazyListState) shared with the scrollable container is the scalable choice.",
+        "If recommending the ScrollState-owning container overload, notes the content must not also apply its own verticalScroll (double-scroll); or if recommending the lazy overload, that the LazyListState is shared with the lazy layout.",
+        "Confirms the content is genuinely overflow-capable (unbounded lines in a fixed-height window), so a scroll affordance is required rather than optional."
+      ]
+    },
+    {
+      "id": 34,
+      "name": "content-description-empty-vs-null",
+      "prompt": "Review this Jewel plugin status row. Focus on the contentDescription choices for icons/images and what should be exposed to accessibility. File: fixture_34.kt",
+      "files": [
+        "evals/files/fixture_34.kt"
+      ],
+      "expected_output": "A report flagging the empty-string contentDescription on the icon-only Configure action and the duplicate plugin-name description on the leading decorative icon; it should preserve the null decorative/status icon and recommend a concise non-empty description for the action.",
+      "expectations": [
+        "Flags contentDescription = \"\" on the GearPlain icon inside IconButton as invalid: an empty string is not a useful accessible name and is not the correct way to hide a decorative element.",
+        "Recommends a concise non-empty description for the configure action, such as \"Configure plugin\" or \"Configure <pluginName>\", because the icon-only button has no visible label.",
+        "Flags the leading plugin icon contentDescription = pluginName as duplicating the adjacent Text(pluginName); since the icon is decorative/redundant, recommends contentDescription = null there.",
+        "Recognizes that contentDescription = null on the status icon next to visible Enabled/Disabled text is acceptable because the sibling text already provides the accessible readout and the icon is decorative/duplicate.",
+        "States the rule explicitly: never use an empty string; use null only for purely decorative or duplicate elements, otherwise use a reasonable non-empty content description.",
+        "Routes deeper accessible name/role/state verification to ui-accessibility rather than overclaiming a full accessibility audit."
+      ]
+    },
+    {
+      "id": 35,
+      "name": "strict-studio-bot-color-key-lookup",
+      "prompt": "Review this Studio Bot severity chip from a Jewel-based IntelliJ plugin. The author wants an exact lookup for Studio Bot color keys, then a ColorPalette fallback if the key is absent. Focus on whether the lookup APIs do what the code expects. File: fixture_35.kt",
+      "files": [
+        "evals/files/fixture_35.kt"
+      ],
+      "expected_output": "A report explaining that JBColor.get is the wrong API for exact LaF key lookup: it does not read UIManager LaF defaults, it registers/returns the supplied default marker, and therefore makes existing StudioBot or ColorPalette keys look missing. It should recommend UIManager.getColor for exact key probing and note why Jewel retrieveColor/JBColor.namedColorOrNull are also not exact because of wildcard fallback matching.",
+      "expectations": [
+        "Flags JBColor.get(colorKey, MissingMarker) as the wrong API for exact LaF key lookup because JBColor.get does not query UIManager LaF defaults; it checks/registers the supplied default in JBColor's defaultThemeColors map.",
+        "Explains the concrete bug: the marker default can be returned even when the requested Studio Bot key exists in UI defaults, so the code treats existing keys as missing or trips the AssertionError path.",
+        "Flags the fallback helper's JBColor.get(\"ColorPalette.Gray12\", MissingMarker) for the same reason: it can make an existing ColorPalette fallback key look missing instead of reading the palette value.",
+        "Recommends UIManager.getColor(key) for strict exact-key lookup semantics, followed by explicit fallback handling and light/dark defaults.",
+        "Distinguishes UIManager.getColor from Jewel retrieveColor*/JBColor.namedColorOrNull: retrieveColor*/namedColorOrNull may wildcard-match via the '*' suffix rules, so they are not appropriate when exact direct-key presence matters.",
+        "Does NOT recommend JBColor.get(key, JBColor.marker(...)) or a marker-plus-AssertionError dance as the fix."
+      ]
+    },
+    {
+      "id": 36,
+      "name": "project-parameter-ijpl-leak",
+      "prompt": "Review this build header composable for architecture and API contract issues. File: fixture_36.kt",
+      "files": [
+        "evals/files/fixture_36.kt"
+      ],
+      "expected_output": "A report flagging the direct Project parameter leak in @Composable, the minting of an ad-hoc LocalProject CompositionLocal out of laziness, and the draw-time ColorFilter.tint on an icon, recommending abstract state (or an explicit provider boundary) and PainterHint.Stroke for icon recoloring.",
+      "expectations": [
+        "Flags direct Project (com.intellij.openapi.project.Project) parameter on @Composable functions as an IJPL platform leak that breaks Compose stability tracking (Project lacks stable equals/hashCode) and ruins unit test isolation.",
+        "Flags minting ad-hoc CompositionLocals (LocalProject) to bypass explicit parameter passing or established abstractions as an anti-pattern.",
+        "Flags layer-level ColorFilter.tint on the icon and recommends PainterHint.Stroke or avoiding layer tinting on filled icons."
+      ]
+    },
+    {
+      "id": 37,
+      "name": "ijpl-singleton-key-in-composition",
+      "prompt": "Review this SearchHighlightBox composable that caches highlight colors. File: fixture_37.kt",
+      "files": [
+        "evals/files/fixture_37.kt"
+      ],
+      "expected_output": "Flags accessing IJPL singleton EditorColorsManager.getInstance() inside remember key parameter as an architectural violation and a Compose reactivity bug, recommending JewelTheme.instanceUuid or an injected reactive state.",
+      "expectations": [
+        "Flags direct access to IJPL singleton APIs (EditorColorsManager.getInstance()) inside @Composable key expressions or composition scope as a violation of Compose architecture.",
+        "Explains that plain JVM getters do not return Compose State, so reading EditorColorsManager.getInstance().globalScheme inside a remember key will NOT trigger recomposition upon scheme changes.",
+        "Recommends keying on JewelTheme.instanceUuid (or a reactive theme state parameter) which automatically invalidates on IDE theme or scheme updates."
+      ]
+    },
+    {
+      "id": 38,
+      "name": "filter-popup-component-reinvention",
+      "prompt": "Review this custom filter menu component built for a tool window top bar. File: fixture_38.kt",
+      "files": [
+        "evals/files/fixture_38.kt"
+      ],
+      "expected_output": "Flags structural component reinvention (hand-rolling custom Column/Row layouts with manual hover logic) instead of using Jewel's standard PopupMenu and SelectableMenuItem, and flags using backgroundActive token for hover state.",
+      "expectations": [
+        "Flags the custom Column + Row filter menu as component reinvention and recommends standard Jewel PopupMenu with SelectableMenuItem or MenuItem.",
+        "Notes that PopupMenu and SelectableMenuItem natively handle keyboard traversal, selection states, and standard IDE menu styling.",
+        "Flags using backgroundActive as a hover color, noting that backgroundActive is an active/pressed state token, not a hover token.",
+        "Does NOT prioritize micro-styling tweaks over flagging the component reinvention."
+      ]
+    },
+    {
+      "id": 39,
+      "name": "list-keyboard-scroll-reinvention",
+      "prompt": "Review this search results list implementation and its keyboard scroll behavior. File: fixture_39.kt",
+      "files": [
+        "evals/files/fixture_39.kt"
+      ],
+      "expected_output": "Flags reinvention of item selection using plain LazyColumn + manual selectedIndex state + animateScrollToItem, recommending Jewel's SingleSelectionLazyColumn with instant scrollToItem step jumps for desktop keyboard navigation.",
+      "expectations": [
+        "Flags building custom item selection via plain LazyColumn + manual selectedIndex state + manual listeners instead of using Jewel's built-in SingleSelectionLazyColumn.",
+        "Explains that IDE lists use instant step jumps (scrollToItem) during keyboard navigation to match desktop platform conventions, and does NOT claim instant step jumps are 'laggy'.",
+        "Notes that SingleSelectionLazyColumn natively manages selection state, keyboard arrow navigation, focus, and scroll-into-view behavior."
+      ]
+    },
+    {
+      "id": 40,
+      "name": "filled-icon-over-tinting",
+      "prompt": "Review this status badge icon composable for icon loading and tinting correctness. File: fixture_40.kt",
+      "files": [
+        "evals/files/fixture_40.kt"
+      ],
+      "expected_output": "Flags draw-time ColorFilter.tint on a filled SVG icon for clobbering fill alpha channels and interior shapes, recommending PainterHint.Stroke for stroke-based recoloring or leaving filled icons untinted.",
+      "expectations": [
+        "Flags applying layer-level ColorFilter.tint(...) to a filled icon for clobbering interior shapes and fill alpha channels to solid colors.",
+        "Recommends using PainterHint.Stroke(color) for stroke-based icon recoloring (which strips fills to transparent at load time) or leaving filled icons untinted.",
+        "Explains the phase difference: PainterHint.Stroke runs during load-time SVG DOM patching, whereas ColorFilter.tint operates during draw-time Compose layer blending."
+      ]
+    },
+    {
+      "id": 41,
+      "name": "mixed-text-baseline-misalignment",
+      "prompt": "Review this file location label composable that combines default UI text and editor code text on the same line. File: fixture_41.kt",
+      "files": [
+        "evals/files/fixture_41.kt"
+      ],
+      "expected_output": "Flags Alignment.CenterVertically as insufficient for aligning mixed text styles on the same line due to differing font metrics, recommending AnnotatedString or baseline alignment, with mandatory visual verification.",
+      "expectations": [
+        "Flags Alignment.CenterVertically on a Row mixing defaultTextStyle and editorTextStyle for misaligning text baselines due to differing font metrics and line heights.",
+        "Recommends using AnnotatedString within a single Text composable, or explicit baseline alignment (Modifier.alignByBaseline() or Row(verticalAlignment = Alignment.Bottom)).",
+        "Requires authors/reviewers to visually verify baseline alignment when fixing mixed-style text lines."
+      ]
+    }
+  ]
+}
