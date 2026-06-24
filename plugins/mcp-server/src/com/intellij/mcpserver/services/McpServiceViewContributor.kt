@@ -3,6 +3,7 @@ package com.intellij.mcpserver.services
 
 import com.intellij.execution.services.ServiceViewContributor
 import com.intellij.execution.services.ServiceViewDescriptor
+import com.intellij.execution.services.ServiceViewNonActivatingDescriptor
 import com.intellij.execution.services.ServiceViewToolWindowDescriptor
 import com.intellij.execution.services.SimpleServiceViewDescriptor
 import com.intellij.icons.AllIcons
@@ -44,6 +45,7 @@ internal class McpServiceViewContributor : ServiceViewContributor<McpSessionInfo
 private class McpServerRootDescriptor(
   private val project: Project,
 ) : SimpleServiceViewDescriptor(McpServerBundle.message("mcp.service.view.root.name"), AllIcons.Nodes.McpServerWidget),
+    ServiceViewNonActivatingDescriptor,
     ServiceViewToolWindowDescriptor {
   private var contentComponent: JComponent? = null
 
