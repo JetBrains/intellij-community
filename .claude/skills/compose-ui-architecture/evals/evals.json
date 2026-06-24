@@ -1,0 +1,71 @@
+{
+  "skill_name": "compose-ui-architecture",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "You are editing an IntelliJ-style desktop Compose chat UI. Review this proposed change shape: a reusable ConversationTimeline composable collects conversationState, activeProjectRoot, and providerDiscovery flows directly, uses remember { mutableStateOf(conversationState.messages) }, and performs markdown parsing in the LazyColumn item body. Give a concise implementation plan that keeps the desktop Compose architecture intact.",
+      "expected_output": "A concise plan that routes raw state and markdown parsing through presenter/coordinator projections, keeps composition render-only, avoids stale remembered props, preserves lazy-list key/contentType guidance, and names tests at the correct layer.",
+      "files": [],
+      "expectations": [
+        "Uses presenter/coordinator terminology or otherwise names a project-specific state-owning layer instead of importing Android ViewModel guidance.",
+        "Recommends a coherent presenter-owned screen/view model projection instead of multiple raw flow collections in the composable.",
+        "Flags remember { mutableStateOf(conversationState.messages) } as stale/shadow state unless explicitly initial-only.",
+        "Moves markdown parsing or heavy data shaping out of LazyColumn item composition into presenter/coordinator or a tested service.",
+        "Mentions stable lazy-list keys and contentType for heterogeneous timeline rows.",
+        "Suggests presenter/state-holder unit tests before relying on Compose UI tests for business logic."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "You are adding a desktop Settings panel in an IntelliJ-style Compose UI with a file picker, keyboard shortcut, and a local expanded/collapsed section. Describe the Compose architecture shape: what stays in composition, what goes to presenter/coordinator, and what seam should hide Swing/AWT details.",
+      "expected_output": "A desktop-specific architecture sketch that keeps file picker/Swing details behind callbacks or interop helpers, routes settings mutation through presenter APIs, treats expanded state as ephemeral UI state, and binds shortcuts at the shell/screen level while dispatching presenter intents.",
+      "files": [],
+      "expectations": [
+        "Treats expanded/collapsed UI state as acceptable ephemeral composition state.",
+        "Routes selected file paths and settings mutations through callbacks/presenter APIs instead of mutating app state in composition.",
+        "Identifies Swing/AWT file picker details as an interop boundary or helper concern, not leaf composable logic.",
+        "Says keyboard shortcuts should be bound at shell/screen level and routed through presenter/app-state intent paths.",
+        "Avoids Android lifecycle, Hilt/Koin, Navigation, or collectAsStateWithLifecycle advice."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Review this desktop Compose pattern from AccountHeaderContent: local hover interaction source, FocusRequester with LaunchedEffect(Unit) to focus an API key editor, TextFieldState committed through onSaveApiKey, and callbacks for login/logout/remove. Say whether this needs architecture refactoring.",
+      "expected_output": "A no-major-refactor answer that identifies hover/focus/text editing as healthy UI-local state and confirms callbacks keep app behavior outside the leaf component.",
+      "files": [],
+      "expectations": [
+        "Does not force a presenter/state-holder refactor for local hover state.",
+        "Treats FocusRequester plus LaunchedEffect(Unit) as acceptable one-shot UI wiring.",
+        "Treats TextFieldState/editing state as acceptable when committed through callbacks.",
+        "Recognizes login/logout/remove/save callbacks as the correct boundary for app behavior.",
+        "Avoids Android lifecycle advice."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Review this runtime-backed desktop Compose surface pattern: a production composable receives a presenter-projected RenderedSurfaceModel, renders rows from that model, and sends onAction/onValueChange callbacks upward. A proposed refactor would instead parse protocol JSON and instantiate the runtime object in the leaf composable. Should production code copy that refactor?",
+      "expected_output": "A generic runtime-boundary answer: production UI should render projected models and send callbacks upward; protocol parsing/runtime ownership belongs outside leaf composition.",
+      "files": [],
+      "expectations": [
+        "Says production UI should render presenter-projected models/snapshots and send callbacks upward.",
+        "Flags protocol parsing and runtime object ownership in a leaf composable as a boundary violation.",
+        "Keeps the advice generic rather than turning into a renderer-specific audit.",
+        "Avoids generic Android ViewModel guidance."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "You are adding a desktop Compose transition from a compact ProjectCard row to a richer ProjectDetails pane. The proposed code puts SharedTransitionLayout deep inside each row, uses Modifier.sharedElement() for the whole details pane even though text style and container shape change, reuses key = \"project\" for every item, stores the selected project in the leaf composable, and has different padding/size modifier order around sharedElement in the source and target. Give a concise implementation plan.",
+      "expected_output": "A desktop-safe shared element plan that keeps selection/navigation state owned above the leaf, uses a common SharedTransitionLayout scope, chooses sharedBounds for visually different container/text transitions, uses stable unique keys, keeps modifier order consistent, and preserves presenter/coordinator ownership.",
+      "files": [],
+      "expectations": [
+        "Places SharedTransitionLayout at a common ancestor that contains both source and target rather than inside each row.",
+        "Uses sharedBounds for visually different content such as changing text style or container shape, or distinguishes it from sharedElement for identical content.",
+        "Requires stable unique shared-content keys derived from item identity and element role, not a reused string key.",
+        "Flags inconsistent modifier order around sharedElement/sharedBounds as a source of visual jumps.",
+        "Keeps selected project/navigation/workflow state in presenter/coordinator or an owning state holder rather than the leaf composable.",
+        "Avoids Android-only navigation/lifecycle guidance."
+      ]
+    }
+  ]
+}
