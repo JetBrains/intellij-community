@@ -131,7 +131,7 @@ public final class DomManagerImpl extends DomManager {
       }
     }, parent);
 
-    VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
+    VirtualFileManager.getInstance().addAsyncFileListenerBackgroundable(new AsyncFileListener() {
       @Override
       public @Nullable ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
         List<DomEvent> domEvents = new ArrayList<>();
