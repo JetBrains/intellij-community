@@ -70,7 +70,10 @@ class DynamicPluginEnabler : PluginEnabler {
       // nothing to do
       pluginsLoaded = true
     }
-    else if (progressTitle == null) {
+    else if (
+      progressTitle == null
+      || DynamicPluginsSupport.getInstance() != null // FIXME disregards custom title, `PotemkinProgress` causes a deadlock with the new support enabled
+    ) {
       val loaded = AtomicBoolean(false)
       runInEdt {
         loaded.set(DynamicPlugins.loadPlugins(installedDescriptors, project))
