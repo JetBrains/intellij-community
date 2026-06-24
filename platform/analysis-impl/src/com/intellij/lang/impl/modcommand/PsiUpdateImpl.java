@@ -577,7 +577,7 @@ final class PsiUpdateImpl {
           }
           TextRange rangeForTemplate = templateRange(elementRange, rangeInElement);
           TextRange range = mapRange(rangeForTemplate);
-          TemplateImpl.DummyContext context = new TemplateImpl.DummyContext(range, element, getPsiFile());
+          TemplateImpl.DummyContext context = new TemplateImpl.DummyContext(rangeForTemplate, element, getPsiFile());
           Result result = varName == null
                           ? expression.calculateResult(context)
                           : myTemplateValues.computeIfAbsent(varName, _ -> expression.calculateResult(context));

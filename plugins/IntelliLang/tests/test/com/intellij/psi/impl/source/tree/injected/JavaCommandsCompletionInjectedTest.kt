@@ -1,9 +1,12 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.completion.command.CommandCompletionLookupElement
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInsight.lookup.LookupElementCustomPreviewHolder
+import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.modcommand.ActionContext
@@ -125,6 +128,76 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
             }""${'"'};
         }      
     """.trimIndent(), preview?.modifiedText())
+  }
+
+  fun testCastPostfixPreview() {
+    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable())
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
+    // language="JAVA"
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class Hello {
+        @org.intellij.lang.annotations.Language("JAVA") String string = ""${'"'}
+        import java.util.List;
+        class A {
+            void a(Object o, List<String> a, String[] b) {
+                o.cast<caret>
+            }
+        }""${'"'};
+      }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    val item = elements.first { element -> element.lookupString.contains("cast", ignoreCase = true) }
+      .`as`(LookupElementCustomPreviewHolder::class.java)
+    assertNotNull(item)
+    val preview = item!!.preview(ActionContext.from(myFixture.editor, myFixture.file))
+    assertTrue(preview is IntentionPreviewInfo.CustomDiff)
+    assertEquals("""
+      class Hello {
+        @org.intellij.lang.annotations.Language("JAVA") String string = ""${'"'}
+        import java.util.List;
+        class A {
+            void a(Object o, List<String> a, String[] b) {
+                (() o)
+            }
+        }""${'"'};
+      }
+    """.trimIndent(), (preview as IntentionPreviewInfo.CustomDiff).modifiedText())
+  }
+
+  fun testForiPostfixPreview() {
+    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable())
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
+    // language="JAVA"
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class Hello {
+        @org.intellij.lang.annotations.Language("JAVA") String string = ""${'"'}
+        import java.util.List;
+        class A {
+            void a(Object o, List<String> a, String[] b) {
+                a.fori<caret>
+            }
+        }""${'"'};
+      }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    val item = elements.first { element -> element.lookupString.contains("fori", ignoreCase = true) }
+      .`as`(LookupElementCustomPreviewHolder::class.java)
+    assertNotNull(item)
+    val preview = item!!.preview(ActionContext.from(myFixture.editor, myFixture.file))
+    assertTrue(preview is IntentionPreviewInfo.CustomDiff)
+    assertEquals("""
+      class Hello {
+        @org.intellij.lang.annotations.Language("JAVA") String string = ""${'"'}
+        import java.util.List;
+        class A {
+            void a(Object o, List<String> a, String[] b) {
+                for (int i = 0; i < a.size(); i++) {
+        
+                }       \s
+            }
+        }""${'"'};
+      }
+    """.trimIndent(), (preview as IntentionPreviewInfo.CustomDiff).modifiedText())
   }
 
   fun testFindDeclaration() {
