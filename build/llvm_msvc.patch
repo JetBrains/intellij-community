@@ -1,10 +1,4 @@
-Subject: [PATCH] fixup! Add MSVC support
-fixup! Add MSVC support
-fixup! Add MSVC support
-fixup! Add MSVC support
-fixup! Add MSVC support
-fixup! Add MSVC support
-Add MSVC support
+Subject: [PATCH] Add MSVC support
 ---
 Index: 3rd_party/llvm-project/x.x/compiler-rt/compiler-rt.BUILD.bazel
 IDEA additional info:
@@ -13,7 +7,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/3rd_party/llvm-project/x.x/compiler-rt/compiler-rt.BUILD.bazel b/3rd_party/llvm-project/x.x/compiler-rt/compiler-rt.BUILD.bazel
 --- a/3rd_party/llvm-project/x.x/compiler-rt/compiler-rt.BUILD.bazel	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/3rd_party/llvm-project/x.x/compiler-rt/compiler-rt.BUILD.bazel	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
++++ b/3rd_party/llvm-project/x.x/compiler-rt/compiler-rt.BUILD.bazel	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -264,20 +264,28 @@
      srcs = [
          "lib/builtins/x86_64/floatdidf.c",
@@ -101,7 +95,7 @@ diff --git a/3rd_party/llvm-project/x.x/compiler-rt/compiler-rt.BUILD.bazel b/3r
 
  CRT_DEFINES = [
      "CRT_HAS_INITFINI_ARRAY",
-@@ -2765,10 +2788,20 @@
+@@ -2765,10 +2788,17 @@
              "@glibc//:gnu_libc_headers",
          ],
          "@platforms//os:macos": [],
@@ -117,10 +111,7 @@ diff --git a/3rd_party/llvm-project/x.x/compiler-rt/compiler-rt.BUILD.bazel b/3r
 +        "@llvm//constraints/windows/abi:gnullvm": [
 +            "@mingw//:mingw_headers",
 +        ],
-+        "@llvm//constraints/windows/abi:msvc": [
-+            "@msvc_runtime//:msvc_include",
-+            "@windows_sdk//:winsdk_ucrt_include",
-+        ],
++        "@llvm//constraints/windows/abi:msvc": [],
 +        "@llvm//constraints/windows/abi:unconstrained": [],
      }),
      includes = [
@@ -132,8 +123,8 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/3rd_party/llvm-project/x.x/libcxx/libcxx.BUILD.bazel b/3rd_party/llvm-project/x.x/libcxx/libcxx.BUILD.bazel
 --- a/3rd_party/llvm-project/x.x/libcxx/libcxx.BUILD.bazel	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/3rd_party/llvm-project/x.x/libcxx/libcxx.BUILD.bazel	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
-@@ -324,10 +324,20 @@
++++ b/3rd_party/llvm-project/x.x/libcxx/libcxx.BUILD.bazel	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
+@@ -324,10 +324,17 @@
          "@llvm//platforms/config:gnu": [
              "@glibc//:gnu_libc_headers",
          ],
@@ -148,10 +139,7 @@ diff --git a/3rd_party/llvm-project/x.x/libcxx/libcxx.BUILD.bazel b/3rd_party/ll
 +        "@llvm//constraints/windows/abi:gnullvm": [
 +            "@mingw//:mingw_headers",
 +        ],
-+        "@llvm//constraints/windows/abi:msvc": [
-+            "@msvc_runtime//:msvc_include",
-+            "@windows_sdk//:winsdk_ucrt_include",
-+        ],
++        "@llvm//constraints/windows/abi:msvc": [],
 +        "@llvm//constraints/windows/abi:unconstrained": [],
      }),
      includes = [
@@ -163,8 +151,8 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/3rd_party/llvm-project/x.x/libcxxabi/libcxxabi.BUILD.bazel b/3rd_party/llvm-project/x.x/libcxxabi/libcxxabi.BUILD.bazel
 --- a/3rd_party/llvm-project/x.x/libcxxabi/libcxxabi.BUILD.bazel	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/3rd_party/llvm-project/x.x/libcxxabi/libcxxabi.BUILD.bazel	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
-@@ -143,10 +143,20 @@
++++ b/3rd_party/llvm-project/x.x/libcxxabi/libcxxabi.BUILD.bazel	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
+@@ -143,10 +143,17 @@
          "@llvm//platforms/config:gnu": [
              "@glibc//:gnu_libc_headers",
          ],
@@ -179,10 +167,7 @@ diff --git a/3rd_party/llvm-project/x.x/libcxxabi/libcxxabi.BUILD.bazel b/3rd_pa
 +        "@llvm//constraints/windows/abi:gnullvm": [
 +            "@mingw//:mingw_headers",
 +        ],
-+        "@llvm//constraints/windows/abi:msvc": [
-+            "@msvc_runtime//:msvc_include",
-+            "@windows_sdk//:winsdk_ucrt_include",
-+        ],
++        "@llvm//constraints/windows/abi:msvc": [],
 +        "@llvm//constraints/windows/abi:unconstrained": [],
      }),
      includes = [
@@ -194,8 +179,8 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/3rd_party/llvm-project/x.x/libunwind/libunwind.BUILD.bazel b/3rd_party/llvm-project/x.x/libunwind/libunwind.BUILD.bazel
 --- a/3rd_party/llvm-project/x.x/libunwind/libunwind.BUILD.bazel	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/3rd_party/llvm-project/x.x/libunwind/libunwind.BUILD.bazel	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
-@@ -106,10 +106,20 @@
++++ b/3rd_party/llvm-project/x.x/libunwind/libunwind.BUILD.bazel	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
+@@ -106,10 +106,17 @@
          "@llvm//platforms/config:gnu": [
              "@glibc//:gnu_libc_headers",
          ],
@@ -210,10 +195,7 @@ diff --git a/3rd_party/llvm-project/x.x/libunwind/libunwind.BUILD.bazel b/3rd_pa
 +        "@llvm//constraints/windows/abi:gnullvm": [
 +            "@mingw//:mingw_headers",
 +        ],
-+        "@llvm//constraints/windows/abi:msvc": [
-+            "@msvc_runtime//:msvc_include",
-+            "@windows_sdk//:winsdk_ucrt_include",
-+        ],
++        "@llvm//constraints/windows/abi:msvc": [],
 +        "@llvm//constraints/windows/abi:unconstrained": [],
      }),
      includes = [
@@ -225,8 +207,8 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/3rd_party/llvm-project/x.x/openmp/openmp.BUILD.bazel b/3rd_party/llvm-project/x.x/openmp/openmp.BUILD.bazel
 --- a/3rd_party/llvm-project/x.x/openmp/openmp.BUILD.bazel	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/3rd_party/llvm-project/x.x/openmp/openmp.BUILD.bazel	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
-@@ -206,11 +206,23 @@
++++ b/3rd_party/llvm-project/x.x/openmp/openmp.BUILD.bazel	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
+@@ -206,11 +206,18 @@
              # https://github.com/hermeticbuild/hermetic-llvm/issues/146
              "@kernel_headers",
          ],
@@ -243,12 +225,7 @@ diff --git a/3rd_party/llvm-project/x.x/openmp/openmp.BUILD.bazel b/3rd_party/ll
 +        "@llvm//constraints/windows/abi:gnullvm": [
 +            "@mingw//:mingw_headers",
 +        ],
-+        "@llvm//constraints/windows/abi:msvc": [
-+            "@msvc_runtime//:msvc_include",
-+            "@windows_sdk//:winsdk_shared_include",
-+            "@windows_sdk//:winsdk_ucrt_include",
-+            "@windows_sdk//:winsdk_um_include",
-+        ],
++        "@llvm//constraints/windows/abi:msvc": [],
 +        "@llvm//constraints/windows/abi:unconstrained": [],
      }) + select({
          "@llvm//platforms/config:musl": [
@@ -260,7 +237,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/MODULE.bazel b/MODULE.bazel
 --- a/MODULE.bazel	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/MODULE.bazel	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
++++ b/MODULE.bazel	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -13,6 +13,7 @@
  bazel_dep(name = "rules_python", version = "1.7.0")
  bazel_dep(name = "with_cfg.bzl", version = "0.12.0")
@@ -302,7 +279,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/MODULE.bazel.lock b/MODULE.bazel.lock
 --- a/MODULE.bazel.lock	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/MODULE.bazel.lock	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
++++ b/MODULE.bazel.lock	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -110,7 +110,8 @@
      "https://bcr.bazel.build/modules/package_metadata/0.0.2/MODULE.bazel": "fb8d25550742674d63d7b250063d4580ca530499f045d70748b1b142081ebb92",
      "https://bcr.bazel.build/modules/package_metadata/0.0.3/MODULE.bazel": "77890552ecea9e284b5424c9de827a58099348763a4359e975c359a83d4faa83",
@@ -420,7 +397,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/README.md b/README.md
 --- a/README.md	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/README.md	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
++++ b/README.md	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -128,6 +128,8 @@
  | **armv7-linux-musleabihf** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
  | **aarch64-windows-gnu ²**| ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -456,7 +433,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/constraints/windows/abi/BUILD.bazel b/constraints/windows/abi/BUILD.bazel
 --- a/constraints/windows/abi/BUILD.bazel	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/constraints/windows/abi/BUILD.bazel	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
++++ b/constraints/windows/abi/BUILD.bazel	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -1,20 +1,17 @@
 +load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 +load(":declare_abis_constraints.bzl", "declare_abis_constraints")
@@ -496,8 +473,8 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/constraints/windows/abi/abis.bzl b/constraints/windows/abi/abis.bzl
 new file mode 100644
---- /dev/null	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
-+++ b/constraints/windows/abi/abis.bzl	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
+--- /dev/null	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
++++ b/constraints/windows/abi/abis.bzl	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -0,0 +1,8 @@
 +WINDOWS_ABIS = [
 +    "gnu",
@@ -514,8 +491,8 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/constraints/windows/abi/declare_abis_constraints.bzl b/constraints/windows/abi/declare_abis_constraints.bzl
 new file mode 100644
---- /dev/null	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
-+++ b/constraints/windows/abi/declare_abis_constraints.bzl	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
+--- /dev/null	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
++++ b/constraints/windows/abi/declare_abis_constraints.bzl	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -0,0 +1,13 @@
 +load(":abis.bzl", "UNCONSTRAINED_WINDOWS_ABI", "WINDOWS_ABIS")
 +
@@ -537,7 +514,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/extensions/llvm_source.bzl b/extensions/llvm_source.bzl
 --- a/extensions/llvm_source.bzl	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/extensions/llvm_source.bzl	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
++++ b/extensions/llvm_source.bzl	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -103,6 +103,7 @@
          "orc-rt",
          "libclc",
@@ -553,7 +530,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/platforms/BUILD.bazel b/platforms/BUILD.bazel
 --- a/platforms/BUILD.bazel	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/platforms/BUILD.bazel	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
++++ b/platforms/BUILD.bazel	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -11,6 +11,7 @@
          ":common",
          "//constraints/cxxstdlib:cxxstdlib_versions",
@@ -569,7 +546,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/platforms/common.bzl b/platforms/common.bzl
 --- a/platforms/common.bzl	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/platforms/common.bzl	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
++++ b/platforms/common.bzl	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -38,3 +38,8 @@
      ("linux", "s390x"),
      ("linux", "armv7"),
@@ -586,7 +563,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/platforms/config/BUILD.bazel b/platforms/config/BUILD.bazel
 --- a/platforms/config/BUILD.bazel	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/platforms/config/BUILD.bazel	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
++++ b/platforms/config/BUILD.bazel	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -9,6 +9,7 @@
      visibility = ["//visibility:public"],
      deps = [
@@ -602,7 +579,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/platforms/config/declare_config_settings.bzl b/platforms/config/declare_config_settings.bzl
 --- a/platforms/config/declare_config_settings.bzl	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/platforms/config/declare_config_settings.bzl	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
++++ b/platforms/config/declare_config_settings.bzl	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -1,6 +1,7 @@
  load("@bazel_skylib//lib:selects.bzl", "selects")
  load("//constraints/libc:libc_versions.bzl", "GLIBCS", "LIBCS")
@@ -644,7 +621,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/platforms/declare_platforms.bzl b/platforms/declare_platforms.bzl
 --- a/platforms/declare_platforms.bzl	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/platforms/declare_platforms.bzl	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
++++ b/platforms/declare_platforms.bzl	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -1,6 +1,7 @@
  load("//constraints/cxxstdlib:cxxstdlib_versions.bzl", "DEFAULT_CXXSTDLIB")
  load("//constraints/libc:libc_versions.bzl", "LIBCS", "default_libc")
@@ -715,7 +692,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/runtimes/copy_to_resource_directory.bzl b/runtimes/copy_to_resource_directory.bzl
 --- a/runtimes/copy_to_resource_directory.bzl	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/runtimes/copy_to_resource_directory.bzl	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
++++ b/runtimes/copy_to_resource_directory.bzl	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -20,8 +20,14 @@
      "@llvm//platforms/config:linux_armv7_musl": "armv7-unknown-linux-musleabihf",
      "@llvm//platforms/config:macos_x86_64": "darwin",
@@ -740,7 +717,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/runtimes/cxxstdlib/BUILD.bazel b/runtimes/cxxstdlib/BUILD.bazel
 --- a/runtimes/cxxstdlib/BUILD.bazel	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/runtimes/cxxstdlib/BUILD.bazel	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
++++ b/runtimes/cxxstdlib/BUILD.bazel	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -18,6 +18,15 @@
      ],
  )
@@ -772,7 +749,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/runtimes/mingw/BUILD.bazel b/runtimes/mingw/BUILD.bazel
 --- a/runtimes/mingw/BUILD.bazel	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/runtimes/mingw/BUILD.bazel	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
++++ b/runtimes/mingw/BUILD.bazel	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -3,8 +3,10 @@
  load("@bazel_lib//lib:run_binary.bzl", "run_binary")
  load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
@@ -963,7 +940,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/runtimes/mingw/import_libs.bzl b/runtimes/mingw/import_libs.bzl
 --- a/runtimes/mingw/import_libs.bzl	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/runtimes/mingw/import_libs.bzl	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
++++ b/runtimes/mingw/import_libs.bzl	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -1,5 +1,30 @@
  load("@bazel_lib//lib:run_binary.bzl", "run_binary")
 
@@ -1002,7 +979,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/toolchain/BUILD.bazel b/toolchain/BUILD.bazel
 --- a/toolchain/BUILD.bazel	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/toolchain/BUILD.bazel	(revision ad3a38f76603f0f699a0027c59eee7ae58aebab7)
++++ b/toolchain/BUILD.bazel	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -150,10 +150,17 @@
          "@platforms//os:linux": [
              "//toolchain/args:crt_search_directory",
@@ -1178,7 +1155,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/toolchain/args/BUILD.bazel b/toolchain/args/BUILD.bazel
 --- a/toolchain/args/BUILD.bazel	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/toolchain/args/BUILD.bazel	(revision 646bfe8c28460b1f273a0b9d492e3c7c47241d2e)
++++ b/toolchain/args/BUILD.bazel	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -1,7 +1,7 @@
  load("@bazel_lib//:bzl_library.bzl", "bzl_library")
  load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
@@ -1321,7 +1298,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/toolchain/args/llvm_target_triple.bzl b/toolchain/args/llvm_target_triple.bzl
 --- a/toolchain/args/llvm_target_triple.bzl	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/toolchain/args/llvm_target_triple.bzl	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
++++ b/toolchain/args/llvm_target_triple.bzl	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -1,21 +1,37 @@
 -LLVM_TARGET_TRIPLE = select({
 +_LLVM_TARGET_TRIPLES = {
@@ -1386,7 +1363,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/toolchain/args/windows/BUILD.bazel b/toolchain/args/windows/BUILD.bazel
 --- a/toolchain/args/windows/BUILD.bazel	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/toolchain/args/windows/BUILD.bazel	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
++++ b/toolchain/args/windows/BUILD.bazel	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -38,7 +38,7 @@
  )
 
@@ -1480,7 +1457,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/toolchain/bootstrap/bootstrap_binary.bzl b/toolchain/bootstrap/bootstrap_binary.bzl
 --- a/toolchain/bootstrap/bootstrap_binary.bzl	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/toolchain/bootstrap/bootstrap_binary.bzl	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
++++ b/toolchain/bootstrap/bootstrap_binary.bzl	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -6,10 +6,12 @@
      "clang-format",
      "clang-tidy",
@@ -1501,7 +1478,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/toolchain/bootstrap/declare_toolchains.bzl b/toolchain/bootstrap/declare_toolchains.bzl
 --- a/toolchain/bootstrap/declare_toolchains.bzl	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/toolchain/bootstrap/declare_toolchains.bzl	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
++++ b/toolchain/bootstrap/declare_toolchains.bzl	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -88,6 +88,30 @@
          },
      )
@@ -1617,7 +1594,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/toolchain/cc_toolchain.bzl b/toolchain/cc_toolchain.bzl
 --- a/toolchain/cc_toolchain.bzl	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/toolchain/cc_toolchain.bzl	(revision ef3855557d86656f6cd8542f7c9a8c085055267b)
++++ b/toolchain/cc_toolchain.bzl	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -47,8 +47,12 @@
                  "@llvm//toolchain/features:targets_windows",
              ],
@@ -1728,7 +1705,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/toolchain/features/BUILD.bazel b/toolchain/features/BUILD.bazel
 --- a/toolchain/features/BUILD.bazel	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/toolchain/features/BUILD.bazel	(revision 32909d553e9b7611102b0684ead04030d360196d)
++++ b/toolchain/features/BUILD.bazel	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -1,6 +1,8 @@
  load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
  load("@rules_cc//cc/toolchains:feature.bzl", "cc_feature")
@@ -2345,7 +2322,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/toolchain/features/legacy/BUILD.bazel b/toolchain/features/legacy/BUILD.bazel
 --- a/toolchain/features/legacy/BUILD.bazel	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/toolchain/features/legacy/BUILD.bazel	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
++++ b/toolchain/features/legacy/BUILD.bazel	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -8,9 +8,14 @@
      actions = [
          "@rules_cc//cc/toolchains/actions:cpp_compile_actions",
@@ -2928,6 +2905,26 @@ diff --git a/toolchain/features/legacy/BUILD.bazel b/toolchain/features/legacy/B
      visibility = ["//visibility:public"],
  )
 
+Index: toolchain/features/runtime_library_search_directories/BUILD.bazel
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/toolchain/features/runtime_library_search_directories/BUILD.bazel b/toolchain/features/runtime_library_search_directories/BUILD.bazel
+--- a/toolchain/features/runtime_library_search_directories/BUILD.bazel	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
++++ b/toolchain/features/runtime_library_search_directories/BUILD.bazel	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
+@@ -28,7 +28,10 @@
+ cc_args(
+     name = "runtime_library_search_directories_args",
+     actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
+-    nested = [":search_dir_args"],
++    nested = select({
++        "@llvm//constraints/windows/abi:msvc": [],
++        "//conditions:default": [":search_dir_args"],
++    }),
+     requires_not_none = "@rules_cc//cc/toolchains/variables:runtime_library_search_directories",
+ )
+
 Index: toolchain/llvm/llvm.bzl
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
@@ -2935,7 +2932,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/toolchain/llvm/llvm.bzl b/toolchain/llvm/llvm.bzl
 --- a/toolchain/llvm/llvm.bzl	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/toolchain/llvm/llvm.bzl	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
++++ b/toolchain/llvm/llvm.bzl	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -63,10 +63,8 @@
              # Use -isystem instead of -resource-dir to avoid conflicts with the
              # linking specific -resource-dir and rules_foreign_cc which does
@@ -3071,7 +3068,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/toolchain/runtimes/BUILD.bazel b/toolchain/runtimes/BUILD.bazel
 --- a/toolchain/runtimes/BUILD.bazel	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/toolchain/runtimes/BUILD.bazel	(revision ad3a38f76603f0f699a0027c59eee7ae58aebab7)
++++ b/toolchain/runtimes/BUILD.bazel	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -7,6 +7,7 @@
      name = "hermetic_link_flags",
      args = select({
@@ -3171,7 +3168,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/toolchain/runtimes/args/BUILD.bazel b/toolchain/runtimes/args/BUILD.bazel
 --- a/toolchain/runtimes/args/BUILD.bazel	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/toolchain/runtimes/args/BUILD.bazel	(revision ad3a38f76603f0f699a0027c59eee7ae58aebab7)
++++ b/toolchain/runtimes/args/BUILD.bazel	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -198,6 +198,27 @@
      }),
  )
@@ -3207,7 +3204,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/toolchain/selects.bzl b/toolchain/selects.bzl
 --- a/toolchain/selects.bzl	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/toolchain/selects.bzl	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
++++ b/toolchain/selects.bzl	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -44,5 +44,7 @@
          "@llvm//toolchain:macos_complete_with_libtool": Label(tool_repo + ":tools_with_dsym_and_libtool"),
          "@llvm//toolchain:macos_complete": Label(tool_repo + ":tools_with_dsym"),
@@ -3223,7 +3220,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/tools/internal/header_parser.c b/tools/internal/header_parser.c
 --- a/tools/internal/header_parser.c	(revision d7bb886223d03bc7c24de199c32cbd80239bf6e3)
-+++ b/tools/internal/header_parser.c	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
++++ b/tools/internal/header_parser.c	(revision 015649885a0ebf020ea2a0293c3e488117d279bf)
 @@ -3,7 +3,14 @@
  #include <stdio.h>
  #include <stdlib.h>
@@ -3281,23 +3278,3 @@ diff --git a/tools/internal/header_parser.c b/tools/internal/header_parser.c
    return 2;
 +#endif
  }
-Index: toolchain/features/runtime_library_search_directories/BUILD.bazel
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
-diff --git a/toolchain/features/runtime_library_search_directories/BUILD.bazel b/toolchain/features/runtime_library_search_directories/BUILD.bazel
---- a/toolchain/features/runtime_library_search_directories/BUILD.bazel	(revision 1808dfca9487e8a771504c63dfc4f4cc83b5d969)
-+++ b/toolchain/features/runtime_library_search_directories/BUILD.bazel	(revision ad3a38f76603f0f699a0027c59eee7ae58aebab7)
-@@ -28,7 +28,10 @@
- cc_args(
-     name = "runtime_library_search_directories_args",
-     actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
--    nested = [":search_dir_args"],
-+    nested = select({
-+        "@llvm//constraints/windows/abi:msvc": [],
-+        "//conditions:default": [":search_dir_args"],
-+    }),
-     requires_not_none = "@rules_cc//cc/toolchains/variables:runtime_library_search_directories",
- )
-
