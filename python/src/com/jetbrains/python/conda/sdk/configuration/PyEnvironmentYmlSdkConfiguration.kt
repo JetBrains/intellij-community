@@ -18,7 +18,6 @@ import com.intellij.util.FileName
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
-import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onSuccess
@@ -48,6 +47,7 @@ import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.setAssociationToModule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -145,7 +145,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
     return PyCondaCommand(condaExecutable.path.pathString, null).createCondaSdkFromExistingEnvironment(
       getCondaEnvIdentity(module, condaExecutable)
       ?: return PyResult.localizedError(PyBundle.message("sdk.cannot.use.existing.conda.environment")),
-      PyConfigurableInterpreterList.getInstance(module.project).model.sdks.toList(),
+      PythonSdkUtil.getAllSdks(),
     )
   }
 
@@ -173,7 +173,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
     val binaryToExec = BinOnEel(condaExecutable.path)
     val existingEnvs = PyCondaEnv.getEnvs(binaryToExec, forceRefresh = true).getOrNull() ?: emptyList()
 
-    val existingSdks = PyConfigurableInterpreterList.getInstance(project).model.sdks
+    val existingSdks = PythonSdkUtil.getAllSdks()
     val newCondaEnvInfo = NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(environmentYml.toNioPath(), existingEnvs)
     val sdk = PyCondaCommand(condaExecutable.path.pathString, null)
       .createCondaSdkAlongWithNewEnv(newCondaEnvInfo, existingSdks.toList()).getOr {

@@ -122,6 +122,7 @@ class PyConsoleOptionsConfigurable(private val myProject: Project) : SearchableC
       override fun isModified(): Boolean = panel.isModified
       override fun apply() = panel.apply()
       override fun reset() = panel.reset()
+      override fun disposeUIResources() = panel.disposeUIResources()
     }
   }
 }

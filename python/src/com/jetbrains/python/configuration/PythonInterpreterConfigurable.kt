@@ -56,15 +56,17 @@ internal class PythonInterpreterConfigurable(moduleOrProject: ModuleOrProject) :
       val configurable = PythonInterpreterConfigurable(if (module != null) ModuleAndProject(module) else ProjectOnly(project))
       // `ShowSettingsUtil.editConfigurable()` with `advancedInitialization` parameter could be possibly also used here
       val dialogWrapper = SettingsDialogFactory.getInstance().create(project, DIMENSION_KEY, configurable, true, false)
-      // select project Python interpreter
-      configurable.masterDetailsComponent.selectNodeInTree(initiallySelectedSdk)
+      // Select the project Python interpreter. The dialog owns its model, which `create()` has just reloaded from the
+      // live SDK table; re-resolve the caller's `initiallySelectedSdk` against it by name because the model holds
+      // editable copies, not the caller's instance.
+      val sdkToSelect = initiallySelectedSdk?.let { configurable.masterDetailsComponent.projectSdksModel.findSdk(it.name) ?: it }
+      configurable.masterDetailsComponent.selectNodeInTree(sdkToSelect)
       val isOKClicked = dialogWrapper.showAndGet()
       // note that clicking "Apply" button and then "Cancel" results in `false` value of `isOKClicked`
       return if (isOKClicked) {
         configurable.masterDetailsComponent.storedSelectedSdk
       }
       else {
-        configurable.masterDetailsComponent.projectSdksModel.reset(project)
         null
       }
     }

@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
  * ``\\wsl$`` projects allow WSL and Docker
  */
 @ApiStatus.Internal
-internal fun TargetConfigurationWithLocalFsAccess.allowCreationTargetOfThisType(confType: TargetEnvironmentType<*>): Boolean {
+fun TargetConfigurationWithLocalFsAccess.allowCreationTargetOfThisType(confType: TargetEnvironmentType<*>): Boolean {
   val javaClass = asTargetConfig.getTargetType().javaClass
   return javaClass == confType.javaClass || javaClass in confType.canProbablyRunCodeForeignTypes
 }
@@ -25,7 +25,7 @@ internal fun TargetConfigurationWithLocalFsAccess.allowCreationTargetOfThisType(
  * ``\\wsl$`` projects allow Docker AND only WSL with right distro
  */
 @ApiStatus.Internal
-internal fun TargetConfigurationWithLocalFsAccess.codeCouldProbablyBeRunWithConfig(config: TargetEnvironmentConfiguration?): Boolean {
+fun TargetConfigurationWithLocalFsAccess.codeCouldProbablyBeRunWithConfig(config: TargetEnvironmentConfiguration?): Boolean {
   if (config == null) return false // For now no local target could run remote
   if (asTargetConfig == config) return true // Same config (like same wsl distro)
   return asTargetConfig.getTargetType().javaClass in config.getTargetType().canProbablyRunCodeForeignTypes
