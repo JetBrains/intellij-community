@@ -83,6 +83,7 @@ import kotlin.Unit
 import kotlin.also
 import kotlin.checkNotNull
 import kotlin.io.path.createDirectories
+import kotlin.io.path.exists
 import kotlin.io.path.moveTo
 import kotlin.let
 import kotlin.text.StringBuilder
@@ -412,7 +413,9 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
             out.write(mainData)
             additionalData?.let { out.write(it) }
             out.close()
-            Files.write(runDir.resolve(PLUGIN_CLASSPATH), byteOut.toByteArray())
+            val pluginClasspath = runDir.resolve(PLUGIN_CLASSPATH)
+            pluginClasspath.parent.createDirectories()
+            Files.write(pluginClasspath, byteOut.toByteArray())
           }
         }
         if (context.generateRuntimeModuleRepository) {
