@@ -293,6 +293,11 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/vcs-log/graph:vcs-log-graph-impl-tests",
         "//platform/vcs-log/graph:vcs-log-graph-impl-tests_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "@lib//:mockito-kotlin",
     ],
 )
 ### auto-generated section `build intellij.platform.vcs.log.impl.tests` end
