@@ -267,6 +267,17 @@ open class HighlightDisplayLevel(severity: HighlightSeverity) {
 sealed interface HighlightDisplayLevelColoredIcon : Icon {
   fun getColor(): Color
   fun getIcon(): Icon
+
+  @Internal
+  companion object {
+    /**
+     * Returns a colorized version of [baseIcon].
+     * The color is based on the text attributes represented by given [key]
+     * and, simply put, repeats the color that highlights the relevant text range.
+     */
+    fun colorizeFromAttributes(baseIcon: Icon, key: TextAttributesKey): HighlightDisplayLevelColoredIcon =
+      HighlightDisplayLevelColorizedIcon(key, baseIcon)
+  }
 }
 
 private class HighlightDisplayLevelColorIcon(size: Int, color: Color) : ColorIcon(size, color), HighlightDisplayLevelColoredIcon {
