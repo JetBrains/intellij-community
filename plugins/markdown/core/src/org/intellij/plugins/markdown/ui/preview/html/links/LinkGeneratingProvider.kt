@@ -7,7 +7,7 @@ import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.html.TransparentInlineHolderProvider
 import org.intellij.markdown.parser.LinkMap
 
-internal abstract class LinkGeneratingProvider: GeneratingProvider {
+abstract class LinkGeneratingProvider : GeneratingProvider {
   override fun processNode(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode) {
     val info = getRenderInfo(text, node) ?: return fallbackProvider.processNode(visitor, text, node)
     renderLink(visitor, text, node, info)
@@ -25,8 +25,8 @@ internal abstract class LinkGeneratingProvider: GeneratingProvider {
   data class RenderInfo(val label: ASTNode, val destination: CharSequence, val title: CharSequence?)
 
   companion object {
-    val fallbackProvider = TransparentInlineHolderProvider()
+    val fallbackProvider: TransparentInlineHolderProvider = TransparentInlineHolderProvider()
 
-    val labelProvider = TransparentInlineHolderProvider(1, -1)
+    val labelProvider: TransparentInlineHolderProvider = TransparentInlineHolderProvider(1, -1)
   }
 }

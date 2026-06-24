@@ -280,6 +280,7 @@ idea/customization/min
 images
 images/intellij.platform.images.copyright
 images/intellij.platform.images.xdebugger
+images/jcef
 java/codeserver/core
 java/codeserver/highlighting
 java/compiler
@@ -1473,6 +1474,7 @@ plugins/markdown/frontmatter/toml
 plugins/markdown/frontmatter/yaml
 plugins/markdown/images
 plugins/markdown/java
+plugins/markdown/jcef
 plugins/markdown/model
 plugins/markdown/plugin
 plugins/markdown/spellchecker

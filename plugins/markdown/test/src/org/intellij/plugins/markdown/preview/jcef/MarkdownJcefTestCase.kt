@@ -10,7 +10,7 @@ import org.cef.CefSettings
 import org.cef.browser.CefBrowser
 import org.cef.handler.CefDisplayHandlerAdapter
 import org.cef.handler.CefLoadHandler
-import org.intellij.plugins.markdown.ui.preview.jcef.MarkdownJCEFHtmlPanel
+import com.intellij.markdown.jcef.preview.MarkdownJCEFHtmlPanel
 import org.junit.jupiter.api.extension.ExtendWith
 import java.awt.BorderLayout
 import javax.swing.JFrame

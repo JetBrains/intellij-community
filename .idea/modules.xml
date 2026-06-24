@@ -1200,6 +1200,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/markdown/frontmatter/yaml/intellij.markdown.frontmatter.yaml.iml" filepath="$PROJECT_DIR$/plugins/markdown/frontmatter/yaml/intellij.markdown.frontmatter.yaml.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/markdown/images/intellij.markdown.images.iml" filepath="$PROJECT_DIR$/plugins/markdown/images/intellij.markdown.images.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/markdown/java/intellij.markdown.java.iml" filepath="$PROJECT_DIR$/plugins/markdown/java/intellij.markdown.java.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/markdown/jcef/intellij.markdown.jcef.iml" filepath="$PROJECT_DIR$/plugins/markdown/jcef/intellij.markdown.jcef.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/markdown/model/intellij.markdown.model.iml" filepath="$PROJECT_DIR$/plugins/markdown/model/intellij.markdown.model.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/markdown/plugin/intellij.markdown.plugin.main.iml" filepath="$PROJECT_DIR$/plugins/markdown/plugin/intellij.markdown.plugin.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/markdown/spellchecker/intellij.markdown.spellchecker.iml" filepath="$PROJECT_DIR$/plugins/markdown/spellchecker/intellij.markdown.spellchecker.iml" />
@@ -1508,6 +1509,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/build-scripts/icons/intellij.platform.images.build.iml" filepath="$PROJECT_DIR$/platform/build-scripts/icons/intellij.platform.images.build.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/build-scripts/icons/intellij.platform.images.build.tests.iml" filepath="$PROJECT_DIR$/platform/build-scripts/icons/intellij.platform.images.build.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/images/intellij.platform.images.copyright/intellij.platform.images.copyright.iml" filepath="$PROJECT_DIR$/images/intellij.platform.images.copyright/intellij.platform.images.copyright.iml" />
+      <module fileurl="file://$PROJECT_DIR$/images/jcef/intellij.platform.images.jcef.iml" filepath="$PROJECT_DIR$/images/jcef/intellij.platform.images.jcef.iml" />
       <module fileurl="file://$PROJECT_DIR$/images/intellij.platform.images.tests.iml" filepath="$PROJECT_DIR$/images/intellij.platform.images.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/images/intellij.platform.images.xdebugger/intellij.platform.images.xdebugger.iml" filepath="$PROJECT_DIR$/images/intellij.platform.images.xdebugger/intellij.platform.images.xdebugger.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/indexing-api/intellij.platform.indexing.iml" filepath="$PROJECT_DIR$/platform/indexing-api/intellij.platform.indexing.iml" />

@@ -143,6 +143,7 @@
     <orderEntry type="module" module-name="intellij.platform.eelHelper" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.jcef.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.mockito" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.mockk" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.mockk.jvm" scope="TEST" />
