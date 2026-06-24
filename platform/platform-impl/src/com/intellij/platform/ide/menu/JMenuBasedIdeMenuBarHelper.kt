@@ -197,12 +197,14 @@ internal object WinAltKeyProcessor : IdeEventQueue.NonLockedEventDispatcher {
       KeyEvent.KEY_PRESSED -> {
         if (!altPressed) {
           altPressed = true
-          altPressedOnly = e.modifiersEx and (InputEvent.SHIFT_DOWN_MASK or InputEvent.CTRL_DOWN_MASK or InputEvent.META_DOWN_MASK) == 0
+          altPressedOnly = e.modifiersEx and (InputEvent.SHIFT_DOWN_MASK or InputEvent.CTRL_DOWN_MASK or InputEvent.META_DOWN_MASK or
+            InputEvent.BUTTON1_DOWN_MASK or InputEvent.BUTTON2_DOWN_MASK or InputEvent.BUTTON3_DOWN_MASK) == 0
         }
       }
       KeyEvent.KEY_RELEASED -> {
         if (altPressed && altPressedOnly
-            && e.modifiersEx and (InputEvent.SHIFT_DOWN_MASK or InputEvent.CTRL_DOWN_MASK or InputEvent.META_DOWN_MASK) == 0) {
+            && e.modifiersEx and (InputEvent.SHIFT_DOWN_MASK or InputEvent.CTRL_DOWN_MASK or InputEvent.META_DOWN_MASK or
+            InputEvent.BUTTON1_DOWN_MASK or InputEvent.BUTTON2_DOWN_MASK or InputEvent.BUTTON3_DOWN_MASK) == 0) {
           for (helper in helpers) {
             if (helper.shouldProcessAltRelease(e)) {
               ApplicationManager.getApplication().invokeLater {
