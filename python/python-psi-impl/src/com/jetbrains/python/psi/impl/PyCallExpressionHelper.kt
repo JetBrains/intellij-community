@@ -289,7 +289,13 @@ object PyCallExpressionHelper {
         val resolveResults = ResolveResultList()
         PyResolveUtil.addImplicitResolveResults(referencedName, resolveResults, callee)
 
-        return forEveryScopeTakeOverloadsOtherwiseImplementations(resolveResults, context).selectCallableTypes(context)
+        return PyUtil.filterTopPriorityElements(forEveryScopeTakeOverloadsOtherwiseImplementations(resolveResults, context) { it.element })
+          .asSequence()
+          .filterIsInstance<PyTypedElement>()
+          .map { context.getType(it) }
+          .flatMap { it.toStream() }
+          .filterIsInstance<PyCallableType>()
+          .toList()
       }
     }
 
@@ -302,14 +308,6 @@ object PyCallExpressionHelper {
     if (file == null || !PythonRuntimeService.getInstance().isInPydevConsole(file)) return mutableListOf()
     val calleeType = getCalleeType(expression, resolveContext)
     return calleeType.components.filterIsInstance<PyCallableType>()
-  }
-
-  private fun List<PsiElement>.selectCallableTypes(context: TypeEvalContext): List<PyCallableType> {
-    return this
-      .filterIsInstance<PyTypedElement>()
-      .map { context.getType(it) }
-      .flatMap { it.toStream() }
-      .filterIsInstance<PyCallableType>()
   }
 
   private fun multipleResolveCallee(expression: PyExpression?, resolveContext: PyResolveContext): List<QualifiedRatedResolveResult> {
@@ -1369,10 +1367,6 @@ object PyCallExpressionHelper {
   private fun isParamSpecOrConcatenate(parameter: PyCallableParameter, context: TypeEvalContext): Boolean {
     val type = parameter.getType(context)
     return type is PyParamSpecType || type is PyConcatenateType
-  }
-
-  private fun forEveryScopeTakeOverloadsOtherwiseImplementations(results: List<ResolveResult>, context: TypeEvalContext): List<PsiElement> {
-    return PyUtil.filterTopPriorityElements(forEveryScopeTakeOverloadsOtherwiseImplementations(results, context) { it.element })
   }
 
   private fun <E : ResolveResult> forEveryScopeTakeOverloadsOtherwiseImplementations(
