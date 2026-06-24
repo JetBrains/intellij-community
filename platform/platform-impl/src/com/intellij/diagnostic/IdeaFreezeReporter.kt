@@ -39,6 +39,7 @@ import java.nio.file.Path
 import java.util.Collections
 import java.util.LinkedList
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.io.path.name
 
 private val FREEZE_NOTIFIER_EP: ExtensionPointName<FreezeNotifier> = ExtensionPointName("com.intellij.diagnostic.freezeNotifier")
 private val FREEZE_ANALYSIS_EP: ExtensionPointName<FreezeAnalysis> = ExtensionPointName("com.intellij.diagnostic.freezeAnalysis")
@@ -422,6 +423,8 @@ private suspend fun reportUnfinishedFreezes() {
 
     // report deadly freeze
     if (duration > FREEZE_THRESHOLD) {
+      logger<IdeaFreezeReporter>().info("Detected unfinished freeze ${dir.name} with duration ${duration}ms")
+
       try {
         LifecycleUsageTriggerCollector.onDeadlockDetected()
         if (isUnfinishedFreezeReportEnabled()) {
