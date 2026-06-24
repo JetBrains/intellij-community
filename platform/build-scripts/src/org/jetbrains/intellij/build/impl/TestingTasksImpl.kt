@@ -1501,4 +1501,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.platform.ai.agent.opencode.sessions.tests",
   "intellij.platform.ai.agent.pi.sessions.filewatch.tests",
   "intellij.platform.ai.agent.terminal.sessions.tests",
+  "intellij.agent.workbench.prompt.core.tests",
 )
