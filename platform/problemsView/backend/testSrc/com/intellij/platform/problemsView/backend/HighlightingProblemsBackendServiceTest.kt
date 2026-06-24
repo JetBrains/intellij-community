@@ -1,10 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.problemsView.backend
 
+import com.intellij.analysis.problemsView.toolWindow.HighlightingProblem
 import com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemEventDto
+import com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemLifetime
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
+import com.intellij.codeInsight.intention.EmptyIntentionAction
+import com.intellij.codeInsight.quickfix.LazyQuickFixUpdater
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -12,12 +16,14 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.psiFileFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -25,6 +31,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -234,6 +241,97 @@ class HighlightingProblemsBackendServiceTest {
     problemIds.forEach { id ->
       val problem = lifetimeManager.findProblemById(id)
       assertNull(problem, "problem with ID $id should not be findable after file close")
+    }
+  }
+
+  @Test
+  fun `quick fixes becoming available updates the problem`() = runBlocking {
+    val lifetimeManager = ProblemLifetimeManager.getInstance(project)
+
+    val flow = HighlightingProblemsBackendService
+      .getInstance(project)
+      .getOrCreateEventFlowForFile(
+        testFile.virtualFile.rpcId()
+      )
+    val batches = mutableListOf<List<ProblemEventDto>>()
+
+    val collectorJob = launch {
+      flow.collect { batch -> batches.add(batch) }
+    }
+
+    addProblemsToDocument(problemCount = 1)
+
+    val problemId = waitForAllExpectedProblemEvents(batches = batches, expectedCount = 1)
+      .filterIsInstance<ProblemEventDto.Appeared>()
+      .single()
+      .problemDto.id
+
+    // simulate lazy quick-fixes finishing their background computation
+    val problem = lifetimeManager.findProblemById(problemId) as HighlightingProblem
+    val highlighter = problem.highlighter
+    val info = requireNotNull(readAction { HighlightInfo.fromRangeHighlighter(highlighter) }) {
+      "the added highlighter should have an associated HighlightInfo"
+    }
+    project.messageBus.syncPublisher(LazyQuickFixUpdater.TOPIC).quickFixesAvailable(info, highlighter.document)
+
+    fun updatesOfProblem() = batches.flatten()
+      .filterIsInstance<ProblemEventDto.Updated>()
+      .filter { it.problemDto.id == problemId }
+
+    val updated = withTimeoutOrNull(3.seconds) {
+        while (updatesOfProblem().isEmpty()) {
+          delay(50.milliseconds)
+        }
+        updatesOfProblem().first()
+      }
+
+    collectorJob.cancel()
+
+    requireNotNull(updated) {"Expected an Updated event for problem $problemId after quick fixes became available" }
+    assertEquals(problemId, updated.problemDto.id, "the same problem should be updated, not a new one")
+  }
+
+  @Test
+  fun `updating a problem does not leak intention ids`() = runBlocking {
+    val lifetimeManager = ProblemLifetimeManager.getInstance(project)
+
+    val flow = HighlightingProblemsBackendService
+      .getInstance(project)
+      .getOrCreateEventFlowForFile(
+        testFile.virtualFile.rpcId()
+      )
+    val batches = mutableListOf<List<ProblemEventDto>>()
+
+    val collectorJob = launch {
+      flow.collect { batch -> batches.add(batch) }
+    }
+
+    addProblemsToDocument(problemCount = 1)
+
+    val appearedId = waitForAllExpectedProblemEvents(batches = batches, expectedCount = 1)
+      .filterIsInstance<ProblemEventDto.Appeared>()
+      .single()
+      .problemDto.id
+    collectorJob.cancel()
+
+    val problem = lifetimeManager.findProblemById(appearedId) as HighlightingProblem
+
+    val lifetimeScope = childScope("test lifetime")
+    val lifetime = ProblemLifetime(lifetimeScope)
+    try {
+      val problemId = lifetimeManager.getOrCreateHighlightingProblemId(problem, lifetime)
+      val staleIntentionId = lifetimeManager.createIntentionId(EmptyIntentionAction("test"), lifetime, problemId)
+
+      assertNotNull(lifetimeManager.findIntentionById(staleIntentionId),
+                    "intention id should be resolvable right after creation")
+
+      // updating the problem removes stale intention ids
+      lifetimeManager.getOrCreateHighlightingProblemId(problem, lifetime)
+      assertNull(lifetimeManager.findIntentionById(staleIntentionId),
+                 "intention id from the previous version of the problem should be removed after its update")
+    }
+    finally {
+      lifetimeScope.cancel()
     }
   }
 }

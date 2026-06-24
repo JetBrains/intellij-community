@@ -161,6 +161,8 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//platform/problemsView/shared",
         "//platform/problemsView/shared:shared_test_lib",
+        "//platform/problemsView/ui",
+        "//platform/problemsView/ui:ui_test_lib",
         "//platform/lang-impl",
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/analysis-api:analysis",
