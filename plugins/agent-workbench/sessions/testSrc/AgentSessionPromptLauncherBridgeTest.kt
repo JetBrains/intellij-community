@@ -470,7 +470,7 @@ class AgentSessionPromptLauncherBridgeTest {
         }
       }
     )
-    withOpenInNonDedicatedFrameSettingForTest(testRootDisposable) {
+    withOpenInNonDedicatedFrameSettingForTest {
       AgentSessionProviders.withRegistryForTest(
         InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
       ) {
@@ -539,7 +539,7 @@ class AgentSessionPromptLauncherBridgeTest {
         }
       }
     )
-    withOpenInNonDedicatedFrameSettingForTest(testRootDisposable) {
+    withOpenInNonDedicatedFrameSettingForTest {
       AgentSessionProviders.withRegistryForTest(
         InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
       ) {
@@ -593,7 +593,7 @@ class AgentSessionPromptLauncherBridgeTest {
     val firstLaunchResult = CompletableDeferred<AgentPromptLaunchResult>()
     val secondLaunchResult = CompletableDeferred<AgentPromptLaunchResult>()
     val chatOpenExecutor = RecordingChatOpenExecutor()
-    withOpenInNonDedicatedFrameSettingForTest(testRootDisposable) {
+    withOpenInNonDedicatedFrameSettingForTest {
       AgentSessionProviders.withRegistryForTest(
         InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
       ) {
@@ -655,7 +655,7 @@ class AgentSessionPromptLauncherBridgeTest {
         openModality.set(currentCoroutineContext().contextModality())
       }
     )
-    withOpenInNonDedicatedFrameSettingForTest(testRootDisposable) {
+    withOpenInNonDedicatedFrameSettingForTest {
       AgentSessionProviders.withRegistryForTest(
         InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
       ) {
@@ -1413,7 +1413,7 @@ class AgentSessionPromptLauncherBridgeTest {
         }
       }
     )
-    withOpenInNonDedicatedFrameSettingForTest(testRootDisposable) {
+    withOpenInNonDedicatedFrameSettingForTest {
       AgentSessionProviders.withRegistryForTest(
         InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
       ) {
@@ -2206,8 +2206,7 @@ private fun addContextToTargetRequest(): AgentPromptAddContextToTargetRequest {
   )
 }
 
-private fun <T> withOpenInNonDedicatedFrameSettingForTest(parentDisposable: Disposable, action: () -> T): T {
-  registerDedicatedFrameSettingForTest(parentDisposable)
+private fun <T> withOpenInNonDedicatedFrameSettingForTest(action: () -> T): T {
   val previousValue = AgentChatOpenModeSettings.openInDedicatedFrame()
   AgentChatOpenModeSettings.setOpenInDedicatedFrame(false)
   try {

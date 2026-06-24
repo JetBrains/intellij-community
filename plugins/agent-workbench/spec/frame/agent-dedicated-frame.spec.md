@@ -30,7 +30,6 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
 
 ## Requirements
 - Dedicated-frame mode must be stored in Agent Workbench settings and exposed in the Agent Workbench Chat settings group.
-  The legacy Advanced Settings key `agent.workbench.chat.open.in.dedicated.frame` must stay registered with default `true` and `visible="false"` as a migration source.
   [@test] ../../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
 - Sessions gear menu must expose `AgentWorkbenchSessions.ToggleDedicatedFrame` and update the Agent Workbench settings value.

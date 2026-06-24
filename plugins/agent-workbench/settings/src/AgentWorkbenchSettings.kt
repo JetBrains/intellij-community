@@ -62,16 +62,6 @@ class AgentWorkbenchSettings : SerializablePersistentStateComponent<AgentWorkben
     }
   }
 
-  fun migrateOpenInDedicatedFrame(enabled: Boolean): Boolean {
-    state.openInDedicatedFrame?.let { return it }
-    val storedValue = nonDefaultBooleanValue(enabled, OPEN_IN_DEDICATED_FRAME_DEFAULT)
-    if (storedValue == null) return openInDedicatedFrame
-    val updatedState = updateState { current ->
-      if (current.openInDedicatedFrame != null) current else current.copy(openInDedicatedFrame = storedValue)
-    }
-    return updatedState.openInDedicatedFrame ?: OPEN_IN_DEDICATED_FRAME_DEFAULT
-  }
-
   fun setOpenInDedicatedFrame(enabled: Boolean) {
     val previousValue = openInDedicatedFrame
     val storedValue = nonDefaultBooleanValue(enabled, OPEN_IN_DEDICATED_FRAME_DEFAULT)

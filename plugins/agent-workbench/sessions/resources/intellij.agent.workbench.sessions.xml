@@ -41,12 +41,6 @@
       dynamic="true"
       parentId="com.intellij.agent.workbench.settings"/>
     <advancedSetting
-      id="agent.workbench.chat.open.in.dedicated.frame"
-      default="true"
-      bundle="messages.AgentSessionsBundle"
-      groupKey="advanced.settings.agent.workbench"
-      visible="false"/>
-    <advancedSetting
       id="agent.workbench.prevent.system.sleep.while.working"
       default="true"
       bundle="messages.AgentSessionsBundle"

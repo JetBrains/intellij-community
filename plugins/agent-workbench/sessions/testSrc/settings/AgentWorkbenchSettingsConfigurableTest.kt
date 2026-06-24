@@ -84,7 +84,7 @@ class AgentWorkbenchSettingsConfigurableTest {
         configurable.reset()
 
         val dedicatedFrameCheckBox =
-          component.checkBox(AgentSessionsBundle.message("advanced.setting.agent.workbench.chat.open.in.dedicated.frame"))
+          component.checkBox(AgentSessionsBundle.message("settings.agent.workbench.chat.open.in.dedicated.frame"))
         val currentProjectOnlyCheckBox =
           component.checkBox(AgentSessionsBundle.message("settings.agent.workbench.agent.threads.current.project.only"))
         val mainToolbarActivityCheckBox =
@@ -204,7 +204,7 @@ class AgentWorkbenchSettingsConfigurableTest {
 
         assertThat(component.componentsOfType(JBCheckBox::class.java).map { it.text })
           .containsSubsequence(
-            AgentSessionsBundle.message("advanced.setting.agent.workbench.chat.open.in.dedicated.frame"),
+            AgentSessionsBundle.message("settings.agent.workbench.chat.open.in.dedicated.frame"),
             TEST_CHAT_COMPONENT_CHECKBOX_TEXT,
             AgentSessionsBundle.message("settings.agent.workbench.show.activity.in.main.toolbar"),
             AgentSessionsBundle.message("advanced.setting.agent.workbench.prevent.system.sleep.while.working"),

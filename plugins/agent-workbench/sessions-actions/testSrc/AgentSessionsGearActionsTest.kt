@@ -170,24 +170,20 @@ class AgentSessionsGearActionsTest {
   }
 
   @Test
-  fun toggleActionUpdatesAgentWorkbenchSetting(@TestDisposable disposable: Disposable) {
+  fun toggleActionUpdatesAgentWorkbenchSetting() {
     val actionManager = ActionManager.getInstance()
     val action = AgentSessionsDedicatedFrameToggleAction()
-    val advancedSettings = AdvancedSettings.getInstance() as AdvancedSettingsImpl
 
     assertThat(sessionsDescriptor())
       .contains("<advancedSetting")
-      .contains("id=\"agent.workbench.chat.open.in.dedicated.frame\"")
-      .contains("visible=\"false\"")
+      .doesNotContain("id=\"agent.workbench.chat.open.in.dedicated.frame\"")
     assertThat(actionManager.getAction("AgentWorkbenchSessions.ToggleDedicatedFrame"))
       .isNotNull
       .isInstanceOf(AgentSessionsDedicatedFrameToggleAction::class.java)
 
-    advancedSettings.setSetting(OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID, false, disposable)
     AgentChatOpenModeSettings.setOpenInDedicatedFrame(true)
     val event = TestActionEvent.createTestEvent(action)
     assertThat(action.isSelected(event)).isTrue()
-    assertThat(AdvancedSettings.getBoolean(OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID)).isTrue()
 
     runInEdtAndWait {
       action.setSelected(event, false)
@@ -196,7 +192,6 @@ class AgentSessionsGearActionsTest {
     assertThat(AgentChatOpenModeSettings.openInDedicatedFrame()).isFalse()
     assertThat(AgentWorkbenchSettings.getInstance().openInDedicatedFrame).isFalse()
     assertThat(AgentWorkbenchSettings.getInstance().openInDedicatedFrameOverride).isFalse()
-    assertThat(AdvancedSettings.getBoolean(OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID)).isTrue()
 
     runInEdtAndWait {
       action.setSelected(event, true)
@@ -445,8 +440,4 @@ class AgentSessionsGearActionsTest {
         .add(CommonDataKeys.PROJECT, ProjectManager.getInstance().defaultProject)
         .build(),
     )
-
-  companion object {
-    private const val OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID = "agent.workbench.chat.open.in.dedicated.frame"
-  }
 }

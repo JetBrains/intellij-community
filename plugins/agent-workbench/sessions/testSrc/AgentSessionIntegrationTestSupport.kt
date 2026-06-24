@@ -25,7 +25,6 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadActivityUpdate
 import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
-import com.intellij.agent.workbench.sessions.frame.OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.model.WorktreeEntry
@@ -40,10 +39,8 @@ import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStat
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.state.InMemorySessionWarmState
 import com.intellij.agent.workbench.sessions.state.SessionWarmState
-import com.intellij.openapi.options.advanced.AdvancedSettingBean
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -114,19 +111,6 @@ private fun <T> normalizeSnapshotTabsByPath(
     normalized[normalizeAgentWorkbenchPath(path)] = tabs
   }
   return normalized
-}
-
-internal fun registerDedicatedFrameSettingForTest(disposable: com.intellij.openapi.Disposable) {
-  if (AdvancedSettingBean.EP_NAME.extensionList.none { it.id == OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID }) {
-    AdvancedSettingBean.EP_NAME.point.registerExtension(
-      AdvancedSettingBean().apply {
-        id = OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID
-        defaultValue = "true"
-        groupKey = "agent.workbench.tests"
-      },
-      disposable,
-    )
-  }
 }
 
 data class TestProjectCatalogEntry(
@@ -605,10 +589,8 @@ internal suspend fun withServiceAndArchiveAndLaunch(
 
   @Suppress("RAW_SCOPE_CREATION")
   val scope = CoroutineScope(job + Dispatchers.Default)
-  val settingDisposable = Disposer.newDisposable()
   var previousOpenInDedicatedFrame: Boolean? = null
   try {
-    registerDedicatedFrameSettingForTest(settingDisposable)
     previousOpenInDedicatedFrame = AgentChatOpenModeSettings.openInDedicatedFrame()
     AgentChatOpenModeSettings.setOpenInDedicatedFrame(true)
     val stateStore = AgentSessionsStateStore()
@@ -681,7 +663,6 @@ internal suspend fun withServiceAndArchiveAndLaunch(
   }
   finally {
     previousOpenInDedicatedFrame?.let { AgentChatOpenModeSettings.setOpenInDedicatedFrame(it) }
-    Disposer.dispose(settingDisposable)
     job.cancelAndJoin()
   }
 }
