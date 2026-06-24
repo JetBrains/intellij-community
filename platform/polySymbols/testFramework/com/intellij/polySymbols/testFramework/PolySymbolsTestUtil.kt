@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.ProperTextRange
 import com.intellij.openapi.util.io.FileUtil
@@ -316,11 +317,11 @@ private fun CodeInsightTestFixture.checkDocumentation(
 private fun CodeInsightTestFixture.renderDocAtCaret(): String? {
   val targets = PlatformTestUtil.callOnBgtSynchronously(
     {
-      ProgressManager.getInstance().runProcess(Computable {
-        runReadAction {
+      runBlockingMaybeCancellable {
+        readAction {
           IdeDocumentationTargetProvider.getInstance(project).documentationTargets(editor, file, caretOffset)
         }
-      }, EmptyProgressIndicator())
+      }
     }, 10)!!
 
   return targets.mapNotNull { computeDocumentationBlocking(it.createPointer()) }.render()
