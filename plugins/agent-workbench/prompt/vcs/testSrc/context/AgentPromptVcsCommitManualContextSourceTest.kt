@@ -8,17 +8,19 @@ import com.intellij.agent.workbench.prompt.core.array
 import com.intellij.agent.workbench.prompt.core.number
 import com.intellij.agent.workbench.prompt.core.objOrNull
 import com.intellij.agent.workbench.prompt.core.string
-import com.intellij.agent.workbench.prompt.vcs.AgentPromptVcsBundle
 import com.intellij.agent.workbench.prompt.core.AgentPromptPayloadValue
+import com.intellij.agent.workbench.prompt.vcs.AgentPromptVcsBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.ui.components.JBList
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
-import java.util.concurrent.TimeUnit
+import java.awt.event.MouseEvent
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Proxy
+import java.util.concurrent.TimeUnit
 import javax.swing.JPanel
 import javax.swing.ListSelectionModel
 
@@ -144,6 +146,41 @@ class AgentPromptVcsCommitManualContextSourceTest {
   }
 
   @Test
+  fun commitPickerRendererPaintsSelectedRowsAsFocusedSelection() {
+    val entries = listOf(
+      commitEntry(hash = "abc12345", rootPath = "/repo"),
+      commitEntry(hash = "def67890", rootPath = "/repo"),
+    )
+    val list = createCommitPickerList(entries, selectedHashes = emptySet())
+    val renderer = AgentPromptVcsCommitListCellRenderer(showRootNames = false)
+
+    val selectedWithoutFocus = renderer.getListCellRendererComponent(list, entries[1], 1, true, false).background
+    val selectedWithFocus = renderer.getListCellRendererComponent(list, entries[1], 1, true, true).background
+
+    assertThat(selectedWithoutFocus).isEqualTo(selectedWithFocus)
+  }
+
+  @Test
+  fun createCommitPickerPopupBuilderConfiguresMultiSelectionBehavior() {
+    val entries = listOf(
+      commitEntry(hash = "abc12345", rootPath = "/repo"),
+      commitEntry(hash = "def67890", rootPath = "/repo"),
+    )
+    val list = JBList(entries).apply {
+      selectionMode = ListSelectionModel.SINGLE_SELECTION
+    }
+    val listenersBefore = list.mouseListeners.toSet()
+
+    val builder = createCommitPickerPopupBuilder(list, showRootNames = false) {}
+    val event = commitPickerMouseReleasedEvent(list)
+    list.mouseListeners.filterNot { it in listenersBefore }.forEach { listener -> listener.mouseReleased(event) }
+
+    assertThat(builder.isAutoselectOnMouseMove).isFalse()
+    assertThat(list.selectionMode).isEqualTo(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION)
+    assertThat(event.isConsumed).isFalse()
+  }
+
+  @Test
   fun showPickerChecksVcsAvailabilityAgainstSourceProject() {
     val hostProject = projectProxy(name = "Agent Dedicated Frame", basePath = "/dedicated")
     val sourceProject = projectProxy(name = "Source Project", basePath = "/repo")
@@ -197,6 +234,27 @@ class AgentPromptVcsCommitManualContextSourceTest {
     )
 
     assertThat(errorMessage).isEqualTo(AgentPromptVcsBundle.message("manual.context.vcs.error.unavailable"))
+  }
+
+  private fun commitPickerMouseReleasedEvent(
+    list: JBList<CommitPickerEntry> = createCommitPickerList(
+      entries = listOf(
+        commitEntry(hash = "abc12345", rootPath = "/repo"),
+      ),
+      selectedHashes = emptySet(),
+    ),
+  ): MouseEvent {
+    return MouseEvent(
+      list,
+      MouseEvent.MOUSE_RELEASED,
+      0L,
+      0,
+      1,
+      1,
+      1,
+      false,
+      MouseEvent.BUTTON1,
+    )
   }
 
   private fun commitEntry(

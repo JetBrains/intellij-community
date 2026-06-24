@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.prompt.vcs.context
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.render.RenderingUtil
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -51,8 +52,8 @@ internal class AgentPromptVcsCommitListCellRenderer(
     isSelected: Boolean,
     cellHasFocus: Boolean,
   ): Component {
-    background = UIUtil.getListBackground(isSelected, cellHasFocus)
-    val foreground = UIUtil.getListForeground(isSelected, cellHasFocus)
+    background = RenderingUtil.getBackground(list, isSelected)
+    val foreground = RenderingUtil.getForeground(list, isSelected)
     val secondaryForeground = if (isSelected) foreground else UIUtil.getContextHelpForeground()
     val detailsAttributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, secondaryForeground)
 
