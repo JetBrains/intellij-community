@@ -128,6 +128,7 @@ jvm_library(
     ),
     module_name = "intellij.devkit.workspaceModel.k2.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/junit5"],
 )
 
 jvm_library(
@@ -150,6 +151,8 @@ jvm_library(
     runtime_deps = [":devkit-workspaceModel-k2-tests"],
     deps = [
         # do not sort,
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
         "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
         "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel_test_lib",
         "//platform/core-api:core",

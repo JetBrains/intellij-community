@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel
 
+import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.copyright.CopyrightManager
 import com.intellij.copyright.IdeCopyrightManager
 import com.intellij.devkit.workspaceModel.WorkspaceModelGenerator.Companion.RIDER_MODULES_PREFIX
@@ -278,6 +279,8 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
       val editorconfigFile = projectRoot.findOrCreateChildData(this@AbstractAllIntellijEntitiesGenerationTest, ".editorconfig")
       VfsUtil.saveText(editorconfigFile, mergedEditorconfigContent)
     }
+    // wait until copied .idea/codeStyles are reloaded
+    StoreReloadManager.getInstance(project).reloadChangedStorageFiles()
   }
 
   private suspend fun updateIntellijWorkspaceCode(
