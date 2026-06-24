@@ -227,6 +227,8 @@ internal class PerformanceWatcherImpl(providedScope: CoroutineScope) : Performan
   }
 
   override suspend fun processUnfinishedFreeze(consumer: suspend (Path, Int) -> Unit) {
+    LOG.debug("Looking for unfinished freeze dumps in $logDir")
+
     val files = try {
       withContext(Dispatchers.IO) {
         Files.newDirectoryStream(logDir) { it.fileName.toString().startsWith(THREAD_DUMPS_PREFIX) }.use { it.sorted() }
