@@ -39,16 +39,15 @@ import javax.swing.JComponent
 private const val MAX_POPUP_ROW_TITLE_LENGTH: Int = 60
 private val ACTIVITY_COUNTER_LOG = logger<AgentSessionsActivityCounterAction>()
 
-internal fun createAgentSessionsTitleActions(projectScopeAction: AnAction? = null): List<AnAction> {
-  return buildList {
-    add(AgentSessionsActivityCounterAction(AgentSessionsActivityBucket.ATTENTION))
-    add(AgentSessionsActivityCounterAction(AgentSessionsActivityBucket.RUNNING))
-    add(AgentSessionsActivityCounterAction(AgentSessionsActivityBucket.DONE))
-    projectScopeAction?.let(::add)
-    add(AgentSessionsShowActiveThreadsHeaderAction())
-    add(AgentSessionsArchivedContextHeaderAction())
-    add(AgentSessionsArchivedRangeHeaderAction())
-  }
+internal fun createAgentSessionsTitleActions(): List<AnAction> {
+  return listOf(
+    AgentSessionsActivityCounterAction(AgentSessionsActivityBucket.ATTENTION),
+    AgentSessionsActivityCounterAction(AgentSessionsActivityBucket.RUNNING),
+    AgentSessionsActivityCounterAction(AgentSessionsActivityBucket.DONE),
+    AgentSessionsShowActiveThreadsHeaderAction(),
+    AgentSessionsArchivedContextHeaderAction(),
+    AgentSessionsArchivedRangeHeaderAction(),
+  )
 }
 
 internal class AgentSessionsShowActiveThreadsHeaderAction : DumbAwareAction() {

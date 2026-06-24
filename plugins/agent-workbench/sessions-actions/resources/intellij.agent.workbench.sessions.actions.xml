@@ -38,15 +38,19 @@
       <action id="AgentWorkbenchSessions.ShowArchivedThreads"
               class="com.intellij.agent.workbench.sessions.actions.AgentSessionsShowArchivedThreadsAction"/>
       <action id="AgentWorkbenchSessions.Refresh" class="com.intellij.agent.workbench.sessions.actions.AgentSessionsRefreshAction"/>
-      <action id="AgentWorkbenchSessions.ConfigureProviders"
-              class="com.intellij.agent.workbench.sessions.actions.AgentSessionsConfigureProvidersAction"/>
+      <separator/>
+      <action id="AgentWorkbenchSessions.ToggleDedicatedFrame"
+              class="com.intellij.agent.workbench.sessions.actions.AgentSessionsDedicatedFrameToggleAction"/>
+      <action id="AgentWorkbenchSessions.ToggleCurrentProjectOnly"
+              class="com.intellij.agent.workbench.sessions.actions.AgentSessionsCurrentProjectOnlyToggleAction"/>
       <separator/>
       <action id="AgentWorkbenchSessions.ToggleSessionCost"
               class="com.intellij.agent.workbench.sessions.AgentSessionsToggleSessionCostAction"/>
-      <action id="AgentWorkbenchSessions.ToggleDedicatedFrame"
-              class="com.intellij.agent.workbench.sessions.actions.AgentSessionsDedicatedFrameToggleAction"/>
       <action id="AgentWorkbenchSessions.TogglePreventSleepWhileWorking"
               class="com.intellij.agent.workbench.sessions.actions.AgentSessionsPreventSleepWhileWorkingToggleAction"/>
+      <separator/>
+      <action id="AgentWorkbenchSessions.MoreSettings"
+              class="com.intellij.agent.workbench.sessions.actions.AgentSessionsMoreSettingsAction"/>
     </group>
     <action
       id="AgentWorkbenchSessions.GoToSourceProjectFromToolbar"

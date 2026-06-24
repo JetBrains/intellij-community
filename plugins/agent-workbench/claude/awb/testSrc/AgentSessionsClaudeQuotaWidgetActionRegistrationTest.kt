@@ -18,19 +18,11 @@ import java.util.concurrent.TimeUnit
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentSessionsClaudeQuotaWidgetActionRegistrationTest {
   @Test
-  fun gearActionsContainClaudeQuotaWidgetToggle() {
+  fun gearActionsDoNotContainClaudeQuotaWidgetToggle() {
     val actionManager = ActionManager.getInstance()
 
-    assertThat(actionManager.getAction("AgentWorkbenchSessions.ToggleClaudeQuotaWidget"))
-      .isNotNull
-      .isInstanceOf(AgentSessionsToggleClaudeQuotaWidgetAction::class.java)
     assertThat(actionManager.childActionEntries("AgentWorkbenchSessions.ToolWindow.GearActions"))
-      .containsSubsequence(
-        "AgentWorkbenchSessions.Refresh",
-        ACTION_SEPARATOR_MARKER,
-        "AgentWorkbenchSessions.ToggleClaudeQuotaWidget",
-        "AgentWorkbenchSessions.ToggleDedicatedFrame",
-      )
+      .doesNotContain("AgentWorkbenchSessions.ToggleClaudeQuotaWidget")
   }
 
   @Test

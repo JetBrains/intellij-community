@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareAction
 
-internal class AgentSessionsConfigureProvidersAction : DumbAwareAction() {
+internal class AgentSessionsMoreSettingsAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     ShowSettingsUtil.getInstance().showSettingsDialog(e.project, AGENT_WORKBENCH_SETTINGS_CONFIGURABLE_ID)
   }

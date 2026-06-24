@@ -4,7 +4,6 @@ package com.intellij.agent.workbench.sessions.toolwindow
 import com.intellij.agent.workbench.sessions.AgentSessionCostHintBanner
 import com.intellij.agent.workbench.sessions.AgentSessionCostPresentationSettings
 import com.intellij.agent.workbench.sessions.AgentSessionCostHintStateService
-import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.ui.AgentWorkbenchActionIds
 import com.intellij.agent.workbench.sessions.ScriptedSessionSource
 import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaHintBanner
@@ -37,7 +36,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.components.ComponentManagerEx
@@ -104,40 +102,27 @@ class AgentSessionsToolWindowFactorySwingTest {
       "AgentWorkbenchSessions.ShowArchivedThreads",
       "AgentWorkbenchSessions.Refresh",
       SEPARATOR_MARKER,
-      "AgentWorkbenchSessions.ToggleSessionCost",
-      "AgentWorkbenchSessions.ToggleJbCentralQuotaWidget",
-      "AgentWorkbenchSessions.ToggleClaudeQuotaWidget",
       "AgentWorkbenchSessions.ToggleDedicatedFrame",
+      "AgentWorkbenchSessions.ToggleCurrentProjectOnly",
+      SEPARATOR_MARKER,
+      "AgentWorkbenchSessions.ToggleSessionCost",
+      "AgentWorkbenchSessions.TogglePreventSleepWhileWorking",
     )
     assertThat(entries)
-      .contains("AgentWorkbenchSessions.TogglePreventSleepWhileWorking")
+      .contains("AgentWorkbenchSessions.MoreSettings")
       .doesNotContain("AgentWorkbenchSessions.OpenDedicatedFrame")
+      .doesNotContain("AgentWorkbenchSessions.ToggleJbCentralQuotaWidget")
+      .doesNotContain("AgentWorkbenchSessions.ToggleClaudeQuotaWidget")
   }
 
   @Test
-  fun descriptorRegistersCurrentProjectOnlyAction() {
-    val action = ActionManager.getInstance().getAction(AgentWorkbenchActionIds.Sessions.TOGGLE_CURRENT_PROJECT_ONLY)
-
-    assertThat(action).isNotNull()
-    assertThat(action.templatePresentation.text)
-      .isEqualTo(AgentSessionsBundle.message("action.AgentWorkbenchSessions.ToggleCurrentProjectOnly.text"))
-    assertThat(action.templatePresentation.description)
-      .isEqualTo(AgentSessionsBundle.message("action.AgentWorkbenchSessions.ToggleCurrentProjectOnly.description"))
-    assertThat(action.templatePresentation.icon).isEqualTo(AllIcons.Ide.LocalScopeAction)
-  }
-
-  @Test
-  fun titleActionsPlaceCurrentProjectOnlyAfterActivityCounters() {
-    val currentProjectOnlyAction = object : AnAction() {
-      override fun actionPerformed(e: AnActionEvent) {
-      }
-    }
-
-    val actions = createAgentSessionsTitleActions(currentProjectOnlyAction)
+  fun titleActionsKeepScopeToggleOutOfTitleToolbar() {
+    val actions = createAgentSessionsTitleActions()
 
     assertThat(actions.take(3)).allMatch { action -> action is AgentSessionsActivityCounterAction }
-    assertThat(actions[3]).isSameAs(currentProjectOnlyAction)
-    assertThat(actions[4]).isInstanceOf(AgentSessionsShowActiveThreadsHeaderAction::class.java)
+    assertThat(actions[3]).isInstanceOf(AgentSessionsShowActiveThreadsHeaderAction::class.java)
+    assertThat(actions.mapNotNull { ActionManager.getInstance().getId(it) })
+      .doesNotContain(AgentWorkbenchActionIds.Sessions.TOGGLE_CURRENT_PROJECT_ONLY)
   }
 
   @Test
