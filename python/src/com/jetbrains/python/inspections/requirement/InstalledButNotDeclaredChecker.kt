@@ -8,6 +8,7 @@ import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.common.toRequirements
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.listDeclaredPackagesAsync
 import com.jetbrains.python.packaging.pip.PyPiPackageCache
 
 internal class InstalledButNotDeclaredChecker(
@@ -19,7 +20,7 @@ internal class InstalledButNotDeclaredChecker(
     if (isIgnoredOrStandardPackage(importedPyModule))
       return null
 
-    val declared = pythonPackageManager.listDeclaredPackagesSnapshot() ?: return null
+    val declared = pythonPackageManager.listDeclaredPackagesAsync() ?: return null
     val pyPiCacheService = ApplicationManager.getApplication().service<PyPiPackageCache>()
 
     if (packageName !in pyPiCacheService)

@@ -8,6 +8,8 @@ import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.toRequirements
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.listDeclaredPackagesAsync
+import com.jetbrains.python.packaging.management.listInstalledPackagesAsync
 import com.jetbrains.python.psi.PyUtil
 
 class DeclaredButNotInstalledPackagesChecker(
@@ -16,9 +18,9 @@ class DeclaredButNotInstalledPackagesChecker(
   private val ignoredPackageNames: Set<String> = ignoredPackages.mapTo(mutableSetOf()) { PyPackageName.normalizePackageName(it) }
 
   fun findUnsatisfiedRequirements(module: Module, manager: PythonPackageManager): List<PyRequirement> {
-    val requirements = manager.listDeclaredPackagesSnapshot() ?: return emptyList()
+    val requirements = manager.listDeclaredPackagesAsync() ?: return emptyList()
     val packagesToCheck = filterToMainPackages(requirements, manager)
-    val installedPackages = manager.listInstalledPackagesSnapshot()
+    val installedPackages = manager.listInstalledPackagesAsync()
     val modulePackages = collectPackagesInModule(module)
 
     return packagesToCheck.toRequirements().filter { requirement ->

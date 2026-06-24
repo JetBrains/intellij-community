@@ -578,6 +578,21 @@ fun PythonPackageManager.listDeclaredPackagesAsync(): List<PythonPackage>? = run
   listDeclaredPackagesCached()
 }?.getOrNull()
 
+/**
+ * Lists installed packages, awaiting initial loading if necessary.
+ *
+ * Use this from non-suspending background contexts (e.g. inspection visitors) instead of
+ * [PythonPackageManager.listInstalledPackagesSnapshot] when freshness matters — the snapshot
+ * may be stale or empty before the initial reload finishes, which causes false-positive
+ * "requirement is not satisfied" diagnostics right after PPTW package operations
+ * (PY-89774).
+ */
+@ApiStatus.Internal
+@RequiresBackgroundThread
+fun PythonPackageManager.listInstalledPackagesAsync(): List<PythonPackage> = runBlockingMaybeCancellable {
+  listInstalledPackages()
+}
+
 @ApiStatus.Internal
 @JvmInline
 value class PyWorkspaceMember(val name: String)

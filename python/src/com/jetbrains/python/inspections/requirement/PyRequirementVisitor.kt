@@ -14,6 +14,7 @@ import com.jetbrains.python.inspections.quickfix.PyAddToDeclaredPackagesQuickFix
 import com.jetbrains.python.inspections.quickfix.SyncProjectQuickFix
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.listDeclaredPackagesAsync
 import com.jetbrains.python.packaging.utils.PyPackageManagerModuleHelpers
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFromImportStatement
@@ -56,7 +57,7 @@ class PyRequirementVisitor(
 
     val sdk = module.pythonSdk ?: return
     val manager = PythonPackageManager.forSdk(module.project, sdk)
-    if (manager.listDeclaredPackagesSnapshot() == null) return
+    if (manager.listDeclaredPackagesAsync() == null) return
 
     val installedNotDeclaredChecker = InstalledButNotDeclaredChecker(ignoredPackages, manager)
     val packageName = installedNotDeclaredChecker.getUndeclaredPackageName(importedPyModule = importedPyModule) ?: return
