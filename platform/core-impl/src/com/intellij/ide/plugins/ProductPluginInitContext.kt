@@ -334,6 +334,12 @@ class ProductPluginInitContext(
               yieldIfResolves(DependencyRef.of(fullLineModule))
             }
           }
+
+          if (PlatformUtils.isGateway() && doesDependOnPluginAlias(descriptor, PluginId.getId("com.jetbrains.gateway"))) {
+            contentModulesExtractedInCorePluginInGateway.forEach { module ->
+              yieldIfResolves(DependencyRef.of(module))
+            }
+          }
         }
 
         if (descriptor !is PluginMainDescriptor || descriptor.pluginId != CORE_ID) { // FIXME violator: DesignedCorePlugin.xml which is xi:included from IdeaPlugin.xml
@@ -488,4 +494,14 @@ private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins
   "intellij.spellchecker",
   "intellij.platform.structuralSearch",
   "intellij.xml.emmet",
+).map { PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE) }
+
+/**
+ * Specifies the list of content modules which was recently extracted from the Gateway main module of the core plugin.
+ * See [contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins]
+ */
+private val contentModulesExtractedInCorePluginInGateway = arrayOf(
+  "intellij.gateway.core",
+  "intellij.gateway.ssh",
+  "intellij.gateway.standalone",
 ).map { PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE) }
