@@ -109,10 +109,10 @@ import javax.swing.JComponent
 @ApiStatus.Internal
 class WelcomeScreenRightTab(
   val project: Project,
-  val contentProvider: WelcomeRightTabContentProvider,
-  val customTabContentProvider: WelcomeRightCustomTabProvider?,
+  val contentProvider: WelcomeRightTabContentProvider
 ) {
   private val showCustomContent = mutableStateOf(false)
+  private var customTabContentProvider: WelcomeRightCustomTabProvider? = null
 
   val component: JComponent by lazy {
     JewelComposePanel {
@@ -123,7 +123,8 @@ class WelcomeScreenRightTab(
   /**
    * Switches to a custom content view if the content provider supports it.
    */
-  fun switchToCustomContent() {
+  fun switchToCustomContent(provider: WelcomeRightCustomTabProvider) {
+    customTabContentProvider = provider
     showCustomContent.value = true
   }
 
@@ -148,8 +149,9 @@ class WelcomeScreenRightTab(
     val focusRequester = remember { FocusRequester() }
     val isShowingCustomContent = showCustomContent.value
 
-    val headerSubtitle = if (isShowingCustomContent && customTabContentProvider?.customSubtitle != null) {
-      customTabContentProvider.customSubtitle ?: contentProvider.secondaryTitle
+    val provider = customTabContentProvider
+    val headerSubtitle = if (isShowingCustomContent && provider?.customSubtitle != null) {
+      provider.customSubtitle ?: contentProvider.secondaryTitle
     }
     else {
       contentProvider.secondaryTitle
@@ -197,8 +199,9 @@ class WelcomeScreenRightTab(
           Header(headerSubtitle)
           Spacer(modifier = Modifier.height(32.dp))
 
-          if (isShowingCustomContent && customTabContentProvider != null) {
-            customTabContentProvider.TabContent(project)
+          val provider = customTabContentProvider
+          if (isShowingCustomContent && provider != null) {
+            provider.TabContent(project)
           }
           else {
             FeatureGrid(modifier = Modifier.wrapContentSize(Alignment.Center))
@@ -733,9 +736,8 @@ class WelcomeScreenRightTab(
     suspend fun show(project: Project) {
       if (!isRightTabEnabled) return
       val contentProvider = WelcomeRightTabContentProvider.getSingleExtension() ?: return
-      val customTabContentProvider = WelcomeRightCustomTabProvider.getSingleExtension()
       withContext(Dispatchers.EDT) {
-        val tab = WelcomeScreenRightTab(project, contentProvider, customTabContentProvider)
+        val tab = WelcomeScreenRightTab(project, contentProvider)
         addToMap(project, tab)
 
         val settingsFile = WelcomeScreenRightTabVirtualFile(tab, project)
