@@ -1,12 +1,12 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.libraries.junit5.params"/>
     <module name="intellij.python.pyproject"/>
     <module name="intellij.python.community.junit5Tests.framework._test"/>
     <module name="intellij.libraries.assertj.core"/>
     <module name="intellij.libraries.junit4"/>
     <module name="intellij.libraries.junit5"/>
+    <module name="intellij.libraries.junit5.params"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
@@ -20,6 +20,7 @@
     <module name="intellij.platform.testFramework.junit5"/>
     <module name="intellij.platform.testFramework.junit5.projectStructure"/>
     <module name="intellij.platform.util.ex"/>
+    <module name="intellij.toml.core"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>
