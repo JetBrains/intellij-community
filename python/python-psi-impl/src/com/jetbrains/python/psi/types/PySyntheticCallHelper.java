@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -139,7 +138,7 @@ public final class PySyntheticCallHelper {
           return matchingOverloads;
         }
       }
-      return List.of(matchingOverloads.get(0));
+      return List.of(matchingOverloads.getFirst());
     }
     return functions;
   }
@@ -148,7 +147,7 @@ public final class PySyntheticCallHelper {
                                                                             @NotNull PyCallableType functionType,
                                                                             @NotNull TypeEvalContext context) {
     List<PyCallableParameter> parameters = functionType.getParameters(context);
-    if (parameters == null) return SyntheticCallArgumentsMapping.empty(functionType);
+    if (parameters == null) return new SyntheticCallArgumentsMapping(Collections.emptyMap(), Collections.emptyList());
 
     List<PyType> unmappedArguments = arguments.subList(Math.min(parameters.size(), arguments.size()), arguments.size());
 
@@ -160,7 +159,7 @@ public final class PySyntheticCallHelper {
       }
     }
 
-    return new SyntheticCallArgumentsMapping(functionType, Collections.emptyList(), mappedParams, unmappedArguments);
+    return new SyntheticCallArgumentsMapping(mappedParams, unmappedArguments);
   }
 
   private static boolean matchesByArgumentTypesOnTypesOnly(@NotNull PyFunction callable,
@@ -175,14 +174,7 @@ public final class PySyntheticCallHelper {
 
     if (!fullMapping.getUnmappedArguments().isEmpty()) return false;
 
-    Map<Ref<PyType>, PyCallableParameter> allMappedParameters = new LinkedHashMap<>();
-    PyCallableParameter firstImplicit = ContainerUtil.getFirstItem(fullMapping.getImplicitParameters());
-    if (firstImplicit != null) {
-      allMappedParameters.put(Ref.create(receiverType), firstImplicit);
-    }
-    allMappedParameters.putAll(fullMapping.getMappedParameters());
-
-    return PyTypeChecker.unifyGenericCallOnArgumentTypes(receiverType, allMappedParameters, context) != null;
+    return PyTypeChecker.unifyGenericCallOnArgumentTypes(receiverType, fullMapping.getMappedParameters(), context) != null;
   }
 
   private static @Nullable PyCallableType getFunctionType(@NotNull PyFunction function,
@@ -196,23 +188,13 @@ public final class PySyntheticCallHelper {
   }
 
   private static class SyntheticCallArgumentsMapping {
-    private final @Nullable PyCallableType myReceiverType;
-    private final @NotNull List<PyCallableParameter> myImplicitParameters;
     private final @NotNull List<PyType> myUnmappedArguments;
     private final @NotNull Map<Ref<PyType>, PyCallableParameter> myMappedParameters;
 
-    SyntheticCallArgumentsMapping(@Nullable PyCallableType receiverType,
-                                  @NotNull List<PyCallableParameter> implicitParameters,
-                                  @NotNull Map<Ref<PyType>, PyCallableParameter> mappedParameters,
+    SyntheticCallArgumentsMapping(@NotNull Map<Ref<PyType>, PyCallableParameter> mappedParameters,
                                   @NotNull List<PyType> unmappedArguments) {
-      myReceiverType = receiverType;
-      myImplicitParameters = implicitParameters;
       myMappedParameters = mappedParameters;
       myUnmappedArguments = unmappedArguments;
-    }
-
-    @NotNull List<PyCallableParameter> getImplicitParameters() {
-      return myImplicitParameters;
     }
 
     @NotNull Map<Ref<PyType>, PyCallableParameter> getMappedParameters() {
@@ -221,14 +203,6 @@ public final class PySyntheticCallHelper {
 
     private @NotNull List<PyType> getUnmappedArguments() {
       return myUnmappedArguments;
-    }
-
-    @Nullable PyCallableType getReceiverType() {
-      return myReceiverType;
-    }
-
-    public static @NotNull SyntheticCallArgumentsMapping empty(@NotNull PyCallableType receiverType) {
-      return new SyntheticCallArgumentsMapping(receiverType, Collections.emptyList(), Collections.emptyMap(), Collections.emptyList());
     }
   }
 }
