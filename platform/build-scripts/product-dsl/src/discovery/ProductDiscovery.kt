@@ -16,6 +16,9 @@ import java.nio.file.Path
  */
 const val PRODUCT_REGISTRY_PATH: String = "build/dev-build.json"
 
+/** Synthetic ProductConfiguration.className used for test product specs without a ProductProperties class. */
+internal const val TEST_PRODUCT_CLASS_NAME: String = "test-product"
+
 /**
  * Product registry containing all product configurations from dev-build.json.
  */

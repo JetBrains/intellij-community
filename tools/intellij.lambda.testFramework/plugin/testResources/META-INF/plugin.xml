@@ -1,6 +1,6 @@
 <!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
 <!-- To regenerate, run 'Generate Product Layouts' or directly UltimateGenerator.main() -->
-<!-- Source: test-product.getProductContentDescriptor() -->
+<!-- Source: platform/buildScripts/src/productLayout/UltimateModuleSets.kt: UltimateModuleSets.getTestProductSpecs()["lambdaTestFixtures"], testPlugin(pluginId = "com.intellij.lambda.test.plugin") -->
 <idea-plugin>
   <id>com.intellij.lambda.test.plugin</id>
   <name>Lambda Test Framework</name>

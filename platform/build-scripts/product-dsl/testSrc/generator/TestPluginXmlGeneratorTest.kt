@@ -82,6 +82,7 @@ class TestPluginXmlGeneratorTest {
     val xml = diffs.single().expectedContent
     assertThat(xml).contains("<dependencies>")
     assertThat(xml).contains("<plugin id=\"intellij.target.plugin\"/>")
+    assertThat(xml).contains("<!-- Source: platform/buildScripts/src/productLayout/UltimateModuleSets.kt: UltimateModuleSets.getTestProductSpecs()[\"TestProduct\"], testPlugin(pluginId = \"intellij.consumer.test.plugin\") -->")
     assertThat(xml).doesNotContain("Generated dependencies - run `Generate Product Layouts` to regenerate")
     }
   }

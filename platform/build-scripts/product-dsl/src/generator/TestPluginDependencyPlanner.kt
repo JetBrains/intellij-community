@@ -23,6 +23,7 @@ import org.jetbrains.intellij.build.productLayout.deps.buildAllowedMissingByModu
 import org.jetbrains.intellij.build.productLayout.deps.collectResolvableModules
 import org.jetbrains.intellij.build.productLayout.deps.readExistingTestPluginDependencies
 import org.jetbrains.intellij.build.productLayout.deps.resolveAllowedMissingPluginIds
+import org.jetbrains.intellij.build.productLayout.discovery.TEST_PRODUCT_CLASS_NAME
 import org.jetbrains.intellij.build.productLayout.model.error.DslTestPluginOwner
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContext
 import org.jetbrains.intellij.build.productLayout.pipeline.DataSlot
@@ -46,10 +47,10 @@ internal object TestPluginDependencyPlanner : PipelineNode {
   override suspend fun execute(ctx: ComputeContext) {
     val model = ctx.model
     val productClassByName = model.discovery.products
-      .associate { product -> product.name to (product.properties?.javaClass?.name ?: "test-product") }
+      .associate { product -> product.name to (product.properties?.javaClass?.name ?: TEST_PRODUCT_CLASS_NAME) }
     val testPluginsWithSource = model.dslTestPluginsByProduct.flatMap { (productName, specs) ->
       if (specs.isEmpty()) return@flatMap emptyList()
-      val productClass = productClassByName[productName] ?: "test-product"
+      val productClass = productClassByName[productName] ?: TEST_PRODUCT_CLASS_NAME
       specs.map { Triple(it, productClass, productName) }
     }
 

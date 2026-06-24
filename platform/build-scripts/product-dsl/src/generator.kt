@@ -21,6 +21,7 @@ import org.jetbrains.intellij.build.productLayout.xml.buildModuleAliasesXml
 import org.jetbrains.intellij.build.productLayout.xml.generateXIncludes
 import org.jetbrains.intellij.build.productLayout.xml.includesPlatformLangPlugin
 import org.jetbrains.intellij.build.productLayout.xml.withEditorFold
+import org.jetbrains.intellij.build.productLayout.discovery.TEST_PRODUCT_CLASS_NAME
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
@@ -129,6 +130,7 @@ internal fun generateProductXml(
 internal fun generateTestPluginXml(
   spec: TestPluginSpec,
   productPropertiesClass: String,
+  productName: String,
   projectRoot: Path,
   moduleDependencies: List<ContentModuleName>,
   pluginDependencies: List<PluginId>,
@@ -174,7 +176,7 @@ internal fun generateTestPluginXml(
     headerBuilder = { sb ->
       sb.append("<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->\n")
       sb.append("<!-- To regenerate, run 'Generate Product Layouts' or directly UltimateGenerator.main() -->\n")
-      sb.append("<!-- Source: $productPropertiesClass.getProductContentDescriptor() -->\n")
+      sb.append("<!-- Source: ${testPluginSourceComment(productPropertiesClass, productName, spec)} -->\n")
     },
     metadataBuilder = { sb ->
       sb.append("  <id>${spec.pluginId.value}</id>\n")
@@ -208,6 +210,16 @@ internal fun generateTestPluginXml(
     status = status,
     moduleCount = buildResult.contentBlocks.sumOf { it.modules.size },
   )
+}
+
+private fun testPluginSourceComment(productPropertiesClass: String, productName: String, spec: TestPluginSpec): String {
+  val productSource = if (productPropertiesClass == TEST_PRODUCT_CLASS_NAME) {
+    "platform/buildScripts/src/productLayout/UltimateModuleSets.kt: UltimateModuleSets.getTestProductSpecs()[\"$productName\"]"
+  }
+  else {
+    "$productPropertiesClass.getProductContentDescriptor()"
+  }
+  return "$productSource, testPlugin(pluginId = \"${spec.pluginId.value}\")"
 }
 
 private fun sortTestPluginContentSpec(spec: ProductModulesContentSpec): ProductModulesContentSpec {
