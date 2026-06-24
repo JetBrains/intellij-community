@@ -9,6 +9,7 @@ import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimePluginHeader
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
+import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
@@ -139,21 +140,26 @@ internal fun generateCrossPlatformRepository(distAllPath: Path, osSpecificDistPa
     val descriptors = repositories.map { it.findDescriptor(moduleId)!! }
     val commonResourcePaths = descriptors.map { it.resourcePaths.toSet() }.reduce { a, b -> a.intersect(b) }
     val commonDependencies = descriptors.first().dependencyIds
-    for (descriptor in descriptors) {
-      if (descriptor.dependencyIds != commonDependencies) {
-        context.messages.logErrorAndThrow("Cannot generate runtime module repository for cross-platform distribution: different dependencies for module '${moduleId.displayName}', ${descriptor.dependencyIds} and $commonDependencies")
-      }
+    if (descriptors.all { it.dependencyIds == commonDependencies }) {
+      commonDescriptors.add(RawRuntimeModuleDescriptor.create(moduleId, commonResourcePaths.toList(), commonDependencies))
     }
-    commonDescriptors.add(RawRuntimeModuleDescriptor.create(moduleId, commonResourcePaths.toList(), commonDependencies))
+    else {
+      Span.current().addEvent("${moduleId.displayName} isn't included in the runtime module repository because it has different dependencies for different platforms")
+    }
   }
+  val commonIncludedModuleIds = commonDescriptors.mapTo(HashSet()) { it.moduleId }
   val commonPluginHeaders = ArrayList<RuntimePluginHeader>()
   for (pluginDescriptorModule in commonPluginDescriptorModules) {
     val headers = repositories.map { repository -> repository.pluginHeaders.single { it.pluginDescriptorModuleId == pluginDescriptorModule } }
     val header = headers.first()
-    for (anotherHeader in headers.drop(1)) {
-      if (header.pluginId != anotherHeader.pluginId || header.includedModules != anotherHeader.includedModules) {
-        context.messages.logErrorAndThrow("Cannot generate runtime module repository for cross-platform distribution: different plugin headers for module '${pluginDescriptorModule.displayName}': $header and $anotherHeader")
-      }
+    if (headers.any { it.pluginId != header.pluginId || it.includedModules != header.includedModules }) {
+      Span.current().addEvent("${pluginDescriptorModule.displayName} plugin isn't included in the runtime module repository because it has different plugin headers for different platforms")
+      continue
+    }
+    val missingModule = header.includedModules.find { it.moduleId !in commonIncludedModuleIds}
+    if (missingModule != null) {
+      Span.current().addEvent("${pluginDescriptorModule.displayName} plugin isn't included in the runtime module repository because it's module ${missingModule.moduleId.displayName} isn't available for some platform")
+      continue
     }
     commonPluginHeaders.add(header)
   }
