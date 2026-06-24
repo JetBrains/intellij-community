@@ -216,8 +216,12 @@ describe("WebView bridge bootstrap", () => {
     expect(themeApi.current).toBe("light")
     const themeStyles = documentStub.getElementById("__wvi-ij-themes")
     expect(themeStyles).not.toBeNull()
-    expect(themeStyles?.textContent?.includes("/__webview/fonts/inter/Inter-Regular.otf")).toBe(true)
-    expect(themeStyles?.textContent?.includes("/__webview/fonts/jetbrains-mono/JetBrainsMono-Regular.ttf")).toBe(true)
+    const themeStyleText = themeStyles?.textContent ?? ""
+    expect(themeStyleText.includes("/__webview/fonts/inter/Inter-Regular.otf")).toBe(true)
+    expect(themeStyleText.includes("/__webview/fonts/jetbrains-mono/JetBrainsMono-Regular.ttf")).toBe(true)
+    expect(themeStyleText.includes("/__webview/fonts/inter/Inter-SemiBold.otf\") format(\"opentype\");\n  font-weight: 700;")).toBe(true)
+    expect(themeStyleText.includes("-webkit-font-smoothing")).toBe(false)
+    expect(themeStyleText.includes("-moz-osx-font-smoothing")).toBe(false)
     expect(documentStub.documentElement.getAttribute("data-theme")).toBe("light")
     expect(postedMessages.slice(bridgeMessageCount)).toContainEqual({
       jsonrpc: "2.0",

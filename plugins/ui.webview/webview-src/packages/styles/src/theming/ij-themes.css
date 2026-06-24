@@ -33,6 +33,22 @@
 }
 
 @font-face {
+  font-family: "Inter";
+  /*noinspection CssUnknownTarget*/
+  src: url("/__webview/fonts/inter/Inter-SemiBold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Inter";
+  /*noinspection CssUnknownTarget*/
+  src: url("/__webview/fonts/inter/Inter-SemiBoldItalic.otf") format("opentype");
+  font-weight: 700;
+  font-style: italic;
+}
+
+@font-face {
   font-family: "JetBrains Mono";
   /*noinspection CssUnknownTarget*/
   src: url("/__webview/fonts/jetbrains-mono/JetBrainsMono-Regular.ttf") format("truetype");
@@ -214,8 +230,6 @@ body.ij-webview-root {
   font-family: var(--ij-font), sans-serif;
   font-size: var(--ij-font-size);
   line-height: var(--ij-line-height-default);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 .ij-webview-editor-font {

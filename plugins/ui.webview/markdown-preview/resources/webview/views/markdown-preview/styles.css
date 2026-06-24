@@ -45,7 +45,7 @@ body {
   max-width: 980px;
   padding: 20px 28px 48px;
   font-size: var(--markdown-preview-font-size, var(--ij-font-size, 13px));
-  line-height: 1.55;
+  line-height: 1.6;
   overflow-wrap: break-word;
 }
 
@@ -328,26 +328,32 @@ html[data-theme="light"] .markdownPreview {
 .markdownPreview h4,
 .markdownPreview h5,
 .markdownPreview h6 {
-  margin: 22px 0 10px;
+  margin: 1em 0 16px;
   color: var(--ij-text-primary);
-  font-weight: 600;
-  line-height: 1.25;
+  font-weight: bold;
+  line-height: 1.4;
 }
 
 .markdownPreview h1 {
   padding-bottom: 8px;
   border-bottom: 1px solid var(--ij-border);
-  font-size: 1.85em;
+  font-size: 2em;
 }
 
 .markdownPreview h2 {
   padding-bottom: 6px;
   border-bottom: 1px solid var(--ij-border);
-  font-size: 1.55em;
+  font-size: 1.8em;
 }
 
 .markdownPreview h3 {
   font-size: 1.3em;
+}
+
+.markdownPreview h4,
+.markdownPreview h5,
+.markdownPreview h6 {
+  font-size: 1em;
 }
 
 .markdownPreview p,
@@ -361,7 +367,7 @@ html[data-theme="light"] .markdownPreview {
 .markdownPreview .frontmatterBlock,
 .markdownPreview .mermaidBlock,
 .markdownPreview .footnotes {
-  margin: 0 0 12px;
+  margin: 16px 0;
 }
 
 .markdownPreview ul,
@@ -412,6 +418,10 @@ html[data-theme="light"] .markdownPreview {
 
 .markdownPreview a:hover {
   text-decoration: underline;
+}
+
+.markdownPreview strong {
+  font-weight: bold;
 }
 
 .markdownPreview kbd {
@@ -645,7 +655,7 @@ html[data-theme="light"] .markdownPreview {
 }
 
 .markdownPreview .hljs-strong {
-  font-weight: 600;
+  font-weight: bold;
 }
 
 .markdownPreview blockquote {
@@ -669,7 +679,7 @@ html[data-theme="light"] .markdownPreview {
 
 .markdownPreview th {
   background: var(--ij-bg-panel);
-  font-weight: 600;
+  font-weight: bold;
 }
 
 .markdownPreview img {
