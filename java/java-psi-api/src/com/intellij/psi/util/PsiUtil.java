@@ -1811,7 +1811,7 @@ public final class PsiUtil extends PsiUtilCore {
     }
   }
 
-  /** @return Whether or not the element is part of a markdown javadoc comment */
+  /// @return Whether the element is part of a Markdown Javadoc comment
   @Contract(value = "null -> false", pure = true)
   public static boolean isInMarkdownDocComment(PsiElement element) {
     PsiDocComment docComment = PsiTreeUtil.getParentOfType(element, PsiDocComment.class);

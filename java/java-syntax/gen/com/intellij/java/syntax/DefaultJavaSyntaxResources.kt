@@ -82,6 +82,7 @@ internal object DefaultJavaSyntaxResources {
     "feature.instance.main.method" to "Instance main method",
     "feature.intersections.in.casts" to "Intersection types in casts",
     "feature.java.lang.io" to "java.lang.IO utility class",
+    "feature.javadoc.inline.return" to "Inline {@return …} in Javadoc",
     "feature.javadoc.snippets" to "@snippet in Javadoc",
     "feature.lambda.expressions" to "Lambda expressions",
     "feature.lazy.constants" to "Lazy constants",

@@ -49,7 +49,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.JavaDocTokenType;
@@ -3334,7 +3334,7 @@ public class JavaDocInfoGenerator {
         if (returnTag != null) {
           return returnTag;
         }
-        if (PsiUtil.getLanguageLevel(comment).isAtLeast(LanguageLevel.JDK_16)) {
+        if (PsiUtil.isAvailable(JavaFeature.JAVADOC_INLINE_RETURN_TAG, comment)) {
           for (PsiElement child : comment.getChildren()) {
             if (child instanceof PsiDocTag tag && RETURN_TAG.equals(tag.getName())) {
               return tag;

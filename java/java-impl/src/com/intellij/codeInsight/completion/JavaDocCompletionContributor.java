@@ -44,7 +44,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaDocTokenType;
@@ -579,7 +578,7 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
     for (JavadocTagInfo info : infos) {
       String tagName = info.getName();
       if (tagName.equals(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME)) continue;
-      if (isInline != info.isInline() && !(PsiUtil.getLanguageLevel(comment).isAtLeast(LanguageLevel.JDK_16) && tagName.equals("return")))
+      if (isInline != info.isInline() && !(PsiUtil.isAvailable(JavaFeature.JAVADOC_INLINE_RETURN_TAG, comment) && tagName.equals("return")))
         continue;
       if (addSpecialTags(ret, comment, tagName)) {
         ret.add(tagName);

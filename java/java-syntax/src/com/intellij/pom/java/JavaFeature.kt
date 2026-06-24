@@ -35,7 +35,7 @@ enum class JavaFeature {
   STREAM_OPTIONAL(LanguageLevel.JDK_1_8, "feature.stream.and.optional.api", true),
 
   /**
-   * `javadoc` tool has a different resolution behavior past JDK1.8, it now supports imports
+   * `javadoc` tool has a different resolution behavior past JDK1.8, it now supports imports statements in the `package-info.java` file
    */
   PACKAGE_INFO_DOC_IMPORTS(LanguageLevel.JDK_1_8, "feature.package.info.imports"),
 
@@ -77,6 +77,7 @@ enum class JavaFeature {
   LOCAL_INTERFACES(LanguageLevel.JDK_16, "feature.local.interfaces"),
   LOCAL_ENUMS(LanguageLevel.JDK_16, "feature.local.enums"),
   INNER_STATICS(LanguageLevel.JDK_16, "feature.inner.statics"),
+  JAVADOC_INLINE_RETURN_TAG(LanguageLevel.JDK_16, "feature.javadoc.inline.return"),
   SEALED_CLASSES(LanguageLevel.JDK_17, "feature.sealed.classes"),
   ALWAYS_STRICTFP(LanguageLevel.JDK_17, "feature.strictfp"),
   INNER_NOT_CAPTURE_THIS(LanguageLevel.JDK_18, "feature.no.this.capture"),
