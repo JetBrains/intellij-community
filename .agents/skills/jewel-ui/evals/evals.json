@@ -1,0 +1,33 @@
+{
+  "skill_name": "jewel-ui",
+  "evals": [
+    {
+      "id": 0,
+      "name": "composition-avoids-ijpl-apis",
+      "prompt": "I am building a Jewel composable for an IntelliJ plugin. Is it okay for the composable to call Registry.get() and ProjectManager.getInstance() during composition if I wrap it in SwingBridgeTheme?",
+      "expected_output": "Guidance that Jewel/Compose composition should not directly or indirectly access IntelliJ Platform APIs; platform work belongs in a presenter/controller boundary or a tiny injected fakeable collaborator when unavoidable.",
+      "files": [],
+      "expectations": [
+        "Says not to access IntelliJ Platform APIs directly or indirectly inside composition.",
+        "Moves platform interaction to presenter/controller/view-model/service/action boundary.",
+        "Allows an injected fakeable collaborator only when access is unavoidable.",
+        "Mentions threading or Compose stability implications of platform APIs.",
+        "Does not imply SwingBridgeTheme makes platform API access in composition safe."
+      ]
+    },
+    {
+      "id": 1,
+      "name": "jewel-intellij-icon-key-loading",
+      "prompt": "I need to render a custom SVG icon in a Jewel-based IntelliJ plugin UI. The icon has an Old UI resource at icons/actions/run.svg and a New UI resource at icons/expui/actions/run.svg. Should I just call Compose painterResource, or is there a Jewel way to define and render this?",
+      "expected_output": "Guidance to define an IntelliJIconKey with old and new UI paths and a classloader context, then render it with Jewel Icon(key = ...) or Image(iconKey = ...), avoiding raw painterResource so Jewel/IntelliJ icon patching and UI variants work correctly.",
+      "files": [],
+      "expectations": [
+        "Uses IntelliJIconKey for the old and new UI resource paths rather than a single raw painterResource call.",
+        "Includes both icons/actions/run.svg and icons/expui/actions/run.svg in the icon key definition.",
+        "Uses an explicit class context such as MyIcons::class.java for classloader resource lookup.",
+        "Renders with Jewel Icon(key = ..., contentDescription = ...) or Image(iconKey = ...).",
+        "Explains that raw painterResource bypasses Jewel or IntelliJ icon-key handling for UI variants, theme patching, or classpath portability."
+      ]
+    }
+  ]
+}

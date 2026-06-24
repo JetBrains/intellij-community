@@ -22,6 +22,9 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | [ide-diagnostics-mcp](ide-diagnostics-mcp/SKILL.md) | Inspect a running IntelliJ IDE for freezes or blocked threads via MCP. |
 | [jewel-markdown](jewel-markdown/SKILL.md) | Build or debug Jewel Markdown parsing, rendering, and styling. |
 | [jewel-release](jewel-release/SKILL.md) | Prepare a Jewel PR or release: checks, release notes, cherry-picks, tagging. |
+| [jewel-swing-interop](jewel-swing-interop/SKILL.md) | Embed Jewel Compose UI in Swing. |
+| [jewel-ui](jewel-ui/SKILL.md) | Build UI with Jewel components and themes. |
+| [jewel-ui-audit](jewel-ui-audit/SKILL.md) | Audit Jewel UI theming and idioms. |
 | [jna](jna/SKILL.md) | Implement or debug JNA bindings and ABI layouts in Kotlin or Java. |
 | [kotlin-ui-dsl](kotlin-ui-dsl/SKILL.md) | Write IntelliJ dialogs and settings with Kotlin UI DSL v2 panels. |
 | [kotlin-ui-swing-component-architecture](kotlin-ui-swing-component-architecture/SKILL.md) | Design IntelliJ Swing UI components, state flow, and EDT work. |
