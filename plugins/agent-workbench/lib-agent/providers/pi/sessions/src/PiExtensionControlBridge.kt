@@ -2,7 +2,6 @@
 package com.intellij.platform.ai.agent.pi.sessions
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
-import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
@@ -377,7 +376,7 @@ private data class PiControlThreadPayload(
       updatedAt = updatedAt ?: System.currentTimeMillis(),
       archived = false,
       activity = activity ?: AgentThreadActivity.READY,
-      provider = AgentSessionProvider.PI,
+      provider = PI_AGENT_SESSION_PROVIDER,
     )
   }
 }

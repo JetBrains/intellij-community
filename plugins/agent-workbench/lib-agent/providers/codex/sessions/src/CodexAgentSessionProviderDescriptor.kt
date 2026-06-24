@@ -6,7 +6,6 @@ import com.intellij.platform.ai.agent.codex.common.CodexCliUtils
 import com.intellij.platform.ai.agent.codex.sessions.backend.appserver.SharedCodexAppServerService
 import com.intellij.platform.ai.agent.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
-import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModelGroup
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
@@ -23,7 +22,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessag
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentPromptProviderOption
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderImplementation
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentThreadRenameAction
@@ -46,10 +45,7 @@ internal class CodexAgentSessionProviderDescriptor(
    */
   private val executableResolver: suspend () -> String = CodexCliUtils::resolveExecutableOrDefaultViaTerminalResolver,
   private val cliAvailableProbe: suspend () -> Boolean = { CodexCliUtils.findExecutableViaTerminalResolver() != null },
-) : AgentSessionProviderDescriptor {
-  override val provider: AgentSessionProvider
-    get() = AgentSessionProvider.CODEX
-
+) : AgentSessionProviderImplementation {
   override val displayPriority: Int
     get() = 0
 
@@ -235,7 +231,7 @@ internal class CodexAgentSessionProviderDescriptor(
           label = skill.displayName ?: skill.name,
           insertText = "$" + skill.name + " ",
           kind = AgentPromptReusableSourceKind.SKILL,
-          provider = AgentSessionProvider.CODEX,
+          provider = CODEX_AGENT_SESSION_PROVIDER,
           description = skill.shortDescription ?: skill.description ?: skill.defaultPrompt,
           sourcePath = skill.path,
         )

@@ -11,6 +11,8 @@ import com.intellij.agent.workbench.sessions.ScriptedSessionSource
 import com.intellij.agent.workbench.sessions.assertNewThreadPromptLaunchOpensNewChat
 import com.intellij.platform.ai.agent.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.platform.ai.agent.sessions.core.providers.withProvider
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -30,7 +32,7 @@ class CodexNewThreadPromptLaunchIntegrationTest {
       workingProjectPath = PROJECT_PATH,
     )
 
-    assertThat(request.provider).isEqualTo(AgentSessionProvider.CODEX)
+    assertThat(request.provider).isEqualTo(AgentSessionProvider.from("codex"))
     assertThat(request.projectPath).isEqualTo(PROJECT_PATH)
     assertThat(request.initialMessageRequest.prompt).isEqualTo(PLAN_PROMPT)
     assertThat(request.initialMessageRequest.providerOptionIds).containsExactly(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE)
@@ -58,7 +60,7 @@ class CodexNewThreadPromptLaunchIntegrationTest {
     val observation = assertNewThreadPromptLaunchOpensNewChat(
       descriptor = descriptor,
       request = AgentPromptLaunchRequest(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         projectPath = PROJECT_PATH,
         launchMode = AgentSessionLaunchMode.STANDARD,
         initialMessageRequest = AgentPromptInitialMessageRequest(
@@ -88,7 +90,7 @@ class CodexNewThreadPromptLaunchIntegrationTest {
     val observation = assertNewThreadPromptLaunchOpensNewChat(
       descriptor = descriptor,
       request = AgentPromptLaunchRequest(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         projectPath = PROJECT_PATH,
         launchMode = AgentSessionLaunchMode.STANDARD,
         initialMessageRequest = AgentPromptInitialMessageRequest(
@@ -109,12 +111,12 @@ class CodexNewThreadPromptLaunchIntegrationTest {
   }
 }
 
-private fun descriptor(): CodexAgentSessionProviderDescriptor {
+private fun descriptor(): AgentSessionProviderDescriptor {
   return CodexAgentSessionProviderDescriptor(
-    sessionSource = ScriptedSessionSource(provider = AgentSessionProvider.CODEX),
+    sessionSource = ScriptedSessionSource(provider = AgentSessionProvider.from("codex")),
     executableResolver = { CodexCliUtils.CODEX_COMMAND },
     cliAvailableProbe = { true },
-  )
+  ).withProvider(CODEX_AGENT_SESSION_PROVIDER)
 }
 
 private const val PROJECT_PATH: String = "/work/project-a"

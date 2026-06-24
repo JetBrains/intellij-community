@@ -3,13 +3,9 @@ package com.intellij.agent.workbench.codex.chat
 
 import com.intellij.agent.workbench.chat.AgentChatTerminalTitleThreadRebindContributor
 import com.intellij.agent.workbench.chat.AgentChatTerminalTitleThreadRebindSignal
-import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import java.util.Locale
 
 internal class CodexTerminalTitleThreadRebindContributor : AgentChatTerminalTitleThreadRebindContributor {
-  override val provider: AgentSessionProvider
-    get() = AgentSessionProvider.CODEX
-
   override fun extractThreadId(applicationTitle: String?): String? {
     return extractThreadSignal(applicationTitle)?.threadId
   }

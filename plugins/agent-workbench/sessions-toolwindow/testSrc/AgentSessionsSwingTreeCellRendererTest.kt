@@ -457,7 +457,7 @@ class AgentSessionsSwingTreeCellRendererTest {
     val project = AgentProjectSessions(path = "/work/project-a",
                                        name = "Project A",
                                        isOpen = true,
-                                       providerLoadStates = loadingProviderStates(AgentSessionProvider.CODEX))
+                                       providerLoadStates = loadingProviderStates(AgentSessionProvider.from("codex")))
     val projectId = SessionTreeId.Project(project.path)
     val renderer = SessionTreeCellRenderer(
       nowProvider = { 0L },
@@ -483,7 +483,7 @@ class AgentSessionsSwingTreeCellRendererTest {
       name = "Project A",
       branch = "feature-x",
       isOpen = true,
-      providerLoadStates = loadingProviderStates(AgentSessionProvider.CODEX),
+      providerLoadStates = loadingProviderStates(AgentSessionProvider.from("codex")),
     )
     val projectId = SessionTreeId.Project(project.path)
     val projectNode = SessionTreeNode.Project(project, pathQualifier = "…/work/project-a")
@@ -511,7 +511,7 @@ class AgentSessionsSwingTreeCellRendererTest {
       name = "project-a-feature",
       branch = "feature",
       isOpen = false,
-      providerLoadStates = loadingProviderStates(AgentSessionProvider.CODEX),
+      providerLoadStates = loadingProviderStates(AgentSessionProvider.from("codex")),
     )
     val worktreeId = SessionTreeId.Worktree(project.path, worktree.path)
     val renderer = SessionTreeCellRenderer(
@@ -624,7 +624,7 @@ class AgentSessionsSwingTreeCellRendererTest {
     val tree = createTree(width = 420)
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
     val thread = AgentSessionThread(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       id = "thread-1",
       title = "How much time",
       updatedAt = 0L,
@@ -662,7 +662,7 @@ class AgentSessionsSwingTreeCellRendererTest {
     val tree = createTree(width = 460)
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
     val thread = AgentSessionThread(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       id = "thread-1",
       title = "Need input",
       updatedAt = 14L * 24L * 60L * 60L * 1000L,
@@ -697,7 +697,7 @@ class AgentSessionsSwingTreeCellRendererTest {
     val tree = createTree(width = 460)
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
     val thread = AgentSessionThread(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       id = "thread-1",
       title = "Processing",
       updatedAt = 14L * 24L * 60L * 60L * 1000L,
@@ -734,7 +734,7 @@ class AgentSessionsSwingTreeCellRendererTest {
     val tree = createTree(width = 460)
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
     val thread = AgentSessionThread(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       id = "thread-1",
       title = "Ready thread",
       updatedAt = 14L * 24L * 60L * 60L * 1000L,
@@ -762,7 +762,7 @@ class AgentSessionsSwingTreeCellRendererTest {
     val tree = createTree(width = 420)
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
     val readyThread = AgentSessionThread(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       id = "thread-ready",
       title = "How much time",
       updatedAt = 0L,
@@ -776,19 +776,19 @@ class AgentSessionsSwingTreeCellRendererTest {
       nodeResolver = { id ->
         when (id) {
           readyThreadId -> SessionTreeNode.Thread(project, readyThread)
-          SessionTreeId.Thread(project.path, AgentSessionProvider.CODEX, "thread-processing") -> SessionTreeNode.Thread(
+          SessionTreeId.Thread(project.path, AgentSessionProvider.from("codex"), "thread-processing") -> SessionTreeNode.Thread(
             project,
             readyThread.copy(id = "thread-processing", activityReport = AgentThreadActivityReport(AgentThreadActivity.PROCESSING)),
           )
-          SessionTreeId.Thread(project.path, AgentSessionProvider.CODEX, "thread-reviewing") -> SessionTreeNode.Thread(
+          SessionTreeId.Thread(project.path, AgentSessionProvider.from("codex"), "thread-reviewing") -> SessionTreeNode.Thread(
             project,
             readyThread.copy(id = "thread-reviewing", activityReport = AgentThreadActivityReport(AgentThreadActivity.REVIEWING)),
           )
-          SessionTreeId.Thread(project.path, AgentSessionProvider.CODEX, "thread-needs-input") -> SessionTreeNode.Thread(
+          SessionTreeId.Thread(project.path, AgentSessionProvider.from("codex"), "thread-needs-input") -> SessionTreeNode.Thread(
             project,
             readyThread.copy(id = "thread-needs-input", activityReport = AgentThreadActivityReport(AgentThreadActivity.NEEDS_INPUT)),
           )
-          SessionTreeId.Thread(project.path, AgentSessionProvider.CODEX, "thread-unread") -> SessionTreeNode.Thread(
+          SessionTreeId.Thread(project.path, AgentSessionProvider.from("codex"), "thread-unread") -> SessionTreeNode.Thread(
             project,
             readyThread.copy(id = "thread-unread", activityReport = AgentThreadActivityReport(AgentThreadActivity.UNREAD)),
           )
@@ -799,11 +799,11 @@ class AgentSessionsSwingTreeCellRendererTest {
 
     renderer.getTreeCellRendererComponent(tree, descriptorValue(readyThreadId), false, false, true, 0, false)
     val readyIcon = renderer.icon
-    assertThreadStatusIcon(readyIcon, AgentSessionProvider.CODEX, AgentThreadActivity.READY)
+    assertThreadStatusIcon(readyIcon, AgentSessionProvider.from("codex"), AgentThreadActivity.READY)
 
     renderer.getTreeCellRendererComponent(
       tree,
-      descriptorValue(SessionTreeId.Thread(project.path, AgentSessionProvider.CODEX, "thread-processing")),
+      descriptorValue(SessionTreeId.Thread(project.path, AgentSessionProvider.from("codex"), "thread-processing")),
       false,
       false,
       true,
@@ -811,12 +811,12 @@ class AgentSessionsSwingTreeCellRendererTest {
       false,
     )
     val processingIcon = renderer.icon
-    assertThreadStatusIcon(processingIcon, AgentSessionProvider.CODEX, AgentThreadActivity.PROCESSING)
+    assertThreadStatusIcon(processingIcon, AgentSessionProvider.from("codex"), AgentThreadActivity.PROCESSING)
     assertThat(processingIcon).isNotSameAs(readyIcon)
 
     renderer.getTreeCellRendererComponent(
       tree,
-      descriptorValue(SessionTreeId.Thread(project.path, AgentSessionProvider.CODEX, "thread-reviewing")),
+      descriptorValue(SessionTreeId.Thread(project.path, AgentSessionProvider.from("codex"), "thread-reviewing")),
       false,
       false,
       true,
@@ -824,12 +824,12 @@ class AgentSessionsSwingTreeCellRendererTest {
       false,
     )
     val reviewingIcon = renderer.icon
-    assertThreadStatusIcon(reviewingIcon, AgentSessionProvider.CODEX, AgentThreadActivity.REVIEWING)
+    assertThreadStatusIcon(reviewingIcon, AgentSessionProvider.from("codex"), AgentThreadActivity.REVIEWING)
     assertThat(reviewingIcon).isNotSameAs(readyIcon)
 
     renderer.getTreeCellRendererComponent(
       tree,
-      descriptorValue(SessionTreeId.Thread(project.path, AgentSessionProvider.CODEX, "thread-needs-input")),
+      descriptorValue(SessionTreeId.Thread(project.path, AgentSessionProvider.from("codex"), "thread-needs-input")),
       false,
       false,
       true,
@@ -837,12 +837,12 @@ class AgentSessionsSwingTreeCellRendererTest {
       false,
     )
     val needsInputIcon = renderer.icon
-    assertThreadStatusIcon(needsInputIcon, AgentSessionProvider.CODEX, AgentThreadActivity.NEEDS_INPUT)
+    assertThreadStatusIcon(needsInputIcon, AgentSessionProvider.from("codex"), AgentThreadActivity.NEEDS_INPUT)
     assertThat(needsInputIcon).isNotSameAs(readyIcon)
 
     renderer.getTreeCellRendererComponent(
       tree,
-      descriptorValue(SessionTreeId.Thread(project.path, AgentSessionProvider.CODEX, "thread-unread")),
+      descriptorValue(SessionTreeId.Thread(project.path, AgentSessionProvider.from("codex"), "thread-unread")),
       false,
       false,
       true,
@@ -850,7 +850,7 @@ class AgentSessionsSwingTreeCellRendererTest {
       false,
     )
     val unreadIcon = renderer.icon
-    assertThreadStatusIcon(unreadIcon, AgentSessionProvider.CODEX, AgentThreadActivity.UNREAD)
+    assertThreadStatusIcon(unreadIcon, AgentSessionProvider.from("codex"), AgentThreadActivity.UNREAD)
     assertThat(unreadIcon).isNotSameAs(readyIcon)
     assertThat(unreadIcon).isNotSameAs(needsInputIcon)
   }
@@ -860,7 +860,7 @@ class AgentSessionsSwingTreeCellRendererTest {
     val tree = createTree(width = 420)
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
     val thread = AgentSessionThread(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       id = "thread-1",
       title = "Thread 1",
       updatedAt = 0L,
@@ -871,8 +871,8 @@ class AgentSessionsSwingTreeCellRendererTest {
         AgentSubAgent(id = "sub-done", name = "Done sub-agent", activity = AgentThreadActivity.UNREAD),
       ),
     )
-    val readySubAgentId = SessionTreeId.SubAgent(project.path, AgentSessionProvider.CODEX, thread.id, "sub-ready")
-    val doneSubAgentId = SessionTreeId.SubAgent(project.path, AgentSessionProvider.CODEX, thread.id, "sub-done")
+    val readySubAgentId = SessionTreeId.SubAgent(project.path, AgentSessionProvider.from("codex"), thread.id, "sub-ready")
+    val doneSubAgentId = SessionTreeId.SubAgent(project.path, AgentSessionProvider.from("codex"), thread.id, "sub-done")
     val renderer = SessionTreeCellRenderer(
       nowProvider = { 0L },
       rowActionsProvider = { _, _, _ -> null },
@@ -902,7 +902,7 @@ class AgentSessionsSwingTreeCellRendererTest {
     val tree = createTree(width = 420)
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
     val thread = AgentSessionThread(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       id = "thread-1",
       title = "How much time",
       updatedAt = 0L,
@@ -933,7 +933,7 @@ class AgentSessionsSwingTreeCellRendererTest {
     val tree = createTree(width = 460)
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
     val thread = AgentSessionThread(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       id = "thread-1",
       title = "How much time need to compute A-C?",
       updatedAt = 14L * 24L * 60L * 60L * 1000L,
@@ -965,7 +965,7 @@ class AgentSessionsSwingTreeCellRendererTest {
     val now = 28L * 24L * 60L * 60L * 1000L
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
     val thread = AgentSessionThread(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       id = "thread-1",
       title = "How much time need to compute A-C?",
       updatedAt = 14L * 24L * 60L * 60L * 1000L,
@@ -993,7 +993,7 @@ class AgentSessionsSwingTreeCellRendererTest {
     val longTitle = "Project setup: " + "a".repeat(180) + " tail"
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
     val thread = AgentSessionThread(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       id = "thread-1",
       title = longTitle,
       updatedAt = 14L * 24L * 60L * 60L * 1000L,
@@ -1021,7 +1021,7 @@ class AgentSessionsSwingTreeCellRendererTest {
 
     statusByActivity.forEach { (activity, statusKey) ->
       val thread = AgentSessionThread(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         id = "thread-$activity",
         title = "Status thread",
         updatedAt = 14L * 24L * 60L * 60L * 1000L,
@@ -1047,7 +1047,7 @@ class AgentSessionsSwingTreeCellRendererTest {
     val now = 28L * 24L * 60L * 60L * 1000L
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
     val thread = AgentSessionThread(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       id = "thread-1",
       title = "How much time need to compute A-C?",
       updatedAt = 14L * 24L * 60L * 60L * 1000L,
@@ -1066,7 +1066,7 @@ class AgentSessionsSwingTreeCellRendererTest {
   fun threadTooltipUsesUnknownUpdatedLabelWhenTimestampMissing() {
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
     val thread = AgentSessionThread(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       id = "thread-1",
       title = "How much time",
       updatedAt = 0L,
@@ -1174,7 +1174,7 @@ class AgentSessionsSwingTreeCellRendererTest {
     }
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
     val thread = AgentSessionThread(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       id = "thread-1",
       title = "How much time",
       updatedAt = 0L,
@@ -1200,7 +1200,7 @@ class AgentSessionsSwingTreeCellRendererTest {
   @Test
   fun threadPresentationUsesFallbackTitleWhenThreadTitleIsBlank() {
     val thread = AgentSessionThread(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       id = "abcdef123456",
       title = "\n  \t  ",
       updatedAt = 0L,
@@ -1219,7 +1219,7 @@ class AgentSessionsSwingTreeCellRendererTest {
   @Test
   fun threadPresentationUsesUnknownTimePlaceholderWhenTimestampMissing() {
     val thread = AgentSessionThread(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       id = "abcdef123456",
       title = "How much time",
       updatedAt = 0L,
@@ -1239,7 +1239,7 @@ class AgentSessionsSwingTreeCellRendererTest {
   fun threadPresentationRendersEstimatedCostWithTildePrefixWhenEnabled() {
     AgentSessionCostPresentationSettings.setEnabled(true)
     val thread = AgentSessionThread(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       id = "abcdef123456",
       title = "How much time",
       updatedAt = 0L,
@@ -1261,7 +1261,7 @@ class AgentSessionsSwingTreeCellRendererTest {
   fun threadPresentationCombinesVisibleStatusAndCostForActionableThread() {
     AgentSessionCostPresentationSettings.setEnabled(true)
     val thread = AgentSessionThread(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       id = "abcdef123456",
       title = "Needs input",
       updatedAt = 0L,
@@ -1285,7 +1285,7 @@ class AgentSessionsSwingTreeCellRendererTest {
   fun threadPresentationDoesNotShowDoneStatusInline() {
     AgentSessionCostPresentationSettings.setEnabled(true)
     val thread = AgentSessionThread(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       id = "abcdef123456",
       title = "Done",
       updatedAt = 0L,
@@ -1308,7 +1308,7 @@ class AgentSessionsSwingTreeCellRendererTest {
   fun threadPresentationOmitsCostWhenSettingDisabled() {
     AgentSessionCostPresentationSettings.setEnabled(false)
     val thread = AgentSessionThread(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       id = "abcdef123456",
       title = "How much time",
       updatedAt = 0L,

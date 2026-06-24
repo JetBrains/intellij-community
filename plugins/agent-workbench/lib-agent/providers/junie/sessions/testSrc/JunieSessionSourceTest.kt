@@ -62,7 +62,7 @@ class JunieSessionSourceTest {
       assertThat(threads[0].updatedAt).isEqualTo(2000L)
       assertThat(threads[0].archived).isFalse()
       assertThat(threads[0].activity).isEqualTo(AgentThreadActivity.READY)
-      assertThat(threads[0].provider).isEqualTo(AgentSessionProvider.JUNIE)
+      assertThat(threads[0].provider).isEqualTo(AgentSessionProvider.from("junie"))
     }
   }
 
@@ -101,7 +101,7 @@ class JunieSessionSourceTest {
       assertThat(threads.single().title).isEqualTo("Archived")
       assertThat(threads.single().archived).isTrue()
       assertThat(threads.single().activity).isEqualTo(AgentThreadActivity.READY)
-      assertThat(threads.single().provider).isEqualTo(AgentSessionProvider.JUNIE)
+      assertThat(threads.single().provider).isEqualTo(AgentSessionProvider.from("junie"))
     }
   }
 

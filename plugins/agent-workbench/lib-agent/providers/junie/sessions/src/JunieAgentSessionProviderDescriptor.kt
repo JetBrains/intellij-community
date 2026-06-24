@@ -3,7 +3,6 @@ package com.intellij.platform.ai.agent.junie.sessions
 
 import com.intellij.platform.ai.agent.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
-import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.junie.common.BRAVE_FLAG
 import com.intellij.platform.ai.agent.junie.common.JunieCliInfo
 import com.intellij.platform.ai.agent.junie.common.JunieCliSupport
@@ -19,7 +18,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessag
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentPromptProviderOption
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderImplementation
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentThreadRenameAction
@@ -36,12 +35,9 @@ internal class JunieAgentSessionProviderDescriptor(
   private val cliInfoResolver: suspend () -> JunieCliInfo? = JunieCliSupport::resolveCliInfoViaTerminalResolver,
   private val generationModelCatalogResolver: suspend (String, String) -> List<AgentPromptGenerationModel> =
     JunieAcpGenerationModelCatalog::listAvailableGenerationModels,
-) : AgentSessionProviderDescriptor {
+) : AgentSessionProviderImplementation {
   @Volatile
   private var latestCliInfo: JunieCliInfo? = null
-
-  override val provider: AgentSessionProvider
-    get() = AgentSessionProvider.JUNIE
 
   override val displayPriority: Int
     get() = 2

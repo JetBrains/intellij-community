@@ -22,6 +22,8 @@
     <agent.workbench.promptLauncher implementation="com.intellij.agent.workbench.sessions.service.AgentSessionPromptLauncherBridge"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchFusCollector"/>
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchProviderValidationRule"/>
     <postStartupActivity implementation="com.intellij.agent.workbench.sessions.sleep.AgentSessionSleepPreventionStartupActivity"/>
     <postStartupActivity implementation="com.intellij.agent.workbench.sessions.service.AgentChatUnreadAcknowledgementStartupActivity"/>
     <notificationGroup id="Agent Workbench Sessions" displayType="BALLOON" bundle="messages.AgentSessionsBundle"

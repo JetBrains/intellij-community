@@ -115,7 +115,7 @@ class AgentChatInitialMessageDispatcherTest {
   fun transientBusyRewindRetriesFromFirstInitialMessageStep(): Unit = timeoutRunBlocking {
     val behavior = RewindOnceOnPromptStepBehavior()
     val file = createFile(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       steps = listOf(
         AgentInitialMessageDispatchStep(
           text = "/plan",
@@ -173,7 +173,7 @@ class AgentChatInitialMessageDispatcherTest {
   @Test
   fun stoppedPlanModeTextDispatchReportsPromptNotSent(): Unit = timeoutRunBlocking {
     val file = createFile(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       initialMessageMode = AgentInitialMessageMode.PLAN,
       steps = listOf(
         AgentInitialMessageDispatchStep(
@@ -313,7 +313,7 @@ private class RewindOnceOnPromptStepBehavior : AgentChatProviderBehavior {
 
 private fun createDispatcher(
   file: AgentChatVirtualFile,
-  provider: AgentSessionProvider = AgentSessionProvider.JUNIE,
+  provider: AgentSessionProvider = AgentSessionProvider.from("junie"),
   behavior: AgentChatProviderBehavior = resolveAgentChatProviderBehavior(provider),
   planModeInitialPromptStopReporter: (Project, AgentChatVirtualFile) -> Unit = { _, _ -> },
 ): AgentChatInitialMessageDispatcher {
@@ -337,7 +337,7 @@ private object StopBeforeSendBehavior : AgentChatProviderBehavior {
 
 private fun createFile(
   steps: List<AgentInitialMessageDispatchStep>,
-  provider: AgentSessionProvider = AgentSessionProvider.JUNIE,
+  provider: AgentSessionProvider = AgentSessionProvider.from("junie"),
   initialMessageMode: AgentInitialMessageMode = AgentInitialMessageMode.STANDARD,
 ): AgentChatVirtualFile {
   return AgentChatVirtualFile(

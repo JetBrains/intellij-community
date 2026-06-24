@@ -7,6 +7,7 @@ import com.intellij.agent.workbench.ai.review.model.ReviewRating
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.diagnostic.fileLogger
@@ -15,9 +16,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.jetbrains.fus.reporting.api.IEventContext
+import com.jetbrains.fus.reporting.api.ValidationResultType
 
 internal object AIReviewCollector : CounterUsagesCollector() {
-  private val group = EventLogGroup("agent.workbench.ai.review", 4)
+  private val group = EventLogGroup("agent.workbench.ai.review", 5)
 
   private val REQUEST_ID = EventFields.Long("request_id", "ID of the review request.")
   private val RATING = EventFields.Enum("rating", ReviewRating::class.java)
@@ -46,14 +49,7 @@ internal object AIReviewCollector : CounterUsagesCollector() {
 
   private val SUCCESS = EventFields.Boolean("success")
 
-  private val AVAILABLE_AI_REVIEW_AGENT_PROVIDERS: List<AgentSessionProvider> = listOf(
-    AgentSessionProvider.CODEX,
-    AgentSessionProvider.CLAUDE,
-    AgentSessionProvider.JUNIE,
-    AgentSessionProvider.OPENCODE,
-  )
-
-  private val AGENT = EventFields.String("agent", AVAILABLE_AI_REVIEW_AGENT_PROVIDERS.map { it.value })
+  private val AGENT = EventFields.StringValidatedByCustomRule<AIReviewAgentProviderValidationRule>("agent")
   private val YOLO = EventFields.Boolean("yolo", "Whether the agent was launched in YOLO (skip-permissions / full-auto) mode.")
 
   private data class ChangeMetrics(
@@ -244,4 +240,12 @@ internal object AIReviewCollector : CounterUsagesCollector() {
     )
   }
 
+}
+
+internal class AIReviewAgentProviderValidationRule : CustomValidationRule() {
+  override fun doValidate(data: String, context: IEventContext): ValidationResultType {
+    return if (AgentSessionProvider.fromOrNull(data) != null) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
+  }
+
+  override fun getRuleId(): String = "agent_workbench_ai_review_provider"
 }

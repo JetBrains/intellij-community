@@ -90,7 +90,7 @@ class AgentPromptProviderSelectorTest {
   fun planModeCheckboxUsesMnemonicAndUpdatesStoredSelection() {
     runInEdtAndWait {
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = listOf(planModeOption()),
       )
       val fixture = createSelectorFixture(listOf(provider))
@@ -123,7 +123,7 @@ class AgentPromptProviderSelectorTest {
   fun providerWithoutPlanModeOptionDoesNotRenderCheckbox() {
     runInEdtAndWait {
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CLAUDE,
+        provider = AgentSessionProvider.from("claude"),
         promptOptions = emptyList(),
       )
       val fixture = createSelectorFixture(listOf(provider))
@@ -143,7 +143,7 @@ class AgentPromptProviderSelectorTest {
       val coloredIcon = EmptyIcon.ICON_16
       val monochromeIcon = EmptyIcon.create(18)
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CLAUDE,
+        provider = AgentSessionProvider.from("claude"),
         promptOptions = emptyList(),
         icon = coloredIcon,
         monochromeIconOverride = monochromeIcon,
@@ -162,7 +162,7 @@ class AgentPromptProviderSelectorTest {
       val coloredIcon = EmptyIcon.ICON_16
       val monochromeIcon = EmptyIcon.create(18)
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CLAUDE,
+        provider = AgentSessionProvider.from("claude"),
         promptOptions = emptyList(),
         icon = coloredIcon,
         monochromeIconOverride = monochromeIcon,
@@ -181,7 +181,7 @@ class AgentPromptProviderSelectorTest {
     try {
       val modelCatalogRequests = AtomicInteger()
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
         supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.MEDIUM, AgentPromptReasoningEffort.HIGH),
         availableGenerationModels = listOf(
@@ -206,7 +206,7 @@ class AgentPromptProviderSelectorTest {
           val profile = AgentPromptLaunchProfile(
             id = "user:high",
             name = "High",
-            providerId = AgentSessionProvider.CODEX.value,
+            providerId = AgentSessionProvider.from("codex").value,
             generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
           )
           controller.restoreLaunchProfiles(
@@ -248,7 +248,7 @@ class AgentPromptProviderSelectorTest {
   fun providerSelectorStaysVisibleWhileGenerationControlsAreHidden() {
     runInEdtAndWait {
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.PI,
+        provider = AgentSessionProvider.from("pi"),
         promptOptions = emptyList(),
       )
       val fixture = createSelectorFixture(listOf(provider))
@@ -280,7 +280,7 @@ class AgentPromptProviderSelectorTest {
   fun generationSettingsControlsStayVisibleWhenReasoningEffortIsUnsupported() {
     runInEdtAndWait {
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.PI,
+        provider = AgentSessionProvider.from("pi"),
         promptOptions = emptyList(),
       )
       val fixture = createSelectorFixture(listOf(provider))
@@ -312,7 +312,7 @@ class AgentPromptProviderSelectorTest {
   fun generationSettingsReasoningEffortPopupActionsUseCodexLabelsAndStayTransient() {
     runInEdtAndWait {
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
         supportedReasoningEffortsOverride = setOf(
           AgentPromptReasoningEffort.LOW,
@@ -362,7 +362,7 @@ class AgentPromptProviderSelectorTest {
     try {
       val fixtureAndController = withContext(Dispatchers.EDT) {
         val provider = testProviderBridge(
-          provider = AgentSessionProvider.JUNIE,
+          provider = AgentSessionProvider.from("junie"),
           promptOptions = emptyList(),
           availableGenerationModels = listOf(
             AgentPromptGenerationModel(
@@ -419,7 +419,7 @@ class AgentPromptProviderSelectorTest {
       val profile = AgentPromptLaunchProfile(
         id = "user:careful",
         name = "Careful",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
         generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
       )
       val launcher = TestPromptLauncherBridge(
@@ -429,7 +429,7 @@ class AgentPromptProviderSelectorTest {
         )
       )
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = listOf(planModeOption()),
         supportedLaunchModesOverride = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
         supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
@@ -466,7 +466,7 @@ class AgentPromptProviderSelectorTest {
   fun launchProfilePopupRowsKeepDefaultMarkerSeparateFromCurrentSelection() {
     runInEdtAndWait {
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
         supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
         supportsGenerationModelSelection = true,
@@ -474,7 +474,7 @@ class AgentPromptProviderSelectorTest {
       val defaultProfile = AgentPromptLaunchProfile(
         id = "user:careful",
         name = "Careful",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
         generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
       )
       val launcher = TestPromptLauncherBridge(
@@ -530,7 +530,7 @@ class AgentPromptProviderSelectorTest {
   fun manageLaunchProfilesActionUsesInjectedDialogRunner() {
     runInEdtAndWait {
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
       )
       val fixture = createSelectorFixture(listOf(provider))
@@ -564,7 +564,7 @@ class AgentPromptProviderSelectorTest {
     runInEdtAndWait {
       val editorService = service<AgentPromptLaunchProfileEditorWindowService>()
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
       )
       val fixture = createSelectorFixture(listOf(provider))
@@ -615,7 +615,7 @@ class AgentPromptProviderSelectorTest {
     runInEdtAndWait {
       val editorService = service<AgentPromptLaunchProfileEditorWindowService>()
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
       )
       val fixture = createSelectorFixture(listOf(provider))
@@ -658,7 +658,7 @@ class AgentPromptProviderSelectorTest {
     runInEdtAndWait {
       val editorService = service<AgentPromptLaunchProfileEditorWindowService>()
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
       )
       val fixture = createSelectorFixture(listOf(provider))
@@ -695,11 +695,11 @@ class AgentPromptProviderSelectorTest {
   fun launchProfilePopupShowsProviderIconsWithSelectedBadgeAfterPopupUpdate() {
     runInEdtAndWait {
       val providerIcon = EmptyIcon.create(17)
-      val activeProfileId = builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD)
+      val activeProfileId = builtInLaunchProfileId(AgentSessionProvider.from("codex"), AgentSessionLaunchMode.STANDARD)
       val userProfile = AgentPromptLaunchProfile(
         id = "user:careful",
         name = "Careful",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
         launchMode = AgentSessionLaunchMode.STANDARD,
       )
       val launcher = TestPromptLauncherBridge(
@@ -709,7 +709,7 @@ class AgentPromptProviderSelectorTest {
         )
       )
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = listOf(planModeOption()),
         icon = providerIcon,
         monochromeIconOverride = providerIcon,
@@ -758,7 +758,7 @@ class AgentPromptProviderSelectorTest {
       val providerIcon = EmptyIcon.create(17)
       val launcher = TestPromptLauncherBridge(AgentPromptLauncherBridge.ProviderPreferences())
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = listOf(planModeOption()),
         icon = providerIcon,
         monochromeIconOverride = providerIcon,
@@ -801,7 +801,7 @@ class AgentPromptProviderSelectorTest {
       val profile = AgentPromptLaunchProfile(
         id = "user:careful",
         name = "Careful",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
         generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
       )
       val launcher = TestPromptLauncherBridge(
@@ -811,7 +811,7 @@ class AgentPromptProviderSelectorTest {
         )
       )
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = listOf(planModeOption(defaultSelected = false)),
         supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
       )
@@ -850,7 +850,7 @@ class AgentPromptProviderSelectorTest {
       val codexProfile = AgentPromptLaunchProfile(
         id = "user:codex",
         name = "Codex Profile",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
       )
       val launcher = TestPromptLauncherBridge(
         AgentPromptLauncherBridge.ProviderPreferences(
@@ -859,11 +859,11 @@ class AgentPromptProviderSelectorTest {
         )
       )
       val claudeProvider = testProviderBridge(
-        provider = AgentSessionProvider.CLAUDE,
+        provider = AgentSessionProvider.from("claude"),
         promptOptions = emptyList(),
       )
       val codexProvider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
       )
       lateinit var fixture: ProviderSelectorFixture
@@ -887,7 +887,7 @@ class AgentPromptProviderSelectorTest {
 
       controller.restoreLaunchProfiles(launcher.preferences)
 
-      assertThat(fixture.selector.selectedProvider?.bridge?.provider).isEqualTo(AgentSessionProvider.CODEX)
+      assertThat(fixture.selector.selectedProvider?.bridge?.provider).isEqualTo(AgentSessionProvider.from("codex"))
       assertThat(fixture.view.containerModeAction.visible).isFalse()
       assertThat(fixture.view.containerModeAction.selected).isFalse()
     }
@@ -897,20 +897,20 @@ class AgentPromptProviderSelectorTest {
   fun restoredContainerModeSelectionIsClampedForUnsupportedProvider() {
     runInEdtAndWait {
       val claudeProvider = testProviderBridge(
-        provider = AgentSessionProvider.CLAUDE,
+        provider = AgentSessionProvider.from("claude"),
         promptOptions = emptyList(),
       )
       val codexProvider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
       )
       val fixture = createSelectorFixture(listOf(claudeProvider, codexProvider))
       fixture.selector.refresh()
-      fixture.selector.selectProvider(AgentSessionProvider.CODEX)
+      fixture.selector.selectProvider(AgentSessionProvider.from("codex"))
 
       syncContainerModeForTest(fixture, requestedSelection = true)
 
-      assertThat(fixture.selector.selectedProvider?.bridge?.provider).isEqualTo(AgentSessionProvider.CODEX)
+      assertThat(fixture.selector.selectedProvider?.bridge?.provider).isEqualTo(AgentSessionProvider.from("codex"))
       assertThat(fixture.view.containerModeAction.visible).isFalse()
       assertThat(fixture.view.containerModeAction.selected).isFalse()
     }
@@ -922,7 +922,7 @@ class AgentPromptProviderSelectorTest {
       val profile = AgentPromptLaunchProfile(
         id = "user:careful",
         name = "Careful",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
         generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
       )
       val launcher = TestPromptLauncherBridge(
@@ -932,7 +932,7 @@ class AgentPromptProviderSelectorTest {
         )
       )
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
         cliAvailable = false,
         supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
@@ -976,7 +976,7 @@ class AgentPromptProviderSelectorTest {
       val profile = AgentPromptLaunchProfile(
         id = "user:careful",
         name = "Careful",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
         generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
       )
       val launcher = TestPromptLauncherBridge(
@@ -986,7 +986,7 @@ class AgentPromptProviderSelectorTest {
         )
       )
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
         supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
       )
@@ -1024,10 +1024,10 @@ class AgentPromptProviderSelectorTest {
   @Test
   fun launchProfileEditorSavesAndRemovesBuiltInOverrides() {
     runInEdtAndWait {
-      val builtInProfileId = builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD)
+      val builtInProfileId = builtInLaunchProfileId(AgentSessionProvider.from("codex"), AgentSessionLaunchMode.STANDARD)
       val launcher = TestPromptLauncherBridge(AgentPromptLauncherBridge.ProviderPreferences())
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
         supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
       )
@@ -1075,12 +1075,12 @@ class AgentPromptProviderSelectorTest {
       val carefulProfile = AgentPromptLaunchProfile(
         id = "user:careful",
         name = "Careful",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
       )
       val fastProfile = AgentPromptLaunchProfile(
         id = "user:fast",
         name = "Fast",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
       )
       val updatedProfiles = ArrayList<AgentPromptLaunchProfile>()
       val editor = createLaunchProfileEditorForTest(
@@ -1114,17 +1114,17 @@ class AgentPromptProviderSelectorTest {
       val profile = AgentPromptLaunchProfile(
         id = "user:careful",
         name = "Careful",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
         generationSettings = AgentPromptGenerationSettings(modelId = "codex-model"),
       )
       val updatedProfiles = ArrayList<AgentPromptLaunchProfile>()
       val codexProvider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
         availableGenerationModels = listOf(AgentPromptGenerationModel("codex-model", "Codex Model")),
       )
       val claudeProvider = testProviderBridge(
-        provider = AgentSessionProvider.CLAUDE,
+        provider = AgentSessionProvider.from("claude"),
         promptOptions = emptyList(),
         availableGenerationModels = listOf(AgentPromptGenerationModel("claude-model", "Claude Model")),
       )
@@ -1134,10 +1134,10 @@ class AgentPromptProviderSelectorTest {
         providerOverrides = listOf(codexProvider, claudeProvider),
         modelCatalogStateProvider = { providerId ->
           when (providerId) {
-            AgentSessionProvider.CODEX.value -> AgentPromptGenerationModelCatalogState.Loaded(
+            AgentSessionProvider.from("codex").value -> AgentPromptGenerationModelCatalogState.Loaded(
               listOf(AgentPromptGenerationModel("codex-model", "Codex Model"))
             )
-            AgentSessionProvider.CLAUDE.value -> AgentPromptGenerationModelCatalogState.Loaded(
+            AgentSessionProvider.from("claude").value -> AgentPromptGenerationModelCatalogState.Loaded(
               listOf(AgentPromptGenerationModel("claude-model", "Claude Model"))
             )
             else -> null
@@ -1147,10 +1147,10 @@ class AgentPromptProviderSelectorTest {
       )
       try {
         editor.selectProfileForTest(profile.id)
-        editor.selectSelectedProfileProviderForTest(AgentSessionProvider.CLAUDE.value)
+        editor.selectSelectedProfileProviderForTest(AgentSessionProvider.from("claude").value)
 
         val updatedProfile = updatedProfiles.single()
-        assertThat(updatedProfile.providerId).isEqualTo(AgentSessionProvider.CLAUDE.value)
+        assertThat(updatedProfile.providerId).isEqualTo(AgentSessionProvider.from("claude").value)
         assertThat(updatedProfile.generationSettings.modelId).isNull()
         assertThat(editor.selectedProfileModelIdForTest()).isNull()
       }
@@ -1164,10 +1164,10 @@ class AgentPromptProviderSelectorTest {
   fun launchProfileEditorCopyCreatesUserProfileImmediately() {
     runInEdtAndWait {
       val profile = AgentPromptLaunchProfile(
-        id = builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD),
+        id = builtInLaunchProfileId(AgentSessionProvider.from("codex"), AgentSessionLaunchMode.STANDARD),
         name = "Codex",
         kind = AgentPromptLaunchProfileKind.BUILT_IN,
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
         generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
       )
       val createdProfiles = ArrayList<AgentPromptLaunchProfile>()
@@ -1186,7 +1186,7 @@ class AgentPromptProviderSelectorTest {
         assertThat(createdProfile.id).isEqualTo("user:new")
         assertThat(createdProfile.name).isEqualTo("High")
         assertThat(createdProfile.kind).isEqualTo(AgentPromptLaunchProfileKind.USER)
-        assertThat(createdProfile.providerId).isEqualTo(AgentSessionProvider.CODEX.value)
+        assertThat(createdProfile.providerId).isEqualTo(AgentSessionProvider.from("codex").value)
         assertThat(createdProfile.generationSettings.reasoningEffort).isEqualTo(AgentPromptReasoningEffort.HIGH)
         assertThat(editor.profileNamesForTest()).containsExactly("Codex", "High")
         assertThat(editor.isNameFieldTextSelectedForTest()).isTrue()
@@ -1203,12 +1203,12 @@ class AgentPromptProviderSelectorTest {
       val profile = AgentPromptLaunchProfile(
         id = "user:careful",
         name = "Careful",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
         generationSettings = AgentPromptGenerationSettings(planReasoningEffort = AgentPromptReasoningEffort.AUTO),
       )
       val createdProfiles = ArrayList<AgentPromptLaunchProfile>()
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = listOf(planModeOption()),
         supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
         supportsPlanReasoningEffortOverride = true,
@@ -1234,10 +1234,10 @@ class AgentPromptProviderSelectorTest {
   @Test
   fun launchProfileEditorReasoningEffortCustomizesBuiltInProfile() {
     runInEdtAndWait {
-      val builtInProfileId = builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD)
+      val builtInProfileId = builtInLaunchProfileId(AgentSessionProvider.from("codex"), AgentSessionLaunchMode.STANDARD)
       val launcher = TestPromptLauncherBridge(AgentPromptLauncherBridge.ProviderPreferences())
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
         supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
       )
@@ -1276,10 +1276,10 @@ class AgentPromptProviderSelectorTest {
   @Test
   fun launchProfileEditorPlanEffortCustomizesBuiltInProfile() {
     runInEdtAndWait {
-      val builtInProfileId = builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD)
+      val builtInProfileId = builtInLaunchProfileId(AgentSessionProvider.from("codex"), AgentSessionLaunchMode.STANDARD)
       val launcher = TestPromptLauncherBridge(AgentPromptLauncherBridge.ProviderPreferences())
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = listOf(planModeOption()),
         supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
         supportsPlanReasoningEffortOverride = true,
@@ -1322,11 +1322,11 @@ class AgentPromptProviderSelectorTest {
       val profile = AgentPromptLaunchProfile(
         id = "user:careful",
         name = "Careful",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
       )
       val updatedProfiles = ArrayList<AgentPromptLaunchProfile>()
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = listOf(planModeOption()),
         supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH, AgentPromptReasoningEffort.XHIGH),
         supportsPlanReasoningEffortOverride = true,
@@ -1361,10 +1361,10 @@ class AgentPromptProviderSelectorTest {
       val profile = AgentPromptLaunchProfile(
         id = "user:careful",
         name = "Careful",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
       )
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = listOf(planModeOption()),
         supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
       )
@@ -1390,7 +1390,7 @@ class AgentPromptProviderSelectorTest {
       val profile = AgentPromptLaunchProfile(
         id = "user:careful",
         name = "Careful",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
       )
       val editor = createLaunchProfileEditorForTest(
         profiles = listOf(profile),
@@ -1411,13 +1411,13 @@ class AgentPromptProviderSelectorTest {
       val carefulProfile = AgentPromptLaunchProfile(
         id = "user:careful",
         name = "Careful",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
         generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
       )
       val fastProfile = AgentPromptLaunchProfile(
         id = "user:fast",
         name = "Fast",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
         generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.LOW),
       )
       val launcher = TestPromptLauncherBridge(
@@ -1427,7 +1427,7 @@ class AgentPromptProviderSelectorTest {
         )
       )
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
         supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.LOW, AgentPromptReasoningEffort.HIGH),
       )
@@ -1465,7 +1465,7 @@ class AgentPromptProviderSelectorTest {
       val profile = AgentPromptLaunchProfile(
         id = "user:careful",
         name = "Careful",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
       )
       val editor = createLaunchProfileEditorForTest(
         profiles = listOf(profile),
@@ -1489,13 +1489,13 @@ class AgentPromptProviderSelectorTest {
       val userProfile = AgentPromptLaunchProfile(
         id = "user:careful",
         name = "Careful",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
       )
       val builtInProfile = AgentPromptLaunchProfile(
         id = "builtin:codex",
         name = "Default Profile",
         kind = AgentPromptLaunchProfileKind.BUILT_IN,
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
       )
       val deletedProfiles = ArrayList<AgentPromptLaunchProfile>()
       val editor = createLaunchProfileEditorForTest(
@@ -1532,7 +1532,7 @@ class AgentPromptProviderSelectorTest {
       val userProfile = AgentPromptLaunchProfile(
         id = "user:careful",
         name = "Careful",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
       )
       val editor = createLaunchProfileEditorForTest(
         profiles = listOf(userProfile),
@@ -1557,13 +1557,13 @@ class AgentPromptProviderSelectorTest {
       val userProfile = AgentPromptLaunchProfile(
         id = "user:careful",
         name = "Careful",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
       )
       val launcher = TestPromptLauncherBridge(
         AgentPromptLauncherBridge.ProviderPreferences(launchProfiles = listOf(userProfile))
       )
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
       )
       val fixture = createSelectorFixture(listOf(provider))
@@ -1602,13 +1602,13 @@ class AgentPromptProviderSelectorTest {
       val defaultProfile = AgentPromptLaunchProfile(
         id = "user:brave",
         name = "Junie (Brave Mode) 124323",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
         launchMode = AgentSessionLaunchMode.YOLO,
       )
       val otherProfile = AgentPromptLaunchProfile(
         id = "user:standard",
         name = "Codex Standard",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
       )
       val editor = createLaunchProfileEditorForTest(
         profiles = listOf(defaultProfile, otherProfile),
@@ -1635,7 +1635,7 @@ class AgentPromptProviderSelectorTest {
       val profile = AgentPromptLaunchProfile(
         id = "user:grouped",
         name = "Grouped",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
         generationSettings = AgentPromptGenerationSettings(modelId = "gpt-5.5"),
       )
       val editor = createLaunchProfileEditorForTest(
@@ -1679,7 +1679,7 @@ class AgentPromptProviderSelectorTest {
       val profile = AgentPromptLaunchProfile(
         id = "user:custom-model",
         name = "Custom Model",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
       )
       val updatedProfiles = ArrayList<AgentPromptLaunchProfile>()
       val editor = createLaunchProfileEditorForTest(
@@ -1710,7 +1710,7 @@ class AgentPromptProviderSelectorTest {
       val profile = AgentPromptLaunchProfile(
         id = "user:unknown-model",
         name = "Unknown Model",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
         generationSettings = AgentPromptGenerationSettings(modelId = "saved-custom-model"),
       )
       val editor = createLaunchProfileEditorForTest(
@@ -1750,11 +1750,11 @@ class AgentPromptProviderSelectorTest {
       val profile = AgentPromptLaunchProfile(
         id = "user:encoded-model",
         name = "Encoded Model",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
         generationSettings = AgentPromptGenerationSettings(modelId = encodedModelId),
       )
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
         supportsGenerationModelSelection = true,
         displayNameForGenerationModelId = { modelId ->
@@ -1790,7 +1790,7 @@ class AgentPromptProviderSelectorTest {
     val finishRefresh = CompletableDeferred<Unit>()
     val modelCatalogRequests = AtomicInteger()
     val provider = testProviderBridge(
-      provider = AgentSessionProvider.PI,
+      provider = AgentSessionProvider.from("pi"),
       promptOptions = emptyList(),
       supportsGenerationModelSelection = true,
       availableGenerationModelsResolver = {
@@ -1803,7 +1803,7 @@ class AgentPromptProviderSelectorTest {
     val profile = AgentPromptLaunchProfile(
       id = "user:models",
       name = "Models",
-      providerId = AgentSessionProvider.PI.value,
+      providerId = AgentSessionProvider.from("pi").value,
     )
     var editor: AgentPromptLaunchProfileEditorDialog? = null
     try {
@@ -1814,7 +1814,7 @@ class AgentPromptProviderSelectorTest {
           providerOverride = provider,
           modelCatalogStateProvider = catalogService::catalogState,
           requestModelCatalogRefresh = { providerId, onStateChanged ->
-            if (providerId == AgentSessionProvider.PI.value) {
+            if (providerId == AgentSessionProvider.from("pi").value) {
               catalogService.requestStateRefresh(provider, project, onStateChanged)
             }
           },
@@ -1853,7 +1853,7 @@ class AgentPromptProviderSelectorTest {
       val yoloProfile = AgentPromptLaunchProfile(
         id = "user:yolo",
         name = "YOLO",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
         launchMode = AgentSessionLaunchMode.YOLO,
       )
       val yoloEditor = createLaunchProfileEditorForTest(
@@ -1894,22 +1894,22 @@ class AgentPromptProviderSelectorTest {
   fun providerSelectionNormalizesUnsupportedLaunchMode() {
     runInEdtAndWait {
       val codex = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
         supportedLaunchModesOverride = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
       )
       val claude = testProviderBridge(
-        provider = AgentSessionProvider.CLAUDE,
+        provider = AgentSessionProvider.from("claude"),
         promptOptions = emptyList(),
         supportedLaunchModesOverride = setOf(AgentSessionLaunchMode.STANDARD),
       )
       val fixture = createSelectorFixture(listOf(codex, claude))
       fixture.selector.refresh()
 
-      fixture.selector.selectProvider(AgentSessionProvider.CODEX, AgentSessionLaunchMode.YOLO)
+      fixture.selector.selectProvider(AgentSessionProvider.from("codex"), AgentSessionLaunchMode.YOLO)
       assertThat(fixture.selector.selectedLaunchMode).isEqualTo(AgentSessionLaunchMode.YOLO)
 
-      fixture.selector.selectProvider(AgentSessionProvider.CLAUDE)
+      fixture.selector.selectProvider(AgentSessionProvider.from("claude"))
 
       assertThat(fixture.selector.selectedLaunchMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
     }
@@ -1921,13 +1921,13 @@ class AgentPromptProviderSelectorTest {
       val carefulProfile = AgentPromptLaunchProfile(
         id = "user:careful",
         name = "Careful",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
         generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
       )
       val fastProfile = AgentPromptLaunchProfile(
         id = "user:fast",
         name = "Fast",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
         generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.LOW),
       )
       val launcher = TestPromptLauncherBridge(
@@ -1937,7 +1937,7 @@ class AgentPromptProviderSelectorTest {
         )
       )
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
         supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.LOW, AgentPromptReasoningEffort.HIGH),
       )
@@ -1977,13 +1977,13 @@ class AgentPromptProviderSelectorTest {
       val carefulProfile = AgentPromptLaunchProfile(
         id = "user:careful",
         name = "Careful",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
         generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
       )
       val fastProfile = AgentPromptLaunchProfile(
         id = "user:fast",
         name = "Fast",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
         generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.LOW),
       )
       val launcher = TestPromptLauncherBridge(
@@ -1993,7 +1993,7 @@ class AgentPromptProviderSelectorTest {
         )
       )
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
         supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.LOW, AgentPromptReasoningEffort.HIGH),
       )
@@ -2035,7 +2035,7 @@ class AgentPromptProviderSelectorTest {
     runInEdtAndWait {
       val launcher = TestPromptLauncherBridge(AgentPromptLauncherBridge.ProviderPreferences())
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
       )
       val fixture = createSelectorFixture(listOf(provider))
@@ -2065,7 +2065,7 @@ class AgentPromptProviderSelectorTest {
     runInEdtAndWait {
       val launcher = TestPromptLauncherBridge(AgentPromptLauncherBridge.ProviderPreferences())
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
         supportedLaunchModesOverride = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
       )
@@ -2099,7 +2099,7 @@ class AgentPromptProviderSelectorTest {
 
       assertThat(statusMessage).isEqualTo("Default profile updated.")
       assertThat(launcher.preferences.defaultLaunchProfileId).isEqualTo(
-        builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.YOLO)
+        builtInLaunchProfileId(AgentSessionProvider.from("codex"), AgentSessionLaunchMode.YOLO)
       )
       assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isFalse()
     }
@@ -2110,7 +2110,7 @@ class AgentPromptProviderSelectorTest {
     runInEdtAndWait {
       val launcher = TestPromptLauncherBridge(AgentPromptLauncherBridge.ProviderPreferences())
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
         supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
       )
@@ -2157,7 +2157,7 @@ class AgentPromptProviderSelectorTest {
       val carefulProfile = AgentPromptLaunchProfile(
         id = "user:careful",
         name = "Careful",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
       )
       val launcher = TestPromptLauncherBridge(
         AgentPromptLauncherBridge.ProviderPreferences(
@@ -2166,7 +2166,7 @@ class AgentPromptProviderSelectorTest {
         )
       )
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
         supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
       )
@@ -2215,7 +2215,7 @@ class AgentPromptProviderSelectorTest {
       val profile = AgentPromptLaunchProfile(
         id = "user:careful",
         name = "Careful",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
         generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
       )
       val launcher = TestPromptLauncherBridge(
@@ -2225,7 +2225,7 @@ class AgentPromptProviderSelectorTest {
         )
       )
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
         supportedLaunchModesOverride = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
         supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
@@ -2260,7 +2260,7 @@ class AgentPromptProviderSelectorTest {
     val modelCatalogScope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
     try {
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
         availableGenerationModels = listOf(
           AgentPromptGenerationModel(id = "gpt-5.1-codex", displayName = "GPT-5.1 Codex").withGroup(AgentPromptGenerationModelGroup.OPENAI),
@@ -2314,7 +2314,7 @@ class AgentPromptProviderSelectorTest {
     val modelCatalogScope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
     try {
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
         availableGenerationModels = listOf(
           AgentPromptGenerationModel(id = "claude-opus-4-8", displayName = "Claude Opus")
@@ -2376,7 +2376,7 @@ class AgentPromptProviderSelectorTest {
     try {
       val modelCatalogRequests = AtomicInteger()
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.JUNIE,
+        provider = AgentSessionProvider.from("junie"),
         promptOptions = emptyList(),
         availableGenerationModels = listOf(
           AgentPromptGenerationModel(id = "chatgpt-5.5", displayName = "ChatGPT 5.5"),
@@ -2438,7 +2438,7 @@ class AgentPromptProviderSelectorTest {
     try {
       val modelCatalogRequests = AtomicInteger()
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.JUNIE,
+        provider = AgentSessionProvider.from("junie"),
         promptOptions = emptyList(),
         supportsGenerationModelSelection = true,
         availableGenerationModelsResolver = {
@@ -2497,7 +2497,7 @@ class AgentPromptProviderSelectorTest {
       val codexCatalogRequests = AtomicInteger()
       val piCatalogRequests = AtomicInteger()
       val codexProvider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
         supportsGenerationModelSelection = true,
         availableGenerationModels = listOf(
@@ -2506,7 +2506,7 @@ class AgentPromptProviderSelectorTest {
         onListAvailableGenerationModels = codexCatalogRequests::incrementAndGet,
       )
       val piProvider = testProviderBridge(
-        provider = AgentSessionProvider.PI,
+        provider = AgentSessionProvider.from("pi"),
         promptOptions = emptyList(),
         supportsGenerationModelSelection = true,
         availableGenerationModels = listOf(
@@ -2517,7 +2517,7 @@ class AgentPromptProviderSelectorTest {
       val controller = withContext(Dispatchers.EDT) {
         val fixture = createSelectorFixture(listOf(codexProvider, piProvider)).also { fixture ->
           fixture.selector.refresh()
-          fixture.selector.selectProvider(AgentSessionProvider.PI)
+          fixture.selector.selectProvider(AgentSessionProvider.from("pi"))
         }
         AgentPromptGenerationSettingsController(
           invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
@@ -2558,7 +2558,7 @@ class AgentPromptProviderSelectorTest {
     try {
       val modelCatalogRequests = AtomicInteger()
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.JUNIE,
+        provider = AgentSessionProvider.from("junie"),
         promptOptions = emptyList(),
         supportsGenerationModelSelection = true,
         availableGenerationModelsResolver = {
@@ -2617,7 +2617,7 @@ class AgentPromptProviderSelectorTest {
     try {
       val modelCatalogRequests = AtomicInteger()
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.JUNIE,
+        provider = AgentSessionProvider.from("junie"),
         promptOptions = emptyList(),
         supportsGenerationModelSelection = true,
         availableGenerationModelsResolver = {
@@ -2687,7 +2687,7 @@ class AgentPromptProviderSelectorTest {
     try {
       val modelCatalogRequests = AtomicInteger()
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.JUNIE,
+        provider = AgentSessionProvider.from("junie"),
         promptOptions = emptyList(),
         supportsGenerationModelSelection = true,
         availableGenerationModelsResolver = {
@@ -2725,7 +2725,7 @@ class AgentPromptProviderSelectorTest {
       }
       firstModelCatalogScope.cancel()
       ProjectManager.getInstance().defaultProject.service<AgentPromptGenerationModelCatalogService>()
-        .ageCachedCatalogForTest(AgentSessionProvider.JUNIE.value, 31.seconds)
+        .ageCachedCatalogForTest(AgentSessionProvider.from("junie").value, 31.seconds)
 
       val secondController = withContext(Dispatchers.EDT) {
         val fixture = createSelectorFixture(listOf(provider)).also { fixture -> fixture.selector.refresh() }
@@ -2778,7 +2778,7 @@ class AgentPromptProviderSelectorTest {
     try {
       val modelCatalogRequests = AtomicInteger()
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.JUNIE,
+        provider = AgentSessionProvider.from("junie"),
         promptOptions = emptyList(),
         supportsGenerationModelSelection = true,
         availableGenerationModelsResolver = {
@@ -2816,7 +2816,7 @@ class AgentPromptProviderSelectorTest {
       }
       firstModelCatalogScope.cancel()
       ProjectManager.getInstance().defaultProject.service<AgentPromptGenerationModelCatalogService>()
-        .ageCachedCatalogForTest(AgentSessionProvider.JUNIE.value, 31.seconds)
+        .ageCachedCatalogForTest(AgentSessionProvider.from("junie").value, 31.seconds)
 
       val secondController = withContext(Dispatchers.EDT) {
         val fixture = createSelectorFixture(listOf(provider)).also { fixture -> fixture.selector.refresh() }
@@ -2860,7 +2860,7 @@ class AgentPromptProviderSelectorTest {
     try {
       val controller = withContext(Dispatchers.EDT) {
         val provider = testProviderBridge(
-          provider = AgentSessionProvider.JUNIE,
+          provider = AgentSessionProvider.from("junie"),
           promptOptions = emptyList(),
           supportsGenerationModelSelection = true,
         )
@@ -2901,7 +2901,7 @@ class AgentPromptProviderSelectorTest {
     try {
       val controller = withContext(Dispatchers.EDT) {
         val provider = testProviderBridge(
-          provider = AgentSessionProvider.JUNIE,
+          provider = AgentSessionProvider.from("junie"),
           promptOptions = emptyList(),
           supportsGenerationModelSelection = true,
           availableGenerationModelsError = IllegalStateException("failed"),
@@ -2943,7 +2943,7 @@ class AgentPromptProviderSelectorTest {
   fun planReasoningEffortAppliesOnlyWhenPlanModeIsSelected() {
     runInEdtAndWait {
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = listOf(planModeOption()),
         supportedReasoningEffortsOverride = setOf(
           AgentPromptReasoningEffort.HIGH,
@@ -2990,7 +2990,7 @@ class AgentPromptProviderSelectorTest {
   fun planReasoningEffortStaysHiddenForProviderWithoutPlanEffortSupport() {
     runInEdtAndWait {
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CLAUDE,
+        provider = AgentSessionProvider.from("claude"),
         promptOptions = listOf(planModeOption()),
         supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
       )
@@ -3022,7 +3022,7 @@ class AgentPromptProviderSelectorTest {
       val profile = AgentPromptLaunchProfile(
         id = "user:plan-careful",
         name = "Plan Careful",
-        providerId = AgentSessionProvider.CODEX.value,
+        providerId = AgentSessionProvider.from("codex").value,
         generationSettings = AgentPromptGenerationSettings(planReasoningEffort = AgentPromptReasoningEffort.XHIGH),
       )
       val launcher = TestPromptLauncherBridge(
@@ -3032,7 +3032,7 @@ class AgentPromptProviderSelectorTest {
         )
       )
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = listOf(planModeOption()),
         supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH, AgentPromptReasoningEffort.XHIGH),
         supportsPlanReasoningEffortOverride = true,
@@ -3073,7 +3073,7 @@ class AgentPromptProviderSelectorTest {
   fun chooserGroupAndProviderActionsAreDumbAware() {
     runInEdtAndWait {
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
       )
       val fixture = createSelectorFixture(listOf(provider))
@@ -3093,7 +3093,7 @@ class AgentPromptProviderSelectorTest {
   fun disabledProviderActionRetainsUnavailableDescription() {
     runInEdtAndWait {
       val provider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
         cliAvailable = false,
       )
@@ -3117,11 +3117,11 @@ class AgentPromptProviderSelectorTest {
   fun promptSelectorExcludesProvidersThatDoNotSupportPromptLaunch() {
     runInEdtAndWait {
       val codexProvider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
       )
       val terminalProvider = testProviderBridge(
-        provider = AgentSessionProvider.TERMINAL,
+        provider = AgentSessionProvider.from("terminal"),
         promptOptions = emptyList(),
         supportsPromptLaunch = false,
       )
@@ -3129,8 +3129,8 @@ class AgentPromptProviderSelectorTest {
 
       fixture.selector.refresh()
 
-      assertThat(fixture.selector.availableProviders).containsExactly(AgentSessionProvider.CODEX)
-      assertThat(fixture.selector.selectedProvider?.bridge?.provider?.value).isEqualTo(AgentSessionProvider.CODEX.value)
+      assertThat(fixture.selector.availableProviders).containsExactly(AgentSessionProvider.from("codex"))
+      assertThat(fixture.selector.selectedProvider?.bridge?.provider?.value).isEqualTo(AgentSessionProvider.from("codex").value)
       val actions = checkNotNull(fixture.selector.buildChooserActionGroup { error("should not select provider during filtering test") })
         .getChildren(TestActionEvent.createTestEvent())
       assertThat(actions.map { action -> action.templatePresentation.text }).containsExactly("Codex")
@@ -3141,25 +3141,25 @@ class AgentPromptProviderSelectorTest {
   fun promptSelectorHidesUnavailableDiscoverableProviders() {
     runInEdtAndWait {
       val codexProvider = testProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         promptOptions = emptyList(),
       )
       val piProvider = testProviderBridge(
-        provider = AgentSessionProvider.PI,
+        provider = AgentSessionProvider.from("pi"),
         promptOptions = emptyList(),
         cliVisibilityPolicy = AgentSessionProviderCliVisibilityPolicy.DISCOVER_WHEN_AVAILABLE,
       )
       val fixture = createSelectorFixture(
         providers = listOf(codexProvider, piProvider),
         availabilityByProvider = mapOf(
-          AgentSessionProvider.CODEX to true,
-          AgentSessionProvider.PI to false,
+          AgentSessionProvider.from("codex") to true,
+          AgentSessionProvider.from("pi") to false,
         ),
       )
 
       fixture.selector.refresh()
 
-      assertThat(fixture.selector.availableProviders).containsExactly(AgentSessionProvider.CODEX)
+      assertThat(fixture.selector.availableProviders).containsExactly(AgentSessionProvider.from("codex"))
       val actions = checkNotNull(fixture.selector.buildChooserActionGroup { error("should not select provider during filtering test") })
         .getChildren(TestActionEvent.createTestEvent())
       assertThat(actions.map { action -> action.templatePresentation.text }).containsExactly("Codex")
@@ -3170,7 +3170,7 @@ class AgentPromptProviderSelectorTest {
   @Suppress("RAW_SCOPE_CREATION")
   fun asyncRefreshAppliesResolvedProviderAvailabilityFromUiScope() = timeoutRunBlocking {
     val provider = testProviderBridge(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       promptOptions = emptyList(),
       cliAvailable = false,
     )
@@ -3234,8 +3234,8 @@ class AgentPromptProviderSelectorTest {
       selectedProvider = fixture.selector.selectedProvider?.bridge?.provider,
       isExtensionTab = false,
       requestedSelection = requestedSelection,
-      supportsContainerMode = { provider -> provider == AgentSessionProvider.CLAUDE },
-      isContainerRuntimeAvailable = { provider -> provider == AgentSessionProvider.CLAUDE },
+      supportsContainerMode = { provider -> provider == AgentSessionProvider.from("claude") },
+      isContainerRuntimeAvailable = { provider -> provider == AgentSessionProvider.from("claude") },
     )
     fixture.view.headerControls.setContainerModeState(
       visible = state.visible,
@@ -3255,7 +3255,7 @@ class AgentPromptProviderSelectorTest {
     providerOverride: AgentSessionProviderDescriptor? = null,
     providerOverrides: List<AgentSessionProviderDescriptor>? = null,
     modelCatalogStateProvider: (String) -> AgentPromptGenerationModelCatalogState? = { providerId ->
-      modelCatalog.takeIf { providerId == AgentSessionProvider.CODEX.value && it.isNotEmpty() }
+      modelCatalog.takeIf { providerId == AgentSessionProvider.from("codex").value && it.isNotEmpty() }
         ?.let(AgentPromptGenerationModelCatalogState::Loaded)
     },
     requestModelCatalogRefresh: (String, () -> Unit) -> Unit = { _, _ -> },
@@ -3264,7 +3264,7 @@ class AgentPromptProviderSelectorTest {
     onDeleteProfile: (AgentPromptLaunchProfile) -> Boolean = { true },
   ): AgentPromptLaunchProfileEditorDialog {
     val provider = providerOverride ?: testProviderBridge(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       promptOptions = emptyList(),
       supportedLaunchModesOverride = supportedLaunchModes,
       supportedReasoningEffortsOverride = supportedReasoningEfforts,

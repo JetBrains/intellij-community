@@ -214,11 +214,11 @@ class AgentSessionsToolWindowFactorySwingTest {
     val costLoadCount = AtomicInteger()
     val visibilityService = service<AgentSessionsToolWindowVisibilityService>()
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       listFromOpenProject = { path, _ ->
         refreshCount.incrementAndGet()
         if (path == PROJECT_PATH) {
-          listOf(thread(id = "claude-1", updatedAt = 100, title = "Migrated Claude thread", provider = AgentSessionProvider.CLAUDE))
+          listOf(thread(id = "claude-1", updatedAt = 100, title = "Migrated Claude thread", provider = AgentSessionProvider.from("claude")))
         }
         else {
           emptyList()
@@ -250,7 +250,7 @@ class AgentSessionsToolWindowFactorySwingTest {
             factory.createToolWindowContent(project, manager.toolWindow)
           }
 
-          val threadId = SessionTreeId.Thread(PROJECT_PATH, AgentSessionProvider.CLAUDE, "claude-1")
+          val threadId = SessionTreeId.Thread(PROJECT_PATH, AgentSessionProvider.from("claude"), "claude-1")
           waitForColdStartThreadModel(
             stateProvider = { service.state.value },
             toolWindow = manager.toolWindow,
@@ -610,13 +610,13 @@ private const val AGENT_SESSIONS_TOOL_WINDOW_ID = "agent.workbench.sessions"
 private fun AgentSessionsState.hasClaudeThread(): Boolean {
   return projects.firstOrNull { it.path == PROJECT_PATH }
     ?.threads
-    ?.any { it.provider == AgentSessionProvider.CLAUDE && it.id == "claude-1" } == true
+    ?.any { it.provider == AgentSessionProvider.from("claude") && it.id == "claude-1" } == true
 }
 
 private fun AgentSessionsState.claudeThreadCostAmount(): BigDecimal? {
   return projects.firstOrNull { it.path == PROJECT_PATH }
     ?.threads
-    ?.singleOrNull { it.provider == AgentSessionProvider.CLAUDE && it.id == "claude-1" }
+    ?.singleOrNull { it.provider == AgentSessionProvider.from("claude") && it.id == "claude-1" }
     ?.cost
     ?.amountUsd
 }

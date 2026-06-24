@@ -66,7 +66,7 @@ class AgentSessionRefreshCoordinatorTest {
     var closedThreadUpdatedAt = 100L
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromOpenProject = { path, _ ->
@@ -76,7 +76,7 @@ class AgentSessionRefreshCoordinatorTest {
         else {
           refreshStarted.complete(Unit)
           releaseRefresh.await()
-          listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX))
+          listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.from("codex")))
         }
       },
       listFromClosedProject = { path ->
@@ -85,7 +85,7 @@ class AgentSessionRefreshCoordinatorTest {
         }
         else {
           closedRefreshInvocations.incrementAndGet()
-          listOf(thread(id = "codex-1", updatedAt = closedThreadUpdatedAt, provider = AgentSessionProvider.CODEX))
+          listOf(thread(id = "codex-1", updatedAt = closedThreadUpdatedAt, provider = AgentSessionProvider.from("codex")))
         }
       },
     )
@@ -107,7 +107,7 @@ class AgentSessionRefreshCoordinatorTest {
       waitForCondition {
         stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
           ?.threads
-          ?.firstOrNull { it.provider == AgentSessionProvider.CODEX }
+          ?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }
           ?.updatedAt == 300L
       }
 
@@ -119,7 +119,7 @@ class AgentSessionRefreshCoordinatorTest {
   fun sourceUpdatesScheduleSingleDebouncedVfsRefresh() = runBlocking(Dispatchers.Default) {
     val vfsRefreshRequests = CopyOnWriteArrayList<Set<String>>()
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = flow {
         emit(threadsChangedEvent(mayHaveChangedProjectFiles = true))
@@ -138,7 +138,7 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
           )
         ),
         visibleThreadCounts = emptyMap(),
@@ -156,7 +156,7 @@ class AgentSessionRefreshCoordinatorTest {
   fun hintSourceUpdateWithProjectFileChangeEvidenceSchedulesVfsRefresh() = runBlocking(Dispatchers.Default) {
     val vfsRefreshRequests = CopyOnWriteArrayList<Set<String>>()
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = flow {
         emit(
@@ -189,14 +189,14 @@ class AgentSessionRefreshCoordinatorTest {
     val vfsRefreshRequests = CopyOnWriteArrayList<Set<String>>()
     val closedRefreshInvocations = AtomicInteger(0)
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = flow { emit(threadsChangedEvent(mayHaveChangedProjectFiles = true)) },
       listFromClosedProject = { path ->
         if (path == projectPath.toString()) {
           closedRefreshInvocations.incrementAndGet()
         }
-        listOf(thread(id = "codex-1", updatedAt = 200L, provider = AgentSessionProvider.CODEX))
+        listOf(thread(id = "codex-1", updatedAt = 200L, provider = AgentSessionProvider.from("codex")))
       },
     )
 
@@ -211,8 +211,8 @@ class AgentSessionRefreshCoordinatorTest {
             path = projectPath.toString(),
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           )
         ),
         visibleThreadCounts = emptyMap(),
@@ -233,7 +233,7 @@ class AgentSessionRefreshCoordinatorTest {
     Files.writeString(changedFile, "fun main() {}")
     val vfsRefreshRequests = CopyOnWriteArrayList<Set<String>>()
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = flow {
         emit(
@@ -257,7 +257,7 @@ class AgentSessionRefreshCoordinatorTest {
             path = projectPath.toString(),
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
           )
         ),
         visibleThreadCounts = emptyMap(),
@@ -278,7 +278,7 @@ class AgentSessionRefreshCoordinatorTest {
     Files.createDirectories(changedDirectory)
     val vfsRefreshRequests = CopyOnWriteArrayList<Set<String>>()
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = flow {
         emit(
@@ -302,7 +302,7 @@ class AgentSessionRefreshCoordinatorTest {
             path = projectPath.toString(),
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
           )
         ),
         visibleThreadCounts = emptyMap(),
@@ -325,7 +325,7 @@ class AgentSessionRefreshCoordinatorTest {
     Files.writeString(changedFile, "fun main() {}")
     val vfsRefreshRequests = CopyOnWriteArrayList<Set<String>>()
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = flow {
         emit(
@@ -355,7 +355,7 @@ class AgentSessionRefreshCoordinatorTest {
             path = projectPath.toString(),
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
           )
         ),
         visibleThreadCounts = emptyMap(),
@@ -376,7 +376,7 @@ class AgentSessionRefreshCoordinatorTest {
     Files.writeString(changedFile, "fun main() {}")
     val vfsRefreshRequests = CopyOnWriteArrayList<Set<String>>()
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = flow {
         emit(
@@ -401,7 +401,7 @@ class AgentSessionRefreshCoordinatorTest {
             path = projectPath.toString(),
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
           )
         ),
         visibleThreadCounts = emptyMap(),
@@ -421,14 +421,14 @@ class AgentSessionRefreshCoordinatorTest {
     val vfsRefreshInvocations = AtomicInteger(0)
     val closedRefreshInvocations = AtomicInteger(0)
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = flow { emit(threadsChangedEvent()) },
       listFromClosedProject = { path ->
         if (path == projectPath.toString()) {
           closedRefreshInvocations.incrementAndGet()
         }
-        listOf(thread(id = "codex-1", updatedAt = 200L, provider = AgentSessionProvider.CODEX))
+        listOf(thread(id = "codex-1", updatedAt = 200L, provider = AgentSessionProvider.from("codex")))
       },
     )
 
@@ -443,8 +443,8 @@ class AgentSessionRefreshCoordinatorTest {
             path = projectPath.toString(),
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           )
         ),
         visibleThreadCounts = emptyMap(),
@@ -464,14 +464,14 @@ class AgentSessionRefreshCoordinatorTest {
     val vfsRefreshInvocations = AtomicInteger(0)
     val closedRefreshInvocations = AtomicInteger(0)
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = flow { emit(threadsChangedEvent(mayHaveChangedProjectFiles = true)) },
       listFromClosedProject = { path ->
         if (path == projectPath.toString()) {
           closedRefreshInvocations.incrementAndGet()
         }
-        listOf(thread(id = "codex-1", updatedAt = 200L, provider = AgentSessionProvider.CODEX))
+        listOf(thread(id = "codex-1", updatedAt = 200L, provider = AgentSessionProvider.from("codex")))
       },
     )
 
@@ -487,8 +487,8 @@ class AgentSessionRefreshCoordinatorTest {
             path = projectPath.toString(),
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           )
         ),
         visibleThreadCounts = emptyMap(),
@@ -508,7 +508,7 @@ class AgentSessionRefreshCoordinatorTest {
     val closedRefreshInvocations = AtomicInteger(0)
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = { path ->
@@ -517,7 +517,7 @@ class AgentSessionRefreshCoordinatorTest {
         }
         else {
           closedRefreshInvocations.incrementAndGet()
-          listOf(thread(id = "codex-1", updatedAt = 300L, provider = AgentSessionProvider.CODEX))
+          listOf(thread(id = "codex-1", updatedAt = 300L, provider = AgentSessionProvider.from("codex")))
         }
       },
     )
@@ -532,8 +532,8 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           )
         ),
         visibleThreadCounts = emptyMap(),
@@ -547,7 +547,7 @@ class AgentSessionRefreshCoordinatorTest {
       assertThat(
         stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
           ?.threads
-          ?.firstOrNull { it.provider == AgentSessionProvider.CODEX }
+          ?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }
           ?.updatedAt
       ).isEqualTo(100L)
 
@@ -556,7 +556,7 @@ class AgentSessionRefreshCoordinatorTest {
       waitForCondition {
         stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
           ?.threads
-          ?.firstOrNull { it.provider == AgentSessionProvider.CODEX }
+          ?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }
           ?.updatedAt == 300L
       }
 
@@ -572,7 +572,7 @@ class AgentSessionRefreshCoordinatorTest {
 
     fun source(updateEvents: kotlinx.coroutines.flow.Flow<AgentSessionSourceUpdateEvent>): ScriptedSessionSource {
       return ScriptedSessionSource(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         supportsUpdates = true,
         updateEvents = updateEvents,
         listFromClosedProject = { path ->
@@ -581,7 +581,7 @@ class AgentSessionRefreshCoordinatorTest {
           }
           else {
             closedRefreshInvocations.incrementAndGet()
-            listOf(thread(id = "codex-1", updatedAt = 300L, provider = AgentSessionProvider.CODEX))
+            listOf(thread(id = "codex-1", updatedAt = 300L, provider = AgentSessionProvider.from("codex")))
           }
         },
       )
@@ -608,8 +608,8 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           )
         ),
         visibleThreadCounts = emptyMap(),
@@ -626,7 +626,7 @@ class AgentSessionRefreshCoordinatorTest {
       waitForCondition {
         stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
           ?.threads
-          ?.firstOrNull { it.provider == AgentSessionProvider.CODEX }
+          ?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }
           ?.updatedAt == 300L
       }
 
@@ -642,14 +642,14 @@ class AgentSessionRefreshCoordinatorTest {
     val closedRefreshInvocations = LinkedHashMap<String, AtomicInteger>()
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = { path ->
         closedRefreshInvocations.getOrPut(path) { AtomicInteger() }.incrementAndGet()
         when (path) {
-          PROJECT_PATH -> listOf(thread(id = "codex-a", updatedAt = 300L, provider = AgentSessionProvider.CODEX))
-          projectB -> listOf(thread(id = "codex-b", updatedAt = 400L, provider = AgentSessionProvider.CODEX))
+          PROJECT_PATH -> listOf(thread(id = "codex-a", updatedAt = 300L, provider = AgentSessionProvider.from("codex")))
+          projectB -> listOf(thread(id = "codex-b", updatedAt = 400L, provider = AgentSessionProvider.from("codex")))
           else -> emptyList()
         }
       },
@@ -665,22 +665,22 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-a", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-a", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           ),
           AgentProjectSessions(
             path = projectB,
             name = "Project B",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-b", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-b", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           ),
         ),
         visibleThreadCounts = emptyMap(),
       )
 
       coordinator.observeSessionSourceUpdates()
-      coordinator.refreshProviderScope(provider = AgentSessionProvider.CODEX, scopedPaths = setOf(PROJECT_PATH))
+      coordinator.refreshProviderScope(provider = AgentSessionProvider.from("codex"), scopedPaths = setOf(PROJECT_PATH))
       updates.tryEmit(hintsChangedEvent(threadIds = setOf("codex-a")))
       delay(900.milliseconds)
 
@@ -691,8 +691,8 @@ class AgentSessionRefreshCoordinatorTest {
 
       waitForCondition {
         val projects = stateStore.snapshot().projects.associateBy { it.path }
-        projects[PROJECT_PATH]?.threads?.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt == 300L &&
-        projects[projectB]?.threads?.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt == 100L
+        projects[PROJECT_PATH]?.threads?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }?.updatedAt == 300L &&
+        projects[projectB]?.threads?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }?.updatedAt == 100L
       }
 
       assertThat(closedRefreshInvocations[PROJECT_PATH]?.get() ?: 0).isEqualTo(1)
@@ -707,14 +707,14 @@ class AgentSessionRefreshCoordinatorTest {
     val closedRefreshInvocations = LinkedHashMap<String, AtomicInteger>()
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = { path ->
         closedRefreshInvocations.getOrPut(path) { AtomicInteger() }.incrementAndGet()
         when (path) {
-          PROJECT_PATH -> listOf(thread(id = "codex-a", updatedAt = 300L, provider = AgentSessionProvider.CODEX))
-          projectB -> listOf(thread(id = "codex-b", updatedAt = 400L, provider = AgentSessionProvider.CODEX))
+          PROJECT_PATH -> listOf(thread(id = "codex-a", updatedAt = 300L, provider = AgentSessionProvider.from("codex")))
+          projectB -> listOf(thread(id = "codex-b", updatedAt = 400L, provider = AgentSessionProvider.from("codex")))
           else -> emptyList()
         }
       },
@@ -730,15 +730,15 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-a", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-a", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           ),
           AgentProjectSessions(
             path = projectB,
             name = "Project B",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-b", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-b", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           ),
         ),
         visibleThreadCounts = emptyMap(),
@@ -750,8 +750,8 @@ class AgentSessionRefreshCoordinatorTest {
       delay(700.milliseconds)
 
       val projects = stateStore.snapshot().projects.associateBy { it.path }
-      assertThat(projects[PROJECT_PATH]?.threads?.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt).isEqualTo(100L)
-      assertThat(projects[projectB]?.threads?.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt).isEqualTo(100L)
+      assertThat(projects[PROJECT_PATH]?.threads?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }?.updatedAt).isEqualTo(100L)
+      assertThat(projects[projectB]?.threads?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }?.updatedAt).isEqualTo(100L)
       assertThat(closedRefreshInvocations[PROJECT_PATH]?.get() ?: 0).isEqualTo(0)
       assertThat(closedRefreshInvocations[projectB]?.get() ?: 0).isEqualTo(0)
     }
@@ -769,13 +769,13 @@ class AgentSessionRefreshCoordinatorTest {
     val closedRefreshInvocations = LinkedHashMap<String, AtomicInteger>()
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = { path ->
         closedRefreshInvocations.getOrPut(path) { AtomicInteger() }.incrementAndGet()
         if (path == loadedPath) {
-          listOf(thread(id = "codex-a", updatedAt = 300L, provider = AgentSessionProvider.CODEX))
+          listOf(thread(id = "codex-a", updatedAt = 300L, provider = AgentSessionProvider.from("codex")))
         }
         else {
           emptyList()
@@ -793,8 +793,8 @@ class AgentSessionRefreshCoordinatorTest {
             path = loadedPath,
             name = "Linked Project",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-a", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-a", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           ),
         ),
         visibleThreadCounts = emptyMap(),
@@ -806,7 +806,7 @@ class AgentSessionRefreshCoordinatorTest {
       waitForCondition {
         stateStore.snapshot().projects.firstOrNull { it.path == loadedPath }
           ?.threads
-          ?.firstOrNull { it.provider == AgentSessionProvider.CODEX }
+          ?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }
           ?.updatedAt == 300L
       }
 
@@ -822,14 +822,14 @@ class AgentSessionRefreshCoordinatorTest {
     val closedRefreshInvocations = LinkedHashMap<String, AtomicInteger>()
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = { path ->
         closedRefreshInvocations.getOrPut(path) { AtomicInteger() }.incrementAndGet()
         when (path) {
-          PROJECT_PATH -> listOf(thread(id = "codex-a", updatedAt = 300L, provider = AgentSessionProvider.CODEX))
-          projectB -> listOf(thread(id = "codex-b", updatedAt = 400L, provider = AgentSessionProvider.CODEX))
+          PROJECT_PATH -> listOf(thread(id = "codex-a", updatedAt = 300L, provider = AgentSessionProvider.from("codex")))
+          projectB -> listOf(thread(id = "codex-b", updatedAt = 400L, provider = AgentSessionProvider.from("codex")))
           else -> emptyList()
         }
       },
@@ -845,15 +845,15 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-a", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-a", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           ),
           AgentProjectSessions(
             path = projectB,
             name = "Project B",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-b", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-b", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           ),
         ),
         visibleThreadCounts = emptyMap(),
@@ -865,8 +865,8 @@ class AgentSessionRefreshCoordinatorTest {
       delay(700.milliseconds)
 
       val projects = stateStore.snapshot().projects.associateBy { it.path }
-      assertThat(projects[PROJECT_PATH]?.threads?.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt).isEqualTo(100L)
-      assertThat(projects[projectB]?.threads?.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt).isEqualTo(100L)
+      assertThat(projects[PROJECT_PATH]?.threads?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }?.updatedAt).isEqualTo(100L)
+      assertThat(projects[projectB]?.threads?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }?.updatedAt).isEqualTo(100L)
       assertThat(closedRefreshInvocations[PROJECT_PATH]?.get() ?: 0).isEqualTo(0)
       assertThat(closedRefreshInvocations[projectB]?.get() ?: 0).isEqualTo(0)
       assertThat(closedRefreshInvocations["/missing/project"]?.get() ?: 0).isEqualTo(0)
@@ -880,14 +880,14 @@ class AgentSessionRefreshCoordinatorTest {
     val closedRefreshInvocations = LinkedHashMap<String, AtomicInteger>()
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = { path ->
         closedRefreshInvocations.getOrPut(path) { AtomicInteger() }.incrementAndGet()
         when (path) {
-          PROJECT_PATH -> listOf(thread(id = "codex-a", updatedAt = 300L, provider = AgentSessionProvider.CODEX))
-          projectB -> listOf(thread(id = "codex-b", updatedAt = 400L, provider = AgentSessionProvider.CODEX))
+          PROJECT_PATH -> listOf(thread(id = "codex-a", updatedAt = 300L, provider = AgentSessionProvider.from("codex")))
+          projectB -> listOf(thread(id = "codex-b", updatedAt = 400L, provider = AgentSessionProvider.from("codex")))
           else -> emptyList()
         }
       },
@@ -903,15 +903,15 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-a", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-a", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           ),
           AgentProjectSessions(
             path = projectB,
             name = "Project B",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-b", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-b", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           ),
         ),
         visibleThreadCounts = emptyMap(),
@@ -923,8 +923,8 @@ class AgentSessionRefreshCoordinatorTest {
       delay(700.milliseconds)
 
       val projects = stateStore.snapshot().projects.associateBy { it.path }
-      assertThat(projects[PROJECT_PATH]?.threads?.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt).isEqualTo(100L)
-      assertThat(projects[projectB]?.threads?.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt).isEqualTo(100L)
+      assertThat(projects[PROJECT_PATH]?.threads?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }?.updatedAt).isEqualTo(100L)
+      assertThat(projects[projectB]?.threads?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }?.updatedAt).isEqualTo(100L)
       assertThat(closedRefreshInvocations[PROJECT_PATH]?.get() ?: 0).isEqualTo(0)
       assertThat(closedRefreshInvocations[projectB]?.get() ?: 0).isEqualTo(0)
     }
@@ -937,7 +937,7 @@ class AgentSessionRefreshCoordinatorTest {
     val closedRefreshInvocations = LinkedHashMap<String, AtomicInteger>()
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = { path ->
@@ -948,7 +948,7 @@ class AgentSessionRefreshCoordinatorTest {
               id = "codex-original",
               updatedAt = 100L,
               title = "Original thread",
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
             )
             if (invocation == 1) {
               listOf(original)
@@ -960,13 +960,13 @@ class AgentSessionRefreshCoordinatorTest {
                   id = "codex-fork",
                   updatedAt = 300L,
                   title = "Renamed fork",
-                  provider = AgentSessionProvider.CODEX,
+                  provider = AgentSessionProvider.from("codex"),
                 ),
               )
             }
           }
           projectB -> listOf(
-            thread(id = "codex-b", updatedAt = 400L, title = "Project B updated", provider = AgentSessionProvider.CODEX)
+            thread(id = "codex-b", updatedAt = 400L, title = "Project B updated", provider = AgentSessionProvider.from("codex"))
           )
           else -> emptyList()
         }
@@ -983,13 +983,13 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
               thread(
                 id = "codex-original",
                 updatedAt = 100L,
                 title = "Original thread",
-                provider = AgentSessionProvider.CODEX,
+                provider = AgentSessionProvider.from("codex"),
               )
             ),
           ),
@@ -997,9 +997,9 @@ class AgentSessionRefreshCoordinatorTest {
             path = projectB,
             name = "Project B",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
-              thread(id = "codex-b", updatedAt = 100L, title = "Project B stable", provider = AgentSessionProvider.CODEX)
+              thread(id = "codex-b", updatedAt = 100L, title = "Project B stable", provider = AgentSessionProvider.from("codex"))
             ),
           ),
         ),
@@ -1044,14 +1044,14 @@ class AgentSessionRefreshCoordinatorTest {
     val closedRefreshInvocations = LinkedHashMap<String, AtomicInteger>()
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = { path ->
         closedRefreshInvocations.getOrPut(path) { AtomicInteger() }.incrementAndGet()
         when (path) {
-          PROJECT_PATH -> listOf(thread(id = "claude-a", updatedAt = 300L, provider = AgentSessionProvider.CLAUDE))
-          projectB -> listOf(thread(id = "claude-b", updatedAt = 400L, provider = AgentSessionProvider.CLAUDE))
+          PROJECT_PATH -> listOf(thread(id = "claude-a", updatedAt = 300L, provider = AgentSessionProvider.from("claude")))
+          projectB -> listOf(thread(id = "claude-b", updatedAt = 400L, provider = AgentSessionProvider.from("claude")))
           else -> emptyList()
         }
       },
@@ -1067,15 +1067,15 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CLAUDE),
-            threads = listOf(thread(id = "claude-a", updatedAt = 100L, provider = AgentSessionProvider.CLAUDE)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("claude")),
+            threads = listOf(thread(id = "claude-a", updatedAt = 100L, provider = AgentSessionProvider.from("claude"))),
           ),
           AgentProjectSessions(
             path = projectB,
             name = "Project B",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CLAUDE),
-            threads = listOf(thread(id = "claude-b", updatedAt = 100L, provider = AgentSessionProvider.CLAUDE)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("claude")),
+            threads = listOf(thread(id = "claude-b", updatedAt = 100L, provider = AgentSessionProvider.from("claude"))),
           ),
         ),
         visibleThreadCounts = emptyMap(),
@@ -1086,8 +1086,8 @@ class AgentSessionRefreshCoordinatorTest {
 
       waitForCondition {
         val projects = stateStore.snapshot().projects.associateBy { it.path }
-        projects[PROJECT_PATH]?.threads?.firstOrNull { it.provider == AgentSessionProvider.CLAUDE }?.updatedAt == 300L &&
-        projects[projectB]?.threads?.firstOrNull { it.provider == AgentSessionProvider.CLAUDE }?.updatedAt == 100L
+        projects[PROJECT_PATH]?.threads?.firstOrNull { it.provider == AgentSessionProvider.from("claude") }?.updatedAt == 300L &&
+        projects[projectB]?.threads?.firstOrNull { it.provider == AgentSessionProvider.from("claude") }?.updatedAt == 100L
       }
 
       assertThat(closedRefreshInvocations[PROJECT_PATH]?.get() ?: 0).isEqualTo(1)
@@ -1103,19 +1103,19 @@ class AgentSessionRefreshCoordinatorTest {
     val presentationModel = AgentSessionThreadPresentationModel()
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = { path ->
         closedRefreshInvocations.getOrPut(path) { AtomicInteger() }.incrementAndGet()
         when (path) {
-          PROJECT_PATH -> listOf(thread(id = "codex-a", updatedAt = 300L, provider = AgentSessionProvider.CODEX))
+          PROJECT_PATH -> listOf(thread(id = "codex-a", updatedAt = 300L, provider = AgentSessionProvider.from("codex")))
           projectB -> listOf(
             thread(
               id = "codex-open",
               updatedAt = 500L,
               title = "Open concrete tab thread",
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
               activity = AgentThreadActivity.UNREAD,
             )
           )
@@ -1128,7 +1128,7 @@ class AgentSessionRefreshCoordinatorTest {
       sessionSourcesProvider = { listOf(source) },
       isRefreshGateActive = { true },
       openConcreteChatThreadIdentitiesByPathProvider = {
-        mapOf(projectB to setOf(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-open")))
+        mapOf(projectB to setOf(buildAgentSessionIdentity(AgentSessionProvider.from("codex"), "codex-open")))
       },
       presentationModel = presentationModel,
     ) { coordinator, stateStore ->
@@ -1138,8 +1138,8 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-a", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-a", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           ),
         ),
         visibleThreadCounts = emptyMap(),
@@ -1148,7 +1148,7 @@ class AgentSessionRefreshCoordinatorTest {
       coordinator.observeSessionSourceUpdates()
       updates.tryEmit(hintsChangedEvent(threadIds = setOf("codex-open")))
 
-      val expectedKey = presentationKey(projectB, AgentSessionProvider.CODEX, "codex-open")
+      val expectedKey = presentationKey(projectB, AgentSessionProvider.from("codex"), "codex-open")
       waitForCondition {
         presentationModel.snapshot()[expectedKey]?.title == "Open concrete tab thread" &&
         presentationModel.snapshot()[expectedKey]?.activity == AgentThreadActivity.UNREAD
@@ -1159,7 +1159,7 @@ class AgentSessionRefreshCoordinatorTest {
       assertThat(
         stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
           ?.threads
-          ?.firstOrNull { it.provider == AgentSessionProvider.CODEX }
+          ?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }
           ?.updatedAt
       ).isEqualTo(100L)
     }
@@ -1171,7 +1171,7 @@ class AgentSessionRefreshCoordinatorTest {
     val capturedRefreshThreadSeedsByPath = mutableListOf<Map<String, Set<AgentSessionRefreshThreadSeed>>>()
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = { path ->
@@ -1180,8 +1180,8 @@ class AgentSessionRefreshCoordinatorTest {
         }
         else {
           listOf(
-            thread(id = "codex-a", updatedAt = 300L, provider = AgentSessionProvider.CODEX),
-            thread(id = "codex-b", updatedAt = 250L, provider = AgentSessionProvider.CODEX),
+            thread(id = "codex-a", updatedAt = 300L, provider = AgentSessionProvider.from("codex")),
+            thread(id = "codex-b", updatedAt = 250L, provider = AgentSessionProvider.from("codex")),
           )
         }
       },
@@ -1203,10 +1203,10 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
-              thread(id = "codex-a", updatedAt = 100L, provider = AgentSessionProvider.CODEX),
-              thread(id = "codex-b", updatedAt = 90L, provider = AgentSessionProvider.CODEX),
+              thread(id = "codex-a", updatedAt = 100L, provider = AgentSessionProvider.from("codex")),
+              thread(id = "codex-b", updatedAt = 90L, provider = AgentSessionProvider.from("codex")),
             ),
           )
         ),
@@ -1238,14 +1238,14 @@ class AgentSessionRefreshCoordinatorTest {
       sessionSourcesProvider = {
         listOf(
           ScriptedSessionSource(
-            provider = AgentSessionProvider.CODEX,
+            provider = AgentSessionProvider.from("codex"),
             listFromClosedProject = { path ->
               if (path != PROJECT_PATH) {
                 emptyList()
               }
               else {
                 closedRefreshInvocations.incrementAndGet()
-                listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX))
+                listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.from("codex")))
               }
             },
           )
@@ -1257,7 +1257,7 @@ class AgentSessionRefreshCoordinatorTest {
         buildOpenChatRefreshSnapshot(openProjectPaths = setOf(PROJECT_PATH))
       },
     ) { coordinator, _ ->
-      coordinator.refreshProviderScope(provider = AgentSessionProvider.CODEX, scopedPaths = setOf(PROJECT_PATH))
+      coordinator.refreshProviderScope(provider = AgentSessionProvider.from("codex"), scopedPaths = setOf(PROJECT_PATH))
 
       waitForCondition {
         closedRefreshInvocations.get() == 1 && openChatSnapshotInvocations.get() == 1
@@ -1271,11 +1271,11 @@ class AgentSessionRefreshCoordinatorTest {
   @Test
   fun providerRefreshAppliesScopedOutcomeToOpenProjectThatIsNotFullyLoaded() = runBlocking(Dispatchers.Default) {
     val claudeRefreshInvocations = AtomicInteger(0)
-    val piThread = thread(id = "pi-1", updatedAt = 100L, provider = AgentSessionProvider.PI)
-    val claudeThread = thread(id = "claude-1", updatedAt = 200L, provider = AgentSessionProvider.CLAUDE)
+    val piThread = thread(id = "pi-1", updatedAt = 100L, provider = AgentSessionProvider.from("pi"))
+    val claudeThread = thread(id = "claude-1", updatedAt = 200L, provider = AgentSessionProvider.from("claude"))
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       listFromClosedProject = { path ->
         if (path != PROJECT_PATH) {
           emptyList()
@@ -1303,22 +1303,22 @@ class AgentSessionRefreshCoordinatorTest {
         visibleThreadCounts = emptyMap(),
       )
 
-      coordinator.refreshProviderScope(provider = AgentSessionProvider.CLAUDE, scopedPaths = setOf(PROJECT_PATH))
+      coordinator.refreshProviderScope(provider = AgentSessionProvider.from("claude"), scopedPaths = setOf(PROJECT_PATH))
 
       waitForCondition {
         stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
           ?.threads
-          ?.any { it.provider == AgentSessionProvider.CLAUDE && it.id == "claude-1" } == true
+          ?.any { it.provider == AgentSessionProvider.from("claude") && it.id == "claude-1" } == true
       }
 
       val project = stateStore.snapshot().projects.single { it.path == PROJECT_PATH }
       assertThat(claudeRefreshInvocations.get()).isEqualTo(1)
-      assertThat(project.providerLoadStates).doesNotContainKey(AgentSessionProvider.PI)
-      assertThat(project.providerLoadStates[AgentSessionProvider.CLAUDE]).isEqualTo(AgentSessionProviderLoadState.LOADED)
+      assertThat(project.providerLoadStates).doesNotContainKey(AgentSessionProvider.from("pi"))
+      assertThat(project.providerLoadStates[AgentSessionProvider.from("claude")]).isEqualTo(AgentSessionProviderLoadState.LOADED)
       assertThat(project.threads.map { it.provider to it.id })
         .containsExactlyInAnyOrder(
-          AgentSessionProvider.PI to "pi-1",
-          AgentSessionProvider.CLAUDE to "claude-1",
+          AgentSessionProvider.from("pi") to "pi-1",
+          AgentSessionProvider.from("claude") to "claude-1",
         )
     }
   }
@@ -1326,11 +1326,11 @@ class AgentSessionRefreshCoordinatorTest {
   @Test
   fun providerRefreshAppliesScopedOutcomeWhenDifferentProviderIsAlreadyLoaded() = runBlocking(Dispatchers.Default) {
     val piRefreshInvocations = AtomicInteger(0)
-    val claudeThread = thread(id = "claude-1", updatedAt = 100L, provider = AgentSessionProvider.CLAUDE)
-    val piThread = thread(id = "pi-1", updatedAt = 200L, provider = AgentSessionProvider.PI)
+    val claudeThread = thread(id = "claude-1", updatedAt = 100L, provider = AgentSessionProvider.from("claude"))
+    val piThread = thread(id = "pi-1", updatedAt = 200L, provider = AgentSessionProvider.from("pi"))
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.PI,
+      provider = AgentSessionProvider.from("pi"),
       listFromClosedProject = { path ->
         if (path != PROJECT_PATH) {
           emptyList()
@@ -1353,30 +1353,30 @@ class AgentSessionRefreshCoordinatorTest {
             name = "Project A",
             isOpen = true,
             threads = listOf(claudeThread),
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CLAUDE),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("claude")),
           )
         ),
         visibleThreadCounts = emptyMap(),
       )
 
-      coordinator.refreshProviderScope(provider = AgentSessionProvider.PI, scopedPaths = setOf(PROJECT_PATH))
+      coordinator.refreshProviderScope(provider = AgentSessionProvider.from("pi"), scopedPaths = setOf(PROJECT_PATH))
 
       waitForCondition {
         val project = stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
-        project.providerLoadStates[AgentSessionProvider.PI] == AgentSessionProviderLoadState.LOADED &&
-        project.providerLoadStates[AgentSessionProvider.CLAUDE] == AgentSessionProviderLoadState.LOADED &&
-        project.threads.any { it.provider == AgentSessionProvider.PI && it.id == "pi-1" } &&
-        project.threads.any { it.provider == AgentSessionProvider.CLAUDE && it.id == "claude-1" }
+        project.providerLoadStates[AgentSessionProvider.from("pi")] == AgentSessionProviderLoadState.LOADED &&
+        project.providerLoadStates[AgentSessionProvider.from("claude")] == AgentSessionProviderLoadState.LOADED &&
+        project.threads.any { it.provider == AgentSessionProvider.from("pi") && it.id == "pi-1" } &&
+        project.threads.any { it.provider == AgentSessionProvider.from("claude") && it.id == "claude-1" }
       }
 
       val project = stateStore.snapshot().projects.single { it.path == PROJECT_PATH }
       assertThat(piRefreshInvocations.get()).isEqualTo(1)
-      assertThat(project.providerLoadStates[AgentSessionProvider.PI]).isEqualTo(AgentSessionProviderLoadState.LOADED)
-      assertThat(project.providerLoadStates[AgentSessionProvider.CLAUDE]).isEqualTo(AgentSessionProviderLoadState.LOADED)
+      assertThat(project.providerLoadStates[AgentSessionProvider.from("pi")]).isEqualTo(AgentSessionProviderLoadState.LOADED)
+      assertThat(project.providerLoadStates[AgentSessionProvider.from("claude")]).isEqualTo(AgentSessionProviderLoadState.LOADED)
       assertThat(project.threads.map { it.provider to it.id })
         .containsExactlyInAnyOrder(
-          AgentSessionProvider.CLAUDE to "claude-1",
-          AgentSessionProvider.PI to "pi-1",
+          AgentSessionProvider.from("claude") to "claude-1",
+          AgentSessionProvider.from("pi") to "pi-1",
         )
     }
   }
@@ -1384,11 +1384,11 @@ class AgentSessionRefreshCoordinatorTest {
   @Test
   fun providerRefreshAppliesScopedOutcomeToOpenWorktreeThatIsNotFullyLoaded() = runBlocking(Dispatchers.Default) {
     val claudeRefreshInvocations = AtomicInteger(0)
-    val piThread = thread(id = "wt-pi-1", updatedAt = 100L, provider = AgentSessionProvider.PI)
-    val claudeThread = thread(id = "wt-claude-1", updatedAt = 200L, provider = AgentSessionProvider.CLAUDE)
+    val piThread = thread(id = "wt-pi-1", updatedAt = 100L, provider = AgentSessionProvider.from("pi"))
+    val claudeThread = thread(id = "wt-claude-1", updatedAt = 200L, provider = AgentSessionProvider.from("claude"))
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       listFromClosedProject = { path ->
         if (path != WORKTREE_PATH) {
           emptyList()
@@ -1424,26 +1424,26 @@ class AgentSessionRefreshCoordinatorTest {
         visibleThreadCounts = emptyMap(),
       )
 
-      coordinator.refreshProviderScope(provider = AgentSessionProvider.CLAUDE, scopedPaths = setOf(WORKTREE_PATH))
+      coordinator.refreshProviderScope(provider = AgentSessionProvider.from("claude"), scopedPaths = setOf(WORKTREE_PATH))
 
       waitForCondition {
         stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
           ?.worktrees
           ?.firstOrNull { it.path == WORKTREE_PATH }
           ?.threads
-          ?.any { it.provider == AgentSessionProvider.CLAUDE && it.id == "wt-claude-1" } == true
+          ?.any { it.provider == AgentSessionProvider.from("claude") && it.id == "wt-claude-1" } == true
       }
 
       val project = stateStore.snapshot().projects.single { it.path == PROJECT_PATH }
       val worktree = project.worktrees.single { it.path == WORKTREE_PATH }
       assertThat(claudeRefreshInvocations.get()).isEqualTo(1)
       assertThat(project.providerLoadStates).isEmpty()
-      assertThat(worktree.providerLoadStates).doesNotContainKey(AgentSessionProvider.PI)
-      assertThat(worktree.providerLoadStates[AgentSessionProvider.CLAUDE]).isEqualTo(AgentSessionProviderLoadState.LOADED)
+      assertThat(worktree.providerLoadStates).doesNotContainKey(AgentSessionProvider.from("pi"))
+      assertThat(worktree.providerLoadStates[AgentSessionProvider.from("claude")]).isEqualTo(AgentSessionProviderLoadState.LOADED)
       assertThat(worktree.threads.map { it.provider to it.id })
         .containsExactlyInAnyOrder(
-          AgentSessionProvider.PI to "wt-pi-1",
-          AgentSessionProvider.CLAUDE to "wt-claude-1",
+          AgentSessionProvider.from("pi") to "wt-pi-1",
+          AgentSessionProvider.from("claude") to "wt-claude-1",
         )
     }
   }
@@ -1454,18 +1454,18 @@ class AgentSessionRefreshCoordinatorTest {
     val releaseClaudeLoad = CompletableDeferred<Unit>()
 
     val codexSource = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       listFromOpenProject = { path, _ ->
         if (path != PROJECT_PATH) {
           emptyList()
         }
         else {
-          listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX))
+          listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.from("codex")))
         }
       },
     )
     val claudeSource = ScriptedSessionSource(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       listFromOpenProject = { path, _ ->
         if (path != PROJECT_PATH) {
           emptyList()
@@ -1473,7 +1473,7 @@ class AgentSessionRefreshCoordinatorTest {
         else {
           claudeLoadStarted.complete(Unit)
           releaseClaudeLoad.await()
-          listOf(thread(id = "claude-1", updatedAt = 200L, provider = AgentSessionProvider.CLAUDE))
+          listOf(thread(id = "claude-1", updatedAt = 200L, provider = AgentSessionProvider.from("claude")))
         }
       },
     )
@@ -1488,23 +1488,23 @@ class AgentSessionRefreshCoordinatorTest {
 
       waitForCondition {
         val project = stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
-        project.providerLoadStates[AgentSessionProvider.CODEX] == AgentSessionProviderLoadState.LOADED &&
-        project.providerLoadStates[AgentSessionProvider.CLAUDE] == AgentSessionProviderLoadState.LOADING &&
-        project.threads.any { it.provider == AgentSessionProvider.CODEX && it.id == "codex-1" }
+        project.providerLoadStates[AgentSessionProvider.from("codex")] == AgentSessionProviderLoadState.LOADED &&
+        project.providerLoadStates[AgentSessionProvider.from("claude")] == AgentSessionProviderLoadState.LOADING &&
+        project.threads.any { it.provider == AgentSessionProvider.from("codex") && it.id == "codex-1" }
       }
 
       releaseClaudeLoad.complete(Unit)
 
       waitForCondition {
         val project = stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
-        project.providerLoadStates[AgentSessionProvider.CODEX] == AgentSessionProviderLoadState.LOADED &&
-        project.providerLoadStates[AgentSessionProvider.CLAUDE] == AgentSessionProviderLoadState.LOADED
+        project.providerLoadStates[AgentSessionProvider.from("codex")] == AgentSessionProviderLoadState.LOADED &&
+        project.providerLoadStates[AgentSessionProvider.from("claude")] == AgentSessionProviderLoadState.LOADED
       }
 
       val project = stateStore.snapshot().projects.single { it.path == PROJECT_PATH }
       assertThat(project.providerLoadStates)
-        .containsEntry(AgentSessionProvider.CODEX, AgentSessionProviderLoadState.LOADED)
-        .containsEntry(AgentSessionProvider.CLAUDE, AgentSessionProviderLoadState.LOADED)
+        .containsEntry(AgentSessionProvider.from("codex"), AgentSessionProviderLoadState.LOADED)
+        .containsEntry(AgentSessionProvider.from("claude"), AgentSessionProviderLoadState.LOADED)
       assertThat(project.threads.map { it.id }).containsExactly("claude-1", "codex-1")
     }
   }
@@ -1513,13 +1513,13 @@ class AgentSessionRefreshCoordinatorTest {
   fun providerRefreshDoesNotTouchStateTimestampWhenOutcomeMatchesState() = runBlocking(Dispatchers.Default) {
     val codexRefreshInvocations = AtomicInteger(0)
     val completionRefreshInvocations = AtomicInteger(0)
-    val existingThread = thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX)
+    val existingThread = thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))
 
     withLoadingCoordinator(
       sessionSourcesProvider = {
         listOf(
           ScriptedSessionSource(
-            provider = AgentSessionProvider.CODEX,
+            provider = AgentSessionProvider.from("codex"),
             listFromClosedProject = { path ->
               if (path != PROJECT_PATH) {
                 emptyList()
@@ -1531,7 +1531,7 @@ class AgentSessionRefreshCoordinatorTest {
             },
           ),
           ScriptedSessionSource(
-            provider = AgentSessionProvider.CLAUDE,
+            provider = AgentSessionProvider.from("claude"),
             listFromClosedProject = { path ->
               if (path == PROJECT_PATH) {
                 completionRefreshInvocations.incrementAndGet()
@@ -1551,8 +1551,8 @@ class AgentSessionRefreshCoordinatorTest {
             isOpen = true,
             threads = listOf(existingThread),
             providerLoadStates = mapOf(
-              AgentSessionProvider.CODEX to AgentSessionProviderLoadState.LOADED,
-              AgentSessionProvider.CLAUDE to AgentSessionProviderLoadState.LOADED,
+              AgentSessionProvider.from("codex") to AgentSessionProviderLoadState.LOADED,
+              AgentSessionProvider.from("claude") to AgentSessionProviderLoadState.LOADED,
             ),
           )
         ),
@@ -1560,8 +1560,8 @@ class AgentSessionRefreshCoordinatorTest {
       )
       val lastUpdatedAtBeforeRefresh = stateStore.snapshot().lastUpdatedAt
 
-      coordinator.refreshProviderScope(provider = AgentSessionProvider.CODEX, scopedPaths = setOf(PROJECT_PATH))
-      coordinator.refreshProviderScope(provider = AgentSessionProvider.CLAUDE, scopedPaths = setOf(PROJECT_PATH))
+      coordinator.refreshProviderScope(provider = AgentSessionProvider.from("codex"), scopedPaths = setOf(PROJECT_PATH))
+      coordinator.refreshProviderScope(provider = AgentSessionProvider.from("claude"), scopedPaths = setOf(PROJECT_PATH))
 
       waitForCondition { completionRefreshInvocations.get() == 1 }
       assertThat(codexRefreshInvocations.get()).isEqualTo(1)
@@ -1575,7 +1575,7 @@ class AgentSessionRefreshCoordinatorTest {
     val closedRefreshInvocations = AtomicInteger(0)
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       updateEvents = updates,
       listFromClosedProject = { path ->
         if (path != PROJECT_PATH) {
@@ -1583,7 +1583,7 @@ class AgentSessionRefreshCoordinatorTest {
         }
         else {
           closedRefreshInvocations.incrementAndGet()
-          listOf(thread(id = "codex-1", updatedAt = 300L, provider = AgentSessionProvider.CODEX))
+          listOf(thread(id = "codex-1", updatedAt = 300L, provider = AgentSessionProvider.from("codex")))
         }
       },
     )
@@ -1598,8 +1598,8 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           )
         ),
         visibleThreadCounts = emptyMap(),
@@ -1613,7 +1613,7 @@ class AgentSessionRefreshCoordinatorTest {
       assertThat(
         stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
           ?.threads
-          ?.firstOrNull { it.provider == AgentSessionProvider.CODEX }
+          ?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }
           ?.updatedAt
       ).isEqualTo(100L)
     }
@@ -1626,7 +1626,7 @@ class AgentSessionRefreshCoordinatorTest {
     val presentationModel = AgentSessionThreadPresentationModel()
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = { path ->
@@ -1634,7 +1634,7 @@ class AgentSessionRefreshCoordinatorTest {
           emptyList()
         }
         else {
-          listOf(thread(id = "codex-1", updatedAt = 300L, title = updatedTitle, provider = AgentSessionProvider.CODEX))
+          listOf(thread(id = "codex-1", updatedAt = 300L, title = updatedTitle, provider = AgentSessionProvider.from("codex")))
         }
       },
     )
@@ -1651,9 +1651,9 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
-              thread(id = "codex-1", updatedAt = 100L, title = "Initial title", provider = AgentSessionProvider.CODEX)
+              thread(id = "codex-1", updatedAt = 100L, title = "Initial title", provider = AgentSessionProvider.from("codex"))
             ),
           )
         ),
@@ -1667,11 +1667,11 @@ class AgentSessionRefreshCoordinatorTest {
       waitForCondition {
         stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
           ?.threads
-          ?.firstOrNull { it.provider == AgentSessionProvider.CODEX }
+          ?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }
           ?.title == "Renamed from source update"
       }
 
-      val expectedKey = presentationKey(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-1")
+      val expectedKey = presentationKey(PROJECT_PATH, AgentSessionProvider.from("codex"), "codex-1")
       waitForCondition {
         presentationModel.snapshot()[expectedKey]?.title == "Renamed from source update" &&
         presentationModel.snapshot()[expectedKey]?.activity == AgentThreadActivity.READY
@@ -1685,7 +1685,7 @@ class AgentSessionRefreshCoordinatorTest {
     val presentationModel = AgentSessionThreadPresentationModel()
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = { path ->
@@ -1694,7 +1694,7 @@ class AgentSessionRefreshCoordinatorTest {
         }
         else {
           listOf(
-            thread(id = "codex-1", updatedAt = 300L, title = "Automatic title", provider = AgentSessionProvider.CODEX)
+            thread(id = "codex-1", updatedAt = 300L, title = "Automatic title", provider = AgentSessionProvider.from("codex"))
           )
         }
       },
@@ -1712,9 +1712,9 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
-              thread(id = "codex-1", updatedAt = 100L, title = "User title", provider = AgentSessionProvider.CODEX)
+              thread(id = "codex-1", updatedAt = 100L, title = "User title", provider = AgentSessionProvider.from("codex"))
             ),
           )
         ),
@@ -1727,11 +1727,11 @@ class AgentSessionRefreshCoordinatorTest {
       waitForCondition {
         val thread = stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
           ?.threads
-          ?.firstOrNull { it.provider == AgentSessionProvider.CODEX }
+          ?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }
         thread?.updatedAt == 300L && thread.title == "Automatic title"
       }
 
-      val expectedKey = presentationKey(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-1")
+      val expectedKey = presentationKey(PROJECT_PATH, AgentSessionProvider.from("codex"), "codex-1")
       waitForCondition {
         presentationModel.snapshot()[expectedKey]?.title == "Automatic title"
       }
@@ -1743,14 +1743,14 @@ class AgentSessionRefreshCoordinatorTest {
     val presentationModel = AgentSessionThreadPresentationModel()
     presentationModel.updateThread(
       path = PROJECT_PATH,
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       threadId = "codex-1",
       title = "Existing title",
       activity = AgentThreadActivity.UNREAD,
     )
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       listFromClosedProject = { path ->
         if (path != PROJECT_PATH) {
           emptyList()
@@ -1773,13 +1773,13 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
               thread(
                 id = "codex-1",
                 updatedAt = 100L,
                 title = "Existing title",
-                provider = AgentSessionProvider.CODEX,
+                provider = AgentSessionProvider.from("codex"),
                 activity = AgentThreadActivity.UNREAD,
               )
             ),
@@ -1788,13 +1788,13 @@ class AgentSessionRefreshCoordinatorTest {
         visibleThreadCounts = emptyMap(),
       )
 
-      coordinator.refreshProviderScope(provider = AgentSessionProvider.CODEX, scopedPaths = setOf(PROJECT_PATH))
+      coordinator.refreshProviderScope(provider = AgentSessionProvider.from("codex"), scopedPaths = setOf(PROJECT_PATH))
 
       waitForCondition {
         stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
           ?.providerWarnings
           ?.singleOrNull()
-          ?.provider == AgentSessionProvider.CODEX
+          ?.provider == AgentSessionProvider.from("codex")
       }
       val project = stateStore.snapshot().projects.single { it.path == PROJECT_PATH }
       assertThat(project.threads).hasSize(1)
@@ -1802,8 +1802,8 @@ class AgentSessionRefreshCoordinatorTest {
       assertThat(project.threads.single().title).isEqualTo("Existing title")
       assertThat(project.threads.single().activity).isEqualTo(AgentThreadActivity.UNREAD)
       assertThat(project.providerWarnings).hasSize(1)
-      assertThat(project.providerWarnings.single().provider).isEqualTo(AgentSessionProvider.CODEX)
-      val presentation = presentationModel.snapshot()[presentationKey(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-1")]
+      assertThat(project.providerWarnings.single().provider).isEqualTo(AgentSessionProvider.from("codex"))
+      val presentation = presentationModel.snapshot()[presentationKey(PROJECT_PATH, AgentSessionProvider.from("codex"), "codex-1")]
       assertThat(presentation?.title).isEqualTo("Existing title")
       assertThat(presentation?.activity).isEqualTo(AgentThreadActivity.UNREAD)
     }
@@ -1812,7 +1812,7 @@ class AgentSessionRefreshCoordinatorTest {
   @Test
   fun providerWarningUsesInjectedProviderDescriptorPresentation() = runBlocking(Dispatchers.Default) {
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.PI,
+      provider = AgentSessionProvider.from("pi"),
       listFromClosedProject = { path ->
         if (path == PROJECT_PATH) throw IllegalStateException("pi failed") else emptyList()
       },
@@ -1823,7 +1823,7 @@ class AgentSessionRefreshCoordinatorTest {
       isRefreshGateActive = { true },
       providerDescriptors = listOf(
         TestAgentSessionProviderDescriptor(
-          provider = AgentSessionProvider.PI,
+          provider = AgentSessionProvider.from("pi"),
           supportedModes = emptySet(),
           cliAvailable = true,
           displayNameKeyOverride = "toolwindow.provider.pi",
@@ -1836,14 +1836,14 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.PI),
-            threads = listOf(thread(id = "pi-1", updatedAt = 100L, provider = AgentSessionProvider.PI)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("pi")),
+            threads = listOf(thread(id = "pi-1", updatedAt = 100L, provider = AgentSessionProvider.from("pi"))),
           )
         ),
         visibleThreadCounts = emptyMap(),
       )
 
-      coordinator.refreshProviderScope(provider = AgentSessionProvider.PI, scopedPaths = setOf(PROJECT_PATH))
+      coordinator.refreshProviderScope(provider = AgentSessionProvider.from("pi"), scopedPaths = setOf(PROJECT_PATH))
       val expectedWarningMessage = AgentSessionsBundle.message(
         "toolwindow.warning.provider.unavailable",
         AgentSessionsBundle.message("toolwindow.provider.pi"),
@@ -1862,12 +1862,12 @@ class AgentSessionRefreshCoordinatorTest {
   fun providerRefreshKeepsHealthyPathWhenAnotherPathFails() = runBlocking(Dispatchers.Default) {
     val projectB = "/work/project-b"
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       listFromClosedProject = { path ->
         when (path) {
           PROJECT_PATH -> throw IllegalStateException("codex failed for project A")
           projectB -> listOf(
-            thread(id = "codex-b", updatedAt = 500L, title = "Updated B", provider = AgentSessionProvider.CODEX)
+            thread(id = "codex-b", updatedAt = 500L, title = "Updated B", provider = AgentSessionProvider.from("codex"))
           )
           else -> emptyList()
         }
@@ -1884,18 +1884,18 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
-              thread(id = "codex-a", updatedAt = 100L, title = "Stable A", provider = AgentSessionProvider.CODEX)
+              thread(id = "codex-a", updatedAt = 100L, title = "Stable A", provider = AgentSessionProvider.from("codex"))
             ),
           ),
           AgentProjectSessions(
             path = projectB,
             name = "Project B",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
-              thread(id = "codex-b", updatedAt = 100L, title = "Stable B", provider = AgentSessionProvider.CODEX)
+              thread(id = "codex-b", updatedAt = 100L, title = "Stable B", provider = AgentSessionProvider.from("codex"))
             ),
           ),
         ),
@@ -1903,13 +1903,13 @@ class AgentSessionRefreshCoordinatorTest {
       )
 
       coordinator.refreshProviderScope(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         scopedPaths = linkedSetOf(PROJECT_PATH, projectB),
       )
 
       waitForCondition {
         val projects = stateStore.snapshot().projects.associateBy { it.path }
-        projects[PROJECT_PATH]?.providerWarnings?.singleOrNull()?.provider == AgentSessionProvider.CODEX &&
+        projects[PROJECT_PATH]?.providerWarnings?.singleOrNull()?.provider == AgentSessionProvider.from("codex") &&
         projects[projectB]?.threads?.singleOrNull()?.title == "Updated B"
       }
 
@@ -1918,7 +1918,7 @@ class AgentSessionRefreshCoordinatorTest {
       val projectBState = projects.getValue(projectB)
       assertThat(projectAState.threads.single().title).isEqualTo("Stable A")
       assertThat(projectAState.providerWarnings).hasSize(1)
-      assertThat(projectAState.providerWarnings.single().provider).isEqualTo(AgentSessionProvider.CODEX)
+      assertThat(projectAState.providerWarnings.single().provider).isEqualTo(AgentSessionProvider.from("codex"))
       assertThat(projectBState.threads.single().title).isEqualTo("Updated B")
       assertThat(projectBState.providerWarnings).isEmpty()
     }
@@ -1930,7 +1930,7 @@ class AgentSessionRefreshCoordinatorTest {
     val rebindInvocations = mutableListOf<PendingCodexRebindInvocation>()
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = { path ->
@@ -1938,7 +1938,7 @@ class AgentSessionRefreshCoordinatorTest {
           emptyList()
         }
         else {
-          listOf(thread(id = "codex-2", updatedAt = 300L, title = "New Codex thread", provider = AgentSessionProvider.CODEX))
+          listOf(thread(id = "codex-2", updatedAt = 300L, title = "New Codex thread", provider = AgentSessionProvider.from("codex")))
         }
       },
     )
@@ -1979,8 +1979,8 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           )
         ),
         visibleThreadCounts = emptyMap(),
@@ -1999,8 +1999,8 @@ class AgentSessionRefreshCoordinatorTest {
       assertThat(invocation.pendingThreadIdentity).isEqualTo("codex:new-1")
       val target = invocation.target
       assertThat(target.projectPath).isEqualTo(PROJECT_PATH)
-      assertThat(target.provider).isEqualTo(AgentSessionProvider.CODEX)
-      assertThat(target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-2"))
+      assertThat(target.provider).isEqualTo(AgentSessionProvider.from("codex"))
+      assertThat(target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.from("codex"), "codex-2"))
       assertThat(target.threadId).isEqualTo("codex-2")
       assertThat(target.threadTitle).isEqualTo("New Codex thread")
       assertThat(target.threadActivity).isEqualTo(AgentThreadActivity.READY)
@@ -2013,7 +2013,7 @@ class AgentSessionRefreshCoordinatorTest {
     val rebindInvocations = mutableListOf<PendingCodexRebindInvocation>()
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = { path ->
@@ -2021,7 +2021,7 @@ class AgentSessionRefreshCoordinatorTest {
           emptyList()
         }
         else {
-          listOf(thread(id = "claude-2", updatedAt = 300L, title = "New Claude thread", provider = AgentSessionProvider.CLAUDE))
+          listOf(thread(id = "claude-2", updatedAt = 300L, title = "New Claude thread", provider = AgentSessionProvider.from("claude")))
         }
       },
     )
@@ -2033,7 +2033,7 @@ class AgentSessionRefreshCoordinatorTest {
         buildOpenChatRefreshSnapshot(
           openProjectPaths = setOf(PROJECT_PATH),
           pendingTabsByProvider = mapOf(
-            AgentSessionProvider.CLAUDE to mapOf(
+            AgentSessionProvider.from("claude") to mapOf(
               PROJECT_PATH to listOf(
                 pendingCodexTab(
                   pendingThreadIdentity = "claude:new-1",
@@ -2066,8 +2066,8 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CLAUDE),
-            threads = listOf(thread(id = "claude-1", updatedAt = 100L, provider = AgentSessionProvider.CLAUDE)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("claude")),
+            threads = listOf(thread(id = "claude-1", updatedAt = 100L, provider = AgentSessionProvider.from("claude"))),
           )
         ),
         visibleThreadCounts = emptyMap(),
@@ -2086,8 +2086,8 @@ class AgentSessionRefreshCoordinatorTest {
       assertThat(invocation.pendingThreadIdentity).isEqualTo("claude:new-1")
       val target = invocation.target
       assertThat(target.projectPath).isEqualTo(PROJECT_PATH)
-      assertThat(target.provider).isEqualTo(AgentSessionProvider.CLAUDE)
-      assertThat(target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CLAUDE, "claude-2"))
+      assertThat(target.provider).isEqualTo(AgentSessionProvider.from("claude"))
+      assertThat(target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.from("claude"), "claude-2"))
       assertThat(target.threadId).isEqualTo("claude-2")
       assertThat(target.threadTitle).isEqualTo("New Claude thread")
       assertThat(target.threadActivity).isEqualTo(AgentThreadActivity.READY)
@@ -2100,7 +2100,7 @@ class AgentSessionRefreshCoordinatorTest {
     val rebindInvocations = mutableListOf<PendingCodexRebindInvocation>()
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = { path ->
@@ -2109,8 +2109,8 @@ class AgentSessionRefreshCoordinatorTest {
         }
         else {
           listOf(
-            thread(id = "codex-1", updatedAt = 500L, title = "Existing thread", provider = AgentSessionProvider.CODEX),
-            thread(id = "codex-2", updatedAt = 700L, title = "New Codex thread", provider = AgentSessionProvider.CODEX),
+            thread(id = "codex-1", updatedAt = 500L, title = "Existing thread", provider = AgentSessionProvider.from("codex")),
+            thread(id = "codex-2", updatedAt = 700L, title = "New Codex thread", provider = AgentSessionProvider.from("codex")),
           )
         }
       },
@@ -2152,8 +2152,8 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           )
         ),
         visibleThreadCounts = emptyMap(),
@@ -2171,7 +2171,7 @@ class AgentSessionRefreshCoordinatorTest {
       assertThat(invocation.pendingTabKey).isEqualTo("pending-codex:new-2")
       assertThat(invocation.pendingThreadIdentity).isEqualTo("codex:new-2")
       val target = invocation.target
-      assertThat(target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-2"))
+      assertThat(target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.from("codex"), "codex-2"))
       assertThat(target.threadId).isEqualTo("codex-2")
     }
   }
@@ -2182,7 +2182,7 @@ class AgentSessionRefreshCoordinatorTest {
     val rebindInvocations = mutableListOf<PendingCodexRebindInvocation>()
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = { path ->
@@ -2191,7 +2191,7 @@ class AgentSessionRefreshCoordinatorTest {
         }
         else {
           listOf(
-            thread(id = "codex-existing", updatedAt = 500L, title = "Existing thread", provider = AgentSessionProvider.CODEX)
+            thread(id = "codex-existing", updatedAt = 500L, title = "Existing thread", provider = AgentSessionProvider.from("codex"))
           )
         }
       },
@@ -2252,8 +2252,8 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-existing", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-existing", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           )
         ),
         visibleThreadCounts = emptyMap(),
@@ -2270,14 +2270,14 @@ class AgentSessionRefreshCoordinatorTest {
       assertThat(invocation.path).isEqualTo(PROJECT_PATH)
       assertThat(invocation.pendingTabKey).isEqualTo("pending-codex:new-hint")
       assertThat(invocation.pendingThreadIdentity).isEqualTo("codex:new-hint")
-      assertThat(invocation.target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-hint"))
+      assertThat(invocation.target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.from("codex"), "codex-hint"))
       assertThat(invocation.target.threadId).isEqualTo("codex-hint")
       assertThat(invocation.target.threadTitle).isEqualTo("Hint-discovered thread")
 
       val codexThreadIds = stateStore.snapshot().projects
         .first { it.path == PROJECT_PATH }
         .threads
-        .filter { it.provider == AgentSessionProvider.CODEX }
+        .filter { it.provider == AgentSessionProvider.from("codex") }
         .map { it.id }
       assertThat(codexThreadIds).containsExactly("codex-existing")
       assertThat(codexThreadIds).doesNotContain("new-hint", "codex-hint")
@@ -2291,7 +2291,7 @@ class AgentSessionRefreshCoordinatorTest {
     val prefetchRefreshHintsInvocations = AtomicInteger(0)
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       prefetchRefreshHintsProvider = { paths, _ ->
@@ -2352,8 +2352,8 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-existing", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-existing", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           )
         ),
         visibleThreadCounts = emptyMap(),
@@ -2377,7 +2377,7 @@ class AgentSessionRefreshCoordinatorTest {
       assertThat(invocation.path).isEqualTo(PROJECT_PATH)
       assertThat(invocation.pendingTabKey).isEqualTo("pending-codex:new-hint")
       assertThat(invocation.pendingThreadIdentity).isEqualTo("codex:new-hint")
-      assertThat(invocation.target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-hint"))
+      assertThat(invocation.target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.from("codex"), "codex-hint"))
       assertThat(invocation.target.threadId).isEqualTo("codex-hint")
     }
   }
@@ -2387,7 +2387,7 @@ class AgentSessionRefreshCoordinatorTest {
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = { path ->
@@ -2400,14 +2400,14 @@ class AgentSessionRefreshCoordinatorTest {
               id = "codex-with-hint",
               updatedAt = 500L,
               title = "Thread with hint",
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
               activity = AgentThreadActivity.PROCESSING,
             ),
             thread(
               id = "codex-without-hint",
               updatedAt = 450L,
               title = "Thread without hint",
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
               activity = AgentThreadActivity.UNREAD,
             ),
           )
@@ -2440,10 +2440,10 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
-              thread(id = "codex-with-hint", updatedAt = 100L, provider = AgentSessionProvider.CODEX),
-              thread(id = "codex-without-hint", updatedAt = 90L, provider = AgentSessionProvider.CODEX),
+              thread(id = "codex-with-hint", updatedAt = 100L, provider = AgentSessionProvider.from("codex")),
+              thread(id = "codex-without-hint", updatedAt = 90L, provider = AgentSessionProvider.from("codex")),
             ),
           )
         ),
@@ -2472,7 +2472,7 @@ class AgentSessionRefreshCoordinatorTest {
     val closedRefreshInvocations = AtomicInteger(0)
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = { path ->
@@ -2493,9 +2493,9 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CLAUDE),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("claude")),
             threads = listOf(
-              thread(id = "claude-1", updatedAt = 100L, provider = AgentSessionProvider.CLAUDE, activity = AgentThreadActivity.READY)
+              thread(id = "claude-1", updatedAt = 100L, provider = AgentSessionProvider.from("claude"), activity = AgentThreadActivity.READY)
             ),
           )
         ),
@@ -2531,7 +2531,7 @@ class AgentSessionRefreshCoordinatorTest {
     val presentationModel = AgentSessionThreadPresentationModel()
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = { path ->
@@ -2553,9 +2553,9 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
-              thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX, activity = AgentThreadActivity.READY)
+              thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.from("codex"), activity = AgentThreadActivity.READY)
             ),
           )
         ),
@@ -2581,7 +2581,7 @@ class AgentSessionRefreshCoordinatorTest {
         thread.activity == AgentThreadActivity.PROCESSING && thread.summaryActivity == null && thread.updatedAt == 200L
       }
 
-      val expectedKey = presentationKey(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-1")
+      val expectedKey = presentationKey(PROJECT_PATH, AgentSessionProvider.from("codex"), "codex-1")
       waitForCondition {
         val presentation = presentationModel.snapshot()[expectedKey] ?: return@waitForCondition false
         presentation.activity == AgentThreadActivity.PROCESSING && presentation.activityReport.chromeActivity == null && presentation.updatedAt == 200L
@@ -2597,7 +2597,7 @@ class AgentSessionRefreshCoordinatorTest {
     val gateActive = AtomicBoolean(false)
     val presentationModel = AgentSessionThreadPresentationModel()
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
     )
@@ -2613,9 +2613,9 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
-              thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX, activity = AgentThreadActivity.READY)
+              thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.from("codex"), activity = AgentThreadActivity.READY)
             ),
           )
         ),
@@ -2652,7 +2652,7 @@ class AgentSessionRefreshCoordinatorTest {
     val presentationModel = AgentSessionThreadPresentationModel()
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = { path ->
@@ -2665,7 +2665,7 @@ class AgentSessionRefreshCoordinatorTest {
             thread(
               id = "codex-1",
               updatedAt = 500L,
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
               activity = AgentThreadActivity.UNREAD,
             )
           )
@@ -2696,9 +2696,9 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
-              thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX, activity = AgentThreadActivity.READY)
+              thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.from("codex"), activity = AgentThreadActivity.READY)
             ),
           )
         ),
@@ -2724,7 +2724,7 @@ class AgentSessionRefreshCoordinatorTest {
         thread.activity == AgentThreadActivity.UNREAD
       }
 
-      val expectedKey = presentationKey(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-1")
+      val expectedKey = presentationKey(PROJECT_PATH, AgentSessionProvider.from("codex"), "codex-1")
       waitForCondition {
         presentationModel.snapshot()[expectedKey]?.activity == AgentThreadActivity.UNREAD
       }
@@ -2736,7 +2736,7 @@ class AgentSessionRefreshCoordinatorTest {
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = { path ->
@@ -2748,7 +2748,7 @@ class AgentSessionRefreshCoordinatorTest {
             thread(
               id = "codex-sub-agent",
               updatedAt = 500L,
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
               activity = AgentThreadActivity.READY,
               summaryActivity = null,
             )
@@ -2782,12 +2782,12 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
               thread(
                 id = "codex-sub-agent",
                 updatedAt = 100L,
-                provider = AgentSessionProvider.CODEX,
+                provider = AgentSessionProvider.from("codex"),
                 activity = AgentThreadActivity.READY,
                 summaryActivity = null,
               )
@@ -2822,7 +2822,7 @@ class AgentSessionRefreshCoordinatorTest {
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = { path ->
@@ -2834,7 +2834,7 @@ class AgentSessionRefreshCoordinatorTest {
             thread(
               id = "codex-1",
               updatedAt = 500L,
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
               activity = AgentThreadActivity.UNREAD,
             )
           )
@@ -2852,9 +2852,9 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
-              thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX, activity = AgentThreadActivity.PROCESSING)
+              thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.from("codex"), activity = AgentThreadActivity.PROCESSING)
             ),
           )
         ),
@@ -2884,7 +2884,7 @@ class AgentSessionRefreshCoordinatorTest {
     val capturedRefreshThreadSeedsByPath = mutableListOf<Map<String, Set<AgentSessionRefreshThreadSeed>>>()
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = { path ->
@@ -2897,7 +2897,7 @@ class AgentSessionRefreshCoordinatorTest {
               id = "codex-listed",
               updatedAt = 610L,
               title = "Listed Codex thread",
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
               activity = AgentThreadActivity.PROCESSING,
             )
           )
@@ -2931,7 +2931,7 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = emptyList(),
           )
         ),
@@ -2962,7 +2962,7 @@ class AgentSessionRefreshCoordinatorTest {
     val capturedRefreshThreadSeedsByPath = mutableListOf<Map<String, Set<AgentSessionRefreshThreadSeed>>>()
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = { path ->
@@ -2975,7 +2975,7 @@ class AgentSessionRefreshCoordinatorTest {
               id = "codex-listed",
               updatedAt = 610L,
               title = "Listed Codex thread",
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
               activity = AgentThreadActivity.PROCESSING,
             )
           )
@@ -3003,9 +3003,9 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
-              thread(id = "new-pending", updatedAt = 600L, provider = AgentSessionProvider.CODEX),
+              thread(id = "new-pending", updatedAt = 600L, provider = AgentSessionProvider.from("codex")),
             ),
           )
         ),
@@ -3031,7 +3031,7 @@ class AgentSessionRefreshCoordinatorTest {
     val rebindInvocations = mutableListOf<PendingCodexRebindInvocation>()
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = { path ->
@@ -3039,7 +3039,7 @@ class AgentSessionRefreshCoordinatorTest {
           emptyList()
         }
         else {
-          listOf(thread(id = "codex-env", updatedAt = 320L, title = "Env thread", provider = AgentSessionProvider.CODEX))
+          listOf(thread(id = "codex-env", updatedAt = 320L, title = "Env thread", provider = AgentSessionProvider.from("codex")))
         }
       },
     )
@@ -3081,8 +3081,8 @@ class AgentSessionRefreshCoordinatorTest {
               path = PROJECT_PATH,
               name = "Project A",
               isOpen = true,
-              providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-              threads = listOf(thread(id = "codex-base", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+              providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+              threads = listOf(thread(id = "codex-base", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
             )
           ),
           visibleThreadCounts = emptyMap(),
@@ -3097,8 +3097,8 @@ class AgentSessionRefreshCoordinatorTest {
 
         val invocation = rebindInvocations.single()
         assertThat(invocation.target.projectPath).isEqualTo(PROJECT_PATH)
-        assertThat(invocation.target.provider).isEqualTo(AgentSessionProvider.CODEX)
-        assertThat(invocation.target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-env"))
+        assertThat(invocation.target.provider).isEqualTo(AgentSessionProvider.from("codex"))
+        assertThat(invocation.target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.from("codex"), "codex-env"))
       }
     }
   }
@@ -3109,11 +3109,11 @@ class AgentSessionRefreshCoordinatorTest {
     val openLoadCounts = LinkedHashMap<String, AtomicInteger>()
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       prefetch = {
         mapOf(
           PROJECT_PATH to listOf(
-            thread(id = "codex-prefetched-a", updatedAt = 600L, title = "Prefetched A", provider = AgentSessionProvider.CODEX)
+            thread(id = "codex-prefetched-a", updatedAt = 600L, title = "Prefetched A", provider = AgentSessionProvider.from("codex"))
           )
         )
       },
@@ -3123,7 +3123,7 @@ class AgentSessionRefreshCoordinatorTest {
           thread(
             id = "codex-fallback-${path.substringAfterLast('/')}",
             updatedAt = 500L,
-            provider = AgentSessionProvider.CODEX,
+            provider = AgentSessionProvider.from("codex"),
           )
         )
       },
@@ -3143,9 +3143,9 @@ class AgentSessionRefreshCoordinatorTest {
 
       waitForCondition {
         val projects = stateStore.snapshot().projects
-        projects.firstOrNull { it.path == PROJECT_PATH }?.providerLoadStates?.get(AgentSessionProvider.CODEX) ==
+        projects.firstOrNull { it.path == PROJECT_PATH }?.providerLoadStates?.get(AgentSessionProvider.from("codex")) ==
         AgentSessionProviderLoadState.LOADED &&
-        projects.firstOrNull { it.path == projectB }?.providerLoadStates?.get(AgentSessionProvider.CODEX) ==
+        projects.firstOrNull { it.path == projectB }?.providerLoadStates?.get(AgentSessionProvider.from("codex")) ==
         AgentSessionProviderLoadState.LOADED
       }
 
@@ -3162,14 +3162,14 @@ class AgentSessionRefreshCoordinatorTest {
   @Test
   fun refreshUsesProviderTitleForLoadedOpenProjectThreads() = runBlocking(Dispatchers.Default) {
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       listFromOpenProject = { path, _ ->
         if (path != PROJECT_PATH) {
           emptyList()
         }
         else {
           listOf(
-            thread(id = "codex-1", updatedAt = 100L, title = "Automatic title", provider = AgentSessionProvider.CODEX)
+            thread(id = "codex-1", updatedAt = 100L, title = "Automatic title", provider = AgentSessionProvider.from("codex"))
           )
         }
       },
@@ -3198,15 +3198,15 @@ class AgentSessionRefreshCoordinatorTest {
       PROJECT_PATH,
       AgentSessionWarmPathSnapshot(
         threads = listOf(
-          thread(id = "codex-warm", updatedAt = 100L, title = "Automatic warm title", provider = AgentSessionProvider.CODEX)
+          thread(id = "codex-warm", updatedAt = 100L, title = "Automatic warm title", provider = AgentSessionProvider.from("codex"))
         ),
-        providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+        providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
         updatedAt = 100L,
       ),
     )
     val providerResult = CompletableDeferred<List<AgentSessionThread>>()
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       listFromOpenProject = { _, _ -> providerResult.await() },
     )
 
@@ -3221,7 +3221,7 @@ class AgentSessionRefreshCoordinatorTest {
 
         waitForCondition {
           val project = stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
-          project.providerLoadStates[AgentSessionProvider.CODEX] == AgentSessionProviderLoadState.LOADING &&
+          project.providerLoadStates[AgentSessionProvider.from("codex")] == AgentSessionProviderLoadState.LOADING &&
           project.threads.singleOrNull()?.title == "Automatic warm title"
         }
       }
@@ -3238,7 +3238,7 @@ class AgentSessionRefreshCoordinatorTest {
     val closedRefreshInvocations = AtomicInteger(0)
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = {
@@ -3250,7 +3250,7 @@ class AgentSessionRefreshCoordinatorTest {
         AgentSessionSourceRefreshResult(
           partialThreadsByPath = mapOf(
             PROJECT_PATH to listOf(
-              thread(id = "codex-1", updatedAt = 900L, title = "Updated", provider = AgentSessionProvider.CODEX)
+              thread(id = "codex-1", updatedAt = 900L, title = "Updated", provider = AgentSessionProvider.from("codex"))
             )
           )
         )
@@ -3267,10 +3267,10 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
-              thread(id = "codex-1", updatedAt = 100L, title = "Old", provider = AgentSessionProvider.CODEX),
-              thread(id = "codex-2", updatedAt = 200L, title = "Stable", provider = AgentSessionProvider.CODEX),
+              thread(id = "codex-1", updatedAt = 100L, title = "Old", provider = AgentSessionProvider.from("codex")),
+              thread(id = "codex-2", updatedAt = 200L, title = "Stable", provider = AgentSessionProvider.from("codex")),
             ),
           )
         ),
@@ -3299,7 +3299,7 @@ class AgentSessionRefreshCoordinatorTest {
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       refreshThreadsProvider = {
@@ -3309,7 +3309,7 @@ class AgentSessionRefreshCoordinatorTest {
               thread(
                 id = "codex-2",
                 updatedAt = 900L,
-                provider = AgentSessionProvider.CODEX,
+                provider = AgentSessionProvider.from("codex"),
                 activity = AgentThreadActivity.PROCESSING,
               )
             )
@@ -3328,10 +3328,10 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
-              thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX, activity = AgentThreadActivity.PROCESSING),
-              thread(id = "codex-2", updatedAt = 200L, provider = AgentSessionProvider.CODEX, activity = AgentThreadActivity.PROCESSING),
+              thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.from("codex"), activity = AgentThreadActivity.PROCESSING),
+              thread(id = "codex-2", updatedAt = 200L, provider = AgentSessionProvider.from("codex"), activity = AgentThreadActivity.PROCESSING),
             ),
           )
         ),
@@ -3354,7 +3354,7 @@ class AgentSessionRefreshCoordinatorTest {
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       refreshThreadsProvider = {
@@ -3364,7 +3364,7 @@ class AgentSessionRefreshCoordinatorTest {
               thread(
                 id = "codex-2",
                 updatedAt = 900L,
-                provider = AgentSessionProvider.CODEX,
+                provider = AgentSessionProvider.from("codex"),
                 activity = AgentThreadActivity.READY,
               )
             )
@@ -3383,10 +3383,10 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
-              thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX, activity = AgentThreadActivity.PROCESSING),
-              thread(id = "codex-2", updatedAt = 200L, provider = AgentSessionProvider.CODEX, activity = AgentThreadActivity.PROCESSING),
+              thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.from("codex"), activity = AgentThreadActivity.PROCESSING),
+              thread(id = "codex-2", updatedAt = 200L, provider = AgentSessionProvider.from("codex"), activity = AgentThreadActivity.PROCESSING),
             ),
           )
         ),
@@ -3411,7 +3411,7 @@ class AgentSessionRefreshCoordinatorTest {
     val refreshRequests = mutableListOf<Pair<List<String>, Set<String>>>()
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       refreshThreadsProvider = { request ->
@@ -3423,7 +3423,7 @@ class AgentSessionRefreshCoordinatorTest {
                 id = "codex-parent",
                 updatedAt = 900L,
                 title = "Parent updated",
-                provider = AgentSessionProvider.CODEX,
+                provider = AgentSessionProvider.from("codex"),
                 subAgents = listOf(
                   AgentSubAgent(id = "codex-sub-2", name = "Sub-agent 2 updated"),
                   AgentSubAgent(id = "codex-sub-3", name = "Sub-agent 3"),
@@ -3445,13 +3445,13 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
               thread(
                 id = "codex-parent",
                 updatedAt = 100L,
                 title = "Parent old",
-                provider = AgentSessionProvider.CODEX,
+                provider = AgentSessionProvider.from("codex"),
                 subAgents = listOf(
                   AgentSubAgent(id = "codex-sub-1", name = "Sub-agent 1"),
                   AgentSubAgent(id = "codex-sub-2", name = "Sub-agent 2"),
@@ -3488,7 +3488,7 @@ class AgentSessionRefreshCoordinatorTest {
     val closedRefreshInvocations = AtomicInteger(0)
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = true,
       updateEvents = updates,
       listFromClosedProject = {
@@ -3512,8 +3512,8 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-known", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-known", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           )
         ),
         visibleThreadCounts = emptyMap(),
@@ -3536,7 +3536,7 @@ class AgentSessionRefreshCoordinatorTest {
     val scopedRefreshSignals = MutableSharedFlow<Set<String>>(replay = 1, extraBufferCapacity = 1)
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = false,
       listFromClosedProject = { path ->
         if (path != PROJECT_PATH) {
@@ -3544,7 +3544,7 @@ class AgentSessionRefreshCoordinatorTest {
         }
         else {
           closedRefreshInvocations.incrementAndGet()
-          listOf(thread(id = "codex-polled", updatedAt = 700L, title = "Polled thread", provider = AgentSessionProvider.CODEX))
+          listOf(thread(id = "codex-polled", updatedAt = 700L, title = "Polled thread", provider = AgentSessionProvider.from("codex")))
         }
       },
     )
@@ -3590,7 +3590,7 @@ class AgentSessionRefreshCoordinatorTest {
     val closedRefreshInvocations = AtomicInteger(0)
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = false,
       listFromClosedProject = { path ->
         if (path != PROJECT_PATH) {
@@ -3598,7 +3598,7 @@ class AgentSessionRefreshCoordinatorTest {
         }
         else {
           closedRefreshInvocations.incrementAndGet()
-          listOf(thread(id = "codex-1", updatedAt = 300L, provider = AgentSessionProvider.CODEX))
+          listOf(thread(id = "codex-1", updatedAt = 300L, provider = AgentSessionProvider.from("codex")))
         }
       },
     )
@@ -3607,7 +3607,7 @@ class AgentSessionRefreshCoordinatorTest {
       sessionSourcesProvider = { listOf(source) },
       isRefreshGateActive = { true },
       providerDescriptors = testRefreshCoordinatorProviderDescriptors().filter { descriptor ->
-        descriptor.provider == AgentSessionProvider.CODEX
+        descriptor.provider == AgentSessionProvider.from("codex")
       },
       codexScopedRefreshSignalsProvider = {
         val call = scopedSignalsProviderCalls.incrementAndGet()
@@ -3627,8 +3627,8 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           )
         ),
         visibleThreadCounts = emptyMap(),
@@ -3645,7 +3645,7 @@ class AgentSessionRefreshCoordinatorTest {
       waitForCondition {
         stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
           ?.threads
-          ?.firstOrNull { it.provider == AgentSessionProvider.CODEX }
+          ?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }
           ?.updatedAt == 300L
       }
 
@@ -3661,7 +3661,7 @@ class AgentSessionRefreshCoordinatorTest {
     val pendingCreatedAtMs = System.currentTimeMillis() - 1_000L
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = false,
       listFromClosedProject = { path ->
         if (path != PROJECT_PATH) {
@@ -3674,7 +3674,7 @@ class AgentSessionRefreshCoordinatorTest {
               id = "codex-polled",
               updatedAt = pendingCreatedAtMs + 200L,
               title = "Polled thread",
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
             )
           )
         }
@@ -3724,7 +3724,7 @@ class AgentSessionRefreshCoordinatorTest {
       assertThat(invocation.path).isEqualTo(PROJECT_PATH)
       assertThat(invocation.pendingTabKey).isEqualTo("pending-codex:new-recent")
       assertThat(invocation.pendingThreadIdentity).isEqualTo("codex:new-recent")
-      assertThat(invocation.target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-polled"))
+      assertThat(invocation.target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.from("codex"), "codex-polled"))
       assertThat(invocation.target.threadId).isEqualTo("codex-polled")
     }
   }
@@ -3737,7 +3737,7 @@ class AgentSessionRefreshCoordinatorTest {
     val pendingFirstInputAtMs = System.currentTimeMillis() - 1_000L
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = false,
       listFromClosedProject = { path ->
         if (path != PROJECT_PATH) {
@@ -3751,7 +3751,7 @@ class AgentSessionRefreshCoordinatorTest {
                 id = "codex-resolved-later",
                 updatedAt = pendingFirstInputAtMs + 200L,
                 title = "Resolved later",
-                provider = AgentSessionProvider.CODEX,
+                provider = AgentSessionProvider.from("codex"),
               )
             )
           }
@@ -3811,7 +3811,7 @@ class AgentSessionRefreshCoordinatorTest {
       val invocation = rebindInvocations.single()
       assertThat(invocation.pendingThreadIdentity).isEqualTo("codex:new-retry")
       assertThat(invocation.target.threadIdentity)
-        .isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-resolved-later"))
+        .isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.from("codex"), "codex-resolved-later"))
       assertThat(invocation.target.threadTitle).isEqualTo("Resolved later")
     }
   }
@@ -3824,7 +3824,7 @@ class AgentSessionRefreshCoordinatorTest {
     val stalePendingCreatedAtMs = System.currentTimeMillis() - 10 * 60 * 1000L
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = false,
       listFromClosedProject = { path ->
         if (path != PROJECT_PATH) {
@@ -3837,7 +3837,7 @@ class AgentSessionRefreshCoordinatorTest {
               id = "codex-polled",
               updatedAt = stalePendingCreatedAtMs + 200L,
               title = "Polled thread",
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
             )
           )
         }
@@ -3881,12 +3881,12 @@ class AgentSessionRefreshCoordinatorTest {
 
   @Test
   fun pendingCodexScopedRefreshRebindsWhenResolvedThreadIsAlreadyOpen() = runBlocking(Dispatchers.Default) {
-    assertPendingScopedRefreshRebindsWhenResolvedThreadIsAlreadyOpen(AgentSessionProvider.CODEX)
+    assertPendingScopedRefreshRebindsWhenResolvedThreadIsAlreadyOpen(AgentSessionProvider.from("codex"))
   }
 
   @Test
   fun pendingClaudeScopedRefreshRebindsWhenResolvedThreadIsAlreadyOpen() = runBlocking(Dispatchers.Default) {
-    assertPendingScopedRefreshRebindsWhenResolvedThreadIsAlreadyOpen(AgentSessionProvider.CLAUDE)
+    assertPendingScopedRefreshRebindsWhenResolvedThreadIsAlreadyOpen(AgentSessionProvider.from("claude"))
   }
 
   @Test
@@ -3896,7 +3896,7 @@ class AgentSessionRefreshCoordinatorTest {
     val scopedRefreshSignals = MutableSharedFlow<Set<String>>(replay = 1, extraBufferCapacity = 1)
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = false,
       listFromClosedProject = { path ->
         if (path != PROJECT_PATH) {
@@ -3905,8 +3905,8 @@ class AgentSessionRefreshCoordinatorTest {
         else {
           closedRefreshInvocations.incrementAndGet()
           listOf(
-            thread(id = "codex-existing", updatedAt = 700L, title = "Existing thread", provider = AgentSessionProvider.CODEX),
-            thread(id = "codex-new", updatedAt = 800L, title = "New thread", provider = AgentSessionProvider.CODEX),
+            thread(id = "codex-existing", updatedAt = 700L, title = "Existing thread", provider = AgentSessionProvider.from("codex")),
+            thread(id = "codex-new", updatedAt = 800L, title = "New thread", provider = AgentSessionProvider.from("codex")),
           )
         }
       },
@@ -3949,8 +3949,8 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-existing", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-existing", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           )
         ),
         visibleThreadCounts = emptyMap(),
@@ -3968,7 +3968,7 @@ class AgentSessionRefreshCoordinatorTest {
       assertThat(invocation.pendingTabKey).isEqualTo("pending-codex:new-3")
       assertThat(invocation.pendingThreadIdentity).isEqualTo("codex:new-3")
       val target = invocation.target
-      assertThat(target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-new"))
+      assertThat(target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.from("codex"), "codex-new"))
       assertThat(target.threadId).isEqualTo("codex-new")
       assertThat(target.threadTitle).isEqualTo("New thread")
     }
@@ -3981,7 +3981,7 @@ class AgentSessionRefreshCoordinatorTest {
     val scopedRefreshSignals = MutableSharedFlow<Set<String>>(replay = 1, extraBufferCapacity = 1)
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = false,
       listFromClosedProject = { path ->
         if (path != PROJECT_PATH) {
@@ -3989,7 +3989,7 @@ class AgentSessionRefreshCoordinatorTest {
         }
         else {
           closedRefreshInvocations.incrementAndGet()
-          listOf(thread(id = "codex-existing", updatedAt = 700L, title = "Existing thread", provider = AgentSessionProvider.CODEX))
+          listOf(thread(id = "codex-existing", updatedAt = 700L, title = "Existing thread", provider = AgentSessionProvider.from("codex")))
         }
       },
     )
@@ -4022,8 +4022,8 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-existing", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-existing", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           )
         ),
         visibleThreadCounts = emptyMap(),
@@ -4048,7 +4048,7 @@ class AgentSessionRefreshCoordinatorTest {
     val scopedRefreshSignals = MutableSharedFlow<Set<String>>(replay = 1, extraBufferCapacity = 1)
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = false,
       listFromClosedProject = { path ->
         synchronized(refreshedPaths) {
@@ -4058,11 +4058,11 @@ class AgentSessionRefreshCoordinatorTest {
           pendingPath -> listOf(thread(id = "codex-polled",
                                        updatedAt = 700L,
                                        title = "Polled thread",
-                                       provider = AgentSessionProvider.CODEX))
+                                       provider = AgentSessionProvider.from("codex")))
           PROJECT_PATH -> listOf(thread(id = "codex-loaded",
                                         updatedAt = 999L,
                                         title = "Loaded thread",
-                                        provider = AgentSessionProvider.CODEX))
+                                        provider = AgentSessionProvider.from("codex")))
           else -> emptyList()
         }
       },
@@ -4080,8 +4080,8 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Loaded",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-loaded", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-loaded", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           ),
           AgentProjectSessions(
             path = pendingPath,
@@ -4109,7 +4109,7 @@ class AgentSessionRefreshCoordinatorTest {
 
       val loadedProject = stateStore.snapshot().projects.first { it.path == PROJECT_PATH }
       assertThat(
-        loadedProject.threads.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt
+        loadedProject.threads.firstOrNull { it.provider == AgentSessionProvider.from("codex") }?.updatedAt
       ).isEqualTo(100L)
     }
   }
@@ -4121,7 +4121,7 @@ class AgentSessionRefreshCoordinatorTest {
     val scopedRefreshSignals = MutableSharedFlow<Set<String>>(replay = 1, extraBufferCapacity = 1)
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = false,
       listFromClosedProject = { path ->
         synchronized(refreshedPaths) {
@@ -4131,11 +4131,11 @@ class AgentSessionRefreshCoordinatorTest {
           outputPath -> listOf(thread(id = "codex-output",
                                       updatedAt = 700L,
                                       title = "Output thread",
-                                      provider = AgentSessionProvider.CODEX))
+                                      provider = AgentSessionProvider.from("codex")))
           PROJECT_PATH -> listOf(thread(id = "codex-loaded",
                                         updatedAt = 999L,
                                         title = "Loaded thread",
-                                        provider = AgentSessionProvider.CODEX))
+                                        provider = AgentSessionProvider.from("codex")))
           else -> emptyList()
         }
       },
@@ -4153,8 +4153,8 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Loaded",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-loaded", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-loaded", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           ),
           AgentProjectSessions(
             path = outputPath,
@@ -4182,7 +4182,7 @@ class AgentSessionRefreshCoordinatorTest {
 
       val loadedProject = stateStore.snapshot().projects.first { it.path == PROJECT_PATH }
       assertThat(
-        loadedProject.threads.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt
+        loadedProject.threads.firstOrNull { it.provider == AgentSessionProvider.from("codex") }?.updatedAt
       ).isEqualTo(100L)
     }
   }
@@ -4193,7 +4193,7 @@ class AgentSessionRefreshCoordinatorTest {
     val scopedRefreshSignals = MutableSharedFlow<Set<String>>(replay = 1, extraBufferCapacity = 1)
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = false,
       listFromClosedProject = { _ ->
         emptyList()
@@ -4234,13 +4234,13 @@ class AgentSessionRefreshCoordinatorTest {
       waitForCondition {
         stateStore.snapshot().projects.firstOrNull { it.path == pendingPath }
           ?.providerLoadStates
-          ?.get(AgentSessionProvider.CODEX) == AgentSessionProviderLoadState.LOADED
+          ?.get(AgentSessionProvider.from("codex")) == AgentSessionProviderLoadState.LOADED
       }
 
       val pendingProject = stateStore.snapshot().projects.first { it.path == pendingPath }
-      assertThat(pendingProject.providerLoadStates[AgentSessionProvider.CODEX]).isEqualTo(AgentSessionProviderLoadState.LOADED)
+      assertThat(pendingProject.providerLoadStates[AgentSessionProvider.from("codex")]).isEqualTo(AgentSessionProviderLoadState.LOADED)
       assertThat(pendingProject.threads).noneMatch { thread ->
-        thread.provider == AgentSessionProvider.CODEX && thread.id == "new-pending"
+        thread.provider == AgentSessionProvider.from("codex") && thread.id == "new-pending"
       }
     }
   }
@@ -4251,7 +4251,7 @@ class AgentSessionRefreshCoordinatorTest {
     val scopedRefreshSignals = MutableSharedFlow<Set<String>>(replay = 1, extraBufferCapacity = 1)
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       supportsUpdates = false,
       listFromClosedProject = { _ ->
         emptyList()
@@ -4266,8 +4266,8 @@ class AgentSessionRefreshCoordinatorTest {
         mapOf(
           pendingPath to listOf(
             pendingTab(
-              provider = AgentSessionProvider.CLAUDE,
-              pendingThreadIdentity = buildAgentSessionIdentity(AgentSessionProvider.CLAUDE, "new-pending"),
+              provider = AgentSessionProvider.from("claude"),
+              pendingThreadIdentity = buildAgentSessionIdentity(AgentSessionProvider.from("claude"), "new-pending"),
               projectPath = pendingPath,
               pendingCreatedAtMs = 700L,
             )
@@ -4293,13 +4293,13 @@ class AgentSessionRefreshCoordinatorTest {
       waitForCondition {
         stateStore.snapshot().projects.firstOrNull { it.path == pendingPath }
           ?.providerLoadStates
-          ?.get(AgentSessionProvider.CLAUDE) == AgentSessionProviderLoadState.LOADED
+          ?.get(AgentSessionProvider.from("claude")) == AgentSessionProviderLoadState.LOADED
       }
 
       val pendingProject = stateStore.snapshot().projects.first { it.path == pendingPath }
-      assertThat(pendingProject.providerLoadStates[AgentSessionProvider.CLAUDE]).isEqualTo(AgentSessionProviderLoadState.LOADED)
+      assertThat(pendingProject.providerLoadStates[AgentSessionProvider.from("claude")]).isEqualTo(AgentSessionProviderLoadState.LOADED)
       assertThat(pendingProject.threads).noneMatch { thread ->
-        thread.provider == AgentSessionProvider.CLAUDE && thread.id == "new-pending"
+        thread.provider == AgentSessionProvider.from("claude") && thread.id == "new-pending"
       }
     }
   }
@@ -4312,7 +4312,7 @@ class AgentSessionRefreshCoordinatorTest {
     val pendingCreatedAtMs = System.currentTimeMillis() - 1_000L
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = false,
       listFromClosedProject = { path ->
         if (path != pendingPath) {
@@ -4324,7 +4324,7 @@ class AgentSessionRefreshCoordinatorTest {
               id = "codex-resolved",
               updatedAt = pendingCreatedAtMs + 200L,
               title = "Resolved thread",
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
             )
           )
         }
@@ -4370,8 +4370,8 @@ class AgentSessionRefreshCoordinatorTest {
             path = pendingPath,
             name = "Pending",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-existing", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-existing", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           )
         ),
         visibleThreadCounts = emptyMap(),
@@ -4400,7 +4400,7 @@ class AgentSessionRefreshCoordinatorTest {
     val pendingCreatedAtMs = System.currentTimeMillis() - 1_000L
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = false,
       listFromClosedProject = { path ->
         if (path != pendingPath) {
@@ -4412,14 +4412,14 @@ class AgentSessionRefreshCoordinatorTest {
               id = "codex-resolved",
               updatedAt = pendingCreatedAtMs + 200L,
               title = "Resolved thread",
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
             )
           )
         }
       },
     )
     val providerDescriptor = TestAgentSessionProviderDescriptor(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportedModes = emptySet(),
       cliAvailable = true,
       supportsPendingEditorTabRebind = false,
@@ -4456,8 +4456,8 @@ class AgentSessionRefreshCoordinatorTest {
             path = pendingPath,
             name = "Pending",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-            threads = listOf(thread(id = "codex-existing", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-existing", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
           )
         ),
         visibleThreadCounts = emptyMap(),
@@ -4484,7 +4484,7 @@ class AgentSessionRefreshCoordinatorTest {
     val pendingCreatedAtMs = System.currentTimeMillis() - 1_000L
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       supportsUpdates = false,
       listFromClosedProject = { path ->
         if (path != pendingPath) {
@@ -4496,7 +4496,7 @@ class AgentSessionRefreshCoordinatorTest {
               id = "claude-resolved",
               updatedAt = pendingCreatedAtMs + 200L,
               title = "Resolved Claude thread",
-              provider = AgentSessionProvider.CLAUDE,
+              provider = AgentSessionProvider.from("claude"),
             )
           )
         }
@@ -4512,8 +4512,8 @@ class AgentSessionRefreshCoordinatorTest {
         mapOf(
           pendingPath to listOf(
             pendingTab(
-              provider = AgentSessionProvider.CLAUDE,
-              pendingThreadIdentity = buildAgentSessionIdentity(AgentSessionProvider.CLAUDE, "new-pending"),
+              provider = AgentSessionProvider.from("claude"),
+              pendingThreadIdentity = buildAgentSessionIdentity(AgentSessionProvider.from("claude"), "new-pending"),
               projectPath = pendingPath,
               pendingCreatedAtMs = pendingCreatedAtMs,
               pendingLaunchMode = "standard",
@@ -4543,8 +4543,8 @@ class AgentSessionRefreshCoordinatorTest {
             path = pendingPath,
             name = "Pending",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CLAUDE),
-            threads = listOf(thread(id = "claude-existing", updatedAt = 100L, provider = AgentSessionProvider.CLAUDE)),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("claude")),
+            threads = listOf(thread(id = "claude-existing", updatedAt = 100L, provider = AgentSessionProvider.from("claude"))),
           )
         ),
         visibleThreadCounts = emptyMap(),
@@ -4561,8 +4561,8 @@ class AgentSessionRefreshCoordinatorTest {
 
       assertThat(rebindInvocations).hasSize(1)
       val invocation = rebindInvocations.single()
-      assertThat(invocation.pendingThreadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CLAUDE, "new-pending"))
-      assertThat(invocation.target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CLAUDE, "claude-resolved"))
+      assertThat(invocation.pendingThreadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.from("claude"), "new-pending"))
+      assertThat(invocation.target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.from("claude"), "claude-resolved"))
       val project = stateStore.snapshot().projects.first { it.path == pendingPath }
       assertThat(project.threads.map { it.id }).containsExactly("claude-resolved")
     }
@@ -4573,18 +4573,18 @@ class AgentSessionRefreshCoordinatorTest {
     val pendingRebindInvocations = mutableListOf<PendingCodexRebindInvocation>()
     val scopedRefreshSignals = MutableSharedFlow<Set<String>>(replay = 1, extraBufferCapacity = 1)
     val rebindRequestedAtMs = System.currentTimeMillis() - 1_000L
-    val oldIdentity = buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-old")
-    val targetIdentity = buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-hinted-new")
+    val oldIdentity = buildAgentSessionIdentity(AgentSessionProvider.from("codex"), "codex-old")
+    val targetIdentity = buildAgentSessionIdentity(AgentSessionProvider.from("codex"), "codex-hinted-new")
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = false,
       listFromClosedProject = { path ->
         if (path != PROJECT_PATH) {
           emptyList()
         }
         else {
-          listOf(thread(id = "codex-old", updatedAt = 100L, title = "Old thread", provider = AgentSessionProvider.CODEX))
+          listOf(thread(id = "codex-old", updatedAt = 100L, title = "Old thread", provider = AgentSessionProvider.from("codex")))
         }
       },
       prefetchRefreshHintsProvider = { paths, _ ->
@@ -4674,10 +4674,10 @@ class AgentSessionRefreshCoordinatorTest {
     val clearedTabs = mutableListOf<AgentChatConcreteTabSnapshot>()
     val scopedRefreshSignals = MutableSharedFlow<Set<String>>(replay = 1, extraBufferCapacity = 1)
     val staleRequestedAtMs = System.currentTimeMillis() - 60_000L
-    val oldIdentity = buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-old")
+    val oldIdentity = buildAgentSessionIdentity(AgentSessionProvider.from("codex"), "codex-old")
 
     val source = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsUpdates = false,
       listFromClosedProject = { path ->
         if (path != PROJECT_PATH) {
@@ -4685,7 +4685,7 @@ class AgentSessionRefreshCoordinatorTest {
         }
         else {
           closedRefreshInvocations.incrementAndGet()
-          listOf(thread(id = "codex-old", updatedAt = 100L, title = "Old thread", provider = AgentSessionProvider.CODEX))
+          listOf(thread(id = "codex-old", updatedAt = 100L, title = "Old thread", provider = AgentSessionProvider.from("codex")))
         }
       },
       prefetchRefreshHintsProvider = { paths, _ ->
@@ -4793,10 +4793,10 @@ class AgentSessionRefreshCoordinatorTest {
       openChatPathsProvider = { setOf(PROJECT_PATH) },
       codexScopedRefreshSignalsProvider = { scopedRefreshSignals },
       openPendingCodexTabsProvider = {
-        if (provider == AgentSessionProvider.CODEX) mapOf(PROJECT_PATH to listOf(pendingTab)) else emptyMap()
+        if (provider == AgentSessionProvider.from("codex")) mapOf(PROJECT_PATH to listOf(pendingTab)) else emptyMap()
       },
       openPendingClaudeTabsProvider = {
-        if (provider == AgentSessionProvider.CLAUDE) mapOf(PROJECT_PATH to listOf(pendingTab)) else emptyMap()
+        if (provider == AgentSessionProvider.from("claude")) mapOf(PROJECT_PATH to listOf(pendingTab)) else emptyMap()
       },
       openConcreteChatThreadIdentitiesByPathProvider = {
         mapOf(PROJECT_PATH to setOf(resolvedThreadIdentity))
@@ -4857,7 +4857,7 @@ private fun pendingCodexTab(
   pendingLaunchMode: String? = null,
 ): AgentChatPendingTabSnapshot {
   return pendingTab(
-    provider = AgentSessionProvider.CODEX,
+    provider = AgentSessionProvider.from("codex"),
     pendingThreadIdentity = pendingThreadIdentity,
     projectPath = projectPath,
     pendingTabKey = pendingTabKey,
@@ -4876,7 +4876,7 @@ private fun pendingTab(
   pendingFirstInputAtMs: Long? = null,
   pendingLaunchMode: String? = null,
 ): AgentChatPendingTabSnapshot {
-  require(provider in setOf(AgentSessionProvider.CLAUDE, AgentSessionProvider.CODEX))
+  require(provider in setOf(AgentSessionProvider.from("claude"), AgentSessionProvider.from("codex")))
   return AgentChatPendingTabSnapshot(
     projectPath = projectPath,
     pendingTabKey = pendingTabKey,
@@ -5013,11 +5013,11 @@ private suspend fun withLoadingCoordinator(
           openProjectPaths = openChatPathsProvider(),
           selectedChatThreadIdentity = selectedChatThreadIdentityProvider(),
           pendingTabsByProvider = mapOf(
-            AgentSessionProvider.CODEX to openPendingCodexTabsProvider(),
-            AgentSessionProvider.CLAUDE to openPendingClaudeTabsProvider(),
+            AgentSessionProvider.from("codex") to openPendingCodexTabsProvider(),
+            AgentSessionProvider.from("claude") to openPendingClaudeTabsProvider(),
           ),
           concreteTabsAwaitingNewThreadRebindByProvider = mapOf(
-            AgentSessionProvider.CODEX to openConcreteCodexTabsAwaitingNewThreadRebindProvider(),
+            AgentSessionProvider.from("codex") to openConcreteCodexTabsAwaitingNewThreadRebindProvider(),
           ),
           concreteThreadIdentitiesByPath = openConcreteChatThreadIdentitiesByPathProvider(),
         )
@@ -5045,7 +5045,7 @@ private fun presentationKey(
 private fun testRefreshCoordinatorProviderDescriptors(): List<AgentSessionProviderDescriptor> {
   return listOf(
     TestAgentSessionProviderDescriptor(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportedModes = emptySet(),
       cliAvailable = true,
       supportsPendingEditorTabRebind = true,
@@ -5054,7 +5054,7 @@ private fun testRefreshCoordinatorProviderDescriptors(): List<AgentSessionProvid
       refreshPathAfterCreateNewSession = true,
     ),
     TestAgentSessionProviderDescriptor(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       supportedModes = emptySet(),
       cliAvailable = true,
       supportsPendingEditorTabRebind = true,

@@ -30,8 +30,8 @@ class PendingThreadRebindTargetResolverTest {
               path = PROJECT_PATH,
               name = "Project A",
               isOpen = true,
-              providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-              threads = listOf(thread(id = "codex-42", updatedAt = 500L, provider = AgentSessionProvider.CODEX, title = "Recovered")),
+              providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+              threads = listOf(thread(id = "codex-42", updatedAt = 500L, provider = AgentSessionProvider.from("codex"), title = "Recovered")),
             )
           )
         )
@@ -44,18 +44,18 @@ class PendingThreadRebindTargetResolverTest {
       tabKey = "pending-codex:new-1",
       threadIdentity = "codex:new-1",
       threadCoordinates = AgentChatThreadCoordinates(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         sessionId = "new-1",
         isPending = true,
       ),
     )
 
-    val target = readService.resolvePendingThreadRebindTarget(context, AgentSessionProvider.CODEX)
+    val target = readService.resolvePendingThreadRebindTarget(context, AgentSessionProvider.from("codex"))
 
     assertThat(target).isNotNull
     assertThat(target?.projectPath).isEqualTo(PROJECT_PATH)
-    assertThat(target?.provider).isEqualTo(AgentSessionProvider.CODEX)
-    assertThat(target?.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-42"))
+    assertThat(target?.provider).isEqualTo(AgentSessionProvider.from("codex"))
+    assertThat(target?.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.from("codex"), "codex-42"))
     assertThat(target?.threadId).isEqualTo("codex-42")
     assertThat(target?.threadTitle).isEqualTo("Recovered")
   }
@@ -70,10 +70,10 @@ class PendingThreadRebindTargetResolverTest {
               path = PROJECT_PATH,
               name = "Project A",
               isOpen = true,
-              providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+              providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
               threads = listOf(
-                thread(id = "new-9", updatedAt = 900L, provider = AgentSessionProvider.CODEX, title = "New thread"),
-                thread(id = "codex-42", updatedAt = 500L, provider = AgentSessionProvider.CODEX, title = "Recovered"),
+                thread(id = "new-9", updatedAt = 900L, provider = AgentSessionProvider.from("codex"), title = "New thread"),
+                thread(id = "codex-42", updatedAt = 500L, provider = AgentSessionProvider.from("codex"), title = "Recovered"),
               ),
             )
           )
@@ -87,16 +87,16 @@ class PendingThreadRebindTargetResolverTest {
       tabKey = "pending-codex:new-1",
       threadIdentity = "codex:new-1",
       threadCoordinates = AgentChatThreadCoordinates(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         sessionId = "new-1",
         isPending = true,
       ),
     )
 
-    val target = readService.resolvePendingThreadRebindTarget(context, AgentSessionProvider.CODEX)
+    val target = readService.resolvePendingThreadRebindTarget(context, AgentSessionProvider.from("codex"))
 
     assertThat(target).isNotNull
-    assertThat(target?.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-42"))
+    assertThat(target?.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.from("codex"), "codex-42"))
     assertThat(target?.threadId).isEqualTo("codex-42")
     assertThat(target?.threadTitle).isEqualTo("Recovered")
   }
@@ -111,9 +111,9 @@ class PendingThreadRebindTargetResolverTest {
               path = PROJECT_PATH,
               name = "Project A",
               isOpen = true,
-              providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+              providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
               threads = listOf(
-                thread(id = "new-9", updatedAt = 900L, provider = AgentSessionProvider.CODEX, title = "New thread"),
+                thread(id = "new-9", updatedAt = 900L, provider = AgentSessionProvider.from("codex"), title = "New thread"),
               ),
             )
           )
@@ -127,13 +127,13 @@ class PendingThreadRebindTargetResolverTest {
       tabKey = "pending-codex:new-1",
       threadIdentity = "codex:new-1",
       threadCoordinates = AgentChatThreadCoordinates(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         sessionId = "new-1",
         isPending = true,
       ),
     )
 
-    assertThat(readService.resolvePendingThreadRebindTarget(context, AgentSessionProvider.CODEX)).isNull()
+    assertThat(readService.resolvePendingThreadRebindTarget(context, AgentSessionProvider.from("codex"))).isNull()
   }
 
   @Test
@@ -147,8 +147,8 @@ class PendingThreadRebindTargetResolverTest {
                 path = PROJECT_PATH,
                 name = "Project A",
                 isOpen = true,
-                providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-                threads = listOf(thread(id = "codex-42", updatedAt = 500L, provider = AgentSessionProvider.CODEX, title = "Recovered")),
+                providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+                threads = listOf(thread(id = "codex-42", updatedAt = 500L, provider = AgentSessionProvider.from("codex"), title = "Recovered")),
               )
             )
           )
@@ -161,20 +161,20 @@ class PendingThreadRebindTargetResolverTest {
         tabKey = "pending-codex:new-1",
         threadIdentity = "codex:new-1",
         threadCoordinates = AgentChatThreadCoordinates(
-          provider = AgentSessionProvider.CODEX,
+          provider = AgentSessionProvider.from("codex"),
           sessionId = "new-1",
           isPending = true,
         ),
       )
 
       val target = withTestLaunchSpecAugmenter {
-        readService.resolvePendingThreadRebindTarget(context, AgentSessionProvider.CODEX)
+        readService.resolvePendingThreadRebindTarget(context, AgentSessionProvider.from("codex"))
       }
 
       assertThat(target).isNotNull
       assertThat(target?.projectPath).isEqualTo(PROJECT_PATH)
-      assertThat(target?.provider).isEqualTo(AgentSessionProvider.CODEX)
-      assertThat(target?.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-42"))
+      assertThat(target?.provider).isEqualTo(AgentSessionProvider.from("codex"))
+      assertThat(target?.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.from("codex"), "codex-42"))
       assertThat(target?.threadId).isEqualTo("codex-42")
     }
   }
@@ -189,12 +189,12 @@ class PendingThreadRebindTargetResolverTest {
               path = PROJECT_PATH,
               name = "Project A",
               isOpen = true,
-              providerLoadStates = loadedProviderStates(AgentSessionProvider.CLAUDE),
+              providerLoadStates = loadedProviderStates(AgentSessionProvider.from("claude")),
               threads = listOf(
                 thread(
                   id = "claude-42",
                   updatedAt = 700L,
-                  provider = AgentSessionProvider.CLAUDE,
+                  provider = AgentSessionProvider.from("claude"),
                   title = "Recovered Claude",
                 )
               ),
@@ -210,17 +210,17 @@ class PendingThreadRebindTargetResolverTest {
       tabKey = "pending-claude:new-1",
       threadIdentity = "claude:new-1",
       threadCoordinates = AgentChatThreadCoordinates(
-        provider = AgentSessionProvider.CLAUDE,
+        provider = AgentSessionProvider.from("claude"),
         sessionId = "new-1",
         isPending = true,
       ),
     )
 
-    val target = readService.resolvePendingThreadRebindTarget(context, AgentSessionProvider.CLAUDE)
+    val target = readService.resolvePendingThreadRebindTarget(context, AgentSessionProvider.from("claude"))
 
     assertThat(target).isNotNull
-    assertThat(target?.provider).isEqualTo(AgentSessionProvider.CLAUDE)
-    assertThat(target?.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CLAUDE, "claude-42"))
+    assertThat(target?.provider).isEqualTo(AgentSessionProvider.from("claude"))
+    assertThat(target?.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.from("claude"), "claude-42"))
     assertThat(target?.threadId).isEqualTo("claude-42")
     assertThat(target?.threadTitle).isEqualTo("Recovered Claude")
   }
@@ -235,10 +235,10 @@ class PendingThreadRebindTargetResolverTest {
               path = PROJECT_PATH,
               name = "Project A",
               isOpen = true,
-              providerLoadStates = loadedProviderStates(AgentSessionProvider.CLAUDE),
+              providerLoadStates = loadedProviderStates(AgentSessionProvider.from("claude")),
               threads = listOf(
-                thread(id = "new-9", updatedAt = 900L, provider = AgentSessionProvider.CLAUDE, title = "New thread"),
-                thread(id = "claude-42", updatedAt = 700L, provider = AgentSessionProvider.CLAUDE, title = "Recovered Claude"),
+                thread(id = "new-9", updatedAt = 900L, provider = AgentSessionProvider.from("claude"), title = "New thread"),
+                thread(id = "claude-42", updatedAt = 700L, provider = AgentSessionProvider.from("claude"), title = "Recovered Claude"),
               ),
             )
           )
@@ -252,16 +252,16 @@ class PendingThreadRebindTargetResolverTest {
       tabKey = "pending-claude:new-1",
       threadIdentity = "claude:new-1",
       threadCoordinates = AgentChatThreadCoordinates(
-        provider = AgentSessionProvider.CLAUDE,
+        provider = AgentSessionProvider.from("claude"),
         sessionId = "new-1",
         isPending = true,
       ),
     )
 
-    val target = readService.resolvePendingThreadRebindTarget(context, AgentSessionProvider.CLAUDE)
+    val target = readService.resolvePendingThreadRebindTarget(context, AgentSessionProvider.from("claude"))
 
     assertThat(target).isNotNull
-    assertThat(target?.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CLAUDE, "claude-42"))
+    assertThat(target?.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.from("claude"), "claude-42"))
     assertThat(target?.threadId).isEqualTo("claude-42")
     assertThat(target?.threadTitle).isEqualTo("Recovered Claude")
   }
@@ -276,8 +276,8 @@ class PendingThreadRebindTargetResolverTest {
               path = PROJECT_PATH,
               name = "Project A",
               isOpen = true,
-              providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-              threads = listOf(thread(id = "codex-42", updatedAt = 500L, provider = AgentSessionProvider.CODEX, title = "Recovered")),
+              providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+              threads = listOf(thread(id = "codex-42", updatedAt = 500L, provider = AgentSessionProvider.from("codex"), title = "Recovered")),
             )
           )
         )
@@ -290,13 +290,13 @@ class PendingThreadRebindTargetResolverTest {
       tabKey = "pending-codex:new-1",
       threadIdentity = "codex:new-1",
       threadCoordinates = AgentChatThreadCoordinates(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         sessionId = "new-1",
         isPending = true,
         participatesInPendingThreadLifecycle = false,
       ),
     )
 
-    assertThat(readService.resolvePendingThreadRebindTarget(context, AgentSessionProvider.CODEX)).isNull()
+    assertThat(readService.resolvePendingThreadRebindTarget(context, AgentSessionProvider.from("codex"))).isNull()
   }
 }

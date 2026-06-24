@@ -27,7 +27,7 @@ Date: 2026-06-05
 Agent Workbench treats Pi as a first-class terminal-backed provider. Pi sessions are discovered from Pi JSONL session files, can be launched and resumed from Agent Workbench, and support rename/archive state without requiring a Pi-specific backend API.
 
 ## Requirements
-- Pi must be exposed as `AgentSessionProvider.PI`, registered after Junie and before Terminal, and shown in provider menus with a Pi icon and localized labels.
+- Pi must be exposed as `AgentSessionProvider.from("pi")`, registered after Junie and before Terminal, and shown in provider menus with a Pi icon and localized labels.
   [@test] ../../pi/sessions/testSrc/PiAgentSessionProviderDescriptorTest.kt
   [@test] ../../plugin/testSrc/AgentWorkbenchProviderRegistrationTest.kt
 

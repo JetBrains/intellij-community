@@ -12,6 +12,8 @@ import com.intellij.agent.workbench.sessions.assertExistingThreadLaunchUsesNoIni
 import com.intellij.agent.workbench.sessions.assertExistingThreadLaunchUsesStartupOverride
 import com.intellij.agent.workbench.sessions.existingThreadPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.thread
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.platform.ai.agent.sessions.core.providers.withProvider
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -26,7 +28,7 @@ class JunieExistingThreadPromptLaunchIntegrationTest {
     val observation = assertExistingThreadLaunchUsesStartupOverride(
       descriptor = descriptor(),
       request = existingThreadPromptLaunchRequest(
-        provider = AgentSessionProvider.JUNIE,
+        provider = AgentSessionProvider.from("junie"),
         projectPath = PROJECT_PATH,
         threadId = EXISTING_THREAD_ID,
         planMode = true,
@@ -53,7 +55,7 @@ class JunieExistingThreadPromptLaunchIntegrationTest {
     val observation = assertExistingThreadLaunchUsesStartupOverride(
       descriptor = descriptor(),
       request = existingThreadPromptLaunchRequest(
-        provider = AgentSessionProvider.JUNIE,
+        provider = AgentSessionProvider.from("junie"),
         projectPath = PROJECT_PATH,
         threadId = EXISTING_THREAD_ID,
         planMode = true,
@@ -89,7 +91,7 @@ class JunieExistingThreadPromptLaunchIntegrationTest {
     assertExistingThreadLaunchUsesNoInitialPromptDelivery(
       descriptor = descriptor(cliVersion = JunieCliVersion(1962, 1)),
       request = existingThreadPromptLaunchRequest(
-        provider = AgentSessionProvider.JUNIE,
+        provider = AgentSessionProvider.from("junie"),
         projectPath = PROJECT_PATH,
         threadId = EXISTING_THREAD_ID,
         planMode = true,
@@ -100,13 +102,13 @@ class JunieExistingThreadPromptLaunchIntegrationTest {
   }
 }
 
-private fun descriptor(cliVersion: JunieCliVersion? = JunieCliVersion(2030, 1)): JunieAgentSessionProviderDescriptor {
+private fun descriptor(cliVersion: JunieCliVersion? = JunieCliVersion(2030, 1)): AgentSessionProviderDescriptor {
   return JunieAgentSessionProviderDescriptor(
     sessionSource = ScriptedSessionSource(
-      provider = AgentSessionProvider.JUNIE,
+      provider = AgentSessionProvider.from("junie"),
       listFromOpenProject = { path, _ ->
         if (path == PROJECT_PATH) {
-          listOf(thread(id = EXISTING_THREAD_ID, updatedAt = 200, provider = AgentSessionProvider.JUNIE))
+          listOf(thread(id = EXISTING_THREAD_ID, updatedAt = 200, provider = AgentSessionProvider.from("junie")))
         }
         else {
           emptyList()
@@ -115,7 +117,7 @@ private fun descriptor(cliVersion: JunieCliVersion? = JunieCliVersion(2030, 1)):
     ),
     executableResolver = { JunieCliSupport.JUNIE_COMMAND },
     cliInfoResolver = { JunieCliInfo(JunieCliSupport.JUNIE_COMMAND, cliVersion) },
-  )
+  ).withProvider(JUNIE_AGENT_SESSION_PROVIDER)
 }
 
 private const val PROJECT_PATH: String = "/work/project-a"

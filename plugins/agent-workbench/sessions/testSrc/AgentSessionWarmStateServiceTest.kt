@@ -28,7 +28,7 @@ class AgentSessionWarmStateServiceTest {
               id = "claude-thread",
               title = "Claude Thread",
               updatedAt = 20,
-              provider = AgentSessionProvider.CLAUDE,
+              provider = AgentSessionProvider.from("claude"),
               activity = AgentThreadActivity.UNREAD,
               subAgents = listOf(AgentSubAgent(id = "claude-sub-1", name = "Sub-agent 1")),
               cost = AgentSessionCost(
@@ -41,11 +41,11 @@ class AgentSessionWarmStateServiceTest {
               id = "codex-thread",
               title = "Codex Thread",
               updatedAt = 10,
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
             ),
           ),
-          providerLoadStates = loadedProviderStates(AgentSessionProvider.CLAUDE, AgentSessionProvider.CODEX),
-          providersWithUnknownThreadCount = setOf(AgentSessionProvider.CLAUDE),
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("claude"), AgentSessionProvider.from("codex")),
+          providersWithUnknownThreadCount = setOf(AgentSessionProvider.from("claude")),
           updatedAt = 500,
         ),
       )
@@ -54,7 +54,7 @@ class AgentSessionWarmStateServiceTest {
     val snapshot = warmState.getPathSnapshot("/work/project-a")
     assertThat(snapshot?.hasUnknownThreadCount).isTrue()
     assertThat(snapshot?.threads?.map { it.id }).isEqualTo(listOf("claude-thread", "codex-thread"))
-    assertThat(snapshot?.threads?.map { it.provider }).isEqualTo(listOf(AgentSessionProvider.CLAUDE, AgentSessionProvider.CODEX))
+    assertThat(snapshot?.threads?.map { it.provider }).isEqualTo(listOf(AgentSessionProvider.from("claude"), AgentSessionProvider.from("codex")))
     assertThat(snapshot?.threads?.map { it.activity }).isEqualTo(listOf(AgentThreadActivity.UNREAD, AgentThreadActivity.READY))
     assertThat(snapshot?.threads?.first()?.subAgents?.map { it.id }).isEqualTo(listOf("claude-sub-1"))
     assertThat(snapshot?.threads?.first()?.originBranch).isEqualTo("feature/x")
@@ -75,8 +75,8 @@ class AgentSessionWarmStateServiceTest {
       "/work/project-a",
       AgentSessionWarmPathSnapshot(
         threads = listOf(
-          thread(id = "new-pending", title = "Pending", updatedAt = 100, provider = AgentSessionProvider.CODEX),
-          thread(id = "blank-title-thread", title = "   \n ", updatedAt = 5, provider = AgentSessionProvider.CODEX),
+          thread(id = "new-pending", title = "Pending", updatedAt = 100, provider = AgentSessionProvider.from("codex")),
+          thread(id = "blank-title-thread", title = "   \n ", updatedAt = 5, provider = AgentSessionProvider.from("codex")),
         ),
         updatedAt = 200,
       ),
@@ -93,14 +93,14 @@ class AgentSessionWarmStateServiceTest {
     warmState.setPathSnapshot(
       "/work/project-a",
       AgentSessionWarmPathSnapshot(
-        threads = listOf(thread(id = "thread-a", updatedAt = 10, provider = AgentSessionProvider.CODEX)),
+        threads = listOf(thread(id = "thread-a", updatedAt = 10, provider = AgentSessionProvider.from("codex"))),
         updatedAt = 10,
       ),
     )
     warmState.setPathSnapshot(
       "/work/project-b",
       AgentSessionWarmPathSnapshot(
-        threads = listOf(thread(id = "thread-b", updatedAt = 20, provider = AgentSessionProvider.CLAUDE)),
+        threads = listOf(thread(id = "thread-b", updatedAt = 20, provider = AgentSessionProvider.from("claude"))),
         updatedAt = 20,
       ),
     )
@@ -120,7 +120,7 @@ class AgentSessionWarmStateServiceTest {
           thread(
             id = "claude-thread",
             updatedAt = 20,
-            provider = AgentSessionProvider.CLAUDE,
+            provider = AgentSessionProvider.from("claude"),
             activity = AgentThreadActivity.UNREAD,
             cost = AgentSessionCost(
               amountUsd = BigDecimal("2.50"),
@@ -128,10 +128,10 @@ class AgentSessionWarmStateServiceTest {
               matchedModelId = "openai/o3",
             ),
           ),
-          thread(id = "codex-thread", updatedAt = 10, provider = AgentSessionProvider.CODEX),
+          thread(id = "codex-thread", updatedAt = 10, provider = AgentSessionProvider.from("codex")),
         ),
-        providerLoadStates = loadedProviderStates(AgentSessionProvider.CLAUDE, AgentSessionProvider.CODEX),
-        providersWithUnknownThreadCount = setOf(AgentSessionProvider.CLAUDE),
+        providerLoadStates = loadedProviderStates(AgentSessionProvider.from("claude"), AgentSessionProvider.from("codex")),
+        providersWithUnknownThreadCount = setOf(AgentSessionProvider.from("claude")),
         updatedAt = 200,
       ),
     )
@@ -142,7 +142,7 @@ class AgentSessionWarmStateServiceTest {
     val snapshot = reloaded.getPathSnapshot("/work/project-a")
     assertThat(snapshot?.hasUnknownThreadCount).isTrue()
     assertThat(snapshot?.threads?.map { it.id }).isEqualTo(listOf("claude-thread", "codex-thread"))
-    assertThat(snapshot?.threads?.map { it.provider }).isEqualTo(listOf(AgentSessionProvider.CLAUDE, AgentSessionProvider.CODEX))
+    assertThat(snapshot?.threads?.map { it.provider }).isEqualTo(listOf(AgentSessionProvider.from("claude"), AgentSessionProvider.from("codex")))
     assertThat(snapshot?.threads?.map { it.activity }).isEqualTo(listOf(AgentThreadActivity.UNREAD, AgentThreadActivity.READY))
     assertThat(snapshot?.threads?.first()?.cost).isEqualTo(
       AgentSessionCost(
@@ -163,7 +163,7 @@ class AgentSessionWarmStateServiceTest {
           thread(
             id = "codex-sub-agent",
             updatedAt = 10,
-            provider = AgentSessionProvider.CODEX,
+            provider = AgentSessionProvider.from("codex"),
             activity = AgentThreadActivity.UNREAD,
             summaryActivity = null,
           ),

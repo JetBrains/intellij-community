@@ -50,7 +50,7 @@ class SessionTreeInteractionTest {
     ).isEqualTo("/work/project-feature")
     assertThat(
       copyPathForSessionTreeId(
-        SessionTreeId.Thread(projectPath = "/work/project-a", provider = AgentSessionProvider.CODEX, threadId = "thread-1")
+        SessionTreeId.Thread(projectPath = "/work/project-a", provider = AgentSessionProvider.from("codex"), threadId = "thread-1")
       )
     ).isNull()
     assertThat(copyPathForSessionTreeId(SessionTreeId.MoreProjects)).isNull()

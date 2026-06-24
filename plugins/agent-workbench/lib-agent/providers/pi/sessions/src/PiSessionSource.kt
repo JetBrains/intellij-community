@@ -11,7 +11,6 @@ import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.normalizeAgentSessionProjectPath
 import com.intellij.platform.ai.agent.core.normalizeAgentSessionTitle
 import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItemKind
-import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.core.session.AgentSessionThreadOutline
 import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineTreeRecord
@@ -174,7 +173,7 @@ internal class PiSessionStore(
     val fileMtime = runCatching { Files.getLastModifiedTime(entry.sessionFile).toMillis() }.getOrDefault(0L)
     val updatedAt = state.updatedAtMs ?: headerTime ?: fileMtime
     return AgentSessionThreadOutline(
-      provider = AgentSessionProvider.PI,
+      provider = PI_AGENT_SESSION_PROVIDER,
       threadId = header.id,
       title = titleState.title,
       updatedAt = updatedAt,
@@ -350,7 +349,7 @@ internal class PiSessionSource(
   extensionStatusEvents: Flow<AgentSessionSourceUpdateEvent> = PiExtensionStatusBridge.updateEvents,
   fileWatchFallbackEnabledProvider: () -> Boolean = ::isPiFileWatchFallbackEnabled,
   sessionUpdateEventsContributorProvider: () -> List<PiSessionUpdateEventsContributor> = ::piSessionUpdateEventsContributors,
-) : BaseAgentSessionSource(AgentSessionProvider.PI) {
+) : BaseAgentSessionSource(PI_AGENT_SESSION_PROVIDER) {
   private val fileWatchFallbackEnabled = fileWatchFallbackEnabledProvider()
   private val watchedSessionDirectoriesLock = Any()
   private val watchedProjectPathsBySessionDir = MutableStateFlow<Map<Path, Set<String>>>(emptyMap())
@@ -1221,7 +1220,7 @@ private fun PiSessionIndexEntry.toAgentSessionThread(readTracker: Map<String, Lo
     updatedAt = updatedAt,
     archived = archived,
     activity = activity ?: resolveCompletedPiActivity(readTracker = readTracker),
-    provider = AgentSessionProvider.PI,
+    provider = PI_AGENT_SESSION_PROVIDER,
   )
 }
 
@@ -1240,7 +1239,7 @@ private fun PiSessionIndexEntry.toAgentSessionThread(
       completedUnreadUpdatedAtByThreadId = completedUnreadUpdatedAtByThreadId,
       observedUpdatedAtByThreadId = observedUpdatedAtByThreadId,
     ),
-    provider = AgentSessionProvider.PI,
+    provider = PI_AGENT_SESSION_PROVIDER,
   )
 }
 

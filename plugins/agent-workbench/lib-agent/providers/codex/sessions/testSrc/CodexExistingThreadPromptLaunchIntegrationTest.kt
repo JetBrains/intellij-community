@@ -7,6 +7,8 @@ import com.intellij.agent.workbench.sessions.ScriptedSessionSource
 import com.intellij.agent.workbench.sessions.assertExistingThreadLaunchUsesPostStartDispatch
 import com.intellij.agent.workbench.sessions.existingThreadPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.thread
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.platform.ai.agent.sessions.core.providers.withProvider
 import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -20,7 +22,7 @@ class CodexExistingThreadPromptLaunchIntegrationTest {
     assertExistingThreadLaunchUsesPostStartDispatch(
       descriptor = descriptor(),
       request = existingThreadPromptLaunchRequest(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         projectPath = PROJECT_PATH,
         threadId = EXISTING_THREAD_ID,
       ),
@@ -34,7 +36,7 @@ class CodexExistingThreadPromptLaunchIntegrationTest {
     assertExistingThreadLaunchUsesPostStartDispatch(
       descriptor = descriptor(),
       request = existingThreadPromptLaunchRequest(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         projectPath = PROJECT_PATH,
         threadId = EXISTING_THREAD_ID,
         planMode = true,
@@ -45,13 +47,13 @@ class CodexExistingThreadPromptLaunchIntegrationTest {
   }
 }
 
-private fun descriptor(): CodexAgentSessionProviderDescriptor {
+private fun descriptor(): AgentSessionProviderDescriptor {
   return CodexAgentSessionProviderDescriptor(
     sessionSource = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       listFromOpenProject = { path, _ ->
         if (path == PROJECT_PATH) {
-          listOf(thread(id = EXISTING_THREAD_ID, updatedAt = 200, provider = AgentSessionProvider.CODEX))
+          listOf(thread(id = EXISTING_THREAD_ID, updatedAt = 200, provider = AgentSessionProvider.from("codex")))
         }
         else {
           emptyList()
@@ -60,7 +62,7 @@ private fun descriptor(): CodexAgentSessionProviderDescriptor {
     ),
     executableResolver = { CodexCliUtils.CODEX_COMMAND },
     cliAvailableProbe = { true },
-  )
+  ).withProvider(CODEX_AGENT_SESSION_PROVIDER)
 }
 
 private const val PROJECT_PATH: String = "/work/project-a"

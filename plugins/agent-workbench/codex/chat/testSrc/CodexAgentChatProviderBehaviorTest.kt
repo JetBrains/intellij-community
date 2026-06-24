@@ -6,7 +6,6 @@ import com.intellij.agent.workbench.chat.AgentChatBehaviorTerminalTab
 import com.intellij.agent.workbench.chat.AgentChatInitialMessageDispatchContext
 import com.intellij.agent.workbench.chat.AgentChatInitialMessageRetryDecision
 import com.intellij.agent.workbench.chat.AgentChatInitialMessageSendObservation
-import com.intellij.agent.workbench.chat.AgentChatProviderBehaviors
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
@@ -22,40 +21,36 @@ import java.util.concurrent.TimeUnit
 @TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
 class CodexAgentChatProviderBehaviorTest {
-  @Test
-  fun behaviorIsRegisteredForCodexProvider() {
-    assertThat(AgentChatProviderBehaviors.find(AgentSessionProvider.CODEX))
-      .isSameAs(CodexAgentChatProviderBehavior)
-  }
+  private val behavior = CodexAgentChatProviderBehavior()
 
   @Test
   fun concreteThreadRebindCommandsAreExactNewOrFork() {
-    assertThat(CodexAgentChatProviderBehavior.isConcreteNewThreadRebindCommand("/new")).isTrue()
-    assertThat(CodexAgentChatProviderBehavior.isConcreteNewThreadRebindCommand("/fork")).isTrue()
+    assertThat(behavior.isConcreteNewThreadRebindCommand("/new")).isTrue()
+    assertThat(behavior.isConcreteNewThreadRebindCommand("/fork")).isTrue()
 
-    assertThat(CodexAgentChatProviderBehavior.isConcreteNewThreadRebindCommand("/fork now")).isFalse()
-    assertThat(CodexAgentChatProviderBehavior.isConcreteNewThreadRebindCommand("/forkx")).isFalse()
-    assertThat(CodexAgentChatProviderBehavior.isConcreteNewThreadRebindCommand("echo /fork")).isFalse()
+    assertThat(behavior.isConcreteNewThreadRebindCommand("/fork now")).isFalse()
+    assertThat(behavior.isConcreteNewThreadRebindCommand("/forkx")).isFalse()
+    assertThat(behavior.isConcreteNewThreadRebindCommand("echo /fork")).isFalse()
   }
 
   @Test
   fun planCommandIsSentWithoutBracketedPasteMode() {
-    assertThat(CodexAgentChatProviderBehavior.shouldUseBracketedPasteMode("/plan")).isFalse()
-    assertThat(CodexAgentChatProviderBehavior.shouldUseBracketedPasteMode("  /plan  ")).isFalse()
-    assertThat(CodexAgentChatProviderBehavior.shouldUseBracketedPasteMode("/plan Refactor this")).isTrue()
-    assertThat(CodexAgentChatProviderBehavior.shouldUseBracketedPasteMode("Refactor this")).isTrue()
+    assertThat(behavior.shouldUseBracketedPasteMode("/plan")).isFalse()
+    assertThat(behavior.shouldUseBracketedPasteMode("  /plan  ")).isFalse()
+    assertThat(behavior.shouldUseBracketedPasteMode("/plan Refactor this")).isTrue()
+    assertThat(behavior.shouldUseBracketedPasteMode("Refactor this")).isTrue()
   }
 
   @Test
   fun generatedPlanCommandRequestsTerminalOutputObservation() {
     assertThat(
-      CodexAgentChatProviderBehavior.requiresPostSendObservation(
+      behavior.requiresPostSendObservation(
         planCommandDispatch(completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY),
       )
     ).isTrue()
 
-    assertThat(CodexAgentChatProviderBehavior.requiresPostSendObservation(planCommandDispatch())).isFalse()
-    assertThat(CodexAgentChatProviderBehavior.requiresPostSendObservation(promptDispatch())).isFalse()
+    assertThat(behavior.requiresPostSendObservation(planCommandDispatch())).isFalse()
+    assertThat(behavior.requiresPostSendObservation(promptDispatch())).isFalse()
   }
 
   @Test
@@ -63,7 +58,7 @@ class CodexAgentChatProviderBehaviorTest {
     val dispatch = planCommandDispatch(completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY)
 
     assertThat(
-      CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(
+      behavior.afterInitialMessageSendObservation(
         file = TestBehaviorFile(),
         dispatch = dispatch,
         observation = observation("'/plan' is disabled while a task is in progress."),
@@ -77,7 +72,7 @@ class CodexAgentChatProviderBehaviorTest {
     val dispatch = planCommandDispatch(completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY)
 
     assertThat(
-      CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(
+      behavior.afterInitialMessageSendObservation(
         file = TestBehaviorFile(),
         dispatch = dispatch,
         observation = observation("\u001B[31m'/plan'\u001B[0m   is disabled while a\n task is in progress."),
@@ -98,7 +93,7 @@ class CodexAgentChatProviderBehaviorTest {
 
     for (output in recognizedResponses) {
       assertThat(
-        CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(
+        behavior.afterInitialMessageSendObservation(
           file = TestBehaviorFile(),
           dispatch = dispatch,
           observation = observation(output),
@@ -120,7 +115,7 @@ class CodexAgentChatProviderBehaviorTest {
 
     for (output in unconfirmedOutputs) {
       assertThat(
-        CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(
+        behavior.afterInitialMessageSendObservation(
           file = TestBehaviorFile(),
           dispatch = dispatch,
           observation = observation(output),
@@ -133,7 +128,7 @@ class CodexAgentChatProviderBehaviorTest {
   @Test
   fun nonRetryablePlanCommandOutputProceedsIfObserved() {
     assertThat(
-      CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(
+      behavior.afterInitialMessageSendObservation(
         file = TestBehaviorFile(),
         dispatch = planCommandDispatch(),
         observation = observation("'/plan' is disabled while a task is in progress."),
@@ -145,7 +140,7 @@ class CodexAgentChatProviderBehaviorTest {
   @Test
   fun concreteBusyPlanModeBeforePlanStepStopsDispatch(): Unit = runBlocking {
     assertThat(
-      CodexAgentChatProviderBehavior.beforeInitialMessageSend(
+      behavior.beforeInitialMessageSend(
         file = TestBehaviorFile(
           threadActivity = AgentThreadActivity.PROCESSING,
           initialMessageMode = AgentInitialMessageMode.PLAN,
@@ -160,7 +155,7 @@ class CodexAgentChatProviderBehaviorTest {
   @Test
   fun concreteBusyPlanModeBeforePromptStepStopsDispatch(): Unit = runBlocking {
     assertThat(
-      CodexAgentChatProviderBehavior.beforeInitialMessageSend(
+      behavior.beforeInitialMessageSend(
         file = TestBehaviorFile(
           threadActivity = AgentThreadActivity.REVIEWING,
           initialMessageMode = AgentInitialMessageMode.PLAN,
@@ -175,7 +170,7 @@ class CodexAgentChatProviderBehaviorTest {
   @Test
   fun pendingBusyPlanModeProceedsBeforeSend(): Unit = runBlocking {
     assertThat(
-      CodexAgentChatProviderBehavior.beforeInitialMessageSend(
+      behavior.beforeInitialMessageSend(
         file = TestBehaviorFile(
           isPendingThread = true,
           threadActivity = AgentThreadActivity.PROCESSING,
@@ -191,7 +186,7 @@ class CodexAgentChatProviderBehaviorTest {
   @Test
   fun nonPlanOrReadyPlanModeProceedsBeforeSend(): Unit = runBlocking {
     assertThat(
-      CodexAgentChatProviderBehavior.beforeInitialMessageSend(
+      behavior.beforeInitialMessageSend(
         file = TestBehaviorFile(
           threadActivity = AgentThreadActivity.PROCESSING,
           initialMessageMode = AgentInitialMessageMode.STANDARD,
@@ -203,7 +198,7 @@ class CodexAgentChatProviderBehaviorTest {
     ).isSameAs(AgentChatInitialMessageRetryDecision.PROCEED)
 
     assertThat(
-      CodexAgentChatProviderBehavior.beforeInitialMessageSend(
+      behavior.beforeInitialMessageSend(
         file = TestBehaviorFile(
           threadActivity = AgentThreadActivity.READY,
           initialMessageMode = AgentInitialMessageMode.PLAN,
@@ -241,7 +236,7 @@ private fun promptDispatch(): TestDispatch {
 }
 
 private data class TestBehaviorFile(
-  override val provider: AgentSessionProvider? = AgentSessionProvider.CODEX,
+  override val provider: AgentSessionProvider? = AgentSessionProvider.from("codex"),
   override val isPendingThread: Boolean = false,
   override val subAgentId: String? = null,
   override val pendingFirstInputAtMs: Long? = null,

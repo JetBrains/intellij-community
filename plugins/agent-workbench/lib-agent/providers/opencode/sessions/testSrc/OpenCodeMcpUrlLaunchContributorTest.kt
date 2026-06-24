@@ -17,7 +17,7 @@ class OpenCodeMcpUrlLaunchContributorTest {
 
     val launchSpec = contributor.contribute(
       projectPath = "/work/project",
-      provider = AgentSessionProvider.OPENCODE,
+      provider = AgentSessionProvider.from("opencode"),
       sessionId = null,
       launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("opencode")),
     )
@@ -34,7 +34,7 @@ class OpenCodeMcpUrlLaunchContributorTest {
 
     val launchSpec = contributor.contribute(
       projectPath = "/work/project",
-      provider = AgentSessionProvider.OPENCODE,
+      provider = AgentSessionProvider.from("opencode"),
       sessionId = "thread-1",
       launchSpec = AgentSessionTerminalLaunchSpec(
         command = listOf("opencode"),
@@ -55,7 +55,7 @@ class OpenCodeMcpUrlLaunchContributorTest {
 
     val launchSpec = contributor.contribute(
       projectPath = "/work/project",
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       sessionId = null,
       launchSpec = baseLaunchSpec,
     )
@@ -70,7 +70,7 @@ class OpenCodeMcpUrlLaunchContributorTest {
 
     val launchSpec = contributor.contribute(
       projectPath = "/work/project",
-      provider = AgentSessionProvider.OPENCODE,
+      provider = AgentSessionProvider.from("opencode"),
       sessionId = null,
       launchSpec = baseLaunchSpec,
     )

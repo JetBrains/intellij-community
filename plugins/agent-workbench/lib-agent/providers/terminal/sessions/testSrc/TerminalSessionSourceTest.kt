@@ -29,7 +29,7 @@ class TerminalSessionSourceTest {
       val archived = source.listArchivedThreadsFromClosedProject("/tmp/project/")
 
       assertThat(active.map { thread -> thread.id }).containsExactly("second")
-      assertThat(active.single().provider).isEqualTo(AgentSessionProvider.TERMINAL)
+      assertThat(active.single().provider).isEqualTo(AgentSessionProvider.from("terminal"))
       assertThat(active.single().archived).isFalse()
       assertThat(archived.map { thread -> thread.id }).containsExactly("first")
       assertThat(archived.single().archived).isTrue()

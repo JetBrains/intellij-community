@@ -86,9 +86,9 @@ class AgentPromptPaletteSessionControllerTest {
         fixture.view.existingTaskList.selectedIndex = 0
         assertThat(fixture.existingTaskController.selectedExistingTaskId).isEqualTo("codex-thread")
 
-        fixture.providerSelector.selectProvider(AgentSessionProvider.CLAUDE)
+        fixture.providerSelector.selectProvider(AgentSessionProvider.from("claude"))
 
-        assertThat(fixture.launcher.observedProviders).containsExactly(AgentSessionProvider.CODEX, AgentSessionProvider.CLAUDE)
+        assertThat(fixture.launcher.observedProviders).containsExactly(AgentSessionProvider.from("codex"), AgentSessionProvider.from("claude"))
         assertThat(existingTaskIds(fixture.view)).containsExactly("claude-thread")
         assertThat(fixture.existingTaskController.selectedExistingTaskId).isEqualTo("claude-thread")
       }
@@ -122,7 +122,7 @@ class AgentPromptPaletteSessionControllerTest {
       try {
         reopenedPopup.controller.initialize()
 
-        assertThat(reopenedPopup.providerSelector.selectedProvider?.bridge?.provider).isEqualTo(AgentSessionProvider.CLAUDE)
+        assertThat(reopenedPopup.providerSelector.selectedProvider?.bridge?.provider).isEqualTo(AgentSessionProvider.from("claude"))
       }
       finally {
         reopenedPopup.dispose()
@@ -153,7 +153,7 @@ class AgentPromptPaletteSessionControllerTest {
       try {
         reopenedPopup.controller.initialize()
 
-        assertThat(reopenedPopup.providerSelector.selectedProvider?.bridge?.provider).isEqualTo(AgentSessionProvider.CODEX)
+        assertThat(reopenedPopup.providerSelector.selectedProvider?.bridge?.provider).isEqualTo(AgentSessionProvider.from("codex"))
       }
       finally {
         reopenedPopup.dispose()
@@ -176,7 +176,7 @@ class AgentPromptPaletteSessionControllerTest {
       try {
         fixture.controller.initialize()
 
-        assertThat(fixture.providerSelector.selectedProvider?.bridge?.provider).isEqualTo(AgentSessionProvider.CODEX)
+        assertThat(fixture.providerSelector.selectedProvider?.bridge?.provider).isEqualTo(AgentSessionProvider.from("codex"))
       }
       finally {
         fixture.dispose()
@@ -189,9 +189,9 @@ class AgentPromptPaletteSessionControllerTest {
   ): SessionControllerFixture {
     val project = ProjectManager.getInstance().defaultProject
     val providers = listOf(
-      testProviderDescriptor(AgentSessionProvider.CODEX),
-      testProviderDescriptor(AgentSessionProvider.CLAUDE),
-      testProviderDescriptor(AgentSessionProvider.JUNIE),
+      testProviderDescriptor(AgentSessionProvider.from("codex")),
+      testProviderDescriptor(AgentSessionProvider.from("claude")),
+      testProviderDescriptor(AgentSessionProvider.from("junie")),
     )
     providers.forEach { provider ->
       service<AgentSessionProviderSettingsService>().setProviderEnabled(provider.provider, true)
@@ -287,7 +287,7 @@ class AgentPromptPaletteSessionControllerTest {
     return AgentPromptLaunchProfile(
       id = "user:careful-claude",
       name = "Careful Claude",
-      providerId = AgentSessionProvider.CLAUDE.value,
+      providerId = AgentSessionProvider.from("claude").value,
     )
   }
 

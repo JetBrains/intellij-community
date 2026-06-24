@@ -22,15 +22,15 @@ class AgentSessionsTreeModelDiffTest {
   @Test
   fun detectsRootChangeWhenRootIdsChange() {
     val oldModel = buildSessionTreeModel(
-      projects = listOf(AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true, providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX))),
+      projects = listOf(AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true, providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")))),
       visibleClosedProjectCount = Int.MAX_VALUE,
       visibleThreadCounts = emptyMap(),
       treeUiState = InMemorySessionTreeUiState(),
     )
     val newModel = buildSessionTreeModel(
       projects = listOf(
-        AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true, providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX)),
-        AgentProjectSessions(path = "/work/project-b", name = "Project B", isOpen = true, providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX)),
+        AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true, providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex"))),
+        AgentProjectSessions(path = "/work/project-b", name = "Project B", isOpen = true, providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex"))),
       ),
       visibleClosedProjectCount = Int.MAX_VALUE,
       visibleThreadCounts = emptyMap(),
@@ -50,14 +50,14 @@ class AgentSessionsTreeModelDiffTest {
           path = "/work/project-a",
           name = "Project A",
           isOpen = true,
-          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
           threads = listOf(
             AgentSessionThread(
               id = "thread-1",
               title = "Thread 1",
               updatedAt = 100,
               archived = false,
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
             )
           ),
         )
@@ -72,21 +72,21 @@ class AgentSessionsTreeModelDiffTest {
           path = "/work/project-a",
           name = "Project A",
           isOpen = true,
-          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
           threads = listOf(
             AgentSessionThread(
               id = "thread-1",
               title = "Thread 1",
               updatedAt = 100,
               archived = false,
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
             ),
             AgentSessionThread(
               id = "thread-2",
               title = "Thread 2",
               updatedAt = 90,
               archived = false,
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
             ),
           ),
         )
@@ -111,14 +111,14 @@ class AgentSessionsTreeModelDiffTest {
           path = "/work/project-a",
           name = "Project A",
           isOpen = true,
-          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
           threads = listOf(
             AgentSessionThread(
               id = "thread-1",
               title = "Thread 1",
               updatedAt = 100,
               archived = false,
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
             )
           ),
         )
@@ -133,14 +133,14 @@ class AgentSessionsTreeModelDiffTest {
           path = "/work/project-a",
           name = "Project A",
           isOpen = true,
-          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
           threads = listOf(
             AgentSessionThread(
               id = "thread-1",
               title = "Renamed",
               updatedAt = 100,
               archived = false,
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
             )
           ),
         )
@@ -155,7 +155,7 @@ class AgentSessionsTreeModelDiffTest {
     assertThat(diff.rootChanged).isFalse()
     assertThat(diff.structureChangedIds.isEmpty()).isTrue()
     assertThat(diff.contentChangedIds)
-      .isEqualTo(setOf(SessionTreeId.Thread("/work/project-a", AgentSessionProvider.CODEX, "thread-1")))
+      .isEqualTo(setOf(SessionTreeId.Thread("/work/project-a", AgentSessionProvider.from("codex"), "thread-1")))
   }
 
   @Test
@@ -166,7 +166,7 @@ class AgentSessionsTreeModelDiffTest {
           path = "/work/project-a",
           name = "Project A",
           isOpen = true,
-          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
           threads = listOf(
             AgentSessionThread(
               id = "thread-1",
@@ -174,7 +174,7 @@ class AgentSessionsTreeModelDiffTest {
               updatedAt = 100,
               archived = false,
               activity = AgentThreadActivity.READY,
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
             )
           ),
         )
@@ -189,7 +189,7 @@ class AgentSessionsTreeModelDiffTest {
           path = "/work/project-a",
           name = "Project A",
           isOpen = true,
-          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
           threads = listOf(
             AgentSessionThread(
               id = "thread-1",
@@ -197,7 +197,7 @@ class AgentSessionsTreeModelDiffTest {
               updatedAt = 100,
               archived = false,
               activity = AgentThreadActivity.PROCESSING,
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
             )
           ),
         )
@@ -212,14 +212,14 @@ class AgentSessionsTreeModelDiffTest {
     assertThat(diff.rootChanged).isFalse()
     assertThat(diff.structureChangedIds).isEmpty()
     assertThat(diff.contentChangedIds)
-      .isEqualTo(setOf(SessionTreeId.Thread("/work/project-a", AgentSessionProvider.CODEX, "thread-1")))
+      .isEqualTo(setOf(SessionTreeId.Thread("/work/project-a", AgentSessionProvider.from("codex"), "thread-1")))
   }
 
   @Test
   fun detectsContentChangesWhenVisibleStandaloneProjectBranchChanges() {
     val oldModel = buildSessionTreeModel(
       projects = listOf(
-        AgentProjectSessions(path = "/work/project-a", name = "Project A", branch = "main", isOpen = true, providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX))
+        AgentProjectSessions(path = "/work/project-a", name = "Project A", branch = "main", isOpen = true, providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")))
       ),
       visibleClosedProjectCount = Int.MAX_VALUE,
       visibleThreadCounts = emptyMap(),
@@ -227,7 +227,7 @@ class AgentSessionsTreeModelDiffTest {
     )
     val newModel = buildSessionTreeModel(
       projects = listOf(
-        AgentProjectSessions(path = "/work/project-a", name = "Project A", branch = "feature-x", isOpen = true, providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX))
+        AgentProjectSessions(path = "/work/project-a", name = "Project A", branch = "feature-x", isOpen = true, providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")))
       ),
       visibleClosedProjectCount = Int.MAX_VALUE,
       visibleThreadCounts = emptyMap(),
@@ -250,7 +250,7 @@ class AgentSessionsTreeModelDiffTest {
           name = "Project A",
           buildSystemBadge = ProjectBuildSystemBadge("gradle", EmptyIcon.create(16, 16)),
           isOpen = true,
-          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),)
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),)
       ),
       visibleClosedProjectCount = Int.MAX_VALUE,
       visibleThreadCounts = emptyMap(),
@@ -263,7 +263,7 @@ class AgentSessionsTreeModelDiffTest {
           name = "Project A",
           buildSystemBadge = ProjectBuildSystemBadge("maven", EmptyIcon.create(16, 16)),
           isOpen = true,
-          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),)
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),)
       ),
       visibleClosedProjectCount = Int.MAX_VALUE,
       visibleThreadCounts = emptyMap(),
@@ -287,7 +287,7 @@ class AgentSessionsTreeModelDiffTest {
           name = "Project A",
           branch = "main",
           isOpen = true,
-          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
           worktrees = listOf(worktree),
         )
       ),
@@ -302,7 +302,7 @@ class AgentSessionsTreeModelDiffTest {
           name = "Project A",
           branch = "feature-base",
           isOpen = true,
-          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
           worktrees = listOf(worktree),
         )
       ),

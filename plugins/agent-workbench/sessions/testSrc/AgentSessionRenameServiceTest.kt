@@ -39,7 +39,7 @@ class AgentSessionRenameServiceTest {
     var renamedThreadId: String? = null
     var renamedName: String? = null
     val descriptor = TestAgentSessionProviderDescriptor(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
       threadRenameActionOverride = { path, threadId, name ->
@@ -67,10 +67,10 @@ class AgentSessionRenameServiceTest {
     try {
       val target = SessionActionTarget.Thread(
         path = "/work/project",
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         threadId = "thread-1",
         title = "Original title",
-        thread = threadModel(AgentSessionProvider.CODEX, "thread-1", "Original title")
+        thread = threadModel(AgentSessionProvider.from("codex"), "thread-1", "Original title")
           .copy(activityReport = AgentThreadActivityReport(AgentThreadActivity.PROCESSING)),
       )
       stateStore.replaceProjects(
@@ -92,11 +92,11 @@ class AgentSessionRenameServiceTest {
       assertThat(renamedThreadId).isEqualTo("thread-1")
       assertThat(renamedName).isEqualTo("Renamed thread")
       assertThat(stateStore.snapshot().projects.single().threads.single().title).isEqualTo("Renamed thread")
-      val presentation = presentationModel.snapshot()[presentationKey("/work/project", AgentSessionProvider.CODEX, "thread-1")]
+      val presentation = presentationModel.snapshot()[presentationKey("/work/project", AgentSessionProvider.from("codex"), "thread-1")]
       assertThat(presentation?.title).isEqualTo("Renamed thread")
       assertThat(presentation?.activity).isEqualTo(AgentThreadActivity.PROCESSING)
       assertThat(operationOrder).containsExactly("refresh")
-      assertThat(refreshedPaths).containsExactly("/work/project" to AgentSessionProvider.CODEX)
+      assertThat(refreshedPaths).containsExactly("/work/project" to AgentSessionProvider.from("codex"))
     }
     finally {
       scope.cancel()
@@ -108,7 +108,7 @@ class AgentSessionRenameServiceTest {
     var renameCalls = 0
     val presentationModel = AgentSessionThreadPresentationModel()
     val descriptor = TestAgentSessionProviderDescriptor(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
       threadRenameActionOverride = { _, _, _ ->
@@ -130,7 +130,7 @@ class AgentSessionRenameServiceTest {
     try {
       val target = SessionActionTarget.Thread(
         path = "/work/project",
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         threadId = "thread-1",
         title = "Original title",
       )
@@ -151,7 +151,7 @@ class AgentSessionRenameServiceTest {
     var refreshCalls = 0
     val presentationModel = AgentSessionThreadPresentationModel()
     val descriptor = TestAgentSessionProviderDescriptor(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
       threadRenameActionOverride = { _, _, _ -> false },
@@ -170,7 +170,7 @@ class AgentSessionRenameServiceTest {
     try {
       val target = SessionActionTarget.Thread(
         path = "/work/project",
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         threadId = "thread-1",
         title = "Original title",
       )
@@ -190,13 +190,13 @@ class AgentSessionRenameServiceTest {
   @Test
   fun canRenameThreadInTreeRequiresConcreteRenameActionAndRejectsPendingNewThreadIds() {
     val renameDescriptor = TestAgentSessionProviderDescriptor(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
       threadRenameActionOverride = { _, _, _ -> true },
     )
     val noRenameDescriptor = TestAgentSessionProviderDescriptor(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
     )
@@ -208,8 +208,8 @@ class AgentSessionRenameServiceTest {
       refreshProviderForPath = { _, _ -> error("refresh should not be called while checking rename availability") },
       findProviderDescriptor = { provider ->
         when (provider) {
-          AgentSessionProvider.CODEX -> renameDescriptor
-          AgentSessionProvider.CLAUDE -> noRenameDescriptor
+          AgentSessionProvider.from("codex") -> renameDescriptor
+          AgentSessionProvider.from("claude") -> noRenameDescriptor
           else -> null
         }
       },
@@ -217,9 +217,9 @@ class AgentSessionRenameServiceTest {
     )
 
     try {
-      assertThat(service.canRenameThreadInTree(threadTarget(AgentSessionProvider.CODEX, "thread-1"))).isTrue()
-      assertThat(service.canRenameThreadInTree(threadTarget(AgentSessionProvider.CLAUDE, "thread-1"))).isFalse()
-      val pendingTarget = threadTarget(AgentSessionProvider.CODEX, "new-codex-pending")
+      assertThat(service.canRenameThreadInTree(threadTarget(AgentSessionProvider.from("codex"), "thread-1"))).isTrue()
+      assertThat(service.canRenameThreadInTree(threadTarget(AgentSessionProvider.from("claude"), "thread-1"))).isFalse()
+      val pendingTarget = threadTarget(AgentSessionProvider.from("codex"), "new-codex-pending")
       assertThat(service.canRenameThreadInTree(pendingTarget)).isFalse()
       assertThat(service.renameThreadFromTree(pendingTarget, "Renamed")).isNull()
     }
@@ -231,7 +231,7 @@ class AgentSessionRenameServiceTest {
   @Test
   fun canRenameThreadInEditorTabRequiresMatchingConcreteThread() {
     val descriptor = TestAgentSessionProviderDescriptor(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
       threadRenameActionOverride = { _, _, _ -> true },
@@ -247,14 +247,14 @@ class AgentSessionRenameServiceTest {
     )
 
     try {
-      val target = threadTarget(AgentSessionProvider.CLAUDE, "thread-1")
+      val target = threadTarget(AgentSessionProvider.from("claude"), "thread-1")
       val matchedContext = AgentChatEditorTabActionContext(
         project = ProjectManager.getInstance().defaultProject,
         path = "/work/project",
         tabKey = "claude:thread-1",
         threadIdentity = "claude:thread-1",
         threadCoordinates = AgentChatThreadCoordinates(
-          provider = AgentSessionProvider.CLAUDE,
+          provider = AgentSessionProvider.from("claude"),
           sessionId = "thread-1",
           isPending = false,
         ),

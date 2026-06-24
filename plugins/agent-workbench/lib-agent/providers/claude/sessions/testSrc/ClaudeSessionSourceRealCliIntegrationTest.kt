@@ -58,7 +58,7 @@ class ClaudeSessionSourceRealCliIntegrationTest {
         .isNotNull
       assertThat(thread!!.id).isEqualTo(fixture.sessionId)
       assertThat(thread.title).isEqualTo(fixture.initialTitle)
-      assertThat(thread.provider).isEqualTo(AgentSessionProvider.CLAUDE)
+      assertThat(thread.provider).isEqualTo(AgentSessionProvider.from("claude"))
     }
   }
 

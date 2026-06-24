@@ -16,7 +16,6 @@ import com.intellij.platform.ai.agent.sessions.core.providers.InMemoryAgentSessi
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchTelemetry
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchTelemetryEvent
-import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchTelemetryProvider
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
 import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveBackgroundTaskRunner
@@ -46,19 +45,19 @@ class AgentSessionArchiveServiceIntegrationTest {
   @Test
   fun archiveThreadsArchivesAllSupportedTargetsAndSkipsUnsupportedOnes() = runBlocking(Dispatchers.Default) {
     val codexThreads = mutableListOf(
-      thread(id = "codex-1", updatedAt = 300, provider = AgentSessionProvider.CODEX),
+      thread(id = "codex-1", updatedAt = 300, provider = AgentSessionProvider.from("codex")),
     )
     val claudeThreads = mutableListOf(
-      thread(id = "claude-1", updatedAt = 200, provider = AgentSessionProvider.CLAUDE),
+      thread(id = "claude-1", updatedAt = 200, provider = AgentSessionProvider.from("claude")),
     )
     val codexSource = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       listFromOpenProject = { path, _ ->
         if (path == PROJECT_PATH) codexThreads.toList() else emptyList()
       },
     )
     val claudeSource = ScriptedSessionSource(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       listFromOpenProject = { path, _ ->
         if (path == PROJECT_PATH) claudeThreads.toList() else emptyList()
       },
@@ -72,7 +71,7 @@ class AgentSessionArchiveServiceIntegrationTest {
     )
     val claudeBridge = object : AgentSessionProviderDescriptor {
       override val provider: AgentSessionProvider
-        get() = AgentSessionProvider.CLAUDE
+        get() = AgentSessionProvider.from("claude")
       override val displayNameKey: String
         get() = "toolwindow.provider.claude"
       override val newSessionLabelKey: String
@@ -133,12 +132,12 @@ class AgentSessionArchiveServiceIntegrationTest {
     val backgroundRunner = RecordingArchiveBackgroundTaskRunner()
     val archiveCalls = mutableListOf<String>()
     val sourceThreads = mutableListOf(
-      thread(id = "codex-1", updatedAt = 300, provider = AgentSessionProvider.CODEX),
-      thread(id = "codex-2", updatedAt = 200, provider = AgentSessionProvider.CODEX),
-      thread(id = "codex-3", updatedAt = 100, provider = AgentSessionProvider.CODEX),
+      thread(id = "codex-1", updatedAt = 300, provider = AgentSessionProvider.from("codex")),
+      thread(id = "codex-2", updatedAt = 200, provider = AgentSessionProvider.from("codex")),
+      thread(id = "codex-3", updatedAt = 100, provider = AgentSessionProvider.from("codex")),
     )
     val sessionSource = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       listFromOpenProject = { path, _ -> if (path == PROJECT_PATH) sourceThreads.toList() else emptyList() },
       listFromClosedProject = { path -> if (path == PROJECT_PATH) sourceThreads.toList() else emptyList() },
     )
@@ -165,9 +164,9 @@ class AgentSessionArchiveServiceIntegrationTest {
 
           archiveService.archiveThreadsForTest(
             listOf(
-              ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-1"),
-              ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-2"),
-              ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-3"),
+              ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.from("codex"), "codex-1"),
+              ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.from("codex"), "codex-2"),
+              ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.from("codex"), "codex-3"),
             )
           )
 
@@ -186,11 +185,11 @@ class AgentSessionArchiveServiceIntegrationTest {
   fun archiveThreadRemovesThreadAndRefreshesState() = runBlocking(Dispatchers.Default) {
     val cleanupCalls = CopyOnWriteArrayList<Pair<String, String>>()
     val sourceThreads = mutableListOf(
-      thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.CODEX),
-      thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.CODEX),
+      thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.from("codex")),
+      thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.from("codex")),
     )
     val sessionSource = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       listFromOpenProject = { path, _ ->
         if (path == PROJECT_PATH) sourceThreads.toList() else emptyList()
       },
@@ -234,12 +233,12 @@ class AgentSessionArchiveServiceIntegrationTest {
             waitForCondition { cleanupCalls.size == 1 }
             val cleanupCall = cleanupCalls.single()
             assertThat(cleanupCall.first).isEqualTo(PROJECT_PATH)
-            assertThat(cleanupCall.second).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-1"))
+            assertThat(cleanupCall.second).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.from("codex"), "codex-1"))
             assertThat(telemetryEvents).contains(
               AgentWorkbenchTelemetryEvent(
                 id = AgentWorkbenchTelemetry.THREAD_ARCHIVE_REQUESTED_EVENT_ID,
                 entryPoint = AgentWorkbenchEntryPoint.TREE_POPUP,
-                provider = AgentWorkbenchTelemetryProvider.CODEX,
+                provider = "codex",
               )
             )
           }
@@ -256,11 +255,11 @@ class AgentSessionArchiveServiceIntegrationTest {
     val cleanupCalls = CopyOnWriteArrayList<Pair<String, String>>()
     val listCalls = AtomicInteger(0)
     val staleSourceThreads = listOf(
-      thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.CODEX),
-      thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.CODEX),
+      thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.from("codex")),
+      thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.from("codex")),
     )
     val sessionSource = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       listFromOpenProject = { path, _ ->
         if (path == PROJECT_PATH) {
           listCalls.incrementAndGet()
@@ -310,7 +309,7 @@ class AgentSessionArchiveServiceIntegrationTest {
           waitForCondition { cleanupCalls.size == 1 }
           val cleanupCall = cleanupCalls.single()
           assertThat(cleanupCall.first).isEqualTo(PROJECT_PATH)
-          assertThat(cleanupCall.second).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-1"))
+          assertThat(cleanupCall.second).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.from("codex"), "codex-1"))
         }
       }
     }
@@ -321,11 +320,11 @@ class AgentSessionArchiveServiceIntegrationTest {
     val backgroundRunner = PausedArchiveBackgroundTaskRunner()
     val listCalls = AtomicInteger(0)
     val sourceThreads = mutableListOf(
-      thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.CODEX),
-      thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.CODEX),
+      thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.from("codex")),
+      thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.from("codex")),
     )
     val sessionSource = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       listFromOpenProject = { path, _ ->
         if (path == PROJECT_PATH) {
           listCalls.incrementAndGet()
@@ -356,7 +355,7 @@ class AgentSessionArchiveServiceIntegrationTest {
             service.state.value.projects.firstOrNull()?.threads?.any { it.id == "codex-1" } == true
           }
 
-          archiveService.archiveThreadsForTest(listOf(ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-1")))
+          archiveService.archiveThreadsForTest(listOf(ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.from("codex"), "codex-1")))
           waitForCondition {
             service.state.value.projects.firstOrNull()?.threads.orEmpty().map { it.id } == listOf("codex-2")
           }
@@ -379,17 +378,17 @@ class AgentSessionArchiveServiceIntegrationTest {
     val claudeSourceStarted = CompletableDeferred<Unit>()
     val releaseClaudeSource = CompletableDeferred<Unit>()
     val sourceThreads = mutableListOf(
-      thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.CODEX),
-      thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.CODEX),
+      thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.from("codex")),
+      thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.from("codex")),
     )
     val codexSource = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       listFromOpenProject = { path, _ ->
         if (path == PROJECT_PATH) sourceThreads.toList() else emptyList()
       },
     )
     val claudeSource = ScriptedSessionSource(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       listFromOpenProject = { path, _ ->
         if (path == PROJECT_PATH) {
           claudeSourceStarted.complete(Unit)
@@ -423,13 +422,13 @@ class AgentSessionArchiveServiceIntegrationTest {
           }
           waitForCondition {
             val project = service.state.value.projects.firstOrNull()
-            project?.providerLoadStates?.get(AgentSessionProvider.CODEX) == AgentSessionProviderLoadState.LOADED &&
-            project.providerLoadStates[AgentSessionProvider.CLAUDE] == AgentSessionProviderLoadState.LOADING &&
+            project?.providerLoadStates?.get(AgentSessionProvider.from("codex")) == AgentSessionProviderLoadState.LOADED &&
+            project.providerLoadStates[AgentSessionProvider.from("claude")] == AgentSessionProviderLoadState.LOADING &&
             project.threads.map { it.id } == listOf("codex-1", "codex-2")
           }
 
           archiveService.archiveThreadsForTest(
-            listOf(ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-1"))
+            listOf(ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.from("codex"), "codex-1"))
           )
           waitForCondition {
             service.state.value.projects.firstOrNull()?.threads.orEmpty().map { it.id } == listOf("codex-2")
@@ -439,8 +438,8 @@ class AgentSessionArchiveServiceIntegrationTest {
           releaseClaudeSource.complete(Unit)
           waitForCondition {
             val project = service.state.value.projects.firstOrNull()
-            project?.providerLoadStates?.get(AgentSessionProvider.CODEX) == AgentSessionProviderLoadState.LOADED &&
-            project.providerLoadStates[AgentSessionProvider.CLAUDE] == AgentSessionProviderLoadState.LOADED &&
+            project?.providerLoadStates?.get(AgentSessionProvider.from("codex")) == AgentSessionProviderLoadState.LOADED &&
+            project.providerLoadStates[AgentSessionProvider.from("claude")] == AgentSessionProviderLoadState.LOADED &&
             project.threads.map { it.id } == listOf("codex-2")
           }
 
@@ -459,11 +458,11 @@ class AgentSessionArchiveServiceIntegrationTest {
     val cleanupCalls = CopyOnWriteArrayList<Pair<String, String>>()
     val normalizedProjectPath = normalizeAgentWorkbenchPath(PROJECT_PATH)
     val sourceThreads = mutableListOf(
-      thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.CODEX),
-      thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.CODEX),
+      thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.from("codex")),
+      thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.from("codex")),
     )
     val sessionSource = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       listFromOpenProject = { path, _ ->
         if (normalizeAgentWorkbenchPath(path) == normalizedProjectPath) sourceThreads.toList() else emptyList()
       },
@@ -489,7 +488,7 @@ class AgentSessionArchiveServiceIntegrationTest {
             service.state.value.projects.firstOrNull()?.threads?.any { it.id == "codex-1" } == true
           }
 
-          archiveService.archiveThreadsForTest(listOf(ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-1")))
+          archiveService.archiveThreadsForTest(listOf(ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.from("codex"), "codex-1")))
           waitForCondition {
             service.state.value.projects.firstOrNull()?.threads.orEmpty().none { it.id == "codex-1" }
           }
@@ -525,8 +524,8 @@ class AgentSessionArchiveServiceIntegrationTest {
   fun archiveThreadEagerlyPrunesWarmSnapshotBeforeRefreshRewrite() = runBlocking(Dispatchers.Default) {
     val listCalls = AtomicInteger(0)
     val staleSourceThreads = listOf(
-      thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.CODEX),
-      thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.CODEX),
+      thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.from("codex")),
+      thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.from("codex")),
     )
     val warmState = InMemorySessionWarmState()
     warmState.setPathSnapshot(
@@ -537,7 +536,7 @@ class AgentSessionArchiveServiceIntegrationTest {
       ),
     )
     val sessionSource = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       listFromOpenProject = { path, _ ->
         if (path == PROJECT_PATH) {
           listCalls.incrementAndGet()
@@ -565,7 +564,7 @@ class AgentSessionArchiveServiceIntegrationTest {
 
           val callsBeforeArchive = listCalls.get()
           archiveService.archiveThreadsForTest(
-            listOf(ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-1"))
+            listOf(ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.from("codex"), "codex-1"))
           )
 
           waitForCondition {
@@ -583,11 +582,11 @@ class AgentSessionArchiveServiceIntegrationTest {
     val cleanupCalls = CopyOnWriteArrayList<Pair<String, String>>()
     val backgroundRunner = PausedArchiveBackgroundTaskRunner()
     val sourceThreads = mutableListOf(
-      thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.CODEX),
-      thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.CODEX),
+      thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.from("codex")),
+      thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.from("codex")),
     )
     val sessionSource = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       listFromOpenProject = { path, _ ->
         if (path == PROJECT_PATH) sourceThreads.toList() else emptyList()
       },
@@ -640,10 +639,10 @@ class AgentSessionArchiveServiceIntegrationTest {
     val cleanupCalls = CopyOnWriteArrayList<Pair<String, String>>()
     val archiveCalls = AtomicInteger(0)
     val sourceThreads = mutableListOf(
-      thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.CODEX),
+      thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.from("codex")),
     )
     val sessionSource = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       listFromOpenProject = { path, _ ->
         if (path == PROJECT_PATH) sourceThreads.toList() else emptyList()
       },
@@ -671,7 +670,7 @@ class AgentSessionArchiveServiceIntegrationTest {
           }
 
           archiveService.archiveThreadsForTest(
-            listOf(ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.CODEX, "new-pending"))
+            listOf(ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.from("codex"), "new-pending"))
           )
 
           waitForCondition {
@@ -680,7 +679,7 @@ class AgentSessionArchiveServiceIntegrationTest {
 
           assertThat(archiveCalls.get()).isEqualTo(0)
           assertThat(cleanupCalls)
-            .containsExactly(PROJECT_PATH to buildAgentSessionIdentity(AgentSessionProvider.CODEX, "new-pending"))
+            .containsExactly(PROJECT_PATH to buildAgentSessionIdentity(AgentSessionProvider.from("codex"), "new-pending"))
         }
       }
     }
@@ -696,12 +695,12 @@ class AgentSessionArchiveServiceIntegrationTest {
       thread(
         id = "codex-parent",
         updatedAt = 200,
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         subAgents = listOf(AgentSubAgent(id = "codex-sub-1", name = "Sub-agent 1")),
       ),
     )
     val sessionSource = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       listFromOpenProject = { path, _ ->
         if (path == PROJECT_PATH) {
           listCalls.incrementAndGet()
@@ -745,7 +744,7 @@ class AgentSessionArchiveServiceIntegrationTest {
             listOf(
               ArchiveThreadTarget.SubAgent(
                 path = PROJECT_PATH,
-                provider = AgentSessionProvider.CODEX,
+                provider = AgentSessionProvider.from("codex"),
                 parentThreadId = "codex-parent",
                 subAgentId = "codex-sub-1",
               )
@@ -771,7 +770,7 @@ class AgentSessionArchiveServiceIntegrationTest {
             .containsExactly(
               Triple(
                 PROJECT_PATH,
-                buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-parent"),
+                buildAgentSessionIdentity(AgentSessionProvider.from("codex"), "codex-parent"),
                 "codex-sub-1",
               )
             )
@@ -785,11 +784,11 @@ class AgentSessionArchiveServiceIntegrationTest {
   fun archiveThreadRefreshesAndRemovesThreadWhenCleanupFails() = runBlocking(Dispatchers.Default) {
     val listCalls = AtomicInteger(0)
     val sourceThreads = mutableListOf(
-      thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.CODEX),
-      thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.CODEX),
+      thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.from("codex")),
+      thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.from("codex")),
     )
     val sessionSource = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       listFromOpenProject = { path, _ ->
         if (path == PROJECT_PATH) {
           listCalls.incrementAndGet()
@@ -850,11 +849,11 @@ class AgentSessionArchiveServiceIntegrationTest {
   fun archiveOpenedClaudeThreadFromEditorTabUsesProviderArchiveAndCleanupTarget() = runBlocking(Dispatchers.Default) {
     val operations = CopyOnWriteArrayList<List<String?>>()
     val sourceThreads = mutableListOf(
-      thread(id = "claude-1", updatedAt = 200, provider = AgentSessionProvider.CLAUDE),
-      thread(id = "claude-2", updatedAt = 100, provider = AgentSessionProvider.CLAUDE),
+      thread(id = "claude-1", updatedAt = 200, provider = AgentSessionProvider.from("claude")),
+      thread(id = "claude-2", updatedAt = 100, provider = AgentSessionProvider.from("claude")),
     )
     val sessionSource = ScriptedSessionSource(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       listFromOpenProject = { path, _ -> if (path == PROJECT_PATH) sourceThreads.toList() else emptyList() },
     )
     val bridge = testClaudeBridge(
@@ -881,7 +880,7 @@ class AgentSessionArchiveServiceIntegrationTest {
           }
 
           archiveService.archiveThreads(
-            targets = listOf(ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.CLAUDE, "claude-1")),
+            targets = listOf(ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.from("claude"), "claude-1")),
             entryPoint = AgentWorkbenchEntryPoint.EDITOR_TAB_POPUP,
             preferredSingleArchivedLabel = "Claude thread",
           )
@@ -889,9 +888,9 @@ class AgentSessionArchiveServiceIntegrationTest {
           waitForCondition {
             val threads = service.state.value.projects.firstOrNull()?.threads.orEmpty()
             operations == listOf(
-              listOf("cleanup", PROJECT_PATH, buildAgentSessionIdentity(AgentSessionProvider.CLAUDE, "claude-1"), null),
+              listOf("cleanup", PROJECT_PATH, buildAgentSessionIdentity(AgentSessionProvider.from("claude"), "claude-1"), null),
               listOf("archive", PROJECT_PATH, "claude-1", null),
-              listOf("cleanup", PROJECT_PATH, buildAgentSessionIdentity(AgentSessionProvider.CLAUDE, "claude-1"), null),
+              listOf("cleanup", PROJECT_PATH, buildAgentSessionIdentity(AgentSessionProvider.from("claude"), "claude-1"), null),
             ) &&
             threads.none { it.id == "claude-1" } &&
             threads.any { it.id == "claude-2" }
@@ -906,11 +905,11 @@ class AgentSessionArchiveServiceIntegrationTest {
     val archiveCalls = AtomicInteger(0)
     val cleanupCalls = AtomicInteger(0)
     val sourceThreads = mutableListOf(
-      thread(id = "claude-1", updatedAt = 200, provider = AgentSessionProvider.CLAUDE),
-      thread(id = "claude-2", updatedAt = 100, provider = AgentSessionProvider.CLAUDE),
+      thread(id = "claude-1", updatedAt = 200, provider = AgentSessionProvider.from("claude")),
+      thread(id = "claude-2", updatedAt = 100, provider = AgentSessionProvider.from("claude")),
     )
     val sessionSource = ScriptedSessionSource(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       listFromOpenProject = { path, _ -> if (path == PROJECT_PATH) sourceThreads.toList() else emptyList() },
     )
     val bridge = testClaudeBridge(
@@ -942,7 +941,7 @@ class AgentSessionArchiveServiceIntegrationTest {
             }
 
             archiveService.archiveThreadsForTest(
-              listOf(ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.CLAUDE, "claude-1"))
+              listOf(ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.from("claude"), "claude-1"))
             )
 
             waitForCondition(timeoutMs = 10_000) { cleanupCalls.get() == 1 }
@@ -956,11 +955,11 @@ class AgentSessionArchiveServiceIntegrationTest {
   @Test
   fun unarchiveThreadsRestoresArchivedCodexThread() = runBlocking(Dispatchers.Default) {
     val sourceThreads = mutableListOf(
-      thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.CODEX),
-      thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.CODEX),
+      thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.from("codex")),
+      thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.from("codex")),
     )
     val sessionSource = ScriptedSessionSource(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       listFromOpenProject = { path, _ ->
         if (path == PROJECT_PATH) sourceThreads.toList() else emptyList()
       },
@@ -973,7 +972,7 @@ class AgentSessionArchiveServiceIntegrationTest {
       },
       onUnarchive = { _, threadId ->
         if (sourceThreads.none { it.id == threadId }) {
-          sourceThreads.add(thread(id = threadId, updatedAt = 250, provider = AgentSessionProvider.CODEX))
+          sourceThreads.add(thread(id = threadId, updatedAt = 250, provider = AgentSessionProvider.from("codex")))
         }
         true
       },
@@ -1009,11 +1008,11 @@ class AgentSessionArchiveServiceIntegrationTest {
   @Test
   fun unarchiveThreadsRestoresArchivedClaudeThread() = runBlocking(Dispatchers.Default) {
     val sourceThreads = mutableListOf(
-      thread(id = "claude-1", updatedAt = 200, provider = AgentSessionProvider.CLAUDE),
-      thread(id = "claude-2", updatedAt = 100, provider = AgentSessionProvider.CLAUDE),
+      thread(id = "claude-1", updatedAt = 200, provider = AgentSessionProvider.from("claude")),
+      thread(id = "claude-2", updatedAt = 100, provider = AgentSessionProvider.from("claude")),
     )
     val sessionSource = ScriptedSessionSource(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       listFromOpenProject = { path, _ ->
         if (path == PROJECT_PATH) sourceThreads.toList() else emptyList()
       },
@@ -1026,7 +1025,7 @@ class AgentSessionArchiveServiceIntegrationTest {
       },
       onUnarchive = { _, threadId ->
         if (sourceThreads.none { it.id == threadId }) {
-          sourceThreads.add(thread(id = threadId, updatedAt = 250, provider = AgentSessionProvider.CLAUDE))
+          sourceThreads.add(thread(id = threadId, updatedAt = 250, provider = AgentSessionProvider.from("claude")))
         }
         true
       },
@@ -1109,7 +1108,7 @@ private fun testCodexBridge(
 ): AgentSessionProviderDescriptor {
   return object : AgentSessionProviderDescriptor {
     override val provider: AgentSessionProvider
-      get() = AgentSessionProvider.CODEX
+      get() = AgentSessionProvider.from("codex")
 
     override val displayNameKey: String
       get() = "toolwindow.provider.codex"
@@ -1168,7 +1167,7 @@ private fun testClaudeBridge(
 ): AgentSessionProviderDescriptor {
   return object : AgentSessionProviderDescriptor {
     override val provider: AgentSessionProvider
-      get() = AgentSessionProvider.CLAUDE
+      get() = AgentSessionProvider.from("claude")
 
     override val displayNameKey: String
       get() = "toolwindow.provider.claude"

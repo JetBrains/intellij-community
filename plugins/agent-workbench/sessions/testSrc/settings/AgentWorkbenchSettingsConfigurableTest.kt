@@ -50,7 +50,7 @@ class AgentWorkbenchSettingsConfigurableTest {
   }
 
   private fun resetSettings() {
-    service<AgentSessionProviderSettingsService>().setProviderEnabled(AgentSessionProvider.CODEX, true)
+    service<AgentSessionProviderSettingsService>().setProviderEnabled(AgentSessionProvider.from("codex"), true)
     AgentWorkbenchSettings.getInstance().loadState(AgentWorkbenchSettings.SettingsState())
     AgentSessionCostPresentationSettings.setEnabled(false)
     setJbCentralQuotaWidgetEnabled(false)
@@ -219,13 +219,13 @@ class AgentWorkbenchSettingsConfigurableTest {
   @Test
   fun configurableAppliesProviderSettings() {
     val providerSettings = service<AgentSessionProviderSettingsService>()
-    providerSettings.setProviderEnabled(AgentSessionProvider.CODEX, true)
+    providerSettings.setProviderEnabled(AgentSessionProvider.from("codex"), true)
 
     AgentSessionProviders.withRegistryForTest(
       InMemoryAgentSessionProviderRegistry(
         listOf(
           TestAgentSessionProviderDescriptor(
-            provider = AgentSessionProvider.CODEX,
+            provider = AgentSessionProvider.from("codex"),
             supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
             cliAvailable = true,
           )
@@ -251,7 +251,7 @@ class AgentWorkbenchSettingsConfigurableTest {
       }
     }
 
-    assertThat(providerSettings.isProviderEnabled(AgentSessionProvider.CODEX)).isFalse()
+    assertThat(providerSettings.isProviderEnabled(AgentSessionProvider.from("codex"))).isFalse()
   }
 
   @Test
@@ -260,7 +260,7 @@ class AgentWorkbenchSettingsConfigurableTest {
     AgentWorkbenchSettingsContributors.EP_NAME.point.registerExtension(
       object : AgentWorkbenchSettingsContributor {
         override fun providerCheckboxSettings(provider: AgentSessionProvider): List<AgentWorkbenchCheckboxSetting> {
-          if (provider != AgentSessionProvider.CODEX) {
+          if (provider != AgentSessionProvider.from("codex")) {
             return emptyList()
           }
           return listOf(
@@ -280,7 +280,7 @@ class AgentWorkbenchSettingsConfigurableTest {
       InMemoryAgentSessionProviderRegistry(
         listOf(
           TestAgentSessionProviderDescriptor(
-            provider = AgentSessionProvider.CODEX,
+            provider = AgentSessionProvider.from("codex"),
             supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
             cliAvailable = true,
           )

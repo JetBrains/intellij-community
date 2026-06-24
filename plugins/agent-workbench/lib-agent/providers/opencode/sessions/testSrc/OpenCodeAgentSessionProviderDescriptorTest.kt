@@ -22,7 +22,7 @@ class OpenCodeAgentSessionProviderDescriptorTest {
 
   @Test
   fun exposesOpenCodeProviderWithNormalLaunchMode() {
-    assertThat(descriptor.provider).isEqualTo(AgentSessionProvider.OPENCODE)
+    assertThat(OPENCODE_AGENT_SESSION_PROVIDER).isEqualTo(AgentSessionProvider.from("opencode"))
     assertThat(descriptor.supportedLaunchModes).containsExactly(AgentSessionLaunchMode.STANDARD)
     assertThat(descriptor.cliVisibilityPolicy).isEqualTo(AgentSessionProviderCliVisibilityPolicy.DISCOVER_WHEN_AVAILABLE)
     assertThat(descriptor.yoloSessionLabelKey).isNull()

@@ -126,10 +126,10 @@ class AgentChatFileEditorLifecycleTest {
     val controllerScope = unconfinedTestScope()
     val controller = AgentChatTerminalTitleThreadRebindController(
       file = file,
-      contributor = terminalTitleThreadRebindContributor(AgentSessionProvider.CODEX),
+      contributor = terminalTitleThreadRebindContributor(),
       tabSnapshotWriter = snapshotWriter,
       rebindPendingTabs = { provider, requestsByPath ->
-        assertThat(provider.value).isEqualTo(AgentSessionProvider.CODEX.value)
+        assertThat(provider.value).isEqualTo(AgentSessionProvider.from("codex").value)
         val request = requestsByPath.getValue(file.projectPath).single()
         requests += request
         file.rebindPendingThread(
@@ -188,7 +188,7 @@ class AgentChatFileEditorLifecycleTest {
     val controllerScope = unconfinedTestScope()
     val controller = AgentChatTerminalTitleThreadRebindController(
       file = file,
-      contributor = terminalTitleThreadRebindContributor(AgentSessionProvider.CODEX),
+      contributor = terminalTitleThreadRebindContributor(),
       tabSnapshotWriter = snapshotWriter,
       rebindPendingTabs = { _, requestsByPath ->
         val request = requestsByPath.getValue(file.projectPath).single()
@@ -260,7 +260,7 @@ class AgentChatFileEditorLifecycleTest {
     val controllerScope = unconfinedTestScope()
     val controller = AgentChatTerminalTitleThreadRebindController(
       file = file,
-      contributor = terminalTitleThreadRebindContributor(AgentSessionProvider.CODEX),
+      contributor = terminalTitleThreadRebindContributor(),
       tabSnapshotWriter = snapshotWriter,
       rebindPendingTabs = { _, requestsByPath ->
         val request = requestsByPath.getValue(file.projectPath).single()
@@ -352,12 +352,12 @@ class AgentChatFileEditorLifecycleTest {
       preallocatedSessionId = preallocatedSessionId,
     )
     val file = testFile(
-      threadIdentity = buildAgentThreadIdentity(AgentSessionProvider.TERMINAL.value, preallocatedSessionId),
+      threadIdentity = buildAgentThreadIdentity(AgentSessionProvider.from("terminal").value, preallocatedSessionId),
       shellCommand = emptyList(),
     )
     file.updateStartupIntent(
       AgentChatStartupIntent.NewSession(
-        provider = AgentSessionProvider.TERMINAL,
+        provider = AgentSessionProvider.from("terminal"),
         launchMode = AgentSessionLaunchMode.STANDARD,
       )
     )
@@ -429,7 +429,7 @@ class AgentChatFileEditorLifecycleTest {
     val controllerScope = unconfinedTestScope()
     val controller = AgentChatTerminalTitleThreadRebindController(
       file = file,
-      contributor = terminalTitleThreadRebindContributor(AgentSessionProvider.CODEX),
+      contributor = terminalTitleThreadRebindContributor(),
       tabSnapshotWriter = snapshotWriter,
       rebindPendingTabs = { _, requestsByPath ->
         val request = requestsByPath.getValue(file.projectPath).single()
@@ -486,10 +486,10 @@ class AgentChatFileEditorLifecycleTest {
     val controllerScope = unconfinedTestScope()
     val controller = AgentChatTerminalTitleThreadRebindController(
       file = file,
-      contributor = terminalTitleThreadRebindContributor(AgentSessionProvider.CODEX),
+      contributor = terminalTitleThreadRebindContributor(),
       tabSnapshotWriter = snapshotWriter,
       rebindConcreteTabs = { provider, requestsByPath ->
-        assertThat(provider.value).isEqualTo(AgentSessionProvider.CODEX.value)
+        assertThat(provider.value).isEqualTo(AgentSessionProvider.from("codex").value)
         val request = requestsByPath.getValue(file.projectPath).single()
         requests += request
         file.rebindConcreteThread(
@@ -549,7 +549,7 @@ class AgentChatFileEditorLifecycleTest {
     lateinit var controller: AgentChatTerminalTitleThreadRebindController
     controller = AgentChatTerminalTitleThreadRebindController(
       file = file,
-      contributor = terminalTitleThreadRebindContributor(AgentSessionProvider.CODEX),
+      contributor = terminalTitleThreadRebindContributor(),
       tabSnapshotWriter = snapshotWriter,
       rebindConcreteTabs = { _, requestsByPath ->
         val request = requestsByPath.getValue(file.projectPath).single()
@@ -599,7 +599,7 @@ class AgentChatFileEditorLifecycleTest {
     val controllerScope = unconfinedTestScope()
     val controller = AgentChatTerminalTitleThreadRebindController(
       file = file,
-      contributor = terminalTitleThreadRebindContributor(AgentSessionProvider.CODEX),
+      contributor = terminalTitleThreadRebindContributor(),
       tabSnapshotWriter = snapshotWriter,
       rebindConcreteTabs = { _, requestsByPath ->
         val request = requestsByPath.getValue(file.projectPath).single()
@@ -660,7 +660,7 @@ class AgentChatFileEditorLifecycleTest {
     val controllerScope = unconfinedTestScope()
     val controller = AgentChatTerminalTitleThreadRebindController(
       file = file,
-      contributor = terminalTitleThreadRebindContributor(AgentSessionProvider.CODEX),
+      contributor = terminalTitleThreadRebindContributor(),
       tabSnapshotWriter = snapshotWriter,
       rebindConcreteTabs = { _, _ ->
         error("Expired /new anchor must not rebind a concrete chat tab")
@@ -773,7 +773,7 @@ class AgentChatFileEditorLifecycleTest {
     val terminalTabs = FakeAgentChatTerminalTabs()
     val closedFiles = CopyOnWriteArrayList<AgentChatVirtualFile>()
     val descriptor = ArchivedThreadsProviderDescriptor(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       archivedThreads = listOf(
         AgentSessionThread(
           id = "thread-restored",
@@ -781,7 +781,7 @@ class AgentChatFileEditorLifecycleTest {
           updatedAt = 1L,
           archived = true,
           activity = AgentThreadActivity.READY,
-          provider = AgentSessionProvider.CODEX,
+          provider = AgentSessionProvider.from("codex"),
         )
       ),
     )
@@ -987,7 +987,7 @@ class AgentChatFileEditorLifecycleTest {
     val terminalTabs = FakeAgentChatTerminalTabs()
     val file = claudeLifecycleTestFile()
     val liveTerminalStore = AgentChatLiveTerminalStore()
-    val descriptor = RecordingTerminalSessionClosedProvider(AgentSessionProvider.CLAUDE)
+    val descriptor = RecordingTerminalSessionClosedProvider(AgentSessionProvider.from("claude"))
 
     AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
       liveTerminalStore.acquireOrCreate(project = project, file = file, terminalTabs = terminalTabs)
@@ -1027,7 +1027,7 @@ class AgentChatFileEditorLifecycleTest {
     val terminalTabs = FakeAgentChatTerminalTabs()
     val file = claudeLifecycleTestFile()
     val liveTerminalStore = AgentChatLiveTerminalStore()
-    val descriptor = RecordingTerminalSessionClosedProvider(AgentSessionProvider.CLAUDE)
+    val descriptor = RecordingTerminalSessionClosedProvider(AgentSessionProvider.from("claude"))
 
     AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
       liveTerminalStore.acquireOrCreate(project = project, file = file, terminalTabs = terminalTabs)
@@ -1211,7 +1211,7 @@ class AgentChatFileEditorLifecycleTest {
       .isTrue()
     assertThat(shouldArchiveTerminalSessionOnLastEditorClose(claudeLifecycleTestFile()))
       .isFalse()
-    assertThat(shouldArchiveTerminalSessionOnLastEditorClose(pendingTestFile(provider = AgentSessionProvider.TERMINAL)))
+    assertThat(shouldArchiveTerminalSessionOnLastEditorClose(pendingTestFile(provider = AgentSessionProvider.from("terminal"))))
       .isFalse()
   }
 
@@ -2080,7 +2080,7 @@ class AgentChatFileEditorLifecycleTest {
       waitForCondition { signalCollector.codexSignals.isNotEmpty() }
 
       file.rebindPendingThread(
-        threadIdentity = buildAgentThreadIdentity(AgentSessionProvider.CODEX.value, "thread-42"),
+        threadIdentity = buildAgentThreadIdentity(AgentSessionProvider.from("codex").value, "thread-42"),
         threadId = "thread-42",
         threadTitle = "Recovered thread",
         threadActivity = AgentThreadActivity.READY,
@@ -2128,7 +2128,7 @@ class AgentChatFileEditorLifecycleTest {
     val terminalTabs = FakeAgentChatTerminalTabs()
     val signalCollector = CodexScopedRefreshSignalCollector()
     val file = pendingTestFile(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       pendingFirstInputAtMs = System.currentTimeMillis() - 100L,
     )
     val editor = testEditor(
@@ -2401,7 +2401,7 @@ private fun testFile(
 }
 
 private fun pendingTestFile(
-  provider: AgentSessionProvider = AgentSessionProvider.CODEX,
+  provider: AgentSessionProvider = AgentSessionProvider.from("codex"),
   pendingFirstInputAtMs: Long? = null,
 ): AgentChatVirtualFile {
   return testFile(
@@ -2449,7 +2449,7 @@ private fun claudeLifecycleTestFile(): AgentChatVirtualFile {
 
 private fun terminalLifecycleTestFile(): AgentChatVirtualFile {
   return testFile(
-    threadIdentity = buildAgentThreadIdentity(AgentSessionProvider.TERMINAL.value, "terminal-1"),
+    threadIdentity = buildAgentThreadIdentity(AgentSessionProvider.from("terminal").value, "terminal-1"),
     shellCommand = emptyList(),
   ).also { file ->
     file.updateThreadId("terminal-1")
@@ -2490,9 +2490,9 @@ private fun testEditor(
 
 private fun testAgentChatProviderBehavior(provider: AgentSessionProvider?): AgentChatProviderBehavior {
   return when (provider) {
-    AgentSessionProvider.CODEX -> TestCodexAgentChatProviderBehavior
-    AgentSessionProvider.CLAUDE -> TestClaudeAgentChatProviderBehavior
-    AgentSessionProvider.JUNIE -> TestJunieAgentChatProviderBehavior
+    AgentSessionProvider.from("codex") -> TestCodexAgentChatProviderBehavior
+    AgentSessionProvider.from("claude") -> TestClaudeAgentChatProviderBehavior
+    AgentSessionProvider.from("junie") -> TestJunieAgentChatProviderBehavior
     else -> TestDefaultAgentChatProviderBehavior
   }
 }
@@ -2524,7 +2524,7 @@ private object TestJunieAgentChatProviderBehavior : AgentChatProviderBehavior {
 
 private object TestCodexAgentChatProviderBehavior : AgentChatProviderBehavior {
   override fun supportsPendingThreadRefreshRetry(file: AgentChatBehaviorFile): Boolean {
-    return file.isPendingThread && file.subAgentId == null && file.provider == AgentSessionProvider.CODEX
+    return file.isPendingThread && file.subAgentId == null && file.provider == AgentSessionProvider.from("codex")
   }
 
   override fun pendingThreadRefreshRetryDelayMs(file: AgentChatBehaviorFile, currentTimeMs: Long, retryIntervalMs: Long): Long? {
@@ -2639,11 +2639,8 @@ private fun terminalTitle(threadId: String, threadTitle: String? = null): String
   return listOfNotNull("thread:$threadId", threadTitle).joinToString(" | ")
 }
 
-private fun terminalTitleThreadRebindContributor(providerId: AgentSessionProvider): AgentChatTerminalTitleThreadRebindContributor {
+private fun terminalTitleThreadRebindContributor(): AgentChatTerminalTitleThreadRebindContributor {
   return object : AgentChatTerminalTitleThreadRebindContributor {
-    override val provider: AgentSessionProvider
-      get() = providerId
-
     override fun extractThreadId(applicationTitle: String?): String? {
       return applicationTitle?.substringAfter("thread:", missingDelimiterValue = "")?.takeIf { it.isNotBlank() }
     }
@@ -2768,7 +2765,7 @@ private class CodexScopedRefreshSignalCollector {
   private val job = object : CoroutineScope {
     override val coroutineContext = Job() + Dispatchers.Default
   }.launch(start = CoroutineStart.UNDISPATCHED) {
-    agentChatScopedRefreshSignals(AgentSessionProvider.CODEX).collect { signal ->
+    agentChatScopedRefreshSignals(AgentSessionProvider.from("codex")).collect { signal ->
       codexSignals += signal.scopedPaths.orEmpty()
     }
   }

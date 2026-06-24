@@ -71,7 +71,7 @@ class CodexSessionSourceTest {
             title = "Pending Codex thread",
             updatedAt = 100L,
             archived = false,
-            provider = AgentSessionProvider.CODEX,
+            provider = AgentSessionProvider.from("codex"),
           )
         ),
       )
@@ -128,7 +128,7 @@ class CodexSessionSourceTest {
 
         override suspend fun loadThreadOutline(path: String, threadId: String): AgentSessionThreadOutline {
           return AgentSessionThreadOutline(
-            provider = AgentSessionProvider.CODEX,
+            provider = AgentSessionProvider.from("codex"),
             threadId = threadId,
             title = "Source thread",
             updatedAt = 100L,
@@ -193,7 +193,7 @@ class CodexSessionSourceTest {
 
       assertThat(forkRequests).containsExactly("source-thread" to 2)
       assertThat(result?.thread?.id).isEqualTo("forked-thread")
-      assertThat(result?.thread?.provider).isEqualTo(AgentSessionProvider.CODEX)
+      assertThat(result?.thread?.provider).isEqualTo(AgentSessionProvider.from("codex"))
     }
   }
 
@@ -580,7 +580,7 @@ class CodexSessionSourceTest {
             title = "thread-missing-path",
             updatedAt = 100L,
             archived = false,
-            provider = AgentSessionProvider.CODEX,
+            provider = AgentSessionProvider.from("codex"),
           )
         ),
       )
@@ -692,14 +692,14 @@ class CodexSessionSourceTest {
             title = "thread-parent",
             updatedAt = 100L,
             archived = false,
-            provider = AgentSessionProvider.CODEX,
+            provider = AgentSessionProvider.from("codex"),
           ),
           AgentSessionThread(
             id = "thread-child",
             title = "thread-child",
             updatedAt = 100L,
             archived = false,
-            provider = AgentSessionProvider.CODEX,
+            provider = AgentSessionProvider.from("codex"),
           ),
         ),
       )
@@ -818,7 +818,7 @@ class CodexSessionSourceTest {
             title = "thread-parent-aggregate",
             updatedAt = 100L,
             archived = false,
-            provider = AgentSessionProvider.CODEX,
+            provider = AgentSessionProvider.from("codex"),
             subAgents = listOf(com.intellij.platform.ai.agent.core.session.AgentSubAgent(id = "thread-child-aggregate", name = "thread-child-aggregate")),
           )
         ),

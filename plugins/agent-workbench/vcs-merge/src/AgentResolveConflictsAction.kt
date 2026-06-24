@@ -1,14 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.vcs.merge
 
-import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.agent.workbench.sessions.AgentSessionLaunchProfileSelection
 import com.intellij.agent.workbench.sessions.AgentSessionLaunchProfileMenuItem
 import com.intellij.agent.workbench.sessions.buildAgentSessionLaunchProfileMenuActions
 import com.intellij.agent.workbench.sessions.buildAgentSessionLaunchProfileMenuModel
-import com.intellij.platform.ai.agent.sessions.core.providers.builtInLaunchProfileId
 import com.intellij.platform.ai.agent.sessions.core.providers.generationSettingsForPlanMode
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderMenuItem
@@ -37,6 +35,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.merge.MergeResolveActionContext
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBOptionButton
 import org.jetbrains.annotations.Nls
 import java.awt.event.ActionEvent
@@ -47,7 +46,7 @@ import javax.swing.JComponent
 
 private data class ResolveWithAgentContext(
   val project: Project,
-  val request: AgentVcsMergeLaunchRequest,
+  val selectionHintFiles: List<VirtualFile>,
   val closeDialog: (() -> Unit)?,
 )
 
@@ -128,9 +127,14 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
   }
 
   private fun launchResolution(context: ResolveWithAgentContext, item: AgentSessionLaunchProfileMenuItem) {
+    val provider = AgentSessionProvider.fromOrNull(item.profile.providerId) ?: return
     launchAgentMergeResolution(
       project = context.project,
-      request = context.request,
+      request = AgentVcsMergeLaunchRequest(
+        selectionHintFiles = context.selectionHintFiles,
+        agentProvider = provider,
+        launchMode = item.profile.launchMode,
+      ),
       closeDialog = context.closeDialog,
       item = item,
       setActiveVcsMergeLaunchProfileId = setActiveVcsMergeLaunchProfileId,
@@ -162,11 +166,7 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
     if (!directContext.isContextValid()) return null
     return ResolveWithAgentContext(
       project = directContext.project,
-      request = AgentVcsMergeLaunchRequest(
-        selectionHintFiles = directContext.selectionHintFiles,
-        agentProvider = AgentSessionProvider.CODEX,
-        launchMode = AgentSessionLaunchMode.STANDARD,
-      ),
+      selectionHintFiles = directContext.selectionHintFiles,
       closeDialog = directContext::closeSourceUi,
     )
   }
@@ -184,7 +184,7 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
       menuModel = menuModel,
       userProfiles = userLaunchProfiles(),
       preferredProfileId = activeVcsMergeLaunchProfileId(),
-      fallbackProfileIds = listOf(builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD)),
+      fallbackProfileIds = emptyList(),
       quickStartItemFilter = { item -> item.menuItem.isEnabled },
     )
   }

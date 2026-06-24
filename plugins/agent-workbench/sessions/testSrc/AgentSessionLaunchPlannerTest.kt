@@ -81,7 +81,7 @@ class AgentSessionLaunchPlannerTest {
       AgentSessionLaunchPlanner.plan(
         intent = AgentSessionLaunchIntent(
           projectPath = "/tmp/project",
-          provider = AgentSessionProvider.CODEX,
+          provider = AgentSessionProvider.from("codex"),
           operation = AgentSessionLaunchOperation.NEW,
         ),
         initialMessagePlan = AgentInitialMessagePlan.EMPTY,
@@ -94,7 +94,7 @@ class AgentSessionLaunchPlannerTest {
     listModels: suspend () -> List<AgentPromptGenerationModel>,
   ): TestAgentSessionProviderDescriptor {
     return object : TestAgentSessionProviderDescriptor(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
     ) {

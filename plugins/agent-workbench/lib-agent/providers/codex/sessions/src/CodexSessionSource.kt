@@ -27,7 +27,6 @@ import com.intellij.platform.ai.agent.core.isWorking
 import com.intellij.platform.ai.agent.core.session.AgentSessionCost
 import com.intellij.platform.ai.agent.core.session.AgentSessionCostKind
 import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItem
-import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.core.session.AgentSessionThreadOutline
 import com.intellij.platform.ai.agent.core.session.AgentSubAgent
@@ -66,7 +65,7 @@ internal class CodexSessionSource internal constructor(
   private val calculateCost: (AgentSessionUsageSnapshot) -> AgentSessionCost = AgentSessionUsageCostCalculators::calculateCost,
   private val threadPathIndex: CodexThreadPathIndex = InMemoryCodexThreadPathIndex(),
   private val exactRolloutThreadLoader: CodexExactRolloutThreadLoader = CodexExactRolloutThreadLoader(),
-) : BaseAgentSessionSource(provider = AgentSessionProvider.CODEX, canReportExactThreadCount = false) {
+) : BaseAgentSessionSource(provider = CODEX_AGENT_SESSION_PROVIDER, canReportExactThreadCount = false) {
   constructor(
     threadPathIndex: CodexThreadPathIndex = service<CodexThreadPathIndexService>(),
     backend: CodexSessionBackend = createDefaultCodexSessionBackend(threadPathIndex = threadPathIndex),
@@ -914,7 +913,7 @@ private fun toAgentSessionThread(
     title = thread.title,
     updatedAt = thread.updatedAt,
     archived = thread.archived,
-    provider = AgentSessionProvider.CODEX,
+    provider = CODEX_AGENT_SESSION_PROVIDER,
     subAgents = thread.subAgents.map { subAgent ->
       AgentSubAgent(
         id = subAgent.id,

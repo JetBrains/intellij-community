@@ -42,7 +42,7 @@ class CodexTerminalTitleThreadRebindContributorTest {
 
   @Test
   fun contributorIsRegistered() {
-    assertThat(AgentChatTerminalTitleThreadRebindContributors.find(AgentSessionProvider.CODEX))
+    assertThat(AgentChatTerminalTitleThreadRebindContributors.find(AgentSessionProvider.from("codex")))
       .isInstanceOf(CodexTerminalTitleThreadRebindContributor::class.java)
   }
 }

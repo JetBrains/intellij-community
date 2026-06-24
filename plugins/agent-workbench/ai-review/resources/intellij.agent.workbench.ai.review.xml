@@ -18,6 +18,8 @@
 
     <statistics.counterUsagesCollector
         implementationClass="com.intellij.agent.workbench.ai.review.AIReviewCollector"/>
+    <statistics.validation.customValidationRule
+        implementation="com.intellij.agent.workbench.ai.review.AIReviewAgentProviderValidationRule"/>
 
     <registryKey key="ai.review.enabled"
                  defaultValue="true"

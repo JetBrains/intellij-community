@@ -22,6 +22,8 @@ import java.nio.file.Path
 import java.time.Instant
 import kotlin.io.path.invariantSeparatorsPathString
 
+private val CLAUDE_AGENT_SESSION_PROVIDER: AgentSessionProvider = AgentSessionProvider.from("claude")
+
 private const val CLAUDE_PROJECTS_DIR = "projects"
 
 // Claude transcript parsing only reports provider work state.
@@ -206,7 +208,7 @@ class ClaudeSessionsStore(
     ).title
     val updatedAt = state.updatedAt ?: runCatching { Files.getLastModifiedTime(path).toMillis() }.getOrDefault(0L)
     return ClaudeSessionOutline(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = CLAUDE_AGENT_SESSION_PROVIDER,
       threadId = sessionId,
       title = title,
       updatedAt = updatedAt,

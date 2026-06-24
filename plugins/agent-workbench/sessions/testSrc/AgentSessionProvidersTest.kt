@@ -34,7 +34,7 @@ class AgentSessionProvidersTest {
 
   @Test
   fun registeringAndDisposingProviderUpdatesFacadeView() {
-    val provider = AgentSessionProvider.CODEX
+    val provider = AgentSessionProvider.from("codex")
     val initialDescriptor = AgentSessionProviders.find(provider)
     val initialSources = AgentSessionProviders.sessionSources()
 
@@ -68,7 +68,7 @@ class AgentSessionProvidersTest {
 
   @Test
   fun duplicateProvidersKeepFirstDescriptor() {
-    val provider = AgentSessionProvider.CODEX
+    val provider = AgentSessionProvider.from("codex")
     val initialDescriptor = AgentSessionProviders.find(provider)
 
     val disposable = Disposer.newDisposable()
@@ -143,40 +143,40 @@ class AgentSessionProvidersTest {
   @Test
   fun registryCanBeOverriddenForIsolatedTests() {
     val codexDescriptor = TestAgentSessionProviderDescriptor(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       sourceId = "override-codex",
       supportedModes = emptySet(),
       cliAvailable = true,
     )
     val claudeDescriptor = TestAgentSessionProviderDescriptor(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       sourceId = "override-claude",
       supportedModes = emptySet(),
       cliAvailable = true,
     )
     val overrideRegistry = InMemoryAgentSessionProviderRegistry(listOf(claudeDescriptor, codexDescriptor))
-    val baselineClaude = AgentSessionProviders.find(AgentSessionProvider.CLAUDE)
+    val baselineClaude = AgentSessionProviders.find(AgentSessionProvider.from("claude"))
 
     AgentSessionProviders.withRegistryForTest(overrideRegistry) {
-      assertThat(AgentSessionProviders.find(AgentSessionProvider.CLAUDE)).isSameAs(claudeDescriptor)
+      assertThat(AgentSessionProviders.find(AgentSessionProvider.from("claude"))).isSameAs(claudeDescriptor)
       assertThat(AgentSessionProviders.allProviders()).containsExactly(claudeDescriptor, codexDescriptor)
       assertThat(AgentSessionProviders.allProvidersById()).containsExactly(claudeDescriptor, codexDescriptor)
       assertThat(AgentSessionProviders.sessionSources())
         .containsExactly(claudeDescriptor.sessionSource, codexDescriptor.sessionSource)
     }
 
-    assertThat(AgentSessionProviders.find(AgentSessionProvider.CLAUDE)).isSameAs(baselineClaude)
+    assertThat(AgentSessionProviders.find(AgentSessionProvider.from("claude"))).isSameAs(baselineClaude)
   }
 
   @Test
   fun menuModelOmitsUnavailableDiscoverableProviders() {
     val prominentProvider = TestAgentSessionProviderDescriptor(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = false,
     )
     val discoverableProvider = TestAgentSessionProviderDescriptor(
-      provider = AgentSessionProvider.PI,
+      provider = AgentSessionProvider.from("pi"),
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = false,
       cliVisibilityPolicy = AgentSessionProviderCliVisibilityPolicy.DISCOVER_WHEN_AVAILABLE,
@@ -185,12 +185,12 @@ class AgentSessionProvidersTest {
     val menuModel = buildAgentSessionProviderMenuModel(
       bridges = listOf(prominentProvider, discoverableProvider),
       availabilityByProvider = mapOf(
-        AgentSessionProvider.CODEX to false,
-        AgentSessionProvider.PI to false,
+        AgentSessionProvider.from("codex") to false,
+        AgentSessionProvider.from("pi") to false,
       ),
     )
 
-    assertThat(menuModel.standardItems.map { item -> item.bridge.provider }).containsExactly(AgentSessionProvider.CODEX)
+    assertThat(menuModel.standardItems.map { item -> item.bridge.provider }).containsExactly(AgentSessionProvider.from("codex"))
     assertThat(menuModel.standardItems.single().isEnabled).isFalse()
   }
 
@@ -207,7 +207,7 @@ class AgentSessionProvidersTest {
     val coloredIcon = AgentWorkbenchCommonIcons.Claude
     val monochromeIcon = AgentWorkbenchCommonIcons.Codex
     val descriptor = object : TestAgentSessionProviderDescriptor(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
       iconOverride = coloredIcon,
@@ -229,7 +229,7 @@ class AgentSessionProvidersTest {
     val coloredIcon = AgentWorkbenchCommonIcons.Claude
     val monochromeIcon = AgentWorkbenchCommonIcons.Codex
     val descriptor = object : TestAgentSessionProviderDescriptor(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
       iconOverride = coloredIcon,
@@ -256,7 +256,7 @@ class AgentSessionProvidersTest {
       val coloredIcon = AgentWorkbenchCommonIcons.Claude
       val monochromeIcon = AgentWorkbenchCommonIcons.Codex
       val descriptor = object : TestAgentSessionProviderDescriptor(
-        provider = AgentSessionProvider.CLAUDE,
+        provider = AgentSessionProvider.from("claude"),
         supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
         cliAvailable = true,
         iconOverride = coloredIcon,
@@ -268,10 +268,10 @@ class AgentSessionProvidersTest {
       AgentSessionProviders.withRegistryForTest(overrideRegistry) {
         val registryValue = Registry.get("agent.workbench.use.monochrome.icons")
 
-        val monochromeStatusIcon = agentSessionThreadStatusIcon(AgentSessionProvider.CLAUDE, AgentThreadActivity.READY)
+        val monochromeStatusIcon = agentSessionThreadStatusIcon(AgentSessionProvider.from("claude"), AgentThreadActivity.READY)
 
         registryValue.setValue(false, disposable)
-        val coloredStatusIcon = agentSessionThreadStatusIcon(AgentSessionProvider.CLAUDE, AgentThreadActivity.READY)
+        val coloredStatusIcon = agentSessionThreadStatusIcon(AgentSessionProvider.from("claude"), AgentThreadActivity.READY)
 
         assertThat(coloredStatusIcon).isNotSameAs(monochromeStatusIcon)
         assertThat(monochromeStatusIcon).isSameAs(monochromeIcon)

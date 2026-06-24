@@ -7,8 +7,6 @@ import com.intellij.agent.workbench.chat.AgentChatInitialMessageDispatchContext
 import com.intellij.agent.workbench.chat.AgentChatInitialMessageRetryDecision
 import com.intellij.agent.workbench.chat.AgentChatInitialMessageSendObservation
 import com.intellij.agent.workbench.chat.AgentChatProviderBehavior
-import com.intellij.agent.workbench.chat.AgentChatProviderBehaviorContributor
-import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadRebindPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
@@ -17,17 +15,9 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProvid
 import com.intellij.platform.ai.agent.sessions.core.providers.isBusyForExistingThreadPlanMode
 import kotlin.math.min
 
-internal class CodexAgentChatProviderBehaviorContributor : AgentChatProviderBehaviorContributor {
-  override val provider: AgentSessionProvider
-    get() = AgentSessionProvider.CODEX
-
-  override val behavior: AgentChatProviderBehavior
-    get() = CodexAgentChatProviderBehavior
-}
-
-internal object CodexAgentChatProviderBehavior : AgentChatProviderBehavior {
+internal class CodexAgentChatProviderBehavior : AgentChatProviderBehavior {
   override fun supportsPendingThreadRefreshRetry(file: AgentChatBehaviorFile): Boolean {
-    return file.isPendingThread && file.subAgentId == null && file.provider == AgentSessionProvider.CODEX
+    return file.isPendingThread && file.subAgentId == null
   }
 
   override fun pendingThreadRefreshRetryDelayMs(file: AgentChatBehaviorFile, currentTimeMs: Long, retryIntervalMs: Long): Long? {

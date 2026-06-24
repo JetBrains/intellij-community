@@ -486,7 +486,7 @@ class ClaudeSessionSourceTest {
     val olderPromptId = "11111111-1111-1111-1111-111111111111"
     val latestPromptId = "22222222-2222-2222-2222-222222222222"
     val outline = AgentSessionThreadOutline(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       threadId = "source-session",
       title = "Source Claude thread",
       updatedAt = 10_000L,
@@ -555,7 +555,7 @@ class ClaudeSessionSourceTest {
     requireNotNull(forkResult)
     assertThat(UUID.fromString(forkResult.thread.id).toString()).isEqualTo(forkResult.thread.id)
     assertThat(forkResult.thread.title).isEqualTo("Source Claude thread")
-    assertThat(forkResult.thread.provider).isEqualTo(AgentSessionProvider.CLAUDE)
+    assertThat(forkResult.thread.provider).isEqualTo(AgentSessionProvider.from("claude"))
     assertThat(forkResult.thread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
     val launchSpec = requireNotNull(forkResult.launchSpecOverride)
     assertThat(launchSpec.command).containsExactly(
@@ -575,7 +575,7 @@ class ClaudeSessionSourceTest {
   @Test
   fun forkActionIgnoresSyntheticOutlineIds() {
     val outline = AgentSessionThreadOutline(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       threadId = "source-session",
       title = "Synthetic outline",
       updatedAt = 10_000L,

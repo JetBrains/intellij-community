@@ -4,7 +4,6 @@ package com.intellij.agent.workbench.prompt.ui
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-entry.spec.md
 
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
-import com.intellij.platform.ai.agent.common.session.isClaudeMenuCommandPrompt
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
@@ -191,7 +190,7 @@ internal class AgentPromptPaletteSubmitController(
       return
     }
 
-    val shouldStripContext = providerEntry.bridge.provider == AgentSessionProvider.CLAUDE && prompt.isClaudeMenuCommandPrompt()
+    val shouldStripContext = providerEntry.bridge.shouldStripContextForPrompt(prompt)
     val contextSelection = if (shouldStripContext) {
       null
     }

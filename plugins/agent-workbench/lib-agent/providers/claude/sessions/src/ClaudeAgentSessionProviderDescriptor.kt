@@ -3,7 +3,6 @@ package com.intellij.platform.ai.agent.claude.sessions
 
 import com.intellij.platform.ai.agent.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
-import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.common.session.isClaudeMenuCommandPrompt
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModelGroup
@@ -17,7 +16,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessag
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentPromptProviderOption
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderImplementation
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentThreadRenameAction
@@ -45,10 +44,7 @@ internal class ClaudeAgentSessionProviderDescriptor(
   ),
   private val cliAvailableProbe: suspend () -> Boolean = { ClaudeCliSupport.findExecutableViaTerminalResolver() != null },
   private val hookSettingsProvider: (String) -> String? = ClaudeHookBridge::createLaunchSettingsArgument,
-) : AgentSessionProviderDescriptor {
-  override val provider: AgentSessionProvider
-    get() = AgentSessionProvider.CLAUDE
-
+) : AgentSessionProviderImplementation {
   override val displayPriority: Int
     get() = 1
 
@@ -155,6 +151,10 @@ internal class ClaudeAgentSessionProviderDescriptor(
 
   override suspend fun listAvailableGenerationModels(project: Project?): List<AgentPromptGenerationModel> {
     return CLAUDE_CODE_GENERATION_MODELS
+  }
+
+  override fun shouldStripContextForPrompt(prompt: String): Boolean {
+    return prompt.isClaudeMenuCommandPrompt()
   }
 
   override fun applyGenerationSettings(

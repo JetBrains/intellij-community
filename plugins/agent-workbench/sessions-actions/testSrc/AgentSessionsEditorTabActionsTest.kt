@@ -359,7 +359,7 @@ private fun editorContext(
   threadIdentity: String = "codex:thread-1",
   threadId: String = "thread-1",
   threadTitle: String = "Thread title",
-  provider: AgentSessionProvider? = AgentSessionProvider.CODEX,
+  provider: AgentSessionProvider? = AgentSessionProvider.from("codex"),
   sessionId: String = "thread-1",
   isPendingThread: Boolean = false,
   subAgentId: String? = null,

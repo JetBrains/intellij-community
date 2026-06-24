@@ -51,7 +51,7 @@ class AgentSessionsActivitySummaryTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
               thread("needs-input", AgentThreadActivity.NEEDS_INPUT, 500),
               thread("reviewing", AgentThreadActivity.REVIEWING, 400),
@@ -117,7 +117,7 @@ class AgentSessionsActivitySummaryTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
               thread("done", AgentThreadActivity.UNREAD, 200),
               thread("idle", AgentThreadActivity.READY, 100),
@@ -141,14 +141,14 @@ class AgentSessionsActivitySummaryTest {
           path = "/work/project-a",
           name = "Project A",
           isOpen = true,
-          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
           worktrees = listOf(
             AgentWorktree(
               path = "/work/project-a-feature",
               name = "feature",
               branch = "feature",
               isOpen = false,
-              providerLoadStates = loadingProviderStates(AgentSessionProvider.CODEX),
+              providerLoadStates = loadingProviderStates(AgentSessionProvider.from("codex")),
             )
           ),
         )
@@ -162,7 +162,7 @@ class AgentSessionsActivitySummaryTest {
           loadingState.projects.single().copy(
             worktrees = listOf(
               loadingState.projects.single().worktrees.single().copy(
-                providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+                providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
               )
             )
           )
@@ -173,7 +173,7 @@ class AgentSessionsActivitySummaryTest {
 
   @Test
   fun buildSummaryOverlaysSharedThreadPresentationActivity() {
-    val key = checkNotNull(AgentSessionThreadPresentationKey.create("/work/project-a", AgentSessionProvider.CODEX, "done"))
+    val key = checkNotNull(AgentSessionThreadPresentationKey.create("/work/project-a", AgentSessionProvider.from("codex"), "done"))
 
     val summary = buildAgentSessionsActivitySummary(
       state(thread("done", AgentThreadActivity.READY, 100, title = "Old title")),
@@ -201,7 +201,7 @@ class AgentSessionsActivitySummaryTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
               thread("fresh-attention", AgentThreadActivity.NEEDS_INPUT, 10_000),
               thread("stale-running", AgentThreadActivity.PROCESSING, 9_999),
@@ -230,7 +230,7 @@ class AgentSessionsActivitySummaryTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
               thread("stale-attention", AgentThreadActivity.NEEDS_INPUT, 9_999),
               thread("stale-done", AgentThreadActivity.UNREAD, 9_999),
@@ -291,7 +291,7 @@ class AgentSessionsActivitySummaryTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
               thread("ready", AgentThreadActivity.READY, 100),
             ),
@@ -314,7 +314,7 @@ class AgentSessionsActivitySummaryTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
               AgentSessionThread(
                 id = "parent-ready",
@@ -322,7 +322,7 @@ class AgentSessionsActivitySummaryTest {
                 updatedAt = 100,
                 archived = false,
                 activity = AgentThreadActivity.READY,
-                provider = AgentSessionProvider.CODEX,
+                provider = AgentSessionProvider.from("codex"),
                 subAgents = listOf(AgentSubAgent(id = "child-done", name = "Child done", activity = AgentThreadActivity.UNREAD)),
               ),
             ),
@@ -345,7 +345,7 @@ class AgentSessionsActivitySummaryTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
               thread("sub-agent-done", AgentThreadActivity.UNREAD, 100, summaryActivity = null),
             ),
@@ -369,7 +369,7 @@ class AgentSessionsActivitySummaryTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
               thread("needs-input", AgentThreadActivity.NEEDS_INPUT, 500),
               thread("done", AgentThreadActivity.UNREAD, 400),
@@ -392,7 +392,7 @@ class AgentSessionsActivitySummaryTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
               thread("done", AgentThreadActivity.UNREAD, 400),
               thread("processing", AgentThreadActivity.PROCESSING, 300),
@@ -414,7 +414,7 @@ class AgentSessionsActivitySummaryTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
               thread("done", AgentThreadActivity.UNREAD, 400),
             ),
@@ -435,7 +435,7 @@ class AgentSessionsActivitySummaryTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
               thread("processing", AgentThreadActivity.PROCESSING, 300),
               thread("ready", AgentThreadActivity.READY, 200),
@@ -465,7 +465,7 @@ class AgentSessionsActivitySummaryTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             worktrees = listOf(
               AgentWorktree(
                 path = "/work/project-a-feature",
@@ -626,7 +626,7 @@ class AgentSessionsActivitySummaryTest {
     assertThat(notification.target).isEqualTo(
       AgentSessionsSystemNotificationTarget(
         path = "/work/project-a-feature",
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         threadId = "needs-input",
       )
     )
@@ -671,7 +671,7 @@ class AgentSessionsActivitySummaryTest {
           path = "/work/project-a",
           name = "Project A",
           isOpen = true,
-          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
           threads = listOf(
             thread("first", AgentThreadActivity.UNREAD, 100, title = "Same title"),
             thread("target", AgentThreadActivity.UNREAD, 200, title = "Same title"),
@@ -682,7 +682,7 @@ class AgentSessionsActivitySummaryTest {
 
     val target = AgentSessionsSystemNotificationTarget(
       path = "/work/project-a",
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       threadId = "target",
     )
 
@@ -697,7 +697,7 @@ class AgentSessionsActivitySummaryTest {
           path = "/work/project-a",
           name = "Project A",
           isOpen = true,
-          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
           threads = listOf(thread("existing", AgentThreadActivity.UNREAD, 100)),
         )
       ),
@@ -705,7 +705,7 @@ class AgentSessionsActivitySummaryTest {
 
     val target = AgentSessionsSystemNotificationTarget(
       path = "/work/project-a",
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       threadId = "missing",
     )
 
@@ -754,7 +754,7 @@ class AgentSessionsActivitySummaryTest {
           path = "/work/project-a",
           name = "Project A",
           isOpen = true,
-          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
           threads = threads.toList(),
         )
       ),
@@ -769,7 +769,7 @@ class AgentSessionsActivitySummaryTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             worktrees = listOf(
               AgentWorktree(
                 path = "/work/project-a-feature",
@@ -798,7 +798,7 @@ class AgentSessionsActivitySummaryTest {
       updatedAt = updatedAt,
       archived = false,
       activity = activity,
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       summaryActivity = summaryActivity,
     )
   }

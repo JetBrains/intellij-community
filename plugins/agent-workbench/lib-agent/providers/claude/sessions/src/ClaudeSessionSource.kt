@@ -7,7 +7,6 @@ import com.intellij.platform.ai.agent.claude.common.ClaudeSessionActivity
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionCost
-import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItemKind
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.core.session.AgentSessionThreadOutline
@@ -36,7 +35,7 @@ class ClaudeSessionSource internal constructor(
   private val calculateCost: (AgentSessionUsageSnapshot) -> AgentSessionCost,
   private val executableResolver: suspend () -> String = ClaudeCliSupport::resolveExecutableOrDefaultViaTerminalResolver,
   private val hookSettingsProvider: (String) -> String? = ClaudeHookBridge::createLaunchSettingsArgument,
-) : BaseAgentSessionSource(provider = AgentSessionProvider.CLAUDE) {
+) : BaseAgentSessionSource(provider = CLAUDE_AGENT_SESSION_PROVIDER) {
   constructor(
     backend: ClaudeSessionBackend = createDefaultClaudeSessionBackend(),
   ) : this(
@@ -276,7 +275,7 @@ class ClaudeSessionSource internal constructor(
         updatedAt = System.currentTimeMillis(),
         archived = false,
         activity = AgentThreadActivity.PROCESSING,
-        provider = AgentSessionProvider.CLAUDE,
+        provider = CLAUDE_AGENT_SESSION_PROVIDER,
       ),
       launchSpecOverride = launchSpec,
     )
@@ -343,7 +342,7 @@ private fun ClaudeBackendThread.toAgentSessionThread(
     title = title,
     updatedAt = updatedAt,
     archived = archived,
-    provider = AgentSessionProvider.CLAUDE,
+    provider = CLAUDE_AGENT_SESSION_PROVIDER,
     originBranch = gitBranch,
     activity = effectiveActivity(
       readTracker = readTracker,

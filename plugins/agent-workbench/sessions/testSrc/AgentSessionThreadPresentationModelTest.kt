@@ -18,13 +18,13 @@ class AgentSessionThreadPresentationModelTest {
 
     val changeSet = model.updateThread(
       path = "/work/project/",
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       threadId = " thread-1 ",
       title = "  Renamed\n\n  thread  ",
       activity = AgentThreadActivity.PROCESSING,
     )
 
-    val key = presentationKey("/work/project", AgentSessionProvider.CODEX, "thread-1")
+    val key = presentationKey("/work/project", AgentSessionProvider.from("codex"), "thread-1")
     assertThat(changeSet.changedKeys).containsExactly(key)
     assertThat(model.snapshot()[key]?.title).isEqualTo("Renamed thread")
     assertThat(model.snapshot()[key]?.activity).isEqualTo(AgentThreadActivity.PROCESSING)
@@ -35,7 +35,7 @@ class AgentSessionThreadPresentationModelTest {
     val model = AgentSessionThreadPresentationModel()
 
     val changeSet = model.updateActivityHints(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       updates = listOf(
         AgentSessionThreadActivityPresentationUpdate(
           path = "/work/project",
@@ -45,7 +45,7 @@ class AgentSessionThreadPresentationModelTest {
       ),
     )
 
-    val key = presentationKey("/work/project", AgentSessionProvider.CODEX, "thread-1")
+    val key = presentationKey("/work/project", AgentSessionProvider.from("codex"), "thread-1")
     assertThat(changeSet.changedKeys).containsExactly(key)
     assertThat(model.snapshot()[key]?.title).isEmpty()
     assertThat(model.snapshot()[key]?.activity).isEqualTo(AgentThreadActivity.PROCESSING)
@@ -56,7 +56,7 @@ class AgentSessionThreadPresentationModelTest {
     val model = AgentSessionThreadPresentationModel()
 
     model.updateActivityHints(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       updates = listOf(
         AgentSessionThreadActivityPresentationUpdate(
           path = "/work/project",
@@ -70,7 +70,7 @@ class AgentSessionThreadPresentationModelTest {
       ),
     )
 
-    val key = presentationKey("/work/project", AgentSessionProvider.CODEX, "thread-1")
+    val key = presentationKey("/work/project", AgentSessionProvider.from("codex"), "thread-1")
     val presentation = model.snapshot()[key]
     assertThat(presentation?.activityReport).isEqualTo(AgentThreadActivityReport(rowActivity = AgentThreadActivity.UNREAD, chromeActivity = null))
     assertThat(presentation?.updatedAt).isEqualTo(42L)
@@ -81,12 +81,12 @@ class AgentSessionThreadPresentationModelTest {
     val model = AgentSessionThreadPresentationModel()
 
     model.updateProviderSnapshot(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       authoritativePaths = setOf("/work/project"),
       threadsByPath = mapOf(
         "/work/project" to listOf(
           threadModel(
-            provider = AgentSessionProvider.CODEX,
+            provider = AgentSessionProvider.from("codex"),
             id = "thread-1",
             title = "Thread title",
             activity = AgentThreadActivity.NEEDS_INPUT,
@@ -97,7 +97,7 @@ class AgentSessionThreadPresentationModelTest {
     )
 
     model.updateActivityHints(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       updates = listOf(
         AgentSessionThreadActivityPresentationUpdate(
           path = "/work/project",
@@ -108,7 +108,7 @@ class AgentSessionThreadPresentationModelTest {
       ),
     )
 
-    val key = presentationKey("/work/project", AgentSessionProvider.CODEX, "thread-1")
+    val key = presentationKey("/work/project", AgentSessionProvider.from("codex"), "thread-1")
     val presentation = model.snapshot()[key]
     assertThat(presentation?.activity).isEqualTo(AgentThreadActivity.NEEDS_INPUT)
     assertThat(presentation?.updatedAt).isEqualTo(100L)
@@ -119,7 +119,7 @@ class AgentSessionThreadPresentationModelTest {
     val model = AgentSessionThreadPresentationModel()
 
     model.updateActivityHints(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       updates = listOf(
         AgentSessionThreadActivityPresentationUpdate(
           path = "/work/project",
@@ -131,12 +131,12 @@ class AgentSessionThreadPresentationModelTest {
     )
 
     model.updateProviderSnapshot(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       authoritativePaths = setOf("/work/project"),
       threadsByPath = mapOf(
         "/work/project" to listOf(
           threadModel(
-            provider = AgentSessionProvider.CODEX,
+            provider = AgentSessionProvider.from("codex"),
             id = "thread-1",
             title = "Thread title",
             activity = AgentThreadActivity.READY,
@@ -146,7 +146,7 @@ class AgentSessionThreadPresentationModelTest {
       ),
     )
 
-    val key = presentationKey("/work/project", AgentSessionProvider.CODEX, "thread-1")
+    val key = presentationKey("/work/project", AgentSessionProvider.from("codex"), "thread-1")
     val presentation = model.snapshot()[key]
     assertThat(presentation?.title).isEqualTo("Thread title")
     assertThat(presentation?.activity).isEqualTo(AgentThreadActivity.REVIEWING)
@@ -156,35 +156,35 @@ class AgentSessionThreadPresentationModelTest {
   @Test
   fun updateProviderSnapshotFiltersProviderAndRemovesMissingAuthoritativeThreads() {
     val model = AgentSessionThreadPresentationModel()
-    val removedKey = presentationKey("/work/project", AgentSessionProvider.CODEX, "removed")
+    val removedKey = presentationKey("/work/project", AgentSessionProvider.from("codex"), "removed")
     model.updateThread(
       path = "/work/project",
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       threadId = "removed",
       title = "Removed",
       activity = AgentThreadActivity.READY,
     )
 
     val changeSet = model.updateProviderSnapshot(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       authoritativePaths = setOf("/work/project"),
       threadsByPath = mapOf(
         "/work/project" to listOf(
           threadModel(
-            AgentSessionProvider.CODEX,
+            AgentSessionProvider.from("codex"),
             "thread-1",
             "Codex thread",
             AgentThreadActivity.READY,
             summaryActivity = null,
             updatedAt = 10L,
           ),
-          threadModel(AgentSessionProvider.CLAUDE, "thread-2", "Claude thread", AgentThreadActivity.PROCESSING),
+          threadModel(AgentSessionProvider.from("claude"), "thread-2", "Claude thread", AgentThreadActivity.PROCESSING),
         )
       ),
     )
 
-    val codexKey = presentationKey("/work/project", AgentSessionProvider.CODEX, "thread-1")
-    val claudeKey = presentationKey("/work/project", AgentSessionProvider.CLAUDE, "thread-2")
+    val codexKey = presentationKey("/work/project", AgentSessionProvider.from("codex"), "thread-1")
+    val claudeKey = presentationKey("/work/project", AgentSessionProvider.from("claude"), "thread-2")
     assertThat(changeSet.changedKeys).containsExactly(codexKey)
     assertThat(changeSet.removedKeys).containsExactly(removedKey)
     assertThat(model.snapshot()).containsOnlyKeys(codexKey)

@@ -60,7 +60,7 @@ class JunieAwbMcpLocationContributorTest {
 
     val launchSpec = contributor(userHomePath = userHomePath).contribute(
       projectPath = projectPath.toString(),
-      provider = AgentSessionProvider.JUNIE,
+      provider = AgentSessionProvider.from("junie"),
       sessionId = null,
       launchSpec = AgentSessionTerminalLaunchSpec(
         command = listOf("junie", "--skip-update-check"),
@@ -111,7 +111,7 @@ class JunieAwbMcpLocationContributorTest {
 
     val launchSpec = contributor(mcpUrl = null).contribute(
       projectPath = projectPath.toString(),
-      provider = AgentSessionProvider.JUNIE,
+      provider = AgentSessionProvider.from("junie"),
       sessionId = null,
       launchSpec = baseLaunchSpec,
     )
@@ -132,7 +132,7 @@ class JunieAwbMcpLocationContributorTest {
 
     val launchSpec = contributor(isDirectHttpEnabled = false).contribute(
       projectPath = projectPath.toString(),
-      provider = AgentSessionProvider.JUNIE,
+      provider = AgentSessionProvider.from("junie"),
       sessionId = null,
       launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("junie")),
     )
@@ -151,7 +151,7 @@ class JunieAwbMcpLocationContributorTest {
 
     val launchSpec = contributor().contribute(
       projectPath = tempDir.resolve("project").toString(),
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       sessionId = null,
       launchSpec = baseLaunchSpec,
     )

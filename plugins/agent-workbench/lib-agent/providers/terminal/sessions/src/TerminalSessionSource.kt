@@ -14,7 +14,7 @@ internal class TerminalSessionSource(
   private val stateService: TerminalSessionStateService,
 ) : AgentSessionSource {
   override val provider: AgentSessionProvider
-    get() = AgentSessionProvider.TERMINAL
+    get() = TERMINAL_AGENT_SESSION_PROVIDER
 
   override val supportsUpdates: Boolean
     get() = true

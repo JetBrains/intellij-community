@@ -6,7 +6,6 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchPromptBlockedReason
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchTelemetry
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchTelemetryEvent
-import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchTelemetryProvider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -30,7 +29,7 @@ class AgentPromptSubmitValidationDecisionsTest {
       ).forEach { messageKey ->
         reportPromptSubmitBlocked(
           validationErrorKey = messageKey,
-          provider = AgentSessionProvider.CODEX,
+          provider = AgentSessionProvider.from("codex"),
           launchMode = AgentSessionLaunchMode.YOLO,
         )
       }
@@ -38,37 +37,37 @@ class AgentPromptSubmitValidationDecisionsTest {
       assertThat(telemetryEvents).containsExactly(
         AgentWorkbenchTelemetryEvent(
           id = AgentWorkbenchTelemetry.PROMPT_SUBMIT_BLOCKED_EVENT_ID,
-          provider = AgentWorkbenchTelemetryProvider.CODEX,
+          provider = "codex",
           launchMode = AgentSessionLaunchMode.YOLO,
           blockedReason = AgentWorkbenchPromptBlockedReason.EMPTY_PROMPT,
         ),
         AgentWorkbenchTelemetryEvent(
           id = AgentWorkbenchTelemetry.PROMPT_SUBMIT_BLOCKED_EVENT_ID,
-          provider = AgentWorkbenchTelemetryProvider.CODEX,
+          provider = "codex",
           launchMode = AgentSessionLaunchMode.YOLO,
           blockedReason = AgentWorkbenchPromptBlockedReason.NO_PROVIDERS,
         ),
         AgentWorkbenchTelemetryEvent(
           id = AgentWorkbenchTelemetry.PROMPT_SUBMIT_BLOCKED_EVENT_ID,
-          provider = AgentWorkbenchTelemetryProvider.CODEX,
+          provider = "codex",
           launchMode = AgentSessionLaunchMode.YOLO,
           blockedReason = AgentWorkbenchPromptBlockedReason.PROVIDER_UNAVAILABLE,
         ),
         AgentWorkbenchTelemetryEvent(
           id = AgentWorkbenchTelemetry.PROMPT_SUBMIT_BLOCKED_EVENT_ID,
-          provider = AgentWorkbenchTelemetryProvider.CODEX,
+          provider = "codex",
           launchMode = AgentSessionLaunchMode.YOLO,
           blockedReason = AgentWorkbenchPromptBlockedReason.PROJECT_PATH,
         ),
         AgentWorkbenchTelemetryEvent(
           id = AgentWorkbenchTelemetry.PROMPT_SUBMIT_BLOCKED_EVENT_ID,
-          provider = AgentWorkbenchTelemetryProvider.CODEX,
+          provider = "codex",
           launchMode = AgentSessionLaunchMode.YOLO,
           blockedReason = AgentWorkbenchPromptBlockedReason.NO_LAUNCHER,
         ),
         AgentWorkbenchTelemetryEvent(
           id = AgentWorkbenchTelemetry.PROMPT_SUBMIT_BLOCKED_EVENT_ID,
-          provider = AgentWorkbenchTelemetryProvider.CODEX,
+          provider = "codex",
           launchMode = AgentSessionLaunchMode.YOLO,
           blockedReason = AgentWorkbenchPromptBlockedReason.EXISTING_TASK_NOT_SELECTED,
         ),
@@ -93,7 +92,7 @@ class AgentPromptSubmitValidationDecisionsTest {
       if (!retried) {
         reportPromptSubmitBlocked(
           validationErrorKey = "popup.error.project.path",
-          provider = AgentSessionProvider.CODEX,
+          provider = AgentSessionProvider.from("codex"),
           launchMode = AgentSessionLaunchMode.STANDARD,
         )
       }
@@ -111,7 +110,7 @@ class AgentPromptSubmitValidationDecisionsTest {
       resolveSubmitValidationErrorMessageKey(
         targetMode = PromptTargetMode.NEW_TASK,
         prompt = "   ",
-        selectedProvider = AgentSessionProvider.CODEX,
+        selectedProvider = AgentSessionProvider.from("codex"),
         isProviderCliAvailable = true,
         hasProjectPath = true,
         hasLauncher = true,
@@ -126,7 +125,7 @@ class AgentPromptSubmitValidationDecisionsTest {
       resolveSubmitValidationErrorMessageKey(
         targetMode = PromptTargetMode.EXISTING_TASK,
         prompt = "fix this",
-        selectedProvider = AgentSessionProvider.CODEX,
+        selectedProvider = AgentSessionProvider.from("codex"),
         isProviderCliAvailable = true,
         hasProjectPath = true,
         hasLauncher = true,
@@ -141,7 +140,7 @@ class AgentPromptSubmitValidationDecisionsTest {
       resolveSubmitValidationErrorMessageKey(
         targetMode = PromptTargetMode.EXISTING_TASK,
         prompt = "fix this",
-        selectedProvider = AgentSessionProvider.CODEX,
+        selectedProvider = AgentSessionProvider.from("codex"),
         isProviderCliAvailable = true,
         hasProjectPath = true,
         hasLauncher = true,

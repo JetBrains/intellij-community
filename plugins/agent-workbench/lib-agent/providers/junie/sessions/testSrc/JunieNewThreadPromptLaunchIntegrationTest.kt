@@ -14,6 +14,8 @@ import com.intellij.agent.workbench.prompt.ui.captureNewTaskPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.ScriptedSessionSource
 import com.intellij.agent.workbench.sessions.assertNewThreadPromptLaunchOpensNewChat
 import com.intellij.platform.ai.agent.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.platform.ai.agent.sessions.core.providers.withProvider
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -33,7 +35,7 @@ class JunieNewThreadPromptLaunchIntegrationTest {
       workingProjectPath = PROJECT_PATH,
     )
 
-    assertThat(request.provider).isEqualTo(AgentSessionProvider.JUNIE)
+    assertThat(request.provider).isEqualTo(AgentSessionProvider.from("junie"))
     assertThat(request.projectPath).isEqualTo(PROJECT_PATH)
     assertThat(request.launchMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
     assertThat(request.initialMessageRequest.prompt).isEqualTo("Implement the Junie flow")
@@ -169,7 +171,7 @@ private fun newThreadLaunchRequest(
   generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
 ): AgentPromptLaunchRequest {
   return AgentPromptLaunchRequest(
-    provider = AgentSessionProvider.JUNIE,
+    provider = AgentSessionProvider.from("junie"),
     projectPath = PROJECT_PATH,
     launchMode = AgentSessionLaunchMode.STANDARD,
     initialMessageRequest = AgentPromptInitialMessageRequest(
@@ -182,12 +184,12 @@ private fun newThreadLaunchRequest(
   )
 }
 
-private fun descriptor(cliVersion: JunieCliVersion? = JunieCliVersion(2030, 1)): JunieAgentSessionProviderDescriptor {
+private fun descriptor(cliVersion: JunieCliVersion? = JunieCliVersion(2030, 1)): AgentSessionProviderDescriptor {
   return JunieAgentSessionProviderDescriptor(
-    sessionSource = ScriptedSessionSource(provider = AgentSessionProvider.JUNIE),
+    sessionSource = ScriptedSessionSource(provider = AgentSessionProvider.from("junie")),
     executableResolver = { JunieCliSupport.JUNIE_COMMAND },
     cliInfoResolver = { JunieCliInfo(JunieCliSupport.JUNIE_COMMAND, cliVersion) },
-  )
+  ).withProvider(JUNIE_AGENT_SESSION_PROVIDER)
 }
 
 private const val PROJECT_PATH: String = "/work/project-a"

@@ -30,12 +30,12 @@ class AgentSessionsSwingTreeStatePersistenceTest {
           path = "/work/project-open",
           name = "Project Open",
           isOpen = true,
-          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),),
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),),
         AgentProjectSessions(
           path = "/work/project-error",
           name = "Project Error",
           isOpen = false,
-          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
           errorMessage = "Failed",
         ),
       ),
@@ -56,7 +56,7 @@ class AgentSessionsSwingTreeStatePersistenceTest {
           path = "/work/project-a",
           name = "Project A",
           isOpen = false,
-          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
           worktrees = listOf(
             AgentWorktree(
               path = "/work/project-a-feature",
@@ -81,12 +81,12 @@ class AgentSessionsSwingTreeStatePersistenceTest {
       path = "/work/project-a",
       name = "Project A",
       isOpen = true,
-      providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),)
+      providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),)
     val projectB = AgentProjectSessions(
       path = "/work/project-b",
       name = "Project B",
       isOpen = false,
-      providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+      providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
       errorMessage = "Failed",
     )
     val previousModel = buildSessionTreeModel(
@@ -129,7 +129,7 @@ class AgentSessionsSwingTreeStatePersistenceTest {
     val selectedTreeId = SessionTreeId.WorktreeSubAgent(
       projectPath = "/work/project-a",
       worktreePath = "/work/project-a-feature",
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       threadId = "thread-1",
       subAgentId = "sub-1",
     )
@@ -141,7 +141,7 @@ class AgentSessionsSwingTreeStatePersistenceTest {
         SessionTreeId.WorktreeThread(
           projectPath = "/work/project-a",
           worktreePath = "/work/project-a-feature",
-          provider = AgentSessionProvider.CODEX,
+          provider = AgentSessionProvider.from("codex"),
           threadId = "thread-1",
         ),
       )
@@ -156,14 +156,14 @@ class AgentSessionsSwingTreeStatePersistenceTest {
           path = "/work/project-a",
           name = "Project A",
           isOpen = false,
-          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
           threads = listOf(
             AgentSessionThread(
               id = "thread-a",
               title = "Thread A",
               updatedAt = 100,
               archived = false,
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
             )
           ),
         ),
@@ -171,7 +171,7 @@ class AgentSessionsSwingTreeStatePersistenceTest {
           path = "/work/project-b",
           name = "Project B",
           isOpen = false,
-          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
           worktrees = listOf(
             AgentWorktree(
               path = "/work/project-b-feature",
@@ -184,7 +184,7 @@ class AgentSessionsSwingTreeStatePersistenceTest {
                   title = "Thread B",
                   updatedAt = 200,
                   archived = false,
-                  provider = AgentSessionProvider.CODEX,
+                  provider = AgentSessionProvider.from("codex"),
                   subAgents = listOf(AgentSubAgent(id = "sub-b", name = "Sub B")),
                 )
               ),
@@ -199,11 +199,11 @@ class AgentSessionsSwingTreeStatePersistenceTest {
       ),
       treeUiState = InMemorySessionTreeUiState(),
     )
-    val selectedProjectThread = SessionTreeId.Thread("/work/project-a", AgentSessionProvider.CODEX, "thread-a")
+    val selectedProjectThread = SessionTreeId.Thread("/work/project-a", AgentSessionProvider.from("codex"), "thread-a")
     val selectedWorktreeSubAgent = SessionTreeId.WorktreeSubAgent(
       projectPath = "/work/project-b",
       worktreePath = "/work/project-b-feature",
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       threadId = "thread-b",
       subAgentId = "sub-b",
     )
@@ -223,7 +223,7 @@ class AgentSessionsSwingTreeStatePersistenceTest {
       SessionTreeId.WorktreeThread(
         projectPath = "/work/project-b",
         worktreePath = "/work/project-b-feature",
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         threadId = "thread-b",
       ),
     )

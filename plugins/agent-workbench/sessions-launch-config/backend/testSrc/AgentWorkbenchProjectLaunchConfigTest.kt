@@ -39,7 +39,7 @@ class AgentWorkbenchProjectLaunchConfigTest {
       environmentVariables = mapOf("PATH" to targetPathEntries.joinToString(":")),
     ).augmentBlocking(
       projectPath = projectDir.toString(),
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       launchSpec = AgentSessionTerminalLaunchSpec(
         command = listOf("codex", "resume", "thread-1"),
         envVariables = mapOf("DISABLE_AUTOUPDATER" to "1"),
@@ -75,7 +75,7 @@ class AgentWorkbenchProjectLaunchConfigTest {
       environmentVariables = mapOf("PATH" to targetPath.toString()),
     ).augmentBlocking(
       projectPath = projectDir.toString(),
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       launchSpec = AgentSessionTerminalLaunchSpec(
         command = listOf("codex", "resume", "thread-1"),
         envVariables = mapOf("PATH" to providerPath.toString()),
@@ -106,7 +106,7 @@ class AgentWorkbenchProjectLaunchConfigTest {
         environmentVariables = mapOf("PATH" to tempDir.resolve("base-path").toString()),
       ).augmentBlocking(
         projectPath = projectDir.toString(),
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         launchSpec = launchSpec,
       )
     ).isEqualTo(launchSpec)
@@ -127,7 +127,7 @@ class AgentWorkbenchProjectLaunchConfigTest {
       environmentVariables = mapOf("PATH" to tempDir.resolve("base-path").toString()),
     ).augmentBlocking(
       projectPath = projectDir.toString(),
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("codex", "resume", "thread-1")),
     )
 
@@ -148,7 +148,7 @@ class AgentWorkbenchProjectLaunchConfigTest {
       environmentVariables = mapOf("PATH" to tempDir.resolve("base-path").toString()),
     ).augmentBlocking(
       projectPath = projectDir.toString(),
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("codex", "resume", "thread-1")),
     )
 
@@ -168,7 +168,7 @@ class AgentWorkbenchProjectLaunchConfigTest {
       environmentVariables = windowsEnvironment(targetPathValue),
     ).augmentBlocking(
       projectPath = projectDir.toString(),
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("claude", "resume", "thread-1")),
     )
 
@@ -204,7 +204,7 @@ class AgentWorkbenchProjectLaunchConfigTest {
       environmentVariables = mapOf("PATH" to basePath.toString()),
     ).augmentBlocking(
       projectPath = projectDir.toString(),
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("codex", "resume", "thread-1")),
     )
 
@@ -223,7 +223,7 @@ class AgentWorkbenchProjectLaunchConfigTest {
       projectDir,
       shared = testLaunchConfig(),
       providers = mapOf(
-        AgentSessionProvider.CLAUDE to testLaunchConfig(
+        AgentSessionProvider.from("claude") to testLaunchConfig(
           pathPrepend = providerPathPrepend,
           commandShimTarget = providerCommandShimTarget,
         )
@@ -240,7 +240,7 @@ class AgentWorkbenchProjectLaunchConfigTest {
       environmentVariables = mapOf("PATH" to basePath.toString()),
     ).augmentBlocking(
       projectPath = projectDir.toString(),
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("claude", "resume", "thread-1")),
     )
 
@@ -280,7 +280,7 @@ class AgentWorkbenchProjectLaunchConfigTest {
       environmentVariables = mapOf("PATH" to basePath.toString()),
     ).augmentBlocking(
       projectPath = projectDir.toString(),
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("codex", "resume", "thread-1")),
     )
 
@@ -310,7 +310,7 @@ class AgentWorkbenchProjectLaunchConfigTest {
 
     val firstLaunchSpec = augmenter.augmentBlocking(
       projectPath = projectDir.toString(),
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       launchSpec = baseLaunchSpec,
     )
 
@@ -324,7 +324,7 @@ class AgentWorkbenchProjectLaunchConfigTest {
 
     val secondLaunchSpec = augmenter.augmentBlocking(
       projectPath = projectDir.toString(),
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       launchSpec = baseLaunchSpec,
     )
 
@@ -353,7 +353,7 @@ class AgentWorkbenchProjectLaunchConfigTest {
     val cache = AgentWorkbenchProjectLaunchConfigCache()
 
     assertThat(cache.isRefreshVfsOnStatusUpdatesEnabled(projectDir)).isFalse()
-    assertThat(cache.getProviderConfig(projectRoot = projectDir, provider = AgentSessionProvider.CODEX)).isNull()
+    assertThat(cache.getProviderConfig(projectRoot = projectDir, provider = AgentSessionProvider.from("codex"))).isNull()
     assertThat(AgentWorkbenchProjectRuntimeConfigProviderImpl(cache).isRefreshVfsOnStatusUpdatesEnabled(projectDir.toString())).isFalse()
   }
 
@@ -393,7 +393,7 @@ class AgentWorkbenchProjectLaunchConfigTest {
       },
     ).augmentBlocking(
       projectPath = projectDir.toString(),
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("codex", "resume", "thread-1")),
     )
 

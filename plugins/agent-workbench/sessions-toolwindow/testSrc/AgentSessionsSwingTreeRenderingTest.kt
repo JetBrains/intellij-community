@@ -32,11 +32,11 @@ class AgentSessionsSwingTreeRenderingTest {
           path = projectPath,
           name = "Project A",
           isOpen = true,
-          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
           errorMessage = "Failed to load sessions",
           providerWarnings = listOf(
             AgentSessionProviderWarning(
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
               message = "provider warning",
             )
           ),
@@ -60,10 +60,10 @@ class AgentSessionsSwingTreeRenderingTest {
           path = projectPath,
           name = "Project A",
           isOpen = true,
-          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
           providerWarnings = listOf(
             AgentSessionProviderWarning(
-              provider = AgentSessionProvider.CLAUDE,
+              provider = AgentSessionProvider.from("claude"),
               message = "CLI not available",
             )
           ),
@@ -75,7 +75,7 @@ class AgentSessionsSwingTreeRenderingTest {
     )
 
     val projectNode = requireNotNull(model.entriesById[SessionTreeId.Project(projectPath)])
-    assertThat(projectNode.childIds.any { it == SessionTreeId.Warning(projectPath, AgentSessionProvider.CLAUDE) }).isTrue()
+    assertThat(projectNode.childIds.any { it == SessionTreeId.Warning(projectPath, AgentSessionProvider.from("claude")) }).isTrue()
     assertThat(projectNode.childIds.any { it == SessionTreeId.Empty(projectPath) }).isFalse()
   }
 
@@ -88,19 +88,19 @@ class AgentSessionsSwingTreeRenderingTest {
           path = projectPath,
           name = "Project A",
           isOpen = true,
-          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
-          providersWithUnknownThreadCount = setOf(AgentSessionProvider.CODEX),
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+          providersWithUnknownThreadCount = setOf(AgentSessionProvider.from("codex")),
           threads = listOf(
             AgentSessionThread(id = "thread-1",
                                title = "Thread 1",
                                updatedAt = 100,
                                archived = false,
-                               provider = AgentSessionProvider.CODEX),
+                               provider = AgentSessionProvider.from("codex")),
             AgentSessionThread(id = "thread-2",
                                title = "Thread 2",
                                updatedAt = 90,
                                archived = false,
-                               provider = AgentSessionProvider.CODEX),
+                               provider = AgentSessionProvider.from("codex")),
           ),
         )
       ),
@@ -124,11 +124,11 @@ class AgentSessionsSwingTreeRenderingTest {
         AgentProjectSessions(path = firstPath,
                              name = "Project A",
                              isOpen = true,
-                             providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX)),
+                             providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex"))),
         AgentProjectSessions(path = secondPath,
                              name = "Project A",
                              isOpen = true,
-                             providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX)),
+                             providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex"))),
       ),
       visibleClosedProjectCount = Int.MAX_VALUE,
       visibleThreadCounts = emptyMap(),
@@ -153,12 +153,12 @@ class AgentSessionsSwingTreeRenderingTest {
                              name = "Project A",
                              branch = "feature-a",
                              isOpen = true,
-                             providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX)),
+                             providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex"))),
         AgentProjectSessions(path = "/tmp/project-a",
                              name = "Project A",
                              branch = "feature-b",
                              isOpen = true,
-                             providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX)),
+                             providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex"))),
       ),
       visibleClosedProjectCount = Int.MAX_VALUE,
       visibleThreadCounts = emptyMap(),
@@ -208,7 +208,7 @@ class AgentSessionsSwingTreeRenderingTest {
             path = "/work/project-loading",
             name = "Loading Project",
             isOpen = false,
-            providerLoadStates = loadingProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadingProviderStates(AgentSessionProvider.from("codex")),
           ),
         ),
         lastUpdatedAt = nowMs,
@@ -234,6 +234,6 @@ private fun archivedThread(id: String, updatedAt: Long): AgentSessionThread {
     title = id,
     updatedAt = updatedAt,
     archived = true,
-    provider = AgentSessionProvider.CODEX,
+    provider = AgentSessionProvider.from("codex"),
   )
 }

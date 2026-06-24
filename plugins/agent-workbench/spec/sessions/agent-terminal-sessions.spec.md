@@ -24,7 +24,7 @@ Date: 2026-05-24
 Agent Workbench can start a regular IDE Terminal shell from the same new-thread affordances used for agent providers. Terminal sessions are tracked as provider-backed sessions so users can reopen, rename, archive, and unarchive them from Agent Workbench.
 
 ## Requirements
-- Terminal is a first-class `AgentSessionProvider.TERMINAL` provider shown after Codex, Claude, Junie, and Pi.
+- Terminal is a first-class `AgentSessionProvider.from("terminal")` provider shown after Codex, Claude, Junie, and Pi.
   [@test] ../../terminal/sessions/testSrc/TerminalAgentSessionProviderDescriptorTest.kt
 
 - New terminal-session launches must use the IDE Terminal default shell. Agent Chat terminal setup must not force `TerminalProcessType.NON_SHELL` or pass an explicit shell command for these launches.
@@ -60,7 +60,7 @@ Agent Workbench can start a regular IDE Terminal shell from the same new-thread 
 - New-thread UI and provider menus must remain provider-generic. Terminal-specific action text, tooltip text, menu description, and new-tab title must come from descriptor bundle keys.
   [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
 
-- Per-provider FUS telemetry tags exist for Codex, Claude, Junie, and Terminal; the generic launch path emits provider-tagged events without per-provider code in each descriptor.
+- FUS telemetry records provider ids through the shared provider validation rule; the generic launch path emits provider-tagged events without per-provider code in each descriptor.
 
 ## Testing / Local Run
 - `./tests.cmd --module intellij.platform.ai.agent.terminal.sessions.tests --test "com.intellij.platform.ai.agent.terminal.sessions.*Test"`

@@ -210,17 +210,14 @@ data class AgentPendingSessionMetadata(
   @JvmField val launchMode: String?,
 )
 
-interface AgentSessionProviderDescriptor {
-  val provider: AgentSessionProvider
+interface AgentSessionProviderImplementation {
   val displayNameKey: String
-  val displayNameFallback: String
-    get() = provider.value.replaceFirstChar { char ->
-      if (char.isLowerCase()) char.titlecase() else char.toString()
-    }
+  val displayNameFallback: String?
+    get() = null
   val cliDisplayNameKey: String
     get() = displayNameKey
-  val cliDisplayNameFallback: String
-    get() = displayNameFallback
+  val cliDisplayNameFallback: String?
+    get() = null
   val displayPriority: Int
     get() = Int.MAX_VALUE
   val newSessionLabelKey: String
@@ -456,13 +453,31 @@ interface AgentSessionProviderDescriptor {
 
   /**
    * CLI-arg marker that distinguishes a YOLO-mode launch from a standard one for this provider.
-   * The default [resolvePendingSessionMetadata] implementation looks for this token in
+   * The default [AgentSessionProviderDescriptor.resolvePendingSessionMetadata] implementation looks for this token in
    * [AgentSessionTerminalLaunchSpec.command] to label the launch mode. `null` (the default)
    * means YOLO is not distinguishable from the launch spec — every pending session is reported
    * as `"standard"`.
    */
   val pendingSessionLaunchYoloMarker: String?
     get() = null
+
+  fun createToolWindowNorthComponent(project: Project): JComponent? = null
+
+  fun shouldStripContextForPrompt(prompt: String): Boolean = false
+
+  fun isCliMissingError(throwable: Throwable): Boolean = false
+}
+
+interface AgentSessionProviderDescriptor : AgentSessionProviderImplementation {
+  val provider: AgentSessionProvider
+
+  override val displayNameFallback: String
+    get() = provider.value.replaceFirstChar { char ->
+      if (char.isLowerCase()) char.titlecase() else char.toString()
+    }
+
+  override val cliDisplayNameFallback: String
+    get() = displayNameFallback
 
   fun resolvePendingSessionMetadata(
     identity: String,
@@ -475,10 +490,6 @@ interface AgentSessionProviderDescriptor {
     val launchMode = if (yoloMarker != null && yoloMarker in launchSpec.command) "yolo" else "standard"
     return AgentPendingSessionMetadata(createdAtMs = System.currentTimeMillis(), launchMode = launchMode)
   }
-
-  fun createToolWindowNorthComponent(project: Project): JComponent? = null
-
-  fun isCliMissingError(throwable: Throwable): Boolean = false
 }
 
 data class AgentSessionTerminalLaunchSpec(

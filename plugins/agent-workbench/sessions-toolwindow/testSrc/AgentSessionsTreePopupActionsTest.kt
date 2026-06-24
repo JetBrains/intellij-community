@@ -106,12 +106,12 @@ class AgentSessionsTreePopupActionsTest {
     assertThat(projectEntryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_POPUP)
 
     val threadProject = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
-    val thread = thread(id = "thread-1", provider = AgentSessionProvider.CODEX)
+    val thread = thread(id = "thread-1", provider = AgentSessionProvider.from("codex"))
     val threadContext = popupContext(
       nodeId = SessionTreeId.WorktreeThread(
         projectPath = "/work/project-a",
         worktreePath = "/work/project-feature",
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         threadId = "thread-1",
       ),
       node = SessionTreeNode.Thread(project = threadProject, thread = thread),
@@ -129,13 +129,13 @@ class AgentSessionsTreePopupActionsTest {
   @Test
   fun pendingThreadRowsDoNotCreatePopupActionContext() {
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
-    val pendingThread = thread(id = "new-pending", provider = AgentSessionProvider.CODEX)
+    val pendingThread = thread(id = "new-pending", provider = AgentSessionProvider.from("codex"))
 
     val projectThreadContext = createAgentSessionsTreePopupActionContext(
       project = ProjectManager.getInstance().defaultProject,
       nodeId = SessionTreeId.Thread(
         projectPath = "/work/project-a",
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         threadId = "new-pending",
       ),
       node = SessionTreeNode.Thread(project = project, thread = pendingThread),
@@ -146,7 +146,7 @@ class AgentSessionsTreePopupActionsTest {
       nodeId = SessionTreeId.WorktreeThread(
         projectPath = "/work/project-a",
         worktreePath = "/work/project-a-feature",
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         threadId = "new-pending",
       ),
       node = SessionTreeNode.Thread(project = project, thread = pendingThread),
@@ -200,7 +200,7 @@ class AgentSessionsTreePopupActionsTest {
     var entryPoint: AgentWorkbenchEntryPoint? = null
     val archiveAction = AgentSessionsTreePopupArchiveThreadAction(
       resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
-      canArchiveProvider = { provider -> provider == AgentSessionProvider.CODEX },
+      canArchiveProvider = { provider -> provider == AgentSessionProvider.from("codex") },
       archiveThreads = { targets, capturedEntryPoint ->
         archivedTargets = targets
         entryPoint = capturedEntryPoint
@@ -210,21 +210,21 @@ class AgentSessionsTreePopupActionsTest {
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
     val codexTarget = ArchiveThreadTarget.Thread(
       path = "/work/project-a",
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       threadId = "codex-1",
     )
     val claudeTarget = ArchiveThreadTarget.Thread(
       path = "/work/project-a",
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       threadId = "claude-1",
     )
     val archiveContext = popupContext(
       nodeId = SessionTreeId.Thread(
         projectPath = "/work/project-a",
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         threadId = "codex-1",
       ),
-      node = SessionTreeNode.Thread(project = project, thread = thread(id = "codex-1", provider = AgentSessionProvider.CODEX)),
+      node = SessionTreeNode.Thread(project = project, thread = thread(id = "codex-1", provider = AgentSessionProvider.from("codex"))),
       archiveTargets = listOf(codexTarget, claudeTarget),
     )
     val archiveEvent = popupEvent(archiveAction, archiveContext)
@@ -239,10 +239,10 @@ class AgentSessionsTreePopupActionsTest {
     val unsupportedContext = popupContext(
       nodeId = SessionTreeId.Thread(
         projectPath = "/work/project-a",
-        provider = AgentSessionProvider.CLAUDE,
+        provider = AgentSessionProvider.from("claude"),
         threadId = "claude-1",
       ),
-      node = SessionTreeNode.Thread(project = project, thread = thread(id = "claude-1", provider = AgentSessionProvider.CLAUDE)),
+      node = SessionTreeNode.Thread(project = project, thread = thread(id = "claude-1", provider = AgentSessionProvider.from("claude"))),
       archiveTargets = listOf(claudeTarget),
     )
     val unsupportedEvent = popupEvent(archiveAction, unsupportedContext)
@@ -257,16 +257,16 @@ class AgentSessionsTreePopupActionsTest {
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
     val treeTarget = ArchiveThreadTarget.Thread(
       path = "/work/project-a",
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       threadId = "tree-1",
     )
     val treeContext = popupContext(
       nodeId = SessionTreeId.Thread(
         projectPath = "/work/project-a",
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         threadId = "tree-1",
       ),
-      node = SessionTreeNode.Thread(project = project, thread = thread(id = "tree-1", provider = AgentSessionProvider.CODEX)),
+      node = SessionTreeNode.Thread(project = project, thread = thread(id = "tree-1", provider = AgentSessionProvider.from("codex"))),
       archiveTargets = listOf(treeTarget),
     )
     val archiveAction = AgentSessionsTreePopupArchiveThreadAction(
@@ -289,30 +289,30 @@ class AgentSessionsTreePopupActionsTest {
     var unarchivedTargets: List<ArchiveThreadTarget>? = null
     val unarchiveAction = AgentSessionsTreePopupUnarchiveThreadAction(
       resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
-      canUnarchiveProvider = { provider -> provider == AgentSessionProvider.CODEX },
+      canUnarchiveProvider = { provider -> provider == AgentSessionProvider.from("codex") },
       unarchiveThreads = { targets -> unarchivedTargets = targets },
     )
 
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
     val codexTarget = ArchiveThreadTarget.Thread(
       path = "/work/project-a",
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       threadId = "codex-archived",
     )
     val claudeTarget = ArchiveThreadTarget.Thread(
       path = "/work/project-a",
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       threadId = "claude-archived",
     )
     val unarchiveContext = popupContext(
       nodeId = SessionTreeId.Thread(
         projectPath = "/work/project-a",
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         threadId = "codex-archived",
       ),
       node = SessionTreeNode.Thread(
         project = project,
-        thread = thread(id = "codex-archived", provider = AgentSessionProvider.CODEX, archived = true),
+        thread = thread(id = "codex-archived", provider = AgentSessionProvider.from("codex"), archived = true),
       ),
       unarchiveTargets = listOf(codexTarget, claudeTarget),
     )
@@ -327,12 +327,12 @@ class AgentSessionsTreePopupActionsTest {
     val unsupportedContext = popupContext(
       nodeId = SessionTreeId.Thread(
         projectPath = "/work/project-a",
-        provider = AgentSessionProvider.CLAUDE,
+        provider = AgentSessionProvider.from("claude"),
         threadId = "claude-archived",
       ),
       node = SessionTreeNode.Thread(
         project = project,
-        thread = thread(id = "claude-archived", provider = AgentSessionProvider.CLAUDE, archived = true),
+        thread = thread(id = "claude-archived", provider = AgentSessionProvider.from("claude"), archived = true),
       ),
       unarchiveTargets = listOf(claudeTarget),
     )
@@ -347,10 +347,10 @@ class AgentSessionsTreePopupActionsTest {
     val threadContext = popupContext(
       nodeId = SessionTreeId.Thread(
         projectPath = "/work/project-a",
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         threadId = "thread-1",
       ),
-      node = SessionTreeNode.Thread(project = project, thread = thread(id = "thread-1", provider = AgentSessionProvider.CODEX)),
+      node = SessionTreeNode.Thread(project = project, thread = thread(id = "thread-1", provider = AgentSessionProvider.from("codex"))),
     )
 
     val unsupported = AgentSessionsTreePopupRenameThreadAction(
@@ -378,13 +378,13 @@ class AgentSessionsTreePopupActionsTest {
     val subAgentContext = popupContext(
       nodeId = SessionTreeId.SubAgent(
         projectPath = "/work/project-a",
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         threadId = "thread-1",
         subAgentId = "sub-thread-1",
       ),
       node = SessionTreeNode.SubAgent(
         project = project,
-        thread = thread(id = "thread-1", provider = AgentSessionProvider.CODEX),
+        thread = thread(id = "thread-1", provider = AgentSessionProvider.from("codex")),
         subAgent = AgentSubAgent(id = "sub-thread-1", name = "Sub thread 1"),
       ),
     )
@@ -406,10 +406,10 @@ class AgentSessionsTreePopupActionsTest {
     val context = popupContext(
       nodeId = SessionTreeId.Thread(
         projectPath = "/work/project-a",
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         threadId = "thread-1",
       ),
-      node = SessionTreeNode.Thread(project = project, thread = thread(id = "thread-1", provider = AgentSessionProvider.CODEX)),
+      node = SessionTreeNode.Thread(project = project, thread = thread(id = "thread-1", provider = AgentSessionProvider.from("codex"))),
     )
     val target = context.target as com.intellij.platform.ai.agent.sessions.core.SessionActionTarget.Thread
     var promptedProjectName: String? = null
@@ -448,18 +448,18 @@ class AgentSessionsTreePopupActionsTest {
     val activeProfile = AgentPromptLaunchProfile(
       id = "user:careful-codex",
       name = "Careful Codex",
-      providerId = AgentSessionProvider.CODEX.value,
+      providerId = AgentSessionProvider.from("codex").value,
       launchMode = AgentSessionLaunchMode.STANDARD,
       generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
     )
     val codexBridge = TestAgentSessionProviderDescriptor(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
       cliAvailable = true,
       yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",
     )
     val claudeBridge = TestAgentSessionProviderDescriptor(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
     )
@@ -478,10 +478,10 @@ class AgentSessionsTreePopupActionsTest {
 
     val threadNode = SessionTreeNode.Thread(
       project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true),
-      thread = thread(id = "thread-1", provider = AgentSessionProvider.CODEX),
+      thread = thread(id = "thread-1", provider = AgentSessionProvider.from("codex")),
     )
     val hiddenContext = popupContext(
-      nodeId = SessionTreeId.Thread("/work/project-a", AgentSessionProvider.CODEX, "thread-1"),
+      nodeId = SessionTreeId.Thread("/work/project-a", AgentSessionProvider.from("codex"), "thread-1"),
       node = threadNode,
     )
     val hiddenEvent = popupEvent(group, hiddenContext)
@@ -531,7 +531,7 @@ class AgentSessionsTreePopupActionsTest {
     yoloAction.actionPerformed(popupEvent(yoloAction, projectContext))
 
     assertThat(launchedPath).isEqualTo("/work/project-a")
-    assertThat(launchedProfile?.providerId).isEqualTo(AgentSessionProvider.CODEX.value)
+    assertThat(launchedProfile?.providerId).isEqualTo(AgentSessionProvider.from("codex").value)
     assertThat(launchedProfile?.launchMode).isEqualTo(AgentSessionLaunchMode.YOLO)
     assertThat(launchedProfile?.kind).isEqualTo(AgentPromptLaunchProfileKind.BUILT_IN)
     assertThat(launchedProject).isEqualTo(projectContext.project)
@@ -547,17 +547,17 @@ class AgentSessionsTreePopupActionsTest {
     val unavailableProfile = AgentPromptLaunchProfile(
       id = "user:careful-claude",
       name = "Careful Claude",
-      providerId = AgentSessionProvider.CLAUDE.value,
+      providerId = AgentSessionProvider.from("claude").value,
       launchMode = AgentSessionLaunchMode.STANDARD,
     )
     val codexBridge = TestAgentSessionProviderDescriptor(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
       cliAvailable = true,
       yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",
     )
     val claudeBridge = TestAgentSessionProviderDescriptor(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = false,
     )
@@ -580,8 +580,8 @@ class AgentSessionsTreePopupActionsTest {
     val event = popupEvent(group, projectContext)
     projectContext.project.service<AgentSessionProviderAvailabilityService>().setAvailabilityForTest(
       mapOf(
-        AgentSessionProvider.CODEX to true,
-        AgentSessionProvider.CLAUDE to false,
+        AgentSessionProvider.from("codex") to true,
+        AgentSessionProvider.from("claude") to false,
       ),
     )
 
@@ -617,7 +617,7 @@ class AgentSessionsTreePopupActionsTest {
     var entryPoint: AgentWorkbenchEntryPoint? = null
     val fallbackProvider = AgentSessionProvider.from("fallback")
     val codexYoloOnlyBridge = TestAgentSessionProviderDescriptor(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportedModes = setOf(AgentSessionLaunchMode.YOLO),
       cliAvailable = true,
       yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",

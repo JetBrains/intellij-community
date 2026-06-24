@@ -22,7 +22,7 @@ internal class ClaudeAwbMcpConfigProviderContributor : AwbMcpConfigProviderContr
   override val filteredServerNames: Set<String> = SERVER_NAMES
 
   override fun contribute(provider: AgentSessionProvider): AwbMcpConfig? {
-    if (provider != AgentSessionProvider.CLAUDE) return null
+    if (provider != CLAUDE_AGENT_SESSION_PROVIDER) return null
     return AwbMcpConfig(
       mcpServerNames = SERVER_NAMES,
       buildCliArgs = { configFile ->

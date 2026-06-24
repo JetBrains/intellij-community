@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit
 class AgentWorkbenchProviderDescriptorKeysTest {
   @Test
   fun codexExposesGenericQuickStartKeys() {
-    val descriptor = descriptorFor(AgentSessionProvider.CODEX)
+    val descriptor = descriptorFor(AgentSessionProvider.from("codex"))
     assertEquals("toolwindow.action.new.session.codex", descriptor.newSessionLabelKey)
     assertEquals("toolwindow.action.new.session.codex", descriptor.quickStartLabelKey)
     assertEquals("action.AgentWorkbenchSessions.NewThreadQuick.text", descriptor.quickStartActionTextKey)
@@ -34,7 +34,7 @@ class AgentWorkbenchProviderDescriptorKeysTest {
 
   @Test
   fun claudeExposesGenericQuickStartKeys() {
-    val descriptor = descriptorFor(AgentSessionProvider.CLAUDE)
+    val descriptor = descriptorFor(AgentSessionProvider.from("claude"))
     assertEquals("toolwindow.action.new.session.claude", descriptor.newSessionLabelKey)
     assertEquals("toolwindow.action.new.session.claude", descriptor.quickStartLabelKey)
     assertEquals("action.AgentWorkbenchSessions.NewThreadQuick.text", descriptor.quickStartActionTextKey)
@@ -45,7 +45,7 @@ class AgentWorkbenchProviderDescriptorKeysTest {
 
   @Test
   fun junieExposesGenericQuickStartKeys() {
-    val descriptor = descriptorFor(AgentSessionProvider.JUNIE)
+    val descriptor = descriptorFor(AgentSessionProvider.from("junie"))
     assertEquals("toolwindow.action.new.session.junie", descriptor.newSessionLabelKey)
     assertEquals("toolwindow.action.new.session.junie", descriptor.quickStartLabelKey)
     assertEquals("action.AgentWorkbenchSessions.NewThreadQuick.text", descriptor.quickStartActionTextKey)
@@ -56,7 +56,7 @@ class AgentWorkbenchProviderDescriptorKeysTest {
 
   @Test
   fun terminalExposesTerminalSpecificQuickStartKeys() {
-    val descriptor = descriptorFor(AgentSessionProvider.TERMINAL)
+    val descriptor = descriptorFor(AgentSessionProvider.from("terminal"))
     assertEquals("toolwindow.action.new.session.terminal", descriptor.newSessionLabelKey)
     assertEquals("action.AgentWorkbenchSessions.NewTerminalSessionQuick.text", descriptor.quickStartActionTextKey)
     assertEquals("action.AgentWorkbenchSessions.NewTerminalSessionQuick.description", descriptor.quickStartActionDescriptionKey)

@@ -6,7 +6,6 @@ package com.intellij.platform.ai.agent.terminal.sessions
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
-import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalRestoreContext
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
@@ -197,7 +196,7 @@ private fun PersistedTerminalSessionState.toAgentSessionThread(): AgentSessionTh
     updatedAt = updatedAt,
     archived = archived,
     activity = AgentThreadActivity.READY,
-    provider = AgentSessionProvider.TERMINAL,
+    provider = TERMINAL_AGENT_SESSION_PROVIDER,
   )
 }
 

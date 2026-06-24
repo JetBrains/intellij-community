@@ -4,10 +4,9 @@ package com.intellij.platform.ai.agent.terminal.sessions
 // @spec community/plugins/agent-workbench/spec/sessions/agent-terminal-sessions.spec.md
 
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
-import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderImplementation
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalRestoreContext
@@ -23,10 +22,7 @@ internal class TerminalAgentSessionProviderDescriptor(
   private val stateService: TerminalSessionStateService = service(),
   override val sessionSource: AgentSessionSource = TerminalSessionSource(stateService),
   private val sessionIdGenerator: () -> String = { UUID.randomUUID().toString() },
-) : AgentSessionProviderDescriptor {
-  override val provider: AgentSessionProvider
-    get() = AgentSessionProvider.TERMINAL
-
+) : AgentSessionProviderImplementation {
   override val displayPriority: Int
     get() = 4
 

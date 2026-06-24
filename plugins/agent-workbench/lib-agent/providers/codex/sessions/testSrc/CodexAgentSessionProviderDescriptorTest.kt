@@ -639,7 +639,7 @@ private val PLAN_INITIAL_MESSAGE_PLAN: AgentInitialMessagePlan = AgentInitialMes
 private fun emptySource(): AgentSessionSource {
   return object : AgentSessionSource {
     override val provider: AgentSessionProvider
-      get() = AgentSessionProvider.CODEX
+      get() = AgentSessionProvider.from("codex")
 
     override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = emptyList()
 
