@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.diagnostic.VMOptions.MemoryKind
@@ -30,6 +30,7 @@ import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit.NANOSECONDS
 import kotlin.math.roundToInt
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
 internal class IdeHeartbeatEventReporter : ProjectActivity {
@@ -203,8 +204,8 @@ internal object UILatencyLogger : CounterUsagesCollector() {
     )
   }
 
-  fun logMainMenuLatency(startMs: Long) {
-    MAIN_MENU_LATENCY.log(System.currentTimeMillis() - startMs)
+  fun logMainMenuLatency(startNs: Long) {
+    MAIN_MENU_LATENCY.log((System.nanoTime() - startNs).nanoseconds.inWholeMilliseconds)
   }
 
   private val MEMORY_TYPE_FIELD = EventFields.Enum<MemoryKind>("type")
