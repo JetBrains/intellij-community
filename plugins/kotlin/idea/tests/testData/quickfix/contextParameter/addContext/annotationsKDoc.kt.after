@@ -4,8 +4,8 @@
 /**
  *
  */
-context(_: String)
 @Deprecated("use something else")
+context(_: String)
 fun foo() {
     bar()
 }

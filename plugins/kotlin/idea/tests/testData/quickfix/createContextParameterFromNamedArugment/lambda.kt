@@ -1,6 +1,7 @@
 // "Add context parameter to function" "true"
 // COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments
 // K2_ERROR: No parameter with name 'callback' found.
+// WITH_STDLIB
 
 fun f1() {}
 

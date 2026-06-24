@@ -3,13 +3,10 @@
 // K2_ERROR: No parameter with name 'ctx' found.
 class Ctx
 
-/** Important function. */
-@Suppress("unused")
-context(ctx: Ctx)
-fun f1() {}
+private fun f1() {}
 
 fun fdemo() {
-    f1(ctx = Ctx())
+    f1(ctx<caret> = Ctx())
 }
 
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddContextParameterFix$ForCalledFunction
