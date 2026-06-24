@@ -14,6 +14,9 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.xml.XmlFile
+import com.fasterxml.jackson.core.json.JsonReadFeature
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.json.JsonMapper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -45,7 +48,7 @@ class SplitModeApiRestrictionsService(
 
   companion object {
     private val LOG: Logger = logger<SplitModeApiRestrictionsService>()
-    private const val API_RESTRICTIONS_RESOURCE_PATH = "remotedevInspectionData/ApiRestrictions.json"
+    private const val API_RESTRICTIONS_RESOURCE_PATH = "remotedevInspectionData/ApiRestrictions.json5"
     private const val PREDEFINED_MODULE_KINDS_RESOURCE_PATH = "remotedevInspectionData/PredefinedModuleKinds.json"
     private const val BACKEND_API_ANNOTATION = "com.intellij.util.remdev.BackendApi"
     private const val FRONTEND_API_ANNOTATION = "com.intellij.util.remdev.FrontendApi"
@@ -105,6 +108,14 @@ class SplitModeApiRestrictionsService(
     ignoreUnknownKeys = true
     isLenient = true
   }
+  private val json5: ObjectMapper = JsonMapper.builder()
+    .enable(
+      JsonReadFeature.ALLOW_JAVA_COMMENTS,
+      JsonReadFeature.ALLOW_SINGLE_QUOTES,
+      JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES,
+      JsonReadFeature.ALLOW_TRAILING_COMMA,
+    )
+    .build()
 
   private val resourceReader = SplitModeInspectionResourceReader.getInstance(project)
   private val backgroundLoadScheduled = AtomicBoolean(false)
@@ -309,7 +320,8 @@ class SplitModeApiRestrictionsService(
       readMode = readMode,
     ) {
       override fun parse(text: String): RestrictionsLookup {
-        return buildApiRestrictionsLookup(json.decodeFromString<List<ApiRestriction>>(text))
+        val normalizedJson = json5.readTree(text).toString()
+        return buildApiRestrictionsLookup(json.decodeFromString<List<ApiRestriction>>(normalizedJson))
       }
 
       override fun getDefaultValue(): RestrictionsLookup {

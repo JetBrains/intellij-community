@@ -164,7 +164,7 @@
                  description="Automatically run JPS to Bazel conversion after applying a fix that touches runtime/compile dependencies"/>
 
     <registryKey key="devkit.split.mode.analysis.api.restrictions.source" defaultValue="[bundled*|project|project-or-bundled]"
-                 description="Source of ApiRestrictions.json for DevKit split-mode inspections."
+                 description="Source of ApiRestrictions.json5 for DevKit split-mode inspections."
                  restartRequired="true"/>
     <registryKey key="devkit.split.mode.analysis.predefined.module.kinds.source" defaultValue="[bundled*|project|project-or-bundled]"
                  description="Source of PredefinedModuleKinds.json for DevKit split-mode inspections."

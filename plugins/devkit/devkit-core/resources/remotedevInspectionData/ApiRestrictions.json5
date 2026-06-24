@@ -1,4 +1,18 @@
+// Split-mode API restrictions consumed by DevKit inspections.
+// JSON5 comments, single-quoted strings, unquoted field names, and trailing commas are supported.
+//
+// Entry structure:
+// {
+//   "apiName": "fully.qualified.ApiName",                        // Required, unique API identifier used by code inspections.
+//   "extensionPointNames": ["com.intellij.extensionPoint"],      // Optional. XML extension point names mapped to this API restriction.
+//   "targetModules": ["frontend", "backend", "shared"],          // Required, non-empty. Allowed values: "frontend", "backend", "shared", "monolith".
+//   "restrictionKind": "genericPlatformApi",                     // Required. Allowed values: "genericPlatformApi", "ui".
+//   "hint": "Extra guidance shown by the inspection"             // Optional. Added to the text user/agent sees when an error is reported by inspections
+// }
+//
+// APIs with "restrictionKind": "ui" are forbidden in modules with the backendWithNonUiApiPermit policy, others are allowed. These modules are rider and clion specific backend modules
 [
+  // frontend ui apis
   {"apiName": "com.intellij.openapi.wm.ToolWindowFactory", "extensionPointNames": ["com.intellij.toolWindow"], "targetModules": ["frontend"], "restrictionKind": "ui"},
   {"apiName": "com.intellij.openapi.wm.ToolWindow", "extensionPointNames": [], "targetModules": ["frontend"], "restrictionKind": "ui"},
   {"apiName": "com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider", "extensionPointNames": [], "targetModules": ["frontend"], "restrictionKind": "ui"},
@@ -20,6 +34,7 @@
   {"apiName": "com.intellij.openapi.editor.ex.FoldingListener", "extensionPointNames": [], "targetModules": ["frontend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.analysis.problemsView.toolWindow.ProblemsViewPanelProvider", "extensionPointNames": ["com.intellij.problemsViewPanelProvider"], "targetModules": ["frontend"], "restrictionKind": "ui"},
 
+  // frontend generic apis
   {"apiName": "com.intellij.openapi.editor.event.DocumentListener", "extensionPointNames": [], "targetModules": ["frontend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.openapi.editor.NonWriteAccessTypedHandler", "extensionPointNames": ["com.intellij.nonWriteAccessTypedHandler"], "targetModules": ["frontend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.notification.NotificationGroup", "extensionPointNames": [], "targetModules": ["frontend"], "restrictionKind": "genericPlatformApi"},
@@ -55,6 +70,7 @@
 
 
 
+  // backend generic apis
   {"apiName": "com.intellij.openapi.vfs.VirtualFileManager", "extensionPointNames": [], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.openapi.vfs.VfsUtil", "extensionPointNames": [], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.psi.stubs.StubIndex", "extensionPointNames": ["com.intellij.stubIndex"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
@@ -241,6 +257,7 @@
 
 
 
+  // shared generic apis
   {"apiName": "com.intellij.lang.ParserDefinition", "extensionPointNames": ["com.intellij.lang.parserDefinition"], "targetModules": ["shared"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.psi.FileViewProviderFactory", "extensionPointNames": ["com.intellij.lang.fileViewProviderFactory"], "targetModules": ["shared"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.lang.ASTFactory", "extensionPointNames": ["com.intellij.lang.ast.factory", "lang.ast.factory"], "targetModules": ["shared"], "restrictionKind": "genericPlatformApi"},
@@ -281,6 +298,7 @@
 
 
 
+  // backend or shared generic apis - ideally shared (better UX), but depending on implementation may require resolve, so backend is also allowed
   {"apiName": "com.intellij.codeInsight.editorActions.CopyPastePostProcessor", "extensionPointNames": ["com.intellij.copyPastePostProcessor"], "targetModules": ["backend", "shared"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.codeInsight.editorActions.CopyPastePreProcessor", "extensionPointNames": ["com.intellij.copyPastePreProcessor"], "targetModules": ["backend", "shared"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.codeInsight.editorActions.PreserveIndentOnPasteBean", "extensionPointNames": ["com.intellij.preserveIndentOnPaste"], "targetModules": ["backend", "shared"], "restrictionKind": "genericPlatformApi"},
@@ -300,6 +318,8 @@
 
 
 
+  // frontend or backend generic apis - suggested to be explicitly registered in a dedicated module type to make sure the developer understands where the code is going to be executed.
+  // example: shared plugin loading listener with logic touching VFS will not effectively work in frontend, so either there must be two different implementations, or a single registered where the necessary resources (VFS) exist
   {"apiName": "com.intellij.openapi.util.registry.RegistryValueListener", "extensionPointNames": [], "targetModules": ["frontend", "backend"], "restrictionKind": "genericPlatformApi", "hint": "Registry values are different on frontend and backend, prefer listening to them explicitly in desired IDE part"},
   {"apiName": "com.intellij.ide.plugins.DynamicPluginListener", "extensionPointNames": [], "targetModules": ["frontend", "backend"], "restrictionKind": "genericPlatformApi", "hint": "Plugin lists are different on frontend and backend, prefer listening to them explicitly in desired IDE part"},
   {"apiName": "com.intellij.openapi.options.Configurable", "extensionPointNames": ["com.intellij.applicationConfigurable", "com.intellij.projectConfigurable"], "targetModules": ["frontend", "backend"], "restrictionKind": "genericPlatformApi"},
@@ -308,7 +328,7 @@
 
 
 
-  {"apiName": "com.intellij.psi.codeStyle.arrangement.std.ArrangementUiComponent.Factory", "extensionPointNames": ["com.intellij.rearranger.ui"], "targetModules": ["frontend", "shared"], "restrictionKind": "genericPlatformApi", "hint": "Language supporting extensions belong to shared, if the language supports injections. Otherwise frontend."},
+  // frontend or shared generic apis
   {"apiName": "com.intellij.openapi.options.colors.ColorSettingsPage", "extensionPointNames": ["com.intellij.colorSettingsPage"], "targetModules": ["frontend", "shared"], "restrictionKind": "genericPlatformApi", "hint": "Language supporting extensions belong to shared, if the language supports injections. Otherwise frontend."},
   {"apiName": "com.intellij.application.options.colors.ColorAndFontPanelFactory", "extensionPointNames": ["com.intellij.colorAndFontPanelFactory"], "targetModules": ["frontend", "shared"], "restrictionKind": "genericPlatformApi", "hint": "Language supporting extensions belong to shared, if the language supports injections. Otherwise frontend."},
   {"apiName": "com.intellij.psi.codeStyle.CodeStyleSettingsProvider", "extensionPointNames": ["com.intellij.codeStyleSettingsProvider"], "targetModules": ["frontend", "shared"], "restrictionKind": "genericPlatformApi", "hint": "Language supporting extensions belong to shared, if the language supports injections. Otherwise frontend."},

@@ -7,7 +7,7 @@ import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRest
 import org.junit.Assert
 
 private const val API_RESTRICTIONS_PROJECT_RELATIVE_PATH =
-  "community/plugins/devkit/devkit-core/resources/remotedevInspectionData/ApiRestrictions.json"
+  "community/plugins/devkit/devkit-core/resources/remotedevInspectionData/ApiRestrictions.json5"
 
 internal class SplitModeApiRestrictionsSourceModeTest : BasePlatformTestCase() {
   fun testProjectApiRestrictionsOverrideBundledListWhenProjectModeEnabled() {
@@ -40,9 +40,11 @@ internal class SplitModeApiRestrictionsSourceModeTest : BasePlatformTestCase() {
     withApiRestrictionsSourceMode(
       "project",
       """
+        // Project-mode restrictions may use JSON5 comments.
         [
-          {"apiName": "custom.split.mode.ui.api", "targetModules": ["frontend"], "restrictionKind": "ui"},
-          {"apiName": "custom.split.mode.generic.api", "targetModules": ["frontend"], "restrictionKind": "genericPlatformApi"}
+          {apiName: 'custom.split.mode.ui.api', targetModules: ['frontend'], restrictionKind: 'ui'},
+          /* Generic platform APIs may be explicitly marked as non-UI restrictions. */
+          {apiName: 'custom.split.mode.generic.api', targetModules: ['frontend'], restrictionKind: 'genericPlatformApi'},
         ]
       """.trimIndent(),
     ) { service ->
