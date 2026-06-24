@@ -176,6 +176,12 @@
       <keyboard-shortcut keymap="$default" first-keystroke="SPACE"/>
     </action>
 
+    <action id="UniversalFileChooser.FocusPath" class="com.intellij.openapi.actionSystem.EmptyAction">
+      <keyboard-shortcut keymap="$default" first-keystroke="control L"/>
+      <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta L"/>
+      <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta L"/>
+    </action>
+
     <action id="SegmentedButton-left" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorLeft"/>
     <action id="SegmentedButton-right" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorRight"/>
 

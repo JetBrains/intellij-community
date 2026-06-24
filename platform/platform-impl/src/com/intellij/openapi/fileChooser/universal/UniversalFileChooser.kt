@@ -22,6 +22,7 @@ import com.intellij.openapi.fileChooser.PathChooserDialog
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor.MountStatus
 import com.intellij.openapi.observable.util.whenDisposed
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComponentValidator
@@ -254,6 +255,19 @@ object UniversalFileChooser {
       disposable.whenDisposed {
         scope.cancel()
       }
+
+      registerFocusPathAction(disposable)
+    }
+
+    private fun registerFocusPathAction(disposable: Disposable) {
+      val action = ActionManager.getInstance().getAction("UniversalFileChooser.FocusPath") ?: return
+      val shortcutSet = action.shortcutSet
+      if (shortcutSet.shortcuts.isEmpty()) return
+      object : DumbAwareAction() {
+        override fun actionPerformed(e: AnActionEvent) {
+          getActiveFileView()?.focusPathField()
+        }
+      }.registerCustomShortcutSet(shortcutSet, this, disposable)
     }
 
     private fun createTopToolbar(): Pair<ActionToolbar, DefaultActionGroup> {
@@ -896,6 +910,12 @@ object UniversalFileChooser {
 
       private fun focusTree() {
         fileTree.getTree().requestFocusInWindow()
+      }
+
+      fun focusPathField() {
+        if (!pathTextField.isShowing) return
+        pathTextField.requestFocusInWindow()
+        pathTextField.selectAll()
       }
 
       private fun navigateToTextFieldPath() {
