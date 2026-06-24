@@ -1157,8 +1157,7 @@ object PyCallExpressionHelper {
     return analyzeArguments(arguments, parameters, context)
   }
 
-  @JvmStatic
-  fun analyzeArguments(
+  private fun analyzeArguments(
     arguments: List<PyExpression>,
     parameters: List<PyCallableParameter>,
     context: TypeEvalContext,
