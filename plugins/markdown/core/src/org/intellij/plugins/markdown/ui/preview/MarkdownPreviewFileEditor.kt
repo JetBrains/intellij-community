@@ -40,7 +40,6 @@ import kotlinx.coroutines.launch
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettings
-import org.intellij.plugins.markdown.ui.preview.jcef.MarkdownJCEFHtmlPanel
 import org.intellij.plugins.markdown.util.MarkdownPluginScope
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.AWTEvent
@@ -356,6 +355,6 @@ class MarkdownPreviewFileEditor(
     val PREVIEW_BROWSER: Key<WeakReference<MarkdownHtmlPanel>> = Key.create("PREVIEW_BROWSER")
 
     internal val PREVIEW_POPUP_POINT: DataKey<RelativePoint> = DataKey.create("PREVIEW_POPUP_POINT")
-    internal val PREVIEW_JCEF_PANEL: DataKey<WeakReference<MarkdownJCEFHtmlPanel>> = DataKey.create("PREVIEW_JCEF_PANEL")
+    internal val PREVIEW_BROWSER_ACTIONS: DataKey<WeakReference<MarkdownPreviewBrowserActions>> = DataKey.create("PREVIEW_BROWSER_ACTIONS")
   }
 }

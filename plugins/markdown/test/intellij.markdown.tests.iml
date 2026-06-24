@@ -9,6 +9,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.markdown" />
+    <orderEntry type="module" module-name="intellij.markdown.jcef" />
     <orderEntry type="module" module-name="intellij.markdown.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.markdown.java" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" />
@@ -47,6 +48,7 @@
     <orderEntry type="module" module-name="intellij.platform.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jsoup" />
     <orderEntry type="module" module-name="intellij.libraries.jcef" />
+    <orderEntry type="module" module-name="intellij.platform.ui.jcef" />
     <orderEntry type="module" module-name="intellij.jcef.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />

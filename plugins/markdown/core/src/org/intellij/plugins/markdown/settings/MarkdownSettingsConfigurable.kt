@@ -54,13 +54,14 @@ import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunner
 import org.intellij.plugins.markdown.settings.MarkdownSettingsUtil.belongsToTheProject
 import org.intellij.plugins.markdown.settings.pandoc.PandocSettingsPanel
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
+import org.intellij.plugins.markdown.ui.preview.PreviewLAFThemeStyles
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 import javax.swing.DefaultComboBoxModel
 import kotlin.io.path.isDirectory
 import kotlin.io.path.notExists
 
-internal class MarkdownSettingsConfigurable(private val project: Project): BoundSearchableConfigurable(
+internal class MarkdownSettingsConfigurable(private val project: Project) : BoundSearchableConfigurable(
   MarkdownBundle.message("markdown.settings.name"),
   MarkdownBundle.message("markdown.settings.name"),
   _id = ID
@@ -319,7 +320,7 @@ internal class MarkdownSettingsConfigurable(private val project: Project): Bound
       val extensionsSettings = MarkdownExtensionsSettings.getInstance()
       val extensionCheckBox = checkBox(text = extension.displayName).bindSelected(
         { extensionsSettings.extensionsEnabledState[extension.id] ?: false },
-        { extensionsSettings.extensionsEnabledState[extension.id] = it}
+        { extensionsSettings.extensionsEnabledState[extension.id] = it }
       ).gap(RightGap.SMALL)
       extensionCheckBox.enabled((extension as? MarkdownExtensionWithExternalFiles)?.isAvailable ?: true)
         .contextHelp(extension.description)
@@ -397,6 +398,6 @@ internal class MarkdownSettingsConfigurable(private val project: Project): Bound
       }
     }
 
-    val fontSizeOptions = listOf(8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72)
+    val fontSizeOptions: List<Int> = PreviewLAFThemeStyles.fontSizeOptions
   }
 }
