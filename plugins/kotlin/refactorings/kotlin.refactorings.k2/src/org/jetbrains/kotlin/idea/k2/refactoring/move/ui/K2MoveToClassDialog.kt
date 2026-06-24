@@ -2,17 +2,21 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move.ui
 
 import com.intellij.ide.util.TreeJavaClassChooserDialog
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.ui.ColoredListCellRenderer
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
@@ -21,6 +25,7 @@ import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.toMutableProperty
+import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
@@ -34,10 +39,12 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import java.awt.Dimension
 import java.awt.event.ItemEvent
+import java.util.concurrent.Callable
 import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.ListSelectionModel
 import javax.swing.ScrollPaneConstants
+import javax.swing.event.DocumentEvent
 
 @ApiStatus.Internal
 class K2MoveToClassDialog(
@@ -48,6 +55,7 @@ class K2MoveToClassDialog(
 
     companion object {
         private const val PREFERRED_DIALOG_WIDTH_UNSCALED: Int = 450
+        private const val VALIDATION_DELAY_MILLIS: Long = 200
     }
 
     private enum class Mode {
@@ -72,6 +80,11 @@ class K2MoveToClassDialog(
      * Class chooser is disabled and automatically filled for [Mode.CONVERT_PARAMETER_TO_DISPATCH_RECEIVER].
      */
     private val classChooserPredicate = AtomicBooleanProperty(mode == Mode.MOVE_TO_CLASS_UNCHANGED)
+
+    /**
+     * Throttles target class validation requests.
+     */
+    private val validationAlarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, disposable)
 
     private val candidateList: JBList<TargetClassCandidateParameter> = object : JBList<TargetClassCandidateParameter>(candidates) {
         // A workaround for the empty list that doesn't react to `visibleRowCont` and shows the default 8 rows regardless
@@ -100,7 +113,34 @@ class K2MoveToClassDialog(
 
     private val classChooser: TextFieldWithBrowseButton = TextFieldWithBrowseButton().apply {
         addActionListener { browseTargetClass() }
+        installTargetClassValidator()
         text = candidateList.selectedValue?.targetClassFqName?.asString().orEmpty()
+    }
+
+    /**
+     * Installs a validator for the target class text field.
+     * The validator checks that the inserted FQ name can be resolved to a [KtClassOrObject].
+     * The validation can happen not more often than once per [VALIDATION_DELAY_MILLIS] ms.
+     */
+    private fun TextFieldWithBrowseButton.installTargetClassValidator() {
+        ComponentValidator(disposable).withValidator {
+            val isValid = ReadAction.nonBlocking(Callable {
+                currentTargetClass() != null
+            }).executeSynchronously()
+            okAction.isEnabled = isValid
+            if (!isValid) {
+                ValidationInfo(KotlinBundle.message("refactoring.cannot.find.target.class"), textField)
+            } else null
+        }.installOn(textField)
+
+        addDocumentListener(object : DocumentAdapter() {
+            override fun textChanged(e: DocumentEvent) {
+                validationAlarm.cancelAllRequests()
+                validationAlarm.addRequest({
+                    ComponentValidator.getInstance(textField).ifPresent { validator -> validator.revalidate() }
+                }, delayMillis = VALIDATION_DELAY_MILLIS)
+            }
+        })
     }
 
     init {
