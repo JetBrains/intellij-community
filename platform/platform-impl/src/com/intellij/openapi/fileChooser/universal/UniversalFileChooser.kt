@@ -218,9 +218,18 @@ object UniversalFileChooser {
       for (contributor in effectiveContributors) {
         val fileView = FileView(contributor, descriptor, disposable, project, okAction, scope, topToolbar, toolbarActionGroup, ::updateOkEnabled)
         fileViews.add(fileView)
-        tabbedPane.addTab(contributor.tabTitle, fileView.topComponent)
       }
-      tabbedPane.addChangeListener { updateOkEnabled() }
+      // If there is a single tab available, don't show the tab itself, only its content panel.
+      val contentComponent: JComponent = if (fileViews.size == 1) {
+        fileViews[0].topComponent
+      }
+      else {
+        for (fileView in fileViews) {
+          tabbedPane.addTab(fileView.contributor.tabTitle, fileView.topComponent)
+        }
+        tabbedPane.addChangeListener { updateOkEnabled() }
+        tabbedPane
+      }
 
       preselect(null)
       updateOkEnabled()
@@ -228,7 +237,7 @@ object UniversalFileChooser {
       if (leftPanel) {
         val splitter = OnePixelSplitter(false, LOCATIONS_PROPORTION_KEY, LOCATIONS_DEFAULT_PROPORTION)
         splitter.firstComponent = createLocationsPanel(project)
-        splitter.secondComponent = tabbedPane
+        splitter.secondComponent = contentComponent
         add(splitter, BorderLayout.CENTER)
       }
       else {
@@ -239,7 +248,7 @@ object UniversalFileChooser {
         }
         add(topPanel, BorderLayout.NORTH)
         topToolbar.targetComponent = this
-        add(tabbedPane, BorderLayout.CENTER)
+        add(contentComponent, BorderLayout.CENTER)
       }
 
       disposable.whenDisposed {
@@ -390,6 +399,7 @@ object UniversalFileChooser {
     }
 
     private fun preselectProjectTab(project: Project) {
+      if (fileViews.size <= 1) return
       val projectContributor = projectContributor(project)
       projectContributor?.let { contributor ->
         tabbedPane.indexOfTab(contributor.tabTitle)
@@ -437,20 +447,23 @@ object UniversalFileChooser {
 
 
     fun getSelectedFiles(): List<Path> {
-      val fileView = (tabbedPane.selectedComponent as JComponent).getUserData(FILE_VIEW_KEY)
+      val fileView = getActiveFileView()
       return fileView?.getSelectedFiles() ?: emptyList()
     }
 
     fun navigateToFile(file: Path) {
       val index = fileViews.indexOfFirst { it.contributor.ownsPath(file) }
       if (index < 0) return
-      tabbedPane.selectedIndex = index
+      if (fileViews.size > 1) {
+        tabbedPane.selectedIndex = index
+      }
       val targetView = fileViews[index]
       targetView.fileToSelect = file
       targetView.fileTree.select(file) { targetView.fileTree.expand(file, null) }
     }
 
     private fun getActiveFileView(): FileView? {
+      if (fileViews.size == 1) return fileViews[0]
       val component = tabbedPane.selectedComponent as? JComponent ?: return null
       return component.getUserData(FILE_VIEW_KEY)
     }
