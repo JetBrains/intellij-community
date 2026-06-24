@@ -356,7 +356,6 @@ abstract class LspClientDescriptor protected constructor(
       "mjs" to "javascript",
       "jsx" to "javascriptreact",
       "ts" to "typescript",
-      "mts" to "typescript",
       "tsx" to "typescriptreact",
 
       "fs" to "fsharp",
