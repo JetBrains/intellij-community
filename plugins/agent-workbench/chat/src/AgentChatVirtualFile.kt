@@ -694,9 +694,11 @@ private fun buildInitialPromptRecord(
   token: String?,
   sent: Boolean,
 ): AgentInitialPromptRecord? {
-  val message = steps.lastOrNull { step -> step.action == AgentInitialMessageDispatchAction.SEND_TEXT && step.text.isNotBlank() }
-                  ?.text
-                ?: return null
+  val message = steps.lastOrNull { step ->
+    step.recordsPrompt &&
+    step.action == AgentInitialMessageDispatchAction.SEND_TEXT &&
+    step.text.isNotBlank()
+  }?.text ?: return null
   return AgentInitialPromptRecord(
     message = message,
     token = token,

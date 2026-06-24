@@ -71,7 +71,7 @@ These contracts keep shared identity, command mapping, provider capabilities, pr
   [@test] ../../junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
-- Post-start prompt dispatch is terminal-readiness-gated. Codex plan-mode dispatch sends `/plan` as the first executable terminal text step and sends the prompt body as a separate second text step. Codex does not parse terminal output to decide whether `/plan` succeeded or failed. Instead, structured Workbench thread activity delays and retries Codex plan-mode dispatch while an existing thread is busy; if busy activity is detected before the prompt step, dispatch rewinds to step 0 so `/plan` is replayed before the prompt after fresh readiness.
+- Post-start prompt dispatch is terminal-readiness-gated. Codex plan-mode dispatch sends `/plan` as the first executable terminal control step and sends the prompt body as a separate second text step. The `/plan` step is not recorded as the user prompt. After `/plan`, startup noise is observed without resending the command; Codex plan-mode acknowledgement releases the prompt step, while an exact Codex busy refusal stops the initial prompt dispatch without sending the prompt body. Concrete existing-thread plan-mode dispatch also stops while Workbench knows the thread is busy; pending new-thread launches may still send `/plan` before the concrete activity is known.
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
   [@test] ../../codex/chat/testSrc/CodexAgentChatProviderBehaviorTest.kt
   [@test] ../../chat/testSrc/AgentChatInitialMessageDispatcherTest.kt

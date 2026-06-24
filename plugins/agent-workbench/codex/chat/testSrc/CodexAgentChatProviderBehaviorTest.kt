@@ -59,7 +59,7 @@ class CodexAgentChatProviderBehaviorTest {
   }
 
   @Test
-  fun generatedPlanCommandBusyOutputRetriesAfterFreshReadiness() {
+  fun generatedPlanCommandBusyOutputStopsDispatch() {
     val dispatch = planCommandDispatch(completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY)
 
     assertThat(
@@ -69,11 +69,11 @@ class CodexAgentChatProviderBehaviorTest {
         observation = observation("'/plan' is disabled while a task is in progress."),
         retryAttempt = 0,
       )
-    ).isEqualTo(AgentChatInitialMessageRetryDecision.RetryTransientBusyAfterReadiness(backoffMs = 250))
+    ).isSameAs(AgentChatInitialMessageRetryDecision.Stop)
   }
 
   @Test
-  fun generatedPlanCommandFormattedBusyOutputRetriesAfterFreshReadiness() {
+  fun generatedPlanCommandFormattedBusyOutputStopsDispatch() {
     val dispatch = planCommandDispatch(completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY)
 
     assertThat(
@@ -83,22 +83,20 @@ class CodexAgentChatProviderBehaviorTest {
         observation = observation("\u001B[31m'/plan'\u001B[0m   is disabled while a\n task is in progress."),
         retryAttempt = 0,
       )
-    ).isEqualTo(AgentChatInitialMessageRetryDecision.RetryTransientBusyAfterReadiness(backoffMs = 250))
+    ).isSameAs(AgentChatInitialMessageRetryDecision.Stop)
   }
 
   @Test
-  fun nonBusyPlanCommandOutputProceeds() {
+  fun recognizedPlanCommandResponseOutputProceeds() {
     val dispatch = planCommandDispatch(completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY)
-    val ignoredOutputs = listOf(
+    val recognizedResponses = listOf(
+      "Plan mode",
       "Plan mode unavailable right now.",
       "Collaboration modes are disabled.",
       "Unknown command: /plan",
-      "'/permissions' is disabled while a task is in progress.",
-      "\u001B[0m \n\t",
-      "Running SessionStart hook:\nhook output",
     )
 
-    for (output in ignoredOutputs) {
+    for (output in recognizedResponses) {
       assertThat(
         CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(
           file = TestBehaviorFile(),
@@ -107,6 +105,28 @@ class CodexAgentChatProviderBehaviorTest {
           retryAttempt = 0,
         )
       ).isSameAs(AgentChatInitialMessageRetryDecision.PROCEED)
+    }
+  }
+
+  @Test
+  fun unconfirmedPlanCommandOutputWaitsForMoreOutput() {
+    val dispatch = planCommandDispatch(completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY)
+    // The prompt step must stay withheld while Codex has not yet reacted to `/plan` (still echoing the
+    // command, rendering startup, or running a SessionStart hook), so it cannot merge onto the input line.
+    val unconfirmedOutputs = listOf(
+      "\u001B[0m \n\t",
+      "Running SessionStart hook:\nhook output",
+    )
+
+    for (output in unconfirmedOutputs) {
+      assertThat(
+        CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(
+          file = TestBehaviorFile(),
+          dispatch = dispatch,
+          observation = observation(output),
+          retryAttempt = 0,
+        )
+      ).isEqualTo(AgentChatInitialMessageRetryDecision.AwaitMorePostSendOutput(backoffMs = 250))
     }
   }
 
@@ -123,7 +143,7 @@ class CodexAgentChatProviderBehaviorTest {
   }
 
   @Test
-  fun busyPlanModeBeforePlanStepRetriesAfterFreshReadiness(): Unit = runBlocking {
+  fun concreteBusyPlanModeBeforePlanStepStopsDispatch(): Unit = runBlocking {
     assertThat(
       CodexAgentChatProviderBehavior.beforeInitialMessageSend(
         file = TestBehaviorFile(
@@ -134,11 +154,11 @@ class CodexAgentChatProviderBehaviorTest {
         dispatch = planCommandDispatch(stepIndex = 0),
         retryAttempt = 0,
       )
-    ).isEqualTo(AgentChatInitialMessageRetryDecision.RetryTransientBusyAfterReadiness(backoffMs = 250))
+    ).isSameAs(AgentChatInitialMessageRetryDecision.Stop)
   }
 
   @Test
-  fun busyPlanModeBeforePromptStepRewindsAndRetriesAfterFreshReadiness(): Unit = runBlocking {
+  fun concreteBusyPlanModeBeforePromptStepStopsDispatch(): Unit = runBlocking {
     assertThat(
       CodexAgentChatProviderBehavior.beforeInitialMessageSend(
         file = TestBehaviorFile(
@@ -149,7 +169,23 @@ class CodexAgentChatProviderBehaviorTest {
         dispatch = promptDispatch(),
         retryAttempt = 0,
       )
-    ).isEqualTo(AgentChatInitialMessageRetryDecision.RetryTransientBusyAfterRewindAndReadiness(backoffMs = 250))
+    ).isSameAs(AgentChatInitialMessageRetryDecision.Stop)
+  }
+
+  @Test
+  fun pendingBusyPlanModeProceedsBeforeSend(): Unit = runBlocking {
+    assertThat(
+      CodexAgentChatProviderBehavior.beforeInitialMessageSend(
+        file = TestBehaviorFile(
+          isPendingThread = true,
+          threadActivity = AgentThreadActivity.PROCESSING,
+          initialMessageMode = AgentInitialMessageMode.PLAN,
+        ),
+        tab = TestBehaviorTerminalTab(),
+        dispatch = planCommandDispatch(stepIndex = 0),
+        retryAttempt = 0,
+      )
+    ).isSameAs(AgentChatInitialMessageRetryDecision.PROCEED)
   }
 
   @Test

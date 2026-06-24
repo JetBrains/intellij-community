@@ -399,6 +399,7 @@ class CodexAgentSessionProviderDescriptorTest {
         text = "/plan",
         timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
         completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
+        recordsPrompt = false,
       ),
       AgentInitialMessageDispatchStep(
         text = "Refactor this",
@@ -422,6 +423,7 @@ class CodexAgentSessionProviderDescriptorTest {
         text = "/plan",
         timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
         completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
+        recordsPrompt = false,
       ),
     )
   }

@@ -64,14 +64,11 @@ internal object CodexAgentChatProviderBehavior : AgentChatProviderBehavior {
     dispatch: AgentChatInitialMessageDispatchContext,
     retryAttempt: Int,
   ): AgentChatInitialMessageRetryDecision {
-    if (file.initialMessageMode != AgentInitialMessageMode.PLAN || !file.threadActivity.isBusyForExistingThreadPlanMode()) {
+    if (file.initialMessageMode != AgentInitialMessageMode.PLAN || file.isPendingThread ||
+        !file.threadActivity.isBusyForExistingThreadPlanMode()) {
       return AgentChatInitialMessageRetryDecision.PROCEED
     }
-    val backoffMs = calculateCodexPlanModeRetryBackoffMs(retryAttempt)
-    if (dispatch.stepIndex > 0) {
-      return AgentChatInitialMessageRetryDecision.RetryTransientBusyAfterRewindAndReadiness(backoffMs)
-    }
-    return AgentChatInitialMessageRetryDecision.RetryTransientBusyAfterReadiness(backoffMs)
+    return AgentChatInitialMessageRetryDecision.Stop
   }
 
   override fun requiresPostSendObservation(dispatch: AgentChatInitialMessageDispatchContext): Boolean {
@@ -87,10 +84,18 @@ internal object CodexAgentChatProviderBehavior : AgentChatProviderBehavior {
     if (!dispatch.isRetryableCodexPlanCommand()) {
       return AgentChatInitialMessageRetryDecision.PROCEED
     }
-    if (!CODEX_PLAN_BUSY_PATTERN.containsMatchIn(normalizeCodexTerminalOutput(observation.outputText))) {
+    val normalizedOutput = normalizeCodexTerminalOutput(observation.outputText)
+    // Codex rejected `/plan` because a task is still running; do not spam the terminal or fall back to a normal prompt.
+    if (CODEX_PLAN_BUSY_PATTERN.containsMatchIn(normalizedOutput)) {
+      return AgentChatInitialMessageRetryDecision.Stop
+    }
+    // Only release the prompt step once Codex has visibly reacted to `/plan` (enabled it or refused it).
+    // Otherwise the `/plan` Enter has not been processed yet and the prompt would be appended onto the
+    // still-pending `/plan` input line (producing `/plan <prompt>` that never submits), so keep waiting.
+    if (CODEX_PLAN_COMMAND_RESPONSE_PATTERNS.any { pattern -> pattern.containsMatchIn(normalizedOutput) }) {
       return AgentChatInitialMessageRetryDecision.PROCEED
     }
-    return AgentChatInitialMessageRetryDecision.RetryTransientBusyAfterReadiness(
+    return AgentChatInitialMessageRetryDecision.AwaitMorePostSendOutput(
       backoffMs = calculateCodexPlanModeRetryBackoffMs(retryAttempt),
     )
   }
@@ -127,3 +132,11 @@ private const val CODEX_PLAN_MODE_MAX_RETRY_BACKOFF_MS: Long = 1_000
 private const val CODEX_NEW_THREAD_COMMAND: String = "/new"
 private const val CODEX_FORK_THREAD_COMMAND: String = "/fork"
 private const val CODEX_PLAN_COMMAND: String = "/plan"
+
+// Output fragments that prove Codex actually processed the `/plan` command, so the prompt step may be sent:
+// either plan mode was toggled, or Codex refused/ignored the command (graceful fallback to standard mode).
+private val CODEX_PLAN_COMMAND_RESPONSE_PATTERNS = listOf(
+  Regex("plan mode", RegexOption.IGNORE_CASE),
+  Regex("unknown command", RegexOption.IGNORE_CASE),
+  Regex("collaboration modes are disabled", RegexOption.IGNORE_CASE),
+)
