@@ -3,6 +3,8 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.openapi.MnemonicHelper;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
@@ -88,7 +90,11 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
     DomManager.getDomManager(getProject()).addDomEventListener(new DomEventListener() {
       @Override
       public void eventOccured(@NotNull DomEvent event) {
-        checkIsValid();
+        // checkIsValid fires FileEditor.PROP_VALID property change; DOM events may arrive off-EDT.
+        ApplicationManager.getApplication().invokeLater(
+          DomFileEditor.this::checkIsValid,
+          ModalityState.any(),
+          getProject().getDisposed());
       }
     }, this);
     Disposer.register(this, myComponent);
