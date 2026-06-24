@@ -175,14 +175,10 @@ private fun canMergeEditGroups(lastGroup: EditGroup, newGroup: EditGroup): Boole
 /**
  * Applies one undo or redo step to [editor], inverting [editGroup] — the original captured operation.
  *
- * The operation is direction-agnostic: the caller determines direction by choosing which stack to pop [editGroup] from
- * (executed → undo, reverted → redo) and by passing the appropriate [editGroup] whose [EditGroup.entryIndices]
- * point to the edits that must be inverted.
- *
  * This function is an implementation detail of the undo machinery and should not be used directly.
  *
- * **Concurrent-edit rebasing.** Edits recorded after the group was originally applied are composed into [baseAfter].
- * The inverted edit is OT-transformed over [baseAfter] so that it applies correctly to the current document state,
+ * **Concurrent-edit rebasing.** Edits recorded after the group was originally applied are composed, and
+ * the inverted edit is OT-transformed over the composition so that it applies correctly to the current document state,
  * and the saved caret positions are similarly rebased so they map to current offsets.
  *
  * **Two-phase caret handling** (controlled by [isCaretMovementUndoStep]):
@@ -193,11 +189,6 @@ private fun canMergeEditGroups(lastGroup: EditGroup, newGroup: EditGroup): Boole
  * - Otherwise the inverted edit is applied to the document and carets are set to [EditGroup.caretStateBefore].
  *   A new [EditGroup] capturing the reverse operation and current caret positions is returned; the caller
  *   should push it onto the opposite stack.
- *
- * @param isCaretMovementUndoStep whether caret movement is treated as a separate undo/redo step. In IJ and Fleet,
- *   the user presses undo twice: the first press repositions the caret, the second reverts the text. In Vim-style
- *   undo, caret movement is not a separate step.
- * @return the [EditGroup] to push onto the opposite stack, or `null` if only carets were moved.
  */
 fun editorUndo(
     editor: MutableEditor,
@@ -237,9 +228,7 @@ fun editorUndo(
 /**
  * Applies one undo or redo step to [document], inverting [editGroup] — the original captured operation.
  *
- * Same as [editorUndo], but operates on a bare document without an editor:
- * no caret-movement undo step is performed (as if `isCaretMovementUndoStep` were `false`), and the caret states
- * recorded in the returned [EditGroup] are the rebased caret states of [editGroup] rather than actual editor carets.
+ * Same as [editorUndo], but operates on a bare document without an editor.
  *
  * This function is an implementation detail of the undo machinery and should not be used directly.
  *
