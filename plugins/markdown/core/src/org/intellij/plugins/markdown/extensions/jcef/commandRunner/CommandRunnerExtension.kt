@@ -48,7 +48,8 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.cancellation.CancellationException
 
-internal class CommandRunnerExtension(
+@ApiStatus.Internal
+class CommandRunnerExtension(
   val panel: MarkdownHtmlPanel,
   private val provider: Provider
 ): MarkdownBrowserPreviewExtension {
@@ -102,7 +103,6 @@ internal class CommandRunnerExtension(
       private val icons = setOf(RUN_LINE_ICON, RUN_BLOCK_ICON)
     }
   }
-
 
   fun processCodeLine(rawCodeLine: String, insideFence: Boolean): String {
     processLine(rawCodeLine, !insideFence)?.let { hash ->
@@ -205,7 +205,7 @@ internal class CommandRunnerExtension(
     val virtualFile = panel.virtualFile
     if (project != null && virtualFile != null) {
       TrustedProjectUtil.executeIfTrusted(project) {
-        RUNNER_EXECUTED.log(project,  RunnerPlace.PREVIEW, RunnerType.BLOCK, runner.javaClass)
+        RUNNER_EXECUTED.log(project, RunnerPlace.PREVIEW, RunnerType.BLOCK, runner.javaClass)
         invokeLater {
           runner.run(command, project, getMarkdownCommandWorkingDirectory(project, virtualFile), executor)
         }
@@ -300,7 +300,6 @@ internal class CommandRunnerExtension(
     provider.extensions.remove(panel.virtualFile)
   }
 
-
   class Provider: MarkdownBrowserPreviewExtension.Provider {
     val extensions = ConcurrentHashMap<VirtualFile, CommandRunnerExtension>()
 
@@ -331,6 +330,7 @@ internal class CommandRunnerExtension(
       return provider?.extensions?.get(file)
     }
 
+    @ApiStatus.Internal
     fun matches(project: Project, workingDirectory: String?, localSession: Boolean,
                 command: String,
                 allowRunConfigurations: Boolean = false): Boolean {
@@ -345,6 +345,7 @@ internal class CommandRunnerExtension(
       }
     }
 
+    @ApiStatus.Internal
     fun execute(
       project: Project,
       workingDirectory: String?,
@@ -393,7 +394,8 @@ internal class CommandRunnerExtension(
 
     private val LOG = logger<CommandRunnerExtension>()
 
-    internal fun trimPrompt(cmd: String): String {
+    @ApiStatus.Internal
+    fun trimPrompt(cmd: String): String {
       return cmd.lines()
         .filter { line -> line.isNotEmpty() }
         .joinToString("\n") { line ->

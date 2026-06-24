@@ -28,6 +28,8 @@ interface MarkdownPreviewHostApi : WebViewImplementable {
 
   suspend fun openLink(params: MarkdownOpenLinkParams)
 
+  suspend fun resolveRunCommands(params: MarkdownResolveRunCommandsParams): MarkdownResolvedRunCommandsParams
+
   suspend fun runCommand(params: MarkdownRunCommandParams)
 
   companion object {
@@ -41,7 +43,7 @@ data class MarkdownContentChangedParams(
   val markdown: String,
   val scrollLine: Int,
   val settings: MarkdownPreviewSettingsParams,
-  val commands: List<MarkdownCommandDescriptor> = emptyList(),
+  val contentVersion: Int = 0,
   val changes: List<MarkdownChangedBlockDescriptor> = emptyList(),
 )
 
@@ -71,6 +73,33 @@ data class MarkdownPreviewSourceRange(
 @ApiStatus.Internal
 @Serializable
 data class MarkdownOpenLinkParams(val href: String)
+
+@ApiStatus.Internal
+@Serializable
+data class MarkdownResolveRunCommandsParams(
+  val contentVersion: Int,
+  val candidates: List<MarkdownCommandCandidate>,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class MarkdownResolvedRunCommandsParams(
+  val commands: List<MarkdownCommandDescriptor>,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class MarkdownCommandCandidate(
+  val id: String,
+  val kind: MarkdownPreviewCommandKind,
+  val startLine: Int,
+  val startColumn: Int,
+  val endLine: Int,
+  val endColumn: Int,
+  val rawCommand: String,
+  val language: String? = null,
+  val firstLineCommandId: String? = null,
+)
 
 @ApiStatus.Internal
 @Serializable
@@ -112,6 +141,7 @@ enum class MarkdownChangedBlockKind {
 @ApiStatus.Internal
 @Serializable
 data class MarkdownRunCommandParams(
+  val contentVersion: Int,
   val id: String,
   val clientX: Int,
   val clientY: Int,

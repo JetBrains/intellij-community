@@ -408,7 +408,13 @@ var rehypePlugins = [
 		]
 	}]
 ];
-function MarkdownPreviewApp({ markdown, scrollLine, commands, changes, selection, theme, onOpenLink, onRunCommand }) {
+function MarkdownPreviewApp({ markdown, scrollLine, contentVersion, changes, selection, theme, onOpenLink, onResolveRunCommands, onRunCommand }) {
+	const commandCandidates = [];
+	const [resolvedCommands, setResolvedCommands] = (0, import_react.useState)({
+		contentVersion: -1,
+		commands: []
+	});
+	const commands = resolvedCommands.contentVersion === contentVersion ? resolvedCommands.commands : [];
 	const commandLookup = createCommandLookup(commands);
 	const components = {
 		a({ href, children, ...props }) {
@@ -445,6 +451,8 @@ function MarkdownPreviewApp({ markdown, scrollLine, commands, changes, selection
 				})]
 			});
 			const sourcePosition = sourcePositionFromPreNode(node);
+			const codeNode = codeNodeFromPreNode(node);
+			if (sourcePosition && codeNode) commandCandidates.push(...codeFenceCommandCandidates(sourcePosition, codeNode));
 			const blockCommand = sourcePosition ? findBlockCommand(commandLookup, sourcePosition) : void 0;
 			const lineCommands = sourcePosition ? findLineCommands(commandLookup, sourcePosition, blockCommand?.firstLineCommandId) : [];
 			if (!blockCommand && lineCommands.length === 0) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("pre", {
@@ -459,6 +467,7 @@ function MarkdownPreviewApp({ markdown, scrollLine, commands, changes, selection
 					...props,
 					children
 				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CodeFenceRunGutter, {
+					contentVersion,
 					sourcePosition,
 					blockCommand,
 					lineCommands,
@@ -473,11 +482,13 @@ function MarkdownPreviewApp({ markdown, scrollLine, commands, changes, selection
 				theme
 			});
 			const sourcePosition = sourcePositionFromHastNode(node);
+			if (sourcePosition && !hasLanguageClass(className)) commandCandidates.push(inlineCommandCandidate(sourcePosition, code));
 			const inlineCommand = sourcePosition ? findInlineCommand(commandLookup, sourcePosition) : void 0;
 			if (inlineCommand) return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("code", {
 				className,
 				...props,
 				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(RunCommandButton, {
+					contentVersion,
 					command: inlineCommand,
 					variant: "inline",
 					onRunCommand
@@ -490,6 +501,24 @@ function MarkdownPreviewApp({ markdown, scrollLine, commands, changes, selection
 			});
 		}
 	};
+	(0, import_react.useEffect)(() => {
+		let cancelled = false;
+		onResolveRunCommands({
+			contentVersion,
+			candidates: uniqueCommandCandidates(commandCandidates)
+		}).then((response) => {
+			if (!cancelled) setResolvedCommands({
+				contentVersion,
+				commands: response.commands
+			});
+		});
+		return () => {
+			cancelled = true;
+		};
+	}, [
+		contentVersion,
+		onResolveRunCommands
+	]);
 	(0, import_react.useEffect)(() => {
 		renderLatex();
 	}, [markdown, theme]);
@@ -636,6 +665,100 @@ function headingLevel(heading) {
 function normalizeHeadingText(text) {
 	return text.replace(/\s+/g, " ").trim();
 }
+function codeFenceCommandCandidates(sourcePosition, codeNode) {
+	const code = hastText(codeNode);
+	const language = codeFenceLanguage(codeNode);
+	const lineCommands = lineCommandCandidates(sourcePosition, code);
+	const result = [];
+	if (language) result.push({
+		...commandSource(sourcePosition),
+		id: commandId("BLOCK", sourcePosition, code),
+		kind: "BLOCK",
+		rawCommand: code,
+		language,
+		firstLineCommandId: lineCommands.length > 1 ? lineCommands[0].id : void 0
+	});
+	result.push(...lineCommands);
+	return result;
+}
+function lineCommandCandidates(sourcePosition, code) {
+	const result = [];
+	let offset = 0;
+	let lineIndex = 0;
+	while (offset < code.length) {
+		const delimiter = code.indexOf("\n", offset);
+		const lineEndOffset = delimiter < 0 ? code.length : delimiter;
+		const rawCommand = code.slice(offset, lineEndOffset);
+		const lineSource = codeLineSourcePosition(sourcePosition, lineIndex, rawCommand);
+		result.push({
+			...commandSource(lineSource),
+			id: commandId("LINE", lineSource, rawCommand),
+			kind: "LINE",
+			rawCommand
+		});
+		if (delimiter < 0) break;
+		offset = delimiter + 1;
+		lineIndex++;
+	}
+	return result;
+}
+function inlineCommandCandidate(sourcePosition, rawCommand) {
+	return {
+		...commandSource(sourcePosition),
+		id: commandId("INLINE", sourcePosition, rawCommand),
+		kind: "INLINE",
+		rawCommand
+	};
+}
+function commandSource(sourcePosition) {
+	return {
+		startLine: sourcePosition.startLine,
+		startColumn: sourcePosition.startColumn,
+		endLine: sourcePosition.endLine,
+		endColumn: sourcePosition.endColumn
+	};
+}
+function codeLineSourcePosition(sourcePosition, lineIndex, rawCommand) {
+	const line = sourcePosition.startLine + lineIndex + 1;
+	return {
+		startLine: line,
+		startColumn: 1,
+		endLine: line,
+		endColumn: rawCommand.length + 1
+	};
+}
+function commandId(kind, sourcePosition, rawCommand) {
+	return `${kind}:${positionKey(sourcePosition)}:${hashString(rawCommand)}`;
+}
+function hashString(value) {
+	let hash = 0;
+	for (let index = 0; index < value.length; index++) hash = Math.imul(hash, 31) + value.charCodeAt(index) | 0;
+	return (hash >>> 0).toString(16);
+}
+function uniqueCommandCandidates(candidates) {
+	const result = /* @__PURE__ */ new Map();
+	for (const candidate of candidates) result.set(candidate.id, candidate);
+	return Array.from(result.values());
+}
+function codeFenceLanguage(codeNode) {
+	const classNames = hastClassNames(codeNode);
+	const languageClass = classNames.find((className) => className.startsWith("language-"));
+	return languageClass?.substring("language-".length);
+}
+function hasLanguageClass(className) {
+	return className?.split(/\s+/).some((name) => name.startsWith("language-")) ?? false;
+}
+function hastClassNames(node) {
+	const className = node?.properties?.className;
+	if (Array.isArray(className)) return className.filter((name) => typeof name === "string");
+	if (typeof className === "string") return className.split(/\s+/);
+	return [];
+}
+function hastText(node) {
+	if (!node) return "";
+	if (typeof node.value === "string") return node.value;
+	return node.children?.map(hastText).join("") ?? "";
+}
 function createCommandLookup(commands) {
 	const inlineCommands = /* @__PURE__ */ new Map();
 	const blockCommands = [];
@@ -660,17 +783,19 @@ function findLineCommands(lookup, sourcePosition, blockFirstLineCommandId) {
 function findInlineCommand(lookup, sourcePosition) {
 	return lookup.inlineCommands.get(positionKey(sourcePosition));
 }
-function CodeFenceRunGutter({ sourcePosition, blockCommand, lineCommands, onRunCommand }) {
+function CodeFenceRunGutter({ contentVersion, sourcePosition, blockCommand, lineCommands, onRunCommand }) {
 	if (!sourcePosition || !blockCommand && lineCommands.length === 0) return null;
 	const contentStartLine = sourcePosition.startLine + 1;
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		className: "codeFenceRunGutter",
 		"aria-hidden": false,
 		children: [blockCommand && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RunCommandButton, {
+			contentVersion,
 			command: blockCommand,
 			variant: "block",
 			onRunCommand
 		}), lineCommands.map((command) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RunCommandButton, {
+			contentVersion,
 			command,
 			variant: "line",
 			style: { top: `calc(${Math.max(0, command.startLine - contentStartLine)} * var(--markdown-code-line-height))` },
@@ -678,11 +803,12 @@ function CodeFenceRunGutter({ sourcePosition, blockCommand, lineCommands, onRunC
 		}, command.id))]
 	});
 }
-function RunCommandButton({ command, variant, style, onRunCommand }) {
+function RunCommandButton({ contentVersion, command, variant, style, onRunCommand }) {
 	function handleClick(event) {
 		event.preventDefault();
 		event.stopPropagation();
 		onRunCommand({
+			contentVersion,
 			id: command.id,
 			clientX: Math.round(event.clientX),
 			clientY: Math.round(event.clientY)
@@ -848,8 +974,10 @@ function parseSourcePosition(sourcePosition) {
 function sourcePositionFromPreNode(node) {
 	const prePosition = sourcePositionFromHastNode(node);
 	if (prePosition) return prePosition;
-	const codeNode = node?.children?.find((child) => child.tagName === "code");
-	return sourcePositionFromHastNode(codeNode);
+	return sourcePositionFromHastNode(codeNodeFromPreNode(node));
+}
+function codeNodeFromPreNode(node) {
+	return node?.children?.find((child) => child.tagName === "code");
 }
 function sourcePositionFromHastNode(node) {
 	const value = node?.properties?.dataSourcepos;
@@ -909,7 +1037,7 @@ function frontmatterCodeNode(node) {
 	};
 }
 function frontmatterLanguageFromPreNode(node) {
-	const language = (node?.children?.find((child) => child.tagName === "code"))?.properties?.dataFrontmatter;
+	const language = codeNodeFromPreNode(node)?.properties?.dataFrontmatter;
 	return typeof language === "string" ? language : void 0;
 }
 function frontmatterTitle(language) {
@@ -939,7 +1067,7 @@ var markdownPreviewHostApi = webView.callable(apiId()("markdown.preview"));
 var root = (0, import_client.createRoot)(requiredElement("content"));
 var markdown = "";
 var scrollLine = 0;
-var commands = [];
+var contentVersion = -1;
 var changes = [];
 var selection;
 var theme = webViewTheme.current;
@@ -947,8 +1075,8 @@ webView.implement(markdownPreviewPageApiId, {
 	contentChanged(params) {
 		markdown = params.markdown;
 		scrollLine = params.scrollLine;
+		contentVersion = params.contentVersion;
 		applyPreviewSettings(params.settings);
-		commands = params.commands;
 		changes = params.changes ?? [];
 		renderPreview();
 	},
@@ -972,16 +1100,20 @@ function renderPreview() {
 	root.render(/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MarkdownPreviewApp, {
 		markdown,
 		scrollLine,
-		commands,
+		contentVersion,
 		changes,
 		selection,
 		theme,
 		onOpenLink: openMarkdownLink,
+		onResolveRunCommands: resolveMarkdownRunCommands,
 		onRunCommand: runMarkdownCommand
 	}));
 }
 function openMarkdownLink(href) {
 	markdownPreviewHostApi.openLink({ href });
+}
+function resolveMarkdownRunCommands(request) {
+	return markdownPreviewHostApi.resolveRunCommands(request);
 }
 function runMarkdownCommand(request) {
 	markdownPreviewHostApi.runCommand(request);

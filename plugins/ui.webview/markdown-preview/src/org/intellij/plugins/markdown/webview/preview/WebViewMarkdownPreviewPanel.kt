@@ -1,6 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.webview.preview
 
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -24,12 +30,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.RunnerPlace
 import org.intellij.plugins.markdown.settings.MarkdownPreviewSettings
 import org.intellij.plugins.markdown.ui.preview.MarkdownContentPanel
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
+import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -56,6 +65,12 @@ class WebViewMarkdownPreviewPanel(
   @Volatile
   private var lastUpdate: MarkdownUpdate? = null
 
+  @Volatile
+  private var lastCommandSession: MarkdownRunCommandSession = MarkdownRunCommandSession.EMPTY
+
+  @Volatile
+  private var nextContentVersion: Int = 0
+
   init {
     ApplicationManager.getApplication().messageBus.connect(coroutineScope.asDisposable()).subscribe(
       MarkdownPreviewSettings.ChangeListener.TOPIC,
@@ -75,8 +90,14 @@ class WebViewMarkdownPreviewPanel(
   }
 
   override fun setMarkdown(markdown: String, initialScrollOffset: Int, initialScrollLineNumber: Int, document: VirtualFile?) {
-    val update = MarkdownUpdate(markdown, initialScrollLineNumber)
+    val update = MarkdownUpdate(
+      markdown = markdown,
+      initialScrollLineNumber = initialScrollLineNumber,
+      document = document ?: virtualFile,
+      contentVersion = nextContentVersion++,
+    )
     lastUpdate = update
+    lastCommandSession = MarkdownRunCommandSession.EMPTY
     sendContentUpdate(update)
   }
 
@@ -145,10 +166,97 @@ class WebViewMarkdownPreviewPanel(
         MarkdownLinkOpener.getInstance().openLink(project, params.href, virtualFile)
       }
 
+      override suspend fun resolveRunCommands(params: MarkdownResolveRunCommandsParams): MarkdownResolvedRunCommandsParams {
+        val session = resolveMarkdownRunCommands(params)
+        return MarkdownResolvedRunCommandsParams(session.descriptors)
+      }
+
       override suspend fun runCommand(params: MarkdownRunCommandParams) {
+        runMarkdownCommand(params)
       }
     }
   }
+
+  private fun resolveMarkdownRunCommands(params: MarkdownResolveRunCommandsParams): MarkdownRunCommandSession {
+    val update = lastUpdate ?: return MarkdownRunCommandSession.EMPTY
+    if (params.contentVersion != update.contentVersion) return MarkdownRunCommandSession.EMPTY
+
+    val session = MarkdownRunCommandSession.resolve(project, update.document, params.candidates)
+    lastCommandSession = session
+    return session
+  }
+
+  private suspend fun runMarkdownCommand(params: MarkdownRunCommandParams) {
+    val update = lastUpdate ?: return
+    if (params.contentVersion != update.contentVersion) return
+
+    val commandSession = lastCommandSession
+    val command = commandSession.command(params.id) ?: run {
+      LOG.warn("Markdown WebView preview command not found: ${params.id}")
+      return
+    }
+    val targets = runCommandTargets(commandSession, command)
+    if (targets.isEmpty()) return
+
+    withContext(Dispatchers.EDT) {
+      if (targets.size == 1) {
+        targets.single().run()
+      }
+      else {
+        showRunCommandPopup(targets, params)
+      }
+    }
+  }
+
+  private fun runCommandTargets(commandSession: MarkdownRunCommandSession, command: MarkdownRunCommand): List<MarkdownRunCommandTarget> {
+    return when (command) {
+      is MarkdownRunCommand.Line -> listOf(
+        MarkdownRunCommandTarget(
+          title = command.command.title,
+          icon = AllIcons.RunConfigurations.TestState.Run,
+          run = { commandSession.executeLine(command.command, RunnerPlace.PREVIEW) },
+        )
+      )
+      is MarkdownRunCommand.Block -> buildList {
+        add(
+          MarkdownRunCommandTarget(
+            title = MarkdownBundle.message("markdown.runner.launch.block"),
+            icon = AllIcons.RunConfigurations.TestState.Run_run,
+            run = { commandSession.executeBlock(command) },
+          )
+        )
+        val firstLineCommand = commandSession.lineCommand(command.descriptor.firstLineCommandId)
+        if (firstLineCommand != null) {
+          add(
+            MarkdownRunCommandTarget(
+              title = MarkdownBundle.message("markdown.runner.launch.line"),
+              icon = AllIcons.RunConfigurations.TestState.Run,
+              run = { commandSession.executeLine(firstLineCommand.command, RunnerPlace.PREVIEW) },
+            )
+          )
+        }
+      }
+    }
+  }
+
+  private fun showRunCommandPopup(targets: List<MarkdownRunCommandTarget>, params: MarkdownRunCommandParams) {
+    val actionGroup = DefaultActionGroup()
+    for (target in targets) {
+      actionGroup.add(object : AnAction({ target.title }, target.icon) {
+        override fun actionPerformed(e: AnActionEvent) {
+          target.run()
+        }
+      })
+    }
+    ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_GUTTER_POPUP, actionGroup)
+      .component.show(rootComponent, params.clientX, params.clientY)
+  }
+
+  private data class MarkdownRunCommandTarget(
+    val title: String,
+    val icon: Icon,
+    val run: () -> Unit,
+  )
 
   private fun sendContentUpdate(update: MarkdownUpdate? = lastUpdate) {
     if (!pageReady) return
@@ -161,6 +269,7 @@ class WebViewMarkdownPreviewPanel(
             markdown = actualUpdate.markdown,
             scrollLine = actualUpdate.initialScrollLineNumber,
             settings = currentPreviewSettings(),
+            contentVersion = actualUpdate.contentVersion,
           )
         )
       }
@@ -201,6 +310,8 @@ class WebViewMarkdownPreviewPanel(
   private data class MarkdownUpdate(
     val markdown: String,
     val initialScrollLineNumber: Int,
+    val document: VirtualFile?,
+    val contentVersion: Int,
   )
 
   @Service(Service.Level.APP)
