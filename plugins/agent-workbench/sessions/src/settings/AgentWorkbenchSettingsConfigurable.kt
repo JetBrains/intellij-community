@@ -111,8 +111,8 @@ private fun chatSettingsComponent(): AgentWorkbenchSettingsComponent {
     displayName = AgentSessionsBundle.message("settings.agent.workbench.chat.group"),
     checkboxSettings = listOf(
       AgentWorkbenchCheckboxSetting(
-        text = AgentSessionsBundle.message("advanced.setting.agent.workbench.chat.open.in.dedicated.frame"),
-        description = AgentSessionsBundle.message("advanced.setting.agent.workbench.chat.open.in.dedicated.frame.description"),
+        text = AgentSessionsBundle.message("settings.agent.workbench.chat.open.in.dedicated.frame"),
+        description = AgentSessionsBundle.message("settings.agent.workbench.chat.open.in.dedicated.frame.description"),
         isSelected = AgentChatOpenModeSettings::openInDedicatedFrame,
         setSelected = AgentChatOpenModeSettings::setOpenInDedicatedFrame,
       )
