@@ -25,7 +25,7 @@
 
 .title-block h1 {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--ij-font-size-h3);
   line-height: var(--ij-line-height-heading);
   font-weight: var(--ij-font-weight-semibold);
   letter-spacing: 0;
@@ -35,7 +35,7 @@
 .title-block p {
   margin: 4px 0 0;
   color: var(--ij-text-secondary);
-  font-size: var(--ij-font-size-small);
+  font-size: var(--ij-font-size-medium);
 }
 
 .header-meta {
@@ -47,7 +47,7 @@
 
 .clock {
   color: var(--ij-text-secondary);
-  font-size: var(--ij-font-size-small);
+  font-size: var(--ij-font-size-medium);
   white-space: nowrap;
   align-self: center;
 }
@@ -331,12 +331,12 @@
 
 .metric-label {
   color: var(--ij-text-secondary);
-  font-size: var(--ij-font-size-small);
+  font-size: var(--ij-font-size-medium);
 }
 
 .metric-value {
   margin-top: 4px;
-  font-size: 18px;
+  font-size: var(--ij-font-size-h2);
   font-weight: var(--ij-font-weight-semibold);
   color: var(--ij-text-primary);
 }
@@ -344,7 +344,7 @@
 .metric-note {
   margin-top: 2px;
   color: var(--ij-text-muted);
-  font-size: var(--ij-font-size-small);
+  font-size: var(--ij-font-size-medium);
 }
 
 .main-grid {
@@ -391,7 +391,7 @@
   padding: 8px 10px;
   border-bottom: 1px solid var(--ij-border);
   color: var(--ij-text-secondary);
-  font-size: var(--ij-font-size-small);
+  font-size: var(--ij-font-size-medium);
   font-weight: var(--ij-font-weight-semibold);
   min-height: 28px;
   display: flex;
@@ -436,7 +436,7 @@
 .task-subtitle {
   margin-top: 3px;
   color: var(--ij-text-muted);
-  font-size: var(--ij-font-size-small);
+  font-size: var(--ij-font-size-medium);
 }
 
 .badge-row {
@@ -449,7 +449,7 @@
 .badge {
   padding: 1px 6px;
   border-radius: 8px;
-  font-size: var(--ij-font-size-tiny);
+  font-size: var(--ij-font-size-small);
   line-height: var(--ij-line-height-default);
   font-weight: var(--ij-font-weight-medium);
   border: none;
@@ -530,7 +530,7 @@
   border-bottom: 1px solid var(--ij-border);
   display: flex;
   align-items: center;
-  font-size: var(--ij-font-size-small);
+  font-size: var(--ij-font-size-medium);
   color: var(--ij-text-secondary);
 }
 
@@ -554,7 +554,7 @@
   display: grid;
   grid-template-columns: 96px 1fr;
   gap: 4px 10px;
-  font-size: var(--ij-font-size-small);
+  font-size: var(--ij-font-size-medium);
 }
 
 .details-key {
@@ -575,7 +575,7 @@
 .footer-row {
   padding: 8px 2px 2px;
   color: var(--ij-text-muted);
-  font-size: var(--ij-font-size-small);
+  font-size: var(--ij-font-size-medium);
 }
 
 .fallback {
@@ -590,7 +590,7 @@
 
 .fallback h2 {
   margin: 0 0 8px;
-  font-size: 14px;
+  font-size: var(--ij-font-size-h4);
   font-weight: var(--ij-font-weight-semibold);
 }
 
@@ -607,7 +607,7 @@
   padding: 6px 10px;
   border-bottom: 1px solid var(--ij-border);
   color: var(--ij-text-secondary);
-  font-size: var(--ij-font-size-small);
+  font-size: var(--ij-font-size-medium);
 }
 
 .fallback-list-item:last-child {
@@ -657,7 +657,7 @@
 
 .mermaid-hint {
   color: var(--ij-text-muted);
-  font-size: var(--ij-font-size-tiny);
+  font-size: var(--ij-font-size-small);
   margin: 0 0 6px 0;
 }
 
@@ -684,7 +684,7 @@
 
 .mermaid-host {
   color: var(--ij-text-primary);
-  font-size: var(--ij-font-size-small);
+  font-size: var(--ij-font-size-medium);
 }
 
 .mermaid-host svg {

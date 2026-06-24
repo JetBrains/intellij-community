@@ -48,7 +48,7 @@ data class MarkdownContentChangedParams(
 @ApiStatus.Internal
 @Serializable
 data class MarkdownPreviewSettingsParams(
-  val fontSize: Int,
+  val fontSize: Int?,
 )
 
 @ApiStatus.Internal

@@ -246,7 +246,7 @@ var inputStyles = i`
   .select-wrap::after {
     color: var(--jb-text-muted);
     content: "v";
-    font-size: 10px;
+    font-size: var(--jb-font-size-small);
     pointer-events: none;
     position: absolute;
     right: 9px;
@@ -1828,13 +1828,23 @@ var controlsTokenStyles = `
 :root {
   --jb-font-family: var(--ij-font, "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif);
   --jb-font-size: var(--ij-font-size, 13px);
-  --jb-font-size-small: var(--ij-font-size-small, 12px);
+  --jb-font-size-h0: var(--ij-font-size-h0, calc(var(--ij-font-size, 13px) + 12px));
+  --jb-font-size-h1: var(--ij-font-size-h1, calc(var(--ij-font-size, 13px) + 9px));
+  --jb-font-size-h2: var(--ij-font-size-h2, calc(var(--ij-font-size, 13px) + 5px));
+  --jb-font-size-h3: var(--ij-font-size-h3, calc(var(--ij-font-size, 13px) + 3px));
+  --jb-font-size-h4: var(--ij-font-size-h4, calc(var(--ij-font-size, 13px) + 1px));
+  --jb-font-size-regular: var(--ij-font-size-regular, var(--ij-font-size, 13px));
+  --jb-font-size-medium: var(--ij-font-size-medium, calc(var(--ij-font-size, 13px) - 1px));
+  --jb-font-size-small: var(--ij-font-size-small, max(calc(var(--ij-font-size, 13px) - 2px), 11px));
+  --jb-font-size-mini: var(--ij-font-size-mini, max(calc(var(--ij-font-size, 13px) - 4px), 9px));
   --jb-line-height: var(--ij-line-height-default, 16px);
-  --jb-line-height-paragraph: var(--ij-line-height-paragraph, 18px);
+  --jb-line-height-compact: var(--ij-line-height-compact, calc(var(--ij-line-height-default, 16px) - 2px));
+  --jb-line-height-paragraph: var(--ij-line-height-paragraph, calc(var(--ij-line-height-default, 16px) + 2px));
+  --jb-line-height-heading: var(--ij-line-height-heading, calc(var(--ij-line-height-default, 16px) + 4px));
   --jb-font-weight-regular: var(--ij-font-weight-regular, 400);
   --jb-font-weight-medium: var(--ij-font-weight-medium, 500);
-  --jb-control-height: 28px;
-  --jb-control-height-compact: 24px;
+  --jb-control-height: var(--ij-control-height, max(28px, calc(var(--ij-line-height-default, 16px) + 12px)));
+  --jb-control-height-compact: var(--ij-control-height-compact, max(24px, calc(var(--ij-line-height-default, 16px) + 8px)));
   --jb-control-radius: var(--ij-radius-control, 4px);
   --jb-control-padding-x: 8px;
   --jb-control-gap: 6px;

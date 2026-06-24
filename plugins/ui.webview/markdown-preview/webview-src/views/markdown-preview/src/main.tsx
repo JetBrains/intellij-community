@@ -20,7 +20,7 @@ interface MarkdownContentChangedParams {
 }
 
 interface MarkdownPreviewSettingsParams {
-  fontSize: number
+  fontSize?: number | null
 }
 
 interface MarkdownScrollToLineParams {
@@ -113,8 +113,13 @@ function applyTheme(theme: "light" | "dark"): void {
 }
 
 function applyPreviewSettings(settings: MarkdownPreviewSettingsParams): void {
-  const fontSize = Number.isFinite(settings.fontSize) && settings.fontSize > 0 ? settings.fontSize : 14
-  document.documentElement.style.setProperty("--default-font-size", `${fontSize}px`)
+  const fontSize = settings.fontSize
+  if (typeof fontSize === "number" && Number.isFinite(fontSize) && fontSize > 0) {
+    document.documentElement.style.setProperty("--markdown-preview-font-size", `${fontSize}px`)
+  }
+  else {
+    document.documentElement.style.removeProperty("--markdown-preview-font-size")
+  }
 }
 
 function requiredElement<T extends HTMLElement>(id: string): T {

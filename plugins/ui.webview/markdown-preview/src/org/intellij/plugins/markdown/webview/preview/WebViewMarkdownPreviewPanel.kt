@@ -160,7 +160,7 @@ class WebViewMarkdownPreviewPanel(
           MarkdownContentChangedParams(
             markdown = actualUpdate.markdown,
             scrollLine = actualUpdate.initialScrollLineNumber,
-            settings = MarkdownPreviewSettingsParams(fontSize = service<MarkdownPreviewSettings>().state.fontSize),
+            settings = currentPreviewSettings(),
           )
         )
       }
@@ -171,6 +171,12 @@ class WebViewMarkdownPreviewPanel(
         LOG.warn("Failed to update Markdown WebView preview content", t)
       }
     }
+  }
+
+  private fun currentPreviewSettings(): MarkdownPreviewSettingsParams {
+    val fontSize = service<MarkdownPreviewSettings>().state.fontSize
+    val defaultFontSize = MarkdownPreviewSettings.State().fontSize
+    return MarkdownPreviewSettingsParams(fontSize = fontSize.takeIf { it != defaultFontSize })
   }
 
   override fun addScrollListener(listener: MarkdownHtmlPanel.ScrollListener) {

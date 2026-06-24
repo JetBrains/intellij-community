@@ -5,8 +5,38 @@ import { apiId, type WebViewCallable, type WebViewImplementable } from "./webVie
 
 export type WebViewTheme = "light" | "dark"
 
+export interface WebViewThemeFontInfo {
+  families: string[]
+  size: number
+  lineHeight?: number
+  sizes?: WebViewThemeFontSizes
+}
+
+export interface WebViewThemeFontSizes {
+  h0?: number
+  h1?: number
+  h2?: number
+  h3?: number
+  h4?: number
+  regular?: number
+  medium?: number
+  small?: number
+  mini?: number
+}
+
+export interface WebViewThemeEditorFontInfo extends WebViewThemeFontInfo {
+  ligatures: boolean
+  fontFeatureSettings: string[]
+}
+
+export interface WebViewThemeFonts {
+  ui: WebViewThemeFontInfo
+  editor: WebViewThemeEditorFontInfo
+}
+
 export interface WebViewThemeChangedParams {
   theme: WebViewTheme
+  fonts?: WebViewThemeFonts
 }
 
 export interface WebViewThemeHostEvents extends WebViewImplementable {

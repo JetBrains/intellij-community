@@ -12,6 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class WebViewAssetResolver(
   private val root: WebViewAssetRoot,
+  private val commonFontRoot: Path = defaultCommonFontRoot(),
 ) {
   private val devSourceRoots = WebViewAssetDevSourceRoots()
 
@@ -24,7 +25,7 @@ class WebViewAssetResolver(
     }
 
     return try {
-      resolveCommonRuntimeAsset(path) ?: resolveScopedAsset(path) ?: when (val source = root.source) {
+      resolveCommonFontAsset(path) ?: resolveCommonRuntimeAsset(path) ?: resolveScopedAsset(path) ?: when (val source = root.source) {
         is WebViewAssetSource.Directory -> resolveFromDirectory(source.root, path, noCache = true)
         is WebViewAssetSource.Classpath -> resolveFromClasspath(source, path)
       }
@@ -89,6 +90,25 @@ class WebViewAssetResolver(
     )
   }
 
+  private fun resolveCommonFontAsset(path: WebViewAssetPath): WebViewAssetResponse? {
+    val fontPath = path.path.removePrefix(COMMON_FONT_REQUEST_PREFIX)
+    if (fontPath == path.path) return null
+
+    val fileName = COMMON_FONT_FILES[fontPath]
+                   ?: return WebViewAssetResponse.notFound("Common WebView font asset not found: $path")
+    val file = commonFontRoot.resolve(fileName).normalize()
+    if (!file.startsWith(commonFontRoot) || !Files.isRegularFile(file)) {
+      return WebViewAssetResponse.notFound("Common WebView font file not found: $path")
+    }
+    return WebViewAssetResponse(
+      statusCode = 200,
+      statusText = "OK",
+      contentType = webViewAssetContentType(fontPath),
+      bytes = Files.newInputStream(file).use { it.readBytes() },
+      headers = mapOf("Cache-Control" to "no-cache"),
+    )
+  }
+
   private fun resolveScopedAsset(path: WebViewAssetPath): WebViewAssetResponse? {
     val scopedProvider = root.scopedAssetProviders.firstOrNull { path.matchesPrefix(it.prefix) } ?: return null
     val scopedPath = path.relativeTo(scopedProvider.prefix)
@@ -123,6 +143,21 @@ class WebViewAssetResolver(
 
   companion object {
     private const val COMMON_RUNTIME_REQUEST_PREFIX = "__webview/"
+    private const val COMMON_FONT_REQUEST_PREFIX = "__webview/fonts/"
     private const val COMMON_RUNTIME_RESOURCE_ROOT = "webview"
+    private val COMMON_FONT_FILES = mapOf(
+      "inter/Inter-Regular.otf" to "Inter-Regular.otf",
+      "inter/Inter-Italic.otf" to "Inter-Italic.otf",
+      "inter/Inter-SemiBold.otf" to "Inter-SemiBold.otf",
+      "inter/Inter-SemiBoldItalic.otf" to "Inter-SemiBoldItalic.otf",
+      "jetbrains-mono/JetBrainsMono-Regular.ttf" to "JetBrainsMono-Regular.ttf",
+      "jetbrains-mono/JetBrainsMono-Italic.ttf" to "JetBrainsMono-Italic.ttf",
+      "jetbrains-mono/JetBrainsMono-Bold.ttf" to "JetBrainsMono-Bold.ttf",
+      "jetbrains-mono/JetBrainsMono-BoldItalic.ttf" to "JetBrainsMono-BoldItalic.ttf",
+    )
+
+    private fun defaultCommonFontRoot(): Path {
+      return Path.of(System.getProperty("java.home"), "lib", "fonts").toAbsolutePath().normalize()
+    }
   }
 }

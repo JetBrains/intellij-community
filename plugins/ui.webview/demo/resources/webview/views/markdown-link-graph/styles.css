@@ -161,7 +161,7 @@ button:disabled {
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--ij-text-secondary);
-  font-size: 12px;
+  font-size: var(--ij-font-size-medium);
 }
 
 .previewBody {
@@ -172,7 +172,7 @@ button:disabled {
   overflow: auto;
   color: var(--ij-text-primary);
   background: var(--ij-bg-window);
-  font-size: 13px;
+  font-size: var(--ij-font-size);
   line-height: 1.55;
   overflow-wrap: break-word;
 }
@@ -198,15 +198,15 @@ button:disabled {
 .previewBody h1 {
   padding-bottom: 8px;
   border-bottom: 1px solid var(--ij-border);
-  font-size: 20px;
+  font-size: var(--ij-font-size-h1);
 }
 
 .previewBody h2 {
-  font-size: 17px;
+  font-size: var(--ij-font-size-h2);
 }
 
 .previewBody h3 {
-  font-size: 15px;
+  font-size: var(--ij-font-size-h3);
 }
 
 .previewBody p,
@@ -235,7 +235,7 @@ button:disabled {
 }
 
 .previewBody a {
-  color: var(--ij-link, var(--ij-accent));
+  color: var(--ij-accent);
   text-decoration: none;
 }
 
@@ -248,8 +248,8 @@ button:disabled {
   border-radius: var(--ij-radius-compact);
   color: var(--ij-text-primary);
   background: var(--ij-bg-panel-alt);
-  font-family: var(--ij-mono-font, monospace);
-  font-size: 12px;
+  font-family: var(--ij-editor-font), monospace;
+  font-size: var(--ij-font-size-medium);
 }
 
 .previewBody pre {
@@ -269,7 +269,7 @@ button:disabled {
 .previewBody table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: var(--ij-font-size-medium);
 }
 
 .previewBody th,
@@ -314,11 +314,11 @@ button:disabled {
 }
 
 .mermaidHost.hasError {
-  border-color: var(--ij-error-border, #C75450);
+  border-color: var(--ij-danger-border);
 }
 
 .mermaidError {
   margin-bottom: 8px;
-  color: var(--ij-error, #C75450);
+  color: var(--ij-danger);
 }
 /*$vite$:1*/

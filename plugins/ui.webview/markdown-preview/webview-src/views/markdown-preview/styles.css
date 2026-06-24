@@ -1,6 +1,6 @@
 /* Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. */
 :root {
-  --default-font-size: 14px;
+  --markdown-preview-font-size: var(--ij-font-size, 13px);
 }
 
 html,
@@ -43,7 +43,7 @@ body {
   box-sizing: border-box;
   max-width: 980px;
   padding: 20px 28px 48px;
-  font-size: var(--default-font-size, 14px);
+  font-size: var(--markdown-preview-font-size, var(--ij-font-size, 13px));
   line-height: 1.55;
   overflow-wrap: break-word;
 }
@@ -239,7 +239,7 @@ html[data-theme="light"] .markdownPreview {
   flex: 1;
   overflow: hidden;
   color: var(--ij-text-secondary);
-  font-size: 12px;
+  font-size: var(--ij-font-size-medium);
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -289,8 +289,8 @@ html[data-theme="light"] .markdownPreview {
   color: var(--ij-text-secondary);
   background: transparent;
   font: inherit;
-  font-size: 12px;
-  line-height: 16px;
+  font-size: var(--ij-font-size-medium);
+  line-height: var(--ij-line-height-compact);
   text-align: left;
 }
 
@@ -453,8 +453,10 @@ html[data-theme="light"] .markdownPreview {
   border-radius: 4px;
   color: var(--ij-text-primary);
   background: var(--ij-bg-panel);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--ij-editor-font), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.92em;
+  font-variant-ligatures: var(--ij-editor-font-variant-ligatures);
+  font-feature-settings: var(--ij-editor-font-feature-settings);
 }
 
 .markdownPreview pre {
@@ -469,7 +471,7 @@ html[data-theme="light"] .markdownPreview {
   padding: 0;
   border-radius: 0;
   background: transparent;
-  font-size: 12px;
+  font-size: var(--ij-editor-font-size);
 }
 
 .markdownPreview pre code.hljs {
@@ -555,7 +557,7 @@ html[data-theme="light"] .markdownPreview {
   padding: 6px 10px;
   border-bottom: 1px solid var(--ij-border);
   color: var(--ij-text-secondary);
-  font-size: 12px;
+  font-size: var(--ij-font-size-medium);
   font-weight: 600;
 }
 
@@ -678,7 +680,7 @@ html[data-theme="light"] .markdownPreview {
   padding-top: 12px;
   border-top: 1px solid var(--ij-border);
   color: var(--ij-text-secondary);
-  font-size: 12px;
+  font-size: var(--ij-font-size-medium);
 }
 
 .markdownPreview .footnotes h2,

@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.webview.preview
 
 import junit.framework.TestCase
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -18,5 +19,18 @@ internal class MarkdownPreviewPageApiTest : TestCase() {
     ).jsonObject
 
     assertEquals("17", payload.getValue("settings").jsonObject.getValue("fontSize").jsonPrimitive.content)
+  }
+
+  fun `test default content update payload inherits WebView font size`() {
+    val payload = Json.encodeToJsonElement(
+      MarkdownContentChangedParams.serializer(),
+      MarkdownContentChangedParams(
+        markdown = "# Title",
+        scrollLine = 3,
+        settings = MarkdownPreviewSettingsParams(fontSize = null),
+      ),
+    ).jsonObject
+
+    assertEquals(JsonNull, payload.getValue("settings").jsonObject.getValue("fontSize"))
   }
 }

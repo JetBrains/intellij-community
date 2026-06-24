@@ -27,11 +27,24 @@ interface TestWindow {
 
 const postedMessages: PostedMessage[] = []
 
+class FakeStyle {
+  readonly properties = new Map<string, string>()
+  colorScheme = ""
+
+  setProperty(name: string, value: string): void {
+    this.properties.set(name, value)
+  }
+
+  getPropertyValue(name: string): string {
+    return this.properties.get(name) ?? ""
+  }
+}
+
 class FakeElement {
   readonly tagName: string
   id = ""
   textContent: string | null = null
-  readonly style: Record<string, string> = {}
+  readonly style = new FakeStyle()
   readonly attributes = new Map<string, string>()
   readonly children: FakeElement[] = []
   parentNode: FakeElement | null = null
@@ -201,7 +214,10 @@ describe("WebView bridge bootstrap", () => {
     const themeApi = requireInstalledThemeApi()
     expect(windowStub.__WVI__).toBe(bridge)
     expect(themeApi.current).toBe("light")
-    expect(documentStub.getElementById("__wvi-ij-themes")).not.toBeNull()
+    const themeStyles = documentStub.getElementById("__wvi-ij-themes")
+    expect(themeStyles).not.toBeNull()
+    expect(themeStyles?.textContent?.includes("/__webview/fonts/inter/Inter-Regular.otf")).toBe(true)
+    expect(themeStyles?.textContent?.includes("/__webview/fonts/jetbrains-mono/JetBrainsMono-Regular.ttf")).toBe(true)
     expect(documentStub.documentElement.getAttribute("data-theme")).toBe("light")
     expect(postedMessages.slice(bridgeMessageCount)).toContainEqual({
       jsonrpc: "2.0",
@@ -221,6 +237,58 @@ describe("WebView bridge bootstrap", () => {
 
     expect(themeApi.current).toBe("dark")
     expect(changes).toEqual(["dark"])
+
+    bridge.__deliver(JSON.stringify({
+      jsonrpc: "2.0",
+      method: "webview.theme/themeChanged",
+      params: {
+        theme: "dark",
+        fonts: {
+          ui: {
+            families: ["Custom UI"],
+            size: 15,
+            lineHeight: 19,
+            sizes: {
+              h0: 27,
+              h1: 24,
+              h2: 20,
+              h3: 18,
+              h4: 16,
+              regular: 15,
+              medium: 14,
+              small: 13,
+              mini: 11,
+            },
+          },
+          editor: {
+            families: ["Custom Mono", "Fallback Mono"],
+            size: 14,
+            lineHeight: 1.4,
+            ligatures: false,
+            fontFeatureSettings: ["zero", "ss01", "ignored-feature"],
+          },
+        },
+      },
+    }))
+
+    const rootStyle = documentStub.documentElement.style
+    expect(rootStyle.getPropertyValue("--ij-font")).toBe("\"Custom UI\"")
+    expect(rootStyle.getPropertyValue("--ij-font-size")).toBe("15px")
+    expect(rootStyle.getPropertyValue("--ij-font-size-h0")).toBe("27px")
+    expect(rootStyle.getPropertyValue("--ij-font-size-h1")).toBe("24px")
+    expect(rootStyle.getPropertyValue("--ij-font-size-h2")).toBe("20px")
+    expect(rootStyle.getPropertyValue("--ij-font-size-h3")).toBe("18px")
+    expect(rootStyle.getPropertyValue("--ij-font-size-h4")).toBe("16px")
+    expect(rootStyle.getPropertyValue("--ij-font-size-regular")).toBe("15px")
+    expect(rootStyle.getPropertyValue("--ij-font-size-medium")).toBe("14px")
+    expect(rootStyle.getPropertyValue("--ij-font-size-small")).toBe("13px")
+    expect(rootStyle.getPropertyValue("--ij-font-size-mini")).toBe("11px")
+    expect(rootStyle.getPropertyValue("--ij-line-height-default")).toBe("19px")
+    expect(rootStyle.getPropertyValue("--ij-editor-font")).toBe("\"Custom Mono\", \"Fallback Mono\"")
+    expect(rootStyle.getPropertyValue("--ij-editor-font-size")).toBe("14px")
+    expect(rootStyle.getPropertyValue("--ij-editor-line-height")).toBe("1.4")
+    expect(rootStyle.getPropertyValue("--ij-editor-font-variant-ligatures")).toBe("none")
+    expect(rootStyle.getPropertyValue("--ij-editor-font-feature-settings")).toBe("\"zero\" 1, \"ss01\" 1")
     registration.close()
   })
 })

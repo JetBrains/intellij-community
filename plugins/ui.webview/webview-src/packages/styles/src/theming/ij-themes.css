@@ -1,18 +1,95 @@
 /* Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. */
 
+@font-face {
+  font-family: "Inter";
+  /*noinspection CssUnknownTarget*/
+  src: url("/__webview/fonts/inter/Inter-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Inter";
+  /*noinspection CssUnknownTarget*/
+  src: url("/__webview/fonts/inter/Inter-Italic.otf") format("opentype");
+  font-weight: 400;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "Inter";
+  /*noinspection CssUnknownTarget*/
+  src: url("/__webview/fonts/inter/Inter-SemiBold.otf") format("opentype");
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Inter";
+  /*noinspection CssUnknownTarget*/
+  src: url("/__webview/fonts/inter/Inter-SemiBoldItalic.otf") format("opentype");
+  font-weight: 600;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  /*noinspection CssUnknownTarget*/
+  src: url("/__webview/fonts/jetbrains-mono/JetBrainsMono-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  /*noinspection CssUnknownTarget*/
+  src: url("/__webview/fonts/jetbrains-mono/JetBrainsMono-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  /*noinspection CssUnknownTarget*/
+  src: url("/__webview/fonts/jetbrains-mono/JetBrainsMono-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  /*noinspection CssUnknownTarget*/
+  src: url("/__webview/fonts/jetbrains-mono/JetBrainsMono-BoldItalic.ttf") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+}
+
 :root {
   --ij-font: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
   --ij-font-size: 13px;
-  --ij-font-size-small: 12px;
-  --ij-font-size-tiny: 11px;
+  --ij-font-size-h0: calc(var(--ij-font-size) + 12px);
+  --ij-font-size-h1: calc(var(--ij-font-size) + 9px);
+  --ij-font-size-h2: calc(var(--ij-font-size) + 5px);
+  --ij-font-size-h3: calc(var(--ij-font-size) + 3px);
+  --ij-font-size-h4: calc(var(--ij-font-size) + 1px);
+  --ij-font-size-regular: var(--ij-font-size);
+  --ij-font-size-medium: calc(var(--ij-font-size) - 1px);
+  --ij-font-size-small: max(calc(var(--ij-font-size) - 2px), 11px);
+  --ij-font-size-mini: max(calc(var(--ij-font-size) - 4px), 9px);
   --ij-line-height-default: 16px;
-  --ij-line-height-paragraph: 18px;
-  --ij-line-height-heading: 20px;
+  --ij-line-height-compact: calc(var(--ij-line-height-default) - 2px);
+  --ij-line-height-paragraph: calc(var(--ij-line-height-default) + 2px);
+  --ij-line-height-heading: calc(var(--ij-line-height-default) + 4px);
   --ij-font-weight-regular: 400;
   --ij-font-weight-medium: 500;
   --ij-font-weight-semibold: 600;
+  --ij-control-height: max(28px, calc(var(--ij-line-height-default) + 12px));
+  --ij-control-height-compact: max(24px, calc(var(--ij-line-height-default) + 8px));
   --ij-editor-font: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --ij-editor-font-size: 13px;
   --ij-editor-line-height: 22px;
+  --ij-editor-font-variant-ligatures: normal;
+  --ij-editor-font-feature-settings: normal;
   --ij-radius-control: 4px;
   --ij-radius-compact: 3px;
   --ij-radius-panel: 6px;
@@ -139,6 +216,14 @@ body.ij-webview-root {
   line-height: var(--ij-line-height-default);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.ij-webview-editor-font {
+  font-family: var(--ij-editor-font), monospace;
+  font-size: var(--ij-editor-font-size);
+  line-height: var(--ij-editor-line-height);
+  font-variant-ligatures: var(--ij-editor-font-variant-ligatures);
+  font-feature-settings: var(--ij-editor-font-feature-settings);
 }
 
 .ij-webview-root::-webkit-scrollbar,

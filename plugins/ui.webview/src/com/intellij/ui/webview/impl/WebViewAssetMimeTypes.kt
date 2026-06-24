@@ -5,9 +5,14 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 internal fun webViewAssetContentType(path: String, file: Path? = null): String {
+  webViewAssetContentTypeByExtension(path)?.let { return it }
   if (file != null) {
     Files.probeContentType(file)?.let { return withCharsetIfText(it) }
   }
+  return "application/octet-stream"
+}
+
+private fun webViewAssetContentTypeByExtension(path: String): String? {
   return when (path.substringAfterLast('.', missingDelimiterValue = "").lowercase()) {
     "html", "htm" -> "text/html; charset=utf-8"
     "css" -> "text/css; charset=utf-8"
@@ -19,11 +24,12 @@ internal fun webViewAssetContentType(path: String, file: Path? = null): String {
     "gif" -> "image/gif"
     "webp" -> "image/webp"
     "ico" -> "image/x-icon"
+    "otf" -> "font/otf"
     "woff" -> "font/woff"
     "woff2" -> "font/woff2"
     "ttf" -> "font/ttf"
     "wasm" -> "application/wasm"
-    else -> "application/octet-stream"
+    else -> null
   }
 }
 

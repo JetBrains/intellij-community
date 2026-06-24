@@ -209,7 +209,7 @@ export const inputStyles = css`
   .select-wrap::after {
     color: var(--jb-text-muted);
     content: "v";
-    font-size: 10px;
+    font-size: var(--jb-font-size-small);
     pointer-events: none;
     position: absolute;
     right: 9px;

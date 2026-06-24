@@ -223,6 +223,15 @@ internal class WebViewRuntimeTest {
     val delivered = withTimeout(5.seconds) { provider.engine.delivered.receive() }
     assertTrue(delivered.contains("\"method\":\"$THEME_CHANGED_METHOD\""), delivered)
     assertTrue(delivered.contains("\"theme\":"), delivered)
+    assertTrue(delivered.contains("\"fonts\":"), delivered)
+    assertTrue(delivered.contains("\"ui\":"), delivered)
+    assertTrue(delivered.contains("\"editor\":"), delivered)
+    assertTrue(delivered.contains("\"families\":"), delivered)
+    assertTrue(delivered.contains("\"sizes\":"), delivered)
+    assertTrue(delivered.contains("\"h0\":"), delivered)
+    assertTrue(delivered.contains("\"medium\":"), delivered)
+    assertTrue(delivered.contains("\"mini\":"), delivered)
+    assertTrue(delivered.contains("\"ligatures\":"), delivered)
     webView.close()
   }
 

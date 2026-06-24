@@ -692,7 +692,7 @@ window.mermaid = mermaid
           "}" +
           ".cluster .nodeLabel, .cluster text {" +
           "  font-weight: 600;" +
-          "  font-size: 12px;" +
+          "  font-size: var(--ij-font-size-medium);" +
           "}" +
           ".marker { fill: " + txtSec + "; stroke: " + txtSec + "; }",
       };

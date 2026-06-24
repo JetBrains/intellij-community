@@ -226,7 +226,7 @@
 	}
 	//#endregion
 	//#region packages/styles/src/theming/ij-themes.css?raw
-	var ij_themes_default = "/* Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. */\n\n:root {\n  --ij-font: \"Inter\", \"Segoe UI\", -apple-system, BlinkMacSystemFont, \"Helvetica Neue\", sans-serif;\n  --ij-font-size: 13px;\n  --ij-font-size-small: 12px;\n  --ij-font-size-tiny: 11px;\n  --ij-line-height-default: 16px;\n  --ij-line-height-paragraph: 18px;\n  --ij-line-height-heading: 20px;\n  --ij-font-weight-regular: 400;\n  --ij-font-weight-medium: 500;\n  --ij-font-weight-semibold: 600;\n  --ij-editor-font: \"JetBrains Mono\", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;\n  --ij-editor-line-height: 22px;\n  --ij-radius-control: 4px;\n  --ij-radius-compact: 3px;\n  --ij-radius-panel: 6px;\n  --ij-focus-ring: 0 0 0 2px rgba(56, 113, 225, 0.32);\n}\n\n:root,\n:root[data-theme=\"dark\"] {\n  --ij-bg-window: #191A1C;\n  --ij-bg-panel: #212326;\n  --ij-bg-panel-alt: #26282C;\n  --ij-bg-input: #191A1C;\n  --ij-bg-control-raised: #26282C;\n  --ij-bg-hover: #FFFFFF17;\n  --ij-bg-pressed: #FFFFFF29;\n  --ij-bg-selected: #2A4371;\n  --ij-bg-selected-muted: #233558;\n  --ij-border: #26282C;\n  --ij-border-inline: #33353B;\n  --ij-border-strong: #40434A;\n  --ij-control-border-raised: #5F6269;\n  --ij-text-primary: #D1D3D9;\n  --ij-text-secondary: #73767C;\n  --ij-text-muted: #9FA2A8;\n  --ij-text-disabled: #4C4F56;\n  --ij-text-on-accent: #FFFFFF;\n  --ij-accent: #3871E1;\n  --ij-accent-hover: #538AF9;\n  --ij-accent-text: #71A1FE;\n  --ij-accent-soft: #233558;\n  --ij-accent-soft-border: #2E4D89;\n  --ij-success: #6DB083;\n  --ij-success-soft: #203B2A;\n  --ij-success-border: #29583C;\n  --ij-warning: #D59637;\n  --ij-warning-soft: #44321D;\n  --ij-warning-border: #694820;\n  --ij-danger: #F57E84;\n  --ij-danger-soft: #56272B;\n  --ij-danger-border: #80383E;\n  --ij-neutral-soft: #B5B7BD33;\n  --ij-neutral-border: #FFFFFF21;\n  --ij-neutral-text: #B5B7BD;\n  --ij-badge-blue-bg: #2E4D89CC;\n  --ij-badge-blue-text: #D0DFFE;\n  --ij-badge-green-bg: #29583CCC;\n  --ij-badge-green-text: #CDE5D1;\n  --ij-badge-purple-bg: #574092CC;\n  --ij-badge-purple-text: #E2DBFC;\n  --ij-badge-gray-bg: #B5B7BD33;\n  --ij-badge-gray-text: #B5B7BD;\n  --ij-progress-track: #40434A;\n  --ij-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);\n  --ij-popup-shadow: 0 8px 24px #00000059;\n  --ij-scrollbar-thumb: #80808059;\n  --ij-scrollbar-thumb-hover: #8080808C;\n}\n\n:root[data-theme=\"light\"] {\n  --ij-bg-window: #FFFFFF;\n  --ij-bg-panel: #F7F8F9;\n  --ij-bg-panel-alt: #FFFFFF;\n  --ij-bg-input: #FFFFFF;\n  --ij-bg-control-raised: #FFFFFF;\n  --ij-bg-hover: #00000012;\n  --ij-bg-pressed: #00000020;\n  --ij-bg-selected: #D0DFFE;\n  --ij-bg-selected-muted: #E3EBFE;\n  --ij-border: #E9EAEE;\n  --ij-border-inline: #E9EAEE;\n  --ij-border-strong: #D1D3D9;\n  --ij-control-border-raised: #B5B7BD;\n  --ij-text-primary: #000000;\n  --ij-text-secondary: #73767C;\n  --ij-text-muted: #5F6269;\n  --ij-text-disabled: #9FA2A8;\n  --ij-text-on-accent: #FFFFFF;\n  --ij-accent: #3871E1;\n  --ij-accent-hover: #2F5EB9;\n  --ij-accent-text: #2F5EB9;\n  --ij-accent-soft: #3871E129;\n  --ij-accent-soft-border: #BDD3FF;\n  --ij-success: #338555;\n  --ij-success-soft: #33855529;\n  --ij-success-border: #BBDBC2;\n  --ij-warning: #A56906;\n  --ij-warning-soft: #FFF6E9;\n  --ij-warning-border: #F4CD9A;\n  --ij-danger: #C54E58;\n  --ij-danger-soft: #FFF6F5;\n  --ij-danger-border: #FFC4C5;\n  --ij-neutral-soft: #73767C1F;\n  --ij-neutral-border: #00000020;\n  --ij-neutral-text: #73767C;\n  --ij-badge-blue-bg: #3871E129;\n  --ij-badge-blue-text: #2F5EB9;\n  --ij-badge-green-bg: #33855529;\n  --ij-badge-green-text: #2A6E47;\n  --ij-badge-purple-bg: #8060DB29;\n  --ij-badge-purple-text: #6C4EBB;\n  --ij-badge-gray-bg: #73767C1F;\n  --ij-badge-gray-text: #73767C;\n  --ij-progress-track: #DDDFE4;\n  --ij-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);\n  --ij-popup-shadow: 0 8px 24px #00000026;\n  --ij-scrollbar-thumb: #80808059;\n  --ij-scrollbar-thumb-hover: #8080808C;\n}\n\n.ij-webview-root,\n.ij-webview-root *,\n.ij-webview-root *::before,\n.ij-webview-root *::after {\n  box-sizing: border-box;\n}\n\nbody.ij-webview-root {\n  margin: 0;\n  min-height: 100vh;\n  background: var(--ij-bg-window);\n  color: var(--ij-text-primary);\n  font-family: var(--ij-font), sans-serif;\n  font-size: var(--ij-font-size);\n  line-height: var(--ij-line-height-default);\n  -webkit-font-smoothing: antialiased;\n  -moz-osx-font-smoothing: grayscale;\n}\n\n.ij-webview-root::-webkit-scrollbar,\n.ij-webview-root *::-webkit-scrollbar {\n  width: 10px;\n  height: 10px;\n  background-color: transparent;\n}\n\n.ij-webview-root::-webkit-scrollbar-track,\n.ij-webview-root *::-webkit-scrollbar-track,\n.ij-webview-root::-webkit-scrollbar-corner,\n.ij-webview-root *::-webkit-scrollbar-corner {\n  background-color: transparent;\n}\n\n.ij-webview-root::-webkit-scrollbar-thumb,\n.ij-webview-root *::-webkit-scrollbar-thumb {\n  background-color: var(--ij-scrollbar-thumb);\n  background-clip: padding-box;\n  border: 2px solid transparent;\n  border-radius: 6px;\n  min-height: 24px;\n}\n\n.ij-webview-root::-webkit-scrollbar-thumb:hover,\n.ij-webview-root *::-webkit-scrollbar-thumb:hover {\n  background-color: var(--ij-scrollbar-thumb-hover);\n  background-clip: padding-box;\n}\n";
+	var ij_themes_default = "/* Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. */\n\n@font-face {\n  font-family: \"Inter\";\n  /*noinspection CssUnknownTarget*/\n  src: url(\"/__webview/fonts/inter/Inter-Regular.otf\") format(\"opentype\");\n  font-weight: 400;\n  font-style: normal;\n}\n\n@font-face {\n  font-family: \"Inter\";\n  /*noinspection CssUnknownTarget*/\n  src: url(\"/__webview/fonts/inter/Inter-Italic.otf\") format(\"opentype\");\n  font-weight: 400;\n  font-style: italic;\n}\n\n@font-face {\n  font-family: \"Inter\";\n  /*noinspection CssUnknownTarget*/\n  src: url(\"/__webview/fonts/inter/Inter-SemiBold.otf\") format(\"opentype\");\n  font-weight: 600;\n  font-style: normal;\n}\n\n@font-face {\n  font-family: \"Inter\";\n  /*noinspection CssUnknownTarget*/\n  src: url(\"/__webview/fonts/inter/Inter-SemiBoldItalic.otf\") format(\"opentype\");\n  font-weight: 600;\n  font-style: italic;\n}\n\n@font-face {\n  font-family: \"JetBrains Mono\";\n  /*noinspection CssUnknownTarget*/\n  src: url(\"/__webview/fonts/jetbrains-mono/JetBrainsMono-Regular.ttf\") format(\"truetype\");\n  font-weight: 400;\n  font-style: normal;\n}\n\n@font-face {\n  font-family: \"JetBrains Mono\";\n  /*noinspection CssUnknownTarget*/\n  src: url(\"/__webview/fonts/jetbrains-mono/JetBrainsMono-Italic.ttf\") format(\"truetype\");\n  font-weight: 400;\n  font-style: italic;\n}\n\n@font-face {\n  font-family: \"JetBrains Mono\";\n  /*noinspection CssUnknownTarget*/\n  src: url(\"/__webview/fonts/jetbrains-mono/JetBrainsMono-Bold.ttf\") format(\"truetype\");\n  font-weight: 700;\n  font-style: normal;\n}\n\n@font-face {\n  font-family: \"JetBrains Mono\";\n  /*noinspection CssUnknownTarget*/\n  src: url(\"/__webview/fonts/jetbrains-mono/JetBrainsMono-BoldItalic.ttf\") format(\"truetype\");\n  font-weight: 700;\n  font-style: italic;\n}\n\n:root {\n  --ij-font: \"Inter\", \"Segoe UI\", -apple-system, BlinkMacSystemFont, \"Helvetica Neue\", sans-serif;\n  --ij-font-size: 13px;\n  --ij-font-size-h0: calc(var(--ij-font-size) + 12px);\n  --ij-font-size-h1: calc(var(--ij-font-size) + 9px);\n  --ij-font-size-h2: calc(var(--ij-font-size) + 5px);\n  --ij-font-size-h3: calc(var(--ij-font-size) + 3px);\n  --ij-font-size-h4: calc(var(--ij-font-size) + 1px);\n  --ij-font-size-regular: var(--ij-font-size);\n  --ij-font-size-medium: calc(var(--ij-font-size) - 1px);\n  --ij-font-size-small: max(calc(var(--ij-font-size) - 2px), 11px);\n  --ij-font-size-mini: max(calc(var(--ij-font-size) - 4px), 9px);\n  --ij-line-height-default: 16px;\n  --ij-line-height-compact: calc(var(--ij-line-height-default) - 2px);\n  --ij-line-height-paragraph: calc(var(--ij-line-height-default) + 2px);\n  --ij-line-height-heading: calc(var(--ij-line-height-default) + 4px);\n  --ij-font-weight-regular: 400;\n  --ij-font-weight-medium: 500;\n  --ij-font-weight-semibold: 600;\n  --ij-control-height: max(28px, calc(var(--ij-line-height-default) + 12px));\n  --ij-control-height-compact: max(24px, calc(var(--ij-line-height-default) + 8px));\n  --ij-editor-font: \"JetBrains Mono\", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;\n  --ij-editor-font-size: 13px;\n  --ij-editor-line-height: 22px;\n  --ij-editor-font-variant-ligatures: normal;\n  --ij-editor-font-feature-settings: normal;\n  --ij-radius-control: 4px;\n  --ij-radius-compact: 3px;\n  --ij-radius-panel: 6px;\n  --ij-focus-ring: 0 0 0 2px rgba(56, 113, 225, 0.32);\n}\n\n:root,\n:root[data-theme=\"dark\"] {\n  --ij-bg-window: #191A1C;\n  --ij-bg-panel: #212326;\n  --ij-bg-panel-alt: #26282C;\n  --ij-bg-input: #191A1C;\n  --ij-bg-control-raised: #26282C;\n  --ij-bg-hover: #FFFFFF17;\n  --ij-bg-pressed: #FFFFFF29;\n  --ij-bg-selected: #2A4371;\n  --ij-bg-selected-muted: #233558;\n  --ij-border: #26282C;\n  --ij-border-inline: #33353B;\n  --ij-border-strong: #40434A;\n  --ij-control-border-raised: #5F6269;\n  --ij-text-primary: #D1D3D9;\n  --ij-text-secondary: #73767C;\n  --ij-text-muted: #9FA2A8;\n  --ij-text-disabled: #4C4F56;\n  --ij-text-on-accent: #FFFFFF;\n  --ij-accent: #3871E1;\n  --ij-accent-hover: #538AF9;\n  --ij-accent-text: #71A1FE;\n  --ij-accent-soft: #233558;\n  --ij-accent-soft-border: #2E4D89;\n  --ij-success: #6DB083;\n  --ij-success-soft: #203B2A;\n  --ij-success-border: #29583C;\n  --ij-warning: #D59637;\n  --ij-warning-soft: #44321D;\n  --ij-warning-border: #694820;\n  --ij-danger: #F57E84;\n  --ij-danger-soft: #56272B;\n  --ij-danger-border: #80383E;\n  --ij-neutral-soft: #B5B7BD33;\n  --ij-neutral-border: #FFFFFF21;\n  --ij-neutral-text: #B5B7BD;\n  --ij-badge-blue-bg: #2E4D89CC;\n  --ij-badge-blue-text: #D0DFFE;\n  --ij-badge-green-bg: #29583CCC;\n  --ij-badge-green-text: #CDE5D1;\n  --ij-badge-purple-bg: #574092CC;\n  --ij-badge-purple-text: #E2DBFC;\n  --ij-badge-gray-bg: #B5B7BD33;\n  --ij-badge-gray-text: #B5B7BD;\n  --ij-progress-track: #40434A;\n  --ij-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);\n  --ij-popup-shadow: 0 8px 24px #00000059;\n  --ij-scrollbar-thumb: #80808059;\n  --ij-scrollbar-thumb-hover: #8080808C;\n}\n\n:root[data-theme=\"light\"] {\n  --ij-bg-window: #FFFFFF;\n  --ij-bg-panel: #F7F8F9;\n  --ij-bg-panel-alt: #FFFFFF;\n  --ij-bg-input: #FFFFFF;\n  --ij-bg-control-raised: #FFFFFF;\n  --ij-bg-hover: #00000012;\n  --ij-bg-pressed: #00000020;\n  --ij-bg-selected: #D0DFFE;\n  --ij-bg-selected-muted: #E3EBFE;\n  --ij-border: #E9EAEE;\n  --ij-border-inline: #E9EAEE;\n  --ij-border-strong: #D1D3D9;\n  --ij-control-border-raised: #B5B7BD;\n  --ij-text-primary: #000000;\n  --ij-text-secondary: #73767C;\n  --ij-text-muted: #5F6269;\n  --ij-text-disabled: #9FA2A8;\n  --ij-text-on-accent: #FFFFFF;\n  --ij-accent: #3871E1;\n  --ij-accent-hover: #2F5EB9;\n  --ij-accent-text: #2F5EB9;\n  --ij-accent-soft: #3871E129;\n  --ij-accent-soft-border: #BDD3FF;\n  --ij-success: #338555;\n  --ij-success-soft: #33855529;\n  --ij-success-border: #BBDBC2;\n  --ij-warning: #A56906;\n  --ij-warning-soft: #FFF6E9;\n  --ij-warning-border: #F4CD9A;\n  --ij-danger: #C54E58;\n  --ij-danger-soft: #FFF6F5;\n  --ij-danger-border: #FFC4C5;\n  --ij-neutral-soft: #73767C1F;\n  --ij-neutral-border: #00000020;\n  --ij-neutral-text: #73767C;\n  --ij-badge-blue-bg: #3871E129;\n  --ij-badge-blue-text: #2F5EB9;\n  --ij-badge-green-bg: #33855529;\n  --ij-badge-green-text: #2A6E47;\n  --ij-badge-purple-bg: #8060DB29;\n  --ij-badge-purple-text: #6C4EBB;\n  --ij-badge-gray-bg: #73767C1F;\n  --ij-badge-gray-text: #73767C;\n  --ij-progress-track: #DDDFE4;\n  --ij-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);\n  --ij-popup-shadow: 0 8px 24px #00000026;\n  --ij-scrollbar-thumb: #80808059;\n  --ij-scrollbar-thumb-hover: #8080808C;\n}\n\n.ij-webview-root,\n.ij-webview-root *,\n.ij-webview-root *::before,\n.ij-webview-root *::after {\n  box-sizing: border-box;\n}\n\nbody.ij-webview-root {\n  margin: 0;\n  min-height: 100vh;\n  background: var(--ij-bg-window);\n  color: var(--ij-text-primary);\n  font-family: var(--ij-font), sans-serif;\n  font-size: var(--ij-font-size);\n  line-height: var(--ij-line-height-default);\n  -webkit-font-smoothing: antialiased;\n  -moz-osx-font-smoothing: grayscale;\n}\n\n.ij-webview-editor-font {\n  font-family: var(--ij-editor-font), monospace;\n  font-size: var(--ij-editor-font-size);\n  line-height: var(--ij-editor-line-height);\n  font-variant-ligatures: var(--ij-editor-font-variant-ligatures);\n  font-feature-settings: var(--ij-editor-font-feature-settings);\n}\n\n.ij-webview-root::-webkit-scrollbar,\n.ij-webview-root *::-webkit-scrollbar {\n  width: 10px;\n  height: 10px;\n  background-color: transparent;\n}\n\n.ij-webview-root::-webkit-scrollbar-track,\n.ij-webview-root *::-webkit-scrollbar-track,\n.ij-webview-root::-webkit-scrollbar-corner,\n.ij-webview-root *::-webkit-scrollbar-corner {\n  background-color: transparent;\n}\n\n.ij-webview-root::-webkit-scrollbar-thumb,\n.ij-webview-root *::-webkit-scrollbar-thumb {\n  background-color: var(--ij-scrollbar-thumb);\n  background-clip: padding-box;\n  border: 2px solid transparent;\n  border-radius: 6px;\n  min-height: 24px;\n}\n\n.ij-webview-root::-webkit-scrollbar-thumb:hover,\n.ij-webview-root *::-webkit-scrollbar-thumb:hover {\n  background-color: var(--ij-scrollbar-thumb-hover);\n  background-clip: padding-box;\n}\n";
 	//#endregion
 	//#region packages/impl/src/theme.ts
 	var IJ_THEME_STYLES_ID = "__wvi-ij-themes";
@@ -239,13 +239,23 @@
 :root {
   --jb-font-family: var(--ij-font, "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif);
   --jb-font-size: var(--ij-font-size, 13px);
-  --jb-font-size-small: var(--ij-font-size-small, 12px);
+  --jb-font-size-h0: var(--ij-font-size-h0, calc(var(--ij-font-size, 13px) + 12px));
+  --jb-font-size-h1: var(--ij-font-size-h1, calc(var(--ij-font-size, 13px) + 9px));
+  --jb-font-size-h2: var(--ij-font-size-h2, calc(var(--ij-font-size, 13px) + 5px));
+  --jb-font-size-h3: var(--ij-font-size-h3, calc(var(--ij-font-size, 13px) + 3px));
+  --jb-font-size-h4: var(--ij-font-size-h4, calc(var(--ij-font-size, 13px) + 1px));
+  --jb-font-size-regular: var(--ij-font-size-regular, var(--ij-font-size, 13px));
+  --jb-font-size-medium: var(--ij-font-size-medium, calc(var(--ij-font-size, 13px) - 1px));
+  --jb-font-size-small: var(--ij-font-size-small, max(calc(var(--ij-font-size, 13px) - 2px), 11px));
+  --jb-font-size-mini: var(--ij-font-size-mini, max(calc(var(--ij-font-size, 13px) - 4px), 9px));
   --jb-line-height: var(--ij-line-height-default, 16px);
-  --jb-line-height-paragraph: var(--ij-line-height-paragraph, 18px);
+  --jb-line-height-compact: var(--ij-line-height-compact, calc(var(--ij-line-height-default, 16px) - 2px));
+  --jb-line-height-paragraph: var(--ij-line-height-paragraph, calc(var(--ij-line-height-default, 16px) + 2px));
+  --jb-line-height-heading: var(--ij-line-height-heading, calc(var(--ij-line-height-default, 16px) + 4px));
   --jb-font-weight-regular: var(--ij-font-weight-regular, 400);
   --jb-font-weight-medium: var(--ij-font-weight-medium, 500);
-  --jb-control-height: 28px;
-  --jb-control-height-compact: 24px;
+  --jb-control-height: var(--ij-control-height, max(28px, calc(var(--ij-line-height-default, 16px) + 12px)));
+  --jb-control-height-compact: var(--ij-control-height-compact, max(24px, calc(var(--ij-line-height-default, 16px) + 8px)));
   --jb-control-radius: var(--ij-radius-control, 4px);
   --jb-control-padding-x: 8px;
   --jb-control-gap: 6px;
@@ -315,14 +325,17 @@
 			}
 		};
 		function applyHostTheme(params) {
-			const theme = normalizeTheme(params && typeof params === "object" ? params.theme : void 0);
-			if (!theme || theme === currentTheme) return;
-			currentTheme = theme;
-			applyThemeAttribute(theme);
-			for (const listener of listeners.slice()) try {
-				listener(theme);
-			} catch (err) {
-				console.error("[__WVI__] theme listener threw:", err);
+			const payload = params && typeof params === "object" ? params : void 0;
+			applyThemeFonts(payload?.fonts);
+			const theme = normalizeTheme(payload?.theme);
+			if (theme && theme !== currentTheme) {
+				currentTheme = theme;
+				applyThemeAttribute(theme);
+				for (const listener of listeners.slice()) try {
+					listener(theme);
+				} catch (err) {
+					console.error("[__WVI__] theme listener threw:", err);
+				}
 			}
 		}
 		function install(bridge) {
@@ -373,6 +386,95 @@
 		document.documentElement.style.colorScheme = theme;
 		ensureJBThemeTokensInstalled();
 	}
+	function applyThemeFonts(fonts) {
+		if (!fonts || typeof fonts !== "object") return;
+		const payload = fonts;
+		applyUiFont(payload.ui);
+		applyEditorFont(payload.editor);
+	}
+	function applyUiFont(font) {
+		const payload = normalizeFontInfo(font);
+		if (!payload) return;
+		const style = document.documentElement.style;
+		style.setProperty("--ij-font", toCssFontFamily(payload.families));
+		style.setProperty("--ij-font-size", `${payload.size}px`);
+		style.setProperty("--ij-font-size-regular", `${payload.sizes?.regular ?? payload.size}px`);
+		applyUiFontSizes(style, payload.sizes);
+		if (payload.lineHeight !== void 0) style.setProperty("--ij-line-height-default", `${payload.lineHeight}px`);
+	}
+	function applyUiFontSizes(style, sizes) {
+		if (!sizes) return;
+		for (const [role, variable] of uiFontSizeVariables) {
+			const size = sizes[role];
+			if (typeof size === "number" && Number.isFinite(size) && size > 0) style.setProperty(variable, `${size}px`);
+		}
+	}
+	function applyEditorFont(font) {
+		const payload = normalizeEditorFontInfo(font);
+		if (!payload) return;
+		const style = document.documentElement.style;
+		style.setProperty("--ij-editor-font", toCssFontFamily(payload.families));
+		style.setProperty("--ij-editor-font-size", `${payload.size}px`);
+		if (payload.lineHeight !== void 0) style.setProperty("--ij-editor-line-height", `${payload.lineHeight}`);
+		style.setProperty("--ij-editor-font-variant-ligatures", payload.ligatures ? "normal" : "none");
+		style.setProperty("--ij-editor-font-feature-settings", toCssFontFeatureSettings(payload.fontFeatureSettings));
+	}
+	function normalizeFontInfo(font) {
+		if (!font || typeof font !== "object") return;
+		const payload = font;
+		const families = Array.isArray(payload.families) ? payload.families.filter((family) => typeof family === "string" && family.trim().length > 0) : [];
+		if (families.length === 0 || typeof payload.size !== "number" || !Number.isFinite(payload.size) || payload.size <= 0) return;
+		const lineHeight = typeof payload.lineHeight === "number" && Number.isFinite(payload.lineHeight) && payload.lineHeight > 0 ? payload.lineHeight : void 0;
+		const sizes = normalizeUiFontSizes(payload.sizes);
+		return {
+			families,
+			size: payload.size,
+			lineHeight,
+			...sizes ? { sizes } : {}
+		};
+	}
+	function normalizeUiFontSizes(sizes) {
+		if (!sizes || typeof sizes !== "object") return;
+		const payload = sizes;
+		const result = {};
+		for (const [role] of uiFontSizeVariables) {
+			const size = payload[role];
+			if (typeof size === "number" && Number.isFinite(size) && size > 0) result[role] = size;
+		}
+		return Object.keys(result).length > 0 ? result : void 0;
+	}
+	function normalizeEditorFontInfo(font) {
+		const payload = normalizeFontInfo(font);
+		if (!payload || !font || typeof font !== "object") return;
+		const editorPayload = font;
+		const fontFeatureSettings = Array.isArray(editorPayload.fontFeatureSettings) ? editorPayload.fontFeatureSettings.filter((feature) => typeof feature === "string") : [];
+		return {
+			...payload,
+			ligatures: editorPayload.ligatures !== false,
+			fontFeatureSettings
+		};
+	}
+	function toCssFontFamily(families) {
+		return families.map((family) => cssString(family.trim())).join(", ");
+	}
+	function toCssFontFeatureSettings(features) {
+		const cssFeatures = features.filter((feature) => /^[A-Za-z0-9]{4}$/.test(feature)).map((feature) => `${cssString(feature)} 1`);
+		return cssFeatures.length === 0 ? "normal" : cssFeatures.join(", ");
+	}
+	function cssString(value) {
+		return `"${value.replace(/\\/g, "\\\\").replace(/"/g, "\\\"")}"`;
+	}
+	var uiFontSizeVariables = [
+		["h0", "--ij-font-size-h0"],
+		["h1", "--ij-font-size-h1"],
+		["h2", "--ij-font-size-h2"],
+		["h3", "--ij-font-size-h3"],
+		["h4", "--ij-font-size-h4"],
+		["regular", "--ij-font-size-regular"],
+		["medium", "--ij-font-size-medium"],
+		["small", "--ij-font-size-small"],
+		["mini", "--ij-font-size-mini"]
+	];
 	//#endregion
 	//#region packages/impl/src/platformFeatures.ts
 	function installWebViewPlatformFeatures(bridge) {

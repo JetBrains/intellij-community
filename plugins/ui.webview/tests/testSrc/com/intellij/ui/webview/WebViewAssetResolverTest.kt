@@ -8,6 +8,7 @@ import com.intellij.ui.webview.impl.WEBVIEW_ASSET_HTTPS_HOST
 import com.intellij.ui.webview.impl.WebViewAssetResolver
 import com.intellij.ui.webview.impl.resolveWebViewAssetUrl
 import com.intellij.ui.webview.impl.webViewAssetHttpsUrl
+import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -128,6 +129,72 @@ internal class WebViewAssetResolverTest {
     assertTrue(featuresScript.contains("__wvi-ij-themes"))
     assertTrue(featuresScript.contains("webview.theme"))
     assertTrue(featuresScript.contains("pointerdown"))
+  }
+
+  @Test
+  fun resolvesCommonFontAssetForAnyRoot(@TempDir tempDir: Path) {
+    val fontRoot = Files.createDirectory(tempDir.resolve("jbr-fonts"))
+    val fontBytes = byteArrayOf(1, 2, 3)
+    Files.write(fontRoot.resolve("Inter-Regular.otf"), fontBytes)
+    Files.write(fontRoot.resolve("JetBrainsMono-Regular.ttf"), fontBytes)
+    val viewRoot = Files.createDirectory(tempDir.resolve("view"))
+    val resolver = WebViewAssetResolver(WebViewAssetRoot.fromDirectory(viewRoot), commonFontRoot = fontRoot)
+
+    val response = resolveWebViewAssetUrl(webViewAssetHttpsUrl(WebViewAssetPath.of("__webview/fonts/inter/Inter-Regular.otf")), resolver)
+    assertNotNull(response)
+
+    assertEquals(200, response!!.statusCode)
+    assertEquals("font/otf", response.contentType)
+    assertArrayEquals(fontBytes, response.bytes)
+
+    val editorFontResponse = resolveWebViewAssetUrl(
+      webViewAssetHttpsUrl(WebViewAssetPath.of("__webview/fonts/jetbrains-mono/JetBrainsMono-Regular.ttf")),
+      resolver,
+    )
+    assertNotNull(editorFontResponse)
+    assertEquals(200, editorFontResponse!!.statusCode)
+    assertEquals("font/ttf", editorFontResponse.contentType)
+    assertArrayEquals(fontBytes, editorFontResponse.bytes)
+  }
+
+  @Test
+  fun commonFontAssetResolverDoesNotExposeUnknownFiles(@TempDir tempDir: Path) {
+    val fontRoot = Files.createDirectory(tempDir.resolve("jbr-fonts"))
+    Files.write(fontRoot.resolve("Secret-Regular.otf"), byteArrayOf(1, 2, 3))
+    val resolver = WebViewAssetResolver(WebViewAssetRoot.fromDirectory(tempDir), commonFontRoot = fontRoot)
+
+    val response = resolveWebViewAssetUrl(webViewAssetHttpsUrl(WebViewAssetPath.of("__webview/fonts/inter/Secret-Regular.otf")), resolver)
+    assertNotNull(response)
+
+    assertEquals(404, response!!.statusCode)
+  }
+
+  @Test
+  fun rejectsTraversalThroughCommonFontAssetUrl(@TempDir tempDir: Path) {
+    val resolver = WebViewAssetResolver(WebViewAssetRoot.fromDirectory(tempDir), commonFontRoot = tempDir)
+    val response = resolveWebViewAssetUrl("https://$WEBVIEW_ASSET_HTTPS_HOST/__webview/fonts/%2e%2e/Inter-Regular.otf", resolver)
+    assertNotNull(response)
+
+    assertEquals(403, response!!.statusCode)
+  }
+
+  @Test
+  fun resolvesFontMimeTypesByExtension(@TempDir tempDir: Path) {
+    Files.write(tempDir.resolve("font.otf"), byteArrayOf(1))
+    Files.write(tempDir.resolve("font.ttf"), byteArrayOf(2))
+    Files.write(tempDir.resolve("font.woff2"), byteArrayOf(3))
+    val resolver = WebViewAssetResolver(WebViewAssetRoot.fromDirectory(tempDir))
+
+    val otfResponse = resolveWebViewAssetUrl(webViewAssetHttpsUrl(WebViewAssetPath.of("font.otf")), resolver)
+    val ttfResponse = resolveWebViewAssetUrl(webViewAssetHttpsUrl(WebViewAssetPath.of("font.ttf")), resolver)
+    val woff2Response = resolveWebViewAssetUrl(webViewAssetHttpsUrl(WebViewAssetPath.of("font.woff2")), resolver)
+
+    assertNotNull(otfResponse)
+    assertNotNull(ttfResponse)
+    assertNotNull(woff2Response)
+    assertEquals("font/otf", otfResponse!!.contentType)
+    assertEquals("font/ttf", ttfResponse!!.contentType)
+    assertEquals("font/woff2", woff2Response!!.contentType)
   }
 
   @Test

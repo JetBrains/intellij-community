@@ -6,6 +6,11 @@ import type {
   WebViewMessageRegistration,
   WebViewTheme,
   WebViewThemeApi,
+  WebViewThemeChangedParams,
+  WebViewThemeEditorFontInfo,
+  WebViewThemeFontInfo,
+  WebViewThemeFontSizes,
+  WebViewThemeFonts,
   WebViewThemeHostEvents,
   WebViewThemePageEvents,
 } from "@jetbrains/intellij-webview"
@@ -22,13 +27,23 @@ const jbThemeTokenStyles = `
 :root {
   --jb-font-family: var(--ij-font, "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif);
   --jb-font-size: var(--ij-font-size, 13px);
-  --jb-font-size-small: var(--ij-font-size-small, 12px);
+  --jb-font-size-h0: var(--ij-font-size-h0, calc(var(--ij-font-size, 13px) + 12px));
+  --jb-font-size-h1: var(--ij-font-size-h1, calc(var(--ij-font-size, 13px) + 9px));
+  --jb-font-size-h2: var(--ij-font-size-h2, calc(var(--ij-font-size, 13px) + 5px));
+  --jb-font-size-h3: var(--ij-font-size-h3, calc(var(--ij-font-size, 13px) + 3px));
+  --jb-font-size-h4: var(--ij-font-size-h4, calc(var(--ij-font-size, 13px) + 1px));
+  --jb-font-size-regular: var(--ij-font-size-regular, var(--ij-font-size, 13px));
+  --jb-font-size-medium: var(--ij-font-size-medium, calc(var(--ij-font-size, 13px) - 1px));
+  --jb-font-size-small: var(--ij-font-size-small, max(calc(var(--ij-font-size, 13px) - 2px), 11px));
+  --jb-font-size-mini: var(--ij-font-size-mini, max(calc(var(--ij-font-size, 13px) - 4px), 9px));
   --jb-line-height: var(--ij-line-height-default, 16px);
-  --jb-line-height-paragraph: var(--ij-line-height-paragraph, 18px);
+  --jb-line-height-compact: var(--ij-line-height-compact, calc(var(--ij-line-height-default, 16px) - 2px));
+  --jb-line-height-paragraph: var(--ij-line-height-paragraph, calc(var(--ij-line-height-default, 16px) + 2px));
+  --jb-line-height-heading: var(--ij-line-height-heading, calc(var(--ij-line-height-default, 16px) + 4px));
   --jb-font-weight-regular: var(--ij-font-weight-regular, 400);
   --jb-font-weight-medium: var(--ij-font-weight-medium, 500);
-  --jb-control-height: 28px;
-  --jb-control-height-compact: 24px;
+  --jb-control-height: var(--ij-control-height, max(28px, calc(var(--ij-line-height-default, 16px) + 12px)));
+  --jb-control-height-compact: var(--ij-control-height-compact, max(24px, calc(var(--ij-line-height-default, 16px) + 8px)));
   --jb-control-radius: var(--ij-radius-control, 4px);
   --jb-control-padding-x: 8px;
   --jb-control-gap: 6px;
@@ -111,18 +126,20 @@ export function createWebViewTheme(): WebViewThemeController {
   }
 
   function applyHostTheme(params: unknown): void {
-    const theme = normalizeTheme(params && typeof params === "object" ? (params as { theme?: unknown }).theme : undefined)
-    if (!theme || theme === currentTheme) {
-      return
-    }
-    currentTheme = theme
-    applyThemeAttribute(theme)
-    for (const listener of listeners.slice()) {
-      try {
-        listener(theme)
-      }
-      catch (err) {
-        console.error("[__WVI__] theme listener threw:", err)
+    const payload = params && typeof params === "object" ? params as Partial<WebViewThemeChangedParams> : undefined
+    applyThemeFonts(payload?.fonts)
+
+    const theme = normalizeTheme(payload?.theme)
+    if (theme && theme !== currentTheme) {
+      currentTheme = theme
+      applyThemeAttribute(theme)
+      for (const listener of listeners.slice()) {
+        try {
+          listener(theme)
+        }
+        catch (err) {
+          console.error("[__WVI__] theme listener threw:", err)
+        }
       }
     }
   }
@@ -195,3 +212,130 @@ function applyThemeAttribute(theme: WebViewTheme): void {
   document.documentElement.style.colorScheme = theme
   ensureJBThemeTokensInstalled()
 }
+
+function applyThemeFonts(fonts: unknown): void {
+  if (!fonts || typeof fonts !== "object") {
+    return
+  }
+  const payload = fonts as Partial<WebViewThemeFonts>
+  applyUiFont(payload.ui)
+  applyEditorFont(payload.editor)
+}
+
+function applyUiFont(font: unknown): void {
+  const payload = normalizeFontInfo(font)
+  if (!payload) {
+    return
+  }
+  const style = document.documentElement.style
+  style.setProperty("--ij-font", toCssFontFamily(payload.families))
+  style.setProperty("--ij-font-size", `${payload.size}px`)
+  style.setProperty("--ij-font-size-regular", `${payload.sizes?.regular ?? payload.size}px`)
+  applyUiFontSizes(style, payload.sizes)
+  if (payload.lineHeight !== undefined) {
+    style.setProperty("--ij-line-height-default", `${payload.lineHeight}px`)
+  }
+}
+
+function applyUiFontSizes(style: CSSStyleDeclaration, sizes: WebViewThemeFontSizes | undefined): void {
+  if (!sizes) {
+    return
+  }
+  for (const [role, variable] of uiFontSizeVariables) {
+    const size = sizes[role]
+    if (typeof size === "number" && Number.isFinite(size) && size > 0) {
+      style.setProperty(variable, `${size}px`)
+    }
+  }
+}
+
+function applyEditorFont(font: unknown): void {
+  const payload = normalizeEditorFontInfo(font)
+  if (!payload) {
+    return
+  }
+  const style = document.documentElement.style
+  style.setProperty("--ij-editor-font", toCssFontFamily(payload.families))
+  style.setProperty("--ij-editor-font-size", `${payload.size}px`)
+  if (payload.lineHeight !== undefined) {
+    style.setProperty("--ij-editor-line-height", `${payload.lineHeight}`)
+  }
+  style.setProperty("--ij-editor-font-variant-ligatures", payload.ligatures ? "normal" : "none")
+  style.setProperty("--ij-editor-font-feature-settings", toCssFontFeatureSettings(payload.fontFeatureSettings))
+}
+
+function normalizeFontInfo(font: unknown): WebViewThemeFontInfo | undefined {
+  if (!font || typeof font !== "object") {
+    return undefined
+  }
+  const payload = font as Partial<WebViewThemeFontInfo>
+  const families = Array.isArray(payload.families)
+    ? payload.families.filter((family): family is string => typeof family === "string" && family.trim().length > 0)
+    : []
+  if (families.length === 0 || typeof payload.size !== "number" || !Number.isFinite(payload.size) || payload.size <= 0) {
+    return undefined
+  }
+  const lineHeight = typeof payload.lineHeight === "number" && Number.isFinite(payload.lineHeight) && payload.lineHeight > 0
+    ? payload.lineHeight
+    : undefined
+  const sizes = normalizeUiFontSizes(payload.sizes)
+  return { families, size: payload.size, lineHeight, ...(sizes ? { sizes } : {}) }
+}
+
+function normalizeUiFontSizes(sizes: unknown): WebViewThemeFontSizes | undefined {
+  if (!sizes || typeof sizes !== "object") {
+    return undefined
+  }
+  const payload = sizes as Partial<WebViewThemeFontSizes>
+  const result: WebViewThemeFontSizes = {}
+  for (const [role] of uiFontSizeVariables) {
+    const size = payload[role]
+    if (typeof size === "number" && Number.isFinite(size) && size > 0) {
+      result[role] = size
+    }
+  }
+  return Object.keys(result).length > 0 ? result : undefined
+}
+
+function normalizeEditorFontInfo(font: unknown): WebViewThemeEditorFontInfo | undefined {
+  const payload = normalizeFontInfo(font)
+  if (!payload || !font || typeof font !== "object") {
+    return undefined
+  }
+  const editorPayload = font as Partial<WebViewThemeEditorFontInfo>
+  const fontFeatureSettings = Array.isArray(editorPayload.fontFeatureSettings)
+    ? editorPayload.fontFeatureSettings.filter((feature): feature is string => typeof feature === "string")
+    : []
+  return {
+    ...payload,
+    ligatures: editorPayload.ligatures !== false,
+    fontFeatureSettings,
+  }
+}
+
+function toCssFontFamily(families: string[]): string {
+  return families.map((family) => cssString(family.trim())).join(", ")
+}
+
+function toCssFontFeatureSettings(features: string[]): string {
+  const cssFeatures = features
+    .filter((feature) => /^[A-Za-z0-9]{4}$/.test(feature))
+    .map((feature) => `${cssString(feature)} 1`)
+  return cssFeatures.length === 0 ? "normal" : cssFeatures.join(", ")
+}
+
+function cssString(value: string): string {
+  return `"${value.replace(/\\/g, "\\\\").replace(/"/g, "\\\"")}"`
+}
+
+const uiFontSizeVariables: Array<[keyof WebViewThemeFontSizes, string]> = [
+  ["h0", "--ij-font-size-h0"],
+  ["h1", "--ij-font-size-h1"],
+  ["h2", "--ij-font-size-h2"],
+  ["h3", "--ij-font-size-h3"],
+  ["h4", "--ij-font-size-h4"],
+  ["regular", "--ij-font-size-regular"],
+  ["medium", "--ij-font-size-medium"],
+  ["small", "--ij-font-size-small"],
+  ["mini", "--ij-font-size-mini"],
+]

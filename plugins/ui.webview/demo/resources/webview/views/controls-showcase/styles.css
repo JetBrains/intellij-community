@@ -19,9 +19,9 @@
 }
 
 .section-title {
-  font-size: 18px;
+  font-size: var(--jb-font-size-h3);
   font-weight: var(--jb-font-weight-medium);
-  line-height: 24px;
+  line-height: var(--jb-line-height-heading);
   margin: 0;
 }
 

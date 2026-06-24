@@ -639,7 +639,7 @@ function MermaidDiagram(props) {
 				clusterBorder: border,
 				edgeLabelBackground: bg
 			},
-			themeCSS: ".node rect, .node polygon, .node circle, .node path, .node ellipse {  stroke-width: 1.6px;  rx: 4px; ry: 4px;}.node .nodeLabel, .node foreignObject span, .node text {  font-weight: 500;}.edgePath .path, path.flowchart-link {  stroke-width: 1.75px;}.cluster rect {  stroke-width: 1.6px;  rx: 4px; ry: 4px;}.cluster .nodeLabel, .cluster text {  font-weight: 600;  font-size: 12px;}.marker { fill: " + txtSec + "; stroke: " + txtSec + "; }"
+			themeCSS: ".node rect, .node polygon, .node circle, .node path, .node ellipse {  stroke-width: 1.6px;  rx: 4px; ry: 4px;}.node .nodeLabel, .node foreignObject span, .node text {  font-weight: 500;}.edgePath .path, path.flowchart-link {  stroke-width: 1.75px;}.cluster rect {  stroke-width: 1.6px;  rx: 4px; ry: 4px;}.cluster .nodeLabel, .cluster text {  font-weight: 600;  font-size: var(--ij-font-size-medium);}.marker { fill: " + txtSec + "; stroke: " + txtSec + "; }"
 		};
 	}
 	function getNodeKey(el) {
