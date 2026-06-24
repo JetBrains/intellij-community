@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeProjection
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2NamedArgumentCompletionContributor.MissingParameterInfo
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.BracketOperatorInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.Tail
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CallableInsertionOptions
@@ -151,8 +152,8 @@ object KotlinFirLookupElementFactory {
         PackagePartLookupElementFactory.createLookup(packagePartFqName)
 
     context(_: KaSession)
-    fun createNamedArgumentLookupElement(name: Name, types: List<IndexedValue<KaType>>): LookupElement =
-        NamedArgumentLookupElementFactory.createLookup(name, types)
+    internal fun createNamedArgumentLookupElement(name: Name, missingParameters: List<MissingParameterInfo>): LookupElement =
+        NamedArgumentLookupElementFactory.createLookup(name, missingParameters)
 
     fun createNamedArgumentWithValueLookupElement(name: Name, value: String, index: Int): LookupElement =
         NamedArgumentLookupElementFactory.createLookup(name, value, index)

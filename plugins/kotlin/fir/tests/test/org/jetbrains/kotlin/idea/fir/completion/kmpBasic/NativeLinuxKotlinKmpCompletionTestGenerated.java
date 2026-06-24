@@ -2267,6 +2267,16 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
             runTest("../../completion/testData/basic/common/namedArguments/ParamsFromSingleUnapplicableOverload.kt");
         }
 
+        @TestMetadata("PrefillExplicitContextArgument.kt")
+        public void testPrefillExplicitContextArgument() throws Exception {
+            runTest("../../completion/testData/basic/common/namedArguments/PrefillExplicitContextArgument.kt");
+        }
+
+        @TestMetadata("PrefillPreferParameterOverContextArgument.kt")
+        public void testPrefillPreferParameterOverContextArgument() throws Exception {
+            runTest("../../completion/testData/basic/common/namedArguments/PrefillPreferParameterOverContextArgument.kt");
+        }
+
         @TestMetadata("PrefillSameNameParameter.kt")
         public void testPrefillSameNameParameter() throws Exception {
             runTest("../../completion/testData/basic/common/namedArguments/PrefillSameNameParameter.kt");
@@ -2300,6 +2310,11 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
         @TestMetadata("PrefillTopLevelValue.kt")
         public void testPrefillTopLevelValue() throws Exception {
             runTest("../../completion/testData/basic/common/namedArguments/PrefillTopLevelValue.kt");
+        }
+
+        @TestMetadata("PrefillWrongOrder.kt")
+        public void testPrefillWrongOrder() throws Exception {
+            runTest("../../completion/testData/basic/common/namedArguments/PrefillWrongOrder.kt");
         }
 
         @TestMetadata("PrivateFunction.kt")
