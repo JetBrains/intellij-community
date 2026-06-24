@@ -37,10 +37,10 @@ internal fun PsiElement.childrenOfType(type: TokenSet): Sequence<PsiElement> {
   return children().filter { it.elementType in type }
 }
 
-internal fun PsiElement.parentOfType(withSelf: Boolean = false, type: IElementType): PsiElement? {
+internal fun PsiElement.parentOfType(type: IElementType, withSelf: Boolean = false): PsiElement? {
   return parents(withSelf).find { it.hasType(type) }
 }
 
-internal fun PsiElement.parentOfType(withSelf: Boolean = false, type: TokenSet): PsiElement? {
+internal fun PsiElement.parentOfType(type: TokenSet, withSelf: Boolean = false): PsiElement? {
   return parents(withSelf).find { it.hasType(type) }
 }

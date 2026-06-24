@@ -8,18 +8,17 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.OuterLanguageElementType
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
+import com.intellij.psi.util.parents
 import com.intellij.psi.util.siblings
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownAlert
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownAlertTitle
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.lang.psi.util.hasType
+import org.intellij.plugins.markdown.lang.psi.util.parentOfType
 import org.intellij.plugins.markdown.util.isFootnoteLabelText
 
 @Suppress("RegExpRedundantEscape")
@@ -33,93 +32,191 @@ internal fun alertTitleColorKey(type: MarkdownAlertTitle.AlertType): TextAttribu
   MarkdownAlertTitle.AlertType.CAUTION -> MarkdownHighlighterColors.ALERT_TITLE_CAUTION
 }
 
+/**
+ * Style keys to be applied to [PsiElement] with the following semantics:
+ * `null` — rule does not apply, pick another one;
+ * [emptySet] — handled, suppress generic highlighting.
+ */
+private typealias HighlightingKeys = Set<TextAttributesKey>
+
 internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
   private val syntaxHighlighter = MarkdownSyntaxHighlighter()
 
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
     if (holder.isBatchMode()) return
-    when (element.elementType) {
-      MarkdownTokenTypes.ALERT_TITLE -> {
-        val key = getAlertAttributeKey(element as MarkdownAlertTitle) ?: return
-        element.traverseAndCreateAnnotationsForContent(holder, key)
-      }
-      MarkdownTokenTypes.EMPH -> annotateBasedOnParent(element, holder) {
+    if (element.elementType is OuterLanguageElementType) return
+
+    if (annotateFootnoteContinuationCodeLine(element, holder)) return
+
+    val keys = collectHighlightingKeys(element) ?: return
+    applyAnnotations(holder, element, keys)
+  }
+
+  private fun annotateFootnoteContinuationCodeLine(element: PsiElement, holder: AnnotationHolder): Boolean {
+    if (element.elementType != MarkdownTokenTypes.CODE_LINE) return false
+    val codeBlock = element.parent ?: return false
+    if (!isFootnoteContinuationBlock(codeBlock)) return false
+
+    highlightFootnoteRefsInCodeLine(element, holder)
+    applyAnnotations(holder, element, setOf(MarkdownHighlighterColors.FOOTNOTE_DEFINITION))
+    return true
+  }
+
+  private fun collectHighlightingKeys(element: PsiElement): HighlightingKeys? =
+    tryAnnotateContextualDelimiter(element)
+    ?: tryAnnotateSpecialCase(element)
+    ?: collectLeafKeys(element)
+
+  private fun collectLeafKeys(element: PsiElement): HighlightingKeys? {
+    // Generic inherited styles are pulled only by leaf elements
+    if (element.firstChild != null) return null
+
+    // Infer ancestor style only when has no own highlight
+    val ownStyleKey = element.primaryNonTextAttributesKey()
+    val keys = if (ownStyleKey != null) {
+      setOf(ownStyleKey)
+    }
+    else {
+      element.parents(withSelf = false)
+        .toList()
+        .asReversed()
+        .mapNotNullTo(linkedSetOf()) {
+          it.primaryNonTextAttributesKey()
+        }
+    }
+
+    return keys.takeIf {
+      it.isNotEmpty()
+    }
+  }
+
+  private fun applyAnnotations(holder: AnnotationHolder, element: PsiElement, keys: HighlightingKeys) {
+    for (key in keys) {
+      holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+        .textAttributes(key)
+        .range(element.textRange)
+        .create()
+    }
+  }
+
+  private fun annotateBasedOnParent(
+    element: PsiElement,
+    predicate: (IElementType) -> TextAttributesKey?,
+  ): TextAttributesKey? {
+    val parentType = element.parent?.elementType ?: return null
+    return predicate.invoke(parentType)
+  }
+
+  private fun tryAnnotateContextualDelimiter(element: PsiElement): HighlightingKeys? {
+    val collectedKey = when (element.elementType) {
+      MarkdownTokenTypes.ALERT_TITLE -> getAlertAttributeKey(element as MarkdownAlertTitle)
+      MarkdownTokenTypes.EMPH -> annotateBasedOnParent(element) {
         when (it) {
           MarkdownElementTypes.EMPH -> MarkdownHighlighterColors.ITALIC_MARKER
           MarkdownElementTypes.STRONG -> MarkdownHighlighterColors.BOLD_MARKER
           else -> null
         }
       }
-      MarkdownTokenTypes.BACKTICK -> annotateBasedOnParent(element, holder) {
+      MarkdownTokenTypes.BACKTICK -> annotateBasedOnParent(element) {
         when (it) {
           MarkdownElementTypes.CODE_FENCE -> MarkdownHighlighterColors.CODE_FENCE_MARKER
           MarkdownElementTypes.CODE_SPAN -> MarkdownHighlighterColors.CODE_SPAN_MARKER
           else -> null
         }
       }
-      MarkdownTokenTypes.DOLLAR -> annotateBasedOnParent(element, holder) {
+      MarkdownTokenTypes.DOLLAR -> annotateBasedOnParent(element) {
         when (it) {
           MarkdownElementTypes.BLOCK_MATH -> MarkdownHighlighterColors.CODE_FENCE_MARKER
           MarkdownElementTypes.INLINE_MATH -> MarkdownHighlighterColors.CODE_SPAN_MARKER
           else -> null
         }
       }
-      else -> annotateWithHighlighter(element, holder)
+      else -> return null
+    }
+
+    return if (collectedKey != null) {
+      setOf(collectedKey)
+    }
+    else {
+      emptySet()
     }
   }
 
-  private fun annotateBasedOnParent(element: PsiElement, holder: AnnotationHolder, predicate: (IElementType) -> TextAttributesKey?) {
-    val parentType = element.parent?.elementType ?: return
-    val attributes = predicate.invoke(parentType)
-    if (attributes != null) {
-      element.traverseAndCreateAnnotationsForContent(holder, attributes)
-    }
-  }
-
-  private fun annotateWithHighlighter(element: PsiElement, holder: AnnotationHolder) {
+  /**
+   * Handles highlighting cases that cannot be expressed via [MarkdownSyntaxHighlighter.ATTRIBUTES]
+   * or ancestor inheritance alone, providing special style overrides for contextual tokens.
+   */
+  private fun tryAnnotateSpecialCase(element: PsiElement): HighlightingKeys? {
     val elementType = element.elementType
-    if (elementType == MarkdownTokenTypes.HTML_BLOCK_CONTENT || elementType == MarkdownElementTypes.HTML_BLOCK) return
-    if (elementType == MarkdownTokenTypes.CODE_LINE) {
-      val codeBlock = element.parent
-      if (codeBlock != null && isFootnoteContinuationBlock(codeBlock)) {
-        element.traverseAndCreateAnnotationsForContent(holder, MarkdownHighlighterColors.FOOTNOTE_DEFINITION)
-        highlightFootnoteRefsInCodeLine(element, holder)
-        return
-      }
+    val hasHtml = elementType == MarkdownTokenTypes.HTML_BLOCK_CONTENT ||
+                  element.parentOfType(MarkdownElementTypes.HTML_BLOCK) != null
+    // scope of HTML highlighter
+    if (hasHtml) {
+      return emptySet()
     }
+    tryAnnotateFootnoteDefinition(element)?.let {
+      return it
+    }
+    tryAnnotateConsecutiveFootnoteReference(element)?.let {
+      return it
+    }
+
+    return when {
+      element.hasType(MarkdownTokenTypes.CODE_FENCE_CONTENT) && (element.parent as? MarkdownCodeFence)?.fenceLanguage != null -> {
+        emptySet()
+      }
+      element.hasType(MarkdownTokenTypes.BLOCK_QUOTE) && element.parentOfType(MarkdownElementTypes.ALERT) != null -> {
+        setOf(MarkdownHighlighterColors.TEXT)
+      }
+      else -> null
+    }
+  }
+
+  private fun tryAnnotateFootnoteDefinition(element: PsiElement): HighlightingKeys? {
+    val elementType = element.elementType
     if (elementType == MarkdownTokenTypes.TEXT) {
       val parent = element.parent
       if (parent != null && parent.hasType(MarkdownElementTypes.PARAGRAPH) && isFootnoteDefinitionParagraph(parent)) {
-        element.traverseAndCreateAnnotationsForContent(holder, MarkdownHighlighterColors.FOOTNOTE_DEFINITION)
-        return
+        return setOf(MarkdownHighlighterColors.FOOTNOTE_DEFINITION)
       }
     }
-    if (elementType == MarkdownElementTypes.LINK_DESTINATION) {
-      val linkDef = element.parent
+    val linkDestination = element.parentOfType(MarkdownElementTypes.LINK_DESTINATION, withSelf = true)
+    if (linkDestination != null) {
+      val linkDef = linkDestination.parent
       if (linkDef != null && linkDef.hasType(MarkdownElementTypes.LINK_DEFINITION) && isFootnoteDefinitionLinkDef(linkDef)) {
-        element.traverseAndCreateAnnotationsForContent(holder, MarkdownHighlighterColors.FOOTNOTE_DEFINITION)
-        return
+        return if (linkDestination == element) {
+          setOf(MarkdownHighlighterColors.FOOTNOTE_DEFINITION)
+        }
+        else {
+          emptySet()
+        }
       }
     }
-    if (elementType == MarkdownElementTypes.LINK_TEXT) {
-      val parent = element.parent
-      if (parent != null && parent.hasType(MarkdownElementTypes.FULL_REFERENCE_LINK) && isConsecutiveFootnoteReferenceLink(parent)) {
-        // Apply LINK_LABEL color instead of LINK_TEXT (hyperlink) color, matching how SHORT_REFERENCE_LINK's LINK_LABEL is rendered
-        element.traverseAndCreateAnnotationsForContent(holder, MarkdownHighlighterColors.LINK_LABEL)
-        return
+
+    return null
+  }
+
+  // Apply LINK_LABEL color instead of LINK_TEXT (hyperlink) color, matching how SHORT_REFERENCE_LINK's LINK_LABEL is rendered
+  private fun tryAnnotateConsecutiveFootnoteReference(element: PsiElement): HighlightingKeys? =
+    sequenceOf(MarkdownElementTypes.LINK_TEXT, MarkdownElementTypes.LINK_LABEL)
+      .firstNotNullOfOrNull {
+        tryAnnotateConsecutiveFootnoteReferencePart(element, it)
       }
+
+  private fun tryAnnotateConsecutiveFootnoteReferencePart(
+    element: PsiElement,
+    partType: IElementType,
+  ): HighlightingKeys? {
+    val part = element.parentOfType(partType, withSelf = true) ?: return null
+    val parent = part.parent
+    if (parent == null || !parent.hasType(MarkdownElementTypes.FULL_REFERENCE_LINK)) return null
+    if (!isConsecutiveFootnoteReferenceLink(parent)) return null
+
+    return if (part == element) {
+      setOf(MarkdownHighlighterColors.LINK_LABEL)
     }
-    if (element.hasType(MarkdownTokenTypes.CODE_FENCE_CONTENT) && (element.parent as? MarkdownCodeFence)?.fenceLanguage != null) {
-      return
-    }
-    if (element.hasType(MarkdownTokenTypes.BLOCK_QUOTE) && PsiTreeUtil.getParentOfType(element, MarkdownAlert::class.java) != null) {
-      element.traverseAndCreateAnnotationsForContent(holder, MarkdownHighlighterColors.TEXT)
-      return
-    }
-    val highlights = syntaxHighlighter.getMarkdownTokenHighlights(elementType)
-    val parentAttributesKey = highlights.firstOrNull() ?: return
-    if (parentAttributesKey != MarkdownHighlighterColors.TEXT) {
-      element.traverseAndCreateAnnotationsForContent(holder, parentAttributesKey)
+    else {
+      emptySet()
     }
   }
 
@@ -179,68 +276,9 @@ internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
     return isFootnoteLabelText(linkLabel.text)
   }
 
-  /**
-   * Traverse element's subtree and create annotations corresponding only to Markdown content,
-   * ignoring nodes which might be of [OuterLanguageElementType].
-   * Applying for leaf elements would result in a guarantee of non-overlapping ranges.
-   */
-  private fun PsiElement.traverseAndCreateAnnotationsForContent(holder: AnnotationHolder, textAttributesKey: TextAttributesKey) {
-    val contentRanges = mutableListOf<TextRange>()
-
-    accept(object : PsiRecursiveElementVisitor() {
-      override fun visitElement(element: PsiElement) {
-        val type = element.elementType
-        if (type !is OuterLanguageElementType && element.firstChild == null) {
-          contentRanges.add(element.textRange)
-        }
-
-        super.visitElement(element)
-      }
-    })
-    /**
-     * If an original sequence was separated by [OuterLanguageElementType]s, then there are several ranges.
-     * In other cases, the result contains one element.
-     */
-    val mergedRanges = mergeRanges(contentRanges)
-
-    mergedRanges.forEach { contentRange ->
-      holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-        .textAttributes(textAttributesKey)
-        .range(contentRange)
-        .create()
-    }
-  }
-
-  /**
-   * Given the list of content [TextRange]s, reduces the list by merging adjustment [TextRange]s, e.g.,
-   * for any i, j from the given list: start_i == end_j.
-   */
-  private fun mergeRanges(contentRanges: Collection<TextRange>): Collection<TextRange> {
-    if (contentRanges.isEmpty()) {
-      return emptyList()
-    }
-
-    val mergedRanges = mutableSetOf<TextRange>()
-    val sortedRanges = contentRanges
-      .sortedBy { it.startOffset }
-    var currentRange = sortedRanges[0]
-
-    for (i in 1 until sortedRanges.size) {
-      val nextRange = sortedRanges[i]
-
-      if (currentRange.endOffset == nextRange.startOffset) {
-        currentRange = TextRange(
-          currentRange.startOffset,
-          maxOf(currentRange.endOffset, nextRange.endOffset)
-        )
-      } else {
-        mergedRanges.add(currentRange)
-        currentRange = nextRange
-      }
-    }
-
-    mergedRanges.add(currentRange)
-
-    return mergedRanges
+  private fun PsiElement.primaryNonTextAttributesKey(): TextAttributesKey? {
+    return syntaxHighlighter
+      .getMarkdownTokenHighlights(elementType)
+      .firstOrNull { it != MarkdownHighlighterColors.TEXT }
   }
 }
