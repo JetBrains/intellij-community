@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.find.FindBundle;
@@ -311,18 +311,20 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
       }
     );
 
-    for(AutomaticRenamerFactory factory : applicableAutoRenameFactories) {
-      gbConstraints.gridwidth = myAutoRenamerFactories.size() % 2 == 0 ? 1 : GridBagConstraints.REMAINDER;
-      gbConstraints.gridx = myAutoRenamerFactories.size() % 2;
+    gbConstraints.weightx = 1;
+    gbConstraints.fill = GridBagConstraints.BOTH;
+    Map<String, JCheckBox> existingOptions = new HashMap<>();
+    for (AutomaticRenamerFactory factory : applicableAutoRenameFactories) {
+      gbConstraints.gridwidth = existingOptions.size() % 2 == 0 ? 1 : GridBagConstraints.REMAINDER;
+      gbConstraints.gridx = existingOptions.size() % 2;
       gbConstraints.insets = gbConstraints.gridx == 0 ? JBUI.insetsBottom(4) : JBUI.insets(0, UIUtil.DEFAULT_HGAP, 4, 0);
-      gbConstraints.weightx = 1;
-      gbConstraints.fill = GridBagConstraints.BOTH;
 
-      JCheckBox checkBox = new NonFocusableCheckBox();
-      checkBox.setText(factory.getOptionName());
-      checkBox.setSelected(factory.isEnabled());
-      panel.add(checkBox, gbConstraints);
-      myAutoRenamerFactories.put(factory, checkBox);
+      myAutoRenamerFactories.put(factory, existingOptions.computeIfAbsent(factory.getOptionName(), name -> {
+        JCheckBox checkBox = new NonFocusableCheckBox(name); //NON-NLS
+        checkBox.setSelected(factory.isEnabled());
+        panel.add(checkBox, gbConstraints);
+        return checkBox;
+      }));
     }
   }
 
