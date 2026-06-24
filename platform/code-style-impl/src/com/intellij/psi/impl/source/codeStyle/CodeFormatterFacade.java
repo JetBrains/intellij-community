@@ -13,12 +13,10 @@ import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.formatting.FormattingProgressCallback;
 import com.intellij.formatting.FormattingProgressCallbackFactory;
 import com.intellij.formatting.InjectedFormattingOptionsProvider;
-import com.intellij.formatting.VirtualFormattingImplKt;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
-import com.intellij.lang.VirtualFormattingListener;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -89,25 +87,7 @@ public final class CodeFormatterFacade {
     final PsiFile fileToFormat = elementToFormat.getContainingFile();
 
 
-    // Dirty workaround
-    // In case we're formatting not the original file, we have to keep the formatting listener
-    // if any and drop it after creating a VirtualFormattingModel.
-    VirtualFormattingListener listener = VirtualFormattingImplKt.getVirtualFormattingListener(file);
-    final FormattingModelBuilder builder;
-    try {
-      if (listener != null) {
-        VirtualFormattingImplKt.setVirtualFormattingListener(fileToFormat, listener);
-      }
-      builder = LanguageFormatting.INSTANCE.forContext(fileToFormat);
-    }
-    finally {
-      if (listener != null) {
-        VirtualFormattingImplKt.setVirtualFormattingListener(fileToFormat, null);
-      }
-    }
-    // End of dirty workaround
-
-
+    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(fileToFormat);
     if (builder != null) {
       RangeMarker rangeMarker = null;
       CodeFormattingData codeFormattingData = CodeFormattingData.getOrCreate(fileToFormat);

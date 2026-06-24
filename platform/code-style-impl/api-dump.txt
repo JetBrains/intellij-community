@@ -60,9 +60,6 @@ f:com.intellij.formatting.IndentInfo
 - generateNewWhiteSpace(com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions):java.lang.String
 - getIndentSpaces():I
 - getSpaces():I
-f:com.intellij.formatting.VirtualFormattingImplKt
-- sf:isEligibleForVirtualFormatting(com.intellij.psi.PsiElement):Z
-- sf:wrapForVirtualFormatting(com.intellij.psi.PsiElement,com.intellij.formatting.FormattingModelBuilder):com.intellij.formatting.FormattingModelBuilder
 f:com.intellij.formatting.service.CoreFormattingService
 - com.intellij.formatting.service.FormattingService
 - <init>():V
