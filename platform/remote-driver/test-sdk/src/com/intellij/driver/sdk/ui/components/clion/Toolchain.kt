@@ -96,7 +96,7 @@ sealed class Toolchain(
 
   class Cygwin(
     compiler: Compiler = Compiler.DEFAULT,
-    debugger: Debugger = Debugger.CUSTOM_CYGWIN_GDB,
+    debugger: Debugger = Debugger.CYGWIN_GDB,
     buildTool: BuildTool = BuildTool.DEFAULT,
     name: ToolchainNames = ToolchainNames.CYGWIN,
     toolset: Toolset = Toolset(kind = "CYGWIN", path = "C:/Tools/cygwin")
@@ -210,11 +210,12 @@ enum class Debugger {
     override val shouldTypePath: Boolean = true
   },
 
-  CUSTOM_CYGWIN_GDB {
+  CYGWIN_GDB {
     override fun getDebuggerPath(): String = "C:\\Tools\\cygwin\\bin\\gdbserver.exe"
     override fun getDebuggerFieldName(): String = "Custom GDB executable"
     override fun toString(): String = "Custom Cygwin GDB"
     override fun type(): String = "GDB"
+    override val shouldTypePath: Boolean = true
   },
 
   WSL_DEBUGGER {
