@@ -8,6 +8,9 @@
     <extensionPoint qualifiedName="com.intellij.json.jsonLiteralChecker"
                     interface="com.intellij.json.codeinsight.JsonLiteralChecker"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.json.lazyParsingVetoer"
+                    interface="com.intellij.json.syntax.JsonLazyParsingVetoer"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -25,6 +28,7 @@
               language="JSON Lines"/>
 
     <registryKey defaultValue="true" description="Enable lazy parsing of JSON" key="json.lazy.parsing" restartRequired="true"/>
+    <json.lazyParsingVetoer implementation="com.intellij.json.JsonRegistryLazyParsingVetoer"/>
 
     <lang.parserDefinition language="JSON" implementationClass="com.intellij.json.JsonParserDefinition"/>
     <lang.parserDefinition language="JSON5" implementationClass="com.intellij.json.json5.Json5ParserDefinition"/>
