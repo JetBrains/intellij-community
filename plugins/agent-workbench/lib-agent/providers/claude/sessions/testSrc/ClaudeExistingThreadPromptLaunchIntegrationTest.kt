@@ -7,6 +7,8 @@ import com.intellij.agent.workbench.sessions.assertExistingThreadLaunchUsesPostS
 import com.intellij.agent.workbench.sessions.assertExistingThreadLaunchUsesStartupOverride
 import com.intellij.agent.workbench.sessions.existingThreadPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.thread
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.platform.ai.agent.sessions.core.providers.withProvider
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -21,7 +23,7 @@ class ClaudeExistingThreadPromptLaunchIntegrationTest {
     assertExistingThreadLaunchUsesPostStartDispatch(
       descriptor = descriptor(),
       request = existingThreadPromptLaunchRequest(
-        provider = AgentSessionProvider.CLAUDE,
+        provider = AgentSessionProvider.from("claude"),
         projectPath = PROJECT_PATH,
         threadId = EXISTING_THREAD_ID,
       ),
@@ -35,7 +37,7 @@ class ClaudeExistingThreadPromptLaunchIntegrationTest {
     val observation = assertExistingThreadLaunchUsesStartupOverride(
       descriptor = descriptor(),
       request = existingThreadPromptLaunchRequest(
-        provider = AgentSessionProvider.CLAUDE,
+        provider = AgentSessionProvider.from("claude"),
         projectPath = PROJECT_PATH,
         threadId = EXISTING_THREAD_ID,
         planMode = true,
@@ -59,13 +61,13 @@ class ClaudeExistingThreadPromptLaunchIntegrationTest {
   }
 }
 
-private fun descriptor(): ClaudeAgentSessionProviderDescriptor {
+private fun descriptor(): AgentSessionProviderDescriptor {
   return ClaudeAgentSessionProviderDescriptor(
     sessionSource = ScriptedSessionSource(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       listFromOpenProject = { path, _ ->
         if (path == PROJECT_PATH) {
-          listOf(thread(id = EXISTING_THREAD_ID, updatedAt = 200, provider = AgentSessionProvider.CLAUDE))
+          listOf(thread(id = EXISTING_THREAD_ID, updatedAt = 200, provider = AgentSessionProvider.from("claude")))
         }
         else {
           emptyList()
@@ -75,7 +77,7 @@ private fun descriptor(): ClaudeAgentSessionProviderDescriptor {
     executableResolver = { ClaudeCliSupport.CLAUDE_COMMAND },
     cliAvailableProbe = { true },
     hookSettingsProvider = ::testHookSettingsArgument,
-  )
+  ).withProvider(CLAUDE_AGENT_SESSION_PROVIDER)
 }
 
 private fun testHookSettingsArgument(sessionId: String): String = "/tmp/agent-workbench-claude-hooks-$sessionId.json"

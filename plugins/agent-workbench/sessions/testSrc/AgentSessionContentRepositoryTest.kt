@@ -44,7 +44,7 @@ class AgentSessionContentRepositoryTest {
     )
 
     val label = repository.findArchiveNotificationLabel(
-      ArchiveThreadTarget.Thread(path = TEST_PROJECT_PATH, provider = AgentSessionProvider.CODEX, threadId = "thread-1")
+      ArchiveThreadTarget.Thread(path = TEST_PROJECT_PATH, provider = AgentSessionProvider.from("codex"), threadId = "thread-1")
     )
 
     assertThat(label).isEqualTo("Runtime title")
@@ -74,7 +74,7 @@ class AgentSessionContentRepositoryTest {
     val label = repository.findArchiveNotificationLabel(
       ArchiveThreadTarget.SubAgent(
         path = TEST_PROJECT_PATH,
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         parentThreadId = "thread-1",
         subAgentId = "sub-agent-1",
       )
@@ -96,7 +96,7 @@ private fun thread(
     title = title,
     updatedAt = 100L,
     archived = false,
-    provider = AgentSessionProvider.CODEX,
+    provider = AgentSessionProvider.from("codex"),
     subAgents = subAgents,
   )
 }

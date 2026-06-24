@@ -98,7 +98,7 @@ class CodexRolloutSessionBackendTest {
       val outline = CodexRolloutParser().parseOutline(rollout)
 
       assertThat(outline).isNotNull
-      assertThat(outline!!.provider).isEqualTo(AgentSessionProvider.CODEX)
+      assertThat(outline!!.provider).isEqualTo(AgentSessionProvider.from("codex"))
       assertThat(outline.threadId).isEqualTo("session-outline")
       assertThat(outline.title).isEqualTo("Fix flaky test")
       assertThat(outline.updatedAt).isEqualTo(Instant.parse("2026-02-13T10:00:04.000Z").toEpochMilli())

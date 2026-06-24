@@ -89,7 +89,7 @@ class AgentChatScopedTerminalRefreshControllerTest {
     val signals = LinkedBlockingQueue<RefreshSignal>()
 
     AgentChatScopedTerminalRefreshController(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       projectPath = "/work/project",
       sessionState = MutableStateFlow(TerminalViewSessionState.NotStarted),
       parentScope = this,
@@ -97,7 +97,7 @@ class AgentChatScopedTerminalRefreshControllerTest {
     ).use {
       val signal = withTimeout(5.seconds) { signals.take() }
 
-      assertThat(signal).isEqualTo(RefreshSignal(AgentSessionProvider.CLAUDE, "/work/project", null, null))
+      assertThat(signal).isEqualTo(RefreshSignal(AgentSessionProvider.from("claude"), "/work/project", null, null))
     }
   }
 
@@ -107,7 +107,7 @@ class AgentChatScopedTerminalRefreshControllerTest {
     val signals = LinkedBlockingQueue<RefreshSignal>()
 
     AgentChatScopedTerminalRefreshController(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       projectPath = "/work/project",
       sessionState = sessionState,
       parentScope = this,
@@ -118,7 +118,7 @@ class AgentChatScopedTerminalRefreshControllerTest {
 
       val signal = withTimeout(5.seconds) { signals.take() }
 
-      assertThat(signal).isEqualTo(RefreshSignal(AgentSessionProvider.CLAUDE, "/work/project", null, null))
+      assertThat(signal).isEqualTo(RefreshSignal(AgentSessionProvider.from("claude"), "/work/project", null, null))
     }
   }
 
@@ -130,7 +130,7 @@ class AgentChatScopedTerminalRefreshControllerTest {
     val updates = LinkedBlockingQueue<AgentSessionSourceUpdateEvent>()
 
     AgentChatScopedTerminalRefreshController(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       projectPath = "/work/project",
       sessionState = MutableStateFlow(TerminalViewSessionState.Running),
       parentScope = this,
@@ -161,7 +161,7 @@ class AgentChatScopedTerminalRefreshControllerTest {
     val updates = LinkedBlockingQueue<AgentSessionSourceUpdateEvent>()
 
     AgentChatScopedTerminalRefreshController(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       projectPath = "/work/project",
       inputChanges = inputChanges,
       sessionState = MutableStateFlow(TerminalViewSessionState.Running),
@@ -200,7 +200,7 @@ class AgentChatScopedTerminalRefreshControllerTest {
     val updates = LinkedBlockingQueue<AgentSessionSourceUpdateEvent>()
 
     AgentChatScopedTerminalRefreshController(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       projectPath = "/work/project",
       sessionState = sessionState,
       parentScope = this,
@@ -223,7 +223,7 @@ class AgentChatScopedTerminalRefreshControllerTest {
 
       sessionState.value = TerminalViewSessionState.Terminated
       assertThat(withTimeout(5.seconds) { signals.take() })
-        .isEqualTo(RefreshSignal(AgentSessionProvider.CODEX, "/work/project", "thread-a", null))
+        .isEqualTo(RefreshSignal(AgentSessionProvider.from("codex"), "/work/project", "thread-a", null))
       signals.clear()
 
       delay(100.milliseconds)
@@ -242,7 +242,7 @@ class AgentChatScopedTerminalRefreshControllerTest {
     val updates = LinkedBlockingQueue<AgentSessionSourceUpdateEvent>()
 
     AgentChatScopedTerminalRefreshController(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       projectPath = "/work/project",
       inputChanges = inputChanges,
       sessionState = MutableStateFlow(TerminalViewSessionState.Running),
@@ -286,7 +286,7 @@ class AgentChatScopedTerminalRefreshControllerTest {
     val updates = LinkedBlockingQueue<AgentSessionSourceUpdateEvent>()
 
     AgentChatScopedTerminalRefreshController(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       projectPath = "/work/project",
       inputChanges = inputChanges,
       sessionState = MutableStateFlow(TerminalViewSessionState.Running),
@@ -332,7 +332,7 @@ private class TestAgentSessionSource(
   private val activeThreadUpdateEventsProvider: (String, String) -> Flow<AgentSessionSourceUpdateEvent>,
 ) : AgentSessionSource {
   override val provider: AgentSessionProvider
-    get() = AgentSessionProvider.CODEX
+    get() = AgentSessionProvider.from("codex")
 
   override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = emptyList()
 

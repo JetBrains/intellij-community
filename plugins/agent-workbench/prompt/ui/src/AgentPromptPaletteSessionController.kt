@@ -551,7 +551,8 @@ internal class AgentPromptPaletteSessionController(
   private suspend fun loadCodexSkillCompletionEntries(): List<AgentPromptReusableSourceEntry> {
     val launcher = launcherProvider() ?: return emptyList()
     val projectPath = submitController.resolveWorkingProjectPath()?.takeIf(String::isNotBlank) ?: return emptyList()
-    return runCatching { launcher.listReusablePromptSourceEntries(projectPath, AgentSessionProvider.CODEX) }
+    val provider = providerSelector.selectedProvider?.bridge?.provider ?: return emptyList()
+    return runCatching { launcher.listReusablePromptSourceEntries(projectPath, provider) }
       .getOrDefault(emptyList())
       .filter { entry ->
         entry.kind == AgentPromptReusableSourceKind.SKILL && entry.insertText.trim().startsWith('$')

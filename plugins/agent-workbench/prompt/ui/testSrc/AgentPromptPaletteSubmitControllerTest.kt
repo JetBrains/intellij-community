@@ -52,12 +52,12 @@ class AgentPromptPaletteSubmitControllerTest {
     val project = ProjectManager.getInstance().defaultProject
     val providerSettings = service<AgentSessionProviderSettingsService>()
     val availabilityService = project.service<AgentSessionProviderAvailabilityService>()
-    providerSettings.setProviderEnabled(AgentSessionProvider.CODEX, false)
-    availabilityService.setAvailabilityForTest(mapOf(AgentSessionProvider.CODEX to false))
+    providerSettings.setProviderEnabled(AgentSessionProvider.from("codex"), false)
+    availabilityService.setAvailabilityForTest(mapOf(AgentSessionProvider.from("codex") to false))
     try {
       val request = captureNewTaskPromptLaunchRequest(
         descriptor = testProviderBridge(
-          provider = AgentSessionProvider.CODEX,
+          provider = AgentSessionProvider.from("codex"),
           promptOptions = listOf(AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION),
         ),
         prompt = "Plan this refactor",
@@ -65,14 +65,14 @@ class AgentPromptPaletteSubmitControllerTest {
         project = project,
       )
 
-      assertThat(request.provider).isEqualTo(AgentSessionProvider.CODEX)
+      assertThat(request.provider).isEqualTo(AgentSessionProvider.from("codex"))
       assertThat(request.projectPath).isEqualTo("/repo")
       assertThat(request.initialMessageRequest.prompt).isEqualTo("Plan this refactor")
       assertThat(request.initialMessageRequest.providerOptionIds).containsExactly(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE)
       assertThat(request.targetThreadId).isNull()
     }
     finally {
-      providerSettings.setProviderEnabled(AgentSessionProvider.CODEX, true)
+      providerSettings.setProviderEnabled(AgentSessionProvider.from("codex"), true)
       availabilityService.clearAvailabilityForTest()
     }
   }
@@ -140,7 +140,7 @@ class AgentPromptPaletteSubmitControllerTest {
             override fun resolveWorkingProjectPath(invocationData: AgentPromptInvocationData): String = "/launcher/path"
           }
         },
-        providersProvider = { listOf(testProviderBridge(provider = AgentSessionProvider.CLAUDE)) },
+        providersProvider = { listOf(testProviderBridge(provider = AgentSessionProvider.from("claude"))) },
         buildVisibleContextEntries = { listOf(ContextEntry(contextItem)) },
         resolveContextSelection = { _, _ ->
           resolveContextSelectionCalls += 1
@@ -148,7 +148,7 @@ class AgentPromptPaletteSubmitControllerTest {
         },
       )
       fixture.providerSelector.refresh()
-      fixture.providerSelector.selectProvider(AgentSessionProvider.CLAUDE)
+      fixture.providerSelector.selectProvider(AgentSessionProvider.from("claude"))
       fixture.promptArea.text = "/mcp"
       fixture.launchState.selectedWorkingProjectPath = "/repo"
       fixture.existingTaskController.selectedExistingTaskId = "thread-1"
@@ -158,7 +158,7 @@ class AgentPromptPaletteSubmitControllerTest {
       assertThat(resolveContextSelectionCalls).isZero()
       assertThat(capturedRequest).isNotNull
       val request = checkNotNull(capturedRequest)
-      assertThat(request.provider).isEqualTo(AgentSessionProvider.CLAUDE)
+      assertThat(request.provider).isEqualTo(AgentSessionProvider.from("claude"))
       assertThat(request.initialMessageRequest.prompt).isEqualTo("/mcp")
       assertThat(request.initialMessageRequest.contextItems).isEmpty()
       assertThat(request.initialMessageRequest.contextEnvelopeSummary).isNull()
@@ -185,7 +185,7 @@ class AgentPromptPaletteSubmitControllerTest {
         launchProfileIdProvider = { "profile:codex-fast" },
       )
       fixture.providerSelector.refresh()
-      fixture.providerSelector.selectProvider(AgentSessionProvider.CODEX)
+      fixture.providerSelector.selectProvider(AgentSessionProvider.from("codex"))
       fixture.promptArea.text = "Plan the change"
       fixture.launchState.selectedWorkingProjectPath = "/repo"
 
@@ -215,7 +215,7 @@ class AgentPromptPaletteSubmitControllerTest {
         providersProvider = {
           listOf(
             testProviderBridge(
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
               promptOptions = listOf(AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION),
             )
           )
@@ -223,14 +223,14 @@ class AgentPromptPaletteSubmitControllerTest {
         currentTargetMode = { PromptTargetMode.NEW_TASK },
       )
       fixture.providerSelector.refresh()
-      fixture.providerSelector.selectProvider(AgentSessionProvider.CODEX)
+      fixture.providerSelector.selectProvider(AgentSessionProvider.from("codex"))
       fixture.promptArea.text = "Plan this refactor"
       fixture.launchState.selectedWorkingProjectPath = "/repo"
 
       fixture.controller.submit()
 
       val request = checkNotNull(capturedRequest)
-      assertThat(request.provider).isEqualTo(AgentSessionProvider.CODEX)
+      assertThat(request.provider).isEqualTo(AgentSessionProvider.from("codex"))
       assertThat(request.initialMessageRequest.prompt).isEqualTo("Plan this refactor")
       assertThat(request.initialMessageRequest.providerOptionIds).containsExactly(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE)
       assertThat(request.targetThreadId).isNull()
@@ -254,7 +254,7 @@ class AgentPromptPaletteSubmitControllerTest {
             override fun resolveWorkingProjectPath(invocationData: AgentPromptInvocationData): String = "/launcher/path"
           }
         },
-        providersProvider = { listOf(testProviderBridge(provider = AgentSessionProvider.CODEX)) },
+        providersProvider = { listOf(testProviderBridge(provider = AgentSessionProvider.from("codex"))) },
         currentTargetMode = { PromptTargetMode.NEW_TASK },
         generationSettingsProvider = {
           AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.MEDIUM)
@@ -267,7 +267,7 @@ class AgentPromptPaletteSubmitControllerTest {
         },
       )
       fixture.providerSelector.refresh()
-      fixture.providerSelector.selectProvider(AgentSessionProvider.CODEX)
+      fixture.providerSelector.selectProvider(AgentSessionProvider.from("codex"))
       fixture.promptArea.text = "Refactor selected code"
       fixture.launchState.selectedWorkingProjectPath = "/repo"
 
@@ -297,7 +297,7 @@ class AgentPromptPaletteSubmitControllerTest {
             override fun resolveWorkingProjectPath(invocationData: AgentPromptInvocationData): String = "/launcher/path"
           }
         },
-        providersProvider = { listOf(testProviderBridge(provider = AgentSessionProvider.CODEX)) },
+        providersProvider = { listOf(testProviderBridge(provider = AgentSessionProvider.from("codex"))) },
         currentTargetMode = { PromptTargetMode.EXISTING_TASK },
         generationSettingsProvider = {
           AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH)
@@ -307,7 +307,7 @@ class AgentPromptPaletteSubmitControllerTest {
         },
       )
       fixture.providerSelector.refresh()
-      fixture.providerSelector.selectProvider(AgentSessionProvider.CODEX)
+      fixture.providerSelector.selectProvider(AgentSessionProvider.from("codex"))
       fixture.promptArea.text = "Refactor selected code"
       fixture.launchState.selectedWorkingProjectPath = "/repo"
       fixture.existingTaskController.selectedExistingTaskId = "thread-1"
@@ -338,21 +338,21 @@ class AgentPromptPaletteSubmitControllerTest {
             override fun resolveWorkingProjectPath(invocationData: AgentPromptInvocationData): String = "/launcher/path"
           }
         },
-        providersProvider = { listOf(testProviderBridge(provider = AgentSessionProvider.CLAUDE)) },
+        providersProvider = { listOf(testProviderBridge(provider = AgentSessionProvider.from("claude"))) },
         currentTargetMode = { PromptTargetMode.NEW_TASK },
         isContainerModeSelected = { true },
-        isContainerModeSupported = { provider -> provider == AgentSessionProvider.CLAUDE },
-        isContainerModeRuntimeAvailable = { provider -> provider == AgentSessionProvider.CLAUDE },
+        isContainerModeSupported = { provider -> provider == AgentSessionProvider.from("claude") },
+        isContainerModeRuntimeAvailable = { provider -> provider == AgentSessionProvider.from("claude") },
       )
       fixture.providerSelector.refresh()
-      fixture.providerSelector.selectProvider(AgentSessionProvider.CLAUDE)
+      fixture.providerSelector.selectProvider(AgentSessionProvider.from("claude"))
       fixture.promptArea.text = "Refactor selected code"
       fixture.launchState.selectedWorkingProjectPath = "/repo"
 
       fixture.controller.submit()
 
       val request = checkNotNull(capturedRequest)
-      assertThat(request.provider).isEqualTo(AgentSessionProvider.CLAUDE)
+      assertThat(request.provider).isEqualTo(AgentSessionProvider.from("claude"))
       assertThat(request.containerMode).isTrue()
     }
   }
@@ -374,20 +374,20 @@ class AgentPromptPaletteSubmitControllerTest {
             override fun resolveWorkingProjectPath(invocationData: AgentPromptInvocationData): String = "/launcher/path"
           }
         },
-        providersProvider = { listOf(testProviderBridge(provider = AgentSessionProvider.CODEX)) },
+        providersProvider = { listOf(testProviderBridge(provider = AgentSessionProvider.from("codex"))) },
         currentTargetMode = { PromptTargetMode.NEW_TASK },
         isContainerModeSelected = { true },
-        isContainerModeSupported = { provider -> provider == AgentSessionProvider.CLAUDE },
+        isContainerModeSupported = { provider -> provider == AgentSessionProvider.from("claude") },
       )
       fixture.providerSelector.refresh()
-      fixture.providerSelector.selectProvider(AgentSessionProvider.CODEX)
+      fixture.providerSelector.selectProvider(AgentSessionProvider.from("codex"))
       fixture.promptArea.text = "Refactor selected code"
       fixture.launchState.selectedWorkingProjectPath = "/repo"
 
       fixture.controller.submit()
 
       val request = checkNotNull(capturedRequest)
-      assertThat(request.provider).isEqualTo(AgentSessionProvider.CODEX)
+      assertThat(request.provider).isEqualTo(AgentSessionProvider.from("codex"))
       assertThat(request.containerMode).isFalse()
     }
   }
@@ -409,21 +409,21 @@ class AgentPromptPaletteSubmitControllerTest {
             override fun resolveWorkingProjectPath(invocationData: AgentPromptInvocationData): String = "/launcher/path"
           }
         },
-        providersProvider = { listOf(testProviderBridge(provider = AgentSessionProvider.CLAUDE)) },
+        providersProvider = { listOf(testProviderBridge(provider = AgentSessionProvider.from("claude"))) },
         currentTargetMode = { PromptTargetMode.NEW_TASK },
         isContainerModeSelected = { true },
-        isContainerModeSupported = { provider -> provider == AgentSessionProvider.CLAUDE },
+        isContainerModeSupported = { provider -> provider == AgentSessionProvider.from("claude") },
         isContainerModeRuntimeAvailable = { false },
       )
       fixture.providerSelector.refresh()
-      fixture.providerSelector.selectProvider(AgentSessionProvider.CLAUDE)
+      fixture.providerSelector.selectProvider(AgentSessionProvider.from("claude"))
       fixture.promptArea.text = "Refactor selected code"
       fixture.launchState.selectedWorkingProjectPath = "/repo"
 
       fixture.controller.submit()
 
       val request = checkNotNull(capturedRequest)
-      assertThat(request.provider).isEqualTo(AgentSessionProvider.CLAUDE)
+      assertThat(request.provider).isEqualTo(AgentSessionProvider.from("claude"))
       assertThat(request.containerMode).isFalse()
     }
   }
@@ -444,12 +444,12 @@ class AgentPromptPaletteSubmitControllerTest {
             override fun resolveWorkingProjectPath(invocationData: AgentPromptInvocationData): String = "/launcher/path"
           }
         },
-        providersProvider = { listOf(testProviderBridge(provider = AgentSessionProvider.CODEX)) },
+        providersProvider = { listOf(testProviderBridge(provider = AgentSessionProvider.from("codex"))) },
         currentTargetMode = { PromptTargetMode.NEW_TASK },
         onPromptSubmitted = submittedHistory::add,
       )
       fixture.providerSelector.refresh()
-      fixture.providerSelector.selectProvider(AgentSessionProvider.CODEX)
+      fixture.providerSelector.selectProvider(AgentSessionProvider.from("codex"))
       fixture.promptArea.text = "  Refactor selected code  "
       fixture.launchState.selectedWorkingProjectPath = "/repo"
 
@@ -479,12 +479,12 @@ class AgentPromptPaletteSubmitControllerTest {
             override fun resolveWorkingProjectPath(invocationData: AgentPromptInvocationData): String = "/launcher/path"
           }
         },
-        providersProvider = { listOf(testProviderBridge(provider = AgentSessionProvider.CODEX)) },
+        providersProvider = { listOf(testProviderBridge(provider = AgentSessionProvider.from("codex"))) },
         currentTargetMode = { PromptTargetMode.NEW_TASK },
         onPromptSubmitted = submittedHistory::add,
       )
       fixture.providerSelector.refresh()
-      fixture.providerSelector.selectProvider(AgentSessionProvider.CODEX)
+      fixture.providerSelector.selectProvider(AgentSessionProvider.from("codex"))
       fixture.promptArea.text = "Refactor selected code"
       fixture.launchState.selectedWorkingProjectPath = "/repo"
 
@@ -515,7 +515,7 @@ class AgentPromptPaletteSubmitControllerTest {
         providersProvider = {
           listOf(
             testProviderBridge(
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
               promptOptions = listOf(AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION),
               initialMessagePlanBuilder = { request ->
                 buildPlanModeInitialMessagePlan(
@@ -529,9 +529,9 @@ class AgentPromptPaletteSubmitControllerTest {
         onSubmitBlocked = { blockedMessage = it },
       )
       fixture.providerSelector.refresh()
-      fixture.providerSelector.selectProvider(AgentSessionProvider.CODEX)
+      fixture.providerSelector.selectProvider(AgentSessionProvider.from("codex"))
       fixture.providerSelector.restoreProviderOptionSelections(
-        mapOf(AgentSessionProvider.CODEX.value to setOf(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE))
+        mapOf(AgentSessionProvider.from("codex").value to setOf(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE))
       )
       fixture.promptArea.text = "Investigate the flaky test"
       fixture.launchState.selectedWorkingProjectPath = "/repo"
@@ -543,7 +543,7 @@ class AgentPromptPaletteSubmitControllerTest {
               title = "Busy Thread",
               updatedAt = 100,
               archived = false,
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
               activity = AgentThreadActivity.PROCESSING,
               subAgents = emptyList(),
             )
@@ -640,13 +640,13 @@ class AgentPromptPaletteSubmitControllerTest {
   }
 
   private fun testProviderBridge(
-    provider: AgentSessionProvider = AgentSessionProvider.CODEX,
+    provider: AgentSessionProvider = AgentSessionProvider.from("codex"),
     promptOptions: List<AgentPromptProviderOption> = emptyList(),
     initialMessagePlanBuilder: (AgentPromptInitialMessageRequest) -> AgentInitialMessagePlan = { AgentInitialMessagePlan.EMPTY },
   ): AgentSessionProviderDescriptor {
     return object : AgentSessionProviderDescriptor {
       override val provider: AgentSessionProvider = provider
-      override val displayNameKey: String = if (provider == AgentSessionProvider.CLAUDE) "provider.claude" else "provider.codex"
+      override val displayNameKey: String = if (provider == AgentSessionProvider.from("claude")) "provider.claude" else "provider.codex"
       override val newSessionLabelKey: String = displayNameKey
       override val promptOptions: List<AgentPromptProviderOption> = promptOptions
       override val sessionSource: AgentSessionSource

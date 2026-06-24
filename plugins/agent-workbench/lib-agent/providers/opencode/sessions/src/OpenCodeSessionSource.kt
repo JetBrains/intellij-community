@@ -3,7 +3,6 @@ package com.intellij.platform.ai.agent.opencode.sessions
 
 import com.intellij.platform.ai.agent.core.normalizeAgentSessionProjectPath
 import com.intellij.platform.ai.agent.core.normalizeAgentSessionTitle
-import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.opencode.sessions.server.SharedOpenCodeServerService
 import com.intellij.platform.ai.agent.sessions.core.providers.BaseAgentSessionSource
@@ -93,7 +92,7 @@ internal class OpenCodeSessionStore(
 
 internal class OpenCodeSessionSource(
   private val sessionStore: OpenCodeSessionStore = OpenCodeSessionStore(),
-) : BaseAgentSessionSource(AgentSessionProvider.OPENCODE) {
+) : BaseAgentSessionSource(OPENCODE_AGENT_SESSION_PROVIDER) {
   override val supportsArchivedThreads: Boolean
     get() = true
 
@@ -123,7 +122,7 @@ private fun OpenCodeSessionIndexEntry.toAgentSessionThread(readTracker: Map<Stri
     updatedAt = updatedAt,
     archived = archived,
     activity = resolveReadTrackedActivity(readTracker = readTracker, threadId = sessionId, updatedAt = updatedAt),
-    provider = AgentSessionProvider.OPENCODE,
+    provider = OPENCODE_AGENT_SESSION_PROVIDER,
   )
 }
 

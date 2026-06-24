@@ -49,15 +49,15 @@ open class TestAgentSessionProviderDescriptor(
 ) : AgentSessionProviderDescriptor {
   override val displayNameKey: String
     get() = displayNameKeyOverride
-            ?: if (provider == AgentSessionProvider.CLAUDE) "toolwindow.provider.claude" else "toolwindow.provider.codex"
+            ?: if (provider == AgentSessionProvider.from("claude")) "toolwindow.provider.claude" else "toolwindow.provider.codex"
 
   override val newSessionLabelKey: String
     get() = newSessionLabelKeyOverride
-            ?: if (provider == AgentSessionProvider.CLAUDE) "toolwindow.action.new.session.claude" else "toolwindow.action.new.session.codex"
+            ?: if (provider == AgentSessionProvider.from("claude")) "toolwindow.action.new.session.claude" else "toolwindow.action.new.session.codex"
 
   override val icon: Icon
     get() = iconOverride
-            ?: if (provider == AgentSessionProvider.CLAUDE) AgentWorkbenchCommonIcons.Claude else AgentWorkbenchCommonIcons.Codex
+            ?: if (provider == AgentSessionProvider.from("claude")) AgentWorkbenchCommonIcons.Claude else AgentWorkbenchCommonIcons.Codex
 
   override val supportedLaunchModes: Set<AgentSessionLaunchMode>
     get() = supportedModes

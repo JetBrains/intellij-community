@@ -44,7 +44,7 @@ internal class JunieAwbMcpLocationContributor(
     sessionId: String?,
     launchSpec: AgentSessionTerminalLaunchSpec,
   ): AgentSessionTerminalLaunchSpec {
-    if (provider != AgentSessionProvider.JUNIE) return launchSpec
+    if (provider != JUNIE_AGENT_SESSION_PROVIDER) return launchSpec
     val normalizedProjectPath = try {
       Path.of(normalizeAgentWorkbenchPath(projectPath))
     }

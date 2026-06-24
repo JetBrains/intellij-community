@@ -30,7 +30,7 @@ class AgentChatUnreadAcknowledgementServiceTest {
     )
 
     assertThat(changed).isTrue()
-    assertThat(marks).containsExactly(ReadMark(ACK_PROJECT_PATH, AgentSessionProvider.CODEX, ACK_THREAD_ID, 200))
+    assertThat(marks).containsExactly(ReadMark(ACK_PROJECT_PATH, AgentSessionProvider.from("codex"), ACK_THREAD_ID, 200))
   }
 
   @Test
@@ -43,7 +43,7 @@ class AgentChatUnreadAcknowledgementServiceTest {
     )
 
     assertThat(changed).isTrue()
-    assertThat(marks).containsExactly(ReadMark(ACK_WORKTREE_PATH, AgentSessionProvider.CODEX, ACK_THREAD_ID, 300))
+    assertThat(marks).containsExactly(ReadMark(ACK_WORKTREE_PATH, AgentSessionProvider.from("codex"), ACK_THREAD_ID, 300))
   }
 
   @Test
@@ -65,7 +65,7 @@ class AgentChatUnreadAcknowledgementServiceTest {
     )
 
     assertThat(changed).isTrue()
-    assertThat(marks).containsExactly(ReadMark(ACK_PROJECT_PATH, AgentSessionProvider.CODEX, ACK_THREAD_ID, 250))
+    assertThat(marks).containsExactly(ReadMark(ACK_PROJECT_PATH, AgentSessionProvider.from("codex"), ACK_THREAD_ID, 250))
   }
 
   @Test
@@ -175,7 +175,7 @@ private fun thread(activityReport: AgentThreadActivityReport, updatedAt: Long): 
     title = "Thread 1",
     updatedAt = updatedAt,
     archived = false,
-    provider = AgentSessionProvider.CODEX,
+    provider = AgentSessionProvider.from("codex"),
     activityReport = activityReport,
   )
 }

@@ -86,7 +86,7 @@ internal class AgentPromptLaunchProfileNameGeneratorTest {
     return AgentPromptLaunchProfile(
       id = "",
       name = name,
-      providerId = AgentSessionProvider.CODEX.value,
+      providerId = AgentSessionProvider.from("codex").value,
       launchMode = launchMode,
       generationSettings = settings,
     )

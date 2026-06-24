@@ -194,7 +194,7 @@ class AgentChatFileEditorProviderTest {
     val element = Element("state")
 
     val startupIntent = AgentChatStartupIntent.NewSession(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       launchMode = AgentSessionLaunchMode.YOLO,
       launchProfileId = "profile:codex-yolo",
     )
@@ -204,7 +204,7 @@ class AgentChatFileEditorProviderTest {
     assertThat(element.getAttributeValue("shellCommand")).isNull()
     assertThat(element.getAttributeValue("shellEnvVariables")).isNull()
     assertThat(element.getAttributeValue("startupKind")).isEqualTo("newSession")
-    assertThat(element.getAttributeValue("startupProvider")).isEqualTo(AgentSessionProvider.CODEX.value)
+    assertThat(element.getAttributeValue("startupProvider")).isEqualTo(AgentSessionProvider.from("codex").value)
     assertThat(element.getAttributeValue("startupLaunchMode")).isEqualTo(AgentSessionLaunchMode.YOLO.name)
     assertThat(element.getAttributeValue("startupLaunchProfileId")).isEqualTo("profile:codex-yolo")
     assertThat(element.getAttributeValue("launchMode")).isEqualTo("yolo")
@@ -271,7 +271,7 @@ class AgentChatFileEditorProviderTest {
       setAttribute("threadActivity", AgentThreadActivity.READY.name)
       setAttribute("pendingLaunchMode", AgentSessionLaunchMode.STANDARD.name)
       setAttribute("startupKind", "newSession")
-      setAttribute("startupProvider", AgentSessionProvider.CODEX.value)
+      setAttribute("startupProvider", AgentSessionProvider.from("codex").value)
       setAttribute("startupLaunchMode", AgentSessionLaunchMode.YOLO.name)
     }
 
@@ -279,7 +279,7 @@ class AgentChatFileEditorProviderTest {
 
     assertThat(restoredState.startupIntent).isEqualTo(
       AgentChatStartupIntent.NewSession(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         launchMode = AgentSessionLaunchMode.YOLO,
       )
     )
@@ -306,7 +306,7 @@ class AgentChatFileEditorProviderTest {
       setAttribute("threadActivity", AgentThreadActivity.READY.name)
       setAttribute("pendingLaunchMode", AgentSessionLaunchMode.STANDARD.name)
       setAttribute("startupKind", "newSession")
-      setAttribute("startupProvider", AgentSessionProvider.CODEX.value)
+      setAttribute("startupProvider", AgentSessionProvider.from("codex").value)
       setAttribute("startupLaunchMode", AgentSessionLaunchMode.YOLO.name)
       setAttribute("startupLaunchProfileId", "profile:missing")
     }
@@ -315,7 +315,7 @@ class AgentChatFileEditorProviderTest {
 
     assertThat(restoredState.startupIntent).isEqualTo(
       AgentChatStartupIntent.NewSession(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         launchMode = AgentSessionLaunchMode.YOLO,
         launchProfileId = "profile:missing",
       )
@@ -517,7 +517,7 @@ class AgentChatFileEditorProviderTest {
       )
       val outlineLoadGate = CompletableDeferred<Unit>()
       val outline = AgentSessionThreadOutline(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         threadId = "thread-42",
         title = "Resolve the current merge conflicts",
         updatedAt = 1L,
@@ -554,7 +554,7 @@ class AgentChatFileEditorProviderTest {
       )
       var loadCalls = 0
       val bridge = ChatTestProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         icon = EmptyIcon.create(18, 18),
         outlineLoader = { _, _, _ ->
           loadCalls++
@@ -625,7 +625,7 @@ class AgentChatFileEditorProviderTest {
       )
       val loadCalls = AtomicInteger()
       val bridge = ChatTestProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         icon = EmptyIcon.create(18, 18),
         outlineLoader = { path, threadId, subAgentId ->
           assertThat(path).isEqualTo("/work/project-a")
@@ -681,7 +681,7 @@ class AgentChatFileEditorProviderTest {
         subAgentId = null,
       )
       val outline = AgentSessionThreadOutline(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         threadId = "thread-rebound",
         title = "Rebound thread",
         updatedAt = 1L,
@@ -689,7 +689,7 @@ class AgentChatFileEditorProviderTest {
       )
       val loadCalls = AtomicInteger()
       val bridge = ChatTestProviderBridge(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         icon = EmptyIcon.create(18, 18),
         outlineLoader = { path, threadId, subAgentId ->
           assertThat(path).isEqualTo("/work/project-a")
@@ -719,7 +719,7 @@ class AgentChatFileEditorProviderTest {
 
           waitForCondition {
             notifyAgentChatScopedRefresh(
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
               projectPath = "/work/project-a",
               threadId = "thread-rebound",
             )
@@ -741,7 +741,7 @@ class AgentChatFileEditorProviderTest {
       val cases: List<Pair<AgentSessionThreadOutline?, String>> = listOf(
         null to AgentChatBundle.message("chat.thread.outline.unavailable"),
         AgentSessionThreadOutline(
-          provider = AgentSessionProvider.CODEX,
+          provider = AgentSessionProvider.from("codex"),
           threadId = "thread-empty",
           title = "Empty thread",
           updatedAt = 1L,
@@ -759,7 +759,7 @@ class AgentChatFileEditorProviderTest {
           subAgentId = null,
         )
         val bridge = ChatTestProviderBridge(
-          provider = AgentSessionProvider.CODEX,
+          provider = AgentSessionProvider.from("codex"),
           icon = EmptyIcon.create(18, 18),
           outlineLoader = { _, _, _ -> outline },
         )
@@ -799,7 +799,7 @@ class AgentChatFileEditorProviderTest {
         preview = "Jump to this entry",
       )
       val outline = AgentSessionThreadOutline(
-        provider = AgentSessionProvider.PI,
+        provider = AgentSessionProvider.from("pi"),
         threadId = "thread-nav",
         title = "Navigation thread",
         updatedAt = 1L,
@@ -807,7 +807,7 @@ class AgentChatFileEditorProviderTest {
       )
       val navigationCalls = LinkedBlockingQueue<OutlineNavigationCall>()
       val bridge = ChatTestProviderBridge(
-        provider = AgentSessionProvider.PI,
+        provider = AgentSessionProvider.from("pi"),
         icon = EmptyIcon.create(18, 18),
         outlineLoader = { _, _, _ -> outline },
         canNavigateOutlineItem = { path, threadId, itemId, subAgentId, tabKey ->
@@ -869,7 +869,7 @@ class AgentChatFileEditorProviderTest {
       title = "Fork from here",
     )
     val bridge = ChatTestProviderBridge(
-      provider = AgentSessionProvider.PI,
+      provider = AgentSessionProvider.from("pi"),
       icon = EmptyIcon.create(18, 18),
       canShowForkOutlineItem = { path, threadId, itemId, subAgentId, tabKey ->
         path == "/work/project-a" &&
@@ -904,7 +904,7 @@ class AgentChatFileEditorProviderTest {
       title = "Fork from here",
     )
     val bridge = ChatTestProviderBridge(
-      provider = AgentSessionProvider.PI,
+      provider = AgentSessionProvider.from("pi"),
       icon = EmptyIcon.create(18, 18),
       canShowForkOutlineItem = { _, _, _, _, _ -> true },
       canForkOutlineItem = { path, threadId, itemId, subAgentId, tabKey ->
@@ -939,7 +939,7 @@ class AgentChatFileEditorProviderTest {
       val updateEvents = MutableSharedFlow<AgentSessionSourceUpdateEvent>(extraBufferCapacity = 1)
       var liveForkAvailable = false
       val bridge = ChatTestProviderBridge(
-        provider = AgentSessionProvider.PI,
+        provider = AgentSessionProvider.from("pi"),
         icon = EmptyIcon.create(18, 18),
         outlineLoader = { _, _, _ ->
           testOutline(
@@ -1006,7 +1006,7 @@ class AgentChatFileEditorProviderTest {
       title = "Fork from here",
     )
     val bridge = ChatTestProviderBridge(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       icon = EmptyIcon.create(18, 18),
       canForkOutlineItem = { _, _, _, _, _ -> true },
     )
@@ -1059,10 +1059,10 @@ class AgentChatFileEditorProviderTest {
   @Test
   fun sharedThreadPresentationFullRefreshReplacesScopedEntries() {
     val model = service<AgentSessionThreadPresentationModel>()
-    val refreshedKey = presentationKey("/work/project-a", AgentSessionProvider.CODEX, "thread-1")
-    val removedKey = presentationKey("/work/project-a", AgentSessionProvider.CODEX, "thread-2")
-    val otherProviderKey = presentationKey("/work/project-a", AgentSessionProvider.CLAUDE, "session-1")
-    val otherPathKey = presentationKey("/work/project-b", AgentSessionProvider.CODEX, "thread-3")
+    val refreshedKey = presentationKey("/work/project-a", AgentSessionProvider.from("codex"), "thread-1")
+    val removedKey = presentationKey("/work/project-a", AgentSessionProvider.from("codex"), "thread-2")
+    val otherProviderKey = presentationKey("/work/project-a", AgentSessionProvider.from("claude"), "session-1")
+    val otherPathKey = presentationKey("/work/project-b", AgentSessionProvider.from("codex"), "thread-3")
     model.replaceForTests(
       mapOf(
         refreshedKey to AgentSessionThreadPresentation(title = "Old title", activity = AgentThreadActivity.READY),
@@ -1073,11 +1073,11 @@ class AgentChatFileEditorProviderTest {
     )
 
     val changeSet = model.updateProviderSnapshot(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       authoritativePaths = setOf("/work/project-a/"),
       threadsByPath = mapOf(
         "/work/project-a" to listOf(
-          threadModel(AgentSessionProvider.CODEX, "thread-1", "Renamed title", AgentThreadActivity.PROCESSING)
+          threadModel(AgentSessionProvider.from("codex"), "thread-1", "Renamed title", AgentThreadActivity.PROCESSING)
         ),
       ),
     )
@@ -1103,17 +1103,17 @@ class AgentChatFileEditorProviderTest {
   fun sharedThreadPresentationActivityOnlyUpdateKeepsExistingTitle() {
     timeoutRunBlocking {
       val model = service<AgentSessionThreadPresentationModel>()
-      val key = presentationKey("/work/project-a", AgentSessionProvider.CODEX, "thread-1")
+      val key = presentationKey("/work/project-a", AgentSessionProvider.from("codex"), "thread-1")
       model.updateThread(
         path = "/work/project-a",
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         threadId = "thread-1",
         title = "Existing title",
         activity = AgentThreadActivity.READY,
       )
 
       val changeSet = model.updateActivityHints(
-        provider = AgentSessionProvider.CODEX,
+        provider = AgentSessionProvider.from("codex"),
         updates = listOf(
           com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadActivityPresentationUpdate(
             path = "/work/project-a",
@@ -1143,7 +1143,7 @@ class AgentChatFileEditorProviderTest {
       )
       val tabsService = service<AgentChatTabsService>()
       val model = service<AgentSessionThreadPresentationModel>()
-      val key = presentationKey(snapshot.identity.projectPath, AgentSessionProvider.CODEX, snapshot.runtime.threadId)
+      val key = presentationKey(snapshot.identity.projectPath, AgentSessionProvider.from("codex"), snapshot.runtime.threadId)
       tabsService.upsert(snapshot)
       try {
         model.clearForTests()
@@ -1174,12 +1174,12 @@ class AgentChatFileEditorProviderTest {
       )
       val tabsService = service<AgentChatTabsService>()
       val model = service<AgentSessionThreadPresentationModel>()
-      val key = presentationKey(snapshot.identity.projectPath, AgentSessionProvider.CODEX, snapshot.runtime.threadId)
+      val key = presentationKey(snapshot.identity.projectPath, AgentSessionProvider.from("codex"), snapshot.runtime.threadId)
       tabsService.upsert(snapshot)
       try {
         model.updateThread(
           path = snapshot.identity.projectPath,
-          provider = AgentSessionProvider.CODEX,
+          provider = AgentSessionProvider.from("codex"),
           threadId = snapshot.runtime.threadId,
           title = "Forget me",
           activity = AgentThreadActivity.UNREAD,
@@ -1410,14 +1410,14 @@ class AgentChatFileEditorProviderTest {
   fun mapsCodexThreadIdentityToCodexIcon() {
     val icon = providerIcon(threadIdentity = "codex:thread-1")
 
-    assertThat(icon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.CODEX, AgentThreadActivity.READY))
+    assertThat(icon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.from("codex"), AgentThreadActivity.READY))
   }
 
   @Test
   fun mapsClaudeThreadIdentityToClaudeIcon() {
     val icon = providerIcon(threadIdentity = "claude:session-1")
 
-    assertThat(icon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.CLAUDE, AgentThreadActivity.READY))
+    assertThat(icon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.from("claude"), AgentThreadActivity.READY))
   }
 
   @Test
@@ -1436,11 +1436,11 @@ class AgentChatFileEditorProviderTest {
     val needsInputIcon = providerIcon(threadIdentity = "codex:thread-1", threadActivity = AgentThreadActivity.NEEDS_INPUT)
     val unreadIcon = providerIcon(threadIdentity = "codex:thread-1", threadActivity = AgentThreadActivity.UNREAD)
 
-    assertThat(readyIcon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.CODEX, AgentThreadActivity.READY))
-    assertThat(processingIcon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.CODEX, AgentThreadActivity.PROCESSING))
-    assertThat(reviewingIcon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.CODEX, AgentThreadActivity.REVIEWING))
-    assertThat(needsInputIcon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.CODEX, AgentThreadActivity.NEEDS_INPUT))
-    assertThat(unreadIcon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.CODEX, AgentThreadActivity.UNREAD))
+    assertThat(readyIcon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.from("codex"), AgentThreadActivity.READY))
+    assertThat(processingIcon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.from("codex"), AgentThreadActivity.PROCESSING))
+    assertThat(reviewingIcon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.from("codex"), AgentThreadActivity.REVIEWING))
+    assertThat(needsInputIcon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.from("codex"), AgentThreadActivity.NEEDS_INPUT))
+    assertThat(unreadIcon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.from("codex"), AgentThreadActivity.UNREAD))
     assertThat(readyIcon).isSameAs(AgentWorkbenchCommonIcons.CodexGray)
     assertThat(processingIcon).isNotSameAs(readyIcon)
     assertThat(reviewingIcon).isNotSameAs(readyIcon)
@@ -1455,7 +1455,7 @@ class AgentChatFileEditorProviderTest {
   fun resolvesProviderIconsThroughBridgeRegistry() {
     val customIcon = EmptyIcon.create(18, 18)
     val bridge = ChatTestProviderBridge(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       icon = customIcon,
     )
 
@@ -1463,7 +1463,7 @@ class AgentChatFileEditorProviderTest {
       clearAgentChatIconCacheForTests()
 
       val icon = providerIcon(threadIdentity = "codex:thread-1", threadActivity = AgentThreadActivity.PROCESSING)
-      val sharedHelperIcon = agentSessionThreadStatusIcon(AgentSessionProvider.CODEX, AgentThreadActivity.PROCESSING)
+      val sharedHelperIcon = agentSessionThreadStatusIcon(AgentSessionProvider.from("codex"), AgentThreadActivity.PROCESSING)
       val expected = withAgentThreadActivityBadge(customIcon, AgentThreadActivity.PROCESSING)
 
       assertThat(icon).isSameAs(sharedHelperIcon)
@@ -1545,7 +1545,7 @@ private fun testOutline(
   items: List<AgentSessionOutlineItem>,
 ): AgentSessionThreadOutline {
   return AgentSessionThreadOutline(
-    provider = AgentSessionProvider.CODEX,
+    provider = AgentSessionProvider.from("codex"),
     threadId = "thread-refresh",
     title = "Refresh thread",
     updatedAt = updatedAt,

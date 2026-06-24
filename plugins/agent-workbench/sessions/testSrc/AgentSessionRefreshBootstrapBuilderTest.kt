@@ -29,9 +29,9 @@ class AgentSessionRefreshBootstrapBuilderTest {
       warmState.setPathSnapshot(
         PROJECT_PATH,
         AgentSessionWarmPathSnapshot(
-          threads = listOf(thread(id = "claude-warm", updatedAt = 100, provider = AgentSessionProvider.CLAUDE)),
-          providerLoadStates = loadedProviderStates(AgentSessionProvider.CLAUDE),
-          providersWithUnknownThreadCount = setOf(AgentSessionProvider.CLAUDE),
+          threads = listOf(thread(id = "claude-warm", updatedAt = 100, provider = AgentSessionProvider.from("claude"))),
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("claude")),
+          providersWithUnknownThreadCount = setOf(AgentSessionProvider.from("claude")),
           updatedAt = 100,
         ),
       )
@@ -46,8 +46,8 @@ class AgentSessionRefreshBootstrapBuilderTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            threads = listOf(thread(id = "codex-runtime", updatedAt = 200, provider = AgentSessionProvider.CODEX)),
-            providerLoadStates = mapOf(AgentSessionProvider.CODEX to AgentSessionProviderLoadState.LOADING),
+            threads = listOf(thread(id = "codex-runtime", updatedAt = 200, provider = AgentSessionProvider.from("codex"))),
+            providerLoadStates = mapOf(AgentSessionProvider.from("codex") to AgentSessionProviderLoadState.LOADING),
           )
         ),
       )
@@ -56,9 +56,9 @@ class AgentSessionRefreshBootstrapBuilderTest {
 
       val project = bootstrap.initialProjects.single()
       assertThat(project.threads.map { it.id }).containsExactly("codex-runtime")
-      assertThat(project.providerLoadStates).containsEntry(AgentSessionProvider.CODEX, AgentSessionProviderLoadState.LOADING)
-      assertThat(project.providerLoadStates).containsEntry(AgentSessionProvider.CLAUDE, AgentSessionProviderLoadState.LOADED)
-      assertThat(project.providersWithUnknownThreadCount).containsExactly(AgentSessionProvider.CLAUDE)
+      assertThat(project.providerLoadStates).containsEntry(AgentSessionProvider.from("codex"), AgentSessionProviderLoadState.LOADING)
+      assertThat(project.providerLoadStates).containsEntry(AgentSessionProvider.from("claude"), AgentSessionProviderLoadState.LOADED)
+      assertThat(project.providersWithUnknownThreadCount).containsExactly(AgentSessionProvider.from("claude"))
     }
   }
 }

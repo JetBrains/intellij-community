@@ -10,8 +10,10 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <agent.workbench.chatProviderBehavior
-      implementation="com.intellij.agent.workbench.codex.chat.CodexAgentChatProviderBehaviorContributor"/>
+      providerId="codex"
+      implementation="com.intellij.agent.workbench.codex.chat.CodexAgentChatProviderBehavior"/>
     <agent.workbench.chatTerminalTitleThreadRebindContributor
+      providerId="codex"
       implementation="com.intellij.agent.workbench.codex.chat.CodexTerminalTitleThreadRebindContributor"/>
   </extensions>
 </idea-plugin>

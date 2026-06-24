@@ -11,11 +11,11 @@ import java.util.concurrent.TimeUnit
 class AgentPromptContainerModeDecisionsTest {
   @Test
   fun containerModeIsShownOnlyForSupportedProvidersOutsideExtensionTabs() {
-    val supportsClaude: (AgentSessionProvider) -> Boolean = { provider -> provider == AgentSessionProvider.CLAUDE }
+    val supportsClaude: (AgentSessionProvider) -> Boolean = { provider -> provider == AgentSessionProvider.from("claude") }
 
     assertThat(
       shouldShowContainerModeOption(
-        selectedProvider = AgentSessionProvider.CLAUDE,
+        selectedProvider = AgentSessionProvider.from("claude"),
         isExtensionTab = false,
         supportsContainerMode = supportsClaude,
       )
@@ -23,7 +23,7 @@ class AgentPromptContainerModeDecisionsTest {
 
     assertThat(
       shouldShowContainerModeOption(
-        selectedProvider = AgentSessionProvider.CODEX,
+        selectedProvider = AgentSessionProvider.from("codex"),
         isExtensionTab = false,
         supportsContainerMode = supportsClaude,
       )
@@ -31,7 +31,7 @@ class AgentPromptContainerModeDecisionsTest {
 
     assertThat(
       shouldShowContainerModeOption(
-        selectedProvider = AgentSessionProvider.CLAUDE,
+        selectedProvider = AgentSessionProvider.from("claude"),
         isExtensionTab = true,
         supportsContainerMode = supportsClaude,
       )
@@ -40,13 +40,13 @@ class AgentPromptContainerModeDecisionsTest {
 
   @Test
   fun containerModeIsEnabledOnlyWhenRuntimeIsAvailable() {
-    val supportsClaude: (AgentSessionProvider) -> Boolean = { provider -> provider == AgentSessionProvider.CLAUDE }
-    val runtimeAvailable: (AgentSessionProvider) -> Boolean = { provider -> provider == AgentSessionProvider.CLAUDE }
+    val supportsClaude: (AgentSessionProvider) -> Boolean = { provider -> provider == AgentSessionProvider.from("claude") }
+    val runtimeAvailable: (AgentSessionProvider) -> Boolean = { provider -> provider == AgentSessionProvider.from("claude") }
     val runtimeUnavailable: (AgentSessionProvider) -> Boolean = { false }
 
     assertThat(
       shouldEnableContainerModeOption(
-        selectedProvider = AgentSessionProvider.CLAUDE,
+        selectedProvider = AgentSessionProvider.from("claude"),
         isExtensionTab = false,
         supportsContainerMode = supportsClaude,
         isContainerRuntimeAvailable = runtimeAvailable,
@@ -55,7 +55,7 @@ class AgentPromptContainerModeDecisionsTest {
 
     assertThat(
       shouldEnableContainerModeOption(
-        selectedProvider = AgentSessionProvider.CLAUDE,
+        selectedProvider = AgentSessionProvider.from("claude"),
         isExtensionTab = false,
         supportsContainerMode = supportsClaude,
         isContainerRuntimeAvailable = runtimeUnavailable,
@@ -64,7 +64,7 @@ class AgentPromptContainerModeDecisionsTest {
 
     assertThat(
       shouldEnableContainerModeOption(
-        selectedProvider = AgentSessionProvider.CLAUDE,
+        selectedProvider = AgentSessionProvider.from("claude"),
         isExtensionTab = true,
         supportsContainerMode = supportsClaude,
         isContainerRuntimeAvailable = runtimeAvailable,
@@ -74,14 +74,14 @@ class AgentPromptContainerModeDecisionsTest {
 
   @Test
   fun containerModeSubmitRequiresSelectionAndAvailability() {
-    val supportsClaude: (AgentSessionProvider) -> Boolean = { provider -> provider == AgentSessionProvider.CLAUDE }
-    val runtimeAvailable: (AgentSessionProvider) -> Boolean = { provider -> provider == AgentSessionProvider.CLAUDE }
+    val supportsClaude: (AgentSessionProvider) -> Boolean = { provider -> provider == AgentSessionProvider.from("claude") }
+    val runtimeAvailable: (AgentSessionProvider) -> Boolean = { provider -> provider == AgentSessionProvider.from("claude") }
     val runtimeUnavailable: (AgentSessionProvider) -> Boolean = { false }
 
     assertThat(
       shouldSubmitContainerMode(
         isSelected = true,
-        selectedProvider = AgentSessionProvider.CLAUDE,
+        selectedProvider = AgentSessionProvider.from("claude"),
         isExtensionTab = false,
         supportsContainerMode = supportsClaude,
         isContainerRuntimeAvailable = runtimeAvailable,
@@ -91,7 +91,7 @@ class AgentPromptContainerModeDecisionsTest {
     assertThat(
       shouldSubmitContainerMode(
         isSelected = false,
-        selectedProvider = AgentSessionProvider.CLAUDE,
+        selectedProvider = AgentSessionProvider.from("claude"),
         isExtensionTab = false,
         supportsContainerMode = supportsClaude,
         isContainerRuntimeAvailable = runtimeAvailable,
@@ -101,7 +101,7 @@ class AgentPromptContainerModeDecisionsTest {
     assertThat(
       shouldSubmitContainerMode(
         isSelected = true,
-        selectedProvider = AgentSessionProvider.CODEX,
+        selectedProvider = AgentSessionProvider.from("codex"),
         isExtensionTab = false,
         supportsContainerMode = supportsClaude,
         isContainerRuntimeAvailable = runtimeAvailable,
@@ -111,7 +111,7 @@ class AgentPromptContainerModeDecisionsTest {
     assertThat(
       shouldSubmitContainerMode(
         isSelected = true,
-        selectedProvider = AgentSessionProvider.CLAUDE,
+        selectedProvider = AgentSessionProvider.from("claude"),
         isExtensionTab = false,
         supportsContainerMode = supportsClaude,
         isContainerRuntimeAvailable = runtimeUnavailable,
@@ -121,13 +121,13 @@ class AgentPromptContainerModeDecisionsTest {
 
   @Test
   fun containerModeStateClampsRestoredSelectionToEligibility() {
-    val supportsClaude: (AgentSessionProvider) -> Boolean = { provider -> provider == AgentSessionProvider.CLAUDE }
-    val runtimeAvailable: (AgentSessionProvider) -> Boolean = { provider -> provider == AgentSessionProvider.CLAUDE }
+    val supportsClaude: (AgentSessionProvider) -> Boolean = { provider -> provider == AgentSessionProvider.from("claude") }
+    val runtimeAvailable: (AgentSessionProvider) -> Boolean = { provider -> provider == AgentSessionProvider.from("claude") }
     val runtimeUnavailable: (AgentSessionProvider) -> Boolean = { false }
 
     assertThat(
       resolveContainerModeOptionState(
-        selectedProvider = AgentSessionProvider.CLAUDE,
+        selectedProvider = AgentSessionProvider.from("claude"),
         isExtensionTab = false,
         requestedSelection = true,
         supportsContainerMode = supportsClaude,
@@ -144,7 +144,7 @@ class AgentPromptContainerModeDecisionsTest {
 
     assertThat(
       resolveContainerModeOptionState(
-        selectedProvider = AgentSessionProvider.CODEX,
+        selectedProvider = AgentSessionProvider.from("codex"),
         isExtensionTab = false,
         requestedSelection = true,
         supportsContainerMode = supportsClaude,
@@ -161,7 +161,7 @@ class AgentPromptContainerModeDecisionsTest {
 
     assertThat(
       resolveContainerModeOptionState(
-        selectedProvider = AgentSessionProvider.CLAUDE,
+        selectedProvider = AgentSessionProvider.from("claude"),
         isExtensionTab = false,
         requestedSelection = true,
         supportsContainerMode = supportsClaude,
@@ -178,7 +178,7 @@ class AgentPromptContainerModeDecisionsTest {
 
     assertThat(
       resolveContainerModeOptionState(
-        selectedProvider = AgentSessionProvider.CLAUDE,
+        selectedProvider = AgentSessionProvider.from("claude"),
         isExtensionTab = true,
         requestedSelection = true,
         supportsContainerMode = supportsClaude,

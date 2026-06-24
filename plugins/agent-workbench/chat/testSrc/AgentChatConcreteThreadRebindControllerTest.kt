@@ -68,7 +68,7 @@ class AgentChatConcreteThreadRebindControllerTest {
       }
 
       assertThat(signals).allSatisfy { signal ->
-        assertThat(signal.provider).isEqualTo(AgentSessionProvider.CODEX)
+        assertThat(signal.provider).isEqualTo(AgentSessionProvider.from("codex"))
         assertThat(signal.projectPath).isEqualTo(PROJECT_PATH)
       }
     }
@@ -100,7 +100,7 @@ class AgentChatConcreteThreadRebindControllerTest {
 
       assertThat(file.newThreadRebindRequestedAtMs).isEqualTo(1_000L)
       assertThat(signals).allSatisfy { signal ->
-        assertThat(signal.provider).isEqualTo(AgentSessionProvider.CODEX)
+        assertThat(signal.provider).isEqualTo(AgentSessionProvider.from("codex"))
         assertThat(signal.projectPath).isEqualTo(PROJECT_PATH)
       }
     }
@@ -164,7 +164,7 @@ class AgentChatConcreteThreadRebindControllerTest {
       waitForCondition { signals.isNotEmpty() && file.newThreadRebindRequestedAtMs == 1_000L }
 
       assertThat(file.rebindConcreteThread(
-        threadIdentity = buildAgentThreadIdentity(AgentSessionProvider.CODEX.value, "thread-2"),
+        threadIdentity = buildAgentThreadIdentity(AgentSessionProvider.from("codex").value, "thread-2"),
         threadId = "thread-2",
         threadTitle = "New thread",
         threadActivity = AgentThreadActivity.READY,
@@ -216,7 +216,7 @@ private object TestConcreteThreadRebindBehavior : AgentChatProviderBehavior {
     file: AgentChatBehaviorFile,
     descriptor: AgentSessionProviderDescriptor?,
   ): Boolean {
-    return file.provider == AgentSessionProvider.CODEX && !file.isPendingThread && file.subAgentId == null
+    return file.provider == AgentSessionProvider.from("codex") && !file.isPendingThread && file.subAgentId == null
   }
 
   override fun isConcreteNewThreadRebindCommand(command: String): Boolean = command == "/new" || command == "/fork"
@@ -285,7 +285,7 @@ private data class ConcreteRebindRefreshSignal(
 private fun concreteCodexFile(): AgentChatVirtualFile {
   return AgentChatVirtualFile(
     projectPath = PROJECT_PATH,
-    threadIdentity = buildAgentThreadIdentity(AgentSessionProvider.CODEX.value, "thread-1"),
+    threadIdentity = buildAgentThreadIdentity(AgentSessionProvider.from("codex").value, "thread-1"),
     shellCommand = listOf("codex", "resume", "thread-1"),
     threadId = "thread-1",
     threadTitle = "Original thread",

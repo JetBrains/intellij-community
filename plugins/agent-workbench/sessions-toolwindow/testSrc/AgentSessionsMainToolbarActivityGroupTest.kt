@@ -286,7 +286,7 @@ class AgentSessionsMainToolbarActivityGroupTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
               thread("attention", AgentThreadActivity.NEEDS_INPUT, updatedAt),
               thread("done", AgentThreadActivity.UNREAD, updatedAt),
@@ -296,7 +296,7 @@ class AgentSessionsMainToolbarActivityGroupTest {
             path = "/work/project-b",
             name = "Project B",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(thread("running", AgentThreadActivity.PROCESSING, updatedAt)),
           ),
         ),
@@ -312,7 +312,7 @@ class AgentSessionsMainToolbarActivityGroupTest {
             path = "/work/project-a",
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(thread("attention", AgentThreadActivity.NEEDS_INPUT, 1_000)),
           )
         ),
@@ -327,7 +327,7 @@ class AgentSessionsMainToolbarActivityGroupTest {
       updatedAt = updatedAt,
       archived = false,
       activity = activity,
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       summaryActivity = activity,
     )
   }

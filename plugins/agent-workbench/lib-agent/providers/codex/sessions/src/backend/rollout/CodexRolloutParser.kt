@@ -21,7 +21,7 @@ import com.intellij.platform.ai.agent.codex.sessions.backend.CodexBackendThread
 import com.intellij.platform.ai.agent.codex.sessions.backend.isResponseRequired
 import com.intellij.platform.ai.agent.codex.sessions.backend.toCodexSessionActivity
 import com.intellij.platform.ai.agent.codex.sessions.codexUserPromptOutlineItemId
-import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.codex.sessions.CODEX_AGENT_SESSION_PROVIDER
 import com.intellij.platform.ai.agent.core.session.agentSessionOutlinePhaseTitle
 import com.intellij.platform.ai.agent.core.session.compactAgentSessionOutlineText
 import com.intellij.platform.ai.agent.core.session.dedupeAgentSessionOutlineText
@@ -157,7 +157,7 @@ internal class CodexRolloutParser(
     val fallbackUpdatedAt = runCatching { Files.getLastModifiedTime(path).toMillis() }.getOrDefault(0L)
     val title = state.title ?: "Thread ${sessionId.take(8)}"
     return AgentSessionThreadOutline(
-      provider = AgentSessionProvider.CODEX,
+      provider = CODEX_AGENT_SESSION_PROVIDER,
       threadId = sessionId,
       title = title,
       updatedAt = if (state.updatedAt > 0L) state.updatedAt else fallbackUpdatedAt,

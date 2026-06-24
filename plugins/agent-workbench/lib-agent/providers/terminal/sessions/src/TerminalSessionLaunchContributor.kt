@@ -17,7 +17,7 @@ internal class TerminalSessionLaunchContributor(
     sessionId: String?,
     launchSpec: AgentSessionTerminalLaunchSpec,
   ): AgentSessionTerminalLaunchSpec {
-    if (provider != AgentSessionProvider.TERMINAL || sessionId == null) {
+    if (provider != TERMINAL_AGENT_SESSION_PROVIDER || sessionId == null) {
       return launchSpec
     }
     val workingDirectory = stateService.readRestoreContext(path = projectPath, threadId = sessionId)

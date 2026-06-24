@@ -22,6 +22,9 @@ private const val SKILLS_DIRECTORY = "skills"
 private const val SKILL_FILE_NAME = "SKILL.md"
 private const val CODEX_SKILL_PREFIX = '$'
 
+private val CLAUDE_AGENT_SESSION_PROVIDER: AgentSessionProvider = AgentSessionProvider.from("claude")
+private val CODEX_AGENT_SESSION_PROVIDER: AgentSessionProvider = AgentSessionProvider.from("codex")
+
 internal class AgentPromptClaudeSlashCompletionProvider(
   private val selectedProvider: () -> AgentSessionProvider?,
   private val resolveWorkingProjectPaths: () -> List<String>,
@@ -29,8 +32,8 @@ internal class AgentPromptClaudeSlashCompletionProvider(
 ) : TextFieldCompletionProviderDumbAware() {
   override fun getPrefix(text: String, offset: Int): String? {
     return when (selectedProvider()) {
-      AgentSessionProvider.CLAUDE -> findClaudeSlashCompletionPrefix(text, offset)
-      AgentSessionProvider.CODEX -> findCodexSkillCompletionPrefix(text, offset)
+      CLAUDE_AGENT_SESSION_PROVIDER -> findClaudeSlashCompletionPrefix(text, offset)
+      CODEX_AGENT_SESSION_PROVIDER -> findCodexSkillCompletionPrefix(text, offset)
       else -> null
     }
   }
@@ -45,10 +48,10 @@ internal class AgentPromptClaudeSlashCompletionProvider(
 
   override fun addCompletionVariants(text: String, offset: Int, prefix: String, result: CompletionResultSet) {
     when (selectedProvider()) {
-      AgentSessionProvider.CLAUDE -> collectClaudeSlashCompletionEntries(resolveWorkingProjectPaths()).forEach { entry ->
+      CLAUDE_AGENT_SESSION_PROVIDER -> collectClaudeSlashCompletionEntries(resolveWorkingProjectPaths()).forEach { entry ->
         result.addElement(entry.toLookupElement())
       }
-      AgentSessionProvider.CODEX -> resolveCodexSkillEntries()
+      CODEX_AGENT_SESSION_PROVIDER -> resolveCodexSkillEntries()
         .asSequence()
         .filter { entry -> entry.kind == AgentPromptReusableSourceKind.SKILL }
         .forEach { entry -> result.addElement(entry.toLookupElement()) }
@@ -86,7 +89,7 @@ internal fun shouldAutoPopupClaudeSlashCompletion(
   offsetAfterChange: Int,
   insertedFragment: CharSequence,
 ): Boolean {
-  if (selectedProvider != AgentSessionProvider.CLAUDE) {
+  if (selectedProvider != CLAUDE_AGENT_SESSION_PROVIDER) {
     return false
   }
   if (insertedFragment.length != 1 || insertedFragment[0] != '/') {
@@ -107,7 +110,7 @@ internal fun shouldAutoPopupCodexSkillCompletion(
   offsetAfterChange: Int,
   insertedFragment: CharSequence,
 ): Boolean {
-  if (selectedProvider != AgentSessionProvider.CODEX) {
+  if (selectedProvider != CODEX_AGENT_SESSION_PROVIDER) {
     return false
   }
   if (insertedFragment.length != 1 || insertedFragment[0] != '$') {

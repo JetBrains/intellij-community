@@ -591,7 +591,7 @@ private fun emptyBackend(): ClaudeSessionBackend {
 private fun emptySource(): AgentSessionSource {
   return object : AgentSessionSource {
     override val provider: AgentSessionProvider
-      get() = AgentSessionProvider.CLAUDE
+      get() = AgentSessionProvider.from("claude")
 
     override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = emptyList()
 

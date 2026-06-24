@@ -22,6 +22,7 @@
 
   <extensions defaultExtensionNs="com.intellij.agent.workbench">
     <settingsContributor implementation="com.intellij.platform.ai.agent.claude.sessions.ClaudeQuotaSettingsContributor"/>
-    <sessionProviderUiContributor implementation="com.intellij.platform.ai.agent.claude.sessions.ClaudeQuotaSessionProviderUiContributor"/>
+    <sessionProviderUiContributor providerId="claude"
+                                  implementation="com.intellij.platform.ai.agent.claude.sessions.ClaudeQuotaSessionProviderUiContributor"/>
   </extensions>
 </idea-plugin>

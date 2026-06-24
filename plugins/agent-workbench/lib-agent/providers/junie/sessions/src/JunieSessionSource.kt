@@ -8,7 +8,6 @@ import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.session.AgentSessionCost
 import com.intellij.platform.ai.agent.core.normalizeAgentSessionProjectPath
 import com.intellij.platform.ai.agent.core.normalizeAgentSessionTitle
-import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.json.createJsonGenerator
 import com.intellij.platform.ai.agent.json.WorkbenchJsonlScanner
@@ -208,7 +207,7 @@ internal class JunieSessionSource(
     sessionIndexStore = sessionIndexStore,
     eventsAnalyzer = eventsAnalyzer,
   ),
-) : BaseAgentSessionSource(provider = AgentSessionProvider.JUNIE) {
+) : BaseAgentSessionSource(provider = JUNIE_AGENT_SESSION_PROVIDER) {
   constructor(
     sessionIndexPathProvider: () -> Path,
     jsonFactory: JsonFactory = JsonFactory(),
@@ -492,7 +491,7 @@ private fun JunieSessionIndexEntry.toAgentSessionThread(
     updatedAt = updatedAt,
     archived = archived == true,
     activity = effectiveActivity(readTracker, eventsAnalysis),
-    provider = AgentSessionProvider.JUNIE,
+    provider = JUNIE_AGENT_SESSION_PROVIDER,
   )
 }
 

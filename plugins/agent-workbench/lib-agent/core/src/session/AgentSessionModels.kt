@@ -14,18 +14,6 @@ private val AGENT_SESSION_OUTLINE_WHITESPACE = Regex("\\s+")
 @JvmInline
 value class AgentSessionProvider private constructor(val value: String) {
   companion object {
-    val CODEX: AgentSessionProvider = from("codex")
-
-    val CLAUDE: AgentSessionProvider = from("claude")
-
-    val JUNIE: AgentSessionProvider = from("junie")
-
-    val OPENCODE: AgentSessionProvider = from("opencode")
-
-    val PI: AgentSessionProvider = from("pi")
-
-    val TERMINAL: AgentSessionProvider = from("terminal")
-
     fun from(value: String): AgentSessionProvider {
       require(AGENT_SESSION_PROVIDER_ID_REGEX.matches(value)) {
         "Invalid provider id '$value'. Expected: ${AGENT_SESSION_PROVIDER_ID_REGEX.pattern}"

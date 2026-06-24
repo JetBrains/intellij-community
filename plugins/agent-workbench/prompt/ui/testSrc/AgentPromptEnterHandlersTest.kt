@@ -63,7 +63,7 @@ class AgentPromptEnterHandlersTest {
       val promptArea = AgentPromptTextField(
         project,
         AgentPromptClaudeSlashCompletionProvider(
-          selectedProvider = { AgentSessionProvider.CLAUDE },
+          selectedProvider = { AgentSessionProvider.from("claude") },
           resolveWorkingProjectPaths = { listOf(projectPath.toString()) },
         ),
       )
@@ -172,7 +172,7 @@ class AgentPromptEnterHandlersTest {
       val promptArea = AgentPromptTextField(
         project,
         AgentPromptClaudeSlashCompletionProvider(
-          selectedProvider = { AgentSessionProvider.CLAUDE },
+          selectedProvider = { AgentSessionProvider.from("claude") },
           resolveWorkingProjectPaths = { listOf(projectPath.toString()) },
         ),
       )

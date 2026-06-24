@@ -143,7 +143,7 @@ class AgentChatOpenTopLevelDispatchTest {
 
     val dispatched = service<AgentOpenTopLevelThreadDispatchService>().dispatchIfPresent(
       projectPath = projectPath,
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       threadId = "thread-open-dispatch",
       launchSpec = AgentSessionTerminalLaunchSpec(command = codexResumeCommand("thread-open-dispatch")),
       initialMessageDispatchPlan = AgentInitialMessageDispatchPlan(
@@ -194,13 +194,13 @@ class AgentChatOpenTopLevelDispatchTest {
 
     val firstAdded = addContextToOpenTopLevelAgentChat(
       projectPath = projectPath,
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       threadId = "thread-context-paste",
       contextItems = listOf(contextItem("Main.kt", "file: Main.kt")),
     )
     val secondAdded = addContextToOpenTopLevelAgentChat(
       projectPath = projectPath,
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       threadId = "thread-context-paste",
       contextItems = listOf(contextItem("Util.kt", "file: Util.kt"), contextItem("Main.kt", "file: Main.kt")),
     )
@@ -235,13 +235,13 @@ class AgentChatOpenTopLevelDispatchTest {
 
     val firstAdded = addContextToOpenTopLevelAgentChat(
       projectPath = projectPath,
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       threadId = "thread-context-duplicate",
       contextItems = listOf(item),
     )
     val duplicateAdded = addContextToOpenTopLevelAgentChat(
       projectPath = projectPath,
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       threadId = "thread-context-duplicate",
       contextItems = listOf(item),
     )
@@ -298,7 +298,7 @@ class AgentChatOpenTopLevelDispatchTest {
     activateEditorForTests(editor, terminalTabs)
 
     assertThat(addContextToOpenTopLevelAgentChat(projectPath,
-                                                 AgentSessionProvider.CODEX,
+                                                 AgentSessionProvider.from("codex"),
                                                  "thread-context-submit",
                                                  listOf(contextItem("Main.kt", "file: Main.kt"))))
       .isEqualTo(AgentPromptAddContextToTargetResult.ADDED_TO_CHAT)
@@ -340,7 +340,7 @@ class AgentChatOpenTopLevelDispatchTest {
     )
 
     assertThat(addContextToOpenTopLevelAgentChat(projectPath,
-                                                 AgentSessionProvider.CODEX,
+                                                 AgentSessionProvider.from("codex"),
                                                  "thread-context-unavailable",
                                                  listOf(contextItem("Main.kt", "file: Main.kt"))))
       .isEqualTo(AgentPromptAddContextToTargetResult.ADDED_TO_CHAT)
@@ -374,7 +374,7 @@ class AgentChatOpenTopLevelDispatchTest {
     val largeBody = largeContextBody()
 
     assertThat(addContextToOpenTopLevelAgentChat(projectPath,
-                                                 AgentSessionProvider.CODEX,
+                                                 AgentSessionProvider.from("codex"),
                                                  "thread-context-send-full",
                                                  listOf(contextItem("Large.kt", largeBody))))
       .isEqualTo(AgentPromptAddContextToTargetResult.ADDED_TO_CHAT)
@@ -412,7 +412,7 @@ class AgentChatOpenTopLevelDispatchTest {
     val largeBody = largeContextBody()
 
     assertThat(addContextToOpenTopLevelAgentChat(projectPath,
-                                                 AgentSessionProvider.CODEX,
+                                                 AgentSessionProvider.from("codex"),
                                                  "thread-context-auto-trim",
                                                  listOf(contextItem("Large.kt", largeBody))))
       .isEqualTo(AgentPromptAddContextToTargetResult.ADDED_TO_CHAT)
@@ -449,7 +449,7 @@ class AgentChatOpenTopLevelDispatchTest {
     )
 
     assertThat(addContextToOpenTopLevelAgentChat(projectPath,
-                                                 AgentSessionProvider.CODEX,
+                                                 AgentSessionProvider.from("codex"),
                                                  "thread-context-cancel",
                                                  listOf(contextItem("Large.kt", largeContextBody()))))
       .isEqualTo(AgentPromptAddContextToTargetResult.ADDED_TO_CHAT)
@@ -488,7 +488,7 @@ class AgentChatOpenTopLevelDispatchTest {
 
     val dispatched = service<AgentOpenTopLevelThreadDispatchService>().dispatchIfPresent(
       projectPath = projectPath,
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       threadId = "thread-sub-agent-only",
       launchSpec = AgentSessionTerminalLaunchSpec(command = codexResumeCommand("thread-sub-agent-only")),
       initialMessageDispatchPlan = AgentInitialMessageDispatchPlan(
@@ -827,11 +827,11 @@ private fun <T : JComponent> findChildComponent(container: Container, componentC
 }
 
 private fun codexThreadIdentity(threadId: String): String {
-  return buildAgentThreadIdentity(providerId = AgentSessionProvider.CODEX.value, threadId = threadId)
+  return buildAgentThreadIdentity(providerId = AgentSessionProvider.from("codex").value, threadId = threadId)
 }
 
 private fun piThreadIdentity(threadId: String): String {
-  return buildAgentThreadIdentity(providerId = AgentSessionProvider.PI.value, threadId = threadId)
+  return buildAgentThreadIdentity(providerId = AgentSessionProvider.from("pi").value, threadId = threadId)
 }
 
 private fun codexResumeCommand(threadId: String): List<String> {
@@ -845,7 +845,7 @@ private fun piResumeCommand(threadId: String): List<String> {
 private class OpenTabDispatchPiProviderDescriptor(
   override val sessionSource: AgentSessionSource,
 ) : AgentSessionProviderDescriptor {
-  override val provider: AgentSessionProvider = AgentSessionProvider.PI
+  override val provider: AgentSessionProvider = AgentSessionProvider.from("pi")
   override val displayNameKey: String = "pi"
   override val newSessionLabelKey: String = "pi"
   override val icon = EmptyIcon.create(18, 18)
@@ -893,7 +893,7 @@ private class OpenTabDispatchPiProviderDescriptor(
 private class OpenTabDispatchPiForkSource : AgentSessionSource {
   val forkCalls = ArrayList<OpenTabDispatchPiForkCall>()
 
-  override val provider: AgentSessionProvider = AgentSessionProvider.PI
+  override val provider: AgentSessionProvider = AgentSessionProvider.from("pi")
 
   override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = emptyList()
 
@@ -942,7 +942,7 @@ private class OpenTabDispatchPiForkSource : AgentSessionSource {
         updatedAt = 5_000L,
         archived = false,
         activity = AgentThreadActivity.PROCESSING,
-        provider = AgentSessionProvider.PI,
+        provider = AgentSessionProvider.from("pi"),
       ),
       launchSpecOverride = AgentSessionTerminalLaunchSpec(
         command = listOf("pi", "--session", "thread-outline-forked", "--from-outline-fork"),

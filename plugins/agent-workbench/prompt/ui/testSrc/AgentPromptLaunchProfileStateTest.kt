@@ -14,16 +14,16 @@ import org.junit.jupiter.api.Test
 
 internal class AgentPromptLaunchProfileStateTest {
   private val standardBuiltInProfile = AgentPromptLaunchProfile(
-    id = builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD),
+    id = builtInLaunchProfileId(AgentSessionProvider.from("codex"), AgentSessionLaunchMode.STANDARD),
     name = "Codex",
     kind = AgentPromptLaunchProfileKind.BUILT_IN,
-    providerId = AgentSessionProvider.CODEX.value,
+    providerId = AgentSessionProvider.from("codex").value,
   )
   private val yoloBuiltInProfile = AgentPromptLaunchProfile(
-    id = builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.YOLO),
+    id = builtInLaunchProfileId(AgentSessionProvider.from("codex"), AgentSessionLaunchMode.YOLO),
     name = "Codex Full Auto",
     kind = AgentPromptLaunchProfileKind.BUILT_IN,
-    providerId = AgentSessionProvider.CODEX.value,
+    providerId = AgentSessionProvider.from("codex").value,
     launchMode = AgentSessionLaunchMode.YOLO,
   )
 
@@ -52,7 +52,7 @@ internal class AgentPromptLaunchProfileStateTest {
     val carefulProfile = AgentPromptLaunchProfile(
       id = "user:careful",
       name = "Careful",
-      providerId = AgentSessionProvider.CODEX.value,
+      providerId = AgentSessionProvider.from("codex").value,
       generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
     )
     val state = createState()
@@ -84,7 +84,7 @@ internal class AgentPromptLaunchProfileStateTest {
     val carefulProfile = AgentPromptLaunchProfile(
       id = "user:careful",
       name = "Careful",
-      providerId = AgentSessionProvider.CODEX.value,
+      providerId = AgentSessionProvider.from("codex").value,
     )
     val state = createState()
     state.restore(
@@ -112,13 +112,13 @@ internal class AgentPromptLaunchProfileStateTest {
     val carefulProfile = AgentPromptLaunchProfile(
       id = "user:careful",
       name = "Careful",
-      providerId = AgentSessionProvider.CODEX.value,
+      providerId = AgentSessionProvider.from("codex").value,
       generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
     )
     val fastProfile = AgentPromptLaunchProfile(
       id = "user:fast",
       name = "Fast",
-      providerId = AgentSessionProvider.CODEX.value,
+      providerId = AgentSessionProvider.from("codex").value,
       generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.LOW),
     )
     val state = createState()
@@ -140,13 +140,13 @@ internal class AgentPromptLaunchProfileStateTest {
     val carefulProfile = AgentPromptLaunchProfile(
       id = "user:careful",
       name = "Careful",
-      providerId = AgentSessionProvider.CODEX.value,
+      providerId = AgentSessionProvider.from("codex").value,
       generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
     )
     val fastProfile = AgentPromptLaunchProfile(
       id = "user:fast",
       name = "Fast",
-      providerId = AgentSessionProvider.CODEX.value,
+      providerId = AgentSessionProvider.from("codex").value,
       generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.LOW),
     )
     val state = createState()

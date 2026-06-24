@@ -43,22 +43,22 @@ class AgentProviderCliStatusBannerTest {
 
   @AfterEach
   fun resetState() {
-    providerSettings.setProviderEnabled(AgentSessionProvider.CODEX, true)
-    providerSettings.setProviderEnabled(AgentSessionProvider.CLAUDE, true)
-    providerSettings.setProviderEnabled(AgentSessionProvider.JUNIE, true)
-    providerSettings.setProviderEnabled(AgentSessionProvider.PI, true)
+    providerSettings.setProviderEnabled(AgentSessionProvider.from("codex"), true)
+    providerSettings.setProviderEnabled(AgentSessionProvider.from("claude"), true)
+    providerSettings.setProviderEnabled(AgentSessionProvider.from("junie"), true)
+    providerSettings.setProviderEnabled(AgentSessionProvider.from("pi"), true)
     availabilityService.clearAvailabilityForTest()
   }
 
   @Test
   fun bannerShowsMissingProviderAndCanDisableIt(@TestDisposable disposable: Disposable) {
     val descriptor = TestAgentSessionProviderDescriptor(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = false,
     )
-    providerSettings.setProviderEnabled(AgentSessionProvider.CODEX, true)
-    availabilityService.setAvailabilityForTest(mapOf(AgentSessionProvider.CODEX to false))
+    providerSettings.setProviderEnabled(AgentSessionProvider.from("codex"), true)
+    availabilityService.setAvailabilityForTest(mapOf(AgentSessionProvider.from("codex") to false))
 
     AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
       runInEdtAndWait {
@@ -78,7 +78,7 @@ class AgentProviderCliStatusBannerTest {
 
         banner.button(AgentSessionsBundle.message("toolwindow.provider.cli.banner.disable", "Codex")).doClick()
 
-        assertThat(providerSettings.isProviderEnabled(AgentSessionProvider.CODEX)).isFalse()
+        assertThat(providerSettings.isProviderEnabled(AgentSessionProvider.from("codex"))).isFalse()
         assertThat(banner.isVisible).isFalse()
       }
     }
@@ -87,18 +87,18 @@ class AgentProviderCliStatusBannerTest {
   @Test
   fun bannerShowsVisibleDisableButtonForEachMissingProvider(@TestDisposable disposable: Disposable) {
     val codexDescriptor = TestAgentSessionProviderDescriptor(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = false,
     )
     val claudeDescriptor = TestAgentSessionProviderDescriptor(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = false,
     )
-    providerSettings.setProviderEnabled(AgentSessionProvider.CODEX, true)
-    providerSettings.setProviderEnabled(AgentSessionProvider.CLAUDE, true)
-    availabilityService.setAvailabilityForTest(mapOf(AgentSessionProvider.CODEX to false, AgentSessionProvider.CLAUDE to false))
+    providerSettings.setProviderEnabled(AgentSessionProvider.from("codex"), true)
+    providerSettings.setProviderEnabled(AgentSessionProvider.from("claude"), true)
+    availabilityService.setAvailabilityForTest(mapOf(AgentSessionProvider.from("codex") to false, AgentSessionProvider.from("claude") to false))
 
     AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(codexDescriptor, claudeDescriptor))) {
       runInEdtAndWait {
@@ -127,13 +127,13 @@ class AgentProviderCliStatusBannerTest {
   @Test
   fun bannerDoesNotShowMissingDiscoverableProvider(@TestDisposable disposable: Disposable) {
     val descriptor = TestAgentSessionProviderDescriptor(
-      provider = AgentSessionProvider.PI,
+      provider = AgentSessionProvider.from("pi"),
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = false,
       cliVisibilityPolicy = AgentSessionProviderCliVisibilityPolicy.DISCOVER_WHEN_AVAILABLE,
     )
-    providerSettings.setProviderEnabled(AgentSessionProvider.PI, true)
-    availabilityService.setAvailabilityForTest(mapOf(AgentSessionProvider.PI to false))
+    providerSettings.setProviderEnabled(AgentSessionProvider.from("pi"), true)
+    availabilityService.setAvailabilityForTest(mapOf(AgentSessionProvider.from("pi") to false))
 
     AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
       runInEdtAndWait {

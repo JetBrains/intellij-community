@@ -312,7 +312,7 @@ class AgentPromptExistingTaskControllerTest {
       updatedAt = updatedAt,
       archived = false,
       activity = activity,
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
     )
   }
 

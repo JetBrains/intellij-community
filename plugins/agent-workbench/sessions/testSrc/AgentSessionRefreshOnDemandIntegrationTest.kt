@@ -25,7 +25,7 @@ class AgentSessionRefreshOnDemandIntegrationTest {
       sessionSourcesProvider = {
         listOf(
           ScriptedSessionSource(
-            provider = AgentSessionProvider.CODEX,
+            provider = AgentSessionProvider.from("codex"),
             canReportExactThreadCount = true,
             listFromClosedProject = { path ->
               if (path != PROJECT_PATH) {
@@ -33,11 +33,11 @@ class AgentSessionRefreshOnDemandIntegrationTest {
               }
               else {
                 listOf(
-                  thread(id = "codex-1", updatedAt = 500, provider = AgentSessionProvider.CODEX),
-                  thread(id = "codex-2", updatedAt = 400, provider = AgentSessionProvider.CODEX),
-                  thread(id = "codex-3", updatedAt = 300, provider = AgentSessionProvider.CODEX),
-                  thread(id = "codex-4", updatedAt = 200, provider = AgentSessionProvider.CODEX),
-                  thread(id = "codex-5", updatedAt = 100, provider = AgentSessionProvider.CODEX),
+                  thread(id = "codex-1", updatedAt = 500, provider = AgentSessionProvider.from("codex")),
+                  thread(id = "codex-2", updatedAt = 400, provider = AgentSessionProvider.from("codex")),
+                  thread(id = "codex-3", updatedAt = 300, provider = AgentSessionProvider.from("codex")),
+                  thread(id = "codex-4", updatedAt = 200, provider = AgentSessionProvider.from("codex")),
+                  thread(id = "codex-5", updatedAt = 100, provider = AgentSessionProvider.from("codex")),
                 )
               }
             },
@@ -56,10 +56,10 @@ class AgentSessionRefreshOnDemandIntegrationTest {
       service.loadProjectThreadsOnDemand(PROJECT_PATH)
       waitForCondition {
         val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
-        project.providerLoadStates[AgentSessionProvider.CODEX] == AgentSessionProviderLoadState.LOADED
+        project.providerLoadStates[AgentSessionProvider.from("codex")] == AgentSessionProviderLoadState.LOADED
       }
 
-      service.ensureThreadVisible(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-5")
+      service.ensureThreadVisible(PROJECT_PATH, AgentSessionProvider.from("codex"), "codex-5")
 
       assertThat(service.state.value.visibleThreadCounts[PROJECT_PATH])
         .isEqualTo(DEFAULT_VISIBLE_THREAD_COUNT + DEFAULT_VISIBLE_THREAD_COUNT)
@@ -72,7 +72,7 @@ class AgentSessionRefreshOnDemandIntegrationTest {
       sessionSourcesProvider = {
         listOf(
           ScriptedSessionSource(
-            provider = AgentSessionProvider.CODEX,
+            provider = AgentSessionProvider.from("codex"),
             canReportExactThreadCount = true,
             listFromClosedProject = { path ->
               if (path != PROJECT_PATH) {
@@ -80,14 +80,14 @@ class AgentSessionRefreshOnDemandIntegrationTest {
               }
               else {
                 listOf(
-                  thread(id = "codex-1", updatedAt = 500, provider = AgentSessionProvider.CODEX),
-                  thread(id = "codex-2", updatedAt = 400, provider = AgentSessionProvider.CODEX),
-                  thread(id = "codex-3", updatedAt = 300, provider = AgentSessionProvider.CODEX),
-                  thread(id = "codex-4", updatedAt = 200, provider = AgentSessionProvider.CODEX),
+                  thread(id = "codex-1", updatedAt = 500, provider = AgentSessionProvider.from("codex")),
+                  thread(id = "codex-2", updatedAt = 400, provider = AgentSessionProvider.from("codex")),
+                  thread(id = "codex-3", updatedAt = 300, provider = AgentSessionProvider.from("codex")),
+                  thread(id = "codex-4", updatedAt = 200, provider = AgentSessionProvider.from("codex")),
                   thread(
                     id = "codex-parent",
                     updatedAt = 100,
-                    provider = AgentSessionProvider.CODEX,
+                    provider = AgentSessionProvider.from("codex"),
                     subAgents = listOf(AgentSubAgent(id = "codex-sub-1", name = "Sub-agent 1")),
                   ),
                 )
@@ -108,10 +108,10 @@ class AgentSessionRefreshOnDemandIntegrationTest {
       service.loadProjectThreadsOnDemand(PROJECT_PATH)
       waitForCondition {
         val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
-        project.providerLoadStates[AgentSessionProvider.CODEX] == AgentSessionProviderLoadState.LOADED
+        project.providerLoadStates[AgentSessionProvider.from("codex")] == AgentSessionProviderLoadState.LOADED
       }
 
-      service.ensureThreadVisible(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-sub-1")
+      service.ensureThreadVisible(PROJECT_PATH, AgentSessionProvider.from("codex"), "codex-sub-1")
 
       assertThat(service.state.value.visibleThreadCounts[PROJECT_PATH])
         .isEqualTo(DEFAULT_VISIBLE_THREAD_COUNT + DEFAULT_VISIBLE_THREAD_COUNT)
@@ -124,7 +124,7 @@ class AgentSessionRefreshOnDemandIntegrationTest {
       sessionSourcesProvider = {
         listOf(
           ScriptedSessionSource(
-            provider = AgentSessionProvider.CODEX,
+            provider = AgentSessionProvider.from("codex"),
             canReportExactThreadCount = true,
           ),
         )
@@ -152,7 +152,7 @@ class AgentSessionRefreshOnDemandIntegrationTest {
       sessionSourcesProvider = {
         listOf(
           ScriptedSessionSource(
-            provider = AgentSessionProvider.CODEX,
+            provider = AgentSessionProvider.from("codex"),
             canReportExactThreadCount = true,
           ),
         )
@@ -183,14 +183,14 @@ class AgentSessionRefreshOnDemandIntegrationTest {
       sessionSourcesProvider = {
         listOf(
           ScriptedSessionSource(
-            provider = AgentSessionProvider.CODEX,
+            provider = AgentSessionProvider.from("codex"),
             canReportExactThreadCount = true,
             listFromClosedProject = { path ->
               if (path == PROJECT_PATH) {
                 listOf(
-                  thread(id = "codex-1", updatedAt = 300, provider = AgentSessionProvider.CODEX),
-                  thread(id = "codex-2", updatedAt = 200, provider = AgentSessionProvider.CODEX),
-                  thread(id = "codex-3", updatedAt = 100, provider = AgentSessionProvider.CODEX),
+                  thread(id = "codex-1", updatedAt = 300, provider = AgentSessionProvider.from("codex")),
+                  thread(id = "codex-2", updatedAt = 200, provider = AgentSessionProvider.from("codex")),
+                  thread(id = "codex-3", updatedAt = 100, provider = AgentSessionProvider.from("codex")),
                 )
               }
               else {
@@ -212,10 +212,10 @@ class AgentSessionRefreshOnDemandIntegrationTest {
       service.loadProjectThreadsOnDemand(PROJECT_PATH)
       waitForCondition {
         val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
-        project.providerLoadStates[AgentSessionProvider.CODEX] == AgentSessionProviderLoadState.LOADED
+        project.providerLoadStates[AgentSessionProvider.from("codex")] == AgentSessionProviderLoadState.LOADED
       }
 
-      service.ensureThreadVisible(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-1")
+      service.ensureThreadVisible(PROJECT_PATH, AgentSessionProvider.from("codex"), "codex-1")
 
       assertThat(service.state.value.visibleThreadCounts).doesNotContainKey(PROJECT_PATH)
     }
@@ -231,7 +231,7 @@ class AgentSessionRefreshOnDemandIntegrationTest {
       sessionSourcesProvider = {
         listOf(
           ScriptedSessionSource(
-            provider = AgentSessionProvider.CODEX,
+            provider = AgentSessionProvider.from("codex"),
             canReportExactThreadCount = false,
             listFromClosedProject = { path ->
               if (path != PROJECT_PATH) {
@@ -241,7 +241,7 @@ class AgentSessionRefreshOnDemandIntegrationTest {
                 invocationCount.incrementAndGet()
                 started.complete(Unit)
                 release.await()
-                listOf(thread(id = "codex-1", updatedAt = 100, provider = AgentSessionProvider.CODEX))
+                listOf(thread(id = "codex-1", updatedAt = 100, provider = AgentSessionProvider.from("codex")))
               }
             },
           ),
@@ -263,7 +263,7 @@ class AgentSessionRefreshOnDemandIntegrationTest {
 
       waitForCondition {
         val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
-        project.providerLoadStates[AgentSessionProvider.CODEX] == AgentSessionProviderLoadState.LOADED
+        project.providerLoadStates[AgentSessionProvider.from("codex")] == AgentSessionProviderLoadState.LOADED
       }
 
       val project = service.state.value.projects.single { it.path == PROJECT_PATH }
@@ -282,7 +282,7 @@ class AgentSessionRefreshOnDemandIntegrationTest {
       sessionSourcesProvider = {
         listOf(
           ScriptedSessionSource(
-            provider = AgentSessionProvider.CODEX,
+            provider = AgentSessionProvider.from("codex"),
             canReportExactThreadCount = false,
             listFromClosedProject = { path ->
               if (path != WORKTREE_PATH) {
@@ -292,7 +292,7 @@ class AgentSessionRefreshOnDemandIntegrationTest {
                 invocationCount.incrementAndGet()
                 started.complete(Unit)
                 release.await()
-                listOf(thread(id = "wt-codex-1", updatedAt = 100, provider = AgentSessionProvider.CODEX))
+                listOf(thread(id = "wt-codex-1", updatedAt = 100, provider = AgentSessionProvider.from("codex")))
               }
             },
           ),
@@ -330,7 +330,7 @@ class AgentSessionRefreshOnDemandIntegrationTest {
           ?.worktrees
           ?.firstOrNull { it.path == WORKTREE_PATH }
           ?: return@waitForCondition false
-        worktree.providerLoadStates[AgentSessionProvider.CODEX] == AgentSessionProviderLoadState.LOADED
+        worktree.providerLoadStates[AgentSessionProvider.from("codex")] == AgentSessionProviderLoadState.LOADED
       }
 
       val worktree = service.state.value.projects

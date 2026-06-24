@@ -22,7 +22,7 @@ class TerminalAgentSessionProviderDescriptorTest {
 
       val launchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
 
-      assertThat(descriptor.provider.value).isEqualTo(AgentSessionProvider.TERMINAL.value)
+      assertThat(TERMINAL_AGENT_SESSION_PROVIDER.value).isEqualTo(AgentSessionProvider.from("terminal").value)
       assertThat(descriptor.supportedLaunchModes).containsExactly(AgentSessionLaunchMode.STANDARD)
       assertThat(descriptor.icon).isNotNull
       assertThat(descriptor.isCliAvailable()).isTrue()
@@ -55,7 +55,7 @@ class TerminalAgentSessionProviderDescriptorTest {
       assertThat(unarchived).isTrue()
       assertThat(thread.title).isEqualTo("Build shell")
       assertThat(thread.archived).isFalse()
-      assertThat(thread.provider.value).isEqualTo(AgentSessionProvider.TERMINAL.value)
+      assertThat(thread.provider.value).isEqualTo(AgentSessionProvider.from("terminal").value)
     }
   }
 
@@ -93,7 +93,7 @@ class TerminalAgentSessionProviderDescriptorTest {
 
       val launchSpec = contributor.contribute(
         projectPath = "/tmp/project",
-        provider = AgentSessionProvider.TERMINAL,
+        provider = AgentSessionProvider.from("terminal"),
         sessionId = "terminal-session-id",
         launchSpec = TerminalAgentSessionProviderDescriptor(stateService = stateService).buildResumeLaunchSpec("terminal-session-id"),
       )

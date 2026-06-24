@@ -18,7 +18,7 @@ internal class OpenCodeMcpUrlLaunchContributor(
     sessionId: String?,
     launchSpec: AgentSessionTerminalLaunchSpec,
   ): AgentSessionTerminalLaunchSpec {
-    if (provider != AgentSessionProvider.OPENCODE) return launchSpec
+    if (provider != OPENCODE_AGENT_SESSION_PROVIDER) return launchSpec
     val mcpUrl = mcpUrlResolver() ?: run {
       LOG.info("No MCP stream URL available for $projectPath; OpenCode launch will not receive $OPENCODE_MCP_URL_ENVIRONMENT_VARIABLE")
       return launchSpec

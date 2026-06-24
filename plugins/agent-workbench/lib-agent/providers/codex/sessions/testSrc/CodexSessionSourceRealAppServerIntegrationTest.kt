@@ -127,8 +127,8 @@ class CodexSessionSourceRealAppServerIntegrationTest {
 
           val originalAfterRename = renamedRows.single { it.id == originalId }
           val forkAfterRename = renamedRows.single { it.id == forkId }
-          assertThat(originalAfterRename.provider).isEqualTo(AgentSessionProvider.CODEX)
-          assertThat(forkAfterRename.provider).isEqualTo(AgentSessionProvider.CODEX)
+          assertThat(originalAfterRename.provider).isEqualTo(AgentSessionProvider.from("codex"))
+          assertThat(forkAfterRename.provider).isEqualTo(AgentSessionProvider.from("codex"))
           assertThat(originalAfterRename.title).isEqualTo(originalTitle)
           assertThat(forkAfterRename.title).isEqualTo("Renamed fork")
         }

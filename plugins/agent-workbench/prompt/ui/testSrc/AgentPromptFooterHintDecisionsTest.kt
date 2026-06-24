@@ -19,7 +19,7 @@ class AgentPromptFooterHintDecisionsTest {
   @Test
   fun codexExistingModeUsesCodexFooterHint() {
     val selectedProvider = testPromptProviderBridge(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsTabQueueShortcut = true,
     )
     assertThat(
@@ -33,7 +33,7 @@ class AgentPromptFooterHintDecisionsTest {
   @Test
   fun existingTaskWithNextPromptTabUsesDefaultFooterHintEvenForCodex() {
     val selectedProvider = testPromptProviderBridge(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsTabQueueShortcut = true,
     )
     assertThat(
@@ -48,10 +48,10 @@ class AgentPromptFooterHintDecisionsTest {
   @Test
   fun nonCodexOrNonExistingModeUsesDefaultFooterHint() {
     val codexProvider = testPromptProviderBridge(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       supportsTabQueueShortcut = true,
     )
-    val claudeProvider = testPromptProviderBridge(provider = AgentSessionProvider.CLAUDE)
+    val claudeProvider = testPromptProviderBridge(provider = AgentSessionProvider.from("claude"))
     assertThat(
       resolveDefaultFooterHintMessageKey(
         targetMode = PromptTargetMode.NEW_TASK,
@@ -77,7 +77,7 @@ class AgentPromptFooterHintDecisionsTest {
   @Test
   fun existingTaskSelectionHintIsHiddenForCodexExistingMode() {
     val selectedProvider = testPromptProviderBridge(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       suppressExistingTaskSelectionHint = true,
     )
     assertThat(
@@ -91,7 +91,7 @@ class AgentPromptFooterHintDecisionsTest {
 
   @Test
   fun existingTaskSelectionHintRequiresNoSelectionInExistingNonCodexMode() {
-    val selectedProvider = testPromptProviderBridge(provider = AgentSessionProvider.CLAUDE)
+    val selectedProvider = testPromptProviderBridge(provider = AgentSessionProvider.from("claude"))
     assertThat(
       shouldShowExistingTaskSelectionHint(
         targetMode = PromptTargetMode.EXISTING_TASK,

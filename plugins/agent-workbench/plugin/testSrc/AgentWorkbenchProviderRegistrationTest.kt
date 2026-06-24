@@ -19,25 +19,25 @@ class AgentWorkbenchProviderRegistrationTest {
     val providers = AgentSessionProviders.allProviders()
     val registeredProviderIds = providers.map { it.provider }
 
-    assertTrue(AgentSessionProvider.CODEX in registeredProviderIds)
-    assertTrue(AgentSessionProvider.CLAUDE in registeredProviderIds)
-    assertTrue(AgentSessionProvider.JUNIE in registeredProviderIds)
-    assertTrue(AgentSessionProvider.OPENCODE in registeredProviderIds)
-    assertTrue(AgentSessionProvider.PI in registeredProviderIds)
-    assertTrue(AgentSessionProvider.TERMINAL in registeredProviderIds)
+    assertTrue(AgentSessionProvider.from("codex") in registeredProviderIds)
+    assertTrue(AgentSessionProvider.from("claude") in registeredProviderIds)
+    assertTrue(AgentSessionProvider.from("junie") in registeredProviderIds)
+    assertTrue(AgentSessionProvider.from("opencode") in registeredProviderIds)
+    assertTrue(AgentSessionProvider.from("pi") in registeredProviderIds)
+    assertTrue(AgentSessionProvider.from("terminal") in registeredProviderIds)
 
     val standardMenuProviders = buildAgentSessionProviderMenuModel(
       providers,
       providers.associate { it.provider to true },
     ).standardItems.map { it.bridge.provider }
-    assertTrue(AgentSessionProvider.JUNIE in standardMenuProviders)
-    assertTrue(AgentSessionProvider.OPENCODE in standardMenuProviders)
-    assertTrue(AgentSessionProvider.PI in standardMenuProviders)
+    assertTrue(AgentSessionProvider.from("junie") in standardMenuProviders)
+    assertTrue(AgentSessionProvider.from("opencode") in standardMenuProviders)
+    assertTrue(AgentSessionProvider.from("pi") in standardMenuProviders)
 
     val yoloMenuProviders = buildAgentSessionProviderMenuModel(
       providers,
       providers.associate { it.provider to true },
     ).yoloItems.map { it.bridge.provider }
-    assertFalse(AgentSessionProvider.OPENCODE in yoloMenuProviders)
+    assertFalse(AgentSessionProvider.from("opencode") in yoloMenuProviders)
   }
 }

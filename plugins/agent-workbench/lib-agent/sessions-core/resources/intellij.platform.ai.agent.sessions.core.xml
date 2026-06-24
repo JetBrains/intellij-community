@@ -10,8 +10,10 @@
   <extensionPoints>
     <extensionPoint
       qualifiedName="com.intellij.agent.workbench.sessionProvider"
-      interface="com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor"
-      dynamic="true"/>
+      beanClass="com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderBean"
+      dynamic="true">
+      <with attribute="implementation" implements="com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderImplementation"/>
+    </extensionPoint>
     <extensionPoint
       qualifiedName="com.intellij.agent.workbench.sessionLaunchSpecAugmenter"
       interface="com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchSpecAugmenter"
@@ -42,8 +44,10 @@
       dynamic="true"/>
     <extensionPoint
       qualifiedName="com.intellij.agent.workbench.sessionProviderUiContributor"
-      interface="com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderUiContributor"
-      dynamic="true"/>
+      beanClass="com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderUiContributorBean"
+      dynamic="true">
+      <with attribute="implementation" implements="com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderUiContributor"/>
+    </extensionPoint>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

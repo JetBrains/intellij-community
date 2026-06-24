@@ -13,6 +13,7 @@ import com.intellij.platform.ai.agent.claude.common.ClaudeSessionsStore
 import com.intellij.platform.ai.agent.claude.sessions.ClaudeBackendThread
 import com.intellij.platform.ai.agent.claude.sessions.ClaudeBackendThreadRefreshResult
 import com.intellij.platform.ai.agent.claude.sessions.ClaudeHookBridge
+import com.intellij.platform.ai.agent.claude.sessions.CLAUDE_AGENT_SESSION_PROVIDER
 import com.intellij.platform.ai.agent.claude.sessions.ClaudeSessionBackend
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
@@ -325,7 +326,7 @@ private fun ClaudeSessionThread.toAgentThreadActivityHint(): AgentThreadActivity
 
 private fun ClaudeSessionOutline.toAgentSessionThreadOutline(): AgentSessionThreadOutline {
   return AgentSessionThreadOutline(
-    provider = com.intellij.platform.ai.agent.core.session.AgentSessionProvider.CLAUDE,
+    provider = CLAUDE_AGENT_SESSION_PROVIDER,
     threadId = sessionId,
     title = title,
     updatedAt = updatedAt,

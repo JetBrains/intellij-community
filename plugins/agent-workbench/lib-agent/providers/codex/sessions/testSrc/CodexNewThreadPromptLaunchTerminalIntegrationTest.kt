@@ -9,6 +9,8 @@ import com.intellij.agent.workbench.prompt.ui.captureNewTaskPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.ScriptedSessionSource
 import com.intellij.agent.workbench.sessions.launchNewThreadPromptRequestWithDefaultChatOpenExecutor
 import com.intellij.platform.ai.agent.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.platform.ai.agent.sessions.core.providers.withProvider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -49,7 +51,7 @@ class CodexNewThreadPromptLaunchTerminalIntegrationTest {
         project = project,
       ).copy(preferredDedicatedFrame = false)
 
-      assertThat(request.provider).isEqualTo(AgentSessionProvider.CODEX)
+      assertThat(request.provider).isEqualTo(AgentSessionProvider.from("codex"))
       assertThat(request.projectPath).isEqualTo(projectPath)
       assertThat(request.initialMessageRequest.prompt).isEqualTo(PLAN_PROMPT)
       assertThat(request.initialMessageRequest.providerOptionIds).containsExactly(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE)
@@ -172,12 +174,12 @@ private suspend fun <T> runInUi(action: suspend () -> T): T {
   }
 }
 
-private fun descriptor(): CodexAgentSessionProviderDescriptor {
+private fun descriptor(): AgentSessionProviderDescriptor {
   return CodexAgentSessionProviderDescriptor(
-    sessionSource = ScriptedSessionSource(provider = AgentSessionProvider.CODEX),
+    sessionSource = ScriptedSessionSource(provider = AgentSessionProvider.from("codex")),
     executableResolver = { CodexCliUtils.CODEX_COMMAND },
     cliAvailableProbe = { true },
-  )
+  ).withProvider(CODEX_AGENT_SESSION_PROVIDER)
 }
 
 private const val PLAN_PROMPT: String = "Plan this refactor"

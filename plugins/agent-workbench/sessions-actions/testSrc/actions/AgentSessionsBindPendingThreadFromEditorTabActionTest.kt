@@ -30,13 +30,13 @@ class AgentSessionsBindPendingThreadFromEditorTabActionTest {
     val context = editorContext(
       path = normalizedPath,
       threadIdentity = "codex:new-1",
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       sessionId = "new-1",
       isPendingThread = true,
     )
     val target = AgentChatTabRebindTarget(
       projectPath = normalizedPath,
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       threadIdentity = "codex:thread-42",
       threadId = "thread-42",
       threadTitle = "Recovered",
@@ -44,7 +44,7 @@ class AgentSessionsBindPendingThreadFromEditorTabActionTest {
     )
     val action = AgentSessionsBindPendingThreadFromEditorTabAction(
       resolveContext = { context },
-      resolveProvider = { AgentSessionProvider.CODEX },
+      resolveProvider = { AgentSessionProvider.from("codex") },
       resolveTarget = { _, _ -> target },
       rebindPendingTab = { _, _ -> },
     )
@@ -89,13 +89,13 @@ class AgentSessionsBindPendingThreadFromEditorTabActionTest {
     val context = editorContext(
       path = normalizedPath,
       threadIdentity = "claude:new-1",
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       sessionId = "new-1",
       isPendingThread = true,
     )
     val target = AgentChatTabRebindTarget(
       projectPath = normalizedPath,
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       threadIdentity = "claude:thread-42",
       threadId = "thread-42",
       threadTitle = "Recovered Claude",
@@ -103,7 +103,7 @@ class AgentSessionsBindPendingThreadFromEditorTabActionTest {
     )
     val action = AgentSessionsBindPendingThreadFromEditorTabAction(
       resolveContext = { context },
-      resolveProvider = { AgentSessionProvider.CLAUDE },
+      resolveProvider = { AgentSessionProvider.from("claude") },
       resolveTarget = { _, _ -> target },
       rebindPendingTab = { _, _ -> },
     )
@@ -121,13 +121,13 @@ class AgentSessionsBindPendingThreadFromEditorTabActionTest {
     val context = editorContext(
       path = normalizedPath,
       threadIdentity = "codex:new-1",
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       sessionId = "new-1",
       isPendingThread = true,
     )
     val target = AgentChatTabRebindTarget(
       projectPath = normalizedPath,
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       threadIdentity = "codex:thread-42",
       threadId = "thread-42",
       threadTitle = "Recovered",
@@ -140,7 +140,7 @@ class AgentSessionsBindPendingThreadFromEditorTabActionTest {
 
     val action = AgentSessionsBindPendingThreadFromEditorTabAction(
       resolveContext = { context },
-      resolveProvider = { AgentSessionProvider.CODEX },
+      resolveProvider = { AgentSessionProvider.from("codex") },
       resolveTarget = { _, _ -> target },
       rebindPendingTab = { _, requestsByPath ->
         val entry = requestsByPath.entries.single()
@@ -184,7 +184,7 @@ private fun editorContext(
   path: String = "/tmp/project",
   tabKey: String = "tab-pending-1",
   threadIdentity: String = "codex:thread-1",
-  provider: AgentSessionProvider? = AgentSessionProvider.CODEX,
+  provider: AgentSessionProvider? = AgentSessionProvider.from("codex"),
   sessionId: String = "thread-1",
   isPendingThread: Boolean = false,
   participatesInPendingThreadLifecycle: Boolean = isPendingThread,

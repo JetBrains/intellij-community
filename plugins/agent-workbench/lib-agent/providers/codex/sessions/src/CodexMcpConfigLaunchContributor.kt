@@ -29,7 +29,7 @@ internal class CodexMcpConfigLaunchContributor(
     sessionId: String?,
     launchSpec: AgentSessionTerminalLaunchSpec,
   ): AgentSessionTerminalLaunchSpec {
-    if (provider != AgentSessionProvider.CODEX || !isDirectHttpEnabled()) return launchSpec
+    if (provider != CODEX_AGENT_SESSION_PROVIDER || !isDirectHttpEnabled()) return launchSpec
     val mcpUrl = mcpUrlResolver() ?: return launchSpec
     val normalizedProjectPath = normalizeAgentWorkbenchPathOrNull(projectPath) ?: return launchSpec
     return launchSpec.copy(

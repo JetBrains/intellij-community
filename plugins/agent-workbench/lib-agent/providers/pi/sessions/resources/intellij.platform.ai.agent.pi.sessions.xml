@@ -30,6 +30,7 @@
                  restartRequired="true"/>
     <agent.workbench.sessionProvider
       id="agentWorkbenchPi"
+      providerId="pi"
       order="after agentWorkbenchJunie"
       implementation="com.intellij.platform.ai.agent.pi.sessions.PiAgentSessionProviderDescriptor"/>
     <httpRequestHandler implementation="com.intellij.platform.ai.agent.pi.sessions.PiExtensionStatusHttpRequestHandler"/>

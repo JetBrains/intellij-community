@@ -15,6 +15,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <agent.workbench.sessionProvider
       id="agentWorkbenchClaude"
+      providerId="claude"
       implementation="com.intellij.platform.ai.agent.claude.sessions.ClaudeAgentSessionProviderDescriptor"/>
     <httpRequestHandler implementation="com.intellij.platform.ai.agent.claude.sessions.ClaudeHookHttpRequestHandler"/>
     <agent.workbench.mcpConfigProviderContributor

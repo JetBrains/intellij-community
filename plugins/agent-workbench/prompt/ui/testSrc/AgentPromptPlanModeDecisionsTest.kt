@@ -82,7 +82,7 @@ class AgentPromptPlanModeDecisionsTest {
 }
 
 private fun testPlanModeProviderBridge(
-  provider: AgentSessionProvider = AgentSessionProvider.CODEX,
+  provider: AgentSessionProvider = AgentSessionProvider.from("codex"),
   promptOptions: List<AgentPromptProviderOption> = listOf(PLAN_MODE_OPTION),
 ): AgentSessionProviderDescriptor {
   return object : AgentSessionProviderDescriptor {

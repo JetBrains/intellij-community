@@ -66,7 +66,7 @@ class PiSessionSourceTest {
       assertThat(threads[0].updatedAt).isEqualTo(3_000L)
       assertThat(threads[0].archived).isFalse()
       assertThat(threads[0].activity).isEqualTo(AgentThreadActivity.READY)
-      assertThat(threads[0].provider).isEqualTo(AgentSessionProvider.PI)
+      assertThat(threads[0].provider).isEqualTo(AgentSessionProvider.from("pi"))
       assertThat(threads[1].title).isEqualTo("Old task")
     }
   }
@@ -245,7 +245,7 @@ class PiSessionSourceTest {
       val outline = source.loadThreadOutline(projectDir.toString(), "session-outline", null)
 
       assertThat(outline).isNotNull
-      assertThat(outline!!.provider).isEqualTo(AgentSessionProvider.PI)
+      assertThat(outline!!.provider).isEqualTo(AgentSessionProvider.from("pi"))
       assertThat(outline.threadId).isEqualTo("session-outline")
       assertThat(outline.title).isEqualTo("Named outline")
       assertThat(outline.updatedAt).isEqualTo(3_000L)
@@ -302,7 +302,7 @@ class PiSessionSourceTest {
       )
 
       val forkedThread = checkNotNull(forkResult?.thread)
-      assertThat(forkedThread.provider).isEqualTo(AgentSessionProvider.PI)
+      assertThat(forkedThread.provider).isEqualTo(AgentSessionProvider.from("pi"))
       assertThat(forkedThread.id).isNotEqualTo("session-local-fork")
       assertThat(forkedThread.title).isEqualTo("First task")
       val forkedOutline = source.loadThreadOutline(projectDir.toString(), forkedThread.id, null)

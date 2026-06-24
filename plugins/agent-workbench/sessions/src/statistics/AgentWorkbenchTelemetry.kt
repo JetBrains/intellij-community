@@ -12,9 +12,13 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EnumEventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
+import com.jetbrains.fus.reporting.api.IEventContext
+import com.jetbrains.fus.reporting.api.ValidationResultType
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicReference
@@ -30,16 +34,6 @@ enum class AgentWorkbenchEntryPoint {
   TOOLBAR,
   WINDOW_MENU,
   SYSTEM_NOTIFICATION,
-}
-
-@Internal
-enum class AgentWorkbenchTelemetryProvider {
-  CODEX,
-  CLAUDE,
-  JUNIE,
-  PI,
-  TERMINAL,
-  OTHER,
 }
 
 @Internal
@@ -76,7 +70,7 @@ enum class AgentWorkbenchPromptLaunchResultKind {
 data class AgentWorkbenchTelemetryEvent(
   @JvmField val id: String,
   @JvmField val entryPoint: AgentWorkbenchEntryPoint? = null,
-  @JvmField val provider: AgentWorkbenchTelemetryProvider? = null,
+  @JvmField val provider: String? = null,
   @JvmField val launchMode: AgentSessionLaunchMode? = null,
   @JvmField val targetKind: AgentWorkbenchTargetKind? = null,
   @JvmField val blockedReason: AgentWorkbenchPromptBlockedReason? = null,
@@ -203,16 +197,8 @@ object AgentWorkbenchTelemetry {
     AgentWorkbenchFusCollector.log(event)
   }
 
-  private fun mapProvider(provider: AgentSessionProvider?): AgentWorkbenchTelemetryProvider? {
-    return when (provider) {
-      null -> null
-      AgentSessionProvider.CODEX -> AgentWorkbenchTelemetryProvider.CODEX
-      AgentSessionProvider.CLAUDE -> AgentWorkbenchTelemetryProvider.CLAUDE
-      AgentSessionProvider.JUNIE -> AgentWorkbenchTelemetryProvider.JUNIE
-      AgentSessionProvider.PI -> AgentWorkbenchTelemetryProvider.PI
-      AgentSessionProvider.TERMINAL -> AgentWorkbenchTelemetryProvider.TERMINAL
-      else -> AgentWorkbenchTelemetryProvider.OTHER
-    }
+  private fun mapProvider(provider: AgentSessionProvider?): String? {
+    return provider?.value
   }
 
   private fun mapBlockedReason(validationErrorKey: String): AgentWorkbenchPromptBlockedReason {
@@ -247,11 +233,10 @@ object AgentWorkbenchTelemetry {
 internal object AgentWorkbenchFusCollector : CounterUsagesCollector() {
   private val LOG = logger<AgentWorkbenchFusCollector>()
 
-  private val group = EventLogGroup("agent.workbench", 5)
+  private val group = EventLogGroup("agent.workbench", 6)
 
   private val entryPointField: EnumEventField<AgentWorkbenchEntryPoint> = EventFields.Enum("entry_point", AgentWorkbenchEntryPoint::class.java)
-  private val providerField: EnumEventField<AgentWorkbenchTelemetryProvider> =
-    EventFields.Enum("provider", AgentWorkbenchTelemetryProvider::class.java)
+  private val providerField = EventFields.StringValidatedByCustomRule<AgentWorkbenchProviderValidationRule>("provider")
   private val launchModeField: EnumEventField<AgentSessionLaunchMode> =
     EventFields.Enum("launch_mode", AgentSessionLaunchMode::class.java)
   private val targetKindField: EnumEventField<AgentWorkbenchTargetKind> =
@@ -347,4 +332,13 @@ internal object AgentWorkbenchFusCollector : CounterUsagesCollector() {
       else -> LOG.error("Unknown telemetry event id: ${event.id}")
     }
   }
+}
+
+internal class AgentWorkbenchProviderValidationRule : CustomValidationRule() {
+  override fun doValidate(data: String, context: IEventContext): ValidationResultType {
+    val provider = AgentSessionProvider.fromOrNull(data) ?: return ValidationResultType.REJECTED
+    return if (AgentSessionProviders.find(provider) != null) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
+  }
+
+  override fun getRuleId(): String = "agent_workbench_provider"
 }

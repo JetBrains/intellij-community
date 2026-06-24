@@ -21,8 +21,8 @@ class AgentSessionLoadAggregationTest {
 
     val result = mergeAgentSessionSourceLoadResults(
       sourceResults = listOf(
-        AgentSessionSourceLoadResult(AgentSessionProvider.CODEX, Result.failure(codexFailure)),
-        AgentSessionSourceLoadResult(AgentSessionProvider.CLAUDE, Result.failure(claudeFailure)),
+        AgentSessionSourceLoadResult(AgentSessionProvider.from("codex"), Result.failure(codexFailure)),
+        AgentSessionSourceLoadResult(AgentSessionProvider.from("claude"), Result.failure(claudeFailure)),
       ),
       resolveErrorMessage = { provider, _ -> "${provider.value} unavailable" },
     )
@@ -39,8 +39,8 @@ class AgentSessionLoadAggregationTest {
 
     val result = mergeAgentSessionSourceLoadResults(
       sourceResults = listOf(
-        AgentSessionSourceLoadResult(AgentSessionProvider.CODEX, Result.failure(codexFailure)),
-        AgentSessionSourceLoadResult(AgentSessionProvider.CLAUDE, Result.success(emptyList())),
+        AgentSessionSourceLoadResult(AgentSessionProvider.from("codex"), Result.failure(codexFailure)),
+        AgentSessionSourceLoadResult(AgentSessionProvider.from("claude"), Result.success(emptyList())),
       ),
       resolveErrorMessage = { provider, _ -> "${provider.value} unavailable" },
       resolveWarningMessage = { provider, _ -> "${provider.value} warning" },
@@ -51,7 +51,7 @@ class AgentSessionLoadAggregationTest {
     assertThat(result.hasUnknownThreadCount).isFalse()
     assertThat(result.providerWarnings).hasSize(1)
     val warning = result.providerWarnings.single()
-    assertThat(warning.provider).isEqualTo(AgentSessionProvider.CODEX)
+    assertThat(warning.provider).isEqualTo(AgentSessionProvider.from("codex"))
     assertThat(warning.message).isEqualTo("codex warning")
   }
 
@@ -62,20 +62,20 @@ class AgentSessionLoadAggregationTest {
       title = "Codex Session",
       updatedAt = 100,
       archived = false,
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
     )
     val claudeThread = AgentSessionThread(
       id = "claude-1",
       title = "Claude Session",
       updatedAt = 200,
       archived = false,
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
     )
 
     val result = mergeAgentSessionSourceLoadResults(
       sourceResults = listOf(
-        AgentSessionSourceLoadResult(AgentSessionProvider.CODEX, Result.success(listOf(codexThread))),
-        AgentSessionSourceLoadResult(AgentSessionProvider.CLAUDE, Result.success(listOf(claudeThread))),
+        AgentSessionSourceLoadResult(AgentSessionProvider.from("codex"), Result.success(listOf(codexThread))),
+        AgentSessionSourceLoadResult(AgentSessionProvider.from("claude"), Result.success(listOf(claudeThread))),
       ),
       resolveErrorMessage = { _, _ -> "error" },
     )
@@ -83,8 +83,8 @@ class AgentSessionLoadAggregationTest {
     assertThat(result.errorMessage).isNull()
     assertThat(result.hasUnknownThreadCount).isFalse()
     assertThat(result.providerLoadStates)
-      .containsEntry(AgentSessionProvider.CODEX, AgentSessionProviderLoadState.LOADED)
-      .containsEntry(AgentSessionProvider.CLAUDE, AgentSessionProviderLoadState.LOADED)
+      .containsEntry(AgentSessionProvider.from("codex"), AgentSessionProviderLoadState.LOADED)
+      .containsEntry(AgentSessionProvider.from("claude"), AgentSessionProviderLoadState.LOADED)
     assertThat(result.threads.map { it.id }).containsExactly("claude-1", "codex-1")
     assertThat(result.providerWarnings).isEmpty()
   }
@@ -95,15 +95,15 @@ class AgentSessionLoadAggregationTest {
 
     val result = mergeAgentSessionSourceLoadResults(
       sourceResults = listOf(
-        AgentSessionSourceLoadResult(AgentSessionProvider.CODEX, Result.failure(codexFailure)),
-        AgentSessionSourceLoadResult(AgentSessionProvider.CLAUDE, Result.success(emptyList())),
+        AgentSessionSourceLoadResult(AgentSessionProvider.from("codex"), Result.failure(codexFailure)),
+        AgentSessionSourceLoadResult(AgentSessionProvider.from("claude"), Result.success(emptyList())),
       ),
       resolveErrorMessage = { provider, _ -> "${provider.value} unavailable" },
     )
 
     assertThat(result.providerLoadStates)
-      .containsEntry(AgentSessionProvider.CODEX, AgentSessionProviderLoadState.FAILED)
-      .containsEntry(AgentSessionProvider.CLAUDE, AgentSessionProviderLoadState.LOADED)
+      .containsEntry(AgentSessionProvider.from("codex"), AgentSessionProviderLoadState.FAILED)
+      .containsEntry(AgentSessionProvider.from("claude"), AgentSessionProviderLoadState.LOADED)
   }
 
   @Test
@@ -113,14 +113,14 @@ class AgentSessionLoadAggregationTest {
       title = "Codex Session",
       updatedAt = 100,
       archived = false,
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
     )
     val claudeThread = AgentSessionThread(
       id = "claude-1",
       title = "Claude Session",
       updatedAt = 100,
       archived = false,
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
     )
 
     fun merge(sourceResults: List<AgentSessionSourceLoadResult>): List<String> {
@@ -132,14 +132,14 @@ class AgentSessionLoadAggregationTest {
 
     val codexThenClaude = merge(
       listOf(
-        AgentSessionSourceLoadResult(AgentSessionProvider.CODEX, Result.success(listOf(codexThread))),
-        AgentSessionSourceLoadResult(AgentSessionProvider.CLAUDE, Result.success(listOf(claudeThread))),
+        AgentSessionSourceLoadResult(AgentSessionProvider.from("codex"), Result.success(listOf(codexThread))),
+        AgentSessionSourceLoadResult(AgentSessionProvider.from("claude"), Result.success(listOf(claudeThread))),
       )
     )
     val claudeThenCodex = merge(
       listOf(
-        AgentSessionSourceLoadResult(AgentSessionProvider.CLAUDE, Result.success(listOf(claudeThread))),
-        AgentSessionSourceLoadResult(AgentSessionProvider.CODEX, Result.success(listOf(codexThread))),
+        AgentSessionSourceLoadResult(AgentSessionProvider.from("claude"), Result.success(listOf(claudeThread))),
+        AgentSessionSourceLoadResult(AgentSessionProvider.from("codex"), Result.success(listOf(codexThread))),
       )
     )
 
@@ -154,13 +154,13 @@ class AgentSessionLoadAggregationTest {
       title = "Codex Session",
       updatedAt = 100,
       archived = false,
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
     )
 
     val result = mergeAgentSessionSourceLoadResults(
       sourceResults = listOf(
         AgentSessionSourceLoadResult(
-          provider = AgentSessionProvider.CODEX,
+          provider = AgentSessionProvider.from("codex"),
           result = Result.success(listOf(codexThread)),
           hasUnknownTotal = true,
         ),
@@ -178,7 +178,7 @@ class AgentSessionLoadAggregationTest {
     val result = mergeAgentSessionSourceLoadResults(
       sourceResults = listOf(
         AgentSessionSourceLoadResult(
-          provider = AgentSessionProvider.CODEX,
+          provider = AgentSessionProvider.from("codex"),
           result = Result.failure(IllegalStateException("codex failed")),
           hasUnknownTotal = true,
         ),
@@ -186,7 +186,7 @@ class AgentSessionLoadAggregationTest {
       resolveErrorMessage = { _, _ -> "error" },
     )
 
-    assertThat(result.providerLoadStates).containsEntry(AgentSessionProvider.CODEX, AgentSessionProviderLoadState.FAILED)
+    assertThat(result.providerLoadStates).containsEntry(AgentSessionProvider.from("codex"), AgentSessionProviderLoadState.FAILED)
     assertThat(result.hasUnknownThreadCount).isFalse()
   }
 
@@ -194,35 +194,35 @@ class AgentSessionLoadAggregationTest {
   fun mergesProviderLoadMetadataByReplacingUnknownCountOnlyForUpdatedProviders() {
     val metadata = mergeProviderLoadMetadata(
       currentProviderLoadStates = mapOf(
-        AgentSessionProvider.CODEX to AgentSessionProviderLoadState.LOADED,
-        AgentSessionProvider.CLAUDE to AgentSessionProviderLoadState.LOADED,
+        AgentSessionProvider.from("codex") to AgentSessionProviderLoadState.LOADED,
+        AgentSessionProvider.from("claude") to AgentSessionProviderLoadState.LOADED,
       ),
-      currentProvidersWithUnknownThreadCount = setOf(AgentSessionProvider.CODEX, AgentSessionProvider.CLAUDE),
-      providerLoadStateUpdates = mapOf(AgentSessionProvider.CODEX to AgentSessionProviderLoadState.LOADED),
+      currentProvidersWithUnknownThreadCount = setOf(AgentSessionProvider.from("codex"), AgentSessionProvider.from("claude")),
+      providerLoadStateUpdates = mapOf(AgentSessionProvider.from("codex") to AgentSessionProviderLoadState.LOADED),
       updatedProvidersWithUnknownThreadCount = emptySet(),
     )
 
     assertThat(metadata.providerLoadStates)
-      .containsEntry(AgentSessionProvider.CODEX, AgentSessionProviderLoadState.LOADED)
-      .containsEntry(AgentSessionProvider.CLAUDE, AgentSessionProviderLoadState.LOADED)
-    assertThat(metadata.providersWithUnknownThreadCount).containsExactly(AgentSessionProvider.CLAUDE)
+      .containsEntry(AgentSessionProvider.from("codex"), AgentSessionProviderLoadState.LOADED)
+      .containsEntry(AgentSessionProvider.from("claude"), AgentSessionProviderLoadState.LOADED)
+    assertThat(metadata.providersWithUnknownThreadCount).containsExactly(AgentSessionProvider.from("claude"))
   }
 
   @Test
   fun mergeProviderLoadMetadataClearsUnknownCountForLoadingProvider() {
     val metadata = mergeProviderLoadMetadata(
       currentProviderLoadStates = mapOf(
-        AgentSessionProvider.CODEX to AgentSessionProviderLoadState.LOADED,
-        AgentSessionProvider.CLAUDE to AgentSessionProviderLoadState.LOADED,
+        AgentSessionProvider.from("codex") to AgentSessionProviderLoadState.LOADED,
+        AgentSessionProvider.from("claude") to AgentSessionProviderLoadState.LOADED,
       ),
-      currentProvidersWithUnknownThreadCount = setOf(AgentSessionProvider.CODEX, AgentSessionProvider.CLAUDE),
-      providerLoadStateUpdates = mapOf(AgentSessionProvider.CODEX to AgentSessionProviderLoadState.LOADING),
+      currentProvidersWithUnknownThreadCount = setOf(AgentSessionProvider.from("codex"), AgentSessionProvider.from("claude")),
+      providerLoadStateUpdates = mapOf(AgentSessionProvider.from("codex") to AgentSessionProviderLoadState.LOADING),
       updatedProvidersWithUnknownThreadCount = emptySet(),
     )
 
     assertThat(metadata.providerLoadStates)
-      .containsEntry(AgentSessionProvider.CODEX, AgentSessionProviderLoadState.LOADING)
-      .containsEntry(AgentSessionProvider.CLAUDE, AgentSessionProviderLoadState.LOADED)
-    assertThat(metadata.providersWithUnknownThreadCount).containsExactly(AgentSessionProvider.CLAUDE)
+      .containsEntry(AgentSessionProvider.from("codex"), AgentSessionProviderLoadState.LOADING)
+      .containsEntry(AgentSessionProvider.from("claude"), AgentSessionProviderLoadState.LOADED)
+    assertThat(metadata.providersWithUnknownThreadCount).containsExactly(AgentSessionProvider.from("claude"))
   }
 }

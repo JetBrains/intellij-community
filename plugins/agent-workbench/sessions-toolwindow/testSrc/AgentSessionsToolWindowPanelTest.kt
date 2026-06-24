@@ -54,14 +54,14 @@ class AgentSessionsToolWindowPanelTest {
           path = "/work/project-a",
           name = "Project A",
           isOpen = true,
-          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
           threads = listOf(
             AgentSessionThread(
               id = "thread-1",
               title = "Thread 1",
               updatedAt = 100,
               archived = false,
-              provider = AgentSessionProvider.CODEX,
+              provider = AgentSessionProvider.from("codex"),
             )
           ),
         )

@@ -22,7 +22,7 @@ class AgentSessionUiPreferencesStateServiceTest {
     val prefs = AgentPromptLauncherBridge.ProviderPreferences(
       providerOptionsByProviderId = mapOf("claude" to setOf("plan_mode")),
       containerModeEnabled = true,
-      launchProfiles = listOf(launchProfile("user:careful", "Careful", AgentSessionProvider.CLAUDE.value)),
+      launchProfiles = listOf(launchProfile("user:careful", "Careful", AgentSessionProvider.from("claude").value)),
       defaultLaunchProfileId = "user:careful",
     )
     service.setProviderPreferences(prefs)
@@ -42,7 +42,7 @@ class AgentSessionUiPreferencesStateServiceTest {
       providerOptionIds = setOf("plan_mode"),
     )
 
-    service.updateProviderOptionsOnLaunch(AgentSessionProvider.CODEX.value, request)
+    service.updateProviderOptionsOnLaunch(AgentSessionProvider.from("codex").value, request)
 
     val loaded = service.getProviderPreferences()
     assertThat(loaded.providerOptionsByProviderId).isEqualTo(mapOf("codex" to setOf("plan_mode")))
@@ -53,12 +53,12 @@ class AgentSessionUiPreferencesStateServiceTest {
     val service = uiPreferencesService()
     service.setProviderPreferences(AgentPromptLauncherBridge.ProviderPreferences(
       providerOptionsByProviderId = mapOf("claude" to setOf("plan_mode")),
-      launchProfiles = listOf(launchProfile("user:claude", "Claude Custom", AgentSessionProvider.CLAUDE.value)),
+      launchProfiles = listOf(launchProfile("user:claude", "Claude Custom", AgentSessionProvider.from("claude").value)),
       defaultLaunchProfileId = "user:claude",
     ))
 
     service.updateProviderOptionsOnLaunch(
-      AgentSessionProvider.CODEX.value,
+      AgentSessionProvider.from("codex").value,
       AgentPromptInitialMessageRequest(prompt = "test", providerOptionIds = setOf("fast")),
     )
 
@@ -75,15 +75,15 @@ class AgentSessionUiPreferencesStateServiceTest {
 
     service.loadState(AgentSessionUiPreferencesStateService.UiPreferencesState(
       providerOptionsByProviderId = mapOf(
-        AgentSessionProvider.CODEX.value to emptySet(),
-        AgentSessionProvider.CLAUDE.value to setOf("plan_mode"),
+        AgentSessionProvider.from("codex").value to emptySet(),
+        AgentSessionProvider.from("claude").value to setOf("plan_mode"),
       ),
     ))
 
     val loaded = service.getProviderPreferences()
     assertThat(loaded.providerOptionsByProviderId).isEqualTo(mapOf(
-      AgentSessionProvider.CODEX.value to emptySet(),
-      AgentSessionProvider.CLAUDE.value to setOf("plan_mode"),
+      AgentSessionProvider.from("codex").value to emptySet(),
+      AgentSessionProvider.from("claude").value to setOf("plan_mode"),
     ))
     assertThat(loaded.launchProfiles).isEmpty()
     assertThat(loaded.defaultLaunchProfileId).isNull()
@@ -96,7 +96,7 @@ class AgentSessionUiPreferencesStateServiceTest {
       providerOptionsByProviderId = mapOf("claude" to setOf("plan_mode")),
     ))
 
-    service.updateProviderOptionsOnLaunch(AgentSessionProvider.CODEX.value, null)
+    service.updateProviderOptionsOnLaunch(AgentSessionProvider.from("codex").value, null)
 
     val loaded = service.getProviderPreferences()
     assertThat(loaded.providerOptionsByProviderId).isEqualTo(mapOf("claude" to setOf("plan_mode")))
@@ -107,7 +107,7 @@ class AgentSessionUiPreferencesStateServiceTest {
     val service = AgentSessionLaunchProfileStateService()
 
     service.setLaunchProfiles(
-      profiles = listOf(launchProfile("user:general", "General", AgentSessionProvider.CLAUDE.value)),
+      profiles = listOf(launchProfile("user:general", "General", AgentSessionProvider.from("claude").value)),
       defaultProfileId = "user:general",
     )
     service.setActiveVcsMergeLaunchProfileId("builtin:codex:standard")
@@ -122,7 +122,7 @@ class AgentSessionUiPreferencesStateServiceTest {
     val uiPreferencesService = AgentSessionUiPreferencesStateService(launchProfileStateService)
 
     uiPreferencesService.setProviderPreferences(AgentPromptLauncherBridge.ProviderPreferences(
-      launchProfiles = listOf(launchProfile("user:fast", "Fast", AgentSessionProvider.CODEX.value)),
+      launchProfiles = listOf(launchProfile("user:fast", "Fast", AgentSessionProvider.from("codex").value)),
       defaultLaunchProfileId = "user:fast",
     ))
 
@@ -137,7 +137,7 @@ class AgentSessionUiPreferencesStateServiceTest {
     val service = AgentSessionLaunchProfileStateService()
 
     service.setLaunchProfiles(
-      profiles = listOf(launchProfile("user:careful", "Careful", AgentSessionProvider.CLAUDE.value)),
+      profiles = listOf(launchProfile("user:careful", "Careful", AgentSessionProvider.from("claude").value)),
       defaultProfileId = "user:careful",
     )
 
@@ -149,7 +149,7 @@ class AgentSessionUiPreferencesStateServiceTest {
   @Test
   fun launchProfileStateServiceStoresBuiltInOverrides() {
     val service = AgentSessionLaunchProfileStateService()
-    val profile = launchProfile("builtin:codex:standard", "Careful Codex", AgentSessionProvider.CODEX.value)
+    val profile = launchProfile("builtin:codex:standard", "Careful Codex", AgentSessionProvider.from("codex").value)
 
     service.setLaunchProfiles(
       profiles = listOf(profile),

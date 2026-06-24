@@ -14,9 +14,9 @@ class AgentSessionThreadOrderingTest {
   @Test
   fun sortsInitialThreadsByUpdatedTimeProviderAndId() {
     val threads = listOf(
-      thread(id = "codex-b", updatedAt = 100, provider = AgentSessionProvider.CODEX),
-      thread(id = "claude-a", updatedAt = 100, provider = AgentSessionProvider.CLAUDE),
-      thread(id = "codex-a", updatedAt = 200, provider = AgentSessionProvider.CODEX),
+      thread(id = "codex-b", updatedAt = 100, provider = AgentSessionProvider.from("codex")),
+      thread(id = "claude-a", updatedAt = 100, provider = AgentSessionProvider.from("claude")),
+      thread(id = "codex-a", updatedAt = 200, provider = AgentSessionProvider.from("codex")),
     )
 
     val sorted = sortAgentSessionThreadsForDisplay(threads)
@@ -27,14 +27,14 @@ class AgentSessionThreadOrderingTest {
   @Test
   fun mergePreservesExistingOrderWhenThreadContentChanges() {
     val previousThreads = listOf(
-      thread(id = "codex-1", updatedAt = 100, provider = AgentSessionProvider.CODEX),
-      thread(id = "codex-2", updatedAt = 200, provider = AgentSessionProvider.CODEX),
-      thread(id = "claude-1", updatedAt = 300, provider = AgentSessionProvider.CLAUDE),
+      thread(id = "codex-1", updatedAt = 100, provider = AgentSessionProvider.from("codex")),
+      thread(id = "codex-2", updatedAt = 200, provider = AgentSessionProvider.from("codex")),
+      thread(id = "claude-1", updatedAt = 300, provider = AgentSessionProvider.from("claude")),
     )
     val refreshedThreads = listOf(
-      thread(id = "claude-1", updatedAt = 300, provider = AgentSessionProvider.CLAUDE),
-      thread(id = "codex-2", updatedAt = 900, title = "Updated", provider = AgentSessionProvider.CODEX),
-      thread(id = "codex-1", updatedAt = 100, provider = AgentSessionProvider.CODEX),
+      thread(id = "claude-1", updatedAt = 300, provider = AgentSessionProvider.from("claude")),
+      thread(id = "codex-2", updatedAt = 900, title = "Updated", provider = AgentSessionProvider.from("codex")),
+      thread(id = "codex-1", updatedAt = 100, provider = AgentSessionProvider.from("codex")),
     )
 
     val merged = mergeAgentSessionThreadsForDisplay(previousThreads, refreshedThreads)
@@ -47,13 +47,13 @@ class AgentSessionThreadOrderingTest {
   @Test
   fun mergeRemovesMissingThreadsWithoutReorderingSurvivors() {
     val previousThreads = listOf(
-      thread(id = "codex-1", updatedAt = 100, provider = AgentSessionProvider.CODEX),
-      thread(id = "codex-2", updatedAt = 200, provider = AgentSessionProvider.CODEX),
-      thread(id = "claude-1", updatedAt = 300, provider = AgentSessionProvider.CLAUDE),
+      thread(id = "codex-1", updatedAt = 100, provider = AgentSessionProvider.from("codex")),
+      thread(id = "codex-2", updatedAt = 200, provider = AgentSessionProvider.from("codex")),
+      thread(id = "claude-1", updatedAt = 300, provider = AgentSessionProvider.from("claude")),
     )
     val refreshedThreads = listOf(
-      thread(id = "claude-1", updatedAt = 300, provider = AgentSessionProvider.CLAUDE),
-      thread(id = "codex-1", updatedAt = 400, provider = AgentSessionProvider.CODEX),
+      thread(id = "claude-1", updatedAt = 300, provider = AgentSessionProvider.from("claude")),
+      thread(id = "codex-1", updatedAt = 400, provider = AgentSessionProvider.from("codex")),
     )
 
     val merged = mergeAgentSessionThreadsForDisplay(previousThreads, refreshedThreads)
@@ -65,14 +65,14 @@ class AgentSessionThreadOrderingTest {
   @Test
   fun mergeInsertsNewThreadsByDisplayPriorityWithoutReorderingExistingThreads() {
     val previousThreads = listOf(
-      thread(id = "old-low", updatedAt = 100, provider = AgentSessionProvider.CODEX),
-      thread(id = "old-high", updatedAt = 300, provider = AgentSessionProvider.CODEX),
+      thread(id = "old-low", updatedAt = 100, provider = AgentSessionProvider.from("codex")),
+      thread(id = "old-high", updatedAt = 300, provider = AgentSessionProvider.from("codex")),
     )
     val refreshedThreads = listOf(
-      thread(id = "old-high", updatedAt = 300, provider = AgentSessionProvider.CODEX),
-      thread(id = "new-middle", updatedAt = 200, provider = AgentSessionProvider.CLAUDE),
-      thread(id = "new-top", updatedAt = 400, provider = AgentSessionProvider.CODEX),
-      thread(id = "old-low", updatedAt = 100, provider = AgentSessionProvider.CODEX),
+      thread(id = "old-high", updatedAt = 300, provider = AgentSessionProvider.from("codex")),
+      thread(id = "new-middle", updatedAt = 200, provider = AgentSessionProvider.from("claude")),
+      thread(id = "new-top", updatedAt = 400, provider = AgentSessionProvider.from("codex")),
+      thread(id = "old-low", updatedAt = 100, provider = AgentSessionProvider.from("codex")),
     )
 
     val merged = mergeAgentSessionThreadsForDisplay(previousThreads, refreshedThreads)
@@ -83,13 +83,13 @@ class AgentSessionThreadOrderingTest {
   @Test
   fun mergeOrdersNewThreadsDeterministicallyWhenUpdatedTimesAreEqual() {
     val previousThreads = listOf(
-      thread(id = "existing", updatedAt = 100, provider = AgentSessionProvider.CODEX),
+      thread(id = "existing", updatedAt = 100, provider = AgentSessionProvider.from("codex")),
     )
     val refreshedThreads = listOf(
-      thread(id = "new-codex-b", updatedAt = 200, provider = AgentSessionProvider.CODEX),
-      thread(id = "existing", updatedAt = 100, provider = AgentSessionProvider.CODEX),
-      thread(id = "new-claude", updatedAt = 200, provider = AgentSessionProvider.CLAUDE),
-      thread(id = "new-codex-a", updatedAt = 200, provider = AgentSessionProvider.CODEX),
+      thread(id = "new-codex-b", updatedAt = 200, provider = AgentSessionProvider.from("codex")),
+      thread(id = "existing", updatedAt = 100, provider = AgentSessionProvider.from("codex")),
+      thread(id = "new-claude", updatedAt = 200, provider = AgentSessionProvider.from("claude")),
+      thread(id = "new-codex-a", updatedAt = 200, provider = AgentSessionProvider.from("codex")),
     )
 
     val merged = mergeAgentSessionThreadsForDisplay(previousThreads, refreshedThreads)

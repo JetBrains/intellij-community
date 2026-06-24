@@ -17,12 +17,16 @@
   <extensionPoints>
     <extensionPoint
       qualifiedName="com.intellij.agent.workbench.chatTerminalTitleThreadRebindContributor"
-      interface="com.intellij.agent.workbench.chat.AgentChatTerminalTitleThreadRebindContributor"
-      dynamic="true"/>
+      beanClass="com.intellij.agent.workbench.chat.AgentChatTerminalTitleThreadRebindContributorBean"
+      dynamic="true">
+      <with attribute="implementation" implements="com.intellij.agent.workbench.chat.AgentChatTerminalTitleThreadRebindContributor"/>
+    </extensionPoint>
     <extensionPoint
       qualifiedName="com.intellij.agent.workbench.chatProviderBehavior"
-      interface="com.intellij.agent.workbench.chat.AgentChatProviderBehaviorContributor"
-      dynamic="true"/>
+      beanClass="com.intellij.agent.workbench.chat.AgentChatProviderBehaviorBean"
+      dynamic="true">
+      <with attribute="implementation" implements="com.intellij.agent.workbench.chat.AgentChatProviderBehavior"/>
+    </extensionPoint>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -50,6 +54,8 @@
 
   <extensions defaultExtensionNs="com.intellij.agent.workbench">
     <settingsContributor implementation="com.intellij.agent.workbench.chat.AgentChatSettingsContributor"/>
+    <chatProviderBehavior providerId="claude"
+                          implementation="com.intellij.agent.workbench.chat.ClaudeAgentChatProviderBehavior"/>
   </extensions>
 
   <actions resource-bundle="messages.AgentChatBundle">

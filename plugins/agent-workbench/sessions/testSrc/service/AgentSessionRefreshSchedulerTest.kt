@@ -40,7 +40,7 @@ class AgentSessionRefreshSchedulerTest {
         rowActivity = AgentThreadActivity.PROCESSING,
         chromeActivity = AgentThreadActivity.REVIEWING,
       ),
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
     )
 
     val resolved = resolveAgentThreadActivityReportUpdate(
@@ -66,7 +66,7 @@ class AgentSessionRefreshSchedulerTest {
         rowActivity = AgentThreadActivity.READY,
         chromeActivity = AgentThreadActivity.REVIEWING,
       ),
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
     )
 
     val resolved = resolveAgentThreadActivityReportUpdate(
@@ -327,8 +327,8 @@ class AgentSessionRefreshSchedulerTest {
     val scheduler = AgentSessionRefreshScheduler(
       serviceScope = serviceScope,
       sessionSourcesProvider = { emptyList() },
-      scopedRefreshProvidersProvider = { listOf(AgentSessionProvider.CODEX) },
-      scopedRefreshSignalsProvider = { provider -> if (provider == AgentSessionProvider.CODEX) scopedEvents else emptyFlow() },
+      scopedRefreshProvidersProvider = { listOf(AgentSessionProvider.from("codex")) },
+      scopedRefreshSignalsProvider = { provider -> if (provider == AgentSessionProvider.from("codex")) scopedEvents else emptyFlow() },
       isRefreshGateActive = { true },
       executeFullRefresh = {},
       executeProviderRefresh = { _, _, updateEvent -> providerRefreshes.add(updateEvent) },

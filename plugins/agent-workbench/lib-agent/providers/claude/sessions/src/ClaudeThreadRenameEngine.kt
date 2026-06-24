@@ -4,7 +4,6 @@ package com.intellij.platform.ai.agent.claude.sessions
 import com.intellij.platform.ai.agent.claude.common.buildClaudeArchivedThreadTitle
 import com.intellij.platform.ai.agent.claude.common.normalizeClaudeStoredThreadTitle
 import com.intellij.platform.ai.agent.claude.common.resolveClaudeThreadTitleState
-import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentOpenTopLevelThreadDispatchService
@@ -46,7 +45,7 @@ internal object ClaudeChatOpenTabRenameDispatcher : ClaudeOpenTabRenameDispatche
                           ?: return false
     return dispatchService.dispatchIfPresent(
       projectPath = path,
-      provider = AgentSessionProvider.CLAUDE,
+      provider = CLAUDE_AGENT_SESSION_PROVIDER,
       threadId = threadId,
       launchSpec = launchSpec,
       initialMessageDispatchPlan = dispatchPlan,

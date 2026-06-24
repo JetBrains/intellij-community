@@ -11,14 +11,39 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessag
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.RequiredElement
+import com.intellij.serviceContainer.BaseKeyedLazyInstance
+import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus
 
 private class AgentChatProviderBehaviorRegistryLog
 
 private val BEHAVIOR_LOG = logger<AgentChatProviderBehaviorRegistryLog>()
 
-private val AGENT_CHAT_PROVIDER_BEHAVIOR_EP: ExtensionPointName<AgentChatProviderBehaviorContributor> =
+private val AGENT_CHAT_PROVIDER_BEHAVIOR_EP: ExtensionPointName<AgentChatProviderBehaviorBean> =
   ExtensionPointName("com.intellij.agent.workbench.chatProviderBehavior")
+
+class AgentChatProviderBehaviorBean : BaseKeyedLazyInstance<AgentChatProviderBehavior>() {
+  @Attribute("providerId")
+  @JvmField
+  @RequiredElement
+  var providerId: String = ""
+
+  @Attribute("implementation")
+  @JvmField
+  @RequiredElement
+  var implementation: String = ""
+
+  override fun getImplementationClassName(): String = implementation
+
+  fun providerOrNull(): AgentSessionProvider? {
+    val provider = AgentSessionProvider.fromOrNull(providerId)
+    if (provider == null) {
+      BEHAVIOR_LOG.warn("Ignoring Agent Chat provider behavior with invalid providerId '$providerId': $implementation")
+    }
+    return provider
+  }
+}
 
 private data class AgentChatProviderBehaviorSnapshot(
   @JvmField val behaviorsByProvider: Map<AgentSessionProvider, AgentChatProviderBehavior>,
@@ -43,29 +68,21 @@ internal fun resolveAgentChatProviderBehavior(provider: AgentSessionProvider?): 
   if (provider != null) {
     AgentChatProviderBehaviors.find(provider)?.let { return it }
   }
-  return when (provider) {
-    AgentSessionProvider.CLAUDE -> ClaudeAgentChatProviderBehavior
-    else -> DefaultAgentChatProviderBehavior
-  }
-}
-
-@ApiStatus.Internal
-interface AgentChatProviderBehaviorContributor {
-  val provider: AgentSessionProvider
-
-  val behavior: AgentChatProviderBehavior
+  return DefaultAgentChatProviderBehavior
 }
 
 private fun buildAgentChatProviderBehaviorSnapshot(
-  contributors: Iterable<AgentChatProviderBehaviorContributor>,
+  behaviorBeans: Iterable<AgentChatProviderBehaviorBean>,
 ): AgentChatProviderBehaviorSnapshot {
   val behaviorsByProvider = LinkedHashMap<AgentSessionProvider, AgentChatProviderBehavior>()
-  for (contributor in contributors) {
-    val previous = behaviorsByProvider.putIfAbsent(contributor.provider, contributor.behavior)
-    if (previous != null && previous !== contributor.behavior) {
+  for (behaviorBean in behaviorBeans) {
+    val provider = behaviorBean.providerOrNull() ?: continue
+    val behavior = behaviorBean.instance
+    val previous = behaviorsByProvider.putIfAbsent(provider, behavior)
+    if (previous != null && previous !== behavior) {
       BEHAVIOR_LOG.warn(
-        "Duplicate Agent Chat provider behavior for ${contributor.provider.value}: " +
-        "keeping ${previous::class.java.name}, ignoring ${contributor.behavior::class.java.name}",
+        "Duplicate Agent Chat provider behavior for ${provider.value}: " +
+        "keeping ${previous::class.java.name}, ignoring ${behavior::class.java.name}",
       )
     }
   }
@@ -155,7 +172,7 @@ interface AgentChatProviderBehavior {
 
 private object DefaultAgentChatProviderBehavior : AgentChatProviderBehavior
 
-private object ClaudeAgentChatProviderBehavior : AgentChatProviderBehavior {
+internal class ClaudeAgentChatProviderBehavior : AgentChatProviderBehavior {
   override fun shouldUseBracketedPasteMode(text: String): Boolean {
     return !text.isClaudeMenuCommandPrompt()
   }

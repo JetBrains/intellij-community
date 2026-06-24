@@ -217,7 +217,7 @@ class AgentChatEditorServiceTest {
       threadId = preallocatedSessionId,
       threadTitle = "Terminal",
       subAgentId = null,
-      newSessionProvider = AgentSessionProvider.TERMINAL,
+      newSessionProvider = AgentSessionProvider.from("terminal"),
       newSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
       startupLaunchSpec = terminalLaunchSpec,
     )
@@ -458,14 +458,14 @@ class AgentChatEditorServiceTest {
       threadId = "a174b4df-e942-49fe-bb30-8b5f8e7f4857",
       threadTitle = "New Claude thread",
       subAgentId = null,
-      newSessionProvider = AgentSessionProvider.CLAUDE,
+      newSessionProvider = AgentSessionProvider.from("claude"),
       newSessionLaunchMode = AgentSessionLaunchMode.YOLO,
     )
 
     val file = openedChatFiles().single()
     assertThat(file.startupIntent()).isEqualTo(
       AgentChatStartupIntent.NewSession(
-        provider = AgentSessionProvider.CLAUDE,
+        provider = AgentSessionProvider.from("claude"),
         launchMode = AgentSessionLaunchMode.YOLO,
       )
     )
@@ -493,14 +493,14 @@ class AgentChatEditorServiceTest {
       project = project,
       file = file,
       deferredStartState = AgentChatDeferredStartState(AgentChatDeferredStartPhase.READY_TO_START, title = ""),
-      newSessionProvider = AgentSessionProvider.CLAUDE,
+      newSessionProvider = AgentSessionProvider.from("claude"),
       newSessionLaunchMode = AgentSessionLaunchMode.YOLO,
       persistSnapshot = true,
     )
 
     assertThat(file.startupIntent()).isEqualTo(
       AgentChatStartupIntent.NewSession(
-        provider = AgentSessionProvider.CLAUDE,
+        provider = AgentSessionProvider.from("claude"),
         launchMode = AgentSessionLaunchMode.YOLO,
       )
     )
@@ -928,7 +928,7 @@ class AgentChatEditorServiceTest {
     val file = openedChatFiles().single()
     assertThat(publishThreadPresentation(
       path = projectPath,
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       threadId = targetThreadId,
       title = sharedTitle,
       activity = AgentThreadActivity.PROCESSING,
@@ -1103,7 +1103,7 @@ class AgentChatEditorServiceTest {
     )
 
     val pendingFile = openedChatFiles().single()
-    val pendingTabsByPath = collectOpenPendingAgentChatTabsByPath(AgentSessionProvider.CLAUDE)
+    val pendingTabsByPath = collectOpenPendingAgentChatTabsByPath(AgentSessionProvider.from("claude"))
     val pendingSnapshot = pendingTabsByPath[projectPath].orEmpty().single()
     assertThat(pendingSnapshot.projectPath).isEqualTo(projectPath)
     assertThat(pendingSnapshot.pendingTabKey).isEqualTo(pendingFile.tabKey)
@@ -1125,7 +1125,7 @@ class AgentChatEditorServiceTest {
 
     val file = openedChatFiles().single()
     val rebindReport = rebindOpenPendingAgentChatTabs(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       requestsByProjectPath = mapOf(
         projectPath to listOf(
           AgentChatPendingTabRebindRequest(
@@ -1136,7 +1136,7 @@ class AgentChatEditorServiceTest {
               threadId = "thread-3",
               threadTitle = "Recovered Claude thread",
               threadActivity = AgentThreadActivity.UNREAD,
-              provider = AgentSessionProvider.CLAUDE,
+              provider = AgentSessionProvider.from("claude"),
             ),
           )
         )
@@ -1176,7 +1176,7 @@ class AgentChatEditorServiceTest {
 
     val file = openedChatFiles().single()
     val rebindReport = rebindOpenPendingAgentChatTabs(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       requestsByProjectPath = mapOf(
         projectPath to listOf(
           AgentChatPendingTabRebindRequest(
@@ -1187,7 +1187,7 @@ class AgentChatEditorServiceTest {
               threadId = "new-2",
               threadTitle = "New thread",
               threadActivity = AgentThreadActivity.READY,
-              provider = AgentSessionProvider.CLAUDE,
+              provider = AgentSessionProvider.from("claude"),
             ),
           )
         )
@@ -1308,7 +1308,7 @@ class AgentChatEditorServiceTest {
     service<AgentChatTabsService>().upsert(file.toSnapshot())
     assertThat(publishThreadPresentation(
       path = projectPath,
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       threadId = targetThreadId,
       title = sharedTitle,
       activity = AgentThreadActivity.PROCESSING,
@@ -1543,14 +1543,14 @@ class AgentChatEditorServiceTest {
 
     val pendingTab = openedChatFiles().first { it.threadIdentity == "CLAUDE:new-1" }
     val rebindReport = rebindOpenPendingAgentChatTabs(
-      provider = AgentSessionProvider.CLAUDE,
+      provider = AgentSessionProvider.from("claude"),
       requestsByProjectPath = mapOf(
         projectPath to listOf(
           AgentChatPendingTabRebindRequest(
             pendingTabKey = pendingTab.tabKey,
             pendingThreadIdentity = "CLAUDE:new-1",
             target = rebindTarget(
-              provider = AgentSessionProvider.CLAUDE,
+              provider = AgentSessionProvider.from("claude"),
               threadIdentity = "CLAUDE:thread-2",
               threadId = "thread-2",
               threadTitle = "Recovered Claude thread",
@@ -1575,12 +1575,12 @@ class AgentChatEditorServiceTest {
 
   @Test
   fun testRebindOpenPendingCodexTabsClosesConcreteTabInAnotherOpenProject(): Unit = timeoutRunBlocking {
-    assertRebindOpenPendingTabsClosesConcreteTabInAnotherOpenProject(AgentSessionProvider.CODEX)
+    assertRebindOpenPendingTabsClosesConcreteTabInAnotherOpenProject(AgentSessionProvider.from("codex"))
   }
 
   @Test
   fun testRebindOpenPendingClaudeTabsClosesConcreteTabInAnotherOpenProject(): Unit = timeoutRunBlocking {
-    assertRebindOpenPendingTabsClosesConcreteTabInAnotherOpenProject(AgentSessionProvider.CLAUDE)
+    assertRebindOpenPendingTabsClosesConcreteTabInAnotherOpenProject(AgentSessionProvider.from("claude"))
   }
 
   @Test
@@ -1679,7 +1679,7 @@ class AgentChatEditorServiceTest {
         subAgentId = null,
       )
     )
-    assertThat(collectSelectedChatThreadIdentity()).isEqualTo(AgentSessionProvider.CODEX to "thread-1")
+    assertThat(collectSelectedChatThreadIdentity()).isEqualTo(AgentSessionProvider.from("codex") to "thread-1")
   }
 
   @Test
@@ -1712,7 +1712,7 @@ class AgentChatEditorServiceTest {
       }
     }
 
-    notifyAgentChatScopedRefresh(provider = AgentSessionProvider.CODEX, projectPath = projectPath)
+    notifyAgentChatScopedRefresh(provider = AgentSessionProvider.from("codex"), projectPath = projectPath)
 
     val signal = signalWaiter.await()
     assertThat(signal.scopedPaths).containsExactly("/work/project-scoped-refresh-delayed")
@@ -1728,7 +1728,7 @@ class AgentChatEditorServiceTest {
     }
 
     notifyAgentChatScopedRefresh(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       projectPath = "/work/project-scoped-refresh-thread/",
       threadId = "codex-thread-1",
     )
@@ -1793,7 +1793,7 @@ class AgentChatEditorServiceTest {
       checkNotNull(beforeCleanup.first { it.subAgentId == null && it.threadIdentity == "CODEX:thread-1" }.presentationKeyOrNull())
     presentationModel.updateThread(
       path = projectPath,
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       threadId = "thread-1",
       title = "Main thread",
       activity = AgentThreadActivity.READY,
@@ -1853,7 +1853,7 @@ class AgentChatEditorServiceTest {
     val basePresentationKey = checkNotNull(beforeCleanup.first { it.subAgentId == null }.presentationKeyOrNull())
     presentationModel.updateThread(
       path = projectPath,
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.from("codex"),
       threadId = "thread-1",
       title = "Main thread",
       activity = AgentThreadActivity.READY,
@@ -2177,24 +2177,24 @@ class AgentChatEditorServiceTest {
 
   private fun providerIdentityPrefix(provider: AgentSessionProvider): String {
     return when (provider) {
-      AgentSessionProvider.CODEX -> "CODEX"
-      AgentSessionProvider.CLAUDE -> "CLAUDE"
+      AgentSessionProvider.from("codex") -> "CODEX"
+      AgentSessionProvider.from("claude") -> "CLAUDE"
       else -> error("Unsupported test provider: $provider")
     }
   }
 
   private fun newThreadCommand(provider: AgentSessionProvider): List<String> {
     return when (provider) {
-      AgentSessionProvider.CODEX -> listOf("codex")
-      AgentSessionProvider.CLAUDE -> listOf("claude")
+      AgentSessionProvider.from("codex") -> listOf("codex")
+      AgentSessionProvider.from("claude") -> listOf("claude")
       else -> error("Unsupported test provider: $provider")
     }
   }
 
   private fun resumeThreadCommand(provider: AgentSessionProvider, threadId: String): List<String> {
     return when (provider) {
-      AgentSessionProvider.CODEX -> listOf("codex", "resume", threadId)
-      AgentSessionProvider.CLAUDE -> listOf("claude", "--resume", threadId)
+      AgentSessionProvider.from("codex") -> listOf("codex", "resume", threadId)
+      AgentSessionProvider.from("claude") -> listOf("claude", "--resume", threadId)
       else -> error("Unsupported test provider: $provider")
     }
   }
@@ -2229,7 +2229,7 @@ class AgentChatEditorServiceTest {
     threadId: String,
     threadTitle: String,
     threadActivity: AgentThreadActivity,
-    provider: AgentSessionProvider = AgentSessionProvider.CODEX,
+    provider: AgentSessionProvider = AgentSessionProvider.from("codex"),
     projectPath: String = this.projectPath,
   ): AgentChatTabRebindTarget {
     return AgentChatTabRebindTarget(
@@ -2391,21 +2391,21 @@ private suspend fun waitForCondition(timeoutMs: Long = 5_000, condition: suspend
   throw AssertionError("Condition was not satisfied within ${timeoutMs}ms")
 }
 
-private fun codexScopedRefreshSignals() = agentChatScopedRefreshSignals(AgentSessionProvider.CODEX)
+private fun codexScopedRefreshSignals() = agentChatScopedRefreshSignals(AgentSessionProvider.from("codex"))
 
 private suspend fun collectOpenPendingCodexTabsByPath(): Map<String, List<AgentChatPendingTabSnapshot>> {
-  return collectOpenPendingAgentChatTabsByPath(AgentSessionProvider.CODEX)
+  return collectOpenPendingAgentChatTabsByPath(AgentSessionProvider.from("codex"))
 }
 
 private suspend fun collectOpenConcreteCodexTabsAwaitingNewThreadRebindByPath(): Map<String, List<AgentChatConcreteTabSnapshot>> {
-  return collectOpenConcreteAgentChatTabsAwaitingNewThreadRebindByPath(AgentSessionProvider.CODEX)
+  return collectOpenConcreteAgentChatTabsAwaitingNewThreadRebindByPath(AgentSessionProvider.from("codex"))
 }
 
 private suspend fun rebindOpenPendingCodexTabs(
   requestsByProjectPath: Map<String, List<AgentChatPendingTabRebindRequest>>,
 ): AgentChatPendingTabRebindReport {
   return rebindOpenPendingAgentChatTabs(
-    provider = AgentSessionProvider.CODEX,
+    provider = AgentSessionProvider.from("codex"),
     requestsByProjectPath = requestsByProjectPath,
   )
 }
@@ -2414,7 +2414,7 @@ private suspend fun rebindOpenConcreteCodexTabs(
   requestsByProjectPath: Map<String, List<AgentChatConcreteTabRebindRequest>>,
 ): AgentChatConcreteTabRebindReport {
   return rebindOpenConcreteAgentChatTabs(
-    provider = AgentSessionProvider.CODEX,
+    provider = AgentSessionProvider.from("codex"),
     requestsByProjectPath = requestsByProjectPath,
   )
 }
