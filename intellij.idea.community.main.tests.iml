@@ -288,6 +288,7 @@
     <orderEntry type="module" module-name="intellij.platform.lsp.impl.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mermaid.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.discoverability.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.dev.leakDetection.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mcpserver.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mcpserver.terminal.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mcpserver.terminal.frontend.tests" scope="TEST" />

@@ -1178,6 +1178,8 @@ jvm_library(
         "//plugins/mermaid:mermaid-tests_test_lib",
         "//platform/discoverability:discoverability-tests",
         "//platform/discoverability:discoverability-tests_test_lib",
+        "//plugins/dev/intellij.dev.leakDetection:leakDetection-tests",
+        "//plugins/dev/intellij.dev.leakDetection:leakDetection-tests_test_lib",
         "//plugins/mcp-server/tests",
         "//plugins/mcp-server/tests:tests_test_lib",
         "//plugins/mcp-server/mcpserver.terminal/tests",

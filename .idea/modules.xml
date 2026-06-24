@@ -394,6 +394,8 @@
       <module fileurl="file://$PROJECT_DIR$/tools/testUtil/debugger.ui.test.util/intellij.debugger.ui.test.util.iml" filepath="$PROJECT_DIR$/tools/testUtil/debugger.ui.test.util/intellij.debugger.ui.test.util.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/dev/intellij.dev/intellij.dev.iml" filepath="$PROJECT_DIR$/plugins/dev/intellij.dev/intellij.dev.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/dev/intellij.dev.codeInsight/intellij.dev.codeInsight.iml" filepath="$PROJECT_DIR$/plugins/dev/intellij.dev.codeInsight/intellij.dev.codeInsight.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/dev/intellij.dev.leakDetection/intellij.dev.leakDetection.iml" filepath="$PROJECT_DIR$/plugins/dev/intellij.dev.leakDetection/intellij.dev.leakDetection.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/dev/intellij.dev.leakDetection/intellij.dev.leakDetection.tests.iml" filepath="$PROJECT_DIR$/plugins/dev/intellij.dev.leakDetection/intellij.dev.leakDetection.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/dev/intellij.dev.noJava.plugin.main.iml" filepath="$PROJECT_DIR$/plugins/dev/intellij.dev.noJava.plugin.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/dev/intellij.dev.plugin.main.iml" filepath="$PROJECT_DIR$/plugins/dev/intellij.dev.plugin.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/dev/intellij.dev.psiViewer/intellij.dev.psiViewer.iml" filepath="$PROJECT_DIR$/plugins/dev/intellij.dev.psiViewer/intellij.dev.psiViewer.iml" />

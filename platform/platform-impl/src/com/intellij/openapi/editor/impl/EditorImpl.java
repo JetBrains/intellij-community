@@ -339,6 +339,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final @Nullable StickyLinesManager myStickyLinesManager;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(true);
   private final FocusModeModel myFocusModeModel;
+  private volatile long myDisposalTimestampNanos;
   private volatile long myLastTypedActionTimestamp = -1;
   private String myLastTypedAction;
   private LatencyListener myLatencyPublisher;
@@ -1484,6 +1485,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myTraceableDisposable.kill(null);
 
       isReleased = true;
+      myDisposalTimestampNanos = System.nanoTime();
       mySizeAdjustmentStrategy.cancelAllRequests();
       cancelAutoResetForMouseSelectionState();
 
@@ -2494,6 +2496,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public boolean isDisposed() {
     return isReleased;
+  }
+
+  /**
+   * {@link System#nanoTime()} captured when this editor was released, or 0 if it is still alive.
+   * Used by internal dev tooling to flag editors lingering in memory after disposal.
+   */
+  @ApiStatus.Internal
+  public long getDisposalTimestampNanos() {
+    return myDisposalTimestampNanos;
   }
 
   public void stopDumbLater() {

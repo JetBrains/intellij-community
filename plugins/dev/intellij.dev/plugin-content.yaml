@@ -4,6 +4,7 @@
   contentModules:
   - name: intellij.dev.psiViewer
   - name: intellij.dev.codeInsight
+  - name: intellij.dev.leakDetection
   - name: intellij.java.dev
   - name: intellij.kotlin.dev
 - name: lib/modules/intellij.groovy.dev.jar

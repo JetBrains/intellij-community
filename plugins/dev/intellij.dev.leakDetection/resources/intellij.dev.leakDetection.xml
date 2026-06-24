@@ -1,0 +1,25 @@
+<idea-plugin package="com.intellij.dev.leakDetection">
+  <resource-bundle>messages.DevLeakDetectionBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup id="Project Leak Detection" displayType="STICKY_BALLOON"
+                       bundle="messages.DevLeakDetectionBundle" key="notification.group.name"/>
+    <registryKey key="dev.leak.detection.runOnWelcomeScreen" defaultValue="false"
+                 description="Auto-run disposed Project/Editor leak detection when the Welcome Screen is shown (internal builds only)."/>
+    <registryKey key="dev.leak.detection.editor.staleThresholdMs" defaultValue="10000"
+                 description="Editors still referenced this many milliseconds after disposal are reported as leaks."/>
+  </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.dev.leakDetection.LeakDetectionWelcomeScreenListener"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
+
+  <actions resource-bundle="messages.DevLeakDetectionBundle">
+    <action id="DetectProjectLeaks"
+            class="com.intellij.dev.leakDetection.DetectProjectLeaksAction"
+            internal="true">
+      <add-to-group group-id="Internal" anchor="last"/>
+    </action>
+  </actions>
+</idea-plugin>
