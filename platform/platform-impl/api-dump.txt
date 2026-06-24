@@ -4534,13 +4534,6 @@ f:com.intellij.ui.AppUIUtil
 - sf:targetToDevice(java.awt.Component,java.awt.Component):V
 - sf:updateAppWindowIcon(java.awt.Window):V
 - sf:updateForDarcula(Z):V
-f:com.intellij.ui.AppUIUtilKt
-- sf:findAppIcon():java.lang.String
-- sf:isWindowIconAlreadyExternallySet():Z
-- sf:loadSmallApplicationIcon(com.intellij.ui.scale.ScaleContext,I):javax.swing.Icon
-- sf:loadSmallApplicationIcon(com.intellij.ui.scale.ScaleContext,I,Z):javax.swing.Icon
-- bs:loadSmallApplicationIcon$default(com.intellij.ui.scale.ScaleContext,I,I,java.lang.Object):javax.swing.Icon
-- sf:updateAppWindowIcon(java.awt.Window):V
 f:com.intellij.ui.BadgeIconSupplier
 - <init>(javax.swing.Icon):V
 - f:getErrorIcon():javax.swing.Icon

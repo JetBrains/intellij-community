@@ -394,7 +394,9 @@ object AppUIUtil {
     }
     removeTraceConsents(result)
     if (!options.isEAP || !Registry.`is`("llm.llmc.data.collection.enabled", true)) {
-      result.removeIf(ConsentOptions.condAiDataCollectionConsent()) // IJPL-195651 and IJPL-210395; AI data collection (LLMC) consent should not be present on UI while it's staying a default consent as a part of migration from LLMC to TRACE consent
+      // IJPL-195651 and IJPL-210395; AI data collection (LLMC) consent should not be present on UI
+      // while it's staying a default consent as a part of migration from LLMC to TRACE consent
+      result.removeIf(ConsentOptions.condAiDataCollectionConsent())
     }
     return result
   }
@@ -563,12 +565,7 @@ object AppUIUtil {
     height: Int,
     xStart: Int = 0,
     yStart: Int = 0,
-    pixelsFunction: (
-      image: BufferedImage,
-      colorStart16: Color16,
-      delta16: Color16,
-      pixels: Array<Array<Color16>>,
-    ) -> Unit,
+    pixelsFunction: (image: BufferedImage, colorStart16: Color16, delta16: Color16, pixels: Array<Array<Color16>>) -> Unit,
   ): TexturePaint {
     val image = ImageUtil.createImage(graphics, width, height, BufferedImage.TYPE_INT_ARGB)
 
@@ -605,24 +602,3 @@ object AppUIUtil {
     return TexturePaint(image, Rectangle(xStart, yStart, width, height))
   }
 }
-
-@Suppress("DeprecatedCallableAddReplaceWith")
-@Deprecated("Use 'AppUIUtil.updateAppWindowIcon' instead", level = DeprecationLevel.ERROR)
-fun updateAppWindowIcon(window: Window): Unit = AppUIUtil.updateAppWindowIcon(window)
-
-@Suppress("DeprecatedCallableAddReplaceWith")
-@Deprecated("Use 'AppUIUtil.findAppIcon' instead")
-fun findAppIcon(): String? = AppUIUtil.findAppIcon()
-
-@Suppress("DeprecatedCallableAddReplaceWith")
-@Deprecated("Use 'AppUIUtil.loadSmallApplicationIcon' instead", level = DeprecationLevel.ERROR)
-fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int = 16): Icon = AppUIUtil.loadSmallApplicationIcon(scaleContext, size)
-
-@Suppress("DeprecatedCallableAddReplaceWith")
-@Deprecated("Use 'AppUIUtil.loadSmallApplicationIcon' instead", level = DeprecationLevel.ERROR)
-fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int, requestReleaseIcon: Boolean): Icon =
-  AppUIUtil.loadSmallApplicationIcon(scaleContext, size, requestReleaseIcon)
-
-@Suppress("DeprecatedCallableAddReplaceWith")
-@Deprecated("Internal stuff; don't use", level = DeprecationLevel.ERROR)
-fun isWindowIconAlreadyExternallySet(): Boolean = AppUIUtil.isWindowIconAlreadyExternallySet()
