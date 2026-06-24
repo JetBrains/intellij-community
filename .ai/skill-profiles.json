@@ -46,6 +46,8 @@
     "toolbox": ["tbx-update-jetbrainsd", "toolbox-agent-ssh-deploy"],
     "ui": [
       "compose",
+      "compose-ui-architecture",
+      "compose-ui-audit",
       "icon-resources",
       "icons",
       "kotlin-ui-dsl",

@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "skill": "compose-ui-architecture",
+  "attribution": "Adapted from Ivan Morgillo's public Compose architecture skill and authored guidance for Compose Desktop/Jewel architecture.",
+  "sources": [
+    {
+      "fetchedAt": "2026-06-12",
+      "label": "Ivan Morgillo compose-agent",
+      "role": "upstream-source",
+      "type": "upstream-skill",
+      "url": "https://github.com/hamen/compose_skill/tree/main/skills/compose-agent",
+      "version": "4.0.0",
+      "versionSource": "frontmatter",
+      "license": "MIT",
+      "check": {
+        "type": "github",
+        "repository": "hamen/compose_skill",
+        "path": "skills/compose-agent",
+        "trackingRef": "main",
+        "frontmatterPath": "skills/compose-agent/SKILL.md"
+      }
+    },
+    {
+      "fetchedAt": "2026-06-11",
+      "label": "Chris Banes compose-focus-navigation",
+      "role": "supporting-reference",
+      "type": "upstream-reference",
+      "url": "https://github.com/chrisbanes/skills/tree/main/skills/compose-focus-navigation",
+      "version": "0d0e411f1afba9d1dcdb9b1508bac2eab4d79f2a",
+      "versionSource": "gitCommit",
+      "license": "Apache-2.0",
+      "check": {
+        "type": "github",
+        "repository": "chrisbanes/skills",
+        "path": "skills/compose-focus-navigation",
+        "trackingRef": "main"
+      }
+    },
+    {
+      "fetchedAt": "2026-06-12",
+      "label": "Android Developers shared element transitions in Compose",
+      "role": "supporting-reference",
+      "type": "documentation",
+      "url": "https://developer.android.com/develop/ui/compose/animation/shared-elements",
+      "version": "2026-06-11",
+      "versionSource": "pageLastUpdated",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "fetchedAt": "2026-06-11",
+      "label": "Author-maintained Compose architecture adaptation for IntelliJ/Jewel",
+      "role": "original-content",
+      "type": "local-original-content",
+      "version": "2026-06-11",
+      "versionSource": "fetchDate",
+      "license": "project"
+    }
+  ]
+}
