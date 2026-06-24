@@ -2,7 +2,6 @@
 package org.intellij.plugins.markdown.extensions
 
 import com.intellij.openapi.editor.ex.util.EditorUtil
-import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.IconUtil
@@ -39,7 +38,7 @@ object MarkdownExtensionsUtil {
 
   fun loadIcon(icon: Icon, format: String): ByteArray {
     val output = ByteArrayOutputStream()
-    val fontSize = JBCefApp.normalizeScaledSize(EditorUtil.getEditorFont().size + 1).toFloat()
+    val fontSize = (EditorUtil.getEditorFont().size + 1).toFloat()
     val scaledIcon = IconUtil.scaleByFont(icon, null, fontSize)
     val image = ImageUtil.createImage(
       ScaleContext.create(),

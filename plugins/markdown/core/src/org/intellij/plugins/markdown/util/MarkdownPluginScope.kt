@@ -7,7 +7,7 @@ import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 
 @Service(Service.Level.PROJECT)
-internal class MarkdownPluginScope(private val coroutineScope: CoroutineScope) {
+class MarkdownPluginScope(private val coroutineScope: CoroutineScope) {
   companion object {
     fun createChildScope(project: Project): CoroutineScope {
       return scope(project).childScope()

@@ -8,7 +8,7 @@ import org.intellij.markdown.ast.getTextInNode
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.parser.LinkMap
 
-internal class IntelliJImageGeneratingProvider(linkMap: LinkMap) : LinkGeneratingProvider() {
+class IntelliJImageGeneratingProvider(linkMap: LinkMap) : LinkGeneratingProvider() {
   companion object {
     private val REGEX = Regex("[^a-zA-Z0-9 ]")
 
@@ -17,10 +17,10 @@ internal class IntelliJImageGeneratingProvider(linkMap: LinkMap) : LinkGeneratin
     }
 
     @JvmStatic
-    val generatedAttributeName = "__idea-generated"
+    val generatedAttributeName: String = "__idea-generated"
 
     @JvmStatic
-    val ignorePathProcessingAttributeName = "md-do-not-process-path"
+    val ignorePathProcessingAttributeName: String = "md-do-not-process-path"
   }
 
   private val referenceLinkProvider = ReferenceLinksGeneratingProvider(linkMap)

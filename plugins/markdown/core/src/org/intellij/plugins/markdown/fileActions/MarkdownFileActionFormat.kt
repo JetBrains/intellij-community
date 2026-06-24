@@ -5,7 +5,7 @@ import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-internal data class MarkdownFileActionFormat(
+data class MarkdownFileActionFormat(
   val formatName: @NlsSafe String,
   val extension: @NlsSafe String
 )

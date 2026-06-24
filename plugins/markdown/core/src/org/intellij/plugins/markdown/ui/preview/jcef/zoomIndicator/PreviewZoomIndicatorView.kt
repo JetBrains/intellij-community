@@ -22,15 +22,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import net.miginfocom.swing.MigLayout
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor.Companion.PREVIEW_JCEF_PANEL
-import org.intellij.plugins.markdown.ui.preview.jcef.MarkdownJCEFHtmlPanel
+import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewBrowserActions
+import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor.Companion.PREVIEW_BROWSER_ACTIONS
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class PreviewZoomIndicatorView(private val preview: MarkdownJCEFHtmlPanel) : JPanel(MigLayout("novisualpadding, ins 0")) {
+class PreviewZoomIndicatorView(private val preview: MarkdownPreviewBrowserActions) : JPanel(MigLayout("novisualpadding, ins 0")) {
   private val isHoveredFlow = MutableSharedFlow<Boolean>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val fontSizeLabel = JLabel(IdeBundle.message("action.reset.font.size.info", "000"))
@@ -68,13 +68,13 @@ class PreviewZoomIndicatorView(private val preview: MarkdownJCEFHtmlPanel) : JPa
 
     override fun uiDataSnapshot(sink: DataSink) {
       super.uiDataSnapshot(sink)
-      sink[PREVIEW_JCEF_PANEL] = WeakReference(preview)
+      sink[PREVIEW_BROWSER_ACTIONS] = WeakReference(preview)
     }
     override fun isShowing() = true
   }
 
   private val resetLink = ActionManager.getInstance().getAction("Markdown.Preview.ResetFontSize").run {
-    val dataContext = SimpleDataContext.builder().add(PREVIEW_JCEF_PANEL, WeakReference(preview)).build()
+    val dataContext = SimpleDataContext.builder().add(PREVIEW_BROWSER_ACTIONS, WeakReference(preview)).build()
     val event = AnActionEvent.createEvent(dataContext, null, ActionPlaces.TOOLBAR,
                                           ActionUiKind.TOOLBAR, null)
     update(event)

@@ -25,12 +25,9 @@ import com.intellij.openapi.fileEditor.TextEditorWithPreview;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.Alarm;
-import org.intellij.images.editor.impl.jcef.JCefImageViewer;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.vfs.IfsUtil;
 import org.jetbrains.annotations.NonNls;
@@ -58,8 +55,9 @@ final class ImageFileEditorProvider implements FileEditorProvider, DumbAware {
   public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
     if (IfsUtil.isSVG(file)) {
       TextEditor editor = (TextEditor)TextEditorProvider.getInstance().createEditor(project, file);
-      if (JBCefApp.isSupported() && RegistryManager.getInstance().is("ide.browser.jcef.svg-viewer.enabled")) {
-        return new TextEditorWithPreview(editor, new JCefImageViewer(file, "image/svg+xml"), "SvgEditor");
+      FileEditor jcefPreview = SvgImageViewerProvider.createEditorFromExtensions(file);
+      if (jcefPreview != null) {
+        return new TextEditorWithPreview(editor, jcefPreview, "SvgEditor");
       }
       else {
         ImageFileEditorImpl viewer = new ImageFileEditorImpl(project, file);

@@ -1,0 +1,36 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.markdown.jcef.preview.impl
+
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.toNioPathOrNull
+import org.intellij.plugins.markdown.ui.preview.ResourceProvider
+import java.nio.file.Files
+import java.nio.file.Path
+
+internal class FileSchemeResourcesProcessor(
+  private val baseFile: VirtualFile?,
+  private val projectRoot: VirtualFile?,
+) : ResourceProvider {
+  override fun canProvide(resourceName: String): Boolean {
+    return baseFile != null && projectRoot != null
+  }
+
+  override fun loadResource(resourceName: String): ResourceProvider.Resource? {
+    val resourcePath = Path.of(resourceName)
+    if (isChildOfProjectRoot(resourcePath)) {
+      val resource = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(resourcePath) ?: return null
+      return ResourceProvider.loadExternalResource(resource)
+    }
+
+    return runCatching {
+      if (!Files.isRegularFile(resourcePath)) return null
+      ResourceProvider.loadExternalResource(resourcePath)
+    }.getOrNull()
+  }
+
+  private fun isChildOfProjectRoot(resourcePath: Path): Boolean {
+    val projectPath = projectRoot?.toNioPathOrNull() ?: return false
+    return resourcePath.startsWith(projectPath)
+  }
+}
