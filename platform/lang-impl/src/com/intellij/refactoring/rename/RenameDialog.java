@@ -14,7 +14,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
@@ -333,15 +332,13 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
     var preselectedScopeName = scopeService.load();
     myScopeCombo = new ScopeChooserCombo();
     myScopeCombo.initialize(myProject, false, true, preselectedScopeName, null)
-      .onSuccess(dummy -> {
+      .onSuccess(_ -> {
         var selectedScopeName = myScopeCombo.getSelectedScopeName();
         if (!Objects.equals(selectedScopeName, preselectedScopeName)) { // saved scope not found, fall back to default
           myScopeCombo.selectItem(scopeService.defaultValue());
         }
       });
-    myScopeCombo.getComboBox().addItemListener(e -> {
-      scopeService.save(myScopeCombo.getSelectedScopeName());
-    });
+    myScopeCombo.getComboBox().addItemListener(_ -> scopeService.save(myScopeCombo.getSelectedScopeName()));
     Disposer.register(myDisposable, myScopeCombo);
 
     // do not show scope chooser for local variables
@@ -387,8 +384,8 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
     final RenameProcessor processor = createRenameProcessor(newName);
 
     for (Map.Entry<AutomaticRenamerFactory, JCheckBox> e : myAutoRenamerFactories.entrySet()) {
-      e.getKey().setEnabled(e.getValue().isSelected());
       if (e.getValue().isSelected()) {
+        e.getKey().setEnabled(true);
         processor.addRenamerFactory(e.getKey());
       }
     }
@@ -439,6 +436,6 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
 
   @Override
   public void close() {
-    close(DialogWrapper.CANCEL_EXIT_CODE);
+    close(CANCEL_EXIT_CODE);
   }
 }
