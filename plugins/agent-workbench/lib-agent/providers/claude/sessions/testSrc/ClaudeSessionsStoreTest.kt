@@ -770,6 +770,9 @@ class ClaudeSessionsStoreTest {
     private fun assistantUserInteractionTool(toolName: String): String =
       claudeAssistantUserInteractionToolLine("2026-02-08T01:00:01.000Z", S, C, toolName)
 
+    private fun assistantToolSearch(query: String): String =
+      claudeAssistantToolSearchLine("2026-02-08T01:00:01.000Z", S, C, query)
+
     private fun assistantStopReason(stopReason: String): String =
       claudeAssistantStopReasonLine("2026-02-08T01:00:01.000Z", S, C, stopReason)
 
@@ -781,6 +784,9 @@ class ClaudeSessionsStoreTest {
 
     private fun toolResult(ts: String): String =
       """{"type":"user","sessionId":"$S","cwd":"$C","isSidechain":false,"timestamp":"$ts","message":{"role":"user","content":[{"tool_use_id":"tu_1","type":"tool_result","content":"ok"}]}}"""
+
+    private fun toolReferenceResult(toolName: String): String =
+      claudeToolReferenceResultLine("2026-02-08T01:00:02.000Z", S, C, toolName)
 
     @JvmStatic
     fun activityStateMachineCases(): Stream<Arguments> = Stream.of(
@@ -806,6 +812,25 @@ class ClaudeSessionsStoreTest {
       Arguments.of("user → assistant(ExitPlanMode) → NEEDS_INPUT",
                    listOf(user("2026-02-08T01:00:00.000Z"), assistantUserInteractionTool("ExitPlanMode")),
                    ClaudeSessionActivity.NEEDS_INPUT),
+      Arguments.of("user → assistant(ToolSearch select:ExitPlanMode) → NEEDS_INPUT",
+                   listOf(user("2026-02-08T01:00:00.000Z"), assistantToolSearch("select:ExitPlanMode")),
+                   ClaudeSessionActivity.NEEDS_INPUT),
+      Arguments.of("user → assistant(ToolSearch select:AskUserQuestion) → NEEDS_INPUT",
+                   listOf(user("2026-02-08T01:00:00.000Z"), assistantToolSearch("select:AskUserQuestion")),
+                   ClaudeSessionActivity.NEEDS_INPUT),
+      Arguments.of("user → assistant(ToolSearch select:ExitPlanMode) → tool_reference → NEEDS_INPUT",
+                   listOf(user("2026-02-08T01:00:00.000Z"),
+                          assistantToolSearch("select:ExitPlanMode"),
+                          toolReferenceResult("ExitPlanMode")),
+                   ClaudeSessionActivity.NEEDS_INPUT),
+      Arguments.of("user → assistant(ToolSearch select:Read) → PROCESSING",
+                   listOf(user("2026-02-08T01:00:00.000Z"), assistantToolSearch("select:Read")),
+                   ClaudeSessionActivity.PROCESSING),
+      Arguments.of("user → assistant(ToolSearch select:Read) → tool_reference → PROCESSING",
+                   listOf(user("2026-02-08T01:00:00.000Z"),
+                          assistantToolSearch("select:Read"),
+                          toolReferenceResult("Read")),
+                   ClaudeSessionActivity.PROCESSING),
       Arguments.of("user → assistant(AskUserQuestion) → progress → NEEDS_INPUT",
                    listOf(user("2026-02-08T01:00:00.000Z"),
                           assistantUserInteractionTool("AskUserQuestion"),

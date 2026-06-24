@@ -36,6 +36,29 @@ internal fun claudeAssistantToolUseLine(
   return """{"type":"assistant","sessionId":"$sessionId","cwd":"$cwd","isSidechain":false,"timestamp":"$timestamp","message":{"role":"assistant","content":[{"type":"text","text":"$content"},{"type":"tool_use","id":"$toolUseId","name":"$toolName","input":$inputJson}],"stop_reason":"tool_use"}}"""
 }
 
+internal fun claudeAssistantToolSearchLine(timestamp: String, sessionId: String, cwd: String, query: String): String {
+  return claudeAssistantToolUseLine(
+    timestamp = timestamp,
+    sessionId = sessionId,
+    cwd = cwd,
+    content = "Searching for tool",
+    toolName = "ToolSearch",
+    inputJson = "{\"query\":\"$query\",\"max_results\":1}",
+  )
+}
+
+internal fun claudeToolReferenceResultLine(
+  timestamp: String,
+  sessionId: String,
+  cwd: String,
+  toolName: String,
+  toolUseId: String = "tu_1",
+): String {
+  return """{"type":"user","sessionId":"$sessionId","cwd":"$cwd","isSidechain":false,"timestamp":"$timestamp","message":""" +
+         """{"role":"user","content":[{"tool_use_id":"$toolUseId","type":"tool_result","content":[""" +
+         """{"type":"tool_reference","tool_name":"$toolName"}]}]}}"""
+}
+
 internal fun claudeAssistantUserInteractionToolLine(timestamp: String, sessionId: String, cwd: String, toolName: String): String {
   return """{"type":"assistant","sessionId":"$sessionId","cwd":"$cwd","isSidechain":false,"timestamp":"$timestamp","message":{"role":"assistant","content":[{"type":"text","text":"Waiting on user"},{"type":"tool_use","id":"tu_1","name":"$toolName","input":{}}],"stop_reason":"tool_use"}}"""
 }

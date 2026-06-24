@@ -38,6 +38,9 @@ Agent Workbench must use Claude Code hooks for immediate Claude session status a
 - The generated settings must include a `PreToolUse` hook with matcher `AskUserQuestion|ExitPlanMode` and a `PostToolUse` hook with matcher `Write|Edit|MultiEdit|NotebookEdit`.
   [@test] ../../claude/sessions/testSrc/ClaudeHookBridgeTest.kt
 
+- `ToolSearch` must not be added as a broad `PreToolUse` matcher. Add it only with a verified input-aware hook condition for `select:ExitPlanMode` or `select:AskUserQuestion`; JSONL transcript parsing remains the correctness fallback.
+  [@test] ../../claude/sessions/testSrc/ClaudeSessionsStoreTest.kt
+
 - Hook settings must be per-launch and authenticated with a bearer token bound to the expected Claude session id.
   [@test] ../../claude/sessions/testSrc/ClaudeHookBridgeTest.kt
 
@@ -78,4 +81,5 @@ Agent Workbench must use Claude Code hooks for immediate Claude session status a
 ## Open Questions / Risks
 
 - Claude Code does not hook arbitrary assistant text questions; only tool calls such as `AskUserQuestion` and `ExitPlanMode` are covered.
+- Broad `ToolSearch` hook matching would call the endpoint for every `ToolSearch`; input-aware hook conditions may avoid that only after their exact Claude Code matching behavior is verified.
 - If the IDE built-in server is unavailable or the HTTP hook times out, the JSONL watcher remains the fallback.
