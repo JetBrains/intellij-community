@@ -24,12 +24,4 @@
     <settingsContributor implementation="com.intellij.platform.ai.agent.claude.sessions.ClaudeQuotaSettingsContributor"/>
     <sessionProviderUiContributor implementation="com.intellij.platform.ai.agent.claude.sessions.ClaudeQuotaSessionProviderUiContributor"/>
   </extensions>
-
-  <actions resource-bundle="messages.ClaudeSessionsBundle">
-    <action
-      id="AgentWorkbenchSessions.ToggleClaudeQuotaWidget"
-      class="com.intellij.platform.ai.agent.claude.sessions.AgentSessionsToggleClaudeQuotaWidgetAction">
-      <add-to-group group-id="AgentWorkbenchSessions.ToolWindow.GearActions" anchor="before" relative-to-action="AgentWorkbenchSessions.ToggleDedicatedFrame"/>
-    </action>
-  </actions>
 </idea-plugin>

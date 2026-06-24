@@ -22,12 +22,4 @@
   <extensions defaultExtensionNs="com.intellij.agent.workbench">
     <settingsContributor implementation="com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaSettingsContributor"/>
   </extensions>
-
-  <actions resource-bundle="messages.AgentSessionsBundle">
-    <action
-      id="AgentWorkbenchSessions.ToggleJbCentralQuotaWidget"
-      class="com.intellij.agent.workbench.sessions.jbcentral.AgentSessionsToggleJbCentralQuotaWidgetAction">
-      <add-to-group group-id="AgentWorkbenchSessions.ToolWindow.GearActions" anchor="after" relative-to-action="AgentWorkbenchSessions.ToggleSessionCost"/>
-    </action>
-  </actions>
 </idea-plugin>

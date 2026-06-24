@@ -33,10 +33,6 @@
       <add-to-group group-id="MainToolbarLeft" anchor="after" relative-to-action="MainToolbarVCSGroup"/>
     </group>
     <action
-      id="AgentWorkbenchSessions.ToggleCurrentProjectOnly"
-      icon="AllIcons.Ide.LocalScopeAction"
-      class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsCurrentProjectOnlyToggleAction"/>
-    <action
       id="AgentWorkbenchSessions.TreePopup.Open"
       class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupOpenAction"/>
     <action
