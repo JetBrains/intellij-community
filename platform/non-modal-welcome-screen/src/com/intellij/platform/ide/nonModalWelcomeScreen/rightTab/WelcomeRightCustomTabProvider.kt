@@ -2,7 +2,6 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
 import androidx.compose.runtime.Composable
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
@@ -24,14 +23,8 @@ interface WelcomeRightCustomTabProvider {
   companion object {
     private val EP_NAME: ExtensionPointName<WelcomeRightCustomTabProvider> = ExtensionPointName("com.intellij.platform.ide.welcomeScreenCustomTabProvider")
 
-    fun getSingleExtension(): WelcomeRightCustomTabProvider? {
-      val providers = EP_NAME.extensionList.filter { it.isEnabled() }
-      if (providers.isEmpty()) return null
-      if (providers.size > 1) {
-        thisLogger().warn("Multiple WelcomeRightCustomTabProvider extensions")
-        return null
-      }
-      return providers.first()
+    fun getExtensions(): List<WelcomeRightCustomTabProvider> {
+      return EP_NAME.extensionList.filter { it.isEnabled() }
     }
   }
 }
