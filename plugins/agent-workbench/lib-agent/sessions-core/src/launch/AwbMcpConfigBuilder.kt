@@ -28,7 +28,7 @@ import java.nio.file.StandardOpenOption
  * AWB-driven launch** (new + resume), so each spawned CLI sees the IDE's *current*
  * streamable-HTTP MCP URL even after IDE restarts that reassign the port.
  *
- * The merge keeps the user's other MCP servers (Glean, Context7, etc.) usable: we copy
+ * The merge keeps the user's other MCP servers (Glean, etc.) usable: we copy
  * entries from configured MCP files verbatim into our file, dropping any name registered
  * by an [AwbMcpConfigProviderContributor]. The Jackson streaming parser preserves
  * unknown fields exactly.
