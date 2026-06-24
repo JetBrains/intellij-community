@@ -17,7 +17,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionUtil.buildModuleKindMismatchMessage
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionUtil.buildModuleKindMismatchTooltipMessage
-import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeModuleKindResolver.doesApiKindMatchExpectedModuleKind
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeModuleKindResolver.isApiUsageAllowed
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.ModuleAnalysis
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeQodanaInspectionScopeLimiter
@@ -114,10 +114,11 @@ class SplitModeApiUsageInspection : DevKitUastInspectionBase(UClass::class.java,
     val resolvedApi = resolveApiUsage(expression) ?: return
     val sourcePsi = expression.sourcePsi ?: return
     val restrictionsService = SplitModeApiRestrictionsService.getInstance(sourcePsi.project)
-    val expectedModuleKind = restrictionsService.getCodeApiKind(resolvedApi.qualifiedName, resolvedApi.owner) ?: return
+    val apiRestriction = restrictionsService.getCodeApiRestriction(resolvedApi.qualifiedName, resolvedApi.owner) ?: return
+    val expectedModuleKind = apiRestriction.targetModuleKind
     val currentModuleType = currentModuleAnalysis.resolvedModuleKind
 
-    if (!doesApiKindMatchExpectedModuleKind(currentModuleType, expectedModuleKind)) {
+    if (!isApiUsageAllowed(currentModuleAnalysis, apiRestriction)) {
       val hint = restrictionsService.getCodeApiHint(resolvedApi.qualifiedName)
       val message = buildModuleKindMismatchMessage(resolvedApi.qualifiedName, expectedModuleKind, currentModuleType, hint)
       val tooltipMessage = buildModuleKindMismatchTooltipMessage(resolvedApi.qualifiedName, expectedModuleKind, currentModuleType, hint)

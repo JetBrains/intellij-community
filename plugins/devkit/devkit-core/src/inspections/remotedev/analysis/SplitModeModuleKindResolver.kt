@@ -20,6 +20,17 @@ internal object SplitModeModuleKindResolver {
     return expectedKind.accepts(actualApiUsageModuleKind.kind)
   }
 
+  fun isApiUsageAllowed(
+    actualModuleAnalysis: ModuleAnalysis,
+    apiRestriction: SplitModeApiRestrictionsService.ApiRestrictionMatch,
+  ): Boolean {
+    val actualModuleKind = actualModuleAnalysis.resolvedModuleKind
+    return doesApiKindMatchExpectedModuleKind(actualModuleKind, apiRestriction.targetModuleKind)
+           || actualModuleKind.kind == SplitModeApiRestrictionsService.ModuleKind.BACKEND
+           && actualModuleAnalysis.apiUsagePolicy == ApiUsagePolicy.BACKEND_WITH_NON_UI_API_PERMIT
+           && apiRestriction.restrictionKind == SplitModeApiRestrictionsService.ApiRestrictionKind.GENERIC_PLATFORM_API
+  }
+
   fun getOrComputeModuleAnalysis(module: Module, descriptorFile: XmlFile? = null): ModuleAnalysis {
     val xmlDescriptor = descriptorFile ?: PluginModuleType.getContentModuleDescriptorXml(module) ?: PluginModuleType.getPluginXml(module)
     if (xmlDescriptor == null) {
@@ -30,7 +41,10 @@ internal object SplitModeModuleKindResolver {
     val predefinedModuleKind =
       SplitModeApiRestrictionsService.getInstance(module.project).getPredefinedModuleKind(module, xmlDescriptor, parsedXmlDescriptor)
     if (predefinedModuleKind != null) {
-      return ModuleAnalysis(ResolvedModuleKind(predefinedModuleKind.moduleKind, predefinedModuleKind.reasoning))
+      return ModuleAnalysis(
+        resolvedModuleKind = ResolvedModuleKind(predefinedModuleKind.moduleKind, predefinedModuleKind.reasoning),
+        apiUsagePolicy = predefinedModuleKind.apiUsagePolicy,
+      )
     }
     if (parsedXmlDescriptor == null) {
       return ModuleAnalysis(ResolvedModuleKind(SplitModeApiRestrictionsService.ModuleKind.SHARED, ""))

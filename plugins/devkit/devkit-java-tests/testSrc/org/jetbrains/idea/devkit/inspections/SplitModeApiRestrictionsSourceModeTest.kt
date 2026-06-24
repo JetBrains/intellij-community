@@ -36,6 +36,27 @@ internal class SplitModeApiRestrictionsSourceModeTest : BasePlatformTestCase() {
     }
   }
 
+  fun testProjectApiRestrictionKindCanBeRead() {
+    withApiRestrictionsSourceMode(
+      "project",
+      """
+        [
+          {"apiName": "custom.split.mode.ui.api", "targetModules": ["frontend"], "restrictionKind": "ui"},
+          {"apiName": "custom.split.mode.generic.api", "targetModules": ["frontend"], "restrictionKind": "genericPlatformApi"}
+        ]
+      """.trimIndent(),
+    ) { service ->
+      Assert.assertEquals(
+        SplitModeApiRestrictionsService.ApiRestrictionKind.UI,
+        service.getCodeApiRestriction("custom.split.mode.ui.api", null)?.restrictionKind,
+      )
+      Assert.assertEquals(
+        SplitModeApiRestrictionsService.ApiRestrictionKind.GENERIC_PLATFORM_API,
+        service.getCodeApiRestriction("custom.split.mode.generic.api", null)?.restrictionKind,
+      )
+    }
+  }
+
   fun testProjectApiRestrictionsReloadAfterProjectFileChange() {
     withApiRestrictionsSourceMode(
       "project",

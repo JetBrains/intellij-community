@@ -96,6 +96,11 @@ class SplitModeApiRestrictionsService(
     }
   }
 
+  enum class ApiRestrictionKind(val id: String) {
+    GENERIC_PLATFORM_API("genericPlatformApi"),
+    UI("ui"),
+  }
+
   private val json = Json {
     ignoreUnknownKeys = true
     isLenient = true
@@ -135,10 +140,18 @@ class SplitModeApiRestrictionsService(
   }
 
   fun getCodeApiKind(apiName: String, apiOwner: PsiModifierListOwner?): ModuleKind? {
-    return getAnnotatedApiKind(apiOwner) ?: getRestrictionsSnapshot().codeRestrictions[apiName]
+    return getCodeApiRestriction(apiName, apiOwner)?.targetModuleKind
   }
 
-  fun getExtensionPointKind(extensionPointName: String): ModuleKind? {
+  internal fun getCodeApiRestriction(apiName: String, apiOwner: PsiModifierListOwner?): ApiRestrictionMatch? {
+    val annotatedApiKind = getAnnotatedApiKind(apiOwner)
+    if (annotatedApiKind != null) {
+      return ApiRestrictionMatch(annotatedApiKind, ApiRestrictionKind.GENERIC_PLATFORM_API)
+    }
+    return getRestrictionsSnapshot().codeRestrictions[apiName]
+  }
+
+  internal fun getExtensionPointRestriction(extensionPointName: String): ApiRestrictionMatch? {
     val restrictions = getRestrictionsSnapshot()
     val apiName = restrictions.extensionPointToApiName[extensionPointName] ?: return null
     return restrictions.codeRestrictions[apiName]
@@ -156,11 +169,11 @@ class SplitModeApiRestrictionsService(
 
   fun getPredefinedDependencyKind(dependencyId: String): ModuleKind? {
     val predefinedModuleKinds = getRestrictionsSnapshot().predefinedModuleKinds
-    val moduleKind = predefinedModuleKinds.moduleNames[dependencyId]
-    if (moduleKind != null) {
-      return moduleKind
+    val moduleInfo = predefinedModuleKinds.moduleNames[dependencyId]
+    if (moduleInfo != null) {
+      return moduleInfo.moduleKind
     }
-    return predefinedModuleKinds.pluginIds[dependencyId]
+    return predefinedModuleKinds.pluginIds[dependencyId]?.moduleKind
   }
 
   internal fun getPredefinedModuleKind(
@@ -172,10 +185,11 @@ class SplitModeApiRestrictionsService(
     val descriptorRelativePath = if (descriptorFile == null) null else computeDescriptorRelativePath(module, descriptorFile)
     if (descriptorRelativePath != null) {
       val selector = DescriptorPathSelector(module.name, descriptorRelativePath)
-      val moduleKind = lookup.descriptorPaths[selector]
-      if (moduleKind != null) {
+      val moduleInfo = lookup.descriptorPaths[selector]
+      if (moduleInfo != null) {
         return PredefinedModuleKindMatch(
-          moduleKind = moduleKind,
+          moduleKind = moduleInfo.moduleKind,
+          apiUsagePolicy = moduleInfo.apiUsagePolicy,
           cacheKey = "descriptor|${module.name}|$descriptorRelativePath",
           reasoning = "Predefined module kind for descriptor '$descriptorRelativePath' in module '${module.name}'",
         )
@@ -185,10 +199,11 @@ class SplitModeApiRestrictionsService(
     if (ideaPlugin != null) {
       val pluginSelectorIds = collectPluginSelectorIds(ideaPlugin)
       for (pluginSelectorId in pluginSelectorIds) {
-        val moduleKind = lookup.pluginIds[pluginSelectorId]
-        if (moduleKind != null) {
+        val moduleInfo = lookup.pluginIds[pluginSelectorId]
+        if (moduleInfo != null) {
           return PredefinedModuleKindMatch(
-            moduleKind = moduleKind,
+            moduleKind = moduleInfo.moduleKind,
+            apiUsagePolicy = moduleInfo.apiUsagePolicy,
             cacheKey = "plugin|$pluginSelectorId",
             reasoning = "Predefined module kind for plugin/module id '$pluginSelectorId'",
           )
@@ -196,9 +211,10 @@ class SplitModeApiRestrictionsService(
       }
     }
 
-    val moduleKind = lookup.moduleNames[module.name] ?: return null
+    val moduleInfo = lookup.moduleNames[module.name] ?: return null
     return PredefinedModuleKindMatch(
-      moduleKind = moduleKind,
+      moduleKind = moduleInfo.moduleKind,
+      apiUsagePolicy = moduleInfo.apiUsagePolicy,
       cacheKey = "module|${module.name}",
       reasoning = "Predefined module kind for module '${module.name}'",
     )
@@ -321,13 +337,14 @@ class SplitModeApiRestrictionsService(
   }
 
   private fun buildApiRestrictionsLookup(data: List<ApiRestriction>): RestrictionsLookup {
-    val codeRestrictions = mutableMapOf<String, ModuleKind>()
+    val codeRestrictions = mutableMapOf<String, ApiRestrictionMatch>()
     val extensionPointToApiName = mutableMapOf<String, String>()
     val apiHints = mutableMapOf<String, String>()
 
     for (restriction in data) {
       val targetModuleKind = toTargetModuleKind(restriction)
-      val existingCodeRestriction = codeRestrictions.putIfAbsent(restriction.apiName, targetModuleKind)
+      val apiRestriction = ApiRestrictionMatch(targetModuleKind, parseApiRestrictionKind(restriction.restrictionKind))
+      val existingCodeRestriction = codeRestrictions.putIfAbsent(restriction.apiName, apiRestriction)
       check(existingCodeRestriction == null) {
         "Duplicate API restriction for '${restriction.apiName}'"
       }
@@ -337,7 +354,7 @@ class SplitModeApiRestrictionsService(
       for (extensionPointName in restriction.extensionPointNames) {
         val existingApiName = extensionPointToApiName[extensionPointName]
         val existingExtensionPointRestriction = if (existingApiName == null) null else codeRestrictions[existingApiName]
-        check(existingExtensionPointRestriction == null || existingExtensionPointRestriction == targetModuleKind) {
+        check(existingExtensionPointRestriction == null || existingExtensionPointRestriction == apiRestriction) {
           "Conflicting extension point restriction for '$extensionPointName'"
         }
         if (existingApiName == null) {
@@ -354,12 +371,13 @@ class SplitModeApiRestrictionsService(
   }
 
   private fun buildPredefinedModuleKindsLookup(data: List<PredefinedModuleKind>): PredefinedModuleKindsLookup {
-    val moduleNames = mutableMapOf<String, ModuleKind>()
-    val pluginIds = mutableMapOf<String, ModuleKind>()
-    val descriptorPaths = mutableMapOf<DescriptorPathSelector, ModuleKind>()
+    val moduleNames = mutableMapOf<String, PredefinedModuleKindInfo>()
+    val pluginIds = mutableMapOf<String, PredefinedModuleKindInfo>()
+    val descriptorPaths = mutableMapOf<DescriptorPathSelector, PredefinedModuleKindInfo>()
 
-    for ((moduleName, pluginId, descriptorRelativePath, moduleKindId) in data) {
+    for ((moduleName, pluginId, descriptorRelativePath, moduleKindId, apiUsagePolicyId) in data) {
       val moduleKind = parsePredefinedModuleKind(moduleKindId)
+      val moduleInfo = PredefinedModuleKindInfo(moduleKind, parseApiUsagePolicy(apiUsagePolicyId))
       val hasModuleName = !moduleName.isNullOrBlank()
       val hasPluginId = !pluginId.isNullOrBlank()
 
@@ -375,7 +393,7 @@ class SplitModeApiRestrictionsService(
 
       if (descriptorRelativePath != null) {
         val selector = DescriptorPathSelector(moduleName!!, descriptorRelativePath)
-        val previousModuleKind = descriptorPaths.putIfAbsent(selector, moduleKind)
+        val previousModuleKind = descriptorPaths.putIfAbsent(selector, moduleInfo)
         check(previousModuleKind == null) {
           "Duplicate predefined module kind for descriptor '${selector.descriptorRelativePath}' in module '${selector.moduleName}'"
         }
@@ -383,13 +401,13 @@ class SplitModeApiRestrictionsService(
       }
 
       if (hasModuleName) {
-        val previousModuleKind = moduleNames.putIfAbsent(moduleName, moduleKind)
+        val previousModuleKind = moduleNames.putIfAbsent(moduleName, moduleInfo)
         check(previousModuleKind == null) {
           "Duplicate predefined module kind for module '$moduleName'"
         }
       }
       else {
-        val previousModuleKind = pluginIds.putIfAbsent(pluginId!!, moduleKind)
+        val previousModuleKind = pluginIds.putIfAbsent(pluginId!!, moduleInfo)
         check(previousModuleKind == null) {
           "Duplicate predefined module kind for plugin/module id '$pluginId'"
         }
@@ -424,6 +442,22 @@ class SplitModeApiRestrictionsService(
     val moduleKind = parseModuleKindId(moduleKindId)
     check(moduleKind != ModuleKind.MIXED) { "'mixed' is not supported in targetModules" }
     return moduleKind
+  }
+
+  private fun parseApiRestrictionKind(restrictionKindId: String): ApiRestrictionKind {
+    return ApiRestrictionKind.entries.firstOrNull { it.id.equals(restrictionKindId, ignoreCase = true) }
+           ?: error("Unknown split-mode API restriction kind '$restrictionKindId'")
+  }
+
+  private fun parseApiUsagePolicy(apiUsagePolicyId: String?): ApiUsagePolicy {
+    if (apiUsagePolicyId == null) {
+      return ApiUsagePolicy.DEFAULT
+    }
+    return when (apiUsagePolicyId) {
+      ApiUsagePolicy.DEFAULT.id -> ApiUsagePolicy.DEFAULT
+      ApiUsagePolicy.BACKEND_WITH_NON_UI_API_PERMIT.id -> ApiUsagePolicy.BACKEND_WITH_NON_UI_API_PERMIT
+      else -> error("Unknown split-mode API usage policy '$apiUsagePolicyId'")
+    }
   }
 
   private fun parsePredefinedModuleKind(moduleKindId: String): ModuleKind {
@@ -467,13 +501,13 @@ class SplitModeApiRestrictionsService(
   }
 
   private data class RestrictionsLookup(
-    val codeRestrictions: Map<String, ModuleKind> = emptyMap(),
+    val codeRestrictions: Map<String, ApiRestrictionMatch> = emptyMap(),
     val extensionPointToApiName: Map<String, String> = emptyMap(),
     val apiHints: Map<String, String> = emptyMap(),
   )
 
   private data class RestrictionsSnapshot(
-    val codeRestrictions: Map<String, ModuleKind> = emptyMap(),
+    val codeRestrictions: Map<String, ApiRestrictionMatch> = emptyMap(),
     val extensionPointToApiName: Map<String, String> = emptyMap(),
     val apiHints: Map<String, String> = emptyMap(),
     val predefinedModuleKinds: PredefinedModuleKindsLookup = PredefinedModuleKindsLookup(),
@@ -481,8 +515,14 @@ class SplitModeApiRestrictionsService(
 
   internal data class PredefinedModuleKindMatch(
     val moduleKind: ModuleKind,
+    val apiUsagePolicy: ApiUsagePolicy,
     val cacheKey: String,
     val reasoning: @NlsSafe String,
+  )
+
+  internal data class ApiRestrictionMatch(
+    val targetModuleKind: ModuleKind,
+    val restrictionKind: ApiRestrictionKind,
   )
 
   private data class DescriptorPathSelector(
@@ -491,14 +531,19 @@ class SplitModeApiRestrictionsService(
   )
 
   private data class PredefinedModuleKindsLookup(
-    val moduleNames: Map<String, ModuleKind> = emptyMap(),
-    val pluginIds: Map<String, ModuleKind> = emptyMap(),
-    val descriptorPaths: Map<DescriptorPathSelector, ModuleKind> = emptyMap(),
+    val moduleNames: Map<String, PredefinedModuleKindInfo> = emptyMap(),
+    val pluginIds: Map<String, PredefinedModuleKindInfo> = emptyMap(),
+    val descriptorPaths: Map<DescriptorPathSelector, PredefinedModuleKindInfo> = emptyMap(),
   ) {
     fun size(): Int {
       return moduleNames.size + pluginIds.size + descriptorPaths.size
     }
   }
+
+  private data class PredefinedModuleKindInfo(
+    val moduleKind: ModuleKind,
+    val apiUsagePolicy: ApiUsagePolicy,
+  )
 
   @Serializable
   private data class ApiRestriction(
@@ -510,6 +555,9 @@ class SplitModeApiRestrictionsService(
 
     @SerialName("targetModules")
     val targetModules: List<String>,
+
+    @SerialName("restrictionKind")
+    val restrictionKind: String = ApiRestrictionKind.GENERIC_PLATFORM_API.id,
 
     @SerialName("hint")
     val hint: @Nls String? = null,
@@ -528,5 +576,8 @@ class SplitModeApiRestrictionsService(
 
     @SerialName("moduleKind")
     val moduleKind: String,
+
+    @SerialName("apiUsagePolicy")
+    val apiUsagePolicy: String? = null,
   )
 }
