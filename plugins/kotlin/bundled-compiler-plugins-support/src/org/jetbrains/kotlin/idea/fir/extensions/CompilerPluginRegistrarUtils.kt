@@ -1,12 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.extensions
 
+import com.intellij.openapi.diagnostic.logger
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.readText
+
+private val LOG = logger<CompilerPluginRegistrarUtils>()
 
 /**
  * Utility class to read the content of registrar files from Kotlin compiler plugins.
@@ -35,16 +38,44 @@ object CompilerPluginRegistrarUtils {
 
 private fun readFirstExistingFileContentFromJar(jarFile: Path, pathsInJar: List<String>): String? {
     //  non-readable (non-existing or not enough permissions) files
-    if (jarFile.extension != "jar" || !Files.isReadable(jarFile)) return null
+    if (jarFile.extension != "jar") {
+        LOG.info("Kotlin FIR compiler plugins: '$jarFile' is not a jar, registrar content was not read")
+        return null
+    }
+    if (!Files.isReadable(jarFile)) {
+        LOG.info(
+            "Kotlin FIR compiler plugins: '$jarFile' is not readable, registrar content was not read, exists=${Files.exists(jarFile)}"
+        )
+        return null
+    }
 
     FileSystems.newFileSystem(jarFile).use { fileSystem ->
         for (path in pathsInJar) {
             val resolvedPath = fileSystem.getPath(path)
-            if (!resolvedPath.isRegularFile()) continue
+            if (!resolvedPath.isRegularFile()) {
+                LOG.info("Kotlin FIR compiler plugins: registrar file '$path' is absent in '$jarFile'")
+                continue
+            }
 
-            return resolvedPath.readText()
+            return resolvedPath.readText().also {
+                LOG.info(
+                    """
+                    |Kotlin FIR compiler plugins: read registrar file '$path' from '$jarFile'
+                    |content:${it.lines().filter { line -> line.isNotBlank() }.formatForCompilerPluginLog()}
+                    """.trimMargin()
+                )
+            }
         }
 
+        LOG.info(
+            """
+            |Kotlin FIR compiler plugins: no registrar files found in '$jarFile'
+            |pathsInJar:${pathsInJar.formatForCompilerPluginLog()}
+            """.trimMargin()
+        )
         return null
     }
 }
+
+private fun Iterable<*>.formatForCompilerPluginLog(): String = toList().takeIf { it.isNotEmpty() }
+    ?.joinToString(separator = "\n", prefix = "\n") { "|  - $it" } ?: "\n|  <empty>"
