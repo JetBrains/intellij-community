@@ -43,6 +43,7 @@ import org.jetbrains.uast.UTypeReferenceExpression
 import org.jetbrains.uast.UastErrorType
 import org.jetbrains.uast.UastLazyPart
 import org.jetbrains.uast.getOrBuild
+import org.jetbrains.uast.kotlin.declarations.KotlinContextUParameter
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
 
 @ApiStatus.Internal
@@ -80,7 +81,7 @@ open class KotlinUMethod(
             buildList {
                 lightParams.take(contextParameters.count())
                     .mapTo(this) { lightContextParam ->
-                        KotlinUParameter(lightContextParam, parameterOrigin(lightContextParam), thisUMethod)
+                        KotlinContextUParameter(lightContextParam, parameterOrigin(lightContextParam), thisUMethod)
                     }
                 if (receiver != null) {
                     lightParams.drop(contextParameters.count()).firstOrNull()?.let { lightReceiver ->
