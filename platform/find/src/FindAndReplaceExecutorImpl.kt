@@ -13,6 +13,7 @@ import com.intellij.ide.rpc.throttledWithAccumulation
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.CheckedDisposable
@@ -27,6 +28,7 @@ import com.intellij.usages.UsageInfoAdapter
 import com.intellij.util.cancelOnDispose
 import fleet.rpc.client.RpcClientException
 import fleet.rpc.client.RpcTimeoutException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -61,53 +63,78 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
     maxUsages: Int,
   ) {
     if (FindKey.isEnabled) {
+      LOG.debug { "FiF: executor.findUsages entry; cancelling prevJob=$findUsagesJob shouldThrottle=$shouldThrottle maxUsages=$maxUsages" }
       findUsagesJob?.cancel("new find request is started")
       findUsagesJob = coroutineScope.launch {
-        selectScopeJob?.join()
-        val filesToScanInitially = previousUsages.mapNotNull { (it as? UsageInfoModel)?.model?.fileId?.virtualFile() }.toSet()
-        currentSearchDisposable?.let { Disposer.dispose(it) }
-        currentSearchDisposable = Disposer.newCheckedDisposable( "Find in Project Search").also {
-          if (!Disposer.tryRegister(disposableParent, it)) {
-            Disposer.dispose(it)
-            LOG.warn("Failed to register disposable for search. Looks like FindPopup is already closed. Search will be canceled.")
-            return@launch
+        var firstLogged = false
+        try {
+          LOG.debug { "FiF: coroutine start; selectScope join begin (selectScopeJob=$selectScopeJob)" }
+          selectScopeJob?.join()
+          LOG.debug { "FiF: selectScope join done" }
+          val filesToScanInitially = previousUsages.mapNotNull { (it as? UsageInfoModel)?.model?.fileId?.virtualFile() }.toSet()
+          currentSearchDisposable?.let { Disposer.dispose(it) }
+          currentSearchDisposable = Disposer.newCheckedDisposable( "Find in Project Search").also {
+            if (!Disposer.tryRegister(disposableParent, it)) {
+              Disposer.dispose(it)
+              LOG.warn("Failed to register disposable for search. Looks like FindPopup is already closed. Search will be canceled.")
+              return@launch
+            }
           }
-        }
-        val searchDisposable = currentSearchDisposable
-        val initScope = this.childScope("FindAndReplaceExecutorImpl.UsageInit")
-        if (searchDisposable != null && !searchDisposable.isDisposed) {
-          Disposer.register(searchDisposable) {
-            initScope.cancel("search disposed")
+          val searchDisposable = currentSearchDisposable
+          val initScope = this.childScope("FindAndReplaceExecutorImpl.UsageInit")
+          if (searchDisposable != null && !searchDisposable.isDisposed) {
+            Disposer.register(searchDisposable) {
+              initScope.cancel("search disposed")
+            }
           }
-        }
-        FindRemoteApi.getInstance().findByModel(
-          findModel = findModel,
-          projectId = project.projectId(),
-          filesToScanInitially = filesToScanInitially.map { it.rpcId() },
-          maxUsagesCount = maxUsages
-        ).take(maxUsages)
-          .let {
-            if (shouldThrottle) it.throttledWithAccumulation()
-            else it.map { event -> ThrottledOneItem(event) }
-          }
-          .collect { throttledItems ->
-          if (searchDisposable?.isDisposed == true) {
-            return@collect
-          }
-          throttledItems.items.forEach { item ->
-            val usage = UsageInfoModel.createUsageInfoModel(project, item, initScope, onUpdateModelCallback)
-            if (searchDisposable == null || !Disposer.tryRegister(searchDisposable, usage)) {
-              Disposer.dispose(usage)
+          FindRemoteApi.getInstance().findByModel(
+            findModel = findModel,
+            projectId = project.projectId(),
+            filesToScanInitially = filesToScanInitially.map { it.rpcId() },
+            maxUsagesCount = maxUsages
+          ).take(maxUsages)
+            .let {
+              if (shouldThrottle) it.throttledWithAccumulation()
+              else it.map { event -> ThrottledOneItem(event) }
+            }
+            .collect { throttledItems ->
+            if (searchDisposable?.isDisposed == true) {
               return@collect
             }
+            if (!firstLogged) {
+              firstLogged = true
+              LOG.debug { "FiF: first collected item batch (size=${throttledItems.items.size})" }
+            }
+            throttledItems.items.forEach { item ->
+              val usage = UsageInfoModel.createUsageInfoModel(project, item, initScope, onUpdateModelCallback)
+              if (searchDisposable == null || !Disposer.tryRegister(searchDisposable, usage)) {
+                Disposer.dispose(usage)
+                return@collect
+              }
 
-            val shouldContinue = onResult(usage)
-            if (!shouldContinue) {
-              return@collect
+              val shouldContinue = onResult(usage)
+              if (!shouldContinue) {
+                return@collect
+              }
             }
           }
+          LOG.debug { "FiF: collect completed normally" }
         }
-        onFinish()
+        catch (ce: CancellationException) {
+          // A superseded/closed search generation is cancelled here. Re-throw to honour structured
+          // concurrency; the finally below still fires the terminal callback so the popup is never
+          // left stuck on "Searching…". The callback is generation-guarded on the caller side, so a
+          // superseded search becomes a no-op there.
+          LOG.debug { "FiF: coroutine CANCELLED: ${ce.message}" }
+          throw ce
+        }
+        finally {
+          // Always notify that this search generation has finished — including on cancellation or an
+          // early return above — so the Find popup is never left stuck showing "Searching…" with no
+          // results.
+          LOG.debug { "FiF: coroutine finally -> onFinish()" }
+          onFinish()
+        }
       }
     }
     else {
