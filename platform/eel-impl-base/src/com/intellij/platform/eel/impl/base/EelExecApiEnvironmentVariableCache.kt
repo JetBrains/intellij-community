@@ -2,7 +2,6 @@
 package com.intellij.platform.eel.impl.base
 
 import com.intellij.platform.eel.EelExecApi
-import com.intellij.platform.eel.EelExecPosixApi
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.jetbrains.annotations.ApiStatus
@@ -53,16 +52,18 @@ class EelExecApiEnvironmentVariableCache(
         successfullyUpdated = environmentVariablesCache.putIfAbsent(cacheKey, newEnvVarCache) == null
       }
       else {
-        if (opts.onlyActual && envVarCache.envVarsInProgress.isActive) {
-          return EelExecApi.EnvironmentVariablesDeferred(envVarCache.envVarsInProgress)
-        }
-
         val latestKnownEnvVars = envVarCache.latestKnownEnvVars
         if (!opts.onlyActual && latestKnownEnvVars != null) {
           return EelExecApi.EnvironmentVariablesDeferred(latestKnownEnvVars)
         }
 
-        newEnvVarCache = EnvVarCache(latestKnownEnvVars to makeEnvironmentVariablesDeferred(mode))
+        if (!envVarCache.envVarsInProgress.isCompleted) {
+          return EelExecApi.EnvironmentVariablesDeferred(envVarCache.envVarsInProgress)
+        }
+
+        // read again after checking isCompleted to avoid TOCTOU race
+        val latestKnownEnvVarsNew = envVarCache.latestKnownEnvVars
+        newEnvVarCache = EnvVarCache(latestKnownEnvVarsNew to makeEnvironmentVariablesDeferred(mode))
         successfullyUpdated = environmentVariablesCache.replace(cacheKey, envVarCache, newEnvVarCache)
       }
     }
