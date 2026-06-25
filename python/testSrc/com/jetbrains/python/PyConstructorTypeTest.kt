@@ -265,4 +265,20 @@ internal class PyConstructorTypeTest : PyInspectionTestCase() {
       assert_type(Class("abb"), Class[int])
     """.trimIndent())
   }
+
+  @TestFor(issues = ["PY-89873"])
+  fun `test class call with __call__ defined`() {
+    doTestByText("""
+      from typing import assert_type
+
+      class M(type): ...
+      class A(metaclass=M): ...
+
+      class B(A):
+          def __call__(self, a: int) -> None: ...
+
+      assert_type(B(), B)
+      assert_type(B(<warning descr="Unexpected argument">1</warning>), B)
+      """.trimIndent())
+  }
 }
