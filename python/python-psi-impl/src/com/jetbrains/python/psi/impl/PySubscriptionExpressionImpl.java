@@ -28,7 +28,6 @@ import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyCollectionType;
 import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
@@ -93,8 +92,8 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
         }
         if (operandType instanceof PyClassType) {
           PyType parameterizedType = Ref.deref(PyTypingTypeProvider.getType(this, context));
-          if (parameterizedType instanceof PyCollectionType collectionType) {
-            return collectionType.toClass();
+          if (parameterizedType instanceof PyClassType pyClassType && pyClassType.isParameterized()) {
+            return pyClassType.toClass();
           }
         }
       }

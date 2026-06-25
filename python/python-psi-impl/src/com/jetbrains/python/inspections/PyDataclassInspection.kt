@@ -42,7 +42,6 @@ import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubImpl
 import com.jetbrains.python.psi.stubs.PyDataclassFieldStub
 import com.jetbrains.python.psi.types.PyClassType
-import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyStructuralType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
@@ -751,8 +750,8 @@ class PyDataclassInspection : PyInspection() {
 
     private fun getInitVarType(field: PyTargetExpression): PyType? {
       val fieldType = myTypeEvalContext.getType(field)
-      if (fieldType is PyCollectionType && fieldType.classQName == Dataclasses.DATACLASSES_INITVAR) {
-        return fieldType.elementTypes.singleOrNull()
+      if (fieldType is PyClassType && fieldType.isParameterized && fieldType.classQName == Dataclasses.DATACLASSES_INITVAR) {
+        return fieldType.typeArguments.singleOrNull()
       }
       return null
     }

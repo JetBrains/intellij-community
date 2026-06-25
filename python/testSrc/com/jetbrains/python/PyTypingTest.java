@@ -10,7 +10,7 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.types.PyCollectionType;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypedDictType;
 import com.jetbrains.python.psi.types.PyUnionType;
@@ -288,8 +288,8 @@ public class PyTypingTest extends PyTestCase {
         result += countTypes(member);
       }
     }
-    else if (type instanceof PyCollectionType pyCollectionType) {
-      for (PyType member : pyCollectionType.getElementTypes()) {
+    else if (type instanceof PyClassType pyCollectionType) {
+      for (PyType member : pyCollectionType.getTypeArguments()) {
         result += countTypes(member);
       }
     }

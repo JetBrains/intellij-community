@@ -201,6 +201,16 @@ public final class PySelfType implements PyTypeParameterType, PyClassType {
   }
 
   @Override
+  public @NotNull List<PyType> getTypeArguments() {
+    return myScopeClassType.getTypeArguments();
+  }
+
+  @Override
+  public @Nullable PyType getIteratedItemType() {
+    return myScopeClassType.getIteratedItemType();
+  }
+
+  @Override
   public <T> @Nullable T getUserData(@NotNull Key<T> key) {
     return null;
   }

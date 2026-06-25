@@ -160,11 +160,11 @@ object PyExpectedVarianceJudgment {
     }
 
     var qualifierType = PyTypingTypeProvider.getType(subscriptionExpr.operand, context)?.get()
-    if (qualifierType is PyClassType && qualifierType !is PyCollectionType) {
+    if (qualifierType is PyClassType && !qualifierType.isParameterized) {
       // convert raw types to generic types
       qualifierType = PyTypeChecker.findGenericDefinitionType(qualifierType.pyClass, context) ?: qualifierType
     }
-    if (qualifierType is PyCollectionType) {
+    if (qualifierType is PyClassType && qualifierType.isParameterized) {
       val paramVariance = getTypeParameterVarianceAtIndex(qualifierType, refIndex, context) ?: return null
       val outerVariance = getExpectedVariance(subscriptionExpr, context) ?: return null
       return combineVariance(outerVariance, paramVariance)
@@ -173,14 +173,14 @@ object PyExpectedVarianceJudgment {
   }
 
   private fun getTypeParameterVarianceAtIndex(qualifierType: PyClassType, index: Int, context: TypeEvalContext): Variance? {
-    if (qualifierType is PyCollectionType) {
+    if (qualifierType.isParameterized) {
       if (qualifierType.classQName == PyNames.FQN.TUPLE) {
         return COVARIANT
       }
       // check definition type since generic type aliases are parameterized, i.e.: `A_Alias_1 = ClassA[T_co]` will be ClassA[Any]
       val definitionType = PyTypeChecker.findGenericDefinitionType(qualifierType.pyClass, context) ?: qualifierType
-      val typeParamType = definitionType.elementTypes.getOrNull(index) as? PyTypeParameterType
-                          ?: qualifierType.elementTypes.getOrNull(index) as? PyTypeParameterType
+      val typeParamType = definitionType.typeArguments.getOrNull(index) as? PyTypeParameterType
+                          ?: qualifierType.typeArguments.getOrNull(index) as? PyTypeParameterType
                           ?: return null
       return getDeclaredOrInferredVariance(typeParamType, context)
     }

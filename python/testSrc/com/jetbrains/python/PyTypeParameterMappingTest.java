@@ -13,7 +13,7 @@ import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterImpl;
 import com.jetbrains.python.psi.types.PyCallableParameterMapping;
-import com.jetbrains.python.psi.types.PyCollectionType;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyFunctionType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
@@ -415,14 +415,14 @@ public final class PyTypeParameterMappingTest extends PyTestCase {
     myFixture.configureByText("a.py", testData);
 
     PyClass pyClass = myFixture.findElementByText("Expected", PyClass.class);
-    PyCollectionType expectedGenericClassType =
-      assertInstanceOf(new PyTypingTypeProvider().getGenericType(pyClass, context), PyCollectionType.class);
+    PyClassType expectedGenericClassType =
+      assertInstanceOf(new PyTypingTypeProvider().getGenericType(pyClass, context), PyClassType.class);
 
     PyTargetExpression actualTuple = myFixture.findElementByText("actual", PyTargetExpression.class);
     PyTupleType actualTupleType = assertInstanceOf(context.getType(actualTuple), PyTupleType.class);
 
     PyTypeParameterMapping mapping = PyTypeParameterMapping.mapByShape(
-      expectedGenericClassType.getElementTypes(),
+      expectedGenericClassType.getTypeArguments(),
       ContainerUtil.subList(actualTupleType.getElementTypes(), 1),
       PyTypeParameterMapping.Option.USE_DEFAULTS
     );

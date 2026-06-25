@@ -46,7 +46,7 @@ import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.impl.PySubscriptionExpressionImpl
 import com.jetbrains.python.psi.types.PyClassLikeType
-import com.jetbrains.python.psi.types.PyCollectionType
+import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyNeverType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
@@ -748,16 +748,17 @@ class PyTypedDictInspection : PyInspection() {
       val expectedType = expected.type
       val actualType = actual.type
 
-      if (expectedType is PyCollectionType && actualType is PyCollectionType) {
+      if (expectedType is PyClassType && expectedType.isParameterized &&
+          actualType is PyClassType && actualType.isParameterized) {
         val expectedGenericDef = PyTypeChecker.findGenericDefinitionType(expectedType.pyClass, myTypeEvalContext)
         if (!PyTypeChecker.match(expectedGenericDef, actualType, myTypeEvalContext)) {
           return false
         }
         //todo: remove when proper variance-aware inference is supported
         if (expectedGenericDef != null) {
-          val expectedGenericParams = expectedGenericDef.elementTypes
-          val expectedMapping = PyTypeParameterMapping.mapByShape(expectedGenericParams, expectedType.elementTypes)
-          val actualMapping = PyTypeParameterMapping.mapByShape(expectedGenericParams, actualType.elementTypes)
+          val expectedGenericParams = expectedGenericDef.typeArguments
+          val expectedMapping = PyTypeParameterMapping.mapByShape(expectedGenericParams, expectedType.typeArguments)
+          val actualMapping = PyTypeParameterMapping.mapByShape(expectedGenericParams, actualType.typeArguments)
           if (expectedMapping != null && actualMapping != null) {
             val l = expectedMapping.mappedTypes.associateBy({ it.first }, { it.second })
             val r = actualMapping.mappedTypes.associateBy({ it.first }, { it.second })

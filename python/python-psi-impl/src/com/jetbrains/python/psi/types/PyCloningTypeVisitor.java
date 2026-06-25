@@ -98,15 +98,6 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
   }
 
   @Override
-  public PyType visitPyGenericType(@NotNull PyCollectionType genericType) {
-    return new PyCollectionTypeImpl(
-      genericType.getPyClass(),
-      genericType.isDefinition(),
-      ContainerUtil.map(genericType.getElementTypes(), type -> clone(type))
-    );
-  }
-
-  @Override
   public PyType visitPyTupleType(@NotNull PyTupleType tupleType) {
     return new PyTupleType(
       tupleType.getPyClass(),
@@ -184,7 +175,14 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
 
   @Override
   public PyType visitPyClassType(@NotNull PyClassType classType) {
-    return classType;
+    if (!classType.isParameterized()) {
+      return classType;
+    }
+    return new PyCollectionTypeImpl(
+      classType.getPyClass(),
+      classType.isDefinition(),
+      ContainerUtil.map(classType.getTypeArguments(), type -> clone(type))
+    );
   }
 
   @Override

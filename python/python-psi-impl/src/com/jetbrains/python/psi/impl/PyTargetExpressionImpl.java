@@ -83,7 +83,6 @@ import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
-import com.jetbrains.python.psi.types.PyCollectionType;
 import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyNamedTupleType;
 import com.jetbrains.python.psi.types.PyTupleType;
@@ -457,8 +456,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       return tupleType.getIteratedItemType();
     }
     PyType type = PyTypeUtil.convertToType(iterableType, "typing.Iterable", anchor, context);
-    if (type instanceof PyCollectionType collectionType) {
-      return collectionType.getIteratedItemType();
+    if (type instanceof PyClassType pyClassType && pyClassType.isParameterized()) {
+      return pyClassType.getIteratedItemType();
     }
     return PyAnyType.getUnknown();
   }
@@ -513,8 +512,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       }
       return nextMethodCallType.get();
     }
-    if (type instanceof PyCollectionType) {
-      return ((PyCollectionType)type).getIteratedItemType();
+    if (type instanceof PyClassType pyClassType && pyClassType.isParameterized()) {
+      return pyClassType.getIteratedItemType();
     }
     return PyAnyType.getUnknown();
   }

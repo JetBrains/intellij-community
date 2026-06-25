@@ -19,7 +19,6 @@ import com.jetbrains.python.psi.types.PyCallableParameterImpl
 import com.jetbrains.python.psi.types.PyCallableParameterListType
 import com.jetbrains.python.psi.types.PyCallableType
 import com.jetbrains.python.psi.types.PyClassType
-import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyFunctionType
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment
 import com.jetbrains.python.psi.types.PyParamSpecType
@@ -212,7 +211,7 @@ internal object PyTypeDiff {
   private fun declaredVariance(generic: PyClassType, index: Int, context: TypeEvalContext): Variance {
     if (generic is PyTupleType) return Variance.COVARIANT
     val definition = PyTypeChecker.findGenericDefinitionType(generic.pyClass, context)
-    val typeParameter = definition?.elementTypes?.getOrNull(index) as? PyTypeParameterType ?: return Variance.COVARIANT
+    val typeParameter = definition?.typeArguments?.getOrNull(index) as? PyTypeParameterType ?: return Variance.COVARIANT
     if (typeParameter !is PyTypeVarType) return Variance.COVARIANT
     return when (PyInferredVarianceJudgment.getDeclaredOrInferredVariance(typeParameter, context)) {
       PyTypeParameterType.Variance.CONTRAVARIANT -> Variance.CONTRAVARIANT
@@ -307,8 +306,8 @@ internal object PyTypeDiff {
     if (expected is PyTupleType || actual is PyTupleType) return null
     val expectedClass = expected as? PyClassType ?: return null
     val actualClass = actual as? PyClassType ?: return null
-    val expectedArgs = (expectedClass as? PyCollectionType)?.elementTypes.orEmpty()
-    val actualArgs = (actualClass as? PyCollectionType)?.elementTypes.orEmpty()
+    val expectedArgs = expectedClass.typeArguments
+    val actualArgs = actualClass.typeArguments
     if (expectedArgs.isEmpty() && actualArgs.isEmpty()) return null
     // Only align type arguments when the two origins are related — the same class, or one a subclass of the other
     // (either direction; the per-argument variance below decides what is actually incompatible). Otherwise they
@@ -325,7 +324,7 @@ internal object PyTypeDiff {
     // A `ParamSpec` generic (`A[**P]`) is parameterized by a parameter list, so its arguments are rendered
     // exactly like a callable's parameters (parens, aligned names, per-type decomposition) rather than as plain
     // type arguments. `P` is invariant in the class, so the parameters are compared invariantly.
-    if (definition?.elementTypes?.any { it is PyParamSpecType } == true) {
+    if (definition?.typeArguments?.any { it is PyParamSpecType } == true) {
       val paramColumns = parameterListColumns(paramSpecParameters(expectedArgs), paramSpecParameters(actualArgs), context, Variance.INVARIANT, depth)
       return bracketed(actualName, expectedName, paramColumns, baseMismatch)
     }
@@ -366,7 +365,7 @@ internal object PyTypeDiff {
    * between, aligned from the left, with any surplus argument on either side shown as an extra red cell.
    */
   private fun variadicArgColumns(
-    definition: PyCollectionType?,
+    definition: PyClassType?,
     generic: PyClassType,
     expectedArgs: List<PyType?>,
     actualArgs: List<PyType?>,
@@ -376,9 +375,9 @@ internal object PyTypeDiff {
   ): List<Col>? {
     if (definition == null) return null
     // The TypeVarTuple's index is exactly the count of fixed parameters before it.
-    val fixedLeft = definition.elementTypes.indexOfFirst { it is PyTypeVarTupleType }
+    val fixedLeft = definition.typeArguments.indexOfFirst { it is PyTypeVarTupleType }
     if (fixedLeft < 0) return null
-    val fixedRight = definition.elementTypes.size - fixedLeft - 1
+    val fixedRight = definition.typeArguments.size - fixedLeft - 1
     if (expectedArgs.size < fixedLeft + fixedRight || actualArgs.size < fixedLeft + fixedRight) return null
 
     val slots = mutableListOf<ArgSlot>()

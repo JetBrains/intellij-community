@@ -40,7 +40,7 @@ public class PyDictCompExpressionImpl extends PyComprehensionElementImpl impleme
       if (mapping != null &&
           PyTypeUtil.convertToType(context.getType(mapping), "typing.Mapping", doubleStarExpression, context)
             instanceof PyCollectionType mappingType) {
-        final List<PyType> elementTypes = mappingType.getElementTypes();
+        final List<PyType> elementTypes = mappingType.getTypeArguments();
         if (elementTypes.size() == 2) {
           keyType = elementTypes.get(0);
           valueType = elementTypes.get(1);

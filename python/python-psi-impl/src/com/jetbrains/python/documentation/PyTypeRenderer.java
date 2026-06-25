@@ -32,11 +32,11 @@ import com.jetbrains.python.psi.types.PyCallableParameterListType;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyCollectionType;
 import com.jetbrains.python.psi.types.PyConcatenateType;
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment;
 import com.jetbrains.python.psi.types.PyIntersectionType;
 import com.jetbrains.python.psi.types.PyLiteralType;
+import com.jetbrains.python.psi.types.PyNamedTupleType;
 import com.jetbrains.python.psi.types.PyNarrowedType;
 import com.jetbrains.python.psi.types.PyNeverType;
 import com.jetbrains.python.psi.types.PyOverloadType;
@@ -48,6 +48,7 @@ import com.jetbrains.python.psi.types.PyTypeParameterType;
 import com.jetbrains.python.psi.types.PyTypeVarTupleType;
 import com.jetbrains.python.psi.types.PyTypeVarType;
 import com.jetbrains.python.psi.types.PyTypeVisitorExt;
+import com.jetbrains.python.psi.types.PyTypingNewType;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.PyUnpackedTupleType;
 import com.jetbrains.python.psi.types.PyUnsafeUnionType;
@@ -324,14 +325,31 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
   }
 
   @Override
-  public HtmlChunk visitPyGenericType(@NotNull PyCollectionType collectionOf) {
-    HtmlChunk genericTypeRender = renderGenericType(collectionOf);
-    return collectionOf.isDefinition() ? wrapInTypingType(genericTypeRender) : genericTypeRender;
+  public HtmlChunk visitPyClassType(@NotNull PyClassType classType) {
+    if (!classType.isParameterized()) {
+      return visitPyClassLikeType(classType);
+    }
+    HtmlChunk genericTypeRender = renderGenericType(classType);
+    return classType.isDefinition() ? wrapInTypingType(genericTypeRender) : genericTypeRender;
   }
 
-  private @NotNull HtmlChunk renderGenericType(@NotNull PyCollectionType genericType) {
+  @Override
+  public HtmlChunk visitPyNamedTupleType(@NotNull PyNamedTupleType namedTupleType) {
+    // A named tuple is rendered by its class name, not by its field types (which are exposed as type arguments
+    // since it is a subtype of tuple[...]). Before PY-79063 it reached the non-parameterized visitPyClassType branch.
+    return visitPyClassLikeType(namedTupleType);
+  }
+
+  @Override
+  public HtmlChunk visitPyTypingNewType(@NotNull PyTypingNewType newType) {
+    // A NewType is rendered by its own name, not by the type arguments of the type it wraps (which it exposes
+    // through delegation). Before PY-79063 it reached the non-parameterized visitPyClassType branch.
+    return visitPyClassLikeType(newType);
+  }
+
+  private @NotNull HtmlChunk renderGenericType(@NotNull PyClassType genericType) {
     HtmlBuilder result = new HtmlBuilder();
-    boolean renderTypeArgumentList = !genericType.getElementTypes().isEmpty();
+    boolean renderTypeArgumentList = genericType.isParameterized();
     String className = genericType.getName();
     if (renderTypeArgumentList &&
         !isGenericBuiltinsAvailable() &&
@@ -347,7 +365,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     }
     if (renderTypeArgumentList) {
       result.append(styled("[", PyHighlighter.PY_BRACKETS));
-      result.append(renderList(ContainerUtil.map(genericType.getElementTypes(), this::render)));
+      result.append(renderList(ContainerUtil.map(genericType.getTypeArguments(), this::render)));
       result.append(styled("]", PyHighlighter.PY_BRACKETS));
     }
     return result.toFragment();

@@ -151,7 +151,7 @@ object PyTypeUtil {
   }
 
   @JvmStatic
-  fun PsiElement.toKeywordContainerType(valueType: PyType?): PyCollectionType? {
+  fun PsiElement.toKeywordContainerType(valueType: PyType?): PyClassType? {
     val builtinCache = PyBuiltinCache.getInstance(this)
 
     return builtinCache.dictType?.pyClass?.let {
@@ -289,7 +289,7 @@ object PyTypeUtil {
 
   @JvmStatic
   fun PyType?.isDict(): Boolean {
-    return this is PyCollectionType && "dict" == this.name
+    return this is PyClassType && this.isParameterized && "dict" == this.name
   }
 
   @JvmStatic

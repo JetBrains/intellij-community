@@ -84,7 +84,7 @@ private fun PresentationTreeBuilder.printGenericType(type: PyCollectionType, con
   }
   clickableClassName(name, type.pyClass)
   plainText("[")
-  type.elementTypes.forEachIndexed { index, element ->
+  type.typeArguments.forEachIndexed { index, element ->
     if (index > 0) plainText(", ")
     printPyTypeHint(element, context)
   }

@@ -28,7 +28,6 @@ import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
-import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
@@ -112,7 +111,7 @@ class PyTypeInlayHintsProvider : InlayHintsProvider {
       val function = element.parent as? PyFunction ?: return
       if (element == function.nameIdentifier && function.annotationValue == null && function.typeCommentAnnotation == null) {
         val type = when (val type = typeEvalContext.getReturnType(function)) {
-          is Any? if function.isAsync -> (type as? PyCollectionType)?.elementTypes[2]
+          is Any? if function.isAsync -> (type as? PyClassType)?.typeArguments?.getOrNull(2)
           else -> type
         }
 
@@ -169,8 +168,8 @@ class PyTypeInlayHintsProvider : InlayHintsProvider {
 
       // Unwrap the type of *args and **kwargs parameters to show the element type
       val parameterType = when {
-                            parameter.isPositionalContainer -> (rawParameterType as? PyCollectionType)?.getIteratedItemType()
-                            parameter.isKeywordContainer -> (rawParameterType as? PyCollectionType)?.elementTypes?.getOrNull(1)
+                            parameter.isPositionalContainer -> (rawParameterType as? PyClassType)?.getIteratedItemType()
+                            parameter.isKeywordContainer -> (rawParameterType as? PyClassType)?.typeArguments?.getOrNull(1)
                             else -> rawParameterType
                           } ?: return
 
@@ -221,8 +220,9 @@ class PyTypeInlayHintsProvider : InlayHintsProvider {
       val typeEvalContext = resolveContext.typeEvalContext
       val calleeType = typeEvalContext.getType(callee)
       if (calleeType !is PyClassType || !calleeType.isDefinition) return null
-      val callType = typeEvalContext.getType(call) as? PyCollectionType ?: return null
-      return callType.elementTypes
+      val callType = typeEvalContext.getType(call)
+      if (callType !is PyClassType || !callType.isParameterized) return null
+      return callType.typeArguments
     }
 
     // Call of a generic function declaring its own type parameters, e.g. `f(1)` for `def f[T](t: T) -> T`.
