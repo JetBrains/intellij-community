@@ -6,24 +6,27 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtUserType
 
 internal class AddContextParameterToExistingContextFix(
     surroundingCall: KtCallExpression,
-    private val candidateName: String,
+    private val candidateName: String?,
     private val parameterTypeText: String,
+    private val parameterTypeFqNameText: String
 ) : KotlinPsiUpdateModCommandAction.ElementContextless<KtCallExpression>(surroundingCall) {
 
     override fun invoke(context: ActionContext, element: KtCallExpression, updater: ModPsiUpdater) {
         val psiFactory = KtPsiFactory(context.project)
         val argList = element.valueArgumentList ?: return
         val rightParen = argList.rightParenthesis ?: return
-        if (argList.arguments.any {
+        if (candidateName != null && argList.arguments.any {
                 (it.getArgumentExpression() as? KtNameReferenceExpression)?.getReferencedName() == candidateName
             }) return
 
@@ -32,16 +35,31 @@ internal class AddContextParameterToExistingContextFix(
         if (argList.arguments.isNotEmpty() && !hasTrailingComma) {
             argList.addBefore(psiFactory.createComma(), rightParen)
         }
-        argList.addBefore(psiFactory.createArgument(candidateName), rightParen)
+        val newElement =
+            if (candidateName != null) {
+                psiFactory.createArgument(candidateName)
+            } else {
+                val typeReference = psiFactory.createType(parameterTypeFqNameText)
+                val userType = shortenReferences(typeReference) as? KtUserType
+                psiFactory.createExpression("TODO(\"Provide $parameterTypeText\")${userType?.let { " as ${it.text}" } ?: ""}")
+            }
+        argList.addBefore(newElement, rightParen)
     }
 
     override fun getActionPresentation(context: ActionContext, element: KtCallExpression): Presentation =
         Presentation.of(
-            KotlinBundle.message(
-                "fix.add.argument.to.existing.context.with.name.and.type",
-                candidateName,
-                parameterTypeText,
-            )
+            if (candidateName != null) {
+                KotlinBundle.message(
+                    "fix.add.argument.to.existing.context.with.name.and.type",
+                    candidateName,
+                    parameterTypeText,
+                )
+            } else {
+                KotlinBundle.message(
+                    "fix.add.todo.argument.to.existing.context.with.name.and.type",
+                    parameterTypeText,
+                )
+            }
         )
 
     override fun getFamilyName(): @IntentionFamilyName String =
