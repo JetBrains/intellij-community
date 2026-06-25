@@ -24,7 +24,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.XCollection
@@ -46,16 +45,13 @@ private val FOUND_DUPLICATING_PLUGIN_EVENT = GROUP.registerVarargEvent("found.du
 private val PLUGIN_UPDATE_NOT_ALLOWED_BY_USER_EVENT = GROUP.registerEvent("checking.plugin.updates.forbidden.by.user")
 
 internal class DuplicatingPluginIdStateCollector : ApplicationUsagesCollector() {
-
-  init {
-    if (!AppMode.isMonolith()) {
-      throw ExtensionNotApplicableException.create()
-    }
-  }
-
   override fun getGroup(): EventLogGroup = GROUP
 
   override suspend fun getMetricsAsync(): Set<MetricEvent> {
+    if (!AppMode.isMonolith()) {
+      return emptySet()
+    }
+
     if (!UpdateSettings.getInstance().isPluginsCheckNeeded) {
       //probably the user doesn't expect repository to be requested without his actions
       return setOf(PLUGIN_UPDATE_NOT_ALLOWED_BY_USER_EVENT.metric())
