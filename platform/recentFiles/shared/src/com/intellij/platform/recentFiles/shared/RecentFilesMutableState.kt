@@ -13,12 +13,10 @@ private val LOG by lazy { fileLogger() }
 class RecentFilesState<T>(val entries: List<T> = listOf())
 
 @ApiStatus.Internal
-abstract class RecentFilesMutableState<T>(protected val project: Project) {
+open class RecentFilesMutableState<T>(protected val project: Project) {
   protected val recentlyOpenedFilesState: MutableStateFlow<RecentFilesState<T>> = MutableStateFlow(RecentFilesState())
   protected val recentlyEditedFilesState: MutableStateFlow<RecentFilesState<T>> = MutableStateFlow(RecentFilesState())
   protected val recentlyOpenedPinnedFilesState: MutableStateFlow<RecentFilesState<T>> = MutableStateFlow(RecentFilesState())
-
-  abstract fun isAllowedInModel(targetFilesKind: RecentFileKind, model: T): Boolean
 
   fun chooseStateToWriteTo(targetFilesKind: RecentFileKind): MutableStateFlow<RecentFilesState<T>> {
     return when (targetFilesKind) {
@@ -30,11 +28,10 @@ abstract class RecentFilesMutableState<T>(protected val project: Project) {
 
   fun addEvent(targetFilesKind: RecentFileKind, batch: List<T>) {
     val targetModel = chooseStateToWriteTo(targetFilesKind)
-    val toAdd = batch
     LOG.debug("Adding ${batch.size} items to $targetFilesKind frontend model")
     targetModel.update { oldList ->
-      val updatedState = toAdd + (oldList.entries - toAdd.toSet())
-      RecentFilesState(updatedState.filter { isAllowedInModel(targetFilesKind, it) })
+      val updatedState = batch + (oldList.entries - batch.toSet())
+      RecentFilesState(updatedState)
     }
   }
 
@@ -49,11 +46,11 @@ abstract class RecentFilesMutableState<T>(protected val project: Project) {
         val newValuesToPutIntoFirstPosition = oldList.entries.mapNotNull { oldItem -> itemsToMergeWithExisting[oldItem] }
         val restOfExistingValues = oldList.entries - newValuesToPutIntoFirstPosition.toSet()
         val updatedState = newValuesToPutIntoFirstPosition + restOfExistingValues
-        RecentFilesState(updatedState.filter { isAllowedInModel(targetFilesKind, it) })
+        RecentFilesState(updatedState)
       }
       else {
         val effectiveModelsToInsert = oldList.entries.map { oldItem -> itemsToMergeWithExisting[oldItem] ?: oldItem }
-        RecentFilesState(effectiveModelsToInsert.filter { isAllowedInModel(targetFilesKind, it) })
+        RecentFilesState(effectiveModelsToInsert)
       }
     }
   }
@@ -63,7 +60,7 @@ abstract class RecentFilesMutableState<T>(protected val project: Project) {
     LOG.debug("Removing ${batch.size} items from $targetFilesKind frontend model")
     targetModel.update { oldList ->
       val updatedState = oldList.entries - batch.toSet()
-      RecentFilesState(updatedState.filter { isAllowedInModel(targetFilesKind, it) })
+      RecentFilesState(updatedState)
     }
   }
 
