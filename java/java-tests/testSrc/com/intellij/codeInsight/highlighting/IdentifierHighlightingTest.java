@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterUpdater;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult;
 import com.intellij.codeInsight.daemon.impl.IdentifierOccurrence;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.editor.elf.ElfFeatureFlag;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -117,6 +118,24 @@ public class IdentifierHighlightingTest extends LightDaemonAnalyzerTestCase {
         getEditor().getCaretModel().moveToOffset(offset);
         assertIdentifierHighlightingManagerCachingWorksForOffset(offset);
       }
+    });
+  }
+
+  public void testIdentifierHighlightingWorksWithLockFreeTypingBeforeElfEdits() {
+    ElfFeatureFlag.withEnabled(() -> {
+      IdentifierHighlighterPassFactory.doWithIdentifierHighlightingEnabled(getProject(), () -> {
+        configureFromFileText("C.java", """
+          class C {
+            void test() {
+              int value = 1;
+              System.out.println(value);
+              val<caret>ue++;
+            }
+          }
+          """);
+
+        assertIdentifierHighlightingManagerCachingWorksForOffset(getEditor().getCaretModel().getOffset());
+      });
     });
   }
 

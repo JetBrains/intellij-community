@@ -3,7 +3,6 @@ package com.intellij.codeInsight.multiverse
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EditorLockFreeTyping
 import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -119,9 +118,7 @@ class CodeInsightContextManagerImpl(
 
     // FIXME: the assert had never worked due to IJPL-221633, but when it is enabled some tests fail
     // ThreadingAssertions.softAssertBackgroundThread()
-    if (EditorLockFreeTyping.isReadAccessNeeded(file)) {
-      ThreadingAssertions.softAssertReadAccess()
-    }
+    ThreadingAssertions.softAssertReadAccess()
 
     log.trace { "requested preferred context of file ${file.path}" }
 

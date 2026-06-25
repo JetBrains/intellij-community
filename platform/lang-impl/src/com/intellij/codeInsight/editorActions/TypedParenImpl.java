@@ -213,7 +213,7 @@ final class TypedParenImpl {
   ) {
     int offset = editor.getCaretModel().getOffset();
     HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
-    Document document = editor.getElfDocument();
+    Document document = editor.getDocument();
     boolean atEndOfDocument = offset == document.getTextLength();
     if (!atEndOfDocument) {
       iterator.retreat();

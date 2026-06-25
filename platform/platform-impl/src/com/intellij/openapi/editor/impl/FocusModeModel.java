@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -55,7 +55,7 @@ public final class FocusModeModel implements Disposable {
   @ApiStatus.Internal
   public FocusModeModel(@NotNull EditorImpl editor) {
     myEditor = editor;
-    myFocusMarkerTree = new RangeMarkerTree<>(editor.getDocument());
+    myFocusMarkerTree = new RangeMarkerTree<>(editor.getElfDocument());
 
     myEditor.getScrollingModel().addVisibleAreaListener(e -> EditorThreading.run(() -> {
       AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
@@ -145,7 +145,7 @@ public final class FocusModeModel implements Disposable {
 
   @ApiStatus.Internal
   public @NotNull RangeMarker createFocusRegion(int start, int end) {
-    RangeMarkerEx marker = new RangeMarkerImpl(myEditor.getDocument(), start, end, false, false);
+    RangeMarkerEx marker = new RangeMarkerImpl(myEditor.getElfDocument(), start, end, false, false);
     myFocusMarkerTree.addInterval(marker, start, end, false, false, true, 0);
     mySegmentListeners.forEach(l -> l.focusRegionAdded(marker));
     return marker;
@@ -178,7 +178,7 @@ public final class FocusModeModel implements Disposable {
 
   private @NotNull Segment enlargeFocusRangeIfNeeded(@NotNull Segment range) {
     int originalStart = range.getStartOffset();
-    DocumentEx document = myEditor.getDocument();
+    DocumentEx document = myEditor.getElfDocument();
     int start = DocumentUtil.getLineStartOffset(originalStart, document);
     if (start < originalStart) {
       range = new TextRange(start, range.getEndOffset());
@@ -202,7 +202,7 @@ public final class FocusModeModel implements Disposable {
     myEditor.putUserData(FOCUS_MODE_ATTRIBUTES, attributes);
 
     MarkupModel markupModel = myEditor.getMarkupModel();
-    DocumentEx document = myEditor.getDocument();
+    DocumentEx document = myEditor.getElfDocument();
     int textLength = document.getTextLength();
 
     int start = focusRange.getStartOffset();
@@ -216,7 +216,7 @@ public final class FocusModeModel implements Disposable {
 
   @Override
   public void dispose() {
-    myFocusMarkerTree.dispose(myEditor.getDocument());
+    myFocusMarkerTree.dispose(myEditor.getElfDocument());
   }
 
   private static boolean intersects(RangeMarker a, RangeMarker b) {

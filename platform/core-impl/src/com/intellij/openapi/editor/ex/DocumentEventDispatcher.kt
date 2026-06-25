@@ -3,7 +3,6 @@ package com.intellij.openapi.editor.ex
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import org.jetbrains.annotations.ApiStatus
 import java.beans.PropertyChangeListener
@@ -21,11 +20,10 @@ interface DocumentEventDispatcher {
   fun addDocumentListener(listener: DocumentListener, parentDisposable: Disposable)
   fun addDocumentListener(listener: DocumentListener)
   fun removeDocumentListener(listener: DocumentListener)
-  fun fireBeforeTextChange(event: DocumentEvent)
-  fun fireTextChanged(event: DocumentEvent)
+
   fun firingTextChanged(): Boolean
-  fun fireBulkUpdateStarting(hostDocument: Document)
-  fun fireBulkUpdateFinished(hostDocument: Document)
+
+  fun setBulkModeStatus(hostDocument: Document, status: Boolean)
   fun isInBulkUpdate(): Boolean
   fun assertNotInBulkUpdate()
 

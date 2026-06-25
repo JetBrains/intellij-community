@@ -38,7 +38,6 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
@@ -90,6 +89,8 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
+import com.intellij.openapi.editor.elf.ElfFeatureFlag;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -104,6 +105,7 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.EditorModel;
 import com.intellij.openapi.editor.ex.EditorPopupHandler;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.ex.ElfCandidate;
 import com.intellij.openapi.editor.ex.ErrorStripeEvent;
 import com.intellij.openapi.editor.ex.ErrorStripeListener;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
@@ -119,7 +121,6 @@ import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.ad.AdTheManager;
-import com.intellij.openapi.editor.impl.elf.ElfTheManager;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesManager;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesModel;
@@ -300,7 +301,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
-
 
 public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable, Dumpable, FocusListener {
   public static final int TEXT_ALIGNMENT_LEFT = 0;
@@ -560,7 +560,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     assertIsDispatchThread();
     myProject = project;
     myDocument = (DocumentEx)document;
-    myElfDocument = ElfTheManager.getInstance().getElfDocument(document);
+    myElfDocument = (DocumentEx)Elf.getElf().getElfDocument(document);
     myVirtualFile = file;
     myState = new EditorState();
     myState.refreshAll();
@@ -722,14 +722,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myEditorFilteringMarkupModel.addMarkupModelListener(myCaretModel, myMarkupModelListener);
     myMarkupModel.addMarkupModelListener(myCaretModel, myMarkupModelListener);
-    getElfDocument().addDocumentListener(myFoldingModel, myCaretModel);
-    getElfDocument().addDocumentListener(myCaretModel, myCaretModel);
+    getDocument().addDocumentListener(myFoldingModel, myCaretModel);
+    getDocument().addDocumentListener(myCaretModel, myCaretModel);
 
-    getElfDocument().addDocumentListener(new EditorDocumentAdapter(), myCaretModel);
-    getElfDocument().addDocumentListener(mySoftWrapModel, myCaretModel);
-    getElfDocument().addDocumentListener(myMarkupModel, myCaretModel);
+    getDocument().addDocumentListener(new EditorDocumentAdapter(), myCaretModel);
+    getDocument().addDocumentListener(mySoftWrapModel, myCaretModel);
+    getDocument().addDocumentListener(myMarkupModel, myCaretModel);
     if (myCustomWrapModel instanceof CustomWrapModelImpl customWrapModelImpl) {
-      getElfDocument().addDocumentListener(customWrapModelImpl, myCaretModel);
+      getDocument().addDocumentListener(customWrapModelImpl, myCaretModel);
     }
 
     myFoldingModel.addListener(mySoftWrapModel, myCaretModel);
@@ -1756,6 +1756,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private boolean processKeyTyped(char c) {
+    AtomicBoolean result = new AtomicBoolean(false);
+    Elf.getElf().withElfScope(() -> {
+      result.set(processKeyTyped0(c));
+    });
+    return result.get();
+  }
+
+  private boolean processKeyTyped0(char c) {
     if (ProgressManager.getInstance().hasModalProgressIndicator()) {
       return false;
     }
@@ -1834,7 +1842,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       Disposer.dispose(myHighlighterDisposable);
 
       myHighlighterDisposable = Disposer.newDisposable();
-      document.addDocumentListener(highlighter, myHighlighterDisposable);
+      document.addDocumentListener(
+        ElfFeatureFlag.isEnabled() ? new EditorHighlighterElfCandidate(highlighter) : highlighter,
+        myHighlighterDisposable
+      );
       Disposer.register(myDisposable, myHighlighterDisposable);
       highlighter.setEditor(this);
 
@@ -2386,9 +2397,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull DocumentEx getDocument() {
-    if (EditorLockFreeTyping.isInElfScope(myElfDocument)) {
-      return myElfDocument;
-    }
     return myDocument;
   }
 
@@ -4631,7 +4639,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (commitCount > 0) {
           for (char c = text.current(); c != CharacterIterator.DONE && commitCount > 0; c = text.next(), commitCount--) {
             if (c >= 0x20 && c != 0x7F) { // Hack just like in javax.swing.text.DefaultEditorKit.DefaultKeyTypedAction
-              processKeyTyped(c);
+              processKeyTyped0(c);
             }
           }
         }
@@ -5457,6 +5465,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return true;
   }
 
+  @ElfCandidate
   private final class EditorDocumentAdapter implements PrioritizedDocumentListener {
     @Override
     public void beforeDocumentChange(@NotNull DocumentEvent e) {
@@ -5481,6 +5490,40 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public int getPriority() {
       return EditorDocumentPriorities.EDITOR_DOCUMENT_ADAPTER;
+    }
+  }
+
+  @ElfCandidate
+  private static final class EditorHighlighterElfCandidate implements PrioritizedDocumentListener {
+    private final EditorHighlighter myHighlighter;
+
+    private EditorHighlighterElfCandidate(@NotNull EditorHighlighter highlighter) {
+      myHighlighter = highlighter;
+    }
+
+    @Override
+    public void beforeDocumentChange(@NotNull DocumentEvent event) {
+      myHighlighter.beforeDocumentChange(event);
+    }
+
+    @Override
+    public void documentChanged(@NotNull DocumentEvent event) {
+      myHighlighter.documentChanged(event);
+    }
+
+    @Override
+    public void bulkUpdateStarting(@NotNull Document document) {
+      myHighlighter.bulkUpdateStarting(document);
+    }
+
+    @Override
+    public void bulkUpdateFinished(@NotNull Document document) {
+      myHighlighter.bulkUpdateFinished(document);
+    }
+
+    @Override
+    public int getPriority() {
+      return myHighlighter instanceof PrioritizedDocumentListener listener ? listener.getPriority() : Integer.MAX_VALUE;
     }
   }
 
@@ -6016,7 +6059,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myElfDocument != null) {
       return myElfDocument;
     }
-    return getDocument();
+    return myDocument;
   }
 
   @ApiStatus.Internal

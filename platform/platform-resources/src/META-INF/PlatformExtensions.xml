@@ -2105,8 +2105,8 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <applicationService serviceInterface="com.intellij.configurationStore.defaults.DefaultSettingsService" open="true"
                         serviceImplementation="com.intellij.configurationStore.defaults.DefaultSettingsServiceImpl" />
 
-    <applicationService serviceInterface="com.intellij.openapi.editor.impl.elf.ElfTheManager"
-                        serviceImplementation="com.intellij.openapi.editor.impl.elf.ElfTheManagerImpl" />
+    <applicationService serviceInterface="com.intellij.openapi.editor.elf.Elf"
+                        serviceImplementation="com.intellij.openapi.editor.impl.elf.ElfImpl" />
 
     <registryKey key="editor.custom.soft.wraps.support.enabled" defaultValue="true"
                  description="Enables support for custom soft wraps in the editor. Only takes effect if editor.use.new.soft.wraps.impl=true." restartRequired="true"/>
@@ -2258,9 +2258,6 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
               activeInTestMode="false" activeInHeadlessMode="false"/>
 
     <listener class="com.intellij.openapi.editor.impl.ad.document.AdDocumentManagerImpl$AdFileDocumentBindingListener"
-              topic="com.intellij.openapi.fileEditor.impl.FileDocumentBindingListener" />
-
-    <listener class="com.intellij.openapi.editor.impl.elf.ElfBindingEntryPoint"
               topic="com.intellij.openapi.fileEditor.impl.FileDocumentBindingListener" />
 
     <listener class="com.intellij.openapi.editor.impl.ad.markup.AdDocumentMarkupManagerImpl$AdDocumentMarkupListener"

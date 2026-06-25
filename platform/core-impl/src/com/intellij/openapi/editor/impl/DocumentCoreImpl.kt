@@ -15,10 +15,10 @@ import kotlin.concurrent.Volatile
  * Default implementation of [DocumentImpl]
  */
 internal class DocumentCoreImpl private constructor(
-  private val settings: DocumentSettings,
-  private val dispatcher: DocumentEventDispatcher,
-  private val tree: DocumentRangeMarkerTree,
   @Volatile private var snapshot: DocumentSnapshot, // mutable via SNAPSHOT_UPDATER
+  private val settings: DocumentSettings,
+  private val dispatcher: DocumentEventDispatcherImpl,
+  private val tree: DocumentRangeMarkerTree,
 ) : DocumentCore {
   private val live: CharSequence = LiveCharSequence()
   private val mutator: DocumentMutator = MutatorImpl()
@@ -100,13 +100,12 @@ internal class DocumentCoreImpl private constructor(
       val dispatcher = DocumentEventDispatcherImpl(settings)
       val tree = DocumentRangeMarkerTreeImpl(dispatcher)
       val snapshot = DocumentSnapshotImpl(chars)
-      return DocumentCoreImpl(settings, dispatcher, tree, snapshot)
+      return DocumentCoreImpl(snapshot, settings, dispatcher, tree)
     }
 
     /**
      * [snapshot] is a performance-critical field, it cannot be replaced with AtomicReference
      */
-    @JvmStatic
     private val SNAPSHOT_UPDATER: AtomicReferenceFieldUpdater<DocumentCoreImpl, DocumentSnapshot> =
       AtomicReferenceFieldUpdater.newUpdater(
         DocumentCoreImpl::class.java,

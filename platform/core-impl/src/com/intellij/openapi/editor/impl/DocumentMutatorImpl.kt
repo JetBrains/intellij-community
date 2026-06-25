@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ReadOnlyFragmentModificationException
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId
 import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.ex.DocumentEventDispatcher
 import com.intellij.openapi.editor.ex.DocumentMutator
 import com.intellij.openapi.editor.ex.DocumentRangeMarkerTree
 import com.intellij.openapi.editor.ex.DocumentSettings
@@ -18,29 +17,19 @@ import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.ProperTextRange
-import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.text.ImmutableCharSequence
 import java.util.function.UnaryOperator
 import kotlin.concurrent.Volatile
 
 internal abstract class DocumentMutatorImpl(
   private val settings: DocumentSettings,
-  private val dispatcher: DocumentEventDispatcher,
+  private val dispatcher: DocumentEventDispatcherImpl,
   private val tree: DocumentRangeMarkerTree,
 ) : DocumentMutator {
   @Volatile private var textChangeInProgress = false
-  @Volatile private var bulkModeStatusChanging = false
 
   protected abstract fun getSnapshot(): DocumentSnapshot
   protected abstract fun updateAndGet(update: UnaryOperator<DocumentSnapshot>): DocumentSnapshot
-
-  protected open fun fireBeforeTextChange(changeEvent: DocumentEvent) {
-    dispatcher.fireBeforeTextChange(changeEvent)
-  }
-
-  protected open fun fireTextChanged(changeEvent: DocumentEvent) {
-    dispatcher.fireTextChanged(changeEvent)
-  }
 
   override fun setModStamp(newModStamp: Long, incrementModSequence: Boolean) {
     updateAndGet { it.withModStamp(newModStamp, incrementModSequence) }
@@ -196,28 +185,6 @@ internal abstract class DocumentMutatorImpl(
     )
   }
 
-  override fun setBulkModeStatus(hostDocument: Document, status: Boolean) {
-    if (settings.isWriteAccessCheckEnabled()) {
-      ThreadingAssertions.assertWriteIntentReadAccess() // TODO: reconsider threading assertion
-    }
-    if (bulkModeStatusChanging) {
-      throw IllegalStateException("Detected bulk mode status update from DocumentBulkUpdateListener")
-    }
-    if (dispatcher.isInBulkUpdate() == status) {
-      return
-    }
-    bulkModeStatusChanging = true
-    try {
-      if (status) {
-        dispatcher.fireBulkUpdateStarting(hostDocument)
-      } else {
-        dispatcher.fireBulkUpdateFinished(hostDocument)
-      }
-    } finally {
-      bulkModeStatusChanging = false
-    }
-  }
-
   private fun deleteString(
     hostDocument: Document,
     snapshot: DocumentSnapshot,
@@ -349,21 +316,22 @@ internal abstract class DocumentMutatorImpl(
     val snapshotAfterChange: DocumentSnapshot
     textChangeInProgress = true
     try {
-      fireBeforeTextChange(changeEvent)
-      snapshotAfterChange = updateAndGet { latest ->
-        // modStamp or other metadata could be changed during fireBeforeTextChange, should merge it into final snapshot
-        val merged = snapshotBefore.withMetadata(latest)
-        merged.withText(
-          newWholeText,
-          changeEvent.offset,
-          changeEvent.offset + changeEvent.oldLength,
-          changeEvent.newFragment,
-          newModStamp,
-          changeEvent.isWholeTextReplaced,
-          clearLineFlags,
-        )
+      snapshotAfterChange = dispatcher.withFiringTextUpdate(changeEvent) {
+        updateAndGet { latest ->
+          // modStamp or other metadata could be changed during fireBeforeTextChange,
+          // should merge it into final snapshot
+          val merged = snapshotBefore.withMetadata(latest)
+          merged.withText(
+            newWholeText,
+            changeEvent.offset,
+            changeEvent.offset + changeEvent.oldLength,
+            changeEvent.newFragment,
+            newModStamp,
+            changeEvent.isWholeTextReplaced,
+            clearLineFlags,
+          )
+        }
       }
-      fireTextChanged(changeEvent)
     } finally {
       textChangeInProgress = false
     }

@@ -69,6 +69,7 @@ import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.editor.ex.ElfCandidate
 import com.intellij.openapi.editor.ex.ErrorStripTooltipRendererProvider
 import com.intellij.openapi.editor.ex.ErrorStripeEvent
 import com.intellij.openapi.editor.ex.ErrorStripeListener
@@ -181,6 +182,7 @@ import kotlin.math.min
 import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
+@ElfCandidate
 class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl) :
   MarkupModelImpl(editor.document), EditorMarkupModel, CaretListener, BulkAwareDocumentListener.Simple, VisibleAreaListener {
   private fun getMinMarkHeight(): Int {
@@ -1887,5 +1889,4 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     @JvmField val thin: Boolean,
     @JvmField val layer: Int,
   )
-
 }

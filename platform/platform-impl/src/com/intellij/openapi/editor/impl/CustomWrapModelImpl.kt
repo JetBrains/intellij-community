@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.CustomWrap
 import com.intellij.openapi.editor.CustomWrapModel
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.ex.ElfCandidate
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 import com.intellij.openapi.editor.impl.customwrap.CustomWrapImpl
 import com.intellij.util.DocumentUtil
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 
+@ElfCandidate
 internal class CustomWrapModelImpl(private val editor: EditorImpl) : CustomWrapModel, CustomWrapModel.Mutator, PrioritizedDocumentListener,
                                                                      Dumpable, Disposable {
   private val document = editor.elfDocument

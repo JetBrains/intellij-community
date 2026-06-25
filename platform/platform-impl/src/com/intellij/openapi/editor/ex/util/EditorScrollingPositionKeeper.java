@@ -45,7 +45,7 @@ public final class EditorScrollingPositionKeeper implements Disposable {
     int caretY = myEditor.visualLineToY(myEditor.getCaretModel().getVisualPosition().line);
     if (visibleArea.height > 0 && (caretY + myEditor.getLineHeight() <= visibleArea.y || caretY >= (visibleArea.y + visibleArea.height))) {
       int topLeftCornerOffset = myEditor.logicalPositionToOffset(myEditor.xyToLogicalPosition(visibleArea.getLocation()));
-      myTopLeftCornerMarker = myEditor.getElfDocument().createRangeMarker(topLeftCornerOffset, topLeftCornerOffset);
+      myTopLeftCornerMarker = myEditor.getDocument().createRangeMarker(topLeftCornerOffset, topLeftCornerOffset);
       myViewportShift = myEditor.offsetToXY(topLeftCornerOffset).y - visibleArea.y;
     }
     else {

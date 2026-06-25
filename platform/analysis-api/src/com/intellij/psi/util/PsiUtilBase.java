@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ModNavigator;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VFileProperty;
@@ -101,6 +102,11 @@ public final class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   }
 
   public static @Nullable PsiFile getPsiFileInEditor(@NotNull Caret caret, final @NotNull Project project) {
+    if (!Elf.getElf().isPsiInteractionAllowed()) {
+      // TODO: rework for lock-free typing, getPsiFile requires RA on EDT
+      return null;
+    }
+
     Editor editor = caret.getEditor();
     assertEditorAndProjectConsistent(project, editor);
     CodeInsightContext context = EditorContextManager.getEditorContext(editor, project);

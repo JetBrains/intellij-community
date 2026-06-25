@@ -12,26 +12,20 @@ import com.intellij.openapi.editor.ex.DocumentFullUpdateListener
 import com.intellij.openapi.editor.ex.DocumentSettings
 import com.intellij.openapi.editor.ex.EditReadOnlyListener
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.util.ArrayUtil
 import com.intellij.util.containers.ContainerUtil
 import java.beans.PropertyChangeListener
-import kotlin.concurrent.Volatile
 
 internal open class DocumentEventDispatcherImpl private constructor(
-  private val mySettings: DocumentSettings,
-  private val myListeners: LockFreeCOWSortedArray<DocumentListener>,
-  private val myPropertyListeners: DocumentPropertyChangeSupport,
-  private val myReadOnlyListeners: MutableList<EditReadOnlyListener>,
-  private val myFullUpdateListeners: MutableList<DocumentFullUpdateListener>,
+  settings: DocumentSettings,
+  protected val listeners: LockFreeCOWSortedArray<DocumentListener>,
+  private val propertyListeners: DocumentPropertyChangeSupport,
+  private val readOnlyListeners: MutableList<EditReadOnlyListener>,
+  private val fullUpdateListeners: MutableList<DocumentFullUpdateListener>,
 ): DocumentEventDispatcher {
-  @Volatile protected var firingTextChange: Boolean = false
-  @Volatile protected var bulkUpdateInProgress: Boolean = false
-  @Volatile protected var bulkUpdateTrace: Throwable? = null
-  @Volatile private var exceptions: DocumentDelayedExceptions? = null
-  @Volatile private var listeners: Array<DocumentListener>? = null
+  protected val textUpdate: DocumentTextUpdate = DocumentTextUpdate.Real(settings, listeners)
+  protected val bulkUpdate: DocumentBulkUpdate = DocumentBulkUpdate.Real(settings, listeners)
 
   constructor(settings: DocumentSettings) : this(
     settings,
@@ -41,20 +35,28 @@ internal open class DocumentEventDispatcherImpl private constructor(
     ContainerUtil.createLockFreeCopyOnWriteList(),
   )
 
+  init {
+    addDeprecatedBulkUpdatePublisher()
+  }
+
+  fun <T> withFiringTextUpdate(changeEvent: DocumentEvent, action: () -> T): T {
+    return textUpdate.withFiringTextUpdate(null, changeEvent, action)
+  }
+
   override fun addDocumentListener(listener: DocumentListener, parentDisposable: Disposable) {
     addDocumentListener(listener)
-    Disposer.register(parentDisposable, DocumentListenerDisposable(myListeners, listener))
+    Disposer.register(parentDisposable, DocumentListenerDisposable(listeners, listener))
   }
 
   override fun addDocumentListener(listener: DocumentListener) {
     if (ArrayUtil.contains(listener, *getListeners())) {
       LOG.error("Already registered: $listener")
     }
-    myListeners.add(listener)
+    listeners.add(listener)
   }
 
   override fun removeDocumentListener(listener: DocumentListener) {
-    val success = myListeners.remove(listener)
+    val success = listeners.remove(listener)
     if (!success) {
       LOG.error(
         "Can't remove document listener (" + listener + "). " +
@@ -63,145 +65,81 @@ internal open class DocumentEventDispatcherImpl private constructor(
     }
   }
 
-  override fun addPropertyChangeListener(listener: PropertyChangeListener) {
-    myPropertyListeners.addPropertyChangeListener(listener)
-  }
-
-  override fun removePropertyChangeListener(listener: PropertyChangeListener) {
-    myPropertyListeners.removePropertyChangeListener(listener)
-  }
-
-  override fun addEditReadOnlyListener(listener: EditReadOnlyListener) {
-    myReadOnlyListeners.add(listener)
-  }
-
-  override fun removeEditReadOnlyListener(listener: EditReadOnlyListener) {
-    myReadOnlyListeners.remove(listener)
-  }
-
-  override fun addFullUpdateListener(listener: DocumentFullUpdateListener) {
-    myFullUpdateListeners.add(listener)
-  }
-
-  override fun removeFullUpdateListener(listener: DocumentFullUpdateListener) {
-    myFullUpdateListeners.remove(listener)
-  }
-
-  override fun fireBeforeTextChange(event: DocumentEvent) {
-    if (ShutDownTracker.isShutdownStarted()) {
-      return
-    }
-    val listeners = getListeners()
-    val exceptions = DocumentDelayedExceptions(isPCEWarningEnabled())
-    ProgressManager.getInstance().executeNonCancelableSection {
-      for (i in listeners.indices.reversed()) {
-        try {
-          listeners[i].beforeDocumentChange(event)
-        } catch (e: Throwable) {
-          exceptions.register(e)
-        }
-      }
-    }
-    this.listeners = listeners
-    this.exceptions = exceptions
-  }
-
-  override fun fireTextChanged(event: DocumentEvent) {
-    if (ShutDownTracker.isShutdownStarted()) {
-      return
-    }
-    val listeners = this.listeners ?: throw IllegalStateException("beforeTextChanged should be called first")
-    val exceptions = this.exceptions ?: throw IllegalStateException("beforeTextChanged should be called first")
-    firingTextChange = true
-    try {
-      ProgressManager.getInstance().executeNonCancelableSection {
-        for (listener in listeners) {
-          try {
-            listener.documentChanged(event)
-          } catch (e: Throwable) {
-            exceptions.register(e)
-          }
-        }
-      }
-    } finally {
-      firingTextChange = false
-      this.listeners = null
-      this.exceptions = null
-    }
-    exceptions.rethrowPCE()
-  }
-
   override fun firingTextChanged(): Boolean {
-    return firingTextChange
+    return textUpdate.isInTextUpdate()
   }
 
-  override fun firePropertyChange(hostDocument: Document, isReadOnly: Boolean) {
-    myPropertyListeners.firePropertyChange(hostDocument, Document.PROP_WRITABLE, !isReadOnly, isReadOnly)
+  override fun setBulkModeStatus(hostDocument: Document, status: Boolean) {
+    bulkUpdate.setBulkUpdateStatus(hostDocument, status)
   }
 
-  override fun fireReadOnlyModificationAttempt(hostDocument: Document) {
-    for (listener in myReadOnlyListeners) {
+  override fun isInBulkUpdate(): Boolean {
+    return bulkUpdate.isInBulkUpdate()
+  }
+
+  override fun assertNotInBulkUpdate() {
+    bulkUpdate.assertNotInBulkUpdate()
+  }
+
+  final override fun addPropertyChangeListener(listener: PropertyChangeListener) {
+    propertyListeners.addPropertyChangeListener(listener)
+  }
+
+  final override fun removePropertyChangeListener(listener: PropertyChangeListener) {
+    propertyListeners.removePropertyChangeListener(listener)
+  }
+
+  final override fun addEditReadOnlyListener(listener: EditReadOnlyListener) {
+    readOnlyListeners.add(listener)
+  }
+
+  final override fun removeEditReadOnlyListener(listener: EditReadOnlyListener) {
+    readOnlyListeners.remove(listener)
+  }
+
+  final override fun addFullUpdateListener(listener: DocumentFullUpdateListener) {
+    fullUpdateListeners.add(listener)
+  }
+
+  final override fun removeFullUpdateListener(listener: DocumentFullUpdateListener) {
+    fullUpdateListeners.remove(listener)
+  }
+
+  final override fun firePropertyChange(hostDocument: Document, isReadOnly: Boolean) {
+    propertyListeners.firePropertyChange(
+      hostDocument,
+      Document.PROP_WRITABLE,
+      !isReadOnly,
+      isReadOnly,
+    )
+  }
+
+  final override fun fireReadOnlyModificationAttempt(hostDocument: Document) {
+    for (listener in readOnlyListeners) {
       listener.readOnlyModificationAttempt(hostDocument)
     }
   }
 
-  override fun fireDocumentFullUpdated(hostDocument: Document) {
-    for (listener in myFullUpdateListeners) {
+  final override fun fireDocumentFullUpdated(hostDocument: Document) {
+    for (listener in fullUpdateListeners) {
       listener.onFullUpdateDocument(hostDocument)
     }
   }
 
-  override fun fireBulkUpdateStarting(hostDocument: Document) {
-    try {
-      getBulkPublisher().updateStarted(hostDocument)
-      val exceptions = DocumentDelayedExceptions(isPCEWarningEnabled())
-      val listeners = getListeners()
-      for (i in listeners.indices.reversed()) {
-        try {
-          listeners[i].bulkUpdateStarting(hostDocument)
-        } catch (e: Throwable) {
-          exceptions.register(e)
-        }
-      }
-      exceptions.rethrowPCE()
-    } finally {
-      bulkUpdateInProgress = true
-      bulkUpdateTrace = Throwable()
-    }
-  }
-
-  override fun fireBulkUpdateFinished(hostDocument: Document) {
-    bulkUpdateInProgress = false
-    bulkUpdateTrace = null
-    val exceptions = DocumentDelayedExceptions(isPCEWarningEnabled())
-    val listeners = getListeners()
-    for (listener in listeners) {
-      try {
-        listener.bulkUpdateFinished(hostDocument)
-      } catch (e: Throwable) {
-        exceptions.register(e)
-      }
-    }
-    getBulkPublisher().updateFinished(hostDocument)
-    exceptions.rethrowPCE()
-  }
-
-  override fun isInBulkUpdate(): Boolean {
-    return bulkUpdateInProgress
-  }
-
-  override fun assertNotInBulkUpdate() {
-    if (isInBulkUpdate()) {
-      throw UnexpectedBulkUpdateStateException(bulkUpdateTrace)
-    }
-  }
-
   protected fun getListeners(): Array<DocumentListener> {
-    return myListeners.getArray()
+    return listeners.getArray()
   }
 
-  protected fun isPCEWarningEnabled(): Boolean {
-    return mySettings.isPCEWarningEnabled()
+  private fun addDeprecatedBulkUpdatePublisher() {
+    // it is scheduled for removal api, don't care about document listener priority
+    listeners.add(object : DocumentListener {
+      override fun bulkUpdateStarting(document: Document) {
+        getBulkPublisher().updateStarted(document)
+      }
+      override fun bulkUpdateFinished(document: Document) {
+        getBulkPublisher().updateFinished(document)
+      }
+    })
   }
 
   companion object {

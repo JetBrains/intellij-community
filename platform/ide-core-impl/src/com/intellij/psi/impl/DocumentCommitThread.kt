@@ -7,7 +7,6 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.lang.FileASTNode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EditorLockFreeTyping
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.ReadAndWriteScope
@@ -217,9 +216,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
       ApplicationManager.getApplication().assertIsNonDispatchThread()
     }
     val document = task.myDocumentRef.get()
-    if (!EditorLockFreeTyping.isInElfScope(document)) {
-      ApplicationManager.getApplication().assertReadAccessAllowed()
-    }
+    ApplicationManager.getApplication().assertReadAccessAllowed()
     if (document == null) return {}
     val project = task.myProject
     val finishProcessors = SmartList<BooleanRunnable>()
@@ -439,9 +436,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     if (!synchronously) {
       ApplicationManager.getApplication().assertIsNonDispatchThread()
     }
-    if (!EditorLockFreeTyping.isInElfScope(document)) {
-      ApplicationManager.getApplication().assertReadAccessAllowed()
-    }
+    ApplicationManager.getApplication().assertReadAccessAllowed()
     val newDocumentText = document.getImmutableCharSequence()
 
     val data = document.getUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY)

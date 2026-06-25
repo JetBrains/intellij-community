@@ -264,7 +264,7 @@ abstract class CustomWrapsTestBase : AbstractEditorTest() {
     addCustomWrap(2)
     assertSize(1, registeredSoftWraps())
 
-    editor.elfDocument.addDocumentListener(object : DocumentListener {
+    editor.document.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
         if (DocumentEventUtil.isMoveInsertion(event)) {
           assertEmpty(registeredSoftWraps())

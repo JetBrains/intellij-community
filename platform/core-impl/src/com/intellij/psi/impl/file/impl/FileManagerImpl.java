@@ -11,7 +11,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -463,17 +462,15 @@ public final class FileManagerImpl implements FileManagerEx {
   }
 
   @Override
-  @RequiresReadLock(generateAssertion = false) // assert for real vFile
+  @RequiresReadLock
   public @Nullable PsiFile findFile(@NotNull VirtualFile vFile) {
-    EditorLockFreeTyping.assertReadAccess(vFile);
     CodeInsightContext context = CodeInsightContexts.anyContext();
     return findFile(vFile, context);
   }
 
   @Override
-  @RequiresReadLock(generateAssertion = false) // assert for real vFile
+  @RequiresReadLock
   public @Nullable PsiFile findFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context) {
-    EditorLockFreeTyping.assertReadAccess(vFile);
     if (vFile.isDirectory()) return null;
 
     if (!vFile.isValid()) {
@@ -486,10 +483,9 @@ public final class FileManagerImpl implements FileManagerEx {
     return viewProvider.getPsi(viewProvider.getBaseLanguage());
   }
 
-  @RequiresReadLock(generateAssertion = false) // assert for real vFile
+  @RequiresReadLock
   @Override
   public @Nullable PsiFile getCachedPsiFile(@NotNull VirtualFile vFile) {
-    EditorLockFreeTyping.assertReadAccess(vFile);
     return getCachedPsiFile(vFile, CodeInsightContexts.anyContext());
   }
 

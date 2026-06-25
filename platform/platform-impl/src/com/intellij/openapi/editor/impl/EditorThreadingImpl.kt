@@ -3,7 +3,7 @@
 
 package com.intellij.openapi.editor.impl
 
-import com.intellij.openapi.application.EditorLockFreeTyping
+import com.intellij.openapi.editor.elf.ElfFeatureFlag
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.editor.EditorThreading
@@ -74,7 +74,7 @@ class EditorThreadingImpl : EditorThreading {
   }
 
   private fun isLockFreeTypingAllowed(): Boolean {
-    return EditorLockFreeTyping.isEnabled() && EDT.isCurrentThreadEdt()
+    return ElfFeatureFlag.isEnabled() && EDT.isCurrentThreadEdt()
   }
 
   /**

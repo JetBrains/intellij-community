@@ -117,11 +117,4 @@ interface DocumentMutator {
     newModStamp: Long,
     wholeTextReplaced: Boolean,
   )
-
-  /**
-   * Does not change any content of the document.
-   * From the design side it would be more correct to place this method in [DocumentEventDispatcher],
-   * but due to some implementation details, it is convenient to keep it here.
-   */
-  fun setBulkModeStatus(hostDocument: Document, status: Boolean)
 }

@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
+import com.intellij.openapi.editor.elf.ElfFeatureFlag;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.DocumentFullUpdateListener;
@@ -26,6 +27,13 @@ import org.jetbrains.annotations.TestOnly;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 
+/**
+ * For historical reasons, this class is public, being an internal implementation {@link DocumentEx}.
+ * <p>
+ * Since 263 the actual implementation has been hidden behind an interface.
+ * All methods delegate to {@link #impl}.
+ * Never add a new field or method implementation here but use {@link DocumentCore} to add new functionality.
+ */
 public final class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   /**
@@ -67,14 +75,21 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   public DocumentImpl(@NotNull CharSequence chars, boolean acceptSlashR, boolean forUseInNonAWTThread) {
-    this(DocumentCoreImpl.createCore(chars, acceptSlashR, forUseInNonAWTThread));
+    this(
+      (forUseInNonAWTThread || !ElfFeatureFlag.isEnabled())
+      ? DocumentCoreImpl.createCore(chars, acceptSlashR, forUseInNonAWTThread)
+      : DocumentMagicCoreImpl.createCore(chars, acceptSlashR, forUseInNonAWTThread)
+    );
   }
 
-  @ApiStatus.Internal
-  public DocumentImpl(@NotNull DocumentCore impl) {
+  private DocumentImpl(@NotNull DocumentCore impl) {
     this(impl, null);
   }
 
+  /**
+   * @param hostDocument null if this document is the host,
+   *                     non-null if this document is a "view" over the corresponding host document
+   */
   @ApiStatus.Internal
   public DocumentImpl(@NotNull DocumentCore impl, @Nullable DocumentImpl hostDocument) {
     this.impl = impl;
@@ -277,7 +292,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   @SuppressWarnings("deprecation") // impl of deprecated method
   @Override
   public void setInBulkUpdate(boolean status) {
-    impl.mutator().setBulkModeStatus(hostDocument(), status);
+    impl.dispatcher().setBulkModeStatus(hostDocument(), status);
   }
 
   @Override

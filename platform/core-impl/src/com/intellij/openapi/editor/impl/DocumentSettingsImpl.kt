@@ -108,7 +108,9 @@ internal class DocumentSettingsImpl private constructor(
   }
 
   override fun stopGuardCheck() {
-    val old = mutableSettings.getAndUpdate { it.copy(isGuardCheckEnabled=(it.isGuardCheckEnabled - 1)) }
+    val old = mutableSettings.getAndUpdate {
+      it.copy(isGuardCheckEnabled=(it.isGuardCheckEnabled - 1))
+    }
     LOG.assertTrue(old.isGuardCheckEnabled > 0) {
       "Unpaired start/stopGuardedBlockChecking"
     }
