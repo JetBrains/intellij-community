@@ -429,6 +429,16 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val testModules = let {
       if (searchForTestsAcrossModuleDependencies && System.getProperty("pass.jar.dependencies.to.tests") == null && options.testSimplePatterns == null) guessTestModulesForGroupsAndPatterns(mainModule, rootExcludeCondition, systemProperties)
       else listOf(mainModule)
+    }.let { modules ->
+      //filter out only for community (ALL_EXCLUDE_DEFINED)
+      if (options.testGroups?.contains(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED) == true) {
+        val (bazelMigratedModules, jpsModules) = modules.partition { COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES.contains(it.name) }
+        if (bazelMigratedModules.isNotEmpty()) {
+          context.messages.info("Skipping tests in ${bazelMigratedModules.size} modules migrated to Bazel: ${bazelMigratedModules.joinToString(", ") { it.name }}")
+        }
+        jpsModules
+      }
+      else modules
     }
 
     context.messages.info("Will run tests from simple patterns, patterns, or groups in ${testModules.size} modules: ${testModules.joinToString(", ") { it.name }}")
@@ -1475,3 +1485,7 @@ private suspend fun publishTestDiscovery(messages: BuildMessages, file: String?)
   }
   messages.buildStatus("With Discovery, {build.status.text}")
 }
+
+private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
+  "intellij.maven.server.eventListener.tests"
+)
