@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsi
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtContainerNode
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
@@ -26,12 +28,27 @@ internal object NoReturnValueFactory {
             createQuickFix(diagnostic.psi)
         }
 
+    val noReturnValueCoercion =
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ReturnValueNotUsedCoercion ->
+            createQuickFix(diagnostic.psi)
+        }
+
     private fun createQuickFix(
         element: KtElement,
     ): List<UnderscoreValueFix> {
-        val parent = findParentOrOuterMostParentheses(element) ?: return emptyList()
+        val expression = element.getExpressionToWrap() ?: return emptyList()
+        val parent = expression as? KtCallableReferenceExpression ?: (findParentOrOuterMostParentheses(expression) ?: return emptyList())
         if (!isSuitableParent(parent)) return emptyList()
-        return listOf(UnderscoreValueFix(element, parent.createSmartPointer()))
+        return listOf(UnderscoreValueFix(expression, parent.createSmartPointer()))
+    }
+
+    private fun KtElement.getExpressionToWrap(): KtElement? {
+        val parent = parent
+        return when (parent) {
+            is KtCallExpression if parent.calleeExpression == this -> parent
+            is KtCallableReferenceExpression if parent.callableReference == this -> parent
+            else -> this
+        }
     }
 
     private fun findParentOrOuterMostParentheses(element: KtElement): PsiElement? {
@@ -50,6 +67,7 @@ internal object NoReturnValueFactory {
                 || element is KtBinaryExpression
                 || element is KtWhenEntry
                 || element is KtContainerNode
+                || element is KtCallableReferenceExpression
 
     private class UnderscoreValueFix(
         element: KtElement,
@@ -83,6 +101,12 @@ internal object NoReturnValueFactory {
             val newExpression = when (parent) {
                 is KtBlockExpression -> {
                     factory.createDeclaration(baseExpressionText)
+                }
+                is KtCallableReferenceExpression -> {
+                    val referencedName = parent.callableReference.text
+                    val receiverText = parent.receiverExpression?.text
+                    val callText = if (receiverText != null) "$receiverText.$referencedName()" else "$referencedName()"
+                    factory.createExpression("{ val _ = $callText }")
                 }
                 is KtParenthesizedExpression if parent.parent !is KtContainerNode -> {
                     factory.createDeclaration("val _ = ${parent.text}")

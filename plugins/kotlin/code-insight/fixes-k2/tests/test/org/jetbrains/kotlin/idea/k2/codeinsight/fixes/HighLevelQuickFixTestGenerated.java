@@ -8598,6 +8598,21 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/explicitlyIgnoreReturnValue/binaryExpressions.kt");
         }
 
+        @TestMetadata("coercion.kt")
+        public void testCoercion() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/explicitlyIgnoreReturnValue/coercion.kt");
+        }
+
+        @TestMetadata("coercionInCallable.kt")
+        public void testCoercionInCallable() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/explicitlyIgnoreReturnValue/coercionInCallable.kt");
+        }
+
+        @TestMetadata("coercionInCallable1.kt")
+        public void testCoercionInCallable1() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/explicitlyIgnoreReturnValue/coercionInCallable1.kt");
+        }
+
         @TestMetadata("if.kt")
         public void testIf() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/explicitlyIgnoreReturnValue/if.kt");

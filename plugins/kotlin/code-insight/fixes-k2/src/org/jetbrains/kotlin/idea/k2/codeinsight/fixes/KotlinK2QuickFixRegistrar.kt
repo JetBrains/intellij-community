@@ -458,6 +458,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(AnnotationUsedAsAnnotationArgumentFixFactories.removeAtFromAnnotationArgumentFixFactory)
 
         registerFactory(NoReturnValueFactory.noReturnValue)
+        registerFactory(NoReturnValueFactory.noReturnValueCoercion)
     }
 
     private val whenStatements = KtQuickFixesListBuilder.registerPsiQuickFix {
