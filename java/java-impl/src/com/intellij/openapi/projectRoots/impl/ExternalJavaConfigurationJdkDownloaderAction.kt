@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadUtil
@@ -37,7 +38,7 @@ public class ExternalJavaConfigurationJdkDownloaderAction : ExternalJavaConfigur
   }
 
   private class MyAction<T: JdkReleaseData>(val downloadExtension: SdkDownload, val provider: ExternalJavaConfigurationProvider<T>, val releaseData: T) :
-    AnAction(JavaBundle.message("external.java.configuration.download.in.ide"),
+    DumbAwareAction(JavaBundle.message("external.java.configuration.download.in.ide"),
              null, AllIcons.Actions.Download) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
