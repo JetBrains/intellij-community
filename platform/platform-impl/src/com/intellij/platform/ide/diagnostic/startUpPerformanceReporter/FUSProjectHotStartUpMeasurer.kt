@@ -21,6 +21,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.impl.zombie.SpawnRecipe
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
@@ -30,8 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.EmptyProjectMarker
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.MarkupType
-import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.getContextElementWithEmptyProjectElementToPass
-import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.getStartUpContextElementIntoIdeStarter
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.isRemDevTestWorkaround
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.util.PlatformUtils
@@ -363,12 +362,11 @@ object FUSProjectHotStartUpMeasurer {
     channel.trySend(Event.MarkupRestoredEvent(recipe.fileId, type))
   }
 
-  fun firstOpenedEditor(file: VirtualFile, project: Project) {
+  fun firstOpenedEditor(file: VirtualFile, project: Project, fileEditor: FileEditor) {
     withRequiredProjectMarker { projectId ->
       channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.TextEditor, file, System.nanoTime(), projectId))
       if (ApplicationManagerEx.isInIntegrationTest()) {
-        val fileEditorManager = FileEditorManager.getInstance(project)
-        checkEditorHasBasicHighlight(file, project, fileEditorManager)
+        checkEditorHasBasicHighlight(file, project, fileEditor)
       }
     }
   }
@@ -377,9 +375,7 @@ object FUSProjectHotStartUpMeasurer {
    * Unfortunately, the current architecture doesn't allow checking that there is basic highlighting (syntax plus maybe folding) in an editor.
    * Here are some heuristics that may save us from bugs, but that is not guaranteed.
    */
-  private fun checkEditorHasBasicHighlight(file: VirtualFile, project: Project, fileEditorManager: FileEditorManager) {
-    val textEditor = fileEditorManager.getEditors(file)[0]
-
+  private fun checkEditorHasBasicHighlight(file: VirtualFile, project: Project, textEditor: FileEditor) {
     if (textEditor !is TextEditor) {
       thisLogger().warn("The editor is not a TextEditor, but ${textEditor.javaClass.name}. Skipping checkEditorHasBasicHighlight")
       return
@@ -414,8 +410,10 @@ object FUSProjectHotStartUpMeasurer {
           return@withRequiredProjectMarker
         }
         val project = openProjects[0]
-        val fileEditorManager = FileEditorManager.getInstance(project)
-        checkEditorHasBasicHighlight(file, project, fileEditorManager)
+        val editors = FileEditorManager.getInstance(project).getEditors(file)
+        if (!editors.isEmpty()) {
+          checkEditorHasBasicHighlight(file, project, editors[0])
+        }
       }
     }
   }

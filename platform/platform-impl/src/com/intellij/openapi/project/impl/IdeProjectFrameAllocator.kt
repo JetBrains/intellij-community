@@ -636,7 +636,7 @@ private fun focusSelectedEditorInComposite(composite: EditorComposite) {
   }
   else {
     AsyncEditorLoader.performWhenLoaded(textEditor.editor) {
-      FUSProjectHotStartUpMeasurer.firstOpenedEditor(composite.file, composite.project)
+      FUSProjectHotStartUpMeasurer.firstOpenedEditor(composite.file, composite.project, textEditor)
       preferredFocusedComponent.requestFocusInWindow()
     }
   }
