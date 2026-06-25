@@ -45,7 +45,6 @@ import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.usageView.UsageTreeColorsScheme;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -391,18 +390,14 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   @RequiresBackgroundThread
   protected void collectFiles(@NotNull Consumer<? super @NotNull PsiFile> consumer) {
-    if (shouldUseSplitTodo()) {
-      myCoroutineHelper.collectFilesFromFlow(getTodoTreeStructure().getTodoFilter(), consumer);
-    } else {
-      TodoTreeStructure treeStructure = getTodoTreeStructure();
-      PsiTodoSearchHelper searchHelper = getSearchHelper();
-      searchHelper.processFilesWithTodoItems(psiFile -> {
-        if (searchHelper.getTodoItemsCount(psiFile) > 0 && treeStructure.accept(psiFile)) {
-          consumer.accept(psiFile);
-        }
-        return true;
-      });
-    }
+    TodoTreeStructure treeStructure = getTodoTreeStructure();
+    PsiTodoSearchHelper searchHelper = getSearchHelper();
+    searchHelper.processFilesWithTodoItems(psiFile -> {
+      if (searchHelper.getTodoItemsCount(psiFile) > 0 && treeStructure.accept(psiFile)) {
+        consumer.accept(psiFile);
+      }
+      return true;
+    });
   }
 
   @RequiresBackgroundThread

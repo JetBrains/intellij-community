@@ -4,16 +4,12 @@ package com.intellij.ide.todo.rpc
 import com.intellij.ide.todo.TodoFilter
 import com.intellij.ide.todo.model.TodoScope
 import com.intellij.ide.vfs.rpcId
-import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.projectId
 import fleet.rpc.client.durable
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.toList
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -30,38 +26,6 @@ suspend fun collectWatchedTodoFiles(
      collector(event)
     }
   }
-}
-
-@ApiStatus.Internal
-suspend fun listTodoFiles(
-  project: Project,
-  filter: TodoFilter?
-): Flow<TodoFileResult> = durable {
-  val projectId: ProjectId = project.projectId()
-  TodoRemoteApi.getInstance().listTodoFiles(projectId, filter?.let { toConfig(it) })
-}
-
-@ApiStatus.Internal
-fun findAllTodos(
-  project: Project,
-  file: VirtualFile,
-  filter: TodoFilter?
-): List<TodoResult> = runBlockingCancellable {
-  durable {
-    val projectId: ProjectId = project.projectId()
-    val settings = TodoQuerySettings(file.rpcId(), filter?.let { toConfig(it) })
-    TodoRemoteApi.getInstance().listTodos(projectId, settings).toList()
-  }
-}
-
-@ApiStatus.Internal
-suspend fun getFilesWithTodos(
-  project: Project,
-  filter: TodoFilter?
-): Flow<VirtualFile> = durable {
-  val projectId: ProjectId = project.projectId()
-  TodoRemoteApi.getInstance().getFilesWithTodos(projectId, filter?.let { toConfig(it) })
-    .mapNotNull { it.virtualFile() }
 }
 
 @ApiStatus.Internal

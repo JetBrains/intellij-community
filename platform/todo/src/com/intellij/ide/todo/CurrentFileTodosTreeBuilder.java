@@ -13,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.JTree;
 import java.util.function.Consumer;
 
-import static com.intellij.ide.todo.TodoImplementationChooserKt.shouldUseSplitTodo;
 import static com.intellij.ide.vfs.VirtualFileIdKt.rpcId;
 
 @ApiStatus.Internal
@@ -37,7 +36,7 @@ public final class CurrentFileTodosTreeBuilder extends TodoTreeBuilder {
   }
 
   @ApiStatus.Internal
-  public @Nullable VirtualFile getCurrentFile() {
+  private @Nullable VirtualFile getCurrentFile() {
     CurrentFileTodosTreeStructure treeStructure = (CurrentFileTodosTreeStructure)getTodoTreeStructure();
     PsiFile psiFile = treeStructure.getFile();
     return psiFile == null ? null : psiFile.getVirtualFile();
@@ -49,12 +48,8 @@ public final class CurrentFileTodosTreeBuilder extends TodoTreeBuilder {
     PsiFile psiFile = treeStructure.getFile();
 
     if (psiFile != null) {
-      if (shouldUseSplitTodo()) {
-        getCoroutineHelper().collectCurrentFileWithCachedTodos(psiFile, treeStructure.getTodoFilter(), consumer);
-      } else {
-        if (treeStructure.accept(psiFile)) {
-          consumer.accept(psiFile);
-        }
+      if (treeStructure.accept(psiFile)) {
+        consumer.accept(psiFile);
       }
     }
   }

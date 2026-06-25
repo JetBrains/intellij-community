@@ -3,36 +3,26 @@ package com.intellij.platform.todo.backend.rpc
 
 import com.intellij.ide.todo.TodoConfiguration
 import com.intellij.ide.todo.TodoFilter
-import com.intellij.ide.todo.model.TodoScope
 import com.intellij.ide.todo.rpc.TodoEvent
-import com.intellij.ide.todo.rpc.TodoFileResult
 import com.intellij.ide.todo.rpc.TodoFilesWatchRequest
 import com.intellij.ide.todo.rpc.TodoFilterConfig
 import com.intellij.ide.todo.rpc.TodoPatternConfig
-import com.intellij.ide.todo.rpc.TodoQuerySettings
 import com.intellij.ide.todo.rpc.TodoRemoteApi
-import com.intellij.ide.todo.rpc.TodoResult
 import com.intellij.ide.vfs.VirtualFileId
-import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.todo.backend.model.BackendTodoModel
-import com.intellij.platform.todo.backend.model.TodoFileResultBuilder.buildTodoFileResult
-import com.intellij.platform.todo.backend.model.TodoFileResultBuilder.collectTodoResults
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.PsiTodoSearchHelper
 import com.intellij.psi.search.TodoAttributesUtil
 import com.intellij.psi.search.TodoPattern
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 
 private val LOG: Logger = logger<TodoRemoteApiImpl>()
@@ -52,73 +42,6 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
       }
     }
   }
-
-  override fun listTodoFiles(
-    projectId: ProjectId,
-    filter: TodoFilterConfig?,
-  ): Flow<TodoFileResult> = channelFlow {
-    val project = projectId.findProjectOrNull() ?: return@channelFlow
-    val resolvedFilter = resolveFilter(project, filter)
-
-    readAction {
-      blockingContextToIndicator {
-        val helper = PsiTodoSearchHelper.getInstance(project)
-
-        helper.processFilesWithTodoItems { psiFile ->
-          val virtualFile = psiFile.virtualFile ?: return@processFilesWithTodoItems true
-          val result = buildTodoFileResult(project, psiFile, virtualFile, resolvedFilter) ?: return@processFilesWithTodoItems true
-          trySend(result).isSuccess
-        }
-      }
-    }
-  }.buffer(Channel.UNLIMITED)
-
-  override fun listTodos(
-    projectId: ProjectId,
-    settings: TodoQuerySettings
-  ): Flow<TodoResult> = channelFlow {
-    val project = projectId.findProjectOrNull() ?: return@channelFlow
-    val virtualFile = settings.fileId.virtualFile() ?: return@channelFlow
-    val filter = resolveFilter(project, settings.filter)
-
-    val results: List<TodoResult> = readAction {
-      val psiFile = PsiManager.getInstance(project).findFile(virtualFile) ?: return@readAction emptyList()
-      collectTodoResults(project, psiFile, virtualFile, filter)
-    }
-
-    for (result in results) {
-      send(result)
-    }
-  }
-
-  override fun getFilesWithTodos(
-    projectId: ProjectId,
-    filter: TodoFilterConfig?,
-  ): Flow<VirtualFileId> = channelFlow {
-    val project = projectId.findProjectOrNull() ?: return@channelFlow
-    val resolvedFilter = resolveFilter(project, filter)
-
-    readAction {
-      blockingContextToIndicator {
-        val helper = PsiTodoSearchHelper.getInstance(project)
-
-        helper.processFilesWithTodoItems { psiFile ->
-          val virtualFile = psiFile.virtualFile ?: return@processFilesWithTodoItems true
-
-          val matchesFilter = if (resolvedFilter != null) {
-            resolvedFilter.accept(helper, psiFile)
-          } else {
-            helper.getTodoItemsCount(psiFile) > 0
-          }
-
-          if (!matchesFilter) {
-            return@processFilesWithTodoItems true
-          }
-          trySend(virtualFile.rpcId()).isSuccess
-        }
-      }
-    }
-  }.buffer(Channel.UNLIMITED)
 
   override suspend fun getTodoCount(
     projectId: ProjectId,

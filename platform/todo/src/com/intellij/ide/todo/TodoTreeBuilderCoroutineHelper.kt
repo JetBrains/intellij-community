@@ -7,14 +7,7 @@ import com.intellij.ide.todo.model.FrontendTodoModel
 import com.intellij.ide.todo.model.TodoScope
 import com.intellij.ide.todo.rpc.TodoEvent
 import com.intellij.ide.todo.rpc.TodoFileResult
-import com.intellij.ide.todo.rpc.TodoQuerySettings
-import com.intellij.ide.todo.rpc.TodoRemoteApi
-import com.intellij.ide.todo.rpc.TodoResult
 import com.intellij.ide.todo.rpc.collectWatchedTodoFiles
-import com.intellij.ide.todo.rpc.fileMatchesFilter
-import com.intellij.ide.todo.rpc.getFilesWithTodos
-import com.intellij.ide.todo.rpc.toConfig
-import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
@@ -26,29 +19,19 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContextToIndicator
-import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.tree.TreeUtil
-import fleet.rpc.client.durable
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
-import java.util.function.Consumer
 
 private val ASYNC_BATCH_SIZE by lazy { RegistryManager.getInstance().get("ide.tree.ui.async.batch.size") }
 
@@ -105,19 +88,6 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
     treeBuilder.addRemoteTodoFileToTree(file)
   }
 
-  @RequiresBackgroundThread
-  @RequiresReadLock
-  fun collectFilesFromFlow(filter: TodoFilter?, consumer: Consumer<in PsiFile>) {
-    runBlockingCancellable {
-      val psiManager = PsiManager.getInstance(treeBuilder.project)
-      getFilesWithTodos(treeBuilder.project, filter).collect { virtualFile ->
-        val psiFile = psiManager.findFile(virtualFile) ?: return@collect
-        treeBuilder.cacheRemoteTodos(virtualFile, findAllTodosSuspend(treeBuilder.project, virtualFile, filter))
-        consumer.accept(psiFile)
-      }
-    }
-  }
-
   fun scheduleCacheAndTreeUpdate(vararg constraints: ReadConstraint): CompletableFuture<*> {
     val todoScope = treeBuilder.scope
     if (shouldUseSplitTodo() && todoScope != null) {
@@ -159,7 +129,7 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
   }
 
   fun scheduleMarkFilesAsDirtyAndUpdateTree(files: List<VirtualFile>) {
-    if (shouldUseSplitTodo() && (treeBuilder is AllTodosTreeBuilder || treeBuilder is CurrentFileTodosTreeBuilder || treeBuilder is ScopeBasedTodosTreeBuilder) && remoteTodoFilesWatchJob?.isActive == true) {
+    if (shouldUseSplitTodo() && remoteTodoFilesWatchJob?.isActive == true) {
       return
     }
 
@@ -171,69 +141,6 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
 
         treeBuilder.updateVisibleTree()
       }
-
-      if (shouldUseSplitTodo()) {
-        scheduleRemoteCacheRefresh(files)
-      }
-    }
-  }
-
-  private fun scheduleRemoteCacheRefresh(files: List<VirtualFile>) {
-    remoteCacheRefreshJob?.cancel()
-    remoteCacheRefreshJob = scope.launch(Dispatchers.Default + ClientId.current.asContextElement()) {
-      val filter = treeBuilder.todoTreeStructure.todoFilter
-      for (file in files) {
-        if (!file.isValid) continue
-        runCatching {
-          treeBuilder.cacheRemoteTodos(file, findAllTodosSuspend(treeBuilder.project, file, filter))
-        }.onFailure { e ->
-          if (e is CancellationException) throw e
-          LOG.warn("Failed to retrieve TODOs for ${file.path}", e)
-          treeBuilder.clearRemoteTodosCache(file)
-        }
-      }
-      readActionBlocking {
-        treeBuilder.updateVisibleTree()
-      }
-    }
-  }
-
-  @RequiresBackgroundThread
-  @RequiresReadLock
-  fun collectCurrentFileWithCachedTodos(
-    psiFile: PsiFile,
-    filter: TodoFilter?,
-    consumer: Consumer<in PsiFile>,
-  ) {
-    runBlockingCancellable {
-      val virtualFile = psiFile.virtualFile ?: return@runBlockingCancellable
-
-      runCatching {
-        if (!fileMatchesFilter(treeBuilder.project, virtualFile, filter)) {
-          treeBuilder.clearRemoteTodosCache(virtualFile)
-          return@runBlockingCancellable
-        }
-
-        val todos = findAllTodosSuspend(treeBuilder.project, virtualFile, filter)
-        treeBuilder.cacheRemoteTodos(virtualFile, todos)
-        consumer.accept(psiFile)
-      }.onFailure { e ->
-        LOG.warn("Failed to collect todos for file ${virtualFile?.path}", e)
-        treeBuilder.clearRemoteTodosCache(virtualFile)
-      }
-    }
-  }
-
-  @ApiStatus.Internal
-  suspend fun findAllTodosSuspend(
-    project: Project,
-    file: VirtualFile,
-    filter: TodoFilter?
-  ) : List<TodoResult> {
-    return durable {
-      val projectId = project.projectId()
-      val settings = TodoQuerySettings(file.rpcId(), filter?.let { toConfig(it) })
-      TodoRemoteApi.getInstance().listTodos(projectId, settings).toList()
     }
   }
 }
