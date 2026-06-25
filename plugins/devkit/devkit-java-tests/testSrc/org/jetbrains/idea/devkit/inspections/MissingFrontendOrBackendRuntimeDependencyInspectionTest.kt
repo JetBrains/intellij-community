@@ -2,11 +2,12 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.IntelliJProjectUtil
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -237,6 +238,7 @@ internal class MissingFrontendOrBackendRuntimeDependencyFixTest : JavaCodeInsigh
   fun testAddingBackendDependencyWhenDependenciesElementDoesNotExist() = testAddingDependencyWhenDependenciesElementDoesNotExist("backend")
 
   fun testAddToExclusionsFixIsHiddenOutsideIntelliJProject() {
+    enableAddToExclusionsQuickFix()
     IntelliJProjectUtil.markAsIntelliJPlatformProject(project, false)
 
     val testedFile = myFixture.addXmlFile("intellij.test.feature.frontend.xml", """
@@ -252,6 +254,7 @@ internal class MissingFrontendOrBackendRuntimeDependencyFixTest : JavaCodeInsigh
   }
 
   fun testAddToExclusionsFixIsLastAndAppendsEntry() {
+    enableAddToExclusionsQuickFix()
     IntelliJProjectUtil.markAsIntelliJPlatformProject(project, true)
 
     val testedFile = myFixture.addXmlFile("intellij.test.feature.frontend.xml", """
@@ -327,6 +330,11 @@ internal class MissingFrontendOrBackendRuntimeDependencyFixTest : JavaCodeInsigh
     assertTrue(fileText.contains("<!-- no dependency -->"))
     assertTrue(fileText.contains("<dependencies>"))
     assertTrue(fileText.contains("intellij.platform.$frontendOrBackend"))
+  }
+
+  private fun enableAddToExclusionsQuickFix() {
+    RegistryManager.getInstance().get("devkit.split.mode.add.to.exclusions.quick.fix.enabled")
+      .setValue(true, testRootDisposable)
   }
 
 }

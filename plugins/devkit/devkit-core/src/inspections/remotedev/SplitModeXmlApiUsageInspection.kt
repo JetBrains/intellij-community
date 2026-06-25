@@ -47,11 +47,11 @@ internal class SplitModeXmlApiUsageInspection : DevKitPluginXmlInspectionBase() 
       return
     }
     val regularFixes = SplitModeDependencyQuickFixes.createMismatchFixes(module, currentlyOpenedDescriptor, expectedModuleKind)
-    val suppressionFix = SplitModeInspectionExclusionsService.getInstance(currentXmlFile.project).createSuppressionFixIfApplicable(
+    val suppressionFixes = SplitModeInspectionExclusionsService.getInstance(currentXmlFile.project).createCommonSuppressionQuickFixes(
       xmlElement,
       SPLIT_MODE_XML_API_USAGE_SHORT_NAME,
     )
-    val fixes = if (suppressionFix != null) regularFixes + suppressionFix else regularFixes
+    val fixes = regularFixes + suppressionFixes
     holder.createProblem(
       element,
       buildModuleKindMismatchMessage(extensionPointName, expectedModuleKind, actualModuleKind, hint),

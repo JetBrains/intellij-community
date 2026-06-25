@@ -127,10 +127,11 @@ class SplitModeApiUsageInspection : DevKitUastInspectionBase(UClass::class.java,
         return
       }
       val regularFixes = SplitModeDependencyQuickFixes.createMismatchFixes(module, null, expectedModuleKind)
-      val suppressionFix =
-        SplitModeInspectionExclusionsService.getInstance(sourcePsi.project).createSuppressionFixIfApplicable(sourcePsi,
-                                                                                                             SPLIT_MODE_API_USAGE_SHORT_NAME)
-      val fixes = if (suppressionFix != null) regularFixes + suppressionFix else regularFixes
+      val suppressionFixes = SplitModeInspectionExclusionsService.getInstance(sourcePsi.project).createCommonSuppressionQuickFixes(
+        sourcePsi,
+        SPLIT_MODE_API_USAGE_SHORT_NAME,
+      )
+      val fixes = regularFixes + suppressionFixes
 
       descriptors.add(
         manager.createProblemDescriptor(

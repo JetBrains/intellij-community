@@ -41,11 +41,11 @@ internal class SplitModeImplicitModuleKindInspection : DevKitPluginXmlInspection
 
     val regularFixes =
       SplitModeDependencyQuickFixes.createAddExplicitDependenciesFixes(module, element, moduleAnalysis.resolvedModuleKind.kind)
-    val suppressionFix = exclusionsService.createSuppressionFixIfApplicable(
+    val suppressionFixes = exclusionsService.createCommonSuppressionQuickFixes(
       xmlElement,
       SPLIT_MODE_IMPLICIT_MODULE_KIND_SHORT_NAME,
     )
-    val quickFixes = if (suppressionFix != null) regularFixes + suppressionFix else regularFixes
+    val quickFixes = regularFixes + suppressionFixes
     holder.createProblem(
       element,
       ProblemHighlightType.WEAK_WARNING,
