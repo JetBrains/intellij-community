@@ -30,6 +30,30 @@ class DependencyCompletionFuzzyMatcherTest {
   }
 
   @Test
+  fun `partially typed token highlights its common prefix and matching continues`() {
+    // "stater" is a typo for "starter"; only the shared "sta" is highlighted, and "actuator" still matches.
+    // The adjacent "boot-" and "sta" fragments render as a continuous "boot-sta" highlight.
+    assertThat(highlighted("boot-stater-actuator", "spring-boot-starter-actuator"))
+      .containsExactly("boot-", "sta", "actuator")
+  }
+
+  @Test
+  fun `match prefers the artifact over an incidental token match in the group`() {
+    // The group "org.springframework.boot" also ends with a "boot" token, but the artifact matches all
+    // three typed tokens, so the whole highlight lands on the artifact, not the group.
+    assertThat(highlighted("boot-stater-actuator", "org.springframework.boot:spring-boot-starter-actuator:4.1.0"))
+      .containsExactly("boot-", "sta", "actuator")
+  }
+
+  @Test
+  fun `prefix token absent from the candidate is skipped while the rest still matches`() {
+    // The candidate has no "starter" token, so "stater" is skipped; "boot-" and "actuator" are adjacent
+    // in the candidate and render as a continuous "boot-actuator" highlight.
+    assertThat(highlighted("boot-stater-actuator", "spring-boot-actuator"))
+      .containsExactly("boot-", "actuator")
+  }
+
+  @Test
   fun `single token skips non-matching candidate tokens`() {
     assertThat(highlighted("api", "junit-jupiter-api")).containsExactly("api")
   }
