@@ -28,11 +28,6 @@ import static git4idea.GitUtil.HEAD;
 import static git4idea.config.UpdateMethod.MERGE;
 import static git4idea.config.UpdateMethod.REBASE;
 
-/**
- * Updates a single repository via merge or rebase.
- * @see GitRebaseUpdater
- * @see GitMergeUpdater
- */
 public abstract class GitUpdater {
   private static final Logger LOG = Logger.getInstance(GitUpdater.class);
 
@@ -64,10 +59,6 @@ public abstract class GitUpdater {
     myRepositoryManager = GitUtil.getRepositoryManager(myProject);
   }
 
-  /**
-   * Returns proper updater based on the update policy (merge or rebase) selected by user or stored in his .git/config
-   * @return {@link GitMergeUpdater} or {@link GitRebaseUpdater}.
-   */
   public static @NotNull GitUpdater getUpdater(@NotNull Project project,
                                       @NotNull Git git,
                                       @NotNull GitBranchPair trackedBranches,
@@ -161,9 +152,6 @@ public abstract class GitUpdater {
     return true;
   }
 
-  /**
-   * Performs update (via rebase or merge - depending on the implementing classes).
-   */
   protected abstract @NotNull GitUpdateResult doUpdate();
 
   protected void markStart(GitRepository repository) throws VcsException {
