@@ -17,15 +17,24 @@ import com.intellij.openapi.fileEditor.impl.EditorEmptyStateComponentProvider
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.Dimension
+import java.awt.event.ActionEvent
+import java.awt.event.KeyEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import javax.swing.AbstractAction
+import javax.swing.JLabel
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.KeyStroke
+import javax.swing.SwingConstants
 
 internal class AgentWorkbenchInlinePromptEmptyStateProvider : EditorEmptyStateComponentProvider {
   override suspend fun createComponent(splitters: EditorsSplitters): JComponent? = withContext(Dispatchers.EDT) {
@@ -34,9 +43,7 @@ internal class AgentWorkbenchInlinePromptEmptyStateProvider : EditorEmptyStateCo
     }
 
     val project = splitters.manager.project
-    val component = AgentWorkbenchInlinePromptEmptyStateComponent(project)
-    component.initialize()
-    return@withContext component
+    return@withContext AgentWorkbenchInlinePromptEmptyStateComponent(project)
   }
 
   override fun disposeComponent(component: JComponent) {
@@ -49,9 +56,11 @@ internal class AgentWorkbenchInlinePromptEmptyStateComponent(
 ) : JPanel(BorderLayout()), Disposable {
   private val parentDisposable = Disposer.newDisposable("AgentWorkbenchInlinePromptEmptyState")
   private var content: AgentPromptPaletteContent? = null
+  private var initializing: Boolean = false
+  private var disposed: Boolean = false
 
   init {
-    Disposer.register(project, parentDisposable)
+    Disposer.register(this, parentDisposable)
     name = INLINE_PROMPT_COMPONENT_NAME
     isOpaque = true
     background = UIUtil.getPanelBackground()
@@ -59,41 +68,99 @@ internal class AgentWorkbenchInlinePromptEmptyStateComponent(
     preferredSize = JBUI.size(620, 172)
     minimumSize = Dimension(JBUI.scale(420), JBUI.scale(124))
     maximumSize = Dimension(JBUI.scale(760), preferredSize.height)
+    isFocusable = true
+    val accessibleName = AgentPromptBundle.message("inline.empty.state.prompt.accessible.name")
+    getAccessibleContext().accessibleName = accessibleName
+    getAccessibleContext().accessibleDescription = AgentPromptBundle.message("inline.empty.state.prompt.accessible.description")
+
+    val activationMouseListener = object : MouseAdapter() {
+      override fun mouseClicked(e: MouseEvent) {
+        ensureContentInitialized(requestFocus = true)
+      }
+    }
+    addMouseListener(activationMouseListener)
+
+    add(JLabel(accessibleName, SwingConstants.CENTER).apply {
+      isOpaque = false
+      getAccessibleContext().accessibleName = accessibleName
+      addMouseListener(activationMouseListener)
+    }, BorderLayout.CENTER)
+
+    val initializeActionName = "initializeAgentPrompt"
+    actionMap.put(initializeActionName, object : AbstractAction() {
+      override fun actionPerformed(e: ActionEvent?) {
+        ensureContentInitialized(requestFocus = true)
+      }
+    })
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), initializeActionName)
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), initializeActionName)
   }
 
-  fun initialize() {
-    val promptContent = createAgentPromptPaletteContent(
-      invocationData = AgentPromptInvocationData(
-        project = project,
-        actionId = INLINE_PROMPT_ACTION_ID,
-        actionText = AgentPromptBundle.message("inline.empty.state.prompt.accessible.name"),
-        actionPlace = INLINE_PROMPT_PLACE,
-        invokedAtMs = System.currentTimeMillis(),
-      ),
-      contextResolverService = project.service<AgentPromptContextResolverService>(),
-      uiStateService = project.service<AgentPromptUiSessionStateService>(),
-      sessionsMessageResolver = AgentPromptSessionsMessageResolver(AgentPromptPalettePopup::class.java.classLoader),
-      closeHost = ::resetAfterSubmit,
-      isHostActive = { isShowing },
-      revalidateHost = {
-        revalidate()
-        repaint()
-      },
-      parentDisposableName = "AgentWorkbenchInlinePromptEmptyStateContent",
-      parentDisposable = parentDisposable,
-    )
-    content = promptContent
-    configureInlineContent(promptContent)
-    add(promptContent.rootPanel, BorderLayout.CENTER)
-    promptContent.sessionController.initialize()
-    promptContent.sessionController.installHandlers()
+  @RequiresEdt
+  fun ensureContentInitialized(requestFocus: Boolean = false) {
+    val existingContent = content
+    if (existingContent != null) {
+      if (requestFocus) {
+        requestPromptFocus(existingContent)
+      }
+      return
+    }
+    if (disposed || initializing) {
+      return
+    }
+
+    initializing = true
+    val promptContentDisposable = Disposer.newDisposable("AgentWorkbenchInlinePromptEmptyStateContent")
+    var promptContent: AgentPromptPaletteContent? = null
+    try {
+      Disposer.register(parentDisposable, promptContentDisposable)
+      promptContent = createAgentPromptPaletteContent(
+        invocationData = AgentPromptInvocationData(
+          project = project,
+          actionId = INLINE_PROMPT_ACTION_ID,
+          actionText = AgentPromptBundle.message("inline.empty.state.prompt.accessible.name"),
+          actionPlace = INLINE_PROMPT_PLACE,
+          invokedAtMs = System.currentTimeMillis(),
+        ),
+        contextResolverService = project.service<AgentPromptContextResolverService>(),
+        uiStateService = project.service<AgentPromptUiSessionStateService>(),
+        sessionsMessageResolver = AgentPromptSessionsMessageResolver(AgentPromptPalettePopup::class.java.classLoader),
+        closeHost = ::resetAfterSubmit,
+        isHostActive = { isShowing },
+        revalidateHost = {
+          revalidate()
+          repaint()
+        },
+        parentDisposableName = "AgentWorkbenchInlinePromptEmptyStateContent",
+        parentDisposable = promptContentDisposable,
+      )
+      configureInlineContent(promptContent)
+      removeAll()
+      add(promptContent.rootPanel, BorderLayout.CENTER)
+      promptContent.sessionController.initialize()
+      promptContent.sessionController.installHandlers()
+      content = promptContent
+      revalidate()
+      repaint()
+      if (requestFocus) {
+        requestPromptFocus(promptContent)
+      }
+    }
+    catch (e: Throwable) {
+      promptContent?.dispose("Agent prompt empty state initialization failed") ?: Disposer.dispose(promptContentDisposable)
+      throw e
+    }
+    finally {
+      initializing = false
+    }
   }
 
   override fun dispose() {
-    content?.let { promptContent ->
-      promptContent.sessionController.onHostClosed()
-      promptContent.sessionScope.cancel("Agent prompt empty state disposed")
+    if (disposed) {
+      return
     }
+    disposed = true
+    content?.dispose("Agent prompt empty state disposed")
     content = null
     Disposer.dispose(parentDisposable)
   }
@@ -128,8 +195,13 @@ internal class AgentWorkbenchInlinePromptEmptyStateComponent(
   }
 
   private fun resetAfterSubmit() {
-    content?.promptArea?.text = ""
-    content?.sessionController?.initialize()
+    val promptContent = content ?: return
+    promptContent.promptArea.text = ""
+    promptContent.sessionController.initialize()
+  }
+
+  private fun requestPromptFocus(promptContent: AgentPromptPaletteContent) {
+    IdeFocusManager.getInstance(project).requestFocusInProject(promptContent.promptArea, project)
   }
 }
 

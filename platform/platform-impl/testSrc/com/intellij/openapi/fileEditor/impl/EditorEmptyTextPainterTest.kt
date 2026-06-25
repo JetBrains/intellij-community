@@ -26,7 +26,9 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
@@ -39,6 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.KeyStroke
+import kotlin.time.Duration
 
 @TestApplication
 @RunInEdt(writeIntent = true)
@@ -77,6 +80,7 @@ internal class EditorEmptyTextPainterTest {
   @AfterEach
   fun tearDown() {
     originalShortcuts.forEach { (actionId, shortcuts) -> resetShortcuts(actionId, shortcuts) }
+    manager.mainSplitters.setEmptyStateComponentCreationGateForTests(null)
   }
 
   @Test
@@ -136,6 +140,7 @@ internal class EditorEmptyTextPainterTest {
     val disposedComponents = AtomicInteger()
     registerComponentProvider(disposable, disposedComponents)
     manager.closeAllFiles()
+    enableRichEmptyStateComponentsWithoutDelay(splitters)
     splitters.updateEmptyStateComponent()
     waitForEmptyStateComponentCreation(splitters)
 
@@ -163,6 +168,7 @@ internal class EditorEmptyTextPainterTest {
 
     val splitters = manager.mainSplitters
     manager.closeAllFiles()
+    enableRichEmptyStateComponentsWithoutDelay(splitters)
     splitters.updateEmptyStateComponent()
     waitForEmptyStateComponentCreation(splitters)
 
@@ -180,6 +186,7 @@ internal class EditorEmptyTextPainterTest {
 
     val splitters = manager.mainSplitters
     manager.closeAllFiles()
+    enableRichEmptyStateComponentsWithoutDelay(splitters)
     splitters.updateEmptyStateComponent()
     waitForEmptyStateComponentCreation(splitters)
 
@@ -191,6 +198,7 @@ internal class EditorEmptyTextPainterTest {
     val splitters = manager.mainSplitters
     registerComponentProvider(disposable)
     manager.closeAllFiles()
+    enableRichEmptyStateComponentsWithoutDelay(splitters)
     splitters.updateEmptyStateComponent()
     waitForEmptyStateComponentCreation(splitters)
 
@@ -199,6 +207,132 @@ internal class EditorEmptyTextPainterTest {
 
     assertThat(findEmptyStateComponent(splitters)).isNotNull()
     assertThat(element.children).isEmpty()
+  }
+
+  @Test
+  fun componentProviderIsNotInvokedWhileRichEmptyStateComponentsAreSuppressed(@TestDisposable disposable: Disposable) {
+    val providerCalls = AtomicInteger()
+    ExtensionTestUtil.maskExtensions(EditorEmptyStateComponentProvider.EP_NAME, listOf(object : EditorEmptyStateComponentProvider {
+      override suspend fun createComponent(splitters: EditorsSplitters): JComponent {
+        providerCalls.incrementAndGet()
+        return JPanel()
+      }
+    }), disposable)
+
+    val splitters = manager.mainSplitters
+    manager.closeAllFiles()
+    splitters.updateEmptyStateComponent()
+    waitForEmptyStateComponentCreation(splitters)
+
+    assertThat(providerCalls).hasValue(0)
+    assertThat(findEmptyStateComponent(splitters)).isNull()
+  }
+
+  @Test
+  fun suppressingRichEmptyStateComponentsDisposesVisibleComponent(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    val disposedComponents = AtomicInteger()
+    registerComponentProvider(disposable, disposedComponents)
+    manager.closeAllFiles()
+    enableRichEmptyStateComponentsWithoutDelay(splitters)
+    waitForEmptyStateComponentCreation(splitters)
+
+    assertThat(findEmptyStateComponent(splitters)).isNotNull()
+
+    splitters.suppressRichEmptyStateComponents()
+
+    assertThat(findEmptyStateComponent(splitters)).isNull()
+    assertThat(disposedComponents).hasValue(1)
+  }
+
+  @Test
+  fun openFilesAsyncWithoutSavedStateEnablesRichEmptyStateComponents(@TestDisposable disposable: Disposable) {
+    val providerCalls = AtomicInteger()
+    ExtensionTestUtil.maskExtensions(EditorEmptyStateComponentProvider.EP_NAME, listOf(object : EditorEmptyStateComponentProvider {
+      override suspend fun createComponent(splitters: EditorsSplitters): JComponent {
+        providerCalls.incrementAndGet()
+        return withContext(Dispatchers.EDT) {
+          JPanel().apply { name = EMPTY_STATE_COMPONENT_NAME }
+        }
+      }
+    }), disposable)
+
+    val splitters = manager.mainSplitters
+    manager.closeAllFiles()
+    splitters.setEmptyStateComponentCreationDelayForTests(Duration.ZERO)
+
+    val openFilesJob = splitters.openFilesAsync(requestFocus = false)
+    PlatformTestUtil.waitWhileBusy { !openFilesJob.isCompleted }
+    waitForEmptyStateComponentCreation(splitters)
+
+    assertThat(providerCalls).hasValue(1)
+    assertThat(findEmptyStateComponent(splitters)).isNotNull()
+  }
+
+  @Test
+  fun openingFileDuringEmptyStateCreationDelayCancelsProviderInvocation(@TestDisposable disposable: Disposable) {
+    val providerCalls = AtomicInteger()
+    ExtensionTestUtil.maskExtensions(EditorEmptyStateComponentProvider.EP_NAME, listOf(object : EditorEmptyStateComponentProvider {
+      override suspend fun createComponent(splitters: EditorsSplitters): JComponent {
+        providerCalls.incrementAndGet()
+        return JPanel()
+      }
+    }), disposable)
+
+    val splitters = manager.mainSplitters
+    val gateEntered = CompletableDeferred<Unit>()
+    val releaseGate = CompletableDeferred<Unit>()
+    splitters.setEmptyStateComponentCreationDelayForTests(Duration.ZERO)
+    splitters.setEmptyStateComponentCreationGateForTests {
+      gateEntered.complete(Unit)
+      releaseGate.await()
+    }
+    manager.closeAllFiles()
+    splitters.enableRichEmptyStateComponents()
+    waitForDeferred(gateEntered)
+
+    val file = LightVirtualFile("empty-state-cancel.txt", "content")
+    manager.openFile(file, false)
+    releaseGate.complete(Unit)
+    waitForEmptyStateComponentCreation(splitters)
+
+    assertThat(providerCalls).hasValue(0)
+    assertThat(findEmptyStateComponent(splitters)).isNull()
+  }
+
+  @Test
+  fun openingFileDuringProviderCreationDisposesAlreadyCreatedEntries(@TestDisposable disposable: Disposable) {
+    val disposedComponents = AtomicInteger()
+    val blockingProviderEntered = CompletableDeferred<Unit>()
+    ExtensionTestUtil.maskExtensions(EditorEmptyStateComponentProvider.EP_NAME, listOf(
+      object : EditorEmptyStateComponentProvider {
+        override suspend fun createComponent(splitters: EditorsSplitters): JComponent = withContext(Dispatchers.EDT) {
+          JPanel().apply { name = EMPTY_STATE_COMPONENT_NAME }
+        }
+
+        override fun disposeComponent(component: JComponent) {
+          disposedComponents.incrementAndGet()
+        }
+      },
+      object : EditorEmptyStateComponentProvider {
+        override suspend fun createComponent(splitters: EditorsSplitters): JComponent? {
+          blockingProviderEntered.complete(Unit)
+          awaitCancellation()
+        }
+      },
+    ), disposable)
+
+    val splitters = manager.mainSplitters
+    manager.closeAllFiles()
+    enableRichEmptyStateComponentsWithoutDelay(splitters)
+    waitForDeferred(blockingProviderEntered)
+
+    val file = LightVirtualFile("empty-state-provider-cancel.txt", "content")
+    manager.openFile(file, false)
+    waitForEmptyStateComponentCreation(splitters)
+
+    assertThat(findEmptyStateComponent(splitters)).isNull()
+    assertThat(disposedComponents).hasValue(1)
   }
 
   private fun registerPromotedActionProvider(disposable: Disposable) {
@@ -230,6 +364,15 @@ internal class EditorEmptyTextPainterTest {
 
   private fun waitForEmptyStateComponentCreation(splitters: EditorsSplitters) {
     PlatformTestUtil.waitWhileBusy { splitters.isEmptyStateComponentCreationPending() }
+  }
+
+  private fun waitForDeferred(deferred: CompletableDeferred<Unit>) {
+    PlatformTestUtil.waitWhileBusy { !deferred.isCompleted }
+  }
+
+  private fun enableRichEmptyStateComponentsWithoutDelay(splitters: EditorsSplitters) {
+    splitters.setEmptyStateComponentCreationDelayForTests(Duration.ZERO)
+    splitters.enableRichEmptyStateComponents()
   }
 
   private fun resetShortcuts(actionId: String, shortcuts: List<Shortcut>) {
