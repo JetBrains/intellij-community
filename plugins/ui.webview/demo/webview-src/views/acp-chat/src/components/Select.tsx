@@ -11,17 +11,35 @@ function SelectTrigger({ className, children, ...props }: ComponentPropsWithoutR
   return (
     <SelectPrimitive.Trigger data-slot="select-trigger" className={className} {...props}>
       {children}
-      <SelectPrimitive.Icon className="acpSelectIcon">⌄</SelectPrimitive.Icon>
+      <SelectPrimitive.Icon className="acpSelectIcon">
+        <SelectChevron direction="down" />
+      </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   )
 }
 
 function SelectScrollUpButton(props: ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollUpButton>) {
-  return <SelectPrimitive.ScrollUpButton data-slot="select-scroll-up-button" className="acpSelectScrollButton" {...props}>⌃</SelectPrimitive.ScrollUpButton>
+  return (
+    <SelectPrimitive.ScrollUpButton data-slot="select-scroll-up-button" className="acpSelectScrollButton" {...props}>
+      <SelectChevron direction="up" />
+    </SelectPrimitive.ScrollUpButton>
+  )
 }
 
 function SelectScrollDownButton(props: ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollDownButton>) {
-  return <SelectPrimitive.ScrollDownButton data-slot="select-scroll-down-button" className="acpSelectScrollButton" {...props}>⌄</SelectPrimitive.ScrollDownButton>
+  return (
+    <SelectPrimitive.ScrollDownButton data-slot="select-scroll-down-button" className="acpSelectScrollButton" {...props}>
+      <SelectChevron direction="down" />
+    </SelectPrimitive.ScrollDownButton>
+  )
+}
+
+function SelectChevron(props: { direction: "up" | "down" }) {
+  return (
+    <svg className={`acpSelectChevron acpSelectChevron--${props.direction}`} width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+      <path d="M3 4.5L6 7.5L9 4.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
 }
 
 function SelectContent({ children, position = "popper", ...props }: ComponentPropsWithoutRef<typeof SelectPrimitive.Content>) {

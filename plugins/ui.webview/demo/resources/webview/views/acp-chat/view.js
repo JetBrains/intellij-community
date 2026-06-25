@@ -969,7 +969,7 @@ function SelectTrigger({ className, children, ...props }) {
 		...props,
 		children: [children, /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectIcon, {
 			className: "acpSelectIcon",
-			children: "⌄"
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectChevron, { direction: "down" })
 		})]
 	});
 }
@@ -978,7 +978,7 @@ function SelectScrollUpButton(props) {
 		"data-slot": "select-scroll-up-button",
 		className: "acpSelectScrollButton",
 		...props,
-		children: "⌃"
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectChevron, { direction: "up" })
 	});
 }
 function SelectScrollDownButton(props) {
@@ -986,7 +986,25 @@ function SelectScrollDownButton(props) {
 		"data-slot": "select-scroll-down-button",
 		className: "acpSelectScrollButton",
 		...props,
-		children: "⌄"
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectChevron, { direction: "down" })
+	});
+}
+function SelectChevron(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+		className: `acpSelectChevron acpSelectChevron--${props.direction}`,
+		width: "12",
+		height: "12",
+		viewBox: "0 0 12 12",
+		"aria-hidden": "true",
+		focusable: "false",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M3 4.5L6 7.5L9 4.5",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: "1.5",
+			strokeLinecap: "round",
+			strokeLinejoin: "round"
+		})
 	});
 }
 function SelectContent({ children, position = "popper", ...props }) {

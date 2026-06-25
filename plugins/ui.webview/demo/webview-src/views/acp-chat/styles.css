@@ -10,9 +10,8 @@
   --acp-accent: var(--ij-accent, #3574f0);
   --acp-success: var(--ij-success, #5fad65);
   --acp-warning: var(--ij-warning, #d3a849);
-  --acp-error: var(--ij-error, #db5c5c);
-  --acp-font: var(--ij-font, Inter, "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif);
-  --acp-mono: var(--ij-font-mono, "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace);
+  --acp-error: var(--ij-danger, #db5c5c);
+  --acp-mono: var(--ij-editor-font, "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace);
 }
 
 html, body, #root {
@@ -23,8 +22,6 @@ html, body, #root {
 body {
   background: var(--acp-bg);
   color: var(--acp-text);
-  font-family: var(--acp-font);
-  font-size: 13px;
 }
 
 .acpChatLayout {
@@ -87,8 +84,20 @@ body {
 .acpSelectIcon {
   flex: 0 0 auto;
   color: var(--acp-text-muted);
-  font-size: 12px;
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+}
+
+.acpSelectChevron {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.acpSelectChevron--up {
+  transform: rotate(180deg);
 }
 
 .acpSelectContent {
@@ -273,7 +282,7 @@ body {
   border-radius: 6px;
   padding: 8px;
   overflow-x: auto;
-  font-family: var(--acp-mono);
+  font-family: var(--acp-mono), monospace;
 }
 
 .acpThinking {
@@ -311,7 +320,7 @@ body {
 }
 
 .acpToolKind {
-  font-family: var(--acp-mono);
+  font-family: var(--acp-mono), monospace;
   font-size: 11px;
   text-transform: uppercase;
   color: var(--acp-accent);
@@ -342,7 +351,7 @@ body {
   margin: 0;
   padding: 8px;
   border-top: 1px solid var(--acp-border);
-  font-family: var(--acp-mono);
+  font-family: var(--acp-mono), monospace;
   font-size: 12px;
   white-space: pre-wrap;
   overflow-x: auto;
@@ -352,7 +361,7 @@ body {
   padding: 4px 8px;
   border-top: 1px solid var(--acp-border);
   color: var(--acp-text-muted);
-  font-family: var(--acp-mono);
+  font-family: var(--acp-mono), monospace;
   font-size: 11px;
 }
 
@@ -536,7 +545,7 @@ body {
 
 .acpAuthVarName {
   flex: 0 0 40%;
-  font-family: var(--acp-mono);
+  font-family: var(--acp-mono), monospace;
   font-size: 12px;
 }
 
@@ -567,7 +576,7 @@ body {
 
 .acpAuthUriLink {
   color: var(--acp-accent);
-  font-family: var(--acp-mono);
+  font-family: var(--acp-mono), monospace;
   font-size: 12px;
   user-select: all;
 }
