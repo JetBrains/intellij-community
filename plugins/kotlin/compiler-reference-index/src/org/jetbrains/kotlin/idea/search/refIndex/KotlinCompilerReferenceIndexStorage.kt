@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.name.FqName
 /**
  * Interface responsible for managing the storage of the Kotlin Compiler Reference Index (KCRI).
  * Implementations can choose how the data is retrieved from the CRI data.
- * Typically there should be one implementation for each build system that wants to offer CRI capabilities.
+ * Typically, there should be one implementation for each build system that wants to offer CRI capabilities.
   */
 @ApiStatus.Experimental
 interface KotlinCompilerReferenceIndexStorage {
@@ -33,7 +33,7 @@ interface KotlinCompilerReferenceIndexStorage {
         /**
          * Opens a storage for the given [project] by finding the first [KotlinCompilerReferenceIndexStorageProvider]
          * that is applicable for the [project].
-         * Returns null if no provider is applicable or if storage creation fails (e.g. index missing or corrupted).
+         * Returns null if no provider is applicable or if storage creation fails (e.g., index missing or corrupted).
          */
         internal fun open(project: Project, projectPath: String): KotlinCompilerReferenceIndexStorage? {
             val provider = KotlinCompilerReferenceIndexStorageProvider.getApplicableProvider(project) ?: return null
@@ -45,6 +45,15 @@ interface KotlinCompilerReferenceIndexStorage {
          */
         internal fun hasIndex(project: Project): Boolean {
             return KotlinCompilerReferenceIndexStorageProvider.getApplicableProvider(project)?.hasIndex(project) == true
+        }
+
+        /**
+         * Returns the builder identifier from the first applicable [KotlinCompilerReferenceIndexStorageProvider] for the given [project].
+         * Returns null if no provider is applicable
+         * or if the build system does not use the logic of marking modules up to date by sending build notifications.
+         */
+        internal fun getBuilderId(project: Project): String? {
+            return KotlinCompilerReferenceIndexStorageProvider.getApplicableProvider(project)?.builderId
         }
     }
 }

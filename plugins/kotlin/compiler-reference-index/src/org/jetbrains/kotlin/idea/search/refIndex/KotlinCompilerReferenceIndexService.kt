@@ -50,7 +50,6 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.asJava.syntheticAccessors
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.util.not
@@ -91,6 +90,7 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
     private val compilationCounter = LongAdder()
     private val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
     private val supportedFileTypes: Set<FileType> = setOf(KotlinFileType.INSTANCE, JavaFileType.INSTANCE)
+    private val currentBuilderId by lazy { KotlinCompilerReferenceIndexStorage.getBuilderId(project) }
     private val dirtyScopeHolder = DirtyScopeHolder(
         project,
         supportedFileTypes,
@@ -101,7 +101,7 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
         connect.subscribe(
             CustomBuilderMessageHandler.TOPIC,
             CustomBuilderMessageHandler { builderId, _, messageText ->
-                if (builderId == SettingConstants.KOTLIN_COMPILER_REFERENCE_INDEX_BUILDER_ID) {
+                if (builderId == currentBuilderId) {
                     mutableSet += messageText
                 }
             },
@@ -186,6 +186,12 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
         val allModules = if (!initialized) allModules() else null
         compilationCounter.increment()
         withDirtyScopeUnderWriteLock {
+            if (activeBuildCount <= 0) {
+                // IJPL-243245 `BuildManagerListener.buildFinished` fires without preceding `buildStarted`
+                LOG.warn("buildFinished without preceding buildStarted (activeBuildCount=$activeBuildCount), skipping")
+                return@withDirtyScopeUnderWriteLock
+            }
+
             --activeBuildCount
 
             if (activeBuildCount == 0) openStorage(projectPath)
