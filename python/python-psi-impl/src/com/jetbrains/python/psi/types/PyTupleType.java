@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Objects;
 
 
+@SuppressWarnings("deprecation")
 public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
 
   private final PyUnpackedTupleType myUnpackedTupleType;
@@ -103,8 +104,12 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
   }
 
   @Override
-  public @NotNull List<PyType> getElementTypes() {
+  public @NotNull List<PyType> getTypeArguments() {
     return myUnpackedTupleType.getElementTypes();
+  }
+
+  public @NotNull List<PyType> getElementTypes() {
+    return getTypeArguments();
   }
 
   @Override

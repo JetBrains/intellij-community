@@ -83,7 +83,6 @@ import com.jetbrains.python.psi.types.PyCallableParameterListType
 import com.jetbrains.python.psi.types.PyCallableType
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
-import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyCollectionTypeImpl
 import com.jetbrains.python.psi.types.PyConcatenateType
 import com.jetbrains.python.psi.types.PyDescriptorTypeUtil.getExpectedValueTypeForDunderSet
@@ -230,7 +229,7 @@ open class PyTypeCheckerInspection : PyInspection() {
           getTargetTypeFromTupleAssignment(leaf, targetSeq, valueType)
         }
         else {
-          (valueType as? PyCollectionType)?.iteratedItemType
+          (valueType as? PyClassType)?.iteratedItemType
         } ?: continue
         if (received.containsAny(context = myTypeEvalContext)) continue
         val actual = upcastLiteralToClass(received)
@@ -447,7 +446,7 @@ open class PyTypeCheckerInspection : PyInspection() {
             val rhs = possibleLhs.assignedValue
             if (rhs != null) {
               val rhsType = myTypeEvalContext.getType(rhs)
-              if (rhsType is PyCollectionType) {
+              if (rhsType is PyClassType && rhsType.isParameterized) {
                 val elementType = upcastLiteralToClass(rhsType.iteratedItemType)
                 val listClass = getInstance(node).getClass("list")
                 if (listClass != null) {
@@ -624,14 +623,14 @@ open class PyTypeCheckerInspection : PyInspection() {
     ): Boolean {
       val expectedSubst = if (substitutions == null) expected else substitute(expected, substitutions, myTypeEvalContext)
       val actualSubst = if (substitutions == null) actual else substitute(actual, substitutions, myTypeEvalContext)
-      if (expectedSubst is PyCollectionType && actualSubst is PyCollectionType) {
+      if (expectedSubst is PyClassType && expectedSubst.isParameterized && actualSubst is PyClassType && actualSubst.isParameterized) {
         val expClassType = expectedSubst.pyClass.getType(myTypeEvalContext)
         val actClassType = actualSubst.pyClass.getType(myTypeEvalContext)
         val isCreational = expExpr is PySequenceExpression
                            || expExpr is PyCallExpression && expExpr.callee !is PySubscriptionExpression || expExpr is PyParenthesizedExpression && expExpr.containedExpression is PyTupleExpression
         val paramMapping = PyTypeParameterMapping.mapByShape(
-          expectedSubst.elementTypes,
-          actualSubst.elementTypes,
+          expectedSubst.typeArguments,
+          actualSubst.typeArguments,
           PyTypeParameterMapping.Option.USE_DEFAULTS
         )
         if (isCreational
@@ -1400,8 +1399,8 @@ open class PyTypeCheckerInspection : PyInspection() {
         if (type is PyTypeParameterType && type.defaultType == null && (type !is PySelfType)) {
           return true
         }
-        return type is PyCollectionType &&
-               type.elementTypes.any { requiresTypeSpecialization(it) }
+        return type is PyClassType &&
+               type.typeArguments.any { requiresTypeSpecialization(it) }
       }
 
       private fun getParamSpecSubstitution(

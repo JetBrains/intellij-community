@@ -21,7 +21,6 @@ import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.PyClassType
-import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyUnionType
@@ -90,11 +89,11 @@ class PyUnhashableInspection : PyInspection() {
     }
 
     private fun isDict(expression: PyExpression?) = expression?.let {
-      context.getType(expression).asSafely<PyCollectionType>()?.name
+      context.getType(expression).asSafely<PyClassType>()?.takeIf { type -> type.isParameterized }?.name
     } == PyNames.DICT
 
     private fun isSet(expression: PyExpression?) = expression?.let {
-      context.getType(expression).asSafely<PyCollectionType>()?.name
+      context.getType(expression).asSafely<PyClassType>()?.takeIf { type -> type.isParameterized }?.name
     } == PyNames.SET
 
     private fun processDictKey(element: PyExpression) = registerIfUnhashable(element, "INSP.dict.key.not.hashable")

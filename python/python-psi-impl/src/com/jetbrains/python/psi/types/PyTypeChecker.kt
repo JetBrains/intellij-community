@@ -736,8 +736,8 @@ object PyTypeChecker {
       return Optional.of(matchProtocols(expected, actual, matchContext))
     }
 
-    if (expected is PyCollectionType) {
-      return Optional.of(match(expected, actual, matchContext))
+    if (expected.isParameterized) {
+      return Optional.of(matchParameterizedClass(expected, actual, matchContext))
     }
 
     if (matchClasses(superClass, subClass, context)) {
@@ -799,9 +799,9 @@ object PyTypeChecker {
     }
 
 
-    if (expected is PyCollectionType && expected.hasGenerics(matchContext.context)) {
-      val concreteExpected: PyCollectionType = checkNotNull(
-        substitute(expected, protocolContext.mySubstitutions, protocolContext.context) as PyCollectionType?
+    if (expected.isParameterized && expected.hasGenerics(matchContext.context)) {
+      val concreteExpected: PyClassType = checkNotNull(
+        substitute(expected, protocolContext.mySubstitutions, protocolContext.context) as PyClassType?
       )
       // This match is supposed to succeed since all protocol members were compatible.
       // Effectively, we're just copying substitutions for the terminal type parameters e.g.
@@ -955,9 +955,9 @@ object PyTypeChecker {
     return match(expected.iteratedItemType, actual.iteratedItemType, context)
   }
 
-  private fun match(expected: PyCollectionType, actual: PyClassType, context: MatchContext): Boolean {
+  private fun matchParameterizedClass(expected: PyClassType, actual: PyClassType, context: MatchContext): Boolean {
     if (actual is PyTupleType) {
-      return match(expected, actual, context)
+      return matchParameterizedClass(expected, actual, context)
     }
 
     val superClass = expected.pyClass
@@ -966,7 +966,7 @@ object PyTypeChecker {
     return matchClasses(superClass, subClass, context.context) && matchGenerics(expected, actual, context)
   }
 
-  private fun match(expected: PyCollectionType, actual: PyTupleType, context: MatchContext): Boolean {
+  private fun matchParameterizedClass(expected: PyClassType, actual: PyTupleType, context: MatchContext): Boolean {
     if (!matchClasses(expected.pyClass, actual.pyClass, context.context)) {
       return false
     }
@@ -1159,16 +1159,16 @@ object PyTypeChecker {
     return PyTupleType(tupleClass, newTupleElements, false)
   }
 
-  private fun matchGenerics(expected: PyCollectionType, actual: PyClassType, context: MatchContext): Boolean {
-    if (actual is PyCollectionType && expected.pyClass == actual.pyClass) {
+  private fun matchGenerics(expected: PyClassType, actual: PyClassType, context: MatchContext): Boolean {
+    if (actual.isParameterized && expected.pyClass == actual.pyClass) {
       return matchGenericClassesParameterWise(expected, actual, context)
     }
 
     val expectedGenericType = findGenericDefinitionType(expected.pyClass, context.context)
     if (expectedGenericType != null) {
       val actualSubstitutions = collectTypeSubstitutions(actual, context.context)
-      val concreteExpected: PyCollectionType =
-        checkNotNull(substitute(expectedGenericType, actualSubstitutions, context.context) as PyCollectionType?)
+      val concreteExpected: PyClassType =
+        checkNotNull(substitute(expectedGenericType, actualSubstitutions, context.context) as PyClassType?)
       return matchGenericClassesParameterWise(expected, concreteExpected, context)
     }
     return true
@@ -1199,10 +1199,10 @@ object PyTypeChecker {
         }
       }
       // Collect own type parameters. In the example above these are: Sub@T3 -> str
-      val genericDefinitionType = provider.getGenericType(classType.pyClass, context) as? PyCollectionType
+      val genericDefinitionType = provider.getGenericType(classType.pyClass, context) as? PyClassType
       // TODO Re-use PyTypeParameterMapping, at the moment C[*Ts] <- C leads to *Ts being mapped to *tuple[], which breaks inference later on
       if (genericDefinitionType != null) {
-        val definitionTypeParameters = genericDefinitionType.elementTypes
+        val definitionTypeParameters = genericDefinitionType.typeArguments
 
         // Inside method bodies, where Self type can appear, we map class' own type parameters to themseleves,
         // not to consider them unbound. For instance, here
@@ -1217,14 +1217,14 @@ object PyTypeChecker {
         //
         // See Py3TypeTest.testApplyingSuperSubstitutionToBoundedGenericClass
         // and Py3TypeTest#testApplyingSuperSubstitutionToGenericClass
-        when (classType) {
-          is PySelfType -> {
+        when {
+          classType is PySelfType -> {
             mapTypeParametersToSubstitutions(
               result, definitionTypeParameters, definitionTypeParameters,
               PyTypeParameterMapping.Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY
             )
           }
-          !is PyCollectionType -> {
+          !classType.isParameterized -> {
             for (typeParameter in definitionTypeParameters) {
               when (typeParameter) {
                 is PyTypeVarType -> result.putTypeVar(typeParameter, null, KeyImpl)
@@ -1234,9 +1234,9 @@ object PyTypeChecker {
             }
           }
           else -> {
-            var elementTypes = classType.elementTypes
+            var elementTypes = classType.typeArguments
             if (classType is PyTupleType && !classType.isHomogeneous) {
-              val unionTypes = classType.elementTypes.flatMap { et -> if (et is PyUnpackedTupleType) et.elementTypes else listOf(et) }
+              val unionTypes = classType.typeArguments.flatMap { et -> if (et is PyUnpackedTupleType) et.elementTypes else listOf(et) }
               elementTypes = listOf(PyUnionType.union(unionTypes))
             }
             mapTypeParametersToSubstitutions(
@@ -1255,10 +1255,10 @@ object PyTypeChecker {
 
   @JvmStatic
   @ApiStatus.Internal
-  fun findGenericDefinitionType(pyClass: PyClass, context: TypeEvalContext): PyCollectionType? {
+  fun findGenericDefinitionType(pyClass: PyClass, context: TypeEvalContext): PyClassType? {
     for (provider in PyTypeProvider.EP_NAME.extensionList) {
       val definitionType = provider.getGenericType(pyClass, context)
-      if (definitionType is PyCollectionType) {
+      if (definitionType is PyClassType && definitionType.isParameterized) {
         return definitionType
       }
     }
@@ -1266,8 +1266,8 @@ object PyTypeChecker {
   }
 
   private fun matchGenericClassesParameterWise(
-    expected: PyCollectionType,
-    actual: PyCollectionType,
+    expected: PyClassType,
+    actual: PyClassType,
     context: MatchContext,
   ): Boolean {
     if (expected == actual) {
@@ -1276,8 +1276,8 @@ object PyTypeChecker {
     if (expected.pyClass != actual.pyClass) {
       return false
     }
-    val expectedElementTypes = expected.elementTypes
-    val actualElementTypes = actual.elementTypes
+    val expectedElementTypes = expected.typeArguments
+    val actualElementTypes = actual.typeArguments
     if (context.reversedSubstitutions) {
       return matchTypeParameters(actual, actualElementTypes, expectedElementTypes, context.resetSubstitutions())
     }
@@ -1287,7 +1287,7 @@ object PyTypeChecker {
   }
 
   private fun matchTypeParameters(
-    genericType: PyCollectionType?,
+    genericType: PyClassType?,
     expectedTypeParameters: List<PyType?>,
     actualTypeParameters: List<PyType?>,
     context: MatchContext,
@@ -1309,14 +1309,14 @@ object PyTypeChecker {
   }
 
   private fun findTypeParameterVariance(
-    genericType: PyCollectionType?,
+    genericType: PyClassType?,
     typeArgumentIndex: Int,
     context: MatchContext,
   ): Variance {
     if (genericType == null) return Variance.COVARIANT
     if (genericType is PyTupleType) return Variance.COVARIANT
     val genericDefType = findGenericDefinitionType(genericType.pyClass, context.context)
-    val typeParameter = genericDefType?.elementTypes?.getOrNull(typeArgumentIndex) as? PyTypeParameterType
+    val typeParameter = genericDefType?.typeArguments?.getOrNull(typeArgumentIndex) as? PyTypeParameterType
     if (typeParameter == null) return Variance.COVARIANT
     if (typeParameter !is PyTypeVarType) return Variance.COVARIANT // TODO: PY-89623
     return getDeclaredOrInferredVariance(typeParameter, context.context)
@@ -1743,10 +1743,13 @@ object PyTypeChecker {
         return result ?: selfType
       }
 
-      override fun visitPyGenericType(genericType: PyCollectionType): PyType {
+      override fun visitPyClassType(classType: PyClassType): PyType? {
+        if (!classType.isParameterized) {
+          return super.visitPyClassType(classType)
+        }
         return PyCollectionTypeImpl(
-          genericType.pyClass, genericType.isDefinition,
-          genericType.elementTypes.flatMap {
+          classType.pyClass, classType.isDefinition,
+          classType.typeArguments.flatMap {
             flattenUnpackedTuple(clone<PyType>(it).widenTupleLiterals())
           }
         )
@@ -2265,7 +2268,7 @@ object PyTypeChecker {
       ) ?: return null
       return substitute(genericType, substitutions, context)
     }
-    else if (genericType is PyCollectionType) {
+    else if (genericType is PyClassType && genericType.isParameterized) {
       return genericType
     }
     else if (genericType is PyClassType) {

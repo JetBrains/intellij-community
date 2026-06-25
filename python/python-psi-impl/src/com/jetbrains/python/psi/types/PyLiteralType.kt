@@ -292,8 +292,8 @@ class PyLiteralType private constructor(
         anchor: PyElement,
         elements: Collection<PyKeyValueExpression>,
       ): PyType? {
-        val (expectedKeyType, expectedValueType) = if (expectedType is PyCollectionType && PyNames.FQN.unqualifyBuiltinName(expectedType.classQName) == PyNames.DICT) {
-          expectedType.elementTypes[0] to expectedType.elementTypes[1]
+        val (expectedKeyType, expectedValueType) = if (expectedType is PyClassType && PyNames.FQN.unqualifyBuiltinName(expectedType.classQName) == PyNames.DICT && expectedType.typeArguments.size >= 2) {
+          expectedType.typeArguments[0] to expectedType.typeArguments[1]
         }
         else {
           null to null
@@ -321,8 +321,8 @@ class PyLiteralType private constructor(
         elements: Collection<PyExpression>,
         className: String,
       ): PyType? {
-        val expectedElementType = if (expectedType is PyCollectionType && PyNames.FQN.unqualifyBuiltinName(expectedType.classQName) == className) {
-          expectedType.elementTypes.firstOrNull()
+        val expectedElementType = if (expectedType is PyClassType && PyNames.FQN.unqualifyBuiltinName(expectedType.classQName) == className && expectedType.isParameterized) {
+          expectedType.typeArguments.firstOrNull()
         }
         else {
           null
@@ -359,7 +359,7 @@ class PyLiteralType private constructor(
     private fun containsLiteral(type: PyType?): Boolean {
       return type is PyLiteralType || type is PyLiteralStringType ||
              type is PyUnionType && type.members.any { containsLiteral(it) } ||
-             type is PyCollectionType && type.elementTypes.any { containsLiteral(it) }
+             type is PyClassType && type.typeArguments.any { containsLiteral(it) }
     }
 
     @ApiStatus.Internal

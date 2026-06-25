@@ -62,7 +62,6 @@ import com.jetbrains.python.psi.types.PyCallableTypeImpl
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyClassTypeImpl
-import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyConcatenateType
 import com.jetbrains.python.psi.types.PyFunctionType
 import com.jetbrains.python.psi.types.PyModuleType
@@ -972,7 +971,7 @@ object PyCallExpressionHelper {
     //  covers most cases.
 
     val classType = stripDefaultTypeArguments(classType, context)
-    val classTypeParams = (classType as? PyCollectionType)?.elementTypes.orEmpty().filterIsInstance<PyTypeParameterType>()
+    val classTypeParams = classType.typeArguments.filterIsInstance<PyTypeParameterType>()
 
     val metaClassCall = resolveMetaClassCallMethod(classType, resolveContext)
     if (metaClassCall != null) {
@@ -1041,7 +1040,7 @@ object PyCallExpressionHelper {
 
   private fun stripDefaultTypeArguments(classType: PyClassType, context: TypeEvalContext): PyClassType {
     val genericDef = PyTypeChecker.findGenericDefinitionType(classType.pyClass, context) ?: return classType
-    if (classType !is PyCollectionType) return genericDef.toClass()
+    if (!classType.isParameterized) return genericDef.toClass()
 
     val allSubstitutions = PyTypeChecker.collectTypeSubstitutions(classType, context)
     val nonDefaultSubstitutions = GenericSubstitutions(

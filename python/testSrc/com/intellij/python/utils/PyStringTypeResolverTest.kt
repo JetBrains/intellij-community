@@ -17,8 +17,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableType
 import com.jetbrains.python.psi.types.PyClassType
-import com.jetbrains.python.psi.types.PyCollectionType
-import com.jetbrains.python.psi.types.PyCollectionTypeImpl
+import com.jetbrains.python.psi.types.PyClassTypeImpl
 import com.jetbrains.python.psi.types.PyFunctionType
 import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyModuleType
@@ -107,20 +106,20 @@ class PyStringTypeResolverTest : PyTestCase() {
 
   fun `test parse simple`() {
     val mapping =
-      parse<PyCollectionType>("collections.abc.Mapping[collections.abc.Sequence[builtins.int], collections.abc.Iterable[builtins.str]]")
+      parse<PyClassType>("collections.abc.Mapping[collections.abc.Sequence[builtins.int], collections.abc.Iterable[builtins.str]]")
 
-    val params = mapping.elementTypes
+    val params = mapping.typeArguments
     assertSize(2, params)
 
     val (keyParam, valParam) = params
 
     // Key is Sequence[int]
-    keyParam.assertIs<PyCollectionType>()
+    keyParam.assertIs<PyClassType>()
     val keyIter = keyParam.iteratedItemType
     assertEquals(builtins.intType, keyIter)
 
     // Value is Iterable[str]
-    valParam.assertIs<PyCollectionType>()
+    valParam.assertIs<PyClassType>()
     val valIter = valParam.iteratedItemType!!
     assertEquals(builtins.strType, valIter)
   }
@@ -223,7 +222,7 @@ class PyStringTypeResolverTest : PyTestCase() {
 
   fun `test parse dict literal expression type`() {
     //{'new_col': ['sum', 'mean']}
-    parse<PyCollectionTypeImpl>("builtins.dict[builtins.str, builtins.list[builtins.str]]")
+    parse<PyClassTypeImpl>("builtins.dict[builtins.str, builtins.list[builtins.str]]")
   }
 
   fun `test parse module expression type`() {
@@ -259,7 +258,7 @@ class PyStringTypeResolverTest : PyTestCase() {
     assertEquals(1, params.size)
     val p0Ty = params.single().getType(typeEvalContext)!!
     assertEquals("int | list", p0Ty.name)
-    assertEquals("int", ((p0Ty as PyUnionType).members.last()!! as PyCollectionType).iteratedItemType!!.name)
+    assertEquals("int", ((p0Ty as PyUnionType).members.last()!! as PyClassType).iteratedItemType!!.name)
   }
 
   fun `test parse callable type with type parameter`() {
@@ -429,9 +428,9 @@ class PyStringTypeResolverTest : PyTestCase() {
     assertFalse(kwargs.isPositionalContainer)
     assertTrue(kwargs.isKeywordContainer)
     assertEquals("kwargs", kwargs.name)
-    val kwargsType = kwargs.getType(typeEvalContext).assertIs<PyCollectionType>()
+    val kwargsType = kwargs.getType(typeEvalContext).assertIs<PyClassType>()
     assertEquals(builtins.dictType!!.pyClass, kwargsType.pyClass)
-    assertEquals(PyNumericTowerUtil.enrich(builtins.complexType), kwargsType.elementTypes[1])
+    assertEquals(PyNumericTowerUtil.enrich(builtins.complexType), kwargsType.typeArguments[1])
   }
 
   fun `test parse generic scope function`() {

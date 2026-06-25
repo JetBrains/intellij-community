@@ -22,7 +22,6 @@ import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyCallableTypeImpl;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
-import com.jetbrains.python.psi.types.PyCollectionType;
 import com.jetbrains.python.psi.types.PyConcatenateType;
 import com.jetbrains.python.psi.types.PyParamSpecType;
 import com.jetbrains.python.psi.types.PySyntheticCallHelper;
@@ -406,7 +405,7 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
    * generic or no usable constructor.
    */
   private static @Nullable PyCallableType buildGenericConstructorType(@NotNull PyClass pyClass, @NotNull TypeEvalContext context) {
-    PyCollectionType genericDefinition = PyTypeChecker.findGenericDefinitionType(pyClass, context);
+    PyClassType genericDefinition = PyTypeChecker.findGenericDefinitionType(pyClass, context);
     if (genericDefinition == null) return null;
 
     List<PyCallableParameter> constructorParameters = new PyClassTypeImpl(pyClass, true).getParameters(context);

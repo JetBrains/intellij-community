@@ -48,7 +48,6 @@ import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyCollectionType;
 import com.jetbrains.python.psi.types.PyIntersectionType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeParameterType;
@@ -360,13 +359,10 @@ public final class PyTypeHintGenerationUtil {
         checkPep484Compatibility(memberType, context);
       }
     }
-    else if (type instanceof PyCollectionType) {
-      for (PyType typeParam : ((PyCollectionType)type).getElementTypes()) {
+    else if (type instanceof PyClassType pyClassType) {
+      for (PyType typeParam : pyClassType.getTypeArguments()) {
         checkPep484Compatibility(typeParam, context);
       }
-    }
-    else if (type instanceof PyClassType) {
-      // In this order since PyCollectionTypeImpl implements PyClassType
     }
     else if (type instanceof PyCallableType callableType) {
       for (PyCallableParameter parameter : ContainerUtil.notNullize(callableType.getParameters(context))) {

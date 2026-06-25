@@ -18,7 +18,6 @@ import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyCollectionType;
 import com.jetbrains.python.psi.types.PyFunctionType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
@@ -562,9 +561,9 @@ public class PyTypeParameterScopingTest extends PyTestCase {
     PyTypedElement typedElement = assertInstanceOf(resolvedElement, PyTypedElement.class);
     PyType type = typeEvalContext.getType(typedElement);
     if (type instanceof PyClassType classType) {
-      PyCollectionType genericClassType = PyTypeChecker.findGenericDefinitionType(classType.getPyClass(), typeEvalContext);
+      PyClassType genericClassType = PyTypeChecker.findGenericDefinitionType(classType.getPyClass(), typeEvalContext);
       assertNotNull(genericClassType);
-      type = genericClassType.getElementTypes().get(0);
+      type = genericClassType.getTypeArguments().get(0);
     }
     else if (type instanceof PyFunctionType functionType) {
       type = functionType.getReturnType(typeEvalContext);

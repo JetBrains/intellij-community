@@ -42,7 +42,6 @@ import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableTypeImpl;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyCollectionType;
 import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
@@ -316,13 +315,13 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
                                                                  @Nullable PyType type,
                                                                  @NotNull TypeEvalContext context) {
     Boolean isMember = null;
-    if (type instanceof PyCollectionType genericType) {
+    if (type instanceof PyClassType genericType && genericType.isParameterized()) {
       if (PyNames.TYPE_ENUM_MEMBER.equals(genericType.getClassQName())) {
-        type = ContainerUtil.getOnlyItem(genericType.getElementTypes());
+        type = ContainerUtil.getOnlyItem(genericType.getTypeArguments());
         isMember = true;
       }
       if (PyNames.TYPE_ENUM_NONMEMBER.equals(genericType.getClassQName())) {
-        type = ContainerUtil.getOnlyItem(genericType.getElementTypes());
+        type = ContainerUtil.getOnlyItem(genericType.getTypeArguments());
         isMember = false;
       }
     }
@@ -600,8 +599,8 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     if (argumentType instanceof PyTupleType) {
       return Ref.create(argumentType);
     }
-    else if (argumentType instanceof PyCollectionType) {
-      final PyType iteratedItemType = ((PyCollectionType)argumentType).getIteratedItemType();
+    else if (argumentType instanceof PyClassType classType && classType.isParameterized()) {
+      final PyType iteratedItemType = classType.getIteratedItemType();
       return Ref.create(PyTupleType.createHomogeneous(call, iteratedItemType));
     }
 

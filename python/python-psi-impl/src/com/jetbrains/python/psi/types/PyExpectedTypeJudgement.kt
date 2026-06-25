@@ -102,7 +102,7 @@ object PyExpectedTypeJudgement {
           if (PyNames.ITERABLE == typeOfStarParent?.name) {
             return typeOfStarParent
           }
-          if (typeOfStarParent is PyCollectionType) {
+          if (typeOfStarParent is PyClassType && typeOfStarParent.isParameterized) {
             // upcast to Iterable
             return createIterableType(expr, typeOfStarParent.iteratedItemType)
           }
@@ -116,9 +116,9 @@ object PyExpectedTypeJudgement {
           if (PyNames.MAPPING == typeOfDoubleStarParent?.name) {
             return typeOfDoubleStarParent
           }
-          if (typeOfDoubleStarParent is PyCollectionType) {
+          if (typeOfDoubleStarParent is PyClassType && typeOfDoubleStarParent.isParameterized) {
             // upcast to Map
-            return PyCollectionTypeImpl.createTypeByQName(expr, "typing." + PyNames.MAPPING, false, typeOfDoubleStarParent.elementTypes)
+            return PyCollectionTypeImpl.createTypeByQName(expr, "typing." + PyNames.MAPPING, false, typeOfDoubleStarParent.typeArguments)
           }
         }
         return null
@@ -137,7 +137,7 @@ object PyExpectedTypeJudgement {
         if (typeOfParentTuple is PyTupleType && typeOfParentTuple.elementTypes.isNotEmpty()) {
           return getElementTypeAtTupleIndex(parent, typeOfParentTuple, indexOfExpr)
         }
-        if (typeOfParentTuple is PyCollectionType) {
+        if (typeOfParentTuple is PyClassType && typeOfParentTuple.isParameterized) {
           return typeOfParentTuple.iteratedItemType
         }
         return null
@@ -147,7 +147,7 @@ object PyExpectedTypeJudgement {
       is PyListLiteralExpression,
         -> {
         val typeOfParentList = getExpectedType(parent, ctx)
-        if (typeOfParentList is PyCollectionType) {
+        if (typeOfParentList is PyClassType && typeOfParentList.isParameterized) {
           return typeOfParentList.iteratedItemType
         }
         return null
@@ -157,9 +157,9 @@ object PyExpectedTypeJudgement {
         if (parent.parent is PyDictLiteralExpression) {
           val parentDict = parent.parent as PyDictLiteralExpression
           val typeOfParentDict = getExpectedType(parentDict, ctx)
-          if (typeOfParentDict is PyCollectionType && typeOfParentDict.elementTypes.size == 2) {
+          if (typeOfParentDict is PyClassType && typeOfParentDict.typeArguments.size == 2) {
             val index = if (parent.key == expr) 0 else 1
-            return typeOfParentDict.elementTypes[index]
+            return typeOfParentDict.typeArguments[index]
           }
           if (typeOfParentDict is PyUnpackedTypedDictType && parent.key is PyStringLiteralExpression) {
             val argName = (parent.key as PyStringLiteralExpression).stringValue
@@ -398,7 +398,7 @@ object PyExpectedTypeJudgement {
 
       is PySubscriptionExpression -> {
         val operandType = ctx.getType(lhs.operand)
-        val iterableType = if (operandType is PyCollectionType) operandType.iteratedItemType else null
+        val iterableType = if (operandType is PyClassType && operandType.isParameterized) operandType.iteratedItemType else null
         if (lhs.indexExpression is PySliceItem) {
           return createIterableType(lhs, iterableType)
         }
@@ -507,7 +507,7 @@ object PyExpectedTypeJudgement {
     return null
   }
 
-  private fun createIterableType(anchor: PsiElement, elementType: PyType?): PyCollectionTypeImpl? {
+  private fun createIterableType(anchor: PsiElement, elementType: PyType?): PyClassTypeImpl? {
     return PyCollectionTypeImpl.createTypeByQName(anchor, "typing." + PyNames.ITERABLE, false, listOf(elementType))
   }
 }

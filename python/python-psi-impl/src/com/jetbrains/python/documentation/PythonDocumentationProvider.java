@@ -65,7 +65,6 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyCollectionType;
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
@@ -315,9 +314,10 @@ public class PythonDocumentationProvider implements DocumentationProvider {
       }
       else if (parameter.isKeywordContainer()) {
         paramName = "**" + StringUtil.notNullize(paramName, "kwargs"); //NON-NLS
-        final PyCollectionType genericType = as(paramType, PyCollectionType.class);
-        if (genericType != null && genericType.getPyClass() == PyBuiltinCache.getInstance(function).getClass("dict")) {
-          final List<PyType> typeParams = genericType.getElementTypes();
+        final PyClassType genericType = as(paramType, PyClassType.class);
+        if (genericType != null && genericType.isParameterized() &&
+            genericType.getPyClass() == PyBuiltinCache.getInstance(function).getClass("dict")) {
+          final List<PyType> typeParams = genericType.getTypeArguments();
           paramType = typeParams.size() == 2 ? typeParams.get(1) : null;
         }
       }

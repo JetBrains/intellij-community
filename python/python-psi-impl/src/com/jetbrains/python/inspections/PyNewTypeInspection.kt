@@ -16,7 +16,6 @@ import com.jetbrains.python.psi.impl.PyClassImpl
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.PyClassType
-import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyTypeVarType
 import com.jetbrains.python.psi.types.PyTypedDictType
@@ -53,7 +52,7 @@ class PyNewTypeInspection : PyInspection() {
             if (type !is PyClassType || !type.isDefinition) {
               registerProblem(typeExpr, PyPsiBundle.problemMessage("INSP.NAME.new.type.expected.class"))
             }
-            else if (type is PyCollectionType && type.elementTypes.any { it is PyTypeVarType && it.scopeOwner == null }) {
+            else if (type.typeArguments.any { it is PyTypeVarType && it.scopeOwner == null }) {
               registerProblem(typeExpr, PyPsiBundle.problemMessage("INSP.NAME.new.type.new.type.cannot.be.generic"))
             }
             else if (type is PyLiteralType) {

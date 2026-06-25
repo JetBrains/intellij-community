@@ -90,7 +90,6 @@ import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.PyCallableParameterVariadicType
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
-import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyConcatenateType
 import com.jetbrains.python.psi.types.PyInstantiableType
 import com.jetbrains.python.psi.types.PyLiteralType
@@ -820,7 +819,7 @@ class PyTypeHintsInspection : PyInspection() {
         // p: T; isinstance(x, p)
         type is PyTypeVarType && !type.isDefinition ||
         // T = TypeVar("T"); isinstance(x, list[T])
-        type is PyCollectionType && type.elementTypes.any { it is PyTypeVarType } && !type.isDefinition
+        type is PyClassType && type.typeArguments.any { it is PyTypeVarType } && !type.isDefinition
       ) {
         registerProblem(base,
                         PyPsiBundle.message("INSP.type.hints.type.variables.cannot.be.used.with.instance.class.checks"),
@@ -1028,7 +1027,7 @@ class PyTypeHintsInspection : PyInspection() {
     private fun checkMetaClass(metaClassExpression: PyExpression?) {
       if (metaClassExpression != null) {
         val metaClassType = myTypeEvalContext.getType(metaClassExpression)
-        if (metaClassType is PyCollectionType && metaClassType.elementTypes.any { it is PyTypeVarType }) {
+        if (metaClassType is PyClassType && metaClassType.typeArguments.any { it is PyTypeVarType }) {
           registerProblem(metaClassExpression, PyPsiBundle.message("INSP.type.hints.metaclass.cannot.be.generic"))
         }
       }
@@ -1105,7 +1104,7 @@ class PyTypeHintsInspection : PyInspection() {
     }
 
     private fun checkInconsistentGenericBaseSubstitutions(cls: PyClass) {
-      val seenSubstitutions = mutableMapOf<PyClass, PyCollectionType>()
+      val seenSubstitutions = mutableMapOf<PyClass, PyClassType>()
 
       for (superClassExpression in cls.superClassExpressions) {
         val superClassType = Ref.deref(PyTypingTypeProvider.getType(superClassExpression, myTypeEvalContext)) as? PyClassType ?: continue
@@ -1119,11 +1118,11 @@ class PyTypeHintsInspection : PyInspection() {
 
         for (pyClass in classesToCheck) {
           val genericDefinitionType = PyTypeChecker.findGenericDefinitionType(pyClass, myTypeEvalContext) ?: continue
-          val concreteType = PyTypeChecker.substitute(genericDefinitionType, substitutions, myTypeEvalContext) as? PyCollectionType ?: continue
-          if (concreteType.elementTypes.isEmpty()) continue
+          val concreteType = PyTypeChecker.substitute(genericDefinitionType, substitutions, myTypeEvalContext) as? PyClassType ?: continue
+          if (!concreteType.isParameterized) continue
 
           val previous = seenSubstitutions.putIfAbsent(pyClass, concreteType)
-          if (previous != null && !sameTypeArguments(previous.elementTypes, concreteType.elementTypes)) {
+          if (previous != null && !sameTypeArguments(previous.typeArguments, concreteType.typeArguments)) {
             val msg = PyPsiBundle.problemMessage(
               "INSP.type.hints.inconsistent.type.var.order",
               pyClass.name ?: "<unknown>",
@@ -1139,12 +1138,12 @@ class PyTypeHintsInspection : PyInspection() {
 
     private fun canonicalizeOwnTypeParameterSubstitutions(superClassType: PyClassType): PyTypeChecker.GenericSubstitutions {
       val substitutions = PyTypeChecker.collectTypeSubstitutions(superClassType, myTypeEvalContext)
-      val typeArguments = (superClassType as? PyCollectionType)?.elementTypes ?: return substitutions
-      if (typeArguments.isEmpty()) return substitutions
+      if (!superClassType.isParameterized) return substitutions
+      val typeArguments = superClassType.typeArguments
 
       val ownTypeParameters = PyTypeChecker
         .findGenericDefinitionType(superClassType.pyClass, myTypeEvalContext)
-        ?.elementTypes
+        ?.typeArguments
         ?.filterIsInstance<PyTypeParameterType>()
         ?: return substitutions
 
@@ -1244,7 +1243,7 @@ class PyTypeHintsInspection : PyInspection() {
       if (scope is PyClass) {
         val genericType = PyTypeChecker.findGenericDefinitionType(scope, myTypeEvalContext)
         if (genericType != null) {
-          return genericType.elementTypes.filterIsInstance<PyTypeParameterType>().map { it.name }
+          return genericType.typeArguments.filterIsInstance<PyTypeParameterType>().map { it.name }
         }
       }
       if (scope is PyFunction) {
@@ -1396,7 +1395,7 @@ class PyTypeHintsInspection : PyInspection() {
         return
       }
 
-      val typeParameters = genericDefinitionType.elementTypes
+      val typeParameters = genericDefinitionType.typeArguments
 
       val typeParameterListRepresentation = typeParameters.joinToString(prefix = "[", postfix = "]") { it.name!! }
 
@@ -1833,7 +1832,7 @@ class PyTypeHintsInspection : PyInspection() {
 
         if (current is PyClass) {
           val genericType = PyTypeChecker.findGenericDefinitionType(current, myTypeEvalContext)
-          if (genericType?.elementTypes?.any { it is PyParamSpecType && it.variableName == paramSpecName } == true) return true
+          if (genericType?.typeArguments?.any { it is PyParamSpecType && it.variableName == paramSpecName } == true) return true
         }
 
         current = PsiTreeUtil.getParentOfType(current, PyTypeParameterListOwner::class.java)
@@ -2048,7 +2047,7 @@ private fun PySubscriptionExpression.isParamSpecArgument(argIndex: Int, context:
   if (operandType != null) {
     val genericDefinitionType = PyTypeChecker.findGenericDefinitionType(operandType.pyClass, context)
     if (genericDefinitionType != null) {
-      val typeParameters = genericDefinitionType.elementTypes
+      val typeParameters = genericDefinitionType.typeArguments
       if (argIndex in typeParameters.indices && typeParameters[argIndex] is PyParamSpecType) {
         return true
       }

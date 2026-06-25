@@ -245,7 +245,7 @@ class PyTypedDictType(
       actual: PyTypedDictType,
       context: TypeEvalContext,
     ): Boolean? {
-      if (expected is PyCollectionType) {
+      if (expected is PyClassType && expected.isParameterized) {
         matchTypedDictWithCollection(expected, actual, context)?.let { return it }
       }
 
@@ -336,12 +336,12 @@ class PyTypedDictType(
       return null
     }
 
-    private fun matchTypedDictWithCollection(expected: PyCollectionType, actual: PyTypedDictType, context: TypeEvalContext): Boolean? {
+    private fun matchTypedDictWithCollection(expected: PyClassType, actual: PyTypedDictType, context: TypeEvalContext): Boolean? {
       val expectedClassQName = expected.classQName
       if (expectedClassQName != PyTypingTypeProvider.MAPPING && expectedClassQName != PyNames.FQN.DICT) return null
 
       val builtinCache = PyBuiltinCache.getInstance(actual.dictClass)
-      val elementTypes = expected.elementTypes
+      val elementTypes = expected.typeArguments
 
       if (elementTypes.size != 2 || builtinCache.strType != elementTypes[0]) {
         return false

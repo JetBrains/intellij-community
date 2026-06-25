@@ -256,7 +256,7 @@ object PyTypeInferenceCspFactory {
 
 fun normalizeType(type: PyType?, context: TypeEvalContext): PyType? {
   var normalizedType = type
-  if (type is PyClassType && type !is PyCollectionType) {
+  if (type is PyClassType && !type.isParameterized) {
     // convert raw types to generic types
     // keep the type variables for the CSP to be computed
     normalizedType = PyTypeChecker.findGenericDefinitionType(type.pyClass, context) ?: type

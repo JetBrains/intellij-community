@@ -17,6 +17,7 @@ import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyElementGenerator
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.types.PyClassLikeType
+import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyClassTypeImpl
 import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyType
@@ -142,7 +143,7 @@ private fun computeSuggestedIntermediateTypeName(targetType: PyType?, actualType
   val objectName = "object"
 
   fun toNonCollectionClassLike(t: PyType?): PyClassLikeType? = when (t) {
-    is PyCollectionType -> null // avoid suggesting collection classes like 'list' as an intermediate type
+    is PyClassType if t.isParameterized -> null // avoid suggesting collection classes like 'list' as an intermediate type
     is PyClassLikeType -> t
     else -> null
   }

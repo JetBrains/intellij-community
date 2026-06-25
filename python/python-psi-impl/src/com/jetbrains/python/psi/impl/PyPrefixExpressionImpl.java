@@ -15,7 +15,6 @@ import com.jetbrains.python.psi.PyPrefixExpression;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyCollectionType;
 import com.jetbrains.python.psi.types.PyNarrowedType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeUtil;
@@ -77,9 +76,9 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
   }
 
   private static @Nullable Ref<PyType> getGeneratorReturnType(@Nullable PyType type) {
-    if (type instanceof PyCollectionType) {
-      if (PyNames.AWAITABLE.equals(((PyClassType)type).getPyClass().getName())) {
-        return Ref.create(((PyCollectionType)type).getIteratedItemType());
+    if (type instanceof PyClassType classType && classType.isParameterized()) {
+      if (PyNames.AWAITABLE.equals(classType.getPyClass().getName())) {
+        return Ref.create(classType.getIteratedItemType());
       }
       else {
         return PyTypingTypeProvider.coroutineOrGeneratorElementType(type);

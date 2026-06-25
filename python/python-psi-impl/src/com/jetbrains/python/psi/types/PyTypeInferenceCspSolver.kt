@@ -765,9 +765,9 @@ private object ConstraintReducer {
     if (left is PyClassType && right is PyClassType && left.pyClass === right.pyClass) {
       matchCount += 1000
 
-      if (left is PyCollectionType && right is PyCollectionType) {
-        val lTArgs = left.getElementTypes()
-        val rTArgs = right.getElementTypes()
+      if (left.isParameterized && right.isParameterized) {
+        val lTArgs = left.getTypeArguments()
+        val rTArgs = right.getTypeArguments()
         if (lTArgs.size == rTArgs.size) {
           matchCount += 100
           for (i in lTArgs.indices) {
@@ -1635,6 +1635,12 @@ private fun substitutePyTypeVarTypes(original: PyType?, inferenceVars: Inference
   }
   return PyCloningTypeVisitor.clone(original, object : PyCloningTypeVisitor(context) {
     override fun visitPyClassType(classType: PyClassType): PyType {
+      // Parameterized types must be cloned recursively so that their type arguments (which may contain
+      // type variables being solved) are run through visitPyTypeVarType and replaced with inference variables.
+      // Before PY-79063 these went through the removed visitPyGenericType, which recursed via the base visitor.
+      if (classType.isParameterized) {
+        return super.visitPyClassType(classType) ?: classType
+      }
       return normalizeType(classType, context) ?: classType
     }
 
