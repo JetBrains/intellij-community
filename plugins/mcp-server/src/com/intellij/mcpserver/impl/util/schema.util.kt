@@ -56,6 +56,19 @@ internal fun parametersSchema(callable: KCallable<*>, vararg additionalImplicitP
 
     val parameterType = parameter.type
 
+    // JsonElement / JsonElement? can hold any JSON value (object, array, string, etc.).
+    // The schemakenerator maps it to type:object, which causes execute_tool to reject arrays.
+    // Use an open schema so the execute_tool parser treats the value as a raw string and
+    // passes it through; the business logic does its own shape checking via parseStructuredJsonArg.
+    if (parameterType == typeOf<JsonElement?>() || parameterType == typeOf<JsonElement>()) {
+      val description = parameter.annotations.filterIsInstance<McpDescription>().firstOrNull()?.description
+      parameterSchemas[parameterName] = buildJsonObject {
+        if (description != null) put("description", description)
+      }
+      if (!parameter.isOptional) requiredParameters.add(parameterName)
+      continue
+    }
+
     val intermediateJsonSchemaData = initial(parameterType)
       .analyzeTypeUsingKotlinxSerialization()
       .generateJsonSchema()
