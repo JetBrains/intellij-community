@@ -1,0 +1,14 @@
+// EXIST: transitiveMiddle, transitiveDeep
+
+// FILE: root.main.kts
+@file:Import("middle.main.kts")
+
+transitive<caret>
+
+// FILE: middle.main.kts
+@file:Import("apiClient.kts")
+
+fun transitiveMiddle() {}
+
+// FILE: apiClient.kts
+fun transitiveDeep() {}

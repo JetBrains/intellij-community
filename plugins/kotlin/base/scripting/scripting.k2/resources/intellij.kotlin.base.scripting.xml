@@ -37,6 +37,15 @@
     <problemHighlightFilter implementation="org.jetbrains.kotlin.idea.core.script.k2.highlighting.ScriptProblemHighlightFilter"/>
 
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptHighlightingVisitor"/>
+
+    <completion.contributor language="kotlin"
+                            id="KotlinImportedScriptCompletionContributor"
+                            order="first, before KotlinCompletionContributor"
+                            implementationClass="org.jetbrains.kotlin.idea.core.script.k2.codeInsight.KotlinImportedScriptCompletionContributor"/>
+    <completion.confidence language="kotlin"
+                           id="KotlinImportedScriptCompletionConfidence"
+                           order="first, before kotlinSkipAutopopupInStrings"
+                           implementationClass="org.jetbrains.kotlin.idea.core.script.k2.codeInsight.KotlinImportedScriptCompletionConfidence"/>
     <psi.clsCustomNavigationPolicy
             implementation="org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptDependencySourceNavigationPolicyForJavaClasses"/>
 
