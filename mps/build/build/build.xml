@@ -46,7 +46,10 @@
     <exec failonerror="true" executable="${platform.root}/bazel.cmd" dir="${platform.root}">
       <arg value="run"/>
       <arg value="//mps/build:mps_builder"/>
+      <arg value="--verbose_failures"/>
+      <arg value="--worker_verbose"/>
       <arg value="--"/>
+      <arg value="--jvm_flag=-Dbuild.number=${build.number}"/>
       <arg value="${platform.root}"/>
     </exec>
   </target>
