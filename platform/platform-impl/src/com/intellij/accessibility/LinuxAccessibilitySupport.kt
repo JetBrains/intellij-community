@@ -129,7 +129,12 @@ object LinuxAccessibilitySupport {
                "Could not persist '$ASSISTIVE_TECHNOLOGIES_PROPERTY=$ATK_WRAPPER'.", it)
     }.isSuccess
 
-    return atkWrapperActivatedInCurrentSession || vmOptionsUpdated
+    val restartRequired = atkWrapperActivatedInCurrentSession || vmOptionsUpdated
+    if (restartRequired) {
+      AccessibilityUsageTrackerCollector.flushRaisedEvents()
+    }
+
+    return restartRequired
   }
 
   fun isLinuxScreenReaderEnabled(): Boolean {
