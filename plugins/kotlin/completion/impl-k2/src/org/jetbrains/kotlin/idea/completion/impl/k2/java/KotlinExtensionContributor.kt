@@ -9,9 +9,11 @@ import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.completion.JavaCompletionSorting
 import com.intellij.codeInsight.completion.JavaFrontendCompletionUtil
 import com.intellij.codeInsight.completion.JavaSmartCompletionContributor
 import com.intellij.codeInsight.completion.PrefixMatcher
+import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.TypedLookupItem
@@ -220,6 +222,8 @@ private class KotlinExtensionLookupItem(
     }
 }
 
+private const val EXTENSION_PRIORITY = -100.0
+
 @OptIn(KaExperimentalApi::class)
 private object KotlinExtensionCompletionProvider : CompletionProvider<CompletionParameters>() {
 
@@ -332,6 +336,7 @@ private object KotlinExtensionCompletionProvider : CompletionProvider<Completion
             JavaSmartCompletionContributor.getExpectedTypes(parameters)
         }
 
+        val javaResultWithSorting = JavaCompletionSorting.addJavaSorting(parameters, result)
         analyze(kaModule) {
             val qualifierKaType = qualifierType.asKaType(parameters.originalFile)?.lowerBoundIfFlexible() ?: return@analyze
             qualifierKaType.processApplicableExtensions(result.prefixMatcher) { extension, methodWrapper ->
@@ -360,7 +365,8 @@ private object KotlinExtensionCompletionProvider : CompletionProvider<Completion
                     icon = extension.getExtensionIcon(),
                 )
 
-                result.addElement(element)
+                // Add the priority to ensure that extensions are always shown after regular Java methods
+                javaResultWithSorting.addElement(PrioritizedLookupElement.withPriority(element, EXTENSION_PRIORITY))
             }
         }
     }
