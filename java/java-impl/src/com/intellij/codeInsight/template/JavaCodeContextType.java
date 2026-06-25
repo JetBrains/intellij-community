@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
@@ -381,7 +381,22 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     @Override
     protected boolean isInContext(@NotNull PsiElement element) {
       return statementContext.isInContext(element) &&
-             PsiUtil.isAvailable(JavaFeature.STRUCTURED_CONCURRENCY_TASK_SCOPE_STATIC_FACTORY_METHODS, element);
+             PsiUtil.isAvailable(JavaFeature.STRUCTURED_CONCURRENCY_TASK_SCOPE_STATIC_FACTORY_METHODS, element) &&
+             !PsiUtil.isAvailable(JavaFeature.STRUCTURED_CONCURRENCY_TASK_SCOPE_STATIC_FACTORY_METHODS_WITH_EXEC_EXCEPTION, element);
+    }
+  }
+
+  public static final class JavaStructuredConcurrencyStaticFactoryMethodsWithExecExceptionType extends JavaCodeContextType {
+    private final JavaCodeContextType statementContext = new Statement();
+
+    JavaStructuredConcurrencyStaticFactoryMethodsWithExecExceptionType() {
+      super(JavaBundle.message("live.template.context.statement.java.structured.concurrency.static.factory.methods.with.exec.exception"));
+    }
+
+    @Override
+    protected boolean isInContext(@NotNull PsiElement element) {
+      return statementContext.isInContext(element) &&
+             PsiUtil.isAvailable(JavaFeature.STRUCTURED_CONCURRENCY_TASK_SCOPE_STATIC_FACTORY_METHODS_WITH_EXEC_EXCEPTION, element);
     }
   }
 }

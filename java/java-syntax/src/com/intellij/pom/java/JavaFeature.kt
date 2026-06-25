@@ -154,7 +154,16 @@ enum class JavaFeature {
     }
   },
 
+  /**
+   * JEP 525
+   */
   STRUCTURED_CONCURRENCY_TASK_SCOPE_STATIC_FACTORY_METHODS(LanguageLevel.JDK_25_PREVIEW, "feature.structured.concurrency.static.factory.methods"),
+
+
+  /**
+   * JEP 533
+   */
+  STRUCTURED_CONCURRENCY_TASK_SCOPE_STATIC_FACTORY_METHODS_WITH_EXEC_EXCEPTION(LanguageLevel.JDK_27_PREVIEW, "feature.structured.concurrency.static.factory.methods.with.execution.exception"),
 
   PEM_API(LanguageLevel.JDK_25_PREVIEW, "feature.pem.api"),
 
