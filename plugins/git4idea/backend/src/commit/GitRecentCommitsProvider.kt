@@ -105,6 +105,7 @@ class GitRecentCommitsProvider(
 
   suspend fun getRecentCommits(root: VirtualFile): List<VcsCommitMetadata> {
     while (true) {
+      check(scope.isActive) { "Provider's scope got cancelled" }
       val deferred = cache.get(root) { scheduleRefresh(root, immediate = true) }
 
       try {
@@ -112,17 +113,11 @@ class GitRecentCommitsProvider(
       }
       catch (@Suppress("IncorrectCancellationExceptionHandling") _: CancellationException) {
         checkCanceled()
-
-        if (!scope.isActive) {
-          LOG.warn("Provider got cancelled, failed to read recent commits for $root")
-          return emptyList()
-        }
         // refresh canceled by removal from the cache, retry
       }
       catch (e: Exception) {
-        LOG.warn("Failed to read recent commits for $root", e)
         cache.asMap().remove(root, deferred)
-        return emptyList()
+        throw e
       }
     }
   }

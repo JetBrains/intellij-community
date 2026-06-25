@@ -3,6 +3,8 @@ package com.intellij.vcs.commit
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.UI
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsSafe
@@ -29,6 +31,7 @@ internal class AmendCommitModeDropDownLink(val amendHandler: AmendCommitHandler)
   }
 
   companion object {
+    private val LOG = logger<AmendCommitModeDropDownLink>()
     private const val LINK_TEXT_MAX: Int = 20
 
     private fun itemToString(item: CommitToAmend): @Nls String = when (item) {
@@ -98,7 +101,14 @@ internal class AmendCommitModeDropDownLink(val amendHandler: AmendCommitHandler)
 
       popup.content.launchOnShow("Amend targets fetcher") {
         updater.paintBusy(true)
-        val loaded = amendHandler.getAmendSpecificCommitTargets().withIndex().toList().ifEmpty { initialItems }
+        val loaded = try {
+          amendHandler.getAmendSpecificCommitTargets().withIndex().toList().ifEmpty { initialItems }
+        }
+        catch (e: Exception) {
+          rethrowControlFlowException(e)
+          LOG.warn("Failed to load amend commit targets", e)
+          initialItems
+        }
         updater.replaceModel(loaded)
         updater.paintBusy(false)
         withContext(Dispatchers.UI) {
