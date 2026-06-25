@@ -27,6 +27,7 @@ e:com.intellij.platform.ai.agent.codex.common.CodexAppServerNotificationKind
 - sf:OTHER:com.intellij.platform.ai.agent.codex.common.CodexAppServerNotificationKind
 - sf:TERMINAL_INTERACTION:com.intellij.platform.ai.agent.codex.common.CodexAppServerNotificationKind
 - sf:THREAD_NAME_UPDATED:com.intellij.platform.ai.agent.codex.common.CodexAppServerNotificationKind
+- sf:THREAD_SETTINGS_UPDATED:com.intellij.platform.ai.agent.codex.common.CodexAppServerNotificationKind
 - sf:THREAD_STARTED:com.intellij.platform.ai.agent.codex.common.CodexAppServerNotificationKind
 - sf:THREAD_STATUS_CHANGED:com.intellij.platform.ai.agent.codex.common.CodexAppServerNotificationKind
 - sf:TURN_COMPLETED:com.intellij.platform.ai.agent.codex.common.CodexAppServerNotificationKind
@@ -250,3 +251,18 @@ e:com.intellij.platform.ai.agent.codex.common.CodexThreadStatusKind
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.platform.ai.agent.codex.common.CodexThreadStatusKind
 - s:values():com.intellij.platform.ai.agent.codex.common.CodexThreadStatusKind[]
+f:com.intellij.platform.ai.agent.codex.common.CodexTurnCollaborationMode
+- f:developerInstructions:java.lang.String
+- f:mode:java.lang.String
+- f:model:java.lang.String
+- f:reasoningEffort:java.lang.String
+- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
+- b:<init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:component3():java.lang.String
+- f:component4():java.lang.String
+- f:copy(java.lang.String,java.lang.String,java.lang.String,java.lang.String):com.intellij.platform.ai.agent.codex.common.CodexTurnCollaborationMode
+- bs:copy$default(com.intellij.platform.ai.agent.codex.common.CodexTurnCollaborationMode,java.lang.String,java.lang.String,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.platform.ai.agent.codex.common.CodexTurnCollaborationMode
+- equals(java.lang.Object):Z
+- hashCode():I

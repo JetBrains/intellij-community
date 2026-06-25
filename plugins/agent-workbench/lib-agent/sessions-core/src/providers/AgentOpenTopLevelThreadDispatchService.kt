@@ -5,10 +5,10 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 
 interface AgentOpenTopLevelThreadDispatchService {
   suspend fun dispatchIfPresent(
-    projectPath: String,
-    provider: AgentSessionProvider,
-    threadId: String,
-    launchSpec: AgentSessionTerminalLaunchSpec,
-    initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
+      projectPath: String,
+      provider: AgentSessionProvider,
+      threadId: String,
+      launchSpec: AgentSessionTerminalLaunchSpec,
+      initialMessageDispatchPlan: AgentInitialPromptDeliveryPlan,
   ): Boolean
 }

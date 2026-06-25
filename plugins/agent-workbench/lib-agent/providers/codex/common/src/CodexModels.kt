@@ -66,6 +66,13 @@ data class CodexGenerationModel(
   @JvmField val isDefault: Boolean = false,
 )
 
+data class CodexTurnCollaborationMode(
+  @JvmField val mode: String,
+  @JvmField val model: String? = null,
+  @JvmField val reasoningEffort: String? = null,
+  @JvmField val developerInstructions: String? = null,
+)
+
 data class CodexThreadActivitySnapshot(
   @JvmField val threadId: String,
   @JvmField val updatedAt: Long,
@@ -86,6 +93,7 @@ data class CodexThreadPage(
 enum class CodexAppServerNotificationKind {
   THREAD_STARTED,
   THREAD_NAME_UPDATED,
+  THREAD_SETTINGS_UPDATED,
   THREAD_STATUS_CHANGED,
   TURN_STARTED,
   TURN_COMPLETED,

@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArrayList
@@ -85,6 +86,16 @@ class RecordingAgentChatTerminalHarness {
     }
   }
 
+  suspend fun awaitSentTextsStayAt(
+    expectedSize: Int,
+    timeoutMs: Long = TERMINAL_HARNESS_NEGATIVE_WAIT_TIMEOUT_MS,
+  ): List<RecordingTerminalSentText> {
+    val unexpectedTexts = withTimeoutOrNull(timeoutMs.milliseconds) {
+      terminalTabs.tab.sentTextsFlow.first { texts -> texts.size > expectedSize }
+    }
+    return unexpectedTexts ?: terminalTabs.tab.sentTexts.toList()
+  }
+
   suspend fun awaitInitialMessageSent(timeoutMs: Long = TERMINAL_HARNESS_WAIT_TIMEOUT_MS): RecordingAgentChatOpenedFileSnapshot {
     return withTimeout(timeoutMs.milliseconds) {
       openedFileSnapshotsFlow.first { snapshots ->
@@ -130,6 +141,7 @@ data class RecordingTerminalSentText(
   @JvmField val text: String,
   @JvmField val shouldExecute: Boolean,
   @JvmField val useBracketedPasteMode: Boolean = true,
+  @JvmField val terminalSendMode: AgentChatInitialMessageTerminalSendMode = AgentChatInitialMessageTerminalSendMode.TEXT,
 )
 
 data class RecordingAgentChatOpenedFileSnapshot(
@@ -264,7 +276,33 @@ private class RecordingAgentChatTerminalTab : AgentChatTerminalTab {
   override suspend fun readRecentOutputTail(): String = recentOutputTail
 
   override fun sendText(text: String, shouldExecute: Boolean, useBracketedPasteMode: Boolean) {
-    sentTexts += RecordingTerminalSentText(text, shouldExecute, useBracketedPasteMode)
+    recordSentText(
+      RecordingTerminalSentText(
+        text = text,
+        shouldExecute = shouldExecute,
+        useBracketedPasteMode = useBracketedPasteMode,
+      )
+    )
+  }
+
+  override suspend fun sendInitialMessageText(
+    text: String,
+    shouldExecute: Boolean,
+    useBracketedPasteMode: Boolean,
+    terminalSendMode: AgentChatInitialMessageTerminalSendMode,
+  ) {
+    recordSentText(
+      RecordingTerminalSentText(
+        text = text,
+        shouldExecute = shouldExecute,
+        useBracketedPasteMode = useBracketedPasteMode,
+        terminalSendMode = terminalSendMode,
+      )
+    )
+  }
+
+  private fun recordSentText(sentText: RecordingTerminalSentText) {
+    sentTexts += sentText
     sentTextsFlow.value = sentTexts.toList()
     sentTextOutputTexts.poll()?.let(::emitTerminalOutput)
   }
@@ -302,3 +340,4 @@ private fun recordingSnapshot(snapshot: AgentChatTabSnapshot): RecordingAgentCha
 }
 
 private const val TERMINAL_HARNESS_WAIT_TIMEOUT_MS: Long = 30_000
+private const val TERMINAL_HARNESS_NEGATIVE_WAIT_TIMEOUT_MS: Long = 500

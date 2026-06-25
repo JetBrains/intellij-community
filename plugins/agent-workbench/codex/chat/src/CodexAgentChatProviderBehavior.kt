@@ -6,6 +6,7 @@ import com.intellij.agent.workbench.chat.AgentChatBehaviorTerminalTab
 import com.intellij.agent.workbench.chat.AgentChatInitialMessageDispatchContext
 import com.intellij.agent.workbench.chat.AgentChatInitialMessageRetryDecision
 import com.intellij.agent.workbench.chat.AgentChatInitialMessageSendObservation
+import com.intellij.agent.workbench.chat.AgentChatInitialMessageTerminalSendMode
 import com.intellij.agent.workbench.chat.AgentChatProviderBehavior
 import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadRebindPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
@@ -48,6 +49,15 @@ internal class CodexAgentChatProviderBehavior : AgentChatProviderBehavior {
     return text.trim() != CODEX_PLAN_COMMAND
   }
 
+  override fun initialMessageTerminalSendMode(dispatch: AgentChatInitialMessageDispatchContext): AgentChatInitialMessageTerminalSendMode {
+    return if (dispatch.isRetryableCodexPlanCommand()) {
+      AgentChatInitialMessageTerminalSendMode.INTERACTIVE_COMMAND
+    }
+    else {
+      AgentChatInitialMessageTerminalSendMode.TEXT
+    }
+  }
+
   override suspend fun beforeInitialMessageSend(
     file: AgentChatBehaviorFile,
     tab: AgentChatBehaviorTerminalTab,
@@ -75,14 +85,14 @@ internal class CodexAgentChatProviderBehavior : AgentChatProviderBehavior {
       return AgentChatInitialMessageRetryDecision.PROCEED
     }
     val normalizedOutput = normalizeCodexTerminalOutput(observation.outputText)
-    // Codex rejected `/plan` because a task is still running; do not spam the terminal or fall back to a normal prompt.
-    if (CODEX_PLAN_BUSY_PATTERN.containsMatchIn(normalizedOutput)) {
+    // Codex rejected `/plan`; do not silently start a standard-mode task after Plan mode was requested.
+    if (CODEX_PLAN_COMMAND_FAILURE_PATTERNS.any { pattern -> pattern.containsMatchIn(normalizedOutput) }) {
       return AgentChatInitialMessageRetryDecision.Stop
     }
-    // Only release the prompt step once Codex has visibly reacted to `/plan` (enabled it or refused it).
+    // Only release the prompt step once Codex has visibly confirmed that Plan mode is active.
     // Otherwise the `/plan` Enter has not been processed yet and the prompt would be appended onto the
     // still-pending `/plan` input line (producing `/plan <prompt>` that never submits), so keep waiting.
-    if (CODEX_PLAN_COMMAND_RESPONSE_PATTERNS.any { pattern -> pattern.containsMatchIn(normalizedOutput) }) {
+    if (CODEX_PLAN_COMMAND_CONFIRMED_PATTERN.containsMatchIn(normalizedOutput)) {
       return AgentChatInitialMessageRetryDecision.PROCEED
     }
     return AgentChatInitialMessageRetryDecision.AwaitMorePostSendOutput(
@@ -115,18 +125,16 @@ private fun calculateCodexPlanModeRetryBackoffMs(retryAttempt: Int): Long {
 
 private val ANSI_ESCAPE_PATTERN = Regex("\u001B\\[[0-?]*[ -/]*[@-~]")
 private val WHITESPACE_PATTERN = Regex("\\s+")
-private val CODEX_PLAN_BUSY_PATTERN = Regex("'\\s*/plan\\s*'\\s+is disabled while a task is in progress\\.", RegexOption.IGNORE_CASE)
+private val CODEX_PLAN_COMMAND_FAILURE_PATTERNS = listOf(
+  Regex("'\\s*/plan\\s*'\\s+is disabled while a task is in progress\\.", RegexOption.IGNORE_CASE),
+  Regex("plan mode unavailable", RegexOption.IGNORE_CASE),
+  Regex("collaboration modes are disabled", RegexOption.IGNORE_CASE),
+  Regex("unknown command.*?/plan", RegexOption.IGNORE_CASE),
+)
+private val CODEX_PLAN_COMMAND_CONFIRMED_PATTERN = Regex("\\bplan mode\\b", RegexOption.IGNORE_CASE)
 
 private const val CODEX_PLAN_MODE_RETRY_BACKOFF_MS: Long = 250
 private const val CODEX_PLAN_MODE_MAX_RETRY_BACKOFF_MS: Long = 1_000
 private const val CODEX_NEW_THREAD_COMMAND: String = "/new"
 private const val CODEX_FORK_THREAD_COMMAND: String = "/fork"
 private const val CODEX_PLAN_COMMAND: String = "/plan"
-
-// Output fragments that prove Codex actually processed the `/plan` command, so the prompt step may be sent:
-// either plan mode was toggled, or Codex refused/ignored the command (graceful fallback to standard mode).
-private val CODEX_PLAN_COMMAND_RESPONSE_PATTERNS = listOf(
-  Regex("plan mode", RegexOption.IGNORE_CASE),
-  Regex("unknown command", RegexOption.IGNORE_CASE),
-  Regex("collaboration modes are disabled", RegexOption.IGNORE_CASE),
-)

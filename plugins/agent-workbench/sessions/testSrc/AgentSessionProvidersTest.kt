@@ -6,15 +6,12 @@ import com.intellij.platform.ai.agent.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderCliVisibilityPolicy
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderMenuItem
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 import com.intellij.platform.ai.agent.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.platform.ai.agent.sessions.core.providers.buildAgentSessionProviderMenuModel
 import com.intellij.agent.workbench.ui.agentSessionThreadStatusIcon
 import com.intellij.agent.workbench.ui.clearAgentSessionThreadStatusIconCacheForTests
-import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
@@ -29,37 +26,27 @@ import javax.swing.Icon
 @TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentSessionProvidersTest {
-  private val extensionPoint =
-    ExtensionPointName<AgentSessionProviderDescriptor>("com.intellij.agent.workbench.sessionProvider")
-
   @Test
   fun registeringAndDisposingProviderUpdatesFacadeView() {
-    val provider = AgentSessionProvider.from("codex")
+    val provider = AgentSessionProvider.from("dynamic-provider")
     val initialDescriptor = AgentSessionProviders.find(provider)
     val initialSources = AgentSessionProviders.sessionSources()
 
-    val disposable = Disposer.newDisposable()
-    disposable.use {
-      val descriptor = TestAgentSessionProviderDescriptor(
-        provider = provider,
-        sourceId = "dynamic",
-        supportedModes = emptySet(),
-        cliAvailable = true,
-      )
-      extensionPoint.point.registerExtension(descriptor, disposable)
+    val descriptor = TestAgentSessionProviderDescriptor(
+      provider = provider,
+      sourceId = "dynamic",
+      supportedModes = emptySet(),
+      cliAvailable = true,
+    )
+    val registry = InMemoryAgentSessionProviderRegistry(listOf(descriptor))
+    AgentSessionProviders.withRegistryForTest(registry) {
+      assertThat(initialDescriptor).isNull()
 
       val descriptorAfterRegister = AgentSessionProviders.find(provider)
-      val expectedDescriptor = initialDescriptor ?: descriptor
-      assertThat(descriptorAfterRegister).isSameAs(expectedDescriptor)
+      assertThat(descriptorAfterRegister).isSameAs(descriptor)
 
       val sourcesAfterRegister = AgentSessionProviders.sessionSources()
-      if (initialDescriptor == null) {
-        assertThat(sourcesAfterRegister).hasSize(initialSources.size + 1)
-        assertThat(sourcesAfterRegister).contains(descriptor.sessionSource)
-      }
-      else {
-        assertThat(sourcesAfterRegister).containsExactlyElementsOf(initialSources)
-      }
+      assertThat(sourcesAfterRegister).containsExactly(descriptor.sessionSource)
     }
 
     assertThat(AgentSessionProviders.find(provider)).isSameAs(initialDescriptor)
@@ -68,20 +55,15 @@ class AgentSessionProvidersTest {
 
   @Test
   fun duplicateProvidersKeepFirstDescriptor() {
-    val provider = AgentSessionProvider.from("codex")
-    val initialDescriptor = AgentSessionProviders.find(provider)
+    val provider = AgentSessionProvider.from("duplicate-provider")
 
-    val disposable = Disposer.newDisposable()
-    disposable.use {
-      val firstDescriptor =
-        TestAgentSessionProviderDescriptor(provider = provider, sourceId = "first", supportedModes = emptySet(), cliAvailable = true)
-      val secondDescriptor =
-        TestAgentSessionProviderDescriptor(provider = provider, sourceId = "second", supportedModes = emptySet(), cliAvailable = true)
-      extensionPoint.point.registerExtension(firstDescriptor, disposable)
-      extensionPoint.point.registerExtension(secondDescriptor, disposable)
-
-      val expectedDescriptor = initialDescriptor ?: firstDescriptor
-      assertThat(AgentSessionProviders.find(provider)).isSameAs(expectedDescriptor)
+    val firstDescriptor =
+      TestAgentSessionProviderDescriptor(provider = provider, sourceId = "first", supportedModes = emptySet(), cliAvailable = true)
+    val secondDescriptor =
+      TestAgentSessionProviderDescriptor(provider = provider, sourceId = "second", supportedModes = emptySet(), cliAvailable = true)
+    val registry = InMemoryAgentSessionProviderRegistry(listOf(firstDescriptor, secondDescriptor))
+    AgentSessionProviders.withRegistryForTest(registry) {
+      assertThat(AgentSessionProviders.find(provider)).isSameAs(firstDescriptor)
       assertThat(AgentSessionProviders.find(provider)).isNotSameAs(secondDescriptor)
     }
   }
@@ -118,25 +100,26 @@ class AgentSessionProvidersTest {
         supportedModes = emptySet(),
         cliAvailable = true,
       )
-      extensionPoint.point.registerExtension(lowPriorityDescriptor, LoadingOrder.FIRST, disposable)
-      extensionPoint.point.registerExtension(alphaDescriptor, LoadingOrder.LAST, disposable)
-      extensionPoint.point.registerExtension(betaDescriptor, LoadingOrder.FIRST, disposable)
-      extensionPoint.point.registerExtension(highPriorityDescriptor, LoadingOrder.LAST, disposable)
+      val registry = InMemoryAgentSessionProviderRegistry(
+        listOf(lowPriorityDescriptor, alphaDescriptor, betaDescriptor, highPriorityDescriptor),
+      )
 
-      assertThat(AgentSessionProviders.allProviders().map { it.provider.value })
-        .containsSubsequence(
-          highPriorityDescriptor.provider.value,
-          alphaDescriptor.provider.value,
-          betaDescriptor.provider.value,
-          lowPriorityDescriptor.provider.value,
-        )
-      assertThat(AgentSessionProviders.allProvidersById().map { it.provider.value })
-        .containsSubsequence(
-          alphaDescriptor.provider.value,
-          betaDescriptor.provider.value,
-          highPriorityDescriptor.provider.value,
-          lowPriorityDescriptor.provider.value,
-        )
+      AgentSessionProviders.withRegistryForTest(registry) {
+        assertThat(AgentSessionProviders.allProviders().map { it.provider.value })
+          .containsExactly(
+            highPriorityDescriptor.provider.value,
+            alphaDescriptor.provider.value,
+            betaDescriptor.provider.value,
+            lowPriorityDescriptor.provider.value,
+          )
+        assertThat(AgentSessionProviders.allProvidersById().map { it.provider.value })
+          .containsExactly(
+            alphaDescriptor.provider.value,
+            betaDescriptor.provider.value,
+            highPriorityDescriptor.provider.value,
+            lowPriorityDescriptor.provider.value,
+          )
+      }
     }
   }
 

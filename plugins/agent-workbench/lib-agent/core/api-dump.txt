@@ -201,12 +201,6 @@ f:com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 f:com.intellij.platform.ai.agent.core.session.AgentSessionProvider$Companion
 - f:from-V7M2pUA(java.lang.String):java.lang.String
 - f:fromOrNull-6Etz2MU(java.lang.String):java.lang.String
-- f:getCLAUDE-dBzBBrw():java.lang.String
-- f:getCODEX-dBzBBrw():java.lang.String
-- f:getJUNIE-dBzBBrw():java.lang.String
-- f:getOPENCODE-dBzBBrw():java.lang.String
-- f:getPI-dBzBBrw():java.lang.String
-- f:getTERMINAL-dBzBBrw():java.lang.String
 f:com.intellij.platform.ai.agent.core.session.AgentSessionThread
 - f:activityReport:com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 - f:archived:Z

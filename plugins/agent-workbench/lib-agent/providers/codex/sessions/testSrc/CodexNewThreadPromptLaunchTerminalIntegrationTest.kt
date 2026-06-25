@@ -3,7 +3,6 @@ package com.intellij.platform.ai.agent.codex.sessions
 
 import com.intellij.platform.ai.agent.codex.common.CodexCliUtils
 import com.intellij.agent.workbench.chat.RecordingAgentChatTerminalHarness
-import com.intellij.agent.workbench.chat.RecordingTerminalSentText
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.ui.captureNewTaskPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.ScriptedSessionSource
@@ -33,11 +32,11 @@ class CodexNewThreadPromptLaunchTerminalIntegrationTest {
   private val fileEditorManagerFixture = projectFixture.fileEditorManagerFixture()
 
   @Test
-  fun globalPromptNewTaskPlanModeDispatchesPlanCommandThenPromptInTerminal(@TestDisposable disposable: Disposable): Unit =
+  fun globalPromptNewTaskPlanModeLaunchesRemoteResumeWithoutTerminalDispatch(@TestDisposable disposable: Disposable): Unit =
     timeoutRunBlocking {
-      val descriptor = descriptor()
+      val startupBackend = RecordingPlanPromptStartupBackend()
+      val descriptor = descriptor(startupBackend)
       val terminalHarness = RecordingAgentChatTerminalHarness()
-      terminalHarness.setSentTextOutputTexts(listOf("Plan mode"))
       runInUi {
         fileEditorManagerFixture.get()
         terminalHarness.registerEditorFactory(disposable)
@@ -66,105 +65,24 @@ class CodexNewThreadPromptLaunchTerminalIntegrationTest {
       ) {
         terminalHarness.awaitCreateCalls(1)
         terminalHarness.setRunning()
-        terminalHarness.awaitSentTexts(2)
-        val finalSnapshot = terminalHarness.awaitInitialMessageSent()
-        assertThat(finalSnapshot.initialMessageDispatchStepIndex).isZero()
+        terminalHarness.awaitInitialMessageSent()
+        assertThat(terminalHarness.awaitSentTextsStayAt(0)).isEmpty()
       }
 
       val startupCommand = terminalHarness.startupLaunchSpecs.single().command
-      assertThat(startupCommand).containsExactlyElementsOf(CODEX_BASE_COMMAND)
+      assertThat(startupCommand)
+        .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("resume", "--remote", REMOTE_URL, "thread-plan-1"))
       assertThat(startupCommand).doesNotContain("--")
       assertThat(startupCommand).doesNotContain(PLAN_PROMPT)
-      assertThat(terminalHarness.sentTexts)
-        .containsExactly(
-          RecordingTerminalSentText("/plan", shouldExecute = true, useBracketedPasteMode = false),
-          RecordingTerminalSentText(PLAN_PROMPT, shouldExecute = true, useBracketedPasteMode = true),
+      assertThat(terminalHarness.sentTexts).isEmpty()
+      assertThat(startupBackend.turnRequests).containsExactly(
+        CodexPlanPromptTurnRequest(
+          threadId = "thread-plan-1",
+          prompt = PLAN_PROMPT,
+          model = null,
+          reasoningEffort = null,
         )
-    }
-
-  @Test
-  fun globalPromptNewTaskPlanModeStopsAfterBusyPlanCommandOutput(@TestDisposable disposable: Disposable): Unit =
-    timeoutRunBlocking {
-      val descriptor = descriptor()
-      val terminalHarness = RecordingAgentChatTerminalHarness()
-      terminalHarness.setSentTextOutputTexts(listOf("'/plan' is disabled while a task is in progress."))
-      runInUi {
-        fileEditorManagerFixture.get()
-        terminalHarness.registerEditorFactory(disposable)
-      }
-
-      val projectPath = checkNotNull(project.basePath)
-      val request = captureNewTaskPromptLaunchRequest(
-        descriptor = descriptor,
-        prompt = PLAN_PROMPT,
-        workingProjectPath = projectPath,
-        project = project,
-      ).copy(preferredDedicatedFrame = false)
-
-      launchNewThreadPromptRequestWithDefaultChatOpenExecutor(
-        descriptor = descriptor,
-        request = request,
-        openedChatHandler = { openedProject, openedFile ->
-          check(terminalHarness.activateAgentChatEditor(project = openedProject, file = openedFile) == 1)
-        },
-      ) {
-        terminalHarness.awaitCreateCalls(1)
-        terminalHarness.setRunning()
-        terminalHarness.awaitSentTexts(1)
-        val finalSnapshot = terminalHarness.awaitInitialMessageDispatchCleared()
-        assertThat(finalSnapshot.initialMessageDispatchStepIndex).isZero()
-        assertThat(finalSnapshot.initialMessageDispatchStepCount).isZero()
-        assertThat(finalSnapshot.initialMessageSent).isFalse()
-      }
-
-      assertThat(terminalHarness.sentTexts)
-        .containsExactly(
-          RecordingTerminalSentText("/plan", shouldExecute = true, useBracketedPasteMode = false),
-        )
-    }
-
-  @Test
-  fun globalPromptNewTaskPlanModeWithholdsPromptUntilPlanModeConfirmed(@TestDisposable disposable: Disposable): Unit =
-    timeoutRunBlocking {
-      val descriptor = descriptor()
-      val terminalHarness = RecordingAgentChatTerminalHarness()
-      // The first `/plan` send is not yet acknowledged by Codex (startup noise, not the busy refusal); the
-      // prompt must stay withheld until plan mode is actually confirmed, without re-issuing `/plan`.
-      terminalHarness.setSentTextOutputTexts(listOf("starting up"))
-      runInUi {
-        fileEditorManagerFixture.get()
-        terminalHarness.registerEditorFactory(disposable)
-      }
-
-      val projectPath = checkNotNull(project.basePath)
-      val request = captureNewTaskPromptLaunchRequest(
-        descriptor = descriptor,
-        prompt = PLAN_PROMPT,
-        workingProjectPath = projectPath,
-        project = project,
-      ).copy(preferredDedicatedFrame = false)
-
-      launchNewThreadPromptRequestWithDefaultChatOpenExecutor(
-        descriptor = descriptor,
-        request = request,
-        openedChatHandler = { openedProject, openedFile ->
-          check(terminalHarness.activateAgentChatEditor(project = openedProject, file = openedFile) == 1)
-        },
-      ) {
-        terminalHarness.awaitCreateCalls(1)
-        terminalHarness.setRunning()
-        terminalHarness.awaitSentTexts(1)
-        terminalHarness.emitTerminalOutput("Plan mode")
-        terminalHarness.awaitSentTexts(2)
-        val finalSnapshot = terminalHarness.awaitInitialMessageSent()
-        assertThat(finalSnapshot.initialMessageDispatchStepIndex).isZero()
-      }
-
-      assertThat(terminalHarness.sentTexts)
-        .containsExactly(
-          RecordingTerminalSentText("/plan", shouldExecute = true, useBracketedPasteMode = false),
-          RecordingTerminalSentText(PLAN_PROMPT, shouldExecute = true, useBracketedPasteMode = true),
-        )
+      )
     }
 }
 
@@ -174,12 +92,25 @@ private suspend fun <T> runInUi(action: suspend () -> T): T {
   }
 }
 
-private fun descriptor(): AgentSessionProviderDescriptor {
+private fun descriptor(planPromptStartupBackend: CodexPlanPromptStartupBackend): AgentSessionProviderDescriptor {
   return CodexAgentSessionProviderDescriptor(
     sessionSource = ScriptedSessionSource(provider = AgentSessionProvider.from("codex")),
+    threadMutationBackend = NoopCodexThreadMutationBackend,
+    planPromptStartupBackend = planPromptStartupBackend,
     executableResolver = { CodexCliUtils.CODEX_COMMAND },
     cliAvailableProbe = { true },
   ).withProvider(CODEX_AGENT_SESSION_PROVIDER)
+}
+
+private object NoopCodexThreadMutationBackend : CodexThreadMutationBackend {
+  override suspend fun archiveThread(path: String, threadId: String) {
+  }
+
+  override suspend fun unarchiveThread(path: String, threadId: String) {
+  }
+
+  override suspend fun setThreadName(path: String, threadId: String, name: String) {
+  }
 }
 
 private const val PLAN_PROMPT: String = "Plan this refactor"

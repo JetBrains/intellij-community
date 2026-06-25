@@ -7,17 +7,17 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.core.session.AgentSubAgent
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan
 
 data class AgentSessionChatOpenPlan(
-  @JvmField val threadIdentity: String,
-  @JvmField val launchSpec: AgentSessionTerminalLaunchSpec,
-  @JvmField val runtimeThreadId: String,
-  @JvmField val threadTitle: String,
-  @JvmField val subAgentId: String?,
-  @JvmField val initialMessageDispatchPlan: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
+    @JvmField val threadIdentity: String,
+    @JvmField val launchSpec: AgentSessionTerminalLaunchSpec,
+    @JvmField val runtimeThreadId: String,
+    @JvmField val threadTitle: String,
+    @JvmField val subAgentId: String?,
+    @JvmField val initialMessageDispatchPlan: AgentInitialPromptDeliveryPlan = AgentInitialPromptDeliveryPlan.EMPTY,
 )
 
 suspend fun resolveAgentSessionChatOpenPlan(
@@ -46,12 +46,12 @@ suspend fun resolveAgentSessionChatOpenPlan(
                      resumeLaunchSpecProvider = resumeLaunchSpecProvider,
                    ).launchSpec
   val threadTitle = subAgent?.name?.ifBlank { subAgent.id } ?: thread.title
-  return AgentSessionChatOpenPlan(
-    threadIdentity = threadIdentity,
-    launchSpec = launchSpec,
-    runtimeThreadId = runtimeThreadId,
-    threadTitle = threadTitle,
-    subAgentId = subAgent?.id,
-    initialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
-  )
+    return AgentSessionChatOpenPlan(
+        threadIdentity = threadIdentity,
+        launchSpec = launchSpec,
+        runtimeThreadId = runtimeThreadId,
+        threadTitle = threadTitle,
+        subAgentId = subAgent?.id,
+        initialMessageDispatchPlan = AgentInitialPromptDeliveryPlan.EMPTY,
+    )
 }
