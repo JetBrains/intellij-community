@@ -51,6 +51,7 @@ internal class AgentWorkbenchInlinePromptEmptyStateComponent(
   private var content: AgentPromptPaletteContent? = null
 
   init {
+    Disposer.register(project, parentDisposable)
     name = INLINE_PROMPT_COMPONENT_NAME
     isOpaque = true
     background = UIUtil.getPanelBackground()

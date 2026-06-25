@@ -28,8 +28,10 @@ import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -387,6 +389,86 @@ class AgentSessionLaunchServiceTest {
           assertThat(openRequest.launchMode).isEqualTo(AgentSessionLaunchMode.YOLO)
           assertThat(openRequest.launchProfileId).isEqualTo(profileId)
           assertThat(openRequest.generationSettings).isEqualTo(profileSettings)
+        }
+      }
+    }
+  }
+
+  @Test
+  fun createNewSessionOpensPreparingChatBeforeLaunchSpecIsPrepared() {
+    val launchSpecRequested = CompletableDeferred<Unit>()
+    val releaseLaunchSpec = CompletableDeferred<Unit>()
+    val descriptor = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.from("codex"),
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+      newSessionLaunchSpecProvider = { mode ->
+        launchSpecRequested.complete(Unit)
+        releaseLaunchSpec.await()
+        AgentSessionTerminalLaunchSpec(command = listOf("test", "new", mode.name))
+      },
+    )
+    val chatOpenExecutor = RecordingChatOpenExecutor()
+
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+      runBlocking(Dispatchers.Default) {
+        withTestServiceAndLaunch(
+          sessionSourcesProvider = { listOf(descriptor.sessionSource) },
+          projectEntriesProvider = { listOf(openTestProjectEntry(PROJECT_PATH, "Project A")) },
+          chatOpenExecutor = chatOpenExecutor,
+        ) { _, launchService ->
+          launchService.createNewSession(
+            path = PROJECT_PATH,
+            provider = AgentSessionProvider.from("codex"),
+            mode = AgentSessionLaunchMode.STANDARD,
+            entryPoint = AgentWorkbenchEntryPoint.TREE_ROW,
+          )
+
+          chatOpenExecutor.awaitOpenPreparingNewChatCalls(1)
+          withTimeout(5_000) { launchSpecRequested.await() }
+          assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
+
+          releaseLaunchSpec.complete(Unit)
+          chatOpenExecutor.awaitOpenNewChatCalls(1)
+          val openRequest = checkNotNull(chatOpenExecutor.lastOpenNewChatRequest.get())
+          assertThat(openRequest.launchSpec.command).containsExactly("test", "new", AgentSessionLaunchMode.STANDARD.name)
+        }
+      }
+    }
+  }
+
+  @Test
+  fun createNewSessionReportsPreparationFailureInOpenedChat() {
+    val descriptor = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.from("codex"),
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = false,
+    )
+    val chatOpenExecutor = RecordingChatOpenExecutor()
+    val launchResult = CompletableDeferred<AgentPromptLaunchResult>()
+
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+      runBlocking(Dispatchers.Default) {
+        withTestServiceAndLaunch(
+          sessionSourcesProvider = { listOf(descriptor.sessionSource) },
+          projectEntriesProvider = { listOf(openTestProjectEntry(PROJECT_PATH, "Project A")) },
+          chatOpenExecutor = chatOpenExecutor,
+        ) { _, launchService ->
+          launchService.createNewSession(
+            path = PROJECT_PATH,
+            provider = AgentSessionProvider.from("codex"),
+            mode = AgentSessionLaunchMode.STANDARD,
+            entryPoint = AgentWorkbenchEntryPoint.TREE_ROW,
+            promptLaunchResolved = { result -> launchResult.complete(result) },
+          )
+
+          chatOpenExecutor.awaitOpenPreparingNewChatCalls(1)
+          waitForCondition { chatOpenExecutor.failPreparingNewChatCalls.get() == 1 }
+          val result = withTimeout(5_000) { launchResult.await() }
+          assertThat(result.launched).isFalse()
+          assertThat(result.error).isEqualTo(AgentPromptLaunchError.PROVIDER_UNAVAILABLE)
+          assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
+          assertThat(chatOpenExecutor.lastFailPreparingNewChatMessage.get()).isNotBlank()
         }
       }
     }

@@ -391,24 +391,6 @@ f:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDisp
 - equals(java.lang.Object):Z
 - hashCode():I
 - f:isDispatchable():Z
-f:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageProviderDispatchRequest
-- f:generationSettings:com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
-- f:message:java.lang.String
-- f:mode:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
-- f:project:com.intellij.openapi.project.Project
-- f:projectPath:java.lang.String
-- f:threadId:java.lang.String
-- <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings):V
-- f:component1():com.intellij.openapi.project.Project
-- f:component2():java.lang.String
-- f:component3():java.lang.String
-- f:component4():java.lang.String
-- f:component5():com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
-- f:component6():com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
-- f:copy(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings):com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageProviderDispatchRequest
-- bs:copy$default(com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageProviderDispatchRequest,com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageProviderDispatchRequest
-- equals(java.lang.Object):Z
-- hashCode():I
 e:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
 - java.lang.Enum
 - sf:PLAN:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
@@ -435,6 +417,24 @@ f:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
 - hashCode():I
 f:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan$Companion
 - f:composeDefault(com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest):com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
+f:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageProviderDispatchRequest
+- f:generationSettings:com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
+- f:message:java.lang.String
+- f:mode:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
+- f:project:com.intellij.openapi.project.Project
+- f:projectPath:java.lang.String
+- f:threadId:java.lang.String
+- <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings):V
+- f:component1():com.intellij.openapi.project.Project
+- f:component2():java.lang.String
+- f:component3():java.lang.String
+- f:component4():java.lang.String
+- f:component5():com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
+- f:component6():com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
+- f:copy(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings):com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageProviderDispatchRequest
+- bs:copy$default(com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageProviderDispatchRequest,com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageProviderDispatchRequest
+- equals(java.lang.Object):Z
+- hashCode():I
 e:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageStartupPolicy
 - java.lang.Enum
 - sf:POST_START_ONLY:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageStartupPolicy
@@ -621,8 +621,8 @@ com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderImple
 - buildResumeLaunchSpec(java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,kotlin.coroutines.Continuation):java.lang.Object
 - a:buildResumeLaunchSpec(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 - createToolWindowNorthComponent(com.intellij.openapi.project.Project):javax.swing.JComponent
-- displayNameForGenerationModelId(java.lang.String):java.lang.String
 - dispatchInitialMessageToProvider(com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageProviderDispatchRequest,kotlin.coroutines.Continuation):java.lang.Object
+- displayNameForGenerationModelId(java.lang.String):java.lang.String
 - getArchiveRefreshDelayMs():J
 - getCliDisplayNameFallback():java.lang.String
 - getCliDisplayNameKey():java.lang.String
