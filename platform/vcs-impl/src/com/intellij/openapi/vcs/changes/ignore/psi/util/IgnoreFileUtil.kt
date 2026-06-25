@@ -89,6 +89,7 @@ private fun changeIgnoreFile(project: Project,
     CommandProcessor.getInstance().executeCommand(project, {
       runUndoTransparentWriteAction {
         if (project.isDisposed) return@runUndoTransparentWriteAction
+        if (!ignoreFile.isValid) return@runUndoTransparentWriteAction
         if (PsiManager.getInstance(project).findFile(ignoreFile)?.language !is IgnoreLanguage) return@runUndoTransparentWriteAction
         action(ignoredFileContentProvider)
         ignoreFile.save()
