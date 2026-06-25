@@ -11,7 +11,6 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecApi.Pty
 import com.intellij.platform.eel.EelProcess
@@ -26,6 +25,7 @@ import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.spawnLoginShell
 import com.intellij.platform.ijent.community.ui.actions.IjentImplBundle
 import com.intellij.platform.ijent.community.ui.actions.dashboard.EnvironmentVariablesDashboard
+import com.intellij.platform.ijent.community.ui.actions.dashboard.EnvironmentVariablesDashboard.FetchEnvVarsMode
 import com.intellij.platform.ijent.community.ui.actions.dashboard.TerminalDashboard
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.bindItem
@@ -34,19 +34,22 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.launchOnShow
 import com.jediterm.core.util.TermSize
 import com.pty4j.PtyProcess
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import javax.swing.JComponent
 import javax.swing.JLabel
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 
@@ -64,7 +67,14 @@ internal class IjentDashboardConfigurable(val project: Project) : SearchableConf
       border = com.intellij.ui.IdeBorderFactory.createBorder(com.intellij.ui.SideBorder.ALL)
     }
 
-    val envVarsFlow = MutableStateFlow<EnvironmentVariablesDashboard.FetchEnvVarsMode?>(null)
+    val envVarsFlow = MutableSharedFlow<FetchEnvVarsMode>(
+      replay = 1,
+      onBufferOverflow = BufferOverflow.SUSPEND
+    )
+    val modeChosenFlow = MutableSharedFlow<LoginShellEnvVarModeProviderImpl.EnvVarShellMode>(
+      replay = 1,
+      onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
 
     val root = panel {
       if (eelDescriptor.osFamily.isPosix) {
@@ -73,7 +83,12 @@ internal class IjentDashboardConfigurable(val project: Project) : SearchableConf
           cell(modeCombo).bindItem(modeProperty)
         }
       }
-      val envDashboard = EnvironmentVariablesDashboard(envVarsFlow.filterNotNull())
+      row {
+        button(IdeBundle.message("action.refresh")) {
+          modeChosenFlow.tryEmit(modeProperty.get())
+        }
+      }
+      val envDashboard = EnvironmentVariablesDashboard(envVarsFlow)
       val splitter = com.intellij.ui.OnePixelSplitter(true, "IjentDashboardConfigurable.Terminal.Proportion", 0.75f).apply {
         firstComponent = envDashboard.component
         secondComponent = terminalPlaceholder
@@ -83,11 +98,34 @@ internal class IjentDashboardConfigurable(val project: Project) : SearchableConf
     }
 
     root.launchOnShow("ijent dashboard login-shell") {
-      modeProperty.toFlow().collectLatest { choice ->
+      launch {
+        modeProperty.toFlow().collectLatest {
+          modeChosenFlow.emit(it)
+        }
+      }
+      modeChosenFlow.collectLatest { choice ->
         coroutineScope {
-          val envVarDeferred = CompletableDeferred<Map<String, String>>()
-          envVarsFlow.value = EnvironmentVariablesDashboard.FetchEnvVarsMode {
-            envVarDeferred.await()
+          launch {
+            val variablesDeferred = eelDescriptor.toEelApi().exec.environmentVariables().mode(choice.toFetchEnvVarsMode()).eelIt()
+            envVarsFlow.emit(FetchEnvVarsMode {
+              variablesDeferred.await()
+            })
+            var updatedVars: Map<String, String>? = null
+            while (true) {
+              delay(30.milliseconds)
+              val newUpdatedVars = withTimeoutOrNull(30.milliseconds) {
+                eelDescriptor.toEelApi().exec.environmentVariables().mode(choice.toFetchEnvVarsMode()).eelIt().await()
+              }
+              if (newUpdatedVars != null) {
+                val prevUpdatedVars = updatedVars ?: run {
+                  if (variablesDeferred.deferred.isCompleted) variablesDeferred.await() else null
+                }
+                if (prevUpdatedVars != newUpdatedVars) {
+                  envVarsFlow.emit(FetchEnvVarsMode { newUpdatedVars })
+                  updatedVars = newUpdatedVars
+                }
+              }
+            }
           }
           val sessionDisposable = Disposer.newDisposable("IjentDashboard terminal session")
           var process: EelProcess? = null
@@ -111,20 +149,17 @@ internal class IjentDashboardConfigurable(val project: Project) : SearchableConf
                 withContext(Dispatchers.EDT) {
                   terminalPlaceholder.setContent(widget.component)
                 }
-                envVarDeferred.complete(handle.capturedEnv.await().associate { it.name to it.value })
               }
               else {
                 withContext(Dispatchers.EDT) {
                   terminalPlaceholder.setContent(null)
                 }
-                envVarDeferred.complete(envFetch(eelDescriptor.toEelApi(), choice).doFetch())
               }
             }
             else {
               withContext(Dispatchers.EDT) {
                 terminalPlaceholder.setContent(null)
               }
-              envVarDeferred.complete(envFetch(eelDescriptor.toEelApi(), choice).doFetch())
             }
             awaitCancellation()
           }
@@ -134,7 +169,6 @@ internal class IjentDashboardConfigurable(val project: Project) : SearchableConf
               @Suppress("HardCodedStringLiteral")
               terminalPlaceholder.setContent(JLabel(e.toString()))
             }
-            envVarDeferred.completeExceptionally(e)
           }
           finally {
             withContext(NonCancellable) {
@@ -153,14 +187,11 @@ internal class IjentDashboardConfigurable(val project: Project) : SearchableConf
   }
 
   @OptIn(EelDelicateApi::class)
-  private fun envFetch(eel: EelApi, choice: LoginShellEnvVarModeProviderImpl.EnvVarShellMode): EnvironmentVariablesDashboard.FetchEnvVarsMode {
-    val mode = when (choice) {
+  private fun LoginShellEnvVarModeProviderImpl.EnvVarShellMode.toFetchEnvVarsMode(): EelExecApi.EnvironmentVariablesOptions.Mode {
+    return when (this) {
       LoginShellEnvVarModeProviderImpl.EnvVarShellMode.LOGIN_INTERACTIVE -> EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE
       LoginShellEnvVarModeProviderImpl.EnvVarShellMode.LOGIN_NON_INTERACTIVE -> EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_NON_INTERACTIVE
       LoginShellEnvVarModeProviderImpl.EnvVarShellMode.LOGIN_INTERACTIVE_SHELL -> EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE_VIA_SHELL
-    }
-    return EnvironmentVariablesDashboard.FetchEnvVarsMode {
-      eel.exec.environmentVariables().onlyActual(true).mode(mode).eelIt().await()
     }
   }
 
