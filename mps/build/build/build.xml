@@ -29,7 +29,7 @@
   </macrodef>
 
   <!-- Build the IJ platform for MPS without custom patches (re-runnable) -->
-  <target name="build" depends="ij-platform,repackage"/>
+  <target name="build" depends="ij-platform,repackage,package-mps-platform-provided"/>
 
   <!-- Code changes required for MPS not yet integrated into the codebase -->
   <target name="patch" description="Apply MPS patches to IDEA Community sources">
@@ -105,4 +105,25 @@
     <delete file="${target.dist}/lib/plugin.xml"/>
   </target>
 
+  <target name="package-mps-platform-provided">
+    <!-- Copied from `IdeaPlatform.buildTypes.PlatformCI#artifactRules` and adapted to ant -->
+    <zip destfile="${target.root}/artifacts/mps-platform-provided.zip" duplicate="preserve">
+      <zipfileset file="${target.root}/artifacts/platform-sources.zip" prefix="lib/src"/>
+      <zipfileset dir="${target.root}/dist.all/lib" prefix="lib"/>
+      <zipfileset dir="${target.root}/dist.all/license" prefix="license"/>
+      <zipfileset dir="${target.root}/dist.all/plugins" prefix="plugins"/>
+      <!--<zipfileset dir="${target.root}/dist.mac.x64/plugins/laf-macos" prefix="plugins/laf-macos"/>-->
+      <!--<zipfileset dir="${target.root}/dist.win.x64/plugins/laf-win10" prefix="plugins/laf-win10"/>-->
+      <zipfileset file="${target.root}/dist.all/build.txt" fullpath="lib/build.txt"/>
+      <zipfileset dir="${target.root}/dist.all/bin" prefix="bin"/>
+      <zipfileset dir="${target.root}/dist.all/build/resources" prefix="build/resources"/>
+      <zipfileset dir="${target.root}/dist.all/build/dependencies" prefix="build/dependencies"/>
+      <zipfileset dir="${target.root}/dist.all/build/tools" prefix="build/tools"/>
+      <zipfileset dir="${target.root}/temp/jna" prefix="lib/jna"/>
+      <zipfileset dir="${target.root}/temp/skiko-awt-runtime-all" prefix="lib/skiko-awt-runtime-all"/>
+      <zipfileset dir="${target.root}/temp/native" prefix="lib/native"/>
+      <zipfileset dir="${target.root}/temp/pty4j" prefix="lib/pty4j"/>
+    </zip>
+  </target>
+  
 </project>
