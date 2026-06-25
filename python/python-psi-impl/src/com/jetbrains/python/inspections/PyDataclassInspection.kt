@@ -460,8 +460,7 @@ class PyDataclassInspection : PyInspection() {
       val value = field.findAssignedValue()
 
       if (value is PyCallExpression) {
-        val fieldWithDefaultFactory = value
-          .multiResolveCallee(resolveContext)
+        val fieldWithDefaultFactory = value.multiResolveCallee(resolveContext)
           .filter { it.callable?.qualifiedName == Dataclasses.DATACLASSES_FIELD }
           .any {
             PyCallExpressionHelper.mapArguments(value, it, myTypeEvalContext).mappedParameters.values.any { p ->

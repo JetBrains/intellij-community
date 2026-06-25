@@ -87,7 +87,8 @@ public final class PyArgumentListInspection extends PyInspection {
     @Override
     public void visitPyDecorator(@NotNull PyDecorator deco) {
       if (deco.hasArgumentList()) return;
-      final PyCallableType callableType = ContainerUtil.getFirstItem(deco.multiResolveCallee(getResolveContext()));
+      final PyCallableType callableType =
+        ContainerUtil.getFirstItem(deco.multiResolveCallee(getResolveContext()));
       if (callableType != null) {
         final PyCallable callable = callableType.getCallable();
         if (callable == null) return;

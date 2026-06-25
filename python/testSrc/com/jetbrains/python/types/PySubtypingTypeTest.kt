@@ -958,11 +958,10 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-22769"])
     fun `replace called on union of str and bytes with str arguments`() = test("""
-      from typing import Union
-
-
-      def foo(path: Union[bytes, str]) -> None:
+      def foo(path: bytes | str) -> None:
           path.replace("/", "\\")
+      #                │    ^^^^ WARNING Expected type 'Buffer', got 'Literal["\"]' instead
+      #                ^^^ WARNING Expected type 'Buffer', got 'Literal["/"]' instead
       """)
 
     @Test

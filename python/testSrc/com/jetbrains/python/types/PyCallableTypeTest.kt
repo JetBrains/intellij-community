@@ -28,8 +28,25 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       dd = spam if random.randint != 42 else Eggs2()
       var = dd if random.randint != 42 else dd
       expr = var()
+      # │    ^^^^^ WARNING Member 'Eggs2' of '() -> Literal["D"] | Eggs2' is not callable
       # └ TYPE Literal["D"]
       """)
+
+    @Test
+    @TestFor(issues = ["PY-84030"])
+    fun `calling union of callables`() = test("""
+    from typing import Callable
+
+    def f(x: Callable[[int], None] | Callable[[str], None]):
+        x(1)
+    #     └ WARNING Expected type 'str', got 'Literal[1]' instead
+
+    def g(x: Callable[[], None] | Callable[[str], None]):
+        x()
+    #     └ WARNING No signature matches the arguments
+        x(1)
+    #     └ WARNING Expected type 'str', got 'Literal[1]' instead
+    """)
 
     @Test
     @TestFor(issues = ["PY-9605"])

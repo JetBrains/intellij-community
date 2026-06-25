@@ -1,9 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
+import com.intellij.idea.TestFor;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
-
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +14,17 @@ import org.jetbrains.annotations.NotNull;
 public class PyCallingNonCallableInspectionTest extends PyInspectionTestCase {
   public void testTupleNonCallable() {
     doTest();
+  }
+
+  @TestFor(issues = "PY-84004")
+  public void testCallingOptionalCallable() {
+    doTestByText(
+      """
+        from typing import Callable
+
+        def f(x: Callable[[int], None] | None):
+            <warning descr="Member 'None' of '(int) -> None | None' is not callable">x(1)</warning>
+        """);
   }
 
   public void testStaticMeth() {

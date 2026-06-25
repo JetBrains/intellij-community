@@ -2,14 +2,10 @@
 package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
-import com.intellij.testFramework.TestLoggerFactory
-import com.intellij.testFramework.TestLoggerFactory.TestLoggerAssertionError
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 
 /**
  * Type and type-checker tests for [overloads][https://docs.python.org/3/library/typing.html#typing.overload]:

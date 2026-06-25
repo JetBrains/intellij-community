@@ -5,7 +5,6 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
@@ -27,7 +26,6 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.GeneratorTyp
 import com.jetbrains.python.codeInsight.typing.isProtocol
 import com.jetbrains.python.codeInsight.typing.matchingProtocolDefinitions
 import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam
-import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionReturnTypeQuickFix
 import com.jetbrains.python.psi.PyAnnotationOwner
 import com.jetbrains.python.psi.PyAssignmentStatement
@@ -109,7 +107,9 @@ import com.jetbrains.python.psi.types.PyTypeInferenceCspFactory.unifyReceiver
 import com.jetbrains.python.psi.types.PyTypeParameterMapping
 import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyTypeUtil.asUnionSequence
+import com.jetbrains.python.psi.types.PyTypeUtil.components
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
+import com.jetbrains.python.psi.types.PyTypeUtil.getCallableItems
 import com.jetbrains.python.psi.types.isUnknown
 import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.checkExpression
@@ -378,7 +378,7 @@ open class PyTypeCheckerInspection : PyInspection() {
       // Recompute the qualified reference type when it's `Unknown` to collect possible method binding errors.
       if (node.isQualified &&
           myTypeEvalContext.getType(node).asUnionSequence().any { it.isUnknown }) {
-        val errors = mutableListOf<ProblemMessage>()
+        val errors = mutableListOf<PyInspectionMessages.ProblemMessage>()
         PyReferenceExpressionImpl.getQualifiedReferenceType(node, myTypeEvalContext, errors)
         for (error in errors) {
           registerProblem(node, error, effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
@@ -906,36 +906,50 @@ open class PyTypeCheckerInspection : PyInspection() {
     }
 
     private fun checkCallSite(callSite: PyCallSiteOwner) {
-      // Check constructor call self argument type
       if (callSite is PyCallExpression) {
-        val callee = callSite.callee
-        if (callee != null) {
-          val calleeType = myTypeEvalContext.getType(callee)
-          if (calleeType is PyClassType && calleeType.isDefinition) {
-            val errors = mutableListOf<ProblemMessage>()
-            val constructorType = PyCallExpressionHelper.createCallableFromClass(calleeType, resolveContext, errors)
-            if (constructorType.isUnknown) {
-              for (error in errors) {
-                registerProblem(callSite, error, effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
-              }
-              return
+        val callee = callSite.callee ?: return
+        // Check constructor call self argument type
+        val calleeType = myTypeEvalContext.getType(callee)
+        if (calleeType is PyClassType && calleeType.isDefinition) {
+          val errors = mutableListOf<PyInspectionMessages.ProblemMessage>()
+          val constructorType = PyCallExpressionHelper.createCallableFromClass(calleeType, resolveContext, errors)
+          if (constructorType.isUnknown) {
+            for (error in errors) {
+              registerProblem(callSite, error, effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
             }
+            return
           }
         }
-      }
 
-      val calleesResults = mapArguments(callSite, resolveContext)
+        // Calling a value of a union type is valid only if *every* member is callable and accepts the arguments
+        // (a member that is not callable at all is reported by PyCallingNonCallableInspection). This differs from an
+        // overloaded callable (a `PyOverloadType`, not a `PyUnionType`), for which matching *any* overload is enough.
+        // TODO: intersection type
+        for (component in PyCallExpressionHelper.getCalleeType(callSite, resolveContext).components) {
+          val argumentsMappings = getCallableItems(component).map { mapArguments(callSite, it, myTypeEvalContext) }.toList()
+          if (reportIfNoneMatches(callSite, argumentsMappings)) break
+        }
+      }
+      else {
+        // Operators
+        reportIfNoneMatches(callSite, mapArguments(callSite, resolveContext))
+      }
+    }
+
+    private fun reportIfNoneMatches(callSite: PyCallSiteOwner, argumentsMappings: List<PyArgumentsMapping>): Boolean {
+      val calleesResults = argumentsMappings
         .filter { it.isComplete }
         .mapNotNull { analyzeCallee(callSite, it) }
-        .toList()
 
-      if (calleesResults.none { isMatched(it) }) {
+      if (calleesResults.isNotEmpty() && calleesResults.none { isMatched(it) }) {
         PyTypeCheckerInspectionProblemRegistrar
           .registerProblem(
             holder, callSite, calleesResults, myTypeEvalContext,
             effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
           )
+        return true
       }
+      return false
     }
 
     private fun checkIteratedValue(iteratedValue: PyExpression?, isAsync: Boolean): Boolean {

@@ -12,6 +12,7 @@ import com.jetbrains.python.ast.PyAstFunction;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.TypeEvalContext;

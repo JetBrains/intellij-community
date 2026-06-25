@@ -13,6 +13,7 @@ import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyReferenceExpression;

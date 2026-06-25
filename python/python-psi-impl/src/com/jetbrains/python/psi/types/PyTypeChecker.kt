@@ -2438,40 +2438,38 @@ object PyTypeChecker {
   }
 
   @JvmStatic
-  fun isCallable(type: PyType?): Boolean? {
-    return when (type) {
-      null, is PyAnyType -> null
-      is PyUnionType -> isUnionCallable(type)
-      is PyOverloadType -> true
-      is PyCallableType -> type.isCallable
-      is PyStructuralType if type.isInferredFromUsages -> true
-      is PyTypeVarType -> {
-        if (type.isDefinition) {
-          true
-        }
-        else isCallable(type.effectiveBound)
+  val PyType?.isCallable: Boolean?
+    get() {
+      PyAnyType.validate(this)
+      return when (this) {
+        null, is PyAnyType -> null
+        is PyUnionType -> this.isCallable
+        is PyUnsafeUnionType -> this.isCallable
+        is PyOverloadType -> true
+        is PyCallableType -> this.isCallable
+        is PyStructuralType if this.isInferredFromUsages -> true
+        is PyTypeVarType -> if (this.isDefinition) true else this.effectiveBound.isCallable
+        else -> false
       }
-      else -> false
     }
-  }
+
+  /**
+   * If any are not callable -- it is not callable.
+   * If any are unknown -- it is unknown.
+   * It is true otherwise.
+   */
+  private val PyUnionType.isCallable: Boolean?
+    get() = if (PyUnionType.isStrictSemanticsEnabled())
+      members.all { it.isCallable ?: return null }
+      else members.any { it.isCallable ?: return null }
 
   /**
    * If at least one is callable -- it is callable.
    * If at least one is unknown -- it is unknown.
    * It is false otherwise.
    */
-  private fun isUnionCallable(type: PyUnionType): Boolean? {
-    for (member in type.members) {
-      val callable = isCallable(member)
-      if (callable == null) {
-        return null
-      }
-      if (callable) {
-        return true
-      }
-    }
-    return false
-  }
+  private val PyUnsafeUnionType.isCallable: Boolean?
+    get() = members.any { it.isCallable ?: return null }
 
   @JvmStatic
   fun definesGetAttr(file: PyFile, context: TypeEvalContext): Boolean {

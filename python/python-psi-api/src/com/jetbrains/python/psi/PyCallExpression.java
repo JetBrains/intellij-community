@@ -85,10 +85,12 @@ public interface PyCallExpression extends PyAstCallExpression, PyCallSiteExpress
   }
 
   /**
-   * Resolves the callee to possible functions.
+   * Resolves the callee to the individual callable signatures it may denote: a union of callables yields one element per
+   * member, and an overloaded callable is unfolded into its overloads. The union/intersection structure of the callee
+   * type is not preserved here; resolution that keeps it lives in the PSI implementation's {@code getCalleeType}.
    *
    * @param resolveContext resolve context
-   * @return objects which contains callable, modifier, implicit offset and "implicitly resolved" flag.
+   * @return the resolved callee callable types.
    */
   @NotNull
   List<@NotNull PyCallableType> multiResolveCallee(@NotNull PyResolveContext resolveContext);
