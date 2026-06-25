@@ -5,8 +5,12 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryTestUtil;
-import com.intellij.refactoring.RefactorJBundle;import com.intellij.testFramework.HeavyPlatformTestCase;
-import com.intellij.util.containers.ContainerUtil;import kotlin.Unit;import java.io.File;import java.util.Arrays;
+import com.intellij.refactoring.RefactorJBundle;
+import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.util.containers.ContainerUtil;
+import kotlin.Unit;
+import java.io.File;
+import java.util.Arrays;
 
 /// Variant of [GenerateJavadocTest] to handle Markdown comment generation
 /// Since the workflow for Markdown comments is different ([com.intellij.codeInsight.completion.CompletionContributor]-based),
