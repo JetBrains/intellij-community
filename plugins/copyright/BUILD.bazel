@@ -1,6 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "copyright-tests_test",
+    timeout = "moderate",
+    sandbox = "True",
+    tags = ["community-aggregator"],
+    runtime_deps = [":copyright-tests_test_lib"],
+)
+### skip generation section `test intellij.copyright.tests`
+
 ### auto-generated section `build intellij.copyright` start
 
 jvm_library(
@@ -215,11 +224,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.copyright.tests` end
-
-### auto-generated section `test intellij.copyright.tests` start
-
-jps_test(
-    name = "copyright-tests_test",
-    runtime_deps = [":copyright-tests_test_lib"],
-)
-### auto-generated section `test intellij.copyright.tests` end
