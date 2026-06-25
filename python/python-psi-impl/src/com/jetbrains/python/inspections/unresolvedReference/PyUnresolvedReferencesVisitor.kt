@@ -18,6 +18,9 @@ import com.intellij.util.containers.addIfNotNull
 import com.jetbrains.python.PyCustomType
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyNames.END_WILDCARD
+import com.jetbrains.python.PyNames.inplaceToLeftOperatorName
+import com.jetbrains.python.PyNames.inplaceToRightOperatorName
+import com.jetbrains.python.PyNames.leftToRightOperatorName
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.PyDunderMatchArgsReference
 import com.jetbrains.python.codeInsight.PySubstitutionChunkReference
@@ -34,6 +37,7 @@ import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PsiReferenceEx
 import com.jetbrains.python.psi.PyAugAssignmentStatement
+import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyCallSiteExpression
 import com.jetbrains.python.psi.PyCallable
@@ -76,6 +80,7 @@ import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker.definesGetAttr
 import com.jetbrains.python.psi.types.PyTypeChecker.isUnknown
 import com.jetbrains.python.psi.types.PyTypeChecker.overridesGetAttr
+import com.jetbrains.python.psi.types.PyTypeUtil.asUnionSequence
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.psi.types.PyTypeVarType
 import com.jetbrains.python.psi.types.PyUnionType
@@ -222,15 +227,15 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
       if (referencedName != null && qualifier != null) {
         val qualifierType = myTypeEvalContext.getType(qualifier)
         if (qualifierType is PyUnionType) {
-          val unionMemberMissingAttr = findStrictUnionMemberMissingAttribute(qualifierType, reference, referencedName)
-          if (unionMemberMissingAttr != null) {
+          val missingMember = qualifierType.findStrictUnionMissingAttribute(reference, referencedName, node, qualifier)
+          if (missingMember != null) {
             val unionTypeRender = PythonDocumentationProvider.getTypeName(qualifierType, myTypeEvalContext)
-            val unionMemberRender = PythonDocumentationProvider.getTypeName(unionMemberMissingAttr, myTypeEvalContext)
+            val unionMemberRender = PythonDocumentationProvider.getTypeName(missingMember.memberType, myTypeEvalContext)
             registerProblem(
               node,
               PyPsiBundle.problemMessage(
                 "INSP.unresolved.refs.unresolved.attribute.in.union.type", unionMemberRender, unionTypeRender,
-                referencedName
+                missingMember.attributeName
               ),
               ProblemHighlightType.WEAK_WARNING,
               null,
@@ -239,6 +244,125 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
           }
         }
       }
+    }
+  }
+
+  /** The union member type that is missing the attribute, and the attribute name to report.  */
+  private data class StrictUnionMissingMember(val memberType: PyType, val attributeName: String)
+
+  private fun PyUnionType.findStrictUnionMissingAttribute(
+    reference: PsiReference,
+    referencedName: String,
+    qualifiedExpression: PyQualifiedExpression,
+    qualifier: PyExpression,
+  ): StrictUnionMissingMember? =
+    when (qualifiedExpression) {
+      is PyAugAssignmentStatement ->
+        findStrictUnionMemberMissingAugAssignOperator(
+          this,
+          reference,
+          qualifiedExpression,
+          referencedName,
+          qualifier,
+        )
+
+      is PyBinaryExpression ->
+        findStrictUnionMemberMissingBinaryOperator(
+          this,
+          reference,
+          qualifiedExpression,
+          referencedName,
+          qualifier,
+        )
+
+      else ->
+        findStrictUnionMemberMissingAttribute(this, reference, referencedName)
+          ?.let { StrictUnionMissingMember(it, referencedName) }
+    }
+
+  private fun findStrictUnionMemberMissingBinaryOperator(
+    unionType: PyUnionType,
+    reference: PsiReference,
+    binaryExpression: PyBinaryExpression,
+    operatorName: String,
+    qualifier: PyExpression,
+  ): StrictUnionMissingMember? {
+    if (!PyUnionType.isStrictSemanticsEnabled()) return null
+
+    val location = reference.element as? PyExpression
+    val rhs = binaryExpression.rightExpression
+    val lhs = binaryExpression.leftExpression
+
+    if (operatorName in PyNames.STANDALONE_RIGHT_OPERATORS) {
+      val missing = unionType.findUnionMemberWithoutAttribute(reference, operatorName, location) ?: return null
+      return StrictUnionMissingMember(missing, operatorName)
+    }
+
+    val unionIsOnRhs = qualifier === rhs
+
+    val unionSideOperator =
+      if (unionIsOnRhs) leftToRightOperatorName(operatorName) ?: return null
+      else operatorName
+
+    val missing = unionType.findUnionMemberWithoutAttribute(reference, unionSideOperator, location) ?: return null
+
+    val fallbackSide = if (unionIsOnRhs) lhs else rhs
+    val fallbackOperator = if (unionIsOnRhs) operatorName else leftToRightOperatorName(operatorName)
+
+    if (fallbackSide != null && fallbackOperator != null) {
+      val fallbackType = myTypeEvalContext.getType(fallbackSide)
+      if (fallbackType != null && fallbackType.typeHasAttribute(fallbackOperator, fallbackSide)) return null
+    }
+
+    return StrictUnionMissingMember(missing, unionSideOperator)
+  }
+
+  private fun findStrictUnionMemberMissingAugAssignOperator(
+    unionType: PyUnionType,
+    reference: PsiReference,
+    augAssignment: PyAugAssignmentStatement,
+    inplaceOperator: String,
+    qualifier: PyExpression,
+  ): StrictUnionMissingMember? {
+    if (!PyUnionType.isStrictSemanticsEnabled()) return null
+
+    val location = reference.element as? PyExpression
+    val unionIsOnRhs = qualifier === augAssignment.value
+
+    if (unionIsOnRhs) {
+      val reflectedOperator = inplaceToRightOperatorName(inplaceOperator) ?: return null
+
+      val missing = unionType.findUnionMemberWithoutAttribute(reference, reflectedOperator, location) ?: return null
+
+      val lhs = augAssignment.target
+      val lhsType = myTypeEvalContext.getType(lhs)
+      if (lhsType != null) {
+        if (lhsType.typeHasAttribute(inplaceOperator, lhs)) return null
+
+        val normalOperator = inplaceToLeftOperatorName(inplaceOperator)
+        if (normalOperator != null && lhsType.typeHasAttribute(normalOperator, lhs)) return null
+      }
+
+      return StrictUnionMissingMember(missing, reflectedOperator)
+    }
+    else {
+      val normalOperator = inplaceToLeftOperatorName(inplaceOperator)
+
+      val missing = unionType.members.firstOrNull { memberType ->
+        memberType != null &&
+        !ignoreUnresolvedMemberForType(memberType, reference, inplaceOperator) &&
+        !memberType.typeHasAttribute(inplaceOperator, location) &&
+        (normalOperator == null || !memberType.typeHasAttribute(normalOperator, location))
+      } ?: return null
+
+      val reflectedOperator = inplaceToRightOperatorName(inplaceOperator)
+      val rhs = augAssignment.value
+      if (reflectedOperator != null && rhs != null) {
+        val rhsType = myTypeEvalContext.getType(rhs)
+        if (rhsType != null && rhsType.typeHasAttribute(reflectedOperator, rhs)) return null
+      }
+
+      return StrictUnionMissingMember(missing, inplaceOperator)
     }
   }
 
@@ -546,6 +670,29 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
       ContainerUtil.isEmpty(t.resolveMember(name, location, AccessDirection.READ, resolveContext))
     }
   }
+
+  private fun PyUnionType.findUnionMemberWithoutAttribute(
+    reference: PsiReference,
+    attributeName: String,
+    location: PyExpression?,
+  ): PyType? =
+    members
+      .firstOrNull { memberType ->
+        memberType != null &&
+        !ignoreUnresolvedMemberForType(memberType, reference, attributeName) &&
+        !memberType.typeHasAttribute(attributeName, location)
+      }
+
+  private fun PyType.typeHasAttribute(
+    attributeName: String,
+    location: PyExpression?,
+  ): Boolean =
+    asUnionSequence()
+      .filterNotNull()
+      .none { type ->
+        val resolved = type.resolveMember(attributeName, location, AccessDirection.READ, resolveContext)
+        resolved.isNullOrEmpty()
+      }
 
   private fun isDecoratedAsDynamic(cls: PyClass): Boolean {
     if (hasDynamicAttrsDocstring(cls)) return true

@@ -68,7 +68,7 @@ public class PyOperatorReference extends PyReferenceImpl {
     }
     else if (myElement instanceof PyBinaryExpression expr) {
       final String name = expr.getReferencedName();
-      if (PyNames.CONTAINS.equals(name)) {
+      if (PyNames.STANDALONE_RIGHT_OPERATORS.contains(name)) {
         return resolveMember(expr.getRightExpression(), name);
       }
       else {

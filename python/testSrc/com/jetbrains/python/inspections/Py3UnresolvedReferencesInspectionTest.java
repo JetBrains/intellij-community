@@ -697,4 +697,276 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
                    a <warning descr="Class 'A' does not define '__iadd__', so the '+=' operator cannot be used on its instances">+=</warning> a
                    """);
   }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberAugAssignInplaceOperatorPresent() {
+    doTestByText("""
+                   class WithIadd:
+                       def __iadd__(self, other): pass
+
+                   class WithAdd:
+                       def __add__(self, other): pass
+
+                   class Rhs:
+                       pass
+  
+                   def f(x: WithIadd | WithAdd):
+                       x += Rhs()  # no error: WithIadd has __iadd__, WithAdd has __add__
+                   """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberAugAssignFallbackToNormalOperator() {
+    doTestByText("""
+                   class WithAdd:
+                       def __add__(self, other): pass
+
+                   class WithIaddAndAdd:
+                       def __iadd__(self, other): pass
+                       def __add__(self, other): pass
+
+                   class Rhs:
+                       pass
+  
+                   def f(x: WithAdd | WithIaddAndAdd):
+                       x += Rhs()  # no error: both satisfy __add__ or __iadd__
+                   """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberAugAssignReflectedOperatorOnRhsConsidered() {
+    doTestByText("""
+                   class Empty:
+                       pass
+
+                   class WithRadd:
+                       def __radd__(self, other): pass
+
+                   def f(x: Empty | None, y: WithRadd):
+                       x += y
+                   """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberAugAssignNoFalsePositiveForFloatIntUnion() {
+    doTestByText("""
+                   def f(foo: float | int):
+                       foo += 1
+                   """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberAugAssignNoFallback() {
+    doTestByText("""
+                 class Empty:
+                     pass
+
+                 class Rhs:
+                     pass
+
+                 def f(x: Empty | None):
+                     x <weak_warning descr="Member 'Empty' of 'Empty | None' does not have attribute '__iadd__'">+=</weak_warning> Rhs()
+                 """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberAugAssignRhsUnionPartialRadd() {
+    doTestByText("""
+                   class Empty:
+                       pass
+
+                   class WithRadd:
+                       def __radd__(self, other): pass
+
+                   def f(x: Empty | None, y: WithRadd | None):
+                       x <weak_warning descr="Member 'Empty' of 'Empty | None' does not have attribute '__iadd__'">+=</weak_warning> y
+                   """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberAugAssignRhsUnionAllRadd() {
+    doTestByText("""
+                   class Empty:
+                       pass
+
+                   class WithRadd:
+                       def __radd__(self, other): pass
+
+                   class WithRadd2:
+                       def __radd__(self, other): pass
+
+                   def f(x: Empty | None, y: WithRadd | WithRadd2):
+                       x += y
+                   """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberBinaryOperatorLhsMissingAddRhsPartialRadd() {
+    doTestByText("""
+                   class Empty:
+                       pass
+                   
+                   class WithRadd:
+                       def __radd__(self, other): pass
+                   
+                   def f(x: Empty | None, y: WithRadd | None):
+                       _ = x <weak_warning descr="Member 'None' of 'WithRadd | None' does not have attribute '__radd__'">+</weak_warning> y
+                   """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberBinaryOperatorRhsUnionAllRadd() {
+    doTestByText("""
+                   class Empty:
+                       pass
+
+                   class WithRadd:
+                       def __radd__(self, other): pass
+
+                   class WithRadd2:
+                       def __radd__(self, other): pass
+
+                   def f(x: Empty | None, y: WithRadd | WithRadd2):
+                       _ = x + y
+                   """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberBinaryOperatorPresent() {
+    doTestByText("""
+                  class WithAdd:
+                      def __add__(self, other): pass
+
+                  class WithAdd2:
+                      def __add__(self, other): pass
+
+                  class Rhs:
+                      pass
+
+                  def f(x: WithAdd | WithAdd2):
+                     _ = x + Rhs()  # no error: both members have __add__
+                  """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberBinaryOperatorReflectedOnRhsConsidered() {
+    doTestByText("""
+                   class Empty:
+                       pass
+
+                   class WithRadd:
+                       def __radd__(self, other): pass
+
+                   def f(x: Empty | None, y: WithRadd):
+                       _ = x + y  # no error: WithRadd.__radd__ covers the fallback
+                   """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberBinaryOperatorLhsMissingButRhsHasRadd() {
+    doTestByText("""
+                  class Empty:
+                    pass
+
+                  class RhsWithRadd:
+                    def __radd__(self, other): pass
+
+                  def f(x: Empty | None):
+                    _ = x + RhsWithRadd()  # no strict-union warning: RHS provides __radd__
+                  """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberBinaryOperatorOneMemberMissingNoRadd() {
+    doTestByText("""
+                  class WithAdd:
+                      def __add__(self, other): pass
+
+                  class NoRadd:
+                      pass
+
+                  def f(x: WithAdd | None):
+                      _ = x <weak_warning descr="Member 'None' of 'WithAdd | None' does not have attribute '__add__'">+</weak_warning> NoRadd()
+                  """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberBinaryOperatorNoFallback() {
+    doTestByText("""
+                  class Empty:
+                      pass
+
+                  class Rhs:
+                      pass
+
+                  def f(x: Empty | None):
+                      _ = x <weak_warning descr="Member 'Empty' of 'Empty | None' does not have attribute '__add__'">+</weak_warning> Rhs()
+                  """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberBinaryOperatorUnsafeUnionSomeMembersMissingAddWithAny() {
+    doTestByText("""
+                  from typing import Any
+  
+                  class WithAdd:
+                      def __add__(self, other): ...
+  
+                  class NoAdd:
+                      pass
+  
+                  class NoRaddRhs:
+                      pass
+  
+                  def f(x: WithAdd | NoAdd | Any):
+                      _ = x <weak_warning descr="Member 'NoAdd' of 'WithAdd | NoAdd | Any' does not have attribute '__add__'">+</weak_warning> NoRaddRhs()
+                  """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberBinaryOperatorRhsUnsafeUnionAllRaddWithAny() {
+    doTestByText("""
+                  from typing import Any
+    
+                  class Empty:
+                      pass
+    
+                  class WithRadd:
+                      def __radd__(self, other): ...
+    
+                  class WithRadd2:
+                      def __radd__(self, other): ...
+    
+                  def f(x: Empty | None, y: WithRadd | WithRadd2 | Any):
+                      _ = x + y  # all non-Any RHS members define '__radd__'
+                  """);
+  }
+
+  @TestFor(issues = "PY-89798")
+  public void testStrictUnionAugAssignmentOnMultipleLocalVariablesNoError() {
+    doTestByText("""
+                  def foo() -> None:
+                    left, right = 0, 42
+
+                    while left < right:
+                        left += 1
+                        #  no error:  ^^ Member 'Literal[0]' of 'Literal[0] | int' does not have attribute '__iadd__'
+                        right -= 1
+                        #  no error:   ^^ Member 'Literal[42]' of 'Literal[42] | int' does not have attribute '__isub__'
+                  """);
+  }
+
+  @TestFor(issues = "PY-90475")
+  public void testStrictUnionAugAssignmentOnLocalVariableNoError() {
+    doTestByText("""
+                   def bar(a: int, b: int):
+                       foo = 2
+      
+                       if a > 0:
+                           foo += 1
+      
+                       if b > 0:
+                           foo -= 1
+                   """);
+  }
 }

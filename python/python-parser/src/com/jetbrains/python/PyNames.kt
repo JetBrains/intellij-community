@@ -411,6 +411,13 @@ object PyNames {
     DELITEM
   )
 
+  /**
+   * Binary operators that are resolved exclusively on the right-hand side operand
+   * and have no left-hand side counterpart or reflected equivalent.
+   */
+  @JvmField
+  val STANDALONE_RIGHT_OPERATORS: Set<String> = setOf(CONTAINS)
+
   private val onlySelfDescr = BuiltinDescription("(self)")
   private fun onlySelfDescr(returnType: String, vararg imports: String) = BuiltinDescription("(self) -> $returnType", *imports)
   private val selfOtherDescr = BuiltinDescription("(self, other)")
