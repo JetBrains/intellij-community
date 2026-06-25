@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.choice.DefaultIntentionActionWithChoic
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
+import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix.removeHighlightersWithExactRange
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAware
@@ -15,14 +16,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiFileRange
-import org.intellij.plugins.markdown.MarkdownBundle
 import org.jetbrains.annotations.Unmodifiable
 
 internal class ReplacementQuickFix(private val underline: SmartPsiFileRange, private val replacements: List<String>): DefaultIntentionActionWithChoice {
 
   companion object {
     val familyName by lazy {
-      MarkdownBundle.message("markdown.specification.quick.fix.title.name")
+      GrazieBundle.message("specification.quick.fix.title.name")
     }
   }
 
