@@ -1,25 +1,15 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DestructuringDeclaration")
 
-package com.intellij.platform.projectView.backend.pane
+package com.intellij.platform.projectView.pane
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.projectView.actions.ProjectViewActionState
-import com.intellij.platform.projectView.pane.ProjectViewActionStateEvent
-import com.intellij.platform.projectView.pane.ProjectViewChildRemoved
-import com.intellij.platform.projectView.pane.ProjectViewChildrenLoaded
-import com.intellij.platform.projectView.pane.ProjectViewChildrenRemoved
-import com.intellij.platform.projectView.pane.ProjectViewClearStateEvent
-import com.intellij.platform.projectView.pane.ProjectViewNodeAdded
-import com.intellij.platform.projectView.pane.ProjectViewNodeModel
-import com.intellij.platform.projectView.pane.ProjectViewNodeUpdated
-import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
-import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
-import com.intellij.platform.projectView.pane.SuperRootModel
 import com.intellij.platform.util.coroutines.flow.IncrementalUpdateFlowProducer
 import com.intellij.platform.util.coroutines.flow.MutableStateWithIncrementalUpdates
 import kotlinx.coroutines.flow.Flow
+import org.jetbrains.annotations.ApiStatus
 
 internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
   private val state = object : MutableStateWithIncrementalUpdates<ProjectViewPaneStateEvent> {

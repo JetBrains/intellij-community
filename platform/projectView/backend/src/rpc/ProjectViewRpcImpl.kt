@@ -31,32 +31,32 @@ internal class ProjectViewRpcImpl : ProjectViewRpc {
     projectId: ProjectId,
     paneId: ProjectViewPaneId,
   ): SendChannel<ProjectViewPaneRequest> {
-    return BackendProjectViewPaneService.getInstanceSuspend(projectId.findProject()).getPaneRequestChannel(paneId)
+    return BackendProjectViewPaneService.getInstance(projectId.findProject()).getPaneRequestChannel(paneId)
   }
 
   override suspend fun getPaneDescriptors(
     projectId: ProjectId,
   ): List<ProjectViewPaneDescriptorImpl> {
-    return BackendProjectViewPaneService.getInstanceSuspend(projectId.findProject()).getPaneDescriptors()
+    return BackendProjectViewPaneService.getInstance(projectId.findProject()).getPaneDescriptors()
   }
 
   override suspend fun getPaneStateFlow(
     projectId: ProjectId,
     paneId: ProjectViewPaneId,
   ): Flow<ProjectViewPaneStateEventDTO> {
-    return BackendProjectViewPaneService.getInstanceSuspend(projectId.findProject()).getPaneStateFlow(paneId).map {
+    return BackendProjectViewPaneService.getInstance(projectId.findProject()).getPaneStateFlow(paneId).map {
       it.toDTO()
     }
   }
 
   override suspend fun findNodeForOpenedFile(projectId: ProjectId, paneId: ProjectViewPaneId, editorChoice: EditorChoice): ProjectViewNodePath? {
-    return BackendProjectViewPaneService.getInstanceSuspend(projectId.findProject()).findNodeForOpenedFile(paneId, editorChoice)
+    return BackendProjectViewPaneService.getInstance(projectId.findProject()).findNodeForOpenedFile(paneId, editorChoice)
   }
 
   override suspend fun findNodeForSelectIn(
       projectId: ProjectId,
       selectInRequest: SelectInRequestDTO,
   ): ProjectViewNodePath? {
-    return BackendProjectViewPaneService.getInstanceSuspend(projectId.findProject()).findNodeForSelectIn(selectInRequest)
+    return BackendProjectViewPaneService.getInstance(projectId.findProject()).findNodeForSelectIn(selectInRequest)
   }
 }

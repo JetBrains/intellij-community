@@ -1,0 +1,182 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(FlowPreview::class)
+package com.intellij.platform.projectView.pane
+
+import com.intellij.openapi.project.Project
+import com.intellij.platform.projectView.actions.EditorChoice
+import com.intellij.platform.projectView.actions.toSetting
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.time.Duration.Companion.seconds
+
+@ApiStatus.Internal
+interface ProjectViewPaneProvider {
+  fun createPanes(project: Project): List<ProjectViewPaneModel>
+}
+
+@OptIn(ExperimentalAtomicApi::class)
+@ApiStatus.Internal
+open class ProjectViewPaneService(
+  private val project: Project,
+  coroutineScope: CoroutineScope,
+  private val getProviders: () -> List<ProjectViewPaneProvider>
+) {
+
+  private val managers = AtomicReference<Map<ProjectViewPaneId, BackendProjectViewPaneManager>?>(null)
+  
+  private val managersDeferred = coroutineScope.async(CoroutineName("BackendProjectViewPaneService: pane computation")) {
+    val result = hashMapOf<ProjectViewPaneId, BackendProjectViewPaneManager>()
+    for (provider in getProviders()) {
+      for (pane in provider.createPanes(project)) {
+        val manager = createBackendProjectViewPaneManager(pane)
+        result[manager.id] = manager
+      }
+    }
+    managers.store(result)
+    result
+  }
+
+  init {
+    coroutineScope.launch(CoroutineName("BackendProjectViewPaneService: pane management")) {
+      val panes = managersDeferred.await()
+      supervisorScope {
+        for (pane in panes.values) {
+          launch(CoroutineName("BackendProjectViewPaneService: pane ${pane.id}")) {
+            pane.manage()
+          }
+        }
+      }
+    }
+  }
+
+  suspend fun getPaneRequestChannel(paneId: ProjectViewPaneId): SendChannel<ProjectViewPaneRequest> {
+    return managersDeferred.await()[paneId]?.getRequestChannel() ?: Channel<ProjectViewPaneRequest>(capacity = 0).also { it.close() }
+  }
+
+  suspend fun getPaneDescriptors(): List<ProjectViewPaneDescriptorImpl> {
+    return managersDeferred.await().values.toList().map { it.descriptor }
+  }
+
+  suspend fun getPaneStateFlow(paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEvent> {
+    return managersDeferred.await()[paneId]?.getPaneStateFlow() ?: emptyFlow()
+  }
+  
+  fun getPane(paneId: ProjectViewPaneId): ProjectViewPaneModel? {
+    return managers.load()?.get(paneId)?.pane
+  }
+
+  suspend fun findNodeForOpenedFile(paneId: ProjectViewPaneId, editorChoice: EditorChoice): ProjectViewNodePath? {
+    val managers = managers.load() ?: return null
+    val pane = managers[paneId]?.pane ?: return null
+    return pane.findNodeForEditor(editorChoice)
+  }
+
+  suspend fun findNodeForSelectIn(selectInRequestDTO: SelectInRequestDTO): ProjectViewNodePath? {
+    val managers = managers.load() ?: return null
+    val manager = managers.values.firstOrNull { pane ->
+      pane.descriptor.selectInTargetDescriptors.any { selectInTargetDescriptor ->
+        selectInTargetDescriptor.id == selectInRequestDTO.targetId
+      }
+    } ?: return null
+    val selectInRequest = selectInRequestDTO.toSelectInRequest(project) ?: return null
+    return manager.pane.findNodeForSelectIn(selectInRequest)
+  }
+}
+
+private suspend fun createBackendProjectViewPaneManager(pane: ProjectViewPaneModel): BackendProjectViewPaneManager {
+  val descriptor = pane.describe(ProjectViewPaneDescriptorBuilderImpl())
+  return BackendProjectViewPaneManager(pane, descriptor as ProjectViewPaneDescriptorImpl)
+}
+
+private class BackendProjectViewPaneManager(val pane: ProjectViewPaneModel, val descriptor: ProjectViewPaneDescriptorImpl) {
+  val id: ProjectViewPaneId
+    get() = descriptor.id
+
+  private val subscriberCount = MutableStateFlow(0)
+  private val stateBuilder = ProjectViewPaneStateBuilderImpl()
+  private val requestChannel = Channel<ProjectViewPaneRequest>(capacity = Channel.BUFFERED)
+
+  suspend fun manage() {
+    coroutineScope {
+      launch(CoroutineName("State updates for PV pane $id")) {
+        subscriberCount.map { subscriberCount -> subscriberCount > 0 }
+          .distinctUntilChanged() // leave only activate / deactivate events
+          .debounce { isActive -> if (isActive) 0.seconds else 30.seconds }
+          .distinctUntilChanged() // filter out quick reconnects
+          .collectLatest { isActive ->
+            if (isActive) {
+              try {
+                pane.manageState(stateBuilder)
+              }
+              finally {
+                withContext(NonCancellable) {
+                  stateBuilder.clear()
+                }
+              }
+            }
+          }
+      }
+      launch(CoroutineName("Requests for PV pane $id")) {
+        for (request in requestChannel) {
+          when (request) {
+            is ProjectViewPaneLoadChildrenRequest -> pane.loadChildren(request.nodeId, ProjectViewPaneLoadChildrenOptionsImpl)
+            is ProjectViewPaneSelectionChanged -> pane.setSelected(request.paneId == id, ProjectViewPaneSelectionOptionsImpl)
+            is ProjectViewPaneNavigateRequest -> pane.navigate(request.nodeId, ProjectViewPaneNavigateOptionsImpl(request.requestFocus))
+            is ProjectViewPaneChangeOptionValueRequest -> pane.changeSetting(
+              request.option.toSetting(request.newValue)
+            )
+            is ProjectViewPaneChangeSortKeyRequest -> pane.changeSetting(
+              ProjectViewSortKeySettingImpl(
+                request.sortKey.toSettingValue()
+              )
+            )
+            is ProjectViewPaneChangeFileNestingRequest -> pane.changeSetting(
+              ProjectViewPaneFileNestingSettingImpl(
+                ProjectViewPaneFileNestingValueImpl(
+                  request.isFileNestingOn,
+                  request.activeRules.map { it.toNestingRule() },
+                )
+              )
+            )
+          }
+        }
+      }
+    }
+  }
+
+  fun getPaneStateFlow(): Flow<ProjectViewPaneStateEvent> = flow {
+    subscriberCount.update { it + 1 }
+    try {
+      stateBuilder.getStateFlow().collect(this)
+    }
+    finally {
+      subscriberCount.update { it - 1 }
+    }
+  }
+
+  fun getRequestChannel(): SendChannel<ProjectViewPaneRequest> {
+    return requestChannel
+  }
+}
+

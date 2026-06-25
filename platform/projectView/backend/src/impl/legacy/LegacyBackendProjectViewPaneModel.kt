@@ -31,29 +31,32 @@ import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.projectView.actions.EditorChoice
 import com.intellij.platform.projectView.actions.FileNestingState
-import com.intellij.platform.projectView.actions.NestingRuleState
 import com.intellij.platform.projectView.actions.ProjectViewActionState
 import com.intellij.platform.projectView.actions.ProjectViewOption
 import com.intellij.platform.projectView.actions.ProjectViewOptionState
 import com.intellij.platform.projectView.actions.ProjectViewSortKeyState
 import com.intellij.platform.projectView.actions.legacyProjectViewOption
 import com.intellij.platform.projectView.actions.toNestingRuleState
-import com.intellij.platform.projectView.backend.pane.BackendProjectViewPane
-import com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneProvider
-import com.intellij.platform.projectView.backend.pane.ProjectViewPaneStateBuilder
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
 import com.intellij.platform.projectView.pane.ProjectViewNodeModel
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
-import com.intellij.platform.projectView.pane.ProjectViewPaneChangeFileNestingRequest
-import com.intellij.platform.projectView.pane.ProjectViewPaneChangeOptionValueRequest
-import com.intellij.platform.projectView.pane.ProjectViewPaneChangeSortKeyRequest
+import com.intellij.platform.projectView.pane.ProjectViewOptionSetting
+import com.intellij.platform.projectView.pane.ProjectViewPaneModel
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder
+import com.intellij.platform.projectView.pane.ProjectViewPaneFileNestingSetting
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
-import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenRequest
-import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateRequest
-import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
-import com.intellij.platform.projectView.pane.ProjectViewPaneSelectionChanged
+import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenOptions
+import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateOptions
+import com.intellij.platform.projectView.pane.ProjectViewPaneProvider
+import com.intellij.platform.projectView.pane.ProjectViewPaneSelectionOptions
+import com.intellij.platform.projectView.pane.ProjectViewPaneSetting
+import com.intellij.platform.projectView.pane.ProjectViewPaneSortByName
+import com.intellij.platform.projectView.pane.ProjectViewPaneSortByTime
+import com.intellij.platform.projectView.pane.ProjectViewPaneSortByType
+import com.intellij.platform.projectView.pane.ProjectViewPaneSortKeyValue
+import com.intellij.platform.projectView.pane.ProjectViewPaneStateBuilder
+import com.intellij.platform.projectView.pane.ProjectViewSortKeySetting
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
 import com.intellij.platform.projectView.pane.SelectInRequest
 import com.intellij.platform.projectView.pane.SuperRoot
@@ -79,7 +82,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -98,8 +100,8 @@ import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.coroutines.resume
 
-internal class LegacyBackendProjectViewPaneProvider : BackendProjectViewPaneProvider {
-  override fun createPanes(project: Project): List<BackendProjectViewPane> {
+internal class LegacyBackendProjectViewPaneProvider : ProjectViewPaneProvider {
+  override fun createPanes(project: Project): List<ProjectViewPaneModel> {
     return project.service<LegacyBackendProjectViewPaneService>().createPanes()
   }
 }
@@ -109,17 +111,17 @@ private class LegacyBackendProjectViewPaneService(
   private val project: Project,
   private val coroutineScope: CoroutineScope,
 ) {
-  fun createPanes(): List<BackendProjectViewPane> {
+  fun createPanes(): List<ProjectViewPaneModel> {
     return AbstractProjectViewPane.EP.getExtensions(project).flatMap { legacyPane ->
       createLegacyPanes(legacyPane)
     }
   }
 
-  private fun createLegacyPanes(legacyPane: AbstractProjectViewPane): Iterable<BackendProjectViewPane> {
+  private fun createLegacyPanes(legacyPane: AbstractProjectViewPane): Iterable<ProjectViewPaneModel> {
     val stateManager = AbstractProjectViewPaneStateManager(project, coroutineScope.childScope("LegacyBackendProjectViewPane: $legacyPane"), legacyPane)
     val subIds = legacyPane.subIds
     if (subIds.isEmpty()) {
-      return listOf(LegacyBackendProjectViewPane(
+      return listOf(LegacyBackendProjectViewPaneModel(
         project = project,
         legacyPaneManager = stateManager,
         subId = null,
@@ -128,7 +130,7 @@ private class LegacyBackendProjectViewPaneService(
     }
     else {
       return subIds.map { subId ->
-        LegacyBackendProjectViewPane(
+        LegacyBackendProjectViewPaneModel(
           project = project,
           legacyPaneManager = stateManager,
           subId = subId,
@@ -140,16 +142,12 @@ private class LegacyBackendProjectViewPaneService(
   }
 }
 
-private class LegacyBackendProjectViewPane(
+private class LegacyBackendProjectViewPaneModel(
   private val project: Project,
   private val legacyPaneManager: AbstractProjectViewPaneStateManager,
   private val subId: String?,
   private val addSelectInTargetDescriptors: Boolean,
-) : BackendProjectViewPane {
-  private val managerRequestChannel = legacyPaneManager.getRequestChannel()
-
-  private val requestChannel = Channel<ProjectViewPaneRequest>(capacity = Channel.UNLIMITED)
-
+) : ProjectViewPaneModel {
   private val id = projectViewPaneId(if (subId == null) legacyPaneManager.id else "${legacyPaneManager.id}:$subId")
 
   override suspend fun describe(builder: ProjectViewPaneDescriptorBuilder): ProjectViewPaneDescriptor = builder.run {
@@ -177,16 +175,51 @@ private class LegacyBackendProjectViewPane(
         legacyPaneManager.subId = subId
         legacyPaneManager.manageState(id, builder)
       }
-      launch(CoroutineName("Manage request channel $id")) {
-        for (request in requestChannel) {
-          managerRequestChannel.send(request)
-        }
+    }
+  }
+
+  override suspend fun setSelected(
+    isSelected: Boolean,
+    options: ProjectViewPaneSelectionOptions,
+  ) {
+    if (isSelected) {
+      withContext(Dispatchers.UI) {
+        legacyPaneManager.changeSelectedPaneIfOneOfOurs(id)
       }
     }
   }
 
-  override fun getRequestChannel(): SendChannel<ProjectViewPaneRequest> {
-    return requestChannel
+  override suspend fun loadChildren(
+    parentId: Long,
+    options: ProjectViewPaneLoadChildrenOptions,
+  ) {
+    withContext(Dispatchers.UI) {
+      legacyPaneManager.loadChildren(parentId)
+    }
+  }
+
+  override suspend fun navigate(
+    nodeId: Long,
+    options: ProjectViewPaneNavigateOptions,
+  ) {
+    withContext(Dispatchers.UI) {
+      legacyPaneManager.navigate(nodeId, options.requestFocus)
+    }
+  }
+
+  override suspend fun <T : Any> changeSetting(
+    setting: ProjectViewPaneSetting<T>,
+  ) {
+    withContext(Dispatchers.UI) {
+      when (setting) {
+        is ProjectViewOptionSetting -> legacyPaneManager.changeOptionValue(setting)
+        is ProjectViewSortKeySetting -> legacyPaneManager.changeSortKey(setting)
+        is ProjectViewPaneFileNestingSetting -> legacyPaneManager.changeFileNesting(setting)
+        else -> {
+          LOG.warn("Unsupported setting: $setting")
+        }
+      }
+    }
   }
 
   override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
@@ -293,8 +326,6 @@ private class AbstractProjectViewPaneStateManager(
 
   private val subIdFlow = MutableStateFlow<String?>(null)
   
-  private val requestChannel = Channel<ProjectViewPaneRequest>(capacity = Channel.BUFFERED)
-
   private var modelUpdateChannel: Channel<ModelUpdateRequest>? = null
 
   private var nextNodeId = SUPER_ROOT_ID
@@ -316,8 +347,6 @@ private class AbstractProjectViewPaneStateManager(
     }
   }
 
-  fun getRequestChannel(): SendChannel<ProjectViewPaneRequest> = requestChannel
-
   suspend fun loadNode(parentId: Long, modelChild: Any): LegacyProjectViewNode? {
     return withContext(Dispatchers.UI) { // our data structures are EDT-only and updates happen there too
       var updateEpoch = updateEpochFlow.value
@@ -334,7 +363,7 @@ private class AbstractProjectViewPaneStateManager(
         // The children are already loaded and the child isn't there? Can't do anything. Likely it was just removed.
         if (parent.childrenState == ChildrenState.LOADED) break
         // The children not loaded? Request and wait.
-        requestChannel.send(ProjectViewPaneLoadChildrenRequest(parentId))
+        loadChildren(parentId)
         updateEpoch = updateEpochFlow.first { it > updateEpoch }
       }
       result
@@ -460,20 +489,6 @@ private class AbstractProjectViewPaneStateManager(
           treeModelListener = MyTreeModelListener()
           treeModel.addTreeModelListener(treeModelListener)
           loadInitialState()
-          launch(CoroutineName("requests from the frontend")) {
-            LOG.debug { "Processing requests from the frontend for pane $id" }
-            for (request in requestChannel) {
-              LOG.trace { "Got request for pane $id: $request" }
-              when (request) {
-                is ProjectViewPaneLoadChildrenRequest -> loadChildren(request.nodeId)
-                is ProjectViewPaneNavigateRequest -> navigate(request.nodeId, request.requestFocus)
-                is ProjectViewPaneChangeOptionValueRequest -> changeOptionValue(request.option, request.newValue)
-                is ProjectViewPaneChangeSortKeyRequest -> changeSortKey(request.sortKey)
-                is ProjectViewPaneChangeFileNestingRequest -> changeFileNesting(request.isFileNestingOn, request.activeRules)
-                is ProjectViewPaneSelectionChanged -> changeSelectedPaneIfOneOfOurs(request.paneId)
-              }
-            }
-          }
           initDeferred.complete(Unit)
           awaitCancellation()
         }
@@ -488,7 +503,7 @@ private class AbstractProjectViewPaneStateManager(
     }
   }
 
-  private fun changeSelectedPaneIfOneOfOurs(
+  fun changeSelectedPaneIfOneOfOurs(
     paneId: ProjectViewPaneId,
   ) {
     if (paneId in activePanes.value) {
@@ -508,7 +523,7 @@ private class AbstractProjectViewPaneStateManager(
 
   private fun isDirectory(node: Any): Boolean = (TreeUtil.getUserObject(node) as? AbstractTreeNode<*>) is PsiDirectoryNode
 
-  private suspend fun navigate(id: Long, requestFocus: Boolean) {
+  suspend fun navigate(id: Long, requestFocus: Boolean) {
     val node = nodeById[id] ?: return
     val navigatable = TreeUtil.getUserObject(node.modelNode) as? Navigatable? ?: return
     val navigationRequest = readAction { navigatable.navigationRequest() } ?: return
@@ -534,7 +549,7 @@ private class AbstractProjectViewPaneStateManager(
     return treeModel
   }
 
-  private fun loadChildren(parentId: Long) {
+  fun loadChildren(parentId: Long) {
     LOG.trace { "Processing the request to load the children of the node $parentId..." }
     val parent = nodeById[parentId] ?: return
     LOG.trace { "...which is $parent" }
@@ -681,22 +696,34 @@ private class AbstractProjectViewPaneStateManager(
     return nodeByModelNode[node]
   }
 
-  private fun changeOptionValue(option: ProjectViewOption, newValue: Boolean) {
+  fun changeOptionValue(option: ProjectViewOptionSetting) {
     val legacyOption = legacyProjectViewOption(project, option)
-    legacyOption.isSelected = newValue
+    legacyOption.isSelected = option.newValue
     updateActionStates()
   }
 
-  private fun changeSortKey(sortKey: NodeSortKey) {
+  fun changeSortKey(sortKey: ProjectViewSortKeySetting) {
     val impl = ProjectViewImpl.getInstance(project) as ProjectViewImpl
-    impl.setSortKey(id, sortKey)
+    impl.setSortKey(id, sortKey.newValue.toLegacySortKey())
     updateActionStates()
   }
 
-  private fun changeFileNesting(isOn: Boolean, rules: List<NestingRuleState>) {
+  private fun ProjectViewPaneSortKeyValue.toLegacySortKey(): NodeSortKey {
+    return when (this) {
+      is ProjectViewPaneSortByName -> NodeSortKey.BY_NAME
+      is ProjectViewPaneSortByType -> NodeSortKey.BY_TYPE
+      is ProjectViewPaneSortByTime -> if (isAscending) NodeSortKey.BY_TIME_ASCENDING else NodeSortKey.BY_TIME_DESCENDING
+      else -> {
+        LOG.warn("Unsupported sort key: $this")
+        NodeSortKey.BY_NAME
+      }
+    }
+  }
+
+  fun changeFileNesting(fileNesting: ProjectViewPaneFileNestingSetting) {
     val impl = ProjectViewImpl.getInstance(project) as ProjectViewImpl
-    impl.setUseFileNestingRules(isOn)
-    ProjectViewFileNestingService.getInstance().setRules(rules.map { it.toNestingRule() })
+    impl.setUseFileNestingRules(fileNesting.newValue.isFileNestingOn)
+    ProjectViewFileNestingService.getInstance().setRules(fileNesting.newValue.nestingRules)
     impl.currentProjectViewPane?.updateFromRoot(true, ProjectViewUpdateCause.SETTINGS)
     updateActionStates()
   }
@@ -829,4 +856,4 @@ private enum class ChildrenState {
 private val TreeModelEvent.model: TreeModel
   get() = source as TreeModel
 
-private val LOG = logger<LegacyBackendProjectViewPane>()
+private val LOG = logger<LegacyBackendProjectViewPaneModel>()

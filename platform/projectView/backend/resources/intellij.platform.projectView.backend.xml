@@ -23,7 +23,7 @@
   <extensionPoints>
     <extensionPoint 
       qualifiedName="com.intellij.project.view.pane.backend" 
-      interface="com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneProvider" 
+      interface="com.intellij.platform.projectView.pane.ProjectViewPaneProvider"
       dynamic="true"
     />
   </extensionPoints>
