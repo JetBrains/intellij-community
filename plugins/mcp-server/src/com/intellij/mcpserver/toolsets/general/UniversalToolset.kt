@@ -180,7 +180,7 @@ class UniversalToolset : McpToolset {
         }
       }
       "array" -> parseAsStructuredJson(paramName, value, "array") { it is JsonArray }
-      "object" -> parseAsStructuredJson(paramName, value, "object") { it is JsonObject }
+      "object" -> parseAsStructuredJson(paramName, value, "object") { it is JsonObject || it is JsonArray }
       else -> JsonPrimitive(value)
     }
   }
