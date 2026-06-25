@@ -38,6 +38,9 @@ public class EclipseThemeReader extends DefaultHandler implements EclipseColorTh
     SAXParserFactory spf = SAXParserFactory.newDefaultInstance();
     spf.setValidating(false);
     try {
+      spf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+      spf.setFeature("http://xml.org/sax/features/external-general-entities", false);
+      spf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
       SAXParser parser = spf.newSAXParser();
       parser.parse(input, this);
     }
