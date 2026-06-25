@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine
 
 import com.intellij.debugger.actions.MuteRendererUtils
@@ -30,10 +30,9 @@ internal object JavaProcessDescriptorFactory {
         areRenderersMutedInitial = renderersFlow.value,
         areRenderersMutedFlow = renderersFlow.toRpc(),
       )
-      if (!SplitDebuggerMode.isSplitDebugger()) {
-        // for actions to work in monolith
-        FrontendDescriptorStateManager.getInstance(debuggerSession.project).registerProcessDescriptor(session.id, descriptor, cs)
-      }
+      // for actions to work in monolith
+      // TODO[IJPL-248436]: should we just remove this code below in comment?
+      // FrontendDescriptorStateManager.getInstance(debuggerSession.project).registerProcessDescriptor(session.id, descriptor, cs)
       descriptor
     }
   }

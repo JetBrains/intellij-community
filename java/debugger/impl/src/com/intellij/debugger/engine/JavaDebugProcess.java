@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -434,9 +434,8 @@ public class JavaDebugProcess extends XDebugProcess {
     return new XDebugTabLayouter() {
       @Override
       public void registerAdditionalContent(@NotNull RunnerLayoutUi ui) {
-        if (!SplitDebuggerMode.isSplitDebugger()) {
-          registerThreadsPanel(ui);
-        }
+        // TODO[IJPL-248436]: should we just remove this code below in the comment?
+        // registerThreadsPanel(ui);
         registerMemoryViewPanel(ui);
         registerOverheadMonitor(ui);
       }
