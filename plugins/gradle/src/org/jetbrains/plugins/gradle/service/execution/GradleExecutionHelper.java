@@ -33,6 +33,7 @@ import com.intellij.util.lang.JavaVersion;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Scope;
+import org.gradle.tooling.BuildCancelledException;
 import org.gradle.tooling.BuildLauncher;
 import org.gradle.tooling.CancellationToken;
 import org.gradle.tooling.GradleConnector;
@@ -240,6 +241,9 @@ public final class GradleExecutionHelper {
         }
         catch (CancellationException | ExternalSystemException e) {
           throw e;
+        }
+        catch (BuildCancelledException e) {
+          throw new ProcessCanceledException(e);
         }
         catch (Exception ex) {
           throw GradleProjectResolver.createProjectResolverChain()
