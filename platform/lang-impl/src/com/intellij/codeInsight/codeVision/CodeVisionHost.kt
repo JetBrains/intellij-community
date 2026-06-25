@@ -499,6 +499,8 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
     lensesToUpdate: UpdateLensesRequest = UpdateLensesRequest.All,
     @RequiresEdt consumer: (newLenses: List<Pair<TextRange, CodeVisionEntry>>, providersToUpdate: List<String>) -> Unit,
   ) {
+    val modCount = modificationCount(editor)
+
     val providers = providers
     val precalculatedUiThings = providers.associate {
       val shouldSkip = lensesToUpdate is UpdateLensesRequest.Specific && !lensesToUpdate.providerIds.contains(it.id)
@@ -518,7 +520,6 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
       ProgressManager.checkCanceled()
       val isEditorInsideSettingsPanel = isInlaySettingsEditor(editor)
       val editorOpenedTimeMark = editor.getUserData(editorTrackingStart)
-      val modCount = modificationCount(editor)
 
       var results = mutableListOf<Pair<TextRange, CodeVisionEntry>>()
 
