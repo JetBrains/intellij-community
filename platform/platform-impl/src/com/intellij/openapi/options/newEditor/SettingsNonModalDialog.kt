@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.help.HelpManager
@@ -214,6 +215,15 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
 
   // ── Lifecycle hooks for subclasses ────────────────────────────────────────────
 
+  /**
+   * Acquires the write-intent read lock and calls [AbstractEditor.apply].
+   *
+   * Non-modal windows are not wrapped by [com.intellij.openapi.application.TransactionGuardImpl]
+   * the way modal dialogs are, so the write-intent lock is not held automatically on the EDT.
+   * Configurables that need a write action would otherwise throw a threading violation.
+   */
+  private fun applyWithWriteIntent(): Boolean = WriteIntentReadAction.compute { editor.apply() }
+
   /** Called after settings are successfully applied and before the window closes. Override to react to apply. */
   protected open fun afterApply() {}
 
@@ -299,7 +309,7 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
       Messages.getWarningIcon(),
     )) {
       Messages.YES -> {
-        if (!editor.apply()) return UnsavedChangesResult.APPLY_FAILED
+        if (!applyWithWriteIntent()) return UnsavedChangesResult.APPLY_FAILED
         SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(null, true))
         UnsavedChangesResult.APPLIED
       }
@@ -390,7 +400,7 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
     val okAction = object : AbstractAction(CommonBundle.getOkButtonText()) {
       override fun actionPerformed(e: ActionEvent) {
         UIUtil.stopFocusedEditing(activeWindow)
-        if (editor.apply()) {
+        if (applyWithWriteIntent()) {
           SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(null, true))
           afterApply()
           close()
@@ -428,7 +438,7 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
           }
         }
         override fun actionPerformed(e: ActionEvent) {
-          rawApplyAction.actionPerformed(e)
+          WriteIntentReadAction.run { rawApplyAction.actionPerformed(e) }
           SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(null, true))
         }
       }
