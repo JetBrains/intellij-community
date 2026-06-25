@@ -25,7 +25,6 @@ import com.intellij.platform.lsp.api.LspClientDescriptor
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.LspClientManagerListener
 import com.intellij.platform.lsp.api.LspIntegrationProvider
-import com.intellij.platform.lsp.api.LspServer
 import com.intellij.platform.lsp.api.LspServerDescriptor
 import com.intellij.platform.lsp.api.LspServerManager
 import com.intellij.platform.lsp.api.LspServerState
@@ -247,10 +246,10 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
     }
   }
 
-  internal fun wrapLsp4jServer(lspServer: LspServer, lsp4jServer: Lsp4jServer): Lsp4jServer =
+  internal fun wrapLsp4jServer(lspClient: LspClientImpl, lsp4jServer: Lsp4jServer): Lsp4jServer =
     @Suppress("TestOnlyProblems")
     lsp4jServerWrappers.fold(lsp4jServer) { wrappedLsp4jServer, wrapper ->
-      wrapper.wrapLsp4jServer(lspServer, wrappedLsp4jServer)
+      wrapper.wrapLsp4jServer(lspClient, wrappedLsp4jServer)
     }
 
   override fun addListener(listener: LspClientManagerListener, parentDisposable: Disposable, sendEventsForExistingClients: Boolean) {
