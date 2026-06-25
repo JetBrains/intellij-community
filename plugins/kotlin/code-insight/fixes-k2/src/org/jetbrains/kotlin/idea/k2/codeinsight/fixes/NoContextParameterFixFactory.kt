@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.config.ApiVersion
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -76,6 +77,8 @@ internal object NoContextParameterFixFactory {
         callElement: KtCallElement,
         currentSymbol: KaContextParameterSymbol,
     ): AddExplicitContextArgumentFix? {
+        if (!callElement.languageVersionSettings.supportsFeature(LanguageFeature.ExplicitContextArguments)) return null
+
         val candidate = callElement.resolveToCallCandidates()
             .firstNotNullOfOrNull { it.candidate as? KaFunctionCall<*> } ?: return null
 
