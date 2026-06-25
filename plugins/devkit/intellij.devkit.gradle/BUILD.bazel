@@ -1,6 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "gradle-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":gradle-tests_test_lib"],
+)
+### skip generation section `test intellij.devkit.gradle.tests`
+
 ### auto-generated section `build intellij.devkit.gradle` start
 
 jvm_library(
@@ -205,6 +213,14 @@ jvm_library(
         "//jps/model-api:model_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
+        "//aether-dependency-resolver/plugin",
+        "//aether-dependency-resolver/plugin:plugin_test_lib",
+        "//libraries/misc/plugin",
+        "//libraries/misc/plugin:plugin_test_lib",
+        "//platform/structure-view-impl/plugin",
+        "//platform/structure-view-impl/plugin:plugin_test_lib",
+        "//platform/todo/plugin",
+        "//platform/todo/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.devkit.gradle.tests` end
@@ -217,11 +233,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.devkit.gradle.tests` end
-
-### auto-generated section `test intellij.devkit.gradle.tests` start
-
-jps_test(
-    name = "gradle-tests_test",
-    runtime_deps = [":gradle-tests_test_lib"],
-)
-### auto-generated section `test intellij.devkit.gradle.tests` end

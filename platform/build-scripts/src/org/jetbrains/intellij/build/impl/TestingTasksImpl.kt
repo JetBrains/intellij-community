@@ -1525,4 +1525,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.copyright.tests",
   "intellij.devkit.apiDump.lang.tests",
   "intellij.devkit.debugger.tests",
+  "intellij.devkit.gradle.tests",
 )
