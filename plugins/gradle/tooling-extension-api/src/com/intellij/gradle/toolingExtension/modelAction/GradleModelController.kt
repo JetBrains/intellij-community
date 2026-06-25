@@ -18,15 +18,6 @@ import org.gradle.tooling.model.Model as GradleModel
 interface GradleModelController {
 
   /**
-   * Fetches a required global Gradle model.
-   *
-   * @param modelClass the model type requested from the Tooling API.
-   *
-   * This method follows the Gradle Tooling API failure semantics when the requested model is not available.
-   */
-  fun <M : Any> fetchModel(modelClass: Class<M>): M
-
-  /**
    * Fetches an optional global Gradle model.
    *
    * @param modelClass the model type requested from the Tooling API.

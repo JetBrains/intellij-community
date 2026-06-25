@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 
 @ApiStatus.Internal
 public class DefaultBuildController implements BuildController {
@@ -37,9 +36,7 @@ public class DefaultBuildController implements BuildController {
     myDelegate = buildController;
 
     myMainGradleBuild = mainGradleBuild;
-    // Gradle root project is null when settings script configuration failed
-    // Gradle model fetching isn't started when settings script configuration failed
-    myMyMainGradleBuildRootProject = Objects.requireNonNull(myMainGradleBuild.getRootProject());
+    myMyMainGradleBuildRootProject = myMainGradleBuild.getRootProject();
 
     myGradleVersion = gradleVersion;
   }

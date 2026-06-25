@@ -25,12 +25,37 @@ class GradleModelControllerImpl(
   private val buildController: BuildController,
 ) : GradleModelController {
 
-  override fun <Model : Any> fetchModel(modelClass: Class<Model>): Model {
+  /**
+   * Fetches a required global Gradle model.
+   *
+   * @param modelClass the model type requested from the Tooling API.
+   *
+   * This method follows the Gradle Tooling API failure semantics when the requested model is not available.
+   */
+  fun <Model : Any> fetchRequiredModel(
+    modelClass: Class<Model>,
+    isValidModel: (Model) -> Boolean = { true },
+  ): Model {
     if (!isResilientModelFetchApiUsed()) {
       return buildController.getModel(modelClass)
     }
-    return buildController.fetch(modelClass).getModel()
-           ?: buildController.getModel(modelClass)
+
+    val result = buildController.fetch(modelClass)
+    val model = result.model
+
+    if (model == null || !isValidModel(model)) {
+      // The resilient API can return a partial required model together with failures.
+      // Fall back to strict getModel() to surface the original Gradle failure instead of
+      // continuing with an invalid root model and failing later with an unrelated NPE.
+      buildController.getModel(modelClass)
+
+      // getModel() is expected to throw. Reaching this point means Gradle returned an unusable
+      // required model without reporting the original failure.
+      error("Strict Gradle model fetch unexpectedly returned invalid model for ${modelClass.name}")
+    }
+
+    sendModelFetchFailures(result)
+    return model
   }
 
   override fun <M : Any> fetchModelOrNull(modelClass: Class<M>): M? {
@@ -38,7 +63,7 @@ class GradleModelControllerImpl(
       return buildController.findModel(modelClass)
     }
     return buildController.fetch(modelClass)
-      .alsoSendModelFetchFailures()
+      .also { sendModelFetchFailures(it) }
       .getModel()
   }
 
@@ -61,7 +86,7 @@ class GradleModelControllerImpl(
       return buildController.findModel(target, modelClass)
     }
     return buildController.fetch(target, modelClass)
-      .alsoSendModelFetchFailures()
+      .also { sendModelFetchFailures(it) }
       .getModel()
   }
 
@@ -75,7 +100,7 @@ class GradleModelControllerImpl(
       return buildController.findModel(target, modelClass, modelParameterClass, modelParameterInitializer)
     }
     return buildController.fetch(target, modelClass, modelParameterClass, modelParameterInitializer)
-      .alsoSendModelFetchFailures()
+      .also { sendModelFetchFailures(it) }
       .getModel()
   }
 
@@ -171,8 +196,8 @@ class GradleModelControllerImpl(
     return buildModel.projects.filter { it.parent == null }
   }
 
-  private fun <T : FetchModelResult<*>> T.alsoSendModelFetchFailures(): T = also { result ->
-    val failures = result.failures.takeIf { it.isNotEmpty() } ?: return@also
+  private fun sendModelFetchFailures(result: FetchModelResult<*>) {
+    val failures = result.failures.takeIf { it.isNotEmpty() } ?: return
     buildController.send(GradleModelFetchFailureState(failures.map { GradleModelFetchFailure(it) }))
   }
 
