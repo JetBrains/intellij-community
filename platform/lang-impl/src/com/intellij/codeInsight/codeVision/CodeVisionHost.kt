@@ -475,6 +475,9 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
     )
 
     subscribeForDocumentChanges(editor, editorLifetime) {
+      // Any running recalculateLenses is now obsolete and cannot succeed.
+      // `.next` cancels it if it is running.
+      calculationLifetimes.next()
       pokeEditor()
     }
 
