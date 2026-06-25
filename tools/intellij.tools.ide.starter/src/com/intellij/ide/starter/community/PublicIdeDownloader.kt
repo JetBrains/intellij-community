@@ -31,8 +31,7 @@ open class PublicIdeDownloader : IdeDownloader {
         filteringParams.majorVersion.isNotBlank() -> sortedByDate.first { it.majorVersion == filteringParams.majorVersion }
         // find the latest release / eap, if no specific params were provided
         filteringParams.versionNumber.isBlank() && filteringParams.buildNumber.isBlank() -> {
-          val latestMajor = sortedByDate.maxOf { it.majorVersion }
-          sortedByDate.first { it.majorVersion == latestMajor }
+          sortedByDate.first()
         }
         filteringParams.versionNumber.isNotBlank() -> {
           sortedByDate.first {
