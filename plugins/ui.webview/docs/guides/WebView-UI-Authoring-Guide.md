@@ -66,6 +66,90 @@ for (const config of defineWebViewViewConfigs({ webviewSrcDir, views: selectedVi
 
 The helper emits commit-friendly static files. The view entry is `view.js`, CSS is `styles.css`, and dependencies from `node_modules` are split into stable package-name chunks under `assets/`, for example `assets/react.js` or `assets/mermaid.js`. Fonts and other emitted assets also live under `assets/` with stable names. Generated `resources/webview/` files should be committed until the frontend build is integrated into the main build graph.
 
+## Preview And Mock A View In A Browser
+
+For fast UI iteration without starting Kotlin, Swing, the IDE, or a native WebView engine, use the browser mock testkit. Production view code still imports `@jetbrains/intellij-webview` and talks through `webView.callable(...)` / `webView.implement(...)`; mock mode is installed by the preview/test harness, not by feature code.
+
+Put mocks under `webview-src/test/<view-id>/mocks`, for example:
+
+```text
+webview-src/
+  views/my-view/...
+  test/my-view/mocks/default.ts
+```
+
+Run a preview from the owning `webview-src` package:
+
+```shell
+bun webview-preview my-view --mock default
+```
+
+The command serves the view through Vite, replaces `/__webview/wvi-bridge.js` with the test bridge, and loads the selected mock. Use `defineWebViewMock(...)` from `@jetbrains/intellij-webview-testkit` to implement host APIs and to call page APIs registered by the view.
+
+Keep mocks and browser smoke tests out of `resources/webview/`; that directory is generated production output. See [Frontend Testability Without IDE](../frontend/WebView-Frontend-Testability.md) for API details and the `demo/webview-src/test/acp-chat` reference mock.
+
+## Test A View With Playwright
+
+Use Playwright for browser smoke tests that need a real browser but not the IDE. The test should start a mock preview server, open `preview.url`, interact with the UI, and assert both rendered state and important bridge calls.
+
+Put Playwright tests next to the mock:
+
+```text
+webview-src/
+  test/my-view/
+    mocks/default.ts
+    my-view.browser.test.ts
+```
+
+Add a browser-test script in the owning `webview-src/package.json` when the package has Playwright tests:
+
+```json
+{
+  "scripts": {
+    "test:browser": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0"
+  }
+}
+```
+
+The test shape is:
+
+```text
+import { test, expect } from "@playwright/test"
+import { startWebViewMockPreview } from "@jetbrains/intellij-webview-testkit"
+
+let preview
+
+test.beforeAll(async () => {
+  preview = await startWebViewMockPreview({
+    webviewSrcDir,
+    viewId: "my-view",
+    mock: mockFile,
+  })
+})
+
+test.afterAll(async () => {
+  await preview?.close()
+})
+
+test("runs my view in a browser", async ({ page }) => {
+  await page.goto(preview.url)
+  await page.getByRole("button", { name: "Run" }).click()
+  await expect(page.getByText("Done")).toBeVisible()
+
+  const calls = await page.evaluate(() => window.__WVI_MOCK__?.calls.byMethod("my.api/run") ?? [])
+  expect(calls.length).toBeGreaterThan(0)
+})
+```
+
+Prefer user-level locators (`getByRole`, `getByLabel`, `getByPlaceholder`) for interaction assertions and use `window.__WVI_MOCK__.calls` only for bridge-contract assertions. Do not assert implementation details that would make harmless markup changes break the smoke test. Run the test from the owning `webview-src` package:
+
+```shell
+bun run test:browser
+```
+
 ## Host The View From Kotlin
 
 Create the Swing-hosted WebView through `createWebViewPanel(...)`. This creates the engine-neutral WebView, host component, message bus, platform bridge, and initial asset load.

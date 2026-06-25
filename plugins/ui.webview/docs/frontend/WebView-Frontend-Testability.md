@@ -1,10 +1,10 @@
 # WebView Frontend Testability Without IDE
 
-Status: ⬜ **DESIGN ONLY**. No `intellij.platform.webview.testkit` Java module, no `@jetbrains/intellij-webview-testkit` npm package, no browser-test bridge in tests, no Java mock backend. This doc is the v1 spec when work starts.
+Status: ⏳ **BROWSER MOCK TESTKIT V1 IMPLEMENTED FOR TS/VITE**. `@jetbrains/intellij-webview-testkit` exists under `webview-src/packages/testkit`, mock previews can run without Kotlin/IDE, and the demo has an `acp-chat` mock. A Java backend testkit remains a possible later layer for Java-heavy plugin teams.
 
 ## Goal
 
-Most WebView UI behavior should be testable without starting the IDE. A view should be opened in a real browser, connected to a simple Java mock backend, and tested with Playwright, Selenium/WebDriver, or another browser automation runner.
+Most WebView UI behavior should be testable without starting the IDE. A view should be opened in a real browser, connected to a deterministic mock host, and tested with Playwright, Selenium/WebDriver, an agent-driven browser session, or another browser automation runner.
 
 This does not replace IDE smoke tests. It creates a faster test layer for frontend behavior, layout, keyboard interaction, bridge API usage, and state transitions.
 
@@ -16,7 +16,7 @@ In production, the WebView page talks to the IDE through `window.__WVI__`, loade
 <script src="/__webview/wvi-bridge.js"></script>
 ```
 
-In browser tests, the page should load a test bridge from the same URL. The test bridge exposes the same public JavaScript API, but forwards JSON-RPC frames to a local Java mock backend instead of to JCEF, WebView2, or WKWebView.
+In browser tests, the page should load a test bridge from the same URL. The V1 bridge exposes the same public JavaScript API, but routes calls to TypeScript mock implementations instead of to JCEF, WebView2, WKWebView, or Kotlin host code.
 
 ```mermaid
 flowchart TD
@@ -24,7 +24,7 @@ flowchart TD
   Browser["real browser\nChromium, WebKit, Firefox, Edge, Chrome"]
   View["WebView page\nindex.html + view.js"]
   Bridge["/__webview/wvi-bridge.js\ntest bridge"]
-  Backend["simple Java mock backend"]
+  Backend["TypeScript mock host"]
   Model["mock model\nscenario state"]
 
   TestRunner --> Browser
@@ -37,7 +37,7 @@ flowchart TD
 
 The source view code keeps using the normal runtime wrapper:
 
-```ts
+```text
 import { apiId, webView, type WebViewCallable } from "@jetbrains/intellij-webview"
 
 interface SettingsHostApi extends WebViewCallable {
@@ -52,9 +52,150 @@ await host.openConfig({ path: "inspectionProfile" })
 
 The view should not know whether it runs inside IDE WebView or inside the browser test harness.
 
+## Browser Mock Testkit V1
+
+The current V1 testkit is a TypeScript/Vite package:
+
+```text
+webview-src/packages/testkit
+  @jetbrains/intellij-webview-testkit
+```
+
+It is intended for fast local previews and browser smoke tests. It does not start Kotlin, Swing, the IDE, or a native WebView engine. It serves the view through Vite, replaces `/__webview/wvi-bridge.js` with a browser mock bridge, and injects a mock entry module.
+
+Public APIs:
+
+```ts
+import {
+  defineWebViewMock,
+  installMockWebViewBridge,
+  startWebViewMockPreview,
+  type MockWebViewContext,
+} from "@jetbrains/intellij-webview-testkit"
+import { withWebViewMockBridge } from "@jetbrains/intellij-webview-testkit/vite"
+```
+
+Core concepts:
+
+- `defineWebViewMock(setup)` declares a mock scenario.
+- `installMockWebViewBridge(options?)` installs the mock `window.__WVI__` bridge.
+- `startWebViewMockPreview({ webviewSrcDir, viewId, mock, port? })` starts a preview server for one view and mock.
+- `MockWebViewContext.host.implement(apiId, implementation)` implements host APIs that production Kotlin would implement.
+- `MockWebViewContext.page.callable(apiId)` calls page APIs registered by the view through `webView.implement(...)`.
+- `MockWebViewContext.page.whenImplemented(apiId, callback)` waits until the view registers a page API.
+- `MockWebViewContext.calls` records bridge calls for smoke assertions.
+- `MockWebViewContext.theme.set(theme, fonts?)` pushes mock theme changes; default mock fonts mirror the common WebView theme variables.
+- `withWebViewMockBridge(config, { mock })` wires the bridge replacement into a Vite config.
+
+The test bridge mirrors the public `WebViewBridge` surface used by view code: `callable`, `implement`, `notification`, `notifications`, and `transport`. Page code must keep importing production APIs from `@jetbrains/intellij-webview`; it should not import the testkit or branch on mock mode.
+
+## Mock Location
+
+Mocks live next to tests, not next to production view source:
+
+```text
+webview-src/
+  views/
+    <view-id>/
+      index.html
+      src/...
+  test/
+    <view-id>/
+      mocks/
+        default.ts
+      <view-id>.browser.test.ts
+```
+
+This keeps production bundles independent from preview-only mock data. `resources/webview/` is generated output and must not contain test mocks.
+
+Mock files usually look like this:
+
+```text
+import { apiId, type WebViewCallable, type WebViewImplementable } from "@jetbrains/intellij-webview"
+import { defineWebViewMock } from "@jetbrains/intellij-webview-testkit"
+
+interface DemoHostApi extends WebViewCallable {
+  listItems(): Promise<{ items: string[] }>
+}
+
+interface DemoPageApi extends WebViewImplementable {
+  itemAdded(params: { item: string }): void
+}
+
+const demoHostApiId = apiId<DemoHostApi>()("demo")
+const demoPageApiId = apiId<DemoPageApi>()("demo")
+
+export default defineWebViewMock(context => {
+  context.host.implement(demoHostApiId, {
+    async listItems() {
+      return { items: ["Mock item"] }
+    },
+  })
+
+  context.page.whenImplemented(demoPageApiId, page => {
+    void page.itemAdded({ item: "Mock item" })
+  })
+})
+```
+
+## Preview Command
+
+For the demo ACP chat view:
+
+```shell
+cd community/plugins/ui.webview/demo/webview-src
+bun webview-preview acp-chat --mock default
+```
+
+The command resolves `test/acp-chat/mocks/default.ts`, starts Vite, serves `/__webview/wvi-bridge.js` from the testkit, and prints a local browser URL. Use this URL for manual preview, browser automation, or agent-assisted UI iteration.
+
+For another view, add a mock under `test/<view-id>/mocks/<name>.ts` and run:
+
+```shell
+bun webview-preview VIEW_ID --mock MOCK_NAME
+```
+
+## Browser Smoke Test Pattern
+
+Browser tests should start the preview server, open `preview.url`, drive the UI, and assert both DOM state and bridge calls where useful.
+
+```ts
+import { dirname, resolve } from "node:path"
+import { fileURLToPath } from "node:url"
+import { startWebViewMockPreview } from "@jetbrains/intellij-webview-testkit"
+
+const testDir = dirname(fileURLToPath(import.meta.url))
+const webviewSrcDir = resolve(testDir, "../..")
+
+const preview = await startWebViewMockPreview({
+  webviewSrcDir,
+  viewId: "acp-chat",
+  mock: resolve(testDir, "mocks/default.ts"),
+})
+```
+
+The ACP chat smoke test is the reference example:
+
+```text
+demo/webview-src/test/acp-chat/acp-chat.browser.test.ts
+demo/webview-src/test/acp-chat/mocks/default.ts
+```
+
+It covers the basic chat flow: mock `listAgents()`, successful `startAgent()`, `sendStdin()` call logging plus mock stdout, and `stopAgent()` session shutdown. The mock can call the page API methods registered by the view, such as `onAgentStdout(...)` and `onAgentExit(...)`.
+
+## Package Resolution Notes
+
+`@jetbrains/intellij-webview-testkit` is a private workspace package. In local demo packages, prefer `file:` dependencies or `tsconfig` path mappings instead of registry resolution. The package declares `@jetbrains/intellij-webview` as an optional peer so `bun install` in `webview-src` does not try to download the private runtime package from npm.
+
+If `bun install` fails with a registry 404 for `@jetbrains/intellij-webview`, check that no new nested package declares the private runtime only as a required peer that Bun tries to auto-install.
+
+## Future Java Backend Shape
+
+The original Java-backend harness remains a possible later layer. Use it only when a test needs Java-side state, JVM assertions, or integration with Java/Kotlin test infrastructure. The V1 browser mock testkit should stay the default for frontend layout, interaction, and bridge-contract iteration.
+
 ## Test Backend Shape
 
-The backend should be a small Java process, not an IDE instance. It can be implemented with the JDK `HttpServer` or another lightweight HTTP/WebSocket stack.
+For a future Java-backed harness, the backend should be a small Java process, not an IDE instance. It can be implemented with the JDK `HttpServer` or another lightweight HTTP/WebSocket stack.
 
 It should provide:
 
@@ -160,7 +301,7 @@ Selenium/WebDriver should remain possible, especially for Java-heavy plugin team
 
 ```mermaid
 flowchart LR
-  Harness["browser-test harness\nJava backend + test bridge"]
+  Harness["browser-test harness\nmock host + test bridge"]
   Playwright["Playwright tests"]
   Selenium["Selenium/WebDriver tests"]
   Browser["real browser"]
@@ -170,7 +311,7 @@ flowchart LR
   Harness --> Browser
 ```
 
-The test backend starts first and prints a URL. The runner then opens that URL and interacts with the page like a user.
+The preview/test backend starts first and prints a URL. The runner then opens that URL and interacts with the page like a user.
 
 ```text
 start backend -> http://127.0.0.1:57123/
@@ -207,7 +348,7 @@ Those still require smaller IDE smoke tests.
 ```mermaid
 flowchart TD
   Unit["unit tests\nplain TS logic"]
-  Browser["browser harness tests\nreal browser + mock Java backend"]
+  Browser["browser harness tests\nreal browser + mock host"]
   Smoke["IDE smoke tests\nreal WebView engine + IDE wiring"]
 
   Unit --> Browser
@@ -216,19 +357,19 @@ flowchart TD
 
 ## Vite Development Mode
 
-During local development, the Java backend can either serve built static assets or proxy to the Vite dev server.
+During local development, the mock preview server can either serve built static assets or proxy to the Vite dev server.
 
 ```mermaid
 flowchart TD
   Browser["browser"]
-  Java["Java mock backend"]
+  Mock["mock preview server"]
   Vite["Vite dev server"]
   Bridge["test bridge"]
   Assets["view source / HMR"]
 
-  Browser --> Java
-  Java --> Bridge
-  Java -. proxy app assets .-> Vite
+  Browser --> Mock
+  Mock --> Bridge
+  Mock -. proxy app assets .-> Vite
   Vite --> Assets
 ```
 
@@ -268,7 +409,7 @@ IntelliJ Platform SDK 252.12345.10
 
 - WebView UI code should be runnable in a normal browser without IDE when given a test bridge.
 - The test bridge must expose the same public `window.__WVI__` API shape as production.
-- A simple Java backend should own deterministic mock model state and JSON-RPC method handlers.
+- The mock host should own deterministic mock model state and API handlers. In V1 this host is TypeScript; a Java backend may be added for Java/Kotlin test infrastructure.
 - Playwright is the default recommendation for browser UI automation; Selenium/WebDriver remains supported as a runner choice.
 - Browser harness tests are required for substantial frontend behavior; IDE smoke tests remain necessary for native WebView integration.
 - The testkit should be versioned with the IntelliJ Platform SDK and distributed alongside the TypeScript runtime packages.

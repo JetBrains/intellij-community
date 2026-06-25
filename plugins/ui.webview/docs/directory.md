@@ -6,14 +6,15 @@
 
 ## 1. Quick start
 
-| I want to… | Go to |
-|---|---|
-| Add a WebView UI to a feature | [guides/WebView-UI-Authoring-Guide](guides/WebView-UI-Authoring-Guide.md) |
-| Understand the runtime (engines, providers, asset loading) | [architecture/WebView-Runtime-Architecture](architecture/WebView-Runtime-Architecture.md) |
-| Review the API surface and the 13-item cleanup state | [architecture/WebView-Architecture-Review](architecture/WebView-Architecture-Review.md) |
-| Design a new JSON-RPC contract | [architecture/WebView-JsonRpc-Design](architecture/WebView-JsonRpc-Design.md) + [architecture/WebView-TS-RPC-API-Design](architecture/WebView-TS-RPC-API-Design.md) |
-| Know what's pending vs done | § 3 Roadmap (this doc) |
-| Understand why an old approach was changed | [historical/historical-decisions](historical/historical-decisions.md) |
+| I want to…                                                     | Go to                                                                                                                                                                         |
+|----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Add a WebView UI to a feature                                  | [guides/WebView-UI-Authoring-Guide](guides/WebView-UI-Authoring-Guide.md)                                                                                                     |
+| Understand the runtime (engines, providers, asset loading)      | [architecture/WebView-Runtime-Architecture](architecture/WebView-Runtime-Architecture.md)                                                                                     |
+| Review the API surface and the 13-item cleanup state            | [architecture/WebView-Architecture-Review](architecture/WebView-Architecture-Review.md)                                                                                       |
+| Design a new JSON-RPC contract                                 | [architecture/WebView-JsonRpc-Design](architecture/WebView-JsonRpc-Design.md) + [architecture/WebView-TS-RPC-API-Design](architecture/WebView-TS-RPC-API-Design.md)           |
+| Preview or browser-test a WebView UI without IDE/Kotlin         | [frontend/WebView-Frontend-Testability](frontend/WebView-Frontend-Testability.md)                                                                                             |
+| Know what's pending vs done                                     | § 3 Roadmap (this doc)                                                                                                                                                        |
+| Understand why an old approach was changed                      | [historical/historical-decisions](historical/historical-decisions.md)                                                                                                         |
 
 ## 2. Decision trees
 
@@ -115,6 +116,7 @@ Use the same status legend everywhere; don't invent new icons.
 ### P2 — Medium (planned)
 - ⬜ DnD Interop v1 (macOS WKWebView + Windows WebView2) — [interop/WebView-Drag-And-Drop-Interop-Plan](interop/WebView-Drag-And-Drop-Interop-Plan.md)
 - ⬜ Frontend Testability harness — [frontend/WebView-Frontend-Testability](frontend/WebView-Frontend-Testability.md)
+- ⏳ Frontend Testability harness — Browser mock testkit V1 exists for TypeScript/Vite previews; Java backend layer deferred — [frontend/WebView-Frontend-Testability](frontend/WebView-Frontend-Testability.md)
 - ⬜ Frontend SDK Distribution (versioned npm + SDK tarball + compatibility check) — [frontend/WebView-Frontend-SDK-Distribution](frontend/WebView-Frontend-SDK-Distribution.md)
 - ⬜ Control Parity scaffold (`@jetbrains/intellij-webview-controls`) — [frontend/WebView-Control-Parity-Design](frontend/WebView-Control-Parity-Design.md)
 - ⬜ Bazel `webview_assets` rule (replace manual build) — [frontend/WebView-Frontend-Build-Strategy](frontend/WebView-Frontend-Build-Strategy.md)
@@ -153,7 +155,8 @@ Use the same status legend everywhere; don't invent new icons.
 - [Framework Policy](frontend/WebView-Frontend-Framework-Policy.md) — Custom Elements, Lit, Preact/React/Svelte tradeoffs.
 - [View Model Patterns](frontend/WebView-Frontend-View-Model-Patterns.md) — Kotlin/WebView state boundary, DTOs, stores, projections.
 - [SDK Distribution](frontend/WebView-Frontend-SDK-Distribution.md) — ⬜ design only.
-- [Testability Without IDE](frontend/WebView-Frontend-Testability.md) — ⬜ design only.
+- [Testability Without IDE](frontend/WebView-Frontend-Testability.md) — ⏳ browser mock testkit V1 implemented; Java backend layer deferred.
+- [IconSet Loading Plan](frontend/WebView-IconSet-Loading-Plan.md) — ⬜ design only.
 - [Control Parity Design](frontend/WebView-Control-Parity-Design.md) — ⬜ design only.
 
 ### `interop/` — Swing ↔ WebView boundary
