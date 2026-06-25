@@ -116,6 +116,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -127,6 +128,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -166,11 +168,15 @@ import javax.swing.SwingUtilities
 import javax.swing.TransferHandler
 import javax.swing.UIManager
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration
+import kotlin.time.TimeSource
 
 private val OPEN_FILES_ACTIVITY = Key.create<Activity>("open.files.activity")
 private val LOG = logger<EditorsSplitters>()
 private const val IDE_FINGERPRINT: @NonNls String = "ideFingerprint"
 private const val EMPTY_STATE_COMPONENT_CONSTRAINT: @NonNls String = "EditorEmptyStateComponent"
+private val EMPTY_STATE_COMPONENT_CREATION_DELAY = 300.milliseconds
+private val SLOW_EMPTY_STATE_COMPONENT_PROVIDER_THRESHOLD = 100.milliseconds
 
 @Suppress("LeakingThis", "IdentifierGrammar")
 @DirtyUI
@@ -224,6 +230,9 @@ open class EditorsSplitters internal constructor(
   private var emptyStateComponentEntries: List<EditorEmptyStateComponentEntry> = emptyList()
   private var emptyStateComponentCreationJob: Job? = null
   private var emptyStateComponentCreationGeneration: Int = 0
+  private var richEmptyStateComponentsEnabled: Boolean = false
+  private var emptyStateComponentCreationDelay: Duration = EMPTY_STATE_COMPONENT_CREATION_DELAY
+  private var emptyStateComponentCreationGate: (suspend () -> Unit)? = null
 
   // temporarily used during initialization of non-main editor splitters
   private val state = AtomicReference<EditorSplitterState?>()
@@ -244,6 +253,32 @@ open class EditorsSplitters internal constructor(
 
   @TestOnly
   internal fun isEmptyStateComponentCreationPending(): Boolean = emptyStateComponentCreationJob != null
+
+  internal fun suppressRichEmptyStateComponents() {
+    if (!richEmptyStateComponentsEnabled && emptyStateComponentHost == null && emptyStateComponentCreationJob == null) {
+      return
+    }
+    richEmptyStateComponentsEnabled = false
+    disposeEmptyStateComponents()
+  }
+
+  internal fun enableRichEmptyStateComponents() {
+    if (richEmptyStateComponentsEnabled) {
+      return
+    }
+    richEmptyStateComponentsEnabled = true
+    updateEmptyStateComponent()
+  }
+
+  @TestOnly
+  internal fun setEmptyStateComponentCreationDelayForTests(delay: Duration) {
+    emptyStateComponentCreationDelay = delay
+  }
+
+  @TestOnly
+  internal fun setEmptyStateComponentCreationGateForTests(gate: (suspend () -> Unit)?) {
+    emptyStateComponentCreationGate = gate
+  }
 
   internal val openFileList: List<VirtualFile>
     get() {
@@ -499,11 +534,24 @@ open class EditorsSplitters internal constructor(
 
   fun openFilesAsync(requestFocus: Boolean): Job {
     return coroutineScope.launch {
-      restoreEditors(state = state.getAndSet(null) ?: return@launch, requestFocus = requestFocus)
+      val stateToRestore = state.getAndSet(null)
+      try {
+        if (stateToRestore != null) {
+          restoreEditors(state = stateToRestore, requestFocus = requestFocus)
+        }
+      }
+      finally {
+        withContext(NonCancellable + Dispatchers.EDT) {
+          if (coroutineScope.isActive) {
+            enableRichEmptyStateComponents()
+          }
+        }
+      }
     }
   }
 
   internal fun readExternal(element: Element) {
+    suppressRichEmptyStateComponents()
     state.set(EditorSplitterState(element))
   }
 
@@ -642,10 +690,12 @@ open class EditorsSplitters internal constructor(
     get() = false
 
   internal open fun afterFileClosed(file: VirtualFile) {
+    cancelEmptyStateComponentCreation()
     updateEmptyStateComponent()
   }
 
   open fun afterFileOpen(file: VirtualFile) {
+    cancelEmptyStateComponentCreation()
     updateEmptyStateComponent()
   }
 
@@ -800,12 +850,14 @@ open class EditorsSplitters internal constructor(
 
   internal fun addWindow(window: EditorWindow) {
     windows.add(window)
+    cancelEmptyStateComponentCreation()
     updateEmptyStateComponent()
   }
 
   internal fun removeWindow(window: EditorWindow) {
     windows.remove(window)
     _currentWindowFlow.compareAndSet(window, null)
+    cancelEmptyStateComponentCreation()
     updateEmptyStateComponent()
   }
 
@@ -867,7 +919,7 @@ open class EditorsSplitters internal constructor(
   }
 
   private fun showEmptyStateComponents() {
-    if (emptyStateComponentHost != null || emptyStateComponentCreationJob != null) {
+    if (!richEmptyStateComponentsEnabled || emptyStateComponentHost != null || emptyStateComponentCreationJob != null) {
       return
     }
 
@@ -876,9 +928,14 @@ open class EditorsSplitters internal constructor(
       var entries: List<EditorEmptyStateComponentEntry> = emptyList()
       var mounted = false
       try {
-        entries = createEmptyStateComponentEntries()
+        delay(emptyStateComponentCreationDelay)
+        emptyStateComponentCreationGate?.invoke()
+        if (!isEmptyStateComponentCreationValidOnEdt(generation)) {
+          return@launch
+        }
+        entries = createEmptyStateComponentEntries(generation)
         withContext(Dispatchers.EDT) {
-          if (generation != emptyStateComponentCreationGeneration || !showEmptyText() || emptyStateComponentHost != null) {
+          if (!isEmptyStateComponentCreationValid(generation)) {
             return@withContext
           }
           if (entries.isEmpty()) {
@@ -901,7 +958,18 @@ open class EditorsSplitters internal constructor(
     }
   }
 
-  private suspend fun createEmptyStateComponentEntries(): List<EditorEmptyStateComponentEntry> {
+  private suspend fun isEmptyStateComponentCreationValidOnEdt(generation: Int): Boolean = withContext(Dispatchers.EDT) {
+    isEmptyStateComponentCreationValid(generation)
+  }
+
+  private fun isEmptyStateComponentCreationValid(generation: Int): Boolean {
+    return generation == emptyStateComponentCreationGeneration &&
+           richEmptyStateComponentsEnabled &&
+           showEmptyText() &&
+           emptyStateComponentHost == null
+  }
+
+  private suspend fun createEmptyStateComponentEntries(generation: Int): List<EditorEmptyStateComponentEntry> {
     val providers = ArrayList<Pair<EditorEmptyStateComponentProvider, PluginDescriptor>>()
     EditorEmptyStateComponentProvider.EP_NAME.processWithPluginDescriptor { provider, pluginDescriptor ->
       providers.add(provider to pluginDescriptor)
@@ -910,8 +978,17 @@ open class EditorsSplitters internal constructor(
     val entries = ArrayList<EditorEmptyStateComponentEntry>()
     try {
       for ((provider, pluginDescriptor) in providers) {
+        if (!isEmptyStateComponentCreationValidOnEdt(generation)) {
+          break
+        }
         val component = try {
-          provider.createComponent(this)
+          val startedAt = TimeSource.Monotonic.markNow()
+          val result = provider.createComponent(this)
+          val elapsed = startedAt.elapsedNow()
+          if (elapsed >= SLOW_EMPTY_STATE_COMPONENT_PROVIDER_THRESHOLD) {
+            LOG.warn("Slow editor empty state component provider $provider from ${pluginDescriptor.pluginId}: $elapsed")
+          }
+          result
         }
         catch (e: CancellationException) {
           throw e
