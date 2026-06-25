@@ -115,8 +115,8 @@ Use the same status legend everywhere; don't invent new icons.
 
 ### P2 — Medium (planned)
 - ⬜ DnD Interop v1 (macOS WKWebView + Windows WebView2) — [interop/WebView-Drag-And-Drop-Interop-Plan](interop/WebView-Drag-And-Drop-Interop-Plan.md)
-- ⬜ Frontend Testability harness — [frontend/WebView-Frontend-Testability](frontend/WebView-Frontend-Testability.md)
 - ⏳ Frontend Testability harness — Browser mock testkit V1 exists for TypeScript/Vite previews; Java backend layer deferred — [frontend/WebView-Frontend-Testability](frontend/WebView-Frontend-Testability.md)
+- ⬜ WebView IconSet loading for classloader-backed IntelliJ icons — [frontend/WebView-IconSet-Loading-Plan](frontend/WebView-IconSet-Loading-Plan.md)
 - ⬜ Frontend SDK Distribution (versioned npm + SDK tarball + compatibility check) — [frontend/WebView-Frontend-SDK-Distribution](frontend/WebView-Frontend-SDK-Distribution.md)
 - ⬜ Control Parity scaffold (`@jetbrains/intellij-webview-controls`) — [frontend/WebView-Control-Parity-Design](frontend/WebView-Control-Parity-Design.md)
 - ⬜ Bazel `webview_assets` rule (replace manual build) — [frontend/WebView-Frontend-Build-Strategy](frontend/WebView-Frontend-Build-Strategy.md)
