@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.recentFiles.frontend.model.FrontendRecentFilesModel
 import com.intellij.platform.recentFiles.shared.FileChangeKind
 import com.intellij.platform.recentFiles.shared.RecentFileKind
+import com.intellij.platform.recentFiles.shared.isAllowedInRecentFilesModel
 
 private class RecentlySelectedEditorListener : FileEditorManagerListener {
   override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
@@ -25,7 +26,7 @@ private class RecentlySelectedEditorListener : FileEditorManagerListener {
     if (source.getEditors(file).isEmpty()) {
       thisLogger().trace { "Do remove closed frontend file from model: ${file.name}" }
       frontendRecentFilesModel.applyFrontendChanges(RecentFileKind.RECENTLY_OPENED_UNPINNED, listOf(file), FileChangeKind.REMOVED)
-      if (isExcludedFromRecentFiles(source.project, RecentFileKind.RECENTLY_OPENED, file)) {
+      if (!isAllowedInRecentFilesModel(source.project, RecentFileKind.RECENTLY_OPENED, file)) {
         frontendRecentFilesModel.applyFrontendChanges(RecentFileKind.RECENTLY_OPENED, listOf(file), FileChangeKind.REMOVED)
       }
     }

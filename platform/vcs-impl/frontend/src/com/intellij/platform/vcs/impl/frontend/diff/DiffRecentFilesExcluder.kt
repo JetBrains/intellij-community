@@ -5,7 +5,7 @@ import com.intellij.diff.impl.DiffSettingsHolder
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.recentFiles.frontend.RecentFilesExcluder
+import com.intellij.platform.recentFiles.shared.RecentFilesExcluder
 
 internal class DiffRecentFilesExcluder : RecentFilesExcluder {
   override fun isExcludedFromRecentlyOpened(project: Project, file: VirtualFile): Boolean {

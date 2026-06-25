@@ -19,7 +19,6 @@ import com.intellij.platform.recentFiles.frontend.SwitcherVirtualFile
 import com.intellij.platform.recentFiles.frontend.createFilesSearchRequestRequest
 import com.intellij.platform.recentFiles.frontend.createFilesUpdateRequest
 import com.intellij.platform.recentFiles.frontend.createHideFilesRequest
-import com.intellij.platform.recentFiles.frontend.isExcludedFromRecentFiles
 import com.intellij.platform.recentFiles.shared.FileChangeKind
 import com.intellij.platform.recentFiles.shared.FileSwitcherApi
 import com.intellij.platform.recentFiles.shared.RecentFileKind
@@ -27,6 +26,7 @@ import com.intellij.platform.recentFiles.shared.RecentFilesCoroutineScopeProvide
 import com.intellij.platform.recentFiles.shared.RecentFilesEvent
 import com.intellij.platform.recentFiles.shared.RecentFilesState
 import com.intellij.platform.recentFiles.shared.SwitcherRpcDto
+import com.intellij.platform.recentFiles.shared.isAllowedInRecentFilesModel
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -76,7 +76,10 @@ class FrontendRecentFilesModel(private val project: Project) {
 
   fun applyFrontendChanges(filesKind: RecentFileKind, files: List<VirtualFile>, changeKind: FileChangeKind) {
     if (files.isEmpty()) return
-    val filesToApply = if (changeKind == FileChangeKind.REMOVED) files else files.filterNot { isExcludedFromRecentFiles(project, filesKind, it) }
+    val filesToApply = if (changeKind == FileChangeKind.REMOVED) files
+    else files.filter {
+      isAllowedInRecentFilesModel(project, filesKind, it)
+    }
     if (changeKind != FileChangeKind.REMOVED) {
       val filesToRemove = files - filesToApply.toSet()
       if (filesToRemove.isNotEmpty()) {
@@ -113,7 +116,10 @@ class FrontendRecentFilesModel(private val project: Project) {
             oldList.entries
           }
         }
-        RecentFilesState(updatedEntries.filter { modelState.isAllowedInModel(filesKind, it) })
+        RecentFilesState(updatedEntries.filter { fileModel ->
+          val file = fileModel.virtualFile ?: return@filter true
+          isAllowedInRecentFilesModel(project, filesKind, file)
+        })
       }
 
       when (changeKind) {
