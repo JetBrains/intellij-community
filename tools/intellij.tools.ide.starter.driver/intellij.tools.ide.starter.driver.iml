@@ -29,7 +29,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter" />
-    <orderEntry type="library" name="kodein-di-jvm" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="kodein-di-jvm" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.driver.sdk" />
     <orderEntry type="library" name="io.qameta.allure.java.commons" level="project" />
