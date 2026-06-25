@@ -1,8 +1,9 @@
 import { i as __toESM } from "./assets/rolldown-runtime.js";
 import { J as require_react, M as require_jsx_runtime, T as useExternalStoreRuntime } from "./assets/assistant-ui-core.js";
-import { i as AssistantRuntimeProvider, n as message_exports, r as composer_exports, t as thread_exports } from "./assets/assistant-ui-react.js";
+import { d as AssistantRuntimeProvider, n as message_exports, r as composer_exports, t as thread_exports } from "./assets/assistant-ui-react.js";
 import { t as require_client } from "./assets/react-dom.js";
 import { t as marked } from "./assets/marked.js";
+import { a as SelectItem$1, c as SelectPortal, d as SelectTrigger$1, i as SelectIcon, l as SelectScrollDownButton$1, n as SelectContent$1, o as SelectItemIndicator, p as SelectViewport, s as SelectItemText, t as Select$1, u as SelectScrollUpButton$1 } from "./assets/radix-ui-react-select.js";
 import { n as ndJsonStream, t as ClientSideConnection } from "./assets/agentclientprotocol-sdk.js";
 //#region \0vite/modulepreload-polyfill.js
 (function polyfill() {
@@ -172,6 +173,7 @@ var AcpSession = class {
 	cwd = ".";
 	authMethods = [];
 	io = null;
+	sink = null;
 	generation = 0;
 	get isActive() {
 		return this.connection != null && this.sessionId != null;
@@ -212,6 +214,8 @@ var AcpSession = class {
 				mcpServers: []
 			});
 			this.sessionId = session.sessionId;
+			this.sink?.onSessionModes(toSessionModeViews(session.modes?.availableModes), stringOrNull(session.modes?.currentModeId));
+			this.sink?.onConfigOptions(toConfigOptionViews(session.configOptions));
 			return { kind: "ready" };
 		} catch (error) {
 			if (!isAuthRequired(error)) return {
@@ -230,17 +234,48 @@ var AcpSession = class {
 			};
 		}
 	}
-	async prompt(text) {
+	async prompt(blocks) {
 		const connection = this.connection;
 		const sessionId = this.sessionId;
 		if (!connection || !sessionId) throw new Error("No active ACP session");
 		await connection.prompt({
 			sessionId,
-			prompt: [{
-				type: "text",
-				text
-			}]
+			prompt: blocks
 		});
+	}
+	async promptText(text) {
+		await this.prompt([{
+			type: "text",
+			text
+		}]);
+	}
+	async setMode(modeId) {
+		const connection = this.connection;
+		const sessionId = this.sessionId;
+		if (!connection || !sessionId) throw new Error("No active ACP session");
+		if (typeof connection.setSessionMode !== "function") throw new Error("The selected ACP agent does not support session modes.");
+		await connection.setSessionMode({
+			sessionId,
+			modeId
+		});
+		this.sink?.onCurrentMode(modeId);
+	}
+	async setConfigOption(configId, type, value) {
+		const connection = this.connection;
+		const sessionId = this.sessionId;
+		if (!connection || !sessionId) throw new Error("No active ACP session");
+		if (typeof connection.setSessionConfigOption !== "function") throw new Error("The selected ACP agent does not support session config options.");
+		const response = type === "boolean" ? await connection.setSessionConfigOption({
+			sessionId,
+			configId,
+			type,
+			value: value === true
+		}) : await connection.setSessionConfigOption({
+			sessionId,
+			configId,
+			value: String(value)
+		});
+		this.sink?.onConfigOptions(toConfigOptionViews(response?.configOptions));
 	}
 	async cancel() {
 		const connection = this.connection;
@@ -251,6 +286,7 @@ var AcpSession = class {
 		this.generation++;
 		this.connection = null;
 		this.sessionId = null;
+		this.sink = null;
 		const io = this.io;
 		this.io = null;
 		try {
@@ -304,7 +340,9 @@ var AcpSession = class {
 			this.cwd = result.cwd ?? ".";
 			this.io = io;
 			this.connection = connection;
+			this.sink = sink;
 			this.authMethods = Array.isArray(init?.authMethods) ? init.authMethods : [];
+			sink.onPromptCapabilities(toPromptCapabilitiesView(init?.agentCapabilities?.promptCapabilities));
 		} catch (error) {
 			io.close();
 			await acpBridgeHost.stopAgent().catch(() => {});
@@ -330,6 +368,23 @@ function handleUpdate(update, sink) {
 			break;
 		case "plan":
 			sink.onPlan(Array.isArray(update.entries) ? update.entries.map(toPlanView) : []);
+			break;
+		case "plan_update": {
+			const plan = toPlanUpdateView(update.plan);
+			if (plan) sink.onPlanUpdate(plan.planId, plan.entries);
+			break;
+		}
+		case "plan_removed":
+			if (typeof update.id === "string") sink.onPlanRemoved(update.id);
+			break;
+		case "available_commands_update":
+			sink.onCommands(toCommandViews(update.availableCommands));
+			break;
+		case "current_mode_update":
+			if (typeof update.currentModeId === "string") sink.onCurrentMode(update.currentModeId);
+			break;
+		case "config_option_update":
+			sink.onConfigOptions(toConfigOptionViews(update.configOptions));
 			break;
 		default: break;
 	}
@@ -371,13 +426,141 @@ function normalizeToolStatus(status) {
 		default: return "in_progress";
 	}
 }
-function toPlanView(entry) {
+function toPlanView(entry, planId) {
 	const status = entry?.status;
-	return {
+	const view = {
 		content: typeof entry?.content === "string" ? entry.content : "",
 		status: status === "pending" || status === "in_progress" || status === "completed" ? status : "pending",
 		priority: typeof entry?.priority === "string" ? entry.priority : void 0
 	};
+	if (planId) view.planId = planId;
+	return view;
+}
+function toPlanUpdateView(plan) {
+	const planId = typeof plan?.id === "string" ? plan.id : null;
+	if (!planId) return null;
+	if (plan.type === "items") return {
+		planId,
+		entries: Array.isArray(plan.entries) ? plan.entries.map((entry) => toPlanView(entry, planId)) : []
+	};
+	if (plan.type === "markdown") return {
+		planId,
+		entries: [{
+			planId,
+			content: typeof plan.content === "string" ? plan.content : "",
+			status: "in_progress"
+		}]
+	};
+	if (plan.type === "file") {
+		const uri = typeof plan.uri === "string" ? plan.uri : "";
+		return {
+			planId,
+			entries: [{
+				planId,
+				content: uri ? `Plan file: ${uri}` : "Plan file",
+				status: "in_progress"
+			}]
+		};
+	}
+	return null;
+}
+function toPromptCapabilitiesView(capabilities) {
+	return {
+		image: capabilities?.image === true,
+		audio: capabilities?.audio === true,
+		embeddedContext: capabilities?.embeddedContext === true
+	};
+}
+function toSessionModeViews(modes) {
+	if (!Array.isArray(modes)) return [];
+	const result = [];
+	for (const mode of modes) {
+		const id = typeof mode?.id === "string" ? mode.id : "";
+		if (!id) continue;
+		result.push({
+			id,
+			name: stringOrDefault(mode.name, id),
+			description: stringOrUndefined(mode.description)
+		});
+	}
+	return result;
+}
+function toConfigOptionViews(options) {
+	if (!Array.isArray(options)) return [];
+	const result = [];
+	for (const option of options) {
+		const id = typeof option?.id === "string" ? option.id : "";
+		if (!id) continue;
+		const base = {
+			id,
+			name: stringOrDefault(option.name, id),
+			description: stringOrUndefined(option.description),
+			category: stringOrUndefined(option.category)
+		};
+		if (option.type === "select") result.push({
+			...base,
+			type: "select",
+			currentValue: typeof option.currentValue === "string" ? option.currentValue : "",
+			options: toConfigOptionSelectChoices(option.options)
+		});
+		else if (option.type === "boolean") result.push({
+			...base,
+			type: "boolean",
+			currentValue: option.currentValue === true
+		});
+	}
+	return result;
+}
+function toConfigOptionSelectChoices(options) {
+	if (!Array.isArray(options)) return [];
+	const result = [];
+	for (const option of options) if (Array.isArray(option?.options)) {
+		const group = stringOrUndefined(option.group);
+		const groupName = stringOrUndefined(option.name);
+		for (const groupedOption of option.options) {
+			const choice = toConfigOptionSelectChoice(groupedOption, group, groupName);
+			if (choice) result.push(choice);
+		}
+	} else {
+		const choice = toConfigOptionSelectChoice(option);
+		if (choice) result.push(choice);
+	}
+	return result;
+}
+function toConfigOptionSelectChoice(option, group, groupName) {
+	const value = typeof option?.value === "string" ? option.value : "";
+	if (!value) return null;
+	const choice = {
+		value,
+		name: stringOrDefault(option.name, value),
+		description: stringOrUndefined(option.description)
+	};
+	if (group) choice.group = group;
+	if (groupName) choice.groupName = groupName;
+	return choice;
+}
+function toCommandViews(commands) {
+	if (!Array.isArray(commands)) return [];
+	const result = [];
+	for (const command of commands) {
+		const name = typeof command?.name === "string" ? command.name : "";
+		if (!name) continue;
+		result.push({
+			name,
+			description: typeof command.description === "string" ? command.description : "",
+			inputHint: stringOrUndefined(command.input?.hint)
+		});
+	}
+	return result;
+}
+function stringOrDefault(value, fallback) {
+	return typeof value === "string" && value ? value : fallback;
+}
+function stringOrUndefined(value) {
+	return typeof value === "string" ? value : void 0;
+}
+function stringOrNull(value) {
+	return typeof value === "string" ? value : null;
 }
 function toPermissionView(request) {
 	const options = Array.isArray(request?.options) ? request.options : [];
@@ -424,6 +607,12 @@ function messageOf(error) {
 }
 //#endregion
 //#region views/acp-chat/src/runtime/useAcpChat.ts
+var emptyPromptCapabilities = {
+	image: false,
+	audio: false,
+	embeddedContext: false
+};
+var legacyPlanId = "legacy";
 function useAcpChat() {
 	const [messages, setMessages] = (0, import_react.useState)([]);
 	const [isRunning, setIsRunning] = (0, import_react.useState)(false);
@@ -432,10 +621,16 @@ function useAcpChat() {
 	const [starting, setStarting] = (0, import_react.useState)(false);
 	const [status, setStatus] = (0, import_react.useState)("");
 	const [plan, setPlan] = (0, import_react.useState)([]);
+	const [promptCapabilities, setPromptCapabilities] = (0, import_react.useState)(emptyPromptCapabilities);
+	const [modes, setModes] = (0, import_react.useState)([]);
+	const [configOptions, setConfigOptions] = (0, import_react.useState)([]);
+	const [currentModeId, setCurrentModeId] = (0, import_react.useState)(null);
+	const [commands, setCommands] = (0, import_react.useState)([]);
 	const [permission, setPermission] = (0, import_react.useState)(null);
 	const [auth, setAuth] = (0, import_react.useState)(null);
 	const sessionRef = (0, import_react.useRef)(null);
 	const turnRef = (0, import_react.useRef)(null);
+	const plansByIdRef = (0, import_react.useRef)(/* @__PURE__ */ new Map());
 	const assistantSeqRef = (0, import_react.useRef)(0);
 	const authResolveRef = (0, import_react.useRef)(null);
 	(0, import_react.useEffect)(() => {
@@ -491,6 +686,20 @@ function useAcpChat() {
 			return next;
 		});
 	}, []);
+	const publishPlans = (0, import_react.useCallback)(() => {
+		setPlan(Array.from(plansByIdRef.current.values()).flat());
+	}, []);
+	const clearPlans = (0, import_react.useCallback)(() => {
+		plansByIdRef.current.clear();
+		setPlan([]);
+	}, []);
+	const resetSessionMetadata = (0, import_react.useCallback)(() => {
+		setPromptCapabilities(emptyPromptCapabilities);
+		setModes([]);
+		setConfigOptions([]);
+		setCurrentModeId(null);
+		setCommands([]);
+	}, []);
 	const sink = (0, import_react.useMemo)(() => ({
 		onMessageChunk(text) {
 			const turn = turnRef.current;
@@ -523,7 +732,33 @@ function useAcpChat() {
 			flushTurn();
 		},
 		onPlan(entries) {
-			setPlan(entries);
+			plansByIdRef.current.clear();
+			if (entries.length > 0) plansByIdRef.current.set(legacyPlanId, entries);
+			publishPlans();
+		},
+		onPlanUpdate(planId, entries) {
+			plansByIdRef.current.set(planId, entries);
+			publishPlans();
+		},
+		onPlanRemoved(planId) {
+			plansByIdRef.current.delete(planId);
+			publishPlans();
+		},
+		onPromptCapabilities(capabilities) {
+			setPromptCapabilities(capabilities);
+		},
+		onSessionModes(nextModes, nextCurrentModeId) {
+			setModes(nextModes);
+			setCurrentModeId(nextCurrentModeId);
+		},
+		onCurrentMode(nextCurrentModeId) {
+			setCurrentModeId(nextCurrentModeId);
+		},
+		onConfigOptions(nextConfigOptions) {
+			setConfigOptions(nextConfigOptions);
+		},
+		onCommands(nextCommands) {
+			setCommands(nextCommands);
 		},
 		requestPermission(view) {
 			return new Promise((resolve) => {
@@ -547,11 +782,13 @@ function useAcpChat() {
 			setIsRunning(false);
 			authResolveRef.current?.(null);
 		}
-	}), [flushTurn]);
+	}), [flushTurn, publishPlans]);
 	return {
 		runtime: useExternalStoreRuntime({
 			isRunning,
 			messages,
+			setMessages: (next) => setMessages([...next]),
+			unstable_capabilities: { copy: true },
 			convertMessage: (message) => message,
 			onNew: (0, import_react.useCallback)(async (message) => {
 				const session = sessionRef.current;
@@ -559,7 +796,8 @@ function useAcpChat() {
 					setStatus("Select an agent to start a session first.");
 					return;
 				}
-				const text = message.content.filter((part) => part.type === "text").map((part) => part.text).join("");
+				const blocks = buildPromptBlocks(message);
+				const text = textFromBlocks(blocks);
 				const assistantId = `assistant-${++assistantSeqRef.current}`;
 				setMessages((previous) => [
 					...previous,
@@ -582,17 +820,17 @@ function useAcpChat() {
 					text: "",
 					tools: []
 				};
-				setPlan([]);
+				clearPlans();
 				setStatus("");
 				setIsRunning(true);
 				try {
-					await session.prompt(text);
+					await session.prompt(blocks);
 				} catch (error) {
 					setStatus(errorText(error));
 				} finally {
 					setIsRunning(false);
 				}
-			}, []),
+			}, [clearPlans]),
 			onCancel: (0, import_react.useCallback)(async () => {
 				try {
 					await sessionRef.current?.cancel();
@@ -607,6 +845,11 @@ function useAcpChat() {
 		starting,
 		status,
 		plan,
+		promptCapabilities,
+		modes,
+		configOptions,
+		currentModeId,
+		commands,
 		permission,
 		auth,
 		selectAgent: (0, import_react.useCallback)((agentId) => {
@@ -619,7 +862,8 @@ function useAcpChat() {
 				try {
 					await previous?.stop();
 					setMessages([]);
-					setPlan([]);
+					clearPlans();
+					resetSessionMetadata();
 					setPermission(null);
 					setAuth(null);
 					setSelectedAgentId(null);
@@ -692,16 +936,106 @@ function useAcpChat() {
 					setStarting(false);
 				}
 			})();
-		}, [sink])
+		}, [
+			clearPlans,
+			resetSessionMetadata,
+			sink
+		])
 	};
+}
+function buildPromptBlocks(message) {
+	return [{
+		type: "text",
+		text: textFromAppendMessage(message)
+	}];
+}
+function textFromAppendMessage(message) {
+	return message.content.filter((part) => part.type === "text").map((part) => part.text).join("");
+}
+function textFromBlocks(blocks) {
+	return blocks.filter((block) => block.type === "text").map((block) => block.text).join("");
 }
 function errorText(error) {
 	return error instanceof Error ? error.message : String(error);
 }
 //#endregion
-//#region views/acp-chat/src/components/AgentSelector.tsx
+//#region views/acp-chat/src/components/Select.tsx
 var import_jsx_runtime = require_jsx_runtime();
+var SelectRoot = Select$1;
+function SelectTrigger({ className, children, ...props }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(SelectTrigger$1, {
+		"data-slot": "select-trigger",
+		className,
+		...props,
+		children: [children, /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectIcon, {
+			className: "acpSelectIcon",
+			children: "⌄"
+		})]
+	});
+}
+function SelectScrollUpButton(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectScrollUpButton$1, {
+		"data-slot": "select-scroll-up-button",
+		className: "acpSelectScrollButton",
+		...props,
+		children: "⌃"
+	});
+}
+function SelectScrollDownButton(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectScrollDownButton$1, {
+		"data-slot": "select-scroll-down-button",
+		className: "acpSelectScrollButton",
+		...props,
+		children: "⌄"
+	});
+}
+function SelectContent({ children, position = "popper", ...props }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectPortal, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(SelectContent$1, {
+		"data-slot": "select-content",
+		className: "acpSelectContent",
+		position,
+		sideOffset: 6,
+		...props,
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectScrollUpButton, {}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectViewport, {
+				className: "acpSelectViewport",
+				children
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectScrollDownButton, {})
+		]
+	}) });
+}
+function SelectItem({ children, ...props }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(SelectItem$1, {
+		"data-slot": "select-item",
+		className: "acpSelectItem",
+		...props,
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+			className: "acpSelectItemIndicator",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectItemIndicator, { children: "✓" })
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectItemText, { children })]
+	});
+}
+function Select({ options, placeholder, className, ...props }) {
+	const selectedOption = options.find((option) => option.value === props.value);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(SelectRoot, {
+		...props,
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectTrigger, {
+			className,
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: selectedOption?.label ?? placeholder })
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectContent, { children: options.map(({ label, disabled, textValue, value }) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectItem, {
+			value,
+			disabled,
+			textValue: textValue ?? (typeof label === "string" ? label : value),
+			children: label
+		}, value)) })]
+	});
+}
+//#endregion
+//#region views/acp-chat/src/components/AgentSelector.tsx
 function AgentSelector(props) {
+	const placeholder = props.agents.length ? "Select an agent…" : "No agents in ~/.jetbrains/acp.json";
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
 		className: "acpAgentSelector",
 		children: [
@@ -709,21 +1043,18 @@ function AgentSelector(props) {
 				className: "acpAgentSelectorLabel",
 				children: "Agent"
 			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", {
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Select, {
 				className: "acpAgentSelect",
 				value: props.selectedAgentId ?? "",
-				disabled: props.starting,
-				onChange: (event) => {
-					if (event.target.value) props.onSelect(event.target.value);
-				},
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
-					value: "",
-					disabled: true,
-					children: props.agents.length ? "Select an agent…" : "No agents in ~/.jetbrains/acp.json"
-				}), props.agents.map((agent) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+				disabled: props.starting || props.agents.length === 0,
+				placeholder,
+				options: props.agents.map((agent) => ({
 					value: agent.id,
-					children: agent.name
-				}, agent.id))]
+					label: agent.name
+				})),
+				onValueChange: (agentId) => {
+					if (agentId) props.onSelect(agentId);
+				}
 			}),
 			props.starting && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 				className: "acpAgentStarting",
@@ -1043,18 +1374,13 @@ function ChatView() {
 		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 			className: "acpChatLayout",
 			children: [
-				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+				chat.status ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("header", {
 					className: "acpChatHeader",
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(AgentSelector, {
-						agents: chat.agents,
-						selectedAgentId: chat.selectedAgentId,
-						starting: chat.starting,
-						onSelect: chat.selectAgent
-					}), chat.status ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 						className: "acpChatStatus",
 						children: chat.status
-					}) : null]
-				}),
+					})
+				}) : null,
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PlanView, { plan: chat.plan }),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(thread_exports.Root, {
 					className: "acpThread",
@@ -1067,14 +1393,25 @@ function ChatView() {
 							UserMessage,
 							AssistantMessage
 						} })]
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(composer_exports.Root, {
-						className: "acpComposer",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Input, {
-							className: "acpComposerInput",
-							placeholder: "Message the agent…"
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Send, {
-							className: "acpComposerSend",
-							children: "Send"
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "acpComposerShell",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(composer_exports.Root, {
+							className: "acpComposer",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Input, {
+								className: "acpComposerInput",
+								placeholder: "Message the agent…"
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Send, {
+								className: "acpComposerSend",
+								children: "Send"
+							})]
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							className: "acpComposerToolbar",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AgentSelector, {
+								agents: chat.agents,
+								selectedAgentId: chat.selectedAgentId,
+								starting: chat.starting,
+								onSelect: chat.selectAgent
+							})
 						})]
 					})]
 				}),

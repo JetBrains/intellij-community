@@ -13,6 +13,7 @@
         "cytoscape-fcose": "^2.2.0",
         "marked": "^15.0.0",
         "mermaid": "^11.4.1",
+        "radix-ui": "^1.6.0",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
         "zod": "^4.4.0",

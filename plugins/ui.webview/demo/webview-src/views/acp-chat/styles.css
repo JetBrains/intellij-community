@@ -38,7 +38,7 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 12px;
+  padding: 6px 12px;
   border-bottom: 1px solid var(--acp-border);
   flex: 0 0 auto;
 }
@@ -47,6 +47,9 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  flex-wrap: wrap;
 }
 
 .acpAgentSelectorLabel {
@@ -54,21 +57,117 @@ body {
 }
 
 .acpAgentSelect {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
   background: var(--acp-bg-alt);
   color: var(--acp-text);
   border: 1px solid var(--acp-border);
   border-radius: 4px;
   padding: 3px 6px;
   font: inherit;
+  cursor: pointer;
+}
+
+.acpAgentSelect:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.acpAgentSelect > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.acpSelectIcon {
+  flex: 0 0 auto;
+  color: var(--acp-text-muted);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.acpSelectContent {
+  z-index: 1000;
+  max-height: 240px;
+  min-width: 160px;
+  max-width: min(360px, calc(100vw - 24px));
+  overflow: hidden;
+  border: 1px solid var(--acp-border);
+  border-radius: 6px;
+  background: var(--acp-bg-alt);
+  color: var(--acp-text);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+}
+
+.acpSelectViewport {
+  padding: 4px;
+}
+
+.acpSelectItem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 4px 28px 4px 8px;
+  border-radius: 4px;
+  cursor: default;
+  outline: none;
+  user-select: none;
+}
+
+.acpSelectItem[data-highlighted] {
+  background: var(--acp-accent);
+  color: #fff;
+}
+
+.acpSelectItem[data-disabled] {
+  opacity: 0.5;
+}
+
+.acpSelectItemIndicator {
+  position: absolute;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+}
+
+.acpSelectScrollButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  color: var(--acp-text-muted);
+}
+
+.acpSelectLabel {
+  padding: 4px 8px;
+  color: var(--acp-text-muted);
+  font-size: 12px;
+}
+
+.acpSelectSeparator {
+  height: 1px;
+  margin: 4px;
+  background: var(--acp-border);
 }
 
 .acpAgentStarting,
 .acpChatStatus {
   color: var(--acp-text-muted);
+  min-width: 0;
 }
 
 .acpChatStatus {
   color: var(--acp-warning);
+  overflow-wrap: anywhere;
 }
 
 .acpPlan {
@@ -257,12 +356,29 @@ body {
   font-size: 11px;
 }
 
-.acpComposer {
+.acpComposerShell {
   flex: 0 0 auto;
   display: flex;
+  flex-direction: column;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 8px 12px 10px;
   border-top: 1px solid var(--acp-border);
+}
+
+.acpComposerToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+
+.acpComposer {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
 }
 
 .acpComposerInput {

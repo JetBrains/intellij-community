@@ -23,9 +23,68 @@ export interface ToolCallView {
 export type PlanStatus = "pending" | "in_progress" | "completed"
 
 export interface PlanEntryView {
+  planId?: string
   content: string
   status: PlanStatus
   priority?: string
+}
+
+export interface PromptCapabilitiesView {
+  image: boolean
+  audio: boolean
+  embeddedContext: boolean
+}
+
+export interface SessionModeView {
+  id: string
+  name: string
+  description?: string
+}
+
+export interface ConfigOptionSelectChoiceView {
+  value: string
+  name: string
+  description?: string
+  group?: string
+  groupName?: string
+}
+
+interface ConfigOptionBaseView {
+  id: string
+  name: string
+  description?: string
+  category?: string
+}
+
+export interface ConfigSelectOptionView extends ConfigOptionBaseView {
+  type: "select"
+  currentValue: string
+  options: ConfigOptionSelectChoiceView[]
+}
+
+export interface ConfigBooleanOptionView extends ConfigOptionBaseView {
+  type: "boolean"
+  currentValue: boolean
+}
+
+export type ConfigOptionView = ConfigSelectOptionView | ConfigBooleanOptionView
+
+export interface CommandView {
+  name: string
+  description: string
+  inputHint?: string
+}
+
+export type AttachmentKind = "image" | "resource"
+
+export interface AttachmentView {
+  id: string
+  kind: AttachmentKind
+  name: string
+  mimeType?: string
+  uri?: string
+  data?: string
+  text?: string
 }
 
 export interface PermissionOptionView {

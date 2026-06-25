@@ -7381,7 +7381,9 @@ var AssistantRuntimeProviderImpl = (t0) => {
 	return t4;
 };
 var AssistantRuntimeProvider = (0, react_shim_exports.memo)(AssistantRuntimeProviderImpl);
-require_react_dom();
+//#endregion
+//#region node_modules/@radix-ui/react-compose-refs/dist/index.mjs
+var import_react_dom = /* @__PURE__ */ __toESM(require_react_dom(), 1);
 function setRef(ref, value) {
 	if (typeof ref === "function") return ref(value);
 	else if (ref !== null && ref !== void 0) ref.current = value;
@@ -7549,6 +7551,9 @@ var Primitive$1 = [
 		[node]: Node
 	};
 }, {});
+function dispatchDiscreteCustomEvent(target, event) {
+	if (target) import_react_dom.flushSync(() => target.dispatchEvent(event));
+}
 //#endregion
 //#region node_modules/@assistant-ui/react/dist/utils/Primitive.js
 /**
@@ -12477,4 +12482,4 @@ var thread_exports = /* @__PURE__ */ __exportAll({
 	ViewportProvider: () => ThreadPrimitiveViewportProvider
 });
 //#endregion
-export { require_react_dom as a, AssistantRuntimeProvider as i, message_exports as n, composer_exports as r, thread_exports as t };
+export { useCallbackRef as a, dispatchDiscreteCustomEvent as c, AssistantRuntimeProvider as d, require_react_dom as f, useEscapeKeydown as i, createSlot as l, message_exports as n, composeEventHandlers as o, composer_exports as r, Primitive$1 as s, thread_exports as t, useComposedRefs as u };

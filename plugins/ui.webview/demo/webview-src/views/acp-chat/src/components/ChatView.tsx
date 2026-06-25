@@ -15,15 +15,7 @@ export function ChatView() {
   return (
     <AssistantRuntimeProvider runtime={chat.runtime}>
       <div className="acpChatLayout">
-        <header className="acpChatHeader">
-          <AgentSelector
-            agents={chat.agents}
-            selectedAgentId={chat.selectedAgentId}
-            starting={chat.starting}
-            onSelect={chat.selectAgent}
-          />
-          {chat.status ? <span className="acpChatStatus">{chat.status}</span> : null}
-        </header>
+        {chat.status ? <header className="acpChatHeader"><span className="acpChatStatus">{chat.status}</span></header> : null}
         <PlanView plan={chat.plan} />
         <ThreadPrimitive.Root className="acpThread">
           <ThreadPrimitive.Viewport className="acpThreadViewport">
@@ -32,10 +24,20 @@ export function ChatView() {
             </ThreadPrimitive.Empty>
             <ThreadPrimitive.Messages components={{ UserMessage, AssistantMessage }} />
           </ThreadPrimitive.Viewport>
-          <ComposerPrimitive.Root className="acpComposer">
-            <ComposerPrimitive.Input className="acpComposerInput" placeholder="Message the agent…" />
-            <ComposerPrimitive.Send className="acpComposerSend">Send</ComposerPrimitive.Send>
-          </ComposerPrimitive.Root>
+          <div className="acpComposerShell">
+            <ComposerPrimitive.Root className="acpComposer">
+              <ComposerPrimitive.Input className="acpComposerInput" placeholder="Message the agent…" />
+              <ComposerPrimitive.Send className="acpComposerSend">Send</ComposerPrimitive.Send>
+            </ComposerPrimitive.Root>
+            <div className="acpComposerToolbar">
+              <AgentSelector
+                agents={chat.agents}
+                selectedAgentId={chat.selectedAgentId}
+                starting={chat.starting}
+                onSelect={chat.selectAgent}
+              />
+            </div>
+          </div>
         </ThreadPrimitive.Root>
         {chat.permission ? <ApprovalPrompt permission={chat.permission} /> : null}
         {chat.auth ? <AuthPrompt auth={chat.auth} /> : null}

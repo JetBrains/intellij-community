@@ -2,9 +2,24 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useExternalStoreRuntime, type AppendMessage, type ThreadMessageLike } from "@assistant-ui/react"
+import type { ContentBlock } from "@agentclientprotocol/sdk"
 import { AcpSession, type AcpEventSink } from "../acp/client"
 import { acpBridgeHost } from "../bridge/webviewApi"
-import type { AuthChoice, AgentInfo, PendingAuth, PendingPermission, PlanEntryView, ToolCallView } from "../model/types"
+import type {
+  AuthChoice,
+  AgentInfo,
+  CommandView,
+  ConfigOptionView,
+  PendingAuth,
+  PendingPermission,
+  PlanEntryView,
+  PromptCapabilitiesView,
+  SessionModeView,
+  ToolCallView,
+} from "../model/types"
+
+const emptyPromptCapabilities: PromptCapabilitiesView = { image: false, audio: false, embeddedContext: false }
+const legacyPlanId = "legacy"
 
 interface Turn {
   reasoning: string
@@ -19,6 +34,11 @@ export interface AcpChat {
   starting: boolean
   status: string
   plan: PlanEntryView[]
+  promptCapabilities: PromptCapabilitiesView
+  modes: SessionModeView[]
+  configOptions: ConfigOptionView[]
+  currentModeId: string | null
+  commands: CommandView[]
   permission: PendingPermission | null
   auth: PendingAuth | null
   selectAgent: (agentId: string) => void
@@ -32,11 +52,17 @@ export function useAcpChat(): AcpChat {
   const [starting, setStarting] = useState(false)
   const [status, setStatus] = useState("")
   const [plan, setPlan] = useState<PlanEntryView[]>([])
+  const [promptCapabilities, setPromptCapabilities] = useState<PromptCapabilitiesView>(emptyPromptCapabilities)
+  const [modes, setModes] = useState<SessionModeView[]>([])
+  const [configOptions, setConfigOptions] = useState<ConfigOptionView[]>([])
+  const [currentModeId, setCurrentModeId] = useState<string | null>(null)
+  const [commands, setCommands] = useState<CommandView[]>([])
   const [permission, setPermission] = useState<PendingPermission | null>(null)
   const [auth, setAuth] = useState<PendingAuth | null>(null)
 
   const sessionRef = useRef<AcpSession | null>(null)
   const turnRef = useRef<Turn | null>(null)
+  const plansByIdRef = useRef(new Map<string, PlanEntryView[]>())
   const assistantSeqRef = useRef(0)
   // Resolver for the select-phase auth prompt, so a dying agent (or unmount) can unblock the prompt instead of hanging.
   const authResolveRef = useRef<((choice: AuthChoice | null) => void) | null>(null)
@@ -87,6 +113,23 @@ export function useAcpChat(): AcpChat {
     })
   }, [])
 
+  const publishPlans = useCallback(() => {
+    setPlan(Array.from(plansByIdRef.current.values()).flat())
+  }, [])
+
+  const clearPlans = useCallback(() => {
+    plansByIdRef.current.clear()
+    setPlan([])
+  }, [])
+
+  const resetSessionMetadata = useCallback(() => {
+    setPromptCapabilities(emptyPromptCapabilities)
+    setModes([])
+    setConfigOptions([])
+    setCurrentModeId(null)
+    setCommands([])
+  }, [])
+
   const sink = useMemo<AcpEventSink>(() => ({
     onMessageChunk(text) {
       const turn = turnRef.current
@@ -116,7 +159,33 @@ export function useAcpChat(): AcpChat {
       flushTurn()
     },
     onPlan(entries) {
-      setPlan(entries)
+      plansByIdRef.current.clear()
+      if (entries.length > 0) plansByIdRef.current.set(legacyPlanId, entries)
+      publishPlans()
+    },
+    onPlanUpdate(planId, entries) {
+      plansByIdRef.current.set(planId, entries)
+      publishPlans()
+    },
+    onPlanRemoved(planId) {
+      plansByIdRef.current.delete(planId)
+      publishPlans()
+    },
+    onPromptCapabilities(capabilities) {
+      setPromptCapabilities(capabilities)
+    },
+    onSessionModes(nextModes, nextCurrentModeId) {
+      setModes(nextModes)
+      setCurrentModeId(nextCurrentModeId)
+    },
+    onCurrentMode(nextCurrentModeId) {
+      setCurrentModeId(nextCurrentModeId)
+    },
+    onConfigOptions(nextConfigOptions) {
+      setConfigOptions(nextConfigOptions)
+    },
+    onCommands(nextCommands) {
+      setCommands(nextCommands)
     },
     requestPermission(view) {
       return new Promise<string | null>(resolve => {
@@ -132,7 +201,7 @@ export function useAcpChat(): AcpChat {
       // Unblock a pending auth prompt so the selection loop does not wait on a dead agent forever.
       authResolveRef.current?.(null)
     },
-  }), [flushTurn])
+  }), [flushTurn, publishPlans])
 
   const onNew = useCallback(async (message: AppendMessage) => {
     const session = sessionRef.current
@@ -140,10 +209,8 @@ export function useAcpChat(): AcpChat {
       setStatus("Select an agent to start a session first.")
       return
     }
-    const text = message.content
-      .filter((part): part is { type: "text", text: string } => part.type === "text")
-      .map(part => part.text)
-      .join("")
+    const blocks = buildPromptBlocks(message)
+    const text = textFromBlocks(blocks)
     const assistantId = `assistant-${++assistantSeqRef.current}`
     setMessages(previous => [
       ...previous,
@@ -151,11 +218,11 @@ export function useAcpChat(): AcpChat {
       { id: assistantId, role: "assistant", content: [] },
     ])
     turnRef.current = { reasoning: "", text: "", tools: [] }
-    setPlan([])
+    clearPlans()
     setStatus("")
     setIsRunning(true)
     try {
-      await session.prompt(text)
+      await session.prompt(blocks)
     }
     catch (error) {
       setStatus(errorText(error))
@@ -163,7 +230,7 @@ export function useAcpChat(): AcpChat {
     finally {
       setIsRunning(false)
     }
-  }, [])
+  }, [clearPlans])
 
   const onCancel = useCallback(async () => {
     try {
@@ -178,6 +245,8 @@ export function useAcpChat(): AcpChat {
   const runtime = useExternalStoreRuntime({
     isRunning,
     messages,
+    setMessages: next => setMessages([...next]),
+    unstable_capabilities: { copy: true },
     convertMessage: (message: ThreadMessageLike) => message,
     onNew,
     onCancel,
@@ -193,7 +262,8 @@ export function useAcpChat(): AcpChat {
       try {
         await previous?.stop()
         setMessages([])
-        setPlan([])
+        clearPlans()
+        resetSessionMetadata()
         setPermission(null)
         setAuth(null)
         // The previous session was just stopped; drop the stale selection until this one is ready.
@@ -254,9 +324,42 @@ export function useAcpChat(): AcpChat {
         setStarting(false)
       }
     })()
-  }, [sink])
+  }, [clearPlans, resetSessionMetadata, sink])
 
-  return { runtime, agents, selectedAgentId, starting, status, plan, permission, auth, selectAgent }
+  return {
+    runtime,
+    agents,
+    selectedAgentId,
+    starting,
+    status,
+    plan,
+    promptCapabilities,
+    modes,
+    configOptions,
+    currentModeId,
+    commands,
+    permission,
+    auth,
+    selectAgent,
+  }
+}
+
+function buildPromptBlocks(message: AppendMessage): ContentBlock[] {
+  return [{ type: "text", text: textFromAppendMessage(message) }]
+}
+
+function textFromAppendMessage(message: AppendMessage): string {
+  return message.content
+    .filter((part): part is { type: "text"; text: string } => part.type === "text")
+    .map(part => part.text)
+    .join("")
+}
+
+function textFromBlocks(blocks: ContentBlock[]): string {
+  return blocks
+    .filter((block): block is ContentBlock & { type: "text"; text: string } => block.type === "text")
+    .map(block => block.text)
+    .join("")
 }
 
 function errorText(error: unknown): string {
