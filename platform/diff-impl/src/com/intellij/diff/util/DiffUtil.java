@@ -894,6 +894,12 @@ public final class DiffUtil {
     return JBInsets.create("Diff.ContentTitle.insets", new Insets(2, 4, 0, 4));
   }
 
+  @ApiStatus.Internal
+  public static @NotNull Color getContentTitleSeparatorColor() {
+    Color lineColor = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.TEARLINE_COLOR);
+    return lineColor != null ? lineColor : JBColor.border();
+  }
+
   private static @NotNull JComponent createCharsetPanel(@NotNull Charset charset, @Nullable Boolean bom) {
     String text = charset.displayName();
     if (bom != null && bom) {
