@@ -9,6 +9,14 @@ jps_test(
 )
 ### skip generation section `test intellij.configurationScript.tests`
 
+jps_test(
+    name = "configurationScript-test-java_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":configurationScript-test-java_test_lib"],
+)
+### skip generation section `test intellij.configurationScript.test.java`
+
 ### auto-generated section `build intellij.configurationScript` start
 
 jvm_library(
@@ -181,14 +189,6 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.configurationScript.test.java` end
-
-### auto-generated section `test intellij.configurationScript.test.java` start
-
-jps_test(
-    name = "configurationScript-test-java_test",
-    runtime_deps = [":configurationScript-test-java_test_lib"],
-)
-### auto-generated section `test intellij.configurationScript.test.java` end
 
 ### auto-generated section `build intellij.configurationScript.tests` start
 
