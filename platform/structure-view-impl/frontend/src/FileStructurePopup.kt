@@ -579,19 +579,21 @@ class FileStructurePopup(
    * Rebuilds the Swing-visible tree projection from the current source tree and enabled actions. Backend DTOs are already applied
    * to [StructureViewNode.sourceChildren] by the UI model; this method only rewrites [StructureViewNode.visibleChildren].
    *
-   * Existing tree selection is restored by [TreeState]. If no selection survives the rebuild, the current editor selection is selected
-   * when it is visible; otherwise [TreeUtil.ensureSelection] provides a fallback selection.
+   * Existing expansion is restored by [TreeState]. The previous popup selection is then replayed explicitly so Swing applies expansion
+   * from the selected path. If the previous popup selection is no longer visible, the current editor selection is selected when
+   * possible; otherwise [TreeUtil.ensureSelection] provides a fallback selection.
    */
   @RequiresEdt
   private fun rebuildVisibleTree(reason: RebuildReason) {
     val rebuildId = rebuildCounter.incrementAndGet()
     val rebuildStartTime = System.nanoTime()
+    val selectionBeforeRebuild = selectedNode
     // nodeStructureChanged(root) can make JTree discard descendant expansion state even when node instances are reused.
-    val treeState = TreeState.createOn(tree, true, true)
+    val treeState = TreeState.createOn(tree, true, false)
     val snapshot = createRebuildSnapshot()
 
     LOG.trace {
-      "FileStructurePopup#rebuild[$rebuildId]: started; reason=$reason, selection=${selectedNode?.id}, " +
+      "FileStructurePopup#rebuild[$rebuildId]: started; reason=$reason, selection=${selectionBeforeRebuild?.id}, " +
       "filters=${snapshot.enabledFilters.size}, providers=${snapshot.enabledNodeProviders.size}, narrowDown=${snapshot.narrowDown}"
     }
 
@@ -605,14 +607,13 @@ class FileStructurePopup(
       expandAutoNodes()
     }
 
-    if (selectedNode == null) {
-      val editorSelection = myModel.editorSelection.value?.let { findPathForElementOrAncestor(it) }
-      if (editorSelection != null) {
-        selectPath(editorSelection)
-      }
-      else {
-        TreeUtil.ensureSelection(tree)
-      }
+    val selectionPath = selectionBeforeRebuild?.let { findPathForElementOrAncestor(it) }
+                        ?: myModel.editorSelection.value?.let { findPathForElementOrAncestor(it) }
+    if (selectionPath != null) {
+      selectPath(selectionPath)
+    }
+    else {
+      TreeUtil.ensureSelection(tree)
     }
 
     mySpeedSearch.refreshSelection()
@@ -761,7 +762,7 @@ class FileStructurePopup(
   }
 
   private fun selectPath(path: TreePath) {
-    tree.expandPath(path.parentPath ?: path)
+    tree.expandPath(path)
     TreeUtil.selectPath(tree, path)
     tree.scrollPathToVisible(path)
     TreeUtil.ensureSelection(tree)
