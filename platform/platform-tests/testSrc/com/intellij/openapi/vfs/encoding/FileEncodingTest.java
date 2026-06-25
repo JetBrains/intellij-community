@@ -42,6 +42,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -601,7 +602,7 @@ public class FileEncodingTest implements TestDialog {
     assertEquals(StandardCharsets.UTF_8, file.getCharset());
     assertArrayEquals(CharsetToolkit.UTF8_BOM, file.getBOM());
 
-    byte[] bytes = FileUtil.loadFileBytes(VfsUtilCore.virtualToIoFile(file));
+    byte[] bytes = Files.readAllBytes(file.toNioPath());
     assertTrue(Arrays.toString(bytes), CharsetToolkit.hasUTF8Bom(bytes));
     assertEquals(text, CharsetToolkit.decodeString(bytes, StandardCharsets.UTF_8));
   }
@@ -620,7 +621,7 @@ public class FileEncodingTest implements TestDialog {
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    byte[] bytes = FileUtil.loadFileBytes(VfsUtilCore.virtualToIoFile(file));
+    byte[] bytes = Files.readAllBytes(file.toNioPath());
     Charset charset = LoadTextUtil.detectCharsetAndSetBOM(file, bytes, file.getFileType());
     assertEquals(StandardCharsets.UTF_8, charset);
     assertArrayEquals(CharsetToolkit.UTF8_BOM, file.getBOM());
@@ -668,7 +669,7 @@ public class FileEncodingTest implements TestDialog {
 
     EncodingUtil.saveIn(getProject(), document, null, file, StandardCharsets.UTF_8);
 
-    byte[] bytes = FileUtil.loadFileBytes(VfsUtilCore.virtualToIoFile(file));
+    byte[] bytes = Files.readAllBytes(file.toNioPath());
 
     assertEquals(StandardCharsets.UTF_8, file.getCharset());
     assertNull(file.getBOM());
@@ -955,9 +956,9 @@ public class FileEncodingTest implements TestDialog {
     assertEquals(StandardCharsets.UTF_8, file.getCharset());
     assertArrayEquals(CharsetToolkit.UTF8_BOM, file.getBOM());
 
-    FileUtil.writeToFile(VfsUtilCore.virtualToIoFile(file), text.getBytes(StandardCharsets.UTF_8));
+    Files.writeString(file.toNioPath(), text);
     file.refresh(false, false);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     assertEquals(text, document.getText());
     assertEquals(defaultProjectEncoding(), file.getCharset());
