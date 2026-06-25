@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.getPluginDistDirByClass
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.io.Decompressor
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.kotlinArtifactRepositoryCoordinates
 import java.io.IOException
 import java.net.URL
 import java.net.URLClassLoader
@@ -105,11 +106,9 @@ object Jsr223KotlincProvider {
         val fileName = kotlinDistForIdeJarName()
         val version = KotlinCompilerVersion.VERSION
         val artifactPath = "$KOTLIN_MAVEN_GROUP_PATH/$KOTLIN_DIST_FOR_IDE_ARTIFACT_ID/$version/$fileName"
-        return listOf(
-            "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/$artifactPath",
-            "https://cache-redirector.jetbrains.com/intellij-dependencies/$artifactPath",
-            "https://repo1.maven.org/maven2/$artifactPath",
-        )
+
+        return kotlinArtifactRepositoryCoordinates
+            .map { "$it/$artifactPath" }
     }
 
     private fun kotlinDistForIdeJarName(): String {
