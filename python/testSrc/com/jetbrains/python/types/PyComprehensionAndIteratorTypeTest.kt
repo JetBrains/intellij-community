@@ -1742,8 +1742,11 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
         pass
     """)
 
+  /**
+   * mirrors of tests in this suite but with PyAnyType disabled to ensure that the old style doesn't regress
+   */
   @Nested
-  inner class PyAnyMigrationMirrors {
+  inner class PyAnyTypeMigrationMirrors {
 
     val oldAny = defaultTestOptions.copy(enablePyAnyType = false)
 

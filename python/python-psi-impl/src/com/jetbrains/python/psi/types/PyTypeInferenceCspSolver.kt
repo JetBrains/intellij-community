@@ -1564,7 +1564,7 @@ private fun substituteUnconstrainedInferenceVariablesBy(typeRef: PyType?, contex
 
 @Suppress("UNCHECKED_CAST")
 private fun <T: PyTypeVarTypeWrapperType> substituteInferenceVariablesBy(typeRef: PyType?, ivType: Class<T>, context: TypeEvalContext, by: (T) -> Ref<PyType?>?): PyType? {
-  if (typeRef == null) return typeRef
+  if (typeRef.isUnknown) return typeRef
 
   var referencesInfVar = false
   PyRecursiveTypeVisitor.traverse(typeRef, context, object : PyTypeTraverser() {

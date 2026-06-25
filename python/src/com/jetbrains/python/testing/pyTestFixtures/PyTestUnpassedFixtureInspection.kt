@@ -22,6 +22,7 @@ import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.types.PyFunctionType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isUnknown
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -95,7 +96,7 @@ class PyTestUnpassedFixtureInspection : PyInspection() {
     }
 
     private fun getType(element: PyReferenceExpression): ResolveType {
-      val type = myTypeEvalContext.getType(element) ?: return ResolveType.NONE
+      val type = myTypeEvalContext.getType(element).takeUnless { it.isUnknown } ?: return ResolveType.NONE
       val fixture = (type as? PyFunctionType)?.callable
       if (fixture is PyFunction && fixture.isFixture()) {
         return ResolveType.FIXTURE

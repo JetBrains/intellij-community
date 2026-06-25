@@ -2,10 +2,10 @@ from m1 import f, g, C, stub_only
 
 
 def test_overloaded_function(x):
-    g(<warning descr="Expected type 'dict[Any, Any]', got 'int' instead">f(10)</warning>)
-    g(<warning descr="Expected type 'dict[Any, Any]', got 'str' instead">f('foo')</warning>)
-    g(<warning descr="Expected type 'dict[Any, Any]', got 'int | str' instead">f(<warning descr="No overload of 'f' matches the arguments. Argument types: (dict[Literal[1], Literal[2]]). Expected one of: (key: int), (key: str)">{1: 2}</warning>)</warning>)
-    g(<warning descr="Expected type 'dict[Any, Any]', got 'int | str' instead">f(x)</warning>)
+    g(<warning descr="Expected type 'dict[Unknown, Unknown]', got 'int' instead">f(10)</warning>)
+    g(<warning descr="Expected type 'dict[Unknown, Unknown]', got 'str' instead">f('foo')</warning>)
+    g(<warning descr="Expected type 'dict[Unknown, Unknown]', got 'int | str' instead">f(<warning descr="No overload of 'f' matches the arguments. Argument types: (dict[Literal[1], Literal[2]]). Expected one of: (key: int), (key: str)">{1: 2}</warning>)</warning>)
+    g(<warning descr="Expected type 'dict[Unknown, Unknown]', got 'int | str' instead">f(x)</warning>)
 
 
 def test_overloaded_subscription_operator_parameters():
@@ -23,7 +23,7 @@ def test_overloaded_binary_operator_parameters():
 
 
 def test_stub_only_function(x):
-    g(<warning descr="Expected type 'dict[Any, Any]', got 'int' instead">stub_only(10)</warning>)
-    g(<warning descr="Expected type 'dict[Any, Any]', got 'str' instead">stub_only('foo')</warning>)
-    g(<warning descr="Expected type 'dict[Any, Any]', got 'int | str' instead">stub_only(x)</warning>)
-    g(<warning descr="Expected type 'dict[Any, Any]', got 'int | str' instead">stub_only(<warning descr="No overload of 'stub_only' matches the arguments. Argument types: (dict[Literal[1], Literal[2]]). Expected one of: (x: int), (x: str)">{1: 2}</warning>)</warning>)
+    g(<warning descr="Expected type 'dict[Unknown, Unknown]', got 'int' instead">stub_only(10)</warning>)
+    g(<warning descr="Expected type 'dict[Unknown, Unknown]', got 'str' instead">stub_only('foo')</warning>)
+    g(<warning descr="Expected type 'dict[Unknown, Unknown]', got 'int | str' instead">stub_only(x)</warning>)
+    g(<warning descr="Expected type 'dict[Unknown, Unknown]', got 'int | str' instead">stub_only(<warning descr="No overload of 'stub_only' matches the arguments. Argument types: (dict[Literal[1], Literal[2]]). Expected one of: (x: int), (x: str)">{1: 2}</warning>)</warning>)

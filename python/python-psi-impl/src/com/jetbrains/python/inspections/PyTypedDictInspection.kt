@@ -59,6 +59,7 @@ import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_CLOSE
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_EXTRA_ITEMS_PARAMETER
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_TOTAL_PARAMETER
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isUnknown
 
 class PyTypedDictInspection : PyInspection() {
   override fun buildVisitor(
@@ -103,7 +104,7 @@ class PyTypedDictInspection : PyInspection() {
       }
 
       val nonMatchingFields = indexExpressionValueOptions.filterNot { it in operandType.fields }
-      if (nonMatchingFields.isNotEmpty() && operandType.extraItemsType == null) {
+      if (nonMatchingFields.isNotEmpty() && operandType.extraItemsType.isUnknown) {
         registerProblem(indexExpression, if (nonMatchingFields.size == 1)
           PyPsiBundle.problemMessage("INSP.typeddict.typeddict.has.no.key", operandType.name, nonMatchingFields[0])
         else {
@@ -223,8 +224,8 @@ class PyTypedDictInspection : PyInspection() {
           registerProblem(closedArgument, PyPsiBundle.message("INSP.typeddict.closed.cannot.reopen.closed.superclass"))
         }
 
-        if (typedDict.extraItemsType != null) {
-          if (extraItemsType != null && !typedDict.extraItemsQualifiers.isReadOnly) {
+        if (!typedDict.extraItemsType.isUnknown) {
+          if (!extraItemsType.isUnknown && !typedDict.extraItemsQualifiers.isReadOnly) {
             registerProblem(extraItemsArgument,
                             PyPsiBundle.message("INSP.typeddict.incompatible.extra.items.override")
             )
@@ -243,7 +244,7 @@ class PyTypedDictInspection : PyInspection() {
         if (typedDict.isClosed || typedDict.extraItemsType == PyNeverType.NEVER) {
           isClosedAncestor = true
         }
-        if (extraItemsAncestor == null && typedDict.extraItemsType != null) {
+        if (extraItemsAncestor == null && !typedDict.extraItemsType.isUnknown) {
           extraItemsAncestor = typedDict
         }
 
@@ -398,7 +399,7 @@ class PyTypedDictInspection : PyInspection() {
         // PEP 728: "In this case, methods that are previously unavailable on a TypedDict are allowed,
         // with signatures matching dict[str, VT]" — when the TypedDict is assignable to dict[str, VT],
         // i.e. all items (including extra_items) are non-required, non-read-only, and consistent with VT.
-        val isAssignableToMutableDict = nodeType.extraItemsType != null &&
+        val isAssignableToMutableDict = !nodeType.extraItemsType.isUnknown &&
                                         !nodeType.extraItemsQualifiers.isReadOnly &&
                                         nodeType.fields.values.none { it.qualifiers.isRequired == true || it.qualifiers.isReadOnly }
         if (!isAssignableToMutableDict) {
@@ -439,7 +440,7 @@ class PyTypedDictInspection : PyInspection() {
           registerProblem(keyArgument, PyPsiBundle.message("INSP.typeddict.key.should.be.string"))
           return
         }
-        if (!nodeType.fields.containsKey(key) && nodeType.extraItemsType == null) {
+        if (!nodeType.fields.containsKey(key) && nodeType.extraItemsType.isUnknown) {
           registerProblem(keyArgument, PyPsiBundle.problemMessage("INSP.typeddict.typeddict.has.no.key", nodeType.name, key))
         }
       }
@@ -481,9 +482,9 @@ class PyTypedDictInspection : PyInspection() {
         if (assignedType !is PyTypedDictType) return@forEach
 
         val expectedExtraItemsType = targetType.extraItemsType
-        if (expectedExtraItemsType == null) return@forEach
+        if (expectedExtraItemsType.isUnknown) return@forEach
 
-        if (assignedType.extraItemsType != null) {
+        if (!assignedType.extraItemsType.isUnknown) {
           if (!PyTypeChecker.match(expectedExtraItemsType, assignedType.extraItemsType, myTypeEvalContext)) {
             registerProblem(
               target,

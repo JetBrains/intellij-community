@@ -111,7 +111,7 @@ public class PyUnionType implements PyCompositeType {
   /**
    * Constructs a union of the given types.
    * <p>
-   * If the resulting union would be empty, returns {@code null} (representing Any type).
+   * If the resulting union would be empty, returns {@code PyAnyType.getUnknown()}.
    * Consider using {@link #unionOrNever} instead, which falls back to {@link PyNeverType#NEVER}.
    *
    * @param members a collection of types to union

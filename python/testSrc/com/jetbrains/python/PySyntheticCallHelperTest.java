@@ -193,7 +193,7 @@ public class PySyntheticCallHelperTest extends PyTestCase {
   }
 
   public void testGenericClassMethod() {
-    doTest("list[Any]", """
+    doTest("list[Unknown]", """
       class Clazz[T]:
         def foo(self) -> T:
           pass
@@ -240,7 +240,7 @@ public class PySyntheticCallHelperTest extends PyTestCase {
   }
 
   public void testGenericClassMethodInExternalFile() {
-    doMultiFileTest("list[Any]", """
+    doMultiFileTest("list[Unknown]", """
       from lib import Clazz
       instance = Clazz[list]()
       """, () -> {
@@ -254,7 +254,7 @@ public class PySyntheticCallHelperTest extends PyTestCase {
   }
 
   public void testGenericClassMethodWithOverloadsInExternalFile() {
-    doMultiFileTest("float | int | list[Any]", """
+    doMultiFileTest("float | int | list[Unknown]", """
       from lib import Clazz
       instance = Clazz[list]()
       """, () -> {

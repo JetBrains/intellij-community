@@ -30,6 +30,8 @@ import com.jetbrains.python.psi.types.PyCallableParameterImpl;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyStructuralType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isAnyOrUnknown;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -152,7 +154,7 @@ public final class PyParameterInfoUtils {
               parameterDescription.setAnnotation(last ? annotationText : (annotationText + ", "));
             }
           }
-          stringBuilder.append(parameter.getPresentableText(true, context, type -> type == null || type instanceof PyStructuralType));
+          stringBuilder.append(parameter.getPresentableText(true, context, type -> isAnyOrUnknown(type) || type instanceof PyStructuralType));
           if (!last) stringBuilder.append(", ");
           final int hintIndex = parameterDescriptions.size();
           parameterToHintIndex.put(parameter, hintIndex);

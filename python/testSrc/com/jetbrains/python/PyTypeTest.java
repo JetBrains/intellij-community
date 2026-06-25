@@ -50,7 +50,7 @@ public class PyTypeTest extends PyTestCase {
       """;
     final PyExpression expr = parseExpr(text);
     assertNotNull(expr);
-    doTest("UnsafeUnion[Union[Literal[3], str], Any]", expr, TypeEvalContext.codeCompletion(expr.getProject(), expr.getContainingFile()));
+    doTest("UnsafeUnion[Union[Literal[3], str], Unknown]", expr, TypeEvalContext.codeCompletion(expr.getProject(), expr.getContainingFile()));
   }
 
   // TODO: enable this test when properties will be calculated with TypeEvalContext
@@ -235,14 +235,14 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-25751
   public void testNotImportedModuleInDunderAll() {
-    doMultiFileTest("Union[pkg.aaa, Any]",
+    doMultiFileTest("Union[pkg.aaa, Unknown]",
                     "from pkg import *\n" +
                     "expr = aaa");
   }
 
   // PY-25751
   public void testNotImportedPackageInDunderAll() {
-    doMultiFileTest("Union[pkg.aaa, Any]",
+    doMultiFileTest("Union[pkg.aaa, Unknown]",
                     "from pkg import *\n" +
                     "expr = aaa");
   }

@@ -50,7 +50,6 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
 
     @Test
     fun `upper bound generic from docstring`() = test(
-      TestOptions(enablePyAnyType = false),
       """
       def foo(x):
           '''
@@ -449,7 +448,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
-    fun `AnyStr for unknown`() = test(TestOptions(enablePyAnyType = false), """
+    fun `AnyStr for unknown`() = test("""
       from typing import AnyStr
       
       def foo(x: AnyStr) -> AnyStr:
@@ -1507,7 +1506,6 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
 
     @Test
     fun `unconstrained TypeVar default Any`() = test(
-      TestOptions(enablePyAnyType = true),
       """
       from typing import Any
 
@@ -1520,7 +1518,6 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
 
     @Test
     fun `unconstrained TypeVar`() = test(
-      TestOptions(enablePyAnyType = true),
       """
       def f[T]() -> T: ...
 

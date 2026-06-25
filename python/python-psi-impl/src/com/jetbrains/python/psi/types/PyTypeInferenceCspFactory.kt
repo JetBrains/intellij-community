@@ -119,7 +119,7 @@ object PyTypeInferenceCspFactory {
     if (declaredReturn.hasGenerics(context)) {
       ensureInferenceVariables(builder, receiverType, declaredReturn, context)
       val expectedReturnType = getExpectedType(callSite, context)
-      if (expectedReturnType != null) {
+      if (expectedReturnType != null && !expectedReturnType.isUnknown) {
         val declaredReturn_selfBounded = substituteSelfTypes(declaredReturn, receiverType, context)
         // semantics: RT <: ExpectedReturnType
         builder.addConstraint(declaredReturn_selfBounded, expectedReturnType, Variance.COVARIANT, ConstraintPriority.LOW)
@@ -186,7 +186,7 @@ object PyTypeInferenceCspFactory {
       builder.addInferenceVariable(typeParam)
 
       // bounds
-      if (typeParam.bound != null) {
+      if (typeParam.bound != null && !typeParam.bound.isUnknown) {
         val typeVarBound_selfBounded = substituteSelfTypes(typeParam.bound, receiverType, context)
         // semantics: TV <: Bound
         builder.addConstraint(typeParam, typeVarBound_selfBounded, Variance.COVARIANT, ConstraintPriority.HIGH)

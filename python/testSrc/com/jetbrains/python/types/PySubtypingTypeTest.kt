@@ -1421,7 +1421,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
     @Test
     fun `function return type checks`() = test(
-      TestOptions(enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(assertRecursionPrevention = false),
       """
       from typing import List, Optional, Union, Generator, Iterable
 
@@ -1453,7 +1453,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
           if x:
               return 'abc' # WARNING Expected type 'int', got 'Literal["abc"]' instead
           else:
-              return {} # WARNING Expected type 'int', got 'dict[Any, Any]' instead
+              return {} # WARNING Expected type 'int', got 'dict[Unknown, Unknown]' instead
 
       def h(x) -> int:
           return # WARNING Expected type 'int', got 'None' instead

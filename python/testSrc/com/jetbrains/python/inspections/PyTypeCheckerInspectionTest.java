@@ -1531,13 +1531,13 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            y = {}
                            z = {'foo': 'bar'}
                            n = {"foo": "", "quux": 3}
-                           f(<warning descr="Expected type 'C', got 'dict[Any, Any]' instead">y</warning>)
+                           f(<warning descr="Expected type 'C', got 'dict[Unknown, Unknown]' instead">y</warning>)
                            f(<warning descr="Expected type 'C', got 'dict[str, str | int]' instead">n</warning>)
                            f(<warning descr="Expected type 'C', got 'dict[str, str]' instead">z</warning>)
-                           f(<warning descr="Expected type 'C', got 'dict[Any, Any]' instead">x=y</warning>)
+                           f(<warning descr="Expected type 'C', got 'dict[Unknown, Unknown]' instead">x=y</warning>)
                            f(<warning descr="Expected type 'C', got 'dict[str, str | int]' instead">x=n</warning>)
                            f(<warning descr="Expected type 'C', got 'dict[str, str]' instead">x=z</warning>)
-                           z2: C = <warning descr="Expected type 'C', got 'dict[Any, Any]' instead">y</warning>
+                           z2: C = <warning descr="Expected type 'C', got 'dict[Unknown, Unknown]' instead">y</warning>
                            z2: C = <warning descr="Expected type 'C', got 'dict[str, str | int]' instead">n</warning>
                            z2: C = <warning descr="Expected type 'C', got 'dict[str, str]' instead">z</warning>
                            """)
@@ -1601,8 +1601,8 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                                    'd': {}
                                }
                            }
-                           s2: HardDict = {'a': 'xx', 'd': <warning descr="Expected type 'NotSoHardDict', got 'dict[str, str | dict[str, int | dict[Any, Any]]]' instead">t1</warning>}
-                           s3: HardDict = <warning descr="Expected type 'HardDict', got 'dict[str, str | dict[str, int | dict[Any, Any]]]' instead">t1</warning>
+                           s2: HardDict = {'a': 'xx', 'd': <warning descr="Expected type 'NotSoHardDict', got 'dict[str, str | dict[str, int | dict[Unknown, Unknown]]]' instead">t1</warning>}
+                           s3: HardDict = <warning descr="Expected type 'HardDict', got 'dict[str, str | dict[str, int | dict[Unknown, Unknown]]]' instead">t1</warning>
                            s4: HardDict = <warning descr="TypedDict 'HardDict' has missing key: 'a'">{
                                'd': {
                                    'a': 'a',

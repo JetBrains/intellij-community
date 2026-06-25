@@ -30,6 +30,7 @@ import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyTypeMismatchExplanation
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isUnknown
 import java.util.Optional
 
 internal object PyTypeCheckerInspectionProblemRegistrar {
@@ -213,7 +214,7 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
 
     val expectedTypeAfterSubstitution = argumentResult.expectedTypeAfterSubstitution
     val expectedTypeParam = PyInspectionMessages.CodifiedParam.ofType(expectedType, anchor, context, true)
-    val expectedSubstitutedParam = if (expectedTypeAfterSubstitution != null && expectedTypeAfterSubstitution != expectedType)
+    val expectedSubstitutedParam = if (!expectedTypeAfterSubstitution.isUnknown && expectedTypeAfterSubstitution != expectedType)
       PyInspectionMessages.CodifiedParam.ofType(expectedTypeAfterSubstitution, anchor, context)
     else
       null
@@ -349,7 +350,7 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
     context: TypeEvalContext,
     matched: Boolean,
   ): PyMismatchTooltips.Slot {
-    val type = argumentResult.expectedTypeAfterSubstitution ?: argumentResult.expectedType
+    val type = argumentResult.expectedTypeAfterSubstitution.takeUnless { it.isUnknown } ?: argumentResult.expectedType
     val typeName = PythonDocumentationProvider.getTypeName(type, context)
     val parameter = argumentResult.parameter ?: return PyMismatchTooltips.Slot("", typeName, matched)
     return PyMismatchTooltips.parameterSlot(parameter, typeName, matched)

@@ -1416,24 +1416,24 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-9662"])
     fun `binary expression with annotated Any operand left`() = test(
-      TestOptions(enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(assertRecursionPrevention = false),
       """
       from typing import Any
       x: Any
       expr = x * 2
-      #└ TYPE UnsafeUnion[int, Any]
+      #└ TYPE UnsafeUnion[int, Unknown] FIXME UnsafeUnion[int, Any]
       """,
     )
 
     @Test
     @TestFor(issues = ["PY-9662"])
     fun `binary expression with annotated Any operand right`() = test(
-      TestOptions(enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(assertRecursionPrevention = false),
       """
       from typing import Any
       x: Any
       expr = 2 * x
-      #└ TYPE UnsafeUnion[int, Any]
+      #└ TYPE UnsafeUnion[int, Unknown] FIXME UnsafeUnion[int, Any]
       """,
     )
 
@@ -1490,7 +1490,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-29891"])
-    fun `context manager type from Type ContextManager annotation`() = test(TestOptions(enablePyAnyType = false),"""
+    fun `context manager type from Type ContextManager annotation`() = test("""
       from typing import Type, ContextManager
       def example():
         manager: Type[ContextManager[str]]
@@ -2449,7 +2449,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-81651"])
-    fun `eq with new any`() = test("""
+    fun `eq with`() = test("""
       from typing import Any
 
       class A:
@@ -2462,7 +2462,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     )
 
     @Test
-    fun `new any unknown reference`() = test(
+    fun `unknown reference`() = test(
       TestOptions(assertRecursionPrevention = false),
       """
       expr = x
@@ -2472,7 +2472,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     )
 
     @Test
-    fun `new any unknown list`() = test(
+    fun `unknown list`() = test(
       TestOptions(assertRecursionPrevention = false),
       """
       expr = [x]
@@ -2482,7 +2482,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     )
 
     @Test
-    fun `new any unknown generator`() = test(
+    fun `unknown generator`() = test(
       TestOptions(assertRecursionPrevention = false),
       """
       def f():
@@ -2496,7 +2496,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     )
 
     @Test
-    fun `new any generic identity over unknown list`() = test(
+    fun `generic identity over unknown list`() = test(
       TestOptions(assertRecursionPrevention = false),
       """
       def f[T](t: T) -> T: ...
@@ -2508,8 +2508,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     )
 
     @Test
-    fun `new any generic element extraction over unknown list`() = test(
-      TestOptions(enablePyAnyType = true),
+    fun `generic element extraction over unknown list`() = test(
       """
       def f[T](t: list[T]) -> T: ...
 
@@ -2520,8 +2519,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     )
 
     @Test
-    fun `plain Any with new any`() = test(
-      TestOptions(enablePyAnyType = true),
+    fun `plain Any`() = test(
       """
       from typing import Any
 
@@ -2531,8 +2529,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     )
 
     @Test
-    fun `simple unknown with new any`() = test(
-      TestOptions(enablePyAnyType = true),
+    fun `simple unknown`() = test(
       """
       expr = asdf
       #│     ^^^^ ERROR Unresolved reference 'asdf'

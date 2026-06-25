@@ -27,6 +27,7 @@ import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyConditionalStatementPart
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isAnyOrUnknown
 import com.jetbrains.python.psi.types.isNoneType
 
 class PySimplifyBooleanCheckInspection : PyInspection() {
@@ -82,7 +83,7 @@ class PySimplifyBooleanCheckInspection : PyInspection() {
       val isIdentity = node.isOperator(PyNames.IS) || node.isOperator("isnot")
 
       // if no type and `is`, then it's unsafe
-      if ((leftType == null || rightType == null) && isIdentity) {
+      if ((leftType.isAnyOrUnknown || rightType.isAnyOrUnknown) && isIdentity) {
         return
       }
 

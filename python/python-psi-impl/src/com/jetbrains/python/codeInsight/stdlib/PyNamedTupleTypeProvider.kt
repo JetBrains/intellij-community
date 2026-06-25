@@ -125,14 +125,14 @@ private fun getFieldTypeForTypingNTFunctionInheritor(referenceExpression: PyRefe
   val qualifierType = referenceExpression.qualifier?.let { context.getType(it) } as? PyWithAncestors
   if (qualifierType == null || qualifierType is PyNamedTupleType) return null
 
-  return PyUnionType.union(
-    qualifierType
-      .getAncestorTypes(context)
-      .filterIsInstance<PyNamedTupleType>()
-      .mapNotNull { it.fields[referenceExpression.name] }
-      .map { it.type }
-      .toList()
-  )
+  val fieldTypes = qualifierType
+    .getAncestorTypes(context)
+    .filterIsInstance<PyNamedTupleType>()
+    .mapNotNull { it.fields[referenceExpression.name] }
+    .map { it.type }
+    .toList()
+  if (fieldTypes.isEmpty()) return null
+  return PyUnionType.union(fieldTypes)
 }
 
 private fun getNamedTupleReplaceType(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyCallableType? {

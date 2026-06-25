@@ -8,6 +8,7 @@ import com.intellij.psi.PsiFile;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -155,7 +156,7 @@ public class PyTypeParserTest extends PyTestCase {
     assertInstanceOf(type, PyUnionType.class);
     final List<PyType> members = new ArrayList<>(((PyUnionType)type).getMembers());
     assertEquals(2, members.size());
-    assertNull(members.get(0));
+    assertEquals(PyAnyType.getUnknown(), members.get(0));
     assertClassType(members.get(1), "int");
   }
 

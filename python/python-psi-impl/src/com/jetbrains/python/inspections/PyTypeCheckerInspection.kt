@@ -77,7 +77,7 @@ import com.jetbrains.python.psi.impl.PySubscriptionExpressionImpl
 import com.jetbrains.python.psi.impl.PyTargetExpressionImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyABCUtil.isSubtype
-import com.jetbrains.python.psi.types.PyAnyType.Companion.unknown
+import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyCallableParameterListType
 import com.jetbrains.python.psi.types.PyCallableType
@@ -716,8 +716,8 @@ open class PyTypeCheckerInspection : PyInspection() {
     private fun reportTypedDictProblems(expectedType: PyTypedDictType, expression: PyExpression) {
       val result = TypeCheckingResult()
       checkExpression(expectedType, expression, myTypeEvalContext, result)
-      result.valueTypeErrors.forEach { error: ValueTypeError? ->
-        val actualExpression = error!!.actualExpression ?: return@forEach
+      result.valueTypeErrors.forEach { error ->
+        val actualExpression = error.actualExpression ?: return@forEach
         PyTypeCheckerProblemReporter.report(
           holder,
           PyTypeCheckerSuppressionCode.BAD_TYPED_DICT,
@@ -1422,7 +1422,7 @@ open class PyTypeCheckerInspection : PyInspection() {
       return if (expectedArgumentType.hasGenerics(myTypeEvalContext))
         substitute(expectedArgumentType, substitutions, myTypeEvalContext)
       else
-        null
+        PyAnyType.unknown
     }
 
     companion object {
@@ -1433,7 +1433,7 @@ open class PyTypeCheckerInspection : PyInspection() {
           if (generatorDesc != null) {
             return generatorDesc.returnType
           }
-          return unknown
+          return PyAnyType.unknown
         }
         if (function.isAsync) {
           return coroutineOrGeneratorElementType(returnType).derefOrUnknown()
@@ -1502,7 +1502,11 @@ open class PyTypeCheckerInspection : PyInspection() {
     val expectedTypeAfterSubstitution: PyType?,
     val actualType: PyType?,
     val isMatched: Boolean,
-  )
+  ) {
+    init {
+      PyAnyType.validate(expectedTypeAfterSubstitution)
+    }
+  }
 
   internal class UnfilledParameterFromParamSpec(val parameter: PyCallableParameter, val paramSpecType: PyParamSpecType)
 

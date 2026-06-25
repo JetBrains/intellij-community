@@ -85,6 +85,8 @@ import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.psi.types.PyTypeVarType
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isAnyOrUnknown
+import com.jetbrains.python.psi.types.isUnknown
 import one.util.streamex.StreamEx
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.Collections
@@ -445,7 +447,7 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
       val qualifier = getReferenceQualifierOrImportSource(reference)
       if (qualifier != null) {
         val type = replaceSelfWithItsScopeClass(myTypeEvalContext.getType(qualifier))
-        if (type != null) {
+        if (!type.isUnknown) {
           if (ignoreUnresolvedMemberForType(type, reference, refName) || isDeclaredInSlots(type, refName)) return null
           qualifierType = type
           if (type is PyClassLikeType) {
@@ -611,7 +613,7 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
   }
 
   private fun isUnboundedTypeVar(type: PyTypeVarType): Boolean =
-    type.bound == null && type.defaultType == null && type.constraints.isEmpty()
+    type.bound.isAnyOrUnknown && type.defaultType == null && type.constraints.isEmpty()
 
   /**
    * Under strict-union semantics a union is ignored only when every member resolves the attribute

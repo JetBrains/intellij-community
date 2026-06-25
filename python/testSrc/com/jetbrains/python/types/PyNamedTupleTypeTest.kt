@@ -121,7 +121,7 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-27148"])
-    fun `collections namedtuple _replace called unbound`() = test(TestOptions(enablePyAnyType = false), """
+    fun `collections namedtuple _replace called unbound`() = test("""
       from collections import namedtuple
       class Cat(namedtuple("Cat", "name age")):
           pass
@@ -317,7 +317,7 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-27148"])
-    fun `typing NamedTuple class _replace called unbound`() = test(TestOptions(enablePyAnyType = false), """
+    fun `typing NamedTuple class _replace called unbound`() = test("""
       from typing import NamedTuple
       class Cat(NamedTuple):
           name: str

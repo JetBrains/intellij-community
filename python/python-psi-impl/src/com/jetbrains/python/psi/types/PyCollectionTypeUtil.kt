@@ -19,13 +19,13 @@ object PyCollectionTypeUtil {
 
   @JvmStatic
   fun getListLiteralType(expression: PyListLiteralExpression, context: TypeEvalContext): PyType? {
-    val cls = PyBuiltinCache.getInstance(expression).getClass("list") ?: return null
+    val cls = PyBuiltinCache.getInstance(expression).getClass("list") ?: return PyAnyType.unknown
     return PyCollectionTypeImpl(cls, false, listOf(getListOrSetIteratedValueType(expression, context)))
   }
 
   @JvmStatic
   fun getSetLiteralType(expression: PySetLiteralExpression, context: TypeEvalContext): PyType? {
-    val cls = PyBuiltinCache.getInstance(expression).getClass("set") ?: return null
+    val cls = PyBuiltinCache.getInstance(expression).getClass("set") ?: return PyAnyType.unknown
     return PyCollectionTypeImpl(cls, false, listOf(getListOrSetIteratedValueType(expression, context)))
   }
 
@@ -53,7 +53,7 @@ object PyCollectionTypeUtil {
 
   @JvmStatic
   fun getDictLiteralType(expression: PyDictLiteralExpression, context: TypeEvalContext): PyType? {
-    val cls = PyBuiltinCache.getInstance(expression).getClass("dict") ?: return null
+    val cls = PyBuiltinCache.getInstance(expression).getClass("dict") ?: return PyAnyType.unknown
     val (keyType, valueType) = getDictLiteralElementTypes(expression, context)
     return PyCollectionTypeImpl(cls, false, listOf(keyType, valueType))
   }

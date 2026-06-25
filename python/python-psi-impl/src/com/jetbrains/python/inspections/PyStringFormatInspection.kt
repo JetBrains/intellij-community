@@ -54,6 +54,7 @@ import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyABCUtil
+import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyTupleType
@@ -196,10 +197,7 @@ class PyStringFormatInspection : PyInspection() {
             return expressions.size
           }
           else {
-            val tupleType = myTypeEvalContext.getType(rightExpression) as PyTupleType?
-            if (tupleType == null) {
-              return null
-            }
+            val tupleType = myTypeEvalContext.getType(rightExpression) as? PyTupleType ?: return null
             matchEntireTupleTypes(problemTarget, tupleType)
             return tupleType.elementCount
           }
@@ -223,7 +221,7 @@ class PyStringFormatInspection : PyInspection() {
         val expectedElementTypes = myFormatSpec.values.map { name ->
           val builtinCache = PyBuiltinCache.getInstance(rightExpression)
           val expected = PyTypeParser.getTypeByName(rightExpression, name, myTypeEvalContext)
-          if (expected === builtinCache.strType) null
+          if (expected === builtinCache.strType) PyAnyType.unknown
           else expected
         }
         val expectedTupleType = PyTupleType.create(rightExpression, expectedElementTypes)

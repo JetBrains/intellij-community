@@ -84,6 +84,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
+
 
 public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference {
   protected final PyQualifiedExpression myElement;
@@ -814,7 +816,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     if (qualifier == null) {
       return HighlightSeverity.ERROR;
     }
-    if (context.getType(qualifier) != null) {
+    if (!isUnknown(context.getType(qualifier))) {
       return HighlightSeverity.WARNING;
     }
     return null;

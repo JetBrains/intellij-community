@@ -452,7 +452,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       def foo(a: A):
           f = a.f
-      #   └ TYPE [U: Unknown](x: U) -> U
+      #   └ TYPE [U](x: U) -> U
           expr = f('abb')
       #   └ TYPE str
       """)
@@ -480,7 +480,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       def foo(a: A[int]):
           f = a.f
-      #   └ TYPE [U: Unknown](x: U) -> tuple[int, U]
+      #   └ TYPE [U](x: U) -> tuple[int, U]
           expr = f('abb')
       #   └ TYPE tuple[int, str]
     """)
@@ -502,7 +502,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       def foo(a: A[int]):
           f = a.f
-      #   └ TYPE Overload[[U: Unknown](x: U, y: int) -> tuple[int, U, str], [U: Unknown](x: U, y: str) -> tuple[int, U, bytes]]
+      #   └ TYPE Overload[[U](x: U, y: int) -> tuple[int, U, str], [U](x: U, y: str) -> tuple[int, U, bytes]]
           expr = f('abb', 'abc')
       #   └ TYPE tuple[int, str, bytes]
       """)
@@ -1517,7 +1517,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = deco(unresolved)
       #│          ^^^^^^^^^^ ERROR Unresolved reference 'unresolved'
-      #└ TYPE (*args: Unknown, **kwargs: Unknown) -> str
+      #└ TYPE (*args, **kwargs) -> str
       """)
 
     @Test
@@ -1873,10 +1873,10 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-71002"])
-    fun `ParamSpec default type refers to another ParamSpec with ellipsis`() = test(TestOptions(enablePyAnyType = false), """
+    fun `ParamSpec default type refers to another ParamSpec with ellipsis`() = test("""
       class Clazz[**P1, **P2 = P1, **P3 = P2]: ...
       expr = Clazz[..., [float]]()
-      #└ TYPE Clazz[Any, [float | int], [float | int]]
+      #└ TYPE Clazz[Unknown, [float | int], [float | int]]
       """)
   }
 
@@ -2319,7 +2319,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
-    fun `wildcard signatures`() = test(TestOptions(enablePyAnyType = false), """
+    fun `wildcard signatures`() = test("""
       from typing import Protocol
 
       class Expected(Protocol):
@@ -2379,7 +2379,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-82871"])
-    fun `Concatenate with ellipsis assignability`() = test(TestOptions(enablePyAnyType = false), """
+    fun `Concatenate with ellipsis assignability`() = test("""
       from typing import Callable, Concatenate
 
       call: Callable[Concatenate[int, ...], str]

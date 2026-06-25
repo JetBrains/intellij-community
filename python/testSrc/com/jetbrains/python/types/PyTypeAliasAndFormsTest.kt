@@ -46,13 +46,13 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-7058"])
-    fun `type of an any value is Any`() = test(
-      TestOptions(enablePyAnyType = false, assertRecursionPrevention = false), // PY-90413
+    fun `type of an unknown value is Unknown`() = test(
+      TestOptions(assertRecursionPrevention = false), // PY-90413
       """
       def f(x):
-      #     └ TYPE Any
+      #     └ TYPE Unknown
           expr = type(x)
-      #   └ TYPE Any
+      #   └ TYPE Unknown
       """,
     )
 
@@ -436,13 +436,13 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-84430"])
-    fun `quoted Any`() = test(TestOptions(enablePyAnyType = false), """
+    fun `quoted Any`() = test("""
       from typing import Any
 
       any: "Any" = 1
 
       expr = any.imag
-      #└ TYPE Literal[0] FIXME Any
+      #└ TYPE Unknown FIXME Any
       """)
   }
 

@@ -53,6 +53,8 @@ import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
+
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isAnyOrUnknown;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -326,7 +328,7 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
 
   private static @Nullable PyType getInferredTypeOrObject(@NotNull PyTypedElement target, @NotNull TypeEvalContext context) {
     final PyType inferred = context.getType(target);
-    return inferred != null ? inferred : PyBuiltinCache.getInstance(target).getObjectType();
+    return !isAnyOrUnknown(inferred) ? inferred : PyBuiltinCache.getInstance(target).getObjectType();
   }
 
   private static boolean isInsideTupleUnpacking(@NotNull PyTargetExpression target) {

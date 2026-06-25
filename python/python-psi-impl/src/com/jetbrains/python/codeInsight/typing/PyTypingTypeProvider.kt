@@ -2077,9 +2077,9 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
             if (elements.size == 2) {
               val parametersExpr = elements[0]
               val returnTypeExpr = elements[1]
-              var returnType = Ref.deref<PyType?>(getType(returnTypeExpr, context))
+              var returnType = getType(returnTypeExpr, context).derefOrUnknown()
               if (returnType is PyVariadicType) {
-                returnType = null
+                returnType = PyAnyType.unknown
               }
               if (parametersExpr is PyEllipsisLiteralExpression) {
                 return PyCallableTypeImpl(null as PyCallableParameterVariadicType?, returnType)
@@ -2102,7 +2102,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
             CALLABLE_EXT,
           )
         ) {
-          return PyCallableTypeImpl(null as PyCallableParameterListType?, null)
+          return PyCallableTypeImpl(null as PyCallableParameterListType?, PyAnyType.unknown)
         }
       }
       return null
@@ -2292,7 +2292,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       val (boundType, constraints) = when (boundExpression) {
         null -> PyAnyType.unknown to emptyList()
 
-        is PyTupleExpression -> PyAnyType.unknown to boundExpression.elements.map { getTypePreventingRecursion(it, context)?.get() }
+        is PyTupleExpression -> PyAnyType.unknown to boundExpression.elements.map { getTypePreventingRecursion(it, context).derefOrUnknown() }
 
         else -> getTypePreventingRecursion(boundExpression, context).derefOrUnknown() to emptyList()
       }
@@ -2849,7 +2849,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         if (desc != null) {
           val classType = PyPsiFacade.getInstance(function.project).createClassByQName(ASYNC_GENERATOR, function)
           val generics = listOf(desc.yieldType, desc.sendType)
-          return if (classType != null) PyCollectionTypeImpl(classType, false, generics) else null
+          return if (classType != null) PyCollectionTypeImpl(classType, false, generics) else PyAnyType.unknown
         }
       }
       return returnType
@@ -2873,7 +2873,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       val targetClass =
         facade.createClassByQName(PyNames.TYPES_COROUTINE_TYPE, anchor)
         ?: facade.createClassByQName(COROUTINE, anchor)
-        ?: return null
+        ?: return PyAnyType.unknown
       return PyCollectionTypeImpl(
         targetClass,
         false,

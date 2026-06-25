@@ -15,6 +15,9 @@ import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isAnyOrUnknown
+import com.jetbrains.python.psi.types.isUnknown
+import org.jetbrains.annotations.Nls
 
 /**
  * Shared logic and messaging for "this call matches none of the candidate signatures" inspection reports,
@@ -55,7 +58,7 @@ internal object PyMismatchTooltips {
   @JvmStatic
   fun parameterSlot(parameter: PyCallableParameter, context: TypeEvalContext, matched: Boolean): Slot {
     val type = parameter.getType(context)
-    return parameterSlot(parameter, if (type == null) null else PythonDocumentationProvider.getTypeName(type, context), matched)
+    return parameterSlot(parameter, if (type.isUnknown) null else PythonDocumentationProvider.getTypeName(type, context), matched)
   }
 
   /**

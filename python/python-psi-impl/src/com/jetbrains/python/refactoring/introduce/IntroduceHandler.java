@@ -101,6 +101,7 @@ import static com.jetbrains.python.PyStringFormatParser.parsePercentFormat;
 import static com.jetbrains.python.PyStringFormatParser.substitutionsToRanges;
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 
 public abstract class IntroduceHandler implements RefactoringActionHandler {
   protected static PsiElement findAnchor(List<? extends PsiElement> occurrences) {
@@ -247,7 +248,7 @@ public abstract class IntroduceHandler implements RefactoringActionHandler {
     }
     final TypeEvalContext context = TypeEvalContext.userInitiated(expression.getProject(), expression.getContainingFile());
     PyType type = context.getType(expression);
-    if (type != null && !isNoneType(type)) {
+    if (!isUnknown(type) && !isNoneType(type)) {
       String typeName = type.getName();
       if (typeName != null) {
         if (type instanceof PyLiteralStringType) { // we don't want to suggest "L" for inferred LiteralStrings

@@ -412,7 +412,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-87344"])
-    fun `set of StrEnum class inferred from values classmethod`() = test(TestOptions(enablePyAnyType = false), """
+    fun `set of StrEnum class inferred from values classmethod`() = test("""
       from enum import StrEnum
       from typing import Self
       
@@ -429,7 +429,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-87344"])
-    fun `set of StrEnum via cls`() = test(TestOptions(enablePyAnyType = false), """
+    fun `set of StrEnum via cls`() = test("""
       from enum import StrEnum
       from typing import Self
       
@@ -672,7 +672,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-87344"])
-    fun `iterating an Enum type and instance`() = test(TestOptions(enablePyAnyType = false), """
+    fun `iterating an Enum type and instance`() = test("""
       from enum import Enum
       from typing import Self
       
@@ -685,12 +685,12 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       
           def foo(self):
               # __iter__ is defined in EnumMeta, thus, for definitions only
-              return set(self) # WARNING Expected type 'Iterable[Any]' (matched generic type 'Iterable[_T]'), got 'Self@Color' instead
+              return set(self) # WARNING Expected type 'Iterable[Unknown]' (matched generic type 'Iterable[_T]'), got 'Self@Color' instead
       """)
 
     @Test
     @TestFor(issues = ["PY-87344"])
-    fun `iterating a StrEnum type and instance`() = test(TestOptions(enablePyAnyType = false), """
+    fun `iterating a StrEnum type and instance`() = test("""
       from enum import StrEnum
       from typing import Self
       

@@ -322,7 +322,7 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
 
   public void testImportDecoratedWithGenericArgFunctionType() {
     initMultiFileTest();
-    checkMultiFileTest("str", "(Any) -> str", Context.ANALYSIS);
+    checkMultiFileTest("str", "(Unknown) -> str", Context.ANALYSIS);
     checkMultiFileTest("str", "(int) -> str", Context.USER_INITIATED);
   }
 

@@ -37,7 +37,7 @@ def test_same_number_of_parameters_but_one_is_default():
 
 def test_different_number_of_parameters_one_is_default():
     h(5)
-    h(<warning descr="No overload of 'h' matches the arguments. Argument types: ((x: Any) -> Any). Expected one of: (i: int), (i: str)">lambda x: x</warning>)
+    h(<warning descr="No overload of 'h' matches the arguments. Argument types: ((x: Unknown) -> Unknown). Expected one of: (i: int), (i: str)">lambda x: x</warning>)
 
     h("a")
 

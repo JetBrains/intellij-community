@@ -118,7 +118,7 @@ public abstract class PyTestCase extends UsefulTestCase {
     myFixture.setUp();
 
     // Enable Any/Unknown type support by default in all tests; opt out per method or class with @PyAnyTypeDisabled.
-    Registry.get("python.type.any").setValue(!isPyAnyTypeDisabledForCurrentTest(), getTestRootDisposable());
+    Registry.get("python.type.any").setValue(!isPyAnyTypeDisabledForCurrentTest());
   }
 
   private boolean isPyAnyTypeDisabledForCurrentTest() {
@@ -161,6 +161,7 @@ public abstract class PyTestCase extends UsefulTestCase {
       addSuppressedException(e);
     }
     finally {
+      Registry.get("python.type.any").resetToDefault();
       super.tearDown();
     }
   }

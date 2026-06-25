@@ -150,7 +150,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testExpressionInsideLambdaAsUntypedArgument() {
-    doTest("expr", "Any", """
+    doTest("expr", "Unknown", """
       def f(fn):
           ...
       f(lambda expr: 2)
@@ -158,7 +158,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testExpressionInsideLambdaBodyAsUntypedArgument() {
-    doTest("\"hello\"", "Any", """
+    doTest("\"hello\"", "Unknown", """
       def f(fn):
           ...
       f(lambda x = 2: (x := "hello"))
@@ -166,9 +166,9 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testExpressionInsideLambdaBodyAsAnyTypedArgument() {
-    doTest("\"hello\"", "Any", """
+    doTest("\"hello\"", "Unknown", """
       from typing import Callable
-      
+
       def f(fn: Callable[[Any], Any]):
           ...
       f(lambda x = 2: (x := "hello"))
@@ -188,7 +188,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   fun testExpressionInsideLambdaBodyAsIntTypedReturn() {
     doTest("\"hello\"", "int", """
       from typing import Callable
-      
+
       def f(fn: Callable[[Any], int]):
           ...
       f(lambda x: (x := "hello"))
@@ -303,21 +303,21 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testTupleAsReturnValueNoTypeHint() {
-    doTest("(expr, \"spam\")", "Any", """
+    doTest("(expr, \"spam\")", "Unknown", """
       def f(xs):
           return (expr, "spam")
       """)
   }
 
   fun testExpressionInsideTupleAsReturnValueNoTypeHint() {
-    doTest("expr", "Any", """
+    doTest("expr", "Unknown", """
       def f(xs):
           return (expr, "spam")
       """)
   }
 
   fun testTupleAsAssignmentValue() {
-    doTest("(42, (expr, \"spam\"))", "tuple[Any, tuple[str, Any]]", """
+    doTest("(42, (expr, \"spam\"))", "tuple[Unknown, tuple[str, Unknown]]", """
       x2: str
       x1, (x2, x3) = (42, (expr, "spam"))
       """)
@@ -331,19 +331,19 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testTupleAsAssignmentValueNoTypeHint() {
-    doTest("(42, (expr, \"spam\"))", "tuple[Any, tuple[Any, Any]]", """
+    doTest("(42, (expr, \"spam\"))", "tuple[Unknown, tuple[Unknown, Unknown]]", """
       x1, (x2, x3) = (42, (expr, "spam"))
       """)
   }
 
   fun testExprAsAssignmentValueNoTypeHint() {
-    doTest("expr", "Iterable[Any]", """
+    doTest("expr", "Iterable[Unknown]", """
       x1, (x2, x3) = expr
       """)
   }
 
   fun testExpressionInsideTupleAsAssignmentValueNoTypeHint() {
-    doTest("expr", "Any", """
+    doTest("expr", "Unknown", """
       x1, (x2, x3) = (42, (expr, "spam"))
       """)
   }
@@ -365,7 +365,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testExpressionInsideTupleAsAssignmentValueToListNoTypeHint() {
-    doTest("expr", "Any", """
+    doTest("expr", "Unknown", """
       x1, [x2, x3] = (42, (expr, "spam"))
       """)
   }
@@ -403,7 +403,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testExpressionAsTupleElementToUnwrap2OutOfBounds() {
-    doTest("expr", "Any", """
+    doTest("expr", "Unknown", """
       x: int
       xs: tuple[int, str]
       x, *xs = 1, 2, "3", expr
@@ -492,7 +492,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testArgumentForArgsOfUnpackedTuple2() {
-    doTest("expr", "Any", """
+    doTest("expr", "Unknown", """
       def f(*args: *tuple[int]):
           pass
 
@@ -748,7 +748,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testDoubleStarExpressionOwnTypeShouldBeAny() {
-    doTest("**xs", "Any", """
+    doTest("**xs", "Unknown", """
       ys: dict[str, int] = {**xs}
       """)
   }
@@ -920,7 +920,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
       """)
 
     // also: Requires constructing an anonymous TypedDict with `extra_items=int`
-    fixme<ComparisonFailure>("PY-85421 Requires constructing an anonymous TypedDict with `extra_items=int`", "Any") {
+    fixme<ComparisonFailure>("PY-85421 Requires constructing an anonymous TypedDict with `extra_items=int`", "Unknown") {
       doTest("expr", "int", """
       def f(a: str, **kwargs: int):
           pass
@@ -1053,7 +1053,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testReturnOfOverloadedFunctions() {
-    fixme<ComparisonFailure>("Depends on correct function overload matching", "Any") {
+    fixme<ComparisonFailure>("Depends on correct function overload matching", "Unknown") {
       doTest("expr", "int", """
       from typing import overload
       

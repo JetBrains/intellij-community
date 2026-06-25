@@ -496,7 +496,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
   inner class InspectionsDictLiteralKeysAndValues {
     @Test
     @TestFor(issues = ["PY-78126"])
-    fun `variable key in dict literal`() = test(TestOptions(enablePyAnyType = false), """
+    fun `variable key in dict literal`() = test("""
       from typing import TypedDict, Literal
       class Movie(TypedDict):
           name: str
@@ -716,7 +716,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-76847"])
-    fun `dict unpack vs Unpack TypedDict parameter`() = test(TestOptions(enablePyAnyType = false), """
+    fun `dict unpack vs Unpack TypedDict parameter`() = test("""
       from typing import TypedDict, NotRequired, Required, Unpack
       
       class TD1(TypedDict):
@@ -737,7 +737,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-76847"])
-    fun `dict unpack vs unpacked dict literal`() = test(TestOptions(enablePyAnyType = false), """
+    fun `dict unpack vs unpacked dict literal`() = test("""
       from typing import TypedDict, NotRequired, Required, Unpack
       
       class TD1(TypedDict):
@@ -756,7 +756,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-76847"])
-    fun `unpacked TypedDict vs signature without TypedDict`() = test(TestOptions(enablePyAnyType = false), """
+    fun `unpacked TypedDict vs signature without TypedDict`() = test("""
       from typing import Protocol, TypedDict, NotRequired, Required, Unpack
       
       class TD1(TypedDict):

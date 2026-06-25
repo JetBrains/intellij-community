@@ -32,11 +32,13 @@ import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.resolve.fromFoothold
 import com.jetbrains.python.psi.resolve.resolveTopLevelMember
+import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isAnyOrUnknown
 import com.jetbrains.python.psi.types.isUnknown
 import java.util.Locale
 
@@ -124,13 +126,16 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
         .asSequence()
         .mapNotNull {
           val mapping = PyCallExpressionHelper.mapArguments(callExpr, it, typeEvalContext)
-          mapping.mappedParameters[expr]?.getArgumentType(typeEvalContext)
+          when (val type = mapping.mappedParameters[expr]) {
+            null -> null
+            else -> type.getArgumentType(typeEvalContext).takeUnless { t -> t.isUnknown }
+          }
         }
 
       // We can't use PyTypeChecker.match directly because the type `str | PathLike` is considered incompatible 
       // with neither str nor PathLike (strict union semantics).
       fun PyType.allowsValuesCompatibleWith(superType: PyType): Boolean =
-        this.toStream().anyMatch { !it.isUnknown && PyTypeChecker.match(superType, it, typeEvalContext) }
+        this.toStream().anyMatch { !it.isAnyOrUnknown && PyTypeChecker.match(superType, it, typeEvalContext) }
 
       return argumentTypes.any { it.allowsValuesCompatibleWith(bytesOrUnicodeType) } &&
              argumentTypes.any { it.allowsValuesCompatibleWith(osPathLikeType) }

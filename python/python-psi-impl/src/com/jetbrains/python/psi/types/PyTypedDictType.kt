@@ -34,11 +34,12 @@ class PyTypedDictType(
     PyAnyType.validate(extraItemsType)
   }
   fun getElementType(key: String): PyType? {
-    return fields[key]?.type
+    val field = fields[key] ?: return PyAnyType.unknown
+    return field.type
   }
 
   override fun getCallType(context: TypeEvalContext, callSite: PyCallSiteOwner): PyType? {
-    return if (isDefinition) toInstance() else null
+    return if (isDefinition) toInstance() else PyAnyType.unknown
   }
 
   override fun toInstance(): PyTypedDictType {
@@ -61,7 +62,7 @@ class PyTypedDictType(
 
   override fun getParameters(context: TypeEvalContext): List<PyCallableParameter>? {
     return if (isCallable) {
-      if (fields.isEmpty() && extraItemsType == null) {
+      if (fields.isEmpty() && extraItemsType.isUnknown) {
         emptyList()
       }
       else {
@@ -74,7 +75,7 @@ class PyTypedDictType(
             PyCallableParameterImpl.nonPsi(key, value.type, PyNames.ELLIPSIS)
         }
 
-        val extraItemsParam = if (extraItemsType != null && !isClosed) {
+        val extraItemsParam = if (!extraItemsType.isUnknown && !isClosed) {
           listOf(PyCallableParameterImpl.keywordContainerNonPsi("kwargs", extraItemsType))
         } else {
           emptyList()
@@ -121,6 +122,9 @@ class PyTypedDictType(
     val type: PyType?,
     val qualifiers: TypedDictFieldQualifiers = TypedDictFieldQualifiers(),
   ) {
+    init {
+      PyAnyType.validate(type)
+    }
     val isRequired: Boolean get() = qualifiers.isRequired ?: true
     val isReadOnly: Boolean get() = qualifiers.isReadOnly
   }
@@ -383,7 +387,7 @@ class PyTypedDictType(
         val valueTypes: MutableList<PyType?> = actual.fields.values.mapNotNullTo(mutableListOf()) { it.type }
         when {
           actual.isClosed || extraItemsType == PyNeverType.NEVER -> {}
-          extraItemsType != null -> valueTypes.add(extraItemsType)
+          !extraItemsType.isUnknown -> valueTypes.add(extraItemsType)
           else -> builtinCache.objectType?.let { valueTypes.add(it) }
         }
         return PyTypeChecker.match(expectedValueType, PyUnionType.union(valueTypes), context)

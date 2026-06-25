@@ -31,8 +31,6 @@ import org.junit.jupiter.api.Test
 @TestFor(issues = ["PY-85381"])
 class PyTypeDiffTest : PyCodeInsightTestCase() {
 
-  override val defaultTestOptions = TestOptions(enablePyAnyType = false)
-
   private val providedColor = ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground())
   private val expectedColor = ColorUtil.toHtmlColor(UIUtil.getLabelSuccessForeground())
   private val mutedColor = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground())

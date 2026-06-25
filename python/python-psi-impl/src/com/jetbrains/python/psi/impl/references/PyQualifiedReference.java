@@ -85,6 +85,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
+
 
 public class PyQualifiedReference extends PyReferenceImpl {
   private static final Logger LOG = Logger.getInstance(PyQualifiedReference.class);
@@ -213,7 +215,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
     final Set<String> namesAlready = new HashSet<>();
     ctx.put(PyType.CTX_NAMES, namesAlready);
     final Collection<Object> variants = new ArrayList<>();
-    if (qualifierType != null) {
+    if (!isUnknown(qualifierType)) {
       if (qualifierType instanceof PyStructuralType && ((PyStructuralType)qualifierType).isInferredFromUsages()) {
         final PyClassType guessedType = guessClassTypeByName();
         if (guessedType != null) {

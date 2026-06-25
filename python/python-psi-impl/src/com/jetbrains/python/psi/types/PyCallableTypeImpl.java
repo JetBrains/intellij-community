@@ -45,6 +45,7 @@ public class PyCallableTypeImpl implements PyCallableType {
                             @Nullable PyFunction.Modifier modifier) {
     myTypeParameters = typeParameters;
     myParametersType = parametersType;
+    PyAnyType.validate(returnType);
     myReturnType = returnType;
     myCallable = callable;
     myModifier = modifier;

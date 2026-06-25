@@ -455,7 +455,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   // PY-22005
   public void testWithSpecifiedType() {
     final int offset = loadTest(1).get("<arg1>").getTextOffset();
-    final String expectedInfo = "a1: str, a2: str | None = None, a3: str | int | None = None, a4: int | Any, *args: int, **kwargs: int";
+    final String expectedInfo = "a1: str, a2: str | None = None, a3: str | int | None = None, a4: Any | int, *args: int, **kwargs: int";
 
     feignCtrlP(offset).check(expectedInfo, new String[]{"a1: str, "});
   }
@@ -754,7 +754,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         feignCtrlP(marks.get("<arg4>").getTextOffset()).check("x, y, z: list[_T] = ...", new String[]{"x, "});
         feignCtrlP(marks.get("<arg5>").getTextOffset()).check("x, y: int = ...", new String[]{"x, "});
         feignCtrlP(marks.get("<arg6>").getTextOffset()).check("x, y: str = ...", new String[]{"x, "});
-        feignCtrlP(marks.get("<arg7>").getTextOffset()).check("x: int | Any = ...", new String[]{"x: int | Any = ..."});
+        feignCtrlP(marks.get("<arg7>").getTextOffset()).check("x: int | Unknown = ...", new String[]{"x: int | Unknown = ..."});
         feignCtrlP(marks.get("<arg8>").getTextOffset()).check("x, y, z: list[_T] = ...", new String[]{"x, "});
       }
     );
@@ -1379,8 +1379,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg1>").getTextOffset()).check("a: int, b, c, d, e", new String[]{"a: int, "});
     feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg2>").getTextOffset()).check("a, b: str, c, d, e", new String[]{"b: str, "});
     feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg3>").getTextOffset()).check("a, b, c: bool, d, e", new String[]{"c: bool, "});
-    feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg4>").getTextOffset()).check("a, b, c, d: list[Any], e", new String[]{"d: list[Any], "});
-    feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg5>").getTextOffset()).check("a, b, c, d, e: set[Any]", new String[]{"e: set[Any]"});
+    feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg4>").getTextOffset()).check("a, b, c, d: list[Unknown], e", new String[]{"d: list[Unknown], "});
+    feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg5>").getTextOffset()).check("a, b, c, d, e: set[Unknown]", new String[]{"e: set[Unknown]"});
   }
 
   // PY-58497

@@ -87,6 +87,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
+import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableParameterVariadicType
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
@@ -105,12 +106,15 @@ import com.jetbrains.python.psi.types.PyTypeChecker.hasGenerics
 import com.jetbrains.python.psi.types.PyTypeParameterMapping
 import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyTypeParser
+import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.PyTypeVarTupleType
 import com.jetbrains.python.psi.types.PyTypeVarType
 import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.PyTypingNewType
 import com.jetbrains.python.psi.types.PyUnpackedTupleType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isAnyOrUnknown
+import com.jetbrains.python.psi.types.isUnknown
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 
 class PyTypeHintsInspection : PyInspection() {
@@ -1490,7 +1494,7 @@ class PyTypeHintsInspection : PyInspection() {
                 registerProblem(argument, message, ProblemHighlightType.GENERIC_ERROR)
               }
             }
-            Ref.deref(typeRef)
+            typeRef.derefOrUnknown()
           }
           is PyNoneLiteralExpression -> {
             PyBuiltinCache.getInstance(node).noneType
@@ -1500,17 +1504,17 @@ class PyTypeHintsInspection : PyInspection() {
             node.isParamSpecArgument(index, myTypeEvalContext) ||
             (isCallable && index == 0)
                                             ) -> {
-            null
+            PyAnyType.unknown
           }
           is PyTupleExpression if (
             (node.isBuiltinTupleTypeForm(myTypeEvalContext) && flatArgument.elements.isEmpty()) ||
             (isCallable && index == 0)
                                   ) -> {
-            null
+            PyAnyType.unknown
           }
           else -> {
             registerProblem(argument, PyPsiBundle.message("INSP.type.hints.invalid.type.argument"), ProblemHighlightType.GENERIC_ERROR)
-            null
+            PyAnyType.unknown
           }
         }
         argumentTypes.add(argumentType)
@@ -1994,13 +1998,13 @@ class PyTypeHintsInspection : PyInspection() {
 
       val defaultTypes = when (defaultType) {
         is PyTypeVarType -> defaultType.constraints.ifEmpty {
-          listOf(defaultType.bound ?: PyBuiltinCache.getInstance(defaultExpression).objectType)
+          listOf(defaultType.bound?.takeUnless { it.isAnyOrUnknown } ?: PyBuiltinCache.getInstance(defaultExpression).objectType)
         }
         else -> listOf(defaultType)
       }
 
       when {
-        typeVarType.bound != null -> {
+        !typeVarType.bound.isUnknown -> {
           if (!defaultTypes.all { PyTypeChecker.match(typeVarType.bound, it, myTypeEvalContext) }) {
             registerProblem(defaultExpression, PyPsiBundle.message("INSP.type.hints.default.type.do.not.match.bounds"),
                             effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING))

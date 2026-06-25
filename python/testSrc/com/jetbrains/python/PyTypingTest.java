@@ -161,7 +161,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-18726
   public void testFunctionTypeCommentBadCallableParameter1() {
-    doTest("Any",
+    doTest("Unknown",
            """
              from typing import Callable, Tuple
              
@@ -172,7 +172,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-18726
   public void testFunctionTypeCommentBadCallableParameter2() {
-    doTest("(bool, int) -> Any",
+    doTest("(bool, int) -> Unknown",
            """
              from typing import Callable, Tuple
              
@@ -357,7 +357,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-87012
   public void testLegacyTypeAliasWithFullyQuotedTypeIsNotAllowed() {
-    doMultiFileStubAwareTest("Any", """
+    doMultiFileStubAwareTest("Unknown", """
       from mod import x
       
       expr = x

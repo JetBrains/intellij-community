@@ -67,6 +67,7 @@ import static com.jetbrains.python.documentation.PyDocSignaturesHighlighterKt.hi
 import static com.jetbrains.python.documentation.PyDocSignaturesHighlighterKt.styledSpan;
 import static com.jetbrains.python.psi.types.PyInferredVarianceJudgment.isEffectivelyInvariant;
 import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isAnyOrUnknown;
 import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 
 // TODO visitPyConcatenateType
@@ -267,6 +268,12 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     }
 
     @Override
+    public @NotNull HtmlChunk visitUnknownType() {
+      // `Unknown` is not denotable Python: render it as `Any` in generated annotations
+      return visitAnyType();
+    }
+
+    @Override
     public @NotNull HtmlChunk visitPySelfType(@NotNull PySelfType selfType) {
       HtmlChunk selfTypeRender = className(isRenderingFqn() ? "typing.Self" : "Self"); //NON-NLS
       return selfType.isDefinition() ? wrapInTypingType(selfTypeRender) : selfTypeRender;
@@ -409,7 +416,6 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
 
   @Override
   public HtmlChunk visitPyUnionType(@NotNull PyUnionType unionType) {
-    // TODO Exclude "Unknown" once it's introduced, don't exclude explicit typing.Any
     if (isOptional(unionType)) {
       return renderOptional(unionType);
     }
@@ -561,12 +567,12 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
   }
 
   @Override
-  public HtmlChunk visitAnyType() {
+  public @NotNull HtmlChunk visitAnyType() {
     return HtmlChunk.raw(isRenderingFqn() ? PyTypingTypeProvider.ANY : PyNames.ANY_TYPE);
   }
 
   @Override
-  public HtmlChunk visitUnknownType() {
+  public @NotNull HtmlChunk visitUnknownType() {
     if (PyAnyType.isEnabled()) {
       return HtmlChunk.raw(PyNames.UNKNOWN_TYPE);
     }
@@ -663,12 +669,12 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
   }
 
   @NotNull HtmlChunk describeTypeParameter(@NotNull PyTypeParameterType typeParameter) {
-    var bound = typeParameter instanceof PyTypeVarType typeVar ? typeVar.getBound() : null;
+    var bound = typeParameter instanceof PyTypeVarType typeVar ? typeVar.getBound() : PyAnyType.getUnknown();
     var defaultTypeRef = typeParameter.getDefaultType();
     var defaultType = defaultTypeRef != null ? defaultTypeRef.get() : null;
     // PyTypeParameterTypes have the stars in the name but PyTypeParameters don't
     String name = typeParameter.getName().replaceFirst("\\*+", "");
-    HtmlChunk renderedBound = bound != null ? render(bound) : null;
+    HtmlChunk renderedBound = !isAnyOrUnknown(bound) ? render(bound) : null;
     HtmlChunk renderedType = defaultType != null ? render(defaultType) : null;
     PyAstTypeParameter.Kind parameterKind = switch (typeParameter) {
       case PyTypeVarType ignored -> PyTypeParameter.Kind.TypeVar;
@@ -763,9 +769,14 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
       if (param.getName() != null) {
         result.append(escaped(param.isPositionalContainer() ? "*" : "**"));
         result.append(styled(param.getName(), PyHighlighter.PY_PARAMETER));
-        result.append(styled(": ", PyHighlighter.PY_OPERATION_SIGN));
+        if (!isAnyOrUnknown(type)) {
+          result.append(styled(": ", PyHighlighter.PY_OPERATION_SIGN));
+          result.append(render(type));
+        }
       }
-      result.append(render(type));
+      else {
+        result.append(render(type));
+      }
     }
     else {
       PyType type = param.getType(myTypeEvalContext);

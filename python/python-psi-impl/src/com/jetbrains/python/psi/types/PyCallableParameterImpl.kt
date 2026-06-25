@@ -92,7 +92,7 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
     get() = parameter is PySingleStarParameter || myIsKeywordOnlySeparator
 
   override fun getPresentableText(includeDefaultValue: Boolean, context: TypeEvalContext?): String {
-    return getPresentableText(includeDefaultValue, context, { it.isUnknown })
+    return getPresentableText(includeDefaultValue, context, { it.isAnyOrUnknown })
   }
 
   override fun getPresentableText(

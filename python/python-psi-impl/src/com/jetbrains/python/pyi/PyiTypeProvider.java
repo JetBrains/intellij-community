@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
 import com.jetbrains.python.psi.types.PyTypeUtil;
@@ -36,6 +37,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 
 public final class PyiTypeProvider extends PyTypeProviderBase {
   @Override
@@ -78,7 +80,7 @@ public final class PyiTypeProvider extends PyTypeProviderBase {
           .prepend(PyiUtil.getOverloads(pyFunction, context))
           .map(context::getType)
           .collect(PyTypeUtil.toUnion());
-        return PyTypeUtil.notNullToRef(allSignatures);
+        return !isUnknown(allSignatures) ? new Ref<>(allSignatures) : null;
       }
       if (pythonStub instanceof PyTypedElement) {
         return PyTypeUtil.notNullToRef(context.getType((PyTypedElement)pythonStub));

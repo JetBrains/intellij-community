@@ -24,7 +24,6 @@ class PyiTypeTest : PyCodeInsightTestCase() {
 
   @Test
   fun `function return type`() = test(
-    TestOptions(enablePyAnyType = false),
     "FunctionReturnType.py",
     """
     def f():
@@ -64,14 +63,13 @@ class PyiTypeTest : PyCodeInsightTestCase() {
 
   @Test
   fun `coroutine type`() = test(
-    TestOptions(enablePyAnyType = false),
     "CoroutineType.py",
     """
     async def f():
         return 42
     
     coroutine = f()
-    #\ TYPE CoroutineType[Any, Any, int]
+    #\ TYPE CoroutineType[Unknown, Unknown, int]
     """,
     "CoroutineType.pyi" to """
       async def f() -> int:

@@ -148,7 +148,6 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-22971"])
     fun `not matched overloads and implementation in class`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON35),
       """
       from typing import overload
       class A:
@@ -168,7 +167,6 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-22971"])
     fun `top level not matched overloads and implementation`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON35),
       """
       from typing import overload
       @overload
@@ -187,7 +185,6 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-22971"])
     fun `not matched overloads and implementation in imported class`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON35),
       """
       from b import A
       expr = A().foo(object()) # WARNING No overload of 'foo' matches the arguments. Argument types: (object). Expected one of: (value: int), (value: str)

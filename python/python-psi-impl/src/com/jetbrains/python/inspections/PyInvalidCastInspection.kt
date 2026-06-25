@@ -21,6 +21,7 @@ import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyClassTypeImpl
 import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.PyTypeUtil.isSubtypeRelated
 import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.PyUnionType
@@ -56,7 +57,7 @@ class PyInvalidCastInspection : PyInspection() {
         val args = callExpression.getArguments()
         if (args.size != 2) return
         val targetTypeRef = PyTypingTypeProvider.getType(args[0], myTypeEvalContext)
-        val targetType = Ref.deref(targetTypeRef)
+        val targetType = targetTypeRef.derefOrUnknown()
         val actualType = myTypeEvalContext.getType(args[1])
 
         if (targetType.isSubtypeRelated(actualType, myTypeEvalContext)) return

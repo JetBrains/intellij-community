@@ -44,6 +44,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 
 public final class KeywordArgumentCompletionUtil {
   public static void collectFunctionArgNames(PyElement element,
@@ -55,7 +56,7 @@ public final class KeywordArgumentCompletionUtil {
       PyExpression callee = callExpr.getCallee();
       if (callee instanceof PyReferenceExpression && element.getParent() == callExpr.getArgumentList()) {
         PyType calleeType = context.getType(callee);
-        if (calleeType == null) {
+        if (isUnknown(calleeType)) {
           final PyTypedElement implicit = as(getElementByChain((PyReferenceExpression)callee, context), PyTypedElement.class);
           if (implicit != null) {
             calleeType = context.getType(implicit);

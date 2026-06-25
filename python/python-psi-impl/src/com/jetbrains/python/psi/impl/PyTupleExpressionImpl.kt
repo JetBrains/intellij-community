@@ -10,6 +10,7 @@ import com.jetbrains.python.psi.PyStarExpression
 import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.types.PyABCUtil
+import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyUnpackedTupleTypeImpl
 import com.jetbrains.python.psi.types.getLiteralType
@@ -47,7 +48,7 @@ class PyTupleExpressionImpl(astNode: ASTNode) : PySequenceExpressionImpl(astNode
         add((if (inferLiteralTypes) element.getLiteralType(context) else null) ?: context.getType(element))
       }
     }
-    return PyTupleType.create(this, elementTypes)
+    return PyTupleType.create(this, elementTypes) ?: PyAnyType.unknown
   }
 
   override fun deleteChildInternal(child: ASTNode) {

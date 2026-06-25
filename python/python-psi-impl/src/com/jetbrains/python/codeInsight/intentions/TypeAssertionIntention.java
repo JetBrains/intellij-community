@@ -35,6 +35,8 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
+
 /**
  * User: ktisha
  * <p>
@@ -75,7 +77,7 @@ public final class TypeAssertionIntention extends PyBaseIntentionAction {
       return false;
     }
     final PyType type = TypeEvalContext.codeAnalysis(psiFile.getProject(), psiFile).getType(problemElement);
-    return type == null;
+    return isUnknown(type);
   }
 
   @Override

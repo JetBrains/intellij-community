@@ -21,6 +21,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyInstantTypeProvider;
 import com.jetbrains.python.psi.PyNumericLiteralExpression;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -45,7 +46,8 @@ public class PyNumericLiteralExpressionImpl extends PyElementImpl implements PyN
       if (!PyLiteralType.inferLiteralTypeForLiteralExpressions()) {
         return PyBuiltinCache.getInstance(this).getIntType();
       }
-      return PyLiteralType.intLiteral(this, getBigIntegerValue());
+      var result = PyLiteralType.intLiteral(this, getBigIntegerValue());
+      return result == null ? PyAnyType.getUnknown() : result;
     }
 
     final IElementType type = getNode().getElementType();

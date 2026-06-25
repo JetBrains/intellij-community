@@ -178,15 +178,15 @@ public final class PyTypeParameterMappingTest extends PyTestCase {
   public void testSingleUnmatchedExpectedTypeIsMappedToAny() {
     doTestShapeMapping("int, T", "int", """
       int -> int
-      T -> Any
+      T -> Unknown
       """, MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY);
   }
 
   public void testTwoUnmatchedExpectedTypeAreMappedToAny() {
     doTestShapeMapping("int, T1, T2", "int", """
       int -> int
-      T1 -> Any
-      T2 -> Any
+      T1 -> Unknown
+      T2 -> Unknown
       """, MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY);
   }
 

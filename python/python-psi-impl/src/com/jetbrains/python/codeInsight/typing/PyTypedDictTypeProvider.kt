@@ -488,12 +488,12 @@ private fun parseTypedDictField(
   context: TypeEvalContext,
   total: Boolean,
 ): PyTypedDictType.FieldTypeAndTotality {
-  if (type == null) return PyTypedDictType.FieldTypeAndTotality(null, null)
+  if (type == null) return PyTypedDictType.FieldTypeAndTotality(null, PyAnyType.unknown)
 
   val valueTypeWithQualifiers = getStringBasedTypeForTypedDict(type, anchor, context)
-  if (valueTypeWithQualifiers == null) return PyTypedDictType.FieldTypeAndTotality(null, null)
+  if (valueTypeWithQualifiers == null) return PyTypedDictType.FieldTypeAndTotality(null, PyAnyType.unknown)
 
-  val pyType = Ref.deref(valueTypeWithQualifiers.first)
+  val pyType = valueTypeWithQualifiers.first.derefOrUnknown()
   val requiredField = valueTypeWithQualifiers.second
 
   val isRequired = requiredField?.isRequired ?: total

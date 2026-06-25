@@ -89,7 +89,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-20757"])
-    fun `min else None`() = test(TestOptions(enablePyAnyType = false), """
+    fun `min else None`() = test("""
       def get_value(v):
           if v:
               return min(v)

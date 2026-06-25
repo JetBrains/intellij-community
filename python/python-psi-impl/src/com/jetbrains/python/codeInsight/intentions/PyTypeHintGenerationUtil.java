@@ -67,6 +67,7 @@ import java.util.TreeSet;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isAnyOrUnknown;
 
 /**
  * @author Mikhail Golubev
@@ -346,7 +347,7 @@ public final class PyTypeHintGenerationUtil {
   }
 
   public static void checkPep484Compatibility(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    if (type == null ||
+    if (isAnyOrUnknown(type) ||
         isNoneType(type) ||
         // Will be rendered as just Any
         type instanceof PyUnsafeUnionType ||

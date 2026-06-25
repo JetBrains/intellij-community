@@ -343,28 +343,28 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
   inner class GenericIterableUnpacking {
     @Test
     @TestFor(issues = ["PY-29489"])
-    fun `generic iterable unpacking no brackets`() = test(TestOptions(enablePyAnyType = false), """
+    fun `generic iterable unpacking no brackets`() = test("""
       _, expr, _ = [1, 2, 3]
       #  └ TYPE int
       """)
 
     @Test
     @TestFor(issues = ["PY-29489"])
-    fun `generic iterable unpacking parentheses`() = test(TestOptions(enablePyAnyType = false), """
+    fun `generic iterable unpacking parentheses`() = test("""
       (_, expr, _) = [1, 2, 3]
       #   └ TYPE int
       """)
 
     @Test
     @TestFor(issues = ["PY-29489"])
-    fun `generic iterable unpacking square brackets`() = test(TestOptions(enablePyAnyType = false), """
+    fun `generic iterable unpacking square brackets`() = test("""
       [_, expr] = [1, 2, 3]
       #   └ TYPE int
       """)
 
     @Test
     @TestFor(issues = ["PY-29489"])
-    fun `non generic iterable unpacking`() = test(TestOptions(enablePyAnyType = false), """
+    fun `non generic iterable unpacking`() = test("""
       _, expr = "ab"
       #  └ TYPE LiteralString
       """)
@@ -609,7 +609,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
-    fun `tuple Any arbitrary length can be assigned to any tuple`() = test(TestOptions(enablePyAnyType = false), """
+    fun `tuple Any arbitrary length can be assigned to any tuple`() = test("""
       from typing import Any
       def func(p1: tuple[Any, ...]):
           v1: tuple[float, float] = p1
@@ -761,7 +761,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-90173"])
-    fun `annotated target unpacked from list assignment is type checked`() = test(defaultTestOptions.copy(enablePyAnyType = false), """
+    fun `annotated target unpacked from list assignment is type checked`() = test("""
       x: int
       x, _ = ["foo", "bar"] # WARNING Expected type 'int', got 'str' instead
 

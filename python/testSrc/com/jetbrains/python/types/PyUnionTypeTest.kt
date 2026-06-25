@@ -384,13 +384,12 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
-    @Disabled("PY-90517")
     fun `union with LiteralString collapses on string concatenation`() = test("""
       from typing import LiteralString
       
       x: LiteralString | str | int
       expr = x + "foo"
-      #└ TYPE LiteralString | str | Any
+      #└ TYPE LiteralString FIXME LiteralString | str | Any # PY-90517
       """)
   }
 

@@ -1160,7 +1160,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-85997"])
     fun `recursive protocol and implementation using Self`() = test(
-      TestOptions(enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(assertRecursionPrevention = false),
       """
           from typing import Self, Protocol
     

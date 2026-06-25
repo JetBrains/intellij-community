@@ -265,6 +265,9 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
         return 1 + d[k1]
     """)
 
+  /**
+   * mirrors of tests in this suite but with PyAnyType disabled to ensure that the old style doesn't regress
+   */
   @Nested
   inner class PyAnyTypeMigrationMirrors {
 

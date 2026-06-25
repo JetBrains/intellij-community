@@ -307,7 +307,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-44905"])
-    fun `generic type alias to Annotated`() = test(TestOptions(enablePyAnyType = false), """
+    fun `generic type alias to Annotated`() = test("""
       from typing import Annotated, TypeVar
       marker = object()
       T = TypeVar("T")
@@ -967,12 +967,12 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-71002"])
-    fun `explicit Any not substituted by defaults`() = test(TestOptions(enablePyAnyType = false), """
+    fun `explicit Any not substituted by defaults`() = test("""
       class Test[T = str, T1 = int, T2 = bool]: ...
       expr = Test[Any, Any]()
       #│          │    ^^^ ERROR Unresolved reference 'Any'
       #│          ^^^ ERROR Unresolved reference 'Any'
-      #└ TYPE Test[Any, Any, bool]
+      #└ TYPE Test[Unknown, Unknown, bool]
       """)
 
     @Test

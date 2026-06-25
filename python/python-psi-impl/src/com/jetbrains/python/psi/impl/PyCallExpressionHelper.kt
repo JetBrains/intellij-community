@@ -751,7 +751,7 @@ object PyCallExpressionHelper {
       }
       return PyUnsafeUnionType.unsafeUnion(superTypes)
     }
-    return null
+    return PyAnyType.unknown
   }
 
   @JvmStatic

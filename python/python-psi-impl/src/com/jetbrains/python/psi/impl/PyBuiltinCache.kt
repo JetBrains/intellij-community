@@ -39,6 +39,7 @@ import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache
 import com.jetbrains.python.psi.resolve.fromSdk
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
+import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyClassTypeImpl
@@ -157,7 +158,7 @@ class PyBuiltinCache private constructor(
       unicode = if (definition) unicode.toClass() else unicode.toInstance()
     }
 
-    return PyUnionType.union(str, unicode)
+    return PyUnionType.union(str, unicode ?: PyAnyType.unknown)
   }
 
   val boolType: PyClassType?

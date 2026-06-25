@@ -573,15 +573,13 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
 
   @TestFor(issues = ["PY-88071"])
   fun `test Default type from both calls explicit Any`() {
-    fixme<AssertionError>("PY-88142", "Expected type 'Any', got 'str' instead") {
-      doTestByText("""
-        from typing import assert_type, Any
-        def f1[S=Any]() -> S: ...
-        def f2[T=str](t: T) -> T: ...
-        rf2 = f2(f1())
-        assert_type(rf2, Any)
-        """)
-    }
+    doTestByText("""
+      from typing import assert_type, Any
+      def f1[S=Any]() -> S: ...
+      def f2[T=str](t: T) -> T: ...
+      rf2 = f2(f1())
+      assert_type(rf2, Any)
+      """)
   }
 
   @TestFor(issues = ["PY-88089"])

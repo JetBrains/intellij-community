@@ -10,6 +10,7 @@ import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyTypeCheckerInspectionTest;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyCallableTypeImpl;
 import com.jetbrains.python.psi.types.PyNarrowedType;
@@ -151,9 +152,9 @@ public class Py3TypeTest extends PyTestCase {
       """;
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     PyExpression dict = myFixture.findElementByText("{'foo': self.foo}", PyExpression.class);
-    assertExpressionType("dict[str, Any]", dict);
+    assertExpressionType("dict[str, Unknown]", dict);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
-    assertExpressionType("dict[str, Any]", expr);
+    assertExpressionType("dict[str, Unknown]", expr);
   }
 
   public void testRecursiveDictTopDown() {
@@ -166,15 +167,15 @@ public class Py3TypeTest extends PyTestCase {
       """;
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
-    assertExpressionType("dict[str, Any]", expr);
+    assertExpressionType("dict[str, Unknown]", expr);
     PyExpression dict = myFixture.findElementByText("{'foo': self.foo}", PyExpression.class);
-    assertExpressionType("dict[str, Any]", dict);
+    assertExpressionType("dict[str, Unknown]", dict);
   }
 
   @TestFor(issues = "PY-54336")
   public void testCyclePreventionDuringGenericsSubstitution() {
-    PyTypeVarType typeVarT = new PyTypeVarTypeImpl("T", null);
-    PyTypeVarType typeVarV = new PyTypeVarTypeImpl("V", null);
+    PyTypeVarType typeVarT = new PyTypeVarTypeImpl("T", PyAnyType.getUnknown());
+    PyTypeVarType typeVarV = new PyTypeVarTypeImpl("V", PyAnyType.getUnknown());
     TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
     PyType substituted;
 
@@ -182,12 +183,12 @@ public class Py3TypeTest extends PyTestCase {
     assertEquals(typeVarT, substituted);
 
     substituted = PyTypeChecker.substitute(typeVarT, new GenericSubstitutions(Map.of(typeVarT, typeVarV, typeVarV, typeVarT)), context);
-    assertNull(substituted);
+    assertEquals(PyAnyType.getUnknown(), substituted);
 
     PyCallableType callable = new PyCallableTypeImpl(List.of(), typeVarT);
     substituted = PyTypeChecker.substitute(callable, new GenericSubstitutions(Map.of(typeVarT, typeVarV, typeVarV, callable)), context);
     PyCallableType substitutedCallable = assertInstanceOf(substituted, PyCallableType.class);
-    assertNull(substitutedCallable.getReturnType(context));
+    assertEquals(PyAnyType.getUnknown(), substitutedCallable.getReturnType(context));
   }
 
 

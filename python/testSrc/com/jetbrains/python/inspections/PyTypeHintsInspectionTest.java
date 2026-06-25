@@ -3262,7 +3262,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
       {"list[((<warning descr=\"Passed type arguments do not match type parameters [_T] of class 'list'\">int, int</warning>))]"},
 
       {"tuple[((int, int))]", "tuple[int, int]"},
-      {"tuple[<error descr=\"Invalid type argument\">((int, int))</error>, int]", "tuple[Any, int]"},
+      {"tuple[<error descr=\"Invalid type argument\">((int, int))</error>, int]", "tuple[Unknown, int]"},
 
       {"set[((int))]", "set[int]"},
       // TODO: type: set[Any]
@@ -3277,7 +3277,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
       {"List[((<warning descr=\"Passed type arguments do not match type parameters [_T] of class 'list'\">int, int</warning>))]"},
 
       {"Tuple[((int)), (((str)))]", "tuple[int, str]"},
-      {"Tuple[<error descr=\"Invalid type argument\">((int, int))</error>, int]", "tuple[Any, int]"},
+      {"Tuple[<error descr=\"Invalid type argument\">((int, int))</error>, int]", "tuple[Unknown, int]"},
 
       {"Set[((int))]", "set[int]"},
       // TODO: type: set[Any]
@@ -3289,14 +3289,14 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
 
       {"Union[((int, (((str)))))]", "int | str"},
       {"Union[<error descr=\"Invalid type argument\">((int, int))</error>, <error descr=\"Invalid type argument\">(int, int)</error>]",
-        "Any"},
+        "Unknown"},
 
       {"Optional[((int))]", "int | None"},
-      {"Optional[((<error descr=\"'Optional' must have exactly one argument\">int, int</error>))]", "Any"},
+      {"Optional[((<error descr=\"'Optional' must have exactly one argument\">int, int</error>))]", "Unknown"},
 
       {"tuple[((int)), ((...))]", "tuple[int, ...]"},
-      {"tuple[((<error descr=\"'...' is allowed only as the second of two arguments\">...</error>)), ((int))]", "Any"},
-      {"tuple[<error descr=\"Invalid type argument\">(int,)</error>, ...]", "tuple[Any, ...]"},
+      {"tuple[((<error descr=\"'...' is allowed only as the second of two arguments\">...</error>)), ((int))]", "Unknown"},
+      {"tuple[<error descr=\"Invalid type argument\">(int,)</error>, ...]", "tuple[Unknown, ...]"},
 
       {"C[(((int)))]", "C[int]"},
       {"C2[(((int), (str)))]", "C2[int, str]"},
@@ -3306,15 +3306,15 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
   public void testSubscriptionEmptyParentheses() {
     generateVariableTypeAssertions(new Object[][]{
       {"tuple[()]", "tuple[()]"},
-      {"tuple[int, <error descr=\"Empty tuple is allowed only as a sole argument\">()</error>]", "Any"},
+      {"tuple[int, <error descr=\"Empty tuple is allowed only as a sole argument\">()</error>]", "Unknown"},
 
-      {"tuple[<error descr=\"Empty tuple is allowed only as a sole argument\">()</error>, int]", "Any"},
-      {"tuple[<error descr=\"Empty tuple is allowed only as a sole argument\">()</error>, ...]", "tuple[Any, ...]"},
+      {"tuple[<error descr=\"Empty tuple is allowed only as a sole argument\">()</error>, int]", "Unknown"},
+      {"tuple[<error descr=\"Empty tuple is allowed only as a sole argument\">()</error>, ...]", "tuple[Unknown, ...]"},
       {"tuple[<error descr=\"Empty tuple is allowed only as a sole argument\">()</error>, <error descr=\"Empty tuple is allowed only as a sole argument\">()</error>]",
-        "Any"},
+        "Unknown"},
 
       {"Tuple[()]", "tuple[()]"},
-      {"Tuple[int, <error descr=\"Empty tuple is allowed only as a sole argument\">()</error>]", "Any"},
+      {"Tuple[int, <error descr=\"Empty tuple is allowed only as a sole argument\">()</error>]", "Unknown"},
 
       // TODO: type: list[Any]
       {"list[<warning descr=\"Passed type arguments do not match type parameters [_T] of class 'list'\">()</warning>]"},
@@ -3332,7 +3332,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
 
       {"Union[()]", "Never"},
 
-      {"Optional[<error descr=\"'Optional' must have exactly one argument\">()</error>]", "Any"},
+      {"Optional[<error descr=\"'Optional' must have exactly one argument\">()</error>]", "Unknown"},
 
       // TODO: type: C[Any]
       {"C[<warning descr=\"Passed type arguments do not match type parameters [T] of class 'C'\">()</warning>]"},
@@ -3344,26 +3344,26 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
       {"list[((int,))]", "list[int]"},
 
       {"tuple[((int,))]", "tuple[int]"},
-      {"tuple[<error descr=\"Invalid type argument\">(int,)</error>, int]", "tuple[Any, int]"},
+      {"tuple[<error descr=\"Invalid type argument\">(int,)</error>, int]", "tuple[Unknown, int]"},
       {"tuple[<error descr=\"Invalid type argument\">(int, str)</error>, <error descr=\"Invalid type argument\">(int, str)</error>]",
-        "tuple[Any, Any]"},
+        "tuple[Unknown, Unknown]"},
 
       {"set[((int,))]", "set[int]"},
 
-      {"dict[<error descr=\"Invalid type argument\">((int,))</error>, str]", "dict[Any, str]"},
-      {"dict[int, <error descr=\"Invalid type argument\">(int, str)</error>]", "dict[int, Any]"},
+      {"dict[<error descr=\"Invalid type argument\">((int,))</error>, str]", "dict[Unknown, str]"},
+      {"dict[int, <error descr=\"Invalid type argument\">(int, str)</error>]", "dict[int, Unknown]"},
       // TODO: type: dict[Any, Any]
       {"dict[((<warning descr=\"Passed type arguments do not match type parameters [_KT, _VT] of class 'dict'\">[int]</warning>))]"},
 
       {"List[((int,))]", "list[int]"},
 
       {"Tuple[((int,))]", "tuple[int]"},
-      {"Tuple[<error descr=\"Invalid type argument\">(int,)</error>, int]", "tuple[Any, int]"},
+      {"Tuple[<error descr=\"Invalid type argument\">(int,)</error>, int]", "tuple[Unknown, int]"},
 
       {"Set[((int,))]", "set[int]"},
 
-      {"Dict[<error descr=\"Invalid type argument\">((int,))</error>, str]", "dict[Any, str]"},
-      {"Dict[int, <error descr=\"Invalid type argument\">(int, str)</error>]", "dict[int, Any]"},
+      {"Dict[<error descr=\"Invalid type argument\">((int,))</error>, str]", "dict[Unknown, str]"},
+      {"Dict[int, <error descr=\"Invalid type argument\">(int, str)</error>]", "dict[int, Unknown]"},
       {"Dict[((<error descr=\"Parameters to generic types must be types\">[int]</error>))]"},  // TODO: type: dict[Any, Any]
 
       {"tuple[Tuple[int, str]]", "tuple[tuple[int, str]]"},
@@ -3373,13 +3373,13 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
       {"tuple[*tuple[int], *Tuple[int]]", "tuple[int, int]"},
 
       {"Union[((int, int,))]", "int"},
-      {"Union[<error descr=\"Invalid type argument\">(int, int,)</error>, int]", "int | Any"},
+      {"Union[<error descr=\"Invalid type argument\">(int, int,)</error>, int]", "int | Unknown"},
 
-      {"Optional[<error descr=\"'Optional' must have exactly one argument\">int, int</error>]", "Any"},
+      {"Optional[<error descr=\"'Optional' must have exactly one argument\">int, int</error>]", "Unknown"},
       {"Optional[(int,)]", "int | None"},
 
-      {"Callable[<error descr=\"'Callable' first parameter must be a parameter expression\">int</error>, int]", "Any"},
-      {"Callable[[int], ((<error descr=\"Parameters to generic types must be types\">[int]</error>))]", "Callable[[int], Any]"},
+      {"Callable[<error descr=\"'Callable' first parameter must be a parameter expression\">int</error>, int]", "Unknown"},
+      {"Callable[[int], ((<error descr=\"Parameters to generic types must be types\">[int]</error>))]", "Callable[[int], Unknown]"},
 
       // TODO: type: list[Any]
       {"list[((<warning descr=\"Passed type arguments do not match type parameters [_T] of class 'list'\">[int]</warning>))]"},
@@ -3404,31 +3404,31 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     generateVariableTypeAssertions(new Object[][]{
       {"tuple[int, ...]", "tuple[int, ...]"},
 
-      {"tuple[<error descr=\"'...' is allowed only as the second of two arguments\">...</error>, int]", "Any"},
-      {"tuple[int, int, <error descr=\"'...' is allowed only as the second of two arguments\">...</error>]", "Any"},
-      {"tuple[int, <error descr=\"'...' is allowed only as the second of two arguments\">...</error>, int]", "Any"},
-      {"tuple[<error descr=\"'...' is allowed only as the second of two arguments\">...</error>]", "Any"},
-      {"tuple[<error descr=\"'...' is allowed only as the second of two arguments\">...</error>, ...]", "Any"},
+      {"tuple[<error descr=\"'...' is allowed only as the second of two arguments\">...</error>, int]", "Unknown"},
+      {"tuple[int, int, <error descr=\"'...' is allowed only as the second of two arguments\">...</error>]", "Unknown"},
+      {"tuple[int, <error descr=\"'...' is allowed only as the second of two arguments\">...</error>, int]", "Unknown"},
+      {"tuple[<error descr=\"'...' is allowed only as the second of two arguments\">...</error>]", "Unknown"},
+      {"tuple[<error descr=\"'...' is allowed only as the second of two arguments\">...</error>, ...]", "Unknown"},
 
-      {"set[<error descr=\"Invalid type argument\">...</error>]", "set[Any]"},
-      {"list[<error descr=\"Invalid type argument\">...</error>]", "list[Any]"},
+      {"set[<error descr=\"Invalid type argument\">...</error>]", "set[Unknown]"},
+      {"list[<error descr=\"Invalid type argument\">...</error>]", "list[Unknown]"},
       {"dict[<error descr=\"Invalid type argument\">...</error>]"},  // TODO: type: "dict[Any, Any]"
 
-      {"Union[int, <error descr=\"Invalid type argument\">...</error>]", "int | Any"},
-      {"Optional[<error descr=\"Invalid type argument\">...</error>]", "Any"},
+      {"Union[int, <error descr=\"Invalid type argument\">...</error>]", "int | Unknown"},
+      {"Optional[<error descr=\"Invalid type argument\">...</error>]", "Unknown"},
 
-      {"tuple[*tuple[str], <error descr=\"'...' cannot be used with an unpacked 'TypeVarTuple' or tuple\">...</error>]", "Any"},
+      {"tuple[*tuple[str], <error descr=\"'...' cannot be used with an unpacked 'TypeVarTuple' or tuple\">...</error>]", "Unknown"},
       {"tuple[*tuple[str, ...], <error descr=\"'...' cannot be used with an unpacked 'TypeVarTuple' or tuple\">...</error>]",
-        "Any"},
+        "Unknown"},
 
-      {"Set[<error descr=\"Invalid type argument\">...</error>]", "set[Any]"},
-      {"List[<error descr=\"Invalid type argument\">...</error>]", "list[Any]"},
+      {"Set[<error descr=\"Invalid type argument\">...</error>]", "set[Unknown]"},
+      {"List[<error descr=\"Invalid type argument\">...</error>]", "list[Unknown]"},
       {"Dict[<error descr=\"Invalid type argument\">...</error>]"},  // TODO: type: "dict[Any, Any]"
 
       {"Tuple[int, ...]", "tuple[int, ...]"},
-      {"Tuple[<error descr=\"'...' is allowed only as the second of two arguments\">...</error>]", "Any"},
+      {"Tuple[<error descr=\"'...' is allowed only as the second of two arguments\">...</error>]", "Unknown"},
 
-      {"C[<error descr=\"Invalid type argument\">...</error>]", "C[Any]"},
+      {"C[<error descr=\"Invalid type argument\">...</error>]", "C[Unknown]"},
     });
   }
 

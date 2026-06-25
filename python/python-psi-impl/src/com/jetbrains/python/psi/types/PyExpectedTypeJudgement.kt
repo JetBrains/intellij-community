@@ -87,7 +87,7 @@ object PyExpectedTypeJudgement {
 
       is PyAssignmentExpression -> {
         val expectedType = fromWalrus(expr, ctx)
-        if (expectedType != null) return expectedType
+        if (expectedType != null && !expectedType.isUnknown) return expectedType
         return getExpectedType(parent, ctx)
       }
 
@@ -357,7 +357,7 @@ object PyExpectedTypeJudgement {
           val lhsElem = lhs.elements[idx]
           val rhsElem = if (rhs is PySequenceExpression) rhs.elements[idx] else null
           val elemType = fromLhs(lhsElem, rhsElem, ctx)
-          tupleElementTypes.add(elemType)
+          tupleElementTypes.add(elemType ?: PyAnyType.unknown)
         }
         if (rhs is PyTupleExpression) {
           // On the RHS of the assignment we are inside a tuple, hence it is safe to downcast the current type to tuple.
@@ -374,8 +374,11 @@ object PyExpectedTypeJudgement {
               iterableElementTypes.add(tupleElementType)
             }
           }
-          if (iterableElementTypes.contains(null)) {
-            return createIterableType(lhs, null) // simplify
+          if (iterableElementTypes.contains(PyAnyType.unknown)) {
+            return createIterableType(lhs, PyAnyType.unknown) // simplify
+          }
+          else if (iterableElementTypes.contains(PyAnyType.any)) {
+            return createIterableType(lhs, PyAnyType.any) // simplify
           }
           val iterableElementTypesUnion = PyUnionType.union(iterableElementTypes)
           return createIterableType(lhs, iterableElementTypesUnion)

@@ -35,6 +35,7 @@ import com.jetbrains.python.psi.types.PyTypeInferenceCspFactory
 import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyTypeParameterType.Variance
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isAnyOrUnknown
 import com.jetbrains.python.psi.types.isUnknown
 
 class PyTypeInlayHintsProvider : InlayHintsProvider {
@@ -171,7 +172,7 @@ class PyTypeInlayHintsProvider : InlayHintsProvider {
                             parameter.isPositionalContainer -> (rawParameterType as? PyClassType)?.getIteratedItemType()
                             parameter.isKeywordContainer -> (rawParameterType as? PyClassType)?.typeArguments?.getOrNull(1)
                             else -> rawParameterType
-                          } ?: return
+                          }?.takeUnless { it.isUnknown } ?: return
 
       val offset = parameter.nameIdentifier?.textRange?.endOffset ?: parameter.textRange.endOffset
 

@@ -78,6 +78,7 @@ import com.jetbrains.python.psi.stubs.PyTypingAliasStub;
 import com.jetbrains.python.psi.stubs.PyTypingNewTypeStub;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
 import com.jetbrains.python.psi.stubs.PyVersionSpecificStub;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyNamedTupleType;
@@ -676,7 +677,7 @@ public class PyStubsTest extends PyTestCase {
   }
 
   private void doTestNamedTuple(@NotNull QualifiedName expectedCalleeName) {
-    doTestNamedTuple("name", Collections.singletonList("field"), Collections.singletonList(null), expectedCalleeName);
+    doTestNamedTuple("name", Collections.singletonList("field"), Collections.singletonList(PyNames.UNKNOWN_TYPE), expectedCalleeName);
   }
 
   private void doTestTypingNamedTuple(@NotNull QualifiedName expectedCalleeName) {
@@ -684,7 +685,7 @@ public class PyStubsTest extends PyTestCase {
   }
 
   private void doTestNamedTupleArguments() {
-    doTestNamedTuple("name", Arrays.asList("x", "y"), Arrays.asList(null, null), QualifiedName.fromComponents("namedtuple"));
+    doTestNamedTuple("name", Arrays.asList("x", "y"), Arrays.asList(PyNames.UNKNOWN_TYPE, PyNames.UNKNOWN_TYPE), QualifiedName.fromComponents("namedtuple"));
   }
 
   private void doTestTypingNamedTupleArguments() {
@@ -745,7 +746,7 @@ public class PyStubsTest extends PyTestCase {
     assertNotNull(attribute);
 
     final PyType typeFromStub = TypeEvalContext.codeInsightFallback(myFixture.getProject()).getType(attribute);
-    assertNull(typeFromStub);
+    assertEquals(PyAnyType.getUnknown(), typeFromStub);
     assertNotParsed(file);
 
     final FileASTNode astNode = file.getNode();
@@ -943,7 +944,7 @@ public class PyStubsTest extends PyTestCase {
   public void testUnresolvedTypingSymbol() {
     final PyFile file = getTestFile();
     final PyFunction func = file.findTopLevelFunction("func");
-    assertType("() -> Any", func, TypeEvalContext.codeInsightFallback(file.getProject()));
+    assertType("() -> Unknown", func, TypeEvalContext.codeInsightFallback(file.getProject()));
     assertNotParsed(file);
   }
 

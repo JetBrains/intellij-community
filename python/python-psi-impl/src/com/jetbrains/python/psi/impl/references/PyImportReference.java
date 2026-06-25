@@ -55,6 +55,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
+
 /**
  * Reference in an import statement:<br/>
  * <code>import <u>foo.name</u></code>
@@ -332,7 +334,7 @@ public class PyImportReference extends PyReferenceImpl {
   @Override
   public HighlightSeverity getUnresolvedHighlightSeverity(TypeEvalContext context) {
     final PyExpression qualifier = myElement.getQualifier();
-    if (qualifier != null && context.getType(qualifier) == null) {
+    if (qualifier != null && isUnknown(context.getType(qualifier))) {
       /* in case the element qualifier can not be resolved, the qualifier need to be highlighted instead of the element */
       return null;
     }
