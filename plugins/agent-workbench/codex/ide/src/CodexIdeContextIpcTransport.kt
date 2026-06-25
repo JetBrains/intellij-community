@@ -514,7 +514,7 @@ internal class UnixCodexIdeContextIpcTransport(
 
     val server = ServerSocketChannel.open(StandardProtocolFamily.UNIX)
     try {
-      server.bind(UnixDomainSocketAddress.of(socketPath))
+      server.bind(UnixDomainSocketAddress.of(socketPath), max(1, settings.maxActiveClients))
       restrictUnixSocketPermissions(socketPath)
       ownsSocketPath = true
       LOG.info("Codex IDE context IPC listening on $socketPath")
