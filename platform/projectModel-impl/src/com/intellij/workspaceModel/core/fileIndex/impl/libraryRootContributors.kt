@@ -27,7 +27,7 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
 import org.jetbrains.annotations.ApiStatus
 
-class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEntity>, PlatformInternalWorkspaceFileIndexContributor {
+class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEntity> {
   override val entityClass: Class<LibraryEntity> get() = LibraryEntity::class.java
 
   override fun registerFileSets(entity: LibraryEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
@@ -122,7 +122,7 @@ class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEnt
  * without making the root participate in JVM package resolution.
  */
 @ApiStatus.Internal
-interface LibraryFileSetData : WorkspaceFileSetData {
+interface LibraryFileSetData : SkipAddingToWatchedRootsData {
   val libraryId: LibraryId?
 }
 

@@ -11,8 +11,7 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
 
-class UnloadedContentRootFileIndexContributor : WorkspaceFileIndexContributor<ContentRootEntity>,
-                                                PlatformInternalWorkspaceFileIndexContributor {
+class UnloadedContentRootFileIndexContributor : WorkspaceFileIndexContributor<ContentRootEntity> {
   override val entityClass: Class<ContentRootEntity>
     get() = ContentRootEntity::class.java
 
@@ -28,4 +27,4 @@ class UnloadedContentRootFileIndexContributor : WorkspaceFileIndexContributor<Co
     get() = EntityStorageKind.UNLOADED
 }
 
-internal class UnloadedModuleContentRootData(val moduleName: String) : WorkspaceFileSetData
+internal class UnloadedModuleContentRootData(val moduleName: String) : WorkspaceFileSetData, SkipAddingToWatchedRootsData

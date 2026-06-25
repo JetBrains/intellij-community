@@ -25,7 +25,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry
 import org.jetbrains.annotations.ApiStatus
 
-class ContentRootFileIndexContributor : WorkspaceFileIndexContributor<ContentRootEntity>, PlatformInternalWorkspaceFileIndexContributor {
+class ContentRootFileIndexContributor : WorkspaceFileIndexContributor<ContentRootEntity> {
   override val entityClass: Class<ContentRootEntity>
     get() = ContentRootEntity::class.java
 
@@ -38,7 +38,7 @@ class ContentRootFileIndexContributor : WorkspaceFileIndexContributor<ContentRoo
   }
 }
 
-class SourceRootFileIndexContributor : WorkspaceFileIndexContributor<SourceRootEntity>, PlatformInternalWorkspaceFileIndexContributor {
+class SourceRootFileIndexContributor : WorkspaceFileIndexContributor<SourceRootEntity> {
   override val entityClass: Class<SourceRootEntity>
     get() = SourceRootEntity::class.java
 
@@ -113,7 +113,8 @@ interface JvmPackageRootDataInternal: WorkspaceFileSetData {
   val packagePrefix: String
 }
 
-internal data class ModuleContentRootData(override val module: Module, override val customContentRoot: VirtualFile?): ModuleContentOrSourceRootData
+internal data class ModuleContentRootData(override val module: Module, override val customContentRoot: VirtualFile?) :
+  ModuleContentOrSourceRootData, SkipAddingToWatchedRootsData
 
 internal data class ModuleSourceRootData(
   override val module: Module,
@@ -123,4 +124,4 @@ internal data class ModuleSourceRootData(
   val forGeneratedSources: Boolean,
   // This property is required for correct equals when computing the diff in the WorkspaceFileIndex
   val languageLevelId: String?,
-) : ModuleContentOrSourceRootData, ModuleOrLibrarySourceRootData, JvmPackageRootDataInternal
+) : ModuleContentOrSourceRootData, ModuleOrLibrarySourceRootData, JvmPackageRootDataInternal, SkipAddingToWatchedRootsData
