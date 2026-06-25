@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.LspServer
+import com.intellij.platform.lsp.api.LspClient
 import org.eclipse.lsp4j.Range
 import org.jetbrains.annotations.ApiStatus
 
@@ -35,16 +35,16 @@ interface LspDocumentAdapter {
 
   fun acceptsUrl(url: String, notebookSupported: Boolean): Boolean
   fun acceptsFile(file: VirtualFile, notebookSupported: Boolean): Boolean
-  fun toLspDocumentPosition(lspServer: LspServer, file: VirtualFile, document: Document, hostOffset: Int): LspDocumentPosition?
-  fun toLspDocumentRangeSync(lspServer: LspServer, file: VirtualFile, document: Document, range: Range): List<LspDocumentRange>
-  suspend fun toLspDocumentRange(lspServer: LspServer, file: VirtualFile, range: Range): List<LspDocumentRange>
-  fun toLspDocumentsInFileSync(lspServer: LspServer, file: VirtualFile): List<LspDocument>
-  suspend fun toLspDocumentsInFile(lspServer: LspServer, file: VirtualFile): List<LspDocument>
-  fun sendDidOpen(lspServer: LspServer, file: VirtualFile, document: Document)
-  fun sendDidClose(lspServer: LspServer, file: VirtualFile, document: Document)
-  fun sendDidChangeFull(lspServer: LspServer, file: VirtualFile, document: Document)
-  fun sendDidChangeIncremental(lspServer: LspServer, file: VirtualFile, event: DocumentEvent)
-  fun sendDidSave(lspServer: LspServer, file: VirtualFile, document: Document, includeText: Boolean)
-  fun getLspDocumentByUrl(lspServer: LspServer, targetUri: String): LspDocument?
+  fun toLspDocumentPosition(lspClient: LspClient, file: VirtualFile, document: Document, hostOffset: Int): LspDocumentPosition?
+  fun toLspDocumentRangeSync(lspClient: LspClient, file: VirtualFile, document: Document, range: Range): List<LspDocumentRange>
+  suspend fun toLspDocumentRange(lspClient: LspClient, file: VirtualFile, range: Range): List<LspDocumentRange>
+  fun toLspDocumentsInFileSync(lspClient: LspClient, file: VirtualFile): List<LspDocument>
+  suspend fun toLspDocumentsInFile(lspClient: LspClient, file: VirtualFile): List<LspDocument>
+  fun sendDidOpen(lspClient: LspClient, file: VirtualFile, document: Document)
+  fun sendDidClose(lspClient: LspClient, file: VirtualFile, document: Document)
+  fun sendDidChangeFull(lspClient: LspClient, file: VirtualFile, document: Document)
+  fun sendDidChangeIncremental(lspClient: LspClient, file: VirtualFile, event: DocumentEvent)
+  fun sendDidSave(lspClient: LspClient, file: VirtualFile, document: Document, includeText: Boolean)
+  fun getLspDocumentByUrl(lspClient: LspClient, targetUri: String): LspDocument?
 
 }

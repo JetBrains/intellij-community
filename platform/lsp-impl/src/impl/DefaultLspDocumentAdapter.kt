@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.LspServer
+import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.impl.documentSync.LspDidChangeUtil
 import com.intellij.platform.lsp.util.getLsp4jPosition
 import org.eclipse.lsp4j.DidCloseTextDocumentParams
@@ -31,104 +31,104 @@ open class DefaultLspDocumentAdapter : LspDocumentAdapter {
     return true
   }
 
-  override fun toLspDocumentPosition(lspServer: LspServer, file: VirtualFile, document: Document, hostOffset: Int): LspDocumentPosition? {
-    val uri = lspServer.descriptor.getFileUri(file)
+  override fun toLspDocumentPosition(lspClient: LspClient, file: VirtualFile, document: Document, hostOffset: Int): LspDocumentPosition? {
+    val uri = lspClient.descriptor.getFileUri(file)
     return LspDocumentPosition(
       DefaultLspDocument(TextDocumentIdentifier(uri), uri),
       getLsp4jPosition(document, hostOffset)
     )
   }
 
-  override fun toLspDocumentRangeSync(lspServer: LspServer, file: VirtualFile, document: Document, range: Range): List<LspDocumentRange> =
-    lspDocumentRange(lspServer, file, range)
+  override fun toLspDocumentRangeSync(lspClient: LspClient, file: VirtualFile, document: Document, range: Range): List<LspDocumentRange> =
+    lspDocumentRange(lspClient, file, range)
 
-  override suspend fun toLspDocumentRange(lspServer: LspServer, file: VirtualFile, range: Range): List<LspDocumentRange> =
-    lspDocumentRange(lspServer, file, range)
+  override suspend fun toLspDocumentRange(lspClient: LspClient, file: VirtualFile, range: Range): List<LspDocumentRange> =
+    lspDocumentRange(lspClient, file, range)
 
-  private fun lspDocumentRange(lspServer: LspServer, file: VirtualFile, range: Range): List<LspDocumentRange> {
-    val uri = lspServer.descriptor.getFileUri(file)
+  private fun lspDocumentRange(lspClient: LspClient, file: VirtualFile, range: Range): List<LspDocumentRange> {
+    val uri = lspClient.descriptor.getFileUri(file)
     return listOf(LspDocumentRange(DefaultLspDocument(TextDocumentIdentifier(uri), uri), range))
   }
 
-  override fun toLspDocumentsInFileSync(lspServer: LspServer, file: VirtualFile): List<LspDocument> =
-    lspDocument(lspServer, file)
+  override fun toLspDocumentsInFileSync(lspClient: LspClient, file: VirtualFile): List<LspDocument> =
+    lspDocument(lspClient, file)
 
-  override suspend fun toLspDocumentsInFile(lspServer: LspServer, file: VirtualFile): List<LspDocument> =
-    lspDocument(lspServer, file)
+  override suspend fun toLspDocumentsInFile(lspClient: LspClient, file: VirtualFile): List<LspDocument> =
+    lspDocument(lspClient, file)
 
-  private fun lspDocument(lspServer: LspServer, file: VirtualFile): List<LspDocument> {
-    val uri = lspServer.descriptor.getFileUri(file)
+  private fun lspDocument(lspClient: LspClient, file: VirtualFile): List<LspDocument> {
+    val uri = lspClient.descriptor.getFileUri(file)
     return listOf(DefaultLspDocument(TextDocumentIdentifier(uri), uri))
   }
 
   override fun sendDidOpen(
-    lspServer: LspServer,
+    lspClient: LspClient,
     file: VirtualFile,
     document: Document,
   ) {
-    val languageId = lspServer.descriptor.getLanguageId(file)
-    val fileUri = lspServer.descriptor.getFileUri(file)
+    val languageId = lspClient.descriptor.getLanguageId(file)
+    val fileUri = lspClient.descriptor.getFileUri(file)
     val version = (document as? DocumentEx)?.modificationSequence ?: document.modificationStamp.toInt()
     val item = TextDocumentItem(fileUri, languageId, version, document.text)
-    lspServer.sendNotification { lsp4jServer ->
-      lsp4jServer.textDocumentService.didOpen(DidOpenTextDocumentParams(item))
+    lspClient.sendNotification {
+      it.textDocumentService.didOpen(DidOpenTextDocumentParams(item))
     }
   }
 
   override fun sendDidClose(
-    lspServer: LspServer,
+    lspClient: LspClient,
     file: VirtualFile,
     document: Document,
   ) {
-    val fileUri = lspServer.descriptor.getFileUri(file)
+    val fileUri = lspClient.descriptor.getFileUri(file)
     val params = DidCloseTextDocumentParams(TextDocumentIdentifier(fileUri))
-    lspServer.sendNotification { lsp4jServer ->
-      lsp4jServer.textDocumentService.didClose(params)
+    lspClient.sendNotification {
+      it.textDocumentService.didClose(params)
     }
   }
 
   override fun sendDidChangeFull(
-    lspServer: LspServer,
+    lspClient: LspClient,
     file: VirtualFile,
     document: Document,
   ) {
-    val params = LspDidChangeUtil.createFullDidChangeParams(lspServer, document, file)
-    lspServer.sendNotification { lsp4jServer ->
-      lsp4jServer.textDocumentService.didChange(params)
+    val params = LspDidChangeUtil.createFullDidChangeParams(lspClient, document, file)
+    lspClient.sendNotification {
+      it.textDocumentService.didChange(params)
     }
   }
 
   override fun sendDidChangeIncremental(
-    lspServer: LspServer,
+    lspClient: LspClient,
     file: VirtualFile,
     event: DocumentEvent,
   ) {
-    val params = LspDidChangeUtil.createIncrementalDidChangeParamsBeforeDocumentChange(lspServer, event, file)
-    lspServer.sendNotification { lsp4jServer ->
-      lsp4jServer.textDocumentService.didChange(params)
+    val params = LspDidChangeUtil.createIncrementalDidChangeParamsBeforeDocumentChange(lspClient, event, file)
+    lspClient.sendNotification {
+      it.textDocumentService.didChange(params)
     }
   }
 
   override fun sendDidSave(
-    lspServer: LspServer,
+    lspClient: LspClient,
     file: VirtualFile,
     document: Document,
     includeText: Boolean,
   ) {
-    val fileUri = lspServer.descriptor.getFileUri(file)
+    val fileUri = lspClient.descriptor.getFileUri(file)
     val documentIdentifier = TextDocumentIdentifier(fileUri)
     val text = if (includeText) document.text else null
     val params = DidSaveTextDocumentParams(documentIdentifier, text)
-    lspServer.sendNotification { lsp4jServer ->
-      lsp4jServer.textDocumentService.didSave(params)
+    lspClient.sendNotification {
+      it.textDocumentService.didSave(params)
     }
   }
 
   override fun getLspDocumentByUrl(
-    lspServer: LspServer,
+    lspClient: LspClient,
     targetUri: String,
   ): LspDocument? {
-    return lspServer.descriptor.findFileByUri(targetUri)?.let {
+    return lspClient.descriptor.findFileByUri(targetUri)?.let {
       DefaultLspDocument(TextDocumentIdentifier(targetUri), targetUri)
     }
   }
