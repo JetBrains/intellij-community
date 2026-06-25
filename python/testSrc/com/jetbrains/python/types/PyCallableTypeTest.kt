@@ -2404,6 +2404,28 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       #│     ^^^^^ WARNING Expected type '(Concatenate(int, ...)) -> str', got '() -> str' instead
       #^^^ WARNING Redeclared 'call' defined above without usage
       """)
+
+    @TestFor(issues = ["PY-89912"])
+    @Test
+    fun `callable with parameter of type Self`() = test("""
+      from typing import Self, Callable
+
+      class Shape:
+          def apply(self, f: Callable[[Self], None]) -> None: ...
+
+      class Circle(Shape): ...
+
+      def accept_circle(c: Circle): ...
+      
+      def accept_shape(s: Shape): ...
+
+      circle = Circle()
+      circle.apply(accept_shape)
+
+      shape = Shape()
+      shape.apply(accept_circle)
+      #           ^^^^^^^^^^^^^ WARNING Expected type '(Shape) -> None', got '(c: Circle) -> None' instead
+      """)
   }
 
   @Nested
