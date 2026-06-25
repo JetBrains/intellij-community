@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.trustedProjects
 
 import com.intellij.diagnostic.WindowsDefenderChecker
@@ -74,16 +74,9 @@ object TrustedProjectsDialog {
 
     if (openChoice != OpenUntrustedProjectChoice.CANCEL && pathsToExclude.isNotEmpty()) {
       val checker = serviceAsync<WindowsDefenderChecker>()
-      val defenderTrustDir = dialog.defenderTrustFolder
-      if (openChoice == OpenUntrustedProjectChoice.TRUST_AND_OPEN && defenderTrustDir != null) {
+      if (openChoice == OpenUntrustedProjectChoice.TRUST_AND_OPEN) {
         checker.markProjectPath(projectRoot, /*skip =*/ false)
         WindowsDefenderStatisticsCollector.excludedFromTrustDialog(dialog.isTrustAll)
-        if (defenderTrustDir != projectRoot) {
-          (pathsToExclude as MutableList<Path>).apply {
-            remove(projectRoot)
-            add(0, defenderTrustDir)
-          }
-        }
         WindowsDefenderCheckerActivity.runAndNotify(project) {
           checker.excludeProjectPaths(project, projectRoot, pathsToExclude)
         }

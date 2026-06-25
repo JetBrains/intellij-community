@@ -139,7 +139,7 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
   }
 
   private fun isOnWindows(projectDir: Path?): Boolean? =
-    projectDir?.let{JEelUtils.toEelPath(it)?.descriptor?.osFamily?.isWindows}
+    projectDir?.let { JEelUtils.toEelPath(it)?.descriptor?.osFamily?.isWindows }
 
   private fun updateDefenderConfig(checker: WindowsDefenderChecker, project: Project, paths: List<Path>) {
     runAndNotify(project) { checker.excludeProjectPaths(project, paths) }
