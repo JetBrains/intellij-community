@@ -22,8 +22,8 @@ internal object TerminalFilePathHandler {
     return escapeShellArgument(pathInMonolith, context.shellName)
   }
 
-  fun isSameEnvironment(nioPath: Path?, eelDescriptor: EelDescriptor): Boolean {
-    val fileMachine = nioPath?.getEelDescriptor()?.getResolvedEelMachine() ?: return false
+  fun isSameEnvironment(nioPath: Path, eelDescriptor: EelDescriptor): Boolean {
+    val fileMachine = nioPath.getEelDescriptor().getResolvedEelMachine() ?: return false
     val eelMachine = eelDescriptor.getResolvedEelMachine() ?: return false
     return fileMachine == eelMachine
   }
