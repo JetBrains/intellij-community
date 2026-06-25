@@ -139,27 +139,21 @@ public class IntroduceFieldPostfixTemplate extends PostfixTemplateWithExpression
                                                            @NotNull PostfixTemplateProvider provider) {
     JavaIntroduceFieldService introduceFieldService = JavaIntroduceFieldService.getInstance();
     if (introduceFieldService == null) return ModCommand.error(JavaRefactoringBundle.message("selected.expression.cannot.be.extracted"));
-    return ModCommand.psiUpdate(ctx, true,
-                                updater -> {
-                                  updater.select(TextRange.from(keyRange.getStartOffset(), 0));
-                                  updater.getDocument()
-                                    .deleteString(PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()),
-                                                  ctx.selection().getStartOffset());
-                                  PsiDocumentManager.getInstance(ctx.project()).commitDocument(updater.getDocument());
-                                  provider.prepareCopyForModCommand(updater.getPsiFile(),
-                                                                    PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()));
-                                  PsiElement expression = PsiTreeUtil.findSameElementInCopy(virtualExpr, updater.getPsiFile());
-                                  expression = ElementToWorkOn.getWritable(expression, updater);
-                                  PsiField field = introduceFieldService
-                                    .introduceField((PsiExpression)expression, place);
-                                  if (field != null) {
-                                    List<String> names = new VariableNameGenerator(field, VariableKind.FIELD)
-                                      .byExpression(field.getInitializer())
-                                      .byType(field.getType())
-                                      .generateAll(true);
-                                    updater.rename(field, names);
-                                  }
-                                });
+    return PostfixModExpander.psiUpdateRemovingTemplateKey(ctx, keyRange, updater -> {
+      provider.prepareCopyForModCommand(updater.getPsiFile(),
+                                        PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()));
+      PsiElement expression = PsiTreeUtil.findSameElementInCopy(virtualExpr, updater.getPsiFile());
+      expression = ElementToWorkOn.getWritable(expression, updater);
+      PsiField field = introduceFieldService
+        .introduceField((PsiExpression)expression, place);
+      if (field != null) {
+        List<String> names = new VariableNameGenerator(field, VariableKind.FIELD)
+          .byExpression(field.getInitializer())
+          .byType(field.getType())
+          .generateAll(true);
+        updater.rename(field, names);
+      }
+    });
   }
 
   @Override

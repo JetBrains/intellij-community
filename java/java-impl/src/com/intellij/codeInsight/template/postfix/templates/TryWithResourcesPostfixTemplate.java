@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -14,7 +14,6 @@ import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModCommand;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
@@ -26,7 +25,6 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
@@ -74,29 +72,25 @@ public class TryWithResourcesPostfixTemplate extends PostfixTemplate implements 
   @Override
   public PostfixModExpander createModExpander() {
     return (ActionContext actionContext, PostfixTemplateProvider provider, TextRange keyRange) ->
-      ModCommand.psiUpdate(actionContext, true,
-                           updater -> {
-                             updater.select(TextRange.from(keyRange.getStartOffset(), 0));
-                             updater.getDocument().deleteString(PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()), actionContext.selection().getStartOffset());
-                             PsiDocumentManager.getInstance(actionContext.project()).commitDocument(updater.getDocument());
-                             PsiFile file = updater.getPsiFile();
-                             provider.prepareCopyForModCommand(file, PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()));
-                             PsiElement context =
-                               CustomTemplateCallback.getContext(file, PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset() - 1));
+      PostfixModExpander.psiUpdateRemovingTemplateKey(actionContext, keyRange, updater -> {
+        PsiFile file = updater.getPsiFile();
+        provider.prepareCopyForModCommand(file, PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()));
+        PsiElement context =
+          CustomTemplateCallback.getContext(file, PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset() - 1));
 
-                             PsiExpression expression = JavaPostfixTemplatesUtils.getTopmostExpression(context);
-                             assert expression != null;
+        PsiExpression expression = JavaPostfixTemplatesUtils.getTopmostExpression(context);
+        assert expression != null;
 
-                             Project project = context.getProject();
+        Project project = context.getProject();
 
-                             updater.getDocument().deleteString(expression.getTextRange().getStartOffset(), expression.getTextRange().getEndOffset());
+        updater.getDocument().deleteString(expression.getTextRange().getStartOffset(), expression.getTextRange().getEndOffset());
 
-                             TemplateManager manager = TemplateManager.getInstance(project);
-                             TemplateImpl template = (TemplateImpl)manager.createTemplate("", "");
+        TemplateManager manager = TemplateManager.getInstance(project);
+        TemplateImpl template = (TemplateImpl)manager.createTemplate("", "");
 
-                             buildTemplate(template, expression, project);
-                             TemplateManagerImpl.updateTemplate(template, updater);
-                           });
+        buildTemplate(template, expression, project);
+        TemplateManagerImpl.updateTemplate(template, updater);
+      });
   }
 
   @Override

@@ -12,6 +12,7 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixModExpander;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
@@ -66,6 +67,12 @@ public class PostfixTemplateLookupElement extends CustomLiveTemplateLookupElemen
         myProvider, ctx.file().getFileDocument().getCharsSequence(), ctx.offset());
       if (key == null) return IntentionPreviewInfo.EMPTY;
       TextRange keyRange = PostfixTemplatesUtils.computeKeyRange(ctx, key, myTemplate.getKey());
+      InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(ctx.project());
+      if (injectedLanguageManager.isInjectedFragment(ctx.file())) {
+        TextRange selection = TextRange.create(injectedLanguageManager.injectedToHost(ctx.file(), ctx.selection().getStartOffset()),
+                                               injectedLanguageManager.injectedToHost(ctx.file(), ctx.selection().getEndOffset()));
+        ctx = ctx.withSelection(selection);
+      }
       var command = expander.expand(ctx, myProvider, keyRange);
       return IntentionPreviewUtils.getModCommandPreview(command, ctx);
     }

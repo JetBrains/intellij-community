@@ -576,6 +576,7 @@ c:com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate
 - *s:computeTemplateKeyWithoutContextChecking(com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider,java.lang.CharSequence,I):java.lang.String
 *:com.intellij.codeInsight.template.postfix.templates.PostfixModExpander
 - a:expand(com.intellij.modcommand.ActionContext,com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider,com.intellij.openapi.util.TextRange):com.intellij.modcommand.ModCommand
+- s:psiUpdateRemovingTemplateKey(com.intellij.modcommand.ActionContext,com.intellij.openapi.util.TextRange,java.util.function.Consumer):com.intellij.modcommand.ModCommand
 a:com.intellij.codeInsight.template.postfix.templates.PostfixTemplate
 - com.intellij.openapi.project.PossiblyDumbAware
 - *:createModExpander():com.intellij.codeInsight.template.postfix.templates.PostfixModExpander

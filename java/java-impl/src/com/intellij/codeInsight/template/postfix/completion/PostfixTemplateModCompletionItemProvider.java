@@ -16,6 +16,7 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils;
 import com.intellij.icons.AllIcons;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
@@ -51,8 +52,6 @@ public final class PostfixTemplateModCompletionItemProvider implements ModComple
     if (!settings.isPostfixTemplatesEnabled()) return;
 
     PsiFile file = context.originalFile();
-    //todo disabled for now
-    if (InjectedLanguageManager.getInstance(context.getProject()).isInjectedFragment(file)) return;
     int offset = context.offset();
     if (offset <= 0) return;
 
@@ -135,19 +134,38 @@ public final class PostfixTemplateModCompletionItemProvider implements ModComple
 
     @Override
     public @NotNull ModCommand perform(@NotNull ActionContext actionContext, @NotNull InsertionContext insertionContext) {
-      TextRange keyRange = PostfixTemplatesUtils.computeKeyRange(actionContext, myKey, myTemplate.getKey());
       var expander = myTemplate.createModExpander();
-      return expander != null ? expander.expand(actionContext, myProvider, keyRange) : ModCommand.nop();
+      if (expander == null) return ModCommand.nop();
+      ActionContext context = actionContext;
+      TextRange keyRange = PostfixTemplatesUtils.computeKeyRange(context, myKey, myTemplate.getKey());
+      InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(actionContext.project());
+      PsiElement injectedElement = injectionManager.findInjectedElementAt(actionContext.file(), actionContext.offset());
+      PsiFile injectedFile = injectedElement == null ? null : injectedElement.getContainingFile();
+      if (injectedFile != null && injectionManager.isInjectedFragment(injectedFile)) {
+        //preserve selection to delete it further
+        context = actionContext.mapToInjected(injectedFile);
+        if (injectedFile.getFileDocument() instanceof DocumentWindow documentWindow) {
+          keyRange = new TextRange(documentWindow.hostToInjected(keyRange.getStartOffset()),
+                                   documentWindow.hostToInjected(keyRange.getEndOffset()));
+        }
+      }
+      context = context.withSelection(actionContext.selection());
+      return expander.expand(context, myProvider, keyRange);
     }
 
     @Override
     public @NotNull IntentionPreviewInfo preview(@NotNull ActionContext ctx) {
       if (myTemplate.isApplicableForModCommand()) {
-        String key = PostfixLiveTemplate.computeTemplateKeyWithoutContextChecking(
-        myProvider, ctx.file().getFileDocument().getCharsSequence(), ctx.offset());
+        String key = PostfixLiveTemplate.computeTemplateKeyWithoutContextChecking(myProvider, ctx.file().getFileDocument().getCharsSequence(), ctx.offset());
         if (key == null) return IntentionPreviewInfo.EMPTY;
         TextRange keyRange = PostfixTemplatesUtils.computeKeyRange(ctx, key, myTemplate.getKey());
         var expander = myTemplate.createModExpander();
+        InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(ctx.project());
+        if (injectedLanguageManager.isInjectedFragment(ctx.file())) {
+          TextRange selection = TextRange.create(injectedLanguageManager.injectedToHost(ctx.file(), ctx.selection().getStartOffset()),
+                                                 injectedLanguageManager.injectedToHost(ctx.file(), ctx.selection().getEndOffset()));
+          ctx = ctx.withSelection(selection);
+        }
         ModCommand command = expander != null ? expander.expand(ctx, myProvider, keyRange) : ModCommand.nop();
         return IntentionPreviewUtils.getModCommandPreview(command, ctx);
       }

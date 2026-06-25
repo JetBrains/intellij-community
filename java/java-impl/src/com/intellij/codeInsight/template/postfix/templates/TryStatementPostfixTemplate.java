@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.generation.surroundWith.JavaWithTryCatchSurrounder;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -15,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiDeclarationStatement;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionStatement;
@@ -55,8 +53,8 @@ public class TryStatementPostfixTemplate extends PostfixTemplate implements Dumb
   @Override
   public PostfixModExpander createModExpander() {
     return (ActionContext actionContext, PostfixTemplateProvider provider, TextRange keyRange) ->
-      ModCommand.psiUpdate(actionContext, true,
-                           updater -> expandModImpl(actionContext, provider, keyRange, updater));
+      PostfixModExpander.psiUpdateRemovingTemplateKey(actionContext, keyRange,
+                                                      updater -> expandModImpl(actionContext, provider, keyRange, updater));
   }
 
   @Override
@@ -66,8 +64,6 @@ public class TryStatementPostfixTemplate extends PostfixTemplate implements Dumb
 
   private static void expandModImpl(@NotNull ActionContext actionContext, @NotNull PostfixTemplateProvider provider,
                                     @NotNull TextRange keyRange, @NotNull ModPsiUpdater updater) {
-    updater.getDocument().deleteString(PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()), actionContext.selection().getStartOffset());
-    PsiDocumentManager.getInstance(actionContext.project()).commitDocument(updater.getDocument());
     PsiFile file = updater.getPsiFile();
     provider.prepareCopyForModCommand(file, PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()));
     PsiElement context =

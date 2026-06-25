@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -33,6 +33,7 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringUsageCollector;
@@ -141,7 +142,11 @@ public abstract class BaseRefactoringAction extends AnAction {
     }
 
     if (activeInplaceRenamer == null &&
-        !(editor != null && editor.getCaretModel() instanceof CaretModelImpl caretModel && caretModel.isIteratingOverCarets())) {
+        !(editor != null &&
+          //prevent infinite recursion for refactoring called from
+          //injected fragments
+          InjectedLanguageEditorUtil.getTopLevelEditor(editor).getCaretModel() instanceof CaretModelImpl caretModel &&
+          caretModel.isIteratingOverCarets())) {
       final LookupEx lookup = LookupManager.getActiveLookup(editor);
       if (lookup instanceof LookupImpl) {
         Runnable command = () -> ((LookupImpl)lookup).finishLookup(Lookup.NORMAL_SELECT_CHAR);

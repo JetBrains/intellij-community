@@ -603,6 +603,13 @@ final class PsiUpdateImpl {
               range = TextRange.from(range.getStartOffset(), fieldValue.length());
             }
           }
+          else if (tracker().getHostCopy() != null && !rangeForTemplate.isEmpty()) {
+            // Injection only. The variable has no value (result == null), yet its range is non-empty.
+            // Root cause: in an injected fragment the reformat step (TemplateImpl.reformatTemplate) deletes
+            // an empty segment's placeholder together with a formatter-added trailing space. An empty field has no
+            // text, so collapse it to a zero-length caret stop at its start. Scoped to injections for now.
+            range = TextRange.from(range.getStartOffset(), 0);
+          }
           myTemplateFields.add(new ModStartTemplate.ExpressionField(range, varName, expression));
           return this;
         }

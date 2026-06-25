@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.guess.GuessManager;
@@ -29,7 +15,6 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModCommand;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -40,7 +25,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiConditionalExpression;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiPolyadicExpression;
@@ -80,25 +64,19 @@ public class InstanceofExpressionPostfixTemplate extends PostfixTemplate impleme
 
   @Override
   public PostfixModExpander createModExpander() {
-    return (ActionContext actionContext, PostfixTemplateProvider provider, TextRange keyRange) -> {
-      TextRange selection = actionContext.selection();
-      return ModCommand.psiUpdate(actionContext, true,
-                                  updater -> {
-                                    updater.select(TextRange.from(keyRange.getStartOffset(), 0));
-                                    updater.getDocument().deleteString(PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()), selection.getStartOffset());
-                                    PsiDocumentManager.getInstance(updater.getProject()).commitDocument(updater.getDocument());
-                                    PsiElement context =
-                                      CustomTemplateCallback.getContext(updater.getPsiFile(), PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset() - 1));
-                                    PsiExpression expr = JavaPostfixTemplatesUtils.getTopmostExpression(context);
-                                    if (!JavaPostfixTemplatesUtils.isNotPrimitiveTypeExpression(expr)) return;
-                                    Template template = getTemplate(updater.getProject(), expr);
-                                    if (!(template instanceof TemplateImpl templateImpl)) return;
-                                    TextRange range = expr.getTextRange();
-                                    updater.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-                                    updater.moveCaretTo(range.getStartOffset());
-                                    TemplateManagerImpl.updateTemplate(templateImpl, updater);
-                                  });
-    };
+    return (ActionContext actionContext, PostfixTemplateProvider _, TextRange keyRange) ->
+      PostfixModExpander.psiUpdateRemovingTemplateKey(actionContext, keyRange, updater -> {
+        PsiElement context =
+          CustomTemplateCallback.getContext(updater.getPsiFile(), PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset() - 1));
+        PsiExpression expr = JavaPostfixTemplatesUtils.getTopmostExpression(context);
+        if (!JavaPostfixTemplatesUtils.isNotPrimitiveTypeExpression(expr)) return;
+        Template template = getTemplate(updater.getProject(), expr);
+        if (!(template instanceof TemplateImpl templateImpl)) return;
+        TextRange range = expr.getTextRange();
+        updater.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+        updater.moveCaretTo(range.getStartOffset());
+        TemplateManagerImpl.updateTemplate(templateImpl, updater);
+      });
   }
 
   @Override
