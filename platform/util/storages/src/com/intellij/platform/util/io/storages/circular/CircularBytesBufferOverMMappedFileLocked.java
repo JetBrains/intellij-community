@@ -49,7 +49,7 @@ public final class CircularBytesBufferOverMMappedFileLocked
   //
   //Records layout is `[header: int32][payload?][int32-alignment-padding]` (see RecordLayout)
   // Record offset is always int32-aligned.
-  // The record header contains a 'type' (=regular|padding), 'consumed' flag, and payload length.
+  // The record header contains a 'type' (=data|padding), 'consumed' flag, and payload length.
   //'Data' record is always continuous, i.e., can't be split in half: if a data record doesn't fit into the
   // remaining bytes at the end of the data region, a padding record is written there, and the data record
   // is written at physical offset 0.
