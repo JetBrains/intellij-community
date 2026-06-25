@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle.message
-import com.intellij.collaboration.ui.codereview.changes.CodeReviewChangeListComponentFactory.SELECTED_CHANGES
+import com.intellij.collaboration.ui.codereview.changes.CodeReviewChangeListDataKeys.SELECTED_CHANGES
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
 import com.intellij.collaboration.ui.codereview.details.model.isViewedStateForAllChanges
 import com.intellij.openapi.actionSystem.ActionUpdateThread

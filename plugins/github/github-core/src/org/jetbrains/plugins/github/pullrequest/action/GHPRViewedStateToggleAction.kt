@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.codereview.changes.CodeReviewChangeListComponentFactory.SELECTED_CHANGES
+import com.intellij.collaboration.ui.codereview.changes.CodeReviewChangeListDataKeys.SELECTED_CHANGES
 import com.intellij.collaboration.ui.codereview.details.model.isViewedStateForAllChanges
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.diff.tools.util.DiffDataKeys
@@ -17,14 +17,14 @@ import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffReviewViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewFileEditorViewModel
 
 internal class GHPRViewedStateToggleAction : DumbAwareAction() {
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = false
     e.presentation.description = CollaborationToolsBundle.message("action.CodeReview.ToggleChangesViewed.description")
 
     val changes = e.getData(SELECTED_CHANGES)
-    val changesVm = e.getData(GHPRChangeListViewModel.DATA_KEY)
+    val changesVm = changes?.let { e.getData(GHPRChangeListViewModel.DATA_KEY) }
     if (changes != null && changesVm != null) {
       if (!changesVm.isOnLatest) return
 
