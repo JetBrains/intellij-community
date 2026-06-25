@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.konan.properties.propertyList
+import org.jetbrains.kotlin.io.propertyList
 import org.jetbrains.kotlin.library.BaseKotlinLibrary
 import org.jetbrains.kotlin.library.KotlinLibrary
 import java.io.IOException
