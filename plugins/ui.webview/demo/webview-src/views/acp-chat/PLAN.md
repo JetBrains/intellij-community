@@ -38,23 +38,24 @@ Key confirmations: `ClientSideConnection implements Agent` (so `setSessionMode`/
 ## Implementation plan
 
 ### 0. Shared plumbing
-1. In `src/acp/client.ts`, make `AcpSession` expose prompt capabilities, session modes/config options, current mode updates, available commands, and plan updates through `AcpEventSink`.
-2. Add `setMode(modeId)` / `setConfigOption(id, value)` on `AcpSession`, using the SDK methods already available on `ClientSideConnection`.
-3. Generalize prompting from `prompt(text)` to `prompt(blocks: ContentBlock[])`, with a text convenience helper. Centralize prompt-block construction in `src/runtime/useAcpChat.ts` so text, attachments, mentions, quotes, and comments use one path.
-4. Extend `src/model/types.ts` with `SessionModeView`, `ConfigOptionView`, `CommandView`, and `AttachmentView`.
-5. In `src/runtime/useAcpChat.ts`, pass shared runtime options to `useExternalStoreRuntime`: `setMessages`, `unstable_capabilities: { copy: true }`, and feature-specific handlers/adapters as they are added.
+- [x] In `src/acp/client.ts`, make `AcpSession` expose prompt capabilities, session modes/config options, current mode updates, available commands, and plan updates through `AcpEventSink`.
+- [x] Add `setMode(modeId)` / `setConfigOption(id, value)` on `AcpSession`, using the SDK methods already available on `ClientSideConnection`.
+- [x] Generalize prompting from `prompt(text)` to `prompt(blocks: ContentBlock[])`, with a text convenience helper. Centralize prompt-block construction in `src/runtime/useAcpChat.ts` so text, attachments, mentions, quotes, and comments use one path.
+- [x] Extend `src/model/types.ts` with `SessionModeView`, `ConfigOptionView`, `CommandView`, and `AttachmentView`.
+- [x] In `src/runtime/useAcpChat.ts`, pass shared runtime options to `useExternalStoreRuntime`: `setMessages`, `unstable_capabilities: { copy: true }`, and feature-specific handlers/adapters as they are added.
 
 ### 1. Agent selector placement
-1. In `ChatView.tsx`, move the existing `AgentSelector` out of the top thread header and into a persistent bottom-left control area.
-2. Keep the existing `starting` disabled state and agent-switch flow intact.
-3. In `styles.css`, position the selector so it does not overlap the composer, action bars, or message list on narrow webview sizes.
-4. Keep status/auth/permission surfaces visually separate from the selector.
+- [x] In `ChatView.tsx`, move the existing `AgentSelector` out of the top thread header and into a persistent bottom-left control area below the composer input.
+- [x] Keep the existing `starting` disabled state and agent-switch flow intact.
+- [x] In `styles.css`, position the selector so it does not overlap the composer, action bars, or message list on narrow webview sizes.
+- [x] Keep status/auth/permission surfaces visually separate from the selector.
+- [x] Use an assistant-ui-style `Select` component backed by `radix-ui` for choosing agents.
 
 ### 2. Smooth typing animation
-1. In `ChatView.tsx`, replace the direct `props.text` read in `MarkdownText` with `useSmooth(useMessagePartText(), …)`.
-2. Apply the same pattern in `ThinkingBlock.tsx` for reasoning text.
-3. Render a trailing caret while `status.type === "running"` and tune `minCommitMs` so markdown is not re-parsed every frame.
-4. Add caret styling in `styles.css`.
+- [x] In `ChatView.tsx`, replace the direct `props.text` read in `MarkdownText` with `useSmooth(useMessagePartText(), …)`.
+- [x] Apply the same pattern in `ThinkingBlock.tsx` for reasoning text.
+- [x] Render a trailing caret while streamed text is running, using message-level running status for reasoning when needed, and tune `minCommitMs` so markdown is not re-parsed every frame.
+- [x] Add caret styling in `styles.css`.
 
 ### 3. Message action bar: Copy / Edit / Regenerate
 1. Add `ActionBar.tsx` using `ActionBarPrimitive.Root`, `Copy`, `Edit`, and `Reload`.

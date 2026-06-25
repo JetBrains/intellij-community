@@ -276,6 +276,33 @@ body {
   margin-bottom: 0;
 }
 
+.acpMarkdown--streaming:empty::after,
+.acpMarkdown--streaming > :last-child::after {
+  content: "";
+}
+
+.acpMarkdown--streaming:empty::after,
+.acpMarkdown--streaming > :last-child::after,
+.acpStreamingCaret {
+  display: inline-block;
+  width: 1px;
+  height: 1em;
+  margin-left: 2px;
+  background: currentColor;
+  vertical-align: -0.15em;
+  animation: acpStreamingCaretBlink 1s steps(2, start) infinite;
+}
+
+@keyframes acpStreamingCaretBlink {
+  0%, 45% {
+    opacity: 1;
+  }
+
+  46%, 100% {
+    opacity: 0;
+  }
+}
+
 .acpMarkdown pre {
   background: var(--acp-bg-alt);
   border: 1px solid var(--acp-border);

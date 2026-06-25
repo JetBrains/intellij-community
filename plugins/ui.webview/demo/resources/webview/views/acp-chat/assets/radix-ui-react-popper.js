@@ -1,6 +1,6 @@
 import { i as __toESM } from "./rolldown-runtime.js";
-import { J as require_react, M as require_jsx_runtime } from "./assistant-ui-core.js";
-import { a as useCallbackRef, s as Primitive, u as useComposedRefs } from "./assistant-ui-react.js";
+import { M as require_jsx_runtime, Y as require_react } from "./assistant-ui-core.js";
+import { c as useCallbackRef, p as useComposedRefs, u as Primitive } from "./assistant-ui-react.js";
 import { n as createContextScope } from "./radix-ui-react-collection.js";
 import { n as useLayoutEffect2 } from "./radix-ui-react-id.js";
 import { n as autoUpdate } from "./floating-ui-dom.js";

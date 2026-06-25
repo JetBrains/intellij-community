@@ -1,6 +1,6 @@
 import { i as __toESM } from "./assets/rolldown-runtime.js";
-import { J as require_react, M as require_jsx_runtime, T as useExternalStoreRuntime } from "./assets/assistant-ui-core.js";
-import { d as AssistantRuntimeProvider, n as message_exports, r as composer_exports, t as thread_exports } from "./assets/assistant-ui-react.js";
+import { M as require_jsx_runtime, T as useExternalStoreRuntime, Y as require_react } from "./assets/assistant-ui-core.js";
+import { a as useMessagePartText, h as AssistantRuntimeProvider, i as useSmooth, m as useMessage, n as thread_exports, o as composer_exports, r as message_exports, t as useMessagePartReasoning } from "./assets/assistant-ui-react.js";
 import { t as require_client } from "./assets/react-dom.js";
 import { t as marked } from "./assets/marked.js";
 import { a as SelectItem$1, c as SelectPortal, d as SelectTrigger$1, i as SelectIcon, l as SelectScrollDownButton$1, n as SelectContent$1, o as SelectItemIndicator, p as SelectViewport, s as SelectItemText, t as Select$1, u as SelectScrollUpButton$1 } from "./assets/radix-ui-react-select.js";
@@ -1317,18 +1317,28 @@ function planMark(status) {
 }
 //#endregion
 //#region views/acp-chat/src/components/ThinkingBlock.tsx
-function ThinkingBlock(props) {
-	const text = props?.text ?? "";
-	if (!text) return null;
+var SMOOTH_TEXT_OPTIONS$1 = {
+	drainMs: 250,
+	maxCharIntervalMs: 5,
+	minCommitMs: 33
+};
+function ThinkingBlock() {
+	const { text, status } = useSmooth(useMessagePartReasoning(), SMOOTH_TEXT_OPTIONS$1);
+	const messageStatus = useMessage((message) => message.status);
+	const running = status.type === "running" || messageStatus?.type === "running";
+	if (!text && !running) return null;
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("details", {
 		className: "acpThinking",
 		open: true,
 		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("summary", {
 			className: "acpThinkingSummary",
 			children: "Thinking"
-		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 			className: "acpThinkingBody",
-			children: text
+			children: [text, running ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				"aria-hidden": "true",
+				className: "acpStreamingCaret"
+			}) : null]
 		})]
 	});
 }
@@ -1385,6 +1395,11 @@ function renderDiff(diff) {
 }
 //#endregion
 //#region views/acp-chat/src/components/ChatView.tsx
+var SMOOTH_TEXT_OPTIONS = {
+	drainMs: 250,
+	maxCharIntervalMs: 5,
+	minCommitMs: 33
+};
 function ChatView() {
 	const chat = useAcpChat();
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AssistantRuntimeProvider, {
@@ -1461,10 +1476,10 @@ function PlainText(props) {
 		children: props?.text ?? ""
 	});
 }
-function MarkdownText(props) {
-	const text = props?.text ?? "";
+function MarkdownText() {
+	const { text, status } = useSmooth(useMessagePartText(), SMOOTH_TEXT_OPTIONS);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-		className: "acpMarkdown",
+		className: status.type === "running" ? "acpMarkdown acpMarkdown--streaming" : "acpMarkdown",
 		dangerouslySetInnerHTML: { __html: marked.parse(text, { async: false }) }
 	});
 }

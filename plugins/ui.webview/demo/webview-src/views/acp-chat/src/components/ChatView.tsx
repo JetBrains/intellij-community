@@ -1,7 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import { marked } from "marked"
-import { AssistantRuntimeProvider, ComposerPrimitive, MessagePrimitive, ThreadPrimitive } from "@assistant-ui/react"
+import {
+  AssistantRuntimeProvider,
+  ComposerPrimitive,
+  MessagePrimitive,
+  ThreadPrimitive,
+  useMessagePartText,
+  useSmooth,
+} from "@assistant-ui/react"
 import { useAcpChat } from "../runtime/useAcpChat"
 import { AgentSelector } from "./AgentSelector"
 import { ApprovalPrompt } from "./ApprovalPrompt"
@@ -9,6 +16,8 @@ import { AuthPrompt } from "./AuthPrompt"
 import { PlanView } from "./PlanView"
 import { ThinkingBlock } from "./ThinkingBlock"
 import { ToolCallCard } from "./ToolCallCard"
+
+const SMOOTH_TEXT_OPTIONS = { drainMs: 250, maxCharIntervalMs: 5, minCommitMs: 33 }
 
 export function ChatView() {
   const chat = useAcpChat()
@@ -68,7 +77,8 @@ function PlainText(props: any) {
   return <span className="acpText">{props?.text ?? ""}</span>
 }
 
-function MarkdownText(props: any) {
-  const text: string = props?.text ?? ""
-  return <div className="acpMarkdown" dangerouslySetInnerHTML={{ __html: marked.parse(text, { async: false }) as string }} />
+function MarkdownText() {
+  const { text, status } = useSmooth(useMessagePartText(), SMOOTH_TEXT_OPTIONS)
+  const className = status.type === "running" ? "acpMarkdown acpMarkdown--streaming" : "acpMarkdown"
+  return <div className={className} dangerouslySetInnerHTML={{ __html: marked.parse(text, { async: false }) as string }} />
 }

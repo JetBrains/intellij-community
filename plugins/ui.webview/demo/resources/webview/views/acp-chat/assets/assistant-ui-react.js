@@ -1,5 +1,5 @@
 import { i as __toESM, t as __commonJSMin } from "./rolldown-runtime.js";
-import { A as useAui, B as useContext, C as ThreadPrimitiveMessageByIndex, D as PartByIndexProvider, E as TextMessagePartProvider, F as resource, G as useRef, H as useEffectEvent$1, I as c, J as require_react, K as useState, L as createContext, M as require_jsx_runtime, N as useResource, O as AssistantProviderBase, P as flushTapSync, R as react_shim_exports, S as MessagePrimitiveGenerativeUI, U as useLayoutEffect$1, V as useEffect, W as useMemo, _ as MessagePrimitiveQuote, a as useComposerDictate, b as MessagePrimitiveParts$1, c as ComposerPrimitiveIf, d as MessagePartPrimitiveInProgress, f as ComposerPrimitiveQueue, g as MessagePrimitiveAttachments, h as MessagePrimitiveAttachmentByIndex, i as useComposerAddAttachment, j as normalizeEventSelector, k as useAuiState, l as ThreadPrimitiveSuggestionByIndex, m as ComposerPrimitiveAttachments, n as useMessageError, o as useComposerCancel, p as ComposerPrimitiveAttachmentByIndex, q as useSyncExternalStore, r as useSuggestionTrigger, s as useComposerSend$1, t as unstable_defaultDirectiveFormatter, u as ThreadPrimitiveSuggestions, v as MessagePrimitiveGroupedParts, w as ThreadPrimitiveMessages, x as defaultComponents$1, y as MessagePrimitivePartByIndex, z as useCallback } from "./assistant-ui-core.js";
+import { A as useAui, B as useContext, C as ThreadPrimitiveMessageByIndex, D as PartByIndexProvider, E as TextMessagePartProvider, F as resource, G as useMemo, H as useEffect, I as c, J as useSyncExternalStore, K as useRef, L as createContext, M as require_jsx_runtime, N as useResource, O as AssistantProviderBase, P as flushTapSync, R as react_shim_exports, S as MessagePrimitiveGenerativeUI, U as useEffectEvent$1, V as useDebugValue, W as useLayoutEffect$1, Y as require_react, _ as MessagePrimitiveQuote, a as useComposerDictate, b as MessagePrimitiveParts$1, c as ComposerPrimitiveIf, d as MessagePartPrimitiveInProgress, f as ComposerPrimitiveQueue, g as MessagePrimitiveAttachments, h as MessagePrimitiveAttachmentByIndex, i as useComposerAddAttachment, j as normalizeEventSelector, k as useAuiState, l as ThreadPrimitiveSuggestionByIndex, m as ComposerPrimitiveAttachments, n as useMessageError, o as useComposerCancel, p as ComposerPrimitiveAttachmentByIndex, q as useState, r as useSuggestionTrigger, s as useComposerSend$1, t as unstable_defaultDirectiveFormatter, u as ThreadPrimitiveSuggestions, v as MessagePrimitiveGroupedParts, w as ThreadPrimitiveMessages, x as defaultComponents$1, y as MessagePrimitivePartByIndex, z as useCallback } from "./assistant-ui-core.js";
 //#region node_modules/scheduler/cjs/scheduler.production.min.js
 /**
 * @license React
@@ -7069,8 +7069,8 @@ var createStoreImpl = (createState) => {
 var createStore = ((createState) => createState ? createStoreImpl(createState) : createStoreImpl);
 //#endregion
 //#region node_modules/zustand/esm/react.mjs
-var identity = (arg) => arg;
-function useStore(api, selector = identity) {
+var identity$1 = (arg) => arg;
+function useStore(api, selector = identity$1) {
 	const slice = import_react.useSyncExternalStore(api.subscribe, import_react.useCallback(() => selector(api.getState()), [api, selector]), import_react.useCallback(() => selector(api.getInitialState()), [api, selector]));
 	import_react.useDebugValue(slice);
 	return slice;
@@ -7381,6 +7381,109 @@ var AssistantRuntimeProviderImpl = (t0) => {
 	return t4;
 };
 var AssistantRuntimeProvider = (0, react_shim_exports.memo)(AssistantRuntimeProviderImpl);
+//#endregion
+//#region node_modules/@assistant-ui/react/dist/context/react/utils/ensureBinding.js
+var ensureBinding = (r) => {
+	const runtime = r;
+	if (runtime.__isBound) return;
+	runtime.__internal_bindMethods?.();
+	runtime.__isBound = true;
+};
+//#endregion
+//#region node_modules/@assistant-ui/react/dist/context/react/utils/useRuntimeState.js
+function useRuntimeStateInternal(runtime, t0) {
+	const $ = c(4);
+	const selector = t0 === void 0 ? identity : t0;
+	ensureBinding(runtime);
+	let t1;
+	let t2;
+	if ($[0] !== runtime || $[1] !== selector) {
+		t1 = () => selector(runtime.getState());
+		t2 = () => selector(runtime.getState());
+		$[0] = runtime;
+		$[1] = selector;
+		$[2] = t1;
+		$[3] = t2;
+	} else {
+		t1 = $[2];
+		t2 = $[3];
+	}
+	const slice = useSyncExternalStore(runtime.subscribe, t1, t2);
+	useDebugValue(slice);
+	return slice;
+}
+var identity = (arg) => arg;
+//#endregion
+//#region node_modules/@assistant-ui/react/dist/context/react/utils/createStateHookForRuntime.js
+function createStateHookForRuntime(useRuntime) {
+	function useStoreHook(param) {
+		let optional = false;
+		let selector;
+		if (typeof param === "function") selector = param;
+		else if (param) {
+			optional = !!param.optional;
+			selector = param.selector;
+		}
+		const store = useRuntime({ optional });
+		if (!store) return null;
+		return useRuntimeStateInternal(store, selector);
+	}
+	return useStoreHook;
+}
+//#endregion
+//#region node_modules/@assistant-ui/react/dist/legacy-runtime/hooks/MessageContext.js
+function useMessageRuntime(options) {
+	const $ = c(2);
+	const aui = useAui();
+	let t0;
+	if ($[0] !== aui) {
+		t0 = () => aui.message.source ? aui.message().__internal_getRuntime?.() ?? null : null;
+		$[0] = aui;
+		$[1] = t0;
+	} else t0 = $[1];
+	const runtime = useAuiState(t0);
+	if (!runtime && !options?.optional) throw new Error("MessageRuntime is not available");
+	return runtime;
+}
+/**
+* @deprecated Use {@link useAuiState}: `useAuiState((s) => s.message)`. See the {@link https://assistant-ui.com/docs/migrations/v0-12 migration guide}.
+*
+* Hook to access the current message state.
+*
+* This hook provides reactive access to the message's state, including content,
+* role, status, and other message-level properties.
+*
+* @param selector Optional selector function to pick specific state properties
+* @returns The selected message state or the entire message state if no selector provided
+*
+* @example
+* ```tsx
+* // Before:
+* function MessageContent() {
+*   const role = useMessage((state) => state.role);
+*   const content = useMessage((state) => state.content);
+*   const isLoading = useMessage((state) => state.status.type === "running");
+*   return (
+*     <div className={`message-${role}`}>
+*       {isLoading ? "Loading..." : content.map(part => part.text).join("")}
+*     </div>
+*   );
+* }
+*
+* // After:
+* function MessageContent() {
+*   const role = useAuiState((s) => s.message.role);
+*   const content = useAuiState((s) => s.message.content);
+*   const isLoading = useAuiState((s) => s.message.status.type === "running");
+*   return (
+*     <div className={`message-${role}`}>
+*       {isLoading ? "Loading..." : content.map(part => part.text).join("")}
+*     </div>
+*   );
+* }
+* ```
+*/
+var useMessage = createStateHookForRuntime(useMessageRuntime);
 //#endregion
 //#region node_modules/@radix-ui/react-compose-refs/dist/index.mjs
 var import_react_dom = /* @__PURE__ */ __toESM(require_react_dom(), 1);
@@ -7809,7 +7912,7 @@ var ComposerInputPluginProvider = (t0) => {
 	if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
 		t3 = () => {
 			const entries = Array.from(pluginsRef.current.entries());
-			entries.sort(_temp$15);
+			entries.sort(_temp$16);
 			snapshotRef.current = entries.map(_temp2$5);
 		};
 		$[2] = t3;
@@ -7855,7 +7958,7 @@ var ComposerInputPluginProvider = (t0) => {
 	} else t7 = $[7];
 	return t7;
 };
-function _temp$15(a, b) {
+function _temp$16(a, b) {
 	return b[1] - a[1];
 }
 function _temp2$5(t0) {
@@ -7971,7 +8074,7 @@ var TriggerPopoverRootInner = (t0) => {
 	if ($[2] !== notify) {
 		t3 = (trigger) => {
 			const { char } = trigger;
-			if (triggersRef.current.has(char)) return _temp$14;
+			if (triggersRef.current.has(char)) return _temp$15;
 			const next = new Map(triggersRef.current);
 			next.set(char, trigger);
 			triggersRef.current = next;
@@ -8125,7 +8228,7 @@ var ComposerPrimitiveTriggerPopoverRoot = (t0) => {
 	return t1;
 };
 ComposerPrimitiveTriggerPopoverRoot.displayName = "ComposerPrimitive.TriggerPopoverRoot";
-function _temp$14() {}
+function _temp$15() {}
 //#endregion
 //#region node_modules/@assistant-ui/react/dist/primitives/composer/trigger/detectTrigger.js
 var WHITESPACE_RE = /\s/u;
@@ -8809,7 +8912,7 @@ var ComposerPrimitiveTriggerPopover$1 = (0, react_shim_exports.forwardRef)((t0, 
 	}
 	const isLoading = t1 === void 0 ? false : t1;
 	const aui = useAui();
-	const text = useAuiState(_temp$13);
+	const text = useAuiState(_temp$14);
 	const popoverId = (0, react_shim_exports.useId)();
 	const behaviorRef = useRef(null);
 	const [behavior, setBehavior] = useState(null);
@@ -9012,7 +9115,7 @@ var ComposerPrimitiveTriggerPopover$1 = (0, react_shim_exports.forwardRef)((t0, 
 	return t17;
 });
 ComposerPrimitiveTriggerPopover$1.displayName = "ComposerPrimitive.TriggerPopover";
-function _temp$13(s) {
+function _temp$14(s) {
 	return s.composer.text;
 }
 //#endregion
@@ -9114,7 +9217,7 @@ ComposerPrimitiveRoot.displayName = "ComposerPrimitive.Root";
 var useOnScrollToBottom = (callback) => {
 	const $ = c(4);
 	const callbackRef = useCallbackRef(callback);
-	const onScrollToBottom = useThreadViewport(_temp$12);
+	const onScrollToBottom = useThreadViewport(_temp$13);
 	let t0;
 	let t1;
 	if ($[0] !== callbackRef || $[1] !== onScrollToBottom) {
@@ -9130,7 +9233,7 @@ var useOnScrollToBottom = (callback) => {
 	}
 	useEffect(t0, t1);
 };
-function _temp$12(vp) {
+function _temp$13(vp) {
 	return vp.onScrollToBottom;
 }
 //#endregion
@@ -9794,7 +9897,7 @@ var ComposerPrimitiveDictate = createActionButton("ComposerPrimitive.Dictate", u
 var useComposerStopDictation = () => {
 	const $ = c(2);
 	const aui = useAui();
-	const isDictating = useAuiState(_temp$11);
+	const isDictating = useAuiState(_temp$12);
 	let t0;
 	if ($[0] !== aui) {
 		t0 = () => {
@@ -9820,7 +9923,7 @@ var useComposerStopDictation = () => {
 * ```
 */
 var ComposerPrimitiveStopDictation = createActionButton("ComposerPrimitive.StopDictation", useComposerStopDictation);
-function _temp$11(s) {
+function _temp$12(s) {
 	return s.composer.dictation != null;
 }
 //#endregion
@@ -9853,7 +9956,7 @@ var ComposerPrimitiveDictationTranscript = (0, react_shim_exports.forwardRef)((t
 		children = $[1];
 		props = $[2];
 	}
-	const transcript = useAuiState(_temp$10);
+	const transcript = useAuiState(_temp$11);
 	if (!transcript) return null;
 	const t1 = children ?? transcript;
 	let t2;
@@ -9871,7 +9974,7 @@ var ComposerPrimitiveDictationTranscript = (0, react_shim_exports.forwardRef)((t
 	return t2;
 });
 ComposerPrimitiveDictationTranscript.displayName = "ComposerPrimitive.DictationTranscript";
-function _temp$10(s) {
+function _temp$11(s) {
 	return s.composer.dictation?.transcript;
 }
 //#endregion
@@ -9890,7 +9993,7 @@ function _temp$10(s) {
 */
 var ComposerPrimitiveQuote = (0, react_shim_exports.forwardRef)((props, forwardedRef) => {
 	const $ = c(3);
-	if (!useAuiState(_temp$9)) return null;
+	if (!useAuiState(_temp$10)) return null;
 	let t0;
 	if ($[0] !== forwardedRef || $[1] !== props) {
 		t0 = /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Primitive.div, {
@@ -9997,7 +10100,7 @@ var ComposerPrimitiveQuoteDismiss = (0, react_shim_exports.forwardRef)((t0, forw
 	return t3;
 });
 ComposerPrimitiveQuoteDismiss.displayName = "ComposerPrimitive.QuoteDismiss";
-function _temp$9(s) {
+function _temp$10(s) {
 	return s.composer.quote;
 }
 function _temp2$4(s) {
@@ -10472,9 +10575,9 @@ var composer_exports = /* @__PURE__ */ __exportAll({
 * See the {@link https://assistant-ui.com/docs/migrations/v0-12 migration guide}.
 */
 var useMessagePartText = () => {
-	return useAuiState(_temp$8);
+	return useAuiState(_temp$9);
 };
-function _temp$8(s) {
+function _temp$9(s) {
 	if (s.part.type !== "text" && s.part.type !== "reasoning") throw new Error("MessagePartText can only be used inside text or reasoning message parts.");
 	return s.part;
 }
@@ -10671,9 +10774,9 @@ var useSmooth = (state, smooth = false) => {
 * See the {@link https://assistant-ui.com/docs/migrations/v0-12 migration guide}.
 */
 var useMessagePartImage = () => {
-	return useAuiState(_temp$7);
+	return useAuiState(_temp$8);
 };
-function _temp$7(s) {
+function _temp$8(s) {
 	if (s.part.type !== "image") throw new Error("MessagePartImage can only be used inside image message parts.");
 	return s.part;
 }
@@ -10866,7 +10969,7 @@ var useIsHoveringRef = () => {
 };
 var useIsTopAnchorUser = () => {
 	const $ = c(2);
-	const activeAnchorId = useThreadViewport(_temp$6);
+	const activeAnchorId = useThreadViewport(_temp$7);
 	let t0;
 	if ($[0] !== activeAnchorId) {
 		t0 = (s_0) => s_0.message.role === "user" && s_0.message.index > 0 && s_0.message.index === s_0.thread.messages.length - 2 && s_0.thread.messages.at(-1)?.role === "assistant" && (s_0.message.id === activeAnchorId || s_0.thread.isRunning);
@@ -11057,7 +11160,7 @@ var MessagePrimitiveRoot = (0, react_shim_exports.forwardRef)((props, forwardedR
 	return t0;
 });
 MessagePrimitiveRoot.displayName = "MessagePrimitive.Root";
-function _temp$6(s) {
+function _temp$7(s) {
 	return s.topAnchorTurn?.anchorId;
 }
 function _temp2$3(s) {
@@ -11177,7 +11280,7 @@ var groupMessagePartsByParentId = (parts) => {
 };
 var useMessagePartsGrouped = (groupingFunction) => {
 	const $ = c(4);
-	const parts = useAuiState(_temp$5);
+	const parts = useAuiState(_temp$6);
 	let t0;
 	bb0: {
 		if (parts.length === 0) {
@@ -11647,7 +11750,7 @@ var MessagePrimitiveUnstable_PartsGroupedByParentId = (t0) => {
 	return t1;
 };
 MessagePrimitiveUnstable_PartsGroupedByParentId.displayName = "MessagePrimitive.Unstable_PartsGroupedByParentId";
-function _temp$5(s) {
+function _temp$6(s) {
 	return s.message.parts;
 }
 function _temp2$2(s) {
@@ -11688,7 +11791,7 @@ var useOnResizeContent = (callback) => {
 				callbackRef();
 			});
 			const mutationObserver = new MutationObserver((mutations) => {
-				if (mutations.some(_temp$4)) callbackRef();
+				if (mutations.some(_temp$5)) callbackRef();
 			});
 			resizeObserver.observe(el);
 			mutationObserver.observe(el, {
@@ -11707,7 +11810,7 @@ var useOnResizeContent = (callback) => {
 	} else t0 = $[1];
 	return useManagedRef(t0);
 };
-function _temp$4(m) {
+function _temp$5(m) {
 	return m.type !== "attributes" || m.attributeName !== "style";
 }
 //#endregion
@@ -11856,10 +11959,10 @@ ThreadPrimitiveRoot.displayName = "ThreadPrimitive.Root";
 */
 var ThreadPrimitiveEmpty = (t0) => {
 	const { children } = t0;
-	return useAuiState(_temp$3) ? children : null;
+	return useAuiState(_temp$4) ? children : null;
 };
 ThreadPrimitiveEmpty.displayName = "ThreadPrimitive.Empty";
-function _temp$3(s) {
+function _temp$4(s) {
 	return s.thread.isEmpty;
 }
 //#endregion
@@ -12136,7 +12239,7 @@ var getActiveTopAnchorTargetId = (options) => getActiveTopAnchorTurn(options)?.t
 //#endregion
 //#region node_modules/@assistant-ui/react/dist/primitives/thread/ThreadViewport.js
 var useViewportSizeRef = () => {
-	return useSizeHandle(useThreadViewport(_temp$2), _temp2$1);
+	return useSizeHandle(useThreadViewport(_temp$3), _temp2$1);
 };
 var useViewportElementRef = () => {
 	return useManagedRef(useThreadViewport(_temp3));
@@ -12348,7 +12451,7 @@ var ThreadPrimitiveViewport = (0, react_shim_exports.forwardRef)((t0, ref) => {
 	return t3;
 });
 ThreadPrimitiveViewport.displayName = "ThreadPrimitive.Viewport";
-function _temp$2(s) {
+function _temp$3(s) {
 	return s.registerViewport;
 }
 function _temp2$1(el) {
@@ -12385,7 +12488,7 @@ function _temp3(s) {
 */
 var ThreadPrimitiveViewportFooter = (0, react_shim_exports.forwardRef)((props, forwardedRef) => {
 	const $ = c(3);
-	const ref = useComposedRefs(forwardedRef, useSizeHandle(useThreadViewport(_temp$1), _temp2));
+	const ref = useComposedRefs(forwardedRef, useSizeHandle(useThreadViewport(_temp$2), _temp2));
 	let t0;
 	if ($[0] !== props || $[1] !== ref) {
 		t0 = /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Primitive.div, {
@@ -12399,7 +12502,7 @@ var ThreadPrimitiveViewportFooter = (0, react_shim_exports.forwardRef)((props, f
 	return t0;
 });
 ThreadPrimitiveViewportFooter.displayName = "ThreadPrimitive.ViewportFooter";
-function _temp$1(s) {
+function _temp$2(s) {
 	return s.registerContentInset;
 }
 function _temp2(el) {
@@ -12417,7 +12520,7 @@ var useThreadScrollToBottom = (t0) => {
 		$[1] = t1;
 	} else t1 = $[1];
 	const { behavior } = t1;
-	const isAtBottom = useThreadViewport(_temp);
+	const isAtBottom = useThreadViewport(_temp$1);
 	const threadViewportStore = useThreadViewportStore();
 	let t2;
 	if ($[2] !== behavior || $[3] !== threadViewportStore) {
@@ -12433,7 +12536,7 @@ var useThreadScrollToBottom = (t0) => {
 	return handleScrollToBottom;
 };
 var ThreadPrimitiveScrollToBottom = createActionButton("ThreadPrimitive.ScrollToBottom", useThreadScrollToBottom, ["behavior"]);
-function _temp(s) {
+function _temp$1(s) {
 	return s.isAtBottom;
 }
 //#endregion
@@ -12482,4 +12585,28 @@ var thread_exports = /* @__PURE__ */ __exportAll({
 	ViewportProvider: () => ThreadPrimitiveViewportProvider
 });
 //#endregion
-export { useCallbackRef as a, dispatchDiscreteCustomEvent as c, AssistantRuntimeProvider as d, require_react_dom as f, useEscapeKeydown as i, createSlot as l, message_exports as n, composeEventHandlers as o, composer_exports as r, Primitive$1 as s, thread_exports as t, useComposedRefs as u };
+//#region node_modules/@assistant-ui/react/dist/primitives/messagePart/useMessagePartReasoning.js
+/**
+* @deprecated Use {@link useAuiState} to select and narrow `s.part`.
+* Return `null` for optional rendering, or throw inside the selector to
+* preserve the old hook's strict behavior.
+*
+* @example
+* ```tsx
+* const reasoning = useAuiState((s) => {
+*   if (s.part.type !== "reasoning") return null;
+*   return s.part;
+* });
+* ```
+*
+* See the {@link https://assistant-ui.com/docs/migrations/v0-12 migration guide}.
+*/
+var useMessagePartReasoning = () => {
+	return useAuiState(_temp);
+};
+function _temp(s) {
+	if (s.part.type !== "reasoning") throw new Error("MessagePartReasoning can only be used inside reasoning message parts.");
+	return s.part;
+}
+//#endregion
+export { useMessagePartText as a, useCallbackRef as c, dispatchDiscreteCustomEvent as d, createSlot as f, require_react_dom as g, AssistantRuntimeProvider as h, useSmooth as i, composeEventHandlers as l, useMessage as m, thread_exports as n, composer_exports as o, useComposedRefs as p, message_exports as r, useEscapeKeydown as s, useMessagePartReasoning as t, Primitive$1 as u };

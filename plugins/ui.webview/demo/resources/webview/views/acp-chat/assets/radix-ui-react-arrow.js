@@ -1,6 +1,6 @@
 import { i as __toESM } from "./rolldown-runtime.js";
-import { J as require_react, M as require_jsx_runtime } from "./assistant-ui-core.js";
-import { s as Primitive } from "./assistant-ui-react.js";
+import { M as require_jsx_runtime, Y as require_react } from "./assistant-ui-core.js";
+import { u as Primitive } from "./assistant-ui-react.js";
 //#region node_modules/@radix-ui/react-arrow/dist/index.mjs
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
 var import_jsx_runtime = require_jsx_runtime();

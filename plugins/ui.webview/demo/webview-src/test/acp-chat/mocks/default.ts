@@ -7,6 +7,7 @@ import type { AcpBridgeHostApi, AcpBridgePageApi } from "../../../views/acp-chat
 const acpBridgeHostApiId = apiId<AcpBridgeHostApi>()("acp.bridge")
 const acpBridgePageApiId = apiId<AcpBridgePageApi>()("acp.bridge")
 const sessionId = "mock-session"
+const streamingProbePrompt = "streaming probe"
 
 type JsonRpcId = string | number | null
 
@@ -106,6 +107,10 @@ export default defineWebViewMock((context) => {
   }
 
   async function sendAssistantResponse(requestId: JsonRpcId, text: string): Promise<void> {
+    if (text.includes(streamingProbePrompt)) {
+      await sendStreamingAssistantResponse(requestId, text)
+      return
+    }
     await sendPageStdout({
       jsonrpc: "2.0",
       method: "session/update",
@@ -117,6 +122,38 @@ export default defineWebViewMock((context) => {
         },
       },
     })
+    await sendPageStdout(response(requestId, { stopReason: "end_turn" }))
+  }
+
+  async function sendStreamingAssistantResponse(requestId: JsonRpcId, text: string): Promise<void> {
+    const thoughtChunks = [`Reasoning about ${text}.`, " Checking stream state.", " Keeping reasoning active."]
+    const messageChunks = [`Streaming markdown response for ${text}.`, " Still streaming.", " Almost done."]
+    for (let i = 0; i < thoughtChunks.length; i++) {
+      await sendPageStdout({
+        jsonrpc: "2.0",
+        method: "session/update",
+        params: {
+          sessionId,
+          update: {
+            sessionUpdate: "agent_thought_chunk",
+            content: { type: "text", text: thoughtChunks[i] },
+          },
+        },
+      })
+      await sendPageStdout({
+        jsonrpc: "2.0",
+        method: "session/update",
+        params: {
+          sessionId,
+          update: {
+            sessionUpdate: "agent_message_chunk",
+            content: { type: "text", text: messageChunks[i] },
+          },
+        },
+      })
+      await delay(300)
+    }
+    await delay(1000)
     await sendPageStdout(response(requestId, { stopReason: "end_turn" }))
   }
 
@@ -147,6 +184,10 @@ function parseJsonRpcMessage(line: string): JsonRpcMessage | null {
 
 function response(id: JsonRpcId, result: unknown): unknown {
   return { jsonrpc: "2.0", id, result }
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
 }
 
 function promptText(prompt: unknown): string {

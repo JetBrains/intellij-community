@@ -13,8 +13,11 @@ type Page = {
   goto(url: string): Promise<void>
   getByRole(role: string, options?: { name?: string | RegExp }): Locator
   getByPlaceholder(text: string): Locator
-  getByText(text: string | RegExp): Locator
+  getByText(text: string | RegExp, options?: { exact?: boolean }): Locator
+  locator(selector: string): Locator
   evaluate<Result>(pageFunction: () => Result | Promise<Result>): Promise<Result>
+  waitForFunction(pageFunction: () => boolean): Promise<unknown>
+  waitForSelector(selector: string): Promise<unknown>
 }
 
 type TestApi = {
@@ -68,15 +71,41 @@ test("renders ACP chat in a real browser with a mock agent", async ({ page }) =>
   }
   await page.goto(preview.url)
 
-  await page.getByRole("button", { name: /select an agent/i }).click()
+  await page.locator(".acpAgentSelect").click()
   await page.getByRole("option", { name: "Mock Agent" }).click()
-  await expect(page.getByRole("button", { name: "Mock Agent" })).toBeVisible()
+  await expect(page.getByText("Mock Agent")).toBeVisible()
 
   await page.getByPlaceholder("Message the agent…").fill("Hello mock")
   await page.getByRole("button", { name: "Send" }).click()
 
-  await expect(page.getByText("Hello mock")).toBeVisible()
+  await expect(page.getByText("Hello mock", { exact: true })).toBeVisible()
   await expect(page.getByText(/Mock response from AI chat: Hello mock/)).toBeVisible()
+
+  await page.getByPlaceholder("Message the agent…").fill("streaming probe")
+  await page.getByRole("button", { name: "Send" }).click()
+
+  await Promise.all([
+    page.waitForSelector(".acpMarkdown--streaming"),
+    page.waitForSelector(".acpThinkingBody .acpStreamingCaret"),
+  ])
+  const streamingCaretStylesApplied = await page.evaluate(() => {
+    const markdown = document.querySelector(".acpMarkdown--streaming")
+    const markdownCaretHost = markdown?.lastElementChild ?? markdown
+    const markdownCaret = markdownCaretHost ? getComputedStyle(markdownCaretHost, "::after") : null
+    const thinkingCaret = document.querySelector(".acpThinkingBody .acpStreamingCaret")
+    const thinkingCaretStyle = thinkingCaret ? getComputedStyle(thinkingCaret) : null
+    return markdownCaret?.animationName === "acpStreamingCaretBlink"
+      && markdownCaret.display === "inline-block"
+      && thinkingCaretStyle?.animationName === "acpStreamingCaretBlink"
+      && thinkingCaretStyle.display === "inline-block"
+  })
+  expect(streamingCaretStylesApplied).toBe(true)
+
+  await expect(page.getByText(/Streaming markdown response for streaming probe/)).toBeVisible()
+  await page.waitForFunction(() => {
+    return document.querySelector(".acpMarkdown--streaming") == null
+      && document.querySelector(".acpThinkingBody .acpStreamingCaret") == null
+  })
 
   const calls = await page.evaluate(() => {
     return (window as MockWindow).__WVI_MOCK__?.calls.byMethod("acp.bridge/sendStdin") ?? []

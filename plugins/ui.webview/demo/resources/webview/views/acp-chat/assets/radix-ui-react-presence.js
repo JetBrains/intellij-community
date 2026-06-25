@@ -1,5 +1,5 @@
 import { i as __toESM } from "./rolldown-runtime.js";
-import { J as require_react } from "./assistant-ui-core.js";
+import { Y as require_react } from "./assistant-ui-core.js";
 import { n as useLayoutEffect2 } from "./radix-ui-react-id.js";
 //#region node_modules/@radix-ui/react-presence/dist/index.mjs
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
