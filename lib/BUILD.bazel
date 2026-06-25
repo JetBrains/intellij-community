@@ -6012,17 +6012,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.plugins/structure-intellij-3.329.jar_copy",
-    src = "@org_jetbrains_intellij_plugins-structure-intellij-3_329_http//file",
-    out = "org.jetbrains.intellij.plugins/structure-intellij-3.329.jar",
+    name = "org.jetbrains.intellij.plugins/structure-intellij-3.330.jar_copy",
+    src = "@org_jetbrains_intellij_plugins-structure-intellij-3_330_http//file",
+    out = "org.jetbrains.intellij.plugins/structure-intellij-3.330.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.plugins/structure-base-3.329.jar_copy",
-    src = "@org_jetbrains_intellij_plugins-structure-base-3_329_http//file",
-    out = "org.jetbrains.intellij.plugins/structure-base-3.329.jar",
+    name = "org.jetbrains.intellij.plugins/structure-base-3.330.jar_copy",
+    src = "@org_jetbrains_intellij_plugins-structure-base-3_330_http//file",
+    out = "org.jetbrains.intellij.plugins/structure-base-3.330.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -6080,8 +6080,8 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":org_jetbrains_intellij_plugins-structure-intellij-3_329_http_import",
-        ":org_jetbrains_intellij_plugins-structure-base-3_329_http_import",
+        ":org_jetbrains_intellij_plugins-structure-intellij-3_330_http_import",
+        ":org_jetbrains_intellij_plugins-structure-base-3_330_http_import",
         ":org_jetbrains_intellij_deps-trove4j-1_0_20200330_http_import",
         ":org_atteo-evo-inflector-1_3_http_import",
         ":org_jdom-jdom2-2_0_6_1_http_import",
@@ -6093,15 +6093,15 @@ java_library(
 )
 
 jvm_import(
-    name = "org_jetbrains_intellij_plugins-structure-intellij-3_329_http_import",
-    jar = "@org_jetbrains_intellij_plugins-structure-intellij-3_329_http//file",
-    source_jar = "@org_jetbrains_intellij_plugins-structure-intellij-3_329-sources_http//file",
+    name = "org_jetbrains_intellij_plugins-structure-intellij-3_330_http_import",
+    jar = "@org_jetbrains_intellij_plugins-structure-intellij-3_330_http//file",
+    source_jar = "@org_jetbrains_intellij_plugins-structure-intellij-3_330-sources_http//file",
 )
 
 jvm_import(
-    name = "org_jetbrains_intellij_plugins-structure-base-3_329_http_import",
-    jar = "@org_jetbrains_intellij_plugins-structure-base-3_329_http//file",
-    source_jar = "@org_jetbrains_intellij_plugins-structure-base-3_329-sources_http//file",
+    name = "org_jetbrains_intellij_plugins-structure-base-3_330_http_import",
+    jar = "@org_jetbrains_intellij_plugins-structure-base-3_330_http//file",
+    source_jar = "@org_jetbrains_intellij_plugins-structure-base-3_330-sources_http//file",
 )
 
 jvm_import(
