@@ -4,11 +4,21 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.RemoveFunctionBodyFix
+import org.jetbrains.kotlin.psi.KtFunction
 
-internal object AbstractFunctionWithBodyFixFactory {
+internal object RemoveFunctionBodyFixFactory {
 
     val removeFunctionBody = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.AbstractFunctionWithBody ->
         val function = diagnostic.psi
+        if (!function.hasBody()) return@ModCommandBased emptyList()
+
+        listOf(
+            RemoveFunctionBodyFix(function)
+        )
+    }
+
+    val removeExpectedFunctionBody = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ExpectedDeclarationWithBody ->
+        val function = diagnostic.psi as? KtFunction ?: return@ModCommandBased emptyList()
         if (!function.hasBody()) return@ModCommandBased emptyList()
 
         listOf(

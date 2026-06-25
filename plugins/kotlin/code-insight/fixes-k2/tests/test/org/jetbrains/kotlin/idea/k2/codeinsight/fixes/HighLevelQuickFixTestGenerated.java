@@ -120,6 +120,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/abstract/addFunctionBodyFixAll.kt");
         }
 
+        @TestMetadata("expectedFunctionWithBody.kt")
+        public void testExpectedFunctionWithBody() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/abstract/expectedFunctionWithBody.kt");
+        }
+
         @TestMetadata("makeEnumEntryAbstract.kt")
         public void testMakeEnumEntryAbstract() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/abstract/makeEnumEntryAbstract.kt");
