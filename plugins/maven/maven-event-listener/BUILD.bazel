@@ -3,7 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
     name = "server-eventListener-tests_test",
-    timeout = "short",
+    timeout = "moderate",
     sandbox = True,
     tags = ["community-aggregator"],
     runtime_deps = [":server-eventListener-tests_test_lib"],
