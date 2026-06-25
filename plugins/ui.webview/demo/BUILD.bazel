@@ -1,5 +1,6 @@
 load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//plugins/ui.webview:webview_plugin_zip.bzl", "webview_plugin_zip")
 
 native_binary(
     name = "build_web_assets",
@@ -11,6 +12,16 @@ native_binary(
         "local",
         "manual",
     ],
+)
+
+webview_plugin_zip(
+    name = "platform_ui_webview_demo_plugin_zip",
+    out = "platform-ui-webview-demo.zip",
+    files = {
+        ":demo.jar": "lib/platform-ui-webview-demo.jar",
+    },
+    root_dir = "platform-ui-webview-demo",
+    visibility = ["//visibility:public"],
 )
 
 ### auto-generated section `build intellij.platform.ui.webview.demo` start
