@@ -31,11 +31,10 @@ Codex starts new threads before the concrete provider thread id is known. Workbe
   [@test] ../../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
   [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
 
-- Codex plan-mode launches with a non-empty stripped prompt use the normal pending PTY path and enqueue ordered post-start dispatch: first send the `/plan` command as a non-prompt control step, then submit the plain prompt body. Startup noise after `/plan` must not duplicate the command; an exact Codex busy refusal for `/plan` stops the initial prompt dispatch without sending the prompt body.
+- Codex plan-mode launches with a non-empty stripped prompt prestart a new thread through the app-server prompt API, launch the terminal by resuming that prestarted thread, and retain a single provider-dispatch initial-message step for delivery status tracking. The prompt body is not bootstrapped through terminal `/plan` commands.
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
-  [@test] ../../codex/sessions/testSrc/CodexNewThreadPromptLaunchIntegrationTest.kt
-  [@test] ../../chat/testSrc/AgentChatInitialMessageDispatcherTest.kt
-  [@test] ../../codex/sessions/testSrc/CodexSessionSourceRealTuiIntegrationTest.kt
+  [@test] ../../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
+  [@test] ../../codex/sessions/testSrc/CodexPlanPromptRealAppServerIntegrationTest.kt
 
 - Title-based rebind must preserve queued post-start dispatch metadata, but startup-command fallback prompts must not be snapshotted after the startup command has been used.
   [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt

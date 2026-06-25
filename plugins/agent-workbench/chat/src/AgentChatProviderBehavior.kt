@@ -6,7 +6,6 @@ import com.intellij.platform.ai.agent.core.extensions.SnapshotExtensionPointCach
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.common.session.isClaudeMenuCommandPrompt
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.openapi.diagnostic.logger
@@ -120,8 +119,6 @@ interface AgentChatBehaviorTerminalTab {
 interface AgentChatInitialMessageDispatchContext {
   val action: AgentInitialMessageDispatchAction
 
-  val completionPolicy: AgentInitialMessageDispatchCompletionPolicy
-
   val message: String
 
   val stepIndex: Int
@@ -132,12 +129,6 @@ data class AgentChatInitialMessageSendObservation(
   @JvmField val outputText: String,
   @JvmField val recentOutputTail: String,
 )
-
-@ApiStatus.Internal
-enum class AgentChatInitialMessageTerminalSendMode {
-  TEXT,
-  INTERACTIVE_COMMAND,
-}
 
 @ApiStatus.Internal
 interface AgentChatProviderBehavior {
@@ -153,10 +144,6 @@ interface AgentChatProviderBehavior {
   fun isConcreteNewThreadRebindCommand(command: String): Boolean = false
 
   fun shouldUseBracketedPasteMode(text: String): Boolean = true
-
-  fun initialMessageTerminalSendMode(dispatch: AgentChatInitialMessageDispatchContext): AgentChatInitialMessageTerminalSendMode {
-    return AgentChatInitialMessageTerminalSendMode.TEXT
-  }
 
   suspend fun beforeInitialMessageSend(
     file: AgentChatBehaviorFile,

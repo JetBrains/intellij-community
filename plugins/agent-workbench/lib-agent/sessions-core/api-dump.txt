@@ -365,29 +365,20 @@ e:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDisp
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
 - s:values():com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction[]
-e:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
-- java.lang.Enum
-- sf:IMMEDIATE:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
-- sf:RETRY_ON_CODEX_PLAN_BUSY:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
-- s:getEntries():kotlin.enums.EnumEntries
-- s:valueOf(java.lang.String):com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
-- s:values():com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy[]
 f:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep
 - f:action:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
-- f:completionPolicy:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 - f:recordsPrompt:Z
 - f:text:java.lang.String
 - f:timeoutPolicy:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 - <init>():V
-- <init>(java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageTimeoutPolicy,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction,Z):V
-- b:<init>(java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageTimeoutPolicy,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageTimeoutPolicy,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction,Z):V
+- b:<init>(java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageTimeoutPolicy,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:component1():java.lang.String
 - f:component2():com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageTimeoutPolicy
-- f:component3():com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
-- f:component4():com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
-- f:component5():Z
-- f:copy(java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageTimeoutPolicy,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction,Z):com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep
-- bs:copy$default(com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageTimeoutPolicy,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction,Z,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep
+- f:component3():com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
+- f:component4():Z
+- f:copy(java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageTimeoutPolicy,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction,Z):com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep
+- bs:copy$default(com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageTimeoutPolicy,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction,Z,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep
 - equals(java.lang.Object):Z
 - hashCode():I
 - f:isDispatchable():Z

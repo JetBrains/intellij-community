@@ -13,6 +13,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetReq
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptContainerLauncher
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
@@ -23,12 +24,18 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathContext
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageProviderDispatchRequest
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageTimeoutPolicy
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryChannel
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryStatus
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptRecord
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartedNewSessionPromptLaunch
 import com.intellij.platform.ai.agent.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.platform.ai.agent.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentPromptProviderOption
@@ -36,6 +43,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProvid
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentTerminalPromptDispatch
 import com.intellij.platform.ai.agent.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.platform.ai.agent.sessions.core.providers.isPlanModeRequested
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
@@ -1040,12 +1048,13 @@ class AgentSessionPromptLauncherBridgeTest {
   }
 
   @Test
-  fun launchUsesPostStartDispatchForCodexPlanPromptOnNewThread() {
+  fun launchUsesProviderDispatchForCodexPlanPromptOnNewThread() {
     val providerBridge = RecordingPromptLaunchProviderBridge(
       provider = AgentSessionProvider.from("codex"),
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
       composedMessageBuilder = { request -> request.prompt.trim() },
+      prestartPlanPromptThreadId = "thread-prestarted-plan",
     )
     val chatOpenExecutor = RecordingChatOpenExecutor()
     AgentSessionProviders.withRegistryForTest(
@@ -1072,10 +1081,12 @@ class AgentSessionPromptLauncherBridgeTest {
           waitForCondition {
             providerBridge.composeCalls.get() == 1 &&
             providerBridge.createCalls.get() == 1 &&
+            providerBridge.prestartPlanPromptCalls.get() == 1 &&
             chatOpenExecutor.openNewChatCalls.get() == 1
           }
 
           assertThat(providerBridge.createCalls.get()).isEqualTo(1)
+          assertThat(providerBridge.prestartPlanPromptCalls.get()).isEqualTo(1)
           assertThat(providerBridge.lastCreateMode.get()).isEqualTo(AgentSessionLaunchMode.STANDARD)
           assertThat(providerBridge.lastComposeRequest.get()).isEqualTo(request.initialMessageRequest)
           assertThat(providerBridge.generationSettingsApplyCalls.get()).isEqualTo(1)
@@ -1086,23 +1097,30 @@ class AgentSessionPromptLauncherBridgeTest {
           assertThat(chatOpenExecutor.openChatCalls.get()).isZero()
 
           val openRequest = checkNotNull(chatOpenExecutor.lastOpenNewChatRequest.get())
-          assertThat(openRequest.identity).startsWith("codex:new-")
+          assertThat(openRequest.identity).isEqualTo("codex:thread-prestarted-plan")
           assertThat(openRequest.launchSpec.command)
-            .containsExactly("test", "new", AgentSessionLaunchMode.STANDARD.name)
+            .containsExactly(
+              "test",
+              "new",
+              AgentSessionLaunchMode.STANDARD.name,
+              "resume",
+              "--remote",
+              "ws://test-codex-app-server",
+              "thread-prestarted-plan",
+            )
+          assertThat(openRequest.launchSpec.preallocatedSessionId).isEqualTo("thread-prestarted-plan")
           assertThat(openRequest.startupLaunchSpecOverride).isNull()
           assertThat(openRequest.postStartDispatchSteps).containsExactly(
             AgentInitialMessageDispatchStep(
-              text = "/plan",
-              timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
-              completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
-              recordsPrompt = false,
-            ),
-            AgentInitialMessageDispatchStep(
               text = "Refactor selected code",
               timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
+              action = AgentInitialMessageDispatchAction.PROVIDER,
             ),
           )
-          assertThat(openRequest.initialMessageToken).isNotNull()
+          assertThat(openRequest.initialPromptMessage).isEqualTo("Refactor selected code")
+          assertThat(openRequest.initialMessageToken).isNull()
+          assertThat(openRequest.initialPromptDeliveryStatus).isEqualTo(AgentInitialPromptDeliveryStatus.PENDING)
+          assertThat(openRequest.initialPromptDeliveryChannel).isEqualTo(AgentInitialPromptDeliveryChannel.APP_SERVER)
         }
       }
     }
@@ -2398,6 +2416,7 @@ private class RecordingPromptLaunchProviderBridge(
     AgentSessionTerminalLaunchSpec,
     AgentPromptGenerationSettings,
   ) -> AgentSessionTerminalLaunchSpec = { launchSpec, _ -> launchSpec },
+  private val prestartPlanPromptThreadId: String? = null,
 ) : AgentSessionProviderDescriptor {
   val createCalls: AtomicInteger = AtomicInteger(0)
   val composeCalls: AtomicInteger = AtomicInteger(0)
@@ -2411,6 +2430,7 @@ private class RecordingPromptLaunchProviderBridge(
   val lastGenerationSettings: AtomicReference<AgentPromptGenerationSettings?> = AtomicReference(null)
   val lastGenerationSettingsInitialMessagePlan: AtomicReference<AgentInitialMessagePlan?> = AtomicReference(null)
   val generationSettingsApplyCalls: AtomicInteger = AtomicInteger(0)
+  val prestartPlanPromptCalls: AtomicInteger = AtomicInteger(0)
 
   override val displayNameKey: String
     get() = "toolwindow.provider.codex"
@@ -2480,27 +2500,44 @@ private class RecordingPromptLaunchProviderBridge(
     )
   }
 
-  override fun buildPostStartDispatchSteps(initialMessagePlan: AgentInitialMessagePlan): List<AgentInitialMessageDispatchStep> {
-    if (provider != AgentSessionProvider.from("codex") || initialMessagePlan.mode != AgentInitialMessageMode.PLAN) {
-      return super.buildPostStartDispatchSteps(initialMessagePlan)
-    }
-
-    val message = initialMessagePlan.message.orEmpty()
-    return listOfNotNull(
-      AgentInitialMessageDispatchStep(
-        text = "/plan",
-        timeoutPolicy = initialMessagePlan.timeoutPolicy,
-        completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
-        recordsPrompt = false,
+  override suspend fun prestartNewSessionPromptLaunch(
+    projectPath: String,
+    launchMode: AgentSessionLaunchMode,
+    initialMessagePlan: AgentInitialMessagePlan,
+    generationSettings: AgentPromptGenerationSettings,
+    generationModelCatalog: List<AgentPromptGenerationModel>,
+    launchSpec: AgentSessionTerminalLaunchSpec,
+  ): AgentPrestartedNewSessionPromptLaunch? {
+    val threadId = prestartPlanPromptThreadId ?: return null
+    if (initialMessagePlan.mode != AgentInitialMessageMode.PLAN) return null
+    val prompt = initialMessagePlan.message?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+    prestartPlanPromptCalls.incrementAndGet()
+    return AgentPrestartedNewSessionPromptLaunch(
+      launchSpec = launchSpec.copy(
+        command = launchSpec.command + listOf("resume", "--remote", "ws://test-codex-app-server", threadId),
+        preallocatedSessionId = threadId,
       ),
-      message.takeIf(String::isNotEmpty)?.let { prompt ->
-        AgentInitialMessageDispatchStep(
-          text = prompt,
-          timeoutPolicy = initialMessagePlan.timeoutPolicy,
-        )
-      },
+      initialMessageDispatchPlan = AgentInitialPromptDeliveryPlan(
+        promptRecord = AgentInitialPromptRecord(
+          message = prompt,
+          mode = AgentInitialMessageMode.PLAN,
+          deliveryStatus = AgentInitialPromptDeliveryStatus.PENDING,
+          deliveryChannel = AgentInitialPromptDeliveryChannel.APP_SERVER,
+        ),
+        terminalDispatch = AgentTerminalPromptDispatch(
+          steps = listOf(
+            AgentInitialMessageDispatchStep(
+              text = prompt,
+              timeoutPolicy = initialMessagePlan.timeoutPolicy,
+              action = AgentInitialMessageDispatchAction.PROVIDER,
+            )
+          )
+        ).normalized(),
+      ),
     )
   }
+
+  override suspend fun dispatchInitialMessageToProvider(request: AgentInitialMessageProviderDispatchRequest): Boolean = true
 
   override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {
     composeCalls.incrementAndGet()

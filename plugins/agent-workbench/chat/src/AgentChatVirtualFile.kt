@@ -8,7 +8,6 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPrompt
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryStatus
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptRecord
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageTimeoutPolicy
@@ -459,7 +458,6 @@ internal class AgentChatVirtualFile internal constructor(
       message = message,
       token = token,
       stepIndex = stepIndex,
-      completionPolicy = currentStep.completionPolicy,
     ).also {
       initialMessageDispatchInFlight = it
     }
@@ -712,7 +710,6 @@ internal class AgentChatInitialMessageDispatch internal constructor(
   override val message: String,
   val token: String?,
   override val stepIndex: Int,
-  override val completionPolicy: AgentInitialMessageDispatchCompletionPolicy,
 ) : AgentChatInitialMessageDispatchContext
 
 private fun AgentChatInitialMessageDispatch.deliveryChannel(): AgentInitialPromptDeliveryChannel {
