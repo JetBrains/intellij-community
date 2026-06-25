@@ -3,6 +3,7 @@ package com.intellij.diff.tools.util;
 
 import com.intellij.diff.tools.holders.EditorHolder;
 import com.intellij.diff.tools.holders.TextEditorHolder;
+import com.intellij.diff.tools.util.side.DiffContentLayoutPanel;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -12,10 +13,13 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.IslandsState;
 import com.intellij.ui.JBSplitter;
+import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +30,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import java.awt.Cursor;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.util.Arrays;
@@ -87,10 +92,47 @@ public class DiffSplitter extends JBSplitter {
       protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         if (myPainter != null) myPainter.paint(g, this);
+        paintTitleSeparator(g, this);
       }
     };
     divider.setOpaque(false);
     return divider;
+  }
+
+  private void paintTitleSeparator(@NotNull Graphics g, @NotNull JComponent divider) {
+    if (getOrientation()) return;
+    paintTitleSeparator(g, divider, Arrays.asList(getFirstComponent(), getSecondComponent()));
+  }
+
+  static void paintTitleSeparator(@NotNull Graphics g,
+                                  @NotNull JComponent divider,
+                                  @NotNull List<? extends JComponent> components) {
+    if (!IslandsState.Companion.isEnabled()) return;
+
+    int titleHeight = 0;
+    for (JComponent component : components) {
+      titleHeight = Math.max(titleHeight, getTitleHeight(component));
+    }
+    if (titleHeight == 0) return;
+
+    Graphics2D g2 = (Graphics2D)g.create();
+    g2.setColor(DiffUtil.getContentTitleSeparatorColor());
+
+    try {
+      var h = JBUI.scale(1);
+      RectanglePainter2D.DRAW.paint(g2, 0, titleHeight - h, divider.getWidth(), h);
+    }
+    finally {
+      g2.dispose();
+    }
+  }
+
+  private static int getTitleHeight(@Nullable JComponent component) {
+    if (component instanceof DiffContentLayoutPanel diffContentPanel) {
+      JComponent title = diffContentPanel.getTitle();
+      return title.isVisible() ? title.getHeight() : 0;
+    }
+    return 0;
   }
 
   public void setTopAction(@Nullable AnAction value) {
