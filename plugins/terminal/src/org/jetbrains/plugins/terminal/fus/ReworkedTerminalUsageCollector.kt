@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Version
 import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.agent.TerminalAgent
+import org.jetbrains.plugins.terminal.fus.TerminalCommandUsageStatistics.getKnownCommandValuesListWithoutPaths
 import org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics.KNOWN_SHELLS
 import org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics.getShellNameForStat
 import kotlin.time.Duration
@@ -39,6 +40,9 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val AGENT_WORKBENCH_PROVIDER_FIELD = EventFields.String("provider", listOf("codex", "claude"))
   private val TERMINAL_AI_AGENT_FIELD = EventFields.Enum<FusTerminalAiAgent>("agent")
   private val IS_INSTALL_FIELD = EventFields.Boolean("is_install")
+  private val PROCESS_EXECUTABLE = EventFields.String("process_executable", getKnownCommandValuesListWithoutPaths())
+  private val INSERTED_CONTENT_TYPE = EventFields.Enum<TerminalInsertedContentType>("content_type")
+  private val INSERTED_CONTENT_SOURCE = EventFields.Enum<TerminalInsertedContentSource>("content_source")
 
   // Latency measurement related fields
   private val DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "duration_ms")
@@ -73,6 +77,13 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val sessionRestoredEvent = GROUP.registerEvent("session.restored", TABS_COUNT)
 
   private val hyperlinkFollowedEvent = GROUP.registerEvent("hyperlink.followed", HYPERLINK_INFO_CLASS)
+
+  private val contentInsertedEvent = GROUP.registerVarargEvent(
+    "content.inserted",
+    INSERTED_CONTENT_TYPE,
+    INSERTED_CONTENT_SOURCE,
+    PROCESS_EXECUTABLE,
+  )
 
   private val osVersion: String by lazy {
     Version.parseVersion(OS.CURRENT.version())?.toCompactString() ?: "unknown"
@@ -272,6 +283,20 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     hyperlinkFollowedEvent.log(javaClass)
   }
 
+  fun logContentInserted(
+    project: Project,
+    contentType: TerminalInsertedContentType,
+    fileSource: TerminalInsertedContentSource,
+    processExecutable: String?,
+  ) {
+    contentInsertedEvent.log(
+      project,
+      INSERTED_CONTENT_TYPE with contentType,
+      INSERTED_CONTENT_SOURCE with fileSource,
+      PROCESS_EXECUTABLE with processExecutable,
+    )
+  }
+
   fun logStartupCursorShowingLatency(openingWay: TerminalTabOpeningWay, duration: Duration) {
     startupCursorShowingLatency.log(
       TERMINAL_TAB_OPENING_WAY with openingWay,
@@ -316,6 +341,22 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   fun logAgentInstalled(project: Project, agentKey: TerminalAgent.AgentKey) {
     agentInstalledEvent.log(project, agentKey.toFusTerminalAiAgent())
   }
+}
+
+@ApiStatus.Internal
+enum class TerminalInsertedContentType {
+  TEXT,
+  FILE,
+  DIRECTORY,
+  CLIPBOARD_IMAGE,
+  MULTIPLE_ITEMS,
+}
+
+@ApiStatus.Internal
+enum class TerminalInsertedContentSource {
+  IDE,
+  EXTERNAL_APP,
+  CLIPBOARD,
 }
 
 internal enum class FusTerminalAiAgent {
