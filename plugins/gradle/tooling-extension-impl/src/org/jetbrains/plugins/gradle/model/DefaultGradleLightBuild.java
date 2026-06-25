@@ -138,10 +138,8 @@ public final class DefaultGradleLightBuild implements GradleLightBuild, Serializ
     // TODO traverse builds via graph to avoid separated parent build field initialization
     for (GradleBuild gradleBuild : gradleBuilds) {
       BasicGradleProject gradleRootProject = gradleBuild.getRootProject();
-      if (gradleRootProject != null) {
-        DefaultGradleLightBuild build = new DefaultGradleLightBuild(gradleBuild, gradleRootProject, gradleVersion);
-        gradleBuildsToConverted.put(gradleBuild.getBuildIdentifier().getRootDir(), build);
-      }
+      DefaultGradleLightBuild build = new DefaultGradleLightBuild(gradleBuild, gradleRootProject, gradleVersion);
+      gradleBuildsToConverted.put(gradleBuild.getBuildIdentifier().getRootDir(), build);
     }
     setIncludedBuildsHierarchy(gradleBuilds, gradleBuildsToConverted);
     setBuildSrcHierarchy(gradleBuildsToConverted.values());
