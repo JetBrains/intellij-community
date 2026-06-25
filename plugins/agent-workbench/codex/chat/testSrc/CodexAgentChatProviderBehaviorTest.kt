@@ -6,6 +6,7 @@ import com.intellij.agent.workbench.chat.AgentChatBehaviorTerminalTab
 import com.intellij.agent.workbench.chat.AgentChatInitialMessageDispatchContext
 import com.intellij.agent.workbench.chat.AgentChatInitialMessageRetryDecision
 import com.intellij.agent.workbench.chat.AgentChatInitialMessageSendObservation
+import com.intellij.agent.workbench.chat.AgentChatInitialMessageTerminalSendMode
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
@@ -54,6 +55,22 @@ class CodexAgentChatProviderBehaviorTest {
   }
 
   @Test
+  fun generatedPlanCommandUsesInteractiveTerminalCommandSendMode() {
+    assertThat(
+      behavior.initialMessageTerminalSendMode(
+        planCommandDispatch(completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY),
+      )
+    ).isEqualTo(AgentChatInitialMessageTerminalSendMode.INTERACTIVE_COMMAND)
+
+    assertThat(behavior.initialMessageTerminalSendMode(planCommandDispatch()))
+      .isEqualTo(AgentChatInitialMessageTerminalSendMode.TEXT)
+    assertThat(behavior.initialMessageTerminalSendMode(planCommandWithArgsDispatch()))
+      .isEqualTo(AgentChatInitialMessageTerminalSendMode.TEXT)
+    assertThat(behavior.initialMessageTerminalSendMode(promptDispatch()))
+      .isEqualTo(AgentChatInitialMessageTerminalSendMode.TEXT)
+  }
+
+  @Test
   fun generatedPlanCommandBusyOutputStopsDispatch() {
     val dispatch = planCommandDispatch(completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY)
 
@@ -82,16 +99,14 @@ class CodexAgentChatProviderBehaviorTest {
   }
 
   @Test
-  fun recognizedPlanCommandResponseOutputProceeds() {
+  fun confirmedPlanCommandResponseOutputProceeds() {
     val dispatch = planCommandDispatch(completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY)
-    val recognizedResponses = listOf(
+    val confirmedResponses = listOf(
       "Plan mode",
-      "Plan mode unavailable right now.",
-      "Collaboration modes are disabled.",
-      "Unknown command: /plan",
+      "status: Plan mode (shift+tab to cycle)",
     )
 
-    for (output in recognizedResponses) {
+    for (output in confirmedResponses) {
       assertThat(
         behavior.afterInitialMessageSendObservation(
           file = TestBehaviorFile(),
@@ -104,11 +119,33 @@ class CodexAgentChatProviderBehaviorTest {
   }
 
   @Test
+  fun planCommandFailureOutputStopsDispatch() {
+    val dispatch = planCommandDispatch(completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY)
+    val failureResponses = listOf(
+      "Plan mode unavailable right now.",
+      "Collaboration modes are disabled.",
+      "Unknown command: /plan",
+    )
+
+    for (output in failureResponses) {
+      assertThat(
+        behavior.afterInitialMessageSendObservation(
+          file = TestBehaviorFile(),
+          dispatch = dispatch,
+          observation = observation(output),
+          retryAttempt = 0,
+        )
+      ).isSameAs(AgentChatInitialMessageRetryDecision.Stop)
+    }
+  }
+
+  @Test
   fun unconfirmedPlanCommandOutputWaitsForMoreOutput() {
     val dispatch = planCommandDispatch(completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY)
     // The prompt step must stay withheld while Codex has not yet reacted to `/plan` (still echoing the
     // command, rendering startup, or running a SessionStart hook), so it cannot merge onto the input line.
     val unconfirmedOutputs = listOf(
+      "/plan",
       "\u001B[0m \n\t",
       "Running SessionStart hook:\nhook output",
     )
@@ -232,6 +269,15 @@ private fun promptDispatch(): TestDispatch {
     action = AgentInitialMessageDispatchAction.SEND_TEXT,
     message = "Refactor this",
     stepIndex = 1,
+  )
+}
+
+private fun planCommandWithArgsDispatch(): TestDispatch {
+  return TestDispatch(
+    action = AgentInitialMessageDispatchAction.SEND_TEXT,
+    message = "/plan Refactor this",
+    stepIndex = 1,
+    completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
   )
 }
 

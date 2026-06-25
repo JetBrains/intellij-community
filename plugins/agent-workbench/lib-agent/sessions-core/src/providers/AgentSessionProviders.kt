@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.serviceContainer.BaseKeyedLazyInstance
 import com.intellij.util.xmlb.annotations.Attribute
+import org.jetbrains.annotations.ApiStatus.Internal
 
 private class AgentSessionProviderRegistryLog
 
@@ -17,6 +18,7 @@ private val LOG = logger<AgentSessionProviderRegistryLog>()
 private val AGENT_SESSION_PROVIDER_EP: ExtensionPointName<AgentSessionProviderBean> =
   ExtensionPointName("com.intellij.agent.workbench.sessionProvider")
 
+@Internal
 class AgentSessionProviderBean : BaseKeyedLazyInstance<AgentSessionProviderImplementation>() {
   @Attribute("providerId")
   @JvmField
@@ -36,7 +38,11 @@ class AgentSessionProviderBean : BaseKeyedLazyInstance<AgentSessionProviderImple
       LOG.warn("Ignoring session provider with invalid providerId '$providerId': $implementation")
       return null
     }
-    return RegisteredAgentSessionProviderDescriptor(provider, instance)
+    val providerImplementation = instance
+    if (providerImplementation is AgentSessionProviderDescriptor && providerImplementation.provider == provider) {
+      return providerImplementation
+    }
+    return RegisteredAgentSessionProviderDescriptor(provider, providerImplementation)
   }
 }
 

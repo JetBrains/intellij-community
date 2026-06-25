@@ -362,9 +362,18 @@ internal class AgentResolveConflictsActionTest {
       .add(MergeResolveActionContext.KEY, mergeContext)
       .build()
 
-    val request = resolveRequest(AgentResolveConflictsAction(), dataContext)
+    var startedRequest: AgentVcsMergeLaunchRequest? = null
+    val action = AgentResolveConflictsAction(
+      allProviders = {
+        listOf(TestAgentSessionProviderDescriptor(AgentSessionProvider.from("codex"), setOf(AgentSessionLaunchMode.STANDARD)))
+      },
+      activeVcsMergeLaunchProfileId = { null },
+      startSession = { _, request -> startedRequest = request },
+    )
 
-    assertThat(request.selectionHintFiles).containsExactlyElementsOf(selectedFiles)
+    action.actionPerformed(createActionEvent(action, dataContext))
+
+    assertThat(startedRequest?.selectionHintFiles).containsExactlyElementsOf(selectedFiles)
   }
 
   private fun createLaunchRequest(): AgentVcsMergeLaunchRequest {
@@ -409,12 +418,12 @@ internal class AgentResolveConflictsActionTest {
     }
   }
 
-  private fun createActionEvent(action: AgentResolveConflictsAction): AnActionEvent {
-    return AnActionEvent.createEvent(createMergeDataContext(),
-                                     action.templatePresentation.clone(),
-                                     ONE_SHOT_DIALOG_ACTION_PLACE,
-                                     ActionUiKind.NONE,
-                                     null)
+  private fun createActionEvent(action: AgentResolveConflictsAction, dataContext: DataContext = createMergeDataContext()): AnActionEvent {
+    return AnActionEvent.createEvent(dataContext,
+                                      action.templatePresentation.clone(),
+                                      ONE_SHOT_DIALOG_ACTION_PLACE,
+                                      ActionUiKind.NONE,
+                                      null)
   }
 
   private fun createMergeDataContext(): DataContext {
@@ -430,14 +439,6 @@ internal class AgentResolveConflictsActionTest {
       .build()
   }
 
-  private fun resolveRequest(action: AgentResolveConflictsAction, dataContext: DataContext): AgentVcsMergeLaunchRequest {
-    val method = AgentResolveConflictsAction::class.java.getDeclaredMethod("resolveContext", DataContext::class.java)
-    method.isAccessible = true
-    val resolveWithAgentContext = checkNotNull(method.invoke(action, dataContext))
-    val requestMethod = resolveWithAgentContext.javaClass.getDeclaredMethod("getRequest")
-    requestMethod.isAccessible = true
-    return requestMethod.invoke(resolveWithAgentContext) as AgentVcsMergeLaunchRequest
-  }
 }
 
 private class TestAgentSessionProviderDescriptor(

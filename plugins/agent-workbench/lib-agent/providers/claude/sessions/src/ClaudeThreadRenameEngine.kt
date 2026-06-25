@@ -4,13 +4,13 @@ package com.intellij.platform.ai.agent.claude.sessions
 import com.intellij.platform.ai.agent.claude.common.buildClaudeArchivedThreadTitle
 import com.intellij.platform.ai.agent.claude.common.normalizeClaudeStoredThreadTitle
 import com.intellij.platform.ai.agent.claude.common.resolveClaudeThreadTitleState
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentOpenTopLevelThreadDispatchService
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentTerminalPromptDispatch
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan
 import kotlinx.coroutines.delay
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -27,19 +27,19 @@ internal interface ClaudeThreadRenameEngine {
 
 internal fun interface ClaudeOpenTabRenameDispatcher {
   suspend fun dispatch(
-    path: String,
-    threadId: String,
-    launchSpec: AgentSessionTerminalLaunchSpec,
-    dispatchPlan: AgentInitialMessageDispatchPlan,
+      path: String,
+      threadId: String,
+      launchSpec: AgentSessionTerminalLaunchSpec,
+      dispatchPlan: AgentInitialPromptDeliveryPlan,
   ): Boolean
 }
 
 internal object ClaudeChatOpenTabRenameDispatcher : ClaudeOpenTabRenameDispatcher {
   override suspend fun dispatch(
-    path: String,
-    threadId: String,
-    launchSpec: AgentSessionTerminalLaunchSpec,
-    dispatchPlan: AgentInitialMessageDispatchPlan,
+      path: String,
+      threadId: String,
+      launchSpec: AgentSessionTerminalLaunchSpec,
+      dispatchPlan: AgentInitialPromptDeliveryPlan,
   ): Boolean {
     val dispatchService = ApplicationManager.getApplication().getService(AgentOpenTopLevelThreadDispatchService::class.java)
                           ?: return false
@@ -237,12 +237,12 @@ internal class ClaudeThreadRenameStateObserver(
   }
 }
 
-private fun buildClaudeRenameDispatchPlan(normalizedTitle: String): AgentInitialMessageDispatchPlan {
-  return AgentInitialMessageDispatchPlan(
-    terminalDispatch = AgentTerminalPromptDispatch(
-      steps = listOf(AgentInitialMessageDispatchStep(text = "/rename $normalizedTitle")),
-    ),
-  )
+private fun buildClaudeRenameDispatchPlan(normalizedTitle: String): AgentInitialPromptDeliveryPlan {
+    return AgentInitialPromptDeliveryPlan(
+        terminalDispatch = AgentTerminalPromptDispatch(
+            steps = listOf(AgentInitialMessageDispatchStep(text = "/rename $normalizedTitle")),
+        ),
+    )
 }
 
 private fun describeObservedState(thread: ClaudeBackendThread?): String {

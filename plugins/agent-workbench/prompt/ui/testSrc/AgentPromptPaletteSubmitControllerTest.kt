@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.common.session.isClaudeMenuCommandPrompt
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
@@ -666,6 +667,10 @@ class AgentPromptPaletteSubmitControllerTest {
 
       override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {
         return initialMessagePlanBuilder(request)
+      }
+
+      override fun shouldStripContextForPrompt(prompt: String): Boolean {
+        return this.provider == AgentSessionProvider.from("claude") && prompt.isClaudeMenuCommandPrompt()
       }
     }
   }

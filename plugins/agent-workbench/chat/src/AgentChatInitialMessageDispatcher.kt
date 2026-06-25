@@ -4,6 +4,8 @@ package com.intellij.agent.workbench.chat
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageProviderDispatchRequest
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
@@ -48,6 +50,7 @@ internal class AgentChatInitialMessageDispatcher(
   private val project: Project,
   private val file: AgentChatVirtualFile,
   private val behavior: AgentChatProviderBehavior,
+  private val descriptor: AgentSessionProviderDescriptor?,
   private val tabSnapshotWriter: AgentChatTabSnapshotWriter,
   private val planModeInitialPromptStopReporter: (Project, AgentChatVirtualFile) -> Unit =
     AgentChatRestoreNotificationService::reportInitialPromptPlanModeFailure,
@@ -313,7 +316,7 @@ internal class AgentChatInitialMessageDispatcher(
     return completeInitialMessageDispatch(dispatch, readinessCheckpoint)
   }
 
-  private fun sendInitialMessageDispatchAction(
+  private suspend fun sendInitialMessageDispatchAction(
     tab: AgentChatTerminalTab,
     dispatch: AgentChatInitialMessageDispatch,
   ): Boolean {
@@ -323,13 +326,42 @@ internal class AgentChatInitialMessageDispatcher(
           false
         }
         else {
-          tab.sendText(
+          tab.sendInitialMessageText(
             dispatch.message,
             shouldExecute = true,
             useBracketedPasteMode = behavior.shouldUseBracketedPasteMode(dispatch.message),
+            terminalSendMode = behavior.initialMessageTerminalSendMode(dispatch),
           )
           true
         }
+      }
+      AgentInitialMessageDispatchAction.PROVIDER -> {
+        val providerDescriptor = descriptor ?: return false
+        val threadId = file.threadId.ifBlank { file.sessionId }
+        if (threadId.isBlank() || dispatch.message.isEmpty()) {
+          return false
+        }
+        when (tab.awaitTerminalTitleThreadId(
+          provider = providerDescriptor.provider,
+          expectedThreadId = threadId,
+          timeoutMs = PROVIDER_INITIAL_MESSAGE_ATTACH_TIMEOUT_MS,
+        )) {
+          AgentChatTerminalInputReadiness.READY -> Unit
+          AgentChatTerminalInputReadiness.TIMEOUT -> LOG.warn(
+            "Timed out waiting for terminal title thread id before provider initial message dispatch; dispatching via provider anyway"
+          )
+          AgentChatTerminalInputReadiness.TERMINATED -> return false
+        }
+        providerDescriptor.dispatchInitialMessageToProvider(
+          AgentInitialMessageProviderDispatchRequest(
+            project = project,
+            projectPath = file.projectPath,
+            threadId = threadId,
+            message = dispatch.message,
+            mode = file.initialMessageMode ?: AgentInitialMessageMode.STANDARD,
+            generationSettings = file.generationSettings,
+          )
+        )
       }
     }
   }
@@ -436,3 +468,4 @@ private data class AgentChatInitialMessageSendResult(
 }
 
 private const val INITIAL_MESSAGE_TRANSIENT_BUSY_TIMEOUT_MS: Long = 120_000
+private const val PROVIDER_INITIAL_MESSAGE_ATTACH_TIMEOUT_MS: Long = 10_000

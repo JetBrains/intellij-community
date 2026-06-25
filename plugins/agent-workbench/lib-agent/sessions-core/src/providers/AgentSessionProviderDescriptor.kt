@@ -39,7 +39,17 @@ enum class AgentInitialMessageDispatchCompletionPolicy {
 
 enum class AgentInitialMessageDispatchAction {
   SEND_TEXT,
+  PROVIDER,
 }
+
+data class AgentInitialMessageProviderDispatchRequest(
+  @JvmField val project: Project,
+  @JvmField val projectPath: String,
+  @JvmField val threadId: String,
+  @JvmField val message: String,
+  @JvmField val mode: AgentInitialMessageMode,
+  @JvmField val generationSettings: AgentPromptGenerationSettings,
+)
 
 /**
  * Controls how synchronous provider pickers behave before CLI availability is known.
@@ -90,6 +100,7 @@ enum class AgentInitialPromptDeliveryStatus {
 enum class AgentInitialPromptDeliveryChannel {
   STARTUP_COMMAND,
   TERMINAL,
+  APP_SERVER,
 }
 
 data class AgentInitialPromptRecord(
@@ -203,7 +214,10 @@ private fun buildPromptRecord(
   )
 }
 
-typealias AgentInitialMessageDispatchPlan = AgentInitialPromptDeliveryPlan
+data class AgentPrestartedNewSessionPromptLaunch(
+  @JvmField val launchSpec: AgentSessionTerminalLaunchSpec,
+  @JvmField val initialMessageDispatchPlan: AgentInitialPromptDeliveryPlan,
+)
 
 data class AgentPendingSessionMetadata(
   @JvmField val createdAtMs: Long,
@@ -369,6 +383,15 @@ interface AgentSessionProviderImplementation {
 
   suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec
 
+  suspend fun prestartNewSessionPromptLaunch(
+    projectPath: String,
+    launchMode: AgentSessionLaunchMode,
+    initialMessagePlan: AgentInitialMessagePlan,
+    generationSettings: AgentPromptGenerationSettings,
+    generationModelCatalog: List<AgentPromptGenerationModel>,
+    launchSpec: AgentSessionTerminalLaunchSpec,
+  ): AgentPrestartedNewSessionPromptLaunch? = null
+
   fun sanitizeGenerationSettings(generationSettings: AgentPromptGenerationSettings): AgentPromptGenerationSettings {
     val modelId = generationSettings.modelId
       ?.trim()
@@ -417,6 +440,8 @@ interface AgentSessionProviderImplementation {
       )
     )
   }
+
+  suspend fun dispatchInitialMessageToProvider(request: AgentInitialMessageProviderDispatchRequest): Boolean = false
 
   suspend fun archiveThread(path: String, threadId: String): Boolean = false
 

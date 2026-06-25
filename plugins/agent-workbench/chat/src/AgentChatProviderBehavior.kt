@@ -134,6 +134,12 @@ data class AgentChatInitialMessageSendObservation(
 )
 
 @ApiStatus.Internal
+enum class AgentChatInitialMessageTerminalSendMode {
+  TEXT,
+  INTERACTIVE_COMMAND,
+}
+
+@ApiStatus.Internal
 interface AgentChatProviderBehavior {
   fun supportsPendingThreadRefreshRetry(file: AgentChatBehaviorFile): Boolean = false
 
@@ -147,6 +153,10 @@ interface AgentChatProviderBehavior {
   fun isConcreteNewThreadRebindCommand(command: String): Boolean = false
 
   fun shouldUseBracketedPasteMode(text: String): Boolean = true
+
+  fun initialMessageTerminalSendMode(dispatch: AgentChatInitialMessageDispatchContext): AgentChatInitialMessageTerminalSendMode {
+    return AgentChatInitialMessageTerminalSendMode.TEXT
+  }
 
   suspend fun beforeInitialMessageSend(
     file: AgentChatBehaviorFile,

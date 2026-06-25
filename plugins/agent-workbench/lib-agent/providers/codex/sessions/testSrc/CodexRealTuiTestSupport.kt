@@ -55,11 +55,19 @@ internal class CodexRealTuiHarness(
     return start(prompt = prompt, extraConfigArgs = emptyList())
   }
 
-  fun startInteractive(extraConfigArgs: List<String> = emptyList()): RunningCodexTuiSession {
-    return start(prompt = null, extraConfigArgs = extraConfigArgs)
+  fun startRemoteResume(remoteUrl: String, threadId: String, extraConfigArgs: List<String> = emptyList()): RunningCodexTuiSession {
+    return start(commandTail = listOf("resume", "--remote", remoteUrl, threadId), extraConfigArgs = extraConfigArgs)
+  }
+
+  fun requests(): List<String> {
+    return server.requests()
   }
 
   private fun start(prompt: String?, extraConfigArgs: List<String>): RunningCodexTuiSession {
+    return start(commandTail = prompt?.let(::listOf).orEmpty(), extraConfigArgs = extraConfigArgs)
+  }
+
+  private fun start(commandTail: List<String>, extraConfigArgs: List<String>): RunningCodexTuiSession {
     val environment = HashMap(System.getenv())
     environment["CODEX_HOME"] = codexHome.toString()
     environment.putIfAbsent("TERM", "xterm-256color")
@@ -74,7 +82,7 @@ internal class CodexRealTuiHarness(
         add("-c")
         add(configArg)
       }
-      prompt?.let(::add)
+      addAll(commandTail)
     }
 
     val process = PtyProcessBuilder(
@@ -158,12 +166,6 @@ internal class RunningCodexTuiSession(
     } ?: error("Timed out waiting for real Codex rollout session id.\n${diagnostics()}")
   }
 
-  suspend fun awaitTerminalTitleContaining(expectedText: String, timeout: Duration = 20.seconds): String {
-    return eventually(timeout = timeout) {
-      terminalTitles().firstOrNull { title -> expectedText in title }
-    } ?: error("Timed out waiting for terminal title containing '$expectedText'.\n${diagnostics()}")
-  }
-
   suspend fun awaitTerminalThreadId(timeout: Duration = 20.seconds): String {
     return eventually(timeout = timeout) {
       terminalTitles()
@@ -171,10 +173,10 @@ internal class RunningCodexTuiSession(
     } ?: error("Timed out waiting for terminal title thread id.\n${diagnostics()}")
   }
 
-  fun submitPrompt(prompt: String) {
-    val bytes = (BRACKETED_PASTE_START + prompt + BRACKETED_PASTE_END + "\r").toByteArray(StandardCharsets.UTF_8)
-    process.outputStream.write(bytes)
-    process.outputStream.flush()
+  suspend fun awaitOutputContains(text: String, timeout: Duration = 20.seconds) {
+    eventually(timeout = timeout) {
+      normalizedOutputText().takeIf { output -> output.contains(text) }
+    } ?: error("Timed out waiting for real Codex TUI output to contain '$text'.\n${diagnostics()}")
   }
 
   fun requests(): List<String> = responsesServer.requests()
@@ -209,6 +211,16 @@ internal class RunningCodexTuiSession(
     return outputLock.withLock {
       output.toString()
     }
+  }
+
+  private fun normalizedOutputText(): String {
+    val withoutAnsi = ANSI_ESCAPE_PATTERN.replace(outputText(), " ")
+    val sanitized = buildString(withoutAnsi.length) {
+      for (char in withoutAnsi) {
+        append(if (char.isWhitespace() || char.isISOControl()) ' ' else char)
+      }
+    }
+    return WHITESPACE_PATTERN.replace(sanitized, " ").trim()
   }
 
   private fun terminalTitles(): List<String> {
@@ -613,12 +625,12 @@ private fun requestUserInputArguments(): String {
 
 private fun sse(vararg events: SseEvent): String {
   return buildString {
-    for (event in events) {
+    for ((type, data) in events) {
       append("event: ")
-      append(event.type)
+      append(type)
       append('\n')
       append("data: ")
-      append(event.data)
+      append(data)
       append("\n\n")
     }
   }
@@ -685,14 +697,14 @@ private val JSON_FACTORY = JsonFactory()
 private val CURSOR_QUERY = byteArrayOf(0x1B, '['.code.toByte(), '6'.code.toByte(), 'n'.code.toByte())
 private val CURSOR_POSITION_RESPONSE = "\u001B[1;1R".toByteArray(StandardCharsets.UTF_8)
 private val CTRL_C = byteArrayOf(3)
-private const val BRACKETED_PASTE_START: String = "\u001B[200~"
-private const val BRACKETED_PASTE_END: String = "\u001B[201~"
 private const val OSC: String = "\u001B]"
 private const val BEL: Char = '\u0007'
 private const val STRING_TERMINATOR: String = "\u001B\\"
 private val CODEX_THREAD_ID_IN_TERMINAL_TITLE_REGEX = Regex(
   "\\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\\b"
 )
+private val ANSI_ESCAPE_PATTERN = Regex("\u001B\\[[0-?]*[ -/]*[@-~]")
+private val WHITESPACE_PATTERN = Regex("\\s+")
 
 private fun minPositive(first: Int, second: Int): Int {
   return when {

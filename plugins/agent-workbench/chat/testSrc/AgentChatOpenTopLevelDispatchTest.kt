@@ -15,7 +15,6 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationModel
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentOpenTopLevelThreadDispatchService
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionOutlineForkResult
@@ -38,6 +37,7 @@ import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan
 import com.intellij.terminal.frontend.view.TerminalInputInterceptor
 import com.intellij.terminal.frontend.view.TerminalKeyEvent
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
@@ -146,10 +146,10 @@ class AgentChatOpenTopLevelDispatchTest {
       provider = AgentSessionProvider.from("codex"),
       threadId = "thread-open-dispatch",
       launchSpec = AgentSessionTerminalLaunchSpec(command = codexResumeCommand("thread-open-dispatch")),
-      initialMessageDispatchPlan = AgentInitialMessageDispatchPlan(
-        postStartDispatchSteps = listOf(AgentInitialMessageDispatchStep(text = "Dispatch through helper")),
-        initialMessageToken = "dispatch-open-token",
-      ),
+        initialMessageDispatchPlan = AgentInitialPromptDeliveryPlan(
+            postStartDispatchSteps = listOf<AgentInitialMessageDispatchStep>(AgentInitialMessageDispatchStep(text = "Dispatch through helper")),
+            initialMessageToken = "dispatch-open-token",
+        ),
     )
 
     assertThat(dispatched).isTrue()
@@ -491,9 +491,9 @@ class AgentChatOpenTopLevelDispatchTest {
       provider = AgentSessionProvider.from("codex"),
       threadId = "thread-sub-agent-only",
       launchSpec = AgentSessionTerminalLaunchSpec(command = codexResumeCommand("thread-sub-agent-only")),
-      initialMessageDispatchPlan = AgentInitialMessageDispatchPlan(
-        postStartDispatchSteps = listOf(AgentInitialMessageDispatchStep(text = "Should not dispatch")),
-      ),
+        initialMessageDispatchPlan = AgentInitialPromptDeliveryPlan(
+            postStartDispatchSteps = listOf<AgentInitialMessageDispatchStep>(AgentInitialMessageDispatchStep(text = "Should not dispatch")),
+        ),
     )
 
     assertThat(dispatched).isFalse()

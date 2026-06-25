@@ -409,6 +409,7 @@ internal class AgentChatFileEditor(
       project = project,
       file = file,
       behavior = behavior,
+      descriptor = providerDescriptor,
       tabSnapshotWriter = tabSnapshotWriter,
     )
     initialMessageDispatcher = messageDispatcher

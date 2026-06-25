@@ -201,6 +201,23 @@ class CodexAppServerProtocolTest {
   }
 
   @Test
+  fun parsesTurnStartResultVariants() {
+    val result = parseResponse(
+      """
+        {
+          "turnId": "turn-1",
+          "status": "in_progress"
+        }
+      """.trimIndent(),
+      defaultResult = null,
+    ) { parser -> protocol.parseTurnStartResult(parser) }
+
+    assertThat(result).isNotNull
+    assertThat(result!!.turnId).isEqualTo("turn-1")
+    assertThat(result.status).isEqualTo("in_progress")
+  }
+
+  @Test
   fun throwsAppServerErrorAndRecognizesIncludeTurnsFallback() {
     assertThatThrownBy {
       protocol.parseResponse(

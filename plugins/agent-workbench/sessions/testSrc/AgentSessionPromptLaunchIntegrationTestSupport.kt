@@ -11,7 +11,6 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
 import com.intellij.platform.ai.agent.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
@@ -23,6 +22,9 @@ import com.intellij.agent.workbench.sessions.service.AgentSessionChatOpenExecuto
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryChannel
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryStatus
 import com.intellij.testFramework.LightVirtualFile
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -295,6 +297,8 @@ fun assertNewThreadPromptLaunchOpensNewChat(
           postStartDispatchSteps = openRequest.postStartDispatchSteps,
           initialPromptMessage = openRequest.initialPromptMessage,
           initialMessageToken = openRequest.initialMessageToken,
+          initialPromptDeliveryStatus = openRequest.initialPromptDeliveryStatus,
+          initialPromptDeliveryChannel = openRequest.initialPromptDeliveryChannel,
           launchProfileId = openRequest.launchProfileId,
           preferredDedicatedFrame = openRequest.preferredDedicatedFrame,
         )
@@ -378,14 +382,14 @@ internal class RecordingChatOpenExecutor(
   }
 
   override suspend fun openChat(
-    normalizedPath: String,
-    thread: AgentSessionThread,
-    subAgent: AgentSubAgent?,
-    launchSpecOverride: AgentSessionTerminalLaunchSpec?,
-    initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
-    launchMode: AgentSessionLaunchMode?,
-    launchProfileId: String?,
-    generationSettings: AgentPromptGenerationSettings,
+      normalizedPath: String,
+      thread: AgentSessionThread,
+      subAgent: AgentSubAgent?,
+      launchSpecOverride: AgentSessionTerminalLaunchSpec?,
+      initialMessageDispatchPlan: AgentInitialPromptDeliveryPlan,
+      launchMode: AgentSessionLaunchMode?,
+      launchProfileId: String?,
+      generationSettings: AgentPromptGenerationSettings,
   ) {
     val request = OpenChatRequest(
       normalizedPath = normalizedPath,
@@ -396,6 +400,8 @@ internal class RecordingChatOpenExecutor(
       postStartDispatchSteps = initialMessageDispatchPlan.postStartDispatchSteps,
       initialPromptMessage = initialMessageDispatchPlan.promptRecord?.message,
       initialMessageToken = initialMessageDispatchPlan.initialMessageToken,
+      initialPromptDeliveryStatus = initialMessageDispatchPlan.promptRecord?.deliveryStatus,
+      initialPromptDeliveryChannel = initialMessageDispatchPlan.promptRecord?.deliveryChannel,
       launchMode = launchMode,
       launchProfileId = launchProfileId,
       generationSettings = generationSettings,
@@ -408,16 +414,16 @@ internal class RecordingChatOpenExecutor(
   }
 
   override suspend fun openNewChat(
-    normalizedPath: String,
-    identity: String,
-    launchSpec: AgentSessionTerminalLaunchSpec,
-    initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
-    launchMode: AgentSessionLaunchMode?,
-    launchProfileId: String?,
-    generationSettings: AgentPromptGenerationSettings,
-    preferredDedicatedFrame: Boolean?,
-    openedChatHandler: (suspend (Project, VirtualFile) -> Unit)?,
-    threadTitle: String?,
+      normalizedPath: String,
+      identity: String,
+      launchSpec: AgentSessionTerminalLaunchSpec,
+      initialMessageDispatchPlan: AgentInitialPromptDeliveryPlan,
+      launchMode: AgentSessionLaunchMode?,
+      launchProfileId: String?,
+      generationSettings: AgentPromptGenerationSettings,
+      preferredDedicatedFrame: Boolean?,
+      openedChatHandler: (suspend (Project, VirtualFile) -> Unit)?,
+      threadTitle: String?,
   ) {
     val request = OpenNewChatRequest(
       normalizedPath = normalizedPath,
@@ -427,6 +433,8 @@ internal class RecordingChatOpenExecutor(
       postStartDispatchSteps = initialMessageDispatchPlan.postStartDispatchSteps,
       initialPromptMessage = initialMessageDispatchPlan.promptRecord?.message,
       initialMessageToken = initialMessageDispatchPlan.initialMessageToken,
+      initialPromptDeliveryStatus = initialMessageDispatchPlan.promptRecord?.deliveryStatus,
+      initialPromptDeliveryChannel = initialMessageDispatchPlan.promptRecord?.deliveryChannel,
       launchMode = launchMode,
       launchProfileId = launchProfileId,
       generationSettings = generationSettings,
@@ -449,6 +457,8 @@ internal data class OpenChatRequest(
   @JvmField val postStartDispatchSteps: List<AgentInitialMessageDispatchStep>,
   @JvmField val initialPromptMessage: String?,
   @JvmField val initialMessageToken: String?,
+  @JvmField val initialPromptDeliveryStatus: AgentInitialPromptDeliveryStatus?,
+  @JvmField val initialPromptDeliveryChannel: AgentInitialPromptDeliveryChannel?,
   @JvmField val launchMode: AgentSessionLaunchMode?,
   @JvmField val launchProfileId: String?,
   @JvmField val generationSettings: AgentPromptGenerationSettings,
@@ -465,6 +475,8 @@ internal data class OpenNewChatRequest(
   @JvmField val postStartDispatchSteps: List<AgentInitialMessageDispatchStep>,
   @JvmField val initialPromptMessage: String?,
   @JvmField val initialMessageToken: String?,
+  @JvmField val initialPromptDeliveryStatus: AgentInitialPromptDeliveryStatus?,
+  @JvmField val initialPromptDeliveryChannel: AgentInitialPromptDeliveryChannel?,
   @JvmField val launchMode: AgentSessionLaunchMode?,
   @JvmField val launchProfileId: String?,
   @JvmField val generationSettings: AgentPromptGenerationSettings,
@@ -483,6 +495,8 @@ data class NewThreadPromptLaunchObservation(
   @JvmField val postStartDispatchSteps: List<AgentInitialMessageDispatchStep>,
   @JvmField val initialPromptMessage: String?,
   @JvmField val initialMessageToken: String?,
+  @JvmField val initialPromptDeliveryStatus: AgentInitialPromptDeliveryStatus?,
+  @JvmField val initialPromptDeliveryChannel: AgentInitialPromptDeliveryChannel?,
   @JvmField val launchProfileId: String?,
   @JvmField val preferredDedicatedFrame: Boolean?,
 )

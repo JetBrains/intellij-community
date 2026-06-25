@@ -1,12 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.vcs.merge
 
+import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.agent.workbench.sessions.AgentSessionLaunchProfileSelection
 import com.intellij.agent.workbench.sessions.AgentSessionLaunchProfileMenuItem
 import com.intellij.agent.workbench.sessions.buildAgentSessionLaunchProfileMenuActions
 import com.intellij.agent.workbench.sessions.buildAgentSessionLaunchProfileMenuModel
+import com.intellij.platform.ai.agent.sessions.core.providers.builtInLaunchProfileId
 import com.intellij.platform.ai.agent.sessions.core.providers.generationSettingsForPlanMode
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderMenuItem
@@ -184,7 +186,7 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
       menuModel = menuModel,
       userProfiles = userLaunchProfiles(),
       preferredProfileId = activeVcsMergeLaunchProfileId(),
-      fallbackProfileIds = emptyList(),
+      fallbackProfileIds = listOf(builtInLaunchProfileId(AgentSessionProvider.from("codex"), AgentSessionLaunchMode.STANDARD)),
       quickStartItemFilter = { item -> item.menuItem.isEnabled },
     )
   }

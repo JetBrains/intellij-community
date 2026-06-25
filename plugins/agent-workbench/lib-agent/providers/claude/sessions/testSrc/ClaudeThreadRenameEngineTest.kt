@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ai.agent.claude.sessions
 
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan
 import com.intellij.testFramework.LoggedErrorProcessor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -166,7 +166,7 @@ class ClaudeThreadRenameEngineTest {
   fun renameThreadDispatchesOpenTabCommandWithoutInitialPromptRecord() {
     runBlocking(Dispatchers.Default) {
       var threads = listOf(ClaudeBackendThread(id = "session-1", title = "Old title", updatedAt = 100L))
-      var dispatchedPlan: AgentInitialMessageDispatchPlan? = null
+      var dispatchedPlan: AgentInitialPromptDeliveryPlan? = null
       val engine = ClaudeOpenTabAwareThreadRenameEngine(
         backend = testBackend { threads },
         fallbackEngine = fallbackRenameEngine(),

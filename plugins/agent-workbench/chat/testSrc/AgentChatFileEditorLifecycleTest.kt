@@ -1207,12 +1207,21 @@ class AgentChatFileEditorLifecycleTest {
 
   @Test
   fun lastEditorCloseArchivesConcreteTerminalSessionOnly() {
-    assertThat(shouldArchiveTerminalSessionOnLastEditorClose(terminalLifecycleTestFile()))
-      .isTrue()
-    assertThat(shouldArchiveTerminalSessionOnLastEditorClose(claudeLifecycleTestFile()))
-      .isFalse()
-    assertThat(shouldArchiveTerminalSessionOnLastEditorClose(pendingTestFile(provider = AgentSessionProvider.from("terminal"))))
-      .isFalse()
+    val terminalProvider = RecordingTerminalSessionClosedProvider(
+      provider = AgentSessionProvider.from("terminal"),
+      supportsArchiveThread = true,
+    )
+    val claudeProvider = RecordingTerminalSessionClosedProvider(provider = AgentSessionProvider.from("claude"))
+    val registry = InMemoryAgentSessionProviderRegistry(listOf(terminalProvider, claudeProvider))
+
+    AgentSessionProviders.withRegistryForTest(registry) {
+      assertThat(shouldArchiveTerminalSessionOnLastEditorClose(terminalLifecycleTestFile()))
+        .isTrue()
+      assertThat(shouldArchiveTerminalSessionOnLastEditorClose(claudeLifecycleTestFile()))
+        .isFalse()
+      assertThat(shouldArchiveTerminalSessionOnLastEditorClose(pendingTestFile(provider = AgentSessionProvider.from("terminal"))))
+        .isFalse()
+    }
   }
 
   @Test
@@ -1611,13 +1620,13 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
-  fun codexPlanModeUnavailableTerminalOutputDoesNotStopPrompt() {
+  fun codexPlanModeUnavailableTerminalOutputStopsPrompt() {
     val terminalTabs = FakeAgentChatTerminalTabs()
     terminalTabs.tab.readinessResult = AgentChatTerminalInputReadiness.TIMEOUT
     terminalTabs.tab.enqueuePostSendOutput("Plan mode unavailable right now.")
     val file = testFile().also {
       it.updateInitialMessageMetadata(
-        initialMessageDispatchSteps = codexPlanDispatchSteps("Send despite unavailable output"),
+        initialMessageDispatchSteps = codexPlanDispatchSteps("Do not send after unavailable output"),
         initialMessageDispatchStepIndex = 0,
         initialMessageToken = "token-terminal-plan-stop",
         initialMessageSent = false,
@@ -1632,25 +1641,24 @@ class AgentChatFileEditorLifecycleTest {
     terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
     terminalTabs.tab.emitMeaningfulOutput("Codex ready")
 
-    waitForCondition(timeoutMs = 5_000) { file.initialMessageSent && terminalTabs.tab.sentTexts.size == 2 }
-    assertThat(file.initialMessageSent).isTrue()
+    waitForCondition(timeoutMs = 5_000) { file.initialMessageDispatchSteps.isEmpty() && terminalTabs.tab.sentTexts.size == 1 }
+    assertThat(file.initialMessageSent).isFalse()
     assertThat(file.initialMessageDispatchStepIndex).isZero()
     assertThat(file.initialMessageDispatchSteps).isEmpty()
     assertThat(terminalTabs.tab.sentTexts)
       .containsExactly(
         SentTerminalText("/plan", shouldExecute = true),
-        SentTerminalText("Send despite unavailable output", shouldExecute = true),
       )
   }
 
   @Test
-  fun codexPlanModeUnsupportedTerminalOutputDoesNotStopPrompt() {
+  fun codexPlanModeUnsupportedTerminalOutputStopsPrompt() {
     val terminalTabs = FakeAgentChatTerminalTabs()
     terminalTabs.tab.readinessResult = AgentChatTerminalInputReadiness.TIMEOUT
     terminalTabs.tab.enqueuePostSendOutput("Unknown command: /plan")
     val file = testFile().also {
       it.updateInitialMessageMetadata(
-        initialMessageDispatchSteps = codexPlanDispatchSteps("Send despite unsupported output"),
+        initialMessageDispatchSteps = codexPlanDispatchSteps("Do not send after unsupported output"),
         initialMessageDispatchStepIndex = 0,
         initialMessageToken = "token-terminal-plan-unsupported",
         initialMessageSent = false,
@@ -1665,14 +1673,13 @@ class AgentChatFileEditorLifecycleTest {
     terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
     terminalTabs.tab.emitMeaningfulOutput("Codex ready")
 
-    waitForCondition(timeoutMs = 5_000) { file.initialMessageSent && terminalTabs.tab.sentTexts.size == 2 }
-    assertThat(file.initialMessageSent).isTrue()
+    waitForCondition(timeoutMs = 5_000) { file.initialMessageDispatchSteps.isEmpty() && terminalTabs.tab.sentTexts.size == 1 }
+    assertThat(file.initialMessageSent).isFalse()
     assertThat(file.initialMessageDispatchStepIndex).isZero()
     assertThat(file.initialMessageDispatchSteps).isEmpty()
     assertThat(terminalTabs.tab.sentTexts)
       .containsExactly(
         SentTerminalText("/plan", shouldExecute = true),
-        SentTerminalText("Send despite unsupported output", shouldExecute = true),
       )
   }
 
@@ -2577,12 +2584,10 @@ private object TestCodexAgentChatProviderBehavior : AgentChatProviderBehavior {
     }
     val outputText = TEST_TERMINAL_ANSI_ESCAPE_REGEX.replace(observation.outputText, " ")
     val sanitizedOutput = testSanitizeTerminalText(outputText)
-    if (TEST_CODEX_PLAN_BUSY_REGEX.containsMatchIn(sanitizedOutput)) {
+    if (TEST_CODEX_PLAN_COMMAND_FAILURE_REGEXES.any { pattern -> pattern.containsMatchIn(sanitizedOutput) }) {
       return AgentChatInitialMessageRetryDecision.Stop
     }
-    if (sanitizedOutput.contains("plan mode", ignoreCase = true) ||
-        sanitizedOutput.contains("unknown command", ignoreCase = true) ||
-        sanitizedOutput.contains("collaboration modes are disabled", ignoreCase = true)) {
+    if (sanitizedOutput.contains("plan mode", ignoreCase = true)) {
       return AgentChatInitialMessageRetryDecision.PROCEED
     }
     return AgentChatInitialMessageRetryDecision.AwaitMorePostSendOutput(
@@ -2625,8 +2630,12 @@ private const val TEST_PROVIDER_RETRY_BACKOFF_MS: Long = 250
 private const val TEST_PROVIDER_MAX_RETRY_BACKOFF_MS: Long = 1_000
 private val TEST_TERMINAL_ANSI_ESCAPE_REGEX: Regex = Regex("\u001B\\[[0-?]*[ -/]*[@-~]")
 private val TEST_TERMINAL_WHITESPACE_REGEX: Regex = Regex(" +")
-private val TEST_CODEX_PLAN_BUSY_REGEX: Regex =
-  Regex("'\\s*/plan\\s*'\\s+is disabled while a task is in progress\\.", RegexOption.IGNORE_CASE)
+private val TEST_CODEX_PLAN_COMMAND_FAILURE_REGEXES: List<Regex> = listOf(
+  Regex("'\\s*/plan\\s*'\\s+is disabled while a task is in progress\\.", RegexOption.IGNORE_CASE),
+  Regex("plan mode unavailable", RegexOption.IGNORE_CASE),
+  Regex("collaboration modes are disabled", RegexOption.IGNORE_CASE),
+  Regex("unknown command.*?/plan", RegexOption.IGNORE_CASE),
+)
 
 private fun unconfinedTestScope(): CoroutineScope {
   return object : CoroutineScope {
@@ -2814,6 +2823,7 @@ private class ArchivedThreadsProviderDescriptor(
 
 private class RecordingTerminalSessionClosedProvider(
   override val provider: AgentSessionProvider,
+  override val supportsArchiveThread: Boolean = false,
 ) : AgentSessionProviderDescriptor {
   val closedSessions: CopyOnWriteArrayList<ClosedTerminalSession> = CopyOnWriteArrayList()
 

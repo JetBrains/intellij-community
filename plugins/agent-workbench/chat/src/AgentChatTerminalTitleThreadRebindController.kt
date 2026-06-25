@@ -15,13 +15,18 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.serviceContainer.BaseKeyedLazyInstance
 import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.TerminalTitleListener
+import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
+import kotlin.coroutines.resume
+import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<AgentChatTerminalTitleThreadRebindController>()
 
@@ -150,6 +155,67 @@ internal fun createAgentChatTerminalTitleThreadRebindController(
   ).also { controller ->
     controller.attach(terminalTitle = terminalTitle, parentScope = tab.coroutineScope)
   }
+}
+
+internal suspend fun AgentChatTerminalTab.awaitAgentChatTerminalTitleThreadId(
+  provider: AgentSessionProvider?,
+  expectedThreadId: String,
+  timeoutMs: Long,
+): AgentChatTerminalInputReadiness {
+  val normalizedExpectedThreadId = expectedThreadId.trim().takeIf { it.isNotEmpty() }
+                                 ?: return AgentChatTerminalInputReadiness.READY
+  val actualProvider = provider ?: return AgentChatTerminalInputReadiness.READY
+  val terminalTitle = terminalView?.title ?: return AgentChatTerminalInputReadiness.READY
+  val contributor = AgentChatTerminalTitleThreadRebindContributors.find(actualProvider)
+                    ?: return AgentChatTerminalInputReadiness.READY
+  if (contributor.matchesThreadId(terminalTitle.applicationTitle, normalizedExpectedThreadId)) {
+    return AgentChatTerminalInputReadiness.READY
+  }
+  val matched = withTimeoutOrNull(timeoutMs.milliseconds) {
+    terminalTitle.awaitThreadId(contributor, normalizedExpectedThreadId)
+  } ?: false
+  return when {
+    matched -> AgentChatTerminalInputReadiness.READY
+    sessionState.value == TerminalViewSessionState.Terminated -> AgentChatTerminalInputReadiness.TERMINATED
+    else -> AgentChatTerminalInputReadiness.TIMEOUT
+  }
+}
+
+private suspend fun TerminalTitle.awaitThreadId(
+  contributor: AgentChatTerminalTitleThreadRebindContributor,
+  expectedThreadId: String,
+): Boolean {
+  return suspendCancellableCoroutine { continuation ->
+    val disposable = Disposer.newDisposable("Agent Chat terminal title await thread id")
+
+    fun resumeIfMatched(applicationTitle: String?): Boolean {
+      if (!contributor.matchesThreadId(applicationTitle, expectedThreadId)) {
+        return false
+      }
+      Disposer.dispose(disposable)
+      if (continuation.isActive) {
+        continuation.resume(true)
+      }
+      return true
+    }
+
+    addTitleListener(
+      object : TerminalTitleListener {
+        override fun onTitleChanged(terminalTitle: TerminalTitle) {
+          resumeIfMatched(terminalTitle.applicationTitle)
+        }
+      },
+      disposable,
+    )
+    resumeIfMatched(applicationTitle)
+    continuation.invokeOnCancellation {
+      Disposer.dispose(disposable)
+    }
+  }
+}
+
+private fun AgentChatTerminalTitleThreadRebindContributor.matchesThreadId(applicationTitle: String?, expectedThreadId: String): Boolean {
+  return extractThreadSignal(applicationTitle)?.threadId?.equals(expectedThreadId, ignoreCase = true) == true
 }
 
 internal class AgentChatTerminalTitleThreadRebindController(

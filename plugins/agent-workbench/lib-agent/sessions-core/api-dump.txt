@@ -360,6 +360,7 @@ f:com.intellij.platform.ai.agent.sessions.core.launch.McpStreamUrlProvider$Compa
 - f:resolve():java.lang.String
 e:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
 - java.lang.Enum
+- sf:PROVIDER:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
 - sf:SEND_TEXT:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
@@ -390,6 +391,24 @@ f:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDisp
 - equals(java.lang.Object):Z
 - hashCode():I
 - f:isDispatchable():Z
+f:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageProviderDispatchRequest
+- f:generationSettings:com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
+- f:message:java.lang.String
+- f:mode:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
+- f:project:com.intellij.openapi.project.Project
+- f:projectPath:java.lang.String
+- f:threadId:java.lang.String
+- <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings):V
+- f:component1():com.intellij.openapi.project.Project
+- f:component2():java.lang.String
+- f:component3():java.lang.String
+- f:component4():java.lang.String
+- f:component5():com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
+- f:component6():com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
+- f:copy(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings):com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageProviderDispatchRequest
+- bs:copy$default(com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageProviderDispatchRequest,com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageProviderDispatchRequest
+- equals(java.lang.Object):Z
+- hashCode():I
 e:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
 - java.lang.Enum
 - sf:PLAN:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
@@ -432,6 +451,7 @@ e:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageTime
 - s:values():com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageTimeoutPolicy[]
 e:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryChannel
 - java.lang.Enum
+- sf:APP_SERVER:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryChannel
 - sf:STARTUP_COMMAND:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryChannel
 - sf:TERMINAL:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryChannel
 - s:getEntries():kotlin.enums.EnumEntries
@@ -495,6 +515,16 @@ f:com.intellij.platform.ai.agent.sessions.core.providers.AgentPendingSessionMeta
 - f:component2():java.lang.String
 - f:copy(J,java.lang.String):com.intellij.platform.ai.agent.sessions.core.providers.AgentPendingSessionMetadata
 - bs:copy$default(com.intellij.platform.ai.agent.sessions.core.providers.AgentPendingSessionMetadata,J,java.lang.String,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.providers.AgentPendingSessionMetadata
+- equals(java.lang.Object):Z
+- hashCode():I
+f:com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartedNewSessionPromptLaunch
+- f:initialMessageDispatchPlan:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan
+- f:launchSpec:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
+- <init>(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan):V
+- f:component1():com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
+- f:component2():com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan
+- f:copy(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan):com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartedNewSessionPromptLaunch
+- bs:copy$default(com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartedNewSessionPromptLaunch,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartedNewSessionPromptLaunch
 - equals(java.lang.Object):Z
 - hashCode():I
 f:com.intellij.platform.ai.agent.sessions.core.providers.AgentPromptProviderOption
@@ -567,6 +597,20 @@ e:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderCli
 - s:valueOf(java.lang.String):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderCliVisibilityPolicy
 - s:values():com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderCliVisibilityPolicy[]
 com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
+- com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderImplementation
+- getCliDisplayNameFallback():java.lang.String
+- getDisplayNameFallback():java.lang.String
+- a:getProvider-dBzBBrw():java.lang.String
+- resolvePendingSessionMetadata(java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec):com.intellij.platform.ai.agent.sessions.core.providers.AgentPendingSessionMetadata
+com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderFeatureSettings
+- isProviderFeatureEnabled-9c6lQVA(java.lang.String,java.lang.String):Z
+- setProviderFeatureEnabled-3n3rsyc(java.lang.String,java.lang.String,Z):V
+f:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderFeatureSettingsExtensions
+- sf:INSTANCE:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderFeatureSettingsExtensions
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+- f:isProviderFeatureEnabled-9c6lQVA(java.lang.String,java.lang.String):Z
+- f:setProviderFeatureEnabled-3n3rsyc(java.lang.String,java.lang.String,Z):V
+com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderImplementation
 - applyGenerationModelCatalog(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,java.util.List):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 - applyGenerationSettings(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 - archiveThread(java.lang.String,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
@@ -578,6 +622,7 @@ com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescr
 - a:buildResumeLaunchSpec(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 - createToolWindowNorthComponent(com.intellij.openapi.project.Project):javax.swing.JComponent
 - displayNameForGenerationModelId(java.lang.String):java.lang.String
+- dispatchInitialMessageToProvider(com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageProviderDispatchRequest,kotlin.coroutines.Continuation):java.lang.Object
 - getArchiveRefreshDelayMs():J
 - getCliDisplayNameFallback():java.lang.String
 - getCliDisplayNameKey():java.lang.String
@@ -595,7 +640,6 @@ com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescr
 - getNewSessionTitleKey():java.lang.String
 - getPendingSessionLaunchYoloMarker():java.lang.String
 - getPromptOptions():java.util.List
-- a:getProvider-dBzBBrw():java.lang.String
 - getQuickStartActionDescriptionKey():java.lang.String
 - getQuickStartActionTargetDescriptionKey():java.lang.String
 - getQuickStartActionTextKey():java.lang.String
@@ -624,24 +668,17 @@ com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescr
 - a:isCliAvailable(kotlin.coroutines.Continuation):java.lang.Object
 - isCliMissingError(java.lang.Throwable):Z
 - listAvailableGenerationModels(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
-- bs:listAvailableGenerationModels$default(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- bs:listAvailableGenerationModels$default(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderImplementation,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - listReusablePromptSourceEntries(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 - onConversationOpened():V
+- prestartNewSessionPromptLaunch(java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,java.util.List,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,kotlin.coroutines.Continuation):java.lang.Object
 - readTerminalRestoreContext(java.lang.String,java.lang.String):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalRestoreContext
 - recordNewSession(java.lang.String,java.lang.String,java.lang.String,J):V
 - recordTerminalSessionClosed(java.lang.String,java.lang.String):V
 - recordTerminalWorkingDirectory(java.lang.String,java.lang.String,java.lang.String):V
-- resolvePendingSessionMetadata(java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec):com.intellij.platform.ai.agent.sessions.core.providers.AgentPendingSessionMetadata
 - sanitizeGenerationSettings(com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings):com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
+- shouldStripContextForPrompt(java.lang.String):Z
 - unarchiveThread(java.lang.String,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
-com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderFeatureSettings
-- isProviderFeatureEnabled-9c6lQVA(java.lang.String,java.lang.String):Z
-- setProviderFeatureEnabled-3n3rsyc(java.lang.String,java.lang.String,Z):V
-f:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderFeatureSettingsExtensions
-- sf:INSTANCE:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderFeatureSettingsExtensions
-- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
-- f:isProviderFeatureEnabled-9c6lQVA(java.lang.String,java.lang.String):Z
-- f:setProviderFeatureEnabled-3n3rsyc(java.lang.String,java.lang.String,Z):V
 f:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderMenuItem
 - f:bridge:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 - f:disabledReasonKey:java.lang.String
@@ -686,8 +723,13 @@ com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderRegis
 - a:sessionSources():java.util.List
 com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderUiContributor
 - createToolWindowNorthComponent(com.intellij.openapi.project.Project):javax.swing.JComponent
-- a:getProvider-dBzBBrw():java.lang.String
 - onConversationOpened():V
+f:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderUiContributorBean
+- com.intellij.serviceContainer.BaseKeyedLazyInstance
+- implementation:java.lang.String
+- providerId:java.lang.String
+- <init>():V
+- f:matches-e2Q3-TE(java.lang.String):Z
 f:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderUiContributors
 - sf:INSTANCE:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderUiContributors
 - f:forProvider-e2Q3-TE(java.lang.String):java.util.List
@@ -699,6 +741,8 @@ f:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 - f:find-e2Q3-TE(java.lang.String):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 - f:sessionSources():java.util.List
 - f:withRegistryForTest(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderRegistry,kotlin.jvm.functions.Function0):java.lang.Object
+f:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProvidersKt
+- sf:withProvider-_8s3iU4(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderImplementation,java.lang.String):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 f:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRebindCandidate
 - f:activity:com.intellij.platform.ai.agent.core.AgentThreadActivity
 - f:threadId:java.lang.String

@@ -430,6 +430,7 @@ private fun notificationKindFromMethod(method: String): CodexAppServerNotificati
   return when (method) {
     "thread/started" -> CodexAppServerNotificationKind.THREAD_STARTED
     "thread/name/updated" -> CodexAppServerNotificationKind.THREAD_NAME_UPDATED
+    "thread/settings/updated" -> CodexAppServerNotificationKind.THREAD_SETTINGS_UPDATED
     "thread/status/changed" -> CodexAppServerNotificationKind.THREAD_STATUS_CHANGED
     "turn/started" -> CodexAppServerNotificationKind.TURN_STARTED
     "turn/completed" -> CodexAppServerNotificationKind.TURN_COMPLETED
@@ -690,6 +691,7 @@ private fun parseTurnFromResultObject(parser: JsonParser): CodexAppServerTurnSta
         }
       }
       "id" -> turnId = readNonBlankStringOrNull(parser)
+      "turnId", "turn_id" -> turnId = readNonBlankStringOrNull(parser)
       "status" -> status = readNonBlankStringOrNull(parser)
       else -> parser.skipChildren()
     }

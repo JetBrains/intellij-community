@@ -5,7 +5,6 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationModel
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryChannel
@@ -26,6 +25,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan
 import com.intellij.terminal.frontend.view.TerminalKeyEvent
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import com.intellij.testFramework.LoggedErrorProcessor
@@ -2139,13 +2139,13 @@ class AgentChatEditorServiceTest {
         ?.let { message -> listOf(AgentInitialMessageDispatchStep(text = message)) }
         .orEmpty()
     }
-    val initialMessageDispatchPlan = AgentInitialMessageDispatchPlan(
-      startupLaunchSpecOverride = startupShellCommandOverride?.let { command ->
-        AgentSessionTerminalLaunchSpec(command = command, envVariables = startupShellEnvOverride.orEmpty())
-      },
-      postStartDispatchSteps = effectivePostStartDispatchSteps,
-      initialMessageToken = initialMessageToken,
-    )
+      val initialMessageDispatchPlan = AgentInitialPromptDeliveryPlan(
+          startupLaunchSpecOverride = startupShellCommandOverride?.let { command ->
+              AgentSessionTerminalLaunchSpec(command = command, envVariables = startupShellEnvOverride.orEmpty())
+          },
+          postStartDispatchSteps = effectivePostStartDispatchSteps,
+          initialMessageToken = initialMessageToken,
+      )
     openChat(
       project = targetProject,
       projectPath = sourceProjectPath,
