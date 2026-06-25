@@ -3,7 +3,6 @@ package com.intellij.python.terminal
 
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -141,11 +140,6 @@ class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
     for ((name, value) in activationEnvs) {
       shellExecOptions.setEnvironmentVariable(name, value)
     }
-  }
-
-  override fun getDefaultStartWorkingDirectory(project: Project): Path? {
-    val file = FileEditorManager.getInstance(project).selectedFiles.firstOrNull() ?: return null
-    return pyTerminalDefaultWorkingDirectory(project, file)
   }
 
   @Deprecated(

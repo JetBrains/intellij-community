@@ -1,6 +1,13 @@
 <idea-plugin>
+  <dependencies>
+    <plugin id="org.jetbrains.plugins.terminal"/>
+  </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <projectSettings service="com.intellij.python.terminal.shared.PyVirtualEnvTerminalSettings"/>
     <rdct.remoteSettingProvider implementation="com.intellij.python.terminal.shared.PyVirtualEnvTerminalRemoteSettingInfoProvider"/>
+    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.python.terminal.shared.PyTerminalCurrentVenvPathTopicListener"/>
+  </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
+    <shellExecOptionsCustomizer implementation="com.intellij.python.terminal.shared.PyVirtualEnvTerminalCustomizerShared"/>
   </extensions>
 </idea-plugin>
