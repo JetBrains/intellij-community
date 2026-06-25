@@ -611,9 +611,7 @@ class AgentSessionPromptLauncherBridgeTest {
               openedChatHandler = { _, _ -> releaseOpenedChatHandler.await() },
               promptLaunchResolved = { result -> firstLaunchResult.complete(result) },
             )
-            waitForCondition {
-              chatOpenExecutor.openNewChatCalls.get() == 1
-            }
+            chatOpenExecutor.awaitOpenPreparingNewChatCalls(1)
 
             launchService.createNewSession(
               path = PROJECT_PATH,
@@ -630,11 +628,12 @@ class AgentSessionPromptLauncherBridgeTest {
             assertThat(firstLaunchResult.isCompleted).isFalse()
             assertThat(droppedDuplicateResult.launched).isFalse()
             assertThat(droppedDuplicateResult.error).isEqualTo(AgentPromptLaunchError.DROPPED_DUPLICATE)
-            assertThat(chatOpenExecutor.openNewChatCalls.get()).isEqualTo(1)
+            assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
 
             releaseOpenedChatHandler.complete(Unit)
 
             assertThat(firstLaunchResult.await()).isEqualTo(AgentPromptLaunchResult.SUCCESS)
+            chatOpenExecutor.awaitOpenNewChatCalls(1)
           }
         }
       }

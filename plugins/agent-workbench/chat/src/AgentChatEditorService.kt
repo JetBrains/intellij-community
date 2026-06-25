@@ -435,11 +435,18 @@ suspend fun updateAgentChatDeferredStartState(
     project: Project,
     file: VirtualFile,
     deferredStartState: AgentChatDeferredStartState?,
+    threadIdentity: String? = null,
+    threadId: String? = null,
+    threadTitle: String? = null,
     threadActivity: AgentThreadActivity? = null,
+    pendingCreatedAtMs: Long? = null,
+    pendingLaunchMode: String? = null,
     startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec? = null,
     initialMessageDispatchPlan: AgentInitialPromptDeliveryPlan? = null,
     newSessionProvider: AgentSessionProvider? = null,
     newSessionLaunchMode: AgentSessionLaunchMode? = null,
+    launchProfileId: String? = null,
+    generationSettings: AgentPromptGenerationSettings? = null,
     persistSnapshot: Boolean = false,
     forgetPersistedSnapshot: Boolean = false,
 ) {
@@ -451,8 +458,31 @@ suspend fun updateAgentChatDeferredStartState(
     )
   }
   chatFile.updateDeferredStartState(deferredStartState)
-  threadActivity?.let {
-    chatFile.updateBootstrapThreadActivity(it)
+  if (threadIdentity != null && threadId != null) {
+    chatFile.rebindPendingThread(
+      threadIdentity = threadIdentity,
+      threadId = threadId,
+      threadTitle = threadTitle ?: chatFile.threadTitle,
+      threadActivity = threadActivity ?: chatFile.threadActivity,
+    )
+  }
+  else {
+    threadActivity?.let {
+      chatFile.updateBootstrapThreadActivity(it)
+    }
+  }
+  if (pendingCreatedAtMs != null || pendingLaunchMode != null) {
+    chatFile.updatePendingMetadata(
+      pendingCreatedAtMs = pendingCreatedAtMs,
+      pendingFirstInputAtMs = chatFile.pendingFirstInputAtMs,
+      pendingLaunchMode = pendingLaunchMode,
+    )
+  }
+  launchProfileId?.let {
+    chatFile.updateLaunchProfileId(it)
+  }
+  generationSettings?.let {
+    chatFile.updateGenerationSettings(it)
   }
   initialMessageDispatchPlan?.let { dispatchPlan ->
     chatFile.updateInitialPromptDelivery(
