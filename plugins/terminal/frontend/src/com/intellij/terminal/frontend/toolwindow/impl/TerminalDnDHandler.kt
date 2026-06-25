@@ -10,6 +10,7 @@ import com.intellij.ide.dnd.TransferableWrapper
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.openapi.wm.ex.ToolWindowEx
@@ -24,6 +25,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
+import org.jetbrains.plugins.terminal.fus.TerminalCommandUsageStatistics
+import org.jetbrains.plugins.terminal.fus.TerminalInsertedContentSource
+import org.jetbrains.plugins.terminal.fus.TerminalInsertedContentType
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.fus.TerminalTabOpeningWay
 import java.nio.file.Path
@@ -53,16 +58,20 @@ internal object TerminalDnDHandler {
     val dataContext = getDataContext(event) ?: return@DnDDropHandler
     val terminalView = dataContext.getData(TerminalView.DATA_KEY)
     if (terminalView != null) {
-      handleDropOnTerminalView(event, terminalView)
+      handleDropOnTerminalView(window.project, event, terminalView)
     }
     else {
       handleDropOnTab(window, coroutineScope, event, dataContext)
     }
   }
 
-  private fun handleDropOnTerminalView(event: DnDEvent, terminalView: TerminalView) {
+  private fun handleDropOnTerminalView(project: Project, event: DnDEvent, terminalView: TerminalView) {
     val data = TerminalDropData(event)
     val context = getTerminalContext(terminalView) ?: return
+    val fileSource = if (event.attachedObject is DnDNativeTarget.EventInfo) {
+      TerminalInsertedContentSource.EXTERNAL_APP
+    }
+    else TerminalInsertedContentSource.IDE
 
     terminalView.coroutineScope.launch {
       val text = when {
@@ -78,6 +87,17 @@ internal object TerminalDnDHandler {
       terminalView.createSendTextBuilder()
         .useBracketedPasteMode()
         .send(text)
+
+      val commandLine = terminalView.getRunningProcessCommandLine()
+      val processExecutable = commandLine?.let {
+        TerminalCommandUsageStatistics.getLoggableCommandData(commandLine, expandAbsoluteOrRelativePath = true).command
+      }
+      ReworkedTerminalUsageCollector.logContentInserted(
+        project = project,
+        contentType = getDroppedContentType(data),
+        fileSource = fileSource,
+        processExecutable = processExecutable,
+      )
     }
   }
 
@@ -142,6 +162,27 @@ internal object TerminalDnDHandler {
   private fun getDirectory(filePath: Path?): Path? {
     if (filePath == null) return null
     return if (filePath.isDirectory()) filePath else filePath.parent
+  }
+
+  /**
+   * It is expected that passed [TerminalDropData] contains it least one file.
+   */
+  private fun getDroppedContentType(data: TerminalDropData): TerminalInsertedContentType {
+    return if (data.virtualFiles.isNotEmpty()) {
+      when {
+        data.virtualFiles.size > 1 -> TerminalInsertedContentType.MULTIPLE_ITEMS
+        data.virtualFiles.single().isDirectory -> TerminalInsertedContentType.DIRECTORY
+        else -> TerminalInsertedContentType.FILE
+      }
+    }
+    else if (data.paths.isNotEmpty()) {
+      when {
+        data.paths.size > 1 -> TerminalInsertedContentType.MULTIPLE_ITEMS
+        data.paths.single().isDirectory() -> TerminalInsertedContentType.DIRECTORY
+        else -> TerminalInsertedContentType.FILE
+      }
+    }
+    else error("It is expected that passed TerminalDropData contains it least one file")
   }
 }
 

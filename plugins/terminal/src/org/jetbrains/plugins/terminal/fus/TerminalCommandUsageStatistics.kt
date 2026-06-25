@@ -8,6 +8,9 @@ import com.intellij.util.PathUtil
 import com.intellij.util.execution.ParametersListUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.plugins.terminal.fus.TerminalCommandUsageStatistics.absolutePathCommand
+import org.jetbrains.plugins.terminal.fus.TerminalCommandUsageStatistics.getKnownCommandValuesList
+import org.jetbrains.plugins.terminal.fus.TerminalCommandUsageStatistics.relativePathCommand
 import java.util.Locale
 import kotlin.math.min
 
@@ -33,6 +36,17 @@ object TerminalCommandUsageStatistics {
     return cornerCases + knownCommandsData.commands.toList()
   }
 
+  /**
+   * Same as [getKnownCommandValuesList] but without [absolutePathCommand] and [relativePathCommand].
+   */
+  fun getKnownCommandValuesListWithoutPaths(): List<String> {
+    val cornerCases = listOf(
+      emptyCommand.command,
+      whitespacesCommand.command
+    )
+    return cornerCases + knownCommandsData.commands.toList()
+  }
+
   fun getKnownSubCommandValuesList(): List<String> {
     return knownCommandsData.subCommands.toList()
   }
@@ -43,13 +57,20 @@ object TerminalCommandUsageStatistics {
   /**
    * Parses the provided [userCommandLine] and returns [CommandData] if command line contains known command or pattern,
    * that we are able to log in the statistics. Returns null otherwise.
+   *
+   * @param expandAbsoluteOrRelativePath if it is true and [userCommandLine] contains an absolute or relative path,
+   * it will try to match the path's file name against the known commands instead of returning [absolutePathCommand] or [relativePathCommand].
    */
-  fun getLoggableCommandData(userCommandLine: String): CommandData {
-    return getLoggableCommandData(userCommandLine, knownCommandsData)
+  fun getLoggableCommandData(userCommandLine: String, expandAbsoluteOrRelativePath: Boolean = false): CommandData {
+    return getLoggableCommandData(userCommandLine, knownCommandsData, expandAbsoluteOrRelativePath)
   }
 
   @VisibleForTesting
-  fun getLoggableCommandData(userCommandLine: String, knownCommandsData: KnownCommandsData): CommandData {
+  fun getLoggableCommandData(
+    userCommandLine: String,
+    knownCommandsData: KnownCommandsData,
+    expandAbsoluteOrRelativePath: Boolean,
+  ): CommandData {
     if (userCommandLine.isEmpty()) {
       return emptyCommand
     }
@@ -68,12 +89,25 @@ object TerminalCommandUsageStatistics {
         val gradleCommand = listOf("gradle") + userCommand.drop(1)
         toKnownCommand(gradleCommand, knownCommandsData) ?: thirdPartyCommand
       }
+      else if (expandAbsoluteOrRelativePath) {
+        expandPathAndGetKnownCommand(userCommand, knownCommandsData) ?: thirdPartyCommand
+      }
       else relativePathCommand
     }
     return if (OSAgnosticPathUtil.isAbsolute(OSAgnosticPathUtil.expandUserHome(executable)) && executable.length > 3) {
-      absolutePathCommand
+      if (expandAbsoluteOrRelativePath) {
+        expandPathAndGetKnownCommand(userCommand, knownCommandsData) ?: thirdPartyCommand
+      }
+      else absolutePathCommand
     }
     else thirdPartyCommand
+  }
+
+  private fun expandPathAndGetKnownCommand(commandLine: List<String>, knownCommandsData: KnownCommandsData): CommandData? {
+    val executable = commandLine.firstOrNull() ?: return null
+    val executableFileName = PathUtil.getFileName(executable)
+    val commandLine = listOf(executableFileName) + commandLine.drop(1)
+    return toKnownCommand(commandLine, knownCommandsData)
   }
 
   private fun isRelativePath(executable: String): Boolean {

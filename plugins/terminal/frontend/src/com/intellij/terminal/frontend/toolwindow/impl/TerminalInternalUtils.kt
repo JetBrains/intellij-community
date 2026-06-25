@@ -5,13 +5,18 @@ import com.intellij.frontend.FrontendType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
+import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.ContentManager
+import com.intellij.util.execution.ParametersListUtil
 import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalTabState
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
+import org.jetbrains.plugins.terminal.util.getNow
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
 
 /**
  * Creates the new terminal tab in the Terminal Tool Window.
@@ -54,4 +59,17 @@ internal fun shouldUseReworkedTerminal(): Boolean {
   val frontendType = FrontendApplicationInfo.getFrontendType()
   val isCodeWithMe = frontendType is FrontendType.Remote && frontendType.isGuest()
   return ExperimentalUI.isNewUI() && engine == TerminalEngine.REWORKED && !isCodeWithMe
+}
+
+internal fun TerminalView.getRunningProcessCommandLine(): String? {
+  val startupOptions = startupOptionsDeferred.getNow() ?: return null
+  return if (startupOptions.processType == TerminalProcessType.NON_SHELL) {
+    ParametersListUtil.join(startupOptions.shellCommand)
+  }
+  else {
+    // If it is a shell process, we need to get the current running command via shell integration
+    val shellIntegration = shellIntegrationDeferred.getNow() ?: return null
+    val currentBlock = shellIntegration.blocksModel.activeBlock as? TerminalCommandBlock ?: return null
+    currentBlock.executedCommand ?: return null
+  }
 }
