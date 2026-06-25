@@ -23,11 +23,11 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 open class DefaultLspDocumentAdapter : LspDocumentAdapter {
-  override fun acceptsUrl(url: String, notebookSupported: Boolean): Boolean {
+  override fun acceptsUrl(lspServer: LspServer, url: String): Boolean {
     return true
   }
 
-  override fun acceptsFile(file: VirtualFile, notebookSupported: Boolean): Boolean {
+  override fun acceptsFile(lspServer: LspServer, file: VirtualFile): Boolean {
     return true
   }
 

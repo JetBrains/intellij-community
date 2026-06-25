@@ -14,6 +14,7 @@ import com.intellij.platform.lsp.impl.LspDocument
 import com.intellij.platform.lsp.impl.LspDocumentAdapter
 import com.intellij.platform.lsp.impl.LspDocumentPosition
 import com.intellij.platform.lsp.impl.LspDocumentRange
+import com.intellij.platform.lsp.impl.isNotebookSupportedByServer
 import org.eclipse.lsp4j.DidChangeNotebookDocumentParams
 import org.eclipse.lsp4j.DidCloseNotebookDocumentParams
 import org.eclipse.lsp4j.DidOpenNotebookDocumentParams
@@ -47,11 +48,11 @@ internal class TestNotebookDocumentAdapter : LspDocumentAdapter {
     private const val CELL_DELIMITER = "\n---\n"
   }
 
-  override fun acceptsFile(file: VirtualFile, notebookSupported: Boolean): Boolean =
-    notebookSupported && file.extension == "test-notebook"
+  override fun acceptsFile(lspServer: LspServer, file: VirtualFile): Boolean =
+    lspServer.isNotebookSupportedByServer && file.extension == "test-notebook"
 
-  override fun acceptsUrl(url: String, notebookSupported: Boolean): Boolean {
-    if (!notebookSupported) return false
+  override fun acceptsUrl(lspServer: LspServer, url: String): Boolean {
+    if (!lspServer.isNotebookSupportedByServer) return false
     val fragment = URI.create(url).fragment ?: return false
     return fragment.startsWith("cell-")
   }

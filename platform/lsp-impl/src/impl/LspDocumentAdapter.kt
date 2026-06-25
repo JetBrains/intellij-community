@@ -33,8 +33,8 @@ interface LspDocumentAdapter {
       ExtensionPointName.create("com.intellij.platform.lsp.documentAdapter")
   }
 
-  fun acceptsUrl(url: String, notebookSupported: Boolean): Boolean
-  fun acceptsFile(file: VirtualFile, notebookSupported: Boolean): Boolean
+  fun acceptsUrl(lspServer: LspServer, url: String): Boolean
+  fun acceptsFile(lspServer: LspServer, file: VirtualFile): Boolean
   fun toLspDocumentPosition(lspServer: LspServer, file: VirtualFile, document: Document, hostOffset: Int): LspDocumentPosition?
   fun toLspDocumentRangeSync(lspServer: LspServer, file: VirtualFile, document: Document, range: Range): List<LspDocumentRange>
   suspend fun toLspDocumentRange(lspServer: LspServer, file: VirtualFile, range: Range): List<LspDocumentRange>
