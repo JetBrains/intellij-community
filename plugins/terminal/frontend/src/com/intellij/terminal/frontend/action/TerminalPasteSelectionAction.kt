@@ -12,9 +12,12 @@ import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.termin
 internal class TerminalPasteSelectionAction : TerminalPromotedDumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.terminalView ?: error("TerminalView is missing")
-    val scrollingModel = e.terminalEditor?.getUserData(TerminalOutputScrollingModel.KEY)
+    TerminalClipboard.pasteClipboardContent(view, preferSystemSelection = true)
 
-    TerminalClipboard.pasteClipboardContent(view, scrollingModel, preferSystemSelection = true)
+    // Scroll to the cursor if the scrolling model is available in this editor.
+    // It can be absent if it is the alternate buffer editor.
+    val scrollingModel = e.terminalEditor?.getUserData(TerminalOutputScrollingModel.KEY)
+    scrollingModel?.scrollToCursor(force = true)
   }
 
   override fun update(e: AnActionEvent) {
