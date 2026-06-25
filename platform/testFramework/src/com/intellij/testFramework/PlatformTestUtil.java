@@ -84,6 +84,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
+import com.intellij.testFramework.common.DumpKt;
 import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
 import com.intellij.ui.ClientProperty;
@@ -107,6 +108,7 @@ import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import junit.framework.AssertionFailedError;
+import kotlin.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1410,6 +1412,18 @@ public final class PlatformTestUtil {
           if (callback != null) {
             callback.run();
           }
+
+          var dump = ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), true).getRawDump();
+          DumpKt.publishArtifact("waitWithEventsDispatching", "txt", (path) -> {
+            try {
+              Files.writeString(path, dump);
+              return Unit.INSTANCE;
+            }
+            catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+          });
+
           fail(errorMessageSupplier.get());
         }
         if (condition.getAsBoolean()) {
