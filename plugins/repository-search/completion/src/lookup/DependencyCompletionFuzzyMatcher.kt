@@ -8,6 +8,9 @@ import org.jetbrains.annotations.ApiStatus
 
 private val log = logger<DependencyCompletionFuzzyMatcher>()
 
+/** Characters that separate words inside a single coordinate part, e.g. `spring-boot-starter` or `org.junit`. */
+private const val WORD_DELIMITERS = "-._"
+
 @ApiStatus.Experimental
 open class DependencyCompletionFuzzyMatcher(prefix: String) : PrefixMatcher(prefix) {
   override fun prefixMatches(name: String): Boolean = true
@@ -32,16 +35,16 @@ open class DependencyCompletionFuzzyMatcher(prefix: String) : PrefixMatcher(pref
     var offset = start
     var j = 0
     for (i in prefixParts.indices) {
-      var matchingFragment: MatchedFragment? = null
-      while (j < nameParts.size && matchingFragment == null) {
-        matchingFragment = getMatchingFragment(offset, prefixParts[i], nameParts[j])
+      var partFragments: List<MatchedFragment>? = null
+      while (j < nameParts.size && partFragments == null) {
+        partFragments = matchPart(offset, prefixParts[i], nameParts[j])
         offset += nameParts[j].length + 1
         j++
       }
-      if (matchingFragment == null) {
+      if (partFragments == null) {
         return tryFallbackMatching(input, searchResult, start)
       }
-      result.add(matchingFragment)
+      result.addAll(partFragments)
     }
     return result
   }
@@ -64,9 +67,64 @@ open class DependencyCompletionFuzzyMatcher(prefix: String) : PrefixMatcher(pref
     return emptyList()
   }
 
-  private fun getMatchingFragment(offset: Int, prefixPart: String, name: String): MatchedFragment? {
-    val from = name.indexOf(prefixPart)
-    if (from == -1) return null
-    return MatchedFragment(from + offset, from + offset + prefixPart.length)
+  /**
+   * Matches the word tokens of [prefixPart] against the word tokens of [namePart] as an in-order subsequence,
+   * returning one highlight fragment per matched token, or `null` if any prefix token has no match.
+   *
+   * [offset] is the absolute start of [namePart] within the whole search result. Matching is case-insensitive.
+   * When a prefix token matches a name token to its end and both are followed by the same delimiter, that
+   * delimiter is included in the fragment (so `junit-` is highlighted for `junit-` but only `junit` for `junit.`).
+   */
+  private fun matchPart(offset: Int, prefixPart: String, namePart: String): List<MatchedFragment>? {
+    val prefixTokens = tokenize(prefixPart)
+    if (prefixTokens.isEmpty()) return emptyList()
+    val nameTokens = tokenize(namePart)
+    val fragments = mutableListOf<MatchedFragment>()
+    var cursor = 0
+    for (prefixToken in prefixTokens) {
+      var matched = false
+      while (cursor < nameTokens.size) {
+        val nameToken = nameTokens[cursor]
+        cursor++
+        val idx = nameToken.text.indexOf(prefixToken.text, ignoreCase = true)
+        if (idx != -1) {
+          val fragmentStart = offset + nameToken.start + idx
+          var fragmentEnd = fragmentStart + prefixToken.text.length
+          val matchedToEnd = idx + prefixToken.text.length == nameToken.text.length
+          if (matchedToEnd && prefixToken.delimiter != null && prefixToken.delimiter == nameToken.delimiter) {
+            fragmentEnd++
+          }
+          fragments.add(MatchedFragment(fragmentStart, fragmentEnd))
+          matched = true
+          break
+        }
+      }
+      if (!matched) return null
+    }
+    return fragments
+  }
+
+  private class Token(val text: String, val start: Int, val delimiter: Char?)
+
+  /** Splits [part] on [WORD_DELIMITERS], keeping each token's start index and the delimiter that immediately follows it. */
+  private fun tokenize(part: String): List<Token> {
+    val tokens = mutableListOf<Token>()
+    var tokenStart = -1
+    for (i in part.indices) {
+      val c = part[i]
+      if (c in WORD_DELIMITERS) {
+        if (tokenStart != -1) {
+          tokens.add(Token(part.substring(tokenStart, i), tokenStart, c))
+          tokenStart = -1
+        }
+      }
+      else if (tokenStart == -1) {
+        tokenStart = i
+      }
+    }
+    if (tokenStart != -1) {
+      tokens.add(Token(part.substring(tokenStart), tokenStart, null))
+    }
+    return tokens
   }
 }
