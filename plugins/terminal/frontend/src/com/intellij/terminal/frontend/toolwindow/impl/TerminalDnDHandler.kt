@@ -65,7 +65,15 @@ internal object TerminalDnDHandler {
     val context = getTerminalContext(terminalView) ?: return
 
     terminalView.coroutineScope.launch {
-      val text = data.virtualFiles?.let { handleVirtualFiles(it, context) } ?: getPathAsText(data.paths, context)
+      val text = when {
+        data.virtualFiles.isNotEmpty() -> handleVirtualFiles(data.virtualFiles, context)
+        data.paths.isNotEmpty() -> getPathAsText(data.paths, context)
+        else -> null
+      }
+
+      if (text.isNullOrBlank()) {
+        return@launch
+      }
 
       terminalView.createSendTextBuilder()
         .useBracketedPasteMode()
@@ -84,10 +92,15 @@ internal object TerminalDnDHandler {
     val fusInfo = TerminalStartupFusInfo(openingWay)
 
     coroutineScope.launch {
-      val droppedFiles = data.virtualFiles?.mapNotNull { it.toNioPathOrNull() } ?: data.paths
-      val filePath = droppedFiles.firstOrNull()
-      if (!TerminalFilePathHandler.isSameEnvironment(filePath, window.project.getEelDescriptor()))
+      val droppedFiles = if (data.virtualFiles.isNotEmpty()) {
+        data.virtualFiles.mapNotNull { it.toNioPathOrNull() }
+      }
+      else data.paths
+
+      val filePath = droppedFiles.firstOrNull() ?: return@launch
+      if (!TerminalFilePathHandler.isSameEnvironment(filePath, window.project.getEelDescriptor())) {
         return@launch
+      }
 
       val dir = getDirectory(filePath) ?: return@launch
       withContext(Dispatchers.EDT) {
@@ -133,13 +146,14 @@ internal object TerminalDnDHandler {
 }
 
 internal class TerminalDropData(event: DnDEvent) {
-  val virtualFiles: List<VirtualFile>? = (event.attachedObject as? TransferableWrapper)
+  val virtualFiles: List<VirtualFile> = (event.attachedObject as? TransferableWrapper)
     ?.getPsiElements()
     ?.filterIsInstance<PsiFileSystemItem>()
     ?.map { it.virtualFile }
-    ?.takeIf { it.isNotEmpty() }
+    ?: emptyList()
 
-  val paths: List<Path> = if (virtualFiles == null)
+  val paths: List<Path> = if (virtualFiles.isEmpty()) {
     getFileListFromAttachedObject(event.attachedObject).map { it.toPath() }
+  }
   else emptyList()
 }
