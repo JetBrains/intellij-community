@@ -1520,4 +1520,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.commander.tests",
   "intellij.completionMlRanking.tests",
   "intellij.completionMlRankingModels.tests",
+  "intellij.configurationScript.tests",
 )
