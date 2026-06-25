@@ -199,18 +199,18 @@ public final class FindUsagesManager {
    */
   @ApiStatus.Experimental
   public @Nullable FindUsagesHandler getFindUsagesHandlerForDialog(@NotNull PsiElement element, @NotNull OperationMode operationMode) {
-    return ProgressManager.getInstance().runProcessWithProgressSynchronously(
+    var handler = getFindUsagesHandler(element, operationMode);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(
       () -> {
-        return getFindUsagesHandler(element, factory -> {
-          FindUsagesHandler handler = factory.createFindUsagesHandler(element, operationMode);
+        ReadAction.runBlocking(() -> {
           CommonFindUsagesDialog.precomputeFindUsagesDialogData(handler);
-          return handler;
         });
       },
       FindBundle.message("progress.title.prepare.find.usages"),
       true,
       element.getProject()
     );
+    return handler;
   }
 
   public @Nullable FindUsagesHandler getNewFindUsagesHandler(@NotNull PsiElement element, boolean forHighlightUsages) {
