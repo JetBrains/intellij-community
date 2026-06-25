@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 
 class CodexThreadActivityProjectionTest {
   @Test
-  fun completedPlanTurnDoesNotRemainNeedsInput() {
+  fun completedPlanTurnRemainsNeedsInputUntilUserResponds() {
     val projection = CodexThreadActivityProjection()
     projection.markUserMessage(1)
     projection.markTurnStarted(order = 2, turnId = "turn-1")
@@ -18,9 +18,9 @@ class CodexThreadActivityProjectionTest {
 
     val snapshot = projection.snapshot()
 
-    assertThat(snapshot.hasPendingPlan).isFalse()
+    assertThat(snapshot.hasPendingPlan).isTrue()
     assertThat(snapshot.hasInProgressTurn).isFalse()
-    assertThat(snapshot.toCodexSessionActivity()).isEqualTo(CodexSessionActivity.READY)
+    assertThat(snapshot.toCodexSessionActivity()).isEqualTo(CodexSessionActivity.NEEDS_INPUT)
   }
 
   @Test
@@ -37,7 +37,7 @@ class CodexThreadActivityProjectionTest {
   }
 
   @Test
-  fun legacyCompletionWithoutTurnIdClearsEarlierPlan() {
+  fun legacyCompletionWithoutTurnIdKeepsPendingPlan() {
     val projection = CodexThreadActivityProjection()
     projection.markUserMessage(1)
     projection.markPlan(order = 2)
@@ -45,8 +45,8 @@ class CodexThreadActivityProjectionTest {
 
     val snapshot = projection.snapshot()
 
-    assertThat(snapshot.hasPendingPlan).isFalse()
-    assertThat(snapshot.toCodexSessionActivity()).isEqualTo(CodexSessionActivity.READY)
+    assertThat(snapshot.hasPendingPlan).isTrue()
+    assertThat(snapshot.toCodexSessionActivity()).isEqualTo(CodexSessionActivity.NEEDS_INPUT)
   }
 
   @Test
@@ -55,6 +55,21 @@ class CodexThreadActivityProjectionTest {
     projection.markUserMessage(1)
     projection.markPlan(order = 2)
     projection.markUserMessage(3)
+
+    val snapshot = projection.snapshot()
+
+    assertThat(snapshot.hasPendingPlan).isFalse()
+    assertThat(snapshot.toCodexSessionActivity()).isEqualTo(CodexSessionActivity.READY)
+  }
+
+  @Test
+  fun userMessageClearsCompletedPlanTurn() {
+    val projection = CodexThreadActivityProjection()
+    projection.markUserMessage(1)
+    projection.markTurnStarted(order = 2, turnId = "turn-1")
+    projection.markPlan(order = 3, turnId = "turn-1")
+    projection.markTurnCompleted(order = 4, turnId = "turn-1")
+    projection.markUserMessage(5)
 
     val snapshot = projection.snapshot()
 
@@ -86,7 +101,7 @@ class CodexThreadActivityProjectionTest {
   }
 
   @Test
-  fun activitySignalsUseProjectionSemantics() {
+  fun activitySignalsKeepPlanPendingAfterTurnCompletion() {
     val projection = CodexThreadActivityProjection()
     projection.apply(CodexThreadActivitySignal.UserMessage(1))
     projection.apply(CodexThreadActivitySignal.Plan(order = 2, turnId = "turn-1"))
@@ -94,8 +109,8 @@ class CodexThreadActivityProjectionTest {
 
     val snapshot = projection.snapshot()
 
-    assertThat(snapshot.hasPendingPlan).isFalse()
-    assertThat(snapshot.toCodexSessionActivity()).isEqualTo(CodexSessionActivity.READY)
+    assertThat(snapshot.hasPendingPlan).isTrue()
+    assertThat(snapshot.toCodexSessionActivity()).isEqualTo(CodexSessionActivity.NEEDS_INPUT)
   }
 
   private fun CodexThreadActivityProjection.snapshot() = toSnapshot(

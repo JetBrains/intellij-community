@@ -720,7 +720,8 @@ class CodexRolloutSessionBackendTest {
             itemCompletedPlan(timestamp = "2026-02-13T11:02:34.000Z", turnId = "turn-plan"),
             """{"timestamp":"2026-02-13T11:02:35.000Z","type":"event_msg","payload":{"type":"task_complete","turn_id":"turn-plan"}}""",
           ),
-          expected = CodexSessionActivity.READY,
+          expected = CodexSessionActivity.NEEDS_INPUT,
+          expectedRequiresResponse = true,
         ),
         ActivityCase(
           id = "session-stale-completion-keeps-newer-plan",
@@ -733,11 +734,23 @@ class CodexRolloutSessionBackendTest {
           expectedRequiresResponse = true,
         ),
         ActivityCase(
-          id = "session-legacy-completion-clears-plan",
+          id = "session-legacy-completion-keeps-plan",
           eventLines = listOf(
             """{"timestamp":"2026-02-13T11:02:39.000Z","type":"event_msg","payload":{"type":"user_message","message":"Plan the change"}}""",
             itemCompletedPlan(timestamp = "2026-02-13T11:02:40.000Z"),
             turnCompleteLine(timestamp = "2026-02-13T11:02:41.000Z"),
+          ),
+          expected = CodexSessionActivity.NEEDS_INPUT,
+          expectedRequiresResponse = true,
+        ),
+        ActivityCase(
+          id = "session-user-response-clears-completed-plan",
+          eventLines = listOf(
+            """{"timestamp":"2026-02-13T11:02:42.000Z","type":"event_msg","payload":{"type":"user_message","message":"Plan the change"}}""",
+            """{"timestamp":"2026-02-13T11:02:43.000Z","type":"event_msg","payload":{"type":"task_started","turn_id":"turn-plan-response"}}""",
+            itemCompletedPlan(timestamp = "2026-02-13T11:02:44.000Z", turnId = "turn-plan-response"),
+            """{"timestamp":"2026-02-13T11:02:45.000Z","type":"event_msg","payload":{"type":"task_complete","turn_id":"turn-plan-response"}}""",
+            """{"timestamp":"2026-02-13T11:02:46.000Z","type":"event_msg","payload":{"type":"user_message","message":"Proceed"}}""",
           ),
           expected = CodexSessionActivity.READY,
         ),

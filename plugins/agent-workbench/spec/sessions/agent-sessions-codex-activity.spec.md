@@ -40,11 +40,11 @@ Workbench shows normalized activity (`NEEDS_INPUT`, `UNREAD`, `REVIEWING`, `PROC
   [@test] ../../codex/sessions/testSrc/backend/CodexSessionActivityResolverTest.kt
   [@test] ../../codex/sessions/testSrc/backend/appserver/CodexAppServerRefreshHintsProviderTest.kt
 
-- App-server `thread/read includeTurns` detects pending plans from structured `plan`/`Plan` items. Rollout fallback detects plans from structured `item_completed` events whose nested item type is `Plan`; assistant text tags are not parsed for activity. A matching or legacy no-id completed/aborted rollout turn clears pending plan attention.
+- App-server `thread/read includeTurns` detects pending plans from structured `plan`/`Plan` items. Rollout fallback detects plans from structured `item_completed` events whose nested item type is `Plan`; assistant text tags are not parsed for activity. Structured plan attention remains needs-input after matching or legacy no-id completed/aborted rollout turns because Codex's post-plan implementation choice is local TUI state, not a persisted `request_user_input` signal. A later user message clears pending plan attention.
   [@test] ../../sessions/testSrc/CodexAppServerClientTest.kt
   [@test] ../../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
-- Codex activity projection is shared between app-server turn snapshots and rollout fallback. Completion is turn-aware when `turn_id` is present: a stale completion from an earlier turn must not clear a newer processing turn or pending plan, while a matching or legacy completed turn closes earlier incomplete work.
+- Codex activity projection is shared between app-server turn snapshots and rollout fallback. Completion is turn-aware when `turn_id` is present: a stale completion from an earlier turn must not clear a newer processing turn or pending plan, while a matching or legacy completed turn closes earlier incomplete work such as processing/tool-call attention without clearing structured plan attention.
   [@test] ../../codex/sessions/testSrc/backend/CodexThreadActivityProjectionTest.kt
   [@test] ../../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 

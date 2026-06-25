@@ -64,10 +64,8 @@ class CodexThreadActivityProjection {
     clearSignalsForTurn(inProgressTurnById, completedOrder = order, completedTurnId = turnId)
     clearSignalsForTurn(pendingApprovalByCallId, completedOrder = order, completedTurnId = turnId)
     clearSignalsForTurn(pendingToolCallByCallId, completedOrder = order, completedTurnId = turnId)
-    val plan = pendingPlan
-    if (plan != null && shouldClearSignalForTurn(plan, completedOrder = order, completedTurnId = turnId)) {
-      pendingPlan = null
-    }
+    // Codex keeps the post-plan implementation choice as local TUI state, not as a persisted request_user_input signal.
+    // Keep structured plans pending across turn completion until a later user message acknowledges them.
   }
 
   fun markPendingUserInput(order: Long, callId: String? = null) {
