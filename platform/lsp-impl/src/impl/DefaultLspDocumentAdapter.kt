@@ -61,11 +61,13 @@ open class DefaultLspDocumentAdapter : LspDocumentAdapter {
     return listOf(DefaultLspDocument(TextDocumentIdentifier(uri), uri))
   }
 
-  override fun sendDidOpen(
-    lspClient: LspClient,
-    file: VirtualFile,
-    document: Document,
-  ) {
+  override fun getLspDocumentByUrl(lspClient: LspClient, targetUri: String): LspDocument? {
+    return lspClient.descriptor.findFileByUri(targetUri)?.let {
+      DefaultLspDocument(TextDocumentIdentifier(targetUri), targetUri)
+    }
+  }
+
+  override fun sendDidOpen(lspClient: LspClient, file: VirtualFile, document: Document) {
     val languageId = lspClient.descriptor.getLanguageId(file)
     val fileUri = lspClient.descriptor.getFileUri(file)
     val version = (document as? DocumentEx)?.modificationSequence ?: document.modificationStamp.toInt()
@@ -75,11 +77,7 @@ open class DefaultLspDocumentAdapter : LspDocumentAdapter {
     }
   }
 
-  override fun sendDidClose(
-    lspClient: LspClient,
-    file: VirtualFile,
-    document: Document,
-  ) {
+  override fun sendDidClose(lspClient: LspClient, file: VirtualFile, document: Document) {
     val fileUri = lspClient.descriptor.getFileUri(file)
     val params = DidCloseTextDocumentParams(TextDocumentIdentifier(fileUri))
     lspClient.sendNotification {
@@ -87,49 +85,27 @@ open class DefaultLspDocumentAdapter : LspDocumentAdapter {
     }
   }
 
-  override fun sendDidChangeFull(
-    lspClient: LspClient,
-    file: VirtualFile,
-    document: Document,
-  ) {
+  override fun sendDidChangeFull(lspClient: LspClient, file: VirtualFile, document: Document) {
     val params = LspDidChangeUtil.createFullDidChangeParams(lspClient, document, file)
     lspClient.sendNotification {
       it.textDocumentService.didChange(params)
     }
   }
 
-  override fun sendDidChangeIncremental(
-    lspClient: LspClient,
-    file: VirtualFile,
-    event: DocumentEvent,
-  ) {
+  override fun sendDidChangeIncremental(lspClient: LspClient, file: VirtualFile, event: DocumentEvent) {
     val params = LspDidChangeUtil.createIncrementalDidChangeParamsBeforeDocumentChange(lspClient, event, file)
     lspClient.sendNotification {
       it.textDocumentService.didChange(params)
     }
   }
 
-  override fun sendDidSave(
-    lspClient: LspClient,
-    file: VirtualFile,
-    document: Document,
-    includeText: Boolean,
-  ) {
+  override fun sendDidSave(lspClient: LspClient, file: VirtualFile, document: Document, includeText: Boolean) {
     val fileUri = lspClient.descriptor.getFileUri(file)
     val documentIdentifier = TextDocumentIdentifier(fileUri)
     val text = if (includeText) document.text else null
     val params = DidSaveTextDocumentParams(documentIdentifier, text)
     lspClient.sendNotification {
       it.textDocumentService.didSave(params)
-    }
-  }
-
-  override fun getLspDocumentByUrl(
-    lspClient: LspClient,
-    targetUri: String,
-  ): LspDocument? {
-    return lspClient.descriptor.findFileByUri(targetUri)?.let {
-      DefaultLspDocument(TextDocumentIdentifier(targetUri), targetUri)
     }
   }
 

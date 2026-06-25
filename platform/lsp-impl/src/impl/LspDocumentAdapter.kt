@@ -29,8 +29,7 @@ import org.jetbrains.annotations.ApiStatus
 interface LspDocumentAdapter {
 
   companion object {
-    val EP_NAME: ExtensionPointName<LspDocumentAdapter> =
-      ExtensionPointName.create("com.intellij.platform.lsp.documentAdapter")
+    val EP_NAME: ExtensionPointName<LspDocumentAdapter> = ExtensionPointName.create("com.intellij.platform.lsp.documentAdapter")
   }
 
   fun acceptsUrl(url: String, notebookSupported: Boolean): Boolean
@@ -40,11 +39,10 @@ interface LspDocumentAdapter {
   suspend fun toLspDocumentRange(lspClient: LspClient, file: VirtualFile, range: Range): List<LspDocumentRange>
   fun toLspDocumentsInFileSync(lspClient: LspClient, file: VirtualFile): List<LspDocument>
   suspend fun toLspDocumentsInFile(lspClient: LspClient, file: VirtualFile): List<LspDocument>
+  fun getLspDocumentByUrl(lspClient: LspClient, targetUri: String): LspDocument?
   fun sendDidOpen(lspClient: LspClient, file: VirtualFile, document: Document)
   fun sendDidClose(lspClient: LspClient, file: VirtualFile, document: Document)
   fun sendDidChangeFull(lspClient: LspClient, file: VirtualFile, document: Document)
   fun sendDidChangeIncremental(lspClient: LspClient, file: VirtualFile, event: DocumentEvent)
   fun sendDidSave(lspClient: LspClient, file: VirtualFile, document: Document, includeText: Boolean)
-  fun getLspDocumentByUrl(lspClient: LspClient, targetUri: String): LspDocument?
-
 }
