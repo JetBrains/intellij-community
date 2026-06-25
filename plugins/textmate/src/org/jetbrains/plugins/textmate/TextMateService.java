@@ -42,6 +42,16 @@ public abstract class TextMateService {
    */
   public abstract void reloadEnabledBundles();
 
+  /**
+   * Synchronously loads TextMate bundles if they are not already loaded. Idempotent: subsequent
+   * calls return immediately. Bundle IO runs on the service's internal IO scope; the calling
+   * thread blocks until loading completes.
+   * <p>
+   * Must not be invoked from the EDT or from inside a read action whose holder the EDT may need
+   * to drain via a write-lock acquisition (see IJPL-34242).
+   */
+  public abstract void ensureInitialized();
+
   public abstract @Nullable TextMateLanguageDescriptor getLanguageDescriptorByExtension(@Nullable CharSequence extension);
 
   public abstract @NotNull ShellVariablesRegistry getShellVariableRegistry();
