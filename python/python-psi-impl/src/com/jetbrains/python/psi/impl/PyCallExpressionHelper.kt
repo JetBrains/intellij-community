@@ -19,12 +19,10 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider.Helper.isTypingTypedDictInheritor
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.AccessDirection
-import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyAugAssignmentStatement
 import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyCallExpression.PyArgumentsMapping
-import com.jetbrains.python.psi.PyCallSiteExpression
 import com.jetbrains.python.psi.PyCallSiteOwner
 import com.jetbrains.python.psi.PyCallable
 import com.jetbrains.python.psi.PyClass
@@ -37,7 +35,6 @@ import com.jetbrains.python.psi.PyLambdaExpression
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyParameter
 import com.jetbrains.python.psi.PyParameterList
-import com.jetbrains.python.psi.PyParenthesizedExpression
 import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PySequenceExpression
@@ -73,8 +70,8 @@ import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions
-import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyTypeMember
+import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.PyTypeUtil.components
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
@@ -775,37 +772,6 @@ object PyCallExpressionHelper {
       return PyUnsafeUnionType.unsafeUnion(superTypes)
     }
     return null
-  }
-
-  /**
-   * `argument` can be (parenthesized) expression or a value of a [PyKeywordArgument]
-   */
-  @ApiStatus.Internal
-  fun getMappedParameters(expression: PyExpression, resolveContext: PyResolveContext): List<PyCallableParameter>? {
-    var argument = expression
-    while (true) {
-      val newArgument = argument.parent
-      newArgument as? PyParenthesizedExpression ?: break
-      argument = newArgument
-    }
-
-    (argument.parent as? PyKeywordArgument)?.let {
-      assert(it.valueExpression === argument)
-      argument = it
-    }
-
-    var parent = argument.parent
-    if (parent is PyArgumentList) {
-      parent = parent.parent
-    }
-    if (parent !is PyCallSiteExpression) {
-      return null
-    }
-
-    val finalArgument = argument
-    return mapArguments(parent, resolveContext).mapNotNull {
-      it.mappedParameters[finalArgument]
-    }
   }
 
   @JvmStatic
