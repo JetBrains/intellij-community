@@ -783,6 +783,7 @@ a:com.intellij.psi.impl.PsiDocumentManagerBase
 - com.intellij.openapi.editor.event.DocumentListener
 - com.intellij.psi.PsiDocumentManager
 - commitDocument(com.intellij.openapi.editor.Document):V
+- getDocumentForNonPhysicalLightFile(com.intellij.psi.PsiFile):com.intellij.openapi.editor.Document
 - getPsiFile(com.intellij.openapi.editor.Document):com.intellij.psi.PsiFile
 - getSynchronizer():com.intellij.psi.impl.PsiToDocumentSynchronizer
 - isCommitInProgress():Z

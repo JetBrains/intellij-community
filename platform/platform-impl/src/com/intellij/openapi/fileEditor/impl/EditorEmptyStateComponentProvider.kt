@@ -7,7 +7,10 @@ import javax.swing.JComponent
 
 @ApiStatus.Internal
 interface EditorEmptyStateComponentProvider {
-  fun createComponent(splitters: EditorsSplitters): JComponent?
+  /**
+   * Called asynchronously by the editor host. Implementations should choose their dispatcher explicitly.
+   */
+  suspend fun createComponent(splitters: EditorsSplitters): JComponent?
 
   fun disposeComponent(component: JComponent) {
   }
@@ -15,6 +18,6 @@ interface EditorEmptyStateComponentProvider {
   companion object {
     @JvmField
     val EP_NAME: ExtensionPointName<EditorEmptyStateComponentProvider> =
-      ExtensionPointName.create("com.intellij.editorEmptyStateComponentProvider")
+      ExtensionPointName("com.intellij.editorEmptyStateComponentProvider")
   }
 }

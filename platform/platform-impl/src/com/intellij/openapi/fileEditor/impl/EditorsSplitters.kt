@@ -5,6 +5,7 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.diagnostic.Activity
+import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.EmptyStateCause
 import com.intellij.frontend.FrontendApplicationInfo
@@ -33,6 +34,7 @@ import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileEditor.ClientFileEditorManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -112,6 +114,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -131,6 +134,7 @@ import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
 import java.awt.AWTEvent
 import java.awt.BorderLayout
 import java.awt.Color
@@ -219,6 +223,8 @@ open class EditorsSplitters internal constructor(
   private val windows = CopyOnWriteArraySet<EditorWindow>()
   private var emptyStateComponentHost: EditorEmptyStateComponentHost? = null
   private var emptyStateComponentEntries: List<EditorEmptyStateComponentEntry> = emptyList()
+  private var emptyStateComponentCreationJob: Job? = null
+  private var emptyStateComponentCreationGeneration: Int = 0
 
   // temporarily used during initialization of non-main editor splitters
   private val state = AtomicReference<EditorSplitterState?>()
@@ -236,6 +242,9 @@ open class EditorsSplitters internal constructor(
     get() = currentCompositeFlow.value?.file
 
   private fun showEmptyText(): Boolean = (currentWindow?.files() ?: emptySequence()).none()
+
+  @TestOnly
+  internal fun isEmptyStateComponentCreationPending(): Boolean = emptyStateComponentCreationJob != null
 
   internal val openFileList: List<VirtualFile>
     get() {
@@ -865,17 +874,74 @@ open class EditorsSplitters internal constructor(
   }
 
   private fun showEmptyStateComponents() {
-    if (emptyStateComponentHost != null) {
+    if (emptyStateComponentHost != null || emptyStateComponentCreationJob != null) {
       return
     }
 
-    val entries = EditorEmptyStateComponentProvider.EP_NAME.extensionList.mapNotNull { provider ->
-      provider.createComponent(this)?.let { EditorEmptyStateComponentEntry(provider, it) }
+    val generation = ++emptyStateComponentCreationGeneration
+    emptyStateComponentCreationJob = coroutineScope.launch(Dispatchers.Default + CoroutineName("create editor empty state components")) {
+      var entries: List<EditorEmptyStateComponentEntry> = emptyList()
+      var mounted = false
+      try {
+        entries = createEmptyStateComponentEntries()
+        withContext(Dispatchers.EDT) {
+          if (generation != emptyStateComponentCreationGeneration || !showEmptyText() || emptyStateComponentHost != null) {
+            return@withContext
+          }
+          if (entries.isEmpty()) {
+            return@withContext
+          }
+          mountEmptyStateComponents(entries)
+          mounted = true
+        }
+      }
+      finally {
+        withContext(NonCancellable + Dispatchers.EDT) {
+          if (!mounted) {
+            disposeEmptyStateComponentEntries(entries)
+          }
+          if (generation == emptyStateComponentCreationGeneration) {
+            emptyStateComponentCreationJob = null
+          }
+        }
+      }
     }
-    if (entries.isEmpty()) {
-      return
+  }
+
+  private suspend fun createEmptyStateComponentEntries(): List<EditorEmptyStateComponentEntry> {
+    val providers = ArrayList<Pair<EditorEmptyStateComponentProvider, PluginDescriptor>>()
+    EditorEmptyStateComponentProvider.EP_NAME.processWithPluginDescriptor { provider, pluginDescriptor ->
+      providers.add(provider to pluginDescriptor)
     }
 
+    val entries = ArrayList<EditorEmptyStateComponentEntry>()
+    try {
+      for ((provider, pluginDescriptor) in providers) {
+        val component = try {
+          provider.createComponent(this)
+        }
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          LOG.error(PluginException("Cannot create editor empty state component using $provider", e, pluginDescriptor.pluginId))
+          null
+        }
+        if (component != null) {
+          entries.add(EditorEmptyStateComponentEntry(provider, component))
+        }
+      }
+      return entries
+    }
+    catch (e: CancellationException) {
+      withContext(NonCancellable + Dispatchers.EDT) {
+        disposeEmptyStateComponentEntries(entries)
+      }
+      throw e
+    }
+  }
+
+  private fun mountEmptyStateComponents(entries: List<EditorEmptyStateComponentEntry>) {
     val host = EditorEmptyStateComponentHost()
     emptyStateComponentHost = host
     emptyStateComponentEntries = entries
@@ -885,13 +951,25 @@ open class EditorsSplitters internal constructor(
     repaint()
   }
 
+  private fun cancelEmptyStateComponentCreation() {
+    val job = emptyStateComponentCreationJob ?: return
+    emptyStateComponentCreationGeneration++
+    emptyStateComponentCreationJob = null
+    job.cancel()
+  }
+
+  private fun disposeEmptyStateComponentEntries(entries: List<EditorEmptyStateComponentEntry>) {
+    for ((provider, component) in entries) {
+      provider.disposeComponent(component)
+    }
+  }
+
   private fun disposeEmptyStateComponents() {
+    cancelEmptyStateComponentCreation()
     val host = emptyStateComponentHost ?: return
     remove(host)
     host.removeAll()
-    for ((provider, component) in emptyStateComponentEntries) {
-      provider.disposeComponent(component)
-    }
+    disposeEmptyStateComponentEntries(emptyStateComponentEntries)
     emptyStateComponentHost = null
     emptyStateComponentEntries = emptyList()
     revalidate()

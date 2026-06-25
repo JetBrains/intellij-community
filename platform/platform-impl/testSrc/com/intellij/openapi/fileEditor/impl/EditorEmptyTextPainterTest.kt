@@ -11,19 +11,23 @@ import com.intellij.openapi.actionSystem.KeyboardGestureAction
 import com.intellij.openapi.actionSystem.KeyboardModifierGestureShortcut
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.Shortcut
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.LightVirtualFile
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
 import org.junit.jupiter.api.AfterEach
@@ -133,6 +137,7 @@ internal class EditorEmptyTextPainterTest {
     registerComponentProvider(disposable, disposedComponents)
     manager.closeAllFiles()
     splitters.updateEmptyStateComponent()
+    waitForEmptyStateComponentCreation(splitters)
 
     assertThat(findEmptyStateComponent(splitters)).isNotNull()
 
@@ -144,6 +149,7 @@ internal class EditorEmptyTextPainterTest {
     assertThat(disposedComponents).hasValue(disposedBeforeOpen + 1)
 
     manager.closeFile(file)
+    waitForEmptyStateComponentCreation(splitters)
 
     assertThat(findEmptyStateComponent(splitters)).isNotNull()
   }
@@ -158,6 +164,7 @@ internal class EditorEmptyTextPainterTest {
     val splitters = manager.mainSplitters
     manager.closeAllFiles()
     splitters.updateEmptyStateComponent()
+    waitForEmptyStateComponentCreation(splitters)
 
     val promotedLine = PROMOTED_ACTION_TEXT + " <shortcut>" + KeymapUtil.getShortcutText(doubleCtrlShortcut) + "</shortcut>"
     val searchEverywhereLine = IdeBundle.message("empty.text.search.everywhere") +
@@ -174,6 +181,7 @@ internal class EditorEmptyTextPainterTest {
     val splitters = manager.mainSplitters
     manager.closeAllFiles()
     splitters.updateEmptyStateComponent()
+    waitForEmptyStateComponentCreation(splitters)
 
     assertThat(findEmptyStateComponent(splitters)).isNull()
   }
@@ -184,6 +192,7 @@ internal class EditorEmptyTextPainterTest {
     registerComponentProvider(disposable)
     manager.closeAllFiles()
     splitters.updateEmptyStateComponent()
+    waitForEmptyStateComponentCreation(splitters)
 
     val element = Element("state")
     splitters.writeExternal(element)
@@ -202,8 +211,8 @@ internal class EditorEmptyTextPainterTest {
 
   private fun registerComponentProvider(disposable: Disposable, disposedComponents: AtomicInteger = AtomicInteger()) {
     ExtensionTestUtil.maskExtensions(EditorEmptyStateComponentProvider.EP_NAME, listOf(object : EditorEmptyStateComponentProvider {
-      override fun createComponent(splitters: EditorsSplitters): JComponent {
-        return JPanel().apply {
+      override suspend fun createComponent(splitters: EditorsSplitters): JComponent = withContext(Dispatchers.EDT) {
+        JPanel().apply {
           name = EMPTY_STATE_COMPONENT_NAME
           preferredSize = java.awt.Dimension(320, 40)
         }
@@ -217,6 +226,10 @@ internal class EditorEmptyTextPainterTest {
 
   private fun findEmptyStateComponent(splitters: EditorsSplitters): JComponent? {
     return UIUtil.uiTraverser(splitters).find { it is JComponent && it.name == EMPTY_STATE_COMPONENT_NAME } as? JComponent
+  }
+
+  private fun waitForEmptyStateComponentCreation(splitters: EditorsSplitters) {
+    PlatformTestUtil.waitWhileBusy { splitters.isEmptyStateComponentCreationPending() }
   }
 
   private fun resetShortcuts(actionId: String, shortcuts: List<Shortcut>) {

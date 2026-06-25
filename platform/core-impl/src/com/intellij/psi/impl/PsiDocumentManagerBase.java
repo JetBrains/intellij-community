@@ -69,6 +69,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.FileContentUtilCore;
@@ -139,13 +140,21 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     project.getMessageBus().connect(this).subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
       @Override
       public void fileContentLoaded(final @NotNull VirtualFile virtualFile, @NotNull Document document) {
-        PsiFile psiFile = ReadAction.computeBlocking(() -> {
-          // todo IJPL-339 figure out which psi file to pass here or get rid of psi file at all
-          return myProject.isDisposed() || !virtualFile.isValid() ? null : getCachedPsiFile(virtualFile, CodeInsightContexts.anyContext());
-        });
+        PsiFile psiFile;
+        if (virtualFile instanceof LightVirtualFile) {
+          psiFile = getCachedPsiFileForLoadedContent(virtualFile);
+        }
+        else {
+          psiFile = ReadAction.computeBlocking(() -> getCachedPsiFileForLoadedContent(virtualFile));
+        }
         fireDocumentCreated(document, psiFile);
       }
     });
+  }
+
+  private @Nullable PsiFile getCachedPsiFileForLoadedContent(@NotNull VirtualFile virtualFile) {
+    // todo IJPL-339 figure out which psi file to pass here or get rid of psi file at all
+    return myProject.isDisposed() || !virtualFile.isValid() ? null : getCachedPsiFile(virtualFile, CodeInsightContexts.anyContext());
   }
 
   // dodo IJPL-339: deprecate this method?
@@ -249,6 +258,22 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
 
   @Override
   public Document getDocument(@NotNull PsiFile psiFile) {
+    return getDocument(psiFile, false);
+  }
+
+  @Override
+  public Document getDocumentForNonPhysicalLightFile(@NotNull PsiFile psiFile) {
+    FileViewProvider viewProvider = psiFile.getViewProvider();
+    VirtualFile virtualFile = viewProvider.getVirtualFile();
+    if (viewProvider.isPhysical() || !(virtualFile instanceof LightVirtualFile)) {
+      throw new IllegalArgumentException("Expected non-physical light PSI file, got " + psiFile +
+                                         "; virtualFile=" + virtualFile +
+                                         "; physical=" + viewProvider.isPhysical());
+    }
+    return getDocument(psiFile, true);
+  }
+
+  private Document getDocument(@NotNull PsiFile psiFile, boolean forNonPhysicalLightFile) {
     Document document = getCachedDocument(psiFile);
     if (document != null) {
       if (!psiFile.getViewProvider().isPhysical()) {
@@ -264,7 +289,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     }
 
     VirtualFile virtualFile = viewProvider.getVirtualFile();
-    document = FileDocumentManager.getInstance().getDocument(virtualFile, myProject);
+    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+    if (forNonPhysicalLightFile) {
+      document = ((FileDocumentManagerBase)fileDocumentManager).getDocumentForLightVirtualFile((LightVirtualFile)virtualFile);
+    }
+    else {
+      document = fileDocumentManager.getDocument(virtualFile, myProject);
+    }
     if (document != null) {
       if (document.getTextLength() != psiFile.getTextLength()) {
         // We have internal state inconsistency, it might be a good idea to contact the core team if you are able to reproduce this error.

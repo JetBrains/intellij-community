@@ -51,6 +51,15 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   @Override
   @RequiresReadLock
   public final @Nullable Document getDocument(@NotNull VirtualFile file) {
+    return getDocumentWithoutReadAccessAssert(file);
+  }
+
+  @ApiStatus.Internal
+  public final @Nullable Document getDocumentForLightVirtualFile(@NotNull LightVirtualFile file) {
+    return getDocumentWithoutReadAccessAssert(file);
+  }
+
+  private @Nullable Document getDocumentWithoutReadAccessAssert(@NotNull VirtualFile file) {
     DocumentEx document = (DocumentEx)getCachedDocument(file);
     if (document != null) {
       return document;

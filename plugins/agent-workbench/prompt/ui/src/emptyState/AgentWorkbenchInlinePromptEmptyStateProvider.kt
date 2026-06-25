@@ -11,6 +11,7 @@ import com.intellij.agent.workbench.prompt.ui.AgentPromptSessionsMessageResolver
 import com.intellij.agent.workbench.prompt.ui.AgentPromptUiSessionStateService
 import com.intellij.agent.workbench.prompt.ui.createAgentPromptPaletteContent
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.impl.EditorEmptyStateComponentProvider
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
@@ -18,22 +19,24 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal class AgentWorkbenchInlinePromptEmptyStateProvider : EditorEmptyStateComponentProvider {
-  override fun createComponent(splitters: EditorsSplitters): JComponent? {
+  override suspend fun createComponent(splitters: EditorsSplitters): JComponent? = withContext(Dispatchers.EDT) {
     if (AgentPromptLaunchers.find() == null) {
-      return null
+      return@withContext null
     }
 
     val project = splitters.manager.project
     val component = AgentWorkbenchInlinePromptEmptyStateComponent(project)
     component.initialize()
-    return component
+    return@withContext component
   }
 
   override fun disposeComponent(component: JComponent) {
