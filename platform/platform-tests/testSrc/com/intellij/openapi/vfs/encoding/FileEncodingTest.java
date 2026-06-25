@@ -14,7 +14,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileDocumentManagerListenerBackgroundable;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
@@ -99,6 +101,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.Objects.requireNonNull;
@@ -175,6 +178,8 @@ public class FileEncodingTest implements TestDialog {
 
   private static void setText(@NotNull Document document, @NotNull String text) {
     ApplicationManager.getApplication().runWriteAction(() -> document.setText(text));
+    List<Document> unsavedDocuments = Arrays.asList(FileDocumentManager.getInstance().getUnsavedDocuments());
+    assertTrue(unsavedDocuments.toString(), unsavedDocuments.contains(document));
   }
 
   private @NotNull Disposable getTestRootDisposable() {
@@ -576,7 +581,22 @@ public class FileEncodingTest implements TestDialog {
     String text = "horseradish";
     setText(document, text);
     assertTrue(FileDocumentManagerImpl.isSaveNeeded(document, file));
+    assertTrue(FileDocumentManager.getInstance().isFileModified(file));
+    assertTrue(file.isValid());
+    assertTrue(FileDocumentManagerBase.isTrackable(file));
+    AtomicBoolean beforeSaving = new AtomicBoolean();
+    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(
+      FileDocumentManagerListenerBackgroundable.TOPIC, new FileDocumentManagerListenerBackgroundable() {
+        @Override
+        public void beforeDocumentSaving(@NotNull Document toSave) {
+          if (document == toSave) {
+            beforeSaving.set(true);
+          }
+        }
+      });
+
     FileDocumentManager.getInstance().saveAllDocuments();
+    assertTrue(beforeSaving.get());
 
     assertEquals(StandardCharsets.UTF_8, file.getCharset());
     assertArrayEquals(CharsetToolkit.UTF8_BOM, file.getBOM());
