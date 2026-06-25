@@ -1,6 +1,5 @@
 package com.intellij.terminal.frontend.toolwindow.impl
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.platform.eel.EelDescriptor
@@ -9,7 +8,6 @@ import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.terminal.frontend.view.TerminalView
-import com.intellij.terminal.frontend.view.impl.TerminalOutputScrollingModel
 import com.intellij.util.ui.ImageUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -25,7 +23,6 @@ import javax.imageio.ImageIO
 internal object TerminalClipboard {
   fun pasteClipboardContent(
     view: TerminalView,
-    scrollingModel: TerminalOutputScrollingModel? = null,
     preferSystemSelection: Boolean = false,
   ) {
     val systemContents = CopyPasteManager.getInstance().systemSelectionContents
@@ -35,15 +32,9 @@ internal object TerminalClipboard {
       val text = sequenceOf(if (preferSystemSelection) systemContents else null, defaultContents)
                    .firstNotNullOfOrNull { getContentAsText(it, view) } ?: return@launch
 
-      withContext(Dispatchers.EDT) {
-        view.createSendTextBuilder()
-          .useBracketedPasteMode()
-          .send(text)
-
-        // Scroll to the cursor if the scrolling model is available in this editor.
-        // It can be absent if it is the alternate buffer editor.
-        scrollingModel?.scrollToCursor(force = true)
-      }
+      view.createSendTextBuilder()
+        .useBracketedPasteMode()
+        .send(text)
     }
   }
 
