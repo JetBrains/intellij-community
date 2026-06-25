@@ -51,10 +51,10 @@ class CodexNewThreadPromptLaunchIntegrationTest {
     val observation = assertNewThreadPromptLaunchOpensNewChat(descriptor = descriptor, request = request)
 
     assertThat(observation.normalizedPath).isEqualTo(PROJECT_PATH)
-    assertThat(observation.identity).isEqualTo("codex:thread-plan-1")
+    assertThat(observation.identity).isEqualTo("codex:$RECORDED_PLAN_THREAD_ID")
     assertThat(observation.launchSpec.command)
-      .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("resume", "--remote", REMOTE_URL, "thread-plan-1"))
-    assertThat(observation.launchSpec.preallocatedSessionId).isEqualTo("thread-plan-1")
+      .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("resume", "--remote", REMOTE_URL, RECORDED_PLAN_THREAD_ID))
+    assertThat(observation.launchSpec.preallocatedSessionId).isEqualTo(RECORDED_PLAN_THREAD_ID)
     assertThat(observation.startupLaunchSpecOverride).isNull()
     val dispatchStep = observation.postStartDispatchSteps.single()
     assertThat(dispatchStep.action).isEqualTo(AgentInitialMessageDispatchAction.PROVIDER)
@@ -102,7 +102,7 @@ class CodexNewThreadPromptLaunchIntegrationTest {
     )
 
     assertThat(observation.normalizedPath).isEqualTo(PROJECT_PATH)
-    assertThat(observation.identity).isEqualTo("codex:thread-plan-1")
+    assertThat(observation.identity).isEqualTo("codex:$RECORDED_PLAN_THREAD_ID")
     assertThat(observation.launchSpec.command)
       .containsExactlyElementsOf(
         CODEX_BASE_COMMAND + listOf(
@@ -115,10 +115,10 @@ class CodexNewThreadPromptLaunchIntegrationTest {
           "resume",
           "--remote",
           REMOTE_URL,
-          "thread-plan-1",
+          RECORDED_PLAN_THREAD_ID,
         )
       )
-    assertThat(observation.launchSpec.preallocatedSessionId).isEqualTo("thread-plan-1")
+    assertThat(observation.launchSpec.preallocatedSessionId).isEqualTo(RECORDED_PLAN_THREAD_ID)
     assertThat(observation.startupLaunchSpecOverride).isNull()
     val dispatchStep = observation.postStartDispatchSteps.single()
     assertThat(dispatchStep.action).isEqualTo(AgentInitialMessageDispatchAction.PROVIDER)
@@ -140,7 +140,7 @@ class CodexNewThreadPromptLaunchIntegrationTest {
         AgentInitialMessageProviderDispatchRequest(
           project = ProjectManager.getInstance().defaultProject,
           projectPath = PROJECT_PATH,
-          threadId = "thread-plan-1",
+          threadId = RECORDED_PLAN_THREAD_ID,
           message = "Refactor selected code",
           mode = AgentInitialMessageMode.PLAN,
           generationSettings = AgentPromptGenerationSettings(
@@ -152,7 +152,7 @@ class CodexNewThreadPromptLaunchIntegrationTest {
     }
     assertThat(startupBackend.turnRequests).containsExactly(
       CodexPlanPromptTurnRequest(
-        threadId = "thread-plan-1",
+        threadId = RECORDED_PLAN_THREAD_ID,
         prompt = "Refactor selected code",
         model = "gpt-5.1-codex",
         reasoningEffort = "high",
@@ -213,7 +213,7 @@ internal class RecordingPlanPromptStartupBackend : CodexPlanPromptStartupBackend
       model = model,
     )
     return CodexPrestartedPlanPrompt(
-      threadId = "thread-plan-${requests.size}",
+      threadId = recordingPlanPromptThreadId(requests.size),
       remoteUrl = REMOTE_URL,
     )
   }
@@ -253,6 +253,12 @@ private const val PROJECT_PATH: String = "/work/project-a"
 private const val PLAN_PROMPT: String = "Plan this refactor"
 
 internal const val REMOTE_URL: String = "ws://127.0.0.1:54321"
+
+internal const val RECORDED_PLAN_THREAD_ID: String = "019effd8-0000-7000-8000-000000000001"
+
+private fun recordingPlanPromptThreadId(index: Int): String {
+  return "019effd8-0000-7000-8000-${index.toString().padStart(12, '0')}"
+}
 
 private val CODEX_BASE_COMMAND: List<String> = listOf(
   "codex",

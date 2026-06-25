@@ -103,6 +103,8 @@ class SharedCodexAppServerService(serviceScope: CoroutineScope) {
       reasoningEffort = reasoningEffort ?: CODEX_DEFAULT_PLAN_REASONING_EFFORT,
       developerInstructions = null,
     )
+    // Keep this pre-turn settings update: the resumed Codex TUI uses thread/settings/updated
+    // to show the visible Plan mode footer before the prompt starts.
     client.updateThreadCollaborationMode(
       threadId = threadId,
       collaborationMode = collaborationMode,

@@ -80,6 +80,9 @@ The global prompt opens a project-scoped prompt surface for starting a new task 
   [@test] ../../prompt/ui/testSrc/AgentPromptPlanModeDecisionsTest.kt
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
+- Codex `NEW_TASK` Plan prompts start through the Codex app-server remote-resume path, not by typing `/plan`. The resumed TUI must visibly enter Plan mode before the prompt starts; an acknowledged no-op `thread/settings/update` without `thread/settings/updated` must not be treated as prompt-send failure.
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexPlanPromptRealAppServerIntegrationTest.kt
+
 - `NEW_TASK` and `EXISTING_TASK` expose the provider selector. Changing provider in `EXISTING_TASK` reloads the selectable task list for that provider. Provider-backed model and reasoning-effort controls are exposed for `NEW_TASK` as specified by `global-prompt-generation-controls.spec.md`. Header actions stay limited to prompt-surface tools such as provider selection, Plan mode, Run in container, preview, and prompt library.
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteViewStructureTest.kt
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
