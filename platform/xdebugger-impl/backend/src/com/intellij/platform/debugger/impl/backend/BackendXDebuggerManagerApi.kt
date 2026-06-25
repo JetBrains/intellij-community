@@ -90,12 +90,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       currentSession.getBreakpointsMutedFlow().toRpc(),
     )
 
-    val consoleView = if (SplitDebuggerMode.isSplitDebugger()) {
-      currentSession.consoleView?.toRpc(currentSession.tabCoroutineScope, debugProcess)
-    }
-    else {
-      null
-    }
+    val consoleView = currentSession.consoleView?.toRpc(currentSession.tabCoroutineScope, debugProcess)
     val activeBreakpointFlow = currentSession.activeNonLineBreakpointFlow.map {
       if (it !is XBreakpointBase<*, *, *>) return@map null
       it.breakpointId

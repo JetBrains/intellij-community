@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.execution.impl.ConsoleViewUtil
@@ -514,19 +514,12 @@ class XLineBreakpointManager(
         val event = AnActionEvent.createFromAnAction(action, mouseEvent, ActionPlaces.EDITOR_GUTTER, dataContext)
         // TODO IJPL-185322 Introduce a better way to handle actions in the frontend
         // TODO We actually want to call the action directly, but dispatch it on frontend if possible
-        if (SplitDebuggerMode.isSplitDebugger()) {
-          // Call handler directly so that it will be called on frontend
-          val handler = ToggleLineBreakpointAction.ourHandler
-          if (handler.isEnabled(project, event)) {
-            handler.perform(project, event)
-            // statistics reporting
-            ActionsCollectorImpl.onAfterActionInvoked(action, event, AnActionResult.PERFORMED)
-          }
-        }
-        else {
-          // Cannot call the handler directly in case of LUX split.
-          // Call the action so that it is delegated to the backend action.
-          ActionUtil.performAction(action, event)
+        // Call handler directly so that it will be called on frontend
+        val handler = ToggleLineBreakpointAction.ourHandler
+        if (handler.isEnabled(project, event)) {
+          handler.perform(project, event)
+          // statistics reporting
+          ActionsCollectorImpl.onAfterActionInvoked(action, event, AnActionResult.PERFORMED)
         }
       }
     }

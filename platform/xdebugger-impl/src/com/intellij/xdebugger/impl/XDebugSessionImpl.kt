@@ -524,7 +524,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
    */
   @ApiStatus.Obsolete
   fun runWhenTabReady(block: (XDebugSessionTab?) -> Unit) {
-    if (AppMode.isRemoteDevHost() && SplitDebuggerMode.isSplitDebugger()) {
+    if (AppMode.isRemoteDevHost()) {
       if (SplitDebuggerMode.showSplitWarnings()) {
         LOG.error("[Split debugger] Debugger tab is not accessible in RemDev on backend")
       }
