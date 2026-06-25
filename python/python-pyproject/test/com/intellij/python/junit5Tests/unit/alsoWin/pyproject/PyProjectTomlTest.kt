@@ -5,7 +5,6 @@ import com.intellij.python.pyproject.PyProjectDependencies
 import com.intellij.python.pyproject.PyProjectFile
 import com.intellij.python.pyproject.PyProjectIssue
 import com.intellij.python.pyproject.PyProjectIssue.InvalidContact
-import com.intellij.python.pyproject.PyProjectIssue.MissingName
 import com.intellij.python.pyproject.PyProjectIssue.MissingVersion
 import com.intellij.python.pyproject.PyProjectIssue.SafeGetError
 import com.intellij.python.pyproject.PyProjectTable
@@ -15,7 +14,6 @@ import com.intellij.python.pyproject.TomlTableSafeGetError.RequiredValueMissing
 import com.intellij.python.pyproject.TomlTableSafeGetError.UnexpectedType
 import org.apache.tuweni.toml.TomlArray
 import org.apache.tuweni.toml.TomlTable
-import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -33,7 +31,7 @@ internal class PyProjectTomlTest {
     val result = PyProjectToml.parse(configContents)
 
     // THEN
-    Assertions.assertThat(result.toml.errors()).isNotEmpty()
+    org.junit.jupiter.api.Assertions.assertNull(result)
   }
 
   @Test
@@ -51,7 +49,7 @@ internal class PyProjectTomlTest {
       bar="test bar"
       baz="test baz"
     """.trimIndent()
-    val pyproject = PyProjectToml.parse(configContents)
+    val pyproject = PyProjectToml.parse(configContents)!!
 
     // WHEN
     val testTool = pyproject.getTool(TestPyProject)
@@ -76,14 +74,7 @@ internal class PyProjectTomlTest {
 
     // WHEN
     val pyproject = PyProjectToml.parse(configContents)
-    val testTool = pyproject.getTool(TestPyProject)
-
-    // THEN
-    assertEquals(pyproject.project, null)
-    assertEquals(pyproject.issues.size, 0)
-    assertEquals(2, testTool.tables.size)
-    assert(testTool.tables["tool.test"] is TomlTable)
-    assert(testTool.tables["shared_category"] is TomlTable)
+    org.junit.jupiter.api.Assertions.assertNull(pyproject)
   }
 
   @Test
@@ -102,14 +93,10 @@ internal class PyProjectTomlTest {
 
     // WHEN
     val pyproject = PyProjectToml.parse(configContents)
-    val testTool = pyproject.getTool(TestPyProject)
+
 
     // THEN
-    assertEquals(pyproject.issues, listOf(MissingName, MissingVersion))
-    assertEquals(pyproject.project, PyProjectTable())
-    assertEquals(2, testTool.tables.size)
-    assert(testTool.tables["tool.test"] is TomlTable)
-    assert(testTool.tables["shared_category"] is TomlTable)
+    org.junit.jupiter.api.Assertions.assertNull(pyproject)
   }
 
   @Test
@@ -120,7 +107,7 @@ internal class PyProjectTomlTest {
       name="Some project"
       version="1.2.3"
     """.trimIndent()
-    val pyproject = PyProjectToml.parse(configContents)
+    val pyproject = PyProjectToml.parse(configContents)!!
 
     // WHEN
     val testTool = pyproject.getTool(TestPyProject)
@@ -132,12 +119,13 @@ internal class PyProjectTomlTest {
 
   @ParameterizedTest(name = "{0}")
   @MethodSource("parseTestCases")
-  fun parseTests(name: String, pyprojectToml: String, expectedProjectTable: PyProjectTable?, expectedIssues: List<PyProjectIssue>) {
+  fun parseTests(name: String, pyprojectToml: String, expectedProjectTable: PyProjectTable?, expectedIssues: List<PyProjectIssue>?) {
     val result = PyProjectToml.parse(pyprojectToml)
-    val unwrapped = result
 
-    assertEquals(expectedProjectTable, unwrapped.project)
-    assertEquals(expectedIssues, unwrapped.issues)
+    assertEquals(expectedProjectTable, result?.project)
+    if (result != null) {
+      assertEquals(expectedIssues, result.issues)
+    }
   }
 
   companion object {
@@ -150,33 +138,6 @@ internal class PyProjectTomlTest {
         listOf()
       ),
 
-      ParseTestCase(
-        "empty project section results with table and name + version issues",
-        "[project]",
-        PyProjectTable(),
-        listOf(MissingName, MissingVersion)
-      ),
-
-      ParseTestCase(
-        "empty name results in an issue",
-        """
-          [project]
-          version = "123"
-        """.trimIndent(),
-        PyProjectTable(version = "123"),
-        listOf(MissingName)
-      ),
-
-      ParseTestCase(
-        "empty name results in an issue, even when mentioned in dynamic",
-        """
-          [project]
-          version = "123"
-          dynamic = ["name"]
-        """.trimIndent(),
-        PyProjectTable(version = "123", dynamic = listOf("name")),
-        listOf(MissingName)
-      ),
 
       ParseTestCase(
         "empty version results in an issue",
@@ -197,17 +158,6 @@ internal class PyProjectTomlTest {
         """.trimIndent(),
         PyProjectTable(name = "some_name", dynamic = listOf("version")),
         listOf()
-      ),
-
-      ParseTestCase(
-        "name of wrong type results in an issue",
-        """
-          [project]
-          name = 12
-          version = "123"
-        """.trimIndent(),
-        PyProjectTable(version = "123"),
-        listOf(SafeGetError(UnexpectedType("name", String::class, Long::class)))
       ),
 
       ParseTestCase(

@@ -16,6 +16,7 @@ import com.jetbrains.python.sdk.findAmongRoots
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.tuweni.toml.Toml
+import org.apache.tuweni.toml.TomlInvalidTypeException
 import org.apache.tuweni.toml.TomlParseError
 import org.apache.tuweni.toml.TomlParseResult
 import org.apache.tuweni.toml.TomlTable
@@ -47,10 +48,6 @@ const val PY_PROJECT_TOML_TOOL_PREFIX: String = "tool"
  */
 @Internal
 sealed class PyProjectIssue {
-  /**
-   * Signifies that the name is missing from the `project` section.
-   */
-  data object MissingName : PyProjectIssue()
 
   /**
    * Signifies that the version is missing from the `project` section, while also being absent from the `dynamic` array.
@@ -75,9 +72,8 @@ sealed class PyProjectIssue {
 data class PyProjectToml(
   /**
    * Represents the parsed `pyproject.toml` file.
-   * This field can be null when the `project` section is missing.
    */
-  val project: PyProjectTable?,
+  val project: PyProjectTable,
 
   /**
    * A list of issues that occurred during the execution of [PyProjectToml.parse].
@@ -140,20 +136,19 @@ data class PyProjectToml(
      * val hatch = pyProject.getTool(HatchPyProject)
      * ```
      */
-    fun parse(tomlFileContent: String): PyProjectToml {
+    fun parse(tomlFileContent: String): PyProjectToml? {
       val issues = mutableListOf<PyProjectIssue>()
       val toml = Toml.parse(tomlFileContent)
 
 
-      val projectTable = toml.safeGet<TomlTable>(PY_PROJECT_TOML_PROJECT).getOrIssue(issues)
+      val projectTable = toml.safeGet<TomlTable>(PY_PROJECT_TOML_PROJECT).getOrIssue(issues) ?: return null
 
-      if (projectTable == null) {
-        return PyProjectToml(null, issues, toml)
+      val name = try {
+        projectTable.getString("name")
       }
-
-      val name = projectTable.safeGet<String>("name").getOrIssue(issues) {
-        issues += PyProjectIssue.MissingName
-      }
+                 catch (_: TomlInvalidTypeException) {
+                   null
+                 } ?: return null
 
       val dynamic = projectTable.safeGetArr<String>("dynamic").getOrIssue(issues)
       val version = projectTable.safeGet<String>("version").getOrIssue(issues) {

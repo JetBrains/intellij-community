@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
@@ -38,8 +37,8 @@ import com.intellij.python.pyproject.model.internal.PyProjectTomlBundle
 import com.intellij.python.pyproject.model.internal.pyProjectToml.FSWalkInfoWithToml
 import com.intellij.python.pyproject.model.internal.pyProjectToml.getDependenciesFromToml
 import com.intellij.python.pyproject.model.spi.ProjectName
-import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
 import com.intellij.python.pyproject.model.spi.PyProjectManager
+import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
 import com.intellij.python.pyproject.model.spi.WorkspaceName
 import com.intellij.python.pyproject.model.spi.plus
 import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
@@ -52,7 +51,6 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import kotlin.io.path.exists
-import kotlin.io.path.name
 
 private val logger = fileLogger()
 
@@ -470,17 +468,6 @@ private suspend fun parseRawEntries(fsInfo: FSWalkInfoWithToml, pyProjectManager
   for ((tomlFile, toml) in fsInfo.tomlFiles.entries.sortedBy { it.key }) {
     val participatedManagers = mutableSetOf<ToolId>()
     val root = tomlFile.parent
-    var projectNameAsString = toml.project?.name
-    if (projectNameAsString == null) {
-      val managerAndName = pyProjectManagers.getNameFromEP(toml)
-      if (managerAndName != null) {
-        projectNameAsString = managerAndName.second
-        participatedManagers.add(managerAndName.first.id)
-      }
-    }
-    if (projectNameAsString == null) {
-      projectNameAsString = root.name
-    }
     val sourceRootsAndTools = pyProjectManagers.flatMap { tool -> tool.getSrcRoots(toml.toml, root).map { Pair(tool, it) } }.toSet()
     val sourceRoots = sourceRootsAndTools.map { it.second }.toSet() + findSrc(root)
     participatedManagers.addAll(sourceRootsAndTools.map { it.first.id })
@@ -502,7 +489,7 @@ private suspend fun parseRawEntries(fsInfo: FSWalkInfoWithToml, pyProjectManager
     val relationsWithTools: MutableSet<PyProjectTomlToolRelation> = participatedManagers.mapTo(mutableSetOf()) {
       PyProjectTomlToolRelation.SimpleRelation(it)
     }
-    rawEntries.add(RawEntry(tomlFile, root, projectNameAsString, participatedManagers, toml, sourceRoots, relationsWithTools))
+    rawEntries.add(RawEntry(tomlFile, root, toml.project.name, participatedManagers, toml, sourceRoots, relationsWithTools))
   }
   return rawEntries
 }
@@ -604,11 +591,6 @@ private suspend fun resolveDependencies(entries: List<PyProjectTomlBasedEntryImp
     entity.dependencies.addAll(deps)
   }
 }
-
-private suspend fun Iterable<PyProjectManager>.getNameFromEP(projectToml: PyProjectToml): Pair<PyProjectManager, @NlsSafe String>? =
-  withContext(Dispatchers.Default) {
-    firstNotNullOfOrNull { tool -> tool.getProjectName(projectToml.toml)?.let { Pair(tool, it) } }
-  }
 
 // For the time being mark them as java-sources to indicate that in the Project tool window
 // Any other type isn't blue

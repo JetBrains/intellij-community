@@ -175,7 +175,7 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
 
           val pythonVersions = withContext(Dispatchers.IO) {
             val versionRequest = if (pyProjectTomlPath.exists()) {
-              PyProjectToml.parse(pyProjectTomlPath.readText()).project?.requiresPython
+              PyProjectToml.parse(pyProjectTomlPath.readText())?.project?.requiresPython
             }
             else {
               null

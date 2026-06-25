@@ -2,7 +2,6 @@
 package com.intellij.python.uv.backend
 
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.getPathMatcher
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.PyProjectToml
@@ -33,8 +32,6 @@ internal class UvPyProjectManager : PyProjectManager {
   override val id: ToolId = UV_TOOL_ID
 
   override val ui: PyToolUIInfo = UV_UI_INFO
-
-  override suspend fun getProjectName(projectToml: TomlTable): @NlsSafe String? = null
 
   override suspend fun getSrcRoots(toml: TomlTable, projectRoot: Directory): Set<Directory> = emptySet()
 

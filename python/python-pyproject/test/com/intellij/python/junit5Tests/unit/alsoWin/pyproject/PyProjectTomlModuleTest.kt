@@ -39,7 +39,10 @@ internal class PyProjectTomlModuleTest {
       val m = ModuleRootManager.getInstance(module).modifiableModel
       m.addContentEntry(dir)
       m.commit()
-      dir.createFile(PY_PROJECT_TOML).writeText("[]")
+      dir.createFile(PY_PROJECT_TOML).writeText("""
+        [project]
+        name="D"
+      """.trimIndent())
     }
     externalSystemAware.reloadProjectImpl()
     module = projectFixture.get().modules[0]

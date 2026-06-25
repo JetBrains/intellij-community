@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.hatch.impl
 
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.hatch.icons.PythonHatchIcons
 import com.intellij.python.pyproject.model.spi.ProjectName
@@ -24,8 +23,6 @@ internal class HatchPyProjectManager : PyProjectManager {
   override val ui: PyToolUIInfo = HATCH_UI_INFO
 
   override suspend fun getSrcRoots(toml: TomlTable, projectRoot: Directory): Set<Directory> = emptySet()
-
-  override suspend fun getProjectName(projectToml: TomlTable): @NlsSafe String? = null
 
   override suspend fun getProjectStructure(
     entries: Map<ProjectName, PyProjectTomlProject>,
