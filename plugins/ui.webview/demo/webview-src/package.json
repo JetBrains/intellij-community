@@ -4,6 +4,8 @@
   "type": "module",
   "scripts": {
     "build": "bun run build.ts",
+    "webview-preview": "bun ../../webview-src/packages/testkit/src/cli.ts",
+    "test:browser": "playwright test",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
@@ -11,6 +13,7 @@
     "@assistant-ui/react": "^0.14.0",
     "@jetbrains/intellij-webview": "file:../../webview-src",
     "@jetbrains/intellij-webview-controls": "file:../../webview-src/packages/controls",
+    "@jetbrains/intellij-webview-testkit": "file:../../webview-src/packages/testkit",
     "cytoscape": "^3.33.1",
     "cytoscape-fcose": "^2.2.0",
     "marked": "^15.0.0",
@@ -21,6 +24,7 @@
     "zod": "^4.4.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.0",
     "@types/node": "^22.10.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
