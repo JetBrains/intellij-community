@@ -46,7 +46,6 @@ import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.sk
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionType
 import com.jetbrains.python.documentation.PyTypeRenderer
 import com.jetbrains.python.documentation.PythonDocumentationProvider
-import com.jetbrains.python.fixtures.PyCodeInsightTestCase.Companion.myFixture
 import com.jetbrains.python.fixtures.PyTestAssertionInliner.findCounterparts
 import com.jetbrains.python.fixtures.PyTestAssertionParser.parseAssertions
 import com.jetbrains.python.inspections.PyAbstractClassInspection
@@ -152,7 +151,8 @@ import kotlin.time.measureTimedValue
  * a related assert method.
  *
  * - **FIXME** records the value that is expected after a known bug or limitation is fixed while keeping the
- * current/wrong expected value before it.
+ * current/wrong expected value before it. `FIXME` may also appear with no anticipated text to indicate e.g.,
+ * superfluous warnings that should disappear once a bug is fixed.
  *
  *
  * ## Implementation Note
@@ -434,7 +434,7 @@ abstract class PyCodeInsightTestCase {
 
       val content = if (expectedAssertion.content == "*") "*" else actualAssertion.content
       val fixmeContent = if (expectedAssertion.fixmeContent == actualAssertion.content) "You fixed it!" else expectedAssertion.fixmeContent
-      val actualAssertionFixed = actualAssertion.withContent(content, fixmeContent)
+      val actualAssertionFixed = actualAssertion.withContent(content, fixmeContent, expectedAssertion.comment)
       actualAssertionsAligned[idx] = actualAssertionFixed
     }
 
@@ -601,9 +601,13 @@ data class PyTestAssertion(
 
   val codeColumnEndEffective: Int get() = if (codeColumnStart + 1 == codeColumnEnd) -1 else codeColumnEnd
 
+  val columnLength: Int get() = codeColumnEnd - codeColumnStart
+
+  val hasFixme: Boolean get() = fixmeContent != null
+
   override fun toString(): String {
     val line = if (assertionLineStart > -1) assertionLineStart else codeLineStart
-    val fixme = fixmeContent.nullize()?.let { "FIXME $it" } ?: ""
+    val fixme = fixmeContent?.let { "FIXME $it" } ?: ""
     val comment = comment.nullize()?.let { " # $it" } ?: ""
     return "[$line:$codeColumnStart] $type $content $fixme$comment"
   }
@@ -735,12 +739,9 @@ private object PyTestAssertionInliner {
     if (expected.codeColumnStart == -1) {
       return expected.codeLineStart == actual.codeLineStart
     }
-    if (expected.codeOffsetStart != actual.codeOffsetStart) return false
+    if (expected.codeOffsetStart < actual.codeOffsetStart || expected.codeOffsetStart > actual.codeOffsetStart + actual.columnLength) return false
 
-    val expectedHasColumnEnd = expected.codeColumnEndEffective > -1
-    val actualHasColumnEnd = actual.codeColumnEndEffective > -1
-
-    if (expectedHasColumnEnd || actualHasColumnEnd) {
+    if (expected.codeColumnEndEffective > -1) {
       return expected.codeColumnEndEffective == actual.codeColumnEndEffective
     }
 
@@ -767,11 +768,11 @@ private object PyTestAssertionInliner {
         val inlineExpected = counterparts[inlineActual]!!
         val commentActuals = actualAssertions - inlineActual
         val commentExpected = expectedAssertions - inlineExpected
-        replaceCommentAssertion(result, commentExpected, commentActuals)
+        replaceCommentAssertion(result, commentExpected, commentActuals, counterparts)
         replaceInlineAssertion(result, inlineExpected, inlineActual)
       }
       else {
-        replaceCommentAssertion(result, expectedAssertions, actualAssertions)
+        replaceCommentAssertion(result, expectedAssertions, actualAssertions, counterparts)
       }
     }
 
@@ -794,12 +795,15 @@ private object PyTestAssertionInliner {
     text: StringBuilder,
     expectedAssertions: List<PyTestAssertion>,
     actualAssertions: List<PyTestAssertion>,
+    counterparts: Map<PyTestAssertion, PyTestAssertion>,
   ) {
+    val unmatchedAssertions = expectedAssertions - counterparts.values.toSet()
+    val actualAndPlaceholderAssertions = actualAssertions + unmatchedAssertions.filter { it.content.isBlank() && it.hasFixme }
 
-    if (actualAssertions.isEmpty()) return
+    if (actualAndPlaceholderAssertions.isEmpty()) return
     removeAssertions(text, expectedAssertions)
 
-    val sortedActualAssertions = actualAssertions.sortedWith(compareBy(
+    val sortedActualAssertions = actualAndPlaceholderAssertions.sortedWith(compareBy(
       { -it.codeColumnStart },
       { it.type },
       { it.content },
@@ -812,7 +816,7 @@ private object PyTestAssertionInliner {
       serializedAssertions = serializedAssertionsUpdated + newAssertion
     }
 
-    val endOfLineOffset = findLineEndOffset(text, actualAssertions.first())
+    val endOfLineOffset = findLineEndOffset(text, actualAndPlaceholderAssertions.first())
     for (serializedAssertion in serializedAssertions.asReversed()) {
       text.insert(endOfLineOffset, "\n$serializedAssertion")
     }
@@ -1004,8 +1008,8 @@ object PyTestAssertionParser {
     var scanIndex = cursor + 1
     var codeColumnEnd = -1
     while (scanIndex < afterHash.length && isAssertionMarker(afterHash[scanIndex])) {
-      codeColumnEnd = hashIndex + 1 + scanIndex
       scanIndex++
+      codeColumnEnd = hashIndex + 1 + scanIndex
     }
 
     scanIndex = skipWhitespace(afterHash, scanIndex)
@@ -1237,7 +1241,7 @@ class PyCodeInsightTestCaseAssertionParserAndInlinerTest {
     val assertion = parseAssertions(code).single()
     Assertions.assertEquals(0, assertion.codeLineStart)
     Assertions.assertEquals(4, assertion.codeColumnStart)
-    Assertions.assertEquals(6, assertion.codeColumnEnd)
+    Assertions.assertEquals(7, assertion.codeColumnEnd)
     Assertions.assertEquals(1, assertion.assertionLineStart)
     Assertions.assertEquals(3, assertion.assertionLineEnd)
     Assertions.assertEquals("TYPE", assertion.type)
@@ -1289,6 +1293,50 @@ class PyCodeInsightTestCaseAssertionParserAndInlinerTest {
     Assertions.assertEquals(2, assertions.size)
     Assertions.assertEquals("first line\ncontinuation", assertions[0].content)
     Assertions.assertEquals("second line", assertions[1].content)
+  }
+
+  @Test
+  fun `parser accepts FIXME with empty content and trailing comment`() {
+    val code = """
+      value = 1
+      #   └ WARNING Expected type 'A[int]', got 'B[object]' instead FIXME # PY-89564
+    """.trimIndent()
+
+    val assertion = parseAssertions(code).single()
+    Assertions.assertEquals("WARNING", assertion.type)
+    Assertions.assertEquals("Expected type 'A[int]', got 'B[object]' instead", assertion.content)
+    Assertions.assertNotNull(assertion.fixmeContent)
+    Assertions.assertTrue(assertion.fixmeContent!!.isEmpty())
+    Assertions.assertEquals("PY-89564", assertion.comment)
+  }
+
+  @Test
+  fun `parser accepts inline FIXME with empty content and trailing comment`() {
+    val code = """
+      value = 1 # WARNING superfluous warning FIXME # PY-89564
+    """.trimIndent()
+
+    val assertion = parseAssertions(code).single()
+    Assertions.assertEquals("WARNING", assertion.type)
+    Assertions.assertEquals("superfluous warning", assertion.content)
+    Assertions.assertNotNull(assertion.fixmeContent)
+    Assertions.assertTrue(assertion.fixmeContent!!.isEmpty())
+    Assertions.assertEquals("PY-89564", assertion.comment)
+  }
+
+  @Test
+  fun `parser accepts FIXME with empty content without trailing comment`() {
+    val code = """
+      value = 1
+      #   └ WARNING superfluous warning FIXME
+    """.trimIndent()
+
+    val assertion = parseAssertions(code).single()
+    Assertions.assertEquals("WARNING", assertion.type)
+    Assertions.assertEquals("superfluous warning", assertion.content)
+    Assertions.assertNotNull(assertion.fixmeContent)
+    Assertions.assertTrue(assertion.fixmeContent!!.isEmpty())
+    Assertions.assertNull(assertion.comment)
   }
 
   @Test
