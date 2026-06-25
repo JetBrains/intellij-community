@@ -110,7 +110,7 @@ class EelLocalExecPosixApi(
     }
   }
 
-  private fun makeEnvironmentVariablesDeferred(mode: EelExecApi.EnvironmentVariablesOptions.Mode?): Deferred<Map<String, String>> {
+  private fun makeEnvironmentVariablesDeferred(mode: EelExecApi.EnvironmentVariablesOptions.Mode): Deferred<Map<String, String>> {
     val interactive = when (mode) {
       EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_NON_INTERACTIVE -> false
       EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE -> true
@@ -118,7 +118,6 @@ class EelLocalExecPosixApi(
       EelExecApi.EnvironmentVariablesOptions.Mode.DEFAULT,
       EelExecApi.EnvironmentVariablesOptions.Mode.MINIMAL,
       EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE_VIA_SHELL,
-      null
         -> error("unreachable")
     }
 
