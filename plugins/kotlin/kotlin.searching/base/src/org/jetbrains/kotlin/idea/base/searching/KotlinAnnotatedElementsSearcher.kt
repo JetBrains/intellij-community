@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.searching
 
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
@@ -12,7 +14,6 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.AnnotatedElementsSearch
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.Processor
-import com.intellij.util.PsiIconUtil.getIconFromProviders
 import com.intellij.util.QueryExecutor
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -129,13 +130,9 @@ class KotlinAnnotatedElementsSearcher : QueryExecutor<PsiModifierListOwner, Anno
             for (elt in candidates) {
                 if (notKtAnnotationEntry(elt)) continue
 
-                val result = runReadAction(fun(): Boolean {
+                val result = ReadAction.nonBlocking(fun(): Boolean? {
                     if (!preFilter(elt)) return true
-
-                    val declaration = elt.getStrictParentOfType<KtDeclaration>() ?: return true
-
                     val psiBasedResolveResult = elt.calleeExpression?.constructorReferenceExpression?.let { ref ->
-                        getIconFromProviders(elt, 0)
                         psiBasedClassResolver.canBeTargetReference(ref)
                     }
 
@@ -156,11 +153,17 @@ class KotlinAnnotatedElementsSearcher : QueryExecutor<PsiModifierListOwner, Anno
                         }
                     }
 
-                    if (!consumer(declaration, elt.useSiteTarget)) return false
+                    return null
+                }).executeSynchronously()
 
-                    return true
-                })
-                if (!result) return false
+                if (result == false) return false
+
+                if (result == null && runReadActionBlocking {
+                    val declaration = elt.getStrictParentOfType<KtDeclaration>()
+                    declaration != null && !consumer(declaration, elt.useSiteTarget)
+                }) {
+                    return false
+                }
             }
 
             return true
