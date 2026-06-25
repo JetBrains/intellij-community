@@ -851,7 +851,6 @@ class AgentSessionLaunchService internal constructor(
           openPreparingNewSessionChat(
             normalizedPath = normalizedPath,
             identity = preliminaryIdentity,
-            provider = effectiveProvider,
             mode = effectiveMode,
             launchProfileId = effectiveLaunchProfileId,
             generationSettings = effectiveGenerationSettings,
@@ -948,7 +947,6 @@ class AgentSessionLaunchService internal constructor(
       openPreparingNewSessionChat(
         normalizedPath = normalizedPath,
         identity = preliminaryIdentity,
-        provider = effectiveProvider,
         mode = effectiveMode,
         launchProfileId = effectiveLaunchProfileId,
         generationSettings = effectiveGenerationSettings,
@@ -1047,7 +1045,6 @@ class AgentSessionLaunchService internal constructor(
   private suspend fun openPreparingNewSessionChat(
     normalizedPath: String,
     identity: String,
-    provider: AgentSessionProvider,
     mode: AgentSessionLaunchMode,
     launchProfileId: String?,
     generationSettings: AgentPromptGenerationSettings,
@@ -1175,7 +1172,7 @@ class AgentSessionLaunchService internal constructor(
       throw e
     }
     catch (t: Throwable) {
-      LOG.warn("Failed to prepare new agent session for " + provider + ":" + normalizedPath, t)
+      LOG.warn("Failed to prepare new agent session for $provider:$normalizedPath", t)
       NewSessionLaunchPreparationResult.Failed(AgentPromptLaunchError.INTERNAL_ERROR)
     }
   }
@@ -1513,7 +1510,7 @@ private fun estimateCommandSizeBytes(command: List<String>): Int {
 
 private fun buildInitialMessageToken(identity: String, steps: List<AgentInitialMessageDispatchStep>): String {
   val sequenceKey = steps.joinToString(separator = "\u0000") { step ->
-    listOf(step.text, step.timeoutPolicy.name, step.completionPolicy.name, step.action.name, step.recordsPrompt.toString())
+    listOf(step.text, step.timeoutPolicy.name, step.action.name, step.recordsPrompt.toString())
       .joinToString(separator = "\u0001")
   }
   return "$identity:${sequenceKey.hashCode()}:${System.nanoTime()}"

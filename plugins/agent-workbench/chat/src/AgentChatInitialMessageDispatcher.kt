@@ -2,7 +2,6 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageProviderDispatchRequest
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
@@ -330,7 +329,6 @@ internal class AgentChatInitialMessageDispatcher(
             dispatch.message,
             shouldExecute = true,
             useBracketedPasteMode = behavior.shouldUseBracketedPasteMode(dispatch.message),
-            terminalSendMode = behavior.initialMessageTerminalSendMode(dispatch),
           )
           true
         }
@@ -415,9 +413,7 @@ internal class AgentChatInitialMessageDispatcher(
 
   private suspend fun stopInitialMessageDispatch(dispatch: AgentChatInitialMessageDispatch): AgentChatInitialMessageSendResult {
     LOG.debug("Stopped initial message dispatch at step ${dispatch.stepIndex}, action=${dispatch.action}")
-    val shouldReportPlanModeInitialPromptStop =
-      dispatch.completionPolicy == AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY ||
-      file.initialMessageMode == AgentInitialMessageMode.PLAN
+    val shouldReportPlanModeInitialPromptStop = file.initialMessageMode == AgentInitialMessageMode.PLAN
     file.clearInitialMessageDispatchMetadata()
     tabSnapshotWriter.upsert(file.toSnapshot())
     if (shouldReportPlanModeInitialPromptStop) {

@@ -71,13 +71,12 @@ These contracts keep shared identity, command mapping, provider capabilities, pr
   [@test] ../../junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
-- Post-start prompt dispatch is terminal-readiness-gated. Codex plan-mode dispatch sends `/plan` as the first executable terminal control step and sends the prompt body as a separate second text step. The `/plan` step is not recorded as the user prompt. After `/plan`, startup noise is observed without resending the command; Codex plan-mode acknowledgement releases the prompt step, while an exact Codex busy refusal stops the initial prompt dispatch without sending the prompt body. Concrete existing-thread plan-mode dispatch also stops while Workbench knows the thread is busy; pending new-thread launches may still send `/plan` before the concrete activity is known.
+- Post-start text prompt dispatch is terminal-readiness-gated. Provider-dispatch steps bypass terminal text injection and are delivered through the selected provider descriptor; Codex plan-mode prompts use app-server provider dispatch and record app-server delivery status instead of bootstrapping terminal `/plan` commands.
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
-  [@test] ../../codex/chat/testSrc/CodexAgentChatProviderBehaviorTest.kt
   [@test] ../../chat/testSrc/AgentChatInitialMessageDispatcherTest.kt
   [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
-  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexNewThreadPromptLaunchTerminalIntegrationTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexPlanPromptRealAppServerIntegrationTest.kt
 
 - Claude plan-mode prompt launch uses `--permission-mode plan` in startup commands for new sessions and resumed threads when Agent Workbench opens the process. Plain `claude --resume <id>` must not be treated as preserving plan mode by Agent Workbench, and already-open editor tabs are not mutated into plan mode by prompt launch.
   [@test] ../../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt

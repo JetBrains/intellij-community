@@ -32,11 +32,6 @@ enum class AgentInitialMessageTimeoutPolicy {
   REQUIRE_EXPLICIT_READINESS,
 }
 
-enum class AgentInitialMessageDispatchCompletionPolicy {
-  IMMEDIATE,
-  RETRY_ON_CODEX_PLAN_BUSY,
-}
-
 enum class AgentInitialMessageDispatchAction {
   SEND_TEXT,
   PROVIDER,
@@ -83,7 +78,6 @@ data class AgentInitialMessagePlan(
 data class AgentInitialMessageDispatchStep(
   @JvmField val text: String = "",
   @JvmField val timeoutPolicy: AgentInitialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK,
-  @JvmField val completionPolicy: AgentInitialMessageDispatchCompletionPolicy = AgentInitialMessageDispatchCompletionPolicy.IMMEDIATE,
   @JvmField val action: AgentInitialMessageDispatchAction = AgentInitialMessageDispatchAction.SEND_TEXT,
   @JvmField val recordsPrompt: Boolean = true,
 ) {

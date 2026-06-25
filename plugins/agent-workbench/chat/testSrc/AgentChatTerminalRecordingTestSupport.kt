@@ -123,7 +123,6 @@ data class RecordingTerminalSentText(
   @JvmField val text: String,
   @JvmField val shouldExecute: Boolean,
   @JvmField val useBracketedPasteMode: Boolean = true,
-  @JvmField val terminalSendMode: AgentChatInitialMessageTerminalSendMode = AgentChatInitialMessageTerminalSendMode.TEXT,
 )
 
 data class RecordingAgentChatOpenedFileSnapshot(
@@ -251,14 +250,12 @@ private class RecordingAgentChatTerminalTab : AgentChatTerminalTab {
     text: String,
     shouldExecute: Boolean,
     useBracketedPasteMode: Boolean,
-    terminalSendMode: AgentChatInitialMessageTerminalSendMode,
   ) {
     recordSentText(
       RecordingTerminalSentText(
         text = text,
         shouldExecute = shouldExecute,
         useBracketedPasteMode = useBracketedPasteMode,
-        terminalSendMode = terminalSendMode,
       )
     )
   }

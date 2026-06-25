@@ -6,7 +6,6 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
@@ -102,7 +101,7 @@ class AgentChatInitialMessageDispatcherTest {
     val file = createFile(
       steps = listOf(
         AgentInitialMessageDispatchStep(
-          text = "/plan",
+          text = "Plan this refactor",
           timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
         ),
       )
@@ -119,31 +118,8 @@ class AgentChatInitialMessageDispatcherTest {
     createDispatcher(file, behavior = behavior).schedule(tab)
 
     waitForCondition { file.initialMessageSent }
-    assertThat(tab.events).containsExactly("text:/plan")
+    assertThat(tab.events).containsExactly("text:Plan this refactor")
     assertThat(behavior.afterSendRetryAttempts).containsExactly(0, 1, 2)
-  }
-
-  @Test
-  fun providerTerminalSendModeIsPassedToInitialMessageTerminal(): Unit = timeoutRunBlocking {
-    val file = createFile(
-      steps = listOf(
-        AgentInitialMessageDispatchStep(
-          text = "/plan",
-          completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
-        ),
-        AgentInitialMessageDispatchStep(text = "Refactor this"),
-      )
-    )
-    val tab = FakeTerminalTab(coroutineScope = this)
-
-    createDispatcher(file, behavior = InteractivePlanCommandBehavior).schedule(tab)
-
-    waitForCondition { file.initialMessageSent }
-    assertThat(tab.events).containsExactly("text:/plan", "text:Refactor this")
-    assertThat(tab.initialMessageTerminalSendModes).containsExactly(
-      AgentChatInitialMessageTerminalSendMode.INTERACTIVE_COMMAND,
-      AgentChatInitialMessageTerminalSendMode.TEXT,
-    )
   }
 
   @Test
@@ -198,7 +174,7 @@ class AgentChatInitialMessageDispatcherTest {
       provider = AgentSessionProvider.from("codex"),
       steps = listOf(
         AgentInitialMessageDispatchStep(
-          text = "/plan",
+          text = "Prepare plan",
           timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
         ),
         AgentInitialMessageDispatchStep(
@@ -212,7 +188,7 @@ class AgentChatInitialMessageDispatcherTest {
     createDispatcher(file, behavior = behavior).schedule(tab)
 
     waitForCondition { file.initialMessageSent }
-    assertThat(tab.events).containsExactly("text:/plan", "text:/plan", "text:Refactor this")
+    assertThat(tab.events).containsExactly("text:Prepare plan", "text:Prepare plan", "text:Refactor this")
   }
 
   @Test
@@ -257,7 +233,7 @@ class AgentChatInitialMessageDispatcherTest {
       initialMessageMode = AgentInitialMessageMode.PLAN,
       steps = listOf(
         AgentInitialMessageDispatchStep(
-          text = "/plan",
+          text = "Prepare plan",
           timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
         ),
         AgentInitialMessageDispatchStep(
@@ -417,17 +393,6 @@ private object StopBeforeSendBehavior : AgentChatProviderBehavior {
   ): AgentChatInitialMessageRetryDecision = AgentChatInitialMessageRetryDecision.Stop
 }
 
-private object InteractivePlanCommandBehavior : AgentChatProviderBehavior {
-  override fun initialMessageTerminalSendMode(dispatch: AgentChatInitialMessageDispatchContext): AgentChatInitialMessageTerminalSendMode {
-    return if (dispatch.message == "/plan") {
-      AgentChatInitialMessageTerminalSendMode.INTERACTIVE_COMMAND
-    }
-    else {
-      AgentChatInitialMessageTerminalSendMode.TEXT
-    }
-  }
-}
-
 private fun createFile(
   steps: List<AgentInitialMessageDispatchStep>,
   provider: AgentSessionProvider = AgentSessionProvider.from("junie"),
@@ -473,7 +438,6 @@ private class FakeTerminalTab(
   override val keyEventsFlow: Flow<TerminalKeyEvent> = emptyFlow()
   override val terminalView: TerminalView? = null
   val events: MutableList<String> = mutableListOf()
-  val initialMessageTerminalSendModes: MutableList<AgentChatInitialMessageTerminalSendMode> = mutableListOf()
   private val observations = ArrayDeque(outputObservations)
 
   override suspend fun captureOutputCheckpoint(): AgentChatTerminalOutputCheckpoint {
@@ -517,9 +481,7 @@ private class FakeTerminalTab(
     text: String,
     shouldExecute: Boolean,
     useBracketedPasteMode: Boolean,
-    terminalSendMode: AgentChatInitialMessageTerminalSendMode,
   ) {
-    initialMessageTerminalSendModes.add(terminalSendMode)
     sendText(text, shouldExecute, useBracketedPasteMode)
   }
 }

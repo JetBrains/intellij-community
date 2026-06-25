@@ -82,7 +82,6 @@ internal interface AgentChatTerminalTab : AgentChatBehaviorTerminalTab {
     text: String,
     shouldExecute: Boolean,
     useBracketedPasteMode: Boolean = true,
-    terminalSendMode: AgentChatInitialMessageTerminalSendMode = AgentChatInitialMessageTerminalSendMode.TEXT,
   ) {
     sendText(text, shouldExecute, useBracketedPasteMode)
   }
@@ -285,16 +284,12 @@ private class ToolWindowAgentChatTerminalTab(
     text: String,
     shouldExecute: Boolean,
     useBracketedPasteMode: Boolean,
-    terminalSendMode: AgentChatInitialMessageTerminalSendMode,
   ) {
     val normalizedText = text.trim()
     if (normalizedText.isEmpty()) {
       return
     }
-    when (terminalSendMode) {
-      AgentChatInitialMessageTerminalSendMode.TEXT -> sendNormalizedText(normalizedText, shouldExecute, useBracketedPasteMode)
-      AgentChatInitialMessageTerminalSendMode.INTERACTIVE_COMMAND -> sendInteractiveCommand(normalizedText, shouldExecute)
-    }
+    sendNormalizedText(normalizedText, shouldExecute, useBracketedPasteMode)
   }
 
   private fun sendNormalizedText(text: String, shouldExecute: Boolean, useBracketedPasteMode: Boolean) {
@@ -306,24 +301,6 @@ private class ToolWindowAgentChatTerminalTab(
       sendTextBuilder.shouldExecute()
     }
     sendTextBuilder.send(text)
-  }
-
-  private suspend fun sendInteractiveCommand(text: String, shouldExecute: Boolean) {
-    withContext(Dispatchers.UI) {
-      val sendTextBuilder = terminalView.createSendTextBuilder().sendEndKeyBeforeText()
-      if (shouldExecute) {
-        sendTextBuilder.shouldExecute()
-      }
-      val submitted = sendTextBuilder.trySend(text)
-      if (submitted) {
-        return@withContext
-      }
-      val fallbackBuilder = terminalView.createSendTextBuilder()
-      if (shouldExecute) {
-        fallbackBuilder.shouldExecute()
-      }
-      fallbackBuilder.send(text)
-    }
   }
 
 }

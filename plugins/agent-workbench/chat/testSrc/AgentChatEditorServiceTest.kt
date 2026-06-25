@@ -6,10 +6,14 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationModel
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryChannel
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryStatus
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptRecord
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentTerminalPromptDispatch
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.LoadingOrder
@@ -25,7 +29,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan
 import com.intellij.terminal.frontend.view.TerminalKeyEvent
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import com.intellij.testFramework.LoggedErrorProcessor
@@ -125,30 +128,30 @@ class AgentChatEditorServiceTest {
   }
 
   @Test
-  fun testNewTabPersistsMultiStepInitialMessageMetadata(): Unit = timeoutRunBlocking {
-    val steps = codexPlanDispatchSteps("Refactor selected code")
+  fun testNewTabPersistsProviderInitialMessageMetadata(): Unit = timeoutRunBlocking {
+    val deliveryPlan = codexPlanDeliveryPlan(prompt = "Refactor selected code", token = "provider-new-token")
+    val steps = deliveryPlan.postStartDispatchSteps
     openChatInModal(
-      threadIdentity = "CODEX:thread-multi-step-new",
+      threadIdentity = "CODEX:thread-provider-new",
       shellCommand = codexCommand,
-      threadId = "thread-multi-step-new",
-      threadTitle = "Multi-step new thread",
+      threadId = "thread-provider-new",
+      threadTitle = "Provider new thread",
       subAgentId = null,
-      postStartDispatchSteps = steps,
-      initialMessageToken = "multi-step-new-token",
+      initialPromptDeliveryPlan = deliveryPlan,
     )
 
     val file = openedChatFiles().single()
     assertThat(file.initialMessageDispatchSteps).containsExactlyElementsOf(steps)
     assertThat(file.initialMessageDispatchStepIndex).isZero()
     assertThat(file.initialComposedMessage).isEqualTo("Refactor selected code")
-    assertThat(file.initialMessageToken).isEqualTo("multi-step-new-token")
+    assertThat(file.initialMessageToken).isEqualTo("provider-new-token")
     assertThat(file.initialMessageSent).isFalse()
 
     val snapshot = file.toSnapshot()
     assertThat(snapshot.runtime.initialMessageDispatchSteps).containsExactlyElementsOf(steps)
     assertThat(snapshot.runtime.initialMessageDispatchStepIndex).isZero()
     assertThat(snapshot.runtime.initialPromptRecord?.message).isEqualTo("Refactor selected code")
-    assertThat(snapshot.runtime.initialMessageToken).isEqualTo("multi-step-new-token")
+    assertThat(snapshot.runtime.initialMessageToken).isEqualTo("provider-new-token")
     assertThat(snapshot.runtime.initialMessageSent).isFalse()
   }
 
@@ -313,38 +316,38 @@ class AgentChatEditorServiceTest {
   }
 
   @Test
-  fun testExistingTabReusePersistsMultiStepInitialMessageMetadata(): Unit = timeoutRunBlocking {
+  fun testExistingTabReusePersistsProviderInitialMessageMetadata(): Unit = timeoutRunBlocking {
     openChatInModal(
-      threadIdentity = "CODEX:thread-existing-multi-step",
+      threadIdentity = "CODEX:thread-existing-provider",
       shellCommand = codexCommand,
-      threadId = "thread-existing-multi-step",
-      threadTitle = "Existing multi-step thread",
+      threadId = "thread-existing-provider",
+      threadTitle = "Existing provider thread",
       subAgentId = null,
     )
 
-    val steps = codexPlanDispatchSteps("Follow-up prompt")
+    val deliveryPlan = codexPlanDeliveryPlan(prompt = "Follow-up prompt", token = "existing-provider-token")
+    val steps = deliveryPlan.postStartDispatchSteps
     openChatInModal(
-      threadIdentity = "CODEX:thread-existing-multi-step",
+      threadIdentity = "CODEX:thread-existing-provider",
       shellCommand = codexCommand,
-      threadId = "thread-existing-multi-step",
-      threadTitle = "Existing multi-step thread",
+      threadId = "thread-existing-provider",
+      threadTitle = "Existing provider thread",
       subAgentId = null,
-      postStartDispatchSteps = steps,
-      initialMessageToken = "existing-multi-step-token",
+      initialPromptDeliveryPlan = deliveryPlan,
     )
 
     val file = openedChatFiles().single()
     assertThat(file.initialMessageDispatchSteps).containsExactlyElementsOf(steps)
     assertThat(file.initialMessageDispatchStepIndex).isZero()
     assertThat(file.initialComposedMessage).isEqualTo("Follow-up prompt")
-    assertThat(file.initialMessageToken).isEqualTo("existing-multi-step-token")
+    assertThat(file.initialMessageToken).isEqualTo("existing-provider-token")
     assertThat(file.initialMessageSent).isFalse()
 
     val snapshot = file.toSnapshot()
     assertThat(snapshot.runtime.initialMessageDispatchSteps).containsExactlyElementsOf(steps)
     assertThat(snapshot.runtime.initialMessageDispatchStepIndex).isZero()
     assertThat(snapshot.runtime.initialPromptRecord?.message).isEqualTo("Follow-up prompt")
-    assertThat(snapshot.runtime.initialMessageToken).isEqualTo("existing-multi-step-token")
+    assertThat(snapshot.runtime.initialMessageToken).isEqualTo("existing-provider-token")
     assertThat(snapshot.runtime.initialMessageSent).isFalse()
   }
 
@@ -2127,6 +2130,7 @@ class AgentChatEditorServiceTest {
     initialComposedMessage: String? = null,
     postStartDispatchSteps: List<AgentInitialMessageDispatchStep> = emptyList(),
     initialMessageToken: String? = null,
+    initialPromptDeliveryPlan: AgentInitialPromptDeliveryPlan? = null,
     persistSnapshot: Boolean = true,
     deferredStartState: AgentChatDeferredStartState? = null,
     targetProject: Project = project,
@@ -2139,7 +2143,7 @@ class AgentChatEditorServiceTest {
         ?.let { message -> listOf(AgentInitialMessageDispatchStep(text = message)) }
         .orEmpty()
     }
-      val initialMessageDispatchPlan = AgentInitialPromptDeliveryPlan(
+      val initialMessageDispatchPlan = initialPromptDeliveryPlan ?: AgentInitialPromptDeliveryPlan(
           startupLaunchSpecOverride = startupShellCommandOverride?.let { command ->
               AgentSessionTerminalLaunchSpec(command = command, envVariables = startupShellEnvOverride.orEmpty())
           },
@@ -2202,12 +2206,24 @@ class AgentChatEditorServiceTest {
   private fun codexPlanDispatchSteps(prompt: String): List<AgentInitialMessageDispatchStep> {
     return listOf(
       AgentInitialMessageDispatchStep(
-        text = "/plan",
-        timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
-      ),
-      AgentInitialMessageDispatchStep(
         text = prompt,
         timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
+        action = AgentInitialMessageDispatchAction.PROVIDER,
+      ),
+    )
+  }
+
+  private fun codexPlanDeliveryPlan(prompt: String, token: String): AgentInitialPromptDeliveryPlan {
+    return AgentInitialPromptDeliveryPlan(
+      promptRecord = AgentInitialPromptRecord(
+        message = prompt,
+        mode = AgentInitialMessageMode.PLAN,
+        token = token,
+        deliveryStatus = AgentInitialPromptDeliveryStatus.PENDING,
+        deliveryChannel = AgentInitialPromptDeliveryChannel.APP_SERVER,
+      ),
+      terminalDispatch = AgentTerminalPromptDispatch(
+        steps = codexPlanDispatchSteps(prompt),
       ),
     )
   }
