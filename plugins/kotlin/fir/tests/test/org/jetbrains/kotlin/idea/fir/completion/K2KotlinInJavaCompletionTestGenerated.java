@@ -277,6 +277,16 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
             runTest("../../completion/testData/inJava/extensions/OperatorExtension.java");
         }
 
+        @TestMetadata("PreferJava.java")
+        public void testPreferJava() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/PreferJava.java");
+        }
+
+        @TestMetadata("PreferJavaWithPrefix.java")
+        public void testPreferJavaWithPrefix() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/PreferJavaWithPrefix.java");
+        }
+
         @TestMetadata("PrivateExtension.java")
         public void testPrivateExtension() throws Exception {
             runTest("../../completion/testData/inJava/extensions/PrivateExtension.java");
