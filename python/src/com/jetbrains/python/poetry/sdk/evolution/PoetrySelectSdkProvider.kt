@@ -46,7 +46,7 @@ internal class PoetrySelectSdkProvider() : EvoSelectSdkProvider {
 
     val (projectName, _) = withContext(Dispatchers.IO) {
       val toml = PyProjectToml.parse(pyProjectTomlFile.readText())
-      (toml.project?.name) to (toml.project?.requiresPython)
+      (toml?.project?.name) to (toml?.project?.requiresPython)
     }
     val poetryVirtualenvsPath = runPoetry(pyProjectTomlFile.parent.toNioPath(), "config", "virtualenvs.path")
       .getOr { return@EvoTreeLazyNodeElement it }.let { Path(it.trim()) }

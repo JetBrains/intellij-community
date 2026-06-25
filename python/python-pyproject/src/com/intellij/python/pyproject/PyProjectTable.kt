@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
  */
 @Internal
 data class PyProjectTable(
-  val name: String? = null,
+  val name: String,
   val version: String? = null,
   val requiresPython: String? = null,
   val authors: List<PyProjectContact>? = null,

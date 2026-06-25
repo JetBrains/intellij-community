@@ -116,7 +116,7 @@ private suspend fun readFile(file: Path): PyProjectToml? {
     return null
   }
   return withContext(Dispatchers.Default) {
-    val toml = PyProjectToml.parse(content)
+    val toml = PyProjectToml.parse(content) ?: return@withContext null
     val errors = toml.issues.joinToString(", ")
     if (errors.isNotBlank()) {
       logger.warn("Errors on $file: $errors")
@@ -189,12 +189,11 @@ private fun getToolSpecificDependenciesFromTomlTable(root: Path, tomlTable: Toml
 
 @RequiresBackgroundThread
 private fun getDependenciesFromPep735Groups(tomlTable: PyProjectToml): Sequence<Directory> =
-  tomlTable.project?.dependencies?.allDepsFromGroups?.asSequence()?.mapNotNull(::parsePep621Dependency)
-  ?: emptySequence()
+  tomlTable.project.dependencies.allDepsFromGroups.asSequence().mapNotNull(::parsePep621Dependency)
 
 @RequiresBackgroundThread
 private fun getDependenciesFromProject(projectToml: PyProjectToml): Sequence<Directory> {
-  val depsFromFile = projectToml.project?.dependencies?.project ?: emptyList()
+  val depsFromFile = projectToml.project.dependencies.project
   return depsFromFile.asSequence().mapNotNull(::parsePep621Dependency)
 }
 

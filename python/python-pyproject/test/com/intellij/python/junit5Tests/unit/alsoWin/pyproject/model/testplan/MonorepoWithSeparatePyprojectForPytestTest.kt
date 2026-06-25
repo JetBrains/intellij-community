@@ -27,7 +27,6 @@ internal class MonorepoWithSeparatePyprojectForPytestTest {
     f.reloadProject()
     f.assertProjectStructure(
       ExpectedModule("monorepo-with-a-separate-pyproject-for-pytest", contentRoot = ".", sourceRoots = listOf(".")),
-      ExpectedModule("tests", contentRoot = "tests"),
       ExpectedModule("uvlib1", contentRoot = "lib" / "uvlib1"),
       ExpectedModule("uvlib2", contentRoot = "lib" / "uvlib2"),
     )
