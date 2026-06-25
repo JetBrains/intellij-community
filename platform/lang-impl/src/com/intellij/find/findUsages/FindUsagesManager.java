@@ -74,7 +74,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -200,11 +199,18 @@ public final class FindUsagesManager {
    */
   @ApiStatus.Experimental
   public @Nullable FindUsagesHandler getFindUsagesHandlerForDialog(@NotNull PsiElement element, @NotNull OperationMode operationMode) {
-    return getFindUsagesHandler(element, factory -> {
-      FindUsagesHandler handler = factory.createFindUsagesHandler(element, operationMode);
-      CommonFindUsagesDialog.precomputeFindUsagesDialogData(handler);
-      return handler;
-    });
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> {
+        return getFindUsagesHandler(element, factory -> {
+          FindUsagesHandler handler = factory.createFindUsagesHandler(element, operationMode);
+          CommonFindUsagesDialog.precomputeFindUsagesDialogData(handler);
+          return handler;
+        });
+      },
+      FindBundle.message("progress.title.prepare.find.usages"),
+      true,
+      element.getProject()
+    );
   }
 
   public @Nullable FindUsagesHandler getNewFindUsagesHandler(@NotNull PsiElement element, boolean forHighlightUsages) {
@@ -219,42 +225,22 @@ public final class FindUsagesManager {
     @NotNull PsiElement element,
     @NotNull Function<FindUsagesHandlerFactory, FindUsagesHandler> createHandler
   ) {
-    if (EDT.isCurrentThreadEdt()) {
-      return ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        () -> {
-          return ReadAction.computeBlocking(() -> {
-            return getFindUsagesHandlerImpl(element, createHandler);
-          });
-        },
-        FindBundle.message("progress.title.prepare.find.usages"),
-        true,
-        element.getProject()
-      );
-    }
-    else {
-      // Mostly for unit tests, as they call this thing on a BGT a lot.
-      return ReadAction.computeBlocking(() -> {
-        return getFindUsagesHandlerImpl(element, createHandler);
-      });
-    }
-  }
-
-  private @Nullable FindUsagesHandler getFindUsagesHandlerImpl(@NotNull PsiElement element,
-                                                 @NotNull Function<FindUsagesHandlerFactory, FindUsagesHandler> createHandler) {
-    for (FindUsagesHandlerFactory factory : FindUsagesHandlerFactory.EP_NAME.getExtensionList(myProject)) {
-      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162401 IDEA-353115")) {
-        if (!factory.canFindUsages(element)) continue;
+    return ReadAction.computeBlocking(() -> {
+      for (FindUsagesHandlerFactory factory : FindUsagesHandlerFactory.EP_NAME.getExtensionList(myProject)) {
+        try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162401 IDEA-353115")) {
+          if (!factory.canFindUsages(element)) continue;
+        }
+        FindUsagesHandler handler;
+        try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162401")) {
+          handler = createHandler.apply(factory);
+        }
+        if (handler == FindUsagesHandler.NULL_HANDLER) return null;
+        if (handler != null) {
+          return handler;
+        }
       }
-      FindUsagesHandler handler;
-      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162401")) {
-        handler = createHandler.apply(factory);
-      }
-      if (handler == FindUsagesHandler.NULL_HANDLER) return null;
-      if (handler != null) {
-        return handler;
-      }
-    }
-    return null;
+      return null;
+    });
   }
 
   public void findUsages(@NotNull PsiElement psiElement, @Nullable PsiFile scopeFile, FileEditor editor, boolean showDialog, @Nullable("null means default (stored in options)") SearchScope searchScope) {
