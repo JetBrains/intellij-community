@@ -6,6 +6,7 @@ import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.spi.ProjectDependencies
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
+import com.intellij.python.pyproject.model.spi.TomlDependencySpecification
 import com.intellij.python.pyproject.safeGetArr
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.Result
@@ -124,7 +125,7 @@ private suspend fun readFile(file: Path): PyProjectToml? {
   }
 }
 
-suspend fun getDependenciesFromToml(
+internal suspend fun getDependenciesFromToml(
   entries: Map<ProjectName, PyProjectTomlProject>,
   rootIndex: Map<Directory, ProjectName>,
   tomlDependencySpecifications: List<TomlDependencySpecification>,
@@ -201,12 +202,6 @@ private fun parsePep621Dependency(depSpec: String): Path? {
   val match = PEP_621_PATH_DEPENDENCY.matchEntire(depSpec) ?: return null
   val (_, depUri) = match.destructured
   return parseDepUri(depUri)
-}
-
-sealed interface TomlDependencySpecification {
-  data class PathDependency(val tomlKey: String) : TomlDependencySpecification
-  data class Pep621Dependency(val tomlKey: String) : TomlDependencySpecification
-  data class GroupPathDependency(val tomlKeyToGroup: String, val tomlKeyFromGroupToPath: String) : TomlDependencySpecification
 }
 
 

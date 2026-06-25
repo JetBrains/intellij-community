@@ -3,7 +3,6 @@ package com.intellij.python.pyproject.model.spi
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.community.common.tools.ToolId
-import com.intellij.python.pyproject.model.internal.pyProjectToml.TomlDependencySpecification
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.venvReader.Directory
 import org.apache.tuweni.toml.TomlTable

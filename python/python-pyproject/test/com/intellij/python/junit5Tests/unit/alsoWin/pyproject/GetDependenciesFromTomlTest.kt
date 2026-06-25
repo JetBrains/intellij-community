@@ -1,10 +1,10 @@
 package com.intellij.python.junit5Tests.unit.alsoWin.pyproject
 
 import com.intellij.python.pyproject.PyProjectToml
-import com.intellij.python.pyproject.model.internal.pyProjectToml.TomlDependencySpecification
 import com.intellij.python.pyproject.model.internal.pyProjectToml.getDependenciesFromToml
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
+import com.intellij.python.pyproject.model.spi.TomlDependencySpecification
 import com.intellij.testFramework.common.timeoutRunBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
