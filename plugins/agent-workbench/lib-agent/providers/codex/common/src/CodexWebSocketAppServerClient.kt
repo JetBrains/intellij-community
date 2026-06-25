@@ -24,6 +24,7 @@ import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -45,6 +46,7 @@ private const val WEBSOCKET_REQUEST_TIMEOUT_MS = 30_000L
 private const val WEBSOCKET_STARTUP_TIMEOUT_MS = 10_000L
 private const val WEBSOCKET_READY_POLL_INTERVAL_MS = 100L
 private const val PROCESS_TERMINATION_TIMEOUT_MS = 2_000L
+private const val THREAD_SETTINGS_UPDATED_GRACE_MS = 1_000L
 private const val PAGE_LIMIT = 50
 private const val THREAD_SETTINGS_UPDATED_METHOD = "thread/settings/updated"
 
@@ -389,11 +391,14 @@ class CodexWebSocketAppServerClient(
           generator.writeEndObject()
         },
       )
-      withTimeout(WEBSOCKET_REQUEST_TIMEOUT_MS.milliseconds) { settingsUpdated.await() }
-    }
-    catch (t: TimeoutCancellationException) {
-      currentCoroutineContext().ensureActive()
-      throw CodexAppServerException("Timed out waiting for Codex thread settings to update", t)
+      // Codex emits thread/settings/updated only for effective changes. A plain ack can mean the
+      // resumed TUI was already in the requested mode, so do not fail Plan prompt delivery on it.
+      val observedSettingsUpdate = withTimeoutOrNull(THREAD_SETTINGS_UPDATED_GRACE_MS.milliseconds) { settingsUpdated.await() } != null
+      if (!observedSettingsUpdate) {
+        LOG.debug {
+          "Codex thread/settings/update for $normalizedThreadId was acknowledged without thread/settings/updated; continuing as no-op update"
+        }
+      }
     }
     finally {
       threadSettingsUpdateWaiters.removeThreadSettingsUpdateWaiter(normalizedThreadId, settingsUpdated)

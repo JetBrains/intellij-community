@@ -125,6 +125,15 @@ internal class AgentChatLiveTerminalRegistryService(
   }
 
   override fun dispose() {
+    disposeLiveTerminals()
+  }
+
+  @TestOnly
+  fun disposeLiveTerminalsForTest() {
+    disposeLiveTerminals()
+  }
+
+  private fun disposeLiveTerminals() {
     pendingCloseJobs.values.forEach(Job::cancel)
     pendingCloseJobs.clear()
     store.disposeProject(project)

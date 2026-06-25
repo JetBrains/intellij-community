@@ -3,6 +3,7 @@ package com.intellij.platform.ai.agent.codex.sessions
 
 import com.intellij.platform.ai.agent.codex.common.CodexCliUtils
 import com.intellij.agent.workbench.chat.RecordingAgentChatTerminalHarness
+import com.intellij.agent.workbench.chat.disposeAgentChatLiveTerminalsForTest
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.ui.captureNewTaskPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.ScriptedSessionSource
@@ -37,6 +38,7 @@ class CodexNewThreadPromptLaunchTerminalIntegrationTest {
       val startupBackend = RecordingPlanPromptStartupBackend()
       val descriptor = descriptor(startupBackend)
       val terminalHarness = RecordingAgentChatTerminalHarness()
+      var openedChatActivated = false
       runInUi {
         fileEditorManagerFixture.get()
         terminalHarness.registerEditorFactory(disposable)
@@ -61,28 +63,33 @@ class CodexNewThreadPromptLaunchTerminalIntegrationTest {
         request = request,
         openedChatHandler = { openedProject, openedFile ->
           check(terminalHarness.activateAgentChatEditor(project = openedProject, file = openedFile) == 1)
+          openedChatActivated = true
         },
       ) {
         terminalHarness.awaitCreateCalls(1)
         terminalHarness.setRunning()
         terminalHarness.awaitInitialMessageSent()
         assertThat(terminalHarness.awaitSentTextsStayAt(0)).isEmpty()
-      }
 
-      val startupCommand = terminalHarness.startupLaunchSpecs.single().command
-      assertThat(startupCommand)
-        .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("resume", "--remote", REMOTE_URL, "thread-plan-1"))
-      assertThat(startupCommand).doesNotContain("--")
-      assertThat(startupCommand).doesNotContain(PLAN_PROMPT)
-      assertThat(terminalHarness.sentTexts).isEmpty()
-      assertThat(startupBackend.turnRequests).containsExactly(
-        CodexPlanPromptTurnRequest(
-          threadId = "thread-plan-1",
-          prompt = PLAN_PROMPT,
-          model = null,
-          reasoningEffort = null,
+        val startupCommand = terminalHarness.startupLaunchSpecs.single().command
+        assertThat(startupCommand)
+          .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("resume", "--remote", REMOTE_URL, RECORDED_PLAN_THREAD_ID))
+        assertThat(startupCommand).doesNotContain("--")
+        assertThat(startupCommand).doesNotContain(PLAN_PROMPT)
+        assertThat(terminalHarness.sentTexts).isEmpty()
+        assertThat(startupBackend.turnRequests).containsExactly(
+          CodexPlanPromptTurnRequest(
+            threadId = RECORDED_PLAN_THREAD_ID,
+            prompt = PLAN_PROMPT,
+            model = null,
+            reasoningEffort = null,
+          )
         )
-      )
+        // Close while the test Codex descriptor is still registered so terminal-close cleanup
+        // does not route the fake preallocated UUID through the production app-server backend.
+        check(openedChatActivated)
+        disposeAgentChatLiveTerminalsForTest(project)
+      }
     }
 }
 

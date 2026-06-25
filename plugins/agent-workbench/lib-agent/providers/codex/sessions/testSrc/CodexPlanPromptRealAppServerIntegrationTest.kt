@@ -19,6 +19,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
@@ -77,6 +78,14 @@ class CodexPlanPromptRealAppServerIntegrationTest {
               collaborationMode = collaborationMode,
             )
             tui.awaitOutputContains("Plan mode")
+            // Regression guard: Codex acknowledges no-op settings updates without emitting
+            // thread/settings/updated, but the prompt must still be sent after that ack.
+            withTimeout(5.seconds) {
+              client.updateThreadCollaborationMode(
+                threadId = threadId,
+                collaborationMode = collaborationMode,
+              )
+            }
             client.startTurn(
               threadId = threadId,
               text = prompt,
@@ -171,6 +180,7 @@ class CodexPlanPromptRealAppServerIntegrationTest {
                 generationSettings = request.generationSettings,
               )
             )).isTrue()
+            tui.awaitOutputContains("Plan mode")
             val planRequest = eventually(timeout = 20.seconds) {
               harness.requests()
                 .takeIf { requests -> requests.size == 1 }
@@ -259,6 +269,7 @@ private class RealCodexPlanPromptStartupBackend(
       reasoningEffort = reasoningEffort ?: CODEX_DEFAULT_PLAN_REASONING_EFFORT,
       developerInstructions = null,
     )
+    // Mirror production: this update drives the resumed TUI's visible Plan mode footer.
     client.updateThreadCollaborationMode(
       threadId = threadId,
       collaborationMode = collaborationMode,

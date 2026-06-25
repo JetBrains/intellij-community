@@ -24,10 +24,8 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicLong
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -58,14 +56,6 @@ class RecordingAgentChatTerminalHarness {
     terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
   }
 
-  fun setSentTextOutputTexts(texts: List<String>) {
-    terminalTabs.tab.setSentTextOutputTexts(texts)
-  }
-
-  fun emitTerminalOutput(text: String) {
-    terminalTabs.tab.emitTerminalOutput(text)
-  }
-
   suspend fun activateAgentChatEditor(project: Project, file: VirtualFile): Int {
     return withContext(Dispatchers.UiWithModelAccess) {
       val chatFile = file as? AgentChatVirtualFile ?: return@withContext 0
@@ -77,12 +67,6 @@ class RecordingAgentChatTerminalHarness {
   suspend fun awaitCreateCalls(expected: Int, timeoutMs: Long = TERMINAL_HARNESS_WAIT_TIMEOUT_MS) {
     withTimeout(timeoutMs.milliseconds) {
       terminalTabs.createCallsFlow.first { calls -> calls >= expected }
-    }
-  }
-
-  suspend fun awaitSentTexts(expectedSize: Int, timeoutMs: Long = TERMINAL_HARNESS_WAIT_TIMEOUT_MS): List<RecordingTerminalSentText> {
-    return withTimeout(timeoutMs.milliseconds) {
-      terminalTabs.tab.sentTextsFlow.first { texts -> texts.size >= expectedSize }
     }
   }
 
@@ -101,14 +85,6 @@ class RecordingAgentChatTerminalHarness {
       openedFileSnapshotsFlow.first { snapshots ->
         snapshots.any { snapshot -> snapshot.initialMessageSent }
       }.single { snapshot -> snapshot.initialMessageSent }
-    }
-  }
-
-  suspend fun awaitInitialMessageDispatchCleared(timeoutMs: Long = TERMINAL_HARNESS_WAIT_TIMEOUT_MS): RecordingAgentChatOpenedFileSnapshot {
-    return withTimeout(timeoutMs.milliseconds) {
-      openedFileSnapshotsFlow.first { snapshots ->
-        snapshots.any { snapshot -> !snapshot.initialMessageSent && snapshot.initialMessageDispatchStepCount == 0 }
-      }.single { snapshot -> !snapshot.initialMessageSent && snapshot.initialMessageDispatchStepCount == 0 }
     }
   }
 
@@ -134,6 +110,12 @@ class RecordingAgentChatTerminalHarness {
     file: AgentChatVirtualFile,
   ): List<AgentChatFileEditor> {
     return manager.getAllEditors(file).filterIsInstance<AgentChatFileEditor>()
+  }
+}
+
+suspend fun disposeAgentChatLiveTerminalsForTest(project: Project) {
+  withContext(Dispatchers.UiWithModelAccess) {
+    project.service<AgentChatLiveTerminalRegistryService>().disposeLiveTerminalsForTest()
   }
 }
 
@@ -208,25 +190,12 @@ private class RecordingAgentChatTerminalTab : AgentChatTerminalTab {
   val sentTexts: CopyOnWriteArrayList<RecordingTerminalSentText> = CopyOnWriteArrayList()
   val sentTextsFlow: MutableStateFlow<List<RecordingTerminalSentText>> = MutableStateFlow(emptyList())
 
-  @Volatile
-  private var recentOutputTail: String = ""
-
-  private val outputVersion: AtomicLong = AtomicLong()
-  private val outputChunks: CopyOnWriteArrayList<RecordingTerminalOutputChunk> = CopyOnWriteArrayList()
-  private val sentTextOutputTexts: ConcurrentLinkedQueue<String> = ConcurrentLinkedQueue()
-
   fun setSessionState(state: TerminalViewSessionState) {
     mutableSessionState.value = state
   }
 
-  fun setSentTextOutputTexts(texts: List<String>) {
-    sentTextOutputTexts.clear()
-    sentTextOutputTexts.addAll(texts)
-  }
-
   override suspend fun captureOutputCheckpoint(): AgentChatTerminalOutputCheckpoint {
-    val version = outputVersion.get()
-    return AgentChatTerminalOutputCheckpoint(regularEndOffset = version, alternativeEndOffset = version)
+    return AgentChatTerminalOutputCheckpoint(regularEndOffset = 0, alternativeEndOffset = 0)
   }
 
   override suspend fun awaitOutputObservation(
@@ -240,20 +209,13 @@ private class RecordingAgentChatTerminalTab : AgentChatTerminalTab {
       if (sessionState.value == TerminalViewSessionState.Terminated) {
         return AgentChatTerminalOutputObservation(
           readiness = AgentChatTerminalInputReadiness.TERMINATED,
-          text = readOutputSince(checkpoint),
-        )
-      }
-      val text = readOutputSince(checkpoint)
-      if (text.isNotEmpty()) {
-        return AgentChatTerminalOutputObservation(
-          readiness = AgentChatTerminalInputReadiness.READY,
-          text = text,
+          text = "",
         )
       }
       if (System.currentTimeMillis() >= deadline) {
         return AgentChatTerminalOutputObservation(
           readiness = AgentChatTerminalInputReadiness.TIMEOUT,
-          text = text,
+          text = "",
         )
       }
       delay(pollIntervalMs.milliseconds)
@@ -273,7 +235,7 @@ private class RecordingAgentChatTerminalTab : AgentChatTerminalTab {
     }
   }
 
-  override suspend fun readRecentOutputTail(): String = recentOutputTail
+  override suspend fun readRecentOutputTail(): String = ""
 
   override fun sendText(text: String, shouldExecute: Boolean, useBracketedPasteMode: Boolean) {
     recordSentText(
@@ -304,28 +266,8 @@ private class RecordingAgentChatTerminalTab : AgentChatTerminalTab {
   private fun recordSentText(sentText: RecordingTerminalSentText) {
     sentTexts += sentText
     sentTextsFlow.value = sentTexts.toList()
-    sentTextOutputTexts.poll()?.let(::emitTerminalOutput)
-  }
-
-  fun emitTerminalOutput(text: String) {
-    recentOutputTail = text
-    val nextVersion = outputVersion.incrementAndGet()
-    outputChunks += RecordingTerminalOutputChunk(version = nextVersion, text = recentOutputTail)
-  }
-
-  private fun readOutputSince(checkpoint: AgentChatTerminalOutputCheckpoint): String {
-    val checkpointVersion = maxOf(checkpoint.regularEndOffset, checkpoint.alternativeEndOffset)
-    return outputChunks
-      .asSequence()
-      .filter { chunk -> chunk.version > checkpointVersion }
-      .joinToString(separator = "\n") { chunk -> chunk.text }
   }
 }
-
-private data class RecordingTerminalOutputChunk(
-  @JvmField val version: Long,
-  @JvmField val text: String,
-)
 
 private fun recordingSnapshot(snapshot: AgentChatTabSnapshot): RecordingAgentChatOpenedFileSnapshot {
   return RecordingAgentChatOpenedFileSnapshot(
