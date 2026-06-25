@@ -7,6 +7,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.PerFileMappingsEx;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -97,7 +98,7 @@ final class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   @Override
   protected void renderValue(@Nullable Object target, @NotNull Charset t, @NotNull ColoredTextContainer renderer) {
     VirtualFile file = target instanceof VirtualFile ? (VirtualFile)target : null;
-    EncodingUtil.FailReason result = file == null || file.isDirectory() ? null : EncodingUtil.checkCanConvertAndReload(file);
+    EncodingUtil.FailReason result = file == null || file.isDirectory() ? null : ReadAction.computeBlocking(() -> EncodingUtil.checkCanConvertAndReload(file));
 
     @NlsSafe String encodingText = t.displayName();
     SimpleTextAttributes attributes = result == null ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES;
@@ -114,7 +115,7 @@ final class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
     catch (IOException ignored) {
     }
     byte[] bytes = b;
-    Document document = file == null ? null : FileDocumentManager.getInstance().getDocument(file);
+    Document document = file == null ? null : ReadAction.computeBlocking(() -> FileDocumentManager.getInstance().getDocument(file));
 
     return new ChangeFileEncodingAction(true) {
       @Override
@@ -221,7 +222,7 @@ final class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   @Override
   protected boolean canEditTarget(@Nullable Object target, Charset value) {
     return target == null || target instanceof VirtualFile && (
-      ((VirtualFile)target).isDirectory() || EncodingUtil.checkCanConvertAndReload((VirtualFile)target) == null);
+      ((VirtualFile)target).isDirectory() || ReadAction.computeBlocking(() -> EncodingUtil.checkCanConvertAndReload((VirtualFile)target)) == null);
   }
 
   private static @NotNull PerFileMappingsEx<Charset> createMappings(@NotNull Project project) {
