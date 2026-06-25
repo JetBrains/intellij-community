@@ -92,6 +92,9 @@
     <extensionPoint qualifiedName="com.intellij.editorEmptyTextPromotedActionProvider"
                     interface="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPromotedActionProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.editorEmptyStateComponentProvider"
+                    interface="com.intellij.openapi.fileEditor.impl.EditorEmptyStateComponentProvider"
+                    dynamic="true"/>
     <extensionPoint name="imageReaderWriterSpi"
                     beanClass="com.intellij.util.imageio.ImageReaderWriterSpiBean"
                     dynamic="true">

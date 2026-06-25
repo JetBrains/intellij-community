@@ -23,7 +23,7 @@ private const val MAX_EXISTING_TASKS = 200
 internal class AgentPromptExistingTaskController(
   private val existingTaskListModel: DefaultListModel<ThreadEntry>,
   private val existingTaskList: JBList<ThreadEntry>,
-  private val popupScope: CoroutineScope,
+  private val sessionScope: CoroutineScope,
   private val sessionsMessageResolver: AgentPromptSessionsMessageResolver,
   private val onStateChanged: () -> Unit,
 ) {
@@ -63,7 +63,7 @@ internal class AgentPromptExistingTaskController(
     selectedProviderEntry: ProviderEntry?,
     launcher: AgentPromptLauncherBridge?,
     projectPath: String?,
-    isPopupActive: () -> Boolean,
+    isHostActive: () -> Boolean,
   ) {
     existingTasksObservationJob?.cancel()
     existingTasksObservationJob = null
@@ -110,13 +110,13 @@ internal class AgentPromptExistingTaskController(
     allExistingTaskEntries = emptyList()
 
     val requestVersion = threadLoadVersion.incrementAndGet()
-    existingTasksObservationJob = popupScope.launch {
+    existingTasksObservationJob = sessionScope.launch {
       launcher.observeExistingThreads(projectPath = projectPath, provider = selectedProviderEntry.bridge.provider)
         .onStart {
           launcher.refreshExistingThreads(projectPath = projectPath, provider = selectedProviderEntry.bridge.provider)
         }
         .catch {
-          if (!isPopupActive() || requestVersion != threadLoadVersion.get()) {
+          if (!isHostActive() || requestVersion != threadLoadVersion.get()) {
             return@catch
           }
           allExistingTaskEntries = emptyList()
@@ -126,7 +126,7 @@ internal class AgentPromptExistingTaskController(
           onStateChanged()
         }
         .collectLatest { snapshot ->
-          if (!isPopupActive() || requestVersion != threadLoadVersion.get()) {
+          if (!isHostActive() || requestVersion != threadLoadVersion.get()) {
             return@collectLatest
           }
           applySnapshot(snapshot)

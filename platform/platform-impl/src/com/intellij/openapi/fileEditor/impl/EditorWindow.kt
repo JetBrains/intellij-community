@@ -71,7 +71,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component
 import java.awt.Container
@@ -440,6 +439,7 @@ class EditorWindow internal constructor(
     }
 
     updateTabsVisibility()
+    owner.updateEmptyStateComponent()
     owner.validate()
   }
 
@@ -811,7 +811,7 @@ class EditorWindow internal constructor(
       is EditorsSplitters -> {
         val currentFocusComponent = IdeFocusManager.getGlobalInstance().getFocusedDescendantFor(parent)
         parent.removeAll()
-        parent.add(otherComponent, BorderLayout.CENTER)
+        parent.addEditorComponent(otherComponent)
         parent.revalidate()
         currentFocusComponent?.requestFocusInWindow()
       }
@@ -1230,7 +1230,7 @@ private fun swapComponents(parent: JPanel, toAdd: JComponent, toRemove: JCompone
   else {
     check(parent is EditorsSplitters)
     parent.remove(toRemove)
-    parent.add(toAdd, BorderLayout.CENTER)
+    parent.addEditorComponent(toAdd)
   }
 }
 

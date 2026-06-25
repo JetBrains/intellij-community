@@ -32,7 +32,7 @@ class AgentPromptSuggestionControllerTest {
     val subscription = FakeSubscription(listOf(candidate(id = "tests.fix")))
     try {
       val controller = AgentPromptSuggestionController(
-        popupScope = scope,
+        sessionScope = scope,
         subscriptionProvider = { subscription },
         onSuggestionsUpdated = observed::add,
       )
@@ -54,7 +54,7 @@ class AgentPromptSuggestionControllerTest {
     val subscription = FakeSubscription(listOf(candidate(id = "tests.fix", promptText = "template")))
     try {
       val controller = AgentPromptSuggestionController(
-        popupScope = scope,
+        sessionScope = scope,
         subscriptionProvider = { subscription },
         onSuggestionsUpdated = observed::add,
       )
@@ -86,7 +86,7 @@ class AgentPromptSuggestionControllerTest {
     val subscriptionCallCount = AtomicInteger(0)
     try {
       val controller = AgentPromptSuggestionController(
-        popupScope = scope,
+        sessionScope = scope,
         subscriptionProvider = {
           subscriptionCallCount.incrementAndGet()
           subscription
@@ -115,7 +115,7 @@ class AgentPromptSuggestionControllerTest {
     val subscriptionCallCount = AtomicInteger(0)
     try {
       val controller = AgentPromptSuggestionController(
-        popupScope = scope,
+        sessionScope = scope,
         subscriptionProvider = {
           subscriptionCallCount.incrementAndGet()
           subscription
@@ -146,7 +146,7 @@ class AgentPromptSuggestionControllerTest {
     val secondSubscription = FakeSubscription(listOf(candidate(id = "fresh")))
     try {
       val controller = AgentPromptSuggestionController(
-        popupScope = scope,
+        sessionScope = scope,
         subscriptionProvider = { request ->
           when (request.contextItems.single().title) {
             "first" -> firstSubscription
@@ -180,7 +180,7 @@ class AgentPromptSuggestionControllerTest {
     val subscriptionCallCount = AtomicInteger(0)
     try {
       val controller = AgentPromptSuggestionController(
-        popupScope = scope,
+        sessionScope = scope,
         subscriptionProvider = { request ->
           subscriptionCallCount.incrementAndGet()
           FakeSubscription(listOf(candidate(id = request.targetModeId)))
@@ -208,7 +208,7 @@ class AgentPromptSuggestionControllerTest {
     val subscriptionCallCount = AtomicInteger(0)
     try {
       val controller = AgentPromptSuggestionController(
-        popupScope = scope,
+        sessionScope = scope,
         subscriptionProvider = { request ->
           subscriptionCallCount.incrementAndGet()
           FakeSubscription(listOf(candidate(id = request.projectPath.orEmpty())))
@@ -236,7 +236,7 @@ class AgentPromptSuggestionControllerTest {
     val subscriptionCallCount = AtomicInteger(0)
     try {
       val controller = AgentPromptSuggestionController(
-        popupScope = scope,
+        sessionScope = scope,
         subscriptionProvider = { request ->
           subscriptionCallCount.incrementAndGet()
           FakeSubscription(
@@ -281,7 +281,7 @@ class AgentPromptSuggestionControllerTest {
     val subscription = FakeSubscription(listOf(candidate(id = "paths.duplication")))
     try {
       val controller = AgentPromptSuggestionController(
-        popupScope = scope,
+        sessionScope = scope,
         subscriptionProvider = { subscription },
         onSuggestionsUpdated = observed::add,
       )
@@ -306,7 +306,7 @@ class AgentPromptSuggestionControllerTest {
     val subscription = FakeSubscription(listOf(candidate(id = "paths.duplication")))
     try {
       val controller = AgentPromptSuggestionController(
-        popupScope = scope,
+        sessionScope = scope,
         subscriptionProvider = { subscription },
         onSuggestionsUpdated = observed::add,
       )
@@ -334,7 +334,7 @@ class AgentPromptSuggestionControllerTest {
     val firstSubscription = FakeSubscription(listOf(candidate(id = "paths.duplication")))
     try {
       val controller = AgentPromptSuggestionController(
-        popupScope = scope,
+        sessionScope = scope,
         subscriptionProvider = { request ->
           when {
             request.contextItems.single().title == "first" && available.getAndSet(0) == 1 -> firstSubscription

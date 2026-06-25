@@ -129,7 +129,7 @@ class AgentPromptPaletteDraftControllerTest {
     return AgentPromptExistingTaskController(
       existingTaskListModel = javax.swing.DefaultListModel(),
       existingTaskList = com.intellij.ui.components.JBList(),
-      popupScope = scope,
+      sessionScope = scope,
       sessionsMessageResolver = AgentPromptSessionsMessageResolver(AgentPromptPaletteDraftControllerTest::class.java.classLoader),
       onStateChanged = {},
     )

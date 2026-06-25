@@ -70,10 +70,10 @@ internal class AgentPromptPaletteSessionController(
   private val contextResolverService: AgentPromptContextResolverService,
   private val uiStateService: AgentPromptUiSessionStateService,
   private val launcherProvider: () -> AgentPromptLauncherBridge?,
-  private val closePopup: () -> Unit,
-  private val isPopupActive: () -> Boolean,
-  private val movePopupToFitScreen: () -> Unit,
-  private val popupScope: CoroutineScope,
+  private val closeHost: () -> Unit,
+  private val isHostActive: () -> Boolean,
+  private val revalidateHost: () -> Unit,
+  private val sessionScope: CoroutineScope,
   private val parentDisposable: Disposable,
 ) {
   private val contextState = AgentPromptPaletteContextState()
@@ -142,7 +142,7 @@ internal class AgentPromptPaletteSessionController(
       reasoningEffortLink = view.reasoningEffortLink,
       planReasoningEffortLink = view.planReasoningEffortLink,
       defaultProfileActionControl = view.defaultProfileActionControl,
-      modelCatalogScope = popupScope,
+      modelCatalogScope = sessionScope,
       launcherProvider = launcherProvider,
       onDefaultSaved = ::showInfo,
       onLaunchProfileApplied = {
@@ -237,7 +237,7 @@ internal class AgentPromptPaletteSessionController(
       handleTabSwitch()
       updateTargetModeUi()
       updateSendAvailability()
-      movePopupToFitScreen()
+      revalidateHost()
     })
 
     promptArea.addDocumentListener(object : DocumentListener {
@@ -248,7 +248,7 @@ internal class AgentPromptPaletteSessionController(
     })
   }
 
-  fun onPopupClosed() {
+  fun onHostClosed() {
     existingTaskController.dispose()
     suggestionController.dispose()
     draftController.saveProviderPreferences()
@@ -261,7 +261,7 @@ internal class AgentPromptPaletteSessionController(
   }
 
   fun showPromptLibraryChooser() {
-    popupScope.launch {
+    sessionScope.launch {
       val sourceEntries = collectReusablePromptSourceEntries(
         workingProjectPaths = reusableSourceProjectPaths(),
       )
@@ -536,7 +536,7 @@ internal class AgentPromptPaletteSessionController(
       return
     }
 
-    popupScope.launch {
+    sessionScope.launch {
       val skillEntries = loadCodexSkillCompletionEntries()
       if (skillEntries.isEmpty()) {
         return@launch
@@ -560,7 +560,7 @@ internal class AgentPromptPaletteSessionController(
   }
 
   private fun invokePromptCompletionWhenReady(editor: Editor, expectedPrefix: Char) {
-    popupScope.launch {
+    sessionScope.launch {
       withContext(Dispatchers.EDT) {
         if (project.isDisposed || editor.isDisposed || !editor.contentComponent.hasFocus()) {
           return@withContext
@@ -664,7 +664,7 @@ internal class AgentPromptPaletteSessionController(
       selectedProviderEntry = providerSelector.selectedProvider,
       launcher = launcher,
       projectPath = submitController.resolveWorkingProjectPath(),
-      isPopupActive = isPopupActive,
+      isHostActive = isHostActive,
     )
   }
 
@@ -673,7 +673,7 @@ internal class AgentPromptPaletteSessionController(
     val mode = currentTargetMode()
     view.existingTaskScrollPane.isVisible = !isExtensionTab && mode == PromptTargetMode.EXISTING_TASK
     view.rootPanel.revalidate()
-    movePopupToFitScreen()
+    revalidateHost()
     if (!isExtensionTab && mode == PromptTargetMode.EXISTING_TASK) {
       if (!existingTaskController.hasLoadedEntries()) {
         reloadExistingTasks()
@@ -686,7 +686,7 @@ internal class AgentPromptPaletteSessionController(
   }
 
   private fun refreshPreselection() {
-    popupScope.launch {
+    sessionScope.launch {
       val preferredId = resolvePreferredThreadId() ?: return@launch
       existingTaskController.setPreselection(preferredId)
     }
@@ -852,11 +852,11 @@ internal class AgentPromptPaletteSessionController(
   }
 
   private fun closeAfterSuccessfulSubmit() {
-    closePopup()
+    closeHost()
   }
 
   private fun runManageProfilesDialog(openDialog: AgentPromptLaunchProfileEditorOpenDialog) {
-    closePopup()
+    closeHost()
     ApplicationManager.getApplication().invokeLater {
       if (project.isDisposed) return@invokeLater
       openDialog {

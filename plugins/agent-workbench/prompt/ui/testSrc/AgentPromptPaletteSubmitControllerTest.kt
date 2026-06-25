@@ -603,7 +603,7 @@ class AgentPromptPaletteSubmitControllerTest {
     val existingTaskController = AgentPromptExistingTaskController(
       existingTaskListModel = javax.swing.DefaultListModel(),
       existingTaskList = com.intellij.ui.components.JBList(),
-      popupScope = testScope(),
+      sessionScope = testScope(),
       sessionsMessageResolver = AgentPromptSessionsMessageResolver(AgentPromptPaletteSubmitControllerTest::class.java.classLoader),
       onStateChanged = {},
     )

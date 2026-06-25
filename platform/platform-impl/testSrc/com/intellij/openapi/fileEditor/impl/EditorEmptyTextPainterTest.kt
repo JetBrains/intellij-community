@@ -4,6 +4,7 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.KeyboardGestureAction
@@ -11,20 +12,26 @@ import com.intellij.openapi.actionSystem.KeyboardModifierGestureShortcut
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.ui.UIUtil
 import org.assertj.core.api.Assertions.assertThat
+import org.jdom.Element
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.KeyStroke
@@ -44,8 +51,18 @@ internal class EditorEmptyTextPainterTest {
     KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH, InputEvent.CTRL_MASK),
     null,
   )
+  private val projectFixture = projectFixture(
+    openProjectTask = OpenProjectTask {
+      beforeInit = { it.putUserData(FileEditorManagerKeys.ALLOW_IN_LIGHT_PROJECT, true) }
+    },
+    openAfterCreation = true,
+  )
+  private val fileEditorManagerFixture = projectFixture.fileEditorManagerFixture()
 
   private lateinit var originalShortcuts: Map<String, List<Shortcut>>
+
+  private val manager: FileEditorManagerImpl
+    get() = fileEditorManagerFixture.get()
 
   @BeforeEach
   fun setUp() {
@@ -109,12 +126,97 @@ internal class EditorEmptyTextPainterTest {
     assertThat(RecordingEditorEmptyTextPainter().appendPromotedActionLines()).isEmpty()
   }
 
+  @Test
+  fun componentProviderIsVisibleOnlyInEmptyEditorState(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    val disposedComponents = AtomicInteger()
+    registerComponentProvider(disposable, disposedComponents)
+    manager.closeAllFiles()
+    splitters.updateEmptyStateComponent()
+
+    assertThat(findEmptyStateComponent(splitters)).isNotNull()
+
+    val disposedBeforeOpen = disposedComponents.get()
+    val file = LightVirtualFile("empty-state.txt", "content")
+    manager.openFile(file, false)
+
+    assertThat(findEmptyStateComponent(splitters)).isNull()
+    assertThat(disposedComponents).hasValue(disposedBeforeOpen + 1)
+
+    manager.closeFile(file)
+
+    assertThat(findEmptyStateComponent(splitters)).isNotNull()
+  }
+
+  @Test
+  fun componentProviderCoexistsWithEmptyTextHints(@TestDisposable disposable: Disposable) {
+    resetShortcuts(PROMOTED_ACTION_ID, listOf(doubleCtrlShortcut))
+    resetShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE, listOf(doubleShiftShortcut))
+    registerPromotedActionProvider(disposable)
+    registerComponentProvider(disposable)
+
+    val splitters = manager.mainSplitters
+    manager.closeAllFiles()
+    splitters.updateEmptyStateComponent()
+
+    val promotedLine = PROMOTED_ACTION_TEXT + " <shortcut>" + KeymapUtil.getShortcutText(doubleCtrlShortcut) + "</shortcut>"
+    val searchEverywhereLine = IdeBundle.message("empty.text.search.everywhere") +
+                               " <shortcut>" + KeymapUtil.getShortcutText(doubleShiftShortcut) + "</shortcut>"
+    assertThat(findEmptyStateComponent(splitters)).isNotNull()
+    assertThat(RecordingEditorEmptyTextPainter().appendAdvertisedActionLines())
+      .startsWith(promotedLine, searchEverywhereLine)
+  }
+
+  @Test
+  fun emptyStateComponentIsNotShownWithoutProvider(@TestDisposable disposable: Disposable) {
+    ExtensionTestUtil.maskExtensions(EditorEmptyStateComponentProvider.EP_NAME, emptyList(), disposable)
+
+    val splitters = manager.mainSplitters
+    manager.closeAllFiles()
+    splitters.updateEmptyStateComponent()
+
+    assertThat(findEmptyStateComponent(splitters)).isNull()
+  }
+
+  @Test
+  fun emptyStateComponentIsNotSerialized(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    registerComponentProvider(disposable)
+    manager.closeAllFiles()
+    splitters.updateEmptyStateComponent()
+
+    val element = Element("state")
+    splitters.writeExternal(element)
+
+    assertThat(findEmptyStateComponent(splitters)).isNotNull()
+    assertThat(element.children).isEmpty()
+  }
+
   private fun registerPromotedActionProvider(disposable: Disposable) {
     ExtensionTestUtil.maskExtensions(EditorEmptyTextPromotedActionProvider.EP_NAME, listOf(object : EditorEmptyTextPromotedActionProvider {
       override fun getPromotedAction(splitters: JComponent): EditorEmptyTextPromotedActionProvider.PromotedAction {
         return EditorEmptyTextPromotedActionProvider.PromotedAction(PROMOTED_ACTION_ID, PROMOTED_ACTION_TEXT)
       }
     }), disposable)
+  }
+
+  private fun registerComponentProvider(disposable: Disposable, disposedComponents: AtomicInteger = AtomicInteger()) {
+    ExtensionTestUtil.maskExtensions(EditorEmptyStateComponentProvider.EP_NAME, listOf(object : EditorEmptyStateComponentProvider {
+      override fun createComponent(splitters: EditorsSplitters): JComponent {
+        return JPanel().apply {
+          name = EMPTY_STATE_COMPONENT_NAME
+          preferredSize = java.awt.Dimension(320, 40)
+        }
+      }
+
+      override fun disposeComponent(component: JComponent) {
+        disposedComponents.incrementAndGet()
+      }
+    }), disposable)
+  }
+
+  private fun findEmptyStateComponent(splitters: EditorsSplitters): JComponent? {
+    return UIUtil.uiTraverser(splitters).find { it is JComponent && it.name == EMPTY_STATE_COMPONENT_NAME } as? JComponent
   }
 
   private fun resetShortcuts(actionId: String, shortcuts: List<Shortcut>) {
@@ -157,5 +259,6 @@ internal class EditorEmptyTextPainterTest {
   private companion object {
     const val PROMOTED_ACTION_ID: String = "EditorEmptyTextPainterTest.PromotedAction"
     const val PROMOTED_ACTION_TEXT: String = "Promoted Action"
+    const val EMPTY_STATE_COMPONENT_NAME: String = "EditorEmptyTextPainterTest.EmptyStateComponent"
   }
 }

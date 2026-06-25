@@ -3,13 +3,17 @@ package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_INVOCATION_PREFER_EXTENSIONS_KEY
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextResolverService
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.textCompletion.TextCompletionUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -74,12 +78,13 @@ class AgentPromptPalettePopupServiceTest {
   fun showAddContextFromUiDispatcherCreatesPopupWithModelAccessWhenNoneIsVisible(): Unit = timeoutRunBlocking {
     val createdPopups = mutableListOf<FakePopupSession>()
     var factoryCanRead = false
-    val service = AgentPromptPalettePopupController { invocationData, initialAddContextRequest, onClosed ->
-      runReadActionBlocking {
-        factoryCanRead = true
-      }
-      FakePopupSession(invocationData, initialAddContextRequest, onClosed).also(createdPopups::add)
-    }
+    val service =
+      AgentPromptPalettePopupController(popupFactory = AgentPromptPalettePopupFactory { invocationData, initialAddContextRequest, onClosed ->
+        runReadActionBlocking {
+          factoryCanRead = true
+        }
+        FakePopupSession(invocationData, initialAddContextRequest, onClosed).also(createdPopups::add)
+      })
     val request = addContextRequest()
 
     withContext(Dispatchers.UI) {
@@ -110,6 +115,38 @@ class AgentPromptPalettePopupServiceTest {
     assertThat(popup.appliedAddContextRequests).containsExactly(request)
     assertThat(popup.composerFocusCalls).isEqualTo(1)
     assertThat(popup.showCalls).isEqualTo(1)
+  }
+
+  @Test
+  fun popupContentCanBeCreatedOnEdtWithPromptCompletionProvider(): Unit = timeoutRunBlocking {
+    val project = ProjectManager.getInstance().defaultProject
+    val content = withContext(Dispatchers.EDT) {
+      createAgentPromptPaletteContent(
+        invocationData = invocationData(actionId = "AgentWorkbenchPrompt.OpenGlobalPalette"),
+        contextResolverService = project.service<AgentPromptContextResolverService>(),
+        uiStateService = project.service<AgentPromptUiSessionStateService>(),
+        sessionsMessageResolver = AgentPromptSessionsMessageResolver(AgentPromptPalettePopup::class.java.classLoader),
+        providersProvider = { emptyList() },
+        launcherProvider = { null },
+        closeHost = {},
+        isHostActive = { true },
+        revalidateHost = {},
+        parentDisposableName = "AgentPromptPalettePopupServiceTest",
+      )
+    }
+
+    try {
+      val document = content.promptArea.document
+      val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)
+
+      assertThat(psiFile).isNotNull()
+      assertThat(TextCompletionUtil.getProvider(psiFile!!)).isInstanceOf(AgentPromptClaudeSlashCompletionProvider::class.java)
+    }
+    finally {
+      withContext(Dispatchers.EDT) {
+        content.dispose("Agent prompt popup content test finished")
+      }
+    }
   }
 
   @Test
@@ -157,7 +194,11 @@ class AgentPromptPalettePopupServiceTest {
   }
 
   private fun service(createdPopups: MutableList<FakePopupSession>): AgentPromptPalettePopupController {
-    return AgentPromptPalettePopupController { invocationData, initialAddContextRequest, onClosed ->
+    return AgentPromptPalettePopupController(popupFactory(createdPopups))
+  }
+
+  private fun popupFactory(createdPopups: MutableList<FakePopupSession>): AgentPromptPalettePopupFactory {
+    return AgentPromptPalettePopupFactory { invocationData, initialAddContextRequest, onClosed ->
       FakePopupSession(invocationData, initialAddContextRequest, onClosed).also(createdPopups::add)
     }
   }

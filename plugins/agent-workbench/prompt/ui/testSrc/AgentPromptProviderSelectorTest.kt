@@ -3169,10 +3169,17 @@ class AgentPromptProviderSelectorTest {
   @Test
   @Suppress("RAW_SCOPE_CREATION")
   fun asyncRefreshAppliesResolvedProviderAvailabilityFromUiScope() = timeoutRunBlocking {
+    val refreshStarted = CompletableDeferred<Unit>()
+    val finishRefresh = CompletableDeferred<Unit>()
     val provider = testProviderBridge(
       provider = AgentSessionProvider.from("codex"),
       promptOptions = emptyList(),
       cliAvailable = false,
+      cliAvailableResolver = {
+        refreshStarted.complete(Unit)
+        finishRefresh.await()
+        false
+      },
     )
     val asyncRefreshScope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
     try {
@@ -3182,7 +3189,9 @@ class AgentPromptProviderSelectorTest {
         }
       }
 
+      refreshStarted.await()
       assertThat(withContext(Dispatchers.EDT) { fixture.selector.selectedProvider?.isCliAvailable }).isTrue()
+      finishRefresh.complete(Unit)
       waitForCondition {
         withContext(Dispatchers.EDT) {
           fixture.selector.selectedProvider?.isCliAvailable == false
@@ -3367,6 +3376,7 @@ class AgentPromptProviderSelectorTest {
     displayNameForGenerationModelId: (String) -> String? = { null },
     icon: Icon = EmptyIcon.ICON_16,
     monochromeIconOverride: Icon? = null,
+    cliAvailableResolver: suspend () -> Boolean = { cliAvailable },
   ): AgentSessionProviderDescriptor {
     return object : AgentSessionProviderDescriptor {
       override val provider: AgentSessionProvider = provider
@@ -3387,7 +3397,7 @@ class AgentPromptProviderSelectorTest {
       override val icon = icon
       override val monochromeIcon: Icon = monochromeIconOverride ?: icon
 
-      override suspend fun isCliAvailable(): Boolean = cliAvailable
+      override suspend fun isCliAvailable(): Boolean = cliAvailableResolver()
 
       override suspend fun listAvailableGenerationModels(project: com.intellij.openapi.project.Project?): List<AgentPromptGenerationModel> {
         onListAvailableGenerationModels()

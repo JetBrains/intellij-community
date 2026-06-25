@@ -21,7 +21,6 @@ import com.intellij.ui.IslandsState;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -73,7 +72,7 @@ public class EditorEmptyTextPainter {
       .withShortcutColor(JBColor.namedColor("Shortcut.foreground", new JBColor(0x0, 0xDFE1E5)));
 
     advertiseActions(splitters, painter);
-    painter.draw(g, (width, height) -> {
+    painter.draw(g, (width, ignored) -> {
       Dimension s = splitters.getSize();
       int w = (s.width - width) / 2;
       int h = (int)(s.height * heightRatio());
@@ -83,6 +82,11 @@ public class EditorEmptyTextPainter {
 
   protected double heightRatio() {
     return 0.375; // fix vertical position @ golden ratio
+  }
+
+  @Internal
+  public final double getEmptyTextHeightRatio() {
+    return heightRatio();
   }
 
   protected void advertiseActions(@NotNull JComponent splitters, @NotNull UIUtil.TextPainter painter) {
