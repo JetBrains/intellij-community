@@ -381,7 +381,7 @@ internal object WKWebViewBridge {
     invoke(webView, SEL_SET_ALLOWS_BACK_FORWARD_NAVIGATION_GESTURES, false)
     invoke(webView, SEL_SET_ALLOWS_MAGNIFICATION, false)
     invokeIfResponds(webView, SEL_SET_PAGE_ZOOM, 1.0, "setPageZoom:")
-    invokeIfResponds(webView, SEL_SET_INSPECTABLE, false, "setInspectable:")
+    invokeIfResponds(webView, SEL_SET_INSPECTABLE, true, "setInspectable:")
     invokeIfResponds(webView, SEL_SET_CAN_USE_CREDENTIAL_STORAGE, false, "_setCanUseCredentialStorage:")
     invokeIfResponds(webView, SEL_SET_RUBBER_BANDING_ENABLED, WK_RECT_EDGE_NONE, "_setRubberBandingEnabled:")
   }
