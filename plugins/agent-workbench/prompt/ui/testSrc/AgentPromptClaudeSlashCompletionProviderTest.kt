@@ -9,12 +9,15 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.CharFilter
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.textCompletion.TextCompletionUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -363,17 +366,17 @@ class AgentPromptClaudeSlashCompletionProviderTest {
 
   @Test
   fun textFieldUsesTextDocumentAndKeepsCompletionProviderInstalled() {
-    runInEdtAndWait {
-      val project = ProjectManager.getInstance().defaultProject
-      val completionProvider = createProvider(selectedProvider = { AgentSessionProvider.from("claude") })
-      val textField = AgentPromptTextField(project, completionProvider)
-
-      val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(textField.document)
-
-      assertThat(psiFile).isNotNull
-      assertThat(psiFile!!.fileType).isEqualTo(FileTypes.PLAIN_TEXT)
-      assertThat(TextCompletionUtil.getProvider(psiFile)).isSameAs(completionProvider)
+    val project = ProjectManager.getInstance().defaultProject
+    val completionProvider = createProvider(selectedProvider = { AgentSessionProvider.from("claude") })
+    val document = runBlocking(Dispatchers.UI) {
+      AgentPromptTextField(project, completionProvider).document
     }
+
+    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)
+
+    assertThat(psiFile).isNotNull
+    assertThat(psiFile!!.fileType).isEqualTo(FileTypes.PLAIN_TEXT)
+    assertThat(TextCompletionUtil.getProvider(psiFile)).isSameAs(completionProvider)
   }
 
   private fun createProvider(

@@ -2,7 +2,6 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -50,9 +49,17 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   }
 
   @Override
-  @RequiresReadLock(generateAssertion = false) // assert for real file
+  @RequiresReadLock
   public final @Nullable Document getDocument(@NotNull VirtualFile file) {
-    EditorLockFreeTyping.assertReadAccess(file);
+    return getDocumentWithoutReadAccessAssert(file);
+  }
+
+  @ApiStatus.Internal
+  public final @Nullable Document getDocumentForLightVirtualFile(@NotNull LightVirtualFile file) {
+    return getDocumentWithoutReadAccessAssert(file);
+  }
+
+  private @Nullable Document getDocumentWithoutReadAccessAssert(@NotNull VirtualFile file) {
     DocumentEx document = (DocumentEx)getCachedDocument(file);
     if (document != null) {
       return document;
@@ -256,7 +263,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
 
   @TestOnly
   @ApiStatus.Internal
-  public @Nullable Document getFileCachedDocument(@NotNull VirtualFile virtualFile) {
+  public @Nullable Document getDocumentFromCacheInTests(@NotNull VirtualFile virtualFile) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       throw new IllegalStateException("This method is only for unit tests");
     }
