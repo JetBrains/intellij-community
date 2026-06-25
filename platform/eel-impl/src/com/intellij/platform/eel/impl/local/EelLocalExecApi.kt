@@ -21,6 +21,7 @@ import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelPosixProcess
 import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.EelWindowsProcess
+import com.intellij.platform.eel.environmentVariablesAwaitReporter
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.LocalEelExecApi
 import com.intellij.platform.eel.channels.EelDelicateApi
@@ -45,6 +46,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
+import kotlin.time.Duration.Companion.nanoseconds
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -122,16 +124,24 @@ class EelLocalExecPosixApi(
     }
 
     return service<CoroutineScopeService>().coroutineScope.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
+      val reporter = environmentVariablesAwaitReporter()
+      reporter?.started(descriptor, mode)
+      val startNs = System.nanoTime()
       try {
         val shell = getUserShell()
         // Timeout is chosen at random.
-        ShellEnvironmentReader.readEnvironment(ShellEnvironmentReader.shellCommand(shell, null, interactive, null), 30_000).first
+        val envs = ShellEnvironmentReader.readEnvironment(ShellEnvironmentReader.shellCommand(shell, null, interactive, null), 30_000).first
+        reporter?.finished(descriptor, mode, (System.nanoTime() - startNs).nanoseconds, Result.success(envs))
+        envs
       }
       catch (err: CancellationException) {
+        reporter?.finished(descriptor, mode, (System.nanoTime() - startNs).nanoseconds, Result.failure(err))
         throw err
       }
       catch (err: Exception) {
-        throw EelExecApi.EnvironmentVariablesException(err.message.orEmpty(), err)
+        val wrapped = EelExecApi.EnvironmentVariablesException(err.message.orEmpty(), err)
+        reporter?.finished(descriptor, mode, (System.nanoTime() - startNs).nanoseconds, Result.failure(wrapped))
+        throw wrapped
       }
     }
   }

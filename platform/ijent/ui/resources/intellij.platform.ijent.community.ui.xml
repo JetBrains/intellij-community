@@ -50,6 +50,11 @@
     <ijent.dashboard.tab implementation="com.intellij.platform.ijent.community.ui.actions.dashboard.IjentDashboardTabInfo"/>
     <ijent.dashboard.tab implementation="com.intellij.platform.ijent.community.ui.actions.dashboard.IjentDashboardTabEnvVars"/>
     <project.root.unavailable implementation="com.intellij.platform.ijent.community.ui.actions.unavailable.IjentUnavailableDialogHandler"/>
+    <notificationGroup
+      id="IJent.EnvironmentVariables"
+      displayType="BALLOON"
+      bundle="messages.IjentImplBundle"
+      key="notification.group.ijent.env.vars"/>
     <advancedSetting
       id="container.environments.env.var.shell.mode"
       enumClass="com.intellij.platform.ijent.community.ui.settings.LoginShellEnvVarModeProviderImpl$EnvVarShellMode"
