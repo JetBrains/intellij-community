@@ -83,6 +83,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.popup.PopupUpdateProcessor
 import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.ui.tree.ui.DefaultTreeUI.AUTO_EXPAND_ALLOWED
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
@@ -167,6 +168,7 @@ class FileStructurePopup(
     //Stop code analyzer to speed up the EDT
     DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(this)
     tree = MyTree(treeModel)
+    tree.putClientProperty(AUTO_EXPAND_ALLOWED, true)
     PopupUtil.applyNewUIBackground(tree)
     tree.getAccessibleContext().setAccessibleName(LangBundle.message("file.structure.tree.accessible.name"))
     Disposer.register(this, myModel)
