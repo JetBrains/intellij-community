@@ -303,7 +303,7 @@ public final class PyResolveUtil {
                                                                       @NotNull TypeEvalContext context) {
     final List<RatedResolveResult> results = PyUtil.getParameterizedCachedValue(
       scopeOwner, Pair.create(qualifiedName, context),
-      param -> doResolveQualifiedNameInScope(param.getFirst(), scopeOwner, param.getSecond(), PyResolveUtil::resolveMember)
+      param -> doResolveQualifiedNameInScope(param.getFirst(), scopeOwner, param.getSecond(), false)
     );
     return ContainerUtil.mapNotNull(results, RatedResolveResult::getElement);
   }
@@ -312,15 +312,20 @@ public final class PyResolveUtil {
   public static @NotNull List<RatedResolveResult> resolveQualifiedNameInScopeNew(@NotNull QualifiedName qualifiedName,
                                                                                  @NotNull ScopeOwner scopeOwner,
                                                                                  @NotNull TypeEvalContext context) {
-    return PyUtil.getParameterizedCachedValue(scopeOwner, Pair.create(qualifiedName, context), param ->
-      doResolveQualifiedNameInScope(param.getFirst(), scopeOwner, param.getSecond(), PyResolveUtil::findMember)
-    );
+    return PyUtil.getParameterizedCachedValue(scopeOwner, Pair.create(qualifiedName, context), param -> {
+      return doResolveQualifiedNameInScope(param.getFirst(), scopeOwner, param.getSecond(), true);
+    });
   }
 
+  /**
+   * If {@param inferType} is `true`, infers the type of {@param qualifiedName} (this includes method binding and
+   * {@code @overload} processing) and returns that type wrapped in {@link PyTypeMember}.
+   * Otherwise, just returns the resolved PSI elements wrapped in {@link RatedResolveResult}.
+   */
   private static @NotNull List<RatedResolveResult> doResolveQualifiedNameInScope(@NotNull QualifiedName qualifiedName,
                                                                                  @NotNull ScopeOwner scopeOwner,
                                                                                  @NotNull TypeEvalContext context,
-                                                                                 @NotNull MemberResolver memberResolver) {
+                                                                                 boolean inferType) {
     final String firstName = qualifiedName.getFirstComponent();
     if (firstName == null || !(scopeOwner instanceof PyTypedElement)) return Collections.emptyList();
 
@@ -349,6 +354,10 @@ public final class PyResolveUtil {
       unqualifiedResults.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, builtin));
     }
 
+    if (inferType) {
+      unqualifiedResults = getTypeOfMember(unqualifiedResults, context);
+    }
+
     final List<String> remainingNames = qualifiedName.removeHead(1).getComponents();
     final List<RatedResolveResult> result = StreamEx.of(remainingNames).foldLeft(StreamEx.of(unqualifiedResults), (prev, name) ->
         prev.flatMap(r -> {
@@ -365,9 +374,9 @@ public final class PyResolveUtil {
             if (type != null) {
             // An instance type has access to instance attributes defined in __init__, a class type does not.
             final PyType instanceType = type instanceof PyClassLikeType ? ((PyClassLikeType)type).toInstance() : type;
-            results = instanceType instanceof PyModuleType moduleType
-                      ? moduleType.resolveModuleMember(name, scopeOwner, AccessDirection.READ, resolveContext)
-                      : memberResolver.resolve(instanceType, name, resolveContext);
+            results = inferType
+                      ? findMember(instanceType, name, scopeOwner, resolveContext)
+                      : resolveMember(instanceType, name, scopeOwner, resolveContext);
             }
           }
           else if (r.getElement() instanceof PsiDirectory dir) {
@@ -380,31 +389,29 @@ public final class PyResolveUtil {
     return PyUtil.filterTopPriorityResults(result);
   }
 
-  @FunctionalInterface
-  private interface MemberResolver {
-    @Nullable List<? extends RatedResolveResult> resolve(@NotNull PyType type,
-                                                         @NotNull String name,
-                                                         @NotNull PyResolveContext resolveContext);
-  }
-
   private static @Nullable List<? extends RatedResolveResult> resolveMember(@NotNull PyType type,
                                                                             @NotNull String name,
+                                                                            @Nullable PsiElement scopeOwner,
                                                                             @NotNull PyResolveContext resolveContext) {
+    if (type instanceof PyModuleType moduleType) {
+      return moduleType.resolveModuleMember(name, scopeOwner, AccessDirection.READ, resolveContext);
+    }
     return type.resolveMember(name, null, AccessDirection.READ, resolveContext);
   }
 
   private static @Nullable List<? extends RatedResolveResult> findMember(@NotNull PyType type,
                                                                          @NotNull String name,
+                                                                         @Nullable PsiElement scopeOwner,
                                                                          @NotNull PyResolveContext resolveContext) {
+    TypeEvalContext context = resolveContext.getTypeEvalContext();
     if (type instanceof PyClassType classType) {
-      TypeEvalContext context = resolveContext.getTypeEvalContext();
       Property property = classType.getPyClass().findProperty(name, true, context);
       if (property != null) {
         PyType propertyType = property.getType(null, context);
         return List.of(new PyTypeMember(property, propertyType));
       }
 
-      var resolveResults = resolveMember(classType, name, resolveContext.withoutProperties());
+      var resolveResults = resolveMember(classType, name, scopeOwner, resolveContext.withoutProperties());
       if (resolveResults != null) {
         PyType memberType = PyTypeUtil.getTypeOfBoundMember(classType, resolveResults, context);
         RatedResolveResult resolveResult = ContainerUtil.getLastItem(resolveResults);
@@ -415,7 +422,20 @@ public final class PyResolveUtil {
 
       return Collections.emptyList();
     }
-    return resolveMember(type, name, resolveContext);
+    if (type instanceof PyModuleType) {
+      var resolveResults = resolveMember(type, name, scopeOwner, resolveContext);
+      return resolveResults != null ? getTypeOfMember(resolveResults, context) : resolveResults;
+    }
+    return resolveMember(type, name, scopeOwner, resolveContext);
+  }
+
+  private static @NotNull List<RatedResolveResult> getTypeOfMember(@NotNull List<? extends RatedResolveResult> resolveResults,
+                                                                   @NotNull TypeEvalContext context) {
+    if (resolveResults.isEmpty()) return Collections.emptyList();
+    PyType memberType = PyTypeUtil.getTypeOfMember(resolveResults, context);
+    RatedResolveResult resolveResult = ContainerUtil.getLastItem(resolveResults);
+    PsiElement element = resolveResult != null ? resolveResult.getElement() : null;
+    return List.of(new PyTypeMember(element, memberType));
   }
 
   private static @NotNull List<? extends RatedResolveResult> resolveShortNameInSingleScope(@NotNull ScopeOwner scopeOwner,

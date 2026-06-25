@@ -188,7 +188,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       if (qName != null && qName.getComponentCount() != 0) {
         final ScopeOwner owner = ScopeUtil.getScopeOwner(this);
         if (owner != null) {
-          for (RatedResolveResult result : PyResolveUtil.resolveQualifiedNameInScopeNew(qName, owner, context)) {
+          final List<RatedResolveResult> results = PyResolveUtil.resolveQualifiedNameInScopeNew(qName, owner, context);
+          for (RatedResolveResult result : results) {
             if (result instanceof PyTypeMember typeMember) {
               types.add(typeMember.getType());
             }

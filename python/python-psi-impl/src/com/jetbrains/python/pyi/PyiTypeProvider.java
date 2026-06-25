@@ -17,6 +17,7 @@ package com.jetbrains.python.pyi;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyClass;
@@ -24,20 +25,20 @@ import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyTypedElement;
-import com.jetbrains.python.psi.types.PyAnyType;
+import com.jetbrains.python.psi.types.PyCallableType;
+import com.jetbrains.python.psi.types.PyOverloadType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
 import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import static com.jetbrains.python.psi.PyUtil.as;
-import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 
 public final class PyiTypeProvider extends PyTypeProviderBase {
   @Override
@@ -76,11 +77,10 @@ public final class PyiTypeProvider extends PyTypeProviderBase {
     if (target instanceof PyElement) {
       final PsiElement pythonStub = PyiUtil.getPythonStub((PyElement)target);
       if (pythonStub instanceof PyFunction pyFunction) {
-        PyType allSignatures = StreamEx.ofNullable(PyiUtil.getImplementation(pyFunction, context))
-          .prepend(PyiUtil.getOverloads(pyFunction, context))
-          .map(context::getType)
-          .collect(PyTypeUtil.toUnion());
-        return !isUnknown(allSignatures) ? new Ref<>(allSignatures) : null;
+        List<PyCallableType> overloads = ContainerUtil.mapNotNull(PyiUtil.getOverloads(pyFunction, context),
+                                                                  f -> as(context.getType(f), PyCallableType.class));
+        if (overloads.isEmpty()) return null;
+        return Ref.create(new PyOverloadType(overloads, null));
       }
       if (pythonStub instanceof PyTypedElement) {
         return PyTypeUtil.notNullToRef(context.getType((PyTypedElement)pythonStub));

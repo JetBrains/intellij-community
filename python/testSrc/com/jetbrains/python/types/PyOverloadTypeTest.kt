@@ -1040,6 +1040,33 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
     """)
 
   @Test
+  @TestFor(issues = ["PY-84004"])
+  fun `module overloaded function assigned to global function`() = test(
+    """
+    from mod import g
+
+    expr1 = g(1)
+    # └ TYPE bytes
+    expr2 = g("s")
+    # └ TYPE str
+    """,
+    "mod.py" to """
+    import lib
+
+    g = lib.func
+    """,
+    "lib.py" to """
+    from typing import overload
+
+
+    @overload
+    def func(x: int) -> bytes: ...
+    @overload
+    def func(x: str) -> str: ...
+    def func(x): ...
+    """)
+
+  @Test
   @TestFor(issues=["PY-90419"])
   fun `combining CFG-induced unions and unsafe unions for ambiguous overloads`() = test("""
     from typing import overload, Any

@@ -38,6 +38,7 @@ import com.jetbrains.python.psi.types.PyCallableTypeImpl
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyNamedTupleType
+import com.jetbrains.python.psi.types.PyOverloadType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeMember
 import com.jetbrains.python.psi.types.PyTypeProviderBase
@@ -176,23 +177,30 @@ private fun getNamedTupleFunctionType(function: PyFunction, context: TypeEvalCon
   val isCollectionsNamedTuple = ArrayUtil.contains(function.qualifiedName, PyNames.COLLECTIONS_NAMEDTUPLE_PY2, PyNames.COLLECTIONS_NAMEDTUPLE_PY3)
   val isTypingNamedTupleInit = !isCollectionsNamedTuple &&
                                PyTypingTypeProvider.NAMEDTUPLE == PyUtil.turnConstructorIntoClass(function)?.qualifiedName
-  if (isCollectionsNamedTuple || isTypingNamedTupleInit) {
-    return if (context.maySwitchToAST(call)) {
-      val functionType = context.getType(function) as? PyCallableType ?: return null
-      val returnType = getNamedTupleTypeFromStub(call, PyNamedTupleStubImpl.create(call), context) ?: return null
-      val parameters = functionType.getParameters(context)
+  if (!isCollectionsNamedTuple && !isTypingNamedTupleInit) return null
+  if (!context.maySwitchToAST(call)) return null
 
-      PyCallableTypeImpl(
-        if (isTypingNamedTupleInit) parameters?.drop(1) else parameters,
-        returnType,
-        functionType.callable,
-        functionType.modifier
-      )
-    }
-    else null
+  val returnType = getNamedTupleTypeFromStub(call, PyNamedTupleStubImpl.create(call), context) ?: return null
+
+  // `typing.NamedTuple.__init__` is overloaded; build a signature per overload and keep them as a single `PyOverloadType`
+  // (matching any signature is enough), rather than a union of signatures, which would force every signature to match the call.
+  val constructors = if (isTypingNamedTupleInit) function.containingClass?.multiFindInitOrNew(false, context)?.takeIf { it.isNotEmpty() }
+                     else null
+  val signatures = (constructors ?: listOf(function)).mapSmartNotNull { constructor ->
+    val constructorType = context.getType(constructor) as? PyCallableType ?: return@mapSmartNotNull null
+    val parameters = constructorType.getParameters(context)
+    PyCallableTypeImpl(
+      if (isTypingNamedTupleInit) parameters?.drop(1) else parameters,
+      returnType,
+      constructorType.callable,
+      constructorType.modifier
+    )
   }
-
-  return null
+  return when (signatures.size) {
+    0 -> null
+    1 -> signatures.single()
+    else -> PyOverloadType(signatures, null)
+  }
 }
 
 private fun getNamedTupleTypeForTarget(target: PyTargetExpression, context: TypeEvalContext): PyNamedTupleType? {
@@ -205,10 +213,7 @@ private fun getNamedTupleTypeForTarget(target: PyTargetExpression, context: Type
 
 private fun getNamedTupleTypeForClass(cls: PyClass, context: TypeEvalContext, call: PyCallExpression): PyType? {
   return getNamedTupleTypeForClass(cls, context)
-         ?: cls.multiFindInitOrNew(false, context)
-              .mapSmartNotNull { getNamedTupleFunctionType(it, context, call) }
-              .takeIf { it.isNotEmpty() }
-              ?.let(PyUnionType::union)
+         ?: cls.multiFindInitOrNew(false, context).firstOrNull()?.let { getNamedTupleFunctionType(it, context, call) }
 }
 
 internal fun getNamedTupleTypeForClass(cls: PyClass, context: TypeEvalContext): PyNamedTupleType? {
