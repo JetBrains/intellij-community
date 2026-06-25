@@ -88,11 +88,6 @@
                  key="debugger.remove.disable.actions"/>
 
     <registryKey defaultValue="true"
-                 description="Debugger implementation for split mode. Enable it in monolith as well to have the same experience as in RD."
-                 key="xdebugger.toolwindow.split"
-                 restartRequired="true"/>
-
-    <registryKey defaultValue="true"
                  description="Throw warnings and errors about misusages of frontend components on the backend (and vice versa)"
                  key="xdebugger.toolwindow.split.warnings"/>
 

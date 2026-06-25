@@ -44,7 +44,6 @@
       <add-to-group group-id="DebugReloadGroup" anchor="first"/>
       <add-to-group group-id="EditorPopupMenuDebugHotSwap" anchor="first"/>
     </action>
-    <action id="XDebugger.Split.Enable" class="com.intellij.platform.debugger.impl.frontend.EnabledSplitDebuggerAction" internal="true"/>
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <registryKey defaultValue="false"
@@ -59,6 +58,5 @@
     <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.frame.FrameNotificationRemoteTopicListener"/>
     <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.frame.ShowSessionTabRemoteTopicListener"/>
 
-    <notificationGroup id="Split debugger internal" displayType="STICKY_BALLOON" hideFromSettings="true"/>
   </extensions>
 </idea-plugin>
