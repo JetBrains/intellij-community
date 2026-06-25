@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.workspaceModel
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.module.Module
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -23,8 +24,18 @@ class KotlinFacetContributor: WorkspaceFacetContributor<KotlinSettingsEntity> {
     override fun createFacetFromEntity(entity: KotlinSettingsEntity, module: Module): KotlinFacet {
         val facetType = KotlinFacetType.INSTANCE
         val facetConfigurationBridge = KotlinFacetConfigurationBridge(entity)
-        return facetType.createFacet(module, entity.name, facetConfigurationBridge, null)
+        val facet = facetType.createFacet(module, entity.name, facetConfigurationBridge, null)
+        LOG.info(
+            "Kotlin FIR compiler plugins: createFacetFromEntity for module '${module.name}'#${System.identityHashCode(module)} " +
+            "(disposed=${module.isDisposed}) → facet#${System.identityHashCode(facet)}, " +
+            "entity.compilerArguments.len=${entity.compilerArguments?.length ?: -1}"
+        )
+        return facet
     }
 
     override fun getParentModuleEntity(entity: KotlinSettingsEntity): ModuleEntity = entity.module
+
+    private companion object {
+        private val LOG = logger<KotlinFacetContributor>()
+    }
 }
