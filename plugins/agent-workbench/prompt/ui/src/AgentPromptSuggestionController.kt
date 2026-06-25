@@ -15,7 +15,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 internal class AgentPromptSuggestionController(
-  private val popupScope: CoroutineScope,
+  private val sessionScope: CoroutineScope,
   private val subscriptionProvider: (AgentPromptSuggestionRequest) -> AgentPromptSuggestionSubscription? = { request ->
     request.project.service<AgentPromptSuggestionSessionService>().attach(request)
   },
@@ -60,7 +60,7 @@ internal class AgentPromptSuggestionController(
     renderSuggestions(subscription.currentCandidates)
 
     var launchedJob: Job? = null
-    launchedJob = popupScope.launch {
+    launchedJob = sessionScope.launch {
       try {
         subscription.updates.collect { candidates ->
           if (version != requestVersion || activeSubscription !== subscription) {

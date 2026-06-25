@@ -3,6 +3,8 @@ name: Global Prompt Entry
 description: Requirements for opening, focusing, submitting, and routing the Agent Workbench global prompt.
 targets:
   - ../../prompt/ui/src/actions/AgentWorkbenchGlobalPromptAction.kt
+  - ../../prompt/ui/src/emptyState/AgentWorkbenchInlinePromptEmptyStateProvider.kt
+  - ../../prompt/ui/src/AgentPromptPalettePopupService.kt
   - ../../prompt/ui/src/AgentPromptPalettePopup.kt
   - ../../prompt/ui/src/AgentPromptPaletteView.kt
   - ../../prompt/ui/src/AgentPromptPaletteSubmitController.kt
@@ -21,11 +23,19 @@ Status: Draft
 Date: 2026-05-16
 
 ## Summary
-The global prompt opens a project-scoped popup for starting a new task or sending a prompt to an existing loaded task. This spec owns popup lifecycle, target mode, validation, keyboard behavior, provider selection, and launcher handoff. Context collection and Add-to-Agent-Context routing are specified separately.
+The global prompt opens a project-scoped prompt surface for starting a new task or sending a prompt to an existing loaded task. The surface is normally a popup, but the empty editor state may host a compact inline prompt composer above the standard empty-state hints. This spec owns popup and inline lifecycle, target mode, validation, keyboard behavior, provider selection, and launcher handoff. Context collection and Add-to-Agent-Context routing are specified separately.
 
 ## Requirements
 - `AgentWorkbenchPrompt.OpenGlobalPalette` and `AgentWorkbenchPrompt.OpenGlobalPaletteAutoSelect` are available only with an open project. Invoking either action while the popup is already visible for the same project focuses the existing popup and preserves live state.
   [@test] ../../prompt/ui/testSrc/AgentPromptPalettePopupServiceTest.kt
+
+- When the main editor area is empty and prompt launching is available, Agent Workbench contributes a compact inline composer to the platform empty editor state. The composer is rendered above the standard empty editor action hints, uses the shared prompt content/session machinery, and keeps the existing empty-state hints visible.
+  [@test] ../../prompt/ui/testSrc/emptyState/AgentWorkbenchInlinePromptEmptyStateProviderTest.kt
+  [@test] ../../../platform/platform-impl/testSrc/com/intellij/openapi/fileEditor/impl/EditorEmptyTextPainterTest.kt
+
+- Showing the empty editor state must not auto-focus the inline composer. Invoking `AgentWorkbenchPrompt.OpenGlobalPalette` opens the ordinary global prompt popup even when the inline composer is visible in the empty editor state.
+  [@test] ../../prompt/ui/testSrc/AgentPromptPalettePopupServiceTest.kt
+  [@test] ../../prompt/ui/testSrc/emptyState/AgentWorkbenchInlinePromptEmptyStateProviderTest.kt
 
 - `AgentWorkbenchPrompt.OpenGlobalPalette` is invoked by pressing `Ctrl` twice. `AgentWorkbenchPrompt.OpenGlobalPaletteAutoSelect` is invoked by holding `Alt`/`Option` while pressing `Ctrl` twice. While Agent Workbench is installed, it displaces Run Anything from bare `Ctrl Ctrl` and must not install a replacement Run Anything keymap shortcut.
   [@test] ../../prompt/ui/testSrc/actions/AgentWorkbenchGlobalPromptDoubleCtrlShortcutTest.kt
@@ -62,6 +72,10 @@ The global prompt opens a project-scoped popup for starting a new task or sendin
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteSubmitControllerTest.kt
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
+- Inline empty-state submit uses the same validation and launch path as the popup prompt. Successful inline submit clears the submitted draft and resets the inline session without closing editor tabs or creating a popup.
+  [@test] ../../prompt/ui/testSrc/AgentPromptPaletteSubmitControllerTest.kt
+  [@test] ../../prompt/ui/testSrc/emptyState/AgentWorkbenchInlinePromptEmptyStateProviderTest.kt
+
 - Plan mode is available only when the selected provider exposes the plan-mode option, persists in project prompt draft state, and is forced off/rejected for busy existing tasks. A typed `/plan` prefix remains prompt text and does not toggle the option.
   [@test] ../../prompt/ui/testSrc/AgentPromptPlanModeDecisionsTest.kt
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
@@ -87,12 +101,17 @@ The global prompt opens a project-scoped popup for starting a new task or sendin
 
 ## User Experience
 - The popup is a focused launcher, not a persistent tool window.
+- The empty editor inline composer is a compact persistent empty-state affordance, not a full embedded popup.
+- Empty editor rendering must not steal focus; users focus the inline composer by clicking it or invoking the global prompt action while it is visible.
+- The inline prompt editor exposes localized accessible name and description metadata, while validation and status feedback continue to use the shared prompt status strip behavior.
 - The popup keep-open toggle is a secondary footer control, not part of the primary header action cluster.
 - Validation errors appear inline and keep the popup open.
 - Successful launches close the popup and clear the submitted draft.
 
 ## Testing / Local Run
 - `./tests.cmd --module intellij.agent.workbench.prompt.ui.tests --test "com.intellij.agent.workbench.prompt.ui.AgentPrompt*Test"`
+- `./tests.cmd --module intellij.agent.workbench.prompt.ui.tests --test "com.intellij.agent.workbench.prompt.ui.emptyState.AgentWorkbenchInlinePromptEmptyStateProviderTest;com.intellij.agent.workbench.prompt.ui.AgentPromptPalettePopupServiceTest"`
+- `./tests.cmd --module intellij.platform.ide.impl.tests --test com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainterTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionPromptLauncherBridgeTest`
 
 ## References

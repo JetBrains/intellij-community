@@ -27,6 +27,7 @@
     <editorEmptyTextPromotedActionProvider
       implementation="com.intellij.agent.workbench.prompt.ui.actions.AgentWorkbenchGlobalPromptEmptyTextPromotedActionProvider"
       order="first"/>
+    <editorEmptyStateComponentProvider implementation="com.intellij.agent.workbench.prompt.ui.emptyState.AgentWorkbenchInlinePromptEmptyStateProvider"/>
     <projectSettings service="com.intellij.agent.workbench.prompt.ui.AgentPromptUiSessionStateService"/>
     <intentionAction>
       <className>com.intellij.agent.workbench.prompt.ui.actions.AgentWorkbenchAddToAgentContextIntention</className>

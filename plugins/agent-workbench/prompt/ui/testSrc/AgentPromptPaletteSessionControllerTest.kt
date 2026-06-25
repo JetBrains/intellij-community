@@ -88,7 +88,8 @@ class AgentPromptPaletteSessionControllerTest {
 
         fixture.providerSelector.selectProvider(AgentSessionProvider.from("claude"))
 
-        assertThat(fixture.launcher.observedProviders).containsExactly(AgentSessionProvider.from("codex"), AgentSessionProvider.from("claude"))
+        assertThat(fixture.launcher.observedProviders).containsExactly(AgentSessionProvider.from("codex"),
+                                                                       AgentSessionProvider.from("claude"))
         assertThat(existingTaskIds(fixture.view)).containsExactly("claude-thread")
         assertThat(fixture.existingTaskController.selectedExistingTaskId).isEqualTo("claude-thread")
       }
@@ -203,68 +204,31 @@ class AgentPromptPaletteSessionControllerTest {
     val disposable = Disposer.newDisposable()
 
     @Suppress("RAW_SCOPE_CREATION")
-    val popupScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+    val sessionScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     val launcher = RecordingPromptLauncher(providerPreferences)
-    val promptArea = AgentPromptTextField(project).apply {
-      setDisposedWith(disposable)
-    }
-    lateinit var controllerRef: AgentPromptPaletteSessionController
-    val suggestions = AgentPromptSuggestionsComponent { candidate -> controllerRef.applySuggestedPrompt(candidate) }
-    val contextChips = AgentPromptContextChipsComponent { entry -> controllerRef.removeContextEntry(entry) }
-    val view = createAgentPromptPaletteView(
-      promptArea = promptArea,
-      suggestionsPanel = suggestions.component,
-      contextChipsPanel = contextChips.component,
-      onExistingTaskSelected = { selected -> controllerRef.onExistingTaskSelected(selected) },
-    )
     val sessionsMessageResolver = AgentPromptSessionsMessageResolver(AgentPromptPaletteSessionControllerTest::class.java.classLoader)
     val invocationData = testInvocationData(project)
-    val providerSelector = AgentPromptProviderSelector(
+    val content = createAgentPromptPaletteContent(
       invocationData = invocationData,
-      headerControls = view.headerControls,
-      providersProvider = { providers },
-      sessionsMessageResolver = sessionsMessageResolver,
-      onProviderOptionsChanged = { controllerRef.onProviderOptionsChanged() },
-      onProviderSelectionChanged = { controllerRef.onProviderSelectionChanged() },
-    )
-    val existingTaskController = AgentPromptExistingTaskController(
-      existingTaskListModel = view.existingTaskListModel,
-      existingTaskList = view.existingTaskList,
-      popupScope = popupScope,
-      sessionsMessageResolver = sessionsMessageResolver,
-      onStateChanged = { controllerRef.onExistingTaskStateChanged() },
-    )
-    val suggestionController = AgentPromptSuggestionController(
-      popupScope = popupScope,
-      onSuggestionsUpdated = suggestions::render,
-    )
-    val controller = AgentPromptPaletteSessionController(
-      project = project,
-      invocationData = invocationData,
-      promptArea = promptArea,
-      view = view,
-      contextChips = contextChips,
-      providerSelector = providerSelector,
-      existingTaskController = existingTaskController,
-      suggestionController = suggestionController,
       contextResolverService = project.service<AgentPromptContextResolverService>(),
       uiStateService = project.service<AgentPromptUiSessionStateService>(),
+      sessionsMessageResolver = sessionsMessageResolver,
+      providersProvider = { providers },
       launcherProvider = { launcher },
-      closePopup = {},
-      isPopupActive = { true },
-      movePopupToFitScreen = {},
-      popupScope = popupScope,
+      closeHost = {},
+      isHostActive = { true },
+      revalidateHost = {},
+      sessionScope = sessionScope,
       parentDisposable = disposable,
     )
-    controllerRef = controller
     return SessionControllerFixture(
-      controller = controller,
-      promptArea = promptArea,
-      providerSelector = providerSelector,
-      existingTaskController = existingTaskController,
-      view = view,
+      controller = content.sessionController,
+      promptArea = content.promptArea,
+      providerSelector = content.providerSelector,
+      existingTaskController = content.existingTaskController,
+      view = content.view,
       launcher = launcher,
-      popupScope = popupScope,
+      sessionScope = sessionScope,
       disposable = disposable,
     )
   }
@@ -381,12 +345,12 @@ class AgentPromptPaletteSessionControllerTest {
     @JvmField val existingTaskController: AgentPromptExistingTaskController,
     @JvmField val view: AgentPromptPaletteView,
     @JvmField val launcher: RecordingPromptLauncher,
-    @JvmField val popupScope: CoroutineScope,
+    @JvmField val sessionScope: CoroutineScope,
     @JvmField val disposable: com.intellij.openapi.Disposable,
   ) {
     fun dispose() {
-      controller.onPopupClosed()
-      popupScope.cancel()
+      controller.onHostClosed()
+      sessionScope.cancel()
       Disposer.dispose(disposable)
     }
   }

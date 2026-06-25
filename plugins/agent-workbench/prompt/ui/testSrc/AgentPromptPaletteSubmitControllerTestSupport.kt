@@ -49,7 +49,7 @@ fun captureNewTaskPromptLaunchRequest(
     val existingTaskController = AgentPromptExistingTaskController(
       existingTaskListModel = javax.swing.DefaultListModel(),
       existingTaskList = com.intellij.ui.components.JBList(),
-      popupScope = testScope(),
+      sessionScope = testScope(),
       sessionsMessageResolver = AgentPromptSessionsMessageResolver(classLoader),
       onStateChanged = {},
     )
