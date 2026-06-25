@@ -2,9 +2,8 @@
 
 import { dirname } from "node:path"
 import { fileURLToPath } from "node:url"
-import { defineConfig } from "vite"
 import { defineWebViewViewConfig } from "@jetbrains/intellij-webview/vite"
 
 const webviewSrcDir = dirname(fileURLToPath(import.meta.url))
 
-export default defineConfig(defineWebViewViewConfig({ webviewSrcDir, id: "sample-panel" }))
+export default defineWebViewViewConfig({ webviewSrcDir, id: "sample-panel" })

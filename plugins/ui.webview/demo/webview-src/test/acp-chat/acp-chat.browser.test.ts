@@ -1,14 +1,54 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import { expect, test } from "@playwright/test"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import { startWebViewMockPreview, type MockWebViewCall, type WebViewMockPreviewServer } from "@jetbrains/intellij-webview-testkit"
 
+type Locator = {
+  click(): Promise<void>
+  fill(value: string): Promise<void>
+}
+
+type Page = {
+  goto(url: string): Promise<void>
+  getByRole(role: string, options?: { name?: string | RegExp }): Locator
+  getByPlaceholder(text: string): Locator
+  getByText(text: string | RegExp): Locator
+  evaluate<Result>(pageFunction: () => Result | Promise<Result>): Promise<Result>
+}
+
+type TestApi = {
+  (title: string, handler: (fixtures: { page: Page }) => Promise<void> | void): void
+  beforeAll(handler: () => Promise<void> | void): void
+  afterAll(handler: () => Promise<void> | void): void
+}
+
+type ExpectApi = {
+  (actual: Locator): { toBeVisible(): Promise<void> }
+  (actual: number): { toBeGreaterThan(expected: number): void }
+  (actual: boolean): { toBe(expected: boolean): void }
+}
+
+type PlaywrightTestModule = {
+  expect: ExpectApi
+  test: TestApi
+}
+
+type MockWindow = Window & {
+  __WVI_MOCK__?: {
+    calls: {
+      byMethod(method: string): readonly MockWebViewCall[]
+    }
+  }
+}
+
+const playwrightTestPackage: string = "@playwright/test"
+const { expect, test } = await import(playwrightTestPackage) as unknown as PlaywrightTestModule
+
 const testDir = dirname(fileURLToPath(import.meta.url))
 const webviewSrcDir = resolve(testDir, "../..")
 
-let preview: WebViewMockPreviewServer
+let preview: WebViewMockPreviewServer | undefined
 
 test.beforeAll(async () => {
   preview = await startWebViewMockPreview({
@@ -19,10 +59,13 @@ test.beforeAll(async () => {
 })
 
 test.afterAll(async () => {
-  await preview.close()
+  await preview?.close()
 })
 
 test("renders ACP chat in a real browser with a mock agent", async ({ page }) => {
+  if (!preview) {
+    throw new Error("ACP chat mock preview server was not started")
+  }
   await page.goto(preview.url)
 
   await page.getByRole("button", { name: /select an agent/i }).click()
@@ -35,7 +78,9 @@ test("renders ACP chat in a real browser with a mock agent", async ({ page }) =>
   await expect(page.getByText("Hello mock")).toBeVisible()
   await expect(page.getByText(/Mock response from AI chat: Hello mock/)).toBeVisible()
 
-  const calls = await page.evaluate(() => window.__WVI_MOCK__?.calls.byMethod("acp.bridge/sendStdin") ?? [])
+  const calls = await page.evaluate(() => {
+    return (window as MockWindow).__WVI_MOCK__?.calls.byMethod("acp.bridge/sendStdin") ?? []
+  })
   expect(calls.length).toBeGreaterThan(0)
   expect(calls.some((call: MockWebViewCall) => JSON.stringify(call.params).includes("session/prompt"))).toBe(true)
 })

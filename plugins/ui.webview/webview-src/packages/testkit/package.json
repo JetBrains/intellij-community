@@ -18,5 +18,10 @@
   "peerDependencies": {
     "@jetbrains/intellij-webview": "*",
     "vite": "^8.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@jetbrains/intellij-webview": {
+      "optional": true
+    }
   }
 }
