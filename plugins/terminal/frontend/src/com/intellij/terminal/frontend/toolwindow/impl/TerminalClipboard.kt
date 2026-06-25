@@ -30,7 +30,9 @@ internal object TerminalClipboard {
 
     view.coroutineScope.launch {
       val text = sequenceOf(if (preferSystemSelection) systemContents else null, defaultContents)
-                   .firstNotNullOfOrNull { getContentAsText(it, view) } ?: return@launch
+                   .firstNotNullOfOrNull { getContentAsText(it, view) }
+                   ?.takeIf { it.isNotEmpty() }
+                   ?: return@launch
 
       view.createSendTextBuilder()
         .useBracketedPasteMode()
@@ -64,7 +66,11 @@ internal object TerminalClipboard {
     terminalContext: TerminalProcessContext,
   ): String? = withContext(Dispatchers.IO) {
     val files = content.getTransferData(DataFlavor.javaFileListFlavor) as? List<*> ?: return@withContext null
+    @Suppress("IO_FILE_USAGE")
     val paths = files.filterIsInstance<File>().map { it.toPath() }
+    if (paths.isEmpty()) {
+      return@withContext null
+    }
 
     TerminalFilePathHandler.getPathAsText(paths, terminalContext)
   }
