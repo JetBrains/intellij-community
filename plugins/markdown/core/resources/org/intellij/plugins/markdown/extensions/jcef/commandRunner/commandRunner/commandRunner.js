@@ -20,8 +20,7 @@ if (window.__IntelliJTools === undefined) {
 
   // Clickjacking guard. Author CSS shares this document and can hide, move, resize, or overlay the run
   // button so a click meant for elsewhere triggers a command. These checks read live geometry and
-  // visibility, which CSS cannot fake. A failing click is not dropped - it is forwarded with a flag so the
-  // IDE confirms the exact command first; a hijacked click can never run silently.
+  // visibility, which CSS cannot fake, so a hijacked click is confirmed by the IDE or runs nothing.
   const isVisiblySolid = (el) => {
     let node = el;
     while (node) {
@@ -31,6 +30,11 @@ if (window.__IntelliJTools === undefined) {
       }
       const opacity = parseFloat(style.opacity);
       if (!Number.isNaN(opacity) && opacity < 0.9) {
+        return false;
+      }
+      // A filter (opacity(), brightness(0), blur(), ...) can make the icon invisible while it stays
+      // clickable and elementFromPoint still resolves to it - the opacity property above does not see this.
+      if (style.filter && style.filter !== 'none') {
         return false;
       }
       node = node.parentElement;
@@ -45,26 +49,55 @@ if (window.__IntelliJTools === undefined) {
   const pointInside = (rect, x, y) =>
     x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
 
-  const isGenuineButtonClick = (e, target) => {
-    // Keyboard activation has detail 0 and no coordinates; trust it (the CSP forbids forged events).
-    if (e.detail === 0) {
-      return true;
-    }
-    // Anchor on the run <img>, not the <a>: a disguised button hides the icon and fakes a label, leaving
-    // the <a> clickable but the click no longer landing on the icon.
-    const icon = target.querySelector('img');
+  const isClickableIcon = (icon, x, y) => {
     if (icon === null) {
       return false;
     }
     const rect = icon.getBoundingClientRect();
-    const x = e.clientX;
-    const y = e.clientY;
-    // The cursor must hit the icon itself - elementFromPoint reports the <a> for a pseudo-element and a
-    // foreign element for an overlay on top - and the icon must be visibly solid.
-    return iconFitsViewport(rect)
-      && pointInside(rect, x, y)
-      && window.document.elementFromPoint(x, y) === icon
-      && isVisiblySolid(icon);
+    return iconFitsViewport(rect) && pointInside(rect, x, y) && isVisiblySolid(icon);
+  };
+
+  const isGenuineButtonClick = (e, icon) => {
+    // The cursor must hit the run <img> itself with nothing on top: elementFromPoint reports the <a> for a
+    // pseudo-element and a foreign element for an overlay, so a disguised or covered button fails here.
+    return window.document.elementFromPoint(e.clientX, e.clientY) === icon
+      && isClickableIcon(icon, e.clientX, e.clientY);
+  };
+
+  const runIconAnchorBeneath = (x, y) => {
+    for (const element of window.document.elementsFromPoint(x, y)) {
+      const anchor = element.closest('a[data-command]');
+      if (anchor !== null && isClickableIcon(anchor.querySelector('img'), x, y)) {
+        return anchor;
+      }
+    }
+    return null;
+  };
+
+  const resolveRunTarget = (e, target) => {
+    // Keyboard activation has detail 0 and no coordinates; trust it (the CSP forbids forged events).
+    if (e.detail === 0) {
+      return { anchor: target, needsConfirmation: "0" };
+    }
+    const icon = target.querySelector('img');
+    if (icon !== null) {
+      return { anchor: target, needsConfirmation: isGenuineButtonClick(e, icon) ? "0" : "1" };
+    }
+    // No run icon on the clicked anchor (an author overlay such as #jump): run the real icon beneath the
+    // cursor, always confirming because something is layered on top.
+    const realAnchor = runIconAnchorBeneath(e.clientX, e.clientY);
+    return realAnchor === null ? null : { anchor: realAnchor, needsConfirmation: "1" };
+  };
+
+  const postRunRequest = (e, anchor, needsConfirmation) => {
+    const cmd = anchor.getAttribute('data-command');
+    const cmdType = anchor.getAttribute('data-commandtype');
+    const firstLineHash = anchor.getAttribute('data-firstLine');
+    if (cmdType === 'block') {
+      runBlock(cmd + ":" + firstLineHash + ":" + e.clientX + ":" + e.clientY + ":" + needsConfirmation);
+    } else {
+      runLine(cmd + ":" + needsConfirmation);
+    }
   };
 
   window.document.addEventListener("click", function(e) {
@@ -78,14 +111,9 @@ if (window.__IntelliJTools === undefined) {
     if (target.tagName === 'A' && target.hasAttribute("data-command")) {
       e.stopPropagation();
       e.preventDefault();
-      const needsConfirmation = isGenuineButtonClick(e, target) ? "0" : "1";
-      const cmd = target.getAttribute('data-command')
-      let cmdType = target.getAttribute('data-commandtype')
-      let firstLineHash = target.getAttribute('data-firstLine')
-      if (cmdType === 'block') {
-        runBlock(cmd + ":" + firstLineHash + ":" + e.clientX + ":" + e.clientY + ":" + needsConfirmation);
-      } else {
-        runLine(cmd + ":" + needsConfirmation);
+      const resolved = resolveRunTarget(e, target);
+      if (resolved !== null) {
+        postRunRequest(e, resolved.anchor, resolved.needsConfirmation);
       }
       return false;
     }
