@@ -12,6 +12,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.platform.projectView.pane.FileNestingStateDTO
+import com.intellij.platform.projectView.pane.NestingRuleDTO
+import com.intellij.platform.projectView.pane.toDTO
 import com.intellij.ui.treeStructure.ProjectViewUpdateCause
 
 internal class ConfigureFilesNestingAction : DumbAwareAction(), ActionRemoteBehaviorSpecification {
@@ -70,20 +73,20 @@ internal class ConfigureFilesNestingAction : DumbAwareAction(), ActionRemoteBeha
   }
 }
 
-private class FileNestingModel(private var state: FileNestingState) : ProjectViewFileNestingModel {
+private class FileNestingModel(private var state: FileNestingStateDTO) : ProjectViewFileNestingModel {
   var isFileNestingOn: Boolean
     get() = state.isFileNestingOn
     set(value) {
       state = state.copy(isFileNestingOn = value)
     }
 
-  val activeRules: List<NestingRuleState>
+  val activeRules: List<NestingRuleDTO>
     get() = state.activeRules
 
   override fun getRules(): List<ProjectViewFileNestingService.NestingRule> = state.activeRules.map { it.toNestingRule() }
 
   override fun setRules(rules: List<ProjectViewFileNestingService.NestingRule>) {
-    state = state.copy(activeRules = rules.map { it.toNestingRuleState() })
+    state = state.copy(activeRules = rules.map { it.toDTO() })
   }
 
   override fun getDefaultRules(): List<ProjectViewFileNestingService.NestingRule> = state.defaultRules.map { it.toNestingRule() }

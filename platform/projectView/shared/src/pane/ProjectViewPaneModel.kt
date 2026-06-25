@@ -18,7 +18,11 @@ interface ProjectViewPaneModel {
 
   suspend fun navigate(nodeId: Long, options: ProjectViewPaneNavigateOptions)
 
-  suspend fun <T : Any> changeSetting(setting: ProjectViewPaneSetting<T>)
+  suspend fun setOptionValue(option: ProjectViewPaneOption, newValue: Boolean)
+
+  suspend fun setSortKey(sortKeyValue: ProjectViewPaneSortKeyValue)
+
+  suspend fun setFileNesting(fileNestingValue: ProjectViewPaneFileNestingValue)
 
   fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot)
 

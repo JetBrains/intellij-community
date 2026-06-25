@@ -4,10 +4,10 @@
 package com.intellij.platform.projectView.frontend.actions
 
 import com.intellij.ide.projectView.NodeSortKey
-import com.intellij.platform.projectView.actions.NestingRuleState
-import com.intellij.platform.projectView.actions.ProjectViewActionState
+import com.intellij.platform.projectView.pane.NestingRuleDTO
+import com.intellij.platform.projectView.pane.ProjectViewPaneSettingsStateDTO
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
-import com.intellij.platform.projectView.actions.ProjectViewOption
+import com.intellij.platform.projectView.pane.ProjectViewPaneOptionDTO
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -18,13 +18,13 @@ import kotlinx.coroutines.flow.flatMapLatest
 internal class ProjectViewActionSupportImpl(
   private val currentPane: MutableStateFlow<FrontendProjectViewPane?>
 ) : ProjectViewActionSupport {
-  override fun getActionState(): ProjectViewActionState? = currentPane.value?.getOptionSupport()?.getActionState()
+  override fun getActionState(): ProjectViewPaneSettingsStateDTO? = currentPane.value?.getOptionSupport()?.getActionState()
 
-  override fun getActionStateFlow(): Flow<ProjectViewActionState?> = currentPane.flatMapLatest {
+  override fun getActionStateFlow(): Flow<ProjectViewPaneSettingsStateDTO?> = currentPane.flatMapLatest {
     it?.getOptionSupport()?.getActionStateFlow() ?: emptyFlow()
   }
 
-  override fun requestOptionValueChange(option: ProjectViewOption, newValue: Boolean) {
+  override fun requestOptionValueChange(option: ProjectViewPaneOptionDTO, newValue: Boolean) {
     currentPane.value?.getOptionSupport()?.requestOptionValueChange(option, newValue)
   }
 
@@ -33,8 +33,8 @@ internal class ProjectViewActionSupportImpl(
   }
 
   override fun requestFileNestingChange(
-      fileNestingOn: Boolean,
-      activeRules: List<NestingRuleState>,
+    fileNestingOn: Boolean,
+    activeRules: List<NestingRuleDTO>,
   ) {
     currentPane.value?.getOptionSupport()?.requestFileNestingChange(fileNestingOn, activeRules)
   }

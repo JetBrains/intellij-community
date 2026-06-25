@@ -27,10 +27,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.projectView.actions.NestingRuleState
-import com.intellij.platform.projectView.actions.ProjectViewActionState
+import com.intellij.platform.projectView.pane.NestingRuleDTO
+import com.intellij.platform.projectView.pane.ProjectViewPaneSettingsStateDTO
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
-import com.intellij.platform.projectView.actions.ProjectViewOption
+import com.intellij.platform.projectView.pane.ProjectViewPaneOptionDTO
 import com.intellij.platform.projectView.actions.ProjectViewOptionMenuUpdater
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
@@ -555,13 +555,13 @@ internal abstract class TreeBasedFrontendProjectViewPane(
   }
   
   private inner class ActionSupport : ProjectViewActionSupport {
-    private val actionState = MutableStateFlow<ProjectViewActionState?>(null)
+    private val actionState = MutableStateFlow<ProjectViewPaneSettingsStateDTO?>(null)
 
-    override fun getActionState(): ProjectViewActionState? = actionState.value
+    override fun getActionState(): ProjectViewPaneSettingsStateDTO? = actionState.value
 
-    override fun getActionStateFlow(): Flow<ProjectViewActionState?> = actionState.asStateFlow()
+    override fun getActionStateFlow(): Flow<ProjectViewPaneSettingsStateDTO?> = actionState.asStateFlow()
 
-    override fun requestOptionValueChange(option: ProjectViewOption, newValue: Boolean) {
+    override fun requestOptionValueChange(option: ProjectViewPaneOptionDTO, newValue: Boolean) {
       sendRequest(ProjectViewPaneChangeOptionValueRequest(option, newValue))
     }
 
@@ -571,12 +571,12 @@ internal abstract class TreeBasedFrontendProjectViewPane(
 
     override fun requestFileNestingChange(
       fileNestingOn: Boolean,
-      activeRules: List<NestingRuleState>,
+      activeRules: List<NestingRuleDTO>,
     ) {
       sendRequest(ProjectViewPaneChangeFileNestingRequest(fileNestingOn, activeRules))
     }
 
-    fun updateActionState(actionState: ProjectViewActionState) {
+    fun updateActionState(actionState: ProjectViewPaneSettingsStateDTO) {
       LOG.debug { "Received updated actions: $actionState" }
       this.actionState.value = actionState
       ProjectViewOptionMenuUpdater.getInstance(project).updateMenu()
@@ -630,20 +630,20 @@ private data class ExpandRequest(val paths: List<TreePath>)
 
 private class MyAutoscrollToSourceHandler(private val project: Project) : AutoScrollToSourceHandler() {
   override fun isAutoScrollMode(): Boolean {
-    return ProjectViewOption.AUTOSCROLL_TO_SOURCE.isOn() || ProjectViewOption.OPEN_IN_PREVIEW_TAB.isOn()
+    return ProjectViewPaneOptionDTO.AUTOSCROLL_TO_SOURCE.isOn() || ProjectViewPaneOptionDTO.OPEN_IN_PREVIEW_TAB.isOn()
   }
 
   override fun setAutoScrollMode(state: Boolean) {
-    ProjectViewActionSupport.getInstance(project).requestOptionValueChange(ProjectViewOption.AUTOSCROLL_TO_SOURCE, state)
+    ProjectViewActionSupport.getInstance(project).requestOptionValueChange(ProjectViewPaneOptionDTO.AUTOSCROLL_TO_SOURCE, state)
   }
 
-  private fun ProjectViewOption.isOn(): Boolean =
+  private fun ProjectViewPaneOptionDTO.isOn(): Boolean =
     ProjectViewActionSupport.getInstance(project).getActionState()?.optionStates?.get(this)?.isSelected == true
 
   suspend fun manage() {
     // sync the setting from the backend, because it's used on the frontend
     ProjectViewActionSupport.getInstance(project).getActionStateFlow().map { 
-      it?.optionStates?.get(ProjectViewOption.OPEN_IN_PREVIEW_TAB)?.isSelected == true
+      it?.optionStates?.get(ProjectViewPaneOptionDTO.OPEN_IN_PREVIEW_TAB)?.isSelected == true
     }.distinctUntilChanged()
       .collectLatest { 
         UISettings.getInstance().openInPreviewTabIfPossible = it

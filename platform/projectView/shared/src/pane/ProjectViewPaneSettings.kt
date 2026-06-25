@@ -6,35 +6,25 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
-interface ProjectViewPaneSetting<T : Any> {
-  val newValue: T
+interface ProjectViewPaneOption {
+  sealed interface OpenInPreviewTab : ProjectViewPaneOption
+  sealed interface AutoscrollToSource : ProjectViewPaneOption
+  sealed interface OpenDirectoriesWithSingleClick : ProjectViewPaneOption
+  sealed interface AutoscrollFromSource : ProjectViewPaneOption
+  sealed interface ShowModules : ProjectViewPaneOption
+  sealed interface ShowMembers : ProjectViewPaneOption
+  sealed interface ShowExcludedFiles : ProjectViewPaneOption
+  sealed interface ShowVisibilityIcons : ProjectViewPaneOption
+  sealed interface ShowLibraryContents : ProjectViewPaneOption
+  sealed interface ShowScratchesAndConsoles : ProjectViewPaneOption
+  sealed interface FlattenModules : ProjectViewPaneOption
+  sealed interface FlattenPackages : ProjectViewPaneOption
+  sealed interface AbbreviatePackageNames : ProjectViewPaneOption
+  sealed interface HideEmptyMiddlePackages : ProjectViewPaneOption
+  sealed interface CompactDirectories : ProjectViewPaneOption
+  sealed interface FoldersAlwaysOnTop : ProjectViewPaneOption
+  sealed interface ManualOrder : ProjectViewPaneOption
 }
-
-@ApiStatus.Experimental
-@ApiStatus.NonExtendable
-interface ProjectViewOptionSetting : ProjectViewPaneSetting<Boolean> {
-  @ApiStatus.NonExtendable interface OpenInPreviewTab : ProjectViewOptionSetting
-  @ApiStatus.NonExtendable interface AutoscrollToSource : ProjectViewOptionSetting
-  @ApiStatus.NonExtendable interface OpenDirectoriesWithSingleClick : ProjectViewOptionSetting
-  @ApiStatus.NonExtendable interface AutoscrollFromSource : ProjectViewOptionSetting
-  @ApiStatus.NonExtendable interface ShowModules : ProjectViewOptionSetting
-  @ApiStatus.NonExtendable interface ShowMembers : ProjectViewOptionSetting
-  @ApiStatus.NonExtendable interface ShowExcludedFiles : ProjectViewOptionSetting
-  @ApiStatus.NonExtendable interface ShowVisibilityIcons : ProjectViewOptionSetting
-  @ApiStatus.NonExtendable interface ShowLibraryContents : ProjectViewOptionSetting
-  @ApiStatus.NonExtendable interface ShowScratchesAndConsoles : ProjectViewOptionSetting
-  @ApiStatus.NonExtendable interface FlattenModules : ProjectViewOptionSetting
-  @ApiStatus.NonExtendable interface FlattenPackages : ProjectViewOptionSetting
-  @ApiStatus.NonExtendable interface AbbreviatePackageNames : ProjectViewOptionSetting
-  @ApiStatus.NonExtendable interface HideEmptyMiddlePackages : ProjectViewOptionSetting
-  @ApiStatus.NonExtendable interface CompactDirectories : ProjectViewOptionSetting
-  @ApiStatus.NonExtendable interface FoldersAlwaysOnTop : ProjectViewOptionSetting
-  @ApiStatus.NonExtendable interface ManualOrder : ProjectViewOptionSetting
-}
-
-@ApiStatus.Experimental
-@ApiStatus.NonExtendable
-interface ProjectViewSortKeySetting : ProjectViewPaneSetting<ProjectViewPaneSortKeyValue>
 
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
@@ -50,10 +40,6 @@ interface ProjectViewPaneSortByType : ProjectViewPaneSortKeyValue
 interface ProjectViewPaneSortByTime : ProjectViewPaneSortKeyValue {
   val isAscending: Boolean
 }
-
-@ApiStatus.Experimental
-@ApiStatus.NonExtendable
-interface ProjectViewPaneFileNestingSetting : ProjectViewPaneSetting<ProjectViewPaneFileNestingValue>
 
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable

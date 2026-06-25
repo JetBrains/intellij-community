@@ -3,7 +3,6 @@
 
 package com.intellij.platform.projectView.pane
 
-import com.intellij.platform.projectView.actions.ProjectViewActionState
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -13,6 +12,6 @@ sealed interface ProjectViewPaneStateBuilder {
   suspend fun updateNode(nodeModel: ProjectViewNodeModel)
   suspend fun removeNodeChildren(parentId: Long)
   suspend fun removeNodeChild(parentId: Long, index: Int)
-  suspend fun updateActionState(actionState: ProjectViewActionState)
+  suspend fun updateActionState(actionState: ProjectViewPaneSettingsStateDTO)
   suspend fun clear()
 }

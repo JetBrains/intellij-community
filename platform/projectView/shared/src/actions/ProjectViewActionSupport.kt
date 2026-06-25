@@ -3,6 +3,9 @@ package com.intellij.platform.projectView.actions
 
 import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.openapi.project.Project
+import com.intellij.platform.projectView.pane.NestingRuleDTO
+import com.intellij.platform.projectView.pane.ProjectViewPaneSettingsStateDTO
+import com.intellij.platform.projectView.pane.ProjectViewPaneOptionDTO
 import com.intellij.platform.projectView.window.ProjectViewToolWindowService
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
@@ -13,13 +16,13 @@ interface ProjectViewActionSupport {
     @JvmStatic fun getInstance(project: Project): ProjectViewActionSupport = ProjectViewToolWindowService.getInstance(project).getActionSupport()
   }
 
-  fun getActionState(): ProjectViewActionState?
+  fun getActionState(): ProjectViewPaneSettingsStateDTO?
 
-  fun getActionStateFlow(): Flow<ProjectViewActionState?>
+  fun getActionStateFlow(): Flow<ProjectViewPaneSettingsStateDTO?>
 
-  fun requestOptionValueChange(option: ProjectViewOption, newValue: Boolean)
+  fun requestOptionValueChange(option: ProjectViewPaneOptionDTO, newValue: Boolean)
 
   fun requestSortKeyChange(sortKey: NodeSortKey)
 
-  fun requestFileNestingChange(fileNestingOn: Boolean, activeRules: List<NestingRuleState>)
+  fun requestFileNestingChange(fileNestingOn: Boolean, activeRules: List<NestingRuleDTO>)
 }

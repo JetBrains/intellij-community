@@ -5,15 +5,13 @@ package com.intellij.platform.projectView.pane
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
-import com.intellij.platform.projectView.actions.ProjectViewActionState
 import com.intellij.platform.util.coroutines.flow.IncrementalUpdateFlowProducer
 import com.intellij.platform.util.coroutines.flow.MutableStateWithIncrementalUpdates
 import kotlinx.coroutines.flow.Flow
-import org.jetbrains.annotations.ApiStatus
 
 internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
   private val state = object : MutableStateWithIncrementalUpdates<ProjectViewPaneStateEvent> {
-    private var actionState: ProjectViewActionState? = null
+    private var actionState: ProjectViewPaneSettingsStateDTO? = null
     private val superRoot = Node(SuperRootModel)
     private val nodeById = hashMapOf<Long, Node>().also { it[SUPER_ROOT_ID] = superRoot }
     
@@ -148,7 +146,7 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
     updateState(ProjectViewChildRemoved(parentId, index))
   }
 
-  override suspend fun updateActionState(actionState: ProjectViewActionState) {
+  override suspend fun updateActionState(actionState: ProjectViewPaneSettingsStateDTO) {
     updateState(ProjectViewActionStateEvent(actionState))
   }
 

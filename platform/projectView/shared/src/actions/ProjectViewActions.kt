@@ -23,8 +23,11 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
-import com.intellij.platform.projectView.pane.ProjectViewOptionSetting
-import com.intellij.platform.projectView.pane.ProjectViewOptionSettingImpl
+import com.intellij.platform.projectView.pane.ProjectViewPaneOptionDTO
+import com.intellij.platform.projectView.pane.ProjectViewOptionStateDTO
+import com.intellij.platform.projectView.pane.ProjectViewPaneOption
+import com.intellij.platform.projectView.pane.ProjectViewPaneOptionImpl
+import com.intellij.platform.projectView.pane.ProjectViewSortKeyStateDTO
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,35 +38,35 @@ import java.util.function.Function
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
-internal class OpenInPreviewTab : OptionAction(ProjectViewOption.OPEN_IN_PREVIEW_TAB)
-internal class AutoscrollToSource : OptionAction(ProjectViewOption.AUTOSCROLL_TO_SOURCE)
-internal class OpenDirectoriesWithSingleClick : OptionAction(ProjectViewOption.OPEN_DIRECTORIES_WITH_SINGLE_CLICK)
-internal class AutoscrollFromSource : OptionAction(ProjectViewOption.AUTOSCROLL_FROM_SOURCE)
-internal class ShowModules : OptionAction(ProjectViewOption.SHOW_MODULES)
-internal class ShowMembers : OptionAction(ProjectViewOption.SHOW_MEMBERS)
-internal class ShowExcludedFiles : OptionAction(ProjectViewOption.SHOW_EXCLUDED_FILES)
-internal class ShowVisibilityIcons : OptionAction(ProjectViewOption.SHOW_VISIBILITY_ICONS)
-internal class ShowLibraryContents : OptionAction(ProjectViewOption.SHOW_LIBRARY_CONTENTS)
-internal class ShowScratchesAndConsoles : OptionAction(ProjectViewOption.SHOW_SCRATCHES_AND_CONSOLES)
-internal class FlattenModules : OptionAction(ProjectViewOption.FLATTEN_MODULES)
-internal class FlattenPackages : OptionAction(ProjectViewOption.FLATTEN_PACKAGES)
-internal class AbbreviatePackageNames : OptionAction(ProjectViewOption.ABBREVIATE_PACKAGE_NAMES)
-internal class HideEmptyMiddlePackages : OptionAction(ProjectViewOption.HIDE_EMPTY_MIDDLE_PACKAGES)
-internal class CompactDirectories : OptionAction(ProjectViewOption.COMPACT_DIRECTORIES)
+internal class OpenInPreviewTab : OptionAction(ProjectViewPaneOptionDTO.OPEN_IN_PREVIEW_TAB)
+internal class AutoscrollToSource : OptionAction(ProjectViewPaneOptionDTO.AUTOSCROLL_TO_SOURCE)
+internal class OpenDirectoriesWithSingleClick : OptionAction(ProjectViewPaneOptionDTO.OPEN_DIRECTORIES_WITH_SINGLE_CLICK)
+internal class AutoscrollFromSource : OptionAction(ProjectViewPaneOptionDTO.AUTOSCROLL_FROM_SOURCE)
+internal class ShowModules : OptionAction(ProjectViewPaneOptionDTO.SHOW_MODULES)
+internal class ShowMembers : OptionAction(ProjectViewPaneOptionDTO.SHOW_MEMBERS)
+internal class ShowExcludedFiles : OptionAction(ProjectViewPaneOptionDTO.SHOW_EXCLUDED_FILES)
+internal class ShowVisibilityIcons : OptionAction(ProjectViewPaneOptionDTO.SHOW_VISIBILITY_ICONS)
+internal class ShowLibraryContents : OptionAction(ProjectViewPaneOptionDTO.SHOW_LIBRARY_CONTENTS)
+internal class ShowScratchesAndConsoles : OptionAction(ProjectViewPaneOptionDTO.SHOW_SCRATCHES_AND_CONSOLES)
+internal class FlattenModules : OptionAction(ProjectViewPaneOptionDTO.FLATTEN_MODULES)
+internal class FlattenPackages : OptionAction(ProjectViewPaneOptionDTO.FLATTEN_PACKAGES)
+internal class AbbreviatePackageNames : OptionAction(ProjectViewPaneOptionDTO.ABBREVIATE_PACKAGE_NAMES)
+internal class HideEmptyMiddlePackages : OptionAction(ProjectViewPaneOptionDTO.HIDE_EMPTY_MIDDLE_PACKAGES)
+internal class CompactDirectories : OptionAction(ProjectViewPaneOptionDTO.COMPACT_DIRECTORIES)
 
 internal class SortByName : SortKeyAction(NodeSortKey.BY_NAME)
 internal class SortByType : SortKeyAction(NodeSortKey.BY_TYPE)
 internal class SortByTimeDescending : SortKeyAction(NodeSortKey.BY_TIME_DESCENDING)
 internal class SortByTimeAscending : SortKeyAction(NodeSortKey.BY_TIME_ASCENDING)
-internal class FoldersAlwaysOnTop : OptionAction(ProjectViewOption.FOLDERS_ALWAYS_ON_TOP)
-internal class ManualOrder : OptionAction(ProjectViewOption.MANUAL_ORDER)
+internal class FoldersAlwaysOnTop : OptionAction(ProjectViewPaneOptionDTO.FOLDERS_ALWAYS_ON_TOP)
+internal class ManualOrder : OptionAction(ProjectViewPaneOptionDTO.MANUAL_ORDER)
 
 internal abstract class OptionAction(
   legacyActionSupplier: () -> ProjectViewImpl.Action,
   frontendOptionSupplier: (AnActionEvent) -> Option,
 ) : ToggleOptionAction(optionSupplier(legacyActionSupplier, frontendOptionSupplier)), DumbAware, ActionRemoteBehaviorSpecification {
   
-  constructor(option: ProjectViewOption) : this(
+  constructor(option: ProjectViewPaneOptionDTO) : this(
     legacyActionSupplier = { legacyProjectViewAction(option) },
     frontendOptionSupplier = { event -> frontendOption(event, option) },
   )
@@ -135,7 +138,7 @@ internal abstract class SortKeyAction(
     }
   }
 
-  private fun getSortKeyState(e: AnActionEvent): ProjectViewSortKeyState? {
+  private fun getSortKeyState(e: AnActionEvent): ProjectViewSortKeyStateDTO? {
     return ProjectViewActionSupport.getInstance(e.project ?: return null).getActionState()?.sortKeyState
   }
 }
@@ -154,25 +157,25 @@ private fun optionSupplier(
   }
 }
 
-private fun legacyProjectViewAction(option: ProjectViewOption): ProjectViewImpl.Action {
+private fun legacyProjectViewAction(option: ProjectViewPaneOptionDTO): ProjectViewImpl.Action {
   return when (option) {
-    ProjectViewOption.OPEN_IN_PREVIEW_TAB -> ProjectViewImpl.Action.OpenInPreviewTab()
-    ProjectViewOption.AUTOSCROLL_TO_SOURCE -> ProjectViewImpl.Action.AutoscrollToSource()
-    ProjectViewOption.OPEN_DIRECTORIES_WITH_SINGLE_CLICK -> ProjectViewImpl.Action.OpenDirectoriesWithSingleClick()
-    ProjectViewOption.AUTOSCROLL_FROM_SOURCE -> ProjectViewImpl.Action.AutoscrollFromSource()
-    ProjectViewOption.SHOW_MODULES -> ProjectViewImpl.Action.ShowModules()
-    ProjectViewOption.SHOW_MEMBERS -> ProjectViewImpl.Action.ShowMembers()
-    ProjectViewOption.SHOW_EXCLUDED_FILES -> ProjectViewImpl.Action.ShowExcludedFiles()
-    ProjectViewOption.SHOW_VISIBILITY_ICONS -> ProjectViewImpl.Action.ShowVisibilityIcons()
-    ProjectViewOption.SHOW_LIBRARY_CONTENTS -> ProjectViewImpl.Action.ShowLibraryContents()
-    ProjectViewOption.SHOW_SCRATCHES_AND_CONSOLES -> ProjectViewImpl.Action.ShowScratchesAndConsoles()
-    ProjectViewOption.FLATTEN_MODULES -> ProjectViewImpl.Action.FlattenModules()
-    ProjectViewOption.FLATTEN_PACKAGES -> ProjectViewImpl.Action.FlattenPackages()
-    ProjectViewOption.ABBREVIATE_PACKAGE_NAMES -> ProjectViewImpl.Action.AbbreviatePackageNames()
-    ProjectViewOption.HIDE_EMPTY_MIDDLE_PACKAGES -> ProjectViewImpl.Action.HideEmptyMiddlePackages()
-    ProjectViewOption.COMPACT_DIRECTORIES -> ProjectViewImpl.Action.CompactDirectories()
-    ProjectViewOption.FOLDERS_ALWAYS_ON_TOP -> ProjectViewImpl.Action.FoldersAlwaysOnTop()
-    ProjectViewOption.MANUAL_ORDER -> ProjectViewImpl.Action.ManualOrder()
+    ProjectViewPaneOptionDTO.OPEN_IN_PREVIEW_TAB -> ProjectViewImpl.Action.OpenInPreviewTab()
+    ProjectViewPaneOptionDTO.AUTOSCROLL_TO_SOURCE -> ProjectViewImpl.Action.AutoscrollToSource()
+    ProjectViewPaneOptionDTO.OPEN_DIRECTORIES_WITH_SINGLE_CLICK -> ProjectViewImpl.Action.OpenDirectoriesWithSingleClick()
+    ProjectViewPaneOptionDTO.AUTOSCROLL_FROM_SOURCE -> ProjectViewImpl.Action.AutoscrollFromSource()
+    ProjectViewPaneOptionDTO.SHOW_MODULES -> ProjectViewImpl.Action.ShowModules()
+    ProjectViewPaneOptionDTO.SHOW_MEMBERS -> ProjectViewImpl.Action.ShowMembers()
+    ProjectViewPaneOptionDTO.SHOW_EXCLUDED_FILES -> ProjectViewImpl.Action.ShowExcludedFiles()
+    ProjectViewPaneOptionDTO.SHOW_VISIBILITY_ICONS -> ProjectViewImpl.Action.ShowVisibilityIcons()
+    ProjectViewPaneOptionDTO.SHOW_LIBRARY_CONTENTS -> ProjectViewImpl.Action.ShowLibraryContents()
+    ProjectViewPaneOptionDTO.SHOW_SCRATCHES_AND_CONSOLES -> ProjectViewImpl.Action.ShowScratchesAndConsoles()
+    ProjectViewPaneOptionDTO.FLATTEN_MODULES -> ProjectViewImpl.Action.FlattenModules()
+    ProjectViewPaneOptionDTO.FLATTEN_PACKAGES -> ProjectViewImpl.Action.FlattenPackages()
+    ProjectViewPaneOptionDTO.ABBREVIATE_PACKAGE_NAMES -> ProjectViewImpl.Action.AbbreviatePackageNames()
+    ProjectViewPaneOptionDTO.HIDE_EMPTY_MIDDLE_PACKAGES -> ProjectViewImpl.Action.HideEmptyMiddlePackages()
+    ProjectViewPaneOptionDTO.COMPACT_DIRECTORIES -> ProjectViewImpl.Action.CompactDirectories()
+    ProjectViewPaneOptionDTO.FOLDERS_ALWAYS_ON_TOP -> ProjectViewImpl.Action.FoldersAlwaysOnTop()
+    ProjectViewPaneOptionDTO.MANUAL_ORDER -> ProjectViewImpl.Action.ManualOrder()
   }
 }
 
@@ -186,73 +189,50 @@ private fun legacyProjectViewAction(sortKey: NodeSortKey): ProjectViewImpl.Actio
 }
 
 @ApiStatus.Internal
-fun legacyProjectViewOption(project: Project, option: ProjectViewOption): Option {
+fun legacyProjectViewOption(project: Project, option: ProjectViewPaneOptionDTO): Option {
   return legacyProjectViewAction(option).optionSupplier.apply(project)
 }
 
 @ApiStatus.Internal
-fun legacyProjectViewOption(project: Project, option: ProjectViewOptionSetting): Option {
-  return legacyProjectViewOption(project, option.toEnum())
+fun legacyProjectViewOption(project: Project, option: ProjectViewPaneOption): Option {
+  return legacyProjectViewOption(project, (option as ProjectViewPaneOptionImpl).dto)
 }
 
-private fun ProjectViewOptionSetting.toEnum(): ProjectViewOption {
+internal fun ProjectViewPaneOptionDTO.fromDTO(): ProjectViewPaneOption {
   return when (this) {
-    is ProjectViewOptionSetting.OpenInPreviewTab -> ProjectViewOption.OPEN_IN_PREVIEW_TAB
-    is ProjectViewOptionSetting.AutoscrollToSource -> ProjectViewOption.AUTOSCROLL_TO_SOURCE
-    is ProjectViewOptionSetting.OpenDirectoriesWithSingleClick -> ProjectViewOption.OPEN_DIRECTORIES_WITH_SINGLE_CLICK
-    is ProjectViewOptionSetting.AutoscrollFromSource -> ProjectViewOption.AUTOSCROLL_FROM_SOURCE
-    is ProjectViewOptionSetting.ShowModules -> ProjectViewOption.SHOW_MODULES
-    is ProjectViewOptionSetting.ShowMembers -> ProjectViewOption.SHOW_MEMBERS
-    is ProjectViewOptionSetting.ShowExcludedFiles -> ProjectViewOption.SHOW_EXCLUDED_FILES
-    is ProjectViewOptionSetting.ShowVisibilityIcons -> ProjectViewOption.SHOW_VISIBILITY_ICONS
-    is ProjectViewOptionSetting.ShowLibraryContents -> ProjectViewOption.SHOW_LIBRARY_CONTENTS
-    is ProjectViewOptionSetting.ShowScratchesAndConsoles -> ProjectViewOption.SHOW_SCRATCHES_AND_CONSOLES
-    is ProjectViewOptionSetting.FlattenModules -> ProjectViewOption.FLATTEN_MODULES
-    is ProjectViewOptionSetting.FlattenPackages -> ProjectViewOption.FLATTEN_PACKAGES
-    is ProjectViewOptionSetting.AbbreviatePackageNames -> ProjectViewOption.ABBREVIATE_PACKAGE_NAMES
-    is ProjectViewOptionSetting.HideEmptyMiddlePackages -> ProjectViewOption.HIDE_EMPTY_MIDDLE_PACKAGES
-    is ProjectViewOptionSetting.CompactDirectories -> ProjectViewOption.COMPACT_DIRECTORIES
-    is ProjectViewOptionSetting.FoldersAlwaysOnTop -> ProjectViewOption.FOLDERS_ALWAYS_ON_TOP
-    is ProjectViewOptionSetting.ManualOrder -> ProjectViewOption.MANUAL_ORDER
-    else -> throw IllegalArgumentException("Unsupported option: $this")
-  }
-}
-
-internal fun ProjectViewOption.toSetting(newValue: Boolean): ProjectViewOptionSetting {
-  return when (this) {
-    ProjectViewOption.OPEN_IN_PREVIEW_TAB -> ProjectViewOptionSettingImpl.OpenInPreviewTabImpl(newValue)
-    ProjectViewOption.AUTOSCROLL_TO_SOURCE -> ProjectViewOptionSettingImpl.AutoscrollToSourceImpl(newValue)
-    ProjectViewOption.OPEN_DIRECTORIES_WITH_SINGLE_CLICK -> ProjectViewOptionSettingImpl.OpenDirectoriesWithSingleClickImpl(newValue)
-    ProjectViewOption.AUTOSCROLL_FROM_SOURCE -> ProjectViewOptionSettingImpl.AutoscrollFromSourceImpl(newValue)
-    ProjectViewOption.SHOW_MODULES -> ProjectViewOptionSettingImpl.ShowModulesImpl(newValue)
-    ProjectViewOption.SHOW_MEMBERS -> ProjectViewOptionSettingImpl.ShowMembersImpl(newValue)
-    ProjectViewOption.SHOW_EXCLUDED_FILES -> ProjectViewOptionSettingImpl.ShowExcludedFilesImpl(newValue)
-    ProjectViewOption.SHOW_VISIBILITY_ICONS -> ProjectViewOptionSettingImpl.ShowVisibilityIconsImpl(newValue)
-    ProjectViewOption.SHOW_LIBRARY_CONTENTS -> ProjectViewOptionSettingImpl.ShowLibraryContentsImpl(newValue)
-    ProjectViewOption.SHOW_SCRATCHES_AND_CONSOLES -> ProjectViewOptionSettingImpl.ShowScratchesAndConsolesImpl(newValue)
-    ProjectViewOption.FLATTEN_MODULES -> ProjectViewOptionSettingImpl.FlattenModulesImpl(newValue)
-    ProjectViewOption.FLATTEN_PACKAGES -> ProjectViewOptionSettingImpl.FlattenPackagesImpl(newValue)
-    ProjectViewOption.ABBREVIATE_PACKAGE_NAMES -> ProjectViewOptionSettingImpl.AbbreviatePackageNamesImpl(newValue)
-    ProjectViewOption.HIDE_EMPTY_MIDDLE_PACKAGES -> ProjectViewOptionSettingImpl.HideEmptyMiddlePackagesImpl(newValue)
-    ProjectViewOption.COMPACT_DIRECTORIES -> ProjectViewOptionSettingImpl.CompactDirectoriesImpl(newValue)
-    ProjectViewOption.FOLDERS_ALWAYS_ON_TOP -> ProjectViewOptionSettingImpl.FoldersAlwaysOnTopImpl(newValue)
-    ProjectViewOption.MANUAL_ORDER -> ProjectViewOptionSettingImpl.ManualOrderImpl(newValue)
+    ProjectViewPaneOptionDTO.OPEN_IN_PREVIEW_TAB -> ProjectViewPaneOptionImpl.OpenInPreviewTab
+    ProjectViewPaneOptionDTO.AUTOSCROLL_TO_SOURCE -> ProjectViewPaneOptionImpl.AutoscrollToSource
+    ProjectViewPaneOptionDTO.OPEN_DIRECTORIES_WITH_SINGLE_CLICK -> ProjectViewPaneOptionImpl.OpenDirectoriesWithSingleClick
+    ProjectViewPaneOptionDTO.AUTOSCROLL_FROM_SOURCE -> ProjectViewPaneOptionImpl.AutoscrollFromSource
+    ProjectViewPaneOptionDTO.SHOW_MODULES -> ProjectViewPaneOptionImpl.ShowModules
+    ProjectViewPaneOptionDTO.SHOW_MEMBERS -> ProjectViewPaneOptionImpl.ShowMembers
+    ProjectViewPaneOptionDTO.SHOW_EXCLUDED_FILES -> ProjectViewPaneOptionImpl.ShowExcludedFiles
+    ProjectViewPaneOptionDTO.SHOW_VISIBILITY_ICONS -> ProjectViewPaneOptionImpl.ShowVisibilityIcons
+    ProjectViewPaneOptionDTO.SHOW_LIBRARY_CONTENTS -> ProjectViewPaneOptionImpl.ShowLibraryContents
+    ProjectViewPaneOptionDTO.SHOW_SCRATCHES_AND_CONSOLES -> ProjectViewPaneOptionImpl.ShowScratchesAndConsoles
+    ProjectViewPaneOptionDTO.FLATTEN_MODULES -> ProjectViewPaneOptionImpl.FlattenModules
+    ProjectViewPaneOptionDTO.FLATTEN_PACKAGES -> ProjectViewPaneOptionImpl.FlattenPackages
+    ProjectViewPaneOptionDTO.ABBREVIATE_PACKAGE_NAMES -> ProjectViewPaneOptionImpl.AbbreviatePackageNames
+    ProjectViewPaneOptionDTO.HIDE_EMPTY_MIDDLE_PACKAGES -> ProjectViewPaneOptionImpl.HideEmptyMiddlePackages
+    ProjectViewPaneOptionDTO.COMPACT_DIRECTORIES -> ProjectViewPaneOptionImpl.CompactDirectories
+    ProjectViewPaneOptionDTO.FOLDERS_ALWAYS_ON_TOP -> ProjectViewPaneOptionImpl.FoldersAlwaysOnTop
+    ProjectViewPaneOptionDTO.MANUAL_ORDER -> ProjectViewPaneOptionImpl.ManualOrder
   }
 }
 
 private fun frontendOption(
   event: AnActionEvent,
-  option: ProjectViewOption,
+  option: ProjectViewPaneOptionDTO,
 ): Option = FrontendOption(event, option)
 
-private class FrontendOption(private val event: AnActionEvent, private val option: ProjectViewOption) : Option {
+private class FrontendOption(private val event: AnActionEvent, private val option: ProjectViewPaneOptionDTO) : Option {
   override fun isSelected(): Boolean = getOptionState()?.isSelected == true
 
   override fun isEnabled(): Boolean = getOptionState()?.isEnabled == true
 
   override fun isAlwaysVisible(): Boolean = getOptionState()?.isAlwaysVisible == true
 
-  private fun getOptionState(): ProjectViewOptionState? {
+  private fun getOptionState(): ProjectViewOptionStateDTO? {
     val result = service()?.getActionState()?.optionStates?.get(option)
     LOG.trace { "FrontendOption.getOptionState($option): $result" }
     return result

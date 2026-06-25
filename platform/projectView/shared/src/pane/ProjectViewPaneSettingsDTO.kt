@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.projectView.actions
+package com.intellij.platform.projectView.pane
 
 import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService
@@ -8,22 +8,22 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Serializable
-data class ProjectViewActionState(
-  val optionStates: Map<ProjectViewOption, ProjectViewOptionState>,
-  val sortKeyState: ProjectViewSortKeyState,
-  val fileNestingState: FileNestingState,
+data class ProjectViewPaneSettingsStateDTO(
+  val optionStates: Map<ProjectViewPaneOptionDTO, ProjectViewOptionStateDTO>,
+  val sortKeyState: ProjectViewSortKeyStateDTO,
+  val fileNestingState: FileNestingStateDTO,
 )
 
 @ApiStatus.Internal
 @Serializable
-data class ProjectViewOptionState(
+data class ProjectViewOptionStateDTO(
   val isSelected: Boolean,
   val isEnabled: Boolean,
   val isAlwaysVisible: Boolean,
 )
 
 @ApiStatus.Internal
-enum class ProjectViewOption {
+enum class ProjectViewPaneOptionDTO {
   OPEN_IN_PREVIEW_TAB,
   AUTOSCROLL_TO_SOURCE,
   OPEN_DIRECTORIES_WITH_SINGLE_CLICK,
@@ -45,23 +45,23 @@ enum class ProjectViewOption {
 
 @ApiStatus.Internal
 @Serializable
-data class ProjectViewSortKeyState(
+data class ProjectViewSortKeyStateDTO(
     val sortKey: NodeSortKey,
     val availableSortKeys: Set<NodeSortKey>,
 )
 
 @ApiStatus.Internal
 @Serializable
-data class FileNestingState(
+data class FileNestingStateDTO(
   val isFileNestingOn: Boolean,
   val isFileNestingAvailable: Boolean,
-  val activeRules: List<NestingRuleState>,
-  val defaultRules: List<NestingRuleState>,
+  val activeRules: List<NestingRuleDTO>,
+  val defaultRules: List<NestingRuleDTO>,
 )
 
 @ApiStatus.Internal
 @Serializable
-data class NestingRuleState(
+data class NestingRuleDTO(
   val parentFileSuffix: String,
   val childFileSuffix: String,
 ) {
@@ -69,4 +69,4 @@ data class NestingRuleState(
 }
 
 @ApiStatus.Internal
-fun ProjectViewFileNestingService.NestingRule.toNestingRuleState(): NestingRuleState = NestingRuleState(parentFileSuffix, childFileSuffix)
+fun ProjectViewFileNestingService.NestingRule.toDTO(): NestingRuleDTO = NestingRuleDTO(parentFileSuffix, childFileSuffix)

@@ -10,9 +10,9 @@ import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.actions.EditorChoice
-import com.intellij.platform.projectView.actions.ProjectViewActionState
+import com.intellij.platform.projectView.pane.ProjectViewPaneSettingsStateDTO
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
-import com.intellij.platform.projectView.actions.ProjectViewOption
+import com.intellij.platform.projectView.pane.ProjectViewPaneOptionDTO
 import com.intellij.platform.projectView.actions.SelectInSplitProjectViewImpl
 import com.intellij.platform.projectView.frontend.window.ProjectViewToolWindowServiceImpl
 import com.intellij.util.asDisposable
@@ -93,5 +93,5 @@ internal class SplitProjectViewAutoscrollFromSource(
   }
 }
 
-private val ProjectViewActionState.isAutoscrollFromSourceEnabled: Boolean
-  get() = optionStates[ProjectViewOption.AUTOSCROLL_FROM_SOURCE]?.isSelected == true
+private val ProjectViewPaneSettingsStateDTO.isAutoscrollFromSourceEnabled: Boolean
+  get() = optionStates[ProjectViewPaneOptionDTO.AUTOSCROLL_FROM_SOURCE]?.isSelected == true

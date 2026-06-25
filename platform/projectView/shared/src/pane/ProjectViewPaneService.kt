@@ -4,7 +4,7 @@ package com.intellij.platform.projectView.pane
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.actions.EditorChoice
-import com.intellij.platform.projectView.actions.toSetting
+import com.intellij.platform.projectView.actions.fromDTO
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
@@ -143,20 +143,12 @@ private class BackendProjectViewPaneManager(val pane: ProjectViewPaneModel, val 
             is ProjectViewPaneLoadChildrenRequest -> pane.loadChildren(request.nodeId, ProjectViewPaneLoadChildrenOptionsImpl)
             is ProjectViewPaneSelectionChanged -> pane.setSelected(request.paneId == id, ProjectViewPaneSelectionOptionsImpl)
             is ProjectViewPaneNavigateRequest -> pane.navigate(request.nodeId, ProjectViewPaneNavigateOptionsImpl(request.requestFocus))
-            is ProjectViewPaneChangeOptionValueRequest -> pane.changeSetting(
-              request.option.toSetting(request.newValue)
-            )
-            is ProjectViewPaneChangeSortKeyRequest -> pane.changeSetting(
-              ProjectViewSortKeySettingImpl(
-                request.sortKey.toSettingValue()
-              )
-            )
-            is ProjectViewPaneChangeFileNestingRequest -> pane.changeSetting(
-              ProjectViewPaneFileNestingSettingImpl(
-                ProjectViewPaneFileNestingValueImpl(
-                  request.isFileNestingOn,
-                  request.activeRules.map { it.toNestingRule() },
-                )
+            is ProjectViewPaneChangeOptionValueRequest -> pane.setOptionValue(request.option.fromDTO(), request.newValue)
+            is ProjectViewPaneChangeSortKeyRequest -> pane.setSortKey(request.sortKey.toSettingValue())
+            is ProjectViewPaneChangeFileNestingRequest -> pane.setFileNesting(
+              ProjectViewPaneFileNestingValueImpl(
+                request.isFileNestingOn,
+                request.activeRules.map { it.toNestingRule() },
               )
             )
           }
