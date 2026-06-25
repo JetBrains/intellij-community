@@ -71,12 +71,15 @@ Key confirmations: `ClientSideConnection implements Agent` (so `setSessionMode`/
 4. Keep an explicit fallback: if repository wiring proves too heavy, keep in-place regenerate for the first pass and leave the picker disabled.
 5. Style the branch picker controls in `styles.css`.
 
-### 5. Model / mode picker
-1. In `src/acp/client.ts`, capture `NewSessionResponse.modes` and `configOptions`, handle `current_mode_update`, and push all of them through the sink.
-2. In `useAcpChat.ts`, store `modes`, `configOptions`, and `currentModeId`; reset them on agent switch.
-3. Expose `selectMode` and `selectConfigOption`, calling `AcpSession.setMode` / `setConfigOption`.
-4. Add `ModelPicker.tsx`, modeled on `AgentSelector.tsx`, and mount it in a new composer toolbar.
-5. Show a disabled placeholder when the agent advertises neither modes nor config options.
+### 5. Mode / model picker
+- [x] In `src/acp/client.ts`, capture `NewSessionResponse.modes` and `configOptions`, handle `current_mode_update` / `config_option_update`, and push all of them through the sink.
+- [x] In `useAcpChat.ts`, store `modes`, `configOptions`, and `currentModeId`; reset them on agent switch.
+- [x] Expose `selectMode` and `selectConfigOption`, calling `AcpSession.setMode` / `setConfigOption` without optimistic UI updates.
+- [x] Add an assistant-ui-style `ModelSelector.tsx` primitive (popover/search/list/group/item) using existing `radix-ui`, not Tailwind/shadcn/lucide.
+- [x] Add `ModelPicker.tsx` with separate controls: **Mode** comes from ACP `modes`; **Model** comes from a model-like ACP select `configOption`; remaining config options render as compact select/switch controls.
+- [x] Treat model config options as model-like when `category === "model"`, when id/name contains `model`, or when option values/names look like known model families (e.g. Gemini/Claude/GPT/Llama/Mistral/Sonnet/Opus/Haiku), so Gemini model lists are not missed when the agent omits `category: "model"`.
+- [x] Mount the picker in the composer toolbar next to `AgentSelector` and style it in `styles.css` with disabled placeholders (`No modes` / `No models`).
+- [x] Add Playwright mock coverage: the mock advertises modes plus a Gemini-like model config option, and the browser test verifies the separate **Mode** and **Model** selectors and the corresponding `session/set_mode` / `session/set_config_option` JSON-RPC calls.
 
 ### 6. File attachments
 1. In `src/acp/client.ts`, capture `init.agentCapabilities?.promptCapabilities` during `connect()`.
@@ -123,26 +126,31 @@ Key confirmations: `ClientSideConnection implements Agent` (so `setSessionMode`/
 - `webview-src/views/acp-chat/src/runtime/useAcpChat.ts`
 - `webview-src/views/acp-chat/src/components/ChatView.tsx`
 - `webview-src/views/acp-chat/src/components/AgentSelector.tsx`
+- `webview-src/views/acp-chat/src/components/ModelPicker.tsx`
+- `webview-src/views/acp-chat/src/components/ModelSelector.tsx`
 - `webview-src/views/acp-chat/src/components/ThinkingBlock.tsx`
 - `webview-src/views/acp-chat/src/model/types.ts`
 - `webview-src/views/acp-chat/src/bridge/webviewApi.ts`
 - `webview-src/views/acp-chat/styles.css`
+- `webview-src/test/acp-chat/acp-chat.browser.test.ts`
+- `webview-src/test/acp-chat/mocks/default.ts`
 - `demo/src/com/intellij/ui/webview/demo/acp/AcpBridgeApi.kt`
 - `demo/src/com/intellij/ui/webview/demo/acp/AcpBridgeHostApiImpl.kt`
 
 **Add** (under `webview-src/views/acp-chat/src/components/`)
-- `ActionBar.tsx`, `ModelPicker.tsx`, `SlashCommandMenu.tsx`, `MentionMenu.tsx`, `CommentOnSelection.tsx` (+ small `AttachmentButton`/`ComposerToolbar`, or inline in `ChatView.tsx`)
+- `ActionBar.tsx`, `SlashCommandMenu.tsx`, `MentionMenu.tsx`, `CommentOnSelection.tsx` (+ small `AttachmentButton`/`ComposerToolbar`, or inline in `ChatView.tsx`)
 
 ## Verification
 
 1. **Types/build**: from `webview-src/` run `bun run typecheck` then `bun run build` (emits to `resources/webview/views/acp-chat/`). `lint_files` on changed `.ts/.tsx`.
+   - For item 5, also run `bun run test:browser -- test/acp-chat/acp-chat.browser.test.ts`; the mock coverage should verify separate **Mode** and **Model** selectors, Gemini model options, boolean config options, and the corresponding ACP JSON-RPC calls.
 2. **Kotlin**: `bazel build` the demo plugin module; `lint_files` on the two changed `.kt` files (no tests in this demo plugin).
 3. **End-to-end** (real agent): configure an ACP agent in `~/.jetbrains/acp.json` (e.g. gemini/claude-code ACP), open the **ACP Chat** tool window, then verify:
    - text streams with the smooth typewriter + caret;
    - the agent selector sits in the bottom-left corner and switching agents still restarts the session cleanly;
    - hover a reply → Copy works;
    - **Edit** a user message and **Regenerate** a reply both re-prompt; branch picker switches variants;
-   - **model/mode picker** lists agent-advertised modes/options and switching calls the ACP method (placeholder/disabled if none);
+   - **mode/model picker** lists agent-advertised modes and model-like config options separately, including Gemini model config options even when the agent omits `category: "model"`; switching calls the ACP method (placeholder/disabled if none);
    - **attach** button appears only when the agent advertises image/embeddedContext and the file is delivered as a content block;
    - typing `/` shows agent commands; typing `@` lists files and inserts a reference.
    - selecting text in a reply shows the floating toolbar: **Quote** adds a dismissible quote chip to the composer (and renders as a blockquote on the sent message) and the quoted context reaches the agent; **Comment** opens an inline input and stages a comment+selection chip that is delivered in the next prompt.

@@ -8,6 +8,10 @@ const acpBridgeHostApiId = apiId<AcpBridgeHostApi>()("acp.bridge")
 const acpBridgePageApiId = apiId<AcpBridgePageApi>()("acp.bridge")
 const sessionId = "mock-session"
 const streamingProbePrompt = "streaming probe"
+const defaultModeId = "ask"
+const modelConfigId = "gemini_model"
+const defaultModelValue = "gemini-2.5-flash"
+const defaultAutonomyValue = false
 
 type JsonRpcId = string | number | null
 
@@ -21,6 +25,9 @@ interface JsonRpcMessage {
 export default defineWebViewMock((context) => {
   let pageApi: MockCallable<AcpBridgePageApi> | null = null
   const pendingStdout: unknown[] = []
+  let currentModeId = defaultModeId
+  let currentModelValue = defaultModelValue
+  let currentAutonomyValue = defaultAutonomyValue
 
   context.page.whenImplemented(acpBridgePageApiId, api => {
     pageApi = api
@@ -37,6 +44,9 @@ export default defineWebViewMock((context) => {
     },
     async startAgent() {
       pendingStdout.length = 0
+      currentModeId = defaultModeId
+      currentModelValue = defaultModelValue
+      currentAutonomyValue = defaultAutonomyValue
       return { ok: true, cwd: "/mock/project" }
     },
     async sendStdin(params) {
@@ -51,7 +61,7 @@ export default defineWebViewMock((context) => {
       await handleRequest(message as JsonRpcMessage & { id: JsonRpcId; method: string })
     },
     async stopAgent() {
-      await pageApi?.onAgentExit({ code: 0 })
+      pageApi?.onAgentExit({ code: 0 })
     },
   })
 
@@ -71,12 +81,23 @@ export default defineWebViewMock((context) => {
           sessionId,
           modes: {
             availableModes: [
-              { id: "ask", name: "Ask" },
+              { id: "ask", name: "Ask", description: "Answer questions without editing files." },
+              { id: "code", name: "Code", description: "Use tools and apply changes." },
             ],
-            currentModeId: "ask",
+            currentModeId,
           },
-          configOptions: [],
+          configOptions: sessionConfigOptions(),
         }))
+        break
+      case "session/set_mode":
+        if (typeof message.params?.modeId === "string") {
+          currentModeId = message.params.modeId
+        }
+        await sendPageStdout(response(message.id, {}))
+        break
+      case "session/set_config_option":
+        updateConfigOption(message.params)
+        await sendPageStdout(response(message.id, { configOptions: sessionConfigOptions() }))
         break
       case "session/prompt":
         await sendAssistantResponse(message.id, promptText(message.params?.prompt))
@@ -125,6 +146,38 @@ export default defineWebViewMock((context) => {
     await sendPageStdout(response(requestId, { stopReason: "end_turn" }))
   }
 
+  function updateConfigOption(params: any): void {
+    if (params?.configId === modelConfigId && typeof params.value === "string") {
+      currentModelValue = params.value
+    }
+    else if (params?.configId === "autonomy" && params.type === "boolean" && typeof params.value === "boolean") {
+      currentAutonomyValue = params.value
+    }
+  }
+
+  function sessionConfigOptions(): unknown[] {
+    return [
+      {
+        id: modelConfigId,
+        type: "select",
+        name: "Gemini model",
+        description: "Controls the mocked model profile.",
+        currentValue: currentModelValue,
+        options: [
+          { value: "gemini-2.5-flash", name: "Gemini 2.5 Flash", description: "Fast Gemini mock model." },
+          { value: "gemini-2.5-pro", name: "Gemini 2.5 Pro", description: "Stronger Gemini mock model." },
+        ],
+      },
+      {
+        id: "autonomy",
+        type: "boolean",
+        name: "Autonomy",
+        description: "Allow the mock agent to act independently.",
+        currentValue: currentAutonomyValue,
+      },
+    ]
+  }
+
   async function sendStreamingAssistantResponse(requestId: JsonRpcId, text: string): Promise<void> {
     const thoughtChunks = [`Reasoning about ${text}.`, " Checking stream state.", " Keeping reasoning active."]
     const messageChunks = [`Streaming markdown response for ${text}.`, " Still streaming.", " Almost done."]
@@ -162,7 +215,7 @@ export default defineWebViewMock((context) => {
       pendingStdout.push(frame)
       return
     }
-    await pageApi.onAgentStdout({ line: JSON.stringify(frame) })
+    pageApi.onAgentStdout({ line: JSON.stringify(frame) })
   }
 
   function flushPendingStdout(): void {

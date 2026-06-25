@@ -13,6 +13,7 @@ import { useAcpChat } from "../runtime/useAcpChat"
 import { AgentSelector } from "./AgentSelector"
 import { ApprovalPrompt } from "./ApprovalPrompt"
 import { AuthPrompt } from "./AuthPrompt"
+import { ModelPicker } from "./ModelPicker"
 import { PlanView } from "./PlanView"
 import { ThinkingBlock } from "./ThinkingBlock"
 import { ToolCallCard } from "./ToolCallCard"
@@ -44,6 +45,14 @@ export function ChatView() {
                 selectedAgentId={chat.selectedAgentId}
                 starting={chat.starting}
                 onSelect={chat.selectAgent}
+              />
+              <ModelPicker
+                modes={chat.modes}
+                configOptions={chat.configOptions}
+                currentModeId={chat.currentModeId}
+                disabled={chat.starting || chat.selectedAgentId == null}
+                onSelectMode={chat.selectMode}
+                onSelectConfigOption={chat.selectConfigOption}
               />
             </div>
           </div>

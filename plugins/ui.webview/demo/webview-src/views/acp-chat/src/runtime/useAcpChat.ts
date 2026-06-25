@@ -42,6 +42,8 @@ export interface AcpChat {
   permission: PendingPermission | null
   auth: PendingAuth | null
   selectAgent: (agentId: string) => void
+  selectMode: (modeId: string) => void
+  selectConfigOption: (option: ConfigOptionView, value: string | boolean) => void
 }
 
 export function useAcpChat(): AcpChat {
@@ -326,6 +328,40 @@ export function useAcpChat(): AcpChat {
     })()
   }, [clearPlans, resetSessionMetadata, sink])
 
+  const selectMode = useCallback((modeId: string) => {
+    const session = sessionRef.current
+    if (!session || !session.isActive) {
+      setStatus("Select an agent to start a session first.")
+      return
+    }
+    void (async () => {
+      try {
+        setStatus("")
+        await session.setMode(modeId)
+      }
+      catch (error) {
+        setStatus(errorText(error))
+      }
+    })()
+  }, [])
+
+  const selectConfigOption = useCallback((option: ConfigOptionView, value: string | boolean) => {
+    const session = sessionRef.current
+    if (!session || !session.isActive) {
+      setStatus("Select an agent to start a session first.")
+      return
+    }
+    void (async () => {
+      try {
+        setStatus("")
+        await session.setConfigOption(option.id, option.type, value)
+      }
+      catch (error) {
+        setStatus(errorText(error))
+      }
+    })()
+  }, [])
+
   return {
     runtime,
     agents,
@@ -341,6 +377,8 @@ export function useAcpChat(): AcpChat {
     permission,
     auth,
     selectAgent,
+    selectMode,
+    selectConfigOption,
   }
 }
 

@@ -4,6 +4,8 @@ import { a as useMessagePartText, h as AssistantRuntimeProvider, i as useSmooth,
 import { t as require_client } from "./assets/react-dom.js";
 import { t as marked } from "./assets/marked.js";
 import { a as SelectItem$1, c as SelectPortal, d as SelectTrigger$1, i as SelectIcon, l as SelectScrollDownButton$1, n as SelectContent$1, o as SelectItemIndicator, p as SelectViewport, s as SelectItemText, t as Select$1, u as SelectScrollUpButton$1 } from "./assets/radix-ui-react-select.js";
+import { i as Trigger$1, n as Portal, r as Root2, t as Content2 } from "./assets/radix-ui-react-popover.js";
+import { n as SwitchThumb, t as Switch } from "./assets/radix-ui-react-switch.js";
 import { n as ndJsonStream, t as ClientSideConnection } from "./assets/agentclientprotocol-sdk.js";
 //#region \0vite/modulepreload-polyfill.js
 (function polyfill() {
@@ -940,7 +942,37 @@ function useAcpChat() {
 			clearPlans,
 			resetSessionMetadata,
 			sink
-		])
+		]),
+		selectMode: (0, import_react.useCallback)((modeId) => {
+			const session = sessionRef.current;
+			if (!session || !session.isActive) {
+				setStatus("Select an agent to start a session first.");
+				return;
+			}
+			(async () => {
+				try {
+					setStatus("");
+					await session.setMode(modeId);
+				} catch (error) {
+					setStatus(errorText(error));
+				}
+			})();
+		}, []),
+		selectConfigOption: (0, import_react.useCallback)((option, value) => {
+			const session = sessionRef.current;
+			if (!session || !session.isActive) {
+				setStatus("Select an agent to start a session first.");
+				return;
+			}
+			(async () => {
+				try {
+					setStatus("");
+					await session.setConfigOption(option.id, option.type, value);
+				} catch (error) {
+					setStatus(errorText(error));
+				}
+			})();
+		}, [])
 	};
 }
 function buildPromptBlocks(message) {
@@ -1283,6 +1315,287 @@ function collectEnv(rows) {
 	return env;
 }
 //#endregion
+//#region views/acp-chat/src/components/ModelSelector.tsx
+var ModelSelectorContext = (0, import_react.createContext)(null);
+function useModelSelectorContext() {
+	const context = (0, import_react.useContext)(ModelSelectorContext);
+	if (!context) throw new Error("ModelSelector components must be used inside ModelSelector.Root");
+	return context;
+}
+function Root({ value, disabled, children, onValueChange }) {
+	const [open, setOpen] = (0, import_react.useState)(false);
+	const [query, setQuery] = (0, import_react.useState)("");
+	const context = (0, import_react.useMemo)(() => ({
+		value,
+		disabled: disabled === true,
+		query,
+		setQuery,
+		selectValue(nextValue) {
+			onValueChange(nextValue);
+			setQuery("");
+			setOpen(false);
+		}
+	}), [
+		disabled,
+		onValueChange,
+		query,
+		value
+	]);
+	function handleOpenChange(nextOpen) {
+		setOpen(nextOpen);
+		if (!nextOpen) setQuery("");
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelectorContext.Provider, {
+		value: context,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Root2, {
+			open,
+			onOpenChange: handleOpenChange,
+			children
+		})
+	});
+}
+function Trigger({ className, children, placeholder = "Select model", ...props }) {
+	const context = useModelSelectorContext();
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Trigger$1, {
+		asChild: true,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+			type: "button",
+			className: className ?? "acpModelSelectorTrigger",
+			disabled: context.disabled,
+			...props,
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				className: "acpModelSelectorTriggerText",
+				children: children ?? placeholder
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				className: "acpModelSelectorChevron",
+				"aria-hidden": "true",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelectorChevron, {})
+			})]
+		})
+	});
+}
+function ModelSelectorChevron() {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+		width: "12",
+		height: "12",
+		viewBox: "0 0 12 12",
+		"aria-hidden": "true",
+		focusable: "false",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M3 4.5L6 7.5L9 4.5",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: "1.5",
+			strokeLinecap: "round",
+			strokeLinejoin: "round"
+		})
+	});
+}
+function Content({ className, children, ...props }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Portal, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Content2, {
+		align: "start",
+		sideOffset: 6,
+		className: className ?? "acpModelSelectorContent",
+		...props,
+		children
+	}) });
+}
+function Search({ className, placeholder = "Search models...", ...props }) {
+	const context = useModelSelectorContext();
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+		type: "search",
+		className: className ?? "acpModelSelectorSearch",
+		placeholder,
+		value: context.query,
+		onChange: (event) => context.setQuery(event.currentTarget.value),
+		...props
+	});
+}
+function List({ className, ...props }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		role: "listbox",
+		className: className ?? "acpModelSelectorList",
+		...props
+	});
+}
+function Group({ className, label, children, ...props }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: className ?? "acpModelSelectorGroup",
+		...props,
+		children: [label ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "acpModelSelectorGroupLabel",
+			children: label
+		}) : null, children]
+	});
+}
+function Item({ className, value, label, description, searchValue, disabled, ...props }) {
+	const context = useModelSelectorContext();
+	const query = context.query.trim().toLocaleLowerCase();
+	const haystack = (searchValue ?? `${label} ${description ?? ""} ${value}`).toLocaleLowerCase();
+	if (query && !haystack.includes(query)) return null;
+	const selected = context.value === value;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+		type: "button",
+		role: "option",
+		"aria-selected": selected,
+		className: className ?? "acpModelSelectorItem",
+		disabled,
+		onClick: () => context.selectValue(value),
+		...props,
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+			className: "acpModelSelectorItemText",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				className: "acpModelSelectorItemName",
+				children: label
+			}), description ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				className: "acpModelSelectorItemDesc",
+				children: description
+			}) : null]
+		}), selected ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+			className: "acpModelSelectorItemCheck",
+			"aria-hidden": "true",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelectorCheck, {})
+		}) : null]
+	});
+}
+function ModelSelectorCheck() {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+		width: "12",
+		height: "12",
+		viewBox: "0 0 12 12",
+		"aria-hidden": "true",
+		focusable: "false",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M2.5 6L5 8.5L9.5 3.5",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: "1.5",
+			strokeLinecap: "round",
+			strokeLinejoin: "round"
+		})
+	});
+}
+var ModelSelector = {
+	Root,
+	Trigger,
+	Content,
+	Search,
+	List,
+	Group,
+	Item
+};
+//#endregion
+//#region views/acp-chat/src/components/ModelPicker.tsx
+function ModelPicker(props) {
+	const selectedMode = props.modes.find((mode) => mode.id === props.currentModeId);
+	const modelOption = props.configOptions.find(isModelSelectOption);
+	const selectedModel = modelOption?.options.find((option) => option.value === modelOption.currentValue);
+	const otherConfigOptions = props.configOptions.filter((option) => option !== modelOption);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "acpModelPicker",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+				className: "acpModelPickerControl",
+				title: selectedMode?.description,
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					className: "acpModelPickerLabel",
+					children: "Mode"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(ModelSelector.Root, {
+					value: props.currentModeId ?? "",
+					disabled: props.disabled || props.modes.length === 0,
+					onValueChange: props.onSelectMode,
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.Trigger, { children: selectedMode?.name ?? (props.modes.length > 0 ? "Select mode..." : "No modes") }), props.modes.length > 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(ModelSelector.Content, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.Search, { placeholder: "Search modes..." }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.List, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.Group, {
+						label: "Modes",
+						children: props.modes.map((mode) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.Item, {
+							value: mode.id,
+							label: mode.name,
+							description: mode.description,
+							searchValue: `${mode.name} ${mode.id} ${mode.description ?? ""}`
+						}, mode.id))
+					}) })] }) : null]
+				})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+				className: "acpModelPickerControl",
+				title: modelOption?.description,
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					className: "acpModelPickerLabel",
+					children: "Model"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(ModelSelector.Root, {
+					value: modelOption?.currentValue ?? "",
+					disabled: props.disabled || !modelOption || modelOption.options.length === 0,
+					onValueChange: (value) => {
+						if (modelOption) props.onSelectConfigOption(modelOption, value);
+					},
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.Trigger, { children: selectedModel?.name ?? (modelOption ? "Select model..." : "No models") }), modelOption ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(ModelSelector.Content, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.Search, { placeholder: "Search models..." }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.List, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.Group, {
+						label: modelOption.name,
+						children: modelOption.options.map((option) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.Item, {
+							value: option.value,
+							label: option.name,
+							description: option.description,
+							searchValue: `${option.name} ${option.value} ${option.description ?? ""}`
+						}, option.value))
+					}) })] }) : null]
+				})]
+			}),
+			otherConfigOptions.map((option) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ConfigOptionControl, {
+				option,
+				disabled: props.disabled,
+				onChange: (value) => props.onSelectConfigOption(option, value)
+			}, option.id))
+		]
+	});
+}
+function ConfigOptionControl(props) {
+	const { option } = props;
+	if (option.type === "select") return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+		className: "acpModelPickerControl",
+		title: option.description,
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+			className: "acpModelPickerLabel",
+			children: option.name
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Select, {
+			className: "acpConfigOptionSelect",
+			value: option.currentValue,
+			disabled: props.disabled || option.options.length === 0,
+			placeholder: "Select...",
+			options: option.options.map((choice) => ({
+				value: choice.value,
+				label: choice.name,
+				textValue: `${choice.name} ${choice.value} ${choice.description ?? ""}`
+			})),
+			onValueChange: props.onChange
+		})]
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+		className: "acpModelPickerControl acpConfigBooleanControl",
+		title: option.description,
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+			className: "acpModelPickerLabel",
+			children: option.name
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Switch, {
+			className: "acpConfigSwitch",
+			checked: option.currentValue,
+			disabled: props.disabled,
+			onCheckedChange: props.onChange,
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SwitchThumb, { className: "acpConfigSwitchThumb" })
+		})]
+	});
+}
+function isModelSelectOption(option) {
+	if (option.type !== "select") return false;
+	if (option.category === "model") return true;
+	if (isModelText(option.id) || isModelText(option.name)) return true;
+	return option.options.some((choice) => isKnownModelText(choice.value) || isKnownModelText(choice.name));
+}
+function isModelText(value) {
+	return value?.toLocaleLowerCase().includes("model") === true;
+}
+function isKnownModelText(value) {
+	const normalized = value?.toLocaleLowerCase() ?? "";
+	return normalized.includes("gemini") || normalized.includes("claude") || normalized.includes("gpt") || normalized.includes("llama") || normalized.includes("mistral") || normalized.includes("sonnet") || normalized.includes("opus") || normalized.includes("haiku");
+}
+//#endregion
 //#region views/acp-chat/src/components/PlanView.tsx
 function PlanView({ plan }) {
 	if (plan.length === 0) return null;
@@ -1437,14 +1750,21 @@ function ChatView() {
 								className: "acpComposerSend",
 								children: "Send"
 							})]
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 							className: "acpComposerToolbar",
-							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AgentSelector, {
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(AgentSelector, {
 								agents: chat.agents,
 								selectedAgentId: chat.selectedAgentId,
 								starting: chat.starting,
 								onSelect: chat.selectAgent
-							})
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelPicker, {
+								modes: chat.modes,
+								configOptions: chat.configOptions,
+								currentModeId: chat.currentModeId,
+								disabled: chat.starting || chat.selectedAgentId == null,
+								onSelectMode: chat.selectMode,
+								onSelectConfigOption: chat.selectConfigOption
+							})]
 						})]
 					})]
 				}),

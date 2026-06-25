@@ -168,6 +168,209 @@ body {
   background: var(--acp-border);
 }
 
+.acpModelPicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  flex: 1 1 260px;
+  flex-wrap: wrap;
+}
+
+.acpModelPickerControl {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.acpConfigBooleanControl {
+  flex-wrap: nowrap;
+}
+
+.acpModelPickerLabel {
+  color: var(--acp-text-muted);
+  white-space: nowrap;
+}
+
+.acpModelSelectorTrigger,
+.acpConfigOptionSelect {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 120px;
+  max-width: min(240px, 100%);
+  background: var(--acp-bg-alt);
+  color: var(--acp-text);
+  border: 1px solid var(--acp-border);
+  border-radius: 4px;
+  padding: 3px 6px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.acpModelSelectorTrigger:disabled,
+.acpConfigOptionSelect:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.acpModelSelectorTriggerText,
+.acpConfigOptionSelect > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.acpModelSelectorChevron {
+  flex: 0 0 auto;
+  color: var(--acp-text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+}
+
+.acpModelSelectorContent {
+  z-index: 1000;
+  width: min(320px, calc(100vw - 24px));
+  max-height: min(360px, calc(100vh - 24px));
+  overflow: hidden;
+  border: 1px solid var(--acp-border);
+  border-radius: 6px;
+  background: var(--acp-bg-alt);
+  color: var(--acp-text);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+}
+
+.acpModelSelectorSearch {
+  box-sizing: border-box;
+  width: 100%;
+  background: var(--acp-bg);
+  color: var(--acp-text);
+  border: 0;
+  border-bottom: 1px solid var(--acp-border);
+  padding: 8px;
+  font: inherit;
+  outline: none;
+}
+
+.acpModelSelectorList {
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.acpModelSelectorGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.acpModelSelectorGroupLabel {
+  padding: 4px 8px;
+  color: var(--acp-text-muted);
+  font-size: 12px;
+}
+
+.acpModelSelectorItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 32px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  padding: 5px 8px;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.acpModelSelectorItem:hover,
+.acpModelSelectorItem:focus-visible {
+  background: var(--acp-accent);
+  color: #fff;
+  outline: none;
+}
+
+.acpModelSelectorItemText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.acpModelSelectorItemName,
+.acpModelSelectorItemDesc {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.acpModelSelectorItemDesc {
+  color: var(--acp-text-muted);
+  font-size: 12px;
+}
+
+.acpModelSelectorItem:hover .acpModelSelectorItemDesc,
+.acpModelSelectorItem:focus-visible .acpModelSelectorItemDesc {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.acpModelSelectorItemCheck {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+}
+
+.acpConfigSwitch {
+  position: relative;
+  width: 26px;
+  height: 16px;
+  flex: 0 0 auto;
+  border: 1px solid var(--acp-border);
+  border-radius: 999px;
+  background: var(--acp-bg-alt);
+  padding: 0;
+  cursor: pointer;
+}
+
+.acpConfigSwitch[data-state="checked"] {
+  border-color: var(--acp-accent);
+  background: var(--acp-accent);
+}
+
+.acpConfigSwitch:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.acpConfigSwitchThumb {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--acp-text-muted);
+  transform: translateX(1px);
+  transition: transform 120ms ease, background 120ms ease;
+}
+
+.acpConfigSwitch[data-state="checked"] .acpConfigSwitchThumb {
+  background: #fff;
+  transform: translateX(11px);
+}
+
 .acpAgentStarting,
 .acpChatStatus {
   color: var(--acp-text-muted);

@@ -11,7 +11,7 @@ type Locator = {
 
 type Page = {
   goto(url: string): Promise<void>
-  getByRole(role: string, options?: { name?: string | RegExp }): Locator
+  getByRole(role: string, options?: { name?: string | RegExp; exact?: boolean }): Locator
   getByPlaceholder(text: string): Locator
   getByText(text: string | RegExp, options?: { exact?: boolean }): Locator
   locator(selector: string): Locator
@@ -43,6 +43,11 @@ type MockWindow = Window & {
       byMethod(method: string): readonly MockWebViewCall[]
     }
   }
+}
+
+interface JsonRpcMessage {
+  method?: string
+  params?: any
 }
 
 const playwrightTestPackage: string = "@playwright/test"
@@ -113,3 +118,64 @@ test("renders ACP chat in a real browser with a mock agent", async ({ page }) =>
   expect(calls.length).toBeGreaterThan(0)
   expect(calls.some((call: MockWebViewCall) => JSON.stringify(call.params).includes("session/prompt"))).toBe(true)
 })
+
+test("drives ACP modes, model selection, and config options through the picker", async ({ page }) => {
+  if (!preview) {
+    throw new Error("ACP chat mock preview server was not started")
+  }
+  await page.goto(preview.url)
+
+  await page.locator(".acpAgentSelect").click()
+  await page.getByRole("option", { name: "Mock Agent" }).click()
+
+  await expect(page.getByRole("button", { name: "Mode", exact: true })).toBeVisible()
+  await expect(page.getByText("Ask", { exact: true })).toBeVisible()
+  await expect(page.getByRole("button", { name: "Model", exact: true })).toBeVisible()
+  await expect(page.getByText("Gemini 2.5 Flash", { exact: true })).toBeVisible()
+
+  await page.getByRole("button", { name: "Mode", exact: true }).click()
+  await expect(page.getByPlaceholder("Search modes...")).toBeVisible()
+  await page.getByPlaceholder("Search modes...").fill("code")
+  await page.getByRole("option", { name: /Code/ }).click()
+  await expect(page.getByText("Code", { exact: true })).toBeVisible()
+
+  await page.getByRole("button", { name: "Model", exact: true }).click()
+  await expect(page.getByPlaceholder("Search models...")).toBeVisible()
+  await page.getByPlaceholder("Search models...").fill("pro")
+  await page.getByRole("option", { name: /Gemini 2.5 Pro/ }).click()
+  await expect(page.getByText("Gemini 2.5 Pro", { exact: true })).toBeVisible()
+
+  await page.getByRole("switch", { name: "Autonomy" }).click()
+  await page.waitForFunction(() => document.querySelector(".acpConfigSwitch")?.getAttribute("data-state") === "checked")
+
+  const calls = await page.evaluate(() => {
+    return (window as MockWindow).__WVI_MOCK__?.calls.byMethod("acp.bridge/sendStdin") ?? []
+  })
+  const rpcMessages = calls
+    .map((call: MockWebViewCall) => parseMockRpcLine(call.params))
+    .filter((message: JsonRpcMessage | null): message is JsonRpcMessage => message != null)
+  expect(rpcMessages.some(message => message.method === "session/set_mode"
+    && message.params?.sessionId === "mock-session"
+    && message.params?.modeId === "code")).toBe(true)
+  expect(rpcMessages.some(message => message.method === "session/set_config_option"
+    && message.params?.sessionId === "mock-session"
+    && message.params?.configId === "gemini_model"
+    && message.params?.value === "gemini-2.5-pro")).toBe(true)
+  expect(rpcMessages.some(message => message.method === "session/set_config_option"
+    && message.params?.sessionId === "mock-session"
+    && message.params?.configId === "autonomy"
+    && message.params?.type === "boolean"
+    && message.params?.value === true)).toBe(true)
+})
+
+function parseMockRpcLine(params: unknown): JsonRpcMessage | null {
+  const line = typeof (params as { line?: unknown })?.line === "string" ? (params as { line: string }).line : null
+  if (!line) return null
+  try {
+    const parsed = JSON.parse(line)
+    return parsed != null && typeof parsed === "object" ? parsed : null
+  }
+  catch {
+    return null
+  }
+}
