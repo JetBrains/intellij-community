@@ -21,19 +21,16 @@ suspend fun collectWatchedTodoFiles(
   project: Project,
   scope: TodoScope,
   filter: TodoFilter?,
-  file: VirtualFile? = null, // not null if scope is current file
-  collector: suspend (TodoFileEvent) -> Unit,
+  collector: suspend (TodoEvent) -> Unit,
 ) {
+  durable {
     val projectId: ProjectId = project.projectId()
-    val request = TodoFilesWatchRequest(
-      filter = filter?.let { toConfig(it) },
-      fileId = file?.rpcId(),
-    )
-
-    TodoRemoteApi.getInstance().watchTodoFiles(projectId, scope, request).collect { event ->
+    val request = TodoFilesWatchRequest(filter?.toConfig(), scope)
+    TodoRemoteApi.getInstance().watchTodoFiles(projectId, request).collect { event ->
      collector(event)
     }
   }
+}
 
 @ApiStatus.Internal
 suspend fun listTodoFiles(
@@ -75,7 +72,7 @@ fun getTodoCount(
 ): Int = runBlockingCancellable {
   durable {
     val projectId: ProjectId = project.projectId()
-    TodoRemoteApi.getInstance().getTodoCount(projectId, file.rpcId(), filter?.let { toConfig(it) })
+    TodoRemoteApi.getInstance().getTodoCount(projectId, file.rpcId(), filter?.toConfig())
   }
 }
 
@@ -87,12 +84,13 @@ fun fileMatchesFilter(
 ): Boolean = runBlockingCancellable {
   durable {
     val projectId = project.projectId()
-    TodoRemoteApi.getInstance().fileMatchesFilter(projectId, file.rpcId(), filter?.let { toConfig(it) })
+    TodoRemoteApi.getInstance().fileMatchesFilter(projectId, file.rpcId(), filter?.toConfig())
   }
 }
 
 @ApiStatus.Internal
-internal fun toConfig(filter: TodoFilter): TodoFilterConfig {
+private fun TodoFilter.toConfig(): TodoFilterConfig {
+  val filter = this
   val patterns = mutableListOf<TodoPatternConfig>()
   val it = filter.iterator()
   while (it.hasNext()) {

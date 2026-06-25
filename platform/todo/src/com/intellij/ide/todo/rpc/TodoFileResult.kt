@@ -14,5 +14,4 @@ data class TodoFileResult(
   val moduleName: String?,
   val packageName: String?,
   val todos: List<TodoResult>,
-) {
-}
+)

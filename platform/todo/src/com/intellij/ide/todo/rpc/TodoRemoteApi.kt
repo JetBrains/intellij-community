@@ -16,9 +16,8 @@ import org.jetbrains.annotations.ApiStatus
 interface TodoRemoteApi : RemoteApi<Unit> {
   fun watchTodoFiles(
     projectId: ProjectId,
-    scope: TodoScope,
     request: TodoFilesWatchRequest,
-  ) : Flow<TodoFileEvent>
+  ) : Flow<TodoEvent>
 
   fun listTodoFiles(
     projectId: ProjectId,

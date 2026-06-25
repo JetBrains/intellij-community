@@ -7,14 +7,16 @@ import kotlinx.serialization.Serializable
 
 @ApiStatus.Internal
 @Serializable
-sealed interface TodoFileEvent {
+sealed interface TodoEvent {
   @Serializable
-  data class Changes(
-    val updated: List<TodoFileResult> = emptyList(),
-    val removed: List<VirtualFileId> = emptyList(),
-    val initialScanFinished: Boolean = false
-  ) : TodoFileEvent
+  data class ItemUpserted(val item: TodoFileResult) : TodoEvent
 
   @Serializable
-  data object Reset : TodoFileEvent
+  data class ItemRemoved(val fileId: VirtualFileId) : TodoEvent
+
+  @Serializable
+  data object AllItemsRemoved : TodoEvent
+
+  @Serializable
+  data object ScanFinished : TodoEvent
 }
