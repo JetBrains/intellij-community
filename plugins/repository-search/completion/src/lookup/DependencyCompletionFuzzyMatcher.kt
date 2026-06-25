@@ -11,6 +11,9 @@ private val log = logger<DependencyCompletionFuzzyMatcher>()
 /** Characters that separate words inside a single coordinate part, e.g. `spring-boot-starter` or `org.junit`. */
 private const val WORD_DELIMITERS = "-._"
 
+/** Minimum shared prefix length accepted as a partial token match (so `stater` still matches `starter`). */
+private const val MIN_PARTIAL_MATCH_LENGTH = 2
+
 @ApiStatus.Experimental
 open class DependencyCompletionFuzzyMatcher(prefix: String) : PrefixMatcher(prefix) {
   override fun prefixMatches(name: String): Boolean = true
@@ -31,20 +34,33 @@ open class DependencyCompletionFuzzyMatcher(prefix: String) : PrefixMatcher(pref
     val start = startOffset(searchResult)
     val prefixParts = input.split(":")
     val nameParts = searchResult.substring(start).split(":")
-    val result = mutableListOf<MatchedFragment>()
+    // Absolute start offset of each colon-separated name part within searchResult.
+    val partOffsets = IntArray(nameParts.size)
     var offset = start
-    var j = 0
-    for (i in prefixParts.indices) {
-      var partFragments: List<MatchedFragment>? = null
-      while (j < nameParts.size && partFragments == null) {
-        partFragments = matchPart(offset, prefixParts[i], nameParts[j])
-        offset += nameParts[j].length + 1
-        j++
+    for (k in nameParts.indices) {
+      partOffsets[k] = offset
+      offset += nameParts[k].length + 1
+    }
+    val result = mutableListOf<MatchedFragment>()
+    var cursor = 0
+    for (prefixPart in prefixParts) {
+      // Among the remaining name parts, pick the one whose match covers the most prefix tokens, so a
+      // coordinate like group:artifact:version highlights the artifact rather than an incidental match in
+      // the group (e.g. the "boot" of "org.springframework.boot" when searching "boot-starter-actuator").
+      var bestFragments: List<MatchedFragment>? = null
+      var bestIndex = -1
+      for (k in cursor until nameParts.size) {
+        val fragments = matchPart(partOffsets[k], prefixPart, nameParts[k]) ?: continue
+        if (bestFragments == null || fragments.size > bestFragments.size) {
+          bestFragments = fragments
+          bestIndex = k
+        }
       }
-      if (partFragments == null) {
+      if (bestFragments == null) {
         return tryFallbackMatching(input, searchResult, start)
       }
-      result.addAll(partFragments)
+      result.addAll(bestFragments)
+      cursor = bestIndex + 1
     }
     return result
   }
@@ -69,11 +85,17 @@ open class DependencyCompletionFuzzyMatcher(prefix: String) : PrefixMatcher(pref
 
   /**
    * Matches the word tokens of [prefixPart] against the word tokens of [namePart] as an in-order subsequence,
-   * returning one highlight fragment per matched token, or `null` if any prefix token has no match.
+   * returning one highlight fragment per matched token, or `null` if no prefix token matches at all.
    *
-   * [offset] is the absolute start of [namePart] within the whole search result. Matching is case-insensitive.
-   * When a prefix token matches a name token to its end and both are followed by the same delimiter, that
-   * delimiter is included in the fragment (so `junit-` is highlighted for `junit-` but only `junit` for `junit.`).
+   * [offset] is the absolute start of [namePart] within the whole search result. Each prefix token is aligned
+   * to a name token by their shared (case-insensitive) leading characters, and only those characters are
+   * highlighted. A token matches when it is a full prefix of the name token (so a short token like `b` still
+   * matches `beans`) or shares at least [MIN_PARTIAL_MATCH_LENGTH] characters (so a typo like `stater` still
+   * highlights the `sta` of `starter`). A prefix token that matches no name token is skipped without consuming
+   * any name token, so the remaining prefix tokens can still match (e.g. `boot-stater-actuator` against
+   * `spring-boot-actuator` highlights `boot-` and `actuator`, skipping `stater`). When a token matches a name
+   * token to its end and both are followed by the same delimiter, that delimiter is included (so `junit-` is
+   * highlighted for `junit-` but only `junit` for `junit.`).
    */
   private fun matchPart(offset: Int, prefixPart: String, namePart: String): List<MatchedFragment>? {
     val prefixTokens = tokenize(prefixPart)
@@ -82,26 +104,31 @@ open class DependencyCompletionFuzzyMatcher(prefix: String) : PrefixMatcher(pref
     val fragments = mutableListOf<MatchedFragment>()
     var cursor = 0
     for (prefixToken in prefixTokens) {
-      var matched = false
-      while (cursor < nameTokens.size) {
-        val nameToken = nameTokens[cursor]
-        cursor++
-        val idx = nameToken.text.indexOf(prefixToken.text, ignoreCase = true)
-        if (idx != -1) {
-          val fragmentStart = offset + nameToken.start + idx
-          var fragmentEnd = fragmentStart + prefixToken.text.length
-          val matchedToEnd = idx + prefixToken.text.length == nameToken.text.length
-          if (matchedToEnd && prefixToken.delimiter != null && prefixToken.delimiter == nameToken.delimiter) {
-            fragmentEnd++
-          }
-          fragments.add(MatchedFragment(fragmentStart, fragmentEnd))
-          matched = true
+      // Find the next name token (at or after the cursor) that shares enough of a leading prefix.
+      var index = cursor
+      var matchLength = 0
+      while (index < nameTokens.size) {
+        val length = prefixToken.text.commonPrefixWith(nameTokens[index].text, ignoreCase = true).length
+        if (length == prefixToken.text.length || length >= MIN_PARTIAL_MATCH_LENGTH) {
+          matchLength = length
           break
         }
+        index++
       }
-      if (!matched) return null
+      // No name token matches this prefix token: skip it without advancing the cursor, so the name tokens
+      // scanned over remain available for the following prefix tokens.
+      if (index == nameTokens.size) continue
+      val nameToken = nameTokens[index]
+      val fragmentStart = offset + nameToken.start
+      var fragmentEnd = fragmentStart + matchLength
+      val matchedToEnd = matchLength == nameToken.text.length
+      if (matchedToEnd && prefixToken.delimiter != null && prefixToken.delimiter == nameToken.delimiter) {
+        fragmentEnd++
+      }
+      fragments.add(MatchedFragment(fragmentStart, fragmentEnd))
+      cursor = index + 1
     }
-    return fragments
+    return fragments.ifEmpty { null }
   }
 
   private class Token(val text: String, val start: Int, val delimiter: Char?)
