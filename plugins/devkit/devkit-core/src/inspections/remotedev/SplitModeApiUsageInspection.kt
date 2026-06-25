@@ -67,11 +67,6 @@ class SplitModeApiUsageInspection : DevKitUastInspectionBase(UClass::class.java,
           return true
         }
 
-        override fun visitField(node: UField): Boolean {
-          addDescriptors(checkField(node, holder.manager, isOnTheFly))
-          return true
-        }
-
         private fun addDescriptors(descriptors: Array<out ProblemDescriptor?>?) {
           descriptors?.forEach { descriptor ->
             if (descriptor != null) {
@@ -80,7 +75,7 @@ class SplitModeApiUsageInspection : DevKitUastInspectionBase(UClass::class.java,
           }
         }
       },
-      arrayOf(UClass::class.java, UField::class.java, UMethod::class.java),
+      arrayOf(UClass::class.java, UMethod::class.java),
     )
   }
 
