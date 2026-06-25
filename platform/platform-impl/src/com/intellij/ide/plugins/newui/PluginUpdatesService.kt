@@ -24,6 +24,8 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -50,6 +52,7 @@ class PluginUpdatesService(val coroutineScope: CoroutineScope) {
   private val updateIdsFlow = MutableStateFlow<Set<PluginId>?>(null)
   private val updateRequestFlow = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val providerSnapshots = ConcurrentHashMap<PluginUpdatesProvider, PluginUpdatesEvent>()
+  private val updateMutex = Mutex()
 
   companion object {
     private val LOG = logger<PluginUpdatesService>()
@@ -95,9 +98,12 @@ class PluginUpdatesService(val coroutineScope: CoroutineScope) {
   }
 
   private suspend fun onProviderUpdated() {
-    val merged = mergeUpdates(providerSnapshots.values)
-    pluginUpdateFlow.value = merged
-    updateIdsFlow.value = merged.all.mapTo(HashSet()) { plugin -> plugin.pluginId }
+    val merged = updateMutex.withLock {
+      val merged = mergeUpdates(providerSnapshots.values)
+      pluginUpdateFlow.value = merged
+      updateIdsFlow.value = merged.all.mapTo(HashSet()) { plugin -> plugin.pluginId }
+      merged
+    }
     withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
       dispatchCallbacks(merged)
     }
