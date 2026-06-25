@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbModeListenerBackgroundable;
 import com.intellij.openapi.project.Project;
@@ -656,7 +657,8 @@ public final class FileManagerImpl implements FileManagerEx {
 
   @Override
   public void reloadPsiAfterTextChange(@NotNull FileViewProvider viewProvider, @NotNull VirtualFile vFile) {
-    if (!areViewProvidersEquivalent(viewProvider, createFileViewProvider(vFile, false))) {
+    if (BinaryFileTypeDecompilers.getInstance().hasDecompiler(vFile) ||
+        !areViewProvidersEquivalent(viewProvider, createFileViewProvider(vFile, false))) {
       forceReload(vFile);
       return;
     }
