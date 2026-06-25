@@ -500,7 +500,7 @@ private suspend fun isUnfinishedFreezeReportEnabled(): Boolean {
 
 private suspend fun isAutoReportEnabledForFreezeReporter(): Boolean {
   return ExceptionAutoReportUtil.isAutoReportEnabled()
-         || AppMode.isRemoteDevHost() && ExceptionAutoReportUtil.isAutoReportForced
+         || ExceptionAutoReportUtil.isAutoReportForcedOnRemoteDevHost
 }
 
 private fun createReportAttachment(durationInSeconds: Long, text: String): Attachment =

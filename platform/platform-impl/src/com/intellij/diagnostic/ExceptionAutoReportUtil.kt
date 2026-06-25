@@ -50,6 +50,11 @@ object ExceptionAutoReportUtil {
   val isAutoReportForced: Boolean
     get() = getForcedAutoReportLevel() != ForcedReportLevel.NONE
 
+  // Remote Dev hosts do not run the regular auto-reporting pipeline, but they still need to produce forced backend reports
+  // that are forwarded to the frontend auto-reporter.
+  val isAutoReportForcedOnRemoteDevHost: Boolean
+    get() = AppMode.isRemoteDevHost() && isAutoReportForced
+
   suspend fun isAutoReportEnabled(): Boolean {
     if (!isAutoReportVisible()) return false
     if (isDevelopmentEnvironment) return ENABLED_FOR_DEVELOPMENT
