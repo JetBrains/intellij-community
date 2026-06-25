@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.syntax
 
 // To regenerate the file, please run `GenerateBundleMapping` run configuration with the following parameters: ")
@@ -126,6 +127,7 @@ internal object DefaultJavaSyntaxResources {
     "feature.structured.concurrency" to "Structured Concurrency",
     "feature.structured.concurrency.constructors" to "Structured Concurrency (StructuredTaskScope with constructors)",
     "feature.structured.concurrency.static.factory.methods" to "Structured Concurrency (StructuredTaskScope with static factory methods)",
+    "feature.structured.concurrency.static.factory.methods.with.execution.exception" to "Structured Concurrency (StructuredTaskScope with static factory methods and ExecutionException)",
     "feature.switch.expressions" to "'switch' expressions",
     "feature.text.block.escape.sequences" to "'\\s' escape sequences",
     "feature.text.blocks" to "Text block literals",
