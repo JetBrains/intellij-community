@@ -22,13 +22,16 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.SimpleTextAttributes
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import javax.swing.JList
 
@@ -259,7 +262,9 @@ internal class AgentPromptPaletteSubmitController(
           )
         )
         launchState.clearDraftOnClose = true
-        onSubmitSucceeded()
+        withContext(Dispatchers.UiWithModelAccess) {
+          onSubmitSucceeded()
+        }
         return@launch
       }
 
