@@ -138,36 +138,6 @@ object PyCallExpressionHelper {
     return null
   }
 
-  private fun getCalleeType(expression: PyCallExpression, resolveContext: PyResolveContext): PyType? {
-    val context = resolveContext.typeEvalContext
-    val callee = expression.callee ?: return PyAnyType.unknown
-    if (callee !is PyReferenceExpression) return context.getType(callee)
-
-    val resolvedCallee = callee.multiFollowAssignmentsChain(resolveContext)
-    val results = PyUtil.filterTopPriorityResults(
-      forEveryScopeTakeOverloadsOtherwiseImplementations(resolvedCallee, context) { it.element }
-    )
-
-    val callableTypes = mutableListOf<PyType?>()
-    for (result in results) {
-      val clarified = clarifyResolveResult(result, context) ?: continue
-      val clarifiedResolved = clarified.clarifiedResolved as? PyTypedElement ?: continue
-
-      result.element
-        ?.let { PyReferenceExpressionImpl.getReferenceTypeFromProviders(it, context, expression) }
-        ?.get()
-        .toStream().filterIsInstance<PyCallableType>()
-        .ifEmpty {
-          context.getType(clarifiedResolved).toStream().filterIsInstance<PyCallableType>()
-        }
-        .forEach {
-          callableTypes.add(adjustCallableType(it, expression, clarified, context))
-        }
-    }
-
-    return PyUnionType.union(callableTypes)
-  }
-
   @JvmStatic
   fun multiResolveCallee(expression: PyCallExpression, resolveContext: PyResolveContext): List<PyCallableType> {
     return PyUtil.getParameterizedCachedValue(expression, resolveContext) {
@@ -281,11 +251,38 @@ object PyCallExpressionHelper {
   }
 
   private fun getRemoteResolveResults(expression: PyCallExpression, resolveContext: PyResolveContext): List<PyCallableType> {
-    if (!resolveContext.allowRemote()) return mutableListOf()
+    if (!resolveContext.allowRemote()) return emptyList()
     val file = expression.containingFile
-    if (file == null || !PythonRuntimeService.getInstance().isInPydevConsole(file)) return mutableListOf()
-    val calleeType = getCalleeType(expression, resolveContext)
-    return calleeType.components.filterIsInstance<PyCallableType>()
+    if (file == null || !PythonRuntimeService.getInstance().isInPydevConsole(file)) return emptyList()
+
+    val callee = expression.callee ?: return emptyList()
+    val context = resolveContext.typeEvalContext
+    if (callee !is PyReferenceExpression) {
+      return context.getType(callee).components.filterIsInstance<PyCallableType>()
+    }
+
+    val resolvedCallee = callee.multiFollowAssignmentsChain(resolveContext)
+    val results = PyUtil.filterTopPriorityResults(
+      forEveryScopeTakeOverloadsOtherwiseImplementations(resolvedCallee, context) { it.element }
+    )
+
+    val callableTypes = mutableListOf<PyType?>()
+    for (result in results) {
+      val clarified = clarifyResolveResult(result, context) ?: continue
+      val clarifiedResolved = clarified.clarifiedResolved as? PyTypedElement ?: continue
+
+      result.element
+        ?.let { PyReferenceExpressionImpl.getReferenceTypeFromProviders(it, context, expression) }
+        ?.get()
+        .toStream().filterIsInstance<PyCallableType>()
+        .ifEmpty {
+          context.getType(clarifiedResolved).toStream().filterIsInstance<PyCallableType>()
+        }
+        .forEach {
+          callableTypes.add(adjustCallableType(it, expression, clarified, context))
+        }
+    }
+    return PyUnionType.union(callableTypes).components.filterIsInstance<PyCallableType>()
   }
 
   private fun clarifyResolveResult(result: QualifiedRatedResolveResult, context: TypeEvalContext): ClarifiedResolveResult? {
