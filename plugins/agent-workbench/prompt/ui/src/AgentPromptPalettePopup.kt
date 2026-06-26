@@ -15,6 +15,7 @@ import com.intellij.ide.FrameStateListener
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -66,7 +67,6 @@ internal class AgentPromptPalettePopup(
       closeHost = ::cancelPopupExplicitly,
       isHostActive = { popupActive },
       revalidateHost = { popup?.moveToFitScreen() },
-      parentDisposableName = "AgentPromptPalettePopup",
     )
     content.sessionController.initialize(initialAddContextRequest)
 
@@ -181,13 +181,27 @@ internal class AgentPromptPaletteContent(
   @JvmField val existingTaskController: AgentPromptExistingTaskController,
   @JvmField val sessionController: AgentPromptPaletteSessionController,
   @JvmField val sessionScope: CoroutineScope,
-  @JvmField val parentDisposable: com.intellij.openapi.Disposable,
+  @JvmField val swingDisposable: Disposable,
 ) {
+  private var disposed: Boolean = false
+
   fun dispose(reason: String) {
+    if (disposed) {
+      return
+    }
+    disposed = true
     sessionController.onHostClosed()
-    Disposer.dispose(parentDisposable)
+    view.headerToolbar.targetComponent = null
+    view.footerPinToolbar.targetComponent = null
+    rootPanel.parent?.remove(rootPanel)
+    Disposer.dispose(swingDisposable)
     sessionScope.cancel(reason)
   }
+}
+
+internal enum class AgentPromptPaletteHostMode {
+  POPUP,
+  INLINE_EMPTY_STATE,
 }
 
 internal fun createAgentPromptPaletteContent(
@@ -200,13 +214,13 @@ internal fun createAgentPromptPaletteContent(
   closeHost: () -> Unit,
   isHostActive: () -> Boolean,
   revalidateHost: () -> Unit,
-  parentDisposableName: String = "AgentPromptPaletteContent",
+  hostMode: AgentPromptPaletteHostMode = AgentPromptPaletteHostMode.POPUP,
   sessionScope: CoroutineScope = createAgentPromptPaletteSessionScope(),
-  parentDisposable: com.intellij.openapi.Disposable = Disposer.newDisposable(parentDisposableName),
 ): AgentPromptPaletteContent {
   val project = invocationData.project
   var providerSelectorRef: AgentPromptProviderSelector? = null
   var sessionControllerRef: AgentPromptPaletteSessionController? = null
+  val swingDisposable = Disposer.newDisposable("AgentPromptPaletteContent.swing")
   val promptArea = AgentPromptTextField(
     project = project,
     completionProvider = AgentPromptClaudeSlashCompletionProvider(
@@ -222,7 +236,7 @@ internal fun createAgentPromptPaletteContent(
       resolveCodexSkillEntries = { sessionControllerRef?.codexSkillCompletionEntriesForCompletion().orEmpty() },
     ),
   )
-  promptArea.setDisposedWith(parentDisposable)
+  promptArea.setDisposedWith(swingDisposable)
 
   val suggestions = AgentPromptSuggestionsComponent { candidate -> sessionControllerRef?.applySuggestedPrompt(candidate) }
   val contextChips = AgentPromptContextChipsComponent { entry -> sessionControllerRef?.removeContextEntry(entry) }
@@ -234,6 +248,7 @@ internal fun createAgentPromptPaletteContent(
     onPromptLibraryClicked = { sessionControllerRef?.showPromptLibraryChooser() },
     onExistingTaskSelected = { selected -> sessionControllerRef?.onExistingTaskSelected(selected) },
     onPinClicked = { sessionControllerRef?.togglePin() },
+    hostMode = hostMode,
   )
   val providerSelector = AgentPromptProviderSelector(
     invocationData = invocationData,
@@ -271,8 +286,8 @@ internal fun createAgentPromptPaletteContent(
     closeHost = closeHost,
     isHostActive = isHostActive,
     revalidateHost = revalidateHost,
+    hostMode = hostMode,
     sessionScope = sessionScope,
-    parentDisposable = parentDisposable,
   )
   sessionControllerRef = sessionController
   return AgentPromptPaletteContent(
@@ -283,7 +298,7 @@ internal fun createAgentPromptPaletteContent(
     existingTaskController = existingTaskController,
     sessionController = sessionController,
     sessionScope = sessionScope,
-    parentDisposable = parentDisposable,
+    swingDisposable = swingDisposable,
   )
 }
 

@@ -2,9 +2,12 @@
 package com.intellij.agent.workbench.prompt.ui.emptyState
 
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
-import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchers
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextResolverService
+import com.intellij.agent.workbench.prompt.ui.AGENT_PROMPT_INLINE_EMPTY_STATE_MAXIMUM_SIZE
+import com.intellij.agent.workbench.prompt.ui.AGENT_PROMPT_INLINE_EMPTY_STATE_MINIMUM_SIZE
+import com.intellij.agent.workbench.prompt.ui.AGENT_PROMPT_INLINE_EMPTY_STATE_PREFERRED_SIZE
 import com.intellij.agent.workbench.prompt.ui.AgentPromptBundle
+import com.intellij.agent.workbench.prompt.ui.AgentPromptPaletteHostMode
 import com.intellij.agent.workbench.prompt.ui.AgentPromptPaletteContent
 import com.intellij.agent.workbench.prompt.ui.AgentPromptPalettePopup
 import com.intellij.agent.workbench.prompt.ui.AgentPromptSessionsMessageResolver
@@ -12,19 +15,23 @@ import com.intellij.agent.workbench.prompt.ui.AgentPromptUiSessionStateService
 import com.intellij.agent.workbench.prompt.ui.createAgentPromptPaletteContent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.impl.EditorEmptyStateComponentProvider
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.ui.RoundedLineBorder
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
-import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.RenderingHints
 import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
@@ -37,13 +44,24 @@ import javax.swing.KeyStroke
 import javax.swing.SwingConstants
 
 internal class AgentWorkbenchInlinePromptEmptyStateProvider : EditorEmptyStateComponentProvider {
-  override suspend fun createComponent(splitters: EditorsSplitters): JComponent? = withContext(Dispatchers.EDT) {
-    if (AgentPromptLaunchers.find() == null) {
-      return@withContext null
+  override suspend fun createComponent(splitters: EditorsSplitters): JComponent? {
+    if (!isInlineEmptyStatePromptEnabled()) {
+      return null
     }
-
-    val project = splitters.manager.project
-    return@withContext AgentWorkbenchInlinePromptEmptyStateComponent(project)
+    return withContext(Dispatchers.EDT) {
+      val project = splitters.manager.project
+      writeIntentReadAction {
+        val component = AgentWorkbenchInlinePromptEmptyStateComponent(project)
+        try {
+          component.ensureContentInitialized()
+          component
+        }
+        catch (e: Throwable) {
+          Disposer.dispose(component)
+          throw e
+        }
+      }
+    }
   }
 
   override fun disposeComponent(component: JComponent) {
@@ -62,12 +80,12 @@ internal class AgentWorkbenchInlinePromptEmptyStateComponent(
   init {
     Disposer.register(this, parentDisposable)
     name = INLINE_PROMPT_COMPONENT_NAME
-    isOpaque = true
-    background = UIUtil.getPanelBackground()
-    border = JBUI.Borders.customLine(UIUtil.getBoundsColor())
-    preferredSize = JBUI.size(620, 172)
-    minimumSize = Dimension(JBUI.scale(420), JBUI.scale(124))
-    maximumSize = Dimension(JBUI.scale(760), preferredSize.height)
+    isOpaque = false
+    background = JBUI.CurrentTheme.Popup.BACKGROUND
+    border = RoundedLineBorder(UIUtil.getBoundsColor(), inlinePromptArcDiameter())
+    preferredSize = AGENT_PROMPT_INLINE_EMPTY_STATE_PREFERRED_SIZE
+    minimumSize = AGENT_PROMPT_INLINE_EMPTY_STATE_MINIMUM_SIZE
+    maximumSize = AGENT_PROMPT_INLINE_EMPTY_STATE_MAXIMUM_SIZE
     isFocusable = true
     val accessibleName = AgentPromptBundle.message("inline.empty.state.prompt.accessible.name")
     getAccessibleContext().accessibleName = accessibleName
@@ -110,10 +128,8 @@ internal class AgentWorkbenchInlinePromptEmptyStateComponent(
     }
 
     initializing = true
-    val promptContentDisposable = Disposer.newDisposable("AgentWorkbenchInlinePromptEmptyStateContent")
     var promptContent: AgentPromptPaletteContent? = null
     try {
-      Disposer.register(parentDisposable, promptContentDisposable)
       promptContent = createAgentPromptPaletteContent(
         invocationData = AgentPromptInvocationData(
           project = project,
@@ -131,8 +147,7 @@ internal class AgentWorkbenchInlinePromptEmptyStateComponent(
           revalidate()
           repaint()
         },
-        parentDisposableName = "AgentWorkbenchInlinePromptEmptyStateContent",
-        parentDisposable = promptContentDisposable,
+        hostMode = AgentPromptPaletteHostMode.INLINE_EMPTY_STATE,
       )
       configureInlineContent(promptContent)
       removeAll()
@@ -147,7 +162,7 @@ internal class AgentWorkbenchInlinePromptEmptyStateComponent(
       }
     }
     catch (e: Throwable) {
-      promptContent?.dispose("Agent prompt empty state initialization failed") ?: Disposer.dispose(promptContentDisposable)
+      promptContent?.dispose("Agent prompt empty state initialization failed")
       throw e
     }
     finally {
@@ -165,23 +180,25 @@ internal class AgentWorkbenchInlinePromptEmptyStateComponent(
     Disposer.dispose(parentDisposable)
   }
 
-  private fun configureInlineContent(promptContent: AgentPromptPaletteContent) {
-    val view = promptContent.view
-    promptContent.rootPanel.apply {
-      preferredSize = JBUI.size(620, 172)
-      minimumSize = Dimension(JBUI.scale(420), JBUI.scale(124))
-      maximumSize = Dimension(JBUI.scale(760), preferredSize.height)
-      border = JBUI.Borders.empty(8)
+  override fun paintComponent(g: Graphics) {
+    val g2 = g.create() as? Graphics2D
+    if (g2 == null) {
+      super.paintComponent(g)
+      return
     }
-    view.tabbedPane.isVisible = false
-    view.bottomPanel.isVisible = true
-    view.existingTaskScrollPane.isVisible = false
-    view.footerPanel.isVisible = true
-    view.footerPinToolbar.component.isVisible = false
-    view.promptPanel.border = JBUI.Borders.empty(4, 8)
-    view.promptEditorPanel.border = JBUI.Borders.customLine(UIUtil.getBoundsColor())
-    view.promptEditorPanel.preferredSize = JBUI.size(0, 86)
-    view.generationSettingsPanel.border = JBUI.Borders.empty(0, 6, 4, 6)
+    try {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+      g2.color = background
+      val arc = inlinePromptArcDiameter()
+      g2.fillRoundRect(0, 0, width, height, arc, arc)
+    }
+    finally {
+      g2.dispose()
+    }
+    super.paintComponent(g)
+  }
+
+  private fun configureInlineContent(promptContent: AgentPromptPaletteContent) {
     val accessibleName = AgentPromptBundle.message("inline.empty.state.prompt.accessible.name")
     val accessibleDescription = AgentPromptBundle.message("inline.empty.state.prompt.accessible.description")
     promptContent.promptArea.accessibleContext.accessibleName = accessibleName
@@ -208,3 +225,15 @@ internal class AgentWorkbenchInlinePromptEmptyStateComponent(
 internal const val INLINE_PROMPT_COMPONENT_NAME: String = "AgentWorkbenchInlinePromptEmptyStateComponent"
 private const val INLINE_PROMPT_ACTION_ID: String = "AgentWorkbenchPrompt.InlineEmptyState"
 private const val INLINE_PROMPT_PLACE: String = "EditorEmptyState"
+
+/**
+ * Feature flag for the inline Agent prompt shown in the empty editor.
+ * When disabled, the inline composer is not created and the
+ * `AgentWorkbenchGlobalPromptEmptyTextPromotedActionProvider` painted hint is used instead.
+ */
+internal const val INLINE_EMPTY_STATE_PROMPT_PROPERTY: String = "agent.workbench.inline.empty.state.prompt"
+
+internal fun isInlineEmptyStatePromptEnabled(): Boolean =
+  System.getProperty(INLINE_EMPTY_STATE_PROMPT_PROPERTY, "true").toBoolean()
+
+private fun inlinePromptArcDiameter(): Int = JBUI.scale(JBUI.getInt("Island.arc", 20))

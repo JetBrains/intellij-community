@@ -58,8 +58,12 @@ internal class AgentPromptPaletteDraftController(
     setPromptAreaTextProgrammatically(promptText)
   }
 
-  fun restoreDraft(restoreContextSnapshot: Boolean = true): AgentPromptUiDraft {
+  fun restoreDraft(
+    restoreContextSnapshot: Boolean = true,
+    targetModeOverride: PromptTargetMode? = null,
+  ): AgentPromptUiDraft {
     val draft = uiStateService.loadDraft()
+    val targetMode = targetModeOverride ?: draft.targetMode
     val providerPrefs = launcherProvider()?.loadProviderPreferences() ?: AgentPromptLauncherBridge.ProviderPreferences()
     val contextRestoreSnapshot = uiStateService.loadContextRestoreSnapshot()
     setPromptAreaTextProgrammatically(draft.promptText)
@@ -68,9 +72,9 @@ internal class AgentPromptPaletteDraftController(
     updateProviderOptionsVisibility()
 
     restoreContainerModeSelection(providerPrefs.containerModeEnabled || draft.containerModeEnabled)
-    setTargetMode(draft.targetMode)
-    draftState.existingTaskSearchQuery = draft.existingTaskSearch
-    existingTaskController.selectedExistingTaskId = draft.selectedExistingTaskId
+    setTargetMode(targetMode)
+    draftState.existingTaskSearchQuery = draft.existingTaskSearch.takeIf { targetMode == PromptTargetMode.EXISTING_TASK }.orEmpty()
+    existingTaskController.selectedExistingTaskId = draft.selectedExistingTaskId.takeIf { targetMode == PromptTargetMode.EXISTING_TASK }
     contextState.removedAutoLogicalItemIds.clear()
     if (restoreContextSnapshot) {
       if (contextRestoreSnapshot.contextFingerprint == contextState.initialAutoContextFingerprint) {
@@ -95,11 +99,20 @@ internal class AgentPromptPaletteDraftController(
     refreshContextEntries()
     resolveExtensionTabs()
 
-    if (draft.targetMode == PromptTargetMode.EXISTING_TASK) {
+    if (targetMode == PromptTargetMode.EXISTING_TASK) {
       reloadExistingTasks()
     }
 
-    return draft
+    return if (targetMode == draft.targetMode) {
+      draft
+    }
+    else {
+      draft.copy(
+        targetMode = targetMode,
+        existingTaskSearch = "",
+        selectedExistingTaskId = null,
+      )
+    }
   }
 
   fun restoreTaskDrafts(draft: AgentPromptUiDraft) {

@@ -26,7 +26,6 @@ import com.intellij.agent.workbench.prompt.ui.context.AgentPromptImagePasteHandl
 import com.intellij.agent.workbench.prompt.ui.context.IMAGE_PASTE_SOURCE_ID
 import com.intellij.agent.workbench.prompt.ui.context.installAgentPromptDialogImageDropSupport
 import com.intellij.agent.workbench.prompt.ui.context.installAgentPromptEditorImageDropSupport
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -34,6 +33,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.SimpleTextAttributes
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.JList
@@ -46,7 +46,7 @@ internal class AgentPromptPaletteContextController(
     private val invocationData: AgentPromptInvocationData,
     private val promptArea: EditorTextField,
     private val view: AgentPromptPaletteView,
-    private val parentDisposable: Disposable,
+    private val sessionScope: CoroutineScope,
     private val contextResolverService: AgentPromptContextResolverService,
     private val contextChips: AgentPromptContextChipsComponent,
     private val launcherProvider: () -> AgentPromptLauncherBridge?,
@@ -183,7 +183,7 @@ internal class AgentPromptPaletteContextController(
         installAgentPromptDialogImageDropSupport(
             rootComponent = view.rootPanel,
             dropHandler = imageDropHandler,
-            parentDisposable = parentDisposable,
+            coroutineScope = sessionScope,
         )
         promptArea.addSettingsProvider { editor ->
             installAgentPromptEditorImageDropSupport(editor, imageDropHandler)

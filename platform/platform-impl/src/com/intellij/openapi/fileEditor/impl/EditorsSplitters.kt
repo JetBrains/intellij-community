@@ -5,7 +5,6 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.diagnostic.Activity
-import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.EmptyStateCause
 import com.intellij.frontend.FrontendApplicationInfo
@@ -34,7 +33,6 @@ import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileEditor.ClientFileEditorManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -100,7 +98,6 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.computeFileIconImpl
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EmptyIcon
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBRectangle
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -117,7 +114,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -138,16 +134,13 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.awt.AWTEvent
-import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component
 import java.awt.Container
-import java.awt.Dimension
 import java.awt.Font
 import java.awt.Graphics
 import java.awt.KeyEventPostProcessor
 import java.awt.KeyboardFocusManager
-import java.awt.LayoutManager2
 import java.awt.Toolkit
 import java.awt.Window
 import java.awt.datatransfer.DataFlavor
@@ -170,21 +163,17 @@ import javax.swing.TransferHandler
 import javax.swing.UIManager
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration
-import kotlin.time.TimeSource
 
 private val OPEN_FILES_ACTIVITY = Key.create<Activity>("open.files.activity")
 private val LOG = logger<EditorsSplitters>()
 private const val IDE_FINGERPRINT: @NonNls String = "ideFingerprint"
-private const val EMPTY_STATE_COMPONENT_CONSTRAINT: @NonNls String = "EditorEmptyStateComponent"
-private val EMPTY_STATE_COMPONENT_CREATION_DELAY = 300.milliseconds
-private val SLOW_EMPTY_STATE_COMPONENT_PROVIDER_THRESHOLD = 100.milliseconds
 
 @Suppress("LeakingThis", "IdentifierGrammar")
 @DirtyUI
 open class EditorsSplitters internal constructor(
   @Internal val manager: FileEditorManagerImpl,
   @Internal @JvmField val coroutineScope: CoroutineScope,
-) : JPanel(EditorEmptyStateLayout()), UISettingsListener {
+) : JPanel(EditorsSplittersLayout()), UISettingsListener {
   companion object {
     const val SPLITTER_KEY: @NonNls String = "EditorsSplitters"
 
@@ -227,16 +216,19 @@ open class EditorsSplitters internal constructor(
   private var previousFocusGainedTime: Long = 0L
 
   private val windows = CopyOnWriteArraySet<EditorWindow>()
-  private var emptyStateComponentHost: EditorEmptyStateComponentHost? = null
-  private var emptyStateComponentEntries: List<EditorEmptyStateComponentEntry> = emptyList()
-  private var emptyStateComponentCreationJob: Job? = null
-  private var emptyStateComponentCreationGeneration: Int = 0
-  private var richEmptyStateComponentsEnabled: Boolean = false
-  private var emptyStateComponentCreationDelay: Duration = EMPTY_STATE_COMPONENT_CREATION_DELAY
-  private var emptyStateComponentCreationGate: (suspend () -> Unit)? = null
+  private val emptyStateComponentController = EditorEmptyStateComponentController(
+    splitters = this,
+    coroutineScope = coroutineScope,
+    showEmptyState = ::shouldShowRichEmptyState,
+  )
 
   // temporarily used during initialization of non-main editor splitters
   private val state = AtomicReference<EditorSplitterState?>()
+
+  private var emptyStatePresentationReady: Boolean = true
+
+  private val splittersLayout: EditorsSplittersLayout
+    get() = layout as EditorsSplittersLayout
 
   @JvmField
   internal var insideChange: Int = 0
@@ -252,33 +244,32 @@ open class EditorsSplitters internal constructor(
 
   private fun showEmptyText(): Boolean = (currentWindow?.files() ?: emptySequence()).none()
 
+  private fun shouldShowRichEmptyState(): Boolean = showEmptyText() && emptyStatePresentationReady
+
+  private fun shouldDelayEmptyStatePresentation(state: EditorSplitterState): Boolean = state.hasFileEntries && shouldReopenEditorsOnStartup()
+
+  @Internal
+  fun isEmptyTextPaintingAllowed(): Boolean = shouldShowRichEmptyState() && !emptyStateComponentController.isVisible()
+
   @TestOnly
-  internal fun isEmptyStateComponentCreationPending(): Boolean = emptyStateComponentCreationJob != null
+  internal fun isEmptyStateComponentCreationPending(): Boolean = emptyStateComponentController.isCreationPending()
 
   internal fun suppressRichEmptyStateComponents() {
-    if (!richEmptyStateComponentsEnabled && emptyStateComponentHost == null && emptyStateComponentCreationJob == null) {
-      return
-    }
-    richEmptyStateComponentsEnabled = false
-    disposeEmptyStateComponents()
+    emptyStateComponentController.suppressRichComponents()
   }
 
   internal fun enableRichEmptyStateComponents() {
-    if (richEmptyStateComponentsEnabled) {
-      return
-    }
-    richEmptyStateComponentsEnabled = true
-    updateEmptyStateComponent()
+    emptyStateComponentController.enableRichComponents()
   }
 
   @TestOnly
   internal fun setEmptyStateComponentCreationDelayForTests(delay: Duration) {
-    emptyStateComponentCreationDelay = delay
+    emptyStateComponentController.setCreationDelayForTests(delay)
   }
 
   @TestOnly
   internal fun setEmptyStateComponentCreationGateForTests(gate: (suspend () -> Unit)?) {
-    emptyStateComponentCreationGate = gate
+    emptyStateComponentController.setCreationGateForTests(gate)
   }
 
   internal val openFileList: List<VirtualFile>
@@ -381,8 +372,8 @@ open class EditorsSplitters internal constructor(
       window.dispose()
     }
 
-    removeAll()
     disposeEmptyStateComponents()
+    clearEditorComponent()
     setCurrentWindow(window = null)
     updateEmptyStateComponent()
     // revalidate doesn't repaint correctly after "Close All"
@@ -400,15 +391,24 @@ open class EditorsSplitters internal constructor(
 
   internal var borderPainter: BorderPainter = DefaultBorderPainter()
 
+  @Internal
   override fun paintChildren(g: Graphics) {
+    borderPainter.paintBeforeChildren(this, g)
     super.paintChildren(g)
     borderPainter.paintAfterChildren(this, g)
   }
 
+  @Internal
   override fun isPaintingOrigin(): Boolean {
     return borderPainter.isPaintingOrigin(this)
   }
 
+  @Internal
+  override fun isOptimizedDrawingEnabled(): Boolean {
+    return splittersLayout.emptyStateOverlay == null && super.isOptimizedDrawingEnabled()
+  }
+
+  @Internal
   fun writeExternal(element: Element) {
     writeExternal(element = element, delayedStates = emptyMap())
   }
@@ -425,56 +425,82 @@ open class EditorsSplitters internal constructor(
 
   @Internal
   suspend fun restoreEditors(state: EditorSplitterState, requestFocus: Boolean = true) {
+    val delayEmptyStatePresentation = shouldDelayEmptyStatePresentation(state)
     withContext(Dispatchers.EDT) {
-      removeAll()
+      if (delayEmptyStatePresentation) {
+        emptyStatePresentationReady = false
+      }
       disposeEmptyStateComponents()
+      clearEditorComponent()
     }
 
-    if (!shouldReopenEditorsOnStartup()) {
-      // Don't restore editors from local files on JetBrains Client, editors are opened from the backend
+    try {
+      if (!shouldReopenEditorsOnStartup()) {
+        // Don't restore editors from local files on JetBrains Client, editors are opened from the backend
+        return
+      }
+
+      UiBuilder(this, isLazyComposite = false).process(state = state, requestFocus = requestFocus) {
+        addEditorComponent(it)
+        InternalUICustomization.getInstance()?.installEditorBackground(it)
+      }
       withContext(Dispatchers.EDT) {
-        updateEmptyStateComponent()
-      }
-      return
-    }
+        validate()
 
-    UiBuilder(this, isLazyComposite = false).process(state = state, requestFocus = requestFocus) {
-      addEditorComponent(it)
-      InternalUICustomization.getInstance()?.installEditorBackground(it)
-    }
-    withContext(Dispatchers.EDT) {
-      validate()
-
-      for (window in windows) {
-        // clear empty splitters
-        if (window.tabCount == 0) {
-          window.removeFromSplitter()
-          window.logEmptyStateIfMainSplitter(cause = EmptyStateCause.CONTEXT_RESTORED)
-        }
-        else {
-          window.tabbedPane.editorTabs.revalidateAndRepaint()
+        for (window in windows) {
+          // clear empty splitters
+          if (window.tabCount == 0) {
+            window.removeFromSplitter()
+            window.logEmptyStateIfMainSplitter(cause = EmptyStateCause.CONTEXT_RESTORED)
+          }
+          else {
+            window.tabbedPane.editorTabs.revalidateAndRepaint()
+          }
         }
       }
-      updateEmptyStateComponent()
+    }
+    finally {
+      withContext(NonCancellable + Dispatchers.EDT) {
+        emptyStatePresentationReady = true
+        if (coroutineScope.isActive) {
+          updateEmptyStateComponent()
+        }
+      }
     }
   }
 
   internal suspend fun createEditors(state: EditorSplitterState) {
-    manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
-    if (!shouldReopenEditorsOnStartup()) {
-      // Don't reopen editors from local files on JetBrains Client, it is done from the backend
-      return
+    if (shouldDelayEmptyStatePresentation(state)) {
+      withContext(Dispatchers.EDT) {
+        emptyStatePresentationReady = false
+        updateEmptyStateComponent()
+      }
     }
+    manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
+    try {
+      if (!shouldReopenEditorsOnStartup()) {
+        // Don't reopen editors from local files on JetBrains Client, it is done from the backend
+        return
+      }
 
-    UiBuilder(splitters = this, isLazyComposite = System.getProperty("idea.delayed.editor.composite", "true").toBoolean())
-      .process(
-        state = state,
-        requestFocus = true,
-        addChild = {
-          addEditorComponent(it)
-          InternalUICustomization.getInstance()?.installEditorBackground(it)
-        },
-      )
+      UiBuilder(splitters = this, isLazyComposite = System.getProperty("idea.delayed.editor.composite", "true").toBoolean())
+        .process(
+          state = state,
+          requestFocus = true,
+          addChild = {
+            addEditorComponent(it)
+            InternalUICustomization.getInstance()?.installEditorBackground(it)
+          },
+        )
+    }
+    finally {
+      withContext(NonCancellable + Dispatchers.EDT) {
+        emptyStatePresentationReady = true
+        if (coroutineScope.isActive) {
+          updateEmptyStateComponent()
+        }
+      }
+    }
   }
 
   private fun shouldReopenEditorsOnStartup(): Boolean {
@@ -513,8 +539,8 @@ open class EditorsSplitters internal constructor(
     for (window in windows) {
       window.dispose()
     }
-    removeAll()
     disposeEmptyStateComponents()
+    clearEditorComponent()
     // revalidate doesn't repaint correctly after "Close All"
     if (repaint) {
       repaint()
@@ -558,8 +584,12 @@ open class EditorsSplitters internal constructor(
   }
 
   internal fun readExternal(element: Element) {
-    suppressRichEmptyStateComponents()
-    state.set(EditorSplitterState(element))
+    val state = EditorSplitterState(element)
+    if (shouldDelayEmptyStatePresentation(state)) {
+      emptyStatePresentationReady = false
+      suppressRichEmptyStateComponents()
+    }
+    this.state.set(state)
   }
 
   fun getSelectedEditors(): Array<FileEditor> {
@@ -907,159 +937,43 @@ open class EditorsSplitters internal constructor(
 
   internal fun addEditorComponent(component: JComponent) {
     disposeEmptyStateComponents()
-    add(component, BorderLayout.CENTER)
+    clearEditorComponent()
+    add(component, EDITOR_ROOT_COMPONENT_CONSTRAINT)
+  }
+
+  internal fun clearEditorComponent() {
+    val editorRoot = splittersLayout.editorRootComponent ?: return
+    remove(editorRoot)
+  }
+
+  internal fun installEmptyStateOverlay(component: JComponent) {
+    splittersLayout.emptyStateOverlay?.let { remove(it) }
+    add(component, EMPTY_STATE_COMPONENT_CONSTRAINT, 0)
+  }
+
+  internal fun uninstallEmptyStateOverlay(component: JComponent) {
+    remove(component)
   }
 
   @Internal
   fun updateEmptyStateComponent() {
-    if (showEmptyText()) {
-      showEmptyStateComponents()
-    }
-    else {
-      disposeEmptyStateComponents()
-    }
+    emptyStateComponentController.update()
   }
 
   private fun rebuildEmptyStateComponent() {
-    disposeEmptyStateComponents()
-    updateEmptyStateComponent()
-  }
-
-  private fun showEmptyStateComponents() {
-    if (!richEmptyStateComponentsEnabled || emptyStateComponentHost != null || emptyStateComponentCreationJob != null) {
-      return
-    }
-
-    val generation = ++emptyStateComponentCreationGeneration
-    emptyStateComponentCreationJob = coroutineScope.launch(Dispatchers.Default + CoroutineName("create editor empty state components")) {
-      var entries: List<EditorEmptyStateComponentEntry> = emptyList()
-      var mounted = false
-      try {
-        delay(emptyStateComponentCreationDelay)
-        emptyStateComponentCreationGate?.invoke()
-        if (!isEmptyStateComponentCreationValidOnEdt(generation)) {
-          return@launch
-        }
-        entries = createEmptyStateComponentEntries(generation)
-        withContext(Dispatchers.EDT) {
-          if (!isEmptyStateComponentCreationValid(generation)) {
-            return@withContext
-          }
-          if (entries.isEmpty()) {
-            return@withContext
-          }
-          mountEmptyStateComponents(entries)
-          mounted = true
-        }
-      }
-      finally {
-        withContext(NonCancellable + Dispatchers.EDT) {
-          if (!mounted) {
-            disposeEmptyStateComponentEntries(entries)
-          }
-          if (generation == emptyStateComponentCreationGeneration) {
-            emptyStateComponentCreationJob = null
-          }
-        }
-      }
-    }
-  }
-
-  private suspend fun isEmptyStateComponentCreationValidOnEdt(generation: Int): Boolean = withContext(Dispatchers.EDT) {
-    isEmptyStateComponentCreationValid(generation)
-  }
-
-  private fun isEmptyStateComponentCreationValid(generation: Int): Boolean {
-    return generation == emptyStateComponentCreationGeneration &&
-           richEmptyStateComponentsEnabled &&
-           showEmptyText() &&
-           emptyStateComponentHost == null
-  }
-
-  private suspend fun createEmptyStateComponentEntries(generation: Int): List<EditorEmptyStateComponentEntry> {
-    val providers = ArrayList<Pair<EditorEmptyStateComponentProvider, PluginDescriptor>>()
-    EditorEmptyStateComponentProvider.EP_NAME.processWithPluginDescriptor { provider, pluginDescriptor ->
-      providers.add(provider to pluginDescriptor)
-    }
-
-    val entries = ArrayList<EditorEmptyStateComponentEntry>()
-    try {
-      for ((provider, pluginDescriptor) in providers) {
-        if (!isEmptyStateComponentCreationValidOnEdt(generation)) {
-          break
-        }
-        val component = try {
-          val startedAt = TimeSource.Monotonic.markNow()
-          val result = provider.createComponent(this)
-          val elapsed = startedAt.elapsedNow()
-          if (elapsed >= SLOW_EMPTY_STATE_COMPONENT_PROVIDER_THRESHOLD) {
-            LOG.warn("Slow editor empty state component provider $provider from ${pluginDescriptor.pluginId}: $elapsed")
-          }
-          result
-        }
-        catch (e: CancellationException) {
-          throw e
-        }
-        catch (e: Throwable) {
-          LOG.error(PluginException("Cannot create editor empty state component using $provider", e, pluginDescriptor.pluginId))
-          null
-        }
-        if (component != null) {
-          entries.add(EditorEmptyStateComponentEntry(provider, component))
-        }
-      }
-      return entries
-    }
-    catch (e: CancellationException) {
-      withContext(NonCancellable + Dispatchers.EDT) {
-        disposeEmptyStateComponentEntries(entries)
-      }
-      throw e
-    }
-  }
-
-  private fun mountEmptyStateComponents(entries: List<EditorEmptyStateComponentEntry>) {
-    val host = EditorEmptyStateComponentHost()
-    emptyStateComponentHost = host
-    emptyStateComponentEntries = entries
-    host.setComponents(entries.map { it.component })
-    add(host, EMPTY_STATE_COMPONENT_CONSTRAINT)
-    revalidate()
-    repaint()
+    emptyStateComponentController.rebuild()
   }
 
   private fun cancelEmptyStateComponentCreation() {
-    val job = emptyStateComponentCreationJob ?: return
-    emptyStateComponentCreationGeneration++
-    emptyStateComponentCreationJob = null
-    job.cancel()
-  }
-
-  private fun disposeEmptyStateComponentEntries(entries: List<EditorEmptyStateComponentEntry>) {
-    for ((provider, component) in entries) {
-      provider.disposeComponent(component)
-    }
+    emptyStateComponentController.cancelCreation()
   }
 
   private fun disposeEmptyStateComponents() {
-    cancelEmptyStateComponentCreation()
-    val host = emptyStateComponentHost ?: return
-    remove(host)
-    host.removeAll()
-    disposeEmptyStateComponentEntries(emptyStateComponentEntries)
-    emptyStateComponentHost = null
-    emptyStateComponentEntries = emptyList()
-    revalidate()
-    repaint()
+    emptyStateComponentController.disposeComponents()
   }
 
   private fun editorRootComponent(): JComponent? {
-    for (component in components) {
-      if (component !== emptyStateComponentHost && component is JComponent) {
-        return component
-      }
-    }
-    return null
+    return splittersLayout.editorRootComponent
   }
 
   open val isFloating: Boolean
@@ -1254,6 +1168,9 @@ class EditorSplitterState(element: Element) {
   @JvmField
   internal val leaf: EditorSplitterStateLeaf?
 
+  @JvmField
+  internal val hasFileEntries: Boolean
+
   init {
     val splitterElement = element.getChild("splitter")
     val first = splitterElement?.getChild("split-first")
@@ -1281,6 +1198,8 @@ class EditorSplitterState(element: Element) {
       )
       leaf = null
     }
+    hasFileEntries = leaf?.files?.isNotEmpty() ?: (splitters?.firstSplitter?.hasFileEntries == true ||
+                                                    splitters?.secondSplitter?.hasFileEntries == true)
   }
 }
 
@@ -1703,77 +1622,6 @@ private fun enableEditorActivationOnEscape() {
   val kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager()
   kfm.removeKeyEventPostProcessor(ACTIVATE_EDITOR_ON_ESCAPE_HANDLER) // we need only one handler, not one per EditorsSplitters instance
   kfm.addKeyEventPostProcessor(ACTIVATE_EDITOR_ON_ESCAPE_HANDLER)
-}
-
-private data class EditorEmptyStateComponentEntry(
-  val provider: EditorEmptyStateComponentProvider,
-  val component: JComponent,
-)
-
-private class EditorEmptyStateLayout : BorderLayout(), LayoutManager2 {
-  private var emptyStateComponent: Component? = null
-
-  override fun addLayoutComponent(comp: Component, constraints: Any?) {
-    if (constraints == EMPTY_STATE_COMPONENT_CONSTRAINT) {
-      emptyStateComponent = comp
-    }
-    else {
-      super.addLayoutComponent(comp, constraints)
-    }
-  }
-
-  override fun removeLayoutComponent(comp: Component) {
-    if (emptyStateComponent === comp) {
-      emptyStateComponent = null
-    }
-    else {
-      super.removeLayoutComponent(comp)
-    }
-  }
-
-  override fun layoutContainer(target: Container) {
-    super.layoutContainer(target)
-    emptyStateComponent?.let { component ->
-      val insets = target.insets
-      component.setBounds(insets.left, insets.top, target.width - insets.left - insets.right, target.height - insets.top - insets.bottom)
-    }
-  }
-}
-
-private class EditorEmptyStateComponentHost : JPanel(null) {
-  init {
-    isOpaque = false
-  }
-
-  fun setComponents(components: List<JComponent>) {
-    removeAll()
-    for (component in components) {
-      add(component)
-    }
-  }
-
-  override fun doLayout() {
-    val visibleComponents = components.filter { it.isVisible }
-    if (visibleComponents.isEmpty()) {
-      return
-    }
-
-    val componentGap = JBUI.scale(8)
-    val textGap = JBUI.scale(24)
-    val totalHeight = visibleComponents.sumOf { it.preferredSize.height } + componentGap * (visibleComponents.size - 1)
-    val painter = ApplicationManager.getApplication().getService(EditorEmptyTextPainter::class.java)
-    var y = (height * painter.emptyTextHeightRatio).toInt() - totalHeight - textGap
-    y = y.coerceAtLeast(JBUI.scale(24))
-    for (component in visibleComponents) {
-      val preferredSize = component.preferredSize
-      val componentWidth = preferredSize.width.coerceAtMost(width)
-      val x = (width - componentWidth) / 2
-      component.setBounds(x, y, componentWidth, preferredSize.height)
-      y += preferredSize.height + componentGap
-    }
-  }
-
-  override fun getPreferredSize(): Dimension = Dimension(0, 0)
 }
 
 private fun getSplitCount(component: JComponent): Int {

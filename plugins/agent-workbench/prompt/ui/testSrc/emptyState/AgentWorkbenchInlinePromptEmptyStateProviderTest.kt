@@ -12,10 +12,14 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptManualContextSourceBr
 import com.intellij.agent.workbench.prompt.core.AgentPromptPaletteExtension
 import com.intellij.agent.workbench.prompt.core.AgentPromptSuggestionAiBackend
 import com.intellij.agent.workbench.prompt.ui.AGENT_PROMPT_PALETTE_PREFERRED_SIZE
+import com.intellij.agent.workbench.prompt.ui.AgentPromptUiDraft
 import com.intellij.agent.workbench.prompt.ui.AgentPromptBundle
 import com.intellij.agent.workbench.prompt.ui.AgentPromptTextField
+import com.intellij.agent.workbench.prompt.ui.AgentPromptUiSessionStateService
+import com.intellij.agent.workbench.prompt.ui.PromptTargetMode
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.project.ProjectManager
@@ -24,6 +28,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.ui.RoundedLineBorder
 import com.intellij.ui.components.JBTabbedPane
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
@@ -35,6 +40,7 @@ import java.awt.Component
 import java.awt.Container
 import java.awt.event.MouseEvent
 import java.util.concurrent.TimeUnit
+import javax.swing.JComponent
 import javax.swing.JLabel
 
 @TestApplication
@@ -64,25 +70,48 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
   }
 
   @Test
-  fun providerReturnsNullWhenLauncherIsUnavailable() {
+  fun providerCreatesPromptContentWhenLauncherIsUnavailable() {
     val provider = AgentWorkbenchInlinePromptEmptyStateProvider()
 
     val component = AgentPromptLaunchers.withLauncherForTest(null) {
       runBlocking { provider.createComponent(fileEditorManagerFixture.get().mainSplitters) }
     }
 
-    assertThat(component).isNull()
+    try {
+      assertThat(component).isInstanceOf(AgentWorkbenchInlinePromptEmptyStateComponent::class.java)
+      assertThat(collectComponents(component!!, AgentPromptTextField::class.java)).hasSize(1)
+    }
+    finally {
+      disposeComponent(component as AgentWorkbenchInlinePromptEmptyStateComponent)
+    }
   }
 
   @Test
-  fun providerCreatesShellWithoutPromptContent() {
+  fun providerCreatesInitializedPromptContent() {
     val component = createProviderComponentWithLauncher()
     try {
       assertThat(component.name).isEqualTo(INLINE_PROMPT_COMPONENT_NAME)
-      assertThat(collectComponents(component, AgentPromptTextField::class.java)).isEmpty()
+      assertThat(collectComponents(component, AgentPromptTextField::class.java)).hasSize(1)
     }
     finally {
-      Disposer.dispose(component)
+      disposeComponent(component)
+    }
+  }
+
+  @Test
+  fun providerReturnsNullWhenFeatureDisabled() {
+    val previous = System.getProperty(INLINE_EMPTY_STATE_PROMPT_PROPERTY)
+    System.setProperty(INLINE_EMPTY_STATE_PROMPT_PROPERTY, "false")
+    try {
+      val provider = AgentWorkbenchInlinePromptEmptyStateProvider()
+      val component = AgentPromptLaunchers.withLauncherForTest(TestPromptLauncher) {
+        runBlocking { provider.createComponent(fileEditorManagerFixture.get().mainSplitters) }
+      }
+      assertThat(component).isNull()
+    }
+    finally {
+      if (previous == null) System.clearProperty(INLINE_EMPTY_STATE_PROMPT_PROPERTY)
+      else System.setProperty(INLINE_EMPTY_STATE_PROMPT_PROPERTY, previous)
     }
   }
 
@@ -100,7 +129,10 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
         val tabbedPane = collectComponents(component, JBTabbedPane::class.java).single()
 
         assertThat(component.name).isEqualTo(INLINE_PROMPT_COMPONENT_NAME)
+        assertThat(component.isOpaque).isFalse()
         assertThat(component.preferredSize.height).isLessThan(AGENT_PROMPT_PALETTE_PREFERRED_SIZE.height)
+        assertThat(component.border).isInstanceOf(RoundedLineBorder::class.java)
+        assertThat(totalBorderInsets(component)).isGreaterThan(0)
         assertThat(tabbedPane.isVisible).isFalse()
         assertThat(promptArea.editor?.contentComponent?.accessibleContext?.accessibleName)
           .isEqualTo(AgentPromptBundle.message("inline.empty.state.prompt.accessible.name"))
@@ -111,7 +143,7 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
         assertThat(collectComponents(component, AgentPromptTextField::class.java)).containsExactly(promptArea)
       }
       finally {
-        Disposer.dispose(component)
+        disposeComponent(component)
       }
     }
   }
@@ -130,7 +162,49 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
         assertThat(collectComponents(component, AgentPromptTextField::class.java)).hasSize(1)
       }
       finally {
-        Disposer.dispose(component)
+        disposeComponent(component)
+      }
+    }
+  }
+
+  @Test
+  fun providerCreatesInitializedPromptBeforeSwingHierarchy() {
+    val component = createProviderComponentWithLauncher()
+    try {
+      assertThat(collectComponents(component, AgentPromptTextField::class.java)).hasSize(1)
+    }
+    finally {
+      disposeComponent(component)
+    }
+  }
+
+  @Test
+  fun inlinePromptIgnoresExistingTaskDraftMode() {
+    val project = projectFixture.get()
+    project.service<AgentPromptUiSessionStateService>().saveDraft(
+      AgentPromptUiDraft(
+        promptText = "new task prompt",
+        targetMode = PromptTargetMode.EXISTING_TASK,
+        existingTaskSearch = "old search",
+        selectedExistingTaskId = "old-task",
+        taskDrafts = mapOf(
+          PromptTargetMode.NEW_TASK.name to "new task prompt",
+          PromptTargetMode.EXISTING_TASK.name to "existing task prompt",
+        ),
+      )
+    )
+
+    runInEdtAndWait {
+      val component = AgentWorkbenchInlinePromptEmptyStateComponent(project)
+      try {
+        component.ensureContentInitialized()
+
+        val promptArea = collectComponents(component, AgentPromptTextField::class.java).single()
+
+        assertThat(promptArea.text).isEqualTo("new task prompt")
+      }
+      finally {
+        disposeComponent(component)
       }
     }
   }
@@ -140,7 +214,7 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
     runInEdtAndWait {
       val component = AgentWorkbenchInlinePromptEmptyStateComponent(ProjectManager.getInstance().defaultProject)
 
-      Disposer.dispose(component)
+      disposeComponent(component)
 
       assertThat(collectComponents(component, AgentPromptTextField::class.java)).isEmpty()
     }
@@ -154,6 +228,17 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
     return component as AgentWorkbenchInlinePromptEmptyStateComponent
   }
 
+  private fun disposeComponent(component: AgentWorkbenchInlinePromptEmptyStateComponent) {
+    if (ApplicationManager.getApplication().isDispatchThread) {
+      Disposer.dispose(component)
+    }
+    else {
+      runInEdtAndWait {
+        Disposer.dispose(component)
+      }
+    }
+  }
+
   private fun <T : Component> collectComponents(component: Component, componentClass: Class<T>): List<T> {
     return buildList {
       if (componentClass.isInstance(component)) {
@@ -163,6 +248,11 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
         component.components.forEach { child -> addAll(collectComponents(child, componentClass)) }
       }
     }
+  }
+
+  private fun totalBorderInsets(component: JComponent): Int {
+    val insets = component.border.getBorderInsets(component)
+    return insets.top + insets.left + insets.bottom + insets.right
   }
 
   private fun ensurePromptExtensionPoints() {

@@ -4,6 +4,7 @@ description: Requirements for opening, focusing, submitting, and routing the Age
 targets:
   - ../../prompt/ui/src/actions/AgentWorkbenchGlobalPromptAction.kt
   - ../../prompt/ui/src/emptyState/AgentWorkbenchInlinePromptEmptyStateProvider.kt
+  - ../../prompt/ui/src/actions/AgentWorkbenchGlobalPromptEmptyTextPromotedActionProvider.kt
   - ../../prompt/ui/src/AgentPromptPalettePopupService.kt
   - ../../prompt/ui/src/AgentPromptPalettePopup.kt
   - ../../prompt/ui/src/AgentPromptPaletteView.kt
@@ -23,15 +24,19 @@ Status: Draft
 Date: 2026-05-16
 
 ## Summary
-The global prompt opens a project-scoped prompt surface for starting a new task or sending a prompt to an existing loaded task. The surface is normally a popup, but the empty editor state may host a compact inline prompt composer above the standard empty-state hints. This spec owns popup and inline lifecycle, target mode, validation, keyboard behavior, provider selection, and launcher handoff. Context collection and Add-to-Agent-Context routing are specified separately.
+The global prompt opens a project-scoped prompt surface for starting a new task or sending a prompt to an existing loaded task. The surface is normally a popup, but the empty editor state may host a compact inline prompt composer instead of standard empty-state hints. This spec owns popup and inline lifecycle, target mode, validation, keyboard behavior, provider selection, and launcher handoff. Context collection and Add-to-Agent-Context routing are specified separately.
 
 ## Requirements
 - `AgentWorkbenchPrompt.OpenGlobalPalette` and `AgentWorkbenchPrompt.OpenGlobalPaletteAutoSelect` are available only with an open project. Invoking either action while the popup is already visible for the same project focuses the existing popup and preserves live state.
   [@test] ../../prompt/ui/testSrc/AgentPromptPalettePopupServiceTest.kt
 
-- When the main editor area is empty and prompt launching is available, Agent Workbench contributes a compact inline composer to the platform empty editor state. The composer is rendered above the standard empty editor action hints, uses the shared prompt content/session machinery, and keeps the existing empty-state hints visible.
+- When the main editor area is empty, Agent Workbench contributes a compact inline composer to the platform empty editor state. The composer owns the rich empty-state surface, uses the shared prompt content/session machinery, and suppresses the painted empty editor action hints while it is visible. Standard empty-state hints remain a fallback when no rich composer is available.
   [@test] ../../prompt/ui/testSrc/emptyState/AgentWorkbenchInlinePromptEmptyStateProviderTest.kt
   [@test] ../../../platform/platform-impl/testSrc/com/intellij/openapi/fileEditor/impl/EditorEmptyTextPainterTest.kt
+
+- The inline empty-state composer is gated by the `agent.workbench.inline.empty.state.prompt` system property, enabled by default. When enabled, the inline provider creates the composer and the redundant `AgentWorkbenchPrompt.OpenGlobalPalette` promoted-text hint is suppressed. When disabled, the inline provider creates no component and the promoted-text hint is shown as the empty-editor affordance instead.
+  [@test] ../../prompt/ui/testSrc/emptyState/AgentWorkbenchInlinePromptEmptyStateProviderTest.kt
+  [@test] ../../prompt/ui/testSrc/actions/AgentWorkbenchGlobalPromptEmptyTextPromotedActionProviderTest.kt
 
 - Showing the empty editor state must not auto-focus the inline composer. Invoking `AgentWorkbenchPrompt.OpenGlobalPalette` opens the ordinary global prompt popup even when the inline composer is visible in the empty editor state.
   [@test] ../../prompt/ui/testSrc/AgentPromptPalettePopupServiceTest.kt
@@ -74,6 +79,9 @@ The global prompt opens a project-scoped prompt surface for starting a new task 
 
 - Inline empty-state submit uses the same validation and launch path as the popup prompt. Successful inline submit clears the submitted draft and resets the inline session without closing editor tabs or creating a popup.
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteSubmitControllerTest.kt
+  [@test] ../../prompt/ui/testSrc/emptyState/AgentWorkbenchInlinePromptEmptyStateProviderTest.kt
+
+- Inline empty-state mode is always a `NEW_TASK` prompt. It must not restore `EXISTING_TASK` draft mode or extension-tab auto-selection because those controls are hidden in the compact empty-state surface.
   [@test] ../../prompt/ui/testSrc/emptyState/AgentWorkbenchInlinePromptEmptyStateProviderTest.kt
 
 - Plan mode is available only when the selected provider exposes the plan-mode option, persists in project prompt draft state, and is forced off/rejected for busy existing tasks. A typed `/plan` prefix remains prompt text and does not toggle the option.

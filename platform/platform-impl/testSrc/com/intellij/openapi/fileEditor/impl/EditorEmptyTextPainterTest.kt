@@ -17,6 +17,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.PlatformTestUtil
@@ -25,6 +26,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -37,6 +39,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import java.awt.image.BufferedImage
+import java.nio.file.Files
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -65,6 +69,8 @@ internal class EditorEmptyTextPainterTest {
     openAfterCreation = true,
   )
   private val fileEditorManagerFixture = projectFixture.fileEditorManagerFixture()
+  private val tempPathFixture = tempPathFixture()
+  private val tempPath by tempPathFixture
 
   private lateinit var originalShortcuts: Map<String, List<Shortcut>>
 
@@ -160,7 +166,62 @@ internal class EditorEmptyTextPainterTest {
   }
 
   @Test
-  fun componentProviderCoexistsWithEmptyTextHints(@TestDisposable disposable: Disposable) {
+  fun componentProviderIsMountedAsEmptyStatePanel(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    registerComponentProvider(disposable)
+    manager.closeAllFiles()
+    enableRichEmptyStateComponentsWithoutDelay(splitters)
+    splitters.updateEmptyStateComponent()
+    waitForEmptyStateComponentCreation(splitters)
+
+    val emptyStateHost = checkNotNull(findEmptyStateHost(splitters))
+
+    assertThat(emptyStateHost.parent).isSameAs(splitters)
+    assertThat(emptyStateLayout(splitters).emptyStateOverlay).isSameAs(emptyStateHost)
+    assertThat(splitters.components).containsExactly(emptyStateHost)
+    assertThat(splitters.isOptimizedDrawingEnabled).isFalse()
+  }
+
+  @Test
+  fun componentProviderIsMountedAboveEmptyEditorRoot(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    registerComponentProvider(disposable)
+    manager.closeAllFiles()
+    splitters.createCurrentWindow()
+    val editorRoot = checkNotNull(emptyStateLayout(splitters).editorRootComponent)
+
+    enableRichEmptyStateComponentsWithoutDelay(splitters)
+    splitters.updateEmptyStateComponent()
+    waitForEmptyStateComponentCreation(splitters)
+
+    val emptyStateHost = checkNotNull(findEmptyStateHost(splitters))
+
+    assertThat(emptyStateLayout(splitters).editorRootComponent).isSameAs(editorRoot)
+    assertThat(emptyStateLayout(splitters).emptyStateOverlay).isSameAs(emptyStateHost)
+    assertThat(splitters.components).containsExactly(emptyStateHost, editorRoot)
+    assertThat(splitters.isOptimizedDrawingEnabled).isFalse()
+  }
+
+  @Test
+  fun componentProviderCanBeMountedAfterEditorRootIsCleared(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    registerComponentProvider(disposable)
+    manager.closeAllFiles()
+    splitters.createCurrentWindow()
+    assertThat(emptyStateLayout(splitters).editorRootComponent).isNotNull()
+
+    splitters.clear()
+    enableRichEmptyStateComponentsWithoutDelay(splitters)
+    splitters.updateEmptyStateComponent()
+    waitForEmptyStateComponentCreation(splitters)
+
+    assertThat(emptyStateLayout(splitters).editorRootComponent).isNull()
+    assertThat(findEmptyStateComponent(splitters)).isNotNull()
+    assertThat(emptyStateLayout(splitters).emptyStateOverlay).isSameAs(findEmptyStateHost(splitters))
+  }
+
+  @Test
+  fun componentProviderSuppressesEmptyTextHints(@TestDisposable disposable: Disposable) {
     resetShortcuts(PROMOTED_ACTION_ID, listOf(doubleCtrlShortcut))
     resetShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE, listOf(doubleShiftShortcut))
     registerPromotedActionProvider(disposable)
@@ -172,12 +233,8 @@ internal class EditorEmptyTextPainterTest {
     splitters.updateEmptyStateComponent()
     waitForEmptyStateComponentCreation(splitters)
 
-    val promotedLine = PROMOTED_ACTION_TEXT + " <shortcut>" + KeymapUtil.getShortcutText(doubleCtrlShortcut) + "</shortcut>"
-    val searchEverywhereLine = IdeBundle.message("empty.text.search.everywhere") +
-                               " <shortcut>" + KeymapUtil.getShortcutText(doubleShiftShortcut) + "</shortcut>"
     assertThat(findEmptyStateComponent(splitters)).isNotNull()
-    assertThat(RecordingEditorEmptyTextPainter().appendAdvertisedActionLines())
-      .startsWith(promotedLine, searchEverywhereLine)
+    assertThat(RecordingEditorEmptyTextPainter().paintEmptyTextLines(splitters)).isEmpty()
   }
 
   @Test
@@ -226,6 +283,58 @@ internal class EditorEmptyTextPainterTest {
 
     assertThat(providerCalls).hasValue(0)
     assertThat(findEmptyStateComponent(splitters)).isNull()
+  }
+
+  @Test
+  fun componentProviderIsNotInvokedWhileSavedStateRestoreIsPending(@TestDisposable disposable: Disposable) {
+    val providerCalls = AtomicInteger()
+    ExtensionTestUtil.maskExtensions(EditorEmptyStateComponentProvider.EP_NAME, listOf(object : EditorEmptyStateComponentProvider {
+      override suspend fun createComponent(splitters: EditorsSplitters): JComponent {
+        providerCalls.incrementAndGet()
+        return JPanel()
+      }
+    }), disposable)
+
+    val splitters = manager.mainSplitters
+    manager.closeAllFiles()
+    splitters.readExternal(splitterStateElementWithFile())
+    splitters.enableRichEmptyStateComponents()
+    splitters.updateEmptyStateComponent()
+    waitForEmptyStateComponentCreation(splitters)
+
+    assertThat(providerCalls).hasValue(0)
+    assertThat(findEmptyStateComponent(splitters)).isNull()
+    assertThat(RecordingEditorEmptyTextPainter().paintEmptyTextLines(splitters)).isEmpty()
+
+    val openFilesJob = splitters.openFilesAsync(requestFocus = false)
+    PlatformTestUtil.waitWhileBusy { !openFilesJob.isCompleted }
+    waitForEmptyStateComponentCreation(splitters)
+  }
+
+  @Test
+  fun componentProviderIsInvokedForEmptySavedState(@TestDisposable disposable: Disposable) {
+    val providerCalls = AtomicInteger()
+    ExtensionTestUtil.maskExtensions(EditorEmptyStateComponentProvider.EP_NAME, listOf(object : EditorEmptyStateComponentProvider {
+      override suspend fun createComponent(splitters: EditorsSplitters): JComponent {
+        providerCalls.incrementAndGet()
+        return JPanel().apply { name = EMPTY_STATE_COMPONENT_NAME }
+      }
+    }), disposable)
+
+    val splitters = manager.mainSplitters
+    manager.closeAllFiles()
+    splitters.setEmptyStateComponentCreationDelayForTests(Duration.ZERO)
+    splitters.readExternal(emptySplitterStateElement())
+    splitters.enableRichEmptyStateComponents()
+    splitters.updateEmptyStateComponent()
+    waitForEmptyStateComponentCreation(splitters)
+
+    assertThat(providerCalls).hasValue(1)
+    assertThat(findEmptyStateComponent(splitters)).isNotNull()
+
+    val openFilesJob = splitters.openFilesAsync(requestFocus = false)
+    PlatformTestUtil.waitWhileBusy { !openFilesJob.isCompleted }
+    waitForEmptyStateComponentCreation(splitters)
   }
 
   @Test
@@ -362,12 +471,37 @@ internal class EditorEmptyTextPainterTest {
     return UIUtil.uiTraverser(splitters).find { it is JComponent && it.name == EMPTY_STATE_COMPONENT_NAME } as? JComponent
   }
 
+  private fun findEmptyStateHost(splitters: EditorsSplitters): JComponent? {
+    val component = findEmptyStateComponent(splitters) ?: return null
+    return component.parent?.parent as? JComponent
+  }
+
+  private fun emptyStateLayout(splitters: EditorsSplitters): EditorsSplittersLayout {
+    return splitters.layout as EditorsSplittersLayout
+  }
+
   private fun waitForEmptyStateComponentCreation(splitters: EditorsSplitters) {
     PlatformTestUtil.waitWhileBusy { splitters.isEmptyStateComponentCreationPending() }
   }
 
   private fun waitForDeferred(deferred: CompletableDeferred<Unit>) {
     PlatformTestUtil.waitWhileBusy { !deferred.isCompleted }
+  }
+
+  private fun emptySplitterStateElement(): Element {
+    return Element("state").addContent(Element("leaf"))
+  }
+
+  private fun splitterStateElementWithFile(): Element {
+    val file = Files.createTempFile(tempPath, "empty-state", ".txt")
+    val virtualFile = checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file))
+    return Element("state").addContent(
+      Element("leaf").addContent(
+        Element("file").addContent(
+          Element(HistoryEntry.TAG).setAttribute(HistoryEntry.FILE_ATTRIBUTE, virtualFile.url),
+        ),
+      ),
+    )
   }
 
   private fun enableRichEmptyStateComponentsWithoutDelay(splitters: EditorsSplitters) {
@@ -405,6 +539,18 @@ internal class EditorEmptyTextPainterTest {
     fun appendPromotedActionLines(): List<String> {
       advertiseActions(JPanel(), createTextPainter())
       return lines.filter { it.startsWith(PROMOTED_ACTION_TEXT) }
+    }
+
+    fun paintEmptyTextLines(splitters: JComponent): List<String> {
+      val image = BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB)
+      val graphics = image.createGraphics()
+      try {
+        doPaintEmptyText(splitters, graphics)
+      }
+      finally {
+        graphics.dispose()
+      }
+      return lines
     }
 
     override fun appendLine(painter: UIUtil.TextPainter, line: String) {
