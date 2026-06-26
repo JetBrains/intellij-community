@@ -25,6 +25,7 @@ import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.VetoableProjectManagerListener
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.NonModalWindowWrapper
 import com.intellij.openapi.ui.OnePixelDivider
@@ -299,15 +300,15 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
       return UnsavedChangesResult.NOT_MODIFIED
     }
 
-    return when (Messages.showYesNoCancelDialog(
-      activeWindow,
-      message,
+    return when (MessageDialogBuilder.yesNoCancel(
       ApplicationBundle.message("settings.switch.project.unsaved.title"),
-      ApplicationBundle.message("settings.switch.project.button.apply"),
-      ApplicationBundle.message("settings.switch.project.button.dont.save"),
-      CommonBundle.getCancelButtonText(),
-      Messages.getWarningIcon(),
-    )) {
+      message,
+    ).yesText(ApplicationBundle.message("settings.switch.project.button.apply"))
+      .noText(ApplicationBundle.message("settings.switch.project.button.dont.save"))
+      .cancelText(CommonBundle.getCancelButtonText())
+      .asWarning()
+      .invocationPlace("Non-modal settings unsaved changes")
+      .show(parentComponent = activeWindow)) {
       Messages.YES -> {
         if (!applyWithWriteIntent()) return UnsavedChangesResult.APPLY_FAILED
         SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(null, true))

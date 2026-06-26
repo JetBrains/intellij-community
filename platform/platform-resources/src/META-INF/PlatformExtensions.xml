@@ -554,6 +554,7 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <applicationService serviceInterface="com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents"
                         serviceImplementation="com.intellij.internal.statistic.collectors.fus.ui.FeatureUsageUiEventsImpl"/>
     <dialogInvocationPlace id="Open project action"/>
+    <dialogInvocationPlace id="Non-modal settings unsaved changes"/>
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginInfoProvider"
                         serviceImplementation="com.intellij.ide.plugins.marketplace.MarketplaceRequests"
                         preload="true"/>
