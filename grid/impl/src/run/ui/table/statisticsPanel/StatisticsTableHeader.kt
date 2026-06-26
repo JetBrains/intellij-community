@@ -27,6 +27,11 @@ abstract class StatisticsTableHeader(statisticsPanelMode: StatisticsPanelMode = 
 
   override var table: JTable? = null
 
+  fun updateStatisticsTableHeader() {
+    val currentMode = statisticsPanelMode
+    statisticsPanelMode = currentMode
+  }
+
   override fun detachController() {
     columnsController?.detach()
   }
