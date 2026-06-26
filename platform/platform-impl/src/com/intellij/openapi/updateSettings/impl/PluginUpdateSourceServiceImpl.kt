@@ -16,6 +16,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
+import kotlinx.serialization.Serializable
 import org.apache.http.client.utils.URIBuilder
 import org.jetbrains.annotations.NonNls
 
@@ -96,6 +97,7 @@ internal class PluginUpdateSourceServiceImpl : PluginUpdateSourceService,
   )
 }
 
+@Serializable
 @Tag("updateSource")
 internal data class Repository(
   @JvmField @Attribute("host") val hostToSerialize: @NlsSafe String,
