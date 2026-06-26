@@ -5,7 +5,6 @@ import com.intellij.ide.AboutPopupDescriptionProvider
 import com.intellij.ide.gdpr.Consent
 import com.intellij.ide.gdpr.ConsentOptions
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
@@ -33,9 +32,7 @@ object ExceptionAutoReportUtil {
 
   // may be queried before Application started
   val autoReportIsForbiddenForProduct: Boolean
-    get() = !ApplicationInfoImpl.getShadowInstance().isVendorJetBrains
-            || AppMode.isRemoteDevHost() // we handle everything on client
-            || AppMode.isHeadless()
+    get() = !ApplicationInfoImpl.getShadowInstance().isVendorJetBrains || AppMode.isHeadless()
 
   suspend fun isAutoReportVisible(): Boolean {
     return !autoReportIsForbiddenForProduct && RegistryManager.getInstanceAsync().`is`("ea.auto.report.feature.visible")
@@ -49,11 +46,6 @@ object ExceptionAutoReportUtil {
   @JvmStatic
   val isAutoReportForced: Boolean
     get() = getForcedAutoReportLevel() != ForcedReportLevel.NONE
-
-  // Remote Dev hosts do not run the regular auto-reporting pipeline, but they still need to produce forced backend reports
-  // that are forwarded to the frontend auto-reporter.
-  val isAutoReportForcedOnRemoteDevHost: Boolean
-    get() = AppMode.isRemoteDevHost() && isAutoReportForced
 
   suspend fun isAutoReportEnabled(): Boolean {
     if (!isAutoReportVisible()) return false
@@ -151,8 +143,10 @@ object ExceptionAutoReportUtil {
       return null
     }
 
-    val pluginId = PluginUtil.getInstance().findPluginId(throwable)
-    val pluginInfo = ErrorMessageClustering.getInstance().createPluginInfo(pluginId)
+    val errorMessageClustering = ErrorMessageClustering.getInstance()
+
+    val pluginId = errorMessageClustering.analyzeCause(message)
+    val pluginInfo = errorMessageClustering.createPluginInfo(pluginId)
     val submitter = DefaultIdeaErrorLogger.findSubmitterByPluginInfo(throwable, pluginInfo)
     val itnReporter = submitter as? ITNReporter ?: return null
 
@@ -214,4 +208,9 @@ internal class ReporterIdLoggerActivity : ProjectActivity {
 
 internal enum class ForcedReportLevel {
   ALL, FREEZES, NONE
+}
+
+@ApiStatus.Internal
+interface ExceptionAutoReportService {
+  fun getResendAttempts(): Int
 }

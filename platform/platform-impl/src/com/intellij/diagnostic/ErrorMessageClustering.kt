@@ -39,7 +39,7 @@ internal class ErrorMessageClustering(private val coroutineScope: CoroutineScope
     return ErrorMessageCluster(messages, pluginId, plugin, submitter)
   }
 
-  private fun analyzeCause(first: AbstractMessage): PluginId? {
+  internal fun analyzeCause(first: AbstractMessage): PluginId? {
     if (first.throwable.isInstance<Freeze>()) {
       return IdeaFreezeReporter.analyzeFreeze(first)
     }
