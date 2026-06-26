@@ -6,6 +6,7 @@ import com.intellij.platform.ai.agent.codex.common.CodexAppServerNotification
 import com.intellij.platform.ai.agent.codex.common.CodexAppServerNotificationKind
 import com.intellij.platform.ai.agent.codex.common.CodexAppServerStartedThread
 import com.intellij.platform.ai.agent.codex.common.CodexThreadActivitySnapshot
+import com.intellij.platform.ai.agent.codex.common.CodexThreadSourceKind
 import com.intellij.platform.ai.agent.codex.common.CodexThreadStatusKind
 import com.intellij.platform.ai.agent.codex.common.normalizeRootPath
 import com.intellij.platform.ai.agent.codex.sessions.backend.CodexRefreshActivityHint
@@ -634,13 +635,33 @@ private fun buildRebindCandidate(
 }
 
 private fun CodexThreadActivitySnapshot.toRefreshActivityHint(verifiedFresh: Boolean = false): CodexRefreshActivityHint {
+  val activity = toCodexSessionActivity().toAgentThreadActivity()
+  val summaryActivity = if (isSubAgentSnapshot()) null else activity
   return CodexRefreshActivityHint(
-    activity = toCodexSessionActivity().toAgentThreadActivity(),
+    activity = activity,
     updatedAt = updatedAt,
     responseRequired = activeFlags.isResponseRequired() || hasPendingPlan,
     verifiedFresh = verifiedFresh,
-    hasSummaryActivityHint = false,
+    summaryActivity = summaryActivity,
+    hasSummaryActivityHint = true,
   )
+}
+
+private fun CodexThreadActivitySnapshot.isSubAgentSnapshot(): Boolean {
+  return when (sourceKind) {
+    CodexThreadSourceKind.SUB_AGENT,
+    CodexThreadSourceKind.SUB_AGENT_REVIEW,
+    CodexThreadSourceKind.SUB_AGENT_COMPACT,
+    CodexThreadSourceKind.SUB_AGENT_THREAD_SPAWN,
+    CodexThreadSourceKind.SUB_AGENT_OTHER -> true
+
+    CodexThreadSourceKind.CLI,
+    CodexThreadSourceKind.VSCODE,
+    CodexThreadSourceKind.EXEC,
+    CodexThreadSourceKind.APP_SERVER -> false
+
+    CodexThreadSourceKind.UNKNOWN -> !parentThreadId.isNullOrBlank()
+  }
 }
 
 private fun CodexAppServerNotification.toRefreshActivityHintOrNull(receivedAtMs: Long): CodexRefreshActivityHint? {

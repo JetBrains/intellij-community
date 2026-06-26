@@ -61,7 +61,9 @@ Agent Chat tabs are protocol-backed editor tabs around terminal-backed agent ses
 - Plain Enter with pending context sends the current terminal prompt plus one `### IDE Context` envelope, then clears pending context only after the terminal accepts the send. Context over the soft cap requires explicit send-full, auto-trim, or cancel.
   [@test] ../../chat/testSrc/AgentChatOpenTopLevelDispatchTest.kt
 
-- Concrete tab title/icon presentation resolves live data from shared thread presentation; sub-agent tabs keep their own stored title while inheriting parent activity.
+- Concrete tab title/icon presentation resolves live data from shared thread presentation. Tab icon badges are chrome signals and
+  use shared chrome activity, while tab row/session activity remains separate. Sub-agent tabs keep their own stored title while inheriting
+  parent chrome activity.
   [@test] ../../chat/testSrc/AgentChatFileEditorProviderTest.kt
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
 

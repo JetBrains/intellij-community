@@ -2,6 +2,8 @@
 package com.intellij.agent.workbench.ui
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
+import com.intellij.platform.ai.agent.core.chromePresentationActivity
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.common.withAgentThreadActivityBadge
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
@@ -45,6 +47,11 @@ fun agentSessionThreadStatusIcon(provider: AgentSessionProvider?, activity: Agen
   return THREAD_STATUS_ICON_CACHE.computeIfAbsent(key) {
     withAgentThreadActivityBadge(resolveAgentSessionProviderIcon(provider, useMonochrome) ?: TOOL_WINDOW_MESSAGES_FALLBACK_ICON, activity)
   }
+}
+
+@ApiStatus.Internal
+fun agentSessionThreadStatusIcon(provider: AgentSessionProvider?, activityReport: AgentThreadActivityReport): Icon {
+  return agentSessionThreadStatusIcon(provider, activityReport.chromePresentationActivity())
 }
 
 @ApiStatus.Internal

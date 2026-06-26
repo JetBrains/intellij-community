@@ -134,6 +134,8 @@ class CodexThreadActivityProjection {
     updatedAt: Long,
     statusKind: CodexThreadStatusKind,
     activeFlags: List<CodexThreadActiveFlag> = emptyList(),
+    sourceKind: CodexThreadSourceKind = CodexThreadSourceKind.UNKNOWN,
+    parentThreadId: String? = null,
     hasTurnActivity: Boolean = false,
   ): CodexThreadActivitySnapshot {
     val resolvedActiveFlags = LinkedHashSet<CodexThreadActiveFlag>(activeFlags.size + 2)
@@ -150,6 +152,8 @@ class CodexThreadActivityProjection {
       updatedAt = updatedAt,
       statusKind = statusKind,
       activeFlags = ArrayList(resolvedActiveFlags),
+      sourceKind = sourceKind,
+      parentThreadId = parentThreadId,
       hasUnreadAssistantMessage = latestAssistantMessageOrder > latestUserMessageOrder,
       hasPendingPlan = pendingPlan != null && pendingPlan!!.order > latestUserMessageOrder,
       isReviewing = reviewing,

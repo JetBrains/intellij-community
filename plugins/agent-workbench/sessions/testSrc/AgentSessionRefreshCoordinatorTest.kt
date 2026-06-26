@@ -2594,6 +2594,164 @@ class AgentSessionRefreshCoordinatorTest {
   }
 
   @Test
+  fun providerUpdateActivityHintsUpdateFoldedSubAgentBeforeRefreshGateOpens() = runBlocking(Dispatchers.Default) {
+    val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
+    val gateActive = AtomicBoolean(false)
+    val closedRefreshInvocations = AtomicInteger(0)
+    val presentationModel = AgentSessionThreadPresentationModel()
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.from("codex"),
+      supportsUpdates = true,
+      updateEvents = updates,
+      listFromClosedProject = { path ->
+        if (path == PROJECT_PATH) {
+          closedRefreshInvocations.incrementAndGet()
+        }
+        emptyList()
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { gateActive.get() },
+      presentationModel = presentationModel,
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(
+              thread(
+                id = "codex-parent",
+                updatedAt = 100L,
+                provider = AgentSessionProvider.from("codex"),
+                activity = AgentThreadActivity.READY,
+                subAgents = listOf(
+                  AgentSubAgent(
+                    id = "codex-child",
+                    name = "Child",
+                    activity = AgentThreadActivity.READY,
+                  ),
+                ),
+              )
+            ),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+      updates.tryEmit(
+        hintsChangedEvent(
+          scopedPaths = setOf(PROJECT_PATH),
+          activityUpdatesByThreadId = mapOf(
+            "codex-child" to activityUpdate(
+              AgentThreadActivity.PROCESSING,
+              chromeActivity = null,
+              updatedAt = 200L,
+            ),
+          ),
+        )
+      )
+
+      waitForCondition {
+        val parent = stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
+                       ?.threads
+                       ?.firstOrNull { it.id == "codex-parent" }
+                     ?: return@waitForCondition false
+        parent.activity == AgentThreadActivity.READY &&
+        parent.summaryActivity == AgentThreadActivity.READY &&
+        parent.subAgents.singleOrNull()?.activity == AgentThreadActivity.PROCESSING
+      }
+
+      assertThat(presentationModel.snapshot().keys.map { key -> key.threadId }).doesNotContain("codex-child")
+      assertThat(closedRefreshInvocations.get()).isEqualTo(0)
+    }
+  }
+
+  @Test
+  fun providerRefreshHintsIncludeFoldedSubAgentIdsAndUpdateChildActivity() = runBlocking(Dispatchers.Default) {
+    val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
+    val capturedSeedsByPath = LinkedHashMap<String, Set<AgentSessionRefreshThreadSeed>>()
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.from("codex"),
+      supportsUpdates = true,
+      updateEvents = updates,
+      prefetchRefreshThreadSeedsProvider = { paths, refreshThreadSeedsByPath ->
+        capturedSeedsByPath.clear()
+        capturedSeedsByPath.putAll(refreshThreadSeedsByPath)
+        if (PROJECT_PATH !in paths) {
+          emptyMap()
+        }
+        else {
+          mapOf(
+            PROJECT_PATH to AgentSessionRefreshHints(
+              activityUpdatesByThreadId = mapOf(
+                "codex-child" to activityUpdate(AgentThreadActivity.NEEDS_INPUT),
+              )
+            )
+          )
+        }
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(
+              thread(
+                id = "codex-parent",
+                updatedAt = 100L,
+                provider = AgentSessionProvider.from("codex"),
+                activity = AgentThreadActivity.READY,
+                subAgents = listOf(
+                  AgentSubAgent(
+                    id = "codex-child",
+                    name = "Child",
+                    activity = AgentThreadActivity.READY,
+                  ),
+                ),
+              )
+            ),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+      updates.tryEmit(
+        hintsChangedEvent(
+          threadIds = setOf("codex-child"),
+        )
+      )
+
+      waitForCondition {
+        val parent = stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
+                       ?.threads
+                       ?.firstOrNull { it.id == "codex-parent" }
+                     ?: return@waitForCondition false
+        parent.subAgents.singleOrNull()?.activity == AgentThreadActivity.NEEDS_INPUT
+      }
+
+      assertThat(capturedSeedsByPath.getValue(PROJECT_PATH).map { seed -> seed.threadId })
+        .containsExactly("codex-parent", "codex-child")
+    }
+  }
+
+  @Test
   fun providerUpdateSummaryOnlyActivityHintsUpdateLoadedThreadBeforeRefreshGateOpens() = runBlocking(Dispatchers.Default) {
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
     val gateActive = AtomicBoolean(false)

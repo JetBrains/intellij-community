@@ -2,6 +2,7 @@
 // @spec community/plugins/agent-workbench/spec/chat/agent-chat-editor.spec.md
 package com.intellij.agent.workbench.chat
 
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationChangeSet
 import com.intellij.openapi.application.EDT
 import kotlinx.coroutines.Dispatchers
@@ -15,8 +16,8 @@ internal object AgentChatOpenTabPresentationInvalidator {
    * each repaint has a fast source for its title/activity and the next editor-state save
    * keeps the latest presentation available after IDE restart.
    * For sub-agent tabs the resolved title is still the sub-agent's own label (per
-   * [resolveAgentChatThreadPresentation]); only the activity is inherited from the
-   * shared thread presentation. Tabs whose resolved state is unchanged are skipped.
+   * [resolveAgentChatThreadPresentation]); the activity report is inherited from the
+   * shared thread presentation.
    */
   suspend fun invalidate(changeSet: AgentSessionThreadPresentationChangeSet): Int {
     if (changeSet.isEmpty) return 0
@@ -32,15 +33,21 @@ internal object AgentChatOpenTabPresentationInvalidator {
 
         val resolvedPresentation = resolveAgentChatThreadPresentation(chatFile)
         val titleChanged = chatFile.updateBootstrapThreadTitle(resolvedPresentation.title)
-        val activityChanged = chatFile.updateBootstrapThreadActivity(resolvedPresentation.activity)
-        val needsRepaint = titleChanged || activityChanged || key in changeSet.removedKeys
-        if (!needsRepaint) continue
+        val activityReport = if (key in changeSet.removedKeys) {
+          AgentThreadActivityReport(chatFile.bootstrapThreadActivity)
+        }
+        else {
+          resolvedPresentation.activityReport
+        }
+        val activityReportChanged = chatFile.updateBootstrapThreadActivityReport(activityReport)
+        if (!titleChanged && !activityReportChanged && key !in changeSet.removedKeys) continue
 
         val managers = openTabsSnapshot.managersFor(chatFile)
         if (managers.isEmpty()) continue
 
         updatedFiles++
         for (manager in managers) {
+          // Chrome activity can change while title and row activity remain unchanged.
           manager.updateFilePresentation(chatFile)
         }
       }

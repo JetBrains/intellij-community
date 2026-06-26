@@ -742,30 +742,41 @@ private fun applyThreadPresentationHintsForPath(
     if (thread.provider != provider) {
       return@map thread
     }
-    val presentationUpdate = presentationUpdatesByThreadId[thread.id] ?: return@map thread
-    val resolvedUpdate = resolveAgentThreadPresentationUpdate(
-      thread = thread,
-      presentationUpdate = presentationUpdate,
+    var updatedThread = thread
+    val presentationUpdate = presentationUpdatesByThreadId[thread.id]
+    if (presentationUpdate != null) {
+      val resolvedUpdate = resolveAgentThreadPresentationUpdate(
+        thread = thread,
+        presentationUpdate = presentationUpdate,
+      )
+      if (resolvedUpdate.title != thread.title || resolvedUpdate.activityReport != thread.activityReport || resolvedUpdate.updatedAt != thread.updatedAt) {
+        LOG.debug {
+          "Applying ${provider.value} presentation hint path=$path threadId=${thread.id} " +
+          "titleChanged=${resolvedUpdate.title != thread.title} " +
+          "activity=${thread.activity}->${resolvedUpdate.activityReport.rowActivity} " +
+          "summaryActivity=${thread.summaryActivity}->${resolvedUpdate.activityReport.chromeActivity} " +
+          "updatedAt=${thread.updatedAt}->${resolvedUpdate.updatedAt}"
+        }
+        presentationUpdates += AgentSessionThreadPresentationPatchUpdate(
+          path = path,
+          threadId = thread.id,
+          title = resolvedUpdate.title,
+          activityReport = resolvedUpdate.activityReport,
+          updatedAt = resolvedUpdate.updatedAt,
+        )
+        updatedThread = thread.copy(title = resolvedUpdate.title, activityReport = resolvedUpdate.activityReport, updatedAt = resolvedUpdate.updatedAt)
+      }
+    }
+
+    updatedThread = applyAgentSubAgentPresentationUpdates(
+      thread = updatedThread,
+      presentationUpdatesByThreadId = presentationUpdatesByThreadId,
     )
-    if (resolvedUpdate.title == thread.title && resolvedUpdate.activityReport == thread.activityReport && resolvedUpdate.updatedAt == thread.updatedAt) {
+    if (updatedThread == thread) {
       return@map thread
     }
-    LOG.debug {
-      "Applying ${provider.value} presentation hint path=$path threadId=${thread.id} " +
-      "titleChanged=${resolvedUpdate.title != thread.title} " +
-      "activity=${thread.activity}->${resolvedUpdate.activityReport.rowActivity} " +
-      "summaryActivity=${thread.summaryActivity}->${resolvedUpdate.activityReport.chromeActivity} " +
-      "updatedAt=${thread.updatedAt}->${resolvedUpdate.updatedAt}"
-    }
-    presentationUpdates += AgentSessionThreadPresentationPatchUpdate(
-      path = path,
-      threadId = thread.id,
-      title = resolvedUpdate.title,
-      activityReport = resolvedUpdate.activityReport,
-      updatedAt = resolvedUpdate.updatedAt,
-    )
     changed = true
-    thread.copy(title = resolvedUpdate.title, activityReport = resolvedUpdate.activityReport, updatedAt = resolvedUpdate.updatedAt)
+    updatedThread
   }
 
   if (!changed) {

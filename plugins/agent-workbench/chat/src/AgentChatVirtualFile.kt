@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryChannel
@@ -88,8 +89,11 @@ internal class AgentChatVirtualFile internal constructor(
   var bootstrapThreadTitle: String = resolveThreadTitle("")
     private set
 
-  var bootstrapThreadActivity: AgentThreadActivity = AgentThreadActivity.READY
+  var bootstrapThreadActivityReport: AgentThreadActivityReport = AgentThreadActivityReport.READY
     private set
+
+  val bootstrapThreadActivity: AgentThreadActivity
+    get() = bootstrapThreadActivityReport.rowActivity
 
   @get:NlsSafe
   val threadTitle: String
@@ -211,17 +215,21 @@ internal class AgentChatVirtualFile internal constructor(
   }
 
   fun updateBootstrapThreadActivity(threadActivity: AgentThreadActivity): Boolean {
-    if (bootstrapThreadActivity == threadActivity) {
+    return updateBootstrapThreadActivityReport(AgentThreadActivityReport(threadActivity))
+  }
+
+  fun updateBootstrapThreadActivityReport(activityReport: AgentThreadActivityReport): Boolean {
+    if (bootstrapThreadActivityReport == activityReport) {
       LOG.debug {
-        "Skipped chat bootstrap activity update(identity=$threadIdentity, subAgentId=$subAgentId): unchanged activity=$threadActivity"
+        "Skipped chat bootstrap activity update(identity=$threadIdentity, subAgentId=$subAgentId): unchanged activity=$activityReport"
       }
       return false
     }
 
-    val oldActivity = bootstrapThreadActivity
-    bootstrapThreadActivity = threadActivity
+    val oldActivity = bootstrapThreadActivityReport
+    bootstrapThreadActivityReport = activityReport
     LOG.debug {
-      "Updated chat bootstrap activity(identity=$threadIdentity, subAgentId=$subAgentId): oldActivity=$oldActivity newActivity=$threadActivity"
+      "Updated chat bootstrap activity(identity=$threadIdentity, subAgentId=$subAgentId): oldActivity=$oldActivity newActivity=$activityReport"
     }
     return true
   }
@@ -545,11 +553,25 @@ internal class AgentChatVirtualFile internal constructor(
     threadTitle: String,
     threadActivity: AgentThreadActivity,
   ): Boolean {
+    return rebindPendingThread(
+      threadIdentity = threadIdentity,
+      threadId = threadId,
+      threadTitle = threadTitle,
+      threadActivityReport = AgentThreadActivityReport(threadActivity),
+    )
+  }
+
+  fun rebindPendingThread(
+    threadIdentity: String,
+    threadId: String,
+    threadTitle: String,
+    threadActivityReport: AgentThreadActivityReport,
+  ): Boolean {
     return rebindThread(
       threadIdentity = threadIdentity,
       threadId = threadId,
       threadTitle = threadTitle,
-      threadActivity = threadActivity,
+      threadActivityReport = threadActivityReport,
       clearPendingMetadata = true,
     )
   }
@@ -560,11 +582,25 @@ internal class AgentChatVirtualFile internal constructor(
     threadTitle: String,
     threadActivity: AgentThreadActivity,
   ): Boolean {
+    return rebindConcreteThread(
+      threadIdentity = threadIdentity,
+      threadId = threadId,
+      threadTitle = threadTitle,
+      threadActivityReport = AgentThreadActivityReport(threadActivity),
+    )
+  }
+
+  fun rebindConcreteThread(
+    threadIdentity: String,
+    threadId: String,
+    threadTitle: String,
+    threadActivityReport: AgentThreadActivityReport,
+  ): Boolean {
     return !isPendingThread && newThreadRebindRequestedAtMs != null && rebindThread(
       threadIdentity = threadIdentity,
       threadId = threadId,
       threadTitle = threadTitle,
-      threadActivity = threadActivity,
+      threadActivityReport = threadActivityReport,
       clearPendingMetadata = false,
     )
   }
@@ -573,7 +609,7 @@ internal class AgentChatVirtualFile internal constructor(
     threadIdentity: String,
     threadId: String,
     threadTitle: String,
-    threadActivity: AgentThreadActivity,
+    threadActivityReport: AgentThreadActivityReport,
     clearPendingMetadata: Boolean,
   ): Boolean {
     var changed = false
@@ -589,7 +625,7 @@ internal class AgentChatVirtualFile internal constructor(
     if (updateBootstrapThreadTitle(threadTitle)) {
       changed = true
     }
-    if (updateBootstrapThreadActivity(threadActivity)) {
+    if (updateBootstrapThreadActivityReport(threadActivityReport)) {
       changed = true
     }
     if (

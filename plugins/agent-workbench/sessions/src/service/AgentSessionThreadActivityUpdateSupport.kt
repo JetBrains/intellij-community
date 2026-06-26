@@ -90,3 +90,25 @@ internal fun AgentSessionRefreshHints.resolvePresentationUpdatesByThreadId(): Ma
   }
   return merged
 }
+
+internal fun applyAgentSubAgentPresentationUpdates(
+  thread: AgentSessionThread,
+  presentationUpdatesByThreadId: Map<String, AgentSessionThreadPresentationUpdate>,
+): AgentSessionThread {
+  if (thread.subAgents.isEmpty() || presentationUpdatesByThreadId.isEmpty()) {
+    return thread
+  }
+
+  var changed = false
+  val subAgents = thread.subAgents.map { subAgent ->
+    val activity = presentationUpdatesByThreadId[subAgent.id]?.activityReport?.rowActivity ?: return@map subAgent
+    if (subAgent.activity == activity) {
+      subAgent
+    }
+    else {
+      changed = true
+      subAgent.copy(activity = activity)
+    }
+  }
+  return if (changed) thread.copy(subAgents = subAgents) else thread
+}
