@@ -160,9 +160,12 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
 private class MoveChangesHandler(val project: Project) {
   private val changeListManager = ChangeListManager.getInstance(project)
 
-  val unversionedFiles = mutableListOf<VirtualFile>()
-  val changedFiles = mutableListOf<VirtualFile>()
-  val changes = mutableListOf<Change>()
+  val unversionedFiles: List<VirtualFile>
+    field = mutableListOf()
+  val changedFiles: List<VirtualFile>
+    field = mutableListOf()
+  val changes: List<Change>
+    field = mutableListOf()
 
   val isEmpty get() = changes.isEmpty() && unversionedFiles.isEmpty()
 
