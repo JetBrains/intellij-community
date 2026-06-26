@@ -842,22 +842,16 @@ private fun readInclude(
       PluginXmlConst.INCLUDE_HREF_ATTR -> path = getNullifiedAttributeValue(reader, i)
       PluginXmlConst.INCLUDE_XPOINTER_ATTR -> pointer = reader.getAttributeValue(i)?.takeIf { !it.isEmpty() && it != allowedPointer }
       PluginXmlConst.INCLUDE_INCLUDE_IF_ATTR -> {
-        LOG.warn("includeIf attribute support is deprecated and is planned for removal in 26.3 version IJPL-215563 (plugin id=${builder.id}, location=${reader.location})")
+        LOG.warn("includeIf attribute support is disabled and has no effect anymore IJPL-215563 (plugin id=${builder.id}, location=${reader.location})")
         checkConditionalIncludeIsSupported("includeIf", builder)
-        val value = reader.getAttributeValue(i)?.let { System.getProperty(it) }
-        if (value != "true") {
-          reader.skipElement()
-          return
-        }
+        reader.skipElement()
+        return
       }
       PluginXmlConst.INCLUDE_INCLUDE_UNLESS_ATTR -> {
-        LOG.warn("includeUnless attribute support is deprecated and is planned for removal in 26.3 version IJPL-215563 (plugin id=${builder.id}, location=${reader.location})")
+        LOG.warn("includeUnless attribute support is disabled and has no effect anymore IJPL-215563 (plugin id=${builder.id}, location=${reader.location})")
         checkConditionalIncludeIsSupported("includeUnless", builder)
-        val value = reader.getAttributeValue(i)?.let { System.getProperty(it) }
-        if (value == "true") {
-          reader.skipElement()
-          return
-        }
+        reader.skipElement()
+        return
       }
       else -> throw RuntimeException("Unknown attribute ${reader.getAttributeLocalName(i)} (${reader.location})")
     }
