@@ -57,8 +57,8 @@ internal class ReferencedSymbol(val reference: KtReference, val symbol: KaSymbol
     }
 
     context(_: KaSession)
-    fun isResolvedWithImport(): Boolean {
-        if (definitelyNotImported) return false
+    fun needsImportsToResolve(): Boolean {
+        if (definitelyDoesNotNeedImport) return false
 
         val isNotAliased = symbol.name in reference.resolvesByNames
 
@@ -70,7 +70,7 @@ internal class ReferencedSymbol(val reference: KtReference, val symbol: KaSymbol
 
     @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
-    private val definitelyNotImported: Boolean get() = when {
+    private val definitelyDoesNotNeedImport: Boolean get() = when {
         // context sensitive resolve does not require imports
         reference.usesContextSensitiveResolution -> true
 
