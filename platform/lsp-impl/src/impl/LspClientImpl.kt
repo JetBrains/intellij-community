@@ -108,8 +108,7 @@ class LspClientImpl internal constructor(
     get() = if (state == LspServerState.Running) initializeResult?.capabilities else null
 
   internal val textDocumentSyncKind: TextDocumentSyncKind?
-    @Suppress("RemoveExplicitTypeArguments")
-    get() = serverCapabilities?.textDocumentSync?.map<TextDocumentSyncKind?>({ it }, { it.change })
+    get() = serverCapabilities?.textDocumentSync?.map({ it }, { it.change })
 
   internal fun isFileOpened(file: VirtualFile): Boolean = documentSyncManager.isFileOpened(file)
 
