@@ -10,10 +10,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.utils.NameBasedDestructuringForm
-import org.jetbrains.kotlin.idea.codeinsight.utils.buildNameBasedDestructuringText
-import org.jetbrains.kotlin.idea.codeinsight.utils.extractPrimaryParameters
-import org.jetbrains.kotlin.idea.codeinsight.utils.isPositionalDestructuringType
+import org.jetbrains.kotlin.idea.codeinsight.utils.buildFullNameBasedDestructuringFormText
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -49,17 +46,11 @@ internal class ConvertNameBasedDestructuringShortFormToFullInspection : KotlinAp
         return ConvertNameBasedDestructuringShortFormToFullFix(context)
     }
 
-    override fun KaSession.prepareContext(element: KtDestructuringDeclaration): String? {
-        val names = extractPrimaryParameters(element)?.map { it.name.asString() } ?: return null
-        // Exclude stdlib types - they should use brackets [x, y] instead
-        if (element.isPositionalDestructuringType()) return null
-        return element.buildNameBasedDestructuringText(
-            NameBasedDestructuringForm(names, positionBased = false, useFullForm = true)
-        )
-    }
+    override fun KaSession.prepareContext(element: KtDestructuringDeclaration): String? =
+        buildFullNameBasedDestructuringFormText(element)
 }
 
-internal class ConvertNameBasedDestructuringShortFormToFullFix(private val newDestructuringText: String) : KotlinModCommandQuickFix<KtDestructuringDeclaration>() {
+internal class ConvertNameBasedDestructuringShortFormToFullFix(private val destructuringText: String) : KotlinModCommandQuickFix<KtDestructuringDeclaration>() {
 
     override fun getFamilyName(): String = KotlinBundle.message("convert.to.full.name.based.form.destructing")
 
@@ -70,7 +61,7 @@ internal class ConvertNameBasedDestructuringShortFormToFullFix(private val newDe
     ) {
         // Create the new destructuring declaration and replace the entire declaration
         val psiFactory = KtPsiFactory(project)
-        val newDestructuringDeclaration = psiFactory.createDestructuringDeclaration(newDestructuringText)
+        val newDestructuringDeclaration = psiFactory.createDestructuringDeclaration(destructuringText)
         element.replace(newDestructuringDeclaration)
     }
 }
