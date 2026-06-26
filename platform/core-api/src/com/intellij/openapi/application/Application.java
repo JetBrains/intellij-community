@@ -16,7 +16,6 @@ import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.messages.MessageBus;
 import kotlin.coroutines.CoroutineContext;
-import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -386,9 +385,9 @@ public interface Application extends ComponentManager {
   boolean isReadAccessAllowed();
 
   /**
-   * Checks if the current thread is the event dispatch thread and has IW lock acquired.
+   * Checks if the current thread is the event dispatch thread.
    *
-   * @return {@code true} if the current thread is EDT with IW lock, {@code false} otherwise.
+   * @return {@code true} if the current thread is EDT, {@code false} otherwise.
    * @see #isWriteIntentLockAcquired()
    */
   @Contract(pure = true)
