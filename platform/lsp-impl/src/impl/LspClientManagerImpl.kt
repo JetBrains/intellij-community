@@ -40,7 +40,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 private val logger = logger<LspClientManagerImpl>()
-private const val MAX_LSP_SERVERS = 10
+private const val MAX_LSP_CLIENTS = 10 //
 
 /**
  * Project service for managing LSP servers for the current project
@@ -150,7 +150,7 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
           return@readAndEdtWriteAction value(Unit)
         }
 
-        if (lspClients.size >= MAX_LSP_SERVERS) {
+        if (lspClients.size >= MAX_LSP_CLIENTS) {
           logger.error("${lspClients.size} LSP servers are already running and one more wants to start." +
                        "To save system resources, this request will be ignored: $descriptor")
           return@readAndEdtWriteAction value(Unit)
