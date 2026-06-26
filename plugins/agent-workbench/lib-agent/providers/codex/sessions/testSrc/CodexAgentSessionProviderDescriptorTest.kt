@@ -27,16 +27,13 @@ import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
-import java.util.concurrent.TimeUnit
 import java.nio.file.Path
+import java.util.concurrent.TimeUnit
 
 @TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
 class CodexAgentSessionProviderDescriptorTest {
-  private val bridge = CodexAgentSessionProviderDescriptor(
-    executableResolver = { CodexCliUtils.CODEX_COMMAND },
-    threadStartupBackend = RecordingThreadStartupBackend(),
-  )
+  private val bridge = testDescriptor()
 
   @Test
   fun buildResumeLaunchSpec(): Unit = runBlocking(Dispatchers.Default) {
@@ -63,6 +60,48 @@ class CodexAgentSessionProviderDescriptorTest {
       .containsExactlyElementsOf(CODEX_BASE_COMMAND)
     assertThat(bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.YOLO).command)
       .containsExactlyElementsOf(CODEX_BASE_COMMAND + "--yolo")
+  }
+
+  @Test
+  fun buildNewSessionLaunchSpecIncludesThemeConfigWhenAvailable(): Unit = runBlocking(Dispatchers.Default) {
+    val descriptor = testDescriptor(themeLaunchConfigResolver = { TEST_THEME_LAUNCH_CONFIG })
+
+    val standard = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+    val yolo = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.YOLO)
+
+    assertThat(standard.command).containsExactlyElementsOf(CODEX_BASE_COMMAND_WITH_THEME)
+    assertThat(yolo.command).containsExactlyElementsOf(CODEX_BASE_COMMAND_WITH_THEME + "--yolo")
+    assertThat(standard.envVariables).isEmpty()
+    assertThat(yolo.envVariables).isEmpty()
+  }
+
+  @Test
+  fun buildResumeLaunchSpecIncludesThemeConfigWhenAvailable(): Unit = runBlocking(Dispatchers.Default) {
+    val descriptor = testDescriptor(themeLaunchConfigResolver = { TEST_THEME_LAUNCH_CONFIG })
+
+    val standard = descriptor.buildResumeLaunchSpec("thread-1")
+    val yolo = descriptor.buildResumeLaunchSpec("thread-1", AgentSessionLaunchMode.YOLO)
+
+    assertThat(standard.command)
+      .containsExactlyElementsOf(
+        CODEX_BASE_COMMAND_WITH_THEME + listOf("resume", "--remote", REMOTE_URL, "thread-1")
+      )
+    assertThat(yolo.command)
+      .containsExactlyElementsOf(
+        CODEX_BASE_COMMAND_WITH_THEME + listOf("--yolo", "resume", "--remote", REMOTE_URL, "thread-1")
+      )
+    assertThat(standard.envVariables).isEmpty()
+    assertThat(yolo.envVariables).isEmpty()
+  }
+
+  @Test
+  fun buildLaunchSpecContinuesWithoutThemeWhenResolverFails(): Unit = runBlocking(Dispatchers.Default) {
+    val descriptor = testDescriptor(themeLaunchConfigResolver = { error("theme generation failed") })
+
+    val launchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+
+    assertThat(launchSpec.command).containsExactlyElementsOf(CODEX_BASE_COMMAND)
+    assertThat(launchSpec.envVariables).isEmpty()
   }
 
   @Test
@@ -178,6 +217,38 @@ class CodexAgentSessionProviderDescriptorTest {
     )
       .containsExactlyElementsOf(
         CODEX_BASE_COMMAND + listOf(
+          "--model",
+          "gpt-5.1-codex",
+          "-c",
+          "model_reasoning_effort=\"high\"",
+          "-c",
+          "plan_mode_reasoning_effort=\"high\"",
+          "--",
+          "Refactor this",
+        )
+      )
+  }
+
+  @Test
+  fun applyGenerationSettingsInsertsArgsBeforePromptSeparatorWhenThemeConfigPresent(): Unit = runBlocking(Dispatchers.Default) {
+    val descriptor = testDescriptor(themeLaunchConfigResolver = { TEST_THEME_LAUNCH_CONFIG })
+    val baseLaunchSpec = checkNotNull(descriptor.buildLaunchSpecWithInitialMessage(
+      baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD),
+      initialMessagePlan = AgentInitialMessagePlan(message = "Refactor this"),
+    ))
+
+    assertThat(
+      descriptor.applyGenerationSettings(
+        baseLaunchSpec,
+        AgentPromptGenerationSettings(
+          modelId = "gpt-5.1-codex",
+          reasoningEffort = AgentPromptReasoningEffort.HIGH,
+        ),
+        PLAN_INITIAL_MESSAGE_PLAN,
+      ).command
+    )
+      .containsExactlyElementsOf(
+        CODEX_BASE_COMMAND_WITH_THEME + listOf(
           "--model",
           "gpt-5.1-codex",
           "-c",
@@ -315,6 +386,7 @@ class CodexAgentSessionProviderDescriptorTest {
             renamedName = name
           }
         },
+        themeLaunchConfigResolver = { null },
       )
 
       assertThat(descriptor.archiveThread(path = "/tmp/project", threadId = "thread-1")).isTrue()
@@ -611,6 +683,16 @@ private fun messageFor(bridge: CodexAgentSessionProviderDescriptor, request: Age
   return checkNotNull(bridge.buildInitialMessagePlan(request).message)
 }
 
+private fun testDescriptor(
+  themeLaunchConfigResolver: () -> CodexThemeLaunchConfig? = { null },
+): CodexAgentSessionProviderDescriptor {
+  return CodexAgentSessionProviderDescriptor(
+    executableResolver = { CodexCliUtils.CODEX_COMMAND },
+    threadStartupBackend = RecordingThreadStartupBackend(),
+    themeLaunchConfigResolver = themeLaunchConfigResolver,
+  )
+}
+
 private val STANDARD_INITIAL_MESSAGE_PLAN: AgentInitialMessagePlan = AgentInitialMessagePlan(message = "Refactor this")
 
 private val PLAN_INITIAL_MESSAGE_PLAN: AgentInitialMessagePlan = AgentInitialMessagePlan(
@@ -635,4 +717,14 @@ private val CODEX_BASE_COMMAND: List<String> = listOf(
   "check_for_update_on_startup=false",
   "-c",
   "tui.terminal_title=[\"thread-id\",\"thread\"]",
+)
+
+private val TEST_THEME_LAUNCH_CONFIG = CodexThemeLaunchConfig(
+  themeFilePath = Path.of("/system/agent-workbench/codex-themes/agent-workbench-idea-1234567890abcdef.tmTheme"),
+  themeConfigValue = "tui.theme=\"/system/agent-workbench/codex-themes/agent-workbench-idea-1234567890abcdef\"",
+)
+
+private val CODEX_BASE_COMMAND_WITH_THEME: List<String> = CODEX_BASE_COMMAND + listOf(
+  "-c",
+  TEST_THEME_LAUNCH_CONFIG.themeConfigValue,
 )

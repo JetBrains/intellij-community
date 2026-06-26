@@ -35,9 +35,13 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTermin
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentThreadRenameAction
 import com.intellij.platform.ai.agent.sessions.core.providers.buildPlanModeInitialMessagePlan
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import java.nio.file.Path
+import java.util.concurrent.CancellationException
 import javax.swing.Icon
+
+private val CODEX_SESSION_PROVIDER_LOG = logger<CodexAgentSessionProviderDescriptor>()
 
 internal class CodexAgentSessionProviderDescriptor(
   override val sessionSource: AgentSessionSource = CodexSessionSource(),
@@ -53,6 +57,7 @@ internal class CodexAgentSessionProviderDescriptor(
    */
   private val executableResolver: suspend () -> String = CodexCliUtils::resolveExecutableOrDefaultViaTerminalResolver,
   private val cliAvailableProbe: suspend () -> Boolean = { CodexCliUtils.findExecutableViaTerminalResolver() != null },
+  private val themeLaunchConfigResolver: () -> CodexThemeLaunchConfig? = CodexThemeSupport.DEFAULT::launchConfigOrNull,
 ) : AgentSessionProviderImplementation {
   override val displayPriority: Int
     get() = 0
@@ -147,12 +152,13 @@ internal class CodexAgentSessionProviderDescriptor(
     launchMode: AgentSessionLaunchMode,
   ): AgentSessionTerminalLaunchSpec {
     val executable = executableResolver()
+    val themeLaunchConfig = resolveThemeLaunchConfigOrNull()
     val remoteUrl = threadStartupBackend.currentRemoteUrl()
     val command = if (launchMode == AgentSessionLaunchMode.YOLO) {
-      buildCodexBaseCommand(executable) + listOf("--yolo", "resume", "--remote", remoteUrl, sessionId)
+      buildCodexBaseCommand(executable, themeLaunchConfig) + listOf("--yolo", "resume", "--remote", remoteUrl, sessionId)
     }
     else {
-      buildCodexBaseCommand(executable) + listOf("resume", "--remote", remoteUrl, sessionId)
+      buildCodexBaseCommand(executable, themeLaunchConfig) + listOf("resume", "--remote", remoteUrl, sessionId)
     }
     return AgentSessionTerminalLaunchSpec(
       command = command,
@@ -161,11 +167,12 @@ internal class CodexAgentSessionProviderDescriptor(
 
   override suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
     val executable = executableResolver()
+    val themeLaunchConfig = resolveThemeLaunchConfigOrNull()
     val command = if (mode == AgentSessionLaunchMode.YOLO) {
-      buildCodexBaseCommand(executable) + "--yolo"
+      buildCodexBaseCommand(executable, themeLaunchConfig) + "--yolo"
     }
     else {
-      buildCodexBaseCommand(executable)
+      buildCodexBaseCommand(executable, themeLaunchConfig)
     }
     return AgentSessionTerminalLaunchSpec(command = command)
   }
@@ -301,6 +308,19 @@ internal class CodexAgentSessionProviderDescriptor(
   override fun isCliMissingError(throwable: Throwable): Boolean {
     return throwable is CodexCliNotFoundException
   }
+
+  private fun resolveThemeLaunchConfigOrNull(): CodexThemeLaunchConfig? {
+    return try {
+      themeLaunchConfigResolver()
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Exception) {
+      CODEX_SESSION_PROVIDER_LOG.warn("Failed to resolve Codex theme launch config", e)
+      null
+    }
+  }
 }
 
 internal interface CodexThreadMutationBackend {
@@ -407,14 +427,19 @@ private fun buildAppServerInitialMessageDispatchPlan(initialMessagePlan: AgentIn
   )
 }
 
-private fun buildCodexBaseCommand(executable: String): List<String> {
-  return listOf(
+private fun buildCodexBaseCommand(executable: String, themeLaunchConfig: CodexThemeLaunchConfig?): List<String> {
+  val command = mutableListOf(
     executable,
     "-c",
     CODEX_AUTO_UPDATE_CONFIG,
     "-c",
     CODEX_TERMINAL_TITLE_CONFIG,
   )
+  themeLaunchConfig?.let { config ->
+    command.add("-c")
+    command.add(config.themeConfigValue)
+  }
+  return command
 }
 
 private fun resolvePlanReasoningEffort(settings: AgentPromptGenerationSettings): String? {
