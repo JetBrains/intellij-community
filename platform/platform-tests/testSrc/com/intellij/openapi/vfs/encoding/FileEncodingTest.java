@@ -42,7 +42,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -400,6 +399,7 @@ public class FileEncodingTest implements TestDialog {
     setText(document, text);
     assertTrue(FileDocumentManagerImpl.isSaveNeeded(document, file));
     FileDocumentManager.getInstance().saveAllDocuments();
+    PlatformTestUtil.flushAllPendingVFSUpdates();
     assertEquals(StandardCharsets.UTF_8, file.getCharset());
   }
 
@@ -455,11 +455,13 @@ public class FileEncodingTest implements TestDialog {
     setText(document, xmlProlog(WINDOWS_1251) + document.getText());
     assertTrue(FileDocumentManagerImpl.isSaveNeeded(document, file));
     FileDocumentManager.getInstance().saveAllDocuments();
+    PlatformTestUtil.flushAllPendingVFSUpdates();
     assertEquals(WINDOWS_1251, file.getCharset());
 
     setText(document, xmlProlog(StandardCharsets.US_ASCII) + "\n<xxx></xxx>");
     assertTrue(FileDocumentManagerImpl.isSaveNeeded(document, file));
     FileDocumentManager.getInstance().saveAllDocuments();
+    PlatformTestUtil.flushAllPendingVFSUpdates();
     assertEquals(StandardCharsets.US_ASCII, file.getCharset());
 
     text = xmlProlog(WINDOWS_1252) + "\n<xxx>\n</xxx>";
@@ -597,6 +599,7 @@ public class FileEncodingTest implements TestDialog {
       });
 
     FileDocumentManager.getInstance().saveAllDocuments();
+    PlatformTestUtil.flushAllPendingVFSUpdates();
     assertTrue(beforeSaving.get());
 
     assertEquals(StandardCharsets.UTF_8, file.getCharset());
@@ -620,6 +623,7 @@ public class FileEncodingTest implements TestDialog {
     assertTrue(FileDocumentManagerImpl.isSaveNeeded(document, file));
 
     FileDocumentManager.getInstance().saveAllDocuments();
+    PlatformTestUtil.flushAllPendingVFSUpdates();
 
     byte[] bytes = Files.readAllBytes(file.toNioPath());
     Charset charset = LoadTextUtil.detectCharsetAndSetBOM(file, bytes, file.getFileType());
@@ -664,6 +668,7 @@ public class FileEncodingTest implements TestDialog {
     setText(document, newContent);
     assertTrue(FileDocumentManagerImpl.isSaveNeeded(document, file));
     FileDocumentManager.getInstance().saveAllDocuments();
+    PlatformTestUtil.flushAllPendingVFSUpdates();
     assertEquals(StandardCharsets.UTF_16BE, file.getCharset());
     assertArrayEquals(CharsetToolkit.UTF16BE_BOM, file.getBOM());
 
@@ -687,6 +692,7 @@ public class FileEncodingTest implements TestDialog {
     Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     assertNotNull(document);
     FileDocumentManager.getInstance().saveAllDocuments();
+    PlatformTestUtil.flushAllPendingVFSUpdates();
     FileType fileType = virtualFile.getFileType();
     assertEquals(FileTypeManager.getInstance().getStdFileType("HTML"), fileType);
     Charset fromType = ((LanguageFileType)fileType).extractCharsetFromFileContent(getProject(), virtualFile, (CharSequence)content);
@@ -744,6 +750,7 @@ public class FileEncodingTest implements TestDialog {
     assertNotSame(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(file, text, bytes, StandardCharsets.US_ASCII));
 
     FileDocumentManager.getInstance().saveAllDocuments();
+    PlatformTestUtil.flushAllPendingVFSUpdates();
     bytes = file.contentsToByteArray();
     result = EncodingUtil.checkCanReload(file, null);
     assertNotNull(result);
@@ -1236,13 +1243,14 @@ public class FileEncodingTest implements TestDialog {
   }
 
   @Test
-  public void testSetMappingMustResetEncodingOfNotYetLoadedFiles() {
+  public void testSetMappingMustResetEncodingOfNotYetLoadedFiles() throws IOException {
     VirtualFile dir = refreshAndFindFile(tempDir.getRootPath());
     ModuleRootModificationUtil.addContentRoot(getModule(), dir);
     VirtualFile file = HeavyPlatformTestCase.createChildData(dir, "my.txt");
     HeavyPlatformTestCase.setFileText(file, "xxx");
     file.setCharset(StandardCharsets.US_ASCII);
     FileDocumentManager.getInstance().saveAllDocuments();
+    PlatformTestUtil.flushAllPendingVFSUpdates();
     UIUtil.dispatchAllInvocationEvents();
 
     assertNull(FileDocumentManager.getInstance().getCachedDocument(file));
@@ -1253,11 +1261,12 @@ public class FileEncodingTest implements TestDialog {
   }
 
   @Test
-  public void testEncodingMappingMustNotContainInvalidFiles() {
+  public void testEncodingMappingMustNotContainInvalidFiles() throws IOException {
     VirtualFile dir = refreshAndFindFile(tempDir.getRootPath());
     VirtualFile root = dir.getParent();
     ModuleRootModificationUtil.addContentRoot(getModule(), dir);
     FileDocumentManager.getInstance().saveAllDocuments();
+    PlatformTestUtil.flushAllPendingVFSUpdates();
     UIUtil.dispatchAllInvocationEvents();
 
     ((EncodingProjectManagerImpl)EncodingProjectManager.getInstance(getProject())).setMapping(Collections.singletonMap(dir, WINDOWS_1251));
