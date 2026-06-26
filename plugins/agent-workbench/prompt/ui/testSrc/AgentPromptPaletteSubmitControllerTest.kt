@@ -18,8 +18,11 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptPaletteInitialPrompt
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.agent.workbench.settings.AgentSessionProviderSettingsService
+import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ai.agent.common.session.isClaudeMenuCommandPrompt
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
@@ -34,13 +37,17 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProvid
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.platform.ai.agent.sessions.core.providers.buildPlanModeInitialMessagePlan
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.EditorTextField
 import com.intellij.util.ui.EmptyIcon
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -77,6 +84,67 @@ class AgentPromptPaletteSubmitControllerTest {
     finally {
       providerSettings.setProviderEnabled(AgentSessionProvider.from("codex"), true)
       availabilityService.clearAvailabilityForTest()
+    }
+  }
+
+  @Test
+  @Suppress("RAW_SCOPE_CREATION")
+  fun successfulSubmitDisposesEditorTextFieldWithModelAccessFromUiDispatcher(): Unit = timeoutRunBlocking {
+    val project = ProjectManager.getInstance().defaultProject
+    val provider = AgentSessionProvider.from("codex")
+    val sessionScope = CoroutineScope(SupervisorJob() + Dispatchers.UI)
+    val editorDisposable = Disposer.newCheckedDisposable("Agent prompt submit success disposal test")
+    val disposed = CompletableDeferred<Unit>()
+    service<AgentSessionProviderSettingsService>().setProviderEnabled(provider, true)
+    project.service<AgentSessionProviderAvailabilityService>().setAvailabilityForTest(mapOf(provider to true))
+    try {
+      val fixture = withContext(Dispatchers.UiWithModelAccess) {
+        val fixture = createFixture(
+          project = project,
+          sessionScope = sessionScope,
+          launcherProvider = {
+            object : AgentPromptLauncherBridge {
+              override suspend fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+                return AgentPromptLaunchResult.SUCCESS
+              }
+
+              override fun resolveWorkingProjectPath(invocationData: AgentPromptInvocationData): String = "/repo"
+            }
+          },
+          currentTargetMode = { PromptTargetMode.NEW_TASK },
+          onSubmitSucceeded = {
+            try {
+              Disposer.dispose(editorDisposable)
+              disposed.complete(Unit)
+            }
+            catch (error: Throwable) {
+              disposed.completeExceptionally(error)
+              throw error
+            }
+          },
+        )
+        fixture.providerSelector.refresh()
+        fixture.providerSelector.selectProvider(provider)
+        fixture.promptArea.setDisposedWith(editorDisposable)
+        fixture.promptArea.getEditor(true)
+        fixture.promptArea.text = "Refactor selected code"
+        fixture.launchState.selectedWorkingProjectPath = "/repo"
+        fixture
+      }
+
+      withContext(Dispatchers.UI) {
+        fixture.controller.submit()
+      }
+      disposed.await()
+    }
+    finally {
+      sessionScope.cancel()
+      project.service<AgentSessionProviderAvailabilityService>().clearAvailabilityForTest()
+      if (!editorDisposable.isDisposed) {
+        withContext(Dispatchers.UiWithModelAccess) {
+          Disposer.dispose(editorDisposable)
+        }
+      }
     }
   }
 
@@ -313,8 +381,8 @@ class AgentPromptPaletteSubmitControllerTest {
       val fixture = createFixture(
         project = project,
         launcherProvider = {
-          object : AgentPromptLauncherBridge {
-            override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+            object : AgentPromptLauncherBridge {
+            override suspend fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
               capturedRequest = request
               return AgentPromptLaunchResult.SUCCESS
             }
@@ -634,6 +702,7 @@ class AgentPromptPaletteSubmitControllerTest {
 
   private fun createFixture(
     project: com.intellij.openapi.project.Project,
+    sessionScope: CoroutineScope = testScope(),
     launcherProvider: () -> AgentPromptLauncherBridge? = { null },
     providersProvider: () -> List<AgentSessionProviderDescriptor> = { listOf(testProviderBridge()) },
     buildVisibleContextEntries: () -> List<ContextEntry> = { emptyList() },
@@ -690,7 +759,7 @@ class AgentPromptPaletteSubmitControllerTest {
       promptArea = promptArea,
       providerSelector = providerSelector,
       existingTaskController = existingTaskController,
-      sessionScope = testScope(),
+      sessionScope = sessionScope,
       launcherProvider = launcherProvider,
       launchState = launchState,
       currentTargetMode = currentTargetMode,
