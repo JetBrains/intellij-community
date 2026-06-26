@@ -348,6 +348,7 @@ f:com.intellij.util.PathUtilRt
 - s:startsWithSeparatorSeparator(java.lang.CharSequence):Z
 - s:suggestFileName(java.lang.String):java.lang.String
 - s:suggestFileName(java.lang.String,Z,Z):java.lang.String
+- s:suggestFileName(java.lang.String,Z,Z,java.nio.charset.Charset):java.lang.String
 e:com.intellij.util.PathUtilRt$Platform
 - java.lang.Enum
 - sf:CURRENT:com.intellij.util.PathUtilRt$Platform
