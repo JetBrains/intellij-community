@@ -58,6 +58,9 @@
     <applicationService
       serviceInterface="com.intellij.platform.eel.EnvironmentVariablesAwaitReporter"
       serviceImplementation="com.intellij.platform.ijent.community.ui.settings.EnvironmentVariablesAwaitReporterImpl"/>
+    <applicationService
+      serviceInterface="com.intellij.platform.ijent.LoginShellEnvVarModeProvider"
+      serviceImplementation="com.intellij.platform.ijent.community.ui.settings.LoginShellEnvVarModeProviderImpl"/>
     <advancedSetting
       id="container.environments.env.var.shell.mode"
       enumClass="com.intellij.platform.ijent.community.ui.settings.LoginShellEnvVarModeProviderImpl$EnvVarShellMode"
