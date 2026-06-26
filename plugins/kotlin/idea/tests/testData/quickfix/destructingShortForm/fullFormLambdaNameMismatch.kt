@@ -7,4 +7,4 @@ fun test(user: User) {
     user.let { (name, other<caret>Name) -> }
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.ConvertNameBasedDestructuringShortFormToFullFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.DestructuringFormFactory$ConvertNameBasedDestructuringToFullFormFix
