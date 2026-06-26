@@ -24,6 +24,7 @@ internal class AgentSessionsToolWindowFactory : ToolWindowFactory, DumbAware {
     toolWindow.contentManager.addContent(content)
     val titleActions = buildList {
       addAll(createAgentSessionsTitleActions())
+      ActionUtil.getActionGroup(AgentWorkbenchActionIds.Sessions.TOOL_WINDOW_TITLE_ACTIONS)?.let(::add)
       ActionUtil.getAction(AgentWorkbenchActionIds.Sessions.OPEN_DEDICATED_FRAME)?.let(::add)
     }
     toolWindow.setTitleActions(titleActions)

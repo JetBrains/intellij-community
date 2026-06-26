@@ -38,6 +38,7 @@ import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadRebindPoli
 import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchIntent
 import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchOperation
 import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchPlanner
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionOutOfBandLaunch
 import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionPlannedLaunch
 import com.intellij.platform.ai.agent.sessions.core.launch.resolveAgentSessionChatOpenPlan
 import com.intellij.platform.ai.agent.sessions.core.paths.resolveAgentWorkbenchOwningProjectBasePath
@@ -53,12 +54,14 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessag
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentPendingSessionMetadata
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartNewSessionLaunchRequest
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentTerminalPromptDispatch
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentPromptProviderOptionTarget
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionLaunchProfileResolver
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderUiContributors
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.platform.ai.agent.sessions.core.providers.isBlockedForExistingThreadPlanMode
+import com.intellij.platform.ai.agent.sessions.core.providers.resolveEffectiveProviderOptionIds
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchTargetKind
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchTelemetry
@@ -210,6 +213,10 @@ private data class PreparedNewSessionLaunch(
   val identity: String,
   val initialMessageDispatchPlan: AgentInitialPromptDeliveryPlan,
   val pendingMetadata: AgentPendingSessionMetadata?,
+  val outOfBandLaunch: AgentSessionOutOfBandLaunch?,
+  val outOfBandThreadId: String?,
+  val outOfBandModelId: String?,
+  val outOfBandPrompt: String?,
 )
 
 private sealed interface NewSessionLaunchPreparationResult {
@@ -948,6 +955,7 @@ class AgentSessionLaunchService internal constructor(
             pendingMetadata = launch.pendingMetadata,
           )
         }
+        runOutOfBandLaunchIfNeeded(launch, openedChat.project, normalizedPath)
         if (launch.descriptor.refreshPathAfterCreateNewSession) {
           syncService.refreshProviderForPath(path = normalizedPath, provider = launch.provider)
         }
@@ -1084,6 +1092,7 @@ class AgentSessionLaunchService internal constructor(
             threadTitle = resolveNewSessionTitle(identity = launch.identity, threadTitle = threadTitle),
             pendingMetadata = launch.pendingMetadata,
           )
+          runOutOfBandLaunchIfNeeded(launch, openedChat.project, normalizedPath)
           if (launch.descriptor.refreshPathAfterCreateNewSession) {
             syncService.refreshProviderForPath(path = normalizedPath, provider = launch.provider)
           }
@@ -1128,6 +1137,7 @@ class AgentSessionLaunchService internal constructor(
             threadTitle = resolveNewSessionTitle(identity = launch.identity, threadTitle = threadTitle),
             pendingMetadata = launch.pendingMetadata,
           )
+          runOutOfBandLaunchIfNeeded(launch, openedChat.project, normalizedPath)
           if (launch.descriptor.refreshPathAfterCreateNewSession) {
             syncService.refreshProviderForPath(path = normalizedPath, provider = launch.provider)
           }
@@ -1239,8 +1249,12 @@ class AgentSessionLaunchService internal constructor(
         return NewSessionLaunchPreparationResult.Failed(AgentPromptLaunchError.PROVIDER_UNAVAILABLE)
       }
       notifyAgentSessionConversationOpened(descriptor)
+      val staticInitialMessageRequest = initialMessageRequest?.withEffectiveProviderOptions(
+        descriptor = descriptor,
+        target = AgentPromptProviderOptionTarget.NEW_TASK,
+      )
       val staticInitialMessagePlan = if (initialMessageRequestBuilder == null) {
-        initialMessageRequest?.let(descriptor::buildInitialMessagePlan) ?: AgentInitialMessagePlan.EMPTY
+        staticInitialMessageRequest?.let(descriptor::buildInitialMessagePlan) ?: AgentInitialMessagePlan.EMPTY
       }
       else {
         AgentInitialMessagePlan.EMPTY
@@ -1275,7 +1289,11 @@ class AgentSessionLaunchService internal constructor(
         identity = preliminaryIdentity,
         launchProfileId = launchProfileId,
       )
-      val effectiveInitialMessageRequest = initialMessageRequestBuilder?.invoke(preliminaryContext) ?: initialMessageRequest
+      val effectiveInitialMessageRequest = (initialMessageRequestBuilder?.invoke(preliminaryContext) ?: staticInitialMessageRequest)
+        ?.withEffectiveProviderOptions(
+          descriptor = descriptor,
+          target = AgentPromptProviderOptionTarget.NEW_TASK,
+        )
       if (updateGeneralProviderPreferences && descriptor.supportsPromptLaunch) {
         uiPreferencesState.updateProviderOptionsOnLaunch(provider.value, effectiveInitialMessageRequest)
       }
@@ -1310,14 +1328,20 @@ class AgentSessionLaunchService internal constructor(
         )
       }
       preparedLaunchHandler?.invoke(preparedContext)
-      val initialMessageDispatchPlan = prestartedLaunch?.initialMessageDispatchPlan
-                                          ?: buildInitialMessageDispatchPlan(
-                                           descriptor = descriptor,
-                                           baseLaunchSpec = launchSpec,
-                                           identity = identity,
-                                           initialMessagePlan = initialMessagePlan,
-                                           allowStartupPromptOverride = true,
-                                         )
+      val outOfBandLaunch = AgentSessionOutOfBandLaunch.forProvider(provider)
+      val initialMessageDispatchPlan = if (outOfBandLaunch != null) {
+        AgentInitialPromptDeliveryPlan.EMPTY
+      }
+      else {
+        prestartedLaunch?.initialMessageDispatchPlan
+        ?: buildInitialMessageDispatchPlan(
+          descriptor = descriptor,
+          baseLaunchSpec = launchSpec,
+          identity = identity,
+          initialMessagePlan = initialMessagePlan,
+          allowStartupPromptOverride = true,
+        )
+      }
       logPreparedNewSessionLaunch(
         provider = provider,
         projectPath = normalizedPath,
@@ -1337,6 +1361,10 @@ class AgentSessionLaunchService internal constructor(
           identity = identity,
           initialMessageDispatchPlan = initialMessageDispatchPlan,
           pendingMetadata = resolvePendingSessionMetadata(identity = identity, launchSpec = launchSpec),
+          outOfBandLaunch = outOfBandLaunch,
+          outOfBandThreadId = launchSpec.preallocatedSessionId,
+          outOfBandModelId = plannedLaunch.intent.generationSettings.modelId,
+          outOfBandPrompt = initialMessagePlan.message,
         )
       )
     }
@@ -1347,6 +1375,16 @@ class AgentSessionLaunchService internal constructor(
       LOG.warn("Failed to prepare new agent session for $provider:$normalizedPath", t)
       NewSessionLaunchPreparationResult.Failed(AgentPromptLaunchError.INTERNAL_ERROR)
     }
+  }
+
+  private suspend fun runOutOfBandLaunchIfNeeded(
+    launch: PreparedNewSessionLaunch,
+    project: Project,
+    normalizedPath: String,
+  ) {
+    val outOfBandLaunch = launch.outOfBandLaunch ?: return
+    val threadId = launch.outOfBandThreadId ?: return
+    outOfBandLaunch.launch(project, normalizedPath, threadId, launch.outOfBandModelId, launch.outOfBandPrompt)
   }
 
   fun launchPromptRequest(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
@@ -1405,7 +1443,10 @@ class AgentSessionLaunchService internal constructor(
             threadId = targetThreadId,
           )
                              ?: return@run reportPromptLaunchResolved(AgentPromptLaunchResult.failure(AgentPromptLaunchError.TARGET_THREAD_NOT_FOUND))
-          val effectiveInitialMessageRequest = request.initialMessageRequest
+          val effectiveInitialMessageRequest = request.initialMessageRequest.withEffectiveProviderOptions(
+            descriptor = bridge,
+            target = AgentPromptProviderOptionTarget.EXISTING_TASK,
+          )
           val initialMessagePlan = bridge.buildInitialMessagePlan(effectiveInitialMessageRequest)
           if (initialMessagePlan.isBlockedForExistingThreadPlanMode(targetThread.activityReport.rowActivity)) {
             return@run reportPromptLaunchResolved(AgentPromptLaunchResult.failure(AgentPromptLaunchError.TARGET_THREAD_BUSY_FOR_PLAN_MODE))
@@ -1709,6 +1750,18 @@ private fun resolveLaunchProjectDirectory(
     return projectDirectory
   }
   return resolveAgentWorkbenchProjectDirectory(identityPath = path)
+}
+
+private fun AgentPromptInitialMessageRequest.withEffectiveProviderOptions(
+  descriptor: AgentSessionProviderDescriptor,
+  target: AgentPromptProviderOptionTarget,
+): AgentPromptInitialMessageRequest {
+  val effectiveOptionIds = resolveEffectiveProviderOptionIds(
+    selectedProvider = descriptor,
+    selectedOptionIds = providerOptionIds,
+    target = target,
+  )
+  return if (effectiveOptionIds == providerOptionIds) this else copy(providerOptionIds = effectiveOptionIds)
 }
 
 private suspend fun resolvePromptInitialMessageDispatchPlan(

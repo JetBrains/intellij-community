@@ -31,6 +31,8 @@
   - name: intellij.agent.workbench.sessions.jbcentral
   - name: intellij.agent.workbench.sessions.actions
   - name: intellij.agent.workbench.sessions.toolwindow
+  - name: intellij.agent.workbench.engine
+  - name: intellij.agent.workbench.acp
   - name: intellij.agent.workbench
 - name: lib/modules/intellij.agent.workbench.container.mcp.jar
   contentModules:

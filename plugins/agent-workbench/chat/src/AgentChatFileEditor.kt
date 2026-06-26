@@ -119,6 +119,7 @@ internal class AgentChatFileEditor(
   private var pendingContextPanelInstalled: Boolean = false
   private var initializationStarted: Boolean = false
   private var initializationRequested: Boolean = false
+  private var customContentInstalled: Boolean = false
   private var focusTerminalAfterInitialization: Boolean = false
   private var stateApplied: Boolean = file.projectPath.isNotBlank() || file.threadIdentity.isNotBlank()
   private var initializationJob: Job? = null
@@ -230,6 +231,9 @@ internal class AgentChatFileEditor(
     if (!stateApplied && file.projectPath.isBlank() && file.threadIdentity.isBlank()) {
       return
     }
+    if (tryInstallCustomContent()) {
+      return
+    }
     val deferredStartState = file.deferredStartState
     if (shouldBlockTerminalInitialization(deferredStartState)) {
       renderDeferredStartState(checkNotNull(deferredStartState))
@@ -270,6 +274,33 @@ internal class AgentChatFileEditor(
         AgentChatRestoreNotificationService.reportTerminalInitializationFailure(project, file, e)
       }
     }
+  }
+
+  /**
+   * Installs provider-supplied non-terminal content (e.g. the ACP screen) into the same
+   * editor tab and skips the terminal lifecycle. Returns true when custom content owns this tab.
+   */
+  private fun tryInstallCustomContent(): Boolean {
+    if (customContentInstalled) {
+      return true
+    }
+    val provider = file.provider ?: return false
+    val contentProvider = AgentChatCustomContent.find(provider) ?: return false
+    customContentInstalled = true
+    initializationStarted = true
+    ensureCrossProjectDockTargetRegistration()
+    val customComponent = contentProvider.createComponent(
+      project = project,
+      threadIdentity = file.threadIdentity,
+      threadId = file.threadId.ifBlank { file.threadIdentity },
+      parent = this,
+    )
+    component.removeAll()
+    component.add(customComponent, BorderLayout.CENTER)
+    component.revalidate()
+    component.repaint()
+    file.updateStartupIntent(null)
+    return true
   }
 
   private suspend fun isRestoredArchivedThread(descriptor: AgentSessionProviderDescriptor?): Boolean {

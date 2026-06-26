@@ -1004,6 +1004,7 @@ plugins/agent-workbench/claude/awb
 plugins/agent-workbench/codex/chat
 plugins/agent-workbench/codex/ide
 plugins/agent-workbench/codex/prompt-suggestions
+plugins/agent-workbench/engine
 plugins/agent-workbench/lib-agent/cli
 plugins/agent-workbench/lib-agent/common
 plugins/agent-workbench/lib-agent/core
