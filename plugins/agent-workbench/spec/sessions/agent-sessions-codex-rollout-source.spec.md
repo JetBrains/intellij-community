@@ -15,7 +15,7 @@ Status: Draft
 Date: 2026-05-09
 
 ## Summary
-Codex session listing is app-server backed. Rollout files remain an internal refresh-hints source for needs-input/activity uplift, unread done-output hints, and rebinding fallback; they are not the primary thread-list backend.
+Codex session listing and Workbench status are app-server backed. Rollout files remain an internal discovery and cost-recovery source; they may trigger source refreshes when new rollout/project-file evidence appears, but they must not provide source-level activity or presentation fallback.
 
 ## Requirements
 - `CodexSessionSource` must list threads through `CodexAppServerSessionBackend`; legacy backend override inputs, including `rollout` and unknown values, must not switch listing away from app-server.
@@ -45,7 +45,7 @@ Codex session listing is app-server backed. Rollout files remain an internal ref
 
 - Codex activity normalization is specified in `agent-sessions-codex-activity.spec.md`.
 
-- Rollout parsing, watching, and refresh-hint consumption are specified in `agent-sessions-codex-rollout-hints.spec.md`.
+- Rollout parsing, watching, and discovery-event consumption are specified in `agent-sessions-codex-rollout-hints.spec.md`.
 
 ## Testing / Local Run
 - `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test com.intellij.platform.ai.agent.codex.sessions.CodexSessionBackendSelectorTest`
