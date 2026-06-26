@@ -4,6 +4,7 @@ package com.intellij.maven.server.m40.utils;
 import com.intellij.maven.server.m40.InvokerWithoutCoreExtensions;
 import com.intellij.maven.server.m40.compat.CompatResidentMavenInvoker;
 import org.apache.maven.api.cli.InvokerRequest;
+import org.apache.maven.api.cli.InvokerException;
 import org.apache.maven.cling.invoker.LookupContext;
 import org.apache.maven.cling.invoker.ProtoLookup;
 import org.apache.maven.cling.invoker.mvn.MavenContext;
@@ -12,8 +13,20 @@ import org.apache.maven.execution.MavenExecutionRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.server.MavenServerGlobals;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public class Maven40Invoker extends CompatResidentMavenInvoker {
   MavenContext myContext = null;
+
+  /**
+   * Closeables registered by {@link #createTerminal} (terminal {@code systemUninstall}, build-log appender,
+   * stream flushers). We detach them from the per-invocation context so that the {@code context.close()} run by
+   * {@link org.apache.maven.cling.invoker.LookupInvoker#invoke} at the end of the single bootstrap {@code doInvoke}
+   * does not close the terminal we keep reusing. They are closed in {@link #close()} when the embedder is released.
+   */
+  private List<AutoCloseable> myResidentCloseables = List.of();
 
   public Maven40Invoker(ProtoLookup protoLookup) {
     super(protoLookup);
@@ -25,7 +38,15 @@ public class Maven40Invoker extends CompatResidentMavenInvoker {
     pushCoreProperties(context);
     pushUserProperties(context);
     configureLogging(context);
+    int closeablesBefore = context.closeables.size();
     createTerminal(context);
+    // LookupInvoker.invoke() wraps doInvoke() in a try-with-resources and runs context.close() the moment this
+    // method returns. createTerminal() registered MessageUtils::systemUninstall (and the build-log/stream closeables)
+    // on the context; closing them would close the resident terminal that we reuse in createMavenExecutionRequest().
+    // Detach them here and tear them down only on release() (see close()).
+    List<AutoCloseable> terminalCloseables = context.closeables.subList(closeablesBefore, context.closeables.size());
+    myResidentCloseables = new ArrayList<>(terminalCloseables);
+    terminalCloseables.clear();
     activateLogging(context);
     helpOrVersionAndMayExit(context);
     preCommands(context);
@@ -48,6 +69,25 @@ public class Maven40Invoker extends CompatResidentMavenInvoker {
     //return execute(context);
     myContext = context;
     return 0;
+  }
+
+  @Override
+  public void close() throws InvokerException {
+    // Close the terminal-bound closeables detached in doInvoke(), reverse order to mirror LookupContext.close().
+    List<AutoCloseable> cs = new ArrayList<>(myResidentCloseables);
+    Collections.reverse(cs);
+    for (AutoCloseable c : cs) {
+      if (c != null) {
+        try {
+          c.close();
+        }
+        catch (Exception e) {
+          MavenServerGlobals.getLogger().warn("Maven40Invoker.close (terminal): " + e.getMessage(), e);
+        }
+      }
+    }
+    myResidentCloseables = List.of();
+    super.close();
   }
 
   /**
