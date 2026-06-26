@@ -7,12 +7,16 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.awaitExit
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
@@ -36,6 +40,7 @@ import java.net.http.HttpResponse
 import java.net.http.WebSocket
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
+import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -74,6 +79,7 @@ class CodexWebSocketAppServerClient(
 ) {
   private val pending = ConcurrentHashMap<String, CompletableDeferred<String>>()
   private val threadSettingsUpdateWaiters = ConcurrentHashMap<String, MutableList<CompletableDeferred<Unit>>>()
+  private val fsWatchSubscribers = ConcurrentHashMap<String, SendChannel<Path>>()
   private val requestCounter = AtomicLong(0)
   private val writeMutex = Mutex()
   private val startMutex = Mutex()
@@ -403,6 +409,60 @@ class CodexWebSocketAppServerClient(
     finally {
       threadSettingsUpdateWaiters.removeThreadSettingsUpdateWaiter(normalizedThreadId, settingsUpdated)
     }
+  }
+
+  fun watchPathChanges(path: Path): Flow<Path> {
+    val normalizedWatchPath = normalizeFsWatchPath(path)
+    return callbackFlow {
+      val watchId = UUID.randomUUID().toString()
+      fsWatchSubscribers[watchId] = channel
+      try {
+        watchPath(watchId = watchId, path = normalizedWatchPath)
+      }
+      catch (t: Throwable) {
+        fsWatchSubscribers.remove(watchId)
+        if (t is CancellationException) throw t
+        LOG.warn("Failed to start Codex app-server file watch for $normalizedWatchPath", t)
+        close()
+        return@callbackFlow
+      }
+      awaitClose {
+        val removed = fsWatchSubscribers.remove(watchId) != null
+        if (removed) {
+          coroutineScope.launch {
+            runCatching { unwatchPath(watchId) }
+              .onFailure { t -> LOG.debug("Failed to stop Codex app-server file watch for $normalizedWatchPath", t) }
+          }
+        }
+      }
+    }
+  }
+
+  suspend fun watchPath(watchId: String, path: Path): Path {
+    val normalizedPath = normalizeFsWatchPath(path)
+    val responsePath = request(
+      method = "fs/watch",
+      paramsWriter = { generator ->
+        generator.writeStartObject()
+        generator.writeStringField("watchId", watchId)
+        generator.writeStringField("path", normalizedPath.toString())
+        generator.writeEndObject()
+      },
+      resultParser = { parser -> protocol.parseFsWatchResult(parser) },
+      defaultResult = null,
+    )
+    return responsePath ?: normalizedPath
+  }
+
+  suspend fun unwatchPath(watchId: String) {
+    requestUnit(
+      method = "fs/unwatch",
+      paramsWriter = { generator ->
+        generator.writeStartObject()
+        generator.writeStringField("watchId", watchId)
+        generator.writeEndObject()
+      },
+    )
   }
 
   fun shutdown() {
@@ -742,11 +802,23 @@ class CodexWebSocketAppServerClient(
                        } ?: return
 
     val result = notificationsChannel.trySend(notification.toPublicNotification())
+    routeFsChangedNotification(notification)
     if (notification.method == THREAD_SETTINGS_UPDATED_METHOD && notification.threadId != null) {
       threadSettingsUpdateWaiters.completeThreadSettingsUpdateWaiters(notification.threadId)
     }
     if (result.isFailure) {
       LOG.warn("Failed to enqueue Codex websocket app-server notification: ${notification.method}")
+    }
+  }
+
+  private fun routeFsChangedNotification(notification: ParsedCodexAppServerNotification) {
+    if (notification.method != "fs/changed") {
+      return
+    }
+    val watchId = notification.watchId ?: return
+    val subscriber = fsWatchSubscribers[watchId] ?: return
+    for (path in notification.changedPaths) {
+      subscriber.trySend(path)
     }
   }
 
@@ -779,6 +851,10 @@ class CodexWebSocketAppServerClient(
       pending.values.forEach { it.completeExceptionally(error) }
     }
     pending.clear()
+    val fsWatchError = error ?: CodexAppServerException("Codex app-server stopped")
+    val fsWatchSubscribersToClose = ArrayList(fsWatchSubscribers.values)
+    fsWatchSubscribers.clear()
+    fsWatchSubscribersToClose.forEach { subscriber -> subscriber.close(fsWatchError) }
 
     stderrJob?.cancel()
     waitJob?.cancel()
@@ -944,4 +1020,8 @@ private fun stripAnsiEscapes(text: String): String {
     stripped.append(ch)
   }
   return stripped.toString()
+}
+
+private fun normalizeFsWatchPath(path: Path): Path {
+  return path.toAbsolutePath().normalize()
 }

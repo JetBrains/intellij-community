@@ -12,11 +12,16 @@ import com.intellij.platform.ai.agent.codex.common.normalizeRootPath
 import com.intellij.platform.ai.agent.codex.sessions.registerShutdownOnCancellation
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.merge
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.invariantSeparatorsPathString
+
+private val LOG = logger<SharedCodexAppServerService>()
 
 @Service(Service.Level.APP)
 class SharedCodexAppServerService(serviceScope: CoroutineScope) {
@@ -48,6 +53,21 @@ class SharedCodexAppServerService(serviceScope: CoroutineScope) {
 
   internal suspend fun readThread(threadId: String): CodexThread? {
     return client.readThread(threadId)
+  }
+
+  internal fun watchPathChanges(paths: Collection<Path>): Flow<Path> {
+    // This is a direct bridge to Codex app-server fs/watch. Callers that need stronger
+    // before-close append semantics, such as active rollout-file refresh on macOS, should merge
+    // this flow with the immediate file watcher instead of relying on app-server alone.
+    val watchPaths = paths.asSequence()
+      .map { path -> path.toAbsolutePath().normalize() }
+      .distinct()
+      .toList()
+    if (watchPaths.isEmpty()) {
+      return emptyFlow()
+    }
+    LOG.debug("Starting Codex app-server file watches for ${watchPaths.size} paths")
+    return merge(*watchPaths.map(client::watchPathChanges).toTypedArray())
   }
 
   internal suspend fun currentRemoteUrl(): String {

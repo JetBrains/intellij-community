@@ -2193,12 +2193,12 @@ class CodexRolloutSessionBackendTest {
 
       val backend = CodexRolloutSessionBackend(
         codexHomeProvider = { tempDir },
-        immediateFileChangeFlow = { flowOf(rollout, rollout) },
       )
 
       val updates = backend.activeThreadUpdateEvents(
         path = projectDir.toString(),
         threadId = "session-active-unchanged",
+        fileChangeFlow = { flowOf(rollout, rollout) },
       ).toList()
 
       assertThat(updates).hasSize(1)
@@ -2242,12 +2242,12 @@ class CodexRolloutSessionBackendTest {
 
       val backend = CodexRolloutSessionBackend(
         codexHomeProvider = { tempDir },
-        immediateFileChangeFlow = { flowOf(rollout) },
       )
 
       val update = backend.activeThreadUpdateEvents(
         path = projectDir.toString(),
         threadId = "session-active-apply-patch",
+        fileChangeFlow = { flowOf(rollout) },
       ).toList().single()
 
       assertThat(update.threadIds).isNull()

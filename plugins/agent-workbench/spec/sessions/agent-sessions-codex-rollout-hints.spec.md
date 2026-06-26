@@ -41,6 +41,13 @@ Codex rollout files are parsed for discovery, project-file-change evidence, cost
   [@test] ../../codex/sessions/testSrc/CodexRolloutSessionsWatcherTest.kt
   [@test] ../../filewatch/testSrc/AgentWorkbenchDirectoryWatcherTest.kt
 
+- Active chat terminal refresh may watch concrete rollout files for project-file-change evidence. Workbench uses Codex app-server `fs/watch`/`fs/changed` for app-server-backed filesystem notifications such as replace or rename updates.
+  [@test] ../../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+  [@test] ../../codex/sessions/testSrc/CodexSessionSourceRealAppServerIntegrationTest.kt
+
+- Codex app-server `fs/watch` is not treated as sufficient for rollout appends written through a long-lived file descriptor. On macOS, Workbench must keep the immediate file watcher fallback so project-file evidence can invalidate the UI before the Codex writer closes the rollout file.
+  [@test] ../../filewatch/testSrc/impl/watchservice/MacOSXListeningWatchServiceTest.kt
+
 - Path-scoped invalidation reparses dirty rollout paths even when file size and mtime are unchanged; overflow or ambiguous directory events may trigger a full rescan.
   [@test] ../../codex/sessions/testSrc/CodexRolloutSessionBackendFileWatchIntegrationTest.kt
 

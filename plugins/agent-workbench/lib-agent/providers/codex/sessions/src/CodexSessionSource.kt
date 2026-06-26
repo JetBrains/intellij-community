@@ -28,6 +28,7 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItem
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.core.session.AgentSessionThreadOutline
 import com.intellij.platform.ai.agent.core.session.AgentSubAgent
+import com.intellij.platform.ai.agent.filewatch.agentWorkbenchImmediateFileChangeFlow
 import com.intellij.platform.ai.agent.sessions.core.cost.AgentSessionUsageCostCalculators
 import com.intellij.platform.ai.agent.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.platform.ai.agent.sessions.core.cost.aggregateAgentSessionUsageCost
@@ -72,7 +73,19 @@ internal class CodexSessionSource internal constructor(
       readThreadActivitySnapshot = sharedAppServerService::readThreadActivitySnapshot,
       notifications = sharedAppServerService.notifications,
     ),
-    rolloutRefreshHintsProvider = CodexRolloutRefreshHintsProvider(rolloutBackend = rolloutBackend),
+    rolloutRefreshHintsProvider = CodexRolloutRefreshHintsProvider(
+      rolloutBackend = rolloutBackend,
+      activeFileChangeFlow = { paths ->
+        // App-server fs/watch covers the supported app-server file watch contract, including
+        // replace/rename updates. The macOS immediate watcher remains necessary for active
+        // rollout files because Codex can append project-file evidence to a long-lived fd and
+        // the UI must invalidate before that writer closes the file.
+        merge(
+          sharedAppServerService.watchPathChanges(paths),
+          agentWorkbenchImmediateFileChangeFlow(paths),
+        )
+      },
+    ),
     rolloutBackend = rolloutBackend,
     calculateCost = AgentSessionUsageCostCalculators::calculateCost,
     threadPathIndex = threadPathIndex,

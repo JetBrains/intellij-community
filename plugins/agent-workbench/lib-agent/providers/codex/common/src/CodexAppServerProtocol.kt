@@ -10,6 +10,7 @@ import tools.jackson.core.JsonParser
 import tools.jackson.core.JsonToken
 import tools.jackson.core.json.JsonFactory
 import java.io.Writer
+import java.nio.file.Path
 
 private val THREAD_TITLE_WHITESPACE = Regex("\\s+")
 
@@ -39,6 +40,8 @@ internal data class ParsedCodexAppServerNotification(
   @JvmField val turnStatus: String? = null,
   @JvmField val turnErrorMessage: String? = null,
   @JvmField val agentMessageText: String? = null,
+  @JvmField val watchId: String? = null,
+  @JvmField val changedPaths: List<Path> = emptyList(),
 ) {
   fun toPublicNotification(): CodexAppServerNotification {
     return CodexAppServerNotification(
@@ -231,6 +234,23 @@ internal class CodexAppServerProtocol {
     return parseTurnFromResultObject(parser)
   }
 
+  fun parseFsWatchResult(parser: JsonParser): Path? {
+    if (parser.currentToken != JsonToken.START_OBJECT) {
+      parser.skipChildren()
+      return null
+    }
+
+    var path: Path? = null
+    forEachObjectField(parser) { fieldName ->
+      when (fieldName) {
+        "path" -> path = readNonBlankStringOrNull(parser)?.let(Path::of)
+        else -> parser.skipChildren()
+      }
+      true
+    }
+    return path
+  }
+
   fun parseNotification(payload: String): ParsedCodexAppServerNotification? {
     jsonFactory.createJsonParser(payload).use { parser ->
       if (parser.nextToken() != JsonToken.START_OBJECT) return null
@@ -274,6 +294,8 @@ internal class CodexAppServerProtocol {
         turnStatus = params.turnStatus,
         turnErrorMessage = params.turnErrorMessage,
         agentMessageText = params.agentMessageText,
+        watchId = params.watchId,
+        changedPaths = params.changedPaths,
       )
     }
   }
@@ -289,6 +311,8 @@ private data class ParsedNotificationParams(
   @JvmField val turnStatus: String? = null,
   @JvmField val turnErrorMessage: String? = null,
   @JvmField val agentMessageText: String? = null,
+  @JvmField val watchId: String? = null,
+  @JvmField val changedPaths: List<Path> = emptyList(),
 )
 
 private data class ParsedNotificationThreadObject(
@@ -334,10 +358,14 @@ private fun parseNotificationParams(parser: JsonParser): ParsedNotificationParam
   var turnStatus: String? = null
   var turnErrorMessage: String? = null
   var agentMessageText: String? = null
+  var watchId: String? = null
+  var changedPaths: List<Path> = emptyList()
   forEachObjectField(parser) { fieldName ->
     when (fieldName) {
       "threadId", "thread_id" -> threadId = readNonBlankStringOrNull(parser)
       "turnId", "turn_id" -> turnId = readNonBlankStringOrNull(parser)
+      "watchId", "watch_id" -> watchId = readNonBlankStringOrNull(parser)
+      "changedPaths", "changed_paths" -> changedPaths = parsePathArray(parser)
       "status" -> {
         val parsedStatus = parseThreadStatus(parser)
         statusKind = parsedStatus.statusKind
@@ -379,7 +407,30 @@ private fun parseNotificationParams(parser: JsonParser): ParsedNotificationParam
     turnStatus = turnStatus,
     turnErrorMessage = turnErrorMessage,
     agentMessageText = agentMessageText,
+    watchId = watchId,
+    changedPaths = changedPaths,
   )
+}
+
+private fun parsePathArray(parser: JsonParser): List<Path> {
+  if (parser.currentToken != JsonToken.START_ARRAY) {
+    parser.skipChildren()
+    return emptyList()
+  }
+  val paths = ArrayList<Path>()
+  while (true) {
+    val token = parser.nextToken() ?: break
+    if (token == JsonToken.END_ARRAY) {
+      break
+    }
+    if (token == JsonToken.VALUE_STRING) {
+      parser.string.trimToNull()?.let { paths.add(Path.of(it)) }
+    }
+    else {
+      parser.skipChildren()
+    }
+  }
+  return paths
 }
 
 private fun parseNotificationThreadObject(parser: JsonParser): ParsedNotificationThreadObject {
