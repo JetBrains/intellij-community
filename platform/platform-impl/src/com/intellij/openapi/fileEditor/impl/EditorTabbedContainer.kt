@@ -468,13 +468,13 @@ internal class EditorTabbedContainerDragOutDelegate(private val window: EditorWi
     val dragStartIndex = editorTabs.getIndexOf(info)
     val isPinnedAtStart = info.isPinned
 
-    // setting isHidden to true will hide the tab - we must select another tab now
     window.getTabToSelect(tabBeingClosed = info, fileBeingClosed = file, componentIndex = dragStartIndex)?.let {
+      // setting isHidden to true will hide the tab - we must select another tab now
       WriteIntentReadAction.run {
         window.setCurrentCompositeAndSelectTab(it)
       }
+      info.isHidden = true
     }
-    info.isHidden = true
 
     this.file = file
     file.putUserData(DRAG_START_INDEX_KEY, dragStartIndex)

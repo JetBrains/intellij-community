@@ -720,7 +720,7 @@ class EditorWindow internal constructor(
           }
 
           val info = editorTabs.getTabAt(componentIndex)
-          if (isDisposed || !manager.project.isOpen) {
+          if (info.isHidden || isDisposed || !manager.project.isOpen) {
             editorTabs.removeTabWithoutChangingSelection(info)
           }
           else {

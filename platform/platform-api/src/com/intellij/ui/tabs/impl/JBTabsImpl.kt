@@ -2638,6 +2638,7 @@ open class JBTabsImpl internal constructor(
       return
     }
 
+    processRemove(tab = info, forcedNow = true, setSelectedToNull = selectedInfo == info)
     if (visibleInfos.isEmpty()) {
       removeDeferredNow()
     }
