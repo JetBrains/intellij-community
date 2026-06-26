@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
@@ -39,6 +39,7 @@ import static com.intellij.codeInspection.dataFlow.ContractReturnValue.fail;
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnAny;
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnBoolean;
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnFalse;
+import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnNotNull;
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnNull;
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnParameter;
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnThis;
@@ -536,13 +537,18 @@ public final class HardcodedContracts {
       return handleAssertThat(paramCount, call);
     }
 
-    if (!isJunit(className) && !isTestng(className)) {
+    boolean testng = isTestng(className);
+    boolean junit = isJunit(className);
+    if (!junit && !testng) {
       return Collections.emptyList();
     }
 
-    boolean testng = isTestng(className);
     if ("fail".equals(methodName)) {
       return Collections.singletonList(StandardMethodContract.trivialContract(paramCount, fail()));
+    }
+
+    if (junit && "assertInstanceOf".equals(methodName)) {
+      return Collections.singletonList(StandardMethodContract.trivialContract(paramCount, returnNotNull()));
     }
 
     if (paramCount == 0) return Collections.emptyList();

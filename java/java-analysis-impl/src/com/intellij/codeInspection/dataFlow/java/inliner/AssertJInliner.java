@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java.inliner;
 
 import com.intellij.codeInsight.Nullability;
@@ -33,7 +33,7 @@ public class AssertJInliner implements CallInliner {
     {"isNotNull", "isNull", "isPresent", "isNotEmpty", "isNotBlank", "isNotPresent", "isEmpty", "isTrue", "isFalse",
       "contains", "containsSame", "containsInstanceOf", "hasOnlyElementsOfType",
       "hasOnlyElementsOfTypes", "have", "haveAtLeast", "haveAtLeastOne", "haveAtMost", "haveExactly", "hasSize", "hasSizeBetween",
-      "hasSizeGreaterThan", "hasSizeLessThan", "hasSizeGreaterThanOrEqualTo", "hasSizeLessThanOrEqualTo"};
+      "hasSizeGreaterThan", "hasSizeLessThan", "hasSizeGreaterThanOrEqualTo", "hasSizeLessThanOrEqualTo", "isInstanceOf"};
   private static final CallMatcher ASSERT = CallMatcher.anyOf(
     CallMatcher.instanceCall("org.assertj.core.api.AbstractAssert", METHOD_NAMES),
     CallMatcher.instanceCall("com.google.common.truth.Subject", METHOD_NAMES)
@@ -84,7 +84,7 @@ public class AssertJInliner implements CallInliner {
     String methodName = method.getName();
     switch (methodName) {
       case "isNotNull", "have", "haveAtLeast", "haveAtLeastOne", "haveAtMost",
-        "haveExactly", "hasOnlyElementsOfType", "hasOnlyElementsOfTypes" ->
+           "haveExactly", "hasOnlyElementsOfType", "hasOnlyElementsOfTypes" ->
         builder.ensure(RelationType.NE, DfTypes.NULL, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
       case "isNull" -> builder.ensure(RelationType.EQ, DfTypes.NULL, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
       case "isPresent", "isNotEmpty", "isNotBlank", "contains", "containsSame", "containsInstanceOf" -> {
@@ -127,6 +127,9 @@ public class AssertJInliner implements CallInliner {
           builder.ensure(RelationType.NE, DfTypes.NULL, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
         }
       }
+      case "isInstanceOf" -> {
+        instanceOf(builder, call);
+      }
       case "hasSize" -> sizeLimit(builder, call, field, RelationType.EQ);
       case "hasSizeGreaterThan" -> sizeLimit(builder, call, field, RelationType.GT);
       case "hasSizeLessThan" -> sizeLimit(builder, call, field, RelationType.LT);
@@ -149,6 +152,19 @@ public class AssertJInliner implements CallInliner {
     }
     builder.pop().pushUnknown();
     return true;
+  }
+
+  private static void instanceOf(@NotNull CFGBuilder builder, @NotNull PsiMethodCallExpression call) {
+    PsiExpression[] args = call.getArgumentList().getExpressions();
+    if (args.length != 1) {
+      return;
+    }
+    builder
+      .dup()
+      .pushExpression(args[0])
+      .isInstance(null)
+      .ensure(RelationType.EQ, DfTypes.TRUE, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR)
+      .pop();
   }
 
   private static void sizeLimit(@NotNull CFGBuilder builder,

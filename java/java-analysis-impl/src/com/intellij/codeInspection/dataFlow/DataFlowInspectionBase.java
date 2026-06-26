@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -731,7 +731,8 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     if (contracts.isEmpty()) {
       return JavaAnalysisBundle.message("dataflow.message.fail");
     }
-    if (ContainerUtil.and(contracts, mc -> ContainerUtil.and(mc.getConditions(), ContractValue::isBoundCheckingCondition))) {
+    if (ContainerUtil.and(contracts, mc -> !mc.getConditions().isEmpty() &&
+                                           ContainerUtil.and(mc.getConditions(), ContractValue::isBoundCheckingCondition))) {
       return JavaAnalysisBundle.message("dataflow.message.contract.fail.index");
     }
     return JavaAnalysisBundle.message("dataflow.message.contract.fail");
