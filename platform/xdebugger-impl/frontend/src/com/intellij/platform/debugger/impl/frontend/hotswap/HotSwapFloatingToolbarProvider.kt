@@ -146,12 +146,14 @@ private class HotSwapToolbarComponent(action: AnAction, presentation: Presentati
   }
 
   fun update(status: HotSwapVisibleStatus, presentation: Presentation) {
-    presentation.isEnabled = status.hasChanges
+    val changesNotHotSwappable = status is HotSwapVisibleStatus.ChangesNotHotSwappable
+    val disableHotSwapButton = changesNotHotSwappable && Registry.`is`("debugger.hotswap.disable.button.for.incompatible.changes")
+    presentation.isEnabled = status.hasChanges && !disableHotSwapButton
     val icon = when (status) {
       HotSwapVisibleStatus.ChangesReady -> hotSwapIcon
       HotSwapVisibleStatus.InProgress -> AnimatedIcon.Default.INSTANCE
       HotSwapVisibleStatus.Success -> AllIcons.Status.Success
-      is HotSwapVisibleStatus.ChangesNotHotSwappable -> AllIcons.Actions.RestartDebugger
+      is HotSwapVisibleStatus.ChangesNotHotSwappable -> if (disableHotSwapButton) AllIcons.General.BalloonWarning else AllIcons.Actions.RestartDebugger
       else -> null
     }
     if (icon != null) {
@@ -163,7 +165,7 @@ private class HotSwapToolbarComponent(action: AnAction, presentation: Presentati
       presentation.text = XDebuggerBundle.message("xdebugger.hotswap.code.changed")
     }
     val shortcut = ActionManager.getInstance().getKeyboardShortcut("XDebugger.Hotswap.Modified.Files")
-      .takeIf { status !is HotSwapVisibleStatus.ChangesNotHotSwappable }
+      .takeIf { !changesNotHotSwappable || disableHotSwapButton }
     tooltip.setShortcut(shortcut)
     HotSwapUiExtension.computeSafeIfAvailable { it.configureTooltip(tooltip, status) }
     button.accessibleContext.accessibleName = HotSwapUiExtension.computeSafeIfAvailable { it.hotSwapButtonAccessibleName(status) }

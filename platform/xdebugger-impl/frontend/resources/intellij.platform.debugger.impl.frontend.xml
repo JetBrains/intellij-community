@@ -47,6 +47,10 @@
     <action id="XDebugger.Split.Enable" class="com.intellij.platform.debugger.impl.frontend.EnabledSplitDebuggerAction" internal="true"/>
   </actions>
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="true"
+                 description="Disable the HotSwap floating toolbar button when the changed sources are not compatible with HotSwap"
+                 key="debugger.hotswap.disable.button.for.incompatible.changes"/>
+
     <editorFloatingToolbarProvider implementation="com.intellij.platform.debugger.impl.frontend.hotswap.HotSwapFloatingToolbarProvider"/>
     <postStartupActivity implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerInitializationProjectActivity"/>
     <xdebugger.managerProxy implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebugManagerProxy" order="first"/>
