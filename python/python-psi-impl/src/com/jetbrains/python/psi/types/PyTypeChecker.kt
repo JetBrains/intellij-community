@@ -309,6 +309,10 @@ object PyTypeChecker {
       }
     }
 
+    if (expected is PyTypeFormType) {
+      return Optional.of(match(expected, actual, context))
+    }
+
     if (expected is PyClassType) {
       val match = matchObject(expected, actual)
       if (match.isPresent) {
@@ -500,6 +504,18 @@ object PyTypeChecker {
       return Optional.of(expectedNarrowedType.narrowedType == actualNarrowedType.narrowedType)
     }
     return match(expectedNarrowedType.narrowedType, actualNarrowedType.narrowedType, context)
+  }
+
+  private fun match(expected: PyTypeFormType, actual: PyType?, context: MatchContext): Boolean {
+    if (actual == null) {
+      return true
+    }
+    val representedActual = PyTypeFormType.representedTypeOf(actual)
+    if (representedActual == null) {
+      // `actual` does not denote a type expression; only an unknown type may still match.
+      return actual.isAnyOrUnknown || actual.containsAny(context = context.context)
+    }
+    return match(expected.representedType, representedActual, context).orElse(true)!!
   }
 
   /**

@@ -124,6 +124,7 @@ import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyTypeChecker.collectGenerics
+import com.jetbrains.python.psi.types.PyTypeFormType
 import com.jetbrains.python.psi.types.PyTypeParameterMapping
 import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyTypeParser
@@ -731,6 +732,8 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     const val TYPE_GUARD_EXT: String = "typing_extensions.TypeGuard"
     const val TYPE_IS: String = "typing.TypeIs"
     const val TYPE_IS_EXT: String = "typing_extensions.TypeIs"
+    const val TYPE_FORM: String = "typing.TypeForm"
+    const val TYPE_FORM_EXT: String = "typing_extensions.TypeForm"
     const val GENERIC: String = "typing.Generic"
     const val PROTOCOL: String = "typing.Protocol"
     const val PROTOCOL_EXT: String = "typing_extensions.Protocol"
@@ -1339,6 +1342,10 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         if (classObjType != null) {
           return classObjType
         }
+        val typeFormType: Ref<PyType?>? = getTypeFormType(resolved, context)
+        if (typeFormType != null) {
+          return typeFormType
+        }
         val finalType: Ref<PyType?>? = unwrapTypeModifier(resolved, context, FINAL, FINAL_EXT)
         if (finalType != null) {
           return finalType
@@ -1571,6 +1578,25 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
             }
           }
         }
+      }
+      return null
+    }
+
+    private fun getTypeFormType(resolved: PsiElement, context: Context): Ref<PyType?>? {
+      if (resolved is PySubscriptionExpression) {
+        if (resolved.operand.resolvesToQualifiedNames(context, TYPE_FORM, TYPE_FORM_EXT)) {
+          val indexExpr = resolved.indexExpression
+          if (indexExpr != null && !indexExpr.resolvesToQualifiedNames(context.typeContext, ANY)) {
+            val representedType = Ref.deref(getType(indexExpr, context))
+            return PyTypeFormType.create(resolved, representedType)?.let { Ref(it) }
+          }
+          // TypeForm[Any] and TypeForm[<unsupported>] denote a value representing an arbitrary type
+          return PyTypeFormType.create(resolved, PyAnyType.any)?.let { Ref(it) }
+        }
+      }
+      else if (TYPE_FORM == resolved.getQualifiedName() || TYPE_FORM_EXT == resolved.getQualifiedName()) {
+        // Bare `TypeForm` is equivalent to `TypeForm[Any]`
+        return PyTypeFormType.create(resolved, PyAnyType.any)?.let { Ref(it) }
       }
       return null
     }

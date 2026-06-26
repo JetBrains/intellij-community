@@ -39,6 +39,7 @@ import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyNamedTupleType;
 import com.jetbrains.python.psi.types.PyNarrowedType;
+import com.jetbrains.python.psi.types.PyTypeFormType;
 import com.jetbrains.python.psi.types.PyNeverType;
 import com.jetbrains.python.psi.types.PyOverloadType;
 import com.jetbrains.python.psi.types.PyParamSpecType;
@@ -413,6 +414,16 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     }
     result.append(styled("[", PyHighlighter.PY_BRACKETS));
     result.append(render(narrowedType.getNarrowedType()));
+    result.append(styled("]", PyHighlighter.PY_BRACKETS));
+    return result.toFragment();
+  }
+
+  @Override
+  public HtmlChunk visitPyTypeFormType(@NotNull PyTypeFormType typeFormType) {
+    HtmlBuilder result = new HtmlBuilder();
+    result.append(styled(isRenderingFqn() ? "typing.TypeForm" : "TypeForm", PyHighlighter.PY_CLASS_DEFINITION));
+    result.append(styled("[", PyHighlighter.PY_BRACKETS));
+    result.append(render(typeFormType.getRepresentedType()));
     result.append(styled("]", PyHighlighter.PY_BRACKETS));
     return result.toFragment();
   }
