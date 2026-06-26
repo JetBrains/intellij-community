@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -19,8 +19,6 @@ final class Redo extends UndoRedo {
     @Nullable FileEditor editor,
     @NotNull UndoRedoStacksHolder undoStacksHolder,
     @NotNull UndoRedoStacksHolder redoStacksHolder,
-    @NotNull SharedUndoRedoStacksHolder sharedUndoStacksHolder,
-    @NotNull SharedUndoRedoStacksHolder sharedRedoStacksHolder,
     @NotNull UndoCapabilities undoCapabilities
   ) {
     super(
@@ -28,8 +26,6 @@ final class Redo extends UndoRedo {
       editor,
       redoStacksHolder,
       undoStacksHolder,
-      sharedRedoStacksHolder,
-      sharedUndoStacksHolder,
       undoCapabilities,
       true
     );

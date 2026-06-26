@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.command.undo.DocumentReference;
@@ -19,14 +19,11 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-
 final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup> {
-  private final SharedAdjustableUndoableActionsHolder undoableActionsHolder;
   private final UndoRedoList<UndoableGroup> globalStack;
 
-  UndoRedoStacksHolder(@NotNull SharedAdjustableUndoableActionsHolder undoableActionsHolder, boolean isUndo) {
+  UndoRedoStacksHolder(boolean isUndo) {
     super(isUndo);
-    this.undoableActionsHolder = undoableActionsHolder;
     this.globalStack = new UndoRedoList<>();
   }
 
@@ -246,7 +243,6 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
       }
       stack.removeFirstSlow();
     }
-    from.invalidateChangeRanges(undoableActionsHolder);
   }
 
   private @NotNull List<UndoRedoList<UndoableGroup>> getAffectedStacks(@NotNull UndoableGroup group) {

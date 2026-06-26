@@ -1,17 +1,14 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.command.UndoConfirmationPolicy
-import com.intellij.openapi.command.undo.AdjustableUndoableAction
 import com.intellij.openapi.command.undo.DocumentReference
-import com.intellij.openapi.command.undo.ImmutableActionChangeRange
 import com.intellij.openapi.command.undo.UndoableAction
 import com.intellij.openapi.util.NlsContexts.Command
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentSet
 import java.lang.ref.Reference
-
 
 internal class UndoRedoListSnapshot<T>(val snapshot: PersistentList<T>) {
   fun toList(): UndoRedoList<T> = UndoRedoList(snapshot.builder())
@@ -43,15 +40,8 @@ internal class LocalCommandMergerSnapshot(
   }
 }
 
-internal class SharedUndoRedoSnapshot(
-  val actionsHolderSnapshot: UndoRedoSetSnapshot<AdjustableUndoableAction>,
-  val sharedUndoStack: UndoRedoListSnapshot<ImmutableActionChangeRange>,
-  val sharedRedoStack: UndoRedoListSnapshot<ImmutableActionChangeRange>,
-)
-
 internal class LocalUndoRedoSnapshot(
   val clientSnapshots: Map<ClientId, PerClientLocalUndoRedoSnapshot>,
-  val sharedSnapshot: SharedUndoRedoSnapshot,
 )
 
 internal class PerClientLocalUndoRedoSnapshot(

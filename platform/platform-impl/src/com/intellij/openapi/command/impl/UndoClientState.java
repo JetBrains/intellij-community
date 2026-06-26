@@ -41,7 +41,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-
 final class UndoClientState implements Disposable {
 
   static @Nullable UndoClientState getInstance(@Nullable Project project) {
@@ -66,8 +65,6 @@ final class UndoClientState implements Disposable {
   private final @NotNull UndoRedoStacksHolder redoStacksHolder;
   private final @NotNull UndoCapabilities undoCapabilities;
 
-  private final @NotNull UndoSharedState sharedState;
-
   private @NotNull UndoRedoInProgress undoRedoInProgress = UndoRedoInProgress.NONE;
   private int commandTimestamp = 1;
   private int dumpCount = 0;
@@ -86,17 +83,15 @@ final class UndoClientState implements Disposable {
     this.clientId = clientId;
     this.project = undoManager.getProject();
     this.undoCapabilities = undoManager.getUndoCapabilities();
-    this.sharedState = undoManager.getUndoSharedState();
-    this.undoStacksHolder = new UndoRedoStacksHolder(sharedState.getAdjustableActions(), true);
-    this.redoStacksHolder = new UndoRedoStacksHolder(sharedState.getAdjustableActions(), false);
+    this.undoStacksHolder = new UndoRedoStacksHolder(true);
+    this.redoStacksHolder = new UndoRedoStacksHolder(false);
     this.commandMerger = new CommandMerger(project != null, undoCapabilities);
     this.commandBuilder = new CommandBuilder(project, undoCapabilities);
   }
 
   @Override
   public void dispose() {
-    Set<DocumentReference> affected = clearStacks();
-    sharedState.trimStacks(affected);
+    clearStacks();
   }
 
   boolean isActiveForCurrentProject() {
@@ -183,9 +178,6 @@ final class UndoClientState implements Disposable {
   void commandFinished(@NotNull CmdEvent cmdFinishEvent) {
     PerformedCommand performedCommand = commandBuilder.commandFinished(cmdFinishEvent);
     commitCommand(performedCommand);
-    for (UndoableAction action : performedCommand.undoableActions()) {
-      sharedState.addAction(action);
-    }
   }
 
   void commandFakeFinished(@NotNull CmdEvent cmdFakeFinishEvent) {
@@ -320,7 +312,6 @@ final class UndoClientState implements Disposable {
       flushCommandMerger(CommandMergerFlushReason.CLEAR_STACKS);
       redoStacksHolder.clearStacks(new HashSet<>(refs), true);
       undoStacksHolder.clearStacks(new HashSet<>(refs), true);
-      sharedState.trimStacks(refs);
     }
   }
 
@@ -391,7 +382,6 @@ final class UndoClientState implements Disposable {
             break;
           }
           clearUndoRedoQueue(doc);
-          sharedState.trimStacks(Collections.singleton(doc));
         }
       }
     }
@@ -462,8 +452,8 @@ final class UndoClientState implements Disposable {
       return null;
     }
     return isUndo
-           ? new Undo(project, editor, undoStacksHolder, redoStacksHolder, sharedState.getUndoStacks(), sharedState.getRedoStacks(), undoCapabilities)
-           : new Redo(project, editor, undoStacksHolder, redoStacksHolder, sharedState.getUndoStacks(), sharedState.getRedoStacks(), undoCapabilities);
+           ? new Undo(project, editor, undoStacksHolder, redoStacksHolder, undoCapabilities)
+           : new Redo(project, editor, undoStacksHolder, redoStacksHolder, undoCapabilities);
   }
 
   private boolean isGlobalSplitEnabled() {
@@ -489,14 +479,13 @@ final class UndoClientState implements Disposable {
     return result;
   }
 
-  private @NotNull Set<DocumentReference> clearStacks() {
+  private void clearStacks() {
     var affected = new HashSet<DocumentReference>();
     flushCommandMerger(CommandMergerFlushReason.CLEAR_STACKS);
     redoStacksHolder.collectAllAffectedDocuments(affected);
     redoStacksHolder.clearStacks(affected, true);
     undoStacksHolder.collectAllAffectedDocuments(affected);
     undoStacksHolder.clearStacks(affected, true);
-    return affected;
   }
 
   private boolean isUndoOrRedoInProgress() {
