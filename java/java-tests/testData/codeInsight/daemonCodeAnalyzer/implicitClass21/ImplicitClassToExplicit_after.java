@@ -1,5 +1,5 @@
-public cl<caret>ass ImplicitClassToExplicit {
-    void main() {
+public class ImplicitClassToExplicit {
+    void main<caret>() {
         System.out.println("Hello World!");
     }
 }

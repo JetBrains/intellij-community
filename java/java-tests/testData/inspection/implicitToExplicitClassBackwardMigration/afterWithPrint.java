@@ -1,7 +1,7 @@
 import static java.io.IO.println;
 
-public class beforeWit<caret>hPrint {
-    public static void main() {
+public class beforeWithPrint {
+    public static void mai<caret>n() {
         println("Hello, world!");
     }
 }
