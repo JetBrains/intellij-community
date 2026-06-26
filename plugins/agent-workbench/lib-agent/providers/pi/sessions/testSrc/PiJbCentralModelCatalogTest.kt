@@ -70,6 +70,8 @@ class PiJbCentralModelCatalogTest {
       "v1beta1/projects/wire-project/locations/wire-location",
       "streamSimpleOpenAIResponses",
       "streamSimpleGoogleVertex",
+      "optionalThinkingLevelMap(parsed.thinkingLevelMap)",
+      "thinkingLevelMap: model.thinkingLevelMap",
     )
     assertThat(extension).doesNotContain(
       "openai-codex-responses",
@@ -431,9 +433,12 @@ class PiJbCentralModelCatalogTest {
         "\"proxyPort\":19517",
         "\"agent\":\"codex\"",
         "\"reasoning\":true",
+        "\"thinkingLevelMap\":{\"xhigh\":\"xhigh\"}",
         "\"supportsImages\":true",
       )
       .doesNotContain("wire-secret")
+    assertThat(PiJbCentralModelCatalog.toLaunchEnvironmentValue(checkNotNull(PiJbCentralModelCatalog.decodeGenerationModelId(models[2].id))))
+      .doesNotContain("thinkingLevelMap")
   }
 
   @Test

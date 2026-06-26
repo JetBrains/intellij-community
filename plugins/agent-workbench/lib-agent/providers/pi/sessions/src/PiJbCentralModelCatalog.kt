@@ -654,12 +654,32 @@ private fun PiJbCentralModelSelection.toJsonString(): String {
     maxTokens?.let { generator.writeNumberField("maxTokens", it) }
     generator.writeName("reasoning")
     generator.writeBoolean(reasoning)
+    toThinkingLevelMap()?.let { thinkingLevelMap -> generator.writeThinkingLevelMapField(thinkingLevelMap) }
     generator.writeName("supportsImages")
     generator.writeBoolean(supportsImages)
     profileId?.let { generator.writeStringField("profileId", it) }
     generator.writeEndObject()
   }
   return writer.toString()
+}
+
+private fun PiJbCentralModelSelection.toThinkingLevelMap(): Map<String, String>? {
+  if (!reasoning || agent != PiJbCentralAgent.CODEX || !modelId.supportsOpenAiXhigh()) {
+    return null
+  }
+  return JBCENTRAL_CODEX_THINKING_LEVEL_MAP
+}
+
+private fun String.supportsOpenAiXhigh(): Boolean {
+  val normalizedModelId = lowercase()
+  return OPENAI_XHIGH_MODEL_MARKERS.any { marker -> normalizedModelId.contains(marker) }
+}
+
+private fun JsonGenerator.writeThinkingLevelMapField(thinkingLevelMap: Map<String, String>) {
+  writeName("thinkingLevelMap")
+  writeStartObject()
+  thinkingLevelMap.forEach { (level, value) -> writeStringField(level, value) }
+  writeEndObject()
 }
 
 private fun PiJbCentralLaunchMetadata.toJsonString(): String {
@@ -702,6 +722,8 @@ private val ANSI_CONTROL_SEQUENCE_REGEX = Regex("${'\u001B'}\\[[0-?]*[ -/]*[@-~]
 
 private const val JBCENTRAL_STATUS_COMMAND: String = "status"
 private val JBCENTRAL_PROXY_START_RETURN_KEY_ARGS: List<String> = listOf("proxy", "start", "--return-key")
+private val OPENAI_XHIGH_MODEL_MARKERS: List<String> = listOf("gpt-5.2", "gpt-5.3", "gpt-5.4", "gpt-5.5")
+private val JBCENTRAL_CODEX_THINKING_LEVEL_MAP: Map<String, String> = mapOf("xhigh" to "xhigh")
 private val JBCENTRAL_PROFILE_PATHS: List<String> = listOf(
   "user/v5/llm/profiles/v8",
   "api/ai/user/v5/llm/profiles/v8",

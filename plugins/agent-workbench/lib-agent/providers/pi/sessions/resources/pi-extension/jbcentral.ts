@@ -22,6 +22,7 @@ import {
   optionalNumber,
   optionalPositiveInteger,
   optionalString,
+  optionalThinkingLevelMap,
 } from "./metadata.ts";
 
 const JBCENTRAL_PROVIDER_ENV = "AGENT_WORKBENCH_PI_JBCENTRAL_PROVIDER";
@@ -118,6 +119,7 @@ export function parseJbCentralProviderMetadata(value: string | undefined): Agent
       contextWindow: optionalNumber(parsed.contextWindow),
       maxTokens: optionalNumber(parsed.maxTokens),
       reasoning: parsed.reasoning === true,
+      thinkingLevelMap: optionalThinkingLevelMap(parsed.thinkingLevelMap),
       supportsImages: parsed.supportsImages === true,
       profileId: optionalString(parsed.profileId),
     };
@@ -138,6 +140,7 @@ function isJbCentralProviderMetadata(value: unknown): value is {
   contextWindow?: unknown;
   maxTokens?: unknown;
   reasoning?: unknown;
+  thinkingLevelMap?: unknown;
   supportsImages?: unknown;
   profileId?: unknown;
 } {
@@ -293,6 +296,7 @@ function toJbCentralProviderModel(model: AgentWorkbenchJbCentralProvider, proxyA
     api: toJbCentralProviderApi(model),
     baseUrl: buildJbCentralModelBaseUrl(model, proxyAccess),
     reasoning: model.reasoning,
+    ...(model.thinkingLevelMap === undefined ? {} : {thinkingLevelMap: model.thinkingLevelMap}),
     input: model.supportsImages ? ["text", "image"] : ["text"],
     cost: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0},
     contextWindow: model.contextWindow ?? DEFAULT_JBCENTRAL_CONTEXT_WINDOW,

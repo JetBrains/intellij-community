@@ -260,7 +260,7 @@ internal class PiAgentSessionProviderDescriptor(
     val reasoningEffort = generationSettings.reasoningEffort
                             .takeIf { effort ->
                               effort == AgentPromptReasoningEffort.AUTO ||
-                              (modelId != null && supportsPiReasoningEffort(modelId, effort))
+                              if (modelId == null) effort in PI_SUPPORTED_REASONING_EFFORTS else supportsPiReasoningEffort(modelId, effort)
                             }
                           ?: AgentPromptReasoningEffort.AUTO
     return AgentPromptGenerationSettings(
@@ -301,9 +301,14 @@ internal class PiAgentSessionProviderDescriptor(
     initialMessagePlan: AgentInitialMessagePlan,
   ): AgentSessionTerminalLaunchSpec {
     val settings = sanitizeGenerationSettings(generationSettings)
-    val sanitizedModelId = settings.modelId ?: return baseLaunchSpec
     val reasoningEffort = settings.reasoningEffort
     val reasoningArgs = buildPiReasoningArgs(reasoningEffort)
+    val sanitizedModelId = settings.modelId ?: return if (reasoningArgs.isEmpty()) {
+      baseLaunchSpec
+    }
+    else {
+      baseLaunchSpec.copy(command = insertPiGenerationArgs(baseLaunchSpec.command, reasoningArgs))
+    }
     PiOmlxModelCatalog.decodeGenerationModelId(sanitizedModelId)?.let { modelSelection ->
       return baseLaunchSpec.copy(
         command = insertPiGenerationArgs(
