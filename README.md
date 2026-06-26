@@ -22,9 +22,8 @@ This section will guide you through getting the project sources and help avoid c
 
 ### Prerequisites
 
-- [Git](https://git-scm.com/) installed
-- Install [IntelliJ IDEA 2023.2](https://www.jetbrains.com/idea/download) or higher.
-- For **Windows** set these Git options to avoid common issues during cloning:
+- Install [Git](https://git-scm.com/).
+- On **Windows**, set these Git options to avoid common issues during cloning:
   ```shell
   git config --global core.longpaths true
   git config --global core.autocrlf input
@@ -38,7 +37,8 @@ The **master** (_default_) branch contains the source code which will be used to
 The branch names and build numbers for older releases of JetBrains IDEs can be found on the
 [Build Number Ranges](https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html) page.
 
-You can [clone this project](https://www.jetbrains.com/help/idea/manage-projects-hosted-on-github.html#clone-from-GitHub) directly using IntelliJ IDEA. 
+You can [clone this project](https://www.jetbrains.com/help/idea/manage-projects-hosted-on-github.html#clone-from-GitHub) using IntelliJ IDEA
+(see [Opening the IntelliJ IDEA Source Code in the IDE](#opening-the-intellij-idea-source-code-in-the-ide)). 
 
 Alternatively, run the following commands in the terminal:
    ```shell
@@ -68,7 +68,6 @@ Run the following script from project root `<IDEA_HOME>` to get the required mod
 ## Building IntelliJ IDEA
 
 These instructions will help you build IntelliJ IDEA from source code, which is the basis for IntelliJ Platform development.
-IntelliJ IDEA '**2026.1**' or newer is required.
 
 > [!IMPORTANT]
 >
@@ -81,15 +80,15 @@ IntelliJ IDEA '**2026.1**' or newer is required.
 
 ### Opening the IntelliJ IDEA Source Code in the IDE
 
-Using the latest IntelliJ IDEA, click '**File | Open**' and select the `<IDEA_HOME>/BUILD.bazel`.
+**Prerequisites**:
+- Install [IntelliJ IDEA 2026.1](https://www.jetbrains.com/idea/download) or newer.
+- Install the [Bazel plugin](https://plugins.jetbrains.com/plugin/22977-bazel) (via _Settings | Plugins | Marketplace_).
+- If the **Maven** plugin is disabled, [add the path variable](https://www.jetbrains.com/help/idea/absolute-path-variables.html)
+  `MAVEN_REPOSITORY` pointing to `<USER_HOME>/.m2/repository` directory.
+
+Using the latest IntelliJ IDEA, click _File | Open_ and select the `<IDEA_HOME>/.bazelproject`.
 If IntelliJ IDEA displays a message about a missing or out-of-date required plugin (e.g., Kotlin),
 [enable, upgrade, or install that plugin](https://www.jetbrains.com/help/idea/managing-plugins.html) and restart IntelliJ IDEA.
-
-### Build Configuration Steps
-
-1. **Maven Configuration**:
-If the **Maven** plugin is disabled, [add the path variable](https://www.jetbrains.com/help/idea/absolute-path-variables.html)
-`MAVEN_REPOSITORY` pointing to `<USER_HOME>/.m2/repository` directory.
 
 ### Building the IntelliJ IDEA Application
 
@@ -132,12 +131,12 @@ docker run --rm --user "$(id -u)" --volume "${PWD}:/community" intellij_idea_env
 ---
 ## Running IntelliJ IDEA
 
-To run the IntelliJ IDEA that was built from source, choose '**Run | Run**' from the main menu. This will use the preconfigured run configuration `IDEA`.
+To run the IntelliJ IDEA that was built from source, choose _Run | Run..._ from the main menu
+and choose the preconfigured run configuration `Run //build:idea_community`.
 
-To run tests on the build, apply these settings to the '**Run | Edit Configurations... | Templates | JUnit**' configuration tab:
+To run tests on the build, apply these settings to the _Run | Edit Configurations... | Templates | JUnit_ configuration tab:
 * Working dir: `<IDEA_HOME>/bin`
 * VM options:  `-ea`
-
 
 ### Running IntelliJ IDEA in a CI/CD environment
 
