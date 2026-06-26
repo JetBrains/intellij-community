@@ -371,6 +371,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     testPatternSystemPropertyKey.let { options.testPatterns?.run { System.setProperty(it, this) } }  // from options, e.g. TestingTasksImpl#runTestsSkippedInHeadlessEnvironment
     testGroupSystemPropertyKey.let { options.testGroups?.run { System.setProperty(it, this) } }  // from options, e.g. RunAnyTestTheSameWayTeamCityDoes#run
     setPropertyFromPass(TestCaseLoader.INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG)
+    setPropertyFromPass(TestCaseLoader.INCLUDE_ALL_UNCONVENTIONALLY_NAMED_TESTS_FLAG)
 
     // configure TestCaseLoader#matchesCurrentBucket with the properties from the test process
     listOf(
