@@ -57,9 +57,10 @@ private fun Task.getPureKotlinSourceRoots(sourceSet: String, disambiguationClass
         val kotlinExtensionClass = project.extensions.findByType(javaClass.classLoader.loadClass(KOTLIN_PROJECT_EXTENSION_CLASS))
         val getKotlinMethod = javaClass.classLoader.loadClass(KOTLIN_SOURCE_SET_CLASS).getMethod("getKotlin")
         val classifier = if (disambiguationClassifier == "metadata") "common" else disambiguationClassifier
+        val compilationFullName = compilationFullName(sourceSet, classifier)
         val kotlinSourceSet = (kotlinExtensionClass?.javaClass?.getMethod("getSourceSets")?.invoke(kotlinExtensionClass)
-                as? FactoryNamedDomainObjectContainer<Any>)?.asMap?.get(compilationFullName(sourceSet, classifier)) ?: return null
-        val pureJava: Set<File>? = getJavaSourceRoot(project, sourceSet)
+                as? FactoryNamedDomainObjectContainer<Any>)?.asMap?.get(compilationFullName) ?: return null
+        val pureJava: Set<File>? = getJavaSourceRoot(project, compilationFullName)
         return (getKotlinMethod.invoke(kotlinSourceSet) as? SourceDirectorySet)?.srcDirs?.filter {
             !(pureJava?.contains(it) ?: false)
         }?.toList()
