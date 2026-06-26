@@ -7829,6 +7829,102 @@ function useEscapeKeydown(onEscapeKeyDownProp, ownerDocument = globalThis?.docum
 	}, [onEscapeKeyDown, ownerDocument]);
 }
 //#endregion
+//#region node_modules/@assistant-ui/react/dist/primitives/attachment/AttachmentRoot.js
+/**
+* The root container component for an attachment.
+*
+* This component provides the foundational wrapper for attachment-related components
+* and content. It serves as the context provider for attachment state and actions.
+*
+* @example
+* ```tsx
+* <AttachmentPrimitive.Root>
+*   <AttachmentPrimitive.Name />
+*   <AttachmentPrimitive.Remove />
+* </AttachmentPrimitive.Root>
+* ```
+*/
+var AttachmentPrimitiveRoot = (0, react_shim_exports.forwardRef)((props, ref) => {
+	const $ = c(3);
+	let t0;
+	if ($[0] !== props || $[1] !== ref) {
+		t0 = /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Primitive.div, {
+			...props,
+			ref
+		});
+		$[0] = props;
+		$[1] = ref;
+		$[2] = t0;
+	} else t0 = $[2];
+	return t0;
+});
+AttachmentPrimitiveRoot.displayName = "AttachmentPrimitive.Root";
+//#endregion
+//#region node_modules/@assistant-ui/react/dist/primitives/attachment/AttachmentThumb.js
+var AttachmentPrimitiveThumb = (0, react_shim_exports.forwardRef)((props, ref) => {
+	const $ = c(4);
+	const ext = useAuiState(_temp$18);
+	let t0;
+	if ($[0] !== ext || $[1] !== props || $[2] !== ref) {
+		t0 = /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Primitive.div, {
+			...props,
+			ref,
+			children: [".", ext]
+		});
+		$[0] = ext;
+		$[1] = props;
+		$[2] = ref;
+		$[3] = t0;
+	} else t0 = $[3];
+	return t0;
+});
+AttachmentPrimitiveThumb.displayName = "AttachmentPrimitive.unstable_Thumb";
+function _temp$18(s) {
+	const parts = s.attachment.name.split(".");
+	return parts.length > 1 ? parts.pop() : "";
+}
+//#endregion
+//#region node_modules/@assistant-ui/react/dist/primitives/attachment/AttachmentName.js
+var AttachmentPrimitiveName = () => {
+	const $ = c(2);
+	const name = useAuiState(_temp$17);
+	let t0;
+	if ($[0] !== name) {
+		t0 = /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children: name });
+		$[0] = name;
+		$[1] = t0;
+	} else t0 = $[1];
+	return t0;
+};
+AttachmentPrimitiveName.displayName = "AttachmentPrimitive.Name";
+function _temp$17(s) {
+	return s.attachment.name;
+}
+//#endregion
+//#region node_modules/@assistant-ui/react/dist/primitives/attachment/AttachmentRemove.js
+var useAttachmentRemove = () => {
+	const $ = c(2);
+	const aui = useAui();
+	let t0;
+	if ($[0] !== aui) {
+		t0 = () => {
+			aui.attachment().remove();
+		};
+		$[0] = aui;
+		$[1] = t0;
+	} else t0 = $[1];
+	return t0;
+};
+var AttachmentPrimitiveRemove = createActionButton("AttachmentPrimitive.Remove", useAttachmentRemove);
+//#endregion
+//#region node_modules/@assistant-ui/react/dist/primitives/attachment.js
+var attachment_exports = /* @__PURE__ */ __exportAll({
+	Name: () => AttachmentPrimitiveName,
+	Remove: () => AttachmentPrimitiveRemove,
+	Root: () => AttachmentPrimitiveRoot,
+	unstable_Thumb: () => AttachmentPrimitiveThumb
+});
+//#endregion
 //#region node_modules/@assistant-ui/react/dist/primitives/message/MessageIf.js
 var useMessageIf = (props) => {
 	const $ = c(12);
@@ -12609,4 +12705,4 @@ function _temp(s) {
 	return s.part;
 }
 //#endregion
-export { useMessagePartText as a, useCallbackRef as c, dispatchDiscreteCustomEvent as d, createSlot as f, require_react_dom as g, AssistantRuntimeProvider as h, useSmooth as i, composeEventHandlers as l, useMessage as m, thread_exports as n, composer_exports as o, useComposedRefs as p, message_exports as r, useEscapeKeydown as s, useMessagePartReasoning as t, Primitive$1 as u };
+export { require_react_dom as _, useMessagePartText as a, useEscapeKeydown as c, Primitive$1 as d, dispatchDiscreteCustomEvent as f, AssistantRuntimeProvider as g, useMessage as h, useSmooth as i, useCallbackRef as l, useComposedRefs as m, thread_exports as n, composer_exports as o, createSlot as p, message_exports as r, attachment_exports as s, useMessagePartReasoning as t, composeEventHandlers as u };

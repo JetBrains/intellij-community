@@ -71,7 +71,7 @@ export default defineWebViewMock((context) => {
         await sendPageStdout(response(message.id, {
           protocolVersion: message.params?.protocolVersion ?? 1,
           agentCapabilities: {
-            promptCapabilities: { image: false, audio: false, embeddedContext: false },
+            promptCapabilities: { image: true, audio: false, embeddedContext: true },
           },
           authMethods: [],
         }))

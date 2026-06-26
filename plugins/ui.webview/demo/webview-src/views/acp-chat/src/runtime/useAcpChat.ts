@@ -1,7 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { useExternalStoreRuntime, type AppendMessage, type ThreadMessageLike } from "@assistant-ui/react"
+import {
+  useExternalStoreRuntime,
+  type AppendMessage,
+  type AttachmentAdapter,
+  type CompleteAttachment,
+  type PendingAttachment,
+  type ThreadMessageLike,
+  type ThreadUserMessagePart,
+} from "@assistant-ui/react"
 import type { ContentBlock } from "@agentclientprotocol/sdk"
 import { AcpSession, type AcpEventSink } from "../acp/client"
 import { acpBridgeHost } from "../bridge/webviewApi"
@@ -20,6 +28,8 @@ import type {
 
 const emptyPromptCapabilities: PromptCapabilitiesView = { image: false, audio: false, embeddedContext: false }
 const legacyPlanId = "legacy"
+const textAttachmentAccept = "text/*,.csv,.json,.jsonl,.md,.markdown,.txt,.xml,.yaml,.yml"
+let attachmentIdSeq = 0
 
 interface Turn {
   reasoning: string
@@ -44,6 +54,7 @@ export interface AcpChat {
   selectAgent: (agentId: string) => void
   selectMode: (modeId: string) => void
   selectConfigOption: (option: ConfigOptionView, value: string | boolean) => void
+  notifyAttachmentCapabilitiesUnavailable: () => void
 }
 
 export function useAcpChat(): AcpChat {
@@ -205,18 +216,27 @@ export function useAcpChat(): AcpChat {
     },
   }), [flushTurn, publishPlans])
 
+  const attachmentAdapter = useMemo(() => createAttachmentAdapter(promptCapabilities), [promptCapabilities])
+
   const onNew = useCallback(async (message: AppendMessage) => {
     const session = sessionRef.current
     if (!session || !session.isActive) {
       setStatus("Select an agent to start a session first.")
       return
     }
-    const blocks = buildPromptBlocks(message)
+    let blocks: ContentBlock[]
+    try {
+      blocks = buildPromptBlocks(message, promptCapabilities)
+    }
+    catch (error) {
+      setStatus(errorText(error))
+      return
+    }
     const text = textFromBlocks(blocks)
     const assistantId = `assistant-${++assistantSeqRef.current}`
     setMessages(previous => [
       ...previous,
-      { id: `user-${assistantSeqRef.current}`, role: "user", content: [{ type: "text", text }] },
+      { id: `user-${assistantSeqRef.current}`, role: "user", content: text ? [{ type: "text", text }] : [], attachments: message.attachments },
       { id: assistantId, role: "assistant", content: [] },
     ])
     turnRef.current = { reasoning: "", text: "", tools: [] }
@@ -232,7 +252,7 @@ export function useAcpChat(): AcpChat {
     finally {
       setIsRunning(false)
     }
-  }, [clearPlans])
+  }, [clearPlans, promptCapabilities])
 
   const onCancel = useCallback(async () => {
     try {
@@ -250,6 +270,7 @@ export function useAcpChat(): AcpChat {
     setMessages: next => setMessages([...next]),
     unstable_capabilities: { copy: true },
     convertMessage: (message: ThreadMessageLike) => message,
+    adapters: { attachments: attachmentAdapter },
     onNew,
     onCancel,
   })
@@ -362,6 +383,18 @@ export function useAcpChat(): AcpChat {
     })()
   }, [])
 
+  const notifyAttachmentCapabilitiesUnavailable = useCallback(() => {
+    if (selectedAgentId == null) {
+      setStatus("Image attachment support can be detected only after an ACP agent is activated.")
+    }
+    else if (!promptCapabilities.image && promptCapabilities.embeddedContext) {
+      setStatus("The active ACP agent does not advertise image prompt attachments.")
+    }
+    else {
+      setStatus("The active ACP agent does not advertise image or embedded-context prompt attachments.")
+    }
+  }, [selectedAgentId, promptCapabilities])
+
   return {
     runtime,
     agents,
@@ -379,11 +412,97 @@ export function useAcpChat(): AcpChat {
     selectAgent,
     selectMode,
     selectConfigOption,
+    notifyAttachmentCapabilitiesUnavailable,
   }
 }
 
-function buildPromptBlocks(message: AppendMessage): ContentBlock[] {
-  return [{ type: "text", text: textFromAppendMessage(message) }]
+function createAttachmentAdapter(capabilities: PromptCapabilitiesView): AttachmentAdapter | undefined {
+  const accept = attachmentAccept(capabilities)
+  if (!accept) return undefined
+  return {
+    accept,
+    async add({ file }) {
+      if (!canAttachFile(file, capabilities)) {
+        throw new Error(`The selected agent does not support '${file.name}' as a prompt attachment.`)
+      }
+      return {
+        id: `attachment-${++attachmentIdSeq}`,
+        type: file.type.startsWith("image/") ? "image" : "document",
+        name: file.name,
+        contentType: file.type || contentTypeForFileName(file.name),
+        file,
+        status: { type: "requires-action", reason: "composer-send" },
+      }
+    },
+    async send(attachment) {
+      return completeAttachment(attachment)
+    },
+    async remove() {
+    },
+  }
+}
+
+function attachmentAccept(capabilities: PromptCapabilitiesView): string | undefined {
+  const accepted: string[] = []
+  if (capabilities.image) accepted.push("image/*")
+  if (capabilities.embeddedContext) accepted.push(textAttachmentAccept)
+  return accepted.length > 0 ? accepted.join(",") : undefined
+}
+
+function canAttachFile(file: File, capabilities: PromptCapabilitiesView): boolean {
+  if (capabilities.image && file.type.startsWith("image/")) return true
+  return capabilities.embeddedContext && isTextLikeFile(file.name, file.type)
+}
+
+async function completeAttachment(attachment: PendingAttachment): Promise<CompleteAttachment> {
+  const contentType = attachment.contentType || attachment.file.type || contentTypeForFileName(attachment.name)
+  if (attachment.type === "image") {
+    return {
+      ...attachment,
+      contentType,
+      status: { type: "complete" },
+      content: [{ type: "image", image: await readFileAsDataUrl(attachment.file), filename: attachment.name }],
+    }
+  }
+  return {
+    ...attachment,
+    contentType,
+    status: { type: "complete" },
+    content: [{ type: "file", filename: attachment.name, mimeType: contentType, data: await attachment.file.text() }],
+  }
+}
+
+function buildPromptBlocks(message: AppendMessage, capabilities: PromptCapabilitiesView): ContentBlock[] {
+  const blocks: ContentBlock[] = []
+  const text = textFromAppendMessage(message)
+  if (text) blocks.push({ type: "text", text })
+  for (const attachment of message.attachments ?? []) {
+    for (const part of attachment.content ?? []) {
+      const block = contentBlockFromAttachmentPart(attachment, part, capabilities)
+      if (block) blocks.push(block)
+    }
+  }
+  return blocks
+}
+
+function contentBlockFromAttachmentPart(attachment: CompleteAttachment, part: ThreadUserMessagePart, capabilities: PromptCapabilitiesView): ContentBlock | null {
+  if (part.type === "image") {
+    if (!capabilities.image) throw new Error("The selected agent does not support image prompt attachments.")
+    const image = acpImageData(part.image, attachment.contentType)
+    return { type: "image", data: image.data, mimeType: image.mimeType, uri: attachmentUri(attachment) }
+  }
+  if (part.type === "file") {
+    if (!capabilities.embeddedContext) throw new Error("The selected agent does not support embedded prompt attachments.")
+    return {
+      type: "resource",
+      resource: {
+        uri: attachmentUri(attachment),
+        mimeType: part.mimeType,
+        text: part.data,
+      },
+    }
+  }
+  return null
 }
 
 function textFromAppendMessage(message: AppendMessage): string {
@@ -398,6 +517,68 @@ function textFromBlocks(blocks: ContentBlock[]): string {
     .filter((block): block is ContentBlock & { type: "text"; text: string } => block.type === "text")
     .map(block => block.text)
     .join("")
+}
+
+function acpImageData(image: string, fallbackMimeType?: string): { data: string; mimeType: string } {
+  const match = /^data:([^;,]+);base64,(.*)$/s.exec(image)
+  if (!match) return { data: image, mimeType: fallbackMimeType || "application/octet-stream" }
+  return { mimeType: match[1], data: match[2] }
+}
+
+function attachmentUri(attachment: CompleteAttachment): string {
+  return `attachment://${encodeURIComponent(attachment.id)}/${attachment.name.split("/").map(encodeURIComponent).join("/")}`
+}
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result ?? ""))
+    reader.onerror = () => reject(reader.error ?? new Error(`Failed to read '${file.name}'.`))
+    reader.readAsDataURL(file)
+  })
+}
+
+function isTextLikeFile(name: string, contentType: string): boolean {
+  if (contentType.startsWith("text/")) return true
+  switch (extensionOf(name)) {
+    case "csv":
+    case "json":
+    case "jsonl":
+    case "md":
+    case "markdown":
+    case "txt":
+    case "xml":
+    case "yaml":
+    case "yml":
+      return true
+    default:
+      return false
+  }
+}
+
+function contentTypeForFileName(name: string): string {
+  switch (extensionOf(name)) {
+    case "csv":
+      return "text/csv"
+    case "json":
+    case "jsonl":
+      return "application/json"
+    case "md":
+    case "markdown":
+      return "text/markdown"
+    case "xml":
+      return "application/xml"
+    case "yaml":
+    case "yml":
+      return "application/yaml"
+    default:
+      return "text/plain"
+  }
+}
+
+function extensionOf(name: string): string {
+  const index = name.lastIndexOf(".")
+  return index >= 0 ? name.slice(index + 1).toLocaleLowerCase() : ""
 }
 
 function errorText(error: unknown): string {

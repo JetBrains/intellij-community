@@ -467,6 +467,80 @@ body {
   max-width: 80%;
 }
 
+.acpAttachmentList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.acpAttachmentList:empty {
+  display: none;
+}
+
+.acpAttachmentChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  max-width: 220px;
+  height: 24px;
+  padding: 0 6px;
+  border: 1px solid var(--acp-border);
+  border-radius: 4px;
+  background: var(--acp-bg-alt);
+  color: var(--acp-text);
+  font-size: 12px;
+}
+
+.acpMsgUser .acpAttachmentChip {
+  border-color: rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.acpAttachmentThumb {
+  flex: 0 0 auto;
+  min-width: 18px;
+  color: var(--acp-text-muted);
+  font-family: var(--acp-mono), monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.acpMsgUser .acpAttachmentThumb {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.acpAttachmentName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.acpAttachmentRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--acp-text-muted);
+  cursor: pointer;
+}
+
+.acpAttachmentRemove:hover,
+.acpAttachmentRemove:focus-visible {
+  background: var(--acp-bg);
+  color: var(--acp-text);
+  outline: none;
+}
+
 .acpMsgAssistant {
   align-self: stretch;
 }
@@ -616,12 +690,27 @@ body {
 
 .acpComposer {
   display: flex;
+  align-items: flex-end;
   gap: 8px;
   min-width: 0;
 }
 
+.acpComposerMain {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.acpComposerAttachments {
+  max-width: 100%;
+}
+
 .acpComposerInput {
   flex: 1 1 auto;
+  box-sizing: border-box;
+  width: 100%;
   resize: none;
   min-height: 36px;
   max-height: 160px;
@@ -631,6 +720,33 @@ body {
   border-radius: 6px;
   padding: 8px;
   font: inherit;
+}
+
+.acpComposerAttach {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  align-self: flex-end;
+  background: var(--acp-bg-alt);
+  color: var(--acp-text-muted);
+  border: 1px solid var(--acp-border);
+  border-radius: 6px;
+  padding: 0;
+  cursor: pointer;
+}
+
+.acpComposerAttach:hover,
+.acpComposerAttach:focus-visible {
+  color: var(--acp-text);
+  outline: none;
+}
+
+.acpComposerAttach:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .acpComposerSend {

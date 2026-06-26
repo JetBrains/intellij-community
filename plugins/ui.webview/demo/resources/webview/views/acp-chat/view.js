@@ -1,6 +1,6 @@
 import { i as __toESM } from "./assets/rolldown-runtime.js";
 import { M as require_jsx_runtime, T as useExternalStoreRuntime, Y as require_react } from "./assets/assistant-ui-core.js";
-import { a as useMessagePartText, h as AssistantRuntimeProvider, i as useSmooth, m as useMessage, n as thread_exports, o as composer_exports, r as message_exports, t as useMessagePartReasoning } from "./assets/assistant-ui-react.js";
+import { a as useMessagePartText, g as AssistantRuntimeProvider, h as useMessage, i as useSmooth, n as thread_exports, o as composer_exports, r as message_exports, s as attachment_exports, t as useMessagePartReasoning } from "./assets/assistant-ui-react.js";
 import { t as require_client } from "./assets/react-dom.js";
 import { t as marked } from "./assets/marked.js";
 import { a as SelectItem$1, c as SelectPortal, d as SelectTrigger$1, i as SelectIcon, l as SelectScrollDownButton$1, n as SelectContent$1, o as SelectItemIndicator, p as SelectViewport, s as SelectItemText, t as Select$1, u as SelectScrollUpButton$1 } from "./assets/radix-ui-react-select.js";
@@ -615,6 +615,8 @@ var emptyPromptCapabilities = {
 	embeddedContext: false
 };
 var legacyPlanId = "legacy";
+var textAttachmentAccept = "text/*,.csv,.json,.jsonl,.md,.markdown,.txt,.xml,.yaml,.yml";
+var attachmentIdSeq = 0;
 function useAcpChat() {
 	const [messages, setMessages] = (0, import_react.useState)([]);
 	const [isRunning, setIsRunning] = (0, import_react.useState)(false);
@@ -785,6 +787,63 @@ function useAcpChat() {
 			authResolveRef.current?.(null);
 		}
 	}), [flushTurn, publishPlans]);
+	const attachmentAdapter = (0, import_react.useMemo)(() => createAttachmentAdapter(promptCapabilities), [promptCapabilities]);
+	const onNew = (0, import_react.useCallback)(async (message) => {
+		const session = sessionRef.current;
+		if (!session || !session.isActive) {
+			setStatus("Select an agent to start a session first.");
+			return;
+		}
+		let blocks;
+		try {
+			blocks = buildPromptBlocks(message, promptCapabilities);
+		} catch (error) {
+			setStatus(errorText(error));
+			return;
+		}
+		const text = textFromBlocks(blocks);
+		const assistantId = `assistant-${++assistantSeqRef.current}`;
+		setMessages((previous) => [
+			...previous,
+			{
+				id: `user-${assistantSeqRef.current}`,
+				role: "user",
+				content: text ? [{
+					type: "text",
+					text
+				}] : [],
+				attachments: message.attachments
+			},
+			{
+				id: assistantId,
+				role: "assistant",
+				content: []
+			}
+		]);
+		turnRef.current = {
+			reasoning: "",
+			text: "",
+			tools: []
+		};
+		clearPlans();
+		setStatus("");
+		setIsRunning(true);
+		try {
+			await session.prompt(blocks);
+		} catch (error) {
+			setStatus(errorText(error));
+		} finally {
+			setIsRunning(false);
+		}
+	}, [clearPlans, promptCapabilities]);
+	const onCancel = (0, import_react.useCallback)(async () => {
+		try {
+			await sessionRef.current?.cancel();
+		} catch (error) {
+			setStatus(errorText(error));
+		}
+		setIsRunning(false);
+	}, []);
 	return {
 		runtime: useExternalStoreRuntime({
 			isRunning,
@@ -792,55 +851,9 @@ function useAcpChat() {
 			setMessages: (next) => setMessages([...next]),
 			unstable_capabilities: { copy: true },
 			convertMessage: (message) => message,
-			onNew: (0, import_react.useCallback)(async (message) => {
-				const session = sessionRef.current;
-				if (!session || !session.isActive) {
-					setStatus("Select an agent to start a session first.");
-					return;
-				}
-				const blocks = buildPromptBlocks(message);
-				const text = textFromBlocks(blocks);
-				const assistantId = `assistant-${++assistantSeqRef.current}`;
-				setMessages((previous) => [
-					...previous,
-					{
-						id: `user-${assistantSeqRef.current}`,
-						role: "user",
-						content: [{
-							type: "text",
-							text
-						}]
-					},
-					{
-						id: assistantId,
-						role: "assistant",
-						content: []
-					}
-				]);
-				turnRef.current = {
-					reasoning: "",
-					text: "",
-					tools: []
-				};
-				clearPlans();
-				setStatus("");
-				setIsRunning(true);
-				try {
-					await session.prompt(blocks);
-				} catch (error) {
-					setStatus(errorText(error));
-				} finally {
-					setIsRunning(false);
-				}
-			}, [clearPlans]),
-			onCancel: (0, import_react.useCallback)(async () => {
-				try {
-					await sessionRef.current?.cancel();
-				} catch (error) {
-					setStatus(errorText(error));
-				}
-				setIsRunning(false);
-			}, [])
+			adapters: { attachments: attachmentAdapter },
+			onNew,
+			onCancel
 		}),
 		agents,
 		selectedAgentId,
@@ -972,20 +985,169 @@ function useAcpChat() {
 					setStatus(errorText(error));
 				}
 			})();
-		}, [])
+		}, []),
+		notifyAttachmentCapabilitiesUnavailable: (0, import_react.useCallback)(() => {
+			if (selectedAgentId == null) setStatus("Image attachment support can be detected only after an ACP agent is activated.");
+			else if (!promptCapabilities.image && promptCapabilities.embeddedContext) setStatus("The active ACP agent does not advertise image prompt attachments.");
+			else setStatus("The active ACP agent does not advertise image or embedded-context prompt attachments.");
+		}, [selectedAgentId, promptCapabilities])
 	};
 }
-function buildPromptBlocks(message) {
-	return [{
+function createAttachmentAdapter(capabilities) {
+	const accept = attachmentAccept(capabilities);
+	if (!accept) return void 0;
+	return {
+		accept,
+		async add({ file }) {
+			if (!canAttachFile(file, capabilities)) throw new Error(`The selected agent does not support '${file.name}' as a prompt attachment.`);
+			return {
+				id: `attachment-${++attachmentIdSeq}`,
+				type: file.type.startsWith("image/") ? "image" : "document",
+				name: file.name,
+				contentType: file.type || contentTypeForFileName(file.name),
+				file,
+				status: {
+					type: "requires-action",
+					reason: "composer-send"
+				}
+			};
+		},
+		async send(attachment) {
+			return completeAttachment(attachment);
+		},
+		async remove() {}
+	};
+}
+function attachmentAccept(capabilities) {
+	const accepted = [];
+	if (capabilities.image) accepted.push("image/*");
+	if (capabilities.embeddedContext) accepted.push(textAttachmentAccept);
+	return accepted.length > 0 ? accepted.join(",") : void 0;
+}
+function canAttachFile(file, capabilities) {
+	if (capabilities.image && file.type.startsWith("image/")) return true;
+	return capabilities.embeddedContext && isTextLikeFile(file.name, file.type);
+}
+async function completeAttachment(attachment) {
+	const contentType = attachment.contentType || attachment.file.type || contentTypeForFileName(attachment.name);
+	if (attachment.type === "image") return {
+		...attachment,
+		contentType,
+		status: { type: "complete" },
+		content: [{
+			type: "image",
+			image: await readFileAsDataUrl(attachment.file),
+			filename: attachment.name
+		}]
+	};
+	return {
+		...attachment,
+		contentType,
+		status: { type: "complete" },
+		content: [{
+			type: "file",
+			filename: attachment.name,
+			mimeType: contentType,
+			data: await attachment.file.text()
+		}]
+	};
+}
+function buildPromptBlocks(message, capabilities) {
+	const blocks = [];
+	const text = textFromAppendMessage(message);
+	if (text) blocks.push({
 		type: "text",
-		text: textFromAppendMessage(message)
-	}];
+		text
+	});
+	for (const attachment of message.attachments ?? []) for (const part of attachment.content ?? []) {
+		const block = contentBlockFromAttachmentPart(attachment, part, capabilities);
+		if (block) blocks.push(block);
+	}
+	return blocks;
+}
+function contentBlockFromAttachmentPart(attachment, part, capabilities) {
+	if (part.type === "image") {
+		if (!capabilities.image) throw new Error("The selected agent does not support image prompt attachments.");
+		const image = acpImageData(part.image, attachment.contentType);
+		return {
+			type: "image",
+			data: image.data,
+			mimeType: image.mimeType,
+			uri: attachmentUri(attachment)
+		};
+	}
+	if (part.type === "file") {
+		if (!capabilities.embeddedContext) throw new Error("The selected agent does not support embedded prompt attachments.");
+		return {
+			type: "resource",
+			resource: {
+				uri: attachmentUri(attachment),
+				mimeType: part.mimeType,
+				text: part.data
+			}
+		};
+	}
+	return null;
 }
 function textFromAppendMessage(message) {
 	return message.content.filter((part) => part.type === "text").map((part) => part.text).join("");
 }
 function textFromBlocks(blocks) {
 	return blocks.filter((block) => block.type === "text").map((block) => block.text).join("");
+}
+function acpImageData(image, fallbackMimeType) {
+	const match = /^data:([^;,]+);base64,(.*)$/s.exec(image);
+	if (!match) return {
+		data: image,
+		mimeType: fallbackMimeType || "application/octet-stream"
+	};
+	return {
+		mimeType: match[1],
+		data: match[2]
+	};
+}
+function attachmentUri(attachment) {
+	return `attachment://${encodeURIComponent(attachment.id)}/${attachment.name.split("/").map(encodeURIComponent).join("/")}`;
+}
+function readFileAsDataUrl(file) {
+	return new Promise((resolve, reject) => {
+		const reader = new FileReader();
+		reader.onload = () => resolve(String(reader.result ?? ""));
+		reader.onerror = () => reject(reader.error ?? /* @__PURE__ */ new Error(`Failed to read '${file.name}'.`));
+		reader.readAsDataURL(file);
+	});
+}
+function isTextLikeFile(name, contentType) {
+	if (contentType.startsWith("text/")) return true;
+	switch (extensionOf(name)) {
+		case "csv":
+		case "json":
+		case "jsonl":
+		case "md":
+		case "markdown":
+		case "txt":
+		case "xml":
+		case "yaml":
+		case "yml": return true;
+		default: return false;
+	}
+}
+function contentTypeForFileName(name) {
+	switch (extensionOf(name)) {
+		case "csv": return "text/csv";
+		case "json":
+		case "jsonl": return "application/json";
+		case "md":
+		case "markdown": return "text/markdown";
+		case "xml": return "application/xml";
+		case "yaml":
+		case "yml": return "application/yaml";
+		default: return "text/plain";
+	}
+}
+function extensionOf(name) {
+	const index = name.lastIndexOf(".");
+	return index >= 0 ? name.slice(index + 1).toLocaleLowerCase() : "";
 }
 function errorText(error) {
 	return error instanceof Error ? error.message : String(error);
@@ -1715,6 +1877,13 @@ var SMOOTH_TEXT_OPTIONS = {
 };
 function ChatView() {
 	const chat = useAcpChat();
+	const attachmentsEnabled = chat.promptCapabilities.image || chat.promptCapabilities.embeddedContext;
+	const notifyOnUnsupportedImagePaste = (event) => {
+		if (chat.promptCapabilities.image) return;
+		if (!Array.from(event.clipboardData.files).some((file) => file.type.startsWith("image/"))) return;
+		event.preventDefault();
+		chat.notifyAttachmentCapabilitiesUnavailable();
+	};
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AssistantRuntimeProvider, {
 		runtime: chat.runtime,
 		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
@@ -1743,13 +1912,36 @@ function ChatView() {
 						className: "acpComposerShell",
 						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(composer_exports.Root, {
 							className: "acpComposer",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Input, {
-								className: "acpComposerInput",
-								placeholder: "Message the agent…"
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Send, {
-								className: "acpComposerSend",
-								children: "Send"
-							})]
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "acpComposerMain",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: "acpAttachmentList acpComposerAttachments",
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Attachments, { children: () => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AttachmentChip, { removable: true }) })
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Input, {
+										className: "acpComposerInput",
+										placeholder: "Message the agent…",
+										onPaste: notifyOnUnsupportedImagePaste
+									})]
+								}),
+								attachmentsEnabled ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.AddAttachment, {
+									className: "acpComposerAttach",
+									"aria-label": "Attach file",
+									title: "Attach file",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AttachmentIcon, {})
+								}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+									className: "acpComposerAttach",
+									type: "button",
+									"aria-label": "Attach file",
+									title: "Attach file",
+									onClick: chat.notifyAttachmentCapabilitiesUnavailable,
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AttachmentIcon, {})
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Send, {
+									className: "acpComposerSend",
+									children: "Send"
+								})
+							]
 						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 							className: "acpComposerToolbar",
 							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(AgentSelector, {
@@ -1775,9 +1967,12 @@ function ChatView() {
 	});
 }
 function UserMessage() {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		className: "acpMsg acpMsgUser",
-		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(message_exports.Parts, { components: { Text: PlainText } })
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(message_exports.Parts, { components: { Text: PlainText } }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "acpAttachmentList acpMessageAttachments",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(message_exports.Attachments, { children: () => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AttachmentChip, {}) })
+		})]
 	});
 }
 function AssistantMessage() {
@@ -1794,6 +1989,57 @@ function PlainText(props) {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 		className: "acpText",
 		children: props?.text ?? ""
+	});
+}
+function AttachmentChip(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(attachment_exports.Root, {
+		className: "acpAttachmentChip",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(attachment_exports.unstable_Thumb, { className: "acpAttachmentThumb" }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				className: "acpAttachmentName",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(attachment_exports.Name, {})
+			}),
+			props.removable ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(attachment_exports.Remove, {
+				className: "acpAttachmentRemove",
+				"aria-label": "Remove attachment",
+				title: "Remove attachment",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RemoveIcon, {})
+			}) : null
+		]
+	});
+}
+function AttachmentIcon() {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+		width: "14",
+		height: "14",
+		viewBox: "0 0 14 14",
+		"aria-hidden": "true",
+		focusable: "false",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M5 10.5L10.6 4.9C11.4 4.1 11.4 2.8 10.6 2C9.8 1.2 8.5 1.2 7.7 2L2.4 7.3C1.3 8.4 1.3 10.2 2.4 11.3C3.5 12.4 5.3 12.4 6.4 11.3L11.3 6.4",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: "1.4",
+			strokeLinecap: "round",
+			strokeLinejoin: "round"
+		})
+	});
+}
+function RemoveIcon() {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+		width: "10",
+		height: "10",
+		viewBox: "0 0 10 10",
+		"aria-hidden": "true",
+		focusable: "false",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M2.5 2.5L7.5 7.5M7.5 2.5L2.5 7.5",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: "1.4",
+			strokeLinecap: "round"
+		})
 	});
 }
 function MarkdownText() {

@@ -9,6 +9,16 @@ type Locator = {
   fill(value: string): Promise<void>
 }
 
+type FilePayload = {
+  name: string
+  mimeType: string
+  buffer: Buffer
+}
+
+type FileChooser = {
+  setFiles(files: FilePayload | FilePayload[]): Promise<void>
+}
+
 type Page = {
   goto(url: string): Promise<void>
   getByRole(role: string, options?: { name?: string | RegExp; exact?: boolean }): Locator
@@ -16,6 +26,7 @@ type Page = {
   getByText(text: string | RegExp, options?: { exact?: boolean }): Locator
   locator(selector: string): Locator
   evaluate<Result>(pageFunction: () => Result | Promise<Result>): Promise<Result>
+  waitForEvent(event: "filechooser"): Promise<FileChooser>
   waitForFunction(pageFunction: () => boolean): Promise<unknown>
   waitForSelector(selector: string): Promise<unknown>
 }
@@ -68,6 +79,19 @@ test.beforeAll(async () => {
 
 test.afterAll(async () => {
   await preview?.close()
+})
+
+test("explains attachment capabilities before an agent is activated", async ({ page }) => {
+  if (!preview) {
+    throw new Error("ACP chat mock preview server was not started")
+  }
+  await page.goto(preview.url)
+
+  await expect(page.getByRole("button", { name: "Attach file" })).toBeVisible()
+  await pasteImageIntoComposer(page)
+  await expect(page.getByText("Image attachment support can be detected only after an ACP agent is activated.")).toBeVisible()
+  await page.getByRole("button", { name: "Attach file" }).click()
+  await expect(page.getByText("Image attachment support can be detected only after an ACP agent is activated.")).toBeVisible()
 })
 
 test("renders ACP chat in a real browser with a mock agent", async ({ page }) => {
@@ -168,6 +192,59 @@ test("drives ACP modes, model selection, and config options through the picker",
     && message.params?.value === true)).toBe(true)
 })
 
+test("sends attached image and text resources as ACP prompt content blocks", async ({ page }) => {
+  if (!preview) {
+    throw new Error("ACP chat mock preview server was not started")
+  }
+  await page.goto(preview.url)
+
+  await page.locator(".acpAgentSelect").click()
+  await page.getByRole("option", { name: "Mock Agent" }).click()
+  await expect(page.getByRole("button", { name: "Attach file" })).toBeVisible()
+
+  const fileChooserPromise = page.waitForEvent("filechooser")
+  await page.getByRole("button", { name: "Attach file" }).click()
+  const fileChooser = await fileChooserPromise
+  await fileChooser.setFiles([
+    { name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("attached text") },
+    { name: "pixel.png", mimeType: "image/png", buffer: Buffer.from([0x89, 0x50, 0x4e, 0x47]) },
+  ])
+
+  await expect(page.getByText("notes.txt", { exact: true })).toBeVisible()
+  await expect(page.getByText("pixel.png", { exact: true })).toBeVisible()
+
+  await page.getByPlaceholder("Message the agent…").fill("attachment probe")
+  await page.getByRole("button", { name: "Send" }).click()
+  await expect(page.getByText(/Mock response from AI chat: attachment probe/)).toBeVisible()
+
+  const calls = await page.evaluate(() => {
+    return (window as MockWindow).__WVI_MOCK__?.calls.byMethod("acp.bridge/sendStdin") ?? []
+  })
+  const rpcMessages = calls
+    .map((call: MockWebViewCall) => parseMockRpcLine(call.params))
+    .filter((message: JsonRpcMessage | null): message is JsonRpcMessage => message != null)
+  const promptRequest = rpcMessages.find(message => message.method === "session/prompt"
+    && Array.isArray(message.params?.prompt)
+    && message.params.prompt.some((block: any) => block?.type === "text" && block.text === "attachment probe"))
+  if (!promptRequest) {
+    throw new Error("No attachment probe prompt request was recorded")
+  }
+  const prompt = promptRequest.params.prompt
+  const hasImageBlock: boolean = prompt.some((block: any) => block?.type === "image"
+    && block.mimeType === "image/png"
+    && typeof block.data === "string"
+    && block.data.length > 0
+    && typeof block.uri === "string"
+    && block.uri.startsWith("attachment://"))
+  const hasTextResourceBlock: boolean = prompt.some((block: any) => block?.type === "resource"
+    && block.resource?.mimeType === "text/plain"
+    && block.resource?.text === "attached text"
+    && typeof block.resource?.uri === "string"
+    && block.resource.uri.startsWith("attachment://"))
+  expect(hasImageBlock).toBe(true)
+  expect(hasTextResourceBlock).toBe(true)
+})
+
 function parseMockRpcLine(params: unknown): JsonRpcMessage | null {
   const line = typeof (params as { line?: unknown })?.line === "string" ? (params as { line: string }).line : null
   if (!line) return null
@@ -178,4 +255,17 @@ function parseMockRpcLine(params: unknown): JsonRpcMessage | null {
   catch {
     return null
   }
+}
+
+async function pasteImageIntoComposer(page: Page): Promise<void> {
+  await page.getByPlaceholder("Message the agent…").click()
+  await page.evaluate(() => {
+    const input = document.querySelector(".acpComposerInput")
+    if (!input) throw new Error("No ACP composer input found")
+    const dataTransfer = new DataTransfer()
+    dataTransfer.items.add(new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], "pasted.png", { type: "image/png" }))
+    const event = new Event("paste", { bubbles: true, cancelable: true })
+    Object.defineProperty(event, "clipboardData", { value: dataTransfer })
+    input.dispatchEvent(event)
+  })
 }

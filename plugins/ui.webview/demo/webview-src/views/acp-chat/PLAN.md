@@ -82,11 +82,13 @@ Key confirmations: `ClientSideConnection implements Agent` (so `setSessionMode`/
 - [x] Add Playwright mock coverage: the mock advertises modes plus a Gemini-like model config option, and the browser test verifies the separate **Mode** and **Model** selectors and the corresponding `session/set_mode` / `session/set_config_option` JSON-RPC calls.
 
 ### 6. File attachments
-1. In `src/acp/client.ts`, capture `init.agentCapabilities?.promptCapabilities` during `connect()`.
-2. Add a small `AttachmentAdapter` in `useAcpChat.ts`: `accept`, `add` with preview data, `send` to `CompleteAttachment`, and `remove`.
-3. In `onNew` / `onEdit`, convert completed attachments into ACP `ContentBlock`s: `image` when image is supported, `resource` when embedded context is supported.
-4. Add an attachment button plus `ComposerPrimitive.Attachments` preview row, gated by prompt capabilities.
-5. Add attachment chip and preview styling in `styles.css`.
+- [x] In `src/acp/client.ts`, capture `init.agentCapabilities?.promptCapabilities` during `connect()`.
+- [x] Add a small `AttachmentAdapter` in `useAcpChat.ts`: `accept`, `add` with preview data, `send` to `CompleteAttachment`, and `remove`.
+- [x] In `onNew`, convert completed attachments into ACP `ContentBlock`s: `image` when image is supported, `resource` when embedded context is supported. `onEdit` remains pending until item 3 is implemented.
+- [x] Add an attachment button plus `ComposerPrimitive.Attachments` preview row, gated by prompt capabilities.
+- [x] Add user-message attachment chips so sent attachments stay visible in local message state.
+- [x] Show a notification when image attachment support is unavailable before agent activation, including pasted clipboard images.
+- [x] Add attachment chip and preview styling in `styles.css`.
 
 ### 7. Slash commands
 1. In `src/acp/client.ts`, handle `available_commands_update` and push commands through the sink.
@@ -143,7 +145,7 @@ Key confirmations: `ClientSideConnection implements Agent` (so `setSessionMode`/
 ## Verification
 
 1. **Types/build**: from `webview-src/` run `bun run typecheck` then `bun run build` (emits to `resources/webview/views/acp-chat/`). `lint_files` on changed `.ts/.tsx`.
-   - For item 5, also run `bun run test:browser -- test/acp-chat/acp-chat.browser.test.ts`; the mock coverage should verify separate **Mode** and **Model** selectors, Gemini model options, boolean config options, and the corresponding ACP JSON-RPC calls.
+   - For items 5 and 6, also run `bun run test:browser -- test/acp-chat/acp-chat.browser.test.ts`; the mock coverage should verify separate **Mode** and **Model** selectors, Gemini model options, boolean config options, file attachment chips, ACP image/resource prompt blocks, pre-activation image-capability notification, and the corresponding ACP JSON-RPC calls.
 2. **Kotlin**: `bazel build` the demo plugin module; `lint_files` on the two changed `.kt` files (no tests in this demo plugin).
 3. **End-to-end** (real agent): configure an ACP agent in `~/.jetbrains/acp.json` (e.g. gemini/claude-code ACP), open the **ACP Chat** tool window, then verify:
    - text streams with the smooth typewriter + caret;
