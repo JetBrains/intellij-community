@@ -19,11 +19,13 @@
   <extensions defaultExtensionNs="com.intellij">
     <toolWindow
       id="agent.workbench.sessions"
-      anchor="right"
+      anchor="left"
+      secondary="true"
       icon="com.intellij.agent.workbench.sessions.toolwindow.icons.AgentWorkbenchSessionsToolwindowIcons.Alien"
       canCloseContents="false"
       factoryClass="com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsToolWindowFactory"/>
     <postStartupActivity implementation="com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityStartupActivity"/>
+    <defaultToolWindowLayout implementation="com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsToolWindowDefaultLayoutExtension" order="last"/>
   </extensions>
 
   <actions resource-bundle="messages.AgentSessionsBundle">

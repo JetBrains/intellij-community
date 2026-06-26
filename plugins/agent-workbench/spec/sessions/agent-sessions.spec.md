@@ -90,6 +90,11 @@ behavior; refresh mechanics and detailed tree rendering/interaction contracts li
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreeStateControllerTest.kt
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsToolWindowFactorySwingTest.kt
 
+- In source-project frames, Agent Threads defaults to the left secondary tool-window stripe beside Thread Outline and above Structure;
+  the dedicated frame keeps Agent Threads as the primary left tool window and Thread Outline as the secondary left tool window.
+  [@test] ../../sessions-toolwindow/testSrc/AgentWorkbenchToolWindowPlacementTest.kt
+  [@test] ../../sessions/testSrc/AgentWorkbenchProjectFrameCapabilitiesProviderTest.kt
+
 - Claude quota hint visibility and acknowledgement must be gated by eligibility, acknowledgement state, and widget availability.
   [@test] ../../claude/sessions/testSrc/AgentSessionsSwingQuotaHintTest.kt
   [@test] ../../claude/sessions/testSrc/AgentSessionsClaudeQuotaWidgetActionRegistrationTest.kt

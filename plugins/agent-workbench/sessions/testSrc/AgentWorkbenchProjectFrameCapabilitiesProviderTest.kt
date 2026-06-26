@@ -5,6 +5,7 @@ import com.intellij.agent.workbench.chat.AGENT_CHAT_THREAD_OUTLINE_TOOL_WINDOW_I
 import com.intellij.agent.workbench.settings.AgentWorkbenchSettings
 import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
+import com.intellij.agent.workbench.sessions.frame.AGENT_SESSIONS_TOOL_WINDOW_ID
 import com.intellij.agent.workbench.sessions.frame.AGENT_WORKBENCH_DEDICATED_LAYOUT_PROFILE_ID
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchProjectFrameCapabilitiesProvider
 import com.intellij.agent.workbench.sessions.frame.isAgentChatThreadOutlineToolWindowAvailable
@@ -12,6 +13,7 @@ import com.intellij.agent.workbench.sessions.frame.refreshAgentChatThreadOutline
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.testFramework.junit5.TestApplication
@@ -78,6 +80,7 @@ class AgentWorkbenchProjectFrameCapabilitiesProviderTest {
     assertThat(suppressedToolWindowIds)
       .contains(ToolWindowId.PROJECT_VIEW)
       .contains(ToolWindowId.STRUCTURE_VIEW)
+      .doesNotContain(AGENT_SESSIONS_TOOL_WINDOW_ID)
       .doesNotContain(AGENT_CHAT_THREAD_OUTLINE_TOOL_WINDOW_ID)
 
     val profile = service<ToolWindowLayoutProfileService>().getProfile(
@@ -87,6 +90,16 @@ class AgentWorkbenchProjectFrameCapabilitiesProviderTest {
     )
     assertThat(profile).isNotNull()
     assertThat(profile!!.migrationVersion).isEqualTo(5)
+
+    val agentSessionsInfo = profile.layout.getInfo(AGENT_SESSIONS_TOOL_WINDOW_ID)
+    assertThat(agentSessionsInfo).isNotNull()
+    assertThat(agentSessionsInfo!!.anchor).isEqualTo(ToolWindowAnchor.LEFT)
+    assertThat(agentSessionsInfo.isSplit).isFalse()
+
+    val threadOutlineInfo = profile.layout.getInfo(AGENT_CHAT_THREAD_OUTLINE_TOOL_WINDOW_ID)
+    assertThat(threadOutlineInfo).isNotNull()
+    assertThat(threadOutlineInfo!!.anchor).isEqualTo(ToolWindowAnchor.LEFT)
+    assertThat(threadOutlineInfo.isSplit).isTrue()
   }
 
   @Test
@@ -96,6 +109,11 @@ class AgentWorkbenchProjectFrameCapabilitiesProviderTest {
     try {
       val dedicatedProject = testProject(basePath = AgentWorkbenchDedicatedFrameProjectManager.dedicatedProjectPath())
       val sourceProject = testProject(basePath = "/tmp/not-agent-workbench-dedicated")
+
+      assertThat(isAgentChatThreadOutlineToolWindowAvailable(dedicatedProject)).isTrue()
+      assertThat(isAgentChatThreadOutlineToolWindowAvailable(sourceProject)).isTrue()
+
+      AgentChatOpenModeSettings.setOpenInDedicatedFrame(true)
 
       assertThat(isAgentChatThreadOutlineToolWindowAvailable(dedicatedProject)).isTrue()
       assertThat(isAgentChatThreadOutlineToolWindowAvailable(sourceProject)).isFalse()
@@ -120,6 +138,8 @@ class AgentWorkbenchProjectFrameCapabilitiesProviderTest {
       val dedicatedToolWindow = testToolWindow()
       val sourceToolWindow = testToolWindow()
       val updates = LinkedHashMap<ToolWindow, Boolean>()
+
+      AgentChatOpenModeSettings.setOpenInDedicatedFrame(true)
 
       val updatedCount = refreshAgentChatThreadOutlineToolWindowAvailability(
         projects = arrayOf(dedicatedProject, sourceProject),
