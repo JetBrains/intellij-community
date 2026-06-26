@@ -40,6 +40,8 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
 import org.jetbrains.intellij.build.impl.contentModuleNameToDescriptorFileName
 import org.jetbrains.intellij.build.impl.toLoadPath
+import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
+import org.jetbrains.intellij.build.productLayout.buildProductContentXml
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import java.nio.file.Path
 
@@ -123,36 +125,49 @@ fun deprecatedResolveDescriptorForEmbeddedProduct(
   spec: PluginLayout.PluginLayoutSpec,
   clientModuleName: String,
   relativePath: String,
+  embeddedProductSpecEvaluator: suspend (BuildContext) -> ProductModulesContentSpec?,
   additionalSearchModules: Collection<String> = emptyList(),
 ) {
   val layoutPatcherIfNoScrambling: LayoutPatcher = { moduleOutputPatcher, platformLayout, context ->
-    val file = context.findFileInModuleSources(clientModuleName, relativePath)
-    if (file != null) {
-      val pluginLayout = PluginLayout.pluginAuto(clientModuleName) {}
-      val descriptorContainer = platformLayout.descriptorCacheContainer.forPlugin(getEmbeddedProductTempPluginDir(context, clientModuleName))
-
-      val xml = JDOMUtil.load(file)
-      val patchedXmlContent = resolveAndCacheDescriptorForEmbeddedProduct(
-        xml = xml,
-        clientModuleName = clientModuleName,
-        additionalSearchModules = additionalSearchModules,
-        platformLayout = platformLayout,
-        platformDescriptorContainer = descriptorContainer,
-        pluginLayout = pluginLayout,
-        pluginDescriptorContainer = descriptorContainer,
-        targetPluginDescriptorContainer = descriptorContainer,
-        context = context,
-      )
-      moduleOutputPatcher.patchModuleOutput(moduleName = clientModuleName, path = relativePath, content = patchedXmlContent)
+    val productModulesContentSpec = embeddedProductSpecEvaluator(context)
+    val xml = if (productModulesContentSpec != null) {
+      loadXmlFromEmbeddedProductSpec(productModulesContentSpec, context)
     }
+    else {
+      val file = context.findFileInModuleSources(clientModuleName, relativePath) ?: error("File not found: $relativePath in module $clientModuleName")
+      JDOMUtil.load(file)
+    }
+    val pluginLayout = PluginLayout.pluginAuto(clientModuleName) {}
+    val descriptorContainer = platformLayout.descriptorCacheContainer.forPlugin(getEmbeddedProductTempPluginDir(context, clientModuleName))
+
+    val patchedXmlContent = resolveAndCacheDescriptorForEmbeddedProduct(
+      xml = xml,
+      clientModuleName = clientModuleName,
+      additionalSearchModules = additionalSearchModules,
+      platformLayout = platformLayout,
+      platformDescriptorContainer = descriptorContainer,
+      pluginLayout = pluginLayout,
+      pluginDescriptorContainer = descriptorContainer,
+      targetPluginDescriptorContainer = descriptorContainer,
+      context = context,
+    )
+    moduleOutputPatcher.patchModuleOutput(moduleName = clientModuleName, path = relativePath, content = patchedXmlContent)
   }
 
   spec.withDeprecatedPostProcessor(layoutPatcherIfNoScrambling) { zipFileName, data, pluginLayout, platformLayout, pluginDescriptorContainer, context ->
     if (zipFileName != relativePath) {
       return@withDeprecatedPostProcessor null
     }
+    val embeddedProductSpec = embeddedProductSpecEvaluator(context)
+    val xml = if (embeddedProductSpec != null) {
+      //this is used only for JetBrains Client now, and it doesn't contain scrambled modules inside the embedded descriptor, so it's ok to use the original content from the spec
+      //todo it seems that we don't need to patch descriptors after scrambling at all, because Gateway also don't contain scrambled classes
+      loadXmlFromEmbeddedProductSpec(embeddedProductSpec, context)
+    }
+    else {
+      JDOMUtil.load(data)
+    }
 
-    val xml = JDOMUtil.load(data)
     val platformDescriptorContainer = platformLayout.descriptorCacheContainer.forPlatform(platformLayout)
     resolveAndCacheDescriptorForEmbeddedProduct(
       xml = xml,
@@ -166,6 +181,22 @@ fun deprecatedResolveDescriptorForEmbeddedProduct(
       context = context,
     )
   }
+}
+
+private suspend fun loadXmlFromEmbeddedProductSpec(
+  embeddedProductSpec: ProductModulesContentSpec,
+  context: BuildContext,
+): Element {
+  val buildResult = buildProductContentXml(
+    spec = embeddedProductSpec,
+    outputProvider = context.outputProvider,
+    inlineXmlIncludes = true,
+    inlineModuleSets = true,
+    metadataBuilder = { sb ->
+      sb.append("  <id>com.intellij</id>\n")
+    },
+  )
+  return JDOMUtil.load(buildResult.xml)
 }
 
 internal suspend fun resolveAndCacheDescriptorForEmbeddedProduct(
