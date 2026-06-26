@@ -98,6 +98,14 @@ internal class TerminalViewFileEditorProviderTest {
     }
   }
 
+  @Test
+  fun `terminal editor file cannot be split`(@TestDisposable disposable: Disposable) {
+    val terminalView = createTerminalView(disposable)
+    val file = createTerminalViewVirtualFile(terminalView)
+
+    assertThat(file.getUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT)).isTrue()
+  }
+
   private fun assertTerminalViewFileEditor(editor: FileEditor) {
     assertThat(editor.javaClass.name).isEqualTo("com.intellij.terminal.frontend.editor.TerminalViewFileEditor")
   }

@@ -910,11 +910,25 @@ open class FileEditorManagerImpl(
 
   @RequiresEdt
   fun closeFile(file: VirtualFile, moveFocus: Boolean, closeAllCopies: Boolean) {
+    closeFile(file = file, moveFocus = moveFocus, closeAllCopies = closeAllCopies, openReplacementInEmptyWindow = true)
+  }
+
+  @RequiresEdt
+  private fun closeFileForMove(file: VirtualFile) {
+    closeFile(file = file, moveFocus = true, closeAllCopies = false, openReplacementInEmptyWindow = false)
+  }
+
+  @RequiresEdt
+  private fun closeFile(file: VirtualFile, moveFocus: Boolean, closeAllCopies: Boolean, openReplacementInEmptyWindow: Boolean) {
     if (closeAllCopies) {
       ClientId.withExplicitClientId(ClientId.localId).use {
         openFileSetModificationCount.increment()
         for (each in getAllSplitters()) {
-          runBulkTabChangeInEdt(each) { each.closeFile(file = file, moveFocus = moveFocus) }
+          runBulkTabChangeInEdt(each) {
+            each.closeFile(file = file,
+                           moveFocus = moveFocus,
+                           openReplacementInEmptyWindow = openReplacementInEmptyWindow)
+          }
         }
       }
       for (manager in allClientFileEditorManagers) {
@@ -926,7 +940,9 @@ open class FileEditorManagerImpl(
         openFileSetModificationCount.increment()
         val activeSplitters = getActiveSplitterSync()
         runBulkTabChangeInEdt(activeSplitters) {
-          activeSplitters.closeFile(file = file, moveFocus = moveFocus)
+          activeSplitters.closeFile(file = file,
+                                    moveFocus = moveFocus,
+                                    openReplacementInEmptyWindow = openReplacementInEmptyWindow)
         }
       }
       else {
@@ -989,7 +1005,7 @@ open class FileEditorManagerImpl(
         }
 
         if (forbidSplitFor(file)) {
-          closeFile(file)
+          closeFileForMove(file)
         }
 
         // Don't create a new window on backend for OpenMode.NEW_WINDOW,
@@ -1002,7 +1018,7 @@ open class FileEditorManagerImpl(
             isSingletonEditorInWindow = options.isSingletonEditorInWindow,
           ) { editorWindow ->
             if (forbidSplitFor(file = file) && !editorWindow.isFileOpen(file = file)) {
-              closeFile(file = file)
+              closeFileForMove(file)
             }
             doOpenFile(file = file, windowToOpenIn = editorWindow, options = options)
           }
@@ -1019,14 +1035,14 @@ open class FileEditorManagerImpl(
       windowToOpenIn = getWindowToOpen(options, file)
     }
     if (forbidSplitFor(file = file) && !windowToOpenIn.isFileOpen(file)) {
-      closeFile(file)
+      closeFileForMove(file)
     }
     return openFileImpl(window = windowToOpenIn, _file = file, entry = null, options = options)
   }
 
   private fun doOpenFile(file: VirtualFile, windowToOpenIn: EditorWindow, options: FileEditorOpenOptions): FileEditorComposite {
     if (forbidSplitFor(file = file) && !windowToOpenIn.isFileOpen(file)) {
-      closeFile(file)
+      closeFileForMove(file)
     }
     return openFileImpl(window = windowToOpenIn, _file = file, entry = null, options = options)
   }
@@ -1045,7 +1061,7 @@ open class FileEditorManagerImpl(
     if (mode == OpenMode.NEW_WINDOW) {
       return withContext(Dispatchers.EDT) {
         if (forbidSplitFor(file)) {
-          closeFile(file)
+          closeFileForMove(file)
         }
         (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(
           file = file,
@@ -1053,7 +1069,7 @@ open class FileEditorManagerImpl(
           isSingletonEditorInWindow = false,
         ) { editorWindow ->
           if (forbidSplitFor(file = file) && !editorWindow.isFileOpen(file = file)) {
-            closeFile(file = file)
+            closeFileForMove(file)
           }
 
           doOpenFile(file = file, windowToOpenIn = editorWindow, options = options)
@@ -1078,7 +1094,7 @@ open class FileEditorManagerImpl(
       writeIntentReadAction {
         val window = getWindowToOpen(options, file)
         if (forbidSplitFor(file) && !window.isFileOpen(file)) {
-          closeFile(file)
+          closeFileForMove(file)
         }
 
         @Suppress("DuplicatedCode")
@@ -1160,15 +1176,26 @@ open class FileEditorManagerImpl(
 
   @JvmOverloads
   fun openFileInNewWindow(file: VirtualFile, reuseOpen: Boolean = false): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
-    return openFile(
-      file = file,
-      window = null,
-      options = FileEditorOpenOptions(
-        reuseOpen = reuseOpen,
-        requestFocus = true,
-        openMode = OpenMode.NEW_WINDOW,
-      ),
-    ).retrofit()
+    val closingToReopen = forbidSplitFor(file)
+    if (closingToReopen) {
+      file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, true)
+    }
+    try {
+      return openFile(
+        file = file,
+        window = null,
+        options = FileEditorOpenOptions(
+          reuseOpen = reuseOpen,
+          requestFocus = true,
+          openMode = OpenMode.NEW_WINDOW,
+        ),
+      ).retrofit()
+    }
+    finally {
+      if (closingToReopen) {
+        file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, null)
+      }
+    }
   }
 
   @RequiresEdt
@@ -1202,7 +1229,7 @@ open class FileEditorManagerImpl(
 
   open fun openFileImpl2(window: EditorWindow, file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
     if (forbidSplitFor(file) && !window.isFileOpen(file)) {
-      closeFile(file)
+      closeFileForMove(file)
     }
     return openFileImpl(window = window, _file = file, entry = null, options = options)
   }
@@ -1210,7 +1237,7 @@ open class FileEditorManagerImpl(
   internal suspend fun checkForbidSplitAndOpenFile(window: EditorWindow, file: VirtualFile, options: FileEditorOpenOptions) {
     if (forbidSplitFor(file) && !window.isFileOpen(file)) {
       withContext(Dispatchers.EDT) {
-        closeFile(file)
+        closeFileForMove(file)
       }
     }
 

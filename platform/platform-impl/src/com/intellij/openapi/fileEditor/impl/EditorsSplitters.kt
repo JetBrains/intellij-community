@@ -654,8 +654,11 @@ open class EditorsSplitters internal constructor(
     return null
   }
 
-  fun closeFile(file: VirtualFile, moveFocus: Boolean) {
-    closeFileInWindows(file = file, windows = findWindows(file), moveFocus = moveFocus)
+  fun closeFile(file: VirtualFile, moveFocus: Boolean, openReplacementInEmptyWindow: Boolean = true) {
+    closeFileInWindows(file = file,
+                       windows = findWindows(file),
+                       moveFocus = moveFocus,
+                       openReplacementInEmptyWindow = openReplacementInEmptyWindow)
   }
 
   internal fun closeFileEditor(file: VirtualFile, editor: FileEditor, moveFocus: Boolean) {
@@ -665,17 +668,17 @@ open class EditorsSplitters internal constructor(
         composite.allEditorsWithProviders.any { it.fileEditor == editor }
       }
     }
-    closeFileInWindows(file = file, windows = windows, moveFocus = moveFocus)
+    closeFileInWindows(file = file, windows = windows, moveFocus = moveFocus, openReplacementInEmptyWindow = true)
   }
 
-  private fun closeFileInWindows(file: VirtualFile, windows: List<EditorWindow>, moveFocus: Boolean) {
+  private fun closeFileInWindows(file: VirtualFile, windows: List<EditorWindow>, moveFocus: Boolean, openReplacementInEmptyWindow: Boolean) {
     if (windows.isEmpty()) {
       return
     }
 
     val isProjectOpen = manager.project.isOpen
 
-    val nextFile = findNextFile(file)
+    val nextFile = if (openReplacementInEmptyWindow) findNextFile(file) else null
     for (window in windows) {
       val composite = window.getComposite(file) ?: continue
       window.closeFile(
@@ -705,7 +708,12 @@ open class EditorsSplitters internal constructor(
           continue
         }
         if (window.tabCount == 0) {
-          window.unsplit(setCurrent = false)
+          if (openReplacementInEmptyWindow) {
+            window.unsplit(setCurrent = false)
+          }
+          else {
+            window.removeFromSplitter()
+          }
         }
       }
     }

@@ -42,6 +42,7 @@ import com.intellij.pom.Navigatable
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -424,6 +425,76 @@ class FileEditorManagerTest {
   }
 
   @Test
+  fun testOpenFileInNewWindowClosesEmptyNoSplitSourceSplit(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    var editorWasClosedToReopen = false
+    registerReopenAwareProvider { editorWasClosedToReopen = true }
+
+    val file = getSourceFile("1.txt")
+    val siblingFile = getSourceFile("2.txt")
+    manager.openFile(file, false)
+    val sourceWindow = currentWindow()
+    val sourceSplitters = sourceWindow.owner
+    val siblingWindow = createVerticalSplitter(sourceWindow)
+    manager.openFileImpl2(siblingWindow, siblingFile, FileEditorOpenOptions().withRequestFocus(true))
+    manager.closeFile(file, siblingWindow)
+    file.putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
+
+    try {
+      manager.openFileInNewWindow(file)
+
+      assertThat(editorWasClosedToReopen).isTrue()
+      assertThat(manager.getAllEditorList(file)).hasSize(1)
+      val sourceWindows = sourceSplitters.windows().toList()
+      assertThat(sourceWindows).hasSize(1)
+      assertThat(sourceWindows.single().isFileOpen(siblingFile)).isTrue()
+    }
+    finally {
+      manager.closeFile(file)
+      manager.closeFile(siblingFile)
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project)
+      IndexingTestUtil.waitUntilIndexesAreReady(project)
+      file.putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, null)
+    }
+  }
+
+  @Test
+  fun testOpenFileInNewWindowKeepsNoSplitSourceSplitWithOtherTabs(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    var editorWasClosedToReopen = false
+    registerReopenAwareProvider { editorWasClosedToReopen = true }
+
+    val file = getSourceFile("1.txt")
+    val sourceFile = getSourceFile("2.txt")
+    val siblingFile = getSourceFile("3.txt")
+    manager.openFile(file, false)
+    val sourceWindow = currentWindow()
+    val sourceSplitters = sourceWindow.owner
+    manager.openFileImpl2(sourceWindow, sourceFile, FileEditorOpenOptions())
+    sourceWindow.setSelectedComposite(file, false)
+    val siblingWindow = createVerticalSplitter(sourceWindow)
+    manager.openFileImpl2(siblingWindow, siblingFile, FileEditorOpenOptions().withRequestFocus(true))
+    manager.closeFile(file, siblingWindow)
+    file.putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
+
+    try {
+      manager.openFileInNewWindow(file)
+
+      assertThat(editorWasClosedToReopen).isTrue()
+      assertThat(manager.getAllEditorList(file)).hasSize(1)
+      assertThat(sourceWindow.isFileOpen(file)).isFalse()
+      assertThat(sourceWindow.isFileOpen(sourceFile)).isTrue()
+      assertThat(sourceSplitters.windows().toList()).hasSize(2)
+    }
+    finally {
+      manager.closeFile(file)
+      manager.closeFile(sourceFile)
+      manager.closeFile(siblingFile)
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project)
+      IndexingTestUtil.waitUntilIndexesAreReady(project)
+      file.putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, null)
+    }
+  }
+
+  @Test
   fun testMustNotAllowToTypeIntoFileRenamedToUnknownExtension(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
     val ioFile = IoTestUtil.createTestFile("test.txt", "")
     var file: VirtualFile? = null
@@ -452,6 +523,31 @@ class FileEditorManagerTest {
     Disposer.register(disposable, providerDisposable)
     providerDisposables.add(providerDisposable)
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.point.registerExtension(provider, providerDisposable)
+  }
+
+  private fun registerReopenAwareProvider(onClosingToReopen: () -> Unit) {
+    registerProvider(object : MockFileEditorProvider(
+      editorTypeId = "reopenAware",
+      fileEditorName = "ReopenAware",
+      policy = FileEditorPolicy.HIDE_DEFAULT_EDITOR,
+    ), DumbAware {
+      override fun createEditor(project: Project, file: VirtualFile): FileEditor {
+        return object : Mock.MyFileEditor() {
+          override fun getComponent(): JComponent = JLabel()
+
+          override fun getName(): String = "ReopenAware"
+
+          override fun getFile(): VirtualFile = file
+
+          override fun dispose() {
+            if (file.getUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN) == true) {
+              onClosingToReopen()
+            }
+            super.dispose()
+          }
+        }
+      }
+    })
   }
 
   private fun getSourceFile(name: String): VirtualFile = getFile("/src/$name")
