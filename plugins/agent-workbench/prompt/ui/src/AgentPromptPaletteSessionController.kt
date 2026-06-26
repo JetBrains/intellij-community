@@ -140,6 +140,7 @@ internal class AgentPromptPaletteSessionController(
       modelSelectorLink = view.modelSelectorLink,
       reasoningEffortLink = view.reasoningEffortLink,
       planReasoningEffortLink = view.planReasoningEffortLink,
+      launchTuningSummaryLink = view.launchTuningSummaryLink,
       defaultProfileActionControl = view.defaultProfileActionControl,
       modelCatalogScope = sessionScope,
       launcherProvider = launcherProvider,

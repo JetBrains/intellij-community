@@ -101,6 +101,7 @@ internal data class AgentPromptPaletteView(
   @JvmField val modelSelectorLink: ActionLink,
   @JvmField val reasoningEffortLink: ActionLink,
   @JvmField val planReasoningEffortLink: ActionLink,
+  @JvmField val launchTuningSummaryLink: ActionLink,
   @JvmField val defaultProfileActionControl: AgentPromptDefaultProfileActionControl,
   @JvmField val addContextButton: ActionLink,
   @JvmField val existingTaskListModel: DefaultListModel<ThreadEntry>,
@@ -585,6 +586,15 @@ internal fun createAgentPromptPaletteView(
     setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.generation.plan.reasoning.tooltip")))
     accessibleContext.accessibleName = AgentPromptBundle.message("popup.generation.plan.reasoning.accessible.name")
   }
+  val launchTuningSummaryLink = ActionLink(AgentPromptBundle.message("popup.generation.summary.initial")).apply {
+    autoHideOnDisable = false
+    setDropDownLinkIcon()
+    withFont(JBUI.Fonts.smallFont())
+    foreground = UIUtil.getContextHelpForeground()
+    border = JBUI.Borders.empty()
+    setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.generation.summary.tooltip")))
+    accessibleContext.accessibleName = AgentPromptBundle.message("popup.generation.summary.accessible.name")
+  }
   val defaultProfileActionControl = AgentPromptDefaultProfileActionControl()
 
   val contextChipsContainer = JPanel(BorderLayout()).apply {
@@ -610,15 +620,17 @@ internal fun createAgentPromptPaletteView(
     if (isInlineEmptyState) {
       add(addContextButton)
     }
-    add(modelSelectorLink)
-    add(reasoningEffortLink)
-    add(planReasoningEffortLink)
+  }
+  val generationSettingsActionsPanel = JPanel(FlowLayout(FlowLayout.RIGHT, if (isInlineEmptyState) 6 else 8, 0)).apply {
+    isOpaque = false
+    add(launchTuningSummaryLink)
+    add(defaultProfileActionControl.component)
   }
   val generationSettingsPanel = JPanel(BorderLayout()).apply {
     isOpaque = false
     border = if (isInlineEmptyState) JBUI.Borders.empty(0, 6, 4, 6) else JBUI.Borders.empty(0, 6, 6, 6)
     add(generationSettingsControlsPanel, BorderLayout.WEST)
-    add(defaultProfileActionControl.component, BorderLayout.EAST)
+    add(generationSettingsActionsPanel, BorderLayout.EAST)
   }
 
   val promptEditorPanel = BorderLayoutPanel().apply {
@@ -701,6 +713,7 @@ internal fun createAgentPromptPaletteView(
     modelSelectorLink = modelSelectorLink,
     reasoningEffortLink = reasoningEffortLink,
     planReasoningEffortLink = planReasoningEffortLink,
+    launchTuningSummaryLink = launchTuningSummaryLink,
     defaultProfileActionControl = defaultProfileActionControl,
     addContextButton = addContextButton,
     existingTaskListModel = existingTaskListModel,
