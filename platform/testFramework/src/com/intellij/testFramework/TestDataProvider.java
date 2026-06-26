@@ -40,27 +40,29 @@ public class TestDataProvider implements DataProvider {
 
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
+      return checkProjectNotDisposed();
+    }
+    if (CommonDataKeys.EDITOR.is(dataId) || OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
+      FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(checkProjectNotDisposed());
+      return manager.getSelectedTextEditor(true);
+    }
+    if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
+      FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(checkProjectNotDisposed());
+      Editor editor = manager.getSelectedTextEditor();
+      return editor == null ? null : TextEditorProvider.getInstance().getTextEditor(editor);
+    }
+    if (myWithRules) {
+      return DataManager.getInstance().getCustomizedData(dataId, DataContext.EMPTY_CONTEXT, myDelegateWithoutRules);
+    }
+    return null;
+  }
+
+  private Project checkProjectNotDisposed() {
     if (myProject.isDisposed()) {
       throw new RuntimeException("TestDataProvider is already disposed for " + myProject + "\n" +
                                  "If you closed a project in test, please reset TestApplicationManager.setDataProvider.");
     }
-
-    if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myProject;
-    }
-    FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(myProject);
-    if (CommonDataKeys.EDITOR.is(dataId) || OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
-      return manager.getSelectedTextEditor(true);
-    }
-    else if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
-      Editor editor = manager.getSelectedTextEditor();
-      return editor == null ? null : TextEditorProvider.getInstance().getTextEditor(editor);
-    }
-    else {
-      if (myWithRules) {
-        return DataManager.getInstance().getCustomizedData(dataId, DataContext.EMPTY_CONTEXT, myDelegateWithoutRules);
-      }
-      return null;
-    }
+    return myProject;
   }
 }
