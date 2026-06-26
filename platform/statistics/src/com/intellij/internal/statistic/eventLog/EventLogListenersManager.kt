@@ -13,6 +13,8 @@ import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
+private const val JCP_LISTENER_CLASS = "com.intellij.ml.llm.core.statistics.fus.jcp.JcpEventsInterceptor"
+
 @ApiStatus.Internal
 @Service(Service.Level.APP)
 class EventLogListenersManager(coroutineScope: CoroutineScope) {
@@ -22,6 +24,7 @@ class EventLogListenersManager(coroutineScope: CoroutineScope) {
 
   private val subscribers = MultiMap.createConcurrent<String, StatisticsEventLogListener>()
   private var listenersFromEP = ConcurrentCollectionFactory.createConcurrentMap<String, StatisticsEventLogListener>()
+  private val jcpListenerByRecorder = ConcurrentCollectionFactory.createConcurrentMap<String, Boolean>()
 
   init {
     if (ApplicationManager.getApplication().extensionArea.hasExtensionPoint(ExternalEventLogSettings.EP_NAME)) {
@@ -86,14 +89,30 @@ class EventLogListenersManager(coroutineScope: CoroutineScope) {
     return listener.javaClass.name == "com.intellij.ae.database.core.baseEvents.fus.Listener"
   }
 
+  /**
+   * Tells whether the JCP listener is subscribed for [recorderId], so the JCP payload is worth carrying to it.
+   * The result is cached and recomputed only when subscriptions change, making it cheap to call while logging.
+   */
+  fun hasJcpListener(recorderId: String): Boolean {
+    return jcpListenerByRecorder.getOrPut(recorderId) {
+      subscribers[recorderId].any { isJcpListener(it) }
+    }
+  }
+
+  private fun isJcpListener(listener: StatisticsEventLogListener): Boolean {
+    return listener.javaClass.name == JCP_LISTENER_CLASS && getPluginInfo(listener.javaClass).isDevelopedByJetBrains()
+  }
+
   fun subscribe(subscriber: StatisticsEventLogListener, recorderId: String) {
     if (!getPluginInfo(subscriber.javaClass).isDevelopedByJetBrains()) return
 
     subscribers.putValue(recorderId, subscriber)
+    jcpListenerByRecorder.remove(recorderId)
   }
 
   fun unsubscribe(subscriber: StatisticsEventLogListener, recorderId: String) {
     subscribers.remove(recorderId, subscriber)
+    jcpListenerByRecorder.remove(recorderId)
   }
 }
 
