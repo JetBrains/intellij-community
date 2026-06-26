@@ -63,22 +63,20 @@ class JavaHotSwapSourceChangeCompatibilityChecker(project: Project) :
   }
 
   private fun PsiClass.supers(): Set<String> =
-    (extendsList?.referenceElements.orEmpty().asSequence() + implementsList?.referenceElements.orEmpty().asSequence())
-      .map { it.text.typeSignature() }
+    (extendsListTypes.asSequence() + implementsListTypes.asSequence())
+      .map { it.signature() }
       .toSet()
 
   private fun PsiField.snapshot(): Pair<String, HotSwapFieldShape> =
-    name to HotSwapFieldShape(typeElement?.text?.typeSignature() ?: type.signature(), modifiers(FIELD_MODIFIERS))
+    name to HotSwapFieldShape(type.signature(), modifiers(FIELD_MODIFIERS))
 
   private fun PsiMethod.snapshot(): Pair<HotSwapMethodId, HotSwapMethodShape> {
-    val id = HotSwapMethodId(name, isConstructor, parameterList.parameters.map { it.typeElement?.text?.typeSignature() ?: it.type.signature() })
-    val returnType = returnTypeElement?.text?.typeSignature() ?: returnType?.signature()
+    val id = HotSwapMethodId(name, isConstructor, parameterList.parameters.map { it.type.signature() })
+    val returnType = returnType?.signature()
     return id to HotSwapMethodShape(returnType, modifiers(METHOD_MODIFIERS))
   }
 
   private fun PsiType.signature(): String = canonicalText
-
-  private fun String.typeSignature(): String = filterNot { it.isWhitespace() }
 
   private fun PsiModifierListOwner.modifiers(knownModifiers: Array<String>): Set<String> =
     knownModifiers.filterTo(hashSetOf()) { modifierList?.hasExplicitModifier(it) == true }

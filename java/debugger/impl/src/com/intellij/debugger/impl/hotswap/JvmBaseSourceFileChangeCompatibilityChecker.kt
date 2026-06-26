@@ -4,6 +4,7 @@ package com.intellij.debugger.impl.hotswap
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
@@ -53,6 +54,9 @@ abstract class JvmBaseSourceFileChangeCompatibilityChecker(
       buildClassShapes(file)
     }
     catch (_: CannotBuildClassShapesException) {
+      null
+    }
+    catch (_: IndexNotReadyException) {
       null
     }
 

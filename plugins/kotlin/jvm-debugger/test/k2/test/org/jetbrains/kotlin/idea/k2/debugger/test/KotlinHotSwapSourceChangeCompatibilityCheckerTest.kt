@@ -2,9 +2,14 @@
 package org.jetbrains.kotlin.idea.k2.debugger.test
 
 import com.intellij.debugger.impl.hotswap.HotSwapIncompatibilityReasons
+import com.intellij.debugger.impl.hotswap.HotSwapClassShape
+import com.intellij.debugger.impl.hotswap.JvmBaseSourceFileChangeCompatibilityChecker
+import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.xdebugger.impl.hotswap.HotSwapChangesCompatibility
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.debugger.core.hotswap.KotlinHotSwapSourceChangeCompatibilityChecker
@@ -16,6 +21,7 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR
+  override fun runInDispatchThread(): Boolean = false
 
   @Test
   fun `body code changed`() {
@@ -131,6 +137,19 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
   }
 
   @Test
+  fun `method parameter type qualified name changed`() {
+    assertCompatible(
+      "method parameter type qualified name changed",
+      """
+        class A { fun f(value: List<String>): Int = value.size }
+      """.trimIndent(),
+      """
+        class A { fun f(value: kotlin.collections.List<kotlin.String>): Int = value.size }
+      """.trimIndent(),
+    )
+  }
+
+  @Test
   fun `method return type changed`() {
     assertIncompatible(
       "method return type changed",
@@ -141,6 +160,19 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
         class A { fun f(): Long = 1 }
       """.trimIndent(),
       HotSwapIncompatibilityReasons.signatureModified(),
+    )
+  }
+
+  @Test
+  fun `method return type qualified name changed`() {
+    assertCompatible(
+      "method return type qualified name changed",
+      """
+        class A { fun f(): List<String> = emptyList() }
+      """.trimIndent(),
+      """
+        class A { fun f(): kotlin.collections.List<kotlin.String> = emptyList() }
+      """.trimIndent(),
     )
   }
 
@@ -197,6 +229,19 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
         class A { val value: Long = 1 }
       """.trimIndent(),
       HotSwapIncompatibilityReasons.signatureModified(),
+    )
+  }
+
+  @Test
+  fun `property type qualified name changed`() {
+    assertCompatible(
+      "property type qualified name changed",
+      """
+        class A { val value: List<String> = emptyList() }
+      """.trimIndent(),
+      """
+        class A { val value: kotlin.collections.List<kotlin.String> = emptyList() }
+      """.trimIndent(),
     )
   }
 
@@ -386,6 +431,25 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
   }
 
   @Test
+  fun `class supertype qualified name changed`() {
+    assertCompatible(
+      "class supertype qualified name changed",
+      """
+        package p
+
+        interface B
+        class A : B { fun f(): Int = 1 }
+      """.trimIndent(),
+      """
+        package p
+
+        interface B
+        class A : p.B { fun f(): Int = 2 }
+      """.trimIndent(),
+    )
+  }
+
+  @Test
   fun `class kind changed`() {
     assertIncompatible(
       "class kind changed",
@@ -528,7 +592,6 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
   @Test
   fun `old file syntax error`() {
     assertUnknown(
-      "old file syntax error",
       """
         class A { fun f(): Int = 1
       """.trimIndent(),
@@ -539,8 +602,22 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
   }
 
   @Test
+  fun `dumb mode returns unknown`() {
+    val checker = object : JvmBaseSourceFileChangeCompatibilityChecker(project, KotlinFileType.INSTANCE) {
+      override fun buildClassShapes(file: PsiFile): Map<String, HotSwapClassShape> {
+        throw IndexNotReadyException.create()
+      }
+    }
+    DumbModeTestUtils.runInDumbModeSynchronously(project) {
+      runReadActionBlocking {
+        assertSame(HotSwapChangesCompatibility.Unknown, checker.classify(createFile("class A"), createFile("class A")))
+      }
+    }
+  }
+
+  @Test
   fun `old inferred function return type`() {
-    assertUnknown(
+    assertCompatible(
       "old inferred function return type",
       """
         class A { fun f() = 1 }
@@ -553,7 +630,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
 
   @Test
   fun `current inferred function return type`() {
-    assertUnknown(
+    assertCompatible(
       "current inferred function return type",
       """
         class A { fun f(): Int = 1 }
@@ -566,7 +643,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
 
   @Test
   fun `current inferred property type`() {
-    assertUnknown(
+    assertCompatible(
       "current inferred property type",
       """
         class A { val value: Int = 1 }
@@ -579,7 +656,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
 
   @Test
   fun `current inferred top level function return type`() {
-    assertUnknown(
+    assertCompatible(
       "current inferred top level function return type",
       """
         fun f(): Int = 1
@@ -592,7 +669,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
 
   @Test
   fun `current inferred top level property type`() {
-    assertUnknown(
+    assertCompatible(
       "current inferred top level property type",
       """
         val value: Int = 1
@@ -613,12 +690,14 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
     assertEquals(name, reason, (compatibility as HotSwapChangesCompatibility.Incompatible).reason)
   }
 
-  private fun assertUnknown(name: String, before: String, after: String) {
-    assertSame(name, HotSwapChangesCompatibility.Unknown, classify(before, after))
+  private fun assertUnknown(before: String, after: String) {
+    assertSame(HotSwapChangesCompatibility.Unknown, classify(before, after))
   }
 
   private fun classify(before: String, after: String): HotSwapChangesCompatibility =
-    KotlinHotSwapSourceChangeCompatibilityChecker(project).classify(createFile(after), createFile(before))
+    runReadActionBlocking {
+      KotlinHotSwapSourceChangeCompatibilityChecker(project).classify(createFile(after), createFile(before))
+    }
 
   private fun createFile(text: String): PsiFile =
     PsiFileFactory.getInstance(project).createFileFromText("A.kt", KotlinFileType.INSTANCE, text)
