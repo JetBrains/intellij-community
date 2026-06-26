@@ -633,6 +633,13 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       #└ TYPE int
       """)
 
+    @TestFor(issues = ["PY-90557"])
+    @Test
+    fun `method inherited from object stays unbound when accessed on class`() = test("""
+      expr = int.__str__
+      #└ TYPE (self: int) -> str
+      """)
+
     @Test
     fun `call type preserves generic parameter`() = test("""
       class MyList[T]:

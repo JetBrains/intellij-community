@@ -556,10 +556,10 @@ object PyTypeUtil {
       shouldBind = true
     }
     else if (memberOwner != null && classType is PyClassType) {
-      // `methodType` is `classType`'s metaclass member
+      // If a member's owner is not an ancestor of the class,
+      // the member must have come from the metaclass -> bind it to the class.
       // TODO: This condition should be computed by the calling code when resolving `memberType`
-      val metaClassType = classType.getMetaClassType(context, true)
-      shouldBind = metaClassType is PyClassType && metaClassType.pyClass.isSubclass(memberOwner, context)
+      shouldBind = !classType.pyClass.isSubclass(memberOwner, context)
     }
 
     if (shouldBind) {
