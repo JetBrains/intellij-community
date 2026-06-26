@@ -37,6 +37,7 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointItem
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import fleet.rpc.client.RpcClientException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -205,6 +206,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
       if (newBreakpoint is XLineBreakpointProxy) {
         lineBreakpointManager.breakpointChanged(newBreakpoint)
       }
+      DebuggerUIUtil.notifyBreakpointAttachments(newBreakpoint)
     }
     val previousBreakpoint = breakpoints.putIfAbsent(breakpointDto.id, newBreakpoint)
     if (previousBreakpoint != null) {
