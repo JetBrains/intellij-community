@@ -367,6 +367,17 @@ interface EditorTextField : Component {
 
 fun Finder.gutter(@Language("xpath") xpath: String = "//div[@class='EditorGutterComponentImpl']"): GutterUiComponent = x(xpath, GutterUiComponent::class.java)
 
+fun IdeaFrameUI.editorsSplitters(@Language("xpath") xpath: String? = null): EditorsSplittersUI =
+  x(xpath ?: "//div[@class='EditorsSplitters']", EditorsSplittersUI::class.java)
+
+class EditorsSplittersUI(data: ComponentData) : UiComponent(data) {
+  fun editor(@Language("xpath") xpath: String? = null): JEditorUiComponent =
+    x(xpath ?: "//div[@class='EditorComponentImpl']", JEditorUiComponent::class.java)
+
+  fun gutter(@Language("xpath") xpath: String? = null): GutterUiComponent =
+    x(xpath ?: "//div[@class='EditorGutterComponentImpl']", GutterUiComponent::class.java)
+}
+
 class GutterUiComponent(data: ComponentData) : UiComponent(data) {
 
   private val gutter by lazy { driver.cast(component, EditorGutterComponentImpl::class) }
