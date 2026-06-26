@@ -20,7 +20,9 @@ import com.intellij.agent.workbench.ui.AgentWorkbenchPopupRow
 import com.intellij.agent.workbench.ui.AgentWorkbenchPopupStep
 import com.intellij.agent.workbench.ui.createAgentWorkbenchListPopup
 import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
 import com.intellij.ide.setToolTipText
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -33,6 +35,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.ui.popup.ListPopupStepEx
@@ -352,9 +355,7 @@ internal class AgentPromptGenerationSettingsController(
       return
     }
 
-    val rows = createModelPopupRows(providerId, modelCatalogState(providerId))
-
-    val popup = createAgentPromptPopup(rows)
+    val popup = createAgentPromptActionPopup(createModelActionGroup(providerId, modelCatalogState(providerId)), modelSelectorLink)
     activeModelPopup = popup
     activeModelPopupProviderId = providerId
     popup.addListener(object : JBPopupListener {
@@ -397,7 +398,7 @@ internal class AgentPromptGenerationSettingsController(
       return
     }
 
-    createAgentPromptPopup(createReasoningEffortPopupRows(supportedEfforts))
+    createAgentPromptActionPopup(createReasoningEffortActionGroup(supportedEfforts), reasoningEffortLink)
       .showUnderneathOf(reasoningEffortLink)
   }
 
@@ -409,7 +410,7 @@ internal class AgentPromptGenerationSettingsController(
       return
     }
 
-    createAgentPromptPopup(createPlanReasoningEffortPopupRows(supportedEfforts))
+    createAgentPromptActionPopup(createPlanReasoningEffortActionGroup(supportedEfforts), planReasoningEffortLink)
       .showUnderneathOf(planReasoningEffortLink)
   }
 
@@ -428,12 +429,12 @@ internal class AgentPromptGenerationSettingsController(
       return
     }
 
-    val rows = createLaunchTuningPopupRows(selectedProvider, providerId)
-    if (rows.isEmpty()) {
+    val actionGroup = createLaunchTuningActionGroup(selectedProvider, providerId)
+    if (actionGroup.hasNoActions()) {
       return
     }
 
-    val popup = createAgentPromptPopup(rows)
+    val popup = createAgentPromptActionPopup(actionGroup, launchTuningSummaryLink)
     activeLaunchTuningPopup = popup
     activeLaunchTuningPopupProviderId = providerId
     popup.addListener(object : JBPopupListener {
@@ -458,6 +459,18 @@ internal class AgentPromptGenerationSettingsController(
 
   private fun createAgentPromptPopup(rows: List<AgentPromptPopupRow>): ListPopup {
     return createAgentWorkbenchListPopup(invocationData.project, rows.toWorkbenchPopupRows(::onPopupRowChosen))
+  }
+
+  private fun createAgentPromptActionPopup(group: DefaultActionGroup, anchor: JComponent): ListPopup {
+    return JBPopupFactory.getInstance().createActionGroupPopup(
+      null,
+      group,
+      DataManager.getInstance().getDataContext(anchor),
+      JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+      true,
+      null,
+      Int.MAX_VALUE,
+    )
   }
 
   private fun selectModel(modelId: String?) {
@@ -524,6 +537,14 @@ internal class AgentPromptGenerationSettingsController(
   }
 
   @TestOnly
+  internal fun createLaunchTuningActionGroupForTest(): DefaultActionGroup? {
+    val selectedProvider = providerSelector.selectedProvider ?: return null
+    val providerId = selectedProvider.bridge.provider.value
+    val actionGroup = createLaunchTuningActionGroup(selectedProvider, providerId)
+    return actionGroup.takeUnless { it.hasNoActions() }
+  }
+
+  @TestOnly
   internal fun createLaunchProfilePopupRowsForTest(): List<AgentPromptPopupRow> {
     return createLaunchProfilePopupRows()
   }
@@ -531,101 +552,6 @@ internal class AgentPromptGenerationSettingsController(
   @TestOnly
   internal fun createLaunchProfilePopupStepForTest(): ListPopupStepEx<AgentWorkbenchPopupRow> {
     return AgentWorkbenchPopupStep(createLaunchProfilePopupRows().toWorkbenchPopupRows(::onPopupRowChosen))
-  }
-
-  private fun createModelPopupRows(
-    providerId: String,
-    modelCatalogState: AgentPromptGenerationModelCatalogState?,
-  ): List<AgentPromptPopupRow> {
-    return buildList {
-      buildGenerationModelSelectorEntries(providerId,
-                                          modelCatalogState,
-                                          currentSettings().modelId,
-                                          ::displayNameForSavedModel).forEach { entry ->
-        when (entry) {
-          is AgentPromptGenerationModelSelectorEntry.Model -> {
-            add(AgentPromptPopupRow.Model(
-              text = entry.displayName,
-              separatorText = entry.separatorGroup?.modelSelectorText(),
-              modelId = entry.modelId,
-              selected = currentSettings().modelId == entry.modelId,
-            ))
-          }
-          is AgentPromptGenerationModelSelectorEntry.Status -> {
-            add(AgentPromptPopupRow.Status(
-              text = entry.displayName,
-              secondaryIcon = modelCatalogStatusIcon(entry.kind),
-            ))
-          }
-          is AgentPromptGenerationModelSelectorEntry.Retry -> {
-            add(AgentPromptPopupRow.RetryModelCatalog(
-              text = AgentPromptBundle.message("popup.generation.model.retry"),
-              tooltipText = AgentPromptBundle.message("popup.generation.model.retry.description"),
-              providerId = entry.providerId,
-            ))
-          }
-        }
-      }
-    }
-  }
-
-  private fun createLaunchTuningPopupRows(
-    selectedProvider: ProviderEntry,
-    providerId: String,
-  ): List<AgentPromptPopupRow> {
-    val modelCatalogState = modelCatalogState(providerId)
-    val supportedEfforts = availableReasoningEfforts(currentSettings(), modelCatalogState?.modelsOrNull())
-    val planEffortSupported = supportedEfforts.isNotEmpty() && selectedProvider.bridge.supportsPlanReasoningEffort
-    return buildList {
-      if (selectedProvider.bridge.supportsGenerationModelSelection) {
-        addAll(createModelPopupRows(providerId, modelCatalogState)
-                 .withSectionSeparator(AgentPromptBundle.message("popup.generation.summary.section.model")))
-      }
-      if (supportedEfforts.isNotEmpty()) {
-        addAll(createReasoningEffortPopupRows(supportedEfforts)
-                 .withSectionSeparator(AgentPromptBundle.message("popup.generation.summary.section.reasoning")))
-      }
-      if (planEffortSupported && providerSelector.isPlanModeSelected()) {
-        addAll(createPlanReasoningEffortPopupRows(supportedEfforts)
-                 .withSectionSeparator(AgentPromptBundle.message("popup.generation.summary.section.plan.reasoning")))
-      }
-    }
-  }
-
-  private fun createReasoningEffortPopupRows(supportedEfforts: Set<AgentPromptReasoningEffort>): List<AgentPromptPopupRow> {
-    return reasoningEffortOrder()
-      .filter { effort -> effort == AgentPromptReasoningEffort.AUTO || effort in supportedEfforts }
-      .map { effort ->
-        AgentPromptPopupRow.ReasoningEffort(
-          text = reasoningEffortPopupText(effort),
-          effort = effort,
-          selected = currentSettings().reasoningEffort == effort,
-        )
-      }
-  }
-
-  private fun createPlanReasoningEffortPopupRows(supportedEfforts: Set<AgentPromptReasoningEffort>): List<AgentPromptPopupRow> {
-    return buildList {
-      add(AgentPromptPopupRow.PlanReasoningEffort(
-        text = planReasoningEffortPopupText(null),
-        planReasoningEffort = null,
-        selected = currentSettings().planReasoningEffort == null,
-      ))
-      add(AgentPromptPopupRow.PlanReasoningEffort(
-        text = planReasoningEffortPopupText(AgentPromptReasoningEffort.AUTO),
-        planReasoningEffort = AgentPromptReasoningEffort.AUTO,
-        selected = currentSettings().planReasoningEffort == AgentPromptReasoningEffort.AUTO,
-      ))
-      reasoningEffortOrder()
-        .filter { effort -> effort != AgentPromptReasoningEffort.AUTO && effort in supportedEfforts }
-        .forEach { effort ->
-          add(AgentPromptPopupRow.PlanReasoningEffort(
-            text = planReasoningEffortPopupText(effort),
-            planReasoningEffort = effort,
-            selected = currentSettings().planReasoningEffort == effort,
-          ))
-        }
-    }
   }
 
   private fun createLaunchProfilePopupRows(): List<AgentPromptPopupRow> {
@@ -671,20 +597,6 @@ internal class AgentPromptGenerationSettingsController(
     when (row) {
       is AgentPromptPopupRow.LaunchProfile -> applyProfile(row.profile)
       is AgentPromptPopupRow.ManageProfiles -> showManageProfilesDialog()
-      is AgentPromptPopupRow.Model -> selectModel(row.modelId)
-      is AgentPromptPopupRow.PlanReasoningEffort -> selectPlanReasoningEffort(row.planReasoningEffort)
-      is AgentPromptPopupRow.ReasoningEffort -> selectReasoningEffort(row.effort)
-      is AgentPromptPopupRow.RetryModelCatalog -> {
-        val selectedProvider = providerSelector.selectedProvider ?: return
-        if (selectedProvider.bridge.provider.value != row.providerId) {
-          return
-        }
-
-        requestModelCatalogRefresh(selectedProvider)
-        refreshPresentation()
-        refreshModelPopupIfOpen(row.providerId)
-      }
-      is AgentPromptPopupRow.Status -> Unit
     }
   }
 
@@ -710,12 +622,39 @@ internal class AgentPromptGenerationSettingsController(
     return group
   }
 
+  private fun createLaunchTuningActionGroup(
+    selectedProvider: ProviderEntry,
+    providerId: String,
+  ): DefaultActionGroup {
+    val modelCatalogState = modelCatalogState(providerId)
+    val supportedEfforts = availableReasoningEfforts(currentSettings(), modelCatalogState?.modelsOrNull())
+    val planEffortSupported = supportedEfforts.isNotEmpty() && selectedProvider.bridge.supportsPlanReasoningEffort
+    val group = DefaultActionGroup()
+    if (selectedProvider.bridge.supportsGenerationModelSelection) {
+      group.add(Separator.create(AgentPromptBundle.message("popup.generation.summary.section.model")))
+      createModelActionGroup(providerId, modelCatalogState).getChildren(ActionManager.getInstance()).forEach { action -> group.add(action) }
+    }
+    if (supportedEfforts.isNotEmpty()) {
+      group.add(Separator.create(AgentPromptBundle.message("popup.generation.summary.section.reasoning")))
+      createReasoningEffortActionGroup(supportedEfforts).getChildren(ActionManager.getInstance()).forEach { action -> group.add(action) }
+    }
+    if (planEffortSupported && providerSelector.isPlanModeSelected()) {
+      group.add(Separator.create(AgentPromptBundle.message("popup.generation.summary.section.plan.reasoning")))
+      createPlanReasoningEffortActionGroup(supportedEfforts).getChildren(ActionManager.getInstance()).forEach { action -> group.add(action) }
+    }
+    return group
+  }
+
   private fun createReasoningEffortActionGroup(supportedEfforts: Set<AgentPromptReasoningEffort>): DefaultActionGroup {
     val group = DefaultActionGroup()
     reasoningEffortOrder()
       .filter { effort -> effort == AgentPromptReasoningEffort.AUTO || effort in supportedEfforts }
       .forEach { effort -> group.add(ReasoningEffortAction(effort)) }
     return group
+  }
+
+  private fun DefaultActionGroup.hasNoActions(): Boolean {
+    return getChildren(ActionManager.getInstance()).isEmpty()
   }
 
   private fun createPlanReasoningEffortActionGroup(supportedEfforts: Set<AgentPromptReasoningEffort>): DefaultActionGroup {
@@ -1081,6 +1020,7 @@ internal class AgentPromptGenerationSettingsController(
       requestModelCatalogRefresh(selectedProvider)
       refreshPresentation()
       refreshModelPopupIfOpen(providerId)
+      refreshLaunchTuningPopupIfOpen(providerId)
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -1327,24 +1267,6 @@ private fun planReasoningEffortSummaryText(planReasoningEffort: AgentPromptReaso
   return AgentPromptBundle.message("popup.generation.summary.plan.reasoning.selected", effortText)
 }
 
-private fun List<AgentPromptPopupRow>.withSectionSeparator(separatorText: @Nls String): List<AgentPromptPopupRow> {
-  return mapIndexed { index, row ->
-    if (index == 0) row.withSeparatorText(separatorText) else row
-  }
-}
-
-private fun AgentPromptPopupRow.withSeparatorText(separatorText: @Nls String?): AgentPromptPopupRow {
-  return when (this) {
-    is AgentPromptPopupRow.LaunchProfile -> copy(separatorText = separatorText)
-    is AgentPromptPopupRow.ManageProfiles -> copy(separatorText = separatorText)
-    is AgentPromptPopupRow.Model -> copy(separatorText = separatorText)
-    is AgentPromptPopupRow.PlanReasoningEffort -> copy(separatorText = separatorText)
-    is AgentPromptPopupRow.ReasoningEffort -> copy(separatorText = separatorText)
-    is AgentPromptPopupRow.RetryModelCatalog -> copy(separatorText = separatorText)
-    is AgentPromptPopupRow.Status -> copy(separatorText = separatorText)
-  }
-}
-
 private fun List<AgentPromptPopupRow>.toWorkbenchPopupRows(onChosen: (AgentPromptPopupRow) -> Unit): List<AgentWorkbenchPopupRow> {
   return map { row -> row.toWorkbenchPopupRow(onChosen) }
 }
@@ -1377,42 +1299,6 @@ internal sealed interface AgentPromptPopupRow {
     get() = true
   val marksDefaultProfile: Boolean
     get() = false
-
-  data class Model(
-    override val text: @Nls String,
-    override val separatorText: @Nls String?,
-    val modelId: String?,
-    override val selected: Boolean,
-  ) : AgentPromptPopupRow
-
-  data class Status(
-    override val text: @Nls String,
-    override val secondaryIcon: Icon?,
-    override val separatorText: String? = null,
-  ) : AgentPromptPopupRow {
-    override val selectable: Boolean = false
-  }
-
-  data class RetryModelCatalog(
-    override val text: @Nls String,
-    override val tooltipText: @Nls String?,
-    val providerId: String,
-    override val separatorText: String? = null,
-  ) : AgentPromptPopupRow
-
-  data class ReasoningEffort(
-    override val text: @Nls String,
-    val effort: AgentPromptReasoningEffort,
-    override val selected: Boolean,
-    override val separatorText: String? = null,
-  ) : AgentPromptPopupRow
-
-  data class PlanReasoningEffort(
-    override val text: @Nls String,
-    val planReasoningEffort: AgentPromptReasoningEffort?,
-    override val selected: Boolean,
-    override val separatorText: String? = null,
-  ) : AgentPromptPopupRow
 
   data class LaunchProfile(
     override val text: @Nls String,
