@@ -14,6 +14,7 @@ object AgentWorkbenchActionIds {
     const val TOGGLE_CURRENT_PROJECT_ONLY: String = "AgentWorkbenchSessions.ToggleCurrentProjectOnly"
     const val SWITCH_SOURCE_AND_CHAT: String = "AgentWorkbenchSessions.SwitchSourceAndChat"
     const val TOOL_WINDOW_GEAR_ACTIONS: String = "AgentWorkbenchSessions.ToolWindow.GearActions"
+    const val TOOL_WINDOW_TITLE_ACTIONS: String = "AgentWorkbenchSessions.ToolWindow.TitleActions"
     const val BIND_PENDING_AGENT_THREAD_FROM_EDITOR_TAB: String = "AgentWorkbenchSessions.BindPendingAgentThreadFromEditorTab"
 
     object MainToolbar {

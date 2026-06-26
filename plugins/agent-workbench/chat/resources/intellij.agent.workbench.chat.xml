@@ -27,6 +27,10 @@
       dynamic="true">
       <with attribute="implementation" implements="com.intellij.agent.workbench.chat.AgentChatProviderBehavior"/>
     </extensionPoint>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.chatCustomContent"
+      interface="com.intellij.agent.workbench.chat.AgentChatCustomContentProvider"
+      dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -64,6 +64,8 @@
     <module name="intellij.agent.workbench.container"/>
     <module name="intellij.agent.workbench.container.mcp"/>
     <module name="intellij.agent.workbench.container.eel"/>
+    <module name="intellij.agent.workbench.engine"/>
+    <module name="intellij.agent.workbench.acp"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
