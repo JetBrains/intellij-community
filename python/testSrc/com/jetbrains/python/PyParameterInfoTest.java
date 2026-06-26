@@ -1450,6 +1450,15 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
       .check("*, A: str | None = ..., B: str | None = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
+  @TestFor(issues = "PY-90526")
+  public void testPydanticFieldDefaultAssignedOutsideAnnotated() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset())
+      .check("*, B: int = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
+  }
+
   @TestFor(issues = "PY-89012")
   public void testPydanticFieldInsideAnnotatedContributesDefaultAndAliasToConstructorSignatureExtraMetadataAfter() {
     myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");

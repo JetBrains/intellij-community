@@ -1420,6 +1420,20 @@ public class PyStubsTest extends PyTestCase {
     assertNotParsed(file);
   }
 
+  @TestFor(issues = "PY-90526")
+  public void testPydanticFieldDefaultAssignedOutsideAnnotatedStub() {
+    myFixture.copyDirectoryToProject("pydantic", "pydantic");
+    final PyFile file = getTestFile();
+    final PyClass cls = file.findTopLevelClass("Model");
+    PyDataclassFieldStub fieldStub = cls.findClassAttribute("b", false, null)
+      .getStub()
+      .getCustomStub(PyDataclassFieldStub.class);
+    assertNotNull(fieldStub);
+    assertTrue(fieldStub.hasDefault());
+    assertEquals("B", fieldStub.getAlias());
+    assertNotParsed(file);
+  }
+
   @TestFor(issues = "PY-88897")
   public void testPydanticDecoratorConfigImportedFromAnotherFileDoesNotCauseUnstubbing() {
     myFixture.copyDirectoryToProject("pydantic", "pydantic");

@@ -40,17 +40,19 @@ class PyDataclassFieldStubImpl private constructor(
 ) : PyDataclassFieldStub {
   companion object {
     fun create(expression: PyTargetExpression): PyDataclassFieldStub? {
-      val fieldInitializer = getFieldInitializerCall(expression) ?: return null
+      val assigned = expression.findAssignedValue()
+      val (fieldInitializer, targetLevelDefault) = when (assigned) {
+        is PyCallExpression -> assigned to null
+        else -> {
+          // For Pydantic fields declared as `Annotated[..., Field()]`, the default may be assigned to
+          // the target itself rather than passed to `Field(...)`; see: PY-90526
+          val specifier = getPydanticFieldSpecifierCallFromAnnotated(expression) ?: return null
+          specifier to assigned
+        }
+      }
+
       val predefinedType = calculateCalleeNameAndType(fieldInitializer) ?: return null
-      return analyzeArguments(fieldInitializer, predefinedType)
-    }
-
-    private fun getFieldInitializerCall(expression: PyTargetExpression): PyCallExpression? {
-      val assignedValueCall = expression.findAssignedValue() as? PyCallExpression
-      if (assignedValueCall != null) return assignedValueCall
-
-      // `Field(...)` inside `Annotated[...]` is only used for Pydantic models.
-      return getPydanticFieldSpecifierCallFromAnnotated(expression)
+      return analyzeArguments(fieldInitializer, predefinedType, targetLevelDefault)
     }
 
     private fun getPydanticFieldSpecifierCallFromAnnotated(field: PyTargetExpression): PyCallExpression? {
@@ -139,14 +141,22 @@ class PyDataclassFieldStubImpl private constructor(
         .map { it.stringValue }
     }
 
-    private fun analyzeArguments(call: PyCallExpression, type: PyDataclassParameters.PredefinedType): PyDataclassFieldStub? {
+    private fun analyzeArguments(
+      call: PyCallExpression,
+      type: PyDataclassParameters.PredefinedType,
+      // Target-level fallback default for Pydantic `Annotated[..., Field()]`, see PY-90526.
+      targetLevelDefault: PyExpression?,
+    ): PyDataclassFieldStub? {
       val qualifiedName = (call.callee as? PyReferenceExpression)?.asQualifiedName() ?: return null
       val initValue = PyEvaluator.evaluateAsBooleanNoResolve(call.getKeywordArgument("init"), true)
       val kwOnly = PyEvaluator.evaluateAsBooleanNoResolve(call.getKeywordArgument("kw_only"))
       val positionalDefault = call.arguments.firstOrNull { it !is PyKeywordArgument }
       val default = call.getKeywordArgument("default")
-                    ?: if (type == PyDataclassParameters.PredefinedType.DATACLASS_TRANSFORM) positionalDefault
-                    else null
+                    ?: when (type) {
+                      PyDataclassParameters.PredefinedType.DATACLASS_TRANSFORM ->
+                        positionalDefault ?: targetLevelDefault
+                      else -> null
+                    }
       val defaultFactory = call.getKeywordArgument("default_factory")
       val factory = call.getKeywordArgument("factory")
       val alias = (call.getKeywordArgument("alias") as? PyStringLiteralExpression)?.stringValue
