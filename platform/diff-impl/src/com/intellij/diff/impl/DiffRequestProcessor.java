@@ -17,7 +17,9 @@ import com.intellij.diff.actions.impl.DiffPreviousFileAction;
 import com.intellij.diff.editor.DiffViewerVirtualFile;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.impl.ui.DiffHeaderToolbarPanel;
+import com.intellij.diff.impl.ui.DiffHeaderToolbarUtil;
 import com.intellij.diff.impl.ui.DiffToolChooser;
+import com.intellij.diff.impl.ui.NoShrinkToolbarLayoutStrategy;
 import com.intellij.diff.lang.DiffIgnoredRangeProvider;
 import com.intellij.diff.lang.DiffLangSpecificProvider;
 import com.intellij.diff.requests.DiffRequest;
@@ -98,8 +100,6 @@ import com.intellij.ui.JBSplitter;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.RemoteTransferUIManager;
 import com.intellij.ui.components.JBPanelWithEmptyText;
-import com.intellij.ui.components.panels.ListLayout;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent;
 import com.intellij.ui.mac.touchbar.Touchbar;
@@ -118,9 +118,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.Box;
 import javax.swing.JComponent;
-import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
 import java.awt.BorderLayout;
@@ -128,8 +126,6 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.Window;
@@ -231,18 +227,27 @@ public abstract class DiffRequestProcessor
 
     myToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_TOOLBAR, myToolbarGroup, true);
     putContextUserData(DiffUserDataKeysEx.LEFT_TOOLBAR, myToolbar);
-
-    myToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     myToolbar.setTargetComponent(myContentPanel.getTargetComponent());
-    myToolbar.getComponent().setOpaque(false);
+    myToolbar.setLayoutStrategy(ToolbarLayoutStrategy.AUTOLAYOUT_STRATEGY);
+    JComponent leftToolbarComponent = myToolbar.getComponent();
+    leftToolbarComponent.setOpaque(false);
 
     myRightToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_RIGHT_TOOLBAR, myRightToolbarGroup, true);
-    myRightToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     myRightToolbar.setTargetComponent(myContentPanel.getTargetComponent());
-    myRightToolbar.getComponent().setOpaque(false);
+    myRightToolbar.setLayoutStrategy(new NoShrinkToolbarLayoutStrategy());
+    JComponent rightToolbarComponent = myRightToolbar.getComponent();
+    rightToolbarComponent.setOpaque(false);
 
     myDiffToolChooser = createDiffToolChooser();
-    myTopPanel = buildTopPanel();
+
+    var headerLayoutPanel = DiffHeaderToolbarUtil.createLayoutPanel(leftToolbarComponent,
+                                                                    myToolbarStatusPanel,
+                                                                    myProgressBar,
+                                                                    myDiffToolChooser,
+                                                                    rightToolbarComponent);
+    myTopPanel = new DiffHeaderToolbarPanel(new BorderLayout());
+    myTopPanel.add(headerLayoutPanel, BorderLayout.CENTER);
+    GuiUtils.installVisibilityReferents(myTopPanel, leftToolbarComponent, rightToolbarComponent, myDiffToolChooser);
 
     myBottomContentSplitter = new JBSplitter(true, "DiffRequestProcessor.BottomComponentSplitter", 0.8f);
     myBottomContentSplitter.setFirstComponent(myContentPanel);
@@ -274,43 +279,6 @@ public abstract class DiffRequestProcessor
     myState = EmptyState.INSTANCE;
     myContentPanel.setContent(DiffUtil.createMessagePanel(((LoadingDiffRequest)myActiveRequest).getMessage()));
     navigator = new DiffNavigator();
-  }
-
-  private @NotNull DiffHeaderToolbarPanel buildTopPanel() {
-    JPanel rightPanel = new NonOpaquePanel(ListLayout.horizontal(0, ListLayout.Alignment.CENTER, ListLayout.GrowPolicy.NO_GROW));
-    rightPanel.add(myToolbarStatusPanel);
-    rightPanel.add(myProgressBar);
-    rightPanel.add(myDiffToolChooser);
-    rightPanel.add(myRightToolbar.getComponent());
-
-    var topPanel = new DiffHeaderToolbarPanel(new GridBagLayout());
-    var gbc = new GridBagConstraints();
-
-    // Add toolbar on the left
-    gbc.gridx = 0;
-    gbc.gridy = 0;
-    gbc.weightx = 0.0;
-    gbc.weighty = 1.0;
-    gbc.anchor = GridBagConstraints.WEST;
-    gbc.fill = GridBagConstraints.NONE;
-    topPanel.add(myToolbar.getComponent(), gbc);
-
-    // Add spacer in the middle to push components to edges
-    gbc.gridx = 1;
-    gbc.weightx = 1.0;
-    gbc.fill = GridBagConstraints.BOTH;
-    topPanel.add(Box.createHorizontalGlue(), gbc);
-
-    // Add rightPanel on the right
-    gbc.gridx = 2;
-    gbc.weightx = 0.0;
-    gbc.anchor = GridBagConstraints.EAST;
-    gbc.fill = GridBagConstraints.NONE;
-    topPanel.add(rightPanel, gbc);
-
-    GuiUtils.installVisibilityReferents(topPanel, myToolbar.getComponent(), myRightToolbar.getComponent(), myDiffToolChooser);
-
-    return topPanel;
   }
 
   protected boolean shouldAddToolbarBottomBorder(@NotNull FrameDiffTool.ToolbarComponents toolbarComponents) {
@@ -705,7 +673,7 @@ public abstract class DiffRequestProcessor
     DiffUtil.addActionBlock(myToolbarGroup, contextActions, false);
     DiffUtil.addActionBlock(myToolbarGroup, new ShowInExternalToolActionGroup());
 
-    DiffUtil.addActionBlock(myRightToolbarGroup, rightViewerActions, false);
+    DiffUtil.addActionBlock(myRightToolbarGroup, rightViewerActions, true);
 
     if (SystemInfo.isMac) { // collect touchbar actions
       myTouchbarActionGroup.removeAll();
