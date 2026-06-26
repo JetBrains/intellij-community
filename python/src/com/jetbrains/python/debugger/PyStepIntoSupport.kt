@@ -36,11 +36,15 @@ interface PyStepIntoSupport {
    */
   val canApplyJustMyCodeChange: Boolean get() = true
 
-  /** Whether [applyJustMyCodeChange] updates the current session without restarting it. */
-  val canApplyJustMyCodeChangeWithoutRestart: Boolean get() = false
+  /**
+   * Whether [applyJustMyCodeChange] will automatically restart the debug session.
+   * When false, the tooltip link text should not promise a restart.
+   */
+  val willRestartOnJustMyCodeChange: Boolean get() = true
 
   /**
-   * Applies [enableJustMyCode] to the active debug session or stores it in the active run configuration before restarting.
+   * Applies [enableJustMyCode] to the active run configuration and opens the run configuration editor
+   * so the user can verify and then restart the session manually.
    * Default is a no-op (used by pydevd, which does not have a justMyCode session-level flag).
    */
   fun applyJustMyCodeChange(enableJustMyCode: Boolean) {}
