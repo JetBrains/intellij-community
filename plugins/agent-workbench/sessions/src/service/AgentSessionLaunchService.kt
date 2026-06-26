@@ -366,6 +366,7 @@ class AgentSessionLaunchService internal constructor(
   private val launchProfileResolver: AgentSessionLaunchProfileResolver = service(),
   private val providerSettingsService: AgentSessionProviderSettingsService = service(),
   private val chatOpenExecutor: AgentSessionChatOpenExecutor = DefaultAgentSessionChatOpenExecutor,
+  private val archiveTransitionSuppressions: AgentSessionArchiveTransitionSuppressions = AgentSessionArchiveTransitionSuppressions(),
   private val openPendingAgentChatTabsProvider: suspend (AgentSessionProvider) -> Map<String, List<AgentChatPendingTabSnapshot>> =
     ::collectOpenPendingAgentChatTabsByPath,
   private val openAgentChatPendingTabsBinder: suspend (
@@ -385,6 +386,7 @@ class AgentSessionLaunchService internal constructor(
     uiPreferencesState = service<AgentSessionUiPreferencesStateService>(),
     providerSettingsService = service<AgentSessionProviderSettingsService>(),
     chatOpenExecutor = DefaultAgentSessionChatOpenExecutor,
+    archiveTransitionSuppressions = service<AgentSessionArchiveTransitionSuppressions>(),
     archivedSessionsRefreshIfLoaded = { service<AgentArchivedSessionsService>().refreshIfLoaded() },
   )
 
@@ -712,13 +714,13 @@ class AgentSessionLaunchService internal constructor(
       return ArchivedThreadOpenResolution(thread = thread)
     }
     if (descriptor.suppressArchivedThreadsDuringRefresh) {
-      syncService.unsuppressArchivedTarget(
-        ArchiveThreadTarget.Thread(
-          path = normalizedPath,
-          provider = thread.provider,
-          threadId = thread.id,
-        )
+      val target = ArchiveThreadTarget.Thread(
+        path = normalizedPath,
+        provider = thread.provider,
+        threadId = thread.id,
       )
+      archiveTransitionSuppressions.unsuppressActive(target)
+      archiveTransitionSuppressions.suppressArchived(target)
     }
     return ArchivedThreadOpenResolution(
       thread = thread.copy(archived = false),

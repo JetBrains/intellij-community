@@ -6,41 +6,115 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.model.normalizeArchiveThreadTarget
+import com.intellij.openapi.components.Service
 
-internal class AgentSessionArchiveSuppressionSupport {
+@Service(Service.Level.APP)
+internal class AgentSessionArchiveTransitionSuppressions {
   private val lock = Any()
-  private val suppressions = LinkedHashSet<ArchiveThreadTarget>()
+  private val activeSuppressions = LinkedHashSet<ArchiveThreadTarget>()
+  private val archivedSuppressions = LinkedHashSet<ArchiveThreadTarget>()
 
-  fun suppress(target: ArchiveThreadTarget) {
+  fun suppressActive(target: ArchiveThreadTarget) {
     synchronized(lock) {
-      suppressions.add(normalizeArchiveThreadTarget(target))
+      activeSuppressions.add(normalizeArchiveThreadTarget(target))
     }
   }
 
-  fun unsuppress(target: ArchiveThreadTarget) {
+  fun unsuppressActive(target: ArchiveThreadTarget) {
     synchronized(lock) {
-      suppressions.remove(normalizeArchiveThreadTarget(target))
+      activeSuppressions.remove(normalizeArchiveThreadTarget(target))
     }
   }
 
-  fun apply(path: String, provider: AgentSessionProvider, threads: List<AgentSessionThread>): List<AgentSessionThread> {
+  fun suppressArchived(target: ArchiveThreadTarget) {
+    synchronized(lock) {
+      archivedSuppressions.add(normalizeArchiveThreadTarget(target))
+    }
+  }
+
+  fun applyActive(path: String, provider: AgentSessionProvider, threads: List<AgentSessionThread>): List<AgentSessionThread> {
+    return apply(
+      path = path,
+      provider = provider,
+      threads = threads,
+      direction = SuppressionDirection.ACTIVE,
+      reconcileAbsent = true,
+    )
+  }
+
+  fun filterActiveSnapshot(path: String, threads: List<AgentSessionThread>): List<AgentSessionThread> {
+    return apply(
+      path = path,
+      provider = null,
+      threads = threads,
+      direction = SuppressionDirection.ACTIVE,
+      reconcileAbsent = false,
+    )
+  }
+
+  fun applyArchived(path: String, provider: AgentSessionProvider, threads: List<AgentSessionThread>): List<AgentSessionThread> {
+    return apply(
+      path = path,
+      provider = provider,
+      threads = threads,
+      direction = SuppressionDirection.ARCHIVED,
+      reconcileAbsent = true,
+    )
+  }
+
+  fun filterArchivedSnapshot(path: String, threads: List<AgentSessionThread>): List<AgentSessionThread> {
+    return apply(
+      path = path,
+      provider = null,
+      threads = threads,
+      direction = SuppressionDirection.ARCHIVED,
+      reconcileAbsent = false,
+    )
+  }
+
+  private fun apply(
+    path: String,
+    provider: AgentSessionProvider?,
+    threads: List<AgentSessionThread>,
+    direction: SuppressionDirection,
+    reconcileAbsent: Boolean,
+  ): List<AgentSessionThread> {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
     val applicableSuppressions = synchronized(lock) {
-      suppressions.asSequence()
-        .filter { suppression -> suppression.path == normalizedPath && suppression.provider == provider }
+      direction.suppressions()
+        .asSequence()
+        .filter { suppression -> suppression.path == normalizedPath && (provider == null || suppression.provider == provider) }
         .toList()
+    }
+    if (reconcileAbsent) {
+      reconcileAbsentSuppressions(direction = direction, applicableSuppressions = applicableSuppressions, threads = threads)
     }
     return apply(threads, applicableSuppressions)
   }
 
-  fun apply(path: String, threads: List<AgentSessionThread>): List<AgentSessionThread> {
-    val normalizedPath = normalizeAgentWorkbenchPath(path)
-    val applicableSuppressions = synchronized(lock) {
-      suppressions.asSequence()
-        .filter { suppression -> suppression.path == normalizedPath }
-        .toList()
+  private fun reconcileAbsentSuppressions(
+    direction: SuppressionDirection,
+    applicableSuppressions: List<ArchiveThreadTarget>,
+    threads: List<AgentSessionThread>,
+  ) {
+    if (applicableSuppressions.isEmpty()) {
+      return
     }
-    return apply(threads, applicableSuppressions)
+    val absentSuppressions = applicableSuppressions.filterNot { suppression -> threads.containsSuppressionTarget(suppression) }
+    if (absentSuppressions.isEmpty()) {
+      return
+    }
+    val absentSuppressionSet = absentSuppressions.toSet()
+    synchronized(lock) {
+      direction.suppressions().removeAll(absentSuppressionSet)
+    }
+  }
+
+  private fun SuppressionDirection.suppressions(): LinkedHashSet<ArchiveThreadTarget> {
+    return when (this) {
+      SuppressionDirection.ACTIVE -> activeSuppressions
+      SuppressionDirection.ARCHIVED -> archivedSuppressions
+    }
   }
 
   private fun apply(threads: List<AgentSessionThread>, applicableSuppressions: List<ArchiveThreadTarget>): List<AgentSessionThread> {
@@ -88,5 +162,19 @@ internal class AgentSessionArchiveSuppressionSupport {
       }
     }
     return if (changed) nextThreads else threads
+  }
+
+  private enum class SuppressionDirection {
+    ACTIVE,
+    ARCHIVED,
+  }
+}
+
+private fun List<AgentSessionThread>.containsSuppressionTarget(target: ArchiveThreadTarget): Boolean {
+  return when (target) {
+    is ArchiveThreadTarget.Thread -> any { thread -> thread.provider == target.provider && thread.id == target.threadId }
+    is ArchiveThreadTarget.SubAgent -> any { thread ->
+      thread.provider == target.provider && thread.id == target.parentThreadId && thread.subAgents.any { subAgent -> subAgent.id == target.subAgentId }
+    }
   }
 }

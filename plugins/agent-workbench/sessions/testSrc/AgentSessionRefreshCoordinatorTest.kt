@@ -4987,6 +4987,7 @@ private suspend fun withLoadingCoordinator(
   scheduleVfsRefresh: (Set<String>) -> Unit = { _ -> },
   isVfsRefreshOnStatusUpdatesEnabled: (String) -> Boolean = { true },
   warmState: InMemorySessionWarmState = InMemorySessionWarmState(),
+  loadingDelayMs: Long = 0L,
   action: suspend (AgentSessionRefreshCoordinator, AgentSessionsStateStore) -> Unit,
 ) {
   @Suppress("RAW_SCOPE_CREATION")
@@ -5026,6 +5027,7 @@ private suspend fun withLoadingCoordinator(
       presentationModel = presentationModel,
       openAgentChatPendingTabsBinder = { _, requestsByPath -> openChatPendingTabsBinder(requestsByPath) },
       clearOpenConcreteNewThreadRebindAnchors = { _, tabsByPath -> clearOpenConcreteCodexTabAnchors(tabsByPath) },
+      loadingDelayMs = loadingDelayMs,
     )
     action(coordinator, stateStore)
   }
