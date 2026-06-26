@@ -51,8 +51,8 @@ internal class CodexRealTuiHarness(
     Files.writeString(codexHome.resolve("config.toml"), buildConfigToml(enableDefaultModeRequestUserInput))
   }
 
-  fun start(prompt: String): RunningCodexTuiSession {
-    return start(prompt = prompt, extraConfigArgs = emptyList())
+  fun start(prompt: String, extraConfigArgs: List<String> = emptyList()): RunningCodexTuiSession {
+    return start(commandTail = listOf(prompt), extraConfigArgs = extraConfigArgs)
   }
 
   fun startRemoteResume(remoteUrl: String, threadId: String, extraConfigArgs: List<String> = emptyList()): RunningCodexTuiSession {
@@ -63,14 +63,10 @@ internal class CodexRealTuiHarness(
     return server.requests()
   }
 
-  private fun start(prompt: String?, extraConfigArgs: List<String>): RunningCodexTuiSession {
-    return start(commandTail = prompt?.let(::listOf).orEmpty(), extraConfigArgs = extraConfigArgs)
-  }
-
   private fun start(commandTail: List<String>, extraConfigArgs: List<String>): RunningCodexTuiSession {
     val environment = HashMap(System.getenv())
     environment["CODEX_HOME"] = codexHome.toString()
-    environment.putIfAbsent("TERM", "xterm-256color")
+    environment["TERM"] = "xterm-256color"
     val command = buildList {
       add(codexBinary)
       add("--no-alt-screen")
