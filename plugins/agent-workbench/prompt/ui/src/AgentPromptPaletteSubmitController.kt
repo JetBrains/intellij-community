@@ -22,13 +22,16 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.SimpleTextAttributes
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import javax.swing.JList
 
@@ -132,8 +135,9 @@ internal class AgentPromptPaletteSubmitController(
             buildVisibleContextEntries().map(ContextEntry::item),
             contextProjectBasePath,
           ) ?: return
+          val prompt = promptArea.document.immutableCharSequence.toString().trim()
           val messageRequest = AgentPromptInitialMessageRequest(
-            prompt = promptArea.text.trim(),
+            prompt = prompt,
             projectPath = contextProjectBasePath,
             contextItems = contextSelection.items,
             contextEnvelopeSummary = contextSelection.summary,
@@ -161,9 +165,10 @@ internal class AgentPromptPaletteSubmitController(
     val launcher = launcherProvider()
     val projectPath = resolveWorkingProjectPath()
     val targetMode = if (extensionNormalLaunch) PromptTargetMode.NEW_TASK else currentTargetMode()
+    val promptText = promptArea.document.immutableCharSequence.toString()
     val validationErrorKey = resolveSubmitValidationErrorMessageKey(
       targetMode = targetMode,
-      prompt = promptArea.text,
+      prompt = promptText,
       selectedProvider = selectedProviderEntry?.bridge?.provider,
       isProviderCliAvailable = selectedProviderEntry?.isCliAvailable == true,
       hasProjectPath = projectPath != null,
@@ -175,7 +180,7 @@ internal class AgentPromptPaletteSubmitController(
       return
     }
 
-    val prompt = promptArea.text.trim()
+    val prompt = promptText.trim()
     val providerEntry = selectedProviderEntry ?: return
     val effectiveProjectPath = projectPath ?: return
     val selectedThreadActivity = existingTaskController.selectedEntry()?.activity
@@ -259,7 +264,9 @@ internal class AgentPromptPaletteSubmitController(
           )
         )
         launchState.clearDraftOnClose = true
-        onSubmitSucceeded()
+        withContext(Dispatchers.UiWithModelAccess) {
+          onSubmitSucceeded()
+        }
         return@launch
       }
 
