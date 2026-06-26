@@ -64,6 +64,7 @@ class ClaudeHookHttpRequestHandlerTest {
       )
 
       assertThat(response.statusCode()).isEqualTo(200)
+      assertJsonHookResponse(response)
       val event = update.await()
       assertThat(event.type).isEqualTo(AgentSessionSourceUpdate.HINTS_CHANGED)
       assertThat(event.scopedPaths).containsExactly(normalizeAgentWorkbenchPath(projectPath.toString()))
@@ -98,6 +99,7 @@ class ClaudeHookHttpRequestHandlerTest {
       }
 
       assertThat(response.statusCode()).isEqualTo(401)
+      assertJsonHookResponse(response)
     }
     finally {
       ClaudeHookBridge.invalidateSession(sessionId)
@@ -116,6 +118,7 @@ class ClaudeHookHttpRequestHandlerTest {
       }
 
       assertThat(response.statusCode()).isEqualTo(400)
+      assertJsonHookResponse(response)
     }
     finally {
       ClaudeHookBridge.invalidateSession(sessionId)
@@ -135,6 +138,7 @@ class ClaudeHookHttpRequestHandlerTest {
       }
 
       assertThat(response.statusCode()).isEqualTo(413)
+      assertJsonHookResponse(response)
     }
     finally {
       ClaudeHookBridge.invalidateSession(sessionId)
@@ -165,6 +169,11 @@ class ClaudeHookHttpRequestHandlerTest {
     }
     return httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString())
   }
+}
+
+private fun assertJsonHookResponse(response: HttpResponse<String>) {
+  assertThat(response.body()).isEqualTo("{}")
+  assertThat(response.headers().firstValue("Content-Type")).hasValue("application/json")
 }
 
 private suspend fun assertNoHookUpdateFor(

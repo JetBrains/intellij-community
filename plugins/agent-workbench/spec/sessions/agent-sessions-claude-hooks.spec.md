@@ -72,6 +72,7 @@ Agent Workbench must use Claude Code hooks for immediate Claude session status a
 
 - Missing or invalid bearer tokens must be rejected with an unauthorized hook result.
 - Malformed JSON or missing session id must be rejected as bad requests. Authenticated but unsupported or incomplete hook payloads must be accepted without emitting updates.
+- HTTP hook responses must use `Content-Type: application/json` and return a JSON object body, including success and rejection statuses.
 - Hook delivery failures must not block Claude Code; the generated HTTP hook has a short timeout and the JSONL watcher remains the fallback.
 
 ## Testing / Local Run
