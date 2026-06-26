@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.idea.TestFor
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.assertExportedDeps
 import com.intellij.maven.testFramework.fixtures.assertModuleLibDep
@@ -13,6 +14,7 @@ import com.intellij.maven.testFramework.fixtures.assertOrderedElementsAreEqual
 import com.intellij.maven.testFramework.fixtures.assertProjectLibraries
 import com.intellij.maven.testFramework.fixtures.assertProjectLibraryCoordinates
 import com.intellij.maven.testFramework.fixtures.assumeMaven3
+import com.intellij.maven.testFramework.fixtures.assumeMaven4
 import com.intellij.maven.testFramework.fixtures.assumeModel_4_0_0
 import com.intellij.maven.testFramework.fixtures.assumeVersionMoreThan
 import com.intellij.maven.testFramework.fixtures.createModulePom
@@ -2810,6 +2812,42 @@ class DependenciesImportingTest(mavenVersion: String, modelVersion: String) {
     val module = maven.projectsManager.findProject(maven.getModule(maven.mn("project", "m1")))
     assertNotNull(module)
     maven.assertModuleModuleDeps("m1", "m2")
+    assertEmpty(module!!.problems)
+  }
+
+  @Test
+  @TestFor(issues = ["IDEA-388560"])
+  fun testParentWithCiFriendlyVersionResolvedViaRelativePath() =runBlocking {
+    // The child references its parent at the already-flattened concrete version (1.0-SNAPSHOT),
+    // while the parent pom on disk still declares its own version through the CI-friendly
+    // ${'$'}{revision} property. The relativePath parent must be accepted instead of falling back
+    // to the local repository, which would leak the literal ${'$'}{revision} into the artifact path.
+    maven.createModulePom("m1", """
+      <artifactId>m1</artifactId>
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>project</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+      </parent>
+      """.trimIndent())
+
+    maven.importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>${'$'}{revision}</version>
+                    <packaging>pom</packaging>
+                    <modules>
+                      <module>m1</module>
+                    </modules>
+                    <properties>
+                      <revision>1.0-SNAPSHOT</revision>
+                    </properties>
+                      """.trimIndent())
+
+    maven.assertModules("project", "m1")
+    val module = maven.projectsManager.findProject(maven.getModule(maven.mn("project", "m1")))
+    assertNotNull(module)
     assertEmpty(module!!.problems)
   }
 }
