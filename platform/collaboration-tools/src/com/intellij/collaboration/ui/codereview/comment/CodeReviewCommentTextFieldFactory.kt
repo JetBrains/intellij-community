@@ -11,6 +11,7 @@ import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.collaboration.util.exceptionOrNull
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.application.UiImmediate
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
@@ -22,9 +23,11 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -54,19 +57,26 @@ object CodeReviewCommentTextFieldFactory {
       component.background = fieldBackground
       asSafely<EditorEx>()?.backgroundColor = fieldBackground
     }
-    cs.launchNow {
+    cs.launch(Dispatchers.UiImmediate) {
       try {
-        editor.document.bindTextIn(this, vm.text)
-        awaitCancellation()
+        coroutineScope {
+          launch {
+            editor.document.bindTextIn(this, vm.text)
+            awaitCancellation()
+          }
+          launch {
+            editor.scrollToCursorPositionOnTyping()
+          }
+          launch {
+            editor.revalidateComponentOnTyping()
+          }
+        }
       }
       finally {
         withContext(NonCancellable) {
           EditorFactory.getInstance().releaseEditor(editor)
         }
       }
-    }
-    cs.launch {
-      editor.scrollToCursorPositionWhenTyping()
     }
 
     val textLength = editor.document.textLength
