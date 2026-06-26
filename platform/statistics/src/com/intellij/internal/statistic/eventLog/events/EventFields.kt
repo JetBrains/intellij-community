@@ -861,6 +861,13 @@ object EventFields {
   @JvmField
   val Dumb: BooleanEventField = Boolean("dumb")
 
+  /**
+   * Field carrying a [JcpData] payload delivered only to external (JCP) statistics listeners.
+   * The payload is excluded from the events scheme and is never validated or sent to the FUS server.
+   */
+  @JvmField
+  val Jcp: JcpDataEventField = JcpDataEventField()
+
   @JvmStatic
   @JvmOverloads
   fun createAdditionalDataField(groupId: String, eventId: String, @NonNls description: String? = null): ObjectEventField {
