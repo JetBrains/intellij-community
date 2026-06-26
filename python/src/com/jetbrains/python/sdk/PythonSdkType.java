@@ -205,8 +205,11 @@ public final class PythonSdkType extends SdkType {
       @Override
       public boolean isFileSelectable(@Nullable VirtualFile file) {
         if (file == null) return false;
-        Path pythonPath = VirtualEnvReaderKt.VirtualEnvReader().findPythonInPythonRoot(file.toNioPath());
-        return pythonPath != null;
+        // A regular file may be a Python binary or a wrapper script (e.g. a .bat/.sh launching Python), so allow
+        // selecting any file and let validateSelectedFiles() reject the invalid ones (PY-89236). A directory is
+        // selectable only when it contains a Python binary (the folder-selection feature from PY-86247).
+        if (!file.isDirectory()) return true;
+        return VirtualEnvReaderKt.VirtualEnvReader().findPythonInPythonRoot(file.toNioPath()) != null;
       }
     }
       .withTitle(PyBundle.message("sdk.select.path"))
