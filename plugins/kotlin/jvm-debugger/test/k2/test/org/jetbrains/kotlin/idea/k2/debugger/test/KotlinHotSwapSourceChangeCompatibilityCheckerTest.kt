@@ -181,10 +181,10 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
     assertIncompatible(
       "method modifier changed",
       """
-        class A { fun f(): Int = 1 }
+        open class A { fun f(): Int = 1 }
       """.trimIndent(),
       """
-        class A { inline fun f(): Int = 1 }
+        open class A { open fun f(): Int = 1 }
       """.trimIndent(),
       HotSwapIncompatibilityReasons.methodModifiersChanged(),
     )
@@ -558,6 +558,93 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
         class A { fun f(): Int = 1 }
       """.trimIndent(),
       HotSwapIncompatibilityReasons.structureModified(),
+    )
+  }
+
+  @Test
+  fun `anonymous class body code changed`() {
+    assertCompatible(
+      "anonymous class body code changed",
+      """
+        interface IntFactory { fun get(): Int }
+        class A { fun f(): IntFactory = object : IntFactory { override fun get(): Int = 1 } }
+      """.trimIndent(),
+      """
+        interface IntFactory { fun get(): Int }
+        class A { fun f(): IntFactory = object : IntFactory { override fun get(): Int = 2 } }
+      """.trimIndent(),
+    )
+  }
+
+  @Test
+  fun `anonymous class method added`() {
+    assertIncompatible(
+      "anonymous class method added",
+      """
+        interface IntFactory { fun get(): Int }
+        class A { fun f(): IntFactory = object : IntFactory { override fun get(): Int = 1 } }
+      """.trimIndent(),
+      """
+        interface IntFactory { fun get(): Int }
+        class A { fun f(): IntFactory = object : IntFactory { override fun get(): Int = 1; fun extra(): Int = 2 } }
+      """.trimIndent(),
+      HotSwapIncompatibilityReasons.methodAdded(),
+    )
+  }
+
+  @Test
+  fun `anonymous class captured variable changed`() {
+    assertIncompatible(
+      "anonymous class captured variable changed",
+      """
+        interface IntFactory { fun get(): Int }
+        class A { fun f(first: Int, second: Int): IntFactory = object : IntFactory { override fun get(): Int = first } }
+      """.trimIndent(),
+      """
+        interface IntFactory { fun get(): Int }
+        class A { fun f(first: Int, second: Int): IntFactory = object : IntFactory { override fun get(): Int = second } }
+      """.trimIndent(),
+      HotSwapIncompatibilityReasons.signatureModified(),
+    )
+  }
+
+  @Test
+  fun `lambda body code changed`() {
+    assertCompatible(
+      "lambda body code changed",
+      """
+        class A { fun f(): () -> Int = { 1 } }
+      """.trimIndent(),
+      """
+        class A { fun f(): () -> Int = { 2 } }
+      """.trimIndent(),
+    )
+  }
+
+  @Test
+  fun `lambda added`() {
+    assertIncompatible(
+      "lambda added",
+      """
+        class A { fun f(): (() -> Int)? = null }
+      """.trimIndent(),
+      """
+        class A { fun f(): (() -> Int)? = { 1 } }
+      """.trimIndent(),
+      HotSwapIncompatibilityReasons.methodAdded(),
+    )
+  }
+
+  @Test
+  fun `lambda captured variable changed`() {
+    assertCompatible(
+      "lambda captured variable changed",
+      """
+        class A { fun f(first: Int, second: Int): () -> Int = { first } }
+      """.trimIndent(),
+      """
+        class A { fun f(first: Int, second: Int): () -> Int = { second } }
+      """.trimIndent(),
     )
   }
 
