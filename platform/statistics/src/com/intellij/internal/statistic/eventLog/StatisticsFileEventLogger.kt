@@ -62,6 +62,7 @@ open class StatisticsFileEventLogger(
           return@Runnable
         }
         val data = dataProvider() ?: return@Runnable
+        val eventData = HashMap(data).also { it.remove(FeatureUsageData.JCP_DATA_KEY) }
         val event = LogEvent(
           session = sessionId,
           build = build,
@@ -69,7 +70,7 @@ open class StatisticsFileEventLogger(
           time = eventTime,
           group = LogEventGroup(group.id, group.version.toString()),
           recorderVersion = recorderVersion,
-          event = LogEventAction(eventId, isState, HashMap(data)),
+          event = LogEventAction(eventId, isState, eventData),
         )
           .also { if (escapeCharsInData) it.escape() else it.escapeExceptData() }
         val validatedEvent = validator.validateEvent(event)
