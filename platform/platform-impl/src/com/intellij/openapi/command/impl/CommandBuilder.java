@@ -2,6 +2,7 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.impl.cmd.CmdEvent;
 import com.intellij.openapi.command.impl.cmd.CmdMeta;
@@ -69,7 +70,7 @@ final class CommandBuilder {
 
   void commandStarted(@NotNull CmdEvent cmdStartEvent, @NotNull CurrentEditorProvider editorProvider) {
     assertOutsideCommand(cmdStartEvent);
-    if (LOG.isTraceEnabled() || ApplicationManager.getApplication().isUnitTestMode()) {
+    if (LOG.isTraceEnabled() || ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManagerEx.isInStressTest()) {
       this.tracedStartCommand = new Throwable();
     }
     this.cmdEvent = cmdStartEvent;
