@@ -363,13 +363,30 @@ object PyCallExpressionHelper {
     if (clarifiedResolved is PyCallable) {
       val originalModifier = if (clarifiedResolved is PyFunction) clarifiedResolved.modifier else null
       val resolvedModifier = originalModifier ?: resolveResult.wrappedModifier
-      if (callableType.modifier == resolvedModifier) {
+
+      val qualifiers = resolveResult.originalResolveResult.qualifiers
+
+      val isByInstance = isQualifiedByInstance(clarifiedResolved, qualifiers, context)
+
+      val lastQualifier = qualifiers.lastOrNull()
+      val isByClass = lastQualifier != null && isQualifiedByClass(clarifiedResolved, lastQualifier, context)
+
+      val resolvedImplicitOffset =
+        getImplicitArgumentCount(clarifiedResolved, resolvedModifier, false, isByInstance, isByClass)
+
+      if (callableType.modifier == resolvedModifier && resolvedImplicitOffset == 0) {
         return callableType
       }
 
+      val parametersType = callableType.getParametersType(context)
+      val newParametersType = if (resolvedImplicitOffset > 0 && parametersType is PyCallableParameterListType)
+        PyCallableParameterListTypeImpl(parametersType.parameters.drop(resolvedImplicitOffset))
+      else
+        parametersType
+
       return PyCallableTypeImpl(
         callableType.getTypeParameters(context),
-        callableType.getParametersType(context),
+        newParametersType,
         callableType.getCallType(context, callExpression),
         clarifiedResolved,
         resolvedModifier
