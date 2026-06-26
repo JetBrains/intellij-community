@@ -30,9 +30,9 @@ internal class LspFileEditorManagerListener : FileEditorManagerListener {
     LspInlayApplier.getInstance(project).onFileClosed(file)
     val document = FileDocumentManager.getInstance().getCachedDocument(file) ?: return
     if (FileDocumentManager.getInstance().isDocumentUnsaved(document)) return
-    val serversToSendDidClose = LspClientManagerImpl.getInstanceImpl(project).getClientsWithThisFileOpen(file)
-    if (serversToSendDidClose.isNotEmpty()) {
-      WriteAction.run<RuntimeException> { serversToSendDidClose.forEach { it.documentSyncManager.close(file) } }
+    val clientsToSendDidClose = LspClientManagerImpl.getInstanceImpl(project).getClientsWithThisFileOpen(file)
+    if (clientsToSendDidClose.isNotEmpty()) {
+      WriteAction.run<RuntimeException> { clientsToSendDidClose.forEach { it.documentSyncManager.close(file) } }
     }
   }
 }

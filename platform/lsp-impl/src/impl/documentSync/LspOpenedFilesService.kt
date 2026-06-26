@@ -134,10 +134,10 @@ internal class LspOpenedFilesService(private val project: Project) {
       }
       .expireWith(lspClientManager)
       .coalesceBy(closeFilesCoalesceObject)
-      .finishOnUiThread(ModalityState.nonModal()) { serverToFilesToClose: MultiMap<LspClientImpl, VirtualFile> ->
-        if (!serverToFilesToClose.isEmpty) {
+      .finishOnUiThread(ModalityState.nonModal()) { clientToFilesToClose: MultiMap<LspClientImpl, VirtualFile> ->
+        if (!clientToFilesToClose.isEmpty) {
           WriteAction.run<RuntimeException> {
-            serverToFilesToClose.entrySet().forEach { (client, files) ->
+            clientToFilesToClose.entrySet().forEach { (client, files) ->
               files.forEach { client.documentSyncManager.close(it) }
             }
           }
