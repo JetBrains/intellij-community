@@ -2,12 +2,13 @@
 package org.jetbrains.kotlin.idea.base.searching
 
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
@@ -123,43 +124,58 @@ class KotlinAnnotatedElementsSearcher : QueryExecutor<PsiModifierListOwner, Anno
         ): Boolean {
             assert(annClass.isAnnotationType) { "Annotation type should be passed to annotated members search" }
 
-            val psiBasedClassResolver = PsiBasedClassResolver.getInstance(annClass)
-            val annotationFQN = annClass.qualifiedName!!
+            val candidates = ReadAction.nonBlocking(fun(): Collection<SmartPsiElementPointer<KtAnnotationEntry>> {
+                val psiBasedClassResolver = PsiBasedClassResolver.getInstance(annClass)
+                val annotationFQN = annClass.qualifiedName!!
 
-            val candidates = getKotlinAnnotationCandidates(annClass, useScope)
-            for (elt in candidates) {
-                if (notKtAnnotationEntry(elt)) continue
+                val annotations = if (useScope is GlobalSearchScope) {
+                    val name = annClass.name ?: return emptyList()
+                    val scope = KotlinSourceFilterScope.everything(useScope, annClass.project)
+                    val entries = KotlinAnnotationsIndex[name, annClass.project, scope]
+                    entries.filterNot { notKtAnnotationEntry(it) }
+                } else {
+                    (useScope as LocalSearchScope).scope.flatMap { it.collectDescendantsOfType<KtAnnotationEntry>() }
+                }
 
-                val result = ReadAction.nonBlocking(fun(): Boolean? {
-                    if (!preFilter(elt)) return true
-                    val psiBasedResolveResult = elt.calleeExpression?.constructorReferenceExpression?.let { ref ->
-                        psiBasedClassResolver.canBeTargetReference(ref)
-                    }
+                val candidates = mutableListOf<SmartPsiElementPointer<KtAnnotationEntry>>()
+                for (elt in annotations) {
+                    fun acceptCandidateAnnotation(): Boolean {
+                        if (!preFilter(elt)) return false
+                        val psiBasedResolveResult = elt.calleeExpression?.constructorReferenceExpression?.let { ref ->
+                            psiBasedClassResolver.canBeTargetReference(ref)
+                        }
 
-                    if (psiBasedResolveResult == ImpreciseResolveResult.NO_MATCH) return true
-                    if (psiBasedResolveResult == ImpreciseResolveResult.UNSURE) {
-                        @OptIn(KaAllowAnalysisOnEdt::class)
-                        allowAnalysisOnEdt {
-                            @OptIn(KaAllowAnalysisFromWriteAction::class)
-                            allowAnalysisFromWriteAction {
-                                analyze(elt) {
-                                    val annotationSymbol = elt.resolveToCall()?.singleConstructorCallOrNull()?.symbol
-                                        ?: return false
-                                    val annotationType = annotationSymbol.returnType as? KaClassType ?: return false
-                                    val fqName = annotationType.classId.asFqNameString()
-                                    if (fqName != annotationFQN) return true
+                        if (psiBasedResolveResult == ImpreciseResolveResult.NO_MATCH) return false
+                        if (psiBasedResolveResult == ImpreciseResolveResult.UNSURE) {
+                            @OptIn(KaAllowAnalysisOnEdt::class)
+                            allowAnalysisOnEdt {
+                                @OptIn(KaAllowAnalysisFromWriteAction::class)
+                                allowAnalysisFromWriteAction {
+                                    analyze(elt) {
+                                        val annotationSymbol = elt.resolveToCall()?.singleConstructorCallOrNull()?.symbol
+                                            ?: return false
+                                        val annotationType = annotationSymbol.returnType as? KaClassType ?: return false
+                                        val fqName = annotationType.classId.asFqNameString()
+                                        if (fqName != annotationFQN) return false
+                                    }
                                 }
                             }
                         }
+
+                        return true
                     }
 
-                    return null
-                }).executeSynchronously()
+                    if (acceptCandidateAnnotation()) {
+                        candidates.add(SmartPointerManager.createPointer(elt))
+                    }
+                }
+                return candidates
+            }).executeSynchronously()
 
-                if (result == false) return false
-
-                if (result == null && runReadActionBlocking {
-                    val declaration = elt.getStrictParentOfType<KtDeclaration>()
+            for (pt in candidates) {
+                if (runReadActionBlocking {
+                    val elt = pt.element
+                    val declaration = elt?.getStrictParentOfType<KtDeclaration>()
                     declaration != null && !consumer(declaration, elt.useSiteTarget)
                 }) {
                     return false
@@ -167,19 +183,6 @@ class KotlinAnnotatedElementsSearcher : QueryExecutor<PsiModifierListOwner, Anno
             }
 
             return true
-        }
-
-        /* Return all elements annotated with given annotation name. Aliases don't work now. */
-        private fun getKotlinAnnotationCandidates(annClass: PsiClass, useScope: SearchScope): Collection<PsiElement> {
-            return runReadAction(fun(): Collection<PsiElement> {
-                if (useScope is GlobalSearchScope) {
-                    val name = annClass.name ?: return emptyList()
-                    val scope = KotlinSourceFilterScope.everything(useScope, annClass.project)
-                    return KotlinAnnotationsIndex.get(name, annClass.project, scope)
-                }
-
-                return (useScope as LocalSearchScope).scope.flatMap { it.collectDescendantsOfType<KtAnnotationEntry>() }
-            })
         }
 
         @OptIn(kotlin.contracts.ExperimentalContracts::class)
