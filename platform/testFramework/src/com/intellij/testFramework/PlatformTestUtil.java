@@ -137,6 +137,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -1405,10 +1406,10 @@ public final class PlatformTestUtil {
     int timeoutInSeconds,
     @Nullable Runnable callback
   ) {
-    var start = System.currentTimeMillis();
+    var start = System.nanoTime();
     while (true) {
       try {
-        if (System.currentTimeMillis() - start > timeoutInSeconds * 1000L) {
+        if (System.nanoTime() - start > Duration.ofSeconds(timeoutInSeconds).toNanos()) {
           if (callback != null) {
             callback.run();
           }
