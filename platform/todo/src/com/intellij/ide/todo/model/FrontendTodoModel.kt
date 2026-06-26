@@ -3,32 +3,44 @@ package com.intellij.ide.todo.model
 
 import com.intellij.ide.todo.rpc.TodoEvent
 import com.intellij.ide.todo.rpc.TodoFileResult
+import com.intellij.ide.todo.rpc.TodoResult
 import com.intellij.ide.vfs.VirtualFileId
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
-
-internal class TodoModelState(
-  @JvmField val files: Map<VirtualFileId, TodoFileResult> = emptyMap(),
-  @JvmField val scanFinished: Boolean = false,
-)
+import com.intellij.ide.vfs.rpcId
+import com.intellij.ide.vfs.virtualFile
+import com.intellij.openapi.vfs.VirtualFile
+import java.util.concurrent.ConcurrentHashMap
 
 internal class FrontendTodoModel {
-  private val state = MutableStateFlow(TodoModelState())
+  private val files = ConcurrentHashMap<VirtualFileId, TodoFileResult>()
 
-  fun applyEvent(event: TodoEvent) {
-    state.update { old ->
-      val files = LinkedHashMap(old.files)
-      var scanFinished = old.scanFinished
-      when (event) {
-        is TodoEvent.ItemUpserted -> files[event.item.fileId] = event.item
-        is TodoEvent.ItemRemoved -> files.remove(event.fileId)
-        TodoEvent.AllItemsRemoved -> {
-          files.clear()
-          scanFinished = false
-        }
-        TodoEvent.ScanFinished -> scanFinished = true
+  fun getFileResult(file: VirtualFile): TodoFileResult? = files[file.rpcId()]
+  fun getTodosForFile(file: VirtualFile): List<TodoResult> = files[file.rpcId()]?.todos ?: emptyList()
+  fun hasTodos(file: VirtualFile): Boolean = files.containsKey(file.rpcId())
+
+  fun applyEvent(event: TodoEvent) : TodoModelChange {
+    when (event) {
+      is TodoEvent.ItemUpserted -> {
+        val file = event.item.fileId.virtualFile() ?: return TodoModelChange.Nothing
+        if (!file.isValid || event.item.todos.isEmpty()) return removeFile(file)
+        files[file.rpcId()] = event.item
+        return TodoModelChange.FileUpdated(file)
       }
-      TodoModelState(files, scanFinished)
+      is TodoEvent.ItemRemoved -> {
+        val file = event.fileId.virtualFile() ?: return TodoModelChange.Nothing
+        return removeFile(file)
+      }
+      TodoEvent.AllItemsRemoved -> {
+        files.clear()
+        return TodoModelChange.Cleared
+      }
+      TodoEvent.ScanFinished -> {
+        return TodoModelChange.Nothing
+      }
     }
+  }
+
+  private fun removeFile(file: VirtualFile): TodoModelChange {
+    val removed = files.remove(file.rpcId())
+    return if (removed != null) TodoModelChange.FileRemoved(file) else TodoModelChange.Nothing
   }
 }

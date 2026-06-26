@@ -62,7 +62,6 @@ import org.jetbrains.concurrency.Promises;
 import javax.swing.JTree;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -99,9 +98,6 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   //used from EDT and from StructureTreeModel invoker thread
   protected final Map<VirtualFile, EditorHighlighter> myFile2Highlighter = ContainerUtil.createConcurrentSoftValueMap();
-
-  private final Map<VirtualFile, List<TodoResult>> remoteTodosCache = new ConcurrentHashMap<>();
-  private final Map<VirtualFile, TodoFileResult> remoteTodoFilesCache = new ConcurrentHashMap<>();
 
   private final @NotNull JTree myTree;
   /**
@@ -405,8 +401,6 @@ public abstract class TodoTreeBuilder implements Disposable {
     myFileTree.clear();
     myDirtyFileSet.clear();
     myFile2Highlighter.clear();
-    remoteTodosCache.clear();
-    remoteTodoFilesCache.clear();
   }
 
   protected final boolean hasDirtyFiles() {
@@ -433,8 +427,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     // First we need to update "dirty" file set.
     for (VirtualFile file : myDirtyFileSet) {
       if (shouldUseSplitTodo()) {
-        List<TodoResult> todoItems = getCachedRemoteTodos(file);
-        if (todoItems.isEmpty()) {
+        if (!hasRemoteTodos(file)) {
           if (myFileTree.contains(file)) {
             myFileTree.removeFile(file);
             myFile2Highlighter.remove(file);
@@ -452,7 +445,6 @@ public abstract class TodoTreeBuilder implements Disposable {
             myFileTree.removeFile(file);
             myFile2Highlighter.remove(file);
           }
-          clearRemoteTodosCache(file);
         }
         else { // file is valid and contains T.O.D.O items
           myFileTree.removeFile(file);
@@ -474,34 +466,17 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   @ApiStatus.Internal
   public @NotNull List<TodoResult> getCachedRemoteTodos(@NotNull VirtualFile file) {
-    return remoteTodosCache.getOrDefault(file, Collections.emptyList());
-  }
-
-  @ApiStatus.Internal
-  public void cacheRemoteTodos(@NotNull VirtualFile file, @NotNull List<TodoResult> todos) {
-    remoteTodosCache.put(file, todos);
-  }
-
-  @ApiStatus.Internal
-  public void clearRemoteTodosCache(@NotNull VirtualFile file) {
-    remoteTodosCache.remove(file);
-    remoteTodoFilesCache.remove(file);
+    return myCoroutineHelper.getModel().getTodosForFile(file);
   }
 
   @ApiStatus.Internal
   public @Nullable TodoFileResult getCachedRemoteTodoFile(@NotNull VirtualFile file) {
-    return remoteTodoFilesCache.get(file);
+    return myCoroutineHelper.getModel().getFileResult(file);
   }
 
   @ApiStatus.Internal
-  public @NotNull Collection<TodoFileResult> getCachedRemoteTodoFiles() {
-    return remoteTodoFilesCache.values();
-  }
-
-  @ApiStatus.Internal
-  public void cacheRemoteTodoFile(@NotNull VirtualFile file, @NotNull TodoFileResult result) {
-    remoteTodoFilesCache.put(file, result);
-    remoteTodosCache.put(file, result.getTodos());
+  public boolean hasRemoteTodos(@NotNull VirtualFile file) {
+    return myCoroutineHelper.getModel().hasTodos(file);
   }
 
   @ApiStatus.Internal
@@ -514,7 +489,6 @@ public abstract class TodoTreeBuilder implements Disposable {
   @RequiresBackgroundThread
   public void removeRemoteTodoFileFromTree(@NotNull VirtualFile file) {
     myFileTree.removeFile(file);
-    clearRemoteTodosCache(file);
     myFile2Highlighter.remove(file);
   }
 

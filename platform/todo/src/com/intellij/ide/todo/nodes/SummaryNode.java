@@ -35,7 +35,7 @@ public class SummaryNode extends BaseToDoNode<ToDoSummary> {
     if (shouldUseSplitTodo()) {
       for (Iterator<VirtualFile> i = myBuilder.getAllVirtualFiles(); i.hasNext(); ) {
         VirtualFile virtualFile = i.next();
-        if (virtualFile == null || !virtualFile.isValid() || myBuilder.getCachedRemoteTodos(virtualFile).isEmpty()) {
+        if (virtualFile == null || !virtualFile.isValid() || !myBuilder.hasRemoteTodos(virtualFile)) {
           continue;
         }
 

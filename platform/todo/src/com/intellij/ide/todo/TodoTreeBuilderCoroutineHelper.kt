@@ -4,11 +4,10 @@ package com.intellij.ide.todo
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
 import com.intellij.ide.todo.model.FrontendTodoModel
+import com.intellij.ide.todo.model.TodoModelChange
 import com.intellij.ide.todo.model.TodoScope
 import com.intellij.ide.todo.rpc.TodoEvent
-import com.intellij.ide.todo.rpc.TodoFileResult
 import com.intellij.ide.todo.rpc.collectWatchedTodoFiles
-import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadConstraint
@@ -29,6 +28,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.launch
 import java.util.concurrent.CompletableFuture
@@ -40,16 +40,15 @@ private val LOG = logger<TodoTreeBuilderCoroutineHelper>()
 internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeBuilder) : Disposable {
   private val parentScope = treeBuilder.project.service<TodoCoroutineScopeProvider>().coroutineScope
   private val scope = parentScope.childScope("TodoTreeBuilderCoroutineHelper")
-  private var remoteCacheRefreshJob: Job? = null
   private var remoteTodoFilesWatchJob: Job? = null
-  private val model = FrontendTodoModel()
+  private val _model = FrontendTodoModel()
+  val model: FrontendTodoModel get() = _model
 
   init {
     Disposer.register(treeBuilder, this)
   }
 
   override fun dispose() {
-    remoteCacheRefreshJob?.cancel()
     remoteTodoFilesWatchJob?.cancel()
     scope.cancel()
   }
@@ -65,27 +64,21 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
     remoteTodoFilesWatchJob = this.scope.launch(Dispatchers.Default + ClientId.current.asContextElement()) {
       readAction { treeBuilder.clearCache() }
       collectWatchedTodoFiles(treeBuilder.project, todoScope, filter) { event ->
-        model.applyEvent(event)
-        when (event) {
-          is TodoEvent.ItemUpserted -> cacheFile(event.item)
-          is TodoEvent.ItemRemoved -> event.fileId.virtualFile()?.let { treeBuilder.removeRemoteTodoFileFromTree(it) }
-          TodoEvent.AllItemsRemoved -> treeBuilder.clearCache()
-          TodoEvent.ScanFinished -> scanCompleted.complete(Unit)
+        coroutineContext.ensureActive()
+        val change = _model.applyEvent(event)
+        when (change) {
+          is TodoModelChange.FileUpdated -> treeBuilder.addRemoteTodoFileToTree(change.file)
+          is TodoModelChange.FileRemoved -> treeBuilder.removeRemoteTodoFileFromTree(change.file)
+          TodoModelChange.Cleared -> treeBuilder.clearCache()
+          TodoModelChange.Nothing -> {}
+          }
+        if (event is TodoEvent.ScanFinished) {
+          scanCompleted.complete(Unit)
         }
         readAction { treeBuilder.updateVisibleTree() }
       }
     }
     return scanCompleted
-  }
-
-  private fun cacheFile(result: TodoFileResult) {
-    val file = result.fileId.virtualFile() ?: return
-    if (!file.isValid || result.todos.isEmpty()) {
-      treeBuilder.clearRemoteTodosCache(file)
-      return
-    }
-    treeBuilder.cacheRemoteTodoFile(file, result)
-    treeBuilder.addRemoteTodoFileToTree(file)
   }
 
   fun scheduleCacheAndTreeUpdate(vararg constraints: ReadConstraint): CompletableFuture<*> {
