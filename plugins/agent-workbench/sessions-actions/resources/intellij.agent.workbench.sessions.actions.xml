@@ -5,13 +5,14 @@
   <dependencies>
     <plugin id="org.jetbrains.plugins.terminal"/>
     <module name="intellij.agent.workbench.chat"/>
-    <module name="intellij.platform.ai.agent.common"/>
-    <module name="intellij.platform.ai.agent.core"/>
     <module name="intellij.agent.workbench.prompt.core"/>
+    <module name="intellij.agent.workbench.prompt.ui"/>
     <module name="intellij.agent.workbench.sessions"/>
-    <module name="intellij.platform.ai.agent.sessions.core"/>
     <module name="intellij.agent.workbench.settings"/>
     <module name="intellij.agent.workbench.ui"/>
+    <module name="intellij.platform.ai.agent.common"/>
+    <module name="intellij.platform.ai.agent.core"/>
+    <module name="intellij.platform.ai.agent.sessions.core"/>
     <module name="intellij.terminal.frontend"/>
   </dependencies>
   <!-- endregion -->

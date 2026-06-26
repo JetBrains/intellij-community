@@ -5,7 +5,6 @@ package com.intellij.agent.workbench.sessions.actions
 // @spec community/plugins/agent-workbench/spec/actions/new-thread.spec.md
 
 import com.intellij.agent.workbench.chat.AgentChatDeferredStartContent
-import com.intellij.agent.workbench.chat.installAgentChatDeferredStartContent
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
@@ -26,7 +25,6 @@ import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -36,11 +34,10 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.RegistryManager
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 internal const val AGENT_WORKBENCH_NEW_THREAD_INLINE_PROMPT_REGISTRY_KEY: String = "agent.workbench.new.thread.inline.prompt"
 
@@ -123,97 +120,82 @@ internal class AgentSessionsInlineNewThreadPromptService internal constructor(
   ) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
     val provider = AgentSessionProvider.from(profile.providerId)
-    var promptProject: Project? = null
+    val handleDeferred = CompletableDeferred<AgentDeferredNewSessionHandle>()
     val handle = try {
       serviceAsync<AgentSessionLaunchService>().createDeferredNewSession(
         path = normalizedPath,
         provider = provider,
         mode = profile.launchMode,
         entryPoint = entryPoint,
-        openedChatHandler = { project, _ -> promptProject = project },
         launchProfileId = profile.id,
         generationSettings = profile.generationSettings,
         waitingTitle = AgentSessionsBundle.message("toolwindow.thread.preparing.title", providerDisplayName(descriptor)),
         waitingMessage = AgentSessionsBundle.message("toolwindow.thread.preparing.body"),
+        deferredStartContentProvider = { project ->
+          createInlinePromptContent(
+            project = project,
+            path = normalizedPath,
+            profile = profile,
+            entryPoint = entryPoint,
+            handleDeferred = handleDeferred,
+          )
+        },
       ).handle
     }
     catch (e: CancellationException) {
+      handleDeferred.cancel()
       throw e
     }
     catch (e: Throwable) {
+      handleDeferred.cancel()
       LOG.warn("Failed to open inline New Thread prompt for ${profile.providerId}:$normalizedPath", e)
       createNewThreadDirectly(path = normalizedPath, profile = profile, currentProject = currentProject, entryPoint = entryPoint)
       return
     }
 
     if (handle == null) {
+      handleDeferred.cancel()
       createNewThreadDirectly(path = normalizedPath, profile = profile, currentProject = currentProject, entryPoint = entryPoint)
       return
     }
-
-    try {
-      installInlinePromptContent(
-        project = promptProject ?: currentProject,
-        path = normalizedPath,
-        profile = profile,
-        entryPoint = entryPoint,
-        handle = handle,
-      )
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      LOG.warn("Failed to install inline New Thread prompt for ${profile.providerId}:$normalizedPath", e)
-      handle.start(initialMessageRequestForLaunchProfile(profile))
-    }
+    handleDeferred.complete(handle)
   }
 
-  private suspend fun installInlinePromptContent(
+  private fun createInlinePromptContent(
     project: Project,
     path: String,
     profile: AgentPromptLaunchProfile,
     entryPoint: AgentWorkbenchEntryPoint,
-    handle: AgentDeferredNewSessionHandle,
-  ) {
-    withContext(Dispatchers.EDT) {
-      val launcher = InlineNewThreadPromptLauncherBridge(projectPath = path, handle = handle)
-      val component = createAgentWorkbenchInlineNewThreadPromptComponent(
+    handleDeferred: CompletableDeferred<AgentDeferredNewSessionHandle>,
+  ): AgentChatDeferredStartContent {
+    val launcher = InlineNewThreadPromptLauncherBridge(projectPath = path, handleProvider = { handleDeferred.await() })
+    val component = createAgentWorkbenchInlineNewThreadPromptComponent(
+      project = project,
+      invocationData = AgentPromptInvocationData(
         project = project,
-        invocationData = AgentPromptInvocationData(
-          project = project,
-          actionId = AgentWorkbenchActionIds.Sessions.MainToolbar.NEW_THREAD,
-          actionText = AgentSessionsBundle.message("action.AgentWorkbenchSessions.MainToolbar.NewThread.text"),
-          actionPlace = entryPoint.name,
-          invokedAtMs = System.currentTimeMillis(),
-        ),
-        launcherProvider = { launcher },
-        initialLaunchProfileId = profile.id,
-      )
-      val installed = installAgentChatDeferredStartContent(
-        project = project,
-        file = handle.file,
-        content = AgentChatDeferredStartContent(
-          component = component,
-          preferredFocusedComponent = component.preferredFocusedComponent,
-          disposeContent = { Disposer.dispose(component) },
-        ),
-      )
-      if (!installed) {
-        Disposer.dispose(component)
-        throw IllegalStateException("Inline New Thread prompt could not be installed into ${handle.file}")
-      }
-    }
+        actionId = AgentWorkbenchActionIds.Sessions.MainToolbar.NEW_THREAD,
+        actionText = AgentSessionsBundle.message("action.AgentWorkbenchSessions.MainToolbar.NewThread.text"),
+        actionPlace = entryPoint.name,
+        invokedAtMs = System.currentTimeMillis(),
+      ),
+      launcherProvider = { launcher },
+      initialLaunchProfileId = profile.id,
+    )
+    return AgentChatDeferredStartContent(
+      component = component,
+      preferredFocusedComponent = component.preferredFocusedComponent,
+      disposeContent = { Disposer.dispose(component) },
+    )
   }
 }
 
 private class InlineNewThreadPromptLauncherBridge(
   private val projectPath: String,
-  private val handle: AgentDeferredNewSessionHandle,
+  private val handleProvider: suspend () -> AgentDeferredNewSessionHandle,
   private val delegateProvider: () -> AgentPromptLauncherBridge? = AgentPromptLaunchers::find,
 ) : AgentPromptLauncherBridge {
   override suspend fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
-    return handle.launch(request)
+    return handleProvider().launch(request)
   }
 
   override fun loadProviderPreferences(): AgentPromptLauncherBridge.ProviderPreferences {

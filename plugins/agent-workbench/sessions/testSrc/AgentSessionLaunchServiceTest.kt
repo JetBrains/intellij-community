@@ -426,6 +426,7 @@ class AgentSessionLaunchServiceTest {
           )
 
           chatOpenExecutor.awaitOpenPreparingNewChatCalls(1)
+          assertThat(checkNotNull(chatOpenExecutor.lastOpenPreparingNewChatRequest.get()).hasDeferredStartContentProvider).isFalse()
           withTimeout(5_000.milliseconds) { launchSpecRequested.await() }
           assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
 
@@ -433,6 +434,39 @@ class AgentSessionLaunchServiceTest {
           chatOpenExecutor.awaitOpenNewChatCalls(1)
           val openRequest = checkNotNull(chatOpenExecutor.lastOpenNewChatRequest.get())
           assertThat(openRequest.launchSpec.command).containsExactly("test", "new", AgentSessionLaunchMode.STANDARD.name)
+        }
+      }
+    }
+  }
+
+  @Test
+  fun createDeferredNewSessionPassesDeferredStartContentProviderToPreparingChat() {
+    val descriptor = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.from("codex"),
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+    )
+    val chatOpenExecutor = RecordingChatOpenExecutor()
+
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+      runBlocking(Dispatchers.Default) {
+        withTestServiceAndLaunch(
+          sessionSourcesProvider = { listOf(descriptor.sessionSource) },
+          projectEntriesProvider = { listOf(openTestProjectEntry(PROJECT_PATH, "Project A")) },
+          chatOpenExecutor = chatOpenExecutor,
+        ) { _, launchService ->
+          val result = launchService.createDeferredNewSession(
+            path = PROJECT_PATH,
+            provider = AgentSessionProvider.from("codex"),
+            mode = AgentSessionLaunchMode.STANDARD,
+            entryPoint = AgentWorkbenchEntryPoint.PROMPT,
+            waitingTitle = "Preparing",
+            deferredStartContentProvider = { error("test executor records the provider without rendering it") },
+          )
+
+          assertThat(result.handle).isNotNull()
+          chatOpenExecutor.awaitOpenPreparingNewChatCalls(1)
+          assertThat(checkNotNull(chatOpenExecutor.lastOpenPreparingNewChatRequest.get()).hasDeferredStartContentProvider).isTrue()
         }
       }
     }

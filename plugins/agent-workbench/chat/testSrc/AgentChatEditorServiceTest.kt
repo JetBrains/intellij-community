@@ -434,6 +434,39 @@ class AgentChatEditorServiceTest {
   }
 
   @Test
+  fun openChatInstallsDeferredStartContentBeforeOpeningEditor(): Unit = timeoutRunBlocking {
+    val customContent = JPanel()
+    val focusComponent = JButton("Prompt")
+    openChat(
+      project = project,
+      projectPath = projectPath,
+      threadIdentity = "CODEX:new-inline-prompt",
+      shellCommand = codexCommand,
+      threadId = "",
+      threadTitle = "New Codex thread",
+      subAgentId = null,
+      persistSnapshot = false,
+      deferredStartState = AgentChatDeferredStartState(
+        phase = AgentChatDeferredStartPhase.WAITING,
+        title = "Preparing Codex",
+      ),
+      deferredStartContent = AgentChatDeferredStartContent(
+        component = customContent,
+        preferredFocusedComponent = focusComponent,
+      ),
+    )
+
+    val file = openedChatFiles().single { file -> file.threadIdentity == "CODEX:new-inline-prompt" }
+    val editor = runInUi {
+      FileEditorManager.getInstance(project).getAllEditors(file).filterIsInstance<AgentChatFileEditor>().single().also { editor ->
+        editor.selectNotify()
+      }
+    }
+    assertThat(editor.component.components).containsExactly(customContent)
+    assertThat(editor.preferredFocusedComponent).isSameAs(focusComponent)
+  }
+
+  @Test
   fun deferredWaitingTabKeepsReadyActivityUntilStartDecision(): Unit = timeoutRunBlocking {
     openChatInModal(
       threadIdentity = "CODEX:new-deferred-ready",
