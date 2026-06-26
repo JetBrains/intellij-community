@@ -108,6 +108,7 @@ private fun descriptor(threadStartupBackend: CodexThreadStartupBackend): AgentSe
     threadStartupBackend = threadStartupBackend,
     executableResolver = { CodexCliUtils.CODEX_COMMAND },
     cliAvailableProbe = { true },
+    themeLaunchConfigResolver = { null },
   ).withProvider(CODEX_AGENT_SESSION_PROVIDER)
 }
 
