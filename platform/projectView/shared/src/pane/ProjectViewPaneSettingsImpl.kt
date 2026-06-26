@@ -3,6 +3,8 @@ package com.intellij.platform.projectView.pane
 
 import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService
+import com.intellij.openapi.diagnostic.fileLogger
+import org.jetbrains.annotations.ApiStatus
 
 internal sealed class ProjectViewPaneOptionImpl(val dto: ProjectViewPaneOptionDTO) : ProjectViewPaneOption {
   data object OpenInPreviewTab : ProjectViewPaneOptionImpl(ProjectViewPaneOptionDTO.OPEN_IN_PREVIEW_TAB), ProjectViewPaneOption.OpenInPreviewTab
@@ -24,6 +26,9 @@ internal sealed class ProjectViewPaneOptionImpl(val dto: ProjectViewPaneOptionDT
   data object ManualOrder : ProjectViewPaneOptionImpl(ProjectViewPaneOptionDTO.MANUAL_ORDER), ProjectViewPaneOption.ManualOrder
 }
 
+private val ProjectViewPaneOption.dto: ProjectViewPaneOptionDTO
+  get() = (this as ProjectViewPaneOptionImpl).dto
+
 internal data object ProjectViewPaneSortByNameImpl : ProjectViewPaneSortByName
 internal data object ProjectViewPaneSortByTypeImpl : ProjectViewPaneSortByType
 internal data class ProjectViewPaneSortByTimeImpl(override val isAscending: Boolean) : ProjectViewPaneSortByTime
@@ -33,11 +38,75 @@ internal data class ProjectViewPaneFileNestingValueImpl(
   override val nestingRules: List<ProjectViewFileNestingService.NestingRule>,
 ) : ProjectViewPaneFileNestingValue
 
-internal fun NodeSortKey.toSettingValue(): ProjectViewPaneSortKeyValue {
+@ApiStatus.Internal
+fun NodeSortKey.toSettingValue(): ProjectViewPaneSortKey {
   return when (this) {
-    NodeSortKey.BY_NAME -> ProjectViewPaneSortByNameImpl
-    NodeSortKey.BY_TYPE -> ProjectViewPaneSortByTypeImpl
-    NodeSortKey.BY_TIME_ASCENDING -> ProjectViewPaneSortByTimeImpl(isAscending = true)
-    NodeSortKey.BY_TIME_DESCENDING -> ProjectViewPaneSortByTimeImpl(isAscending = false)
+    NodeSortKey.BY_NAME -> ProjectViewPaneSortKey.byName()
+    NodeSortKey.BY_TYPE -> ProjectViewPaneSortKey.byType()
+    NodeSortKey.BY_TIME_ASCENDING -> ProjectViewPaneSortKey.byTime(isAscending = true)
+    NodeSortKey.BY_TIME_DESCENDING -> ProjectViewPaneSortKey.byTime(isAscending = false)
   }
 }
+
+@ApiStatus.Internal
+fun ProjectViewPaneSortKey.toLegacySortKey(): NodeSortKey {
+  return when (this) {
+    is ProjectViewPaneSortByName -> NodeSortKey.BY_NAME
+    is ProjectViewPaneSortByType -> NodeSortKey.BY_TYPE
+    is ProjectViewPaneSortByTime -> if (isAscending) NodeSortKey.BY_TIME_ASCENDING else NodeSortKey.BY_TIME_DESCENDING
+    else -> {
+      LOG.warn("Unsupported sort key: $this")
+      NodeSortKey.BY_NAME
+    }
+  }
+}
+
+internal class ProjectViewPaneSettingsStateBuilderImpl : ProjectViewPaneSettingsStateBuilder {
+  private val optionState = hashMapOf<ProjectViewPaneOptionDTO, ProjectViewOptionStateDTO>()
+  private var sortKey = NodeSortKey.BY_NAME
+  private var availableSortKeys = NodeSortKey.entries.toList()
+  private var fileNesting = FileNestingStateDTO(
+    isFileNestingOn = false,
+    isFileNestingAvailable = false,
+    activeRules = emptyList(),
+    defaultRules = emptyList(),
+  )
+
+  override fun setOptionState(
+    option: ProjectViewPaneOption,
+    isSelected: Boolean,
+    isEnabled: Boolean,
+    isAlwaysVisible: Boolean,
+  ) {
+    optionState[option.dto] = ProjectViewOptionStateDTO(isSelected, isEnabled, isAlwaysVisible)
+  }
+
+  override fun setAvailableSortKeys(sortKeys: List<ProjectViewPaneSortKey>) {
+    this.availableSortKeys = sortKeys.map { it.toLegacySortKey() }
+  }
+
+  override fun setSortKey(sortKey: ProjectViewPaneSortKey) {
+    this.sortKey = sortKey.toLegacySortKey()
+  }
+
+  override fun setFileNesting(
+    isFileNestingOn: Boolean,
+    isFileNestingAvailable: Boolean,
+    activeRules: List<ProjectViewFileNestingService.NestingRule>,
+    defaultRules: List<ProjectViewFileNestingService.NestingRule>,
+  ) {
+    fileNesting = FileNestingStateDTO(
+      isFileNestingOn, isFileNestingAvailable, activeRules.map { it.toDTO() }, defaultRules.map { it.toDTO() }
+    )
+  }
+
+  fun build(): ProjectViewPaneSettingsStateDTO {
+    return ProjectViewPaneSettingsStateDTO(
+      optionState,
+      ProjectViewSortKeyStateDTO(sortKey, availableSortKeys),
+      fileNesting,
+    )
+  }
+}
+
+private val LOG = fileLogger()

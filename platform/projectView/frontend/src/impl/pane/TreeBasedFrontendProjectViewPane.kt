@@ -34,7 +34,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneOptionDTO
 import com.intellij.platform.projectView.actions.ProjectViewOptionMenuUpdater
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
-import com.intellij.platform.projectView.pane.ProjectViewActionStateEvent
+import com.intellij.platform.projectView.pane.ProjectViewSettingsStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewChildRemoved
 import com.intellij.platform.projectView.pane.ProjectViewChildrenLoaded
 import com.intellij.platform.projectView.pane.ProjectViewChildrenRemoved
@@ -247,8 +247,8 @@ internal abstract class TreeBasedFrontendProjectViewPane(
           treeModel.setChildren(parent, emptyList())
         }
       }
-      is ProjectViewActionStateEvent -> {
-        optionSupport.updateActionState(event.actionState)
+      is ProjectViewSettingsStateEvent -> {
+        optionSupport.updateActionState(event.settingsState)
       }
     }
     updateEpoch.update { it + 1 }

@@ -32,7 +32,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @ApiStatus.Internal
 interface ProjectViewPaneProvider {
-  fun createPanes(project: Project): List<ProjectViewPaneModel>
+  suspend fun createPanes(project: Project): List<ProjectViewPaneModel>
 }
 
 @OptIn(ExperimentalAtomicApi::class)

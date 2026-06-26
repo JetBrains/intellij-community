@@ -2,6 +2,7 @@
 package com.intellij.platform.projectView.pane
 
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService
+import com.intellij.platform.projectView.actions.fromDTO
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -27,17 +28,29 @@ interface ProjectViewPaneOption {
 }
 
 @ApiStatus.Experimental
-@ApiStatus.NonExtendable
-interface ProjectViewPaneSortKeyValue
+fun allProjectViewPaneOptions(): List<ProjectViewPaneOption> {
+  return ProjectViewPaneOptionDTO.entries.map { it.fromDTO() }
+}
+
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
-interface ProjectViewPaneSortByName : ProjectViewPaneSortKeyValue
+interface ProjectViewPaneSortKey {
+  companion object {
+    fun byName(): ProjectViewPaneSortByName = ProjectViewPaneSortByNameImpl
+    fun byType(): ProjectViewPaneSortByType = ProjectViewPaneSortByTypeImpl
+    fun byTime(isAscending: Boolean): ProjectViewPaneSortByTime = ProjectViewPaneSortByTimeImpl(isAscending)
+  }
+}
+
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
-interface ProjectViewPaneSortByType : ProjectViewPaneSortKeyValue
+interface ProjectViewPaneSortByName : ProjectViewPaneSortKey
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
-interface ProjectViewPaneSortByTime : ProjectViewPaneSortKeyValue {
+interface ProjectViewPaneSortByType : ProjectViewPaneSortKey
+@ApiStatus.Experimental
+@ApiStatus.NonExtendable
+interface ProjectViewPaneSortByTime : ProjectViewPaneSortKey {
   val isAscending: Boolean
 }
 
@@ -46,4 +59,18 @@ interface ProjectViewPaneSortByTime : ProjectViewPaneSortKeyValue {
 interface ProjectViewPaneFileNestingValue {
   val isFileNestingOn: Boolean
   val nestingRules: List<ProjectViewFileNestingService.NestingRule>
+}
+
+@ApiStatus.Experimental
+@ApiStatus.NonExtendable
+interface ProjectViewPaneSettingsStateBuilder {
+  fun setOptionState(option: ProjectViewPaneOption, isSelected: Boolean, isEnabled: Boolean, isAlwaysVisible: Boolean)
+  fun setSortKey(sortKey: ProjectViewPaneSortKey)
+  fun setAvailableSortKeys(sortKeys: List<ProjectViewPaneSortKey>)
+  fun setFileNesting(
+    isFileNestingOn: Boolean,
+    isFileNestingAvailable: Boolean,
+    activeRules: List<ProjectViewFileNestingService.NestingRule>,
+    defaultRules: List<ProjectViewFileNestingService.NestingRule>,
+  )
 }

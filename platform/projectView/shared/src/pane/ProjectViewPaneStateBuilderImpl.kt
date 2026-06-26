@@ -54,8 +54,8 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
           val node = nodeById[update.model.id] ?: return null
           node.model = update.model
         }
-        is ProjectViewActionStateEvent -> {
-          actionState = update.actionState
+        is ProjectViewSettingsStateEvent -> {
+          actionState = update.settingsState
         }
       }
       LOG.debug("Handled update: $update")
@@ -76,7 +76,7 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
     private fun addActionStates(result: ArrayList<ProjectViewPaneStateEvent>) {
       val actionState = actionState
       if (actionState != null) {
-        result.add(ProjectViewActionStateEvent(actionState))
+        result.add(ProjectViewSettingsStateEvent(actionState))
       }
     }
 
@@ -146,8 +146,10 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
     updateState(ProjectViewChildRemoved(parentId, index))
   }
 
-  override suspend fun updateActionState(actionState: ProjectViewPaneSettingsStateDTO) {
-    updateState(ProjectViewActionStateEvent(actionState))
+  override suspend fun updateSettingsState(build: (ProjectViewPaneSettingsStateBuilder) -> Unit) {
+    val builder = ProjectViewPaneSettingsStateBuilderImpl()
+    build(builder)
+    updateState(ProjectViewSettingsStateEvent(builder.build()))
   }
 
   override suspend fun clear() {

@@ -12,6 +12,6 @@ sealed interface ProjectViewPaneStateBuilder {
   suspend fun updateNode(nodeModel: ProjectViewNodeModel)
   suspend fun removeNodeChildren(parentId: Long)
   suspend fun removeNodeChild(parentId: Long, index: Int)
-  suspend fun updateActionState(actionState: ProjectViewPaneSettingsStateDTO)
+  suspend fun updateSettingsState(build: (ProjectViewPaneSettingsStateBuilder) -> Unit)
   suspend fun clear()
 }

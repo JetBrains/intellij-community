@@ -19,9 +19,6 @@ internal class ProjectViewToolWindowFactory : ToolWindowFactory, DumbAware {
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     if (isProjectViewSplit()) {
-      if (!isJetBrainsClient()) { // monolith or backend - to ensure that legacy panes work correctly
-        legacyProjectView(project).setupBackend()
-      }
       if (!AppMode.isRemoteDevHost()) { // monolith or frontend - the UI part
         ProjectViewToolWindowService.getInstance(project).setupToolWindow(toolWindow)
       }

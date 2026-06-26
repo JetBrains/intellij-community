@@ -47,7 +47,7 @@ enum class ProjectViewPaneOptionDTO {
 @Serializable
 data class ProjectViewSortKeyStateDTO(
     val sortKey: NodeSortKey,
-    val availableSortKeys: Set<NodeSortKey>,
+    val availableSortKeys: List<NodeSortKey>,
 )
 
 @ApiStatus.Internal

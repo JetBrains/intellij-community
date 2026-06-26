@@ -29,8 +29,8 @@ data object ProjectViewClearStateEvent : ProjectViewPaneStateSerializableEvent()
 
 @ApiStatus.Internal
 @Serializable
-data class ProjectViewActionStateEvent(
-  val actionState: ProjectViewPaneSettingsStateDTO,
+data class ProjectViewSettingsStateEvent(
+  val settingsState: ProjectViewPaneSettingsStateDTO,
 ) : ProjectViewPaneStateSerializableEvent()
 
 @ApiStatus.Internal

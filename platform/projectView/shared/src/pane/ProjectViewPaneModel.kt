@@ -20,7 +20,7 @@ interface ProjectViewPaneModel {
 
   suspend fun setOptionValue(option: ProjectViewPaneOption, newValue: Boolean)
 
-  suspend fun setSortKey(sortKeyValue: ProjectViewPaneSortKeyValue)
+  suspend fun setSortKey(sortKeyValue: ProjectViewPaneSortKey)
 
   suspend fun setFileNesting(fileNestingValue: ProjectViewPaneFileNestingValue)
 
