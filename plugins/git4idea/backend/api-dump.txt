@@ -260,6 +260,8 @@ c:git4idea.ui.branch.GitCompareBranchesHelper
 - <init>(com.intellij.openapi.project.Project):V
 f:git4idea.update.GitUpdateSessionKt
 - sf:getBodyForUpdateNotification(java.lang.Integer):java.lang.String
+a:git4idea.update.GitUpdater
+- p:hasRemoteChanges(git4idea.GitBranch):Z
 f:git4idea.util.GitFileUtils
 - sf:INSTANCE:git4idea.util.GitFileUtils
 - sf:addFiles(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.Collection):V

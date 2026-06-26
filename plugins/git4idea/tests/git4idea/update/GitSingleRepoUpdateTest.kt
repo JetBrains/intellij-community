@@ -22,6 +22,7 @@ import git4idea.test.resolveConflicts
 import git4idea.test.runUnderProgress
 import git4idea.test.tac
 import java.nio.file.Path
+import kotlin.test.assertNotEquals
 
 class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
   private lateinit var repo: GitRepository
@@ -263,6 +264,20 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
 
     assertErrorNotification(GitBundle.message("update.notification.update.error"),
                             GitUpdateProcess.getNoTrackedBranchError(repo, "feature"))
+  }
+
+  fun `test reset drops local commits when remote branch has no new commits`() {
+    cd(repo)
+    val before = last()
+
+    commitLocalFilesToRepo()
+
+    assertNotEquals(before, last())
+
+    val (result, _) = updateWith(RESET)
+    assertSuccessfulUpdate(result)
+
+    assertEquals(before, last())
   }
 
   private fun getUpdatedRange(updateProcess: GitUpdateProcess): HashRange {

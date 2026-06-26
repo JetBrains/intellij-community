@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
@@ -144,8 +145,7 @@ public abstract class GitUpdater {
    * @return true if update is needed, false otherwise.
    */
   public boolean isUpdateNeeded(@NotNull GitBranchPair branchPair) throws VcsException {
-    String remoteBranch = branchPair.getTarget().getName();
-    if (!hasRemoteChanges(remoteBranch)) {
+    if (!hasRemoteChanges(branchPair.getTarget())) {
       LOG.info("isUpdateNeeded: No remote changes, update is not needed");
       return false;
     }
@@ -164,11 +164,11 @@ public abstract class GitUpdater {
     new MergeChangeCollector(myProject, repository, myBefore).collect(myUpdatedFiles);
   }
 
-  protected boolean hasRemoteChanges(@NotNull String remoteBranch) throws VcsException {
+  protected boolean hasRemoteChanges(@NotNull GitBranch remoteBranch) throws VcsException {
     GitLineHandler handler = new GitLineHandler(myProject, myRoot, GitCommand.REV_LIST);
     handler.setSilent(true);
     handler.addParameters("-1");
-    handler.addParameters(HEAD + ".." + remoteBranch);
+    handler.addParameters(HEAD + ".." + remoteBranch.getName());
     String output = myGit.runCommand(handler).getOutputOrThrow();
     return !output.isEmpty();
   }

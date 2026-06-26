@@ -5083,7 +5083,6 @@ a:git4idea.update.GitUpdater
 - p:<init>(com.intellij.openapi.project.Project,git4idea.commands.Git,git4idea.repo.GitRepository,com.intellij.openapi.progress.ProgressIndicator,com.intellij.openapi.vcs.update.UpdatedFiles):V
 - pa:doUpdate():git4idea.update.GitUpdateResult
 - s:getUpdater(com.intellij.openapi.project.Project,git4idea.commands.Git,git4idea.branch.GitBranchPair,git4idea.repo.GitRepository,com.intellij.openapi.progress.ProgressIndicator,com.intellij.openapi.vcs.update.UpdatedFiles,git4idea.config.UpdateMethod):git4idea.update.GitUpdater
-- p:hasRemoteChanges(java.lang.String):Z
 - a:isSaveNeeded():Z
 - isUpdateNeeded(git4idea.branch.GitBranchPair):Z
 - p:markEnd(git4idea.repo.GitRepository):V
