@@ -839,6 +839,17 @@ internal class KotlinGradleDependenciesCompletionTest : AbstractKotlinGradleComp
     }
   }
 
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test configuration names are not suggested for coordinate-like input`(gradleVersion: GradleVersion) {
+    test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE) {
+      // "junit-api" contains a coordinate separator, so configuration names that merely contain "api"
+      // (api, testApi, ...) must not be suggested; only dependency coordinates should appear.
+      val file = writeTextAndCommit("build.gradle.kts", "dependencies { junit-api<caret> }")
+      assertCompletionDoesntSuggest(file, listOf("api", "testApi", "apiDependenciesMetadata", "testApiDependenciesMetadata"))
+    }
+  }
+
   private fun test(gradleVersion: GradleVersion, fixtureBuilder: GradleTestFixtureBuilder, runInDumbMode: Boolean, test: () -> Unit) {
     test(gradleVersion, fixtureBuilder) {
       if (runInDumbMode) {
