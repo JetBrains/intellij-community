@@ -55,6 +55,9 @@
       displayType="BALLOON"
       bundle="messages.IjentImplBundle"
       key="notification.group.ijent.env.vars"/>
+    <applicationService
+      serviceInterface="com.intellij.platform.eel.EnvironmentVariablesAwaitReporter"
+      serviceImplementation="com.intellij.platform.ijent.community.ui.settings.EnvironmentVariablesAwaitReporterImpl"/>
     <advancedSetting
       id="container.environments.env.var.shell.mode"
       enumClass="com.intellij.platform.ijent.community.ui.settings.LoginShellEnvVarModeProviderImpl$EnvVarShellMode"

@@ -25,10 +25,12 @@ import kotlin.time.Duration
 private const val NOTIFICATION_GROUP_ID: String = "IJent.EnvironmentVariables"
 
 /**
- * `ServiceLoader`-discovered SPI wrapper that forwards events to the application-level
- * [EnvironmentVariablesAwaitNotifier] service.
+ * Forwards events to the application-level [EnvironmentVariablesAwaitNotifier] service.
  *
- * Registered in `META-INF/services/com.intellij.platform.eel.EnvironmentVariablesAwaitReporter`.
+ * Registered as idea application service in
+ * `intellij.platform.ijent.community.ui.xml`. The SPI-side thin forwarder in `eel-impl` looks up
+ * this service through IntelliJ's service container, which crosses plugin-classloader boundaries
+ * (unlike `ServiceLoader`).
  */
 internal class EnvironmentVariablesAwaitReporterImpl : EnvironmentVariablesAwaitReporter {
   override fun finished(
