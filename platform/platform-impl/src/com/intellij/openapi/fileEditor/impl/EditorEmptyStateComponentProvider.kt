@@ -7,6 +7,8 @@ import javax.swing.JComponent
 
 @ApiStatus.Internal
 interface EditorEmptyStateComponentProvider {
+  fun isAvailable(splitters: EditorsSplitters): Boolean = true
+
   /**
    * Called asynchronously by the editor host. Implementations should choose their dispatcher explicitly.
    */

@@ -55,6 +55,8 @@ internal class EditorEmptyStateComponentController(
 
   fun isVisible(): Boolean = componentHost != null
 
+  fun suppressesEmptyText(): Boolean = componentHost != null || creationJob != null
+
   fun suppressRichComponents() {
     if (!richComponentsEnabled && componentHost == null && creationJob == null) {
       return
@@ -116,6 +118,9 @@ internal class EditorEmptyStateComponentController(
     if (!richComponentsEnabled || componentHost != null || creationJob != null) {
       return
     }
+    if (!hasAvailableProvider()) {
+      return
+    }
 
     val generation = ++creationGeneration
     creationJob = coroutineScope.launch(Dispatchers.Default + CoroutineName("create editor empty state components")) {
@@ -148,10 +153,33 @@ internal class EditorEmptyStateComponentController(
           }
           if (generation == creationGeneration) {
             creationJob = null
+            if (!mounted && richComponentsEnabled && showEmptyState()) {
+              splitters.repaint()
+            }
           }
         }
       }
     }
+  }
+
+  private fun hasAvailableProvider(): Boolean {
+    var hasAvailableProvider = false
+    EditorEmptyStateComponentProvider.EP_NAME.processWithPluginDescriptor { provider, pluginDescriptor ->
+      if (hasAvailableProvider) {
+        return@processWithPluginDescriptor
+      }
+      val available = try {
+        provider.isAvailable(splitters)
+      }
+      catch (e: Throwable) {
+        LOG.error(PluginException("Cannot check editor empty state component availability using $provider", e, pluginDescriptor.pluginId))
+        false
+      }
+      if (available) {
+        hasAvailableProvider = true
+      }
+    }
+    return hasAvailableProvider
   }
 
   private suspend fun isCreationValidOnEdt(generation: Int): Boolean = withContext(Dispatchers.EDT) {

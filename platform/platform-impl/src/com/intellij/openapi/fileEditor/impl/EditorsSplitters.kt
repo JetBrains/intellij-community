@@ -249,7 +249,7 @@ open class EditorsSplitters internal constructor(
   private fun shouldDelayEmptyStatePresentation(state: EditorSplitterState): Boolean = state.hasFileEntries && shouldReopenEditorsOnStartup()
 
   @Internal
-  fun isEmptyTextPaintingAllowed(): Boolean = shouldShowRichEmptyState() && !emptyStateComponentController.isVisible()
+  fun isEmptyTextPaintingAllowed(): Boolean = shouldShowRichEmptyState() && !emptyStateComponentController.suppressesEmptyText()
 
   @TestOnly
   internal fun isEmptyStateComponentCreationPending(): Boolean = emptyStateComponentController.isCreationPending()

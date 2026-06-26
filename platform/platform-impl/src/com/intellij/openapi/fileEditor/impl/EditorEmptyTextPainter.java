@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.Gray;
 import com.intellij.ui.IslandsState;
@@ -88,22 +87,39 @@ public class EditorEmptyTextPainter {
   }
 
   protected void advertiseActions(@NotNull JComponent splitters, @NotNull UIUtil.TextPainter painter) {
-    appendPromotedActions(splitters, painter);
-    appendSearchEverywhere(painter);
-    appendToolWindow(painter, IdeBundle.message("empty.text.project.view"), ToolWindowId.PROJECT_VIEW, splitters);
-    appendAction(painter, IdeBundle.message("empty.text.go.to.file"), getActionShortcutText("GotoFile"));
-    appendAction(painter, IdeBundle.message("empty.text.recent.files"), getActionShortcutText(IdeActions.ACTION_RECENT_FILES));
-    appendAction(painter, IdeBundle.message("empty.text.navigation.bar"), getActionShortcutText("ShowNavBar"));
-    appendDnd(painter);
+    EditorEmptyTextSink sink = createSink(splitters, painter);
+    for (EditorEmptyTextProvider provider : EditorEmptyTextProvider.EP_NAME.getExtensionList()) {
+      provider.appendEmptyText(splitters, sink);
+    }
   }
 
-  private void appendPromotedActions(@NotNull JComponent splitters, @NotNull UIUtil.TextPainter painter) {
-    for (EditorEmptyTextPromotedActionProvider provider : EditorEmptyTextPromotedActionProvider.EP_NAME.getExtensionList()) {
-      EditorEmptyTextPromotedActionProvider.PromotedAction action = provider.getPromotedAction(splitters);
-      if (action != null) {
-        appendAction(painter, action.getText(), getShortcutsText(action.getActionId()));
+  private @NotNull EditorEmptyTextSink createSink(@NotNull JComponent splitters, @NotNull UIUtil.TextPainter painter) {
+    return new EditorEmptyTextSink() {
+      @Override
+      public void appendLine(@NotNull String line) {
+        EditorEmptyTextPainter.this.appendLine(painter, line);
       }
-    }
+
+      @Override
+      public void appendAction(@NotNull String action, @Nullable String shortcut) {
+        EditorEmptyTextPainter.this.appendAction(painter, action, shortcut);
+      }
+
+      @Override
+      public void appendActionWithShortcuts(@NotNull String action, @NotNull String actionId) {
+        EditorEmptyTextPainter.this.appendAction(painter, action, getShortcutsText(actionId));
+      }
+
+      @Override
+      public void appendActionWithFirstKeyboardShortcut(@NotNull String action, @NotNull String actionId) {
+        EditorEmptyTextPainter.this.appendAction(painter, action, getActionShortcutText(actionId));
+      }
+
+      @Override
+      public void appendToolWindow(@NotNull String action, @NotNull String toolWindowId) {
+        EditorEmptyTextPainter.this.appendToolWindow(painter, action, toolWindowId, splitters);
+      }
+    };
   }
 
   protected void appendDnd(@NotNull UIUtil.TextPainter painter) {

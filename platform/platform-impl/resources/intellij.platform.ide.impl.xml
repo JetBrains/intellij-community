@@ -89,8 +89,8 @@
     <extensionPoint qualifiedName="com.intellij.editor.interLineBreakpointConfigurationProvider"
                     interface="com.intellij.openapi.editor.impl.InterLineBreakpointConfigurationProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.editorEmptyTextPromotedActionProvider"
-                    interface="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPromotedActionProvider"
+    <extensionPoint qualifiedName="com.intellij.editorEmptyTextProvider"
+                    interface="com.intellij.openapi.fileEditor.impl.EditorEmptyTextProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.editorEmptyStateComponentProvider"
                     interface="com.intellij.openapi.fileEditor.impl.EditorEmptyStateComponentProvider"
@@ -164,6 +164,8 @@
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.menu.MainMenuCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.minimap.MinimapUsageCollector"/>
+    <editorEmptyTextProvider implementation="com.intellij.openapi.fileEditor.impl.DefaultEditorEmptyTextProvider" order="last"/>
+    <pluginUpdatesProvider implementation="com.intellij.ide.plugins.newui.DefaultPluginUpdatesProvider"/>
     <projectSettings service="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector"/>
     <projectSettings service="com.intellij.ui.RecentsManager"/>
     <projectSettings service="com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration"/>
