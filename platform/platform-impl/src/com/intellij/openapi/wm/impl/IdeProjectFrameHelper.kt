@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.extensions.trackEachExtensionSafe
 import com.intellij.openapi.project.Project
@@ -14,7 +15,6 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.components.JBBox
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
@@ -71,7 +71,7 @@ internal class IdeProjectFrameHelper(
       extensionScope.launch(ModalityState.any().asContextElement()) {
         try {
           flow.collect { component ->
-            withContext(Dispatchers.UI) {
+            withContext(Dispatchers.UiWithModelAccess) {
               updateNorthPanelComponent(northPanel, key, component)
             }
           }
