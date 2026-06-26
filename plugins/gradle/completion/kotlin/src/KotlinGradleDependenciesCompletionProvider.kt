@@ -66,7 +66,12 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
 
       positionElement.isOnTheTopLevelOfScriptBlock(DEPENDENCIES) -> {
         // dependencies { implementatio<caret> }
-        suggestConfigurations(result, parameters)
+        // Only while the typed text can still be a configuration name. Once it looks like a dependency
+        // coordinate (contains '-', '.' or ':'), the configurations are just noise — e.g. `api`/`testApi`
+        // matching the `api` of `junit-api`.
+        if (!looksLikeDependencyCoordinate(parameters)) {
+          suggestConfigurations(result, parameters)
+        }
 
         // server-side completion only
         if (!isFreeMode()) {
@@ -165,6 +170,19 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
         }
       }
     }
+  }
+
+  /**
+   * Whether the text being completed at the caret already looks like a dependency coordinate rather than a
+   * configuration name. Gradle configuration names are camel-case identifiers, so the presence of a coordinate
+   * separator (`-`, `.` or `:`) means the user is typing a dependency, and configuration suggestions such as
+   * `api`/`testApi` for `junit-api` would only be noise.
+   */
+  private fun looksLikeDependencyCoordinate(parameters: CompletionParameters): Boolean {
+    val documentText = parameters.editor.document.text
+    val offset = parameters.offset
+    val text = documentText.substring(getDependencyCompletionStartOffset(documentText, offset), offset)
+    return text.any { it == '-' || it == '.' || it == ':' }
   }
 
   private fun suggestConfigurations(result: CompletionResultSet, parameters: CompletionParameters) {
