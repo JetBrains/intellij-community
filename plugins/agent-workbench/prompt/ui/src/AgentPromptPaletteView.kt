@@ -45,6 +45,8 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
 import java.awt.Color
+import java.awt.Component
+import java.awt.Container
 import java.awt.Cursor
 import java.awt.Dimension
 import java.awt.FlowLayout
@@ -53,6 +55,7 @@ import java.awt.event.ContainerEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.accessibility.AccessibleContext
+import javax.swing.AbstractButton
 import javax.swing.DefaultListModel
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -690,6 +693,14 @@ internal fun createAgentPromptPaletteView(
     addToCenter(promptPanel)
     addToBottom(bottomPanel)
   }
+  if (isInlinePrompt) {
+    installInlinePromptChromeFocusForwarding(
+      rootPanel = rootPanel,
+      promptArea = promptArea,
+      suggestionsPanel = suggestionsPanel,
+      contextChipsPanel = contextChipsPanel,
+    )
+  }
   headerToolbar.targetComponent = rootPanel
   footerPinToolbar.targetComponent = rootPanel
   headerControls.updateActions()
@@ -729,6 +740,51 @@ internal fun createAgentPromptPaletteView(
     footerPinToolbar = footerPinToolbar,
     footerPinAction = pinAction,
   )
+}
+
+private fun installInlinePromptChromeFocusForwarding(
+  rootPanel: JComponent,
+  promptArea: EditorTextField,
+  suggestionsPanel: JComponent,
+  contextChipsPanel: JComponent,
+) {
+  val focusPromptListener = object : MouseAdapter() {
+    override fun mousePressed(e: MouseEvent) {
+      if (e.button == MouseEvent.BUTTON1) {
+        promptArea.requestFocusInWindow()
+      }
+    }
+  }
+
+  fun install(component: Component) {
+    if (component.isInlinePromptInteractionBoundary(
+        promptArea = promptArea,
+        suggestionsPanel = suggestionsPanel,
+        contextChipsPanel = contextChipsPanel,
+      )) {
+      return
+    }
+
+    if (component is JPanel) {
+      component.addMouseListener(focusPromptListener)
+    }
+    if (component is Container) {
+      component.components.forEach(::install)
+    }
+  }
+
+  install(rootPanel)
+}
+
+private fun Component.isInlinePromptInteractionBoundary(
+  promptArea: EditorTextField,
+  suggestionsPanel: JComponent,
+  contextChipsPanel: JComponent,
+): Boolean {
+  return this === promptArea ||
+         this === suggestionsPanel ||
+         this === contextChipsPanel ||
+         this is AbstractButton
 }
 
 private fun installComposerContextVisibilitySync(

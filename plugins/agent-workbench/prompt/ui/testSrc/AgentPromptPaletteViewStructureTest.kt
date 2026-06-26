@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
@@ -193,6 +194,46 @@ class AgentPromptPaletteViewStructureTest {
       assertThat(view.launchProfileLink.isFocusable).isFalse()
       assertThat(SwingUtilities.isDescendingFrom(promptAreaInRoot, view.promptEditorPanel)).isTrue()
       assertThat(promptAreaInRoot.height).isGreaterThan(0)
+    }
+  }
+
+  @Test
+  fun clickingInlinePromptChromeRequestsPromptFocus() {
+    runInEdtAndWait {
+      val promptArea = FocusTrackingEditorTextField()
+      val view = createAgentPromptPaletteView(
+        promptArea = promptArea,
+        contextChipsPanel = JPanel(),
+        onExistingTaskSelected = {},
+        hostMode = AgentPromptPaletteHostMode.INLINE_EMPTY_STATE,
+      )
+
+      layoutPopupRoot(view.rootPanel)
+      val topLeftChrome = checkNotNull(SwingUtilities.getDeepestComponentAt(view.rootPanel, 2, 2))
+
+      triggerMousePressed(topLeftChrome)
+
+      assertThat(promptArea.focusRequested).isTrue()
+    }
+  }
+
+  @Test
+  fun clickingInlinePromptControlsDoesNotRequestPromptFocusThroughChromeForwarding() {
+    runInEdtAndWait {
+      val promptArea = FocusTrackingEditorTextField()
+      val view = createAgentPromptPaletteView(
+        promptArea = promptArea,
+        contextChipsPanel = JPanel(),
+        onExistingTaskSelected = {},
+        hostMode = AgentPromptPaletteHostMode.INLINE_EMPTY_STATE,
+      )
+
+      layoutPopupRoot(view.rootPanel)
+
+      triggerMousePressed(view.addContextButton)
+      triggerMousePressed(view.launchTuningSummaryLink)
+
+      assertThat(promptArea.focusRequested).isFalse()
     }
   }
 
@@ -585,5 +626,19 @@ class AgentPromptPaletteViewStructureTest {
     view.headerControls.updateActions()
     layoutPopupRoot(view.rootPanel)
     return collectComponentsOfType(view.rootPanel, JBCheckBox::class.java).single { checkBox -> checkBox.text == text }
+  }
+
+  private fun triggerMousePressed(component: Component) {
+    val event = MouseEvent(component, MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(), 0, 1, 1, 1, false, MouseEvent.BUTTON1)
+    component.mouseListeners.forEach { listener -> listener.mousePressed(event) }
+  }
+
+  private class FocusTrackingEditorTextField : EditorTextField() {
+    var focusRequested: Boolean = false
+
+    override fun requestFocusInWindow(): Boolean {
+      focusRequested = true
+      return true
+    }
   }
 }
