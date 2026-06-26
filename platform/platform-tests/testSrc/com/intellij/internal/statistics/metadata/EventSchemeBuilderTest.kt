@@ -226,6 +226,22 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
     assertSameElements(event.fields.first().value, expectedValues)
   }
 
+  fun `test jcp field is excluded from scheme`() {
+    val group = buildGroupDescription(EventFields.Jcp)
+    val event = group.schema.first()
+    assertEmpty("JCP payload field must not appear in the generated events scheme", event.fields)
+  }
+
+  fun `test jcp field is excluded but other fields remain`() {
+    val eventLogGroup = EventLogGroup("test.group.id", 1, "FUS")
+    eventLogGroup.registerEvent("test_event", EventFields.Int("count"), EventFields.Jcp)
+    val collector = EventsSchemeBuilder.FeatureUsageCollectorInfo(TestCounterCollector(eventLogGroup), PluginSchemeDescriptor("testPlugin"))
+    val groups = EventsSchemeBuilder.collectGroupsFromExtensions("count", listOf(collector), "FUS")
+
+    val event = groups.first().schema.first()
+    assertSameElements(event.fields.map { it.path }, listOf("count"))
+  }
+
   private fun doCompositeFieldTest(eventField: EventField<*>, expectedValues: Set<FieldDescriptor>) {
     val group = buildGroupDescription(eventField)
     val event = group.schema.first()
