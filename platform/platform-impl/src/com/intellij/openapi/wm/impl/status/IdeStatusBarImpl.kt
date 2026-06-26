@@ -6,8 +6,9 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.HelpTooltipManager
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.internal.statistic.eventLog.events.FusInputEvent
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.StatusBarPopupShown
-import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.StatusBarWidgetClicked
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -138,6 +139,7 @@ import java.awt.Point
 import java.awt.event.ActionEvent
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
+import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
@@ -557,6 +559,7 @@ open class IdeStatusBarImpl @Internal constructor(
     val activate = object : AbstractAction() {
       override fun actionPerformed(e: ActionEvent) {
         if (component.isShowing && component.isEnabled) {
+          logWidgetActivated(component, IdeEventQueue.getInstance().trueCurrentEvent as? InputEvent)
           StatusBarUtil.performPrimaryAction(component, activationTarget, onActivate?.let { Runnable {
             it() } })
         }
@@ -741,6 +744,9 @@ open class IdeStatusBarImpl @Internal constructor(
     }
     else if (e.clickCount == 1 && e.id == MouseEvent.MOUSE_PRESSED) {
       applyWidgetEffect(targetWidget, WidgetEffect.PRESSED)
+      if (targetWidget != null && e.button == MouseEvent.BUTTON1 && !e.isPopupTrigger) {
+        logWidgetActivated(targetWidget, e)
+      }
     }
 
     if (e.isConsumed || widget == null) {
@@ -775,6 +781,13 @@ open class IdeStatusBarImpl @Internal constructor(
       } as? JComponent
     }
     return null
+  }
+
+  private fun logWidgetActivated(component: JComponent, inputEvent: InputEvent?) {
+    val widget = ClientProperty.get(component, WIDGET_ID)?.let { widgetRegistry.getWidget(it) } ?: return
+    // WidgetPresentationWrapper is a single generic wrapper shared by all V2 widgets, so report the concrete factory class
+    val widgetClass = (widget as? WidgetPresentationWrapper)?.factoryClass ?: widget.javaClass
+    UIEventLogger.StatusBarWidgetClicked.log(widgetClass, inputEvent?.let { FusInputEvent(it, ActionPlaces.STATUS_BAR_PLACE) })
   }
 
   override fun getUIClassID(): String = UI_CLASS_ID
@@ -1046,14 +1059,15 @@ private fun configurePresentationComponent(presentation: WidgetPresentation, pan
 
 internal fun wrap(widget: StatusBarWidget): JComponent {
   val result = if (widget is CustomStatusBarWidget) {
-    return wrapCustomStatusBarWidget(widget)
+    wrapCustomStatusBarWidget(widget)
   }
   else {
-    createComponentByWidgetPresentation(widget)
+    createComponentByWidgetPresentation(widget).also {
+      ToolTipManager.sharedInstance().registerComponent(it)
+      it.putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, true)
+    }
   }
-  ToolTipManager.sharedInstance().registerComponent(result)
   ClientProperty.put(result, WIDGET_ID, widget.ID())
-  result.putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, true)
   return result
 }
 
@@ -1162,7 +1176,6 @@ private class MultipleTextValues(private val presentation: MultipleTextValuesPre
 private class StatusBarWidgetClickListener(private val clickConsumer: (MouseEvent) -> Unit) : ClickListener() {
   override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
     if (!e.isPopupTrigger && MouseEvent.BUTTON1 == e.button) {
-      StatusBarWidgetClicked.log(clickConsumer.javaClass)
       WriteIntentReadAction.run {
         clickConsumer(e)
       }
