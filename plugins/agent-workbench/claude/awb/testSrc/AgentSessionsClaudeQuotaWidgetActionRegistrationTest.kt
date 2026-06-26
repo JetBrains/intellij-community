@@ -3,11 +3,6 @@ package com.intellij.platform.ai.agent.claude.sessions
 
 import com.intellij.agent.workbench.settings.AGENT_WORKBENCH_STATUS_BAR_WIDGETS_SETTINGS_COMPONENT_ID
 import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsContributors
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.Separator
-import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -17,14 +12,6 @@ import java.util.concurrent.TimeUnit
 @TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentSessionsClaudeQuotaWidgetActionRegistrationTest {
-  @Test
-  fun gearActionsDoNotContainClaudeQuotaWidgetToggle() {
-    val actionManager = ActionManager.getInstance()
-
-    assertThat(actionManager.childActionEntries("AgentWorkbenchSessions.ToolWindow.GearActions"))
-      .doesNotContain("AgentWorkbenchSessions.ToggleClaudeQuotaWidget")
-  }
-
   @Test
   fun settingsContributorTogglesClaudeQuotaWidget() {
     assertThat(AgentWorkbenchSettingsContributors.all()).anyMatch { it is ClaudeQuotaSettingsContributor }
@@ -49,24 +36,5 @@ class AgentSessionsClaudeQuotaWidgetActionRegistrationTest {
     finally {
       ClaudeQuotaStatusBarWidgetSettings.setEnabled(initialEnabled)
     }
-  }
-
-  private fun ActionManager.childActionEntries(groupId: String): List<String> {
-    val group = getAction(groupId) as? ActionGroup
-    assertThat(group).withFailMessage("Action group '%s' is not registered", groupId).isNotNull
-    return flattenEntries(checkNotNull(group).getChildren(TestActionEvent.createTestEvent()))
-  }
-
-  private fun ActionManager.flattenEntries(actions: Array<AnAction>): List<String> {
-    return actions.mapNotNull { action ->
-      when (action) {
-        is Separator -> ACTION_SEPARATOR_MARKER
-        else -> getId(action)
-      }
-    }
-  }
-
-  companion object {
-    private const val ACTION_SEPARATOR_MARKER = "<separator>"
   }
 }

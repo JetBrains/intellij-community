@@ -3,13 +3,12 @@
 
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.agent.workbench.settings"/>
+    <module name="intellij.agent.workbench.ui"/>
     <module name="intellij.platform.ai.agent.common"/>
     <module name="intellij.platform.ai.agent.core"/>
     <module name="intellij.platform.ai.agent.json"/>
-    <module name="intellij.agent.workbench.sessions.actions"/>
     <module name="intellij.platform.ai.agent.sessions.core"/>
-    <module name="intellij.agent.workbench.settings"/>
-    <module name="intellij.agent.workbench.ui"/>
   </dependencies>
   <!-- endregion -->
 
