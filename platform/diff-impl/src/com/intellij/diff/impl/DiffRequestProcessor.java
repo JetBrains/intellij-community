@@ -173,6 +173,7 @@ public abstract class DiffRequestProcessor
   private final @NotNull ActionToolbar myRightToolbar;
   private final @NotNull Wrapper myToolbarStatusPanel;
   private final @NotNull MyProgressBar myProgressBar;
+  private final @NotNull Splitter myBottomContentSplitter;
 
   private final @NotNull EventDispatcher<DiffRequestProcessorListener> myEventDispatcher =
     EventDispatcher.create(DiffRequestProcessorListener.class);
@@ -240,8 +241,8 @@ public abstract class DiffRequestProcessor
     myDiffToolChooser = createDiffToolChooser();
     myTopPanel = buildTopPanel();
 
-    Splitter bottomContentSplitter = new JBSplitter(true, "DiffRequestProcessor.BottomComponentSplitter", 0.8f);
-    bottomContentSplitter.setFirstComponent(myContentPanel);
+    myBottomContentSplitter = new JBSplitter(true, "DiffRequestProcessor.BottomComponentSplitter", 0.8f);
+    myBottomContentSplitter.setFirstComponent(myContentPanel);
 
     // only needed for lux to transfer the BG color correctly
     var topPanelWrapper = new Wrapper(myTopPanel);
@@ -250,13 +251,13 @@ public abstract class DiffRequestProcessor
     RemoteTransferUIManager.forceDirectTransfer(topPanelWrapper);
 
     myMainPanel.add(topPanelWrapper, BorderLayout.NORTH);
-    myMainPanel.add(bottomContentSplitter, BorderLayout.CENTER);
+    myMainPanel.add(myBottomContentSplitter, BorderLayout.CENTER);
 
     myMainPanel.setFocusTraversalPolicyProvider(true);
     myMainPanel.setFocusTraversalPolicy(new MyFocusTraversalPolicy());
 
     JComponent bottomPanel = myContext.getUserData(DiffUserDataKeysEx.BOTTOM_PANEL);
-    if (bottomPanel != null) bottomContentSplitter.setSecondComponent(bottomPanel);
+    if (bottomPanel != null) myBottomContentSplitter.setSecondComponent(bottomPanel);
     if (bottomPanel instanceof Disposable) Disposer.register(this, (Disposable)bottomPanel);
 
     myState = EmptyState.INSTANCE;
@@ -665,6 +666,9 @@ public abstract class DiffRequestProcessor
 
       myRightToolbar.setTargetComponent(null);
       ((ActionToolbarImpl)myRightToolbar).reset();
+
+      // do not leak 'this' via ('DiffUserDataKeysEx.BOTTOM_PANEL' as JComponent).parent
+      myBottomContentSplitter.setSecondComponent(null);
 
       onAssigned(myActiveRequest, false);
 
