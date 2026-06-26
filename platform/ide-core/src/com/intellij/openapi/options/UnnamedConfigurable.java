@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
@@ -22,6 +23,7 @@ public interface UnnamedConfigurable {
    * @return new Swing form to show, or {@code null} if it cannot be created
    * @see #disposeUIResources
    */
+  @RequiresEdt
   @Nullable
   JComponent createComponent();
 
