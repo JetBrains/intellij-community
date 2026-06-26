@@ -6,6 +6,10 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsState
 import com.intellij.mock.Mock
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.editor.Document
@@ -44,6 +48,7 @@ import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.executeSomeCoroutineTasksAndDispatchAllInvocationEvents
@@ -536,6 +541,72 @@ class FileEditorManagerTest {
   }
 
   @Test
+  fun testNoSplitEditorTabCanBeMovedAndUnsplit(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    val file = getSourceFile("1.txt")
+    val siblingFile = getSourceFile("2.txt")
+    val sourceFile = getSourceFile("3.txt")
+    manager.openFile(file, false)
+    val sourceWindow = currentWindow()
+    manager.openFileImpl2(sourceWindow, sourceFile, FileEditorOpenOptions())
+    val siblingWindow = createVerticalSplitter(sourceWindow)
+    manager.openFileImpl2(siblingWindow, siblingFile, FileEditorOpenOptions().withRequestFocus(true))
+    manager.closeFile(file, siblingWindow)
+    sourceWindow.setSelectedComposite(file, false)
+    file.putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
+
+    try {
+      val dataContext = editorTabDataContext(file, sourceWindow)
+
+      assertActionEnabled("MoveTabRight", dataContext, true)
+      assertActionEnabled("MoveTabDown", dataContext, true)
+      assertActionEnabled("Unsplit", dataContext, true)
+    }
+    finally {
+      manager.closeFile(file)
+      manager.closeFile(siblingFile)
+      manager.closeFile(sourceFile)
+      file.putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, null)
+    }
+  }
+
+  @Test
+  fun testSplitAndMoveNoSplitEditorTabKeepsEditorReopened(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    var closeToReopenCount = 0
+    registerReopenAwareProvider { closeToReopenCount++ }
+
+    val file = getSourceFile("1.txt")
+    val siblingFile = getSourceFile("2.txt")
+    val sourceFile = getSourceFile("3.txt")
+    manager.openFile(file, false)
+    val sourceWindow = currentWindow()
+    manager.openFileImpl2(sourceWindow, sourceFile, FileEditorOpenOptions())
+    val siblingWindow = createVerticalSplitter(sourceWindow)
+    manager.openFileImpl2(siblingWindow, siblingFile, FileEditorOpenOptions().withRequestFocus(true))
+    manager.closeFile(file, siblingWindow)
+    sourceWindow.setSelectedComposite(file, false)
+    file.putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
+
+    try {
+      performAction("MoveTabRight", editorTabDataContext(file, sourceWindow))
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project)
+
+      assertThat(closeToReopenCount).isEqualTo(1)
+      assertThat(manager.getAllEditorList(file)).hasSize(1)
+      assertThat(sourceWindow.isFileOpen(file)).isFalse()
+      assertThat(sourceWindow.isFileOpen(sourceFile)).isTrue()
+      assertThat(sourceWindow.owner.windows().toList().any { it !== sourceWindow && it.isFileOpen(file) }).isTrue()
+    }
+    finally {
+      manager.closeFile(file)
+      manager.closeFile(siblingFile)
+      manager.closeFile(sourceFile)
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project)
+      IndexingTestUtil.waitUntilIndexesAreReady(project)
+      file.putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, null)
+    }
+  }
+
+  @Test
   fun testSuspendOpenFileInNewWindowKeepsNoSplitEditorReopened(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
     var editorWasClosedToReopen = false
     registerReopenAwareProvider { editorWasClosedToReopen = true }
@@ -656,6 +727,33 @@ class FileEditorManagerTest {
     manager.openFileImpl2(secondaryWindow, getSourceFile("2.txt"), FileEditorOpenOptions().withRequestFocus(true))
     manager.closeFile(file, secondaryWindow)
     return SecondaryWindowFixture(file, secondaryWindow)
+  }
+
+  private fun editorTabDataContext(file: VirtualFile, window: EditorWindow): DataContext {
+    return SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, project)
+      .add(CommonDataKeys.VIRTUAL_FILE, file)
+      .add(EditorWindow.DATA_KEY, window)
+      .build()
+  }
+
+  private fun assertActionEnabled(actionId: String, dataContext: DataContext, enabled: Boolean) {
+    val action = assertThatNotNull(ActionManager.getInstance().getAction(actionId), actionId)
+    val event = TestActionEvent.createTestEvent(action, dataContext)
+
+    action.update(event)
+
+    assertThat(event.presentation.isEnabled).describedAs(actionId).isEqualTo(enabled)
+  }
+
+  private fun performAction(actionId: String, dataContext: DataContext) {
+    val action = assertThatNotNull(ActionManager.getInstance().getAction(actionId), actionId)
+    val event = TestActionEvent.createTestEvent(action, dataContext)
+
+    action.update(event)
+    assertThat(event.presentation.isEnabled).describedAs(actionId).isTrue()
+
+    action.actionPerformed(event)
   }
 
   private fun openSingleTextEditor(file: VirtualFile): Editor {
