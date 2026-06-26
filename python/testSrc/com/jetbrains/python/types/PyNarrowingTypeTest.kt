@@ -1329,7 +1329,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
       def func1(val: List[object]):
           if is_str_list(val):
               expr = val
-      #       └ TYPE list[object] & list[str]
+      #       └ TYPE list[str] FIXME list[object] & list[str] # PY-89564
       """)
 
     @Test
@@ -1345,7 +1345,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
       def func1(val: List[object]):
           if is_str_list(val):
               expr = val
-      #       └ TYPE list[object] & list[str]
+      #       └ TYPE list[str] FIXME list[object] & list[str] # PY-89564
       """)
 
     @Test

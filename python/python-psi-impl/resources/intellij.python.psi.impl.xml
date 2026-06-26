@@ -614,6 +614,8 @@
                  description="Enable Any and Unknown support"/>
     <registryKey key="python.use.csp.type.inference" defaultValue="true"
                  description="Enable CSP engine for type inference"/>
+    <registryKey key="python.subtypechecks.respect.variance" defaultValue="false"
+                 description="Enable variance in subtype checks"/>
     <registryKey key="python.skeleton.generator.use.process.pool" defaultValue="true"
                  description="Use a process worker pool for skeleton generation to avoid process creation overhead"/>
 
