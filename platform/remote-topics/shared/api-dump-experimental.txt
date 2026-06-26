@@ -1,0 +1,13 @@
+*:com.intellij.platform.rpc.topics.ApplicationRemoteTopic
+- com.intellij.platform.rpc.topics.RemoteTopic
+*f:com.intellij.platform.rpc.topics.ApplicationRemoteTopicKt
+- sf:ApplicationRemoteTopic(java.lang.String,kotlinx.serialization.KSerializer):com.intellij.platform.rpc.topics.ApplicationRemoteTopic
+- sf:broadcast(com.intellij.platform.rpc.topics.ApplicationRemoteTopic,java.lang.Object):V
+*:com.intellij.platform.rpc.topics.ProjectRemoteTopic
+- com.intellij.platform.rpc.topics.RemoteTopic
+*f:com.intellij.platform.rpc.topics.ProjectRemoteTopicKt
+- sf:ProjectRemoteTopic(java.lang.String,kotlinx.serialization.KSerializer):com.intellij.platform.rpc.topics.ProjectRemoteTopic
+- sf:broadcast(com.intellij.platform.rpc.topics.ProjectRemoteTopic,com.intellij.openapi.project.Project,java.lang.Object):V
+*:com.intellij.platform.rpc.topics.RemoteTopic
+- a:getId():java.lang.String
+- a:getSerializer():kotlinx.serialization.KSerializer

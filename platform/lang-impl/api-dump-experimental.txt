@@ -48,6 +48,11 @@ c:com.intellij.build.ExecutionNode
 - com.intellij.ide.util.treeView.PresentableNodeDescriptor
 - *:isAlwaysLeaf():Z
 - *:setAlwaysLeaf(Z):V
+*a:com.intellij.build.FlowWithHistory
+- <init>(kotlinx.coroutines.CoroutineScope):V
+- f:getFlowWithHistory():kotlinx.coroutines.flow.Flow
+- pa:getHistory():java.util.List
+- pf:updateHistoryAndEmit(kotlin.jvm.functions.Function0):V
 c:com.intellij.build.SyncViewManager
 - com.intellij.build.AbstractViewManager
 - *s:createBuildProgress(com.intellij.openapi.project.Project):com.intellij.build.progress.BuildProgress
