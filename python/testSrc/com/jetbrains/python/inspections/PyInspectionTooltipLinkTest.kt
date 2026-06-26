@@ -8,6 +8,7 @@ import com.intellij.idea.TestFor
 import com.intellij.openapi.application.runReadActionBlocking
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFunction
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertInstanceOf
+import org.opentest4j.AssertionFailedError
 
 /**
  * Verifies that inspection tooltips render type and symbol names as highlighted, navigable links
@@ -149,23 +151,25 @@ class PyInspectionTooltipLinkTest : PyCodeInsightTestCase() {
   @Test
   @TestFor(issues = ["PY-80221"])
   fun `invariant type parameter breakdown links the owner class`() {
-    val info = highlight<PyTypeCheckerInspection>(
-      """
-      from typing import Generic, TypeVar
-      T = TypeVar("T")
-      class Box(Generic[T]):
-          def __init__(self, x: T) -> None:
-              self.x = x
-      bad = Box(True)
-      b: Box[int] = bad
-      """.trimIndent(),
-      "Expected type"
-    )
-    val tooltip = info.toolTip!!
-    assertTrue("invariant" in tooltip, tooltip)
-    assertTrue("<code>T</code>" in tooltip, tooltip)
-    val linkTargets = Regex("""#element/([\w.]+)""").findAll(tooltip).map { it.groupValues[1] }.toList()
-    assertInstanceOf<PyClass>(runReadActionBlocking { QualifiedNameProviderUtil.qualifiedNameToElement(linkTargets.first { it.endsWith(".Box") }, myFixture.project) })
+    PyTestCase.fixme("PY-89564", NoSuchElementException::class.java, "") {
+      val info = highlight<PyTypeCheckerInspection>(
+        """
+        from typing import Generic, TypeVar
+        T = TypeVar("T")
+        class Box(Generic[T]):
+            def __init__(self, x: T) -> None:
+                self.x = x
+        bad = Box(True)
+        b: Box[int] = bad
+        """.trimIndent(),
+        "Expected type"
+      )
+      val tooltip = info.toolTip!!
+      assertTrue("invariant" in tooltip, tooltip)
+      assertTrue("<code>T</code>" in tooltip, tooltip)
+      val linkTargets = Regex("""#element/([\w.]+)""").findAll(tooltip).map { it.groupValues[1] }.toList()
+      assertInstanceOf<PyClass>(runReadActionBlocking { QualifiedNameProviderUtil.qualifiedNameToElement(linkTargets.first { it.endsWith(".Box") }, myFixture.project) })
+    }
   }
 
   private fun assertLink(info: HighlightInfo, name: String) {

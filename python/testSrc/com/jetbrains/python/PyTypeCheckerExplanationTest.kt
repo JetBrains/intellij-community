@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.runReadActionBlocking
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.inspections.PyMethodOverridingInspection
 import com.jetbrains.python.inspections.PyOverloadsInspection
 import com.jetbrains.python.inspections.PyTypeCheckerInspection
@@ -18,6 +19,8 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.opentest4j.AssertionFailedError
+import kotlin.jvm.java
 
 /**
  * Tests for [PyTypeChecker.explainMismatch] — the structured breakdown shown when a type mismatch is reported.
@@ -62,18 +65,22 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
       expected: list[str]
       actual: list[int]
     """)
-    assertContainsOrdered(text, "Type parameter 1", "not assignable")
+    PyTestCase.fixme("PY-89564", AssertionFailedError::class.java, "") {
+      assertContainsOrdered(text, "Type parameter 1", "not assignable")
+    }
   }
 
   @Test
   fun `invariant generic rejects a subtype element`() {
     // `bool` is a subtype of `int`, so the failure is invariance, not assignability: the breakdown names the
     // offending type parameter and its owner instead of the backwards "int is not assignable to bool".
-    val text = renderExplanation("""
+    PyTestCase.fixme("PY-89564", AssertionFailedError::class.java, "") {
+      val text = renderExplanation("""
       expected: list[int]
       actual = [True]
     """)
-    assertContainsOrdered(text, "Type parameter '_T' of 'list' is invariant", "'bool'", "'int'")
+      assertContainsOrdered(text, "Type parameter '_T' of 'list' is invariant", "'bool'", "'int'")
+    }
   }
 
   @Test
@@ -82,7 +89,9 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
       expected: list[list[int]]
       actual: list[list[str]]
     """)
-    assertContainsOrdered(text, "Type parameter 1", "Type parameter 1", "not assignable")
+    PyTestCase.fixme("PY-89564", AssertionFailedError::class.java, "") {
+      assertContainsOrdered(text, "Type parameter 1", "Type parameter 1", "not assignable")
+    }
   }
 
   @Test
@@ -95,7 +104,9 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
       expected: Box[int]
       actual: Box[str]
     """)
-    assertContainsOrdered(text, "Type parameter 1", "not assignable")
+    PyTestCase.fixme("PY-89564", AssertionFailedError::class.java, "") {
+      assertContainsOrdered(text, "Type parameter 1", "not assignable")
+    }
   }
 
   @Test
@@ -104,7 +115,9 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
       expected: tuple[int, str]
       actual = (1, 2)
     """)
-    assertContainsOrdered(text, "Type parameter 2", "not assignable")
+    PyTestCase.fixme("PY-89564", AssertionFailedError::class.java, "") {
+      assertContainsOrdered(text, "Type parameter 2", "not assignable")
+    }
   }
 
   @Test
@@ -438,7 +451,8 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
 
   @Test
   fun `generic argument mismatch with an invariant type carries the breakdown in its tooltip`() {
-    val tooltip = tooltipOf(PyTypeCheckerInspection(), "Expected type 'list[int]'", """
+    PyTestCase.fixme("PY-89564", NoSuchElementException::class.java, "") {
+      val tooltip = tooltipOf(PyTypeCheckerInspection(), "Expected type 'list[int]'", """
       class Box[T]:
           def __init__(self, x: T) -> None:
               self.x = x
@@ -448,12 +462,13 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
       data = [True]
       c.put(data)
     """)
-    // The substituted parameter type is `list[int]`; list is invariant and `bool` ≠ `int`, so the breakdown
-    // names the type parameter and its owner rather than the backwards "int is not assignable to bool".
-    // The type-variable name stays a plain <code> span; the owner class is a clickable link.
-    assertTrue("invariant" in tooltip, tooltip)
-    assertTrue("<code>_T</code>" in tooltip, tooltip)
-    assertTrue("href=\"#element/builtins.list\"" in tooltip, tooltip)
+      // The substituted parameter type is `list[int]`; list is invariant and `bool` ≠ `int`, so the breakdown
+      // names the type parameter and its owner rather than the backwards "int is not assignable to bool".
+      // The type-variable name stays a plain <code> span; the owner class is a clickable link.
+      assertTrue("invariant" in tooltip, tooltip)
+      assertTrue("<code>_T</code>" in tooltip, tooltip)
+      assertTrue("href=\"#element/builtins.list\"" in tooltip, tooltip)
+    }
   }
 
   /** Enables [inspection], highlights [code] and returns the tooltip of the single problem whose description contains [descriptionMarker]. */

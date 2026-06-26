@@ -6,6 +6,7 @@ import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.util.ArrayUtil
@@ -1554,6 +1555,41 @@ object PyTypeChecker {
   }
 
   private fun matchTypeParameters(
+    genericType: PyClassType?,
+    expectedTypeParameters: List<PyType?>,
+    actualTypeParameters: List<PyType?>,
+    context: MatchContext,
+  ): Boolean {
+    if (Registry.`is`("python.subtypechecks.respect.variance")) {
+      return matchTypeParametersRespectVariance(genericType, expectedTypeParameters, actualTypeParameters, context)
+    }
+    else {
+      return matchTypeParametersIgnoreVariance(expectedTypeParameters, actualTypeParameters, context)
+    }
+  }
+
+  private fun matchTypeParametersIgnoreVariance(
+    expectedTypeParameters: List<PyType?>,
+    actualTypeParameters: List<PyType?>,
+    context: MatchContext,
+  ): Boolean {
+    val mapping = PyTypeParameterMapping.mapByShape(expectedTypeParameters, actualTypeParameters, USE_DEFAULTS)
+    if (mapping == null) {
+      return false
+    }
+    for (pair in mapping.mappedTypes) {
+      val matched = if (context.reversedSubstitutions)
+        match(pair.getSecond(), pair.getFirst(), context)
+      else
+        match(pair.getFirst(), pair.getSecond(), context)
+      if (!matched.orElse(true)!!) {
+        return false
+      }
+    }
+    return true
+  }
+
+  private fun matchTypeParametersRespectVariance(
     genericType: PyClassType?,
     expectedTypeParameters: List<PyType?>,
     actualTypeParameters: List<PyType?>,

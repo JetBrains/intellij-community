@@ -7,6 +7,7 @@ import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.fixtures.PyInspectionTestCase
+import org.junit.ComparisonFailure
 
 @Subsystems.Inspections
 @Layers.Functional
@@ -95,7 +96,11 @@ class PyInvalidCastInspectionTest : PyInspectionTestCase() {
       """.trimIndent()
     )
     myFixture.enableInspections(inspection)
-    myFixture.checkHighlighting(isWarning, isInfo, isWeakWarning)
+    fixme("PY-89564", ComparisonFailure::class.java,
+          "Cast of type 'list[int]' to type 'list[object]' may be a mistake because they are not in the same inheritance hierarchy. If this was intentional, cast the expression to 'object' first."
+    ) {
+      myFixture.checkHighlighting(isWarning, isInfo, isWeakWarning)
+    }
   }
 
   /**

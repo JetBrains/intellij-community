@@ -34,3 +34,5 @@ specialtypes_never.py
 specialtypes_promotions.py
 specialtypes_type.py
 typeforms_typeform.py
+generics_base_class.py
+narrowing_typeis.py

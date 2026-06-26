@@ -423,6 +423,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       d_obj : D[object] = D[object]()
 
       d_int = d_obj # ok
+      #│      ^^^^^ WARNING Expected type 'D[int]', got 'D[object]' instead FIXME # PY-89564
       #^^^^ WARNING Redeclared 'd_int' defined above without usage
       d_obj = d_int # E
       #       ^^^^^ WARNING Expected type 'D[object]', got 'D[int]' instead
@@ -439,6 +440,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       d_obj : E = E()
 
       d_int = d_obj # ok
+      #│      ^^^^^ WARNING Expected type 'D[int]', got 'E' instead FIXME # PY-89564
       #^^^^ WARNING Redeclared 'd_int' defined above without usage
       d_obj = d_int # E
       #       ^^^^^ WARNING Expected type 'E', got 'D[int]' instead
@@ -497,6 +499,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       b : B[object] = B[object]()
 
       a = b # Ok
+      #│  └ WARNING Expected type 'A[int]', got 'B[object]' instead FIXME # PY-89564
       #\ WARNING Redeclared 'a' defined above without usage
       b = a # E
       #   └ WARNING Expected type 'B[object]', got 'A[int]' instead
@@ -516,7 +519,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       b : B[int] = B[int]()
 
       a = b # E
-      #│  └ WARNING Expected type 'A[object]', got 'B[int]' instead
+      #│  └ WARNING FIXME Expected type 'A[object]', got 'B[int]' instead # PY-89564
       #\ WARNING Redeclared 'a' defined above without usage
       b = a # E
       #   └ WARNING Expected type 'B[int]', got 'A[object]' instead
