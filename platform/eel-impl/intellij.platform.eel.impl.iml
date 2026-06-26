@@ -26,5 +26,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.libraries.hash4j" />
     <orderEntry type="module" module-name="intellij.platform.eel.impl.base" />
+    <orderEntry type="module" module-name="intellij.platform.externalProcessAuthHelper.rt" />
   </component>
 </module>

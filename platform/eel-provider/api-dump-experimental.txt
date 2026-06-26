@@ -1,9 +1,3 @@
-*f:com.intellij.platform.eel.provider.EelNioBridgeServiceKt
-- s:asEelPath(java.nio.file.Path):com.intellij.platform.eel.path.EelPath
-- s:asEelPath(java.nio.file.Path,com.intellij.platform.eel.EelDescriptor):com.intellij.platform.eel.path.EelPath
-- s:asNioPath(com.intellij.platform.eel.path.EelPath):java.nio.file.Path
-- s:asNioPathOrNull(com.intellij.platform.eel.path.EelPath):java.nio.file.Path
-- s:routingPrefixes(com.intellij.platform.eel.EelDescriptor):java.util.Set
 f:com.intellij.platform.eel.provider.EelProviderProjectUtilKt
 - *sf:getEelDescriptor(com.intellij.openapi.project.Project):com.intellij.platform.eel.EelDescriptor
 - *sf:toEelApiBlocking(com.intellij.platform.eel.EelDescriptor):com.intellij.platform.eel.EelApi

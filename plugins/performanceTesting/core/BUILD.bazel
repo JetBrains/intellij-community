@@ -55,6 +55,7 @@ jvm_library(
         "//platform/diagnostic/telemetry",
         "//platform/editor-ui-api:editor-ui",
         "//platform/editor-ui-ex:editor-ex",
+        "//platform/eel-impl",
         "//platform/eel-provider",
         "//platform/execution",
         "//platform/execution-impl",

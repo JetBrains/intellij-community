@@ -45,6 +45,7 @@ jvm_library(
         "//libraries/netty/buffer",
         "//platform/eel",
         "//platform/eel-provider",
+        "//platform/eel-impl",
         "//platform/util/coroutines",
     ],
 )
@@ -80,6 +81,7 @@ jvm_library(
         "//libraries/junit5:junit5_test_lib",
         "//platform/eel:eel_test_lib",
         "//platform/eel-provider:eel-provider_test_lib",
+        "//platform/eel-impl:eel-impl_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",
     ],
 )

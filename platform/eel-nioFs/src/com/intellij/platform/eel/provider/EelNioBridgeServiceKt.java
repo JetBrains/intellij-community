@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.Set;
 
 /**
  * Java facade preserving binary compatibility for EEL ↔ NIO path conversion.
@@ -21,10 +20,6 @@ public final class EelNioBridgeServiceKt {
 
   public static @NotNull Path asNioPath(@NotNull EelPath eelPath) {
     return EelPathConversionsKt.asNioPath(eelPath);
-  }
-
-  public static @NotNull Set<Path> routingPrefixes(@NotNull EelDescriptor descriptor) {
-    return EelAlternativeRootProviderKt.routingPrefixes(descriptor);
   }
 
   @Deprecated
