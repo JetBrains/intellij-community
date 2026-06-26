@@ -259,7 +259,7 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
     // lives inside promptUnsavedChangesOrCancel, so both restart and exit are covered.
     ApplicationManagerEx.getApplicationEx().addApplicationListener(object : ApplicationListener {
       override fun canExitApplication(): Boolean {
-        return promptUnsavedChangesOrCancel(ApplicationBundle.message("settings.close.application.unsaved.message"))
+        return promptUnsavedChangesOrCancel(ApplicationBundle.message("settings.close.application.unsaved.message", project.name))
       }
     }, frameDisposable)
   }
