@@ -40,17 +40,19 @@ public class TestDataProvider implements DataProvider {
 
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
-    if (CommonDataKeys.PROJECT.is(dataId)) {
-      return checkProjectNotDisposed();
-    }
-    if (CommonDataKeys.EDITOR.is(dataId) || OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
-      FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(checkProjectNotDisposed());
-      return manager.getSelectedTextEditor(true);
-    }
-    if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
-      FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(checkProjectNotDisposed());
-      Editor editor = manager.getSelectedTextEditor();
-      return editor == null ? null : TextEditorProvider.getInstance().getTextEditor(editor);
+    switch (dataId) {
+      case CommonDataKeys.Names.PROJECT_KEY_NAME -> {
+        return checkProjectNotDisposed();
+      }
+      case CommonDataKeys.Names.EDITOR_KEY_NAME, OpenFileDescriptor.NAVIGATE_IN_EDITOR_KEY_NAME -> {
+        FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(checkProjectNotDisposed());
+        return manager.getSelectedTextEditor(true);
+      }
+      case PlatformCoreDataKeys.Names.FILE_EDITOR_KEY_NAME -> {
+        FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(checkProjectNotDisposed());
+        Editor editor = manager.getSelectedTextEditor();
+        return editor == null ? null : TextEditorProvider.getInstance().getTextEditor(editor);
+      }
     }
     if (myWithRules) {
       return DataManager.getInstance().getCustomizedData(dataId, DataContext.EMPTY_CONTEXT, myDelegateWithoutRules);

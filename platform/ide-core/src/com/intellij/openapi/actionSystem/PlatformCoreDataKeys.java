@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.SlowOperations;
 import kotlin.jvm.functions.Function0;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.awt.Component;
 
@@ -24,7 +25,7 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
   /**
    * @see com.intellij.openapi.actionSystem.PlatformDataKeys#LAST_ACTIVE_FILE_EDITOR
    */
-  public static final DataKey<FileEditor> FILE_EDITOR = DataKey.create("fileEditor");
+  public static final DataKey<FileEditor> FILE_EDITOR = DataKey.create(Names.FILE_EDITOR_KEY_NAME);
 
   /**
    * Returns {@link Boolean#TRUE} if action is executed in modal context and
@@ -101,4 +102,8 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
    * @see CommonDataKeys#PSI_ELEMENT
    */
   public static final DataKey<PsiElement[]> PSI_ELEMENT_ARRAY = DataKey.create("psi.Element.array");
+  @ApiStatus.Internal
+  public interface Names {
+    String FILE_EDITOR_KEY_NAME = "fileEditor";
+  }
 }

@@ -293,11 +293,13 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
 
   @Suppress("DuplicatedCode")
   fun getRawDataIfCached(dataId: String, uiOnly: Boolean): Any? {
-    if (PlatformCoreDataKeys.CONTEXT_COMPONENT.`is`(dataId)) return SoftReference.dereference(myComponentRef.ref)
-    if (PlatformCoreDataKeys.IS_MODAL_CONTEXT.`is`(dataId)) return myComponentRef.modalContext
-    if (PlatformDataKeys.MODALITY_STATE.`is`(dataId)) return myComponentRef.modalityState
-    if (PlatformDataKeys.SPEED_SEARCH_TEXT.`is`(dataId) && myComponentRef.speedSearchText != null) return myComponentRef.speedSearchText
-    if (PlatformDataKeys.SPEED_SEARCH_COMPONENT.`is`(dataId) && myComponentRef.speedSearchRef != null) return myComponentRef.speedSearchRef.get()
+    when (dataId) {
+      PlatformCoreDataKeys.CONTEXT_COMPONENT.name -> return SoftReference.dereference(myComponentRef.ref)
+      PlatformCoreDataKeys.IS_MODAL_CONTEXT.name -> return myComponentRef.modalContext
+      PlatformDataKeys.MODALITY_STATE.name -> return myComponentRef.modalityState
+      PlatformDataKeys.SPEED_SEARCH_TEXT.name -> if (myComponentRef.speedSearchText != null) return myComponentRef.speedSearchText
+      PlatformDataKeys.SPEED_SEARCH_COMPONENT.name -> if (myComponentRef.speedSearchRef != null) return myComponentRef.speedSearchRef.get()
+    }
 
     val answer = myCachedData.uiData(dataId) ?: run {
       if (!uiOnly) myCachedData.bgtComputed[dataId] else null

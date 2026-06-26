@@ -27,11 +27,13 @@ import java.util.function.IntSupplier;
  * Allows opening file in editor, optionally at specific line/column position.
  */
 public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<OpenFileDescriptor> {
+  @ApiStatus.Internal
+  public static final String NAVIGATE_IN_EDITOR_KEY_NAME = "NAVIGATE_IN_EDITOR";
   /**
    * Tells descriptor to navigate in specific editor rather than file editor in the main IDE window.
    * For example, if you want to navigate in an editor embedded into modal dialog, you should provide this data.
    */
-  public static final DataKey<Editor> NAVIGATE_IN_EDITOR = DataKey.create("NAVIGATE_IN_EDITOR");
+  public static final DataKey<Editor> NAVIGATE_IN_EDITOR = DataKey.create(NAVIGATE_IN_EDITOR_KEY_NAME);
 
   private final Project myProject;
   private final VirtualFile myFile;
