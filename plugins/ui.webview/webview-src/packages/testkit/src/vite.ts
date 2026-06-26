@@ -3,7 +3,7 @@
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import type { Alias, AliasOptions, Plugin, UserConfig } from "vite"
-import { mockWebViewBridgeBrowserScript } from "./browserScript"
+import { mockWebViewBridgeBrowserScript } from "./browserScript.ts"
 
 const testkitSrcDir = dirname(fileURLToPath(import.meta.url))
 

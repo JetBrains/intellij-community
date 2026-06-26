@@ -1,6 +1,7 @@
 const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./assets/mermaid.js","./assets/rolldown-runtime.js","./assets/braintree-sanitize-url.js","./assets/iconify-utils.js","./assets/cytoscape-cose-bilkent.js","./assets/cose-base.js","./assets/cytoscape-fcose.js","./assets/cytoscape.js","./assets/d3-array.js","./assets/d3-axis.js","./assets/d3.js","./assets/d3-format.js","./assets/d3-hierarchy.js","./assets/d3-interpolate.js","./assets/d3-color.js","./assets/d3-sankey.js","./assets/d3-path.js","./assets/d3-scale-chromatic.js","./assets/d3-scale.js","./assets/d3-selection.js","./assets/d3-shape.js","./assets/dagre-d3-es.js","./assets/dayjs.js","./assets/dompurify.js","./assets/es-toolkit.js","./assets/khroma.js","./assets/marked.js"])))=>i.map(i=>d[i]);
 import { n as require_react, t as require_jsx_runtime } from "./assets/react.js";
 import { t as require_client } from "./assets/react-dom.js";
+import { i, n as A, r as b, t as i$1 } from "./assets/lit.js";
 import { t as renderMathInElement } from "./assets/katex.js";
 import { t as Markdown } from "./assets/react-markdown.js";
 import { t as rehypeHighlight } from "./assets/rehype-highlight.js";
@@ -79,6 +80,35 @@ function createLazyWebViewTheme() {
 	});
 }
 var webViewTheme = createLazyWebViewTheme();
+//#endregion
+//#region ../../webview-src/packages/api/src/iconSet.ts
+var IconSet = /* @__PURE__ */ Object.freeze({ define(id) {
+	validateIconSetId(id);
+	return new DefinedIconSet(id);
+} });
+var DefinedIconSet = class {
+	id;
+	constructor(id) {
+		this.id = id;
+	}
+	src(resourcePath) {
+		validateIconResourcePath(resourcePath);
+		return `./__ij-icons/${this.id}/${webViewTheme.current}/${encodeIconResourcePath(resourcePath)}`;
+	}
+};
+var AllIcons = /* @__PURE__ */ IconSet.define("AllIcons");
+function validateIconSetId(id) {
+	if (!/^[A-Za-z][A-Za-z0-9._-]*$/.test(id)) throw new Error(`Invalid WebView icon set id: ${id}`);
+}
+function validateIconResourcePath(resourcePath) {
+	if (resourcePath.length === 0 || resourcePath.startsWith("/") || resourcePath.includes("\\")) throw new Error(`Invalid WebView icon resource path: ${resourcePath}`);
+	if (/^[A-Za-z][A-Za-z0-9+.-]*:/.test(resourcePath)) throw new Error(`Invalid WebView icon resource path: ${resourcePath}`);
+	if (resourcePath.split("/").some((segment) => segment.length === 0 || segment === "." || segment === "..")) throw new Error(`Invalid WebView icon resource path: ${resourcePath}`);
+	if (!resourcePath.endsWith(".svg") && !resourcePath.endsWith(".png")) throw new Error(`Unsupported WebView icon resource extension: ${resourcePath}`);
+}
+function encodeIconResourcePath(resourcePath) {
+	return resourcePath.split("/").map((segment) => encodeURIComponent(segment)).join("/");
+}
 apiId()("webview.focus");
 apiId()("webview.focus");
 //#endregion
@@ -105,6 +135,418 @@ function createLazyWebViewBridge() {
 	});
 }
 var webView = createLazyWebViewBridge();
+//#endregion
+//#region ../../webview-src/packages/controls/src/foundation/define.ts
+function defineControl(tagName, constructor, registry = customElements) {
+	if (!registry.get(tagName)) registry.define(tagName, constructor);
+}
+//#endregion
+//#region ../../webview-src/packages/controls/src/foundation/styles.ts
+var hostStyles = i`
+  :host {
+    box-sizing: border-box;
+    color: var(--jb-text-color);
+    font-family: var(--jb-font-family);
+    font-size: var(--jb-font-size);
+    line-height: var(--jb-line-height);
+  }
+
+  :host([hidden]) {
+    display: none !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: inherit;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  [disabled],
+  :host([disabled]) {
+    cursor: default;
+  }
+`;
+i`
+  .button {
+    appearance: none;
+    align-items: center;
+    background: var(--jb-bg-control);
+    border: 1px solid var(--jb-border-color);
+    border-radius: var(--jb-control-radius);
+    color: var(--jb-text-color);
+    cursor: default;
+    display: inline-flex;
+    gap: var(--jb-control-gap);
+    justify-content: center;
+    min-height: var(--jb-control-height);
+    min-width: var(--jb-control-height);
+    outline: none;
+    padding: 0 var(--jb-control-padding-x);
+    position: relative;
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  .button:hover:not(:disabled) {
+    background: var(--jb-bg-hover);
+  }
+
+  .button:active:not(:disabled),
+  .button[data-pressed="true"] {
+    background: var(--jb-bg-pressed);
+  }
+
+  .button:focus-visible {
+    box-shadow: var(--jb-focus-ring);
+  }
+
+  .button:disabled {
+    border-color: var(--jb-border-color-muted);
+    color: var(--jb-text-disabled);
+    opacity: 0.72;
+  }
+
+  .button.primary {
+    background: var(--jb-accent-color);
+    border-color: var(--jb-accent-color);
+    color: var(--jb-text-on-accent);
+  }
+
+  .button.primary:hover:not(:disabled) {
+    background: var(--jb-accent-hover-color);
+    border-color: var(--jb-accent-hover-color);
+  }
+
+  .button.danger {
+    color: var(--jb-danger-color);
+  }
+
+  .button.link {
+    background: transparent;
+    border-color: transparent;
+    color: var(--jb-accent-text-color);
+    min-height: var(--jb-control-height-compact);
+    min-width: 0;
+    padding: 0;
+  }
+
+  .button.link:hover:not(:disabled) {
+    background: transparent;
+    color: var(--jb-accent-hover-color);
+    text-decoration: underline;
+  }
+
+  .button.toolbar,
+  .button.icon {
+    background: transparent;
+    border-color: transparent;
+    height: var(--jb-control-height-compact);
+    min-height: var(--jb-control-height-compact);
+    min-width: var(--jb-control-height-compact);
+    padding: 0 var(--jb-space-xs);
+  }
+
+  .button.icon {
+    width: var(--jb-control-height-compact);
+  }
+
+  .button.selected,
+  .button[aria-pressed="true"] {
+    background: var(--jb-bg-selected-muted);
+    border-color: var(--jb-accent-soft-bg);
+    color: var(--jb-text-color);
+  }
+
+  .button.small {
+    min-height: var(--jb-control-height-compact);
+    padding-inline: var(--jb-space-sm);
+  }
+
+  .icon-slot,
+  .chevron {
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  .chevron {
+    color: var(--jb-text-muted);
+    font-size: var(--jb-font-size-small);
+  }
+`;
+i`
+  .field-control,
+  .textarea,
+  .select {
+    appearance: none;
+    background: var(--jb-bg-input);
+    border: 1px solid var(--jb-border-color);
+    border-radius: var(--jb-control-radius);
+    color: var(--jb-text-color);
+    min-height: var(--jb-control-height);
+    outline: none;
+    padding: 0 var(--jb-control-padding-x);
+    width: 100%;
+  }
+
+  .field-control:hover:not(:disabled):not([readonly]),
+  .textarea:hover:not(:disabled):not([readonly]),
+  .select:hover:not(:disabled) {
+    border-color: var(--jb-border-color-strong);
+  }
+
+  .field-control:focus-visible,
+  .textarea:focus-visible,
+  .select:focus-visible {
+    border-color: var(--jb-accent-color);
+    box-shadow: var(--jb-focus-ring);
+  }
+
+  .field-control:disabled,
+  .textarea:disabled,
+  .select:disabled {
+    color: var(--jb-text-disabled);
+    opacity: 0.72;
+  }
+
+  .field-control[aria-invalid="true"],
+  .textarea[aria-invalid="true"],
+  .select[aria-invalid="true"] {
+    border-color: var(--jb-danger-color);
+  }
+
+  .field-control::placeholder,
+  .textarea::placeholder {
+    color: var(--jb-text-secondary);
+  }
+
+  .textarea {
+    line-height: var(--jb-line-height-paragraph);
+    min-height: 72px;
+    padding-block: var(--jb-space-xs);
+    resize: vertical;
+  }
+
+  .select-wrap,
+  .combo-wrap {
+    position: relative;
+  }
+
+  .select {
+    padding-right: 26px;
+  }
+
+  .select-wrap::after {
+    color: var(--jb-text-muted);
+    content: "v";
+    font-size: var(--jb-font-size-small);
+    pointer-events: none;
+    position: absolute;
+    right: 9px;
+    top: 50%;
+    transform: translateY(-52%);
+  }
+`;
+i`
+  .popup {
+    background: var(--jb-bg-panel);
+    border: 1px solid var(--jb-border-color-muted);
+    border-radius: var(--jb-control-radius);
+    box-shadow: var(--jb-popup-shadow);
+    display: grid;
+    gap: 1px;
+    margin-top: var(--jb-space-xs);
+    min-width: 160px;
+    padding: var(--jb-space-xs);
+    position: absolute;
+    z-index: 10;
+  }
+
+  .menu-root {
+    display: inline-block;
+    position: relative;
+  }
+
+  .menu-item {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    border-radius: var(--jb-control-radius);
+    color: var(--jb-text-color);
+    min-height: var(--jb-control-height-compact);
+    padding: 0 var(--jb-space-sm);
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .menu-item:hover:not(:disabled),
+  .menu-item:focus-visible {
+    background: var(--jb-bg-hover);
+    outline: none;
+  }
+
+  .menu-item:disabled {
+    color: var(--jb-text-disabled);
+  }
+`;
+i`
+  .choice {
+    align-items: flex-start;
+    color: var(--jb-text-color);
+    display: inline-flex;
+    gap: var(--jb-control-gap);
+    min-height: var(--jb-control-height-compact);
+    position: relative;
+  }
+
+  .native-check {
+    height: 1px;
+    left: 8px;
+    opacity: 0;
+    position: absolute;
+    top: 8px;
+    width: 1px;
+  }
+
+  .mark {
+    align-items: center;
+    background: var(--jb-bg-input);
+    border: 1px solid var(--jb-border-color);
+    color: var(--jb-text-on-accent);
+    display: inline-flex;
+    flex: 0 0 auto;
+    height: 16px;
+    justify-content: center;
+    margin-top: 1px;
+    width: 16px;
+  }
+
+  .checkbox .mark {
+    border-radius: 3px;
+  }
+
+  .radio .mark {
+    border-radius: 50%;
+  }
+
+  .native-check:focus-visible + .mark {
+    box-shadow: var(--jb-focus-ring);
+  }
+
+  .native-check:checked + .mark,
+  .native-check:indeterminate + .mark {
+    background: var(--jb-accent-color);
+    border-color: var(--jb-accent-color);
+  }
+
+  .native-check:disabled + .mark,
+  .native-check:disabled ~ .choice-label {
+    color: var(--jb-text-disabled);
+    opacity: 0.72;
+  }
+
+  .checkbox .native-check:checked + .mark::before {
+    content: "";
+    border: solid currentColor;
+    border-width: 0 2px 2px 0;
+    height: 8px;
+    margin-top: -1px;
+    transform: rotate(45deg);
+    width: 4px;
+  }
+
+  .checkbox .native-check:indeterminate + .mark::before {
+    background: currentColor;
+    content: "";
+    height: 2px;
+    width: 8px;
+  }
+
+  .radio .native-check:checked + .mark::before {
+    background: currentColor;
+    border-radius: 50%;
+    content: "";
+    height: 6px;
+    width: 6px;
+  }
+`;
+//#endregion
+//#region ../../webview-src/packages/controls/src/elements/icon/icon.ts
+var JbIcon = class extends i$1 {
+	static properties = {
+		label: {
+			type: String,
+			reflect: true
+		},
+		name: {
+			type: String,
+			reflect: true
+		},
+		size: {
+			type: String,
+			reflect: true
+		},
+		src: {
+			type: String,
+			reflect: true
+		}
+	};
+	static styles = [hostStyles, i`
+    :host {
+      display: inline-flex;
+      vertical-align: middle;
+    }
+
+    .icon {
+      align-items: center;
+      color: currentColor;
+      display: inline-flex;
+      height: 16px;
+      justify-content: center;
+      line-height: 1;
+      width: 16px;
+    }
+
+    .icon.large {
+      height: 20px;
+      width: 20px;
+    }
+
+    img {
+      display: block;
+      height: 100%;
+      width: 100%;
+    }
+  `];
+	constructor() {
+		super();
+		this.label = "";
+		this.name = "";
+		this.size = "default";
+		this.src = "";
+	}
+	render() {
+		return b`<span part="icon" class=${["icon", this.size].join(" ")} role=${this.label ? "img" : A} aria-label=${this.label || A}>${this.renderContent()}</span>`;
+	}
+	renderContent() {
+		if (this.src) return b`<img src=${this.src} alt="" draggable="false">`;
+		return b`<slot>${this.name}</slot>`;
+	}
+};
+function defineJbIcon(registry) {
+	defineControl("jb-icon", JbIcon, registry);
+}
+//#endregion
+//#region ../../webview-src/packages/controls/src/define/icon.ts
+defineJbIcon();
 //#endregion
 //#region views/markdown-preview/src/MermaidBlock.tsx
 var import_react = require_react();
@@ -340,8 +782,9 @@ var removedBlockPlaceholderClassName = "markdownRemovedBlockPlaceholder";
 var headingSelector = "h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]";
 var activeHeadingTopOffset = 80;
 var markdownResourcePrefix = "./__markdown-preview-resource/";
-var markdownIconPrefix = "./__markdown-preview-icon/";
 var scheduledScrollFrame;
+var runLineIcon = { src: () => AllIcons.src("expui/gutter/run.svg") };
+var runBlockIcon = { src: () => AllIcons.src("expui/gutter/rerun.svg") };
 var latexDelimiters = [
 	{
 		left: "$$",
@@ -414,8 +857,7 @@ function MarkdownPreviewApp({ markdown, scrollLine, contentVersion, changes, sel
 		contentVersion: -1,
 		commands: []
 	});
-	const commands = resolvedCommands.contentVersion === contentVersion ? resolvedCommands.commands : [];
-	const commandLookup = createCommandLookup(commands);
+	const commandLookup = createCommandLookup(resolvedCommands.contentVersion === contentVersion ? resolvedCommands.commands : []);
 	const components = {
 		a({ href, children, ...props }) {
 			function handleClick(event) {
@@ -515,10 +957,7 @@ function MarkdownPreviewApp({ markdown, scrollLine, contentVersion, changes, sel
 		return () => {
 			cancelled = true;
 		};
-	}, [
-		contentVersion,
-		onResolveRunCommands
-	]);
+	}, [contentVersion, onResolveRunCommands]);
 	(0, import_react.useEffect)(() => {
 		renderLatex();
 	}, [markdown, theme]);
@@ -741,9 +1180,7 @@ function uniqueCommandCandidates(candidates) {
 	return Array.from(result.values());
 }
 function codeFenceLanguage(codeNode) {
-	const classNames = hastClassNames(codeNode);
-	const languageClass = classNames.find((className) => className.startsWith("language-"));
-	return languageClass?.substring("language-".length);
+	return hastClassNames(codeNode).find((className) => className.startsWith("language-"))?.substring(9);
 }
 function hasLanguageClass(className) {
 	return className?.split(/\s+/).some((name) => name.startsWith("language-")) ?? false;
@@ -821,14 +1258,15 @@ function RunCommandButton({ contentVersion, command, variant, style, onRunComman
 		"aria-label": command.title,
 		style,
 		onClick: handleClick,
-		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-			src: runCommandIconSrc(variant),
-			alt: ""
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-icon", {
+			className: "markdownRunIcon",
+			src: runCommandIcon(variant).src(),
+			"aria-hidden": true
 		})
 	});
 }
-function runCommandIconSrc(variant) {
-	return `${markdownIconPrefix}${variant === "block" ? "runBlock.png" : "run.png"}`;
+function runCommandIcon(variant) {
+	return variant === "block" ? runBlockIcon : runLineIcon;
 }
 function renderLatex() {
 	const contentElement = document.getElementById("content");

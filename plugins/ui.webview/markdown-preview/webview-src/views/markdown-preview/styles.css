@@ -1,4 +1,6 @@
 /* Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. */
+@import "katex/dist/katex.css";
+
 :root {
   --markdown-preview-font-size: var(--ij-font-size, 13px);
 }
@@ -529,7 +531,7 @@ html[data-theme="light"] .markdownPreview {
   opacity: 1;
 }
 
-.markdownPreview .markdownRunButton img {
+.markdownPreview .markdownRunIcon {
   width: 16px;
   height: 16px;
 }

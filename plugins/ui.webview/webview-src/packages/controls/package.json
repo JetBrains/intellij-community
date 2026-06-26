@@ -12,6 +12,10 @@
       "types": "./src/define/all.ts",
       "default": "./src/define/all.ts"
     },
+    "./define/icon": {
+      "types": "./src/define/icon.ts",
+      "default": "./src/define/icon.ts"
+    },
     "./elements/action-button": {
       "types": "./src/elements/action-button/index.ts",
       "default": "./src/elements/action-button/index.ts"

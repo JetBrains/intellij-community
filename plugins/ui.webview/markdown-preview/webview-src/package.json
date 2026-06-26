@@ -4,10 +4,13 @@
   "type": "module",
   "scripts": {
     "build": "bun run build.ts",
+    "dev:mock": "vite --config mock.vite.config.ts --host 127.0.0.1 --port 5174",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@jetbrains/intellij-webview": "file:../../webview-src",
+    "@jetbrains/intellij-webview-controls": "file:../../webview-src/packages/controls",
+    "katex": "^0.16.45",
     "mermaid": "^11.4.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -20,6 +23,7 @@
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
+    "@jetbrains/intellij-webview-testkit": "file:../../webview-src/packages/testkit",
     "@types/node": "^22.10.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",

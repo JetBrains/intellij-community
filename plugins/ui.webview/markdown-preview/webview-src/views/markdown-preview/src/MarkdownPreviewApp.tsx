@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import { useEffect, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react"
+import { AllIcons } from "@jetbrains/intellij-webview"
 import renderMathInElement from "katex/contrib/auto-render"
-import "katex/dist/katex.min.css"
 import ReactMarkdown, { type Components, type Options } from "react-markdown"
 import rehypeHighlight from "rehype-highlight"
 import rehypeRaw from "rehype-raw"
@@ -12,6 +12,20 @@ import remarkFrontmatter from "remark-frontmatter"
 import remarkGfm from "remark-gfm"
 import { MermaidBlock } from "./MermaidBlock"
 import { markdownSanitizeSchema } from "./markdownSanitizeSchema"
+
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      "jb-icon": {
+        src?: string
+        label?: string
+        size?: string
+        className?: string
+        "aria-hidden"?: boolean | "true" | "false"
+      }
+    }
+  }
+}
 
 interface MarkdownPreviewAppProps {
   markdown: string
@@ -165,8 +179,15 @@ const removedBlockPlaceholderClassName = "markdownRemovedBlockPlaceholder"
 const headingSelector = "h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]"
 const activeHeadingTopOffset = 80
 const markdownResourcePrefix = "./__markdown-preview-resource/"
-const markdownIconPrefix = "./__markdown-preview-icon/"
 let scheduledScrollFrame: number | undefined
+
+const runLineIcon = {
+  src: () => AllIcons.src("expui/gutter/run.svg"),
+}
+
+const runBlockIcon = {
+  src: () => AllIcons.src("expui/gutter/rerun.svg"),
+}
 
 const latexDelimiters = [
   { left: "$$", right: "$$", display: true },
@@ -670,13 +691,13 @@ function RunCommandButton({ contentVersion, command, variant, style, onRunComman
       style={style}
       onClick={handleClick}
     >
-      <img src={runCommandIconSrc(variant)} alt="" />
+      <jb-icon className="markdownRunIcon" src={runCommandIcon(variant).src()} aria-hidden={true} />
     </button>
   )
 }
 
-function runCommandIconSrc(variant: "block" | "line" | "inline"): string {
-  return `${markdownIconPrefix}${variant === "block" ? "runBlock.png" : "run.png"}`
+function runCommandIcon(variant: "block" | "line" | "inline"): typeof runLineIcon {
+  return variant === "block" ? runBlockIcon : runLineIcon
 }
 
 function renderLatex(): void {

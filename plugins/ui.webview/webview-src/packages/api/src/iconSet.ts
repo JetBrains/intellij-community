@@ -23,6 +23,8 @@ class DefinedIconSet implements IconSet {
   }
 }
 
+export const AllIcons: IconSet = /* @__PURE__ */ IconSet.define("AllIcons")
+
 function validateIconSetId(id: string): void {
   if (!/^[A-Za-z][A-Za-z0-9._-]*$/.test(id)) {
     throw new Error(`Invalid WebView icon set id: ${id}`)

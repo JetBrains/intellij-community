@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import "@jetbrains/intellij-webview-controls/define/all"
-import { IconSet } from "@jetbrains/intellij-webview"
+import { AllIcons } from "@jetbrains/intellij-webview"
 import type { JbControlOption } from "@jetbrains/intellij-webview-controls"
 
 interface ItemsControl extends HTMLElement {
@@ -13,8 +13,6 @@ const root = document.getElementById("root")
 if (!root) {
   throw new Error("#root missing")
 }
-
-const AllIcons = IconSet.define("AllIcons")
 
 interface IconSample {
   name: string

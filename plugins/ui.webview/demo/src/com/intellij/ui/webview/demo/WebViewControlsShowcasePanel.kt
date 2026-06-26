@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.webview.demo
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -34,7 +33,7 @@ private const val SHOWCASE_SOURCE_PATH = "community/plugins/ui.webview/demo/webv
 private val LOG = logger<WebViewControlsShowcasePanel>()
 private val SHOWCASE_ASSET_ROOT = WebViewAssetRoot
   .forView("controls-showcase")
-  .withIconSets(WebViewIconSet.of("AllIcons", AllIcons::class.java))
+  .withIconSets(WebViewIconSet.allIcons())
 
 private val SHOWCASE_TABS = listOf(
   ShowcaseTab("components", "webview.controls.showcase.tab.components", "webview.controls.showcase.tab.components.description"),

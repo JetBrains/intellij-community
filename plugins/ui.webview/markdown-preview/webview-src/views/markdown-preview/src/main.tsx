@@ -2,6 +2,7 @@
 
 import { createRoot } from "react-dom/client"
 import { apiId, webView, webViewTheme, type WebViewCallable, type WebViewImplementable } from "@jetbrains/intellij-webview"
+import "@jetbrains/intellij-webview-controls/define/icon"
 import {
   MarkdownPreviewApp,
   scrollMarkdownPreviewToLine,

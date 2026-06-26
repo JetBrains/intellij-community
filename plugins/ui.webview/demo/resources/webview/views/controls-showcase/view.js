@@ -1128,10 +1128,13 @@ var JbIcon = class extends i$1 {
       width: 100%;
     }
   `];
-	label = "";
-	name = "";
-	size = "default";
-	src = "";
+	constructor() {
+		super();
+		this.label = "";
+		this.name = "";
+		this.size = "default";
+		this.src = "";
+	}
 	render() {
 		return b`<span part="icon" class=${["icon", this.size].join(" ")} role=${this.label ? "img" : A} aria-label=${this.label || A}>${this.renderContent()}</span>`;
 	}
@@ -2001,6 +2004,7 @@ var DefinedIconSet = class {
 		return `./__ij-icons/${this.id}/${webViewTheme.current}/${encodeIconResourcePath(resourcePath)}`;
 	}
 };
+var AllIcons = /* @__PURE__ */ IconSet.define("AllIcons");
 function validateIconSetId(id) {
 	if (!/^[A-Za-z][A-Za-z0-9._-]*$/.test(id)) throw new Error(`Invalid WebView icon set id: ${id}`);
 }
@@ -2043,7 +2047,6 @@ createLazyWebViewBridge();
 //#region views/controls-showcase/src/main.ts
 var root = document.getElementById("root");
 if (!root) throw new Error("#root missing");
-var AllIcons = IconSet.define("AllIcons");
 var iconSamples = [
 	{
 		name: "Run",

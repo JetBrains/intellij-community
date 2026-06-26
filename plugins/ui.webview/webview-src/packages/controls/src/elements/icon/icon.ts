@@ -40,10 +40,18 @@ export class JbIcon extends LitElement {
     }
   `]
 
-  label = ""
-  name = ""
-  size = "default"
-  src = ""
+  declare label: string
+  declare name: string
+  declare size: string
+  declare src: string
+
+  constructor() {
+    super()
+    this.label = ""
+    this.name = ""
+    this.size = "default"
+    this.src = ""
+  }
 
   render(): TemplateResult {
     return html`<span part="icon" class=${["icon", this.size].join(" ")} role=${this.label ? "img" : nothing} aria-label=${this.label || nothing}>${this.renderContent()}</span>`

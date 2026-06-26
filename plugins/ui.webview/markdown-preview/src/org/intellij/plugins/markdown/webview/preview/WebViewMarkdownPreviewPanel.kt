@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.webview.api.WebViewAssetPath
 import com.intellij.ui.webview.api.WebViewAssetRoot
+import com.intellij.ui.webview.api.WebViewIconSet
 import com.intellij.ui.webview.api.WebViewPanel
 import com.intellij.ui.webview.api.WebViewPanelOptions
 import com.intellij.ui.webview.api.createWebViewPanel
@@ -144,7 +145,7 @@ class WebViewMarkdownPreviewPanel(
   }
 
   private fun createAssetRoot(): WebViewAssetRoot {
-    var assetRoot = ASSET_ROOT.withScopedAssetProvider(WebViewAssetPath.of(MARKDOWN_ICON_PREFIX), MarkdownPreviewIconProvider())
+    var assetRoot = ASSET_ROOT
     val project = project
     if (project != null) {
       assetRoot = assetRoot.withScopedAssetProvider(
@@ -320,7 +321,9 @@ class WebViewMarkdownPreviewPanel(
   )
 
   private companion object {
-    private val ASSET_ROOT = WebViewAssetRoot.forView("markdown-preview")
+    private val ASSET_ROOT = WebViewAssetRoot
+      .forView("markdown-preview")
+      .withIconSets(WebViewIconSet.allIcons())
 
     private fun lineNumberAtOffset(text: String, offset: Int): Int {
       val targetOffset = offset.coerceIn(0, text.length)

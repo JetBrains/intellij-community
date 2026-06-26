@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import { beforeEach, describe, expect, test } from "bun:test"
-import { IconSet, type WebViewTheme, type WebViewThemeApi } from "../src"
+import { AllIcons, IconSet, type WebViewTheme, type WebViewThemeApi } from "../src"
 
 let currentTheme: WebViewTheme = "light"
 
@@ -30,6 +30,11 @@ describe("IconSet", () => {
     expect(allIcons.src("expui/breakpoints/breakpoint.svg")).toBe("./__ij-icons/AllIcons/light/expui/breakpoints/breakpoint.svg")
     currentTheme = "dark"
     expect(allIcons.src("expui/breakpoints/breakpoint.svg")).toBe("./__ij-icons/AllIcons/dark/expui/breakpoints/breakpoint.svg")
+  })
+
+  test("exports predefined AllIcons icon set", () => {
+    expect(AllIcons.id).toBe("AllIcons")
+    expect(AllIcons.src("expui/breakpoints/breakpoint.svg")).toBe("./__ij-icons/AllIcons/light/expui/breakpoints/breakpoint.svg")
   })
 
   test("escapes resource path segments without collapsing separators", () => {
