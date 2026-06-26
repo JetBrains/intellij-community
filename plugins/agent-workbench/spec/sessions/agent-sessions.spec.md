@@ -2,11 +2,14 @@
 name: Agent Threads Tool Window
 description: Requirements for the Agent Threads project browser, row model, actions, and owned session UI surface.
 targets:
-  - ../../claude/sessions/src/**/*.kt
-  - ../../codex/sessions/src/**/*.kt
-  - ../../junie/sessions/src/**/*.kt
-  - ../../pi/sessions/src/**/*.kt
-  - ../../terminal/sessions/src/**/*.kt
+  - ../../lib-agent/providers/claude/sessions/src/**/*.kt
+  - ../../lib-agent/providers/claude/sessions/testSrc/*.kt
+  - ../../claude/awb/src/**/*.kt
+  - ../../claude/awb/testSrc/*.kt
+  - ../../lib-agent/providers/codex/sessions/src/**/*.kt
+  - ../../lib-agent/providers/junie/sessions/src/**/*.kt
+  - ../../lib-agent/providers/pi/sessions/src/**/*.kt
+  - ../../lib-agent/providers/terminal/sessions/src/**/*.kt
   - ../../sessions/src/**/*.kt
   - ../../sessions-toolwindow/src/**/*.kt
   - ../../sessions-actions/src/**/*.kt
@@ -14,8 +17,8 @@ targets:
   - ../../sessions-toolwindow/testSrc/*.kt
   - ../../sessions/testSrc/*.kt
   - ../../sessions-actions/testSrc/*.kt
-  - ../../pi/sessions/testSrc/*.kt
-  - ../../terminal/sessions/testSrc/*.kt
+  - ../../lib-agent/providers/pi/sessions/testSrc/*.kt
+  - ../../lib-agent/providers/terminal/sessions/testSrc/*.kt
 ---
 
 # Agent Threads Tool Window
@@ -78,9 +81,9 @@ behavior; refresh mechanics and detailed tree rendering/interaction contracts li
   active view, and archived filtering is limited to runtime `All`, `Today`, `Last 7 days`, and `Last 30 days` presets.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsSwingTreeRenderingTest.kt
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
-  [@test] ../../codex/sessions/testSrc/CodexSessionSourceTest.kt
-  [@test] ../../claude/sessions/testSrc/ClaudeSessionSourceTest.kt
-  [@test] ../../junie/sessions/testSrc/JunieSessionSourceTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexSessionSourceTest.kt
+  [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeSessionSourceTest.kt
+  [@test] ../../lib-agent/providers/junie/sessions/testSrc/JunieSessionSourceTest.kt
 
 - Agent Threads must support a current-project-only scope for both active and archived views. The automatic default is current project
   because chat opens in the source project frame by default, and switches to all projects when chats open in the dedicated frame; an explicit user override must persist
@@ -95,9 +98,15 @@ behavior; refresh mechanics and detailed tree rendering/interaction contracts li
   [@test] ../../sessions-toolwindow/testSrc/AgentWorkbenchToolWindowPlacementTest.kt
   [@test] ../../sessions/testSrc/AgentWorkbenchProjectFrameCapabilitiesProviderTest.kt
 
+- Agent Workbench settings must register under Tools, keep provider settings nested under the Agent Workbench root configurable, and render
+  registered settings contributors in their declared groups.
+  [@test] ../../sessions/testSrc/settings/AgentWorkbenchSettingsConfigurableTest.kt
+
 - Claude quota hint visibility and acknowledgement must be gated by eligibility, acknowledgement state, and widget availability.
-  [@test] ../../claude/sessions/testSrc/AgentSessionsSwingQuotaHintTest.kt
-  [@test] ../../claude/sessions/testSrc/AgentSessionsClaudeQuotaWidgetActionRegistrationTest.kt
+  [@test] ../../claude/awb/testSrc/AgentSessionsSwingQuotaHintTest.kt
+  [@test] ../../claude/awb/testSrc/AgentSessionsClaudeQuotaWidgetActionRegistrationTest.kt
+  [@test] ../../claude/awb/testSrc/ClaudeQuotaHintStateServiceTest.kt
+  [@test] ../../claude/awb/testSrc/ClaudeQuotaStatusBarWidgetTest.kt
 
 ## User Experience
 
@@ -115,6 +124,9 @@ behavior; refresh mechanics and detailed tree rendering/interaction contracts li
 - `./tests.cmd --module intellij.agent.workbench.sessions.toolwindow.tests --test "com.intellij.agent.workbench.sessions.toolwindow.AgentSessions*Test"`
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test "com.intellij.agent.workbench.sessions.AgentSession*IntegrationTest"`
 - `./tests.cmd --module intellij.agent.workbench.sessions.actions.tests --test "com.intellij.agent.workbench.sessions.AgentSessions*Test"`
+- `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.settings.AgentWorkbenchSettingsConfigurableTest`
+- `./tests.cmd --module intellij.agent.workbench.claude.awb.tests --test "com.intellij.platform.ai.agent.claude.sessions.AgentSessionsSwingQuotaHintTest;com.intellij.platform.ai.agent.claude.sessions.AgentSessionsClaudeQuotaWidgetActionRegistrationTest"`
+- `./tests.cmd --module intellij.agent.workbench.claude.awb.tests --test "com.intellij.platform.ai.agent.claude.sessions.ClaudeQuotaHintStateServiceTest;com.intellij.platform.ai.agent.claude.sessions.ClaudeQuotaStatusBarWidgetTest"`
 
 ## References
 

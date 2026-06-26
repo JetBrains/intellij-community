@@ -34,7 +34,7 @@ The global prompt opens a project-scoped prompt surface for starting a new task 
 
 - When the main editor area is empty, Agent Workbench contributes a compact inline composer to the platform empty editor state. The composer owns the rich empty-state surface, uses the shared prompt content/session machinery, and suppresses the painted empty editor action hints while it is visible. Standard empty-state hints remain a fallback when no rich composer is available.
   [@test] ../../prompt/ui/testSrc/emptyState/AgentWorkbenchInlinePromptEmptyStateProviderTest.kt
-  [@test] ../../../platform/platform-impl/testSrc/com/intellij/openapi/fileEditor/impl/EditorEmptyTextPainterTest.kt
+  [@test] ../../../../platform/platform-impl/testSrc/com/intellij/openapi/fileEditor/impl/EditorEmptyTextPainterTest.kt
 
 - The inline empty-state composer is gated by the `agent.workbench.inline.empty.state.prompt` system property, enabled by default. When enabled, the inline provider creates the composer and the redundant `AgentWorkbenchPrompt.OpenGlobalPalette` promoted-text hint is suppressed. When disabled, the inline provider creates no component and the promoted-text hint is shown as the empty-editor affordance instead.
   [@test] ../../prompt/ui/testSrc/emptyState/AgentWorkbenchInlinePromptEmptyStateProviderTest.kt

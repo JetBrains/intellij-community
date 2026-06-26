@@ -39,7 +39,7 @@ The group is a lightweight global Agent activity switcher: it helps users notice
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsMainToolbarActivityGroupTest.kt
 
 - Source project activity must be disabled by default and controlled by the Agent Workbench setting `Show Agent activity in main toolbar`.
-  [@test] ../../sessions/testSrc/core/settings/AgentWorkbenchSettingsTest.kt
+  [@test] ../../sessions/testSrc/settings/AgentWorkbenchSettingsTest.kt
   [@test] ../../sessions/testSrc/settings/AgentWorkbenchSettingsConfigurableTest.kt
 
 - Source project activity must be visible only for non-dedicated projects with an openable normalized source project path.

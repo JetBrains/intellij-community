@@ -4,11 +4,11 @@ description: Inventory of Agent Workbench persistent state components and storag
 targets:
   - ../../chat/src/AgentChatFileEditorState.kt
   - ../../chat/src/AgentChatTabsStateService.kt
-  - ../../terminal/sessions/src/TerminalSessionStateService.kt
+  - ../../lib-agent/providers/terminal/sessions/src/TerminalSessionStateService.kt
   - ../../sessions/src/state/*.kt
   - ../../prompt/ui/src/AgentPromptUiSessionStateService.kt
   - ../../chat/testSrc/AgentChatFileEditorProviderTest.kt
-  - ../../terminal/sessions/testSrc/TerminalSessionSourceTest.kt
+  - ../../lib-agent/providers/terminal/sessions/testSrc/TerminalSessionSourceTest.kt
   - ../../sessions/testSrc/AgentSession*StateServiceTest.kt
   - ../../prompt/ui/testSrc/AgentPromptUiSessionStateServiceTest.kt
 ---

@@ -2,18 +2,18 @@
 name: Agent Workbench Pi Sessions
 description: Requirements for first-class pi.dev session support in Agent Workbench.
 targets:
-  - ../../common/src/session/AgentSessionModels.kt
-  - ../../pi/sessions/resources/intellij.platform.ai.agent.pi.sessions.xml
-  - ../../pi/sessions-filewatch/resources/intellij.platform.ai.agent.pi.sessions.filewatch.xml
-  - ../../pi/sessions/resources/pi-extension/agent-workbench-extension.ts
-  - ../../pi/sessions/resources/pi-extension/control.ts
-  - ../../pi/sessions/src/**/*.kt
-  - ../../pi/sessions/testSrc/*.kt
-  - ../../sessions-core/src/providers/AgentSessionProviderDescriptor.kt
+  - ../../lib-agent/core/src/session/AgentSessionModels.kt
+  - ../../lib-agent/providers/pi/sessions/resources/intellij.platform.ai.agent.pi.sessions.xml
+  - ../../lib-agent/providers/pi/sessions-filewatch/resources/intellij.platform.ai.agent.pi.sessions.filewatch.xml
+  - ../../lib-agent/providers/pi/sessions/resources/pi-extension/agent-workbench-extension.ts
+  - ../../lib-agent/providers/pi/sessions/resources/pi-extension/control.ts
+  - ../../lib-agent/providers/pi/sessions/src/**/*.kt
+  - ../../lib-agent/providers/pi/sessions/testSrc/*.kt
+  - ../../lib-agent/sessions-core/src/providers/AgentSessionProviderDescriptor.kt
   - ../../sessions/src/settings/*.kt
   - ../../sessions/testSrc/settings/*.kt
-  - ../../pi/sessions-filewatch/src/**/*.kt
-  - ../../pi/sessions-filewatch/testSrc/*.kt
+  - ../../lib-agent/providers/pi/sessions-filewatch/src/**/*.kt
+  - ../../lib-agent/providers/pi/sessions-filewatch/testSrc/*.kt
   - ../../plugin/resources/META-INF/plugin.xml
   - ../../sessions/resources/messages/AgentSessionsBundle.properties
 ---
@@ -28,15 +28,15 @@ Agent Workbench treats Pi as a first-class terminal-backed provider. Pi sessions
 
 ## Requirements
 - Pi must be exposed as `AgentSessionProvider.from("pi")`, registered after Junie and before Terminal, and shown in provider menus with a Pi icon and localized labels.
-  [@test] ../../pi/sessions/testSrc/PiAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiAgentSessionProviderDescriptorTest.kt
   [@test] ../../plugin/testSrc/AgentWorkbenchProviderRegistrationTest.kt
 
 - Pi launch support must use the shared Terminal agent resolver for the `pi` executable without registering Pi as a built-in Terminal agent. New Agent Workbench sessions must launch `pi --extension <agentWorkbenchExtension> --session-id <uuid>` with a provider-allocated session id, while resumed sessions must launch `pi --extension <agentWorkbenchExtension> --session <threadId>`. The launch environment must pass `AGENT_WORKBENCH_PI_THEME_STATE=<stateFile>`, `AGENT_WORKBENCH_PI_STATUS_ENDPOINT=<url>`, `AGENT_WORKBENCH_PI_CONTROL_WS_ENDPOINT=<url>`, and a launch-scoped `AGENT_WORKBENCH_PI_STATUS_TOKEN=<token>` when the Agent Workbench-managed Pi extension is available; the token must be retained only in memory by the IDE bridge, must not be persisted in tab state, and must be invalidated when the live terminal session closes. If the extension cannot be materialized, launch must continue without `--extension`.
-  [@test] ../../pi/sessions/testSrc/PiAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiAgentSessionProviderDescriptorTest.kt
 
 - Pi oMLX model support must be enabled by default but controllable through a Pi provider setting under Agent Workbench > Providers. When enabled, Pi discovers local oMLX generation models from PI auth and `.omlx/settings.json`; PI auth is preferred for a matching base URL, but `.omlx/settings.json` must remain a fallback if the PI auth endpoint does not return usable generation models. A selected oMLX model launches with `--provider`, `--model`, and `AGENT_WORKBENCH_PI_OMLX_PROVIDER` metadata so the bundled Pi extension can register the selected local provider. When disabled, model selection is hidden, oMLX catalog refresh is skipped, saved oMLX selections sanitize back to provider default, and launches must not include oMLX registration metadata.
-  [@test] ../../pi/sessions/testSrc/PiAgentSessionProviderDescriptorTest.kt
-  [@test] ../../sessions/testSrc/settings/AgentSessionProviderSettingsServiceTest.kt
+  [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiAgentSessionProviderDescriptorTest.kt
+  [@test] ../../settings/testSrc/AgentSessionProviderSettingsServiceTest.kt
   [@test] ../../sessions/testSrc/settings/AgentWorkbenchSettingsConfigurableTest.kt
 
 - When Pi generation model selection is enabled, Agent Workbench must scope launched Pi sessions from Pi's own `--list-models` output after loading the managed extension and Agent Workbench model-registration metadata. The resulting `--models` scope must keep the selected model first and include Pi built-in/custom models together with Agent Workbench-registered oMLX/JetBrains Central models, so Pi's `/model` selector is not limited to extension-provided models.
@@ -45,50 +45,50 @@ Agent Workbench treats Pi as a first-class terminal-backed provider. Pi sessions
   JetBrains Central launch metadata must be resolved from `jbcentral status`, including the proxy port. The status agent list describes wired terminal CLI tools, not the complete model proxy surface; Agent Workbench must therefore expose its supported Central proxy routes by default once JBCentral is available. Codex models must be registered from Pi's `openai-codex` source through the `codex/openai` proxy route; Claude Code models from Pi's `anthropic` source through the `claude-code/anthropic` proxy route; Gemini models from Pi's `google-vertex` source through the `gemini-cli/vertex` proxy route using the Central Vertex placeholder path `v1beta1/projects/wire-project/locations/wire-location`. All routes must be presented to users under the single `JetBrains Central` provider name, including Claude Code models such as Opus and Gemini models such as Flash.
   JetBrains Central rows should be derived from available JetBrains Central LLM profiles through the direct local `jbcentral` proxy probe only when it is explicitly enabled, not from Pi's static model registry: real `profilesV8` rows can omit `providerModelID`, so Agent Workbench must use `providerModelID` only when present and otherwise launch by the Central profile id such as `openai-gpt-5`, `anthropic-claude-4-5-sonnet`, or `google-gemini-2-5-flash`. OpenAI/Codex Central profiles may be `Responses`-only and must not be filtered out for missing `Chat`; Anthropic/Claude Code and Google/Gemini profiles must still support chat, tools, and system messages. Deprecated and experimental Central profiles must stay hidden.
   When profile-backed JetBrains Central models are available, Pi's Central-looking fallback rows (`JetBrains Central`, `openai-codex`, wired `anthropic`, and wired `google-vertex`) must be suppressed so stale or future entries such as unavailable Fable models do not appear as normal choices. If the direct profiles probe is disabled or returns no profiles, Agent Workbench must still wire JetBrains Central into Pi through the managed extension, use Pi's static `openai-codex`/`anthropic`/`google-vertex` model registry as a last-resort fallback, and recode those rows as `JetBrains Central` models before showing or launching them. If the full Pi catalog probe fails, launch must fall back to the discovered Agent Workbench extension models.
-  [@test] ../../pi/sessions/testSrc/PiAgentSessionProviderDescriptorTest.kt
-  [@test] ../../pi/sessions/testSrc/PiJbCentralModelCatalogTest.kt
-  [@test] ../../pi/sessions/testSrc/PiKnownModelCatalogTest.kt
+  [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiJbCentralModelCatalogTest.kt
+  [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiKnownModelCatalogTest.kt
 
 - JetBrains Central model availability source order is: direct `profilesV8` through the local `jbcentral` proxy, then Pi static Central rows only as a last-resort fallback. Pi static rows are not authoritative for Central availability; they may be shown only when no profile-backed Central list is available, and they must be suppressed as soon as profile-backed rows exist.
   The direct local `profilesV8` probe must stay disabled by default behind `-Dagent.workbench.pi.jbcentral.direct.profiles.enabled=true` while the local `jbcentral` proxy does not expose that endpoint consistently across installed JBCentral versions and environments. This avoids repeatedly probing known-404 local proxy routes.
-  [@test] ../../pi/sessions/testSrc/PiAgentSessionProviderDescriptorTest.kt
-  [@test] ../../pi/sessions/testSrc/PiJbCentralModelCatalogTest.kt
+  [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiJbCentralModelCatalogTest.kt
 
 - The bundled Pi extension is the bridge between Agent Workbench catalog rows and Pi's `/model` selector. During catalog probing, Agent Workbench must pass profile-backed oMLX/JetBrains Central models through `AGENT_WORKBENCH_PI_MODEL_CATALOG`; the extension registers those providers before Pi evaluates `--list-models`. JetBrains Central proxy credentials must not be persisted in model ids, launch metadata, or logs; the extension and IDE-side direct profile probe should obtain the wire secret from `jbcentral proxy start --return-key` and fall back to `.wire/config.json` when the proxy is already running but the CLI cannot return a key.
   JetBrains Central OpenAI/Codex models that support Pi `xhigh` thinking must include model-level `thinkingLevelMap` metadata in the bundled extension registration, so Pi's runtime Shift+Tab cycle exposes `xhigh` after Agent Workbench registers those models.
-  [@test] ../../pi/sessions/testSrc/PiKnownModelCatalogTest.kt
-  [@test] ../../pi/sessions/testSrc/PiJbCentralModelCatalogTest.kt
+  [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiKnownModelCatalogTest.kt
+  [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiJbCentralModelCatalogTest.kt
 
 - Agent Workbench must provide one bundled Pi extension for IDE integration. It reads a managed JSON theme snapshot, validates all required Pi foreground/background theme keys, applies a full Pi `Theme`, and watches the managed theme-state file for IDE theme changes. The snapshot must be built from the active IDE look-and-feel, Swing UI defaults, and editor color scheme so Islands Dark, Islands Light, Islands Darcula, High Contrast, and customized user colors are reflected at runtime. Theme state must be refreshed on both IDE look-and-feel and editor color scheme changes. The extension resource is materialized into a managed IDE system-cache directory with a non-JSON sidecar manifest containing a format version and SHA-256 hash.
-  [@test] ../../pi/sessions/testSrc/PiThemeSupportTest.kt
-  [@test] ../../pi/sessions/testSrc/PiThemeSnapshotBuilderTest.kt
+  [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiThemeSupportTest.kt
+  [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiThemeSnapshotBuilderTest.kt
 
 - Initial prompts must be passed as a positional Pi CLI message argument. Pi must not expose built-in Agent Workbench plan mode or YOLO launch modes.
-  [@test] ../../pi/sessions/testSrc/PiAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiAgentSessionProviderDescriptorTest.kt
 
 - Pi session loading must read JSONL files from the effective Pi session directory: `PI_CODING_AGENT_SESSION_DIR`, then project/global Pi `settings.json` `sessionDir`, then the default `~/.pi/agent/sessions/<encoded-cwd>` directory.
-  [@test] ../../pi/sessions/testSrc/PiSessionSourceTest.kt
+  [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiSessionSourceTest.kt
 
 - Listed Pi threads must be filtered by the session header `cwd`, use the header `id`, use the latest `session_info.name` as the title, fall back to the first user message, and sort newest first by latest user/assistant activity timestamp, header timestamp, or file mtime.
-  [@test] ../../pi/sessions/testSrc/PiSessionSourceTest.kt
+  [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiSessionSourceTest.kt
 
 - Pi thread outlines must be loaded from persisted JSONL without launching Pi or parsing interactive `/tree` output. Outline loading follows Pi tree display semantics by showing normal visible conversation/work rows as a chronological top-level timeline, keeping tool details under their owning assistant/work rows, hiding bookkeeping nodes, and mapping conversation/tool records to the shared Agent Chat Structure View outline kinds.
-  [@test] ../../pi/sessions/testSrc/PiSessionSourceTest.kt
+  [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiSessionSourceTest.kt
 
 - Pi thread activity must be inferred from the persisted JSONL leaf. User, tool-result, custom, and assistant `toolUse` leaves are shown
   as `PROCESSING`; completed assistant leaves use the shared Done/read semantics when observed work completes. Pi does not report
   `NEEDS_INPUT` from session JSONL until an explicit persisted status signal exists.
-  [@test] ../../pi/sessions/testSrc/PiSessionSourceTest.kt
+  [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiSessionSourceTest.kt
 
 - The bundled Pi extension must also post fast activity hints on Pi lifecycle events to the IDE-local status endpoint. Requests must be `POST` calls from an accessible local origin, authenticated with `Authorization: Bearer <token>`, and accepted only when the token is bound to the posted Pi `sessionId`. Accepted requests emit scoped, thread-scoped `HINTS_CHANGED` activity updates; `done` updates use the shared Done/read semantics. Malformed, oversized, unauthorized, or cross-session requests must not emit updates. JSONL file watching is an opt-in durable fallback for persisted session changes, isolated in a separate content module and disabled by default behind `agent.workbench.pi.file.watch.fallback`.
-  [@test] ../../pi/sessions/testSrc/PiExtensionStatusHttpRequestHandlerTest.kt
-  [@test] ../../pi/sessions-filewatch/testSrc/PiSessionFileWatchUpdateEventsContributorTest.kt
+  [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiExtensionStatusHttpRequestHandlerTest.kt
+  [@test] ../../lib-agent/providers/pi/sessions-filewatch/testSrc/PiSessionFileWatchUpdateEventsContributorTest.kt
 
 - The bundled Pi extension must open one private IDE-local WebSocket control connection for live Structure View actions. The WebSocket handshake must be authenticated with `Authorization: Bearer <launchToken>`, the first `hello` frame must bind the connection to the same launch-scoped token/session id/cwd, and every command must target the currently bound session id. The IDE may send `navigateTree` and `forkFromEntry` commands only when the live connection advertises those capabilities. Fork commands must use Pi `fork(entryId, { position: "at", withSession })` and return the fresh replacement session state captured from `withSession`; there is no long-polling, polling, slash-command, or unauthenticated fallback.
-  [@test] ../../pi/sessions/testSrc/PiExtensionControlWebSocketHandlerTest.kt
+  [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiExtensionControlWebSocketHandlerTest.kt
 
 - Rename must append a Pi-compatible `session_info` entry to the session JSONL file while preserving the thread's current archive state. Archive and unarchive must use the same mechanism by writing a title with or without the shared `[archived] ` prefix; loaded Pi titles must strip that prefix for display and use it only as Agent Workbench archive state.
-  [@test] ../../pi/sessions/testSrc/PiSessionSourceTest.kt
+  [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiSessionSourceTest.kt
 
 ## Theme Mapping Notes
 - Runtime IDE/editor colors are the preferred source for every Pi theme key. Fallback palettes are allowed only when a corresponding UI default or editor color is unavailable, when the IDE theme cannot be resolved, or when the Pi extension starts without a readable state file.

@@ -2,16 +2,25 @@
 name: Agent Sessions Cost and JBCentral Quota
 description: Requirements for per-session cost presentation, OpenRouter-backed price snapshots, and JBCentral quota status display.
 targets:
-  - ../../common/src/session/*.kt
+  - ../../lib-agent/core/src/session/*.kt
   - ../../sessions-cost/src/**/*.kt
   - ../../sessions-cost/testSrc/**/*.kt
   - ../../sessions-toolwindow/src/ui/*.kt
   - ../../sessions-toolwindow/testSrc/*.kt
-  - ../../codex/sessions/src/**/*.kt
-  - ../../codex/sessions/testSrc/**/*.kt
-  - ../../claude/common/src/*.kt
-  - ../../claude/sessions/src/**/*.kt
-  - ../../claude/sessions/testSrc/**/*.kt
+  - ../../sessions/src/settings/AgentSessionCostPresentationSettings.kt
+  - ../../sessions/src/settings/*.kt
+  - ../../sessions/testSrc/settings/*.kt
+  - ../../lib-agent/providers/codex/sessions/src/**/*.kt
+  - ../../lib-agent/providers/codex/sessions/testSrc/**/*.kt
+  - ../../lib-agent/providers/claude/common/src/*.kt
+  - ../../lib-agent/providers/claude/sessions/src/**/*.kt
+  - ../../lib-agent/providers/claude/sessions/testSrc/**/*.kt
+  - ../../claude/awb/src/**/*.kt
+  - ../../claude/awb/testSrc/**/*.kt
+  - ../../claude/awb/resources/intellij.agent.workbench.claude.awb.xml
+  - ../../sessions-jbcentral/src/**/*.kt
+  - ../../sessions-jbcentral/testSrc/**/*.kt
+  - ../../sessions-jbcentral/resources/intellij.agent.workbench.sessions.jbcentral.xml
 ---
 
 # Agent Sessions Cost and JBCentral Quota
@@ -49,61 +58,64 @@ The Agent Threads tree must optionally show per-session cost when the provider a
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
 
 - Model matching must use a trivial deterministic heuristic built from normalized model identifiers rather than a manually curated alias table. Normalization must lowercase names, replace non-alphanumeric runs with `-`, collapse duplicate separators, and compare both whole-name and trailing-name forms. Prefix fallback may be used only when it produces a single unambiguous match.
-  [@test] ../../codex/sessions/testSrc/CodexSessionSourceTest.kt
-  [@test] ../../claude/sessions/testSrc/ClaudeSessionSourceTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexSessionSourceTest.kt
+  [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeSessionSourceTest.kt
 
 - When a provider exposes exact session cost, Agent Workbench must show that exact amount and must not replace it with an OpenRouter estimate.
-  [@test] ../../codex/sessions/testSrc/CodexSessionSourceTest.kt
-  [@test] ../../claude/sessions/testSrc/ClaudeSessionSourceTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexSessionSourceTest.kt
+  [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeSessionSourceTest.kt
 
 - When exact cost is unavailable but normalized usage and an unambiguous OpenRouter model match exist, Agent Workbench must show an estimated session cost derived from the persisted snapshot.
-  [@test] ../../codex/sessions/testSrc/CodexSessionSourceRolloutIntegrationTest.kt
-  [@test] ../../claude/sessions/testSrc/ClaudeSessionsStoreTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexSessionSourceRolloutIntegrationTest.kt
+  [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeSessionsStoreTest.kt
 
 - When exact cost is unavailable and the model match is missing or ambiguous, Agent Workbench must treat the session cost as unavailable and must not display a guessed amount.
-  [@test] ../../codex/sessions/testSrc/CodexSessionSourceTest.kt
-  [@test] ../../claude/sessions/testSrc/ClaudeSessionSourceTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexSessionSourceTest.kt
+  [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeSessionSourceTest.kt
 
 - Codex rollout parsing must capture the last observed model identifier and the last observed cumulative token totals for the thread. Repeated `token_count` events with unchanged totals must not multiply the session cost.
-  [@test] ../../codex/sessions/testSrc/CodexSessionSourceRolloutIntegrationTest.kt
-  [@test] ../../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexSessionSourceRolloutIntegrationTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
 - Claude session usage aggregation must sum `message.usage` across assistant messages in the main session transcript and any `subagents/*.jsonl` transcripts that belong to the same session so that the displayed cost reflects the full session visible to the user.
-  [@test] ../../claude/sessions/testSrc/ClaudeSessionsStoreTest.kt
-  [@test] ../../claude/sessions/testSrc/ClaudeSessionSourceTest.kt
+  [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeSessionsStoreTest.kt
+  [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeSessionSourceTest.kt
 
 - Claude synthetic zero-usage assistant messages and similar placeholder records must not change aggregated usage or cost.
-  [@test] ../../claude/sessions/testSrc/ClaudeSessionsStoreTest.kt
+  [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeSessionsStoreTest.kt
 
 - Agent Threads cost presentation must remain opt-in behind a dedicated registry key or equivalent feature flag.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
 
 - The session cost feature and the JBCentral quota widget must each expose persisted enablement state so users can turn them on and off independently.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
-  [@test] ../../claude/sessions/testSrc/ClaudeQuotaHintStateServiceTest.kt
+  [@test] ../../sessions/testSrc/settings/AgentWorkbenchSettingsConfigurableTest.kt
+  [@test] ../../sessions-jbcentral/testSrc/jbcentral/JbCentralQuotaHintStateServiceTest.kt
 
 - When enabled, thread rows must render exact cost as `$N.NN`, estimated cost as `~$N.NN`, and unavailable cost as no cost label.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
 
 - Cost presentation must update through the existing thread refresh flow; it must not introduce an additional tree-specific polling loop.
-  [@test] ../../codex/sessions/testSrc/CodexSessionSourceRolloutIntegrationTest.kt
-  [@test] ../../claude/sessions/testSrc/ClaudeSessionSourceTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexSessionSourceRolloutIntegrationTest.kt
+  [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeSessionSourceTest.kt
 
 - JBCentral quota must be surfaced through a dedicated status bar widget that follows the Claude quota widget interaction model: lazy activation, explicit refresh on click, and tooltip-based detail display.
-  [@test] ../../claude/sessions/testSrc/ClaudeQuotaStatusBarWidgetTest.kt
+  [@test] ../../sessions-jbcentral/testSrc/jbcentral/JbCentralQuotaStatusBarWidgetTest.kt
 
 - JBCentral quota enablement must be offered through a startup hint flow equivalent in behavior to the current Claude quota hint flow: opening the relevant Agent Workbench surface may mark the hint as eligible, the hint must be dismissible, and enabling the widget from the hint must acknowledge the prompt and persist enablement.
-  [@test] ../../claude/sessions/testSrc/ClaudeQuotaHintStateServiceTest.kt
-  [@test] ../../claude/sessions/testSrc/ClaudeQuotaStatusBarWidgetTest.kt
+  [@test] ../../sessions-jbcentral/testSrc/jbcentral/JbCentralQuotaHintStateServiceTest.kt
+  [@test] ../../sessions/testSrc/settings/AgentWorkbenchSettingsConfigurableTest.kt
 
 - The JBCentral quota implementation must shell out to the installed `jbcentral quota` workflow instead of duplicating Central CLI token loading, encrypted storage, or refresh logic inside Agent Workbench.
-  [@test] ../../claude/sessions/testSrc/ClaudeQuotaServiceE2eTest.kt
+  [@test] ../../sessions-jbcentral/testSrc/jbcentral/JbCentralQuotaCliClientTest.kt
+  [@test] ../../sessions-jbcentral/testSrc/jbcentral/JbCentralQuotaServiceTest.kt
 
 - The JBCentral quota widget must resolve the CLI path from explicit configuration first, then `PATH`, then known local fallback locations.
-  [@test] ../../claude/sessions/testSrc/ClaudeQuotaServiceE2eTest.kt
+  [@test] ../../sessions-jbcentral/testSrc/jbcentral/JbCentralQuotaCliSupportTest.kt
 
 - If the JBCentral CLI is unavailable, unauthenticated, or returns malformed quota data, the widget must hide itself or show a non-intrusive error tooltip instead of occupying persistent space with stale data.
-  [@test] ../../claude/sessions/testSrc/ClaudeQuotaStatusBarWidgetTest.kt
+  [@test] ../../sessions-jbcentral/testSrc/jbcentral/JbCentralQuotaStatusBarWidgetTest.kt
+  [@test] ../../sessions-jbcentral/testSrc/jbcentral/JbCentralQuotaServiceTest.kt
 
 ## User Experience
 - User-visible strings for cost labels, tooltips, and JBCentral quota states must live in `.properties` bundles.
@@ -128,7 +140,8 @@ The Agent Threads tree must optionally show per-session cost when the provider a
 - `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test com.intellij.platform.ai.agent.codex.sessions.CodexSessionSourceRolloutIntegrationTest`
 - `./tests.cmd --module intellij.platform.ai.agent.claude.sessions.tests --test com.intellij.platform.ai.agent.claude.sessions.ClaudeSessionsStoreTest`
 - `./tests.cmd --module intellij.platform.ai.agent.claude.sessions.tests --test com.intellij.platform.ai.agent.claude.sessions.ClaudeSessionSourceTest`
-- `./tests.cmd --module intellij.platform.ai.agent.claude.sessions.tests --test com.intellij.platform.ai.agent.claude.sessions.ClaudeQuotaStatusBarWidgetTest`
+- `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.settings.AgentWorkbenchSettingsConfigurableTest`
+- `./tests.cmd --module intellij.agent.workbench.sessions.jbcentral.tests --test "com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuota*Test"`
 - `./tests.cmd --module intellij.agent.workbench.sessions.toolwindow.tests --test com.intellij.agent.workbench.sessions.toolwindow.AgentSessionsSwingTreeCellRendererTest`
 
 ## Open Questions / Risks

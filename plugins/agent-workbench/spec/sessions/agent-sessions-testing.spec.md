@@ -6,9 +6,11 @@ targets:
   - ../../sessions-toolwindow/testSrc/*.kt
   - ../../sessions-actions/testSrc/*.kt
   - ../../chat/testSrc/*.kt
-  - ../../claude/sessions/testSrc/**/*.kt
-  - ../../codex/sessions/testSrc/**/*.kt
-  - ../../filewatch/testSrc/**/*.kt
+  - ../../lib-agent/providers/claude/sessions/testSrc/**/*.kt
+  - ../../claude/awb/testSrc/*.kt
+  - ../../sessions-jbcentral/testSrc/**/*.kt
+  - ../../lib-agent/providers/codex/sessions/testSrc/**/*.kt
+  - ../../lib-agent/filewatch/testSrc/**/*.kt
 ---
 
 # Agent Threads Testing
@@ -27,7 +29,9 @@ This spec maps Agent Workbench behavior specs to their primary module tests. It 
 - Chat tab lifecycle and dispatch: `AgentChatEditorServiceTest`, `AgentChatFileEditorProviderTest`, `AgentChatFileEditorLifecycleTest`, `AgentChatTabSelectionServiceTest`, and `AgentChatOpenTopLevelDispatchTest`.
 - Archive, rename, and provider capability behavior: `AgentSessionArchiveServiceIntegrationTest`, `AgentSessionRenameServiceTest`, provider descriptor tests, and Claude rename/store tests.
 - Dedicated frame behavior: `AgentSessionsGearActionsTest`, `AgentSessionPromptLauncherBridgeTest`, project frame capability tests, and terminal hyperlink routing tests.
-- Codex source/backend behavior: `CodexAppServerClientTest`, `CodexAppServerSessionBackendTest`, `CodexSessionBackendSelectorTest`, rollout parser/watcher tests, refresh-hints tests, and activity resolver tests.
+- Codex source/backend behavior: `CodexAppServerProtocolTest`, `CodexAppServerSessionBackendTest`, `CodexSessionBackendSelectorTest`, rollout parser/watcher tests, refresh-hints tests, and activity resolver tests.
+- Claude source/backend behavior: `ClaudeSessionSourceTest`, `ClaudeSessionsStoreTest`, `ClaudeStoreSessionBackendTest`, hook bridge tests, and provider descriptor tests.
+- Settings and quota wiring: `AgentWorkbenchSettingsConfigurableTest`, Claude quota widget tests, and `JbCentralQuota*Test`.
 - File watching: `AgentWorkbenchDirectoryWatcherTest`, `DirectoryWatcherImplTest`, and provider watcher tests.
 
 ## Integration Gating
@@ -42,7 +46,7 @@ This spec maps Agent Workbench behavior specs to their primary module tests. It 
 - `./tests.cmd --module intellij.agent.workbench.chat.tests --test "com.intellij.agent.workbench.chat.AgentChat*Test"`
 - `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test "com.intellij.platform.ai.agent.codex.sessions.CodexRollout*Test"`
 - `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test com.intellij.platform.ai.agent.codex.sessions.backend.appserver.CodexAppServerRefreshHintsProviderTest`
-- `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.CodexAppServerClientTest`
+- `./tests.cmd --module intellij.platform.ai.agent.codex.common.tests --test com.intellij.platform.ai.agent.codex.common.CodexAppServerProtocolTest`
 
 ## References
 - `../core/agent-core-contracts.spec.md`

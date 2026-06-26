@@ -2,17 +2,17 @@
 name: Agent Threads Refresh and Loading
 description: Provider aggregation, refresh scheduling, warm snapshot, and source-update requirements for Agent Threads.
 targets:
-  - ../../sessions-core/src/providers/*.kt
+  - ../../lib-agent/sessions-core/src/providers/*.kt
   - ../../sessions/src/service/*.kt
   - ../../sessions/src/state/AgentSessionWarmStateService.kt
-  - ../../codex/sessions/src/**/*.kt
-  - ../../claude/sessions/src/**/*.kt
-  - ../../junie/sessions/src/**/*.kt
-  - ../../filewatch/src/**/*.kt
+  - ../../lib-agent/providers/codex/sessions/src/**/*.kt
+  - ../../lib-agent/providers/claude/sessions/src/**/*.kt
+  - ../../lib-agent/providers/junie/sessions/src/**/*.kt
+  - ../../lib-agent/filewatch/src/**/*.kt
   - ../../sessions/testSrc/*.kt
-  - ../../codex/sessions/testSrc/**/*.kt
-  - ../../claude/sessions/testSrc/**/*.kt
-  - ../../filewatch/testSrc/**/*.kt
+  - ../../lib-agent/providers/codex/sessions/testSrc/**/*.kt
+  - ../../lib-agent/providers/claude/sessions/testSrc/**/*.kt
+  - ../../lib-agent/filewatch/testSrc/**/*.kt
 ---
 
 # Agent Threads Refresh and Loading
@@ -51,8 +51,8 @@ Session refresh is event-driven and provider-agnostic. It merges provider result
 
 - Source updates must schedule IDE VFS refresh only when the update carries provider evidence that project files may have changed, and must scope that refresh to resolved open/loaded project or worktree paths. Status-only activity or hint updates must still refresh provider session state without refreshing VFS. Evidence is raised on a newly completed mutating tool: for Codex, native `exec_command` / `apply_patch` function calls (including their `ExecCommandBegin/End` and `PatchApplyBegin/End` event-msg pairs); for Claude Code, completion of any of `Bash`, `Edit`, `MultiEdit`, `Write`, `NotebookEdit` — `Bash` is treated as mutating regardless of command content because the rollout cannot reliably classify shell intent. Provider/tool implementations that mutate project files through IDE or MCP APIs own their own refresh semantics and must not rely on session-source inference.
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
-  [@test] ../../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
-  [@test] ../../claude/sessions/testSrc/ClaudeStoreSessionBackendTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+  [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeStoreSessionBackendTest.kt
 
 - Thread-targeted source updates must refresh only resolvable loaded/open paths and must not widen unresolved thread-only events into a full refresh.
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
@@ -62,16 +62,21 @@ Session refresh is event-driven and provider-agnostic. It merges provider result
 - Provider refresh outcomes may be complete path snapshots or partial thread updates/removals. Partial outcomes must not remove unrelated provider rows or shared thread presentation.
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
+- File-backed provider index refresh must plan invalidation, apply parsed-cache updates, and materialize backend threads atomically so
+  concurrent project loads cannot observe or prune each other's partial rescan state.
+  [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeStoreSessionBackendTest.kt
+
 - Provider refresh publishes shared thread presentation keyed by normalized path and canonical thread identity so Agent Threads and open editor tabs show the same title/activity.
   [@test] ../../sessions/testSrc/AgentSessionThreadPresentationTest.kt
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
 
 - File-backed provider watchers must recover after watch-loop failures while the owning watcher remains active.
-  [@test] ../../filewatch/testSrc/AgentWorkbenchDirectoryWatcherTest.kt
+  [@test] ../../lib-agent/filewatch/testSrc/AgentWorkbenchDirectoryWatcherTest.kt
 
 ## Testing / Local Run
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test "com.intellij.agent.workbench.sessions.AgentSessionRefresh*Test"`
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionLoadAggregationTest`
+- `./tests.cmd --module intellij.platform.ai.agent.claude.sessions.tests --test com.intellij.platform.ai.agent.claude.sessions.ClaudeStoreSessionBackendTest`
 - `./tests.cmd --module intellij.platform.ai.agent.filewatch.tests --test com.intellij.platform.ai.agent.filewatch.AgentWorkbenchDirectoryWatcherTest`
 
 ## References
