@@ -611,8 +611,10 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
 
   @Override
   public @NotNull HtmlChunk visitPyModuleType(@NotNull PyModuleType moduleType) {
-    // A module's name is its (importable) qualified name, so it doubles as a navigable link target.
-    String name = getTypeName(moduleType);
+    // A module's name is its own (importable) qualified name, so it doubles as a navigable link target.
+    // Don't go through getTypeName(): under FQN rendering that resolves to the module's declaration element,
+    // which is the `types.ModuleType` class rather than the module itself.
+    String name = moduleType.getName();
     return StringUtil.isEmpty(name) ? escaped(name) : qualifiedNameLink(name, name);
   }
 
