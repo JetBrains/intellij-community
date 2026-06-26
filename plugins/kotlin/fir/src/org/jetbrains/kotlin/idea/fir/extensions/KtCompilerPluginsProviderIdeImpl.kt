@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.fir.extensions
 
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
@@ -14,10 +13,12 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider.CompilerPluginType
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.extensions.ExtensionPointDescriptor
 import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerPluginsScriptConfigurationListener
@@ -35,13 +36,8 @@ internal class KtCompilerPluginsProviderIdeImpl(
 
     private val pluginsCacheCachedValue: SynchronizedClearableLazy<KtCompilerPluginsCache?> = SynchronizedClearableLazy {
         if (TrustedProjects.isProjectTrusted(project)) {
-            LOG.info(
-                "Kotlin FIR compiler plugins: creating compiler plugins cache for project '${project.name}', " +
-                "onlyBundledPluginsEnabled=${onlyBundledPluginsEnabledRegistryValue.asBoolean()}"
-            )
             KtCompilerPluginsCache.new(project, onlyBundledPluginsEnabledRegistryValue.asBoolean())
         } else {
-            LOG.info("Kotlin FIR compiler plugins: project '${project.name}' is not trusted, compiler plugins cache is disabled")
             null
         }
     }
@@ -56,7 +52,7 @@ internal class KtCompilerPluginsProviderIdeImpl(
                     entities.any { it.isKotlinFacet() }
                 }
                 if (hasChanges) {
-                    resetPluginsCache("Kotlin facet or settings workspace model change")
+                    resetPluginsCache()
                 }
             }
         }
@@ -64,30 +60,26 @@ internal class KtCompilerPluginsProviderIdeImpl(
         messageBusConnection.subscribe(
             KotlinCompilerSettingsListener.TOPIC, object : KotlinCompilerSettingsListener {
                 override fun <T> settingsChanged(oldSettings: T?, newSettings: T?) {
-                    resetPluginsCache("Kotlin compiler settings change: old=${oldSettings?.javaClass?.name}, new=${newSettings?.javaClass?.name}")
+                    resetPluginsCache()
                 }
             })
         messageBusConnection.subscribe(
             KotlinCompilerPluginsScriptConfigurationListener.TOPIC, object : KotlinCompilerPluginsScriptConfigurationListener {
                 override fun scriptConfigurationsChanged() {
-                    LOG.info("Kotlin FIR compiler plugins: resetting script compiler plugins cache after script configuration change")
                     (pluginsCacheCachedValue.valueIfInitialized ?: return).resetScriptCache()
                 }
             })
         onlyBundledPluginsEnabledRegistryValue.addListener(
             object : RegistryValueListener {
                 override fun afterValueChanged(value: RegistryValue) {
-                    resetPluginsCache("Registry '${value.key}' changed to ${value.asBoolean()}")
+                    resetPluginsCache()
                 }
             }, this
         )
     }
 
     override fun <T : Any> getRegisteredExtensions(module: KaModule, extensionType: ExtensionPointDescriptor<T>): List<T> {
-        val pluginsCache = pluginsCacheCachedValue.value ?: run {
-            LOG.info("Kotlin FIR compiler plugins: no compiler plugins cache available while requesting ${extensionType.name}")
-            return emptyList()
-        }
+        val pluginsCache = pluginsCacheCachedValue.value ?: return emptyList()
         return pluginsCache.getRegisteredExtensions(
             module = module,
             extensionType = extensionType
@@ -95,10 +87,7 @@ internal class KtCompilerPluginsProviderIdeImpl(
     }
 
     override fun isPluginOfTypeRegistered(module: KaModule, pluginType: CompilerPluginType): Boolean {
-        val pluginsCache = pluginsCacheCachedValue.value ?: run {
-            LOG.info("Kotlin FIR compiler plugins: no compiler plugins cache available while checking plugin type $pluginType")
-            return false
-        }
+        val pluginsCache = pluginsCacheCachedValue.value ?: return false
         return pluginsCache.isPluginOfTypeRegistered(
             module = module,
             pluginType = pluginType
@@ -106,7 +95,7 @@ internal class KtCompilerPluginsProviderIdeImpl(
     }
 
     override fun dispose() {
-        resetPluginsCache("provider disposal")
+        resetPluginsCache()
     }
 
     /**
@@ -119,17 +108,15 @@ internal class KtCompilerPluginsProviderIdeImpl(
      *
      * Otherwise, race conditions similar to KTIJ-37664 may occur.
      */
-    private fun resetPluginsCache(reason: String) {
-        LOG.info("Kotlin FIR compiler plugins: resetting compiler plugins cache, reason=$reason")
+    private fun resetPluginsCache() {
         val cache = pluginsCacheCachedValue.dropSynchronously()
         cache?.dispose()
     }
 
     companion object {
-        private val LOG = logger<KtCompilerPluginsProviderIdeImpl>()
-
         fun getInstance(project: Project): KtCompilerPluginsProviderIdeImpl {
             return KotlinCompilerPluginsProvider.getInstance(project) as KtCompilerPluginsProviderIdeImpl
         }
     }
 }
+

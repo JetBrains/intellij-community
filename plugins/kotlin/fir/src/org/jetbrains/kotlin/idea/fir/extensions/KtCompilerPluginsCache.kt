@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.analysis.api.platform.projectStructure.areCompilerPl
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.create
@@ -51,7 +52,6 @@ import org.jetbrains.kotlin.scripting.compiler.plugin.impl.makeScriptCompilerArg
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.util.ServiceLoaderLite
 import java.io.File
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Optional
 import java.util.concurrent.ConcurrentMap
@@ -94,15 +94,11 @@ class KtCompilerPluginsCache private constructor(
         module: KaModule,
         extensionType: ExtensionPointDescriptor<T>
     ): List<T> {
-        if (!module.areCompilerPluginsSupported()) {
-            LOG.debug("Kotlin FIR compiler plugins: compiler plugins are not supported for ${module.describeForCompilerPluginLog()}")
-            return emptyList()
-        }
+        if (!module.areCompilerPluginsSupported()) return emptyList()
         val classLoader = pluginsClassLoader
         return when (module) {
             is KaSourceModule -> {
                 val registrarForModule = registrarForSourceModule
-                LOG.debug("Kotlin FIR compiler plugins: requesting ${extensionType.name} extensions for ${module.describeForCompilerPluginLog()}")
                 module.getExtensionsForModule(classLoader, registrarForModule, module, extensionType)
             }
 
@@ -110,7 +106,6 @@ class KtCompilerPluginsCache private constructor(
                 val registrarForModule = registrarForScriptModule.value
                 val cacheKey = module.file.virtualFile.getOriginalOrDelegateFileOrSelf()
 
-                LOG.debug("Kotlin FIR compiler plugins: requesting ${extensionType.name} extensions for ${module.describeForCompilerPluginLog()}, cacheKey=${cacheKey.path}")
                 module.getExtensionsForModule(classLoader, registrarForModule, cacheKey, extensionType)
             }
 
@@ -124,29 +119,10 @@ class KtCompilerPluginsCache private constructor(
         cacheKey: K,
         extensionType: ExtensionPointDescriptor<T>
     ): List<T> {
-        val wasCached = registrarForModule.containsKey(cacheKey)
         val extensionStorage = registrarForModule.computeIfAbsent(cacheKey) {
-            LOG.info("Kotlin FIR compiler plugins: cache miss for ${describeForCompilerPluginLog()}; computing extension storage")
             Optional.ofNullable(computeExtensionStorage(classLoader, this))
-        }.orNull() ?: run {
-            LOG.info("Kotlin FIR compiler plugins: no extension storage for ${describeForCompilerPluginLog()}, cacheHit=$wasCached")
-            return emptyList()
-        }
-        if (wasCached) {
-            LOG.debug("Kotlin FIR compiler plugins: cache hit for ${describeForCompilerPluginLog()}")
-        }
-        val registrars = extensionStorage.registeredExtensions[extensionType] ?: run {
-            LOG.info(
-                """
-                |Kotlin FIR compiler plugins: extension storage for ${describeForCompilerPluginLog()} does not contain ${extensionType.name}
-                |registeredExtensionTypes:${extensionStorage.registeredExtensions.keys.map { it.name }.formatForCompilerPluginLog()}
-                """.trimMargin()
-            )
-            return emptyList()
-        }
-        LOG.info(
-            "Kotlin FIR compiler plugins: returning ${registrars.size} ${extensionType.name} extensions for ${describeForCompilerPluginLog()}"
-        )
+        }.orNull() ?: return emptyList()
+        val registrars = extensionStorage.registeredExtensions[extensionType] ?: return emptyList()
         @Suppress("UNCHECKED_CAST") return registrars as List<T>
     }
 
@@ -156,92 +132,35 @@ class KtCompilerPluginsCache private constructor(
         module: KaModule
     ): CompilerPluginRegistrar.ExtensionStorage? {
         val compilerArguments = when (module) {
-            is KaSourceModule -> module.openapiModule.getCompilerArguments().also {
-                LOG.info("Kotlin FIR compiler plugins: source module arguments class is ${it::class.qualifiedName} for ${module.describeForCompilerPluginLog()}")
-            }
+            is KaSourceModule -> module.openapiModule.getCompilerArguments()
             is KaScriptModule -> {
-                val scriptDefinition = module.file.findScriptDefinition() ?: run {
-                    LOG.info("Kotlin FIR compiler plugins: no script definition for ${module.describeForCompilerPluginLog()}")
-                    return null
-                }
+                val scriptDefinition = module.file.findScriptDefinition() ?: return null
                 val scriptConfiguration = scriptDefinition.compilationConfiguration
 
-                val providedOptions = scriptConfiguration[ScriptCompilationConfiguration.compilerOptions] ?: run {
-                    LOG.info("Kotlin FIR compiler plugins: script definition for ${module.describeForCompilerPluginLog()} has no compiler options")
-                    return null
-                }
-                makeScriptCompilerArguments(providedOptions).also {
-                    LOG.info(
-                        """
-                        |Kotlin FIR compiler plugins: script arguments created for ${module.describeForCompilerPluginLog()}
-                        |providedOptions:${providedOptions.toList().formatForCompilerPluginLog()}
-                        """.trimMargin()
-                    )
-                }
+                val providedOptions = scriptConfiguration[ScriptCompilationConfiguration.compilerOptions] ?: return null
+                makeScriptCompilerArguments(providedOptions)
             }
 
             else -> {
-                LOG.info("Kotlin FIR compiler plugins: unsupported module type ${module::class.qualifiedName}")
                 return null
             }
         }
-        LOG.info(
-            """
-            |Kotlin FIR compiler plugins: compiler arguments for ${module.describeForCompilerPluginLog()}
-            |pluginClasspaths:${compilerArguments.pluginClasspaths.toList().formatForCompilerPluginLog()}
-            |pluginOptions:${compilerArguments.pluginOptions.toList().formatForCompilerPluginLog()}
-            """.trimMargin()
-        )
-        val pluginClasspaths = collectSubstitutedPluginClasspaths(
-            project,
-            onlyBundledPluginsEnabled,
-            listOf(compilerArguments),
-            "extension storage for ${module.describeForCompilerPluginLog()}"
-        ).map { it.toFile() }
-        if (pluginClasspaths.isEmpty()) {
-            LOG.info("Kotlin FIR compiler plugins: no substituted plugin classpaths for ${module.describeForCompilerPluginLog()}")
-            return null
-        }
+        val pluginClasspaths = collectSubstitutedPluginClasspaths(project, onlyBundledPluginsEnabled, listOf(compilerArguments)).map { it.toFile() }
+        if (pluginClasspaths.isEmpty()) return null
+
+        val logger = logger<KtCompilerPluginsProviderIdeImpl>()
 
         ProgressManager.checkCanceled()
 
         val pluginRegistrars =
-            LOG.runAndLogException { ServiceLoaderLite.loadImplementations<CompilerPluginRegistrar>(pluginClasspaths, classLoader) }
-                ?.takeIf { it.isNotEmpty() } ?: run {
-                LOG.warn(
-                    """
-                    |Kotlin FIR compiler plugins: ServiceLoader found no CompilerPluginRegistrar implementations for ${module.describeForCompilerPluginLog()}
-                    |pluginClasspaths:${pluginClasspaths.map { it.path }.formatForCompilerPluginLog()}
-                    """.trimMargin()
-                )
-                return null
-            }
-        LOG.info(
-            """
-            |Kotlin FIR compiler plugins: loaded compiler plugin registrars for ${module.describeForCompilerPluginLog()}
-            |pluginRegistrars:${pluginRegistrars.map { it::class.qualifiedName }.formatForCompilerPluginLog()}
-            """.trimMargin()
-        )
+            logger.runAndLogException { ServiceLoaderLite.loadImplementations<CompilerPluginRegistrar>(pluginClasspaths, classLoader) }
+                ?.takeIf { it.isNotEmpty() } ?: return null
 
         ProgressManager.checkCanceled()
 
-        val commandLineProcessors = LOG.runAndLogException {
+        val commandLineProcessors = logger.runAndLogException {
             ServiceLoaderLite.loadImplementations<CommandLineProcessor>(pluginClasspaths, classLoader)
-        } ?: run {
-            LOG.warn(
-                """
-                |Kotlin FIR compiler plugins: failed to load command line processors for ${module.describeForCompilerPluginLog()}
-                |pluginClasspaths:${pluginClasspaths.map { it.path }.formatForCompilerPluginLog()}
-                """.trimMargin()
-            )
-            return null
-        }
-        LOG.info(
-            """
-            |Kotlin FIR compiler plugins: loaded command line processors for ${module.describeForCompilerPluginLog()}
-            |commandLineProcessors:${commandLineProcessors.map { it::class.qualifiedName }.formatForCompilerPluginLog()}
-            """.trimMargin()
-        )
+        } ?: return null
 
         ProgressManager.checkCanceled()
 
@@ -260,7 +179,7 @@ class KtCompilerPluginsCache private constructor(
                     putIfNotNull(JVMConfigurationKeys.OUTPUT_DIRECTORY, outputUrl?.let { File(it) })
                 }
 
-                processCompilerPluginsOptions(this, compilerArguments.pluginOptions.toList(), commandLineProcessors)
+                processCompilerPluginsOptions(this, compilerArguments.pluginOptions?.toList(), commandLineProcessors)
             }
 
         val storage = CompilerPluginRegistrar.ExtensionStorage()
@@ -269,20 +188,10 @@ class KtCompilerPluginsCache private constructor(
 
             with(pluginRegistrar) {
                 try {
-                    LOG.info(
-                        "Kotlin FIR compiler plugins: registering extensions from ${pluginRegistrar::class.qualifiedName} " +
-                        "for ${module.describeForCompilerPluginLog()}"
-                    )
                     val configuration = KotlinFirCompilerPluginConfigurationForIdeProvider.getCompilerConfigurationWithCustomOptions(
                         pluginRegistrar, compilerConfiguration
                     ) ?: compilerConfiguration
                     storage.registerExtensions(configuration)
-                    LOG.info(
-                        """
-                        |Kotlin FIR compiler plugins: registered extension types after ${pluginRegistrar::class.qualifiedName}
-                        |registeredExtensionTypes:${storage.registeredExtensions.keys.map { it.name }.formatForCompilerPluginLog()}
-                        """.trimMargin()
-                    )
                 } catch (e: ProcessCanceledException) {
                     throw e
                 } catch (e: Throwable) {
@@ -315,22 +224,7 @@ class KtCompilerPluginsCache private constructor(
             val pluginsClassLoader: UrlClassLoader = UrlClassLoader.build().apply {
                 parent(KaModule::class.java.classLoader)
                 val compilerArguments = ModuleManager.getInstance(project).modules.map { it.getCompilerArguments() }
-                LOG.info(
-                    "Kotlin FIR compiler plugins: creating cache for project '${project.name}', " +
-                    "onlyBundledPluginsEnabled=$onlyBundledPluginsEnabled, modules=${compilerArguments.size}"
-                )
-                val pluginClasspaths = collectSubstitutedPluginClasspaths(
-                    project,
-                    onlyBundledPluginsEnabled,
-                    compilerArguments,
-                    "project classloader initialization"
-                )
-                LOG.info(
-                    """
-                    |Kotlin FIR compiler plugins: classloader files
-                    |files:${pluginClasspaths.map { it.toString() }.formatForCompilerPluginLog()}
-                    """.trimMargin()
-                )
+                val pluginClasspaths = collectSubstitutedPluginClasspaths(project, onlyBundledPluginsEnabled, compilerArguments)
                 files(pluginClasspaths)
             }.get()
             return KtCompilerPluginsCache(
@@ -360,35 +254,17 @@ class KtCompilerPluginsCache private constructor(
         private fun CommonCompilerArguments.getOriginalPluginClasspaths(project: Project): List<Path> {
             val pluginClassPaths = this.pluginClasspaths
 
-            if (pluginClassPaths.isEmpty()) return emptyList()
+            if (pluginClassPaths.isNullOrEmpty()) return emptyList()
 
             val layoutService = KotlinPluginLayoutService.getInstance(project)
 
             val pathMacroManager = PathMacroManager.getInstance(project)
-            val expandedPluginClassPaths = pluginClassPaths.mapNotNull { pluginClassPath ->
-                pathMacroManager.expandPath(pluginClassPath).also { expandedPath ->
-                    if (expandedPath == null) {
-                        LOG.warn("Kotlin FIR compiler plugins: path macro expansion returned null for '$pluginClassPath'")
-                    }
-                }
-            }
-            LOG.info(
-                """
-                |Kotlin FIR compiler plugins: original plugin classpaths from ${this::class.qualifiedName}
-                |raw:${pluginClassPaths.toList().formatForCompilerPluginLog()}
-                |expanded:${expandedPluginClassPaths.formatForCompilerPluginLog()}
-                """.trimMargin()
-            )
+            val expandedPluginClassPaths = pluginClassPaths.map { pathMacroManager.expandPath(it) }
 
-            return expandedPluginClassPaths.mapNotNull { expandedPath ->
+            return expandedPluginClassPaths.mapNotNull {
                 runCatching {
-                    layoutService.resolveRelativeToRemoteKotlinc(Path.of(expandedPath))
-                }.getOrLogException(LOG).also { resolvedPath ->
-                    LOG.info(
-                        "Kotlin FIR compiler plugins: resolved plugin classpath '$expandedPath' to '$resolvedPath', " +
-                        "exists=${resolvedPath?.let(Files::exists)}, readable=${resolvedPath?.let(Files::isReadable)}"
-                    )
-                }
+                    layoutService.resolveRelativeToRemoteKotlinc(Path.of(it))
+                }.getOrLogException(LOG)
             }
         }
 
@@ -401,18 +277,9 @@ class KtCompilerPluginsCache private constructor(
             ProgressManager.checkCanceled()
 
             val bundledPlugin = KotlinBundledFirCompilerPluginProvider.provideBundledPluginJar(project, userSuppliedPluginJar)
-            if (bundledPlugin != null) {
-                LOG.info("Kotlin FIR compiler plugins: substituted '$userSuppliedPluginJar' with bundled '$bundledPlugin'")
-                return bundledPlugin
-            }
+            if (bundledPlugin != null) return bundledPlugin
 
-            if (onlyBundledPluginsEnabled) {
-                LOG.warn("Kotlin FIR compiler plugins: filtered non-bundled compiler plugin jar '$userSuppliedPluginJar'")
-                return null
-            }
-
-            LOG.info("Kotlin FIR compiler plugins: keeping user-supplied compiler plugin jar '$userSuppliedPluginJar'")
-            return userSuppliedPluginJar
+            return userSuppliedPluginJar.takeUnless { onlyBundledPluginsEnabled }
         }
 
         /**
@@ -425,33 +292,15 @@ class KtCompilerPluginsCache private constructor(
         private fun collectSubstitutedPluginClasspaths(
             project: Project,
             onlyBundledPluginsEnabled: Boolean,
-            compilerArguments: List<CommonCompilerArguments>,
-            logContext: String,
+            compilerArguments: List<CommonCompilerArguments>
         ): List<Path> {
-            val combinedOriginalClasspaths = compilerArguments.asSequence().flatMap { it.getOriginalPluginClasspaths(project) }.distinct().toList()
-            LOG.info(
-                """
-                |Kotlin FIR compiler plugins: collected original plugin classpaths for $logContext, onlyBundledPluginsEnabled=$onlyBundledPluginsEnabled
-                |classpaths:${combinedOriginalClasspaths.map { it.toString() }.formatForCompilerPluginLog()}
-                """.trimMargin()
-            )
+            val combinedOriginalClasspaths = compilerArguments.asSequence().flatMap { it.getOriginalPluginClasspaths(project) }.distinct()
 
             val substitutedClasspaths = combinedOriginalClasspaths.mapNotNull { userSuppliedPluginJar ->
                 substitutePluginJar(project, onlyBundledPluginsEnabled, userSuppliedPluginJar)
             }.distinct()
 
-            val result = substitutedClasspaths.toList()
-            LOG.info(
-                """
-                |Kotlin FIR compiler plugins: substituted plugin classpaths for $logContext
-                |classpaths:${result.map { it.toString() }.formatForCompilerPluginLog()}
-                """.trimMargin()
-            )
-            if (combinedOriginalClasspaths.isNotEmpty() && result.isEmpty()) {
-                LOG.warn("Kotlin FIR compiler plugins: all compiler plugin jars were lost for $logContext")
-            }
-
-            return result
+            return substitutedClasspaths.toList()
         }
 
         @Suppress("MISSING_DEPENDENCY_SUPERCLASS_IN_TYPE_ARGUMENT")
@@ -459,15 +308,5 @@ class KtCompilerPluginsCache private constructor(
             return KotlinFacet.get(this)?.configuration?.settings?.mergedCompilerArguments
                 ?: KotlinCommonCompilerArgumentsHolder.getInstance(project).settings
         }
-
-        @OptIn(KaExperimentalApi::class)
-        private fun KaModule.describeForCompilerPluginLog(): String = when (this) {
-            is KaSourceModule -> "source module '${openapiModule.name}' ($sourceModuleKind)"
-            is KaScriptModule -> "script module '${file.virtualFile.path}'"
-            else -> "${this::class.qualifiedName}"
-        }
-
-        private fun Iterable<*>.formatForCompilerPluginLog(): String = toList().takeIf { it.isNotEmpty() }
-            ?.joinToString(separator = "\n", prefix = "\n") { "|  - $it" } ?: "\n|  <empty>"
     }
 }

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.extensions
 
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -45,33 +44,14 @@ interface KotlinBundledFirCompilerPluginProvider {
     }
 
     companion object {
-        private val LOG = logger<KotlinBundledFirCompilerPluginProvider>()
-
         private val EP_NAME: ExtensionPointName<KotlinBundledFirCompilerPluginProvider> =
             ExtensionPointName.create("org.jetbrains.kotlin.bundledFirCompilerPluginProvider")
 
         fun provideBundledPluginJar(project: Project, originalPluginJar: Path): Path? {
-            val providers = EP_NAME.extensionList
-            LOG.info(
-                """
-                |Kotlin FIR compiler plugins: looking for bundled substitution for '$originalPluginJar'
-                |providers:${providers.map { it::class.qualifiedName }.formatForCompilerPluginLog()}
-                """.trimMargin()
-            )
-            for (provider in providers) {
+            return EP_NAME.extensionList.firstNotNullOfOrNull {
                 ProgressManager.checkCanceled()
-                val bundledJar = provider.provideBundledPluginJar(project, originalPluginJar)
-                LOG.info(
-                    "Kotlin FIR compiler plugins: bundled provider ${provider::class.qualifiedName} " +
-                    "returned '$bundledJar' for '$originalPluginJar'"
-                )
-                if (bundledJar != null) return bundledJar
+                it.provideBundledPluginJar(project, originalPluginJar)
             }
-            LOG.info("Kotlin FIR compiler plugins: no bundled substitution found for '$originalPluginJar'")
-            return null
         }
-
-        private fun Iterable<*>.formatForCompilerPluginLog(): String = toList().takeIf { it.isNotEmpty() }
-            ?.joinToString(separator = "\n", prefix = "\n") { "|  - $it" } ?: "\n|  <empty>"
     }
 }
