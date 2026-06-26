@@ -17,12 +17,18 @@ import com.intellij.ide.dnd.DnDTarget
 import com.intellij.ide.dnd.DropActionHandler
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.awt.RelativeRectangle
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.job
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -92,6 +98,33 @@ class AgentPromptImageDropSupportTest {
 
     assertThat(dndManager.targetFor(child)).isNotNull
     assertThat(dndManager.targetFor(nestedChild)).isNotNull
+  }
+
+  @Test
+  fun cancellingDialogDndScopeRemovesTargetsAndContainerListeners() {
+    val root = JPanel()
+    val child = JPanel()
+    root.add(child)
+    val dndManager = RecordingDnDManager()
+    ApplicationManager.getApplication().replaceService(DnDManager::class.java, dndManager, disposable)
+    @Suppress("RAW_SCOPE_CREATION")
+    val coroutineScope = CoroutineScope(SupervisorJob())
+    installAgentPromptDialogImageDropSupport(root, dropHandler = { true }, coroutineScope = coroutineScope)
+
+    assertThat(dndManager.targetFor(root)).isNotNull
+    assertThat(dndManager.targetFor(child)).isNotNull
+
+    runBlocking {
+      coroutineScope.coroutineContext.job.cancelAndJoin()
+    }
+
+    assertThat(dndManager.targetFor(root)).isNull()
+    assertThat(dndManager.targetFor(child)).isNull()
+
+    val lateChild = JPanel()
+    root.add(lateChild)
+
+    assertThat(dndManager.targetFor(lateChild)).isNull()
   }
 
   @Test
@@ -294,7 +327,7 @@ class AgentPromptImageDropSupportTest {
   }
 }
 
-private class RecordingDnDManager : DnDManager() {
+internal class RecordingDnDManager : DnDManager() {
   private val registeredTargets = LinkedHashMap<JComponent, DnDTarget>()
 
   fun targetFor(component: JComponent): DnDTarget? = registeredTargets[component]
@@ -307,6 +340,9 @@ private class RecordingDnDManager : DnDManager() {
 
   override fun registerTarget(target: DnDTarget, component: JComponent, parentDisposable: Disposable) {
     registeredTargets[component] = target
+    Disposer.register(parentDisposable) {
+      unregisterTarget(target, component)
+    }
   }
 
   override fun unregisterTarget(target: DnDTarget?, component: JComponent?) {

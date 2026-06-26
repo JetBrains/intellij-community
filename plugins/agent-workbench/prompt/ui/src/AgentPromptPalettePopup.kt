@@ -25,8 +25,10 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import java.awt.Component
@@ -181,6 +183,7 @@ internal class AgentPromptPaletteContent(
   @JvmField val existingTaskController: AgentPromptExistingTaskController,
   @JvmField val sessionController: AgentPromptPaletteSessionController,
   @JvmField val sessionScope: CoroutineScope,
+  @JvmField val imageDropSupportScope: CoroutineScope,
   @JvmField val swingDisposable: Disposable,
 ) {
   private var disposed: Boolean = false
@@ -190,12 +193,25 @@ internal class AgentPromptPaletteContent(
       return
     }
     disposed = true
-    sessionController.onHostClosed()
-    view.headerToolbar.targetComponent = null
-    view.footerPinToolbar.targetComponent = null
-    rootPanel.parent?.remove(rootPanel)
-    Disposer.dispose(swingDisposable)
-    sessionScope.cancel(reason)
+    imageDropSupportScope.cancel(reason)
+    try {
+      sessionController.onHostClosed()
+    }
+    finally {
+      try {
+        view.headerToolbar.targetComponent = null
+        view.footerPinToolbar.targetComponent = null
+        rootPanel.parent?.remove(rootPanel)
+      }
+      finally {
+        try {
+          Disposer.dispose(swingDisposable)
+        }
+        finally {
+          sessionScope.cancel(reason)
+        }
+      }
+    }
   }
 }
 
@@ -221,85 +237,105 @@ internal fun createAgentPromptPaletteContent(
   var providerSelectorRef: AgentPromptProviderSelector? = null
   var sessionControllerRef: AgentPromptPaletteSessionController? = null
   val swingDisposable = Disposer.newDisposable("AgentPromptPaletteContent.swing")
-  val promptArea = AgentPromptTextField(
-    project = project,
-    completionProvider = AgentPromptClaudeSlashCompletionProvider(
-      selectedProvider = { providerSelectorRef?.selectedProvider?.bridge?.provider },
-      resolveWorkingProjectPaths = {
-        resolveWorkingProjectPathsForCompletion(
-          project = project,
-          invocationData = invocationData,
-          launcherProvider = launcherProvider,
-          sessionController = sessionControllerRef,
-        )
-      },
-      resolveCodexSkillEntries = { sessionControllerRef?.codexSkillCompletionEntriesForCompletion().orEmpty() },
-    ),
-  )
-  promptArea.setDisposedWith(swingDisposable)
+  val imageDropSupportScope = createAgentPromptImageDropSupportScope(sessionScope)
+  try {
+    val promptArea = AgentPromptTextField(
+      project = project,
+      completionProvider = AgentPromptClaudeSlashCompletionProvider(
+        selectedProvider = { providerSelectorRef?.selectedProvider?.bridge?.provider },
+        resolveWorkingProjectPaths = {
+          resolveWorkingProjectPathsForCompletion(
+            project = project,
+            invocationData = invocationData,
+            launcherProvider = launcherProvider,
+            sessionController = sessionControllerRef,
+          )
+        },
+        resolveCodexSkillEntries = { sessionControllerRef?.codexSkillCompletionEntriesForCompletion().orEmpty() },
+      ),
+    )
+    promptArea.setDisposedWith(swingDisposable)
 
-  val suggestions = AgentPromptSuggestionsComponent { candidate -> sessionControllerRef?.applySuggestedPrompt(candidate) }
-  val contextChips = AgentPromptContextChipsComponent { entry -> sessionControllerRef?.removeContextEntry(entry) }
-  val view = createAgentPromptPaletteView(
-    promptArea = promptArea,
-    suggestionsPanel = suggestions.component,
-    contextChipsPanel = contextChips.component,
-    pinned = { sessionControllerRef?.isPinned == true },
-    onPromptLibraryClicked = { sessionControllerRef?.showPromptLibraryChooser() },
-    onExistingTaskSelected = { selected -> sessionControllerRef?.onExistingTaskSelected(selected) },
-    onPinClicked = { sessionControllerRef?.togglePin() },
-    hostMode = hostMode,
-  )
-  val providerSelector = AgentPromptProviderSelector(
-    invocationData = invocationData,
-    headerControls = view.headerControls,
-    providersProvider = providersProvider,
-    sessionsMessageResolver = sessionsMessageResolver,
-    asyncRefreshScope = sessionScope,
-    onProviderOptionsChanged = { sessionControllerRef?.onProviderOptionsChanged() },
-    onProviderSelectionChanged = { sessionControllerRef?.onProviderSelectionChanged() },
-  )
-  providerSelectorRef = providerSelector
-  val existingTaskController = AgentPromptExistingTaskController(
-    existingTaskListModel = view.existingTaskListModel,
-    existingTaskList = view.existingTaskList,
-    sessionScope = sessionScope,
-    sessionsMessageResolver = sessionsMessageResolver,
-    onStateChanged = { sessionControllerRef?.onExistingTaskStateChanged() },
-  )
-  val suggestionController = AgentPromptSuggestionController(
-    sessionScope = sessionScope,
-    onSuggestionsUpdated = suggestions::render,
-  )
-  val sessionController = AgentPromptPaletteSessionController(
-    project = project,
-    invocationData = invocationData,
-    promptArea = promptArea,
-    view = view,
-    contextChips = contextChips,
-    providerSelector = providerSelector,
-    existingTaskController = existingTaskController,
-    suggestionController = suggestionController,
-    contextResolverService = contextResolverService,
-    uiStateService = uiStateService,
-    launcherProvider = launcherProvider,
-    closeHost = closeHost,
-    isHostActive = isHostActive,
-    revalidateHost = revalidateHost,
-    hostMode = hostMode,
-    sessionScope = sessionScope,
-  )
-  sessionControllerRef = sessionController
-  return AgentPromptPaletteContent(
-    rootPanel = view.rootPanel,
-    promptArea = promptArea,
-    view = view,
-    providerSelector = providerSelector,
-    existingTaskController = existingTaskController,
-    sessionController = sessionController,
-    sessionScope = sessionScope,
-    swingDisposable = swingDisposable,
-  )
+    val suggestions = AgentPromptSuggestionsComponent { candidate -> sessionControllerRef?.applySuggestedPrompt(candidate) }
+    val contextChips = AgentPromptContextChipsComponent { entry -> sessionControllerRef?.removeContextEntry(entry) }
+    val view = createAgentPromptPaletteView(
+      promptArea = promptArea,
+      suggestionsPanel = suggestions.component,
+      contextChipsPanel = contextChips.component,
+      pinned = { sessionControllerRef?.isPinned == true },
+      onPromptLibraryClicked = { sessionControllerRef?.showPromptLibraryChooser() },
+      onExistingTaskSelected = { selected -> sessionControllerRef?.onExistingTaskSelected(selected) },
+      onPinClicked = { sessionControllerRef?.togglePin() },
+      hostMode = hostMode,
+    )
+    val providerSelector = AgentPromptProviderSelector(
+      invocationData = invocationData,
+      headerControls = view.headerControls,
+      providersProvider = providersProvider,
+      sessionsMessageResolver = sessionsMessageResolver,
+      asyncRefreshScope = sessionScope,
+      onProviderOptionsChanged = { sessionControllerRef?.onProviderOptionsChanged() },
+      onProviderSelectionChanged = { sessionControllerRef?.onProviderSelectionChanged() },
+    )
+    providerSelectorRef = providerSelector
+    val existingTaskController = AgentPromptExistingTaskController(
+      existingTaskListModel = view.existingTaskListModel,
+      existingTaskList = view.existingTaskList,
+      sessionScope = sessionScope,
+      sessionsMessageResolver = sessionsMessageResolver,
+      onStateChanged = { sessionControllerRef?.onExistingTaskStateChanged() },
+    )
+    val suggestionController = AgentPromptSuggestionController(
+      sessionScope = sessionScope,
+      onSuggestionsUpdated = suggestions::render,
+    )
+    val sessionController = AgentPromptPaletteSessionController(
+      project = project,
+      invocationData = invocationData,
+      promptArea = promptArea,
+      view = view,
+      contextChips = contextChips,
+      providerSelector = providerSelector,
+      existingTaskController = existingTaskController,
+      suggestionController = suggestionController,
+      contextResolverService = contextResolverService,
+      uiStateService = uiStateService,
+      launcherProvider = launcherProvider,
+      closeHost = closeHost,
+      isHostActive = isHostActive,
+      revalidateHost = revalidateHost,
+      hostMode = hostMode,
+      sessionScope = sessionScope,
+      imageDropSupportScope = imageDropSupportScope,
+    )
+    sessionControllerRef = sessionController
+    return AgentPromptPaletteContent(
+      rootPanel = view.rootPanel,
+      promptArea = promptArea,
+      view = view,
+      providerSelector = providerSelector,
+      existingTaskController = existingTaskController,
+      sessionController = sessionController,
+      sessionScope = sessionScope,
+      imageDropSupportScope = imageDropSupportScope,
+      swingDisposable = swingDisposable,
+    )
+  }
+  catch (error: Throwable) {
+    try {
+      imageDropSupportScope.cancel("Agent prompt palette content creation failed", error)
+    }
+    finally {
+      Disposer.dispose(swingDisposable)
+    }
+    throw error
+  }
+}
+
+@Suppress("RAW_SCOPE_CREATION")
+private fun createAgentPromptImageDropSupportScope(sessionScope: CoroutineScope): CoroutineScope {
+  val parentJob = sessionScope.coroutineContext[Job]
+  return CoroutineScope(sessionScope.coroutineContext + SupervisorJob(parentJob) + CoroutineName("Agent prompt image drop support"))
 }
 
 private fun resolveWorkingProjectPathsForCompletion(

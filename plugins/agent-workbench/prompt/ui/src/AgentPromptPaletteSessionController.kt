@@ -74,6 +74,7 @@ internal class AgentPromptPaletteSessionController(
   private val revalidateHost: () -> Unit,
   private val hostMode: AgentPromptPaletteHostMode,
   private val sessionScope: CoroutineScope,
+  private val imageDropSupportScope: CoroutineScope,
 ) {
   private val contextState = AgentPromptPaletteContextState()
   private val draftState = AgentPromptPaletteDraftState()
@@ -95,7 +96,7 @@ internal class AgentPromptPaletteSessionController(
       invocationData = invocationData,
       promptArea = promptArea,
       view = view,
-      sessionScope = sessionScope,
+      imageDropSupportScope = imageDropSupportScope,
       contextResolverService = contextResolverService,
       contextChips = contextChips,
       launcherProvider = launcherProvider,

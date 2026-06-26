@@ -5,6 +5,7 @@ import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
+import com.intellij.agent.workbench.prompt.ui.context.RecordingDnDManager
 import com.intellij.agent.workbench.prompt.core.AgentPromptContainerLauncher
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextResolverService
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextContributorBridge
@@ -26,19 +27,31 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.agent.workbench.settings.AgentSessionProviderSettingsService
+import com.intellij.ide.dnd.DnDManager
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ui.EmptyIcon
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -46,6 +59,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
 import javax.swing.JComponent
+import javax.swing.JPanel
 
 @TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
@@ -239,10 +253,61 @@ class AgentPromptPaletteSessionControllerTest {
     }
   }
 
+  @Test
+  fun contentDisposalReleasesImageDropTargetsBeforeSessionScopeCompletes(@TestDisposable disposable: Disposable) {
+    val dndManager = RecordingDnDManager()
+    ApplicationManager.getApplication().replaceService(DnDManager::class.java, dndManager, disposable)
+    val releaseSessionBlocker = CompletableDeferred<Unit>()
+    val sessionScope = createBlockedSessionTestScope()
+    val sessionBlocker = sessionScope.launch(start = CoroutineStart.UNDISPATCHED) {
+      withContext(NonCancellable) {
+        releaseSessionBlocker.await()
+      }
+    }
+    var fixture: SessionControllerFixture? = null
+    try {
+      runInEdtAndWait {
+        val createdFixture = createSessionControllerFixture(sessionScope = sessionScope)
+        fixture = createdFixture
+        createdFixture.controller.initialize()
+        createdFixture.controller.installHandlers()
+      }
+      val createdFixture = checkNotNull(fixture)
+
+      assertThat(dndManager.targetFor(createdFixture.view.rootPanel)).isNotNull
+
+      runInEdtAndWait {
+        createdFixture.dispose()
+      }
+
+      assertThat(dndManager.targetFor(createdFixture.view.rootPanel)).isNull()
+      assertThat(sessionScope.coroutineContext.job.isCompleted).isFalse()
+
+      val lateChild = JPanel()
+      runInEdtAndWait {
+        createdFixture.view.rootPanel.add(lateChild)
+      }
+
+      assertThat(dndManager.targetFor(lateChild)).isNull()
+    }
+    finally {
+      releaseSessionBlocker.complete(Unit)
+      runBlocking {
+        sessionBlocker.cancelAndJoin()
+      }
+      fixture?.let { createdFixture ->
+        runInEdtAndWait {
+          createdFixture.dispose()
+        }
+      }
+    }
+  }
+
   private fun createSessionControllerFixture(
     providerPreferences: AgentPromptLauncherBridge.ProviderPreferences = AgentPromptLauncherBridge.ProviderPreferences(),
     hostMode: AgentPromptPaletteHostMode = AgentPromptPaletteHostMode.POPUP,
     revalidateHost: () -> Unit = {},
+    sessionScope: CoroutineScope = createTestSessionScope(),
   ): SessionControllerFixture {
     val project = ProjectManager.getInstance().defaultProject
     val providers = listOf(
@@ -257,8 +322,6 @@ class AgentPromptPaletteSessionControllerTest {
       providers.associate { provider -> provider.provider to true }
     )
 
-    @Suppress("RAW_SCOPE_CREATION")
-    val sessionScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     val launcher = RecordingPromptLauncher(providerPreferences)
     val sessionsMessageResolver = AgentPromptSessionsMessageResolver(AgentPromptPaletteSessionControllerTest::class.java.classLoader)
     val invocationData = testInvocationData(project)
@@ -285,6 +348,12 @@ class AgentPromptPaletteSessionControllerTest {
       launcher = launcher,
     )
   }
+
+  @Suppress("RAW_SCOPE_CREATION")
+  private fun createTestSessionScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+
+  @Suppress("RAW_SCOPE_CREATION")
+  private fun createBlockedSessionTestScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
   private fun existingTaskTabIndex(view: AgentPromptPaletteView): Int {
     for (index in 0 until view.tabbedPane.tabCount) {
