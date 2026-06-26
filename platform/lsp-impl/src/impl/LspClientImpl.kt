@@ -264,11 +264,11 @@ class LspClientImpl internal constructor(
         }
         logWarn("Failed to start LSP server", exToLog)
 
-        val lspServerManager = ReadAction.computeBlocking<LspClientManagerImpl?, Throwable> {
+        val manager = ReadAction.computeBlocking<LspClientManagerImpl?, Throwable> {
           if (!project.isDisposed) LspClientManagerImpl.getInstanceImpl(project) else null
         }
         val text = (if (e is LspInitializationException) "$e\nCaused by:\n" else "") + exToLog.stackTraceToString()
-        lspServerManager?.handleMaybeUnexpectedServerStop(this, text)
+        manager?.handleMaybeUnexpectedServerStop(this, text)
       }
     }
   }
