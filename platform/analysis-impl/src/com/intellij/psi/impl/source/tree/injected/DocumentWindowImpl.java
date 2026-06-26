@@ -202,7 +202,7 @@ public final class DocumentWindowImpl extends UserDataHolderBase implements Disp
   @Override
   public int getLineNumber(int offset) {
     int lineNumber = 0;
-    String hostText = myDelegate.getText();
+    CharSequence hostText = myDelegate.getImmutableCharSequence();
     synchronized (myLock) {
       for (PsiLanguageInjectionHost.Shred shred : myShreds) {
         String prefix = shred.getPrefix();
