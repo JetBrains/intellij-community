@@ -14,7 +14,6 @@ import com.intellij.platform.ai.agent.codex.sessions.backend.toAgentThreadActivi
 import com.intellij.platform.ai.agent.codex.sessions.resolveProjectDirectoryFromPath
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.session.AgentSessionThreadOutline
-import com.intellij.platform.ai.agent.filewatch.agentWorkbenchImmediateFileChangeFlow
 import com.intellij.platform.ai.agent.json.filebacked.FileBackedSessionChangeSet
 import com.intellij.platform.ai.agent.json.filebacked.createFileBackedSessionChangeFlow
 import com.intellij.platform.ai.agent.json.filebacked.toFileBackedSessionPathKey
@@ -46,7 +45,6 @@ internal class CodexRolloutSessionBackend(
   private val codexHomeProvider: () -> Path = { Path.of(System.getProperty("user.home"), ".codex") },
   rolloutChangeSource: (() -> Flow<FileBackedSessionChangeSet>)? = null,
   private val trailingRefreshDelayMs: Long = CODEX_ROLLOUT_TRAILING_REFRESH_DELAY_MS,
-  private val immediateFileChangeFlow: (Collection<Path>) -> Flow<Path> = { paths -> agentWorkbenchImmediateFileChangeFlow(paths) },
 ) : CodexSessionBackend {
   private val parser = CodexRolloutParser()
   private val threadIndex = CodexRolloutThreadIndex(codexHomeProvider = codexHomeProvider, parseRollout = parser::parse)
@@ -62,15 +60,19 @@ internal class CodexRolloutSessionBackend(
 
   override val updates: Flow<Unit> = rolloutUpdates.map {}
 
-  fun activeThreadUpdateEvents(path: String, threadId: String): Flow<AgentSessionSourceUpdateEvent> {
+  fun activeThreadUpdateEvents(
+    path: String,
+    threadId: String,
+    fileChangeFlow: (Collection<Path>) -> Flow<Path>,
+  ): Flow<AgentSessionSourceUpdateEvent> {
     return flow {
       val files = withContext(Dispatchers.IO) {
         resolveActiveThreadFilePaths(path = path, threadId = threadId)
       }
       LOG.debug {
-        "Resolved Codex active rollout files for immediate watch (path=$path, threadId=$threadId, files=${files.size})"
+        "Resolved Codex active rollout files for active file watch (path=$path, threadId=$threadId, files=${files.size})"
       }
-      emitAll(immediateFileChangeFlow(files).mapNotNull { changedPath ->
+      emitAll(fileChangeFlow(files).mapNotNull { changedPath ->
         withContext(Dispatchers.IO) {
           buildActiveThreadUpdate(changedPath)
         }

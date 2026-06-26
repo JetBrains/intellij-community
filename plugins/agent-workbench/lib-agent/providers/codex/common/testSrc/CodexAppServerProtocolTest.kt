@@ -218,6 +218,41 @@ class CodexAppServerProtocolTest {
   }
 
   @Test
+  fun parsesFilesystemWatchPayloads() {
+    val watchResponse = parseResponse(
+      """
+        {
+          "path": "/work/project/.git/HEAD"
+        }
+      """.trimIndent(),
+      defaultResult = null,
+    ) { parser -> protocol.parseFsWatchResult(parser) }
+
+    assertThat(watchResponse).isNotNull
+    assertThat(watchResponse.toString()).isEqualTo("/work/project/.git/HEAD")
+
+    val changed = protocol.parseNotification(
+      """
+        {
+          "method": "fs/changed",
+          "params": {
+            "watchId": "watch-1",
+            "changedPaths": ["/work/project/.git/HEAD", "/work/project/src/Main.kt"]
+          }
+        }
+      """.trimIndent()
+    )
+
+    assertThat(changed).isNotNull
+    assertThat(changed!!.method).isEqualTo("fs/changed")
+    assertThat(changed.watchId).isEqualTo("watch-1")
+    assertThat(changed.changedPaths.map { it.toString() }).containsExactly(
+      "/work/project/.git/HEAD",
+      "/work/project/src/Main.kt",
+    )
+  }
+
+  @Test
   fun throwsAppServerErrorAndRecognizesIncludeTurnsFallback() {
     assertThatThrownBy {
       protocol.parseResponse(

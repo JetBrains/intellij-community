@@ -12,15 +12,22 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadPresentationUpdate
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import java.nio.file.Path
 
 internal class CodexRolloutRefreshHintsProvider(
   private val rolloutBackend: CodexRolloutSessionBackend = CodexRolloutSessionBackend(),
+  private val activeFileChangeFlow: (Collection<Path>) -> Flow<Path> = { emptyFlow() },
 ) : CodexRefreshHintsProvider {
   override val updateEvents: Flow<AgentSessionSourceUpdateEvent>
     get() = rolloutBackend.sessionUpdates
 
   override fun activeThreadUpdateEvents(path: String, threadId: String): Flow<AgentSessionSourceUpdateEvent> {
-    return rolloutBackend.activeThreadUpdateEvents(path = path, threadId = threadId)
+    return rolloutBackend.activeThreadUpdateEvents(
+      path = path,
+      threadId = threadId,
+      fileChangeFlow = activeFileChangeFlow,
+    )
   }
 
   override suspend fun prefetchRefreshHints(
