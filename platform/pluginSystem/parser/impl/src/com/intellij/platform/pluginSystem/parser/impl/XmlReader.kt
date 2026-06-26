@@ -155,16 +155,6 @@ private val KNOWN_KOTLIN_PLUGIN_IDS = Java11Shim.INSTANCE.copyOf(listOf(
   "org.jetbrains.kotlin.native.appcode"
 ))
 
-fun isKotlinPlugin(pluginId: String): Boolean = pluginId in KNOWN_KOTLIN_PLUGIN_IDS
-
-private val K2_ALLOWED_PLUGIN_IDS = Java11Shim.INSTANCE.copyOf(KNOWN_KOTLIN_PLUGIN_IDS + listOf(
-  "org.jetbrains.android",
-  "androidx.compose.plugins.idea",
-  "com.jetbrains.kmm",
-  "com.jetbrains.kotlin.ocswift",
-  "com.jetbrains.rider.android"
-))
-
 private fun readRootElementChild(
   consumer: PluginDescriptorFromXmlStreamConsumer,
   reader: XMLStreamReader2,
@@ -843,13 +833,11 @@ private fun readInclude(
       PluginXmlConst.INCLUDE_XPOINTER_ATTR -> pointer = reader.getAttributeValue(i)?.takeIf { !it.isEmpty() && it != allowedPointer }
       PluginXmlConst.INCLUDE_INCLUDE_IF_ATTR -> {
         LOG.warn("includeIf attribute support is disabled and has no effect anymore IJPL-215563 (plugin id=${builder.id}, location=${reader.location})")
-        checkConditionalIncludeIsSupported("includeIf", builder)
         reader.skipElement()
         return
       }
       PluginXmlConst.INCLUDE_INCLUDE_UNLESS_ATTR -> {
         LOG.warn("includeUnless attribute support is disabled and has no effect anymore IJPL-215563 (plugin id=${builder.id}, location=${reader.location})")
-        checkConditionalIncludeIsSupported("includeUnless", builder)
         reader.skipElement()
         return
       }
@@ -904,12 +892,6 @@ private fun readInclude(
   }
   else {
     throw RuntimeException("Cannot resolve $path (targetPath=$targetPath, loader=${consumer.xIncludeLoader})", readError)
-  }
-}
-
-private fun checkConditionalIncludeIsSupported(attribute: String, builder: PluginDescriptorBuilder) {
-  if (builder.id !in K2_ALLOWED_PLUGIN_IDS) {
-    throw IllegalArgumentException("$attribute of 'include' is not supported")
   }
 }
 
