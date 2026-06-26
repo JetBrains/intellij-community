@@ -107,15 +107,25 @@ class AsyncableLocalFileSystemImpl : LocalFileSystemImpl(), AsyncableFileSystem 
           ioTasksExecutor.execute(object : AbstractContentWriteTask(
             fileId, file,
             requestor,
-            modStamp, resolveTimeStamp(timeStamp),
+            modStamp, timeStamp, timeStampUpdateRequestedByCaller = (timeStamp > 0),
             myBuffer, myCount,
           ) {
             override fun write() {
               recursionGuard.set(true)
               try {
-                super@AsyncableLocalFileSystemImpl.getOutputStream(this.file, this.requestor, this.modStamp, this.timeStamp).use {
+                super@AsyncableLocalFileSystemImpl.getOutputStream(this.file, this.requestor, this.modStamp, /* timeStamp: */ -1).use {
                   it.write(content, 0, contentLength)
                 }
+              }
+              finally {
+                recursionGuard.set(false)
+              }
+            }
+
+            override fun updateLastModifiedTimeOfUnderlyingFile(lastModified: Long) {
+              recursionGuard.set(true)
+              try {
+                super@AsyncableLocalFileSystemImpl.setTimeStamp(file, lastModified)
               }
               finally {
                 recursionGuard.set(false)
@@ -344,8 +354,6 @@ class AsyncableLocalFileSystemImpl : LocalFileSystemImpl(), AsyncableFileSystem 
 
   // </editor-fold> =============================================================================================================== //
 }
-
-private fun resolveTimeStamp(timeStamp: Long): Long = if (timeStamp > 0) timeStamp else System.currentTimeMillis()
 
 /** @return fileId if the file has it, or -1 if the file has no fileId */
 private fun fileIdOf(file: VirtualFile): Int = if (file is VirtualFileWithId) file.id else -1
