@@ -246,8 +246,8 @@ internal fun scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(
       launch {
         initUiScale.join()
         appInfoDeferred.join()
-        // most of the time is consumed by loading SVG and can be done in parallel
-        span("update window icon") {
+        // Early Java2D/SVG icon rendering must not race splash peer creation.
+        span("update window icon", RawSwingDispatcher) {
           AppUIUtil.updateAppWindowIcon(JOptionPane.getRootFrame())
         }
       }

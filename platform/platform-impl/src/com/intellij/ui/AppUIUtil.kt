@@ -1,5 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+@file:OptIn(LowLevelLocalMachineAccess::class)
+
 package com.intellij.ui
 
 import com.intellij.diagnostic.ExceptionAutoReportUtil
@@ -49,7 +51,7 @@ import com.intellij.util.system.OS
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageIcon
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import sun.awt.AWTAccessor
 import java.awt.Color
 import java.awt.Component
@@ -76,15 +78,15 @@ import kotlin.io.path.absolutePathString
 import kotlin.io.path.extension
 import kotlin.math.roundToInt
 
-@OptIn(LowLevelLocalMachineAccess::class)
+private const val VENDOR_PREFIX = "jetbrains-"
+private const val MAC_DOCK_ICON_BORDER = 25
+private var appIcons: List<Image>? = null
+private val isMacDocIconSet = AtomicBoolean(false)
+
+private val LOG: Logger
+  get() = logger<AppUIUtil>()
+
 object AppUIUtil {
-  private const val VENDOR_PREFIX = "jetbrains-"
-  private const val MAC_DOCK_ICON_BORDER = 25
-  private var appIcons: List<Image>? = null
-  private val isMacDocIconSet = AtomicBoolean(false)
-
-  private val LOG: Logger get() = logger<AppUIUtil>()
-
   @JvmStatic
   fun updateAppWindowIcon(window: Window) {
     if (isWindowIconAlreadyExternallySet()) {
@@ -132,59 +134,7 @@ object AppUIUtil {
     }
   }
 
-  // returns a HiDPI-aware image
-  private fun loadAppIconImage(svgPath: String, scaleContext: ScaleContext, size: Int): Image? {
-    val pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
-    val svgData = findAppIconSvgData(svgPath, pixScale)
-    if (svgData == null) {
-      LOG.warn("Cannot load SVG application icon from $svgPath")
-      return null
-    }
-    val sysScale = scaleContext.getScale(ScaleType.SYS_SCALE).toFloat()
-    val userScale = scaleContext.getScale(ScaleType.USR_SCALE).toFloat()
-    val userSize = (size * userScale).roundToInt()
-    return loadWithSizes(listOf(userSize), svgData, sysScale).first()
-  }
-
-  private fun findAppIconSvgData(path: String, pixScale: Float): ByteArray? {
-    val loadingStart = StartUpMeasurer.getCurrentTimeIfEnabled()
-    // app icon doesn't support `dark` concept, and moreover, it cannot depend on a current LaF
-    val descriptors = createImageDescriptorList(path, isDark = false, isStroke = false, pixScale)
-    val rawPathWithoutExt = path.substring(if (path.startsWith('/')) 1 else 0, path.lastIndexOf('.'))
-    for (descriptor in descriptors) {
-      val transformedPath = descriptor.pathTransform(rawPathWithoutExt, "svg")
-      val resourceLoadStart = StartUpMeasurer.getCurrentTimeIfEnabled()
-      val data = ResourceUtil.getResourceAsBytes(transformedPath, AppUIUtil::class.java.classLoader, true) ?: continue
-      if (resourceLoadStart != -1L) {
-        IconLoadMeasurer.loadFromResources.end(resourceLoadStart)
-      }
-      if (loadingStart != -1L) {
-        IconLoadMeasurer.addLoading(descriptor.isSvg, loadingStart)
-      }
-      return data
-    }
-    return null
-  }
-
-  private fun addTransparentBorder(img: Image): BufferedImage {
-    val border = MAC_DOCK_ICON_BORDER
-    val width = img.getWidth(null)
-    val height = img.getHeight(null)
-    val result = @Suppress("UndesirableClassUsage") BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
-    val g = result.createGraphics()
-    try {
-      g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
-      g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
-      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      g.drawImage(img, border, border, width - 2 * border, height - 2 * border, null)
-    }
-    finally {
-      g.dispose()
-    }
-    return result
-  }
-
-  @ApiStatus.Internal
+  @Internal
   @JvmStatic
   fun isWindowIconAlreadyExternallySet(): Boolean {
     return !System.getProperty("intellij.platform.force.update.app.window.icon").toBoolean() && when (OS.CURRENT) {
@@ -205,15 +155,15 @@ object AppUIUtil {
   }
 
   @JvmStatic
-  fun loadApplicationIcon(ctx: ScaleContext, size: Int): Icon? =
-    loadAppIconImage(ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl, ctx, size)
-      ?.let { JBImageIcon(it) }
+  fun loadApplicationIcon(ctx: ScaleContext, size: Int): Icon? {
+    return loadAppIconImage(ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl, ctx, size)?.let { JBImageIcon(it) }
+  }
 
   @JvmStatic
   fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int): Icon =
     loadSmallApplicationIcon(scaleContext, size, requestReleaseIcon = !ApplicationInfoImpl.getShadowInstance().isEAP)
 
-  @ApiStatus.Internal
+  @Internal
   @JvmStatic
   fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int, requestReleaseIcon: Boolean): Icon {
     val appInfo = ApplicationInfoImpl.getShadowInstance()
@@ -410,7 +360,7 @@ object AppUIUtil {
   }
 
   @JvmStatic
-  @ApiStatus.Internal
+  @Internal
   fun loadLocalConsentsAsConsentsForEditing(): List<Consent> {
     val localConsents = LocalConsentOptions.getLocalConsents().first.toMutableList()
     if (TraceConsentManager.getInstance()?.canDisplayTraceConsent() != true) {
@@ -466,8 +416,7 @@ object AppUIUtil {
     }
   }
 
-  @JvmStatic
-  @ApiStatus.Internal
+  @Internal
   fun saveConsentsAsLocalConsents(consents: List<Consent>) {
     LocalConsentOptions.setLocalConsents(consents)
   }
@@ -481,7 +430,7 @@ object AppUIUtil {
    * The calculation in that case may involve device-dependent metrics (such as font metrics)
    * and thus should refer to a particular device in multi-monitor env.
    *
-   * Note that if after calling this method the component is added to another hierarchy bound to a different device,
+   * Note that if after calling this method, the component is added to another hierarchy bound to a different device,
    * AWT will throw `IllegalArgumentException`.
    * To avoid that, the device should be reset by calling `targetToDevice(comp, null)`.
    *
@@ -499,14 +448,6 @@ object AppUIUtil {
 
   @JvmStatic
   fun isInFullScreen(window: Window?): Boolean = window is IdeFrame && (window as IdeFrame).isInFullScreen
-
-  private fun adjustFractionalMetrics(defaultValue: Any): Any {
-    if (OS.CURRENT != OS.macOS || GraphicsEnvironment.isHeadless() || AppMode.isRemoteDevHost()) {
-      return defaultValue
-    }
-    val gc = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.defaultConfiguration
-    return if (sysScale(gc) == 1.0f) RenderingHints.VALUE_FRACTIONALMETRICS_OFF else defaultValue
-  }
 
   fun getAdjustedFractionalMetricsValue(): Any = adjustFractionalMetrics(UISettings.getPreferredFractionalMetricsValue())
 
@@ -555,50 +496,110 @@ object AppUIUtil {
       }
     }
   }
+}
 
-  @Suppress("DuplicatedCode")
-  private fun createGradientTexture(
-    graphics: Graphics,
-    colorStart: Color,
-    colorEnd: Color,
-    width: Int,
-    height: Int,
-    xStart: Int = 0,
-    yStart: Int = 0,
-    pixelsFunction: (image: BufferedImage, colorStart16: Color16, delta16: Color16, pixels: Array<Array<Color16>>) -> Unit,
-  ): TexturePaint {
-    val image = ImageUtil.createImage(graphics, width, height, BufferedImage.TYPE_INT_ARGB)
+private fun adjustFractionalMetrics(defaultValue: Any): Any {
+  if (OS.CURRENT != OS.macOS || GraphicsEnvironment.isHeadless() || AppMode.isRemoteDevHost()) {
+    return defaultValue
+  }
+  val gc = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.defaultConfiguration
+  return if (sysScale(gc) == 1.0f) RenderingHints.VALUE_FRACTIONALMETRICS_OFF else defaultValue
+}
 
-    val pixels: Array<Array<Color16>> = Array(image.height) { Array(image.width) { Color16.TRANSPARENT } }
+@Suppress("DuplicatedCode")
+private fun createGradientTexture(
+  graphics: Graphics,
+  colorStart: Color,
+  colorEnd: Color,
+  width: Int,
+  height: Int,
+  xStart: Int = 0,
+  yStart: Int = 0,
+  pixelsFunction: (image: BufferedImage, colorStart16: Color16, delta16: Color16, pixels: Array<Array<Color16>>) -> Unit,
+): TexturePaint {
+  val image = ImageUtil.createImage(graphics, width, height, BufferedImage.TYPE_INT_ARGB)
 
-    val colorStart16 = colorStart.toColor16()
-    val colorEnd16 = colorEnd.toColor16()
-    val delta16 = colorEnd16 - colorStart16
-    pixelsFunction(image, colorStart16, delta16, pixels)
+  val pixels: Array<Array<Color16>> = Array(image.height) { Array(image.width) { Color16.TRANSPARENT } }
 
-    val coefficients = doubleArrayOf(7.0 / 16, 3.0 / 16, 5.0 / 16, 1.0 / 16)
-    for (y in 0 until image.height) {
-      for (x in 0 until image.width) {
-        val oldColor: Color16 = pixels[y][x]
-        val newColor: Color = oldColor.toColor8()
-        image.setRGB(x, y, newColor.rgb)
+  val colorStart16 = colorStart.toColor16()
+  val colorEnd16 = colorEnd.toColor16()
+  val delta16 = colorEnd16 - colorStart16
+  pixelsFunction(image, colorStart16, delta16, pixels)
 
-        val error: Color16 = oldColor - newColor.toColor16()
-        if (x + 1 < image.width) {
-          pixels[y][x + 1] = pixels[y][x + 1] + error * coefficients[0]
-        }
-        if (x - 1 >= 0 && y + 1 < image.height) {
-          pixels[y + 1][x - 1] = pixels[y + 1][x - 1] + error * coefficients[1]
-        }
-        if (y + 1 < image.height) {
-          pixels[y + 1][x] = pixels[y + 1][x] + error * coefficients[2]
-        }
-        if (x + 1 < image.width && y + 1 < image.height) {
-          pixels[y + 1][x + 1] = pixels[y + 1][x + 1] + error * coefficients[3]
-        }
+  val coefficients = doubleArrayOf(7.0 / 16, 3.0 / 16, 5.0 / 16, 1.0 / 16)
+  for (y in 0 until image.height) {
+    for (x in 0 until image.width) {
+      val oldColor: Color16 = pixels[y][x]
+      val newColor: Color = oldColor.toColor8()
+      image.setRGB(x, y, newColor.rgb)
+
+      val error: Color16 = oldColor - newColor.toColor16()
+      if (x + 1 < image.width) {
+        pixels[y][x + 1] = pixels[y][x + 1] + error * coefficients[0]
+      }
+      if (x - 1 >= 0 && y + 1 < image.height) {
+        pixels[y + 1][x - 1] = pixels[y + 1][x - 1] + error * coefficients[1]
+      }
+      if (y + 1 < image.height) {
+        pixels[y + 1][x] = pixels[y + 1][x] + error * coefficients[2]
+      }
+      if (x + 1 < image.width && y + 1 < image.height) {
+        pixels[y + 1][x + 1] = pixels[y + 1][x + 1] + error * coefficients[3]
       }
     }
-
-    return TexturePaint(image, Rectangle(xStart, yStart, width, height))
   }
+
+  return TexturePaint(image, Rectangle(xStart, yStart, width, height))
+}
+
+// returns a HiDPI-aware image
+private fun loadAppIconImage(svgPath: String, scaleContext: ScaleContext, size: Int): Image? {
+  val pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
+  val svgData = findAppIconSvgData(svgPath, pixScale)
+  if (svgData == null) {
+    LOG.warn("Cannot load SVG application icon from $svgPath")
+    return null
+  }
+  val sysScale = scaleContext.getScale(ScaleType.SYS_SCALE).toFloat()
+  val userScale = scaleContext.getScale(ScaleType.USR_SCALE).toFloat()
+  val userSize = (size * userScale).roundToInt()
+  return loadWithSizes(listOf(userSize), svgData, sysScale).first()
+}
+
+private fun findAppIconSvgData(path: String, pixScale: Float): ByteArray? {
+  val loadingStart = StartUpMeasurer.getCurrentTimeIfEnabled()
+  // app icon doesn't support `dark` concept, and moreover, it cannot depend on a current LaF
+  val descriptors = createImageDescriptorList(path, isDark = false, isStroke = false, pixScale)
+  val rawPathWithoutExt = path.substring(if (path.startsWith('/')) 1 else 0, path.lastIndexOf('.'))
+  for (descriptor in descriptors) {
+    val transformedPath = descriptor.pathTransform(rawPathWithoutExt, "svg")
+    val resourceLoadStart = StartUpMeasurer.getCurrentTimeIfEnabled()
+    val data = ResourceUtil.getResourceAsBytes(transformedPath, AppUIUtil::class.java.classLoader, true) ?: continue
+    if (resourceLoadStart != -1L) {
+      IconLoadMeasurer.loadFromResources.end(resourceLoadStart)
+    }
+    if (loadingStart != -1L) {
+      IconLoadMeasurer.addLoading(descriptor.isSvg, loadingStart)
+    }
+    return data
+  }
+  return null
+}
+
+private fun addTransparentBorder(img: Image): BufferedImage {
+  val border = MAC_DOCK_ICON_BORDER
+  val width = img.getWidth(null)
+  val height = img.getHeight(null)
+  val result = @Suppress("UndesirableClassUsage") BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+  val g = result.createGraphics()
+  try {
+    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
+    g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+    g.drawImage(img, border, border, width - 2 * border, height - 2 * border, null)
+  }
+  finally {
+    g.dispose()
+  }
+  return result
 }

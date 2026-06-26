@@ -433,7 +433,6 @@ data class VMOptions(
 
   fun enforceSplash() {
     addLine("-Dsplash=true")
-    addLine("-Didea.show.splash.longer=true")
   }
 
   @Suppress("SpellCheckingInspection")
