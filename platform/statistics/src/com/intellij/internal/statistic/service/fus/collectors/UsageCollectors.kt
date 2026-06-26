@@ -20,8 +20,10 @@ object UsageCollectors {
   @JvmField
   val COUNTER_EP_NAME: ExtensionPointName<CounterUsageCollectorEP> = ExtensionPointName("com.intellij.statistics.counterUsagesCollector")
 
-  internal fun getApplicationCollectors(invoker: UsagesCollectorConsumer,
-                                        allowedOnStartupOnly: Boolean): Collection<ApplicationUsagesCollector> {
+  internal fun getApplicationCollectors(
+    invoker: UsagesCollectorConsumer,
+    allowedOnStartupOnly: Boolean,
+  ): Collection<ApplicationUsagesCollector> {
     if (isCalledFromPlugin(invoker)) {
       return emptyList()
     }
@@ -32,14 +34,14 @@ object UsageCollectors {
 
     return APPLICATION_EP_NAME.extensionList.asSequence()
       .filter { it.allowOnStartup == true }
-      .map { it.collector as ApplicationUsagesCollector }
+      .mapNotNull { it.getCollectorIfApplicable() as ApplicationUsagesCollector? }
       .filter { isValidCollector(it) }
       .toList()
   }
 
   private fun getAllApplicationCollectors(): Collection<ApplicationUsagesCollector> {
     return APPLICATION_EP_NAME.extensionList.asSequence()
-      .map { it.collector as ApplicationUsagesCollector }
+      .mapNotNull { it.getCollectorIfApplicable() as ApplicationUsagesCollector? }
       .filter { isValidCollector(it) }
       .toList()
   }
@@ -50,7 +52,7 @@ object UsageCollectors {
     }
 
     return PROJECT_EP_NAME.extensionList.asSequence()
-      .map { it.collector as ProjectUsagesCollector }
+      .mapNotNull { it.getCollectorIfApplicable() as ProjectUsagesCollector? }
       .filter { isValidCollector(it) }
       .toList()
   }
@@ -64,6 +66,6 @@ object UsageCollectors {
   }
 
   private fun isCalledFromPlugin(invoker: UsagesCollectorConsumer): Boolean {
-    return invoker.javaClass.getClassLoader() is PluginAwareClassLoader
+    return invoker.javaClass.classLoader is PluginAwareClassLoader
   }
 }

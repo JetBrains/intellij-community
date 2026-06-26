@@ -2,18 +2,22 @@
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class UsageCollectorBean implements PluginAware {
+  private static final Object NOT_APPLICABLE = new Object();
+
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private PluginDescriptor myPluginDescriptor;
 
-  private volatile FeatureUsagesCollector instance;
+  private volatile Object instance;
 
   @Attribute("implementation")
   @RequiredElement
@@ -32,15 +36,33 @@ public final class UsageCollectorBean implements PluginAware {
   }
 
   public @NotNull FeatureUsagesCollector getCollector() {
-    if (instance != null) return instance;
+    FeatureUsagesCollector collector = getCollectorIfApplicable();
+    if (collector == null) {
+      throw new IllegalStateException("Usage collector is not applicable");
+    }
+    return collector;
+  }
+
+  @Nullable FeatureUsagesCollector getCollectorIfApplicable() {
+    Object result = instance;
+    if (result == NOT_APPLICABLE) return null;
+    if (result != null) return (FeatureUsagesCollector)result;
 
     synchronized (this) {
-      if (instance != null) return instance;
+      result = instance;
+      if (result == NOT_APPLICABLE) return null;
+      if (result != null) return (FeatureUsagesCollector)result;
 
-      //noinspection NonPrivateFieldAccessedInSynchronizedContext
-      instance = ApplicationManager.getApplication().instantiateClass(implementationClass, myPluginDescriptor);
+      try {
+        //noinspection NonPrivateFieldAccessedInSynchronizedContext
+        FeatureUsagesCollector collector = ApplicationManager.getApplication().instantiateClass(implementationClass, myPluginDescriptor);
+        instance = collector;
+        return collector;
+      }
+      catch (ExtensionNotApplicableException ignore) {
+        instance = NOT_APPLICABLE;
+        return null;
+      }
     }
-
-    return instance;
   }
 }
