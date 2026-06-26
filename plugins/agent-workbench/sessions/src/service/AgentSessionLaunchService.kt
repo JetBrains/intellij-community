@@ -9,6 +9,7 @@ package com.intellij.agent.workbench.sessions.service
 // @spec community/plugins/agent-workbench/spec/core/agent-workbench-telemetry.spec.md
 
 import com.intellij.agent.workbench.chat.AgentChatDeferredStartPhase
+import com.intellij.agent.workbench.chat.AgentChatDeferredStartContent
 import com.intellij.agent.workbench.chat.AgentChatDeferredStartState
 import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindReport
 import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindRequest
@@ -79,6 +80,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtilService
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.asContextElement
@@ -162,6 +164,7 @@ internal interface AgentSessionChatOpenExecutor {
       openedChatHandler: (suspend (Project, VirtualFile) -> Unit)?,
       threadTitle: String?,
       waitingState: AgentChatDeferredStartState,
+      deferredStartContentProvider: ((Project) -> AgentChatDeferredStartContent)?,
   ): DeferredAgentSessionChatOpenResult
 
   suspend fun completePreparingNewChat(
@@ -292,6 +295,7 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
       openedChatHandler: (suspend (Project, VirtualFile) -> Unit)?,
       threadTitle: String?,
       waitingState: AgentChatDeferredStartState,
+      deferredStartContentProvider: ((Project) -> AgentChatDeferredStartContent)?,
   ): DeferredAgentSessionChatOpenResult {
     return openAgentSessionDeferredNewChat(
       normalizedPath = normalizedPath,
@@ -304,6 +308,7 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
       openedChatHandler = openedChatHandler,
       threadTitle = threadTitle,
       waitingState = waitingState,
+      deferredStartContentProvider = deferredStartContentProvider,
     )
   }
 
@@ -934,6 +939,7 @@ class AgentSessionLaunchService internal constructor(
     threadTitle: String? = null,
     waitingTitle: @Nls String,
     waitingMessage: @Nls String? = null,
+    deferredStartContentProvider: ((Project) -> AgentChatDeferredStartContent)? = null,
   ): AgentDeferredNewSessionLaunchResult {
     val resolvedLaunchProfile = launchProfileId?.let { profileId ->
       launchProfileResolver.resolveLaunchProfile(
@@ -959,6 +965,7 @@ class AgentSessionLaunchService internal constructor(
         threadTitle = threadTitle,
         waitingTitle = waitingTitle,
         waitingMessage = waitingMessage,
+        deferredStartContentProvider = deferredStartContentProvider,
       )
     }
     val resolutionRecorded = AtomicBoolean(false)
@@ -1136,6 +1143,7 @@ class AgentSessionLaunchService internal constructor(
     threadTitle: String?,
     waitingTitle: @Nls String,
     waitingMessage: @Nls String?,
+    deferredStartContentProvider: ((Project) -> AgentChatDeferredStartContent)? = null,
   ): DeferredAgentSessionChatOpenResult {
     return chatOpenExecutor.openPreparingNewChat(
       normalizedPath = normalizedPath,
@@ -1152,6 +1160,7 @@ class AgentSessionLaunchService internal constructor(
         title = waitingTitle,
         message = waitingMessage,
       ),
+      deferredStartContentProvider = deferredStartContentProvider,
     )
   }
 
@@ -1758,6 +1767,7 @@ private suspend fun openAgentSessionDeferredNewChat(
   openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
   threadTitle: String? = null,
   waitingState: AgentChatDeferredStartState,
+  deferredStartContentProvider: ((Project) -> AgentChatDeferredStartContent)? = null,
 ): DeferredAgentSessionChatOpenResult {
   val title = resolveNewSessionTitle(identity = identity, threadTitle = threadTitle)
   val dedicatedFrame = preferredDedicatedFrame ?: AgentChatOpenModeSettings.openInDedicatedFrame()
@@ -1772,6 +1782,7 @@ private suspend fun openAgentSessionDeferredNewChat(
       title = title,
       openedChatHandler = openedChatHandler,
       waitingState = waitingState,
+      deferredStartContentProvider = deferredStartContentProvider,
     )
   }
   val openProject = openOrReuseSourceProjectByPath(normalizedPath) ?: error("Project could not be opened for $normalizedPath")
@@ -1786,6 +1797,7 @@ private suspend fun openAgentSessionDeferredNewChat(
     title = title,
     openedChatHandler = openedChatHandler,
     waitingState = waitingState,
+    deferredStartContentProvider = deferredStartContentProvider,
   )
 }
 
@@ -1856,6 +1868,7 @@ private suspend fun openDeferredNewChatInDedicatedFrame(
   title: String,
   openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
   waitingState: AgentChatDeferredStartState,
+  deferredStartContentProvider: ((Project) -> AgentChatDeferredStartContent)? = null,
 ): DeferredAgentSessionChatOpenResult {
   val dedicatedProjectPath = AgentWorkbenchDedicatedFrameProjectManager.dedicatedProjectPath()
   val openProject = findOpenProject(dedicatedProjectPath)
@@ -1872,6 +1885,7 @@ private suspend fun openDeferredNewChatInDedicatedFrame(
       title = title,
       openedChatHandler = openedChatHandler,
       waitingState = waitingState,
+      deferredStartContentProvider = deferredStartContentProvider,
     )
   }
 
@@ -1899,6 +1913,7 @@ private suspend fun openDeferredNewChatInDedicatedFrame(
     title = title,
     openedChatHandler = openedChatHandler,
     waitingState = waitingState,
+    deferredStartContentProvider = deferredStartContentProvider,
   )
 }
 
@@ -1986,10 +2001,16 @@ private suspend fun openDeferredNewChatInProject(
   title: String,
   openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
   waitingState: AgentChatDeferredStartState,
+  deferredStartContentProvider: ((Project) -> AgentChatDeferredStartContent)? = null,
 ): DeferredAgentSessionChatOpenResult {
   val threadId = resolveAgentSessionId(identity)
   val pendingMetadata = resolvePendingSessionMetadata(identity = identity, launchSpec = launchSpec)
   val provider = parseAgentSessionIdentity(identity)?.provider
+  val deferredStartContent = deferredStartContentProvider?.let { provider ->
+    withContext(Dispatchers.EDT) {
+      provider(project)
+    }
+  }
   val file = openChat(
     project = project,
     projectPath = projectPath,
@@ -2010,6 +2031,7 @@ private suspend fun openDeferredNewChatInProject(
     generationSettings = generationSettings,
     persistSnapshot = false,
     deferredStartState = waitingState,
+    deferredStartContent = deferredStartContent,
     startupLaunchSpec = launchSpec,
   )
   focusProjectWindow(project)

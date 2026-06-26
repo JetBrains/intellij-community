@@ -20,6 +20,7 @@ import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
 import com.intellij.agent.workbench.sessions.service.AgentSessionChatOpenExecutor
 import com.intellij.agent.workbench.sessions.service.DeferredAgentSessionChatOpenResult
+import com.intellij.agent.workbench.chat.AgentChatDeferredStartContent
 import com.intellij.agent.workbench.chat.AgentChatDeferredStartState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -473,6 +474,7 @@ internal class RecordingChatOpenExecutor(
       openedChatHandler: (suspend (Project, VirtualFile) -> Unit)?,
       threadTitle: String?,
       waitingState: AgentChatDeferredStartState,
+      deferredStartContentProvider: ((Project) -> AgentChatDeferredStartContent)?,
   ): DeferredAgentSessionChatOpenResult {
     val request = OpenPreparingNewChatRequest(
       normalizedPath = normalizedPath,
@@ -483,6 +485,7 @@ internal class RecordingChatOpenExecutor(
       generationSettings = generationSettings,
       preferredDedicatedFrame = preferredDedicatedFrame,
       waitingState = waitingState,
+      hasDeferredStartContentProvider = deferredStartContentProvider != null,
     )
     val callIndex = openPreparingNewChatCalls.incrementAndGet()
     lastOpenPreparingNewChatRequest.set(request)
@@ -578,6 +581,7 @@ internal data class OpenPreparingNewChatRequest(
   @JvmField val generationSettings: AgentPromptGenerationSettings,
   @JvmField val preferredDedicatedFrame: Boolean?,
   @JvmField val waitingState: AgentChatDeferredStartState,
+  @JvmField val hasDeferredStartContentProvider: Boolean,
 )
 
 data class NewThreadPromptLaunchObservation(

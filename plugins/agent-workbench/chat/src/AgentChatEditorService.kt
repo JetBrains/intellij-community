@@ -246,6 +246,7 @@ suspend fun openChat(
     generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
     persistSnapshot: Boolean = true,
     deferredStartState: AgentChatDeferredStartState? = null,
+    deferredStartContent: AgentChatDeferredStartContent? = null,
     startupLaunchSpec: AgentSessionTerminalLaunchSpec? = null,
 ): VirtualFile {
   val manager = FileEditorManagerEx.getInstanceExAsync(project)
@@ -321,6 +322,9 @@ suspend fun openChat(
     "subAgentId=$subAgentId, existing=${existing != null}, title=$threadTitle)"
   }
   val file = existing ?: agentChatVirtualFileSystem().getOrCreateFile(snapshot)
+  if (deferredStartContent != null) {
+    file.replaceDeferredStartContent(deferredStartContent)
+  }
   if (existing != null) {
     val oldLaunchMode = existing.launchMode
     existing.updateRestoreOnRestart(persistSnapshot)

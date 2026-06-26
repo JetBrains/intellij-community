@@ -1,10 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.chat
 
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
@@ -23,20 +20,6 @@ class AgentChatDeferredStartContent(
     disposed = true
     disposeContent()
   }
-}
-
-@ApiStatus.Internal
-fun installAgentChatDeferredStartContent(
-  project: Project,
-  file: VirtualFile,
-  content: AgentChatDeferredStartContent,
-): Boolean {
-  val chatFile = file as? AgentChatVirtualFile ?: return false
-  chatFile.replaceDeferredStartContent(content)
-  FileEditorManager.getInstance(project).getEditors(chatFile).forEach { editor ->
-    (editor as? AgentChatFileEditor)?.refreshForFileStateChange()
-  }
-  return true
 }
 
 private val AGENT_CHAT_DEFERRED_START_CONTENT_KEY: Key<AgentChatDeferredStartContent> =
