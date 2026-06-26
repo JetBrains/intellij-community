@@ -34,8 +34,6 @@ public class EclipseXmlProfileReader extends DefaultHandler implements EclipseXm
     SAXParser parser;
     try {
       spf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-      spf.setFeature("http://xml.org/sax/features/external-general-entities", false);
-      spf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
       parser = spf.newSAXParser();
       parser.parse(input, this);
     }
