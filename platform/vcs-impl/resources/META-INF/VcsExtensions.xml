@@ -40,6 +40,8 @@
                     serviceImplementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl" preload="notHeadless"/>
     <registryKey key="vcs.watch.roots" defaultValue="false" restartRequired="true"
                  description="Add VCS repository roots as recursive VFS watch roots"/>
+    <registryKey key="vcs.changelist.move.changes.on.create" defaultValue="true" restartRequired="false"
+                 description="Move the currently selected changes into a changelist right after it is created"/>
     <dependencyCollector kind="vcs" implementation="com.intellij.openapi.vcs.impl.MissingVcsPluginAdvertiser"/>
     <!--suppress LightServiceMigrationXML - see DefaultProjectStoreTest (IDE needs to know correct Storage without service being loaded) -->
     <projectService serviceImplementation="com.intellij.openapi.vcs.impl.OptionsAndConfirmationsHolder"/>
@@ -443,4 +445,3 @@
               topic="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$Listener"/>
   </projectListeners>
 </idea-plugin>
-
