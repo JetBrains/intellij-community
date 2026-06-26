@@ -115,12 +115,12 @@ internal abstract class Lsp4jServerConnector protected constructor(private val l
       }
     }
 
-    initializeServer(onSuccess)
+    initializeLsp4jServer(onSuccess)
   }
 
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
-  private fun initializeServer(onSuccess: (InitializeResult) -> Unit) {
+  private fun initializeLsp4jServer(onSuccess: (InitializeResult) -> Unit) {
     logger.debug("$descriptor: initializing LSP server")
 
     var error: Throwable? = null
