@@ -411,7 +411,6 @@ public final class DebuggerUIUtil {
 
     final JComponent mainPanel = propertiesPanel.getMainPanel();
     final Balloon balloon = showBreakpointEditor(project, mainPanel, point, component,
-                                                 () -> notifyBreakpointAttachments(breakpoint),
                                                  showMoreOptions,
                                                  breakpoint);
     propertiesPanel.setBalloon(balloon);
@@ -453,7 +452,6 @@ public final class DebuggerUIUtil {
                                              final JComponent mainPanel,
                                              final Point whereToShow,
                                              final JComponent component,
-                                             final @Nullable Runnable onEditorDisposed,
                                              final @Nullable Runnable showMoreOptions,
                                              Object breakpoint) {
     final BreakpointEditor editor = new BreakpointEditor();
@@ -482,12 +480,6 @@ public final class DebuggerUIUtil {
     }
 
     Balloon balloon = builder.createBalloon();
-
-    if (onEditorDisposed != null) {
-      Disposer.register(balloon, () -> {
-        onEditorDisposed.run();
-      });
-    }
 
     editor.setDelegate(new BreakpointEditor.Delegate() {
       @Override
