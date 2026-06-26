@@ -91,23 +91,18 @@ internal suspend fun testRefreshActivities(
     .mapValues { (_, update) -> checkNotNull(update.activityReport.rowActivity) }
 }
 
-internal suspend fun testRefreshCodexHints(
+internal suspend fun testRolloutCodexHints(
   projectDir: Path,
   codexHome: Path,
   threadIds: List<String>,
-  appServerHints: Map<String, CodexRefreshHints> = emptyMap(),
 ): CodexRefreshHints {
   val projectPath = projectDir.toString()
   val knownThreadIdsByPath = mapOf(projectPath to threadIds.toSet())
-  val rolloutHints = CodexRolloutRefreshHintsProvider(
+  return CodexRolloutRefreshHintsProvider(
     rolloutBackend = CodexRolloutSessionBackend(codexHomeProvider = { codexHome })
   ).prefetchRefreshHints(
     paths = listOf(projectPath),
     refreshThreadSeedsByPath = knownThreadIdsByPath.mapValues { (_, threadIds) -> threadIds.toAgentSessionRefreshThreadSeeds() },
-  )
-  return mergeCodexRefreshHints(
-    appServerHintsByPath = appServerHints,
-    rolloutHintsByPath = rolloutHints,
   ).getOrElse(projectPath) { CodexRefreshHints() }
 }
 

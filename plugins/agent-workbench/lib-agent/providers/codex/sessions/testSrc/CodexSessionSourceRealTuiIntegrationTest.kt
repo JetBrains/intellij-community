@@ -19,7 +19,7 @@ class CodexSessionSourceRealTuiIntegrationTest {
   lateinit var tempDir: Path
 
   @Test
-  fun completedRealTuiTurnUnreadHintClearsAfterReadTracking() {
+  fun completedRealTuiTurnUnreadHintIsIgnoredBySourceStatus() {
     runBlocking(Dispatchers.IO) {
       val codexBinary = requireRealCodexBinary()
       CodexRealTuiHarness(
@@ -36,7 +36,7 @@ class CodexSessionSourceRealTuiIntegrationTest {
           )
 
           val unreadHint = eventually(timeout = 30.seconds) {
-            testRefreshCodexHints(
+            testRolloutCodexHints(
               projectDir = harness.projectDir,
               codexHome = harness.codexHome,
               threadIds = listOf(threadId),
@@ -56,7 +56,7 @@ class CodexSessionSourceRealTuiIntegrationTest {
           }
 
           assertThat(hintsAfterRead)
-            .withFailMessage("Timed out waiting for read tracking to suppress passive unread rollout hint from real Codex TUI.\n%s",
+            .withFailMessage("Timed out waiting for source status to ignore passive unread rollout hint from real Codex TUI.\n%s",
                              session.diagnostics())
             .isNotNull
         }
@@ -65,7 +65,7 @@ class CodexSessionSourceRealTuiIntegrationTest {
   }
 
   @Test
-  fun inProgressRealTuiTurnKeepsProcessingWhenAppServerIsReady() {
+  fun inProgressRealTuiTurnDoesNotOverrideAppServerReadyHint() {
     runBlocking(Dispatchers.IO) {
       val codexBinary = requireRealCodexBinary()
       CodexRealTuiHarness(
@@ -88,11 +88,11 @@ class CodexSessionSourceRealTuiIntegrationTest {
 
           val hint = eventually(timeout = 30.seconds) {
             testRefreshHints(source, harness.projectDir, listOf(threadId)).activityUpdatesByThreadId[threadId]?.activityReport?.rowActivity
-              ?.takeIf { it == AgentThreadActivity.PROCESSING }
+              ?.takeIf { it == AgentThreadActivity.READY }
           }
 
           assertThat(hint)
-            .withFailMessage("Timed out waiting for PROCESSING rollout hint from real Codex TUI.\n%s", session.diagnostics())
+            .withFailMessage("Timed out waiting for READY app-server source hint with real Codex TUI rollout present.\n%s", session.diagnostics())
             .isNotNull
         }
       }
@@ -100,7 +100,7 @@ class CodexSessionSourceRealTuiIntegrationTest {
   }
 
   @Test
-  fun realTuiRequestUserInputProducesResponseRequiredNeedsInput() {
+  fun realTuiRequestUserInputDoesNotOverrideAppServerReadyHint() {
     runBlocking(Dispatchers.IO) {
       val codexBinary = requireRealCodexBinary()
       CodexRealTuiHarness(
@@ -124,25 +124,20 @@ class CodexSessionSourceRealTuiIntegrationTest {
 
           val activity = eventually(timeout = 30.seconds) {
             testRefreshHints(source, harness.projectDir, listOf(threadId)).activityUpdatesByThreadId[threadId]?.activityReport?.rowActivity
-              ?.takeIf { it == AgentThreadActivity.NEEDS_INPUT }
+              ?.takeIf { it == AgentThreadActivity.READY }
           }
-          val mergedHint = eventually(timeout = 30.seconds) {
-            testRefreshCodexHints(
+          val rolloutHint = eventually(timeout = 30.seconds) {
+            testRolloutCodexHints(
               projectDir = harness.projectDir,
               codexHome = harness.codexHome,
               threadIds = listOf(threadId),
-              appServerHints = mapOf(
-                harness.projectDir.toString() to testRefreshHintsOf(
-                  threadId to testRefreshHint(activity = AgentThreadActivity.READY, updatedAt = 100L)
-                )
-              ),
             ).activityHintsByThreadId[threadId]?.takeIf { it.activity == AgentThreadActivity.NEEDS_INPUT && it.responseRequired }
           }
 
           assertThat(activity)
-            .withFailMessage("Timed out waiting for NEEDS_INPUT source hint from real Codex TUI.\n%s", session.diagnostics())
+            .withFailMessage("Timed out waiting for READY app-server source hint with real Codex TUI rollout present.\n%s", session.diagnostics())
             .isNotNull
-          assertThat(mergedHint)
+          assertThat(rolloutHint)
             .withFailMessage("Timed out waiting for response-required NEEDS_INPUT Codex hint from real Codex TUI.\n%s",
                              session.diagnostics())
             .isNotNull

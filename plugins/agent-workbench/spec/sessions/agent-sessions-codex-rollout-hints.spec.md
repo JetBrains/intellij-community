@@ -15,7 +15,7 @@ Status: Draft
 Date: 2026-05-09
 
 ## Summary
-Codex rollout files are parsed for refresh hints only: pending/concrete tab rebinding, needs-input/activity uplift, unread done-output hints, and local integration coverage. They do not create the primary thread list.
+Codex rollout files are parsed for discovery, project-file-change evidence, cost recovery, and local integration coverage. They do not create the primary thread list and do not drive Workbench source status.
 
 ## Requirements
 - Rollout scan scope is limited to `~/.codex/sessions/**/rollout-*.jsonl`; sessions are filtered by normalized `cwd` matching the requested project/worktree path.
@@ -30,7 +30,7 @@ Codex rollout files are parsed for refresh hints only: pending/concrete tab rebi
 - Rollout review-mode and response-required needs-input hints must use current Codex rollout event shapes, including `entered_review_mode`, `exited_review_mode`, `request_user_input`, persisted `response_item` tool calls named `request_user_input`, approval events (`exec_approval_request`, `apply_patch_approval_request`, `request_permissions`, `elicitation_request`), and escalated tool-call arguments (`sandbox_permissions: require_escalated`).
   [@test] ../../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
-- Rollout hints may be consumed for pending-tab rebinding, concrete `/new` rebinding, and Codex activity projection. Rollout-discovered ids must not create persisted thread rows.
+- Rollout update events consumed by `CodexSessionSource` are discovery-only: they may trigger app-server thread refreshes and project-file refreshes, but rollout-discovered ids, activity hints, and presentation hints must not create persisted thread rows or status updates.
   [@test] ../../codex/sessions/testSrc/backend/rollout/CodexRolloutRefreshHintsProviderTest.kt
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 

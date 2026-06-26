@@ -26,7 +26,7 @@ class CodexSessionSourceRolloutIntegrationTest {
   lateinit var tempDir: Path
 
   @Test
-  fun rolloutTaskStartedAndAgentMessageKeepsProcessingWhenAppServerIsReady() {
+  fun rolloutTaskStartedAndAgentMessageDoesNotOverrideAppServerReadyHint() {
     runBlocking(Dispatchers.Default) {
       val projectDir = createProjectDir("project-processing")
       writeRollout(
@@ -49,7 +49,7 @@ class CodexSessionSourceRolloutIntegrationTest {
       )
 
       assertThat(testRefreshActivities(source, projectDir, listOf(THREAD_ID)))
-        .containsExactlyEntriesOf(mapOf(THREAD_ID to AgentThreadActivity.PROCESSING))
+        .containsExactlyEntriesOf(mapOf(THREAD_ID to AgentThreadActivity.READY))
     }
   }
 
@@ -246,7 +246,7 @@ class CodexSessionSourceRolloutIntegrationTest {
   }
 
   @Test
-  fun rolloutTaskCompleteClearsStaleAppServerProcessingRefreshHintToUnread() {
+  fun rolloutTaskCompleteDoesNotOverrideAppServerProcessingRefreshHint() {
     runBlocking(Dispatchers.Default) {
       val projectDir = createProjectDir("project-refresh-complete-unread")
       writeRollout(
@@ -271,7 +271,7 @@ class CodexSessionSourceRolloutIntegrationTest {
       )
 
       assertThat(testRefreshActivities(source, projectDir, listOf(THREAD_ID)))
-        .containsExactlyEntriesOf(mapOf(THREAD_ID to AgentThreadActivity.UNREAD))
+        .containsExactlyEntriesOf(mapOf(THREAD_ID to AgentThreadActivity.PROCESSING))
     }
   }
 
@@ -364,7 +364,7 @@ class CodexSessionSourceRolloutIntegrationTest {
   }
 
   @Test
-  fun rolloutEnteredReviewModeOverridesReadyAppServerHint() {
+  fun rolloutReviewModeDoesNotOverrideAppServerReadyHint() {
     runBlocking(Dispatchers.Default) {
       val projectDir = createProjectDir("project-review")
       writeRollout(
@@ -386,12 +386,12 @@ class CodexSessionSourceRolloutIntegrationTest {
       )
 
       assertThat(testRefreshActivities(source, projectDir, listOf(THREAD_ID)))
-        .containsExactlyEntriesOf(mapOf(THREAD_ID to AgentThreadActivity.REVIEWING))
+        .containsExactlyEntriesOf(mapOf(THREAD_ID to AgentThreadActivity.READY))
     }
   }
 
   @Test
-  fun rolloutRequestUserInputProducesNeedsInputHint() {
+  fun rolloutRequestUserInputDoesNotOverrideAppServerReadyHint() {
     runBlocking(Dispatchers.Default) {
       val projectDir = createProjectDir("project-user-input")
       writeRollout(
@@ -413,12 +413,12 @@ class CodexSessionSourceRolloutIntegrationTest {
       )
 
       assertThat(testRefreshActivities(source, projectDir, listOf(THREAD_ID)))
-        .containsExactlyEntriesOf(mapOf(THREAD_ID to AgentThreadActivity.NEEDS_INPUT))
+        .containsExactlyEntriesOf(mapOf(THREAD_ID to AgentThreadActivity.READY))
     }
   }
 
   @Test
-  fun rolloutProcessingRefreshOverridesStaleAppServerResponseRequiredHint() {
+  fun rolloutProcessingDoesNotOverrideAppServerResponseRequiredHint() {
     runBlocking(Dispatchers.Default) {
       val projectDir = createProjectDir("project-response-required")
       writeRollout(
@@ -444,7 +444,7 @@ class CodexSessionSourceRolloutIntegrationTest {
       )
 
       assertThat(testRefreshActivities(source, projectDir, listOf(THREAD_ID)))
-        .containsExactlyEntriesOf(mapOf(THREAD_ID to AgentThreadActivity.PROCESSING))
+        .containsExactlyEntriesOf(mapOf(THREAD_ID to AgentThreadActivity.NEEDS_INPUT))
     }
   }
 
