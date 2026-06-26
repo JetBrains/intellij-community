@@ -17,6 +17,7 @@ import com.intellij.util.UriUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.NonNls
 
 @State(name = "PluginUpdateSources", storages = [Storage("pluginUpdateSources.xml", roamingType = RoamingType.DISABLED)])
@@ -96,6 +97,7 @@ internal class PluginUpdateSourceServiceImpl : PluginUpdateSourceService,
   )
 }
 
+@Serializable
 @Tag("updateSource")
 internal data class Repository(
   @JvmField @Attribute("host") val hostToSerialize: @NlsSafe String,
