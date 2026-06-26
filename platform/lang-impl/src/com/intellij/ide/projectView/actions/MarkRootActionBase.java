@@ -2,6 +2,7 @@
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
+import com.intellij.ide.ui.VirtualFileAppearanceListener;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -54,6 +55,9 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
 
   protected void modifyRoots(@NotNull Module module, VirtualFile @NotNull [] files) {
     MarkRootsManager.modifyRoots(module, files, this::modifyRoots);
+    for (VirtualFile file : files) {
+      VirtualFileAppearanceListener.fireVirtualFileAppearanceChanged(file);
+    }
   }
 
   protected abstract void modifyRoots(VirtualFile file, ContentEntry entry);
