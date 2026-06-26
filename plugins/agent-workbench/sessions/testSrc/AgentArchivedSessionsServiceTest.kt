@@ -5,7 +5,10 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionCost
 import com.intellij.platform.ai.agent.core.session.AgentSessionCostKind
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
+import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
+import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
 import com.intellij.agent.workbench.sessions.service.AgentArchivedSessionsService
+import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveTransitionSuppressions
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -27,6 +30,124 @@ import kotlin.time.Duration.Companion.seconds
 @TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentArchivedSessionsServiceTest {
+  @Test
+  fun archivedRefreshPublishesLoadingAfterDelay() {
+    runBlocking(Dispatchers.Default) {
+      val job = Job(coroutineContext.job)
+
+      @Suppress("RAW_SCOPE_CREATION")
+      val scope = CoroutineScope(coroutineContext + job)
+      val provider = AgentSessionProvider.from("test-archived-loading")
+      val loadStarted = CompletableDeferred<Unit>()
+      val releaseLoad = CompletableDeferred<Unit>()
+      val sessionSource = ScriptedSessionSource(
+        provider = provider,
+        supportsArchivedThreads = true,
+        listArchivedFromOpenProject = { path, _ ->
+          if (path != PROJECT_PATH) {
+            emptyList()
+          }
+          else {
+            loadStarted.complete(Unit)
+            releaseLoad.await()
+            listOf(thread(id = "archived-1", updatedAt = 100, provider = provider).copy(archived = true))
+          }
+        },
+      )
+      val service = AgentArchivedSessionsService(
+        serviceScope = scope,
+        sessionSourcesProvider = { listOf(sessionSource) },
+        projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
+        loadingDelayMs = 300L,
+      )
+
+      try {
+        service.ensureLoaded()
+        withTimeout(6.seconds) {
+          loadStarted.await()
+        }
+
+        waitForCondition(timeoutMs = 6_000) {
+          service.snapshot().projects.firstOrNull()?.providerLoadStates?.get(provider) == AgentSessionProviderLoadState.LOADING
+        }
+
+        releaseLoad.complete(Unit)
+        waitForCondition(timeoutMs = 6_000) {
+          service.snapshot().projects.firstOrNull()?.providerLoadStates?.get(provider) == AgentSessionProviderLoadState.LOADED
+        }
+      }
+      finally {
+        job.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
+  fun archivedRefreshHidesSuppressedThreadBeforeStaleRefreshCompletes() {
+    runBlocking(Dispatchers.Default) {
+      val job = Job(coroutineContext.job)
+
+      @Suppress("RAW_SCOPE_CREATION")
+      val scope = CoroutineScope(coroutineContext + job)
+      val provider = AgentSessionProvider.from("test-archived-suppressed")
+      val archiveTransitionSuppressions = AgentSessionArchiveTransitionSuppressions()
+      val listCalls = AtomicInteger(0)
+      val secondLoadStarted = CompletableDeferred<Unit>()
+      val releaseSecondLoad = CompletableDeferred<Unit>()
+      val archivedThread = thread(id = "archived-1", updatedAt = 100, provider = provider).copy(archived = true)
+      val sessionSource = ScriptedSessionSource(
+        provider = provider,
+        supportsArchivedThreads = true,
+        listArchivedFromOpenProject = { path, _ ->
+          if (path != PROJECT_PATH) {
+            emptyList()
+          }
+          else {
+            if (listCalls.incrementAndGet() >= 2) {
+              secondLoadStarted.complete(Unit)
+              releaseSecondLoad.await()
+            }
+            listOf(archivedThread)
+          }
+        },
+      )
+      val service = AgentArchivedSessionsService(
+        serviceScope = scope,
+        sessionSourcesProvider = { listOf(sessionSource) },
+        projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
+        archiveTransitionSuppressions = archiveTransitionSuppressions,
+        loadingDelayMs = 0L,
+      )
+
+      try {
+        service.ensureLoaded()
+        waitForCondition(timeoutMs = 6_000) {
+          archivedThreadIds(service) == listOf("archived-1")
+        }
+
+        archiveTransitionSuppressions.suppressArchived(
+          ArchiveThreadTarget.Thread(path = PROJECT_PATH, provider = provider, threadId = "archived-1")
+        )
+        service.refreshIfLoaded()
+        withTimeout(6.seconds) {
+          secondLoadStarted.await()
+        }
+
+        waitForCondition(timeoutMs = 6_000) {
+          archivedThreadIds(service).isEmpty()
+        }
+
+        releaseSecondLoad.complete(Unit)
+        waitForCondition(timeoutMs = 6_000) {
+          listCalls.get() >= 2 && archivedThreadIds(service).isEmpty()
+        }
+      }
+      finally {
+        job.cancelAndJoin()
+      }
+    }
+  }
+
   @Test
   fun refreshIfLoadedQueuesRefreshWhileInitialLoadIsRunning() {
     runBlocking(Dispatchers.Default) {

@@ -3,8 +3,10 @@ package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
+import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
+import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.model.sortAgentSessionThreadsForDisplay
 
 internal data class AgentSessionLoadResult(
@@ -88,6 +90,46 @@ internal fun buildLoadingProviderLoadStates(
   return buildMap {
     providers.forEach { provider -> put(provider, AgentSessionProviderLoadState.LOADING) }
   }
+}
+
+internal fun AgentProjectSessions.withLoadingProviderLoadStates(
+  providerLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
+): AgentProjectSessions {
+  if (providerLoadStates.isEmpty()) {
+    return this
+  }
+  val providerLoadMetadata = mergeProviderLoadMetadata(
+    currentProviderLoadStates = this.providerLoadStates,
+    currentProvidersWithUnknownThreadCount = providersWithUnknownThreadCount,
+    providerLoadStateUpdates = providerLoadStates,
+    updatedProvidersWithUnknownThreadCount = emptySet(),
+  )
+  return copy(
+    errorMessage = null,
+    providerWarnings = emptyList(),
+    providerLoadStates = providerLoadMetadata.providerLoadStates,
+    providersWithUnknownThreadCount = providerLoadMetadata.providersWithUnknownThreadCount,
+  )
+}
+
+internal fun AgentWorktree.withLoadingProviderLoadStates(
+  providerLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
+): AgentWorktree {
+  if (providerLoadStates.isEmpty()) {
+    return this
+  }
+  val providerLoadMetadata = mergeProviderLoadMetadata(
+    currentProviderLoadStates = this.providerLoadStates,
+    currentProvidersWithUnknownThreadCount = providersWithUnknownThreadCount,
+    providerLoadStateUpdates = providerLoadStates,
+    updatedProvidersWithUnknownThreadCount = emptySet(),
+  )
+  return copy(
+    errorMessage = null,
+    providerWarnings = emptyList(),
+    providerLoadStates = providerLoadMetadata.providerLoadStates,
+    providersWithUnknownThreadCount = providerLoadMetadata.providersWithUnknownThreadCount,
+  )
 }
 
 internal fun mergeProviderLoadStates(

@@ -23,7 +23,6 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.frame.AGENT_SESSIONS_TOOL_WINDOW_ID
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
-import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.model.hasAnyProviderSnapshot
 import com.intellij.agent.workbench.settings.AgentSessionProviderSettingsListener
@@ -81,6 +80,8 @@ class AgentSessionRefreshService internal constructor(
   private val providerDescriptorProvider: (AgentSessionProvider) -> AgentSessionProviderDescriptor? = AgentSessionProviders::find,
   private val toolWindowVisibleFlow: StateFlow<Boolean> = MutableStateFlow(true),
   private val currentTimeMillis: () -> Long = System::currentTimeMillis,
+  private val archiveTransitionSuppressions: AgentSessionArchiveTransitionSuppressions = AgentSessionArchiveTransitionSuppressions(),
+  private val loadingDelayMs: Long = DEFAULT_AGENT_SESSION_LOADING_DELAY_MS,
 ) {
   @Suppress("unused")
   constructor(serviceScope: CoroutineScope) : this(
@@ -93,6 +94,7 @@ class AgentSessionRefreshService internal constructor(
     stateStore = service<AgentSessionsStateStore>(),
     warmState = service<AgentSessionWarmStateService>(),
     toolWindowVisibleFlow = service<AgentSessionsToolWindowVisibilityService>().visibleFlow,
+    archiveTransitionSuppressions = service<AgentSessionArchiveTransitionSuppressions>(),
     subscribeToProjectLifecycle = true,
   )
 
@@ -116,6 +118,8 @@ class AgentSessionRefreshService internal constructor(
     openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinder,
     clearOpenConcreteNewThreadRebindAnchors = clearOpenConcreteNewThreadRebindAnchors,
     providerDescriptorProvider = providerDescriptorProvider,
+    archiveTransitionSuppressions = archiveTransitionSuppressions,
+    loadingDelayMs = loadingDelayMs,
   )
 
   private val visibleCostHydrationSupport = AgentSessionVisibleCostHydrationSupport(
@@ -267,14 +271,6 @@ class AgentSessionRefreshService internal constructor(
 
   fun appendProviderUnavailableWarning(path: String, provider: AgentSessionProvider) {
     loadingCoordinator.appendProviderUnavailableWarning(path = path, provider = provider)
-  }
-
-  fun suppressArchivedTarget(target: ArchiveThreadTarget) {
-    loadingCoordinator.suppressArchivedTarget(target)
-  }
-
-  fun unsuppressArchivedTarget(target: ArchiveThreadTarget) {
-    loadingCoordinator.unsuppressArchivedTarget(target)
   }
 
   fun loadProjectThreadsOnDemand(path: String) {

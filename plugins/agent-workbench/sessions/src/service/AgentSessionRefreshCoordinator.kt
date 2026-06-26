@@ -30,7 +30,6 @@ import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
-import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.settings.AgentSessionProviderSettingsService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
@@ -78,15 +77,17 @@ internal class AgentSessionRefreshCoordinator(
   private val clearOpenConcreteNewThreadRebindAnchors: (
     AgentSessionProvider,
     Map<String, List<AgentChatConcreteTabSnapshot>>,
-  ) -> Int = ::clearOpenConcreteAgentChatNewThreadRebindAnchors,
+    ) -> Int = ::clearOpenConcreteAgentChatNewThreadRebindAnchors,
+  private val archiveTransitionSuppressions: AgentSessionArchiveTransitionSuppressions = AgentSessionArchiveTransitionSuppressions(),
+  loadingDelayMs: Long = DEFAULT_AGENT_SESSION_LOADING_DELAY_MS,
 ) {
   private val refreshMutex = Mutex()
-  private val archiveSuppressionSupport = AgentSessionArchiveSuppressionSupport()
+  private val pathLoadController = AgentSessionPathLoadController(loadingDelayMs)
   private val providerRefreshSupportByProvider = LinkedHashMap<AgentSessionProvider, AgentSessionThreadRebindSupport>()
   private val providerRefreshSupportLock = Any()
   private val threadLoadSupport = AgentSessionThreadLoadSupport(
     sessionSourcesProvider = sessionSourcesProvider,
-    applyArchiveSuppressions = archiveSuppressionSupport::apply,
+    applyArchiveSuppressions = archiveTransitionSuppressions::applyActive,
     resolveErrorMessage = { provider, throwable ->
       resolveErrorMessage(providerDescriptorProvider = providerDescriptorProvider, provider = provider, t = throwable)
     },
@@ -100,6 +101,7 @@ internal class AgentSessionRefreshCoordinator(
     stateStore = stateStore,
     threadLoadSupport = threadLoadSupport,
     sessionSourcesProvider = sessionSourcesProvider,
+    loadingDelayMs = loadingDelayMs,
   )
   private val refreshBootstrapBuilder = AgentSessionRefreshBootstrapBuilder(
     projectEntriesProvider = projectEntriesProvider,
@@ -111,7 +113,7 @@ internal class AgentSessionRefreshCoordinator(
     sessionSourcesProvider = sessionSourcesProvider,
     stateStore = stateStore,
     contentRepository = contentRepository,
-    archiveSuppressionSupport = archiveSuppressionSupport,
+    archiveTransitionSuppressions = archiveTransitionSuppressions,
     refreshSupportProvider = ::refreshSupportFor,
     resolveProviderWarningMessage = { provider, throwable ->
       resolveProviderWarningMessage(providerDescriptorProvider = providerDescriptorProvider, provider = provider, t = throwable)
@@ -285,73 +287,47 @@ internal class AgentSessionRefreshCoordinator(
       }
 
       val sessionSources = sessionSourcesProvider()
-      val cliAvailabilityByProvider = resolveCliAvailabilityByProvider(sessionSources)
-      val availableSessionSources = sessionSources.filter { source -> cliAvailabilityByProvider[source.provider] != false }
-      val loadingProviderLoadStates = buildLoadingProviderLoadStates(availableSessionSources.map { source -> source.provider })
-      markProviderLoadStatesLoading(bootstrap = bootstrap, providerLoadStates = loadingProviderLoadStates)
+      var loadingProviderLoadStates = buildLoadingProviderLoadStates(sessionSources.map { source -> source.provider })
+      pathLoadController.runWithDelayedLoading(
+        providerLoadStates = { loadingProviderLoadStates },
+        publishLoading = { providerLoadStates -> markProviderLoadStatesLoading(bootstrap = bootstrap, providerLoadStates = providerLoadStates) },
+      ) {
+        val cliAvailabilityByProvider = resolveCliAvailabilityByProvider(sessionSources)
+        val availableSessionSources = sessionSources.filter { source -> cliAvailabilityByProvider[source.provider] != false }
+        loadingProviderLoadStates = buildLoadingProviderLoadStates(availableSessionSources.map { source -> source.provider })
 
-      val prefetchedByProvider = coroutineScope {
-        availableSessionSources.map { source ->
-          async {
-            source.provider to try {
-              source.prefetchThreads(bootstrap.loadPaths.toList())
+        val prefetchedByProvider = coroutineScope {
+          availableSessionSources.map { source ->
+            async {
+              source.provider to try {
+                source.prefetchThreads(bootstrap.loadPaths.toList())
+              }
+              catch (_: Throwable) {
+                emptyMap()
+              }
             }
-            catch (_: Throwable) {
-              emptyMap()
-            }
-          }
-        }.awaitAll().toMap()
-      }
+          }.awaitAll().toMap()
+        }
 
-      coroutineScope {
-        for ((entryPath, _, entryProject, _, _, worktreeEntries) in bootstrap.entries) {
-          val normalizedEntryPath = normalizeAgentWorkbenchPath(entryPath)
-          launch {
-            loadOpenPathThreads(
-              target = RefreshThreadLoadTarget(
-                normalizedPath = normalizedEntryPath,
-                originalPath = entryPath,
-                project = entryProject,
-                updateLoadingFailed = {
-                  stateStore.updateProject(normalizedEntryPath) { project -> project.withLoadingProvidersFailed() }
-                },
-                updateResult = { result, includeErrorMessage ->
-                  stateStore.updateProject(normalizedEntryPath) { project ->
-                    project.withRefreshResult(
-                      normalizedPath = normalizedEntryPath,
-                      result = result,
-                      includeErrorMessage = includeErrorMessage,
-                      applyArchiveSuppressions = archiveSuppressionSupport::apply,
-                    )
-                  }
-                },
-              ),
-              loadPaths = bootstrap.loadPaths,
-              availableSessionSources = availableSessionSources,
-              prefetchedByProvider = prefetchedByProvider,
-              cliAvailabilityByProvider = cliAvailabilityByProvider,
-            )
-          }
-          for ((worktreePath, _, _, worktreeProject) in worktreeEntries) {
-            val normalizedWorktreePath = normalizeAgentWorkbenchPath(worktreePath)
+        coroutineScope {
+          for ((entryPath, _, entryProject, _, _, worktreeEntries) in bootstrap.entries) {
+            val normalizedEntryPath = normalizeAgentWorkbenchPath(entryPath)
             launch {
               loadOpenPathThreads(
                 target = RefreshThreadLoadTarget(
-                  normalizedPath = normalizedWorktreePath,
-                  originalPath = worktreePath,
-                  project = worktreeProject,
+                  normalizedPath = normalizedEntryPath,
+                  originalPath = entryPath,
+                  project = entryProject,
                   updateLoadingFailed = {
-                    stateStore.updateWorktree(normalizedEntryPath, normalizedWorktreePath) { worktree ->
-                      worktree.withLoadingProvidersFailed()
-                    }
+                    stateStore.updateProject(normalizedEntryPath) { project -> project.withLoadingProvidersFailed() }
                   },
                   updateResult = { result, includeErrorMessage ->
-                    stateStore.updateWorktree(normalizedEntryPath, normalizedWorktreePath) { worktree ->
-                      worktree.withRefreshResult(
-                        normalizedPath = normalizedWorktreePath,
+                    stateStore.updateProject(normalizedEntryPath) { project ->
+                      project.withRefreshResult(
+                        normalizedPath = normalizedEntryPath,
                         result = result,
                         includeErrorMessage = includeErrorMessage,
-                        applyArchiveSuppressions = archiveSuppressionSupport::apply,
+                        applyArchiveSuppressions = archiveTransitionSuppressions::filterActiveSnapshot,
                       )
                     }
                   },
@@ -361,6 +337,37 @@ internal class AgentSessionRefreshCoordinator(
                 prefetchedByProvider = prefetchedByProvider,
                 cliAvailabilityByProvider = cliAvailabilityByProvider,
               )
+            }
+            for ((worktreePath, _, _, worktreeProject) in worktreeEntries) {
+              val normalizedWorktreePath = normalizeAgentWorkbenchPath(worktreePath)
+              launch {
+                loadOpenPathThreads(
+                  target = RefreshThreadLoadTarget(
+                    normalizedPath = normalizedWorktreePath,
+                    originalPath = worktreePath,
+                    project = worktreeProject,
+                    updateLoadingFailed = {
+                      stateStore.updateWorktree(normalizedEntryPath, normalizedWorktreePath) { worktree ->
+                        worktree.withLoadingProvidersFailed()
+                      }
+                    },
+                    updateResult = { result, includeErrorMessage ->
+                      stateStore.updateWorktree(normalizedEntryPath, normalizedWorktreePath) { worktree ->
+                        worktree.withRefreshResult(
+                          normalizedPath = normalizedWorktreePath,
+                          result = result,
+                          includeErrorMessage = includeErrorMessage,
+                          applyArchiveSuppressions = archiveTransitionSuppressions::filterActiveSnapshot,
+                        )
+                      }
+                    },
+                  ),
+                  loadPaths = bootstrap.loadPaths,
+                  availableSessionSources = availableSessionSources,
+                  prefetchedByProvider = prefetchedByProvider,
+                  cliAvailabilityByProvider = cliAvailabilityByProvider,
+                )
+              }
             }
           }
         }
@@ -432,16 +439,7 @@ internal class AgentSessionRefreshCoordinator(
       var changed = false
       val nextProjects = state.projects.map { project ->
         val updatedProject = if (project.path in bootstrap.loadPaths) {
-          val providerLoadMetadata = mergeProviderLoadMetadata(
-            currentProviderLoadStates = project.providerLoadStates,
-            currentProvidersWithUnknownThreadCount = project.providersWithUnknownThreadCount,
-            providerLoadStateUpdates = providerLoadStates,
-            updatedProvidersWithUnknownThreadCount = emptySet(),
-          )
-          val updated = project.copy(
-            providerLoadStates = providerLoadMetadata.providerLoadStates,
-            providersWithUnknownThreadCount = providerLoadMetadata.providersWithUnknownThreadCount,
-          )
+          val updated = project.withLoadingProviderLoadStates(providerLoadStates)
           if (updated != project) {
             changed = true
           }
@@ -455,16 +453,7 @@ internal class AgentSessionRefreshCoordinator(
           if (worktree.path !in bootstrap.loadPaths) {
             return@map worktree
           }
-          val providerLoadMetadata = mergeProviderLoadMetadata(
-            currentProviderLoadStates = worktree.providerLoadStates,
-            currentProvidersWithUnknownThreadCount = worktree.providersWithUnknownThreadCount,
-            providerLoadStateUpdates = providerLoadStates,
-            updatedProvidersWithUnknownThreadCount = emptySet(),
-          )
-          val updated = worktree.copy(
-            providerLoadStates = providerLoadMetadata.providerLoadStates,
-            providersWithUnknownThreadCount = providerLoadMetadata.providersWithUnknownThreadCount,
-          )
+          val updated = worktree.withLoadingProviderLoadStates(providerLoadStates)
           if (updated != worktree) {
             changed = true
           }
@@ -474,14 +463,6 @@ internal class AgentSessionRefreshCoordinator(
       }
       if (changed) state.copy(projects = nextProjects, lastUpdatedAt = System.currentTimeMillis()) else state
     }
-  }
-
-  fun suppressArchivedTarget(target: ArchiveThreadTarget) {
-    archiveSuppressionSupport.suppress(target)
-  }
-
-  fun unsuppressArchivedTarget(target: ArchiveThreadTarget) {
-    archiveSuppressionSupport.unsuppress(target)
   }
 
   fun loadProjectThreadsOnDemand(path: String) {

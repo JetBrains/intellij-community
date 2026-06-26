@@ -55,6 +55,7 @@ class AgentSessionArchiveService internal constructor(
   private val contentRepository: AgentSessionContentRepository,
   private val archiveChatCleanup: suspend (projectPath: String, threadIdentity: String, subAgentId: String?) -> Unit,
   private val backgroundTaskRunner: AgentSessionArchiveBackgroundTaskRunner,
+  private val archiveTransitionSuppressions: AgentSessionArchiveTransitionSuppressions = AgentSessionArchiveTransitionSuppressions(),
   private val archivedSessionsRefreshIfLoaded: () -> Unit = {},
 ) {
   @Suppress("unused")
@@ -69,6 +70,7 @@ class AgentSessionArchiveService internal constructor(
       closeAndForgetAgentChatsForThread(projectPath = projectPath, threadIdentity = threadIdentity, subAgentId = subAgentId)
     },
     backgroundTaskRunner = IdeAgentSessionArchiveBackgroundTaskRunner,
+    archiveTransitionSuppressions = service<AgentSessionArchiveTransitionSuppressions>(),
     archivedSessionsRefreshIfLoaded = { service<AgentArchivedSessionsService>().refreshIfLoaded() },
   )
 
@@ -149,7 +151,8 @@ class AgentSessionArchiveService internal constructor(
 
         anyUnarchived = true
         if (descriptor.suppressArchivedThreadsDuringRefresh) {
-          syncService.unsuppressArchivedTarget(target)
+          archiveTransitionSuppressions.unsuppressActive(target)
+          archiveTransitionSuppressions.suppressArchived(target)
         }
         refreshDelayMs = maxOf(refreshDelayMs, descriptor.archiveRefreshDelayMs)
       }
@@ -206,7 +209,7 @@ class AgentSessionArchiveService internal constructor(
       val suppressed = descriptor.suppressArchivedThreadsDuringRefresh
       val rollbackThread = contentRepository.findArchivedTargetThread(target)
       if (suppressed) {
-        syncService.suppressArchivedTarget(target)
+        archiveTransitionSuppressions.suppressActive(target)
       }
       contentRepository.removeArchivedTarget(target)
       providerTargets.add(
@@ -296,7 +299,7 @@ class AgentSessionArchiveService internal constructor(
 
   private fun handleArchiveFailure(preparedTarget: PreparedArchiveTarget) {
     if (preparedTarget.suppressed) {
-      syncService.unsuppressArchivedTarget(preparedTarget.target)
+      archiveTransitionSuppressions.unsuppressActive(preparedTarget.target)
     }
     preparedTarget.rollbackThread?.let { thread ->
       contentRepository.restoreArchivedThread(preparedTarget.target.path, thread)

@@ -32,6 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -41,6 +42,7 @@ import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
 import java.math.BigDecimal
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
@@ -439,6 +441,100 @@ class AgentSessionRefreshServiceIntegrationTest {
       assertThat(costLoadCount.get()).isZero()
       assertThat(service.state.value.projects.single { it.path == PROJECT_PATH }.threads)
         .isEmpty()
+    }
+  }
+
+  @Test
+  fun refreshCompletesBeforeLoadingDelayWithoutPublishingLoading() = runBlocking(Dispatchers.Default) {
+    val testScope = this
+    val provider = AgentSessionProvider.from("codex")
+
+    withService(
+      sessionSourcesProvider = {
+        listOf(
+          ScriptedSessionSource(
+            provider = provider,
+            listFromOpenProject = { path, _ ->
+              if (path == PROJECT_PATH) listOf(thread(id = "codex-1", updatedAt = 100, provider = provider)) else emptyList()
+            },
+          )
+        )
+      },
+      projectEntriesProvider = {
+        listOf(openProjectEntry(PROJECT_PATH, "Project A"))
+      },
+      loadingDelayMs = 300L,
+    ) { service ->
+      val loadingObserved = AtomicBoolean(false)
+      val collector = testScope.launch {
+        service.state.collect { state ->
+          if (state.projects.any { project -> project.isLoading || project.worktrees.any { worktree -> worktree.isLoading } }) {
+            loadingObserved.set(true)
+          }
+        }
+      }
+      try {
+        service.refresh()
+        waitForCondition {
+          service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
+            ?.providerLoadStates
+            ?.get(provider) == AgentSessionProviderLoadState.LOADED
+        }
+
+        delay(350.milliseconds)
+
+        assertThat(loadingObserved.get()).isFalse()
+      }
+      finally {
+        collector.cancel()
+      }
+    }
+  }
+
+  @Test
+  fun refreshPublishesLoadingAfterDelayWhilePrefetchRuns() = runBlocking(Dispatchers.Default) {
+    val provider = AgentSessionProvider.from("codex")
+    val prefetchStarted = CompletableDeferred<Unit>()
+    val releasePrefetch = CompletableDeferred<Unit>()
+
+    withService(
+      sessionSourcesProvider = {
+        listOf(
+          ScriptedSessionSource(
+            provider = provider,
+            prefetch = { paths ->
+              if (PROJECT_PATH in paths) {
+                prefetchStarted.complete(Unit)
+                releasePrefetch.await()
+              }
+              emptyMap()
+            },
+            listFromOpenProject = { path, _ ->
+              if (path == PROJECT_PATH) listOf(thread(id = "codex-1", updatedAt = 100, provider = provider)) else emptyList()
+            },
+          )
+        )
+      },
+      projectEntriesProvider = {
+        listOf(openProjectEntry(PROJECT_PATH, "Project A"))
+      },
+      loadingDelayMs = 300L,
+    ) { service ->
+      service.refresh()
+      prefetchStarted.await()
+
+      waitForCondition(timeoutMs = 6_000) {
+        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
+          ?.providerLoadStates
+          ?.get(provider) == AgentSessionProviderLoadState.LOADING
+      }
+
+      releasePrefetch.complete(Unit)
+      waitForCondition {
+        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
+          ?.providerLoadStates
+          ?.get(provider) == AgentSessionProviderLoadState.LOADED
+      }
     }
   }
 

@@ -51,6 +51,8 @@ class AgentArchivedSessionsService internal constructor(
   private val serviceScope: CoroutineScope,
   private val sessionSourcesProvider: () -> List<AgentSessionSource>,
   private val projectEntriesProvider: suspend () -> List<ProjectEntry>,
+  private val archiveTransitionSuppressions: AgentSessionArchiveTransitionSuppressions = AgentSessionArchiveTransitionSuppressions(),
+  loadingDelayMs: Long = DEFAULT_AGENT_SESSION_LOADING_DELAY_MS,
 ) {
   @Suppress("unused")
   constructor(serviceScope: CoroutineScope) : this(
@@ -60,10 +62,12 @@ class AgentArchivedSessionsService internal constructor(
       AgentSessionProviders.sessionSources().filter { source -> providerSettings.isProviderEnabled(source.provider) }
     },
     projectEntriesProvider = AgentSessionProjectCatalog()::collectProjects,
+    archiveTransitionSuppressions = service<AgentSessionArchiveTransitionSuppressions>(),
   )
 
   private val mutableState = MutableStateFlow(AgentArchivedSessionsState())
   private val refreshMutex = Mutex()
+  private val pathLoadController = AgentSessionPathLoadController(loadingDelayMs)
   private val loadRequested = AtomicBoolean(false)
   private val costCache = ConcurrentHashMap<ArchivedThreadCacheKey, ArchivedThreadCostCacheEntry>()
   private val inFlightCostLoads = ConcurrentHashMap.newKeySet<ArchivedThreadLoadKey>()
@@ -87,7 +91,7 @@ class AgentArchivedSessionsService internal constructor(
   fun ensureLoaded() {
     loadRequested.set(true)
     val state = mutableState.value
-    if (state.lastUpdatedAt == null && !state.projects.anyPathLoading()) {
+    if (state.lastUpdatedAt == null && !state.projects.anyPathLoading() && !refreshMutex.isLocked) {
       refresh()
     }
   }
@@ -162,14 +166,11 @@ class AgentArchivedSessionsService internal constructor(
     val previousProjectsByPath = previous.projects.associateBy { project -> normalizeAgentWorkbenchPath(project.path) }
     val pathRequests = buildArchivedPathRequests(entries)
     val knownPaths = pathRequests.mapTo(LinkedHashSet()) { it.path }
-    val sources = sessionSourcesProvider().filter { source -> source.supportsArchivedThreads }
-    val cliAvailabilityByProvider = resolveArchivedCliAvailabilityByProvider(sources)
-    val availableSources = sources.filter { source -> cliAvailabilityByProvider[source.provider] != false }
-    val loadingProviderLoadStates = buildLoadingProviderLoadStates(availableSources.map { source -> source.provider })
     val initialProjects = buildInitialArchivedProjects(
       entries = entries,
       previousProjectsByPath = previousProjectsByPath,
-      loadingProviderLoadStates = loadingProviderLoadStates,
+      loadingProviderLoadStates = emptyMap(),
+      archiveTransitionSuppressions = archiveTransitionSuppressions,
     )
 
     mutableState.update { state ->
@@ -179,12 +180,28 @@ class AgentArchivedSessionsService internal constructor(
       )
     }
 
-    val resultsByPath = coroutineScope {
-      pathRequests.map { request ->
-        async {
-          request.path to loadArchivedThreads(path = request.path, project = request.project, sources = availableSources)
-        }
-      }.awaitAll().toMap()
+    if (pathRequests.isEmpty()) {
+      mutableState.update { state -> state.copy(lastUpdatedAt = System.currentTimeMillis()) }
+      return
+    }
+
+    val sources = sessionSourcesProvider().filter { source -> source.supportsArchivedThreads }
+    var loadingProviderLoadStates = buildLoadingProviderLoadStates(sources.map { source -> source.provider })
+    val resultsByPath = pathLoadController.runWithDelayedLoading(
+      providerLoadStates = { loadingProviderLoadStates },
+      publishLoading = { providerLoadStates -> markArchivedPathsLoading(knownPaths = knownPaths, providerLoadStates = providerLoadStates) },
+    ) {
+      val cliAvailabilityByProvider = resolveArchivedCliAvailabilityByProvider(sources)
+      val availableSources = sources.filter { source -> cliAvailabilityByProvider[source.provider] != false }
+      loadingProviderLoadStates = buildLoadingProviderLoadStates(availableSources.map { source -> source.provider })
+
+      coroutineScope {
+        pathRequests.map { request ->
+          async {
+            request.path to loadArchivedThreads(path = request.path, project = request.project, sources = availableSources)
+          }
+        }.awaitAll().toMap()
+      }
     }
 
     mutableState.update { state ->
@@ -207,13 +224,14 @@ class AgentArchivedSessionsService internal constructor(
       sources.map { source ->
         async {
           val result = try {
+            val loadedThreads = if (project != null) {
+              source.listArchivedThreadsFromOpenProject(path = path, project = project)
+            }
+            else {
+              source.listArchivedThreadsFromClosedProject(path = path)
+            }
             Result.success(
-              if (project != null) {
-                source.listArchivedThreadsFromOpenProject(path = path, project = project)
-              }
-              else {
-                source.listArchivedThreadsFromClosedProject(path = path)
-              }
+              archiveTransitionSuppressions.applyArchived(path = path, provider = source.provider, threads = loadedThreads)
             )
           }
           catch (throwable: Throwable) {
@@ -260,6 +278,38 @@ class AgentArchivedSessionsService internal constructor(
           }
         }.awaitAll().toMap()
       }
+    }
+  }
+
+  private fun markArchivedPathsLoading(
+    knownPaths: Set<String>,
+    providerLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
+  ) {
+    if (knownPaths.isEmpty() || providerLoadStates.isEmpty()) {
+      return
+    }
+    mutableState.update { state ->
+      var changed = false
+      val nextProjects = state.projects.map { project ->
+        val updatedProject = if (project.path in knownPaths) {
+          project.withLoadingProviderLoadStates(providerLoadStates).also { updated ->
+            if (updated != project) changed = true
+          }
+        }
+        else {
+          project
+        }
+        val nextWorktrees = updatedProject.worktrees.map { worktree ->
+          if (worktree.path !in knownPaths) {
+            return@map worktree
+          }
+          worktree.withLoadingProviderLoadStates(providerLoadStates).also { updated ->
+            if (updated != worktree) changed = true
+          }
+        }
+        if (nextWorktrees == updatedProject.worktrees) updatedProject else updatedProject.copy(worktrees = nextWorktrees)
+      }
+      if (changed) state.copy(projects = nextProjects, lastUpdatedAt = System.currentTimeMillis()) else state
     }
   }
 
@@ -459,6 +509,7 @@ private fun buildInitialArchivedProjects(
   entries: List<ProjectEntry>,
   previousProjectsByPath: Map<String, AgentProjectSessions>,
   loadingProviderLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
+  archiveTransitionSuppressions: AgentSessionArchiveTransitionSuppressions,
 ): List<AgentProjectSessions> {
   return entries.map { entry ->
     val normalizedPath = normalizeAgentWorkbenchPath(entry.path)
@@ -469,7 +520,7 @@ private fun buildInitialArchivedProjects(
       branch = entry.branch,
       buildSystemBadge = entry.buildSystemBadge,
       isOpen = entry.project != null,
-      threads = previous?.threads.orEmpty(),
+      threads = archiveTransitionSuppressions.filterArchivedSnapshot(normalizedPath, previous?.threads.orEmpty()),
       errorMessage = null,
       providerWarnings = emptyList(),
       providerLoadStates = mergeProviderLoadStates(previous?.providerLoadStates.orEmpty(), loadingProviderLoadStates),
@@ -482,7 +533,7 @@ private fun buildInitialArchivedProjects(
           name = worktree.name,
           branch = worktree.branch,
           isOpen = worktree.project != null,
-          threads = previousWorktree?.threads.orEmpty(),
+          threads = archiveTransitionSuppressions.filterArchivedSnapshot(normalizedWorktreePath, previousWorktree?.threads.orEmpty()),
           errorMessage = null,
           providerWarnings = emptyList(),
           providerLoadStates = mergeProviderLoadStates(previousWorktree?.providerLoadStates.orEmpty(), loadingProviderLoadStates),
