@@ -32,13 +32,23 @@ internal class AgentSessionArchiveTransitionSuppressions {
     }
   }
 
-  fun applyActive(path: String, provider: AgentSessionProvider, threads: List<AgentSessionThread>): List<AgentSessionThread> {
+  fun applyActiveAuthoritative(path: String, provider: AgentSessionProvider, threads: List<AgentSessionThread>): List<AgentSessionThread> {
     return apply(
       path = path,
       provider = provider,
       threads = threads,
       direction = SuppressionDirection.ACTIVE,
       reconcileAbsent = true,
+    )
+  }
+
+  fun filterActive(path: String, provider: AgentSessionProvider, threads: List<AgentSessionThread>): List<AgentSessionThread> {
+    return apply(
+      path = path,
+      provider = provider,
+      threads = threads,
+      direction = SuppressionDirection.ACTIVE,
+      reconcileAbsent = false,
     )
   }
 
@@ -52,7 +62,11 @@ internal class AgentSessionArchiveTransitionSuppressions {
     )
   }
 
-  fun applyArchived(path: String, provider: AgentSessionProvider, threads: List<AgentSessionThread>): List<AgentSessionThread> {
+  fun applyArchivedAuthoritative(
+    path: String,
+    provider: AgentSessionProvider,
+    threads: List<AgentSessionThread>,
+  ): List<AgentSessionThread> {
     return apply(
       path = path,
       provider = provider,

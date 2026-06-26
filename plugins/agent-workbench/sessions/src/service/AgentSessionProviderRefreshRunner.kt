@@ -380,7 +380,7 @@ internal class AgentSessionProviderRefreshRunner(
   ) {
     for ((path, threads) in refreshResult.completeThreadsByPath) {
       outcomes[path] = ProviderRefreshOutcome(
-        threads = archiveTransitionSuppressions.applyActive(path = path, provider = provider, threads = threads),
+        threads = archiveTransitionSuppressions.applyActiveAuthoritative(path = path, provider = provider, threads = threads),
         isComplete = true,
         removedThreadIds = refreshResult.removedThreadIdsByPath[path].orEmpty(),
       )
@@ -392,7 +392,7 @@ internal class AgentSessionProviderRefreshRunner(
         addAll(refreshResult.removedThreadIdsByPath[path].orEmpty())
       }
       outcomes[path] = ProviderRefreshOutcome(
-        threads = archiveTransitionSuppressions.applyActive(path = path, provider = provider, threads = threads),
+        threads = archiveTransitionSuppressions.filterActive(path = path, provider = provider, threads = threads),
         isComplete = false,
         removedThreadIds = removedThreadIds,
       )

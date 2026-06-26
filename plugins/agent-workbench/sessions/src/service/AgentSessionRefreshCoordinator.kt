@@ -87,7 +87,7 @@ internal class AgentSessionRefreshCoordinator(
   private val providerRefreshSupportLock = Any()
   private val threadLoadSupport = AgentSessionThreadLoadSupport(
     sessionSourcesProvider = sessionSourcesProvider,
-    applyArchiveSuppressions = archiveTransitionSuppressions::applyActive,
+    applyArchiveSuppressions = archiveTransitionSuppressions::applyActiveAuthoritative,
     resolveErrorMessage = { provider, throwable ->
       resolveErrorMessage(providerDescriptorProvider = providerDescriptorProvider, provider = provider, t = throwable)
     },
