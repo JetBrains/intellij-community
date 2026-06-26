@@ -654,6 +654,9 @@ open class EditorsSplitters internal constructor(
     return null
   }
 
+  /**
+   * If [openReplacementInEmptyWindow] is false, an emptied source split is removed instead of being filled with another open file.
+   */
   fun closeFile(file: VirtualFile, moveFocus: Boolean, openReplacementInEmptyWindow: Boolean = true) {
     closeFileInWindows(file = file,
                        windows = findWindows(file),

@@ -495,6 +495,76 @@ class FileEditorManagerTest {
   }
 
   @Test
+  fun testMovingNoSplitFileBetweenEditorSplitsKeepsSingleReopenedEditor(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    var closeToReopenCount = 0
+    registerReopenAwareProvider { closeToReopenCount++ }
+
+    val file = getSourceFile("1.txt")
+    val leftFile = getSourceFile("2.txt")
+    val rightFile = getSourceFile("3.txt")
+    manager.openFile(file, false)
+    val leftWindow = currentWindow()
+    manager.openFileImpl2(leftWindow, leftFile, FileEditorOpenOptions())
+    leftWindow.setSelectedComposite(file, false)
+    val rightWindow = createVerticalSplitter(leftWindow)
+    manager.openFileImpl2(rightWindow, rightFile, FileEditorOpenOptions().withRequestFocus(true))
+    manager.closeFile(file, rightWindow)
+    file.putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
+
+    try {
+      repeat(6) { index ->
+        val targetWindow = if (index % 2 == 0) rightWindow else leftWindow
+        manager.openFileImpl2(targetWindow, file, FileEditorOpenOptions().withRequestFocus(true))
+
+        assertThat(manager.getAllEditorList(file)).hasSize(1)
+        assertThat(leftWindow.isFileOpen(file)).isEqualTo(targetWindow === leftWindow)
+        assertThat(rightWindow.isFileOpen(file)).isEqualTo(targetWindow === rightWindow)
+      }
+
+      assertThat(closeToReopenCount).isEqualTo(6)
+      assertThat(leftWindow.isFileOpen(leftFile)).isTrue()
+      assertThat(rightWindow.isFileOpen(rightFile)).isTrue()
+    }
+    finally {
+      manager.closeFile(file)
+      manager.closeFile(leftFile)
+      manager.closeFile(rightFile)
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project)
+      IndexingTestUtil.waitUntilIndexesAreReady(project)
+      file.putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, null)
+    }
+  }
+
+  @Test
+  fun testSuspendOpenFileInNewWindowKeepsNoSplitEditorReopened(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    var editorWasClosedToReopen = false
+    registerReopenAwareProvider { editorWasClosedToReopen = true }
+
+    val file = getSourceFile("1.txt")
+    manager.openFile(file, false)
+    file.putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
+
+    try {
+      manager.openFile(
+        file,
+        FileEditorOpenOptions(
+          requestFocus = true,
+          openMode = FileEditorManagerImpl.OpenMode.NEW_WINDOW,
+        ),
+      )
+
+      assertThat(editorWasClosedToReopen).isTrue()
+      assertThat(manager.getAllEditorList(file)).hasSize(1)
+    }
+    finally {
+      manager.closeFile(file)
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project)
+      IndexingTestUtil.waitUntilIndexesAreReady(project)
+      file.putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, null)
+    }
+  }
+
+  @Test
   fun testMustNotAllowToTypeIntoFileRenamedToUnknownExtension(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
     val ioFile = IoTestUtil.createTestFile("test.txt", "")
     var file: VirtualFile? = null
