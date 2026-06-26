@@ -16,6 +16,7 @@ import com.intellij.python.uv.common.UV_TOOL_ID
 import com.intellij.python.uv.common.UV_UI_INFO
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyToolUIInfo
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -182,23 +183,27 @@ private fun getUvDependencies(
   if (sourcesTablesWithRoots.isEmpty()) {
     return null
   }
-  val deps = extractDependencyNamesWithoutExtras(pyProject.pyProjectToml)?.toMutableSet() ?: return null
+  val deps = extractDependencyNamesWithoutExtras(pyProject.pyProjectToml) ?: return null
+  // Dependency names indexed by their normalized form; a `tool.uv.sources` entry applies to a
+  // dependency when their normalized names match, regardless of `-`/`_`/`.` spelling (PY-90207).
+  val depByNormalizedName = deps.associateByTo(HashMap()) { PyPackageName.normalizeProjectName(it) }
   val workspaceDeps = mutableListOf<ProjectName>()
   val pathDeps = hashSetOf<Path>()
   for ((sourcesTable, ownerRoot) in sourcesTablesWithRoots) {
-    for ((depName, depTable) in sourcesTable.toMap().entries) {
-      if (depName !in deps) continue
+    for ((sourceKey, depTable) in sourcesTable.toMap().entries) {
+      val normalizedKey = PyPackageName.normalizeProjectName(sourceKey)
+      val depName = depByNormalizedName[normalizedKey] ?: continue
       val table = depTable as? TomlTable ?: continue
 
       if (table.getBoolean("workspace") == true) {
         workspaceDeps.add(ProjectName(depName))
-        deps.remove(depName)
+        depByNormalizedName.remove(normalizedKey)
       }
       else {
         val path = table.getString("path") ?: continue
         try {
           pathDeps.add(ownerRoot.resolve(path).normalize())
-          deps.remove(depName)
+          depByNormalizedName.remove(normalizedKey)
         }
         catch (e: InvalidPathException) {
           logger.info("Can't resolve $path against $ownerRoot", e)
