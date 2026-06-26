@@ -10,6 +10,13 @@ import javax.swing.JComponent;
  * This interface represents a configurable component that provides a Swing form to configure some settings.
  * Sometimes the IDE instantiates it on a background thread, so it is not recommended to create any Swing component in a constructor.
  * Use the <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a> instead.
+ * <p>
+ * The lifecycle is the following:
+ * <ol>
+ *   <li>{@link #createComponent()} (this method is much like a constructor, implementation initializes its inner state)</li>
+ *   <li>Some other methods might be called here (e.g. {@link #isModified()})</li>
+ *   <li>{@link #disposeUIResources()} (this is a destructor: no other method is called after it)</li>
+ * </ol>
  *
  * @author lesya
  */
