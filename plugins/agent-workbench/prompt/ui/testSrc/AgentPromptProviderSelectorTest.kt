@@ -199,6 +199,7 @@ class AgentPromptProviderSelectorTest {
           generationSettingsPanel = fixture.view.generationSettingsPanel,
           modelSelectorLink = fixture.view.modelSelectorLink,
           reasoningEffortLink = fixture.view.reasoningEffortLink,
+          launchTuningSummaryLink = fixture.view.launchTuningSummaryLink,
           modelCatalogScope = modelCatalogScope,
           launcherProvider = { null },
           onDefaultSaved = { _ -> },
@@ -231,12 +232,16 @@ class AgentPromptProviderSelectorTest {
         assertThat(fixture.view.reasoningEffortLink.isVisible).isTrue()
         assertThat(fixture.view.reasoningEffortLink.isEnabled).isTrue()
         assertThat(fixture.view.reasoningEffortLink.text).isEqualTo("Effort High")
+        assertThat(fixture.view.launchTuningSummaryLink.isVisible).isTrue()
+        assertThat(fixture.view.launchTuningSummaryLink.isEnabled).isTrue()
+        assertThat(fixture.view.launchTuningSummaryLink.text).isEqualTo("Default model · High")
 
         controller.setGenerationControlsVisible(false)
 
         assertThat(fixture.view.generationSettingsPanel.isVisible).isFalse()
         assertThat(fixture.view.modelSelectorLink.isVisible).isFalse()
         assertThat(fixture.view.reasoningEffortLink.isVisible).isFalse()
+        assertThat(fixture.view.launchTuningSummaryLink.isVisible).isFalse()
       }
     }
     finally {

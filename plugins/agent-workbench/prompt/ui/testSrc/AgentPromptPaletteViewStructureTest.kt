@@ -183,14 +183,11 @@ class AgentPromptPaletteViewStructureTest {
       assertThat(view.promptEditorPanel.border).isInstanceOf(JBEmptyBorder::class.java)
       assertThat(totalBorderInsets(view.promptEditorPanel)).isGreaterThan(0)
       assertThat(SwingUtilities.isDescendingFrom(view.addContextButton, view.generationSettingsPanel)).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(view.launchTuningSummaryLink, view.generationSettingsPanel)).isTrue()
       assertThat(SwingUtilities.isDescendingFrom(view.addContextButton, view.composerContextPanel)).isFalse()
-      assertThat(view.addContextButton.parent).isSameAs(view.modelSelectorLink.parent)
-      assertThat(view.addContextButton.parent.components.toList()).containsSubsequence(
-        view.addContextButton,
-        view.modelSelectorLink,
-        view.reasoningEffortLink,
-        view.planReasoningEffortLink,
-      )
+      assertThat(xInRoot(view.addContextButton, view.rootPanel)).isLessThan(xInRoot(view.launchTuningSummaryLink, view.rootPanel))
+      assertThat(abs(yCenterInRoot(view.addContextButton, view.rootPanel) - yCenterInRoot(view.launchTuningSummaryLink, view.rootPanel)))
+        .isLessThanOrEqualTo(1)
       assertThat(SwingUtilities.isDescendingFrom(view.headerControls.toolbarComponent, view.rightHeaderPanel)).isTrue()
       assertThat(SwingUtilities.isDescendingFrom(view.profileAction.customComponent, view.rightHeaderPanel)).isTrue()
       assertThat(view.launchProfileLink.isFocusable).isFalse()
@@ -421,12 +418,14 @@ class AgentPromptPaletteViewStructureTest {
       assertThat(SwingUtilities.isDescendingFrom(view.launchProfileLink, view.promptEditorPanel)).isFalse()
       assertThat(view.profileAction.templatePresentation.description).contains("Choose a task profile")
       assertThat(SwingUtilities.isDescendingFrom(profileActionComponent, view.generationSettingsPanel)).isFalse()
-      assertThat(SwingUtilities.isDescendingFrom(view.modelSelectorLink, view.rootPanel)).isTrue()
-      assertThat(SwingUtilities.isDescendingFrom(view.reasoningEffortLink, view.rootPanel)).isTrue()
-      assertThat(SwingUtilities.isDescendingFrom(view.planReasoningEffortLink, view.rootPanel)).isTrue()
-      assertThat(SwingUtilities.isDescendingFrom(view.modelSelectorLink, view.generationSettingsPanel)).isTrue()
-      assertThat(SwingUtilities.isDescendingFrom(view.reasoningEffortLink, view.generationSettingsPanel)).isTrue()
-      assertThat(SwingUtilities.isDescendingFrom(view.planReasoningEffortLink, view.generationSettingsPanel)).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(view.launchTuningSummaryLink, view.rootPanel)).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(view.modelSelectorLink, view.rootPanel)).isFalse()
+      assertThat(SwingUtilities.isDescendingFrom(view.reasoningEffortLink, view.rootPanel)).isFalse()
+      assertThat(SwingUtilities.isDescendingFrom(view.planReasoningEffortLink, view.rootPanel)).isFalse()
+      assertThat(SwingUtilities.isDescendingFrom(view.launchTuningSummaryLink, view.generationSettingsPanel)).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(view.modelSelectorLink, view.generationSettingsPanel)).isFalse()
+      assertThat(SwingUtilities.isDescendingFrom(view.reasoningEffortLink, view.generationSettingsPanel)).isFalse()
+      assertThat(SwingUtilities.isDescendingFrom(view.planReasoningEffortLink, view.generationSettingsPanel)).isFalse()
       assertThat(SwingUtilities.isDescendingFrom(view.defaultProfileActionControl.component, view.generationSettingsPanel)).isTrue()
       assertThat(SwingUtilities.isDescendingFrom(view.defaultProfileActionControl.component, view.rightHeaderPanel)).isFalse()
       assertThat(view.generationSettingsPanel.parent).isSameAs(view.promptEditorPanel)
@@ -447,17 +446,16 @@ class AgentPromptPaletteViewStructureTest {
       assertThat(view.launchProfileLink.text).isEqualTo("Standard")
       assertThat(view.profileAction.textForTest).isEqualTo("Standard")
       assertThat(view.launchProfileLink.icon).isNotNull()
-      assertThat(view.modelSelectorLink.foreground).isEqualTo(view.reasoningEffortLink.foreground)
-      assertThat(view.modelSelectorLink.text).isEqualTo("Model Default")
-      assertThat(view.reasoningEffortLink.text).isEqualTo("Effort Default")
-      assertThat(view.modelSelectorLink.isEnabled).isTrue()
-      val modelSelectorCenter = SwingUtilities.convertPoint(
-        view.modelSelectorLink,
-        view.modelSelectorLink.width / 2,
-        view.modelSelectorLink.height / 2,
+      assertThat(view.launchTuningSummaryLink.foreground).isEqualTo(view.modelSelectorLink.foreground)
+      assertThat(view.launchTuningSummaryLink.text).isEqualTo("Provider defaults")
+      assertThat(view.launchTuningSummaryLink.isEnabled).isTrue()
+      val launchTuningSummaryCenter = SwingUtilities.convertPoint(
+        view.launchTuningSummaryLink,
+        view.launchTuningSummaryLink.width / 2,
+        view.launchTuningSummaryLink.height / 2,
         view.rootPanel,
       )
-      val topComponent = SwingUtilities.getDeepestComponentAt(view.rootPanel, modelSelectorCenter.x, modelSelectorCenter.y)
+      val topComponent = SwingUtilities.getDeepestComponentAt(view.rootPanel, launchTuningSummaryCenter.x, launchTuningSummaryCenter.y)
       assertThat(isDescendantOrSame(topComponent, view.generationSettingsPanel)).isTrue()
     }
   }
@@ -484,13 +482,13 @@ class AgentPromptPaletteViewStructureTest {
         assertThat(SwingUtilities.isDescendingFrom(view.generationSettingsPanel, view.rootPanel)).isTrue()
         assertThat(SwingUtilities.isDescendingFrom(view.generationSettingsPanel, view.promptEditorPanel)).isTrue()
         assertThat(yInRoot(view.generationSettingsPanel, view.rootPanel)).isGreaterThanOrEqualTo(bottomInRoot(promptArea, view.rootPanel))
-        val modelSelectorCenter = SwingUtilities.convertPoint(
-          view.modelSelectorLink,
-          view.modelSelectorLink.width / 2,
-          view.modelSelectorLink.height / 2,
+        val launchTuningSummaryCenter = SwingUtilities.convertPoint(
+          view.launchTuningSummaryLink,
+          view.launchTuningSummaryLink.width / 2,
+          view.launchTuningSummaryLink.height / 2,
           view.rootPanel,
         )
-        val topComponent = SwingUtilities.getDeepestComponentAt(view.rootPanel, modelSelectorCenter.x, modelSelectorCenter.y)
+        val topComponent = SwingUtilities.getDeepestComponentAt(view.rootPanel, launchTuningSummaryCenter.x, launchTuningSummaryCenter.y)
         assertThat(isDescendantOrSame(topComponent, view.generationSettingsPanel)).isTrue()
       }
       finally {

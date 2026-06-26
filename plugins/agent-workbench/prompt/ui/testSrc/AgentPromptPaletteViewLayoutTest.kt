@@ -60,10 +60,10 @@ class AgentPromptPaletteViewLayoutTest {
 
       assertThat(view.addContextButton.isVisible).isTrue()
       assertThat(view.composerContextPanel.isVisible).isFalse()
-      assertThat(view.addContextButton.parent).isSameAs(view.modelSelectorLink.parent)
+      assertThat(SwingUtilities.isDescendingFrom(view.launchTuningSummaryLink, view.generationSettingsPanel)).isTrue()
       assertThat(locationInRoot(view.addContextButton, view.rootPanel).x)
-        .isLessThan(locationInRoot(view.modelSelectorLink, view.rootPanel).x)
-      assertThat(abs(yCenterInRoot(view.addContextButton, view.rootPanel) - yCenterInRoot(view.modelSelectorLink, view.rootPanel)))
+        .isLessThan(locationInRoot(view.launchTuningSummaryLink, view.rootPanel).x)
+      assertThat(abs(yCenterInRoot(view.addContextButton, view.rootPanel) - yCenterInRoot(view.launchTuningSummaryLink, view.rootPanel)))
         .isLessThanOrEqualTo(1)
     }
   }
