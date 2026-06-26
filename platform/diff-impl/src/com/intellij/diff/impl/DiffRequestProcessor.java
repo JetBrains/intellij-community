@@ -232,7 +232,7 @@ public abstract class DiffRequestProcessor
     putContextUserData(DiffUserDataKeysEx.LEFT_TOOLBAR, myToolbar);
 
     myToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
-    myToolbar.setTargetComponent(myContentPanel);
+    myToolbar.setTargetComponent(myContentPanel.getTargetComponent());
     myToolbar.getComponent().setOpaque(false);
 
     myRightToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_RIGHT_TOOLBAR, myRightToolbarGroup, true);
@@ -515,6 +515,9 @@ public abstract class DiffRequestProcessor
       myContentPanel.setContent(null);
       myTopPanel.setNeedBottomSeparatorBorder(false);
 
+      myToolbar.setTargetComponent(null);
+      myRightToolbar.setTargetComponent(null);
+
       myToolbarGroup.removeAll();
       myRightToolbarGroup.removeAll();
       myPopupActionGroup.removeAll();
@@ -667,6 +670,12 @@ public abstract class DiffRequestProcessor
       myRightToolbarGroup.removeAll();
       myPopupActionGroup.removeAll();
       ActionUtil.clearActions(myMainPanel);
+
+      myToolbar.setTargetComponent(null);
+      ((ActionToolbarImpl)myToolbar).reset(); // do not leak previous DiffViewer via caches
+
+      myRightToolbar.setTargetComponent(null);
+      ((ActionToolbarImpl)myRightToolbar).reset();
 
       onAssigned(myActiveRequest, false);
 
