@@ -508,14 +508,15 @@ f:com.intellij.platform.ai.agent.sessions.core.providers.AgentPendingSessionMeta
 - bs:copy$default(com.intellij.platform.ai.agent.sessions.core.providers.AgentPendingSessionMetadata,J,java.lang.String,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.providers.AgentPendingSessionMetadata
 - equals(java.lang.Object):Z
 - hashCode():I
-f:com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartedNewSessionPromptLaunch
+f:com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartedNewSessionLaunch
 - f:initialMessageDispatchPlan:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan
 - f:launchSpec:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 - <init>(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan):V
+- b:<init>(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:component1():com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 - f:component2():com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan
-- f:copy(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan):com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartedNewSessionPromptLaunch
-- bs:copy$default(com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartedNewSessionPromptLaunch,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartedNewSessionPromptLaunch
+- f:copy(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan):com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartedNewSessionLaunch
+- bs:copy$default(com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartedNewSessionLaunch,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartedNewSessionLaunch
 - equals(java.lang.Object):Z
 - hashCode():I
 f:com.intellij.platform.ai.agent.sessions.core.providers.AgentPromptProviderOption
@@ -662,7 +663,7 @@ com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderImple
 - bs:listAvailableGenerationModels$default(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderImplementation,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - listReusablePromptSourceEntries(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 - onConversationOpened():V
-- prestartNewSessionPromptLaunch(java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,java.util.List,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,kotlin.coroutines.Continuation):java.lang.Object
+- prestartNewSessionLaunch(java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,java.util.List,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,kotlin.coroutines.Continuation):java.lang.Object
 - readTerminalRestoreContext(java.lang.String,java.lang.String):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalRestoreContext
 - recordNewSession(java.lang.String,java.lang.String,java.lang.String,J):V
 - recordTerminalSessionClosed(java.lang.String,java.lang.String):V

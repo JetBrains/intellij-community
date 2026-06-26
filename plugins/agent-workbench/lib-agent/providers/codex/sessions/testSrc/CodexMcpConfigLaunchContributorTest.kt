@@ -79,11 +79,11 @@ class CodexMcpConfigLaunchContributorTest {
       projectPath = PROJECT_PATH,
       provider = AgentSessionProvider.from("codex"),
       sessionId = "thread-1",
-      launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("codex", "--yolo", "resume", "thread-1")),
+      launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("codex", "--yolo", "resume", "--remote", REMOTE_URL, "thread-1")),
     )
 
     assertThat(launchSpec.command).containsExactlyElementsOf(
-      listOf("codex", "--yolo") + EXPECTED_MCP_ARGS_WITH_FILTERED_DISABLES + listOf("resume", "thread-1")
+      listOf("codex", "--yolo") + EXPECTED_MCP_ARGS_WITH_FILTERED_DISABLES + listOf("resume", "--remote", REMOTE_URL, "thread-1")
     )
   }
 

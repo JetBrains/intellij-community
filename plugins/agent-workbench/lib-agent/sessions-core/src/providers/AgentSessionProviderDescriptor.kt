@@ -208,9 +208,9 @@ private fun buildPromptRecord(
   )
 }
 
-data class AgentPrestartedNewSessionPromptLaunch(
+data class AgentPrestartedNewSessionLaunch(
   @JvmField val launchSpec: AgentSessionTerminalLaunchSpec,
-  @JvmField val initialMessageDispatchPlan: AgentInitialPromptDeliveryPlan,
+  @JvmField val initialMessageDispatchPlan: AgentInitialPromptDeliveryPlan? = null,
 )
 
 data class AgentPendingSessionMetadata(
@@ -377,14 +377,14 @@ interface AgentSessionProviderImplementation {
 
   suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec
 
-  suspend fun prestartNewSessionPromptLaunch(
+  suspend fun prestartNewSessionLaunch(
     projectPath: String,
     launchMode: AgentSessionLaunchMode,
     initialMessagePlan: AgentInitialMessagePlan,
     generationSettings: AgentPromptGenerationSettings,
     generationModelCatalog: List<AgentPromptGenerationModel>,
     launchSpec: AgentSessionTerminalLaunchSpec,
-  ): AgentPrestartedNewSessionPromptLaunch? = null
+  ): AgentPrestartedNewSessionLaunch? = null
 
   fun sanitizeGenerationSettings(generationSettings: AgentPromptGenerationSettings): AgentPromptGenerationSettings {
     val modelId = generationSettings.modelId

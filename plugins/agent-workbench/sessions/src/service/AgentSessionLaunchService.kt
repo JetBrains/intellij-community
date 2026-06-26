@@ -1130,7 +1130,7 @@ class AgentSessionLaunchService internal constructor(
       )
       val baseLaunchSpec = plannedLaunch.baseLaunchSpec
       val plannedLaunchSpec = plannedLaunch.launchSpec
-      val prestartedPromptLaunch = descriptor.prestartNewSessionPromptLaunch(
+      val prestartedLaunch = descriptor.prestartNewSessionLaunch(
         projectPath = normalizedPath,
         launchMode = mode,
         initialMessagePlan = initialMessagePlan,
@@ -1138,16 +1138,16 @@ class AgentSessionLaunchService internal constructor(
         generationModelCatalog = plannedLaunch.generationModelCatalog,
         launchSpec = plannedLaunchSpec,
       )
-      val launchSpec = prestartedPromptLaunch?.launchSpec ?: plannedLaunchSpec
+      val launchSpec = prestartedLaunch?.launchSpec ?: plannedLaunchSpec
       val identity = buildNewSessionIdentity(provider = provider, launchSpec = launchSpec, fallbackPendingIdentity = fallbackPendingIdentity)
-      val initialMessageDispatchPlan = prestartedPromptLaunch?.initialMessageDispatchPlan
-                                       ?: buildInitialMessageDispatchPlan(
-                                         descriptor = descriptor,
-                                         baseLaunchSpec = launchSpec,
-                                         identity = identity,
-                                         initialMessagePlan = initialMessagePlan,
-                                         allowStartupPromptOverride = true,
-                                       )
+      val initialMessageDispatchPlan = prestartedLaunch?.initialMessageDispatchPlan
+                                         ?: buildInitialMessageDispatchPlan(
+                                           descriptor = descriptor,
+                                           baseLaunchSpec = launchSpec,
+                                           identity = identity,
+                                           initialMessagePlan = initialMessagePlan,
+                                           allowStartupPromptOverride = true,
+                                         )
       logPreparedNewSessionLaunch(
         provider = provider,
         projectPath = normalizedPath,

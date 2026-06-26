@@ -27,7 +27,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPrompt
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryStatus
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptRecord
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentTerminalPromptDispatch
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartedNewSessionPromptLaunch
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartedNewSessionLaunch
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentPromptProviderOption
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderImplementation
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
@@ -42,7 +42,7 @@ import javax.swing.Icon
 internal class CodexAgentSessionProviderDescriptor(
   override val sessionSource: AgentSessionSource = CodexSessionSource(),
   private val threadMutationBackend: CodexThreadMutationBackend = SharedServiceCodexThreadMutationBackend,
-  private val planPromptStartupBackend: CodexPlanPromptStartupBackend = SharedServiceCodexPlanPromptStartupBackend,
+  private val threadStartupBackend: CodexThreadStartupBackend = SharedServiceCodexThreadStartupBackend,
   /**
    * Resolves the `codex` executable for terminal launch specs. Defaults to
    * [CodexCliUtils.resolveExecutableOrDefaultViaTerminalResolver], which delegates to the shared
@@ -101,9 +101,6 @@ internal class CodexAgentSessionProviderDescriptor(
   override val supportsGenerationModelSelection: Boolean
     get() = true
 
-  override val supportsPendingEditorTabRebind: Boolean
-    get() = true
-
   override val supportsNewThreadRebind: Boolean
     get() = true
 
@@ -150,11 +147,12 @@ internal class CodexAgentSessionProviderDescriptor(
     launchMode: AgentSessionLaunchMode,
   ): AgentSessionTerminalLaunchSpec {
     val executable = executableResolver()
+    val remoteUrl = threadStartupBackend.currentRemoteUrl()
     val command = if (launchMode == AgentSessionLaunchMode.YOLO) {
-      buildCodexBaseCommand(executable) + listOf("--yolo", "resume", sessionId)
+      buildCodexBaseCommand(executable) + listOf("--yolo", "resume", "--remote", remoteUrl, sessionId)
     }
     else {
-      buildCodexBaseCommand(executable) + listOf("resume", sessionId)
+      buildCodexBaseCommand(executable) + listOf("resume", "--remote", remoteUrl, sessionId)
     }
     return AgentSessionTerminalLaunchSpec(
       command = command,
@@ -172,43 +170,25 @@ internal class CodexAgentSessionProviderDescriptor(
     return AgentSessionTerminalLaunchSpec(command = command)
   }
 
-  override suspend fun prestartNewSessionPromptLaunch(
+  override suspend fun prestartNewSessionLaunch(
     projectPath: String,
     launchMode: AgentSessionLaunchMode,
     initialMessagePlan: AgentInitialMessagePlan,
     generationSettings: AgentPromptGenerationSettings,
     generationModelCatalog: List<AgentPromptGenerationModel>,
     launchSpec: AgentSessionTerminalLaunchSpec,
-  ): AgentPrestartedNewSessionPromptLaunch? {
-    if (initialMessagePlan.mode != AgentInitialMessageMode.PLAN) return null
-    val prompt = initialMessagePlan.message?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-    val prestarted = planPromptStartupBackend.prestartPlanPromptThread(
+  ): AgentPrestartedNewSessionLaunch {
+    val prestarted = threadStartupBackend.prestartThread(
       projectPath = projectPath,
       launchMode = launchMode,
       model = generationSettings.modelId,
     )
-    return AgentPrestartedNewSessionPromptLaunch(
+    return AgentPrestartedNewSessionLaunch(
       launchSpec = launchSpec.copy(
         command = launchSpec.command + listOf("resume", "--remote", prestarted.remoteUrl, prestarted.threadId),
         preallocatedSessionId = prestarted.threadId,
       ),
-      initialMessageDispatchPlan = AgentInitialPromptDeliveryPlan(
-        promptRecord = AgentInitialPromptRecord(
-          message = prompt,
-          mode = AgentInitialMessageMode.PLAN,
-          deliveryStatus = AgentInitialPromptDeliveryStatus.PENDING,
-          deliveryChannel = AgentInitialPromptDeliveryChannel.APP_SERVER,
-        ),
-        terminalDispatch = AgentTerminalPromptDispatch(
-          steps = listOf(
-            AgentInitialMessageDispatchStep(
-              text = prompt,
-              timeoutPolicy = initialMessagePlan.timeoutPolicy,
-              action = AgentInitialMessageDispatchAction.PROVIDER,
-            )
-          )
-        ).normalized(),
-      ),
+      initialMessageDispatchPlan = buildAppServerInitialMessageDispatchPlan(initialMessagePlan),
     )
   }
 
@@ -267,12 +247,13 @@ internal class CodexAgentSessionProviderDescriptor(
   }
 
   override suspend fun dispatchInitialMessageToProvider(request: AgentInitialMessageProviderDispatchRequest): Boolean {
-    if (request.mode != AgentInitialMessageMode.PLAN || request.message.isBlank()) {
+    if (request.message.isBlank()) {
       return false
     }
-    planPromptStartupBackend.startPlanPromptTurn(
+    threadStartupBackend.startTurn(
       threadId = request.threadId,
       prompt = request.message,
+      mode = request.mode,
       model = request.generationSettings.modelId,
       reasoningEffort = resolvePlanReasoningEffort(request.generationSettings),
     )
@@ -330,22 +311,25 @@ internal interface CodexThreadMutationBackend {
   suspend fun setThreadName(path: String, threadId: String, name: String)
 }
 
-internal interface CodexPlanPromptStartupBackend {
-  suspend fun prestartPlanPromptThread(
+internal interface CodexThreadStartupBackend {
+  suspend fun currentRemoteUrl(): String
+
+  suspend fun prestartThread(
     projectPath: String,
     launchMode: AgentSessionLaunchMode,
     model: String?,
-  ): CodexPrestartedPlanPrompt
+  ): CodexPrestartedThread
 
-  suspend fun startPlanPromptTurn(
+  suspend fun startTurn(
     threadId: String,
     prompt: String,
+    mode: AgentInitialMessageMode,
     model: String?,
     reasoningEffort: String?,
   )
 }
 
-internal data class CodexPrestartedPlanPrompt(
+internal data class CodexPrestartedThread(
   @JvmField val threadId: String,
   @JvmField val remoteUrl: String,
 )
@@ -364,36 +348,63 @@ private object SharedServiceCodexThreadMutationBackend : CodexThreadMutationBack
   }
 }
 
-private object SharedServiceCodexPlanPromptStartupBackend : CodexPlanPromptStartupBackend {
-  override suspend fun prestartPlanPromptThread(
+private object SharedServiceCodexThreadStartupBackend : CodexThreadStartupBackend {
+  override suspend fun currentRemoteUrl(): String {
+    return serviceAsync<SharedCodexAppServerService>().currentRemoteUrl()
+  }
+
+  override suspend fun prestartThread(
     projectPath: String,
     launchMode: AgentSessionLaunchMode,
     model: String?,
-  ): CodexPrestartedPlanPrompt {
-    val prestarted = serviceAsync<SharedCodexAppServerService>().prestartPlanPromptThread(
+  ): CodexPrestartedThread {
+    val prestarted = serviceAsync<SharedCodexAppServerService>().prestartThread(
       cwd = projectPath,
       yolo = launchMode == AgentSessionLaunchMode.YOLO,
       model = model,
     )
-    return CodexPrestartedPlanPrompt(
+    return CodexPrestartedThread(
       threadId = prestarted.threadId,
       remoteUrl = prestarted.remoteUrl,
     )
   }
 
-  override suspend fun startPlanPromptTurn(
+  override suspend fun startTurn(
     threadId: String,
     prompt: String,
+    mode: AgentInitialMessageMode,
     model: String?,
     reasoningEffort: String?,
   ) {
-    serviceAsync<SharedCodexAppServerService>().startPlanPromptTurn(
+    serviceAsync<SharedCodexAppServerService>().startInitialPromptTurn(
       threadId = threadId,
       prompt = prompt,
+      mode = mode,
       model = model,
       reasoningEffort = reasoningEffort,
     )
   }
+}
+
+private fun buildAppServerInitialMessageDispatchPlan(initialMessagePlan: AgentInitialMessagePlan): AgentInitialPromptDeliveryPlan? {
+  val prompt = initialMessagePlan.message?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+  return AgentInitialPromptDeliveryPlan(
+    promptRecord = AgentInitialPromptRecord(
+      message = prompt,
+      mode = initialMessagePlan.mode,
+      deliveryStatus = AgentInitialPromptDeliveryStatus.PENDING,
+      deliveryChannel = AgentInitialPromptDeliveryChannel.APP_SERVER,
+    ),
+    terminalDispatch = AgentTerminalPromptDispatch(
+      steps = listOf(
+        AgentInitialMessageDispatchStep(
+          text = prompt,
+          timeoutPolicy = initialMessagePlan.timeoutPolicy,
+          action = AgentInitialMessageDispatchAction.PROVIDER,
+        )
+      )
+    ).normalized(),
+  )
 }
 
 private fun buildCodexBaseCommand(executable: String): List<String> {

@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit
 class CodexNewThreadPromptLaunchIntegrationTest {
   @Test
   fun globalPromptNewTaskPlanModePrestartsPlanTurnThroughAppServer() {
-    val startupBackend = RecordingPlanPromptStartupBackend()
+    val startupBackend = RecordingThreadStartupBackend()
     val descriptor = descriptor(startupBackend)
 
     val request = captureNewTaskPromptLaunchRequest(
@@ -64,7 +64,7 @@ class CodexNewThreadPromptLaunchIntegrationTest {
     assertThat(observation.initialPromptDeliveryStatus).isEqualTo(AgentInitialPromptDeliveryStatus.PENDING)
     assertThat(observation.initialPromptDeliveryChannel).isEqualTo(AgentInitialPromptDeliveryChannel.APP_SERVER)
     assertThat(startupBackend.requests).containsExactly(
-      CodexPlanPromptStartupRequest(
+      CodexThreadStartupRequest(
         projectPath = PROJECT_PATH,
         launchMode = AgentSessionLaunchMode.STANDARD,
         model = null,
@@ -74,7 +74,7 @@ class CodexNewThreadPromptLaunchIntegrationTest {
 
   @Test
   fun newThreadPlanModePromptPrestartsPlanTurnWithGenerationSettings() {
-    val startupBackend = RecordingPlanPromptStartupBackend()
+    val startupBackend = RecordingThreadStartupBackend()
     val descriptor = descriptor(startupBackend)
 
     val observation = assertNewThreadPromptLaunchOpensNewChat(
@@ -128,7 +128,7 @@ class CodexNewThreadPromptLaunchIntegrationTest {
     assertThat(observation.initialPromptDeliveryStatus).isEqualTo(AgentInitialPromptDeliveryStatus.PENDING)
     assertThat(observation.initialPromptDeliveryChannel).isEqualTo(AgentInitialPromptDeliveryChannel.APP_SERVER)
     assertThat(startupBackend.requests).containsExactly(
-      CodexPlanPromptStartupRequest(
+      CodexThreadStartupRequest(
         projectPath = PROJECT_PATH,
         launchMode = AgentSessionLaunchMode.STANDARD,
         model = "gpt-5.1-codex",
@@ -151,9 +151,10 @@ class CodexNewThreadPromptLaunchIntegrationTest {
       )
     }
     assertThat(startupBackend.turnRequests).containsExactly(
-      CodexPlanPromptTurnRequest(
+      CodexPromptTurnRequest(
         threadId = RECORDED_PLAN_THREAD_ID,
         prompt = "Refactor selected code",
+        mode = AgentInitialMessageMode.PLAN,
         model = "gpt-5.1-codex",
         reasoningEffort = "high",
       )
@@ -161,8 +162,9 @@ class CodexNewThreadPromptLaunchIntegrationTest {
   }
 
   @Test
-  fun newThreadStandardPromptStaysOnPtyCreatePath() {
-    val descriptor = descriptor()
+  fun newThreadStandardPromptPrestartsThreadThroughAppServer() {
+    val startupBackend = RecordingThreadStartupBackend()
+    val descriptor = descriptor(startupBackend)
 
     val observation = assertNewThreadPromptLaunchOpensNewChat(
       descriptor = descriptor,
@@ -177,73 +179,111 @@ class CodexNewThreadPromptLaunchIntegrationTest {
     )
 
     assertThat(observation.normalizedPath).isEqualTo(PROJECT_PATH)
-    assertThat(observation.identity).startsWith("codex:new-")
+    assertThat(observation.identity).isEqualTo("codex:$RECORDED_PLAN_THREAD_ID")
     assertThat(observation.launchSpec.command)
-      .containsExactlyElementsOf(CODEX_BASE_COMMAND)
-    assertThat(observation.startupLaunchSpecOverride?.command)
-      .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("--", "Refactor selected code"))
-    assertThat(observation.postStartDispatchSteps).isEmpty()
+      .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("resume", "--remote", REMOTE_URL, RECORDED_PLAN_THREAD_ID))
+    assertThat(observation.launchSpec.preallocatedSessionId).isEqualTo(RECORDED_PLAN_THREAD_ID)
+    assertThat(observation.startupLaunchSpecOverride).isNull()
+    val dispatchStep = observation.postStartDispatchSteps.single()
+    assertThat(dispatchStep.action).isEqualTo(AgentInitialMessageDispatchAction.PROVIDER)
+    assertThat(dispatchStep.text).isEqualTo("Refactor selected code")
     assertThat(observation.initialPromptMessage).isEqualTo("Refactor selected code")
-    assertThat(observation.initialMessageToken).isNotNull()
+    assertThat(observation.initialMessageToken).isNull()
+    assertThat(observation.initialPromptDeliveryStatus).isEqualTo(AgentInitialPromptDeliveryStatus.PENDING)
+    assertThat(observation.initialPromptDeliveryChannel).isEqualTo(AgentInitialPromptDeliveryChannel.APP_SERVER)
+    assertThat(startupBackend.requests).containsExactly(
+      CodexThreadStartupRequest(
+        projectPath = PROJECT_PATH,
+        launchMode = AgentSessionLaunchMode.STANDARD,
+        model = null,
+      )
+    )
+
+    runBlocking {
+      descriptor.dispatchInitialMessageToProvider(
+        AgentInitialMessageProviderDispatchRequest(
+          project = ProjectManager.getInstance().defaultProject,
+          projectPath = PROJECT_PATH,
+          threadId = RECORDED_PLAN_THREAD_ID,
+          message = "Refactor selected code",
+          mode = AgentInitialMessageMode.STANDARD,
+          generationSettings = AgentPromptGenerationSettings.AUTO,
+        )
+      )
+    }
+    assertThat(startupBackend.turnRequests).containsExactly(
+      CodexPromptTurnRequest(
+        threadId = RECORDED_PLAN_THREAD_ID,
+        prompt = "Refactor selected code",
+        mode = AgentInitialMessageMode.STANDARD,
+        model = null,
+        reasoningEffort = null,
+      )
+    )
   }
 }
 
 private fun descriptor(
-  planPromptStartupBackend: CodexPlanPromptStartupBackend = RecordingPlanPromptStartupBackend(),
+  threadStartupBackend: CodexThreadStartupBackend = RecordingThreadStartupBackend(),
 ): AgentSessionProviderDescriptor {
   return CodexAgentSessionProviderDescriptor(
     sessionSource = ScriptedSessionSource(provider = AgentSessionProvider.from("codex")),
-    planPromptStartupBackend = planPromptStartupBackend,
+    threadStartupBackend = threadStartupBackend,
     executableResolver = { CodexCliUtils.CODEX_COMMAND },
     cliAvailableProbe = { true },
   ).withProvider(CODEX_AGENT_SESSION_PROVIDER)
 }
 
-internal class RecordingPlanPromptStartupBackend : CodexPlanPromptStartupBackend {
-  val requests: MutableList<CodexPlanPromptStartupRequest> = mutableListOf()
+internal class RecordingThreadStartupBackend : CodexThreadStartupBackend {
+  override suspend fun currentRemoteUrl(): String = REMOTE_URL
 
-  override suspend fun prestartPlanPromptThread(
+  val requests: MutableList<CodexThreadStartupRequest> = mutableListOf()
+
+  override suspend fun prestartThread(
     projectPath: String,
     launchMode: AgentSessionLaunchMode,
     model: String?,
-  ): CodexPrestartedPlanPrompt {
-    requests += CodexPlanPromptStartupRequest(
+  ): CodexPrestartedThread {
+    requests += CodexThreadStartupRequest(
       projectPath = projectPath,
       launchMode = launchMode,
       model = model,
     )
-    return CodexPrestartedPlanPrompt(
+    return CodexPrestartedThread(
       threadId = recordingPlanPromptThreadId(requests.size),
       remoteUrl = REMOTE_URL,
     )
   }
 
-  val turnRequests: MutableList<CodexPlanPromptTurnRequest> = mutableListOf()
+  val turnRequests: MutableList<CodexPromptTurnRequest> = mutableListOf()
 
-  override suspend fun startPlanPromptTurn(
+  override suspend fun startTurn(
     threadId: String,
     prompt: String,
+    mode: AgentInitialMessageMode,
     model: String?,
     reasoningEffort: String?,
   ) {
-    turnRequests += CodexPlanPromptTurnRequest(
+    turnRequests += CodexPromptTurnRequest(
       threadId = threadId,
       prompt = prompt,
+      mode = mode,
       model = model,
       reasoningEffort = reasoningEffort,
     )
   }
 }
 
-internal data class CodexPlanPromptStartupRequest(
+internal data class CodexThreadStartupRequest(
   @JvmField val projectPath: String,
   @JvmField val launchMode: AgentSessionLaunchMode,
   @JvmField val model: String?,
 )
 
-internal data class CodexPlanPromptTurnRequest(
+internal data class CodexPromptTurnRequest(
   @JvmField val threadId: String,
   @JvmField val prompt: String,
+  @JvmField val mode: AgentInitialMessageMode,
   @JvmField val model: String?,
   @JvmField val reasoningEffort: String?,
 )

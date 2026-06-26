@@ -35,24 +35,26 @@ import java.nio.file.Path
 class CodexAgentSessionProviderDescriptorTest {
   private val bridge = CodexAgentSessionProviderDescriptor(
     executableResolver = { CodexCliUtils.CODEX_COMMAND },
+    threadStartupBackend = RecordingThreadStartupBackend(),
   )
 
   @Test
   fun buildResumeLaunchSpec(): Unit = runBlocking(Dispatchers.Default) {
     assertThat(bridge.buildResumeLaunchSpec("thread-1").command)
-      .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("resume", "thread-1"))
+      .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("resume", "--remote", REMOTE_URL, "thread-1"))
   }
 
   @Test
   fun buildYoloResumeLaunchSpec(): Unit = runBlocking(Dispatchers.Default) {
     assertThat(bridge.buildResumeLaunchSpec("thread-1", AgentSessionLaunchMode.YOLO).command)
-      .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("--yolo", "resume", "thread-1"))
+      .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("--yolo", "resume", "--remote", REMOTE_URL, "thread-1"))
   }
 
   @Test
   fun promptOptionsUseSharedPlanModeOption() {
     assertThat(bridge.promptOptions).containsExactly(AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION)
     assertThat(bridge.supportsGenerationModelSelection).isTrue()
+    assertThat(bridge.supportsPendingEditorTabRebind).isFalse()
   }
 
   @Test
@@ -257,7 +259,7 @@ class CodexAgentSessionProviderDescriptorTest {
         initialMessagePlan = AgentInitialMessagePlan(message = "Summarize changes"),
       )).command
     )
-      .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("resume", "thread-1", "--", "Summarize changes"))
+      .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("resume", "--remote", REMOTE_URL, "thread-1", "--", "Summarize changes"))
   }
 
   @Test
