@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -71,9 +71,8 @@ public final class JavaNameSuggestionProvider implements NameSuggestionProvider 
     if (superMethodName != null && !list.contains(superMethodName)) {
       list.add(0, superMethodName);
     }
-    list.remove(initialName);
-    list.add(initialName);
     ContainerUtil.removeDuplicates(list);
+    list.remove(initialName);
     result.addAll(list);
     return info;
   }
