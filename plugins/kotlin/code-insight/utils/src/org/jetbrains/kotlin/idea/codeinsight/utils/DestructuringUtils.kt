@@ -85,6 +85,16 @@ fun KaSession.isPositionalDestructuringType(classType: KaClassType): Boolean {
 }
 
 @ApiStatus.Internal
+fun KaSession.buildFullNameBasedDestructuringFormText(declaration: KtDestructuringDeclaration): String? {
+    if (declaration.isPositionalDestructuringType()) return null
+    val names = extractPrimaryParameters(declaration)?.map { it.name.asString() } ?: return null
+    // Exclude stdlib types - they should use brackets [x, y] instead
+    return declaration.buildNameBasedDestructuringText(
+        NameBasedDestructuringForm(names, positionBased = false, useFullForm = true)
+    )
+}
+
+@ApiStatus.Internal
 fun KtDestructuringDeclaration.buildNameBasedDestructuringText(
     nameBasedDestructuringForm: NameBasedDestructuringForm,
     useExplicitMappings: Boolean = false,

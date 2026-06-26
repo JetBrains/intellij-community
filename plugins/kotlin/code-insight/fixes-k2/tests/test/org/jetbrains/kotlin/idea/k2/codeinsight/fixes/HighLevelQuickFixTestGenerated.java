@@ -8497,6 +8497,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/fullFormWithUnusedVariable.kt");
         }
 
+        @TestMetadata("fullFormWithUnusedVariableNameMismatch.kt")
+        public void testFullFormWithUnusedVariableNameMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/fullFormWithUnusedVariableNameMismatch.kt");
+        }
+
         @TestMetadata("genericDataClassFullForm.kt")
         public void testGenericDataClassFullForm() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/genericDataClassFullForm.kt");
