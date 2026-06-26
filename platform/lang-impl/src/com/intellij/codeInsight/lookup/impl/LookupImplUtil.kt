@@ -5,8 +5,6 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -45,17 +43,6 @@ object LookupImplUtil {
 
   @JvmStatic
   fun getEditor(project: Project, toplevelEditor: Editor): Editor {
-    val application = ApplicationManager.getApplication()
-    // Lookup.getEditor() is public API and may be invoked on EDT without a read action, but the
-    // injected-editor lookup below touches PSI. Acquire a read action in that case. On a background
-    // thread the caller is expected to already hold a read action.
-    if (application.isDispatchThread && !application.isReadAccessAllowed) {
-      return runReadActionBlocking { doGetEditor(project, toplevelEditor) }
-    }
-    return doGetEditor(project, toplevelEditor)
-  }
-
-  private fun doGetEditor(project: Project, toplevelEditor: Editor): Editor {
     val documentWindow = getInjectedDocument(project, toplevelEditor, toplevelEditor.caretModel.offset) ?: return toplevelEditor
     val injectedFile = PsiDocumentManager.getInstance(project).getPsiFile(documentWindow)
     return InjectedLanguageUtil.getInjectedEditorForInjectedFile(toplevelEditor, injectedFile)
