@@ -13,6 +13,7 @@ import com.intellij.psi.JavaElementVisitor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.util.PsiUtil
@@ -20,9 +21,12 @@ import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
 
 /**
  * This inspection detects usages of `componentN()` calls on data classes from **Java** code.
@@ -46,6 +50,17 @@ internal class UseNamedGetterInspection : LocalInspectionTool() {
         return valueParameters.isEmpty() && contextParameters.isEmpty() && typeParameters.isEmpty()
     }
 
+    private fun KtParameter.getGetterForAssociatedProperty(containingClass: KtClassOrObject): PsiMethod? {
+        if (isPropertyParameter()) {
+            return LightClassUtil.getLightClassPropertyMethods(this).getter
+        }
+
+        val matchingProperty = containingClass.declarations
+            .filterIsInstance<KtProperty>()
+            .firstOrNull { it.name == this.name } ?: return null
+        return LightClassUtil.getLightClassPropertyMethods(matchingProperty).getter
+    }
+
     override fun buildVisitor(
         holder: ProblemsHolder,
         isOnTheFly: Boolean
@@ -66,7 +81,7 @@ internal class UseNamedGetterInspection : LocalInspectionTool() {
             if (!PsiUtil.isAccessible(resolvedMethod, referenceElement, null)) return
 
             val parameter = containingClass.primaryConstructor?.valueParameters?.getOrNull(componentNumber - 1) ?: return
-            val parameterGetter = LightClassUtil.getLightClassPropertyMethods(parameter).getter ?: return
+            val parameterGetter = parameter.getGetterForAssociatedProperty(containingClass) ?: return
             if (!StringUtil.isJavaIdentifier(parameterGetter.name)) return
 
             val problemDescriptor = holder.manager.createProblemDescriptor(
