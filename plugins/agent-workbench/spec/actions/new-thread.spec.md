@@ -5,6 +5,8 @@ targets:
   - ../../sessions-toolwindow/src/**/*.kt
   - ../../sessions-actions/src/**/*.kt
   - ../../sessions/src/service/AgentSessionLaunchService.kt
+  - ../../chat/src/AgentChatDeferredStartContent.kt
+  - ../../chat/src/AgentChatFileEditor.kt
   - ../../sessions/src/service/AgentSessionProjectCatalog.kt
   - ../../sessions/resources/messages/AgentSessionsBundle.properties
   - ../../sessions-actions/resources/intellij.agent.workbench.sessions.actions.xml
@@ -19,7 +21,7 @@ Status: Draft
 Date: 2026-05-09
 
 ## Summary
-New-thread actions let users start provider-backed threads from project/worktree rows and the main toolbar. This spec owns action availability, launch-profile menus, target resolution, and launch deduplication. Codex pending/concrete rebind behavior is specified separately.
+New-thread actions let users start provider-backed threads from project/worktree rows and the main toolbar. This spec owns action availability, launch-profile menus, target resolution, inline prompt handoff, and launch deduplication. Codex pending/concrete rebind behavior is specified separately.
 
 ## Requirements
 - Project/worktree rows expose new-thread controls only while hovered or selected, suppress them while the row is loading, and hide tree
@@ -67,6 +69,16 @@ New-thread actions let users start provider-backed threads from project/worktree
   [@test] ../../sessions/testSrc/AgentSessionLaunchServiceTest.kt
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
+- Main-toolbar new-thread opens a deferred chat tab with an inline prompt when `agent.workbench.new.thread.inline.prompt` is enabled and the selected provider supports prompt launch. The inline prompt is seeded with the selected launch profile, submits through `AgentDeferredNewSessionHandle.launch(...)`, and completes the same pending chat tab instead of opening a separate TUI tab first.
+  [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionLaunchServiceTest.kt
+  [@test] ../../prompt/ui/testSrc/AgentPromptPaletteSessionControllerTest.kt
+  [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+
+- Inline new-thread routing falls back to direct `createNewSession(...)` when the registry key is disabled, the provider descriptor is missing, the provider does not support prompt launch, deferred chat opening fails, or inline prompt installation fails.
+  [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionLaunchServiceTest.kt
+
 - Command construction for each provider and launch mode follows `../core/agent-core-contracts.spec.md`.
   [@test] ../../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
   [@test] ../../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
@@ -75,6 +87,7 @@ New-thread actions let users start provider-backed threads from project/worktree
 ## User Experience
 - Quick actions use the active launch profile when that profile is still launchable, otherwise they fall back to the first launchable built-in/user profile.
 - Launch-profile pickers keep Standard and YOLO choices explicit.
+- Registry-gated inline new-thread uses the chat tab itself as the prompt surface; failed submit keeps that prompt visible for correction or retry.
 - Dedicated-frame source selection appears only when the user invokes the action, not during toolbar update.
 
 ## Testing / Local Run
@@ -82,7 +95,10 @@ New-thread actions let users start provider-backed threads from project/worktree
 - `./tests.cmd --module intellij.agent.workbench.sessions.toolwindow.tests --test com.intellij.agent.workbench.sessions.toolwindow.AgentSessionsTreePopupActionsTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.actions.tests --test com.intellij.agent.workbench.sessions.AgentSessionsGearActionsTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.actions.tests --test com.intellij.agent.workbench.sessions.AgentSessionsMainToolbarNewThreadActionsTest`
+- `./tests.cmd --module intellij.agent.workbench.chat.tests --test com.intellij.agent.workbench.chat.AgentChatFileEditorLifecycleTest`
+- `./tests.cmd --module intellij.agent.workbench.prompt.ui.tests --test com.intellij.agent.workbench.prompt.ui.AgentPromptPaletteSessionControllerTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionPromptLauncherBridgeTest`
+- `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionLaunchServiceTest`
 
 ## References
 - `../core/agent-core-contracts.spec.md`

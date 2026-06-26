@@ -410,7 +410,7 @@ internal fun createAgentPromptPaletteView(
   onPinClicked: () -> Unit = {},
   hostMode: AgentPromptPaletteHostMode = AgentPromptPaletteHostMode.POPUP,
 ): AgentPromptPaletteView {
-  val isInlineEmptyState = hostMode == AgentPromptPaletteHostMode.INLINE_EMPTY_STATE
+  val isInlinePrompt = hostMode.isInlinePrompt
 
   val pinAction = AgentPromptToolbarIconToggleAction(
     text = AgentPromptBundle.message("popup.keep.open.toggle.tooltip"),
@@ -448,7 +448,7 @@ internal fun createAgentPromptPaletteView(
     setReservePlaceAutoPopupIcon(true)
     (this as? ActionToolbarImpl)?.setSkipWindowAdjustments(true)
     component.isOpaque = false
-    component.border = if (isInlineEmptyState) JBUI.Borders.empty() else JBUI.Borders.empty(JBUI.CurrentTheme.BigPopup.headerToolbarInsets())
+    component.border = if (isInlinePrompt) JBUI.Borders.empty() else JBUI.Borders.empty(JBUI.CurrentTheme.BigPopup.headerToolbarInsets())
   }
   val headerControls = AgentPromptHeaderControls(
     rootGroup = headerActionsGroup,
@@ -460,7 +460,7 @@ internal fun createAgentPromptPaletteView(
   )
   launchProfileLink.onVisibilityChanged = headerControls::updateActions
   profileSelectorAction.onPresentationChanged = headerControls::updateActions
-  if (isInlineEmptyState) {
+  if (isInlinePrompt) {
     launchProfileLink.isFocusable = false
     promptLibraryIconLabel.isFocusable = false
     headerToolbar.component.isFocusable = false
@@ -506,7 +506,7 @@ internal fun createAgentPromptPaletteView(
     }
   }
   headerPanel.apply {
-    if (isInlineEmptyState) {
+    if (isInlinePrompt) {
       isOpaque = false
       border = JBUI.Borders.empty(0, 12)
     }
@@ -525,7 +525,7 @@ internal fun createAgentPromptPaletteView(
   tabbedPane.addTab(AgentPromptBundle.message("popup.target.existing"), JPanel().apply {
     putClientProperty("targetMode", PromptTargetMode.EXISTING_TASK)
   })
-  tabbedPane.isVisible = !isInlineEmptyState
+  tabbedPane.isVisible = !isInlinePrompt
 
   val existingTaskListModel = DefaultListModel<ThreadEntry>()
   val existingTaskList = JBList(existingTaskListModel).apply {
@@ -603,32 +603,32 @@ internal fun createAgentPromptPaletteView(
   }
   val composerContextActionsPanel = JPanel(BorderLayout()).apply {
     isOpaque = false
-    border = JBUI.Borders.emptyTop(if (isInlineEmptyState) 0 else 2)
-    if (!isInlineEmptyState) {
+    border = JBUI.Borders.emptyTop(if (isInlinePrompt) 0 else 2)
+    if (!isInlinePrompt) {
       add(addContextButton, BorderLayout.WEST)
     }
   }
   val composerContextPanel = BorderLayoutPanel().apply {
     isOpaque = false
-    border = JBUI.Borders.emptyTop(if (isInlineEmptyState) 2 else 4)
+    border = JBUI.Borders.emptyTop(if (isInlinePrompt) 2 else 4)
     addToTop(contextChipsContainer)
     addToBottom(composerContextActionsPanel)
   }
 
-  val generationSettingsControlsPanel = JPanel(FlowLayout(FlowLayout.LEFT, if (isInlineEmptyState) 6 else 8, 0)).apply {
+  val generationSettingsControlsPanel = JPanel(FlowLayout(FlowLayout.LEFT, if (isInlinePrompt) 6 else 8, 0)).apply {
     isOpaque = false
-    if (isInlineEmptyState) {
+    if (isInlinePrompt) {
       add(addContextButton)
     }
   }
-  val generationSettingsActionsPanel = JPanel(FlowLayout(FlowLayout.RIGHT, if (isInlineEmptyState) 6 else 8, 0)).apply {
+  val generationSettingsActionsPanel = JPanel(FlowLayout(FlowLayout.RIGHT, if (isInlinePrompt) 6 else 8, 0)).apply {
     isOpaque = false
     add(launchTuningSummaryLink)
     add(defaultProfileActionControl.component)
   }
   val generationSettingsPanel = JPanel(BorderLayout()).apply {
     isOpaque = false
-    border = if (isInlineEmptyState) JBUI.Borders.empty(0, 6, 4, 6) else JBUI.Borders.empty(0, 6, 6, 6)
+    border = if (isInlinePrompt) JBUI.Borders.empty(0, 6, 4, 6) else JBUI.Borders.empty(0, 6, 6, 6)
     add(generationSettingsControlsPanel, BorderLayout.WEST)
     add(generationSettingsActionsPanel, BorderLayout.EAST)
   }
@@ -636,7 +636,7 @@ internal fun createAgentPromptPaletteView(
   val promptEditorPanel = BorderLayoutPanel().apply {
     isOpaque = false
     border = JBUI.Borders.empty(1)
-    if (isInlineEmptyState) {
+    if (isInlinePrompt) {
       preferredSize = INLINE_PROMPT_EDITOR_PREFERRED_SIZE
     }
     addToCenter(promptCardPanel)
@@ -645,18 +645,18 @@ internal fun createAgentPromptPaletteView(
 
   val promptPanel = JPanel(BorderLayout()).apply {
     isOpaque = false
-    border = if (isInlineEmptyState) JBUI.Borders.empty(0, 12, 6, 12) else JBUI.Borders.empty(6, 12, 8, 12)
+    border = if (isInlinePrompt) JBUI.Borders.empty(0, 12, 6, 12) else JBUI.Borders.empty(6, 12, 8, 12)
     add(suggestionsPanel, BorderLayout.NORTH)
     add(promptEditorPanel, BorderLayout.CENTER)
     add(composerContextPanel, BorderLayout.SOUTH)
-    minimumSize = if (isInlineEmptyState) INLINE_PROMPT_PANEL_MINIMUM_SIZE else PROMPT_PANEL_MINIMUM_SIZE
+    minimumSize = if (isInlinePrompt) INLINE_PROMPT_PANEL_MINIMUM_SIZE else PROMPT_PANEL_MINIMUM_SIZE
   }
 
   val footerPanel = JPanel(BorderLayout()).apply {
     background = JBUI.CurrentTheme.BigPopup.advertiserBackground()
     add(statusStrip.component, BorderLayout.CENTER)
     add(footerPinToolbar.component, BorderLayout.EAST)
-    isVisible = !isInlineEmptyState
+    isVisible = !isInlinePrompt
   }
 
   val bottomPanel = BorderLayoutPanel().apply {
@@ -664,7 +664,7 @@ internal fun createAgentPromptPaletteView(
     addToCenter(existingTaskScrollPane)
     addToBottom(footerPanel)
   }
-  if (isInlineEmptyState) {
+  if (isInlinePrompt) {
     existingTaskScrollPane.isVisible = false
     footerPinToolbar.component.isVisible = false
   }
@@ -674,15 +674,15 @@ internal fun createAgentPromptPaletteView(
     addContextControl = addContextButton,
     composerContextPanel = composerContextPanel,
     layoutParent = promptPanel,
-    showAddContextRowWithoutChips = !isInlineEmptyState,
+    showAddContextRowWithoutChips = !isInlinePrompt,
   )
 
   val rootPanel = BorderLayoutPanel().apply {
     background = JBUI.CurrentTheme.Popup.BACKGROUND
-    isOpaque = !isInlineEmptyState
-    preferredSize = if (isInlineEmptyState) AGENT_PROMPT_INLINE_EMPTY_STATE_PREFERRED_SIZE else AGENT_PROMPT_PALETTE_PREFERRED_SIZE
-    minimumSize = if (isInlineEmptyState) AGENT_PROMPT_INLINE_EMPTY_STATE_MINIMUM_SIZE else AGENT_PROMPT_PALETTE_MINIMUM_SIZE
-    if (isInlineEmptyState) {
+    isOpaque = !isInlinePrompt
+    preferredSize = if (isInlinePrompt) AGENT_PROMPT_INLINE_EMPTY_STATE_PREFERRED_SIZE else AGENT_PROMPT_PALETTE_PREFERRED_SIZE
+    minimumSize = if (isInlinePrompt) AGENT_PROMPT_INLINE_EMPTY_STATE_MINIMUM_SIZE else AGENT_PROMPT_PALETTE_MINIMUM_SIZE
+    if (isInlinePrompt) {
       maximumSize = AGENT_PROMPT_INLINE_EMPTY_STATE_MAXIMUM_SIZE
       border = JBUI.Borders.empty(8)
     }

@@ -38,6 +38,7 @@ import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.milliseconds
 
 @TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
@@ -425,7 +426,7 @@ class AgentSessionLaunchServiceTest {
           )
 
           chatOpenExecutor.awaitOpenPreparingNewChatCalls(1)
-          withTimeout(5_000) { launchSpecRequested.await() }
+          withTimeout(5_000.milliseconds) { launchSpecRequested.await() }
           assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
 
           releaseLaunchSpec.complete(Unit)
@@ -464,11 +465,81 @@ class AgentSessionLaunchServiceTest {
 
           chatOpenExecutor.awaitOpenPreparingNewChatCalls(1)
           waitForCondition { chatOpenExecutor.failPreparingNewChatCalls.get() == 1 }
-          val result = withTimeout(5_000) { launchResult.await() }
+          val result = withTimeout(5_000.milliseconds) { launchResult.await() }
           assertThat(result.launched).isFalse()
           assertThat(result.error).isEqualTo(AgentPromptLaunchError.PROVIDER_UNAVAILABLE)
           assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
           assertThat(chatOpenExecutor.lastFailPreparingNewChatMessage.get()).isNotBlank()
+        }
+      }
+    }
+  }
+
+  @Test
+  fun deferredNewSessionPromptLaunchCanRetryAfterRejectedPreparation() {
+    val launchSpecAttempts = AtomicInteger(0)
+    val descriptor = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.from("codex"),
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+      newSessionLaunchSpecProvider = {
+        val attempt = launchSpecAttempts.incrementAndGet()
+        AgentSessionTerminalLaunchSpec(command = listOf("test", "retry", attempt.toString()))
+      },
+    )
+    val chatOpenExecutor = RecordingChatOpenExecutor()
+
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+      runBlocking(Dispatchers.Default) {
+        withTestServiceAndLaunch(
+          sessionSourcesProvider = { listOf(descriptor.sessionSource) },
+          projectEntriesProvider = { listOf(openTestProjectEntry(PROJECT_PATH, "Project A")) },
+          chatOpenExecutor = chatOpenExecutor,
+        ) { _, launchService ->
+          val handle = checkNotNull(
+            launchService.createDeferredNewSession(
+              path = PROJECT_PATH,
+              provider = AgentSessionProvider.from("codex"),
+              mode = AgentSessionLaunchMode.STANDARD,
+              entryPoint = AgentWorkbenchEntryPoint.PROMPT,
+              waitingTitle = "Preparing",
+            ).handle
+          )
+          chatOpenExecutor.awaitOpenPreparingNewChatCalls(1)
+
+          val rejectedRequest = AgentPromptLaunchRequest(
+            provider = AgentSessionProvider.from("codex"),
+            projectPath = PROJECT_PATH,
+            launchMode = AgentSessionLaunchMode.YOLO,
+            initialMessageRequest = AgentPromptInitialMessageRequest(prompt = "Rejected before retry"),
+          )
+          val request = AgentPromptLaunchRequest(
+            provider = AgentSessionProvider.from("codex"),
+            projectPath = PROJECT_PATH,
+            launchMode = AgentSessionLaunchMode.STANDARD,
+            initialMessageRequest = AgentPromptInitialMessageRequest(prompt = "Start after retry"),
+          )
+          val failedResult = handle.launch(rejectedRequest)
+          assertThat(failedResult.launched).isFalse()
+          assertThat(failedResult.error).isEqualTo(AgentPromptLaunchError.UNSUPPORTED_LAUNCH_MODE)
+          assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
+          assertThat(chatOpenExecutor.failPreparingNewChatCalls.get()).isZero()
+          assertThat(launchSpecAttempts.get()).isZero()
+
+          val successfulResult = handle.launch(request)
+          assertThat(successfulResult.launched).isTrue()
+          assertThat(successfulResult.error).isNull()
+          chatOpenExecutor.awaitOpenNewChatCalls(1)
+
+          val openRequest = checkNotNull(chatOpenExecutor.lastOpenNewChatRequest.get())
+          assertThat(openRequest.launchSpec.command).containsExactly("test", "retry", "1")
+          assertThat(openRequest.initialComposedMessage).isEqualTo("Start after retry")
+
+          val duplicateResult = handle.launch(request)
+          assertThat(duplicateResult.launched).isFalse()
+          assertThat(duplicateResult.error).isEqualTo(AgentPromptLaunchError.DROPPED_DUPLICATE)
+          assertThat(chatOpenExecutor.openNewChatCalls.get()).isEqualTo(1)
+          assertThat(launchSpecAttempts.get()).isEqualTo(1)
         }
       }
     }

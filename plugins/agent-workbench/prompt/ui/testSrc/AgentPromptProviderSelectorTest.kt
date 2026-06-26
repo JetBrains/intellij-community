@@ -3458,7 +3458,7 @@ class AgentPromptProviderSelectorTest {
     var preferences: AgentPromptLauncherBridge.ProviderPreferences = initialPreferences
       private set
 
-    override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+    override suspend fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
       error("Not required for this test")
     }
 

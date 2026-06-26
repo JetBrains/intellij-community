@@ -114,6 +114,7 @@ internal class AgentPromptPaletteDraftState {
 internal class AgentPromptPaletteLaunchState {
   var selectedWorkingProjectPath: String? = null
   var canSubmitNow: Boolean = false
+  var launchInProgress: Boolean = false
   var clearDraftOnClose: Boolean = false
 }
 

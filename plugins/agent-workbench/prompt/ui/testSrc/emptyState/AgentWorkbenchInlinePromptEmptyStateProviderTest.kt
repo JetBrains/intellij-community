@@ -281,7 +281,7 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
   }
 
   private object TestPromptLauncher : AgentPromptLauncherBridge {
-    override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+    override suspend fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
       return AgentPromptLaunchResult.SUCCESS
     }
   }

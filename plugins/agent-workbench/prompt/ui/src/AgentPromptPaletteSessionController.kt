@@ -159,6 +159,7 @@ internal class AgentPromptPaletteSessionController(
       promptArea = promptArea,
       providerSelector = providerSelector,
       existingTaskController = existingTaskController,
+      sessionScope = sessionScope,
       launcherProvider = launcherProvider,
       launchState = launchState,
       currentTargetMode = ::currentTargetMode,
@@ -179,13 +180,16 @@ internal class AgentPromptPaletteSessionController(
     submitControllerRef = submitController
   }
 
-  fun initialize(initialAddContextRequest: AgentPromptAddContextRequest? = null) {
+  fun initialize(
+    initialAddContextRequest: AgentPromptAddContextRequest? = null,
+    initialLaunchProfileId: String? = null,
+  ) {
     contextController.configureAddContextButton()
     refreshProviders()
     contextController.loadInitialContext(initialAddContextRequest?.contextItems)
     contextController.resolveExtensionTabs()
 
-    val forcedTargetMode = if (hostMode == AgentPromptPaletteHostMode.INLINE_EMPTY_STATE) PromptTargetMode.NEW_TASK else null
+    val forcedTargetMode = if (hostMode.isInlinePrompt) PromptTargetMode.NEW_TASK else null
     val draft = draftController.restoreDraft(
       restoreContextSnapshot = initialAddContextRequest == null,
       targetModeOverride = forcedTargetMode,
@@ -194,10 +198,10 @@ internal class AgentPromptPaletteSessionController(
     generationSettingsController.restoreLaunchProfiles(
       launcherProvider()?.loadProviderPreferences() ?: AgentPromptLauncherBridge.ProviderPreferences()
     )
-    generationSettingsController.restoreDraftLaunchProfile(draft.selectedLaunchProfileId)
+    generationSettingsController.restoreDraftLaunchProfile(initialLaunchProfileId ?: draft.selectedLaunchProfileId)
     refreshExtensionTaskDraftsFromContext()
 
-    if (hostMode != AgentPromptPaletteHostMode.INLINE_EMPTY_STATE &&
+    if (!hostMode.isInlinePrompt &&
         invocationData.attributes[com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_INVOCATION_PREFER_EXTENSIONS_KEY] == true) {
       contextController.selectAutoSelectExtensionTab()
     }
@@ -792,7 +796,7 @@ internal class AgentPromptPaletteSessionController(
   }
 
   private fun currentTargetMode(): PromptTargetMode {
-    if (hostMode == AgentPromptPaletteHostMode.INLINE_EMPTY_STATE) {
+    if (hostMode.isInlinePrompt) {
       return PromptTargetMode.NEW_TASK
     }
     val selectedComponent = view.tabbedPane.selectedComponent as? JPanel ?: return PromptTargetMode.NEW_TASK
@@ -800,7 +804,7 @@ internal class AgentPromptPaletteSessionController(
   }
 
   private fun setTargetMode(mode: PromptTargetMode) {
-    val targetMode = if (hostMode == AgentPromptPaletteHostMode.INLINE_EMPTY_STATE) PromptTargetMode.NEW_TASK else mode
+    val targetMode = if (hostMode.isInlinePrompt) PromptTargetMode.NEW_TASK else mode
     val index = findTabIndexForMode(targetMode) ?: return
     view.tabbedPane.selectedIndex = index
   }
@@ -816,7 +820,7 @@ internal class AgentPromptPaletteSessionController(
   }
 
   private fun clearStatus() {
-    if (hostMode == AgentPromptPaletteHostMode.INLINE_EMPTY_STATE) {
+    if (hostMode.isInlinePrompt) {
       setInlineStatusVisible(false)
       return
     }
@@ -897,7 +901,7 @@ internal class AgentPromptPaletteSessionController(
   }
 
   private fun setInlineStatusVisible(visible: Boolean) {
-    if (hostMode != AgentPromptPaletteHostMode.INLINE_EMPTY_STATE || view.footerPanel.isVisible == visible) {
+    if (!hostMode.isInlinePrompt || view.footerPanel.isVisible == visible) {
       return
     }
     view.footerPanel.isVisible = visible

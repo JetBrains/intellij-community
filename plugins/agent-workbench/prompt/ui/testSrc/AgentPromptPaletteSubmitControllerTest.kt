@@ -86,7 +86,7 @@ class AgentPromptPaletteSubmitControllerTest {
         project = project,
         launcherProvider = {
           object : AgentPromptLauncherBridge {
-            override fun launch(request: AgentPromptLaunchRequest) =
+            override suspend fun launch(request: AgentPromptLaunchRequest) =
               AgentPromptLaunchResult.SUCCESS
 
             override fun resolveWorkingProjectPath(invocationData: AgentPromptInvocationData): String = "/launcher/path"
@@ -133,7 +133,7 @@ class AgentPromptPaletteSubmitControllerTest {
         project = project,
         launcherProvider = {
           object : AgentPromptLauncherBridge {
-            override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+            override suspend fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
               capturedRequest = request
               return AgentPromptLaunchResult.SUCCESS
             }
@@ -174,7 +174,7 @@ class AgentPromptPaletteSubmitControllerTest {
         project = ProjectManager.getInstance().defaultProject,
         launcherProvider = {
           object : AgentPromptLauncherBridge {
-            override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+            override suspend fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
               capturedRequest = request
               return AgentPromptLaunchResult.SUCCESS
             }
@@ -205,7 +205,7 @@ class AgentPromptPaletteSubmitControllerTest {
         project = project,
         launcherProvider = {
           object : AgentPromptLauncherBridge {
-            override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+            override suspend fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
               capturedRequest = request
               return AgentPromptLaunchResult.SUCCESS
             }
@@ -247,7 +247,7 @@ class AgentPromptPaletteSubmitControllerTest {
         project = project,
         launcherProvider = {
           object : AgentPromptLauncherBridge {
-            override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+            override suspend fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
               capturedRequest = request
               return AgentPromptLaunchResult.SUCCESS
             }
@@ -290,7 +290,7 @@ class AgentPromptPaletteSubmitControllerTest {
         project = project,
         launcherProvider = {
           object : AgentPromptLauncherBridge {
-            override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+            override suspend fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
               capturedRequest = request
               return AgentPromptLaunchResult.SUCCESS
             }
@@ -331,7 +331,7 @@ class AgentPromptPaletteSubmitControllerTest {
         project = project,
         launcherProvider = {
           object : AgentPromptLauncherBridge {
-            override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+            override suspend fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
               capturedRequest = request
               return AgentPromptLaunchResult.SUCCESS
             }
@@ -367,7 +367,7 @@ class AgentPromptPaletteSubmitControllerTest {
         project = project,
         launcherProvider = {
           object : AgentPromptLauncherBridge {
-            override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+            override suspend fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
               capturedRequest = request
               return AgentPromptLaunchResult.SUCCESS
             }
@@ -402,7 +402,7 @@ class AgentPromptPaletteSubmitControllerTest {
         project = project,
         launcherProvider = {
           object : AgentPromptLauncherBridge {
-            override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+            override suspend fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
               capturedRequest = request
               return AgentPromptLaunchResult.SUCCESS
             }
@@ -438,7 +438,7 @@ class AgentPromptPaletteSubmitControllerTest {
         project = project,
         launcherProvider = {
           object : AgentPromptLauncherBridge {
-            override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+            override suspend fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
               return AgentPromptLaunchResult.SUCCESS
             }
 
@@ -473,7 +473,7 @@ class AgentPromptPaletteSubmitControllerTest {
         project = project,
         launcherProvider = {
           object : AgentPromptLauncherBridge {
-            override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+            override suspend fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
               return AgentPromptLaunchResult.failure(AgentPromptLaunchError.INTERNAL_ERROR)
             }
 
@@ -505,7 +505,7 @@ class AgentPromptPaletteSubmitControllerTest {
         project = project,
         launcherProvider = {
           object : AgentPromptLauncherBridge {
-            override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+            override suspend fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
               capturedRequest = request
               return AgentPromptLaunchResult.SUCCESS
             }
@@ -620,6 +620,7 @@ class AgentPromptPaletteSubmitControllerTest {
       promptArea = promptArea,
       providerSelector = providerSelector,
       existingTaskController = existingTaskController,
+      sessionScope = testScope(),
       launcherProvider = launcherProvider,
       launchState = launchState,
       currentTargetMode = currentTargetMode,

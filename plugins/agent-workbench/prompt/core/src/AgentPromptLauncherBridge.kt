@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
 interface AgentPromptLauncherBridge {
-  fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult
+  suspend fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult
 
   fun loadProviderPreferences(): ProviderPreferences {
     return ProviderPreferences()

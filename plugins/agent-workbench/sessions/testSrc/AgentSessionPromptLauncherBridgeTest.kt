@@ -193,7 +193,7 @@ class AgentSessionPromptLauncherBridgeTest {
     val request = promptLaunchRequest(provider = AgentSessionProvider.from("claude")).copy(containerMode = true)
 
     withContainerLauncherForTest(containerLauncher, testRootDisposable) {
-      val result = bridge.launch(request)
+      val result = runBlocking { bridge.launch(request) }
 
       assertThat(result).isEqualTo(AgentPromptLaunchResult.SUCCESS)
       assertThat(standardLaunchCalls.get()).isZero()
@@ -222,7 +222,7 @@ class AgentSessionPromptLauncherBridgeTest {
 
     try {
       withContainerLauncherForTest(containerLauncher, testRootDisposable) {
-        val result = bridge.launch(request)
+        val result = runBlocking { bridge.launch(request) }
 
         assertThat(result.launched).isFalse()
         assertThat(result.error).isEqualTo(AgentPromptLaunchError.UNSUPPORTED_LAUNCH_MODE)
@@ -259,7 +259,7 @@ class AgentSessionPromptLauncherBridgeTest {
 
     try {
       withContainerLauncherForTest(containerLauncher, testRootDisposable) {
-        val result = bridge.launch(request)
+        val result = runBlocking { bridge.launch(request) }
 
         assertThat(result.launched).isFalse()
         assertThat(result.error).isEqualTo(AgentPromptLaunchError.PROVIDER_UNAVAILABLE)
@@ -292,7 +292,7 @@ class AgentSessionPromptLauncherBridgeTest {
 
     try {
       withContainerLaunchersForTest(emptyList(), testRootDisposable) {
-        val result = bridge.launch(request)
+        val result = runBlocking { bridge.launch(request) }
 
         assertThat(result.launched).isFalse()
         assertThat(result.error).isEqualTo(AgentPromptLaunchError.UNSUPPORTED_LAUNCH_MODE)
@@ -328,7 +328,7 @@ class AgentSessionPromptLauncherBridgeTest {
 
     try {
       withContainerLauncherForTest(containerLauncher, testRootDisposable) {
-        val result = bridge.launch(request)
+        val result = runBlocking { bridge.launch(request) }
 
         assertThat(result.launched).isFalse()
         assertThat(result.error).isEqualTo(AgentPromptLaunchError.INTERNAL_ERROR)

@@ -218,7 +218,11 @@ internal class AgentPromptPaletteContent(
 internal enum class AgentPromptPaletteHostMode {
   POPUP,
   INLINE_EMPTY_STATE,
+  INLINE_NEW_THREAD,
 }
+
+internal val AgentPromptPaletteHostMode.isInlinePrompt: Boolean
+  get() = this == AgentPromptPaletteHostMode.INLINE_EMPTY_STATE || this == AgentPromptPaletteHostMode.INLINE_NEW_THREAD
 
 internal fun createAgentPromptPaletteContent(
   invocationData: AgentPromptInvocationData,
