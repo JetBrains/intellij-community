@@ -107,11 +107,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -1218,7 +1220,7 @@ class SePopupContentPane(
   companion object {
     const val DEFAULT_FROZEN_VISIBLE_PART: Double = 1.1
     const val DEFAULT_FREEZING_DELAY_MS: Long = 800
-    private const val MAX_COALESCING_BATCH_SIZE: Int = 30
+    private const val MAX_COALESCING_BATCH_SIZE: Int = 20
   }
 }
 
@@ -1230,7 +1232,7 @@ class SePopupContentPane(
  * everything currently buffered into a single batch, a slow collector processes N ready items in one EDT hop instead of N.
  */
 private fun <T> Flow<T>.coalesceWhileAvailable(maxBatchSize: Int): Flow<List<T>> = channelFlow {
-  val buffer = Channel<T>(Channel.UNLIMITED)
+  val buffer = Channel<T>(maxBatchSize, onBufferOverflow = BufferOverflow.SUSPEND)
   launch {
     try {
       collect { buffer.send(it) }
@@ -1249,7 +1251,7 @@ private fun <T> Flow<T>.coalesceWhileAvailable(maxBatchSize: Int): Flow<List<T>>
     }
     send(batch)
   }
-}
+}.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND)
 
 private fun ThrottledItems<SeResultEvent>.hasResultsUpdates(): Boolean =
   when (this) {
