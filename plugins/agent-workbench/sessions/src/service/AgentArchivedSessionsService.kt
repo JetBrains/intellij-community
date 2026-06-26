@@ -231,7 +231,7 @@ class AgentArchivedSessionsService internal constructor(
               source.listArchivedThreadsFromClosedProject(path = path)
             }
             Result.success(
-              archiveTransitionSuppressions.applyArchived(path = path, provider = source.provider, threads = loadedThreads)
+              archiveTransitionSuppressions.applyArchivedAuthoritative(path = path, provider = source.provider, threads = loadedThreads)
             )
           }
           catch (throwable: Throwable) {

@@ -23,7 +23,9 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceRefreshResult
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
+import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
+import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveTransitionSuppressions
 import com.intellij.agent.workbench.sessions.service.AgentSessionContentRepository
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshCoordinator
 import com.intellij.agent.workbench.sessions.state.AgentSessionWarmPathSnapshot
@@ -3295,6 +3297,101 @@ class AgentSessionRefreshCoordinatorTest {
   }
 
   @Test
+  fun threadScopedProviderUpdateDoesNotClearArchiveSuppressionForAbsentThread() = runBlocking(Dispatchers.Default) {
+    val provider = AgentSessionProvider.from("codex")
+    val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
+    val archiveTransitionSuppressions = AgentSessionArchiveTransitionSuppressions()
+    val suppressedThread = thread(id = "codex-1", updatedAt = 100L, title = "Archived", provider = provider)
+    val visibleThread = thread(id = "codex-2", updatedAt = 200L, title = "Visible", provider = provider)
+    val partialThread = visibleThread.copy(updatedAt = 300L, title = "Partial")
+    val staleFullThread = visibleThread.copy(updatedAt = 400L, title = "Stale Full")
+    val caughtUpThread = visibleThread.copy(updatedAt = 500L, title = "Caught Up")
+    val finalFullThread = visibleThread.copy(updatedAt = 600L, title = "Final Full")
+    val openProjectThreads = CopyOnWriteArrayList(listOf(suppressedThread, staleFullThread))
+    val fullLoadCalls = AtomicInteger(0)
+
+    val source = ScriptedSessionSource(
+      provider = provider,
+      supportsUpdates = true,
+      updateEvents = updates,
+      listFromOpenProject = { path, _ ->
+        if (path != PROJECT_PATH) {
+          emptyList()
+        }
+        else {
+          fullLoadCalls.incrementAndGet()
+          openProjectThreads.toList()
+        }
+      },
+      refreshThreadsProvider = { request ->
+        assertThat(request.threadIds).containsExactly("codex-2")
+        AgentSessionSourceRefreshResult(
+          partialThreadsByPath = mapOf(PROJECT_PATH to listOf(partialThread))
+        )
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
+      isRefreshGateActive = { true },
+      archiveTransitionSuppressions = archiveTransitionSuppressions,
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            providerLoadStates = loadedProviderStates(provider),
+            threads = listOf(visibleThread),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+      archiveTransitionSuppressions.suppressActive(
+        ArchiveThreadTarget.Thread(path = PROJECT_PATH, provider = provider, threadId = suppressedThread.id)
+      )
+
+      coordinator.observeSessionSourceUpdates()
+      updates.tryEmit(threadsChangedEvent(threadIds = setOf(visibleThread.id)))
+
+      waitForCondition {
+        stateStore.snapshot().projects.single().threads.singleOrNull()?.title == "Partial"
+      }
+      assertThat(stateStore.snapshot().projects.single().threads.map { it.id }).containsExactly(visibleThread.id)
+
+      val staleLoadCountBefore = fullLoadCalls.get()
+      coordinator.refresh()
+      waitForCondition {
+        fullLoadCalls.get() > staleLoadCountBefore &&
+        stateStore.snapshot().projects.single().threads.singleOrNull()?.title == "Stale Full"
+      }
+      assertThat(stateStore.snapshot().projects.single().threads.map { it.id }).containsExactly(visibleThread.id)
+
+      openProjectThreads.clear()
+      openProjectThreads.add(caughtUpThread)
+      val caughtUpLoadCountBefore = fullLoadCalls.get()
+      coordinator.refresh()
+      waitForCondition {
+        fullLoadCalls.get() > caughtUpLoadCountBefore &&
+        stateStore.snapshot().projects.single().threads.singleOrNull()?.title == "Caught Up"
+      }
+      assertThat(stateStore.snapshot().projects.single().threads.map { it.id }).containsExactly(visibleThread.id)
+
+      openProjectThreads.clear()
+      openProjectThreads.addAll(listOf(suppressedThread, finalFullThread))
+      val finalLoadCountBefore = fullLoadCalls.get()
+      coordinator.refresh()
+      waitForCondition {
+        fullLoadCalls.get() > finalLoadCountBefore &&
+        stateStore.snapshot().projects.single().threads.any { it.title == "Final Full" }
+      }
+      assertThat(stateStore.snapshot().projects.single().threads.map { it.id }).contains(suppressedThread.id)
+    }
+  }
+
+  @Test
   fun threadScopedProviderUpdatePreservesRelativeOrderForStillWorkingThreads() = runBlocking(Dispatchers.Default) {
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
 
@@ -4987,6 +5084,7 @@ private suspend fun withLoadingCoordinator(
   scheduleVfsRefresh: (Set<String>) -> Unit = { _ -> },
   isVfsRefreshOnStatusUpdatesEnabled: (String) -> Boolean = { true },
   warmState: InMemorySessionWarmState = InMemorySessionWarmState(),
+  archiveTransitionSuppressions: AgentSessionArchiveTransitionSuppressions = AgentSessionArchiveTransitionSuppressions(),
   loadingDelayMs: Long = 0L,
   action: suspend (AgentSessionRefreshCoordinator, AgentSessionsStateStore) -> Unit,
 ) {
@@ -5027,6 +5125,7 @@ private suspend fun withLoadingCoordinator(
       presentationModel = presentationModel,
       openAgentChatPendingTabsBinder = { _, requestsByPath -> openChatPendingTabsBinder(requestsByPath) },
       clearOpenConcreteNewThreadRebindAnchors = { _, tabsByPath -> clearOpenConcreteCodexTabAnchors(tabsByPath) },
+      archiveTransitionSuppressions = archiveTransitionSuppressions,
       loadingDelayMs = loadingDelayMs,
     )
     action(coordinator, stateStore)
