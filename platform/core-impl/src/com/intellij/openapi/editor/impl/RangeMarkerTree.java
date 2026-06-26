@@ -259,9 +259,10 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     if (affected.isEmpty()) {
       return Collections.emptyList();
     }
-    List<T> invalidated = new ArrayList<>(affected.size());
+    int affectedSize = affected.size();
+    List<T> invalidated = new ArrayList<>(affectedSize);
     // reverse direction to visit leaves first - it's cheaper to compute maxEndOf for them first
-    for (int i = affected.size() - 1; i >= 0; i--) {
+    for (int i = affectedSize - 1; i >= 0; i--) {
       IntervalNode<T> node = affected.get(i);
       // assumption: interval.getEndOffset() will never be accessed during remove()
       int startOffset = node.intervalStart();
@@ -284,7 +285,8 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       }
     }
     checkMax(true);
-    for (IntervalNode<T> node : affected) {
+    for (int i = 0; i < affectedSize; i++) {
+      IntervalNode<T> node = affected.get(i);
       RangeMarkerImpl marker = getAnyNodeMarker(node, invalidated);
       if (marker == null) continue; // node remains removed from the tree
 
