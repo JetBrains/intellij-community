@@ -470,6 +470,7 @@
     <action id="PreviousTab" class="com.intellij.ide.actions.PreviousTabAction"/>
     <action id="PinActiveTab" class="com.intellij.ide.actions.PinActiveTabAction"/>
     <action id="PinActiveTabToggle" class="com.intellij.ide.actions.PinActiveTabAction$Toggle"/>
+    <action id="NonModalWindow.PinUnpin" class="com.intellij.openapi.actionSystem.EmptyAction"/>
 
     <action id="IconsLoadTime" internal="true" class="com.intellij.internal.IconsLoadTime"/>
 
