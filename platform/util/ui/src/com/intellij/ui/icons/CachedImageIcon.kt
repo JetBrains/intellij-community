@@ -417,10 +417,12 @@ open class CachedImageIcon private constructor(
     }
   }
 
-  fun encodeToByteArray(): ByteArray {
+  fun encodeToByteArray(): ByteArray? {
     var descriptor = originalLoader.serializeToByteArray()
     if (descriptor == null) {
-      descriptor = UrlDataLoaderDescriptor(url!!.toExternalForm())
+      // The loader has neither a serializable descriptor nor a URL (e.g. a synthetic icon or a detached class loader),
+      // so there is nothing to persist.
+      descriptor = UrlDataLoaderDescriptor((url ?: return null).toExternalForm())
     }
     return ProtoBuf.encodeToByteArray(descriptor)
   }
