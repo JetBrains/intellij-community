@@ -598,6 +598,29 @@ class PiAgentSessionProviderDescriptorTest {
   }
 
   @Test
+  fun applyGenerationSettingsAddsThinkingForProviderDefaultModelBeforeSessionFlags(): Unit = runBlocking(Dispatchers.Default) {
+    val baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+
+    val launchSpec = descriptor.applyGenerationSettings(
+      baseLaunchSpec,
+      AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.XHIGH),
+      STANDARD_INITIAL_MESSAGE_PLAN,
+    )
+
+    assertThat(descriptor.sanitizeGenerationSettings(AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.XHIGH)))
+      .isEqualTo(AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.XHIGH))
+    assertThat(launchSpec.command).containsExactly(
+      "pi",
+      "--extension",
+      "/tmp/pi-extension/agent-workbench-extension.ts",
+      "--thinking",
+      "xhigh",
+      "--session-id",
+      "pi-session-1",
+    )
+  }
+
+  @Test
   fun applyGenerationSettingsAddsKnownPiProviderAndModelBeforeSessionFlags(): Unit = runBlocking(Dispatchers.Default) {
     val modelId = PiKnownModelCatalog.encodeGenerationModelId(knownSelection("openai", "gpt-5.4"))
     val baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
@@ -685,6 +708,7 @@ class PiAgentSessionProviderDescriptorTest {
         "\"jbCentralExecutable\":\"/usr/local/bin/jbcentral\"",
         "\"proxyPort\":19516",
         "\"agent\":\"codex\"",
+        "\"thinkingLevelMap\":{\"xhigh\":\"xhigh\"}",
       )
       .doesNotContain("wire-secret")
   }
@@ -820,7 +844,7 @@ class PiAgentSessionProviderDescriptorTest {
   }
 
   @Test
-  fun applyGenerationSettingsLeavesAutoAndUnknownModelsUnchanged(): Unit = runBlocking(Dispatchers.Default) {
+  fun applyGenerationSettingsKeepsReasoningWhenModelSanitizesToProviderDefault(): Unit = runBlocking(Dispatchers.Default) {
     val baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
 
     assertThat(descriptor.applyGenerationSettings(baseLaunchSpec, AgentPromptGenerationSettings.AUTO, STANDARD_INITIAL_MESSAGE_PLAN))
@@ -833,8 +857,16 @@ class PiAgentSessionProviderDescriptorTest {
       )
     )
     assertThat(sanitized.modelId).isNull()
-    assertThat(sanitized.reasoningEffort).isEqualTo(AgentPromptReasoningEffort.AUTO)
-    assertThat(descriptor.applyGenerationSettings(baseLaunchSpec, sanitized, STANDARD_INITIAL_MESSAGE_PLAN)).isEqualTo(baseLaunchSpec)
+    assertThat(sanitized.reasoningEffort).isEqualTo(AgentPromptReasoningEffort.HIGH)
+    assertThat(descriptor.applyGenerationSettings(baseLaunchSpec, sanitized, STANDARD_INITIAL_MESSAGE_PLAN).command).containsExactly(
+      "pi",
+      "--extension",
+      "/tmp/pi-extension/agent-workbench-extension.ts",
+      "--thinking",
+      "high",
+      "--session-id",
+      "pi-session-1",
+    )
 
     val validModelId = PiOmlxModelCatalog.encodeGenerationModelId(omlxSelection())
     assertThat(

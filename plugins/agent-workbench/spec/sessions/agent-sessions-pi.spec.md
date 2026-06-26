@@ -55,6 +55,7 @@ Agent Workbench treats Pi as a first-class terminal-backed provider. Pi sessions
   [@test] ../../pi/sessions/testSrc/PiJbCentralModelCatalogTest.kt
 
 - The bundled Pi extension is the bridge between Agent Workbench catalog rows and Pi's `/model` selector. During catalog probing, Agent Workbench must pass profile-backed oMLX/JetBrains Central models through `AGENT_WORKBENCH_PI_MODEL_CATALOG`; the extension registers those providers before Pi evaluates `--list-models`. JetBrains Central proxy credentials must not be persisted in model ids, launch metadata, or logs; the extension and IDE-side direct profile probe should obtain the wire secret from `jbcentral proxy start --return-key` and fall back to `.wire/config.json` when the proxy is already running but the CLI cannot return a key.
+  JetBrains Central OpenAI/Codex models that support Pi `xhigh` thinking must include model-level `thinkingLevelMap` metadata in the bundled extension registration, so Pi's runtime Shift+Tab cycle exposes `xhigh` after Agent Workbench registers those models.
   [@test] ../../pi/sessions/testSrc/PiKnownModelCatalogTest.kt
   [@test] ../../pi/sessions/testSrc/PiJbCentralModelCatalogTest.kt
 
