@@ -13,6 +13,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchers
 import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceEntry
+import com.intellij.agent.workbench.prompt.ui.emptyState.createAgentWorkbenchInlinePromptEditorHost
 import com.intellij.agent.workbench.prompt.ui.emptyState.createAgentWorkbenchInlineNewThreadPromptComponent
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.projectLabelForPath
@@ -182,7 +183,7 @@ internal class AgentSessionsInlineNewThreadPromptService internal constructor(
       initialLaunchProfileId = profile.id,
     )
     return AgentChatDeferredStartContent(
-      component = component,
+      component = createAgentWorkbenchInlinePromptEditorHost(component),
       preferredFocusedComponent = component.preferredFocusedComponent,
       disposeContent = { Disposer.dispose(component) },
     )

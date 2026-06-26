@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
+import com.intellij.openapi.fileEditor.impl.EditorEmptyStateComponentHost
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.junit5.TestApplication
@@ -141,6 +142,32 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
 
         component.ensureContentInitialized()
         assertThat(collectComponents(component, AgentPromptTextField::class.java)).containsExactly(promptArea)
+      }
+      finally {
+        disposeComponent(component)
+      }
+    }
+  }
+
+  @Test
+  fun inlinePromptEditorHostUsesRichEmptyStateLayout() {
+    runInEdtAndWait {
+      val component = AgentWorkbenchInlinePromptEmptyStateComponent(ProjectManager.getInstance().defaultProject)
+      try {
+        val host = createAgentWorkbenchInlinePromptEditorHost(component)
+        val preferredSize = component.preferredSize
+        val hostWidth = preferredSize.width + 400
+        val hostHeight = preferredSize.height + 300
+
+        host.setBounds(0, 0, hostWidth, hostHeight)
+        host.doLayout()
+        val contentPanel = host.components.single() as JComponent
+        contentPanel.doLayout()
+
+        assertThat(host).isInstanceOf(EditorEmptyStateComponentHost::class.java)
+        assertThat(component.size).isEqualTo(preferredSize)
+        assertThat(kotlin.math.abs(contentPanel.x * 2 + contentPanel.width - host.width)).isLessThanOrEqualTo(1)
+        assertThat(kotlin.math.abs(contentPanel.y * 2 + contentPanel.height - host.height)).isLessThanOrEqualTo(1)
       }
       finally {
         disposeComponent(component)

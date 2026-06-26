@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.fileEditor.impl.EditorEmptyStateComponentHost
 import com.intellij.openapi.fileEditor.impl.EditorEmptyStateComponentProvider
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.project.Project
@@ -250,6 +251,14 @@ fun createAgentWorkbenchInlineNewThreadPromptComponent(
     ),
   ).also { component ->
     component.ensureContentInitialized()
+  }
+}
+
+@ApiStatus.Internal
+@RequiresEdt
+fun createAgentWorkbenchInlinePromptEditorHost(component: JComponent): JComponent {
+  return EditorEmptyStateComponentHost(fillContent = false).apply {
+    setComponents(listOf(component))
   }
 }
 
