@@ -1,0 +1,15 @@
+[project]
+name = "abc.eval"
+version = "0.1.0"
+dependencies = [
+    "abc.rag_specs>=0.25",
+    "abc.rag>=0.61",
+]
+
+[tool.uv.sources]
+"abc.rag_specs" = { workspace = true }
+"abc.rag" = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

@@ -92,10 +92,12 @@ internal class UvPyProjectManager : PyProjectManager {
       }
       val (workspaceDeps, pathDeps) = getUvDependencies(projectToml, sourcesTablesWithRoots) ?: continue
       // Workspace deps use natural package names from pyproject.toml (e.g. "lib"),
-      // but siblings use deduped module names (e.g. "lib@1"). Match by base name.
-      val siblingsByBaseName = siblings.associateBy { ProjectName(it.name.substringBefore('@')) }
-      val resolvedWorkspaceDeps = workspaceDeps.mapNotNull { siblingsByBaseName[it] }.toSet()
-      val brokenDeps = workspaceDeps.filter { it !in siblingsByBaseName }.toSet()
+      // but siblings use deduped module names (e.g. "lib@1"). Match by base name, and compare
+      // names in their normalized form so a member published under its normalized name (e.g. abc-rag)
+      // still matches a dependency spelled with '.'/'_' (e.g. abc.rag) (PY-89677).
+      val siblingsByNormalizedName = siblings.associateBy { PyPackageName.normalizeProjectName(it.name.substringBefore('@')) }
+      val resolvedWorkspaceDeps = workspaceDeps.mapNotNull { siblingsByNormalizedName[PyPackageName.normalizeProjectName(it.name)] }.toSet()
+      val brokenDeps = workspaceDeps.filter { PyPackageName.normalizeProjectName(it.name) !in siblingsByNormalizedName }.toSet()
       if (brokenDeps.isNotEmpty()) {
         logger.info("Deps are broken: ${brokenDeps.joinToString(", ")}")
       }
