@@ -762,6 +762,7 @@ open class IDETestContext(
 
   fun withProjectSdk(sdkObject: SdkObject) = copy(sdk = sdkObject)
 
+  @Deprecated("Use withProjectSdk instead")
   fun setupSdk(sdkObjects: SdkObject?, cleanDirs: Boolean = true): IDETestContext = computeWithSpan("setupSdk") {
     if (sdkObjects == null) return this
     try {
