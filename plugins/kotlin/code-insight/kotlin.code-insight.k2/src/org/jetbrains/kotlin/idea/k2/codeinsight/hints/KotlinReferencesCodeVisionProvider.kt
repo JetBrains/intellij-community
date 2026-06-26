@@ -30,6 +30,9 @@ class KotlinReferencesCodeVisionProvider : RenameAwareReferencesCodeVisionProvid
         val namedDeclaration = element as? KtNamedDeclaration ?: return null
         val result = KotlinUsagesCountManager.getInstance(element.getProject()).countMemberUsages(file, namedDeclaration)
         if (result == 0) return null
+        if (result == Int.MAX_VALUE) {
+            return CodeVisionProviderBase.CodeVisionInfo(KotlinBundle.message("hints.codevision.usages.too_many.format", MAX_VISIBLE_USAGES_COUNT), MAX_VISIBLE_USAGES_COUNT)
+        }
         return CodeVisionProviderBase.CodeVisionInfo(KotlinBundle.message("hints.codevision.usages.format", result), result)
     }
 
