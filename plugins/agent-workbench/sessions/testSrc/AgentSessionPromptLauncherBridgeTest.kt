@@ -35,7 +35,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPrompt
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryStatus
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptRecord
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartedNewSessionPromptLaunch
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartedNewSessionLaunch
 import com.intellij.platform.ai.agent.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.platform.ai.agent.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentPromptProviderOption
@@ -2500,19 +2500,19 @@ private class RecordingPromptLaunchProviderBridge(
     )
   }
 
-  override suspend fun prestartNewSessionPromptLaunch(
+  override suspend fun prestartNewSessionLaunch(
     projectPath: String,
     launchMode: AgentSessionLaunchMode,
     initialMessagePlan: AgentInitialMessagePlan,
     generationSettings: AgentPromptGenerationSettings,
     generationModelCatalog: List<AgentPromptGenerationModel>,
     launchSpec: AgentSessionTerminalLaunchSpec,
-  ): AgentPrestartedNewSessionPromptLaunch? {
+  ): AgentPrestartedNewSessionLaunch? {
     val threadId = prestartPlanPromptThreadId ?: return null
     if (initialMessagePlan.mode != AgentInitialMessageMode.PLAN) return null
     val prompt = initialMessagePlan.message?.trim()?.takeIf { it.isNotEmpty() } ?: return null
     prestartPlanPromptCalls.incrementAndGet()
-    return AgentPrestartedNewSessionPromptLaunch(
+    return AgentPrestartedNewSessionLaunch(
       launchSpec = launchSpec.copy(
         command = launchSpec.command + listOf("resume", "--remote", "ws://test-codex-app-server", threadId),
         preallocatedSessionId = threadId,

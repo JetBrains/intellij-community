@@ -127,7 +127,7 @@ class CodexPlanPromptRealAppServerIntegrationTest {
           environmentOverrides = mapOf("CODEX_HOME" to harness.codexHome.toString()),
           workingDirectory = harness.projectDir,
         )
-        val descriptor = realCodexDescriptor(codexBinary, RealCodexPlanPromptStartupBackend(client))
+        val descriptor = realCodexDescriptor(codexBinary, RealCodexThreadStartupBackend(client))
         try {
           val request = captureNewTaskPromptLaunchRequest(
             descriptor = descriptor,
@@ -140,7 +140,7 @@ class CodexPlanPromptRealAppServerIntegrationTest {
 
           val initialMessagePlan = descriptor.buildInitialMessagePlan(request.initialMessageRequest)
           val launchSpec = descriptor.buildNewSessionLaunchSpec(request.launchMode)
-          val prestartedPromptLaunch = descriptor.prestartNewSessionPromptLaunch(
+          val prestartedLaunch = descriptor.prestartNewSessionLaunch(
             projectPath = request.projectPath,
             launchMode = request.launchMode,
             initialMessagePlan = initialMessagePlan,
@@ -148,21 +148,22 @@ class CodexPlanPromptRealAppServerIntegrationTest {
             generationModelCatalog = request.generationModelCatalog,
             launchSpec = launchSpec,
           ) ?: error("Codex Plan-mode global prompt did not prestart a remote resume thread")
+          val initialMessageDispatchPlan = checkNotNull(prestartedLaunch.initialMessageDispatchPlan)
 
-          val promptRecord = checkNotNull(prestartedPromptLaunch.initialMessageDispatchPlan.promptRecord)
+          val promptRecord = checkNotNull(initialMessageDispatchPlan.promptRecord)
           assertThat(promptRecord.message).isEqualTo(prompt)
           assertThat(promptRecord.mode).isEqualTo(AgentInitialMessageMode.PLAN)
           assertThat(promptRecord.deliveryStatus).isEqualTo(AgentInitialPromptDeliveryStatus.PENDING)
           assertThat(promptRecord.deliveryChannel).isEqualTo(AgentInitialPromptDeliveryChannel.APP_SERVER)
-          val dispatchStep = checkNotNull(prestartedPromptLaunch.initialMessageDispatchPlan.terminalDispatch).steps.single()
+          val dispatchStep = checkNotNull(initialMessageDispatchPlan.terminalDispatch).steps.single()
           assertThat(dispatchStep.action).isEqualTo(AgentInitialMessageDispatchAction.PROVIDER)
           assertThat(dispatchStep.text).isEqualTo(prompt)
-          assertThat(prestartedPromptLaunch.launchSpec.command).doesNotContain("/plan")
-          assertThat(prestartedPromptLaunch.launchSpec.command).doesNotContain(prompt)
+          assertThat(prestartedLaunch.launchSpec.command).doesNotContain("/plan")
+          assertThat(prestartedLaunch.launchSpec.command).doesNotContain(prompt)
           assertThat(harness.requests()).isEmpty()
 
-          val remoteResumeTarget = remoteResumeTarget(prestartedPromptLaunch.launchSpec.command)
-          assertThat(prestartedPromptLaunch.launchSpec.preallocatedSessionId).isEqualTo(remoteResumeTarget.threadId)
+          val remoteResumeTarget = remoteResumeTarget(prestartedLaunch.launchSpec.command)
+          assertThat(prestartedLaunch.launchSpec.preallocatedSessionId).isEqualTo(remoteResumeTarget.threadId)
           harness.startRemoteResume(
             remoteUrl = remoteResumeTarget.remoteUrl,
             threadId = remoteResumeTarget.threadId,
@@ -215,25 +216,29 @@ class CodexPlanPromptRealAppServerIntegrationTest {
   }
 }
 
-private fun realCodexDescriptor(codexBinary: String, planPromptStartupBackend: CodexPlanPromptStartupBackend): AgentSessionProviderDescriptor {
+private fun realCodexDescriptor(codexBinary: String, threadStartupBackend: CodexThreadStartupBackend): AgentSessionProviderDescriptor {
   return CodexAgentSessionProviderDescriptor(
     sessionSource = ScriptedSessionSource(provider = AgentSessionProvider.from("codex")),
-    planPromptStartupBackend = planPromptStartupBackend,
+    threadStartupBackend = threadStartupBackend,
     executableResolver = { codexBinary },
     cliAvailableProbe = { true },
   ).withProvider(CODEX_AGENT_SESSION_PROVIDER)
 }
 
-private class RealCodexPlanPromptStartupBackend(
+private class RealCodexThreadStartupBackend(
   private val client: CodexWebSocketAppServerClient,
-) : CodexPlanPromptStartupBackend {
+) : CodexThreadStartupBackend {
   private val prestartedPlanPromptModels: MutableMap<String, String> = ConcurrentHashMap()
 
-  override suspend fun prestartPlanPromptThread(
+  override suspend fun currentRemoteUrl(): String {
+    return client.currentRemoteUrl()
+  }
+
+  override suspend fun prestartThread(
     projectPath: String,
     launchMode: AgentSessionLaunchMode,
     model: String?,
-  ): CodexPrestartedPlanPrompt {
+  ): CodexPrestartedThread {
     val session = if (launchMode == AgentSessionLaunchMode.YOLO) {
       client.createThreadSession(cwd = projectPath, model = model, approvalPolicy = "on-request", sandbox = "workspace-write")
     }
@@ -244,7 +249,7 @@ private class RealCodexPlanPromptStartupBackend(
     try {
       prestartedPlanPromptModels[threadId] = session.model
       client.materializeThread(threadId)
-      return CodexPrestartedPlanPrompt(
+      return CodexPrestartedThread(
         threadId = threadId,
         remoteUrl = client.currentRemoteUrl(),
       )
@@ -256,12 +261,18 @@ private class RealCodexPlanPromptStartupBackend(
     }
   }
 
-  override suspend fun startPlanPromptTurn(
+  override suspend fun startTurn(
     threadId: String,
     prompt: String,
+    mode: AgentInitialMessageMode,
     model: String?,
     reasoningEffort: String?,
   ) {
+    if (mode != AgentInitialMessageMode.PLAN) {
+      client.startTurn(threadId = threadId, text = prompt)
+      prestartedPlanPromptModels.remove(threadId)
+      return
+    }
     val effectiveModel = model ?: prestartedPlanPromptModels[threadId]
     val collaborationMode = CodexTurnCollaborationMode(
       mode = CODEX_PLAN_COLLABORATION_MODE,

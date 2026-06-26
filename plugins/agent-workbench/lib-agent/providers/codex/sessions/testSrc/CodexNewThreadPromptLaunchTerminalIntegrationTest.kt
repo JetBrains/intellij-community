@@ -9,6 +9,7 @@ import com.intellij.agent.workbench.prompt.ui.captureNewTaskPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.ScriptedSessionSource
 import com.intellij.agent.workbench.sessions.launchNewThreadPromptRequestWithDefaultChatOpenExecutor
 import com.intellij.platform.ai.agent.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.withProvider
 import com.intellij.openapi.Disposable
@@ -35,7 +36,7 @@ class CodexNewThreadPromptLaunchTerminalIntegrationTest {
   @Test
   fun globalPromptNewTaskPlanModeLaunchesRemoteResumeWithoutTerminalDispatch(@TestDisposable disposable: Disposable): Unit =
     timeoutRunBlocking {
-      val startupBackend = RecordingPlanPromptStartupBackend()
+      val startupBackend = RecordingThreadStartupBackend()
       val descriptor = descriptor(startupBackend)
       val terminalHarness = RecordingAgentChatTerminalHarness()
       var openedChatActivated = false
@@ -78,9 +79,10 @@ class CodexNewThreadPromptLaunchTerminalIntegrationTest {
         assertThat(startupCommand).doesNotContain(PLAN_PROMPT)
         assertThat(terminalHarness.sentTexts).isEmpty()
         assertThat(startupBackend.turnRequests).containsExactly(
-          CodexPlanPromptTurnRequest(
+          CodexPromptTurnRequest(
             threadId = RECORDED_PLAN_THREAD_ID,
             prompt = PLAN_PROMPT,
+            mode = AgentInitialMessageMode.PLAN,
             model = null,
             reasoningEffort = null,
           )
@@ -99,11 +101,11 @@ private suspend fun <T> runInUi(action: suspend () -> T): T {
   }
 }
 
-private fun descriptor(planPromptStartupBackend: CodexPlanPromptStartupBackend): AgentSessionProviderDescriptor {
+private fun descriptor(threadStartupBackend: CodexThreadStartupBackend): AgentSessionProviderDescriptor {
   return CodexAgentSessionProviderDescriptor(
     sessionSource = ScriptedSessionSource(provider = AgentSessionProvider.from("codex")),
     threadMutationBackend = NoopCodexThreadMutationBackend,
-    planPromptStartupBackend = planPromptStartupBackend,
+    threadStartupBackend = threadStartupBackend,
     executableResolver = { CodexCliUtils.CODEX_COMMAND },
     cliAvailableProbe = { true },
   ).withProvider(CODEX_AGENT_SESSION_PROVIDER)

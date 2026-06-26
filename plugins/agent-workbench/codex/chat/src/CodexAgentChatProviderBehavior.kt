@@ -3,28 +3,9 @@ package com.intellij.agent.workbench.codex.chat
 
 import com.intellij.agent.workbench.chat.AgentChatBehaviorFile
 import com.intellij.agent.workbench.chat.AgentChatProviderBehavior
-import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadRebindPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
-import kotlin.math.min
 
 internal class CodexAgentChatProviderBehavior : AgentChatProviderBehavior {
-  override fun supportsPendingThreadRefreshRetry(file: AgentChatBehaviorFile): Boolean {
-    return file.isPendingThread && file.subAgentId == null
-  }
-
-  override fun pendingThreadRefreshRetryDelayMs(file: AgentChatBehaviorFile, currentTimeMs: Long, retryIntervalMs: Long): Long? {
-    if (!supportsPendingThreadRefreshRetry(file)) {
-      return null
-    }
-    val pendingFirstInputAtMs = file.pendingFirstInputAtMs ?: return null
-    val retryDeadlineMs = pendingFirstInputAtMs + AgentSessionThreadRebindPolicy.PENDING_THREAD_MATCH_POST_WINDOW_MS
-    val remainingMs = retryDeadlineMs - currentTimeMs
-    if (remainingMs <= 0L) {
-      return null
-    }
-    return min(retryIntervalMs, remainingMs)
-  }
-
   override fun supportsConcreteNewThreadRebind(
     file: AgentChatBehaviorFile,
     descriptor: AgentSessionProviderDescriptor?,

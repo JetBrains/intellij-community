@@ -10,6 +10,7 @@ import com.intellij.platform.ai.agent.codex.common.CodexTurnCollaborationMode
 import com.intellij.platform.ai.agent.codex.common.CodexWebSocketAppServerClient
 import com.intellij.platform.ai.agent.codex.common.normalizeRootPath
 import com.intellij.platform.ai.agent.codex.sessions.registerShutdownOnCancellation
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.openapi.components.Service
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -22,7 +23,7 @@ class SharedCodexAppServerService(serviceScope: CoroutineScope) {
   private val client = CodexWebSocketAppServerClient(
     coroutineScope = serviceScope,
   )
-  private val prestartedPlanPromptSettings: MutableMap<String, CodexPlanPromptThreadSettings> = ConcurrentHashMap()
+  private val prestartedThreadSettings: MutableMap<String, CodexPrestartedThreadSettings> = ConcurrentHashMap()
 
   internal val notifications: Flow<CodexAppServerNotification>
     get() = client.notifications
@@ -49,6 +50,10 @@ class SharedCodexAppServerService(serviceScope: CoroutineScope) {
     return client.readThread(threadId)
   }
 
+  internal suspend fun currentRemoteUrl(): String {
+    return client.currentRemoteUrl()
+  }
+
   internal suspend fun forkThread(threadId: String): CodexThread {
     return client.forkThread(threadId).thread
   }
@@ -65,37 +70,43 @@ class SharedCodexAppServerService(serviceScope: CoroutineScope) {
     return client.listModels()
   }
 
-  internal suspend fun prestartPlanPromptThread(
+  internal suspend fun prestartThread(
     cwd: String,
     yolo: Boolean,
     model: String?,
-  ): CodexPrestartedPlanPromptThread {
-    val session = createPlanPromptThread(cwd = cwd, yolo = yolo, model = model)
+  ): CodexPrestartedThread {
+    val session = createThreadInternal(cwd = cwd, yolo = yolo, model = model)
     val threadId = session.thread.id
     try {
-      prestartedPlanPromptSettings[threadId] = CodexPlanPromptThreadSettings(
+      prestartedThreadSettings[threadId] = CodexPrestartedThreadSettings(
         model = session.model,
       )
       client.materializeThread(threadId)
-      return CodexPrestartedPlanPromptThread(
+      return CodexPrestartedThread(
         threadId = threadId,
         remoteUrl = client.currentRemoteUrl(),
       )
     }
     catch (t: Throwable) {
-      prestartedPlanPromptSettings.remove(threadId)
+      prestartedThreadSettings.remove(threadId)
       runCatching { client.archiveThread(threadId) }
       throw t
     }
   }
 
-  internal suspend fun startPlanPromptTurn(
+  internal suspend fun startInitialPromptTurn(
     threadId: String,
     prompt: String,
+    mode: AgentInitialMessageMode,
     model: String?,
     reasoningEffort: String?,
   ) {
-    val prestartedSettings = prestartedPlanPromptSettings[threadId]
+    val prestartedSettings = prestartedThreadSettings[threadId]
+    if (mode != AgentInitialMessageMode.PLAN) {
+      client.startTurn(threadId = threadId, text = prompt)
+      prestartedThreadSettings.remove(threadId)
+      return
+    }
     val effectiveModel = model ?: prestartedSettings?.model
     val collaborationMode = CodexTurnCollaborationMode(
       mode = CODEX_PLAN_COLLABORATION_MODE,
@@ -114,7 +125,7 @@ class SharedCodexAppServerService(serviceScope: CoroutineScope) {
       text = prompt,
       collaborationMode = collaborationMode,
     )
-    prestartedPlanPromptSettings.remove(threadId)
+    prestartedThreadSettings.remove(threadId)
   }
 
   @Suppress("unused")
@@ -136,14 +147,7 @@ class SharedCodexAppServerService(serviceScope: CoroutineScope) {
     client.unarchiveThread(threadId)
   }
 
-  private suspend fun createThreadInternal(cwd: String, yolo: Boolean) = if (yolo) {
-    client.createThreadSession(cwd = cwd, approvalPolicy = "on-request", sandbox = "workspace-write")
-  }
-  else {
-    client.createThreadSession(cwd = cwd)
-  }
-
-  private suspend fun createPlanPromptThread(cwd: String, yolo: Boolean, model: String?) = if (yolo) {
+  private suspend fun createThreadInternal(cwd: String, yolo: Boolean, model: String? = null) = if (yolo) {
     client.createThreadSession(cwd = cwd, model = model, approvalPolicy = "on-request", sandbox = "workspace-write")
   }
   else {
@@ -151,12 +155,12 @@ class SharedCodexAppServerService(serviceScope: CoroutineScope) {
   }
 }
 
-internal data class CodexPrestartedPlanPromptThread(
+internal data class CodexPrestartedThread(
   @JvmField val threadId: String,
   @JvmField val remoteUrl: String,
 )
 
-private data class CodexPlanPromptThreadSettings(
+private data class CodexPrestartedThreadSettings(
   @JvmField val model: String,
 )
 

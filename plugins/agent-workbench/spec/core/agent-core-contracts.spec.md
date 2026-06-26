@@ -71,11 +71,12 @@ These contracts keep shared identity, command mapping, provider capabilities, pr
   [@test] ../../junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
-- Post-start text prompt dispatch is terminal-readiness-gated. Provider-dispatch steps bypass terminal text injection and are delivered through the selected provider descriptor; Codex plan-mode prompts use app-server provider dispatch and record app-server delivery status instead of bootstrapping terminal `/plan` commands.
+- Post-start text prompt dispatch is terminal-readiness-gated. Provider-dispatch steps bypass terminal text injection and are delivered through the selected provider descriptor; Codex new-task prompts use app-server provider dispatch and record app-server delivery status instead of bootstrapping terminal startup arguments or `/plan` commands.
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
   [@test] ../../chat/testSrc/AgentChatInitialMessageDispatcherTest.kt
   [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexNewThreadPromptLaunchIntegrationTest.kt
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexPlanPromptRealAppServerIntegrationTest.kt
 
 - Claude plan-mode prompt launch uses `--permission-mode plan` in startup commands for new sessions and resumed threads when Agent Workbench opens the process. Plain `claude --resume <id>` must not be treated as preserving plan mode by Agent Workbench, and already-open editor tabs are not mutated into plan mode by prompt launch.
