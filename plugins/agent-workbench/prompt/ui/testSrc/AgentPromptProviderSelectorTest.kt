@@ -236,6 +236,25 @@ class AgentPromptProviderSelectorTest {
         assertThat(fixture.view.launchTuningSummaryLink.isEnabled).isTrue()
         assertThat(fixture.view.launchTuningSummaryLink.text).isEqualTo("Default model · High")
 
+        val reasoningActions = checkNotNull(controller.createReasoningEffortActionGroupForTest())
+          .getChildren(TestActionEvent.createTestEvent())
+        assertThat(isSelectedInPopup(reasoningActions.single { action -> action.templatePresentation.text == "Default" })).isFalse()
+        assertThat(isSelectedInPopup(reasoningActions.single { action -> action.templatePresentation.text == "High" })).isTrue()
+
+        val tuningActions = checkNotNull(controller.createLaunchTuningActionGroupForTest())
+          .getChildren(TestActionEvent.createTestEvent())
+        assertThat(modelActionEntries(tuningActions)).containsExactly(
+          "separator:Model",
+          "model:Default",
+          "separator:Reasoning",
+          "model:Default",
+          "model:Medium",
+          "model:High",
+        )
+        assertThat(isSelectedInPopup(tuningActions[1])).isTrue()
+        assertThat(isSelectedInPopup(tuningActions[3])).isFalse()
+        assertThat(isSelectedInPopup(tuningActions[5])).isTrue()
+
         controller.setGenerationControlsVisible(false)
 
         assertThat(fixture.view.generationSettingsPanel.isVisible).isFalse()
@@ -246,6 +265,70 @@ class AgentPromptProviderSelectorTest {
     }
     finally {
       modelCatalogScope.cancel()
+    }
+  }
+
+  @Test
+  fun launchTuningPopupMarksProfileModelAndReasoningSelections() {
+    runInEdtAndWait {
+      val modelId = "gpt-5.1-codex"
+      val profile = AgentPromptLaunchProfile(
+        id = "user:profile-model",
+        name = "Profile Model",
+        providerId = AgentSessionProvider.from("codex").value,
+        generationSettings = AgentPromptGenerationSettings(
+          modelId = modelId,
+          reasoningEffort = AgentPromptReasoningEffort.HIGH,
+        ),
+      )
+      val launcher = TestPromptLauncherBridge(
+        AgentPromptLauncherBridge.ProviderPreferences(
+          launchProfiles = listOf(profile),
+          defaultLaunchProfileId = profile.id,
+        )
+      )
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.from("codex"),
+        promptOptions = emptyList(),
+        supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
+        supportsGenerationModelSelection = true,
+        displayNameForGenerationModelId = { id -> if (id == modelId) "GPT-5.1 Codex" else null },
+      )
+      val fixture = createSelectorFixture(listOf(provider))
+      fixture.selector.refresh()
+      val controller = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = fixture.selector,
+        generationSettingsPanel = fixture.view.generationSettingsPanel,
+        launchProfileLink = fixture.view.launchProfileLink,
+        modelSelectorLink = fixture.view.modelSelectorLink,
+        reasoningEffortLink = fixture.view.reasoningEffortLink,
+        launchTuningSummaryLink = fixture.view.launchTuningSummaryLink,
+        modelCatalogScope = testScope(),
+        launcherProvider = { launcher },
+        onDefaultSaved = { _ -> },
+      )
+
+      controller.restoreLaunchProfiles(launcher.preferences)
+      val actions = checkNotNull(controller.createLaunchTuningActionGroupForTest())
+        .getChildren(TestActionEvent.createTestEvent())
+
+      assertThat(controller.currentSettings().modelId).isEqualTo(modelId)
+      assertThat(controller.currentSettings().reasoningEffort).isEqualTo(AgentPromptReasoningEffort.HIGH)
+      assertThat(fixture.view.launchTuningSummaryLink.text).isEqualTo("GPT-5.1 Codex · High")
+      assertThat(modelActionEntries(actions)).containsExactly(
+        "separator:Model",
+        "model:Default",
+        "separator:Other",
+        "model:GPT-5.1 Codex",
+        "separator:Reasoning",
+        "model:Default",
+        "model:High",
+      )
+      assertThat(isSelectedInPopup(actions[1])).isFalse()
+      assertThat(isSelectedInPopup(actions[3])).isTrue()
+      assertThat(isSelectedInPopup(actions[5])).isFalse()
+      assertThat(isSelectedInPopup(actions[6])).isTrue()
     }
   }
 
@@ -407,10 +490,19 @@ class AgentPromptProviderSelectorTest {
         val (_, controller) = fixtureAndController
         val actionGroup = checkNotNull(controller.createReasoningEffortActionGroupForTest())
         val actions = actionGroup.getChildren(TestActionEvent.createTestEvent())
+        val modelActions = checkNotNull(controller.createModelActionGroupForTest())
+          .getChildren(TestActionEvent.createTestEvent())
+          .filterNot { action -> action is Separator }
 
         assertThat(controller.currentSettings()).isEqualTo(AgentPromptGenerationSettings.AUTO)
+        assertThat(modelActions.mapNotNull { action -> action.templatePresentation.text })
+          .containsExactly("Default", "ChatGPT 5.5")
+        assertThat(isSelectedInPopup(modelActions.single { action -> action.templatePresentation.text == "Default" })).isTrue()
+        assertThat(isSelectedInPopup(modelActions.single { action -> action.templatePresentation.text == "ChatGPT 5.5" })).isFalse()
         assertThat(actions.mapNotNull { action -> action.templatePresentation.text })
           .containsExactly("Default", "High", "Extra High")
+        assertThat(isSelectedInPopup(actions.single { action -> action.templatePresentation.text == "Default" })).isTrue()
+        assertThat(isSelectedInPopup(actions.single { action -> action.templatePresentation.text == "High" })).isFalse()
       }
     }
     finally {
@@ -2306,6 +2398,18 @@ class AgentPromptProviderSelectorTest {
           .containsExactly("model:Default", "model:GPT-5.1 Codex")
         assertThat(actions.filterNot { action -> action is Separator }.map { action -> action.templatePresentation.keepPopupOnPerform })
           .containsOnly(KeepPopupOnPerform.Never)
+
+        val defaultAction = actions.single { action -> action.templatePresentation.text == "Default" }
+        val modelAction = actions.single { action -> action.templatePresentation.text == "GPT-5.1 Codex" }
+        assertThat(isSelectedInPopup(defaultAction)).isTrue()
+        assertThat(isSelectedInPopup(modelAction)).isFalse()
+
+        modelAction.actionPerformed(TestActionEvent.createTestEvent(modelAction))
+
+        val updatedActions = checkNotNull(controller.createModelActionGroupForTest())
+          .getChildren(TestActionEvent.createTestEvent())
+        assertThat(isSelectedInPopup(updatedActions.single { action -> action.templatePresentation.text == "Default" })).isFalse()
+        assertThat(isSelectedInPopup(updatedActions.single { action -> action.templatePresentation.text == "GPT-5.1 Codex" })).isTrue()
       }
     }
     finally {
@@ -3343,6 +3447,12 @@ class AgentPromptProviderSelectorTest {
       ActionUiKind.POPUP,
       null,
     )
+  }
+
+  private fun isSelectedInPopup(action: AnAction): Boolean {
+    val event = popupEvent(action)
+    action.update(event)
+    return Toggleable.isSelected(event.presentation)
   }
 
   private fun performRetryModelCatalogAction(controller: AgentPromptGenerationSettingsController) {
