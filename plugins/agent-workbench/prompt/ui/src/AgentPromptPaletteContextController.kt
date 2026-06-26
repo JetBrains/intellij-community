@@ -46,7 +46,7 @@ internal class AgentPromptPaletteContextController(
     private val invocationData: AgentPromptInvocationData,
     private val promptArea: EditorTextField,
     private val view: AgentPromptPaletteView,
-    private val sessionScope: CoroutineScope,
+    private val imageDropSupportScope: CoroutineScope,
     private val contextResolverService: AgentPromptContextResolverService,
     private val contextChips: AgentPromptContextChipsComponent,
     private val launcherProvider: () -> AgentPromptLauncherBridge?,
@@ -183,7 +183,7 @@ internal class AgentPromptPaletteContextController(
         installAgentPromptDialogImageDropSupport(
             rootComponent = view.rootPanel,
             dropHandler = imageDropHandler,
-            coroutineScope = sessionScope,
+            coroutineScope = imageDropSupportScope,
         )
         promptArea.addSettingsProvider { editor ->
             installAgentPromptEditorImageDropSupport(editor, imageDropHandler)
