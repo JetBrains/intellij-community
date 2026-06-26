@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.impl.EditorHeaderComponent
 import com.intellij.openapi.editor.impl.SearchReplaceFacade
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorCompositePanel
-import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter
 import com.intellij.openapi.fileEditor.impl.EditorTopPanel
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.fileEditor.impl.createTopBottomSideBorder
@@ -884,7 +883,6 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
         // Paint the "empty frame" background behind the editor children so that an
         // interactive empty-state component (e.g. the inline Agent prompt) stays visible.
-        // The empty text itself is still drawn on top in paintAfterChildren.
         if (fileEditorManager?.openFiles?.isEmpty() == true) {
           val frameBG = IdeBackgroundUtil.withFrameBackground(g, component)
           paintBeforeEditorEmptyText(component, frameBG, editorTabPainterAdapter)
@@ -892,20 +890,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
       }
 
       override fun paintAfterChildren(component: JComponent, g: Graphics) {
-        val project = ProjectUtil.getProjectForComponent(component)
-        val fileEditorManager = project?.getServiceIfCreated(FileEditorManager::class.java)
-
-        // A bit special handling of the "empty frame" background.
-        // The editor empty text consists of the editor itself and the surrounding island.
-        // Both are technically parts of the same component (EditorsSplitters),
-        // but must use different backgrounds because the border is visually a part of the "editor and tools" background,
-        // and the empty text must use the "empty frame" background.
-        val frameBG = IdeBackgroundUtil.withFrameBackground(g, component)
         val editorBG = IdeBackgroundUtil.withEditorBackground(g, component)
-        if (fileEditorManager?.openFiles?.isEmpty() == true) {
-          val editorEmptyTextPainter = ApplicationManager.getApplication().getService(EditorEmptyTextPainter::class.java)
-          editorEmptyTextPainter.doPaintEmptyText(component, frameBG)
-        }
 
         paintIslandBorder(component, editorBG, true)
       }

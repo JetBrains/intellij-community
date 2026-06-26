@@ -68,6 +68,15 @@ public class EditorEmptyTextPainter {
       return;
     }
 
+    paintEmptyText(splitters, splitters, g);
+  }
+
+  @Internal
+  public void paintEmptyText(@NotNull JComponent splitters, @NotNull JComponent target, @NotNull Graphics g) {
+    if (!isEnabled()) {
+      return;
+    }
+
     UISettings.setupAntialiasing(g);
 
     UIUtil.TextPainter painter = createTextPainter().withColor(JBColor.namedColor("Label.infoForeground", new JBColor(Gray._80, Gray._160)))
@@ -75,7 +84,7 @@ public class EditorEmptyTextPainter {
 
     advertiseActions(splitters, painter);
     painter.draw(g, (width, ignored) -> {
-      Dimension s = splitters.getSize();
+      Dimension s = target.getSize();
       int w = (s.width - width) / 2;
       int h = (int)(s.height * heightRatio());
       return Couple.of(w, h);

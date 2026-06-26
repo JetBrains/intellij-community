@@ -227,7 +227,7 @@ internal class EditorEmptyTextPainterTest {
     resetShortcuts(PROVIDER_ACTION_ID, listOf(doubleCtrlShortcut))
     resetShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE, listOf(doubleShiftShortcut))
     registerEmptyTextProvider(disposable)
-    registerComponentProvider(disposable)
+    registerComponentProvider(disposable, includeFallbackProvider = true)
 
     val splitters = manager.mainSplitters
     manager.closeAllFiles()
@@ -243,7 +243,7 @@ internal class EditorEmptyTextPainterTest {
   fun componentProviderCreationPendingSuppressesEmptyTextHints(@TestDisposable disposable: Disposable) {
     resetShortcuts(PROVIDER_ACTION_ID, listOf(doubleCtrlShortcut))
     registerEmptyTextProvider(disposable)
-    registerComponentProvider(disposable)
+    registerComponentProvider(disposable, includeFallbackProvider = true)
 
     val splitters = manager.mainSplitters
     val gateEntered = CompletableDeferred<Unit>()
@@ -259,6 +259,7 @@ internal class EditorEmptyTextPainterTest {
     waitForDeferred(gateEntered)
 
     try {
+      assertThat(findEmptyTextComponent(splitters)).isNull()
       assertThat(RecordingEditorEmptyTextPainter().paintEmptyTextLines(splitters)).isEmpty()
     }
     finally {
@@ -268,10 +269,27 @@ internal class EditorEmptyTextPainterTest {
   }
 
   @Test
-  fun emptyTextHintsReturnWhenAvailableComponentProviderCreatesNothing(@TestDisposable disposable: Disposable) {
+  fun fallbackEmptyTextProviderIsMountedWithoutRichProvider(@TestDisposable disposable: Disposable) {
     resetShortcuts(PROVIDER_ACTION_ID, listOf(doubleCtrlShortcut))
     registerEmptyTextProvider(disposable)
-    registerNullComponentProvider(disposable)
+    registerFallbackComponentProvider(disposable)
+
+    val splitters = manager.mainSplitters
+    manager.closeAllFiles()
+    splitters.updateEmptyStateComponent()
+    waitForEmptyStateComponentCreation(splitters)
+
+    assertThat(findEmptyStateComponent(splitters)).isNull()
+    assertThat(findEmptyTextComponent(splitters)).isNotNull()
+    assertThat(emptyStateLayout(splitters).emptyStateOverlay).isSameAs(findEmptyTextComponent(splitters)?.parent)
+    assertThat(RecordingEditorEmptyTextPainter().paintEmptyTextLines(splitters)).isEmpty()
+  }
+
+  @Test
+  fun fallbackEmptyTextProviderIsMountedWhenAvailableComponentProviderCreatesNothing(@TestDisposable disposable: Disposable) {
+    resetShortcuts(PROVIDER_ACTION_ID, listOf(doubleCtrlShortcut))
+    registerEmptyTextProvider(disposable)
+    registerNullAndFallbackComponentProviders(disposable)
 
     val splitters = manager.mainSplitters
     manager.closeAllFiles()
@@ -280,8 +298,8 @@ internal class EditorEmptyTextPainterTest {
     waitForEmptyStateComponentCreation(splitters)
 
     assertThat(findEmptyStateComponent(splitters)).isNull()
-    assertThat(RecordingEditorEmptyTextPainter().paintEmptyTextLines(splitters))
-      .containsExactly(PROVIDER_ACTION_TEXT + " <shortcut>" + KeymapUtil.getShortcutText(doubleCtrlShortcut) + "</shortcut>")
+    assertThat(findEmptyTextComponent(splitters)).isNotNull()
+    assertThat(RecordingEditorEmptyTextPainter().paintEmptyTextLines(splitters)).isEmpty()
   }
 
   @Test
@@ -525,25 +543,41 @@ internal class EditorEmptyTextPainterTest {
     }, disposable)
   }
 
-  private fun registerComponentProvider(disposable: Disposable, disposedComponents: AtomicInteger = AtomicInteger()) {
-    ExtensionTestUtil.maskExtensions(EditorEmptyStateComponentProvider.EP_NAME, listOf(object : EditorEmptyStateComponentProvider {
-      override suspend fun createComponent(splitters: EditorsSplitters): JComponent = withContext(Dispatchers.EDT) {
-        JPanel().apply {
-          name = EMPTY_STATE_COMPONENT_NAME
-          preferredSize = java.awt.Dimension(320, 40)
+  private fun registerComponentProvider(
+    disposable: Disposable,
+    disposedComponents: AtomicInteger = AtomicInteger(),
+    includeFallbackProvider: Boolean = false,
+  ) {
+    ExtensionTestUtil.maskExtensions(EditorEmptyStateComponentProvider.EP_NAME, buildList {
+      add(object : EditorEmptyStateComponentProvider {
+        override suspend fun createComponent(splitters: EditorsSplitters): JComponent = withContext(Dispatchers.EDT) {
+          JPanel().apply {
+            name = EMPTY_STATE_COMPONENT_NAME
+            preferredSize = java.awt.Dimension(320, 40)
+          }
         }
-      }
 
-      override fun disposeComponent(component: JComponent) {
-        disposedComponents.incrementAndGet()
+        override fun disposeComponent(component: JComponent) {
+          disposedComponents.incrementAndGet()
+        }
+      })
+      if (includeFallbackProvider) {
+        add(EditorEmptyTextComponentProvider())
       }
-    }), disposable)
+    }, disposable)
   }
 
-  private fun registerNullComponentProvider(disposable: Disposable) {
-    ExtensionTestUtil.maskExtensions(EditorEmptyStateComponentProvider.EP_NAME, listOf(object : EditorEmptyStateComponentProvider {
-      override suspend fun createComponent(splitters: EditorsSplitters): JComponent? = null
-    }), disposable)
+  private fun registerNullAndFallbackComponentProviders(disposable: Disposable) {
+    ExtensionTestUtil.maskExtensions(EditorEmptyStateComponentProvider.EP_NAME, buildList {
+      add(object : EditorEmptyStateComponentProvider {
+        override suspend fun createComponent(splitters: EditorsSplitters): JComponent? = null
+      })
+      add(EditorEmptyTextComponentProvider())
+    }, disposable)
+  }
+
+  private fun registerFallbackComponentProvider(disposable: Disposable) {
+    ExtensionTestUtil.maskExtensions(EditorEmptyStateComponentProvider.EP_NAME, listOf(EditorEmptyTextComponentProvider()), disposable)
   }
 
   private fun registerUnavailableComponentProvider(disposable: Disposable) {
@@ -558,6 +592,10 @@ internal class EditorEmptyTextPainterTest {
 
   private fun findEmptyStateComponent(splitters: EditorsSplitters): JComponent? {
     return UIUtil.uiTraverser(splitters).find { it is JComponent && it.name == EMPTY_STATE_COMPONENT_NAME } as? JComponent
+  }
+
+  private fun findEmptyTextComponent(splitters: EditorsSplitters): JComponent? {
+    return UIUtil.uiTraverser(splitters).find { it is JComponent && it.name == EDITOR_EMPTY_TEXT_COMPONENT_NAME } as? JComponent
   }
 
   private fun findEmptyStateHost(splitters: EditorsSplitters): JComponent? {
