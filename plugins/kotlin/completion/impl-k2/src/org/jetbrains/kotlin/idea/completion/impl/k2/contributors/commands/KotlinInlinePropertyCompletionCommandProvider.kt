@@ -24,11 +24,15 @@ internal class KotlinInlinePropertyCompletionCommandProvider : AbstractInlineVar
     override val presentableName: @Nls String
         get() = KotlinBundle.message("title.inline.property")
 
-    override fun findElementToInline(offset: Int, psiFile: PsiFile, editor: Editor?, forExecution: Boolean): PsiElement? =
-        findInlinableProperty(offset, psiFile, permitEdtResolve = forExecution)
+    override fun findElementToInline(offset: Int, psiFile: PsiFile, editor: Editor?): PsiElement? {
+        val property = findInlinableProperty(offset, psiFile)
+        if (property == null) return null
+        if (!isPropertyInlinable(property)) return null
+        return property
+    }
 }
 
-private fun findInlinableProperty(offset: Int, psiFile: PsiFile, permitEdtResolve: Boolean): KtProperty? {
+private fun findInlinableProperty(offset: Int, psiFile: PsiFile): KtProperty? {
     if (offset == 0) return null
     var element = getCommandContext(offset, psiFile) ?: return null
     if (element is PsiWhiteSpace) {
@@ -46,13 +50,12 @@ private fun findInlinableProperty(offset: Int, psiFile: PsiFile, permitEdtResolv
     // Usage: a property reference whose name ends at the caret.
     val reference = element.parentOfType<KtNameReferenceExpression>()
     if (reference == null || reference.textRange?.endOffset != currentOffset) return null
-    val resolved = resolveToProperty(reference, permitEdtResolve) ?: return null
-    return resolved.takeIf { isPropertyInlinable(it) }
+    return resolveToProperty(reference)
 }
 
-private fun resolveToProperty(reference: KtNameReferenceExpression, permitEdtResolve: Boolean): KtProperty? {
+private fun resolveToProperty(reference: PsiElement): KtProperty? {
+    if (reference !is KtNameReferenceExpression) return null
     val onEdt = EDT.isCurrentThreadEdt()
-    if (onEdt && !permitEdtResolve) return null
     fun doResolve(): PsiElement? = analyze(reference) { reference.mainReference.resolve() }
     val resolved = if (onEdt) {
         runWithModalProgressBlocking(ModalTaskOwner.guess(), KotlinBundle.message("title.inline.property"))
@@ -68,6 +71,5 @@ private fun isPropertyInlinable(property: KtProperty): Boolean {
     if (property.containingKtFile.isCompiled) return false
     if (!property.hasBody()) return false
     val hasAccessorBody = property.getter?.hasBody() == true || property.setter?.hasBody() == true
-    if (hasAccessorBody && property.initializer != null) return false
-    return true
+    return !(hasAccessorBody && property.initializer != null)
 }

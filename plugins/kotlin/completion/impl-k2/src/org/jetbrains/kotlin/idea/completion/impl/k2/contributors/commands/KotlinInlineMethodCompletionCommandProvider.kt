@@ -3,6 +3,10 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands
 
 import com.intellij.codeInsight.completion.command.commands.AbstractInlineMethodCompletionCommandProvider
 import com.intellij.codeInsight.completion.command.getCommandContext
+import com.intellij.openapi.application.readAction
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
@@ -10,6 +14,7 @@ import com.intellij.psi.util.findParentOfType
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ui.EDT
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -54,8 +59,14 @@ private fun isNamedFunctionInlinable(function: KtNamedFunction): Boolean {
 }
 
 private fun isCallInlinable(callExpression: KtCallExpression): Boolean {
-    if (EDT.isCurrentThreadEdt()) return true
-    val resolved = analyze(callExpression) { callExpression.referenceExpression()?.mainReference?.resolve() }
-    val function = resolved as? KtNamedFunction ?: return true
+    val onEdt = EDT.isCurrentThreadEdt()
+    fun doResolve(): PsiElement? = analyze(callExpression) { callExpression.referenceExpression()?.mainReference?.resolve() }
+    val resolved = if (onEdt) {
+        runWithModalProgressBlocking(ModalTaskOwner.guess(), KotlinBundle.message("title.inline.function"))
+        { readAction { doResolve() } }
+    } else {
+        doResolve()
+    }
+    val function = resolved as? KtNamedFunction ?: return false
     return isNamedFunctionInlinable(function)
 }

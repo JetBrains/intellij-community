@@ -35,11 +35,8 @@ abstract class AbstractInlineVariableCompletionCommandProvider : CommandProvider
 
   /**
    * Returns the element to inline when the caret is at [offset], or `null` if inlining is not applicable here.
-   *
-   * @param forExecution `false` while computing the lookup (the availability path), `true` when the command is executed.
-   * Implementations that need potentially expensive resolution can use this to stay cheap on the availability path.
    */
-  protected abstract fun findElementToInline(offset: Int, psiFile: PsiFile, editor: Editor?, forExecution: Boolean): PsiElement?
+  protected abstract fun findElementToInline(offset: Int, psiFile: PsiFile, editor: Editor?): PsiElement?
 
   /** Range highlighted while the command is selected. Defaults to the element under the caret. */
   protected open fun getHighlightRange(offset: Int, psiFile: PsiFile): TextRange? {
@@ -51,7 +48,7 @@ abstract class AbstractInlineVariableCompletionCommandProvider : CommandProvider
   }
 
   final override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
-    val element = findElementToInline(context.offset, context.psiFile, context.editor, forExecution = false) ?: return emptyList()
+    val element = findElementToInline(context.offset, context.psiFile, context.editor) ?: return emptyList()
     val editor = context.editor
     val canInline = InlineActionHandler.EP_NAME.extensionList.any { extension ->
       try {
@@ -72,7 +69,7 @@ abstract class AbstractInlineVariableCompletionCommandProvider : CommandProvider
 private class InlineVariableCompletionCommand(
   override val presentableName: @Nls String,
   override val highlightInfo: HighlightInfoLookup?,
-  private val elementFinder: (offset: Int, psiFile: PsiFile, editor: Editor?, forExecution: Boolean) -> PsiElement?,
+  private val elementFinder: (offset: Int, psiFile: PsiFile, editor: Editor?) -> PsiElement?,
 ) : CompletionCommand(), DumbAware {
 
   override val synonyms: List<String>
@@ -83,7 +80,7 @@ private class InlineVariableCompletionCommand(
 
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
     if (editor == null) return
-    val element = elementFinder(offset, psiFile, editor, true) ?: return
+    val element = elementFinder(offset, psiFile, editor) ?: return
     for (extension in InlineActionHandler.EP_NAME.extensionList) {
       if (extension.canInlineElement(element)) {
         WriteIntentReadAction.run {
