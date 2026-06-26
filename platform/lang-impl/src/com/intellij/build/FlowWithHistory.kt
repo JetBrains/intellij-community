@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
  * There's no need to synchronize access to the history data in subclasses, this class guarantees that it won't be accessed concurrently,
  * provided that data is modified only using [updateHistoryAndEmit] calls.
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 abstract class FlowWithHistory<T : Any>(private val scope: CoroutineScope) {
   // sequential execution ensures consistent snapshot construction
   private val sequentialDispatcher = Dispatchers.Default.limitedParallelism(1)

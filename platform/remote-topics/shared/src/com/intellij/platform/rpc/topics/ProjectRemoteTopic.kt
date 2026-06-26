@@ -63,6 +63,7 @@ fun <E : Any> ProjectRemoteTopic<E>.broadcast(project: Project, event: E) {
  * Sends the [event] to a specific client identified by [clientId] for given [project].
  * If no [clientId] is provided, [ClientId] from current context will be used.
  */
+@ApiStatus.Internal
 fun <E : Any> ProjectRemoteTopic<E>.sendToClient(project: Project, event: E, clientId: ClientId = ClientId.current) {
   RemoteTopicSubscribersManager.getInstance().sendEvent(this, project, event, clientId)
 }

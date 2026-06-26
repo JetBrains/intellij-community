@@ -55,6 +55,7 @@ fun <E : Any> ApplicationRemoteTopic(id: String, serializer: KSerializer<E>): Ap
  * Sends the [event] to a specific client identified by [clientId].
  * If no [clientId] is provided, [ClientId] from current context will be used.
  */
+@ApiStatus.Internal
 fun <E : Any> ApplicationRemoteTopic<E>.sendToClient(event: E, clientId: ClientId = ClientId.current) {
   RemoteTopicSubscribersManager.getInstance().sendEvent(this, project = null, event, clientId)
 }
