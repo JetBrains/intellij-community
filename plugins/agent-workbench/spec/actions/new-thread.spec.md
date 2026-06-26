@@ -80,9 +80,9 @@ New-thread actions let users start provider-backed threads from project/worktree
   [@test] ../../sessions/testSrc/AgentSessionLaunchServiceTest.kt
 
 - Command construction for each provider and launch mode follows `../core/agent-core-contracts.spec.md`.
-  [@test] ../../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
-  [@test] ../../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
-  [@test] ../../junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
 
 ## User Experience
 - Quick actions use the active launch profile when that profile is still launchable, otherwise they fall back to the first launchable built-in/user profile.

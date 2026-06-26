@@ -3,8 +3,8 @@ name: Codex Fast Rollout Path
 description: Requirements for app-server rollout-path persistence, lazy Codex rollout reads, and frozen Codex cost reuse.
 targets:
   - ../../codex/common/src/*.kt
-  - ../../codex/sessions/src/**/*.kt
-  - ../../codex/sessions/testSrc/**/*.kt
+  - ../../lib-agent/providers/codex/sessions/src/**/*.kt
+  - ../../lib-agent/providers/codex/sessions/testSrc/**/*.kt
   - ../../sessions/src/service/*.kt
   - ../../sessions/testSrc/*.kt
 ---
@@ -37,37 +37,37 @@ The app-server already exposes each thread's rollout file path. Agent Workbench 
 ## Requirements
 
 - `CodexThread` must preserve the rollout file path returned by the Codex app-server.
-  [@test] ../../sessions/testSrc/CodexAppServerClientTest.kt
+  [@test] ../../lib-agent/providers/codex/common/testSrc/CodexAppServerProtocolTest.kt
 
 - Agent Workbench must maintain a small persisted Codex thread path index keyed by thread id. Each entry must be able to retain the normalized cwd, rollout path, parent thread id when known, thread `updatedAt`, and the last computed frozen cost for that exact thread version.
-  [@test] ../../codex/sessions/testSrc/CodexSessionSourceTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexSessionSourceTest.kt
 
 - The path index must be updated from app-server-backed Codex thread reads that already know the rollout path, including normal thread listing, archived thread listing, and thread-scoped refresh paths.
-  [@test] ../../codex/sessions/testSrc/CodexAppServerSessionBackendTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexAppServerSessionBackendTest.kt
 
 - Normal Codex thread listing and multi-path prefetch must not require a cold rollout directory scan. Startup thread rows must be renderable from warm snapshot plus app-server data alone.
   [@test] ../../sessions/testSrc/AgentSessionRefreshServiceIntegrationTest.kt
 
 - Rollout-backed Codex cost loading must prefer exact rollout paths from the persisted path index and must read only the rollout files required for the requested visible or archived threads.
-  [@test] ../../codex/sessions/testSrc/CodexSessionSourceRolloutIntegrationTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexSessionSourceRolloutIntegrationTest.kt
 
 - When a visible Codex parent thread has folded sub-agents, rollout-backed cost loading must aggregate usage from the parent rollout and the known sub-agent rollout files that belong to that row.
-  [@test] ../../codex/sessions/testSrc/CodexSessionSourceRolloutIntegrationTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexSessionSourceRolloutIntegrationTest.kt
 
 - Once Agent Workbench computes a Codex thread cost for a specific thread id and `updatedAt`, that frozen cost must be reused until `updatedAt` changes. The IDE must not reprice an unchanged Codex thread after an OpenRouter price snapshot refresh or IDE restart.
-  [@test] ../../codex/sessions/testSrc/CodexSessionSourceTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexSessionSourceTest.kt
   [@test] ../../sessions/testSrc/AgentSessionRefreshServiceIntegrationTest.kt
   [@test] ../../sessions/testSrc/AgentArchivedSessionsServiceTest.kt
 
 - Archived Codex threads must use the same frozen-cost and exact-rollout-path resolution path as active Codex threads.
-  [@test] ../../codex/sessions/testSrc/CodexSessionSourceTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexSessionSourceTest.kt
 
 - If the exact rollout path is missing, unreadable, or stale, Agent Workbench may fall back to a broader rollout recovery path, but that recovery path must stay off the normal startup listing flow.
-  [@test] ../../codex/sessions/testSrc/CodexSessionSourceRolloutIntegrationTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexSessionSourceRolloutIntegrationTest.kt
 
 - Real-Codex integration tests may remain guarded for local development, but CI ownership for this feature must stay with deterministic unit/integration tests that use fake app-server payloads and sanitized rollout fixtures.
-  [@test] ../../codex/sessions/testSrc/CodexSessionSourceRealAppServerIntegrationTest.kt
-  [@test] ../../codex/sessions/testSrc/CodexSessionSourceRolloutIntegrationTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexSessionSourceRealAppServerIntegrationTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexSessionSourceRolloutIntegrationTest.kt
 
 ## User Experience
 

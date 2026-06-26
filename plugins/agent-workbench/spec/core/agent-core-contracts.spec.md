@@ -2,7 +2,7 @@
 name: Agent Workbench Core Contracts
 description: Cross-cutting contracts shared by Sessions, Chat, provider bridges, editor-tab actions, and prompt launch.
 targets:
-  - ../../common/src/**/*.kt
+  - ../../lib-agent/core/src/**/*.kt
   - ../../lib-agent/sessions-core/src/**/*.kt
   - ../../lib-agent/providers/claude/sessions/src/**/*.kt
   - ../../lib-agent/providers/claude/sessions/testSrc/*.kt
@@ -18,9 +18,9 @@ targets:
   - ../../sessions/testSrc/*.kt
   - ../../sessions-actions/testSrc/*.kt
   - ../../chat/testSrc/*.kt
-  - ../../claude/sessions/testSrc/*.kt
-  - ../../codex/sessions/testSrc/*.kt
-  - ../../junie/sessions/testSrc/*.kt
+  - ../../lib-agent/providers/claude/sessions/testSrc/*.kt
+  - ../../lib-agent/providers/codex/sessions/testSrc/*.kt
+  - ../../lib-agent/providers/junie/sessions/testSrc/*.kt
 ---
 
 # Agent Workbench Core Contracts
@@ -41,34 +41,34 @@ These contracts keep shared identity, command mapping, provider capabilities, pr
   [@test] ../../sessions/testSrc/AgentSessionRefreshOnDemandIntegrationTest.kt
 
 - Standard resume command mapping after executable token is canonical: Codex `-c check_for_update_on_startup=false -c tui.terminal_title=["thread-id","thread"] resume <id>`, Claude `--resume <id>`, Junie `--skip-update-check --session-id <id>`. Codex `thread-id` is supported by stable CLI `0.131.0+`; stable `0.130.0` and older ignore it and fall back to `thread`. YOLO resume uses provider-specific YOLO flags only when explicitly requested by prompt launch or restored from stored chat tab metadata; ordinary thread open must not infer YOLO from global last-used UI preferences.
-  [@test] ../../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
-  [@test] ../../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
-  [@test] ../../junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
   [@test] ../../sessions/testSrc/AgentSessionLaunchServiceTest.kt
 
 - New-thread command mapping after executable token is canonical: Codex standard/YOLO include `-c check_for_update_on_startup=false -c tui.terminal_title=["thread-id","thread"]`, Claude standard/YOLO with a preallocated `--session-id <uuid>`, and Junie standard/YOLO are defined by provider descriptors and tested there. Codex `thread-id` has the same `0.131.0+` stable compatibility boundary as resume launches.
-  [@test] ../../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
-  [@test] ../../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
-  [@test] ../../junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
 
 - Provider bridges resolve executables through the shared `TerminalAgentResolver` at launch time. `AgentSessionProviderDescriptor.isCliAvailable` is a single suspending contract backed by the resolver; synchronous UI surfaces consult the project-level provider availability cache and request background refreshes instead of blocking UI code. Launch-spec construction is suspending.
-  [@test] ../../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
-  [@test] ../../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
-  [@test] ../../junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
 
 - Prompt launch handoff carries one optional startup launch override, a live initial prompt record, and an optional ordered terminal dispatch queue. Startup CLI delivery marks the live prompt record delivered through `STARTUP_COMMAND` and must not persist or replay a terminal fallback queue. Terminal delivery keeps the live prompt record pending through `TERMINAL`, advances the queue while sending, and clears the queue after delivery while preserving the delivered prompt record for the current live session only. If a startup override is ignored because the target chat tab is already open, the prompt must be rebased to terminal delivery instead of being treated as delivered. Prompt text, tokens, delivery state, and dispatch queues must be omitted from persisted restore state.
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
 
 - Providers with startup prompt CLI support must use startup delivery for both new sessions and resumed threads when Agent Workbench opens the process. Junie build `2030.1` qualifies for both `--prompt` and plan `--plan --prompt` startup delivery; older Junie builds do not expose or dispatch Agent Workbench Plan Mode.
-  [@test] ../../junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
-  [@test] ../../junie/sessions/testSrc/JunieNewThreadPromptLaunchIntegrationTest.kt
-  [@test] ../../junie/sessions/testSrc/JunieExistingThreadPromptLaunchIntegrationTest.kt
+  [@test] ../../lib-agent/providers/junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/junie/sessions/testSrc/JunieNewThreadPromptLaunchIntegrationTest.kt
+  [@test] ../../lib-agent/providers/junie/sessions/testSrc/JunieExistingThreadPromptLaunchIntegrationTest.kt
 
 - Prompt plan mode is requested only through provider option ids. A user-typed `/plan` prefix is ordinary prompt text owned by the provider CLI, not Agent Workbench syntax, and must not be stripped or converted into plan mode.
-  [@test] ../../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
-  [@test] ../../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
-  [@test] ../../junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
 - Post-start text prompt dispatch is terminal-readiness-gated. Provider-dispatch steps bypass terminal text injection and are delivered through the selected provider descriptor; Codex new-task prompts use app-server provider dispatch and record app-server delivery status instead of bootstrapping terminal startup arguments or `/plan` commands.
@@ -80,13 +80,13 @@ These contracts keep shared identity, command mapping, provider capabilities, pr
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexPlanPromptRealAppServerIntegrationTest.kt
 
 - Claude plan-mode prompt launch uses `--permission-mode plan` in startup commands for new sessions and resumed threads when Agent Workbench opens the process. Plain `claude --resume <id>` must not be treated as preserving plan mode by Agent Workbench, and already-open editor tabs are not mutated into plan mode by prompt launch.
-  [@test] ../../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
-  [@test] ../../claude/sessions/testSrc/ClaudeNewThreadPromptLaunchIntegrationTest.kt
-  [@test] ../../claude/sessions/testSrc/ClaudeExistingThreadPromptLaunchIntegrationTest.kt
+  [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeNewThreadPromptLaunchIntegrationTest.kt
+  [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeExistingThreadPromptLaunchIntegrationTest.kt
 
 - Claude recognized menu commands remain post-start dispatch and are sent as executable terminal input without prompt context packaging.
   [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
-  [@test] ../../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
 
 - Editor-tab popup actions for a selected Agent Chat tab expose archive, optional rename, copy thread id, and select-in-threads in stable placement relative to built-in close/copy actions.
   [@test] ../../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
@@ -100,7 +100,7 @@ These contracts keep shared identity, command mapping, provider capabilities, pr
 
 - Claude archive, unarchive, and rename are provider-backed. Archive and unarchive use the non-interactive resumed Claude transport; rename reuses a matching top-level Claude chat tab when one is open and otherwise uses the non-interactive resumed Claude transport.
   [@test] ../../chat/testSrc/AgentChatOpenTopLevelDispatchTest.kt
-  [@test] ../../claude/sessions/testSrc/ClaudeThreadRenameEngineTest.kt
+  [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeThreadRenameEngineTest.kt
 
 - `Select in Agent Threads` calls `ensureThreadVisible(path, provider, threadId)` before activating the tool window. Visibility primitives increment visible counts in +3 steps.
   [@test] ../../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt

@@ -10,9 +10,9 @@ targets:
   - ../../prompt/ui/src/AgentPromptReusableSourceCollector.kt
   - ../../prompt/ui/src/AgentPromptUiSessionStateService.kt
   - ../../prompt/ui/testSrc/AgentPrompt*Test.kt
-  - ../../sessions-core/src/providers/AgentSessionProviderDescriptor.kt
+  - ../../lib-agent/sessions-core/src/providers/AgentSessionProviderDescriptor.kt
   - ../../sessions/src/service/AgentSessionPromptLauncherBridge.kt
-  - ../../sessions/testSrc/CodexAppServerClientTest.kt
+  - ../../lib-agent/providers/codex/common/testSrc/CodexAppServerProtocolTest.kt
 ---
 
 # Global Prompt Reusable Sources
@@ -59,7 +59,7 @@ The global prompt popup lets users reuse saved prompts, recent submitted prompts
 
 - Codex skill completion entries must come from the app-server `skills/list` method through `AgentPromptLauncherBridge`, include only enabled skills, and insert `$skillName ` for accepted entries.
   [@test] ../../prompt/ui/testSrc/AgentPromptClaudeSlashCompletionProviderTest.kt
-  [@test] ../../sessions/testSrc/CodexAppServerClientTest.kt
+  [@test] ../../lib-agent/providers/codex/common/testSrc/CodexAppServerProtocolTest.kt
 
 ## User Experience
 - The prompt-library chooser is a lightweight popup flow attached to the global prompt, not a persistent management view.
@@ -75,7 +75,7 @@ The global prompt popup lets users reuse saved prompts, recent submitted prompts
 
 ## Testing / Local Run
 - `./tests.cmd --module intellij.agent.workbench.prompt.ui.tests --test "com.intellij.agent.workbench.prompt.ui.*"`
-- `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.CodexAppServerClientTest`
+- `./tests.cmd --module intellij.platform.ai.agent.codex.common.tests --test com.intellij.platform.ai.agent.codex.common.CodexAppServerProtocolTest`
 
 ## References
 - `global-prompt-entry.spec.md`

@@ -5,12 +5,12 @@ targets:
   - ../../sessions-launch-config/backend/src/*.kt
   - ../../sessions-launch-config/backend/resources/*.xml
   - ../../sessions-launch-config/backend/testSrc/*.kt
-  - ../../sessions-core/src/config/*.kt
-  - ../../sessions-core/src/launch/*.kt
-  - ../../sessions-core/resources/intellij.platform.ai.agent.sessions.core.xml
+  - ../../lib-agent/sessions-core/src/config/*.kt
+  - ../../lib-agent/sessions-core/src/launch/*.kt
+  - ../../lib-agent/sessions-core/resources/intellij.platform.ai.agent.sessions.core.xml
   - ../../sessions/src/service/AgentSessionRefreshCoordinator.kt
   - ../../sessions/src/service/AgentSessionLaunchService.kt
-  - ../../sessions-core/src/launch/AgentSessionChatOpenPlan.kt
+  - ../../lib-agent/sessions-core/src/launch/AgentSessionChatOpenPlan.kt
   - ../../chat/src/AgentChatEditorService.kt
   - ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
   - ../../sessions/testSrc/AgentSessionChatOpenPlanTest.kt

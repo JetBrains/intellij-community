@@ -6,7 +6,7 @@ targets:
   - ../../prompt/ui/src/AgentPromptPaletteView.kt
   - ../../prompt/core/src/AgentPromptModels.kt
   - ../../prompt/core/src/AgentPromptLauncherBridge.kt
-  - ../../sessions-core/src/providers/AgentSessionLaunchProfiles.kt
+  - ../../lib-agent/sessions-core/src/providers/AgentSessionLaunchProfiles.kt
   - ../../sessions/src/service/AgentSessionPromptLauncherBridge.kt
   - ../../sessions/src/state/AgentSessionUiPreferencesStateService.kt
   - ../../sessions-actions/src/actions/AgentSessionsMainToolbarNewThreadActions.kt
@@ -36,14 +36,14 @@ Ask Agent launch controls let users choose a provider, launch mode, model, and n
 
 - Model and normal reasoning effort default to `Default`, which means provider-auto behavior and sends no CLI override. Codex model selection is populated from the shared Codex app-server `model/list` catalog. Claude Code model selection uses a hardcoded alias catalog because Claude Code does not expose a reliable dynamic model catalog; explicit Claude selections must launch with `--model <id>` before the `--` prompt separator.
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
-  [@test] ../../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
-  [@test] ../../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
 
 - Plan-mode reasoning effort is distinct from normal effort and is exposed only for providers that support a dedicated Plan reasoning effort transport. The Plan effort control is visible for such providers, supports `Same as Effort`, `Provider Default`, and explicit efforts, is enabled and applied only while Plan mode is selected, and clears the Plan-only override when Plan mode is not selected.
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
 
 - Codex Plan mode applies the selected model through the normal Codex model override because the Plan collaboration mask inherits the active model. A selected Plan-mode reasoning effort must also be passed through Codex's Plan-only `plan_mode_reasoning_effort` config so Plan turns do not fall back to the Codex Plan preset effort.
-  [@test] ../../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
 - Provider model catalogs load on demand when either the global prompt model selector or the launch profile editor model combo is opened. After a catalog has loaded once, reopening either control within 30 seconds must show the cached catalog immediately without provider I/O. Older cached catalogs must still render immediately and refresh in the background. The background refresh status appears after 3 seconds to avoid flicker for fast refreshes; if refresh fails after cached data exists, keep the cached choices visible and show the refresh failure inline. Saved model ids that are absent from the current catalog must remain visible as custom choices instead of being dropped.

@@ -2,28 +2,27 @@
 name: Agent Chat Structure View
 description: Requirements for the Agent Chat editor Structure View and provider-backed session history outline.
 targets:
-  - ../../common/src/session/AgentSessionModels.kt
+  - ../../lib-agent/core/src/session/AgentSessionModels.kt
   - ../../chat/src/AgentChatThreadOutlineModel.kt
   - ../../chat/src/AgentChatThreadOutlineForkAction.kt
   - ../../chat/src/AgentChatFileEditor.kt
   - ../../chat/src/AgentChatFileEditorProvider.kt
   - ../../chat/resources/messages/AgentChatBundle.properties
   - ../../chat/testSrc/AgentChatFileEditorProviderTest.kt
-  - ../../sessions-core/src/providers/AgentSessionOutline.kt
-  - ../../sessions-core/src/providers/AgentSessionSource.kt
-  - ../../codex/sessions/src/CodexSessionSource.kt
-  - ../../codex/sessions/src/backend/rollout/CodexRolloutParser.kt
-  - ../../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
-  - ../../claude/common/src/ClaudeSessionsStore.kt
-  - ../../claude/sessions/src/ClaudeSessionBackend.kt
-  - ../../claude/sessions/src/ClaudeAgentSessionProviderDescriptor.kt
-  - ../../claude/sessions/src/ClaudeSessionSource.kt
-  - ../../claude/sessions/src/backend/store/ClaudeStoreSessionBackend.kt
-  - ../../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
-  - ../../claude/sessions/testSrc/ClaudeSessionSourceTest.kt
-  - ../../claude/sessions/testSrc/ClaudeSessionsStoreTest.kt
-  - ../../pi/sessions/src/PiSessionSource.kt
-  - ../../pi/sessions/testSrc/PiSessionSourceTest.kt
+  - ../../lib-agent/sessions-core/src/providers/AgentSessionSource.kt
+  - ../../lib-agent/providers/codex/sessions/src/CodexSessionSource.kt
+  - ../../lib-agent/providers/codex/sessions/src/backend/rollout/CodexRolloutParser.kt
+  - ../../lib-agent/providers/codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+  - ../../lib-agent/providers/claude/common/src/ClaudeSessionsStore.kt
+  - ../../lib-agent/providers/claude/sessions/src/ClaudeSessionBackend.kt
+  - ../../lib-agent/providers/claude/sessions/src/ClaudeAgentSessionProviderDescriptor.kt
+  - ../../lib-agent/providers/claude/sessions/src/ClaudeSessionSource.kt
+  - ../../lib-agent/providers/claude/sessions/src/backend/store/ClaudeStoreSessionBackend.kt
+  - ../../lib-agent/providers/claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
+  - ../../lib-agent/providers/claude/sessions/testSrc/ClaudeSessionSourceTest.kt
+  - ../../lib-agent/providers/claude/sessions/testSrc/ClaudeSessionsStoreTest.kt
+  - ../../lib-agent/providers/pi/sessions/src/PiSessionSource.kt
+  - ../../lib-agent/providers/pi/sessions/testSrc/PiSessionSourceTest.kt
 ---
 
 # Agent Chat Structure View
@@ -61,13 +60,13 @@ Agent Chat Structure View exposes an outline of persisted provider session histo
 - Codex outline items must not navigate to rollout JSONL records as a substitute for chat navigation. The outline is parsed from persisted history, while the editor renders a live terminal TUI that can clear, redraw, switch buffers, or trim scrollback. TUI navigation may be added only if the IDE can resolve a stable live TUI position for the item or Codex exposes a stable jump/anchor API.
 
 - Codex user-prompt outline rows may expose `Start New Conversation From Here` for top-level Codex chat tabs. The provider must fork the current thread through Codex app-server `thread/fork`, roll back only the forked thread through app-server `thread/rollback`, keep the source chat tab unchanged, and open the forked thread in a focused Agent Chat tab with a fresh `codex resume` terminal launch. It must not send `Esc`, scrape terminal scrollback, drive the live TUI selection, mutate the original thread, or expose the action for sub-agent rows or non-user-prompt outline items.
-  [@test] ../../codex/sessions/testSrc/CodexSessionSourceTest.kt
-  [@test] ../../codex/sessions/testSrc/CodexAppServerSessionBackendTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexSessionSourceTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexAppServerSessionBackendTest.kt
   [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
 
 - Claude Code outline rows may expose `Start New Conversation From Here` only for the latest top-level user-prompt row whose outline id is a persisted Claude transcript `uuid`. Claude Code does not expose a noninteractive API to fork at an arbitrary transcript UUID; older prompt rows must not show the action. The partial Claude implementation must open the fork through Claude CLI `--resume <sourceSessionId> --fork-session --session-id <newSessionId>` with Agent Workbench hook settings bound to the new session id, keep the source tab unchanged, and must not drive `/rewind`, double-Esc, terminal selection, or JSONL truncation.
-  [@test] ../../claude/sessions/testSrc/ClaudeSessionSourceTest.kt
-  [@test] ../../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
+  [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeSessionSourceTest.kt
+  [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
 
 - Outline items preserve provider order and hierarchy. The shared model supports user prompts, assistant responses, agent work groups, tool calls, tool results, plans, approval requests, input requests, summaries, and metadata; unknown provider records should be skipped or mapped to metadata rather than exposed as raw JSON.
 
@@ -75,16 +74,16 @@ Agent Chat Structure View exposes an outline of persisted provider session histo
   [@test] ../../chat/testSrc/AgentChatFileEditorProviderTest.kt
 
 - Codex outlines are parsed from rollout JSONL data and should group inferred agent work so tool-call and tool-result activity remains readable as a block-oriented history browser.
-  [@test] ../../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
 - Codex rollout user-prompt outline items should use stable provider ids that encode the visible user-prompt ordinal used for rollback math. Duplicate rollout representations of the same prompt should remain a single visible user-prompt row.
-  [@test] ../../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
 - Claude outlines are parsed from transcript JSONL data and should group assistant/tool activity into readable blocks while preserving prompt and summary records. When transcript `uuid` fields are present, outline item ids should use those stable provider anchors rather than synthetic UI ordinals.
-  [@test] ../../claude/sessions/testSrc/ClaudeSessionsStoreTest.kt
+  [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeSessionsStoreTest.kt
 
 - Pi outlines are parsed from persisted Pi JSONL session entries using `/tree` display semantics: normal visible conversation/work rows are shown as a chronological top-level timeline, tool details may stay under their owning assistant/work row, hidden bookkeeping nodes are kept out of the visible Structure View, and leaf/bookkeeping records are not shown. The implementation must not launch Pi or scrape the interactive `/tree` TUI.
-  [@test] ../../pi/sessions/testSrc/PiSessionSourceTest.kt
+  [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiSessionSourceTest.kt
 
 ## Testing / Local Run
 - `./tests.cmd --module intellij.agent.workbench.chat.tests --test com.intellij.agent.workbench.chat.AgentChatFileEditorProviderTest`

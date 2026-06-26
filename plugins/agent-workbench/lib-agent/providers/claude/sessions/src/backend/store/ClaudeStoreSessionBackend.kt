@@ -2,6 +2,8 @@
 package com.intellij.platform.ai.agent.claude.sessions.backend.store
 
 // @spec community/plugins/agent-workbench/spec/chat/agent-chat-structure-view.spec.md
+// @spec community/plugins/agent-workbench/spec/sessions/agent-sessions-refresh.spec.md
+// @spec community/plugins/agent-workbench/spec/sessions/agent-sessions-claude-hooks.spec.md
 
 import com.intellij.platform.ai.agent.claude.common.ClaudeSessionActivity
 import com.intellij.platform.ai.agent.claude.common.ClaudeProjectFileChangeEvidence
