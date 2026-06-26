@@ -682,6 +682,117 @@ class CodexAppServerRefreshHintsProviderTest {
     }
 
     @Test
+    fun turnCompletedNotificationsEmitDelayedRetryForActivityRefresh(): Unit = runBlocking(Dispatchers.Default) {
+        val notifications = MutableSharedFlow<CodexAppServerNotification>(replay = 1, extraBufferCapacity = 16)
+        val provider = CodexAppServerRefreshHintsProvider(
+            readThreadActivitySnapshot = { null },
+            notifications = notifications,
+        )
+        val updates = Channel<AgentSessionSourceUpdateEvent>(capacity = Channel.UNLIMITED)
+        val collectJob = launch {
+            provider.updateEvents.collect { update ->
+                updates.send(update)
+            }
+        }
+        try {
+            withTimeout(2.seconds) {
+                notifications.subscriptionCount.first { it > 0 }
+            }
+            notifications.emit(
+                CodexAppServerNotification(
+                    method = "turn/completed",
+                    kind = CodexAppServerNotificationKind.TURN_COMPLETED,
+                    threadId = "thread-live",
+                )
+            )
+
+            val firstUpdate = withTimeout(2.seconds) { updates.receive() }
+            val retryUpdate = withTimeout(2.seconds) { updates.receive() }
+            assertThat(firstUpdate.type).isEqualTo(AgentSessionSourceUpdate.HINTS_CHANGED)
+            assertThat(firstUpdate.threadIds).containsExactly("thread-live")
+            assertThat(firstUpdate.activityUpdatesByThreadId).isEmpty()
+            assertThat(retryUpdate).isEqualTo(firstUpdate)
+        }
+        finally {
+            collectJob.cancel()
+            updates.close()
+        }
+    }
+
+    @Test
+    fun turnCompletedRetryInvalidatesStaleSnapshotActivityHint(): Unit = runBlocking(Dispatchers.Default) {
+        val notifications = MutableSharedFlow<CodexAppServerNotification>(replay = 1, extraBufferCapacity = 16)
+        val requestedThreadIds = mutableListOf<String>()
+        var snapshotReadCount = 0
+        val provider = CodexAppServerRefreshHintsProvider(
+            readThreadActivitySnapshot = { threadId ->
+                requestedThreadIds += threadId
+                snapshotReadCount += 1
+                when (snapshotReadCount) {
+                    1 -> snapshot(
+                        threadId = threadId,
+                        statusKind = CodexThreadStatusKind.ACTIVE,
+                        hasInProgressTurn = true,
+                        hasTurnActivity = true,
+                        updatedAt = 100L,
+                    )
+                    2 -> snapshot(
+                        threadId = threadId,
+                        statusKind = CodexThreadStatusKind.ACTIVE,
+                        hasUnreadAssistantMessage = true,
+                        hasTurnActivity = true,
+                        updatedAt = 100L,
+                    )
+                    else -> null
+                }
+            },
+            notifications = notifications,
+        )
+        val updates = Channel<AgentSessionSourceUpdateEvent>(capacity = Channel.UNLIMITED)
+        val collectJob = launch {
+            provider.updateEvents.collect { update ->
+                updates.send(update)
+            }
+        }
+        try {
+            withTimeout(2.seconds) {
+                notifications.subscriptionCount.first { it > 0 }
+            }
+            notifications.emit(
+                CodexAppServerNotification(
+                    method = "turn/completed",
+                    kind = CodexAppServerNotificationKind.TURN_COMPLETED,
+                    threadId = "thread-live",
+                )
+            )
+
+            withTimeout(2.seconds) { updates.receive() }
+            val staleHints = provider.prefetchRefreshHints(
+                paths = listOf("/work/project"),
+                refreshThreadSeedsByPath = mapOf(
+                    "/work/project" to setOf(refreshThreadSeed("thread-live", updatedAt = 100L)),
+                ),
+            ).getValue("/work/project")
+            assertThat(staleHints.activities()).containsExactlyEntriesOf(mapOf("thread-live" to AgentThreadActivity.PROCESSING))
+
+            withTimeout(2.seconds) { updates.receive() }
+            val refreshedHints = provider.prefetchRefreshHints(
+                paths = listOf("/work/project"),
+                refreshThreadSeedsByPath = mapOf(
+                    "/work/project" to setOf(refreshThreadSeed("thread-live", updatedAt = 100L)),
+                ),
+            ).getValue("/work/project")
+
+            assertThat(requestedThreadIds).containsExactly("thread-live", "thread-live")
+            assertThat(refreshedHints.activities()).containsExactlyEntriesOf(mapOf("thread-live" to AgentThreadActivity.UNREAD))
+        }
+        finally {
+            collectJob.cancel()
+            updates.close()
+        }
+    }
+
+    @Test
     fun reusesCachedSnapshotWhenUpdatedAtIsUnchanged(): Unit = runBlocking(Dispatchers.Default) {
         val requestedThreadIds = mutableListOf<String>()
         val provider = CodexAppServerRefreshHintsProvider(
