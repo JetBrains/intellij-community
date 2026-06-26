@@ -1584,7 +1584,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
 
     private fun getTypeFormType(resolved: PsiElement, context: Context): Ref<PyType?>? {
       if (resolved is PySubscriptionExpression) {
-        if (resolved.operand.resolvesToQualifiedNames(context, TYPE_FORM, TYPE_FORM_EXT)) {
+        if (isTypeForm(resolveToQualifiedNames(resolved.operand, context.typeContext), resolved)) {
           val indexExpr = resolved.indexExpression
           if (indexExpr != null && !indexExpr.resolvesToQualifiedNames(context.typeContext, ANY)) {
             val representedType = Ref.deref(getType(indexExpr, context))
@@ -1594,11 +1594,17 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
           return PyTypeFormType.create(resolved, PyAnyType.any)?.let { Ref(it) }
         }
       }
-      else if (TYPE_FORM == resolved.getQualifiedName() || TYPE_FORM_EXT == resolved.getQualifiedName()) {
+      else if (isTypeForm(listOfNotNull(resolved.getQualifiedName()), resolved)) {
         // Bare `TypeForm` is equivalent to `TypeForm[Any]`
         return PyTypeFormType.create(resolved, PyAnyType.any)?.let { Ref(it) }
       }
       return null
+    }
+
+    // `typing.TypeForm` (PEP 747) only exists since Python 3.15; `typing_extensions.TypeForm` is a backport.
+    private fun isTypeForm(names: Collection<String>, anchor: PsiElement): Boolean {
+      if (TYPE_FORM_EXT in names) return true
+      return TYPE_FORM in names && LanguageLevel.forElement(anchor).isAtLeast(LanguageLevel.PYTHON315)
     }
 
     private fun getSelfType(resolved: PsiElement, typeHint: PyExpression, context: Context): Ref<PyType?>? {

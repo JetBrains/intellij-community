@@ -3,6 +3,7 @@ package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.types.PyTypeFormType
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -115,6 +116,33 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
 
       def use():
           f(42) # ISSUES *
+      """)
+  }
+
+  @Nested
+  inner class VersionGating {
+    @Test
+    fun `typing TypeForm is available since 3_15`() = test(
+      defaultTestOptions.copy(languageLevel = LanguageLevel.PYTHON315), """
+      from typing import TypeForm
+
+      def f[T](form: TypeForm[T]) -> T: ...
+
+      def use():
+          r = f(int)
+      #   └ TYPE int
+      """)
+
+    @Test
+    fun `typing_extensions TypeForm is available on older versions`() = test(
+      defaultTestOptions.copy(languageLevel = LanguageLevel.PYTHON313), """
+      from typing_extensions import TypeForm
+
+      def f[T](form: TypeForm[T]) -> T: ...
+
+      def use():
+          r = f(int)
+      #   └ TYPE int
       """)
   }
 }
