@@ -19,6 +19,7 @@ import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.util.PsiUtil
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -51,6 +52,9 @@ internal class UseNamedGetterInspection : LocalInspectionTool() {
     }
 
     private fun KtParameter.getGetterForAssociatedProperty(containingClass: KtClassOrObject): PsiMethod? {
+        // JvmField properties do not have a getter from Java, they are accessed using the field directly.
+        if (KotlinPsiHeuristics.hasJvmFieldAnnotation(this)) return null
+
         if (isPropertyParameter()) {
             return LightClassUtil.getLightClassPropertyMethods(this).getter
         }
@@ -58,6 +62,8 @@ internal class UseNamedGetterInspection : LocalInspectionTool() {
         val matchingProperty = containingClass.declarations
             .filterIsInstance<KtProperty>()
             .firstOrNull { it.name == this.name } ?: return null
+        if (KotlinPsiHeuristics.hasJvmFieldAnnotation(matchingProperty)) return null
+
         return LightClassUtil.getLightClassPropertyMethods(matchingProperty).getter
     }
 

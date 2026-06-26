@@ -491,6 +491,19 @@ public abstract class K2MultiFileLocalInspectionTestGenerated extends AbstractK2
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/multiFileInspectionsLocal/useNamedGetter/jvmField")
+            public static class JvmField extends AbstractK2MultiFileLocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("jvmField.test")
+                public void testJvmField() throws Exception {
+                    runTest("testData/multiFileInspectionsLocal/useNamedGetter/jvmField/jvmField.test");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/multiFileInspectionsLocal/useNamedGetter/multipleComponents")
             public static class MultipleComponents extends AbstractK2MultiFileLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
