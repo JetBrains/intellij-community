@@ -7,6 +7,7 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.newui.EventHandler
+import com.intellij.internal.statistic.eventLog.getUiEventLogger
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.IdeActions
@@ -25,16 +26,17 @@ import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.VetoableProjectManagerListener
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.ExitActionType
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.NonModalWindowWrapper
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.border.CustomLineBorder
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.mac.touchbar.Touchbar
 import com.intellij.util.ui.DialogUtil
 import com.intellij.util.ui.GridBag
@@ -145,6 +147,7 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
 
   private val editor: SettingsEditor
   private val mainPanel: JPanel
+  private var exitActionType: ExitActionType = ExitActionType.UNDEFINED
 
   // ── Initialization ────────────────────────────────────────────────────────────
 
@@ -180,6 +183,10 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
   override fun getPreferredFocusComponent(): JComponent? =
     editor.getPreferredFocusedComponent() ?: mainPanel
 
+  override fun onShown() {
+    getUiEventLogger().logShowDialog(SettingsNonModalDialog::class.java)
+  }
+
   override fun onWindowDeactivated(): Unit = editor.recordWindowLeaveState()
 
   override fun onWindowActivated(): Unit = editor.resetUnmodifiedOnWindowFocus()
@@ -210,7 +217,11 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
   }
 
   override fun dispose() {
-    if (ourInstance === this) ourInstance = null
+    if (ourInstance === this) {
+      ourInstance = null
+      val exitCode = if (exitActionType == ExitActionType.OK) DialogWrapper.OK_EXIT_CODE else DialogWrapper.CANCEL_EXIT_CODE
+      getUiEventLogger().logCloseDialog(SettingsNonModalDialog::class.java, exitCode, exitActionType)
+    }
     super.dispose()
   }
 
@@ -226,10 +237,14 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
   private fun applyWithWriteIntent(): Boolean = WriteIntentReadAction.compute { editor.apply() }
 
   /** Called after settings are successfully applied and before the window closes. Override to react to apply. */
-  protected open fun afterApply() {}
+  protected open fun afterApply() {
+    exitActionType = ExitActionType.OK
+  }
 
   /** Called when settings are canceled (Cancel button, ESC, or the X button). Override to react to cancel. */
-  protected open fun afterCancel() {}
+  protected open fun afterCancel() {
+    exitActionType = ExitActionType.CANCEL
+  }
 
   // ── Lifecycle subscriptions ───────────────────────────────────────────────────
 
