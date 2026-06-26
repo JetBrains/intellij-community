@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSetFactory
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportProgress
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -285,10 +286,9 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
   ) {
     @Suppress("DialogTitleCapitalization") val progressTitle = IdeBundle.message("actions.on.save.background.progress")
     withBackgroundProgress(project, progressTitle) {
-      reportProgress(size = documentsToModStamps.size) { progressReporter ->
+      reportSequentialProgress(size = documentsToModStamps.size) { progressReporter ->
         for ((document, modStamp) in documentsToModStamps) {
-          // Not only does the `progressReporter.itemStep` call help with progress reporting,
-          // it also makes sure that the documents are processed one at a time, not in parallel.
+          // Documents are processed one at a time, not in parallel.
           // It's a safer path than parallel processing because there may be a lot of documents,
           // and Actions on Save may perform heavy operations or start external processes.
           progressReporter.itemStep {
