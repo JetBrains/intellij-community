@@ -11,11 +11,10 @@ import org.jetbrains.kotlin.tooling.core.isDev
 import org.jetbrains.kotlin.tooling.core.isSnapshot
 import org.jetbrains.kotlin.tooling.core.isStable
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
-import java.io.File
+import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.div
 import kotlin.io.path.exists
-import kotlin.io.resolve
 
 object GradleKotlinTestUtils {
 
@@ -68,116 +67,128 @@ object GradleKotlinTestUtils {
         )
     }
 
-    private fun listKtsRepositoriesOptimized(gradleVersion: GradleVersion, kotlinVersion: KotlinToolingVersion): String {
-        val repositories = mutableListOf<String>()
-        operator fun String.unaryPlus() = repositories.add(this)
+    private fun MutableList<String>.addMavenLocal(kotlinContentConstraint: String) {
+        add(
+            repository("mavenLocal") { kotlinContentConstraint }
+        )
+    }
 
-        val mavenLocal = """
-            mavenLocal {
-                content {
-                    includeVersionByRegex(".*jetbrains.*", ".*", "$kotlinVersion")
+    private fun listKtsRepositoriesOptimized(
+        gradleVersion: GradleVersion,
+        kotlinVersion: KotlinToolingVersion,
+    ): String {
+        val repositories = buildList {
+            val kotlinContentConstraint = kotlinContentConstraint(kotlinVersion)
+
+            if (kotlinVersion.shouldUseMavenLocal()) {
+                addMavenLocal(kotlinContentConstraint)
+            }
+
+            if (!kotlinVersion.isStable) {
+                val kotlinSnapshotPath = Path(PlatformTestUtil.getCommunityPath()) / "lib" / "kotlin-snapshot"
+                when {
+                    kotlinGradlePluginExists(kotlinSnapshotPath, kotlinVersion) -> {
+                        addMavenRepository(
+                            kotlinSnapshotPath.toString(),
+                            kotlinContentConstraint
+                        )
+                        add(KOTLIN_NATIVE_RELEASES_REPOSITORY)
+                        add(KOTLIN_NATIVE_DEV_REPOSITORY)
+                    }
+
+                    kotlinVersion.isDev -> {
+                        addMavenRepository("https://packages.jetbrains.team/maven/p/kt/experimental", kotlinContentConstraint)
+                    }
+                }
+
+                if (kotlinGradlePluginExists(Path(System.getProperty("user.home")).resolve(".m2/repository"), kotlinVersion)) {
+                    addMavenLocal(kotlinContentConstraint)
+                } else {
+                    addMavenRepository(
+                        "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap",
+                        kotlinContentConstraint
+                    )
+                    addMavenRepository("https://cache-redirector.jetbrains.com/intellij-dependencies", kotlinContentConstraint)
                 }
             }
-        """.trimIndent()
 
-        // Artefact with `snapshot` in name or with pattern like `1.9.0-341` doesn't publish in public repositories
-        // and must be searched in local maven
-        if (kotlinVersion.isSnapshot || kotlinVersion.isStable && kotlinVersion.classifier != null ) {
-            +mavenLocal
-        }
-
-        if (!kotlinVersion.isStable) {
-
-            if (isCooperativeDevelopmentEnabled(kotlinVersion)) {
-                +"""
-                    maven {
-                        url = uri("${Path(PlatformTestUtil.getCommunityPath()).resolve("lib").resolve("kotlin-snapshot")}")
-
-                        content {
-                            includeVersionByRegex(".*jetbrains.*", ".*", "$kotlinVersion")
-                        }
-                    }
-                    ivy {
-                        url = uri("https://download.jetbrains.com/kotlin/native/builds/releases")
-                        patternLayout {
-                            artifact("[revision]/[classifier]/[artifact]-[classifier]-[revision].[ext]")
-                        }
-                        metadataSources {
-                            artifact()
-                        }
-                    }
-                    ivy {
-                        url = uri("https://download.jetbrains.com/kotlin/native/builds/dev")
-                        patternLayout {
-                            artifact("[revision]/[classifier]/[artifact]-[classifier]-[revision].[ext]")
-                        }
-                        metadataSources {
-                            artifact()
-                        }
-                    }
-                """.trimIndent()
-            } else if (kotlinVersion.isDev) {
-                +"""
-                     maven {
-                        url = uri("https://packages.jetbrains.team/maven/p/kt/experimental")
-
-                        content {
-                            includeVersionByRegex(".*jetbrains.*", ".*", "$kotlinVersion")
-                        }
-                    }
-                """.trimIndent()
-            }
-
-            if (localKotlinGradlePluginExists(kotlinVersion)) {
-                +mavenLocal
-            } else +"""
-                maven("https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap") {
+            addMavenRepository("https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/")
+            addMavenRepository(
+                url = "https://cache-redirector.jetbrains.com/dl.google.com.android.maven2/",
+                kotlinContentConstraint =
+                    """
                     content {
-                        includeVersionByRegex(".*jetbrains.*", ".*", "$kotlinVersion")
+                        includeGroupByRegex(".*android.*")
+                        includeGroupByRegex(".*google.*")
                     }
-                }
-                
-                /* Repository used to resolve manual deployments of KGP (specifically to be resolved by IJ import tests) */
-                maven("https://cache-redirector.jetbrains.com/intellij-dependencies") {
-                    content {
-                        includeVersionByRegex(".*jetbrains.*", ".*", "$kotlinVersion")
-                    }
-                }
-            """.trimIndent()
-        }
+                    """.trimIndent()
+            )
+            addMavenRepository("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2/")
 
-        +"""maven("https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/")"""
-
-        +"""
-            maven("https://cache-redirector.jetbrains.com/dl.google.com.android.maven2/") {
-                content {
-                    includeGroupByRegex(".*android.*")
-                    includeGroupByRegex(".*google.*")
-                }
+            if (!VersionMatcher(gradleVersion).isVersionMatch("7.0+", true)) {
+                addMavenRepository("https://cache-redirector.jetbrains.com/jcenter/")
             }
-            """
-            .trimIndent()
-
-        +"""maven("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2/")"""
-
-        if (!VersionMatcher(gradleVersion).isVersionMatch("7.0+", true)) {
-            +"""maven("https://cache-redirector.jetbrains.com/jcenter/")"""
         }
 
         return repositories.joinToString("\n")
     }
-}
 
-private fun localKotlinGradlePluginExists(kotlinGradlePluginVersion: KotlinToolingVersion): Boolean {
-    val localKotlinGradlePlugin = File(System.getProperty("user.home"))
-        .resolve(".m2/repository")
-        .resolve("org/jetbrains/kotlin/kotlin-gradle-plugin/$kotlinGradlePluginVersion")
+    private fun MutableList<String>.addMavenRepository(url: String, kotlinContentConstraint: String? = null) {
+        val urlLine = """url = uri("$url")"""
 
-    return localKotlinGradlePlugin.exists()
-}
+        val mavenRepository = repository("maven") {
+            buildString {
+                append(urlLine)
+                kotlinContentConstraint?.let {
+                    appendLine()
+                    append(it)
+                }
+            }
+        }
+        add(mavenRepository)
+    }
 
-private fun isCooperativeDevelopmentEnabled(kotlinGradlePluginVersion: KotlinToolingVersion): Boolean {
-    val localKotlinGradlePlugin =
-        Path(PlatformTestUtil.getCommunityPath()) / "lib" / "kotlin-snapshot" / "org/jetbrains/kotlin/kotlin-gradle-plugin/$kotlinGradlePluginVersion"
-    return localKotlinGradlePlugin.exists()
+    private fun KotlinToolingVersion.shouldUseMavenLocal(): Boolean =
+        isSnapshot || isStable && classifier != null
+
+    private fun kotlinContentConstraint(kotlinVersion: KotlinToolingVersion): String = """
+        content {
+            includeVersionByRegex(".*jetbrains.*", ".*", "$kotlinVersion")
+        }
+        """.trimIndent()
+
+    private fun repository(
+        name: String,
+        content: (() -> String)? = null,
+    ): String = buildString {
+        appendLine("$name {")
+        content?.invoke()?.let {
+            appendLine(it.prependIndent())
+        }
+        append("}")
+    }
+
+    private val KOTLIN_NATIVE_RELEASES_REPOSITORY = kotlinNativeRepository(
+        "https://download.jetbrains.com/kotlin/native/builds/releases"
+    )
+
+    private val KOTLIN_NATIVE_DEV_REPOSITORY = kotlinNativeRepository(
+        "https://download.jetbrains.com/kotlin/native/builds/dev"
+    )
+
+    private fun kotlinNativeRepository(url: String): String = """
+        ivy {
+            url = uri("$url")
+            patternLayout {
+                artifact("[revision]/[classifier]/[artifact]-[classifier]-[revision].[ext]")
+            }
+            metadataSources {
+                artifact()
+            }
+        }
+        """.trimIndent()
+
+
+    private fun kotlinGradlePluginExists(root: Path, version: KotlinToolingVersion, ): Boolean =
+        (root / "org/jetbrains/kotlin/kotlin-gradle-plugin/$version").exists()
 }
