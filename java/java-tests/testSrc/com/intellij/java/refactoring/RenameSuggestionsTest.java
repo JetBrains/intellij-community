@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -40,7 +40,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
           }
       }""";
 
-    doTestSuggestionAvailable(text, "lambdaRename", "rename", "v");
+    doTestSuggestionAvailable(text, "lambdaRename", "rename");
   }
 
   public void testForeachScope() {
@@ -77,7 +77,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
                                                       Optional<Foo> <caret>o = Optional.of(typeValue);
                                                     }}
                                                     """);
-    assertEquals(List.of("typeValue1", "value", "foo", "optionalFoo", "fooOptional", "optional", "o"), suggestions);
+    assertEquals(List.of("typeValue1", "value", "foo", "optionalFoo", "fooOptional", "optional"), suggestions);
   }
 
   public void testByOptionalOfNullableInitializer() {
@@ -88,7 +88,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
           Foo typeValue = this;
           Optional<Foo> <caret>o = Optional.ofNullable(typeValue);
         }}""");
-    assertEquals(List.of("typeValue1", "value", "foo", "optionalFoo", "fooOptional", "optional", "o"), suggestions);
+    assertEquals(List.of("typeValue1", "value", "foo", "optionalFoo", "fooOptional", "optional"), suggestions);
   }
 
   public void testByOptionalOfInitializerWithConstructor() {
@@ -97,7 +97,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
         class Foo {{
           Optional<Foo> <caret>o = Optional.ofNullable(new Foo());
         }}""");
-    assertEquals(List.of("foo", "optionalFoo", "fooOptional", "optional", "o"), suggestions);
+    assertEquals(List.of("foo", "optionalFoo", "fooOptional", "optional"), suggestions);
   }
 
   public void testByOptionalFlatMap() {
@@ -112,7 +112,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
         }
         class Car {}
         """);
-    assertEquals(List.of("car", "optionalCar", "carOptional", "optional", "o"), suggestions);
+    assertEquals(List.of("car", "optionalCar", "carOptional", "optional"), suggestions);
   }
 
   public void testLongQualifiedName() {
@@ -128,7 +128,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
                                                       }
                                                     }
                                                     """);
-    assertEquals(List.of("cat", "innerCat", "string", "s"), suggestions);
+    assertEquals(List.of("cat", "innerCat", "string"), suggestions);
   }
 
   private void doTestSuggestionAvailable(String text, String... expectedSuggestions) {
