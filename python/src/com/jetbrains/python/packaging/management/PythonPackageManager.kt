@@ -587,9 +587,8 @@ fun PythonPackageManager.listDeclaredPackagesAsync(): List<PythonPackage>? = run
  * "requirement is not satisfied" diagnostics right after PPTW package operations
  * (PY-89774).
  */
-@ApiStatus.Internal
 @RequiresBackgroundThread
-fun PythonPackageManager.listInstalledPackagesAsync(): List<PythonPackage> = runBlockingMaybeCancellable {
+internal fun PythonPackageManager.listInstalledPackagesAsync(): List<PythonPackage> = runBlockingMaybeCancellable {
   listInstalledPackages()
 }
 

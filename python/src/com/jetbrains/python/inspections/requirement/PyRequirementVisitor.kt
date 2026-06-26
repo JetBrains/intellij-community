@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiElement
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.inspections.PyInspectionVisitor
@@ -57,9 +58,9 @@ class PyRequirementVisitor(
 
     val sdk = module.pythonSdk ?: return
     val manager = PythonPackageManager.forSdk(module.project, sdk)
-    if (manager.listDeclaredPackagesAsync() == null) return
+    val declared = manager.listDeclaredPackagesAsync() ?: return
 
-    val installedNotDeclaredChecker = InstalledButNotDeclaredChecker(ignoredPackages, manager)
+    val installedNotDeclaredChecker = InstalledButNotDeclaredChecker(ignoredPackages, declared)
     val packageName = installedNotDeclaredChecker.getUndeclaredPackageName(importedPyModule = importedPyModule) ?: return
 
 
@@ -81,6 +82,7 @@ class PyRequirementVisitor(
   }
 
   private fun checkPackagesHaveBeenInstalled(file: PsiElement, module: Module) {
+    ThreadingAssertions.assertBackgroundThread()
     if (PyPackageManagerModuleHelpers.isRunningPackagingTasks(module))
       return
     val sdk = PythonSdkUtil.findPythonSdk(module) ?: return

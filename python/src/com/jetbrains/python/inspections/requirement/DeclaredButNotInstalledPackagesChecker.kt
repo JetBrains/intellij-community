@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections.requirement
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackage
@@ -17,6 +18,7 @@ class DeclaredButNotInstalledPackagesChecker(
 ) {
   private val ignoredPackageNames: Set<String> = ignoredPackages.mapTo(mutableSetOf()) { PyPackageName.normalizePackageName(it) }
 
+  @RequiresBackgroundThread
   fun findUnsatisfiedRequirements(module: Module, manager: PythonPackageManager): List<PyRequirement> {
     val requirements = manager.listDeclaredPackagesAsync() ?: return emptyList()
     val packagesToCheck = filterToMainPackages(requirements, manager)
