@@ -182,7 +182,13 @@ abstract class NonModalWindowWrapper(
    * [switchWindowMode], which requires [activeWindow] to be initialised — so the action must
    * not be activated before [initWindow] is called.)
    */
-  fun createModeAction(): ToggleAction = object : ToggleAction(
+  fun createModeAction(): ToggleAction {
+    val action = PinWindowAction()
+    ActionUtil.mergeFrom(action, ACTION_PIN_WINDOW_ID)
+    return action
+  }
+
+  private inner class PinWindowAction : ToggleAction(
     IdeBundle.messagePointer("action.ToggleAction.text.pin.window"),
     IdeBundle.messagePointer("action.ToggleAction.description.pin.window"),
     AllIcons.General.Pin_tab,
@@ -628,3 +634,5 @@ private fun Window.isSameOrOwnedBy(ancestor: Window): Boolean {
 }
 
 private val LOG = logger<NonModalWindowWrapper>()
+
+internal const val ACTION_PIN_WINDOW_ID = "NonModalWindow.PinUnpin"
