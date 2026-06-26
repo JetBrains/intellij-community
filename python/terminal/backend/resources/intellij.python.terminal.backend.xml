@@ -6,8 +6,13 @@
     <module name="intellij.python.sdk"/>
     <module name="intellij.python.terminal.shared"/>
     <!-- endregion -->
+    <module name="intellij.platform.rpc.backend"/>
   </dependencies>
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
     <shellExecOptionsCustomizer implementation="com.intellij.python.terminal.PyVirtualEnvTerminalCustomizer"/>
   </extensions>
+  <projectListeners>
+    <listener topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"
+              class="com.intellij.python.terminal.PyTerminalFileManagerListener"/>
+  </projectListeners>
 </idea-plugin>
