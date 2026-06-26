@@ -1,6 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
+jps_test(
+    name = "backend-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":backend-tests_test_lib"],
+)
+### skip generation section `test intellij.editorconfig.backend.tests`
+
 ### auto-generated section `build intellij.editorconfig.backend` start
 
 resourcegroup(
@@ -242,6 +250,22 @@ jvm_library(
         "//platform/forms_rt:java-guiForms-rt_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//plugins/editorconfig:editorconfig-plugin-main",
+        "//plugins/editorconfig:editorconfig-plugin-main_test_lib",
+        "//plugins/editorconfig/backend.spellchecking",
+        "//plugins/editorconfig/backend.spellchecking:backend.spellchecking_test_lib",
+        "//libraries/misc/plugin",
+        "//libraries/misc/plugin:plugin_test_lib",
+        "//java/java-backend:backend",
+        "//java/java-backend:backend_test_lib",
+        "//java/plugin",
+        "//java/plugin:plugin_test_lib",
+        "//platform/structure-view-impl/plugin",
+        "//platform/structure-view-impl/plugin:plugin_test_lib",
+        "//platform/todo/plugin",
+        "//platform/todo/plugin:plugin_test_lib",
+        "//aether-dependency-resolver/plugin",
+        "//aether-dependency-resolver/plugin:plugin_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
     ],
@@ -256,11 +280,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.editorconfig.backend.tests` end
-
-### auto-generated section `test intellij.editorconfig.backend.tests` start
-
-jps_test(
-    name = "backend-tests_test",
-    runtime_deps = [":backend-tests_test_lib"],
-)
-### auto-generated section `test intellij.editorconfig.backend.tests` end

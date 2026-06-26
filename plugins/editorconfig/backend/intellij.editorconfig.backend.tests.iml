@@ -66,6 +66,14 @@
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="TEST" />
     <orderEntry type="module" module-name="intellij.editorconfig.backend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.editorconfig.plugin.main" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.editorconfig.backend.spellchecking" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.misc.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.backend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.structureView.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.todo.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.editorconfig.backend" />

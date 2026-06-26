@@ -1530,4 +1530,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.devkit.testFramework",
   "intellij.devkit.workspaceModel.tests",
   "intellij.eclipse.tests",
+  "intellij.editorconfig.backend.tests",
 )
