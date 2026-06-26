@@ -10,7 +10,7 @@ import com.intellij.psi.PsiTreeChangeEvent
 import com.intellij.psi.util.PsiTreeUtil
 
 internal class TodoBackendPsiListener(
-  private val scheduleFileChanges: (List<VirtualFile>) -> Unit
+  private val scheduleFileChanges: (VirtualFile) -> Unit
 ) : PsiTreeChangeAdapter() {
 
   override fun childAdded(event: PsiTreeChangeEvent) = scheduleFor(event)
@@ -21,7 +21,7 @@ internal class TodoBackendPsiListener(
 
   private fun scheduleFor(event: PsiTreeChangeEvent) {
     val file = affectedFile(event) ?: return
-    scheduleFileChanges(listOf(file))
+    scheduleFileChanges(file)
   }
 
   private fun affectedFile(event: PsiTreeChangeEvent): VirtualFile? {

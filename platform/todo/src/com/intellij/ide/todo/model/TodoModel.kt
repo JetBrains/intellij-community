@@ -10,7 +10,7 @@ import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.vfs.VirtualFile
 import java.util.concurrent.ConcurrentHashMap
 
-internal class FrontendTodoModel {
+internal class TodoModel {
   private val files = ConcurrentHashMap<VirtualFileId, TodoFileResult>()
 
   fun getFileResult(file: VirtualFile): TodoFileResult? = files[file.rpcId()]
