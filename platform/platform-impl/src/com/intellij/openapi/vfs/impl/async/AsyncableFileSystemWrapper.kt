@@ -393,7 +393,7 @@ abstract class AbstractContentWriteTask(
         }
       }
 
-      updateFileTimestamp()
+      updateLastModifiedTimestampInVFS()
     }
 
     if (executedOnBackground) {
@@ -407,16 +407,16 @@ abstract class AbstractContentWriteTask(
     }
   }
 
-  //FIXME RC: rename to updateLastModifiedTimestampInVFS()
-  private fun updateFileTimestamp() {
+  private fun updateLastModifiedTimestampInVFS() {
     //Underlying FS could have different lastModified granularity than currentTimeMillis has => re-query
     //the lastModified just set, to know how the FS actually stores it:
     val modificationTimeStampWithUnderlyingFSGranularity = lastModifiedTimeOfUnderlyingFile()
     if (modificationTimeStampWithUnderlyingFSGranularity != timeStamp) {
       //hack: call low-level API directly, because normal file.setTimestamp() causes infinite recursion & stack overflow:
-      //FIXME: remove obsolete annotation OR use updateRecordFields() method instead
-      @Suppress("TestOnlyProblems", "UsagesOfObsoleteApi")
-      FSRecords.getInstance().setTimestamp(fileId, modificationTimeStampWithUnderlyingFSGranularity)
+      val vfs = FSRecords.getInstance()
+      vfs.connection().records().updateRecord(fileId){
+        record -> record.setTimestamp(modificationTimeStampWithUnderlyingFSGranularity)
+      }
     }
   }
 
@@ -433,7 +433,8 @@ abstract class AbstractContentWriteTask(
   override fun isAsyncExecutionAllowed(): Boolean = ASYNC_CONTENT_WRITE_ENABLED && requestor is AsyncFileContentWriteRequestor
 
   override fun toString(): String =
-    "ContentWriteTask[#$fileId][requestor: ${requestor?.javaClass?.name}][modStamp=$modStamp, timeStamp=$timeStamp, contentLength=$contentLength]"
+    "ContentWriteTask[#$fileId][requestor: ${requestor?.javaClass?.name}]" +
+    "[modStamp=$modStamp, timeStamp=$timeStamp, contentLength=$contentLength, timeStampUpdateRequestedByCaller=$timeStampUpdateRequestedByCaller]"
 }
 
 /** Limits both: (# of tasks postponed) AND (total size of memory used by postponed tasks) */
