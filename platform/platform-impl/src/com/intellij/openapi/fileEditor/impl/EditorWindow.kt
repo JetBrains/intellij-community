@@ -810,7 +810,7 @@ class EditorWindow internal constructor(
       }
       is EditorsSplitters -> {
         val currentFocusComponent = IdeFocusManager.getGlobalInstance().getFocusedDescendantFor(parent)
-        parent.removeAll()
+        parent.clearEditorComponent()
         parent.addEditorComponent(otherComponent)
         parent.revalidate()
         currentFocusComponent?.requestFocusInWindow()

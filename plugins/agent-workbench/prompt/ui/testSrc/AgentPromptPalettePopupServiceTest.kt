@@ -131,7 +131,6 @@ class AgentPromptPalettePopupServiceTest {
         closeHost = {},
         isHostActive = { true },
         revalidateHost = {},
-        parentDisposableName = "AgentPromptPalettePopupServiceTest",
       )
     }
 

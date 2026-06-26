@@ -3242,11 +3242,8 @@ c:com.intellij.openapi.fileEditor.impl.EditorsSplitters
 - f:getSelectedFiles():com.intellij.openapi.vfs.VirtualFile[]
 - f:getWindows():com.intellij.openapi.fileEditor.impl.EditorWindow[]
 - isFloating():Z
-- p:isPaintingOrigin():Z
 - f:openFilesAsync(Z):kotlinx.coroutines.Job
 - f:openInRightSplit(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.impl.EditorWindow
-- p:paintChildren(java.awt.Graphics):V
-- f:writeExternal(org.jdom.Element):V
 f:com.intellij.openapi.fileEditor.impl.EditorsSplitters$Companion
 - f:focusDefaultComponentInSplittersIfPresent(com.intellij.openapi.project.Project):Z
 c:com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl

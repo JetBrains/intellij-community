@@ -10,6 +10,9 @@ import javax.swing.JComponent
  */
 @ApiStatus.Internal
 interface BorderPainter {
+  fun paintBeforeChildren(component: JComponent, g: Graphics) {
+  }
+
   fun paintAfterChildren(component: JComponent, g: Graphics)
 
   fun isPaintingOrigin(component: JComponent): Boolean

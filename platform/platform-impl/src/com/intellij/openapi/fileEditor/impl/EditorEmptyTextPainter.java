@@ -65,6 +65,9 @@ public class EditorEmptyTextPainter {
     if (!isEnabled()) {
       return;
     }
+    if (splitters instanceof EditorsSplitters && !((EditorsSplitters)splitters).isEmptyTextPaintingAllowed()) {
+      return;
+    }
 
     UISettings.setupAntialiasing(g);
 
@@ -82,11 +85,6 @@ public class EditorEmptyTextPainter {
 
   protected double heightRatio() {
     return 0.375; // fix vertical position @ golden ratio
-  }
-
-  @Internal
-  public final double getEmptyTextHeightRatio() {
-    return heightRatio();
   }
 
   protected void advertiseActions(@NotNull JComponent splitters, @NotNull UIUtil.TextPainter painter) {

@@ -12,7 +12,9 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.Advertiser
+import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -21,6 +23,7 @@ import java.util.concurrent.TimeUnit
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.KeyEvent
+import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 import javax.swing.SwingConstants
@@ -153,6 +156,78 @@ class AgentPromptPaletteViewStructureTest {
   }
 
   @Test
+  fun inlineEmptyStatePresentationKeepsCompactGlobalPromptChrome() {
+    runInEdtAndWait {
+      val promptArea = EditorTextField()
+      val planModeAction = AgentPromptHeaderCheckBoxAction("&Plan mode")
+      val view = createAgentPromptPaletteView(
+        promptArea = promptArea,
+        contextChipsPanel = JPanel(),
+        onExistingTaskSelected = {},
+        hostMode = AgentPromptPaletteHostMode.INLINE_EMPTY_STATE,
+      )
+      view.headerControls.setProviderOptionActions(listOf(planModeAction))
+
+      layoutPopupRoot(view.rootPanel)
+      val promptAreaInRoot = checkNotNull(findPromptArea(view.rootPanel, promptArea))
+
+      assertThat(view.rootPanel.preferredSize.height).isLessThan(AGENT_PROMPT_PALETTE_PREFERRED_SIZE.height)
+      assertThat(view.rootPanel.minimumSize.height).isLessThan(AGENT_PROMPT_PALETTE_MINIMUM_SIZE.height)
+      assertThat(view.tabbedPane.isVisible).isFalse()
+      assertThat(view.rootPanel.isOpaque).isFalse()
+      assertThat(view.headerPanel.isOpaque).isFalse()
+      assertThat(totalBorderInsets(view.headerPanel)).isGreaterThan(0)
+      assertThat(view.existingTaskScrollPane.isVisible).isFalse()
+      assertThat(view.footerPanel.isVisible).isFalse()
+      assertThat(view.footerPinToolbar.component.isVisible).isFalse()
+      assertThat(view.promptEditorPanel.border).isInstanceOf(JBEmptyBorder::class.java)
+      assertThat(totalBorderInsets(view.promptEditorPanel)).isGreaterThan(0)
+      assertThat(SwingUtilities.isDescendingFrom(view.addContextButton, view.generationSettingsPanel)).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(view.addContextButton, view.composerContextPanel)).isFalse()
+      assertThat(view.addContextButton.parent).isSameAs(view.modelSelectorLink.parent)
+      assertThat(view.addContextButton.parent.components.toList()).containsSubsequence(
+        view.addContextButton,
+        view.modelSelectorLink,
+        view.reasoningEffortLink,
+        view.planReasoningEffortLink,
+      )
+      assertThat(SwingUtilities.isDescendingFrom(view.headerControls.toolbarComponent, view.rightHeaderPanel)).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(view.profileAction.customComponent, view.rightHeaderPanel)).isTrue()
+      assertThat(view.launchProfileLink.isFocusable).isFalse()
+      assertThat(SwingUtilities.isDescendingFrom(promptAreaInRoot, view.promptEditorPanel)).isTrue()
+      assertThat(promptAreaInRoot.height).isGreaterThan(0)
+    }
+  }
+
+  @Test
+  fun inlineEmptyStateKeepsPromptUsableAtMinimumSize() {
+    runInEdtAndWait {
+      val promptArea = EditorTextField()
+      val planModeAction = AgentPromptHeaderCheckBoxAction("&Plan mode")
+      val view = createAgentPromptPaletteView(
+        promptArea = promptArea,
+        contextChipsPanel = JPanel(),
+        onExistingTaskSelected = {},
+        hostMode = AgentPromptPaletteHostMode.INLINE_EMPTY_STATE,
+      )
+      view.headerControls.setProviderOptionActions(listOf(planModeAction))
+      view.headerControls.setContainerModeVisible(true)
+
+      layoutPopupRoot(view.rootPanel, view.rootPanel.minimumSize)
+      val promptAreaInRoot = checkNotNull(findPromptArea(view.rootPanel, promptArea))
+
+      assertThat(view.rootPanel.width).isEqualTo(view.rootPanel.minimumSize.width)
+      assertThat(promptAreaInRoot.height).isGreaterThan(0)
+      assertThat(view.generationSettingsPanel.height).isGreaterThan(0)
+      assertThat(view.addContextButton.isVisible).isTrue()
+      assertThat(view.footerPanel.isVisible).isFalse()
+      val generationSettingsBottom = bottomInRoot(view.generationSettingsPanel, view.rootPanel)
+      val promptPanelBottom = bottomInRoot(view.promptPanel, view.rootPanel)
+      assertThat(generationSettingsBottom).isLessThanOrEqualTo(promptPanelBottom)
+    }
+  }
+
+  @Test
   fun headerToolbarDoesNotForcePopupWiderThanMinimumWidth() {
     runInEdtAndWait {
       val planModeAction = AgentPromptHeaderCheckBoxAction("&Plan mode")
@@ -278,6 +353,8 @@ class AgentPromptPaletteViewStructureTest {
       assertThat(SwingUtilities.isDescendingFrom(view.promptLibraryIconLabel, view.rootPanel)).isTrue()
       assertThat(SwingUtilities.isDescendingFrom(view.promptLibraryIconLabel, view.rightHeaderPanel)).isTrue()
       assertThat(view.promptLibraryIconLabel.toolTipText).isEqualTo(AgentPromptBundle.message("popup.prompt.library.tooltip"))
+      assertThat(collectComponentsOfType(view.rootPanel, JBLabel::class.java).map { it.toolTipText })
+        .doesNotContain("Toggle Markdown Preview")
       assertThat(view.promptLibraryIconLabel.preferredSize).isEqualTo(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
       assertThat(view.promptLibraryIconLabel.width).isEqualTo(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width)
       assertThat(view.promptLibraryIconLabel.horizontalAlignment).isEqualTo(SwingConstants.CENTER)
@@ -361,8 +438,10 @@ class AgentPromptPaletteViewStructureTest {
       assertThat(view.promptEditorPanel.border).isNotNull()
       assertThat(view.generationSettingsPanel.isOpaque).isFalse()
       assertThat(yCenterInRoot(view.generationSettingsPanel, view.rootPanel)).isGreaterThan(yCenterInRoot(promptAreaInRoot, view.rootPanel))
-      assertThat(yInRoot(view.generationSettingsPanel, view.rootPanel)).isGreaterThanOrEqualTo(bottomInRoot(promptAreaInRoot, view.rootPanel))
-      assertThat(bottomInRoot(view.generationSettingsPanel, view.rootPanel)).isLessThanOrEqualTo(bottomInRoot(view.promptEditorPanel, view.rootPanel))
+      assertThat(yInRoot(view.generationSettingsPanel, view.rootPanel)).isGreaterThanOrEqualTo(bottomInRoot(promptAreaInRoot,
+                                                                                                            view.rootPanel))
+      assertThat(bottomInRoot(view.generationSettingsPanel, view.rootPanel)).isLessThanOrEqualTo(bottomInRoot(view.promptEditorPanel,
+                                                                                                              view.rootPanel))
       assertThat(promptAreaInRoot.border.getBorderInsets(promptAreaInRoot).bottom).isZero()
       assertThat(view.generationSettingsPanel.isVisible).isTrue()
       assertThat(view.launchProfileLink.text).isEqualTo("Standard")
@@ -450,6 +529,8 @@ class AgentPromptPaletteViewStructureTest {
       layoutPopupRoot(view.rootPanel)
 
       assertThat(SwingUtilities.isDescendingFrom(view.addContextButton, view.promptPanel)).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(view.addContextButton, view.composerContextPanel)).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(view.addContextButton, view.generationSettingsPanel)).isFalse()
       assertThat(SwingUtilities.isDescendingFrom(contextChipsPanel, view.promptPanel)).isTrue()
       assertThat(SwingUtilities.isDescendingFrom(view.addContextButton, view.bottomPanel)).isFalse()
       assertThat(SwingUtilities.isDescendingFrom(contextChipsPanel, view.bottomPanel)).isFalse()
@@ -486,6 +567,11 @@ class AgentPromptPaletteViewStructureTest {
 
   private fun bottomInRoot(component: Component, root: JPanel): Int {
     return yInRoot(component, root) + component.height
+  }
+
+  private fun totalBorderInsets(component: JComponent): Int {
+    val insets = component.border.getBorderInsets(component)
+    return insets.top + insets.left + insets.bottom + insets.right
   }
 
   private fun isDescendantOrSame(component: Component?, ancestor: Component): Boolean {

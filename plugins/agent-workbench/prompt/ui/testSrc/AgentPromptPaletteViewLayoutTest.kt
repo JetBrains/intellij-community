@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
+import kotlin.math.abs
 
 @TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
@@ -43,6 +44,27 @@ class AgentPromptPaletteViewLayoutTest {
 
       assertThat(view.composerContextPanel.isVisible).isTrue()
       assertThat(view.addContextButton.isVisible).isTrue()
+    }
+  }
+
+  @Test
+  fun inlineComposerContextClusterIsHiddenWhenAddContextControlIsInGenerationRow() {
+    runInEdtAndWait {
+      val promptArea = EditorTextField()
+      val view = createPaletteView(
+        promptArea = promptArea,
+        hostMode = AgentPromptPaletteHostMode.INLINE_EMPTY_STATE,
+      )
+
+      layoutPopupRoot(view.rootPanel)
+
+      assertThat(view.addContextButton.isVisible).isTrue()
+      assertThat(view.composerContextPanel.isVisible).isFalse()
+      assertThat(view.addContextButton.parent).isSameAs(view.modelSelectorLink.parent)
+      assertThat(locationInRoot(view.addContextButton, view.rootPanel).x)
+        .isLessThan(locationInRoot(view.modelSelectorLink, view.rootPanel).x)
+      assertThat(abs(yCenterInRoot(view.addContextButton, view.rootPanel) - yCenterInRoot(view.modelSelectorLink, view.rootPanel)))
+        .isLessThanOrEqualTo(1)
     }
   }
 
@@ -290,12 +312,14 @@ class AgentPromptPaletteViewLayoutTest {
     suggestionsPanel: JPanel = JPanel(),
     contextChipsPanel: JPanel = JPanel(),
     addContextVisible: Boolean = true,
+    hostMode: AgentPromptPaletteHostMode = AgentPromptPaletteHostMode.POPUP,
   ): AgentPromptPaletteView {
     return createAgentPromptPaletteView(
       promptArea = promptArea,
       suggestionsPanel = suggestionsPanel,
       contextChipsPanel = contextChipsPanel,
       onExistingTaskSelected = {},
+      hostMode = hostMode,
     ).apply {
       addContextButton.isVisible = addContextVisible
     }
@@ -316,5 +340,9 @@ class AgentPromptPaletteViewLayoutTest {
 
   private fun locationInRoot(component: java.awt.Component, root: JPanel): java.awt.Point {
     return SwingUtilities.convertPoint(component.parent, component.location, root)
+  }
+
+  private fun yCenterInRoot(component: java.awt.Component, root: JPanel): Int {
+    return locationInRoot(component, root).y + component.height / 2
   }
 }

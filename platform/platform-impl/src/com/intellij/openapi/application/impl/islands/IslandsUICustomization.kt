@@ -878,6 +878,19 @@ internal class IslandsUICustomization : InternalUICustomization() {
     configureBackgroundPainting(component, recursive = true)
 
     component.borderPainter = object : AbstractBorderPainter() {
+      override fun paintBeforeChildren(component: JComponent, g: Graphics) {
+        val project = ProjectUtil.getProjectForComponent(component)
+        val fileEditorManager = project?.getServiceIfCreated(FileEditorManager::class.java)
+
+        // Paint the "empty frame" background behind the editor children so that an
+        // interactive empty-state component (e.g. the inline Agent prompt) stays visible.
+        // The empty text itself is still drawn on top in paintAfterChildren.
+        if (fileEditorManager?.openFiles?.isEmpty() == true) {
+          val frameBG = IdeBackgroundUtil.withFrameBackground(g, component)
+          paintBeforeEditorEmptyText(component, frameBG, editorTabPainterAdapter)
+        }
+      }
+
       override fun paintAfterChildren(component: JComponent, g: Graphics) {
         val project = ProjectUtil.getProjectForComponent(component)
         val fileEditorManager = project?.getServiceIfCreated(FileEditorManager::class.java)
@@ -890,8 +903,6 @@ internal class IslandsUICustomization : InternalUICustomization() {
         val frameBG = IdeBackgroundUtil.withFrameBackground(g, component)
         val editorBG = IdeBackgroundUtil.withEditorBackground(g, component)
         if (fileEditorManager?.openFiles?.isEmpty() == true) {
-          paintBeforeEditorEmptyText(component, frameBG, editorTabPainterAdapter)
-
           val editorEmptyTextPainter = ApplicationManager.getApplication().getService(EditorEmptyTextPainter::class.java)
           editorEmptyTextPainter.doPaintEmptyText(component, frameBG)
         }

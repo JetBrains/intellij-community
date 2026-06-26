@@ -21,6 +21,8 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.disposeOnCompletion
+import kotlinx.coroutines.CoroutineScope
 import java.awt.Component
 import java.awt.Container
 import java.awt.datatransfer.DataFlavor
@@ -57,6 +59,22 @@ internal fun installAgentPromptImageDropSupport(
 internal fun installAgentPromptDialogImageDropSupport(
   rootComponent: JComponent,
   dropHandler: AgentPromptImageDropHandler,
+  coroutineScope: CoroutineScope,
+) {
+  if (ApplicationManager.getApplication() == null) {
+    return
+  }
+
+  installAgentPromptDialogImageDropSupport(
+    rootComponent = rootComponent,
+    dropHandler = dropHandler,
+    parentDisposable = disposableFromScope(coroutineScope),
+  )
+}
+
+internal fun installAgentPromptDialogImageDropSupport(
+  rootComponent: JComponent,
+  dropHandler: AgentPromptImageDropHandler,
   parentDisposable: Disposable,
 ) {
   if (ApplicationManager.getApplication() == null) {
@@ -67,6 +85,12 @@ internal fun installAgentPromptDialogImageDropSupport(
     dndHandler = AgentPromptImageDndHandler(dropHandler),
     parentDisposable = parentDisposable,
   ).install(rootComponent)
+}
+
+private fun disposableFromScope(coroutineScope: CoroutineScope): Disposable {
+  return Disposer.newDisposable("AgentPromptDialogImageDropSupport").also { disposable ->
+    disposable.disposeOnCompletion(coroutineScope)
+  }
 }
 
 internal fun installAgentPromptEditorImageDropSupport(

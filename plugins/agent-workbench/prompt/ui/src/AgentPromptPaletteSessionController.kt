@@ -33,7 +33,6 @@ import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -73,8 +72,8 @@ internal class AgentPromptPaletteSessionController(
   private val closeHost: () -> Unit,
   private val isHostActive: () -> Boolean,
   private val revalidateHost: () -> Unit,
+  private val hostMode: AgentPromptPaletteHostMode,
   private val sessionScope: CoroutineScope,
-  private val parentDisposable: Disposable,
 ) {
   private val contextState = AgentPromptPaletteContextState()
   private val draftState = AgentPromptPaletteDraftState()
@@ -96,7 +95,7 @@ internal class AgentPromptPaletteSessionController(
       invocationData = invocationData,
       promptArea = promptArea,
       view = view,
-      parentDisposable = parentDisposable,
+      sessionScope = sessionScope,
       contextResolverService = contextResolverService,
       contextChips = contextChips,
       launcherProvider = launcherProvider,
@@ -184,7 +183,11 @@ internal class AgentPromptPaletteSessionController(
     contextController.loadInitialContext(initialAddContextRequest?.contextItems)
     contextController.resolveExtensionTabs()
 
-    val draft = draftController.restoreDraft(restoreContextSnapshot = initialAddContextRequest == null)
+    val forcedTargetMode = if (hostMode == AgentPromptPaletteHostMode.INLINE_EMPTY_STATE) PromptTargetMode.NEW_TASK else null
+    val draft = draftController.restoreDraft(
+      restoreContextSnapshot = initialAddContextRequest == null,
+      targetModeOverride = forcedTargetMode,
+    )
     draftController.restoreTaskDrafts(draft)
     generationSettingsController.restoreLaunchProfiles(
       launcherProvider()?.loadProviderPreferences() ?: AgentPromptLauncherBridge.ProviderPreferences()
@@ -192,7 +195,8 @@ internal class AgentPromptPaletteSessionController(
     generationSettingsController.restoreDraftLaunchProfile(draft.selectedLaunchProfileId)
     refreshExtensionTaskDraftsFromContext()
 
-    if (invocationData.attributes[com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_INVOCATION_PREFER_EXTENSIONS_KEY] == true) {
+    if (hostMode != AgentPromptPaletteHostMode.INLINE_EMPTY_STATE &&
+        invocationData.attributes[com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_INVOCATION_PREFER_EXTENSIONS_KEY] == true) {
       contextController.selectAutoSelectExtensionTab()
     }
     contextController.syncActiveExtensionTab(view.tabbedPane.selectedComponent as? JPanel)
@@ -357,14 +361,16 @@ internal class AgentPromptPaletteSessionController(
 
     fun refreshPromptLibraryPopup(preselectNormalizedPromptText: String?) {
       val popupToRefresh = promptLibraryPopup ?: return
-      ApplicationManager.getApplication().invokeLater {
-        if (project.isDisposed || promptLibraryPopup !== popupToRefresh || popupToRefresh.isDisposed) {
-          return@invokeLater
+      sessionScope.launch {
+        withContext(Dispatchers.EDT) {
+          if (project.isDisposed || promptLibraryPopup !== popupToRefresh || popupToRefresh.isDisposed) {
+            return@withContext
+          }
+          popupsWithoutPromptRestore.add(popupToRefresh)
+          popupToRefresh.cancel()
+          promptLibraryPopup = null
+          openPromptLibraryPopup(preselectNormalizedPromptText)
         }
-        popupsWithoutPromptRestore.add(popupToRefresh)
-        popupToRefresh.cancel()
-        promptLibraryPopup = null
-        openPromptLibraryPopup(preselectNormalizedPromptText)
       }
     }
 
@@ -437,10 +443,12 @@ internal class AgentPromptPaletteSessionController(
           if (promptLibraryPopup === popup) {
             promptLibraryPopup = null
           }
-          ApplicationManager.getApplication().invokeLater {
-            if (!skipPromptRestore && chosenEntry == null && !project.isDisposed) {
-              draftController.restorePromptSnapshot(snapshot)
-              IdeFocusManager.getInstance(project).requestFocusInProject(promptArea, project)
+          sessionScope.launch {
+            withContext(Dispatchers.EDT) {
+              if (!skipPromptRestore && chosenEntry == null && !project.isDisposed) {
+                draftController.restorePromptSnapshot(snapshot)
+                IdeFocusManager.getInstance(project).requestFocusInProject(promptArea, project)
+              }
             }
           }
         }
@@ -782,12 +790,16 @@ internal class AgentPromptPaletteSessionController(
   }
 
   private fun currentTargetMode(): PromptTargetMode {
+    if (hostMode == AgentPromptPaletteHostMode.INLINE_EMPTY_STATE) {
+      return PromptTargetMode.NEW_TASK
+    }
     val selectedComponent = view.tabbedPane.selectedComponent as? JPanel ?: return PromptTargetMode.NEW_TASK
     return selectedComponent.getClientProperty("targetMode") as? PromptTargetMode ?: PromptTargetMode.NEW_TASK
   }
 
   private fun setTargetMode(mode: PromptTargetMode) {
-    val index = findTabIndexForMode(mode) ?: return
+    val targetMode = if (hostMode == AgentPromptPaletteHostMode.INLINE_EMPTY_STATE) PromptTargetMode.NEW_TASK else mode
+    val index = findTabIndexForMode(targetMode) ?: return
     view.tabbedPane.selectedIndex = index
   }
 
@@ -802,6 +814,11 @@ internal class AgentPromptPaletteSessionController(
   }
 
   private fun clearStatus() {
+    if (hostMode == AgentPromptPaletteHostMode.INLINE_EMPTY_STATE) {
+      setInlineStatusVisible(false)
+      return
+    }
+
     val extensionTab = contextState.activeExtensionTab
     val message = if (extensionTab != null) {
       extensionTab.extension.getFooterHint() ?: AgentPromptBundle.message("popup.footer.hint.default.tab")
@@ -869,10 +886,20 @@ internal class AgentPromptPaletteSessionController(
 
   private fun showError(message: @Nls String) {
     view.statusStrip.showError(message)
+    setInlineStatusVisible(true)
   }
 
   private fun showInfo(message: @Nls String) {
     view.statusStrip.showInfo(message)
+    setInlineStatusVisible(true)
+  }
+
+  private fun setInlineStatusVisible(visible: Boolean) {
+    if (hostMode != AgentPromptPaletteHostMode.INLINE_EMPTY_STATE || view.footerPanel.isVisible == visible) {
+      return
+    }
+    view.footerPanel.isVisible = visible
+    revalidateHost()
   }
 }
 

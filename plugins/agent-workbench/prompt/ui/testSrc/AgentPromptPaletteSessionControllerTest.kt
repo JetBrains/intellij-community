@@ -8,6 +8,7 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.agent.workbench.prompt.core.AgentPromptContainerLauncher
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextResolverService
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextContributorBridge
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptExistingThreadsSnapshot
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
@@ -30,7 +31,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ui.EmptyIcon
@@ -205,8 +205,44 @@ class AgentPromptPaletteSessionControllerTest {
     }
   }
 
+  @Test
+  fun inlineEmptyStateHidesDefaultFooterUntilStatusIsShown() {
+    runInEdtAndWait {
+      var revalidateCalls = 0
+      val fixture = createSessionControllerFixture(
+        hostMode = AgentPromptPaletteHostMode.INLINE_EMPTY_STATE,
+        revalidateHost = { revalidateCalls++ },
+      )
+      try {
+        fixture.controller.initialize()
+
+        assertThat(fixture.view.footerPanel.isVisible).isFalse()
+
+        fixture.controller.applyAddContextRequest(
+          AgentPromptAddContextRequest(
+            contextItems = listOf(AgentPromptContextItem(rendererId = "test", title = "File", body = "src/Main.kt")),
+            target = null,
+          )
+        )
+
+        assertThat(fixture.view.footerPanel.isVisible).isTrue()
+        assertThat(fixture.view.statusStrip.text).isEqualTo(AgentPromptBundle.message("popup.status.context.added"))
+        assertThat(revalidateCalls).isGreaterThan(0)
+
+        fixture.controller.initialize()
+
+        assertThat(fixture.view.footerPanel.isVisible).isFalse()
+      }
+      finally {
+        fixture.dispose()
+      }
+    }
+  }
+
   private fun createSessionControllerFixture(
     providerPreferences: AgentPromptLauncherBridge.ProviderPreferences = AgentPromptLauncherBridge.ProviderPreferences(),
+    hostMode: AgentPromptPaletteHostMode = AgentPromptPaletteHostMode.POPUP,
+    revalidateHost: () -> Unit = {},
   ): SessionControllerFixture {
     val project = ProjectManager.getInstance().defaultProject
     val providers = listOf(
@@ -220,8 +256,6 @@ class AgentPromptPaletteSessionControllerTest {
     project.service<AgentSessionProviderAvailabilityService>().setAvailabilityForTest(
       providers.associate { provider -> provider.provider to true }
     )
-
-    val disposable = Disposer.newDisposable()
 
     @Suppress("RAW_SCOPE_CREATION")
     val sessionScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
@@ -237,9 +271,9 @@ class AgentPromptPaletteSessionControllerTest {
       launcherProvider = { launcher },
       closeHost = {},
       isHostActive = { true },
-      revalidateHost = {},
+      revalidateHost = revalidateHost,
+      hostMode = hostMode,
       sessionScope = sessionScope,
-      parentDisposable = disposable,
     )
     return SessionControllerFixture(
       content = content,
