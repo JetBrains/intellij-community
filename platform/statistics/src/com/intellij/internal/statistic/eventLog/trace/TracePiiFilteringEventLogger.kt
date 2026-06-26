@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.RecorderOptionProvider
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogger
 import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.JcpDataEventField
 import com.intellij.internal.statistic.eventLog.events.ListEventField
 import com.intellij.internal.statistic.eventLog.events.ObjectEventField
 import com.intellij.internal.statistic.eventLog.events.ObjectListEventField
@@ -265,6 +266,8 @@ internal object TraceLlmPiiDataFilter {
           for (nestedField in field.fields) {
             collectLlmFieldPaths(nestedField, fieldPath, result)
           }
+        }
+        is JcpDataEventField -> {
         }
       }
     }

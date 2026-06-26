@@ -678,3 +678,21 @@ class ObjectListEventField @JvmOverloads constructor(@NonNls @EventFieldName ove
     fuData.addListObjectData(name, value.map { it.buildObjectData(fuData.recorderId, fields) })
   }
 }
+
+/**
+ * Field carrying a [JcpData] payload that is delivered to the JCP listener only.
+ *
+ * It is intentionally **not** a [PrimitiveEventField] or [ListEventField]: it has no validation rule, is excluded
+ * from the generated events scheme and must never be validated or sent to the FUS server. Use [EventFields.Jcp].
+ */
+class JcpDataEventField : EventField<JcpData>() {
+  override val name: String
+    get() = FeatureUsageData.JCP_DATA_KEY
+
+  override val description: String?
+    get() = null
+
+  override fun addData(fuData: FeatureUsageData, value: JcpData) {
+    fuData.addJcpData(value)
+  }
+}
