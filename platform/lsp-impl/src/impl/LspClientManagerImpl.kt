@@ -50,7 +50,7 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
   @Suppress("DEPRECATION")
   LspServerManager, Disposable {
   init {
-    assert(!project.isDefault) { "LspServerManager doesn't make sense for the default project" }
+    assert(!project.isDefault) { "LspClientManager doesn't make sense for the default project" }
     addExtensionPointListener()
     addWorkspaceModelListener()
   }
@@ -205,7 +205,7 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
    */
   private fun handleServerStop(lspClient: LspClientImpl, explicitStop: Boolean) {
     if (lspClient.state in arrayOf(LspServerState.Initializing, LspServerState.Running) && !lspClients.contains(lspClient)) {
-      logger.error("LspServerManager doesn't know the server that it is asked to stop: $lspClient")
+      logger.error("LspClientManager doesn't know the server that it is asked to stop: $lspClient")
     }
 
     if (explicitStop) {

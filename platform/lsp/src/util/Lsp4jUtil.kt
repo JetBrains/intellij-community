@@ -15,7 +15,7 @@ fun getLsp4jPosition(document: Document, offset: Int): Position {
   if (document is DocumentWindow) {
     // It's very likely that the caller uses DocumentWindow not only when calling this function but also somewhere else.
     // The error helps to find the problematic place earlier.
-    fileLogger().error("DocumentWindow is not expected here. Make sure to use DocumentWindow.delegate when working with the LSP server.")
+    fileLogger().error("DocumentWindow is not expected here. Make sure to use DocumentWindow.delegate when working with LspClient.")
     return getLsp4jPosition(document.delegate, document.injectedToHost(offset))
   }
 
