@@ -12696,6 +12696,252 @@ var thread_exports = /* @__PURE__ */ __exportAll({
 	ViewportProvider: () => ThreadPrimitiveViewportProvider
 });
 //#endregion
+//#region node_modules/@assistant-ui/react/dist/utils/getSelectionMessageId.js
+var findMessageId = (node) => {
+	let el = node instanceof HTMLElement ? node : node?.parentElement ?? null;
+	while (el) {
+		const id = el.getAttribute("data-message-id");
+		if (id) return id;
+		el = el.parentElement;
+	}
+	return null;
+};
+var getSelectionMessageId = (selection) => {
+	const { anchorNode, focusNode } = selection;
+	if (!anchorNode || !focusNode) return null;
+	const anchorId = findMessageId(anchorNode);
+	const focusId = findMessageId(focusNode);
+	if (!anchorId || anchorId !== focusId) return null;
+	return anchorId;
+};
+//#endregion
+//#region node_modules/@assistant-ui/react/dist/primitives/selectionToolbar/SelectionToolbarRoot.js
+var SelectionToolbarContext = createContext(null);
+var useSelectionToolbarInfo = () => {
+	return useContext(SelectionToolbarContext);
+};
+/**
+* A floating toolbar that appears when text is selected within a message.
+*
+* Listens for mouse and keyboard selection events, validates that the
+* selection is within a single message, and renders a positioned portal
+* near the selection. Prevents mousedown from clearing the selection.
+*
+* @example
+* ```tsx
+* <SelectionToolbarPrimitive.Root>
+*   <SelectionToolbarPrimitive.Quote>Quote</SelectionToolbarPrimitive.Quote>
+* </SelectionToolbarPrimitive.Root>
+* ```
+*/
+var SelectionToolbarPrimitiveRoot = (0, react_shim_exports.forwardRef)((t0, forwardedRef) => {
+	const $ = c(20);
+	let onMouseDown;
+	let props;
+	let style;
+	if ($[0] !== t0) {
+		({onMouseDown, style, ...props} = t0);
+		$[0] = t0;
+		$[1] = onMouseDown;
+		$[2] = props;
+		$[3] = style;
+	} else {
+		onMouseDown = $[1];
+		props = $[2];
+		style = $[3];
+	}
+	const [info, setInfo] = useState(null);
+	let t1;
+	let t2;
+	if ($[4] === Symbol.for("react.memo_cache_sentinel")) {
+		t1 = () => {
+			const checkSelection = () => {
+				requestAnimationFrame(() => {
+					const sel = window.getSelection();
+					if (!sel || sel.isCollapsed) {
+						setInfo(null);
+						return;
+					}
+					const text = sel.toString().trim();
+					if (!text) {
+						setInfo(null);
+						return;
+					}
+					const messageId = getSelectionMessageId(sel);
+					if (!messageId) {
+						setInfo(null);
+						return;
+					}
+					setInfo({
+						text,
+						messageId,
+						rect: sel.getRangeAt(0).getBoundingClientRect()
+					});
+				});
+			};
+			const handleSelectionCollapse = () => {
+				const sel_0 = window.getSelection();
+				if (!sel_0 || sel_0.isCollapsed) setInfo(null);
+			};
+			const handleScroll = () => {
+				setInfo(null);
+			};
+			document.addEventListener("mouseup", checkSelection);
+			document.addEventListener("keyup", checkSelection);
+			document.addEventListener("selectionchange", handleSelectionCollapse);
+			document.addEventListener("scroll", handleScroll, true);
+			return () => {
+				document.removeEventListener("mouseup", checkSelection);
+				document.removeEventListener("keyup", checkSelection);
+				document.removeEventListener("selectionchange", handleSelectionCollapse);
+				document.removeEventListener("scroll", handleScroll, true);
+			};
+		};
+		t2 = [];
+		$[4] = t1;
+		$[5] = t2;
+	} else {
+		t1 = $[4];
+		t2 = $[5];
+	}
+	useEffect(t1, t2);
+	if (!info) return null;
+	const t3 = `${info.rect.top - 8}px`;
+	const t4 = `${info.rect.left + info.rect.width / 2}px`;
+	let t5;
+	if ($[6] !== style || $[7] !== t3 || $[8] !== t4) {
+		t5 = {
+			position: "fixed",
+			top: t3,
+			left: t4,
+			transform: "translate(-50%, -100%)",
+			zIndex: 50,
+			...style
+		};
+		$[6] = style;
+		$[7] = t3;
+		$[8] = t4;
+		$[9] = t5;
+	} else t5 = $[9];
+	const positionStyle = t5;
+	let t6;
+	if ($[10] !== onMouseDown) {
+		t6 = (e) => {
+			e.preventDefault();
+			onMouseDown?.(e);
+		};
+		$[10] = onMouseDown;
+		$[11] = t6;
+	} else t6 = $[11];
+	let t7;
+	if ($[12] !== forwardedRef || $[13] !== positionStyle || $[14] !== props || $[15] !== t6) {
+		t7 = /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Primitive.div, {
+			...props,
+			ref: forwardedRef,
+			style: positionStyle,
+			onMouseDown: t6
+		});
+		$[12] = forwardedRef;
+		$[13] = positionStyle;
+		$[14] = props;
+		$[15] = t6;
+		$[16] = t7;
+	} else t7 = $[16];
+	let t8;
+	if ($[17] !== info || $[18] !== t7) {
+		t8 = (0, import_react_dom.createPortal)(/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectionToolbarContext.Provider, {
+			value: info,
+			children: t7
+		}), document.body);
+		$[17] = info;
+		$[18] = t7;
+		$[19] = t8;
+	} else t8 = $[19];
+	return t8;
+});
+SelectionToolbarPrimitiveRoot.displayName = "SelectionToolbarPrimitive.Root";
+//#endregion
+//#region node_modules/@assistant-ui/react/dist/primitives/selectionToolbar/SelectionToolbarQuote.js
+/**
+* A button that quotes the currently selected text.
+*
+* Must be placed inside `SelectionToolbarPrimitive.Root`. Reads the
+* selection info from context (captured by the Root), sets it as a
+* quote in the thread composer, and clears the selection.
+*
+* @example
+* ```tsx
+* <SelectionToolbarPrimitive.Quote>
+*   <QuoteIcon /> Quote
+* </SelectionToolbarPrimitive.Quote>
+* ```
+*/
+var SelectionToolbarPrimitiveQuote = (0, react_shim_exports.forwardRef)((t0, forwardedRef) => {
+	const $ = c(15);
+	let disabled;
+	let onClick;
+	let props;
+	if ($[0] !== t0) {
+		({onClick, disabled, ...props} = t0);
+		$[0] = t0;
+		$[1] = disabled;
+		$[2] = onClick;
+		$[3] = props;
+	} else {
+		disabled = $[1];
+		onClick = $[2];
+		props = $[3];
+	}
+	const aui = useAui();
+	const info = useSelectionToolbarInfo();
+	let t1;
+	if ($[4] !== aui || $[5] !== info) {
+		t1 = () => {
+			if (!info) return;
+			aui.thread().composer().setQuote({
+				text: info.text,
+				messageId: info.messageId
+			});
+			window.getSelection()?.removeAllRanges();
+		};
+		$[4] = aui;
+		$[5] = info;
+		$[6] = t1;
+	} else t1 = $[6];
+	const handleClick = t1;
+	const t2 = disabled || !info;
+	let t3;
+	if ($[7] !== handleClick || $[8] !== onClick) {
+		t3 = composeEventHandlers(onClick, handleClick);
+		$[7] = handleClick;
+		$[8] = onClick;
+		$[9] = t3;
+	} else t3 = $[9];
+	let t4;
+	if ($[10] !== forwardedRef || $[11] !== props || $[12] !== t2 || $[13] !== t3) {
+		t4 = /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Primitive.button, {
+			type: "button",
+			...props,
+			ref: forwardedRef,
+			disabled: t2,
+			onClick: t3
+		});
+		$[10] = forwardedRef;
+		$[11] = props;
+		$[12] = t2;
+		$[13] = t3;
+		$[14] = t4;
+	} else t4 = $[14];
+	return t4;
+});
+SelectionToolbarPrimitiveQuote.displayName = "SelectionToolbarPrimitive.Quote";
+//#endregion
+//#region node_modules/@assistant-ui/react/dist/primitives/selectionToolbar.js
+var selectionToolbar_exports = /* @__PURE__ */ __exportAll({
+	Quote: () => SelectionToolbarPrimitiveQuote,
+	Root: () => SelectionToolbarPrimitiveRoot
+});
+//#endregion
 //#region node_modules/@assistant-ui/react/dist/primitives/messagePart/useMessagePartReasoning.js
 /**
 * @deprecated Use {@link useAuiState} to select and narrow `s.part`.
@@ -12787,4 +13033,4 @@ function matchesQuery(cmd, lower) {
 	return false;
 }
 //#endregion
-export { useMessage as _, useSmooth as a, require_react_dom as b, useTriggerPopoverScopeContext as c, useCallbackRef as d, composeEventHandlers as f, useComposedRefs as g, createSlot as h, message_exports as i, attachment_exports as l, dispatchDiscreteCustomEvent as m, useMessagePartReasoning as n, useMessagePartText as o, Primitive$1 as p, thread_exports as r, composer_exports as s, unstable_useSlashCommandAdapter as t, useEscapeKeydown as u, useComposerRuntime as v, AssistantRuntimeProvider as y };
+export { useComposedRefs as _, message_exports as a, AssistantRuntimeProvider as b, composer_exports as c, useEscapeKeydown as d, useCallbackRef as f, createSlot as g, dispatchDiscreteCustomEvent as h, thread_exports as i, useTriggerPopoverScopeContext as l, Primitive$1 as m, useMessagePartReasoning as n, useSmooth as o, composeEventHandlers as p, selectionToolbar_exports as r, useMessagePartText as s, unstable_useSlashCommandAdapter as t, attachment_exports as u, useMessage as v, require_react_dom as x, useComposerRuntime as y };

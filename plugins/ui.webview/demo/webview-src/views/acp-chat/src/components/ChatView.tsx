@@ -7,6 +7,7 @@ import {
   AttachmentPrimitive,
   ComposerPrimitive,
   MessagePrimitive,
+  SelectionToolbarPrimitive,
   ThreadPrimitive,
   useMessagePartText,
   useSmooth,
@@ -45,10 +46,20 @@ export function ChatView() {
             </ThreadPrimitive.Empty>
             <ThreadPrimitive.Messages components={{ UserMessage, AssistantMessage }} />
           </ThreadPrimitive.Viewport>
+          <SelectionToolbarPrimitive.Root className="acpSelectionToolbar" aria-label="Selection actions">
+            <SelectionToolbarPrimitive.Quote className="acpSelectionToolbarButton">Quote</SelectionToolbarPrimitive.Quote>
+          </SelectionToolbarPrimitive.Root>
           <div className="acpComposerShell">
             <ComposerPrimitive.Unstable_TriggerPopoverRoot>
               <ComposerPrimitive.Root className="acpComposer">
                 <div className="acpComposerMain">
+                  <ComposerPrimitive.Quote className="acpComposerQuote">
+                    <span className="acpComposerQuoteLabel">Quote</span>
+                    <ComposerPrimitive.QuoteText className="acpComposerQuoteText" />
+                    <ComposerPrimitive.QuoteDismiss className="acpComposerQuoteDismiss" aria-label="Remove quote" title="Remove quote">
+                      <RemoveIcon />
+                    </ComposerPrimitive.QuoteDismiss>
+                  </ComposerPrimitive.Quote>
                   <div className="acpAttachmentList acpComposerAttachments">
                     <ComposerPrimitive.Attachments>
                       {() => <AttachmentChip removable />}
@@ -96,24 +107,27 @@ export function ChatView() {
 
 function UserMessage() {
   return (
-    <div className="acpMsg acpMsgUser">
+    <MessagePrimitive.Root className="acpMsg acpMsgUser">
+      <MessagePrimitive.Quote>
+        {quote => <blockquote className="acpMessageQuote">{quote.text}</blockquote>}
+      </MessagePrimitive.Quote>
       <MessagePrimitive.Parts components={{ Text: PlainText }} />
       <div className="acpAttachmentList acpMessageAttachments">
         <MessagePrimitive.Attachments>
           {() => <AttachmentChip />}
         </MessagePrimitive.Attachments>
       </div>
-    </div>
+    </MessagePrimitive.Root>
   )
 }
 
 function AssistantMessage() {
   return (
-    <div className="acpMsg acpMsgAssistant">
+    <MessagePrimitive.Root className="acpMsg acpMsgAssistant">
       <MessagePrimitive.Parts
         components={{ Text: MarkdownText, Reasoning: ThinkingBlock, tools: { Fallback: ToolCallCard } }}
       />
-    </div>
+    </MessagePrimitive.Root>
   )
 }
 

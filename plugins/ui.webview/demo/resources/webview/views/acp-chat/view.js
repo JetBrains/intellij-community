@@ -1,6 +1,6 @@
 import { i as __toESM } from "./assets/rolldown-runtime.js";
 import { M as require_jsx_runtime, T as useExternalStoreRuntime, Y as require_react } from "./assets/assistant-ui-core.js";
-import { _ as useMessage, a as useSmooth, c as useTriggerPopoverScopeContext, i as message_exports, l as attachment_exports, n as useMessagePartReasoning, o as useMessagePartText, r as thread_exports, s as composer_exports, t as unstable_useSlashCommandAdapter, v as useComposerRuntime, y as AssistantRuntimeProvider } from "./assets/assistant-ui-react.js";
+import { a as message_exports, b as AssistantRuntimeProvider, c as composer_exports, i as thread_exports, l as useTriggerPopoverScopeContext, n as useMessagePartReasoning, o as useSmooth, r as selectionToolbar_exports, s as useMessagePartText, t as unstable_useSlashCommandAdapter, u as attachment_exports, v as useMessage, y as useComposerRuntime } from "./assets/assistant-ui-react.js";
 import { t as require_client } from "./assets/react-dom.js";
 import { t as marked } from "./assets/marked.js";
 import { a as SelectItem$1, c as SelectPortal, d as SelectTrigger$1, i as SelectIcon, l as SelectScrollDownButton$1, n as SelectContent$1, o as SelectItemIndicator, p as SelectViewport, s as SelectItemText, t as Select$1, u as SelectScrollUpButton$1 } from "./assets/radix-ui-react-select.js";
@@ -801,7 +801,7 @@ function useAcpChat() {
 			setStatus(errorText(error));
 			return;
 		}
-		const text = textFromBlocks(blocks);
+		const text = textFromAppendMessage(message);
 		const assistantId = `assistant-${++assistantSeqRef.current}`;
 		setMessages((previous) => [
 			...previous,
@@ -812,7 +812,8 @@ function useAcpChat() {
 					type: "text",
 					text
 				}] : [],
-				attachments: message.attachments
+				attachments: message.attachments,
+				metadata: message.metadata
 			},
 			{
 				id: assistantId,
@@ -1054,6 +1055,11 @@ async function completeAttachment(attachment) {
 }
 function buildPromptBlocks(message, capabilities) {
 	const blocks = [];
+	const quote = quoteFromAppendMessage(message);
+	if (quote) blocks.push({
+		type: "text",
+		text: quoteContextText(quote)
+	});
 	const text = textFromAppendMessage(message);
 	if (text) blocks.push({
 		type: "text",
@@ -1064,6 +1070,21 @@ function buildPromptBlocks(message, capabilities) {
 		if (block) blocks.push(block);
 	}
 	return blocks;
+}
+function quoteFromAppendMessage(message) {
+	const quote = message.metadata?.custom?.quote;
+	if (!quote || typeof quote !== "object") return null;
+	const text = quote.text;
+	const messageId = quote.messageId;
+	if (typeof text !== "string" || typeof messageId !== "string" || text.length === 0 || messageId.length === 0) return null;
+	return {
+		text,
+		messageId
+	};
+}
+function quoteContextText(quote) {
+	const quotedText = quote.text.split(/\r?\n/u).map((line) => `> ${line}`).join("\n");
+	return `Quoted context from message ${quote.messageId}:\n${quotedText}`;
 }
 function contentBlockFromAttachmentPart(attachment, part, capabilities) {
 	if (part.type === "image") {
@@ -1091,9 +1112,6 @@ function contentBlockFromAttachmentPart(attachment, part, capabilities) {
 }
 function textFromAppendMessage(message) {
 	return message.content.filter((part) => part.type === "text").map((part) => part.text).join("");
-}
-function textFromBlocks(blocks) {
-	return blocks.filter((block) => block.type === "text").map((block) => block.text).join("");
 }
 function acpImageData(image, fallbackMimeType) {
 	const match = /^data:([^;,]+);base64,(.*)$/s.exec(image);
@@ -2014,67 +2032,97 @@ function ChatView() {
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PlanView, { plan: chat.plan }),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(thread_exports.Root, {
 					className: "acpThread",
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(thread_exports.Viewport, {
-						className: "acpThreadViewport",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(thread_exports.Empty, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-							className: "acpEmpty",
-							children: "Select an agent and send a message to start."
-						}) }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(thread_exports.Messages, { components: {
-							UserMessage,
-							AssistantMessage
-						} })]
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: "acpComposerShell",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Unstable_TriggerPopoverRoot, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(composer_exports.Root, {
-							className: "acpComposer",
-							children: [
-								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-									className: "acpComposerMain",
-									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-										className: "acpAttachmentList acpComposerAttachments",
-										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Attachments, { children: () => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AttachmentChip, { removable: true }) })
-									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Input, {
-										className: "acpComposerInput",
-										placeholder: "Message the agent…",
-										onPaste: notifyOnUnsupportedImagePaste
-									})]
-								}),
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SlashCommandMenu, { commands: chat.commands }),
-								attachmentsEnabled ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.AddAttachment, {
-									className: "acpComposerAttach",
-									"aria-label": "Attach file",
-									title: "Attach file",
-									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AttachmentIcon, {})
-								}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-									className: "acpComposerAttach",
-									type: "button",
-									"aria-label": "Attach file",
-									title: "Attach file",
-									onClick: chat.notifyAttachmentCapabilitiesUnavailable,
-									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AttachmentIcon, {})
-								}),
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Send, {
-									className: "acpComposerSend",
-									children: "Send"
-								})
-							]
-						}) }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "acpComposerToolbar",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(AgentSelector, {
-								agents: chat.agents,
-								selectedAgentId: chat.selectedAgentId,
-								starting: chat.starting,
-								onSelect: chat.selectAgent
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelPicker, {
-								modes: chat.modes,
-								configOptions: chat.configOptions,
-								currentModeId: chat.currentModeId,
-								disabled: chat.starting || chat.selectedAgentId == null,
-								onSelectMode: chat.selectMode,
-								onSelectConfigOption: chat.selectConfigOption
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(thread_exports.Viewport, {
+							className: "acpThreadViewport",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(thread_exports.Empty, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								className: "acpEmpty",
+								children: "Select an agent and send a message to start."
+							}) }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(thread_exports.Messages, { components: {
+								UserMessage,
+								AssistantMessage
+							} })]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(selectionToolbar_exports.Root, {
+							className: "acpSelectionToolbar",
+							"aria-label": "Selection actions",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(selectionToolbar_exports.Quote, {
+								className: "acpSelectionToolbarButton",
+								children: "Quote"
+							})
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "acpComposerShell",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Unstable_TriggerPopoverRoot, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(composer_exports.Root, {
+								className: "acpComposer",
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "acpComposerMain",
+										children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(composer_exports.Quote, {
+												className: "acpComposerQuote",
+												children: [
+													/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+														className: "acpComposerQuoteLabel",
+														children: "Quote"
+													}),
+													/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.QuoteText, { className: "acpComposerQuoteText" }),
+													/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.QuoteDismiss, {
+														className: "acpComposerQuoteDismiss",
+														"aria-label": "Remove quote",
+														title: "Remove quote",
+														children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RemoveIcon, {})
+													})
+												]
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+												className: "acpAttachmentList acpComposerAttachments",
+												children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Attachments, { children: () => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AttachmentChip, { removable: true }) })
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Input, {
+												className: "acpComposerInput",
+												placeholder: "Message the agent…",
+												onPaste: notifyOnUnsupportedImagePaste
+											})
+										]
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SlashCommandMenu, { commands: chat.commands }),
+									attachmentsEnabled ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.AddAttachment, {
+										className: "acpComposerAttach",
+										"aria-label": "Attach file",
+										title: "Attach file",
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AttachmentIcon, {})
+									}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+										className: "acpComposerAttach",
+										type: "button",
+										"aria-label": "Attach file",
+										title: "Attach file",
+										onClick: chat.notifyAttachmentCapabilitiesUnavailable,
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AttachmentIcon, {})
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Send, {
+										className: "acpComposerSend",
+										children: "Send"
+									})
+								]
+							}) }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "acpComposerToolbar",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(AgentSelector, {
+									agents: chat.agents,
+									selectedAgentId: chat.selectedAgentId,
+									starting: chat.starting,
+									onSelect: chat.selectAgent
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelPicker, {
+									modes: chat.modes,
+									configOptions: chat.configOptions,
+									currentModeId: chat.currentModeId,
+									disabled: chat.starting || chat.selectedAgentId == null,
+									onSelectMode: chat.selectMode,
+									onSelectConfigOption: chat.selectConfigOption
+								})]
 							})]
-						})]
-					})]
+						})
+					]
 				}),
 				chat.permission ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ApprovalPrompt, { permission: chat.permission }) : null,
 				chat.auth ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AuthPrompt, { auth: chat.auth }) : null
@@ -2083,16 +2131,23 @@ function ChatView() {
 	});
 }
 function UserMessage() {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(message_exports.Root, {
 		className: "acpMsg acpMsgUser",
-		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(message_exports.Parts, { components: { Text: PlainText } }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-			className: "acpAttachmentList acpMessageAttachments",
-			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(message_exports.Attachments, { children: () => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AttachmentChip, {}) })
-		})]
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(message_exports.Quote, { children: (quote) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("blockquote", {
+				className: "acpMessageQuote",
+				children: quote.text
+			}) }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(message_exports.Parts, { components: { Text: PlainText } }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "acpAttachmentList acpMessageAttachments",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(message_exports.Attachments, { children: () => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AttachmentChip, {}) })
+			})
+		]
 	});
 }
 function AssistantMessage() {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(message_exports.Root, {
 		className: "acpMsg acpMsgAssistant",
 		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(message_exports.Parts, { components: {
 			Text: MarkdownText,

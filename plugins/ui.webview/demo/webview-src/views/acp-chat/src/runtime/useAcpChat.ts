@@ -37,6 +37,11 @@ interface Turn {
   tools: ToolCallView[]
 }
 
+interface QuoteInfoView {
+  text: string
+  messageId: string
+}
+
 export interface AcpChat {
   runtime: ReturnType<typeof useExternalStoreRuntime>
   agents: AgentInfo[]
@@ -232,11 +237,11 @@ export function useAcpChat(): AcpChat {
       setStatus(errorText(error))
       return
     }
-    const text = textFromBlocks(blocks)
+    const text = textFromAppendMessage(message)
     const assistantId = `assistant-${++assistantSeqRef.current}`
     setMessages(previous => [
       ...previous,
-      { id: `user-${assistantSeqRef.current}`, role: "user", content: text ? [{ type: "text", text }] : [], attachments: message.attachments },
+      { id: `user-${assistantSeqRef.current}`, role: "user", content: text ? [{ type: "text", text }] : [], attachments: message.attachments, metadata: message.metadata },
       { id: assistantId, role: "assistant", content: [] },
     ])
     turnRef.current = { reasoning: "", text: "", tools: [] }
@@ -474,6 +479,8 @@ async function completeAttachment(attachment: PendingAttachment): Promise<Comple
 
 function buildPromptBlocks(message: AppendMessage, capabilities: PromptCapabilitiesView): ContentBlock[] {
   const blocks: ContentBlock[] = []
+  const quote = quoteFromAppendMessage(message)
+  if (quote) blocks.push({ type: "text", text: quoteContextText(quote) })
   const text = textFromAppendMessage(message)
   if (text) blocks.push({ type: "text", text })
   for (const attachment of message.attachments ?? []) {
@@ -483,6 +490,20 @@ function buildPromptBlocks(message: AppendMessage, capabilities: PromptCapabilit
     }
   }
   return blocks
+}
+
+function quoteFromAppendMessage(message: AppendMessage): QuoteInfoView | null {
+  const quote = message.metadata?.custom?.quote
+  if (!quote || typeof quote !== "object") return null
+  const text = (quote as { text?: unknown }).text
+  const messageId = (quote as { messageId?: unknown }).messageId
+  if (typeof text !== "string" || typeof messageId !== "string" || text.length === 0 || messageId.length === 0) return null
+  return { text, messageId }
+}
+
+function quoteContextText(quote: QuoteInfoView): string {
+  const quotedText = quote.text.split(/\r?\n/u).map(line => `> ${line}`).join("\n")
+  return `Quoted context from message ${quote.messageId}:\n${quotedText}`
 }
 
 function contentBlockFromAttachmentPart(attachment: CompleteAttachment, part: ThreadUserMessagePart, capabilities: PromptCapabilitiesView): ContentBlock | null {
@@ -509,13 +530,6 @@ function textFromAppendMessage(message: AppendMessage): string {
   return message.content
     .filter((part): part is { type: "text"; text: string } => part.type === "text")
     .map(part => part.text)
-    .join("")
-}
-
-function textFromBlocks(blocks: ContentBlock[]): string {
-  return blocks
-    .filter((block): block is ContentBlock & { type: "text"; text: string } => block.type === "text")
-    .map(block => block.text)
     .join("")
 }
 

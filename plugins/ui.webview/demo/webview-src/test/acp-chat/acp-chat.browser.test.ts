@@ -282,6 +282,78 @@ test("inserts ACP slash commands into the composer and sends them as prompt pref
     && message.params.prompt.some((block: any) => block?.type === "text" && block.text === "/summarize this file"))).toBe(true)
 })
 
+test("quotes selected assistant text and sends quoted context before the prompt", async ({ page }) => {
+  if (!preview) {
+    throw new Error("ACP chat mock preview server was not started")
+  }
+  await page.goto(preview.url)
+
+  await page.locator(".acpAgentSelect").click()
+  await page.getByRole("option", { name: "Mock Agent" }).click()
+
+  await page.getByPlaceholder("Message the agent…").fill("quote source")
+  await page.getByRole("button", { name: "Send" }).click()
+  await expect(page.getByText(/Mock response from AI chat: quote source/)).toBeVisible()
+
+  const selected = await page.evaluate(() => {
+    const selectedText = "Mock response from AI chat"
+    const markdown = document.querySelector(".acpMsgAssistant .acpMarkdown")
+    if (!markdown) return false
+    const walker = document.createTreeWalker(markdown, NodeFilter.SHOW_TEXT)
+    let node = walker.nextNode()
+    while (node) {
+      const text = node.nodeValue ?? ""
+      const index = text.indexOf(selectedText)
+      if (index >= 0) {
+        const range = document.createRange()
+        range.setStart(node, index)
+        range.setEnd(node, index + selectedText.length)
+        const selection = window.getSelection()
+        selection?.removeAllRanges()
+        selection?.addRange(range)
+        document.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }))
+        return true
+      }
+      node = walker.nextNode()
+    }
+    return false
+  })
+  expect(selected).toBe(true)
+  await expect(page.getByRole("button", { name: "Quote" })).toBeVisible()
+
+  await page.getByRole("button", { name: "Quote" }).click()
+  await page.waitForSelector(".acpComposerQuote")
+  const composerQuoteVisible = await page.evaluate(() => document.querySelector(".acpComposerQuoteText")?.textContent === "Mock response from AI chat")
+  expect(composerQuoteVisible).toBe(true)
+
+  await page.getByPlaceholder("Message the agent…").fill("quote follow-up")
+  await page.getByRole("button", { name: "Send" }).click()
+  await expect(page.getByText("quote follow-up", { exact: true })).toBeVisible()
+  await page.waitForSelector(".acpMsgUser .acpMessageQuote")
+  const sentQuoteVisible = await page.evaluate(() => document.querySelector(".acpMsgUser .acpMessageQuote")?.textContent === "Mock response from AI chat")
+  expect(sentQuoteVisible).toBe(true)
+
+  const calls = await page.evaluate(() => {
+    return (window as MockWindow).__WVI_MOCK__?.calls.byMethod("acp.bridge/sendStdin") ?? []
+  })
+  const rpcMessages = calls
+    .map((call: MockWebViewCall) => parseMockRpcLine(call.params))
+    .filter((message: JsonRpcMessage | null): message is JsonRpcMessage => message != null)
+  const promptRequest = rpcMessages.find(message => message.method === "session/prompt"
+    && Array.isArray(message.params?.prompt)
+    && message.params.prompt.some((block: any) => block?.type === "text" && block.text === "quote follow-up"))
+  if (!promptRequest) {
+    throw new Error("No quote follow-up prompt request was recorded")
+  }
+  const prompt = promptRequest.params.prompt
+  const quoteBlockIndex: number = prompt.findIndex((block: any) => block?.type === "text"
+    && typeof block.text === "string"
+    && block.text.includes("Quoted context from message assistant-")
+    && block.text.includes("> Mock response from AI chat"))
+  const promptBlockIndex: number = prompt.findIndex((block: any) => block?.type === "text" && block.text === "quote follow-up")
+  expect(quoteBlockIndex >= 0 && promptBlockIndex > quoteBlockIndex).toBe(true)
+})
+
 test("keeps the keyboard-highlighted slash command visible while navigating", async ({ page }) => {
   if (!preview) {
     throw new Error("ACP chat mock preview server was not started")
