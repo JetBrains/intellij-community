@@ -9,7 +9,7 @@ import javax.swing.JComponent
 
 internal class AgentWorkbenchGlobalPromptEmptyTextProvider : EditorEmptyTextProvider {
   override fun appendEmptyText(splitters: JComponent, sink: EditorEmptyTextSink) {
-    // The inline empty-state composer supersedes this painted hint when enabled.
+    // The inline empty-state composer supersedes this fallback hint when enabled.
     if (isInlineEmptyStatePromptEnabled()) {
       return
     }

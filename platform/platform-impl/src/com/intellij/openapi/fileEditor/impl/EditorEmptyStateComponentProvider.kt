@@ -7,6 +7,8 @@ import javax.swing.JComponent
 
 @ApiStatus.Internal
 interface EditorEmptyStateComponentProvider {
+  fun getKind(): Kind = Kind.RICH
+
   fun isAvailable(splitters: EditorsSplitters): Boolean = true
 
   /**
@@ -15,6 +17,11 @@ interface EditorEmptyStateComponentProvider {
   suspend fun createComponent(splitters: EditorsSplitters): JComponent?
 
   fun disposeComponent(component: JComponent) {
+  }
+
+  enum class Kind {
+    RICH,
+    FALLBACK,
   }
 
   companion object {
