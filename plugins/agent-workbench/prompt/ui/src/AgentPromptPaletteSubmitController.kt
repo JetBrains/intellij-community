@@ -27,6 +27,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.SimpleTextAttributes
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import javax.swing.JList
 
@@ -36,6 +38,7 @@ internal class AgentPromptPaletteSubmitController(
   private val promptArea: EditorTextField,
   private val providerSelector: AgentPromptProviderSelector,
   private val existingTaskController: AgentPromptExistingTaskController,
+  private val sessionScope: CoroutineScope,
   private val launcherProvider: () -> AgentPromptLauncherBridge?,
   private val launchState: AgentPromptPaletteLaunchState,
   private val currentTargetMode: () -> PromptTargetMode,
@@ -85,7 +88,7 @@ internal class AgentPromptPaletteSubmitController(
 
     val extensionTab = activeExtensionTab()
     if (extensionTab?.extension?.getSubmitActionId() != null) {
-      launchState.canSubmitNow = true
+      launchState.canSubmitNow = !launchState.launchInProgress
       return
     }
     val targetMode = if (extensionTab != null) PromptTargetMode.NEW_TASK else currentTargetMode()
@@ -94,13 +97,17 @@ internal class AgentPromptPaletteSubmitController(
                                   hasProjectPath &&
                                   selectedProviderEntry != null &&
                                   selectedProviderEntry.isCliAvailable
-    launchState.canSubmitNow = when (targetMode) {
+    launchState.canSubmitNow = !launchState.launchInProgress && when (targetMode) {
       PromptTargetMode.NEW_TASK -> submitPrerequisitesMet
       PromptTargetMode.EXISTING_TASK -> submitPrerequisitesMet && hasExistingTaskTarget
     }
   }
 
   fun submit() {
+    if (launchState.launchInProgress) {
+      return
+    }
+
     fun reportValidationFailure(validationErrorKey: String, selectedProviderEntry: ProviderEntry?) {
       if (shouldRetrySubmitAfterWorkingProjectPathSelection(validationErrorKey) && launcherProvider()?.let(::promptWorkingProjectPathSelection) == true) {
         return
@@ -236,23 +243,33 @@ internal class AgentPromptPaletteSubmitController(
       ),
     )
 
-    val result = launcherBridge.launch(request)
-    if (result.launched) {
-      onPromptSubmitted(
-        AgentPromptHistoryEntry(
-          promptText = prompt,
-          createdAtMs = System.currentTimeMillis(),
-          providerId = providerEntry.bridge.provider.value,
-          targetMode = targetMode,
-          launchMode = providerSelector.selectedLaunchMode.name,
+    launchState.launchInProgress = true
+    updateSendAvailability()
+    sessionScope.launch {
+      val result = launcherBridge.launch(request)
+      launchState.launchInProgress = false
+      if (result.launched) {
+        onPromptSubmitted(
+          AgentPromptHistoryEntry(
+            promptText = prompt,
+            createdAtMs = System.currentTimeMillis(),
+            providerId = providerEntry.bridge.provider.value,
+            targetMode = targetMode,
+            launchMode = providerSelector.selectedLaunchMode.name,
+          )
         )
-      )
-      launchState.clearDraftOnClose = true
-      onSubmitSucceeded()
-      return
-    }
+        launchState.clearDraftOnClose = true
+        onSubmitSucceeded()
+        return@launch
+      }
 
-    val errorMessage = when (result.error) {
+      updateSendAvailability()
+      onSubmitBlocked(resolveLaunchErrorMessage(result.error))
+    }
+  }
+
+  private fun resolveLaunchErrorMessage(error: AgentPromptLaunchError?): @Nls String {
+    return when (error) {
       AgentPromptLaunchError.PROVIDER_UNAVAILABLE -> AgentPromptBundle.message("popup.error.launch.provider")
       AgentPromptLaunchError.UNSUPPORTED_LAUNCH_MODE -> AgentPromptBundle.message("popup.error.launch.mode")
       AgentPromptLaunchError.TARGET_THREAD_NOT_FOUND -> AgentPromptBundle.message("popup.error.launch.thread.not.found")
@@ -263,7 +280,6 @@ internal class AgentPromptPaletteSubmitController(
       null,
         -> AgentPromptBundle.message("popup.error.launch.internal")
     }
-    onSubmitBlocked(errorMessage)
   }
 
   private fun resolveValidationErrorMessage(

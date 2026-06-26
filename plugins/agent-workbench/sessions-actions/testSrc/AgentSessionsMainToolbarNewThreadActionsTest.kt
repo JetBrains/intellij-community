@@ -18,6 +18,7 @@ import com.intellij.agent.workbench.sessions.actions.AgentSessionsMainToolbarNew
 import com.intellij.agent.workbench.sessions.actions.ProfileQuickStartAction
 import com.intellij.agent.workbench.sessions.actions.resolveAgentSessionsMainToolbarNewThreadContext
 import com.intellij.agent.workbench.sessions.actions.resolveQuickStartProjectPopupAnchor
+import com.intellij.agent.workbench.sessions.actions.shouldOpenInlineNewThreadPrompt
 import com.intellij.platform.ai.agent.sessions.core.providers.builtInLaunchProfileId
 import com.intellij.platform.ai.agent.sessions.core.providers.initialMessageRequestForLaunchProfile
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
@@ -854,6 +855,27 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
 
     assertThat(request.prompt).isEmpty()
     assertThat(request.providerOptionIds).isEmpty()
+  }
+
+  @Test
+  fun inlineNewThreadPromptRoutingRequiresRegistryAndPromptCapableProvider() {
+    val promptProvider = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.from("codex"),
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+      supportsPromptLaunch = true,
+    )
+    val terminalProvider = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.from("terminal"),
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+      supportsPromptLaunch = false,
+    )
+
+    assertThat(shouldOpenInlineNewThreadPrompt(registryEnabled = true, descriptor = promptProvider)).isTrue()
+    assertThat(shouldOpenInlineNewThreadPrompt(registryEnabled = false, descriptor = promptProvider)).isFalse()
+    assertThat(shouldOpenInlineNewThreadPrompt(registryEnabled = true, descriptor = terminalProvider)).isFalse()
+    assertThat(shouldOpenInlineNewThreadPrompt(registryEnabled = true, descriptor = null)).isFalse()
   }
 
   @Test

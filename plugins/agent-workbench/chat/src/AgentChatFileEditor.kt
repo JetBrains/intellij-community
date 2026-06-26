@@ -123,6 +123,7 @@ internal class AgentChatFileEditor(
   override fun getComponent(): JComponent = component
 
   override fun getPreferredFocusedComponent(): JComponent {
+    file.deferredStartContent()?.preferredFocusedComponent?.let { return it }
     return tab?.preferredFocusableComponent ?: component
   }
 
@@ -202,6 +203,7 @@ internal class AgentChatFileEditor(
     disposeTerminalAttachments(clearPendingContextPanel = true)
     pendingContextPanel = null
     pendingContextPanelInstalled = false
+    file.clearDeferredStartContent()
     component.removeAll()
   }
 
@@ -376,6 +378,7 @@ internal class AgentChatFileEditor(
     if (deferredStartState?.phase == AgentChatDeferredStartPhase.READY_TO_START) {
       file.updateDeferredStartState(null)
     }
+    file.clearDeferredStartContent()
     val behavior = behaviorResolver(file.provider)
     val createdTab = liveTerminalRegistry.acquireOrCreate(
       file = file,
@@ -551,8 +554,12 @@ internal class AgentChatFileEditor(
   }
 
   private fun renderDeferredStartState(state: AgentChatDeferredStartState) {
+    val deferredContent = if (state.phase == AgentChatDeferredStartPhase.WAITING) file.deferredStartContent() else null
+    if (deferredContent == null) {
+      file.clearDeferredStartContent()
+    }
     component.removeAll()
-    component.add(createDeferredStartComponent(state), BorderLayout.CENTER)
+    component.add(deferredContent?.component ?: createDeferredStartComponent(state), BorderLayout.CENTER)
     component.revalidate()
     component.repaint()
   }

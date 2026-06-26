@@ -5,6 +5,8 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormat
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextTruncationReason
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
 import com.intellij.agent.workbench.sessions.service.AgentDeferredNewSessionHandle
 import com.intellij.agent.workbench.prompt.core.number
 import com.intellij.agent.workbench.prompt.core.objOrNull
@@ -220,6 +222,11 @@ private class RecordingDeferredNewSessionHandle : AgentDeferredNewSessionHandle 
   override suspend fun start(initialMessageRequest: AgentPromptInitialMessageRequest?) {
     events += "start"
     startedRequest = initialMessageRequest
+  }
+
+  override suspend fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+    events += "launch"
+    return AgentPromptLaunchResult.SUCCESS
   }
 
   override suspend fun completeWithoutStart(title: String, message: String?) {

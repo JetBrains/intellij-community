@@ -71,5 +71,9 @@
                  defaultValue="true"
                  description="Use monochrome line icons on main toolbar buttons, action buttons, and status indicators in Agent Workbench"
                  restartRequired="false"/>
+    <registryKey key="agent.workbench.new.thread.inline.prompt"
+                 defaultValue="true"
+                 description="Open Agent Workbench New Thread actions as an inline prompt before starting the agent session"
+                 restartRequired="false"/>
   </extensions>
 </idea-plugin>

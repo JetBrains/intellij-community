@@ -13,7 +13,9 @@ targets:
   - ../../prompt/ui/src/AgentPromptExistingTaskController.kt
   - ../../prompt/ui/src/AgentPromptProviderSelector.kt
   - ../../prompt/core/src/AgentPromptLauncherBridge.kt
+  - ../../sessions-actions/src/actions/NewThreadMenuActions.kt
   - ../../sessions/src/service/AgentSessionPromptLauncherBridge.kt
+  - ../../sessions/src/service/AgentSessionLaunchService.kt
   - ../../prompt/ui/testSrc/*.kt
   - ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 ---
@@ -84,6 +86,11 @@ The global prompt opens a project-scoped prompt surface for starting a new task 
 - Inline empty-state mode is always a `NEW_TASK` prompt. It must not restore `EXISTING_TASK` draft mode or extension-tab auto-selection because those controls are hidden in the compact empty-state surface.
   [@test] ../../prompt/ui/testSrc/emptyState/AgentWorkbenchInlinePromptEmptyStateProviderTest.kt
 
+- Inline new-thread mode is also always a `NEW_TASK` prompt. It is hosted inside a deferred chat tab, starts from the selected launch profile, skips extension-tab auto-selection, and keeps the inline prompt visible when `AgentPromptLauncherBridge.launch(...)` returns a failure so the same pending tab can be retried.
+  [@test] ../../prompt/ui/testSrc/AgentPromptPaletteSessionControllerTest.kt
+  [@test] ../../prompt/ui/testSrc/AgentPromptPaletteSubmitControllerTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionLaunchServiceTest.kt
+
 - Plan mode is available only when the selected provider exposes the plan-mode option, persists in project prompt draft state, and is forced off/rejected for busy existing tasks. A typed `/plan` prefix remains prompt text and does not toggle the option.
   [@test] ../../prompt/ui/testSrc/AgentPromptPlanModeDecisionsTest.kt
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
@@ -119,12 +126,15 @@ The global prompt opens a project-scoped prompt surface for starting a new task 
 - The popup keep-open toggle is a secondary footer control, not part of the primary header action cluster.
 - Validation errors appear inline and keep the popup open.
 - Successful launches close the popup and clear the submitted draft.
+- Successful inline new-thread launches clear the submitted draft and replace the prompt surface by starting the deferred chat tab.
 
 ## Testing / Local Run
 - `./tests.cmd --module intellij.agent.workbench.prompt.ui.tests --test "com.intellij.agent.workbench.prompt.ui.AgentPrompt*Test"`
 - `./tests.cmd --module intellij.agent.workbench.prompt.ui.tests --test "com.intellij.agent.workbench.prompt.ui.emptyState.AgentWorkbenchInlinePromptEmptyStateProviderTest;com.intellij.agent.workbench.prompt.ui.AgentPromptPalettePopupServiceTest"`
+- `./tests.cmd --module intellij.agent.workbench.prompt.ui.tests --test "com.intellij.agent.workbench.prompt.ui.AgentPromptPaletteSessionControllerTest;com.intellij.agent.workbench.prompt.ui.AgentPromptPaletteSubmitControllerTest"`
 - `./tests.cmd --module intellij.platform.ide.impl.tests --test com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainterTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionPromptLauncherBridgeTest`
+- `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionLaunchServiceTest`
 
 ## References
 - `add-to-agent-context.spec.md`

@@ -80,7 +80,7 @@ class AgentPromptManualContextAvailabilityDecisionsTest {
 
   private fun testLauncher(sourceProject: Project?): AgentPromptLauncherBridge {
     return object : AgentPromptLauncherBridge {
-      override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+      override suspend fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
         return AgentPromptLaunchResult.SUCCESS
       }
 

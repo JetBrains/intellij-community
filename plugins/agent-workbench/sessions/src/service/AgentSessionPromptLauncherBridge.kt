@@ -100,7 +100,7 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
     this.addContextToOpenChatTargetHandler = addContextToOpenChatTarget
   }
 
-  override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+  override suspend fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
     fun reportPromptLaunchResolved(result: AgentPromptLaunchResult): AgentPromptLaunchResult {
       AgentWorkbenchTelemetry.logPromptLaunchResolved(request, result)
       return result

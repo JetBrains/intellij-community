@@ -367,6 +367,51 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
+  fun deferredStartStateRendersCustomContentUntilReadyToStart() {
+    val startupLaunchSpec = AgentSessionTerminalLaunchSpec(command = listOf("codex", "resume", "thread-1"))
+    val file = testFile()
+    file.setStartupLaunchSpecOverride(startupLaunchSpec)
+    file.updateDeferredStartState(
+      AgentChatDeferredStartState(
+        phase = AgentChatDeferredStartPhase.WAITING,
+        title = "Waiting",
+      )
+    )
+    val customContent = JPanel()
+    val focusComponent = JButton("Prompt")
+    var disposed = false
+    file.replaceDeferredStartContent(
+      AgentChatDeferredStartContent(
+        component = customContent,
+        preferredFocusedComponent = focusComponent,
+        disposeContent = { disposed = true },
+      )
+    )
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    val editor = testEditor(file = file, terminalTabs = terminalTabs)
+
+    editor.selectNotify()
+
+    assertThat(editor.component.components).containsExactly(customContent)
+    assertThat(editor.preferredFocusedComponent).isSameAs(focusComponent)
+    assertThat(terminalTabs.createCalls).isZero()
+    assertThat(disposed).isFalse()
+
+    file.updateDeferredStartState(
+      AgentChatDeferredStartState(
+        phase = AgentChatDeferredStartPhase.READY_TO_START,
+        title = "Ready",
+      )
+    )
+    editor.refreshForFileStateChange()
+
+    assertThat(terminalTabs.createCalls).isEqualTo(1)
+    assertThat(terminalTabs.lastStartupLaunchSpec).isEqualTo(startupLaunchSpec)
+    assertThat(disposed).isTrue()
+    assertThat(editor.preferredFocusedComponent).isSameAs(terminalTabs.tab.preferredFocusableComponent)
+  }
+
+  @Test
   fun restartForFileStateChangeReplacesRetainedTerminalWithNewLaunchSpec() {
     val project = testProject()
     val file = testFile()

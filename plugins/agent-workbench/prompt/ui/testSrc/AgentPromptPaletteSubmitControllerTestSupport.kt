@@ -62,9 +62,10 @@ fun captureNewTaskPromptLaunchRequest(
       promptArea = promptArea,
       providerSelector = providerSelector,
       existingTaskController = existingTaskController,
+      sessionScope = testScope(),
       launcherProvider = {
         object : AgentPromptLauncherBridge {
-          override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+          override suspend fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
             capturedRequest = request
             return AgentPromptLaunchResult.SUCCESS
           }
