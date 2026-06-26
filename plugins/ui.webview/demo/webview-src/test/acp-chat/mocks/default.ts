@@ -88,6 +88,17 @@ export default defineWebViewMock((context) => {
           },
           configOptions: sessionConfigOptions(),
         }))
+        await sendPageStdout({
+          jsonrpc: "2.0",
+          method: "session/update",
+          params: {
+            sessionId,
+            update: {
+              sessionUpdate: "available_commands_update",
+              availableCommands: sessionCommands(),
+            },
+          },
+        })
         break
       case "session/set_mode":
         if (typeof message.params?.modeId === "string") {
@@ -175,6 +186,23 @@ export default defineWebViewMock((context) => {
         description: "Allow the mock agent to act independently.",
         currentValue: currentAutonomyValue,
       },
+    ]
+  }
+
+  function sessionCommands(): unknown[] {
+    return [
+      { name: "summarize", description: "Summarize the current context.", input: { hint: "what to summarize" } },
+      { name: "explain", description: "Explain the selected topic.", input: { hint: "topic" } },
+      { name: "refactor", description: "Suggest a small refactoring.", input: { hint: "target" } },
+      { name: "test", description: "Create a focused test plan.", input: { hint: "behavior" } },
+      { name: "document", description: "Draft documentation for a symbol.", input: { hint: "symbol" } },
+      { name: "optimize", description: "Find a performance improvement.", input: { hint: "code path" } },
+      { name: "debug", description: "Inspect a failing scenario.", input: { hint: "failure" } },
+      { name: "inspect", description: "Inspect related implementation details.", input: { hint: "area" } },
+      { name: "migrate", description: "Plan a migration path.", input: { hint: "source and target" } },
+      { name: "cleanup", description: "Identify safe cleanup work.", input: { hint: "scope" } },
+      { name: "review", description: "Review the current change.", input: { hint: "focus" } },
+      { name: "commit", description: "Draft a commit summary.", input: { hint: "change" } },
     ]
   }
 

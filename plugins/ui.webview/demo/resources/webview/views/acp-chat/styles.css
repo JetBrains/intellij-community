@@ -689,10 +689,98 @@ body {
 }
 
 .acpComposer {
+  position: relative;
   display: flex;
   align-items: flex-end;
   gap: 8px;
   min-width: 0;
+}
+
+.acpSlashCommandMenu {
+  position: absolute;
+  z-index: 1000;
+  left: 0;
+  bottom: calc(100% + 6px);
+  width: min(360px, calc(100vw - 24px));
+  max-height: min(280px, calc(100vh - 120px));
+  overflow: hidden;
+  border: 1px solid var(--acp-border);
+  border-radius: 6px;
+  background: var(--acp-bg-alt);
+  color: var(--acp-text);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+}
+
+.acpSlashCommandItems {
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.acpSlashCommandItem {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 34px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  padding: 5px 8px;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.acpSlashCommandItem:hover,
+.acpSlashCommandItem:focus-visible,
+.acpSlashCommandItem[data-highlighted] {
+  background: var(--acp-accent);
+  color: #fff;
+  outline: none;
+}
+
+.acpSlashCommandText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.acpSlashCommandName,
+.acpSlashCommandDesc,
+.acpSlashCommandHint {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.acpSlashCommandName {
+  font-family: var(--acp-mono), monospace;
+}
+
+.acpSlashCommandDesc,
+.acpSlashCommandHint,
+.acpSlashCommandEmpty {
+  color: var(--acp-text-muted);
+  font-size: 12px;
+}
+
+.acpSlashCommandHint {
+  font-family: var(--acp-mono), monospace;
+}
+
+.acpSlashCommandItem:hover .acpSlashCommandDesc,
+.acpSlashCommandItem:focus-visible .acpSlashCommandDesc,
+.acpSlashCommandItem[data-highlighted] .acpSlashCommandDesc,
+.acpSlashCommandItem:hover .acpSlashCommandHint,
+.acpSlashCommandItem:focus-visible .acpSlashCommandHint,
+.acpSlashCommandItem[data-highlighted] .acpSlashCommandHint {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.acpSlashCommandEmpty {
+  padding: 6px 8px;
 }
 
 .acpComposerMain {

@@ -91,11 +91,11 @@ Key confirmations: `ClientSideConnection implements Agent` (so `setSessionMode`/
 - [x] Add attachment chip and preview styling in `styles.css`.
 
 ### 7. Slash commands
-1. In `src/acp/client.ts`, handle `available_commands_update` and push commands through the sink.
-2. In `useAcpChat.ts`, store command state and reset it on agent switch.
-3. Add `SlashCommandMenu.tsx`: show a popover/typeahead on `/`, and insert `/<name> ` into the composer when selected.
-4. Send the command as a normal prompt prefix; the agent remains responsible for parsing it.
-5. Add slash-command popover styling in `styles.css`.
+- [x] In `src/acp/client.ts`, handle `available_commands_update` and push commands through the sink.
+- [x] In `useAcpChat.ts`, store command state and reset it on agent switch.
+- [x] Add `SlashCommandMenu.tsx`: show a popover/typeahead on `/`, and insert `/<name> ` into the composer when selected.
+- [x] Send the command as a normal prompt prefix; the agent remains responsible for parsing it.
+- [x] Add slash-command popover styling in `styles.css`.
 
 ### 8. @-mention files
 1. In `acp/AcpBridgeApi.kt`, add `suspend fun listFiles(params: ListFilesRequest): ListFilesResult` with DTOs `ListFilesRequest(query: String, limit: Int = 50)` / `ListFilesResult(files: List<String>)`.

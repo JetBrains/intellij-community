@@ -17,6 +17,7 @@ import { ApprovalPrompt } from "./ApprovalPrompt"
 import { AuthPrompt } from "./AuthPrompt"
 import { ModelPicker } from "./ModelPicker"
 import { PlanView } from "./PlanView"
+import { SlashCommandMenu } from "./SlashCommandMenu"
 import { ThinkingBlock } from "./ThinkingBlock"
 import { ToolCallCard } from "./ToolCallCard"
 
@@ -45,26 +46,29 @@ export function ChatView() {
             <ThreadPrimitive.Messages components={{ UserMessage, AssistantMessage }} />
           </ThreadPrimitive.Viewport>
           <div className="acpComposerShell">
-            <ComposerPrimitive.Root className="acpComposer">
-              <div className="acpComposerMain">
-                <div className="acpAttachmentList acpComposerAttachments">
-                  <ComposerPrimitive.Attachments>
-                    {() => <AttachmentChip removable />}
-                  </ComposerPrimitive.Attachments>
+            <ComposerPrimitive.Unstable_TriggerPopoverRoot>
+              <ComposerPrimitive.Root className="acpComposer">
+                <div className="acpComposerMain">
+                  <div className="acpAttachmentList acpComposerAttachments">
+                    <ComposerPrimitive.Attachments>
+                      {() => <AttachmentChip removable />}
+                    </ComposerPrimitive.Attachments>
+                  </div>
+                  <ComposerPrimitive.Input className="acpComposerInput" placeholder="Message the agent…" onPaste={notifyOnUnsupportedImagePaste} />
                 </div>
-                <ComposerPrimitive.Input className="acpComposerInput" placeholder="Message the agent…" onPaste={notifyOnUnsupportedImagePaste} />
-              </div>
-              {attachmentsEnabled ? (
-                <ComposerPrimitive.AddAttachment className="acpComposerAttach" aria-label="Attach file" title="Attach file">
-                  <AttachmentIcon />
-                </ComposerPrimitive.AddAttachment>
-              ) : (
-                <button className="acpComposerAttach" type="button" aria-label="Attach file" title="Attach file" onClick={chat.notifyAttachmentCapabilitiesUnavailable}>
-                  <AttachmentIcon />
-                </button>
-              )}
-              <ComposerPrimitive.Send className="acpComposerSend">Send</ComposerPrimitive.Send>
-            </ComposerPrimitive.Root>
+                <SlashCommandMenu commands={chat.commands} />
+                {attachmentsEnabled ? (
+                  <ComposerPrimitive.AddAttachment className="acpComposerAttach" aria-label="Attach file" title="Attach file">
+                    <AttachmentIcon />
+                  </ComposerPrimitive.AddAttachment>
+                ) : (
+                  <button className="acpComposerAttach" type="button" aria-label="Attach file" title="Attach file" onClick={chat.notifyAttachmentCapabilitiesUnavailable}>
+                    <AttachmentIcon />
+                  </button>
+                )}
+                <ComposerPrimitive.Send className="acpComposerSend">Send</ComposerPrimitive.Send>
+              </ComposerPrimitive.Root>
+            </ComposerPrimitive.Unstable_TriggerPopoverRoot>
             <div className="acpComposerToolbar">
               <AgentSelector
                 agents={chat.agents}

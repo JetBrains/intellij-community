@@ -7431,6 +7431,21 @@ function createStateHookForRuntime(useRuntime) {
 	return useStoreHook;
 }
 //#endregion
+//#region node_modules/@assistant-ui/react/dist/legacy-runtime/hooks/ComposerContext.js
+function useComposerRuntime(options) {
+	const $ = c(2);
+	const aui = useAui();
+	let t0;
+	if ($[0] !== aui) {
+		t0 = () => aui.composer.source ? aui.composer().__internal_getRuntime?.() ?? null : null;
+		$[0] = aui;
+		$[1] = t0;
+	} else t0 = $[1];
+	const runtime = useAuiState(t0);
+	if (!runtime && !options?.optional) throw new Error("ComposerRuntime is not available");
+	return runtime;
+}
+//#endregion
 //#region node_modules/@assistant-ui/react/dist/legacy-runtime/hooks/MessageContext.js
 function useMessageRuntime(options) {
 	const $ = c(2);
@@ -8513,7 +8528,7 @@ var useTriggerKeyboardResource = (t0) => {
 var TriggerKeyboardResource = resource(useTriggerKeyboardResource);
 //#endregion
 //#region node_modules/@assistant-ui/react/dist/primitives/composer/trigger/triggerNavigationResource.js
-function matchesQuery(item, lower) {
+function matchesQuery$1(item, lower) {
 	return item.id.toLowerCase().includes(lower) || item.label.toLowerCase().includes(lower) || (item.description?.toLowerCase().includes(lower) ?? false);
 }
 /**
@@ -8606,7 +8621,7 @@ var useTriggerNavigationResource = (t0) => {
 		if ($[13] !== adapter || $[14] !== categories || $[15] !== query) {
 			all = [];
 			const lower = query.toLowerCase();
-			for (const cat of categories) for (const item of adapter.categoryItems(cat.id)) if (matchesQuery(item, lower)) all.push(item);
+			for (const cat of categories) for (const item of adapter.categoryItems(cat.id)) if (matchesQuery$1(item, lower)) all.push(item);
 			$[13] = adapter;
 			$[14] = categories;
 			$[15] = query;
@@ -8661,7 +8676,7 @@ var useTriggerNavigationResource = (t0) => {
 		let t8;
 		if ($[23] !== allItems || $[24] !== query) {
 			const lower_1 = query.toLowerCase();
-			t8 = allItems.filter((item_0) => matchesQuery(item_0, lower_1));
+			t8 = allItems.filter((item_0) => matchesQuery$1(item_0, lower_1));
 			$[23] = allItems;
 			$[24] = query;
 			$[25] = t8;
@@ -12705,4 +12720,71 @@ function _temp(s) {
 	return s.part;
 }
 //#endregion
-export { require_react_dom as _, useMessagePartText as a, useEscapeKeydown as c, Primitive$1 as d, dispatchDiscreteCustomEvent as f, AssistantRuntimeProvider as g, useMessage as h, useSmooth as i, useCallbackRef as l, useComposedRefs as m, thread_exports as n, composer_exports as o, createSlot as p, message_exports as r, attachment_exports as s, useMessagePartReasoning as t, composeEventHandlers as u };
+//#region node_modules/@assistant-ui/react/dist/unstable/useSlashCommandAdapter.js
+/**
+* @deprecated Under active development and may change without notice.
+*
+* Bundles slash command definitions (with inline `execute` callbacks) into
+* `{adapter, action}` that plug directly into `ComposerTriggerPopover`.
+* `execute` stays in the hook closure and is never attached to the returned
+* `TriggerItem`, keeping items serializable.
+*
+* @example
+* ```tsx
+* const slash = unstable_useSlashCommandAdapter({
+*   commands: [
+*     { id: "summarize", execute: () => runSummarize(), icon: "FileText" },
+*     { id: "translate", execute: () => runTranslate(), icon: "Languages" },
+*   ],
+* });
+*
+* <ComposerTriggerPopover char="/" {...slash} />
+* ```
+*/
+function unstable_useSlashCommandAdapter(options) {
+	const { commands, removeOnExecute } = options;
+	const commandsRef = useRef(commands);
+	commandsRef.current = commands;
+	return useMemo(() => {
+		return {
+			adapter: {
+				categories: () => [],
+				categoryItems: () => [],
+				search: (query) => {
+					const lower = query.toLowerCase();
+					return commandsRef.current.filter((c) => matchesQuery(c, lower)).map(toItem);
+				}
+			},
+			action: {
+				onExecute: (item) => {
+					commandsRef.current.find((c) => c.id === item.id)?.execute();
+				},
+				...removeOnExecute !== void 0 ? { removeOnExecute } : {}
+			},
+			...options.iconMap ? { iconMap: options.iconMap } : {},
+			...options.fallbackIcon ? { fallbackIcon: options.fallbackIcon } : {}
+		};
+	}, [
+		removeOnExecute,
+		options.iconMap,
+		options.fallbackIcon
+	]);
+}
+function toItem(cmd) {
+	return {
+		id: cmd.id,
+		type: "command",
+		label: cmd.label ?? `/${cmd.id}`,
+		...cmd.description !== void 0 ? { description: cmd.description } : {},
+		...cmd.icon !== void 0 ? { metadata: { icon: cmd.icon } } : {}
+	};
+}
+function matchesQuery(cmd, lower) {
+	if (!lower) return true;
+	if (cmd.id.toLowerCase().includes(lower)) return true;
+	if (cmd.label?.toLowerCase().includes(lower)) return true;
+	if (cmd.description?.toLowerCase().includes(lower)) return true;
+	return false;
+}
+//#endregion
+export { useMessage as _, useSmooth as a, require_react_dom as b, useTriggerPopoverScopeContext as c, useCallbackRef as d, composeEventHandlers as f, useComposedRefs as g, createSlot as h, message_exports as i, attachment_exports as l, dispatchDiscreteCustomEvent as m, useMessagePartReasoning as n, useMessagePartText as o, Primitive$1 as p, thread_exports as r, composer_exports as s, unstable_useSlashCommandAdapter as t, useEscapeKeydown as u, useComposerRuntime as v, AssistantRuntimeProvider as y };

@@ -7,6 +7,8 @@ import { startWebViewMockPreview, type MockWebViewCall, type WebViewMockPreviewS
 type Locator = {
   click(): Promise<void>
   fill(value: string): Promise<void>
+  inputValue(): Promise<string>
+  press(key: string): Promise<void>
 }
 
 type FilePayload = {
@@ -243,6 +245,69 @@ test("sends attached image and text resources as ACP prompt content blocks", asy
     && block.resource.uri.startsWith("attachment://"))
   expect(hasImageBlock).toBe(true)
   expect(hasTextResourceBlock).toBe(true)
+})
+
+test("inserts ACP slash commands into the composer and sends them as prompt prefixes", async ({ page }) => {
+  if (!preview) {
+    throw new Error("ACP chat mock preview server was not started")
+  }
+  await page.goto(preview.url)
+
+  await page.locator(".acpAgentSelect").click()
+  await page.getByRole("option", { name: "Mock Agent" }).click()
+
+  const input = page.getByPlaceholder("Message the agent…")
+  await input.fill("/")
+  await expect(page.getByRole("option", { name: /\/summarize/ })).toBeVisible()
+  await expect(page.getByRole("option", { name: /\/explain/ })).toBeVisible()
+
+  await input.fill("/sum")
+  await page.getByRole("option", { name: /\/summarize/ }).click()
+  await page.waitForFunction(() => (document.querySelector(".acpComposerInput") as HTMLTextAreaElement | null)?.value === "/summarize ")
+  const insertedCommand = await input.inputValue()
+  expect(insertedCommand === "/summarize ").toBe(true)
+
+  await input.fill(`${insertedCommand}this file`)
+  await page.getByRole("button", { name: "Send" }).click()
+  await expect(page.getByText(/Mock response from AI chat: \/summarize this file/)).toBeVisible()
+
+  const calls = await page.evaluate(() => {
+    return (window as MockWindow).__WVI_MOCK__?.calls.byMethod("acp.bridge/sendStdin") ?? []
+  })
+  const rpcMessages = calls
+    .map((call: MockWebViewCall) => parseMockRpcLine(call.params))
+    .filter((message: JsonRpcMessage | null): message is JsonRpcMessage => message != null)
+  expect(rpcMessages.some(message => message.method === "session/prompt"
+    && Array.isArray(message.params?.prompt)
+    && message.params.prompt.some((block: any) => block?.type === "text" && block.text === "/summarize this file"))).toBe(true)
+})
+
+test("keeps the keyboard-highlighted slash command visible while navigating", async ({ page }) => {
+  if (!preview) {
+    throw new Error("ACP chat mock preview server was not started")
+  }
+  await page.goto(preview.url)
+
+  await page.locator(".acpAgentSelect").click()
+  await page.getByRole("option", { name: "Mock Agent" }).click()
+
+  const input = page.getByPlaceholder("Message the agent…")
+  await input.fill("/")
+  await expect(page.getByRole("option", { name: /\/summarize/ })).toBeVisible()
+  for (let i = 0; i < 11; i++) {
+    await input.press("ArrowDown")
+  }
+  await page.waitForFunction(() => document.querySelector(".acpSlashCommandItem[data-highlighted]")?.textContent?.includes("/commit") === true)
+
+  const highlightedVisible = await page.evaluate(() => {
+    const container = document.querySelector(".acpSlashCommandItems")
+    const highlighted = document.querySelector(".acpSlashCommandItem[data-highlighted]")
+    if (!container || !highlighted) return false
+    const containerRect = container.getBoundingClientRect()
+    const highlightedRect = highlighted.getBoundingClientRect()
+    return highlightedRect.top >= containerRect.top && highlightedRect.bottom <= containerRect.bottom
+  })
+  expect(highlightedVisible).toBe(true)
 })
 
 function parseMockRpcLine(params: unknown): JsonRpcMessage | null {

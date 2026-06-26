@@ -1,6 +1,6 @@
 import { i as __toESM } from "./assets/rolldown-runtime.js";
 import { M as require_jsx_runtime, T as useExternalStoreRuntime, Y as require_react } from "./assets/assistant-ui-core.js";
-import { a as useMessagePartText, g as AssistantRuntimeProvider, h as useMessage, i as useSmooth, n as thread_exports, o as composer_exports, r as message_exports, s as attachment_exports, t as useMessagePartReasoning } from "./assets/assistant-ui-react.js";
+import { _ as useMessage, a as useSmooth, c as useTriggerPopoverScopeContext, i as message_exports, l as attachment_exports, n as useMessagePartReasoning, o as useMessagePartText, r as thread_exports, s as composer_exports, t as unstable_useSlashCommandAdapter, v as useComposerRuntime, y as AssistantRuntimeProvider } from "./assets/assistant-ui-react.js";
 import { t as require_client } from "./assets/react-dom.js";
 import { t as marked } from "./assets/marked.js";
 import { a as SelectItem$1, c as SelectPortal, d as SelectTrigger$1, i as SelectIcon, l as SelectScrollDownButton$1, n as SelectContent$1, o as SelectItemIndicator, p as SelectViewport, s as SelectItemText, t as Select$1, u as SelectScrollUpButton$1 } from "./assets/radix-ui-react-select.js";
@@ -1791,6 +1791,121 @@ function planMark(status) {
 	}
 }
 //#endregion
+//#region views/acp-chat/src/components/SlashCommandMenu.tsx
+var slashCommandFormatter = {
+	serialize(item) {
+		return commandPrefix(item.id);
+	},
+	parse(text) {
+		return [{
+			kind: "text",
+			text
+		}];
+	}
+};
+function SlashCommandMenu(props) {
+	const slashCommands = (0, import_react.useMemo)(() => props.commands.map((command) => ({
+		id: command.name,
+		label: commandPrefix(command.name),
+		description: command.description || command.inputHint,
+		execute() {}
+	})), [props.commands]);
+	const commandByName = (0, import_react.useMemo)(() => new Map(props.commands.map((command) => [command.name, command])), [props.commands]);
+	const slash = unstable_useSlashCommandAdapter({
+		commands: slashCommands,
+		removeOnExecute: false
+	});
+	if (props.commands.length === 0) return null;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(composer_exports.Unstable_TriggerPopover, {
+		char: "/",
+		adapter: slash.adapter,
+		className: "acpSlashCommandMenu",
+		"aria-label": "Slash commands",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Unstable_TriggerPopover.Action, {
+			...slash.action,
+			formatter: slashCommandFormatter
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SlashCommandItems, { commandByName })]
+	});
+}
+function SlashCommandItems(props) {
+	const popover = useTriggerPopoverScopeContext();
+	const listRef = (0, import_react.useRef)(null);
+	(0, import_react.useEffect)(() => {
+		const list = listRef.current;
+		const highlighted = list?.querySelector(".acpSlashCommandItem[data-highlighted]");
+		if (!list || !highlighted) return;
+		scrollElementIntoNearestView(list, highlighted);
+	}, [popover.highlightedIndex, popover.items]);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Unstable_TriggerPopoverItems, {
+		ref: listRef,
+		className: "acpSlashCommandItems",
+		children: (items) => items.length > 0 ? items.map((item, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SlashCommandItem, {
+			item,
+			index,
+			command: props.commandByName.get(item.id)
+		}, item.id)) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "acpSlashCommandEmpty",
+			children: "No commands"
+		})
+	});
+}
+function SlashCommandItem(props) {
+	const composer = useComposerRuntime();
+	const popover = useTriggerPopoverScopeContext();
+	function insertCommand() {
+		composer.setText(replaceActiveSlashCommand(composer.getState().text, popover.query, props.item.id));
+		popover.close();
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Unstable_TriggerPopoverItem, {
+		item: props.item,
+		index: props.index,
+		className: "acpSlashCommandItem",
+		onMouseDown: (event) => {
+			event.preventDefault();
+			insertCommand();
+		},
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+			className: "acpSlashCommandText",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					className: "acpSlashCommandName",
+					children: props.item.label
+				}),
+				props.command?.description ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					className: "acpSlashCommandDesc",
+					children: props.command.description
+				}) : null,
+				props.command?.inputHint ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					className: "acpSlashCommandHint",
+					children: props.command.inputHint
+				}) : null
+			]
+		})
+	});
+}
+function commandPrefix(name) {
+	return name.startsWith("/") ? name : `/${name}`;
+}
+function replaceActiveSlashCommand(text, query, commandName) {
+	const token = `/${query}`;
+	const index = text.lastIndexOf(token);
+	if (index >= 0 && isTokenBoundary(text, index)) {
+		const before = text.slice(0, index);
+		const after = text.slice(index + token.length);
+		return before + commandPrefix(commandName) + (after.startsWith(" ") ? after : ` ${after}`);
+	}
+	return `${text}${text.length === 0 || text.endsWith(" ") ? "" : " "}${commandPrefix(commandName)} `;
+}
+function isTokenBoundary(text, index) {
+	return index === 0 || /\s/u.test(text[index - 1] ?? "");
+}
+function scrollElementIntoNearestView(container, element) {
+	const containerRect = container.getBoundingClientRect();
+	const elementRect = element.getBoundingClientRect();
+	if (elementRect.top < containerRect.top) container.scrollTop -= containerRect.top - elementRect.top;
+	else if (elementRect.bottom > containerRect.bottom) container.scrollTop += elementRect.bottom - containerRect.bottom;
+}
+//#endregion
 //#region views/acp-chat/src/components/ThinkingBlock.tsx
 var SMOOTH_TEXT_OPTIONS$1 = {
 	drainMs: 250,
@@ -1910,7 +2025,7 @@ function ChatView() {
 						} })]
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 						className: "acpComposerShell",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(composer_exports.Root, {
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Unstable_TriggerPopoverRoot, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(composer_exports.Root, {
 							className: "acpComposer",
 							children: [
 								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
@@ -1924,6 +2039,7 @@ function ChatView() {
 										onPaste: notifyOnUnsupportedImagePaste
 									})]
 								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SlashCommandMenu, { commands: chat.commands }),
 								attachmentsEnabled ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.AddAttachment, {
 									className: "acpComposerAttach",
 									"aria-label": "Attach file",
@@ -1942,7 +2058,7 @@ function ChatView() {
 									children: "Send"
 								})
 							]
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						}) }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 							className: "acpComposerToolbar",
 							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(AgentSelector, {
 								agents: chat.agents,
