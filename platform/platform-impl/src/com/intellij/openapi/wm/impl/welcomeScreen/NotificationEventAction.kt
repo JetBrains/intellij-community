@@ -35,7 +35,9 @@ internal class NotificationEventAction(parentDisposable: Disposable) : DumbAware
   override fun update(e: AnActionEvent) {
     super.update(e)
 
-    e.presentation.icon = WelcomeScreenComponentFactory.getNotificationIcon(notificationTypes, getComponent(e))
+    val panel = getComponent(e) ?: return
+
+    e.presentation.icon = WelcomeScreenComponentFactory.getNotificationIcon(notificationTypes, panel)
     e.presentation.text = IdeBundle.message("toolwindow.stripe.Notifications")
     e.presentation.isEnabledAndVisible = notificationTypes.isNotEmpty()
   }
@@ -64,7 +66,7 @@ internal class NotificationEventAction(parentDisposable: Disposable) : DumbAware
     balloonLayout.showPopup()
   }
 
-  private fun getComponent(e: AnActionEvent): JComponent {
-    return (e.inputEvent?.component ?: e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)) as JComponent
+  private fun getComponent(e: AnActionEvent): JComponent? {
+    return (e.inputEvent?.component ?: e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)) as? JComponent
   }
 }
