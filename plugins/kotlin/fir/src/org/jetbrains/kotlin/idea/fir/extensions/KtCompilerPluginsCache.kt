@@ -157,13 +157,7 @@ class KtCompilerPluginsCache private constructor(
     ): CompilerPluginRegistrar.ExtensionStorage? {
         val compilerArguments = when (module) {
             is KaSourceModule -> module.openapiModule.getCompilerArguments().also {
-                val openapi = module.openapiModule
-                val facet = KotlinFacet.get(openapi)
-                LOG.info(
-                    "Kotlin FIR compiler plugins: source module arguments class is ${it::class.qualifiedName} for ${module.describeForCompilerPluginLog()}, " +
-                    "openapiModule#${System.identityHashCode(openapi)}, isDisposed=${openapi.isDisposed}, " +
-                    "facet=${facet != null}, facet#${facet?.let { f -> System.identityHashCode(f) } ?: "null"}"
-                )
+                LOG.info("Kotlin FIR compiler plugins: source module arguments class is ${it::class.qualifiedName} for ${module.describeForCompilerPluginLog()}")
             }
             is KaScriptModule -> {
                 val scriptDefinition = module.file.findScriptDefinition() ?: run {
@@ -320,12 +314,10 @@ class KtCompilerPluginsCache private constructor(
         fun new(project: Project, onlyBundledPluginsEnabled: Boolean): KtCompilerPluginsCache {
             val pluginsClassLoader: UrlClassLoader = UrlClassLoader.build().apply {
                 parent(KaModule::class.java.classLoader)
-                val modules = ModuleManager.getInstance(project).modules
-                val compilerArguments = modules.map { it.getCompilerArguments() }
+                val compilerArguments = ModuleManager.getInstance(project).modules.map { it.getCompilerArguments() }
                 LOG.info(
-                    "Kotlin FIR compiler plugins: creating cache for project '${project.name}'#${System.identityHashCode(project)}, " +
-                    "onlyBundledPluginsEnabled=$onlyBundledPluginsEnabled, modules=${compilerArguments.size}, " +
-                    "moduleSnapshot=${modules.joinToString { m -> "${m.name}#${System.identityHashCode(m)}(disposed=${m.isDisposed})" }}"
+                    "Kotlin FIR compiler plugins: creating cache for project '${project.name}', " +
+                    "onlyBundledPluginsEnabled=$onlyBundledPluginsEnabled, modules=${compilerArguments.size}"
                 )
                 val pluginClasspaths = collectSubstitutedPluginClasspaths(
                     project,
