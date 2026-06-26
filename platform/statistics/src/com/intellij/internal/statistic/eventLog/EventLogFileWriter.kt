@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
+import com.intellij.internal.statistic.config.eventLog.EventLogBuildType
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -130,31 +131,39 @@ open class EventLogFileWriter(
   }
 
   protected open fun cleanUpOldFiles(oldestAcceptable: Long) {
-    synchronized(lock) {
-      val logs = logFilesSupplier.get()
-      if (logs.isEmpty()) {
-        return
+    val logs = logFilesSupplier.get()
+    if (logs.isEmpty()) {
+      return
+    }
+    val now = System.currentTimeMillis()
+    val activeLog = getActiveLogName()
+    val capturedByPath = HashMap<String, CapturedFileInfo>()
+    for (file in logs) {
+      if (StringUtil.equals(file.name, activeLog)) continue
+      if (file.lastModified() < oldestAcceptable) {
+        capturedByPath[file.path] = CapturedFileInfo(file.length(), EventLogFile(file).getType(), readFileStats(file))
       }
-      val activeLog = getActiveLogName()
+    }
+
+    synchronized(lock) {
       var oldestFile: Long = -1
       var failedDeletingFiles = 0
       for (file in logs) {
         if (StringUtil.equals(file.name, activeLog)) continue
         val lastModified = file.lastModified()
         if (lastModified < oldestAcceptable) {
-          val sizeBytes = file.length()
-          val buildType = EventLogFile(file).getType()
-          val stats = readFileStats(file)
-          val ageMs = if (stats.firstEventMs > 0) System.currentTimeMillis() - stats.firstEventMs else -1L
-          val bytesPerEvent = if (stats.eventCount > 0) sizeBytes / stats.eventCount else 0L
           if (!file.delete()) {
             System.err.println("Failed deleting old FUS file $file")
             failedDeletingFiles ++
           }
           else {
-            eventLogSystemCollector?.logFileDeleted(
-              ageMs, sizeBytes, stats.firstEventMs, stats.lastEventMs, stats.eventCount, bytesPerEvent, buildType
-            )
+            val captured = capturedByPath[file.path]
+            if (captured != null) {
+              val ageMs = if (captured.stats.firstEventMs > 0) now - captured.stats.firstEventMs else -1L
+              logDeletedFile(
+                ageMs, captured.sizeBytes, captured.stats.firstEventMs, captured.stats.lastEventMs, captured.stats.eventCount, captured.buildType
+              )
+            }
           }
         }
         else if (lastModified < oldestFile || oldestFile == -1L) {
@@ -164,6 +173,18 @@ open class EventLogFileWriter(
       oldestExistingFile = oldestFile
       eventLogSystemCollector?.logDeletedFilesCalculated(logs.size, logs.size - failedDeletingFiles, failedDeletingFiles)
     }
+  }
+
+  /** Logs a single file removed by [cleanUpOldFiles]. Overridable so tests can capture the reported metrics. */
+  protected open fun logDeletedFile(
+    ageMs: Long,
+    sizeBytes: Long,
+    firstEventMs: Long,
+    lastEventMs: Long,
+    eventCount: Int,
+    buildType: EventLogBuildType,
+  ) {
+    eventLogSystemCollector?.logFileDeleted(ageMs, sizeBytes, firstEventMs, lastEventMs, eventCount, buildType)
   }
 
   fun cleanUp() {
@@ -230,6 +251,8 @@ open class EventLogFileWriter(
   }
 
   private data class FileStats(val eventCount: Int, val firstEventMs: Long, val lastEventMs: Long)
+
+  private class CapturedFileInfo(val sizeBytes: Long, val buildType: EventLogBuildType, val stats: FileStats)
 }
 
 private class CountingOutputStream(private val delegate: OutputStream) : OutputStream() {

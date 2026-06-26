@@ -103,9 +103,9 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
   )
 
   private val fileDeletedEvent = GROUP.registerVarargEvent(
-    "file.deleted",
+    "logs.file.deleted",
     deletedFileAgeMsField, deletedFileSizeBytesField, deletedFileFirstEventMsField, deletedFileLastEventMsField,
-    deletedFileEventCountField, deletedFileBytesPerEventField, deletedFileBuildTypeField
+    deletedFileEventCountField, deletedFileBuildTypeField
   )
 
   fun logMetadataLoaded(version: String?) = metadataLoadedEvent.log(version)
@@ -177,7 +177,6 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
     firstEventMs: Long,
     lastEventMs: Long,
     eventCount: Int,
-    bytesPerEvent: Long,
     buildType: EventLogBuildType,
   ) {
     fileDeletedEvent.log(
@@ -186,7 +185,6 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
       deletedFileFirstEventMsField.with(firstEventMs),
       deletedFileLastEventMsField.with(lastEventMs),
       deletedFileEventCountField.with(eventCount),
-      deletedFileBytesPerEventField.with(bytesPerEvent),
       deletedFileBuildTypeField.with(buildType),
     )
   }
@@ -272,12 +270,11 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
     private val fileSizeBytes = EventFields.Long("file_size_bytes", "File size in bytes")
     private val eventsCount = EventFields.Int("events_count", "Number of events in the file")
 
-    private val deletedFileAgeMsField = EventFields.Long("file_age_ms", "Age of the data in the deleted file: now minus the timestamp of its oldest event, in milliseconds (-1 if unknown)")
-    private val deletedFileSizeBytesField = EventFields.Long("file_size_bytes", "Size of the deleted file in bytes")
-    private val deletedFileFirstEventMsField = EventFields.Long("file_first_event_ms", "Timestamp of the oldest event in the deleted file, in milliseconds")
-    private val deletedFileLastEventMsField = EventFields.Long("file_last_event_ms", "Timestamp of the newest event in the deleted file, in milliseconds")
-    private val deletedFileEventCountField = EventFields.Int("file_event_count", "Number of events the deleted file contained")
-    private val deletedFileBytesPerEventField = EventFields.Long("file_bytes_per_event", "Average bytes per event in the deleted file")
-    private val deletedFileBuildTypeField = EventFields.Enum<EventLogBuildType>("file_build_type", "Build type (EAP, RELEASE, etc.)")
+    private val deletedFileAgeMsField = EventFields.Long("deleted_file_age_ms", "Age of the data in the deleted file: now minus the timestamp of its oldest event, in milliseconds (-1 if unknown)")
+    private val deletedFileSizeBytesField = EventFields.Long("deleted_file_size_bytes", "Size of the deleted file in bytes")
+    private val deletedFileFirstEventMsField = EventFields.Long("deleted_file_first_event_ms", "Timestamp of the oldest event in the deleted file, in milliseconds")
+    private val deletedFileLastEventMsField = EventFields.Long("deleted_file_last_event_ms", "Timestamp of the newest event in the deleted file, in milliseconds")
+    private val deletedFileEventCountField = EventFields.Int("deleted_file_event_count", "Number of events the deleted file contained")
+    private val deletedFileBuildTypeField = EventFields.Enum<EventLogBuildType>("deleted_file_build_type", "Build type (EAP, RELEASE, etc.)")
   }
 }
