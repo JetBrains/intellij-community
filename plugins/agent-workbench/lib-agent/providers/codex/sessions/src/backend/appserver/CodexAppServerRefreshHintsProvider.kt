@@ -333,8 +333,16 @@ internal class CodexAppServerRefreshHintsProvider(
             send(updateEvent)
             if (notification.kind == CodexAppServerNotificationKind.THREAD_STARTED && updateEvent.type == AgentSessionSourceUpdate.THREADS_CHANGED) {
               // Keep the retry ordered in the collector coroutine: it gives the app-server time to publish the new thread.
-              delay(APP_SERVER_STARTED_THREAD_REFRESH_RETRY_DELAY_MS.milliseconds)
+              delay(APP_SERVER_REFRESH_RETRY_DELAY_MS.milliseconds)
               send(updateEvent)
+            }
+            if (notification.kind == CodexAppServerNotificationKind.TURN_COMPLETED && !updateEvent.threadIds.isNullOrEmpty()) {
+              val threadId = notification.threadId
+              launch {
+                delay(APP_SERVER_REFRESH_RETRY_DELAY_MS.milliseconds)
+                invalidateCachedSnapshotActivityHint(threadId)
+                send(updateEvent)
+              }
             }
           }
           in outputBurstUpdateKinds -> {
@@ -513,7 +521,7 @@ private data class CachedNotificationActivityHint(
 )
 
 private const val APP_SERVER_OUTPUT_NOTIFICATION_DEBOUNCE_MS = 250L
-private const val APP_SERVER_STARTED_THREAD_REFRESH_RETRY_DELAY_MS = 1_000L
+private const val APP_SERVER_REFRESH_RETRY_DELAY_MS = 1_000L
 private const val STARTED_THREAD_HINT_TTL_MS = 120_000L
 private const val NOTIFICATION_ACTIVITY_HINT_TTL_MS = 15_000L
 private const val MAX_UNKNOWN_STARTED_THREADS_PER_PATH = 200

@@ -11,18 +11,15 @@ import com.intellij.platform.ai.agent.codex.sessions.backend.CodexBackendThread
 import com.intellij.platform.ai.agent.codex.sessions.backend.CodexBackendThreadRefreshResult
 import com.intellij.platform.ai.agent.codex.sessions.backend.CodexSessionBackend
 import com.intellij.platform.ai.agent.codex.sessions.backend.toAgentThreadActivity
-import com.intellij.platform.ai.agent.core.AgentThreadActivity
-import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.codex.sessions.resolveProjectDirectoryFromPath
+import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.session.AgentSessionThreadOutline
 import com.intellij.platform.ai.agent.filewatch.agentWorkbenchImmediateFileChangeFlow
 import com.intellij.platform.ai.agent.json.filebacked.FileBackedSessionChangeSet
 import com.intellij.platform.ai.agent.json.filebacked.createFileBackedSessionChangeFlow
 import com.intellij.platform.ai.agent.json.filebacked.toFileBackedSessionPathKey
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadActivityUpdate
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadPresentationUpdate
-import com.intellij.platform.ai.agent.core.session.AgentSessionThreadOutline
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -137,8 +134,6 @@ internal class CodexRolloutSessionBackend(
 
     val scopedPaths = LinkedHashSet<String>()
     val threadIds = LinkedHashSet<String>()
-    val activityUpdatesByThreadId = LinkedHashMap<String, AgentSessionThreadActivityUpdate>()
-    val presentationUpdatesByThreadId = LinkedHashMap<String, AgentSessionThreadPresentationUpdate>()
     var mayHaveChangedProjectFiles = false
     var changedProjectFilePaths: LinkedHashSet<String>? = LinkedHashSet()
     var failedParses = 0
@@ -164,22 +159,6 @@ internal class CodexRolloutSessionBackend(
       threadIds.addAll(parsedThread.spawnedExecThreadIds)
       val parentThreadIds = parentThreadIdsForUpdate(parsedThread)
       threadIds.addAll(parentThreadIds)
-      if (parentThreadIds.isEmpty()) {
-        val threadId = parsedThread.thread.thread.id
-        val activityReport = AgentThreadActivityReport(
-          rowActivity = parsedThread.thread.activity.toAgentThreadActivity(),
-          chromeActivity = parsedThread.thread.summaryActivity?.toAgentThreadActivity(),
-        )
-        activityUpdatesByThreadId[threadId] = AgentSessionThreadActivityUpdate(
-          activityReport = activityReport,
-          updatedAt = parsedThread.thread.thread.updatedAt,
-        )
-        presentationUpdatesByThreadId[threadId] = AgentSessionThreadPresentationUpdate(
-          title = parsedThread.thread.thread.title.takeIf { parsedThread.hasExplicitTitle },
-          activityReport = activityReport,
-          updatedAt = parsedThread.thread.thread.updatedAt,
-        )
-      }
     }
 
     if (failedParses > 0 || scopedPaths.isEmpty()) {
@@ -200,8 +179,6 @@ internal class CodexRolloutSessionBackend(
       type = AgentSessionSourceUpdate.HINTS_CHANGED,
       scopedPaths = scopedPaths,
       threadIds = threadIds.takeIf { it.isNotEmpty() },
-      activityUpdatesByThreadId = activityUpdatesByThreadId,
-      presentationUpdatesByThreadId = presentationUpdatesByThreadId,
       mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
       changedProjectFilePaths = changedProjectFilePathsForUpdate(mayHaveChangedProjectFiles, changedProjectFilePaths),
     )
@@ -226,23 +203,6 @@ internal class CodexRolloutSessionBackend(
     return AgentSessionSourceUpdateEvent(
       type = AgentSessionSourceUpdate.HINTS_CHANGED,
       scopedPaths = setOf(parsedThread.normalizedCwd),
-      activityUpdatesByThreadId = activeThreadActivityHint?.let { hint ->
-        mapOf(
-          hint.threadId to AgentSessionThreadActivityUpdate(
-            activityReport = AgentThreadActivityReport(rowActivity = hint.activity, chromeActivity = hint.summaryActivity),
-            updatedAt = hint.updatedAt,
-          )
-        )
-      }.orEmpty(),
-      presentationUpdatesByThreadId = activeThreadActivityHint?.let { hint ->
-        mapOf(
-          hint.threadId to AgentSessionThreadPresentationUpdate(
-            title = hint.title,
-            activityReport = AgentThreadActivityReport(rowActivity = hint.activity, chromeActivity = hint.summaryActivity),
-            updatedAt = hint.updatedAt,
-          )
-        )
-      }.orEmpty(),
       mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
       changedProjectFilePaths = consumedProjectFileChangeEvidence?.changedProjectFilePaths,
     )

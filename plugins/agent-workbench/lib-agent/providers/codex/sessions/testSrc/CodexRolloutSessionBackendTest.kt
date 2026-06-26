@@ -4,8 +4,6 @@ package com.intellij.platform.ai.agent.codex.sessions
 import com.intellij.platform.ai.agent.codex.sessions.backend.CodexSessionActivity
 import com.intellij.platform.ai.agent.codex.sessions.backend.rollout.CodexRolloutParser
 import com.intellij.platform.ai.agent.codex.sessions.backend.rollout.CodexRolloutSessionBackend
-import com.intellij.platform.ai.agent.core.AgentThreadActivity
-import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItemKind
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.json.filebacked.FileBackedSessionChangeSet
@@ -1488,7 +1486,7 @@ class CodexRolloutSessionBackendTest {
   }
 
   @Test
-  fun scopedRolloutUpdateIncludesAuthoritativeActivityHint() {
+  fun scopedRolloutUpdateTriggersDiscoveryWithoutStatusHint() {
     runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-update-activity-hint")
       Files.createDirectories(projectDir)
@@ -1528,12 +1526,8 @@ class CodexRolloutSessionBackendTest {
         assertThat(update).isNotNull
         assertThat(update!!.scopedPaths).containsExactly(projectDir.toString())
         assertThat(update.threadIds).containsExactly("session-update-activity-hint")
-        assertThat(update.activityUpdatesByThreadId.getValue("session-update-activity-hint").activityReport)
-          .isEqualTo(AgentThreadActivityReport(AgentThreadActivity.PROCESSING))
-        val presentationUpdate = update.presentationUpdatesByThreadId.getValue("session-update-activity-hint")
-        assertThat(presentationUpdate.title).isEqualTo("Run a slow tool")
-        assertThat(presentationUpdate.activityReport).isEqualTo(AgentThreadActivityReport(AgentThreadActivity.PROCESSING))
-        assertThat(presentationUpdate.updatedAt).isEqualTo(Instant.parse("2026-02-16T12:00:02.000Z").toEpochMilli())
+        assertThat(update.activityUpdatesByThreadId).isEmpty()
+        assertThat(update.presentationUpdatesByThreadId).isEmpty()
         assertThat(update.mayHaveChangedProjectFiles).isFalse()
       }
       finally {
@@ -1783,7 +1777,7 @@ class CodexRolloutSessionBackendTest {
   }
 
   @Test
-  fun scopedRolloutUpdateIncludesNonContributingSummaryHintForStandaloneSubAgent() {
+  fun scopedRolloutUpdateForStandaloneSubAgentOmitsStatusHints() {
     runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-update-sub-agent-summary-hint")
       Files.createDirectories(projectDir)
@@ -1827,8 +1821,8 @@ class CodexRolloutSessionBackendTest {
         assertThat(update).isNotNull
         assertThat(update!!.scopedPaths).containsExactly(projectDir.toString())
         assertThat(update.threadIds).containsExactly("session-sub-agent-summary-hint")
-        assertThat(update.activityUpdatesByThreadId.getValue("session-sub-agent-summary-hint").activityReport)
-          .isEqualTo(AgentThreadActivityReport(rowActivity = AgentThreadActivity.UNREAD, chromeActivity = null))
+        assertThat(update.activityUpdatesByThreadId).isEmpty()
+        assertThat(update.presentationUpdatesByThreadId).isEmpty()
       }
       finally {
         updatesJob.cancelAndJoin()
@@ -2210,9 +2204,8 @@ class CodexRolloutSessionBackendTest {
       assertThat(updates).hasSize(1)
       val update = updates.single()
       assertThat(update.threadIds).isNull()
-      assertThat(update.activityUpdatesByThreadId.getValue("session-active-unchanged").activityReport)
-        .isEqualTo(AgentThreadActivityReport(AgentThreadActivity.PROCESSING))
-      assertThat(update.presentationUpdatesByThreadId.getValue("session-active-unchanged").title).isEqualTo("Run checks")
+      assertThat(update.activityUpdatesByThreadId).isEmpty()
+      assertThat(update.presentationUpdatesByThreadId).isEmpty()
       assertThat(update.mayHaveChangedProjectFiles).isFalse()
     }
   }
