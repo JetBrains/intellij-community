@@ -23,13 +23,18 @@ import com.intellij.xdebugger.hotswap.SourceFileChangesCollector
 import com.intellij.xdebugger.hotswap.SourceFileChangesListener
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CancellationException
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
@@ -213,9 +218,10 @@ class SourceFileChangesCollectorImpl(
   internal val filters: List<SourceFileChangeFilter<VirtualFile>>,
   private val compatibilityCheckers: List<SourceFileChangeCompatibilityChecker> = emptyList(),
 ) : SourceFileChangesCollector<VirtualFile>, Disposable {
-  private val events = Channel<ChangeState>(Channel.UNLIMITED)
+  private val events = Channel<ProcessingJob>(Channel.UNLIMITED)
   private val lock = ReentrantLock()
   private val cs = coroutineScope.childScope("SourceFileChangesCollectorImpl")
+  private val currentProcessing = ConcurrentHashMap<VirtualFile, Job>()
 
   @Volatile
   private var currentChanges: MutableMap<VirtualFile, HotSwapChangesCompatibility> = hashMapOf()
@@ -226,7 +232,15 @@ class SourceFileChangesCollectorImpl(
 
   init {
     cs.launch {
-      events.consumeEach { processDocumentChangeInternal(it) }
+      events.consumeEach { (file, job) ->
+        try {
+          job.start()
+          job.join()
+        }
+        finally {
+          currentProcessing.remove(file, job)
+        }
+      }
     }
     ChangesProcessingService.getInstance().addCollector(this)
   }
@@ -243,8 +257,20 @@ class SourceFileChangesCollectorImpl(
   }
 
   internal fun processDocumentChange(change: ChangeState) {
-    events.trySend(change)
+    val file = change.file
+    val job = cs.launch(start = CoroutineStart.LAZY) {
+      processDocumentChangeInternal(change)
+    }
+    val previousJob = currentProcessing.put(file, job)
+    previousJob?.cancel()
+    val send = events.trySend(ProcessingJob(file, job))
+    if (send.isFailure) {
+      currentProcessing.remove(file, job)
+      job.cancel()
+    }
   }
+
+  private data class ProcessingJob(val file: VirtualFile, val job: Job)
 
   private suspend fun processDocumentChangeInternal(change: ChangeState) {
     val file = change.file
@@ -263,6 +289,7 @@ class SourceFileChangesCollectorImpl(
       }
     }
 
+    currentCoroutineContext().ensureActive()
     when (status) {
       SourceFileChangesStatus.ChangesCanceled -> {
         logger.debug { "Document change reverted previous changes: $file" }

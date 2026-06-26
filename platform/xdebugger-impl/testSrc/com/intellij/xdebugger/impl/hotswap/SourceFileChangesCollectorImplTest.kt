@@ -22,6 +22,7 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.xdebugger.hotswap.SourceFileChangesCollector
 import com.intellij.xdebugger.hotswap.SourceFileChangesListener
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -234,6 +235,37 @@ class SourceFileChangesCollectorImplTest {
         writeCommandAction(project, "Replace first line back") { document.replaceString(0, 6, "line") }
         assertEquals(Response.ChangesCanceled, channel.receive())
         assertTrue(collector.getChanges().isEmpty())
+      }
+    }
+  }
+
+  @Test
+  fun testObsoleteDocumentChangeIsSkippedWhenNewerChangeForSameFileArrives() {
+    doTest { scope, document ->
+      val firstCheckStarted = CompletableDeferred<Unit>()
+      val allowFirstCheckToComplete = CompletableDeferred<Unit>()
+      val checker = SourceFileChangeCompatibilityChecker {
+        firstCheckStarted.complete(Unit)
+        allowFirstCheckToComplete.await()
+        HotSwapChangesCompatibility.Compatible
+      }
+      scope.withCollector(compatibilityCheckers = listOf(checker)) { collector, channel ->
+        SourceFileChangesCollectorImpl.customLocalHistory = MockLocalHistory(CONTENT.toByteArray())
+
+        writeCommandAction(project, "Replace first line") { document.replaceString(0, 4, "string") }
+        firstCheckStarted.await()
+        assertTrue(collector.getChanges().isEmpty())
+        assertNull(channel.tryReceive().getOrNull())
+
+        writeCommandAction(project, "Replace first line twice") {
+          document.replaceString(0, 6, "second")
+          document.replaceString(0, 6, "line")
+        }
+        allowFirstCheckToComplete.complete(Unit)
+
+        assertEquals(Response.ChangesCanceled, channel.receive())
+        assertTrue(collector.getChanges().isEmpty())
+        assertNull(channel.tryReceive().getOrNull())
       }
     }
   }
