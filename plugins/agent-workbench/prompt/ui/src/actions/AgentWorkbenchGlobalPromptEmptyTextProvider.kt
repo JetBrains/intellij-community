@@ -3,18 +3,19 @@ package com.intellij.agent.workbench.prompt.ui.actions
 
 import com.intellij.agent.workbench.prompt.ui.AgentPromptBundle
 import com.intellij.agent.workbench.prompt.ui.emptyState.isInlineEmptyStatePromptEnabled
-import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPromotedActionProvider
+import com.intellij.openapi.fileEditor.impl.EditorEmptyTextProvider
+import com.intellij.openapi.fileEditor.impl.EditorEmptyTextSink
 import javax.swing.JComponent
 
-internal class AgentWorkbenchGlobalPromptEmptyTextPromotedActionProvider : EditorEmptyTextPromotedActionProvider {
-  override fun getPromotedAction(splitters: JComponent): EditorEmptyTextPromotedActionProvider.PromotedAction? {
+internal class AgentWorkbenchGlobalPromptEmptyTextProvider : EditorEmptyTextProvider {
+  override fun appendEmptyText(splitters: JComponent, sink: EditorEmptyTextSink) {
     // The inline empty-state composer supersedes this painted hint when enabled.
     if (isInlineEmptyStatePromptEnabled()) {
-      return null
+      return
     }
-    return EditorEmptyTextPromotedActionProvider.PromotedAction(
+    sink.appendActionWithShortcuts(
+      action = AgentPromptBundle.message("action.AgentWorkbenchPrompt.OpenGlobalPalette.text"),
       actionId = AGENT_WORKBENCH_GLOBAL_PROMPT_ACTION_ID,
-      text = AgentPromptBundle.message("action.AgentWorkbenchPrompt.OpenGlobalPalette.text"),
     )
   }
 }

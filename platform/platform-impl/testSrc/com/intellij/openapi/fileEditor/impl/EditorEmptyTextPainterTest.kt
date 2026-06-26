@@ -79,7 +79,7 @@ internal class EditorEmptyTextPainterTest {
 
   @BeforeEach
   fun setUp() {
-    originalShortcuts = listOf(IdeActions.ACTION_SEARCH_EVERYWHERE, PROMOTED_ACTION_ID)
+    originalShortcuts = listOf(IdeActions.ACTION_SEARCH_EVERYWHERE, PROVIDER_ACTION_ID)
       .associateWith { activeKeymap().getShortcuts(it).toList() }
   }
 
@@ -90,15 +90,17 @@ internal class EditorEmptyTextPainterTest {
   }
 
   @Test
-  fun searchEverywhereHintIsHiddenWithoutShortcut() {
+  fun defaultProviderSearchEverywhereHintIsHiddenWithoutShortcut(@TestDisposable disposable: Disposable) {
     resetShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE, emptyList())
+    registerDefaultEmptyTextProvider(disposable)
 
     assertThat(RecordingEditorEmptyTextPainter().appendSearchEverywhereLines()).isEmpty()
   }
 
   @Test
-  fun searchEverywhereHintUsesAssignedShortcut() {
+  fun defaultProviderSearchEverywhereHintUsesAssignedShortcut(@TestDisposable disposable: Disposable) {
     resetShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE, listOf(doubleShiftShortcut))
+    registerDefaultEmptyTextProvider(disposable)
 
     val expectedLine = IdeBundle.message("empty.text.search.everywhere") +
                        " <shortcut>" + KeymapUtil.getShortcutText(doubleShiftShortcut) + "</shortcut>"
@@ -107,37 +109,37 @@ internal class EditorEmptyTextPainterTest {
   }
 
   @Test
-  fun promotedActionHintIsRenderedBeforeSearchEverywhere(@TestDisposable disposable: Disposable) {
-    resetShortcuts(PROMOTED_ACTION_ID, listOf(doubleCtrlShortcut))
+  fun emptyTextProviderHintIsRenderedBeforeDefaultProvider(@TestDisposable disposable: Disposable) {
+    resetShortcuts(PROVIDER_ACTION_ID, listOf(doubleCtrlShortcut))
     resetShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE, listOf(doubleShiftShortcut))
-    registerPromotedActionProvider(disposable)
+    registerEmptyTextProvider(disposable, includeDefaultProvider = true)
 
-    val promotedLine = PROMOTED_ACTION_TEXT + " <shortcut>" + KeymapUtil.getShortcutText(doubleCtrlShortcut) + "</shortcut>"
+    val providerLine = PROVIDER_ACTION_TEXT + " <shortcut>" + KeymapUtil.getShortcutText(doubleCtrlShortcut) + "</shortcut>"
     val searchEverywhereLine = IdeBundle.message("empty.text.search.everywhere") +
                                " <shortcut>" + KeymapUtil.getShortcutText(doubleShiftShortcut) + "</shortcut>"
     assertThat(RecordingEditorEmptyTextPainter().appendAdvertisedActionLines())
-      .startsWith(promotedLine, searchEverywhereLine)
+      .startsWith(providerLine, searchEverywhereLine)
   }
 
   @Test
-  fun promotedActionHintUsesAssignedShortcuts(@TestDisposable disposable: Disposable) {
-    resetShortcuts(PROMOTED_ACTION_ID, listOf(ctrlBackslashShortcut, doubleCtrlShortcut))
-    registerPromotedActionProvider(disposable)
+  fun emptyTextProviderHintUsesAssignedShortcuts(@TestDisposable disposable: Disposable) {
+    resetShortcuts(PROVIDER_ACTION_ID, listOf(ctrlBackslashShortcut, doubleCtrlShortcut))
+    registerEmptyTextProvider(disposable)
 
-    val lines = RecordingEditorEmptyTextPainter().appendPromotedActionLines()
+    val lines = RecordingEditorEmptyTextPainter().appendProviderActionLines()
 
     val expectedShortcutText = KeymapUtil.getShortcutText(doubleCtrlShortcut) +
                                " " + IdeBundle.message("empty.text.shortcut.separator") + " " +
                                KeymapUtil.getShortcutText(ctrlBackslashShortcut)
-    assertThat(lines).containsExactly("$PROMOTED_ACTION_TEXT <shortcut>$expectedShortcutText</shortcut>")
+    assertThat(lines).containsExactly("$PROVIDER_ACTION_TEXT <shortcut>$expectedShortcutText</shortcut>")
   }
 
   @Test
-  fun promotedActionHintIsHiddenWithoutShortcut(@TestDisposable disposable: Disposable) {
-    resetShortcuts(PROMOTED_ACTION_ID, emptyList())
-    registerPromotedActionProvider(disposable)
+  fun emptyTextProviderHintIsHiddenWithoutShortcut(@TestDisposable disposable: Disposable) {
+    resetShortcuts(PROVIDER_ACTION_ID, emptyList())
+    registerEmptyTextProvider(disposable)
 
-    assertThat(RecordingEditorEmptyTextPainter().appendPromotedActionLines()).isEmpty()
+    assertThat(RecordingEditorEmptyTextPainter().appendProviderActionLines()).isEmpty()
   }
 
   @Test
@@ -222,9 +224,9 @@ internal class EditorEmptyTextPainterTest {
 
   @Test
   fun componentProviderSuppressesEmptyTextHints(@TestDisposable disposable: Disposable) {
-    resetShortcuts(PROMOTED_ACTION_ID, listOf(doubleCtrlShortcut))
+    resetShortcuts(PROVIDER_ACTION_ID, listOf(doubleCtrlShortcut))
     resetShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE, listOf(doubleShiftShortcut))
-    registerPromotedActionProvider(disposable)
+    registerEmptyTextProvider(disposable)
     registerComponentProvider(disposable)
 
     val splitters = manager.mainSplitters
@@ -235,6 +237,68 @@ internal class EditorEmptyTextPainterTest {
 
     assertThat(findEmptyStateComponent(splitters)).isNotNull()
     assertThat(RecordingEditorEmptyTextPainter().paintEmptyTextLines(splitters)).isEmpty()
+  }
+
+  @Test
+  fun componentProviderCreationPendingSuppressesEmptyTextHints(@TestDisposable disposable: Disposable) {
+    resetShortcuts(PROVIDER_ACTION_ID, listOf(doubleCtrlShortcut))
+    registerEmptyTextProvider(disposable)
+    registerComponentProvider(disposable)
+
+    val splitters = manager.mainSplitters
+    val gateEntered = CompletableDeferred<Unit>()
+    val releaseGate = CompletableDeferred<Unit>()
+    splitters.setEmptyStateComponentCreationDelayForTests(Duration.ZERO)
+    splitters.setEmptyStateComponentCreationGateForTests {
+      gateEntered.complete(Unit)
+      releaseGate.await()
+    }
+
+    manager.closeAllFiles()
+    splitters.enableRichEmptyStateComponents()
+    waitForDeferred(gateEntered)
+
+    try {
+      assertThat(RecordingEditorEmptyTextPainter().paintEmptyTextLines(splitters)).isEmpty()
+    }
+    finally {
+      releaseGate.complete(Unit)
+      waitForEmptyStateComponentCreation(splitters)
+    }
+  }
+
+  @Test
+  fun emptyTextHintsReturnWhenAvailableComponentProviderCreatesNothing(@TestDisposable disposable: Disposable) {
+    resetShortcuts(PROVIDER_ACTION_ID, listOf(doubleCtrlShortcut))
+    registerEmptyTextProvider(disposable)
+    registerNullComponentProvider(disposable)
+
+    val splitters = manager.mainSplitters
+    manager.closeAllFiles()
+    enableRichEmptyStateComponentsWithoutDelay(splitters)
+    splitters.updateEmptyStateComponent()
+    waitForEmptyStateComponentCreation(splitters)
+
+    assertThat(findEmptyStateComponent(splitters)).isNull()
+    assertThat(RecordingEditorEmptyTextPainter().paintEmptyTextLines(splitters))
+      .containsExactly(PROVIDER_ACTION_TEXT + " <shortcut>" + KeymapUtil.getShortcutText(doubleCtrlShortcut) + "</shortcut>")
+  }
+
+  @Test
+  fun unavailableComponentProviderDoesNotSuppressEmptyTextHints(@TestDisposable disposable: Disposable) {
+    resetShortcuts(PROVIDER_ACTION_ID, listOf(doubleCtrlShortcut))
+    registerEmptyTextProvider(disposable)
+    registerUnavailableComponentProvider(disposable)
+
+    val splitters = manager.mainSplitters
+    manager.closeAllFiles()
+    enableRichEmptyStateComponentsWithoutDelay(splitters)
+    splitters.updateEmptyStateComponent()
+    waitForEmptyStateComponentCreation(splitters)
+
+    assertThat(findEmptyStateComponent(splitters)).isNull()
+    assertThat(RecordingEditorEmptyTextPainter().paintEmptyTextLines(splitters))
+      .containsExactly(PROVIDER_ACTION_TEXT + " <shortcut>" + KeymapUtil.getShortcutText(doubleCtrlShortcut) + "</shortcut>")
   }
 
   @Test
@@ -444,12 +508,21 @@ internal class EditorEmptyTextPainterTest {
     assertThat(disposedComponents).hasValue(1)
   }
 
-  private fun registerPromotedActionProvider(disposable: Disposable) {
-    ExtensionTestUtil.maskExtensions(EditorEmptyTextPromotedActionProvider.EP_NAME, listOf(object : EditorEmptyTextPromotedActionProvider {
-      override fun getPromotedAction(splitters: JComponent): EditorEmptyTextPromotedActionProvider.PromotedAction {
-        return EditorEmptyTextPromotedActionProvider.PromotedAction(PROMOTED_ACTION_ID, PROMOTED_ACTION_TEXT)
+  private fun registerDefaultEmptyTextProvider(disposable: Disposable) {
+    ExtensionTestUtil.maskExtensions(EditorEmptyTextProvider.EP_NAME, listOf(DefaultEditorEmptyTextProvider()), disposable)
+  }
+
+  private fun registerEmptyTextProvider(disposable: Disposable, includeDefaultProvider: Boolean = false) {
+    ExtensionTestUtil.maskExtensions(EditorEmptyTextProvider.EP_NAME, buildList {
+      add(object : EditorEmptyTextProvider {
+        override fun appendEmptyText(splitters: JComponent, sink: EditorEmptyTextSink) {
+          sink.appendActionWithShortcuts(PROVIDER_ACTION_TEXT, PROVIDER_ACTION_ID)
+        }
+      })
+      if (includeDefaultProvider) {
+        add(DefaultEditorEmptyTextProvider())
       }
-    }), disposable)
+    }, disposable)
   }
 
   private fun registerComponentProvider(disposable: Disposable, disposedComponents: AtomicInteger = AtomicInteger()) {
@@ -463,6 +536,22 @@ internal class EditorEmptyTextPainterTest {
 
       override fun disposeComponent(component: JComponent) {
         disposedComponents.incrementAndGet()
+      }
+    }), disposable)
+  }
+
+  private fun registerNullComponentProvider(disposable: Disposable) {
+    ExtensionTestUtil.maskExtensions(EditorEmptyStateComponentProvider.EP_NAME, listOf(object : EditorEmptyStateComponentProvider {
+      override suspend fun createComponent(splitters: EditorsSplitters): JComponent? = null
+    }), disposable)
+  }
+
+  private fun registerUnavailableComponentProvider(disposable: Disposable) {
+    ExtensionTestUtil.maskExtensions(EditorEmptyStateComponentProvider.EP_NAME, listOf(object : EditorEmptyStateComponentProvider {
+      override fun isAvailable(splitters: EditorsSplitters): Boolean = false
+
+      override suspend fun createComponent(splitters: EditorsSplitters): JComponent {
+        error("Unavailable provider must not be invoked")
       }
     }), disposable)
   }
@@ -527,8 +616,8 @@ internal class EditorEmptyTextPainterTest {
     private val lines = mutableListOf<String>()
 
     fun appendSearchEverywhereLines(): List<String> {
-      appendSearchEverywhere(createTextPainter())
-      return lines
+      advertiseActions(JPanel(), createTextPainter())
+      return lines.filter { it.startsWith(IdeBundle.message("empty.text.search.everywhere")) }
     }
 
     fun appendAdvertisedActionLines(): List<String> {
@@ -536,9 +625,9 @@ internal class EditorEmptyTextPainterTest {
       return lines
     }
 
-    fun appendPromotedActionLines(): List<String> {
+    fun appendProviderActionLines(): List<String> {
       advertiseActions(JPanel(), createTextPainter())
-      return lines.filter { it.startsWith(PROMOTED_ACTION_TEXT) }
+      return lines.filter { it.startsWith(PROVIDER_ACTION_TEXT) }
     }
 
     fun paintEmptyTextLines(splitters: JComponent): List<String> {
@@ -559,8 +648,8 @@ internal class EditorEmptyTextPainterTest {
   }
 
   private companion object {
-    const val PROMOTED_ACTION_ID: String = "EditorEmptyTextPainterTest.PromotedAction"
-    const val PROMOTED_ACTION_TEXT: String = "Promoted Action"
+    const val PROVIDER_ACTION_ID: String = "EditorEmptyTextPainterTest.ProviderAction"
+    const val PROVIDER_ACTION_TEXT: String = "Provider Action"
     const val EMPTY_STATE_COMPONENT_NAME: String = "EditorEmptyTextPainterTest.EmptyStateComponent"
   }
 }

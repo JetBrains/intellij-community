@@ -4,7 +4,7 @@ description: Requirements for opening, focusing, submitting, and routing the Age
 targets:
   - ../../prompt/ui/src/actions/AgentWorkbenchGlobalPromptAction.kt
   - ../../prompt/ui/src/emptyState/AgentWorkbenchInlinePromptEmptyStateProvider.kt
-  - ../../prompt/ui/src/actions/AgentWorkbenchGlobalPromptEmptyTextPromotedActionProvider.kt
+  - ../../prompt/ui/src/actions/AgentWorkbenchGlobalPromptEmptyTextProvider.kt
   - ../../prompt/ui/src/AgentPromptPalettePopupService.kt
   - ../../prompt/ui/src/AgentPromptPalettePopup.kt
   - ../../prompt/ui/src/AgentPromptPaletteView.kt
@@ -36,7 +36,7 @@ The global prompt opens a project-scoped prompt surface for starting a new task 
 
 - The inline empty-state composer is gated by the `agent.workbench.inline.empty.state.prompt` system property, enabled by default. When enabled, the inline provider creates the composer and the redundant `AgentWorkbenchPrompt.OpenGlobalPalette` promoted-text hint is suppressed. When disabled, the inline provider creates no component and the promoted-text hint is shown as the empty-editor affordance instead.
   [@test] ../../prompt/ui/testSrc/emptyState/AgentWorkbenchInlinePromptEmptyStateProviderTest.kt
-  [@test] ../../prompt/ui/testSrc/actions/AgentWorkbenchGlobalPromptEmptyTextPromotedActionProviderTest.kt
+  [@test] ../../prompt/ui/testSrc/actions/AgentWorkbenchGlobalPromptEmptyTextProviderTest.kt
 
 - Showing the empty editor state must not auto-focus the inline composer. Invoking `AgentWorkbenchPrompt.OpenGlobalPalette` opens the ordinary global prompt popup even when the inline composer is visible in the empty editor state.
   [@test] ../../prompt/ui/testSrc/AgentPromptPalettePopupServiceTest.kt

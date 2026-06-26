@@ -24,8 +24,8 @@
     <editorFloatingToolbarProvider
       implementation="com.intellij.agent.workbench.prompt.ui.actions.AgentWorkbenchScratchPromptFloatingToolbarProvider"
       id="AgentWorkbenchScratchPromptFloatingToolbarProvider"/>
-    <editorEmptyTextPromotedActionProvider
-      implementation="com.intellij.agent.workbench.prompt.ui.actions.AgentWorkbenchGlobalPromptEmptyTextPromotedActionProvider"
+    <editorEmptyTextProvider
+      implementation="com.intellij.agent.workbench.prompt.ui.actions.AgentWorkbenchGlobalPromptEmptyTextProvider"
       order="first"/>
     <editorEmptyStateComponentProvider implementation="com.intellij.agent.workbench.prompt.ui.emptyState.AgentWorkbenchInlinePromptEmptyStateProvider"/>
     <projectSettings service="com.intellij.agent.workbench.prompt.ui.AgentPromptUiSessionStateService"/>

@@ -44,6 +44,8 @@ import javax.swing.KeyStroke
 import javax.swing.SwingConstants
 
 internal class AgentWorkbenchInlinePromptEmptyStateProvider : EditorEmptyStateComponentProvider {
+  override fun isAvailable(splitters: EditorsSplitters): Boolean = isInlineEmptyStatePromptEnabled()
+
   override suspend fun createComponent(splitters: EditorsSplitters): JComponent? {
     if (!isInlineEmptyStatePromptEnabled()) {
       return null
@@ -229,7 +231,7 @@ private const val INLINE_PROMPT_PLACE: String = "EditorEmptyState"
 /**
  * Feature flag for the inline Agent prompt shown in the empty editor.
  * When disabled, the inline composer is not created and the
- * `AgentWorkbenchGlobalPromptEmptyTextPromotedActionProvider` painted hint is used instead.
+ * `AgentWorkbenchGlobalPromptEmptyTextProvider` painted hint is used instead.
  */
 internal const val INLINE_EMPTY_STATE_PROMPT_PROPERTY: String = "agent.workbench.inline.empty.state.prompt"
 
