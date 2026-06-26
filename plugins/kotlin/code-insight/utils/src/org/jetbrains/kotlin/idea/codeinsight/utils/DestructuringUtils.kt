@@ -12,8 +12,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.config.LanguageFeature.DeprecateNameMismatchInShortDestructuringWithParentheses
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
@@ -100,19 +98,24 @@ fun KtDestructuringDeclaration.buildNameBasedDestructuringText(
     val useShortForm = !nameBasedDestructuringForm.useFullForm
     val originalKeyword = if (isVar) "var" else "val"
     val keyword = "".takeIf { positionBased || useShortForm } ?: originalKeyword
-    val newEntries = names.zip(destructuringNames) { entry, name ->
-        buildString {
-            append(keyword)
-            if (keyword.isNotEmpty()) {
-                append(" ")
-            }
-            append(entry)
-            if (!positionBased && (useExplicitMappings || entry != name)) {
-                append(" = ")
-                append(name)
+    val newEntries = names
+        .filter { it != "_" }
+        .zip(destructuringNames) { entry, name ->
+            buildString {
+                append(keyword)
+                if (keyword.isNotEmpty()) {
+                    append(" ")
+                }
+                append(entry)
+                if (!positionBased && (useExplicitMappings || entry != name)) {
+                    append(" = ")
+                    append(name)
+                }
             }
         }
-    }.joinToString(", ")
+        .takeIf { it.isNotEmpty() }
+        ?.joinToString(", ")
+        ?: return null
 
     val declarationText =
         buildString {
@@ -125,18 +128,6 @@ fun KtDestructuringDeclaration.buildNameBasedDestructuringText(
             append(nameBasedDestructuringForm.rightParenthesis)
         }
     return initializer?.let { "$declarationText = ${it.text}" } ?: declarationText
-}
-
-@ApiStatus.Internal
-context(session: KaSession)
-fun KtDestructuringDeclaration.buildNameBasedDestructuringText(useExplicitMappings: Boolean = false): String? {
-    val positionalDestructuringType = isPositionalDestructuringType()
-    val useFullForm = !languageVersionSettings.supportsFeature(DeprecateNameMismatchInShortDestructuringWithParentheses)
-    val names = session.extractPrimaryParameters(this)?.map { it.name.asString() } ?: return null
-    return buildNameBasedDestructuringText(
-        NameBasedDestructuringForm(names, positionalDestructuringType, useFullForm),
-        useExplicitMappings
-    )
 }
 
 /**
