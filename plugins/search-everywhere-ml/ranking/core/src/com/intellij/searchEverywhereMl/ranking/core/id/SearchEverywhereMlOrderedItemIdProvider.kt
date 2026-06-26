@@ -1,5 +1,6 @@
 package com.intellij.searchEverywhereMl.ranking.core.id
 
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.searchEverywhereMl.ranking.ext.SearchEverywhereElementKeyProvider
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -25,6 +26,6 @@ internal class SearchEverywhereMlOrderedItemIdProvider(private val onNullKey: (e
       return null
     }
 
-    return itemToId.computeIfAbsent(key) { idCounter.getAndIncrement() }
+    return runReadActionBlocking { itemToId.computeIfAbsent(key) { idCounter.getAndIncrement() } }
   }
 }
