@@ -3,8 +3,8 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
     name = "execution-process-mediator-common-tests_test",
-    jvm_flags = ["-ea"],
     timeout = "moderate",
+    jvm_flags = ["-ea"],
     tags = ["community-aggregator"],
     runtime_deps = [":execution-process-mediator-common-tests_test_lib"],
 )
