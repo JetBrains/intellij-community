@@ -785,6 +785,26 @@ class ElfDocumentTest {
   }
 
   @Test
+  fun `test later elf insert keeps its position when an earlier elf insert shifts a real insert past it`() {
+    withLockFreeTyping {
+      val document = DocumentImpl("ABCDE")
+      val elfDocument = getElfDocument(document)
+      withElfScope {
+        runCommandAction {
+          document.insertString(0, "XXX")
+          document.insertString(4, "Q")
+        }
+      }
+      assertEquals("ABCDE", document.text)
+      assertEquals("XXXAQBCDE", elfDocument.text)
+      runWriteCommandAction {
+        document.insertString(3, "Z")
+      }
+      waitForTextAndAssertSnapshots(document, elfDocument, "XXXAQBCZDE")
+    }
+  }
+
+  @Test
   fun `test later elf change stays reverted when real change replaced its old text`() {
     withLockFreeTyping {
       val document = DocumentImpl("abc")

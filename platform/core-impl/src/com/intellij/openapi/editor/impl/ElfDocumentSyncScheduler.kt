@@ -87,8 +87,33 @@ abstract class ElfDocumentSyncScheduler {
   }
 
   companion object {
-    private val DISPATCHER: CoroutineDispatcher = Dispatchers.Default.limitedParallelism(1, "Elf document dispatcher")
+    private val DISPATCHER: CoroutineDispatcher = Dispatchers.Default.limitedParallelism(1, "ELF_DOCUMENT_DISPATCHER")
 
+    /**
+     * The heart of the "lock-free" typing approach.
+     *
+     * Lock-free typing is not lock-*less*. The authoritative real document must still be updated under the global write
+     * lock, because PSI, undo, persistence and every other read-lock holder rely on that lock for consistency. What
+     * changes is *when* and *on which thread* the write lock is taken.
+     *
+     * In the classic model the keystroke itself takes the write lock on the EDT, so the EDT blocks until all in-flight
+     * read actions (indexing, code analysis, ...) drain before the character can be inserted — that wait is the typing
+     * freeze. Here, typing only mutates the lock-free elf view on the EDT and returns immediately; updating the real
+     * document is deferred to this method and pushed off the critical path:
+     *
+     * 1. The work is launched on a background coroutine; the single-threaded `DISPATCHER` keeps a document's sync passes
+     *    ordered.
+     * 2. `backgroundWriteAction` acquires the global write lock *on that background thread*. The expensive part of
+     *    taking the write lock — waiting for in-flight read actions to finish — therefore happens off the EDT and never
+     *    freezes the UI.
+     * 3. `runOnEdtWithTransferredWriteActionAndWait` hands the *already acquired* write lock to the EDT and runs `action`
+     *    there. The EDT performs the real-document mutation and fires its listeners with the lock already in hand; it
+     *    never blocks acquiring the lock.
+     *
+     * Net effect: the user sees the typed character instantly (elf view, no lock), while the write-lock-guarded
+     * reconciliation into the real document runs asynchronously and coalesced via `schedule`. The EDT is never blocked
+     * waiting for the write lock, so typing does not freeze.
+     */
     fun invokeLaterWithWriteAccess(@RequiresEdt @RequiresWriteLock action: Runnable) {
       service<MyService>().cs.launch(DISPATCHER) {
         backgroundWriteAction {
