@@ -1,6 +1,6 @@
 # WebView IconSet Loading Plan
 
-Status: ⬜ **DESIGN ONLY**. No Kotlin icon-set registration API, no TypeScript `IconSet` helper, and no WebView icon asset route exist yet. This doc is the v1 spec when work starts.
+Status: ✅ **IMPLEMENTED V1**. Kotlin icon-set registration, the TypeScript `IconSet` helper, and the WebView icon asset route are implemented for raw SVG/PNG classpath resources.
 
 ## Goal
 

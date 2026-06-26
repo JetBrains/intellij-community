@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import "@jetbrains/intellij-webview-controls/define/all"
+import { IconSet } from "@jetbrains/intellij-webview"
 import type { JbControlOption } from "@jetbrains/intellij-webview-controls"
 
 interface ItemsControl extends HTMLElement {
@@ -13,11 +14,74 @@ if (!root) {
   throw new Error("#root missing")
 }
 
+const AllIcons = IconSet.define("AllIcons")
+
+interface IconSample {
+  name: string
+  path: string
+}
+
+const iconSamples: IconSample[] = [
+  { name: "Run", path: "expui/run/run.svg" },
+  { name: "Stop", path: "expui/run/stop.svg" },
+  { name: "Pause", path: "expui/run/pause.svg" },
+  { name: "Gutter Run", path: "expui/gutter/run.svg" },
+  { name: "Refresh", path: "expui/actions/forceRefresh.svg" },
+  { name: "Play First", path: "expui/actions/playFirst.svg" },
+  { name: "Play Back", path: "expui/actions/playBack.svg" },
+  { name: "Play Forward", path: "expui/actions/playForward.svg" },
+  { name: "Play Last", path: "expui/actions/playLast.svg" },
+  { name: "Add", path: "expui/general/add.svg" },
+  { name: "Remove", path: "expui/general/remove.svg" },
+  { name: "Delete", path: "expui/general/delete.svg" },
+  { name: "Edit", path: "expui/general/edit.svg" },
+  { name: "Save", path: "expui/general/save.svg" },
+  { name: "Close", path: "expui/general/close.svg" },
+  { name: "Search", path: "expui/general/search.svg" },
+  { name: "Filter", path: "expui/general/filter.svg" },
+  { name: "Settings", path: "expui/general/settings.svg" },
+  { name: "Help", path: "expui/general/help.svg" },
+  { name: "Export", path: "expui/general/export.svg" },
+  { name: "Layout", path: "expui/general/layout.svg" },
+  { name: "User", path: "expui/general/user.svg" },
+  { name: "Locked", path: "expui/general/locked.svg" },
+  { name: "Commit", path: "expui/vcs/commit.svg" },
+  { name: "Update", path: "expui/vcs/update.svg" },
+  { name: "Diff", path: "expui/vcs/diff.svg" },
+  { name: "VCS Remove", path: "expui/vcs/remove.svg" },
+  { name: "Breakpoint", path: "expui/breakpoints/breakpoint.svg" },
+  { name: "Info", path: "expui/status/info.svg" },
+  { name: "Success", path: "expui/status/success.svg" },
+  { name: "Warning", path: "expui/status/warning.svg" },
+  { name: "Error", path: "expui/status/error.svg" },
+  { name: "Folder", path: "expui/nodes/folder.svg" },
+  { name: "Package", path: "expui/nodes/package.svg" },
+  { name: "Function", path: "expui/nodes/function.svg" },
+  { name: "Plugin", path: "expui/nodes/plugin.svg" },
+  { name: "Unknown Node", path: "expui/nodes/unknown.svg" },
+  { name: "YAML", path: "expui/fileTypes/yaml.svg" },
+  { name: "Gradle", path: "expui/fileTypes/gradle.svg" },
+  { name: "Docker", path: "expui/fileTypes/docker.svg" },
+  { name: "SQL", path: "expui/fileTypes/sql.svg" },
+  { name: "Properties", path: "expui/fileTypes/properties.svg" },
+  { name: "Run Tool Window", path: "expui/toolwindows/run.svg" },
+  { name: "Commit Tool Window", path: "expui/toolwindows/commit.svg" },
+  { name: "Profiler Tool Window", path: "expui/toolwindows/profiler.svg" },
+  { name: "Structure Tool Window", path: "expui/toolwindows/structure.svg" },
+  { name: "Palette Tool Window", path: "expui/toolwindows/palette.svg" },
+  { name: "External Link", path: "expui/ide/externalLink.svg" },
+]
+
 const sections = {
   "components": {
     title: "Components",
     note: "Batch 1 primitives and first batch 2 composites rendered with Int UI Kit: Islands mapping.",
     render: renderComponents,
+  },
+  "icons": {
+    title: "AllIcons",
+    note: "Classpath icon resources rendered through IconSet.define(\"AllIcons\") and the WebView icon asset route.",
+    render: renderIcons,
   },
   "labels-help": {
     title: "Labels and help text",
@@ -74,6 +138,40 @@ hydrateControls(root)
 
 function normalizeSection(value: string | null): SectionId {
   return value && value in sections ? value as SectionId : "components"
+}
+
+function renderIcons(): string {
+  const iconItems = iconSamples.map((icon) => `
+    <div class="icon-sample">
+      <span class="icon-preview">${renderIconImage(icon.path)}</span>
+      <span class="icon-name">${icon.name}</span>
+      <code class="icon-path">${icon.path}</code>
+    </div>
+  `).join("")
+
+  return `
+    <div class="showcase-grid icons-showcase-grid">
+      <section class="panel icons-panel">
+        <p class="panel-title">AllIcons resource paths</p>
+        <div class="icon-grid">
+          ${iconItems}
+        </div>
+      </section>
+      <section class="panel icons-panel">
+        <p class="panel-title">Inline usage</p>
+        <div class="form-stack">
+          <div class="inline-icon-row">${renderIconImage("expui/run/run.svg")}<jb-text>Run configuration</jb-text></div>
+          <div class="inline-icon-row">${renderIconImage("expui/vcs/update.svg")}<jb-text>Update project</jb-text></div>
+          <div class="inline-icon-row">${renderIconImage("expui/breakpoints/breakpoint.svg")}<jb-text>Line breakpoint</jb-text></div>
+          <jb-help-text>Switch the IDE theme to verify that dark icon variants are requested through a different URL.</jb-help-text>
+        </div>
+      </section>
+    </div>
+  `
+}
+
+function renderIconImage(path: string): string {
+  return `<jb-icon src="${AllIcons.src(path)}"></jb-icon>`
 }
 
 function renderComponents(): string {

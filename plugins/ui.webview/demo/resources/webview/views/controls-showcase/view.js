@@ -1095,9 +1095,18 @@ var JbIcon = class extends i$1 {
 		size: {
 			type: String,
 			reflect: true
+		},
+		src: {
+			type: String,
+			reflect: true
 		}
 	};
 	static styles = [hostStyles, i`
+    :host {
+      display: inline-flex;
+      vertical-align: middle;
+    }
+
     .icon {
       align-items: center;
       color: currentColor;
@@ -1112,12 +1121,23 @@ var JbIcon = class extends i$1 {
       height: 20px;
       width: 20px;
     }
+
+    img {
+      display: block;
+      height: 100%;
+      width: 100%;
+    }
   `];
 	label = "";
 	name = "";
 	size = "default";
+	src = "";
 	render() {
-		return b`<span part="icon" class=${["icon", this.size].join(" ")} role=${this.label ? "img" : A} aria-label=${this.label || A}><slot>${this.name}</slot></span>`;
+		return b`<span part="icon" class=${["icon", this.size].join(" ")} role=${this.label ? "img" : A} aria-label=${this.label || A}>${this.renderContent()}</span>`;
+	}
+	renderContent() {
+		if (this.src) return b`<img src=${this.src} alt="" draggable="false">`;
+		return b`<slot>${this.name}</slot>`;
 	}
 };
 //#endregion
@@ -1929,14 +1949,305 @@ function defineAllControls(registry = customElements) {
 //#region ../../webview-src/packages/controls/src/define/all.ts
 defineAllControls();
 //#endregion
+//#region ../../webview-src/packages/api/src/webViewApi.ts
+function apiId() {
+	return function createApiId(namespace) {
+		validateApiNamespace(namespace);
+		return { namespace };
+	};
+}
+function validateApiNamespace(namespace) {
+	if (typeof namespace !== "string" || namespace.length === 0) throw new Error("WebView API namespace must be a non-empty string");
+	if (namespace.startsWith(".") || namespace.endsWith(".") || namespace.startsWith("/") || namespace.endsWith("/")) throw new Error("WebView API namespace must not start or end with '.' or '/': " + namespace);
+	if (!/^[A-Za-z0-9_.-]+$/.test(namespace)) throw new Error("WebView API namespace contains unsupported characters: " + namespace);
+}
+apiId()("webview.theme");
+apiId()("webview.theme");
+function getWebViewTheme() {
+	return window.__WVI_THEME__;
+}
+function requireWebViewTheme() {
+	const theme = getWebViewTheme();
+	if (!theme) throw new Error("WebView theme is not installed. Load /__webview/wvi-platform-features.js after /__webview/wvi-bridge.js before theme-aware application code.");
+	return theme;
+}
+function createLazyWebViewTheme() {
+	return new Proxy({}, {
+		get(_target, property, receiver) {
+			return Reflect.get(requireWebViewTheme(), property, receiver);
+		},
+		set(_target, property, value, receiver) {
+			return Reflect.set(requireWebViewTheme(), property, value, receiver);
+		},
+		has(_target, property) {
+			return property in requireWebViewTheme();
+		}
+	});
+}
+var webViewTheme = createLazyWebViewTheme();
+//#endregion
+//#region ../../webview-src/packages/api/src/iconSet.ts
+var IconSet = /* @__PURE__ */ Object.freeze({ define(id) {
+	validateIconSetId(id);
+	return new DefinedIconSet(id);
+} });
+var DefinedIconSet = class {
+	id;
+	constructor(id) {
+		this.id = id;
+	}
+	src(resourcePath) {
+		validateIconResourcePath(resourcePath);
+		return `./__ij-icons/${this.id}/${webViewTheme.current}/${encodeIconResourcePath(resourcePath)}`;
+	}
+};
+function validateIconSetId(id) {
+	if (!/^[A-Za-z][A-Za-z0-9._-]*$/.test(id)) throw new Error(`Invalid WebView icon set id: ${id}`);
+}
+function validateIconResourcePath(resourcePath) {
+	if (resourcePath.length === 0 || resourcePath.startsWith("/") || resourcePath.includes("\\")) throw new Error(`Invalid WebView icon resource path: ${resourcePath}`);
+	if (/^[A-Za-z][A-Za-z0-9+.-]*:/.test(resourcePath)) throw new Error(`Invalid WebView icon resource path: ${resourcePath}`);
+	if (resourcePath.split("/").some((segment) => segment.length === 0 || segment === "." || segment === "..")) throw new Error(`Invalid WebView icon resource path: ${resourcePath}`);
+	if (!resourcePath.endsWith(".svg") && !resourcePath.endsWith(".png")) throw new Error(`Unsupported WebView icon resource extension: ${resourcePath}`);
+}
+function encodeIconResourcePath(resourcePath) {
+	return resourcePath.split("/").map((segment) => encodeURIComponent(segment)).join("/");
+}
+apiId()("webview.focus");
+apiId()("webview.focus");
+//#endregion
+//#region ../../webview-src/packages/api/src/bridge.ts
+function getWebViewBridge() {
+	return window.__WVI__;
+}
+function requireWebViewBridge() {
+	const bridge = getWebViewBridge();
+	if (!bridge) throw new Error("WebView bridge is not installed. Load /__webview/wvi-bridge.js before application code.");
+	return bridge;
+}
+function createLazyWebViewBridge() {
+	return new Proxy({}, {
+		get(_target, property, receiver) {
+			return Reflect.get(requireWebViewBridge(), property, receiver);
+		},
+		set(_target, property, value, receiver) {
+			return Reflect.set(requireWebViewBridge(), property, value, receiver);
+		},
+		has(_target, property) {
+			return property in requireWebViewBridge();
+		}
+	});
+}
+createLazyWebViewBridge();
+//#endregion
 //#region views/controls-showcase/src/main.ts
 var root = document.getElementById("root");
 if (!root) throw new Error("#root missing");
+var AllIcons = IconSet.define("AllIcons");
+var iconSamples = [
+	{
+		name: "Run",
+		path: "expui/run/run.svg"
+	},
+	{
+		name: "Stop",
+		path: "expui/run/stop.svg"
+	},
+	{
+		name: "Pause",
+		path: "expui/run/pause.svg"
+	},
+	{
+		name: "Gutter Run",
+		path: "expui/gutter/run.svg"
+	},
+	{
+		name: "Refresh",
+		path: "expui/actions/forceRefresh.svg"
+	},
+	{
+		name: "Play First",
+		path: "expui/actions/playFirst.svg"
+	},
+	{
+		name: "Play Back",
+		path: "expui/actions/playBack.svg"
+	},
+	{
+		name: "Play Forward",
+		path: "expui/actions/playForward.svg"
+	},
+	{
+		name: "Play Last",
+		path: "expui/actions/playLast.svg"
+	},
+	{
+		name: "Add",
+		path: "expui/general/add.svg"
+	},
+	{
+		name: "Remove",
+		path: "expui/general/remove.svg"
+	},
+	{
+		name: "Delete",
+		path: "expui/general/delete.svg"
+	},
+	{
+		name: "Edit",
+		path: "expui/general/edit.svg"
+	},
+	{
+		name: "Save",
+		path: "expui/general/save.svg"
+	},
+	{
+		name: "Close",
+		path: "expui/general/close.svg"
+	},
+	{
+		name: "Search",
+		path: "expui/general/search.svg"
+	},
+	{
+		name: "Filter",
+		path: "expui/general/filter.svg"
+	},
+	{
+		name: "Settings",
+		path: "expui/general/settings.svg"
+	},
+	{
+		name: "Help",
+		path: "expui/general/help.svg"
+	},
+	{
+		name: "Export",
+		path: "expui/general/export.svg"
+	},
+	{
+		name: "Layout",
+		path: "expui/general/layout.svg"
+	},
+	{
+		name: "User",
+		path: "expui/general/user.svg"
+	},
+	{
+		name: "Locked",
+		path: "expui/general/locked.svg"
+	},
+	{
+		name: "Commit",
+		path: "expui/vcs/commit.svg"
+	},
+	{
+		name: "Update",
+		path: "expui/vcs/update.svg"
+	},
+	{
+		name: "Diff",
+		path: "expui/vcs/diff.svg"
+	},
+	{
+		name: "VCS Remove",
+		path: "expui/vcs/remove.svg"
+	},
+	{
+		name: "Breakpoint",
+		path: "expui/breakpoints/breakpoint.svg"
+	},
+	{
+		name: "Info",
+		path: "expui/status/info.svg"
+	},
+	{
+		name: "Success",
+		path: "expui/status/success.svg"
+	},
+	{
+		name: "Warning",
+		path: "expui/status/warning.svg"
+	},
+	{
+		name: "Error",
+		path: "expui/status/error.svg"
+	},
+	{
+		name: "Folder",
+		path: "expui/nodes/folder.svg"
+	},
+	{
+		name: "Package",
+		path: "expui/nodes/package.svg"
+	},
+	{
+		name: "Function",
+		path: "expui/nodes/function.svg"
+	},
+	{
+		name: "Plugin",
+		path: "expui/nodes/plugin.svg"
+	},
+	{
+		name: "Unknown Node",
+		path: "expui/nodes/unknown.svg"
+	},
+	{
+		name: "YAML",
+		path: "expui/fileTypes/yaml.svg"
+	},
+	{
+		name: "Gradle",
+		path: "expui/fileTypes/gradle.svg"
+	},
+	{
+		name: "Docker",
+		path: "expui/fileTypes/docker.svg"
+	},
+	{
+		name: "SQL",
+		path: "expui/fileTypes/sql.svg"
+	},
+	{
+		name: "Properties",
+		path: "expui/fileTypes/properties.svg"
+	},
+	{
+		name: "Run Tool Window",
+		path: "expui/toolwindows/run.svg"
+	},
+	{
+		name: "Commit Tool Window",
+		path: "expui/toolwindows/commit.svg"
+	},
+	{
+		name: "Profiler Tool Window",
+		path: "expui/toolwindows/profiler.svg"
+	},
+	{
+		name: "Structure Tool Window",
+		path: "expui/toolwindows/structure.svg"
+	},
+	{
+		name: "Palette Tool Window",
+		path: "expui/toolwindows/palette.svg"
+	},
+	{
+		name: "External Link",
+		path: "expui/ide/externalLink.svg"
+	}
+];
 var sections = {
 	"components": {
 		title: "Components",
 		note: "Batch 1 primitives and first batch 2 composites rendered with Int UI Kit: Islands mapping.",
 		render: renderComponents
+	},
+	"icons": {
+		title: "AllIcons",
+		note: "Classpath icon resources rendered through IconSet.define(\"AllIcons\") and the WebView icon asset route.",
+		render: renderIcons
 	},
 	"labels-help": {
 		title: "Labels and help text",
@@ -1987,6 +2298,36 @@ root.innerHTML = `
 hydrateControls(root);
 function normalizeSection(value) {
 	return value && value in sections ? value : "components";
+}
+function renderIcons() {
+	return `
+    <div class="showcase-grid icons-showcase-grid">
+      <section class="panel icons-panel">
+        <p class="panel-title">AllIcons resource paths</p>
+        <div class="icon-grid">
+          ${iconSamples.map((icon) => `
+    <div class="icon-sample">
+      <span class="icon-preview">${renderIconImage(icon.path)}</span>
+      <span class="icon-name">${icon.name}</span>
+      <code class="icon-path">${icon.path}</code>
+    </div>
+  `).join("")}
+        </div>
+      </section>
+      <section class="panel icons-panel">
+        <p class="panel-title">Inline usage</p>
+        <div class="form-stack">
+          <div class="inline-icon-row">${renderIconImage("expui/run/run.svg")}<jb-text>Run configuration</jb-text></div>
+          <div class="inline-icon-row">${renderIconImage("expui/vcs/update.svg")}<jb-text>Update project</jb-text></div>
+          <div class="inline-icon-row">${renderIconImage("expui/breakpoints/breakpoint.svg")}<jb-text>Line breakpoint</jb-text></div>
+          <jb-help-text>Switch the IDE theme to verify that dark icon variants are requested through a different URL.</jb-help-text>
+        </div>
+      </section>
+    </div>
+  `;
+}
+function renderIconImage(path) {
+	return `<jb-icon src="${AllIcons.src(path)}"></jb-icon>`;
 }
 function renderComponents() {
 	return `

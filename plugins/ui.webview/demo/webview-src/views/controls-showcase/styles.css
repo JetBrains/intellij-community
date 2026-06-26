@@ -119,6 +119,72 @@
 .swatch.panel-bg { background: var(--jb-bg-panel); }
 .swatch.input-bg { background: var(--jb-bg-input); }
 
+.icons-showcase-grid {
+  grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+}
+
+.icons-panel {
+  align-self: start;
+}
+
+.icon-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.icon-sample {
+  align-items: center;
+  border: 1px solid var(--jb-border-color-muted);
+  border-radius: 6px;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 28px minmax(80px, max-content) minmax(0, 1fr);
+  min-height: 42px;
+  min-width: 0;
+  padding: 7px 8px;
+}
+
+.icon-preview {
+  align-items: center;
+  background: var(--jb-bg-panel);
+  border: 1px solid var(--jb-border-color-muted);
+  border-radius: 4px;
+  display: inline-flex;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+}
+
+.icon-preview jb-icon,
+.inline-icon-row jb-icon {
+  height: 16px;
+  width: 16px;
+}
+
+.icon-name {
+  font-weight: var(--jb-font-weight-medium);
+  min-width: 0;
+}
+
+.icon-path {
+  color: var(--jb-text-muted);
+  font-family: var(--ij-editor-font, "JetBrains Mono"), monospace;
+  font-size: var(--jb-font-size-small);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inline-icon-row {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 16px minmax(0, 1fr);
+  min-height: 20px;
+}
+
 @media (max-width: 560px) {
   .showcase-shell {
     padding: 10px;
@@ -126,5 +192,13 @@
 
   .showcase-grid {
     grid-template-columns: 1fr;
+  }
+
+  .icon-sample {
+    grid-template-columns: 28px minmax(0, 1fr);
+  }
+
+  .icon-path {
+    grid-column: 2;
   }
 }

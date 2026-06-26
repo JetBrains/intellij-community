@@ -9,9 +9,15 @@ export class JbIcon extends LitElement {
     label: { type: String, reflect: true },
     name: { type: String, reflect: true },
     size: { type: String, reflect: true },
+    src: { type: String, reflect: true },
   }
 
   static styles = [hostStyles, css`
+    :host {
+      display: inline-flex;
+      vertical-align: middle;
+    }
+
     .icon {
       align-items: center;
       color: currentColor;
@@ -26,14 +32,28 @@ export class JbIcon extends LitElement {
       height: 20px;
       width: 20px;
     }
+
+    img {
+      display: block;
+      height: 100%;
+      width: 100%;
+    }
   `]
 
   label = ""
   name = ""
   size = "default"
+  src = ""
 
   render(): TemplateResult {
-    return html`<span part="icon" class=${["icon", this.size].join(" ")} role=${this.label ? "img" : nothing} aria-label=${this.label || nothing}><slot>${this.name}</slot></span>`
+    return html`<span part="icon" class=${["icon", this.size].join(" ")} role=${this.label ? "img" : nothing} aria-label=${this.label || nothing}>${this.renderContent()}</span>`
+  }
+
+  private renderContent(): TemplateResult {
+    if (this.src) {
+      return html`<img src=${this.src} alt="" draggable="false">`
+    }
+    return html`<slot>${this.name}</slot>`
   }
 }
 

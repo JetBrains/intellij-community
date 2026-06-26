@@ -3,5 +3,6 @@
 export * from "./webViewApi"
 export * from "./notifications"
 export * from "./theme"
+export * from "./iconSet"
 export * from "./focus"
 export * from "./bridge"

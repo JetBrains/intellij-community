@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.webview.demo
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -10,6 +11,7 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.webview.api.WebViewAssetRoot
+import com.intellij.ui.webview.api.WebViewIconSet
 import com.intellij.ui.webview.api.WebViewPanel
 import com.intellij.ui.webview.api.WebViewPanelOptions
 import com.intellij.ui.webview.api.createWebViewPanel
@@ -30,10 +32,13 @@ import javax.swing.SwingUtilities
 private const val SHOWCASE_SOURCE_PATH = "community/plugins/ui.webview/demo/webview-src/views/controls-showcase/src/main.ts"
 
 private val LOG = logger<WebViewControlsShowcasePanel>()
-private val SHOWCASE_ASSET_ROOT = WebViewAssetRoot.forView("controls-showcase")
+private val SHOWCASE_ASSET_ROOT = WebViewAssetRoot
+  .forView("controls-showcase")
+  .withIconSets(WebViewIconSet.of("AllIcons", AllIcons::class.java))
 
 private val SHOWCASE_TABS = listOf(
   ShowcaseTab("components", "webview.controls.showcase.tab.components", "webview.controls.showcase.tab.components.description"),
+  ShowcaseTab("icons", "webview.controls.showcase.tab.icons", "webview.controls.showcase.tab.icons.description"),
   ShowcaseTab("labels-help", "webview.controls.showcase.tab.labels.help", "webview.controls.showcase.tab.labels.help.description"),
   ShowcaseTab("validation", "webview.controls.showcase.tab.validation", "webview.controls.showcase.tab.validation.description"),
   ShowcaseTab("states", "webview.controls.showcase.tab.states", "webview.controls.showcase.tab.states.description"),

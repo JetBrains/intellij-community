@@ -15,8 +15,11 @@ class WebViewAssetResolver(
   private val commonFontRoot: Path = defaultCommonFontRoot(),
 ) {
   private val devSourceRoots = WebViewAssetDevSourceRoots()
+  private val iconSetAssetProvider = WebViewIconSetAssetProvider(root.iconSets)
 
   internal fun resolve(requestPath: WebViewAssetRequestPath): WebViewAssetResponse {
+    iconSetAssetProvider.resolve(requestPath.path)?.let { return it.toResponse() }
+
     val path = try {
       requestPath.toAssetPath()
     }

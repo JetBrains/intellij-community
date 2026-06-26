@@ -14,6 +14,7 @@ import java.nio.file.Path
 class WebViewAssetRoot private constructor(
   internal val source: WebViewAssetSource,
   internal val scopedAssetProviders: List<WebViewScopedAssetProvider>,
+  internal val iconSets: Map<String, WebViewIconSet>,
 ) {
   /**
    * Routes requests under [prefix] to [provider] before falling back to this root's regular assets.
@@ -22,7 +23,24 @@ class WebViewAssetRoot private constructor(
    * `404` and are not resolved from the regular asset root.
    */
   fun withScopedAssetProvider(prefix: WebViewAssetPath, provider: WebViewAssetProvider): WebViewAssetRoot {
-    return WebViewAssetRoot(source, scopedAssetProviders + WebViewScopedAssetProvider(prefix, provider))
+    return WebViewAssetRoot(source, scopedAssetProviders + WebViewScopedAssetProvider(prefix, provider), iconSets)
+  }
+
+  /**
+   * Registers classloader-backed icon namespaces available to this WebView page.
+   *
+   * Registered ids are used by frontend `IconSet.define(id)` objects. Resource paths requested from the page are resolved
+   * from the fixed classloader captured in each [WebViewIconSet]. Duplicate ids are rejected.
+   */
+  fun withIconSets(vararg iconSets: WebViewIconSet): WebViewAssetRoot {
+    if (iconSets.isEmpty()) return this
+
+    val updatedIconSets = LinkedHashMap(this.iconSets)
+    for (iconSet in iconSets) {
+      require(!updatedIconSets.containsKey(iconSet.id)) { "Duplicate WebView icon set id: ${iconSet.id}" }
+      updatedIconSets[iconSet.id] = iconSet
+    }
+    return WebViewAssetRoot(source, scopedAssetProviders, updatedIconSets.toMap())
   }
 
   companion object {
@@ -61,6 +79,7 @@ class WebViewAssetRoot private constructor(
       return WebViewAssetRoot(
         WebViewAssetSource.Classpath(owner, viewAssetPath(viewId, viewsRoot), devSourceRoot = null),
         emptyList(),
+        emptyMap(),
       )
     }
 
@@ -77,6 +96,7 @@ class WebViewAssetRoot private constructor(
       return WebViewAssetRoot(
         WebViewAssetSource.Classpath(owner, root, devSourceRoot?.toAbsolutePath()?.normalize()),
         emptyList(),
+        emptyMap(),
       )
     }
 
@@ -86,7 +106,7 @@ class WebViewAssetRoot private constructor(
      */
     @JvmStatic
     fun fromDirectory(root: Path): WebViewAssetRoot {
-      return WebViewAssetRoot(WebViewAssetSource.Directory(root.toAbsolutePath().normalize()), emptyList())
+      return WebViewAssetRoot(WebViewAssetSource.Directory(root.toAbsolutePath().normalize()), emptyList(), emptyMap())
     }
 
     private fun viewAssetPath(viewId: String, viewsRoot: String): WebViewAssetPath {
