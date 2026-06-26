@@ -59,6 +59,7 @@ INTELLIJ_ADD_OPENS = [
 ]
 
 DEFAULT_JVM_FLAGS = [
+    "--enable-native-access=ALL-UNNAMED",
     "-ea",
     "-Didea.jre.check=true",
     "-Didea.is.internal=true",
