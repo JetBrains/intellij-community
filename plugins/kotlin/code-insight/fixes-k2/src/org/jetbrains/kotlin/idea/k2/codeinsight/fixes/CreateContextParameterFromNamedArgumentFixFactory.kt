@@ -10,6 +10,8 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -37,6 +39,14 @@ internal object CreateContextParameterFromNamedArgumentFixFactory {
             renderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES,
             position = Variance.INVARIANT,
         )
+
+        if (!targetFunction.languageVersionSettings.supportsFeature(LanguageFeature.ContextParameters)) {
+            return@ModCommandBased emptyList()
+        }
+
+        if (!callExpression.languageVersionSettings.supportsFeature(LanguageFeature.ExplicitContextArguments)) {
+            return@ModCommandBased emptyList()
+        }
 
         listOf(
             AddContextParameterFix.ForCalledFunction(
