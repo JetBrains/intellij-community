@@ -1597,14 +1597,14 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       A[int]().foo()
       A[str]().foo()
-      #^^^^^^^^^^^ WARNING Invalid self argument `A[str]` to method `A.foo` with type `(x: A[int]) -> None`
+      #^^^^^^^^^^^ WARNING Invalid self argument 'A[str]' to method 'A.foo' with type '(x: A[int]) -> None'
 
       A[int].bar()
       A[int]().bar()
       A[str].bar()
-      #^^^^^^^^^ WARNING Invalid self argument `type[A[str]]` to method `A.bar` with type `(x: type[A[int]]) -> None`
+      #^^^^^^^^^ WARNING Invalid self argument 'type[A[str]]' to method 'A.bar' with type '(x: type[A[int]]) -> None'
       A[str]().bar()
-      #^^^^^^^^^^^ WARNING Invalid self argument `type[A[str]]` to method `A.bar` with type `(x: type[A[int]]) -> None`
+      #^^^^^^^^^^^ WARNING Invalid self argument 'type[A[str]]' to method 'A.bar' with type '(x: type[A[int]]) -> None'
       """)
 
     @Test
@@ -1622,7 +1622,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       def f(x: A | B, y: A | B | C[str]):
           x.foo()
           y.foo()
-      #   ^^^^^ WARNING Invalid self argument `C[str]` to method `C.foo` with type `(self: C[int]) -> None`
+      #   ^^^^^ WARNING Invalid self argument 'C[str]' to method 'C.foo' with type '(self: C[int]) -> None'
       """)
 
     @Test

@@ -493,7 +493,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                        def foo(self): ...
 
                    A[str]().foo()
-                   <warning descr="Invalid self argument `A[float | int]` to method `A.foo` with type `(self: A[int]) -> None`">A[float]().foo</warning>()
+                   <warning descr="Invalid self argument 'A[float | int]' to method 'A.foo' with type '(self: A[int]) -> None'">A[float]().foo</warning>()
                    """);
   }
 

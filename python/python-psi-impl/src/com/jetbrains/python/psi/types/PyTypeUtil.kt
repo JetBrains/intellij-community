@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi.types
 
-import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UserDataHolder
@@ -24,6 +23,8 @@ import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
+import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam
+import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyPossibleClassMember
@@ -443,7 +444,7 @@ object PyTypeUtil {
     classType: PyClassType,
     memberResolveResults: List<@JvmWildcard RatedResolveResult>,
     context: TypeEvalContext,
-    errors: MutableList<@InspectionMessage String>? = null,
+    errors: MutableList<ProblemMessage>? = null,
   ): PyType? = getTypeOfBoundMember(classType, classType, memberResolveResults, context, errors)
 
   @ApiStatus.Internal
@@ -454,7 +455,7 @@ object PyTypeUtil {
     selfType: PyInstantiableType<*>,
     memberResolveResults: List<@JvmWildcard RatedResolveResult>,
     context: TypeEvalContext,
-    errors: MutableList<@InspectionMessage String>? = null,
+    errors: MutableList<ProblemMessage>? = null,
   ): PyType? {
     val memberType = specializeMemberType(classType, selfType, getTypeOfMember(memberResolveResults, context), context)
     val memberOwner = getContainingClass(memberResolveResults)
@@ -541,7 +542,7 @@ object PyTypeUtil {
     memberType: PyType?,
     memberOwner: PyClass?,
     context: TypeEvalContext,
-    errors: MutableList<@InspectionMessage String>?
+    errors: MutableList<ProblemMessage>?
   ): PyType? {
     val signatures = getCallableItems(memberType).toList()
     if (signatures.isEmpty()) return memberType
@@ -581,23 +582,33 @@ object PyTypeUtil {
     selfType: PyType,
     memberType: PyType?,
     context: TypeEvalContext,
-  ): @InspectionMessage String {
-    val selfTypeName = PythonDocumentationProvider.getTypeName(selfType, context)
+  ): ProblemMessage {
     val methodType = if (memberType is PyOverloadType) memberType.items.firstOrNull() else memberType
-    val methodTypeName = PythonDocumentationProvider.getTypeName(methodType, context)
     val callable = (methodType as? PyCallableType)?.callable
+    // Any element in a Python file works as the link-resolution scope; the type names link to global declarations.
+    val anchor: PsiElement? = callable ?: (selfType as? PyClassType)?.pyClass
+    val selfTypeParam = selfType.toCodeSpan(anchor, context)
+    val methodTypeParam = methodType.toCodeSpan(anchor, context)
     val methodName = callable?.name?.let { name ->
       val containingClass = callable.asMethod()?.containingClass?.name
       if (containingClass != null) "$containingClass.$name" else name
     }
     return if (methodName != null) {
-      PyPsiBundle.message("INSP.type.checker.invalid.self.argument.to.named.method.with.type",
-                          selfTypeName, methodName, methodTypeName)
+      PyPsiBundle.problemMessage("INSP.type.checker.invalid.self.argument.to.named.method.with.type",
+                                 selfTypeParam, methodName, methodTypeParam)
     }
     else {
-      PyPsiBundle.message("INSP.type.checker.invalid.self.argument.to.method.with.type", selfTypeName, methodTypeName)
+      PyPsiBundle.problemMessage("INSP.type.checker.invalid.self.argument.to.method.with.type", selfTypeParam, methodTypeParam)
     }
   }
+
+  /**
+   * Renders [this] as a code span for an inspection message: a [CodifiedParam] with clickable type links when an
+   * [anchor] is available, otherwise the plain type name (the message template still renders it as a code span).
+   */
+  private fun PyType?.toCodeSpan(anchor: PsiElement?, context: TypeEvalContext): Any =
+    if (anchor != null) CodifiedParam.ofType(this, anchor, context)
+    else PythonDocumentationProvider.getTypeName(this, context)
 
   @ApiStatus.Internal
   @JvmStatic

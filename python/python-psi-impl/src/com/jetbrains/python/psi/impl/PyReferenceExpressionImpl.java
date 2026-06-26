@@ -4,7 +4,6 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.codeInsight.controlflow.ConditionalInstruction;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
-import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +28,7 @@ import com.jetbrains.python.codeInsight.controlflow.PyTypeAssertionEvaluator;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.Property;
 import com.jetbrains.python.psi.PyAnnotationOwner;
@@ -312,7 +312,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   public static @Nullable Ref<PyType> getQualifiedReferenceType(@NotNull PyReferenceExpression refExpr,
                                                                 @NotNull TypeEvalContext context,
-                                                                @Nullable List<@InspectionMessage String> errors) {
+                                                                @Nullable List<ProblemMessage> errors) {
     final PyExpression qualifier = refExpr.getQualifier();
     if (qualifier == null) return null;
 
@@ -495,7 +495,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
                                                        @NotNull String attrName,
                                                        @NotNull PyQualifiedExpression anchor,
                                                        @NotNull PyResolveContext resolveContext,
-                                                       @Nullable List<@InspectionMessage String> errors) {
+                                                       @Nullable List<ProblemMessage> errors) {
     if (type instanceof PyUnionType union) {
       var result = StreamEx.of(union.getMembers())
           .map(it -> getTypeOfMember(it, attrName, anchor, resolveContext, errors))
@@ -556,7 +556,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
                                                                  @NotNull String name,
                                                                  @NotNull PyQualifiedExpression anchor,
                                                                  @NotNull PyResolveContext resolveContext,
-                                                                 @Nullable List<@InspectionMessage String> errors) {
+                                                                 @Nullable List<ProblemMessage> errors) {
     List<? extends RatedResolveResult> resolveResults =
       classType.toClass().resolveMember(name, null, AccessDirection.READ, resolveContext);
     if (resolveResults == null || resolveResults.isEmpty()) return null;

@@ -4,7 +4,6 @@
 package com.jetbrains.python.psi.impl
 
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl
-import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
@@ -17,6 +16,7 @@ import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider.Helper.isTypingTypedDictInheritor
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage
 import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.PyAugAssignmentStatement
 import com.jetbrains.python.psi.PyBinaryExpression
@@ -890,7 +890,7 @@ object PyCallExpressionHelper {
   fun createCallableFromClass(
     classType: PyClassType,
     resolveContext: PyResolveContext,
-    errors: MutableList<@InspectionMessage String>? = null,
+    errors: MutableList<ProblemMessage>? = null,
   ): PyType? {
     val resolveContext = resolveContext.withoutProperties()
     val context = resolveContext.typeEvalContext

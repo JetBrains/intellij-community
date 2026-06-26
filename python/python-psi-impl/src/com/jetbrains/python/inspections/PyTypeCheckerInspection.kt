@@ -27,6 +27,7 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.GeneratorTyp
 import com.jetbrains.python.codeInsight.typing.isProtocol
 import com.jetbrains.python.codeInsight.typing.matchingProtocolDefinitions
 import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam
+import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionReturnTypeQuickFix
 import com.jetbrains.python.psi.PyAnnotationOwner
 import com.jetbrains.python.psi.PyAssignmentStatement
@@ -377,7 +378,7 @@ open class PyTypeCheckerInspection : PyInspection() {
       // Recompute the qualified reference type when it's `Unknown` to collect possible method binding errors.
       if (node.isQualified &&
           myTypeEvalContext.getType(node).asUnionSequence().any { it.isUnknown }) {
-        val errors = mutableListOf<@InspectionMessage String>()
+        val errors = mutableListOf<ProblemMessage>()
         PyReferenceExpressionImpl.getQualifiedReferenceType(node, myTypeEvalContext, errors)
         for (error in errors) {
           registerProblem(node, error, effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
@@ -911,7 +912,7 @@ open class PyTypeCheckerInspection : PyInspection() {
         if (callee != null) {
           val calleeType = myTypeEvalContext.getType(callee)
           if (calleeType is PyClassType && calleeType.isDefinition) {
-            val errors = mutableListOf<@InspectionMessage String>()
+            val errors = mutableListOf<ProblemMessage>()
             val constructorType = PyCallExpressionHelper.createCallableFromClass(calleeType, resolveContext, errors)
             if (constructorType.isUnknown) {
               for (error in errors) {
