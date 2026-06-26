@@ -33,6 +33,7 @@ import com.jetbrains.python.psi.PyPsiFacade
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.PyTypeAliasStatement
 import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyTypeParser
 import com.jetbrains.python.psi.types.PyUnionType
@@ -113,6 +114,35 @@ object PyDocumentationLink {
       else -> HtmlChunk.text(typeName)
     }
   }
+
+  /**
+   * Like [toPossibleClassTooltipLink] but builds the link from [type]'s own class identity instead of
+   * re-resolving the displayed [typeName] from [anchor]'s scope. This makes class names that are not imported
+   * into the anchor file — most notably the `collections.abc` ABCs — navigable in tooltips, where name-based
+   * resolution would have failed and rendered them as plain text. Falls back to the name-based
+   * [toPossibleClassTooltipLink] for `None` (so it keeps its keyword styling) and for class-like types without
+   * a usable [PyClass].
+   */
+  @JvmStatic
+  fun toPossibleClassTooltipLink(type: PyClassLikeType, typeName: @Nls String, anchor: PsiElement, context: TypeEvalContext): HtmlChunk {
+    val pyClass = type.asLinkableClass()
+    return if (pyClass != null) styledReference(toQualifiedNameTooltipLink(pyClass.qualifiedName!!, typeName), pyClass)
+    else toPossibleClassTooltipLink(typeName, anchor, context)
+  }
+
+  /**
+   * The [PyClass] to link to directly: the class of a non-`None` class type that carries a qualified name.
+   * `None` is excluded so it keeps its keyword styling via the name-resolution path.
+   */
+  private fun PyClassLikeType.asLinkableClass(): PyClass? {
+    if (this.isNoneType) return null
+    return (this as? PyClassType)?.pyClass?.takeIf { !it.qualifiedName.isNullOrEmpty() }
+  }
+
+  /** Renders [linkText] as a tooltip-navigable link (`#element/<fqn>`). */
+  @JvmStatic
+  fun toQualifiedNameTooltipLink(@NlsSafe qualifiedName: String, linkText: @Nls String): HtmlChunk =
+    HtmlChunk.link("$TOOLTIP_ELEMENT_LINK_PREFIX$qualifiedName", linkText)
 
   @JvmStatic
   fun toClass(pyClass: PyClass, linkText: @Nls String): HtmlChunk {

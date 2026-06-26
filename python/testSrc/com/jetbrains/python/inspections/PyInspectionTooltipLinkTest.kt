@@ -11,6 +11,7 @@ import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -120,6 +121,79 @@ class PyInspectionTooltipLinkTest : PyCodeInsightTestCase() {
     assertEquals("Unresolved reference 'foo'", info.description)
     assertFalse("`" in info.description, info.description)
     assertTrue("<code>foo</code>" in info.toolTip!!, info.toolTip!!)
+  }
+
+  @Test
+  @TestFor(issues = ["PY-90264"])
+  fun `collections abc type is a clickable link`() {
+    val info = highlight<PyTypeCheckerInspection>(
+      """
+      from collections.abc import Iterable
+      def f(value: int): pass
+      def g() -> Iterable[int]: ...
+      f(g())
+      """.trimIndent(),
+      "Expected type"
+    )
+    assertEquals("Expected type 'int', got 'Iterable[int]' instead", info.description)
+    // `Iterable` is re-exported from `collections.abc` but its canonical declaration (and qualified name) is
+    // `typing.Iterable`; the link uses the class's own qualified name, which is navigable, where re-resolving
+    // the bare short name `Iterable` from this file would have failed and left it as plain text.
+    assertLink(info, "typing.Iterable")
+    assertResolves("typing.Iterable")
+  }
+
+  // `Literal` is a `typing` special form (not a class); it is now linked to its declaration by FQN.
+  @Test
+  @TestFor(issues = ["PY-90264"])
+  fun `typing Literal special form is a clickable link`() {
+    val info = highlight<PyTypeCheckerInspection>("x: int = [1, 2]", "Expected type")
+    assertEquals("Expected type 'int', got 'list[Literal[1, 2]]' instead", info.description)
+    assertLink(info, "typing.Literal")
+  }
+
+  // `Any` is a `typing` special form (not a class); it is now linked to its declaration by FQN.
+  @Test
+  @TestFor(issues = ["PY-90264"])
+  fun `typing Any special form is a clickable link`() {
+    val info = highlight<PyTypeCheckerInspection>(
+      """
+      from typing import Any
+      def f(value: int): pass
+      x: list[Any] = []
+      f(x)
+      """.trimIndent(),
+      "Expected type"
+    )
+    assertEquals("Expected type 'int', got 'list[Any]' instead", info.description)
+    assertLink(info, "typing.Any")
+  }
+
+  // a module type renders as its qualified name, which is also a navigable link to the module.
+  @Test
+  @TestFor(issues = ["PY-90264"])
+  fun `module type is a clickable link`() {
+    val info = highlight<PyTypeCheckerInspection>(
+      """
+      import collections
+      a: int = collections
+      """.trimIndent(),
+      "Expected type"
+    )
+    assertEquals("Expected type 'int', got 'collections' instead", info.description)
+    assertLink(info, "collections")
+  }
+
+  // the `#element/collections` link must navigate to the module's own file — the package's `__init__`
+  // (`collections/__init__.py`, or its `.pyi` stub in a typeshed-backed SDK) — not to the package directory.
+  @Test
+  @TestFor(issues = ["PY-90264"])
+  fun `module link resolves to the package init file`() {
+    myFixture.configureByText(PythonFileType.INSTANCE, "import collections\na: int = collections")
+    val target = runReadActionBlocking { QualifiedNameProviderUtil.qualifiedNameToElement("collections", myFixture.project) }
+    val file = assertInstanceOf<PyFile>(target)
+    assertEquals("collections", file.virtualFile.parent.name)
+    assertTrue(file.name == "__init__.py" || file.name == "__init__.pyi", file.name)
   }
 
   // PY-80221: the type-mismatch breakdown shown below the headline in the tooltip renders its type references
