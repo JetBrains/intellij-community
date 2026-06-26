@@ -16,6 +16,7 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
 import java.awt.Component
@@ -387,7 +388,8 @@ internal class EditorsSplittersLayout : LayoutManager2 {
   }
 }
 
-private class EditorEmptyStateComponentHost(private val fillContent: Boolean) : JPanel() {
+@ApiStatus.Internal
+class EditorEmptyStateComponentHost(private val fillContent: Boolean) : JPanel() {
   private val contentPanel = JPanel().apply {
     isOpaque = false
     layout = BoxLayout(this, BoxLayout.Y_AXIS)
