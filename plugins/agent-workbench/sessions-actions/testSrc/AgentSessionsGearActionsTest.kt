@@ -191,7 +191,7 @@ class AgentSessionsGearActionsTest {
 
     assertThat(AgentChatOpenModeSettings.openInDedicatedFrame()).isFalse()
     assertThat(AgentWorkbenchSettings.getInstance().openInDedicatedFrame).isFalse()
-    assertThat(AgentWorkbenchSettings.getInstance().openInDedicatedFrameOverride).isFalse()
+    assertThat(AgentWorkbenchSettings.getInstance().openInDedicatedFrameOverride).isNull()
 
     runInEdtAndWait {
       action.setSelected(event, true)
@@ -199,7 +199,7 @@ class AgentSessionsGearActionsTest {
 
     assertThat(AgentChatOpenModeSettings.openInDedicatedFrame()).isTrue()
     assertThat(AgentWorkbenchSettings.getInstance().openInDedicatedFrame).isTrue()
-    assertThat(AgentWorkbenchSettings.getInstance().openInDedicatedFrameOverride).isNull()
+    assertThat(AgentWorkbenchSettings.getInstance().openInDedicatedFrameOverride).isTrue()
   }
 
   @Test

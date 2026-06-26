@@ -17,6 +17,7 @@ internal fun createAgentSessionsTreePopupActionContext(
   node: SessionTreeNode,
   archiveTargets: List<ArchiveThreadTarget>,
   unarchiveTargets: List<ArchiveThreadTarget> = emptyList(),
+  newThreadActionAvailable: Boolean = true,
 ): AgentSessionsTreePopupActionContext? {
   val target = resolveSessionActionTarget(nodeId, node) ?: return null
   return AgentSessionsTreePopupActionContext(
@@ -24,6 +25,7 @@ internal fun createAgentSessionsTreePopupActionContext(
     target = target,
     archiveTargets = archiveTargets,
     unarchiveTargets = unarchiveTargets,
+    newThreadActionAvailable = newThreadActionAvailable,
   )
 }
 

@@ -22,7 +22,8 @@ Date: 2026-05-09
 New-thread actions let users start provider-backed threads from project/worktree rows and the main toolbar. This spec owns action availability, launch-profile menus, target resolution, and launch deduplication. Codex pending/concrete rebind behavior is specified separately.
 
 ## Requirements
-- Project/worktree rows expose new-thread controls only while hovered or selected, and suppress them while the row is loading.
+- Project/worktree rows expose new-thread controls only while hovered or selected, suppress them while the row is loading, and hide tree
+  new-thread controls entirely in effective current-project-only scope.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
 
 - Quick start uses `lastUsedProvider` plus `lastUsedLaunchMode`, falling back to `STANDARD` when needed, and launches directly only when the source project is unambiguous.
@@ -44,7 +45,8 @@ New-thread actions let users start provider-backed threads from project/worktree
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
   [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
 
-- Tree popup new-thread actions resolve context from tree rows only.
+- Tree popup new-thread actions resolve context from tree rows only and are hidden in effective current-project-only scope; the main
+  toolbar action is the supported new-thread entry point for the single-project UI.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
 
 - Dedicated Agent frame main-toolbar new-thread resolves source projects lazily on click or popup expansion. Multiple source candidates require explicit selection; a single candidate may be used directly; selected chat-tab source path is a fallback when no open source-project candidate exists.

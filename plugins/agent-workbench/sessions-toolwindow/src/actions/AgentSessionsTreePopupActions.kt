@@ -47,6 +47,7 @@ internal data class AgentSessionsTreePopupActionContext(
   val target: SessionActionTarget,
   @JvmField val archiveTargets: List<ArchiveThreadTarget>,
   @JvmField val unarchiveTargets: List<ArchiveThreadTarget> = emptyList(),
+  @JvmField val newThreadActionAvailable: Boolean = true,
 )
 
 internal fun resolveAgentSessionsTreePopupActionContext(event: AnActionEvent): AgentSessionsTreePopupActionContext? {
@@ -236,6 +237,7 @@ internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
 
   private fun resolveNewThreadMenu(e: AnActionEvent): NewThreadMenu? {
     val context = resolveContext(e) ?: return null
+    if (!context.newThreadActionAvailable) return null
     val path = newThreadPathFromTarget(context.target) ?: return null
     val menuModel = buildAgentSessionLaunchProfileMenuModel(allBridges(), context.project)
     if (!menuModel.hasEntries()) return null

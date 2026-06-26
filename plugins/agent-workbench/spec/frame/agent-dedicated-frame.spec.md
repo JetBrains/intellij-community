@@ -18,7 +18,7 @@ Date: 2026-03-01
 Define dedicated-frame mode behavior for Agent chat routing. This spec owns frame policy, frame lifecycle, filtering, and shortcut semantics. Shared command mapping and action contracts are owned by `../core/agent-core-contracts.spec.md`.
 
 ## Goals
-- Default to one reusable dedicated frame per IDE instance.
+- Support one reusable dedicated frame per IDE instance when the user enables dedicated-frame mode.
 - Allow explicit user mode switch between dedicated frame and source-project frame.
 - Keep dedicated-frame project hidden from session registry and recent-project UX.
 - Keep dedicated-frame policy centralized and independent from welcome-project provider internals.
@@ -83,7 +83,7 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
 - Implementation must stay independent from `welcomeScreenProjectProvider` singleton model. Dedicated-frame lifecycle is self-contained and must not couple to welcome-screen project provider internals.
 
 ## User Experience
-- Default click behavior opens chat in dedicated frame.
+- Default click behavior opens chat in the current source-project frame.
 - Toggling dedicated-frame setting affects subsequent opens immediately.
 - Dedicated frame receives focus when chat opens there.
 - Dedicated frame can be reopened from explicit action entry points.

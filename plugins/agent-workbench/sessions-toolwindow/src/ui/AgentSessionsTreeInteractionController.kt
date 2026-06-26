@@ -44,6 +44,7 @@ internal class AgentSessionsTreeInteractionController(
   private val selectedUnarchiveTargets: () -> List<ArchiveThreadTarget>,
   private val showMoreProjects: () -> Unit,
   private val showMoreThreads: (String) -> Unit,
+  private val isNewThreadPopupAvailable: () -> Boolean = { true },
 ) {
   var popupActionContext: AgentSessionsTreePopupActionContext? = null
     private set
@@ -147,6 +148,7 @@ internal class AgentSessionsTreeInteractionController(
       node = treeNode,
       archiveTargets = selectedArchiveTargets(),
       unarchiveTargets = selectedUnarchiveTargets(),
+      newThreadActionAvailable = isNewThreadPopupAvailable(),
     ) ?: return
     val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, actionGroup)
     popupMenu.setTargetComponent(tree)

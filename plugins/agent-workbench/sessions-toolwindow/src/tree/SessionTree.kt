@@ -53,16 +53,28 @@ internal data class VisibleProjectsResult(
   @JvmField val hiddenClosedProjectCount: Int,
 )
 
+internal enum class SessionTreeRootPresentation {
+  PROJECTS,
+  SINGLE_PROJECT_CONTENTS,
+}
+
 internal fun buildSessionTreeModel(
   projects: List<AgentProjectSessions>,
   visibleClosedProjectCount: Int,
   visibleThreadCounts: Map<String, Int>,
   treeUiState: SessionTreeUiState,
+  rootPresentation: SessionTreeRootPresentation = SessionTreeRootPresentation.PROJECTS,
 ): SessionTreeModel {
   val visibleProjectsResult = computeVisibleProjects(projects, visibleClosedProjectCount)
   val projectPathQualifiers = computeProjectPathQualifiers(visibleProjectsResult.visibleProjects)
   val modelBuilder = SessionTreeModelBuilder(visibleThreadCounts, projectPathQualifiers)
   val baseModel = modelBuilder.build(visibleProjectsResult)
+  val model = if (rootPresentation == SessionTreeRootPresentation.SINGLE_PROJECT_CONTENTS) {
+    baseModel.flattenSingleProjectRoot(visibleProjectsResult)
+  }
+  else {
+    baseModel
+  }
   val autoOpenProjects = visibleProjectsResult.visibleProjects
     .filter {
       it.isOpen ||
@@ -72,7 +84,25 @@ internal fun buildSessionTreeModel(
     }
     .filterNot { treeUiState.isProjectCollapsed(it.path) }
     .map { SessionTreeId.Project(it.path) }
-  return baseModel.copy(autoOpenProjects = autoOpenProjects)
+  return model.copy(autoOpenProjects = autoOpenProjects.filter { it in model.entriesById })
+}
+
+private fun SessionTreeModel.flattenSingleProjectRoot(visibleProjectsResult: VisibleProjectsResult): SessionTreeModel {
+  if (visibleProjectsResult.hiddenClosedProjectCount > 0) return this
+  val project = visibleProjectsResult.visibleProjects.singleOrNull() ?: return this
+  val projectId = SessionTreeId.Project(project.path)
+  if (rootIds != listOf(projectId)) return this
+  val projectEntry = entriesById[projectId] ?: return this
+  val entries = LinkedHashMap<SessionTreeId, SessionTreeModelEntry>()
+  entriesById.forEach { (id, entry) ->
+    if (id == projectId) return@forEach
+    entries[id] = if (entry.parentId == projectId) entry.copy(parentId = null) else entry
+  }
+  return copy(
+    rootIds = projectEntry.childIds,
+    entriesById = entries,
+    autoOpenProjects = emptyList(),
+  )
 }
 
 internal fun diffSessionTreeModels(
