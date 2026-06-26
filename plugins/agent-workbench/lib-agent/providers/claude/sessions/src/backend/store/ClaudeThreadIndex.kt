@@ -39,6 +39,7 @@ internal class ClaudeThreadIndex(
   private val usageInvalidationState =
     FileBackedSessionInvalidationState<ClaudeSessionUsageFile?>(::isClaudeSessionFile)
   private val indexInvalidationState = FileBackedSessionInvalidationState<Map<String, ClaudeSessionIndexEntry>>(::isClaudeSessionIndexFile)
+  private val refreshLock = Any()
 
   fun markDirty(changeSet: FileBackedSessionChangeSet) {
     if (!changeSet.requiresFullRescan && changeSet.changedPaths.isEmpty()) {
@@ -84,19 +85,21 @@ internal class ClaudeThreadIndex(
       }
     }
 
-    val threadRescanPlan = threadInvalidationState.planRescan(allJsonlFiles)
-    val usageRescanPlan = usageInvalidationState.planRescan(allUsageFiles)
-    val indexRescanPlan = indexInvalidationState.planRescan(allIndexFiles)
-    applyThreadRescan(threadRescanPlan)
-    applyUsageRescan(usageRescanPlan)
-    applyIndexRescan(indexRescanPlan)
-    val threads = buildBackendThreads(jsonlFilesByPath = allJsonlFiles, usageFilesByPath = allUsageFiles)
+    val refreshResult = refreshThreads(
+      jsonlFilesByPath = allJsonlFiles,
+      usageFilesByPath = allUsageFiles,
+      indexFilesByPath = allIndexFiles,
+    )
 
     LOG.debug {
-      "Resolved Claude threads for project (directories=${directories.size}, jsonlFiles=${allJsonlFiles.size}, usageFiles=${allUsageFiles.size}, indexFiles=${allIndexFiles.size}, parsedJsonl=${threadRescanPlan.filesToParse.size}, parsedUsage=${usageRescanPlan.filesToParse.size}, parsedIndex=${indexRescanPlan.filesToParse.size}, total=${threads.size})"
+      "Resolved Claude threads for project (directories=${directories.size}, jsonlFiles=${allJsonlFiles.size}, " +
+      "usageFiles=${allUsageFiles.size}, indexFiles=${allIndexFiles.size}, " +
+      "parsedJsonl=${refreshResult.threadRescanPlan.filesToParse.size}, " +
+      "parsedUsage=${refreshResult.usageRescanPlan.filesToParse.size}, " +
+      "parsedIndex=${refreshResult.indexRescanPlan.filesToParse.size}, total=${refreshResult.threads.size})"
     }
 
-    return threads
+    return refreshResult.threads
   }
 
   fun collectByProjectAndSessionIds(projectPath: String, sessionIds: Set<String>): List<ClaudeBackendThread> {
@@ -141,21 +144,44 @@ internal class ClaudeThreadIndex(
       return emptyList()
     }
 
-    val threadRescanPlan = threadInvalidationState.planRescan(jsonlFiles)
-    val usageRescanPlan = usageInvalidationState.planRescan(usageFiles)
-    val indexRescanPlan = indexInvalidationState.planRescan(indexFiles)
-    applyThreadRescan(threadRescanPlan)
-    applyUsageRescan(usageRescanPlan)
-    applyIndexRescan(indexRescanPlan)
-    val threads = buildBackendThreads(jsonlFilesByPath = jsonlFiles, usageFilesByPath = usageFiles)
+    val refreshResult = refreshThreads(
+      jsonlFilesByPath = jsonlFiles,
+      usageFilesByPath = usageFiles,
+      indexFilesByPath = indexFiles,
+    )
 
     LOG.debug {
       "Resolved Claude thread subset for project (directories=${directories.size}, requestedSessions=${normalizedSessionIds.size}, " +
-      "jsonlFiles=${jsonlFiles.size}, usageFiles=${usageFiles.size}, indexFiles=${indexFiles.size}, parsedJsonl=${threadRescanPlan.filesToParse.size}, " +
-      "parsedUsage=${usageRescanPlan.filesToParse.size}, parsedIndex=${indexRescanPlan.filesToParse.size}, total=${threads.size})"
+      "jsonlFiles=${jsonlFiles.size}, usageFiles=${usageFiles.size}, indexFiles=${indexFiles.size}, " +
+      "parsedJsonl=${refreshResult.threadRescanPlan.filesToParse.size}, " +
+      "parsedUsage=${refreshResult.usageRescanPlan.filesToParse.size}, " +
+      "parsedIndex=${refreshResult.indexRescanPlan.filesToParse.size}, total=${refreshResult.threads.size})"
     }
 
-    return threads
+    return refreshResult.threads
+  }
+
+  private fun refreshThreads(
+    jsonlFilesByPath: Map<String, FileBackedSessionFileStat>,
+    usageFilesByPath: Map<String, FileBackedSessionFileStat>,
+    indexFilesByPath: Map<String, FileBackedSessionFileStat>,
+  ): ThreadIndexRefreshResult {
+    return synchronized(refreshLock) {
+      val threadRescanPlan = threadInvalidationState.planRescan(jsonlFilesByPath)
+      val usageRescanPlan = usageInvalidationState.planRescan(usageFilesByPath)
+      val indexRescanPlan = indexInvalidationState.planRescan(indexFilesByPath)
+      applyThreadRescan(threadRescanPlan)
+      applyUsageRescan(usageRescanPlan)
+      applyIndexRescan(indexRescanPlan)
+      val threads = buildBackendThreads(jsonlFilesByPath = jsonlFilesByPath, usageFilesByPath = usageFilesByPath)
+
+      ThreadIndexRefreshResult(
+        threadRescanPlan = threadRescanPlan,
+        usageRescanPlan = usageRescanPlan,
+        indexRescanPlan = indexRescanPlan,
+        threads = threads,
+      )
+    }
   }
 
   private fun applyThreadRescan(threadRescanPlan: FileBackedSessionRescanPlan) {
@@ -248,6 +274,13 @@ internal class ClaudeThreadIndex(
     return threads
   }
 }
+
+private data class ThreadIndexRefreshResult(
+  @JvmField val threadRescanPlan: FileBackedSessionRescanPlan,
+  @JvmField val usageRescanPlan: FileBackedSessionRescanPlan,
+  @JvmField val indexRescanPlan: FileBackedSessionRescanPlan,
+  @JvmField val threads: List<ClaudeBackendThread>,
+)
 
 private fun scanJsonlFiles(directory: Path, result: MutableMap<String, FileBackedSessionFileStat>) {
   val cutoffNs = TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis()) - MAX_AGE_NS

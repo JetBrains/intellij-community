@@ -28,7 +28,6 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//plugins/agent-workbench/sessions-actions:agent-workbench-sessions-actions"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -80,7 +79,6 @@ jvm_library(
         "//plugins/agent-workbench/lib-agent/common:common_test_lib",
         "//plugins/agent-workbench/lib-agent/core:core_test_lib",
         "//plugins/agent-workbench/lib-agent/json:json_test_lib",
-        "//plugins/agent-workbench/sessions-actions:agent-workbench-sessions-actions_test_lib",
         "//plugins/agent-workbench/lib-agent/sessions-core:ai-agent-sessions-core_test_lib",
         "//plugins/agent-workbench/settings:settings_test_lib",
         "//plugins/agent-workbench/ui:ui_test_lib",
