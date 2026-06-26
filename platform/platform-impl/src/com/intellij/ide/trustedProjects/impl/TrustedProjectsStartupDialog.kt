@@ -2,6 +2,7 @@
 package com.intellij.ide.trustedProjects.impl
 
 import com.intellij.diagnostic.WindowsDefenderChecker
+import com.intellij.diagnostic.WindowsDefenderCheckerActivity
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.OpenUntrustedProjectChoice
@@ -21,8 +22,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.eel.isWindows
-import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupBorder
 import com.intellij.ui.WindowRoundedCornersManager
@@ -404,7 +403,7 @@ class TrustedProjectStartupDialog private constructor(
     }
 
     private suspend fun getDefenderExcludePaths(project: Project?, projectPath: Path): Pair<List<Path>, Path?> {
-      if (isWindowsProject(projectPath)) {
+      if (WindowsDefenderCheckerActivity.isLocalWindowsPath(projectPath)) {
         val checker = serviceAsync<WindowsDefenderChecker>()
         if (
           !checker.isUntrustworthyLocation(projectPath) &&
@@ -420,9 +419,5 @@ class TrustedProjectStartupDialog private constructor(
       }
       return Pair(emptyList(), null)
     }
-
-    @OptIn(LowLevelLocalMachineAccess::class)
-    private fun isWindowsProject(projectPath: Path): Boolean =
-      OS.CURRENT == OS.Windows && projectPath.asEelPath().descriptor.osFamily.isWindows
   }
 }
