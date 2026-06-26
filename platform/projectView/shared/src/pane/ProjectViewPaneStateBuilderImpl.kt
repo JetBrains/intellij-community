@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
   private val state = object : MutableStateWithIncrementalUpdates<ProjectViewPaneStateEvent> {
     private var actionState: ProjectViewPaneSettingsStateDTO? = null
-    private val superRoot = Node(SuperRootModel)
+    private val superRoot = Node(SuperRootModel as ProjectViewNodeModelImpl)
     private val nodeById = hashMapOf<Long, Node>().also { it[SUPER_ROOT_ID] = superRoot }
     
     override suspend fun applyUpdate(update: ProjectViewPaneStateEvent): ProjectViewPaneStateEvent? {
@@ -114,16 +114,18 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
     }
   }
 
-  private data class Node(var model: ProjectViewNodeModel, var children: MutableList<Node>? = null)
+  private data class Node(var model: ProjectViewNodeModelImpl, var children: MutableList<Node>? = null)
 
   private val flowProducer = IncrementalUpdateFlowProducer(state)
 
   fun getStateFlow(): Flow<ProjectViewPaneStateEvent> = flowProducer.getIncrementalUpdateFlow()
+
+  @Suppress("UNCHECKED_CAST") // cast to the only implementation of a sealed interface
   override suspend fun setNodeChildren(
     parentId: Long,
     children: List<ProjectViewNodeModel>,
   ) {
-    updateState(ProjectViewChildrenLoaded(parentId, children))
+    updateState(ProjectViewChildrenLoaded(parentId, children as List<ProjectViewNodeModelImpl>))
   }
 
   override suspend fun addNode(
@@ -131,11 +133,11 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
     index: Int,
     nodeModel: ProjectViewNodeModel,
   ) {
-    updateState(ProjectViewNodeAdded(parentId, index, nodeModel))
+    updateState(ProjectViewNodeAdded(parentId, index, nodeModel as ProjectViewNodeModelImpl))
   }
 
   override suspend fun updateNode(nodeModel: ProjectViewNodeModel) {
-    updateState(ProjectViewNodeUpdated(nodeModel))
+    updateState(ProjectViewNodeUpdated(nodeModel as ProjectViewNodeModelImpl))
   }
 
   override suspend fun removeNodeChildren(parentId: Long) {

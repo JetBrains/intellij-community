@@ -395,7 +395,8 @@ private class TreeNodeViewModelImpl(
   }
 
   private suspend fun emitStates(isExpanded: Boolean?) {
-    val builder = TreeNodePresentationBuilderImpl(domainModel.computeIsLeaf())
+    val builder = TreeNodePresentationBuilderImpl()
+    builder.setLeaf(domainModel.computeIsLeaf())
     val lastState = lastComputedState.get()
     // The flow provided by the domain model may cause flickering,
     // as it's supposed to start from "simple" presentations and then add "heavy" parts.
@@ -475,13 +476,18 @@ private class FakeRootDomainModel(private val treeModel: TreeDomainModel) : Tree
 }
 
 @ApiStatus.Internal
-class TreeNodePresentationBuilderImpl(val isLeaf: Boolean) : TreeNodePresentationBuilder {
+class TreeNodePresentationBuilderImpl : TreeNodePresentationBuilder {
+  private var isLeafValue: Boolean = false
   // these "Value" suffixes to avoid signature clashes with the setters
   private var iconValue: Icon? = null
   private var mainTextValue: String? = null
   private var fullTextValue: MutableList<TreeNodeTextFragment>? = null
   private var toolTipValue: String? = null
   private var textAttributesKeyValue: TextAttributesKey? = null
+
+  override fun setLeaf(isLeaf: Boolean) {
+    this.isLeafValue = isLeaf
+  }
 
   override fun setIcon(icon: Icon?) {
     this.iconValue = icon
@@ -530,7 +536,7 @@ class TreeNodePresentationBuilderImpl(val isLeaf: Boolean) : TreeNodePresentatio
       }
     }
     return TreeNodePresentationImpl(
-      isLeaf = isLeaf,
+      isLeaf = isLeafValue,
       icon = iconValue,
       mainText = mainText,
       fullText = fullText,

@@ -51,6 +51,7 @@ import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
 import com.intellij.platform.projectView.pane.SelectInRequest
 import com.intellij.platform.projectView.pane.SuperRoot
 import com.intellij.platform.projectView.pane.allProjectViewPaneOptions
+import com.intellij.platform.projectView.pane.buildProjectViewNodeModel
 import com.intellij.platform.projectView.pane.projectViewNodePath
 import com.intellij.platform.projectView.pane.projectViewPaneId
 import com.intellij.platform.projectView.pane.toLegacySortKey
@@ -62,11 +63,11 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.LoadingNode
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.RestoreSelectionListener
-import com.intellij.ui.tree.TreeNodePresentationBuilderImpl
 import com.intellij.ui.tree.buildPresentation
 import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.ui.treeStructure.ProjectViewUpdateCause
-import com.intellij.ui.treeStructure.TreeNodePresentationImpl
+import com.intellij.ui.treeStructure.TreeNodePresentation
+import com.intellij.ui.treeStructure.TreeNodePresentationBuilder
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.CompletableDeferred
@@ -461,18 +462,21 @@ private class AbstractProjectViewPaneStateManager(
   }
 
   private suspend fun createNodeModel(id: Long, node: Any): ProjectViewNodeModel {
-    val presentation = getNodePresentation(node)
-    return readAction {
-      val canNavigate = canNavigate(node)
-      val canNavigateToSource = canNavigateToSource(node)
-      val isIncludedInExpandAll = isIncludedInExpandAll(node)
-      val isDirectory = isDirectory(node)
-      ProjectViewNodeModel(id, presentation, canNavigate, canNavigateToSource, isIncludedInExpandAll, isDirectory)
+    return buildProjectViewNodeModel(id) { nodeBuilder ->
+      nodeBuilder.buildPresentation { presentationBuilder ->
+        buildNodePresentation(node, presentationBuilder)
+      }
+      readAction {
+        nodeBuilder.setCanNavigate(canNavigate(node))
+        nodeBuilder.setCanNavigateToSource(canNavigateToSource(node))
+        nodeBuilder.setIncludedInExpandAll(isIncludedInExpandAll(node))
+        nodeBuilder.setIsDirectory(isDirectory(node))
+      }
     }
   }
 
-  private fun getNodePresentation(node: Any): TreeNodePresentationImpl {
-    val builder = TreeNodePresentationBuilderImpl(treeModel.isLeaf(node))
+  private fun buildNodePresentation(node: Any, builder: TreeNodePresentationBuilder): TreeNodePresentation {
+    builder.setLeaf(treeModel.isLeaf(node))
     return when (val userObject = TreeUtil.getUserObject(node)) {
       is PresentableNodeDescriptor<*> -> {
         buildPresentation(userObject, builder)

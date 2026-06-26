@@ -23,7 +23,9 @@ interface TreeNodeDomainModel {
 sealed interface TreeNodePresentation
 
 @ApiStatus.Experimental
+@ApiStatus.NonExtendable
 interface TreeNodePresentationBuilder {
+  fun setLeaf(isLeaf: Boolean)
   fun setIcon(icon: Icon?)
   fun setMainText(text: String)
   fun appendTextFragment(text: String, attributes: SimpleTextAttributes)

@@ -36,7 +36,7 @@ data class ProjectViewSettingsStateEvent(
 @ApiStatus.Internal
 data class ProjectViewChildrenLoaded(
   val parentId: Long,
-  val children: List<ProjectViewNodeModel>,
+  val children: List<ProjectViewNodeModelImpl>,
 ) : ProjectViewPaneStateEvent {
   override fun toDTO(): ProjectViewPaneStateEventDTO = ProjectViewChildrenLoadedDTO(
     parentId, children.map { it.toDTO() }
@@ -47,7 +47,7 @@ data class ProjectViewChildrenLoaded(
 data class ProjectViewNodeAdded(
   val parentId: Long,
   val index: Int,
-  val model: ProjectViewNodeModel,
+  val model: ProjectViewNodeModelImpl,
 ) : ProjectViewPaneStateEvent {
   override fun toDTO(): ProjectViewPaneStateEventDTO = ProjectViewNodeAddedDTO(
     parentId, index, model.toDTO()
@@ -88,7 +88,7 @@ data class ProjectViewChildrenRemoved(val parentId: Long) : ProjectViewPaneState
 
 @ApiStatus.Internal
 data class ProjectViewNodeUpdated(
-  val model: ProjectViewNodeModel,
+  val model: ProjectViewNodeModelImpl,
 ) : ProjectViewPaneStateEvent {
   override fun toDTO(): ProjectViewPaneStateEventDTO = ProjectViewNodeUpdatedDTO(
     model.toDTO()

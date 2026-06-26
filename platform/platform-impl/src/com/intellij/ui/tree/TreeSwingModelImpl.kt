@@ -645,7 +645,8 @@ private class CachedViewModel(
 }
 
 private fun buildCachedPresentation(treePresentation: CachedTreePresentation, cachedObject: Any): TreeNodePresentationImpl {
-  val builder = TreeNodePresentationBuilderImpl(treePresentation.isLeaf(cachedObject))
+  val builder = TreeNodePresentationBuilderImpl()
+  builder.setLeaf(treePresentation.isLeaf(cachedObject))
   buildPresentation(builder, cachedObject)
   return builder.build()
 }

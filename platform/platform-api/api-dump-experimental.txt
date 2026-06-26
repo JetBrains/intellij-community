@@ -750,6 +750,7 @@ f:com.intellij.ui.dsl.builder.TextFieldWithBrowseButtonKt
 - a:appendTextFragment(java.lang.String,com.intellij.ui.SimpleTextAttributes):V
 - a:build():com.intellij.ui.treeStructure.TreeNodePresentation
 - a:setIcon(javax.swing.Icon):V
+- a:setLeaf(Z):V
 - a:setMainText(java.lang.String):V
 - a:setTextAttributesKey(com.intellij.openapi.editor.colors.TextAttributesKey):V
 - a:setToolTipText(java.lang.String):V
