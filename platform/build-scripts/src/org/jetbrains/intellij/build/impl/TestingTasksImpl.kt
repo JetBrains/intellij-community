@@ -1533,4 +1533,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.editorconfig.backend.tests",
   "intellij.evaluationPlugin.languages.java.tests",
   "intellij.evaluationPlugin.languages.kotlin.tests",
+  "intellij.evaluationPlugin.tests",
 )
