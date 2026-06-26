@@ -7,6 +7,7 @@ import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.projectView.actions.EditorChoice
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
@@ -23,7 +24,7 @@ data class SelectInTargetDescriptor(
 @ApiStatus.Internal
 fun SelectInRequestDTO.toSelectInRequest(project: Project): SelectInRequest? {
   val context = context ?: restoreSerializedContext(contextDTO, project) ?: return null
-  return SelectInRequestImpl(targetId, context)
+  return SelectByContextImpl(targetId, context)
 }
 
 private fun restoreSerializedContext(contextDescriptor: SelectInContextDTO, project: Project): SelectInContext? {
@@ -31,11 +32,20 @@ private fun restoreSerializedContext(contextDescriptor: SelectInContextDTO, proj
   return FileSelectInContext(project, file)
 }
 
-@ApiStatus.Internal
-private data class SelectInRequestImpl(
+private data class SelectByContextImpl(
   override val targetId: @NonNls String,
   override val context: SelectInContext,
-) : SelectInRequest
+) : SelectByContext
+
+internal data class SelectByEditorImpl(
+  val editorChoice: EditorChoice,
+) : SelectByEditor {
+  override val considerOnlyLastFocusedEditor: Boolean
+    get() = when (editorChoice) {
+      EditorChoice.ALL_SELECTED -> false
+      EditorChoice.LAST_FOCUSED_ONLY -> true
+    }
+}
 
 @ApiStatus.Internal
 @Serializable

@@ -26,8 +26,6 @@ interface ProjectViewPaneModel {
 
   fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot)
 
-  suspend fun findNodeForEditor(editorChoice: EditorChoice): ProjectViewNodePath?
-
   suspend fun findNodeForSelectIn(selectInRequest: SelectInRequest): ProjectViewNodePath?
 }
 

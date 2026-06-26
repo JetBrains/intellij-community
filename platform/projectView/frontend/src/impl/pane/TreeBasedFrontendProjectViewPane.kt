@@ -41,6 +41,7 @@ import com.intellij.platform.projectView.pane.ProjectViewChildrenRemoved
 import com.intellij.platform.projectView.pane.ProjectViewClearStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewNodeAdded
 import com.intellij.platform.projectView.pane.ProjectViewNodeModel
+import com.intellij.platform.projectView.pane.ProjectViewNodeModelImpl
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewNodeUpdated
 import com.intellij.platform.projectView.pane.ProjectViewPaneChangeFileNestingRequest
@@ -587,8 +588,8 @@ internal abstract class TreeBasedFrontendProjectViewPane(
 private class Node(
   model: ProjectViewNodeModel,
 ) : DefaultMutableTreeNode(model), TreeNodeWithPresentation, PathElementIdProvider {
-  val projectViewNode: ProjectViewNodeModel
-    get() = userObject as ProjectViewNodeModel
+  val projectViewNode: ProjectViewNodeModelImpl
+    get() = userObject as ProjectViewNodeModelImpl
   
   var isChildrenLoaded: Boolean = false
   
@@ -596,7 +597,7 @@ private class Node(
     get() = projectViewNode.id
 
   override val presentation: TreeNodePresentationImpl
-    get() = projectViewNode.presentation
+    get() = projectViewNode.presentation as TreeNodePresentationImpl
 
   override fun isLeaf(): Boolean {
     return projectViewNode.presentation.isLeaf

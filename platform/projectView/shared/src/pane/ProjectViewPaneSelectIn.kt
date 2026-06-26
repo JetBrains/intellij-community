@@ -6,7 +6,15 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
 @ApiStatus.Experimental
-sealed interface SelectInRequest {
+sealed interface SelectInRequest
+
+@ApiStatus.Experimental
+sealed interface SelectByContext : SelectInRequest {
   val targetId: @NonNls String
   val context: SelectInContext
+}
+
+@ApiStatus.Experimental
+sealed interface SelectByEditor : SelectInRequest {
+  val considerOnlyLastFocusedEditor: Boolean
 }

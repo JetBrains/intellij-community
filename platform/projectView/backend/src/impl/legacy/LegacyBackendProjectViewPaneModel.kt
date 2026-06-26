@@ -30,7 +30,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
-import com.intellij.platform.projectView.actions.EditorChoice
 import com.intellij.platform.projectView.actions.legacyProjectViewOption
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
 import com.intellij.platform.projectView.pane.ProjectViewNodeModel
@@ -48,6 +47,8 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneSelectionOptions
 import com.intellij.platform.projectView.pane.ProjectViewPaneSortKey
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateBuilder
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
+import com.intellij.platform.projectView.pane.SelectByContext
+import com.intellij.platform.projectView.pane.SelectByEditor
 import com.intellij.platform.projectView.pane.SelectInRequest
 import com.intellij.platform.projectView.pane.SuperRoot
 import com.intellij.platform.projectView.pane.allProjectViewPaneOptions
@@ -228,27 +229,38 @@ private class LegacyBackendProjectViewPaneModel(
     legacyPaneManager.uiDataSnapshot(sink, selectedIds)
   }
 
-  override suspend fun findNodeForEditor(editorChoice: EditorChoice): ProjectViewNodePath? {
-    return selectAndGetPath {
-      val impl = ProjectViewImpl.getInstance(project) as ProjectViewImpl
-      if (editorChoice == EditorChoice.LAST_FOCUSED_ONLY && AppMode.isMonolith()) { // in remdev, "last focused" isn't very meaningful
-        LOG.debug { "[$id] Selecting using the last focused editor because the editor choice = $editorChoice, is monolith = ${AppMode.isMonolith()}" }
-        impl.selectOpenedFileUsingLastFocusedEditor()
+  override suspend fun findNodeForSelectIn(selectInRequest: SelectInRequest): ProjectViewNodePath? {
+    return when (selectInRequest) {
+      is SelectByContext -> {
+        findNodeForContext(selectInRequest)
       }
-      else {
-        LOG.debug { "[$id] Selecting using the selected editor because the editor choice = $editorChoice, is monolith = ${AppMode.isMonolith()}" }
-        impl.selectOpenedFile()
+      is SelectByEditor -> {
+        findNodeForEditor(selectInRequest)
       }
     }
   }
 
-  override suspend fun findNodeForSelectIn(selectInRequest: SelectInRequest): ProjectViewNodePath? {
+  private suspend fun findNodeForContext(selectByContext: SelectByContext): ProjectViewNodePath? {
     val target = legacyPaneManager.selectInTarget
-    val context = selectInRequest.context
+    val context = selectByContext.context
     if (!readAction { target.canSelect(context) }) return null
     return selectAndGetPath {
       LOG.debug { "[$id] Selecting using the context $context" }
       target.selectIn(context, false) // requestFocus doesn't matter because it's backend code
+    }
+  }
+
+  private suspend fun findNodeForEditor(selectByEditor: SelectByEditor): ProjectViewNodePath? {
+    return selectAndGetPath {
+      val impl = ProjectViewImpl.getInstance(project) as ProjectViewImpl
+      if (selectByEditor.considerOnlyLastFocusedEditor && AppMode.isMonolith()) { // in remdev, "last focused" isn't very meaningful
+        LOG.debug { "[$id] Selecting using the last focused editor because the editor choice = $selectByEditor, is monolith = ${AppMode.isMonolith()}" }
+        impl.selectOpenedFileUsingLastFocusedEditor()
+      }
+      else {
+        LOG.debug { "[$id] Selecting using the selected editor because the editor choice = $selectByEditor, is monolith = ${AppMode.isMonolith()}" }
+        impl.selectOpenedFile()
+      }
     }
   }
 
