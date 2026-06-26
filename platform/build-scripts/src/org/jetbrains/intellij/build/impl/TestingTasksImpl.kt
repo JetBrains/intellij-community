@@ -22,6 +22,7 @@ import com.intellij.platform.util.coroutines.filterConcurrent
 import com.intellij.testFramework.SkipInHeadlessEnvironment
 import com.intellij.util.io.awaitExit
 import com.intellij.util.lang.UrlClassLoader
+import com.intellij.util.text.nullize
 import io.opentelemetry.api.trace.Span
 import jetbrains.buildServer.messages.serviceMessages.BlockClosed
 import jetbrains.buildServer.messages.serviceMessages.BlockOpened
@@ -370,6 +371,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     testPatternSystemPropertyKey.let { options.testPatterns?.run { System.setProperty(it, this) } }  // from options, e.g. TestingTasksImpl#runTestsSkippedInHeadlessEnvironment
     testGroupSystemPropertyKey.let { options.testGroups?.run { System.setProperty(it, this) } }  // from options, e.g. RunAnyTestTheSameWayTeamCityDoes#run
     setPropertyFromPass(TestCaseLoader.INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG)
+    setPropertyFromPass(TestCaseLoader.INCLUDE_ALL_UNCONVENTIONALLY_NAMED_TESTS_FLAG)
 
     // configure TestCaseLoader#matchesCurrentBucket with the properties from the test process
     listOf(
@@ -428,6 +430,16 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val testModules = let {
       if (searchForTestsAcrossModuleDependencies && System.getProperty("pass.jar.dependencies.to.tests") == null && options.testSimplePatterns == null) guessTestModulesForGroupsAndPatterns(mainModule, rootExcludeCondition, systemProperties)
       else listOf(mainModule)
+    }.let { modules ->
+      //filter out only for community (ALL_EXCLUDE_DEFINED)
+      if (options.testGroups?.contains(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED) == true) {
+        val (bazelMigratedModules, jpsModules) = modules.partition { COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES.contains(it.name) }
+        if (bazelMigratedModules.isNotEmpty()) {
+          context.messages.info("Skipping tests in ${bazelMigratedModules.size} modules migrated to Bazel: ${bazelMigratedModules.joinToString(", ") { it.name }}")
+        }
+        jpsModules
+      }
+      else modules
     }
 
     context.messages.info("Will run tests from simple patterns, patterns, or groups in ${testModules.size} modules: ${testModules.joinToString(", ") { it.name }}")
@@ -1324,12 +1336,13 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
     val environment: MutableMap<String, String> = HashMap(envVariables)
 
-    val mainClass = "com.intellij.tests.JUnit5TeamCityRunner"
+    val entryPointClass = System.getProperty("idea.test.entry.point.class").nullize(nullizeSpaces = true)
+                          ?: "com.intellij.tests.JUnit5TeamCityRunner"
     if (devBuildModeSettings == null) {
-      args.add(mainClass)
+      args.add(entryPointClass)
     }
     else {
-      devBuildModeSettings.apply(mainClass, mainModule, args, environment)
+      devBuildModeSettings.apply(entryPointClass, mainModule, args, environment)
     }
 
     args.add(suiteName)
@@ -1473,3 +1486,34 @@ private suspend fun publishTestDiscovery(messages: BuildMessages, file: String?)
   }
   messages.buildStatus("With Discovery, {build.status.text}")
 }
+
+private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
+  "intellij.maven.server.eventListener.tests",
+  "intellij.agent.workbench.chat.tests",
+  "intellij.agent.workbench.codex.prompt.suggestions.tests",
+  "intellij.platform.ai.agent.cli.tests",
+  "intellij.platform.ai.agent.common.tests",
+  "intellij.platform.ai.agent.core.tests",
+  "intellij.platform.ai.agent.filewatch.tests",
+  "intellij.platform.ai.agent.json.tests",
+  "intellij.platform.ai.agent.codex.common.tests",
+  "intellij.platform.ai.agent.opencode.sessions.tests",
+  "intellij.platform.ai.agent.pi.sessions.filewatch.tests",
+  "intellij.platform.ai.agent.terminal.sessions.tests",
+  "intellij.agent.workbench.prompt.core.tests",
+  "intellij.agent.workbench.prompt.testrunner.tests",
+  "intellij.agent.workbench.prompt.vcs.tests",
+  "intellij.agent.workbench.sessions.cost.tests",
+  "intellij.agent.workbench.sessions.jbcentral.tests",
+  "intellij.agent.workbench.sessions.launch.config.backend.tests",
+  "intellij.agent.workbench.settings.tests",
+  "intellij.agent.workbench.ui.tests",
+  "intellij.agent.workbench.claude.awb.tests",
+  "intellij.agent.workbench.codex.chat.tests",
+  "intellij.agent.workbench.codex.ide.tests",
+  "intellij.platform.ai.agent.claude.sessions.tests",
+  "intellij.platform.ai.agent.junie.sessions.tests",
+  "intellij.platform.ai.agent.pi.sessions.tests",
+  "intellij.agent.workbench.sessions.tests",
+  "intellij.agent.workbench.vcs.merge.tests",
+)
