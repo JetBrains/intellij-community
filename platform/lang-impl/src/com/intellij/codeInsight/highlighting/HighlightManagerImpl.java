@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -369,7 +370,7 @@ public final class HighlightManagerImpl extends HighlightManager {
     }
 
     private void requestHideHighlights(@NotNull DataContext dataContext) {
-      final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+      final Editor editor = ReadAction.compute(() -> CommonDataKeys.EDITOR.getData(dataContext));
       if (editor == null) return;
       hideHighlights(editor, HIDE_BY_ANY_KEY);
     }
