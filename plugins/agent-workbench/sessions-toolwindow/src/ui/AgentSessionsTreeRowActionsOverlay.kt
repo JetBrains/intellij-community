@@ -46,6 +46,7 @@ internal class AgentSessionsTreeRowActionsOverlay(
   private val project: Project,
   private val tree: Tree,
   private val nodeResolver: (SessionTreeId) -> SessionTreeNode?,
+  private val isNewThreadActionAvailable: () -> Boolean = { true },
 ) {
   private var hoveredRow: Int? = null
   private val rowActionComponents = LinkedHashMap<SessionTreeId, RowActionComponent>()
@@ -57,7 +58,7 @@ internal class AgentSessionsTreeRowActionsOverlay(
   ): SessionTreeRowActionPresentation? {
     val showLoadingAction = isLoadingNode(treeNode)
     val showInteractiveAction = selected || TreeHoverListener.getHoveredRow(tree) == row || hoveredRow == row
-    val showNewThreadAction = showInteractiveAction && newThreadPath(treeNode) != null
+    val showNewThreadAction = isNewThreadActionAvailable() && showInteractiveAction && newThreadPath(treeNode) != null
     if (!showLoadingAction && !showNewThreadAction) return null
     return SessionTreeRowActionPresentation(
       showLoadingAction = showLoadingAction,

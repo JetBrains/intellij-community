@@ -12,6 +12,7 @@ import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.state.InMemorySessionTreeUiState
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
+import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeRootPresentation
 import com.intellij.agent.workbench.sessions.toolwindow.tree.archiveTargetFromThreadNode
 import com.intellij.agent.workbench.sessions.toolwindow.tree.buildSessionTreeModel
 import com.intellij.agent.workbench.sessions.toolwindow.tree.overlayPendingAgentChatTabs
@@ -68,6 +69,40 @@ class AgentSessionsTreeSnapshotTest {
 
     val projectNode = requireNotNull(model.entriesById[SessionTreeId.Project(projectPath)])
     assertThat(projectNode.childIds.any { it == SessionTreeId.MoreThreads(projectPath) }).isTrue()
+  }
+
+  @Test
+  fun singleProjectPresentationPromotesProjectChildrenToRoot() {
+    val projectPath = "/work/project-a"
+    val threadId = "thread-1"
+    val model = buildSessionTreeModel(
+      projects = listOf(
+        AgentProjectSessions(
+          path = projectPath,
+          name = "Project A",
+          isOpen = true,
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+          threads = listOf(
+            AgentSessionThread(
+              id = threadId,
+              title = "Thread 1",
+              updatedAt = 100,
+              archived = false,
+              provider = AgentSessionProvider.from("codex"),
+            )
+          ),
+        )
+      ),
+      visibleClosedProjectCount = Int.MAX_VALUE,
+      visibleThreadCounts = emptyMap(),
+      treeUiState = InMemorySessionTreeUiState(),
+      rootPresentation = SessionTreeRootPresentation.SINGLE_PROJECT_CONTENTS,
+    )
+
+    val threadTreeId = SessionTreeId.Thread(projectPath, AgentSessionProvider.from("codex"), threadId)
+    assertThat(model.rootIds).containsExactly(threadTreeId)
+    assertThat(model.entriesById).doesNotContainKey(SessionTreeId.Project(projectPath))
+    assertThat(model.entriesById.getValue(threadTreeId).parentId).isNull()
   }
 
   @Test

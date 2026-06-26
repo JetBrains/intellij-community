@@ -186,6 +186,9 @@ class AgentSessionsTreeStateControllerTest {
           !harness.model.entriesById.containsKey(SessionTreeId.Thread(OTHER_PROJECT_PATH, AgentSessionProvider.from("codex"), "other-thread"))
         }
         assertThat(harness.controller.displayedStateSnapshot().projects.map { it.path }).containsExactly(PROJECT_PATH)
+        assertThat(harness.model.rootIds)
+          .containsExactly(SessionTreeId.Thread(PROJECT_PATH, AgentSessionProvider.from("codex"), "current-thread"))
+        assertThat(harness.model.entriesById).doesNotContainKey(SessionTreeId.Project(PROJECT_PATH))
       }
       finally {
         runInEdtAndWait { harness.controller.dispose() }
@@ -225,7 +228,7 @@ class AgentSessionsTreeStateControllerTest {
   }
 
   @Test
-  fun currentProjectScopeKeepsOnlyMatchingWorktreeUnderParentProject() {
+  fun currentProjectScopePromotesOnlyMatchingWorktreeToRoot() {
     runBlocking {
       val harness = createHarness()
       try {
@@ -267,7 +270,8 @@ class AgentSessionsTreeStateControllerTest {
                                                                              AgentSessionProvider.from("codex"),
                                                                              "worktree-thread"))
         }
-        assertThat(harness.model.entriesById).containsKey(SessionTreeId.Project(PROJECT_PATH))
+        assertThat(harness.model.rootIds).containsExactly(SessionTreeId.Worktree(PROJECT_PATH, WORKTREE_PATH))
+        assertThat(harness.model.entriesById).doesNotContainKey(SessionTreeId.Project(PROJECT_PATH))
         assertThat(harness.model.entriesById).doesNotContainKey(SessionTreeId.Thread(PROJECT_PATH,
                                                                                      AgentSessionProvider.from("codex"),
                                                                                      "parent-thread"))

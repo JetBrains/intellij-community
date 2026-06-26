@@ -13,6 +13,7 @@ import com.intellij.agent.workbench.sessions.state.AgentSessionThreadViewState
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModel
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModelDiff
+import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeRootPresentation
 import com.intellij.agent.workbench.sessions.toolwindow.tree.buildSessionTreeModel
 import com.intellij.agent.workbench.sessions.toolwindow.tree.diffSessionTreeModels
 import com.intellij.agent.workbench.sessions.toolwindow.tree.overlayPendingAgentChatTabs
@@ -151,6 +152,10 @@ internal class AgentSessionsTreeStateController(
     return state.filterToCurrentProjectSessions(currentProjectPathForScope())
   }
 
+  fun isSingleProjectPresentationEnabled(): Boolean {
+    return currentProjectPathForScope() != null
+  }
+
   fun projectScopeChanged() {
     rebuildTree(SessionTreeRebuildReason.PROJECT_SCOPE_CHANGED)
   }
@@ -176,6 +181,12 @@ internal class AgentSessionsTreeStateController(
     val snapshotState = displayedStateSnapshot()
     val snapshotThreadViewState = threadViewState
     val snapshotSelectedChatTab = selectedChatTab
+    val snapshotRootPresentation = if (isSingleProjectPresentationEnabled()) {
+      SessionTreeRootPresentation.SINGLE_PROJECT_CONTENTS
+    }
+    else {
+      SessionTreeRootPresentation.PROJECTS
+    }
     val oldModel = getSessionTreeModel()
     val updateSequence = ++treeUpdateSequence
     rebuildJob = scope.launch {
@@ -185,6 +196,7 @@ internal class AgentSessionsTreeStateController(
           visibleClosedProjectCount = snapshotState.visibleClosedProjectCount,
           visibleThreadCounts = snapshotState.visibleThreadCounts,
           treeUiState = serviceAsync<AgentSessionTreeUiStateService>(),
+          rootPresentation = snapshotRootPresentation,
         )
         val diff = diffSessionTreeModels(oldModel, model)
         val selection = if (snapshotThreadViewState.mode == AgentSessionThreadViewMode.ACTIVE) {

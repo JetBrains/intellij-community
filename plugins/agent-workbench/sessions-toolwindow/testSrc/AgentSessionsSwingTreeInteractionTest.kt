@@ -13,9 +13,11 @@ import com.intellij.agent.workbench.sessions.toolwindow.tree.shouldExpandOnDoubl
 import com.intellij.agent.workbench.sessions.toolwindow.tree.shouldHandleSingleClick
 import com.intellij.agent.workbench.sessions.toolwindow.tree.shouldOpenOnActivation
 import com.intellij.agent.workbench.sessions.toolwindow.tree.shouldRetargetSelectionForContextMenu
+import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsTreeRowActionsOverlay
 import com.intellij.agent.workbench.sessions.toolwindow.ui.resolveArchiveActionContext
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.ui.treeStructure.Tree
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -82,6 +84,21 @@ class AgentSessionsSwingTreeInteractionTest {
     assertThat(shouldExpandOnDoubleClick(SessionTreeNode.MoreProjects(hiddenCount = 1))).isTrue()
     assertThat(shouldExpandOnDoubleClick(SessionTreeNode.MoreThreads(project, hiddenCount = 1))).isTrue()
     assertThat(shouldExpandOnDoubleClick(SessionTreeNode.Warning("warning"))).isTrue()
+  }
+
+  @Test
+  fun rowNewThreadActionCanBeSuppressedForSingleProjectPresentation() {
+    val overlay = AgentSessionsTreeRowActionsOverlay(
+      project = ProjectManager.getInstance().defaultProject,
+      tree = Tree(),
+      nodeResolver = { null },
+      isNewThreadActionAvailable = { false },
+    )
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
+
+    assertThat(
+      overlay.rowActionPresentation(row = 0, treeNode = SessionTreeNode.Project(project), selected = true)
+    ).isNull()
   }
 
   @Test

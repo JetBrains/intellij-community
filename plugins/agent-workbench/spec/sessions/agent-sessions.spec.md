@@ -82,8 +82,8 @@ behavior; refresh mechanics and detailed tree rendering/interaction contracts li
   [@test] ../../claude/sessions/testSrc/ClaudeSessionSourceTest.kt
   [@test] ../../junie/sessions/testSrc/JunieSessionSourceTest.kt
 
-- Agent Threads must support a current-project-only scope for both active and archived views. The automatic default is all projects when
-  chat opens in the dedicated frame and current project when chats open in the source project frame; an explicit user override must persist
+- Agent Threads must support a current-project-only scope for both active and archived views. The automatic default is current project
+  because chat opens in the source project frame by default, and switches to all projects when chats open in the dedicated frame; an explicit user override must persist
   until the user returns to the current automatic default. Worktree projects keep the parent project row only as a container for the
   matching worktree.
   [@test] ../../sessions/testSrc/settings/AgentWorkbenchSettingsTest.kt
@@ -103,6 +103,7 @@ behavior; refresh mechanics and detailed tree rendering/interaction contracts li
   return-to-active icon, an archived context label, and a separate range selector.
 - The title header exposes the current-project-only scope toggle as a direct toolbar action so users can narrow a crowded dock without
   opening settings.
+- In effective current-project-only scope, the single-project tree omits the root project row and shows its thread/worktree rows directly.
 
 ## Testing / Local Run
 

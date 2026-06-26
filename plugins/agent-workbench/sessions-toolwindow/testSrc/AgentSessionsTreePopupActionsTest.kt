@@ -440,6 +440,24 @@ class AgentSessionsTreePopupActionsTest {
   }
 
   @Test
+  fun newThreadGroupHidesWhenContextDisallowsNewThread() {
+    val group = AgentSessionsTreePopupNewThreadGroup(
+      resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
+    )
+    val projectContext = popupContext(
+      nodeId = SessionTreeId.Project("/work/project-a"),
+      node = SessionTreeNode.Project(AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)),
+      newThreadActionAvailable = false,
+    )
+    val event = popupEvent(group, projectContext)
+
+    group.update(event)
+
+    assertThat(event.presentation.isEnabledAndVisible).isFalse()
+    assertThat(group.getChildren(event)).isEmpty()
+  }
+
+  @Test
   fun newThreadGroupVisibilityAndDispatchUsesDefaultLaunchProfile() {
     var launchedPath: String? = null
     var launchedProfile: AgentPromptLaunchProfile? = null
@@ -675,6 +693,7 @@ private fun popupContext(
   node: SessionTreeNode,
   archiveTargets: List<ArchiveThreadTarget> = emptyList(),
   unarchiveTargets: List<ArchiveThreadTarget> = emptyList(),
+  newThreadActionAvailable: Boolean = true,
 ): AgentSessionsTreePopupActionContext {
   return checkNotNull(createAgentSessionsTreePopupActionContext(
     project = ProjectManager.getInstance().defaultProject,
@@ -682,6 +701,7 @@ private fun popupContext(
     node = node,
     archiveTargets = archiveTargets,
     unarchiveTargets = unarchiveTargets,
+    newThreadActionAvailable = newThreadActionAvailable,
   ))
 }
 

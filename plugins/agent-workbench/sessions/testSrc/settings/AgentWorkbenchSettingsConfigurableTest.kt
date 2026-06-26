@@ -112,7 +112,7 @@ class AgentWorkbenchSettingsConfigurableTest {
     }
 
     assertThat(AgentWorkbenchSettings.getInstance().openInDedicatedFrame).isTrue()
-    assertThat(AgentWorkbenchSettings.getInstance().openInDedicatedFrameOverride).isNull()
+    assertThat(AgentWorkbenchSettings.getInstance().openInDedicatedFrameOverride).isTrue()
     assertThat(AgentWorkbenchSettings.getInstance().agentThreadsCurrentProjectOnlyOverride).isTrue()
     assertThat(AgentWorkbenchSettings.getInstance().showAgentActivityInMainToolbar).isTrue()
     assertThat(AgentWorkbenchSettings.getInstance().showAgentActivityInMainToolbarOverride).isTrue()
