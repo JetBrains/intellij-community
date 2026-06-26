@@ -177,5 +177,6 @@
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="fleet.rhizomedb" />
     <orderEntry type="library" name="jetbrains.intellij.deps.java.atk.wrapper.linux" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.eel.nioFs.impl" />
   </component>
 </module>

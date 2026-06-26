@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.eel.provider.utils.EelPathUtils;
+import com.intellij.platform.eel.provider.utils.EelProjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
@@ -934,7 +935,7 @@ public class GitImpl extends GitImplBase {
     else {
       try {
         if (GitEelExecutableDetectionHelper.canUseEel()) {
-          stdinFile = EelPathUtils.createTemporaryFile(repository.getProject(), HOOK_STDIN_FILE_PREFIX, HOOK_STDIN_FILE_SUFFIX, true);
+          stdinFile = EelProjectUtils.createTemporaryFile(repository.getProject(), HOOK_STDIN_FILE_PREFIX, HOOK_STDIN_FILE_SUFFIX, true);
         }
         else {
           stdinFile = Files.createTempFile(HOOK_STDIN_FILE_PREFIX, HOOK_STDIN_FILE_SUFFIX);

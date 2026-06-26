@@ -19,5 +19,8 @@ f:com.intellij.platform.eel.provider.EelProviderProjectUtilKt
 - s:setEelMachine(com.intellij.openapi.project.Project,com.intellij.platform.eel.EelMachine):V
 - s:toEelApiBlocking(com.intellij.platform.eel.EelDescriptor):com.intellij.platform.eel.EelApi
 - s:toEelApiBlocking(com.intellij.platform.eel.EelMachine,com.intellij.platform.eel.EelDescriptor):com.intellij.platform.eel.EelApi
-*f:com.intellij.platform.eel.provider.utils.EelPathUtilsKt
-- *sf:Path(java.lang.String,com.intellij.platform.eel.EelDescriptor):java.nio.file.Path
+*f:com.intellij.platform.eel.provider.utils.EelSystemFolderUtils
+- sf:INSTANCE:com.intellij.platform.eel.provider.utils.EelSystemFolderUtils
+- sf:getSystemFolder(com.intellij.openapi.project.Project):java.nio.file.Path
+- sf:getSystemFolder(com.intellij.platform.eel.EelApi):java.nio.file.Path
+- sf:getSystemFolder(com.intellij.platform.eel.EelDescriptor):java.nio.file.Path

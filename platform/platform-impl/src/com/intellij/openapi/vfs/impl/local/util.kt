@@ -23,6 +23,7 @@ import com.intellij.platform.eel.fs.readFile
 import com.intellij.platform.eel.fs.stat
 import com.intellij.platform.eel.getOr
 import com.intellij.platform.eel.getOrNull
+import com.intellij.platform.eel.nioFs.impl.utils.getCaseSensitivity
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.EelMountProvider
@@ -377,7 +378,7 @@ private fun EelFileInfo.toVfs(isWritable: Boolean, isSymLink: Boolean): FileAttr
   val length = (attrs.type as? EelFileInfo.Type.Regular)?.size ?: 0
   val lastModified = FileTime.from(attrs.lastModifiedTime?.toInstant() ?: Instant.MIN).toMillis()
   val caseSensitivity = when (val type = attrs.type) {
-    is EelFileInfo.Type.Directory -> EelPathUtils.getCaseSensitivity(type)
+    is EelFileInfo.Type.Directory -> type.getCaseSensitivity()
     else -> FileAttributes.CaseSensitivity.UNKNOWN
   }
 

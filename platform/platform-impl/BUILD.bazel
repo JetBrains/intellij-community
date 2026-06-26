@@ -190,6 +190,7 @@ jvm_library(
         "//platform/forms_rt:java-guiForms-rt",
         "//fleet/rhizomedb",
         "@lib//:jetbrains-intellij-deps-java-atk-wrapper-linux",
+        "//platform/eel-nioFs-impl",
     ],
 )
 
@@ -352,6 +353,7 @@ jvm_library(
         "//libraries/rd/core:core_test_lib",
         "//platform/forms_rt:java-guiForms-rt_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//platform/eel-nioFs-impl:eel-nioFs-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ide.impl` end

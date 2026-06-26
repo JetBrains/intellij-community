@@ -74,7 +74,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.compiler.ArtifactCompilerUtil;
 import com.intellij.packaging.impl.compiler.ArtifactsCompiler;
-import com.intellij.platform.eel.provider.utils.EelPathUtils;
+import com.intellij.platform.eel.provider.utils.EelProjectUtils;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.tracing.Tracer;
@@ -169,7 +169,7 @@ public final class CompileDriver {
       LOG.debug("isUpToDate operation started");
     }
     if (ProjectRootManager.getInstance(myProject).getProjectSdk() == null &&
-        !EelPathUtils.isProjectLocal(myProject)) {
+        !EelProjectUtils.isProjectLocal(myProject)) {
       // BuildManager tries to use the internal JDK if the project jdk is not set
       // We cannot allow fallback to the internal jdk
       return true;

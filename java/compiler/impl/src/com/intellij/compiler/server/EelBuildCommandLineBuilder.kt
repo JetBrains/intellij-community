@@ -19,6 +19,7 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.routingPrefixes
 import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.platform.eel.provider.utils.EelPathUtils
+import com.intellij.platform.eel.provider.utils.EelSystemFolderUtils
 import com.intellij.platform.eel.provider.utils.forwardLocalServer
 import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.CoroutineScope
@@ -150,7 +151,7 @@ internal class EelBuildCommandLineBuilder(val project: Project, exePath: Path) :
   }
 
   private fun getSystemFolderRoot(): Path {
-    return EelPathUtils.getSystemFolder(eel)
+    return EelSystemFolderUtils.getSystemFolder(eel)
   }
 }
 

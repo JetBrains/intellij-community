@@ -17,3 +17,5 @@ f:com.intellij.platform.eel.provider.EelPathDescriptorKt
 - *sf:getEelDescriptor(java.nio.file.Path):com.intellij.platform.eel.EelDescriptor
 - *sf:getOsFamily(java.nio.file.Path):com.intellij.platform.eel.EelOsFamily
 - *sf:ownsPath(com.intellij.platform.eel.EelMachine,java.nio.file.Path):Z
+f:com.intellij.platform.eel.provider.utils.EelPathUtilsKt
+- *sf:Path(java.lang.String,com.intellij.platform.eel.EelDescriptor):java.nio.file.Path

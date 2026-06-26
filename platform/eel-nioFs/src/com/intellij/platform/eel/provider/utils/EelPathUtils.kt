@@ -1,20 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-@file:ApiStatus.Experimental
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
-import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.io.FileAttributes
-import com.intellij.openapi.util.io.NioFiles
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelUserPosixInfo
-import com.intellij.platform.eel.fs.EelFileInfo
 import com.intellij.platform.eel.fs.EelPosixFileInfo
 import com.intellij.platform.eel.fs.EelWindowsFileInfo
 import com.intellij.platform.eel.fs.createTemporaryDirectory
@@ -28,30 +18,24 @@ import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
-import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.platform.eel.provider.utils.EelPathTransfer.FileTransferAttributesStrategy
 import com.intellij.platform.eel.provider.utils.EelPathTransfer.IncrementalWalkingTransferAbsoluteSymlinkHandler
 import com.intellij.platform.eel.provider.utils.EelPathTransfer.incrementalWalkingTransfer
 import com.intellij.platform.eel.provider.utils.EelPathUtils.UnixFilePermissionBranch.GROUP
 import com.intellij.platform.eel.provider.utils.EelPathUtils.UnixFilePermissionBranch.OTHER
 import com.intellij.platform.eel.provider.utils.EelPathUtils.UnixFilePermissionBranch.OWNER
-import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.CollectionFactory
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.nio.file.AccessMode
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.Path
-import kotlin.io.path.deleteRecursively
 import kotlin.io.path.isDirectory
 import kotlin.io.path.name
 
@@ -73,7 +57,7 @@ object EelPathUtils {
   }
 
   fun expandUserHome(eelDescriptor: EelDescriptor, path: String): Path {
-    val userHome = eelDescriptor.toEelApiBlocking().userInfo.home
+    val userHome = runBlocking { eelDescriptor.toEelApi() }.userInfo.home
     val path = runCatching { Path(path).asEelPath().toString() }.getOrNull() ?: path // try to normalize path
 
     return eelDescriptor.getPath(if (path == "~") {
@@ -85,74 +69,12 @@ object EelPathUtils {
     }).asNioPath()
   }
 
-  /**
-   * **Obsolete – avoid it in new code.**
-   *
-   * Although positioned one level higher than *isPathLocal*, this helper still bakes in the same
-   * local-vs-remote distinction, tying callers to a specific execution environment and reducing the
-   * portability of higher-level logic.
-   *
-   * @return `true` when the project's default Eel target is local.
-   */
-  @ApiStatus.Obsolete
-  @JvmStatic
-  fun isProjectLocal(project: Project): Boolean {
-    val projectFilePath = project.projectFilePath ?: return true
-    return isPathLocal(Path.of(projectFilePath))
-  }
-
-  @JvmStatic
-  @RequiresBackgroundThread(generateAssertion = false)
-  fun createTemporaryFile(project: Project?, prefix: String = "", suffix: String = "", deleteOnExit: Boolean = true): Path {
-    if (project == null || isProjectLocal(project)) {
-      return Files.createTempFile(prefix, suffix)
-    }
-    val projectFilePath = project.projectFilePath ?: return Files.createTempFile(prefix, suffix)
-    return runBlockingMaybeCancellable {
-      val eel = Path.of(projectFilePath).getEelDescriptor().toEelApi()
-      val file = eel.fs.createTemporaryFile().suffix(suffix).prefix(prefix).deleteOnExit(deleteOnExit).getOrThrowFileSystemException()
-      file.asNioPath()
-    }
-  }
-
-  @JvmStatic
-  @RequiresBackgroundThread(generateAssertion = false)
-  fun getSystemFolder(project: Project): Path {
-    return getSystemFolder(project.getEelDescriptor().toEelApiBlocking())
-  }
-
-  @JvmStatic
-  @RequiresBackgroundThread(generateAssertion = false)
-  fun getSystemFolder(eelDescriptor: EelDescriptor): Path {
-    return getSystemFolder(eelDescriptor.toEelApiBlocking())
-  }
-
-  @JvmStatic
-  @RequiresBackgroundThread(generateAssertion = false)
-  fun getSystemFolder(eel: EelApi): Path {
-    val selector = PathManager.getPathsSelector() ?: "IJ-Platform"
-    val userHomeFolder = eel.userInfo.home.asNioPath().toString()
-    return Path.of(PathManager.getDefaultSystemPathFor(eel.platform.toOs(), userHomeFolder, selector, eel.exec.fetchLoginShellEnvVariablesBlocking()))
-  }
-
-  @JvmStatic
-  @OptIn(ExperimentalPathApi::class)
-  @RequiresBackgroundThread(generateAssertion = false)
-  fun createTemporaryDirectory(project: Project?, prefix: String = "", suffix: String = "", deleteOnExit: Boolean = false): Path {
-    if (project == null || isProjectLocal(project) || project.projectFilePath == null) {
-      val dir = Files.createTempDirectory(prefix)
-      if (deleteOnExit) {
-        Runtime.getRuntime().addShutdownHook(Thread {
-          dir.deleteRecursively()
-        })
-      }
-      return dir
-    }
-    val eel = Path.of(project.projectFilePath!!).getEelDescriptor().toEelApiBlocking()
-    return createTemporaryDirectory(eel, prefix, suffix, deleteOnExit)
-  }
-
-  private suspend fun createTemporaryDirectoryImpl(eelApi: EelApi, prefix: String = "", suffix: String = "", deleteOnExit: Boolean = false): Path {
+  private suspend fun createTemporaryDirectoryImpl(
+    eelApi: EelApi,
+    prefix: String = "",
+    suffix: String = "",
+    deleteOnExit: Boolean = false,
+  ): Path {
     val file = eelApi.fs.createTemporaryDirectory()
       .prefix(prefix)
       .suffix(suffix)
@@ -162,9 +84,8 @@ object EelPathUtils {
   }
 
   @JvmStatic
-  @RequiresBackgroundThread(generateAssertion = false)
   fun createTemporaryDirectory(eelApi: EelApi, prefix: String = "", suffix: String = "", deleteOnExit: Boolean = false): Path {
-    return runBlockingMaybeCancellable { createTemporaryDirectoryImpl(eelApi, prefix, suffix, deleteOnExit) }
+    return runBlocking { createTemporaryDirectoryImpl(eelApi, prefix, suffix, deleteOnExit) }
   }
 
   @JvmStatic
@@ -173,15 +94,12 @@ object EelPathUtils {
   }
 
   @JvmStatic
-  @RequiresBackgroundThread(generateAssertion = false)
   fun renderAsEelPath(path: Path): String {
     val eelPath = path.asEelPath()
     if (eelPath.descriptor == LocalEelDescriptor) {
       return path.toString()
     }
-    return runBlockingMaybeCancellable {
-      eelPath.toString()
-    }
+    return eelPath.toString()
   }
 
   /** If [path] is `\\wsl.localhost\Ubuntu\mnt\c\Program Files`, then actual path is `C:\Program Files` */
@@ -252,7 +170,6 @@ object EelPathUtils {
   @ApiStatus.Obsolete
   @JvmStatic
   @JvmOverloads
-  @RequiresBackgroundThread
   fun transferContentsIfNonLocal(
     eel: EelApi,
     source: Path,
@@ -279,7 +196,6 @@ object EelPathUtils {
    */
   @JvmStatic
   @JvmOverloads
-  @RequiresBackgroundThread
   fun transferLocalContentToRemote(
     source: Path,
     target: TransferTarget,
@@ -296,13 +212,13 @@ object EelPathUtils {
           return source
         }
 
-        runBlockingMaybeCancellable {
-          service<TransferredContentHolder>().transferIfNeeded(target.descriptor.toEelApi(), source, fileAttributesStrategy, absoluteSymlinkHandler)
+        runBlocking {
+          TransferredContentHolder.transferIfNeeded(target.descriptor.toEelApi(), source, fileAttributesStrategy, absoluteSymlinkHandler)
         }
       }
       is TransferTarget.Explicit -> {
         val sink = target.path
-        runBlockingMaybeCancellable {
+        runBlocking {
           incrementalWalkingTransfer(source, sink, fileAttributesStrategy, absoluteSymlinkHandler, null)
         }
         return sink
@@ -317,8 +233,7 @@ object EelPathUtils {
    * instead of being an application-level service. This would provide cleaner lifecycle management
    * and explicit cache invalidation on IJent restart.
    */
-  @Service
-  private class TransferredContentHolder(private val scope: CoroutineScope) {
+  private object TransferredContentHolder {
 
     data class CacheKey(
       val sourcePathString: String,
@@ -327,16 +242,21 @@ object EelPathUtils {
     )
 
     data class CacheValue(
-      val transferredFilePath: Path
+      val transferredFilePath: Path,
     )
 
-    private class Cache: ConcurrentHashMap<CacheKey, Deferred<CacheValue>>()
+    private class Cache : ConcurrentHashMap<CacheKey, Deferred<CacheValue>>()
 
     // eel api instance -> (source path string -> transferred file)
     private val caches = CollectionFactory.createConcurrentWeakIdentityMap<EelApi, Cache>()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    suspend fun transferIfNeeded(eel: EelApi, source: Path, fileAttributesStrategy: FileTransferAttributesStrategy, absoluteSymlinkHandler: IncrementalWalkingTransferAbsoluteSymlinkHandler?): Path {
+    suspend fun transferIfNeeded(
+      eel: EelApi,
+      source: Path,
+      fileAttributesStrategy: FileTransferAttributesStrategy,
+      absoluteSymlinkHandler: IncrementalWalkingTransferAbsoluteSymlinkHandler?,
+    ): Path {
       val cache = caches.computeIfAbsent(eel) { Cache() }
 
       return cache.compute(CacheKey(source.toString(), fileAttributesStrategy, absoluteSymlinkHandler)) { _, deferred ->
@@ -350,7 +270,7 @@ object EelPathUtils {
           }
         }
 
-        scope.async {
+        GlobalScope.async {
           val targetPath = targetPath ?: eel.createTempFor(source, true)
           incrementalWalkingTransfer(source, targetPath, fileAttributesStrategy, absoluteSymlinkHandler, null)
           CacheValue(targetPath)
@@ -453,17 +373,9 @@ object EelPathUtils {
     return null
   }
 
-  fun getCaseSensitivity(directoryType: EelFileInfo.Type.Directory): FileAttributes.CaseSensitivity {
-    return when (directoryType.sensitivity) {
-      EelFileInfo.CaseSensitivity.SENSITIVE -> FileAttributes.CaseSensitivity.SENSITIVE
-      EelFileInfo.CaseSensitivity.INSENSITIVE -> FileAttributes.CaseSensitivity.INSENSITIVE
-      EelFileInfo.CaseSensitivity.UNKNOWN -> FileAttributes.CaseSensitivity.UNKNOWN
-    }
-  }
-
   fun deleteRecursively(path: Path) {
     // TODO optimize the remote FS case
-    NioFiles.deleteRecursively(path)
+    FileUtilRt.deleteRecursively(path, null)
   }
 }
 
@@ -473,4 +385,4 @@ object EelPathUtils {
  */
 @ApiStatus.Experimental
 @Throws(EelPathException::class)
-fun Path(pathOnEel: @NlsSafe String, eel: EelDescriptor): Path = EelPath.parse(pathOnEel, eel).asNioPath()
+fun Path(pathOnEel: String, eel: EelDescriptor): Path = EelPath.parse(pathOnEel, eel).asNioPath()
