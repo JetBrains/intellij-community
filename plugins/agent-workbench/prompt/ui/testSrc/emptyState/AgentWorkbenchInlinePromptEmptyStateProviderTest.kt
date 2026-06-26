@@ -20,6 +20,7 @@ import com.intellij.agent.workbench.prompt.ui.PromptTargetMode
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.impl.EditorEmptyStateComponentHost
@@ -154,16 +155,20 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
     runInEdtAndWait {
       val component = AgentWorkbenchInlinePromptEmptyStateComponent(ProjectManager.getInstance().defaultProject)
       try {
-        val host = createAgentWorkbenchInlinePromptEditorHost(component)
+        val root = createAgentWorkbenchInlinePromptEditorHost(component)
         val preferredSize = component.preferredSize
         val hostWidth = preferredSize.width + 400
         val hostHeight = preferredSize.height + 300
 
-        host.setBounds(0, 0, hostWidth, hostHeight)
+        root.setBounds(0, 0, hostWidth, hostHeight)
+        root.doLayout()
+        val host = collectComponents(root, EditorEmptyStateComponentHost::class.java).single()
         host.doLayout()
         val contentPanel = host.components.single() as JComponent
         contentPanel.doLayout()
 
+        assertThat(root.isOpaque).isTrue()
+        assertThat(root.background).isEqualTo(EditorColorsManager.getInstance().globalScheme.defaultBackground)
         assertThat(host).isInstanceOf(EditorEmptyStateComponentHost::class.java)
         assertThat(component.size).isEqualTo(preferredSize)
         assertThat(kotlin.math.abs(contentPanel.x * 2 + contentPanel.width - host.width)).isLessThanOrEqualTo(1)

@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.impl.EditorEmptyStateComponentHost
 import com.intellij.openapi.fileEditor.impl.EditorEmptyStateComponentProvider
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
@@ -257,10 +258,25 @@ fun createAgentWorkbenchInlineNewThreadPromptComponent(
 @ApiStatus.Internal
 @RequiresEdt
 fun createAgentWorkbenchInlinePromptEditorHost(component: JComponent): JComponent {
-  return EditorEmptyStateComponentHost(fillContent = false).apply {
-    setComponents(listOf(component))
+  return AgentWorkbenchInlinePromptEditorHost(component)
+}
+
+private class AgentWorkbenchInlinePromptEditorHost(component: JComponent) : JPanel(BorderLayout()) {
+  init {
+    isOpaque = true
+    background = editorBackground()
+    add(EditorEmptyStateComponentHost(fillContent = false).apply {
+      setComponents(listOf(component))
+    }, BorderLayout.CENTER)
+  }
+
+  override fun updateUI() {
+    super.updateUI()
+    background = editorBackground()
   }
 }
+
+private fun editorBackground() = EditorColorsManager.getInstance().globalScheme.defaultBackground
 
 internal data class AgentWorkbenchInlinePromptConfiguration(
   @JvmField val invocationData: AgentPromptInvocationData,
