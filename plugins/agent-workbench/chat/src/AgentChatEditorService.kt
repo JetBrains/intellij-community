@@ -134,8 +134,12 @@ data class AgentChatTabRebindTarget(
   @JvmField val threadIdentity: String,
   @JvmField val threadId: String,
   @JvmField val threadTitle: String,
+  // threadActivity is the row-compatible activity; threadActivityReport carries editor chrome state.
   @JvmField val threadActivity: AgentThreadActivity,
+  @JvmField val threadActivityReport: AgentThreadActivityReport = AgentThreadActivityReport(threadActivity),
   @JvmField val threadUpdatedAt: Long = 0L,
+  // Callers that already know the resume command can avoid provider launch planning side effects.
+  @JvmField val launchSpec: AgentSessionTerminalLaunchSpec? = null,
 )
 
 data class AgentChatPendingTabSnapshot(
@@ -612,6 +616,7 @@ private fun AgentChatTabRebindTarget.toRebindLaunchSpecKey(): AgentChatRebindLau
 }
 
 private suspend fun resolveRebindLaunchSpec(target: AgentChatTabRebindTarget): AgentSessionTerminalLaunchSpec? {
+  target.launchSpec?.let { return it }
   return try {
     AgentSessionLaunchPlanner.plan(
       intent = AgentSessionLaunchIntent(
@@ -765,13 +770,13 @@ suspend fun rebindOpenPendingAgentChatTabs(
           provider = request.target.provider,
           threadId = request.target.threadId,
           fallbackTitle = request.target.threadTitle,
-          fallbackActivity = request.target.threadActivity,
+          fallbackActivityReport = request.target.threadActivityReport,
         )
         val changed = pendingFile.rebindPendingThread(
           threadIdentity = request.target.threadIdentity,
           threadId = request.target.threadId,
           threadTitle = targetPresentation.title,
-          threadActivity = targetPresentation.activity,
+          threadActivityReport = targetPresentation.activityReport,
         )
         if (!changed) {
           outcomes.add(
@@ -933,13 +938,13 @@ suspend fun rebindOpenConcreteAgentChatTabs(
           provider = request.target.provider,
           threadId = request.target.threadId,
           fallbackTitle = request.target.threadTitle,
-          fallbackActivity = request.target.threadActivity,
+          fallbackActivityReport = request.target.threadActivityReport,
         )
         val changed = concreteFile.rebindConcreteThread(
           threadIdentity = request.target.threadIdentity,
           threadId = request.target.threadId,
           threadTitle = targetPresentation.title,
-          threadActivity = targetPresentation.activity,
+          threadActivityReport = targetPresentation.activityReport,
         )
         if (!changed) {
           outcomes.add(

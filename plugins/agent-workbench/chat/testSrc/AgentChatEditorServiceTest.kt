@@ -1,6 +1,7 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationModel
@@ -691,6 +692,65 @@ class AgentChatEditorServiceTest {
       activity = AgentThreadActivity.UNREAD,
     )
     assertThat(unchangedTabs).isEqualTo(0)
+  }
+
+  @Test
+  fun testTabIconUsesChromeActivityWithoutChangingThreadActivity(): Unit = timeoutRunBlocking {
+    openChatInModal(
+      threadIdentity = "CODEX:thread-1",
+      shellCommand = codexCommand,
+      threadId = "thread-1",
+      threadTitle = "Initial title",
+      subAgentId = null,
+    )
+
+    val file = openedChatFiles().single()
+    val updatedTabs = publishThreadPresentation(
+      file = file,
+      title = "Initial title",
+      activityReport = AgentThreadActivityReport(
+        rowActivity = AgentThreadActivity.READY,
+        chromeActivity = AgentThreadActivity.NEEDS_INPUT,
+      ),
+    )
+    assertThat(updatedTabs).isEqualTo(1)
+
+    assertThat(file.threadActivity).isEqualTo(AgentThreadActivity.READY)
+    assertThat(resolveAgentChatTabIconActivity(file)).isEqualTo(AgentThreadActivity.NEEDS_INPUT)
+  }
+
+  @Test
+  fun testTabIconChromeActivityClearRepaintsWithoutChangingThreadActivity(): Unit = timeoutRunBlocking {
+    openChatInModal(
+      threadIdentity = "CODEX:thread-1",
+      shellCommand = codexCommand,
+      threadId = "thread-1",
+      threadTitle = "Initial title",
+      subAgentId = null,
+    )
+
+    val file = openedChatFiles().single()
+    assertThat(publishThreadPresentation(
+      file = file,
+      title = "Initial title",
+      activityReport = AgentThreadActivityReport(
+        rowActivity = AgentThreadActivity.READY,
+        chromeActivity = AgentThreadActivity.NEEDS_INPUT,
+      ),
+    )).isEqualTo(1)
+
+    val clearedTabs = publishThreadPresentation(
+      file = file,
+      title = "Initial title",
+      activityReport = AgentThreadActivityReport(
+        rowActivity = AgentThreadActivity.READY,
+        chromeActivity = null,
+      ),
+    )
+
+    assertThat(clearedTabs).isEqualTo(1)
+    assertThat(file.threadActivity).isEqualTo(AgentThreadActivity.READY)
+    assertThat(resolveAgentChatTabIconActivity(file)).isEqualTo(AgentThreadActivity.READY)
   }
 
   @Test
@@ -2245,6 +2305,7 @@ class AgentChatEditorServiceTest {
     threadId: String,
     threadTitle: String,
     threadActivity: AgentThreadActivity,
+    threadActivityReport: AgentThreadActivityReport = AgentThreadActivityReport(threadActivity),
     provider: AgentSessionProvider = AgentSessionProvider.from("codex"),
     projectPath: String = this.projectPath,
   ): AgentChatTabRebindTarget {
@@ -2255,6 +2316,8 @@ class AgentChatEditorServiceTest {
       threadId = threadId,
       threadTitle = threadTitle,
       threadActivity = threadActivity,
+      threadActivityReport = threadActivityReport,
+      launchSpec = AgentSessionTerminalLaunchSpec(command = listOf(provider.value, "resume", threadId)),
     )
   }
 
@@ -2374,6 +2437,22 @@ private suspend fun publishThreadPresentation(
 }
 
 private suspend fun publishThreadPresentation(
+  file: AgentChatVirtualFile,
+  path: String = file.projectPath,
+  title: String,
+  activityReport: AgentThreadActivityReport,
+): Int {
+  val provider = checkNotNull(file.provider)
+  return publishThreadPresentation(
+    path = path,
+    provider = provider,
+    threadId = file.sessionId,
+    title = title,
+    activityReport = activityReport,
+  )
+}
+
+private suspend fun publishThreadPresentation(
   path: String,
   provider: AgentSessionProvider,
   threadId: String,
@@ -2386,6 +2465,24 @@ private suspend fun publishThreadPresentation(
     threadId = threadId,
     title = title,
     activity = activity,
+  )
+  return AgentChatOpenTabPresentationInvalidator.invalidate(changeSet)
+}
+
+private suspend fun publishThreadPresentation(
+  path: String,
+  provider: AgentSessionProvider,
+  threadId: String,
+  title: String,
+  activityReport: AgentThreadActivityReport,
+): Int {
+  val changeSet = service<AgentSessionThreadPresentationModel>().updateThread(
+    path = path,
+    provider = provider,
+    threadId = threadId,
+    title = title,
+    activity = null,
+    activityReport = activityReport,
   )
   return AgentChatOpenTabPresentationInvalidator.invalidate(changeSet)
 }

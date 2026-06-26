@@ -133,6 +133,7 @@ class CodexAppServerProtocolTest {
             "id": "thread-read-1",
             "updated_at": 1700000031000,
             "status": {"type": "active", "activeFlags": ["waitingOnApproval"]},
+            "source": {"subAgent": {"thread_spawn": {"parent_thread_id": "parent-read"}}},
             "turns": [
               {"status": "completed", "items": [{"type": "userMessage"}, {"type": "agentMessage"}, {"type": "enteredReviewMode"}]},
               {"id": "turn-2", "status": {"type": "in_progress"}, "items": [{"type": "plan"}]}
@@ -147,6 +148,8 @@ class CodexAppServerProtocolTest {
     assertThat(snapshot!!.threadId).isEqualTo("thread-read-1")
     assertThat(snapshot.statusKind).isEqualTo(CodexThreadStatusKind.ACTIVE)
     assertThat(snapshot.activeFlags).containsExactly(CodexThreadActiveFlag.WAITING_ON_APPROVAL)
+    assertThat(snapshot.sourceKind).isEqualTo(CodexThreadSourceKind.SUB_AGENT_THREAD_SPAWN)
+    assertThat(snapshot.parentThreadId).isEqualTo("parent-read")
     assertThat(snapshot.hasUnreadAssistantMessage).isTrue()
     assertThat(snapshot.hasPendingPlan).isTrue()
     assertThat(snapshot.isReviewing).isTrue()

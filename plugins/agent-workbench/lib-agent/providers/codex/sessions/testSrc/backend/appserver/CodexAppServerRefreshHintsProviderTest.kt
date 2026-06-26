@@ -8,8 +8,10 @@ import com.intellij.platform.ai.agent.codex.common.CodexAppServerStartedThread
 import com.intellij.platform.ai.agent.codex.common.CodexAppServerException
 import com.intellij.platform.ai.agent.codex.common.CodexThreadActiveFlag
 import com.intellij.platform.ai.agent.codex.common.CodexThreadActivitySnapshot
+import com.intellij.platform.ai.agent.codex.common.CodexThreadSourceKind
 import com.intellij.platform.ai.agent.codex.common.CodexThreadStatusKind
 import com.intellij.platform.ai.agent.codex.sessions.backend.CodexRefreshHints
+import com.intellij.platform.ai.agent.codex.sessions.backend.toAgentSessionRefreshHints
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
@@ -138,6 +140,45 @@ class CodexAppServerRefreshHintsProviderTest {
             .containsExactlyEntriesOf(mapOf("thread-shared" to AgentThreadActivity.READY))
         assertThat(hintsByPath.getValue("/work/project-b").activities())
             .containsExactlyEntriesOf(mapOf("thread-shared" to AgentThreadActivity.READY))
+    }
+
+    @Test
+    fun verifiedThreadReadSnapshotsUpdateChromeActivity(): Unit = runBlocking(Dispatchers.Default) {
+        val provider = CodexAppServerRefreshHintsProvider(
+            readThreadActivitySnapshot = { threadId ->
+                when (threadId) {
+                    "thread-top" -> snapshot(
+                        threadId = threadId,
+                        statusKind = CodexThreadStatusKind.ACTIVE,
+                    )
+                    "thread-subagent" -> snapshot(
+                        threadId = threadId,
+                        statusKind = CodexThreadStatusKind.ACTIVE,
+                        sourceKind = CodexThreadSourceKind.SUB_AGENT_THREAD_SPAWN,
+                        parentThreadId = "thread-top",
+                    )
+                    else -> null
+                }
+            },
+            notifications = emptyFlow(),
+        )
+
+        val hints = provider.prefetchRefreshHints(
+            paths = listOf("/work/project"),
+            refreshThreadSeedsByPath = mapOf(
+                "/work/project" to setOf(refreshThreadSeed("thread-top"), refreshThreadSeed("thread-subagent")),
+            ),
+        ).getValue("/work/project").toAgentSessionRefreshHints()
+
+        val topUpdate = hints.activityUpdatesByThreadId.getValue("thread-top")
+        assertThat(topUpdate.updatesChromeActivity).isTrue()
+        assertThat(topUpdate.activityReport.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
+        assertThat(topUpdate.activityReport.chromeActivity).isEqualTo(AgentThreadActivity.PROCESSING)
+
+        val subAgentUpdate = hints.activityUpdatesByThreadId.getValue("thread-subagent")
+        assertThat(subAgentUpdate.updatesChromeActivity).isTrue()
+        assertThat(subAgentUpdate.activityReport.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
+        assertThat(subAgentUpdate.activityReport.chromeActivity).isNull()
     }
 
     @Test
@@ -1030,6 +1071,8 @@ private fun snapshot(
     threadId: String,
     statusKind: CodexThreadStatusKind,
     activeFlags: List<CodexThreadActiveFlag> = emptyList(),
+    sourceKind: CodexThreadSourceKind = CodexThreadSourceKind.UNKNOWN,
+    parentThreadId: String? = null,
     hasUnreadAssistantMessage: Boolean = false,
     hasPendingPlan: Boolean = false,
     isReviewing: Boolean = false,
@@ -1042,6 +1085,8 @@ private fun snapshot(
         updatedAt = updatedAt,
         statusKind = statusKind,
         activeFlags = activeFlags,
+        sourceKind = sourceKind,
+        parentThreadId = parentThreadId,
         hasUnreadAssistantMessage = hasUnreadAssistantMessage,
         hasPendingPlan = hasPendingPlan,
         isReviewing = isReviewing,

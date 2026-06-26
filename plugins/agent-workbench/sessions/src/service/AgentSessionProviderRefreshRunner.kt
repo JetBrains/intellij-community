@@ -726,11 +726,19 @@ private fun collectCurrentProviderOutcomes(
 }
 
 private fun List<AgentSessionThread>.normalizedProviderThreadIds(provider: AgentSessionProvider): Set<String> {
-  return asSequence()
-    .filter { thread -> thread.provider == provider }
-    .map { thread -> thread.id }
-    .mapNotNull(::normalizeConcreteAgentSessionThreadId)
-    .toCollection(LinkedHashSet())
+  val result = LinkedHashSet<String>()
+  forEach { thread ->
+    if (thread.provider != provider) {
+      return@forEach
+    }
+    normalizeConcreteAgentSessionThreadId(thread.id)?.let(result::add)
+    thread.subAgents
+      .asSequence()
+      .map { subAgent -> subAgent.id }
+      .mapNotNull(::normalizeConcreteAgentSessionThreadId)
+      .forEach(result::add)
+  }
+  return result
 }
 
 private fun collectMissingProviderThreadPaths(
@@ -777,13 +785,24 @@ private fun applyRefreshHintsToOutcomes(
       if (thread.provider != provider) {
         return@map thread
       }
-      val presentationUpdate = presentationUpdatesByThreadId[thread.id] ?: return@map thread
-      val resolvedUpdate = resolveAgentThreadPresentationUpdate(thread = thread, presentationUpdate = presentationUpdate)
-      if (resolvedUpdate.title == thread.title && resolvedUpdate.activityReport == thread.activityReport && resolvedUpdate.updatedAt == thread.updatedAt) {
+      var updatedThread = thread
+      val presentationUpdate = presentationUpdatesByThreadId[thread.id]
+      if (presentationUpdate != null) {
+        val resolvedUpdate = resolveAgentThreadPresentationUpdate(thread = thread, presentationUpdate = presentationUpdate)
+        if (resolvedUpdate.title != thread.title || resolvedUpdate.activityReport != thread.activityReport || resolvedUpdate.updatedAt != thread.updatedAt) {
+          updatedThread = thread.copy(title = resolvedUpdate.title, activityReport = resolvedUpdate.activityReport, updatedAt = resolvedUpdate.updatedAt)
+        }
+      }
+
+      updatedThread = applyAgentSubAgentPresentationUpdates(
+        thread = updatedThread,
+        presentationUpdatesByThreadId = presentationUpdatesByThreadId,
+      )
+      if (updatedThread == thread) {
         return@map thread
       }
       changed = true
-      thread.copy(title = resolvedUpdate.title, activityReport = resolvedUpdate.activityReport, updatedAt = resolvedUpdate.updatedAt)
+      updatedThread
     }
     if (changed) {
       outcomes[path] = outcome.copy(threads = updatedThreads)
