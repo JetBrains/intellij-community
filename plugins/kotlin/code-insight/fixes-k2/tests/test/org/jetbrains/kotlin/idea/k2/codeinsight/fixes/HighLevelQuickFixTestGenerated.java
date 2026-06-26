@@ -3928,6 +3928,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/createContextParameterFromNamedArugment/comment.kt");
         }
 
+        @TestMetadata("disabledContextParameters.kt")
+        public void testDisabledContextParameters() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createContextParameterFromNamedArugment/disabledContextParameters.kt");
+        }
+
+        @TestMetadata("disabledExplicitContextArguments.kt")
+        public void testDisabledExplicitContextArguments() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createContextParameterFromNamedArugment/disabledExplicitContextArguments.kt");
+        }
+
         @TestMetadata("existingContext.kt")
         public void testExistingContext() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/createContextParameterFromNamedArugment/existingContext.kt");
