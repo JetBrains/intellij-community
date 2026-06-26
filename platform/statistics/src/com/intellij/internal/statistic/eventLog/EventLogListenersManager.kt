@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -73,11 +74,20 @@ class EventLogListenersManager(coroutineScope: CoroutineScope) {
   }
 
   fun notifySubscribers(recorderId: String, validatedEvent: LogEvent, rawEventId: String?, rawData: Map<String, Any>?, isFromLocalRecorder: Boolean) {
+    val testMode = StatisticsRecorderUtil.isTestModeEnabled(recorderId)
+    val effectiveRawEventId = if (testMode) rawEventId else null
+    val effectiveRawData = if (testMode) rawData?.let { HashMap(it).apply { remove(FeatureUsageData.JCP_DATA_KEY) } } else null
+
     val listeners = subscribers[recorderId]
     for (listener in listeners) {
       try {
         if (!isFromLocalRecorder || isLocalAllowed(listener)) {
-          listener.onLogEvent(validatedEvent, rawEventId, rawData)
+          if (isJcpListener(listener)) {
+            listener.onLogEvent(validatedEvent, rawEventId, rawData)
+          }
+          else {
+            listener.onLogEvent(validatedEvent, effectiveRawEventId, effectiveRawData)
+          }
         }
       } catch (e: Exception) {
         logger.warnInProduction(e)
