@@ -1,18 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.thread.view
+package com.intellij.agent.workbench.chat
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
-import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.buildAgentThreadIdentity
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
+import com.intellij.platform.ai.agent.common.session.isClaudeMenuCommandPrompt
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadRebindPolicy
-import com.intellij.platform.ai.agent.sessions.core.launch.AGENT_SESSION_SURFACE_ACP
-import com.intellij.platform.ai.agent.sessions.core.launch.AGENT_SESSION_SURFACE_TERMINAL
-import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionSurfaces
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
@@ -21,8 +18,6 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessag
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryChannel
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryStatus
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptRecord
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionMenuCommand
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionArchivedSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
@@ -41,15 +36,12 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.frontend.view.TerminalKeyEvent
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
-import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.EmptyIcon
-import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -69,29 +61,24 @@ import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
-import java.awt.Component
-import java.awt.Container
+import java.util.concurrent.TimeUnit
 import java.awt.event.KeyEvent
 import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Proxy
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicLong
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.Icon
 import javax.swing.JPanel
-import javax.swing.JTextArea
-import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
-import kotlin.math.abs
 import kotlin.math.min
 
-private val editorsToDispose = CopyOnWriteArrayList<AgentThreadViewFileEditor>()
+private val editorsToDispose = CopyOnWriteArrayList<AgentChatFileEditor>()
 
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
-class AgentThreadViewFileEditorLifecycleTest {
+class AgentChatFileEditorLifecycleTest {
   @AfterEach
   fun tearDown() {
     editorsToDispose.asReversed().forEach { editor ->
@@ -107,11 +94,11 @@ class AgentThreadViewFileEditorLifecycleTest {
     val firstAction = DumbAwareAction.create("First") { }
     val secondAction = DumbAwareAction.create("Second") { }
 
-    val emptyGroup = buildAgentThreadViewEditorTabActionGroup(emptyList())
-    val wrappedSingleActionGroup = buildAgentThreadViewEditorTabActionGroup(listOf(firstAction))
+    val emptyGroup = buildAgentChatEditorTabActionGroup(emptyList())
+    val wrappedSingleActionGroup = buildAgentChatEditorTabActionGroup(listOf(firstAction))
     val existingGroup = object : DefaultActionGroup(firstAction), DumbAware {}
-    val reusedGroup = buildAgentThreadViewEditorTabActionGroup(listOf(existingGroup))
-    val wrappedMultiActionGroup = buildAgentThreadViewEditorTabActionGroup(listOf(firstAction, secondAction))
+    val reusedGroup = buildAgentChatEditorTabActionGroup(listOf(existingGroup))
+    val wrappedMultiActionGroup = buildAgentChatEditorTabActionGroup(listOf(firstAction, secondAction))
 
     assertThat(emptyGroup).isNull()
     assertThat(wrappedSingleActionGroup).isNotNull
@@ -131,10 +118,10 @@ class AgentThreadViewFileEditorLifecycleTest {
     val file = pendingTestFile()
     val title = TerminalTitle()
     val snapshotWriter = RecordingSnapshotWriter()
-    val requests = mutableListOf<AgentThreadViewPendingTabRebindRequest>()
+    val requests = mutableListOf<AgentChatPendingTabRebindRequest>()
     val refreshThreadIds = mutableListOf<String?>()
     val controllerScope = unconfinedTestScope()
-    val controller = AgentThreadViewTerminalTitleThreadRebindController(
+    val controller = AgentChatTerminalTitleThreadRebindController(
       file = file,
       contributor = terminalTitleThreadRebindContributor(),
       tabSnapshotWriter = snapshotWriter,
@@ -148,7 +135,7 @@ class AgentThreadViewFileEditorLifecycleTest {
           threadTitle = request.target.threadTitle,
           threadActivity = request.target.threadActivity,
         )
-        AgentThreadViewPendingTabRebindReport(
+        AgentChatPendingTabRebindReport(
           requestedBindings = 1,
           reboundBindings = 1,
           reboundFiles = 1,
@@ -192,11 +179,11 @@ class AgentThreadViewFileEditorLifecycleTest {
     val threadId = "018f4b30-f1b2-7000-9b4d-abcdef123456"
     val file = pendingTestFile()
     val snapshotWriter = RecordingSnapshotWriter()
-    val requests = mutableListOf<AgentThreadViewPendingTabRebindRequest>()
+    val requests = mutableListOf<AgentChatPendingTabRebindRequest>()
     val refreshThreadIds = mutableListOf<String?>()
     var attempts = 0
     val controllerScope = unconfinedTestScope()
-    val controller = AgentThreadViewTerminalTitleThreadRebindController(
+    val controller = AgentChatTerminalTitleThreadRebindController(
       file = file,
       contributor = terminalTitleThreadRebindContributor(),
       tabSnapshotWriter = snapshotWriter,
@@ -205,7 +192,7 @@ class AgentThreadViewFileEditorLifecycleTest {
         requests += request
         attempts++
         if (attempts == 1) {
-          pendingRebindReport(file.projectPath, request, AgentThreadViewPendingTabRebindStatus.PENDING_TAB_NOT_OPEN)
+          pendingRebindReport(file.projectPath, request, AgentChatPendingTabRebindStatus.PENDING_TAB_NOT_OPEN)
         }
         else {
           file.rebindPendingThread(
@@ -214,7 +201,7 @@ class AgentThreadViewFileEditorLifecycleTest {
             threadTitle = request.target.threadTitle,
             threadActivity = request.target.threadActivity,
           )
-          pendingRebindReport(file.projectPath, request, AgentThreadViewPendingTabRebindStatus.REBOUND)
+          pendingRebindReport(file.projectPath, request, AgentChatPendingTabRebindStatus.REBOUND)
         }
       },
       notifyRefresh = { _, _, refreshedThreadId, _, _ ->
@@ -266,7 +253,7 @@ class AgentThreadViewFileEditorLifecycleTest {
     val title = TerminalTitle()
     val snapshotWriter = RecordingSnapshotWriter()
     val controllerScope = unconfinedTestScope()
-    val controller = AgentThreadViewTerminalTitleThreadRebindController(
+    val controller = AgentChatTerminalTitleThreadRebindController(
       file = file,
       contributor = terminalTitleThreadRebindContributor(),
       tabSnapshotWriter = snapshotWriter,
@@ -278,7 +265,7 @@ class AgentThreadViewFileEditorLifecycleTest {
           threadTitle = request.target.threadTitle,
           threadActivity = request.target.threadActivity,
         )
-        AgentThreadViewPendingTabRebindReport(
+        AgentChatPendingTabRebindReport(
           requestedBindings = 1,
           reboundBindings = 1,
           reboundFiles = 1,
@@ -330,7 +317,7 @@ class AgentThreadViewFileEditorLifecycleTest {
       initialMessageToken = "token-startup",
       initialMessageSent = false,
     )
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val editor = testEditor(file = file, terminalTabs = terminalTabs)
 
     editor.selectNotify()
@@ -363,13 +350,13 @@ class AgentThreadViewFileEditorLifecycleTest {
       shellCommand = emptyList(),
     )
     file.updateStartupIntent(
-      AgentThreadViewStartupIntent.NewSession(
+      AgentChatStartupIntent.NewSession(
         provider = AgentSessionProvider.from("terminal"),
         launchMode = AgentSessionLaunchMode.STANDARD,
       )
     )
     file.setStartupLaunchSpecOverride(startupLaunchSpec)
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val editor = testEditor(file = file, terminalTabs = terminalTabs)
 
     editor.selectNotify()
@@ -385,8 +372,8 @@ class AgentThreadViewFileEditorLifecycleTest {
     val file = testFile()
     file.setStartupLaunchSpecOverride(startupLaunchSpec)
     file.updateDeferredStartState(
-      AgentThreadViewDeferredStartState(
-        phase = AgentThreadViewDeferredStartPhase.WAITING,
+      AgentChatDeferredStartState(
+        phase = AgentChatDeferredStartPhase.WAITING,
         title = "Waiting",
       )
     )
@@ -394,13 +381,13 @@ class AgentThreadViewFileEditorLifecycleTest {
     val focusComponent = JButton("Prompt")
     var disposed = false
     file.replaceDeferredStartContent(
-      AgentThreadViewDeferredStartContent(
+      AgentChatDeferredStartContent(
         component = customContent,
         preferredFocusedComponent = focusComponent,
         disposeContent = { disposed = true },
       )
     )
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val editor = testEditor(file = file, terminalTabs = terminalTabs)
 
     editor.selectNotify()
@@ -411,8 +398,8 @@ class AgentThreadViewFileEditorLifecycleTest {
     assertThat(disposed).isFalse()
 
     file.updateDeferredStartState(
-      AgentThreadViewDeferredStartState(
-        phase = AgentThreadViewDeferredStartPhase.READY_TO_START,
+      AgentChatDeferredStartState(
+        phase = AgentChatDeferredStartPhase.READY_TO_START,
         title = "Ready",
       )
     )
@@ -425,215 +412,16 @@ class AgentThreadViewFileEditorLifecycleTest {
   }
 
   @Test
-  fun providerCustomContentWaitsForDeferredStartStateToBecomeReady() {
-    val provider = AgentSessionProvider.from("custom")
-    val file = testFile(
-      threadIdentity = buildAgentThreadIdentity(provider.value, "new-thread"),
-      shellCommand = emptyList(),
-    ).also { file ->
-      file.updateThreadId("new-thread")
-      file.updateDeferredStartState(
-        AgentThreadViewDeferredStartState(
-          phase = AgentThreadViewDeferredStartPhase.WAITING,
-          title = "Waiting",
-        )
-      )
-    }
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
-    val customContent = JPanel()
-    val createdThreadIds = ArrayList<String>()
-    val resolvedContexts = ArrayList<AgentThreadViewContentContext>()
-    val customContentProvider = object : AgentThreadViewCustomContentProvider {
-      override val provider: AgentSessionProvider = provider
-
-      override fun createComponent(project: Project, threadIdentity: String, threadId: String, parent: Disposable): JComponent {
-        createdThreadIds += threadId
-        return customContent
-      }
-    }
-    val editor = testEditor(
-      file = file,
-      terminalTabs = terminalTabs,
-      customContentProviderResolver = { candidate ->
-        resolvedContexts += candidate
-        if (candidate.provider == provider) customContentProvider else null
-      },
-    )
-
-    editor.selectNotify()
-
-    assertThat(createdThreadIds).isEmpty()
-    assertThat(editor.component.components).doesNotContain(customContent)
-    assertThat(terminalTabs.createCalls).isZero()
-
-    file.updateDeferredStartState(
-      AgentThreadViewDeferredStartState(
-        phase = AgentThreadViewDeferredStartPhase.READY_TO_START,
-        title = "Ready",
-      )
-    )
-    editor.refreshForFileStateChange()
-
-    assertThat(resolvedContexts.single().surfaceId).isEqualTo(AgentSessionSurfaces.TERMINAL)
-    assertThat(createdThreadIds).containsExactly("new-thread")
-    assertThat(editor.component.components).containsExactly(customContent)
-    assertThat(file.deferredStartState).isNull()
-    assertThat(terminalTabs.createCalls).isZero()
-  }
-
-  @Test
-  fun providerCustomContentSuppliesPreferredFocusedComponent() {
-    val provider = AgentSessionProvider.from("custom")
-    val file = testFile(
-      threadIdentity = buildAgentThreadIdentity(provider.value, "thread-1"),
-      shellCommand = emptyList(),
-    ).also { file ->
-      file.updateThreadId("thread-1")
-    }
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
-    val inputComponent = JTextArea()
-    val customContent = object : JPanel(), AgentThreadViewPreferredFocusableContent {
-      override val preferredFocusedComponent: JComponent = inputComponent
-    }
-    val customContentProvider = object : AgentThreadViewCustomContentProvider {
-      override val provider: AgentSessionProvider = provider
-
-      override fun createComponent(project: Project, threadIdentity: String, threadId: String, parent: Disposable): JComponent {
-        return customContent
-      }
-    }
-    val editor = testEditor(
-      file = file,
-      terminalTabs = terminalTabs,
-      customContentProviderResolver = { candidate ->
-        if (candidate.provider == provider) customContentProvider else null
-      },
-    )
-
-    editor.selectNotify()
-
-    assertThat(editor.component.components).containsExactly(customContent)
-    assertThat(editor.preferredFocusedComponent).isSameAs(inputComponent)
-    assertThat(terminalTabs.createCalls).isZero()
-  }
-
-  @Test
-  fun customContentResolverUsesSurfaceContext() {
-    val provider = AgentSessionProvider.from("acp")
-    val customContent = JPanel()
-    val terminalFile = testFile(
-      threadIdentity = buildAgentThreadIdentity(provider.value, "terminal-thread"),
-      shellCommand = emptyList(),
-    ).also { file ->
-      file.updateThreadId("terminal-thread")
-      file.updateSurfaceId(AGENT_SESSION_SURFACE_TERMINAL)
-      file.setStartupLaunchSpecOverride(AgentSessionTerminalLaunchSpec(command = listOf("acp", "resume", "terminal-thread")))
-    }
-    val acpFile = testFile(
-      threadIdentity = buildAgentThreadIdentity(provider.value, "acp-thread"),
-      shellCommand = emptyList(),
-    ).also { file ->
-      file.updateThreadId("acp-thread")
-      file.updateSurfaceId(AGENT_SESSION_SURFACE_ACP)
-    }
-    val customContentProvider = object : AgentThreadViewCustomContentProvider {
-      override val provider: AgentSessionProvider = provider
-
-      override fun handles(context: AgentThreadViewContentContext): Boolean {
-        return context.provider == provider && context.surfaceId == AgentSessionSurfaces.ACP
-      }
-
-      override fun createComponent(project: Project, threadIdentity: String, threadId: String, parent: Disposable): JComponent {
-        return customContent
-      }
-    }
-
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
-    val terminalEditor = testEditor(
-      file = terminalFile,
-      terminalTabs = terminalTabs,
-      customContentProviderResolver = { context -> customContentProvider.takeIf { it.handles(context) } },
-    )
-    terminalEditor.selectNotify()
-
-    assertThat(terminalEditor.component.components).doesNotContain(customContent)
-    assertThat(terminalTabs.createCalls).isEqualTo(1)
-
-    val acpTerminalTabs = FakeAgentThreadViewTerminalTabs()
-    val acpEditor = testEditor(
-      file = acpFile,
-      terminalTabs = acpTerminalTabs,
-      customContentProviderResolver = { context -> customContentProvider.takeIf { it.handles(context) } },
-    )
-    acpEditor.selectNotify()
-
-    assertThat(acpEditor.component.components).containsExactly(customContent)
-    assertThat(acpTerminalTabs.createCalls).isZero()
-  }
-
-  @Test
-  fun defaultDeferredStartWaitingStateUsesCenteredDelayedProgress() {
-    val file = testFile()
-    file.updateDeferredStartState(
-      AgentThreadViewDeferredStartState(
-        phase = AgentThreadViewDeferredStartPhase.WAITING,
-        title = "Starting new thread…",
-      )
-    )
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
-    val editor = testEditor(file = file, terminalTabs = terminalTabs)
-
-    editor.selectNotify()
-
-    editor.component.setSize(600, 400)
-    layoutRecursively(editor.component)
-    val progressIcon = collectAgentThreadViewStartProgressComponents(editor.component).single()
-    val title = collectComponentsOfType(editor.component, JTextArea::class.java).single()
-    assertThat(title.text).isEqualTo("Starting new thread…")
-    assertThat(title.font.isBold).isFalse()
-    assertThat(progressIcon.isVisible).isFalse()
-    assertThat(abs(yCenterInRoot(title, editor.component) - editor.component.height / 2)).isLessThan(48)
-    assertThat(abs(xCenterInRoot(title, editor.component) - editor.component.width / 2)).isLessThan(96)
-
-    waitForCondition(timeoutMs = 1_000) { progressIcon.isVisible }
-    assertThat(terminalTabs.createCalls).isZero()
-  }
-
-  @Test
-  fun defaultDeferredStartFailureStateDoesNotShowProgressIcon() {
-    val file = testFile()
-    file.updateDeferredStartState(
-      AgentThreadViewDeferredStartState(
-        phase = AgentThreadViewDeferredStartPhase.FAILURE_NO_START,
-        title = "Couldn't start agent",
-        message = "Try again.",
-      )
-    )
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
-    val editor = testEditor(file = file, terminalTabs = terminalTabs)
-
-    editor.selectNotify()
-
-    assertThat(collectComponentsOfType(editor.component, AsyncProcessIcon::class.java)).isEmpty()
-    val messages = collectComponentsOfType(editor.component, JTextArea::class.java)
-    assertThat(messages.map { it.text })
-      .containsExactly("Couldn't start agent", "Try again.")
-    assertThat(messages.first().font.isBold).isFalse()
-    assertThat(messages.last().foreground).isEqualTo(UIUtil.getContextHelpForeground())
-    assertThat(terminalTabs.createCalls).isZero()
-  }
-
-  @Test
   fun restartForFileStateChangeReplacesRetainedTerminalWithNewLaunchSpec() {
     val project = testProject()
     val file = testFile()
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
-    val liveTerminalStore = AgentThreadViewLiveTerminalStore()
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    val liveTerminalStore = AgentChatLiveTerminalStore()
     val editor = testEditor(
       project = project,
       file = file,
       terminalTabs = terminalTabs,
-      liveTerminalRegistry = TestAgentThreadViewLiveTerminalRegistry(project = project, store = liveTerminalStore),
+      liveTerminalRegistry = TestAgentChatLiveTerminalRegistry(project = project, store = liveTerminalStore),
     )
 
     editor.selectNotify()
@@ -678,7 +466,7 @@ class AgentThreadViewFileEditorLifecycleTest {
     val title = TerminalTitle()
     val snapshotWriter = RecordingSnapshotWriter()
     val controllerScope = unconfinedTestScope()
-    val controller = AgentThreadViewTerminalTitleThreadRebindController(
+    val controller = AgentChatTerminalTitleThreadRebindController(
       file = file,
       contributor = terminalTitleThreadRebindContributor(),
       tabSnapshotWriter = snapshotWriter,
@@ -690,7 +478,7 @@ class AgentThreadViewFileEditorLifecycleTest {
           threadTitle = request.target.threadTitle,
           threadActivity = request.target.threadActivity,
         )
-        AgentThreadViewPendingTabRebindReport(
+        AgentChatPendingTabRebindReport(
           requestedBindings = 1,
           reboundBindings = 1,
           reboundFiles = 1,
@@ -732,10 +520,10 @@ class AgentThreadViewFileEditorLifecycleTest {
     file.updateNewThreadRebindRequestedAtMs(2_000L)
     val title = TerminalTitle()
     val snapshotWriter = RecordingSnapshotWriter()
-    val requests = mutableListOf<AgentThreadViewConcreteTabRebindRequest>()
+    val requests = mutableListOf<AgentChatConcreteTabRebindRequest>()
     val refreshSignals = mutableListOf<Pair<String?, String?>>()
     val controllerScope = unconfinedTestScope()
-    val controller = AgentThreadViewTerminalTitleThreadRebindController(
+    val controller = AgentChatTerminalTitleThreadRebindController(
       file = file,
       contributor = terminalTitleThreadRebindContributor(),
       tabSnapshotWriter = snapshotWriter,
@@ -749,7 +537,7 @@ class AgentThreadViewFileEditorLifecycleTest {
           threadTitle = request.target.threadTitle,
           threadActivity = request.target.threadActivity,
         )
-        AgentThreadViewConcreteTabRebindReport(
+        AgentChatConcreteTabRebindReport(
           requestedBindings = 1,
           reboundBindings = 1,
           reboundFiles = 1,
@@ -794,11 +582,11 @@ class AgentThreadViewFileEditorLifecycleTest {
     val file = testFile()
     file.updateNewThreadRebindRequestedAtMs(2_000L)
     val snapshotWriter = RecordingSnapshotWriter()
-    val requests = mutableListOf<AgentThreadViewConcreteTabRebindRequest>()
+    val requests = mutableListOf<AgentChatConcreteTabRebindRequest>()
     val refreshSignals = mutableListOf<Pair<String?, String?>>()
     val controllerScope = unconfinedTestScope()
-    lateinit var controller: AgentThreadViewTerminalTitleThreadRebindController
-    controller = AgentThreadViewTerminalTitleThreadRebindController(
+    lateinit var controller: AgentChatTerminalTitleThreadRebindController
+    controller = AgentChatTerminalTitleThreadRebindController(
       file = file,
       contributor = terminalTitleThreadRebindContributor(),
       tabSnapshotWriter = snapshotWriter,
@@ -813,7 +601,7 @@ class AgentThreadViewFileEditorLifecycleTest {
         )
         controller.dispose()
         withContext(Dispatchers.Default) {}
-        concreteRebindReport(file.projectPath, request, AgentThreadViewConcreteTabRebindStatus.REBOUND)
+        concreteRebindReport(file.projectPath, request, AgentChatConcreteTabRebindStatus.REBOUND)
       },
       notifyRefresh = { _, _, refreshedThreadId, refreshedThreadTitle, _ ->
         refreshSignals += refreshedThreadId to refreshedThreadTitle
@@ -844,11 +632,11 @@ class AgentThreadViewFileEditorLifecycleTest {
     val file = testFile()
     file.updateNewThreadRebindRequestedAtMs(2_000L)
     val snapshotWriter = RecordingSnapshotWriter()
-    val requests = mutableListOf<AgentThreadViewConcreteTabRebindRequest>()
+    val requests = mutableListOf<AgentChatConcreteTabRebindRequest>()
     val refreshThreadIds = mutableListOf<String?>()
     var attempts = 0
     val controllerScope = unconfinedTestScope()
-    val controller = AgentThreadViewTerminalTitleThreadRebindController(
+    val controller = AgentChatTerminalTitleThreadRebindController(
       file = file,
       contributor = terminalTitleThreadRebindContributor(),
       tabSnapshotWriter = snapshotWriter,
@@ -857,7 +645,7 @@ class AgentThreadViewFileEditorLifecycleTest {
         requests += request
         attempts++
         if (attempts == 1) {
-          concreteRebindReport(file.projectPath, request, AgentThreadViewConcreteTabRebindStatus.CONCRETE_TAB_NOT_OPEN)
+          concreteRebindReport(file.projectPath, request, AgentChatConcreteTabRebindStatus.CONCRETE_TAB_NOT_OPEN)
         }
         else {
           file.rebindConcreteThread(
@@ -866,7 +654,7 @@ class AgentThreadViewFileEditorLifecycleTest {
             threadTitle = request.target.threadTitle,
             threadActivity = request.target.threadActivity,
           )
-          concreteRebindReport(file.projectPath, request, AgentThreadViewConcreteTabRebindStatus.REBOUND)
+          concreteRebindReport(file.projectPath, request, AgentChatConcreteTabRebindStatus.REBOUND)
         }
       },
       notifyRefresh = { _, _, refreshedThreadId, _, _ ->
@@ -909,12 +697,12 @@ class AgentThreadViewFileEditorLifecycleTest {
     val snapshotWriter = RecordingSnapshotWriter()
     val refreshThreadIds = mutableListOf<String?>()
     val controllerScope = unconfinedTestScope()
-    val controller = AgentThreadViewTerminalTitleThreadRebindController(
+    val controller = AgentChatTerminalTitleThreadRebindController(
       file = file,
       contributor = terminalTitleThreadRebindContributor(),
       tabSnapshotWriter = snapshotWriter,
       rebindConcreteTabs = { _, _ ->
-        error("Expired /new anchor must not rebind a concrete threadView tab")
+        error("Expired /new anchor must not rebind a concrete chat tab")
       },
       notifyRefresh = { _, _, refreshedThreadId, _, _ ->
         refreshThreadIds += refreshedThreadId
@@ -940,7 +728,7 @@ class AgentThreadViewFileEditorLifecycleTest {
 
   @Test
   fun preferredFocusedComponentDoesNotStartTerminalInitialization() {
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val editor = testEditor(terminalTabs = terminalTabs)
 
     val preferred = editor.preferredFocusedComponent
@@ -951,7 +739,7 @@ class AgentThreadViewFileEditorLifecycleTest {
 
   @Test
   fun selectNotifyWaitsUntilEditorComponentIsShown() {
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val editor = testEditor(terminalTabs = terminalTabs, showComponent = false)
 
     editor.selectNotify()
@@ -968,7 +756,7 @@ class AgentThreadViewFileEditorLifecycleTest {
 
   @Test
   fun selectNotifyFocusesTerminalAfterEditorComponentIsShown() {
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val editor = testEditor(terminalTabs = terminalTabs, showComponent = false)
 
     editor.selectNotify()
@@ -984,7 +772,7 @@ class AgentThreadViewFileEditorLifecycleTest {
 
   @Test
   fun pendingContextCanBeQueuedBeforeAsyncTerminalInitialization() {
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val editorScope = object : CoroutineScope {
       override val coroutineContext = Job() + PausedCoroutineDispatcher
     }
@@ -1012,7 +800,7 @@ class AgentThreadViewFileEditorLifecycleTest {
     file.updateRestoreOnRestart(false)
     val editor = testEditor(file = file)
 
-    val state = editor.getState(FileEditorStateLevel.FULL) as AgentThreadViewFileEditorState
+    val state = editor.getState(FileEditorStateLevel.FULL) as AgentChatFileEditorState
 
     assertThat(state.snapshot).isNull()
     assertThat(state.startupIntent).isNull()
@@ -1021,8 +809,8 @@ class AgentThreadViewFileEditorLifecycleTest {
   @Test
   fun restoredArchivedThreadClosesWithoutStartingTerminal() {
     val file = restoredConcreteTestFile()
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
-    val closedFiles = CopyOnWriteArrayList<AgentThreadViewVirtualFile>()
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    val closedFiles = CopyOnWriteArrayList<AgentChatVirtualFile>()
     val descriptor = ArchivedThreadsProviderDescriptor(
       provider = AgentSessionProvider.from("codex"),
       archivedThreads = listOf(
@@ -1031,7 +819,7 @@ class AgentThreadViewFileEditorLifecycleTest {
           title = "Restored thread",
           updatedAt = 1L,
           archived = true,
-          activityReport = AgentThreadActivityReport(AgentThreadActivity.READY),
+          activity = AgentThreadActivity.READY,
           provider = AgentSessionProvider.from("codex"),
         )
       ),
@@ -1041,7 +829,7 @@ class AgentThreadViewFileEditorLifecycleTest {
       val editor = testEditor(
         file = file,
         terminalTabs = terminalTabs,
-        archivedRestoreHandler = AgentThreadViewArchivedRestoreHandler { closedFile -> closedFiles += closedFile },
+        archivedRestoreHandler = AgentChatArchivedRestoreHandler { closedFile -> closedFiles += closedFile },
         providerDescriptorResolver = { provider -> if (provider == descriptor.provider) descriptor else null },
       )
 
@@ -1055,23 +843,23 @@ class AgentThreadViewFileEditorLifecycleTest {
 
   @Test
   fun editorShellCreationDoesNotResolveLiveTerminalRegistry() {
-    val editor = AgentThreadViewFileEditor(
+    val editor = AgentChatFileEditor(
       project = testProject(),
       file = claudeLifecycleTestFile(),
-      liveTerminalRegistry = object : AgentThreadViewLiveTerminalRegistry {
+      liveTerminalRegistry = object : AgentChatLiveTerminalRegistry {
         override fun acquireOrCreate(
-          file: AgentThreadViewVirtualFile,
-          terminalTabs: AgentThreadViewTerminalTabs,
+          file: AgentChatVirtualFile,
+          terminalTabs: AgentChatTerminalTabs,
           startupLaunchSpec: AgentSessionTerminalLaunchSpec,
-        ): AgentThreadViewTerminalTab {
+        ): AgentChatTerminalTab {
           throw AssertionError("Live terminal registry must not be used while creating the editor shell")
         }
 
         override fun replace(
-          file: AgentThreadViewVirtualFile,
-          terminalTabs: AgentThreadViewTerminalTabs,
+          file: AgentChatVirtualFile,
+          terminalTabs: AgentChatTerminalTabs,
           startupLaunchSpec: AgentSessionTerminalLaunchSpec,
-        ): AgentThreadViewTerminalTab {
+        ): AgentChatTerminalTab {
           throw AssertionError("Live terminal registry must not be used while creating the editor shell")
         }
       },
@@ -1084,29 +872,29 @@ class AgentThreadViewFileEditorLifecycleTest {
   @Test
   fun selectNotifyResolvesLiveTerminalRegistryWhenTerminalIsInitialized() {
     val project = testProject()
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
-    val liveTerminalStore = AgentThreadViewLiveTerminalStore()
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    val liveTerminalStore = AgentChatLiveTerminalStore()
     val registryAcquisitions = AtomicLong()
-    val editor = AgentThreadViewFileEditor(
+    val editor = AgentChatFileEditor(
       project = project,
       file = claudeLifecycleTestFile(),
       terminalTabs = terminalTabs,
       editorCoroutineScope = unconfinedTestScope(),
-      liveTerminalRegistry = object : AgentThreadViewLiveTerminalRegistry {
+      liveTerminalRegistry = object : AgentChatLiveTerminalRegistry {
         override fun acquireOrCreate(
-          file: AgentThreadViewVirtualFile,
-          terminalTabs: AgentThreadViewTerminalTabs,
+          file: AgentChatVirtualFile,
+          terminalTabs: AgentChatTerminalTabs,
           startupLaunchSpec: AgentSessionTerminalLaunchSpec,
-        ): AgentThreadViewTerminalTab {
+        ): AgentChatTerminalTab {
           registryAcquisitions.incrementAndGet()
           return liveTerminalStore.acquireOrCreate(project, file, terminalTabs, startupLaunchSpec)
         }
 
         override fun replace(
-          file: AgentThreadViewVirtualFile,
-          terminalTabs: AgentThreadViewTerminalTabs,
+          file: AgentChatVirtualFile,
+          terminalTabs: AgentChatTerminalTabs,
           startupLaunchSpec: AgentSessionTerminalLaunchSpec,
-        ): AgentThreadViewTerminalTab {
+        ): AgentChatTerminalTab {
           return liveTerminalStore.replace(project, file, terminalTabs, startupLaunchSpec)
         }
       },
@@ -1125,11 +913,11 @@ class AgentThreadViewFileEditorLifecycleTest {
 
   @Test
   fun deferredStartBlocksTerminalInitializationUntilReleased() {
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val file = testFile().also {
       it.updateDeferredStartState(
-        AgentThreadViewDeferredStartState(
-          phase = AgentThreadViewDeferredStartPhase.WAITING,
+        AgentChatDeferredStartState(
+          phase = AgentChatDeferredStartPhase.WAITING,
           title = "Preparing merge resolution",
           message = "Still preparing conflicts",
         )
@@ -1142,7 +930,7 @@ class AgentThreadViewFileEditorLifecycleTest {
     assertThat(terminalTabs.createCalls).isEqualTo(0)
     assertThat(editor.preferredFocusedComponent).isSameAs(editor.component)
 
-    file.updateDeferredStartState(AgentThreadViewDeferredStartState(AgentThreadViewDeferredStartPhase.READY_TO_START, title = ""))
+    file.updateDeferredStartState(AgentChatDeferredStartState(AgentChatDeferredStartPhase.READY_TO_START, title = ""))
     editor.refreshForFileStateChange()
 
     assertThat(terminalTabs.createCalls).isEqualTo(1)
@@ -1152,14 +940,14 @@ class AgentThreadViewFileEditorLifecycleTest {
   @Test
   fun disposeKeepsInitializedTerminalTabAliveUntilFileClose() {
     val project = testProject()
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val file = claudeLifecycleTestFile()
-    val liveTerminalStore = AgentThreadViewLiveTerminalStore()
+    val liveTerminalStore = AgentChatLiveTerminalStore()
     val editor = testEditor(
       project = project,
       file = file,
       terminalTabs = terminalTabs,
-      liveTerminalRegistry = TestAgentThreadViewLiveTerminalRegistry(project, liveTerminalStore),
+      liveTerminalRegistry = TestAgentChatLiveTerminalRegistry(project, liveTerminalStore),
     )
 
     editor.selectNotify()
@@ -1176,10 +964,10 @@ class AgentThreadViewFileEditorLifecycleTest {
   @Test
   fun recreatedEditorReusesInitializedTerminalTab() {
     val project = testProject()
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val file = claudeLifecycleTestFile()
-    val liveTerminalStore = AgentThreadViewLiveTerminalStore()
-    val liveTerminalRegistry = TestAgentThreadViewLiveTerminalRegistry(project, liveTerminalStore)
+    val liveTerminalStore = AgentChatLiveTerminalStore()
+    val liveTerminalRegistry = TestAgentChatLiveTerminalRegistry(project, liveTerminalStore)
     val firstEditor = testEditor(
       project = project,
       file = file,
@@ -1211,14 +999,14 @@ class AgentThreadViewFileEditorLifecycleTest {
   @Test
   fun fileClosedClosesInitializedTerminalTabWhenNoCopiesRemain() {
     val project = testProject()
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val file = claudeLifecycleTestFile()
-    val liveTerminalStore = AgentThreadViewLiveTerminalStore()
+    val liveTerminalStore = AgentChatLiveTerminalStore()
     val editor = testEditor(
       project = project,
       file = file,
       terminalTabs = terminalTabs,
-      liveTerminalRegistry = TestAgentThreadViewLiveTerminalRegistry(project, liveTerminalStore),
+      liveTerminalRegistry = TestAgentChatLiveTerminalRegistry(project, liveTerminalStore),
     )
 
     editor.selectNotify()
@@ -1235,9 +1023,9 @@ class AgentThreadViewFileEditorLifecycleTest {
   @Test
   fun fileClosedRecordsProviderTerminalSessionCloseWhenNoCopiesRemain() {
     val project = testProject()
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val file = claudeLifecycleTestFile()
-    val liveTerminalStore = AgentThreadViewLiveTerminalStore()
+    val liveTerminalStore = AgentChatLiveTerminalStore()
     val descriptor = RecordingTerminalSessionClosedProvider(AgentSessionProvider.from("claude"))
 
     AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
@@ -1251,14 +1039,14 @@ class AgentThreadViewFileEditorLifecycleTest {
   @Test
   fun fileClosedKeepsInitializedTerminalTabWhenFileIsStillReportedOpen() {
     val project = testProject()
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val file = claudeLifecycleTestFile()
-    val liveTerminalStore = AgentThreadViewLiveTerminalStore()
+    val liveTerminalStore = AgentChatLiveTerminalStore()
     val editor = testEditor(
       project = project,
       file = file,
       terminalTabs = terminalTabs,
-      liveTerminalRegistry = TestAgentThreadViewLiveTerminalRegistry(project, liveTerminalStore),
+      liveTerminalRegistry = TestAgentChatLiveTerminalRegistry(project, liveTerminalStore),
     )
 
     editor.selectNotify()
@@ -1275,9 +1063,9 @@ class AgentThreadViewFileEditorLifecycleTest {
   @Test
   fun fileClosedDoesNotRecordProviderTerminalSessionCloseWhenFileIsStillOpen() {
     val project = testProject()
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val file = claudeLifecycleTestFile()
-    val liveTerminalStore = AgentThreadViewLiveTerminalStore()
+    val liveTerminalStore = AgentChatLiveTerminalStore()
     val descriptor = RecordingTerminalSessionClosedProvider(AgentSessionProvider.from("claude"))
 
     AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
@@ -1294,16 +1082,16 @@ class AgentThreadViewFileEditorLifecycleTest {
   fun fileClosedKeepsInitializedTerminalTabWhenFileIsOpenInAnotherProject() {
     val sourceProject = testProject()
     val targetProject = testProject()
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val file = claudeLifecycleTestFile()
-    val liveTerminalStore = AgentThreadViewLiveTerminalStore { candidate, excludedProject ->
+    val liveTerminalStore = AgentChatLiveTerminalStore { candidate, excludedProject ->
       if (candidate.tabKey == file.tabKey && excludedProject === sourceProject) targetProject else null
     }
 
     liveTerminalStore.acquireOrCreate(project = sourceProject, file = file, terminalTabs = terminalTabs)
     val closeResult = liveTerminalStore.handleFileClosed(sourceProject, testFileEditorManager(isFileOpen = false), file)
 
-    assertThat(closeResult).isEqualTo(AgentThreadViewLiveTerminalCloseResult.KEPT_OPEN)
+    assertThat(closeResult).isEqualTo(AgentChatLiveTerminalCloseResult.KEPT_OPEN)
     assertThat(terminalTabs.createCalls).isEqualTo(1)
     assertThat(terminalTabs.closeCalls).isEqualTo(0)
     assertThat(liveTerminalStore.isTracked(file.tabKey)).isTrue()
@@ -1315,9 +1103,9 @@ class AgentThreadViewFileEditorLifecycleTest {
   fun crossProjectRecreatedEditorReusesInitializedTerminalTab() {
     val dedicatedProject = testProject()
     val sourceProject = testProject()
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val file = claudeLifecycleTestFile()
-    val liveTerminalStore = AgentThreadViewLiveTerminalStore()
+    val liveTerminalStore = AgentChatLiveTerminalStore()
 
     val dedicatedTab = liveTerminalStore.acquireOrCreate(project = dedicatedProject, file = file, terminalTabs = terminalTabs)
     val sourceTab = liveTerminalStore.acquireOrCreate(project = sourceProject, file = file, terminalTabs = terminalTabs)
@@ -1332,7 +1120,7 @@ class AgentThreadViewFileEditorLifecycleTest {
     assertThat(liveTerminalStore.isTracked(file.tabKey)).isTrue()
 
     val closeResult = liveTerminalStore.handleFileClosed(sourceProject, testFileEditorManager(isFileOpen = false), file)
-    assertThat(closeResult).isEqualTo(AgentThreadViewLiveTerminalCloseResult.CLOSED)
+    assertThat(closeResult).isEqualTo(AgentChatLiveTerminalCloseResult.CLOSED)
     assertThat(terminalTabs.closeCalls).isEqualTo(1)
     assertThat(liveTerminalStore.isTracked(file.tabKey)).isFalse()
 
@@ -1343,9 +1131,9 @@ class AgentThreadViewFileEditorLifecycleTest {
   fun projectDisposalReassignsInitializedTerminalTabWhenFileIsOpenInAnotherProject() {
     val dedicatedProject = testProject()
     val sourceProject = testProject()
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val file = claudeLifecycleTestFile()
-    val liveTerminalStore = AgentThreadViewLiveTerminalStore { candidate, excludedProject ->
+    val liveTerminalStore = AgentChatLiveTerminalStore { candidate, excludedProject ->
       if (candidate.tabKey == file.tabKey && excludedProject === dedicatedProject) sourceProject else null
     }
 
@@ -1358,7 +1146,7 @@ class AgentThreadViewFileEditorLifecycleTest {
 
     val closeResult = liveTerminalStore.handleFileClosed(sourceProject, testFileEditorManager(isFileOpen = false), file)
 
-    assertThat(closeResult).isEqualTo(AgentThreadViewLiveTerminalCloseResult.CLOSED)
+    assertThat(closeResult).isEqualTo(AgentChatLiveTerminalCloseResult.CLOSED)
     assertThat(terminalTabs.closeCalls).isEqualTo(1)
     assertThat(liveTerminalStore.isTracked(file.tabKey)).isFalse()
 
@@ -1368,14 +1156,14 @@ class AgentThreadViewFileEditorLifecycleTest {
   @Test
   fun fileClosedDefersInitializedTerminalTabCloseWhileClosingToReopen() {
     val project = testProject()
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val file = claudeLifecycleTestFile()
-    val liveTerminalStore = AgentThreadViewLiveTerminalStore()
+    val liveTerminalStore = AgentChatLiveTerminalStore()
     val editor = testEditor(
       project = project,
       file = file,
       terminalTabs = terminalTabs,
-      liveTerminalRegistry = TestAgentThreadViewLiveTerminalRegistry(project, liveTerminalStore),
+      liveTerminalRegistry = TestAgentChatLiveTerminalRegistry(project, liveTerminalStore),
     )
 
     editor.selectNotify()
@@ -1383,7 +1171,7 @@ class AgentThreadViewFileEditorLifecycleTest {
     file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, true)
     val closeResult = liveTerminalStore.handleFileClosed(project, testFileEditorManager(isFileOpen = false), file)
 
-    assertThat(closeResult).isEqualTo(AgentThreadViewLiveTerminalCloseResult.DEFERRED)
+    assertThat(closeResult).isEqualTo(AgentChatLiveTerminalCloseResult.DEFERRED)
     assertThat(terminalTabs.createCalls).isEqualTo(1)
     assertThat(terminalTabs.closeCalls).isEqualTo(0)
     assertThat(liveTerminalStore.isTracked(file.tabKey)).isTrue()
@@ -1396,14 +1184,14 @@ class AgentThreadViewFileEditorLifecycleTest {
   @Test
   fun pendingCloseConfirmationKeepsInitializedTerminalTabWhenFileReopens() {
     val project = testProject()
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val file = claudeLifecycleTestFile()
-    val liveTerminalStore = AgentThreadViewLiveTerminalStore()
+    val liveTerminalStore = AgentChatLiveTerminalStore()
     val editor = testEditor(
       project = project,
       file = file,
       terminalTabs = terminalTabs,
-      liveTerminalRegistry = TestAgentThreadViewLiveTerminalRegistry(project, liveTerminalStore),
+      liveTerminalRegistry = TestAgentChatLiveTerminalRegistry(project, liveTerminalStore),
     )
     val fileEditorManager = TestFileEditorManager(isFileOpen = false)
 
@@ -1415,8 +1203,8 @@ class AgentThreadViewFileEditorLifecycleTest {
     liveTerminalStore.handleFileOpened(file)
     val confirmResult = liveTerminalStore.confirmPendingClose(project, fileEditorManager, file)
 
-    assertThat(closeResult).isEqualTo(AgentThreadViewLiveTerminalCloseResult.DEFERRED)
-    assertThat(confirmResult).isEqualTo(AgentThreadViewLiveTerminalCloseResult.KEPT_OPEN)
+    assertThat(closeResult).isEqualTo(AgentChatLiveTerminalCloseResult.DEFERRED)
+    assertThat(confirmResult).isEqualTo(AgentChatLiveTerminalCloseResult.KEPT_OPEN)
     assertThat(terminalTabs.closeCalls).isEqualTo(0)
     assertThat(liveTerminalStore.isTracked(file.tabKey)).isTrue()
     assertThat(liveTerminalStore.isPendingClose(file.tabKey)).isFalse()
@@ -1428,14 +1216,14 @@ class AgentThreadViewFileEditorLifecycleTest {
   @Test
   fun pendingCloseConfirmationClosesInitializedTerminalTabWhenReopenNeverArrives() {
     val project = testProject()
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val file = claudeLifecycleTestFile()
-    val liveTerminalStore = AgentThreadViewLiveTerminalStore()
+    val liveTerminalStore = AgentChatLiveTerminalStore()
     val editor = testEditor(
       project = project,
       file = file,
       terminalTabs = terminalTabs,
-      liveTerminalRegistry = TestAgentThreadViewLiveTerminalRegistry(project, liveTerminalStore),
+      liveTerminalRegistry = TestAgentChatLiveTerminalRegistry(project, liveTerminalStore),
     )
     val fileEditorManager = TestFileEditorManager(isFileOpen = false)
 
@@ -1446,8 +1234,8 @@ class AgentThreadViewFileEditorLifecycleTest {
     file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, null)
     val confirmResult = liveTerminalStore.confirmPendingClose(project, fileEditorManager, file)
 
-    assertThat(closeResult).isEqualTo(AgentThreadViewLiveTerminalCloseResult.DEFERRED)
-    assertThat(confirmResult).isEqualTo(AgentThreadViewLiveTerminalCloseResult.CLOSED)
+    assertThat(closeResult).isEqualTo(AgentChatLiveTerminalCloseResult.DEFERRED)
+    assertThat(confirmResult).isEqualTo(AgentChatLiveTerminalCloseResult.CLOSED)
     assertThat(terminalTabs.createCalls).isEqualTo(1)
     assertThat(terminalTabs.closeCalls).isEqualTo(1)
     assertThat(liveTerminalStore.isTracked(file.tabKey)).isFalse()
@@ -1461,20 +1249,13 @@ class AgentThreadViewFileEditorLifecycleTest {
     val terminalProvider = RecordingTerminalSessionClosedProvider(
       provider = AgentSessionProvider.from("terminal"),
       supportsArchiveThread = true,
-      archiveOnLastEditorClose = true,
-    )
-    val codexProvider = RecordingTerminalSessionClosedProvider(
-      provider = AgentSessionProvider.from("codex"),
-      supportsArchiveThread = true,
     )
     val claudeProvider = RecordingTerminalSessionClosedProvider(provider = AgentSessionProvider.from("claude"))
-    val registry = InMemoryAgentSessionProviderRegistry(listOf(terminalProvider, codexProvider, claudeProvider))
+    val registry = InMemoryAgentSessionProviderRegistry(listOf(terminalProvider, claudeProvider))
 
     AgentSessionProviders.withRegistryForTest(registry) {
       assertThat(shouldArchiveTerminalSessionOnLastEditorClose(terminalLifecycleTestFile()))
         .isTrue()
-      assertThat(shouldArchiveTerminalSessionOnLastEditorClose(codexLifecycleTestFile()))
-        .isFalse()
       assertThat(shouldArchiveTerminalSessionOnLastEditorClose(claudeLifecycleTestFile()))
         .isFalse()
       assertThat(shouldArchiveTerminalSessionOnLastEditorClose(pendingTestFile(provider = AgentSessionProvider.from("terminal"))))
@@ -1485,10 +1266,10 @@ class AgentThreadViewFileEditorLifecycleTest {
   @Test
   fun acquireOrCreateClearsPendingCloseAndReusesInitializedTerminalTab() {
     val project = testProject()
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val file = claudeLifecycleTestFile()
-    val liveTerminalStore = AgentThreadViewLiveTerminalStore()
-    val liveTerminalRegistry = TestAgentThreadViewLiveTerminalRegistry(project, liveTerminalStore)
+    val liveTerminalStore = AgentChatLiveTerminalStore()
+    val liveTerminalRegistry = TestAgentChatLiveTerminalRegistry(project, liveTerminalStore)
     val firstEditor = testEditor(
       project = project,
       file = file,
@@ -1510,7 +1291,7 @@ class AgentThreadViewFileEditorLifecycleTest {
     )
     secondEditor.selectNotify()
 
-    assertThat(closeResult).isEqualTo(AgentThreadViewLiveTerminalCloseResult.DEFERRED)
+    assertThat(closeResult).isEqualTo(AgentChatLiveTerminalCloseResult.DEFERRED)
     assertThat(terminalTabs.createCalls).isEqualTo(1)
     assertThat(terminalTabs.closeCalls).isEqualTo(0)
     assertThat(liveTerminalStore.isTracked(file.tabKey)).isTrue()
@@ -1524,7 +1305,7 @@ class AgentThreadViewFileEditorLifecycleTest {
 
   @Test
   fun disposeWithoutInitializationDoesNotCloseTerminalTab() {
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val editor = testEditor(terminalTabs = terminalTabs)
 
     Disposer.dispose(editor)
@@ -1535,7 +1316,7 @@ class AgentThreadViewFileEditorLifecycleTest {
 
   @Test
   fun selectNotifySendsInitialMessageOnce() {
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val file = testFile().also {
       it.updateInitialMessageMetadata(
         initialComposedMessage = "Refactor selected code",
@@ -1551,7 +1332,7 @@ class AgentThreadViewFileEditorLifecycleTest {
 
     terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
 
-    waitForCondition { terminalTabs.tab.sentTexts.size == 1 && file.initialMessageSent }
+    waitForCondition { terminalTabs.tab.sentTexts.size == 1 }
 
     assertThat(file.initialMessageSent).isTrue()
     assertThat(terminalTabs.tab.sentTexts)
@@ -1560,7 +1341,7 @@ class AgentThreadViewFileEditorLifecycleTest {
 
   @Test
   fun flushPendingInitialMessageWaitsForRunningSessionState() {
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val file = testFile()
     val editor = testEditor(file = file, terminalTabs = terminalTabs)
 
@@ -1585,7 +1366,7 @@ class AgentThreadViewFileEditorLifecycleTest {
 
   @Test
   fun disposeBeforeSessionRunningSkipsInitialMessageSend() {
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val file = testFile().also {
       it.updateInitialMessageMetadata(
         initialComposedMessage = "Generate tests",
@@ -1606,7 +1387,7 @@ class AgentThreadViewFileEditorLifecycleTest {
 
   @Test
   fun waitingForSessionRunningSendsLatestInitialMessageMetadata() {
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val file = testFile()
     val editor = testEditor(file = file, terminalTabs = terminalTabs)
 
@@ -1635,7 +1416,7 @@ class AgentThreadViewFileEditorLifecycleTest {
 
   @Test
   fun terminatedSessionDoesNotSendInitialMessage() {
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val file = testFile().also {
       it.updateInitialMessageMetadata(
         initialComposedMessage = "Do not send",
@@ -1656,8 +1437,8 @@ class AgentThreadViewFileEditorLifecycleTest {
 
   @Test
   fun timeoutReadinessStillSendsInitialMessage() {
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
-    terminalTabs.tab.readinessResult = AgentThreadViewTerminalInputReadiness.TIMEOUT
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    terminalTabs.tab.readinessResult = AgentChatTerminalInputReadiness.TIMEOUT
     val file = testFile().also {
       it.updateInitialMessageMetadata(
         initialComposedMessage = "Send even if output is silent",
@@ -1678,7 +1459,7 @@ class AgentThreadViewFileEditorLifecycleTest {
 
   @Test
   fun claudeMenuCommandInitialMessageUsesTypedInputInsteadOfBracketedPaste() {
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val file = testFile(
       threadIdentity = "CLAUDE:session-1",
       shellCommand = listOf("claude", "--resume", "session-1"),
@@ -1702,7 +1483,7 @@ class AgentThreadViewFileEditorLifecycleTest {
 
   @Test
   fun junieInitialMessageWaitsForPromptInputBeforeSending() {
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val file = testFile(
       threadIdentity = "junie:new-1",
       shellCommand = listOf("junie", "--skip-update-check"),
@@ -1733,8 +1514,8 @@ class AgentThreadViewFileEditorLifecycleTest {
 
   @Test
   fun codexPlannerPrefixStillFallsBackOnTimeout() {
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
-    terminalTabs.tab.readinessResult = AgentThreadViewTerminalInputReadiness.TIMEOUT
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    terminalTabs.tab.readinessResult = AgentChatTerminalInputReadiness.TIMEOUT
     val file = testFile().also {
       it.updateInitialMessageMetadata(
         initialComposedMessage = "/planner still fallback",
@@ -1755,8 +1536,8 @@ class AgentThreadViewFileEditorLifecycleTest {
 
   @Test
   fun nonCodexPlanCommandStillFallsBackOnTimeout() {
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
-    terminalTabs.tab.readinessResult = AgentThreadViewTerminalInputReadiness.TIMEOUT
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    terminalTabs.tab.readinessResult = AgentChatTerminalInputReadiness.TIMEOUT
     val file = testFile(
       threadIdentity = "CLAUDE:thread-1",
       shellCommand = listOf("claude", "--resume", "thread-1"),
@@ -1780,8 +1561,8 @@ class AgentThreadViewFileEditorLifecycleTest {
 
   @Test
   fun timeoutPolicyUsesLatestInitialMessageMetadata() {
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
-    terminalTabs.tab.readinessResult = AgentThreadViewTerminalInputReadiness.TIMEOUT
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    terminalTabs.tab.readinessResult = AgentChatTerminalInputReadiness.TIMEOUT
     val file = testFile()
     val editor = testEditor(file = file, terminalTabs = terminalTabs)
 
@@ -1811,7 +1592,7 @@ class AgentThreadViewFileEditorLifecycleTest {
 
   @Test
   fun slashNewTrackerIgnoresPartialCommandsAndHandlesBackspaceCorrection() {
-    val tracker = AgentThreadViewTerminalCommandTracker()
+    val tracker = AgentChatTerminalCommandTracker()
 
     "/new branch".forEach { tracker.record(keyTyped(it)) }
     assertThat(tracker.record(keyPressed(KeyEvent.VK_ENTER))).isEqualTo("/new branch")
@@ -1826,7 +1607,7 @@ class AgentThreadViewFileEditorLifecycleTest {
 
   @Test
   fun pendingCodexFirstInputPersistsMetadataAndRetriesScopedRefresh() {
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val snapshotWriter = RecordingSnapshotWriter()
     val signalCollector = CodexScopedRefreshSignalCollector()
     val file = pendingTestFile()
@@ -1857,7 +1638,7 @@ class AgentThreadViewFileEditorLifecycleTest {
 
   @Test
   fun restoredPendingCodexTabResumesScopedRefreshRetriesOnInitialization() {
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val signalCollector = CodexScopedRefreshSignalCollector()
     val pendingFirstInputAtMs = System.currentTimeMillis() - 100L
     val file = pendingTestFile(pendingFirstInputAtMs = pendingFirstInputAtMs)
@@ -1885,7 +1666,7 @@ class AgentThreadViewFileEditorLifecycleTest {
 
   @Test
   fun pendingCodexScopedRefreshRetriesStopAfterRebind() {
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val signalCollector = CodexScopedRefreshSignalCollector()
     val file = pendingTestFile()
     val editor = testEditor(
@@ -1920,7 +1701,7 @@ class AgentThreadViewFileEditorLifecycleTest {
 
   @Test
   fun stalePendingCodexTabDoesNotResumeScopedRefreshRetries() {
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val signalCollector = CodexScopedRefreshSignalCollector()
     val file = pendingTestFile(
       pendingFirstInputAtMs = System.currentTimeMillis() - AgentSessionThreadRebindPolicy.PENDING_THREAD_MATCH_POST_WINDOW_MS - 1L,
@@ -1945,7 +1726,7 @@ class AgentThreadViewFileEditorLifecycleTest {
 
   @Test
   fun pendingClaudeTabDoesNotStartCodexScopedRefreshRetries() {
-    val terminalTabs = FakeAgentThreadViewTerminalTabs()
+    val terminalTabs = FakeAgentChatTerminalTabs()
     val signalCollector = CodexScopedRefreshSignalCollector()
     val file = pendingTestFile(
       provider = AgentSessionProvider.from("claude"),
@@ -1971,20 +1752,20 @@ class AgentThreadViewFileEditorLifecycleTest {
   }
 }
 
-private class FakeAgentThreadViewTerminalTabs : AgentThreadViewTerminalTabs {
+private class FakeAgentChatTerminalTabs : AgentChatTerminalTabs {
   var createCalls: Int = 0
   var closeCalls: Int = 0
-  var tab = FakeAgentThreadViewTerminalTab()
-  val createdTabs: MutableList<FakeAgentThreadViewTerminalTab> = mutableListOf()
+  var tab = FakeAgentChatTerminalTab()
+  val createdTabs: MutableList<FakeAgentChatTerminalTab> = mutableListOf()
   var lastStartupLaunchSpec: AgentSessionTerminalLaunchSpec? = null
 
   override fun createTab(
     project: Project,
-    file: AgentThreadViewVirtualFile,
+    file: AgentChatVirtualFile,
     startupLaunchSpec: AgentSessionTerminalLaunchSpec,
-  ): AgentThreadViewTerminalTab {
+  ): AgentChatTerminalTab {
     if (createCalls > 0) {
-      tab = FakeAgentThreadViewTerminalTab()
+      tab = FakeAgentChatTerminalTab()
     }
     createCalls++
     createdTabs += tab
@@ -1992,13 +1773,13 @@ private class FakeAgentThreadViewTerminalTabs : AgentThreadViewTerminalTabs {
     return tab
   }
 
-  override fun closeTab(project: Project, tab: AgentThreadViewTerminalTab) {
+  override fun closeTab(project: Project, tab: AgentChatTerminalTab) {
     closeCalls++
-    (tab as? FakeAgentThreadViewTerminalTab)?.coroutineScope?.cancel()
+    (tab as? FakeAgentChatTerminalTab)?.coroutineScope?.cancel()
   }
 }
 
-private class FakeAgentThreadViewTerminalTab : AgentThreadViewTerminalTab {
+private class FakeAgentChatTerminalTab : AgentChatTerminalTab {
   private val focusableComponent = RecordingFocusComponent()
 
   override val component: JComponent = JPanel()
@@ -2012,7 +1793,7 @@ private class FakeAgentThreadViewTerminalTab : AgentThreadViewTerminalTab {
   override val keyEventsFlow: Flow<TerminalKeyEvent> = mutableKeyEventsFlow.asSharedFlow()
 
   @Volatile
-  var readinessResult: AgentThreadViewTerminalInputReadiness = AgentThreadViewTerminalInputReadiness.READY
+  var readinessResult: AgentChatTerminalInputReadiness = AgentChatTerminalInputReadiness.READY
 
   @Volatile
   private var recentOutputTail: String = ""
@@ -2043,38 +1824,38 @@ private class FakeAgentThreadViewTerminalTab : AgentThreadViewTerminalTab {
     mutableKeyEventsFlow.tryEmit(terminalKeyEvent(awtEvent))
   }
 
-  override suspend fun captureOutputCheckpoint(): AgentThreadViewTerminalOutputCheckpoint {
+  override suspend fun captureOutputCheckpoint(): AgentChatTerminalOutputCheckpoint {
     val currentOutputVersion = outputVersion.get()
-    return AgentThreadViewTerminalOutputCheckpoint(
+    return AgentChatTerminalOutputCheckpoint(
       regularEndOffset = currentOutputVersion,
       alternativeEndOffset = currentOutputVersion,
     )
   }
 
   override suspend fun awaitOutputObservation(
-    checkpoint: AgentThreadViewTerminalOutputCheckpoint,
+    checkpoint: AgentChatTerminalOutputCheckpoint,
     timeoutMs: Long,
     idleMs: Long,
-  ): AgentThreadViewTerminalOutputObservation {
+  ): AgentChatTerminalOutputObservation {
     val deadline = System.currentTimeMillis() + timeoutMs
     val pollIntervalMs = idleMs.coerceIn(10, 50)
     while (true) {
       if (sessionState.value == TerminalViewSessionState.Terminated) {
-        return AgentThreadViewTerminalOutputObservation(
-          readiness = AgentThreadViewTerminalInputReadiness.TERMINATED,
+        return AgentChatTerminalOutputObservation(
+          readiness = AgentChatTerminalInputReadiness.TERMINATED,
           text = readOutputSince(checkpoint),
         )
       }
       val text = readOutputSince(checkpoint)
       if (text.isNotEmpty()) {
-        return AgentThreadViewTerminalOutputObservation(
-          readiness = AgentThreadViewTerminalInputReadiness.READY,
+        return AgentChatTerminalOutputObservation(
+          readiness = AgentChatTerminalInputReadiness.READY,
           text = text,
         )
       }
       if (System.currentTimeMillis() >= deadline) {
-        return AgentThreadViewTerminalOutputObservation(
-          readiness = AgentThreadViewTerminalInputReadiness.TIMEOUT,
+        return AgentChatTerminalOutputObservation(
+          readiness = AgentChatTerminalInputReadiness.TIMEOUT,
           text = text,
         )
       }
@@ -2089,13 +1870,13 @@ private class FakeAgentThreadViewTerminalTab : AgentThreadViewTerminalTab {
   override suspend fun awaitInitialMessageReadiness(
     timeoutMs: Long,
     idleMs: Long,
-    checkpoint: AgentThreadViewTerminalOutputCheckpoint?,
-  ): AgentThreadViewTerminalInputReadiness {
+    checkpoint: AgentChatTerminalOutputCheckpoint?,
+  ): AgentChatTerminalInputReadiness {
     if (sessionState.value == TerminalViewSessionState.Terminated) {
-      return AgentThreadViewTerminalInputReadiness.TERMINATED
+      return AgentChatTerminalInputReadiness.TERMINATED
     }
     if (hasMeaningfulOutputSince(checkpoint)) {
-      return AgentThreadViewTerminalInputReadiness.READY
+      return AgentChatTerminalInputReadiness.READY
     }
     return readinessResult
   }
@@ -2104,12 +1885,12 @@ private class FakeAgentThreadViewTerminalTab : AgentThreadViewTerminalTab {
     return recentOutputTail.takeLast(4_096)
   }
 
-  private fun hasMeaningfulOutputSince(checkpoint: AgentThreadViewTerminalOutputCheckpoint?): Boolean {
+  private fun hasMeaningfulOutputSince(checkpoint: AgentChatTerminalOutputCheckpoint?): Boolean {
     val baseline = checkpoint?.regularEndOffset ?: Long.MIN_VALUE
     return emittedOutputChunks.any { chunk -> chunk.version > baseline }
   }
 
-  private fun readOutputSince(checkpoint: AgentThreadViewTerminalOutputCheckpoint): String {
+  private fun readOutputSince(checkpoint: AgentChatTerminalOutputCheckpoint): String {
     return emittedOutputChunks
       .filter { chunk -> chunk.version > checkpoint.regularEndOffset }
       .joinToString(separator = "\n") { chunk -> chunk.text }
@@ -2140,8 +1921,8 @@ private data class SentTerminalText(
 private fun testFile(
   threadIdentity: String = "CODEX:thread-1",
   shellCommand: List<String> = listOf("codex", "resume", "thread-1"),
-): AgentThreadViewVirtualFile {
-  return AgentThreadViewVirtualFile(
+): AgentChatVirtualFile {
+  return AgentChatVirtualFile(
     projectPath = "/work/project-a",
     threadIdentity = threadIdentity,
     shellCommand = shellCommand,
@@ -2155,7 +1936,7 @@ private fun testFile(
 private fun pendingTestFile(
   provider: AgentSessionProvider = AgentSessionProvider.from("codex"),
   pendingFirstInputAtMs: Long? = null,
-): AgentThreadViewVirtualFile {
+): AgentChatVirtualFile {
   return testFile(
     threadIdentity = buildAgentThreadIdentity(provider.value, "new-thread"),
     shellCommand = listOf(provider.value),
@@ -2168,8 +1949,8 @@ private fun pendingTestFile(
   }
 }
 
-private fun restoredConcreteTestFile(): AgentThreadViewVirtualFile {
-  val snapshot = AgentThreadViewTabSnapshot.create(
+private fun restoredConcreteTestFile(): AgentChatVirtualFile {
+  val snapshot = AgentChatTabSnapshot.create(
     projectHash = "hash-1",
     projectPath = "/work/project-a",
     threadIdentity = "CODEX:thread-restored",
@@ -2177,9 +1958,9 @@ private fun restoredConcreteTestFile(): AgentThreadViewVirtualFile {
     threadTitle = "Restored thread",
     subAgentId = null,
   )
-  return AgentThreadViewVirtualFile(
-    fileSystem = createStandaloneAgentThreadViewVirtualFileSystemForTest(),
-    resolution = AgentThreadViewTabResolution.Resolved(snapshot),
+  return AgentChatVirtualFile(
+    fileSystem = createStandaloneAgentChatVirtualFileSystemForTest(),
+    resolution = AgentChatTabResolution.Resolved(snapshot),
   )
 }
 
@@ -2192,23 +1973,14 @@ private fun testContextItem(): AgentPromptContextItem {
   )
 }
 
-private fun claudeLifecycleTestFile(): AgentThreadViewVirtualFile {
+private fun claudeLifecycleTestFile(): AgentChatVirtualFile {
   return testFile(
     threadIdentity = "CLAUDE:session-1",
     shellCommand = listOf("claude", "--resume", "session-1"),
   )
 }
 
-private fun codexLifecycleTestFile(): AgentThreadViewVirtualFile {
-  return testFile(
-    threadIdentity = buildAgentThreadIdentity(AgentSessionProvider.from("codex").value, "codex-1"),
-    shellCommand = listOf("codex", "resume", "codex-1"),
-  ).also { file ->
-    file.updateThreadId("codex-1")
-  }
-}
-
-private fun terminalLifecycleTestFile(): AgentThreadViewVirtualFile {
+private fun terminalLifecycleTestFile(): AgentChatVirtualFile {
   return testFile(
     threadIdentity = buildAgentThreadIdentity(AgentSessionProvider.from("terminal").value, "terminal-1"),
     shellCommand = emptyList(),
@@ -2219,19 +1991,18 @@ private fun terminalLifecycleTestFile(): AgentThreadViewVirtualFile {
 
 private fun testEditor(
   project: Project = testProject(),
-  file: AgentThreadViewVirtualFile = testFile(),
-  terminalTabs: AgentThreadViewTerminalTabs = FakeAgentThreadViewTerminalTabs(),
-  liveTerminalRegistry: AgentThreadViewLiveTerminalRegistry = TestAgentThreadViewLiveTerminalRegistry(project),
-  snapshotWriter: AgentThreadViewTabSnapshotWriter = AgentThreadViewTabSnapshotWriter { },
-  archivedRestoreHandler: AgentThreadViewArchivedRestoreHandler = AgentThreadViewArchivedRestoreHandler { },
+  file: AgentChatVirtualFile = testFile(),
+  terminalTabs: AgentChatTerminalTabs = FakeAgentChatTerminalTabs(),
+  liveTerminalRegistry: AgentChatLiveTerminalRegistry = TestAgentChatLiveTerminalRegistry(project),
+  snapshotWriter: AgentChatTabSnapshotWriter = AgentChatTabSnapshotWriter { },
+  archivedRestoreHandler: AgentChatArchivedRestoreHandler = AgentChatArchivedRestoreHandler { },
   pendingScopedRefreshRetryIntervalMs: Long = AgentSessionThreadRebindPolicy.PENDING_THREAD_REFRESH_RETRY_INTERVAL_MS,
   editorCoroutineScope: CoroutineScope? = unconfinedTestScope(),
   showComponent: Boolean = true,
-  providerDescriptorResolver: (AgentSessionProvider) -> AgentSessionProviderDescriptor? = ::testAgentSessionProviderDescriptor,
-  customContentProviderResolver: (AgentThreadViewContentContext) -> AgentThreadViewCustomContentProvider? = { null },
-  behaviorResolver: (AgentSessionProvider?) -> AgentThreadViewProviderBehavior = ::testAgentThreadViewProviderBehavior,
-): AgentThreadViewFileEditor {
-  return AgentThreadViewFileEditor(
+  providerDescriptorResolver: (AgentSessionProvider) -> AgentSessionProviderDescriptor? = { null },
+  behaviorResolver: (AgentSessionProvider?) -> AgentChatProviderBehavior = ::testAgentChatProviderBehavior,
+): AgentChatFileEditor {
+  return AgentChatFileEditor(
     project = project,
     file = file,
     terminalTabs = terminalTabs,
@@ -2241,7 +2012,6 @@ private fun testEditor(
     pendingScopedRefreshRetryIntervalMs = pendingScopedRefreshRetryIntervalMs,
     editorCoroutineScope = editorCoroutineScope,
     providerDescriptorResolver = providerDescriptorResolver,
-    customContentProviderResolver = customContentProviderResolver,
     behaviorResolver = behaviorResolver,
   ).also { editor ->
     if (showComponent) {
@@ -2251,39 +2021,46 @@ private fun testEditor(
   }
 }
 
-private fun testAgentThreadViewProviderBehavior(provider: AgentSessionProvider?): AgentThreadViewProviderBehavior {
+private fun testAgentChatProviderBehavior(provider: AgentSessionProvider?): AgentChatProviderBehavior {
   return when (provider) {
-    AgentSessionProvider.from("codex") -> TestCodexAgentThreadViewProviderBehavior
-    AgentSessionProvider.from("junie") -> TestJunieAgentThreadViewProviderBehavior
-    else -> TestDefaultAgentThreadViewProviderBehavior
+    AgentSessionProvider.from("codex") -> TestCodexAgentChatProviderBehavior
+    AgentSessionProvider.from("claude") -> TestClaudeAgentChatProviderBehavior
+    AgentSessionProvider.from("junie") -> TestJunieAgentChatProviderBehavior
+    else -> TestDefaultAgentChatProviderBehavior
   }
 }
 
-private object TestDefaultAgentThreadViewProviderBehavior : AgentThreadViewProviderBehavior
+private object TestDefaultAgentChatProviderBehavior : AgentChatProviderBehavior
 
-private object TestJunieAgentThreadViewProviderBehavior : AgentThreadViewProviderBehavior {
+private object TestClaudeAgentChatProviderBehavior : AgentChatProviderBehavior {
+  override fun shouldUseBracketedPasteMode(text: String): Boolean {
+    return !text.isClaudeMenuCommandPrompt()
+  }
+}
+
+private object TestJunieAgentChatProviderBehavior : AgentChatProviderBehavior {
   override suspend fun beforeInitialMessageSend(
-    file: AgentThreadViewBehaviorFile,
-    tab: AgentThreadViewBehaviorTerminalTab,
-    dispatch: AgentThreadViewInitialMessageDispatchContext,
+    file: AgentChatBehaviorFile,
+    tab: AgentChatBehaviorTerminalTab,
+    dispatch: AgentChatInitialMessageDispatchContext,
     retryAttempt: Int,
-  ): AgentThreadViewInitialMessageRetryDecision {
+  ): AgentChatInitialMessageRetryDecision {
     return if (testJuniePromptInputReady(tab.readRecentOutputTail())) {
-      AgentThreadViewInitialMessageRetryDecision.PROCEED
+      AgentChatInitialMessageRetryDecision.PROCEED
     }
     else {
-      AgentThreadViewInitialMessageRetryDecision.RetryWithoutReadiness(TEST_JUNIE_RETRY_BACKOFF_MS)
+      AgentChatInitialMessageRetryDecision.RetryWithoutReadiness(TEST_JUNIE_RETRY_BACKOFF_MS)
     }
   }
 
 }
 
-private object TestCodexAgentThreadViewProviderBehavior : AgentThreadViewProviderBehavior {
-  override fun supportsPendingThreadRefreshRetry(file: AgentThreadViewBehaviorFile): Boolean {
+private object TestCodexAgentChatProviderBehavior : AgentChatProviderBehavior {
+  override fun supportsPendingThreadRefreshRetry(file: AgentChatBehaviorFile): Boolean {
     return file.isPendingThread && file.subAgentId == null && file.provider == AgentSessionProvider.from("codex")
   }
 
-  override fun pendingThreadRefreshRetryDelayMs(file: AgentThreadViewBehaviorFile, currentTimeMs: Long, retryIntervalMs: Long): Long? {
+  override fun pendingThreadRefreshRetryDelayMs(file: AgentChatBehaviorFile, currentTimeMs: Long, retryIntervalMs: Long): Long? {
     if (!supportsPendingThreadRefreshRetry(file)) {
       return null
     }
@@ -2297,7 +2074,7 @@ private object TestCodexAgentThreadViewProviderBehavior : AgentThreadViewProvide
   }
 
   override fun supportsConcreteNewThreadRebind(
-    file: AgentThreadViewBehaviorFile,
+    file: AgentChatBehaviorFile,
     descriptor: AgentSessionProviderDescriptor?,
   ): Boolean {
     return descriptor?.supportsNewThreadRebind == true && !file.isPendingThread && file.subAgentId == null
@@ -2338,16 +2115,16 @@ private fun terminalTitle(threadId: String, threadTitle: String? = null): String
   return listOfNotNull("thread:$threadId", threadTitle).joinToString(" | ")
 }
 
-private fun terminalTitleThreadRebindContributor(): AgentThreadViewTerminalTitleThreadRebindContributor {
-  return object : AgentThreadViewTerminalTitleThreadRebindContributor {
+private fun terminalTitleThreadRebindContributor(): AgentChatTerminalTitleThreadRebindContributor {
+  return object : AgentChatTerminalTitleThreadRebindContributor {
     override fun extractThreadId(applicationTitle: String?): String? {
       return applicationTitle?.substringAfter("thread:", missingDelimiterValue = "")?.takeIf { it.isNotBlank() }
     }
 
-    override fun extractThreadSignal(applicationTitle: String?): AgentThreadViewTerminalTitleThreadRebindSignal? {
+    override fun extractThreadSignal(applicationTitle: String?): AgentChatTerminalTitleThreadRebindSignal? {
       val value = applicationTitle?.substringAfter("thread:", missingDelimiterValue = "")?.takeIf { it.isNotBlank() } ?: return null
       val parts = value.split(" | ", limit = 2)
-      return AgentThreadViewTerminalTitleThreadRebindSignal(
+      return AgentChatTerminalTitleThreadRebindSignal(
         threadId = parts[0],
         threadTitle = parts.getOrNull(1),
       )
@@ -2374,18 +2151,18 @@ private fun codexPlanDispatchSteps(
 
 private fun pendingRebindReport(
   projectPath: String,
-  request: AgentThreadViewPendingTabRebindRequest,
-  status: AgentThreadViewPendingTabRebindStatus,
-): AgentThreadViewPendingTabRebindReport {
-  val reboundFiles = if (status == AgentThreadViewPendingTabRebindStatus.REBOUND) 1 else 0
-  return AgentThreadViewPendingTabRebindReport(
+  request: AgentChatPendingTabRebindRequest,
+  status: AgentChatPendingTabRebindStatus,
+): AgentChatPendingTabRebindReport {
+  val reboundFiles = if (status == AgentChatPendingTabRebindStatus.REBOUND) 1 else 0
+  return AgentChatPendingTabRebindReport(
     requestedBindings = 1,
     reboundBindings = reboundFiles,
     reboundFiles = reboundFiles,
     updatedPresentations = reboundFiles,
     outcomesByPath = mapOf(
       projectPath to listOf(
-        AgentThreadViewPendingTabRebindOutcome(
+        AgentChatPendingTabRebindOutcome(
           projectPath = projectPath,
           request = request,
           status = status,
@@ -2398,18 +2175,18 @@ private fun pendingRebindReport(
 
 private fun concreteRebindReport(
   projectPath: String,
-  request: AgentThreadViewConcreteTabRebindRequest,
-  status: AgentThreadViewConcreteTabRebindStatus,
-): AgentThreadViewConcreteTabRebindReport {
-  val reboundFiles = if (status == AgentThreadViewConcreteTabRebindStatus.REBOUND) 1 else 0
-  return AgentThreadViewConcreteTabRebindReport(
+  request: AgentChatConcreteTabRebindRequest,
+  status: AgentChatConcreteTabRebindStatus,
+): AgentChatConcreteTabRebindReport {
+  val reboundFiles = if (status == AgentChatConcreteTabRebindStatus.REBOUND) 1 else 0
+  return AgentChatConcreteTabRebindReport(
     requestedBindings = 1,
     reboundBindings = reboundFiles,
     reboundFiles = reboundFiles,
     updatedPresentations = reboundFiles,
     outcomesByPath = mapOf(
       projectPath to listOf(
-        AgentThreadViewConcreteTabRebindOutcome(
+        AgentChatConcreteTabRebindOutcome(
           projectPath = projectPath,
           request = request,
           status = status,
@@ -2420,10 +2197,10 @@ private fun concreteRebindReport(
   )
 }
 
-private class RecordingSnapshotWriter : AgentThreadViewTabSnapshotWriter {
-  val snapshots: MutableList<AgentThreadViewTabSnapshot> = mutableListOf()
+private class RecordingSnapshotWriter : AgentChatTabSnapshotWriter {
+  val snapshots: MutableList<AgentChatTabSnapshot> = mutableListOf()
 
-  override suspend fun upsert(snapshot: AgentThreadViewTabSnapshot) {
+  override suspend fun upsert(snapshot: AgentChatTabSnapshot) {
     snapshots += snapshot
   }
 }
@@ -2433,7 +2210,7 @@ private class CodexScopedRefreshSignalCollector {
   private val job = object : CoroutineScope {
     override val coroutineContext = Job() + Dispatchers.Default
   }.launch(start = CoroutineStart.UNDISPATCHED) {
-    agentThreadViewScopedRefreshSignals(AgentSessionProvider.from("codex")).collect { signal ->
+    agentChatScopedRefreshSignals(AgentSessionProvider.from("codex")).collect { signal ->
       codexSignals += signal.scopedPaths.orEmpty()
     }
   }
@@ -2448,38 +2225,6 @@ private data class ClosedTerminalSession(
   @JvmField val threadId: String,
 )
 
-private fun testAgentSessionProviderDescriptor(provider: AgentSessionProvider): AgentSessionProviderDescriptor? {
-  return when (provider) {
-    AgentSessionProvider.from("claude") -> TestClaudeAgentSessionProviderDescriptor
-    else -> null
-  }
-}
-
-private object TestClaudeAgentSessionProviderDescriptor : AgentSessionProviderDescriptor {
-  override val provider: AgentSessionProvider = AgentSessionProvider.from("claude")
-  override val displayNameKey: String = "provider.claude"
-  override val newSessionLabelKey: String = displayNameKey
-  override val icon: Icon = EmptyIcon.ICON_0
-  override val sessionSource: AgentSessionSource
-    get() = error("Not required for this test")
-  override val cliMissingMessageKey: String = displayNameKey
-  override val menuCommands: List<AgentSessionMenuCommand> = listOf(AgentSessionMenuCommand("/mcp"))
-
-  override suspend fun isCliAvailable(): Boolean = true
-
-  override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
-    return AgentSessionTerminalLaunchSpec(command = emptyList())
-  }
-
-  override suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
-    return AgentSessionTerminalLaunchSpec(command = emptyList())
-  }
-
-  override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {
-    return AgentInitialMessagePlan.EMPTY
-  }
-}
-
 private class ArchivedThreadsProviderDescriptor(
   override val provider: AgentSessionProvider,
   private val archivedThreads: List<AgentSessionThread>,
@@ -2487,13 +2232,17 @@ private class ArchivedThreadsProviderDescriptor(
   override val displayNameKey: String = "test.provider"
   override val newSessionLabelKey: String = "test.new.session"
   override val icon: Icon = EmptyIcon.ICON_0
-  override val sessionSource: AgentSessionSource = object : AgentSessionSource, AgentSessionArchivedSource {
+  override val sessionSource: AgentSessionSource = object : AgentSessionSource {
     override val provider: AgentSessionProvider
       get() = this@ArchivedThreadsProviderDescriptor.provider
 
-    override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> = emptyList()
+    override val supportsArchivedThreads: Boolean = true
 
-    override suspend fun listArchivedThreads(path: String, openProject: Project?): List<AgentSessionThread> = archivedThreads
+    override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = emptyList()
+
+    override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> = emptyList()
+
+    override suspend fun listArchivedThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = archivedThreads
   }
   override val cliMissingMessageKey: String = "test.cli.missing"
 
@@ -2511,7 +2260,6 @@ private class ArchivedThreadsProviderDescriptor(
 private class RecordingTerminalSessionClosedProvider(
   override val provider: AgentSessionProvider,
   override val supportsArchiveThread: Boolean = false,
-  override val archiveOnLastEditorClose: Boolean = false,
 ) : AgentSessionProviderDescriptor {
   val closedSessions: CopyOnWriteArrayList<ClosedTerminalSession> = CopyOnWriteArrayList()
 
@@ -2522,8 +2270,9 @@ private class RecordingTerminalSessionClosedProvider(
     override val provider: AgentSessionProvider
       get() = this@RecordingTerminalSessionClosedProvider.provider
 
-    override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> = emptyList()
+    override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = emptyList()
 
+    override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> = emptyList()
   }
   override val cliMissingMessageKey: String = "test.cli.missing"
 
@@ -2546,7 +2295,7 @@ private fun testProject(): Project {
   val handler = InvocationHandler { proxy, method, args ->
     when (method.name) {
       "isDisposed" -> false
-      "toString" -> "Project(agent-thread-view-lifecycle-test)"
+      "toString" -> "Project(agent-chat-editor-lifecycle-test)"
       "hashCode" -> System.identityHashCode(proxy)
       "equals" -> proxy === args?.firstOrNull()
       else -> defaultValue(method.returnType)
@@ -2555,23 +2304,23 @@ private fun testProject(): Project {
   return Proxy.newProxyInstance(Project::class.java.classLoader, arrayOf(Project::class.java), handler) as Project
 }
 
-private class TestAgentThreadViewLiveTerminalRegistry(
+private class TestAgentChatLiveTerminalRegistry(
   private val project: Project,
-  private val store: AgentThreadViewLiveTerminalStore = AgentThreadViewLiveTerminalStore(),
-) : AgentThreadViewLiveTerminalRegistry {
+  private val store: AgentChatLiveTerminalStore = AgentChatLiveTerminalStore(),
+) : AgentChatLiveTerminalRegistry {
   override fun acquireOrCreate(
-    file: AgentThreadViewVirtualFile,
-    terminalTabs: AgentThreadViewTerminalTabs,
+    file: AgentChatVirtualFile,
+    terminalTabs: AgentChatTerminalTabs,
     startupLaunchSpec: AgentSessionTerminalLaunchSpec,
-  ): AgentThreadViewTerminalTab {
+  ): AgentChatTerminalTab {
     return store.acquireOrCreate(project = project, file = file, terminalTabs = terminalTabs, startupLaunchSpec = startupLaunchSpec)
   }
 
   override fun replace(
-    file: AgentThreadViewVirtualFile,
-    terminalTabs: AgentThreadViewTerminalTabs,
+    file: AgentChatVirtualFile,
+    terminalTabs: AgentChatTerminalTabs,
     startupLaunchSpec: AgentSessionTerminalLaunchSpec,
-  ): AgentThreadViewTerminalTab {
+  ): AgentChatTerminalTab {
     return store.replace(project = project, file = file, terminalTabs = terminalTabs, startupLaunchSpec = startupLaunchSpec)
   }
 }
@@ -2644,7 +2393,7 @@ private class TestFileEditorManager(isFileOpen: Boolean) : FileEditorManager() {
 
   override fun runWhenLoaded(editor: Editor, runnable: Runnable) = runnable.run()
 
-  override fun toString(): String = "FileEditorManager(agent-thread-view-lifecycle-test)"
+  override fun toString(): String = "FileEditorManager(agent-chat-editor-lifecycle-test)"
 }
 
 private fun keyTyped(keyChar: Char): KeyEvent {
@@ -2689,55 +2438,6 @@ private fun waitForCondition(timeoutMs: Long = 2_000, condition: () -> Boolean) 
     Thread.sleep(10)
   }
   throw AssertionError("Condition was not satisfied within ${timeoutMs}ms")
-}
-
-private fun layoutRecursively(component: Component) {
-  if (component is Container) {
-    component.doLayout()
-    component.components.forEach(::layoutRecursively)
-  }
-}
-
-private fun <T : Component> collectComponentsOfType(component: Component, type: Class<T>): List<T> {
-  val result = ArrayList<T>()
-
-  fun visit(current: Component) {
-    if (type.isInstance(current)) {
-      result.add(type.cast(current))
-    }
-    if (current is Container) {
-      current.components.forEach(::visit)
-    }
-  }
-
-  visit(component)
-  return result
-}
-
-private fun collectAgentThreadViewStartProgressComponents(component: Component): List<Component> {
-  val result = ArrayList<Component>()
-
-  fun visit(current: Component) {
-    if (current.name == "Agent Thread View Start Progress") {
-      result.add(current)
-    }
-    if (current is Container) {
-      current.components.forEach(::visit)
-    }
-  }
-
-  visit(component)
-  return result
-}
-
-private fun xCenterInRoot(component: Component, root: Component): Int {
-  val location = SwingUtilities.convertPoint(component.parent, component.location, root)
-  return location.x + component.width / 2
-}
-
-private fun yCenterInRoot(component: Component, root: Component): Int {
-  val location = SwingUtilities.convertPoint(component.parent, component.location, root)
-  return location.y + component.height / 2
 }
 
 private const val TEST_JUNIE_RETRY_BACKOFF_MS: Long = 100

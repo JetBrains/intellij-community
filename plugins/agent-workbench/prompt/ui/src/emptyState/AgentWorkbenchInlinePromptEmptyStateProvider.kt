@@ -16,10 +16,9 @@ import com.intellij.agent.workbench.prompt.ui.AgentPromptSessionsMessageResolver
 import com.intellij.agent.workbench.prompt.ui.AgentPromptUiSessionStateService
 import com.intellij.agent.workbench.prompt.ui.createAgentPromptPaletteContent
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.fileEditor.impl.EditorEmptyStateComponentHost
 import com.intellij.openapi.fileEditor.impl.EditorEmptyStateComponentProvider
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.project.Project
@@ -33,12 +32,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
-import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.RenderingHints
+import java.awt.event.ActionEvent
+import java.awt.event.KeyEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import javax.swing.AbstractAction
+import javax.swing.JLabel
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.KeyStroke
+import javax.swing.SwingConstants
 
 internal class AgentWorkbenchInlinePromptEmptyStateProvider : EditorEmptyStateComponentProvider {
   override fun isAvailable(splitters: EditorsSplitters): Boolean = isInlineEmptyStatePromptEnabled()
@@ -47,16 +53,18 @@ internal class AgentWorkbenchInlinePromptEmptyStateProvider : EditorEmptyStateCo
     if (!isInlineEmptyStatePromptEnabled()) {
       return null
     }
-    return withContext(Dispatchers.UI) {
+    return withContext(Dispatchers.EDT) {
       val project = splitters.manager.project
-      val component = AgentWorkbenchInlinePromptEmptyStateComponent(project)
-      try {
-        component.ensureContentInitialized()
-        component
-      }
-      catch (e: Throwable) {
-        Disposer.dispose(component)
-        throw e
+      writeIntentReadAction {
+        val component = AgentWorkbenchInlinePromptEmptyStateComponent(project)
+        try {
+          component.ensureContentInitialized()
+          component
+        }
+        catch (e: Throwable) {
+          Disposer.dispose(component)
+          throw e
+        }
       }
     }
   }
@@ -71,11 +79,13 @@ class AgentWorkbenchInlinePromptEmptyStateComponent internal constructor(
   private val project: Project,
   private val configuration: AgentWorkbenchInlinePromptConfiguration = emptyStateInlinePromptConfiguration(project),
 ) : JPanel(BorderLayout()), Disposable {
+  private val parentDisposable = Disposer.newDisposable("AgentWorkbenchInlinePromptEmptyState")
   private var content: AgentPromptPaletteContent? = null
   private var initializing: Boolean = false
   private var disposed: Boolean = false
 
   init {
+    Disposer.register(this, parentDisposable)
     name = INLINE_PROMPT_COMPONENT_NAME
     isOpaque = false
     background = JBUI.CurrentTheme.Popup.BACKGROUND
@@ -87,6 +97,28 @@ class AgentWorkbenchInlinePromptEmptyStateComponent internal constructor(
     val accessibleName = AgentPromptBundle.message("inline.empty.state.prompt.accessible.name")
     getAccessibleContext().accessibleName = accessibleName
     getAccessibleContext().accessibleDescription = AgentPromptBundle.message("inline.empty.state.prompt.accessible.description")
+
+    val activationMouseListener = object : MouseAdapter() {
+      override fun mouseClicked(e: MouseEvent) {
+        ensureContentInitialized(requestFocus = true)
+      }
+    }
+    addMouseListener(activationMouseListener)
+
+    add(JLabel(accessibleName, SwingConstants.CENTER).apply {
+      isOpaque = false
+      getAccessibleContext().accessibleName = accessibleName
+      addMouseListener(activationMouseListener)
+    }, BorderLayout.CENTER)
+
+    val initializeActionName = "initializeAgentPrompt"
+    actionMap.put(initializeActionName, object : AbstractAction() {
+      override fun actionPerformed(e: ActionEvent?) {
+        ensureContentInitialized(requestFocus = true)
+      }
+    })
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), initializeActionName)
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), initializeActionName)
   }
 
   val preferredFocusedComponent: JComponent
@@ -117,7 +149,6 @@ class AgentWorkbenchInlinePromptEmptyStateComponent internal constructor(
         closeHost = ::handleSubmitSucceeded,
         isHostActive = { isShowing },
         revalidateHost = {
-          promptContent?.let(::syncInlineContentSize)
           revalidate()
           repaint()
         },
@@ -127,7 +158,6 @@ class AgentWorkbenchInlinePromptEmptyStateComponent internal constructor(
       removeAll()
       add(promptContent.rootPanel, BorderLayout.CENTER)
       promptContent.sessionController.initialize(initialLaunchProfileId = configuration.initialLaunchProfileId)
-      syncInlineContentSize(promptContent)
       promptContent.sessionController.installHandlers()
       content = promptContent
       revalidate()
@@ -150,13 +180,9 @@ class AgentWorkbenchInlinePromptEmptyStateComponent internal constructor(
       return
     }
     disposed = true
-    disposeContent(configuration.disposeReason)
-  }
-
-  private fun disposeContent(reason: String) {
-    val promptContent = content ?: return
+    content?.dispose(configuration.disposeReason)
     content = null
-    promptContent.dispose(reason)
+    Disposer.dispose(parentDisposable)
   }
 
   override fun paintComponent(g: Graphics) {
@@ -188,20 +214,6 @@ class AgentWorkbenchInlinePromptEmptyStateComponent internal constructor(
     }
     promptContent.promptArea.editor?.contentComponent?.accessibleContext?.accessibleName = accessibleName
     promptContent.promptArea.editor?.contentComponent?.accessibleContext?.accessibleDescription = accessibleDescription
-  }
-
-  private fun syncInlineContentSize(promptContent: AgentPromptPaletteContent) {
-    preferredSize = contentHostSize(promptContent.rootPanel.preferredSize)
-    minimumSize = contentHostSize(promptContent.rootPanel.minimumSize)
-    maximumSize = contentHostSize(promptContent.rootPanel.maximumSize)
-  }
-
-  private fun contentHostSize(contentSize: Dimension): Dimension {
-    val borderInsets = insets
-    return Dimension(
-      contentSize.width + borderInsets.left + borderInsets.right,
-      contentSize.height + borderInsets.top + borderInsets.bottom,
-    )
   }
 
   private fun handleSubmitSucceeded() {
@@ -241,29 +253,6 @@ fun createAgentWorkbenchInlineNewThreadPromptComponent(
   }
 }
 
-@ApiStatus.Internal
-@RequiresEdt
-fun createAgentWorkbenchInlinePromptEditorHost(component: JComponent): JComponent {
-  return AgentWorkbenchInlinePromptEditorHost(component)
-}
-
-private class AgentWorkbenchInlinePromptEditorHost(component: JComponent) : JPanel(BorderLayout()) {
-  init {
-    isOpaque = true
-    background = editorBackground()
-    add(EditorEmptyStateComponentHost(fillContent = false).apply {
-      setComponents(listOf(component))
-    }, BorderLayout.CENTER)
-  }
-
-  override fun updateUI() {
-    super.updateUI()
-    background = editorBackground()
-  }
-}
-
-private fun editorBackground() = EditorColorsManager.getInstance().globalScheme.defaultBackground
-
 internal data class AgentWorkbenchInlinePromptConfiguration(
   @JvmField val invocationData: AgentPromptInvocationData,
   @JvmField val launcherProvider: () -> AgentPromptLauncherBridge?,
@@ -297,7 +286,7 @@ private const val INLINE_PROMPT_PLACE: String = "EditorEmptyState"
 /**
  * Feature flag for the inline Agent prompt shown in the empty editor.
  * When disabled, the inline composer is not created and the
- * `AgentWorkbenchGlobalPromptEmptyTextProvider` fallback hint is used instead.
+ * `AgentWorkbenchGlobalPromptEmptyTextProvider` painted hint is used instead.
  */
 internal const val INLINE_EMPTY_STATE_PROMPT_PROPERTY: String = "agent.workbench.inline.empty.state.prompt"
 

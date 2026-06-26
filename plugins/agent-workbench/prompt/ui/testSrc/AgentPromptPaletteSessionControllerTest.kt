@@ -311,6 +311,40 @@ class AgentPromptPaletteSessionControllerTest {
   }
 
   @Test
+  fun inlineNewThreadPrefersInitialLaunchProfileAndForcesNewTaskUi() {
+    runInEdtAndWait {
+      val project = ProjectManager.getInstance().defaultProject
+      val codexProfile = carefulCodexProfile()
+      val claudeProfile = carefulClaudeProfile()
+      project.service<AgentPromptUiSessionStateService>().saveDraft(
+        AgentPromptUiDraft(
+          promptText = "draft",
+          taskDrafts = mapOf(PromptTargetMode.NEW_TASK.name to "draft"),
+          selectedLaunchProfileId = codexProfile.id,
+        )
+      )
+      val fixture = createSessionControllerFixture(
+        providerPreferences = AgentPromptLauncherBridge.ProviderPreferences(launchProfiles = listOf(codexProfile, claudeProfile)),
+        hostMode = AgentPromptPaletteHostMode.INLINE_NEW_THREAD,
+      )
+      try {
+        fixture.controller.initialize(initialLaunchProfileId = claudeProfile.id)
+        fixture.controller.installHandlers()
+
+        assertThat(fixture.providerSelector.selectedProvider?.bridge?.provider).isEqualTo(AgentSessionProvider.from("claude"))
+        assertThat(fixture.view.existingTaskScrollPane.isVisible).isFalse()
+
+        fixture.view.tabbedPane.selectedIndex = existingTaskTabIndex(fixture.view)
+
+        assertThat(fixture.view.existingTaskScrollPane.isVisible).isFalse()
+      }
+      finally {
+        fixture.dispose()
+      }
+    }
+  }
+
+  @Test
   fun contentDisposalReleasesImageDropTargetsBeforeSessionScopeCompletes(@TestDisposable disposable: Disposable) {
     val dndManager = RecordingDnDManager()
     ApplicationManager.getApplication().replaceService(DnDManager::class.java, dndManager, disposable)
