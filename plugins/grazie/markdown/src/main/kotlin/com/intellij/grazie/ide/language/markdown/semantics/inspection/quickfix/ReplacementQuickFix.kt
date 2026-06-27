@@ -37,6 +37,7 @@ internal class ReplacementQuickFix(private val underline: SmartPsiFileRange, pri
     override fun getName(): @IntentionName String = replacement
     override fun getFamilyName(): @IntentionFamilyName String = Companion.familyName
     override fun getFileModifierForPreview(target: PsiFile): FileModifier = ReplacementPreview(index, underline, replacement)
+    override fun isShowSubmenu(): Boolean = true
 
     override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
       val document = file.viewProvider.document ?: return
