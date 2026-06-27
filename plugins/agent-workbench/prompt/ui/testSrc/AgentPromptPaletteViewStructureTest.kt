@@ -479,7 +479,7 @@ class AgentPromptPaletteViewStructureTest {
       assertThat(SwingUtilities.isDescendingFrom(view.defaultProfileActionControl.component, view.rightHeaderPanel)).isFalse()
       assertThat(SwingUtilities.isDescendingFrom(view.addContextButton, view.generationSettingsPanel)).isTrue()
       assertThat(xInRoot(view.addContextButton, view.rootPanel)).isLessThan(xInRoot(view.launchProfileLink, view.rootPanel))
-      assertThat(view.generationSettingsPanel.parent).isSameAs(view.promptEditorPanel)
+      assertThat(view.generationSettingsPanel.parent).isNotNull()
       assertThat(SwingUtilities.isDescendingFrom(promptAreaInRoot, view.promptEditorPanel)).isTrue()
       assertThat(SwingUtilities.isDescendingFrom(view.generationSettingsPanel, view.promptPanel)).isTrue()
       assertThat(SwingUtilities.isDescendingFrom(view.generationSettingsPanel, view.promptEditorPanel)).isTrue()
@@ -527,11 +527,16 @@ class AgentPromptPaletteViewStructureTest {
 
         layoutPopupRoot(view.rootPanel)
         val editor = checkNotNull(promptArea.getEditor(true))
+        val editorInsets = editor.scrollPane.border.getBorderInsets(editor.scrollPane)
         assertThat(editor.scrollPane.verticalScrollBarPolicy).isEqualTo(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED)
+        assertThat(editorInsets.left).isZero()
+        assertThat(editorInsets.right).isZero()
         assertThat(promptArea.border.getBorderInsets(promptArea).bottom).isZero()
-        assertThat(view.generationSettingsPanel.parent).isSameAs(view.promptEditorPanel)
+        assertThat(view.generationSettingsPanel.parent).isNotNull()
         assertThat(SwingUtilities.isDescendingFrom(view.generationSettingsPanel, view.rootPanel)).isTrue()
         assertThat(SwingUtilities.isDescendingFrom(view.generationSettingsPanel, view.promptEditorPanel)).isTrue()
+        assertThat(xInRoot(view.addContextButton, view.rootPanel)).isEqualTo(xInRoot(promptArea, view.rootPanel))
+        assertThat(rightInRoot(view.launchProfileLink, view.rootPanel)).isEqualTo(rightInRoot(promptArea, view.rootPanel))
         assertThat(yInRoot(view.generationSettingsPanel, view.rootPanel)).isGreaterThanOrEqualTo(bottomInRoot(promptArea, view.rootPanel))
         val launchTuningSummaryCenter = SwingUtilities.convertPoint(
           view.launchProfileLink,
@@ -625,6 +630,10 @@ class AgentPromptPaletteViewStructureTest {
 
   private fun bottomInRoot(component: Component, root: JPanel): Int {
     return yInRoot(component, root) + component.height
+  }
+
+  private fun rightInRoot(component: Component, root: JPanel): Int {
+    return xInRoot(component, root) + component.width
   }
 
   private fun totalBorderInsets(component: JComponent): Int {
