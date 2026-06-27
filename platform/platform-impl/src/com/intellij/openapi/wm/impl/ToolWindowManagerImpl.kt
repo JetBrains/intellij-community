@@ -651,7 +651,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   // mutate operation must use info from layout and not from decorator
-  internal fun getRegisteredMutableInfoOrLogError(id: String): WindowInfoImpl {
+  @ApiStatus.Internal
+  fun getRegisteredMutableInfoOrLogError(id: String): WindowInfoImpl {
     var info = layoutState.getInfo(id)
     if (info == null) {
       val entry = idToEntry.get(id) ?: throw IllegalStateException("window with id=\"$id\" isn't registered")
