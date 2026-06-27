@@ -15,7 +15,6 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionThreadOutline
 import com.intellij.platform.ai.agent.json.filebacked.FileBackedSessionChangeSet
 import com.intellij.platform.ai.agent.json.filebacked.createFileBackedSessionChangeFlow
 import com.intellij.platform.ai.agent.json.filebacked.toFileBackedSessionPathKey
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -175,8 +174,7 @@ internal class CodexRolloutSessionBackend(
     LOG.debug {
       "Codex rollout update scoped (changedRolloutPaths=${rolloutPaths.size}, scopedPaths=${scopedPaths.size}, threadIds=${threadIds.size})"
     }
-    return AgentSessionSourceUpdateEvent(
-      type = AgentSessionSourceUpdate.HINTS_CHANGED,
+    return AgentSessionSourceUpdateEvent.hintsChanged(
       scopedPaths = scopedPaths,
       threadIds = threadIds.takeIf { it.isNotEmpty() },
       mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
@@ -199,8 +197,7 @@ internal class CodexRolloutSessionBackend(
       return null
     }
 
-    return AgentSessionSourceUpdateEvent(
-      type = AgentSessionSourceUpdate.HINTS_CHANGED,
+    return AgentSessionSourceUpdateEvent.hintsChanged(
       scopedPaths = setOf(parsedThread.normalizedCwd),
       mayHaveChangedProjectFiles = consumedProjectFileChangeEvidence != null,
       changedProjectFilePaths = consumedProjectFileChangeEvidence?.changedProjectFilePaths,
@@ -339,8 +336,7 @@ private fun rolloutSessionUpdate(
   mayHaveChangedProjectFiles: Boolean = false,
   changedProjectFilePaths: Set<String>? = null,
 ): AgentSessionSourceUpdateEvent {
-  return AgentSessionSourceUpdateEvent(
-    type = AgentSessionSourceUpdate.HINTS_CHANGED,
+  return AgentSessionSourceUpdateEvent.hintsChanged(
     mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
     changedProjectFilePaths = changedProjectFilePaths,
   )

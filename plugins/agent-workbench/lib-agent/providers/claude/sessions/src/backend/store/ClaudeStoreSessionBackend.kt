@@ -27,7 +27,6 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionThreadOutline
 import com.intellij.platform.ai.agent.json.filebacked.FileBackedSessionChangeSet
 import com.intellij.platform.ai.agent.json.filebacked.createFileBackedSessionChangeFlow
 import com.intellij.platform.ai.agent.json.filebacked.toFileBackedSessionPathKey
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadActivityUpdate
 import com.intellij.openapi.diagnostic.debug
@@ -153,8 +152,7 @@ internal class ClaudeStoreSessionBackend(
     LOG.debug {
       "Claude sessions update scoped (changedJsonlPaths=${jsonlPaths.size}, scopedPaths=${scopedPaths.size}, threadIds=${threadIds.size})"
     }
-    return AgentSessionSourceUpdateEvent(
-      type = AgentSessionSourceUpdate.THREADS_CHANGED,
+    return AgentSessionSourceUpdateEvent.threadsChanged(
       scopedPaths = scopedPaths,
       threadIds = threadIds.takeIf { it.isNotEmpty() },
       activityUpdatesByThreadId = activityUpdatesByThreadId,
@@ -264,8 +262,7 @@ private fun claudeSessionUpdate(
   mayHaveChangedProjectFiles: Boolean = false,
   changedProjectFilePaths: Set<String>? = null,
 ): AgentSessionSourceUpdateEvent {
-  return AgentSessionSourceUpdateEvent(
-    type = AgentSessionSourceUpdate.THREADS_CHANGED,
+  return AgentSessionSourceUpdateEvent.threadsChanged(
     mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
     changedProjectFilePaths = changedProjectFilePaths,
   )

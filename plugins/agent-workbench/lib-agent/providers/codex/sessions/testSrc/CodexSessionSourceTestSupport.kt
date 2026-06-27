@@ -8,7 +8,7 @@ import com.intellij.platform.ai.agent.codex.sessions.backend.CodexRefreshHints
 import com.intellij.platform.ai.agent.codex.sessions.backend.CodexRefreshHintsProvider
 import com.intellij.platform.ai.agent.codex.sessions.backend.CodexSessionBackend
 import com.intellij.platform.ai.agent.codex.sessions.backend.toAgentThreadActivity
-import com.intellij.platform.ai.agent.codex.sessions.backend.rollout.CodexRolloutRefreshHintsProvider
+import com.intellij.platform.ai.agent.codex.sessions.backend.rollout.CodexRolloutDiscoveryProvider
 import com.intellij.platform.ai.agent.codex.sessions.backend.rollout.CodexRolloutSessionBackend
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.session.AgentSessionCost
@@ -29,7 +29,10 @@ internal fun testCreateSource(
   threadIds: List<String>,
   appServerHints: Map<String, CodexRefreshHints> = emptyMap(),
   backendThreadCustomizer: (CodexBackendThread) -> CodexBackendThread = { it },
-  calculateCost: (AgentSessionUsageSnapshot) -> AgentSessionCost = { AgentSessionCost(amountUsd = null, kind = AgentSessionCostKind.UNAVAILABLE) },
+  calculateCost: (AgentSessionUsageSnapshot) -> AgentSessionCost = {
+    AgentSessionCost(amountUsd = null,
+                     kind = AgentSessionCostKind.UNAVAILABLE)
+  },
 ): CodexSessionSource {
   val projectPath = projectDir.toString()
   val rolloutBackend = CodexRolloutSessionBackend(codexHomeProvider = { codexHome })
@@ -55,11 +58,11 @@ internal fun testCreateSource(
     }
   }
   val appServerRefreshHintsProvider = testStaticHintsProvider(appServerHints)
-  val rolloutRefreshHintsProvider = CodexRolloutRefreshHintsProvider(rolloutBackend = rolloutBackend)
+  val rolloutDiscoveryProvider = CodexRolloutDiscoveryProvider(rolloutBackend = rolloutBackend)
   return CodexSessionSource(
     backend,
     appServerRefreshHintsProvider,
-    rolloutRefreshHintsProvider,
+    rolloutDiscoveryProvider,
     rolloutBackend,
     calculateCost,
   )

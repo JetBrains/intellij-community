@@ -153,4 +153,4 @@ The Agent Threads tree must optionally show per-session cost when the provider a
 - `agent-sessions.spec.md`
 - `agent-sessions-tree.spec.md`
 - `agent-sessions-codex-rollout-source.spec.md`
-- `agent-sessions-codex-rollout-hints.spec.md`
+- `agent-sessions-codex-rollout-discovery.spec.md`

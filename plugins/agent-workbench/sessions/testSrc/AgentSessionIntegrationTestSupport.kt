@@ -21,7 +21,6 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefres
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceRefreshRequest
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceRefreshResult
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadActivityUpdate
 import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
@@ -252,8 +251,7 @@ fun threadsChangedEvent(
   mayHaveChangedProjectFiles: Boolean = false,
   changedProjectFilePaths: Set<String>? = null,
 ): AgentSessionSourceUpdateEvent {
-  return AgentSessionSourceUpdateEvent(
-    type = AgentSessionSourceUpdate.THREADS_CHANGED,
+  return AgentSessionSourceUpdateEvent.threadsChanged(
     scopedPaths = scopedPaths,
     threadIds = threadIds,
     activityUpdatesByThreadId = activityUpdatesByThreadId,
@@ -269,8 +267,7 @@ fun hintsChangedEvent(
   mayHaveChangedProjectFiles: Boolean = false,
   changedProjectFilePaths: Set<String>? = null,
 ): AgentSessionSourceUpdateEvent {
-  return AgentSessionSourceUpdateEvent(
-    type = AgentSessionSourceUpdate.HINTS_CHANGED,
+  return AgentSessionSourceUpdateEvent.hintsChanged(
     scopedPaths = scopedPaths,
     threadIds = threadIds,
     activityUpdatesByThreadId = activityUpdatesByThreadId,

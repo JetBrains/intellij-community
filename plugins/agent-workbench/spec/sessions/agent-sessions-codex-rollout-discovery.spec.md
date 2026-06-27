@@ -1,6 +1,6 @@
 ---
-name: Codex Rollout Refresh Hints
-description: Requirements for Codex rollout parsing, watching, and refresh-hint consumption.
+name: Codex Rollout Discovery
+description: Requirements for Codex rollout parsing, watching, discovery, and project-file evidence.
 targets:
   - ../../lib-agent/providers/codex/sessions/src/backend/rollout/**/*.kt
   - ../../lib-agent/filewatch/src/**/*.kt
@@ -9,7 +9,7 @@ targets:
   - ../../lib-agent/filewatch/testSrc/**/*.kt
 ---
 
-# Codex Rollout Refresh Hints
+# Codex Rollout Discovery
 
 Status: Draft
 Date: 2026-05-09
@@ -30,12 +30,13 @@ Codex rollout files are parsed for discovery, project-file-change evidence, cost
 - Rollout review-mode and response-required needs-input hints must use current Codex rollout event shapes, including `entered_review_mode`, `exited_review_mode`, `request_user_input`, persisted `response_item` tool calls named `request_user_input`, approval events (`exec_approval_request`, `apply_patch_approval_request`, `request_permissions`, `elicitation_request`), and escalated tool-call arguments (`sandbox_permissions: require_escalated`).
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
-- Rollout update events consumed by `CodexSessionSource` are discovery-only: they may trigger app-server thread refreshes and project-file refreshes, but rollout-discovered ids, activity hints, and presentation hints must not create persisted thread rows or status updates. Rollout refresh hints must not expose activity or presentation updates for already-known thread ids.
-  [@test] ../../lib-agent/providers/codex/sessions/testSrc/backend/rollout/CodexRolloutRefreshHintsProviderTest.kt
+- Rollout update events consumed by `CodexSessionSource` are discovery-only: they may trigger app-server thread refreshes and project-file refreshes, but rollout-discovered ids, activity hints, and presentation hints must not create persisted thread rows or status updates. Rollout discovery must not expose activity or presentation updates for already-known thread ids.
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/backend/rollout/CodexRolloutDiscoveryProviderTest.kt
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexSessionSourceTest.kt
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
-- Rebind candidates from rollout hints are top-level CLI sessions only; parsed sub-agent sessions must not become automatic rebind targets.
-  [@test] ../../lib-agent/providers/codex/sessions/testSrc/backend/rollout/CodexRolloutRefreshHintsProviderTest.kt
+- Rebind candidates from rollout discovery are top-level CLI sessions only; parsed sub-agent sessions must not become automatic rebind targets.
+  [@test] ../../lib-agent/providers/codex/sessions/testSrc/backend/rollout/CodexRolloutDiscoveryProviderTest.kt
 
 - Rollout watching uses `AgentWorkbenchDirectoryWatcher`; Java NIO `WatchService` must not be used directly. Refresh remains event-driven, not periodic polling.
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexRolloutSessionsWatcherTest.kt
@@ -59,7 +60,7 @@ Codex rollout files are parsed for discovery, project-file-change evidence, cost
 
 ## Testing / Local Run
 - `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test "com.intellij.platform.ai.agent.codex.sessions.CodexRollout*Test"`
-- `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test com.intellij.platform.ai.agent.codex.sessions.backend.rollout.CodexRolloutRefreshHintsProviderTest`
+- `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test com.intellij.platform.ai.agent.codex.sessions.backend.rollout.CodexRolloutDiscoveryProviderTest`
 - `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test com.intellij.platform.ai.agent.codex.sessions.CodexSessionSourceRealTuiIntegrationTest`
 - `./tests.cmd --module intellij.platform.ai.agent.filewatch.tests --test com.intellij.platform.ai.agent.filewatch.AgentWorkbenchDirectoryWatcherTest`
 

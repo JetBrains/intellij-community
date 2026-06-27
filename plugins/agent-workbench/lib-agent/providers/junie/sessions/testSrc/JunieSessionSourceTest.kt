@@ -666,8 +666,7 @@ class JunieSessionSourceTest {
     return AgentSessionSourceRefreshRequest(
       paths = listOf(projectDir.toString()),
       threadIds = setOf(threadId),
-      updateEvent = AgentSessionSourceUpdateEvent(
-        type = AgentSessionSourceUpdate.HINTS_CHANGED,
+      updateEvent = AgentSessionSourceUpdateEvent.hintsChanged(
         scopedPaths = setOf(projectDir.toString()),
         threadIds = setOf(threadId),
       ),

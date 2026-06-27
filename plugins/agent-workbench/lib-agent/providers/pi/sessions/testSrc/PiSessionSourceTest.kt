@@ -128,8 +128,7 @@ class PiSessionSourceTest {
   @Test
   fun `enabled file watch fallback merges contributor updates`() {
     runBlocking(Dispatchers.Default) {
-      val updateEvent = AgentSessionSourceUpdateEvent(
-        type = AgentSessionSourceUpdate.THREADS_CHANGED,
+      val updateEvent = AgentSessionSourceUpdateEvent.threadsChanged(
         scopedPaths = setOf(tempDir.resolve("project-contributor").toString()),
       )
       val source = PiSessionSource(

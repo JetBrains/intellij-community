@@ -23,12 +23,12 @@ import java.nio.file.Path
 import kotlin.time.Duration.Companion.seconds
 
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
-class CodexRolloutRefreshHintsProviderTest {
+class CodexRolloutDiscoveryProviderTest {
   @TempDir
   lateinit var tempDir: Path
 
   @Test
-  fun emitsScopedHintUpdateForChangedRolloutFile() {
+  fun emitsScopedDiscoveryUpdateForChangedRolloutFile() {
     runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-rollout-scoped-update")
       Files.createDirectories(projectDir)
@@ -43,7 +43,7 @@ class CodexRolloutRefreshHintsProviderTest {
       )
 
       val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
-      val provider = CodexRolloutRefreshHintsProvider(
+      val provider = CodexRolloutDiscoveryProvider(
         rolloutBackend = CodexRolloutSessionBackend(
           codexHomeProvider = { tempDir },
           rolloutChangeSource = { sourceUpdates },
@@ -72,7 +72,7 @@ class CodexRolloutRefreshHintsProviderTest {
   }
 
   @Test
-  fun fallsBackToUnscopedHintUpdateWhenChangedRolloutFileCannotBeParsed() {
+  fun fallsBackToUnscopedDiscoveryUpdateWhenChangedRolloutFileCannotBeParsed() {
     runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-rollout-unscoped-update")
       Files.createDirectories(projectDir)
@@ -86,7 +86,7 @@ class CodexRolloutRefreshHintsProviderTest {
       )
 
       val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
-      val provider = CodexRolloutRefreshHintsProvider(
+      val provider = CodexRolloutDiscoveryProvider(
         rolloutBackend = CodexRolloutSessionBackend(
           codexHomeProvider = { tempDir },
           rolloutChangeSource = { sourceUpdates },
@@ -117,7 +117,7 @@ class CodexRolloutRefreshHintsProviderTest {
   @Test
   fun emitsOnlyRebindCandidatesForTopLevelCliThreads() {
     runBlocking(Dispatchers.Default) {
-      val projectDir = tempDir.resolve("project-rollout-hints")
+      val projectDir = tempDir.resolve("project-rollout-discovery")
       Files.createDirectories(projectDir)
       val sessionsRoot = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("14")
 
@@ -157,7 +157,7 @@ class CodexRolloutRefreshHintsProviderTest {
         ),
       )
 
-      val provider = CodexRolloutRefreshHintsProvider(
+      val provider = CodexRolloutDiscoveryProvider(
         rolloutBackend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir }),
       )
 
@@ -177,19 +177,25 @@ class CodexRolloutRefreshHintsProviderTest {
 
 private fun sessionMetaLine(timestamp: String, id: String, cwd: Path, source: String? = null): String {
   val sourceField = if (source == null) "" else ",\"source\":\"$source\""
-  return """{"timestamp":"$timestamp","type":"session_meta","payload":{"id":"$id","timestamp":"$timestamp","cwd":"${cwd.toString().replace("\\", "\\\\")}"$sourceField}}"""
+  return """{"timestamp":"$timestamp","type":"session_meta","payload":{"id":"$id","timestamp":"$timestamp","cwd":"${
+    cwd.toString().replace("\\", "\\\\")
+  }"$sourceField}}"""
 }
 
 private fun sessionMetaLineWithoutId(cwd: Path): String {
   val timestamp = "2026-02-14T18:00:00.000Z"
-  return """{"timestamp":"$timestamp","type":"session_meta","payload":{"timestamp":"$timestamp","cwd":"${cwd.toString().replace("\\", "\\\\")}"}}"""
+  return """{"timestamp":"$timestamp","type":"session_meta","payload":{"timestamp":"$timestamp","cwd":"${
+    cwd.toString().replace("\\", "\\\\")
+  }"}}"""
 }
 
 private fun subAgentSessionMetaLine(cwd: Path, sourceFieldName: String = "subagent"): String {
   val timestamp = "2026-02-14T16:02:00.000Z"
   val id = "subagent-thread"
   val parentThreadId = "cli-parent"
-  return """{"timestamp":"$timestamp","type":"session_meta","payload":{"id":"$id","timestamp":"$timestamp","cwd":"${cwd.toString().replace("\\", "\\\\")}","source":{"$sourceFieldName":{"thread_spawn":{"parent_thread_id":"$parentThreadId","depth":1}}}}}"""
+  return """{"timestamp":"$timestamp","type":"session_meta","payload":{"id":"$id","timestamp":"$timestamp","cwd":"${
+    cwd.toString().replace("\\", "\\\\")
+  }","source":{"$sourceFieldName":{"thread_spawn":{"parent_thread_id":"$parentThreadId","depth":1}}}}}"""
 }
 
 private fun writeRollout(file: Path, lines: List<String>) {

@@ -853,6 +853,7 @@ e:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdat
 - s:valueOf(java.lang.String):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 - s:values():com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate[]
 f:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+- sf:Companion:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent$Companion
 - f:activityUpdatesByThreadId:java.util.Map
 - f:changedProjectFilePaths:java.util.Set
 - f:mayHaveChangedProjectFiles:Z
@@ -860,19 +861,21 @@ f:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdat
 - f:scopedPaths:java.util.Set
 - f:threadIds:java.util.Set
 - f:type:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
-- <init>(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate,java.util.Set,java.util.Set,java.util.Map,java.util.Map,Z,java.util.Set):V
-- b:<init>(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate,java.util.Set,java.util.Set,java.util.Map,java.util.Map,Z,java.util.Set,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:component1():com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
-- f:component2():java.util.Set
-- f:component3():java.util.Set
-- f:component4():java.util.Map
-- f:component5():java.util.Map
-- f:component6():Z
-- f:component7():java.util.Set
-- f:copy(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate,java.util.Set,java.util.Set,java.util.Map,java.util.Map,Z,java.util.Set):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
-- bs:copy$default(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate,java.util.Set,java.util.Set,java.util.Map,java.util.Map,Z,java.util.Set,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 - equals(java.lang.Object):Z
 - hashCode():I
+f:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent$Companion
+- f:activityChanged(java.util.Set,java.util.Set,java.util.Map):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+- bs:activityChanged$default(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent$Companion,java.util.Set,java.util.Set,java.util.Map,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+- f:discoveryChanged(java.util.Set,Z,java.util.Set):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+- bs:discoveryChanged$default(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent$Companion,java.util.Set,Z,java.util.Set,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+- f:hintsChanged(java.util.Set,java.util.Set,java.util.Map,java.util.Map,Z,java.util.Set):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+- bs:hintsChanged$default(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent$Companion,java.util.Set,java.util.Set,java.util.Map,java.util.Map,Z,java.util.Set,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+- f:presentationChanged(java.util.Set,java.util.Set,java.util.Map):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+- bs:presentationChanged$default(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent$Companion,java.util.Set,java.util.Set,java.util.Map,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+- f:projectFilesChanged(java.util.Set,java.util.Set):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+- bs:projectFilesChanged$default(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent$Companion,java.util.Set,java.util.Set,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+- f:threadsChanged(java.util.Set,java.util.Set,java.util.Map,java.util.Map,Z,java.util.Set):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+- bs:threadsChanged$default(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent$Companion,java.util.Set,java.util.Set,java.util.Map,java.util.Map,Z,java.util.Set,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 f:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 - f:command:java.util.List
 - f:containerSessionId:java.lang.String

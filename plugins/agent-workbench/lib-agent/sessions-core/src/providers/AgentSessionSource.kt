@@ -65,7 +65,7 @@ enum class AgentSessionSourceUpdate {
   HINTS_CHANGED,
 }
 
-data class AgentSessionSourceUpdateEvent(
+class AgentSessionSourceUpdateEvent private constructor(
   @JvmField val type: AgentSessionSourceUpdate,
   @JvmField val scopedPaths: Set<String>? = null,
   @JvmField val threadIds: Set<String>? = null,
@@ -73,7 +73,130 @@ data class AgentSessionSourceUpdateEvent(
   @JvmField val presentationUpdatesByThreadId: Map<String, AgentSessionThreadPresentationUpdate> = emptyMap(),
   @JvmField val mayHaveChangedProjectFiles: Boolean = false,
   @JvmField val changedProjectFilePaths: Set<String>? = null,
-)
+) {
+  companion object {
+    fun threadsChanged(
+      scopedPaths: Set<String>? = null,
+      threadIds: Set<String>? = null,
+      activityUpdatesByThreadId: Map<String, AgentSessionThreadActivityUpdate> = emptyMap(),
+      presentationUpdatesByThreadId: Map<String, AgentSessionThreadPresentationUpdate> = emptyMap(),
+      mayHaveChangedProjectFiles: Boolean = false,
+      changedProjectFilePaths: Set<String>? = null,
+    ): AgentSessionSourceUpdateEvent {
+      return AgentSessionSourceUpdateEvent(
+        type = AgentSessionSourceUpdate.THREADS_CHANGED,
+        scopedPaths = scopedPaths,
+        threadIds = threadIds,
+        activityUpdatesByThreadId = activityUpdatesByThreadId,
+        presentationUpdatesByThreadId = presentationUpdatesByThreadId,
+        mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
+        changedProjectFilePaths = changedProjectFilePaths,
+      )
+    }
+
+    fun hintsChanged(
+      scopedPaths: Set<String>? = null,
+      threadIds: Set<String>? = null,
+      activityUpdatesByThreadId: Map<String, AgentSessionThreadActivityUpdate> = emptyMap(),
+      presentationUpdatesByThreadId: Map<String, AgentSessionThreadPresentationUpdate> = emptyMap(),
+      mayHaveChangedProjectFiles: Boolean = false,
+      changedProjectFilePaths: Set<String>? = null,
+    ): AgentSessionSourceUpdateEvent {
+      return AgentSessionSourceUpdateEvent(
+        type = AgentSessionSourceUpdate.HINTS_CHANGED,
+        scopedPaths = scopedPaths,
+        threadIds = threadIds,
+        activityUpdatesByThreadId = activityUpdatesByThreadId,
+        presentationUpdatesByThreadId = presentationUpdatesByThreadId,
+        mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
+        changedProjectFilePaths = changedProjectFilePaths,
+      )
+    }
+
+    fun activityChanged(
+      scopedPaths: Set<String>? = null,
+      threadIds: Set<String>? = null,
+      activityUpdatesByThreadId: Map<String, AgentSessionThreadActivityUpdate>,
+    ): AgentSessionSourceUpdateEvent {
+      return hintsChanged(
+        scopedPaths = scopedPaths,
+        threadIds = threadIds,
+        activityUpdatesByThreadId = activityUpdatesByThreadId,
+      )
+    }
+
+    fun presentationChanged(
+      scopedPaths: Set<String>? = null,
+      threadIds: Set<String>? = null,
+      presentationUpdatesByThreadId: Map<String, AgentSessionThreadPresentationUpdate>,
+    ): AgentSessionSourceUpdateEvent {
+      return hintsChanged(
+        scopedPaths = scopedPaths,
+        threadIds = threadIds,
+        presentationUpdatesByThreadId = presentationUpdatesByThreadId,
+      )
+    }
+
+    fun discoveryChanged(
+      scopedPaths: Set<String>? = null,
+      mayHaveChangedProjectFiles: Boolean = false,
+      changedProjectFilePaths: Set<String>? = null,
+    ): AgentSessionSourceUpdateEvent {
+      return threadsChanged(
+        scopedPaths = scopedPaths,
+        mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
+        changedProjectFilePaths = changedProjectFilePaths,
+      )
+    }
+
+    fun projectFilesChanged(
+      scopedPaths: Set<String>? = null,
+      changedProjectFilePaths: Set<String>? = null,
+    ): AgentSessionSourceUpdateEvent {
+      return discoveryChanged(
+        scopedPaths = scopedPaths,
+        mayHaveChangedProjectFiles = true,
+        changedProjectFilePaths = changedProjectFilePaths,
+      )
+    }
+
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is AgentSessionSourceUpdateEvent) return false
+
+    return type == other.type &&
+           scopedPaths == other.scopedPaths &&
+           threadIds == other.threadIds &&
+           activityUpdatesByThreadId == other.activityUpdatesByThreadId &&
+           presentationUpdatesByThreadId == other.presentationUpdatesByThreadId &&
+           mayHaveChangedProjectFiles == other.mayHaveChangedProjectFiles &&
+           changedProjectFilePaths == other.changedProjectFilePaths
+  }
+
+  override fun hashCode(): Int {
+    var result = type.hashCode()
+    result = 31 * result + scopedPaths.hashCode()
+    result = 31 * result + threadIds.hashCode()
+    result = 31 * result + activityUpdatesByThreadId.hashCode()
+    result = 31 * result + presentationUpdatesByThreadId.hashCode()
+    result = 31 * result + mayHaveChangedProjectFiles.hashCode()
+    result = 31 * result + changedProjectFilePaths.hashCode()
+    return result
+  }
+
+  override fun toString(): String {
+    return "AgentSessionSourceUpdateEvent(" +
+           "type=$type, " +
+           "scopedPaths=$scopedPaths, " +
+           "threadIds=$threadIds, " +
+           "activityUpdatesByThreadId=$activityUpdatesByThreadId, " +
+           "presentationUpdatesByThreadId=$presentationUpdatesByThreadId, " +
+           "mayHaveChangedProjectFiles=$mayHaveChangedProjectFiles, " +
+           "changedProjectFilePaths=$changedProjectFilePaths)"
+  }
+}
 
 fun AgentSessionThreadActivityUpdate.toPresentationUpdate(): AgentSessionThreadPresentationUpdate {
   return AgentSessionThreadPresentationUpdate(

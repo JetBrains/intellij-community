@@ -5,7 +5,6 @@ import com.intellij.platform.ai.agent.filewatch.AgentWorkbenchDirectoryWatcher
 import com.intellij.platform.ai.agent.filewatch.AgentWorkbenchWatchEvent
 import com.intellij.platform.ai.agent.filewatch.AgentWorkbenchWatchEventType
 import com.intellij.platform.ai.agent.pi.sessions.PiSessionUpdateEventsContributor
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -82,14 +81,12 @@ internal fun createPiSessionSourceUpdateEventForWatchEvent(
     projectPathsBySessionDir = projectPathsBySessionDir,
   ).takeIf { it.isNotEmpty() } ?: return null
   if (event.eventType == AgentWorkbenchWatchEventType.OVERFLOW) {
-    return AgentSessionSourceUpdateEvent(
-      type = AgentSessionSourceUpdate.THREADS_CHANGED,
+    return AgentSessionSourceUpdateEvent.threadsChanged(
       scopedPaths = scopedPaths,
     )
   }
   if (!isRelevantPiSessionWatchEvent(event, eventPath, projectPathsBySessionDir.keys)) return null
-  return AgentSessionSourceUpdateEvent(
-    type = AgentSessionSourceUpdate.THREADS_CHANGED,
+  return AgentSessionSourceUpdateEvent.threadsChanged(
     scopedPaths = scopedPaths,
   )
 }

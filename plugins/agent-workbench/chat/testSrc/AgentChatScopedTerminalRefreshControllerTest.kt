@@ -6,7 +6,6 @@ import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadActivityUpdate
 import com.intellij.openapi.project.Project
@@ -320,8 +319,7 @@ private data class RefreshSignal(
 )
 
 private fun activeUpdate(threadId: String): AgentSessionSourceUpdateEvent {
-  return AgentSessionSourceUpdateEvent(
-    type = AgentSessionSourceUpdate.HINTS_CHANGED,
+  return AgentSessionSourceUpdateEvent.activityChanged(
     scopedPaths = setOf("/work/project"),
     activityUpdatesByThreadId = mapOf(threadId to AgentSessionThreadActivityUpdate(AgentThreadActivityReport(AgentThreadActivity.PROCESSING))),
   )

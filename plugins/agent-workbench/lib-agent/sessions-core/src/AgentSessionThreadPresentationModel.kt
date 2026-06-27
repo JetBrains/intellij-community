@@ -34,6 +34,10 @@ data class AgentSessionThreadPresentationKey(
   }
 }
 
+/**
+ * Shared thread presentation for editor/tab chrome and fresh title projection.
+ * Tool-window activity counters must use canonical [AgentSessionThread.activityReport].
+ */
 data class AgentSessionThreadPresentation(
   @JvmField val title: @NlsSafe String,
   @JvmField val activityReport: AgentThreadActivityReport,
@@ -108,7 +112,9 @@ class AgentSessionThreadPresentationModel {
     val key = AgentSessionThreadPresentationKey.create(projectPath = path, provider = provider, threadId = threadId)
               ?: return AgentSessionThreadPresentationChangeSet.EMPTY
     val normalizedTitle = normalizeAgentSessionTitle(title) ?: title
-    return putMerged(mapOf(key to AgentSessionThreadPresentationPatch(title = normalizedTitle, activityReport = activityReport, updatedAt = updatedAt)))
+    return putMerged(mapOf(key to AgentSessionThreadPresentationPatch(title = normalizedTitle,
+                                                                      activityReport = activityReport,
+                                                                      updatedAt = updatedAt)))
   }
 
   fun updateActivityHints(

@@ -45,8 +45,7 @@ abstract class BaseAgentSessionSource(
     }
     if (advanced) {
       readStateUpdates.tryEmit(
-        AgentSessionSourceUpdateEvent(
-          type = AgentSessionSourceUpdate.HINTS_CHANGED,
+        AgentSessionSourceUpdateEvent.hintsChanged(
           threadIds = setOf(threadId),
         )
       )

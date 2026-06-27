@@ -5,7 +5,6 @@ import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.core.parseAgentWorkbenchPathOrNull
 import com.intellij.platform.ai.agent.json.filebacked.FileBackedSessionChangeSet
 import com.intellij.platform.ai.agent.json.filebacked.createFileBackedSessionChangeFlow
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -55,8 +54,7 @@ internal class JunieSessionUpdateBackend(
       val scopedPaths = sessionIndexStore.loadEntries()
         .mapTo(LinkedHashSet()) { entry -> entry.normalizedProjectDir }
       UPDATE_LOG.debug { "Junie index update scopedPaths=${scopedPaths.size}" }
-      return AgentSessionSourceUpdateEvent(
-        type = AgentSessionSourceUpdate.THREADS_CHANGED,
+      return AgentSessionSourceUpdateEvent.threadsChanged(
         scopedPaths = scopedPaths.takeIf { it.isNotEmpty() },
       )
     }
@@ -125,8 +123,7 @@ internal class JunieSessionUpdateBackend(
     UPDATE_LOG.debug {
       "Junie events update scopedPaths=${scopedPaths.size}, threadIds=${threadIds.size}, changedProjectFiles=$mayHaveChangedProjectFiles"
     }
-    return AgentSessionSourceUpdateEvent(
-      type = AgentSessionSourceUpdate.HINTS_CHANGED,
+    return AgentSessionSourceUpdateEvent.hintsChanged(
       scopedPaths = scopedPaths.takeIf { it.isNotEmpty() },
       threadIds = threadIds.takeIf { it.isNotEmpty() },
       mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
@@ -135,7 +132,7 @@ internal class JunieSessionUpdateBackend(
   }
 }
 
-private val JUNIE_THREADS_CHANGED_UPDATE = AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.THREADS_CHANGED)
+private val JUNIE_THREADS_CHANGED_UPDATE = AgentSessionSourceUpdateEvent.threadsChanged()
 
 private fun isJunieIndexPath(path: Path): Boolean {
   return path.fileName?.toString() == JUNIE_INDEX_FILE_NAME
