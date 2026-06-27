@@ -36,7 +36,7 @@ Task-cost profiles make the global prompt ready to send while still letting user
 - This spec does not require renaming the existing persisted `activeLaunchProfileId` field; it may remain the stored default profile id for compatibility.
 
 ## Requirements
-- The prompt composer bottom tray must place Add Context on the left as a prompt-composition action and expose one right-side launch-settings affordance for both popup and inline prompt surfaces. The launch-settings affordance must show the selected provider icon, including the red YOLO/Brave badge for YOLO profiles, plus the compact selected profile name or generated profile name, and open one popup for profile choice, per-task tuning, default/save actions, and profile management. Built-in provider-backed profiles use compact mode labels, such as `Default`, `Full Auto`, `Skip Permissions`, or `Brave Mode`, to avoid repeating provider names. User profiles show their saved profile name, and unmatched edited controls show a generated compact name, such as `High` or `GPT-5 High`.
+- The prompt composer bottom tray must place Add Context on the left as a prompt-composition action and expose one right-side launch-settings affordance for both popup and inline prompt surfaces. The launch-settings affordance must show the selected provider icon, including the red YOLO/Brave badge for YOLO profiles, plus the compact selected profile name or generated profile name, and open one popup for profile choice, per-task tuning, and profile management. Default/save/update actions stay visible inline next to the launch-settings affordance. Built-in provider-backed profiles use compact mode labels, such as `Default`, `Full Auto`, `Skip Permissions`, or `Brave Mode`, to avoid repeating provider names. User profiles show their saved profile name, and unmatched edited controls show a generated compact name, such as `High` or `GPT-5 High`.
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteViewStructureTest.kt
 
 - The prompt must restore the stored default profile on open when that profile is still applicable. If the default is unavailable, the prompt may fall back to the provider-list default without writing a replacement default.
@@ -45,7 +45,7 @@ Task-cost profiles make the global prompt ready to send while still letting user
 - Choosing a built-in or user profile in the prompt profile popup must apply that profile to the current task only. It must not update the stored default profile id.
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
 
-- The launch-settings popup must list profiles split into normal profiles and YOLO/Brave profiles, then expose reasoning-effort, Plan-effort, a nested model submenu, default/save/update, and management actions in separate sections. The model row shows the current model display name or `Default` with a submenu chevron; model choices and model-loading status live in that nested submenu. Starting or completing model-catalog refresh from this popup must not recreate the parent popup. Rename, delete, duplicate, and full profile editing remain in profile management.
+- The launch-settings popup must list profiles split into normal profiles and YOLO/Brave profiles, then expose reasoning-effort, Plan-effort, a nested model submenu, and profile management. The model row shows the current model display name or `Default Model` with a submenu chevron; model choices and model-loading status live in that nested submenu. Starting or completing model-catalog refresh from this popup must not recreate the parent popup. Rename, delete, duplicate, and full profile editing remain in profile management.
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
   [@test] ../../ui/testSrc/AgentWorkbenchPopupTest.kt
 
@@ -75,7 +75,7 @@ Task-cost profiles make the global prompt ready to send while still letting user
 ## User Experience
 - Profile labels should read as task presets or compact states, for example `Default`, `Custom`, `Careful`, or `Fast`, not as a raw settings list. The composer should not duplicate the provider name as both icon identity and adjacent text, and model/reasoning values should be exposed by the tuning affordance instead of repeated in the profile label.
 - Built-in and user profiles should appear together in the quick chooser. The built-in/user distinction matters in the manage dialog, where built-in edits are stored as removable user customizations.
-- The launch-settings popup should show profiles, tuning rows, default/save/update actions, and one `Manage Launch Profiles` action. Model selection should be a nested submenu so the parent popup stays compact and stable while catalog rows load. The composer tray itself should keep exactly one visible launch-settings control.
+- The launch-settings popup should show profiles, tuning rows, and one `Manage Launch Profiles` action. Default/save/update actions should stay inline in the composer tray next to the launch-settings control. Model selection should be a nested submenu so the parent popup stays compact and stable while catalog rows load. The composer tray itself should keep exactly one visible launch-settings control.
 - Existing-task mode and extension tabs should hide task-cost controls because they do not launch a new task with generation settings.
 
 ## Data & Backend

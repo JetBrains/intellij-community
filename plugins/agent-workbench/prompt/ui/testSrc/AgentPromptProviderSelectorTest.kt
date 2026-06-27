@@ -252,7 +252,7 @@ class AgentPromptProviderSelectorTest {
           .getChildren(TestActionEvent.createTestEvent())
         assertThat(modelActionEntries(tuningActions)).containsExactly(
           "separator:Model",
-          "model:Default",
+          "model:Default Model",
           "separator:Reasoning",
           "model:Default",
           "model:Medium",
@@ -263,18 +263,18 @@ class AgentPromptProviderSelectorTest {
         assertThat(isSelectedInPopup(tuningActions[5])).isTrue()
 
         val modelSubmenu = launchSettingsModelSubmenu(controller)
-        assertThat(modelSubmenu.text).isEqualTo("Default")
+        assertThat(modelSubmenu.text).isEqualTo("Default Model")
         assertThat(modelSubmenu.separatorText).isEqualTo("")
         assertThat(modelSubmenu.secondaryIcon).isSameAs(AllIcons.General.ChevronRight)
         assertThat(popupRowEntries(modelSubmenu.subRows)).containsExactly(
           "separator:Model",
-          "row:Default",
+          "row:Default Model",
         )
-        assertThat(popupCommand(modelSubmenu.subRows, "Default").selected).isTrue()
+        assertThat(popupCommand(modelSubmenu.subRows, "Default Model").selected).isTrue()
 
         val workbenchModelSubmenu = launchSettingsWorkbenchModelSubmenu(controller)
         assertThat(workbenchModelSubmenu.text).isEqualTo(modelSubmenu.text)
-        assertThat(workbenchModelSubmenu.subRows.map { row -> row.text }).containsExactly("Default")
+        assertThat(workbenchModelSubmenu.subRows.map { row -> row.text }).containsExactly("Default Model")
         assertThat(workbenchModelSubmenu.subRowsProvider != null).isTrue()
 
         controller.setGenerationControlsVisible(false)
@@ -345,7 +345,7 @@ class AgentPromptProviderSelectorTest {
         .isEqualTo("Model and reasoning: GPT-5.1 Codex · High")
       assertThat(modelActionEntries(actions)).containsExactly(
         "separator:Model",
-        "model:Default",
+        "model:Default Model",
         "separator:Other",
         "model:GPT-5.1 Codex",
         "separator:Reasoning",
@@ -363,16 +363,16 @@ class AgentPromptProviderSelectorTest {
       assertThat(modelSubmenu.secondaryIcon).isSameAs(AllIcons.General.ChevronRight)
       assertThat(popupRowEntries(modelSubmenu.subRows)).containsExactly(
         "separator:Model",
-        "row:Default",
+        "row:Default Model",
         "separator:Other",
         "row:GPT-5.1 Codex",
       )
-      assertThat(popupCommand(modelSubmenu.subRows, "Default").selected).isFalse()
+      assertThat(popupCommand(modelSubmenu.subRows, "Default Model").selected).isFalse()
       assertThat(popupCommand(modelSubmenu.subRows, "GPT-5.1 Codex").selected).isTrue()
 
       val workbenchModelSubmenu = launchSettingsWorkbenchModelSubmenu(controller)
       assertThat(workbenchModelSubmenu.text).isEqualTo(modelSubmenu.text)
-      assertThat(workbenchModelSubmenu.subRows.map { row -> row.text }).containsExactly("Default", "GPT-5.1 Codex")
+      assertThat(workbenchModelSubmenu.subRows.map { row -> row.text }).containsExactly("Default Model", "GPT-5.1 Codex")
       assertThat(workbenchModelSubmenu.subRowsProvider != null).isTrue()
     }
   }
@@ -547,8 +547,8 @@ class AgentPromptProviderSelectorTest {
 
         assertThat(controller.currentSettings()).isEqualTo(AgentPromptGenerationSettings.AUTO)
         assertThat(modelActions.mapNotNull { action -> action.templatePresentation.text })
-          .containsExactly("Default", "ChatGPT 5.5")
-        assertThat(isSelectedInPopup(modelActions.single { action -> action.templatePresentation.text == "Default" })).isTrue()
+          .containsExactly("Default Model", "ChatGPT 5.5")
+        assertThat(isSelectedInPopup(modelActions.single { action -> action.templatePresentation.text == "Default Model" })).isTrue()
         assertThat(isSelectedInPopup(modelActions.single { action -> action.templatePresentation.text == "ChatGPT 5.5" })).isFalse()
         assertThat(actions.mapNotNull { action -> action.templatePresentation.text })
           .containsExactly("Default", "High", "Extra High")
@@ -1801,7 +1801,7 @@ class AgentPromptProviderSelectorTest {
         editor.selectProfileForTest(profile.id)
 
         assertThat(editor.modelOptionTextsForTest()).containsExactly(
-          "Default",
+          "Default Model",
           "Qwen Local",
           "GPT-5.5",
           "Claude Opus",
@@ -1873,7 +1873,7 @@ class AgentPromptProviderSelectorTest {
         editor.selectProfileForTest(profile.id)
 
         assertThat(editor.modelOptionTextsForTest()).containsExactly(
-          "Default",
+          "Default Model",
           "Qwen Local",
           "GPT-5.5",
           "saved-custom-model",
@@ -1919,7 +1919,7 @@ class AgentPromptProviderSelectorTest {
 
         assertThat(editor.selectedProfileModelIdForTest()).isEqualTo(encodedModelId)
         assertThat(editor.modelOptionTextsForTest()).containsExactly(
-          "Default",
+          "Default Model",
           "GPT-5.5 (JetBrains Central)",
         )
         assertThat(editor.modelOptionTextsForTest()).doesNotContain(encodedModelId)
@@ -1972,9 +1972,9 @@ class AgentPromptProviderSelectorTest {
       withContext(Dispatchers.EDT) {
         val activeEditor = editor
         assertThat(activeEditor.isModelComboLiveUpdateEnabledForTest()).isTrue()
-        assertThat(activeEditor.modelOptionTextsForTest()).containsExactly("Default")
+        assertThat(activeEditor.modelOptionTextsForTest()).containsExactly("Default Model")
         activeEditor.openModelComboForTest()
-        assertThat(activeEditor.modelOptionTextsForTest()).containsExactly("Default", "Loading models...")
+        assertThat(activeEditor.modelOptionTextsForTest()).containsExactly("Default Model", "Loading models...")
         assertThat(activeEditor.modelOptionIconsForTest()[0]).isNull()
         assertThat(activeEditor.modelOptionIconsForTest()[1]).isNotNull()
       }
@@ -1982,7 +1982,7 @@ class AgentPromptProviderSelectorTest {
       finishRefresh.complete(Unit)
       waitForCondition {
         withContext(Dispatchers.EDT) {
-          editor.modelOptionTextsForTest() == listOf("Default", "Pi Sonnet")
+          editor.modelOptionTextsForTest() == listOf("Default Model", "Pi Sonnet")
         }
       }
       assertThat(modelCatalogRequests.get()).isEqualTo(1)
@@ -2167,8 +2167,12 @@ class AgentPromptProviderSelectorTest {
 
       fastAction.actionPerformed(TestActionEvent.createTestEvent(fastAction))
 
-      assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isFalse()
-      launchSettingsCommand(controller, "Make Default").onChosen()
+      assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isTrue()
+      assertThat(fixture.view.defaultProfileActionControl.component.text).isEqualTo("Make Default")
+      assertThat(controller.createLaunchSettingsPopupRowsForTest().map { row -> row.text })
+        .contains(AgentPromptBundle.message("popup.profile.manage"))
+        .doesNotContain("Make Default", "Save as Default", "Update Profile")
+      fixture.view.defaultProfileActionControl.component.doClick()
 
       assertThat(statusMessage).isEqualTo("Default profile updated.")
       assertThat(launcher.preferences.defaultLaunchProfileId).isEqualTo(fastProfile.id)
@@ -2238,8 +2242,9 @@ class AgentPromptProviderSelectorTest {
       yoloAction.actionPerformed(TestActionEvent.createTestEvent(yoloAction))
 
       assertThat(fixture.view.launchProfileLink.text).isEqualTo("Full Auto")
-      assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isFalse()
-      launchSettingsCommand(controller, "Make Default").onChosen()
+      assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isTrue()
+      assertThat(fixture.view.defaultProfileActionControl.component.text).isEqualTo("Make Default")
+      fixture.view.defaultProfileActionControl.component.doClick()
 
       assertThat(statusMessage).isEqualTo("Default profile updated.")
       assertThat(launcher.preferences.defaultLaunchProfileId).isEqualTo(
@@ -2281,8 +2286,9 @@ class AgentPromptProviderSelectorTest {
       highAction.actionPerformed(TestActionEvent.createTestEvent(highAction))
 
       assertThat(fixture.view.launchProfileLink.text).isEqualTo("High")
-      assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isFalse()
-      launchSettingsCommand(controller, "Save as Default").onChosen()
+      assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isTrue()
+      assertThat(fixture.view.defaultProfileActionControl.component.text).isEqualTo("Save as Default")
+      fixture.view.defaultProfileActionControl.component.doClick()
 
       val savedProfile = launcher.preferences.launchProfiles.single()
       assertThat(statusMessage).isEqualTo("Launch profile saved as default.")
@@ -2335,8 +2341,9 @@ class AgentPromptProviderSelectorTest {
       highAction.actionPerformed(TestActionEvent.createTestEvent(highAction))
 
       assertThat(fixture.view.launchProfileLink.text).isEqualTo("High")
-      assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isFalse()
-      launchSettingsCommand(controller, "Update Profile").onChosen()
+      assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isTrue()
+      assertThat(fixture.view.defaultProfileActionControl.component.text).isEqualTo("Update Profile")
+      fixture.view.defaultProfileActionControl.component.doClick()
 
       val savedProfile = launcher.preferences.launchProfiles.single()
       assertThat(statusMessage).isEqualTo("Launch profile updated.")
@@ -2438,11 +2445,11 @@ class AgentPromptProviderSelectorTest {
         val actions = actionGroup.getChildren(TestActionEvent.createTestEvent())
 
         assertThat(modelActionEntries(actions))
-          .containsExactly("model:Default", "model:GPT-5.1 Codex")
+          .containsExactly("model:Default Model", "model:GPT-5.1 Codex")
         assertThat(actions.filterNot { action -> action is Separator }.map { action -> action.templatePresentation.keepPopupOnPerform })
           .containsOnly(KeepPopupOnPerform.Never)
 
-        val defaultAction = actions.single { action -> action.templatePresentation.text == "Default" }
+        val defaultAction = actions.single { action -> action.templatePresentation.text == "Default Model" }
         val modelAction = actions.single { action -> action.templatePresentation.text == "GPT-5.1 Codex" }
         assertThat(isSelectedInPopup(defaultAction)).isTrue()
         assertThat(isSelectedInPopup(modelAction)).isFalse()
@@ -2451,7 +2458,7 @@ class AgentPromptProviderSelectorTest {
 
         val updatedActions = checkNotNull(controller.createModelActionGroupForTest())
           .getChildren(TestActionEvent.createTestEvent())
-        assertThat(isSelectedInPopup(updatedActions.single { action -> action.templatePresentation.text == "Default" })).isFalse()
+        assertThat(isSelectedInPopup(updatedActions.single { action -> action.templatePresentation.text == "Default Model" })).isFalse()
         assertThat(isSelectedInPopup(updatedActions.single { action -> action.templatePresentation.text == "GPT-5.1 Codex" })).isTrue()
       }
     }
@@ -2504,7 +2511,7 @@ class AgentPromptProviderSelectorTest {
         val actions = checkNotNull(controller.createModelActionGroupForTest())
           .getChildren(TestActionEvent.createTestEvent())
         assertThat(modelActionEntries(actions)).containsExactly(
-          "model:Default",
+          "model:Default Model",
           "separator:Local",
           "model:Qwen Local",
           "separator:OpenAI",
@@ -2557,7 +2564,7 @@ class AgentPromptProviderSelectorTest {
         val loadingActions = checkNotNull(controller.createModelActionGroupForTest(loadIfNeeded = true))
           .getChildren(TestActionEvent.createTestEvent())
         assertThat(loadingActions.mapNotNull { action -> action.templatePresentation.text })
-          .containsExactly("Default", "Loading models...")
+          .containsExactly("Default Model", "Loading models...")
       }
 
       waitForCondition {
@@ -2573,7 +2580,7 @@ class AgentPromptProviderSelectorTest {
           .getChildren(TestActionEvent.createTestEvent())
         assertThat(modelCatalogRequests.get()).isEqualTo(1)
         assertThat(actions.mapNotNull { action -> action.templatePresentation.text })
-          .containsExactly("Default", "ChatGPT 5.5")
+          .containsExactly("Default Model", "ChatGPT 5.5")
       }
     }
     finally {
@@ -2617,18 +2624,18 @@ class AgentPromptProviderSelectorTest {
       withContext(Dispatchers.EDT) {
         assertThat(modelCatalogRequests.get()).isZero()
         assertThat(modelActionTexts(controller, loadIfNeeded = true))
-          .containsExactly("Default", "Loading models...")
+          .containsExactly("Default Model", "Loading models...")
       }
       waitForCondition { refreshStarted.isCompleted }
       withContext(Dispatchers.EDT) {
         assertThat(modelActionTexts(controller))
-          .containsExactly("Default", "Loading models...")
+          .containsExactly("Default Model", "Loading models...")
         assertThat(modelCatalogRequests.get()).isEqualTo(1)
       }
       finishRefresh.complete(Unit)
       waitForCondition {
         withContext(Dispatchers.EDT) {
-          modelActionTexts(controller) == listOf("Default", "ChatGPT 5.5")
+          modelActionTexts(controller) == listOf("Default Model", "ChatGPT 5.5")
         }
       }
       assertThat(modelCatalogRequests.get()).isEqualTo(1)
@@ -2687,12 +2694,12 @@ class AgentPromptProviderSelectorTest {
         assertThat(codexCatalogRequests.get()).isZero()
         assertThat(piCatalogRequests.get()).isZero()
         assertThat(modelActionTexts(controller, loadIfNeeded = true))
-          .containsExactly("Default", "Loading models...")
+          .containsExactly("Default Model", "Loading models...")
       }
 
       waitForCondition {
         withContext(Dispatchers.EDT) {
-          modelActionTexts(controller) == listOf("Default", "GPT-5.5")
+          modelActionTexts(controller) == listOf("Default Model", "GPT-5.5")
         }
       }
       assertThat(codexCatalogRequests.get()).isZero()
@@ -2737,21 +2744,21 @@ class AgentPromptProviderSelectorTest {
 
       withContext(Dispatchers.EDT) {
         assertThat(modelActionTexts(controller, loadIfNeeded = true))
-          .containsExactly("Default", "Loading models...")
+          .containsExactly("Default Model", "Loading models...")
       }
       waitForCondition {
         withContext(Dispatchers.EDT) {
-          modelActionTexts(controller) == listOf("Default", "Unable to load models", "Retry Loading Models")
+          modelActionTexts(controller) == listOf("Default Model", "Unable to load models", "Retry Loading Models")
         }
       }
       withContext(Dispatchers.EDT) {
         performRetryModelCatalogAction(controller)
         assertThat(modelActionTexts(controller))
-          .containsExactly("Default", "Loading models...")
+          .containsExactly("Default Model", "Loading models...")
       }
       waitForCondition {
         withContext(Dispatchers.EDT) {
-          modelActionTexts(controller) == listOf("Default", "ChatGPT 5.5")
+          modelActionTexts(controller) == listOf("Default Model", "ChatGPT 5.5")
         }
       }
       assertThat(modelCatalogRequests.get()).isEqualTo(2)
@@ -2798,7 +2805,7 @@ class AgentPromptProviderSelectorTest {
       }
       waitForCondition {
         withContext(Dispatchers.EDT) {
-          modelActionTexts(firstController) == listOf("Default", "ChatGPT 5.5")
+          modelActionTexts(firstController) == listOf("Default Model", "ChatGPT 5.5")
         }
       }
       firstModelCatalogScope.cancel()
@@ -2819,7 +2826,7 @@ class AgentPromptProviderSelectorTest {
 
       withContext(Dispatchers.EDT) {
         assertThat(modelActionTexts(secondController, loadIfNeeded = true))
-          .containsExactly("Default", "ChatGPT 5.5")
+          .containsExactly("Default Model", "ChatGPT 5.5")
       }
       assertThat(modelCatalogRequests.get()).isEqualTo(1)
     }
@@ -2872,7 +2879,7 @@ class AgentPromptProviderSelectorTest {
       }
       waitForCondition {
         withContext(Dispatchers.EDT) {
-          modelActionTexts(firstController) == listOf("Default", "ChatGPT 5.5")
+          modelActionTexts(firstController) == listOf("Default Model", "ChatGPT 5.5")
         }
       }
       firstModelCatalogScope.cancel()
@@ -2895,19 +2902,19 @@ class AgentPromptProviderSelectorTest {
 
       withContext(Dispatchers.EDT) {
         assertThat(modelActionTexts(secondController, loadIfNeeded = true))
-          .containsExactly("Default", "ChatGPT 5.5")
+          .containsExactly("Default Model", "ChatGPT 5.5")
       }
       waitForCondition { secondRefreshStarted.isCompleted }
       assertThat(modelCatalogRequests.get()).isEqualTo(2)
       waitForCondition {
         withContext(Dispatchers.EDT) {
-          modelActionTexts(secondController) == listOf("Default", "ChatGPT 5.5", "Refreshing models...")
+          modelActionTexts(secondController) == listOf("Default Model", "ChatGPT 5.5", "Refreshing models...")
         }
       }
       finishSecondRefresh.complete(Unit)
       waitForCondition {
         withContext(Dispatchers.EDT) {
-          modelActionTexts(secondController) == listOf("Default", "ChatGPT 5.6")
+          modelActionTexts(secondController) == listOf("Default Model", "ChatGPT 5.6")
         }
       }
     }
@@ -2963,7 +2970,7 @@ class AgentPromptProviderSelectorTest {
       }
       waitForCondition {
         withContext(Dispatchers.EDT) {
-          modelActionTexts(firstController) == listOf("Default", "ChatGPT 5.5")
+          modelActionTexts(firstController) == listOf("Default Model", "ChatGPT 5.5")
         }
       }
       firstModelCatalogScope.cancel()
@@ -2986,13 +2993,13 @@ class AgentPromptProviderSelectorTest {
 
       withContext(Dispatchers.EDT) {
         assertThat(modelActionTexts(secondController, loadIfNeeded = true))
-          .containsExactly("Default", "ChatGPT 5.5")
+          .containsExactly("Default Model", "ChatGPT 5.5")
       }
       waitForCondition { secondRefreshStarted.isCompleted }
       failSecondRefresh.complete(Unit)
       waitForCondition {
         withContext(Dispatchers.EDT) {
-          modelActionTexts(secondController) == listOf("Default", "ChatGPT 5.5", "Unable to refresh models", "Retry Loading Models")
+          modelActionTexts(secondController) == listOf("Default Model", "ChatGPT 5.5", "Unable to refresh models", "Retry Loading Models")
         }
       }
       assertThat(modelCatalogRequests.get()).isEqualTo(2)
@@ -3038,7 +3045,7 @@ class AgentPromptProviderSelectorTest {
         withContext(Dispatchers.EDT) {
           controller.createModelActionGroupForTest()
             ?.getChildren(TestActionEvent.createTestEvent())
-            ?.mapNotNull { action -> action.templatePresentation.text } == listOf("Default", "No models available")
+            ?.mapNotNull { action -> action.templatePresentation.text } == listOf("Default Model", "No models available")
         }
       }
     }
@@ -3079,7 +3086,7 @@ class AgentPromptProviderSelectorTest {
       waitForCondition {
         withContext(Dispatchers.EDT) {
           modelActionTexts(controller) == listOf(
-            "Default",
+            "Default Model",
             "Unable to load models",
             "Retry Loading Models",
           )
@@ -3473,15 +3480,6 @@ class AgentPromptProviderSelectorTest {
       ?.getChildren(TestActionEvent.createTestEvent())
       ?.filterNot { action -> action is Separator }
       ?.mapNotNull { action -> action.templatePresentation.text }
-  }
-
-  private fun launchSettingsCommand(
-    controller: AgentPromptGenerationSettingsController,
-    text: String,
-  ): AgentPromptPopupRow.Command {
-    return controller.createLaunchSettingsPopupRowsForTest()
-      .filterIsInstance<AgentPromptPopupRow.Command>()
-      .single { row -> row.text == text }
   }
 
   private fun launchSettingsModelSubmenu(controller: AgentPromptGenerationSettingsController): AgentPromptPopupRow.Command {

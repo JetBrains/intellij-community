@@ -26,7 +26,7 @@ Date: 2026-06-09
 Ask Agent launch controls let users choose a provider, launch mode, model, and normal reasoning effort through task-cost profiles, while Plan mode remains an independent prompt option. The controls are scoped to `NEW_TASK` launches, use built-in provider/mode profiles unless explicitly changed, and persist custom profiles only through explicit profile management actions.
 
 ## Requirements
-- The prompt composer bottom tray renders Add Context as the left-side prompt-composition action and a single right-side launch-settings affordance for both popup and inline prompt surfaces. The launch-settings affordance shows the selected provider icon plus a compact profile/model/reasoning summary and opens one popup containing profile choices, provider-backed model selection when available, normal reasoning-effort selection, Plan-mode reasoning-effort selection when available, profile default/save actions, and profile management.
+- The prompt composer bottom tray renders Add Context as the left-side prompt-composition action and a single right-side launch-settings affordance for both popup and inline prompt surfaces. The launch-settings affordance shows the selected provider icon plus a compact profile/model/reasoning summary and opens one popup containing profile choices, provider-backed model selection when available, normal reasoning-effort selection, Plan-mode reasoning-effort selection when available, and profile management. Profile default/save/update actions stay visible inline next to the launch-settings affordance.
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteViewStructureTest.kt
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
 
@@ -34,7 +34,7 @@ Ask Agent launch controls let users choose a provider, launch mode, model, and n
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
   [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
 
-- Model and normal reasoning effort default to `Default`, which means provider-auto behavior and sends no CLI override. Codex model selection is populated from the shared Codex app-server `model/list` catalog. Claude Code model selection uses a hardcoded alias catalog because Claude Code does not expose a reliable dynamic model catalog; explicit Claude selections must launch with `--model <id>` before the `--` prompt separator.
+- The model selector displays `Default Model` for provider-auto model behavior, while normal reasoning effort displays `Default`; both send no CLI override. Codex model selection is populated from the shared Codex app-server `model/list` catalog. Claude Code model selection uses a hardcoded alias catalog because Claude Code does not expose a reliable dynamic model catalog; explicit Claude selections must launch with `--model <id>` before the `--` prompt separator.
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
   [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
@@ -49,7 +49,7 @@ Ask Agent launch controls let users choose a provider, launch mode, model, and n
 - Provider model catalogs load on demand when either the global prompt model selector or the launch profile editor model combo is opened. After a catalog has loaded once, reopening either control within 30 seconds must show the cached catalog immediately without provider I/O. Older cached catalogs must still render immediately and refresh in the background. The background refresh status appears after 3 seconds to avoid flicker for fast refreshes; if refresh fails after cached data exists, keep the cached choices visible and show the refresh failure inline. Saved model ids that are absent from the current catalog must remain visible as custom choices instead of being dropped.
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
 
-- Model selector rows must keep `Default` first, then group explicit models with separators in this order: local models, OpenAI/Codex models, Claude Code models, and other models. Claude Code explicit rows must follow Claude Code menu order: `Opus`, `Sonnet`, `Sonnet (1M context)`, `Haiku`; additional supported aliases such as `Fable` follow those menu-derived rows. The same ordering, loading, retry, cached refresh, and custom-id preservation behavior applies in the launch profile editor's model combo.
+- Model selector rows must keep `Default Model` first, then group explicit models with separators in this order: local models, OpenAI/Codex models, Claude Code models, and other models. Claude Code explicit rows must follow Claude Code menu order: `Opus`, `Sonnet`, `Sonnet (1M context)`, `Haiku`; additional supported aliases such as `Fable` follow those menu-derived rows. The same ordering, loading, retry, cached refresh, and custom-id preservation behavior applies in the launch profile editor's model combo.
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
 
 - Quick profile selection is transient for the current launch. It must not be saved on submit or popup close. The active profile label shows a modified state when the draft differs from the selected profile's provider, launch mode, model, or effort.

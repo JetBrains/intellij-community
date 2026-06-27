@@ -210,7 +210,7 @@ internal class AgentPromptGenerationSettingsController(
     planReasoningEffortLink.isEnabled = showGenerationControls && planEffortSupported && planModeSelected
     launchTuningSummaryLink.isVisible = false
     launchTuningSummaryLink.isEnabled = launchTuningSummaryVisible
-    defaultProfileActionController.refreshPresentation(false)
+    defaultProfileActionController.refreshPresentation(showGenerationControls)
     val launchSettingsAccessibleName = AgentPromptBundle.message("popup.launch.settings.accessible.name.with.value", profileText)
     if (showProviderSelector) {
       launchProfileLink.text = profileText
@@ -578,16 +578,9 @@ internal class AgentPromptGenerationSettingsController(
       if (generationControlsVisible && selectedProvider != null) {
         addLaunchTuningRows(selectedProvider)
       }
-      if (generationControlsVisible) {
-        launchProfileState.defaultAction(currentProfileDraft())?.let { action ->
-          add(createDefaultProfileActionPopupRow(action, AgentPromptBundle.message("popup.launch.settings.section.profile.actions")))
-        }
-      }
       add(AgentPromptPopupRow.ManageProfiles(
         text = AgentPromptBundle.message("popup.profile.manage"),
-        separatorText = AgentPromptBundle.message("popup.launch.settings.section.profile.actions").takeIf {
-          none { row -> row.separatorText == it }
-        } ?: "",
+        separatorText = "",
         tooltipText = AgentPromptBundle.message("popup.profile.manage.description"),
       ))
     }
@@ -741,35 +734,6 @@ internal class AgentPromptGenerationSettingsController(
              models = emptyList(),
              displayNameForSavedModel = ::displayNameForSavedModel,
            )
-  }
-
-  private fun createDefaultProfileActionPopupRow(
-    action: AgentPromptDefaultProfileAction,
-    separatorText: @Nls String,
-  ): AgentPromptPopupRow.Command {
-    val presentation = action.presentation()
-    return AgentPromptPopupRow.Command(
-      text = AgentPromptBundle.message(presentation.textKey),
-      separatorText = separatorText,
-      tooltipText = AgentPromptBundle.message(presentation.descriptionKey),
-      onChosen = { performDefaultProfileAction(action) },
-    )
-  }
-
-  private fun AgentPromptDefaultProfileAction.presentation(): AgentPromptDefaultProfileActionPresentation {
-    return when (this) {
-      is AgentPromptDefaultProfileAction.MakeDefault -> AgentPromptDefaultProfileActionPresentation.MAKE_DEFAULT
-      is AgentPromptDefaultProfileAction.UpdateProfile -> AgentPromptDefaultProfileActionPresentation.UPDATE_PROFILE
-      AgentPromptDefaultProfileAction.SaveAsDefault -> AgentPromptDefaultProfileActionPresentation.SAVE_AS_DEFAULT
-    }
-  }
-
-  private fun performDefaultProfileAction(action: AgentPromptDefaultProfileAction) {
-    when (action) {
-      is AgentPromptDefaultProfileAction.MakeDefault -> setDefaultProfile(action.profile)
-      is AgentPromptDefaultProfileAction.UpdateProfile -> saveProfile(action.profile)
-      AgentPromptDefaultProfileAction.SaveAsDefault -> saveDraftProfileAsDefault()
-    }
   }
 
   private fun createLaunchProfilePopupRow(
