@@ -8,7 +8,6 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItemKind
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.core.session.AgentSessionThreadOutline
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.engine.core.MessageRole
 import com.intellij.agent.workbench.engine.core.RuntimeKind
@@ -46,7 +45,7 @@ internal class EngineSessionSource : AgentSessionSource {
 
   override val updateEvents: Flow<AgentSessionSourceUpdateEvent>
     get() = EngineChangeBus.changes.map {
-      AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.THREADS_CHANGED)
+      AgentSessionSourceUpdateEvent.threadsChanged()
     }
 
   override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> {
