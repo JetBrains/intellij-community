@@ -16,13 +16,19 @@ import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.core.session.AgentSubAgent
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionArchivedSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionCostSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPrefetchSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshHints
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshHintsSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshThreadSeed
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceRefreshRequest
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceRefreshResult
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadActivityUpdate
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionUpdateSource
 import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
@@ -43,6 +49,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelAndJoin
@@ -182,9 +189,9 @@ class AgentSessionStateSyncTestFacade(
 class ScriptedSessionSource(
   override val provider: AgentSessionProvider,
   override val canReportExactThreadCount: Boolean = true,
-  override val supportsArchivedThreads: Boolean = false,
-  override val supportsUpdates: Boolean = false,
-  override val updateEvents: Flow<AgentSessionSourceUpdateEvent> = emptyFlow(),
+  private val supportsArchivedThreads: Boolean = false,
+  supportsUpdates: Boolean = false,
+  updateEvents: Flow<AgentSessionSourceUpdateEvent> = emptyFlow(),
   private val listFromOpenProject: suspend (path: String, project: Project) -> List<AgentSessionThread> = { _, _ -> emptyList() },
   private val listFromClosedProject: suspend (path: String) -> List<AgentSessionThread> = { _ -> emptyList() },
   private val listArchivedFromOpenProject: suspend (path: String, project: Project) -> List<AgentSessionThread> = { _, _ -> emptyList() },
@@ -207,21 +214,24 @@ class ScriptedSessionSource(
       }
     )
   },
-) : AgentSessionSource {
-  override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> {
-    return listFromOpenProject(path, project)
+) : AgentSessionSource,
+    AgentSessionArchivedSource,
+    AgentSessionUpdateSource,
+    AgentSessionPrefetchSource,
+    AgentSessionRefreshSource,
+    AgentSessionRefreshHintsSource,
+    AgentSessionCostSource {
+  override val updateEvents: Flow<AgentSessionSourceUpdateEvent> = if (supportsUpdates) updateEvents else emptyFlow()
+
+  override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> {
+    return if (openProject == null) listFromClosedProject(path) else listFromOpenProject(path, openProject)
   }
 
-  override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> {
-    return listFromClosedProject(path)
-  }
-
-  override suspend fun listArchivedThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> {
-    return listArchivedFromOpenProject(path, project)
-  }
-
-  override suspend fun listArchivedThreadsFromClosedProject(path: String): List<AgentSessionThread> {
-    return listArchivedFromClosedProject(path)
+  override suspend fun listArchivedThreads(path: String, openProject: Project?): List<AgentSessionThread> {
+    if (!supportsArchivedThreads) {
+      return emptyList()
+    }
+    return if (openProject == null) listArchivedFromClosedProject(path) else listArchivedFromOpenProject(path, openProject)
   }
 
   override suspend fun prefetchThreads(paths: List<String>): Map<String, List<AgentSessionThread>> {
@@ -229,7 +239,31 @@ class ScriptedSessionSource(
   }
 
   override suspend fun refreshThreads(request: AgentSessionSourceRefreshRequest): AgentSessionSourceRefreshResult {
-    return refreshThreadsProvider?.invoke(request) ?: super.refreshThreads(request)
+    val refreshResult = refreshThreadsProvider?.invoke(request)
+    if (refreshResult != null) {
+      return refreshResult
+    }
+    val prefetchedThreadsByPath = prefetch(request.paths)
+    val completeThreadsByPath = LinkedHashMap<String, List<AgentSessionThread>>(request.paths.size)
+    val failuresByPath = LinkedHashMap<String, Throwable>()
+    for (path in request.paths) {
+      val prefetchedThreads = prefetchedThreadsByPath[path]
+      if (prefetchedThreads != null) {
+        completeThreadsByPath[path] = prefetchedThreads
+        continue
+      }
+      try {
+        completeThreadsByPath[path] = listFromClosedProject(path)
+      }
+      catch (e: Throwable) {
+        if (e is CancellationException) throw e
+        failuresByPath[path] = e
+      }
+    }
+    return AgentSessionSourceRefreshResult(
+      completeThreadsByPath = completeThreadsByPath,
+      failuresByPath = failuresByPath,
+    )
   }
 
   override suspend fun loadThreadCosts(path: String, threads: List<AgentSessionThread>): Map<String, AgentSessionCost?> {

@@ -147,7 +147,6 @@ class PiExtensionControlWebSocketHandlerTest {
         ).join()
         listener.nextMessage()
 
-        assertThat(source.canShowThreadOutlineForkAction(projectDir.toString(), sessionId, "entry-fork", null, null)).isTrue()
         assertThat(source.canForkThreadFromOutlineItem(projectDir.toString(), sessionId, "entry-fork", null, null)).isFalse()
       }
       finally {

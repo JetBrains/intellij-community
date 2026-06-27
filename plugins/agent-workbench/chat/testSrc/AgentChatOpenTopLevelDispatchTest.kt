@@ -7,6 +7,7 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItem
 import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItemKind
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
+import com.intellij.platform.ai.agent.core.session.AgentSessionThreadOutline
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormatter
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
@@ -22,6 +23,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProvid
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadOutlineForkSource
 import com.intellij.platform.ai.agent.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.UiWithModelAccess
@@ -146,10 +148,10 @@ class AgentChatOpenTopLevelDispatchTest {
       provider = AgentSessionProvider.from("codex"),
       threadId = "thread-open-dispatch",
       launchSpec = AgentSessionTerminalLaunchSpec(command = codexResumeCommand("thread-open-dispatch")),
-        initialMessageDispatchPlan = AgentInitialPromptDeliveryPlan(
-            postStartDispatchSteps = listOf<AgentInitialMessageDispatchStep>(AgentInitialMessageDispatchStep(text = "Dispatch through helper")),
-            initialMessageToken = "dispatch-open-token",
-        ),
+      initialMessageDispatchPlan = AgentInitialPromptDeliveryPlan(
+        postStartDispatchSteps = listOf(AgentInitialMessageDispatchStep(text = "Dispatch through helper")),
+        initialMessageToken = "dispatch-open-token",
+      ),
     )
 
     assertThat(dispatched).isTrue()
@@ -491,9 +493,9 @@ class AgentChatOpenTopLevelDispatchTest {
       provider = AgentSessionProvider.from("codex"),
       threadId = "thread-sub-agent-only",
       launchSpec = AgentSessionTerminalLaunchSpec(command = codexResumeCommand("thread-sub-agent-only")),
-        initialMessageDispatchPlan = AgentInitialPromptDeliveryPlan(
-            postStartDispatchSteps = listOf<AgentInitialMessageDispatchStep>(AgentInitialMessageDispatchStep(text = "Should not dispatch")),
-        ),
+      initialMessageDispatchPlan = AgentInitialPromptDeliveryPlan(
+        postStartDispatchSteps = listOf(AgentInitialMessageDispatchStep(text = "Should not dispatch")),
+      ),
     )
 
     assertThat(dispatched).isFalse()
@@ -890,24 +892,14 @@ private class OpenTabDispatchPiProviderDescriptor(
   }
 }
 
-private class OpenTabDispatchPiForkSource : AgentSessionSource {
+private class OpenTabDispatchPiForkSource : AgentSessionSource, AgentSessionThreadOutlineForkSource {
   val forkCalls = ArrayList<OpenTabDispatchPiForkCall>()
 
   override val provider: AgentSessionProvider = AgentSessionProvider.from("pi")
 
-  override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = emptyList()
+  override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> = emptyList()
 
-  override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> = emptyList()
-
-  override fun canShowThreadOutlineForkAction(
-    path: String,
-    threadId: String,
-    itemId: String,
-    subAgentId: String?,
-    tabKey: String?,
-  ): Boolean {
-    return itemId == "entry-fork" && subAgentId == null
-  }
+  override suspend fun loadThreadOutline(path: String, threadId: String, subAgentId: String?): AgentSessionThreadOutline? = null
 
   override fun canForkThreadFromOutlineItem(
     path: String,

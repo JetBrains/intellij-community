@@ -8,6 +8,7 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.AgentSessionCostPresentationSettings
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionCostSource
 import com.intellij.platform.ai.agent.sessions.core.normalizeConcreteAgentSessionThreadId
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
@@ -64,9 +65,12 @@ internal class AgentSessionVisibleCostHydrationSupport(
     }
 
     val now = currentTimeMillis()
-    val sourcesByProvider = sessionSourcesProvider().associateBy { source -> source.provider }
+    val sourcesByProvider = sessionSourcesProvider()
+      .asSequence()
+      .mapNotNull { source -> source as? AgentSessionCostSource }
+      .associateBy { source -> source.provider }
     val cachedUpdatesByPath = LinkedHashMap<String, MutableMap<AgentSessionProvider, MutableMap<String, ThreadCostUpdate>>>()
-    val loadRequests = LinkedHashMap<Pair<AgentSessionSource, String>, MutableList<VisibleThreadSnapshot>>()
+    val loadRequests = LinkedHashMap<Pair<AgentSessionCostSource, String>, MutableList<VisibleThreadSnapshot>>()
 
     for (visibleThread in visibleThreads) {
       if (normalizeConcreteAgentSessionThreadId(visibleThread.threadId) == null) {

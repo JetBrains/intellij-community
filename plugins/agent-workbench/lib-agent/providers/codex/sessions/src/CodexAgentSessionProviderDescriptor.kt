@@ -292,7 +292,14 @@ internal class CodexAgentSessionProviderDescriptor(
     if (initialMessagePlan.mode != AgentInitialMessageMode.PLAN) {
       return super.buildPostStartDispatchSteps(initialMessagePlan)
     }
-    return emptyList()
+    val message = initialMessagePlan.message?.takeIf { it.isNotBlank() } ?: return emptyList()
+    return listOf(
+      AgentInitialMessageDispatchStep(
+        text = message,
+        timeoutPolicy = initialMessagePlan.timeoutPolicy,
+        action = AgentInitialMessageDispatchAction.PROVIDER,
+      )
+    )
   }
 
   override suspend fun archiveThread(path: String, threadId: String): Boolean {

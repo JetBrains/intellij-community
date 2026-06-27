@@ -79,6 +79,7 @@ Primary sources of truth:
 - [`plugin/plugin-content.yaml`](plugin/plugin-content.yaml) declares packaged content-module jars.
 - `intellij.agent.workbench.*.iml` files declare module dependencies and generate `BUILD.bazel` files.
 - [`spec/README.md`](spec/README.md) and [`community/.ai/spec/SPEC_GUIDE.md`](../../.ai/spec/SPEC_GUIDE.md) define spec placement and metadata rules.
+- [`docs/agent-session-provider-guide.md`](docs/agent-session-provider-guide.md) explains how to implement or review a provider-backed session source.
 
 ```text
 com.intellij.agent.workbench

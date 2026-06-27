@@ -59,7 +59,7 @@ The current change uses only `cost` for display, but the token fields are presen
 - If no relevant `modelUsage` entry has a usable `cost`, the thread cost must be unavailable and no cost label should be shown.
 - Junie cost loading must read only `~/.junie/sessions/<sessionId>/events.jsonl`.
 - Junie cost loading must not inspect `task-*` subdirectories, `.matterhorn` task state, or any other derived nested storage.
-- Junie cost must integrate through the existing `AgentSessionSource.loadThreadCosts()` path.
+- Junie cost must integrate through the optional `AgentSessionCostSource.loadThreadCosts()` path.
 - `listThreads()` and `listArchivedThreads()` must remain cheap and continue loading only from `index.jsonl`.
 - Visible-thread hydration must compute Junie cost only for currently visible rows.
 - Archived-thread hydration must compute Junie cost only for currently visible archived rows.

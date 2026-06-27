@@ -31,7 +31,7 @@ internal class AgentSessionThreadLoadSupport(
 ) {
   suspend fun loadThreadsFromClosedProject(path: String): AgentSessionLoadResult {
     return loadThreads(path) { source ->
-      source.listThreadsFromClosedProject(path = path)
+      source.listThreads(path = path, openProject = null)
     }
   }
 
@@ -89,7 +89,7 @@ internal class AgentSessionThreadLoadSupport(
       val threads = applyArchiveSuppressions(
         normalizedPath,
         source.provider,
-        prefetched ?: source.listThreadsFromOpenProject(path = normalizedPath, project = project),
+        prefetched ?: source.listThreads(path = normalizedPath, openProject = project),
       )
       AgentSessionSourceLoadResult(
         provider = source.provider,

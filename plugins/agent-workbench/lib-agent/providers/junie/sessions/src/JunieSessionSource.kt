@@ -14,15 +14,21 @@ import com.intellij.platform.ai.agent.json.WorkbenchJsonlScanner
 import com.intellij.platform.ai.agent.json.forEachJsonObjectField
 import com.intellij.platform.ai.agent.json.readJsonLongOrNull
 import com.intellij.platform.ai.agent.json.readJsonStringOrNull
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionActiveThreadUpdateSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionArchivedSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionCostSource
 import com.intellij.platform.ai.agent.sessions.core.providers.BaseAgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshThreadSeed
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshHintsSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceRefreshRequest
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceRefreshResult
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadActivityUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadPresentationUpdate
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionUpdateSource
 import com.intellij.platform.ai.agent.sessions.core.providers.resolveReadTrackedActivity
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -207,7 +213,13 @@ internal class JunieSessionSource(
     sessionIndexStore = sessionIndexStore,
     eventsAnalyzer = eventsAnalyzer,
   ),
-) : BaseAgentSessionSource(provider = JUNIE_AGENT_SESSION_PROVIDER) {
+) : BaseAgentSessionSource(provider = JUNIE_AGENT_SESSION_PROVIDER),
+    AgentSessionUpdateSource,
+    AgentSessionActiveThreadUpdateSource,
+    AgentSessionArchivedSource,
+    AgentSessionRefreshSource,
+    AgentSessionRefreshHintsSource,
+    AgentSessionCostSource {
   constructor(
     sessionIndexPathProvider: () -> Path,
     jsonFactory: JsonFactory = JsonFactory(),
@@ -221,12 +233,6 @@ internal class JunieSessionSource(
     ),
   )
 
-  override val supportsUpdates: Boolean get() = true
-
-  override val supportsActiveThreadUpdateEvents: Boolean get() = true
-
-  override val supportsArchivedThreads: Boolean get() = true
-
   override val updateEvents: Flow<AgentSessionSourceUpdateEvent>
     get() = merge(
       updateBackend.sessionUpdates,
@@ -237,7 +243,7 @@ internal class JunieSessionSource(
     return updateBackend.activeThreadUpdateEvents(path = path, threadId = threadId)
   }
 
-  override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> {
+  override suspend fun loadThreads(path: String, openProject: Project?): List<AgentSessionThread> {
     val normalizedProjectPath = normalizeJunieProjectPath(path) ?: return emptyList()
     val matchingEntries = sessionIndexStore.loadEntries()
       .filter { it.normalizedProjectDir == normalizedProjectPath }
@@ -258,7 +264,7 @@ internal class JunieSessionSource(
 
   override suspend fun refreshThreads(request: AgentSessionSourceRefreshRequest): AgentSessionSourceRefreshResult {
     if (!request.isThreadScoped) {
-      return super.refreshThreads(request)
+      return refreshThreadsByListing(request)
     }
 
     val partialThreadsByPath = LinkedHashMap<String, List<AgentSessionThread>>()

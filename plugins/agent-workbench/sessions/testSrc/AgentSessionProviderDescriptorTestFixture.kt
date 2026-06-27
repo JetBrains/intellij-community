@@ -66,9 +66,8 @@ open class TestAgentSessionProviderDescriptor(
     override val provider: AgentSessionProvider
       get() = this@TestAgentSessionProviderDescriptor.provider
 
-    override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = emptyList()
+    override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> = emptyList()
 
-    override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> = emptyList()
 
     override fun toString(): String = "TestAgentSessionSource($sourceId)"
   }

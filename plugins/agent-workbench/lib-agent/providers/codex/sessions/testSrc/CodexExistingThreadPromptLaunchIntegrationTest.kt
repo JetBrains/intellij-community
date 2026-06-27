@@ -10,6 +10,7 @@ import com.intellij.agent.workbench.sessions.thread
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.withProvider
 import com.intellij.testFramework.junit5.TestApplication
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
@@ -33,21 +34,28 @@ class CodexExistingThreadPromptLaunchIntegrationTest {
 
   @Test
   fun existingThreadPlanModePromptUsesPostStartDispatch() {
+    val startupBackend = RecordingThreadStartupBackend()
+    val request = existingThreadPromptLaunchRequest(
+      provider = AgentSessionProvider.from("codex"),
+      projectPath = PROJECT_PATH,
+      threadId = EXISTING_THREAD_ID,
+      planMode = true,
+    )
+
     assertExistingThreadLaunchUsesPostStartDispatch(
-      descriptor = descriptor(),
-      request = existingThreadPromptLaunchRequest(
-        provider = AgentSessionProvider.from("codex"),
-        projectPath = PROJECT_PATH,
-        threadId = EXISTING_THREAD_ID,
-        planMode = true,
-      ),
+      descriptor = descriptor(startupBackend),
+      request = request,
       projectPath = PROJECT_PATH,
       threadId = EXISTING_THREAD_ID,
     )
+    assertThat(startupBackend.requests).isEmpty()
+    assertThat(startupBackend.turnRequests).isEmpty()
   }
 }
 
-private fun descriptor(): AgentSessionProviderDescriptor {
+private fun descriptor(
+  threadStartupBackend: CodexThreadStartupBackend = RecordingThreadStartupBackend(),
+): AgentSessionProviderDescriptor {
   return CodexAgentSessionProviderDescriptor(
     sessionSource = ScriptedSessionSource(
       provider = AgentSessionProvider.from("codex"),
@@ -60,8 +68,10 @@ private fun descriptor(): AgentSessionProviderDescriptor {
         }
       },
     ),
+    threadStartupBackend = threadStartupBackend,
     executableResolver = { CodexCliUtils.CODEX_COMMAND },
     cliAvailableProbe = { true },
+    themeLaunchConfigResolver = { null },
   ).withProvider(CODEX_AGENT_SESSION_PROVIDER)
 }
 

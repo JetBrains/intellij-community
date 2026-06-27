@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.platform.ai.agent.sessions.core.launch.resolveAgentSessionChatOpenPlan
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadOutlineForkSource
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -42,19 +43,13 @@ internal fun canShowAgentChatThreadOutlineForkAction(target: AgentChatThreadOutl
 internal fun canForkAgentChatThreadOutlineTarget(target: AgentChatThreadOutlineTarget?): Boolean {
   target ?: return false
   val file = target.file
+  val forkSource = target.source as? AgentSessionThreadOutlineForkSource ?: return false
   return file.provider != null &&
-         !file.isPendingThread &&
-         target.source.canShowThreadOutlineForkAction(
-           path = file.projectPath,
-           threadId = file.threadId,
-           itemId = target.item.id,
-           subAgentId = file.subAgentId,
-           tabKey = file.tabKey,
-         ) &&
-         target.source.canForkThreadFromOutlineItem(
-           path = file.projectPath,
-           threadId = file.threadId,
-           itemId = target.item.id,
+          !file.isPendingThread &&
+          forkSource.canForkThreadFromOutlineItem(
+            path = file.projectPath,
+            threadId = file.threadId,
+            itemId = target.item.id,
            subAgentId = file.subAgentId,
            tabKey = file.tabKey,
          )
@@ -69,9 +64,10 @@ internal suspend fun forkAgentChatThreadOutlineTarget(
   if (!canForkAgentChatThreadOutlineTarget(target)) {
     return false
   }
+  val forkSource = target.source as? AgentSessionThreadOutlineForkSource ?: return false
 
   val forkResult = try {
-    target.source.forkThreadFromOutlineItem(
+    forkSource.forkThreadFromOutlineItem(
       project = project,
       path = file.projectPath,
       threadId = file.threadId,

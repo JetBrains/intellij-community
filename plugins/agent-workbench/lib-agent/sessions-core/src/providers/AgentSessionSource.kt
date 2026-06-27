@@ -10,61 +10,131 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.core.session.AgentSessionThreadOutline
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
+import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Lightweight description of a provider thread that can replace a still-pending chat tab.
+ *
+ * Providers return candidates from [AgentSessionRefreshHints] when a newly opened chat tab does not yet know its concrete provider
+ * thread id. The refresh coordinator matches candidates by path, provider, recency, and presentation metadata; candidates do not create
+ * or update persisted rows by themselves.
+ */
+@ApiStatus.Internal
 data class AgentSessionRebindCandidate(
+  /** Concrete provider thread id that can be rebound to a pending tab. */
   @JvmField val threadId: String,
+  /** Provider-normalized title for the candidate row or tab. */
   @JvmField val title: String,
+  /** Provider update timestamp in epoch milliseconds. */
   @JvmField val updatedAt: Long,
+  /** Best current row activity for the candidate. */
   @JvmField val activity: AgentThreadActivity,
 )
 
+/**
+ * Activity-only update for a known provider thread.
+ *
+ * This compact form is used by update events and refresh hints when a provider can report status without reloading the full thread row.
+ */
+@ApiStatus.Internal
 data class AgentSessionThreadActivityUpdate(
+  /** Row/chrome activity to apply to the thread. */
   @JvmField val activityReport: AgentThreadActivityReport,
+  /** Whether [activityReport] should also replace the chrome/summary activity. */
   @JvmField val updatesChromeActivity: Boolean = true,
+  /** Provider update timestamp in epoch milliseconds, or `null` when the update is not timestamped. */
   @JvmField val updatedAt: Long? = null,
 )
 
+/**
+ * Presentation update for a known provider thread.
+ *
+ * A presentation update may carry title, activity, timestamp, or any combination of them. Consumers merge these updates with existing
+ * rows and ignore stale timestamped updates.
+ */
+@ApiStatus.Internal
 data class AgentSessionThreadPresentationUpdate(
+  /** Replacement title, or `null` to keep the current title. */
   @JvmField val title: String? = null,
+  /** Replacement activity, or `null` to keep the current activity. */
   @JvmField val activityReport: AgentThreadActivityReport? = null,
+  /** Whether [activityReport] should also replace the chrome/summary activity. */
   @JvmField val updatesChromeActivity: Boolean = true,
+  /** Provider update timestamp in epoch milliseconds, or `null` when the update is not timestamped. */
   @JvmField val updatedAt: Long? = null,
 )
 
+/**
+ * Provider-specific hints fetched around a refresh.
+ *
+ * Hints are intentionally non-authoritative: they may rebind pending tabs and patch presentation for already loaded rows, but they do not
+ * add persisted rows or evict missing rows. Providers that can only list threads should skip [AgentSessionRefreshHintsSource].
+ */
+@ApiStatus.Internal
 data class AgentSessionRefreshHints(
+  /** Candidate concrete threads for pending editor tabs that do not yet have a provider thread id. */
   @JvmField val rebindCandidates: List<AgentSessionRebindCandidate> = emptyList(),
+  /** Activity-only patches keyed by concrete thread id or sub-agent id. */
   @JvmField val activityUpdatesByThreadId: Map<String, AgentSessionThreadActivityUpdate> = emptyMap(),
+  /** Title/activity/timestamp patches keyed by concrete thread id or sub-agent id. */
   @JvmField val presentationUpdatesByThreadId: Map<String, AgentSessionThreadPresentationUpdate> = emptyMap(),
 )
 
-/** Result of creating a new thread from an outline item. */
+/**
+ * Result of creating a new provider thread from a thread-outline item.
+ *
+ * [thread] describes the newly created thread. [launchSpecOverride] is used when the new thread must be opened with a provider-specific
+ * terminal command that differs from the normal resume command.
+ */
+@ApiStatus.Internal
 data class AgentSessionOutlineForkResult(
   @JvmField val thread: AgentSessionThread,
   @JvmField val launchSpecOverride: AgentSessionTerminalLaunchSpec? = null,
 )
 
+/** Timestamp marker used when a refresh seed has no known row timestamp. */
+@ApiStatus.Internal
 const val UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT: Long = -1L
 
+/**
+ * Known thread identity passed to providers when fetching refresh hints.
+ *
+ * [updatedAt] is the row timestamp currently held by Agent Workbench, or [UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT] when unknown.
+ * [forceRefresh] is true when the triggering event explicitly named this thread and stale cached hints should not be reused.
+ */
+@ApiStatus.Internal
 data class AgentSessionRefreshThreadSeed(
   @JvmField val threadId: String,
   @JvmField val updatedAt: Long = UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT,
   @JvmField val forceRefresh: Boolean = false,
 )
 
+/** Converts thread ids to refresh seeds with unknown timestamps. */
+@ApiStatus.Internal
 fun Collection<String>.toAgentSessionRefreshThreadSeeds(): Set<AgentSessionRefreshThreadSeed> {
   return asSequence()
     .map { threadId -> AgentSessionRefreshThreadSeed(threadId = threadId) }
     .toCollection(LinkedHashSet())
 }
 
+/** Describes how a provider update event should be consumed by the refresh scheduler. */
+@ApiStatus.Internal
 enum class AgentSessionSourceUpdate {
+  /** Thread rows may have been added, removed, or changed; an authoritative provider refresh may be required. */
   THREADS_CHANGED,
+  /** Only auxiliary hints or presentation may have changed; consumers should avoid a full row refresh when possible. */
   HINTS_CHANGED,
 }
 
+/**
+ * Event emitted by [AgentSessionUpdateSource] or [AgentSessionActiveThreadUpdateSource].
+ *
+ * Scope fields narrow the affected paths and thread ids. A `null` scope means all loaded paths or all relevant threads may be affected;
+ * an empty scope is normalized away by consumers. Project-file evidence lets the scheduler trigger VFS refreshes only when a provider has
+ * observed possible changes to project files.
+ */
+@ApiStatus.Internal
 class AgentSessionSourceUpdateEvent private constructor(
   @JvmField val type: AgentSessionSourceUpdate,
   @JvmField val scopedPaths: Set<String>? = null,
@@ -75,6 +145,12 @@ class AgentSessionSourceUpdateEvent private constructor(
   @JvmField val changedProjectFilePaths: Set<String>? = null,
 ) {
   companion object {
+    /**
+     * Creates an event indicating that provider thread rows may have changed.
+     *
+     * Use this for additions, removals, archive transitions, title changes that need authoritative reload, or status changes that cannot
+     * be expressed as hints. [scopedPaths] and [threadIds] should be as narrow as the provider can report reliably.
+     */
     fun threadsChanged(
       scopedPaths: Set<String>? = null,
       threadIds: Set<String>? = null,
@@ -94,6 +170,11 @@ class AgentSessionSourceUpdateEvent private constructor(
       )
     }
 
+    /**
+     * Creates an event indicating that provider hints or presentation changed without requiring a full row snapshot.
+     *
+     * Consumers may still load a missing thread snapshot when [threadIds] names a row that is not currently present.
+     */
     fun hintsChanged(
       scopedPaths: Set<String>? = null,
       threadIds: Set<String>? = null,
@@ -113,6 +194,7 @@ class AgentSessionSourceUpdateEvent private constructor(
       )
     }
 
+    /** Creates a hint event carrying activity updates for known thread ids. */
     fun activityChanged(
       scopedPaths: Set<String>? = null,
       threadIds: Set<String>? = null,
@@ -125,6 +207,7 @@ class AgentSessionSourceUpdateEvent private constructor(
       )
     }
 
+    /** Creates a hint event carrying title/activity/timestamp presentation updates for known thread ids. */
     fun presentationChanged(
       scopedPaths: Set<String>? = null,
       threadIds: Set<String>? = null,
@@ -137,6 +220,7 @@ class AgentSessionSourceUpdateEvent private constructor(
       )
     }
 
+    /** Creates a row-discovery event, optionally scoped to paths and project-file evidence. */
     fun discoveryChanged(
       scopedPaths: Set<String>? = null,
       mayHaveChangedProjectFiles: Boolean = false,
@@ -149,6 +233,12 @@ class AgentSessionSourceUpdateEvent private constructor(
       )
     }
 
+    /**
+     * Creates a discovery event that also reports possible project-file changes.
+     *
+     * [changedProjectFilePaths] should contain absolute project-file paths when the provider can report exact files; `null` means the
+     * provider only knows that some project file under the scoped paths may have changed.
+     */
     fun projectFilesChanged(
       scopedPaths: Set<String>? = null,
       changedProjectFilePaths: Set<String>? = null,
@@ -198,6 +288,8 @@ class AgentSessionSourceUpdateEvent private constructor(
   }
 }
 
+/** Converts an activity-only update to a presentation update. */
+@ApiStatus.Internal
 fun AgentSessionThreadActivityUpdate.toPresentationUpdate(): AgentSessionThreadPresentationUpdate {
   return AgentSessionThreadPresentationUpdate(
     activityReport = activityReport,
@@ -206,6 +298,13 @@ fun AgentSessionThreadActivityUpdate.toPresentationUpdate(): AgentSessionThreadP
   )
 }
 
+/**
+ * Merges two presentation updates for the same thread id.
+ *
+ * Stale timestamped updates are ignored. Non-null incoming fields replace existing fields, while chrome-activity behavior is merged so a
+ * later row-only update does not accidentally erase a chrome activity supplied by an earlier update.
+ */
+@ApiStatus.Internal
 fun mergeAgentSessionThreadPresentationUpdates(
   existing: AgentSessionThreadPresentationUpdate,
   incoming: AgentSessionThreadPresentationUpdate,
@@ -236,15 +335,29 @@ fun mergeAgentSessionThreadPresentationUpdates(
   )
 }
 
+/** Request passed to [AgentSessionRefreshSource] for provider-scoped refreshes. */
+@ApiStatus.Internal
 data class AgentSessionSourceRefreshRequest(
+  /** Normalized Agent Workbench project/worktree paths that need provider rows. */
   @JvmField val paths: List<String>,
+  /** Concrete thread ids named by the triggering update, or empty for a path-level refresh. */
   @JvmField val threadIds: Set<String> = emptySet(),
+  /** Source update that triggered this refresh. */
   @JvmField val updateEvent: AgentSessionSourceUpdateEvent,
 ) {
+  /** True when [threadIds] requests a partial thread-level refresh. */
   val isThreadScoped: Boolean
     get() = threadIds.isNotEmpty()
 }
 
+/**
+ * Result returned by [AgentSessionRefreshSource].
+ *
+ * [completeThreadsByPath] is authoritative for a path and replaces all active rows for the provider there. [partialThreadsByPath] updates
+ * only returned thread ids and must not evict other rows. [removedThreadIdsByPath] removes rows during a partial refresh. [failuresByPath]
+ * reports path-local failures while allowing other paths in the same request to succeed.
+ */
+@ApiStatus.Internal
 data class AgentSessionSourceRefreshResult(
   @JvmField val completeThreadsByPath: Map<String, List<AgentSessionThread>> = emptyMap(),
   @JvmField val partialThreadsByPath: Map<String, List<AgentSessionThread>> = emptyMap(),
@@ -252,10 +365,14 @@ data class AgentSessionSourceRefreshResult(
   @JvmField val failuresByPath: Map<String, Throwable> = emptyMap(),
 )
 
+/** Returns true when an update event is not scoped to paths or thread ids. */
+@ApiStatus.Internal
 fun AgentSessionSourceUpdateEvent.isUnscoped(): Boolean {
   return scopedPaths == null && threadIds == null
 }
 
+/** Formats update scope for debug logging without exposing concrete paths or thread ids. */
+@ApiStatus.Internal
 fun AgentSessionSourceUpdateEvent.describeScope(): String {
   val scopedPaths = scopedPaths
   val threadIds = threadIds
@@ -268,137 +385,156 @@ fun AgentSessionSourceUpdateEvent.describeScope(): String {
   return changedProjectFilePaths?.let { paths -> "$scope,changedProjectFiles:${paths.size}" } ?: scope
 }
 
+/**
+ * Required provider source contract for Agent Workbench session discovery.
+ *
+ * Provider implementations normally register one provider descriptor and expose one stable source from it. This source owns active thread
+ * listing and provider-local session discovery state. Optional behavior belongs in the focused capability interfaces below, implemented
+ * on the same source when supported; do not add default no-op methods here.
+ *
+ * The path accepted by methods in this file is the normalized Agent Workbench project or worktree path. [Project] is supplied only when the
+ * path belongs to a currently open IDE project.
+ */
+@ApiStatus.Internal
 interface AgentSessionSource {
+  /** Stable provider id for every thread returned by this source. */
   val provider: AgentSessionProvider
+
+  /**
+   * Whether normal active-thread loading can report the exact total number of available rows for this provider.
+   *
+   * Return `false` when discovery is intentionally partial or backend-limited. The tool window then treats visible counts as unknown
+   * instead of implying that no more provider rows exist.
+   */
   val canReportExactThreadCount: Boolean
     get() = true
 
-  val supportsUpdates: Boolean
-    get() = false
-
   /**
-   * True when [activeThreadUpdateEvents] provides a meaningful live stream for the active terminal thread.
+   * Loads active, non-archived threads for [path].
    *
-   * UI consumers should use this gate before wiring active thread update streams so providers with no-op implementations do not
-   * start misleading watches.
+   * Return rows with [AgentSessionThread.provider] equal to [provider], stable concrete ids, provider-normalized titles, and epoch-millis
+   * `updatedAt` values. [openProject] is non-null only when the path belongs to a currently open IDE project; implementations may ignore
+   * it when provider storage is project-path based. Do not return archived rows here; implement [AgentSessionArchivedSource] instead.
    */
-  val supportsActiveThreadUpdateEvents: Boolean
-    get() = false
+  suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread>
+}
 
-  val supportsArchivedThreads: Boolean
-    get() = false
-
+/** Capability for providers that can batch-load active threads for several paths. */
+@ApiStatus.Internal
+interface AgentSessionPrefetchSource : AgentSessionSource {
   /**
-   * Typed source updates used by the loading coordinator to distinguish
-   * backend listing updates from auxiliary hint updates.
+   * Prefetches active threads for [paths] in one backend call.
+   *
+   * Return only paths that were actually loaded. Missing paths fall back to [AgentSessionSource.listThreads]. Returned lists are complete
+   * active snapshots for their path and must follow the same row contract as [AgentSessionSource.listThreads].
+   */
+  suspend fun prefetchThreads(paths: List<String>): Map<String, List<AgentSessionThread>>
+}
+
+/** Capability for providers that expose archived threads separately from active threads. */
+@ApiStatus.Internal
+interface AgentSessionArchivedSource : AgentSessionSource {
+  /**
+   * Loads archived threads for [path].
+   *
+   * Return only archived rows. [openProject] has the same meaning as in [AgentSessionSource.listThreads]. Providers that cannot list
+   * archived rows cheaply or accurately should not implement this capability.
+   */
+  suspend fun listArchivedThreads(path: String, openProject: Project?): List<AgentSessionThread>
+}
+
+/** Capability for providers that emit background updates for loaded session rows or hints. */
+@ApiStatus.Internal
+interface AgentSessionUpdateSource : AgentSessionSource {
+  /**
+   * Stream of provider update events.
+   *
+   * Implementations should emit only meaningful changes after filtering raw filesystem/backend noise. Events may be scoped to paths,
+   * thread ids, or both; precise scopes reduce refresh work and make active chat tabs update faster.
    */
   val updateEvents: Flow<AgentSessionSourceUpdateEvent>
-    get() = emptyFlow()
+}
 
+/** Capability for providers that can watch one active concrete thread with provider-specific filtering. */
+@ApiStatus.Internal
+interface AgentSessionActiveThreadUpdateSource : AgentSessionSource {
   /**
-   * Provider-filtered updates for an actively running thread.
+   * Returns update events for an actively running [threadId] under [path].
    *
-   * Implementations should parse raw file notifications and emit only meaningful source updates,
-   * such as activity changes or project-file change evidence. Unchanged persistence writes should
-   * not be surfaced as refresh signals.
+   * This stream is used by active chat tabs and outlines. Implementations should parse raw notifications and emit only meaningful source
+   * updates such as activity changes or project-file evidence; unchanged persistence writes should not become refresh signals.
    */
-  fun activeThreadUpdateEvents(path: String, threadId: String): Flow<AgentSessionSourceUpdateEvent> = emptyFlow()
+  fun activeThreadUpdateEvents(path: String, threadId: String): Flow<AgentSessionSourceUpdateEvent>
+}
 
-  suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread>
-
-  suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread>
-
-  suspend fun listArchivedThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> {
-    return listArchivedThreads(path = path, openProject = project)
-  }
-
-  suspend fun listArchivedThreadsFromClosedProject(path: String): List<AgentSessionThread> {
-    return listArchivedThreads(path = path, openProject = null)
-  }
-
-  suspend fun listArchivedThreads(path: String, openProject: Project?): List<AgentSessionThread> = emptyList()
-
+/** Capability for providers that can refresh rows more precisely than path-level listing. */
+@ApiStatus.Internal
+interface AgentSessionRefreshSource : AgentSessionSource {
   /**
    * Refreshes provider rows for [AgentSessionSourceRefreshRequest.paths].
    *
-   * [AgentSessionSourceRefreshResult.completeThreadsByPath] is authoritative for a path and replaces all provider rows there.
-   * [AgentSessionSourceRefreshResult.partialThreadsByPath] updates only the returned thread ids and must not evict other rows.
-   * [AgentSessionSourceRefreshResult.failuresByPath] reports path-local failures; other paths in the same request may still succeed.
+   * Return complete path snapshots when the provider performed an authoritative path listing. Return partial rows and removals for
+   * thread-scoped updates. Report path-local failures in [AgentSessionSourceRefreshResult.failuresByPath] instead of failing the whole
+   * request when other paths can still succeed.
    */
-  suspend fun refreshThreads(request: AgentSessionSourceRefreshRequest): AgentSessionSourceRefreshResult {
-    if (request.paths.isEmpty()) {
-      return AgentSessionSourceRefreshResult()
-    }
+  suspend fun refreshThreads(request: AgentSessionSourceRefreshRequest): AgentSessionSourceRefreshResult
+}
 
-    val prefetched = try {
-      prefetchThreads(request.paths)
-    }
-    catch (e: Throwable) {
-      if (e is CancellationException) throw e
-      emptyMap()
-    }
-    val completeThreadsByPath = LinkedHashMap<String, List<AgentSessionThread>>(request.paths.size)
-    val failuresByPath = LinkedHashMap<String, Throwable>()
-    for (path in request.paths) {
-      val prefetchedThreads = prefetched[path]
-      if (prefetchedThreads != null) {
-        completeThreadsByPath[path] = prefetchedThreads
-        continue
-      }
-      try {
-        completeThreadsByPath[path] = listThreadsFromClosedProject(path)
-      }
-      catch (e: Throwable) {
-        if (e is CancellationException) throw e
-        failuresByPath[path] = e
-      }
-    }
-    return AgentSessionSourceRefreshResult(
-      completeThreadsByPath = completeThreadsByPath,
-      failuresByPath = failuresByPath,
-    )
-  }
-
+/** Capability for providers that can cheaply fetch non-authoritative refresh hints. */
+@ApiStatus.Internal
+interface AgentSessionRefreshHintsSource : AgentSessionSource {
   /**
-   * Prefetch threads for multiple paths in a single backend call.
-   * Returns a map of path to threads. Empty map means no prefetch (use per-path calls).
-   */
-  suspend fun prefetchThreads(paths: List<String>): Map<String, List<AgentSessionThread>> = emptyMap()
-
-  /**
-   * Optional provider-specific refresh hints used by the loading coordinator.
+   * Loads provider-specific hints for [paths].
    *
-   * Hints must not add persisted rows directly. They are consumed for
-   * pending-tab rebinding and provider-specific status projection.
+   * [refreshThreadSeedsByPath] contains loaded or otherwise interesting thread ids with their current timestamps. Returned hints must not
+   * add or remove persisted rows directly; they are consumed for pending-tab rebinding and presentation/status projection.
    */
   suspend fun prefetchRefreshHints(
     paths: List<String>,
     refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
-  ): Map<String, AgentSessionRefreshHints> = emptyMap()
+  ): Map<String, AgentSessionRefreshHints>
+}
 
+/** Capability for providers that hydrate cost after visible rows are known. */
+@ApiStatus.Internal
+interface AgentSessionCostSource : AgentSessionSource {
+  /**
+   * Loads cost for the requested [threads] under [path].
+   *
+   * Implementations should key the result by concrete thread id and avoid recomputing work already represented by an unchanged
+   * `updatedAt`. A missing map entry or `null` value means the cost is unavailable for that thread.
+   */
   suspend fun loadThreadCosts(
     path: String,
     threads: List<AgentSessionThread>,
-  ): Map<String, AgentSessionCost?> = emptyMap()
+  ): Map<String, AgentSessionCost?>
+}
 
+/** Capability for providers that expose a read-only outline of persisted thread history. */
+@ApiStatus.Internal
+interface AgentSessionThreadOutlineSource : AgentSessionSource {
   /**
    * Loads a read-only, role-aware outline for a persisted thread.
    *
    * Implementations should read provider history without restoring terminals, driving TUIs, or mutating provider state. Return `null`
-   * when outlines are unsupported or unavailable. Return an [AgentSessionThreadOutline] with an empty item list when the provider
-   * supports outlines but has no visible entries. Item ids must be stable provider anchors when navigation or fork actions are enabled.
+   * when an outline is unavailable. Return an [AgentSessionThreadOutline] with an empty item list when the provider supports outlines but
+   * has no visible entries. Item ids must be stable provider anchors when navigation or fork capabilities use them.
    */
   suspend fun loadThreadOutline(
     path: String,
     threadId: String,
     subAgentId: String? = null,
-  ): AgentSessionThreadOutline? = null
+  ): AgentSessionThreadOutline?
+}
 
+/** Capability for providers that can navigate a live provider view to an outline item. */
+@ApiStatus.Internal
+interface AgentSessionThreadOutlineNavigationSource : AgentSessionThreadOutlineSource {
   /**
    * Returns whether [itemId] has a stable live provider anchor that can be navigated to in the current thread context.
    *
-   * This is not a fallback hook for launching a provider, scraping terminal output, or replaying a TUI selection. Providers that can
-   * only display persisted history should leave navigation unsupported.
+   * This is not a fallback hook for launching a provider, scraping terminal output, or replaying a TUI selection. Providers that only
+   * display persisted history should not implement this capability.
    */
   fun canNavigateThreadOutlineItem(
     path: String,
@@ -406,7 +542,7 @@ interface AgentSessionSource {
     itemId: String,
     subAgentId: String? = null,
     tabKey: String? = null,
-  ): Boolean = false
+  ): Boolean
 
   /** Navigates a live provider view to [itemId] when [canNavigateThreadOutlineItem] reports support. */
   suspend fun navigateThreadOutlineItem(
@@ -415,36 +551,31 @@ interface AgentSessionSource {
     itemId: String,
     subAgentId: String? = null,
     tabKey: String? = null,
-  ): Boolean = false
+  ): Boolean
+}
 
+/** Capability for providers that can create a new thread from an outline item. */
+@ApiStatus.Internal
+interface AgentSessionThreadOutlineForkSource : AgentSessionThreadOutlineSource {
   /**
-   * Static visibility gate for the outline fork action.
+   * Runtime visibility and executable gate for forking from [itemId].
    *
-   * Return `true` only for item roles that can conceptually be forked, even if the current live provider state may still make the
-   * action unavailable. [canForkThreadFromOutlineItem] is the runtime executable gate.
+   * Return `true` only when the current provider state can create the fork now. UI surfaces use this single gate for both visibility and
+   * enablement, so do not return `true` for conceptual support that may still fail because a live bridge is disconnected.
    */
-  fun canShowThreadOutlineForkAction(
-    path: String,
-    threadId: String,
-    itemId: String,
-    subAgentId: String? = null,
-    tabKey: String? = null,
-  ): Boolean = false
-
-  /** Runtime gate for forking from [itemId] in the current provider state. */
   fun canForkThreadFromOutlineItem(
     path: String,
     threadId: String,
     itemId: String,
     subAgentId: String? = null,
     tabKey: String? = null,
-  ): Boolean = false
+  ): Boolean
 
   /**
-   * Creates and opens a provider-specific fork from [itemId].
+   * Creates a provider-specific fork from [itemId].
    *
-   * Implementations must not mutate the source thread. The returned [AgentSessionOutlineForkResult.thread] should describe the new
-   * thread that callers can select or refresh after the fork completes.
+   * Implementations must not mutate the source thread. The returned [AgentSessionOutlineForkResult.thread] describes the new thread that
+   * callers can open and refresh after the fork completes. Return `null` if the fork is no longer possible.
    */
   suspend fun forkThreadFromOutlineItem(
     project: Project,
@@ -453,9 +584,15 @@ interface AgentSessionSource {
     itemId: String,
     subAgentId: String? = null,
     tabKey: String? = null,
-  ): AgentSessionOutlineForkResult? = null
+  ): AgentSessionOutlineForkResult?
+}
 
-  fun markThreadAsRead(threadId: String, updatedAt: Long) {}
+/** Capability for providers that track read/unread state relative to open chat tabs. */
+@ApiStatus.Internal
+interface AgentSessionReadStateSource : AgentSessionSource {
+  /** Records that [threadId] is the active thread for this source, or clears it with `null`. */
+  fun setActiveThreadId(threadId: String?)
 
-  fun setActiveThreadId(threadId: String?) {}
+  /** Marks [threadId] as read through [updatedAt] and emits any provider-local hint update needed to clear unread state. */
+  fun markThreadAsRead(threadId: String, updatedAt: Long)
 }

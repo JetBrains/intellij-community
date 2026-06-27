@@ -55,7 +55,7 @@ class JunieSessionSourceTest {
       )
       val source = JunieSessionSource(sessionIndexPathProvider = { index })
 
-      val threads = source.listThreadsFromClosedProject("$projectDir/")
+      val threads = source.listThreads("$projectDir/", openProject = null)
 
       assertThat(threads.map { it.id }).containsExactly("session-2")
       assertThat(threads[0].title).isEqualTo("Review changes")
@@ -95,7 +95,7 @@ class JunieSessionSourceTest {
       )
       val source = JunieSessionSource(sessionIndexPathProvider = { index })
 
-      val threads = source.listArchivedThreadsFromClosedProject(projectDir.toString())
+      val threads = source.listArchivedThreads(projectDir.toString(), openProject = null)
 
       assertThat(threads.map { it.id }).containsExactly("session-archived")
       assertThat(threads.single().title).isEqualTo("Archived")
@@ -123,7 +123,7 @@ class JunieSessionSourceTest {
       val renamed = store.renameThread(projectDir.toString(), "session-rename", "New title")
 
       assertThat(renamed).isTrue()
-      val thread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      val thread = source.listThreads(projectDir.toString(), openProject = null).single()
       assertThat(thread.title).isEqualTo("New title")
       assertThat(thread.updatedAt).isEqualTo(4000L)
       assertThat(thread.archived).isFalse()
@@ -151,7 +151,7 @@ class JunieSessionSourceTest {
       val archived = store.archiveThread("$projectDir/", "session-archive")
 
       assertThat(archived).isTrue()
-      assertThat(source.listThreadsFromClosedProject(projectDir.toString())).isEmpty()
+      assertThat(source.listThreads(projectDir.toString(), openProject = null)).isEmpty()
       rewriteIndex(
         index,
         sessionIndexLine(
@@ -161,7 +161,7 @@ class JunieSessionSourceTest {
           updatedAt = 4500L,
         ),
       )
-      assertThat(source.listThreadsFromClosedProject(projectDir.toString())).isEmpty()
+      assertThat(source.listThreads(projectDir.toString(), openProject = null)).isEmpty()
 
       now = 5000L
       val unarchived = store.unarchiveThread(projectDir.toString(), "session-archive")
@@ -176,7 +176,7 @@ class JunieSessionSourceTest {
       )
 
       assertThat(unarchived).isTrue()
-      val thread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      val thread = source.listThreads(projectDir.toString(), openProject = null).single()
       assertThat(thread.title).isEqualTo("Junie refreshed unarchived session")
       assertThat(thread.updatedAt).isEqualTo(5500L)
       assertThat(thread.archived).isFalse()
@@ -222,7 +222,7 @@ class JunieSessionSourceTest {
       )
       val source = JunieSessionSource(sessionIndexPathProvider = { index })
 
-      val threads = source.listThreadsFromClosedProject(projectDir.toString())
+      val threads = source.listThreads(projectDir.toString(), openProject = null)
 
       val thread = threads.single()
       assertThat(thread.id).isEqualTo("session-duplicate")
@@ -247,12 +247,12 @@ class JunieSessionSourceTest {
 
       source.markThreadAsRead("session-read-state", 2000L)
 
-      val unreadThreads = source.listThreadsFromClosedProject(projectDir.toString())
+      val unreadThreads = source.listThreads(projectDir.toString(), openProject = null)
       assertThat(unreadThreads.single().activity).isEqualTo(AgentThreadActivity.UNREAD)
 
       source.markThreadAsRead("session-read-state", 3000L)
 
-      val readyThreads = source.listThreadsFromClosedProject(projectDir.toString())
+      val readyThreads = source.listThreads(projectDir.toString(), openProject = null)
       assertThat(readyThreads.single().activity).isEqualTo(AgentThreadActivity.READY)
     }
   }
@@ -277,7 +277,7 @@ class JunieSessionSourceTest {
       )
       val source = JunieSessionSource(sessionIndexPathProvider = { index })
 
-      val threads = source.listThreadsFromClosedProject(projectDir.toString())
+      val threads = source.listThreads(projectDir.toString(), openProject = null)
       val thread = threads.single()
       assertThat(thread.cost).isNull()
 
@@ -313,7 +313,7 @@ class JunieSessionSourceTest {
       )
       val source = JunieSessionSource(sessionIndexPathProvider = { index })
 
-      val archivedThreads = source.listArchivedThreadsFromClosedProject(projectDir.toString())
+      val archivedThreads = source.listArchivedThreads(projectDir.toString(), openProject = null)
       val loadedCosts = source.loadThreadCosts(projectDir.toString(), archivedThreads)
 
       assertThat(archivedThreads.single().cost).isNull()
@@ -341,7 +341,7 @@ class JunieSessionSourceTest {
       )
       val source = JunieSessionSource(sessionIndexPathProvider = { index })
 
-      val listedThreads = source.listThreadsFromClosedProject(projectDir.toString())
+      val listedThreads = source.listThreads(projectDir.toString(), openProject = null)
       assertThat(listedThreads.single().activity).isEqualTo(AgentThreadActivity.READY)
 
       val refreshResult = source.refreshThreads(
@@ -350,7 +350,7 @@ class JunieSessionSourceTest {
 
       val refreshedThread = refreshResult.partialThreadsByPath.getValue(projectDir.toString()).single()
       assertThat(refreshedThread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
-      assertThat(source.listThreadsFromClosedProject(projectDir.toString()).single().activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(source.listThreads(projectDir.toString(), openProject = null).single().activity).isEqualTo(AgentThreadActivity.PROCESSING)
     }
   }
 
@@ -442,7 +442,7 @@ class JunieSessionSourceTest {
         sessionA2uxLlmEvent(model = "gpt-4.1-mini-2025-04-14", cost = "0.10"),
       )
       val source = JunieSessionSource(sessionIndexPathProvider = { index })
-      val initialThread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      val initialThread = source.listThreads(projectDir.toString(), openProject = null).single()
 
       assertThat(source.loadThreadCosts(projectDir.toString(), listOf(initialThread))["session-cost-cache"]?.amountUsd)
         .isEqualByComparingTo("0.10")
@@ -464,7 +464,7 @@ class JunieSessionSourceTest {
           updatedAt = 4000L,
         ),
       )
-      val updatedThread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      val updatedThread = source.listThreads(projectDir.toString(), openProject = null).single()
       assertThat(source.loadThreadCosts(projectDir.toString(), listOf(updatedThread))["session-cost-cache"]?.amountUsd)
         .isEqualByComparingTo("20.00")
     }
@@ -483,7 +483,7 @@ class JunieSessionSourceTest {
         ),
       )
       val source = JunieSessionSource(sessionIndexPathProvider = { index })
-      val initialThread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      val initialThread = source.listThreads(projectDir.toString(), openProject = null).single()
 
       assertThat(source.loadThreadCosts(projectDir.toString(), listOf(initialThread)))
         .containsEntry("session-missing-cost-cache", null)
@@ -505,7 +505,7 @@ class JunieSessionSourceTest {
           updatedAt = 4000L,
         ),
       )
-      val updatedThread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      val updatedThread = source.listThreads(projectDir.toString(), openProject = null).single()
       assertThat(source.loadThreadCosts(projectDir.toString(), listOf(updatedThread))["session-missing-cost-cache"]?.amountUsd)
         .isEqualByComparingTo("0.20")
     }

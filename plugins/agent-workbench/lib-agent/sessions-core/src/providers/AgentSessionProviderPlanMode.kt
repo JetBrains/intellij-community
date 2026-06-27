@@ -3,6 +3,7 @@ package com.intellij.platform.ai.agent.sessions.core.providers
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import org.jetbrains.annotations.ApiStatus
 
 fun AgentPromptInitialMessageRequest.isPlanModeRequested(): Boolean {
   return AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE in providerOptionIds
@@ -16,6 +17,7 @@ fun AgentInitialMessagePlan.isBlockedForExistingThreadPlanMode(threadActivity: A
   return mode == AgentInitialMessageMode.PLAN && threadActivity?.isBusyForExistingThreadPlanMode() == true
 }
 
+@ApiStatus.Internal
 fun AgentSessionProviderDescriptor.isPlanModeBlockedForExistingThread(
   request: AgentPromptInitialMessageRequest,
   threadActivity: AgentThreadActivity?,

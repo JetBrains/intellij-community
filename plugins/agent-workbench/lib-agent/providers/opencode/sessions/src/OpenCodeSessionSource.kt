@@ -5,6 +5,7 @@ import com.intellij.platform.ai.agent.core.normalizeAgentSessionProjectPath
 import com.intellij.platform.ai.agent.core.normalizeAgentSessionTitle
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.opencode.sessions.server.SharedOpenCodeServerService
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionArchivedSource
 import com.intellij.platform.ai.agent.sessions.core.providers.BaseAgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.resolveReadTrackedActivity
 import com.intellij.openapi.diagnostic.logger
@@ -92,11 +93,8 @@ internal class OpenCodeSessionStore(
 
 internal class OpenCodeSessionSource(
   private val sessionStore: OpenCodeSessionStore = OpenCodeSessionStore(),
-) : BaseAgentSessionSource(OPENCODE_AGENT_SESSION_PROVIDER) {
-  override val supportsArchivedThreads: Boolean
-    get() = true
-
-  override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> {
+) : BaseAgentSessionSource(OPENCODE_AGENT_SESSION_PROVIDER), AgentSessionArchivedSource {
+  override suspend fun loadThreads(path: String, openProject: Project?): List<AgentSessionThread> {
     val entries = sessionStore.loadEntries(projectPath = path, archived = false)
     rememberActiveThreadRead(entries, OpenCodeSessionIndexEntry::sessionId, OpenCodeSessionIndexEntry::updatedAt)
     return entries.map { entry -> entry.toAgentSessionThread(readTracker) }

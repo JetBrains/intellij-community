@@ -3,12 +3,15 @@ package com.intellij.platform.ai.agent.sessions.core.providers
 
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 data class AgentSessionProviderMenuModel(
   @JvmField val standardItems: List<AgentSessionProviderMenuItem>,
   @JvmField val yoloItems: List<AgentSessionProviderMenuItem>,
 )
 
+@ApiStatus.Internal
 data class AgentSessionProviderMenuItem(
   @JvmField val bridge: AgentSessionProviderDescriptor,
   @JvmField val mode: AgentSessionLaunchMode,
@@ -17,6 +20,7 @@ data class AgentSessionProviderMenuItem(
   @JvmField val disabledReasonKey: String? = null,
 )
 
+@ApiStatus.Internal
 fun AgentSessionProviderMenuModel.hasEntries(): Boolean {
   return standardItems.isNotEmpty() || yoloItems.isNotEmpty()
 }
@@ -25,6 +29,7 @@ fun AgentSessionProviderMenuModel.hasEntries(): Boolean {
  * Sync menu-model builder. Synchronous surfaces (action `update()` callbacks) must supply
  * [availabilityByProvider] from the caller's project-level provider availability cache.
  */
+@ApiStatus.Internal
 fun buildAgentSessionProviderMenuModel(
   bridges: List<AgentSessionProviderDescriptor>,
   availabilityByProvider: Map<AgentSessionProvider, Boolean>,

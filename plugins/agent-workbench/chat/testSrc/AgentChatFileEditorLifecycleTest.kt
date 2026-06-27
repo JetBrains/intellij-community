@@ -18,6 +18,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessag
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryChannel
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryStatus
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptRecord
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionArchivedSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
@@ -2302,17 +2303,13 @@ private class ArchivedThreadsProviderDescriptor(
   override val displayNameKey: String = "test.provider"
   override val newSessionLabelKey: String = "test.new.session"
   override val icon: Icon = EmptyIcon.ICON_0
-  override val sessionSource: AgentSessionSource = object : AgentSessionSource {
+  override val sessionSource: AgentSessionSource = object : AgentSessionSource, AgentSessionArchivedSource {
     override val provider: AgentSessionProvider
       get() = this@ArchivedThreadsProviderDescriptor.provider
 
-    override val supportsArchivedThreads: Boolean = true
+    override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> = emptyList()
 
-    override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = emptyList()
-
-    override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> = emptyList()
-
-    override suspend fun listArchivedThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = archivedThreads
+    override suspend fun listArchivedThreads(path: String, openProject: Project?): List<AgentSessionThread> = archivedThreads
   }
   override val cliMissingMessageKey: String = "test.cli.missing"
 
@@ -2341,9 +2338,8 @@ private class RecordingTerminalSessionClosedProvider(
     override val provider: AgentSessionProvider
       get() = this@RecordingTerminalSessionClosedProvider.provider
 
-    override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = emptyList()
+    override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> = emptyList()
 
-    override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> = emptyList()
   }
   override val cliMissingMessageKey: String = "test.cli.missing"
 

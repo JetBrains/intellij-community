@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ai.agent.codex.sessions
 
+import com.intellij.platform.ai.agent.codex.common.CodexWebSocketAppServerClient
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
@@ -12,6 +14,7 @@ import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.seconds
 
+@TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
 class CodexThemeRealTuiIntegrationTest {
   @TempDir
@@ -35,18 +38,40 @@ class CodexThemeRealTuiIntegrationTest {
         tempRoot = tempDir.resolve("theme-launch"),
         responsePlans = listOf(MockResponsesPlan.completedAssistantMessage(THEME_SMOKE_RESPONSE)),
       ).use { harness ->
-        harness.start(
-          prompt = THEME_SMOKE_PROMPT,
-          extraConfigArgs = listOf(themeLaunchConfig.themeConfigValue),
-        ).use { session ->
-          val request = eventually(timeout = 20.seconds) {
-            harness.requests()
-              .takeIf { requests -> requests.size == 1 }
-              ?.singleOrNull { request -> request.contains(THEME_SMOKE_PROMPT) }
-          } ?: error("Timed out waiting for Codex TUI request with generated theme config.\n${session.diagnostics()}")
+        val client = CodexWebSocketAppServerClient(
+          coroutineScope = this,
+          executablePathProvider = { codexBinary },
+          environmentOverrides = mapOf("CODEX_HOME" to harness.codexHome.toString()),
+          workingDirectory = harness.projectDir,
+        )
+        try {
+          val thread = client.createThreadSession(cwd = harness.projectDir.toString()).thread
+          client.materializeThread(thread.id)
+          val remoteUrl = client.currentRemoteUrl()
+          assertThat(harness.requests()).isEmpty()
 
-          assertThat(request).contains(THEME_SMOKE_PROMPT)
-          session.awaitOutputContains(THEME_SMOKE_RESPONSE)
+          harness.startRemoteResume(
+            remoteUrl = remoteUrl,
+            threadId = thread.id,
+            extraConfigArgs = listOf(CODEX_TERMINAL_TITLE_CONFIG, themeLaunchConfig.themeConfigValue),
+          ).use { session ->
+            assertThat(session.awaitTerminalThreadId()).isEqualTo(thread.id.lowercase())
+            assertThat(harness.requests()).isEmpty()
+            client.startTurn(threadId = thread.id, text = THEME_SMOKE_PROMPT)
+            val request = eventually(timeout = 20.seconds) {
+              harness.requests()
+                .takeIf { requests -> requests.size == 1 }
+                ?.singleOrNull { request -> request.contains(THEME_SMOKE_PROMPT) }
+            } ?: error("Timed out waiting for Codex app-server request with generated theme config.\n${session.diagnostics()}")
+
+            assertThat(request).contains(THEME_SMOKE_PROMPT)
+            session.awaitOutputContains(THEME_SMOKE_RESPONSE_INTRO)
+            session.awaitOutputContains(THEME_SMOKE_CODE_IDENTIFIER)
+            session.awaitRawOutputMatches(THEME_KEYWORD_FOREGROUND_ANSI_REGEX)
+          }
+        }
+        finally {
+          client.shutdown()
         }
       }
     }
@@ -83,4 +108,13 @@ private fun realTuiThemeSnapshot(): CodexThemeSnapshot {
 }
 
 private const val THEME_SMOKE_PROMPT: String = "Reply once for the generated Codex theme smoke test."
-private const val THEME_SMOKE_RESPONSE: String = "Theme smoke response"
+private const val CODEX_TERMINAL_TITLE_CONFIG: String = "tui.terminal_title=[\"thread-id\",\"thread\"]"
+private const val THEME_SMOKE_RESPONSE_INTRO: String = "Theme smoke response"
+private const val THEME_SMOKE_RESPONSE: String = """$THEME_SMOKE_RESPONSE_INTRO
+
+```python
+def themed_function():
+    return "theme"
+```"""
+private const val THEME_SMOKE_CODE_IDENTIFIER: String = "themed_function"
+private val THEME_KEYWORD_FOREGROUND_ANSI_REGEX = Regex("\u001B\\[[0-9;]*38;2;170;85;0[0-9;]*m")

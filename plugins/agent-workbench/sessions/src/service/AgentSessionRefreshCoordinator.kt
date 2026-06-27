@@ -21,6 +21,7 @@ import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentati
 import com.intellij.platform.ai.agent.sessions.core.config.AgentWorkbenchProjectRuntimeConfigs
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPrefetchSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadPresentationUpdate
@@ -300,7 +301,7 @@ internal class AgentSessionRefreshCoordinator(
           availableSessionSources.map { source ->
             async {
               source.provider to try {
-                source.prefetchThreads(bootstrap.loadPaths.toList())
+                (source as? AgentSessionPrefetchSource)?.prefetchThreads(bootstrap.loadPaths.toList()).orEmpty()
               }
               catch (_: Throwable) {
                 emptyMap()

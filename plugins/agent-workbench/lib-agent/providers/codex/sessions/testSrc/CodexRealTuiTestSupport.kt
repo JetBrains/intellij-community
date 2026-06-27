@@ -175,6 +175,12 @@ internal class RunningCodexTuiSession(
     } ?: error("Timed out waiting for real Codex TUI output to contain '$text'.\n${diagnostics()}")
   }
 
+  suspend fun awaitRawOutputMatches(pattern: Regex, timeout: Duration = 20.seconds) {
+    eventually(timeout = timeout) {
+      outputText().takeIf { output -> pattern.containsMatchIn(output) }
+    } ?: error("Timed out waiting for real Codex TUI raw output to match '$pattern'.\n${diagnostics()}")
+  }
+
   fun requests(): List<String> = responsesServer.requests()
 
   fun diagnostics(): String {

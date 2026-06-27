@@ -5,8 +5,12 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.ui.AgentWorkbenchActionIds
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionActiveThreadUpdateSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadOutlineForkSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadOutlineNavigationSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadOutlineSource
 import com.intellij.ide.util.treeView.AbstractTreeStructure
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.Disposable
@@ -218,26 +222,20 @@ class AgentChatThreadOutlinePanel(
   private fun logHiddenThreadOutlinePopup(target: AgentChatThreadOutlineTarget) {
     val file = target.file
     val provider = file.provider
-    val staticSupport = provider != null &&
-                        !file.isPendingThread &&
-                        target.source.canShowThreadOutlineForkAction(
-                          path = file.projectPath,
-                          threadId = file.threadId,
-                          itemId = target.item.id,
-                          subAgentId = file.subAgentId,
-                          tabKey = file.tabKey,
-                        )
-    val liveSupport = staticSupport && target.source.canForkThreadFromOutlineItem(
-      path = file.projectPath,
-      threadId = file.threadId,
-      itemId = target.item.id,
-      subAgentId = file.subAgentId,
-      tabKey = file.tabKey,
-    )
+    val forkSource = target.source as? AgentSessionThreadOutlineForkSource
+    val forkSupport = provider != null &&
+                      !file.isPendingThread &&
+                      forkSource?.canForkThreadFromOutlineItem(
+                        path = file.projectPath,
+                        threadId = file.threadId,
+                        itemId = target.item.id,
+                        subAgentId = file.subAgentId,
+                        tabKey = file.tabKey,
+                      ) == true
     LOG.info(
       "Thread outline popup hidden: provider=${provider?.value}, path=${file.projectPath}, threadId=${file.threadId}, " +
       "itemId=${target.item.id}, itemKind=${target.item.kind}, subAgent=${file.subAgentId != null}, tabKey=${file.tabKey}, " +
-      "pending=${file.isPendingThread}, staticForkSupport=$staticSupport, liveForkSupport=$liveSupport"
+      "pending=${file.isPendingThread}, forkSupport=$forkSupport"
     )
   }
 
@@ -376,11 +374,12 @@ class AgentChatThreadOutlinePanel(
   }
 
   private fun navigateTarget(target: AgentChatThreadOutlineTarget): Boolean {
-    if (!canNavigate(target)) {
+    val navigationSource = target.source as? AgentSessionThreadOutlineNavigationSource ?: return false
+    if (!canNavigate(navigationSource = navigationSource, target = target)) {
       return false
     }
     cs.launch {
-      target.source.navigateThreadOutlineItem(
+      navigationSource.navigateThreadOutlineItem(
         path = target.file.projectPath,
         threadId = target.file.threadId,
         itemId = target.item.id,
@@ -400,8 +399,8 @@ class AgentChatThreadOutlinePanel(
     return outlineNode(id)?.target
   }
 
-  private fun canNavigate(target: AgentChatThreadOutlineTarget): Boolean {
-    return target.source.canNavigateThreadOutlineItem(
+  private fun canNavigate(navigationSource: AgentSessionThreadOutlineNavigationSource, target: AgentChatThreadOutlineTarget): Boolean {
+    return navigationSource.canNavigateThreadOutlineItem(
       path = target.file.projectPath,
       threadId = target.file.threadId,
       itemId = target.item.id,
@@ -483,7 +482,7 @@ private class AgentChatThreadOutlineController(
     }
     jobs += cs.launch {
       val provider = file.provider ?: return@launch
-      val source = AgentSessionProviders.find(provider)?.sessionSource ?: return@launch
+      val source = AgentSessionProviders.find(provider)?.sessionSource as? AgentSessionActiveThreadUpdateSource ?: return@launch
       val projectPath = file.projectPath.takeIf(String::isNotBlank) ?: return@launch
       val threadId = file.threadId.takeIf(String::isNotBlank) ?: return@launch
       source.activeThreadUpdateEvents(path = projectPath, threadId = threadId).collect {
@@ -505,7 +504,7 @@ private class AgentChatThreadOutlineController(
 
   private suspend fun loadModel(): AgentChatThreadOutlineModel {
     val provider = file.provider
-    val source = provider?.let { AgentSessionProviders.find(it)?.sessionSource }
+    val source = provider?.let { AgentSessionProviders.find(it)?.sessionSource as? AgentSessionThreadOutlineSource }
     if (source == null) {
       return unavailableModel()
     }

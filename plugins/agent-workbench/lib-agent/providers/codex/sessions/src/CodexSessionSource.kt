@@ -33,12 +33,21 @@ import com.intellij.platform.ai.agent.sessions.core.cost.AgentSessionUsageCostCa
 import com.intellij.platform.ai.agent.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.platform.ai.agent.sessions.core.cost.aggregateAgentSessionUsageCost
 import com.intellij.platform.ai.agent.sessions.core.normalizeConcreteAgentSessionThreadId
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionActiveThreadUpdateSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionArchivedSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionCostSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPrefetchSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionOutlineForkResult
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshHintsSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceRefreshRequest
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceRefreshResult
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadOutlineForkSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadOutlineSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionUpdateSource
 import com.intellij.platform.ai.agent.sessions.core.providers.BaseAgentSessionSource
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -60,7 +69,16 @@ internal class CodexSessionSource internal constructor(
   private val calculateCost: (AgentSessionUsageSnapshot) -> AgentSessionCost = AgentSessionUsageCostCalculators::calculateCost,
   private val threadPathIndex: CodexThreadPathIndex = InMemoryCodexThreadPathIndex(),
   private val exactRolloutThreadLoader: CodexExactRolloutThreadLoader = CodexExactRolloutThreadLoader(),
-) : BaseAgentSessionSource(provider = CODEX_AGENT_SESSION_PROVIDER, canReportExactThreadCount = false) {
+) : BaseAgentSessionSource(provider = CODEX_AGENT_SESSION_PROVIDER, canReportExactThreadCount = false),
+    AgentSessionUpdateSource,
+    AgentSessionActiveThreadUpdateSource,
+    AgentSessionArchivedSource,
+    AgentSessionPrefetchSource,
+    AgentSessionRefreshSource,
+    AgentSessionRefreshHintsSource,
+    AgentSessionCostSource,
+    AgentSessionThreadOutlineSource,
+    AgentSessionThreadOutlineForkSource {
   constructor(
     threadPathIndex: CodexThreadPathIndex = service<CodexThreadPathIndexService>(),
     backend: CodexSessionBackend = createDefaultCodexSessionBackend(threadPathIndex = threadPathIndex),
@@ -89,15 +107,6 @@ internal class CodexSessionSource internal constructor(
     calculateCost = AgentSessionUsageCostCalculators::calculateCost,
     threadPathIndex = threadPathIndex,
   )
-
-  override val supportsUpdates: Boolean
-    get() = true
-
-  override val supportsActiveThreadUpdateEvents: Boolean
-    get() = true
-
-  override val supportsArchivedThreads: Boolean
-    get() = true
 
   override val updateEvents: Flow<AgentSessionSourceUpdateEvent>
     get() = merge(
@@ -129,7 +138,7 @@ internal class CodexSessionSource internal constructor(
     }
   }
 
-  override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> {
+  override suspend fun loadThreads(path: String, openProject: Project?): List<AgentSessionThread> {
     val threads = backend.listThreads(path = path, openProject = openProject)
     rememberThreadMetadata(threads)
     trackActiveThreadRead(threads)
@@ -230,16 +239,6 @@ internal class CodexSessionSource internal constructor(
            ?: loadIndexedRolloutThreadOutline(threadId)
   }
 
-  override fun canShowThreadOutlineForkAction(
-    path: String,
-    threadId: String,
-    itemId: String,
-    subAgentId: String?,
-    tabKey: String?,
-  ): Boolean {
-    return subAgentId == null && parseCodexUserPromptOutlineItemIndex(itemId) != null
-  }
-
   override fun canForkThreadFromOutlineItem(
     path: String,
     threadId: String,
@@ -247,13 +246,7 @@ internal class CodexSessionSource internal constructor(
     subAgentId: String?,
     tabKey: String?,
   ): Boolean {
-    return canShowThreadOutlineForkAction(
-      path = path,
-      threadId = threadId,
-      itemId = itemId,
-      subAgentId = subAgentId,
-      tabKey = tabKey,
-    )
+    return subAgentId == null && parseCodexUserPromptOutlineItemIndex(itemId) != null
   }
 
   override suspend fun forkThreadFromOutlineItem(
@@ -326,7 +319,7 @@ internal class CodexSessionSource internal constructor(
 
   override suspend fun refreshThreads(request: AgentSessionSourceRefreshRequest): AgentSessionSourceRefreshResult {
     if (!request.isThreadScoped) {
-      return super.refreshThreads(request)
+      return refreshThreadsByListing(request)
     }
 
     val partialThreadsByPath = LinkedHashMap<String, List<AgentSessionThread>>()

@@ -495,9 +495,8 @@ private class RecordingProviderDispatchDescriptor : AgentSessionProviderDescript
     override val provider: AgentSessionProvider
       get() = this@RecordingProviderDispatchDescriptor.provider
 
-    override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = emptyList()
+    override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> = emptyList()
 
-    override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> = emptyList()
   }
   override val cliMissingMessageKey: String = "test.cli.missing"
   val requests: MutableList<AgentInitialMessageProviderDispatchRequest> = mutableListOf()
