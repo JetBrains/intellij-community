@@ -31,6 +31,7 @@ import org.jetbrains.idea.maven.project.MavenDownloadSourcesRequest
 import org.jetbrains.idea.maven.project.MavenImportListener
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsTree
+import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -297,4 +298,10 @@ fun MavenTestFixture.getRelativePath(base: Path, path: String): String =
 // Ported from MavenImportingTestCase.
 fun MavenImportingTestFixture.runWithoutStaticSync() {
   Registry.get("maven.preimport.project").setValue(false, testRootDisposable)
+}
+
+// Ported from MavenTestCase.resetRepositoryFile().
+fun MavenImportingTestFixture.resetRepositoryFile() {
+  mavenGeneralSettings.setLocalRepository(null)
+  MavenSettingsCache.getInstance(project).reload()
 }
