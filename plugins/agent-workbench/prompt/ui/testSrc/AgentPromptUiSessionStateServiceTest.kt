@@ -179,7 +179,7 @@ class AgentPromptUiSessionStateServiceTest {
   private fun manualContextItem(): AgentPromptContextItem {
     return AgentPromptContextItem(
       rendererId = AgentPromptContextRendererIds.VCS_COMMITS,
-      title = "Picked Commits",
+      title = "Commits",
       body = "abc12345",
       itemId = "manual.vcs.commits",
       source = "manualVcs",
