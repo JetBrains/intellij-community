@@ -1,6 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "ide-startup-importSettings-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":ide-startup-importSettings-tests_test_lib"],
+)
+### skip generation section `test intellij.ide.startup.importSettings.tests`
+
 ### auto-generated section `build intellij.ide.startup.importSettings` start
 
 jvm_library(
@@ -245,11 +253,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.ide.startup.importSettings.tests` end
-
-### auto-generated section `test intellij.ide.startup.importSettings.tests` start
-
-jps_test(
-    name = "ide-startup-importSettings-tests_test",
-    runtime_deps = [":ide-startup-importSettings-tests_test_lib"],
-)
-### auto-generated section `test intellij.ide.startup.importSettings.tests` end
