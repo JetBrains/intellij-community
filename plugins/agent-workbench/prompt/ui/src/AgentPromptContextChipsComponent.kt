@@ -20,6 +20,7 @@ private const val CONTEXT_CHIP_GAP = 4
 
 internal class AgentPromptContextChipsComponent(
   private val maxVisibleRows: Int? = null,
+  private val initialAvailableWidth: Int? = null,
   private val onRemove: (ContextEntry) -> Unit,
 ) {
   private var renderedEntries: List<ContextEntry> = emptyList()
@@ -47,12 +48,13 @@ internal class AgentPromptContextChipsComponent(
 
     val visibleEntries: List<ContextEntry>
     val hiddenCount: Int
-    if (maxVisibleRows == null || component.width <= 0) {
+    val availableWidth = component.width.takeIf { it > 0 } ?: initialAvailableWidth?.takeIf { it > 0 }
+    if (maxVisibleRows == null || availableWidth == null) {
       visibleEntries = renderedEntries
       hiddenCount = 0
     }
     else {
-      val selection = selectVisibleEntries(component.width)
+      val selection = selectVisibleEntries(availableWidth)
       visibleEntries = selection.visibleEntries
       hiddenCount = selection.hiddenCount
     }
