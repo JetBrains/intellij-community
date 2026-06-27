@@ -25,8 +25,14 @@ import com.intellij.platform.ai.agent.json.WorkbenchJsonlScanner
 import com.intellij.platform.ai.agent.json.forEachJsonObjectField
 import com.intellij.platform.ai.agent.json.readJsonLongOrNull
 import com.intellij.platform.ai.agent.json.readJsonStringOrNull
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionActiveThreadUpdateSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionArchivedSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionOutlineForkResult
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadOutlineForkSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadOutlineNavigationSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadOutlineSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionUpdateSource
 import com.intellij.platform.ai.agent.sessions.core.providers.BaseAgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.resolveReadTrackedActivity
 import com.intellij.openapi.diagnostic.logger
@@ -349,18 +355,18 @@ internal class PiSessionSource(
   extensionStatusEvents: Flow<AgentSessionSourceUpdateEvent> = PiExtensionStatusBridge.updateEvents,
   fileWatchFallbackEnabledProvider: () -> Boolean = ::isPiFileWatchFallbackEnabled,
   sessionUpdateEventsContributorProvider: () -> List<PiSessionUpdateEventsContributor> = ::piSessionUpdateEventsContributors,
-) : BaseAgentSessionSource(PI_AGENT_SESSION_PROVIDER) {
+) : BaseAgentSessionSource(PI_AGENT_SESSION_PROVIDER),
+    AgentSessionUpdateSource,
+    AgentSessionActiveThreadUpdateSource,
+    AgentSessionArchivedSource,
+    AgentSessionThreadOutlineSource,
+    AgentSessionThreadOutlineNavigationSource,
+    AgentSessionThreadOutlineForkSource {
   private val fileWatchFallbackEnabled = fileWatchFallbackEnabledProvider()
   private val watchedSessionDirectoriesLock = Any()
   private val watchedProjectPathsBySessionDir = MutableStateFlow<Map<Path, Set<String>>>(emptyMap())
   private val observedUpdatedAtByThreadId = ConcurrentHashMap<String, Long>()
   private val completedUnreadUpdatedAtByThreadId = ConcurrentHashMap<String, Long>()
-
-  override val supportsUpdates: Boolean get() = true
-
-  override val supportsActiveThreadUpdateEvents: Boolean get() = true
-
-  override val supportsArchivedThreads: Boolean get() = true
 
   override val updateEvents: Flow<AgentSessionSourceUpdateEvent> = merge(
     readStateUpdateEvents,
@@ -381,7 +387,7 @@ internal class PiSessionSource(
     return if (currentControlUpdate == null) matchingUpdates else merge(flowOf(currentControlUpdate), matchingUpdates)
   }
 
-  override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> {
+  override suspend fun loadThreads(path: String, openProject: Project?): List<AgentSessionThread> {
     rememberSessionDirectory(path)
     val entries = sessionStore.loadEntries(path)
       .filterNot(PiSessionIndexEntry::archived)
@@ -429,16 +435,6 @@ internal class PiSessionSource(
     tabKey: String?,
   ): Boolean {
     return subAgentId == null && PiExtensionControlBridge.navigateThreadOutlineItem(path = path, threadId = threadId, itemId = itemId)
-  }
-
-  override fun canShowThreadOutlineForkAction(
-    path: String,
-    threadId: String,
-    itemId: String,
-    subAgentId: String?,
-    tabKey: String?,
-  ): Boolean {
-    return subAgentId == null && itemId.isNotBlank()
   }
 
   override fun canForkThreadFromOutlineItem(

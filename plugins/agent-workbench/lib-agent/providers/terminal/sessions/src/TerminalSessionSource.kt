@@ -5,39 +5,27 @@ package com.intellij.platform.ai.agent.terminal.sessions
 
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionArchivedSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionUpdateSource
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.Flow
 
 internal class TerminalSessionSource(
   private val stateService: TerminalSessionStateService,
-) : AgentSessionSource {
+) : AgentSessionSource, AgentSessionUpdateSource, AgentSessionArchivedSource {
   override val provider: AgentSessionProvider
     get() = TERMINAL_AGENT_SESSION_PROVIDER
-
-  override val supportsUpdates: Boolean
-    get() = true
-
-  override val supportsArchivedThreads: Boolean
-    get() = true
 
   override val updateEvents: Flow<AgentSessionSourceUpdateEvent>
     get() = stateService.updateEvents
 
-  override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> {
+  override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> {
     return stateService.listSessions(path = path, archived = false)
   }
 
-  override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> {
-    return stateService.listSessions(path = path, archived = false)
-  }
-
-  override suspend fun listArchivedThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> {
-    return stateService.listSessions(path = path, archived = true)
-  }
-
-  override suspend fun listArchivedThreadsFromClosedProject(path: String): List<AgentSessionThread> {
+  override suspend fun listArchivedThreads(path: String, openProject: Project?): List<AgentSessionThread> {
     return stateService.listSessions(path = path, archived = true)
   }
 }

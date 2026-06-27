@@ -466,10 +466,7 @@ private class TestAgentSessionProviderDescriptor(
     override val provider: AgentSessionProvider
       get() = this@TestAgentSessionProviderDescriptor.provider
 
-    override suspend fun listThreadsFromOpenProject(path: String, project: Project) =
-      emptyList<com.intellij.platform.ai.agent.core.session.AgentSessionThread>()
-
-    override suspend fun listThreadsFromClosedProject(path: String) =
+    override suspend fun listThreads(path: String, openProject: Project?) =
       emptyList<com.intellij.platform.ai.agent.core.session.AgentSessionThread>()
   }
 

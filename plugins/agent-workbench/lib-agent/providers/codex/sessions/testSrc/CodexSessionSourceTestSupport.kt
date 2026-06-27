@@ -74,7 +74,7 @@ internal suspend fun testRefreshHints(
   threadIds: List<String>,
 ): AgentSessionRefreshHints {
   val projectPath = projectDir.toString()
-  val listedThreads = source.listThreadsFromClosedProject(projectPath)
+  val listedThreads = source.listThreads(projectPath, openProject = null)
   check(listedThreads.map { it.id } == threadIds) {
     "Expected listed thread ids $threadIds but got ${listedThreads.map { it.id }}"
   }

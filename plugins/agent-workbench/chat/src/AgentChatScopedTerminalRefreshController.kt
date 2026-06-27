@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionActiveThreadUpdateSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
@@ -52,10 +53,8 @@ internal fun resolveAgentChatActiveThreadUpdateEvents(
   sessionSource: AgentSessionSource,
   projectPath: String,
 ): ((String) -> Flow<AgentSessionSourceUpdateEvent>)? {
-  if (!sessionSource.supportsActiveThreadUpdateEvents) {
-    return null
-  }
-  return { threadId -> sessionSource.activeThreadUpdateEvents(projectPath, threadId) }
+  val updateSource = sessionSource as? AgentSessionActiveThreadUpdateSource ?: return null
+  return { threadId -> updateSource.activeThreadUpdateEvents(projectPath, threadId) }
 }
 
 internal fun resolveAgentChatScopedRefreshThreadId(file: AgentChatVirtualFile): String? {

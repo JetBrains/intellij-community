@@ -20,11 +20,14 @@ import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentati
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionOutlineForkResult
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionActiveThreadUpdateSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadOutlineForkSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadOutlineNavigationSource
 import com.intellij.platform.ai.agent.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.agent.workbench.ui.agentSessionThreadStatusIcon
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -872,13 +875,6 @@ class AgentChatFileEditorProviderTest {
     val bridge = ChatTestProviderBridge(
       provider = AgentSessionProvider.from("pi"),
       icon = EmptyIcon.create(18, 18),
-      canShowForkOutlineItem = { path, threadId, itemId, subAgentId, tabKey ->
-        path == "/work/project-a" &&
-        threadId == "thread-fork" &&
-        itemId == "entry-fork" &&
-        subAgentId == null &&
-        tabKey == file.tabKey
-      },
     )
     val action = AgentChatThreadOutlineForkAction()
     val event = threadOutlineForkActionEvent(action, threadOutlineForkTarget(file, bridge.sessionSource, item))
@@ -907,7 +903,6 @@ class AgentChatFileEditorProviderTest {
     val bridge = ChatTestProviderBridge(
       provider = AgentSessionProvider.from("pi"),
       icon = EmptyIcon.create(18, 18),
-      canShowForkOutlineItem = { _, _, _, _, _ -> true },
       canForkOutlineItem = { path, threadId, itemId, subAgentId, tabKey ->
         path == "/work/project-a" &&
         threadId == "thread-fork" &&
@@ -953,13 +948,6 @@ class AgentChatFileEditorProviderTest {
           assertThat(threadId).isEqualTo("thread-fork-refresh")
           updateEvents
         },
-        canShowForkOutlineItem = { path, threadId, itemId, subAgentId, tabKey ->
-          path == "/work/project-a" &&
-          threadId == "thread-fork-refresh" &&
-          itemId == "entry-fork-refresh" &&
-          subAgentId == null &&
-          tabKey == file.tabKey
-        },
         canForkOutlineItem = { path, threadId, itemId, subAgentId, tabKey ->
           liveForkAvailable &&
           path == "/work/project-a" &&
@@ -992,7 +980,7 @@ class AgentChatFileEditorProviderTest {
   }
 
   @Test
-  fun threadOutlineForkActionStaysHiddenForProvidersWithoutStaticSupport() {
+  fun threadOutlineForkActionStaysHiddenForSourcesWithoutForkCapability() {
     val file = AgentChatVirtualFile(
       projectPath = "/work/project-a",
       threadIdentity = "CODEX:thread-fork",
@@ -1006,13 +994,14 @@ class AgentChatFileEditorProviderTest {
       kind = AgentSessionOutlineItemKind.USER_PROMPT,
       title = "Fork from here",
     )
-    val bridge = ChatTestProviderBridge(
-      provider = AgentSessionProvider.from("codex"),
-      icon = EmptyIcon.create(18, 18),
-      canForkOutlineItem = { _, _, _, _, _ -> true },
-    )
+    val source = object : AgentSessionSource {
+      override val provider: AgentSessionProvider
+        get() = AgentSessionProvider.from("codex")
+
+      override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> = emptyList()
+    }
     val action = AgentChatThreadOutlineForkAction()
-    val event = threadOutlineForkActionEvent(action, threadOutlineForkTarget(file, bridge.sessionSource, item))
+    val event = threadOutlineForkActionEvent(action, threadOutlineForkTarget(file, source, item))
 
     action.update(event)
 
@@ -1608,8 +1597,6 @@ private class ChatTestProviderBridge(
     { _, _, _, _, _ -> false },
   private val navigateOutlineItem: suspend (path: String, threadId: String, itemId: String, subAgentId: String?, tabKey: String?) -> Boolean =
     { _, _, _, _, _ -> false },
-  private val canShowForkOutlineItem: (path: String, threadId: String, itemId: String, subAgentId: String?, tabKey: String?) -> Boolean =
-    { _, _, _, _, _ -> false },
   private val canForkOutlineItem: (path: String, threadId: String, itemId: String, subAgentId: String?, tabKey: String?) -> Boolean =
     { _, _, _, _, _ -> false },
   private val forkOutlineItem: suspend (project: Project, path: String, threadId: String, itemId: String, subAgentId: String?, tabKey: String?) -> AgentSessionOutlineForkResult? =
@@ -1621,13 +1608,14 @@ private class ChatTestProviderBridge(
   override val newSessionLabelKey: String
     get() = provider.value
 
-  override val sessionSource: AgentSessionSource = object : AgentSessionSource {
+  override val sessionSource: AgentSessionSource = object : AgentSessionSource,
+                                                       AgentSessionActiveThreadUpdateSource,
+                                                       AgentSessionThreadOutlineNavigationSource,
+                                                       AgentSessionThreadOutlineForkSource {
     override val provider: AgentSessionProvider
       get() = this@ChatTestProviderBridge.provider
 
-    override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = emptyList()
-
-    override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> = emptyList()
+    override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> = emptyList()
 
     override suspend fun loadThreadOutline(path: String, threadId: String, subAgentId: String?): AgentSessionThreadOutline? {
       return outlineLoader(path, threadId, subAgentId)
@@ -1655,16 +1643,6 @@ private class ChatTestProviderBridge(
       tabKey: String?,
     ): Boolean {
       return navigateOutlineItem(path, threadId, itemId, subAgentId, tabKey)
-    }
-
-    override fun canShowThreadOutlineForkAction(
-      path: String,
-      threadId: String,
-      itemId: String,
-      subAgentId: String?,
-      tabKey: String?,
-    ): Boolean {
-      return canShowForkOutlineItem(path, threadId, itemId, subAgentId, tabKey)
     }
 
     override fun canForkThreadFromOutlineItem(

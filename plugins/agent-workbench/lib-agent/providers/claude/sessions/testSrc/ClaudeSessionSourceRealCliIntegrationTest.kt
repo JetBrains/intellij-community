@@ -265,7 +265,7 @@ private suspend fun awaitThread(
   var resolvedThread: AgentSessionThread? = null
   withTimeoutOrNull(30.seconds) {
     while (resolvedThread == null) {
-      resolvedThread = source.listThreadsFromClosedProject(projectPath).firstOrNull { it.id == sessionId }
+      resolvedThread = source.listThreads(projectPath, openProject = null).firstOrNull { it.id == sessionId }
       if (resolvedThread == null) {
         delay(250.milliseconds)
       }
@@ -278,7 +278,7 @@ private suspend fun awaitThreadHidden(source: ClaudeSessionSource, projectPath: 
   var hidden = false
   withTimeoutOrNull(30.seconds) {
     while (!hidden) {
-      hidden = source.listThreadsFromClosedProject(projectPath).none { it.id == sessionId }
+      hidden = source.listThreads(projectPath, openProject = null).none { it.id == sessionId }
       if (!hidden) {
         delay(250.milliseconds)
       }

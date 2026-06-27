@@ -7,6 +7,8 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.platform.ai.agent.sessions.core.normalizeConcreteAgentSessionThreadId
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionArchivedSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionCostSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.model.AgentArchivedSessionsState
@@ -185,7 +187,7 @@ class AgentArchivedSessionsService internal constructor(
       return
     }
 
-    val sources = sessionSourcesProvider().filter { source -> source.supportsArchivedThreads }
+    val sources = sessionSourcesProvider().filterIsInstance<AgentSessionArchivedSource>()
     var loadingProviderLoadStates = buildLoadingProviderLoadStates(sources.map { source -> source.provider })
     val resultsByPath = pathLoadController.runWithDelayedLoading(
       providerLoadStates = { loadingProviderLoadStates },
@@ -215,7 +217,7 @@ class AgentArchivedSessionsService internal constructor(
   private suspend fun loadArchivedThreads(
     path: String,
     project: Project?,
-    sources: List<AgentSessionSource>,
+    sources: List<AgentSessionArchivedSource>,
   ): AgentSessionLoadResult {
     if (sources.isEmpty()) {
       return AgentSessionLoadResult(threads = emptyList())
@@ -224,12 +226,7 @@ class AgentArchivedSessionsService internal constructor(
       sources.map { source ->
         async {
           val result = try {
-            val loadedThreads = if (project != null) {
-              source.listArchivedThreadsFromOpenProject(path = path, project = project)
-            }
-            else {
-              source.listArchivedThreadsFromClosedProject(path = path)
-            }
+            val loadedThreads = source.listArchivedThreads(path = path, openProject = project)
             Result.success(
               archiveTransitionSuppressions.applyArchivedAuthoritative(path = path, provider = source.provider, threads = loadedThreads)
             )
@@ -256,7 +253,7 @@ class AgentArchivedSessionsService internal constructor(
   }
 
   private suspend fun resolveArchivedCliAvailabilityByProvider(
-    sources: List<AgentSessionSource>,
+    sources: List<AgentSessionArchivedSource>,
   ): Map<AgentSessionProvider, Boolean> {
     return withContext(Dispatchers.IO) {
       coroutineScope {
@@ -321,10 +318,10 @@ class AgentArchivedSessionsService internal constructor(
 
     val sourcesByProvider = sessionSourcesProvider()
       .asSequence()
-      .filter(AgentSessionSource::supportsArchivedThreads)
-      .associateBy(AgentSessionSource::provider)
+      .mapNotNull { source -> source as? AgentSessionCostSource }
+      .associateBy(AgentSessionCostSource::provider)
     val cachedUpdatesByPath = LinkedHashMap<String, MutableMap<AgentSessionProvider, MutableMap<String, ArchivedThreadCostUpdate>>>()
-    val loadRequests = LinkedHashMap<Pair<AgentSessionSource, String>, MutableList<ArchivedVisibleThreadSnapshot>>()
+    val loadRequests = LinkedHashMap<Pair<AgentSessionCostSource, String>, MutableList<ArchivedVisibleThreadSnapshot>>()
 
     for (visibleThread in visibleThreads) {
       if (normalizeConcreteAgentSessionThreadId(visibleThread.threadId) == null) {

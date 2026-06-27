@@ -19,6 +19,7 @@ import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentati
 import com.intellij.platform.ai.agent.sessions.core.config.AgentWorkbenchProjectRuntimeConfigs
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionReadStateSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.frame.AGENT_SESSIONS_TOOL_WINDOW_ID
@@ -237,8 +238,8 @@ class AgentSessionRefreshService internal constructor(
       markThreadPresentationAsRead(path = path, provider = provider, threadId = threadId, updatedAt = updatedAt)
     }
     val source = sessionSourcesProvider().firstOrNull { it.provider == provider } ?: return
-    source.setActiveThreadId(threadId)
-    source.markThreadAsRead(threadId, updatedAt)
+    (source as? AgentSessionReadStateSource)?.setActiveThreadId(threadId)
+    (source as? AgentSessionReadStateSource)?.markThreadAsRead(threadId, updatedAt)
   }
 
   fun markThreadAsRead(path: String, provider: AgentSessionProvider, threadId: String, updatedAt: Long) {
@@ -246,7 +247,7 @@ class AgentSessionRefreshService internal constructor(
       markThreadPresentationAsRead(path = path, provider = provider, threadId = threadId, updatedAt = updatedAt)
     }
     val source = sessionSourcesProvider().firstOrNull { it.provider == provider } ?: return
-    source.markThreadAsRead(threadId, updatedAt)
+    (source as? AgentSessionReadStateSource)?.markThreadAsRead(threadId, updatedAt)
   }
 
   private fun markThreadPresentationAsRead(path: String, provider: AgentSessionProvider, threadId: String, updatedAt: Long) {

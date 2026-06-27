@@ -15,6 +15,7 @@ import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchInt
 import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchOperation
 import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchPlanner
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryChannel
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionArchivedSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionLaunchProfileResolver
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
@@ -271,12 +272,9 @@ internal class AgentChatFileEditor(
   }
 
   private suspend fun isRestoredArchivedThread(descriptor: AgentSessionProviderDescriptor?): Boolean {
-    val source = descriptor?.sessionSource ?: return false
-    if (!source.supportsArchivedThreads) {
-      return false
-    }
+    val source = descriptor?.sessionSource as? AgentSessionArchivedSource ?: return false
     val archivedThreads = try {
-      source.listArchivedThreadsFromOpenProject(path = file.projectPath, project = project)
+      source.listArchivedThreads(path = file.projectPath, openProject = project)
     }
     catch (e: CancellationException) {
       throw e

@@ -56,22 +56,6 @@ com.intellij.platform.ai.agent.claude.sessions.ClaudeSessionBackend
 - refreshThreads(java.lang.String,java.util.Set,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.platform.ai.agent.claude.sessions.ClaudeSessionBackendsKt
 - sf:createDefaultClaudeSessionBackend():com.intellij.platform.ai.agent.claude.sessions.ClaudeSessionBackend
-f:com.intellij.platform.ai.agent.claude.sessions.ClaudeSessionSource
-- com.intellij.platform.ai.agent.sessions.core.providers.BaseAgentSessionSource
-- <init>(com.intellij.platform.ai.agent.claude.sessions.ClaudeSessionBackend):V
-- b:<init>(com.intellij.platform.ai.agent.claude.sessions.ClaudeSessionBackend,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- activeThreadUpdateEvents(java.lang.String,java.lang.String):kotlinx.coroutines.flow.Flow
-- canForkThreadFromOutlineItem(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String):Z
-- canShowThreadOutlineForkAction(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String):Z
-- forkThreadFromOutlineItem(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
-- getSupportsArchivedThreads():Z
-- getSupportsUpdates():Z
-- getUpdateEvents():kotlinx.coroutines.flow.Flow
-- listArchivedThreads(java.lang.String,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
-- loadThreadCosts(java.lang.String,java.util.List,kotlin.coroutines.Continuation):java.lang.Object
-- loadThreadOutline(java.lang.String,java.lang.String,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
-- prefetchRefreshHints(java.util.List,java.util.Map,kotlin.coroutines.Continuation):java.lang.Object
-- refreshThreads(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceRefreshRequest,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.platform.ai.agent.claude.sessions.ClaudeSessionSource$inlined$sam$i$java_util_function_BiFunction$0
 - java.util.function.BiFunction
 - <init>(kotlin.jvm.functions.Function2):V

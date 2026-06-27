@@ -69,7 +69,7 @@ class CodexSessionSourceRolloutIntegrationTest {
         threadIds = listOf(THREAD_ID),
       )
 
-      val listedThreads = source.listThreadsFromClosedProject(projectDir.toString())
+      val listedThreads = source.listThreads(projectDir.toString(), openProject = null)
 
       assertThat(listedThreads).hasSize(1)
       assertThat(listedThreads.single().activity).isEqualTo(AgentThreadActivity.READY)
@@ -95,7 +95,7 @@ class CodexSessionSourceRolloutIntegrationTest {
         },
       )
 
-      val listedThreads = source.listThreadsFromClosedProject(projectDir.toString())
+      val listedThreads = source.listThreads(projectDir.toString(), openProject = null)
       val loadedCosts = source.loadThreadCosts(projectDir.toString(), listedThreads)
 
       assertThat(listedThreads).hasSize(1)
@@ -141,7 +141,7 @@ class CodexSessionSourceRolloutIntegrationTest {
         },
       )
 
-      val listedThreads = source.listThreadsFromClosedProject(projectDir.toString())
+      val listedThreads = source.listThreads(projectDir.toString(), openProject = null)
       val loadedCosts = source.loadThreadCosts(projectDir.toString(), listedThreads)
 
       assertThat(listedThreads).hasSize(1)
@@ -199,7 +199,7 @@ class CodexSessionSourceRolloutIntegrationTest {
         },
       )
 
-      val listedThreads = source.listThreadsFromClosedProject(projectDir.toString())
+      val listedThreads = source.listThreads(projectDir.toString(), openProject = null)
       val loadedCosts = source.loadThreadCosts(projectDir.toString(), listedThreads)
 
       assertThat(listedThreads).hasSize(1)
@@ -233,7 +233,7 @@ class CodexSessionSourceRolloutIntegrationTest {
         backendThreadCustomizer = { backendThread -> backendThread.copy(activity = CodexSessionActivity.PROCESSING) },
       )
 
-      val listedThreads = source.listThreadsFromClosedProject(projectDir.toString())
+      val listedThreads = source.listThreads(projectDir.toString(), openProject = null)
 
       assertThat(listedThreads).hasSize(1)
       assertThat(listedThreads.single().activity).isEqualTo(AgentThreadActivity.PROCESSING)
@@ -320,7 +320,7 @@ class CodexSessionSourceRolloutIntegrationTest {
         },
       )
 
-      val listedThreads = source.listThreadsFromClosedProject(projectDir.toString())
+      val listedThreads = source.listThreads(projectDir.toString(), openProject = null)
 
       assertThat(listedThreads).hasSize(1)
       assertThat(listedThreads.single().activity).isEqualTo(AgentThreadActivity.NEEDS_INPUT)
@@ -351,7 +351,7 @@ class CodexSessionSourceRolloutIntegrationTest {
         },
       )
 
-      val listedThreads = source.listThreadsFromClosedProject(projectDir.toString())
+      val listedThreads = source.listThreads(projectDir.toString(), openProject = null)
 
       assertThat(listedThreads).hasSize(1)
       assertThat(listedThreads.single().activity).isEqualTo(AgentThreadActivity.NEEDS_INPUT)

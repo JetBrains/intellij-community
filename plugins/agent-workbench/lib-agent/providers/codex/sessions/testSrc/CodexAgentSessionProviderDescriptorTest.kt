@@ -457,7 +457,7 @@ class CodexAgentSessionProviderDescriptorTest {
   }
 
   @Test
-  fun planModeDoesNotBuildTerminalPostStartDispatchSteps() {
+  fun planModeBuildsProviderPostStartDispatchStep() {
     val steps = bridge.buildPostStartDispatchSteps(
       AgentInitialMessagePlan(
         message = "Refactor this",
@@ -466,7 +466,11 @@ class CodexAgentSessionProviderDescriptorTest {
       )
     )
 
-    assertThat(steps).isEmpty()
+    assertThat(steps).hasSize(1)
+    val step = steps.single()
+    assertThat(step.text).isEqualTo("Refactor this")
+    assertThat(step.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS)
+    assertThat(step.action).isEqualTo(AgentInitialMessageDispatchAction.PROVIDER)
   }
 
   @Test
@@ -705,9 +709,8 @@ private fun emptySource(): AgentSessionSource {
     override val provider: AgentSessionProvider
       get() = AgentSessionProvider.from("codex")
 
-    override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = emptyList()
+    override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> = emptyList()
 
-    override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> = emptyList()
   }
 }
 

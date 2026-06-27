@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ai.agent.sessions.core.providers
 
+import org.jetbrains.annotations.ApiStatus
+
 const val AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE: String = "plan_mode"
 
 val AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION: AgentPromptProviderOption = AgentPromptProviderOption(
@@ -24,6 +26,7 @@ enum class AgentPromptProviderOptionTarget {
   EXISTING_TASK,
 }
 
+@ApiStatus.Internal
 fun resolveEffectiveProviderOptionIds(
   selectedProvider: AgentSessionProviderDescriptor?,
   selectedOptionIds: Set<String>,

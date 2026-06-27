@@ -57,6 +57,7 @@ private class RegisteredAgentSessionProviderDescriptor(
     get() = implementation.cliDisplayNameFallback ?: displayNameFallback
 }
 
+@Internal
 fun AgentSessionProviderImplementation.withProvider(provider: AgentSessionProvider): AgentSessionProviderDescriptor {
   return RegisteredAgentSessionProviderDescriptor(provider, this)
 }
@@ -86,6 +87,7 @@ private val PROVIDER_SNAPSHOT_CACHE = SnapshotExtensionPointCache(
   buildSnapshot = ::buildAgentSessionProviderSnapshot,
 )
 
+@Internal
 interface AgentSessionProviderRegistry {
   fun find(provider: AgentSessionProvider): AgentSessionProviderDescriptor?
 
@@ -149,6 +151,7 @@ private fun snapshotOrEmpty(): AgentSessionProviderSnapshot {
   return PROVIDER_SNAPSHOT_CACHE.getSnapshotOrEmpty()
 }
 
+@Internal
 class InMemoryAgentSessionProviderRegistry(
   providers: Iterable<AgentSessionProviderDescriptor>,
 ) : AgentSessionProviderRegistry {
@@ -171,6 +174,7 @@ class InMemoryAgentSessionProviderRegistry(
   }
 }
 
+@Internal
 object AgentSessionProviders {
   private val epRegistry: AgentSessionProviderRegistry = EpBackedAgentSessionProviderRegistry()
   private val registryOverride = OverridableValue { epRegistry }

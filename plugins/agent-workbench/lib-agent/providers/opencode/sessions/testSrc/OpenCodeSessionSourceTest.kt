@@ -3,6 +3,7 @@ package com.intellij.platform.ai.agent.opencode.sessions
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionArchivedSource
 import com.intellij.platform.ai.agent.opencode.sessions.server.OpenCodeServerProject
 import com.intellij.platform.ai.agent.opencode.sessions.server.OpenCodeServerSession
 import com.intellij.platform.ai.agent.opencode.sessions.server.OpenCodeServerSessionBackend
@@ -73,7 +74,7 @@ class OpenCodeSessionSourceTest {
     }
     val source = OpenCodeSessionSource(OpenCodeSessionStore(backend = OpenCodeServerSessionBackend(transport)))
 
-    val threads = source.listThreadsFromClosedProject("$projectPath/")
+    val threads = source.listThreads("$projectPath/", openProject = null)
 
     assertThat(threads.map { it.id }).containsExactly("new-session", "worktree-session", "old-session")
     assertThat(threads.map { it.title }).containsExactly("New thread", "Worktree session", "Older thread")
@@ -103,7 +104,7 @@ class OpenCodeSessionSourceTest {
     }
     val source = OpenCodeSessionSource(OpenCodeSessionStore(backend = OpenCodeServerSessionBackend(transport)))
 
-    val threads = source.listArchivedThreadsFromClosedProject(projectPath)
+    val threads = source.listArchivedThreads(projectPath, openProject = null)
 
     assertThat(threads.map { it.id }).containsExactly("archived-session")
     assertThat(threads.single().archived).isTrue()
@@ -136,19 +137,20 @@ class OpenCodeSessionSourceTest {
     assertThat(descriptor.supportsUnarchiveThread).isTrue()
     assertThat(descriptor.threadRenameAction.invoke(projectPath, "session-1", "  Renamed\nthread  ")).isTrue()
 
-    val renamedThread = descriptor.sessionSource.listThreadsFromClosedProject(projectPath).single()
+    val renamedThread = descriptor.sessionSource.listThreads(projectPath, openProject = null).single()
     assertThat(renamedThread.title).isEqualTo("Renamed thread")
     assertThat(transport.titlePatches).containsExactly("session-1" to "Renamed thread")
 
     assertThat(descriptor.archiveThread(projectPath, "session-1")).isTrue()
     assertThat(transport.archivedPatches).containsExactly("session-1" to 1_000L)
-    assertThat(descriptor.sessionSource.listThreadsFromClosedProject(projectPath)).isEmpty()
-    assertThat(descriptor.sessionSource.listArchivedThreadsFromClosedProject(projectPath).single().id).isEqualTo("session-1")
+    assertThat(descriptor.sessionSource.listThreads(projectPath, openProject = null)).isEmpty()
+    val archivedSource = descriptor.sessionSource as AgentSessionArchivedSource
+    assertThat(archivedSource.listArchivedThreads(projectPath, openProject = null).single().id).isEqualTo("session-1")
 
     assertThat(descriptor.unarchiveThread(projectPath, "session-1")).isTrue()
     assertThat(transport.archivedPatches).containsExactly("session-1" to 1_000L, "session-1" to null)
-    assertThat(descriptor.sessionSource.listArchivedThreadsFromClosedProject(projectPath)).isEmpty()
-    assertThat(descriptor.sessionSource.listThreadsFromClosedProject(projectPath).single().id).isEqualTo("session-1")
+    assertThat(archivedSource.listArchivedThreads(projectPath, openProject = null)).isEmpty()
+    assertThat(descriptor.sessionSource.listThreads(projectPath, openProject = null).single().id).isEqualTo("session-1")
   }
 
   @Test
@@ -179,8 +181,8 @@ class OpenCodeSessionSourceTest {
   fun returnsEmptyListWhenServerUnavailable(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
     val source = OpenCodeSessionSource(OpenCodeSessionStore(backend = FailingOpenCodeSessionBackend))
 
-    assertThat(source.listThreadsFromClosedProject(tempDir.toString())).isEmpty()
-    assertThat(source.listArchivedThreadsFromClosedProject(tempDir.toString())).isEmpty()
+    assertThat(source.listThreads(tempDir.toString(), openProject = null)).isEmpty()
+    assertThat(source.listArchivedThreads(tempDir.toString(), openProject = null)).isEmpty()
   }
 
   @Test

@@ -14,13 +14,21 @@ import com.intellij.platform.ai.agent.sessions.core.cost.AgentSessionUsageCostCa
 import com.intellij.platform.ai.agent.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.platform.ai.agent.sessions.core.cost.aggregateAgentSessionUsageCost
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionOutlineForkResult
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionActiveThreadUpdateSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionArchivedSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionCostSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshThreadSeed
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshHintsSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceRefreshRequest
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceRefreshResult
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadActivityUpdate
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadOutlineForkSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadOutlineSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionUpdateSource
 import com.intellij.platform.ai.agent.sessions.core.providers.BaseAgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.resolveReadTrackedActivity
 import com.intellij.openapi.project.Project
@@ -30,12 +38,20 @@ import kotlinx.coroutines.flow.merge
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
-class ClaudeSessionSource internal constructor(
+internal class ClaudeSessionSource internal constructor(
   private val backend: ClaudeSessionBackend,
   private val calculateCost: (AgentSessionUsageSnapshot) -> AgentSessionCost,
   private val executableResolver: suspend () -> String = ClaudeCliSupport::resolveExecutableOrDefaultViaTerminalResolver,
   private val hookSettingsProvider: (String) -> String? = ClaudeHookBridge::createLaunchSettingsArgument,
-) : BaseAgentSessionSource(provider = CLAUDE_AGENT_SESSION_PROVIDER) {
+) : BaseAgentSessionSource(provider = CLAUDE_AGENT_SESSION_PROVIDER),
+    AgentSessionUpdateSource,
+    AgentSessionActiveThreadUpdateSource,
+    AgentSessionArchivedSource,
+    AgentSessionRefreshSource,
+    AgentSessionRefreshHintsSource,
+    AgentSessionCostSource,
+    AgentSessionThreadOutlineSource,
+    AgentSessionThreadOutlineForkSource {
   constructor(
     backend: ClaudeSessionBackend = createDefaultClaudeSessionBackend(),
   ) : this(
@@ -49,10 +65,6 @@ class ClaudeSessionSource internal constructor(
   private val completedUnreadUpdatedAtByThreadId: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
   private val latestForkablePromptByThreadKey: ConcurrentHashMap<ClaudeThreadOutlineKey, ClaudeForkablePrompt> = ConcurrentHashMap()
 
-  override val supportsUpdates: Boolean get() = true
-
-  override val supportsArchivedThreads: Boolean get() = true
-
   override val updateEvents: Flow<AgentSessionSourceUpdateEvent>
     get() = merge(
       backend.sessionUpdates,
@@ -63,7 +75,7 @@ class ClaudeSessionSource internal constructor(
     return backend.activeThreadUpdateEvents(path = path, threadId = threadId)
   }
 
-  override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> {
+  override suspend fun loadThreads(path: String, openProject: Project?): List<AgentSessionThread> {
     val threads = backend.listThreads(path = path, openProject = openProject)
     val visibleThreads = threads.filterNot(ClaudeBackendThread::archived)
     rememberActiveNonReadyThreadRead(visibleThreads)
@@ -84,7 +96,7 @@ class ClaudeSessionSource internal constructor(
 
   override suspend fun refreshThreads(request: AgentSessionSourceRefreshRequest): AgentSessionSourceRefreshResult {
     if (!request.isThreadScoped) {
-      return super.refreshThreads(request)
+      return refreshThreadsByListing(request)
     }
 
     val partialThreadsByPath = LinkedHashMap<String, List<AgentSessionThread>>()
@@ -225,16 +237,6 @@ class ClaudeSessionSource internal constructor(
     val outline = if (subAgentId == null) backend.loadThreadOutline(path = path, threadId = threadId) else null
     rememberLatestForkablePrompt(path = path, threadId = threadId, outline = outline)
     return outline
-  }
-
-  override fun canShowThreadOutlineForkAction(
-    path: String,
-    threadId: String,
-    itemId: String,
-    subAgentId: String?,
-    tabKey: String?,
-  ): Boolean {
-    return canForkThreadFromOutlineItem(path = path, threadId = threadId, itemId = itemId, subAgentId = subAgentId, tabKey = tabKey)
   }
 
   override fun canForkThreadFromOutlineItem(

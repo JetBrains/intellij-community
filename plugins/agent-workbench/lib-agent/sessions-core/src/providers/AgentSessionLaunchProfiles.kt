@@ -121,6 +121,7 @@ fun builtInLaunchProfileId(provider: AgentSessionProvider, launchMode: AgentSess
   return "$BUILT_IN_LAUNCH_PROFILE_PREFIX${provider.value}:${launchMode.name.lowercase()}"
 }
 
+@ApiStatus.Internal
 fun buildBuiltInLaunchProfiles(
   menuModel: AgentSessionProviderMenuModel,
   resolveName: (AgentSessionProviderMenuItem) -> String,

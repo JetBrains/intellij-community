@@ -5,6 +5,7 @@ import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionActiveThreadUpdateSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadActivityUpdate
@@ -50,13 +51,7 @@ class AgentChatScopedTerminalRefreshControllerTest {
     val calls = AtomicInteger()
 
     val updateEvents = resolveAgentChatActiveThreadUpdateEvents(
-      sessionSource = TestAgentSessionSource(
-        supportsActiveThreadUpdateEvents = false,
-        activeThreadUpdateEventsProvider = { _, _ ->
-          calls.incrementAndGet()
-          emptyFlow()
-        },
-      ),
+      sessionSource = TestAgentSessionSource(),
       projectPath = "/work/project",
     )
 
@@ -69,8 +64,7 @@ class AgentChatScopedTerminalRefreshControllerTest {
     val fileChanges = MutableSharedFlow<AgentSessionSourceUpdateEvent>(extraBufferCapacity = 16)
     val watchRequests = LinkedBlockingQueue<Pair<String, String>>()
     val updateEvents = checkNotNull(resolveAgentChatActiveThreadUpdateEvents(
-      sessionSource = TestAgentSessionSource(
-        supportsActiveThreadUpdateEvents = true,
+      sessionSource = TestAgentSessionActiveThreadUpdateSource(
         activeThreadUpdateEventsProvider = { path, threadId ->
           watchRequests.add(path to threadId)
           fileChanges
@@ -325,17 +319,16 @@ private fun activeUpdate(threadId: String): AgentSessionSourceUpdateEvent {
   )
 }
 
-private class TestAgentSessionSource(
-  override val supportsActiveThreadUpdateEvents: Boolean,
-  private val activeThreadUpdateEventsProvider: (String, String) -> Flow<AgentSessionSourceUpdateEvent>,
-) : AgentSessionSource {
+private open class TestAgentSessionSource : AgentSessionSource {
   override val provider: AgentSessionProvider
     get() = AgentSessionProvider.from("codex")
 
-  override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = emptyList()
+  override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> = emptyList()
+}
 
-  override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> = emptyList()
-
+private class TestAgentSessionActiveThreadUpdateSource(
+  private val activeThreadUpdateEventsProvider: (String, String) -> Flow<AgentSessionSourceUpdateEvent>,
+) : TestAgentSessionSource(), AgentSessionActiveThreadUpdateSource {
   override fun activeThreadUpdateEvents(path: String, threadId: String): Flow<AgentSessionSourceUpdateEvent> {
     return activeThreadUpdateEventsProvider(path, threadId)
   }

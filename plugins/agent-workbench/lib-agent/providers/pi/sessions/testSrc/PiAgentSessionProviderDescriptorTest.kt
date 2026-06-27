@@ -1065,8 +1065,7 @@ private fun emptySource(): AgentSessionSource {
     override val provider: AgentSessionProvider
       get() = AgentSessionProvider.from("pi")
 
-    override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = emptyList()
+    override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> = emptyList()
 
-    override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> = emptyList()
   }
 }

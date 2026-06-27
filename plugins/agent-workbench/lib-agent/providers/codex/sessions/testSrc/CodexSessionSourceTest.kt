@@ -183,10 +183,10 @@ class CodexSessionSourceTest {
     )
 
     runBlocking(Dispatchers.Default) {
-      assertThat(source.canShowThreadOutlineForkAction(PROJECT_PATH, "source-thread", codexUserPromptOutlineItemId(1))).isTrue()
-      assertThat(source.canShowThreadOutlineForkAction(PROJECT_PATH, "source-thread", codexUserPromptOutlineItemId(1), subAgentId = "sub"))
+      assertThat(source.canForkThreadFromOutlineItem(PROJECT_PATH, "source-thread", codexUserPromptOutlineItemId(1))).isTrue()
+      assertThat(source.canForkThreadFromOutlineItem(PROJECT_PATH, "source-thread", codexUserPromptOutlineItemId(1), subAgentId = "sub"))
         .isFalse()
-      assertThat(source.canShowThreadOutlineForkAction(PROJECT_PATH, "source-thread", "call-1")).isFalse()
+      assertThat(source.canForkThreadFromOutlineItem(PROJECT_PATH, "source-thread", "call-1")).isFalse()
 
       val result = source.forkThreadFromOutlineItem(
         project = testProject(),
@@ -263,7 +263,7 @@ class CodexSessionSourceTest {
 
     runBlocking(Dispatchers.Default) {
       val source1 = createCostSource(multiplier = 1)
-      val listed1 = source1.listThreadsFromClosedProject(projectPath)
+      val listed1 = source1.listThreads(projectPath, openProject = null)
       val cost1 = source1.loadThreadCosts(projectPath, listed1).getValue("thread-1")
       assertThat(cost1).isEqualTo(
         AgentSessionCost(
@@ -274,7 +274,7 @@ class CodexSessionSourceTest {
       )
 
       val source2 = createCostSource(multiplier = 9)
-      val listed2 = source2.listThreadsFromClosedProject(projectPath)
+      val listed2 = source2.listThreads(projectPath, openProject = null)
       val cost2 = source2.loadThreadCosts(projectPath, listed2).getValue("thread-1")
       assertThat(cost2).isEqualTo(cost1)
 
@@ -293,7 +293,7 @@ class CodexSessionSourceTest {
       )
 
       val source3 = createCostSource(multiplier = 2)
-      val listed3 = source3.listThreadsFromClosedProject(projectPath)
+      val listed3 = source3.listThreads(projectPath, openProject = null)
       val cost3 = source3.loadThreadCosts(projectPath, listed3).getValue("thread-1")
       assertThat(cost3).isEqualTo(
         AgentSessionCost(
@@ -369,7 +369,7 @@ class CodexSessionSourceTest {
 
     runBlocking(Dispatchers.Default) {
       val source1 = createArchivedCostSource(multiplier = 1)
-      val archived1 = source1.listArchivedThreadsFromClosedProject(projectPath)
+      val archived1 = source1.listArchivedThreads(projectPath, openProject = null)
       val cost1 = source1.loadThreadCosts(projectPath, archived1).getValue("archived-1")
       assertThat(cost1).isEqualTo(
         AgentSessionCost(
@@ -380,7 +380,7 @@ class CodexSessionSourceTest {
       )
 
       val source2 = createArchivedCostSource(multiplier = 9)
-      val archived2 = source2.listArchivedThreadsFromClosedProject(projectPath)
+      val archived2 = source2.listArchivedThreads(projectPath, openProject = null)
       assertThat(archived2.single().cost).isEqualTo(cost1)
 
       updatedAt = 200L
@@ -398,7 +398,7 @@ class CodexSessionSourceTest {
       )
 
       val source3 = createArchivedCostSource(multiplier = 2)
-      val archived3 = source3.listArchivedThreadsFromClosedProject(projectPath)
+      val archived3 = source3.listArchivedThreads(projectPath, openProject = null)
       val cost3 = source3.loadThreadCosts(projectPath, archived3).getValue("archived-1")
       assertThat(cost3).isEqualTo(
         AgentSessionCost(
@@ -491,7 +491,7 @@ class CodexSessionSourceTest {
     )
 
     runBlocking(Dispatchers.Default) {
-      val listedThreads = source.listThreadsFromClosedProject(projectPath)
+      val listedThreads = source.listThreads(projectPath, openProject = null)
       val loadedCosts = source.loadThreadCosts(projectPath, listedThreads)
 
       assertThat(listCalls).isEqualTo(1)
@@ -1043,7 +1043,7 @@ class CodexSessionSourceTest {
 
     runBlocking(Dispatchers.Default) {
       source.setActiveThreadId("thread-1")
-      source.listThreadsFromClosedProject(PROJECT_PATH)
+      source.listThreads(PROJECT_PATH, openProject = null)
 
       val hints = source.prefetchRefreshHints(
         paths = listOf(PROJECT_PATH),
@@ -1076,7 +1076,7 @@ class CodexSessionSourceTest {
     )
 
     runBlocking(Dispatchers.Default) {
-      val archivedThreads = source.listArchivedThreadsFromClosedProject(PROJECT_PATH)
+      val archivedThreads = source.listArchivedThreads(PROJECT_PATH, openProject = null)
 
       assertThat(archivedThreads).hasSize(1)
       assertThat(archivedThreads.single().id).isEqualTo("archived-1")
@@ -1139,7 +1139,7 @@ class CodexSessionSourceTest {
     )
 
     runBlocking(Dispatchers.Default) {
-      val archivedThreads = source.listArchivedThreadsFromClosedProject(PROJECT_PATH)
+      val archivedThreads = source.listArchivedThreads(PROJECT_PATH, openProject = null)
       val loadedCosts = source.loadThreadCosts(PROJECT_PATH, archivedThreads)
 
       assertThat(archivedThreads).hasSize(1)
@@ -1373,7 +1373,7 @@ class CodexSessionSourceTest {
     )
 
     runBlocking(Dispatchers.Default) {
-      val threads = source.listThreadsFromClosedProject(PROJECT_PATH)
+      val threads = source.listThreads(PROJECT_PATH, openProject = null)
 
       assertThat(observedAppServerSeeds).isEmpty()
       assertThat(observedRolloutSeeds).isEmpty()

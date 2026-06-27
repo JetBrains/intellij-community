@@ -14,6 +14,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceEntry
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 import javax.swing.JComponent
 
@@ -218,6 +219,7 @@ data class AgentPendingSessionMetadata(
   @JvmField val launchMode: String?,
 )
 
+@ApiStatus.Internal
 interface AgentSessionProviderImplementation {
   val displayNameKey: String
   val displayNameFallback: String?
@@ -311,8 +313,10 @@ interface AgentSessionProviderImplementation {
   /**
    * Provider-backed session source.
    *
-   * Implementations that support thread outlines must follow the role-aware [AgentSessionSource.loadThreadOutline] contract so shared
-   * chat UI can render user prompts, assistant responses, and tool activity consistently across providers.
+   * The required source contract is active-thread listing through [AgentSessionSource.listThreads]. Optional behaviors such as archived
+   * rows, refresh events, cost hydration, and thread outlines are exposed by the focused `AgentSession*Source` capability interfaces.
+   * Providers that support thread outlines must follow the role-aware [AgentSessionThreadOutlineSource.loadThreadOutline] contract so
+   * shared chat UI can render user prompts, assistant responses, and tool activity consistently across providers.
    */
   val sessionSource: AgentSessionSource
   val cliMissingMessageKey: String
@@ -494,6 +498,7 @@ interface AgentSessionProviderImplementation {
   fun isCliMissingError(throwable: Throwable): Boolean = false
 }
 
+@ApiStatus.Internal
 interface AgentSessionProviderDescriptor : AgentSessionProviderImplementation {
   val provider: AgentSessionProvider
 

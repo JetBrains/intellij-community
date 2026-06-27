@@ -25,8 +25,8 @@ class TerminalSessionSourceTest {
       stateService.recordSession(path = "/tmp/other", threadId = "other", title = "Other", createdAtMs = 3000L)
       stateService.archiveSession(path = "/tmp/project", threadId = "first")
 
-      val active = source.listThreadsFromClosedProject("/tmp/project")
-      val archived = source.listArchivedThreadsFromClosedProject("/tmp/project/")
+      val active = source.listThreads("/tmp/project", openProject = null)
+      val archived = source.listArchivedThreads("/tmp/project/", openProject = null)
 
       assertThat(active.map { thread -> thread.id }).containsExactly("second")
       assertThat(active.single().provider).isEqualTo(AgentSessionProvider.from("terminal"))
@@ -77,8 +77,8 @@ class TerminalSessionSourceTest {
       stateService.recordSession(path = "C:\\", threadId = "drive-root", title = "Drive root", createdAtMs = 1000L)
       stateService.recordWorkingDirectory(path = "C:/", threadId = "drive-root", workingDirectory = "C:\\")
 
-      val threadsFromSlashPath = source.listThreadsFromClosedProject("C:/")
-      val threadsFromBackslashPath = source.listThreadsFromClosedProject("C:\\")
+      val threadsFromSlashPath = source.listThreads("C:/", openProject = null)
+      val threadsFromBackslashPath = source.listThreads("C:\\", openProject = null)
       val context = checkNotNull(stateService.readRestoreContext(path = "C:/", threadId = "drive-root"))
       assertThat(threadsFromSlashPath.map { thread -> thread.id }).containsExactly("drive-root")
       assertThat(threadsFromBackslashPath.map { thread -> thread.id }).containsExactly("drive-root")

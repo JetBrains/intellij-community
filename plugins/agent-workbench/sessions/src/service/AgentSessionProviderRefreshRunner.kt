@@ -13,6 +13,10 @@ import com.intellij.platform.ai.agent.sessions.core.normalizeConcreteAgentSessio
 import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationModel
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshThreadSeed
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPrefetchSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionReadStateSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshHintsSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceRefreshRequest
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceRefreshResult
@@ -65,7 +69,7 @@ internal class AgentSessionProviderRefreshRunner(
       val source = sessionSourcesProvider().firstOrNull { it.provider == provider } ?: return
       val openChatSnapshot = openAgentChatSnapshotProvider()
       val selectedIdentity = openChatSnapshot.selectedChatThreadIdentity
-      source.setActiveThreadId(
+      (source as? AgentSessionReadStateSource)?.setActiveThreadId(
         if (selectedIdentity != null && selectedIdentity.first == provider) selectedIdentity.second else null
       )
       val stateSnapshot = stateStore.snapshot()
@@ -90,8 +94,9 @@ internal class AgentSessionProviderRefreshRunner(
 
       val outcomes = LinkedHashMap<String, ProviderRefreshOutcome>(targetPaths.size)
       try {
-        val refreshResult = source.refreshThreads(
-          AgentSessionSourceRefreshRequest(
+        val refreshResult = refreshThreads(
+          source = source,
+          request = AgentSessionSourceRefreshRequest(
             paths = targetPaths.toList(),
             threadIds = updateEvent.threadIds.orEmpty(),
             updateEvent = updateEvent,
@@ -205,7 +210,7 @@ internal class AgentSessionProviderRefreshRunner(
       val source = sessionSourcesProvider().firstOrNull { it.provider == provider } ?: return
       val openChatSnapshot = openAgentChatSnapshotProvider()
       val selectedIdentity = openChatSnapshot.selectedChatThreadIdentity
-      source.setActiveThreadId(
+      (source as? AgentSessionReadStateSource)?.setActiveThreadId(
         if (selectedIdentity != null && selectedIdentity.first == provider) selectedIdentity.second else null
       )
       val stateSnapshot = stateStore.snapshot()
@@ -317,8 +322,9 @@ internal class AgentSessionProviderRefreshRunner(
     outcomes: MutableMap<String, ProviderRefreshOutcome>,
   ) {
     try {
-      val refreshResult = source.refreshThreads(
-        AgentSessionSourceRefreshRequest(
+      val refreshResult = refreshThreads(
+        source = source,
+        request = AgentSessionSourceRefreshRequest(
           paths = targetPaths.toList(),
           threadIds = updateEvent.threadIds.orEmpty(),
           updateEvent = updateEvent,
@@ -360,16 +366,57 @@ internal class AgentSessionProviderRefreshRunner(
       forcedThreadIds = forcedThreadIds,
     )
     return try {
-      source.prefetchRefreshHints(
+      (source as? AgentSessionRefreshHintsSource)?.prefetchRefreshHints(
         paths = refreshHintPaths.toList(),
         refreshThreadSeedsByPath = refreshThreadSeedsByPath,
-      )
+      ).orEmpty()
     }
     catch (e: Throwable) {
       if (e is CancellationException) throw e
       LOG.warn("Failed to fetch ${provider.value} refresh hints", e)
       emptyMap()
     }
+  }
+
+  private suspend fun refreshThreads(
+    source: AgentSessionSource,
+    request: AgentSessionSourceRefreshRequest,
+  ): AgentSessionSourceRefreshResult {
+    val refreshSource = source as? AgentSessionRefreshSource
+    if (refreshSource != null) {
+      return refreshSource.refreshThreads(request)
+    }
+    if (request.paths.isEmpty()) {
+      return AgentSessionSourceRefreshResult()
+    }
+
+    val prefetched = try {
+      (source as? AgentSessionPrefetchSource)?.prefetchThreads(request.paths).orEmpty()
+    }
+    catch (e: Throwable) {
+      if (e is CancellationException) throw e
+      emptyMap()
+    }
+    val completeThreadsByPath = LinkedHashMap<String, List<AgentSessionThread>>(request.paths.size)
+    val failuresByPath = LinkedHashMap<String, Throwable>()
+    for (path in request.paths) {
+      val prefetchedThreads = prefetched[path]
+      if (prefetchedThreads != null) {
+        completeThreadsByPath[path] = prefetchedThreads
+        continue
+      }
+      try {
+        completeThreadsByPath[path] = source.listThreads(path = path, openProject = null)
+      }
+      catch (e: Throwable) {
+        if (e is CancellationException) throw e
+        failuresByPath[path] = e
+      }
+    }
+    return AgentSessionSourceRefreshResult(
+      completeThreadsByPath = completeThreadsByPath,
+      failuresByPath = failuresByPath,
+    )
   }
 
   private fun applyRefreshResultToOutcomes(

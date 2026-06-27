@@ -81,7 +81,7 @@ class CodexSessionSourceRealAppServerIntegrationTest {
 
           val source = createRealAppServerSource(client = client, notifications = notifications)
           val originalRows = eventually(timeout = 30.seconds) {
-            source.listThreadsFromClosedProject(projectDir.toString())
+            source.listThreads(projectDir.toString(), openProject = null)
               .takeIf { rows -> rows.any { it.id == originalId } }
           } ?: error("Timed out waiting for original thread $originalId to appear in Codex app-server thread/list")
           val originalTitle = originalRows.single { it.id == originalId }.title
@@ -106,7 +106,7 @@ class CodexSessionSourceRealAppServerIntegrationTest {
           assertThat(startedEvent.scopedPaths).containsExactly(forkScopedPath)
 
           val afterForkRows = eventually(timeout = 30.seconds) {
-            val rows = source.listThreadsFromClosedProject(projectDir.toString())
+            val rows = source.listThreads(projectDir.toString(), openProject = null)
             rows.takeIf { it.any { row -> row.id == originalId } && it.any { row -> row.id == forkId } }
           } ?: error("Timed out waiting for fork $forkId and original $originalId in Codex app-server thread/list")
           assertThat(afterForkRows.map { it.id }).contains(originalId, forkId)
@@ -123,7 +123,7 @@ class CodexSessionSourceRealAppServerIntegrationTest {
           assertThat(renameEvent.threadIds).containsExactly(forkId)
 
           val renamedRows = eventually(timeout = 30.seconds) {
-            val rows = source.listThreadsFromClosedProject(projectDir.toString())
+            val rows = source.listThreads(projectDir.toString(), openProject = null)
             val original = rows.firstOrNull { it.id == originalId }
             val fork = rows.firstOrNull { it.id == forkId }
             rows.takeIf { original != null && fork?.title == "Renamed fork" }

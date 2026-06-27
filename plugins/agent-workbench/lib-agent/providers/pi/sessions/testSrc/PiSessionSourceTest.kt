@@ -7,6 +7,7 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItemKind
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionUpdateSource
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
@@ -59,7 +60,7 @@ class PiSessionSourceTest {
       Files.writeString(sessionDir.resolve("malformed.jsonl"), "not json\n")
       val source = sourceFor(sessionDir)
 
-      val threads = source.listThreadsFromClosedProject("$projectDir/")
+      val threads = source.listThreads("$projectDir/", openProject = null)
 
       assertThat(threads.map { it.id }).containsExactly("session-new", "session-old")
       assertThat(threads[0].title).isEqualTo("Named Pi session")
@@ -86,7 +87,7 @@ class PiSessionSourceTest {
       )
       val source = sourceFor(sessionDir)
 
-      val thread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      val thread = source.listThreads(projectDir.toString(), openProject = null).single()
 
       assertThat(thread.title).isEqualTo("New name")
     }
@@ -121,7 +122,7 @@ class PiSessionSourceTest {
       },
     )
 
-    assertThat(source.supportsUpdates).isTrue()
+    assertThat(source).isInstanceOf(AgentSessionUpdateSource::class.java)
     assertThat(contributorProviderCallCount).isZero()
   }
 
@@ -218,7 +219,7 @@ class PiSessionSourceTest {
       )
       val source = sourceFor(sessionDir)
 
-      val thread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      val thread = source.listThreads(projectDir.toString(), openProject = null).single()
 
       assertThat(thread.title).isEqualTo("First task")
     }
@@ -358,8 +359,8 @@ class PiSessionSourceTest {
       val source = PiSessionSource(sessionStore = store)
 
       assertThat(store.archiveThread(projectDir.toString(), "session-archive")).isTrue()
-      assertThat(source.listThreadsFromClosedProject(projectDir.toString())).isEmpty()
-      val archivedThread = source.listArchivedThreadsFromClosedProject(projectDir.toString()).single()
+      assertThat(source.listThreads(projectDir.toString(), openProject = null)).isEmpty()
+      val archivedThread = source.listArchivedThreads(projectDir.toString(), openProject = null).single()
       assertThat(archivedThread.id).isEqualTo("session-archive")
       assertThat(archivedThread.title).isEqualTo("Archive me")
       assertThat(archivedThread.archived).isTrue()
@@ -369,11 +370,11 @@ class PiSessionSourceTest {
 
       now = 5_000L
       assertThat(store.unarchiveThread(projectDir.toString(), "session-archive")).isTrue()
-      val activeThread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      val activeThread = source.listThreads(projectDir.toString(), openProject = null).single()
       assertThat(activeThread.title).isEqualTo("Archive me")
       assertThat(activeThread.archived).isFalse()
       assertThat(activeThread.updatedAt).isEqualTo(3_000L)
-      assertThat(source.listArchivedThreadsFromClosedProject(projectDir.toString())).isEmpty()
+      assertThat(source.listArchivedThreads(projectDir.toString(), openProject = null)).isEmpty()
       assertThat(Files.readString(sessionFile)).contains("\"name\":\"Archive me\"")
       assertThat(Files.exists(sessionDir.resolve("agent-workbench-archive-state.jsonl"))).isFalse()
     }
@@ -394,14 +395,14 @@ class PiSessionSourceTest {
       val store = PiSessionStore(sessionDirResolver = { sessionDir }, timeProvider = { now })
       val source = PiSessionSource(sessionStore = store)
 
-      assertThat(source.listThreadsFromClosedProject(projectDir.toString()).single().activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(source.listThreads(projectDir.toString(), openProject = null).single().activity).isEqualTo(AgentThreadActivity.PROCESSING)
       assertThat(store.archiveThread(projectDir.toString(), "session-archive-processing")).isTrue()
-      val archivedThread = source.listArchivedThreadsFromClosedProject(projectDir.toString()).single()
+      val archivedThread = source.listArchivedThreads(projectDir.toString(), openProject = null).single()
       assertThat(archivedThread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
 
       now = 5_000L
       assertThat(store.unarchiveThread(projectDir.toString(), "session-archive-processing")).isTrue()
-      val activeThread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      val activeThread = source.listThreads(projectDir.toString(), openProject = null).single()
       assertThat(activeThread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
     }
   }
@@ -422,7 +423,7 @@ class PiSessionSourceTest {
 
       assertThat(store.renameThread(projectDir.toString(), "session-rename", "  New title  ")).isTrue()
 
-      val thread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      val thread = source.listThreads(projectDir.toString(), openProject = null).single()
       assertThat(thread.title).isEqualTo("New title")
       val lines = Files.readAllLines(sessionFile)
       assertThat(lines.last()).contains("\"type\":\"session_info\"")
@@ -448,7 +449,7 @@ class PiSessionSourceTest {
       assertThat(store.archiveThread(projectDir.toString(), "session-rename-archived")).isTrue()
       assertThat(store.renameThread(projectDir.toString(), "session-rename-archived", "New title")).isTrue()
 
-      val archivedThread = source.listArchivedThreadsFromClosedProject(projectDir.toString()).single()
+      val archivedThread = source.listArchivedThreads(projectDir.toString(), openProject = null).single()
       assertThat(archivedThread.title).isEqualTo("New title")
       assertThat(archivedThread.archived).isTrue()
       assertThat(Files.readAllLines(sessionFile).last()).contains("\"name\":\"[archived] New title\"")
@@ -470,10 +471,10 @@ class PiSessionSourceTest {
       val source = sourceFor(sessionDir)
 
       source.markThreadAsRead("session-read", 2_000L)
-      assertThat(source.listThreadsFromClosedProject(projectDir.toString()).single().activity).isEqualTo(AgentThreadActivity.UNREAD)
+      assertThat(source.listThreads(projectDir.toString(), openProject = null).single().activity).isEqualTo(AgentThreadActivity.UNREAD)
 
       source.markThreadAsRead("session-read", 3_000L)
-      assertThat(source.listThreadsFromClosedProject(projectDir.toString()).single().activity).isEqualTo(AgentThreadActivity.READY)
+      assertThat(source.listThreads(projectDir.toString(), openProject = null).single().activity).isEqualTo(AgentThreadActivity.READY)
     }
   }
 
@@ -490,7 +491,7 @@ class PiSessionSourceTest {
       )
       val source = sourceFor(sessionDir)
 
-      val thread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      val thread = source.listThreads(projectDir.toString(), openProject = null).single()
 
       assertThat(thread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
     }
@@ -515,7 +516,7 @@ class PiSessionSourceTest {
       )
       val source = sourceFor(sessionDir)
 
-      val thread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      val thread = source.listThreads(projectDir.toString(), openProject = null).single()
 
       assertThat(thread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
     }
@@ -535,7 +536,7 @@ class PiSessionSourceTest {
       )
       val source = sourceFor(sessionDir)
 
-      val thread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      val thread = source.listThreads(projectDir.toString(), openProject = null).single()
 
       assertThat(thread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
     }
@@ -555,7 +556,7 @@ class PiSessionSourceTest {
       )
       val source = sourceFor(sessionDir)
 
-      val thread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      val thread = source.listThreads(projectDir.toString(), openProject = null).single()
 
       assertThat(thread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
     }
@@ -574,17 +575,17 @@ class PiSessionSourceTest {
       )
       val source = sourceFor(sessionDir)
 
-      val workingThread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      val workingThread = source.listThreads(projectDir.toString(), openProject = null).single()
       assertThat(workingThread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
       appendPiSessionEntry(
         sessionFile,
         piAssistantMessageEntry(id = "assistant-completed-observed", parentId = "user-completed-observed", timestamp = 4_000L),
       )
 
-      val completedThread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      val completedThread = source.listThreads(projectDir.toString(), openProject = null).single()
       assertThat(completedThread.activity).isEqualTo(AgentThreadActivity.UNREAD)
       source.markThreadAsRead("session-completed-observed", 4_000L)
-      val readThread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      val readThread = source.listThreads(projectDir.toString(), openProject = null).single()
       assertThat(readThread.activity).isEqualTo(AgentThreadActivity.READY)
     }
   }
@@ -603,14 +604,14 @@ class PiSessionSourceTest {
       val source = sourceFor(sessionDir)
       source.setActiveThreadId("session-active-completed")
 
-      val workingThread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      val workingThread = source.listThreads(projectDir.toString(), openProject = null).single()
       assertThat(workingThread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
       appendPiSessionEntry(
         sessionFile,
         piAssistantMessageEntry(id = "assistant-active-completed", parentId = "user-active-completed", timestamp = 4_000L),
       )
 
-      val completedThread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      val completedThread = source.listThreads(projectDir.toString(), openProject = null).single()
       assertThat(completedThread.activity).isEqualTo(AgentThreadActivity.UNREAD)
     }
   }
@@ -644,31 +645,41 @@ class PiSessionSourceTest {
 
   @Test
   fun `outline fork action is shown only for concrete top level items`() {
-    val source = sourceFor(tempDir.resolve("sessions"))
+    val projectDir = tempDir.resolve("project-fork-visibility")
+    val sessionDir = tempDir.resolve("fork-visibility-sessions")
+    writePiSession(
+      sessionDir = sessionDir,
+      sessionId = "session-fork-visibility",
+      cwd = projectDir,
+      piUserMessageEntry(id = "user-first", content = "First task", timestamp = 1_000L),
+      piAssistantTextMessageEntry(id = "assistant-first", parentId = "user-first", content = "First answer", timestamp = 2_000L),
+      piUserMessageEntry(id = "user-second", content = "Second task", timestamp = 3_000L, parentId = "assistant-first"),
+    )
+    val source = sourceFor(sessionDir)
 
     assertThat(
-      source.canShowThreadOutlineForkAction(
-        path = "/work/project-a",
-        threadId = "thread-1",
-        itemId = "entry-1",
+      source.canForkThreadFromOutlineItem(
+        path = projectDir.toString(),
+        threadId = "session-fork-visibility",
+        itemId = "assistant-first",
         subAgentId = null,
         tabKey = "tab-1",
       )
     ).isTrue()
     assertThat(
-      source.canShowThreadOutlineForkAction(
-        path = "/work/project-a",
-        threadId = "thread-1",
+      source.canForkThreadFromOutlineItem(
+        path = projectDir.toString(),
+        threadId = "session-fork-visibility",
         itemId = " ",
         subAgentId = null,
         tabKey = "tab-1",
       )
     ).isFalse()
     assertThat(
-      source.canShowThreadOutlineForkAction(
-        path = "/work/project-a",
-        threadId = "thread-1",
-        itemId = "entry-1",
+      source.canForkThreadFromOutlineItem(
+        path = projectDir.toString(),
+        threadId = "session-fork-visibility",
+        itemId = "assistant-first",
         subAgentId = "alpha",
         tabKey = "tab-1",
       )
