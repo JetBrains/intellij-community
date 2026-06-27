@@ -162,6 +162,12 @@ class AgentWorkbenchDirectoryWatcherTest {
         watchLoop.completed.await()
       }
 
+      withTimeout(5.seconds) {
+        while (watcher.isActive) {
+          delay(10.milliseconds)
+        }
+      }
+
       assertThat(watcher.isActive).isFalse()
     }
   }

@@ -11,12 +11,14 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadActivityUpdate
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
@@ -118,7 +120,7 @@ class AgentChatScopedTerminalRefreshControllerTest {
   @Test
   fun activeThreadFileChangeEmitsScopedRefreshWhileRunning() = runBlocking(Dispatchers.Default) {
     val update = activeUpdate(threadId = "thread-a")
-    val fileChanges = MutableSharedFlow<AgentSessionSourceUpdateEvent>(extraBufferCapacity = 16)
+    val fileChanges = SubscribedUpdateFlow()
     val watchRequests = LinkedBlockingQueue<String>()
     val updates = LinkedBlockingQueue<AgentSessionSourceUpdateEvent>()
 
@@ -132,7 +134,7 @@ class AgentChatScopedTerminalRefreshControllerTest {
       activeThreadIdProvider = { "thread-a" },
       activeThreadUpdateEvents = { threadId ->
         watchRequests.add(threadId)
-        fileChanges
+        fileChanges.asFlow()
       },
       notifyUpdate = { _, updateEvent -> updates.add(updateEvent) },
     ).use {
@@ -148,7 +150,7 @@ class AgentChatScopedTerminalRefreshControllerTest {
   fun activeThreadFileWatchRetriesSameThreadAfterCompletedWatch() = runBlocking(Dispatchers.Default) {
     val inputChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
     val update = activeUpdate(threadId = "thread-a")
-    val retryFileChanges = MutableSharedFlow<AgentSessionSourceUpdateEvent>(extraBufferCapacity = 16)
+    val retryFileChanges = SubscribedUpdateFlow()
     val watchAttempts = AtomicInteger()
     val watchRequests = LinkedBlockingQueue<String>()
     val updates = LinkedBlockingQueue<AgentSessionSourceUpdateEvent>()
@@ -164,7 +166,7 @@ class AgentChatScopedTerminalRefreshControllerTest {
       activeThreadIdProvider = { "thread-a" },
       activeThreadUpdateEvents = { threadId ->
         watchRequests.add(threadId)
-        if (watchAttempts.incrementAndGet() == 1) emptyFlow() else retryFileChanges
+        if (watchAttempts.incrementAndGet() == 1) emptyFlow() else retryFileChanges.asFlow()
       },
       notifyUpdate = { _, updateEvent -> updates.add(updateEvent) },
     ).use {
@@ -186,7 +188,7 @@ class AgentChatScopedTerminalRefreshControllerTest {
   @Test
   fun activeThreadFileChangeStopsWhenSessionLeavesRunning() = runBlocking(Dispatchers.Default) {
     val update = activeUpdate(threadId = "thread-a")
-    val fileChanges = MutableSharedFlow<AgentSessionSourceUpdateEvent>(extraBufferCapacity = 16)
+    val fileChanges = SubscribedUpdateFlow()
     val watchRequests = LinkedBlockingQueue<String>()
     val sessionState = MutableStateFlow<TerminalViewSessionState>(TerminalViewSessionState.NotStarted)
     val signals = LinkedBlockingQueue<RefreshSignal>()
@@ -202,7 +204,7 @@ class AgentChatScopedTerminalRefreshControllerTest {
       activeThreadIdProvider = { "thread-a" },
       activeThreadUpdateEvents = { threadId ->
         watchRequests.add(threadId)
-        fileChanges
+        fileChanges.asFlow()
       },
       notifyRefresh = { provider, path, threadId, activityReport -> signals.add(RefreshSignal(provider, path, threadId, activityReport)) },
       notifyUpdate = { _, updateEvent -> updates.add(updateEvent) },
@@ -230,7 +232,7 @@ class AgentChatScopedTerminalRefreshControllerTest {
   fun activeThreadFileWatchRestartsAfterTerminalActivityChangesActiveThread() = runBlocking(Dispatchers.Default) {
     val inputChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
     val activeThreadId = AtomicReference("thread-a")
-    val fileChangesByThreadId = ConcurrentHashMap<String, MutableSharedFlow<AgentSessionSourceUpdateEvent>>()
+    val fileChangesByThreadId = ConcurrentHashMap<String, SubscribedUpdateFlow>()
     val watchRequests = LinkedBlockingQueue<String>()
     val updates = LinkedBlockingQueue<AgentSessionSourceUpdateEvent>()
 
@@ -244,9 +246,9 @@ class AgentChatScopedTerminalRefreshControllerTest {
       threadId = "thread-a",
       activeThreadIdProvider = { activeThreadId.get() },
       activeThreadUpdateEvents = { threadId ->
-        val fileChanges = fileChangesByThreadId.computeIfAbsent(threadId) { MutableSharedFlow(extraBufferCapacity = 16) }
+        val fileChanges = fileChangesByThreadId.computeIfAbsent(threadId) { SubscribedUpdateFlow() }
         watchRequests.add(threadId)
-        fileChanges
+        fileChanges.asFlow()
       },
       notifyUpdate = { _, updateEvent -> updates.add(updateEvent) },
     ).use {
@@ -274,7 +276,7 @@ class AgentChatScopedTerminalRefreshControllerTest {
     val inputChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
     val activeThreadId = AtomicReference<String?>(null)
     val update = activeUpdate(threadId = "thread-a")
-    val fileChanges = MutableSharedFlow<AgentSessionSourceUpdateEvent>(extraBufferCapacity = 16)
+    val fileChanges = SubscribedUpdateFlow()
     val watchRequests = LinkedBlockingQueue<String>()
     val updates = LinkedBlockingQueue<AgentSessionSourceUpdateEvent>()
 
@@ -288,7 +290,7 @@ class AgentChatScopedTerminalRefreshControllerTest {
       activeThreadIdProvider = { activeThreadId.get() },
       activeThreadUpdateEvents = { threadId ->
         watchRequests.add(threadId)
-        fileChanges
+        fileChanges.asFlow()
       },
       notifyUpdate = { _, updateEvent -> updates.add(updateEvent) },
     ).use {
@@ -317,6 +319,24 @@ private fun activeUpdate(threadId: String): AgentSessionSourceUpdateEvent {
     scopedPaths = setOf("/work/project"),
     activityUpdatesByThreadId = mapOf(threadId to AgentSessionThreadActivityUpdate(AgentThreadActivityReport(AgentThreadActivity.PROCESSING))),
   )
+}
+
+private class SubscribedUpdateFlow {
+  private val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(extraBufferCapacity = 16)
+  private val subscribed = CompletableDeferred<Unit>()
+
+  fun asFlow(): Flow<AgentSessionSourceUpdateEvent> {
+    return updates.onSubscription {
+      subscribed.complete(Unit)
+    }
+  }
+
+  suspend fun emit(updateEvent: AgentSessionSourceUpdateEvent) {
+    withTimeout(5.seconds) {
+      subscribed.await()
+    }
+    updates.emit(updateEvent)
+  }
 }
 
 private open class TestAgentSessionSource : AgentSessionSource {

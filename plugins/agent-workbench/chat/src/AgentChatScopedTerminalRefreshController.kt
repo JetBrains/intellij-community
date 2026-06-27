@@ -11,17 +11,18 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 
 private val LOG = logger<AgentChatScopedTerminalRefreshController>()
@@ -123,7 +124,20 @@ internal class AgentChatScopedTerminalRefreshController(
     activeThreadIdProvider: () -> String?,
     activeThreadUpdateEvents: (String) -> Flow<AgentSessionSourceUpdateEvent>,
   ) {
-    val watchRequests = if (restartChanges == null) flowOf(Unit) else merge(flowOf(Unit), restartChanges)
+    val watchRequests = if (restartChanges == null) {
+      flowOf(Unit)
+    }
+    else {
+      channelFlow {
+        val restartJob = launch(start = CoroutineStart.UNDISPATCHED) {
+          restartChanges.collect {
+            send(Unit)
+          }
+        }
+        send(Unit)
+        restartJob.join()
+      }
+    }
     coroutineScope watchScope@{
       var watchedThreadId: String? = null
       var watchJob: Job? = null
@@ -141,37 +155,42 @@ internal class AgentChatScopedTerminalRefreshController(
         job?.cancelAndJoin()
       }
 
-      watchRequests.collect {
-        val activeThreadId = activeThreadIdProvider()?.takeIf(String::isNotBlank)
-        if (activeThreadId == null) {
-          LOG.debug {
-            "Skipping ${provider.value} active session file watch from agent chat terminal: no active thread id (path=$projectPath)"
-          }
-          stopActiveWatch()
-          return@collect
-        }
-        val currentJob = watchJob
-        if (watchedThreadId == activeThreadId && currentJob?.isActive == true) {
-          return@collect
-        }
-
-        if (currentJob != null) {
-          stopActiveWatch()
-        }
-        watchedThreadId = activeThreadId
-        LOG.debug {
-          "Starting ${provider.value} active session file watch from agent chat terminal (path=$projectPath, threadId=$activeThreadId)"
-        }
-        watchJob = this@watchScope.launch {
-          activeThreadUpdateEvents(activeThreadId).collect { updateEvent ->
+      try {
+        watchRequests.collect {
+          val activeThreadId = activeThreadIdProvider()?.takeIf(String::isNotBlank)
+          if (activeThreadId == null) {
             LOG.debug {
-              "Received ${provider.value} active session update from agent chat terminal (path=$projectPath, threadId=$activeThreadId)"
+              "Skipping ${provider.value} active session file watch from agent chat terminal: no active thread id (path=$projectPath)"
             }
-            notifyUpdate(provider, updateEvent)
+            stopActiveWatch()
+            return@collect
+          }
+          val currentJob = watchJob
+          if (watchedThreadId == activeThreadId && currentJob?.isActive == true) {
+            return@collect
+          }
+
+          if (currentJob != null) {
+            stopActiveWatch()
+          }
+          watchedThreadId = activeThreadId
+          LOG.debug {
+            "Starting ${provider.value} active session file watch from agent chat terminal (path=$projectPath, threadId=$activeThreadId)"
+          }
+          watchJob = this@watchScope.launch {
+            activeThreadUpdateEvents(activeThreadId).collect { updateEvent ->
+              LOG.debug {
+                "Received ${provider.value} active session update from agent chat terminal (path=$projectPath, threadId=$activeThreadId)"
+              }
+              notifyUpdate(provider, updateEvent)
+            }
           }
         }
+        watchJob?.join()
       }
-      watchJob?.join()
+      finally {
+        stopActiveWatch()
+      }
     }
   }
 
