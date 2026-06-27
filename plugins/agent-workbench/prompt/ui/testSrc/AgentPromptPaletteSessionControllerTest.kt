@@ -238,13 +238,13 @@ class AgentPromptPaletteSessionControllerTest {
 
         assertThat(addedResult).isEqualTo(AgentPromptAddContextApplyResult.ADDED)
         assertThat(fixture.view.footerPanel.isVisible).isFalse()
-        assertThat(fixture.view.statusStrip.text).isNotEqualTo(AgentPromptBundle.message("popup.status.context.added"))
+        assertThat(fixture.view.statusStrip.text).isNotEqualTo(AgentPromptBundle.message("popup.status.context.added.to.prompt"))
 
         val alreadyAddedResult = fixture.controller.applyAddContextRequest(request)
 
         assertThat(alreadyAddedResult).isEqualTo(AgentPromptAddContextApplyResult.ALREADY_ADDED)
         assertThat(fixture.view.footerPanel.isVisible).isFalse()
-        assertThat(fixture.view.statusStrip.text).isNotEqualTo(AgentPromptBundle.message("popup.status.context.already.added"))
+        assertThat(fixture.view.statusStrip.text).isNotEqualTo(AgentPromptBundle.message("popup.status.context.already.added.to.prompt"))
       }
       finally {
         fixture.dispose()
@@ -267,7 +267,7 @@ class AgentPromptPaletteSessionControllerTest {
 
         assertThat(result).isEqualTo(AgentPromptAddContextApplyResult.ADDED)
         assertThat(fixture.view.footerPanel.isVisible).isTrue()
-        assertThat(fixture.view.statusStrip.text).isEqualTo(AgentPromptBundle.message("popup.status.context.added"))
+        assertThat(fixture.view.statusStrip.text).isEqualTo(AgentPromptBundle.message("popup.status.context.added.to.prompt"))
       }
       finally {
         fixture.dispose()

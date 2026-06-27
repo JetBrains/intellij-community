@@ -656,15 +656,10 @@ internal fun createAgentPromptPaletteView(
     isOpaque = false
     add(contextChipsPanel, BorderLayout.CENTER)
   }
-  val composerContextActionsPanel = JPanel(BorderLayout()).apply {
-    isOpaque = false
-    border = JBUI.Borders.emptyTop(if (isInlinePrompt) 0 else 2)
-  }
   val composerContextPanel = BorderLayoutPanel().apply {
     isOpaque = false
-    border = JBUI.Borders.emptyTop(if (isInlinePrompt) 2 else 4)
-    addToTop(contextChipsContainer)
-    addToBottom(composerContextActionsPanel)
+    border = JBUI.Borders.empty(0, if (isInlinePrompt) 0 else 2, if (isInlinePrompt) 4 else 6, if (isInlinePrompt) 0 else 2)
+    addToCenter(contextChipsContainer)
   }
 
   val generationSettingsControlsPanel = JPanel(FlowLayout(FlowLayout.LEFT, if (isInlinePrompt) 6 else 8, 0)).apply {
@@ -689,6 +684,7 @@ internal fun createAgentPromptPaletteView(
     if (isInlinePrompt) {
       preferredSize = INLINE_PROMPT_EDITOR_PREFERRED_SIZE
     }
+    addToTop(composerContextPanel)
     addToCenter(promptCardPanel)
     addToBottom(generationSettingsPanel)
   }
@@ -698,7 +694,6 @@ internal fun createAgentPromptPaletteView(
     border = if (isInlinePrompt) JBUI.Borders.empty(0, 12, 6, 12) else JBUI.Borders.empty(6, 12, 8, 12)
     add(suggestionsPanel, BorderLayout.NORTH)
     add(promptEditorPanel, BorderLayout.CENTER)
-    add(composerContextPanel, BorderLayout.SOUTH)
     minimumSize = if (isInlinePrompt) INLINE_PROMPT_PANEL_MINIMUM_SIZE else PROMPT_PANEL_MINIMUM_SIZE
   }
 
@@ -737,9 +732,11 @@ internal fun createAgentPromptPaletteView(
     }
 
     val contextHeight = if (composerContextPanel.isVisible) composerContextPanel.preferredSize.height else 0
+    promptEditorPanel.preferredSize = inlinePromptSize(INLINE_PROMPT_EDITOR_PREFERRED_SIZE, contextHeight)
     rootPanel.preferredSize = inlinePromptSize(AGENT_PROMPT_INLINE_EMPTY_STATE_PREFERRED_SIZE, contextHeight)
     rootPanel.minimumSize = inlinePromptSize(AGENT_PROMPT_INLINE_EMPTY_STATE_MINIMUM_SIZE, contextHeight)
     rootPanel.maximumSize = inlinePromptSize(AGENT_PROMPT_INLINE_EMPTY_STATE_MAXIMUM_SIZE, contextHeight)
+    promptEditorPanel.revalidate()
     rootPanel.revalidate()
     rootPanel.parent?.revalidate()
   }
@@ -748,7 +745,7 @@ internal fun createAgentPromptPaletteView(
     contextChipsContainer = contextChipsContainer,
     addContextControl = addContextButton,
     composerContextPanel = composerContextPanel,
-    layoutParent = promptPanel,
+    layoutParent = promptEditorPanel,
     onContextLayoutChanged = ::syncInlineRootSize,
   )
   if (isInlinePrompt) {

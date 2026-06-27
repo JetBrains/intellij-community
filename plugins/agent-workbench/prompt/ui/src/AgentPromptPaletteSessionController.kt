@@ -339,8 +339,8 @@ internal class AgentPromptPaletteSessionController(
   fun applyAddContextRequest(request: AgentPromptAddContextRequest): AgentPromptAddContextApplyResult {
     val result = contextController.addExternalContextItems(request.contextItems)
     when (result) {
-      AgentPromptAddContextApplyResult.ADDED -> handleContextChanged(AgentPromptBundle.message("popup.status.context.added"))
-      AgentPromptAddContextApplyResult.ALREADY_ADDED -> showContextInfo(AgentPromptBundle.message("popup.status.context.already.added"))
+      AgentPromptAddContextApplyResult.ADDED -> handleContextChanged(AgentPromptBundle.message("popup.status.context.added.to.prompt"))
+      AgentPromptAddContextApplyResult.ALREADY_ADDED -> showContextInfo(AgentPromptBundle.message("popup.status.context.already.added.to.prompt"))
     }
     return result
   }
