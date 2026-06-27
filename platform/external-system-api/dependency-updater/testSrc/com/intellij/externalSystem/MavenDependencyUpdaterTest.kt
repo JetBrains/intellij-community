@@ -2,13 +2,23 @@ package com.intellij.externalSystem
 
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.getModule
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenDependencyUpdaterTest : MavenDependencyUpdaterTestBase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenDependencyUpdaterTest(mavenVersion: String, modelVersion: String) : MavenDependencyUpdaterTestBase(mavenVersion, modelVersion) {
   @Test
   fun testGetDependencies() = runBlocking {
-    val dependencies = myModifierService!!.declaredDependencies(getModule("project"))
+    val dependencies = myModifierService!!.declaredDependencies(maven.getModule("project"))
     assertNotNull(dependencies)
     assertEquals(2, dependencies.size)
 
@@ -24,38 +34,38 @@ class MavenDependencyUpdaterTest : MavenDependencyUpdaterTestBase() {
 
   @Test
   fun testAddDependency() {
-    myModifierService!!.addDependency(getModule("project"), UnifiedDependency("somegroup", "someartifact", "1.0", "compile"))
+    myModifierService!!.addDependency(maven.getModule("project"), UnifiedDependency("somegroup", "someartifact", "1.0", "compile"))
     assertFilesAsExpected()
   }
 
   @Test
   fun testAddDependencyToExistingList() {
-    myModifierService!!.addDependency(getModule("project"), UnifiedDependency("somegroup", "someartifact", "1.0", "compile"))
+    myModifierService!!.addDependency(maven.getModule("project"), UnifiedDependency("somegroup", "someartifact", "1.0", "compile"))
     assertFilesAsExpected()
   }
 
   @Test
   fun testRemoveDependency() {
-    myModifierService!!.removeDependency(getModule("project"), UnifiedDependency("somegroup", "someartifact", "1.0", "compile"))
+    myModifierService!!.removeDependency(maven.getModule("project"), UnifiedDependency("somegroup", "someartifact", "1.0", "compile"))
     assertFilesAsExpected()
   }
 
   @Test
   fun testShouldAddDependencyToManagedTag() {
-    myModifierService!!.addDependency(getModule("m1"), UnifiedDependency("somegroup", "someartifact", "1.0", "compile"))
+    myModifierService!!.addDependency(maven.getModule("m1"), UnifiedDependency("somegroup", "someartifact", "1.0", "compile"))
     assertFilesAsExpected()
   }
 
 
   @Test
   fun testShouldRemoveDependencyIfManaged() {
-    myModifierService!!.removeDependency(getModule("m1"), UnifiedDependency("somegroup", "someartifact", "1.0", "compile"))
+    myModifierService!!.removeDependency(maven.getModule("m1"), UnifiedDependency("somegroup", "someartifact", "1.0", "compile"))
     assertFilesAsExpected()
   }
 
   @Test
   fun testUpdateDependency() {
-    myModifierService!!.updateDependency(getModule("project"),
+    myModifierService!!.updateDependency(maven.getModule("project"),
                                          UnifiedDependency("somegroup", "someartifact", "1.0", "compile"),
                                          UnifiedDependency("somegroup", "someartifact", "2.0", "test")
     )
@@ -64,7 +74,7 @@ class MavenDependencyUpdaterTest : MavenDependencyUpdaterTestBase() {
 
   @Test
   fun testUpdateDependencyNoScope() {
-    myModifierService!!.updateDependency(getModule("project"),
+    myModifierService!!.updateDependency(maven.getModule("project"),
                                          UnifiedDependency("somegroup", "someartifact", "1.0", null),
                                          UnifiedDependency("somegroup", "someartifact", "2.0", null)
     )
@@ -73,7 +83,7 @@ class MavenDependencyUpdaterTest : MavenDependencyUpdaterTestBase() {
 
   @Test
   fun testUpdateDependencyRemoveScope() {
-    myModifierService!!.updateDependency(getModule("project"),
+    myModifierService!!.updateDependency(maven.getModule("project"),
                                          UnifiedDependency("somegroup", "someartifact", "1.0", "compile"),
                                          UnifiedDependency("somegroup", "someartifact", "2.0", null)
     )
@@ -82,7 +92,7 @@ class MavenDependencyUpdaterTest : MavenDependencyUpdaterTestBase() {
 
   @Test
   fun testUpdateManagedDependency() {
-    myModifierService!!.updateDependency(getModule("m1"),
+    myModifierService!!.updateDependency(maven.getModule("m1"),
                                          UnifiedDependency("somegroup", "someartifact", "1.0", "compile"),
                                          UnifiedDependency("somegroup", "someartifact", "2.0", "test")
     )
@@ -91,7 +101,7 @@ class MavenDependencyUpdaterTest : MavenDependencyUpdaterTestBase() {
 
   @Test
   fun testUpdateManagedDependencyNoScope() {
-    myModifierService!!.updateDependency(getModule("m1"),
+    myModifierService!!.updateDependency(maven.getModule("m1"),
                                          UnifiedDependency("somegroup", "someartifact", "1.0", null),
                                          UnifiedDependency("somegroup", "someartifact", "2.0", null)
     )
@@ -100,7 +110,7 @@ class MavenDependencyUpdaterTest : MavenDependencyUpdaterTestBase() {
 
   @Test
   fun testUpdateManagedDependencyRemoveScope() {
-    myModifierService!!.updateDependency(getModule("m1"),
+    myModifierService!!.updateDependency(maven.getModule("m1"),
                                          UnifiedDependency("somegroup", "someartifact", "1.0", "compile"),
                                          UnifiedDependency("somegroup", "someartifact", "2.0", null)
     )
@@ -109,7 +119,7 @@ class MavenDependencyUpdaterTest : MavenDependencyUpdaterTestBase() {
 
   @Test
   fun testUpdateDependencyWithProperty() {
-    myModifierService!!.updateDependency(getModule("project"),
+    myModifierService!!.updateDependency(maven.getModule("project"),
                                          UnifiedDependency("somegroup", "someartifact", "1.0", "compile"),
                                          UnifiedDependency("somegroup", "someartifact", "2.0", "test")
     )
@@ -118,7 +128,7 @@ class MavenDependencyUpdaterTest : MavenDependencyUpdaterTestBase() {
 
   @Test
   fun testUpdateDependencyWithPropertyNoScope() {
-    myModifierService!!.updateDependency(getModule("project"),
+    myModifierService!!.updateDependency(maven.getModule("project"),
                                          UnifiedDependency("somegroup", "someartifact", "1.0", null),
                                          UnifiedDependency("somegroup", "someartifact", "2.0", null)
     )
@@ -127,7 +137,7 @@ class MavenDependencyUpdaterTest : MavenDependencyUpdaterTestBase() {
 
   @Test
   fun testUpdateDependencyWithPropertyRemoveScope() {
-    myModifierService!!.updateDependency(getModule("project"),
+    myModifierService!!.updateDependency(maven.getModule("project"),
                                          UnifiedDependency("somegroup", "someartifact", "1.0", "compile"),
                                          UnifiedDependency("somegroup", "someartifact", "2.0", null)
     )
@@ -136,13 +146,13 @@ class MavenDependencyUpdaterTest : MavenDependencyUpdaterTestBase() {
 
   @Test
   fun testAddRepository() {
-    myModifierService!!.addRepository(getModule("project"), UnifiedDependencyRepository("id", "name", "https://example.com"))
+    myModifierService!!.addRepository(maven.getModule("project"), UnifiedDependencyRepository("id", "name", "https://example.com"))
     assertFilesAsExpected()
   }
 
   @Test
   fun testRemoveRepository() {
-    myModifierService!!.deleteRepository(getModule("project"), UnifiedDependencyRepository("id", "name", "https://example.com"))
+    myModifierService!!.deleteRepository(maven.getModule("project"), UnifiedDependencyRepository("id", "name", "https://example.com"))
     assertFilesAsExpected()
   }
 }
