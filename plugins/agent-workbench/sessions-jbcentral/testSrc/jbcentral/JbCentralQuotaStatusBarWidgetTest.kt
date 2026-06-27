@@ -1,13 +1,46 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.jbcentral
 
+import com.intellij.agent.workbench.sessions.AgentSessionsBundle
+import com.intellij.agent.workbench.settings.AGENT_WORKBENCH_STATUS_BAR_WIDGETS_SETTINGS_COMPONENT_ID
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.wm.StatusBarWidgetFactory
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
+@TestApplication
 class JbCentralQuotaStatusBarWidgetTest {
   @Test
   fun widgetIsDisabledByDefault() {
     assertThat(JbCentralQuotaStatusBarWidgetFactory().isEnabledByDefault).isFalse()
+  }
+
+  @Test
+  fun settingsContributorTogglesJbCentralQuotaWidget(@TestDisposable disposable: Disposable) {
+    registerJbCentralQuotaWidgetFactoryIfMissing(disposable)
+
+    val initialEnabled = JbCentralQuotaStatusBarWidgetSettings.isEnabled()
+    try {
+      JbCentralQuotaStatusBarWidgetSettings.setEnabled(false)
+
+      val component = JbCentralQuotaSettingsContributor().components().single()
+      assertThat(component.id).isEqualTo(AGENT_WORKBENCH_STATUS_BAR_WIDGETS_SETTINGS_COMPONENT_ID)
+      assertThat(component.displayName).isEqualTo(AgentSessionsBundle.message("settings.agent.workbench.status.bar.widgets.group"))
+
+      val setting = component.checkboxSettings.single()
+      assertThat(setting.text).isEqualTo(AgentSessionsBundle.message("settings.agent.workbench.jbcentral.quota.status.bar.widget"))
+      assertThat(setting.description).isEqualTo(AgentSessionsBundle.message("settings.agent.workbench.jbcentral.quota.status.bar.widget.description"))
+      assertThat(setting.isSelected()).isFalse()
+
+      setting.setSelected(true)
+
+      assertThat(JbCentralQuotaStatusBarWidgetSettings.isEnabled()).isTrue()
+    }
+    finally {
+      JbCentralQuotaStatusBarWidgetSettings.setEnabled(initialEnabled)
+    }
   }
 
   @Test
@@ -53,5 +86,11 @@ class JbCentralQuotaStatusBarWidgetTest {
       percentUsed = percentUsed,
       resetDateText = "Jun 1, 2026",
     )
+  }
+
+  private fun registerJbCentralQuotaWidgetFactoryIfMissing(disposable: Disposable) {
+    if (StatusBarWidgetFactory.EP_NAME.extensionList.none { it.id == JBCENTRAL_QUOTA_WIDGET_ID }) {
+      StatusBarWidgetFactory.EP_NAME.point.registerExtension(JbCentralQuotaStatusBarWidgetFactory(), disposable)
+    }
   }
 }

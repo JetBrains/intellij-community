@@ -15,13 +15,12 @@ import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsComponent
 import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsContributor
 import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsContributors
 import com.intellij.agent.workbench.settings.AgentSessionProviderSettingsService
+import com.intellij.agent.workbench.settings.AGENT_WORKBENCH_STATUS_BAR_WIDGETS_SETTINGS_COMPONENT_ID
 import com.intellij.agent.workbench.sessions.sleep.PREVENT_SYSTEM_SLEEP_WHILE_WORKING_SETTING_ID
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
-import com.intellij.openapi.wm.StatusBarWidgetFactory
-import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetSettings
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.runInEdtAndWait
@@ -53,7 +52,6 @@ class AgentWorkbenchSettingsConfigurableTest {
     service<AgentSessionProviderSettingsService>().setProviderEnabled(AgentSessionProvider.from("codex"), true)
     AgentWorkbenchSettings.getInstance().loadState(AgentWorkbenchSettings.SettingsState())
     AgentSessionCostPresentationSettings.setEnabled(false)
-    setJbCentralQuotaWidgetEnabled(false)
   }
 
   @Test
@@ -162,7 +160,16 @@ class AgentWorkbenchSettingsConfigurableTest {
   }
 
   @Test
-  fun configurableRendersAndAppliesJbCentralQuotaSetting() {
+  fun configurableRendersAndAppliesStatusBarWidgetSettings(@TestDisposable disposable: Disposable) {
+    var statusBarWidgetEnabled = false
+    AgentWorkbenchSettingsContributors.EP_NAME.point.registerExtension(
+      TestStatusBarWidgetsComponentContributor(
+        isSelected = { statusBarWidgetEnabled },
+        setSelected = { enabled -> statusBarWidgetEnabled = enabled },
+      ),
+      disposable,
+    )
+
     runInEdtAndWait {
       val configurable = AgentWorkbenchSettingsConfigurable()
       try {
@@ -176,7 +183,7 @@ class AgentWorkbenchSettingsConfigurableTest {
             AgentSessionsBundle.message("settings.agent.workbench.status.bar.widgets.group"),
           )
 
-        val checkbox = component.checkBox(AgentSessionsBundle.message("settings.agent.workbench.jbcentral.quota.status.bar.widget"))
+        val checkbox = component.checkBox(TEST_STATUS_BAR_WIDGET_CHECKBOX_TEXT)
         assertThat(checkbox.isSelected).isFalse()
 
         checkbox.isSelected = true
@@ -189,7 +196,7 @@ class AgentWorkbenchSettingsConfigurableTest {
       }
     }
 
-    assertThat(isJbCentralQuotaWidgetEnabled()).isTrue()
+    assertThat(statusBarWidgetEnabled).isTrue()
   }
 
   @Test
@@ -317,20 +324,6 @@ class AgentWorkbenchSettingsConfigurableTest {
     return componentsOfType(TitledSeparator::class.java).map { it.text }
   }
 
-  private fun isJbCentralQuotaWidgetEnabled(): Boolean {
-    return StatusBarWidgetSettings.getInstance().isEnabled(jbCentralQuotaWidgetFactory())
-  }
-
-  private fun setJbCentralQuotaWidgetEnabled(enabled: Boolean) {
-    StatusBarWidgetSettings.getInstance().setEnabled(jbCentralQuotaWidgetFactory(), enabled)
-  }
-
-  private fun jbCentralQuotaWidgetFactory(): StatusBarWidgetFactory {
-    return checkNotNull(StatusBarWidgetFactory.EP_NAME.extensionList.firstOrNull { it.id == JBCENTRAL_QUOTA_WIDGET_ID }) {
-      "Missing status bar widget factory: $JBCENTRAL_QUOTA_WIDGET_ID"
-    }
-  }
-
   private fun <T : JComponent> JComponent.componentsOfType(componentClass: Class<T>): List<T> {
     val result = mutableListOf<T>()
     collectComponentsOfType(this, componentClass, result)
@@ -386,10 +379,32 @@ class AgentWorkbenchSettingsConfigurableTest {
     }
   }
 
+  private class TestStatusBarWidgetsComponentContributor(
+    private val isSelected: () -> Boolean,
+    private val setSelected: (Boolean) -> Unit,
+  ) : AgentWorkbenchSettingsContributor {
+    override fun components(): List<AgentWorkbenchSettingsComponent> {
+      return listOf(
+        AgentWorkbenchSettingsComponent(
+          id = AGENT_WORKBENCH_STATUS_BAR_WIDGETS_SETTINGS_COMPONENT_ID,
+          displayName = AgentSessionsBundle.message("settings.agent.workbench.status.bar.widgets.group"),
+          checkboxSettings = listOf(
+            AgentWorkbenchCheckboxSetting(
+              text = TEST_STATUS_BAR_WIDGET_CHECKBOX_TEXT,
+              description = null,
+              isSelected = isSelected,
+              setSelected = setSelected,
+            )
+          ),
+        )
+      )
+    }
+  }
+
   companion object {
-    private const val JBCENTRAL_QUOTA_WIDGET_ID = "jbcentral.quota"
     private const val TEST_CONTRIBUTOR_CHECKBOX_TEXT = "Test provider setting"
     private const val TEST_CHAT_COMPONENT_CHECKBOX_TEXT = "Test chat setting"
+    private const val TEST_STATUS_BAR_WIDGET_CHECKBOX_TEXT = "Test status bar widget"
     private const val TEST_PROVIDER_FEATURE_CHECKBOX_TEXT = "Test provider feature"
     private const val TEST_PROVIDER_FEATURE_CHECKBOX_DESCRIPTION = "Test provider feature description"
   }
