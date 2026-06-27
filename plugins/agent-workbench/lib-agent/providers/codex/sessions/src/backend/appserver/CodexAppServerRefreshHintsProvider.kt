@@ -256,40 +256,35 @@ internal class CodexAppServerRefreshHintsProvider(
       )
     }
     return when {
-      notification.kind == CodexAppServerNotificationKind.THREAD_STARTED && startedThreadPath != null -> AgentSessionSourceUpdateEvent(
-        type = AgentSessionSourceUpdate.THREADS_CHANGED,
+      notification.kind == CodexAppServerNotificationKind.THREAD_STARTED && startedThreadPath != null -> AgentSessionSourceUpdateEvent.threadsChanged(
         scopedPaths = setOf(startedThreadPath),
         activityUpdatesByThreadId = activityUpdatesByThreadId(),
       )
-      startedThreadPath != null -> AgentSessionSourceUpdateEvent(
-        type = AgentSessionSourceUpdate.HINTS_CHANGED,
+      startedThreadPath != null -> AgentSessionSourceUpdateEvent.hintsChanged(
         scopedPaths = setOf(startedThreadPath),
         activityUpdatesByThreadId = activityUpdatesByThreadId(),
       )
       notification.kind == CodexAppServerNotificationKind.THREAD_NAME_UPDATED && threadId != null -> {
         val startedThreadPathForId = findStartedThreadPath(threadId)
         if (startedThreadPathForId == null) {
-          AgentSessionSourceUpdateEvent(
-            type = AgentSessionSourceUpdate.HINTS_CHANGED,
+          AgentSessionSourceUpdateEvent.hintsChanged(
             threadIds = setOf(threadId),
             activityUpdatesByThreadId = activityUpdatesByThreadId(),
           )
         }
         else {
-          AgentSessionSourceUpdateEvent(
-            type = AgentSessionSourceUpdate.HINTS_CHANGED,
+          AgentSessionSourceUpdateEvent.hintsChanged(
             scopedPaths = setOf(startedThreadPathForId),
             threadIds = setOf(threadId),
             activityUpdatesByThreadId = activityUpdatesByThreadId(),
           )
         }
       }
-      threadId != null -> AgentSessionSourceUpdateEvent(
-        type = AgentSessionSourceUpdate.HINTS_CHANGED,
+      threadId != null -> AgentSessionSourceUpdateEvent.hintsChanged(
         threadIds = setOf(threadId),
         activityUpdatesByThreadId = activityUpdatesByThreadId(),
       )
-      else -> AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.HINTS_CHANGED)
+      else -> AgentSessionSourceUpdateEvent.hintsChanged()
     }
   }
 
@@ -308,8 +303,8 @@ internal class CodexAppServerRefreshHintsProvider(
           val emitUnscopedUpdate = pendingUnscopedUpdate
           pendingUnscopedUpdate = false
           when {
-            emitUnscopedUpdate || threadIds == null -> AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.HINTS_CHANGED)
-            else -> AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.HINTS_CHANGED, threadIds = threadIds)
+            emitUnscopedUpdate || threadIds == null -> AgentSessionSourceUpdateEvent.hintsChanged()
+            else -> AgentSessionSourceUpdateEvent.hintsChanged(threadIds = threadIds)
           }
         }
         send(updateEvent)
@@ -654,12 +649,14 @@ private fun CodexThreadActivitySnapshot.isSubAgentSnapshot(): Boolean {
     CodexThreadSourceKind.SUB_AGENT_REVIEW,
     CodexThreadSourceKind.SUB_AGENT_COMPACT,
     CodexThreadSourceKind.SUB_AGENT_THREAD_SPAWN,
-    CodexThreadSourceKind.SUB_AGENT_OTHER -> true
+    CodexThreadSourceKind.SUB_AGENT_OTHER,
+      -> true
 
     CodexThreadSourceKind.CLI,
     CodexThreadSourceKind.VSCODE,
     CodexThreadSourceKind.EXEC,
-    CodexThreadSourceKind.APP_SERVER -> false
+    CodexThreadSourceKind.APP_SERVER,
+      -> false
 
     CodexThreadSourceKind.UNKNOWN -> !parentThreadId.isNullOrBlank()
   }

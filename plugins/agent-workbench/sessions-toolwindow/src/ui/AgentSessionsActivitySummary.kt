@@ -172,6 +172,7 @@ private fun AgentSessionThread.overlayPresentation(
 ): AgentSessionThread {
   val key = AgentSessionThreadPresentationKey.create(projectPath = path, provider = provider, threadId = id) ?: return this
   val presentation = presentationsByKey[key] ?: return this
+  // Activity summary buckets use the persisted thread activity; shared presentation only refreshes row titles here.
   return copy(
     title = presentation.title.takeIf { it.isNotBlank() } ?: title,
   )

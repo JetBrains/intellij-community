@@ -326,8 +326,7 @@ class ClaudeSessionSourceTest {
     val source = ClaudeSessionSource(backend = backend)
 
     backendUpdates.tryEmit(
-      AgentSessionSourceUpdateEvent(
-        type = AgentSessionSourceUpdate.THREADS_CHANGED,
+      AgentSessionSourceUpdateEvent.threadsChanged(
         scopedPaths = setOf("/work/project"),
         threadIds = setOf("session-1"),
       )
@@ -653,8 +652,7 @@ private fun refreshRequest(): AgentSessionSourceRefreshRequest {
   return AgentSessionSourceRefreshRequest(
     paths = listOf("/any"),
     threadIds = setOf("s1"),
-    updateEvent = AgentSessionSourceUpdateEvent(
-      type = AgentSessionSourceUpdate.THREADS_CHANGED,
+    updateEvent = AgentSessionSourceUpdateEvent.threadsChanged(
       scopedPaths = setOf("/any"),
       threadIds = setOf("s1"),
     ),

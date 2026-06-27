@@ -23,7 +23,6 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionOutlin
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.platform.ai.agent.sessions.core.providers.InMemoryAgentSessionProviderRegistry
@@ -1594,8 +1593,7 @@ private fun testOutlineItem(
 }
 
 private fun testUpdateEvent(path: String = "/work/project-a", threadId: String = "thread-refresh"): AgentSessionSourceUpdateEvent {
-  return AgentSessionSourceUpdateEvent(
-    type = AgentSessionSourceUpdate.THREADS_CHANGED,
+  return AgentSessionSourceUpdateEvent.threadsChanged(
     scopedPaths = setOf(path),
     threadIds = setOf(threadId),
   )

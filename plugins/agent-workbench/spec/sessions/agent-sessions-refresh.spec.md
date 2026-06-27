@@ -66,7 +66,7 @@ Session refresh is event-driven and provider-agnostic. It merges provider result
   concurrent project loads cannot observe or prune each other's partial rescan state.
   [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeStoreSessionBackendTest.kt
 
-- Provider refresh publishes shared thread presentation keyed by normalized path and canonical thread identity so Agent Threads and open editor tabs show the same title/activity.
+- Provider refresh publishes shared thread presentation keyed by normalized path and canonical thread identity so Agent Threads and open editor tabs show the same title/activity. Agent Threads activity counters use canonical thread summary activity; shared presentation may refresh titles without changing counter buckets.
   [@test] ../../sessions/testSrc/AgentSessionThreadPresentationTest.kt
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
 

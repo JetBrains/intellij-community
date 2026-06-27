@@ -45,7 +45,7 @@ Codex session listing and Workbench status are app-server backed. Rollout files 
 
 - Codex activity normalization is specified in `agent-sessions-codex-activity.spec.md`.
 
-- Rollout parsing, watching, and discovery-event consumption are specified in `agent-sessions-codex-rollout-hints.spec.md`.
+- Rollout parsing, watching, and discovery-event consumption are specified in `agent-sessions-codex-rollout-discovery.spec.md`.
 
 ## Testing / Local Run
 - `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test com.intellij.platform.ai.agent.codex.sessions.CodexSessionBackendSelectorTest`
@@ -55,6 +55,6 @@ Codex session listing and Workbench status are app-server backed. Rollout files 
 
 ## References
 - `agent-sessions-codex-activity.spec.md`
-- `agent-sessions-codex-rollout-hints.spec.md`
+- `agent-sessions-codex-rollout-discovery.spec.md`
 - `agent-sessions-refresh.spec.md`
 - `../actions/codex-thread-rebinding.spec.md`

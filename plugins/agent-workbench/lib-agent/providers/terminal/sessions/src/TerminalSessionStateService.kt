@@ -8,7 +8,6 @@ import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalRestoreContext
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.openapi.components.SerializablePersistentStateComponent
 import com.intellij.openapi.components.Service
@@ -26,10 +25,8 @@ private const val TERMINAL_SESSIONS_STATE_VERSION = 2
 internal class TerminalSessionStateService
   : SerializablePersistentStateComponent<TerminalSessionsState>(TerminalSessionsState()) {
 
-  private val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(extraBufferCapacity = 16)
-
   val updateEvents: Flow<AgentSessionSourceUpdateEvent>
-    get() = updates
+    field = MutableSharedFlow<AgentSessionSourceUpdateEvent>(extraBufferCapacity = 16)
 
   fun recordSession(path: String, threadId: String, title: String, createdAtMs: Long): Boolean {
     val normalizedPath = normalizeTerminalProjectPath(path) ?: return false
@@ -138,9 +135,8 @@ internal class TerminalSessionStateService
   }
 
   private fun emitThreadsChanged(path: String, threadId: String) {
-    updates.tryEmit(
-      AgentSessionSourceUpdateEvent(
-        type = AgentSessionSourceUpdate.THREADS_CHANGED,
+    updateEvents.tryEmit(
+      AgentSessionSourceUpdateEvent.threadsChanged(
         scopedPaths = setOf(path),
         threadIds = setOf(threadId),
       )

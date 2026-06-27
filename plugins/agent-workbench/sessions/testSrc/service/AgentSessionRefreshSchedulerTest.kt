@@ -360,7 +360,7 @@ private fun scopedEvent(
   mayHaveChangedProjectFiles: Boolean = false,
   changedProjectFilePaths: Set<String>? = null,
 ): AgentSessionSourceUpdateEvent {
-  return AgentSessionSourceUpdateEvent(
+  return createSourceUpdateEvent(
     type = type,
     scopedPaths = setOf(path),
     threadIds = setOf(threadId),
@@ -373,8 +373,7 @@ private fun scopedEvent(
 private fun activityOnlyEvent(
   activityUpdate: AgentSessionThreadActivityUpdate,
 ): AgentSessionSourceUpdateEvent {
-  return AgentSessionSourceUpdateEvent(
-    type = AgentSessionSourceUpdate.HINTS_CHANGED,
+  return AgentSessionSourceUpdateEvent.activityChanged(
     scopedPaths = setOf("/work/project"),
     activityUpdatesByThreadId = mapOf("thread-a" to activityUpdate),
   )
@@ -383,11 +382,36 @@ private fun activityOnlyEvent(
 private fun titleOnlyEvent(
   presentationUpdate: AgentSessionThreadPresentationUpdate,
 ): AgentSessionSourceUpdateEvent {
-  return AgentSessionSourceUpdateEvent(
-    type = AgentSessionSourceUpdate.HINTS_CHANGED,
+  return AgentSessionSourceUpdateEvent.presentationChanged(
     scopedPaths = setOf("/work/project"),
     presentationUpdatesByThreadId = mapOf("thread-a" to presentationUpdate),
   )
+}
+
+private fun createSourceUpdateEvent(
+  type: AgentSessionSourceUpdate,
+  scopedPaths: Set<String>? = null,
+  threadIds: Set<String>? = null,
+  activityUpdatesByThreadId: Map<String, AgentSessionThreadActivityUpdate> = emptyMap(),
+  mayHaveChangedProjectFiles: Boolean = false,
+  changedProjectFilePaths: Set<String>? = null,
+): AgentSessionSourceUpdateEvent {
+  return when (type) {
+    AgentSessionSourceUpdate.THREADS_CHANGED -> AgentSessionSourceUpdateEvent.threadsChanged(
+      scopedPaths = scopedPaths,
+      threadIds = threadIds,
+      activityUpdatesByThreadId = activityUpdatesByThreadId,
+      mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
+      changedProjectFilePaths = changedProjectFilePaths,
+    )
+    AgentSessionSourceUpdate.HINTS_CHANGED -> AgentSessionSourceUpdateEvent.hintsChanged(
+      scopedPaths = scopedPaths,
+      threadIds = threadIds,
+      activityUpdatesByThreadId = activityUpdatesByThreadId,
+      mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
+      changedProjectFilePaths = changedProjectFilePaths,
+    )
+  }
 }
 
 private fun assertMergedScopedRefresh(

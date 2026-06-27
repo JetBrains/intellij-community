@@ -7,7 +7,6 @@ import com.intellij.platform.ai.agent.json.createJsonParser
 import com.intellij.platform.ai.agent.json.forEachJsonObjectField
 import com.intellij.platform.ai.agent.json.readJsonLongOrNull
 import com.intellij.platform.ai.agent.json.readJsonStringOrNull
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadActivityUpdate
 import com.intellij.openapi.diagnostic.logger
@@ -129,8 +128,7 @@ internal object PiExtensionStatusBridge {
     val event = payload.event?.trim()?.lowercase()?.replace('-', '_')
     if (event != null) {
       return when (event) {
-        PI_SESSION_INFO_CHANGED_EVENT -> AgentSessionSourceUpdateEvent(
-          type = AgentSessionSourceUpdate.THREADS_CHANGED,
+        PI_SESSION_INFO_CHANGED_EVENT -> AgentSessionSourceUpdateEvent.threadsChanged(
           scopedPaths = setOf(scopedPath),
           threadIds = setOf(sessionId),
         )
@@ -139,8 +137,7 @@ internal object PiExtensionStatusBridge {
     }
     val activity = payload.activity?.let(::parsePiStatusActivity) ?: return null
     val updatedAt = payload.updatedAt ?: receivedAtMs
-    return AgentSessionSourceUpdateEvent(
-      type = AgentSessionSourceUpdate.HINTS_CHANGED,
+    return AgentSessionSourceUpdateEvent.activityChanged(
       scopedPaths = setOf(scopedPath),
       threadIds = setOf(sessionId),
       activityUpdatesByThreadId = mapOf(

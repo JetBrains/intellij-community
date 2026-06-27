@@ -31,7 +31,7 @@ The Agent Threads tree follows IntelliJ tree conventions while adding provider-s
   the title bar carries one counter action per active bucket (`Needs attention` covers `NEEDS_INPUT`/`REVIEWING`,
   `Running` covers `PROCESSING`, `Done` covers `UNREAD`). `READY` threads are not surfaced in title chrome.
   Thread rows render their actual activity badge, but title counters, stripe badges, and OS notifications use summary activity;
-  sub-agent-only activity does not contribute to those global signals. Title counters and stripe badges ignore activity rows
+  shared presentation may update row titles but must not override activity for those counters. Sub-agent-only activity does not contribute to those global signals. Title counters and stripe badges ignore activity rows
   whose thread `updatedAt` is older than 3 days; the tree and OS notification transition tracking still use the full active
   thread state.
   All three counters are always visible so that bucket positions remain stable for muscle memory.

@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import java.nio.file.Path
 
-internal class CodexRolloutRefreshHintsProvider(
+internal class CodexRolloutDiscoveryProvider(
   private val rolloutBackend: CodexRolloutSessionBackend = CodexRolloutSessionBackend(),
   private val activeFileChangeFlow: (Collection<Path>) -> Flow<Path> = { emptyFlow() },
 ) : CodexRefreshHintsProvider {

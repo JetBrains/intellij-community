@@ -3,7 +3,6 @@ package com.intellij.platform.ai.agent.pi.sessions
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.platform.ai.agent.json.createJsonGenerator
 import com.intellij.platform.ai.agent.json.createJsonParser
@@ -263,8 +262,7 @@ internal object PiExtensionControlBridge {
   }
 
   private fun buildControlUpdateEvent(projectPath: String, sessionId: String): AgentSessionSourceUpdateEvent {
-    return AgentSessionSourceUpdateEvent(
-      type = AgentSessionSourceUpdate.HINTS_CHANGED,
+    return AgentSessionSourceUpdateEvent.hintsChanged(
       scopedPaths = setOf(projectPath),
       threadIds = setOf(sessionId),
     )

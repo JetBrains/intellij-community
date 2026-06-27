@@ -6,7 +6,6 @@ package com.intellij.platform.ai.agent.claude.sessions
 import com.intellij.platform.ai.agent.claude.common.ClaudeSessionActivity
 import com.intellij.platform.ai.agent.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.platform.ai.agent.core.session.AgentSessionThreadOutline
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.Flow
@@ -32,7 +31,7 @@ interface ClaudeSessionBackend {
   suspend fun loadThreadOutline(path: String, threadId: String): AgentSessionThreadOutline? = null
 
   val sessionUpdates: Flow<AgentSessionSourceUpdateEvent>
-    get() = updates.map { AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.THREADS_CHANGED) }
+    get() = updates.map { AgentSessionSourceUpdateEvent.threadsChanged() }
 
   val updates: Flow<Unit>
     get() = emptyFlow()

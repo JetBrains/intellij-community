@@ -97,6 +97,6 @@ The app-server already exposes each thread's rollout file path. Agent Workbench 
 ## References
 
 - `agent-sessions-codex-rollout-source.spec.md`
-- `agent-sessions-codex-rollout-hints.spec.md`
+- `agent-sessions-codex-rollout-discovery.spec.md`
 - `agent-sessions-refresh.spec.md`
 - `agent-sessions-cost-and-jbcentral-quota.spec.md`

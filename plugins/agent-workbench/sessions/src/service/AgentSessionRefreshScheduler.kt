@@ -71,8 +71,7 @@ internal class AgentSessionRefreshScheduler(
   fun refreshProviderScope(provider: AgentSessionProvider, scopedPaths: Set<String>) {
     enqueueSourceRefresh(
       provider = provider,
-      updateEvent = AgentSessionSourceUpdateEvent(
-        type = AgentSessionSourceUpdate.THREADS_CHANGED,
+      updateEvent = AgentSessionSourceUpdateEvent.threadsChanged(
         scopedPaths = scopedPaths,
       ),
     )
@@ -352,7 +351,7 @@ internal class AgentSessionRefreshScheduler(
 
   private fun normalizeUpdateEvent(updateEvent: AgentSessionSourceUpdateEvent): AgentSessionSourceUpdateEvent {
     val activityUpdatesByThreadId = normalizeActivityUpdates(updateEvent.activityUpdatesByThreadId)
-    return AgentSessionSourceUpdateEvent(
+    return createSourceUpdateEvent(
       type = updateEvent.type,
       scopedPaths = normalizePaths(updateEvent.scopedPaths),
       threadIds = normalizeThreadIds(updateEvent.threadIds),
@@ -436,7 +435,7 @@ internal class AgentSessionRefreshScheduler(
     )
     val mergedChangedProjectFilePaths = mergeChangedProjectFilePaths(existing, incoming)
     if (existing.isUnscoped() || incoming.isUnscoped()) {
-      return AgentSessionSourceUpdateEvent(
+      return createSourceUpdateEvent(
         type = mergedType,
         activityUpdatesByThreadId = mergedActivityUpdatesByThreadId,
         presentationUpdatesByThreadId = mergedPresentationUpdatesByThreadId,
@@ -445,7 +444,7 @@ internal class AgentSessionRefreshScheduler(
       )
     }
 
-    return AgentSessionSourceUpdateEvent(
+    return createSourceUpdateEvent(
       type = mergedType,
       scopedPaths = mergeScopeSets(existing.scopedPaths, incoming.scopedPaths),
       threadIds = mergeScopeSets(existing.threadIds, incoming.threadIds),
@@ -521,7 +520,8 @@ internal class AgentSessionRefreshScheduler(
     merged.putAll(existing)
     for ((threadId, incomingUpdate) in incoming) {
       val existingUpdate = merged[threadId]
-      merged[threadId] = if (existingUpdate == null) incomingUpdate else mergeAgentSessionThreadPresentationUpdates(existingUpdate, incomingUpdate)
+      merged[threadId] =
+        if (existingUpdate == null) incomingUpdate else mergeAgentSessionThreadPresentationUpdates(existingUpdate, incomingUpdate)
     }
     return merged
   }
@@ -619,6 +619,35 @@ internal class AgentSessionRefreshScheduler(
   private enum class RefreshRequestType {
     CATALOG_SYNC,
     FULL_REFRESH,
+  }
+}
+
+private fun createSourceUpdateEvent(
+  type: AgentSessionSourceUpdate,
+  scopedPaths: Set<String>? = null,
+  threadIds: Set<String>? = null,
+  activityUpdatesByThreadId: Map<String, AgentSessionThreadActivityUpdate> = emptyMap(),
+  presentationUpdatesByThreadId: Map<String, AgentSessionThreadPresentationUpdate> = emptyMap(),
+  mayHaveChangedProjectFiles: Boolean = false,
+  changedProjectFilePaths: Set<String>? = null,
+): AgentSessionSourceUpdateEvent {
+  return when (type) {
+    AgentSessionSourceUpdate.THREADS_CHANGED -> AgentSessionSourceUpdateEvent.threadsChanged(
+      scopedPaths = scopedPaths,
+      threadIds = threadIds,
+      activityUpdatesByThreadId = activityUpdatesByThreadId,
+      presentationUpdatesByThreadId = presentationUpdatesByThreadId,
+      mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
+      changedProjectFilePaths = changedProjectFilePaths,
+    )
+    AgentSessionSourceUpdate.HINTS_CHANGED -> AgentSessionSourceUpdateEvent.hintsChanged(
+      scopedPaths = scopedPaths,
+      threadIds = threadIds,
+      activityUpdatesByThreadId = activityUpdatesByThreadId,
+      presentationUpdatesByThreadId = presentationUpdatesByThreadId,
+      mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
+      changedProjectFilePaths = changedProjectFilePaths,
+    )
   }
 }
 

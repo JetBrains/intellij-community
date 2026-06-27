@@ -16,7 +16,7 @@ import com.intellij.platform.ai.agent.codex.sessions.backend.appserver.CodexAppS
 import com.intellij.platform.ai.agent.codex.sessions.backend.appserver.SharedCodexAppServerService
 import com.intellij.platform.ai.agent.codex.sessions.backend.createDefaultCodexSessionBackend
 import com.intellij.platform.ai.agent.codex.sessions.backend.rollout.CodexExactRolloutThreadLoader
-import com.intellij.platform.ai.agent.codex.sessions.backend.rollout.CodexRolloutRefreshHintsProvider
+import com.intellij.platform.ai.agent.codex.sessions.backend.rollout.CodexRolloutDiscoveryProvider
 import com.intellij.platform.ai.agent.codex.sessions.backend.rollout.CodexRolloutParser
 import com.intellij.platform.ai.agent.codex.sessions.backend.rollout.CodexRolloutSessionBackend
 import com.intellij.platform.ai.agent.codex.sessions.backend.toAgentSessionRefreshHints
@@ -38,7 +38,6 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefres
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionOutlineForkResult
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceRefreshRequest
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceRefreshResult
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.platform.ai.agent.sessions.core.providers.BaseAgentSessionSource
 import com.intellij.openapi.components.service
@@ -56,7 +55,7 @@ private val LOG = logger<CodexSessionSource>()
 internal class CodexSessionSource internal constructor(
   private val backend: CodexSessionBackend,
   private val appServerRefreshHintsProvider: CodexRefreshHintsProvider,
-  private val rolloutRefreshHintsProvider: CodexRefreshHintsProvider,
+  private val rolloutDiscoveryProvider: CodexRefreshHintsProvider,
   private val rolloutBackend: CodexSessionBackend? = null,
   private val calculateCost: (AgentSessionUsageSnapshot) -> AgentSessionCost = AgentSessionUsageCostCalculators::calculateCost,
   private val threadPathIndex: CodexThreadPathIndex = InMemoryCodexThreadPathIndex(),
@@ -73,7 +72,7 @@ internal class CodexSessionSource internal constructor(
       readThreadActivitySnapshot = sharedAppServerService::readThreadActivitySnapshot,
       notifications = sharedAppServerService.notifications,
     ),
-    rolloutRefreshHintsProvider = CodexRolloutRefreshHintsProvider(
+    rolloutDiscoveryProvider = CodexRolloutDiscoveryProvider(
       rolloutBackend = rolloutBackend,
       activeFileChangeFlow = { paths ->
         // App-server fs/watch covers the supported app-server file watch contract, including
@@ -102,14 +101,14 @@ internal class CodexSessionSource internal constructor(
 
   override val updateEvents: Flow<AgentSessionSourceUpdateEvent>
     get() = merge(
-      backend.updates.map { AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.THREADS_CHANGED) },
+      backend.updates.map { AgentSessionSourceUpdateEvent.threadsChanged() },
       appServerRefreshHintsProvider.updateEvents,
-      rolloutRefreshHintsProvider.updateEvents.mapNotNull(::toRolloutDiscoveryUpdateEvent),
+      rolloutDiscoveryProvider.updateEvents.mapNotNull(::toRolloutDiscoveryUpdateEvent),
       readStateUpdateEvents,
     )
 
   override fun activeThreadUpdateEvents(path: String, threadId: String): Flow<AgentSessionSourceUpdateEvent> {
-    return rolloutRefreshHintsProvider.activeThreadUpdateEvents(path = path, threadId = threadId)
+    return rolloutDiscoveryProvider.activeThreadUpdateEvents(path = path, threadId = threadId)
       .mapNotNull(::toRolloutDiscoveryUpdateEvent)
   }
 
@@ -117,12 +116,17 @@ internal class CodexSessionSource internal constructor(
     if (updateEvent.scopedPaths.isNullOrEmpty() && !updateEvent.mayHaveChangedProjectFiles) {
       return null
     }
-    return AgentSessionSourceUpdateEvent(
-      type = AgentSessionSourceUpdate.THREADS_CHANGED,
-      scopedPaths = updateEvent.scopedPaths,
-      mayHaveChangedProjectFiles = updateEvent.mayHaveChangedProjectFiles,
-      changedProjectFilePaths = updateEvent.changedProjectFilePaths,
-    )
+    return if (updateEvent.mayHaveChangedProjectFiles) {
+      AgentSessionSourceUpdateEvent.projectFilesChanged(
+        scopedPaths = updateEvent.scopedPaths,
+        changedProjectFilePaths = updateEvent.changedProjectFilePaths,
+      )
+    }
+    else {
+      AgentSessionSourceUpdateEvent.discoveryChanged(
+        scopedPaths = updateEvent.scopedPaths,
+      )
+    }
   }
 
   override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> {
