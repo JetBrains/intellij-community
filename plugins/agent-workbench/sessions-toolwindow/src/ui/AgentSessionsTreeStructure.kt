@@ -103,7 +103,6 @@ private class AgentSessionsTreeNodeDescriptor(
   private fun computeName(): String {
     if (element !is SessionTreeId) return ""
     val model = modelProvider()
-    val node = model.entriesById[element]?.node ?: return ""
-    return sessionTreeNodeSearchText(node)
+    return sessionTreeNodeSearchText(model, element)
   }
 }

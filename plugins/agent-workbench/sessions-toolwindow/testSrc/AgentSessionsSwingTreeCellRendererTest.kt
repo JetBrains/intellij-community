@@ -19,6 +19,7 @@ import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
 import com.intellij.agent.workbench.sessions.toolwindow.ui.SESSION_TREE_MORE_ROW_FRAGMENT_TAG
 import com.intellij.agent.workbench.sessions.toolwindow.ui.SessionTreeCellRenderer
+import com.intellij.agent.workbench.sessions.toolwindow.ui.SessionTreeCellRendererWithSeparators
 import com.intellij.agent.workbench.sessions.toolwindow.ui.SessionTreeRowActionPresentation
 import com.intellij.agent.workbench.sessions.toolwindow.ui.buildSessionTreeThreadRowPresentation
 import com.intellij.agent.workbench.sessions.toolwindow.ui.buildSessionTreeThreadTooltipHtml
@@ -44,6 +45,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.IconManager
 import com.intellij.ui.render.RenderingHelper
 import com.intellij.ui.treeStructure.Tree
@@ -634,6 +636,50 @@ class AgentSessionsSwingTreeCellRendererTest {
 
     assertThat(renderer.icon).isNull()
     assertThat(renderer.getCharSequence(true).toString()).isEqualTo(AgentSessionsBundle.message("toolwindow.section.pinned"))
+  }
+
+  @Test
+  fun flatPinnedSectionRowUsesSeparatorRenderer() {
+    val pinnedId = SessionTreeId.Pinned
+    val nodeResolver = { id: SessionTreeId ->
+      if (id == pinnedId) SessionTreeNode.PinnedSection else null
+    }
+    val renderer = SessionTreeCellRendererWithSeparators(
+      delegate = SessionTreeCellRenderer(
+        nowProvider = { 0L },
+        rowActionsProvider = { _, _, _ -> null },
+        nodeResolver = nodeResolver,
+      ),
+      nodeResolver = nodeResolver,
+    )
+    val tree = createTree(width = 420)
+
+    val component = renderer.getTreeCellRendererComponent(tree, descriptorValue(pinnedId), false, false, true, 0, false)
+
+    assertThat(component).isInstanceOf(GroupHeaderSeparator::class.java)
+    assertThat((component as GroupHeaderSeparator).caption).isEqualTo(AgentSessionsBundle.message("toolwindow.section.pinned"))
+  }
+
+  @Test
+  fun flatSectionSeparatorRowUsesUncaptionedSeparatorRenderer() {
+    val separatorId = SessionTreeId.PinnedSeparator
+    val nodeResolver = { id: SessionTreeId ->
+      if (id == separatorId) SessionTreeNode.SectionSeparator else null
+    }
+    val renderer = SessionTreeCellRendererWithSeparators(
+      delegate = SessionTreeCellRenderer(
+        nowProvider = { 0L },
+        rowActionsProvider = { _, _, _ -> null },
+        nodeResolver = nodeResolver,
+      ),
+      nodeResolver = nodeResolver,
+    )
+    val tree = createTree(width = 420)
+
+    val component = renderer.getTreeCellRendererComponent(tree, descriptorValue(separatorId), false, false, true, 0, false)
+
+    assertThat(component).isInstanceOf(GroupHeaderSeparator::class.java)
+    assertThat((component as GroupHeaderSeparator).caption).isNull()
   }
 
   @Test

@@ -31,7 +31,9 @@ internal fun createAgentSessionsTreePopupActionContext(
 
 internal fun resolveSessionActionTarget(nodeId: SessionTreeId, node: SessionTreeNode): SessionActionTarget? {
   return when (node) {
-    is SessionTreeNode.PinnedSection -> null
+    is SessionTreeNode.PinnedSection,
+    is SessionTreeNode.SectionSeparator,
+      -> null
 
     is SessionTreeNode.Project -> {
       val projectId = nodeId as? SessionTreeId.Project ?: return null

@@ -71,7 +71,7 @@ class AgentSessionsTreeSnapshotTest {
   }
 
   @Test
-  fun currentProjectScopedModelKeepsProjectContainer() {
+  fun currentProjectScopedModelFlattensProjectContainer() {
     val projectPath = "/work/project-a"
     val threadId = "thread-1"
     val model = buildSessionTreeModel(
@@ -100,9 +100,10 @@ class AgentSessionsTreeSnapshotTest {
 
     val projectTreeId = SessionTreeId.Project(projectPath)
     val threadTreeId = SessionTreeId.Thread(projectPath, AgentSessionProvider.from("codex"), threadId)
-    assertThat(model.rootIds).containsExactly(projectTreeId)
-    assertThat(model.entriesById.getValue(projectTreeId).childIds).containsExactly(threadTreeId)
-    assertThat(model.entriesById.getValue(threadTreeId).parentId).isEqualTo(projectTreeId)
+    assertThat(model.rootIds).containsExactly(threadTreeId)
+    assertThat(model.entriesById).doesNotContainKey(projectTreeId)
+    assertThat(model.entriesById.getValue(threadTreeId).parentId).isNull()
+    assertThat(model.autoOpenProjects).isEmpty()
   }
 
   @Test
@@ -146,7 +147,7 @@ class AgentSessionsTreeSnapshotTest {
   }
 
   @Test
-  fun currentProjectScopedModelKeepsPinnedSectionAboveProjectContainer() {
+  fun currentProjectScopedModelKeepsPinnedThreadsAboveFlatProjectRows() {
     val provider = AgentSessionProvider.from("codex")
     val projectPath = "/work/project-a"
     val model = buildSessionTreeModel(
@@ -174,11 +175,11 @@ class AgentSessionsTreeSnapshotTest {
     val projectTreeId = SessionTreeId.Project(projectPath)
     val recentThreadId = SessionTreeId.Thread(projectPath, provider, "recent")
     val pinnedThreadId = SessionTreeId.Thread(projectPath, provider, "pinned")
-    assertThat(model.rootIds).containsExactly(SessionTreeId.Pinned, projectTreeId)
-    assertThat(model.entriesById.getValue(SessionTreeId.Pinned).childIds).containsExactly(pinnedThreadId)
-    assertThat(model.entriesById.getValue(projectTreeId).childIds).containsExactly(recentThreadId)
-    assertThat(model.entriesById.getValue(recentThreadId).parentId).isEqualTo(projectTreeId)
-    assertThat(model.entriesById.getValue(pinnedThreadId).parentId).isEqualTo(SessionTreeId.Pinned)
+    assertThat(model.rootIds).containsExactly(SessionTreeId.Pinned, pinnedThreadId, SessionTreeId.PinnedSeparator, recentThreadId)
+    assertThat(model.entriesById.getValue(SessionTreeId.Pinned).childIds).isEmpty()
+    assertThat(model.entriesById).doesNotContainKey(projectTreeId)
+    assertThat(model.entriesById.getValue(recentThreadId).parentId).isNull()
+    assertThat(model.entriesById.getValue(pinnedThreadId).parentId).isNull()
   }
 
   @Test

@@ -66,6 +66,9 @@ internal fun buildSessionTreeModel(
   val projectPathQualifiers = computeProjectPathQualifiers(visibleProjectsResult.visibleProjects)
   val modelBuilder = SessionTreeModelBuilder(visibleThreadCounts, projectPathQualifiers, openTabsPresentationState)
   val model = modelBuilder.build(visibleProjectsResult)
+  if (currentProjectScopeActive) {
+    return flattenCurrentProjectModel(model = model, visibleProjectsResult = visibleProjectsResult)
+  }
   val autoOpenProjects = visibleProjectsResult.visibleProjects
     .filter {
       it.isOpen ||
@@ -73,9 +76,56 @@ internal fun buildSessionTreeModel(
       it.providerWarnings.isNotEmpty() ||
       it.worktrees.any { wt -> wt.isOpen }
     }
-    .filter { currentProjectScopeActive || !treeUiState.isProjectCollapsed(it.path) }
+    .filter { !treeUiState.isProjectCollapsed(it.path) }
     .map { SessionTreeId.Project(it.path) }
   return model.copy(autoOpenProjects = autoOpenProjects.filter { it in model.entriesById })
+}
+
+private fun flattenCurrentProjectModel(
+  model: SessionTreeModel,
+  visibleProjectsResult: VisibleProjectsResult,
+): SessionTreeModel {
+  if (visibleProjectsResult.visibleProjects.size != 1 || visibleProjectsResult.hiddenClosedProjectCount != 0) {
+    return model.copy(autoOpenProjects = emptyList())
+  }
+
+  val projectId = SessionTreeId.Project(visibleProjectsResult.visibleProjects.single().path)
+  val projectEntry = model.entriesById[projectId] ?: return model.copy(autoOpenProjects = emptyList())
+  val entriesById = LinkedHashMap(model.entriesById)
+  val rootIds = mutableListOf<SessionTreeId>()
+
+  entriesById[SessionTreeId.Pinned]?.let { pinnedEntry ->
+    rootIds += SessionTreeId.Pinned
+    pinnedEntry.childIds.forEach { childId ->
+      rootIds += childId
+      entriesById[childId]?.let { childEntry ->
+        entriesById[childId] = childEntry.copy(parentId = null)
+      }
+    }
+    entriesById[SessionTreeId.Pinned] = pinnedEntry.copy(childIds = emptyList())
+    if (projectEntry.childIds.isNotEmpty()) {
+      rootIds += SessionTreeId.PinnedSeparator
+      entriesById[SessionTreeId.PinnedSeparator] = SessionTreeModelEntry(
+        id = SessionTreeId.PinnedSeparator,
+        parentId = null,
+        node = SessionTreeNode.SectionSeparator,
+      )
+    }
+  }
+
+  projectEntry.childIds.forEach { childId ->
+    rootIds += childId
+    entriesById[childId]?.let { childEntry ->
+      entriesById[childId] = childEntry.copy(parentId = null)
+    }
+  }
+  entriesById.remove(projectId)
+
+  return SessionTreeModel(
+    rootIds = rootIds,
+    entriesById = entriesById,
+    autoOpenProjects = emptyList(),
+  )
 }
 
 internal fun diffSessionTreeModels(
@@ -158,6 +208,7 @@ internal fun sessionTreeNodePresentation(node: SessionTreeNode): Any {
     )
 
     is SessionTreeNode.PinnedSection -> Unit
+    is SessionTreeNode.SectionSeparator -> Unit
     is SessionTreeNode.SubAgent -> node.subAgent
     is SessionTreeNode.Warning -> node.message
     is SessionTreeNode.Error -> node.message
@@ -533,9 +584,19 @@ internal fun shouldHandleSingleClick(node: SessionTreeNode): Boolean {
   return node is SessionTreeNode.MoreProjects || node is SessionTreeNode.MoreThreads
 }
 
+internal fun isSelectableSessionTreeId(model: SessionTreeModel, id: SessionTreeId): Boolean {
+  val entry = model.entriesById[id] ?: return false
+  return when (id) {
+    SessionTreeId.Pinned -> entry.childIds.isNotEmpty()
+    SessionTreeId.PinnedSeparator -> false
+    else -> true
+  }
+}
+
 internal fun shouldOpenOnActivation(node: SessionTreeNode): Boolean {
   return when (node) {
     is SessionTreeNode.PinnedSection,
+    is SessionTreeNode.SectionSeparator,
       -> false
 
     is SessionTreeNode.Project,
@@ -559,6 +620,7 @@ internal fun shouldExpandOnDoubleClick(node: SessionTreeNode): Boolean {
     is SessionTreeNode.Project,
     is SessionTreeNode.Worktree,
     is SessionTreeNode.PinnedSection,
+    is SessionTreeNode.SectionSeparator,
     is SessionTreeNode.SubAgent,
       -> false
 
@@ -618,6 +680,7 @@ internal fun archiveTargetFromThreadNode(
 
 internal sealed interface SessionTreeNode {
   data object PinnedSection : SessionTreeNode
+  data object SectionSeparator : SessionTreeNode
 
   data class Project(
     @JvmField val project: AgentProjectSessions,
@@ -646,6 +709,7 @@ internal sealed interface SessionTreeNode {
 
 internal sealed interface SessionTreeId {
   data object Pinned : SessionTreeId
+  data object PinnedSeparator : SessionTreeId
   data class Project(@JvmField val path: String) : SessionTreeId
   data class Thread(@JvmField val projectPath: String, val provider: AgentSessionProvider, @JvmField val threadId: String) : SessionTreeId
   data class SubAgent(

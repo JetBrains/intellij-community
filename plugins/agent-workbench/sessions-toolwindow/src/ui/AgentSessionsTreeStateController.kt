@@ -473,7 +473,9 @@ internal fun sessionTreeExpansionTargetsAfterModelSwap(
     }
   }
 
-  if (SessionTreeId.Pinned in model.entriesById && SessionTreeId.Pinned !in previousModel.entriesById) {
+  val pinnedEntry = model.entriesById[SessionTreeId.Pinned]
+  val previousPinnedEntry = previousModel.entriesById[SessionTreeId.Pinned]
+  if (pinnedEntry?.childIds?.isNotEmpty() == true && previousPinnedEntry?.childIds?.isNotEmpty() != true) {
     result += SessionTreeId.Pinned
   }
 

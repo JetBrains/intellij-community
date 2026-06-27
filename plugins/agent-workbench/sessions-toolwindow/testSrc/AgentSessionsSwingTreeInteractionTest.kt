@@ -1,20 +1,28 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.toolwindow
 
+import com.intellij.agent.workbench.chat.AgentChatOpenTabsPresentationState
+import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.core.session.AgentSubAgent
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
+import com.intellij.agent.workbench.sessions.state.InMemorySessionTreeUiState
 import com.intellij.agent.workbench.sessions.toolwindow.actions.createAgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
+import com.intellij.agent.workbench.sessions.toolwindow.tree.buildSessionTreeModel
+import com.intellij.agent.workbench.sessions.toolwindow.tree.isSelectableSessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.pathForMoreThreadsNode
+import com.intellij.agent.workbench.sessions.toolwindow.tree.sessionTreeNodeSearchText
 import com.intellij.agent.workbench.sessions.toolwindow.tree.shouldExpandOnDoubleClick
 import com.intellij.agent.workbench.sessions.toolwindow.tree.shouldHandleSingleClick
 import com.intellij.agent.workbench.sessions.toolwindow.tree.shouldOpenOnActivation
 import com.intellij.agent.workbench.sessions.toolwindow.tree.shouldRetargetSelectionForContextMenu
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsTreeRowActionsOverlay
+import com.intellij.agent.workbench.sessions.toolwindow.ui.filterSelectableSessionTreeSelectionPaths
 import com.intellij.agent.workbench.sessions.toolwindow.ui.resolveArchiveActionContext
+import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.treeStructure.Tree
@@ -22,6 +30,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
+import javax.swing.JTree
+import javax.swing.tree.TreePath
 
 @TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
@@ -123,6 +133,71 @@ class AgentSessionsSwingTreeInteractionTest {
   }
 
   @Test
+  fun flatPinnedSectionRowsAreStructuralAndNotSearchable() {
+    val model = pinnedSectionModel(currentProjectScopeActive = true)
+    val provider = AgentSessionProvider.from("codex")
+    val pinnedThreadId = SessionTreeId.Thread(PROJECT_PATH, provider, PINNED_THREAD_ID)
+    val recentThreadId = SessionTreeId.Thread(PROJECT_PATH, provider, RECENT_THREAD_ID)
+
+    assertThat(model.rootIds).containsExactly(SessionTreeId.Pinned, pinnedThreadId, SessionTreeId.PinnedSeparator, recentThreadId)
+    assertThat(isSelectableSessionTreeId(model, SessionTreeId.Pinned)).isFalse()
+    assertThat(isSelectableSessionTreeId(model, SessionTreeId.PinnedSeparator)).isFalse()
+    assertThat(isSelectableSessionTreeId(model, pinnedThreadId)).isTrue()
+    assertThat(sessionTreeNodeSearchText(model, SessionTreeId.Pinned)).isEmpty()
+    assertThat(sessionTreeNodeSearchText(model, SessionTreeId.PinnedSeparator)).isEmpty()
+  }
+
+  @Test
+  fun globalPinnedSectionParentRemainsSelectableAndSearchable() {
+    val model = pinnedSectionModel(currentProjectScopeActive = false)
+
+    assertThat(model.rootIds.first()).isEqualTo(SessionTreeId.Pinned)
+    assertThat(model.entriesById.getValue(SessionTreeId.Pinned).childIds).isNotEmpty()
+    assertThat(isSelectableSessionTreeId(model, SessionTreeId.Pinned)).isTrue()
+    assertThat(sessionTreeNodeSearchText(model, SessionTreeId.Pinned))
+      .isEqualTo(AgentSessionsBundle.message("toolwindow.section.pinned"))
+  }
+
+  @Test
+  fun structuralSelectionSkipsPinnedSectionRowsInNavigationDirection() {
+    val model = pinnedSectionModel(currentProjectScopeActive = true)
+    val provider = AgentSessionProvider.from("codex")
+    val pinnedHeaderPath = treePath(SessionTreeId.Pinned)
+    val pinnedThreadPath = treePath(SessionTreeId.Thread(PROJECT_PATH, provider, PINNED_THREAD_ID))
+    val separatorPath = treePath(SessionTreeId.PinnedSeparator)
+    val recentThreadPath = treePath(SessionTreeId.Thread(PROJECT_PATH, provider, RECENT_THREAD_ID))
+    val tree = RowMappedTree(listOf(pinnedHeaderPath, pinnedThreadPath, separatorPath, recentThreadPath))
+
+    assertThat(
+      filterSelectableSessionTreeSelectionPaths(
+        tree = tree,
+        model = model,
+        selectionPaths = arrayOf(separatorPath),
+        oldLeadSelectionPath = pinnedThreadPath,
+        newLeadSelectionPath = separatorPath,
+      )
+    ).containsExactly(recentThreadPath)
+    assertThat(
+      filterSelectableSessionTreeSelectionPaths(
+        tree = tree,
+        model = model,
+        selectionPaths = arrayOf(separatorPath),
+        oldLeadSelectionPath = recentThreadPath,
+        newLeadSelectionPath = separatorPath,
+      )
+    ).containsExactly(pinnedThreadPath)
+    assertThat(
+      filterSelectableSessionTreeSelectionPaths(
+        tree = tree,
+        model = model,
+        selectionPaths = arrayOf(pinnedHeaderPath),
+        oldLeadSelectionPath = pinnedThreadPath,
+        newLeadSelectionPath = pinnedHeaderPath,
+      )
+    ).containsExactly(pinnedThreadPath)
+  }
+
+  @Test
   fun archiveActionContextPrefersPopupContextAndFallsBackToSelection() {
     val project = ProjectManager.getInstance().defaultProject
     val projectSessions = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
@@ -174,4 +249,60 @@ class AgentSessionsSwingTreeInteractionTest {
     )
     assertThat(missingSelectionContext).isNull()
   }
+}
+
+private const val PROJECT_PATH = "/work/project-a"
+private const val RECENT_THREAD_ID = "recent"
+private const val PINNED_THREAD_ID = "pinned"
+
+private fun pinnedSectionModel(currentProjectScopeActive: Boolean) = buildSessionTreeModel(
+  projects = listOf(
+    AgentProjectSessions(
+      path = PROJECT_PATH,
+      name = "Project A",
+      isOpen = true,
+      providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+      threads = listOf(
+        AgentSessionThread(
+          id = RECENT_THREAD_ID,
+          title = "Recent thread",
+          updatedAt = 300,
+          archived = false,
+          provider = AgentSessionProvider.from("codex"),
+        ),
+        AgentSessionThread(
+          id = PINNED_THREAD_ID,
+          title = "Pinned thread",
+          updatedAt = 100,
+          archived = false,
+          provider = AgentSessionProvider.from("codex"),
+        ),
+      ),
+    )
+  ),
+  visibleClosedProjectCount = Int.MAX_VALUE,
+  visibleThreadCounts = emptyMap(),
+  treeUiState = InMemorySessionTreeUiState(),
+  currentProjectScopeActive = currentProjectScopeActive,
+  openTabsPresentationState = AgentChatOpenTabsPresentationState(
+    pinnedTopLevelThreadIdsByProvider = mapOf(AgentSessionProvider.from("codex") to mapOf(PROJECT_PATH to setOf(PINNED_THREAD_ID))),
+  ),
+)
+
+private fun treePath(id: SessionTreeId): TreePath = TreePath(arrayOf(TestDescriptor("root"), TestDescriptor(id)))
+
+private class RowMappedTree(private val paths: List<TreePath>) : JTree() {
+  override fun getRowCount(): Int = paths.size
+
+  override fun getPathForRow(row: Int): TreePath? = paths.getOrNull(row)
+
+  override fun getRowForPath(path: TreePath?): Int = paths.indexOf(path)
+}
+
+private class TestDescriptor(
+  private val elementValue: Any?,
+) : NodeDescriptor<Any?>(null, null) {
+  override fun update(): Boolean = false
+
+  override fun getElement(): Any? = elementValue
 }
