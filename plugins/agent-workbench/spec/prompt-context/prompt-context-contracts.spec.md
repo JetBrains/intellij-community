@@ -46,5 +46,6 @@ Prompt context is collected by contributors, normalized by the prompt UI, and re
 - `./tests.cmd --module intellij.agent.workbench.prompt.ui.tests --test com.intellij.agent.workbench.prompt.ui.AgentPromptUiSessionStateServiceTest`
 
 ## References
+- `../actions/global-prompt-composer.spec.md`
 - `../actions/global-prompt-entry.spec.md`
 - `../actions/add-to-agent-context.spec.md`

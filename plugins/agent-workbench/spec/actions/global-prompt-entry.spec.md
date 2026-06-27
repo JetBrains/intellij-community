@@ -103,7 +103,7 @@ The global prompt opens a project-scoped prompt surface for starting a new task 
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexPlanPromptRealAppServerIntegrationTest.kt
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexNewThreadPromptLaunchIntegrationTest.kt
 
-- `NEW_TASK` and `EXISTING_TASK` expose the provider selector. Changing provider in `EXISTING_TASK` reloads the selectable task list for that provider. Provider-backed model and reasoning-effort controls are exposed for `NEW_TASK` through the unified launch-settings control specified by `global-prompt-generation-controls.spec.md`. Popup and inline composers render selected context as attachment cards above the editable prompt text, keep Add Context as the left prompt-composition action and one launch-settings affordance as the right launch-configuration action in the prompt bottom tray, align context cards, prompt text, and left tray actions to the same composer-owned content lane, and keep header actions limited to prompt-surface tools such as Plan mode, Run in container, preview, and prompt library. The embedded prompt editor must not add hidden horizontal insets to define this lane.
+- `NEW_TASK` and `EXISTING_TASK` expose the provider selector. Changing provider in `EXISTING_TASK` reloads the selectable task list for that provider. Provider-backed model and reasoning-effort controls are exposed for `NEW_TASK` through the unified launch-settings control specified by `global-prompt-generation-controls.spec.md`. The prompt composer mental model, context/text/tray ownership, and content-lane layout contract are owned by `global-prompt-composer.spec.md`.
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteViewStructureTest.kt
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteSessionControllerTest.kt
@@ -141,6 +141,7 @@ The global prompt opens a project-scoped prompt surface for starting a new task 
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionLaunchServiceTest`
 
 ## References
+- `global-prompt-composer.spec.md`
 - `add-to-agent-context.spec.md`
 - `global-prompt-generation-controls.spec.md`
 - `global-prompt-suggestions.spec.md`

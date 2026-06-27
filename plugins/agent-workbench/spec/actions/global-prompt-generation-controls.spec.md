@@ -26,7 +26,7 @@ Date: 2026-06-09
 Ask Agent launch controls let users choose a provider, launch mode, model, and normal reasoning effort through task-cost profiles, while Plan mode remains an independent prompt option. The controls are scoped to `NEW_TASK` launches, use built-in provider/mode profiles unless explicitly changed, and persist custom profiles only through explicit profile management actions.
 
 ## Requirements
-- The prompt composer renders selected context as attachment cards above the editable prompt text, and the bottom tray renders Add Context as the left-side prompt-composition action plus a single right-side launch-settings affordance for both popup and inline prompt surfaces. Context cards, prompt text, and left tray actions share one leading composer content lane; launch settings are right-aligned in that same lane. The composer layout owns the lane, not the embedded editor's internal border. The launch-settings affordance shows the selected provider icon plus a compact profile/model/reasoning summary and opens one popup containing profile choices, provider-backed model selection when available, normal reasoning-effort selection, Plan-mode reasoning-effort selection when available, and profile management. Profile default/save/update actions stay visible inline next to the launch-settings affordance.
+- The prompt composer places one launch-settings affordance in the bottom tray location specified by `global-prompt-composer.spec.md`. The launch-settings affordance shows the selected provider icon plus a compact profile/model/reasoning summary and opens one popup containing profile choices, provider-backed model selection when available, normal reasoning-effort selection, Plan-mode reasoning-effort selection when available, and profile management. Profile default/save/update actions stay visible inline next to the launch-settings affordance.
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteViewStructureTest.kt
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
 
@@ -72,7 +72,7 @@ Ask Agent launch controls let users choose a provider, launch mode, model, and n
 
 ## User Experience
 - `Default` belongs to provider/model/effort selector state and to the compact built-in standard profile label. The profile control uses compact state labels: `Default` for the built-in standard profile, saved profile names for exact user profiles, and `Custom` when current controls do not match an applicable profile. Model and reasoning details belong to the tuning affordance tooltip/accessibility text, not to the profile label. Plan mode belongs to the separate Plan checkbox, not to the selected profile.
-- The composer remains borderless: popup tray controls use normal label weight, inline tray controls stay compact, context attachment cards belong to the top of the composer before the prompt text, context cards and left tray actions share the prompt text leading edge through composer-owned padding, and context cards must not visually dominate the launch-settings affordance.
+- Popup tray controls use normal label weight, inline tray controls stay compact, and the launch-settings affordance must not visually dominate context attachments or prompt text.
 - Built-in profiles are safe fallbacks and should not require users to create a profile before the toolbar quick launch works.
 - Disabled popup actions are reserved for genuinely unavailable commands, not already-satisfied saved states.
 
@@ -84,5 +84,6 @@ Ask Agent launch controls let users choose a provider, launch mode, model, and n
 - `./tests.cmd --module intellij.agent.workbench.sessions.actions.tests --test com.intellij.agent.workbench.sessions.AgentSessionsMainToolbarNewThreadActionsTest`
 
 ## References
+- `global-prompt-composer.spec.md`
 - `global-prompt-entry.spec.md`
 - `../core/agent-core-contracts.spec.md`
