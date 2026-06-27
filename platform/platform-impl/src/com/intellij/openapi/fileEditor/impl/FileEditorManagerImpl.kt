@@ -873,13 +873,44 @@ open class FileEditorManagerImpl(
    * @return true if all the checks were successfully passed and the file can be closed
    */
   private fun canCloseFile(file: VirtualFile): Boolean {
+    return canCloseFiles(listOf(file))
+  }
+
+  private fun canCloseFiles(files: Collection<VirtualFile>): Boolean {
+    if (files.isEmpty()) {
+      return true
+    }
     val checks = VirtualFilePreCloseCheck.EP_NAME.extensionsIfPointIsRegistered
-    return checks.all { it.canCloseFile(file) }
+    return checks.all { it.canCloseFiles(files) }
   }
 
   @RequiresEdt
   override fun closeFileWithChecks(file: VirtualFile, window: EditorWindow): Boolean {
     return closeFile(window = window, composite = window.getComposite(file) ?: return false, runChecks = true)
+  }
+
+  @RequiresEdt
+  override fun closeFilesWithChecks(filesWithWindows: List<Pair<EditorComposite, EditorWindow>>): Boolean {
+    val filesToClose = filesWithWindows.filter { it.second.getComposite(it.first.file) != null }
+    if (filesToClose.isEmpty()) {
+      return true
+    }
+    val filesToCheck = filesToClose.mapTo(LinkedHashSet()) { it.first.file }
+    if (!canCloseFiles(filesToCheck)) {
+      return false
+    }
+
+    openFileSetModificationCount.increment()
+    WriteIntentReadAction.run {
+      for (fileWithWindow in filesToClose) {
+        val window = fileWithWindow.second
+        val currentComposite = window.getComposite(fileWithWindow.first.file)
+        if (currentComposite != null) {
+          window.closeFile(file = currentComposite.file, composite = currentComposite)
+        }
+      }
+    }
+    return true
   }
 
   @RequiresEdt

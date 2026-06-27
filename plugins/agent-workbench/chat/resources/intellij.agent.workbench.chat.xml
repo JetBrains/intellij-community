@@ -37,6 +37,7 @@
                        key="notification.group.agent.workbench.chat"/>
     <fileIconProvider implementation="com.intellij.agent.workbench.chat.AgentChatFileIconProvider"/>
     <fileEditorProvider id="agent.workbench-chat-editor" implementation="com.intellij.agent.workbench.chat.AgentChatFileEditorProvider"/>
+    <virtualFilePreCloseCheck implementation="com.intellij.agent.workbench.chat.AgentChatPreCloseCheck"/>
     <editorTabTitleProvider implementation="com.intellij.agent.workbench.chat.AgentChatEditorTabTitleProvider"/>
     <editorTabColorProvider implementation="com.intellij.agent.workbench.chat.AgentChatEditorTabColorProvider"/>
     <applicationSettings service="com.intellij.agent.workbench.chat.AgentChatTabsStateService"/>

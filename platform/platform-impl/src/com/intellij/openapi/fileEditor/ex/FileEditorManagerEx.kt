@@ -81,6 +81,21 @@ abstract class FileEditorManagerEx : FileEditorManager() {
    */
   abstract fun closeFileWithChecks(file: VirtualFile, window: EditorWindow): Boolean
 
+  /**
+   * Close editors opened in particular windows after running pre-close checks.
+   * @return true if all requested editors were closed; false otherwise
+   */
+  @Internal
+  @RequiresEdt
+  open fun closeFilesWithChecks(filesWithWindows: List<Pair<EditorComposite, EditorWindow>>): Boolean {
+    for (fileWithWindow in filesWithWindows) {
+      if (!closeFileWithChecks(fileWithWindow.first.file, fileWithWindow.second)) {
+        return false
+      }
+    }
+    return true
+  }
+
   abstract fun unsplitAllWindow()
 
   abstract val windowSplitCount: Int
