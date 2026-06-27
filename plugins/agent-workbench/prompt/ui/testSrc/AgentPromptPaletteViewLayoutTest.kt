@@ -2,17 +2,26 @@
 package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextItemIds
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
+import com.intellij.agent.workbench.prompt.core.AgentPromptPayload
+import com.intellij.agent.workbench.prompt.core.AgentPromptPayloadValue
 import com.intellij.agent.workbench.prompt.core.AgentPromptSuggestionCandidate
+import com.intellij.agent.workbench.prompt.ui.context.AgentPromptScreenshotContextItem
+import com.intellij.icons.AllIcons
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.EditorTextField
+import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import java.awt.Color
 import java.awt.Component
+import java.awt.image.BufferedImage
 import java.util.concurrent.TimeUnit
 import javax.swing.JButton
 import javax.swing.JComponent
@@ -601,12 +610,22 @@ class AgentPromptPaletteViewLayoutTest {
     }
   }
 
-  private fun createContextEntry(title: String, body: String): ContextEntry {
+  private fun createContextEntry(
+    title: String,
+    body: String,
+    rendererId: String = "test",
+    payload: AgentPromptPayloadValue = AgentPromptPayloadValue.Obj.EMPTY,
+    itemId: String? = null,
+    source: String = "test",
+  ): ContextEntry {
     return ContextEntry(
       item = AgentPromptContextItem(
-        rendererId = "test",
+        rendererId = rendererId,
         title = title,
         body = body,
+        payload = payload,
+        itemId = itemId,
+        source = source,
       )
     )
   }
@@ -691,6 +710,12 @@ class AgentPromptPaletteViewLayoutTest {
   private fun contextRemoveButtons(root: Component): List<JButton> {
     return collectComponentsOfType(root, JButton::class.java).filter { button ->
       button.getClientProperty(CONTEXT_ATTACHMENT_REMOVE_PROPERTY) == true
+    }
+  }
+
+  private fun contextAttachmentLabels(root: Component): List<JBLabel> {
+    return contextAttachmentCards(root).map { card ->
+      collectComponentsOfType(card, JBLabel::class.java).single()
     }
   }
 

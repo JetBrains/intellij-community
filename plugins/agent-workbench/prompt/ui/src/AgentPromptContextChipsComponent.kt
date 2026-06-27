@@ -1,6 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.ui
 
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextItemIds
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
+import com.intellij.agent.workbench.prompt.core.array
+import com.intellij.agent.workbench.prompt.core.objOrNull
+import com.intellij.agent.workbench.prompt.core.string
 import com.intellij.icons.AllIcons
 import com.intellij.ide.setToolTipText
 import com.intellij.openapi.util.text.HtmlChunk
@@ -134,8 +140,7 @@ internal class AgentPromptContextChipsComponent(
   }
 
   private fun createContextChip(entry: ContextEntry): JComponent {
-    val chipIcon = AgentPromptScreenshotChipIcon.resolve(entry.item)
-    return ContextAttachmentCard(entry = entry, icon = chipIcon ?: AllIcons.Actions.ListFiles) { onRemove(entry) }
+    return ContextAttachmentCard(entry = entry, icon = resolveContextChipIcon(entry.item)) { onRemove(entry) }
   }
 
   private fun createOverflowChip(hiddenCount: Int): JComponent {
@@ -155,6 +160,64 @@ internal class AgentPromptContextChipsComponent(
       0,
     )
   }
+}
+
+private fun resolveContextChipIcon(item: AgentPromptContextItem): Icon {
+  AgentPromptScreenshotChipIcon.resolve(item)?.let { return it }
+
+  return when (item.rendererId) {
+    AgentPromptContextRendererIds.FILE -> AllIcons.FileTypes.Any_type
+    AgentPromptContextRendererIds.PATHS -> resolvePathsChipIcon(item)
+    AgentPromptContextRendererIds.SYMBOL -> AllIcons.Nodes.Method
+    AgentPromptContextRendererIds.VCS_COMMITS -> AllIcons.Vcs.CommitNode
+    AgentPromptContextRendererIds.TEST_FAILURES -> AllIcons.RunConfigurations.TestState.Red2
+    AgentPromptContextRendererIds.SNIPPET -> resolveSnippetChipIcon(item)
+    else -> AllIcons.Actions.ListFiles
+  }
+}
+
+private fun resolveSnippetChipIcon(item: AgentPromptContextItem): Icon {
+  return if (item.itemId == AgentPromptContextItemIds.CHANGES_SELECTION || item.source == "changes") {
+    AllIcons.Vcs.Changelist
+  }
+  else {
+    AllIcons.Actions.ListFiles
+  }
+}
+
+private fun resolvePathsChipIcon(item: AgentPromptContextItem): Icon {
+  val kinds = extractPathKinds(item)
+  return when {
+    kinds.isNotEmpty() && kinds.all { it == "dir" } -> AllIcons.Nodes.Folder
+    kinds.isNotEmpty() && kinds.all { it == "file" } -> AllIcons.FileTypes.Any_type
+    else -> AllIcons.Actions.ListFiles
+  }
+}
+
+private fun extractPathKinds(item: AgentPromptContextItem): Set<String> {
+  val payloadKinds = item.payload.objOrNull()
+    ?.array("entries")
+    ?.mapNotNull { value ->
+      value.objOrNull()
+        ?.string("kind")
+        ?.trim()
+        ?.lowercase()
+        ?.takeIf { it == "dir" || it == "file" }
+    }
+    .orEmpty()
+  if (payloadKinds.isNotEmpty()) {
+    return payloadKinds.toSet()
+  }
+
+  return item.body.lineSequence()
+    .mapNotNull { line ->
+      when {
+        line.trim().startsWith("dir:", ignoreCase = true) -> "dir"
+        line.trim().startsWith("file:", ignoreCase = true) -> "file"
+        else -> null
+      }
+    }
+    .toSet()
 }
 
 private open class ContextAttachmentCardPanel : JPanel(BorderLayout(JBUI.scale(6), 0)) {
@@ -196,13 +259,13 @@ private class ContextAttachmentCard(
   onRemove: () -> Unit,
 ) : ContextAttachmentCardPanel() {
   init {
-    getAccessibleContext().accessibleName = entry.displayText
+    getAccessibleContext().accessibleName = entry.accessibleText
 
     val label = JBLabel(entry.displayText, icon, SwingConstants.LEFT).apply {
       font = JBUI.Fonts.smallFont().asPlain()
       foreground = UIUtil.getLabelForeground()
       iconTextGap = JBUI.scale(6)
-      accessibleContext.accessibleName = entry.displayText
+      accessibleContext.accessibleName = entry.accessibleText
     }
     installContextChipIdeTooltip(this) { entry }
     installContextChipIdeTooltip(label) { entry }
@@ -217,7 +280,7 @@ private class ContextAttachmentCard(
       border = JBUI.Borders.empty()
       preferredSize = JBUI.size(16, 16)
       setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.context.remove.tooltip")))
-      accessibleContext.accessibleName = AgentPromptBundle.message("popup.context.remove.accessible.name", entry.displayText)
+      accessibleContext.accessibleName = AgentPromptBundle.message("popup.context.remove.accessible.name", entry.accessibleText)
       addActionListener { onRemove() }
     }, BorderLayout.EAST)
   }

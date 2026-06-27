@@ -1,7 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.ui
 
+// @spec community/plugins/agent-workbench/spec/prompt-context/prompt-context-contracts.spec.md
+
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextItemIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptPayload
 import com.intellij.agent.workbench.prompt.core.AgentPromptPayloadValue
@@ -12,8 +15,8 @@ import com.intellij.util.SystemProperties
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
-import java.util.concurrent.TimeUnit
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 @TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
@@ -143,19 +146,19 @@ class AgentPromptContextEntryPathRenderingTest {
   }
 
   @Test
-  fun nonPathKindsDoNotShortenAbsoluteContent() {
-    val home = systemPath(SystemProperties.getUserHome())
-    val projectBasePath = systemPath("$home/agent-workbench-project-symbol")
-    val absoluteContent = systemPath("$home/agent-workbench-project-symbol/src/SomeSymbol")
+  fun symbolChipUsesPreviewWithoutPrefix() {
+    val preview = "com.example.SomeSymbol"
 
     val entry = contextEntry(
       rendererId = AgentPromptContextRendererIds.SYMBOL,
       title = "Symbol",
-      body = absoluteContent,
-      projectBasePath = projectBasePath,
+      body = preview,
+      projectBasePath = null,
     )
 
-    assertThat(entry.displayText).isEqualTo("Symbol: $absoluteContent")
+    assertThat(entry.displayText).isEqualTo(preview)
+    assertThat(entry.displayText).doesNotStartWith("Symbol:")
+    assertThat(entry.accessibleText).isEqualTo("Symbol: $preview")
   }
 
   @Test
@@ -168,6 +171,59 @@ class AgentPromptContextEntryPathRenderingTest {
     )
 
     assertThat(entry.displayText).isEqualTo("Selection (1-5)")
+    assertThat(entry.accessibleText).isEqualTo("Selection (1-5)")
+  }
+
+  @Test
+  fun caretSnippetChipUsesCompactTitleButKeepsFullAccessibleTitle() {
+    val entry = contextEntry(
+      rendererId = AgentPromptContextRendererIds.SNIPPET,
+      title = "Caret Context (10-12)",
+      body = "val x = foo.bar(baz)\nval y = 42",
+      projectBasePath = null,
+      payload = AgentPromptPayload.obj(
+        "startLine" to AgentPromptPayload.num(10),
+        "endLine" to AgentPromptPayload.num(12),
+        "selection" to AgentPromptPayload.bool(false),
+      ),
+    )
+
+    assertThat(entry.displayText).isEqualTo("Caret (10-12)")
+    assertThat(entry.accessibleText).isEqualTo("Caret Context (10-12)")
+    assertThat(entry.item.title).isEqualTo("Caret Context (10-12)")
+  }
+
+  @Test
+  fun treeSelectionChipUsesCompactTitleButKeepsFullAccessibleTitle() {
+    val entry = contextEntry(
+      rendererId = AgentPromptContextRendererIds.SNIPPET,
+      title = "Tree Selection (Project)",
+      body = "Tree: Project\nSelected:\n- src",
+      projectBasePath = null,
+      payload = AgentPromptPayload.obj("treeKind" to AgentPromptPayload.str("Project")),
+      itemId = "tree.selection",
+      source = "tree",
+    )
+
+    assertThat(entry.displayText).isEqualTo("Selection (Project)")
+    assertThat(entry.accessibleText).isEqualTo("Tree Selection (Project)")
+    assertThat(entry.item.title).isEqualTo("Tree Selection (Project)")
+  }
+
+  @Test
+  fun localChangesChipUsesCompactTitleButKeepsFullAccessibleTitle() {
+    val entry = contextEntry(
+      rendererId = AgentPromptContextRendererIds.SNIPPET,
+      title = "Local Changes",
+      body = "Default changelist\n- modified: src/Main.kt",
+      projectBasePath = null,
+      itemId = AgentPromptContextItemIds.CHANGES_SELECTION,
+      source = "changes",
+    )
+
+    assertThat(entry.displayText).isEqualTo("Changes")
+    assertThat(entry.accessibleText).isEqualTo("Local Changes")
+    assertThat(entry.item.title).isEqualTo("Local Changes")
   }
 
   @Test
@@ -187,7 +243,8 @@ class AgentPromptContextEntryPathRenderingTest {
       ),
     )
 
-    assertThat(entry.displayText).isEqualTo("Commits: abc12345")
+    assertThat(entry.displayText).isEqualTo("abc12345")
+    assertThat(entry.accessibleText).isEqualTo("Commits: abc12345")
     assertThat(entry.tooltipText).isEqualTo("commits:\nabc12345")
     assertThat(entry.tooltipText).doesNotContain("source=")
   }
@@ -215,6 +272,8 @@ class AgentPromptContextEntryPathRenderingTest {
     body: String,
     projectBasePath: String?,
     payload: AgentPromptPayloadValue = AgentPromptPayloadValue.Obj.EMPTY,
+    itemId: String? = null,
+    source: String = "test",
   ): ContextEntry {
     return ContextEntry(
       item = AgentPromptContextItem(
@@ -222,7 +281,8 @@ class AgentPromptContextEntryPathRenderingTest {
         title = title,
         body = body,
         payload = payload,
-        source = "test",
+        itemId = itemId,
+        source = source,
       ),
       projectBasePath = projectBasePath,
     )

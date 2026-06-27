@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.core
 
+// @spec community/plugins/agent-workbench/spec/prompt-context/prompt-context-contracts.spec.md
+
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
@@ -12,6 +14,7 @@ import java.nio.file.Path
 import kotlin.math.max
 
 private const val CHIP_PREVIEW_MAX_LENGTH = 60
+private const val TREE_SELECTION_ITEM_ID = "tree.selection"
 
 internal class AgentPromptSnippetContextRendererBridge : AgentPromptContextRendererBridge {
   override val rendererId: String
@@ -43,7 +46,35 @@ internal class AgentPromptSnippetContextRendererBridge : AgentPromptContextRende
   }
 
   override fun renderChip(input: AgentPromptChipRenderInput): AgentPromptChipRender {
-    return AgentPromptChipRender(text = input.item.title ?: "Snippet")
+    return AgentPromptChipRender(text = compactSnippetChipTitle(input.item) ?: input.item.title ?: "Snippet")
+  }
+
+  private fun compactSnippetChipTitle(item: AgentPromptContextItem): String? {
+    if (item.itemId == AgentPromptContextItemIds.CHANGES_SELECTION) {
+      return "Changes"
+    }
+
+    val payload = item.payload.objOrNull()
+    if (item.itemId == TREE_SELECTION_ITEM_ID) {
+      payload?.string("treeKind")?.trim()?.takeIf { it.isNotEmpty() }?.let { treeKind ->
+        return "Selection ($treeKind)"
+      }
+    }
+
+    if (payload?.bool("selection") == false) {
+      val startLine = payload.number("startLine")?.takeIf { it.isNotBlank() }
+      val endLine = payload.number("endLine")?.takeIf { it.isNotBlank() }
+      if (startLine != null && endLine != null) {
+        return "Caret ($startLine-$endLine)"
+      }
+    }
+
+    val title = item.title?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+    return when {
+      title.startsWith("Caret Context ") -> "Caret " + title.removePrefix("Caret Context ")
+      title.startsWith("Tree Selection ") -> "Selection " + title.removePrefix("Tree Selection ")
+      else -> null
+    }
   }
 }
 
@@ -78,7 +109,7 @@ class AgentPromptSymbolContextRendererBridge : AgentPromptContextRendererBridge 
   }
 
   override fun renderChip(input: AgentPromptChipRenderInput): AgentPromptChipRender {
-    return AgentPromptChipRender(text = composeChipText(input.item.title, input.item.body))
+    return AgentPromptChipRender(text = composePreviewChipText(input.item.title, input.item.body))
   }
 }
 
@@ -225,14 +256,13 @@ private fun resolveAbsolutePath(pathText: String, projectPath: String?): String?
   }
 }
 
-internal fun composeChipText(title: String?, preview: String): String {
+internal fun composePreviewChipText(title: String?, preview: String): String {
   val resolvedTitle = title?.takeIf { it.isNotBlank() } ?: "Context"
   val trimmedPreview = preview.trim()
   if (trimmedPreview.isEmpty()) {
     return resolvedTitle
   }
-  val shortPreview = if (trimmedPreview.length <= CHIP_PREVIEW_MAX_LENGTH) trimmedPreview else trimmedPreview.take(CHIP_PREVIEW_MAX_LENGTH) + "\u2026"
-  return "$resolvedTitle: $shortPreview"
+  return if (trimmedPreview.length <= CHIP_PREVIEW_MAX_LENGTH) trimmedPreview else trimmedPreview.take(CHIP_PREVIEW_MAX_LENGTH) + "\u2026"
 }
 
 internal fun composePathChipText(title: String?, preview: String): String {
