@@ -1516,4 +1516,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.ide.startup.importSettings.tests",
   "intellij.idea.community.build.tasks.tests",
   "intellij.idea.tools.launch.tests",
+  "intellij.java.byteCodeViewer.tests",
 )
