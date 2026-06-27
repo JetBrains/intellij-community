@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.toolwindow.ui
 
-import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.common.statusMessageKey
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
@@ -82,6 +81,11 @@ internal class SessionTreeCellRenderer(
     var metaRightPadding = 0
 
     when (treeNode) {
+      is SessionTreeNode.PinnedSection -> {
+        icon = null
+        append(AgentSessionsBundle.message("toolwindow.section.pinned"), SimpleTextAttributes.GRAY_ATTRIBUTES)
+      }
+
       is SessionTreeNode.Project -> {
         val projectIcon = projectCompositeIcon(treeNode.project)
         icon = projectIcon
@@ -130,7 +134,7 @@ internal class SessionTreeCellRenderer(
         val baseFontMetrics = getFontMetrics(getBaseFont())
         val sharedTimeColumnWidth = computeSharedTimeColumnWidth(baseFontMetrics)
         val threadRowPresentation = buildSessionTreeThreadRowPresentation(treeNode = treeNode, now = nowProvider())
-        icon = threadCompositeIcon(treeNode.thread.provider, treeNode.thread.activity)
+        icon = threadCompositeIcon(treeNode)
         val threadTitle: @NlsSafe String = threadRowPresentation.title
         appendWithClipping(threadTitle, SimpleTextAttributes.REGULAR_ATTRIBUTES, middleTextClipper)
         threadTrailingPaint = computeSessionTreeThreadTrailingPaint(
@@ -295,9 +299,9 @@ internal class SessionTreeCellRenderer(
     return width
   }
 
-  private fun threadCompositeIcon(provider: AgentSessionProvider, activity: AgentThreadActivity): Icon {
-    return providerIconProvider?.let { agentSessionThreadStatusIcon(it(provider), activity) }
-           ?: agentSessionThreadStatusIcon(provider, activity)
+  private fun threadCompositeIcon(treeNode: SessionTreeNode.Thread): Icon {
+    return providerIconProvider?.let { agentSessionThreadStatusIcon(it(treeNode.thread.provider), treeNode.thread.activity) }
+           ?: agentSessionThreadStatusIcon(treeNode.thread.provider, treeNode.thread.activity)
   }
 
   private fun projectCompositeIcon(project: AgentProjectSessions): Icon {

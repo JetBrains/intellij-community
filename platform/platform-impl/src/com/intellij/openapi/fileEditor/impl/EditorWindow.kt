@@ -1038,6 +1038,8 @@ class EditorWindow internal constructor(
       owner.scheduleUpdateFileColor(composite.file)
     }
     if (wasPinned != pinned && EDT.isCurrentThreadEdt()) {
+      owner.manager.project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
+        .filePinStateChanged(owner.manager, composite.file)
       (tabbedPane.tabs as? JBTabsImpl)?.doLayout()
     }
   }

@@ -138,6 +138,7 @@ internal interface AgentSessionChatOpenExecutor {
       launchMode: AgentSessionLaunchMode?,
       launchProfileId: String?,
       generationSettings: AgentPromptGenerationSettings,
+      openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
   )
 
   suspend fun openNewChat(
@@ -245,6 +246,7 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
       launchMode: AgentSessionLaunchMode?,
       launchProfileId: String?,
       generationSettings: AgentPromptGenerationSettings,
+      openedChatHandler: (suspend (Project, VirtualFile) -> Unit)?,
   ) {
     openAgentSessionChat(
       normalizedPath = normalizedPath,
@@ -255,6 +257,7 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
       launchMode = launchMode,
       launchProfileId = launchProfileId,
       generationSettings = generationSettings,
+      openedChatHandler = openedChatHandler,
     )
   }
 
@@ -448,6 +451,7 @@ class AgentSessionLaunchService internal constructor(
       promptLaunchResolved: ((AgentPromptLaunchResult) -> Unit)? = null,
       extraEnvVariables: Map<String, String> = emptyMap(),
       extraCommandArgs: List<String> = emptyList(),
+      openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
   ) {
       val normalizedPath = normalizeAgentWorkbenchPath(path)
       val descriptor = AgentSessionProviders.find(thread.provider)
@@ -577,6 +581,7 @@ class AgentSessionLaunchService internal constructor(
                   launchMode = launchModeForChatState,
                   launchProfileId = resolvedLaunchProfile?.id ?: launchProfileId,
                   generationSettings = plannedResumeLaunch.intent.generationSettings,
+                  openedChatHandler = openedChatHandler,
               )
               scheduleRefreshAfterArchivedThreadOpen(archiveResolution)
               promptLaunchResolved?.invoke(AgentPromptLaunchResult.SUCCESS)
@@ -1446,6 +1451,7 @@ private suspend fun openAgentSessionChat(
     launchMode: AgentSessionLaunchMode? = null,
     launchProfileId: String? = null,
     generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
+    openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
 ) {
   if (AgentChatOpenModeSettings.openInDedicatedFrame()) {
     openChatInDedicatedFrame(
@@ -1457,6 +1463,7 @@ private suspend fun openAgentSessionChat(
       launchMode = launchMode,
       launchProfileId = launchProfileId,
       generationSettings = generationSettings,
+      openedChatHandler = openedChatHandler,
     )
     return
   }
@@ -1471,6 +1478,7 @@ private suspend fun openAgentSessionChat(
     launchMode = launchMode,
     launchProfileId = launchProfileId,
     generationSettings = generationSettings,
+    openedChatHandler = openedChatHandler,
   )
 }
 
@@ -2043,6 +2051,7 @@ private suspend fun openChatInDedicatedFrame(
     launchMode: AgentSessionLaunchMode? = null,
     launchProfileId: String? = null,
     generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
+    openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
 ) {
   val dedicatedProjectPath = AgentWorkbenchDedicatedFrameProjectManager.dedicatedProjectPath()
   val openProject = findOpenProject(dedicatedProjectPath)
@@ -2058,6 +2067,7 @@ private suspend fun openChatInDedicatedFrame(
       launchMode = launchMode,
       launchProfileId = launchProfileId,
       generationSettings = generationSettings,
+      openedChatHandler = openedChatHandler,
     )
     return
   }
@@ -2082,6 +2092,7 @@ private suspend fun openChatInDedicatedFrame(
     launchMode = launchMode,
     launchProfileId = launchProfileId,
     generationSettings = generationSettings,
+    openedChatHandler = openedChatHandler,
   )
 }
 
@@ -2095,6 +2106,7 @@ private suspend fun openChatInProject(
     launchMode: AgentSessionLaunchMode? = null,
     launchProfileId: String? = null,
     generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
+    openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
 ) {
   val chatOpenPlan = resolveAgentSessionChatOpenPlan(
     projectPath = projectPath,
@@ -2111,7 +2123,7 @@ private suspend fun openChatInProject(
   else {
     chatOpenPlan.initialMessageDispatchPlan
   }
-  openChat(
+  val file = openChat(
     project = project,
     projectPath = projectPath,
     threadIdentity = chatOpenPlan.threadIdentity,
@@ -2129,6 +2141,7 @@ private suspend fun openChatInProject(
   )
 
   focusProjectWindow(project)
+  openedChatHandler?.invoke(project, file)
 }
 
 private suspend fun focusProjectWindow(project: Project) {

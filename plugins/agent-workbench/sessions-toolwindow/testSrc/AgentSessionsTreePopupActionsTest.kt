@@ -23,6 +23,7 @@ import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTre
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupNewThreadGroup
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupOpenAction
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupRenameThreadAction
+import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupToggleThreadPinAction
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupUnarchiveThreadAction
 import com.intellij.agent.workbench.sessions.toolwindow.actions.createAgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.toolwindow.actions.resolveAgentSessionsTreePopupActionContext
@@ -32,17 +33,28 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ai.agent.sessions.core.SessionActionTarget
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
@@ -125,6 +137,147 @@ class AgentSessionsTreePopupActionsTest {
     assertThat(openedSubAgentPath).isNull()
     assertThat(threadEntryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_POPUP)
     assertThat(subAgentEntryPoint).isNull()
+  }
+
+  @Test
+  fun togglePinActionPinsUnpinnedThreadByOpeningTab() {
+    val provider = AgentSessionProvider.from("codex")
+    val thread = thread(id = "thread-pin", provider = provider)
+    val projectSessions = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
+    val context = popupContext(
+      nodeId = SessionTreeId.Thread(projectPath = "/work/project-a", provider = provider, threadId = thread.id),
+      node = SessionTreeNode.Thread(project = projectSessions, thread = thread),
+    )
+    val openedFile = LightVirtualFile("thread-pin.chat")
+    var openedTarget: SessionActionTarget.Thread? = null
+    var pinnedProject: Project? = null
+    var pinnedFile: VirtualFile? = null
+    var pinnedValue: Boolean? = null
+    val action = AgentSessionsTreePopupToggleThreadPinAction(
+      resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
+      isThreadPinned = { false },
+      openThread = { _, target, openedChatHandler ->
+        openedTarget = target
+        runBlocking {
+          openedChatHandler(context.project, openedFile)
+        }
+      },
+      setOpenTabsPinned = { _, _ -> error("Unpin handler must not be called") },
+      setOpenedFilePinned = { project, file, pinned ->
+        pinnedProject = project
+        pinnedFile = file
+        pinnedValue = pinned
+      },
+    )
+    val event = popupEvent(action, context)
+
+    action.update(event)
+
+    assertThat(event.presentation.isEnabledAndVisible).isTrue()
+    assertThat(event.presentation.text)
+      .isEqualTo(AgentSessionsBundle.message("action.AgentWorkbenchSessions.TreePopup.TogglePin.text"))
+
+    action.actionPerformed(event)
+
+    assertThat(openedTarget?.threadId).isEqualTo(thread.id)
+    assertThat(pinnedProject).isSameAs(context.project)
+    assertThat(pinnedFile).isSameAs(openedFile)
+    assertThat(pinnedValue).isTrue()
+  }
+
+  @Test
+  fun togglePinActionUnpinsPinnedThreadTabs() {
+    val provider = AgentSessionProvider.from("codex")
+    val thread = thread(id = "thread-unpin", provider = provider)
+    val projectSessions = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
+    val context = popupContext(
+      nodeId = SessionTreeId.Thread(projectPath = "/work/project-a", provider = provider, threadId = thread.id),
+      node = SessionTreeNode.Thread(project = projectSessions, thread = thread),
+    )
+    val unpinned = CompletableDeferred<Pair<String, Boolean>>()
+    val action = AgentSessionsTreePopupToggleThreadPinAction(
+      resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
+      isThreadPinned = { true },
+      openThread = { _, _, _ -> error("Open handler must not be called") },
+      setOpenTabsPinned = { target, pinned ->
+        unpinned.complete(target.threadId to pinned)
+        1
+      },
+      setOpenedFilePinned = { _, _, _ -> error("Pin handler must not be called") },
+    )
+    val event = popupEvent(action, context)
+
+    action.update(event)
+
+    assertThat(event.presentation.isEnabledAndVisible).isTrue()
+    assertThat(event.presentation.text)
+      .isEqualTo(AgentSessionsBundle.message("action.AgentWorkbenchSessions.TreePopup.TogglePin.unpin.text"))
+
+    val result = runBlocking {
+      withContext(Dispatchers.EDT) {
+        ActionUtil.performAction(action, event)
+      }
+      withTimeout(5.seconds) {
+        unpinned.await()
+      }
+    }
+    assertThat(result).isEqualTo(thread.id to false)
+  }
+
+  @Test
+  fun togglePinActionIsHiddenForNonActiveTopLevelThreads() {
+    val provider = AgentSessionProvider.from("codex")
+    val projectSessions = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
+    val action = AgentSessionsTreePopupToggleThreadPinAction(
+      resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
+      isThreadPinned = { false },
+      openThread = { _, _, _ -> error("Open handler must not be called") },
+      setOpenTabsPinned = { _, _ -> error("Unpin handler must not be called") },
+      setOpenedFilePinned = { _, _, _ -> error("Pin handler must not be called") },
+    )
+
+    assertTogglePinHidden(action, popupContext(
+      nodeId = SessionTreeId.Project("/work/project-a"),
+      node = SessionTreeNode.Project(projectSessions),
+    ))
+
+    val thread = thread(id = "thread-hidden", provider = provider)
+    assertTogglePinHidden(action, popupContext(
+      nodeId = SessionTreeId.SubAgent(
+        projectPath = "/work/project-a",
+        provider = provider,
+        threadId = thread.id,
+        subAgentId = "sub-${thread.id}",
+      ),
+      node = SessionTreeNode.SubAgent(
+        project = projectSessions,
+        thread = thread,
+        subAgent = thread.subAgents.single(),
+      ),
+    ))
+
+    val archivedThread = thread(id = "thread-archived", provider = provider, archived = true)
+    assertTogglePinHidden(action, popupContext(
+      nodeId = SessionTreeId.Thread(projectPath = "/work/project-a", provider = provider, threadId = archivedThread.id),
+      node = SessionTreeNode.Thread(project = projectSessions, thread = archivedThread),
+    ))
+
+    assertTogglePinHidden(action, AgentSessionsTreePopupActionContext(
+      project = ProjectManager.getInstance().defaultProject,
+      target = SessionActionTarget.Thread(
+        path = "/work/project-a",
+        provider = provider,
+        threadId = "new-thread-hidden",
+        title = "New Thread",
+        thread = thread(id = "new-thread-hidden", provider = provider),
+      ),
+      archiveTargets = emptyList(),
+    ))
+
+    assertTogglePinHidden(action, popupContext(
+      nodeId = SessionTreeId.MoreThreads("/work/project-a"),
+      node = SessionTreeNode.MoreThreads(project = projectSessions, hiddenCount = 2),
+    ))
   }
 
   @Test
@@ -460,10 +613,10 @@ class AgentSessionsTreePopupActionsTest {
       ),
       node = SessionTreeNode.Thread(project = project, thread = thread(id = "thread-1", provider = AgentSessionProvider.from("codex"))),
     )
-    val target = context.target as com.intellij.platform.ai.agent.sessions.core.SessionActionTarget.Thread
+    val target = context.target as SessionActionTarget.Thread
     var promptedProjectName: String? = null
     var promptedTitle: String? = null
-    var renamedTarget: com.intellij.platform.ai.agent.sessions.core.SessionActionTarget.Thread? = null
+    var renamedTarget: SessionActionTarget.Thread? = null
     var renamedTo: String? = null
 
     val action = AgentSessionsTreePopupRenameThreadAction(
@@ -735,6 +888,12 @@ class AgentSessionsTreePopupActionsTest {
     assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_POPUP)
   }
 
+}
+
+private fun assertTogglePinHidden(action: AgentSessionsTreePopupToggleThreadPinAction, context: AgentSessionsTreePopupActionContext) {
+  val event = popupEvent(action, context)
+  action.update(event)
+  assertThat(event.presentation.isEnabledAndVisible).isFalse()
 }
 
 private fun popupContext(

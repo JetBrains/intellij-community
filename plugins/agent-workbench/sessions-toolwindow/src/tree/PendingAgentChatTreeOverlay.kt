@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.toolwindow.tree
 
-import com.intellij.agent.workbench.chat.AgentChatOpenPendingTabsState
+import com.intellij.agent.workbench.chat.AgentChatOpenTabsPresentationState
 import com.intellij.agent.workbench.chat.AgentChatPendingTabSnapshot
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
@@ -14,9 +14,9 @@ import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 
 internal fun overlayPendingAgentChatTabs(
   state: AgentSessionsState,
-  pendingTabsState: AgentChatOpenPendingTabsState,
+  openTabsPresentationState: AgentChatOpenTabsPresentationState,
 ): AgentSessionsState {
-  val pendingThreadsByPath = buildPendingThreadsByPath(pendingTabsState)
+  val pendingThreadsByPath = buildPendingThreadsByPath(openTabsPresentationState)
   if (pendingThreadsByPath.isEmpty()) {
     return state
   }
@@ -49,11 +49,11 @@ internal fun overlayPendingAgentChatTabs(
 }
 
 private fun buildPendingThreadsByPath(
-  pendingTabsState: AgentChatOpenPendingTabsState,
+  openTabsPresentationState: AgentChatOpenTabsPresentationState,
 ): Map<String, List<AgentSessionThread>> {
   val pendingThreadsByPath = LinkedHashMap<String, LinkedHashMap<PendingThreadKey, AgentSessionThread>>()
-  for (provider in pendingTabsState.providers()) {
-    for ((path, pendingTabs) in pendingTabsState.pendingTabsByPath(provider)) {
+  for (provider in openTabsPresentationState.providers()) {
+    for ((path, pendingTabs) in openTabsPresentationState.pendingTabsByPath(provider)) {
       val normalizedPath = normalizeAgentWorkbenchPath(path)
       val threadsByKey = pendingThreadsByPath.getOrPut(normalizedPath) { LinkedHashMap() }
       for (pendingTab in pendingTabs) {

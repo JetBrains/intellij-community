@@ -154,6 +154,7 @@ data class AgentChatPendingTabSnapshot(
   @JvmField val pendingCreatedAtMs: Long?,
   @JvmField val pendingFirstInputAtMs: Long?,
   @JvmField val pendingLaunchMode: String?,
+  @JvmField val pinnedEditorTab: Boolean = false,
 )
 
 data class AgentChatConcreteTabSnapshot(
@@ -399,7 +400,7 @@ suspend fun openChat(
   val pendingProvider = pendingProviderForThreadIdentity(threadIdentity)
   if (pendingProvider != null) {
     project.service<AgentChatPendingEditorLifecycleService>()
-    service<AgentChatOpenPendingTabsStateService>().refreshOpenTabs()
+    service<AgentChatOpenTabsPresentationStateService>().refreshOpenTabs()
     if (AgentSessionProviders.find(pendingProvider)?.emitsScopedRefreshSignals == true) {
       notifyAgentChatScopedRefresh(provider = pendingProvider, projectPath = projectPath)
     }
@@ -822,7 +823,7 @@ suspend fun rebindOpenPendingAgentChatTabs(
       }
     }
     if (changedFiles.isNotEmpty()) {
-      service<AgentChatOpenPendingTabsStateService>().refreshOpenTabs()
+      service<AgentChatOpenTabsPresentationStateService>().refreshOpenTabs()
     }
 
     val requestedBindings = normalizedRequestsByPath.values.sumOf { it.size }

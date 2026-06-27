@@ -35,18 +35,25 @@ class AgentChatPendingEditorLifecycleService(
         object : FileEditorManagerListener {
           override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
             val chatFile = file as? AgentChatVirtualFile ?: return
-            if (!participatesInPendingAgentChatProjection(chatFile)) {
+            if (!participatesInOpenAgentChatPresentation(chatFile)) {
               return
             }
             if (source.isFileOpen(chatFile) || isOpenInAnyProject(chatFile)) {
-              publishOpenPendingTabsChanged(chatFile)
+              publishOpenTabsPresentationChanged(chatFile)
               return
             }
             if (chatFile.getUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN) == true) {
               schedulePendingCloseConfirmation(chatFile)
               return
             }
-            publishOpenPendingTabsChanged(chatFile)
+            publishOpenTabsPresentationChanged(chatFile)
+          }
+
+          override fun filePinStateChanged(source: FileEditorManager, file: VirtualFile) {
+            val chatFile = file as? AgentChatVirtualFile ?: return
+            if (participatesInOpenAgentChatPresentation(chatFile)) {
+              publishOpenTabsPresentationChanged(chatFile)
+            }
           }
         }
       )
@@ -59,11 +66,11 @@ class AgentChatPendingEditorLifecycleService(
             editorsWithProviders: List<FileEditorWithProvider>,
           ) {
             val chatFile = file as? AgentChatVirtualFile ?: return
-            if (!participatesInPendingAgentChatProjection(chatFile)) {
+            if (!participatesInOpenAgentChatPresentation(chatFile)) {
               return
             }
             cancelPendingCloseJob(chatFile.tabKey)
-            publishOpenPendingTabsChanged(chatFile)
+            publishOpenTabsPresentationChanged(chatFile)
           }
         }
       )
@@ -86,7 +93,7 @@ class AgentChatPendingEditorLifecycleService(
       }
       pendingCloseJobs.remove(file.tabKey)
       if (!isOpenInAnyProject(file)) {
-        publishOpenPendingTabsChanged(file)
+        publishOpenTabsPresentationChanged(file)
       }
     }
     pendingCloseJobs[file.tabKey] = job
@@ -99,9 +106,11 @@ class AgentChatPendingEditorLifecycleService(
     pendingCloseJobs.remove(tabKey)?.cancel()
   }
 
-  private fun publishOpenPendingTabsChanged(file: AgentChatVirtualFile) {
-    service<AgentChatOpenPendingTabsStateService>().refreshOpenTabs()
-    notifyAgentChatScopedRefresh(provider = file.provider ?: return, projectPath = file.projectPath)
+  private fun publishOpenTabsPresentationChanged(file: AgentChatVirtualFile) {
+    service<AgentChatOpenTabsPresentationStateService>().refreshOpenTabs()
+    if (participatesInPendingAgentChatProjection(file)) {
+      notifyAgentChatScopedRefresh(provider = file.provider ?: return, projectPath = file.projectPath)
+    }
   }
 }
 

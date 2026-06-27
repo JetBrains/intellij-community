@@ -115,8 +115,9 @@ internal class AgentSessionsTreeDataContextProvider(
     val treeId = selectedTreeId ?: return null
     val treeNode = selectedTreeNode ?: return null
     val path = when (treeId) {
-                 is SessionTreeId.Project -> treeId.path
-                 is SessionTreeId.Thread -> treeId.projectPath
+                  SessionTreeId.Pinned -> null
+                  is SessionTreeId.Project -> treeId.path
+                  is SessionTreeId.Thread -> treeId.projectPath
                  is SessionTreeId.SubAgent -> treeId.projectPath
                  is SessionTreeId.Warning -> treeId.projectPath
                  is SessionTreeId.Error -> treeId.projectPath
@@ -131,6 +132,7 @@ internal class AgentSessionsTreeDataContextProvider(
                  is SessionTreeId.WorktreeError -> treeId.worktreePath
                } ?: return null
     val displayName = when (treeNode) {
+      is SessionTreeNode.PinnedSection -> null
       is SessionTreeNode.Project -> treeNode.project.name
       is SessionTreeNode.Thread -> treeNode.project.name
       is SessionTreeNode.SubAgent -> treeNode.project.name

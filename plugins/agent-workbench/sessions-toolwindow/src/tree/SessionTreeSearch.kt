@@ -6,6 +6,8 @@ import com.intellij.agent.workbench.sessions.tree.threadDisplayTitle
 
 internal fun sessionTreeNodeSearchText(node: SessionTreeNode): String {
   return when (node) {
+    is SessionTreeNode.PinnedSection -> AgentSessionsBundle.message("toolwindow.section.pinned")
+
     is SessionTreeNode.Project -> searchText(
       node.project.name,
       visibleProjectBranch(node.project),

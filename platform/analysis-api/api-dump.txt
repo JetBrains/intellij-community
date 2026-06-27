@@ -1680,6 +1680,7 @@ com.intellij.openapi.fileEditor.FileEditorManagerListener
 - fileOpened(com.intellij.openapi.fileEditor.FileEditorManager,com.intellij.openapi.vfs.VirtualFile):V
 - fileOpenedSync(com.intellij.openapi.fileEditor.FileEditorManager,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.util.Pair):V
 - fileOpenedSync(com.intellij.openapi.fileEditor.FileEditorManager,com.intellij.openapi.vfs.VirtualFile,java.util.List):V
+- filePinStateChanged(com.intellij.openapi.fileEditor.FileEditorManager,com.intellij.openapi.vfs.VirtualFile):V
 - selectionChanged(com.intellij.openapi.fileEditor.FileEditorManagerEvent):V
 com.intellij.openapi.fileEditor.FileEditorManagerListener$Before
 - java.util.EventListener
