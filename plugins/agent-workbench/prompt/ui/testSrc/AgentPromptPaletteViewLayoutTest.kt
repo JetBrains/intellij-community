@@ -47,12 +47,17 @@ class AgentPromptPaletteViewLayoutTest {
       val view = createPaletteView(promptArea = promptArea)
 
       layoutPopupRoot(view.rootPanel)
+      val promptAreaInRoot = checkNotNull(findPromptArea(view.rootPanel, promptArea))
 
       assertThat(view.composerContextPanel.isVisible).isFalse()
       assertThat(view.addContextButton.isVisible).isTrue()
       assertThat(SwingUtilities.isDescendingFrom(view.launchProfileLink, view.generationSettingsPanel)).isTrue()
       assertThat(SwingUtilities.isDescendingFrom(view.launchTuningSummaryLink, view.generationSettingsPanel)).isFalse()
       assertThat(SwingUtilities.isDescendingFrom(view.addContextButton, view.generationSettingsPanel)).isTrue()
+      assertThat(locationInRoot(view.addContextButton, view.rootPanel).x)
+        .isEqualTo(locationInRoot(promptAreaInRoot, view.rootPanel).x)
+      assertThat(rightInRoot(view.launchProfileLink, view.rootPanel))
+        .isEqualTo(rightInRoot(promptAreaInRoot, view.rootPanel))
       assertThat(locationInRoot(view.addContextButton, view.rootPanel).x)
         .isLessThan(locationInRoot(view.launchProfileLink, view.rootPanel).x)
       assertThat(abs(yCenterInRoot(view.addContextButton, view.rootPanel) - yCenterInRoot(view.launchProfileLink, view.rootPanel)))
@@ -61,6 +66,15 @@ class AgentPromptPaletteViewLayoutTest {
       assertThat(view.launchProfileLink.font.size).isEqualTo(JBFont.label().size)
       assertThat(view.addContextButton.foreground).isEqualTo(UIUtil.getLabelForeground())
       assertThat(view.launchProfileLink.foreground).isEqualTo(UIUtil.getLabelForeground())
+
+      view.defaultProfileActionControl.setState(AgentPromptDefaultProfileActionState.MAKE_DEFAULT)
+      layoutPopupRoot(view.rootPanel)
+
+      assertThat(view.defaultProfileActionControl.component.border.getBorderInsets(view.defaultProfileActionControl.component).left).isEqualTo(8)
+      assertThat(locationInRoot(view.defaultProfileActionControl.component, view.rootPanel).x)
+        .isEqualTo(rightInRoot(view.launchProfileLink, view.rootPanel))
+      assertThat(rightInRoot(view.defaultProfileActionControl.component, view.rootPanel))
+        .isEqualTo(rightInRoot(promptAreaInRoot, view.rootPanel))
     }
   }
 
@@ -74,6 +88,7 @@ class AgentPromptPaletteViewLayoutTest {
       )
 
       layoutPopupRoot(view.rootPanel)
+      val promptAreaInRoot = checkNotNull(findPromptArea(view.rootPanel, promptArea))
 
       assertThat(view.addContextButton.isVisible).isTrue()
       assertThat(view.composerContextPanel.isVisible).isFalse()
@@ -82,11 +97,22 @@ class AgentPromptPaletteViewLayoutTest {
       assertThat(SwingUtilities.isDescendingFrom(view.launchTuningSummaryLink, view.generationSettingsPanel)).isFalse()
       assertThat(SwingUtilities.isDescendingFrom(view.launchTuningSummaryLink, view.rightHeaderPanel)).isFalse()
       assertThat(locationInRoot(view.addContextButton, view.rootPanel).x)
+        .isEqualTo(locationInRoot(promptAreaInRoot, view.rootPanel).x)
+      assertThat(rightInRoot(view.launchProfileLink, view.rootPanel))
+        .isEqualTo(rightInRoot(promptAreaInRoot, view.rootPanel))
+      assertThat(locationInRoot(view.addContextButton, view.rootPanel).x)
         .isLessThan(locationInRoot(view.launchProfileLink, view.rootPanel).x)
       assertThat(view.addContextButton.font.size).isEqualTo(JBUI.Fonts.smallFont().size)
       assertThat(view.launchProfileLink.font.size).isEqualTo(JBUI.Fonts.smallFont().size)
       assertThat(view.addContextButton.foreground).isEqualTo(UIUtil.getContextHelpForeground())
       assertThat(view.launchProfileLink.foreground).isEqualTo(UIUtil.getContextHelpForeground())
+
+      view.defaultProfileActionControl.setState(AgentPromptDefaultProfileActionState.MAKE_DEFAULT)
+      layoutPopupRoot(view.rootPanel)
+
+      assertThat(view.defaultProfileActionControl.component.border.getBorderInsets(view.defaultProfileActionControl.component).left).isEqualTo(6)
+      assertThat(rightInRoot(view.defaultProfileActionControl.component, view.rootPanel))
+        .isEqualTo(rightInRoot(promptAreaInRoot, view.rootPanel))
     }
   }
 
@@ -211,12 +237,14 @@ class AgentPromptPaletteViewLayoutTest {
       val promptEditorLocation = locationInRoot(view.promptEditorPanel, view.rootPanel)
       val promptAreaLocation = locationInRoot(checkNotNull(findPromptArea(view.rootPanel, promptArea)), view.rootPanel)
 
-      assertThat(initialLocation.x).isGreaterThanOrEqualTo(promptEditorLocation.x)
+      assertThat(initialLocation.x).isEqualTo(promptAreaLocation.x)
       assertThat(initialLocation.x).isLessThan(locationInRoot(view.launchProfileLink, view.rootPanel).x)
+      assertThat(firstChipLocation.x).isEqualTo(promptAreaLocation.x)
       assertThat(firstChipLocation.x).isGreaterThanOrEqualTo(promptEditorLocation.x)
       assertThat(firstChipLocation.y).isLessThan(promptAreaLocation.y)
       assertThat(SwingUtilities.isDescendingFrom(view.addContextButton, view.generationSettingsPanel)).isTrue()
       val firstAttachmentCard = contextAttachmentCards(contextChips.component).single()
+      assertThat(locationInRoot(firstAttachmentCard, view.rootPanel).x).isEqualTo(promptAreaLocation.x)
       assertThat(firstAttachmentCard.isOpaque).isFalse()
       assertThat(firstAttachmentCard.accessibleContext.accessibleName).isEqualTo("File: src/Main.java")
       val removeButton = contextRemoveButtons(firstAttachmentCard).single()
@@ -487,6 +515,10 @@ class AgentPromptPaletteViewLayoutTest {
 
   private fun bottomInRoot(component: Component, root: JPanel): Int {
     return yInRoot(component, root) + component.height
+  }
+
+  private fun rightInRoot(component: Component, root: JPanel): Int {
+    return locationInRoot(component, root).x + component.width
   }
 
   private fun yCenterInRoot(component: Component, root: JPanel): Int {

@@ -658,22 +658,23 @@ internal fun createAgentPromptPaletteView(
   }
   val composerContextPanel = BorderLayoutPanel().apply {
     isOpaque = false
-    border = JBUI.Borders.empty(0, if (isInlinePrompt) 0 else 2, if (isInlinePrompt) 4 else 6, if (isInlinePrompt) 0 else 2)
+    border = JBUI.Borders.emptyBottom(if (isInlinePrompt) 4 else 6)
     addToCenter(contextChipsContainer)
   }
 
-  val generationSettingsControlsPanel = JPanel(FlowLayout(FlowLayout.LEFT, if (isInlinePrompt) 6 else 8, 0)).apply {
+  val generationSettingsControlsPanel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)).apply {
     isOpaque = false
     add(addContextButton)
   }
-  val generationSettingsActionsPanel = JPanel(FlowLayout(FlowLayout.RIGHT, if (isInlinePrompt) 6 else 8, 0)).apply {
+  val generationSettingsActionsPanel = JPanel(FlowLayout(FlowLayout.RIGHT, 0, 0)).apply {
     isOpaque = false
     add(launchProfileLink)
+    defaultProfileActionControl.component.border = JBUI.Borders.emptyLeft(if (isInlinePrompt) 6 else 8)
     add(defaultProfileActionControl.component)
   }
   val generationSettingsPanel = JPanel(BorderLayout()).apply {
     isOpaque = false
-    border = if (isInlinePrompt) JBUI.Borders.empty(0, 6, 4, 6) else JBUI.Borders.empty(2, 6, 4, 6)
+    border = if (isInlinePrompt) JBUI.Borders.emptyBottom(4) else JBUI.Borders.empty(2, 0, 4, 0)
     add(generationSettingsControlsPanel, BorderLayout.WEST)
     add(generationSettingsActionsPanel, BorderLayout.EAST)
   }
