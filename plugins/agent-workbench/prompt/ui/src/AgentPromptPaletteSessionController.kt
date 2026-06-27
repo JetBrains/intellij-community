@@ -340,7 +340,7 @@ internal class AgentPromptPaletteSessionController(
     val result = contextController.addExternalContextItems(request.contextItems)
     when (result) {
       AgentPromptAddContextApplyResult.ADDED -> handleContextChanged(AgentPromptBundle.message("popup.status.context.added"))
-      AgentPromptAddContextApplyResult.ALREADY_ADDED -> showInfo(AgentPromptBundle.message("popup.status.context.already.added"))
+      AgentPromptAddContextApplyResult.ALREADY_ADDED -> showContextInfo(AgentPromptBundle.message("popup.status.context.already.added"))
     }
     return result
   }
@@ -859,7 +859,16 @@ internal class AgentPromptPaletteSessionController(
     refreshExtensionTaskDraftsFromContext()
     updateTargetModeUi()
     updateSendAvailability()
-    showInfo(message)
+    showContextInfo(message)
+  }
+
+  private fun showContextInfo(message: @Nls String) {
+    if (hostMode.isInlinePrompt) {
+      setInlineStatusVisible(false)
+    }
+    else {
+      showInfo(message)
+    }
   }
 
   private fun handleWorkingProjectPathSelected() {

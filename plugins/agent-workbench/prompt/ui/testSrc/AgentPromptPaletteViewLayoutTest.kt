@@ -6,12 +6,17 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptSuggestionCandidate
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.EditorTextField
+import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
+import javax.swing.JButton
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
+import kotlin.math.abs
 
 @TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
@@ -48,6 +53,12 @@ class AgentPromptPaletteViewLayoutTest {
       assertThat(SwingUtilities.isDescendingFrom(view.addContextButton, view.generationSettingsPanel)).isTrue()
       assertThat(locationInRoot(view.addContextButton, view.rootPanel).x)
         .isLessThan(locationInRoot(view.launchProfileLink, view.rootPanel).x)
+      assertThat(abs(yCenterInRoot(view.addContextButton, view.rootPanel) - yCenterInRoot(view.launchProfileLink, view.rootPanel)))
+        .isLessThanOrEqualTo(1)
+      assertThat(view.addContextButton.font.size).isEqualTo(JBFont.label().size)
+      assertThat(view.launchProfileLink.font.size).isEqualTo(JBFont.label().size)
+      assertThat(view.addContextButton.foreground).isEqualTo(UIUtil.getLabelForeground())
+      assertThat(view.launchProfileLink.foreground).isEqualTo(UIUtil.getLabelForeground())
     }
   }
 
@@ -70,6 +81,10 @@ class AgentPromptPaletteViewLayoutTest {
       assertThat(SwingUtilities.isDescendingFrom(view.launchTuningSummaryLink, view.rightHeaderPanel)).isFalse()
       assertThat(locationInRoot(view.addContextButton, view.rootPanel).x)
         .isLessThan(locationInRoot(view.launchProfileLink, view.rootPanel).x)
+      assertThat(view.addContextButton.font.size).isEqualTo(JBUI.Fonts.smallFont().size)
+      assertThat(view.launchProfileLink.font.size).isEqualTo(JBUI.Fonts.smallFont().size)
+      assertThat(view.addContextButton.foreground).isEqualTo(UIUtil.getContextHelpForeground())
+      assertThat(view.launchProfileLink.foreground).isEqualTo(UIUtil.getContextHelpForeground())
     }
   }
 
@@ -195,6 +210,8 @@ class AgentPromptPaletteViewLayoutTest {
       assertThat(initialLocation.x).isLessThan(locationInRoot(view.launchProfileLink, view.rootPanel).x)
       assertThat(firstChipLocation.x).isEqualTo(promptEditorLocation.x)
       assertThat(SwingUtilities.isDescendingFrom(view.addContextButton, view.generationSettingsPanel)).isTrue()
+      val firstChipButton = contextChipButtons(contextChips.component).single()
+      assertThat(firstChipButton.font.size).isLessThanOrEqualTo(view.addContextButton.font.size)
 
       contextChips.render(
         listOf(
@@ -209,6 +226,53 @@ class AgentPromptPaletteViewLayoutTest {
       assertThat(view.composerContextPanel.isVisible).isTrue()
       assertThat(contextChips.component.isVisible).isTrue()
       assertThat(SwingUtilities.isDescendingFrom(contextChips.component, view.composerContextPanel)).isTrue()
+    }
+  }
+
+  @Test
+  fun inlineContextChipsAreCappedAtTwoRowsWithOverflowChip() {
+    runInEdtAndWait {
+      val promptArea = EditorTextField()
+      val contextChips = AgentPromptContextChipsComponent(maxVisibleRows = 2) {}
+      val view = createPaletteView(
+        promptArea = promptArea,
+        contextChipsPanel = contextChips.component,
+        hostMode = AgentPromptPaletteHostMode.INLINE_EMPTY_STATE,
+      )
+      val entries = createManyContextEntries()
+
+      layoutPopupRoot(view.rootPanel)
+      contextChips.render(entries)
+      layoutPopupRoot(view.rootPanel)
+      contextChips.render(entries)
+      layoutPopupRoot(view.rootPanel)
+
+      val buttons = contextChipButtons(contextChips.component)
+      val overflowButton = buttons.single { button -> button.text.startsWith("+") }
+      assertThat(buttonRowCount(buttons, view.rootPanel)).isLessThanOrEqualTo(2)
+      assertThat(overflowButton.text).matches("\\+\\d+")
+      assertThat(overflowButton.text.removePrefix("+").toInt()).isEqualTo(entries.size - buttons.size + 1)
+      assertThat(buttons.size).isLessThan(entries.size)
+    }
+  }
+
+  @Test
+  fun popupContextChipsRenderAllEntriesWithoutOverflowChip() {
+    runInEdtAndWait {
+      val promptArea = EditorTextField()
+      val contextChips = AgentPromptContextChipsComponent {}
+      val entries = createManyContextEntries()
+      contextChips.render(entries)
+      val view = createPaletteView(
+        promptArea = promptArea,
+        contextChipsPanel = contextChips.component,
+      )
+
+      layoutPopupRoot(view.rootPanel)
+
+      val buttons = contextChipButtons(contextChips.component)
+      assertThat(buttons).hasSize(entries.size)
+      assertThat(buttons.map { button -> button.text }).noneMatch { text -> text.startsWith("+") }
     }
   }
 
@@ -316,6 +380,15 @@ class AgentPromptPaletteViewLayoutTest {
     )
   }
 
+  private fun createManyContextEntries(): List<ContextEntry> {
+    return (1..12).map { index ->
+      createContextEntry(
+        title = "File $index",
+        body = "community/plugins/agent-workbench/prompt/ui/src/context/VeryLongContextFileName$index.kt",
+      )
+    }
+  }
+
   private fun createPaletteView(
     promptArea: EditorTextField,
     suggestionsPanel: JPanel = JPanel(),
@@ -349,6 +422,21 @@ class AgentPromptPaletteViewLayoutTest {
 
   private fun locationInRoot(component: java.awt.Component, root: JPanel): java.awt.Point {
     return SwingUtilities.convertPoint(component.parent, component.location, root)
+  }
+
+  private fun yCenterInRoot(component: java.awt.Component, root: JPanel): Int {
+    val location = locationInRoot(component, root)
+    return location.y + component.height / 2
+  }
+
+  private fun buttonRowCount(buttons: List<JButton>, root: JPanel): Int {
+    return buttons.map { button -> locationInRoot(button, root).y }.distinct().size
+  }
+
+  private fun contextChipButtons(root: java.awt.Component): List<JButton> {
+    return collectComponentsOfType(root, JButton::class.java).filter { button ->
+      button.getClientProperty("styleTag") != null
+    }
   }
 
 }

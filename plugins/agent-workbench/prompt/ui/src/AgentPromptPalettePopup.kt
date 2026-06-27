@@ -261,7 +261,9 @@ internal fun createAgentPromptPaletteContent(
     promptArea.setDisposedWith(swingDisposable)
 
     val suggestions = AgentPromptSuggestionsComponent { candidate -> sessionControllerRef?.applySuggestedPrompt(candidate) }
-    val contextChips = AgentPromptContextChipsComponent { entry -> sessionControllerRef?.removeContextEntry(entry) }
+    val contextChips = AgentPromptContextChipsComponent(
+      maxVisibleRows = if (hostMode.isInlinePrompt) 2 else null,
+    ) { entry -> sessionControllerRef?.removeContextEntry(entry) }
     val view = createAgentPromptPaletteView(
       promptArea = promptArea,
       suggestionsPanel = suggestions.component,
