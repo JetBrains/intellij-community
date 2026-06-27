@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.ui
 
+import com.intellij.icons.AllIcons
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
@@ -197,6 +198,7 @@ class AgentPromptProviderSelectorTest {
           invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
           providerSelector = fixture.selector,
           generationSettingsPanel = fixture.view.generationSettingsPanel,
+          launchProfileLink = fixture.view.launchProfileLink,
           modelSelectorLink = fixture.view.modelSelectorLink,
           reasoningEffortLink = fixture.view.reasoningEffortLink,
           launchTuningSummaryLink = fixture.view.launchTuningSummaryLink,
@@ -220,21 +222,26 @@ class AgentPromptProviderSelectorTest {
       }
 
       waitForCondition {
-        withContext(Dispatchers.EDT) { fixture.view.modelSelectorLink.isVisible }
+        withContext(Dispatchers.EDT) { fixture.view.launchProfileLink.text == "High" }
       }
       withContext(Dispatchers.EDT) {
         assertThat(controller.currentSettings().reasoningEffort).isEqualTo(AgentPromptReasoningEffort.HIGH)
         assertThat(fixture.view.generationSettingsPanel.isVisible).isTrue()
-        assertThat(fixture.view.modelSelectorLink.isVisible).isTrue()
+        assertThat(fixture.view.modelSelectorLink.isVisible).isFalse()
         assertThat(fixture.view.modelSelectorLink.isEnabled).isTrue()
         assertThat(fixture.view.modelSelectorLink.text).isEqualTo("Model Default")
         assertThat(modelCatalogRequests.get()).isZero()
-        assertThat(fixture.view.reasoningEffortLink.isVisible).isTrue()
+        assertThat(fixture.view.reasoningEffortLink.isVisible).isFalse()
         assertThat(fixture.view.reasoningEffortLink.isEnabled).isTrue()
         assertThat(fixture.view.reasoningEffortLink.text).isEqualTo("Effort High")
-        assertThat(fixture.view.launchTuningSummaryLink.isVisible).isTrue()
+        assertThat(fixture.view.launchTuningSummaryLink.isVisible).isFalse()
         assertThat(fixture.view.launchTuningSummaryLink.isEnabled).isTrue()
-        assertThat(fixture.view.launchTuningSummaryLink.text).isEqualTo("Default model · High")
+        assertThat(fixture.view.launchTuningSummaryLink.text).isEqualTo("Model and reasoning")
+        assertThat(fixture.view.launchTuningSummaryLink.accessibleContext.accessibleName)
+          .isEqualTo("Model and reasoning: Default model · High")
+        assertThat(fixture.view.launchProfileLink.text).isEqualTo("High")
+        assertThat(fixture.view.launchProfileLink.accessibleContext.accessibleName)
+          .isEqualTo("Launch settings: High")
 
         val reasoningActions = checkNotNull(controller.createReasoningEffortActionGroupForTest())
           .getChildren(TestActionEvent.createTestEvent())
@@ -255,9 +262,24 @@ class AgentPromptProviderSelectorTest {
         assertThat(isSelectedInPopup(tuningActions[3])).isFalse()
         assertThat(isSelectedInPopup(tuningActions[5])).isTrue()
 
+        val modelSubmenu = launchSettingsModelSubmenu(controller)
+        assertThat(modelSubmenu.text).isEqualTo("Default")
+        assertThat(modelSubmenu.separatorText).isEqualTo("")
+        assertThat(modelSubmenu.secondaryIcon).isSameAs(AllIcons.General.ChevronRight)
+        assertThat(popupRowEntries(modelSubmenu.subRows)).containsExactly(
+          "separator:Model",
+          "row:Default",
+        )
+        assertThat(popupCommand(modelSubmenu.subRows, "Default").selected).isTrue()
+
+        val workbenchModelSubmenu = launchSettingsWorkbenchModelSubmenu(controller)
+        assertThat(workbenchModelSubmenu.text).isEqualTo(modelSubmenu.text)
+        assertThat(workbenchModelSubmenu.subRows.map { row -> row.text }).containsExactly("Default")
+        assertThat(workbenchModelSubmenu.subRowsProvider != null).isTrue()
+
         controller.setGenerationControlsVisible(false)
 
-        assertThat(fixture.view.generationSettingsPanel.isVisible).isFalse()
+        assertThat(fixture.view.generationSettingsPanel.isVisible).isTrue()
         assertThat(fixture.view.modelSelectorLink.isVisible).isFalse()
         assertThat(fixture.view.reasoningEffortLink.isVisible).isFalse()
         assertThat(fixture.view.launchTuningSummaryLink.isVisible).isFalse()
@@ -315,7 +337,12 @@ class AgentPromptProviderSelectorTest {
 
       assertThat(controller.currentSettings().modelId).isEqualTo(modelId)
       assertThat(controller.currentSettings().reasoningEffort).isEqualTo(AgentPromptReasoningEffort.HIGH)
-      assertThat(fixture.view.launchTuningSummaryLink.text).isEqualTo("GPT-5.1 Codex · High")
+      assertThat(fixture.view.launchProfileLink.text).isEqualTo("Profile Model")
+      assertThat(fixture.view.launchProfileLink.accessibleContext.accessibleName)
+        .isEqualTo("Launch settings: Profile Model")
+      assertThat(fixture.view.launchTuningSummaryLink.text).isEqualTo("Model and reasoning")
+      assertThat(fixture.view.launchTuningSummaryLink.accessibleContext.accessibleName)
+        .isEqualTo("Model and reasoning: GPT-5.1 Codex · High")
       assertThat(modelActionEntries(actions)).containsExactly(
         "separator:Model",
         "model:Default",
@@ -329,6 +356,24 @@ class AgentPromptProviderSelectorTest {
       assertThat(isSelectedInPopup(actions[3])).isTrue()
       assertThat(isSelectedInPopup(actions[5])).isFalse()
       assertThat(isSelectedInPopup(actions[6])).isTrue()
+
+      val modelSubmenu = launchSettingsModelSubmenu(controller)
+      assertThat(modelSubmenu.text).isEqualTo("GPT-5.1 Codex")
+      assertThat(modelSubmenu.separatorText).isEqualTo("")
+      assertThat(modelSubmenu.secondaryIcon).isSameAs(AllIcons.General.ChevronRight)
+      assertThat(popupRowEntries(modelSubmenu.subRows)).containsExactly(
+        "separator:Model",
+        "row:Default",
+        "separator:Other",
+        "row:GPT-5.1 Codex",
+      )
+      assertThat(popupCommand(modelSubmenu.subRows, "Default").selected).isFalse()
+      assertThat(popupCommand(modelSubmenu.subRows, "GPT-5.1 Codex").selected).isTrue()
+
+      val workbenchModelSubmenu = launchSettingsWorkbenchModelSubmenu(controller)
+      assertThat(workbenchModelSubmenu.text).isEqualTo(modelSubmenu.text)
+      assertThat(workbenchModelSubmenu.subRows.map { row -> row.text }).containsExactly("Default", "GPT-5.1 Codex")
+      assertThat(workbenchModelSubmenu.subRowsProvider != null).isTrue()
     }
   }
 
@@ -348,6 +393,7 @@ class AgentPromptProviderSelectorTest {
         launchProfileLink = fixture.view.launchProfileLink,
         modelSelectorLink = fixture.view.modelSelectorLink,
         reasoningEffortLink = fixture.view.reasoningEffortLink,
+        launchTuningSummaryLink = fixture.view.launchTuningSummaryLink,
         modelCatalogScope = testScope(),
         launcherProvider = { null },
         onDefaultSaved = { _ -> },
@@ -358,7 +404,7 @@ class AgentPromptProviderSelectorTest {
       controller.setControlsVisibility(providerSelectorVisible = true, generationControlsVisible = false)
 
       assertThat(fixture.view.launchProfileLink.isVisible).isTrue()
-      assertThat(fixture.view.generationSettingsPanel.isVisible).isFalse()
+      assertThat(fixture.view.generationSettingsPanel.isVisible).isTrue()
       assertThat(fixture.view.modelSelectorLink.isVisible).isFalse()
       assertThat(fixture.view.reasoningEffortLink.isVisible).isFalse()
     }
@@ -380,6 +426,7 @@ class AgentPromptProviderSelectorTest {
         launchProfileLink = fixture.view.launchProfileLink,
         modelSelectorLink = fixture.view.modelSelectorLink,
         reasoningEffortLink = fixture.view.reasoningEffortLink,
+        launchTuningSummaryLink = fixture.view.launchTuningSummaryLink,
         modelCatalogScope = testScope(),
         launcherProvider = { null },
         onDefaultSaved = { _ -> },
@@ -388,8 +435,9 @@ class AgentPromptProviderSelectorTest {
       controller.refreshPresentation()
 
       assertThat(fixture.view.generationSettingsPanel.isVisible).isTrue()
+      assertThat(fixture.view.launchTuningSummaryLink.isVisible).isFalse()
       assertThat(fixture.view.modelSelectorLink.isVisible).isFalse()
-      assertThat(fixture.view.reasoningEffortLink.isVisible).isTrue()
+      assertThat(fixture.view.reasoningEffortLink.isVisible).isFalse()
       assertThat(fixture.view.reasoningEffortLink.isEnabled).isFalse()
       assertThat(fixture.view.reasoningEffortLink.text).isEqualTo("Effort Default")
       assertThat(fixture.view.reasoningEffortLink.toolTipText).contains("not available")
@@ -482,8 +530,11 @@ class AgentPromptProviderSelectorTest {
 
       waitForCondition {
         withContext(Dispatchers.EDT) {
-          fixtureAndController.first.view.modelSelectorLink.isVisible &&
-          fixtureAndController.first.view.reasoningEffortLink.isEnabled
+          val (fixture, controller) = fixtureAndController
+          fixture.view.reasoningEffortLink.isEnabled &&
+          controller.createModelActionGroupForTest()
+            ?.getChildren(TestActionEvent.createTestEvent())
+            ?.any { action -> action.templatePresentation.text == "ChatGPT 5.5" } == true
         }
       }
       withContext(Dispatchers.EDT) {
@@ -935,7 +986,7 @@ class AgentPromptProviderSelectorTest {
       builtInAction.actionPerformed(TestActionEvent.createTestEvent(builtInAction))
 
       assertThat(launcher.preferences.defaultLaunchProfileId).isEqualTo(profile.id)
-      assertThat(fixture.view.launchProfileLink.text).isEqualTo("Standard")
+      assertThat(fixture.view.launchProfileLink.text).isEqualTo("Default")
       assertThat(controller.currentSettings().reasoningEffort).isEqualTo(AgentPromptReasoningEffort.AUTO)
       assertThat(fixture.selector.isPlanModeSelected()).isTrue()
     }
@@ -2116,10 +2167,8 @@ class AgentPromptProviderSelectorTest {
 
       fastAction.actionPerformed(TestActionEvent.createTestEvent(fastAction))
 
-      assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isTrue()
-      assertThat(fixture.view.defaultProfileActionControl.component.text).isEqualTo("Make Default")
-
-      fixture.view.defaultProfileActionControl.component.doClick()
+      assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isFalse()
+      launchSettingsCommand(controller, "Make Default").onChosen()
 
       assertThat(statusMessage).isEqualTo("Default profile updated.")
       assertThat(launcher.preferences.defaultLaunchProfileId).isEqualTo(fastProfile.id)
@@ -2152,7 +2201,7 @@ class AgentPromptProviderSelectorTest {
 
       controller.restoreLaunchProfiles(launcher.preferences)
 
-      assertThat(fixture.view.launchProfileLink.text).isEqualTo("Standard")
+      assertThat(fixture.view.launchProfileLink.text).isEqualTo("Default")
       assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isFalse()
     }
   }
@@ -2189,10 +2238,8 @@ class AgentPromptProviderSelectorTest {
       yoloAction.actionPerformed(TestActionEvent.createTestEvent(yoloAction))
 
       assertThat(fixture.view.launchProfileLink.text).isEqualTo("Full Auto")
-      assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isTrue()
-      assertThat(fixture.view.defaultProfileActionControl.component.text).isEqualTo("Make Default")
-
-      fixture.view.defaultProfileActionControl.component.doClick()
+      assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isFalse()
+      launchSettingsCommand(controller, "Make Default").onChosen()
 
       assertThat(statusMessage).isEqualTo("Default profile updated.")
       assertThat(launcher.preferences.defaultLaunchProfileId).isEqualTo(
@@ -2233,11 +2280,9 @@ class AgentPromptProviderSelectorTest {
 
       highAction.actionPerformed(TestActionEvent.createTestEvent(highAction))
 
-      assertThat(fixture.view.launchProfileLink.text).isEqualTo("Custom")
-      assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isTrue()
-      assertThat(fixture.view.defaultProfileActionControl.component.text).isEqualTo("Save as Default")
-
-      fixture.view.defaultProfileActionControl.component.doClick()
+      assertThat(fixture.view.launchProfileLink.text).isEqualTo("High")
+      assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isFalse()
+      launchSettingsCommand(controller, "Save as Default").onChosen()
 
       val savedProfile = launcher.preferences.launchProfiles.single()
       assertThat(statusMessage).isEqualTo("Launch profile saved as default.")
@@ -2289,11 +2334,9 @@ class AgentPromptProviderSelectorTest {
 
       highAction.actionPerformed(TestActionEvent.createTestEvent(highAction))
 
-      assertThat(fixture.view.launchProfileLink.text).isEqualTo("Custom")
-      assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isTrue()
-      assertThat(fixture.view.defaultProfileActionControl.component.text).isEqualTo("Update Profile")
-
-      fixture.view.defaultProfileActionControl.component.doClick()
+      assertThat(fixture.view.launchProfileLink.text).isEqualTo("High")
+      assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isFalse()
+      launchSettingsCommand(controller, "Update Profile").onChosen()
 
       val savedProfile = launcher.preferences.launchProfiles.single()
       assertThat(statusMessage).isEqualTo("Launch profile updated.")
@@ -2509,7 +2552,7 @@ class AgentPromptProviderSelectorTest {
 
       withContext(Dispatchers.EDT) {
         val (fixture, controller) = fixtureAndController
-        assertThat(fixture.view.modelSelectorLink.isVisible).isTrue()
+        assertThat(fixture.view.modelSelectorLink.isVisible).isFalse()
         assertThat(modelCatalogRequests.get()).isZero()
         val loadingActions = checkNotNull(controller.createModelActionGroupForTest(loadIfNeeded = true))
           .getChildren(TestActionEvent.createTestEvent())
@@ -3080,14 +3123,14 @@ class AgentPromptProviderSelectorTest {
         .single { action -> action.templatePresentation.text == "Extra High" }
       extraHighPlanAction.actionPerformed(TestActionEvent.createTestEvent(extraHighPlanAction))
 
-      assertThat(fixture.view.planReasoningEffortLink.isVisible).isTrue()
+      assertThat(fixture.view.planReasoningEffortLink.isVisible).isFalse()
       assertThat(fixture.view.planReasoningEffortLink.text).isEqualTo("Plan Effort Extra High")
       assertThat(controller.currentLaunchSettings().planReasoningEffort).isEqualTo(AgentPromptReasoningEffort.XHIGH)
 
       fixture.selector.setPlanModeSelected(false)
       controller.refreshPresentation()
 
-      assertThat(fixture.view.planReasoningEffortLink.isVisible).isTrue()
+      assertThat(fixture.view.planReasoningEffortLink.isVisible).isFalse()
       assertThat(fixture.view.planReasoningEffortLink.isEnabled).isFalse()
       assertThat(fixture.view.planReasoningEffortLink.toolTipText)
         .contains(AgentPromptBundle.message("popup.generation.plan.reasoning.disabled.tooltip"))
@@ -3164,7 +3207,7 @@ class AgentPromptProviderSelectorTest {
       controller.restoreLaunchProfiles(launcher.preferences)
 
       assertThat(fixture.selector.isPlanModeSelected()).isFalse()
-      assertThat(fixture.view.planReasoningEffortLink.isVisible).isTrue()
+      assertThat(fixture.view.planReasoningEffortLink.isVisible).isFalse()
       assertThat(fixture.view.planReasoningEffortLink.isEnabled).isFalse()
       assertThat(fixture.view.planReasoningEffortLink.text).isEqualTo("Plan Effort Extra High")
       assertThat(controller.currentLaunchSettings().planReasoningEffort).isNull()
@@ -3172,7 +3215,7 @@ class AgentPromptProviderSelectorTest {
       fixture.selector.setPlanModeSelected(true)
       controller.refreshPresentation()
 
-      assertThat(fixture.view.planReasoningEffortLink.isVisible).isTrue()
+      assertThat(fixture.view.planReasoningEffortLink.isVisible).isFalse()
       assertThat(fixture.view.planReasoningEffortLink.isEnabled).isTrue()
       assertThat(controller.currentLaunchSettings().planReasoningEffort).isEqualTo(AgentPromptReasoningEffort.XHIGH)
     }
@@ -3430,6 +3473,38 @@ class AgentPromptProviderSelectorTest {
       ?.getChildren(TestActionEvent.createTestEvent())
       ?.filterNot { action -> action is Separator }
       ?.mapNotNull { action -> action.templatePresentation.text }
+  }
+
+  private fun launchSettingsCommand(
+    controller: AgentPromptGenerationSettingsController,
+    text: String,
+  ): AgentPromptPopupRow.Command {
+    return controller.createLaunchSettingsPopupRowsForTest()
+      .filterIsInstance<AgentPromptPopupRow.Command>()
+      .single { row -> row.text == text }
+  }
+
+  private fun launchSettingsModelSubmenu(controller: AgentPromptGenerationSettingsController): AgentPromptPopupRow.Command {
+    return controller.createLaunchSettingsPopupRowsForTest()
+      .filterIsInstance<AgentPromptPopupRow.Command>()
+      .single { row -> row.subRows.isNotEmpty() }
+  }
+
+  private fun launchSettingsWorkbenchModelSubmenu(controller: AgentPromptGenerationSettingsController): AgentWorkbenchPopupRow {
+    return controller.createLaunchSettingsWorkbenchPopupRowsForTest().single { row -> row.subRows.isNotEmpty() }
+  }
+
+  private fun popupCommand(rows: List<AgentPromptPopupRow>, text: String): AgentPromptPopupRow.Command {
+    return rows.filterIsInstance<AgentPromptPopupRow.Command>().single { row -> row.text == text }
+  }
+
+  private fun popupRowEntries(rows: List<AgentPromptPopupRow>): List<String> {
+    return rows.flatMap { row ->
+      buildList {
+        row.separatorText?.let { separatorText -> add("separator:$separatorText") }
+        add("row:${row.text}")
+      }
+    }
   }
 
   private fun modelActionEntries(actions: Array<AnAction>): List<String> {

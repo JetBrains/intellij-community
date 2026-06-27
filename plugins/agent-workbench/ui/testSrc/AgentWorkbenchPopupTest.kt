@@ -74,6 +74,32 @@ class AgentWorkbenchPopupTest {
       assertThat(renderPixel(selectedPanel, x = 220).rgb).isEqualTo(UIUtil.getListSelectionBackground(true).rgb)
     }
   }
+
+  @Test
+  fun stepBuildsNestedRowsFromProviderWhenSubstepOpens() {
+    runInEdtAndWait {
+      var providerCalls = 0
+      var nestedRowText = "Loading models..."
+      val modelRow = AgentWorkbenchPopupRow(
+        text = "Default",
+        subRowsProvider = {
+          providerCalls++
+          listOf(AgentWorkbenchPopupRow(text = nestedRowText))
+        },
+      )
+      val step = AgentWorkbenchPopupStep(listOf(modelRow))
+
+      assertThat(step.hasSubstep(modelRow)).isTrue()
+      assertThat(providerCalls).isEqualTo(1)
+
+      nestedRowText = "GPT-5.1 Codex"
+      val nestedStep = step.onChosen(modelRow, finalChoice = false)
+
+      assertThat(nestedStep).isInstanceOf(AgentWorkbenchPopupStep::class.java)
+      assertThat(providerCalls).isEqualTo(2)
+      assertThat((nestedStep as AgentWorkbenchPopupStep).values.map { row -> row.text }).containsExactly("GPT-5.1 Codex")
+    }
+  }
 }
 
 private fun renderPixel(component: JComponent, x: Int, width: Int = 240): Color {

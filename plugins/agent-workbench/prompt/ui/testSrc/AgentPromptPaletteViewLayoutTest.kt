@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
-import kotlin.math.abs
 
 @TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
@@ -35,20 +34,25 @@ class AgentPromptPaletteViewLayoutTest {
   }
 
   @Test
-  fun composerContextClusterIsShownWhenAddContextControlIsTheOnlyVisibleControl() {
+  fun popupComposerContextClusterIsHiddenWhenAddContextControlIsInBottomTray() {
     runInEdtAndWait {
       val promptArea = EditorTextField()
       val view = createPaletteView(promptArea = promptArea)
 
       layoutPopupRoot(view.rootPanel)
 
-      assertThat(view.composerContextPanel.isVisible).isTrue()
+      assertThat(view.composerContextPanel.isVisible).isFalse()
       assertThat(view.addContextButton.isVisible).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(view.launchProfileLink, view.generationSettingsPanel)).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(view.launchTuningSummaryLink, view.generationSettingsPanel)).isFalse()
+      assertThat(SwingUtilities.isDescendingFrom(view.addContextButton, view.generationSettingsPanel)).isTrue()
+      assertThat(locationInRoot(view.addContextButton, view.rootPanel).x)
+        .isLessThan(locationInRoot(view.launchProfileLink, view.rootPanel).x)
     }
   }
 
   @Test
-  fun inlineComposerContextClusterIsHiddenWhenAddContextControlIsInGenerationRow() {
+  fun inlineComposerContextClusterIsHiddenWhenAddContextControlIsInBottomTray() {
     runInEdtAndWait {
       val promptArea = EditorTextField()
       val view = createPaletteView(
@@ -60,11 +64,12 @@ class AgentPromptPaletteViewLayoutTest {
 
       assertThat(view.addContextButton.isVisible).isTrue()
       assertThat(view.composerContextPanel.isVisible).isFalse()
-      assertThat(SwingUtilities.isDescendingFrom(view.launchTuningSummaryLink, view.generationSettingsPanel)).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(view.launchProfileLink, view.generationSettingsPanel)).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(view.addContextButton, view.generationSettingsPanel)).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(view.launchTuningSummaryLink, view.generationSettingsPanel)).isFalse()
+      assertThat(SwingUtilities.isDescendingFrom(view.launchTuningSummaryLink, view.rightHeaderPanel)).isFalse()
       assertThat(locationInRoot(view.addContextButton, view.rootPanel).x)
-        .isLessThan(locationInRoot(view.launchTuningSummaryLink, view.rootPanel).x)
-      assertThat(abs(yCenterInRoot(view.addContextButton, view.rootPanel) - yCenterInRoot(view.launchTuningSummaryLink, view.rootPanel)))
-        .isLessThanOrEqualTo(1)
+        .isLessThan(locationInRoot(view.launchProfileLink, view.rootPanel).x)
     }
   }
 
@@ -186,8 +191,10 @@ class AgentPromptPaletteViewLayoutTest {
       val firstChipLocation = locationInRoot(contextChips.component.components.first(), view.rootPanel)
       val promptEditorLocation = locationInRoot(view.promptEditorPanel, view.rootPanel)
 
-      assertThat(initialLocation.x).isEqualTo(promptEditorLocation.x)
+      assertThat(initialLocation.x).isGreaterThanOrEqualTo(promptEditorLocation.x)
+      assertThat(initialLocation.x).isLessThan(locationInRoot(view.launchProfileLink, view.rootPanel).x)
       assertThat(firstChipLocation.x).isEqualTo(promptEditorLocation.x)
+      assertThat(SwingUtilities.isDescendingFrom(view.addContextButton, view.generationSettingsPanel)).isTrue()
 
       contextChips.render(
         listOf(
@@ -199,7 +206,9 @@ class AgentPromptPaletteViewLayoutTest {
       layoutPopupRoot(view.rootPanel)
 
       assertThat(locationInRoot(view.addContextButton, view.rootPanel)).isEqualTo(initialLocation)
-      assertThat(locationInRoot(contextChips.component, view.rootPanel).y).isLessThan(initialLocation.y)
+      assertThat(view.composerContextPanel.isVisible).isTrue()
+      assertThat(contextChips.component.isVisible).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(contextChips.component, view.composerContextPanel)).isTrue()
     }
   }
 
@@ -342,7 +351,4 @@ class AgentPromptPaletteViewLayoutTest {
     return SwingUtilities.convertPoint(component.parent, component.location, root)
   }
 
-  private fun yCenterInRoot(component: java.awt.Component, root: JPanel): Int {
-    return locationInRoot(component, root).y + component.height / 2
-  }
 }

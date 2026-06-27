@@ -97,7 +97,7 @@ class AgentPromptPaletteSessionControllerTest {
 
         assertThat(fixture.view.launchProfileLink.isVisible).isTrue()
         assertThat(fixture.view.profileAction.customComponent.isVisible).isTrue()
-        assertThat(fixture.view.generationSettingsPanel.isVisible).isFalse()
+        assertThat(fixture.view.generationSettingsPanel.isVisible).isTrue()
         assertThat(fixture.view.modelSelectorLink.isVisible).isFalse()
         assertThat(fixture.view.reasoningEffortLink.isVisible).isFalse()
       }

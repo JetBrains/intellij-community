@@ -99,7 +99,7 @@ The global prompt opens a project-scoped prompt surface for starting a new task 
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexPlanPromptRealAppServerIntegrationTest.kt
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexNewThreadPromptLaunchIntegrationTest.kt
 
-- `NEW_TASK` and `EXISTING_TASK` expose the provider selector. Changing provider in `EXISTING_TASK` reloads the selectable task list for that provider. Provider-backed model and reasoning-effort controls are exposed for `NEW_TASK` as specified by `global-prompt-generation-controls.spec.md`. Header actions stay limited to prompt-surface tools such as provider selection, Plan mode, Run in container, preview, and prompt library.
+- `NEW_TASK` and `EXISTING_TASK` expose the provider selector. Changing provider in `EXISTING_TASK` reloads the selectable task list for that provider. Provider-backed model and reasoning-effort controls are exposed for `NEW_TASK` through the unified launch-settings control specified by `global-prompt-generation-controls.spec.md`. Popup and inline composers keep Add Context as the left prompt-composition action and one launch-settings affordance as the right launch-configuration action in the prompt bottom tray; header actions stay limited to prompt-surface tools such as Plan mode, Run in container, preview, and prompt library.
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteViewStructureTest.kt
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteSessionControllerTest.kt
