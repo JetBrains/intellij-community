@@ -6,14 +6,11 @@ import com.intellij.openapi.command.undo.DocumentReference
 import com.intellij.openapi.command.undo.UndoableAction
 import com.intellij.openapi.util.NlsContexts.Command
 import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.PersistentSet
 import java.lang.ref.Reference
 
 internal class UndoRedoListSnapshot<T>(val snapshot: PersistentList<T>) {
   fun toList(): UndoRedoList<T> = UndoRedoList(snapshot.builder())
 }
-
-internal class UndoRedoSetSnapshot<T>(val snapshot: PersistentSet<T>)
 
 internal class LocalCommandMergerSnapshot(
   val documentReferences: DocumentReference?,
