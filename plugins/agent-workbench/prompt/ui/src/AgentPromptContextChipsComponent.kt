@@ -128,7 +128,7 @@ internal class AgentPromptContextChipsComponent(
   private fun wrapRowComponent(content: JComponent): JComponent {
     return JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)).apply {
       isOpaque = false
-      border = JBUI.Borders.emptyRight(CONTEXT_CHIP_GAP)
+      border = JBUI.Borders.empty(0, 0, CONTEXT_CHIP_GAP, CONTEXT_CHIP_GAP)
       add(content)
     }
   }
@@ -152,7 +152,7 @@ internal class AgentPromptContextChipsComponent(
     fun chipLayout(): WrapLayout = WrapLayout(
       FlowLayout.LEFT,
       0,
-      JBUI.scale(CONTEXT_CHIP_GAP),
+      0,
     )
   }
 }

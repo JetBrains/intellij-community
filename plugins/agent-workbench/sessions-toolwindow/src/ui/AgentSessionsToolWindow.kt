@@ -34,6 +34,7 @@ import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModel
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModelDiff
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
+import com.intellij.agent.workbench.sessions.toolwindow.tree.isSelectableSessionTreeId
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 import com.intellij.ide.ActivityTracker
 import com.intellij.openapi.Disposable
@@ -222,6 +223,7 @@ internal class AgentSessionsToolWindowPanel(
       tree = tree,
       rowActionsOverlayProvider = { rowActionsOverlay },
       nodeResolver = ::sessionTreeNode,
+      isHoverableTreeId = { id -> isSelectableSessionTreeId(sessionTreeModel, id) },
       selectedArchiveTargets = { dataContextProvider.selectedArchiveTargets() },
       selectedUnarchiveTargets = { dataContextProvider.selectedUnarchiveTargets() },
       showMoreProjects = ::showMoreProjectsForCurrentView,

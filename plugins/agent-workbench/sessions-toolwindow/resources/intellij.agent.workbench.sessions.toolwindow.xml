@@ -49,11 +49,11 @@
       id="AgentWorkbenchSessions.TreePopup.Rename"
       class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupRenameThreadAction"/>
     <action
-      id="AgentWorkbenchSessions.TreePopup.CopyThreadId"
-      class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupCopyThreadIdAction"/>
-    <action
       id="AgentWorkbenchSessions.TreePopup.TogglePin"
       class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupToggleThreadPinAction"/>
+    <action
+      id="AgentWorkbenchSessions.TreePopup.CopyThreadId"
+      class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupCopyThreadIdAction"/>
     <action
       id="AgentWorkbenchSessions.TreePopup.Archive"
       class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupArchiveThreadAction"/>
@@ -65,10 +65,10 @@
       <reference ref="AgentWorkbenchSessions.TreePopup.More"/>
       <reference ref="AgentWorkbenchSessions.TreePopup.NewThread"/>
       <separator/>
-      <reference ref="AgentWorkbenchSessions.TreePopup.TogglePin"/>
       <reference ref="AgentWorkbenchSessions.TreePopup.Archive"/>
       <reference ref="AgentWorkbenchSessions.TreePopup.Unarchive"/>
       <reference ref="AgentWorkbenchSessions.TreePopup.Rename"/>
+      <reference ref="AgentWorkbenchSessions.TreePopup.TogglePin"/>
       <reference ref="AgentWorkbenchSessions.TreePopup.CopyThreadId"/>
       <reference ref="CopyReferencePopupGroup"/>
     </group>
