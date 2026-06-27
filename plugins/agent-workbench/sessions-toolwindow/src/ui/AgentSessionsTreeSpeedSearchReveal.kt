@@ -151,6 +151,7 @@ private fun ensureVisible(
     is SessionTreeId.Error,
     is SessionTreeId.Empty,
     is SessionTreeId.Pinned,
+    is SessionTreeId.PinnedSeparator,
     is SessionTreeId.MoreProjects,
     is SessionTreeId.MoreThreads,
     is SessionTreeId.WorktreeWarning,

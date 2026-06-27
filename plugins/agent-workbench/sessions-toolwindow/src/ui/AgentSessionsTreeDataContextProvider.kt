@@ -115,24 +115,26 @@ internal class AgentSessionsTreeDataContextProvider(
     val treeId = selectedTreeId ?: return null
     val treeNode = selectedTreeNode ?: return null
     val path = when (treeId) {
-                  SessionTreeId.Pinned -> null
-                  is SessionTreeId.Project -> treeId.path
-                  is SessionTreeId.Thread -> treeId.projectPath
-                 is SessionTreeId.SubAgent -> treeId.projectPath
-                 is SessionTreeId.Warning -> treeId.projectPath
-                 is SessionTreeId.Error -> treeId.projectPath
-                 is SessionTreeId.Empty -> treeId.projectPath
-                 SessionTreeId.MoreProjects -> null
-                 is SessionTreeId.MoreThreads -> treeId.projectPath
-                 is SessionTreeId.Worktree -> treeId.worktreePath
-                 is SessionTreeId.WorktreeThread -> treeId.worktreePath
-                 is SessionTreeId.WorktreeSubAgent -> treeId.worktreePath
-                 is SessionTreeId.WorktreeWarning -> treeId.worktreePath
-                 is SessionTreeId.WorktreeMoreThreads -> treeId.worktreePath
-                 is SessionTreeId.WorktreeError -> treeId.worktreePath
-               } ?: return null
+      SessionTreeId.Pinned -> null
+      SessionTreeId.PinnedSeparator -> null
+      is SessionTreeId.Project -> treeId.path
+      is SessionTreeId.Thread -> treeId.projectPath
+      is SessionTreeId.SubAgent -> treeId.projectPath
+      is SessionTreeId.Warning -> treeId.projectPath
+      is SessionTreeId.Error -> treeId.projectPath
+      is SessionTreeId.Empty -> treeId.projectPath
+      SessionTreeId.MoreProjects -> null
+      is SessionTreeId.MoreThreads -> treeId.projectPath
+      is SessionTreeId.Worktree -> treeId.worktreePath
+      is SessionTreeId.WorktreeThread -> treeId.worktreePath
+      is SessionTreeId.WorktreeSubAgent -> treeId.worktreePath
+      is SessionTreeId.WorktreeWarning -> treeId.worktreePath
+      is SessionTreeId.WorktreeMoreThreads -> treeId.worktreePath
+      is SessionTreeId.WorktreeError -> treeId.worktreePath
+    } ?: return null
     val displayName = when (treeNode) {
       is SessionTreeNode.PinnedSection -> null
+      is SessionTreeNode.SectionSeparator -> null
       is SessionTreeNode.Project -> treeNode.project.name
       is SessionTreeNode.Thread -> treeNode.project.name
       is SessionTreeNode.SubAgent -> treeNode.project.name

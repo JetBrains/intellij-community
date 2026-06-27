@@ -353,10 +353,15 @@ internal class AgentSessionsToolWindowPanel(
     tree.showsRootHandles = true
     tree.emptyText.text = AgentSessionsBundle.message("toolwindow.loading")
     tree.selectionModel.selectionMode = javax.swing.tree.TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION
-    tree.cellRenderer = SessionTreeCellRenderer(
-      nowProvider = { System.currentTimeMillis() },
-      rowActionsProvider = { row, treeNode, selected -> rowActionsOverlay.rowActionPresentation(row, treeNode, selected) },
-      nodeResolver = { treeId -> sessionTreeModel.entriesById[treeId]?.node },
+    installSessionTreeStructuralSelectionFilter(tree = tree, modelProvider = { sessionTreeModel })
+    val nodeResolver = { treeId: SessionTreeId -> sessionTreeModel.entriesById[treeId]?.node }
+    tree.cellRenderer = SessionTreeCellRendererWithSeparators(
+      delegate = SessionTreeCellRenderer(
+        nowProvider = { System.currentTimeMillis() },
+        rowActionsProvider = { row, treeNode, selected -> rowActionsOverlay.rowActionPresentation(row, treeNode, selected) },
+        nodeResolver = nodeResolver,
+      ),
+      nodeResolver = nodeResolver,
     )
     configureSessionTreeRenderingProperties(tree)
     TreeUIHelper.getInstance().installTreeSpeedSearch(tree)
