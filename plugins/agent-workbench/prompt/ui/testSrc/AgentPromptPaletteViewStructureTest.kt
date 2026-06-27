@@ -191,6 +191,7 @@ class AgentPromptPaletteViewStructureTest {
       assertThat(SwingUtilities.isDescendingFrom(view.launchTuningSummaryLink, view.rightHeaderPanel)).isFalse()
       assertThat(SwingUtilities.isDescendingFrom(view.launchTuningSummaryLink, view.headerControls.toolbarComponent)).isFalse()
       assertThat(SwingUtilities.isDescendingFrom(view.addContextButton, view.composerContextPanel)).isFalse()
+      assertThat(SwingUtilities.isDescendingFrom(view.composerContextPanel, view.promptEditorPanel)).isTrue()
       assertThat(xInRoot(view.addContextButton, view.rootPanel)).isLessThan(xInRoot(view.launchProfileLink, view.rootPanel))
       assertThat(SwingUtilities.isDescendingFrom(view.headerControls.toolbarComponent, view.rightHeaderPanel)).isTrue()
       assertThat(SwingUtilities.isDescendingFrom(view.profileAction.customComponent, view.rightHeaderPanel)).isFalse()
@@ -587,6 +588,8 @@ class AgentPromptPaletteViewStructureTest {
       assertThat(SwingUtilities.isDescendingFrom(view.addContextButton, view.composerContextPanel)).isFalse()
       assertThat(SwingUtilities.isDescendingFrom(view.addContextButton, view.generationSettingsPanel)).isTrue()
       assertThat(SwingUtilities.isDescendingFrom(contextChipsPanel, view.promptPanel)).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(contextChipsPanel, view.promptEditorPanel)).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(contextChipsPanel, view.generationSettingsPanel)).isFalse()
       assertThat(SwingUtilities.isDescendingFrom(view.addContextButton, view.bottomPanel)).isFalse()
       assertThat(SwingUtilities.isDescendingFrom(contextChipsPanel, view.bottomPanel)).isFalse()
     }

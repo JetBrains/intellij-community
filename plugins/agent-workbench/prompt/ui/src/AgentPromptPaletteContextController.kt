@@ -198,7 +198,7 @@ internal class AgentPromptPaletteContextController(
         state.manualContextItemsBySourceId[sourceId] = existing + items
         refreshContextEntries()
         resolveExtensionTabs()
-        onContextChanged(AgentPromptBundle.message("popup.status.context.added"))
+        onContextChanged(AgentPromptBundle.message("popup.status.context.added.to.prompt"))
     }
 
     fun resolveContextSelection(items: List<AgentPromptContextItem>, projectPath: String?): AgentPromptPaletteContextSelection? {
@@ -324,7 +324,7 @@ internal class AgentPromptPaletteContextController(
         state.manualContextItemsBySourceId[source.sourceId] = updatedItems
         refreshContextEntries()
         resolveExtensionTabs()
-        onContextChanged(AgentPromptBundle.message("popup.status.context.added"))
+        onContextChanged(AgentPromptBundle.message("popup.status.context.added.to.prompt"))
     }
 
     private fun addExtensionTab(extension: AgentPromptPaletteExtension) {

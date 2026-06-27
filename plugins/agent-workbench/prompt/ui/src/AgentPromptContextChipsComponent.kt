@@ -1,22 +1,34 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.ui
 
-import com.intellij.execution.ui.TagButton
-import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.icons.AllIcons
+import com.intellij.ide.setToolTipText
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.WrapLayout
 import org.jetbrains.annotations.Nls
+import java.awt.BorderLayout
+import java.awt.Dimension
 import java.awt.FlowLayout
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.RenderingHints
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
-import java.util.function.Consumer
 import javax.swing.Icon
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.SwingConstants
+import kotlin.math.max
 
 private const val CONTEXT_CHIP_GAP = 4
+private const val CONTEXT_ATTACHMENT_CARD_MIN_HEIGHT = 26
+internal const val CONTEXT_ATTACHMENT_CARD_PROPERTY: String = "agentPromptContextAttachmentCard"
+internal const val CONTEXT_ATTACHMENT_OVERFLOW_PROPERTY: String = "agentPromptContextAttachmentOverflow"
+internal const val CONTEXT_ATTACHMENT_REMOVE_PROPERTY: String = "agentPromptContextAttachmentRemove"
 
 internal class AgentPromptContextChipsComponent(
   private val maxVisibleRows: Int? = null,
@@ -123,35 +135,12 @@ internal class AgentPromptContextChipsComponent(
 
   private fun createContextChip(entry: ContextEntry): JComponent {
     val chipIcon = AgentPromptScreenshotChipIcon.resolve(entry.item)
-    return ContextChipTagButton(entry.displayText, chipIcon, Consumer { _: Any? ->
-      onRemove(entry)
-    }).apply {
-      isOpaque = false
-      isFocusable = false
-      // TagButton's inner `styleTag` button is opaque by default; make it non-opaque and
-      // transparent so only the rounded tag shape is painted (no rectangular tile behind it).
-      components.filterIsInstance<JButton>()
-        .filter { it.getClientProperty("styleTag") != null }
-        .forEach { button ->
-          button.isOpaque = false
-          button.background = UIUtil.TRANSPARENT_COLOR
-          button.putClientProperty("JButton.backgroundColor", UIUtil.TRANSPARENT_COLOR)
-          installContextChipIdeTooltip(component = button) { entry }
-      }
-    }
+    return ContextAttachmentCard(entry = entry, icon = chipIcon ?: AllIcons.Actions.ListFiles) { onRemove(entry) }
   }
 
   private fun createOverflowChip(hiddenCount: Int): JComponent {
     val text = AgentPromptBundle.message("popup.context.overflow", hiddenCount)
-    return JButton(text).apply {
-      putClientProperty("styleTag", true)
-      font = JBUI.Fonts.smallFont().asPlain()
-      isFocusable = false
-      isOpaque = false
-      background = UIUtil.TRANSPARENT_COLOR
-      putClientProperty("JButton.backgroundColor", UIUtil.TRANSPARENT_COLOR)
-      accessibleContext.accessibleName = text
-    }
+    return ContextOverflowAttachmentCard(text)
   }
 
   private data class ContextChipsSelection(
@@ -168,19 +157,80 @@ internal class AgentPromptContextChipsComponent(
   }
 }
 
-private class ContextChipTagButton(
-  @Nls text: String,
-  icon: Icon?,
-  action: Consumer<in AnActionEvent>,
-) : TagButton(text, action) {
+private open class ContextAttachmentCardPanel : JPanel(BorderLayout(JBUI.scale(6), 0)) {
   init {
-    myButton.font = JBUI.Fonts.smallFont().asPlain()
-    if (icon != null) {
-      myButton.iconTextGap = JBUI.scale(4)
-      updateButton(text, icon)
+    isOpaque = false
+    putClientProperty(CONTEXT_ATTACHMENT_CARD_PROPERTY, true)
+    border = JBUI.Borders.empty(5, 8, 5, 6)
+  }
+
+  override fun paintComponent(g: Graphics) {
+    val g2 = g.create() as Graphics2D
+    try {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+      val arc = JBUI.scale(10)
+      g2.color = UIUtil.getTextFieldBackground()
+      g2.fillRoundRect(0, 0, width - 1, height - 1, arc, arc)
+      g2.color = JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()
+      g2.drawRoundRect(0, 0, width - 1, height - 1, arc, arc)
     }
-    else {
-      layoutButtons()
+    finally {
+      g2.dispose()
     }
+    super.paintComponent(g)
+  }
+
+  override fun getPreferredSize() = super.getPreferredSize().withAttachmentCardHeight()
+
+  override fun getMinimumSize() = super.getMinimumSize().withAttachmentCardHeight()
+
+  private fun Dimension.withAttachmentCardHeight(): Dimension {
+    height = max(height, JBUI.scale(CONTEXT_ATTACHMENT_CARD_MIN_HEIGHT))
+    return this
+  }
+}
+
+private class ContextAttachmentCard(
+  entry: ContextEntry,
+  icon: Icon,
+  onRemove: () -> Unit,
+) : ContextAttachmentCardPanel() {
+  init {
+    getAccessibleContext().accessibleName = entry.displayText
+
+    val label = JBLabel(entry.displayText, icon, SwingConstants.LEFT).apply {
+      font = JBUI.Fonts.smallFont().asPlain()
+      foreground = UIUtil.getLabelForeground()
+      iconTextGap = JBUI.scale(6)
+      accessibleContext.accessibleName = entry.displayText
+    }
+    installContextChipIdeTooltip(this) { entry }
+    installContextChipIdeTooltip(label) { entry }
+    add(label, BorderLayout.CENTER)
+
+    add(JButton(AllIcons.Actions.Close).apply {
+      putClientProperty(CONTEXT_ATTACHMENT_REMOVE_PROPERTY, true)
+      isOpaque = false
+      isContentAreaFilled = false
+      isBorderPainted = false
+      isFocusable = true
+      border = JBUI.Borders.empty()
+      preferredSize = JBUI.size(16, 16)
+      setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.context.remove.tooltip")))
+      accessibleContext.accessibleName = AgentPromptBundle.message("popup.context.remove.accessible.name", entry.displayText)
+      addActionListener { onRemove() }
+    }, BorderLayout.EAST)
+  }
+}
+
+private class ContextOverflowAttachmentCard(text: @Nls String) : ContextAttachmentCardPanel() {
+  init {
+    putClientProperty(CONTEXT_ATTACHMENT_OVERFLOW_PROPERTY, true)
+    getAccessibleContext().accessibleName = text
+    add(JBLabel(text).apply {
+      font = JBUI.Fonts.smallFont().asPlain()
+      foreground = UIUtil.getContextHelpForeground()
+      accessibleContext.accessibleName = text
+    }, BorderLayout.CENTER)
   }
 }
