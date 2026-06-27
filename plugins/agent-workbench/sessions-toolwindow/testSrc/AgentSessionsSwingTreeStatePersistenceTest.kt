@@ -50,6 +50,29 @@ class AgentSessionsSwingTreeStatePersistenceTest {
   }
 
   @Test
+  fun currentProjectScopeAutoOpenProjectsIgnorePersistedCollapsedState() {
+    val uiState = InMemorySessionTreeUiState()
+    uiState.setProjectCollapsed("/work/project-open", collapsed = true)
+
+    val model = buildSessionTreeModel(
+      projects = listOf(
+        AgentProjectSessions(
+          path = "/work/project-open",
+          name = "Project Open",
+          isOpen = true,
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+        )
+      ),
+      visibleClosedProjectCount = Int.MAX_VALUE,
+      visibleThreadCounts = emptyMap(),
+      treeUiState = uiState,
+      currentProjectScopeActive = true,
+    )
+
+    assertThat(model.autoOpenProjects).containsExactly(SessionTreeId.Project("/work/project-open"))
+  }
+
+  @Test
   fun autoOpenProjectsIncludeProjectsWithOpenWorktrees() {
     val model = buildSessionTreeModel(
       projects = listOf(

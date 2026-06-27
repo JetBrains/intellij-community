@@ -226,14 +226,14 @@ internal class AgentSessionsToolWindowPanel(
       selectedUnarchiveTargets = { dataContextProvider.selectedUnarchiveTargets() },
       showMoreProjects = ::showMoreProjectsForCurrentView,
       showMoreThreads = ::showMoreThreadsForCurrentView,
-      isNewThreadPopupAvailable = { !stateController.isSingleProjectPresentationEnabled() },
+      isNewThreadPopupAvailable = { !stateController.isCurrentProjectScopeActive() },
     )
 
     rowActionsOverlay = AgentSessionsTreeRowActionsOverlay(
       project = project,
       tree = tree,
       nodeResolver = ::sessionTreeNode,
-      isNewThreadActionAvailable = { !stateController.isSingleProjectPresentationEnabled() },
+      isNewThreadActionAvailable = { !stateController.isCurrentProjectScopeActive() },
     )
 
     installProviderAvailabilityRefresh()

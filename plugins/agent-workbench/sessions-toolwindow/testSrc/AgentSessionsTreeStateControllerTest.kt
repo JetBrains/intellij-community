@@ -186,9 +186,11 @@ class AgentSessionsTreeStateControllerTest {
           !harness.model.entriesById.containsKey(SessionTreeId.Thread(OTHER_PROJECT_PATH, AgentSessionProvider.from("codex"), "other-thread"))
         }
         assertThat(harness.controller.displayedStateSnapshot().projects.map { it.path }).containsExactly(PROJECT_PATH)
+        val projectTreeId = SessionTreeId.Project(PROJECT_PATH)
+        val threadTreeId = SessionTreeId.Thread(PROJECT_PATH, AgentSessionProvider.from("codex"), "current-thread")
         assertThat(harness.model.rootIds)
-          .containsExactly(SessionTreeId.Thread(PROJECT_PATH, AgentSessionProvider.from("codex"), "current-thread"))
-        assertThat(harness.model.entriesById).doesNotContainKey(SessionTreeId.Project(PROJECT_PATH))
+          .containsExactly(projectTreeId)
+        assertThat(harness.model.entriesById.getValue(projectTreeId).childIds).containsExactly(threadTreeId)
       }
       finally {
         runInEdtAndWait { harness.controller.dispose() }
@@ -228,7 +230,7 @@ class AgentSessionsTreeStateControllerTest {
   }
 
   @Test
-  fun currentProjectScopePromotesOnlyMatchingWorktreeToRoot() {
+  fun currentProjectScopeKeepsParentProjectContainerForMatchingWorktree() {
     runBlocking {
       val harness = createHarness()
       try {
@@ -270,11 +272,14 @@ class AgentSessionsTreeStateControllerTest {
                                                                              AgentSessionProvider.from("codex"),
                                                                              "worktree-thread"))
         }
-        assertThat(harness.model.rootIds).containsExactly(SessionTreeId.Worktree(PROJECT_PATH, WORKTREE_PATH))
-        assertThat(harness.model.entriesById).doesNotContainKey(SessionTreeId.Project(PROJECT_PATH))
-        assertThat(harness.model.entriesById).doesNotContainKey(SessionTreeId.Thread(PROJECT_PATH,
-                                                                                     AgentSessionProvider.from("codex"),
-                                                                                     "parent-thread"))
+        val projectTreeId = SessionTreeId.Project(PROJECT_PATH)
+        val worktreeTreeId = SessionTreeId.Worktree(PROJECT_PATH, WORKTREE_PATH)
+        assertThat(harness.model.rootIds).containsExactly(projectTreeId)
+        assertThat(harness.model.entriesById.getValue(projectTreeId).childIds).containsExactly(worktreeTreeId)
+        assertThat(harness.model.entriesById)
+          .doesNotContainKey(SessionTreeId.Thread(PROJECT_PATH,
+                                                  AgentSessionProvider.from("codex"),
+                                                  "parent-thread"))
         assertThat(harness.model.entriesById)
           .doesNotContainKey(SessionTreeId.WorktreeThread(PROJECT_PATH,
                                                           OTHER_WORKTREE_PATH,
@@ -378,6 +383,65 @@ class AgentSessionsTreeStateControllerTest {
         harness.model.entriesById[pinnedThreadId]?.parentId == SessionTreeId.Pinned &&
         projectEntry?.childIds?.firstOrNull() == SessionTreeId.Thread(PROJECT_PATH, AgentSessionProvider.from("codex"), "recent") &&
         projectEntry.childIds.none { it == pinnedThreadId }
+      }
+    }
+    finally {
+      runInEdtAndWait { harness.controller.dispose() }
+    }
+  }
+
+  @Test
+  fun currentProjectScopeKeepsProjectContainerWhenLastPinnedThreadIsUnpinned() = runBlocking {
+    val harness = createHarness()
+    try {
+      harness.currentProjectOnly = true
+      harness.currentProjectPath = PROJECT_PATH
+      runInEdtAndWait { harness.controller.start() }
+      harness.sessionsState.value = AgentSessionsState(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(
+              thread("recent", updatedAt = 300),
+              thread("pinned", updatedAt = 100),
+            ),
+          ),
+          projectWithThread(OTHER_PROJECT_PATH, "Project B", "other-thread"),
+        ),
+        lastUpdatedAt = 1,
+      )
+
+      val projectTreeId = SessionTreeId.Project(PROJECT_PATH)
+      val recentThreadId = SessionTreeId.Thread(PROJECT_PATH, AgentSessionProvider.from("codex"), "recent")
+      val pinnedThreadId = SessionTreeId.Thread(PROJECT_PATH, AgentSessionProvider.from("codex"), "pinned")
+      waitForCondition {
+        harness.model.rootIds == listOf(projectTreeId) &&
+        harness.model.entriesById[projectTreeId]?.childIds?.firstOrNull() == recentThreadId &&
+        !harness.model.entriesById.containsKey(SessionTreeId.Project(OTHER_PROJECT_PATH))
+      }
+
+      harness.openChatTabsPresentationState.value = AgentChatOpenTabsPresentationState(
+        pinnedTopLevelThreadIdsByProvider = mapOf(
+          AgentSessionProvider.from("codex") to mapOf(PROJECT_PATH to setOf("pinned"))
+        )
+      )
+
+      waitForCondition {
+        val pinnedEntry = harness.model.entriesById[SessionTreeId.Pinned]
+        harness.model.rootIds == listOf(SessionTreeId.Pinned, projectTreeId) &&
+        pinnedEntry?.childIds == listOf(pinnedThreadId) &&
+        harness.model.entriesById[projectTreeId]?.childIds == listOf(recentThreadId)
+      }
+
+      harness.openChatTabsPresentationState.value = AgentChatOpenTabsPresentationState.EMPTY
+
+      waitForCondition {
+        harness.model.rootIds == listOf(projectTreeId) &&
+        !harness.model.entriesById.containsKey(SessionTreeId.Pinned) &&
+        harness.model.entriesById[projectTreeId]?.childIds == listOf(recentThreadId, pinnedThreadId)
       }
     }
     finally {
