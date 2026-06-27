@@ -72,6 +72,7 @@ Ask Agent launch controls let users choose a provider, launch mode, model, and n
 
 ## User Experience
 - `Default` belongs to provider/model/effort selector state and to the compact built-in standard profile label. The profile control uses compact state labels: `Default` for the built-in standard profile, saved profile names for exact user profiles, and `Custom` when current controls do not match an applicable profile. Model and reasoning details belong to the tuning affordance tooltip/accessibility text, not to the profile label. Plan mode belongs to the separate Plan checkbox, not to the selected profile.
+- The composer remains borderless: popup tray controls use normal label weight, inline tray controls stay compact, and context chips must not visually dominate the launch-settings affordance.
 - Built-in profiles are safe fallbacks and should not require users to create a profile before the toolbar quick launch works.
 - Disabled popup actions are reserved for genuinely unavailable commands, not already-satisfied saved states.
 

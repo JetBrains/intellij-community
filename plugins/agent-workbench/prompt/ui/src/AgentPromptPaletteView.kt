@@ -90,6 +90,20 @@ private const val HEADER_ACTIONS_PLACE = "AgentPromptPalette.Header"
 private const val FOOTER_ACTIONS_PLACE = "AgentPromptPalette.Footer"
 private fun headerIconButtonSize(): Dimension = Dimension(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
 
+private fun ActionLink.configureComposerTrayLink(isInlinePrompt: Boolean) {
+  autoHideOnDisable = false
+  if (isInlinePrompt) {
+    withFont(JBUI.Fonts.smallFont())
+    foreground = UIUtil.getContextHelpForeground()
+    border = JBUI.Borders.empty()
+  }
+  else {
+    withFont(JBFont.label().asPlain())
+    foreground = UIUtil.getLabelForeground()
+    border = JBUI.Borders.empty(1, 0)
+  }
+}
+
 internal data class AgentPromptPaletteView(
   @JvmField val rootPanel: JPanel,
   @JvmField val promptPanel: JPanel,
@@ -469,14 +483,13 @@ internal fun createAgentPromptPaletteView(
     initialDescription = AgentPromptBundle.message("popup.launch.settings.tooltip"),
     initialIcon = AllIcons.Toolwindows.ToolWindowMessages,
   )
-  val launchProfileLink = profileSelectorAction.link
+  val launchProfileLink = profileSelectorAction.link.apply {
+    configureComposerTrayLink(isInlinePrompt)
+  }
 
   val launchTuningSummaryLink = HeaderActionLink(AgentPromptBundle.message("popup.generation.summary.link")).apply {
-    autoHideOnDisable = false
     setDropDownLinkIcon()
-    withFont(JBUI.Fonts.smallFont())
-    foreground = UIUtil.getContextHelpForeground()
-    border = JBUI.Borders.empty()
+    configureComposerTrayLink(isInlinePrompt)
     setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.generation.summary.tooltip")))
     accessibleContext.accessibleName = AgentPromptBundle.message("popup.generation.summary.accessible.name")
     isVisible = false
@@ -602,11 +615,8 @@ internal fun createAgentPromptPaletteView(
   }
 
   val addContextButton = ComposerContextActionLink(AgentPromptBundle.message("popup.context.add")).apply {
-    autoHideOnDisable = false
     setDropDownLinkIcon()
-    withFont(JBUI.Fonts.smallFont())
-    foreground = UIUtil.getContextHelpForeground()
-    border = JBUI.Borders.empty()
+    configureComposerTrayLink(isInlinePrompt)
     DialogUtil.registerMnemonic(this)
   }
   if (isInlinePrompt) {
@@ -614,33 +624,24 @@ internal fun createAgentPromptPaletteView(
   }
 
   val modelSelectorLink = ActionLink(AgentPromptBundle.message("popup.generation.model.auto")).apply {
-    autoHideOnDisable = false
     setDropDownLinkIcon()
-    withFont(JBUI.Fonts.smallFont())
-    foreground = UIUtil.getContextHelpForeground()
-    border = JBUI.Borders.empty()
+    configureComposerTrayLink(isInlinePrompt)
     setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.generation.model.tooltip")))
     accessibleContext.accessibleName = AgentPromptBundle.message("popup.generation.model.auto")
     isVisible = false
   }
 
   val reasoningEffortLink = ActionLink(AgentPromptBundle.message("popup.generation.reasoning.auto")).apply {
-    autoHideOnDisable = false
     setDropDownLinkIcon()
-    withFont(JBUI.Fonts.smallFont())
-    foreground = UIUtil.getContextHelpForeground()
-    border = JBUI.Borders.empty()
+    configureComposerTrayLink(isInlinePrompt)
     setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.generation.reasoning.tooltip")))
     accessibleContext.accessibleName = AgentPromptBundle.message("popup.generation.reasoning.accessible.name")
     isVisible = false
   }
 
   val planReasoningEffortLink = ActionLink(AgentPromptBundle.message("popup.generation.plan.reasoning.same")).apply {
-    autoHideOnDisable = false
     setDropDownLinkIcon()
-    withFont(JBUI.Fonts.smallFont())
-    foreground = UIUtil.getContextHelpForeground()
-    border = JBUI.Borders.empty()
+    configureComposerTrayLink(isInlinePrompt)
     setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.generation.plan.reasoning.tooltip")))
     accessibleContext.accessibleName = AgentPromptBundle.message("popup.generation.plan.reasoning.accessible.name")
     isVisible = false
@@ -673,7 +674,7 @@ internal fun createAgentPromptPaletteView(
   }
   val generationSettingsPanel = JPanel(BorderLayout()).apply {
     isOpaque = false
-    border = if (isInlinePrompt) JBUI.Borders.empty(0, 6, 4, 6) else JBUI.Borders.empty(0, 6, 6, 6)
+    border = if (isInlinePrompt) JBUI.Borders.empty(0, 6, 4, 6) else JBUI.Borders.empty(2, 6, 4, 6)
     add(generationSettingsControlsPanel, BorderLayout.WEST)
     add(generationSettingsActionsPanel, BorderLayout.EAST)
   }

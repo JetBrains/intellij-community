@@ -220,32 +220,54 @@ class AgentPromptPaletteSessionControllerTest {
   }
 
   @Test
-  fun inlineEmptyStateHidesDefaultFooterUntilStatusIsShown() {
+  fun inlineEmptyStateKeepsContextInfoStatusHidden() {
     runInEdtAndWait {
-      var revalidateCalls = 0
       val fixture = createSessionControllerFixture(
         hostMode = AgentPromptPaletteHostMode.INLINE_EMPTY_STATE,
-        revalidateHost = { revalidateCalls++ },
       )
       try {
         fixture.controller.initialize()
+        val request = AgentPromptAddContextRequest(
+          contextItems = listOf(AgentPromptContextItem(rendererId = "test", title = "File", body = "src/Main.kt")),
+          target = null,
+        )
 
         assertThat(fixture.view.footerPanel.isVisible).isFalse()
 
-        fixture.controller.applyAddContextRequest(
+        val addedResult = fixture.controller.applyAddContextRequest(request)
+
+        assertThat(addedResult).isEqualTo(AgentPromptAddContextApplyResult.ADDED)
+        assertThat(fixture.view.footerPanel.isVisible).isFalse()
+        assertThat(fixture.view.statusStrip.text).isNotEqualTo(AgentPromptBundle.message("popup.status.context.added"))
+
+        val alreadyAddedResult = fixture.controller.applyAddContextRequest(request)
+
+        assertThat(alreadyAddedResult).isEqualTo(AgentPromptAddContextApplyResult.ALREADY_ADDED)
+        assertThat(fixture.view.footerPanel.isVisible).isFalse()
+        assertThat(fixture.view.statusStrip.text).isNotEqualTo(AgentPromptBundle.message("popup.status.context.already.added"))
+      }
+      finally {
+        fixture.dispose()
+      }
+    }
+  }
+
+  @Test
+  fun popupShowsContextInfoStatusWhenContextIsAdded() {
+    runInEdtAndWait {
+      val fixture = createSessionControllerFixture()
+      try {
+        fixture.controller.initialize()
+        val result = fixture.controller.applyAddContextRequest(
           AgentPromptAddContextRequest(
             contextItems = listOf(AgentPromptContextItem(rendererId = "test", title = "File", body = "src/Main.kt")),
             target = null,
           )
         )
 
+        assertThat(result).isEqualTo(AgentPromptAddContextApplyResult.ADDED)
         assertThat(fixture.view.footerPanel.isVisible).isTrue()
         assertThat(fixture.view.statusStrip.text).isEqualTo(AgentPromptBundle.message("popup.status.context.added"))
-        assertThat(revalidateCalls).isGreaterThan(0)
-
-        fixture.controller.initialize()
-
-        assertThat(fixture.view.footerPanel.isVisible).isFalse()
       }
       finally {
         fixture.dispose()
