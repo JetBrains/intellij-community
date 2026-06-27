@@ -669,6 +669,7 @@ internal fun createAgentPromptPaletteView(
   val generationSettingsActionsPanel = JPanel(FlowLayout(FlowLayout.RIGHT, if (isInlinePrompt) 6 else 8, 0)).apply {
     isOpaque = false
     add(launchProfileLink)
+    add(defaultProfileActionControl.component)
   }
   val generationSettingsPanel = JPanel(BorderLayout()).apply {
     isOpaque = false
