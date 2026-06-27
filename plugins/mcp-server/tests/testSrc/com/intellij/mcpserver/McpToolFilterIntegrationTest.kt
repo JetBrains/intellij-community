@@ -231,8 +231,11 @@ class McpToolFilterIntegrationTest {
     try {
       client.connect(sseClientTransport)
       action(client)
-    } finally {
-      sseClientTransport.close()
+    }
+    finally {
+      httpClient.use {
+        sseClientTransport.close()
+      }
     }
   }
 }

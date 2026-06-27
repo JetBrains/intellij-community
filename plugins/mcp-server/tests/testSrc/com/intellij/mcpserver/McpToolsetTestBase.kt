@@ -134,8 +134,9 @@ abstract class McpToolsetTestBase {
         }
       }
       finally {
-        transport.close()
-        httpClient.close()
+        httpClient.use {
+          transport.close()
+        }
       }
     }
 
