@@ -1524,4 +1524,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.kotlin.gradle.tooling.impl.tests",
   "intellij.kotlin.onboarding.tests",
   "intellij.maven.proofreading.tests",
+  "intellij.maven.testFramework.tests",
 )
