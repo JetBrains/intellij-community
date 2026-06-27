@@ -2,7 +2,7 @@
 package com.intellij.agent.workbench.sessions.toolwindow.ui
 
 import com.intellij.agent.workbench.chat.AgentChatTabSelection
-import com.intellij.agent.workbench.chat.AgentChatOpenPendingTabsState
+import com.intellij.agent.workbench.chat.AgentChatOpenTabsPresentationState
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.model.AgentArchivedSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentSessionThreadViewMode
@@ -17,7 +17,6 @@ import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeRootPres
 import com.intellij.agent.workbench.sessions.toolwindow.tree.buildSessionTreeModel
 import com.intellij.agent.workbench.sessions.toolwindow.tree.diffSessionTreeModels
 import com.intellij.agent.workbench.sessions.toolwindow.tree.overlayPendingAgentChatTabs
-import com.intellij.agent.workbench.sessions.toolwindow.tree.parentNodesForSelection
 import com.intellij.agent.workbench.sessions.toolwindow.tree.resolveSelectedSessionTreeId
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.serviceAsync
@@ -41,7 +40,7 @@ internal class AgentSessionsTreeStateController(
   private val archivedSessionsStateFlow: StateFlow<AgentArchivedSessionsState>,
   private val threadViewStateFlow: StateFlow<AgentSessionThreadViewState>,
   private val selectedChatTabFlow: StateFlow<AgentChatTabSelection?>,
-  private val pendingChatTabsStateFlow: StateFlow<AgentChatOpenPendingTabsState>,
+  private val openChatTabsPresentationStateFlow: StateFlow<AgentChatOpenTabsPresentationState>,
   private val ensureArchivedSessionsLoaded: () -> Unit,
   private val tree: Tree,
   private val getSessionTreeModel: () -> SessionTreeModel,
@@ -62,7 +61,7 @@ internal class AgentSessionsTreeStateController(
   private var archivedSessionsState: AgentArchivedSessionsState = AgentArchivedSessionsState()
   private var threadViewState: AgentSessionThreadViewState = AgentSessionThreadViewState()
   private var selectedChatTab: AgentChatTabSelection? = null
-  private var pendingChatTabsState: AgentChatOpenPendingTabsState = AgentChatOpenPendingTabsState.EMPTY
+  private var openChatTabsPresentationState: AgentChatOpenTabsPresentationState = AgentChatOpenTabsPresentationState.EMPTY
   private var treeUpdateSequence: Long = 0
   private var rebuildJob: Job? = null
   private var treeSelectionInitialized = false
@@ -103,9 +102,9 @@ internal class AgentSessionsTreeStateController(
     }
 
     scope.launch {
-      pendingChatTabsStateFlow.collect { state ->
-        pendingChatTabsState = state
-        rebuildTree(SessionTreeRebuildReason.PENDING_CHAT_TABS_CHANGED)
+      openChatTabsPresentationStateFlow.collect { state ->
+        openChatTabsPresentationState = state
+        rebuildTree(SessionTreeRebuildReason.OPEN_CHAT_TABS_PRESENTATION_CHANGED)
       }
     }
 
@@ -141,7 +140,7 @@ internal class AgentSessionsTreeStateController(
     val state = when (threadViewState.mode) {
       AgentSessionThreadViewMode.ACTIVE -> overlayPendingAgentChatTabs(
         state = activeSessionsState,
-        pendingTabsState = pendingChatTabsState,
+        openTabsPresentationState = openChatTabsPresentationState,
       )
       AgentSessionThreadViewMode.ARCHIVED -> buildArchivedDisplayState(
         archivedState = archivedSessionsState,
@@ -181,6 +180,7 @@ internal class AgentSessionsTreeStateController(
     val snapshotState = displayedStateSnapshot()
     val snapshotThreadViewState = threadViewState
     val snapshotSelectedChatTab = selectedChatTab
+    val snapshotOpenTabsPresentationState = openChatTabsPresentationState
     val snapshotRootPresentation = if (isSingleProjectPresentationEnabled()) {
       SessionTreeRootPresentation.SINGLE_PROJECT_CONTENTS
     }
@@ -197,6 +197,12 @@ internal class AgentSessionsTreeStateController(
           visibleThreadCounts = snapshotState.visibleThreadCounts,
           treeUiState = serviceAsync<AgentSessionTreeUiStateService>(),
           rootPresentation = snapshotRootPresentation,
+          openTabsPresentationState = if (snapshotThreadViewState.mode == AgentSessionThreadViewMode.ACTIVE) {
+            snapshotOpenTabsPresentationState
+          }
+          else {
+            AgentChatOpenTabsPresentationState.EMPTY
+          },
         )
         val diff = diffSessionTreeModels(oldModel, model)
         val selection = if (snapshotThreadViewState.mode == AgentSessionThreadViewMode.ACTIVE) {
@@ -210,7 +216,7 @@ internal class AgentSessionsTreeStateController(
       if (treeUpdateSequence != updateSequence) return@launch
 
       val selectedTreeIdsBeforeModelSwap = selectedTreeIds()
-      val expandedProjectsBeforeModelSwap = expandedProjectIds()
+      val expandedTreeIdsBeforeModelSwap = expandedTreeIds()
       val selectedTreeIds = sessionTreeSelectionTargetsAfterModelSwap(
         model = nextModel,
         reason = reason,
@@ -241,7 +247,7 @@ internal class AgentSessionsTreeStateController(
               model = nextModel,
               previousModel = oldModel,
               rootChanged = false,
-              previouslyExpandedProjects = expandedProjectsBeforeModelSwap,
+              previouslyExpandedTreeIds = expandedTreeIdsBeforeModelSwap,
               selectedTreeIds = selectedTreeIds,
             )
           }
@@ -264,7 +270,7 @@ internal class AgentSessionsTreeStateController(
               model = nextModel,
               previousModel = oldModel,
               rootChanged = treeModelDiff.rootChanged,
-              previouslyExpandedProjects = expandedProjectsBeforeModelSwap,
+              previouslyExpandedTreeIds = expandedTreeIdsBeforeModelSwap,
               selectedTreeIds = selectedTreeIds,
             )
           }
@@ -336,14 +342,14 @@ internal class AgentSessionsTreeStateController(
     model: SessionTreeModel,
     previousModel: SessionTreeModel,
     rootChanged: Boolean,
-    previouslyExpandedProjects: Set<SessionTreeId.Project>,
+    previouslyExpandedTreeIds: Set<SessionTreeId>,
     selectedTreeIds: Collection<SessionTreeId>,
   ) {
     sessionTreeExpansionTargetsAfterModelSwap(
       model = model,
       previousModel = previousModel,
       rootChanged = rootChanged,
-      previouslyExpandedProjects = previouslyExpandedProjects,
+      previouslyExpandedTreeIds = previouslyExpandedTreeIds,
       selectedTreeIds = selectedTreeIds,
     ).forEach { treeId ->
       expandNode(treeId)
@@ -357,9 +363,9 @@ internal class AgentSessionsTreeStateController(
     }.distinct()
   }
 
-  private fun expandedProjectIds(): Set<SessionTreeId.Project> {
+  private fun expandedTreeIds(): Set<SessionTreeId> {
     return TreeUtil.collectExpandedObjects(tree) { path ->
-      path.lastPathComponent?.let(::extractSessionTreeId) as? SessionTreeId.Project
+      path.lastPathComponent?.let(::extractSessionTreeId)
     }.filterNotNull().toSet()
   }
 
@@ -376,7 +382,7 @@ internal class AgentSessionsTreeStateController(
 internal enum class SessionTreeRebuildReason {
   SESSION_STATE_CHANGED,
   CHAT_TAB_SELECTION_CHANGED,
-  PENDING_CHAT_TABS_CHANGED,
+  OPEN_CHAT_TABS_PRESENTATION_CHANGED,
   THREAD_VIEW_CHANGED,
   PROJECT_SCOPE_CHANGED,
 }
@@ -405,6 +411,10 @@ internal fun coalesceSessionTreeRebuildReason(
   if (current == SessionTreeRebuildReason.PROJECT_SCOPE_CHANGED ||
       next == SessionTreeRebuildReason.PROJECT_SCOPE_CHANGED) {
     return SessionTreeRebuildReason.PROJECT_SCOPE_CHANGED
+  }
+  if (current == SessionTreeRebuildReason.OPEN_CHAT_TABS_PRESENTATION_CHANGED ||
+      next == SessionTreeRebuildReason.OPEN_CHAT_TABS_PRESENTATION_CHANGED) {
+    return SessionTreeRebuildReason.OPEN_CHAT_TABS_PRESENTATION_CHANGED
   }
   return SessionTreeRebuildReason.SESSION_STATE_CHANGED
 }
@@ -436,7 +446,7 @@ internal fun sessionTreeSelectionTargetsAfterModelSwap(
     selectionInitialized && previouslySelectedTreeIds.isEmpty() && lastAppliedSelectedTreeIds.isNotEmpty()
   return when (reason) {
     SessionTreeRebuildReason.SESSION_STATE_CHANGED,
-    SessionTreeRebuildReason.PENDING_CHAT_TABS_CHANGED,
+    SessionTreeRebuildReason.OPEN_CHAT_TABS_PRESENTATION_CHANGED,
     SessionTreeRebuildReason.THREAD_VIEW_CHANGED,
     SessionTreeRebuildReason.PROJECT_SCOPE_CHANGED,
       -> {
@@ -459,14 +469,18 @@ internal fun sessionTreeExpansionTargetsAfterModelSwap(
   model: SessionTreeModel,
   previousModel: SessionTreeModel,
   rootChanged: Boolean,
-  previouslyExpandedProjects: Set<SessionTreeId.Project>,
+  previouslyExpandedTreeIds: Set<SessionTreeId>,
   selectedTreeIds: Collection<SessionTreeId>,
 ): List<SessionTreeId> {
   val result = LinkedHashSet<SessionTreeId>()
-  previouslyExpandedProjects.forEach { projectId ->
-    if (projectId in model.entriesById) {
-      result += projectId
+  previouslyExpandedTreeIds.forEach { treeId ->
+    if (treeId in model.entriesById) {
+      result += treeId
     }
+  }
+
+  if (SessionTreeId.Pinned in model.entriesById && SessionTreeId.Pinned !in previousModel.entriesById) {
+    result += SessionTreeId.Pinned
   }
 
   val previousRootProjects = previousModel.rootIds.filterIsInstance<SessionTreeId.Project>().toSet()
@@ -477,11 +491,13 @@ internal fun sessionTreeExpansionTargetsAfterModelSwap(
   }
 
   selectedTreeIds.forEach { treeId ->
-    parentNodesForSelection(treeId).forEach { parentId ->
-      if (parentId in model.entriesById) {
-        result += parentId
-      }
+    val parentChain = mutableListOf<SessionTreeId>()
+    var parentId = model.entriesById[treeId]?.parentId
+    while (parentId != null) {
+      parentChain += parentId
+      parentId = model.entriesById[parentId]?.parentId
     }
+    result += parentChain.asReversed()
   }
 
   return result.toList()

@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -605,6 +606,77 @@ class AgentChatEditorServiceTest {
 
     assertThat(collectOpenPendingCodexTabsByPath()).isEmpty()
     assertThat(collectOpenPendingAgentChatProjectPaths()).isEmpty()
+  }
+
+  @Test
+  fun pinnedPendingTabIsCollectedWithPinnedMetadata(): Unit = timeoutRunBlocking {
+    openChatInModal(
+      threadIdentity = "CODEX:new-pinned-pending",
+      shellCommand = codexCommand,
+      threadId = "",
+      threadTitle = "Pinned pending thread",
+      subAgentId = null,
+    )
+
+    val file = openedChatFiles().single()
+    setEditorTabPinned(file, true)
+
+    val pendingTabs = collectOpenPendingCodexTabsByPath()[projectPath].orEmpty()
+    assertThat(pendingTabs).hasSize(1)
+    assertThat(pendingTabs.single().pendingTabKey).isEqualTo(file.tabKey)
+    assertThat(pendingTabs.single().pinnedEditorTab).isTrue()
+  }
+
+  @Test
+  fun pinnedConcreteTopLevelTabIsCollectedByProviderAndPath(): Unit = timeoutRunBlocking {
+    openChatInModal(
+      threadIdentity = "CODEX:pinned-concrete",
+      shellCommand = listOf("codex", "resume", "pinned-concrete"),
+      threadId = "pinned-concrete",
+      threadTitle = "Pinned concrete thread",
+      subAgentId = null,
+    )
+
+    val file = openedChatFiles().single()
+    setEditorTabPinned(file, true)
+
+    val pinnedThreadIds = collectOpenAgentChatTabsSnapshotOnUi()
+      .pinnedTopLevelConcreteThreadIdentitiesByPath(AgentSessionProvider.from("codex"))[projectPath]
+      .orEmpty()
+    assertThat(pinnedThreadIds).containsExactly("pinned-concrete")
+  }
+
+  @Test
+  fun concreteTopLevelTabCanBePinnedAndUnpinnedByThreadIdentity(): Unit = timeoutRunBlocking {
+    val provider = AgentSessionProvider.from("codex")
+    openChatInModal(
+      threadIdentity = "CODEX:toggle-pinned-concrete",
+      shellCommand = listOf("codex", "resume", "toggle-pinned-concrete"),
+      threadId = "toggle-pinned-concrete",
+      threadTitle = "Toggle pinned concrete thread",
+      subAgentId = null,
+    )
+
+    val file = openedChatFiles().single()
+    assertThat(isEditorTabPinned(file)).isFalse()
+
+    setAgentChatEditorTabPinned(project, file, true)
+
+    assertThat(isEditorTabPinned(file)).isTrue()
+    assertThat(collectOpenAgentChatTabsPresentationState().isPinnedTopLevelThread(provider, projectPath, "toggle-pinned-concrete"))
+      .isTrue()
+
+    val unpinnedCount = setOpenTopLevelAgentChatThreadTabsPinned(
+      provider = provider,
+      projectPath = projectPath,
+      threadId = "toggle-pinned-concrete",
+      pinned = false,
+    )
+
+    assertThat(unpinnedCount).isEqualTo(1)
+    assertThat(isEditorTabPinned(file)).isFalse()
+    assertThat(collectOpenAgentChatTabsPresentationState().isPinnedTopLevelThread(provider, projectPath, "toggle-pinned-concrete"))
+      .isFalse()
   }
 
   @Test
@@ -2330,6 +2402,21 @@ class AgentChatEditorServiceTest {
   private suspend fun editorTabTooltip(file: AgentChatVirtualFile): String? {
     return runInUi {
       AgentChatEditorTabTitleProvider().getEditorTabTooltipHtml(project, file)?.toString()
+    }
+  }
+
+  private suspend fun isEditorTabPinned(file: AgentChatVirtualFile): Boolean {
+    return runInUi {
+      FileEditorManager.getInstance(project).hasPinnedEditorTab(file)
+    }
+  }
+
+  private suspend fun setEditorTabPinned(file: AgentChatVirtualFile, pinned: Boolean) {
+    runInUi {
+      val editorManager = FileEditorManagerEx.getInstanceEx(project)
+      val editorWindow = editorManager.windows.firstOrNull { window -> window.isFileOpen(file) }
+      assertThat(editorWindow).isNotNull()
+      editorWindow?.setFilePinned(file, pinned)
     }
   }
 

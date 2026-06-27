@@ -189,6 +189,8 @@ internal class AgentSessionsTreeInteractionController(
         true
       }
 
+      is SessionTreeNode.PinnedSection -> false
+
       is SessionTreeNode.Thread -> {
         if (!includeOpenActions) return false
         if (isAgentSessionNewSessionId(treeNode.thread.id)) return false

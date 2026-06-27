@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.toolwindow
 
-import com.intellij.agent.workbench.chat.AgentChatOpenPendingTabsState
+import com.intellij.agent.workbench.chat.AgentChatOpenTabsPresentationState
 import com.intellij.agent.workbench.chat.AgentChatPendingTabSnapshot
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.buildAgentThreadIdentity
@@ -103,6 +103,81 @@ class AgentSessionsTreeSnapshotTest {
     assertThat(model.rootIds).containsExactly(threadTreeId)
     assertThat(model.entriesById).doesNotContainKey(SessionTreeId.Project(projectPath))
     assertThat(model.entriesById.getValue(threadTreeId).parentId).isNull()
+  }
+
+  @Test
+  fun pinnedEditorTabThreadsAreMovedToPinnedSectionAboveProjects() {
+    val provider = AgentSessionProvider.from("codex")
+    val projectPath = "/work/project-a"
+    val model = buildSessionTreeModel(
+      projects = listOf(
+        AgentProjectSessions(
+          path = projectPath,
+          name = "Project A",
+          isOpen = true,
+          providerLoadStates = loadedProviderStates(provider),
+          threads = listOf(
+            AgentSessionThread(id = "recent", title = "Recent", updatedAt = 300, archived = false, provider = provider),
+            AgentSessionThread(id = "middle", title = "Middle", updatedAt = 200, archived = false, provider = provider),
+            AgentSessionThread(id = "pinned", title = "Pinned", updatedAt = 100, archived = false, provider = provider),
+          ),
+        )
+      ),
+      visibleClosedProjectCount = Int.MAX_VALUE,
+      visibleThreadCounts = mapOf(projectPath to 1),
+      treeUiState = InMemorySessionTreeUiState(),
+      openTabsPresentationState = AgentChatOpenTabsPresentationState(
+        pinnedTopLevelThreadIdsByProvider = mapOf(provider to mapOf(projectPath to setOf("pinned"))),
+      ),
+    )
+
+    assertThat(model.rootIds).containsExactly(SessionTreeId.Pinned, SessionTreeId.Project(projectPath))
+    val pinnedEntry = model.entriesById.getValue(SessionTreeId.Pinned)
+    assertThat(pinnedEntry.node).isEqualTo(SessionTreeNode.PinnedSection)
+    assertThat(pinnedEntry.childIds).containsExactly(SessionTreeId.Thread(projectPath, provider, "pinned"))
+
+    val projectEntry = model.entriesById.getValue(SessionTreeId.Project(projectPath))
+    val pinnedThreadId = SessionTreeId.Thread(projectPath, provider, "pinned")
+    assertThat(model.entriesById.getValue(pinnedThreadId).parentId).isEqualTo(SessionTreeId.Pinned)
+    assertThat(projectEntry.childIds).doesNotContain(pinnedThreadId)
+    assertThat(projectEntry.childIds.first()).isEqualTo(SessionTreeId.Thread(projectPath, provider, "recent"))
+    assertThat(projectEntry.childIds).contains(SessionTreeId.MoreThreads(projectPath))
+    assertThat((model.entriesById.getValue(SessionTreeId.MoreThreads(projectPath)).node as SessionTreeNode.MoreThreads).hiddenCount).isEqualTo(1)
+  }
+
+  @Test
+  fun singleProjectPresentationKeepsPinnedSectionAboveFlattenedProjectContents() {
+    val provider = AgentSessionProvider.from("codex")
+    val projectPath = "/work/project-a"
+    val model = buildSessionTreeModel(
+      projects = listOf(
+        AgentProjectSessions(
+          path = projectPath,
+          name = "Project A",
+          isOpen = true,
+          providerLoadStates = loadedProviderStates(provider),
+          threads = listOf(
+            AgentSessionThread(id = "recent", title = "Recent", updatedAt = 300, archived = false, provider = provider),
+            AgentSessionThread(id = "pinned", title = "Pinned", updatedAt = 100, archived = false, provider = provider),
+          ),
+        )
+      ),
+      visibleClosedProjectCount = Int.MAX_VALUE,
+      visibleThreadCounts = emptyMap(),
+      treeUiState = InMemorySessionTreeUiState(),
+      rootPresentation = SessionTreeRootPresentation.SINGLE_PROJECT_CONTENTS,
+      openTabsPresentationState = AgentChatOpenTabsPresentationState(
+        pinnedTopLevelThreadIdsByProvider = mapOf(provider to mapOf(projectPath to setOf("pinned"))),
+      ),
+    )
+
+    val recentThreadId = SessionTreeId.Thread(projectPath, provider, "recent")
+    val pinnedThreadId = SessionTreeId.Thread(projectPath, provider, "pinned")
+    assertThat(model.rootIds).containsExactly(SessionTreeId.Pinned, recentThreadId)
+    assertThat(model.entriesById).doesNotContainKey(SessionTreeId.Project(projectPath))
+    assertThat(model.entriesById.getValue(SessionTreeId.Pinned).childIds).containsExactly(pinnedThreadId)
+    assertThat(model.entriesById.getValue(recentThreadId).parentId).isNull()
+    assertThat(model.entriesById.getValue(pinnedThreadId).parentId).isEqualTo(SessionTreeId.Pinned)
   }
 
   @Test
@@ -263,7 +338,7 @@ class AgentSessionsTreeSnapshotTest {
 
     val overlaidState = overlayPendingAgentChatTabs(
       state = state,
-      pendingTabsState = pendingTabsState(
+      openTabsPresentationState = pendingTabsState(
         path = "/work/project-a",
         provider = AgentSessionProvider.from("codex"),
         threadId = "new-pending",
@@ -297,7 +372,7 @@ class AgentSessionsTreeSnapshotTest {
 
     val overlaidState = overlayPendingAgentChatTabs(
       state = state,
-      pendingTabsState = pendingTabsState(
+      openTabsPresentationState = pendingTabsState(
         path = "/work/project-a-feature",
         provider = AgentSessionProvider.from("codex"),
         threadId = "new-pending",
@@ -317,7 +392,7 @@ class AgentSessionsTreeSnapshotTest {
         AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
       )
     )
-    val pendingTabsState = AgentChatOpenPendingTabsState(
+    val pendingTabsState = AgentChatOpenTabsPresentationState(
       mapOf(
         AgentSessionProvider.from("codex") to mapOf(
           "/work/unknown" to listOf(pendingTab(path = "/work/unknown", provider = AgentSessionProvider.from("codex"), threadId = "new-pending")),
@@ -328,7 +403,7 @@ class AgentSessionsTreeSnapshotTest {
       )
     )
 
-    val overlaidState = overlayPendingAgentChatTabs(state = state, pendingTabsState = pendingTabsState)
+    val overlaidState = overlayPendingAgentChatTabs(state = state, openTabsPresentationState = pendingTabsState)
 
     assertThat(overlaidState).isSameAs(state)
     assertThat(overlaidState.projects.single().threads).isEmpty()
@@ -341,7 +416,7 @@ class AgentSessionsTreeSnapshotTest {
         AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
       )
     )
-    val pendingTabsState = AgentChatOpenPendingTabsState(
+    val pendingTabsState = AgentChatOpenTabsPresentationState(
       mapOf(
         AgentSessionProvider.from("codex") to mapOf(
           "/work/project-a" to listOf(
@@ -358,7 +433,7 @@ class AgentSessionsTreeSnapshotTest {
       )
     )
 
-    val pendingThreads = overlayPendingAgentChatTabs(state = state, pendingTabsState = pendingTabsState)
+    val pendingThreads = overlayPendingAgentChatTabs(state = state, openTabsPresentationState = pendingTabsState)
       .projects
       .single()
       .threads
@@ -373,15 +448,23 @@ private fun pendingTabsState(
   provider: AgentSessionProvider,
   threadId: String,
   pendingCreatedAtMs: Long,
-): AgentChatOpenPendingTabsState {
-  return AgentChatOpenPendingTabsState(
-    mapOf(
+  pinnedEditorTab: Boolean = false,
+): AgentChatOpenTabsPresentationState {
+  return AgentChatOpenTabsPresentationState(
+    pendingTabsByProvider = mapOf(
       provider to mapOf(
         path to listOf(
-          pendingTab(path = path, provider = provider, threadId = threadId, pendingCreatedAtMs = pendingCreatedAtMs)
+          pendingTab(
+            path = path,
+            provider = provider,
+            threadId = threadId,
+            pendingCreatedAtMs = pendingCreatedAtMs,
+            pinnedEditorTab = pinnedEditorTab,
+          )
         )
       )
-    )
+    ),
+    pinnedTopLevelThreadIdsByProvider = if (pinnedEditorTab) mapOf(provider to mapOf(path to setOf(threadId))) else emptyMap(),
   )
 }
 
@@ -391,6 +474,7 @@ private fun pendingTab(
   threadId: String = "new-pending",
   pendingThreadIdentity: String = buildAgentThreadIdentity(provider.value, threadId),
   pendingCreatedAtMs: Long? = null,
+  pinnedEditorTab: Boolean = false,
 ): AgentChatPendingTabSnapshot {
   return AgentChatPendingTabSnapshot(
     projectPath = path,
@@ -399,5 +483,6 @@ private fun pendingTab(
     pendingCreatedAtMs = pendingCreatedAtMs,
     pendingFirstInputAtMs = null,
     pendingLaunchMode = "standard",
+    pinnedEditorTab = pinnedEditorTab,
   )
 }

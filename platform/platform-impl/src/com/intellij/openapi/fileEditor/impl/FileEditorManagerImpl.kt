@@ -714,6 +714,20 @@ open class FileEditorManagerImpl(
     queueUpdateFile(file)
   }
 
+  @RequiresEdt
+  override fun hasPinnedEditorTab(file: VirtualFile): Boolean {
+    return windows.any { window -> window.isFileOpen(file) && window.isFilePinned(file) }
+  }
+
+  @RequiresEdt
+  override fun setPinnedEditorTab(file: VirtualFile, pinned: Boolean) {
+    windows.forEach { window ->
+      if (window.isFileOpen(file)) {
+        window.setFilePinned(file, pinned)
+      }
+    }
+  }
+
   override fun updateFileName(file: VirtualFile) {
     if (!isFileOpen(file)) {
       return

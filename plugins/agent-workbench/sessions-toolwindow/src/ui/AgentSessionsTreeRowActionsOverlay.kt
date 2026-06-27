@@ -265,6 +265,7 @@ private fun newThreadPath(node: SessionTreeNode): String? {
   return when (node) {
     is SessionTreeNode.Project -> node.project.path
     is SessionTreeNode.Worktree -> node.worktree.path
+    is SessionTreeNode.PinnedSection,
     is SessionTreeNode.Thread,
     is SessionTreeNode.SubAgent,
     is SessionTreeNode.Warning,

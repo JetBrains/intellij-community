@@ -372,6 +372,7 @@ internal class RecordingChatOpenExecutor(
   val failPreparingNewChatCalls: AtomicInteger = AtomicInteger(0)
   val openChatRequests: CopyOnWriteArrayList<OpenChatRequest> = CopyOnWriteArrayList()
   val lastOpenChatRequest: AtomicReference<OpenChatRequest?> = AtomicReference(null)
+  val lastOpenChatHandler: AtomicReference<(suspend (Project, VirtualFile) -> Unit)?> = AtomicReference(null)
   val lastOpenNewChatRequest: AtomicReference<OpenNewChatRequest?> = AtomicReference(null)
   val lastOpenPreparingNewChatRequest: AtomicReference<OpenPreparingNewChatRequest?> = AtomicReference(null)
   val lastFailPreparingNewChatMessage: AtomicReference<String?> = AtomicReference(null)
@@ -406,6 +407,7 @@ internal class RecordingChatOpenExecutor(
       launchMode: AgentSessionLaunchMode?,
       launchProfileId: String?,
       generationSettings: AgentPromptGenerationSettings,
+      openedChatHandler: (suspend (Project, VirtualFile) -> Unit)?,
   ) {
     val request = OpenChatRequest(
       normalizedPath = normalizedPath,
@@ -425,6 +427,7 @@ internal class RecordingChatOpenExecutor(
     val callIndex = openChatCalls.incrementAndGet()
     openChatRequests.add(request)
     lastOpenChatRequest.set(request)
+    lastOpenChatHandler.set(openedChatHandler)
     openChatCallsFlow.value = callIndex
     onOpenChat?.invoke(request, callIndex)
   }

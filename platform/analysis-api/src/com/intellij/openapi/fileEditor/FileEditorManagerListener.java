@@ -53,6 +53,14 @@ public interface FileEditorManagerListener extends EventListener {
   default void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
   }
 
+  /**
+   * Invoked when the pinned state of an editor tab representing {@code file} changes.
+   * Consumers should treat this event as an invalidation signal and query {@link FileEditorManager#hasPinnedEditorTab(VirtualFile)}
+   * for the current aggregate state.
+   */
+  default void filePinStateChanged(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+  }
+
   default void selectionChanged(@NotNull FileEditorManagerEvent event) {
   }
 

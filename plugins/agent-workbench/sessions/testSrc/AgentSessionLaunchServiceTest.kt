@@ -26,7 +26,9 @@ import com.intellij.agent.workbench.sessions.state.AgentSessionLaunchProfileStat
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -125,6 +127,37 @@ class AgentSessionLaunchServiceTest {
           assertThat(openRequest.thread.archived).isFalse()
           assertThat(unarchiveCalls.get()).isZero()
           assertThat(archivedRefreshCalls.get()).isZero()
+        }
+      }
+    }
+  }
+
+  @Test
+  fun openChatThreadPassesOpenedChatHandlerToExecutor() {
+    val descriptor = testDescriptor(
+      supportsUnarchiveThread = false,
+      unarchiveThreadHandler = { _, _ -> false },
+    )
+    val chatOpenExecutor = RecordingChatOpenExecutor()
+    val openedChatHandler: suspend (Project, VirtualFile) -> Unit = { _, _ -> }
+
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+      runBlocking(Dispatchers.Default) {
+        withTestServiceAndLaunch(
+          sessionSourcesProvider = { listOf(sourceForActiveThreads(emptyList())) },
+          projectEntriesProvider = { listOf(openTestProjectEntry(PROJECT_PATH, "Project A")) },
+          chatOpenExecutor = chatOpenExecutor,
+        ) { _, launchService ->
+          launchService.openChatThread(
+            path = PROJECT_PATH,
+            thread = thread(id = "codex-active", updatedAt = 200, provider = AgentSessionProvider.from("codex")),
+            entryPoint = AgentWorkbenchEntryPoint.TREE_ROW,
+            openedChatHandler = openedChatHandler,
+          )
+
+          waitForCondition { chatOpenExecutor.openChatCalls.get() == 1 }
+
+          assertThat(chatOpenExecutor.lastOpenChatHandler.get()).isSameAs(openedChatHandler)
         }
       }
     }

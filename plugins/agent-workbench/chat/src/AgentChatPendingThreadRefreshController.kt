@@ -48,7 +48,7 @@ internal class AgentChatPendingThreadRefreshController(
           return@collectLatest
         }
         tabSnapshotWriter.upsert(file.toSnapshot())
-        serviceOrNull<AgentChatOpenPendingTabsStateService>()?.refreshOpenTabs()
+        serviceOrNull<AgentChatOpenTabsPresentationStateService>()?.refreshOpenTabs()
         notifyAgentChatScopedRefresh(provider = provider, projectPath = file.projectPath)
         ensurePendingScopedRefreshRetries(tab, emitImmediately = false)
       }
