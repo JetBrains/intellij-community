@@ -235,7 +235,8 @@ class AgentPromptPaletteViewLayoutTest {
       val initialLocation = locationInRoot(view.addContextButton, view.rootPanel)
       val firstChipLocation = locationInRoot(contextChips.component.components.first(), view.rootPanel)
       val promptEditorLocation = locationInRoot(view.promptEditorPanel, view.rootPanel)
-      val promptAreaLocation = locationInRoot(checkNotNull(findPromptArea(view.rootPanel, promptArea)), view.rootPanel)
+      val promptAreaInRoot = checkNotNull(findPromptArea(view.rootPanel, promptArea))
+      val promptAreaLocation = locationInRoot(promptAreaInRoot, view.rootPanel)
 
       assertThat(initialLocation.x).isEqualTo(promptAreaLocation.x)
       assertThat(initialLocation.x).isLessThan(locationInRoot(view.launchProfileLink, view.rootPanel).x)

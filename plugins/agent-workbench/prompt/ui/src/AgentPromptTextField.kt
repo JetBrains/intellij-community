@@ -53,6 +53,6 @@ internal class AgentPromptTextField(
   }
 
   private fun setupPromptBorder(editor: EditorEx) {
-    editor.setBorder(JBUI.Borders.empty(4, 6, 0, 6))
+    editor.setBorder(JBUI.Borders.emptyTop(4))
   }
 }

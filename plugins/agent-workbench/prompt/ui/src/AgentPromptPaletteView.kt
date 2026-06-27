@@ -82,6 +82,7 @@ private const val EXISTING_TASK_VISIBLE_ROWS = 3
 private val PROMPT_PANEL_MINIMUM_SIZE = JBUI.size(0, 120)
 private val INLINE_PROMPT_PANEL_MINIMUM_SIZE = JBUI.size(0, 96)
 private val INLINE_PROMPT_EDITOR_PREFERRED_SIZE = JBUI.size(0, 74)
+private const val COMPOSER_CONTENT_HORIZONTAL_INSET = 6
 
 private fun inlinePromptSize(baseSize: Dimension, additionalHeight: Int): Dimension {
   return Dimension(baseSize.width, baseSize.height + additionalHeight)
@@ -679,15 +680,21 @@ internal fun createAgentPromptPaletteView(
     add(generationSettingsActionsPanel, BorderLayout.EAST)
   }
 
+  val composerContentPanel = BorderLayoutPanel().apply {
+    isOpaque = false
+    border = JBUI.Borders.empty(0, COMPOSER_CONTENT_HORIZONTAL_INSET)
+    addToTop(composerContextPanel)
+    addToCenter(promptCardPanel)
+    addToBottom(generationSettingsPanel)
+  }
+
   val promptEditorPanel = BorderLayoutPanel().apply {
     isOpaque = false
     border = JBUI.Borders.empty(1)
     if (isInlinePrompt) {
       preferredSize = INLINE_PROMPT_EDITOR_PREFERRED_SIZE
     }
-    addToTop(composerContextPanel)
-    addToCenter(promptCardPanel)
-    addToBottom(generationSettingsPanel)
+    addToCenter(composerContentPanel)
   }
 
   val promptPanel = JPanel(BorderLayout()).apply {
