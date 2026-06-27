@@ -1,6 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "java-i18n-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":java-i18n-tests_test_lib"],
+)
+### skip generation section `test intellij.java.i18n.tests`
+
 ### auto-generated section `build intellij.java.i18n` start
 
 jvm_library(
@@ -323,11 +331,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.i18n.tests` end
-
-### auto-generated section `test intellij.java.i18n.tests` start
-
-jps_test(
-    name = "java-i18n-tests_test",
-    runtime_deps = [":java-i18n-tests_test_lib"],
-)
-### auto-generated section `test intellij.java.i18n.tests` end
