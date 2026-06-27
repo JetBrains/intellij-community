@@ -2,6 +2,15 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
+jps_test(
+    name = "visualization-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":visualization-tests_test_lib"],
+)
+
+### skip generation section `test intellij.notebooks.visualization.tests`
+
 ### auto-generated section `build intellij.notebooks.visualization` start
 
 create_kotlinc_options(
@@ -221,11 +230,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.notebooks.visualization.tests` end
-
-### auto-generated section `test intellij.notebooks.visualization.tests` start
-
-jps_test(
-    name = "visualization-tests_test",
-    runtime_deps = [":visualization-tests_test_lib"],
-)
-### auto-generated section `test intellij.notebooks.visualization.tests` end
