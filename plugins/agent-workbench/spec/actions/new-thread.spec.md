@@ -75,6 +75,10 @@ New-thread actions let users start provider-backed threads from project/worktree
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteSessionControllerTest.kt
   [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
 
+- Generic new-thread deferred tabs show provider-neutral centered progress copy. The spinner appears only after a short delay so quick launches do not flash progress chrome.
+  [@test] ../../sessions/testSrc/AgentSessionLaunchServiceTest.kt
+  [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+
 - Inline new-thread routing falls back to direct `createNewSession(...)` when the registry key is disabled, the provider descriptor is missing, the provider does not support prompt launch, deferred chat opening fails, or inline prompt installation fails.
   [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
   [@test] ../../sessions/testSrc/AgentSessionLaunchServiceTest.kt

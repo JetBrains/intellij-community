@@ -440,6 +440,38 @@ class AgentSessionLaunchServiceTest {
   }
 
   @Test
+  fun createNewSessionUsesGenericDeferredWaitingCopy() {
+    val descriptor = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.from("codex"),
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+    )
+    val chatOpenExecutor = RecordingChatOpenExecutor()
+
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+      runBlocking(Dispatchers.Default) {
+        withTestServiceAndLaunch(
+          sessionSourcesProvider = { listOf(descriptor.sessionSource) },
+          projectEntriesProvider = { listOf(openTestProjectEntry(PROJECT_PATH, "Project A")) },
+          chatOpenExecutor = chatOpenExecutor,
+        ) { _, launchService ->
+          launchService.createNewSession(
+            path = PROJECT_PATH,
+            provider = AgentSessionProvider.from("codex"),
+            mode = AgentSessionLaunchMode.STANDARD,
+            entryPoint = AgentWorkbenchEntryPoint.PROMPT,
+          )
+
+          chatOpenExecutor.awaitOpenPreparingNewChatCalls(1)
+          val state = checkNotNull(chatOpenExecutor.lastOpenPreparingNewChatRequest.get()).waitingState
+          assertThat(state.title).isEqualTo("Starting new thread…")
+          assertThat(state.message).isNull()
+        }
+      }
+    }
+  }
+
+  @Test
   fun createDeferredNewSessionPassesDeferredStartContentProviderToPreparingChat() {
     val descriptor = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.from("codex"),

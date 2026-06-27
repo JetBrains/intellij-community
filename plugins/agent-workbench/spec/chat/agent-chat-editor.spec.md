@@ -44,6 +44,9 @@ Agent Chat tabs are protocol-backed editor tabs around terminal-backed agent ses
 - Terminal content initialization is lazy: the lightweight editor shell appears immediately, and the terminal starts only after explicit tab selection/focus.
   [@test] ../../chat/testSrc/AgentChatTabSelectionServiceTest.kt
 
+- The default deferred-start waiting shell is centered, uses provider-neutral progress copy for generic new-thread starts, and delays the spinner briefly to avoid flicker. Custom deferred-start content continues to replace the default shell until the tab is ready to start.
+  [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+
 - The live terminal belongs to the logical open chat tab (`tabKey`), not a transient `FileEditor` instance. Reordering, splitter movement, detach/reattach, or editor recreation must not restart the live terminal.
   [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
   [@test] ../../chat/testSrc/AgentChatScopedTerminalRefreshControllerTest.kt

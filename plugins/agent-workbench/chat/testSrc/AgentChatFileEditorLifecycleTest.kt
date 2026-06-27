@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.frontend.view.TerminalKeyEvent
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
+import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.EmptyIcon
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -61,18 +62,23 @@ import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
-import java.util.concurrent.TimeUnit
+import java.awt.Component
+import java.awt.Container
 import java.awt.event.KeyEvent
 import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Proxy
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicLong
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.Icon
 import javax.swing.JPanel
+import javax.swing.JTextArea
+import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
+import kotlin.math.abs
 import kotlin.math.min
 
 private val editorsToDispose = CopyOnWriteArrayList<AgentChatFileEditor>()
@@ -409,6 +415,54 @@ class AgentChatFileEditorLifecycleTest {
     assertThat(terminalTabs.lastStartupLaunchSpec).isEqualTo(startupLaunchSpec)
     assertThat(disposed).isTrue()
     assertThat(editor.preferredFocusedComponent).isSameAs(terminalTabs.tab.preferredFocusableComponent)
+  }
+
+  @Test
+  fun defaultDeferredStartWaitingStateUsesCenteredDelayedProgress() {
+    val file = testFile()
+    file.updateDeferredStartState(
+      AgentChatDeferredStartState(
+        phase = AgentChatDeferredStartPhase.WAITING,
+        title = "Starting new thread…",
+      )
+    )
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    val editor = testEditor(file = file, terminalTabs = terminalTabs)
+
+    editor.selectNotify()
+
+    editor.component.setSize(600, 400)
+    layoutRecursively(editor.component)
+    val progressIcon = collectAgentChatStartProgressComponents(editor.component).single()
+    val title = collectComponentsOfType(editor.component, JTextArea::class.java).single()
+    assertThat(title.text).isEqualTo("Starting new thread…")
+    assertThat(progressIcon.isVisible).isFalse()
+    assertThat(abs(yCenterInRoot(title, editor.component) - editor.component.height / 2)).isLessThan(48)
+    assertThat(abs(xCenterInRoot(title, editor.component) - editor.component.width / 2)).isLessThan(96)
+
+    waitForCondition(timeoutMs = 1_000) { progressIcon.isVisible }
+    assertThat(terminalTabs.createCalls).isZero()
+  }
+
+  @Test
+  fun defaultDeferredStartFailureStateDoesNotShowProgressIcon() {
+    val file = testFile()
+    file.updateDeferredStartState(
+      AgentChatDeferredStartState(
+        phase = AgentChatDeferredStartPhase.FAILURE_NO_START,
+        title = "Couldn't start agent",
+        message = "Try again.",
+      )
+    )
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    val editor = testEditor(file = file, terminalTabs = terminalTabs)
+
+    editor.selectNotify()
+
+    assertThat(collectComponentsOfType(editor.component, AsyncProcessIcon::class.java)).isEmpty()
+    assertThat(collectComponentsOfType(editor.component, JTextArea::class.java).map { it.text })
+      .containsExactly("Couldn't start agent", "Try again.")
+    assertThat(terminalTabs.createCalls).isZero()
   }
 
   @Test
@@ -1339,7 +1393,7 @@ class AgentChatFileEditorLifecycleTest {
 
     terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
 
-    waitForCondition { terminalTabs.tab.sentTexts.size == 1 }
+    waitForCondition { terminalTabs.tab.sentTexts.size == 1 && file.initialMessageSent }
 
     assertThat(file.initialMessageSent).isTrue()
     assertThat(terminalTabs.tab.sentTexts)
@@ -2455,6 +2509,55 @@ private fun waitForCondition(timeoutMs: Long = 2_000, condition: () -> Boolean) 
     Thread.sleep(10)
   }
   throw AssertionError("Condition was not satisfied within ${timeoutMs}ms")
+}
+
+private fun layoutRecursively(component: Component) {
+  if (component is Container) {
+    component.doLayout()
+    component.components.forEach(::layoutRecursively)
+  }
+}
+
+private fun <T : Component> collectComponentsOfType(component: Component, type: Class<T>): List<T> {
+  val result = ArrayList<T>()
+
+  fun visit(current: Component) {
+    if (type.isInstance(current)) {
+      result.add(type.cast(current))
+    }
+    if (current is Container) {
+      current.components.forEach(::visit)
+    }
+  }
+
+  visit(component)
+  return result
+}
+
+private fun collectAgentChatStartProgressComponents(component: Component): List<Component> {
+  val result = ArrayList<Component>()
+
+  fun visit(current: Component) {
+    if (current.name == "Agent Chat Start Progress") {
+      result.add(current)
+    }
+    if (current is Container) {
+      current.components.forEach(::visit)
+    }
+  }
+
+  visit(component)
+  return result
+}
+
+private fun xCenterInRoot(component: Component, root: Component): Int {
+  val location = SwingUtilities.convertPoint(component.parent, component.location, root)
+  return location.x + component.width / 2
+}
+
+private fun yCenterInRoot(component: Component, root: Component): Int {
+  val location = SwingUtilities.convertPoint(component.parent, component.location, root)
+  return location.y + component.height / 2
 }
 
 private const val TEST_JUNIE_RETRY_BACKOFF_MS: Long = 100

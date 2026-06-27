@@ -91,6 +91,10 @@ The global prompt opens a project-scoped prompt surface for starting a new task 
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteSubmitControllerTest.kt
   [@test] ../../sessions/testSrc/AgentSessionLaunchServiceTest.kt
 
+- New-task launches accepted from the global prompt use the shared generic new-thread deferred tab: provider-neutral centered copy appears immediately, and the spinner appears only after a short delay.
+  [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionLaunchServiceTest.kt
+
 - Plan mode is available only when the selected provider exposes the plan-mode option, persists in project prompt draft state, and is forced off/rejected for busy existing tasks. A typed `/plan` prefix remains prompt text and does not toggle the option.
   [@test] ../../prompt/ui/testSrc/AgentPromptPlanModeDecisionsTest.kt
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
