@@ -10,6 +10,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptPaletteInitialPrompt
 import com.intellij.agent.workbench.prompt.core.AgentPromptPayloadValue
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPoint
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -66,7 +67,11 @@ class AIReviewPaletteExtensionTest : BasePlatformTestCase() {
   }
 
   fun `test ai review uses execute action when tui registry is enabled`() {
-    Registry.get(AI_REVIEW_VIA_TUI_REGISTRY_KEY).setValue(true, testRootDisposable)
+    // The flag's <registryKey> lives in a content module that is absent from some test plugin sets (e.g. the
+    // community-aggregator sandbox), "setValue(true, testRootDisposable)" invocation leads to "MissingResourceException".
+    val tuiRegistryValue = Registry.get(AI_REVIEW_VIA_TUI_REGISTRY_KEY)
+    Disposer.register(testRootDisposable) { tuiRegistryValue.resetToDefault() }
+    tuiRegistryValue.setValue(true)
 
     assertEquals(AIReviewPromptSupport.AI_REVIEW_EXECUTE_ACTION_ID, extension.getSubmitActionId())
   }
