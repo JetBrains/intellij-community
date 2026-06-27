@@ -17,7 +17,6 @@ import com.intellij.platform.ai.agent.codex.sessions.backend.resolveCodexSession
 import com.intellij.platform.ai.agent.codex.sessions.backend.toAgentThreadActivity
 import com.intellij.platform.ai.agent.codex.sessions.backend.toCodexSessionActivity
 import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
@@ -79,16 +78,9 @@ internal class CodexAppServerRefreshHintsProvider(
     }
 
     val normalizedRefreshThreadSeedsByPath = normalizeRefreshThreadSeedsByPath(refreshThreadSeedsByPath)
-    val normalizedKnownThreadIdsByPath = extractThreadIdsByPath(normalizedRefreshThreadSeedsByPath)
-    val startedThreadHintsByNormalizedPath = collectStartedThreadHints(
-      paths = normalizedPathToOriginal.keys,
-      knownThreadIdsByPath = normalizedKnownThreadIdsByPath,
-    )
-
     val candidateThreadIds = collectCandidateThreadIds(
       paths = normalizedPathToOriginal.keys,
       refreshThreadSeedsByPath = normalizedRefreshThreadSeedsByPath,
-      startedThreadHintsByPath = startedThreadHintsByNormalizedPath,
       hasCachedActivityHint = ::hasCachedSnapshotActivityHint,
     )
 
@@ -125,7 +117,6 @@ internal class CodexAppServerRefreshHintsProvider(
 
     val hintsByPath = LinkedHashMap<String, CodexRefreshHints>()
     var resolvedActivityThreadCount = 0
-    var rebindCandidateCount = 0
     for ((normalizedPath, originalPath) in normalizedPathToOriginal) {
       val refreshThreadSeedsForPath = normalizedRefreshThreadSeedsByPath[normalizedPath].orEmpty()
       val activityHintsByThreadId = LinkedHashMap<String, CodexRefreshActivityHint>()
@@ -150,23 +141,17 @@ internal class CodexAppServerRefreshHintsProvider(
         resolvedActivityThreadCount += 1
       }
 
-      val rebindCandidates = startedThreadHintsByNormalizedPath[normalizedPath]
-        .orEmpty()
-        .map { hint -> buildRebindCandidate(hint.startedThread, snapshotsByThreadId[hint.startedThread.id]) }
-      rebindCandidateCount += rebindCandidates.size
-
-      if (activityHintsByThreadId.isEmpty() && rebindCandidates.isEmpty()) {
+      if (activityHintsByThreadId.isEmpty()) {
         continue
       }
       hintsByPath[originalPath] = CodexRefreshHints(
-        rebindCandidates = rebindCandidates,
         activityHintsByThreadId = activityHintsByThreadId,
       )
     }
 
     LOG.debug {
       "Codex app-server activity prefetch finished " +
-      "(pathsWithHints=${hintsByPath.size}, resolvedActivityThreads=$resolvedActivityThreadCount, rebindCandidates=$rebindCandidateCount)"
+      "(pathsWithHints=${hintsByPath.size}, resolvedActivityThreads=$resolvedActivityThreadCount)"
     }
     return hintsByPath
   }
@@ -456,27 +441,6 @@ internal class CodexAppServerRefreshHintsProvider(
     }
   }
 
-  private fun collectStartedThreadHints(
-    paths: Set<String>,
-    knownThreadIdsByPath: Map<String, Set<String>>,
-  ): Map<String, List<CachedStartedThreadHint>> {
-    val nowMs = System.currentTimeMillis()
-    synchronized(startedThreadHintsLock) {
-      evictExpiredStartedThreadHintsLocked(nowMs)
-      val hintsByPath = LinkedHashMap<String, List<CachedStartedThreadHint>>()
-      for (path in paths) {
-        val hintsForPath = startedThreadHintsByPath[path] ?: continue
-        knownThreadIdsByPath[path].orEmpty().forEach(hintsForPath::remove)
-        if (hintsForPath.isEmpty()) {
-          startedThreadHintsByPath.remove(path)
-          continue
-        }
-        hintsByPath[path] = hintsForPath.values.toList()
-      }
-      return hintsByPath
-    }
-  }
-
   private fun evictExpiredStartedThreadHintsLocked(nowMs: Long) {
     val pathIterator = startedThreadHintsByPath.entries.iterator()
     while (pathIterator.hasNext()) {
@@ -544,20 +508,9 @@ private fun normalizeRefreshThreadSeedsByPath(
   return normalizedRefreshThreadSeedsByPath
 }
 
-private fun extractThreadIdsByPath(
-  refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
-): Map<String, Set<String>> {
-  val threadIdsByPath = LinkedHashMap<String, Set<String>>(refreshThreadSeedsByPath.size)
-  for ((path, refreshThreadSeeds) in refreshThreadSeedsByPath) {
-    threadIdsByPath[path] = refreshThreadSeeds.asSequence().map { it.threadId }.toCollection(LinkedHashSet())
-  }
-  return threadIdsByPath
-}
-
 private fun collectCandidateThreadIds(
   paths: Set<String>,
   refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
-  startedThreadHintsByPath: Map<String, List<CachedStartedThreadHint>>,
   hasCachedActivityHint: (AgentSessionRefreshThreadSeed) -> Boolean,
 ): Set<String> {
   val candidateThreadIds = linkedSetOf<String>()
@@ -569,11 +522,6 @@ private fun collectCandidateThreadIds(
         !isAgentSessionPendingThreadId(refreshThreadSeed.threadId) && !hasCachedActivityHint(refreshThreadSeed)
       }
       .map { refreshThreadSeed -> refreshThreadSeed.threadId }
-      .forEach(candidateThreadIds::add)
-    startedThreadHintsByPath[path]
-      .orEmpty()
-      .asSequence()
-      .map { hint -> hint.startedThread.id }
       .forEach(candidateThreadIds::add)
   }
   return candidateThreadIds
@@ -614,20 +562,6 @@ private fun maxKnownUpdatedAt(left: Long, right: Long): Long {
     right == UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT -> left
     else -> maxOf(left, right)
   }
-}
-
-private fun buildRebindCandidate(
-  startedThread: CodexAppServerStartedThread,
-  snapshot: CodexThreadActivitySnapshot?,
-): AgentSessionRebindCandidate {
-  val activity = (snapshot?.toCodexSessionActivity() ?: startedThread.toCodexSessionActivity()).toAgentThreadActivity()
-  val updatedAt = snapshot?.updatedAt ?: startedThread.updatedAt
-  return AgentSessionRebindCandidate(
-    threadId = startedThread.id,
-    title = startedThread.title,
-    updatedAt = updatedAt,
-    activity = activity,
-  )
 }
 
 private fun CodexThreadActivitySnapshot.toRefreshActivityHint(verifiedFresh: Boolean = false): CodexRefreshActivityHint {

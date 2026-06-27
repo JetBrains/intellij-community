@@ -35,9 +35,6 @@ Codex rollout files are parsed for discovery, project-file-change evidence, cost
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexSessionSourceTest.kt
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
-- Rebind candidates from rollout discovery are top-level CLI sessions only; parsed sub-agent sessions must not become automatic rebind targets.
-  [@test] ../../lib-agent/providers/codex/sessions/testSrc/backend/rollout/CodexRolloutDiscoveryProviderTest.kt
-
 - Rollout watching uses `AgentWorkbenchDirectoryWatcher`; Java NIO `WatchService` must not be used directly. Refresh remains event-driven, not periodic polling.
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexRolloutSessionsWatcherTest.kt
   [@test] ../../lib-agent/filewatch/testSrc/AgentWorkbenchDirectoryWatcherTest.kt
