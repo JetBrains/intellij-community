@@ -12,7 +12,6 @@ import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.state.InMemorySessionTreeUiState
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
-import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeRootPresentation
 import com.intellij.agent.workbench.sessions.toolwindow.tree.archiveTargetFromThreadNode
 import com.intellij.agent.workbench.sessions.toolwindow.tree.buildSessionTreeModel
 import com.intellij.agent.workbench.sessions.toolwindow.tree.overlayPendingAgentChatTabs
@@ -72,7 +71,7 @@ class AgentSessionsTreeSnapshotTest {
   }
 
   @Test
-  fun singleProjectPresentationPromotesProjectChildrenToRoot() {
+  fun currentProjectScopedModelKeepsProjectContainer() {
     val projectPath = "/work/project-a"
     val threadId = "thread-1"
     val model = buildSessionTreeModel(
@@ -96,13 +95,14 @@ class AgentSessionsTreeSnapshotTest {
       visibleClosedProjectCount = Int.MAX_VALUE,
       visibleThreadCounts = emptyMap(),
       treeUiState = InMemorySessionTreeUiState(),
-      rootPresentation = SessionTreeRootPresentation.SINGLE_PROJECT_CONTENTS,
+      currentProjectScopeActive = true,
     )
 
+    val projectTreeId = SessionTreeId.Project(projectPath)
     val threadTreeId = SessionTreeId.Thread(projectPath, AgentSessionProvider.from("codex"), threadId)
-    assertThat(model.rootIds).containsExactly(threadTreeId)
-    assertThat(model.entriesById).doesNotContainKey(SessionTreeId.Project(projectPath))
-    assertThat(model.entriesById.getValue(threadTreeId).parentId).isNull()
+    assertThat(model.rootIds).containsExactly(projectTreeId)
+    assertThat(model.entriesById.getValue(projectTreeId).childIds).containsExactly(threadTreeId)
+    assertThat(model.entriesById.getValue(threadTreeId).parentId).isEqualTo(projectTreeId)
   }
 
   @Test
@@ -146,7 +146,7 @@ class AgentSessionsTreeSnapshotTest {
   }
 
   @Test
-  fun singleProjectPresentationKeepsPinnedSectionAboveFlattenedProjectContents() {
+  fun currentProjectScopedModelKeepsPinnedSectionAboveProjectContainer() {
     val provider = AgentSessionProvider.from("codex")
     val projectPath = "/work/project-a"
     val model = buildSessionTreeModel(
@@ -165,18 +165,19 @@ class AgentSessionsTreeSnapshotTest {
       visibleClosedProjectCount = Int.MAX_VALUE,
       visibleThreadCounts = emptyMap(),
       treeUiState = InMemorySessionTreeUiState(),
-      rootPresentation = SessionTreeRootPresentation.SINGLE_PROJECT_CONTENTS,
+      currentProjectScopeActive = true,
       openTabsPresentationState = AgentChatOpenTabsPresentationState(
         pinnedTopLevelThreadIdsByProvider = mapOf(provider to mapOf(projectPath to setOf("pinned"))),
       ),
     )
 
+    val projectTreeId = SessionTreeId.Project(projectPath)
     val recentThreadId = SessionTreeId.Thread(projectPath, provider, "recent")
     val pinnedThreadId = SessionTreeId.Thread(projectPath, provider, "pinned")
-    assertThat(model.rootIds).containsExactly(SessionTreeId.Pinned, recentThreadId)
-    assertThat(model.entriesById).doesNotContainKey(SessionTreeId.Project(projectPath))
+    assertThat(model.rootIds).containsExactly(SessionTreeId.Pinned, projectTreeId)
     assertThat(model.entriesById.getValue(SessionTreeId.Pinned).childIds).containsExactly(pinnedThreadId)
-    assertThat(model.entriesById.getValue(recentThreadId).parentId).isNull()
+    assertThat(model.entriesById.getValue(projectTreeId).childIds).containsExactly(recentThreadId)
+    assertThat(model.entriesById.getValue(recentThreadId).parentId).isEqualTo(projectTreeId)
     assertThat(model.entriesById.getValue(pinnedThreadId).parentId).isEqualTo(SessionTreeId.Pinned)
   }
 

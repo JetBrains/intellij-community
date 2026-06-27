@@ -117,7 +117,8 @@ behavior; refresh mechanics and detailed tree rendering/interaction contracts li
   return-to-active icon, an archived context label, and a separate range selector.
 - The title header exposes the current-project-only scope toggle as a direct toolbar action so users can narrow a crowded dock without
   opening settings.
-- In effective current-project-only scope, the single-project tree omits the root project row and shows its thread/worktree rows directly.
+- In effective current-project-only scope, the tree filters to the current project or worktree while preserving project/worktree container rows
+  so pinning or unpinning editor tabs does not change the presentation shape of ordinary rows.
 
 ## Testing / Local Run
 

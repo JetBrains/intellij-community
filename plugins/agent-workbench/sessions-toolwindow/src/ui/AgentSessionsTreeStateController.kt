@@ -13,7 +13,6 @@ import com.intellij.agent.workbench.sessions.state.AgentSessionThreadViewState
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModel
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModelDiff
-import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeRootPresentation
 import com.intellij.agent.workbench.sessions.toolwindow.tree.buildSessionTreeModel
 import com.intellij.agent.workbench.sessions.toolwindow.tree.diffSessionTreeModels
 import com.intellij.agent.workbench.sessions.toolwindow.tree.overlayPendingAgentChatTabs
@@ -151,7 +150,7 @@ internal class AgentSessionsTreeStateController(
     return state.filterToCurrentProjectSessions(currentProjectPathForScope())
   }
 
-  fun isSingleProjectPresentationEnabled(): Boolean {
+  fun isCurrentProjectScopeActive(): Boolean {
     return currentProjectPathForScope() != null
   }
 
@@ -181,12 +180,7 @@ internal class AgentSessionsTreeStateController(
     val snapshotThreadViewState = threadViewState
     val snapshotSelectedChatTab = selectedChatTab
     val snapshotOpenTabsPresentationState = openChatTabsPresentationState
-    val snapshotRootPresentation = if (isSingleProjectPresentationEnabled()) {
-      SessionTreeRootPresentation.SINGLE_PROJECT_CONTENTS
-    }
-    else {
-      SessionTreeRootPresentation.PROJECTS
-    }
+    val snapshotCurrentProjectScopeActive = isCurrentProjectScopeActive()
     val oldModel = getSessionTreeModel()
     val updateSequence = ++treeUpdateSequence
     rebuildJob = scope.launch {
@@ -196,7 +190,7 @@ internal class AgentSessionsTreeStateController(
           visibleClosedProjectCount = snapshotState.visibleClosedProjectCount,
           visibleThreadCounts = snapshotState.visibleThreadCounts,
           treeUiState = serviceAsync<AgentSessionTreeUiStateService>(),
-          rootPresentation = snapshotRootPresentation,
+          currentProjectScopeActive = snapshotCurrentProjectScopeActive,
           openTabsPresentationState = if (snapshotThreadViewState.mode == AgentSessionThreadViewMode.ACTIVE) {
             snapshotOpenTabsPresentationState
           }
