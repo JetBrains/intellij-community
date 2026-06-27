@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor
 
+import com.intellij.ide.actions.Switcher
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsState
@@ -329,6 +330,50 @@ class FileEditorManagerTest {
 
     assertThat(checked).isFalse()
     assertOpenFiles()
+  }
+
+  @Test
+  @Suppress("DEPRECATION")
+  fun testSwitcherCloseWithWindowRunsPreCloseCheck(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    val file = openSourceFile("1.txt")
+    val window = currentWindow()
+    var checkedFile: VirtualFile? = null
+    registerPreCloseCheck(object : VirtualFilePreCloseCheck {
+      override fun canCloseFile(file: VirtualFile): Boolean {
+        checkedFile = file
+        return false
+      }
+    })
+
+    assertThat(Switcher.SwitcherPanel.closeVirtualFileForTest(project, file, window)).isFalse()
+
+    assertThat(checkedFile).isEqualTo(file)
+    assertOpenFiles("1.txt")
+  }
+
+  @Test
+  @Suppress("DEPRECATION")
+  fun testSwitcherCloseWithoutWindowRunsBatchPreCloseCheck(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    val file = openSourceFile("1.txt")
+    var singleChecks = 0
+    var batchFiles: List<VirtualFile> = emptyList()
+    registerPreCloseCheck(object : VirtualFilePreCloseCheck {
+      override fun canCloseFile(file: VirtualFile): Boolean {
+        singleChecks++
+        return true
+      }
+
+      override fun canCloseFiles(files: Collection<VirtualFile>): Boolean {
+        batchFiles = files.toList()
+        return false
+      }
+    })
+
+    assertThat(Switcher.SwitcherPanel.closeVirtualFileForTest(project, file, null)).isFalse()
+
+    assertThat(singleChecks).isZero()
+    assertThat(batchFiles).containsExactly(file)
+    assertOpenFiles("1.txt")
   }
 
   @Test
