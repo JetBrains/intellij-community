@@ -2,16 +2,20 @@
 package com.intellij.agent.workbench.prompt.ui
 
 import com.dynatrace.hash4j.hashing.HashValue128
-import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.agent.workbench.prompt.core.AgentPromptChipRenderInput
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormatter
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextItemIds
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRenderers
 import com.intellij.agent.workbench.prompt.core.AgentPromptManualContextSourceBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptPaletteExtension
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.agent.workbench.prompt.core.bool
+import com.intellij.agent.workbench.prompt.core.objOrNull
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.JBUI
@@ -53,6 +57,8 @@ internal data class ContextEntry(
 
   val displayText: @NlsSafe String = chipRender?.text ?: buildDefaultDisplayText()
 
+  val accessibleText: @NlsSafe String = buildAccessibleText()
+
   private val fallbackTooltipText: @NlsSafe String by lazy(LazyThreadSafetyMode.NONE) {
     AgentPromptContextEnvelopeFormatter.renderContextItem(item = item, projectPath = projectBasePath)
   }
@@ -68,6 +74,28 @@ internal data class ContextEntry(
     }
     val preview = if (firstLine.length <= 60) firstLine else firstLine.take(60) + "\u2026"
     return "$title: $preview"
+  }
+
+  private fun buildAccessibleText(): @NlsSafe String {
+    val title = item.title?.trim()?.takeIf { it.isNotEmpty() }
+    val display = displayText.trim().takeIf { it.isNotEmpty() } ?: title ?: "Context"
+    if (title == null || display == title || display.startsWith("$title:")) {
+      return display
+    }
+    if (isCompactTitleOnlyChip()) {
+      return title
+    }
+    return "$title: $display"
+  }
+
+  private fun isCompactTitleOnlyChip(): Boolean {
+    if (item.rendererId != AgentPromptContextRendererIds.SNIPPET) {
+      return false
+    }
+    if (item.itemId == AgentPromptContextItemIds.CHANGES_SELECTION || item.itemId == "tree.selection") {
+      return true
+    }
+    return item.payload.objOrNull()?.bool("selection") == false
   }
 }
 

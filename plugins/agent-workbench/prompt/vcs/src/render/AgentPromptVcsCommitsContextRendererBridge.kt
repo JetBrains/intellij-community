@@ -155,5 +155,5 @@ private fun composeCommitChipText(title: String?, preview: String, totalCount: I
     trimmedPreview.take(COMMIT_CHIP_PREVIEW_MAX_LENGTH) + "\u2026"
   }
   val countSuffix = if (totalCount > 1) " +${totalCount - 1}" else ""
-  return "$resolvedTitle: $shortPreview$countSuffix"
+  return "$shortPreview$countSuffix"
 }
