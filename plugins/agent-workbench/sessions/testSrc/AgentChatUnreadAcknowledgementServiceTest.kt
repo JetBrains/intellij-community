@@ -9,6 +9,7 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
+import com.intellij.agent.workbench.sessions.service.markAgentChatSelectionThreadAsReadAfterFocusLostIfUnread
 import com.intellij.agent.workbench.sessions.service.markAgentChatSelectionThreadAsReadIfUnread
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
@@ -66,6 +67,66 @@ class AgentChatUnreadAcknowledgementServiceTest {
 
     assertThat(changed).isTrue()
     assertThat(marks).containsExactly(ReadMark(ACK_PROJECT_PATH, AgentSessionProvider.from("codex"), ACK_THREAD_ID, 250))
+  }
+
+  @Test
+  fun marksUnreadSelectedThreadAsReadAfterFocusedChatLosesFocus() {
+    val marks = mutableListOf<ReadMark>()
+
+    val changed = markAgentChatSelectionThreadAsReadAfterFocusLostIfUnread(
+      selection = selection(),
+      isSelectedEditorStillFocused = false,
+      state = stateWithUnreadProjectThread(),
+      markThreadAsRead = { path, provider, threadId, updatedAt -> marks += ReadMark(path, provider, threadId, updatedAt) },
+    )
+
+    assertThat(changed).isTrue()
+    assertThat(marks).containsExactly(ReadMark(ACK_PROJECT_PATH, AgentSessionProvider.from("codex"), ACK_THREAD_ID, 200))
+  }
+
+  @Test
+  fun doesNotMarkUnreadSelectedThreadAsReadWhenSelectedChatKeepsFocus() {
+    val marks = mutableListOf<ReadMark>()
+
+    val changed = markAgentChatSelectionThreadAsReadAfterFocusLostIfUnread(
+      selection = selection(),
+      isSelectedEditorStillFocused = true,
+      state = stateWithUnreadProjectThread(),
+      markThreadAsRead = { path, provider, threadId, updatedAt -> marks += ReadMark(path, provider, threadId, updatedAt) },
+    )
+
+    assertThat(changed).isFalse()
+    assertThat(marks).isEmpty()
+  }
+
+  @Test
+  fun doesNotMarkThreadAsReadAfterFocusLostWithoutSelectedChat() {
+    val marks = mutableListOf<ReadMark>()
+
+    val changed = markAgentChatSelectionThreadAsReadAfterFocusLostIfUnread(
+      selection = null,
+      isSelectedEditorStillFocused = false,
+      state = stateWithUnreadProjectThread(),
+      markThreadAsRead = { path, provider, threadId, updatedAt -> marks += ReadMark(path, provider, threadId, updatedAt) },
+    )
+
+    assertThat(changed).isFalse()
+    assertThat(marks).isEmpty()
+  }
+
+  @Test
+  fun doesNotMarkReadThreadAsReadAfterFocusedChatLosesFocus() {
+    val marks = mutableListOf<ReadMark>()
+
+    val changed = markAgentChatSelectionThreadAsReadAfterFocusLostIfUnread(
+      selection = selection(),
+      isSelectedEditorStillFocused = false,
+      state = stateWithReadyProjectThread(),
+      markThreadAsRead = { path, provider, threadId, updatedAt -> marks += ReadMark(path, provider, threadId, updatedAt) },
+    )
+
+    assertThat(changed).isFalse()
+    assertThat(marks).isEmpty()
   }
 
   @Test

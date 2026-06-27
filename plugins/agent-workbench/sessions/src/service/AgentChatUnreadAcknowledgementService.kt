@@ -11,6 +11,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
@@ -18,11 +19,13 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.FocusWatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.awt.event.FocusEvent
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -31,7 +34,9 @@ internal class AgentChatUnreadAcknowledgementService(
   project: Project,
   private val serviceScope: CoroutineScope,
 ) : Disposable {
+  private val fileEditorManager = FileEditorManager.getInstance(project)
   private val pendingCloseJobs = ConcurrentHashMap<String, Job>()
+  private var selectedChatFocusWatch: SelectedChatFocusWatch? = null
 
   init {
     project.messageBus.connect(this).subscribe(
@@ -58,11 +63,58 @@ internal class AgentChatUnreadAcknowledgementService(
         }
       }
     )
+    serviceScope.launch(Dispatchers.UI) {
+      fileEditorManager.selectedEditorFlow.collect { editor ->
+        updateSelectedChatFocusWatch(editor)
+      }
+    }
   }
 
   override fun dispose() {
     pendingCloseJobs.values.forEach { job -> job.cancel() }
     pendingCloseJobs.clear()
+    clearSelectedChatFocusWatch()
+  }
+
+  private fun updateSelectedChatFocusWatch(editor: FileEditor?) {
+    if (selectedChatFocusWatch?.editor == editor) {
+      return
+    }
+    clearSelectedChatFocusWatch()
+    val selectedEditor = editor ?: return
+    if (selectedEditor.file.toAgentChatTabSelection() == null) {
+      return
+    }
+    val watcher = object : FocusWatcher() {
+      override fun focusLostImpl(e: FocusEvent) {
+        scheduleMarkSelectedChatEditorAsReadIfFocusMovedAway(selectedEditor)
+      }
+    }
+    watcher.install(selectedEditor.component)
+    selectedChatFocusWatch = SelectedChatFocusWatch(selectedEditor, watcher)
+  }
+
+  private fun clearSelectedChatFocusWatch() {
+    selectedChatFocusWatch?.let { watch ->
+      watch.watcher.deinstall(watch.editor.component)
+    }
+    selectedChatFocusWatch = null
+  }
+
+  private fun scheduleMarkSelectedChatEditorAsReadIfFocusMovedAway(editor: FileEditor) {
+    serviceScope.launch(Dispatchers.UI) {
+      if (selectedChatFocusWatch?.editor != editor) {
+        return@launch
+      }
+      markAgentChatSelectionThreadAsReadAfterFocusLostIfUnread(
+        selection = editor.file.toAgentChatTabSelection(),
+        isSelectedEditorStillFocused = fileEditorManager.focusedEditor == editor,
+        state = service<AgentSessionReadService>().stateFlow().value,
+        markThreadAsRead = { path, provider, threadId, updatedAt ->
+          service<AgentSessionRefreshService>().markThreadAsRead(path, provider, threadId, updatedAt)
+        },
+      )
+    }
   }
 
   private fun markChatFileThreadAsRead(file: VirtualFile?) {
@@ -103,6 +155,28 @@ internal class AgentChatUnreadAcknowledgementService(
   private fun cancelPendingCloseJob(selection: AgentChatTabSelection) {
     pendingCloseJobs.remove(selection.closeJobKey())?.cancel()
   }
+
+  private data class SelectedChatFocusWatch(
+    @JvmField val editor: FileEditor,
+    @JvmField val watcher: FocusWatcher,
+  )
+}
+
+internal fun markAgentChatSelectionThreadAsReadAfterFocusLostIfUnread(
+  selection: AgentChatTabSelection?,
+  isSelectedEditorStillFocused: Boolean,
+  state: AgentSessionsState,
+  markThreadAsRead: (String, AgentSessionProvider, String, Long) -> Unit,
+): Boolean {
+  if (isSelectedEditorStillFocused) {
+    return false
+  }
+  selection ?: return false
+  return markAgentChatSelectionThreadAsReadIfUnread(
+    selection = selection,
+    state = state,
+    markThreadAsRead = markThreadAsRead,
+  )
 }
 
 internal fun markAgentChatSelectionThreadAsReadIfUnread(
