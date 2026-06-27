@@ -1,11 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project.importing
 
-import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.testFramework.junit5.TestApplication
-import kotlinx.coroutines.runBlocking
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
 import com.intellij.maven.testFramework.fixtures.assertUnorderedPathsAreEqual
@@ -19,7 +14,12 @@ import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
 import com.intellij.maven.testFramework.fixtures.projectPath
 import com.intellij.maven.testFramework.fixtures.projectsTree
 import com.intellij.maven.testFramework.fixtures.updateSettingsXml
-import org.jetbrains.idea.maven.fixtures.waitForImportWithinTimeout
+import com.intellij.maven.testFramework.fixtures.waitForImportWithinTimeout
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass

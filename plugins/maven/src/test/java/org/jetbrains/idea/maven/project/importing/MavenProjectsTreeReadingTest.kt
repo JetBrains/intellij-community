@@ -36,6 +36,7 @@ import com.intellij.maven.testFramework.fixtures.updateAllProjectsFullSync
 import com.intellij.maven.testFramework.fixtures.updateModulePom
 import com.intellij.maven.testFramework.fixtures.updateProjectPom
 import com.intellij.maven.testFramework.fixtures.updateSettingsXml
+import com.intellij.maven.testFramework.fixtures.waitForImportWithinTimeout
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
@@ -55,7 +56,6 @@ import org.jetbrains.idea.maven.fixtures.tree
 import org.jetbrains.idea.maven.fixtures.update
 import org.jetbrains.idea.maven.fixtures.updateAll
 import org.jetbrains.idea.maven.fixtures.updateTimestamps
-import org.jetbrains.idea.maven.fixtures.waitForImportWithinTimeout
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenProfileKind
@@ -71,6 +71,16 @@ import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
 import java.util.Arrays
 import java.util.Set
+import kotlin.String
+import kotlin.collections.ArrayList
+import kotlin.collections.List
+import kotlin.collections.associate
+import kotlin.collections.emptyList
+import kotlin.collections.listOf
+import kotlin.collections.map
+import kotlin.map
+import kotlin.sequences.map
+import kotlin.to
 
 @TestApplication
 @ParameterizedClass
