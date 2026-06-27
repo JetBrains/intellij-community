@@ -18,6 +18,7 @@ import com.intellij.ide.frame
 import com.intellij.ide.frameInfo
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.recentProjectMetaInfo
+import com.intellij.ide.util.runOnceForProject
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CoroutineSupport
@@ -762,21 +763,23 @@ private suspend fun findAndOpenReadmeIfNeeded(project: Project) {
     return
   }
 
-  val projectDir = project.guessProjectDir() ?: return
-  val files = mutableListOf(".github/README.md", "README.md", "docs/README.md")
-  if (SystemInfoRt.isFileSystemCaseSensitive) {
-    files.addAll(files.map { it.lowercase() })
-  }
-  val readme = files.firstNotNullOfOrNull(projectDir::findFileByRelativePath) ?: return
-  if (!readme.isDirectory) {
-    // Screen readers don't support JCEF preview (IJPL-59438)
-    val layout =
-      if (ScreenReader.isActive()) TextEditorWithPreview.Layout.SHOW_EDITOR_AND_PREVIEW else TextEditorWithPreview.Layout.SHOW_PREVIEW
-    readme.putUserData(TextEditorWithPreview.DEFAULT_LAYOUT_FOR_FILE, layout)
-    (project.serviceAsync<FileEditorManager>() as FileEditorManagerEx).openFile(readme, FileEditorOpenOptions(requestFocus = true))
+  runOnceForProject(project = project, id = "ShowReadmeOnStart") {
+    val projectDir = project.guessProjectDir() ?: return@runOnceForProject
+    val files = mutableListOf(".github/README.md", "README.md", "docs/README.md")
+    if (SystemInfoRt.isFileSystemCaseSensitive) {
+      files.addAll(files.map { it.lowercase() })
+    }
+    val readme = files.firstNotNullOfOrNull(projectDir::findFileByRelativePath) ?: return@runOnceForProject
+    if (!readme.isDirectory) {
+      // Screen readers don't support JCEF preview (IJPL-59438)
+      val layout =
+        if (ScreenReader.isActive()) TextEditorWithPreview.Layout.SHOW_EDITOR_AND_PREVIEW else TextEditorWithPreview.Layout.SHOW_PREVIEW
+      readme.putUserData(TextEditorWithPreview.DEFAULT_LAYOUT_FOR_FILE, layout)
+      (project.serviceAsync<FileEditorManager>() as FileEditorManagerEx).openFile(readme, FileEditorOpenOptions(requestFocus = true))
 
-    readme.putUserData(README_OPENED_ON_START_TS, Instant.now())
-    FUSProjectHotStartUpMeasurer.openedReadme(readme, System.nanoTime())
+      readme.putUserData(README_OPENED_ON_START_TS, Instant.now())
+      FUSProjectHotStartUpMeasurer.openedReadme(readme, System.nanoTime())
+    }
   }
 }
 
