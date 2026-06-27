@@ -32,7 +32,6 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.RegistryManager
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -59,7 +58,6 @@ fun createNewThreadViaService(
     profile = profile,
     currentProject = currentProject,
     entryPoint = entryPoint,
-    descriptor = checkNotNull(descriptor),
   )
 }
 
@@ -99,7 +97,6 @@ internal class AgentSessionsInlineNewThreadPromptService internal constructor(
     profile: AgentPromptLaunchProfile,
     currentProject: Project,
     entryPoint: AgentWorkbenchEntryPoint,
-    descriptor: AgentSessionProviderDescriptor,
   ) {
     coroutineScope.launch(CoroutineName("Agent Workbench inline New Thread prompt")) {
       openInlinePromptSuspending(
@@ -107,7 +104,6 @@ internal class AgentSessionsInlineNewThreadPromptService internal constructor(
         profile = profile,
         currentProject = currentProject,
         entryPoint = entryPoint,
-        descriptor = descriptor,
       )
     }
   }
@@ -117,7 +113,6 @@ internal class AgentSessionsInlineNewThreadPromptService internal constructor(
     profile: AgentPromptLaunchProfile,
     currentProject: Project,
     entryPoint: AgentWorkbenchEntryPoint,
-    descriptor: AgentSessionProviderDescriptor,
   ) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
     val provider = AgentSessionProvider.from(profile.providerId)
@@ -130,8 +125,7 @@ internal class AgentSessionsInlineNewThreadPromptService internal constructor(
         entryPoint = entryPoint,
         launchProfileId = profile.id,
         generationSettings = profile.generationSettings,
-        waitingTitle = AgentSessionsBundle.message("toolwindow.thread.preparing.title", providerDisplayName(descriptor)),
-        waitingMessage = AgentSessionsBundle.message("toolwindow.thread.preparing.body"),
+        waitingTitle = AgentSessionsBundle.message("toolwindow.thread.preparing.title"),
         deferredStartContentProvider = { project ->
           createInlinePromptContent(
             project = project,
@@ -230,11 +224,6 @@ private class InlineNewThreadPromptLauncherBridge(
   ): List<AgentPromptReusableSourceEntry> {
     return delegateProvider()?.listReusablePromptSourceEntries(projectPath, provider).orEmpty()
   }
-}
-
-private fun providerDisplayName(descriptor: AgentSessionProviderDescriptor): @NlsSafe String {
-  return runCatching { AgentSessionsBundle.message(descriptor.displayNameKey) }
-    .getOrDefault(descriptor.displayNameFallback)
 }
 
 private val LOG = logger<AgentSessionsInlineNewThreadPromptService>()

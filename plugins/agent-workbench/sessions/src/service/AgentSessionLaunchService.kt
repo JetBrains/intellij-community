@@ -866,8 +866,7 @@ class AgentSessionLaunchService internal constructor(
             preferredDedicatedFrame = preferredDedicatedFrame,
             openedChatHandler = openedChatHandler,
             threadTitle = threadTitle,
-            waitingTitle = defaultNewSessionWaitingTitle(effectiveProvider),
-            waitingMessage = defaultNewSessionWaitingMessage(),
+            waitingTitle = defaultNewSessionWaitingTitle(),
           )
         }
         val prepared = prepareNewSessionLaunch(
@@ -1142,7 +1141,7 @@ class AgentSessionLaunchService internal constructor(
     openedChatHandler: (suspend (Project, VirtualFile) -> Unit)?,
     threadTitle: String?,
     waitingTitle: @Nls String,
-    waitingMessage: @Nls String?,
+    waitingMessage: @Nls String? = null,
     deferredStartContentProvider: ((Project) -> AgentChatDeferredStartContent)? = null,
   ): DeferredAgentSessionChatOpenResult {
     return chatOpenExecutor.openPreparingNewChat(
@@ -1679,12 +1678,8 @@ private fun dedicatedFrameOpenProgressRequest(currentProject: Project?): SingleF
   )
 }
 
-private fun defaultNewSessionWaitingTitle(provider: AgentSessionProvider): @Nls String {
-  return AgentSessionsBundle.message("toolwindow.thread.preparing.title", providerDisplayName(provider))
-}
-
-private fun defaultNewSessionWaitingMessage(): @Nls String {
-  return AgentSessionsBundle.message("toolwindow.thread.preparing.body")
+private fun defaultNewSessionWaitingTitle(): @Nls String {
+  return AgentSessionsBundle.message("toolwindow.thread.preparing.title")
 }
 
 private fun defaultNewSessionFailureTitle(provider: AgentSessionProvider): @Nls String {
