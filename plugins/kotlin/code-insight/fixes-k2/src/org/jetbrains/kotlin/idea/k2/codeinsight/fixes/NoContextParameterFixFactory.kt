@@ -53,9 +53,7 @@ internal object NoContextParameterFixFactory {
             if (surroundingCall != null) {
                 if (!candidates.isEmpty()) {
                     candidates.forEach { candidateName ->
-                        if (candidateName != null) {
-                            add(AddContextParameterToExistingContextFix(surroundingCall, candidateName, requiredTypeText, requiredTypeFqNameText))
-                        }
+                        add(AddContextParameterToExistingContextFix(surroundingCall, candidateName, requiredTypeText, requiredTypeFqNameText))
                     }
                 } else {
                     add(AddContextParameterToExistingContextFix(surroundingCall, null, requiredTypeText, requiredTypeFqNameText))
@@ -110,7 +108,7 @@ internal object NoContextParameterFixFactory {
         useSite: KtElement,
         surroundingContextCall: KtCallExpression?,
         requiredType: KaType,
-    ): Set<String?> {
+    ): Set<String> {
         if (surroundingContextCall != null &&
             innerContextScopeAlreadyContainsType(useSite, surroundingContextCall, requiredType)) return emptySet()
 
