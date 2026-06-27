@@ -2231,6 +2231,7 @@ f:com.intellij.openapi.command.impl.StartMarkAction$AlreadyStartedException
 - java.lang.Exception
 c:com.intellij.openapi.command.impl.UndoManagerImpl
 - com.intellij.openapi.command.undo.UndoManager
+- com.intellij.openapi.Disposable
 - addDocumentAsAffected(com.intellij.openapi.editor.Document):V
 - clearUndoRedoQueueInTests(com.intellij.openapi.vfs.VirtualFile):V
 - dropHistoryInTests():V

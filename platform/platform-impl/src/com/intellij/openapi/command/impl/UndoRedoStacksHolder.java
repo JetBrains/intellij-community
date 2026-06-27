@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -208,13 +207,9 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
       %s""".formatted(stackName, affected, dumpStack(stack));
   }
 
-  @TestOnly
-  void clearAllStacksInTests() {
-    clearStacks(getAffectedDocuments(), true);
+  void clearAllStacks() {
     globalStack.clear();
-    myDocumentStacks.clear();
-    myDocumentsWithStacks.clear();
-    myNonlocalVirtualFilesWithStacks.clear();
+    clearDocumentStacks();
   }
 
   private void doAddToStack(@NotNull UndoRedoList<UndoableGroup> stack, @NotNull UndoableGroup group, int limit) {

@@ -1,15 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.cmd.CmdEvent;
 import com.intellij.openapi.command.impl.cmd.CmdEventTransform;
 import com.intellij.openapi.command.undo.DocumentReference;
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
-import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -35,12 +31,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-final class UndoClientState implements Disposable {
-
-  static @Nullable UndoClientState getInstance(@Nullable Project project) {
-    return getComponentManager(project).getService(UndoClientState.class);
-  }
-
+final class UndoClientState {
   private static final Logger LOG = Logger.getInstance(UndoClientState.class);
 
   private static final int COMMANDS_TO_KEEP_LIVE_QUEUES = 100;
@@ -58,28 +49,13 @@ final class UndoClientState implements Disposable {
   private int commandTimestamp = 1;
   private int dumpCount = 0;
 
-  @SuppressWarnings({"unused", "UnsafeOpenServiceCast"})
-  UndoClientState(@NotNull Project project) {
-    this((UndoManagerImpl) UndoManager.getInstance(project));
-  }
-
-  @SuppressWarnings({"unused", "UnsafeOpenServiceCast"})
-  UndoClientState() {
-    this((UndoManagerImpl) UndoManager.getGlobalInstance());
-  }
-
-  private UndoClientState(@NotNull UndoManagerImpl undoManager) {
-    this.project = undoManager.getProject();
-    this.undoCapabilities = undoManager.getUndoCapabilities();
+  UndoClientState(@Nullable Project project, @NotNull UndoCapabilities undoCapabilities) {
+    this.project = project;
+    this.undoCapabilities = undoCapabilities;
     this.undoStacksHolder = new UndoRedoStacksHolder(true);
     this.redoStacksHolder = new UndoRedoStacksHolder(false);
     this.commandMerger = new CommandMerger(project != null, undoCapabilities);
     this.commandBuilder = new CommandBuilder(project, undoCapabilities);
-  }
-
-  @Override
-  public void dispose() {
-    clearStacks();
   }
 
   boolean isActiveForCurrentProject() {
@@ -300,6 +276,12 @@ final class UndoClientState implements Disposable {
     }
   }
 
+  void clearStacks() {
+    flushCommandMerger(CommandMergerFlushReason.CLEAR_STACKS);
+    redoStacksHolder.clearAllStacks();
+    undoStacksHolder.clearAllStacks();
+  }
+
   @NotNull String dump(@Nullable FileEditor editor) {
     //String currentMerger = currentCommandMerger == null ? "" : currentCommandMerger.dumpState();
     String currentMerger = "";
@@ -340,11 +322,15 @@ final class UndoClientState implements Disposable {
   @TestOnly
   void dropHistoryInTests() {
     commandBuilder.assertOutsideCommand();
-    undoStacksHolder.clearAllStacksInTests();
-    redoStacksHolder.clearAllStacksInTests();
+    clearStacks();
   }
 
-  void flushCommandMerger(@NotNull CommandMergerFlushReason flushReason) {
+  @TestOnly
+  void flushCommandMergerInTests(@NotNull CommandMergerFlushReason flushReason) {
+    flushCommandMerger(flushReason);
+  }
+
+  private void flushCommandMerger(@NotNull CommandMergerFlushReason flushReason) {
     UndoableGroup group = commandMerger.formGroup(flushReason, nextCommandTimestamp());
     if (group != null) {
       composeStartFinishGroup(group);
@@ -462,15 +448,6 @@ final class UndoClientState implements Disposable {
     return result;
   }
 
-  private void clearStacks() {
-    var affected = new HashSet<DocumentReference>();
-    flushCommandMerger(CommandMergerFlushReason.CLEAR_STACKS);
-    redoStacksHolder.collectAllAffectedDocuments(affected);
-    redoStacksHolder.clearStacks(affected, true);
-    undoStacksHolder.collectAllAffectedDocuments(affected);
-    undoStacksHolder.clearStacks(affected, true);
-  }
-
   private boolean isUndoOrRedoInProgress() {
     return undoRedoInProgress != UndoRedoInProgress.NONE;
   }
@@ -514,10 +491,6 @@ final class UndoClientState implements Disposable {
       %s
       %s
       """.formatted(s, inEditor, redo, undo);
-  }
-
-  private static @NotNull ComponentManager getComponentManager(@Nullable Project project) {
-    return project != null ? project : ApplicationManager.getApplication();
   }
 
   private enum UndoRedoInProgress { NONE, UNDO, REDO }

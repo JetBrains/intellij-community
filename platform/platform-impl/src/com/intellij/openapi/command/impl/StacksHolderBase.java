@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.command.undo.DocumentReference;
@@ -75,6 +75,18 @@ public abstract class StacksHolderBase<E, ECollection extends Collection<E>>  {
 
     cleanWeaklyTrackedEmptyStacks(myDocumentsWithStacks);
     cleanWeaklyTrackedEmptyStacks(myNonlocalVirtualFilesWithStacks);
+  }
+
+  void clearDocumentStacks() {
+    for (Document holder1 : myDocumentsWithStacks) {
+      holder1.putUserData(STACK_IN_DOCUMENT_KEY, null);
+    }
+    for (VirtualFile holder : myNonlocalVirtualFilesWithStacks) {
+      holder.putUserData(STACK_IN_DOCUMENT_KEY, null);
+    }
+    myDocumentStacks.clear();
+    myDocumentsWithStacks.clear();
+    myNonlocalVirtualFilesWithStacks.clear();
   }
 
   // remove all references to document to avoid memory leaks
