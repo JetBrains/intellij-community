@@ -1,13 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
-import com.intellij.codeWithMe.ClientId;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.client.ClientSession;
-import com.intellij.openapi.client.ClientSessionsManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.cmd.CmdEvent;
 import com.intellij.openapi.command.impl.cmd.CmdIdService;
@@ -18,7 +14,6 @@ import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.ClientFileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -40,11 +35,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -156,25 +149,25 @@ public class UndoManagerImpl extends UndoManager {
 
   @Override
   public long getNextUndoNanoTime(@NotNull FileEditor editor) {
-    UndoClientState state = getClientState(editor);
+    UndoClientState state = getClientState();
     return state == null ? -1 : state.getNextNanoTime(editor, true);
   }
 
   @Override
   public long getNextRedoNanoTime(@NotNull FileEditor editor) {
-    UndoClientState state = getClientState(editor);
+    UndoClientState state = getClientState();
     return state == null ? -1 : state.getNextNanoTime(editor, false);
   }
 
   @Override
   public boolean isNextUndoAskConfirmation(@NotNull FileEditor editor) {
-    UndoClientState state = getClientState(editor);
+    UndoClientState state = getClientState();
     return state != null && state.isNextAskConfirmation(editor, true);
   }
 
   @Override
   public boolean isNextRedoAskConfirmation(@NotNull FileEditor editor) {
-    UndoClientState state = getClientState(editor);
+    UndoClientState state = getClientState();
     return state != null && state.isNextAskConfirmation(editor, false);
   }
 
@@ -206,7 +199,8 @@ public class UndoManagerImpl extends UndoManager {
 
   public void invalidateActionsFor(@NotNull DocumentReference ref) {
     ThreadingAssertions.assertEventDispatchThread();
-    for (UndoClientState state : getAllClientStates()) {
+    UndoClientState state = getClientState();
+    if (state != null) {
       state.invalidateActions(ref);
     }
   }
@@ -254,7 +248,7 @@ public class UndoManagerImpl extends UndoManager {
     String redoStatus = "redo: %s, %s, %s".formatted(redoAvailable, redoDescription.getFirst(), redoDescription.getSecond());
     String commandHistory = CmdIdService.getInstance().historyDump();
     String stacks;
-    UndoClientState state = getClientState(editor);
+    UndoClientState state = getClientState();
     if (state == null) {
       stacks = "no state";
     } else {
@@ -276,14 +270,16 @@ public class UndoManagerImpl extends UndoManager {
   @ApiStatus.Internal
   public void clearDocumentReferences(@NotNull Document document) {
     ThreadingAssertions.assertEventDispatchThread();
-    for (UndoClientState state : getAllClientStates()) {
+    UndoClientState state = getClientState();
+    if (state != null) {
       state.clearDocumentReferences(document);
     }
   }
 
   @ApiStatus.Internal
   public void clearStacks(@Nullable FileEditor editor) {
-    for (UndoClientState state : getAllClientStates()) {
+    UndoClientState state = getClientState();
+    if (state != null) {
       state.clearStacks(editor);
     }
   }
@@ -301,7 +297,7 @@ public class UndoManagerImpl extends UndoManager {
 
   @ApiStatus.Internal
   protected void undoOrRedo(@Nullable FileEditor editor, boolean isUndo) {
-    UndoClientState state = getClientState(editor);
+    UndoClientState state = getClientState();
     if (state != null) {
       String commandName = getUndoOrRedoActionNameAndDescription(editor, isUndo).getSecond();
       Disposable disposable = Disposer.newDisposable();
@@ -349,29 +345,13 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   @Nullable LocalUndoRedoSnapshot getUndoRedoSnapshotForDocument(@NotNull DocumentReference reference) {
-    var perClient = new HashMap<ClientId, PerClientLocalUndoRedoSnapshot>();
-    for (UndoClientState state : getAllClientStates()) {
-      PerClientLocalUndoRedoSnapshot perClientSnapshot = state.getUndoRedoSnapshotForDocument(reference);
-      if (perClientSnapshot == null) {
-        return null;
-      }
-      perClient.put(state.getClientId(), perClientSnapshot);
-    }
-    return new LocalUndoRedoSnapshot(Collections.unmodifiableMap(perClient));
+    UndoClientState state = getClientState();
+    return state == null ? null : state.getUndoRedoSnapshotForDocument(reference);
   }
 
   boolean resetLocalHistory(@NotNull DocumentReference reference, @NotNull LocalUndoRedoSnapshot snapshot) {
-    for (UndoClientState state : getAllClientStates()) {
-      PerClientLocalUndoRedoSnapshot perClientSnapshot = snapshot.getClientSnapshots().get(state.getClientId());
-      if (perClientSnapshot == null) {
-        perClientSnapshot = PerClientLocalUndoRedoSnapshot.empty();
-      }
-      boolean success = state.resetLocalHistory(reference, perClientSnapshot);
-      if (!success) {
-        return false;
-      }
-    }
-    return true;
+    UndoClientState state = getClientState();
+    return state != null && state.resetLocalHistory(reference, snapshot);
   }
 
   boolean isUndoRedoAvailable(@NotNull DocumentReference docRef, boolean undo) {
@@ -427,7 +407,7 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   private @NotNull Pair<@ActionText String, @ActionDescription String> getUndoOrRedoActionNameAndDescription(@Nullable FileEditor editor, boolean undo) {
-    UndoClientState state = getClientState(editor);
+    UndoClientState state = getClientState();
     String desc = null;
     if (state != null && state.isUndoRedoAvailable(editor, undo)) {
       desc = state.getLastCommandName(editor, undo);
@@ -454,7 +434,7 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   private boolean isUndoRedoAvailableUnsafe(@Nullable FileEditor editor, boolean undo) {
-    UndoClientState state = getClientState(editor);
+    UndoClientState state = getClientState();
     return state != null && state.isUndoRedoAvailable(editor, undo);
   }
 
@@ -468,38 +448,7 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   private @Nullable UndoClientState getClientStateUnsafe() {
-    ClientId clientId = ClientId.getCurrentOrNull();
-    if (clientId != null) {
-      ClientSession appSession = ClientSessionsManager.getAppSession(clientId);
-      if (appSession != null && appSession.isController()) {
-        // IJPL-168172: If current session is a controller, return a local client state instead
-        try (AccessToken ignored = ClientId.withExplicitClientId(ClientId.getLocalId())) {
-          return UndoClientState.getInstance(myProject);
-        }
-      }
-    }
     return UndoClientState.getInstance(myProject);
-  }
-
-  private @Nullable UndoClientState getClientState(@Nullable FileEditor editor) {
-    UndoClientState state = getClientState();
-    if (myProject == null || editor == null) {
-      return state;
-    }
-    try (AccessToken ignored = ClientId.withExplicitClientId(ClientFileEditorManager.getClientId(editor))) {
-      UndoClientState editorState = getClientState();
-      LOG.assertTrue(
-        state == editorState,
-        "Using editor belonging to '" +
-        (editorState != null ? editorState.getClientId().getValue() : "null") + "' under '" +
-        (state != null ? state.getClientId().getValue() : "null") + "'"
-      );
-    }
-    return state;
-  }
-
-  private @Unmodifiable @NotNull List<UndoClientState> getAllClientStates() {
-    return UndoClientState.getAllInstances(myProject);
   }
 
   private @NotNull List<UndoProvider> getUndoProviders() {
