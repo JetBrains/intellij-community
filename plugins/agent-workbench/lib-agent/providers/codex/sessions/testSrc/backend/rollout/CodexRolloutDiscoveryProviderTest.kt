@@ -3,7 +3,6 @@
 package com.intellij.platform.ai.agent.codex.sessions.backend.rollout
 
 import com.intellij.platform.ai.agent.json.filebacked.FileBackedSessionChangeSet
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import kotlinx.coroutines.Dispatchers
@@ -37,7 +36,7 @@ class CodexRolloutDiscoveryProviderTest {
       writeRollout(
         file = rollout,
         lines = listOf(
-          sessionMetaLine(timestamp = "2026-02-14T17:00:00.000Z", id = "cli-working", cwd = projectDir),
+          sessionMetaLine(cwd = projectDir),
           """{"timestamp":"2026-02-14T17:00:01.000Z","type":"event_msg","payload":{"type":"task_started"}}""",
         ),
       )
@@ -113,73 +112,14 @@ class CodexRolloutDiscoveryProviderTest {
       }
     }
   }
-
-  @Test
-  fun emitsOnlyRebindCandidatesForTopLevelCliThreads() {
-    runBlocking(Dispatchers.Default) {
-      val projectDir = tempDir.resolve("project-rollout-discovery")
-      Files.createDirectories(projectDir)
-      val sessionsRoot = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("14")
-
-      writeRollout(
-        file = sessionsRoot.resolve("rollout-parent.jsonl"),
-        lines = listOf(
-          sessionMetaLine(timestamp = "2026-02-14T16:00:00.000Z", id = "cli-parent", cwd = projectDir),
-          """{"timestamp":"2026-02-14T16:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Parent thread"}}""",
-        ),
-      )
-      writeRollout(
-        file = sessionsRoot.resolve("rollout-cli-new.jsonl"),
-        lines = listOf(
-          sessionMetaLine(timestamp = "2026-02-14T16:01:00.000Z", id = "cli-new", cwd = projectDir),
-          """{"timestamp":"2026-02-14T16:01:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"New top-level thread"}}""",
-        ),
-      )
-      writeRollout(
-        file = sessionsRoot.resolve("rollout-subagent.jsonl"),
-        lines = listOf(
-          subAgentSessionMetaLine(cwd = projectDir),
-          """{"timestamp":"2026-02-14T16:02:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Nested sub-agent thread"}}""",
-        ),
-      )
-      writeRollout(
-        file = sessionsRoot.resolve("rollout-subagent-camel.jsonl"),
-        lines = listOf(
-          subAgentSessionMetaLine(cwd = projectDir, sourceFieldName = "subAgent"),
-          """{"timestamp":"2026-02-14T16:03:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Nested camel-case sub-agent thread"}}""",
-        ),
-      )
-      writeRollout(
-        file = sessionsRoot.resolve("rollout-vscode.jsonl"),
-        lines = listOf(
-          sessionMetaLine(timestamp = "2026-02-14T16:04:00.000Z", id = "vscode-top-level", cwd = projectDir, source = "vscode"),
-          """{"timestamp":"2026-02-14T16:04:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"VS Code thread"}}""",
-        ),
-      )
-
-      val provider = CodexRolloutDiscoveryProvider(
-        rolloutBackend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir }),
-      )
-
-      val hints = provider.prefetchRefreshHints(
-        paths = listOf(projectDir.toString()),
-        refreshThreadSeedsByPath = mapOf(
-          projectDir.toString() to setOf(AgentSessionRefreshThreadSeed(threadId = "cli-parent"))
-        ),
-      ).getValue(projectDir.toString())
-
-      assertThat(hints.rebindCandidates.map { it.threadId }).containsExactly("cli-new")
-      assertThat(hints.activityHintsByThreadId).isEmpty()
-      assertThat(hints.presentationUpdatesByThreadId).isEmpty()
-    }
-  }
 }
 
-private fun sessionMetaLine(timestamp: String, id: String, cwd: Path, source: String? = null): String {
-  val sourceField = if (source == null) "" else ",\"source\":\"$source\""
+private fun sessionMetaLine(cwd: Path): String {
+  val timestamp = "2026-02-14T17:00:00.000Z"
+  val id = "cli-working"
   return """{"timestamp":"$timestamp","type":"session_meta","payload":{"id":"$id","timestamp":"$timestamp","cwd":"${
     cwd.toString().replace("\\", "\\\\")
-  }"$sourceField}}"""
+  }"}}"""
 }
 
 private fun sessionMetaLineWithoutId(cwd: Path): String {
@@ -187,15 +127,6 @@ private fun sessionMetaLineWithoutId(cwd: Path): String {
   return """{"timestamp":"$timestamp","type":"session_meta","payload":{"timestamp":"$timestamp","cwd":"${
     cwd.toString().replace("\\", "\\\\")
   }"}}"""
-}
-
-private fun subAgentSessionMetaLine(cwd: Path, sourceFieldName: String = "subagent"): String {
-  val timestamp = "2026-02-14T16:02:00.000Z"
-  val id = "subagent-thread"
-  val parentThreadId = "cli-parent"
-  return """{"timestamp":"$timestamp","type":"session_meta","payload":{"id":"$id","timestamp":"$timestamp","cwd":"${
-    cwd.toString().replace("\\", "\\\\")
-  }","source":{"$sourceFieldName":{"thread_spawn":{"parent_thread_id":"$parentThreadId","depth":1}}}}}"""
 }
 
 private fun writeRollout(file: Path, lines: List<String>) {

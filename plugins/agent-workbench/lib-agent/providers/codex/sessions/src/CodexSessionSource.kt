@@ -506,11 +506,10 @@ internal class CodexSessionSource internal constructor(
         }
       }
 
-      if (hints.rebindCandidates.isEmpty() && filteredActivityHintsByThreadId.isEmpty() && hints.presentationUpdatesByThreadId.isEmpty()) {
+      if (filteredActivityHintsByThreadId.isEmpty() && hints.presentationUpdatesByThreadId.isEmpty()) {
         continue
       }
       filtered[path] = CodexRefreshHints(
-        rebindCandidates = hints.rebindCandidates,
         activityHintsByThreadId = filteredActivityHintsByThreadId,
         presentationUpdatesByThreadId = hints.presentationUpdatesByThreadId,
       )

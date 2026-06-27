@@ -4,7 +4,6 @@ package com.intellij.platform.ai.agent.codex.sessions.backend
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
@@ -25,7 +24,6 @@ internal data class CodexRefreshActivityHint(
 )
 
 internal data class CodexRefreshHints(
-  @JvmField val rebindCandidates: List<AgentSessionRebindCandidate> = emptyList(),
   @JvmField val activityHintsByThreadId: Map<String, CodexRefreshActivityHint> = emptyMap(),
   @JvmField val presentationUpdatesByThreadId: Map<String, AgentSessionThreadPresentationUpdate> = emptyMap(),
 )
@@ -42,7 +40,6 @@ internal fun CodexRefreshHints.toAgentSessionRefreshHints(): AgentSessionRefresh
     )
   }
   return AgentSessionRefreshHints(
-    rebindCandidates = rebindCandidates,
     activityUpdatesByThreadId = activityUpdatesByThreadId,
     presentationUpdatesByThreadId = mergeCodexPresentationUpdates(
       activityUpdatesByThreadId.mapValues { (_, update) -> update.toPresentationUpdate() },
@@ -74,5 +71,5 @@ internal interface CodexRefreshHintsProvider {
   suspend fun prefetchRefreshHints(
     paths: List<String>,
     refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
-  ): Map<String, CodexRefreshHints>
+  ): Map<String, CodexRefreshHints> = emptyMap()
 }
