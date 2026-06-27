@@ -29,6 +29,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import javax.swing.JTree
 import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 import javax.swing.event.TreeExpansionEvent
@@ -134,7 +135,7 @@ internal class AgentSessionsTreeInteractionController(
 
   private fun maybeShowPopup(event: MouseEvent) {
     if (!event.isPopupTrigger) return
-    val path = tree.getPathForLocation(event.x, event.y) ?: return
+    val path = pathForSessionTreeContextMenuRow(tree, event.y) ?: return
     if (shouldRetargetSelectionForContextMenu(tree.selectionModel.isPathSelected(path))) {
       tree.selectionPath = path
     }
@@ -247,4 +248,14 @@ internal class AgentSessionsTreeInteractionController(
   private fun idFromPath(path: TreePath?): SessionTreeId? {
     return path?.lastPathComponent?.let(::extractSessionTreeId)
   }
+}
+
+internal fun pathForSessionTreeContextMenuRow(tree: JTree, y: Int): TreePath? {
+  if (y < 0) return null
+  for (row in 0 until tree.rowCount) {
+    val bounds = tree.getRowBounds(row) ?: continue
+    if (y < bounds.y) return null
+    if (y < bounds.y + bounds.height) return tree.getPathForRow(row)
+  }
+  return null
 }

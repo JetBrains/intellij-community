@@ -21,6 +21,7 @@ import com.intellij.agent.workbench.sessions.toolwindow.tree.shouldOpenOnActivat
 import com.intellij.agent.workbench.sessions.toolwindow.tree.shouldRetargetSelectionForContextMenu
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsTreeRowActionsOverlay
 import com.intellij.agent.workbench.sessions.toolwindow.ui.filterSelectableSessionTreeSelectionPaths
+import com.intellij.agent.workbench.sessions.toolwindow.ui.pathForSessionTreeContextMenuRow
 import com.intellij.agent.workbench.sessions.toolwindow.ui.resolveArchiveActionContext
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.project.ProjectManager
@@ -29,6 +30,7 @@ import com.intellij.ui.treeStructure.Tree
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import java.awt.Rectangle
 import java.util.concurrent.TimeUnit
 import javax.swing.JTree
 import javax.swing.tree.TreePath
@@ -130,6 +132,26 @@ class AgentSessionsSwingTreeInteractionTest {
   fun contextMenuSelectionRetargetPolicyMatchesIjTreeConventions() {
     assertThat(shouldRetargetSelectionForContextMenu(isClickedPathSelected = false)).isTrue()
     assertThat(shouldRetargetSelectionForContextMenu(isClickedPathSelected = true)).isFalse()
+  }
+
+  @Test
+  fun contextMenuPathResolvesWholeVisibleRow() {
+    val firstPath = treePath(SessionTreeId.Project("/work/project-a"))
+    val secondPath = treePath(SessionTreeId.Project("/work/project-b"))
+    val tree = RowMappedTree(
+      paths = listOf(firstPath, secondPath),
+      rowBounds = listOf(
+        Rectangle(24, 10, 90, 20),
+        Rectangle(24, 35, 90, 20),
+      ),
+    )
+
+    assertThat(pathForSessionTreeContextMenuRow(tree, y = 10)).isEqualTo(firstPath)
+    assertThat(pathForSessionTreeContextMenuRow(tree, y = 29)).isEqualTo(firstPath)
+    assertThat(pathForSessionTreeContextMenuRow(tree, y = 35)).isEqualTo(secondPath)
+    assertThat(pathForSessionTreeContextMenuRow(tree, y = -1)).isNull()
+    assertThat(pathForSessionTreeContextMenuRow(tree, y = 30)).isNull()
+    assertThat(pathForSessionTreeContextMenuRow(tree, y = 55)).isNull()
   }
 
   @Test
@@ -291,12 +313,17 @@ private fun pinnedSectionModel(currentProjectScopeActive: Boolean) = buildSessio
 
 private fun treePath(id: SessionTreeId): TreePath = TreePath(arrayOf(TestDescriptor("root"), TestDescriptor(id)))
 
-private class RowMappedTree(private val paths: List<TreePath>) : JTree() {
+private class RowMappedTree(
+  private val paths: List<TreePath>,
+  private val rowBounds: List<Rectangle> = List(paths.size) { row -> Rectangle(0, row * 20, 100, 20) },
+) : JTree() {
   override fun getRowCount(): Int = paths.size
 
   override fun getPathForRow(row: Int): TreePath? = paths.getOrNull(row)
 
   override fun getRowForPath(path: TreePath?): Int = paths.indexOf(path)
+
+  override fun getRowBounds(row: Int): Rectangle? = rowBounds.getOrNull(row)?.let(::Rectangle)
 }
 
 private class TestDescriptor(
