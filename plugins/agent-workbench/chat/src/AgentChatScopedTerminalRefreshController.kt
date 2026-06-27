@@ -124,20 +124,7 @@ internal class AgentChatScopedTerminalRefreshController(
     activeThreadIdProvider: () -> String?,
     activeThreadUpdateEvents: (String) -> Flow<AgentSessionSourceUpdateEvent>,
   ) {
-    val watchRequests = if (restartChanges == null) {
-      flowOf(Unit)
-    }
-    else {
-      channelFlow {
-        val restartJob = launch(start = CoroutineStart.UNDISPATCHED) {
-          restartChanges.collect {
-            send(Unit)
-          }
-        }
-        send(Unit)
-        restartJob.join()
-      }
-    }
+    val watchRequests = activeThreadWatchRequests(restartChanges)
     coroutineScope watchScope@{
       var watchedThreadId: String? = null
       var watchJob: Job? = null
@@ -191,6 +178,21 @@ internal class AgentChatScopedTerminalRefreshController(
       finally {
         stopActiveWatch()
       }
+    }
+  }
+
+  private fun activeThreadWatchRequests(restartChanges: Flow<Unit>?): Flow<Unit> {
+    if (restartChanges == null) {
+      return flowOf(Unit)
+    }
+    return channelFlow {
+      val restartJob = launch(start = CoroutineStart.UNDISPATCHED) {
+        restartChanges.collect {
+          send(Unit)
+        }
+      }
+      send(Unit)
+      restartJob.join()
     }
   }
 
