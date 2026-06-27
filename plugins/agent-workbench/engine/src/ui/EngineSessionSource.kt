@@ -2,7 +2,6 @@
 package com.intellij.agent.workbench.engine.ui
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
-import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItem
 import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItemKind
@@ -10,12 +9,8 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.core.session.AgentSessionThreadOutline
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadPresentationUpdate
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadOutlineSource
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionUpdateSource
 import com.intellij.agent.workbench.engine.core.MessageRole
 import com.intellij.agent.workbench.engine.core.RuntimeKind
-import com.intellij.agent.workbench.engine.core.ThreadActionPrompt
 import com.intellij.agent.workbench.engine.core.ThreadCommand
 import com.intellij.agent.workbench.engine.core.ThreadContextCompaction
 import com.intellij.agent.workbench.engine.core.ThreadFileDiff
@@ -41,24 +36,24 @@ internal val ACP_PROVIDER: AgentSessionProvider = AgentSessionProvider.from("acp
  * Surfaces Engine threads as `AgentSessionThread`s in the existing Agent Workbench tool
  * window, so ACP/remote/mock runtimes appear alongside Claude/Codex without a separate UI.
  */
-internal class EngineSessionSource : AgentSessionSource, AgentSessionUpdateSource, AgentSessionThreadOutlineSource {
+internal class EngineSessionSource : AgentSessionSource {
   override val provider: AgentSessionProvider
     get() = ACP_PROVIDER
 
+  override val supportsUpdates: Boolean
+    get() = true
+
   override val updateEvents: Flow<AgentSessionSourceUpdateEvent>
-    get() = EngineChangeBus.changes.map { change ->
-      toSourceUpdateEvent(
-        store = EngineProjectService.storeForPath(change.projectPath),
-        projectPath = change.projectPath,
-        threadId = change.threadId,
-      )
+    get() = EngineChangeBus.changes.map {
+      AgentSessionSourceUpdateEvent.threadsChanged()
     }
 
-  override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> {
-    if (openProject != null) {
-      val tracker = EngineUnreadTracker.getInstance(openProject)
-      return surfacedThreads(EngineProjectService.getInstance(openProject).eventStore) { tracker.isUnread(it) }
-    }
+  override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> {
+    val tracker = EngineUnreadTracker.getInstance(project)
+    return surfacedThreads(EngineProjectService.getInstance(project).eventStore) { tracker.isUnread(it) }
+  }
+
+  override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> {
     // No project instance -> no live unread state; restored threads are never badged.
     return surfacedThreads(EngineProjectService.storeForPath(path)) { false }
   }
@@ -73,24 +68,6 @@ internal class EngineSessionSource : AgentSessionSource, AgentSessionUpdateSourc
       .map { id -> store.projection(id) }
       .filter { it.thread.runtimeKind != RuntimeKind.Terminal }
       .map { toThread(it, unread(it.thread.id)) }
-  }
-
-  private fun toSourceUpdateEvent(
-    store: EventStore,
-    projectPath: String,
-    threadId: ThreadId,
-  ): AgentSessionSourceUpdateEvent {
-    val projection = store.projection(threadId)
-    return AgentSessionSourceUpdateEvent.threadsChanged(
-      scopedPaths = setOf(projectPath),
-      threadIds = setOf(threadId.value),
-      presentationUpdatesByThreadId = mapOf(
-        threadId.value to AgentSessionThreadPresentationUpdate(
-          title = projection.thread.title.ifBlank { threadId.value },
-          updatedAt = projection.thread.updatedAt,
-        )
-      ),
-    )
   }
 
   override suspend fun loadThreadOutline(path: String, threadId: String, subAgentId: String?): AgentSessionThreadOutline {
@@ -120,7 +97,7 @@ internal class EngineSessionSource : AgentSessionSource, AgentSessionUpdateSourc
       updatedAt = thread.updatedAt,
       archived = false,
       // A live, unseen agent reply gets the attention badge; otherwise fall back to the status mapping.
-      activityReport = AgentThreadActivityReport(if (unread) AgentThreadActivity.NEEDS_INPUT else mapActivity(thread.status)),
+      activity = if (unread) AgentThreadActivity.NEEDS_INPUT else mapActivity(thread.status),
       provider = provider,
     )
   }
@@ -142,7 +119,7 @@ internal class EngineSessionSource : AgentSessionSource, AgentSessionUpdateSourc
       else -> AgentSessionOutlineItemKind.METADATA
     }
     is ThreadToolCall, is ThreadCommand -> AgentSessionOutlineItemKind.TOOL_CALL
-    is ThreadPlan, is ThreadFileDiff, is ThreadContextCompaction, is ThreadActionPrompt -> AgentSessionOutlineItemKind.METADATA
+    is ThreadPlan, is ThreadFileDiff, is ThreadContextCompaction -> AgentSessionOutlineItemKind.METADATA
   }
 
   private fun outlineTitle(entry: ThreadTranscriptEntry): String = when (entry) {
@@ -152,7 +129,6 @@ internal class EngineSessionSource : AgentSessionSource, AgentSessionUpdateSourc
     is ThreadPlan -> entry.title ?: entry.id
     is ThreadFileDiff -> entry.title ?: entry.path ?: entry.id
     is ThreadContextCompaction -> entry.title ?: entry.id
-    is ThreadActionPrompt -> entry.title
   }
 
   private fun outlinePreview(entry: ThreadTranscriptEntry): String = when (entry) {
@@ -162,6 +138,5 @@ internal class EngineSessionSource : AgentSessionSource, AgentSessionUpdateSourc
     is ThreadPlan -> entry.items.joinToString(separator = "\n") { it.title }
     is ThreadFileDiff -> entry.newText.orEmpty()
     is ThreadContextCompaction -> entry.summary.orEmpty()
-    is ThreadActionPrompt -> entry.message ?: entry.buttons.joinToString(separator = "\n") { it.text }
   }
 }
