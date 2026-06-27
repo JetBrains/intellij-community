@@ -12,6 +12,7 @@ import com.intellij.util.ui.UIUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import java.awt.Component
 import java.util.concurrent.TimeUnit
 import javax.swing.JButton
 import javax.swing.JPanel
@@ -257,6 +258,50 @@ class AgentPromptPaletteViewLayoutTest {
   }
 
   @Test
+  fun inlineContextChipsExpandComposerWithoutHidingPromptInput() {
+    runInEdtAndWait {
+      val promptArea = EditorTextField()
+      val contextChips = AgentPromptContextChipsComponent(maxVisibleRows = 2) {}
+      val view = createPaletteView(
+        promptArea = promptArea,
+        contextChipsPanel = contextChips.component,
+        hostMode = AgentPromptPaletteHostMode.INLINE_EMPTY_STATE,
+      )
+      val entries = createManyContextEntries()
+
+      layoutPopupRoot(view.rootPanel)
+      val promptAreaInRoot = checkNotNull(findPromptArea(view.rootPanel, promptArea))
+      val compactPreferredHeight = view.rootPanel.preferredSize.height
+      val compactPromptHeight = promptAreaInRoot.height
+      assertThat(view.composerContextPanel.isVisible).isFalse()
+      assertThat(compactPromptHeight).isGreaterThan(0)
+
+      contextChips.render(entries)
+      layoutPopupRoot(view.rootPanel)
+      contextChips.render(entries)
+      layoutPopupRoot(view.rootPanel)
+
+      val buttons = contextChipButtons(contextChips.component)
+      assertThat(view.composerContextPanel.isVisible).isTrue()
+      assertThat(view.rootPanel.preferredSize.height).isGreaterThan(compactPreferredHeight)
+      assertThat(buttonRowCount(buttons, view.rootPanel)).isLessThanOrEqualTo(2)
+      assertThat(promptAreaInRoot.height).isGreaterThanOrEqualTo(compactPromptHeight)
+      assertThat(bottomInRoot(promptAreaInRoot, view.rootPanel))
+        .isLessThanOrEqualTo(yInRoot(view.generationSettingsPanel, view.rootPanel))
+      assertThat(bottomInRoot(view.generationSettingsPanel, view.rootPanel))
+        .isLessThanOrEqualTo(yInRoot(view.composerContextPanel, view.rootPanel))
+      assertThat(bottomInRoot(view.composerContextPanel, view.rootPanel)).isLessThanOrEqualTo(view.rootPanel.height)
+
+      contextChips.render(emptyList())
+      layoutPopupRoot(view.rootPanel)
+
+      assertThat(view.composerContextPanel.isVisible).isFalse()
+      assertThat(view.rootPanel.preferredSize.height).isEqualTo(compactPreferredHeight)
+      assertThat(promptAreaInRoot.height).isGreaterThanOrEqualTo(compactPromptHeight)
+    }
+  }
+
+  @Test
   fun popupContextChipsRenderAllEntriesWithoutOverflowChip() {
     runInEdtAndWait {
       val promptArea = EditorTextField()
@@ -420,11 +465,19 @@ class AgentPromptPaletteViewLayoutTest {
     }
   }
 
-  private fun locationInRoot(component: java.awt.Component, root: JPanel): java.awt.Point {
+  private fun locationInRoot(component: Component, root: JPanel): java.awt.Point {
     return SwingUtilities.convertPoint(component.parent, component.location, root)
   }
 
-  private fun yCenterInRoot(component: java.awt.Component, root: JPanel): Int {
+  private fun yInRoot(component: Component, root: JPanel): Int {
+    return locationInRoot(component, root).y
+  }
+
+  private fun bottomInRoot(component: Component, root: JPanel): Int {
+    return yInRoot(component, root) + component.height
+  }
+
+  private fun yCenterInRoot(component: Component, root: JPanel): Int {
     val location = locationInRoot(component, root)
     return location.y + component.height / 2
   }
@@ -433,7 +486,7 @@ class AgentPromptPaletteViewLayoutTest {
     return buttons.map { button -> locationInRoot(button, root).y }.distinct().size
   }
 
-  private fun contextChipButtons(root: java.awt.Component): List<JButton> {
+  private fun contextChipButtons(root: Component): List<JButton> {
     return collectComponentsOfType(root, JButton::class.java).filter { button ->
       button.getClientProperty("styleTag") != null
     }

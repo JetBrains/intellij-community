@@ -3,7 +3,9 @@ package com.intellij.agent.workbench.prompt.ui.emptyState
 
 import com.intellij.agent.workbench.prompt.core.AgentPromptContainerLauncher
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextContributorBridge
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererBridge
+import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
@@ -17,15 +19,18 @@ import com.intellij.agent.workbench.prompt.ui.AgentPromptBundle
 import com.intellij.agent.workbench.prompt.ui.AgentPromptTextField
 import com.intellij.agent.workbench.prompt.ui.AgentPromptUiSessionStateService
 import com.intellij.agent.workbench.prompt.ui.PromptTargetMode
+import com.intellij.agent.workbench.prompt.ui.layoutRecursively
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.extensions.ExtensionPoint
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.impl.EditorEmptyStateComponentHost
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -40,6 +45,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.awt.Component
 import java.awt.Container
+import java.awt.Dimension
 import java.awt.event.MouseEvent
 import java.util.concurrent.TimeUnit
 import javax.swing.JComponent
@@ -147,6 +153,44 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
       finally {
         disposeComponent(component)
       }
+    }
+  }
+
+  @Test
+  fun inlinePromptEmptyStateExpandsOuterSizeWhenInitialContextIsLoaded() {
+    val contextItems = createManyContextItems()
+    val contextContributorDisposable = Disposer.newDisposable()
+    try {
+      ExtensionTestUtil.maskExtensions(
+        ExtensionPointName.create(PROMPT_CONTEXT_CONTRIBUTOR_EP),
+        listOf(testContextContributor(contextItems)),
+        contextContributorDisposable,
+      )
+
+      runInEdtAndWait {
+        val component = AgentWorkbenchInlinePromptEmptyStateComponent(ProjectManager.getInstance().defaultProject)
+        try {
+          val compactPreferredHeight = component.preferredSize.height
+
+          component.ensureContentInitialized()
+          component.size = component.preferredSize
+          layoutRecursively(component)
+
+          val rootPanel = component.components.single() as JComponent
+          val promptArea = collectComponents(component, AgentPromptTextField::class.java).single()
+          assertThat(contentAreaSize(component.preferredSize, component)).isEqualTo(rootPanel.preferredSize)
+          assertThat(contentAreaSize(component.minimumSize, component)).isEqualTo(rootPanel.minimumSize)
+          assertThat(contentAreaSize(component.maximumSize, component)).isEqualTo(rootPanel.maximumSize)
+          assertThat(component.preferredSize.height).isGreaterThan(compactPreferredHeight)
+          assertThat(promptArea.height).isGreaterThan(0)
+        }
+        finally {
+          disposeComponent(component)
+        }
+      }
+    }
+    finally {
+      Disposer.dispose(contextContributorDisposable)
     }
   }
 
@@ -285,6 +329,33 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
   private fun totalBorderInsets(component: JComponent): Int {
     val insets = component.border.getBorderInsets(component)
     return insets.top + insets.left + insets.bottom + insets.right
+  }
+
+  private fun contentAreaSize(size: Dimension, component: JComponent): Dimension {
+    val insets = component.insets
+    return Dimension(
+      size.width - insets.left - insets.right,
+      size.height - insets.top - insets.bottom,
+    )
+  }
+
+  private fun createManyContextItems(): List<AgentPromptContextItem> {
+    return (1..12).map { index ->
+      AgentPromptContextItem(
+        rendererId = "test",
+        title = "File $index",
+        body = "community/plugins/agent-workbench/prompt/ui/src/context/VeryLongContextFileName$index.kt",
+        source = "test",
+      )
+    }
+  }
+
+  private fun testContextContributor(items: List<AgentPromptContextItem>): AgentPromptContextContributorBridge {
+    return object : AgentPromptContextContributorBridge {
+      override fun collect(invocationData: AgentPromptInvocationData): List<AgentPromptContextItem> {
+        return items
+      }
+    }
   }
 
   private fun ensurePromptExtensionPoints() {

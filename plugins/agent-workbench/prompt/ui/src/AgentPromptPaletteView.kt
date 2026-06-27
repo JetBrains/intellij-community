@@ -83,6 +83,10 @@ private val PROMPT_PANEL_MINIMUM_SIZE = JBUI.size(0, 120)
 private val INLINE_PROMPT_PANEL_MINIMUM_SIZE = JBUI.size(0, 96)
 private val INLINE_PROMPT_EDITOR_PREFERRED_SIZE = JBUI.size(0, 74)
 
+private fun inlinePromptSize(baseSize: Dimension, additionalHeight: Int): Dimension {
+  return Dimension(baseSize.width, baseSize.height + additionalHeight)
+}
+
 @NonNls
 private const val HEADER_ACTIONS_PLACE = "AgentPromptPalette.Header"
 
@@ -714,14 +718,6 @@ internal fun createAgentPromptPaletteView(
     existingTaskScrollPane.isVisible = false
     footerPinToolbar.component.isVisible = false
   }
-  installComposerContextVisibilitySync(
-    contextChipsPanel = contextChipsPanel,
-    contextChipsContainer = contextChipsContainer,
-    addContextControl = addContextButton,
-    composerContextPanel = composerContextPanel,
-    layoutParent = promptPanel,
-  )
-
   val rootPanel = BorderLayoutPanel().apply {
     background = JBUI.CurrentTheme.Popup.BACKGROUND
     isOpaque = !isInlinePrompt
@@ -735,6 +731,26 @@ internal fun createAgentPromptPaletteView(
     addToCenter(promptPanel)
     addToBottom(bottomPanel)
   }
+  fun syncInlineRootSize() {
+    if (!isInlinePrompt) {
+      return
+    }
+
+    val contextHeight = if (composerContextPanel.isVisible) composerContextPanel.preferredSize.height else 0
+    rootPanel.preferredSize = inlinePromptSize(AGENT_PROMPT_INLINE_EMPTY_STATE_PREFERRED_SIZE, contextHeight)
+    rootPanel.minimumSize = inlinePromptSize(AGENT_PROMPT_INLINE_EMPTY_STATE_MINIMUM_SIZE, contextHeight)
+    rootPanel.maximumSize = inlinePromptSize(AGENT_PROMPT_INLINE_EMPTY_STATE_MAXIMUM_SIZE, contextHeight)
+    rootPanel.revalidate()
+    rootPanel.parent?.revalidate()
+  }
+  installComposerContextVisibilitySync(
+    contextChipsPanel = contextChipsPanel,
+    contextChipsContainer = contextChipsContainer,
+    addContextControl = addContextButton,
+    composerContextPanel = composerContextPanel,
+    layoutParent = promptPanel,
+    onContextLayoutChanged = ::syncInlineRootSize,
+  )
   if (isInlinePrompt) {
     installInlinePromptChromeFocusForwarding(
       rootPanel = rootPanel,
@@ -835,17 +851,19 @@ private fun installComposerContextVisibilitySync(
   addContextControl: ComposerContextActionLink,
   composerContextPanel: JPanel,
   layoutParent: JPanel,
+  onContextLayoutChanged: () -> Unit = {},
 ) {
   fun syncVisibility() {
     val hasContextChips = contextChipsPanel.componentCount > 0
     val chipsVisibilityChanged = contextChipsContainer.isVisible != hasContextChips
     val panelVisibilityChanged = composerContextPanel.isVisible != hasContextChips
-    if (!chipsVisibilityChanged && !panelVisibilityChanged) {
-      return
+    if (chipsVisibilityChanged) {
+      contextChipsContainer.isVisible = hasContextChips
     }
-
-    contextChipsContainer.isVisible = hasContextChips
-    composerContextPanel.isVisible = hasContextChips
+    if (panelVisibilityChanged) {
+      composerContextPanel.isVisible = hasContextChips
+    }
+    onContextLayoutChanged()
     layoutParent.revalidate()
     layoutParent.repaint()
   }

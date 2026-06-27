@@ -263,6 +263,7 @@ internal fun createAgentPromptPaletteContent(
     val suggestions = AgentPromptSuggestionsComponent { candidate -> sessionControllerRef?.applySuggestedPrompt(candidate) }
     val contextChips = AgentPromptContextChipsComponent(
       maxVisibleRows = if (hostMode.isInlinePrompt) 2 else null,
+      initialAvailableWidth = if (hostMode.isInlinePrompt) AGENT_PROMPT_INLINE_EMPTY_STATE_PREFERRED_SIZE.width else null,
     ) { entry -> sessionControllerRef?.removeContextEntry(entry) }
     val view = createAgentPromptPaletteView(
       promptArea = promptArea,

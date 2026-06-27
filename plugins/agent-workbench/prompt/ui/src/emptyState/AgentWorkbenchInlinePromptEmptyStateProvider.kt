@@ -34,6 +34,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
+import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.RenderingHints
@@ -151,6 +152,7 @@ class AgentWorkbenchInlinePromptEmptyStateComponent internal constructor(
         closeHost = ::handleSubmitSucceeded,
         isHostActive = { isShowing },
         revalidateHost = {
+          promptContent?.let(::syncInlineContentSize)
           revalidate()
           repaint()
         },
@@ -160,6 +162,7 @@ class AgentWorkbenchInlinePromptEmptyStateComponent internal constructor(
       removeAll()
       add(promptContent.rootPanel, BorderLayout.CENTER)
       promptContent.sessionController.initialize(initialLaunchProfileId = configuration.initialLaunchProfileId)
+      syncInlineContentSize(promptContent)
       promptContent.sessionController.installHandlers()
       content = promptContent
       revalidate()
@@ -216,6 +219,20 @@ class AgentWorkbenchInlinePromptEmptyStateComponent internal constructor(
     }
     promptContent.promptArea.editor?.contentComponent?.accessibleContext?.accessibleName = accessibleName
     promptContent.promptArea.editor?.contentComponent?.accessibleContext?.accessibleDescription = accessibleDescription
+  }
+
+  private fun syncInlineContentSize(promptContent: AgentPromptPaletteContent) {
+    preferredSize = contentHostSize(promptContent.rootPanel.preferredSize)
+    minimumSize = contentHostSize(promptContent.rootPanel.minimumSize)
+    maximumSize = contentHostSize(promptContent.rootPanel.maximumSize)
+  }
+
+  private fun contentHostSize(contentSize: Dimension): Dimension {
+    val borderInsets = insets
+    return Dimension(
+      contentSize.width + borderInsets.left + borderInsets.right,
+      contentSize.height + borderInsets.top + borderInsets.bottom,
+    )
   }
 
   private fun handleSubmitSucceeded() {
