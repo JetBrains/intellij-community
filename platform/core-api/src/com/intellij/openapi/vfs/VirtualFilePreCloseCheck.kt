@@ -15,4 +15,10 @@ interface VirtualFilePreCloseCheck {
    * @return true if the file can be closed, otherwise false.
    */
   fun canCloseFile(file: VirtualFile): Boolean
+
+  /**
+   * This method can handle some logic to prevent several files from closing e.g. a single confirmation dialog.
+   * @return true if all files can be closed, otherwise false.
+   */
+  fun canCloseFiles(files: Collection<VirtualFile>): Boolean = files.all(::canCloseFile)
 }
