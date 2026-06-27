@@ -1519,4 +1519,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.java.byteCodeViewer.tests",
   "intellij.java.guiForms.compiler.tests",
   "intellij.java.i18n.tests",
+  "intellij.java.jshell.protocol.tests",
 )
