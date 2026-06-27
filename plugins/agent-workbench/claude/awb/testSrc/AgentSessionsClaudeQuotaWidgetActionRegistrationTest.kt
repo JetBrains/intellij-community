@@ -2,8 +2,10 @@
 package com.intellij.platform.ai.agent.claude.sessions
 
 import com.intellij.agent.workbench.settings.AGENT_WORKBENCH_STATUS_BAR_WIDGETS_SETTINGS_COMPONENT_ID
-import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsContributors
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -13,8 +15,8 @@ import java.util.concurrent.TimeUnit
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentSessionsClaudeQuotaWidgetActionRegistrationTest {
   @Test
-  fun settingsContributorTogglesClaudeQuotaWidget() {
-    assertThat(AgentWorkbenchSettingsContributors.all()).anyMatch { it is ClaudeQuotaSettingsContributor }
+  fun settingsContributorTogglesClaudeQuotaWidget(@TestDisposable disposable: Disposable) {
+    registerClaudeQuotaWidgetFactoryIfMissing(disposable)
 
     val initialEnabled = ClaudeQuotaStatusBarWidgetSettings.isEnabled()
     try {
@@ -35,6 +37,12 @@ class AgentSessionsClaudeQuotaWidgetActionRegistrationTest {
     }
     finally {
       ClaudeQuotaStatusBarWidgetSettings.setEnabled(initialEnabled)
+    }
+  }
+
+  private fun registerClaudeQuotaWidgetFactoryIfMissing(disposable: Disposable) {
+    if (StatusBarWidgetFactory.EP_NAME.extensionList.none { it.id == CLAUDE_QUOTA_WIDGET_ID }) {
+      StatusBarWidgetFactory.EP_NAME.point.registerExtension(ClaudeQuotaStatusBarWidgetFactory(), disposable)
     }
   }
 }

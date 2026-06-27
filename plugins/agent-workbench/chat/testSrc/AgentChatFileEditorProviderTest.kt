@@ -40,6 +40,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.IconManager
 import com.intellij.util.ui.EmptyIcon
@@ -564,20 +565,20 @@ class AgentChatFileEditorProviderTest {
       )
 
       AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
-        val panel = AgentChatThreadOutlinePanel(project, startSelectionSubscription = false)
+        val panel = createThreadOutlinePanel(project)
         try {
-          panel.selectFileForTests(file)
-          assertThat(panel.modelForTests().singleNode().location).isEqualTo(AgentChatBundle.message("chat.thread.outline.loading"))
+          panel.selectFileForTestsOnEdt(file)
+          assertThat(panel.modelForTestsOnEdt().singleNode().location).isEqualTo(AgentChatBundle.message("chat.thread.outline.loading"))
           waitForCondition { loadCalls == 1 }
 
           outlineLoadGate.complete(Unit)
           val providerRootId = AgentChatThreadOutlineId.Item("0")
           waitForCondition {
-            panel.modelForTests().entriesById[providerRootId]?.childIds ==
+            panel.modelForTestsOnEdt().entriesById[providerRootId]?.childIds ==
               listOf(AgentChatThreadOutlineId.Item("0/0"), AgentChatThreadOutlineId.Item("0/1"))
           }
 
-          val model = panel.modelForTests()
+          val model = panel.modelForTestsOnEdt()
           assertThat(model.autoExpandIds).containsExactly(providerRootId)
           assertThat(model.entriesById.getValue(providerRootId).childIds)
             .containsExactly(AgentChatThreadOutlineId.Item("0/0"), AgentChatThreadOutlineId.Item("0/1"))
@@ -642,10 +643,10 @@ class AgentChatFileEditorProviderTest {
       )
 
       AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
-        val panel = AgentChatThreadOutlinePanel(project, startSelectionSubscription = false)
+        val panel = createThreadOutlinePanel(project)
         try {
-          panel.selectFileForTests(file)
-          waitForCondition { panel.modelForTests().rootNodeTitles() == listOf("user: Initial prompt") }
+          panel.selectFileForTestsOnEdt(file)
+          waitForCondition { panel.modelForTestsOnEdt().rootNodeTitles() == listOf("user: Initial prompt") }
           assertThat(loadCalls.get()).isEqualTo(1)
           waitForCondition { updateEvents.subscriptionCount.value > 0 }
 
@@ -658,7 +659,7 @@ class AgentChatFileEditorProviderTest {
           )
           assertThat(updateEvents.tryEmit(testUpdateEvent())).isTrue()
 
-          waitForCondition { panel.modelForTests().rootNodeTitles() == listOf("user: Initial prompt", "assistant: Assistant reply") }
+          waitForCondition { panel.modelForTestsOnEdt().rootNodeTitles() == listOf("user: Initial prompt", "assistant: Assistant reply") }
           assertThat(loadCalls.get()).isEqualTo(2)
         }
         finally {
@@ -701,10 +702,10 @@ class AgentChatFileEditorProviderTest {
       )
 
       AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
-        val panel = AgentChatThreadOutlinePanel(project, startSelectionSubscription = false)
+        val panel = createThreadOutlinePanel(project)
         try {
-          panel.selectFileForTests(file)
-          assertThat(panel.modelForTests().singleNode().location)
+          panel.selectFileForTestsOnEdt(file)
+          assertThat(panel.modelForTestsOnEdt().singleNode().location)
             .isEqualTo(AgentChatBundle.message("chat.thread.outline.unavailable"))
           assertThat(loadCalls.get()).isZero()
 
@@ -723,7 +724,7 @@ class AgentChatFileEditorProviderTest {
               projectPath = "/work/project-a",
               threadId = "thread-rebound",
             )
-            panel.modelForTests().rootNodeTitles() == listOf("user: Prompt after rebind")
+            panel.modelForTestsOnEdt().rootNodeTitles() == listOf("user: Prompt after rebind")
           }
           assertThat(loadCalls.get()).isGreaterThanOrEqualTo(1)
         }
@@ -765,12 +766,13 @@ class AgentChatFileEditorProviderTest {
         )
 
         AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
-          val panel = AgentChatThreadOutlinePanel(project, startSelectionSubscription = false)
+          val panel = createThreadOutlinePanel(project)
           try {
-            panel.selectFileForTests(file)
-            waitForCondition { panel.modelForTests().singleNode().location == expectedStatus }
-            assertThat(panel.modelForTests().rootIds).hasSize(1)
-            assertThat(panel.modelForTests().entriesById.getValue(panel.modelForTests().rootIds.single()).childIds).isEmpty()
+            panel.selectFileForTestsOnEdt(file)
+            waitForCondition { panel.modelForTestsOnEdt().singleNode().location == expectedStatus }
+            val model = panel.modelForTestsOnEdt()
+            assertThat(model.rootIds).hasSize(1)
+            assertThat(model.entriesById.getValue(model.rootIds.single()).childIds).isEmpty()
           }
           finally {
             disposePanel(panel)
@@ -824,12 +826,12 @@ class AgentChatFileEditorProviderTest {
       )
 
       AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
-        val panel = AgentChatThreadOutlinePanel(project, startSelectionSubscription = false)
+        val panel = createThreadOutlinePanel(project)
         try {
-          panel.selectFileForTests(file)
-          waitForCondition { panel.modelForTests().rootNodeTitles() == listOf("user: Open entry") }
+          panel.selectFileForTestsOnEdt(file)
+          waitForCondition { panel.modelForTestsOnEdt().rootNodeTitles() == listOf("user: Open entry") }
 
-          assertThat(panel.navigateOutlineIdForTests(AgentChatThreadOutlineId.Item("0"))).isTrue()
+          assertThat(panel.navigateOutlineIdForTestsOnEdt(AgentChatThreadOutlineId.Item("0"))).isTrue()
 
           assertThat(navigationCalls.poll(5, TimeUnit.SECONDS))
             .isEqualTo(OutlineNavigationCall("/work/project-a", "thread-nav", "entry-nav", null, file.tabKey))
@@ -844,9 +846,9 @@ class AgentChatFileEditorProviderTest {
   @Test
   fun threadOutlinePopupHasKeyboardActivation() {
     val project = ProjectManager.getInstance().defaultProject
-    val panel = AgentChatThreadOutlinePanel(project, startSelectionSubscription = false)
+    val panel = createThreadOutlinePanel(project)
     try {
-      assertThat(panel.hasPopupKeyboardActivationForTests()).isTrue()
+      assertThat(panel.hasPopupKeyboardActivationForTestsOnEdt()).isTrue()
     }
     finally {
       disposePanel(panel)
@@ -970,18 +972,18 @@ class AgentChatFileEditorProviderTest {
       )
 
       AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
-        val panel = AgentChatThreadOutlinePanel(project, startSelectionSubscription = false)
+        val panel = createThreadOutlinePanel(project)
         try {
-          panel.selectFileForTests(file)
-          waitForCondition { panel.modelForTests().rootNodeTitles() == listOf("user: Fork from here") }
+          panel.selectFileForTestsOnEdt(file)
+          waitForCondition { panel.modelForTestsOnEdt().rootNodeTitles() == listOf("user: Fork from here") }
           waitForCondition { updateEvents.subscriptionCount.value > 0 }
           val outlineId = AgentChatThreadOutlineId.Item("0")
-          assertThat(panel.canShowPopupForOutlineIdForTests(outlineId)).isFalse()
+          assertThat(panel.canShowPopupForOutlineIdForTestsOnEdt(outlineId)).isFalse()
 
           liveForkAvailable = true
           assertThat(updateEvents.tryEmit(testUpdateEvent(path = "/work/project-a", threadId = "thread-fork-refresh"))).isTrue()
 
-          waitForCondition { panel.canShowPopupForOutlineIdForTests(outlineId) }
+          waitForCondition { panel.canShowPopupForOutlineIdForTestsOnEdt(outlineId) }
         }
         finally {
           disposePanel(panel)
@@ -1524,6 +1526,32 @@ private fun AgentChatThreadOutlineModel.rootNodeTitles(): List<String> {
 
 private fun AgentChatThreadOutlineModel.singleNode(): AgentChatThreadOutlineNode {
   return entriesById.getValue(rootIds.single()).node
+}
+
+private fun createThreadOutlinePanel(project: Project): AgentChatThreadOutlinePanel {
+  return runInEdtAndGet { AgentChatThreadOutlinePanel(project, startSelectionSubscription = false) }
+}
+
+private fun AgentChatThreadOutlinePanel.selectFileForTestsOnEdt(file: AgentChatVirtualFile?) {
+  runInEdtAndWait {
+    selectFileForTests(file)
+  }
+}
+
+private fun AgentChatThreadOutlinePanel.modelForTestsOnEdt(): AgentChatThreadOutlineModel {
+  return runInEdtAndGet { modelForTests() }
+}
+
+private fun AgentChatThreadOutlinePanel.navigateOutlineIdForTestsOnEdt(id: AgentChatThreadOutlineId): Boolean {
+  return runInEdtAndGet { navigateOutlineIdForTests(id) }
+}
+
+private fun AgentChatThreadOutlinePanel.canShowPopupForOutlineIdForTestsOnEdt(id: AgentChatThreadOutlineId): Boolean {
+  return runInEdtAndGet { canShowPopupForOutlineIdForTests(id) }
+}
+
+private fun AgentChatThreadOutlinePanel.hasPopupKeyboardActivationForTestsOnEdt(): Boolean {
+  return runInEdtAndGet { hasPopupKeyboardActivationForTests() }
 }
 
 private fun disposePanel(panel: AgentChatThreadOutlinePanel) {
