@@ -415,8 +415,7 @@ abstract class KotlinCommonBlock(
             val parentType = childParent.elementType
 
             if (parentType === VALUE_PARAMETER_LIST || parentType === VALUE_ARGUMENT_LIST) {
-                val prev = getPrevWithoutWhitespace(child)
-                if (childType === RPAR && (prev == null || prev.elementType !== COMMA || !hasDoubleLineBreakBefore(child))) {
+                if (childType === RPAR) {
                     return Indent.getNoneIndent()
                 }
 
@@ -481,20 +480,27 @@ abstract class KotlinCommonBlock(
 
             VALUE_PARAMETER_LIST, VALUE_ARGUMENT_LIST -> {
                 val subBlocks = getSubBlocks()
+                val parameterIndent =
+                    if ((type == VALUE_PARAMETER_LIST && !settings.kotlinCustomSettings.CONTINUATION_INDENT_IN_PARAMETER_LISTS) ||
+                        (type == VALUE_ARGUMENT_LIST && !settings.kotlinCustomSettings.CONTINUATION_INDENT_IN_ARGUMENT_LISTS)
+                    ) {
+                        Indent.getNormalIndent()
+                    } else {
+                        Indent.getContinuationIndent()
+                    }
+
                 if (newChildIndex != 1 && newChildIndex != 0 && newChildIndex < subBlocks.size) {
                     val block = subBlocks[newChildIndex]
-                    ChildAttributes(block.indent, block.alignment)
+                    if (block is ASTBlock && block.node?.elementType == RPAR) {
+                        // A new line inserted right before the closing bracket is a new parameter/argument position,
+                        // so it gets parameter-level indent and alignment instead of inheriting the un-indented bracket block.
+                        val prevBlock = subBlocks.getOrNull(newChildIndex - 1)
+                        ChildAttributes(parameterIndent, prevBlock?.alignment)
+                    } else {
+                        ChildAttributes(block.indent, block.alignment)
+                    }
                 } else {
-                    val indent =
-                        if ((type == VALUE_PARAMETER_LIST && !settings.kotlinCustomSettings.CONTINUATION_INDENT_IN_PARAMETER_LISTS) ||
-                            (type == VALUE_ARGUMENT_LIST && !settings.kotlinCustomSettings.CONTINUATION_INDENT_IN_ARGUMENT_LISTS)
-                        ) {
-                            Indent.getNormalIndent()
-                        } else {
-                            Indent.getContinuationIndent()
-                        }
-
-                    ChildAttributes(indent, null)
+                    ChildAttributes(parameterIndent, null)
                 }
             }
 
@@ -1051,12 +1057,6 @@ private fun hasLineBreakBefore(node: ASTNode): Boolean {
     return prevSibling?.elementType == TokenType.WHITE_SPACE && prevSibling?.textContains('\n') == true
 }
 
-private fun hasDoubleLineBreakBefore(node: ASTNode): Boolean {
-    val prevSibling = node.leaves(false).firstOrNull() ?: return false
-
-    return prevSibling.text.count { it == '\n' } >= 2
-}
-
 fun NodeIndentStrategy.PositionStrategy.continuationIf(
     option: (KotlinCodeStyleSettings) -> Boolean,
     indentFirst: Boolean = false,
@@ -1316,14 +1316,6 @@ private fun getAlignmentForChildInParenthesis(
     return object : CommonAlignmentStrategy() {
         override fun getAlignment(node: ASTNode): Alignment? {
             val childNodeType = node.elementType
-
-            val prev = getPrevWithoutWhitespace(node)
-            val hasTrailingComma = childNodeType === closeBracket && prev?.elementType == COMMA
-
-            if (hasTrailingComma && hasDoubleLineBreakBefore(node)) {
-                // Prefer align to parameters on code with trailing comma (case of line break after comma, when before closing bracket there was a line break)
-                return parameterAlignment
-            }
 
             if (childNodeType === openBracket || childNodeType === closeBracket) {
                 return bracketsAlignment

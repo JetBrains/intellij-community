@@ -564,6 +564,11 @@ public abstract class K2FormatterTestGenerated extends AbstractK2FormatterTest {
                 public void testParameterListWrapAsNeeded() throws Exception {
                     runTest("../../idea/tests/testData/formatter/trailingComma/valueParameters/ParameterListWrapAsNeeded.after.kt");
                 }
+
+                @TestMetadata("RightParenthesisOnNewLine.after.kt")
+                public void testRightParenthesisOnNewLine() throws Exception {
+                    runTest("../../idea/tests/testData/formatter/trailingComma/valueParameters/RightParenthesisOnNewLine.after.kt");
+                }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
