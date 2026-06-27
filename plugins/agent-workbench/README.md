@@ -175,6 +175,7 @@ Detailed requirements and testing contracts are documented in `spec/`.
 - [Agent Main Toolbar Activity](spec/frame/agent-main-toolbar-activity.spec.md) - Global Agent activity counters shown in source-project main toolbars.
 - [Codex Sessions Rollout Source](spec/sessions/agent-sessions-codex-rollout-source.spec.md) - Rollout-default Codex discovery, watcher semantics, backend selector, and app-server write interoperability.
 - [Agent Sessions New-Session Actions](spec/actions/new-thread.spec.md) - New-thread UX, provider/YOLO selection, creation dedup, pending-thread rebinding.
+- [Global Prompt Composer](spec/actions/global-prompt-composer.spec.md) - Prompt-as-task-composer mental model, context/text/tray ownership, and layout lane contract.
 - [Global Prompt Entry](spec/actions/global-prompt-entry.spec.md) - Global shortcut entrypoint, centered popup UX, context capture, and launch bridge flow.
 - [Global Prompt Suggestions](spec/actions/global-prompt-suggestions.spec.md) - Context-derived seed prompts, prompt-panel suggestion UI, async refresh semantics, and Codex polishing.
 - [Testing Contract](spec/sessions/agent-sessions-testing.spec.md) - Coverage ownership matrix and required contract test suites.

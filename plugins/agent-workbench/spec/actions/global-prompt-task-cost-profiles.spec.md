@@ -36,7 +36,7 @@ Task-cost profiles make the global prompt ready to send while still letting user
 - This spec does not require renaming the existing persisted `activeLaunchProfileId` field; it may remain the stored default profile id for compatibility.
 
 ## Requirements
-- The prompt composer must render selected context as attachment cards above the editable prompt text, while the bottom tray places Add Context on the left as a prompt-composition action and exposes one right-side launch-settings affordance for both popup and inline prompt surfaces. Context cards, prompt text, and left tray actions must share one leading composer-owned content lane, while launch settings are right-aligned in that same lane; the embedded prompt editor must not add hidden horizontal insets to create that alignment. The launch-settings affordance must show the selected provider icon, including the red YOLO/Brave badge for YOLO profiles, plus the compact selected profile name or generated profile name, and open one popup for profile choice, per-task tuning, and profile management. Default/save/update actions stay visible inline next to the launch-settings affordance. Built-in provider-backed profiles use compact mode labels, such as `Default`, `Full Auto`, `Skip Permissions`, or `Brave Mode`, to avoid repeating provider names. User profiles show their saved profile name, and unmatched edited controls show a generated compact name, such as `High` or `GPT-5 High`.
+- The prompt composer exposes the launch-settings affordance in the bottom tray location specified by `global-prompt-composer.spec.md`. The affordance must show the selected provider icon, including the red YOLO/Brave badge for YOLO profiles, plus the compact selected profile name or generated profile name, and open one popup for profile choice, per-task tuning, and profile management. Default/save/update actions stay visible inline next to the launch-settings affordance. Built-in provider-backed profiles use compact mode labels, such as `Default`, `Full Auto`, `Skip Permissions`, or `Brave Mode`, to avoid repeating provider names. User profiles show their saved profile name, and unmatched edited controls show a generated compact name, such as `High` or `GPT-5 High`.
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteViewStructureTest.kt
 
 - The prompt must restore the stored default profile on open when that profile is still applicable. If the default is unavailable, the prompt may fall back to the provider-list default without writing a replacement default.
@@ -92,4 +92,5 @@ Task-cost profiles make the global prompt ready to send while still letting user
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionUiPreferencesStateServiceTest`
 
 ## References
+- `global-prompt-composer.spec.md`
 - `global-prompt-entry.spec.md`
