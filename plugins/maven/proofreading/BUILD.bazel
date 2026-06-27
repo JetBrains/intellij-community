@@ -1,6 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "proofreading-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":proofreading-tests_test_lib"],
+)
+
+### skip generation section `test intellij.maven.proofreading.tests`
+
 ### auto-generated section `build intellij.maven.proofreading` start
 
 jvm_library(
@@ -104,6 +113,8 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//plugins/maven",
         "//plugins/maven:maven_test_lib",
+        "//plugins/maven/plugin",
+        "//plugins/maven/plugin:plugin_test_lib",
         "//xml/xml-psi-api:psi",
         "//xml/xml-psi-api:psi_test_lib",
         "//platform/testFramework",
@@ -124,11 +135,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.maven.proofreading.tests` end
-
-### auto-generated section `test intellij.maven.proofreading.tests` start
-
-jps_test(
-    name = "proofreading-tests_test",
-    runtime_deps = [":proofreading-tests_test_lib"],
-)
-### auto-generated section `test intellij.maven.proofreading.tests` end
