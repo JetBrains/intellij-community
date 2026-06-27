@@ -1,7 +1,12 @@
 package com.intellij.externalSystem
 
 import com.intellij.externalSystem.DependencyModifierService.Companion.getInstance
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.fixtures.MavenImportingTestFixture
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.projectRoot
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.io.FileUtil
@@ -14,6 +19,10 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.VfsTestUtil
 import junit.framework.AssertionFailedError
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.TestInfo
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import java.io.File
@@ -27,33 +36,39 @@ import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.Arrays
 
-abstract class MavenDependencyUpdaterTestBase : MavenMultiVersionImportingTestCase() {
+abstract class MavenDependencyUpdaterTestBase(mavenVersion: String, modelVersion: String) {
+  protected val maven: MavenImportingTestFixture by mavenImportingFixture(mavenVersion = mavenVersion, modelVersion = modelVersion)
+
+  protected val project: Project
+    get() = maven.project
+
   private var myTestDataDir: File? = null
   private var myProjectDataDir: File? = null
   protected var myExpectedDataDir: File? = null
 
   protected var myModifierService: DependencyModifierService? = null
 
-  public override fun setUp() = runBlocking {
-    super.setUp()
+  @BeforeEach
+  fun setUpBase(testInfo: TestInfo) = runBlocking {
+    val testName = UsefulTestCase.getTestName(testInfo.testMethod.get().name, true)
     myTestDataDir = PathManagerEx.findFileUnderCommunityHome("platform/external-system-api/dependency-updater/testData/maven")
     assertTrue(myTestDataDir!!.isDirectory)
-    myProjectDataDir = File(File(myTestDataDir, "projects"), getTestName(true))
-    myExpectedDataDir = File(File(myTestDataDir, "expected"), getTestName(true))
+    myProjectDataDir = File(File(myTestDataDir, "projects"), testName)
+    myExpectedDataDir = File(File(myTestDataDir, "expected"), testName)
     myModifierService = getInstance(project)
     prepareAndImport()
   }
 
   private suspend fun prepareAndImport() {
-    createProjectPom("")
-    FileUtil.copyDir(myProjectDataDir!!, projectRoot.toNioPath().toFile())
-    projectRoot.refresh(false, true)
-    importProjectAsync()
+    maven.createProjectPom("")
+    FileUtil.copyDir(myProjectDataDir!!, maven.projectRoot.toNioPath().toFile())
+    maven.projectRoot.refresh(false, true)
+    maven.importProjectAsync()
   }
 
   protected suspend fun findDependencyTag(group: String, artifact: String, version: String): XmlTag? {
     return readAction {
-      val pom = PsiUtilCore.getPsiFile(project, projectPom)
+      val pom = PsiUtilCore.getPsiFile(project, maven.projectPom)
       findDependencyTag(group, artifact, version, pom)
     }
   }
@@ -77,9 +92,9 @@ abstract class MavenDependencyUpdaterTestBase : MavenMultiVersionImportingTestCa
       override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
         val expectedFile = file.toFile()
         val relativePath = myExpectedDataDir!!.toPath().relativize(file)
-        val actual = projectRoot.findFileByRelativePath(FileUtil.normalize(relativePath.toString()))
+        val actual = maven.projectRoot.findFileByRelativePath(FileUtil.normalize(relativePath.toString()))
         if (actual == null) {
-          fail("File $file not found in actual dir")
+          fail<Nothing>("File $file not found in actual dir")
         }
         val value = String(actual!!.contentsToByteArray(), actual.charset)
         assertFilesAreIdenticalLineByLineIgnoringIndent(expectedFile.path, value)
