@@ -26,6 +26,8 @@ class TerminalAgentSessionProviderDescriptorTest {
       assertThat(descriptor.supportedLaunchModes).containsExactly(AgentSessionLaunchMode.STANDARD)
       assertThat(descriptor.icon).isNotNull
       assertThat(descriptor.isCliAvailable()).isTrue()
+      assertThat(descriptor.supportsArchiveThread).isTrue()
+      assertThat(descriptor.archiveOnLastEditorClose).isTrue()
       assertThat(launchSpec.command).isEmpty()
       assertThat(launchSpec.useTerminalDefaultShell).isTrue()
       assertThat(launchSpec.preallocatedSessionId).isEqualTo("terminal-session-id")

@@ -59,6 +59,9 @@ internal class TerminalAgentSessionProviderDescriptor(
   override val supportsArchiveThread: Boolean
     get() = true
 
+  override val archiveOnLastEditorClose: Boolean
+    get() = true
+
   override val supportsUnarchiveThread: Boolean
     get() = true
 
