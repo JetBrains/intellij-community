@@ -50,6 +50,7 @@ import java.awt.Container
 import java.awt.Cursor
 import java.awt.Dimension
 import java.awt.FlowLayout
+import java.awt.Graphics
 import java.awt.event.ContainerAdapter
 import java.awt.event.ContainerEvent
 import java.awt.event.MouseAdapter
@@ -66,7 +67,7 @@ import javax.swing.ScrollPaneConstants
 import javax.swing.SwingConstants
 
 internal val AGENT_PROMPT_PALETTE_PREFERRED_SIZE: Dimension
-  get() = JBUI.size(680, 380)
+  get() = JBUI.size(680, 400)
 internal val AGENT_PROMPT_PALETTE_MINIMUM_SIZE: Dimension
   get() = JBUI.size(520, 260)
 internal val AGENT_PROMPT_INLINE_EMPTY_STATE_PREFERRED_SIZE: Dimension
@@ -193,7 +194,6 @@ internal class AgentPromptHeaderControls(
   @JvmField val toolbarComponent: JComponent,
   @JvmField val containerModeAction: AgentPromptHeaderCheckBoxAction,
   private val promptLibraryAction: AgentPromptToolbarIconAction,
-  private val profileAction: AgentPromptToolbarProfileAction,
 ) {
   private var providerOptionsVisible = true
 
@@ -235,7 +235,6 @@ internal class AgentPromptHeaderControls(
     rootGroup.add(containerModeAction)
     providerOptionActions.forEach(rootGroup::add)
     rootGroup.add(promptLibraryAction)
-    rootGroup.add(profileAction)
     updateActions()
   }
 }
@@ -257,6 +256,13 @@ internal class AgentPromptToolbarIconToggleAction(
 
 internal class HeaderActionLink(text: @Nls String) : ActionLink(text) {
   var onVisibilityChanged: (() -> Unit)? = null
+  var onPresentationChanged: (() -> Unit)? = null
+  var trailingIcon: Icon? = null
+    set(value) {
+      field = value
+      revalidate()
+      repaint()
+    }
 
   override fun setVisible(aFlag: Boolean) {
     val visibilityChanged = isVisible != aFlag
@@ -264,6 +270,41 @@ internal class HeaderActionLink(text: @Nls String) : ActionLink(text) {
     if (visibilityChanged) {
       onVisibilityChanged?.invoke()
     }
+  }
+
+  override fun setText(text: @Nls String?) {
+    val textChanged = this.text != text
+    super.setText(text)
+    if (textChanged) {
+      onPresentationChanged?.invoke()
+    }
+  }
+
+  override fun getPreferredSize(): Dimension {
+    return super.getPreferredSize().withTrailingIconWidth()
+  }
+
+  override fun getMinimumSize(): Dimension {
+    return super.getMinimumSize().withTrailingIconWidth()
+  }
+
+  override fun paintComponent(g: Graphics) {
+    super.paintComponent(g)
+    val icon = trailingIcon ?: return
+    val x = if (componentOrientation.isLeftToRight) {
+      width - insets.right - icon.iconWidth
+    }
+    else {
+      insets.left
+    }
+    val y = (height - icon.iconHeight) / 2
+    icon.paintIcon(this, g, x, y)
+  }
+
+  private fun Dimension.withTrailingIconWidth(): Dimension {
+    val icon = trailingIcon ?: return this
+    width += icon.iconWidth + iconTextGap
+    return this
   }
 }
 
@@ -284,10 +325,11 @@ internal class AgentPromptToolbarProfileAction(
   @JvmField
   val link: HeaderActionLink = HeaderActionLink(initialText).apply {
     autoHideOnDisable = false
-    withFont(JBUI.Fonts.smallFont())
+    withFont(JBUI.Fonts.smallFont().asPlain())
     foreground = UIUtil.getContextHelpForeground()
     border = JBUI.Borders.empty()
     setIcon(initialIcon, false)
+    trailingIcon = AllIcons.General.LinkDropTriangle
     setToolTipText(HtmlChunk.text(initialDescription))
     accessibleContext.accessibleName = initialText
     accessibleContext.accessibleDescription = initialDescription
@@ -424,10 +466,21 @@ internal fun createAgentPromptPaletteView(
 
   val profileSelectorAction = AgentPromptToolbarProfileAction(
     initialText = AgentPromptBundle.message("popup.profile.header.standard"),
-    initialDescription = AgentPromptBundle.message("popup.profile.tooltip"),
+    initialDescription = AgentPromptBundle.message("popup.launch.settings.tooltip"),
     initialIcon = AllIcons.Toolwindows.ToolWindowMessages,
   )
   val launchProfileLink = profileSelectorAction.link
+
+  val launchTuningSummaryLink = HeaderActionLink(AgentPromptBundle.message("popup.generation.summary.link")).apply {
+    autoHideOnDisable = false
+    setDropDownLinkIcon()
+    withFont(JBUI.Fonts.smallFont())
+    foreground = UIUtil.getContextHelpForeground()
+    border = JBUI.Borders.empty()
+    setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.generation.summary.tooltip")))
+    accessibleContext.accessibleName = AgentPromptBundle.message("popup.generation.summary.accessible.name")
+    isVisible = false
+  }
 
   val promptLibraryAction = AgentPromptToolbarIconAction(
     text = AgentPromptBundle.message("popup.prompt.library.tooltip"),
@@ -459,12 +512,10 @@ internal fun createAgentPromptPaletteView(
     toolbarComponent = headerToolbar.component,
     containerModeAction = containerModeAction,
     promptLibraryAction = promptLibraryAction,
-    profileAction = profileSelectorAction,
   )
-  launchProfileLink.onVisibilityChanged = headerControls::updateActions
-  profileSelectorAction.onPresentationChanged = headerControls::updateActions
   if (isInlinePrompt) {
     launchProfileLink.isFocusable = false
+    launchTuningSummaryLink.isFocusable = false
     promptLibraryIconLabel.isFocusable = false
     headerToolbar.component.isFocusable = false
   }
@@ -552,12 +603,14 @@ internal fun createAgentPromptPaletteView(
 
   val addContextButton = ComposerContextActionLink(AgentPromptBundle.message("popup.context.add")).apply {
     autoHideOnDisable = false
-    isFocusable = false
     setDropDownLinkIcon()
     withFont(JBUI.Fonts.smallFont())
     foreground = UIUtil.getContextHelpForeground()
     border = JBUI.Borders.empty()
     DialogUtil.registerMnemonic(this)
+  }
+  if (isInlinePrompt) {
+    addContextButton.isFocusable = false
   }
 
   val modelSelectorLink = ActionLink(AgentPromptBundle.message("popup.generation.model.auto")).apply {
@@ -568,6 +621,7 @@ internal fun createAgentPromptPaletteView(
     border = JBUI.Borders.empty()
     setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.generation.model.tooltip")))
     accessibleContext.accessibleName = AgentPromptBundle.message("popup.generation.model.auto")
+    isVisible = false
   }
 
   val reasoningEffortLink = ActionLink(AgentPromptBundle.message("popup.generation.reasoning.auto")).apply {
@@ -578,6 +632,7 @@ internal fun createAgentPromptPaletteView(
     border = JBUI.Borders.empty()
     setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.generation.reasoning.tooltip")))
     accessibleContext.accessibleName = AgentPromptBundle.message("popup.generation.reasoning.accessible.name")
+    isVisible = false
   }
 
   val planReasoningEffortLink = ActionLink(AgentPromptBundle.message("popup.generation.plan.reasoning.same")).apply {
@@ -588,15 +643,7 @@ internal fun createAgentPromptPaletteView(
     border = JBUI.Borders.empty()
     setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.generation.plan.reasoning.tooltip")))
     accessibleContext.accessibleName = AgentPromptBundle.message("popup.generation.plan.reasoning.accessible.name")
-  }
-  val launchTuningSummaryLink = ActionLink(AgentPromptBundle.message("popup.generation.summary.initial")).apply {
-    autoHideOnDisable = false
-    setDropDownLinkIcon()
-    withFont(JBUI.Fonts.smallFont())
-    foreground = UIUtil.getContextHelpForeground()
-    border = JBUI.Borders.empty()
-    setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.generation.summary.tooltip")))
-    accessibleContext.accessibleName = AgentPromptBundle.message("popup.generation.summary.accessible.name")
+    isVisible = false
   }
   val defaultProfileActionControl = AgentPromptDefaultProfileActionControl()
 
@@ -607,9 +654,6 @@ internal fun createAgentPromptPaletteView(
   val composerContextActionsPanel = JPanel(BorderLayout()).apply {
     isOpaque = false
     border = JBUI.Borders.emptyTop(if (isInlinePrompt) 0 else 2)
-    if (!isInlinePrompt) {
-      add(addContextButton, BorderLayout.WEST)
-    }
   }
   val composerContextPanel = BorderLayoutPanel().apply {
     isOpaque = false
@@ -620,14 +664,11 @@ internal fun createAgentPromptPaletteView(
 
   val generationSettingsControlsPanel = JPanel(FlowLayout(FlowLayout.LEFT, if (isInlinePrompt) 6 else 8, 0)).apply {
     isOpaque = false
-    if (isInlinePrompt) {
-      add(addContextButton)
-    }
+    add(addContextButton)
   }
   val generationSettingsActionsPanel = JPanel(FlowLayout(FlowLayout.RIGHT, if (isInlinePrompt) 6 else 8, 0)).apply {
     isOpaque = false
-    add(launchTuningSummaryLink)
-    add(defaultProfileActionControl.component)
+    add(launchProfileLink)
   }
   val generationSettingsPanel = JPanel(BorderLayout()).apply {
     isOpaque = false
@@ -677,7 +718,6 @@ internal fun createAgentPromptPaletteView(
     addContextControl = addContextButton,
     composerContextPanel = composerContextPanel,
     layoutParent = promptPanel,
-    showAddContextRowWithoutChips = !isInlinePrompt,
   )
 
   val rootPanel = BorderLayoutPanel().apply {
@@ -793,19 +833,17 @@ private fun installComposerContextVisibilitySync(
   addContextControl: ComposerContextActionLink,
   composerContextPanel: JPanel,
   layoutParent: JPanel,
-  showAddContextRowWithoutChips: Boolean,
 ) {
   fun syncVisibility() {
     val hasContextChips = contextChipsPanel.componentCount > 0
-    val shouldShowComposerContext = hasContextChips || (showAddContextRowWithoutChips && addContextControl.isVisible)
     val chipsVisibilityChanged = contextChipsContainer.isVisible != hasContextChips
-    val panelVisibilityChanged = composerContextPanel.isVisible != shouldShowComposerContext
+    val panelVisibilityChanged = composerContextPanel.isVisible != hasContextChips
     if (!chipsVisibilityChanged && !panelVisibilityChanged) {
       return
     }
 
     contextChipsContainer.isVisible = hasContextChips
-    composerContextPanel.isVisible = shouldShowComposerContext
+    composerContextPanel.isVisible = hasContextChips
     layoutParent.revalidate()
     layoutParent.repaint()
   }

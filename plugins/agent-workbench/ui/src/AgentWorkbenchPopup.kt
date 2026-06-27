@@ -40,8 +40,13 @@ data class AgentWorkbenchPopupRow(
   val selected: Boolean = false,
   val selectable: Boolean = true,
   val subRows: List<AgentWorkbenchPopupRow> = emptyList(),
+  val subRowsProvider: (() -> List<AgentWorkbenchPopupRow>)? = null,
   val onChosen: (() -> Unit)? = null,
 )
+
+private fun AgentWorkbenchPopupRow.resolvedSubRows(): List<AgentWorkbenchPopupRow> {
+  return subRowsProvider?.invoke() ?: subRows
+}
 
 class AgentWorkbenchPopupStep(
   rows: List<AgentWorkbenchPopupRow>,
@@ -79,12 +84,13 @@ class AgentWorkbenchPopupStep(
   }
 
   override fun hasSubstep(selectedValue: AgentWorkbenchPopupRow?): Boolean {
-    return selectedValue?.subRows?.isNotEmpty() == true
+    return selectedValue?.resolvedSubRows()?.isNotEmpty() == true
   }
 
   override fun onChosen(selectedValue: AgentWorkbenchPopupRow, finalChoice: Boolean): PopupStep<*>? {
-    if (selectedValue.subRows.isNotEmpty()) {
-      return AgentWorkbenchPopupStep(selectedValue.subRows)
+    val subRows = selectedValue.resolvedSubRows()
+    if (subRows.isNotEmpty()) {
+      return AgentWorkbenchPopupStep(subRows)
     }
     if (selectedValue.selectable) {
       selectedValue.onChosen?.invoke()
