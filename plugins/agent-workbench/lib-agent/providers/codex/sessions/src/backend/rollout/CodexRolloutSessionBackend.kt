@@ -10,9 +10,7 @@ import com.intellij.platform.ai.agent.codex.common.normalizeRootPath
 import com.intellij.platform.ai.agent.codex.sessions.backend.CodexBackendThread
 import com.intellij.platform.ai.agent.codex.sessions.backend.CodexBackendThreadRefreshResult
 import com.intellij.platform.ai.agent.codex.sessions.backend.CodexSessionBackend
-import com.intellij.platform.ai.agent.codex.sessions.backend.toAgentThreadActivity
 import com.intellij.platform.ai.agent.codex.sessions.resolveProjectDirectoryFromPath
-import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.session.AgentSessionThreadOutline
 import com.intellij.platform.ai.agent.json.filebacked.FileBackedSessionChangeSet
 import com.intellij.platform.ai.agent.json.filebacked.createFileBackedSessionChangeFlow
@@ -50,8 +48,8 @@ internal class CodexRolloutSessionBackend(
   private val threadIndex = CodexRolloutThreadIndex(codexHomeProvider = codexHomeProvider, parseRollout = parser::parse)
   private val projectFilesChangedAtByPathKey = HashMap<String, Long>()
   private val projectFilesChangedAtLock = Any()
-  private val activeThreadActivityByPathKey = HashMap<String, ActiveThreadActivityHint>()
-  private val activeThreadActivityLock = Any()
+  private val activeThreadTranscriptByPathKey = HashMap<String, ActiveThreadTranscriptSnapshot>()
+  private val activeThreadTranscriptLock = Any()
   private val rolloutUpdates: Flow<AgentSessionSourceUpdateEvent> = createUpdatesFlow(
     rolloutChangeSource?.invoke() ?: createWatcherUpdates()
   ).conflate()
@@ -192,32 +190,31 @@ internal class CodexRolloutSessionBackend(
     }
     val parsedThread = parser.parse(path) ?: return null
     val consumedProjectFileChangeEvidence = consumeProjectFileChangeEvidence(parsedThread)
-    val activeThreadActivityHint = parsedThread.toActiveThreadActivityHint(parentThreadIdsForUpdate(parsedThread))
-    val hasActivityChange = activeThreadActivityHint != null && rememberActiveThreadActivityHint(
+    val activeThreadTranscriptSnapshot = parsedThread.toActiveThreadTranscriptSnapshot(parentThreadIdsForUpdate(parsedThread))
+    val hasTranscriptChange = activeThreadTranscriptSnapshot != null && rememberActiveThreadTranscriptSnapshot(
       path = parsedThread.path,
-      activityHint = activeThreadActivityHint,
+      snapshot = activeThreadTranscriptSnapshot,
     )
-    if (consumedProjectFileChangeEvidence == null && !hasActivityChange) {
+    if (consumedProjectFileChangeEvidence == null && !hasTranscriptChange) {
       return null
     }
 
-    val mayHaveChangedProjectFiles = consumedProjectFileChangeEvidence != null
     return AgentSessionSourceUpdateEvent(
       type = AgentSessionSourceUpdate.HINTS_CHANGED,
       scopedPaths = setOf(parsedThread.normalizedCwd),
-      mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
+      mayHaveChangedProjectFiles = consumedProjectFileChangeEvidence != null,
       changedProjectFilePaths = consumedProjectFileChangeEvidence?.changedProjectFilePaths,
     )
   }
 
-  private fun rememberActiveThreadActivityHint(path: Path, activityHint: ActiveThreadActivityHint): Boolean {
+  private fun rememberActiveThreadTranscriptSnapshot(path: Path, snapshot: ActiveThreadTranscriptSnapshot): Boolean {
     val pathKey = toFileBackedSessionPathKey(path)
-    return synchronized(activeThreadActivityLock) {
-      if (activeThreadActivityByPathKey[pathKey] == activityHint) {
+    return synchronized(activeThreadTranscriptLock) {
+      if (activeThreadTranscriptByPathKey[pathKey] == snapshot) {
         false
       }
       else {
-        activeThreadActivityByPathKey[pathKey] = activityHint
+        activeThreadTranscriptByPathKey[pathKey] = snapshot
         true
       }
     }
@@ -372,24 +369,17 @@ private data class ConsumedProjectFileChangeEvidence(
   @JvmField val changedProjectFilePaths: Set<String>?,
 )
 
-private data class ActiveThreadActivityHint(
+private data class ActiveThreadTranscriptSnapshot(
   @JvmField val threadId: String,
-  @JvmField val title: String?,
-  @JvmField val activity: AgentThreadActivity,
-  @JvmField val summaryActivity: AgentThreadActivity?,
   @JvmField val updatedAt: Long,
 )
 
-private fun ParsedRolloutThread.toActiveThreadActivityHint(parentThreadIds: Set<String>): ActiveThreadActivityHint? {
+private fun ParsedRolloutThread.toActiveThreadTranscriptSnapshot(parentThreadIds: Set<String>): ActiveThreadTranscriptSnapshot? {
   if (parentThreadIds.isNotEmpty()) {
     return null
   }
-  val threadId = thread.thread.id
-  return ActiveThreadActivityHint(
-    threadId = threadId,
-    title = thread.thread.title.takeIf { hasExplicitTitle },
-    activity = thread.activity.toAgentThreadActivity(),
-    summaryActivity = thread.summaryActivity?.toAgentThreadActivity(),
+  return ActiveThreadTranscriptSnapshot(
+    threadId = thread.thread.id,
     updatedAt = thread.thread.updatedAt,
   )
 }

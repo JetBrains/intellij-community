@@ -2594,6 +2594,77 @@ class AgentSessionRefreshCoordinatorTest {
   }
 
   @Test
+  fun appServerReadyActivityHintClearsLoadedThreadProcessingChromeBeforeRefreshGateOpens() = runBlocking(Dispatchers.Default) {
+    val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
+    val gateActive = AtomicBoolean(false)
+    val closedRefreshInvocations = AtomicInteger(0)
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.from("codex"),
+      supportsUpdates = true,
+      updateEvents = updates,
+      listFromClosedProject = { path ->
+        if (path == PROJECT_PATH) {
+          closedRefreshInvocations.incrementAndGet()
+        }
+        emptyList()
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { gateActive.get() },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(
+              thread(
+                id = "codex-1",
+                updatedAt = 100L,
+                provider = AgentSessionProvider.from("codex"),
+                activity = AgentThreadActivity.PROCESSING,
+                summaryActivity = AgentThreadActivity.PROCESSING,
+              )
+            ),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+      updates.tryEmit(
+        threadsChangedEvent(
+          scopedPaths = setOf(PROJECT_PATH),
+          threadIds = setOf("codex-1"),
+          activityUpdatesByThreadId = mapOf(
+            "codex-1" to activityUpdate(
+              activity = AgentThreadActivity.READY,
+              chromeActivity = AgentThreadActivity.READY,
+              updatesChromeActivity = true,
+              updatedAt = 200L,
+            )
+          ),
+        )
+      )
+
+      waitForCondition {
+        val thread = stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
+                       ?.threads
+                       ?.firstOrNull { it.id == "codex-1" }
+                     ?: return@waitForCondition false
+        thread.activity == AgentThreadActivity.READY && thread.summaryActivity == AgentThreadActivity.READY && thread.updatedAt == 200L
+      }
+
+      assertThat(closedRefreshInvocations.get()).isEqualTo(0)
+    }
+  }
+
+  @Test
   fun providerUpdateActivityHintsUpdateFoldedSubAgentBeforeRefreshGateOpens() = runBlocking(Dispatchers.Default) {
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
     val gateActive = AtomicBoolean(false)

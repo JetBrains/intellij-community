@@ -30,18 +30,18 @@ Codex rollout files are parsed for discovery, project-file-change evidence, cost
 - Rollout review-mode and response-required needs-input hints must use current Codex rollout event shapes, including `entered_review_mode`, `exited_review_mode`, `request_user_input`, persisted `response_item` tool calls named `request_user_input`, approval events (`exec_approval_request`, `apply_patch_approval_request`, `request_permissions`, `elicitation_request`), and escalated tool-call arguments (`sandbox_permissions: require_escalated`).
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
-- Rollout update events consumed by `CodexSessionSource` are discovery-only: they may trigger app-server thread refreshes and project-file refreshes, but rollout-discovered ids, activity hints, and presentation hints must not create persisted thread rows or status updates.
+- Rollout update events consumed by `CodexSessionSource` are discovery-only: they may trigger app-server thread refreshes and project-file refreshes, but rollout-discovered ids, activity hints, and presentation hints must not create persisted thread rows or status updates. Rollout refresh hints must not expose activity or presentation updates for already-known thread ids.
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/backend/rollout/CodexRolloutRefreshHintsProviderTest.kt
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
-- Rebind candidates from rollout hints are top-level CLI sessions only; parsed sub-agent sessions may contribute hierarchy/activity data but must not become automatic rebind targets.
+- Rebind candidates from rollout hints are top-level CLI sessions only; parsed sub-agent sessions must not become automatic rebind targets.
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/backend/rollout/CodexRolloutRefreshHintsProviderTest.kt
 
 - Rollout watching uses `AgentWorkbenchDirectoryWatcher`; Java NIO `WatchService` must not be used directly. Refresh remains event-driven, not periodic polling.
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexRolloutSessionsWatcherTest.kt
   [@test] ../../lib-agent/filewatch/testSrc/AgentWorkbenchDirectoryWatcherTest.kt
 
-- Active chat terminal refresh may watch concrete rollout files for project-file-change evidence. Workbench uses Codex app-server `fs/watch`/`fs/changed` for app-server-backed filesystem notifications such as replace or rename updates.
+- Active chat terminal refresh may watch concrete rollout files for live outline invalidation and project-file-change evidence. Activity-only or title-only rollout appends may emit neutral scoped active-thread invalidation events, but must not carry thread ids, activity updates, or presentation updates. Workbench uses Codex app-server `fs/watch`/`fs/changed` for app-server-backed filesystem notifications such as replace or rename updates.
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexSessionSourceRealAppServerIntegrationTest.kt
 

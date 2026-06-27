@@ -2176,7 +2176,7 @@ class CodexRolloutSessionBackendTest {
   }
 
   @Test
-  fun activeThreadUpdateSuppressesRepeatedUnchangedRolloutNotification() {
+  fun activeThreadUpdateEmitsScopedTranscriptInvalidationWithoutStatusHints() {
     runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-active-unchanged")
       Files.createDirectories(projectDir)
@@ -2203,6 +2203,7 @@ class CodexRolloutSessionBackendTest {
 
       assertThat(updates).hasSize(1)
       val update = updates.single()
+      assertThat(update.scopedPaths).containsExactly(projectDir.toString())
       assertThat(update.threadIds).isNull()
       assertThat(update.activityUpdatesByThreadId).isEmpty()
       assertThat(update.presentationUpdatesByThreadId).isEmpty()

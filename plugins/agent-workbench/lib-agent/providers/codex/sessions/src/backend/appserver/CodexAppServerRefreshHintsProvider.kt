@@ -259,6 +259,7 @@ internal class CodexAppServerRefreshHintsProvider(
       notification.kind == CodexAppServerNotificationKind.THREAD_STARTED && startedThreadPath != null -> AgentSessionSourceUpdateEvent(
         type = AgentSessionSourceUpdate.THREADS_CHANGED,
         scopedPaths = setOf(startedThreadPath),
+        activityUpdatesByThreadId = activityUpdatesByThreadId(),
       )
       startedThreadPath != null -> AgentSessionSourceUpdateEvent(
         type = AgentSessionSourceUpdate.HINTS_CHANGED,
@@ -665,18 +666,20 @@ private fun CodexThreadActivitySnapshot.isSubAgentSnapshot(): Boolean {
 }
 
 private fun CodexAppServerNotification.toRefreshActivityHintOrNull(receivedAtMs: Long): CodexRefreshActivityHint? {
-  val rawStatusKind = statusKind
-  val rawActiveFlags = activeFlags
+  val rawStatusKind = statusKind ?: startedThread?.statusKind
+  val rawActiveFlags = activeFlags ?: startedThread?.activeFlags
   if (rawStatusKind == null && rawActiveFlags == null) {
     return null
   }
 
   val resolvedActiveFlags = rawActiveFlags.orEmpty()
   val resolvedStatusKind = rawStatusKind ?: CodexThreadStatusKind.UNKNOWN
+  val activity = resolveCodexSessionActivity(statusKind = resolvedStatusKind, activeFlags = resolvedActiveFlags).toAgentThreadActivity()
   return CodexRefreshActivityHint(
-    activity = resolveCodexSessionActivity(statusKind = resolvedStatusKind, activeFlags = resolvedActiveFlags).toAgentThreadActivity(),
+    activity = activity,
     updatedAt = startedThread?.updatedAt ?: receivedAtMs,
     responseRequired = resolvedActiveFlags.isResponseRequired(),
-    hasSummaryActivityHint = false,
+    summaryActivity = activity,
+    hasSummaryActivityHint = true,
   )
 }
