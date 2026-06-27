@@ -1,31 +1,24 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
-import com.intellij.openapi.command.undo.AdjustableUndoableAction;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.DocumentReference;
-import com.intellij.openapi.command.undo.ImmutableActionChangeRange;
-import com.intellij.openapi.command.undo.MutableActionChangeRange;
-import com.intellij.openapi.command.undo.MutableActionChangeRangeImpl;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CompressionUtil;
-import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.List;
-
-final class EditorChangeAction extends BasicUndoableAction implements AdjustableUndoableAction {
+final class EditorChangeAction extends BasicUndoableAction {
+  private final int myOffset;
   private final int myMoveOffset;
   private final Object myOldString;
   private final Object myNewString;
   private final long myOldTimeStamp;
   private final long myNewTimeStamp;
-  private final MutableActionChangeRange myChangeRange;
+  private final int myOldDocumentLength;
+  private final int myNewDocumentLength;
 
   EditorChangeAction(@NotNull DocumentEvent e) {
     this((DocumentImpl)e.getDocument(), e.getOffset(), e.getMoveOffset(), e.getOldFragment(), e.getNewFragment(), e.getOldTimeStamp());
@@ -38,33 +31,24 @@ final class EditorChangeAction extends BasicUndoableAction implements Adjustable
                              @NotNull CharSequence newString,
                              long oldTimeStamp) {
     super(document);
+    myOffset = offset;
     myMoveOffset = moveOffset;
     myOldString = CompressionUtil.compressStringRawBytes(oldString);
     myNewString = CompressionUtil.compressStringRawBytes(newString);
     myOldTimeStamp = oldTimeStamp;
     myNewTimeStamp = document.getModificationStamp();
-    int newDocumentLength = document.getTextLength();
-    int oldDocumentLength = newDocumentLength - newString.length() + oldString.length();
-    ImmutableActionChangeRange immutableActionChangeRange = ImmutableActionChangeRange.Companion.createNew(offset, oldString.length(), newString.length(), oldDocumentLength, newDocumentLength, this);
-    myChangeRange = new MutableActionChangeRangeImpl(immutableActionChangeRange);
+    myNewDocumentLength = document.getTextLength();
+    myOldDocumentLength = myNewDocumentLength - newString.length() + oldString.length();
   }
 
   @Override
   public void undo() throws UnexpectedUndoException {
-    long timeStamp = myChangeRange.isMoved() ? createNextTimeStamp() : myOldTimeStamp;
-    ImmutableActionChangeRange range = myChangeRange.getState();
-    doChange(range.getNewDocumentLength(), myOldString, range.getOldDocumentLength(), timeStamp);
+    doChange(myNewDocumentLength, myOldString, myOldDocumentLength, myOldTimeStamp);
   }
 
   @Override
   public void redo() throws UnexpectedUndoException {
-    long timeStamp = myChangeRange.isMoved() ? createNextTimeStamp() : myNewTimeStamp;
-    ImmutableActionChangeRange range = myChangeRange.getState();
-    doChange(range.getOldDocumentLength(), myNewString, range.getNewDocumentLength(), timeStamp);
-  }
-
-  private static long createNextTimeStamp() {
-    return LocalTimeCounter.currentTime();
+    doChange(myOldDocumentLength, myNewString, myNewDocumentLength, myNewTimeStamp);
   }
 
   private void doChange(int fromLength, Object to, int toLength, long toTimeStamp) throws UnexpectedUndoException {
@@ -76,30 +60,10 @@ final class EditorChangeAction extends BasicUndoableAction implements Adjustable
     try {
       CharSequence toString = CompressionUtil.uncompressStringRawBytes(to);
       int fromStringLength = toString.length() - toLength + fromLength;
-      int offset = myChangeRange.getState().getOffset();
-      int moveOffset = myChangeRange.isMoved() ? offset : myMoveOffset;
-      document.replaceString(offset, offset + fromStringLength, moveOffset, toString, toTimeStamp, false);
+      document.replaceString(myOffset, myOffset + fromStringLength, myMoveOffset, toString, toTimeStamp, false);
     }
     finally {
       DocumentUndoProvider.finishDocumentUndo(document);
-    }
-  }
-
-  @Override
-  public @NotNull List<MutableActionChangeRange> getChangeRanges(@NotNull DocumentReference reference) {
-    return isAffected(reference) ? Collections.singletonList(myChangeRange) : Collections.emptyList();
-  }
-
-  private boolean isAffected(@NotNull DocumentReference reference) {
-    // `DocumentReference.getDocument()` can throw if it refers to a deleted file
-    // (see an implementation for `DocumentReferenceByVirtualFile`),
-    // so it's safer to compare two virtual files first
-    DocumentReference affected = getDocumentRef();
-    VirtualFile affectedFile = affected.getFile();
-    if (affectedFile != null) {
-      return affectedFile.equals(reference.getFile());
-    } else {
-      return affected.getDocument() == reference.getDocument();
     }
   }
 
@@ -113,6 +77,6 @@ final class EditorChangeAction extends BasicUndoableAction implements Adjustable
     String oldString = myOldString.toString().replace("\n", "\\n");
     String newString = myNewString.toString().replace("\n", "\\n");
     DocumentReference ref = getDocumentRef();
-    return "Change{%s:'%s'->'%s', ref=%s}".formatted(myChangeRange.getOffset(), oldString, newString, ref);
+    return "Change{%s:'%s'->'%s', ref=%s}".formatted(myOffset, oldString, newString, ref);
   }
 }
