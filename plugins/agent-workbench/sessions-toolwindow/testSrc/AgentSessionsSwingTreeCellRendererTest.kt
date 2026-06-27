@@ -19,6 +19,7 @@ import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
 import com.intellij.agent.workbench.sessions.toolwindow.ui.SESSION_TREE_MORE_ROW_FRAGMENT_TAG
 import com.intellij.agent.workbench.sessions.toolwindow.ui.SessionTreeCellRenderer
+import com.intellij.agent.workbench.sessions.toolwindow.ui.SessionTreeFlatSectionRenderer
 import com.intellij.agent.workbench.sessions.toolwindow.ui.SessionTreeCellRendererWithSeparators
 import com.intellij.agent.workbench.sessions.toolwindow.ui.SessionTreeRowActionPresentation
 import com.intellij.agent.workbench.sessions.toolwindow.ui.buildSessionTreeThreadRowPresentation
@@ -45,7 +46,6 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.AnimatedIcon
-import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.IconManager
 import com.intellij.ui.render.RenderingHelper
 import com.intellij.ui.treeStructure.Tree
@@ -58,6 +58,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
 import java.awt.Rectangle
+import java.awt.image.BufferedImage
 import java.math.BigDecimal
 import javax.swing.Icon
 import javax.swing.JTree
@@ -639,7 +640,7 @@ class AgentSessionsSwingTreeCellRendererTest {
   }
 
   @Test
-  fun flatPinnedSectionRowUsesSeparatorRenderer() {
+  fun flatPinnedSectionRowUsesTreeSectionRenderer() {
     val pinnedId = SessionTreeId.Pinned
     val nodeResolver = { id: SessionTreeId ->
       if (id == pinnedId) SessionTreeNode.PinnedSection else null
@@ -656,12 +657,16 @@ class AgentSessionsSwingTreeCellRendererTest {
 
     val component = renderer.getTreeCellRendererComponent(tree, descriptorValue(pinnedId), false, false, true, 0, false)
 
-    assertThat(component).isInstanceOf(GroupHeaderSeparator::class.java)
-    assertThat((component as GroupHeaderSeparator).caption).isEqualTo(AgentSessionsBundle.message("toolwindow.section.pinned"))
+    assertThat(component).isInstanceOf(SessionTreeFlatSectionRenderer::class.java)
+    val sectionRenderer = component as SessionTreeFlatSectionRenderer
+    assertThat(sectionRenderer.caption).isEqualTo(AgentSessionsBundle.message("toolwindow.section.pinned"))
+    assertThat(sectionRenderer.isOpaque).isFalse()
+    assertThat(sectionRenderer.icon).isNull()
+    assertThat(sectionRenderer.contentStartXForTest()).isLessThan(JBUI.scale(16))
   }
 
   @Test
-  fun flatSectionSeparatorRowUsesUncaptionedSeparatorRenderer() {
+  fun flatSectionSeparatorRowUsesUncaptionedTreeSectionRenderer() {
     val separatorId = SessionTreeId.PinnedSeparator
     val nodeResolver = { id: SessionTreeId ->
       if (id == separatorId) SessionTreeNode.SectionSeparator else null
@@ -678,8 +683,66 @@ class AgentSessionsSwingTreeCellRendererTest {
 
     val component = renderer.getTreeCellRendererComponent(tree, descriptorValue(separatorId), false, false, true, 0, false)
 
-    assertThat(component).isInstanceOf(GroupHeaderSeparator::class.java)
-    assertThat((component as GroupHeaderSeparator).caption).isNull()
+    assertThat(component).isInstanceOf(SessionTreeFlatSectionRenderer::class.java)
+    val sectionRenderer = component as SessionTreeFlatSectionRenderer
+    assertThat(sectionRenderer.caption).isNull()
+    assertThat(sectionRenderer.isOpaque).isFalse()
+    assertThat(sectionRenderer.icon).isNull()
+    assertThat(sectionRenderer.contentStartXForTest()).isLessThan(JBUI.scale(16))
+  }
+
+  @Test
+  fun flatPinnedSectionRendererDoesNotFillRowBackground() {
+    val pinnedId = SessionTreeId.Pinned
+    val nodeResolver = { id: SessionTreeId ->
+      if (id == pinnedId) SessionTreeNode.PinnedSection else null
+    }
+    val renderer = SessionTreeCellRendererWithSeparators(
+      delegate = SessionTreeCellRenderer(
+        nowProvider = { 0L },
+        rowActionsProvider = { _, _, _ -> null },
+        nodeResolver = nodeResolver,
+      ),
+      nodeResolver = nodeResolver,
+    )
+    val tree = createTree(width = 420)
+    val component = renderer.getTreeCellRendererComponent(tree, descriptorValue(pinnedId), false, false, true, 0, false)
+    component.setSize(240, 24)
+
+    val image = paintToImage(component)
+
+    assertThat(alphaAt(image, 0, 0)).isEqualTo(0)
+    assertThat(alphaAt(image, image.width - 1, image.height / 2)).isEqualTo(0)
+  }
+
+  @Test
+  fun flatSectionSeparatorPaintsLineFromContentInsetOnly() {
+    val separatorId = SessionTreeId.PinnedSeparator
+    val nodeResolver = { id: SessionTreeId ->
+      if (id == separatorId) SessionTreeNode.SectionSeparator else null
+    }
+    val renderer = SessionTreeCellRendererWithSeparators(
+      delegate = SessionTreeCellRenderer(
+        nowProvider = { 0L },
+        rowActionsProvider = { _, _, _ -> null },
+        nodeResolver = nodeResolver,
+      ),
+      nodeResolver = nodeResolver,
+    )
+    val tree = createTree(width = 420)
+    val component = renderer.getTreeCellRendererComponent(tree, descriptorValue(separatorId), false, false, true, 0, false)
+      as SessionTreeFlatSectionRenderer
+    component.setSize(240, 24)
+
+    val image = paintToImage(component)
+    val lineY = image.height / 2
+    val startX = component.contentStartXForTest()
+
+    assertThat(startX).isLessThan(JBUI.scale(16))
+    if (startX > 0) {
+      assertThat(alphaAt(image, startX - 1, lineY)).isEqualTo(0)
+    }
+    assertThat(alphaAt(image, startX, lineY)).isGreaterThan(0)
   }
 
   @Test
@@ -1431,6 +1494,22 @@ class AgentSessionsSwingTreeCellRendererTest {
       setSize(width, 320)
       doLayout()
     }
+  }
+
+  private fun paintToImage(component: java.awt.Component): BufferedImage {
+    val image = BufferedImage(component.width, component.height, BufferedImage.TYPE_INT_ARGB)
+    val graphics = image.createGraphics()
+    try {
+      component.paint(graphics)
+    }
+    finally {
+      graphics.dispose()
+    }
+    return image
+  }
+
+  private fun alphaAt(image: BufferedImage, x: Int, y: Int): Int {
+    return image.getRGB(x, y) ushr 24
   }
 
   private fun assertThreadStatusIcon(

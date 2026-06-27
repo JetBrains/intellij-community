@@ -409,19 +409,25 @@ class AgentSessionsToolWindowFactorySwingTest {
       .contains("AgentWorkbenchSessions.TreePopup.Rename")
       .contains(AgentWorkbenchActionIds.Sessions.TreePopup.ARCHIVE)
       .contains("AgentWorkbenchSessions.TreePopup.Unarchive")
+      .contains("AgentWorkbenchSessions.TreePopup.TogglePin")
+      .contains("AgentWorkbenchSessions.TreePopup.CopyThreadId")
       .contains("CopyReferencePopupGroup")
 
     val newThreadIndex = entries.requiredIndex("AgentWorkbenchSessions.TreePopup.NewThread")
     val archiveIndex = entries.requiredIndex("AgentWorkbenchSessions.TreePopup.Archive")
     val unarchiveIndex = entries.requiredIndex("AgentWorkbenchSessions.TreePopup.Unarchive")
     val renameIndex = entries.requiredIndex("AgentWorkbenchSessions.TreePopup.Rename")
+    val togglePinIndex = entries.requiredIndex("AgentWorkbenchSessions.TreePopup.TogglePin")
+    val copyThreadIdIndex = entries.requiredIndex("AgentWorkbenchSessions.TreePopup.CopyThreadId")
     val copyReferenceIndex = entries.requiredIndex("CopyReferencePopupGroup")
 
     assertThat(entries[newThreadIndex + 1]).isEqualTo(SEPARATOR_MARKER)
     assertThat(archiveIndex).isLessThan(unarchiveIndex)
     assertThat(unarchiveIndex).isLessThan(renameIndex)
-    assertThat(renameIndex).isLessThan(copyReferenceIndex)
-    assertThat(entries.subList(archiveIndex + 1, renameIndex)).doesNotContain(SEPARATOR_MARKER)
+    assertThat(renameIndex).isLessThan(togglePinIndex)
+    assertThat(togglePinIndex).isLessThan(copyThreadIdIndex)
+    assertThat(copyThreadIdIndex).isLessThan(copyReferenceIndex)
+    assertThat(entries.subList(archiveIndex + 1, copyThreadIdIndex)).doesNotContain(SEPARATOR_MARKER)
 
     assertThat(actionManager.getAction("AgentWorkbenchSessions.TreePopup.NewThread"))
       .isNotNull

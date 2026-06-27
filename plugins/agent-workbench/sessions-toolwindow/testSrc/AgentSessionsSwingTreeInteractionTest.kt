@@ -23,6 +23,7 @@ import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsTreeRowA
 import com.intellij.agent.workbench.sessions.toolwindow.ui.filterSelectableSessionTreeSelectionPaths
 import com.intellij.agent.workbench.sessions.toolwindow.ui.pathForSessionTreeContextMenuRow
 import com.intellij.agent.workbench.sessions.toolwindow.ui.resolveArchiveActionContext
+import com.intellij.agent.workbench.sessions.toolwindow.ui.sessionTreeHoverRow
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
@@ -170,6 +171,25 @@ class AgentSessionsSwingTreeInteractionTest {
   }
 
   @Test
+  fun flatPinnedSectionRowsDoNotGetHoverBackground() {
+    val model = pinnedSectionModel(currentProjectScopeActive = true)
+    val provider = AgentSessionProvider.from("codex")
+    val pinnedThreadId = SessionTreeId.Thread(PROJECT_PATH, provider, PINNED_THREAD_ID)
+    val recentThreadId = SessionTreeId.Thread(PROJECT_PATH, provider, RECENT_THREAD_ID)
+    val tree = RowMappedTree(
+      paths = model.rootIds.map(::treePath),
+      rowBounds = model.rootIds.indices.map { row -> Rectangle(0, row * 20, 160, 20) },
+    )
+    val isHoverableTreeId = { id: SessionTreeId -> isSelectableSessionTreeId(model, id) }
+
+    assertThat(sessionTreeHoverRow(tree, x = 8, y = 10, isHoverableTreeId = isHoverableTreeId)).isEqualTo(-1)
+    assertThat(sessionTreeHoverRow(tree, x = 8, y = 30, isHoverableTreeId = isHoverableTreeId)).isEqualTo(1)
+    assertThat(sessionTreeHoverRow(tree, x = 8, y = 50, isHoverableTreeId = isHoverableTreeId)).isEqualTo(-1)
+    assertThat(sessionTreeHoverRow(tree, x = 8, y = 70, isHoverableTreeId = isHoverableTreeId)).isEqualTo(3)
+    assertThat(model.rootIds).containsExactly(SessionTreeId.Pinned, pinnedThreadId, SessionTreeId.PinnedSeparator, recentThreadId)
+  }
+
+  @Test
   fun globalPinnedSectionParentRemainsSelectableAndSearchable() {
     val model = pinnedSectionModel(currentProjectScopeActive = false)
 
@@ -178,6 +198,18 @@ class AgentSessionsSwingTreeInteractionTest {
     assertThat(isSelectableSessionTreeId(model, SessionTreeId.Pinned)).isTrue()
     assertThat(sessionTreeNodeSearchText(model, SessionTreeId.Pinned))
       .isEqualTo(AgentSessionsBundle.message("toolwindow.section.pinned"))
+  }
+
+  @Test
+  fun globalPinnedSectionParentKeepsHoverBackground() {
+    val model = pinnedSectionModel(currentProjectScopeActive = false)
+    val tree = RowMappedTree(
+      paths = model.rootIds.map(::treePath),
+      rowBounds = model.rootIds.indices.map { row -> Rectangle(0, row * 20, 160, 20) },
+    )
+    val isHoverableTreeId = { id: SessionTreeId -> isSelectableSessionTreeId(model, id) }
+
+    assertThat(sessionTreeHoverRow(tree, x = 8, y = 10, isHoverableTreeId = isHoverableTreeId)).isEqualTo(0)
   }
 
   @Test
@@ -324,6 +356,25 @@ private class RowMappedTree(
   override fun getRowForPath(path: TreePath?): Int = paths.indexOf(path)
 
   override fun getRowBounds(row: Int): Rectangle? = rowBounds.getOrNull(row)?.let(::Rectangle)
+
+  override fun getPathBounds(path: TreePath?): Rectangle? {
+    return getRowBounds(getRowForPath(path))
+  }
+
+  override fun getClosestPathForLocation(x: Int, y: Int): TreePath? {
+    return pathForLocation(x, y)
+  }
+
+  override fun getPathForLocation(x: Int, y: Int): TreePath? {
+    return pathForLocation(x, y)
+  }
+
+  private fun pathForLocation(x: Int, y: Int): TreePath? {
+    val row = rowBounds.indexOfFirst { bounds ->
+      x >= bounds.x && x < bounds.x + bounds.width && y >= bounds.y && y < bounds.y + bounds.height
+    }
+    return paths.getOrNull(row)
+  }
 }
 
 private class TestDescriptor(

@@ -14,7 +14,6 @@ import com.intellij.ide.ui.ProductIcons
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ColoredTreeCellRenderer
-import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.SimpleColoredComponent.FragmentTextClipper
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.IconUtil
@@ -28,14 +27,16 @@ import java.awt.Graphics2D
 import javax.swing.Icon
 import javax.swing.JTree
 import javax.swing.tree.TreeCellRenderer
+import org.jetbrains.annotations.Nls
 
 private const val SESSION_TREE_MIDDLE_TEXT_CACHE_LIMIT = 1024
+private const val SESSION_TREE_FLAT_SEPARATOR_RIGHT_INSET = 8
 
 internal class SessionTreeCellRendererWithSeparators(
   private val delegate: SessionTreeCellRenderer,
   private val nodeResolver: (SessionTreeId) -> SessionTreeNode?,
 ) : TreeCellRenderer {
-  private val pinnedSeparator = GroupHeaderSeparator(JBUI.emptyInsets())
+  private val flatSectionRenderer = SessionTreeFlatSectionRenderer()
 
   override fun getTreeCellRendererComponent(
     tree: JTree,
@@ -49,15 +50,64 @@ internal class SessionTreeCellRendererWithSeparators(
     val treeId = extractSessionTreeId(value)
     val treeNode = treeId?.let(nodeResolver)
     if (leaf && treeId == SessionTreeId.Pinned && treeNode is SessionTreeNode.PinnedSection) {
-      pinnedSeparator.caption = AgentSessionsBundle.message("toolwindow.section.pinned")
-      return pinnedSeparator
+      flatSectionRenderer.caption = AgentSessionsBundle.message("toolwindow.section.pinned")
+      return flatSectionRenderer.getTreeCellRendererComponent(tree, value, false, expanded, true, row, false)
     }
     if (leaf && treeNode is SessionTreeNode.SectionSeparator) {
-      pinnedSeparator.caption = null
-      return pinnedSeparator
+      flatSectionRenderer.caption = null
+      return flatSectionRenderer.getTreeCellRendererComponent(tree, value, false, expanded, true, row, false)
     }
 
     return delegate.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
+  }
+}
+
+internal class SessionTreeFlatSectionRenderer : ColoredTreeCellRenderer() {
+  internal var caption: @Nls String? = null
+
+  init {
+    setOpaque(false)
+    setIconOpaque(false)
+  }
+
+  override fun customizeCellRenderer(
+    tree: JTree,
+    value: Any?,
+    selected: Boolean,
+    expanded: Boolean,
+    leaf: Boolean,
+    row: Int,
+    hasFocus: Boolean,
+  ) {
+    setOpaque(false)
+    setIconOpaque(false)
+    setBackground(null)
+    icon = null
+    caption?.let { label ->
+      append(label, SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, SimpleTextAttributes.GRAY_ATTRIBUTES.fgColor))
+    }
+  }
+
+  override fun paintComponent(g: Graphics) {
+    if (caption != null) {
+      super.paintComponent(g)
+      return
+    }
+
+    val g2 = g as? Graphics2D ?: return
+    val startX = contentStartX()
+    val lineWidth = (width - startX - JBUI.scale(SESSION_TREE_FLAT_SEPARATOR_RIGHT_INSET)).coerceAtLeast(0)
+    if (lineWidth <= 0) return
+
+    g2.color = JBUI.CurrentTheme.Popup.separatorColor()
+    g2.fillRect(startX, height / 2, lineWidth, 1)
+  }
+
+  internal fun contentStartXForTest(): Int = contentStartX()
+
+  private fun contentStartX(): Int {
+    val borderInsets = myBorder?.getBorderInsets(this) ?: JBUI.emptyInsets()
+    return ipad.left + borderInsets.left + insets.left
   }
 }
 

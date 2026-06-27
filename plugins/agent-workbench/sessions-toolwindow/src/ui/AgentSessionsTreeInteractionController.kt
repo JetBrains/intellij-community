@@ -22,10 +22,12 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.ui.hover.HoverListener
 import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.ui.tree.TreeUtil
+import java.awt.Component
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -41,6 +43,7 @@ internal class AgentSessionsTreeInteractionController(
   private val tree: Tree,
   private val rowActionsOverlayProvider: () -> AgentSessionsTreeRowActionsOverlay,
   private val nodeResolver: (SessionTreeId) -> SessionTreeNode?,
+  private val isHoverableTreeId: (SessionTreeId) -> Boolean,
   private val selectedArchiveTargets: () -> List<ArchiveThreadTarget>,
   private val selectedUnarchiveTargets: () -> List<ArchiveThreadTarget>,
   private val showMoreProjects: () -> Unit,
@@ -52,11 +55,38 @@ internal class AgentSessionsTreeInteractionController(
 
   fun install() {
     TreeUtil.installActions(tree)
-    TreeHoverListener.DEFAULT.addTo(tree)
+    installHoverListener()
     EditSourceOnDoubleClickHandler.install(tree) { activateSelectedNode() }
     installEnterKeyActivation()
     installMouseListeners()
     installTreeExpansionListener()
+  }
+
+  private fun installHoverListener() {
+    object : HoverListener() {
+      override fun mouseEntered(component: Component, x: Int, y: Int) {
+        updateHover(component, x, y)
+      }
+
+      override fun mouseMoved(component: Component, x: Int, y: Int) {
+        updateHover(component, x, y)
+      }
+
+      override fun mouseExited(component: Component) {
+        TreeHoverListener.DEFAULT.mouseExited(component)
+      }
+
+      private fun updateHover(component: Component, x: Int, y: Int) {
+        if (component !is JTree) return
+        val hoverRow = sessionTreeHoverRow(tree = component, x = x, y = y, isHoverableTreeId = isHoverableTreeId)
+        if (hoverRow < 0) {
+          TreeHoverListener.DEFAULT.mouseExited(component)
+        }
+        else {
+          TreeHoverListener.DEFAULT.mouseMoved(component, x, y)
+        }
+      }
+    }.addTo(tree)
   }
 
   private fun installEnterKeyActivation() {
@@ -258,4 +288,25 @@ internal fun pathForSessionTreeContextMenuRow(tree: JTree, y: Int): TreePath? {
     if (y < bounds.y + bounds.height) return tree.getPathForRow(row)
   }
   return null
+}
+
+internal fun sessionTreeHoverRow(
+  tree: JTree,
+  x: Int,
+  y: Int,
+  isHoverableTreeId: (SessionTreeId) -> Boolean,
+): Int {
+  val row = TreeUtil.getRowForLocation(tree, x, y)
+  return sessionTreeHoverRowForRow(tree = tree, row = row, isHoverableTreeId = isHoverableTreeId)
+}
+
+private fun sessionTreeHoverRowForRow(
+  tree: JTree,
+  row: Int,
+  isHoverableTreeId: (SessionTreeId) -> Boolean,
+): Int {
+  if (row < 0) return -1
+  val path = tree.getPathForRow(row) ?: return -1
+  val id = path.lastPathComponent?.let(::extractSessionTreeId) ?: return row
+  return row.takeIf { isHoverableTreeId(id) } ?: -1
 }

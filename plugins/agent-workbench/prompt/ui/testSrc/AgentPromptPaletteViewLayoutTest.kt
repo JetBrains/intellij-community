@@ -362,6 +362,151 @@ class AgentPromptPaletteViewLayoutTest {
   }
 
   @Test
+  fun contextChipsDoNotAddOuterTopGap() {
+    runInEdtAndWait {
+      val promptArea = EditorTextField()
+      val contextChips = AgentPromptContextChipsComponent {}
+      contextChips.render(
+        listOf(
+          createContextEntry(title = "File", body = "src/Main.java"),
+          createContextEntry(title = "Symbol", body = "main"),
+        )
+      )
+      val view = createPaletteView(
+        promptArea = promptArea,
+        contextChipsPanel = contextChips.component,
+      )
+
+      layoutPopupRoot(view.rootPanel)
+
+      val cards = contextAttachmentCards(contextChips.component)
+      assertThat(cards).hasSize(2)
+      assertThat(yInRoot(cards[0], view.rootPanel)).isEqualTo(yInRoot(contextChips.component, view.rootPanel))
+      assertThat(locationInRoot(cards[1], view.rootPanel).x - rightInRoot(cards[0], view.rootPanel)).isEqualTo(JBUI.scale(4))
+    }
+  }
+
+  @Test
+  fun contextChipsUseTypeSpecificIconsAndFullAccessibleNames() {
+    runInEdtAndWait {
+      val contextChips = AgentPromptContextChipsComponent {}
+      contextChips.render(
+        listOf(
+          createContextEntry(
+            rendererId = AgentPromptContextRendererIds.FILE,
+            title = "File",
+            body = "src/Main.kt",
+          ),
+          createContextEntry(
+            rendererId = AgentPromptContextRendererIds.PATHS,
+            title = "Files",
+            body = "dir: src",
+            payload = AgentPromptPayload.obj(
+              "entries" to AgentPromptPayload.arr(
+                AgentPromptPayload.obj(
+                  "kind" to AgentPromptPayload.str("dir"),
+                  "path" to AgentPromptPayload.str("src"),
+                )
+              )
+            ),
+          ),
+          createContextEntry(
+            rendererId = AgentPromptContextRendererIds.SYMBOL,
+            title = "Symbol",
+            body = "com.example.Main.run",
+          ),
+          createContextEntry(
+            rendererId = AgentPromptContextRendererIds.VCS_COMMITS,
+            title = "Commits",
+            body = "",
+            payload = AgentPromptPayload.obj(
+              "entries" to AgentPromptPayload.arr(
+                AgentPromptPayload.obj(
+                  "hash" to AgentPromptPayload.str("abc12345abcdef"),
+                  "subject" to AgentPromptPayload.str("Fix TEST-101 regression"),
+                )
+              )
+            ),
+          ),
+          createContextEntry(
+            rendererId = AgentPromptContextRendererIds.SNIPPET,
+            title = "Local Changes",
+            body = "Default changelist\n- modified: src/Main.kt",
+            itemId = AgentPromptContextItemIds.CHANGES_SELECTION,
+            source = "changes",
+          ),
+          createContextEntry(
+            rendererId = AgentPromptContextRendererIds.TEST_FAILURES,
+            title = "Tests",
+            body = "failed: Suite#testA",
+          ),
+        )
+      )
+
+      val labels = contextAttachmentLabels(contextChips.component)
+      assertThat(labels.take(5).map { it.text }).containsExactly(
+        "src/Main.kt",
+        "src",
+        "com.example.Main.run",
+        "Fix TEST-101 regression",
+        "Changes",
+      )
+      assertThat(labels[5].text).isNotBlank()
+      assertThat(labels.map { it.icon }).containsExactly(
+        AllIcons.FileTypes.Any_type,
+        AllIcons.Nodes.Folder,
+        AllIcons.Nodes.Method,
+        AllIcons.Vcs.CommitNode,
+        AllIcons.Vcs.Changelist,
+        AllIcons.RunConfigurations.TestState.Red2,
+      )
+
+      val cards = contextAttachmentCards(contextChips.component)
+      assertThat(cards.take(5).map { it.accessibleContext.accessibleName }).containsExactly(
+        "File: src/Main.kt",
+        "Files: src",
+        "Symbol: com.example.Main.run",
+        "Commits: Fix TEST-101 regression",
+        "Local Changes",
+      )
+      assertThat(cards[5].accessibleContext.accessibleName).startsWith("Tests")
+    }
+  }
+
+  @Test
+  fun screenshotContextChipUsesThumbnailBeforeGenericSnippetIcon() {
+    runInEdtAndWait {
+      val item = AgentPromptScreenshotContextItem.buildScreenshotContextItem(
+        title = "Pasted Image",
+        screenshot = BufferedImage(4, 4, BufferedImage.TYPE_INT_ARGB).apply {
+          val graphics = createGraphics()
+          try {
+            graphics.color = Color.RED
+            graphics.fillRect(0, 0, width, height)
+          }
+          finally {
+            graphics.dispose()
+          }
+        },
+        sourceId = "test.screenshot",
+        source = "test",
+        tempFilePrefix = "agent-prompt-chip-test-",
+      )
+      try {
+        val contextChips = AgentPromptContextChipsComponent {}
+        contextChips.render(listOf(ContextEntry(item = item)))
+
+        val label = contextAttachmentLabels(contextChips.component).single()
+        assertThat(label.text).isEqualTo("Pasted Image")
+        assertThat(label.icon).isNotSameAs(AllIcons.Actions.ListFiles)
+      }
+      finally {
+        AgentPromptScreenshotContextItem.deleteScreenshotContextFileIfPresent(item)
+      }
+    }
+  }
+
+  @Test
   fun enteringPromptTextKeepsSuggestionRowVisibleWithoutChangingPromptHeight() {
     runInEdtAndWait {
       val promptArea = EditorTextField()
