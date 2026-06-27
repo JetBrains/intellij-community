@@ -115,7 +115,7 @@ class CodexRolloutRefreshHintsProviderTest {
   }
 
   @Test
-  fun emitsRebindCandidatesOnlyForTopLevelCliThreads() {
+  fun emitsOnlyRebindCandidatesForTopLevelCliThreads() {
     runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-rollout-hints")
       Files.createDirectories(projectDir)
@@ -169,7 +169,8 @@ class CodexRolloutRefreshHintsProviderTest {
       ).getValue(projectDir.toString())
 
       assertThat(hints.rebindCandidates.map { it.threadId }).containsExactly("cli-new")
-      assertThat(hints.presentationUpdatesByThreadId.getValue("cli-parent").title).isEqualTo("Parent thread")
+      assertThat(hints.activityHintsByThreadId).isEmpty()
+      assertThat(hints.presentationUpdatesByThreadId).isEmpty()
     }
   }
 }

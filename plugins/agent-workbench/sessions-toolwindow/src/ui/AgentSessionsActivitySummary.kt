@@ -174,8 +174,6 @@ private fun AgentSessionThread.overlayPresentation(
   val presentation = presentationsByKey[key] ?: return this
   return copy(
     title = presentation.title.takeIf { it.isNotBlank() } ?: title,
-    updatedAt = presentation.updatedAt ?: updatedAt,
-    activityReport = presentation.activityReport,
   )
 }
 

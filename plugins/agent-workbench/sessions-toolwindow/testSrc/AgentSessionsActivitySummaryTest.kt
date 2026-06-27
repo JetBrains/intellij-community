@@ -172,23 +172,24 @@ class AgentSessionsActivitySummaryTest {
   }
 
   @Test
-  fun buildSummaryOverlaysSharedThreadPresentationActivity() {
+  fun buildSummaryOverlaysSharedThreadPresentationTitleOnly() {
     val key = checkNotNull(AgentSessionThreadPresentationKey.create("/work/project-a", AgentSessionProvider.from("codex"), "done"))
 
     val summary = buildAgentSessionsActivitySummary(
-      state(thread("done", AgentThreadActivity.READY, 100, title = "Old title")),
+      state(thread("done", AgentThreadActivity.UNREAD, 100, title = "Old title")),
       presentationsByKey = mapOf(
         key to AgentSessionThreadPresentation(
           title = "Live title",
-          activityReport = AgentThreadActivityReport(rowActivity = AgentThreadActivity.UNREAD, chromeActivity = AgentThreadActivity.UNREAD),
+          activityReport = AgentThreadActivityReport(rowActivity = AgentThreadActivity.PROCESSING, chromeActivity = AgentThreadActivity.PROCESSING),
           updatedAt = 500,
         )
       ),
     )
 
+    assertThat(summary.runningRows).isEmpty()
     assertThat(summary.doneRows.map { row -> row.thread.id }).containsExactly("done")
     assertThat(summary.doneRows.single().thread.title).isEqualTo("Live title")
-    assertThat(summary.doneRows.single().thread.updatedAt).isEqualTo(500)
+    assertThat(summary.doneRows.single().thread.updatedAt).isEqualTo(100)
   }
 
   @Test

@@ -367,6 +367,11 @@ class CodexAppServerRefreshHintsProviderTest {
             assertThat(firstUpdate.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
             assertThat(firstUpdate.scopedPaths).containsExactly("/work/project")
             assertThat(firstUpdate.threadIds).isNull()
+            val firstActivityUpdate = firstUpdate.activityUpdatesByThreadId.getValue("thread-started")
+            assertThat(firstActivityUpdate.activityReport.rowActivity).isEqualTo(AgentThreadActivity.READY)
+            assertThat(firstActivityUpdate.activityReport.chromeActivity).isEqualTo(AgentThreadActivity.READY)
+            assertThat(firstActivityUpdate.updatesChromeActivity).isTrue()
+            assertThat(firstActivityUpdate.updatedAt).isEqualTo(100L)
             assertThat(retryUpdate).isEqualTo(firstUpdate)
         }
         finally {
@@ -600,8 +605,47 @@ class CodexAppServerRefreshHintsProviderTest {
 
         val hint = hints.activityHintsByThreadId.getValue("thread-live")
         assertThat(hint.activity).isEqualTo(AgentThreadActivity.NEEDS_INPUT)
+        assertThat(hint.summaryActivity).isEqualTo(AgentThreadActivity.NEEDS_INPUT)
+        assertThat(hint.hasSummaryActivityHint).isTrue()
         assertThat(hint.responseRequired).isTrue()
         assertThat(hint.updatedAt).isGreaterThan(0L)
+
+        val update = hints.toAgentSessionRefreshHints().activityUpdatesByThreadId.getValue("thread-live")
+        assertThat(update.updatesChromeActivity).isTrue()
+        assertThat(update.activityReport.chromeActivity).isEqualTo(AgentThreadActivity.NEEDS_INPUT)
+    }
+
+    @Test
+    fun threadStatusReadyNotificationClearsNotificationBackedChromeWhenSnapshotUnavailable(): Unit = runBlocking(Dispatchers.Default) {
+        val notifications = MutableSharedFlow<CodexAppServerNotification>(replay = 1, extraBufferCapacity = 16)
+        val provider = CodexAppServerRefreshHintsProvider(
+            readThreadActivitySnapshot = { null },
+            notifications = notifications,
+        )
+
+        notifications.emit(
+            CodexAppServerNotification(
+                method = "thread/status/changed",
+                kind = CodexAppServerNotificationKind.THREAD_STATUS_CHANGED,
+                threadId = "thread-live",
+                statusKind = CodexThreadStatusKind.IDLE,
+                activeFlags = emptyList(),
+            )
+        )
+        withTimeout(2.seconds) {
+            provider.updateEvents.first()
+        }
+
+        val hints = provider.prefetchRefreshHints(
+            paths = listOf("/work/project"),
+            refreshThreadSeedsByPath = mapOf(
+                "/work/project" to setOf(refreshThreadSeed("thread-live")),
+            ),
+        ).getValue("/work/project")
+        val update = hints.toAgentSessionRefreshHints().activityUpdatesByThreadId.getValue("thread-live")
+        assertThat(update.activityReport.rowActivity).isEqualTo(AgentThreadActivity.READY)
+        assertThat(update.activityReport.chromeActivity).isEqualTo(AgentThreadActivity.READY)
+        assertThat(update.updatesChromeActivity).isTrue()
     }
 
     @Test
