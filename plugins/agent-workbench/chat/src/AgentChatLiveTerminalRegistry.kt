@@ -185,7 +185,7 @@ internal class AgentChatLiveTerminalRegistryService(
     serviceScope.launch {
       val provider = file.provider ?: return@launch
       val descriptor = AgentSessionProviders.find(provider)
-      if (descriptor == null || !descriptor.supportsArchiveThread) {
+      if (descriptor == null || !descriptor.supportsArchiveThread || !descriptor.archiveOnLastEditorClose) {
         return@launch
       }
       try {
@@ -204,7 +204,8 @@ internal class AgentChatLiveTerminalRegistryService(
 internal fun shouldArchiveTerminalSessionOnLastEditorClose(file: AgentChatVirtualFile): Boolean {
   val provider = file.provider ?: return false
   val descriptor = AgentSessionProviders.find(provider) ?: return false
-  return descriptor.supportsArchiveThread &&
+  return descriptor.archiveOnLastEditorClose &&
+         descriptor.supportsArchiveThread &&
          !file.isPendingThread &&
          file.subAgentId == null &&
          file.projectPath.isNotBlank() &&

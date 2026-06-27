@@ -1249,13 +1249,20 @@ class AgentChatFileEditorLifecycleTest {
     val terminalProvider = RecordingTerminalSessionClosedProvider(
       provider = AgentSessionProvider.from("terminal"),
       supportsArchiveThread = true,
+      archiveOnLastEditorClose = true,
+    )
+    val codexProvider = RecordingTerminalSessionClosedProvider(
+      provider = AgentSessionProvider.from("codex"),
+      supportsArchiveThread = true,
     )
     val claudeProvider = RecordingTerminalSessionClosedProvider(provider = AgentSessionProvider.from("claude"))
-    val registry = InMemoryAgentSessionProviderRegistry(listOf(terminalProvider, claudeProvider))
+    val registry = InMemoryAgentSessionProviderRegistry(listOf(terminalProvider, codexProvider, claudeProvider))
 
     AgentSessionProviders.withRegistryForTest(registry) {
       assertThat(shouldArchiveTerminalSessionOnLastEditorClose(terminalLifecycleTestFile()))
         .isTrue()
+      assertThat(shouldArchiveTerminalSessionOnLastEditorClose(codexLifecycleTestFile()))
+        .isFalse()
       assertThat(shouldArchiveTerminalSessionOnLastEditorClose(claudeLifecycleTestFile()))
         .isFalse()
       assertThat(shouldArchiveTerminalSessionOnLastEditorClose(pendingTestFile(provider = AgentSessionProvider.from("terminal"))))
@@ -1980,6 +1987,15 @@ private fun claudeLifecycleTestFile(): AgentChatVirtualFile {
   )
 }
 
+private fun codexLifecycleTestFile(): AgentChatVirtualFile {
+  return testFile(
+    threadIdentity = buildAgentThreadIdentity(AgentSessionProvider.from("codex").value, "codex-1"),
+    shellCommand = listOf("codex", "resume", "codex-1"),
+  ).also { file ->
+    file.updateThreadId("codex-1")
+  }
+}
+
 private fun terminalLifecycleTestFile(): AgentChatVirtualFile {
   return testFile(
     threadIdentity = buildAgentThreadIdentity(AgentSessionProvider.from("terminal").value, "terminal-1"),
@@ -2260,6 +2276,7 @@ private class ArchivedThreadsProviderDescriptor(
 private class RecordingTerminalSessionClosedProvider(
   override val provider: AgentSessionProvider,
   override val supportsArchiveThread: Boolean = false,
+  override val archiveOnLastEditorClose: Boolean = false,
 ) : AgentSessionProviderDescriptor {
   val closedSessions: CopyOnWriteArrayList<ClosedTerminalSession> = CopyOnWriteArrayList()
 

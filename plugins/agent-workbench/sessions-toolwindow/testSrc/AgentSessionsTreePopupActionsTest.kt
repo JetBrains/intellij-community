@@ -17,6 +17,7 @@ import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupArchiveThreadAction
+import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupCopyThreadIdAction
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupDataKeys
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupMoreAction
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupNewThreadGroup
@@ -192,6 +193,54 @@ class AgentSessionsTreePopupActionsTest {
     assertThat(threadsEvent.presentation.text).isEqualTo("More (4)")
     moreAction.actionPerformed(threadsEvent)
     assertThat(showMoreThreadsPath).isEqualTo("/work/project-feature")
+  }
+
+  @Test
+  fun copyThreadIdActionCopiesActiveAndArchivedThreadIds() {
+    val copiedThreadIds = mutableListOf<String>()
+    val action = AgentSessionsTreePopupCopyThreadIdAction(
+      copyToClipboard = { threadId -> copiedThreadIds += threadId },
+      resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
+    )
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
+
+    val activeContext = popupContext(
+      nodeId = SessionTreeId.Thread(
+        projectPath = "/work/project-a",
+        provider = AgentSessionProvider.from("codex"),
+        threadId = "thread-1",
+      ),
+      node = SessionTreeNode.Thread(project = project, thread = thread(id = "thread-1", provider = AgentSessionProvider.from("codex"))),
+    )
+    val activeEvent = popupEvent(action, activeContext)
+    action.update(activeEvent)
+    assertThat(activeEvent.presentation.isEnabledAndVisible).isTrue()
+    action.actionPerformed(activeEvent)
+
+    val archivedContext = popupContext(
+      nodeId = SessionTreeId.Thread(
+        projectPath = "/work/project-a",
+        provider = AgentSessionProvider.from("codex"),
+        threadId = "archived-1",
+      ),
+      node = SessionTreeNode.Thread(
+        project = project,
+        thread = thread(id = "archived-1", provider = AgentSessionProvider.from("codex"), archived = true),
+      ),
+    )
+    val archivedEvent = popupEvent(action, archivedContext)
+    action.update(archivedEvent)
+    assertThat(archivedEvent.presentation.isEnabledAndVisible).isTrue()
+    action.actionPerformed(archivedEvent)
+
+    val projectContext = popupContext(
+      nodeId = SessionTreeId.Project("/work/project-a"),
+      node = SessionTreeNode.Project(project),
+    )
+    val projectEvent = popupEvent(action, projectContext)
+    action.update(projectEvent)
+    assertThat(projectEvent.presentation.isEnabledAndVisible).isFalse()
+    assertThat(copiedThreadIds).containsExactly("thread-1", "archived-1")
   }
 
   @Test

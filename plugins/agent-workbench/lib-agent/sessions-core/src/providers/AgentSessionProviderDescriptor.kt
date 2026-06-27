@@ -332,6 +332,13 @@ interface AgentSessionProviderImplementation {
     get() = false
 
   /**
+   * True when closing the last editor tab for a concrete chat should archive the provider thread.
+   * This is separate from [supportsArchiveThread], which also covers explicit user-initiated archive actions.
+   */
+  val archiveOnLastEditorClose: Boolean
+    get() = false
+
+  /**
    * Close any open chat tab before invoking [archiveThread]. Use this for providers whose archive transport resumes
    * the session non-interactively and cannot safely run while the same session is open in a terminal.
    */

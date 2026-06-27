@@ -615,6 +615,7 @@ com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderImple
 - createToolWindowNorthComponent(com.intellij.openapi.project.Project):javax.swing.JComponent
 - dispatchInitialMessageToProvider(com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageProviderDispatchRequest,kotlin.coroutines.Continuation):java.lang.Object
 - displayNameForGenerationModelId(java.lang.String):java.lang.String
+- getArchiveOnLastEditorClose():Z
 - getArchiveRefreshDelayMs():J
 - getCliDisplayNameFallback():java.lang.String
 - getCliDisplayNameKey():java.lang.String
