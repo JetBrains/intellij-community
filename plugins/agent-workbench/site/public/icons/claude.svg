@@ -1,9 +1,0 @@
-<!-- Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
-<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-  <g fill="#D97757">
-    <rect x="7.1" y="1" width="1.8" height="14" rx="0.9"/>
-    <rect x="7.1" y="1" width="1.8" height="14" rx="0.9" transform="rotate(45 8 8)"/>
-    <rect x="7.1" y="1" width="1.8" height="14" rx="0.9" transform="rotate(90 8 8)"/>
-    <rect x="7.1" y="1" width="1.8" height="14" rx="0.9" transform="rotate(135 8 8)"/>
-  </g>
-</svg>
