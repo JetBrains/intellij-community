@@ -249,7 +249,7 @@ internal fun buildManualVcsContextItem(selection: List<CommitPickerEntry>): Agen
   }
   return AgentPromptContextItem(
     rendererId = AgentPromptContextRendererIds.VCS_COMMITS,
-    title = AgentPromptVcsBundle.message("context.vcs.manual.title"),
+    title = AgentPromptVcsBundle.message("context.vcs.title"),
     body = content,
     payload = AgentPromptPayload.obj(
       "entries" to AgentPromptPayloadValue.Arr(payloadEntries),

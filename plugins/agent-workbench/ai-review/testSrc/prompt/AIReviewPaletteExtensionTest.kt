@@ -237,7 +237,7 @@ class AIReviewPaletteExtensionTest : BasePlatformTestCase() {
   private fun vcsCommitsContextItem(vararg issueUrls: String): AgentPromptContextItem {
     return AgentPromptContextItem(
       rendererId = AgentPromptContextRendererIds.VCS_COMMITS,
-      title = "Picked Commits",
+      title = "Commits",
       body = "abcdef12",
       payload = AgentPromptPayloadValue.Obj(
         mapOf(

@@ -55,7 +55,7 @@ class AgentPromptVcsCommitManualContextSourceTest {
 
     val item = buildManualVcsContextItem(selection)
 
-    assertThat(item.title).isEqualTo(AgentPromptVcsBundle.message("context.vcs.manual.title"))
+    assertThat(item.title).isEqualTo(AgentPromptVcsBundle.message("context.vcs.title"))
     assertThat(item.itemId).isEqualTo("manual.vcs.commits")
     assertThat(item.source).isEqualTo("manualVcs")
     assertThat(item.truncation.reason).isEqualTo(AgentPromptContextTruncationReason.SOURCE_LIMIT)
