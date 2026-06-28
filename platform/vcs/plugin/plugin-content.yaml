@@ -5,18 +5,30 @@
   files:
   - name: $MAVEN_REPOSITORY$/org/sqlite/native/3/native-3.jar
   reason: <- intellij.platform.sqlite
+- name: lib/modules/intellij.platform.vcs.backend.split.jar
+  contentModules:
+  - name: intellij.platform.vcs.backend.split
+- name: lib/modules/intellij.platform.vcs.common.split.jar
+  contentModules:
+  - name: intellij.platform.vcs.common.split
 - name: lib/modules/intellij.platform.vcs.dvcs.impl.jar
   contentModules:
   - name: intellij.platform.vcs.dvcs.impl
 - name: lib/modules/intellij.platform.vcs.dvcs.jar
   contentModules:
   - name: intellij.platform.vcs.dvcs
+- name: lib/modules/intellij.platform.vcs.frontend.split.jar
+  contentModules:
+  - name: intellij.platform.vcs.frontend.split
 - name: lib/modules/intellij.platform.vcs.impl.debugger.jar
   contentModules:
   - name: intellij.platform.vcs.impl.debugger
 - name: lib/modules/intellij.platform.vcs.impl.exec.jar
   contentModules:
   - name: intellij.platform.vcs.impl.exec
+- name: lib/modules/intellij.platform.vcs.impl.frontend.jar
+  contentModules:
+  - name: intellij.platform.vcs.impl.frontend
 - name: lib/modules/intellij.platform.vcs.impl.jar
   contentModules:
   - name: intellij.platform.vcs.impl
@@ -38,6 +50,9 @@
 - name: lib/modules/intellij.platform.vcs.log.jar
   contentModules:
   - name: intellij.platform.vcs.log
+- name: lib/modules/intellij.platform.vcs.protocol.split.generated.jar
+  contentModules:
+  - name: intellij.platform.vcs.protocol.split.generated
 - name: lib/platform-vcs-plugin.jar
   modules:
   - name: intellij.platform.vcs.plugin

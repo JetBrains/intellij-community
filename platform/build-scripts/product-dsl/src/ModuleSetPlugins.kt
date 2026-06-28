@@ -20,7 +20,6 @@ private val HAND_WRITTEN_MODULE_SET_PLUGIN_MODULES: Set<String> = setOf(
   "intellij.platform.ssh.plugin",
   "intellij.platform.todo.plugin",
   "intellij.platform.vcs.plugin",
-  "intellij.platform.vcs.split.plugin",
 )
 
 fun moduleSetPluginModuleName(moduleSetName: String): TargetName {
