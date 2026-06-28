@@ -270,7 +270,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           if (ensureCanonicalName) {
             //It is definitely possible for childId to be in this.children list, but not found by name, if
             // ensureCanonicalName=false -- because of file name normalisation intricacies.
-            // But same for ensureCanonicalName=true it is a suspicious case: why didn't we find a child by name then?
+            // But the same for ensureCanonicalName=true it is a suspicious case: why didn't we find a child by name then?
             logChildLookupFailure(pFS, childId, childNameId, name);
           }
         }
@@ -281,10 +281,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
       else {
         if (!vfsData.isFileValid(childId)) {
-          //If childId was already deleted, it should be removed from ChildrenIds list first,
-          // see PersistentFSImpl.executeDelete() -- but here we are, with childId from findChildInfo(),
-          // executed under the directoryLock:
-          throw new FileDeletedException(childId, "file is deleted, but still in [" + getId() + "].children list");
+          //If childId was already deleted, it should be removed from ChildrenIds list first, see PersistentFSImpl.executeDelete()
+          // -- but here we are, with childId from findChildInfo(), executed under the directoryLock:
+          throw new FileDeletedException(
+            childId,
+            "file is deleted, but still in [" + getId() + "].children list: " + directoryData.children
+          );
         }
         newlyLoadedChild = getCachedOrLoadChild(childId, vfsData);
         addChild(newlyLoadedChild);
