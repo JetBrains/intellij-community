@@ -1,6 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "java-coverage-tests_test",
+    timeout = "long",
+    tags = ["community-aggregator"],
+    runtime_deps = [":java-coverage-tests_test_lib"],
+)
+
+### skip generation section `test intellij.java.coverage.tests`
+
 ### auto-generated section `build intellij.java.coverage` start
 
 jvm_library(
@@ -171,6 +180,18 @@ jvm_library(
         "//java/execution/openapi:java-execution",
         "//java/openapi:java",
     ],
+    runtime_deps = [
+        # do not sort,
+        "//java/plugin",
+        "//aether-dependency-resolver/plugin",
+        "//platform/structure-view-impl/plugin",
+        "//platform/todo/plugin",
+        "//libraries/misc/plugin",
+        "//platform/testRunner/plugin",
+        "//plugins/junit",
+        "//platform/vcs/plugin",
+        "//spellchecker",
+    ],
 )
 
 jvm_library(
@@ -201,8 +222,17 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":java-coverage-tests",
+        "//java/plugin:plugin_test_lib",
+        "//aether-dependency-resolver/plugin:plugin_test_lib",
+        "//platform/structure-view-impl/plugin:plugin_test_lib",
+        "//platform/todo/plugin:plugin_test_lib",
+        "//libraries/misc/plugin:plugin_test_lib",
+        "//platform/testRunner/plugin:plugin_test_lib",
+        "//plugins/junit:junit_test_lib",
+        "//platform/vcs/plugin:plugin_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//spellchecker:spellchecker_test_lib",
         "//platform/platform-impl/concurrency:concurrency_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
@@ -305,11 +335,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.coverage.tests` end
-
-### auto-generated section `test intellij.java.coverage.tests` start
-
-jps_test(
-    name = "java-coverage-tests_test",
-    runtime_deps = [":java-coverage-tests_test_lib"],
-)
-### auto-generated section `test intellij.java.coverage.tests` end

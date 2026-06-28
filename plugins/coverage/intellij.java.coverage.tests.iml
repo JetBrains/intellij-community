@@ -62,6 +62,11 @@
     <orderEntry type="module" module-name="intellij.platform.coverage" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.execution" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java" exported="" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.structureView.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.todo.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.misc.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.syntax" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.psi" scope="TEST" />
@@ -72,8 +77,11 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testRunner" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testRunner.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.testng.rt" scope="TEST" />
     <orderEntry type="module" module-name="intellij.junit.rt" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.junit" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.compiler" scope="TEST" />
@@ -81,6 +89,7 @@
     <orderEntry type="module" module-name="intellij.java.psi.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.spellchecker" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.concurrency" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
