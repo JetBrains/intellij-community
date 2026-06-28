@@ -82,13 +82,11 @@ class AgentWorkbenchInlinePromptEmptyStateComponent internal constructor(
   private val project: Project,
   private val configuration: AgentWorkbenchInlinePromptConfiguration = emptyStateInlinePromptConfiguration(project),
 ) : JPanel(BorderLayout()), Disposable {
-  private val parentDisposable = Disposer.newDisposable("AgentWorkbenchInlinePromptEmptyState")
   private var content: AgentPromptPaletteContent? = null
   private var initializing: Boolean = false
   private var disposed: Boolean = false
 
   init {
-    Disposer.register(this, parentDisposable)
     name = INLINE_PROMPT_COMPONENT_NAME
     isOpaque = false
     background = JBUI.CurrentTheme.Popup.BACKGROUND
@@ -187,7 +185,6 @@ class AgentWorkbenchInlinePromptEmptyStateComponent internal constructor(
     disposed = true
     content?.dispose(configuration.disposeReason)
     content = null
-    Disposer.dispose(parentDisposable)
   }
 
   override fun paintComponent(g: Graphics) {

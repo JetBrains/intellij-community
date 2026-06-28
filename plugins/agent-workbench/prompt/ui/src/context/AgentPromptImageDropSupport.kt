@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.EditorTextField
 import com.intellij.util.disposeOnCompletion
 import kotlinx.coroutines.CoroutineScope
 import java.awt.Component
@@ -37,11 +38,6 @@ internal fun interface AgentPromptImageDropHandler {
 }
 
 private const val IMAGE_DROP_TARGET_INSTALLED_PROPERTY = "AgentPromptImageDropTargetInstalled"
-
-private val EDITOR_DND_COMPONENT_CLASS_NAMES = setOf(
-  "com.intellij.openapi.editor.impl.EditorComponentImpl",
-  "com.intellij.openapi.editor.impl.EditorGutterComponentImpl",
-)
 
 internal fun installAgentPromptImageDropSupport(
   targetComponent: JComponent,
@@ -157,7 +153,18 @@ private class AgentPromptDialogImageDropInstaller(
   }
 
   private fun shouldInstallNativeImageDropTarget(component: JComponent): Boolean {
-    return component.javaClass.name !in EDITOR_DND_COMPONENT_CLASS_NAMES
+    return !isInsideEditorTextField(component)
+  }
+
+  private fun isInsideEditorTextField(component: Component): Boolean {
+    var current: Component? = component
+    while (current != null) {
+      if (current is EditorTextField) {
+        return true
+      }
+      current = current.parent
+    }
+    return false
   }
 }
 
