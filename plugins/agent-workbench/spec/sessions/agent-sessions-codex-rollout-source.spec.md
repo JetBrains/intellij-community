@@ -12,7 +12,7 @@ targets:
 # Codex Sessions Source
 
 Status: Draft
-Date: 2026-05-09
+Date: 2026-06-28
 
 ## Summary
 Codex session listing and Workbench status are app-server backed. Rollout files remain an internal discovery and cost-recovery source; they may trigger source refreshes when new rollout/project-file evidence appears, but they must not provide source-level activity or presentation fallback.
@@ -21,8 +21,9 @@ Codex session listing and Workbench status are app-server backed. Rollout files 
 - `CodexSessionSource` must list threads through `CodexAppServerSessionBackend`; legacy backend override inputs, including `rollout` and unknown values, must not switch listing away from app-server.
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
 
-- App-server listing must request `thread/list` with server-side `cwd` and source-kind filters so top-level sessions and sub-agent sessions can be folded consistently.
+- App-server listing must request `thread/list` with server-side `cwd` and source-kind filters so top-level sessions and sub-agent sessions can be folded consistently. When Agent Workbench identity path and project directory differ, Codex requests use the project directory as `cwd` and Workbench remaps returned rows and hints back to the identity path.
   [@test] ../../lib-agent/providers/codex/common/testSrc/CodexAppServerProtocolTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
 - App-server thread-scoped refresh must use `thread/read includeTurns=false`, filter snapshots by normalized `cwd`, and return partial updates/removals instead of replacing the whole project path.
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt

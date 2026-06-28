@@ -20,7 +20,7 @@ targets:
 # Agent Workbench Project Launch Config
 
 Status: Draft
-Date: 2026-03-13
+Date: 2026-06-28
 
 ## Summary
 Define the project-local launch augmentation contract for Agent Workbench sessions. This spec owns how `.agent-workbench.yaml` contributes `PATH` entries and command shims for all providers, with optional provider-specific overrides, without changing canonical provider command mapping.
@@ -38,8 +38,9 @@ Shared provider command mapping remains owned by `../core/agent-core-contracts.s
 - Providing live UI editing or validation for project launch config.
 
 ## Requirements
-- Project launch config file location is the normalized project root file `.agent-workbench.yaml`.
+- Project launch config file location is the resolved project directory file `.agent-workbench.yaml`. The Agent Workbench identity path remains the stable UI/session key; when the identity is a project file such as `.bazelproject`, `.blazeproject`, `.ipr`, `.iws`, or an `.idea` path, launch-spec resolution also carries the normalized project directory used as provider cwd and config root. Bazel project-view identities resolve to their containing workspace/Git root.
   [@test] ../../sessions-launch-config/backend/testSrc/AgentWorkbenchProjectLaunchConfigTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
 - Config schema supports shared top-level launch augmentation keys plus optional provider override blocks under `providers.<providerId>`.
   Supported launch augmentation keys at both levels are:
@@ -116,7 +117,7 @@ Shared provider command mapping remains owned by `../core/agent-core-contracts.s
 ## Data & Backend
 - Provider ids used in `providers.<providerId>` must match stable Agent Workbench provider ids.
 - Shared root launch augmentation is provider-agnostic and applies before provider-specific overrides are considered.
-- Relative configured paths resolve against the normalized project root.
+- Relative configured paths resolve against the normalized project directory, not necessarily the identity path.
 - Absolute configured paths are allowed and normalize before use.
 - Shared launch-spec resolution remains the single composition point between provider bridges and project-local augmentation.
 

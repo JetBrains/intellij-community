@@ -18,7 +18,7 @@ targets:
 # Agent Sessions New-Thread Actions
 
 Status: Draft
-Date: 2026-05-09
+Date: 2026-06-28
 
 ## Summary
 New-thread actions let users start provider-backed threads from project/worktree rows and the main toolbar. This spec owns action availability, launch-profile menus, target resolution, inline prompt handoff, and launch deduplication. Codex pending/concrete rebind behavior is specified separately.
@@ -53,6 +53,10 @@ New-thread actions let users start provider-backed threads from project/worktree
 
 - Dedicated Agent frame main-toolbar new-thread resolves source projects lazily on click or popup expansion. Multiple source candidates require explicit selection; a single candidate may be used directly; selected chat-tab source path is a fallback when no open source-project candidate exists.
   [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
+
+- New-thread target resolution uses the source project identity path for row selection, chat-tab keys, and session state, while launch requests carry the resolved project directory for provider cwd. For Bazel project-view opens, the identity is the `.bazelproject` path and the project directory is the containing workspace/Git root.
+  [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionLaunchServiceTest.kt
 
 - Source-project labels in dedicated-frame new-thread popups reuse Sessions tree naming and fall back to full normalized paths for collisions.
   [@test] ../../sessions/testSrc/AgentSessionProjectCatalogTest.kt

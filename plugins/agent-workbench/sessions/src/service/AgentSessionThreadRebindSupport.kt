@@ -217,6 +217,7 @@ internal class AgentSessionThreadRebindSupport(
         pathCandidates.add(
           buildAgentSessionChatRebindTarget(
             path = path,
+            projectDirectory = projectDirectoriesByPath[path],
             provider = provider,
             threadId = threadId,
             title = title,

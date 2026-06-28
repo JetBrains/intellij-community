@@ -24,7 +24,7 @@ targets:
 # Agent Threads Tool Window
 
 Status: Draft
-Date: 2026-06-15
+Date: 2026-06-28
 
 ## Summary
 
@@ -38,7 +38,7 @@ behavior; refresh mechanics and detailed tree rendering/interaction contracts li
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsToolWindowFactorySwingTest.kt
 
 - Project catalog rows must merge open projects and recent projects, exclude the dedicated Agent frame project, and group Git worktrees
-  under their parent project when detected.
+  under their parent project when detected. Rows are keyed by the normalized identity path, but may carry a separate project directory used for source loading and worktree grouping. Recent closed projects must preserve remembered identity-to-directory mappings so reopened Bazel project-view identities still load from the workspace root.
   [@test] ../../sessions/testSrc/AgentSessionProjectCatalogTest.kt
   [@test] ../../sessions/testSrc/GitWorktreeDiscoveryTest.kt
 
