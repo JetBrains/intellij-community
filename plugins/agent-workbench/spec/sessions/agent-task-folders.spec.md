@@ -52,6 +52,11 @@ create a new top-level Agent Workbench entity and do not inject context into pro
   done actions. User-visible action text and dialog text must live in `AgentSessionsBundle.properties`.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
 
+- Dragging active thread rows onto an in-progress task folder on the same path must perform the same move as `Move to Task Folder`. If the
+  dragged row is selected, all selected active same-path thread rows move together; if it is not selected, only the dragged row moves.
+  Mixed-path selections and drops onto other paths or done folders must be rejected.
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
+
 - Marking a folder done must archive all assigned threads through the normal archive service, including assignments whose rows are not
   currently loaded. The folder status may become `Done` only after the archive service reports that every requested target was archived.
   Empty folders may be marked done immediately.

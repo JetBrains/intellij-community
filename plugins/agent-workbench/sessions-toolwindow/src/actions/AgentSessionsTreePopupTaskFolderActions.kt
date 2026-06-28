@@ -120,7 +120,7 @@ internal class AgentSessionsTreePopupMoveToTaskFolderGroup @JvmOverloads constru
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val menu = e?.let(::moveMenu) ?: return emptyArray()
     return menu.folders.map { folder ->
-      MoveToTaskFolderAction(menu.targets, folder, assignThread)
+      MoveToTaskFolderAction(menu.move, folder, assignThread)
     }.toTypedArray()
   }
 
@@ -128,14 +128,12 @@ internal class AgentSessionsTreePopupMoveToTaskFolderGroup @JvmOverloads constru
 
   private fun moveMenu(e: AnActionEvent): MoveToTaskFolderMenu? {
     val context = resolveContext(e) ?: return null
-    val targets = activeThreadTargets(context)
-    if (targets.isEmpty()) return null
-    val path = targets.map { it.path }.distinct().singleOrNull() ?: return null
-    return MoveToTaskFolderMenu(targets = targets, folders = listFolders(path))
+    val move = resolveTaskFolderThreadMove(context.target, context.selectedThreadTargets) ?: return null
+    return MoveToTaskFolderMenu(move = move, folders = listFolders(move.path))
   }
 
   private data class MoveToTaskFolderMenu(
-    @JvmField val targets: List<SessionActionTarget.Thread>,
+    @JvmField val move: TaskFolderThreadMove,
     @JvmField val folders: List<AgentTaskFolder>,
   )
 }
@@ -285,15 +283,44 @@ internal class AgentSessionsTreePopupMarkTaskFolderDoneAction : DumbAwareAction 
 }
 
 private class MoveToTaskFolderAction(
-  private val targets: List<SessionActionTarget.Thread>,
+  private val move: TaskFolderThreadMove,
   private val folder: AgentTaskFolder,
   private val assignThread: (SessionActionTarget.Thread, AgentTaskFolder) -> Unit,
 ) : DumbAwareAction(folder.name) {
   override fun actionPerformed(e: AnActionEvent) {
-    targets.forEach { target -> assignThread(target, folder) }
+    assignThreadsToTaskFolder(move, folder, assignThread)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+}
+
+internal data class TaskFolderThreadMove(
+  @JvmField val path: String,
+  @JvmField val targets: List<SessionActionTarget.Thread>,
+)
+
+internal fun resolveTaskFolderThreadMove(
+  target: SessionActionTarget?,
+  selectedThreadTargets: List<SessionActionTarget.Thread>,
+): TaskFolderThreadMove? {
+  val targets = selectedThreadTargets.ifEmpty {
+    listOfNotNull(target as? SessionActionTarget.Thread)
+  }
+  if (targets.isEmpty()) return null
+  val path = targets.map { it.path }.distinct().singleOrNull() ?: return null
+  return TaskFolderThreadMove(path = path, targets = targets)
+}
+
+internal fun canMoveThreadsToTaskFolder(move: TaskFolderThreadMove, folder: AgentTaskFolder): Boolean {
+  return folder.status == AgentTaskFolderStatus.IN_PROGRESS && move.path == folder.path
+}
+
+internal fun assignThreadsToTaskFolder(
+  move: TaskFolderThreadMove,
+  folder: AgentTaskFolder,
+  assignThread: (SessionActionTarget.Thread, AgentTaskFolder) -> Unit,
+) {
+  move.targets.forEach { target -> assignThread(target, folder) }
 }
 
 private fun activeThreadTargets(context: AgentSessionsTreePopupActionContext): List<SessionActionTarget.Thread> {

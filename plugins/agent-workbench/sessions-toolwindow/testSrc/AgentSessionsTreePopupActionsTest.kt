@@ -29,8 +29,10 @@ import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTre
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupRenameThreadAction
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupToggleThreadPinAction
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupUnarchiveThreadAction
+import com.intellij.agent.workbench.sessions.toolwindow.actions.canMoveThreadsToTaskFolder
 import com.intellij.agent.workbench.sessions.toolwindow.actions.createAgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.toolwindow.actions.resolveAgentSessionsTreePopupActionContext
+import com.intellij.agent.workbench.sessions.toolwindow.actions.resolveTaskFolderThreadMove
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
 import com.intellij.agent.workbench.sessions.toolwindow.ui.archiveTargetsForTaskFolderAssignments
@@ -48,6 +50,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveRequestResult
 import com.intellij.platform.ai.agent.sessions.core.SessionActionTarget
 import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolder
+import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderStatus
 import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderThreadAssignment
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.TestActionEvent
@@ -570,6 +573,47 @@ class AgentSessionsTreePopupActionsTest {
     child.actionPerformed(popupEvent(child, context))
 
     assertThat(assigned).containsExactly("thread-1" to "folder-1", "thread-2" to "folder-1")
+  }
+
+  @Test
+  fun taskFolderThreadMoveUsesSelectedSamePathThreads() {
+    val provider = AgentSessionProvider.from("codex")
+    val firstTarget = threadActionTarget(path = "/work/project-a", provider = provider, threadId = "thread-1")
+    val secondTarget = threadActionTarget(path = "/work/project-a", provider = provider, threadId = "thread-2")
+
+    val move = resolveTaskFolderThreadMove(firstTarget, listOf(firstTarget, secondTarget))
+
+    assertThat(move?.path).isEqualTo("/work/project-a")
+    assertThat(move?.targets).containsExactly(firstTarget, secondTarget)
+  }
+
+  @Test
+  fun taskFolderThreadMoveFallsBackToPrimaryThread() {
+    val target = threadActionTarget(path = "/work/project-a", threadId = "thread-1")
+
+    val move = resolveTaskFolderThreadMove(target, emptyList())
+
+    assertThat(move?.path).isEqualTo("/work/project-a")
+    assertThat(move?.targets).containsExactly(target)
+  }
+
+  @Test
+  fun taskFolderThreadMoveRejectsMixedPathSelection() {
+    val provider = AgentSessionProvider.from("codex")
+    val firstTarget = threadActionTarget(path = "/work/project-a", provider = provider, threadId = "thread-1")
+    val secondTarget = threadActionTarget(path = "/work/project-b", provider = provider, threadId = "thread-2")
+
+    assertThat(resolveTaskFolderThreadMove(firstTarget, listOf(firstTarget, secondTarget))).isNull()
+  }
+
+  @Test
+  fun taskFolderThreadMoveValidatesSameActiveFolderPath() {
+    val target = threadActionTarget(path = "/work/project-a", threadId = "thread-1")
+    val move = checkNotNull(resolveTaskFolderThreadMove(target, emptyList()))
+
+    assertThat(canMoveThreadsToTaskFolder(move, taskFolder(path = "/work/project-a"))).isTrue()
+    assertThat(canMoveThreadsToTaskFolder(move, taskFolder(path = "/work/project-b"))).isFalse()
+    assertThat(canMoveThreadsToTaskFolder(move, taskFolder(path = "/work/project-a", status = AgentTaskFolderStatus.DONE))).isFalse()
   }
 
   @Test
@@ -1163,6 +1207,33 @@ private fun popupEvent(action: AnAction, context: AgentSessionsTreePopupActionCo
     .add(AgentSessionsTreePopupDataKeys.CONTEXT, context)
     .build()
   return TestActionEvent.createTestEvent(action, dataContext)
+}
+
+private fun threadActionTarget(
+  path: String,
+  threadId: String,
+  provider: AgentSessionProvider = AgentSessionProvider.from("codex"),
+): SessionActionTarget.Thread {
+  return SessionActionTarget.Thread(
+    path = path,
+    provider = provider,
+    threadId = threadId,
+    title = threadId,
+  )
+}
+
+private fun taskFolder(
+  path: String,
+  status: AgentTaskFolderStatus = AgentTaskFolderStatus.IN_PROGRESS,
+): AgentTaskFolder {
+  return AgentTaskFolder(
+    path = path,
+    id = "folder-1",
+    name = "Research",
+    status = status,
+    createdAt = 1,
+    updatedAt = 1,
+  )
 }
 
 private fun taskFolderAssignment(
