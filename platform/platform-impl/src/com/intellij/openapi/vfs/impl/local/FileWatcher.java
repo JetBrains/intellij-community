@@ -133,7 +133,7 @@ public final class FileWatcher implements AppLifecycleListener {
   }
 
   @NotNull DirtyPaths getDirtyPaths() {
-    return myNotificationSink.getDirtyPaths();
+    return myNotificationSink.takeAndResetDirtyPaths();
   }
 
   public @NotNull Collection<@NotNull String> getManualWatchRoots() {
@@ -206,8 +206,7 @@ public final class FileWatcher implements AppLifecycleListener {
     private DirtyPaths myDirtyPaths = new DirtyPaths();
 
     /// gets _and clears_ dirty paths currently accumulated
-    /// TODO rename to takeDirtyPaths() to be clear it is a modifying op
-    private DirtyPaths getDirtyPaths() {
+    private DirtyPaths takeAndResetDirtyPaths() {
       var dirtyPaths = DirtyPaths.EMPTY;
 
       synchronized (myLock) {
