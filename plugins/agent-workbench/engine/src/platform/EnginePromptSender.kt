@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.engine.platform
 
+import com.intellij.agent.workbench.engine.core.ThreadActionPromptButton
 import com.intellij.agent.workbench.engine.core.ThreadId
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -20,6 +21,9 @@ interface EnginePromptSender {
 
   /** Sends [text] as the next user prompt in [threadId]; connects the runtime session on first use. */
   fun sendPrompt(project: Project, threadId: ThreadId, text: String)
+
+  /** Handles a runtime-specific action prompt button rendered in the thread transcript. */
+  fun handleActionPromptButton(project: Project, threadId: ThreadId, button: ThreadActionPromptButton): Boolean = false
 
   companion object {
     private val EP = ExtensionPointName<EnginePromptSender>("com.intellij.agent.workbench.engine.promptSender")

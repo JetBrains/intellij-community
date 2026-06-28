@@ -11,6 +11,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.engine.core.MessageRole
 import com.intellij.agent.workbench.engine.core.RuntimeKind
+import com.intellij.agent.workbench.engine.core.ThreadActionPrompt
 import com.intellij.agent.workbench.engine.core.ThreadCommand
 import com.intellij.agent.workbench.engine.core.ThreadContextCompaction
 import com.intellij.agent.workbench.engine.core.ThreadFileDiff
@@ -119,7 +120,7 @@ internal class EngineSessionSource : AgentSessionSource {
       else -> AgentSessionOutlineItemKind.METADATA
     }
     is ThreadToolCall, is ThreadCommand -> AgentSessionOutlineItemKind.TOOL_CALL
-    is ThreadPlan, is ThreadFileDiff, is ThreadContextCompaction -> AgentSessionOutlineItemKind.METADATA
+    is ThreadPlan, is ThreadFileDiff, is ThreadContextCompaction, is ThreadActionPrompt -> AgentSessionOutlineItemKind.METADATA
   }
 
   private fun outlineTitle(entry: ThreadTranscriptEntry): String = when (entry) {
@@ -129,6 +130,7 @@ internal class EngineSessionSource : AgentSessionSource {
     is ThreadPlan -> entry.title ?: entry.id
     is ThreadFileDiff -> entry.title ?: entry.path ?: entry.id
     is ThreadContextCompaction -> entry.title ?: entry.id
+    is ThreadActionPrompt -> entry.title
   }
 
   private fun outlinePreview(entry: ThreadTranscriptEntry): String = when (entry) {
@@ -138,5 +140,6 @@ internal class EngineSessionSource : AgentSessionSource {
     is ThreadPlan -> entry.items.joinToString(separator = "\n") { it.title }
     is ThreadFileDiff -> entry.newText.orEmpty()
     is ThreadContextCompaction -> entry.summary.orEmpty()
+    is ThreadActionPrompt -> entry.message ?: entry.buttons.joinToString(separator = "\n") { it.text }
   }
 }
