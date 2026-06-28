@@ -5,6 +5,7 @@ import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItemKind
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionActivityEvidence
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionUpdateSource
@@ -165,6 +166,7 @@ class PiSessionSourceTest {
       AgentThreadActivityReport(AgentThreadActivity.PROCESSING)
     )
     assertThat(updateEvent?.activityUpdatesByThreadId?.get("session-status")?.updatedAt).isEqualTo(5_000L)
+    assertThat(updateEvent?.activityUpdatesByThreadId?.get("session-status")?.evidence).isEqualTo(AgentSessionActivityEvidence.SEMANTIC)
     assertThat(updateEvent?.threadIds).containsExactly("session-status")
   }
 

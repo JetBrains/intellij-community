@@ -74,6 +74,9 @@ Session refresh is event-driven and provider-agnostic. It merges provider result
   [@test] ../../sessions/testSrc/AgentSessionThreadPresentationTest.kt
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
 
+- Activity and presentation updates carry evidence authority. Provisional provider signals may update row activity, but must not clear an existing attention-bucket chrome/summary activity. Semantic provider signals and authoritative snapshots may clear attention when they explicitly report a non-attention activity.
+  [@test] ../../sessions/testSrc/service/AgentSessionRefreshSchedulerTest.kt
+
 - File-backed provider watchers must recover after watch-loop failures while the owning watcher remains active.
   [@test] ../../lib-agent/filewatch/testSrc/AgentWorkbenchDirectoryWatcherTest.kt
 

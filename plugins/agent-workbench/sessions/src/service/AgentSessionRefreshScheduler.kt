@@ -11,6 +11,8 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThread
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionUpdateSource
 import com.intellij.platform.ai.agent.sessions.core.providers.describeScope
 import com.intellij.platform.ai.agent.sessions.core.providers.isUnscoped
+import com.intellij.platform.ai.agent.sessions.core.providers.mergeAgentSessionActivityEvidence
+import com.intellij.platform.ai.agent.sessions.core.providers.mergeAgentThreadActivityReport
 import com.intellij.platform.ai.agent.sessions.core.providers.mergeAgentSessionThreadPresentationUpdates
 import com.intellij.platform.ai.agent.sessions.core.providers.toPresentationUpdate
 import com.intellij.openapi.diagnostic.debug
@@ -503,11 +505,15 @@ internal class AgentSessionRefreshScheduler(
     }
     val updatesChromeActivity = incoming.updatesChromeActivity || existing.updatesChromeActivity
     return AgentSessionThreadActivityUpdate(
-      activityReport = incoming.activityReport.copy(
-        chromeActivity = if (incoming.updatesChromeActivity) incoming.activityReport.chromeActivity else existing.activityReport.chromeActivity,
+      activityReport = mergeAgentThreadActivityReport(
+        existing = existing.activityReport,
+        incoming = incoming.activityReport,
+        incomingUpdatesChromeActivity = incoming.updatesChromeActivity,
+        incomingEvidence = incoming.evidence,
       ),
       updatesChromeActivity = updatesChromeActivity,
       updatedAt = updatedAt,
+      evidence = mergeAgentSessionActivityEvidence(existing = existing.evidence, incoming = incoming.evidence),
     )
   }
 
