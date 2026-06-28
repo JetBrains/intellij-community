@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.engine.platform
 
 import com.intellij.agent.workbench.engine.core.EventSource
 import com.intellij.agent.workbench.engine.core.EventVisibility
+import com.intellij.agent.workbench.engine.core.ThreadActionPrompt
 import com.intellij.agent.workbench.engine.core.StartThreadRequest
 import com.intellij.agent.workbench.engine.core.ThreadApprovalStatus
 import com.intellij.agent.workbench.engine.core.ThreadCommand
@@ -14,6 +15,8 @@ import com.intellij.agent.workbench.engine.core.ThreadToolCall
 import com.intellij.agent.workbench.engine.core.RuntimeKind
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.addJsonObject
+import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.assertj.core.api.Assertions.assertThat
@@ -312,6 +315,84 @@ class EngineEventStoreTest {
     val projection = store.projection(threadId)
     assertThat(projection.thread.status).isEqualTo(ThreadStatus.Disconnected)
     assertThat(projection.messages.single().text).isEqualTo("hello")
+  }
+
+  @Test
+  fun `auth-required disconnected event shows an action prompt and keeps the thread sendable`(@TempDir dir: Path) {
+    val store = JsonlEventStore(dir)
+    store.append(
+      threadId, EventSource.Runtime, ThreadEventType.ThreadDisconnected,
+      buildJsonObject {
+        put("authRequired", true)
+        put("promptId", "auth-required")
+        put("title", "Authentication required")
+        put("message", "Sign in, then send the message again.")
+        put("details", "Authentication is required before this operation can be performed.")
+        put("buttons", buildJsonArray {
+          addJsonObject {
+            put("id", "acp-auth-jetbrains-account")
+            put("text", "Junie Account")
+            put("actionKind", "acpAuthenticate")
+            put("authMethodId", "jetbrains-account")
+            put("description", "Log in via Junie Account in a browser.")
+          }
+        })
+      },
+    )
+
+    val projection = store.projection(threadId)
+    assertThat(projection.thread.status).isEqualTo(ThreadStatus.WaitingForUser)
+    val prompt = projection.transcript.single() as ThreadActionPrompt
+    assertThat(prompt.title).isEqualTo("Authentication required")
+    assertThat(prompt.message).isEqualTo("Sign in, then send the message again.")
+    val button = prompt.buttons.single()
+    assertThat(button.id).isEqualTo("acp-auth-jetbrains-account")
+    assertThat(button.text).isEqualTo("Junie Account")
+    assertThat(button.actionId).isNull()
+    assertThat(button.actionKind).isEqualTo("acpAuthenticate")
+    assertThat(button.authMethodId).isEqualTo("jetbrains-account")
+    assertThat(button.description).isEqualTo("Log in via Junie Account in a browser.")
+  }
+
+  @Test
+  fun `ThreadStarted clears stale action prompts`(@TempDir dir: Path) {
+    val store = JsonlEventStore(dir)
+    store.append(
+      threadId, EventSource.Runtime, ThreadEventType.ThreadDisconnected,
+      buildJsonObject {
+        put("authRequired", true)
+        put("promptId", "auth-required")
+        put("title", "Authentication required")
+        put("message", "Sign in, then send the message again.")
+        put("buttons", buildJsonArray {
+          addJsonObject {
+            put("id", "open-ai-assistant-settings")
+            put("text", "Open AI Assistant Settings")
+            put("actionId", "AIAssistant.LLMSettings")
+          }
+        })
+      },
+    )
+    assertThat(store.projection(threadId).transcript.filterIsInstance<ThreadActionPrompt>()).hasSize(1)
+
+    store.append(
+      threadId, EventSource.User, ThreadEventType.MessageDelta,
+      buildJsonObject {
+        put("messageId", "m1")
+        put("role", "User")
+        put("contentDelta", "hey")
+      },
+    )
+    store.append(
+      threadId, EventSource.User, ThreadEventType.MessageCompleted,
+      buildJsonObject { put("messageId", "m1") },
+    )
+    store.append(threadId, EventSource.Runtime, ThreadEventType.ThreadStarted)
+
+    val projection = store.projection(threadId)
+    assertThat(projection.thread.status).isEqualTo(ThreadStatus.Running)
+    assertThat(projection.transcript.filterIsInstance<ThreadActionPrompt>()).isEmpty()
+    assertThat(projection.messages.single().text).isEqualTo("hey")
   }
 
   @Test

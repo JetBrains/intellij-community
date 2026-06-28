@@ -2,6 +2,8 @@
 package com.intellij.agent.workbench.engine.ui
 
 import com.intellij.agent.workbench.engine.core.RuntimeKind
+import com.intellij.agent.workbench.engine.core.ThreadActionPrompt
+import com.intellij.agent.workbench.engine.core.ThreadActionPromptButton
 import com.intellij.agent.workbench.engine.core.ThreadEventEnvelope
 import com.intellij.agent.workbench.engine.core.ThreadCommand
 import com.intellij.agent.workbench.engine.core.ThreadContextCompaction
@@ -19,11 +21,20 @@ import com.intellij.agent.workbench.engine.platform.EngineProjectService
 import com.intellij.agent.workbench.engine.platform.EnginePromptSender
 import com.intellij.agent.workbench.engine.platform.EngineRuntimeConnector
 import com.intellij.agent.workbench.engine.platform.EngineUnreadTracker
+import com.intellij.ide.setToolTipText
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
@@ -34,6 +45,7 @@ import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
+import java.awt.FlowLayout
 import java.awt.Font
 import java.awt.Point
 import java.awt.Rectangle
@@ -44,6 +56,7 @@ import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import javax.swing.Box
 import javax.swing.BoxLayout
+import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.Scrollable
@@ -423,7 +436,8 @@ internal class AgentAcpThreadScreen(
     val manualTailPauseActive = isManualTranscriptTailPauseActive()
     val followTailBefore = followTranscriptTail
     val keepFollowingTailAcrossLayoutDrift = followTailBefore && !manualTailPauseActive && scrollState.isWithinTailDrift
-    val shouldStickToBottom = previousComponents == 0 || latestIsUserMessage || (atBottom && !manualTailPauseActive) || keepFollowingTailAcrossLayoutDrift
+    val shouldStickToBottom =
+      previousComponents == 0 || latestIsUserMessage || (atBottom && !manualTailPauseActive) || keepFollowingTailAcrossLayoutDrift
     val reason = when {
       previousComponents == 0 -> "initial-or-empty-panel"
       latestIsUserMessage -> "latest-entry-is-user-message"
@@ -651,6 +665,7 @@ internal class AgentAcpThreadScreen(
     is ThreadPlan -> "plan(id=$id, complete=$complete, items=${items.size}, updatedAt=$updatedAt)"
     is ThreadFileDiff -> "diff(id=$id, status=$status, newTextLength=${newText?.length ?: 0}, updatedAt=$updatedAt)"
     is ThreadContextCompaction -> "context(id=$id, summaryLength=${summary?.length ?: 0}, updatedAt=$updatedAt)"
+    is ThreadActionPrompt -> "actionPrompt(id=$id, buttons=${buttons.size}, updatedAt=$updatedAt)"
   }
 
   private fun ThreadProjection.debugSummary(): String =
@@ -671,6 +686,7 @@ internal class AgentAcpThreadScreen(
     is ThreadPlan -> planRow(entry)
     is ThreadFileDiff -> diffRow(entry)
     is ThreadContextCompaction -> contextRow(entry)
+    is ThreadActionPrompt -> actionPromptRow(entry)
   }
 
   private fun messageRow(message: ThreadMessage): JComponent {
@@ -789,6 +805,91 @@ internal class AgentAcpThreadScreen(
       body = previewText(context.summary.orEmpty()),
       status = null,
     )
+  }
+
+  private fun actionPromptRow(prompt: ThreadActionPrompt): JComponent {
+    val row = TranscriptRowPanel().apply {
+      isOpaque = false
+      alignmentX = LEFT_ALIGNMENT
+    }
+    val roleLabel = JBLabel(EngineBundle.message("acp.screen.row.authorization")).apply {
+      font = JBFont.small().asBold()
+      foreground = UIUtil.getContextHelpForeground()
+      border = JBUI.Borders.emptyBottom(2)
+    }
+    val body = JPanel().apply {
+      layout = BoxLayout(this, BoxLayout.Y_AXIS)
+      isOpaque = false
+      add(roleLabel)
+      add(rowTextArea(prompt.title, monospace = false))
+      prompt.message?.takeIf { it.isNotBlank() }?.let { message ->
+        add(Box.createVerticalStrut(2))
+        add(rowTextArea(message, monospace = false))
+      }
+      val buttonPanel = promptButtonPanel(prompt.buttons)
+      if (buttonPanel != null) {
+        add(buttonPanel)
+      }
+    }
+    row.add(body, BorderLayout.CENTER)
+    return row
+  }
+
+  private fun promptButtonPanel(buttons: List<ThreadActionPromptButton>): JComponent? {
+    val actionManager = ActionManager.getInstance()
+    val panel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)).apply {
+      isOpaque = false
+      alignmentX = LEFT_ALIGNMENT
+      border = JBUI.Borders.emptyTop(6)
+    }
+    for (button in buttons) {
+      val actionId = button.actionId
+      val actionKind = button.actionKind
+      val component = when {
+        actionId != null -> {
+          val action = actionManager.getAction(actionId)
+          if (action == null) {
+            LOG.warn("[$threadId] ACP action prompt skipped missing action: $actionId")
+            null
+          }
+          else {
+            promptButton(button) {
+              val dataContext = DataContext { dataId ->
+                if (CommonDataKeys.PROJECT.`is`(dataId)) project else null
+              }
+              val event = AnActionEvent.createEvent(action, dataContext, null, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null)
+              ActionUtil.performAction(action, event)
+            }
+          }
+        }
+        actionKind != null -> {
+          promptButton(button) {
+            val sender = EnginePromptSender.forThread(project, threadId)
+            if (sender == null || !sender.handleActionPromptButton(project, threadId, button)) {
+              LOG.warn("[$threadId] ACP action prompt skipped unhandled action kind: $actionKind")
+            }
+          }
+        }
+        else -> {
+          LOG.warn("[$threadId] ACP action prompt skipped button without action: ${button.id}")
+          null
+        }
+      }
+      if (component != null) {
+        if (panel.componentCount > 0) panel.add(Box.createHorizontalStrut(JBUI.scale(6)))
+        panel.add(component)
+      }
+    }
+    return panel.takeIf { it.componentCount > 0 }
+  }
+
+  private fun promptButton(button: ThreadActionPromptButton, action: () -> Unit): JButton {
+    return JButton(button.text).apply {
+      button.description?.let { setToolTipText(HtmlChunk.text(it)) }
+      accessibleContext.accessibleName = button.text
+      accessibleContext.accessibleDescription = button.description
+      addActionListener { action() }
+    }
   }
 
   private fun entryRow(

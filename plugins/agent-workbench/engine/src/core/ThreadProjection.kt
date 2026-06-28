@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.engine.core
 
+import com.intellij.openapi.util.NlsSafe
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -137,6 +138,25 @@ data class ThreadContextCompaction(
 ) : ThreadTranscriptEntry
 
 @Serializable
+data class ThreadActionPromptButton(
+  val id: String,
+  val text: @NlsSafe String,
+  val actionId: String? = null,
+  val actionKind: String? = null,
+  val authMethodId: String? = null,
+  val description: @NlsSafe String? = null,
+)
+
+@Serializable
+data class ThreadActionPrompt(
+  override val id: String,
+  val title: @NlsSafe String,
+  val message: @NlsSafe String? = null,
+  val buttons: List<ThreadActionPromptButton> = emptyList(),
+  override val updatedAt: Long = 0L,
+) : ThreadTranscriptEntry
+
+@Serializable
 data class ThreadUsage(
   val inputTokens: Long? = null,
   val outputTokens: Long? = null,
@@ -231,7 +251,7 @@ fun reduce(state: ThreadProjection, event: ThreadEventEnvelope): ThreadProjectio
   return when (event.type) {
     ThreadEventType.ThreadCreated -> withSeq.withThreadCreated(payload, event.timestamp)
     ThreadEventType.RuntimeSessionBound -> withSeq.withRuntimeBinding(payload, event.timestamp)
-    ThreadEventType.ThreadStarted -> withSeq.withStatus(ThreadStatus.Running, event.timestamp)
+    ThreadEventType.ThreadStarted -> withSeq.withThreadStarted(event.timestamp)
     ThreadEventType.MessageDelta -> withSeq.withMessageDelta(payload, event.timestamp)
     ThreadEventType.MessageCompleted -> withSeq.withMessageCompleted(payload, event.timestamp)
     ThreadEventType.ToolCallStarted -> withSeq.withToolCallStarted(payload, event.timestamp)
@@ -262,7 +282,7 @@ fun reduce(state: ThreadProjection, event: ThreadEventEnvelope): ThreadProjectio
       ),
     )
     ThreadEventType.ThreadFailed -> withSeq.withStatus(ThreadStatus.Failed, event.timestamp)
-    ThreadEventType.ThreadDisconnected -> withSeq.withStatus(ThreadStatus.Disconnected, event.timestamp)
+    ThreadEventType.ThreadDisconnected -> withSeq.withDisconnected(payload, event.timestamp)
     ThreadEventType.ThreadCancelled -> withSeq.withStatus(ThreadStatus.Cancelled, event.timestamp)
     else -> withSeq
   }
@@ -275,11 +295,33 @@ fun replay(seed: ThreadProjection, events: Iterable<ThreadEventEnvelope>): Threa
 private fun ThreadProjection.withStatus(status: ThreadStatus, at: Long): ThreadProjection =
   copy(thread = thread.copy(status = status, updatedAt = at))
 
+private fun ThreadProjection.withThreadStarted(at: Long): ThreadProjection {
+  val next = withStatus(ThreadStatus.Running, at)
+  val transcript = next.transcript.filterNot { it is ThreadActionPrompt }
+  return if (transcript.size == next.transcript.size) next else next.copy(transcript = transcript)
+}
+
 private fun ThreadProjection.withThreadUpdated(at: Long): ThreadProjection =
   copy(thread = thread.copy(updatedAt = at))
 
 private fun ThreadProjection.withWaitingStatus(at: Long): ThreadProjection =
   withStatus(if (pendingApprovals > 0) ThreadStatus.WaitingForApproval else ThreadStatus.WaitingForUser, at)
+
+private fun ThreadProjection.withDisconnected(payload: JsonObject, at: Long): ThreadProjection {
+  val authRequired = payload.boolean("authRequired") == true
+  val next = withStatus(if (authRequired) ThreadStatus.WaitingForUser else ThreadStatus.Disconnected, at)
+  if (!authRequired) return next
+  val title = payload.string("title") ?: return next
+  val prompt = ThreadActionPrompt(
+    id = payload.string("promptId") ?: "auth-required",
+    title = title,
+    message = payload.string("message") ?: payload.string("details")?.takeIf { it != title },
+    buttons = payload.buttons(),
+    updatedAt = at,
+  )
+  val transcript = next.transcript.filterNot { it is ThreadActionPrompt && it.id == prompt.id } + prompt
+  return next.copy(transcript = transcript).withThreadUpdated(at)
+}
 
 private fun ThreadProjection.withThreadCreated(payload: JsonObject, at: Long): ThreadProjection {
   val created = copy(
@@ -629,6 +671,24 @@ private fun JsonObject.boolean(key: String): Boolean? = string(key)?.toBooleanSt
 
 private fun JsonObject.array(key: String): JsonArray? = this[key]?.let {
   runCatching { it.jsonArray }.getOrNull()
+}
+
+private fun JsonObject.buttons(): List<ThreadActionPromptButton> {
+  return array("buttons")?.mapIndexedNotNull { index, element ->
+    val button = runCatching { element.jsonObject }.getOrNull() ?: return@mapIndexedNotNull null
+    val text = button.string("text") ?: return@mapIndexedNotNull null
+    val actionId = button.string("actionId")
+    val actionKind = button.string("actionKind")
+    if (actionId == null && actionKind == null) return@mapIndexedNotNull null
+    ThreadActionPromptButton(
+      id = button.string("id") ?: actionId ?: button.string("authMethodId") ?: "button:$index",
+      text = text,
+      actionId = actionId,
+      actionKind = actionKind,
+      authMethodId = button.string("authMethodId"),
+      description = button.string("description"),
+    )
+  }.orEmpty()
 }
 
 private inline fun <reified T : Enum<T>> JsonObject.enum(key: String): T? {
