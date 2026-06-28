@@ -89,8 +89,9 @@ Agent Workbench treats Pi as a first-class terminal-backed provider. Pi sessions
 
 - The same authenticated control WebSocket may carry explicit task-folder capability requests from the bundled Pi extension to the IDE:
   `getCurrentTaskFolder`, `listTaskFolderThreads`, `getTaskFolderMetadata`, `setTaskFolderMetadata`, and
-  `deleteTaskFolderMetadata`. These requests must use the bound cwd/session id, must not inject prompt context automatically, and must
-  return normal `response` frames with `ok`, `requestId`, and the requested folder, assignment, metadata, or mutation result fields.
+  `deleteTaskFolderMetadata`. These requests must use the bound cwd/session id to resolve current-session context, use global folder id
+  for explicit folder mutations, must not inject prompt context automatically, and must return normal `response` frames with `ok`,
+  `requestId`, and the requested folder, assignment, metadata, or mutation result fields.
   [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiExtensionControlWebSocketHandlerTest.kt
 
 - Rename must append a Pi-compatible `session_info` entry to the session JSONL file while preserving the thread's current archive state. Archive and unarchive must use the same mechanism by writing a title with or without the shared `[archived] ` prefix; loaded Pi titles must strip that prefix for display and use it only as Agent Workbench archive state.

@@ -5,6 +5,7 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderService
 import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderStatus
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.io.Ksuid
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -24,6 +25,7 @@ class AgentTaskFolderServiceTest {
     )
 
     assertThat(folder?.path).isEqualTo("/work/project-a")
+    assertThat(Ksuid.isValid(folder?.id)).isTrue()
     assertThat(folder?.name).isEqualTo("Authentication rewrite")
     assertThat(folder?.metadata).containsExactlyEntriesOf(mapOf("issue" to "IJPL-1"))
     assertThat(service.listFolders("/work/project-a")).containsExactly(folder)
@@ -39,8 +41,8 @@ class AgentTaskFolderServiceTest {
     assertThat(service.assignThread("/work/project-a", provider, "thread-1", first.id)).isTrue()
     assertThat(service.assignThread("/work/project-a", provider, "thread-1", second.id)).isTrue()
 
-    assertThat(service.listFolderThreadAssignments("/work/project-a", first.id)).isEmpty()
-    assertThat(service.listFolderThreadAssignments("/work/project-a", second.id).map { it.threadId }).containsExactly("thread-1")
+    assertThat(service.listFolderThreadAssignments(first.id)).isEmpty()
+    assertThat(service.listFolderThreadAssignments(second.id).map { it.threadId }).containsExactly("thread-1")
     assertThat(service.getFolderForThread("/work/project-a", provider, "thread-1")?.id).isEqualTo(second.id)
   }
 
@@ -50,7 +52,7 @@ class AgentTaskFolderServiceTest {
     val provider = AgentSessionProvider.from("codex")
     val folder = requireNotNull(service.createFolder("/work/project-a", "Review"))
 
-    assertThat(service.setFolderStatus("/work/project-a", folder.id, AgentTaskFolderStatus.DONE)).isTrue()
+    assertThat(service.setFolderStatus(folder.id, AgentTaskFolderStatus.DONE)).isTrue()
 
     assertThat(service.listFolders("/work/project-a")).isEmpty()
     assertThat(service.listFolders("/work/project-a", includeDone = true).map { it.id }).containsExactly(folder.id)
@@ -64,7 +66,7 @@ class AgentTaskFolderServiceTest {
     val folder = requireNotNull(service.createFolder("/work/project-a", "Docs"))
     assertThat(service.assignThread("/work/project-a", provider, "thread-1", folder.id)).isTrue()
 
-    assertThat(service.deleteFolder("/work/project-a", folder.id)).isTrue()
+    assertThat(service.deleteFolder(folder.id)).isTrue()
 
     assertThat(service.listFolders("/work/project-a", includeDone = true)).isEmpty()
     assertThat(service.getFolderForThread("/work/project-a", provider, "thread-1")).isNull()
@@ -75,29 +77,75 @@ class AgentTaskFolderServiceTest {
     val service = AgentTaskFolderService()
     service.loadState(
       AgentTaskFolderService.TaskFolderState(
-        foldersByPath = mapOf(
-          "/work/project-a/" to listOf(
-            AgentTaskFolderService.FolderState(
-              id = " folder-1 ",
-              name = " Folder ",
-              metadata = mapOf(" issue " to "IJPL-1", " " to "ignored"),
-            )
+        foldersById = mapOf(
+          " folder1 " to AgentTaskFolderService.FolderState(
+            name = " Folder ",
+            metadata = mapOf(" issue " to "IJPL-1", " " to "ignored"),
+            paths = listOf("/work/project-a/", " "),
           )
         ),
-        assignmentsByPath = mapOf(
-          "/work/project-a/" to listOf(
-            AgentTaskFolderService.AssignmentState(providerId = "codex", threadId = " thread-1 ", folderId = " folder-1 "),
-            AgentTaskFolderService.AssignmentState(providerId = "1invalid", threadId = "thread-2", folderId = "folder-1"),
-            AgentTaskFolderService.AssignmentState(providerId = "codex", threadId = "thread-3", folderId = "missing-folder"),
-          )
+        assignments = listOf(
+          AgentTaskFolderService.AssignmentState(path = "/work/project-a/", providerId = "codex", threadId = " thread-1 ", folderId = " folder1 "),
+          AgentTaskFolderService.AssignmentState(path = "/work/project-a/", providerId = "1invalid", threadId = "thread-2", folderId = "folder1"),
+          AgentTaskFolderService.AssignmentState(path = "/work/project-a/", providerId = "codex", threadId = "thread-3", folderId = "missing"),
+          AgentTaskFolderService.AssignmentState(path = "/work/project-b", providerId = "codex", threadId = "thread-4", folderId = "folder1"),
         ),
       )
     )
 
     val folder = service.listFolders("/work/project-a").single()
-    assertThat(folder.id).isEqualTo("folder-1")
+    assertThat(folder.id).isEqualTo("folder1")
     assertThat(folder.name).isEqualTo("Folder")
     assertThat(folder.metadata).containsExactlyEntriesOf(mapOf("issue" to "IJPL-1"))
-    assertThat(service.listFolderThreadAssignments("/work/project-a", "folder-1").map { it.threadId }).containsExactly("thread-1")
+    assertThat(service.listFolderThreadAssignments("folder1").map { it.threadId }).containsExactly("thread-1")
+  }
+
+  @Test
+  fun folderMutationsUseGlobalFolderIdAcrossAssociatedPaths() {
+    val service = AgentTaskFolderService()
+    val provider = AgentSessionProvider.from("codex")
+    service.loadState(
+      AgentTaskFolderService.TaskFolderState(
+        foldersById = mapOf(
+          "folder1" to AgentTaskFolderService.FolderState(
+            name = "Folder",
+            paths = listOf("/work/project-a", "/work/project-b"),
+          )
+        ),
+      )
+    )
+
+    assertThat(service.renameFolder("folder1", "Renamed")).isTrue()
+    assertThat(service.setMetadata("folder1", "issue", "IJPL-1")).isTrue()
+    assertThat(service.assignThread("/work/project-a", provider, "thread-a", "folder1")).isTrue()
+    assertThat(service.assignThread("/work/project-b", provider, "thread-b", "folder1")).isTrue()
+
+    assertThat(service.listFolders("/work/project-a").single().name).isEqualTo("Renamed")
+    assertThat(service.listFolders("/work/project-b").single().metadata).containsEntry("issue", "IJPL-1")
+    assertThat(service.listFolderThreadAssignments("folder1").map { it.threadId }).containsExactly("thread-a", "thread-b")
+
+    assertThat(service.deleteFolder("folder1")).isTrue()
+
+    assertThat(service.listFolders("/work/project-a", includeDone = true)).isEmpty()
+    assertThat(service.listFolders("/work/project-b", includeDone = true)).isEmpty()
+    assertThat(service.getFolderForThread("/work/project-a", provider, "thread-a")).isNull()
+    assertThat(service.getFolderForThread("/work/project-b", provider, "thread-b")).isNull()
+  }
+
+  @Test
+  fun legacyUuidFolderIdsAreDroppedOnLoad() {
+    val service = AgentTaskFolderService()
+    service.loadState(
+      AgentTaskFolderService.TaskFolderState(
+        foldersById = mapOf(
+          "550e8400-e29b-41d4-a716-446655440000" to AgentTaskFolderService.FolderState(
+            name = "Legacy",
+            paths = listOf("/work/project-a"),
+          )
+        ),
+      )
+    )
+
+    assertThat(service.listFolders("/work/project-a", includeDone = true)).isEmpty()
   }
 }

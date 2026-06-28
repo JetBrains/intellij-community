@@ -190,7 +190,7 @@ class AgentSessionsTreeSnapshotTest {
   fun taskFoldersGroupAssignedProjectThreadsAndRemoveThemFromUngroupedRows() {
     val provider = AgentSessionProvider.from("codex")
     val projectPath = "/work/project-a"
-    val folderId = "folder-auth"
+    val folderId = "folderauth"
     val model = buildSessionTreeModel(
       projects = listOf(
         AgentProjectSessions(
@@ -247,7 +247,7 @@ class AgentSessionsTreeSnapshotTest {
   fun currentProjectScopedModelFlattensTaskFoldersWithProjectRows() {
     val provider = AgentSessionProvider.from("codex")
     val projectPath = "/work/project-a"
-    val folderId = "folder-auth"
+    val folderId = "folderauth"
     val model = buildSessionTreeModel(
       projects = listOf(
         AgentProjectSessions(

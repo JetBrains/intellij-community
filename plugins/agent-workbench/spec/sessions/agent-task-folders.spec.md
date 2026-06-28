@@ -24,18 +24,20 @@ Date: 2026-06-28
 
 ## Summary
 
-Agent Task Folders are lightweight persisted groups inside Agent Threads history. A folder belongs to a normalized project or worktree path,
-can hold explicit thread assignments, and has a simple `In Progress` -> `Done` lifecycle. Folders organize existing threads; they do not
+Agent Task Folders are lightweight persisted groups inside Agent Threads history. A folder has an opaque global KSUID identity, can be
+associated with normalized project or worktree paths, can hold explicit thread assignments, and has a simple `In Progress` -> `Done` lifecycle. Folders organize existing threads; they do not
 create a new top-level Agent Workbench entity and do not inject context into prompts automatically.
 
 ## Requirements
 
-- The folder service must persist app-level, non-roamable folder state keyed by normalized project/worktree path. Folder names, ids,
-  assignment thread ids, and metadata keys must be trimmed; invalid or orphaned persisted records must be dropped on load.
+- The folder service must persist app-level, non-roamable folder state keyed by global folder id. New folder ids must be generated as
+  platform KSUIDs; persisted folder ids must be trimmed and accepted only if they match KSUID shape. Folder path associations, names,
+  assignment thread ids, and metadata keys must be trimmed or normalized; invalid or orphaned persisted records must be dropped on load.
   [@test] ../../sessions/testSrc/AgentTaskFolderServiceTest.kt
 
 - A thread may be assigned to at most one in-progress task folder per normalized path/provider/thread id. Assigning a thread to another
-  folder must move it from the previous folder. Done folders must be hidden from the active tree and reject new assignments.
+  folder must move it from the previous folder. Folder rename, metadata, delete, and status mutations must address the global folder id,
+  not the render path. Done folders must be hidden from the active tree and reject new assignments.
   [@test] ../../sessions/testSrc/AgentTaskFolderServiceTest.kt
 
 - The active Agent Threads tree must render in-progress task folders under their owning project or worktree. Loaded assigned threads must

@@ -9,12 +9,12 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.io.Ksuid
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
-import java.util.UUID
 
 @ApiStatus.Internal
 enum class AgentTaskFolderStatus {
@@ -48,20 +48,27 @@ data class AgentTaskFolderSnapshot(
   @JvmField val assignmentsByPath: Map<String, List<AgentTaskFolderThreadAssignment>> = emptyMap(),
 ) {
   fun folders(path: String, includeDone: Boolean = false): List<AgentTaskFolder> {
-    val normalizedPath = normalizeAgentWorkbenchPath(path)
+    val normalizedPath = normalizeFolderPath(path) ?: return emptyList()
     return foldersByPath[normalizedPath].orEmpty()
       .filter { folder -> includeDone || folder.status == AgentTaskFolderStatus.IN_PROGRESS }
   }
 
+  fun folder(folderId: String): AgentTaskFolder? {
+    val normalizedFolderId = normalizeFolderId(folderId) ?: return null
+    return foldersByPath.values.asSequence()
+      .flatMap { folders -> folders.asSequence() }
+      .firstOrNull { folder -> folder.id == normalizedFolderId }
+  }
+
   fun folder(path: String, folderId: String): AgentTaskFolder? {
-    val normalizedPath = normalizeAgentWorkbenchPath(path)
-    val normalizedFolderId = folderId.trim()
+    val normalizedPath = normalizeFolderPath(path) ?: return null
+    val normalizedFolderId = normalizeFolderId(folderId) ?: return null
     return foldersByPath[normalizedPath].orEmpty().firstOrNull { folder -> folder.id == normalizedFolderId }
   }
 
   fun folderForThread(path: String, provider: AgentSessionProvider, threadId: String): AgentTaskFolder? {
-    val normalizedPath = normalizeAgentWorkbenchPath(path)
-    val normalizedThreadId = threadId.trim()
+    val normalizedPath = normalizeFolderPath(path) ?: return null
+    val normalizedThreadId = threadId.trim().takeIf { it.isNotEmpty() } ?: return null
     val assignment = assignmentsByPath[normalizedPath].orEmpty().firstOrNull { assignment ->
       assignment.provider == provider && assignment.threadId == normalizedThreadId
     } ?: return null
@@ -69,11 +76,20 @@ data class AgentTaskFolderSnapshot(
   }
 
   fun assignments(path: String, folderId: String? = null): List<AgentTaskFolderThreadAssignment> {
-    val normalizedPath = normalizeAgentWorkbenchPath(path)
-    val normalizedFolderId = folderId?.trim()?.takeIf { it.isNotEmpty() }
+    val normalizedPath = normalizeFolderPath(path) ?: return emptyList()
+    val normalizedFolderId = folderId?.let { normalizeFolderId(it) ?: return emptyList() }
     return assignmentsByPath[normalizedPath].orEmpty()
       .filter { assignment -> normalizedFolderId == null || assignment.folderId == normalizedFolderId }
       .sortedBy { assignment -> assignment.assignedAt }
+  }
+
+  fun assignmentsForFolder(folderId: String): List<AgentTaskFolderThreadAssignment> {
+    val normalizedFolderId = normalizeFolderId(folderId) ?: return emptyList()
+    return assignmentsByPath.values.asSequence()
+      .flatMap { assignments -> assignments.asSequence() }
+      .filter { assignment -> assignment.folderId == normalizedFolderId }
+      .sortedBy { assignment -> assignment.assignedAt }
+      .toList()
   }
 }
 
@@ -102,87 +118,85 @@ class AgentTaskFolderService : SerializablePersistentStateComponent<AgentTaskFol
     return snapshot(includeDone = includeDone).folders(path, includeDone = includeDone)
   }
 
-  fun getFolder(path: String, folderId: String): AgentTaskFolder? {
-    return snapshot(includeDone = true).folder(path, folderId)
+  fun getFolder(folderId: String): AgentTaskFolder? {
+    val normalizedFolderId = normalizeFolderId(folderId) ?: return null
+    val folder = state.foldersById[normalizedFolderId] ?: return null
+    val path = folder.paths.firstOrNull() ?: return null
+    return folder.toFolder(path = path, id = normalizedFolderId)
   }
 
   fun getFolderForThread(path: String, provider: AgentSessionProvider, threadId: String): AgentTaskFolder? {
     return snapshot(includeDone = true).folderForThread(path, provider, threadId)
   }
 
-  fun listFolderThreadAssignments(path: String, folderId: String): List<AgentTaskFolderThreadAssignment> {
-    return snapshot(includeDone = true).assignments(path, folderId)
+  fun listFolderThreadAssignments(folderId: String): List<AgentTaskFolderThreadAssignment> {
+    return snapshot(includeDone = true).assignmentsForFolder(folderId)
   }
 
   fun createFolder(path: String, name: String, metadata: Map<String, String> = emptyMap()): AgentTaskFolder? {
     val normalizedName = normalizeFolderName(name) ?: return null
-    val normalizedPath = normalizeAgentWorkbenchPath(path)
+    val normalizedPath = normalizeFolderPath(path) ?: return null
     val now = nowProvider()
+    val folderId = newFolderId()
     val folder = FolderState(
-      id = UUID.randomUUID().toString(),
       name = normalizedName,
       status = AgentTaskFolderStatus.IN_PROGRESS.name,
       metadata = normalizeMetadata(metadata),
+      paths = listOf(normalizedPath),
       createdAt = now,
       updatedAt = now,
     )
     updateAndEmit { current ->
-      val updatedFolders = current.foldersByPath.toMutableMap()
-      updatedFolders[normalizedPath] = updatedFolders[normalizedPath].orEmpty() + folder
-      current.copy(foldersByPath = updatedFolders)
+      current.copy(foldersById = current.foldersById + (folderId to folder))
     }
-    return folder.toFolder(normalizedPath)
+    return folder.toFolder(path = normalizedPath, id = folderId)
   }
 
-  fun renameFolder(path: String, folderId: String, name: String): Boolean {
+  fun renameFolder(folderId: String, name: String): Boolean {
     val normalizedName = normalizeFolderName(name) ?: return false
-    return updateFolder(path = path, folderId = folderId) { folder, now ->
+    return updateFolder(folderId = folderId) { folder, now ->
       if (folder.name == normalizedName) folder else folder.copy(name = normalizedName, updatedAt = now)
     }
   }
 
-  fun setFolderStatus(path: String, folderId: String, status: AgentTaskFolderStatus): Boolean {
-    return updateFolder(path = path, folderId = folderId) { folder, now ->
+  fun setFolderStatus(folderId: String, status: AgentTaskFolderStatus): Boolean {
+    return updateFolder(folderId = folderId) { folder, now ->
       val statusName = status.name
       if (folder.status == statusName) folder else folder.copy(status = statusName, updatedAt = now)
     }
   }
 
-  fun deleteFolder(path: String, folderId: String): Boolean {
-    val normalizedPath = normalizeAgentWorkbenchPath(path)
+  fun deleteFolder(folderId: String): Boolean {
     val normalizedFolderId = normalizeFolderId(folderId) ?: return false
     var changed = false
     updateAndEmit { current ->
-      val currentFolders = current.foldersByPath[normalizedPath].orEmpty()
-      val nextFolders = currentFolders.filterNot { folder -> folder.id == normalizedFolderId }
-      if (nextFolders.size != currentFolders.size) {
+      val nextFolders = current.foldersById - normalizedFolderId
+      if (nextFolders.size != current.foldersById.size) {
         changed = true
       }
-      val currentAssignments = current.assignmentsByPath[normalizedPath].orEmpty()
-      val nextAssignments = currentAssignments.filterNot { assignment -> assignment.folderId == normalizedFolderId }
-      if (nextAssignments.size != currentAssignments.size) {
+      val nextAssignments = current.assignments.filterNot { assignment -> assignment.folderId == normalizedFolderId }
+      if (nextAssignments.size != current.assignments.size) {
         changed = true
       }
       if (!changed) {
         return@updateAndEmit current
       }
-      current.copy(
-        foldersByPath = current.foldersByPath.updatedPathEntries(normalizedPath, nextFolders),
-        assignmentsByPath = current.assignmentsByPath.updatedPathEntries(normalizedPath, nextAssignments),
-      )
+      current.copy(foldersById = nextFolders, assignments = nextAssignments)
     }
     return changed
   }
 
   fun assignThread(path: String, provider: AgentSessionProvider, threadId: String, folderId: String): Boolean {
-    val normalizedPath = normalizeAgentWorkbenchPath(path)
+    val normalizedPath = normalizeFolderPath(path) ?: return false
     val normalizedThreadId = threadId.trim().takeIf { it.isNotEmpty() } ?: return false
     val normalizedFolderId = normalizeFolderId(folderId) ?: return false
-    val currentFolder = getFolder(normalizedPath, normalizedFolderId) ?: return false
-    if (currentFolder.status != AgentTaskFolderStatus.IN_PROGRESS) return false
+    val currentFolder = state.foldersById[normalizedFolderId] ?: return false
+    if (currentFolder.status != AgentTaskFolderStatus.IN_PROGRESS.name) return false
+    if (normalizedPath !in currentFolder.paths) return false
 
     val now = nowProvider()
     val assignment = AssignmentState(
+      path = normalizedPath,
       providerId = provider.value,
       threadId = normalizedThreadId,
       folderId = normalizedFolderId,
@@ -190,34 +204,32 @@ class AgentTaskFolderService : SerializablePersistentStateComponent<AgentTaskFol
     )
     var changed = false
     updateAndEmit { current ->
-      val currentAssignments = current.assignmentsByPath[normalizedPath].orEmpty()
-      val nextAssignments = currentAssignments
-        .filterNot { existing -> existing.providerId == provider.value && existing.threadId == normalizedThreadId }
+      val nextAssignments = current.assignments
+        .filterNot { existing -> existing.path == normalizedPath && existing.providerId == provider.value && existing.threadId == normalizedThreadId }
         .let { assignments -> assignments + assignment }
-      changed = nextAssignments != currentAssignments
-      if (!changed) current else current.copy(assignmentsByPath = current.assignmentsByPath + (normalizedPath to nextAssignments))
+      changed = nextAssignments != current.assignments
+      if (!changed) current else current.copy(assignments = nextAssignments)
     }
     return changed
   }
 
   fun unassignThread(path: String, provider: AgentSessionProvider, threadId: String): Boolean {
-    val normalizedPath = normalizeAgentWorkbenchPath(path)
+    val normalizedPath = normalizeFolderPath(path) ?: return false
     val normalizedThreadId = threadId.trim().takeIf { it.isNotEmpty() } ?: return false
     var changed = false
     updateAndEmit { current ->
-      val currentAssignments = current.assignmentsByPath[normalizedPath].orEmpty()
-      val nextAssignments = currentAssignments.filterNot { assignment ->
-        assignment.providerId == provider.value && assignment.threadId == normalizedThreadId
+      val nextAssignments = current.assignments.filterNot { assignment ->
+        assignment.path == normalizedPath && assignment.providerId == provider.value && assignment.threadId == normalizedThreadId
       }
-      changed = nextAssignments.size != currentAssignments.size
-      if (!changed) current else current.copy(assignmentsByPath = current.assignmentsByPath.updatedPathEntries(normalizedPath, nextAssignments))
+      changed = nextAssignments.size != current.assignments.size
+      if (!changed) current else current.copy(assignments = nextAssignments)
     }
     return changed
   }
 
-  fun setMetadata(path: String, folderId: String, key: String, value: String): Boolean {
+  fun setMetadata(folderId: String, key: String, value: String): Boolean {
     val normalizedKey = key.trim().takeIf { it.isNotEmpty() } ?: return false
-    return updateFolder(path = path, folderId = folderId) { folder, now ->
+    return updateFolder(folderId = folderId) { folder, now ->
       if (folder.metadata[normalizedKey] == value) {
         folder
       }
@@ -227,9 +239,9 @@ class AgentTaskFolderService : SerializablePersistentStateComponent<AgentTaskFol
     }
   }
 
-  fun deleteMetadata(path: String, folderId: String, key: String): Boolean {
+  fun deleteMetadata(folderId: String, key: String): Boolean {
     val normalizedKey = key.trim().takeIf { it.isNotEmpty() } ?: return false
-    return updateFolder(path = path, folderId = folderId) { folder, now ->
+    return updateFolder(folderId = folderId) { folder, now ->
       if (!folder.metadata.containsKey(normalizedKey)) {
         folder
       }
@@ -244,22 +256,16 @@ class AgentTaskFolderService : SerializablePersistentStateComponent<AgentTaskFol
     mutableStateFlow.value = this.state
   }
 
-  private fun updateFolder(path: String, folderId: String, transform: (FolderState, Long) -> FolderState): Boolean {
-    val normalizedPath = normalizeAgentWorkbenchPath(path)
+  private fun updateFolder(folderId: String, transform: (FolderState, Long) -> FolderState): Boolean {
     val normalizedFolderId = normalizeFolderId(folderId) ?: return false
     var changed = false
     updateAndEmit { current ->
-      val currentFolders = current.foldersByPath[normalizedPath].orEmpty()
-      val now = nowProvider()
-      val nextFolders = currentFolders.map { folder ->
-        if (folder.id != normalizedFolderId) return@map folder
-        val updated = transform(folder, now)
-        if (updated != folder) {
-          changed = true
-        }
-        updated
+      val currentFolder = current.foldersById[normalizedFolderId] ?: return@updateAndEmit current
+      val updated = transform(currentFolder, nowProvider())
+      if (updated != currentFolder) {
+        changed = true
       }
-      if (!changed) current else current.copy(foldersByPath = current.foldersByPath + (normalizedPath to nextFolders))
+      if (!changed) current else current.copy(foldersById = current.foldersById + (normalizedFolderId to updated))
     }
     return changed
   }
@@ -271,22 +277,23 @@ class AgentTaskFolderService : SerializablePersistentStateComponent<AgentTaskFol
 
   @Serializable
   data class TaskFolderState(
-    @JvmField val foldersByPath: Map<String, List<FolderState>> = emptyMap(),
-    @JvmField val assignmentsByPath: Map<String, List<AssignmentState>> = emptyMap(),
+    @JvmField val foldersById: Map<String, FolderState> = emptyMap(),
+    @JvmField val assignments: List<AssignmentState> = emptyList(),
   )
 
   @Serializable
   data class FolderState(
-    @JvmField val id: String,
     @JvmField val name: String,
     @JvmField val status: String = AgentTaskFolderStatus.IN_PROGRESS.name,
     @JvmField val metadata: Map<String, String> = emptyMap(),
+    @JvmField val paths: List<String> = emptyList(),
     @JvmField val createdAt: Long = 0L,
     @JvmField val updatedAt: Long = 0L,
   )
 
   @Serializable
   data class AssignmentState(
+    @JvmField val path: String,
     @JvmField val providerId: String,
     @JvmField val threadId: String,
     @JvmField val folderId: String,
@@ -295,48 +302,47 @@ class AgentTaskFolderService : SerializablePersistentStateComponent<AgentTaskFol
 }
 
 private fun AgentTaskFolderService.TaskFolderState.toSnapshot(includeDone: Boolean): AgentTaskFolderSnapshot {
-  val foldersByPath = LinkedHashMap<String, List<AgentTaskFolder>>()
-  for ((path, folders) in this.foldersByPath) {
-    val visibleFolders = folders.mapNotNull { folder ->
-      val taskFolder = folder.toFolder(path)
-      taskFolder.takeIf { includeDone || it.status == AgentTaskFolderStatus.IN_PROGRESS }
+  val foldersByPath = LinkedHashMap<String, MutableList<AgentTaskFolder>>()
+  for ((folderId, folder) in this.foldersById) {
+    val parsedStatus = parseFolderStatus(folder.status)
+    if (!includeDone && parsedStatus != AgentTaskFolderStatus.IN_PROGRESS) {
+      continue
     }
-    if (visibleFolders.isNotEmpty()) {
-      foldersByPath[path] = visibleFolders
+    folder.paths.forEach { path ->
+      foldersByPath.getOrPut(path) { ArrayList() } += folder.toFolder(path = path, id = folderId)
     }
   }
 
   val visibleFolderIdsByPath = foldersByPath.mapValues { (_, folders) -> folders.mapTo(LinkedHashSet()) { folder -> folder.id } }
-  val assignmentsByPath = LinkedHashMap<String, List<AgentTaskFolderThreadAssignment>>()
-  for ((path, assignments) in this.assignmentsByPath) {
-    val visibleFolderIds = visibleFolderIdsByPath[path].orEmpty()
-    val visibleAssignments = assignments.mapNotNull { assignment ->
-      assignment.toAssignment(path)?.takeIf { it.folderId in visibleFolderIds }
-    }
-    if (visibleAssignments.isNotEmpty()) {
-      assignmentsByPath[path] = visibleAssignments
-    }
+  val assignmentsByPath = LinkedHashMap<String, MutableList<AgentTaskFolderThreadAssignment>>()
+  for (assignment in this.assignments) {
+    val visibleFolderIds = visibleFolderIdsByPath[assignment.path].orEmpty()
+    val visibleAssignment = assignment.toAssignment()?.takeIf { it.folderId in visibleFolderIds } ?: continue
+    assignmentsByPath.getOrPut(visibleAssignment.path) { ArrayList() } += visibleAssignment
   }
-  return AgentTaskFolderSnapshot(foldersByPath = foldersByPath, assignmentsByPath = assignmentsByPath)
+
+  return AgentTaskFolderSnapshot(
+    foldersByPath = foldersByPath.mapValues { (_, folders) -> folders.toList() },
+    assignmentsByPath = assignmentsByPath.mapValues { (_, assignments) -> assignments.sortedBy { assignment -> assignment.assignedAt } },
+  )
 }
 
-private fun AgentTaskFolderService.FolderState.toFolder(path: String): AgentTaskFolder {
-  val parsedStatus = runCatching { AgentTaskFolderStatus.valueOf(status) }.getOrDefault(AgentTaskFolderStatus.IN_PROGRESS)
+private fun AgentTaskFolderService.FolderState.toFolder(path: String, id: String): AgentTaskFolder {
   return AgentTaskFolder(
-    path = normalizeAgentWorkbenchPath(path),
+    path = path,
     id = id,
     name = name,
-    status = parsedStatus,
+    status = parseFolderStatus(status),
     metadata = metadata,
     createdAt = createdAt,
     updatedAt = updatedAt,
   )
 }
 
-private fun AgentTaskFolderService.AssignmentState.toAssignment(path: String): AgentTaskFolderThreadAssignment? {
+private fun AgentTaskFolderService.AssignmentState.toAssignment(): AgentTaskFolderThreadAssignment? {
   val provider = AgentSessionProvider.fromOrNull(providerId) ?: return null
   return AgentTaskFolderThreadAssignment(
-    path = normalizeAgentWorkbenchPath(path),
+    path = path,
     provider = provider,
     threadId = threadId,
     folderId = folderId,
@@ -345,61 +351,71 @@ private fun AgentTaskFolderService.AssignmentState.toAssignment(path: String): A
 }
 
 private fun normalizeState(state: AgentTaskFolderService.TaskFolderState): AgentTaskFolderService.TaskFolderState {
-  val normalizedFolders = LinkedHashMap<String, List<AgentTaskFolderService.FolderState>>()
-  val validFolderIdsByPath = LinkedHashMap<String, Set<String>>()
-  for ((path, folders) in state.foldersByPath) {
-    val normalizedPath = normalizeAgentWorkbenchPath(path)
-    val normalizedPathFolders = folders
-      .mapNotNull { folder -> normalizeFolderState(folder) }
-      .distinctBy { folder -> folder.id }
-      .sortedWith(compareBy<AgentTaskFolderService.FolderState> { folder -> folder.createdAt }.thenBy { folder -> folder.name.lowercase() })
-    if (normalizedPathFolders.isNotEmpty()) {
-      normalizedFolders[normalizedPath] = normalizedPathFolders
-      validFolderIdsByPath[normalizedPath] = normalizedPathFolders.mapTo(LinkedHashSet()) { folder -> folder.id }
+  val normalizedFolders = LinkedHashMap<String, AgentTaskFolderService.FolderState>()
+  state.foldersById.entries
+    .asSequence()
+    .mapNotNull { (folderId, folder) ->
+      val normalizedFolderId = normalizeFolderId(folderId) ?: return@mapNotNull null
+      val normalizedFolder = normalizeFolderState(folder) ?: return@mapNotNull null
+      normalizedFolderId to normalizedFolder
     }
-  }
+    .sortedWith(compareBy<Pair<String, AgentTaskFolderService.FolderState>> { (_, folder) -> folder.createdAt }
+                  .thenBy { (_, folder) -> folder.name.lowercase() }
+                  .thenBy { (folderId, _) -> folderId })
+    .forEach { (folderId, folder) -> normalizedFolders.putIfAbsent(folderId, folder) }
 
-  val normalizedAssignments = LinkedHashMap<String, List<AgentTaskFolderService.AssignmentState>>()
-  for ((path, assignments) in state.assignmentsByPath) {
-    val normalizedPath = normalizeAgentWorkbenchPath(path)
-    val folderIds = validFolderIdsByPath[normalizedPath].orEmpty()
-    val assignmentByThreadKey = LinkedHashMap<String, AgentTaskFolderService.AssignmentState>()
-    assignments
-      .mapNotNull { assignment -> normalizeAssignmentState(assignment) }
-      .filter { assignment -> assignment.folderId in folderIds }
-      .forEach { assignment -> assignmentByThreadKey["${assignment.providerId}:${assignment.threadId}"] = assignment }
-    if (assignmentByThreadKey.isNotEmpty()) {
-      normalizedAssignments[normalizedPath] = assignmentByThreadKey.values.sortedBy { assignment -> assignment.assignedAt }
+  val assignmentByThreadKey = LinkedHashMap<AssignmentThreadKey, AgentTaskFolderService.AssignmentState>()
+  state.assignments
+    .asSequence()
+    .mapNotNull { assignment -> normalizeAssignmentState(assignment) }
+    .filter { assignment ->
+      val folder = normalizedFolders[assignment.folderId]
+      folder != null && assignment.path in folder.paths
     }
-  }
+    .forEach { assignment ->
+      assignmentByThreadKey[AssignmentThreadKey(assignment.path, assignment.providerId, assignment.threadId)] = assignment
+    }
 
   return AgentTaskFolderService.TaskFolderState(
-    foldersByPath = normalizedFolders,
-    assignmentsByPath = normalizedAssignments,
+    foldersById = normalizedFolders,
+    assignments = assignmentByThreadKey.values.sortedBy { assignment -> assignment.assignedAt },
   )
 }
 
 private fun normalizeFolderState(folder: AgentTaskFolderService.FolderState): AgentTaskFolderService.FolderState? {
-  val id = normalizeFolderId(folder.id) ?: return null
   val name = normalizeFolderName(folder.name) ?: return null
-  val status = runCatching { AgentTaskFolderStatus.valueOf(folder.status) }.getOrDefault(AgentTaskFolderStatus.IN_PROGRESS)
+  val paths = folder.paths
+    .mapNotNull(::normalizeFolderPath)
+    .distinct()
+  if (paths.isEmpty()) return null
   return folder.copy(
-    id = id,
     name = name,
-    status = status.name,
+    status = parseFolderStatus(folder.status).name,
     metadata = normalizeMetadata(folder.metadata),
+    paths = paths,
   )
 }
 
 private fun normalizeAssignmentState(assignment: AgentTaskFolderService.AssignmentState): AgentTaskFolderService.AssignmentState? {
+  val path = normalizeFolderPath(assignment.path) ?: return null
   val provider = AgentSessionProvider.fromOrNull(assignment.providerId) ?: return null
   val threadId = assignment.threadId.trim().takeIf { it.isNotEmpty() } ?: return null
   val folderId = normalizeFolderId(assignment.folderId) ?: return null
   return assignment.copy(
+    path = path,
     providerId = provider.value,
     threadId = threadId,
     folderId = folderId,
   )
+}
+
+private fun parseFolderStatus(status: String): AgentTaskFolderStatus {
+  return runCatching { AgentTaskFolderStatus.valueOf(status) }.getOrDefault(AgentTaskFolderStatus.IN_PROGRESS)
+}
+
+private fun normalizeFolderPath(path: String): String? {
+  val trimmedPath = path.trim().takeIf { it.isNotEmpty() } ?: return null
+  return normalizeAgentWorkbenchPath(trimmedPath)
 }
 
 private fun normalizeFolderName(name: String): String? {
@@ -407,7 +423,8 @@ private fun normalizeFolderName(name: String): String? {
 }
 
 private fun normalizeFolderId(folderId: String): String? {
-  return folderId.trim().takeIf { it.isNotEmpty() }
+  val id = folderId.trim().takeIf { it.isNotEmpty() } ?: return null
+  return id.takeIf(Ksuid::isValid)
 }
 
 private fun normalizeMetadata(metadata: Map<String, String>): Map<String, String> {
@@ -418,9 +435,10 @@ private fun normalizeMetadata(metadata: Map<String, String>): Map<String, String
     .toMap(LinkedHashMap())
 }
 
-private fun <T> Map<String, List<T>>.updatedPathEntries(path: String, entries: List<T>): Map<String, List<T>> {
-  if (entries.isEmpty()) {
-    return this - path
-  }
-  return this + (path to entries)
-}
+private fun newFolderId(): String = Ksuid.generate()
+
+private data class AssignmentThreadKey(
+  @JvmField val path: String,
+  @JvmField val providerId: String,
+  @JvmField val threadId: String,
+)

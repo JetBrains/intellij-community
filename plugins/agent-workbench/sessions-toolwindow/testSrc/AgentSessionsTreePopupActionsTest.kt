@@ -540,7 +540,7 @@ class AgentSessionsTreePopupActionsTest {
     val provider = AgentSessionProvider.from("codex")
     val folder = AgentTaskFolder(
       path = "/work/project-a",
-      id = "folder-1",
+      id = "folder1",
       name = "Research",
       createdAt = 1,
       updatedAt = 1,
@@ -572,7 +572,7 @@ class AgentSessionsTreePopupActionsTest {
     val child = group.getChildren(event).single()
     child.actionPerformed(popupEvent(child, context))
 
-    assertThat(assigned).containsExactly("thread-1" to "folder-1", "thread-2" to "folder-1")
+    assertThat(assigned).containsExactly("thread-1" to "folder1", "thread-2" to "folder1")
   }
 
   @Test
@@ -652,7 +652,7 @@ class AgentSessionsTreePopupActionsTest {
     val provider = AgentSessionProvider.from("codex")
     val folderTarget = SessionActionTarget.TaskFolder(
       path = "/work/project-a",
-      folderId = "folder-1",
+      folderId = "folder1",
       name = "Research",
       isDone = false,
     )
@@ -710,7 +710,7 @@ class AgentSessionsTreePopupActionsTest {
     val provider = AgentSessionProvider.from("codex")
     val folderTarget = SessionActionTarget.TaskFolder(
       path = "/work/project-a",
-      folderId = "folder-1",
+      folderId = "folder1",
       name = "Research",
       isDone = false,
     )
@@ -752,7 +752,7 @@ class AgentSessionsTreePopupActionsTest {
       project = ProjectManager.getInstance().defaultProject,
       target = SessionActionTarget.TaskFolder(
         path = "/work/project-a",
-        folderId = "folder-1",
+        folderId = "folder1",
         name = "Research",
         isDone = false,
       ),
@@ -1228,7 +1228,7 @@ private fun taskFolder(
 ): AgentTaskFolder {
   return AgentTaskFolder(
     path = path,
-    id = "folder-1",
+    id = "folder1",
     name = "Research",
     status = status,
     createdAt = 1,
@@ -1245,7 +1245,7 @@ private fun taskFolderAssignment(
     path = "/work/project-a",
     provider = provider,
     threadId = threadId,
-    folderId = "folder-1",
+    folderId = "folder1",
     assignedAt = assignedAt,
   )
 }
