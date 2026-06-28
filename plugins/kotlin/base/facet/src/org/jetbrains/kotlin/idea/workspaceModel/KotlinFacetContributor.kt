@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.workspaceModel
 
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.module.Module
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -19,36 +18,13 @@ class KotlinFacetContributor: WorkspaceFacetContributor<KotlinSettingsEntity> {
     override val rootEntityType: Class<KotlinSettingsEntity>
         get() = KotlinSettingsEntity::class.java
 
-    override fun getRootEntitiesByModuleEntity(moduleEntity: ModuleEntity): List<KotlinSettingsEntity> {
-        val kotlinSettings = moduleEntity.kotlinSettings
-
-        LOG.info(
-            """
-            KotlinSettingsEntity queried for ${moduleEntity.name} (${System.identityHashCode(moduleEntity)})
-            Result is: $kotlinSettings
-            """.trimIndent()
-        )
-
-        return kotlinSettings
-    }
+    override fun getRootEntitiesByModuleEntity(moduleEntity: ModuleEntity): List<KotlinSettingsEntity> = moduleEntity.kotlinSettings
 
     override fun createFacetFromEntity(entity: KotlinSettingsEntity, module: Module): KotlinFacet {
         val facetType = KotlinFacetType.INSTANCE
         val facetConfigurationBridge = KotlinFacetConfigurationBridge(entity)
-        val facet = facetType.createFacet(module, entity.name, facetConfigurationBridge, null)
-
-        LOG.info(
-            """
-            Facet created for module ${module.name} (${System.identityHashCode(module)})
-            """.trimIndent(),
-            RuntimeException("Stacktrace:")
-        )
-        return facet
+        return facetType.createFacet(module, entity.name, facetConfigurationBridge, null)
     }
 
     override fun getParentModuleEntity(entity: KotlinSettingsEntity): ModuleEntity = entity.module
-
-    private companion object {
-        val LOG = logger<KotlinFacetContributor>()
-    }
 }
