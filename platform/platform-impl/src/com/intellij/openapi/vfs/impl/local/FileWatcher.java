@@ -23,6 +23,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -70,6 +71,10 @@ public final class FileWatcher implements AppLifecycleListener {
 
   private volatile boolean myShuttingDown = false;
   private volatile CanonicalPathMap myPathMap = CanonicalPathMap.empty();
+
+  /// Watch roots that can't be monitored by available [PluggableFileWatcher]s, and must be refreshed 'manually', i.e.,
+  /// mark the whole hierarchy under those roots as 'dirty' and rely on refresh (hence the name).
+  /// @see LocalFileSystemImpl#markSuspiciousFilesDirty(List)
   private volatile Map<Object, Set<String>> myManualWatchRoots = Collections.emptyMap();
 
   FileWatcher(@NotNull ManagingFS managingFS, @NotNull Runnable postInitCallback) {
@@ -200,6 +205,8 @@ public final class FileWatcher implements AppLifecycleListener {
     private final Object myLock = new Object();
     private DirtyPaths myDirtyPaths = new DirtyPaths();
 
+    /// gets _and clears_ dirty paths currently accumulated
+    /// TODO rename to takeDirtyPaths() to be clear it is a modifying op
     private DirtyPaths getDirtyPaths() {
       var dirtyPaths = DirtyPaths.EMPTY;
 
