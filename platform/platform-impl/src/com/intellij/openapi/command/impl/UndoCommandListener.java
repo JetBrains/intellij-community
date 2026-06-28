@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.CancellationException;
 
-
 final class UndoCommandListener implements SeparatedCommandListener {
   private final @NotNull ComponentManager componentManager;
   private final @NotNull UndoManagerImpl undoManager;

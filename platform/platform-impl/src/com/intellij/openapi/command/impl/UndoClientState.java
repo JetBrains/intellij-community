@@ -282,6 +282,10 @@ final class UndoClientState {
     undoStacksHolder.clearAllStacks();
   }
 
+  @NotNull UndoCapabilities getUndoCapabilities() {
+    return undoCapabilities;
+  }
+
   @NotNull String dump(@Nullable FileEditor editor) {
     //String currentMerger = currentCommandMerger == null ? "" : currentCommandMerger.dumpState();
     String currentMerger = "";
