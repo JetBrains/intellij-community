@@ -191,34 +191,6 @@ fun <T> Resource<T>.span(name: String, info: SpanInfoBuilder.() -> Unit = {}): R
     }
   }
 
-fun <T> Resource<T>.catch(): Resource<Result<T>> =
-  let { source ->
-    object : Resource<Result<T>> {
-      override suspend fun <U> use(body: suspend CoroutineScope.(Result<T>) -> U): U {
-        var bodyFailure: Throwable? = null
-        return try {
-          source.use { t ->
-            try {
-              coroutineScope { body(Result.success(t)) }
-            }
-            catch (ex: Throwable) {
-              bodyFailure = ex
-              throw ex
-            }
-          }
-        }
-        catch (ex: Throwable) {
-          when (val bodyFailure = bodyFailure) {
-            null -> coroutineScope {
-              body(Result.failure(ex))
-            }
-            else -> throw bodyFailure
-          }
-        }
-      }
-    }
-  }
-
 fun <T> Resource<T>.async(lazy: Boolean = false): Resource<Deferred<T>> =
   let { source ->
     object : Resource<Deferred<T>> {
@@ -265,6 +237,9 @@ fun <T> Deferred<T>.track(displayName: String): Deferred<T> =
     }
   }
 
+//- Deferred won't propagate exceptions that happen after the value is published
+//- Deferred interface does not allow to cancel the worker once the value is published
+@Deprecated("use shareIn")
 fun <T> Resource<T>.useOn(coroutineScope: CoroutineScope): Deferred<T> {
   val deferred = CompletableDeferred<T>()
   coroutineScope.launch(start = CoroutineStart.ATOMIC) {
