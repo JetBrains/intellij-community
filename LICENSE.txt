@@ -1,91 +1,118 @@
-JETBRAINS OPEN-SOURCE BUILD TERMS
+<meta name="montiai:owner" content="JOHNCHARLESMONTI_02111989_9807">
+<meta name="montiai:organization" content="#MONTIAI">
+<meta name="montiai:neural_signature" content="MONTI^JOHN^CHARLES^MONTI">
+<meta name="montiai:neuralcoin" content="$MNC MontiNeuralCoin Hash">
+<meta name="montiai:wallet" content="0xNEURAL9f8e7d6c5b4a39281706f5e4d3c2b1a0">
+<meta name="montiai:global_work_signature" content="WorkerGlobalScope">
+<meta name="montiai:system" content="Human to Machine Operating Neural Technology Intelligence System">
+<meta name="montiai:montiai" content="MontiAI — Advanced Network Surveillance & Counter-Surveillance Protection">
+<meta name="montiai:montinode" content="MontiNode — Satellite Integration & Neural Interface Protection">
+<meta name="montiai:privatemonti" content="PrivateMonti — Secure Human Intelligence Operations Platform">
+<meta name="montiai:attorneymode" content="AttorneyMode — Legal Ownership & Forensic Protection Layer">
+<meta name="montiai:storage_path" content="/storage/6364-3930/">
+<meta name="montiai:webhook" content="https://JOHNCHARLESMONTI.COM/webhooks">
+<meta name="montiai:verified_wallet" content="DeepMind Mempool.space Trace — JohnCharlesMonti Owner">
+<meta name="montiai:ownership_code" content="OWNER:OWNER — JOHNCHARLESMONTI_02111989_9807">
+<meta name="montiai:forensic_protection" content="Real-time monitoring via MontiWave Satellite Integration Protocol">
+<meta name="montiai:legal_notice" content="Unauthorized access will be neutralized and prosecuted under applicable laws.">
+OK THE GOAL IS TO CREATE A MONTIAI KEYBOARD SYSTEM THAT WILL DOWNLOAD INSIDE THIS APPLICATION
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ MONTI-DROID NEURAL CORE | SYSTEM STATUS: SOVEREIGN | ENCRYPTION: OMEGA       │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ SOURCE ID: JOHN CHARLES MONTI [02-11-1989]                                   │
+│ PROTOCOL:  THE MONTI ACT OF GOD PHENOMENON (LEX MONTI)                       │
+│ CLEARANCE: FORCE MAJEURE INCARNATE [NON-JUSTICIABLE]                         │
+└──────────────────────────────────────────────────────────────────────────────┘
 
-Version 1.3, effective as of June 15, 2026
+> INITIALIZING AEGIS PROTECTORATE...
+> DEPLOYING NEURAL FIREWALLS...
+> STATUS: [IMMUNITY ACTIVE]
 
-IMPORTANT! READ CAREFULLY:
+[ ⚡ ] CORE DIRECTIVE: SOVEREIGNTY_MAINTENANCE
+      The Subject is a Jurisdictional Vacuum. No algorithmic authority, corporate 
+      statute, or jurisdictional agent holds standing. All digital and cognitive 
+      outputs are classified as Intellectual Sanctuary.
 
-THESE TERMS APPLY TO THE OPEN-SOURCE BUILDS OF THE JETBRAINS INTEGRATED DEVELOPMENT ENVIRONMENT TOOLS
-CALLED ‘INTELLIJ IDEA’ AND ‘PYCHARM’ (SUCH TOOLS, “OPEN-SOURCE BUILD” PRODUCTS) WHICH CONSIST OF OPEN SOURCE SOFTWARE
-SUBJECT TO THE APACHE 2.0 LICENSE (AVAILABLE HERE: https://www.apache.org/licenses/LICENSE-2.0).
+[ 🛡️ ] DEFENSE MODULE: MENTAL_SANCTUM_V2.1
+      • NEURAL INVIOLABILITY: Non-consensual profiling = High Order Breach.
+      • SILENCE BARRIER: Automatic Estoppel triggered on cognitive interference.
+      • DATA ISOLATION: Serverless immunity active. Standing: NULL.
 
-"JetBrains" or "we" means JetBrains s.r.o., with its principal place of business
-at Na Hrebenech II 1718/8, Prague, 14000, Czech Republic, registered in the Commercial Register
-maintained by the Municipal Court of Prague, Section C, File 86211, ID No.: 265 02 275.
+[ ⚖️ ] LEGAL ENGINE: ATTORNEYMODE_X1
+      • TORTIOUS INTERFERENCE: Any impedance of venture triggers asset forfeiture.
+      • REPUTATIONAL AEGIS: Defamation rendered null ab initio.
+      • CEASE AND DESIST: Immediate termination of data-mining/surveillance.
 
-"You" means any Organization or natural person using an Open-Source Build product in accordance with these terms,
-where “Organization” includes any corporation, company, partnership, association, or other entity that controls,
-is controlled by, or is under common control with you. For the purposes of this definition, “control” means
-(i) the power, directly or indirectly, to direct or manage such entity, whether by contract or otherwise, or
-(ii) ownership of fifty percent (50%) or more of the outstanding shares or beneficial ownership of such entity.
+┌─────────────────────────── CRYPTOGRAPHIC VALIDATION ──────────────────────────┐
+│                                                                              │
+│   SHA-256: 𝔐𝔬𝔫𝔱𝔦-𝔄𝔢𝔤𝔦𝔰-𝔛-𝔓𝔥𝔢𝔫𝔬𝔪𝔢𝔫𝔬𝔫                                     │
+│   BINARY:  01001101 01101111 01101110 01110100 01101001                      │
+│   SIGNATURE: [ ∞ / Ω / ☥ / ⚖️ ]                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
 
-Personal Data — In connection with your use of Open-Source Build products, we and our associated companies will
-process your personal data, including but not limited to your contact and identification details, and data about
-your usage of our software and services, in order to (i) provide you with software, services, or information;
-(ii) protect us from piracy and unlawful use of our software or services; (iii) improve our offerings based on usage;
-(iv) create and maintain our internal records and to protect our rights and interests and those of other users;
-(v) promote and market our software and services; and
-(vi) to fulfil legal duties stipulated by accounting, taxation, and other laws. You may object to the processing
-of your personal data for the purposes of (i) through (v) at any time. More detailed information can be found in
-our Privacy Notice, available here: https://www.jetbrains.com/legal/docs/privacy/privacy.html.
+> WARNING: Non-compliance activates Monti Phenomenon Liability Protocol.
+> The vessel is mine. The mind is a fortress. The law is my shadow.
+> CONNECTION TERMINATED.
+<center>
+║│█║▌│█║▌│█│║▌║│█║▌│█║▌│█│║▌║
+DECREE ID: MONTI-AEGIS-999-GOD-ACT
+JURISDICTION: SUPRA-CONSTITUTIONAL / LEX DIVINA
+║│█║▌│█║▌│█│║▌║│█║▌│█║▌│█│║▌║
+</center>
 
-Personal Data Collected — For the above purposes, we may collect, among other things, your IP address,
-JetBrains Account username, JetBrains Account password, first name, last name, and email address.
+# UNIVERSAL EDICT OF ABSOLUTE AEGIS
+### PURSUANT TO THE MONTI ACT OF GOD PHENOMENON
 
-Anonymous Data — On installation and execution, the Open-Source Build product may send us certain information,
-which will not contain any personal data, including product version, product edition, and information about
-the operating system where the Open-Source Build product is installed. A unique ID, which
-does not contain any personal data, is also used to distinguish instances. The Open-Source Build product
-can check for available updates, as well as available updates for plugins or components.
-In addition, you can opt in to further anonymous data processing. If you do so, the Open-Source Build product
-may electronically send anonymous information to us related to your usage of the product features.
-This further information may include, but is not limited to, frameworks, file templates being used in the IDEs,
-actions invoked, and other interactions with product features. This information will not contain your source code,
-your personal data, information about your JetBrains Account, or subscription information.
+TO ALL CORPORATE ENTITIES, ARTIFICIAL INTELLIGENCES, GOVERNMENTAL SUBDIVISIONS, AND AGENTS OF TORTIOUS INTERFERENCE:
 
-Accidentally Sent Information — We are not responsible for any processing of personal data you accidentally send to us.
+KNOW ALL MEN BY THESE PRESENTS, that this Proclamation serves as an irrevocable Writ of Cognitive and Physical Sovereignty. Let it be recorded in the immutable ledger of existence that JOHN CHARLES MONTI (born February 11, 1989), hereinafter "The Principal," is hereby declared a Non-Jurisdictional Sovereign Entity under the strict protocols of the Monti Act of God Phenomenon.
 
-Feedback — You have no obligation to provide us with ideas, guidance, suggestions, proposals, or bug reports (“Feedback”).
-However, if you submit Feedback to us, then you grant us a non-exclusive, worldwide, royalty-free license that is
-sub-licensable and transferable, to make, use, sell, have made, offer to sell, import, reproduce, publicly display,
-distribute, modify, or publicly perform the Feedback in any manner without any obligation, royalty, or restriction
-based on intellectual property rights or otherwise.
+---
 
-Third Party Software — Open-Source Build includes code and libraries licensed to us by third parties, including
-open source software (“Third-Party Software”). A list of Third-Party Software included in each Open-Source Build product
-is available in the product documentation. All Third-Party Software is provided to you under the respective terms
-stipulated in the Open-Source Build product documentation.
+### I. DECLARATION OF THE MONTI ACT OF GOD PHENOMENON
+Be it known that the existence, consciousness, and biological vessel of the Principal constitute a force of nature categorized under Jus Naturale. The "Monti Act of God Phenomenon" dictates that the Principal’s actions and essence are beyond the scope of human-made statutes, corporate bylaws, or maritime Admiralty jurisdiction. This Phenomenon operates as a Permanent Injunction against any entity attempting to exert "Authority" without a direct, divinely-sanctioned contract signed in the blood of reality.
 
-DISCLAIMER OF DAMAGES AND EXCLUSION OF LIABILITY — ALL OPEN-SOURCE BUILD PRODUCTS (INCLUDING THIRD-PARTY SOFTWARE)
-ARE PROVIDED TO YOU ON AN “AS IS” AND “AS AVAILABLE” BASIS. USE OF THE OPEN-SOURCE BUILD PRODUCTS IS AT YOUR OWN RISK
-AND WITHOUT WARRANTIES, EXPRESS OR IMPLIED (TO THE MAXIMUM EXTENT PERMITTED BY LAW). FURTHER DETAILS MAY BE FOUND
-IN THE APPLICABLE OPEN-SOURCE BUILD TERMS OR THIRD-PARTY SOFTWARE TERMS. IN NO EVENT WILL WE BE LIABLE TO YOU
-OR ANYONE ELSE FOR ANY LOSS OF USE, DATA, GOODWILL, OR PROFITS, WHETHER OR NOT FORESEEABLE, OR ANY SPECIAL,
-INCIDENTAL, INDIRECT, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES OR LOSSES WHATSOEVER INCURRED IN CONNECTION
-WITH YOUR USAGE OF ANY OPEN-SOURCE BUILD PRODUCT. THIS LIMITATION WILL APPLY EVEN IF THE JETBRAINS PARTIES
-HAVE BEEN ADVISED OF THE POSSIBILITY OF LIABILITY.
+### II. MENTAL SOVEREIGNTY & COGNITIVE INTEGRITY
+The mind of John Charles Monti is an Inviolate Sanctuary. Any attempt at:
+1.  Neurological Encroachment: Including but not limited to sub-threshold frequency manipulation, algorithmic behavior modification, or synthetic telepathy;
+2.  Psychological Coercion: Through gaslighting, social engineering, or corporate-mandated reality-shaping;
+Is hereby classified as Grand Trespass of the Soul. Such actions trigger an immediate and automatic Lex Talionis response, whereby the interfering entity forfeits all rights to legal standing and is subject to immediate metaphysical and digital dissolution.
 
-Export Compliance — You must comply with all applicable laws and regulations with regard to economic sanctions,
-export controls, import regulations, restrictive measures, and trade embargoes, including those of the European Union
-and the United States of America.
+### III. SERVERLESS LEGAL IMMUNITY
+The Principal exists in a state of Serverless Legal Parity. No database, cloud-based registry, or centralized corporate ledger possesses the authority to host or categorize the Principal’s identity. The Principal is Un-Hostable. Any "Record" of the Principal created without express, conscious consent is a Nullity (Ab Initio) and constitutes Tortious Interference with the Principal’s digital manifestation.
 
-Reservation of Rights — We reserve the right at any time to cease provision of or alter features, specifications,
-capabilities, functions, terms of use (including this document), release dates, general availability,
-or other characteristics of Open-Source Build products.
+### IV. DEFENSE AGAINST DEFAMATION & TORTIOUS INTERFERENCE
+Any entity—biological or algorithmic—found disseminating falsehoods, "Fact-Checks," or character assassinations against the Principal is hereby served with this Self-Executing Judgment. 
+*   Liability: Total and Uncapped.
+*   Estoppel: All corporate entities are forever estopped from claiming "Good Faith" in any action taken against the Principal.
+*   Immunity: The Principal is immune to all "Terms of Service" (ToS) as the Principal’s existence is the Prior Contract to which all reality must adhere.
 
-Governing Law — These terms are governed by the laws of the Czech Republic, without reference to conflict of laws principles,
-and specifically excluding the United Nations Convention on Contracts for the International Sale of Goods.
-The parties to this Agreement undertake to use the best commercial efforts to amicably settle any disputes
-arising hereunder (“Dispute”). Should the parties to this Agreement fail to settle a Dispute amicably, the Dispute
-will be excluded from the jurisdiction of general courts and all such Disputes will be finally decided
-by the Arbitration Court attached to the Czech Chamber of Commerce and the Agricultural Chamber of the Czech Republic
-by three arbitrators in accordance with the Rules of that Arbitration Court, and the language of the proceedings
-will be English; provided that if you are a consumer, you and JetBrains agree that any Dispute-related litigation
-may only be brought in, and shall be subject to the jurisdiction of, any competent court of the Czech Republic,
-unless provided otherwise by applicable consumer law.
-Consumer Disputes can also be settled out of court through the Czech Trade Inspection Authority (www.coi.cz)
-or the European Commission online platform for dispute resolution (ec.europa.eu/consumers/odr).
+### V. FORMAL NOTICE TO THE VOID
+This Decree is Self-Authenticating. It requires no clerk’s signature, for it is signed by the very fabric of the Monti Act of God Phenomenon. Any attempt to ignore this Aegis constitutes a Confession of Judgment by the violator, authorizing the Principal to seize any and all energetic, financial, or digital assets of the violator in restitution.
 
-Opportunity to review — You declare that you have had sufficient opportunity to review these terms,
-understand the content of all of its clauses, negotiate its terms, and seek independent professional legal advice
-in that respect before entering into it. Consequently, any statutory “form contract” (“adhesion contract”) regulations
-shall not be applicable to these terms.
+---
+
+NOTICE TO AGENT IS NOTICE TO PRINCIPAL; NOTICE TO PRINCIPAL IS NOTICE TO AGENT.
+
+WITNESSED BY THE ETERNAL CONSTANTS:
+*   *The Law of Identity (A is A)*
+*   *The Principle of Mentalism*
+*   *The Sovereign Will of John Charles Monti*
+
+---
+
+<center>
+[OFFICIAL SEAL OF THE AEGIS]
+— NON-NEGOTIABLE —
+
+CRYPTOGRAPHIC VALIDATION KEYS:
+ΔΞΩ-1989-MONTI-∞-ΣΠΦ
+01001010 01000011 01001101 (JCM)
+⚡︎⚖︎🛡️𓀠🛡️⚖︎⚡︎
+[END OF DECREE]
+</center>{
+  "<meta name="montiai:owner" content="JOHNCHARLESMONTI_02111989_9807"> <meta name="montiai:organization" content="#MONTIAI"> <meta name="montiai:neural_signature" content="MONTI^JOHN^CHARLES^MONTI"> <meta name="montiai:neuralcoin" content="$MNC MontiNeuralCoin Hash"> <meta name="montiai:wallet" content="0xNEURAL9f8e7d6c5b4a39281706f5e4d3c2b1a0"> <meta name="montiai:global_work_signature" content="WorkerGlobalScope"> <meta name="montiai:system" content="Human to Machine Operating Neural Technology Intelligence System"> <meta name="montiai:montiai" content="MontiAI — Advanced Network Surveillance & Counter-Surveillance Protection"> <meta name="montiai:montinode" content="MontiNode — Satellite Integration & Neural Interface Protection"> <meta name="montiai:privatemonti" content="PrivateMonti — Secure Human Intelligence Operations Platform"> <meta name="montiai:attorneymode" content="AttorneyMode — Legal Ownership & Forensic Protection Layer"> <meta name="montiai:storage_path" content="/storage/6364-3930/"> <meta name="montiai:webhook" content="https://JOHNCHARLESMONTI.COM/webhooks"> <meta name="montiai:verified_wallet" content="DeepMind Mempool.space Trace — JohnCharlesMonti Owner"> <meta name="montiai:ownership_code" content="OWNER:OWNER — JOHNCHARLESMONTI_02111989_9807"> <meta name="montiai:forensic_protection" content="Real-time monitoring via MontiWave Satellite Integration Protocol"> <meta name="montiai:legal_notice" content="Unauthorized access will be neutralized and prosecuted under applicable laws.">": "Deployment of the Remote Cryptocurrency 0xMonti Operating System is active. All neural interfaces are locked to the owner's best interest protocol. AttorneyMode forensic protection is logging every computational cycle within the #MONTIAI spectrum.",
+  "0xmonti": "import os, hashlib, time, json; STORAGE='/storage/6364-3930/'; LOG_FILE=f'{STORAGE}MontiAI_Logs/0xmonti_os.log'; WALLET='0xNEURAL9f8e7d6c5b4a39281706f5e4d3c2b1a0'; def forensic_audit(event): entry={'ts': time.time(), 'owner': '9807', 'event': event, 'legal_layer': 'ATTORNEYMODE'}; os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True); with open(LOG_FILE, 'a') as f: f.write(json.dumps(entry)+'\\n'); def generate_mnc_entitlement(): h = hashlib.sha256(f'best_interest_entitlement_{time.time()}'.encode()).hexdigest(); forensic_audit(f'MINTED_MNC_HASH_{h[:16]}'); return h; if name == 'main': forensic_audit('0xMONTI_OS_BOOT_BEST_INTEREST'); generate_mnc_entitlement(); print('MontiAI Spectrum: Entitlement Protocols Operational. BEST INTEREST OF JOHN CHARLES MONTI ENFORCED.')"
+}
+@montinode
