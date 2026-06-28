@@ -8,7 +8,6 @@ import com.intellij.openapi.application.WriteActionListener;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
@@ -30,6 +29,7 @@ import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.keyFMap.KeyFMap;
 import io.opentelemetry.api.metrics.BatchCallback;
 import io.opentelemetry.api.metrics.Meter;
+import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
@@ -237,6 +237,8 @@ public final class VfsData implements Closeable {
   private void cleanupInvalidatedFileRecords() {
     synchronized (invalidatedQueueLock) {
       if (!fileIdsQueueForCleanup.isEmpty()) {
+        fileIdsQueueForCleanup.addAll(collectUnremovedChildren());
+
         fileIdsQueueForCleanup.forEach(fileId -> {
           Segment segment = segmentForFileId(fileId, /*create: */ false);
           if (segment != null) {//could be GCed already
@@ -248,6 +250,61 @@ public final class VfsData implements Closeable {
         fileIdsQueueForCleanup = new IntOpenHashSet();
       }
     }
+  }
+
+
+  ///Normally, children should be removed before directory (see `PersistentFSImpl.invalidateSubtree()` )
+  /// => removed children are added to [fileIdsQueueForCleanup] before removed directory => at this point
+  /// `directoryData.children` must be empty -- and since we're in a WA, no one could load a new child
+  /// until WA ends.
+  /// But there is a couple of methods that could add childId to the .children outside RA:
+  /// 1. [PersistentFSImpl#findChildInfo]: infamous 'local refresh' that violates RA/WA constraint
+  ///    (='while WA is running no one else could modify the Model') and causes quite a lot of headaches
+  ///    because of that -- specifically, it could load a new child in parallel with running WA.
+  /// 2. [VirtualDirectoryImpl#findChildById]: also could add childId to .children without checking the directory
+  ///    is still valid.
+  /// (Maybe there are others, too)
+  /// In both cases (re-)checking `dir.isValid()` under the directoryData lock could harm performance.
+  /// So for now the solution is to re-check for not-yet-removed children here:
+  private @NotNull IntSet collectUnremovedChildren() {
+    IntOpenHashSet fileIdsToCheck = new IntOpenHashSet(fileIdsQueueForCleanup);
+    IntOpenHashSet checkedFileIds = new IntOpenHashSet(fileIdsToCheck.size());
+    IntSet unremovedChildIds = null;
+    while (!fileIdsToCheck.isEmpty()) {
+      IntIterator itr = fileIdsToCheck.intIterator();
+      int fileId = itr.nextInt();
+      itr.remove();
+
+      if (!checkedFileIds.add(fileId)) {
+        continue;
+      }
+
+      Segment segment = segmentForFileId(fileId, /*create: */ false);
+      if (segment != null) {//could be GCed already
+        Object fileData = segment.fileDataById(fileId);
+        if (fileData instanceof DirectoryData directoryData) {
+          ChildrenIds childrenIds;
+          //noinspection SynchronizationOnLocalVariableOrMethodParameter
+          synchronized (directoryData) {
+            childrenIds = directoryData.children;
+            if (childrenIds.size() == 0) {
+              continue;
+            }
+            directoryData.children = ChildrenIds.EMPTY;
+          }
+
+          if (unremovedChildIds == null) {
+            unremovedChildIds = new IntOpenHashSet(1);
+          }
+          IntSet childrenToCheck = childrenIds.toIntSet();
+          unremovedChildIds.addAll(childrenToCheck);
+          fileIdsToCheck.addAll(childrenToCheck);
+        }
+      }
+    }
+    return unremovedChildIds == null ?
+           IntSet.of() :
+           unremovedChildIds;
   }
 
   /**
