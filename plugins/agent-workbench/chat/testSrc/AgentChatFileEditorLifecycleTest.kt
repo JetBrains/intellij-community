@@ -44,6 +44,7 @@ import com.intellij.terminal.frontend.view.TerminalKeyEvent
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -437,6 +438,7 @@ class AgentChatFileEditorLifecycleTest {
     val progressIcon = collectAgentChatStartProgressComponents(editor.component).single()
     val title = collectComponentsOfType(editor.component, JTextArea::class.java).single()
     assertThat(title.text).isEqualTo("Starting new thread…")
+    assertThat(title.font.isBold).isFalse()
     assertThat(progressIcon.isVisible).isFalse()
     assertThat(abs(yCenterInRoot(title, editor.component) - editor.component.height / 2)).isLessThan(48)
     assertThat(abs(xCenterInRoot(title, editor.component) - editor.component.width / 2)).isLessThan(96)
@@ -461,8 +463,11 @@ class AgentChatFileEditorLifecycleTest {
     editor.selectNotify()
 
     assertThat(collectComponentsOfType(editor.component, AsyncProcessIcon::class.java)).isEmpty()
-    assertThat(collectComponentsOfType(editor.component, JTextArea::class.java).map { it.text })
+    val messages = collectComponentsOfType(editor.component, JTextArea::class.java)
+    assertThat(messages.map { it.text })
       .containsExactly("Couldn't start agent", "Try again.")
+    assertThat(messages.first().font.isBold).isFalse()
+    assertThat(messages.last().foreground).isEqualTo(UIUtil.getContextHelpForeground())
     assertThat(terminalTabs.createCalls).isZero()
   }
 

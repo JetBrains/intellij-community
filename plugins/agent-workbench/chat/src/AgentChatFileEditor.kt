@@ -42,6 +42,8 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.terminal.frontend.view.TerminalInputInterceptor
 import com.intellij.util.ui.AsyncProcessIcon
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CoroutineScope
@@ -62,7 +64,6 @@ import java.awt.event.HierarchyEvent
 import java.awt.event.HierarchyListener
 import java.awt.event.KeyEvent
 import java.beans.PropertyChangeListener
-import javax.swing.BorderFactory
 import javax.swing.Box
 import javax.swing.BoxLayout
 import javax.swing.JComponent
@@ -715,20 +716,20 @@ internal class AgentChatFileEditor(
     val rootPanel = JPanel(GridBagLayout())
     val content = JPanel().apply {
       layout = BoxLayout(this, BoxLayout.Y_AXIS)
-      border = BorderFactory.createEmptyBorder(16, 16, 16, 16)
+      border = JBUI.Borders.empty(16)
       isOpaque = false
     }
     if (state.phase == AgentChatDeferredStartPhase.WAITING) {
       content.add(createDelayedDeferredStartProgressIcon())
-      content.add(Box.createVerticalStrut(8))
+      content.add(Box.createVerticalStrut(JBUI.scale(8)))
     }
-    content.add(createMessageArea(state.title, bold = true).apply {
+    content.add(createMessageArea(state.title).apply {
       alignmentX = Component.CENTER_ALIGNMENT
     })
     val stateMessage = state.message
     if (!stateMessage.isNullOrBlank()) {
-      content.add(Box.createVerticalStrut(8))
-      content.add(createMessageArea(stateMessage, bold = false).apply {
+      content.add(Box.createVerticalStrut(JBUI.scale(4)))
+      content.add(createMessageArea(stateMessage, secondary = true).apply {
         alignmentX = Component.CENTER_ALIGNMENT
       })
     }
@@ -802,7 +803,7 @@ private fun buildDeferredStartAccessibleName(state: AgentChatDeferredStartState)
   return "${state.title}. $stateMessage"
 }
 
-private fun createMessageArea(text: @Nls String, bold: Boolean): JComponent {
+private fun createMessageArea(text: @Nls String, secondary: Boolean = false): JComponent {
   return JTextArea(text).apply {
     isEditable = false
     isFocusable = false
@@ -810,7 +811,9 @@ private fun createMessageArea(text: @Nls String, bold: Boolean): JComponent {
     wrapStyleWord = true
     isOpaque = false
     border = null
-    font = if (bold) font.deriveFont(font.style or java.awt.Font.BOLD) else font
+    if (secondary) {
+      foreground = UIUtil.getContextHelpForeground()
+    }
   }
 }
 
