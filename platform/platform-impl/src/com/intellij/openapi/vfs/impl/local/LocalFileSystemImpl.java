@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -125,8 +126,15 @@ public class LocalFileSystemImpl
       AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(
         () -> {
           var application = ApplicationManager.getApplication();
-          if (application != null && !application.isDisposed()) {
-            storeRefreshStatusToFiles();
+          try {
+            if (application != null && !application.isDisposed()) {
+              ReadAction.runBlocking(() -> {
+                storeRefreshStatusToFiles();
+              });
+            }
+          }
+          catch (Throwable e) {
+            LOG.warn("Exception while marking changed files dirty", e);
           }
         },
         STATUS_UPDATE_PERIOD, STATUS_UPDATE_PERIOD, MILLISECONDS
