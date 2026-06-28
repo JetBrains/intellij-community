@@ -18,7 +18,7 @@ targets:
 # Agent Threads Refresh and Loading
 
 Status: Draft
-Date: 2026-05-09
+Date: 2026-06-28
 
 ## Summary
 Session refresh is event-driven and provider-agnostic. It merges provider results per normalized path, keeps useful partial data, and uses warm snapshots only as startup/bootstrap state.
@@ -45,6 +45,10 @@ Session refresh is event-driven and provider-agnostic. It merges provider result
 - Explicit refresh and on-demand loads must scope loading indicators to affected paths and deduplicate concurrent requests for the same normalized path.
   [@test] ../../sessions/testSrc/AgentSessionRefreshOnDemandIntegrationTest.kt
   [@test] ../../sessions/testSrc/AgentSessionRefreshConcurrencyIntegrationTest.kt
+
+- When a path has a separate project directory, refresh and on-demand loading must invoke provider sources with that directory while merging results, warm snapshots, loading state, and pending-tab rebind requests under the identity path. Refresh hints and thread-scoped source updates must remap provider source paths back to identity paths, and rebind targets must retain the project directory for resume launch planning.
+  [@test] ../../sessions/testSrc/AgentSessionThreadLoadSupportTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
 - Source update observation must be event-driven. Observer failures must restart collection so one provider signal failure cannot permanently stop refresh delivery.
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt

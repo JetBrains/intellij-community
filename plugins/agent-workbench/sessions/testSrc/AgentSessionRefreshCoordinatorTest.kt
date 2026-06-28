@@ -2287,6 +2287,125 @@ class AgentSessionRefreshCoordinatorTest {
   }
 
   @Test
+  fun providerUpdateUsesProjectDirectoryForBazelRefreshHintsAndKeepsIdentityForRebind() = runBlocking(Dispatchers.Default) {
+    val identityPath = "/home/haze/work/ultimate/toolbox/toolbox.bazelproject"
+    val projectDirectory = "/home/haze/work/ultimate"
+    val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
+    val loadedPaths = CopyOnWriteArrayList<String>()
+    val refreshHintPaths = CopyOnWriteArrayList<List<String>>()
+    val refreshHintSeeds = CopyOnWriteArrayList<Map<String, Set<String>>>()
+    val rebindInvocations = mutableListOf<PendingCodexRebindInvocation>()
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.from("codex"),
+      supportsUpdates = true,
+      updateEvents = updates,
+      listFromClosedProject = { path ->
+        loadedPaths.add(path)
+        if (path != projectDirectory) {
+          emptyList()
+        }
+        else {
+          listOf(
+            thread(id = "codex-existing", updatedAt = 500L, title = "Existing thread", provider = AgentSessionProvider.from("codex"))
+          )
+        }
+      },
+      prefetchRefreshHintsProvider = { paths, knownThreadIdsByPath ->
+        refreshHintPaths.add(paths)
+        refreshHintSeeds.add(knownThreadIdsByPath)
+        if (projectDirectory !in paths || projectDirectory !in knownThreadIdsByPath) {
+          emptyMap()
+        }
+        else {
+          mapOf(
+            projectDirectory to AgentSessionRefreshHints(
+              rebindCandidates = listOf(
+                AgentSessionRebindCandidate(
+                  threadId = "codex-hint",
+                  title = "Hint-discovered thread",
+                  updatedAt = 760L,
+                  activity = AgentThreadActivity.UNREAD,
+                )
+              ),
+            )
+          )
+        }
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+      openChatPathsProvider = { setOf(identityPath) },
+      openPendingCodexTabsProvider = {
+        mapOf(
+          identityPath to listOf(
+            pendingCodexTab(
+              projectPath = identityPath,
+              pendingThreadIdentity = "codex:new-hint",
+              pendingCreatedAtMs = 750L,
+            )
+          )
+        )
+      },
+      openChatPendingTabsBinder = { requestsByPath ->
+        requestsByPath.forEach { (path, requests) ->
+          requests.forEach { request ->
+            rebindInvocations.add(
+              PendingCodexRebindInvocation(
+                path = path,
+                pendingTabKey = request.pendingTabKey,
+                pendingThreadIdentity = request.pendingThreadIdentity,
+                target = request.target,
+              )
+            )
+          }
+        }
+        successfulPendingCodexRebindReport(requestsByPath)
+      },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = identityPath,
+            projectDirectory = projectDirectory,
+            name = "ultimate (toolbox)",
+            isOpen = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
+            threads = listOf(thread(id = "codex-existing", updatedAt = 100L, provider = AgentSessionProvider.from("codex"))),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+      updates.tryEmit(threadsChangedEvent())
+
+      waitForCondition {
+        rebindInvocations.isNotEmpty()
+      }
+
+      assertThat(loadedPaths).contains(projectDirectory)
+      assertThat(refreshHintPaths).anySatisfy { paths ->
+        assertThat(paths).containsExactly(projectDirectory)
+      }
+      assertThat(refreshHintSeeds).anySatisfy { seedsByPath ->
+        assertThat(seedsByPath[projectDirectory]).containsExactly("codex-existing")
+      }
+
+      val invocation = rebindInvocations.single()
+      assertThat(invocation.path).isEqualTo(identityPath)
+      assertThat(invocation.pendingTabKey).isEqualTo("pending-codex:new-hint")
+      assertThat(invocation.pendingThreadIdentity).isEqualTo("codex:new-hint")
+      assertThat(invocation.target.projectPath).isEqualTo(identityPath)
+      assertThat(invocation.target.projectDirectory).isEqualTo(projectDirectory)
+      assertThat(invocation.target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.from("codex"), "codex-hint"))
+      assertThat(invocation.target.threadId).isEqualTo("codex-hint")
+    }
+  }
+
+  @Test
   fun hintSourceUpdateWithThreadIdsUsesRefreshHintsForCodexRebindWhenActivityHintsAvailable() = runBlocking(Dispatchers.Default) {
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
     val rebindInvocations = mutableListOf<PendingCodexRebindInvocation>()
