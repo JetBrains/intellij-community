@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.toolwindow.ui
 
+import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.core.parseAgentWorkbenchPathOrNull
 import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_PROJECT_PATH_CONTEXT_DATA_KEY
 import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathContext
@@ -13,6 +14,7 @@ import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
 import com.intellij.agent.workbench.sessions.toolwindow.tree.archiveTargetFromThreadNode
 import com.intellij.agent.workbench.sessions.toolwindow.tree.copyPathForSessionTreeId
+import com.intellij.agent.workbench.sessions.toolwindow.tree.pathForThreadNode
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
@@ -23,6 +25,7 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.platform.ai.agent.sessions.core.SessionActionTarget
 import javax.swing.tree.TreePath
 
 internal class AgentSessionsTreeDataContextProvider(
@@ -62,6 +65,24 @@ internal class AgentSessionsTreeDataContextProvider(
 
   fun selectedUnarchiveTargets(): List<ArchiveThreadTarget> {
     return selectedThreadArchiveTargets(archived = true)
+  }
+
+  fun selectedThreadTargets(): List<SessionActionTarget.Thread> {
+    val targetsByKey = LinkedHashMap<String, SessionActionTarget.Thread>()
+    selectedTreeIds().forEach { id ->
+      val threadNode = nodeResolver(id) as? SessionTreeNode.Thread ?: return@forEach
+      if (threadNode.thread.archived || isAgentSessionNewSessionId(threadNode.thread.id)) return@forEach
+      val path = normalizeAgentWorkbenchPath(pathForThreadNode(id, threadNode.project.path))
+      val target = SessionActionTarget.Thread(
+        path = path,
+        provider = threadNode.thread.provider,
+        threadId = threadNode.thread.id,
+        title = threadNode.thread.title,
+        thread = threadNode.thread,
+      )
+      targetsByKey.putIfAbsent("${target.provider.value}:${target.path}:${target.threadId}", target)
+    }
+    return targetsByKey.values.toList()
   }
 
   private fun selectedThreadArchiveTargets(archived: Boolean): List<ArchiveThreadTarget> {
@@ -118,6 +139,7 @@ internal class AgentSessionsTreeDataContextProvider(
       SessionTreeId.Pinned -> null
       SessionTreeId.PinnedSeparator -> null
       is SessionTreeId.Project -> treeId.path
+      is SessionTreeId.TaskFolder -> treeId.path
       is SessionTreeId.Thread -> treeId.projectPath
       is SessionTreeId.SubAgent -> treeId.projectPath
       is SessionTreeId.Warning -> treeId.projectPath
@@ -136,6 +158,7 @@ internal class AgentSessionsTreeDataContextProvider(
       is SessionTreeNode.PinnedSection -> null
       is SessionTreeNode.SectionSeparator -> null
       is SessionTreeNode.Project -> treeNode.project.name
+      is SessionTreeNode.TaskFolder -> treeNode.folder.name
       is SessionTreeNode.Thread -> treeNode.project.name
       is SessionTreeNode.SubAgent -> treeNode.project.name
       is SessionTreeNode.Error -> treeNode.project.name

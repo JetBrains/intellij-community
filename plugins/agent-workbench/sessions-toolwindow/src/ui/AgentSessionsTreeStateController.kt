@@ -17,6 +17,8 @@ import com.intellij.agent.workbench.sessions.toolwindow.tree.buildSessionTreeMod
 import com.intellij.agent.workbench.sessions.toolwindow.tree.diffSessionTreeModels
 import com.intellij.agent.workbench.sessions.toolwindow.tree.overlayPendingAgentChatTabs
 import com.intellij.agent.workbench.sessions.toolwindow.tree.resolveSelectedSessionTreeId
+import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderService
+import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderSnapshot
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.ui.treeStructure.Tree
@@ -61,6 +63,7 @@ internal class AgentSessionsTreeStateController(
   private var threadViewState: AgentSessionThreadViewState = AgentSessionThreadViewState()
   private var selectedChatTab: AgentChatTabSelection? = null
   private var openChatTabsPresentationState: AgentChatOpenTabsPresentationState = AgentChatOpenTabsPresentationState.EMPTY
+  private var taskFolderSnapshot: AgentTaskFolderSnapshot = AgentTaskFolderSnapshot()
   private var treeUpdateSequence: Long = 0
   private var rebuildJob: Job? = null
   private var treeSelectionInitialized = false
@@ -104,6 +107,14 @@ internal class AgentSessionsTreeStateController(
       openChatTabsPresentationStateFlow.collect { state ->
         openChatTabsPresentationState = state
         rebuildTree(SessionTreeRebuildReason.OPEN_CHAT_TABS_PRESENTATION_CHANGED)
+      }
+    }
+
+    scope.launch {
+      val taskFolderService = serviceAsync<AgentTaskFolderService>()
+      taskFolderService.stateFlow.collect {
+        taskFolderSnapshot = taskFolderService.snapshot(includeDone = false)
+        rebuildTree(SessionTreeRebuildReason.TASK_FOLDERS_CHANGED)
       }
     }
 
@@ -180,6 +191,8 @@ internal class AgentSessionsTreeStateController(
     val snapshotThreadViewState = threadViewState
     val snapshotSelectedChatTab = selectedChatTab
     val snapshotOpenTabsPresentationState = openChatTabsPresentationState
+    val snapshotTaskFolderSnapshot = taskFolderSnapshot.takeIf { snapshotThreadViewState.mode == AgentSessionThreadViewMode.ACTIVE }
+                                   ?: AgentTaskFolderSnapshot()
     val snapshotCurrentProjectScopeActive = isCurrentProjectScopeActive()
     val oldModel = getSessionTreeModel()
     val updateSequence = ++treeUpdateSequence
@@ -197,6 +210,7 @@ internal class AgentSessionsTreeStateController(
           else {
             AgentChatOpenTabsPresentationState.EMPTY
           },
+          taskFolderSnapshot = snapshotTaskFolderSnapshot,
         )
         val diff = diffSessionTreeModels(oldModel, model)
         val selection = if (snapshotThreadViewState.mode == AgentSessionThreadViewMode.ACTIVE) {
@@ -377,6 +391,7 @@ internal enum class SessionTreeRebuildReason {
   SESSION_STATE_CHANGED,
   CHAT_TAB_SELECTION_CHANGED,
   OPEN_CHAT_TABS_PRESENTATION_CHANGED,
+  TASK_FOLDERS_CHANGED,
   THREAD_VIEW_CHANGED,
   PROJECT_SCOPE_CHANGED,
 }
@@ -401,6 +416,10 @@ internal fun coalesceSessionTreeRebuildReason(
   if (current == SessionTreeRebuildReason.THREAD_VIEW_CHANGED ||
       next == SessionTreeRebuildReason.THREAD_VIEW_CHANGED) {
     return SessionTreeRebuildReason.THREAD_VIEW_CHANGED
+  }
+  if (current == SessionTreeRebuildReason.TASK_FOLDERS_CHANGED ||
+      next == SessionTreeRebuildReason.TASK_FOLDERS_CHANGED) {
+    return SessionTreeRebuildReason.TASK_FOLDERS_CHANGED
   }
   if (current == SessionTreeRebuildReason.PROJECT_SCOPE_CHANGED ||
       next == SessionTreeRebuildReason.PROJECT_SCOPE_CHANGED) {
@@ -441,6 +460,7 @@ internal fun sessionTreeSelectionTargetsAfterModelSwap(
   return when (reason) {
     SessionTreeRebuildReason.SESSION_STATE_CHANGED,
     SessionTreeRebuildReason.OPEN_CHAT_TABS_PRESENTATION_CHANGED,
+    SessionTreeRebuildReason.TASK_FOLDERS_CHANGED,
     SessionTreeRebuildReason.THREAD_VIEW_CHANGED,
     SessionTreeRebuildReason.PROJECT_SCOPE_CHANGED,
       -> {

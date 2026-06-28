@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ai.agent.sessions.core.SessionActionTarget
 import com.intellij.ui.hover.HoverListener
 import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.treeStructure.Tree
@@ -46,6 +47,8 @@ internal class AgentSessionsTreeInteractionController(
   private val isHoverableTreeId: (SessionTreeId) -> Boolean,
   private val selectedArchiveTargets: () -> List<ArchiveThreadTarget>,
   private val selectedUnarchiveTargets: () -> List<ArchiveThreadTarget>,
+  private val selectedThreadTargets: () -> List<SessionActionTarget.Thread>,
+  private val taskFolderArchiveTargets: (SessionTreeId.TaskFolder) -> List<ArchiveThreadTarget>,
   private val showMoreProjects: () -> Unit,
   private val showMoreThreads: (String) -> Unit,
   private val isNewThreadPopupAvailable: () -> Boolean = { true },
@@ -179,6 +182,8 @@ internal class AgentSessionsTreeInteractionController(
       node = treeNode,
       archiveTargets = selectedArchiveTargets(),
       unarchiveTargets = selectedUnarchiveTargets(),
+      selectedThreadTargets = selectedThreadTargets(),
+      taskFolderArchiveTargets = (id as? SessionTreeId.TaskFolder)?.let(taskFolderArchiveTargets).orEmpty(),
       newThreadActionAvailable = isNewThreadPopupAvailable(),
     ) ?: return
     val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, actionGroup)
@@ -222,6 +227,7 @@ internal class AgentSessionsTreeInteractionController(
 
       is SessionTreeNode.PinnedSection,
       is SessionTreeNode.SectionSeparator,
+      is SessionTreeNode.TaskFolder,
         -> false
 
       is SessionTreeNode.Thread -> {

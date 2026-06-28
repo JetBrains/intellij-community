@@ -17,7 +17,9 @@ import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaHintBanner
 import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaHintStateService
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderUiContributors
+import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.model.AgentSessionThreadViewMode
+import com.intellij.agent.workbench.sessions.model.archiveThreadTargetKey
 import com.intellij.agent.workbench.sessions.service.AgentArchivedSessionsService
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityListener
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
@@ -53,6 +55,8 @@ import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderService
+import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderThreadAssignment
 import java.awt.BorderLayout
 import java.awt.Graphics
 import java.util.Collections
@@ -226,6 +230,8 @@ internal class AgentSessionsToolWindowPanel(
       isHoverableTreeId = { id -> isSelectableSessionTreeId(sessionTreeModel, id) },
       selectedArchiveTargets = { dataContextProvider.selectedArchiveTargets() },
       selectedUnarchiveTargets = { dataContextProvider.selectedUnarchiveTargets() },
+      selectedThreadTargets = { dataContextProvider.selectedThreadTargets() },
+      taskFolderArchiveTargets = ::taskFolderArchiveTargets,
       showMoreProjects = ::showMoreProjectsForCurrentView,
       showMoreThreads = ::showMoreThreadsForCurrentView,
       isNewThreadPopupAvailable = { !stateController.isCurrentProjectScopeActive() },
@@ -504,6 +510,11 @@ internal class AgentSessionsToolWindowPanel(
     }
   }
 
+  private fun taskFolderArchiveTargets(folderId: SessionTreeId.TaskFolder): List<ArchiveThreadTarget> {
+    val assignments = service<AgentTaskFolderService>().listFolderThreadAssignments(folderId.path, folderId.folderId)
+    return archiveTargetsForTaskFolderAssignments(assignments)
+  }
+
   @TestOnly
   internal fun containsSessionTreeIdForTest(id: SessionTreeId): Boolean {
     return id in sessionTreeModel.entriesById
@@ -513,6 +524,19 @@ internal class AgentSessionsToolWindowPanel(
     service<AgentSessionsToolWindowVisibilityService>().release(costHydrationVisibilityToken)
     stateController.dispose()
   }
+}
+
+internal fun archiveTargetsForTaskFolderAssignments(assignments: List<AgentTaskFolderThreadAssignment>): List<ArchiveThreadTarget> {
+  val targetsByKey = LinkedHashMap<String, ArchiveThreadTarget>()
+  assignments.forEach { assignment ->
+    val target = ArchiveThreadTarget.Thread(
+      path = assignment.path,
+      provider = assignment.provider,
+      threadId = assignment.threadId,
+    )
+    targetsByKey.putIfAbsent(archiveThreadTargetKey(target), target)
+  }
+  return targetsByKey.values.toList()
 }
 
 internal fun sessionTreeModelShouldMarkCostHintEligible(model: SessionTreeModel): Boolean {

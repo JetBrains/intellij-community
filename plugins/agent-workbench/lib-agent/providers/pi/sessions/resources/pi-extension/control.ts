@@ -12,6 +12,11 @@ const STATUS_TOKEN = process.env[STATUS_TOKEN_ENV];
 
 type AgentWorkbenchControlBridge = {
   setContext: (ctx: ExtensionContext) => void;
+  getCurrentTaskFolder: () => Promise<AgentWorkbenchTaskFolder | undefined>;
+  listTaskFolderThreads: (folderId?: string) => Promise<AgentWorkbenchTaskFolderThread[]>;
+  getTaskFolderMetadata: (folderId?: string) => Promise<Record<string, string> | undefined>;
+  setTaskFolderMetadata: (key: string, value: string, folderId?: string) => Promise<boolean>;
+  deleteTaskFolderMetadata: (key: string, folderId?: string) => Promise<boolean>;
   close: () => void;
 };
 
@@ -19,8 +24,19 @@ type AgentWorkbenchControlCommand = {
   type?: string;
   requestId?: string;
   sessionId?: string;
+  cwd?: string;
   entryId?: string;
   position?: string;
+  ok?: boolean;
+  cancelled?: boolean;
+  error?: string;
+  folderId?: string;
+  key?: string;
+  value?: string;
+  changed?: boolean;
+  folder?: AgentWorkbenchTaskFolder | null;
+  threads?: AgentWorkbenchTaskFolderThread[];
+  metadata?: Record<string, string>;
 };
 
 type AgentWorkbenchControlThread = {
@@ -28,6 +44,24 @@ type AgentWorkbenchControlThread = {
   title: string;
   updatedAt: number;
   activity: string;
+};
+
+type AgentWorkbenchTaskFolder = {
+  path: string;
+  id: string;
+  name: string;
+  status: string;
+  metadata?: Record<string, string>;
+  createdAt?: number;
+  updatedAt?: number;
+};
+
+type AgentWorkbenchTaskFolderThread = {
+  path: string;
+  provider: string;
+  threadId: string;
+  folderId: string;
+  assignedAt?: number;
 };
 
 type AgentWorkbenchControlContext = ExtensionContext & {
@@ -53,6 +87,11 @@ export function startControlBridge(ctx: ExtensionContext): AgentWorkbenchControl
   }
 
   let currentCtx = ctx;
+  const pendingRequests = new Map<string, {
+    resolve: (command: AgentWorkbenchControlCommand) => void;
+    reject: (error: Error) => void;
+    timeout: NodeJS.Timeout;
+  }>();
   const socket = connectControlSocket({
     endpoint: CONTROL_ENDPOINT,
     token: STATUS_TOKEN,
@@ -81,12 +120,67 @@ export function startControlBridge(ctx: ExtensionContext): AgentWorkbenchControl
     if (command === undefined) {
       return;
     }
-    if (command.type === "navigateTree") {
+    if (command.type === "response") {
+      handleResponse(command);
+    }
+    else if (command.type === "navigateTree") {
       await handleNavigateTree(command);
     }
     else if (command.type === "forkFromEntry") {
       await handleForkFromEntry(command);
     }
+  };
+
+  const handleResponse = (command: AgentWorkbenchControlCommand) => {
+    const requestId = command.requestId;
+    if (requestId === undefined) {
+      return;
+    }
+    const pending = pendingRequests.get(requestId);
+    if (pending === undefined) {
+      return;
+    }
+    pendingRequests.delete(requestId);
+    clearTimeout(pending.timeout);
+    pending.resolve(command);
+  };
+
+  const sendRequest = (
+    type: string,
+    payload: Partial<AgentWorkbenchControlCommand> = {},
+  ): Promise<AgentWorkbenchControlCommand> => {
+    const sessionId = currentCtx.sessionManager.getSessionId();
+    const cwd = currentCtx.cwd;
+    if (sessionId === undefined || cwd === undefined || !socket.isOpen()) {
+      return Promise.reject(new Error("Agent Workbench control socket is unavailable"));
+    }
+    const requestId = crypto.randomUUID();
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        pendingRequests.delete(requestId);
+        reject(new Error(`Timed out waiting for Agent Workbench control response: ${type}`));
+      }, 10_000);
+      pendingRequests.set(requestId, {resolve, reject, timeout});
+      const sent = socket.sendText(JSON.stringify({
+        type,
+        requestId,
+        sessionId,
+        cwd,
+        ...payload,
+      }));
+      if (!sent) {
+        pendingRequests.delete(requestId);
+        clearTimeout(timeout);
+        reject(new Error("Failed to send Agent Workbench control request"));
+      }
+    });
+  };
+
+  const requireOk = (response: AgentWorkbenchControlCommand): AgentWorkbenchControlCommand => {
+    if (response.ok !== true) {
+      throw new Error(response.error ?? "Agent Workbench control request failed");
+    }
+    return response;
   };
 
   const handleNavigateTree = async (command: AgentWorkbenchControlCommand) => {
@@ -171,7 +265,34 @@ export function startControlBridge(ctx: ExtensionContext): AgentWorkbenchControl
       currentCtx = nextCtx;
       sendSessionMessage("sessionState");
     },
-    close: () => socket.close(),
+    getCurrentTaskFolder: async () => {
+      const response = requireOk(await sendRequest("getCurrentTaskFolder"));
+      return response.folder ?? undefined;
+    },
+    listTaskFolderThreads: async (folderId) => {
+      const response = requireOk(await sendRequest("listTaskFolderThreads", {folderId}));
+      return response.threads ?? [];
+    },
+    getTaskFolderMetadata: async (folderId) => {
+      const response = requireOk(await sendRequest("getTaskFolderMetadata", {folderId}));
+      return response.metadata;
+    },
+    setTaskFolderMetadata: async (key, value, folderId) => {
+      const response = requireOk(await sendRequest("setTaskFolderMetadata", {folderId, key, value}));
+      return response.changed === true;
+    },
+    deleteTaskFolderMetadata: async (key, folderId) => {
+      const response = requireOk(await sendRequest("deleteTaskFolderMetadata", {folderId, key}));
+      return response.changed === true;
+    },
+    close: () => {
+      for (const [requestId, pending] of pendingRequests) {
+        pendingRequests.delete(requestId);
+        clearTimeout(pending.timeout);
+        pending.reject(new Error("Agent Workbench control socket closed"));
+      }
+      socket.close();
+    },
   };
 }
 

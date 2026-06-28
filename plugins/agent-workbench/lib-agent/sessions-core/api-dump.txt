@@ -159,6 +159,24 @@ f:com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$SubAgent
 - getThreadId():java.lang.String
 - getTitle():java.lang.String
 - hashCode():I
+f:com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$TaskFolder
+- com.intellij.platform.ai.agent.sessions.core.SessionActionTarget
+- f:folderId:java.lang.String
+- f:isDone:Z
+- f:metadata:java.util.Map
+- f:name:java.lang.String
+- f:path:java.lang.String
+- <init>(java.lang.String,java.lang.String,java.lang.String,Z,java.util.Map):V
+- b:<init>(java.lang.String,java.lang.String,java.lang.String,Z,java.util.Map,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:component3():java.lang.String
+- f:component4():Z
+- f:component5():java.util.Map
+- f:copy(java.lang.String,java.lang.String,java.lang.String,Z,java.util.Map):com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$TaskFolder
+- bs:copy$default(com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$TaskFolder,java.lang.String,java.lang.String,java.lang.String,Z,java.util.Map,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$TaskFolder
+- equals(java.lang.Object):Z
+- hashCode():I
 f:com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$Thread
 - com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$Conversation
 - b:<init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionThread,I,kotlin.jvm.internal.DefaultConstructorMarker):V

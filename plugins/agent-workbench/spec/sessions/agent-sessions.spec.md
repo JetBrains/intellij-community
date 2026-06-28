@@ -63,6 +63,11 @@ behavior; refresh mechanics and detailed tree rendering/interaction contracts li
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
   [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
 
+- Task-folder grouping, lifecycle actions, explicit metadata, and folder tree placement must follow `agent-task-folders.spec.md`.
+  [@test] ../../sessions/testSrc/AgentTaskFolderServiceTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreeSnapshotTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
+
 - Archive, unarchive, and rename actions must update the session view through provider-backed refresh paths; unsupported provider
   capabilities must hide or disable the corresponding action without blocking supported targets.
   [@test] ../../sessions/testSrc/AgentSessionArchiveServiceIntegrationTest.kt
@@ -133,6 +138,7 @@ behavior; refresh mechanics and detailed tree rendering/interaction contracts li
 
 - `agent-sessions-tree.spec.md`
 - `agent-sessions-refresh.spec.md`
+- `agent-task-folders.spec.md`
 - `../core/agent-core-contracts.spec.md`
 - `../chat/agent-chat-editor.spec.md`
 - `../actions/new-thread.spec.md`

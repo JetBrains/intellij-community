@@ -46,6 +46,32 @@
       icon="AllIcons.General.Add"
       class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupNewThreadGroup"/>
     <action
+      id="AgentWorkbenchSessions.TreePopup.CreateTaskFolder"
+      icon="AllIcons.General.Add"
+      class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupCreateTaskFolderAction"/>
+    <group
+      id="AgentWorkbenchSessions.TreePopup.MoveToTaskFolder"
+      popup="true"
+      class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupMoveToTaskFolderGroup"/>
+    <action
+      id="AgentWorkbenchSessions.TreePopup.RemoveFromTaskFolder"
+      class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupRemoveFromTaskFolderAction"/>
+    <action
+      id="AgentWorkbenchSessions.TreePopup.MarkTaskFolderDone"
+      class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupMarkTaskFolderDoneAction"/>
+    <action
+      id="AgentWorkbenchSessions.TreePopup.RenameTaskFolder"
+      class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupRenameTaskFolderAction"/>
+    <action
+      id="AgentWorkbenchSessions.TreePopup.DeleteTaskFolder"
+      class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupDeleteTaskFolderAction"/>
+    <action
+      id="AgentWorkbenchSessions.TreePopup.SetTaskFolderMetadata"
+      class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupSetTaskFolderMetadataAction"/>
+    <action
+      id="AgentWorkbenchSessions.TreePopup.DeleteTaskFolderMetadata"
+      class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupDeleteTaskFolderMetadataAction"/>
+    <action
       id="AgentWorkbenchSessions.TreePopup.Rename"
       class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupRenameThreadAction"/>
     <action
@@ -64,6 +90,16 @@
       <reference ref="AgentWorkbenchSessions.TreePopup.Open"/>
       <reference ref="AgentWorkbenchSessions.TreePopup.More"/>
       <reference ref="AgentWorkbenchSessions.TreePopup.NewThread"/>
+      <reference ref="AgentWorkbenchSessions.TreePopup.CreateTaskFolder"/>
+      <separator/>
+      <reference ref="AgentWorkbenchSessions.TreePopup.MoveToTaskFolder"/>
+      <reference ref="AgentWorkbenchSessions.TreePopup.RemoveFromTaskFolder"/>
+      <reference ref="AgentWorkbenchSessions.TreePopup.MarkTaskFolderDone"/>
+      <separator/>
+      <reference ref="AgentWorkbenchSessions.TreePopup.RenameTaskFolder"/>
+      <reference ref="AgentWorkbenchSessions.TreePopup.SetTaskFolderMetadata"/>
+      <reference ref="AgentWorkbenchSessions.TreePopup.DeleteTaskFolderMetadata"/>
+      <reference ref="AgentWorkbenchSessions.TreePopup.DeleteTaskFolder"/>
       <separator/>
       <reference ref="AgentWorkbenchSessions.TreePopup.Archive"/>
       <reference ref="AgentWorkbenchSessions.TreePopup.Unarchive"/>
