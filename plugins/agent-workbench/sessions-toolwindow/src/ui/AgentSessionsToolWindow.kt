@@ -224,6 +224,7 @@ internal class AgentSessionsToolWindowPanel(
 
     interactionController = AgentSessionsTreeInteractionController(
       project = project,
+      parentDisposable = this,
       tree = tree,
       rowActionsOverlayProvider = { rowActionsOverlay },
       nodeResolver = ::sessionTreeNode,
@@ -232,6 +233,9 @@ internal class AgentSessionsToolWindowPanel(
       selectedUnarchiveTargets = { dataContextProvider.selectedUnarchiveTargets() },
       selectedThreadTargets = { dataContextProvider.selectedThreadTargets() },
       taskFolderArchiveTargets = ::taskFolderArchiveTargets,
+      assignThreadToTaskFolder = { target, folder ->
+        service<AgentTaskFolderService>().assignThread(target.path, target.provider, target.threadId, folder.id)
+      },
       showMoreProjects = ::showMoreProjectsForCurrentView,
       showMoreThreads = ::showMoreThreadsForCurrentView,
       isNewThreadPopupAvailable = { !stateController.isCurrentProjectScopeActive() },
