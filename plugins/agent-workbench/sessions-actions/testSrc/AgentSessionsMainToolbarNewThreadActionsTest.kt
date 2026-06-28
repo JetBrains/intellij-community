@@ -1031,6 +1031,63 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
   }
 
   @Test
+  fun pickerGroupSeparatesAcpProfilesFromTerminalProfiles() {
+    val context = newThreadContext(path = "/tmp/repo-direct")
+    val codexBridge = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.from("codex"),
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
+      cliAvailable = true,
+      yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",
+    )
+    val acpBridge = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.from("acp"),
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+      supportsPromptLaunch = false,
+      newSessionLabelKeyOverride = "toolwindow.action.new.session.acp",
+    )
+    val acpProfile = AgentPromptLaunchProfile(
+      id = "builtin:acp:target:mistral-vibe:standard",
+      name = "Mistral Vibe",
+      kind = AgentPromptLaunchProfileKind.BUILT_IN,
+      providerId = acpBridge.provider.value,
+      launchTargetId = "acp.registry.mistral-vibe",
+    )
+    val action = AgentSessionsMainToolbarNewThreadAction(
+      resolveContext = { context },
+      allBridges = { listOf(codexBridge, acpBridge) },
+      userLaunchProfiles = { listOf(acpProfile) },
+      createNewSession = { _, _, _, _ -> },
+    )
+    val event = TestActionEvent.createTestEvent(action)
+
+    val children = action.actionGroup.getChildren(event)
+    val launchActionTexts = children
+      .filter { child -> child !is Separator }
+      .map { child -> child.templatePresentation.text }
+      .filter { text -> text != MANAGE_LAUNCH_PROFILES_TEXT }
+    assertThat(launchActionTexts).containsExactly(
+      AgentSessionsBundle.message("toolwindow.action.new.session.codex"),
+      "Mistral Vibe",
+      AgentSessionsBundle.message("toolwindow.action.new.session.codex.yolo"),
+    )
+    assertThat(children.filterIsInstance<Separator>()).hasSizeGreaterThanOrEqualTo(2)
+
+    val rows = action.createProfilePickerRowsForTest(event)
+    val launchRows = rows.filter { row -> row.text != MANAGE_LAUNCH_PROFILES_TEXT }
+    assertThat(launchRows.map { row -> row.text }).containsExactly(
+      AgentSessionsBundle.message("toolwindow.action.new.session.codex"),
+      "Mistral Vibe",
+      AgentSessionsBundle.message("toolwindow.action.new.session.codex.yolo"),
+    )
+    assertThat(launchRows.single { row -> row.text == "Mistral Vibe" }.separatorText)
+      .isEqualTo(AgentSessionsBundle.message("toolwindow.action.new.session.section.acp"))
+    val yoloRow = launchRows.single { row -> row.text == AgentSessionsBundle.message("toolwindow.action.new.session.codex.yolo") }
+    assertThat(yoloRow.separatorText)
+      .isEqualTo(AgentSessionsBundle.message("toolwindow.action.new.session.section.auto"))
+  }
+
+  @Test
   fun pickerGroupReturnsCandidateSubGroupsForCandidatesTarget() {
     val context = newThreadContext(
       projectPathCandidates = listOf(
