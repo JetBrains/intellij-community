@@ -31,8 +31,16 @@ fun providerItemMonochromeIconWithMode(item: AgentSessionProviderMenuItem): Icon
   return icon
 }
 
-fun setProviderItemLaunchProfileActiveMarker(presentation: Presentation, item: AgentSessionProviderMenuItem, active: Boolean) {
-  setLaunchProfileActiveMarker(presentation, providerItemMonochromeIconWithMode(item), active)
+fun launchProfileItemMonochromeIconWithMode(item: AgentSessionLaunchProfileMenuItem): Icon {
+  val icon = item.icon ?: return providerItemMonochromeIconWithMode(item.menuItem)
+  if (item.menuItem.mode == AgentSessionLaunchMode.YOLO) {
+    return withYoloModeBadge(icon)
+  }
+  return icon
+}
+
+fun setLaunchProfileItemActiveMarker(presentation: Presentation, item: AgentSessionLaunchProfileMenuItem, active: Boolean) {
+  setLaunchProfileActiveMarker(presentation, launchProfileItemMonochromeIconWithMode(item), active)
 }
 
 fun setLaunchProfileIcon(presentation: Presentation, baseIcon: Icon, selected: Boolean) {

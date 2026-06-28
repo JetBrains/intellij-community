@@ -28,12 +28,15 @@ import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.ui.AgentWorkbenchActionIds
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionOutOfBandLaunch
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionOutOfBandLaunchContext
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.RegistryManager
@@ -41,6 +44,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 internal const val AGENT_WORKBENCH_NEW_THREAD_INLINE_PROMPT_REGISTRY_KEY: String = "agent.workbench.new.thread.inline.prompt"
@@ -69,7 +73,7 @@ internal fun createNewThreadViaService(
 ) {
   val provider = AgentSessionProvider.from(profile.providerId)
   val descriptor = AgentSessionProviders.find(provider)
-  if (!shouldOpenInlineNewThreadPrompt(descriptor)) {
+  if (!shouldOpenInlineNewThreadPrompt(profile = profile, provider = provider, descriptor = descriptor)) {
     createNewThreadDirectly(
       path = path,
       profile = profile,
@@ -88,17 +92,34 @@ internal fun createNewThreadViaService(
   )
 }
 
-private fun shouldOpenInlineNewThreadPrompt(descriptor: AgentSessionProviderDescriptor?): Boolean {
+private fun shouldOpenInlineNewThreadPrompt(
+  profile: AgentPromptLaunchProfile,
+  provider: AgentSessionProvider,
+  descriptor: AgentSessionProviderDescriptor?,
+): Boolean {
   return shouldOpenInlineNewThreadPrompt(
     registryEnabled = RegistryManager.getInstance().get(AGENT_WORKBENCH_NEW_THREAD_INLINE_PROMPT_REGISTRY_KEY).asBoolean(),
     descriptor = descriptor,
+    hasOutOfBandLaunch = hasOutOfBandLaunch(profile = profile, provider = provider),
   )
 }
 
 internal fun shouldOpenInlineNewThreadPrompt(
   registryEnabled: Boolean,
   descriptor: AgentSessionProviderDescriptor?,
-): Boolean = registryEnabled && descriptor?.supportsPromptLaunch == true
+  hasOutOfBandLaunch: Boolean = false,
+): Boolean = registryEnabled && descriptor?.supportsPromptLaunch == true && !hasOutOfBandLaunch
+
+private fun hasOutOfBandLaunch(profile: AgentPromptLaunchProfile, provider: AgentSessionProvider): Boolean {
+  val context = AgentSessionOutOfBandLaunchContext(
+    provider = provider,
+    launchMode = profile.launchMode,
+    launchProfileId = profile.id,
+    launchTargetId = profile.launchTargetId,
+    generationSettings = profile.generationSettings,
+  )
+  return AgentSessionOutOfBandLaunch.forContext(context) != null
+}
 
 private fun createNewThreadDirectly(
   path: String,
@@ -170,7 +191,7 @@ internal class AgentSessionsInlineNewThreadPromptService internal constructor(
     entryPoint: AgentWorkbenchEntryPoint,
     invocationData: AgentPromptInvocationData?,
   ) {
-    coroutineScope.launch(CoroutineName("Agent Workbench inline New Thread prompt")) {
+    coroutineScope.launch(Dispatchers.EDT + CoroutineName("Agent Workbench inline New Thread prompt")) {
       openInlinePromptSuspending(
         path = path,
         profile = profile,
@@ -198,6 +219,7 @@ internal class AgentSessionsInlineNewThreadPromptService internal constructor(
         mode = profile.launchMode,
         entryPoint = entryPoint,
         launchProfileId = profile.id,
+        launchTargetId = profile.launchTargetId,
         generationSettings = profile.generationSettings,
         waitingTitle = AgentSessionsBundle.message("toolwindow.thread.preparing.title"),
         deferredStartContentProvider = { project ->

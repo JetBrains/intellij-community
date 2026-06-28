@@ -244,7 +244,7 @@ internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
     val path = newThreadPathFromTarget(context.target) ?: return null
     val menuModel = buildAgentSessionLaunchProfileMenuModel(allBridges(), context.project)
     if (!menuModel.hasEntries()) return null
-    val selection = resolveAgentSessionLaunchProfileSelection(menuModel, userLaunchProfiles(), defaultLaunchProfileId())
+    val selection = resolveAgentSessionLaunchProfileSelection(menuModel, userLaunchProfiles(), defaultLaunchProfileId(), project = context.project)
     if (selection.profiles.isEmpty()) return null
     return NewThreadMenu(context, path, selection)
   }

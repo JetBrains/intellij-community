@@ -31,6 +31,10 @@
       interface="com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionOutOfBandLaunch"
       dynamic="true"/>
     <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.sessionLaunchProfileContributor"
+      interface="com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionLaunchProfileContributor"
+      dynamic="true"/>
+    <extensionPoint
       qualifiedName="com.intellij.agent.workbench.mcpStreamUrlProvider"
       interface="com.intellij.platform.ai.agent.sessions.core.launch.McpStreamUrlProvider"
       dynamic="true"/>

@@ -27,7 +27,7 @@ internal class AgentSessionLaunchProfileResolverImpl(
       launchProfileId = launchProfileId,
       requiredProvider = requiredProvider,
       defaultProfileId = uiPreferencesState.getDefaultLaunchProfileId(),
-      builtInProfiles = buildBuiltInLaunchProfiles(providerMenuModel) { item -> item.bridge.displayNameFallback },
+      builtInProfiles = buildBuiltInLaunchProfiles(providerMenuModel, resolveName = { item -> item.bridge.displayNameFallback }),
       userProfiles = uiPreferencesState.getUserLaunchProfiles(),
       providerDescriptors = providers,
     )

@@ -289,6 +289,12 @@ interface AgentSessionProviderImplementation {
   val supportsPromptLaunch: Boolean
     get() = true
 
+  /**
+   * True when the provider itself can be launched as a built-in profile without an additional target.
+   */
+  val supportsDefaultLaunchProfile: Boolean
+    get() = supportsPromptLaunch
+
   val supportedLaunchModes: Set<AgentSessionLaunchMode>
     get() = setOf(AgentSessionLaunchMode.STANDARD)
 

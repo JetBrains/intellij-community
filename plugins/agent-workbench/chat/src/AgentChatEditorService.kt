@@ -33,6 +33,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -248,6 +249,7 @@ suspend fun openChat(
   pendingLaunchMode: String? = null,
   launchMode: String? = null,
   launchProfileId: String? = null,
+  launchTargetId: String? = null,
   newSessionProvider: AgentSessionProvider? = null,
   newSessionLaunchMode: AgentSessionLaunchMode? = null,
   initialMessageDispatchPlan: AgentInitialPromptDeliveryPlan = AgentInitialPromptDeliveryPlan.EMPTY,
@@ -279,6 +281,7 @@ suspend fun openChat(
     generationSettings
   }
   val effectiveLaunchProfileId = launchProfileId?.trim()?.takeIf(String::isNotEmpty) ?: existing?.launchProfileId
+  val effectiveLaunchTargetId = launchTargetId?.trim()?.takeIf(String::isNotEmpty) ?: existing?.launchTargetId
   val startupOverrideForTab = if (isNewTab) {
     initialMessageDispatchPlan.startupLaunchSpecOverride ?: launchSpec.takeIf(::shouldUseStartupLaunchSpecOverride)
   }
@@ -290,10 +293,12 @@ suspend fun openChat(
       provider = newSessionProvider,
       launchMode = newSessionLaunchMode,
       launchProfileId = effectiveLaunchProfileId,
+      launchTargetId = effectiveLaunchTargetId,
     ) ?: pendingProviderForThreadIdentity(threadIdentity)?.let { provider ->
       AgentChatStartupIntent.NewSession(provider = provider,
                                         launchMode = parseAgentChatLaunchMode(pendingLaunchMode),
-                                        launchProfileId = effectiveLaunchProfileId)
+                                        launchProfileId = effectiveLaunchProfileId,
+                                        launchTargetId = effectiveLaunchTargetId)
     }
   }
   else {
@@ -322,6 +327,7 @@ suspend fun openChat(
     pendingLaunchMode = pendingLaunchMode,
     launchMode = launchMode ?: existing?.launchMode,
     launchProfileId = effectiveLaunchProfileId,
+    launchTargetId = effectiveLaunchTargetId,
     generationSettings = effectiveGenerationSettings,
     newThreadRebindRequestedAtMs = existing?.newThreadRebindRequestedAtMs,
     initialPromptRecord = snapshotInitialPromptRecord,
@@ -393,9 +399,15 @@ suspend fun openChat(
     // TestEditorManagerImpl uses FileEditorProvider.KEY for non-text editors and otherwise falls back to doOpenTextEditor.
     file.putUserData(FileEditorProvider.KEY, AgentChatFileEditorProvider())
   }
-  manager.openFile(file = file, options = FileEditorOpenOptions(requestFocus = true, reuseOpen = true))
-  if (existing != null && hasExplicitInitialPromptDelivery && !file.initialMessageSent) {
-    flushPendingInitialMessageForOpenEditors(manager = manager, file = file)
+  val focusDeferredStartContent = deferredStartContent != null
+  withContext(Dispatchers.UiWithModelAccess) {
+    manager.openFile(file = file, options = FileEditorOpenOptions(requestFocus = !focusDeferredStartContent, reuseOpen = true))
+    if (focusDeferredStartContent) {
+      focusOpenChatEditorPreferredComponent(project = project, manager = manager, file = file)
+    }
+    if (existing != null && hasExplicitInitialPromptDelivery && !file.initialMessageSent) {
+      flushPendingInitialMessageForOpenEditors(manager = manager, file = file)
+    }
   }
   LOG.debug {
     "openChat openFile completed(identity=$threadIdentity, subAgentId=$subAgentId, fileName=${file.name}, activity=$threadActivity)"
@@ -425,12 +437,14 @@ private fun buildNewSessionStartupIntent(
   provider: AgentSessionProvider?,
   launchMode: AgentSessionLaunchMode?,
   launchProfileId: String?,
+  launchTargetId: String?,
 ): AgentChatStartupIntent.NewSession? {
   val resolvedProvider = provider ?: return null
   return AgentChatStartupIntent.NewSession(
     provider = resolvedProvider,
     launchMode = launchMode ?: AgentSessionLaunchMode.STANDARD,
     launchProfileId = launchProfileId,
+    launchTargetId = launchTargetId,
   )
 }
 
@@ -464,6 +478,7 @@ suspend fun updateAgentChatDeferredStartState(
   newSessionProvider: AgentSessionProvider? = null,
   newSessionLaunchMode: AgentSessionLaunchMode? = null,
   launchProfileId: String? = null,
+  launchTargetId: String? = null,
   generationSettings: AgentPromptGenerationSettings? = null,
   persistSnapshot: Boolean = false,
   forgetPersistedSnapshot: Boolean = false,
@@ -499,6 +514,9 @@ suspend fun updateAgentChatDeferredStartState(
   launchProfileId?.let {
     chatFile.updateLaunchProfileId(it)
   }
+  launchTargetId?.let {
+    chatFile.updateLaunchTargetId(it)
+  }
   generationSettings?.let {
     chatFile.updateGenerationSettings(it)
   }
@@ -516,6 +534,7 @@ suspend fun updateAgentChatDeferredStartState(
           provider = newSessionProvider,
           launchMode = newSessionLaunchMode,
           launchProfileId = chatFile.launchProfileId,
+          launchTargetId = chatFile.launchTargetId,
         ) ?: resolveAgentChatNewSessionStartupIntent(chatFile)
       )
     }
@@ -1128,6 +1147,19 @@ private fun flushPendingInitialMessageForOpenEditors(
     .forEach { editor ->
       editor.flushPendingInitialMessageIfInitialized()
     }
+}
+
+private fun focusOpenChatEditorPreferredComponent(
+  project: Project,
+  manager: FileEditorManagerEx,
+  file: AgentChatVirtualFile,
+) {
+  val editor = manager.getAllEditors(file)
+                 .filterIsInstance<AgentChatFileEditor>()
+                 .firstOrNull()
+               ?: return
+  val component = editor.preferredFocusedComponent
+  IdeFocusManager.getInstance(project).requestFocus(component, true)
 }
 
 private fun refreshOpenEditors(

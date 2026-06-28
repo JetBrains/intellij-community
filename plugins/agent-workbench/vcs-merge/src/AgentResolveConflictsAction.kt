@@ -93,7 +93,7 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
     latestUpdateProject.set(context.project)
 
     val menuModel = buildProviderMenuModel(context.project)
-    val selection = resolveVcsLaunchProfileSelection(menuModel)
+    val selection = resolveVcsLaunchProfileSelection(menuModel, context.project)
     val enabledProfileItems = enabledProfileItems(selection.profiles)
     val quickStartItem = selection.quickStartItem
 
@@ -147,7 +147,7 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
   private fun resolveAndQuickLaunch(dataContext: DataContext): QuickLaunchResult {
     val context = resolveContext(dataContext) ?: return QuickLaunchResult.NoContext
     val menuModel = buildProviderMenuModel(context.project)
-    val selection = resolveVcsLaunchProfileSelection(menuModel)
+    val selection = resolveVcsLaunchProfileSelection(menuModel, context.project)
     val enabledProfileItems = enabledProfileItems(selection.profiles)
     if (enabledProfileItems.isEmpty()) {
       Messages.showErrorDialog(
@@ -181,11 +181,15 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
     return buildAgentSessionLaunchProfileMenuModel(allProviders(), project)
   }
 
-  private fun resolveVcsLaunchProfileSelection(menuModel: AgentSessionProviderMenuModel): AgentSessionLaunchProfileSelection {
+  private fun resolveVcsLaunchProfileSelection(
+    menuModel: AgentSessionProviderMenuModel,
+    project: Project,
+  ): AgentSessionLaunchProfileSelection {
     return resolveAgentSessionLaunchProfileSelection(
       menuModel = menuModel,
       userProfiles = userLaunchProfiles(),
       preferredProfileId = activeVcsMergeLaunchProfileId(),
+      project = project,
       fallbackProfileIds = listOf(builtInLaunchProfileId(AgentSessionProvider.from("codex"), AgentSessionLaunchMode.STANDARD)),
       quickStartItemFilter = { item -> item.menuItem.isEnabled },
     )
@@ -253,7 +257,7 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
       val dataContext = DataManager.getInstance().getDataContext(this)
       val context = resolveContext(dataContext)
       val project = context?.project ?: latestUpdateProject.get() ?: return null
-      val selection = resolveVcsLaunchProfileSelection(buildProviderMenuModel(project))
+      val selection = resolveVcsLaunchProfileSelection(buildProviderMenuModel(project), project)
       val enabledProfileItems = enabledProfileItems(selection.profiles)
       if (enabledProfileItems.size <= 1) {
         return null
@@ -294,6 +298,7 @@ internal fun launchAgentMergeResolution(
     agentProvider = provider,
     launchMode = item.profile.launchMode,
     launchProfileId = item.profile.id,
+    launchTargetId = item.profile.launchTargetId,
     generationSettings = generationSettingsForPlanMode(
       generationSettings = item.profile.generationSettings,
       startInPlanMode = false,

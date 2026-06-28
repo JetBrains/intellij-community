@@ -9,6 +9,7 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfileKind
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionLaunchProfileContributors
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionLaunchProfileSnapshot
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderMenuItem
@@ -32,10 +33,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ui.LafIconLookup
 import org.jetbrains.annotations.Nls
+import javax.swing.Icon
 
 data class AgentSessionLaunchProfileMenuItem(
   @JvmField val profile: AgentPromptLaunchProfile,
   @JvmField val menuItem: AgentSessionProviderMenuItem,
+  @JvmField val icon: Icon? = null,
 )
 
 data class AgentSessionLaunchProfileSelection(
@@ -86,10 +89,11 @@ fun resolveAgentSessionLaunchProfileSelection(
   menuModel: AgentSessionProviderMenuModel,
   userProfiles: List<AgentPromptLaunchProfile>,
   preferredProfileId: String?,
+  project: Project? = null,
   fallbackProfileIds: List<String> = emptyList(),
   quickStartItemFilter: (AgentSessionLaunchProfileMenuItem) -> Boolean = { true },
 ): AgentSessionLaunchProfileSelection {
-  val profiles = resolveAgentSessionLaunchProfileItems(menuModel, userProfiles)
+  val profiles = resolveAgentSessionLaunchProfileItems(menuModel, userProfiles, project = project)
   return resolveAgentSessionLaunchProfileSelection(
     profiles = profiles,
     preferredProfileId = preferredProfileId,
@@ -129,9 +133,13 @@ private fun resolveAgentSessionLaunchProfileItem(
 fun resolveAgentSessionLaunchProfileItems(
   menuModel: AgentSessionProviderMenuModel,
   userProfiles: List<AgentPromptLaunchProfile>,
+  project: Project? = null,
 ): List<AgentSessionLaunchProfileMenuItem> {
+  val contributionIconsByProfileId = AgentSessionLaunchProfileContributors.buildBuiltInLaunchProfiles(project)
+    .mapNotNull { contribution -> contribution.icon?.let { icon -> contribution.id to icon } }
+    .toMap()
   val snapshot = AgentSessionLaunchProfileSnapshot(
-    builtInProfiles = buildBuiltInLaunchProfiles(menuModel, ::quickStartLabel),
+    builtInProfiles = buildBuiltInLaunchProfiles(menuModel, ::quickStartLabel, project = project),
     userProfiles = userProfiles,
   )
   val items = menuModel.standardItems + menuModel.yoloItems
@@ -139,7 +147,7 @@ fun resolveAgentSessionLaunchProfileItems(
     val provider = AgentSessionProvider.fromOrNull(profile.providerId) ?: return@mapNotNull null
     val menuItem = items.firstOrNull { item -> item.bridge.provider == provider && item.mode == profile.launchMode }
                    ?: return@mapNotNull null
-    AgentSessionLaunchProfileMenuItem(profile, menuItem)
+    AgentSessionLaunchProfileMenuItem(profile, menuItem, contributionIconsByProfileId[profile.id])
   }
 }
 
@@ -301,7 +309,7 @@ private fun createLaunchProfileMenuRow(
   return AgentWorkbenchPopupRow(
     text = profileItem.profile.name,
     separatorText = separatorText,
-    primaryIcon = providerItemMonochromeIconWithMode(profileItem.menuItem),
+    primaryIcon = launchProfileItemMonochromeIconWithMode(profileItem),
     secondaryIcon = when {
       !isCheckedProfile -> null
       isEnabled -> LafIconLookup.getIcon("checkmark")
@@ -328,9 +336,9 @@ private class LaunchProfileMenuAction(
   private val entryPoint: AgentWorkbenchEntryPoint,
   private val createNewSession: (String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit,
   private val checkedLaunchProfileId: String?,
-) : DumbAwareAction(profileItem.profile.name, null, providerItemMonochromeIconWithMode(profileItem.menuItem)) {
+) : DumbAwareAction(profileItem.profile.name, null, launchProfileItemMonochromeIconWithMode(profileItem)) {
   init {
-    setProviderItemLaunchProfileActiveMarker(templatePresentation, profileItem.menuItem, isCheckedProfile())
+    setLaunchProfileItemActiveMarker(templatePresentation, profileItem, isCheckedProfile())
     templatePresentation.description = launchProfileActionDescription(
       profileItem = profileItem,
       projectLabel = projectLabelForPath(path),
@@ -343,7 +351,7 @@ private class LaunchProfileMenuAction(
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = profileItem.menuItem.isEnabled
-    setProviderItemLaunchProfileActiveMarker(e.presentation, profileItem.menuItem, isCheckedProfile())
+    setLaunchProfileItemActiveMarker(e.presentation, profileItem, isCheckedProfile())
     e.presentation.description = launchProfileActionDescription(
       profileItem = profileItem,
       projectLabel = projectLabelForPath(path),

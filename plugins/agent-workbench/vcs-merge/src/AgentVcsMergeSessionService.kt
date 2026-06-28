@@ -67,6 +67,7 @@ internal data class AgentVcsMergeLaunchRequest(
   val agentProvider: AgentSessionProvider,
   @JvmField val launchMode: AgentSessionLaunchMode,
   @JvmField val launchProfileId: String? = null,
+  @JvmField val launchTargetId: String? = null,
   @JvmField val generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
 )
 
@@ -249,6 +250,8 @@ internal class AgentVcsMergeSessionService(
         provider = request.agentProvider,
         mode = request.launchMode,
         entryPoint = AgentWorkbenchEntryPoint.TOOLBAR,
+        launchProfileId = request.launchProfileId,
+        launchTargetId = request.launchTargetId,
         generationSettings = request.generationSettings,
         preferredDedicatedFrame = false,
         openedChatHandler = openedChatHandler,

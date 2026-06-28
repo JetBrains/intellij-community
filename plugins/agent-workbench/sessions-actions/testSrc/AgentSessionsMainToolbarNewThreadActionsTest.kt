@@ -787,9 +787,10 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     val selectedRow = rows.single { row -> row.text == AgentSessionsBundle.message("toolwindow.action.new.session.codex") }
     val yoloRow = rows.single { row -> row.text == AgentSessionsBundle.message("toolwindow.action.new.session.codex.yolo") }
     assertThat(selectedRow.selected).isTrue()
-    assertThat(selectedRow.primaryIcon).isNotNull()
+    assertThat(selectedRow.primaryIcon).isSameAs(codexBridge.monochromeIcon)
     assertThat(selectedRow.secondaryIcon).isNotNull()
     assertThat(yoloRow.selected).isFalse()
+    assertThat(yoloRow.primaryIcon).isInstanceOf(BadgeIcon::class.java)
     assertThat(yoloRow.secondaryIcon).isNull()
     assertThat(popupStep.getIconFor(selectedRow)).isNull()
     assertThat(popupStep.getSelectedIconFor(selectedRow)).isNull()
@@ -997,6 +998,9 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     assertThat(shouldOpenInlineNewThreadPrompt(registryEnabled = false, descriptor = promptProvider)).isFalse()
     assertThat(shouldOpenInlineNewThreadPrompt(registryEnabled = true, descriptor = terminalProvider)).isFalse()
     assertThat(shouldOpenInlineNewThreadPrompt(registryEnabled = true, descriptor = null)).isFalse()
+    assertThat(shouldOpenInlineNewThreadPrompt(registryEnabled = true,
+                                               descriptor = promptProvider,
+                                               hasOutOfBandLaunch = true)).isFalse()
   }
 
   @Test

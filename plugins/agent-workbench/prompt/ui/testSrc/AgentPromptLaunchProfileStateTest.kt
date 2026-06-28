@@ -189,6 +189,21 @@ internal class AgentPromptLaunchProfileStateTest {
     assertThat(draft.profilePayload()).isEqualTo(standardBuiltInProfile.profilePayload())
   }
 
+  @Test
+  fun profilePayloadMatchingIncludesLaunchTargetId() {
+    val firstAgentProfile = standardBuiltInProfile.copy(
+      id = "builtin:acp:target:first",
+      providerId = "acp",
+      launchTargetId = "acp.registry.first",
+    )
+    val secondAgentProfile = firstAgentProfile.copy(
+      id = "builtin:acp:target:second",
+      launchTargetId = "acp.registry.second",
+    )
+
+    assertThat(firstAgentProfile.profilePayload()).isNotEqualTo(secondAgentProfile.profilePayload())
+  }
+
   private fun createState(): AgentPromptLaunchProfileState {
     return AgentPromptLaunchProfileState(
       builtInProfiles = { listOf(standardBuiltInProfile, yoloBuiltInProfile) },

@@ -340,6 +340,7 @@ class AgentSessionLaunchServiceTest {
         name = "Codex Yolo",
         providerId = AgentSessionProvider.from("codex").value,
         launchMode = AgentSessionLaunchMode.YOLO,
+        launchTargetId = "codex.test.target",
         generationSettings = profileSettings,
       )
     )
@@ -376,6 +377,7 @@ class AgentSessionLaunchServiceTest {
           assertThat(openRequest.thread.id).isEqualTo(activeThread.id)
           assertThat(openRequest.launchMode).isEqualTo(AgentSessionLaunchMode.YOLO)
           assertThat(openRequest.launchProfileId).isEqualTo(profileId)
+          assertThat(openRequest.launchTargetId).isEqualTo("codex.test.target")
           assertThat(openRequest.generationSettings).isEqualTo(profileSettings)
         }
       }
@@ -399,6 +401,7 @@ class AgentSessionLaunchServiceTest {
         name = "Codex New Yolo",
         providerId = AgentSessionProvider.from("codex").value,
         launchMode = AgentSessionLaunchMode.YOLO,
+        launchTargetId = "codex.active.target",
         generationSettings = profileSettings,
       )
     )
@@ -423,6 +426,7 @@ class AgentSessionLaunchServiceTest {
           assertThat(openRequest.identity).startsWith("codex:new-")
           assertThat(openRequest.launchMode).isEqualTo(AgentSessionLaunchMode.YOLO)
           assertThat(openRequest.launchProfileId).isEqualTo(profileId)
+          assertThat(openRequest.launchTargetId).isEqualTo("codex.active.target")
           assertThat(openRequest.generationSettings).isEqualTo(profileSettings)
         }
       }

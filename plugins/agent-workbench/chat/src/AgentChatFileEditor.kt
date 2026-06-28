@@ -88,6 +88,7 @@ internal class AgentChatFileEditor(
   private val pendingScopedRefreshRetryIntervalMs: Long = AgentSessionThreadRebindPolicy.PENDING_THREAD_REFRESH_RETRY_INTERVAL_MS,
   editorCoroutineScope: CoroutineScope? = null,
   private val providerDescriptorResolver: (AgentSessionProvider) -> AgentSessionProviderDescriptor? = AgentSessionProviders::find,
+  private val customContentProviderResolver: (AgentSessionProvider) -> AgentChatCustomContentProvider? = AgentChatCustomContent::find,
   private val behaviorResolver: (AgentSessionProvider?) -> AgentChatProviderBehavior = ::resolveAgentChatProviderBehavior,
 ) : UserDataHolderBase(), FileEditor {
   private val ownedTerminalStartupJob = if (editorCoroutineScope == null) SupervisorJob() else null
@@ -231,12 +232,12 @@ internal class AgentChatFileEditor(
     if (!stateApplied && file.projectPath.isBlank() && file.threadIdentity.isBlank()) {
       return
     }
-    if (tryInstallCustomContent()) {
-      return
-    }
     val deferredStartState = file.deferredStartState
     if (shouldBlockTerminalInitialization(deferredStartState)) {
       renderDeferredStartState(checkNotNull(deferredStartState))
+      return
+    }
+    if (tryInstallCustomContent()) {
       return
     }
     if (initializationStarted) {
@@ -285,7 +286,11 @@ internal class AgentChatFileEditor(
       return true
     }
     val provider = file.provider ?: return false
-    val contentProvider = AgentChatCustomContent.find(provider) ?: return false
+    val contentProvider = customContentProviderResolver(provider) ?: return false
+    val deferredStartState = file.deferredStartState
+    if (deferredStartState?.phase == AgentChatDeferredStartPhase.READY_TO_START) {
+      file.updateDeferredStartState(null)
+    }
     customContentInstalled = true
     initializationStarted = true
     ensureCrossProjectDockTargetRegistration()
@@ -295,6 +300,7 @@ internal class AgentChatFileEditor(
       threadId = file.threadId.ifBlank { file.threadIdentity },
       parent = this,
     )
+    disposeDeferredStartProgressTimers(component)
     component.removeAll()
     component.add(customComponent, BorderLayout.CENTER)
     component.revalidate()
@@ -346,6 +352,7 @@ internal class AgentChatFileEditor(
     )
     val provider = resolvedLaunchProfile?.provider ?: startupIntent.provider
     val launchMode = resolvedLaunchProfile?.launchMode ?: startupIntent.launchMode
+    val launchTargetId = resolvedLaunchProfile?.launchTargetId ?: startupIntent.launchTargetId
     val generationSettings = resolvedLaunchProfile?.generationSettings ?: file.generationSettings
     val descriptor = AgentSessionProviders.find(provider)
                      ?: throw IllegalStateException("Missing Agent Chat provider for ${provider.value}")
@@ -359,6 +366,7 @@ internal class AgentChatFileEditor(
         provider = provider,
         operation = AgentSessionLaunchOperation.NEW,
         launchMode = launchMode,
+        launchTargetId = launchTargetId,
         generationSettings = generationSettings,
       ),
       project = project,
@@ -371,6 +379,7 @@ internal class AgentChatFileEditor(
       launchProfileId = file.launchProfileId,
       requiredProvider = provider,
     )
+    val launchTargetId = resolvedLaunchProfile?.launchTargetId ?: file.launchTargetId
     return AgentSessionLaunchPlanner.plan(
       intent = AgentSessionLaunchIntent(
         projectPath = file.projectPath,
@@ -379,6 +388,7 @@ internal class AgentChatFileEditor(
         operation = AgentSessionLaunchOperation.RESUME,
         sessionId = file.threadId.ifBlank { file.sessionId },
         launchMode = resolvedLaunchProfile?.launchMode ?: parseAgentChatLaunchMode(file.launchMode),
+        launchTargetId = launchTargetId,
         generationSettings = resolvedLaunchProfile?.generationSettings ?: file.generationSettings,
       ),
       project = project,
