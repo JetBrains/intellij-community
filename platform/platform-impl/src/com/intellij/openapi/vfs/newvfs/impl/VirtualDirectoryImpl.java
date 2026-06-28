@@ -1199,7 +1199,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (PersistentFSRecordAccessor.hasDeletedFlag(childAttributes)) {
       //It is an error to come here with childId which was already deleted -- such childId should be removed from ChildrenIds
       // list first, see PersistentFSImpl.executeDelete()
-      throw new FileDeletedException(childId, "file is deleted, but still in [" + getId() + "].children list. " + cachedChild);
+      throw new FileDeletedException(childId, "file is deleted, but still in [" + getId() + "].children list.");
     }
 
     int childNameId = vfsPeer.getNameIdByFileId(childId);
