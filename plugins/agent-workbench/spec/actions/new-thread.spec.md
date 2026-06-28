@@ -79,7 +79,7 @@ New-thread actions let users start provider-backed threads from project/worktree
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteSessionControllerTest.kt
   [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
 
-- Generic new-thread deferred tabs show provider-neutral centered progress copy. The spinner appears only after a short delay so quick launches do not flash progress chrome.
+- Generic new-thread deferred tabs show provider-neutral centered regular-weight progress copy with secondary detail text when present. The spinner appears only after a short delay so quick launches do not flash progress chrome.
   [@test] ../../sessions/testSrc/AgentSessionLaunchServiceTest.kt
   [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
 
