@@ -7,9 +7,39 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfileKind
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
+import java.nio.charset.StandardCharsets
+import java.util.Base64
+import javax.swing.Icon
 
 const val BUILT_IN_LAUNCH_PROFILE_PREFIX: String = "builtin:"
+private const val ACP_PROVIDER_ID = "acp"
+
+@ApiStatus.Internal
+data class AgentSessionBuiltInLaunchProfileContribution(
+  @JvmField val id: String,
+  @JvmField val name: String,
+  val provider: AgentSessionProvider,
+  @JvmField val launchMode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
+  @JvmField val launchTargetId: String? = null,
+  @JvmField val icon: Icon? = null,
+)
+
+@ApiStatus.Internal
+interface AgentSessionLaunchProfileContributor {
+  fun buildBuiltInLaunchProfiles(project: Project?): List<AgentSessionBuiltInLaunchProfileContribution>
+}
+
+@ApiStatus.Internal
+object AgentSessionLaunchProfileContributors {
+  private val EP = ExtensionPointName<AgentSessionLaunchProfileContributor>("com.intellij.agent.workbench.sessionLaunchProfileContributor")
+
+  fun buildBuiltInLaunchProfiles(project: Project?): List<AgentSessionBuiltInLaunchProfileContribution> {
+    return if (EP.hasAnyExtensions()) EP.extensionList.flatMap { contributor -> contributor.buildBuiltInLaunchProfiles(project) } else emptyList()
+  }
+}
 
 data class AgentSessionLaunchProfileSnapshot(
   @JvmField val builtInProfiles: List<AgentPromptLaunchProfile>,
@@ -25,6 +55,7 @@ data class AgentSessionResolvedLaunchProfile(
   @JvmField val profile: AgentPromptLaunchProfile,
   val provider: AgentSessionProvider,
   @JvmField val launchMode: AgentSessionLaunchMode,
+  @JvmField val launchTargetId: String?,
   @JvmField val generationSettings: AgentPromptGenerationSettings,
 )
 
@@ -49,16 +80,18 @@ fun resolveAgentSessionLaunchProfile(
   val effectiveProfiles = effectiveLaunchProfiles(builtInProfiles, userProfiles)
 
   fun resolve(profile: AgentPromptLaunchProfile): AgentSessionResolvedLaunchProfile? {
-    val provider = AgentSessionProvider.fromOrNull(profile.providerId) ?: return null
+    val normalizedProfile = normalizeLaunchProfileForResolution(profile)
+    val provider = AgentSessionProvider.fromOrNull(normalizedProfile.providerId) ?: return null
     if (requiredProvider != null && provider != requiredProvider) return null
     val descriptor = descriptorsByProvider[provider.value] ?: return null
-    if (profile.launchMode !in descriptor.supportedLaunchModes) return null
+    if (normalizedProfile.launchMode !in descriptor.supportedLaunchModes) return null
     return AgentSessionResolvedLaunchProfile(
-      id = profile.id,
-      profile = profile,
+      id = normalizedProfile.id,
+      profile = normalizedProfile,
       provider = provider,
-      launchMode = profile.launchMode,
-      generationSettings = descriptor.sanitizeGenerationSettings(profile.generationSettings),
+      launchMode = normalizedProfile.launchMode,
+      launchTargetId = normalizedProfile.launchTargetId,
+      generationSettings = descriptor.sanitizeGenerationSettings(normalizedProfile.generationSettings),
     )
   }
 
@@ -122,12 +155,24 @@ fun builtInLaunchProfileId(provider: AgentSessionProvider, launchMode: AgentSess
 }
 
 @ApiStatus.Internal
+fun builtInLaunchTargetProfileId(
+  provider: AgentSessionProvider,
+  launchTargetId: String,
+  launchMode: AgentSessionLaunchMode,
+): String {
+  val encodedTargetId = Base64.getUrlEncoder().withoutPadding().encodeToString(launchTargetId.toByteArray(StandardCharsets.UTF_8))
+  return "$BUILT_IN_LAUNCH_PROFILE_PREFIX${provider.value}:target:$encodedTargetId:${launchMode.name.lowercase()}"
+}
+
+@ApiStatus.Internal
 fun buildBuiltInLaunchProfiles(
   menuModel: AgentSessionProviderMenuModel,
   resolveName: (AgentSessionProviderMenuItem) -> String,
+  project: Project? = null,
 ): List<AgentPromptLaunchProfile> {
-  return (menuModel.standardItems + menuModel.yoloItems)
+  val providerProfiles = (menuModel.standardItems + menuModel.yoloItems)
     .filter(AgentSessionProviderMenuItem::isEnabled)
+    .filter { item -> item.bridge.supportsDefaultLaunchProfile }
     .map { item ->
       AgentPromptLaunchProfile(
         id = builtInLaunchProfileId(item.bridge.provider, item.mode),
@@ -137,6 +182,17 @@ fun buildBuiltInLaunchProfiles(
         launchMode = item.mode,
       )
     }
+  val contributedProfiles = AgentSessionLaunchProfileContributors.buildBuiltInLaunchProfiles(project).map { profile ->
+    AgentPromptLaunchProfile(
+      id = profile.id,
+      name = profile.name,
+      kind = AgentPromptLaunchProfileKind.BUILT_IN,
+      providerId = profile.provider.value,
+      launchMode = profile.launchMode,
+      launchTargetId = profile.launchTargetId,
+    )
+  }
+  return (providerProfiles + contributedProfiles).distinctBy(AgentPromptLaunchProfile::id)
 }
 
 fun generationSettingsForPlanMode(
@@ -151,4 +207,23 @@ fun generationSettingsForPlanMode(
 
 fun initialMessageRequestForLaunchProfile(@Suppress("UNUSED_PARAMETER") profile: AgentPromptLaunchProfile): AgentPromptInitialMessageRequest {
   return AgentPromptInitialMessageRequest(prompt = "")
+}
+
+private fun normalizeLaunchProfileForResolution(profile: AgentPromptLaunchProfile): AgentPromptLaunchProfile {
+  val launchTargetId = profile.launchTargetId?.trim()?.takeIf(String::isNotEmpty)
+  if (launchTargetId != null) {
+    return if (launchTargetId == profile.launchTargetId) profile else profile.copy(launchTargetId = launchTargetId)
+  }
+
+  if (profile.providerId == ACP_PROVIDER_ID) {
+    val legacyAgentKey = profile.generationSettings.modelId?.trim()?.takeIf(String::isNotEmpty)
+    if (legacyAgentKey != null) {
+      return profile.copy(
+        launchTargetId = legacyAgentKey,
+        generationSettings = profile.generationSettings.copy(modelId = null),
+      )
+    }
+  }
+
+  return if (profile.launchTargetId == null) profile else profile.copy(launchTargetId = null)
 }

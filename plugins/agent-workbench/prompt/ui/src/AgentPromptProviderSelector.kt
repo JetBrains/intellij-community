@@ -48,6 +48,7 @@ internal class AgentPromptProviderSelector(
   private val onProviderOptionsChanged: () -> Unit = {},
   private val onProviderSelectionChanged: () -> Unit = {},
 ) {
+  private val project = invocationData.project
   private val providerAvailabilityService = invocationData.project.service<AgentSessionProviderAvailabilityService>()
   private val providerSettingsService = service<AgentSessionProviderSettingsService>()
   private var providerEntries: List<ProviderEntry> = emptyList()
@@ -153,9 +154,9 @@ internal class AgentPromptProviderSelector(
   }
 
   fun builtInLaunchProfiles(): List<AgentPromptLaunchProfile> {
-    return buildBuiltInLaunchProfiles(providerMenuModel) { item ->
+    return buildBuiltInLaunchProfiles(providerMenuModel, resolveName = { item ->
       sessionsMessageResolver.resolve(item.labelKey, item.bridge) ?: item.displayNameFallback()
-    }
+    }, project = project)
   }
 
   fun selectProvider(provider: AgentSessionProvider?, launchMode: AgentSessionLaunchMode? = null) {

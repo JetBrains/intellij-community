@@ -86,7 +86,7 @@ internal class AgentPromptLaunchProfileManager(
   private fun builtInProfiles(providers: List<AgentSessionProviderDescriptor>): List<AgentPromptLaunchProfile> {
     val availabilityService = project.service<AgentSessionProviderAvailabilityService>()
     val menuModel = buildAgentSessionProviderMenuModel(providers, availabilityService.availabilitySnapshot(providers))
-    return buildBuiltInLaunchProfiles(menuModel, ::launchProfileLabel)
+    return buildBuiltInLaunchProfiles(menuModel, ::launchProfileLabel, project = project)
   }
 
   private fun launchProfileLabel(item: AgentSessionProviderMenuItem): @NlsSafe String {

@@ -182,6 +182,10 @@ internal class AgentPromptGenerationSettingsController(
     return launchProfileState.profileForPresentation(currentProfileDraft())?.id
   }
 
+  fun currentLaunchTargetId(): String? {
+    return currentProfileDraft()?.launchTargetId
+  }
+
   fun refreshPresentation() {
     val selectedProvider = providerSelector.selectedProvider
     val showGenerationControls = generationControlsVisible
@@ -1053,8 +1057,18 @@ internal class AgentPromptGenerationSettingsController(
       kind = AgentPromptLaunchProfileKind.USER,
       providerId = provider.value,
       launchMode = providerSelector.selectedLaunchMode,
+      launchTargetId = selectedLaunchTargetIdForDraft(provider, providerSelector.selectedLaunchMode),
       generationSettings = currentSettings,
     )
+  }
+
+  private fun selectedLaunchTargetIdForDraft(
+    provider: AgentSessionProvider,
+    launchMode: AgentSessionLaunchMode,
+  ): String? {
+    val selectedProfile = findProfile(draftSelectedLaunchProfileId) ?: return null
+    if (selectedProfile.providerId != provider.value || selectedProfile.launchMode != launchMode) return null
+    return selectedProfile.launchTargetId
   }
 
   private fun findProfile(profileId: String?): AgentPromptLaunchProfile? {

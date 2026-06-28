@@ -38,6 +38,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.terminal.TerminalTitle
@@ -418,6 +419,60 @@ class AgentChatFileEditorLifecycleTest {
     assertThat(terminalTabs.lastStartupLaunchSpec).isEqualTo(startupLaunchSpec)
     assertThat(disposed).isTrue()
     assertThat(editor.preferredFocusedComponent).isSameAs(terminalTabs.tab.preferredFocusableComponent)
+  }
+
+  @Test
+  fun providerCustomContentWaitsForDeferredStartStateToBecomeReady() {
+    val provider = AgentSessionProvider.from("custom")
+    val file = testFile(
+      threadIdentity = buildAgentThreadIdentity(provider.value, "new-thread"),
+      shellCommand = emptyList(),
+    ).also { file ->
+      file.updateThreadId("new-thread")
+      file.updateDeferredStartState(
+        AgentChatDeferredStartState(
+          phase = AgentChatDeferredStartPhase.WAITING,
+          title = "Waiting",
+        )
+      )
+    }
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    val customContent = JPanel()
+    val createdThreadIds = ArrayList<String>()
+    val customContentProvider = object : AgentChatCustomContentProvider {
+      override val provider: AgentSessionProvider = provider
+
+      override fun createComponent(project: Project, threadIdentity: String, threadId: String, parent: Disposable): JComponent {
+        createdThreadIds += threadId
+        return customContent
+      }
+    }
+    val editor = testEditor(
+      file = file,
+      terminalTabs = terminalTabs,
+      customContentProviderResolver = { candidate ->
+        if (candidate == provider) customContentProvider else null
+      },
+    )
+
+    editor.selectNotify()
+
+    assertThat(createdThreadIds).isEmpty()
+    assertThat(editor.component.components).doesNotContain(customContent)
+    assertThat(terminalTabs.createCalls).isZero()
+
+    file.updateDeferredStartState(
+      AgentChatDeferredStartState(
+        phase = AgentChatDeferredStartPhase.READY_TO_START,
+        title = "Ready",
+      )
+    )
+    editor.refreshForFileStateChange()
+
+    assertThat(createdThreadIds).containsExactly("new-thread")
+    assertThat(editor.component.components).containsExactly(customContent)
+    assertThat(file.deferredStartState).isNull()
+    assertThat(terminalTabs.createCalls).isZero()
   }
 
   @Test
@@ -2077,6 +2132,7 @@ private fun testEditor(
   editorCoroutineScope: CoroutineScope? = unconfinedTestScope(),
   showComponent: Boolean = true,
   providerDescriptorResolver: (AgentSessionProvider) -> AgentSessionProviderDescriptor? = { null },
+  customContentProviderResolver: (AgentSessionProvider) -> AgentChatCustomContentProvider? = { null },
   behaviorResolver: (AgentSessionProvider?) -> AgentChatProviderBehavior = ::testAgentChatProviderBehavior,
 ): AgentChatFileEditor {
   return AgentChatFileEditor(
@@ -2089,6 +2145,7 @@ private fun testEditor(
     pendingScopedRefreshRetryIntervalMs = pendingScopedRefreshRetryIntervalMs,
     editorCoroutineScope = editorCoroutineScope,
     providerDescriptorResolver = providerDescriptorResolver,
+    customContentProviderResolver = customContentProviderResolver,
     behaviorResolver = behaviorResolver,
   ).also { editor ->
     if (showComponent) {

@@ -3,13 +3,12 @@ package com.intellij.agent.workbench.prompt.ui.actions
 
 import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_INITIAL_TEXT_DATA_KEY
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderMenuItem
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderMenuModel
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 import com.intellij.platform.ai.agent.sessions.core.providers.buildAgentSessionProviderMenuModel
-import com.intellij.platform.ai.agent.sessions.core.providers.buildBuiltInLaunchProfiles
-import com.intellij.platform.ai.agent.sessions.core.providers.effectiveLaunchProfiles
-import com.intellij.agent.workbench.sessions.providerItemMonochromeIconWithMode
+import com.intellij.agent.workbench.sessions.AgentSessionLaunchProfileMenuItem
+import com.intellij.agent.workbench.sessions.launchProfileItemMonochromeIconWithMode
+import com.intellij.agent.workbench.sessions.resolveAgentSessionLaunchProfileItems
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.agent.workbench.settings.AgentSessionProviderSettingsService
 import com.intellij.agent.workbench.sessions.state.AgentSessionLaunchProfileStateService
@@ -111,28 +110,22 @@ private fun resolveScratchPromptActionIcon(project: Project): Icon {
   val launchProfileStateService = service<AgentSessionLaunchProfileStateService>()
   val activeItem = resolveActivePromptProfileItem(
     menuModel = menuModel,
+    project = project,
     userProfiles = launchProfileStateService.getUserLaunchProfiles(),
     activeProfileId = launchProfileStateService.getDefaultLaunchProfileId(),
   )
-  return activeItem?.let(::providerItemMonochromeIconWithMode) ?: AllIcons.Actions.InlayGear
+  return activeItem?.let(::launchProfileItemMonochromeIconWithMode) ?: AllIcons.Actions.InlayGear
 }
 
 private fun resolveActivePromptProfileItem(
   menuModel: AgentSessionProviderMenuModel,
+  project: Project,
   userProfiles: List<AgentPromptLaunchProfile>,
   activeProfileId: String?,
-): AgentSessionProviderMenuItem? {
-  val enabledItems = (menuModel.standardItems + menuModel.yoloItems).filter(AgentSessionProviderMenuItem::isEnabled)
-  if (enabledItems.isEmpty()) return null
-
-  val profiles = effectiveLaunchProfiles(
-    buildBuiltInLaunchProfiles(menuModel) { item -> item.bridge.displayNameFallback },
-    userProfiles,
-  )
-  val activeProfile = profiles.firstOrNull { profile -> activeProfileId == null || profile.id == activeProfileId }
-                      ?: profiles.firstOrNull()
-                      ?: return enabledItems.firstOrNull()
-  return enabledItems.firstOrNull { item ->
-    item.bridge.provider.value == activeProfile.providerId && item.mode == activeProfile.launchMode
-  } ?: enabledItems.firstOrNull()
+): AgentSessionLaunchProfileMenuItem? {
+  val profiles = resolveAgentSessionLaunchProfileItems(menuModel, userProfiles, project = project)
+    .filter { item -> item.menuItem.isEnabled }
+  if (profiles.isEmpty()) return null
+  return profiles.firstOrNull { item -> activeProfileId == null || item.profile.id == activeProfileId }
+         ?: profiles.firstOrNull()
 }

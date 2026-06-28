@@ -27,6 +27,7 @@ data class AgentSessionLaunchIntent(
   @JvmField val operation: AgentSessionLaunchOperation,
   @JvmField val sessionId: String? = null,
   @JvmField val launchMode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
+  @JvmField val launchTargetId: String? = null,
   @JvmField val generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
 )
 

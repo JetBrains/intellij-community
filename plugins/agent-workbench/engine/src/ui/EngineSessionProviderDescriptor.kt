@@ -3,15 +3,12 @@ package com.intellij.agent.workbench.engine.ui
 
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.engine.platform.EngineLaunchAgentProvider
-import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.project.Project
 import javax.swing.Icon
 
 /**
@@ -46,20 +43,16 @@ internal class EngineSessionProviderDescriptor(
   override val supportsPromptLaunch: Boolean
     get() = true
 
+  override val supportsDefaultLaunchProfile: Boolean
+    get() = false
+
   override val supportsGenerationModelSelection: Boolean
-    get() = true
+    get() = false
 
   override val resolvesGenerationModelCatalogForAutoSettings: Boolean
-    get() = true
+    get() = false
 
   override suspend fun isCliAvailable(): Boolean = true
-
-  override suspend fun listAvailableGenerationModels(project: Project?): List<AgentPromptGenerationModel> {
-    val agents = project?.let(EngineLaunchAgentProvider::availableAgents).orEmpty()
-    return agents.map { agent -> AgentPromptGenerationModel(id = agent.id, displayName = agent.displayName) }
-  }
-
-  override fun displayNameForGenerationModelId(modelId: String): String? = modelId
 
   override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec =
     AgentSessionTerminalLaunchSpec(command = emptyList(), useTerminalDefaultShell = true)

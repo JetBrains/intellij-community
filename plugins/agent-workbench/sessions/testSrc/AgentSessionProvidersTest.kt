@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
@@ -226,6 +227,38 @@ class AgentSessionProvidersTest {
       isEnabled = true
     )
     assertThat(providerItemMonochromeIconWithMode(item)).isSameAs(coloredIcon)
+  }
+
+  @Test
+  @RegistryKey(key = "agent.workbench.use.monochrome.icons", value = "true")
+  fun launchProfileItemMonochromeIconWithModeUsesLaunchProfileIconOverride() {
+    val providerIcon = AgentWorkbenchCommonIcons.Claude
+    val launchProfileIcon = AgentWorkbenchCommonIcons.Opencode
+    val descriptor = object : TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.from("acp"),
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+      iconOverride = providerIcon,
+    ) {
+      override val monochromeIcon: Icon = AgentWorkbenchCommonIcons.ClaudeGray
+    }
+    val menuItem = AgentSessionProviderMenuItem(
+      bridge = descriptor,
+      mode = AgentSessionLaunchMode.STANDARD,
+      labelKey = "some.key",
+      isEnabled = true,
+    )
+    val profileItem = AgentSessionLaunchProfileMenuItem(
+      profile = AgentPromptLaunchProfile(
+        id = "builtin:acp:target:opencode:standard",
+        name = "OpenCode",
+        providerId = descriptor.provider.value,
+      ),
+      menuItem = menuItem,
+      icon = launchProfileIcon,
+    )
+
+    assertThat(launchProfileItemMonochromeIconWithMode(profileItem)).isSameAs(launchProfileIcon)
   }
 
   @Test

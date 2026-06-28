@@ -114,6 +114,7 @@ data class AgentPromptLaunchProfile(
   @JvmField val kind: AgentPromptLaunchProfileKind = AgentPromptLaunchProfileKind.USER,
   @JvmField val providerId: String,
   @JvmField val launchMode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
+  @JvmField val launchTargetId: String? = null,
   @JvmField val generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
 )
 
@@ -150,6 +151,7 @@ data class AgentPromptLaunchRequest(
   val provider: AgentSessionProvider,
   @JvmField val projectPath: String,
   @JvmField val launchMode: AgentSessionLaunchMode,
+  @JvmField val launchTargetId: String? = null,
   @JvmField val initialMessageRequest: AgentPromptInitialMessageRequest,
   @JvmField val targetThreadId: String? = null,
   @JvmField val preferredDedicatedFrame: Boolean? = null,

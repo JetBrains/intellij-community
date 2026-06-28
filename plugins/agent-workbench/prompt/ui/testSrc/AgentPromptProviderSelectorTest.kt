@@ -1287,6 +1287,45 @@ class AgentPromptProviderSelectorTest {
   }
 
   @Test
+  fun launchProfileEditorPreservesBuiltInLaunchTargetOverrides() {
+    runInEdtAndWait {
+      val acpProvider = AgentSessionProvider.from("acp")
+      val launchTargetId = "acp.registry.opencode"
+      val builtInProfile = AgentPromptLaunchProfile(
+        id = builtInLaunchTargetProfileId(acpProvider, launchTargetId, AgentSessionLaunchMode.STANDARD),
+        name = "OpenCode",
+        kind = AgentPromptLaunchProfileKind.BUILT_IN,
+        providerId = acpProvider.value,
+        launchTargetId = launchTargetId,
+      )
+      val updatedProfiles = ArrayList<AgentPromptLaunchProfile>()
+      val provider = testProviderBridge(
+        provider = acpProvider,
+        promptOptions = emptyList(),
+      )
+      val editor = createLaunchProfileEditorForTest(
+        profiles = listOf(builtInProfile),
+        activeProfileId = builtInProfile.id,
+        providerOverrides = listOf(provider),
+        onUpdateProfile = { profile -> updatedProfiles += profile },
+      )
+      try {
+        editor.selectProfileForTest(builtInProfile.id)
+        editor.setSelectedProfileNameForTest("OpenCode Custom")
+
+        assertThat(updatedProfiles.single()).isEqualTo(
+          builtInProfile.copy(
+            name = "OpenCode Custom",
+          )
+        )
+      }
+      finally {
+        editor.closeForTest()
+      }
+    }
+  }
+
+  @Test
   fun launchProfileEditorKeepsInvalidNameTransient() {
     runInEdtAndWait {
       val carefulProfile = AgentPromptLaunchProfile(

@@ -882,6 +882,7 @@ internal class AgentPromptLaunchProfileEditorDialog(
     val name = nameField.text.trim().takeIf { it.isNotEmpty() } ?: return null
     val provider = selectedProviderOption()?.takeIf { option -> option.isAvailable } ?: return null
     val launchMode = selectedLaunchMode() ?: return null
+    val launchTargetId = selectedLaunchTargetIdForDraft(existing, provider.providerId, launchMode)
     val modelId = currentModelIdFromModelCombo()
     val reasoningEffort = selectedReasoningEffortOption()?.effort ?: AgentPromptReasoningEffort.AUTO
     val planReasoningEffort = selectedPlanReasoningEffort()
@@ -891,12 +892,22 @@ internal class AgentPromptLaunchProfileEditorDialog(
       kind = existing?.kind ?: AgentPromptLaunchProfileKind.USER,
       providerId = provider.providerId,
       launchMode = launchMode,
+      launchTargetId = launchTargetId,
       generationSettings = AgentPromptGenerationSettings(
         modelId = modelId,
         reasoningEffort = reasoningEffort,
         planReasoningEffort = planReasoningEffort,
       ),
     )
+  }
+
+  private fun selectedLaunchTargetIdForDraft(
+    existing: AgentPromptLaunchProfile?,
+    providerId: String,
+    launchMode: AgentSessionLaunchMode,
+  ): String? {
+    if (existing?.providerId != providerId || existing.launchMode != launchMode) return null
+    return existing.launchTargetId
   }
 
   private fun selectedProviderReasoningEfforts(): Set<AgentPromptReasoningEffort> {
