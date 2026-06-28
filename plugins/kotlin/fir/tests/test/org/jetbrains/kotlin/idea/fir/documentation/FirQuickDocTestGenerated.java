@@ -2134,14 +2134,34 @@ public abstract class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
                 runTest("../../idea/tests/testData/editor/quickDoc/misc/typeAliases/TypeAliasF.kt");
             }
 
+            @TestMetadata("TypeAliasForChainOfTypeAliases.kt")
+            public void testTypeAliasForChainOfTypeAliases() throws Exception {
+                runTest("../../idea/tests/testData/editor/quickDoc/misc/typeAliases/TypeAliasForChainOfTypeAliases.kt");
+            }
+
+            @TestMetadata("TypeAliasForChainOfTypeAliasesWithKDoc.kt")
+            public void testTypeAliasForChainOfTypeAliasesWithKDoc() throws Exception {
+                runTest("../../idea/tests/testData/editor/quickDoc/misc/typeAliases/TypeAliasForChainOfTypeAliasesWithKDoc.kt");
+            }
+
+            @TestMetadata("TypeAliasForClassWithKDoc.kt")
+            public void testTypeAliasForClassWithKDoc() throws Exception {
+                runTest("../../idea/tests/testData/editor/quickDoc/misc/typeAliases/TypeAliasForClassWithKDoc.kt");
+            }
+
+            @TestMetadata("TypeAliasForLambda.kt")
+            public void testTypeAliasForLambda() throws Exception {
+                runTest("../../idea/tests/testData/editor/quickDoc/misc/typeAliases/TypeAliasForLambda.kt");
+            }
+
             @TestMetadata("TypeAliasG.kt")
             public void testTypeAliasG() throws Exception {
                 runTest("../../idea/tests/testData/editor/quickDoc/misc/typeAliases/TypeAliasG.kt");
             }
 
-            @TestMetadata("TypeAliasH.kt")
-            public void testTypeAliasH() throws Exception {
-                runTest("../../idea/tests/testData/editor/quickDoc/misc/typeAliases/TypeAliasH.kt");
+            @TestMetadata("TypeAliasWithKDocForClassWithKDoc.kt")
+            public void testTypeAliasWithKDocForClassWithKDoc() throws Exception {
+                runTest("../../idea/tests/testData/editor/quickDoc/misc/typeAliases/TypeAliasWithKDocForClassWithKDoc.kt");
             }
         }
     }

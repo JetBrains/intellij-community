@@ -78,7 +78,9 @@ import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
@@ -140,6 +142,19 @@ private fun computeLocalDocumentation(element: PsiElement, originalElement: PsiE
               return computeLocalDocumentation(declaration, originalElement, quickNavigation)
           }
       }
+
+      element is KtTypeAlias && element.docComment == null && element.getTypeReference() != null -> {
+          val typeRef = element.getTypeReference()!!
+          val resolved = (typeRef.typeElement as? KtUserType)?.referenceExpression?.mainReference?.resolve()
+          return buildString {
+              renderKotlinDeclaration(element, quickNavigation)
+              val element = resolved ?: typeRef
+              computeLocalDocumentation(element, originalElement, quickNavigation)?.let {
+                  append(it)
+              }
+          }
+      }
+
       element is KtClass && element.isEnum() -> {
           return buildString {
               renderEnumSpecialFunction(originalElement, element, quickNavigation)
