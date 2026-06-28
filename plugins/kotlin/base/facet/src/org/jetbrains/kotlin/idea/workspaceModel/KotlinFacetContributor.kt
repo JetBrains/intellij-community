@@ -25,7 +25,7 @@ class KotlinFacetContributor: WorkspaceFacetContributor<KotlinSettingsEntity> {
         LOG.info(
             """
             KotlinSettingsEntity queried for ${moduleEntity.name} (${System.identityHashCode(moduleEntity)})
-            Result is: ${kotlinSettings.joinToString(", ", "[", "]") { "${it.name} (${System.identityHashCode(it)})" }}
+            Result is: $kotlinSettings
             """.trimIndent()
         )
 
@@ -39,8 +39,7 @@ class KotlinFacetContributor: WorkspaceFacetContributor<KotlinSettingsEntity> {
 
         LOG.info(
             """
-            Facet created for module ${module.name} (${System.identityHashCode(module)}) from entity ${entity.name} (${System.identityHashCode(entity)}):
-            $facet (${System.identityHashCode(facet)})
+            Facet created for module ${module.name} (${System.identityHashCode(module)})
             """.trimIndent(),
             RuntimeException("Stacktrace:")
         )
