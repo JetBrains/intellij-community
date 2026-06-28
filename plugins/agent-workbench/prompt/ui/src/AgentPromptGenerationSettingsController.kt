@@ -591,20 +591,11 @@ internal class AgentPromptGenerationSettingsController(
     firstSeparatorText: @Nls String? = null,
   ): List<AgentPromptPopupRow> {
     return buildList {
-      val profiles = launchableProfiles()
-      val standardProfiles = profiles.filter { profile -> profile.launchMode != AgentSessionLaunchMode.YOLO }
-      val yoloProfiles = profiles.filter { profile -> profile.launchMode == AgentSessionLaunchMode.YOLO }
-      standardProfiles.forEachIndexed { index, profile ->
-        add(createLaunchProfilePopupRow(
-          profile = profile,
-          separatorText = if (index == 0) firstSeparatorText else null,
-        ))
-      }
-      if (yoloProfiles.isNotEmpty()) {
-        yoloProfiles.forEachIndexed { index, profile ->
+      launchProfileSections(launchableProfiles(), firstSeparatorText).forEach { section ->
+        section.profiles.forEachIndexed { index, profile ->
           add(createLaunchProfilePopupRow(
             profile = profile,
-            separatorText = if (index == 0) AgentPromptBundle.message("popup.provider.section.auto") else null,
+            separatorText = section.title.takeIf { index == 0 },
           ))
         }
       }
@@ -835,20 +826,42 @@ internal class AgentPromptGenerationSettingsController(
 
   private fun createLaunchProfileActionGroup(): DefaultActionGroup {
     val group = DefaultActionGroup()
-    val profiles = launchableProfiles()
-    val standardProfiles = profiles.filter { profile -> profile.launchMode != AgentSessionLaunchMode.YOLO }
-    val yoloProfiles = profiles.filter { profile -> profile.launchMode == AgentSessionLaunchMode.YOLO }
-    standardProfiles.forEach { profile -> group.add(LaunchProfileAction(profile)) }
-    if (yoloProfiles.isNotEmpty()) {
-      if (standardProfiles.isNotEmpty()) {
+    var hasProfileActions = false
+    launchProfileSections(launchableProfiles(), firstSeparatorText = null).forEach { section ->
+      if (hasProfileActions) {
         group.add(Separator.getInstance())
       }
-      group.add(Separator.create(AgentPromptBundle.message("popup.provider.section.auto")))
-      yoloProfiles.forEach { profile -> group.add(LaunchProfileAction(profile)) }
+      section.title?.let { title -> group.add(Separator.create(title)) }
+      section.profiles.forEach { profile -> group.add(LaunchProfileAction(profile)) }
+      hasProfileActions = true
     }
     group.add(Separator.getInstance())
     group.add(ManageProfilesAction())
     return group
+  }
+
+  private fun launchProfileSections(
+    profiles: List<AgentPromptLaunchProfile>,
+    firstSeparatorText: @Nls String?,
+  ): List<LaunchProfileSection> {
+    val standardProfiles = profiles.filter { profile ->
+      !profile.isAcpLaunchProfile() && profile.launchMode != AgentSessionLaunchMode.YOLO
+    }
+    val acpProfiles = profiles.filter { profile -> profile.isAcpLaunchProfile() }
+    val yoloProfiles = profiles.filter { profile ->
+      !profile.isAcpLaunchProfile() && profile.launchMode == AgentSessionLaunchMode.YOLO
+    }
+    return buildList {
+      if (standardProfiles.isNotEmpty()) {
+        add(LaunchProfileSection(firstSeparatorText, standardProfiles))
+      }
+      if (acpProfiles.isNotEmpty()) {
+        add(LaunchProfileSection(AgentPromptBundle.message("popup.profile.section.acp"), acpProfiles))
+      }
+      if (yoloProfiles.isNotEmpty()) {
+        add(LaunchProfileSection(AgentPromptBundle.message("popup.provider.section.auto"), yoloProfiles))
+      }
+    }
   }
 
   private fun applyProfile(profile: AgentPromptLaunchProfile, persistForDraft: Boolean = true): Boolean {
@@ -1281,6 +1294,15 @@ internal class AgentPromptGenerationSettingsController(
   }
 
 }
+
+private data class LaunchProfileSection(
+  val title: @Nls String?,
+  val profiles: List<AgentPromptLaunchProfile>,
+)
+
+private fun AgentPromptLaunchProfile.isAcpLaunchProfile(): Boolean = providerId == ACP_PROVIDER_ID
+
+private const val ACP_PROVIDER_ID: String = "acp"
 
 internal fun List<AgentPromptGenerationModel>.catalogReasoningEfforts(): Set<AgentPromptReasoningEffort>? {
   val efforts = flatMapTo(LinkedHashSet()) { model -> model.supportedReasoningEfforts }

@@ -273,11 +273,19 @@ private fun forEachLaunchProfileSection(
   profiles: List<AgentSessionLaunchProfileMenuItem>,
   handleSection: (@Nls String?, List<AgentSessionLaunchProfileMenuItem>) -> Unit,
 ) {
-  val standardProfiles = profiles.filter { profileItem -> profileItem.profile.launchMode != AgentSessionLaunchMode.YOLO }
-  val yoloProfiles = profiles.filter { profileItem -> profileItem.profile.launchMode == AgentSessionLaunchMode.YOLO }
+  val acpProfiles = profiles.filter(AgentSessionLaunchProfileMenuItem::isAcpProfile)
+  val standardProfiles = profiles.filter { profileItem ->
+    !profileItem.isAcpProfile() && profileItem.profile.launchMode != AgentSessionLaunchMode.YOLO
+  }
+  val yoloProfiles = profiles.filter { profileItem ->
+    !profileItem.isAcpProfile() && profileItem.profile.launchMode == AgentSessionLaunchMode.YOLO
+  }
   handleSection(null, standardProfiles)
+  handleSection(AgentSessionsBundle.message("toolwindow.action.new.session.section.acp"), acpProfiles)
   handleSection(AgentSessionsBundle.message("toolwindow.action.new.session.section.auto"), yoloProfiles)
 }
+
+private fun AgentSessionLaunchProfileMenuItem.isAcpProfile(): Boolean = profile.providerId == ACP_PROVIDER_ID
 
 private fun createLaunchProfileMenuRow(
   path: String,
@@ -349,3 +357,5 @@ private class LaunchProfileMenuAction(
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
+
+private const val ACP_PROVIDER_ID: String = "acp"

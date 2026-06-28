@@ -25,6 +25,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProvid
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.platform.ai.agent.sessions.core.providers.builtInLaunchProfileId
+import com.intellij.platform.ai.agent.sessions.core.providers.builtInLaunchTargetProfileId
 import com.intellij.agent.workbench.sessions.providerItemMonochromeIconWithMode
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.agent.workbench.ui.AgentWorkbenchPopupRow
@@ -608,6 +609,73 @@ class AgentPromptProviderSelectorTest {
         .containsExactly("Codex", "Careful", "Codex (Full Auto)", "Manage Launch Profiles…")
       assertThat(profileActions.last().templatePresentation.keepPopupOnPerform).isEqualTo(KeepPopupOnPerform.Never)
       assertThat(actions.filterIsInstance<Separator>()).hasSize(3)
+    }
+  }
+
+  @Test
+  fun launchSettingsPopupSeparatesAcpLaunchProfiles() {
+    runInEdtAndWait {
+      val acpProvider = AgentSessionProvider.from("acp")
+      val acpProfile = AgentPromptLaunchProfile(
+        id = builtInLaunchTargetProfileId(acpProvider, "acp.registry.stakpak", AgentSessionLaunchMode.STANDARD),
+        name = "Stakpak",
+        kind = AgentPromptLaunchProfileKind.BUILT_IN,
+        providerId = acpProvider.value,
+        launchTargetId = "acp.registry.stakpak",
+      )
+      val launcher = TestPromptLauncherBridge(
+        AgentPromptLauncherBridge.ProviderPreferences(
+          launchProfiles = listOf(acpProfile),
+        )
+      )
+      val codexProvider = testProviderBridge(
+        provider = AgentSessionProvider.from("codex"),
+        promptOptions = emptyList(),
+        supportedLaunchModesOverride = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
+      )
+      val acpBridge = testProviderBridge(
+        provider = acpProvider,
+        promptOptions = emptyList(),
+        supportsDefaultLaunchProfileOverride = false,
+      )
+      val fixture = createSelectorFixture(listOf(codexProvider, acpBridge))
+      fixture.selector.refresh()
+      val controller = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = fixture.selector,
+        generationSettingsPanel = fixture.view.generationSettingsPanel,
+        launchProfileLink = fixture.view.launchProfileLink,
+        modelSelectorLink = fixture.view.modelSelectorLink,
+        reasoningEffortLink = fixture.view.reasoningEffortLink,
+        modelCatalogScope = testScope(),
+        launcherProvider = { launcher },
+        onDefaultSaved = { _ -> },
+      )
+
+      controller.restoreLaunchProfiles(launcher.preferences)
+
+      assertThat(actionEntries(controller.createLaunchProfileActionGroupForTest().getChildren(TestActionEvent.createTestEvent())))
+        .containsExactly(
+          "action:Codex",
+          "separator:",
+          "separator:ACP Agents",
+          "action:Stakpak",
+          "separator:",
+          "separator:YOLO",
+          "action:Codex (Full Auto)",
+          "separator:",
+          "action:Manage Launch Profiles…",
+        )
+      assertThat(popupRowEntries(controller.createLaunchSettingsPopupRowsForTest())).containsExactly(
+        "separator:Profile",
+        "row:Codex",
+        "separator:ACP Agents",
+        "row:Stakpak",
+        "separator:YOLO",
+        "row:Codex (Full Auto)",
+        "separator:",
+        "row:Manage Launch Profiles…",
+      )
     }
   }
 
@@ -3512,6 +3580,12 @@ class AgentPromptProviderSelectorTest {
     }
   }
 
+  private fun actionEntries(actions: Array<AnAction>): List<String> {
+    return actions.map { action ->
+      if (action is Separator) "separator:${action.text.orEmpty()}" else "action:${action.templatePresentation.text.orEmpty()}"
+    }
+  }
+
   private fun popupEvent(action: AnAction): AnActionEvent {
     return AnActionEvent.createEvent(
       action,
@@ -3559,6 +3633,7 @@ class AgentPromptProviderSelectorTest {
     supportsPlanReasoningEffortOverride: Boolean = false,
     availableGenerationModels: List<AgentPromptGenerationModel> = emptyList(),
     supportsGenerationModelSelection: Boolean = availableGenerationModels.isNotEmpty(),
+    supportsDefaultLaunchProfileOverride: Boolean = supportsPromptLaunch,
     availableGenerationModelsError: Throwable? = null,
     availableGenerationModelsResolver: suspend () -> List<AgentPromptGenerationModel> = { availableGenerationModels },
     onListAvailableGenerationModels: () -> Unit = {},
@@ -3579,6 +3654,7 @@ class AgentPromptProviderSelectorTest {
       override val supportedReasoningEfforts: Set<AgentPromptReasoningEffort> = supportedReasoningEffortsOverride
       override val supportsPlanReasoningEffort: Boolean = supportsPlanReasoningEffortOverride
       override val supportsGenerationModelSelection: Boolean = supportsGenerationModelSelection
+      override val supportsDefaultLaunchProfile: Boolean = supportsDefaultLaunchProfileOverride
       override val supportsPromptLaunch: Boolean = supportsPromptLaunch
       override val sessionSource: AgentSessionSource
         get() = error("Not required for this test")
