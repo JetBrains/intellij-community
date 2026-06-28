@@ -2143,6 +2143,26 @@ public abstract class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
             public void testTypeAliasH() throws Exception {
                 runTest("../../idea/tests/testData/editor/quickDoc/misc/typeAliases/TypeAliasH.kt");
             }
+
+            @TestMetadata("TypeAliasI.kt")
+            public void testTypeAliasI() throws Exception {
+                runTest("../../idea/tests/testData/editor/quickDoc/misc/typeAliases/TypeAliasI.kt");
+            }
+
+            @TestMetadata("TypeAliasJ.kt")
+            public void testTypeAliasJ() throws Exception {
+                runTest("../../idea/tests/testData/editor/quickDoc/misc/typeAliases/TypeAliasJ.kt");
+            }
+
+            @TestMetadata("TypeAliasK.kt")
+            public void testTypeAliasK() throws Exception {
+                runTest("../../idea/tests/testData/editor/quickDoc/misc/typeAliases/TypeAliasK.kt");
+            }
+
+            @TestMetadata("TypeAliasL.kt")
+            public void testTypeAliasL() throws Exception {
+                runTest("../../idea/tests/testData/editor/quickDoc/misc/typeAliases/TypeAliasL.kt");
+            }
         }
     }
 }
