@@ -2,6 +2,7 @@
 package com.intellij.maven.testFramework.fixtures
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.containers.CollectionFactory
 import junit.framework.TestCase
@@ -62,5 +63,23 @@ fun <T> assertOrderedElementsAreEqual(actual: Collection<T>, expected: List<T>) 
       )
     }
     assertEquals(s, expectedElement, actualElement)
+  }
+}
+
+/**
+ * Asserts that the file at [filePath] contains the same lines as [expectedText], ignoring line order.
+ * Ported from `MavenTestCase.assertUnorderedLinesWithFile` for fixture-based JUnit 5 tests.
+ */
+fun assertUnorderedLinesWithFile(filePath: String, expectedText: String) {
+  try {
+    UsefulTestCase.assertSameLinesWithFile(filePath, expectedText)
+  }
+  catch (e: FileComparisonFailedError) {
+    val expected = e.expectedStringPresentation
+    val actual = e.actualStringPresentation
+    assertUnorderedElementsAreEqual(
+      expected.split("\n").dropLastWhile { it.isEmpty() },
+      *actual.split("\n").dropLastWhile { it.isEmpty() }.toTypedArray()
+    )
   }
 }
