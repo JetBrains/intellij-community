@@ -47,6 +47,8 @@ internal data class AgentSessionsTreePopupActionContext(
   val target: SessionActionTarget,
   @JvmField val archiveTargets: List<ArchiveThreadTarget>,
   @JvmField val unarchiveTargets: List<ArchiveThreadTarget> = emptyList(),
+  @JvmField val selectedThreadTargets: List<SessionActionTarget.Thread> = emptyList(),
+  @JvmField val taskFolderArchiveTargets: List<ArchiveThreadTarget> = emptyList(),
   @JvmField val newThreadActionAvailable: Boolean = true,
 )
 

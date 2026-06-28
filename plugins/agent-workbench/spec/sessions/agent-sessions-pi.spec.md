@@ -87,6 +87,12 @@ Agent Workbench treats Pi as a first-class terminal-backed provider. Pi sessions
 - The bundled Pi extension must open one private IDE-local WebSocket control connection for live Structure View actions. The WebSocket handshake must be authenticated with `Authorization: Bearer <launchToken>`, the first `hello` frame must bind the connection to the same launch-scoped token/session id/cwd, and every command must target the currently bound session id. The IDE may send `navigateTree` and `forkFromEntry` commands only when the live connection advertises those capabilities. Fork commands must use Pi `fork(entryId, { position: "at", withSession })` and return the fresh replacement session state captured from `withSession`; there is no long-polling, polling, slash-command, or unauthenticated fallback.
   [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiExtensionControlWebSocketHandlerTest.kt
 
+- The same authenticated control WebSocket may carry explicit task-folder capability requests from the bundled Pi extension to the IDE:
+  `getCurrentTaskFolder`, `listTaskFolderThreads`, `getTaskFolderMetadata`, `setTaskFolderMetadata`, and
+  `deleteTaskFolderMetadata`. These requests must use the bound cwd/session id, must not inject prompt context automatically, and must
+  return normal `response` frames with `ok`, `requestId`, and the requested folder, assignment, metadata, or mutation result fields.
+  [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiExtensionControlWebSocketHandlerTest.kt
+
 - Rename must append a Pi-compatible `session_info` entry to the session JSONL file while preserving the thread's current archive state. Archive and unarchive must use the same mechanism by writing a title with or without the shared `[archived] ` prefix; loaded Pi titles must strip that prefix for display and use it only as Agent Workbench archive state.
   [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiSessionSourceTest.kt
 
@@ -106,5 +112,6 @@ Agent Workbench treats Pi as a first-class terminal-backed provider. Pi sessions
 
 ## References
 - `agent-sessions.spec.md`
+- `agent-task-folders.spec.md`
 - `agent-terminal-sessions.spec.md`
 - Pi local checkout: `/Users/develar/projects/pi-main/packages/coding-agent`

@@ -5,8 +5,10 @@ import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.json.createJsonParser
 import com.intellij.platform.ai.agent.json.forEachJsonObjectField
 import com.intellij.platform.ai.agent.json.readJsonStringOrNull
+import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderService
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.junit5.TestApplication
@@ -186,6 +188,54 @@ class PiExtensionControlWebSocketHandlerTest {
     }
 
   @Test
+  fun `task folder requests are handled over authenticated websocket`(@TestDisposable disposable: Disposable): Unit =
+    runBlocking(Dispatchers.Default) {
+      registerControlHandler(disposable)
+      val sessionId = "session-ws-task-folder"
+      val projectDir = tempDir.resolve("project-task-folder")
+      val folderService = service<AgentTaskFolderService>()
+      val folder = requireNotNull(folderService.createFolder(projectDir.toString(), "Research", mapOf("issue" to "IJPL-248623")))
+      assertThat(folderService.assignThread(projectDir.toString(), PI_AGENT_SESSION_PROVIDER, sessionId, folder.id)).isTrue()
+      val launchEnvironment = createControlLaunchEnvironment(sessionId)
+      val listener = PiControlTestWebSocketListener()
+      val webSocket = connectControlSocket(launchEnvironment, listener)
+      try {
+        webSocket.sendText(
+          controlHelloPayload(
+            token = launchEnvironment.token,
+            sessionId = sessionId,
+            cwd = projectDir.toString(),
+          ),
+          true,
+        ).join()
+        listener.nextMessage()
+
+        webSocket.sendText(controlTaskFolderRequest("request-current", "getCurrentTaskFolder"), true).join()
+        val currentFolderResponse = listener.nextMessage()
+        assertThat(currentFolderResponse).contains("\"requestId\":\"request-current\"")
+        assertThat(currentFolderResponse).contains("\"ok\":true")
+        assertThat(currentFolderResponse).contains("\"id\":${folder.id.jsonString()}")
+        assertThat(currentFolderResponse).contains("\"issue\":\"IJPL-248623\"")
+
+        webSocket.sendText(controlTaskFolderRequest("request-list", "listTaskFolderThreads", folderId = folder.id), true).join()
+        val listResponse = listener.nextMessage()
+        assertThat(listResponse).contains("\"threadId\":${sessionId.jsonString()}")
+        assertThat(listResponse).contains("\"folderId\":${folder.id.jsonString()}")
+
+        webSocket.sendText(
+          controlTaskFolderRequest("request-set", "setTaskFolderMetadata", folderId = folder.id, key = "review", value = "backend"),
+          true,
+        ).join()
+        val setResponse = listener.nextMessage()
+        assertThat(setResponse).contains("\"changed\":true")
+        assertThat(folderService.getFolder(projectDir.toString(), folder.id)?.metadata).containsEntry("review", "backend")
+      }
+      finally {
+        webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "done").join()
+      }
+    }
+
+  @Test
   fun `session source fork delegates over connected websocket`(@TestDisposable disposable: Disposable): Unit =
     runBlocking(Dispatchers.Default) {
       registerControlHandler(disposable)
@@ -324,6 +374,23 @@ private fun controlForkResponsePayload(requestId: String, forkedSessionId: Strin
          "\"activity\":\"processing\"" +
          "}" +
          "}"
+}
+
+private fun controlTaskFolderRequest(
+  requestId: String,
+  type: String,
+  folderId: String? = null,
+  key: String? = null,
+  value: String? = null,
+): String {
+  val fields = mutableListOf(
+    "\"type\":${type.jsonString()}",
+    "\"requestId\":${requestId.jsonString()}",
+  )
+  folderId?.let { fields += "\"folderId\":${it.jsonString()}" }
+  key?.let { fields += "\"key\":${it.jsonString()}" }
+  value?.let { fields += "\"value\":${it.jsonString()}" }
+  return "{${fields.joinToString(",")}}"
 }
 
 private fun String.readRequestId(): String {

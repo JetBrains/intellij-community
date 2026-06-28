@@ -40,6 +40,7 @@ import com.intellij.platform.util.progress.reportSequentialProgress
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
+import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<AgentSessionArchiveService>()
@@ -90,6 +91,7 @@ class AgentSessionArchiveService internal constructor(
     targets: List<ArchiveThreadTarget>,
     entryPoint: AgentWorkbenchEntryPoint,
     preferredSingleArchivedLabel: @NlsSafe String? = null,
+    onComplete: ((AgentSessionArchiveRequestResult) -> Unit)? = null,
   ) {
     val normalizedTargets = normalizeArchiveTargets(targets)
     if (normalizedTargets.isEmpty()) {
@@ -103,12 +105,15 @@ class AgentSessionArchiveService internal constructor(
       val preparedBatch = prepareArchiveTargets(normalizedTargets, preferredSingleArchivedLabel)
       if (preparedBatch.providerTargets.isEmpty()) {
         finishArchiveBatch(preparedBatch.localOutcome)
+        onComplete?.invoke(preparedBatch.localOutcome.toRequestResult())
         return@launchDropAction
       }
       val progressProject = resolveArchiveProgressProject(normalizedTargets)
       backgroundTaskRunner.run(progressProject, buildArchiveProgressTitle(preparedBatch.providerTargets.size)) {
         val providerOutcome = archivePreparedTargets(preparedBatch.providerTargets)
-        finishArchiveBatch(preparedBatch.localOutcome + providerOutcome)
+        val outcome = preparedBatch.localOutcome + providerOutcome
+        finishArchiveBatch(outcome)
+        onComplete?.invoke(outcome.toRequestResult())
       }
     }
   }
@@ -487,6 +492,22 @@ internal data class ArchiveNotificationPresentation(
   @JvmField val body: @NlsContexts.NotificationContent String,
   @JvmField val showUndoAction: Boolean,
 )
+
+@ApiStatus.Internal
+data class AgentSessionArchiveRequestResult(
+  @JvmField val requestedCount: Int,
+  @JvmField val archivedCount: Int,
+) {
+  val allRequestedArchived: Boolean
+    get() = requestedCount > 0 && requestedCount == archivedCount
+}
+
+private fun ArchiveBatchOutcome.toRequestResult(): AgentSessionArchiveRequestResult {
+  return AgentSessionArchiveRequestResult(
+    requestedCount = requestedCount,
+    archivedCount = archivedTargets.size,
+  )
+}
 
 private data class ArchivedChatCleanupTarget(
   @JvmField val threadIdentity: String,
