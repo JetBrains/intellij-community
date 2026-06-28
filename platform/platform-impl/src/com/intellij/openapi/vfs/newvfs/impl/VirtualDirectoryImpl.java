@@ -231,6 +231,14 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                                                              boolean isCaseSensitive) {
     VirtualFileSystemEntry newlyLoadedChild;
     synchronized (directoryData) {
+      VfsData vfsData = getVfsData();
+      if (!vfsData.isFileValid(getId()) ) {
+        //Accessing !valid file must be filtered above, but some VFS ops are still executed outside RA/WA framework
+        // => vfile could be deleted concurrently => re-check it here, before potentially doing something unnatural
+        // to dead file's .children:
+        return null;
+      }
+
       // usually we come here after unsuccessful findInCachedChildren() -- but maybe another findChild() sneaked in the middle?
       VirtualFileSystemEntry existingChild = findInCachedChildren(name, isCaseSensitive);
       if (existingChild != null) return existingChild; // including NULL_VIRTUAL_FILE
@@ -238,7 +246,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         return null;//all children loaded, but child not found -> not exist
       }
 
-      VfsData vfsData = getVfsData();
       PersistentFSImpl pFS = vfsData.owningPersistentFS();
       ChildInfo childInfo = pFS.findChildInfo(this, name, fileSystem);
       if (childInfo == null) {
@@ -907,6 +914,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     String childName = child.getName();
     synchronized (directoryData) {
+      //MAYBE RC: check directory is not yet invalidated (.isValid())?
       directoryData.removeAdoptedName(childName);
 
       VfsData.ChildrenIds children = directoryData.children;
@@ -1084,6 +1092,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @Override
   public void invalidate(@NotNull Object source, @NotNull Object reason) {
     super.invalidate(source, reason);
+    //MAYBE RC: how to protect from modifying already invalidated file:
+    //          create a new INVALIDATED flag, and ChildrenIds.INVALIDATED_CHILDREN=ChildrenIds(empty,INVALIDATED)
+    //          check the flag in each ChildrenIds modification methods?
     directoryData.children = VfsData.ChildrenIds.EMPTY;
   }
 
@@ -1201,7 +1212,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (PersistentFSRecordAccessor.hasDeletedFlag(childAttributes)) {
       //It is an error to come here with childId which was already deleted -- such childId should be removed from ChildrenIds
       // list first, see PersistentFSImpl.executeDelete()
-      throw new FileDeletedException(childId, "file is deleted, but still in [" + getId() + "].children list.");
+      throw new FileDeletedException(childId, "file is deleted, but still in [" + getId() + "].children list " + directoryData.children);
     }
 
     int childNameId = vfsPeer.getNameIdByFileId(childId);
