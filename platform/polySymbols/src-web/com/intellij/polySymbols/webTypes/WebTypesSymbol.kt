@@ -36,7 +36,8 @@ interface WebTypesSymbol : PsiLinkedPolySymbol, PolySymbolScope {
 
     fun findFile(): VirtualFile? =
       context.firstNotNullOfOrNull {
-        it.parent?.findFileByRelativePath(fileName)
+        if (!it.isValid) null
+        else it.parent?.findFileByRelativePath(fileName)
       }
 
   }
