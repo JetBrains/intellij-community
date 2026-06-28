@@ -542,6 +542,7 @@ private class CallHierarchyAnalyzer(
   private fun searchableNames(element: PsiNamedElement, displayName: String, longName: String): Set<String> {
     return buildSet {
       stableQualifiedNames(element).forEach(::add)
+      topLevelQualifiedNames(element).forEach(::add)
       element.name?.takeIf { it.isNotBlank() }?.let(::add)
       qualifiedName(element)?.takeIf { it.isNotBlank() }?.let(::add)
       parentQualifiedName(element)?.takeIf { it.isNotBlank() }?.let { parentName ->
@@ -556,6 +557,47 @@ private class CallHierarchyAnalyzer(
         add("$parentName.$name")
       }
     }
+  }
+
+  private fun topLevelQualifiedNames(element: PsiNamedElement): Set<String> {
+    return buildSet {
+      topLevelQualifiedName(element)?.let(::add)
+      val navigationElement = runCatching { element.navigationElement }.getOrNull()
+      if (navigationElement !== element && navigationElement is PsiNamedElement) {
+        topLevelQualifiedName(navigationElement)?.let(::add)
+      }
+    }
+  }
+
+  private fun topLevelQualifiedName(element: PsiNamedElement): String? {
+    val name = element.name?.takeIf { it.isNotBlank() } ?: return null
+    if (!isTopLevelNamedElement(element)) return null
+    val packageName = containingFilePackageName(element) ?: return null
+    return "$packageName.$name"
+  }
+
+  private fun isTopLevelNamedElement(element: PsiNamedElement): Boolean {
+    var current = element.parent
+    while (current != null) {
+      if (current is PsiFile) return true
+      if (current is PsiNamedElement) return false
+      current = current.parent
+    }
+    return false
+  }
+
+  private fun containingFilePackageName(element: PsiNamedElement): String? {
+    val containingFile = runCatching { element.containingFile }.getOrNull() ?: return null
+    val packageName = stringMethodValue(containingFile, "getPackageName")
+    if (!packageName.isNullOrBlank()) return packageName
+    val packageFqName = runCatching { containingFile.javaClass.getMethod("getPackageFqName").invoke(containingFile) }.getOrNull()
+    return packageFqName?.let { fqName ->
+      stringMethodValue(fqName, "asString") ?: fqName.toString()
+    }?.takeIf { it.isNotBlank() && it != "<root>" }
+  }
+
+  private fun stringMethodValue(instance: Any, methodName: String): String? {
+    return runCatching { instance.javaClass.getMethod(methodName).invoke(instance) as? String }.getOrNull()
   }
 
   private fun stableQualifiedNames(element: PsiNamedElement): Set<String> {
