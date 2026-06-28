@@ -4,7 +4,9 @@ package com.intellij.platform.ai.agent.sessions.core.providers
 // @spec community/plugins/agent-workbench/spec/chat/agent-chat-structure-view.spec.md
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityBucket
 import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
+import com.intellij.platform.ai.agent.core.chromeBucket
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.core.session.AgentSessionCost
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
@@ -34,6 +36,36 @@ data class AgentSessionRebindCandidate(
 )
 
 /**
+ * Describes how much authority an activity update has over the current UI activity.
+ */
+@ApiStatus.Internal
+enum class AgentSessionActivityAuthority {
+  PROVISIONAL,
+  DERIVED,
+  SEMANTIC,
+  SNAPSHOT,
+}
+
+/**
+ * Provider activity evidence used when multiple update streams report the same thread.
+ */
+@ApiStatus.Internal
+data class AgentSessionActivityEvidence(
+  @JvmField val authority: AgentSessionActivityAuthority = AgentSessionActivityAuthority.DERIVED,
+  @JvmField val canClearAttention: Boolean = true,
+) {
+  companion object {
+    @JvmField val PROVISIONAL: AgentSessionActivityEvidence = AgentSessionActivityEvidence(
+      authority = AgentSessionActivityAuthority.PROVISIONAL,
+      canClearAttention = false,
+    )
+    @JvmField val DERIVED: AgentSessionActivityEvidence = AgentSessionActivityEvidence(AgentSessionActivityAuthority.DERIVED)
+    @JvmField val SEMANTIC: AgentSessionActivityEvidence = AgentSessionActivityEvidence(AgentSessionActivityAuthority.SEMANTIC)
+    @JvmField val SNAPSHOT: AgentSessionActivityEvidence = AgentSessionActivityEvidence(AgentSessionActivityAuthority.SNAPSHOT)
+  }
+}
+
+/**
  * Activity-only update for a known provider thread.
  *
  * This compact form is used by update events and refresh hints when a provider can report status without reloading the full thread row.
@@ -46,6 +78,8 @@ data class AgentSessionThreadActivityUpdate(
   @JvmField val updatesChromeActivity: Boolean = true,
   /** Provider update timestamp in epoch milliseconds, or `null` when the update is not timestamped. */
   @JvmField val updatedAt: Long? = null,
+  /** Authority metadata for merging this activity with existing thread state. */
+  @JvmField val evidence: AgentSessionActivityEvidence = AgentSessionActivityEvidence.DERIVED,
 )
 
 /**
@@ -64,6 +98,8 @@ data class AgentSessionThreadPresentationUpdate(
   @JvmField val updatesChromeActivity: Boolean = true,
   /** Provider update timestamp in epoch milliseconds, or `null` when the update is not timestamped. */
   @JvmField val updatedAt: Long? = null,
+  /** Authority metadata for merging this activity with existing thread state. */
+  @JvmField val evidence: AgentSessionActivityEvidence = AgentSessionActivityEvidence.DERIVED,
 )
 
 /**
@@ -296,6 +332,26 @@ fun AgentSessionThreadActivityUpdate.toPresentationUpdate(): AgentSessionThreadP
     activityReport = activityReport,
     updatesChromeActivity = updatesChromeActivity,
     updatedAt = updatedAt,
+    evidence = evidence,
+  )
+}
+
+/** Merges an incoming activity report with an existing report according to the incoming evidence authority. */
+@ApiStatus.Internal
+fun mergeAgentThreadActivityReport(
+  existing: AgentThreadActivityReport,
+  incoming: AgentThreadActivityReport,
+  incomingUpdatesChromeActivity: Boolean,
+  incomingEvidence: AgentSessionActivityEvidence,
+): AgentThreadActivityReport {
+  val chromeActivity = when {
+    !incomingUpdatesChromeActivity -> existing.chromeActivity
+    shouldPreserveAttentionChrome(existing = existing, incoming = incoming, incomingEvidence = incomingEvidence) -> existing.chromeActivity
+    else -> incoming.chromeActivity
+  }
+  return AgentThreadActivityReport(
+    rowActivity = incoming.rowActivity,
+    chromeActivity = chromeActivity,
   )
 }
 
@@ -324,8 +380,11 @@ fun mergeAgentSessionThreadPresentationUpdates(
   val activityReport = when {
     incoming.activityReport == null -> existing.activityReport
     existing.activityReport == null -> incoming.activityReport
-    else -> incoming.activityReport.copy(
-      chromeActivity = if (incoming.updatesChromeActivity) incoming.activityReport.chromeActivity else existing.activityReport.chromeActivity,
+    else -> mergeAgentThreadActivityReport(
+      existing = existing.activityReport,
+      incoming = incoming.activityReport,
+      incomingUpdatesChromeActivity = incoming.updatesChromeActivity,
+      incomingEvidence = incoming.evidence,
     )
   }
   return AgentSessionThreadPresentationUpdate(
@@ -333,7 +392,27 @@ fun mergeAgentSessionThreadPresentationUpdates(
     activityReport = activityReport,
     updatesChromeActivity = updatesChromeActivity,
     updatedAt = updatedAt,
+    evidence = mergeAgentSessionActivityEvidence(existing = existing.evidence, incoming = incoming.evidence),
   )
+}
+
+private fun shouldPreserveAttentionChrome(
+  existing: AgentThreadActivityReport,
+  incoming: AgentThreadActivityReport,
+  incomingEvidence: AgentSessionActivityEvidence,
+): Boolean {
+  return !incomingEvidence.canClearAttention &&
+         existing.chromeBucket() == AgentThreadActivityBucket.ATTENTION &&
+         incoming.chromeBucket() != AgentThreadActivityBucket.ATTENTION
+}
+
+/** Keeps the strongest activity evidence seen while coalescing updates for a thread. */
+@ApiStatus.Internal
+fun mergeAgentSessionActivityEvidence(
+  existing: AgentSessionActivityEvidence,
+  incoming: AgentSessionActivityEvidence,
+): AgentSessionActivityEvidence {
+  return if (incoming.authority.ordinal >= existing.authority.ordinal) incoming else existing
 }
 
 /** Request passed to [AgentSessionRefreshSource] for provider-scoped refreshes. */

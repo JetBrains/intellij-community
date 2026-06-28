@@ -13,6 +13,7 @@ import com.intellij.platform.ai.agent.codex.common.CodexThreadStatusKind
 import com.intellij.platform.ai.agent.codex.sessions.backend.CodexRefreshHints
 import com.intellij.platform.ai.agent.codex.sessions.backend.toAgentSessionRefreshHints
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionActivityEvidence
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
@@ -110,6 +111,7 @@ class CodexAppServerRefreshHintsProviderTest {
         assertThat(hints.activityHintsByThreadId.getValue("thread-pending-plan").responseRequired).isTrue()
         assertThat(hints.activityHintsByThreadId.getValue("thread-review-flag").responseRequired).isTrue()
         assertThat(hints.activityHintsByThreadId.getValue("thread-unread-message").responseRequired).isFalse()
+        assertThat(hints.activityHintsByThreadId.values.map { hint -> hint.evidence }).containsOnly(AgentSessionActivityEvidence.SNAPSHOT)
     }
 
     @Test
@@ -174,11 +176,13 @@ class CodexAppServerRefreshHintsProviderTest {
         assertThat(topUpdate.updatesChromeActivity).isTrue()
         assertThat(topUpdate.activityReport.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
         assertThat(topUpdate.activityReport.chromeActivity).isEqualTo(AgentThreadActivity.PROCESSING)
+        assertThat(topUpdate.evidence).isEqualTo(AgentSessionActivityEvidence.SNAPSHOT)
 
         val subAgentUpdate = hints.activityUpdatesByThreadId.getValue("thread-subagent")
         assertThat(subAgentUpdate.updatesChromeActivity).isTrue()
         assertThat(subAgentUpdate.activityReport.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
         assertThat(subAgentUpdate.activityReport.chromeActivity).isNull()
+        assertThat(subAgentUpdate.evidence).isEqualTo(AgentSessionActivityEvidence.SNAPSHOT)
     }
 
     @Test
@@ -317,6 +321,7 @@ class CodexAppServerRefreshHintsProviderTest {
             assertThat(firstActivityUpdate.activityReport.chromeActivity).isEqualTo(AgentThreadActivity.READY)
             assertThat(firstActivityUpdate.updatesChromeActivity).isTrue()
             assertThat(firstActivityUpdate.updatedAt).isEqualTo(100L)
+            assertThat(firstActivityUpdate.evidence).isEqualTo(AgentSessionActivityEvidence.PROVISIONAL)
             assertThat(retryUpdate).isEqualTo(firstUpdate)
         }
         finally {
@@ -437,6 +442,7 @@ class CodexAppServerRefreshHintsProviderTest {
         assertThat(activityUpdate.activityReport.chromeActivity).isEqualTo(AgentThreadActivity.NEEDS_INPUT)
         assertThat(activityUpdate.updatesChromeActivity).isTrue()
         assertThat(activityUpdate.updatedAt).isEqualTo(700L)
+        assertThat(activityUpdate.evidence).isEqualTo(AgentSessionActivityEvidence.SEMANTIC)
     }
 
     @Test
@@ -498,11 +504,13 @@ class CodexAppServerRefreshHintsProviderTest {
         assertThat(hint.summaryActivity).isEqualTo(AgentThreadActivity.NEEDS_INPUT)
         assertThat(hint.hasSummaryActivityHint).isTrue()
         assertThat(hint.responseRequired).isTrue()
+        assertThat(hint.evidence).isEqualTo(AgentSessionActivityEvidence.SEMANTIC)
         assertThat(hint.updatedAt).isGreaterThan(0L)
 
         val update = hints.toAgentSessionRefreshHints().activityUpdatesByThreadId.getValue("thread-live")
         assertThat(update.updatesChromeActivity).isTrue()
         assertThat(update.activityReport.chromeActivity).isEqualTo(AgentThreadActivity.NEEDS_INPUT)
+        assertThat(update.evidence).isEqualTo(AgentSessionActivityEvidence.SEMANTIC)
     }
 
     @Test
@@ -536,6 +544,7 @@ class CodexAppServerRefreshHintsProviderTest {
         assertThat(update.activityReport.rowActivity).isEqualTo(AgentThreadActivity.READY)
         assertThat(update.activityReport.chromeActivity).isEqualTo(AgentThreadActivity.READY)
         assertThat(update.updatesChromeActivity).isTrue()
+        assertThat(update.evidence).isEqualTo(AgentSessionActivityEvidence.PROVISIONAL)
     }
 
     @Test
@@ -606,6 +615,7 @@ class CodexAppServerRefreshHintsProviderTest {
 
         assertThat(requestedThreadIds).containsExactly("thread-live")
         assertThat(hints.activities()).containsExactlyEntriesOf(mapOf("thread-live" to AgentThreadActivity.REVIEWING))
+        assertThat(hints.activityHintsByThreadId.getValue("thread-live").evidence).isEqualTo(AgentSessionActivityEvidence.SNAPSHOT)
     }
 
     @Test

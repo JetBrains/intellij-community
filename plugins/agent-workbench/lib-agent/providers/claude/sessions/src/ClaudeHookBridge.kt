@@ -15,6 +15,7 @@ import com.intellij.platform.ai.agent.json.createJsonGenerator
 import com.intellij.platform.ai.agent.json.createJsonParser
 import com.intellij.platform.ai.agent.json.forEachJsonObjectField
 import com.intellij.platform.ai.agent.json.readJsonStringOrNull
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionActivityEvidence
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadActivityUpdate
 import com.intellij.openapi.application.PathManager
@@ -304,6 +305,7 @@ private fun createHookUpdate(payload: ClaudeHookPayload, sessionId: String): Cla
           activityUpdatesByThreadId = mapOf(
             sessionId to AgentSessionThreadActivityUpdate(
               activityReport = AgentThreadActivityReport(AgentThreadActivity.NEEDS_INPUT),
+              evidence = AgentSessionActivityEvidence.SEMANTIC,
             )
           ),
         )

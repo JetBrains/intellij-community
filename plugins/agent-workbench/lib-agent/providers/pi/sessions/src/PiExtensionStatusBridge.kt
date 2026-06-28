@@ -7,6 +7,7 @@ import com.intellij.platform.ai.agent.json.createJsonParser
 import com.intellij.platform.ai.agent.json.forEachJsonObjectField
 import com.intellij.platform.ai.agent.json.readJsonLongOrNull
 import com.intellij.platform.ai.agent.json.readJsonStringOrNull
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionActivityEvidence
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadActivityUpdate
 import com.intellij.openapi.diagnostic.logger
@@ -144,6 +145,7 @@ internal object PiExtensionStatusBridge {
         sessionId to AgentSessionThreadActivityUpdate(
           activityReport = AgentThreadActivityReport(activity),
           updatedAt = updatedAt,
+          evidence = AgentSessionActivityEvidence.SEMANTIC,
         )
       ),
     )

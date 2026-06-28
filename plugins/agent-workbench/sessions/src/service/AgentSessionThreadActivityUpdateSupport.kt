@@ -7,6 +7,7 @@ import com.intellij.platform.ai.agent.sessions.core.normalizeAgentSessionTitle
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadActivityUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadPresentationUpdate
+import com.intellij.platform.ai.agent.sessions.core.providers.mergeAgentThreadActivityReport
 import com.intellij.platform.ai.agent.sessions.core.providers.mergeAgentSessionThreadPresentationUpdates
 import com.intellij.platform.ai.agent.sessions.core.providers.toPresentationUpdate
 
@@ -27,15 +28,12 @@ internal fun resolveAgentThreadActivityReportUpdate(
     )
   }
   return ResolvedAgentThreadActivityReportUpdate(
-    activityReport = if (activityUpdate.updatesChromeActivity) {
-      activityUpdate.activityReport
-    }
-    else {
-      AgentThreadActivityReport(
-        rowActivity = activityUpdate.activityReport.rowActivity,
-        chromeActivity = thread.activityReport.chromeActivity,
-      )
-    },
+    activityReport = mergeAgentThreadActivityReport(
+      existing = thread.activityReport,
+      incoming = activityUpdate.activityReport,
+      incomingUpdatesChromeActivity = activityUpdate.updatesChromeActivity,
+      incomingEvidence = activityUpdate.evidence,
+    ),
     updatedAt = updateTimestamp?.let { updatedAt -> maxOf(thread.updatedAt, updatedAt) } ?: thread.updatedAt,
   )
 }
@@ -57,13 +55,18 @@ internal fun resolveAgentThreadPresentationUpdate(
         activityReport = activityReport,
         updatesChromeActivity = presentationUpdate.updatesChromeActivity,
         updatedAt = presentationUpdate.updatedAt,
+        evidence = presentationUpdate.evidence,
       ),
     )
   }
   return ResolvedAgentThreadPresentationUpdate(
     title = normalizeAgentSessionTitle(presentationUpdate.title) ?: thread.title,
     activityReport = resolvedActivityUpdate?.activityReport ?: thread.activityReport,
-    updatedAt = maxOf(thread.updatedAt, presentationUpdate.updatedAt ?: thread.updatedAt, resolvedActivityUpdate?.updatedAt ?: thread.updatedAt),
+    updatedAt = maxOf(
+      thread.updatedAt,
+      presentationUpdate.updatedAt ?: thread.updatedAt,
+      resolvedActivityUpdate?.updatedAt ?: thread.updatedAt,
+    ),
   )
 }
 
@@ -75,7 +78,9 @@ internal fun AgentSessionRefreshHints.resolvePresentationUpdatesByThreadId(): Ma
   if (presentationUpdatesByThreadId.isEmpty()) {
     return activityPresentationUpdates
   }
-  val merged = LinkedHashMap<String, AgentSessionThreadPresentationUpdate>(activityPresentationUpdates.size + presentationUpdatesByThreadId.size)
+  val merged = LinkedHashMap<String, AgentSessionThreadPresentationUpdate>(
+    activityPresentationUpdates.size + presentationUpdatesByThreadId.size
+  )
   val threadIds = LinkedHashSet<String>(activityPresentationUpdates.size + presentationUpdatesByThreadId.size)
   threadIds.addAll(activityPresentationUpdates.keys)
   threadIds.addAll(presentationUpdatesByThreadId.keys)

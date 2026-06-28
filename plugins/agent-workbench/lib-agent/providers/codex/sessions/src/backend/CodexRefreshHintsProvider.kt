@@ -4,6 +4,7 @@ package com.intellij.platform.ai.agent.codex.sessions.backend
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionActivityEvidence
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
@@ -19,6 +20,7 @@ internal data class CodexRefreshActivityHint(
   @JvmField val updatedAt: Long,
   @JvmField val responseRequired: Boolean = false,
   @JvmField val verifiedFresh: Boolean = false,
+  @JvmField val evidence: AgentSessionActivityEvidence = AgentSessionActivityEvidence.DERIVED,
   @JvmField val summaryActivity: AgentThreadActivity? = activity,
   @JvmField val hasSummaryActivityHint: Boolean = true,
 )
@@ -37,6 +39,7 @@ internal fun CodexRefreshHints.toAgentSessionRefreshHints(): AgentSessionRefresh
       ),
       updatesChromeActivity = hint.hasSummaryActivityHint,
       updatedAt = hint.updatedAt,
+      evidence = hint.evidence,
     )
   }
   return AgentSessionRefreshHints(
@@ -58,7 +61,12 @@ private fun mergeCodexPresentationUpdates(
   merged.putAll(existing)
   for ((threadId, incomingUpdate) in incoming) {
     val existingUpdate = merged[threadId]
-    merged[threadId] = if (existingUpdate == null) incomingUpdate else mergeAgentSessionThreadPresentationUpdates(existingUpdate, incomingUpdate)
+    merged[threadId] = if (existingUpdate == null) {
+      incomingUpdate
+    }
+    else {
+      mergeAgentSessionThreadPresentationUpdates(existingUpdate, incomingUpdate)
+    }
   }
   return merged
 }

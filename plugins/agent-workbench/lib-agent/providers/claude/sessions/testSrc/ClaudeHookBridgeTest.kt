@@ -4,6 +4,7 @@ package com.intellij.platform.ai.agent.claude.sessions
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionActivityEvidence
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -96,8 +97,10 @@ class ClaudeHookBridgeTest {
         assertThat(event.type).isEqualTo(AgentSessionSourceUpdate.HINTS_CHANGED)
         assertThat(event.scopedPaths).containsExactly(normalizeAgentWorkbenchPath(projectPath.toString()))
         assertThat(event.threadIds).isNull()
-        assertThat(event.activityUpdatesByThreadId.getValue(sessionId).activityReport)
+        val activityUpdate = event.activityUpdatesByThreadId.getValue(sessionId)
+        assertThat(activityUpdate.activityReport)
           .isEqualTo(AgentThreadActivityReport(AgentThreadActivity.NEEDS_INPUT))
+        assertThat(activityUpdate.evidence).isEqualTo(AgentSessionActivityEvidence.SEMANTIC)
         assertThat(event.mayHaveChangedProjectFiles).isFalse()
       }
       finally {
@@ -133,8 +136,10 @@ class ClaudeHookBridgeTest {
         val event = update.await()
         assertThat(event.type).isEqualTo(AgentSessionSourceUpdate.HINTS_CHANGED)
         assertThat(event.scopedPaths).containsExactly(normalizeAgentWorkbenchPath(projectPath.toString()))
-        assertThat(event.activityUpdatesByThreadId.getValue(sessionId).activityReport)
+        val activityUpdate = event.activityUpdatesByThreadId.getValue(sessionId)
+        assertThat(activityUpdate.activityReport)
           .isEqualTo(AgentThreadActivityReport(AgentThreadActivity.NEEDS_INPUT))
+        assertThat(activityUpdate.evidence).isEqualTo(AgentSessionActivityEvidence.SEMANTIC)
         assertThat(event.mayHaveChangedProjectFiles).isFalse()
       }
       finally {
