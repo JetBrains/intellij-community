@@ -1526,6 +1526,7 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.maven.proofreading.tests",
   "intellij.maven.testFramework.tests",
   "intellij.notebooks.visualization.tests",
+  "intellij.java.manifest.tests",
   "intellij.json.networknt.wrapper.tests",
   "intellij.jsonpath.tests",
   "intellij.jvm.analysis.java.tests",
