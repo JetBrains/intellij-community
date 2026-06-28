@@ -16,13 +16,13 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.WrapLayout
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
+import java.awt.Container
 import java.awt.Dimension
-import java.awt.FlowLayout
 import java.awt.Graphics
 import java.awt.Graphics2D
+import java.awt.LayoutManager
 import java.awt.RenderingHints
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -47,7 +47,7 @@ internal class AgentPromptContextChipsComponent(
   private var renderedEntries: List<ContextEntry> = emptyList()
   private var renderedWidth: Int = -1
 
-  val component: JPanel = JPanel(chipLayout()).apply {
+  val component: JPanel = JPanel(ContextChipsWrapLayout(JBUI.scale(CONTEXT_CHIP_GAP), JBUI.scale(CONTEXT_CHIP_GAP))).apply {
     isOpaque = false
     addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {
@@ -81,10 +81,10 @@ internal class AgentPromptContextChipsComponent(
     }
 
     visibleEntries.forEach { entry ->
-      component.add(wrapRowComponent(createContextChip(entry)))
+      component.add(createContextChip(entry))
     }
     if (hiddenCount > 0) {
-      component.add(wrapRowComponent(createOverflowChip(hiddenCount)))
+      component.add(createOverflowChip(hiddenCount))
     }
     component.revalidate()
     component.repaint()
@@ -99,10 +99,10 @@ internal class AgentPromptContextChipsComponent(
       val hiddenCount = renderedEntries.size - visibleCount
       val componentWidths = ArrayList<Int>(visibleCount + if (hiddenCount > 0) 1 else 0)
       renderedEntries.take(visibleCount).mapTo(componentWidths) { entry ->
-        wrapRowComponent(createContextChip(entry)).preferredSize.width
+        createContextChip(entry).preferredSize.width
       }
       if (hiddenCount > 0) {
-        componentWidths += wrapRowComponent(createOverflowChip(hiddenCount)).preferredSize.width
+        componentWidths += createOverflowChip(hiddenCount).preferredSize.width
       }
       if (rowCount(componentWidths, availableWidth) <= checkNotNull(maxVisibleRows)) {
         return ContextChipsSelection(
@@ -123,7 +123,9 @@ internal class AgentPromptContextChipsComponent(
     var rows = 1
     var rowWidth = 0
     for (componentWidth in componentWidths) {
-      if (rowWidth == 0 || rowWidth + componentWidth <= availableWidth) {
+      val gap = if (rowWidth == 0) 0 else JBUI.scale(CONTEXT_CHIP_GAP)
+      if (rowWidth == 0 || rowWidth + gap + componentWidth <= availableWidth) {
+        rowWidth += gap
         rowWidth += componentWidth
       }
       else {
@@ -132,14 +134,6 @@ internal class AgentPromptContextChipsComponent(
       }
     }
     return rows
-  }
-
-  private fun wrapRowComponent(content: JComponent): JComponent {
-    return JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)).apply {
-      isOpaque = false
-      border = JBUI.Borders.empty(0, 0, CONTEXT_CHIP_GAP, CONTEXT_CHIP_GAP)
-      add(content)
-    }
   }
 
   private fun createContextChip(entry: ContextEntry): JComponent {
@@ -155,13 +149,87 @@ internal class AgentPromptContextChipsComponent(
     @JvmField val visibleEntries: List<ContextEntry>,
     @JvmField val hiddenCount: Int,
   )
+}
 
-  private companion object {
-    fun chipLayout(): WrapLayout = WrapLayout(
-      FlowLayout.LEFT,
-      0,
-      0,
-    )
+private class ContextChipsWrapLayout(
+  private val hgap: Int,
+  private val vgap: Int,
+) : LayoutManager {
+  override fun addLayoutComponent(name: String?, comp: java.awt.Component?) = Unit
+
+  override fun removeLayoutComponent(comp: java.awt.Component?) = Unit
+
+  override fun preferredLayoutSize(parent: Container): Dimension {
+    return layoutSize(parent, usePreferredSize = true)
+  }
+
+  override fun minimumLayoutSize(parent: Container): Dimension {
+    return layoutSize(parent, usePreferredSize = false)
+  }
+
+  override fun layoutContainer(parent: Container) {
+    synchronized(parent.treeLock) {
+      val insets = parent.insets
+      val maxWidth = parent.width - insets.left - insets.right
+      var x = insets.left
+      var y = insets.top
+      var rowHeight = 0
+
+      for (component in parent.components) {
+        if (!component.isVisible) continue
+
+        val size = component.preferredSize
+        val gap = if (x == insets.left) 0 else hgap
+        if (x != insets.left && x + gap + size.width > insets.left + maxWidth) {
+          x = insets.left
+          y += rowHeight + vgap
+          rowHeight = 0
+        }
+
+        val effectiveGap = if (x == insets.left) 0 else hgap
+        component.setBounds(x + effectiveGap, y, size.width, size.height)
+        x += effectiveGap + size.width
+        rowHeight = max(rowHeight, size.height)
+      }
+    }
+  }
+
+  private fun layoutSize(parent: Container, usePreferredSize: Boolean): Dimension {
+    synchronized(parent.treeLock) {
+      val insets = parent.insets
+      val targetWidth = parent.width.takeIf { it > 0 }
+                        ?: parent.parent?.width?.takeIf { it > 0 }
+                        ?: Int.MAX_VALUE
+      val maxWidth = targetWidth - insets.left - insets.right
+      var width = 0
+      var height = 0
+      var rowWidth = 0
+      var rowHeight = 0
+
+      for (component in parent.components) {
+        if (!component.isVisible) continue
+
+        val size = if (usePreferredSize) component.preferredSize else component.minimumSize
+        val gap = if (rowWidth == 0) 0 else hgap
+        if (rowWidth != 0 && rowWidth + gap + size.width > maxWidth) {
+          width = max(width, rowWidth)
+          height += if (height == 0) rowHeight else vgap + rowHeight
+          rowWidth = 0
+          rowHeight = 0
+        }
+
+        val effectiveGap = if (rowWidth == 0) 0 else hgap
+        rowWidth += effectiveGap + size.width
+        rowHeight = max(rowHeight, size.height)
+      }
+
+      if (rowWidth > 0) {
+        width = max(width, rowWidth)
+        height += if (height == 0) rowHeight else vgap + rowHeight
+      }
+
+      return Dimension(width + insets.left + insets.right, height + insets.top + insets.bottom)
+    }
   }
 }
 
