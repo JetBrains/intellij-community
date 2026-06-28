@@ -1,0 +1,9 @@
+<!-- Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<!-- Based on Lucide list-todo, ISC License, adapted to IntelliJ 16x16 icon style. -->
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M8.5 3.5H14" stroke="#6C707E" stroke-linecap="round"/>
+  <path d="M8.5 8H14" stroke="#6C707E" stroke-linecap="round"/>
+  <path d="M8.5 12.5H14" stroke="#6C707E" stroke-linecap="round"/>
+  <rect x="2.25" y="2.75" width="4.25" height="4.25" rx="0.75" stroke="#6C707E"/>
+  <path d="M2.25 11.5L3.75 13L6.25 10.25" stroke="#6C707E" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -12,6 +12,7 @@ import com.intellij.ide.setToolTipText
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -110,6 +111,10 @@ private fun ActionLink.configureComposerTrayLink(isInlinePrompt: Boolean) {
   }
 }
 
+internal interface AgentPromptHeaderVisibleAction {
+  var visible: Boolean
+}
+
 internal data class AgentPromptPaletteView(
   @JvmField val rootPanel: JPanel,
   @JvmField val promptPanel: JPanel,
@@ -146,8 +151,8 @@ internal class AgentPromptHeaderCheckBoxAction(
   text: @Nls String,
   var selected: Boolean = false,
   private val onSelectionChanged: ((Boolean) -> Unit)? = null,
-) : CheckboxAction(text), DumbAware {
-  var visible: Boolean = true
+) : CheckboxAction(text), DumbAware, AgentPromptHeaderVisibleAction {
+  override var visible: Boolean = true
   var enabled: Boolean = true
   var tooltipText: @Nls String? = null
 
@@ -165,6 +170,33 @@ internal class AgentPromptHeaderCheckBoxAction(
     e.presentation.isVisible = visible
     e.presentation.isEnabled = enabled
     e.presentation.description = tooltipText
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+}
+
+internal class AgentPromptHeaderIconToggleAction(
+  text: @Nls String,
+  initialIcon: Icon,
+  var selected: Boolean = false,
+  private val onSelectionChanged: ((Boolean) -> Unit)? = null,
+) : DumbAwareToggleAction(text, text, initialIcon), AgentPromptHeaderVisibleAction {
+  override var visible: Boolean = true
+  var enabled: Boolean = true
+
+  override fun isSelected(e: AnActionEvent): Boolean {
+    return selected
+  }
+
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
+    selected = state
+    onSelectionChanged?.invoke(state)
+  }
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.isVisible = visible
+    e.presentation.isEnabled = enabled
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -217,18 +249,26 @@ internal class AgentPromptHeaderControls(
 ) {
   private var providerOptionsVisible = true
 
-  var providerOptionActions: List<AgentPromptHeaderCheckBoxAction> = emptyList()
+  var providerOptionActions: List<AnAction> = emptyList()
     private set
 
-  fun setProviderOptionActions(actions: List<AgentPromptHeaderCheckBoxAction>) {
+  fun setProviderOptionActions(actions: List<AnAction>) {
     providerOptionActions = actions
-    providerOptionActions.forEach { action -> action.visible = providerOptionsVisible }
+    providerOptionActions.forEach { action ->
+      if (action is AgentPromptHeaderVisibleAction) {
+        action.visible = providerOptionsVisible
+      }
+    }
     rebuildActions()
   }
 
   fun setProviderOptionsVisible(visible: Boolean) {
     providerOptionsVisible = visible
-    providerOptionActions.forEach { action -> action.visible = visible }
+    providerOptionActions.forEach { action ->
+      if (action is AgentPromptHeaderVisibleAction) {
+        action.visible = visible
+      }
+    }
     updateActions()
   }
 
