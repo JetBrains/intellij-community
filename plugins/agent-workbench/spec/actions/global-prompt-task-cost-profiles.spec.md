@@ -49,7 +49,7 @@ Task-cost profiles make the global prompt ready to send while still letting user
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
   [@test] ../../ui/testSrc/AgentWorkbenchPopupTest.kt
 
-- The prompt Plan checkbox must remain a separate header option. Selecting or restoring a profile must not change the current Plan checkbox state, and saving/updating user profiles must not store Plan state.
+- The prompt Plan mode icon toggle must remain a separate header option. Selecting or restoring a profile must not change the current Plan mode state, and saving/updating user profiles must not store Plan state.
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
 
 - When the current prompt uses an applicable saved or built-in profile that is not the stored default, the generation-control row must show an inline `Make Default` action. When the current provider, launch mode, model, effort, or Plan effort draft does not match any applicable profile but was edited from a selected saved user profile, the same location must show `Update Profile`; this updates the existing profile without creating a copy or changing the stored default id. Other unmatched drafts must show `Save as Default`; this creates a user profile with a generated name, makes it the stored default, and keeps it active in the prompt. The inline action is hidden when the current profile is already the stored default or generation controls are hidden.
@@ -81,8 +81,8 @@ Task-cost profiles make the global prompt ready to send while still letting user
 ## Data & Backend
 - The persisted `activeLaunchProfileId` value represents the explicit default profile id.
 - User launch profiles and the explicit default profile id must be stored in the app-level roamable `AgentSessionLaunchProfileStateV2`, not in the non-roamable UI preferences state.
-- Per-task prompt changes live in the prompt controller state and are sent with the launch request; they are not persisted unless the user chooses an explicit default/profile action such as `Save as Default`, `Update Profile`, or `Set as Default` in profile management.
-- Profile UI may store Plan effort only for providers that support dedicated Plan reasoning effort, but must not store Plan checkbox state or create profiles that automatically start in Plan mode.
+- Per-task generation-control changes live in the prompt controller state and are sent with the launch request; they are not persisted unless the user chooses an explicit default/profile action such as `Save as Default`, `Update Profile`, or `Set as Default` in profile management.
+- Profile UI may store Plan effort only for providers that support dedicated Plan reasoning effort, but must not store Plan mode state or create profiles that automatically start in Plan mode.
 
 ## Testing / Local Run
 - `./tests.cmd --module intellij.agent.workbench.prompt.ui.tests --test com.intellij.agent.workbench.prompt.ui.AgentPromptProviderSelectorTest`

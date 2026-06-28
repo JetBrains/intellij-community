@@ -16,6 +16,7 @@ targets:
   - ../../sessions-actions/src/actions/NewThreadMenuActions.kt
   - ../../sessions/src/service/AgentSessionPromptLauncherBridge.kt
   - ../../sessions/src/service/AgentSessionLaunchService.kt
+  - ../../sessions/src/state/AgentSessionUiPreferencesStateService.kt
   - ../../prompt/ui/testSrc/*.kt
   - ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 ---
@@ -95,7 +96,7 @@ The global prompt opens a project-scoped prompt surface for starting a new task 
   [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
   [@test] ../../sessions/testSrc/AgentSessionLaunchServiceTest.kt
 
-- Plan mode is available only when the selected provider exposes the plan-mode option, persists in project prompt draft state, and is forced off/rejected for busy existing tasks. A typed `/plan` prefix remains prompt text and does not toggle the option.
+- Plan mode is available as a compact header icon toggle only when the selected provider exposes the plan-mode option. Its last-used state is stored per provider as provider option preferences, restored on prompt open, sent in the launch payload, and forced off or rejected for busy existing tasks. A typed `/plan` prefix remains prompt text and does not toggle the option.
   [@test] ../../prompt/ui/testSrc/AgentPromptPlanModeDecisionsTest.kt
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
