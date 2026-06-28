@@ -17,7 +17,6 @@ import com.intellij.agent.workbench.prompt.ui.AgentPromptUiSessionStateService
 import com.intellij.agent.workbench.prompt.ui.createAgentPromptPaletteContent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.impl.EditorEmptyStateComponentHost
@@ -58,17 +57,7 @@ internal class AgentWorkbenchInlinePromptEmptyStateProvider : EditorEmptyStateCo
     }
     return withContext(Dispatchers.EDT) {
       val project = splitters.manager.project
-      writeIntentReadAction {
-        val component = AgentWorkbenchInlinePromptEmptyStateComponent(project)
-        try {
-          component.ensureContentInitialized()
-          component
-        }
-        catch (e: Throwable) {
-          Disposer.dispose(component)
-          throw e
-        }
-      }
+      AgentWorkbenchInlinePromptEmptyStateComponent(project)
     }
   }
 

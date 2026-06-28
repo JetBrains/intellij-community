@@ -79,7 +79,7 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
   }
 
   @Test
-  fun providerCreatesPromptContentWhenLauncherIsUnavailable() {
+  fun providerCreatesShellWhenLauncherIsUnavailable() {
     val provider = AgentWorkbenchInlinePromptEmptyStateProvider()
 
     val component = AgentPromptLaunchers.withLauncherForTest(null) {
@@ -88,7 +88,8 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
 
     try {
       assertThat(component).isInstanceOf(AgentWorkbenchInlinePromptEmptyStateComponent::class.java)
-      assertThat(collectComponents(component!!, AgentPromptTextField::class.java)).hasSize(1)
+      assertThat(collectComponents(component!!, AgentPromptTextField::class.java)).isEmpty()
+      assertThat(collectComponents(component, JLabel::class.java)).hasSize(1)
     }
     finally {
       disposeComponent(component as AgentWorkbenchInlinePromptEmptyStateComponent)
@@ -96,11 +97,12 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
   }
 
   @Test
-  fun providerCreatesInitializedPromptContent() {
+  fun providerCreatesShellPromptContent() {
     val component = createProviderComponentWithLauncher()
     try {
       assertThat(component.name).isEqualTo(INLINE_PROMPT_COMPONENT_NAME)
-      assertThat(collectComponents(component, AgentPromptTextField::class.java)).hasSize(1)
+      assertThat(collectComponents(component, AgentPromptTextField::class.java)).isEmpty()
+      assertThat(collectComponents(component, JLabel::class.java)).hasSize(1)
     }
     finally {
       disposeComponent(component)
@@ -284,10 +286,11 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
   }
 
   @Test
-  fun providerCreatesInitializedPromptBeforeSwingHierarchy() {
+  fun providerCreatesShellBeforeSwingHierarchy() {
     val component = createProviderComponentWithLauncher()
     try {
-      assertThat(collectComponents(component, AgentPromptTextField::class.java)).hasSize(1)
+      assertThat(collectComponents(component, AgentPromptTextField::class.java)).isEmpty()
+      assertThat(collectComponents(component, JLabel::class.java)).hasSize(1)
     }
     finally {
       disposeComponent(component)
