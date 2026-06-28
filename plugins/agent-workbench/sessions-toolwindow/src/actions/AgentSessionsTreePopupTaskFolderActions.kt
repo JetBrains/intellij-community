@@ -64,7 +64,7 @@ internal class AgentSessionsTreePopupRenameTaskFolderAction : DumbAwareAction() 
     ::resolveAgentSessionsTreePopupActionContext
   private val promptForName: (Project, String) -> String? = ::showRenameTaskFolderDialog
   private val renameFolder: (SessionActionTarget.TaskFolder, String) -> Unit = { target, name ->
-    service<AgentTaskFolderService>().renameFolder(target.path, target.folderId, name)
+    service<AgentTaskFolderService>().renameFolder(target.folderId, name)
   }
 
   override fun update(e: AnActionEvent) {
@@ -86,7 +86,7 @@ internal class AgentSessionsTreePopupDeleteTaskFolderAction : DumbAwareAction() 
     ::resolveAgentSessionsTreePopupActionContext
   private val confirmDelete: (Project, SessionActionTarget.TaskFolder) -> Boolean = ::confirmDeleteTaskFolder
   private val deleteFolder: (SessionActionTarget.TaskFolder) -> Unit = { target ->
-    service<AgentTaskFolderService>().deleteFolder(target.path, target.folderId)
+    service<AgentTaskFolderService>().deleteFolder(target.folderId)
   }
 
   override fun update(e: AnActionEvent) {
@@ -179,7 +179,7 @@ internal class AgentSessionsTreePopupSetTaskFolderMetadataAction : DumbAwareActi
   private val promptForMetadata: (Project, SessionActionTarget.TaskFolder) -> Pair<String, String>? =
     ::showSetTaskFolderMetadataDialog
   private val setMetadata: (SessionActionTarget.TaskFolder, String, String) -> Unit = { target, key, value ->
-    service<AgentTaskFolderService>().setMetadata(target.path, target.folderId, key, value)
+    service<AgentTaskFolderService>().setMetadata(target.folderId, key, value)
   }
 
   override fun update(e: AnActionEvent) {
@@ -201,7 +201,7 @@ internal class AgentSessionsTreePopupDeleteTaskFolderMetadataAction : DumbAwareA
     ::resolveAgentSessionsTreePopupActionContext
   private val promptForKey: (Project, SessionActionTarget.TaskFolder) -> String? = ::showDeleteTaskFolderMetadataDialog
   private val deleteMetadata: (SessionActionTarget.TaskFolder, String) -> Unit = { target, key ->
-    service<AgentTaskFolderService>().deleteMetadata(target.path, target.folderId, key)
+    service<AgentTaskFolderService>().deleteMetadata(target.folderId, key)
   }
 
   override fun update(e: AnActionEvent) {
@@ -233,7 +233,7 @@ internal class AgentSessionsTreePopupMarkTaskFolderDoneAction : DumbAwareAction 
       service<AgentSessionArchiveService>().archiveThreads(targets, entryPoint, onComplete = onComplete)
     }
     setFolderDone =
-      { target -> service<AgentTaskFolderService>().setFolderStatus(target.path, target.folderId, AgentTaskFolderStatus.DONE) }
+      { target -> service<AgentTaskFolderService>().setFolderStatus(target.folderId, AgentTaskFolderStatus.DONE) }
   }
 
   internal constructor(

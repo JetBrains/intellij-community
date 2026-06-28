@@ -207,7 +207,7 @@ internal object PiExtensionControlBridge {
           buildErrorResponse(requestId, "Task folder is not available")
         }
         else {
-          buildTaskFolderAssignmentsResponse(requestId, service.listFolderThreadAssignments(connection.projectPath, folderId))
+          buildTaskFolderAssignmentsResponse(requestId, service.listFolderThreadAssignments(folderId))
         }
       }
       PI_CONTROL_GET_TASK_FOLDER_METADATA_TYPE -> {
@@ -222,7 +222,7 @@ internal object PiExtensionControlBridge {
           buildErrorResponse(requestId, "Task folder metadata request is incomplete")
         }
         else {
-          val changed = service.setMetadata(connection.projectPath, folderId, key, value)
+          val changed = service.setMetadata(folderId, key, value)
           buildMutationResponse(requestId, changed)
         }
       }
@@ -233,7 +233,7 @@ internal object PiExtensionControlBridge {
           buildErrorResponse(requestId, "Task folder metadata request is incomplete")
         }
         else {
-          val changed = service.deleteMetadata(connection.projectPath, folderId, key)
+          val changed = service.deleteMetadata(folderId, key)
           buildMutationResponse(requestId, changed)
         }
       }
@@ -674,7 +674,7 @@ private fun resolveTaskFolder(
   payload: PiControlPayload,
 ): AgentTaskFolder? {
   val folderId = resolveTaskFolderId(service, connection, payload) ?: return null
-  return service.getFolder(connection.projectPath, folderId)
+  return service.getFolder(folderId)
 }
 
 private fun resolveTaskFolderId(service: AgentTaskFolderService, connection: PiControlConnection, payload: PiControlPayload): String? {

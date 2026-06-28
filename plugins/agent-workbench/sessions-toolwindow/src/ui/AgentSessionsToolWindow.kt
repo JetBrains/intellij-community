@@ -515,7 +515,7 @@ internal class AgentSessionsToolWindowPanel(
   }
 
   private fun taskFolderArchiveTargets(folderId: SessionTreeId.TaskFolder): List<ArchiveThreadTarget> {
-    val assignments = service<AgentTaskFolderService>().listFolderThreadAssignments(folderId.path, folderId.folderId)
+    val assignments = service<AgentTaskFolderService>().listFolderThreadAssignments(folderId.folderId)
     return archiveTargetsForTaskFolderAssignments(assignments)
   }
 

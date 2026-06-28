@@ -228,7 +228,7 @@ class PiExtensionControlWebSocketHandlerTest {
         ).join()
         val setResponse = listener.nextMessage()
         assertThat(setResponse).contains("\"changed\":true")
-        assertThat(folderService.getFolder(projectDir.toString(), folder.id)?.metadata).containsEntry("review", "backend")
+        assertThat(folderService.getFolder(folder.id)?.metadata).containsEntry("review", "backend")
       }
       finally {
         webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "done").join()
