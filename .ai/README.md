@@ -28,7 +28,7 @@ AI_GUIDE_EDITION=ULTIMATE  node community/.ai/render-guides.mjs
 - `CLAUDE.md` (ultimate only)
 - `.junie/AGENTS.md`
 - `opencode.json` (from `.mcp.json`)
-- `.opencode/skill/*` (mirrored from `.codex/skills/*`)
+- `.opencode/skill/*` (generated from skill sources)
 - Skill stubs in `.agents/skills/*`, `.claude/skills/*`, `.junie/skills/*`, `community/.claude/skills/*`
 
 ## High-level render pipeline
@@ -58,7 +58,7 @@ AI_GUIDE_EDITION=ULTIMATE  node community/.ai/render-guides.mjs
 
 ## Skill sources and stub generation
 
-The renderer has two skill sources:
+The renderer has two skill sources for all generated skill outputs, including `.opencode/skill/*`:
 
 1. Community source skills: `community/.agents/skills/*/SKILL.md`
 2. Ultimate-only source skills: manual (non-generated) `.agents/skills/*/SKILL.md`
@@ -83,8 +83,14 @@ community/.agents/skills/<name>/SKILL.md
 PASS 2 (ultimate-only manual skills)
 ------------------------------------
 .agents/skills/<name>/SKILL.md   [manual, non-generated]
-   |--> .claude/skills/<name>/SKILL.md   [ULTIMATE only]
-   '--> .junie/skills/<name>/SKILL.md    [ULTIMATE only]
+    |--> .claude/skills/<name>/SKILL.md   [ULTIMATE only]
+    '--> .junie/skills/<name>/SKILL.md    [ULTIMATE only]
+
+OpenCode skills
+---------------
+community/.agents/skills/<name>/SKILL.md  [COMMUNITY + ULTIMATE]
+.agents/skills/<name>/SKILL.md            [ULTIMATE only]
+   '--> .opencode/skill/<name>/SKILL.md
 
 Cleanup
 -------

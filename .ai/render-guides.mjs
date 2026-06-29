@@ -281,7 +281,6 @@ async function detectEdition() {
 
 const mcpConfigPath = join(repoRoot, ".mcp.json");
 const opencodeConfigPath = join(repoRoot, "opencode.json");
-const codexSkillsDir = join(repoRoot, ".codex", "skills");
 const opencodeSkillsDir = join(repoRoot, ".opencode", "skill");
 const communitySkillsSourceDir = join(repoRoot, "community", ".agents", "skills");
 const agentsSkillsDir = join(repoRoot, ".agents", "skills");
@@ -405,35 +404,32 @@ async function copyDirectory(sourceDir, targetDir) {
   }
 }
 
-async function renderOpenCodeSkills() {
-  let entries;
-  try {
-    entries = await readdir(codexSkillsDir, {withFileTypes: true});
-  } catch (error) {
-    if (error && error.code === "ENOENT") {
-      return;
-    }
-    throw error;
-  }
+export async function renderOpenCodeSkills(options = {}) {
+  const {
+    communitySourceDir = communitySkillsSourceDir,
+    agentsDir = agentsSkillsDir,
+    opencodeDir = opencodeSkillsDir,
+    edition,
+  } = options;
+  const normalizedEdition = edition === undefined ? await detectEdition() : normalizeEdition(edition);
+  const {communitySkills, ultimateOnlySkills} = await collectCanonicalSkillSources(communitySourceDir, agentsDir);
+  const skillSources = normalizedEdition === "ULTIMATE"
+    ? new Map([...communitySkills, ...ultimateOnlySkills])
+    : communitySkills;
+  const expectedSkillNames = new Set(skillSources.keys());
 
-  await mkdir(opencodeSkillsDir, {recursive: true});
-  const sourceSkillNames = new Set(entries.filter(entry => entry.isDirectory()).map(entry => entry.name));
-
-  const targetEntries = await readdir(opencodeSkillsDir, {withFileTypes: true});
+  await mkdir(opencodeDir, {recursive: true});
+  const targetEntries = await readdir(opencodeDir, {withFileTypes: true});
   for (const entry of targetEntries) {
-    if (!sourceSkillNames.has(entry.name)) {
-      await rm(join(opencodeSkillsDir, entry.name), {recursive: true, force: true});
-    }
-  }
-
-  for (const entry of entries) {
-    if (!entry.isDirectory()) {
+    if (!entry.isDirectory() || expectedSkillNames.has(entry.name)) {
       continue;
     }
-    const sourcePath = join(codexSkillsDir, entry.name);
-    const targetPath = join(opencodeSkillsDir, entry.name);
-    await rm(targetPath, {recursive: true, force: true});
-    await copyDirectory(sourcePath, targetPath);
+    await rm(join(opencodeDir, entry.name), {recursive: true, force: true});
+  }
+
+  for (const [dirName, {skillPath, content}] of skillSources) {
+    await rm(join(opencodeDir, dirName), {recursive: true, force: true});
+    await writeSkillStub(opencodeDir, dirName, content, skillPath);
   }
 }
 
@@ -476,6 +472,40 @@ async function collectSkillSources(dir) {
     });
   }
   return skills;
+}
+
+async function collectCanonicalSkillSources(communitySourceDir, agentsDir) {
+  const communitySkills = await collectSkillSources(communitySourceDir);
+  const agentsSkills = await collectSkillSources(agentsDir);
+  const ultimateOnlySkills = new Map();
+
+  for (const [dirName, {skillPath, content, frontmatter, isGenerated}] of agentsSkills) {
+    // Manual .agents/skills files are authoritative ultimate-only sources.
+    // Name collisions with community source skills must fail fast to prevent overwrites.
+    if (communitySkills.has(dirName)) {
+      if (!isGenerated) {
+        throw new Error(
+          `Skill name collision for '${dirName}': community source and manual .agents/skills source both exist (${skillPath}).`,
+        );
+      }
+      continue;
+    }
+    if (isGenerated) {
+      continue;
+    }
+    if (!frontmatter) {
+      throw new Error(`Invalid ultimate skill source ${skillPath}: missing YAML frontmatter.`);
+    }
+    ultimateOnlySkills.set(dirName, {content, frontmatter, skillPath});
+  }
+
+  for (const {skillPath, frontmatter} of communitySkills.values()) {
+    if (!frontmatter) {
+      throw new Error(`Invalid community skill source ${skillPath}: missing YAML frontmatter.`);
+    }
+  }
+
+  return {communitySkills, ultimateOnlySkills};
 }
 
 /**
@@ -592,39 +622,8 @@ export async function renderSkills(options = {}) {
     edition,
   } = options;
   const normalizedEdition = edition === undefined ? await detectEdition() : normalizeEdition(edition);
-
-  const communitySkills = await collectSkillSources(communitySourceDir);
   const communityTargets = [agentsDir, claudeDir, junieDir, communityClaudeDir];
-
-  // Collect Ultimate-only skills before pass 1 overwrites generated stubs in .agents/skills.
-  const agentsSkills = await collectSkillSources(agentsDir);
-  const ultimateOnlySkills = new Map();
-  for (const [dirName, {skillPath, content, frontmatter, isGenerated}] of agentsSkills) {
-
-    // Manual .agents/skills files are authoritative ultimate-only sources.
-    // Name collisions with community source skills must fail fast to prevent overwrites.
-    if (communitySkills.has(dirName)) {
-      if (!isGenerated) {
-        throw new Error(
-          `Skill name collision for '${dirName}': community source and manual .agents/skills source both exist (${skillPath}).`,
-        );
-      }
-      continue;
-    }
-    if (isGenerated) {
-      continue;
-    }
-    if (!frontmatter) {
-      throw new Error(`Invalid ultimate skill source ${skillPath}: missing YAML frontmatter.`);
-    }
-    ultimateOnlySkills.set(dirName, {content, frontmatter, skillPath});
-  }
-
-  for (const {skillPath, frontmatter} of communitySkills.values()) {
-    if (!frontmatter) {
-      throw new Error(`Invalid community skill source ${skillPath}: missing YAML frontmatter.`);
-    }
-  }
+  const {communitySkills, ultimateOnlySkills} = await collectCanonicalSkillSources(communitySourceDir, agentsDir);
 
   const communitySkillNames = new Set(communitySkills.keys());
   const claudeExpectedSkillNames = normalizedEdition === "ULTIMATE"

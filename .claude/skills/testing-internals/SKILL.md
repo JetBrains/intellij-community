@@ -36,7 +36,7 @@ Key components:
    ```bash
    # WRONG - simple name won't match FQN
    -Dintellij.build.test.patterns=MyTest
-   
+
    # CORRECT - use wildcard or FQN
    -Dintellij.build.test.patterns=*MyTest
    -Dintellij.build.test.patterns=com.example.MyTest
@@ -492,7 +492,7 @@ This is a TeamCity convention for passing properties to nested processes.
    - Applied to EVERY class in classpath (must be fast)
 
 4. **PostDiscoveryFilter** (JUnit 5) - Post-discovery filter
-   - Calls `TestCaseLoader.isClassIncluded(className)`  
+   - Calls `TestCaseLoader.isClassIncluded(className)`
    - Checks bucketing (which runner should execute this test)
 
 5. **TestCaseLoader.fillTestCases()** (JUnit 3/4) - Scans classpath roots
@@ -509,7 +509,7 @@ This is a TeamCity convention for passing properties to nested processes.
 // className: "org.example.MyTest"
 "MyTest".matches("org.example.MyTest")  // Returns FALSE
 
-// Pattern: "*MyTest" → Regex: ".*MyTest"  
+// Pattern: "*MyTest" → Regex: ".*MyTest"
 ".*MyTest".matches("org.example.MyTest")  // Returns TRUE
 ```
 
