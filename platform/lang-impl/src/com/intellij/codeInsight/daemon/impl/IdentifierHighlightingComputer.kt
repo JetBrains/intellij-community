@@ -80,7 +80,9 @@ class IdentifierHighlightingComputer(
       val readUsages = highlightUsagesHandler.readUsages
       for (readUsage in readUsages) {
         @Suppress("SENSELESS_COMPARISON")
-        LOG.assertTrue(readUsage != null, "null text range from $highlightUsagesHandler")
+        if (readUsage == null) {
+          LOG.error("null text range received from $highlightUsagesHandler")
+        }
       }
       myInfos.addAll(readUsages.map { u: TextRange ->
         IdentifierOccurrence(u, HighlightInfoType.ELEMENT_UNDER_CARET_READ)
