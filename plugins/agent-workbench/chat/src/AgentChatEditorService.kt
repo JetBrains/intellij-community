@@ -42,6 +42,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 
 private class AgentChatEditorServiceLog
 
@@ -401,10 +402,7 @@ suspend fun openChat(
   }
   val focusDeferredStartContent = deferredStartContent != null
   withContext(Dispatchers.UiWithModelAccess) {
-    manager.openFile(file = file, options = FileEditorOpenOptions(requestFocus = !focusDeferredStartContent, reuseOpen = true))
-    if (focusDeferredStartContent) {
-      focusOpenChatEditorPreferredComponent(project = project, manager = manager, file = file)
-    }
+    manager.openFile(file = file, options = FileEditorOpenOptions(requestFocus = true, reuseOpen = true))
     if (existing != null && hasExplicitInitialPromptDelivery && !file.initialMessageSent) {
       flushPendingInitialMessageForOpenEditors(manager = manager, file = file)
     }
@@ -419,6 +417,16 @@ suspend fun openChat(
     service<AgentChatOpenTabsPresentationStateService>().refreshOpenTabs()
     if (AgentSessionProviders.find(pendingProvider)?.emitsScopedRefreshSignals == true) {
       notifyAgentChatScopedRefresh(provider = pendingProvider, projectPath = projectPath)
+    }
+  }
+
+  if (focusDeferredStartContent) {
+    withContext(Dispatchers.UiWithModelAccess) {
+      focusOpenChatEditorPreferredComponent(project = project, manager = manager, file = file)
+    }
+    withContext(Dispatchers.EDT) {
+      yield()
+      focusOpenChatEditorPreferredComponent(project = project, manager = manager, file = file)
     }
   }
 
@@ -1159,7 +1167,7 @@ private fun focusOpenChatEditorPreferredComponent(
                  .firstOrNull()
                ?: return
   val component = editor.preferredFocusedComponent
-  IdeFocusManager.getInstance(project).requestFocus(component, true)
+  IdeFocusManager.getInstance(project).requestFocusInProject(component, project)
 }
 
 private fun refreshOpenEditors(

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.engine.ui
 
+import com.intellij.agent.workbench.chat.AgentChatPreferredFocusableContent
 import com.intellij.agent.workbench.engine.core.RuntimeKind
 import com.intellij.agent.workbench.engine.core.ThreadActionPrompt
 import com.intellij.agent.workbench.engine.core.ThreadActionPromptButton
@@ -76,7 +77,7 @@ internal class AgentAcpThreadScreen(
   private val project: Project,
   private val threadId: ThreadId,
   parent: Disposable,
-) : JPanel(BorderLayout()) {
+) : JPanel(BorderLayout()), AgentChatPreferredFocusableContent {
   private val statusLabel = JBLabel().apply { font = JBFont.label().asBold() }
   private val subtitleLabel = JBLabel().apply { foreground = UIUtil.getContextHelpForeground() }
   private var renderCounter = 0
@@ -115,6 +116,8 @@ internal class AgentAcpThreadScreen(
       }
     })
   }
+
+  override val preferredFocusedComponent: JComponent = inputArea
 
   init {
     border = JBUI.Borders.empty(4)

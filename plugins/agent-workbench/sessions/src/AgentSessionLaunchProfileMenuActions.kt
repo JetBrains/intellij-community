@@ -242,7 +242,15 @@ fun appendManageLaunchProfilesRow(rows: MutableList<AgentWorkbenchPopupRow>, eve
 }
 
 fun quickStartActionText(item: AgentSessionProviderMenuItem): @Nls String {
-  return AgentSessionsBundle.message(item.bridge.quickStartActionTextKey, quickStartLabel(item))
+  return newThreadQuickActionText(item.bridge.quickStartActionTextKey, quickStartLabel(item))
+}
+
+fun newThreadActionText(agentName: @Nls String): @Nls String {
+  return newThreadQuickActionText("action.AgentWorkbenchSessions.NewThreadQuick.text", agentName)
+}
+
+private fun newThreadQuickActionText(key: String, agentName: @Nls String): @Nls String {
+  return AgentSessionsBundle.message(key, agentName)
 }
 
 fun quickStartLabel(item: AgentSessionProviderMenuItem): @Nls String {
@@ -251,7 +259,7 @@ fun quickStartLabel(item: AgentSessionProviderMenuItem): @Nls String {
 }
 
 fun launchProfileActionText(item: AgentSessionLaunchProfileMenuItem): @Nls String {
-  if (item.profile.kind == AgentPromptLaunchProfileKind.BUILT_IN) {
+  if (item.profile.kind == AgentPromptLaunchProfileKind.BUILT_IN && !item.isAcpProfile()) {
     return quickStartActionText(item.menuItem)
   }
   return AgentSessionsBundle.message("action.AgentWorkbenchSessions.NewThreadProfileQuick.text", item.profile.name)

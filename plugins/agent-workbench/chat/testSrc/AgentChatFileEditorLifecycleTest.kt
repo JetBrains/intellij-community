@@ -476,6 +476,42 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
+  fun providerCustomContentSuppliesPreferredFocusedComponent() {
+    val provider = AgentSessionProvider.from("custom")
+    val file = testFile(
+      threadIdentity = buildAgentThreadIdentity(provider.value, "thread-1"),
+      shellCommand = emptyList(),
+    ).also { file ->
+      file.updateThreadId("thread-1")
+    }
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    val inputComponent = JTextArea()
+    val customContent = object : JPanel(), AgentChatPreferredFocusableContent {
+      override val preferredFocusedComponent: JComponent = inputComponent
+    }
+    val customContentProvider = object : AgentChatCustomContentProvider {
+      override val provider: AgentSessionProvider = provider
+
+      override fun createComponent(project: Project, threadIdentity: String, threadId: String, parent: Disposable): JComponent {
+        return customContent
+      }
+    }
+    val editor = testEditor(
+      file = file,
+      terminalTabs = terminalTabs,
+      customContentProviderResolver = { candidate ->
+        if (candidate == provider) customContentProvider else null
+      },
+    )
+
+    editor.selectNotify()
+
+    assertThat(editor.component.components).containsExactly(customContent)
+    assertThat(editor.preferredFocusedComponent).isSameAs(inputComponent)
+    assertThat(terminalTabs.createCalls).isZero()
+  }
+
+  @Test
   fun defaultDeferredStartWaitingStateUsesCenteredDelayedProgress() {
     val file = testFile()
     file.updateDeferredStartState(

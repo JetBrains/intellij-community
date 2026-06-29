@@ -129,6 +129,8 @@ internal class AgentSessionsMainToolbarNewThreadAction private constructor(
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
+  protected override fun useDynamicSplitButton(): Boolean = false
+
   public override fun getMainAction(e: AnActionEvent): AnAction? {
     val context = resolveContext(e) ?: return null
     val menuModel = buildAgentSessionLaunchProfileMenuModel(allBridges(), context.project)
@@ -399,6 +401,8 @@ class AgentSessionsDirectPathNewThreadAction private constructor(
   )
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  protected override fun useDynamicSplitButton(): Boolean = false
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     val component = super.createCustomComponent(presentation, place)

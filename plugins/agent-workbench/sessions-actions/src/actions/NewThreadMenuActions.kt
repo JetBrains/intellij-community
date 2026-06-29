@@ -21,6 +21,7 @@ import com.intellij.agent.workbench.prompt.ui.emptyState.createAgentWorkbenchInl
 import com.intellij.agent.workbench.prompt.ui.emptyState.createAgentWorkbenchInlineNewThreadPromptComponent
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.projectLabelForPath
+import com.intellij.agent.workbench.sessions.newThreadActionText
 import com.intellij.platform.ai.agent.sessions.core.providers.initialMessageRequestForLaunchProfile
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.service.AgentDeferredNewSessionHandle
@@ -28,8 +29,6 @@ import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.ui.AgentWorkbenchActionIds
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
-import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionOutOfBandLaunch
-import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionOutOfBandLaunchContext
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 import com.intellij.openapi.components.Service
@@ -46,6 +45,7 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.Nls
 
 internal const val AGENT_WORKBENCH_NEW_THREAD_INLINE_PROMPT_REGISTRY_KEY: String = "agent.workbench.new.thread.inline.prompt"
 
@@ -73,7 +73,7 @@ internal fun createNewThreadViaService(
 ) {
   val provider = AgentSessionProvider.from(profile.providerId)
   val descriptor = AgentSessionProviders.find(provider)
-  if (!shouldOpenInlineNewThreadPrompt(profile = profile, provider = provider, descriptor = descriptor)) {
+  if (!shouldOpenInlineNewThreadPrompt(descriptor = descriptor)) {
     createNewThreadDirectly(
       path = path,
       profile = profile,
@@ -93,33 +93,18 @@ internal fun createNewThreadViaService(
 }
 
 private fun shouldOpenInlineNewThreadPrompt(
-  profile: AgentPromptLaunchProfile,
-  provider: AgentSessionProvider,
   descriptor: AgentSessionProviderDescriptor?,
 ): Boolean {
   return shouldOpenInlineNewThreadPrompt(
     registryEnabled = RegistryManager.getInstance().get(AGENT_WORKBENCH_NEW_THREAD_INLINE_PROMPT_REGISTRY_KEY).asBoolean(),
     descriptor = descriptor,
-    hasOutOfBandLaunch = hasOutOfBandLaunch(profile = profile, provider = provider),
   )
 }
 
 internal fun shouldOpenInlineNewThreadPrompt(
   registryEnabled: Boolean,
   descriptor: AgentSessionProviderDescriptor?,
-  hasOutOfBandLaunch: Boolean = false,
-): Boolean = registryEnabled && descriptor?.supportsPromptLaunch == true && !hasOutOfBandLaunch
-
-private fun hasOutOfBandLaunch(profile: AgentPromptLaunchProfile, provider: AgentSessionProvider): Boolean {
-  val context = AgentSessionOutOfBandLaunchContext(
-    provider = provider,
-    launchMode = profile.launchMode,
-    launchProfileId = profile.id,
-    launchTargetId = profile.launchTargetId,
-    generationSettings = profile.generationSettings,
-  )
-  return AgentSessionOutOfBandLaunch.forContext(context) != null
-}
+): Boolean = registryEnabled && descriptor?.supportsPromptLaunch == true
 
 private fun createNewThreadDirectly(
   path: String,
@@ -273,13 +258,13 @@ internal class AgentSessionsInlineNewThreadPromptService internal constructor(
     handleDeferred: CompletableDeferred<AgentDeferredNewSessionHandle>,
     invocationData: AgentPromptInvocationData?,
   ): AgentChatDeferredStartContent {
-    val launcher = InlineNewThreadPromptLauncherBridge(projectPath = path, handleProvider = { handleDeferred.await() })
-    val component = createAgentWorkbenchInlineNewThreadPromptComponent(
-      project = project,
-      invocationData = (invocationData ?: defaultNewThreadInvocationData(project, entryPoint)).copy(project = project),
-      launcherProvider = { launcher },
-      initialLaunchProfileId = profile.id,
-    )
+      val launcher = InlineNewThreadPromptLauncherBridge(projectPath = path, handleProvider = { handleDeferred.await() })
+      val component = createAgentWorkbenchInlineNewThreadPromptComponent(
+        project = project,
+        invocationData = (invocationData ?: defaultNewThreadInvocationData(project, entryPoint, profile.name)).copy(project = project),
+        launcherProvider = { launcher },
+        initialLaunchProfileId = profile.id,
+      )
     return AgentChatDeferredStartContent(
       component = createAgentWorkbenchInlinePromptEditorHost(component),
       preferredFocusedComponent = component.preferredFocusedComponent,
@@ -288,11 +273,15 @@ internal class AgentSessionsInlineNewThreadPromptService internal constructor(
   }
 }
 
-private fun defaultNewThreadInvocationData(project: Project, entryPoint: AgentWorkbenchEntryPoint): AgentPromptInvocationData {
+private fun defaultNewThreadInvocationData(
+  project: Project,
+  entryPoint: AgentWorkbenchEntryPoint,
+  profileName: @Nls String,
+): AgentPromptInvocationData {
   return AgentPromptInvocationData(
     project = project,
     actionId = AgentWorkbenchActionIds.Sessions.MainToolbar.NEW_THREAD,
-    actionText = AgentSessionsBundle.message("action.AgentWorkbenchSessions.MainToolbar.NewThread.text"),
+    actionText = newThreadActionText(profileName),
     actionPlace = entryPoint.name,
     invokedAtMs = System.currentTimeMillis(),
   )
