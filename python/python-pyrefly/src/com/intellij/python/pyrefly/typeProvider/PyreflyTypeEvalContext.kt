@@ -26,16 +26,14 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTypeParameter
 import com.jetbrains.python.psi.PyTypedElement
-import com.jetbrains.python.psi.impl.ParamHelper
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.types.PyAnyType
-import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyCallableParameterImpl
+import com.jetbrains.python.psi.types.PyCallableParameterListTypeImpl
 import com.jetbrains.python.psi.types.PyCallableType
+import com.jetbrains.python.psi.types.PyCallableTypeImpl
 import com.jetbrains.python.psi.types.PyClassTypeImpl
 import com.jetbrains.python.psi.types.PyCollectionTypeImpl
-import com.jetbrains.python.psi.types.PyFunctionType
-import com.jetbrains.python.psi.types.PyFunctionTypeImpl
 import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyModuleType
 import com.jetbrains.python.psi.types.PyNeverType
@@ -252,7 +250,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     pyElement: PyTypedElement,
     callable: PyCallable,
     tspType: PyreflyLsp4jServer.TspType,
-  ): PyFunctionType {
+  ): PyCallableType {
     val psiParams = callable.parameterList.parameters
     val substituted = tspType.specializedTypes?.parameterTypes
     val parameters = psiParams.mapIndexed { i, p ->
@@ -261,21 +259,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     }
     val returnTsp = tspType.specializedTypes?.returnType ?: tspType.returnType
     val returnType = returnTsp?.let { buildPyType(pyElement, it)?.get() }
-    return PyreflyFunctionType(callable, parameters, returnType)
-  }
-
-  private class PyreflyFunctionType(
-    callable: PyCallable,
-    parameters: List<PyCallableParameter>,
-    private val tspReturnType: PyType?,
-  ) : PyFunctionTypeImpl(callable, parameters) {
-    override fun getReturnType(context: TypeEvalContext): PyType? = tspReturnType
-
-    override fun dropSelf(context: TypeEvalContext): PyFunctionType {
-      val params = getParameters(context)
-      val newParams = ParamHelper.dropSelf(params)
-      return if (newParams.size < params.size) PyreflyFunctionType(callable, newParams, tspReturnType) else this
-    }
+    return PyCallableTypeImpl(null, PyCallableParameterListTypeImpl(parameters), returnType, callable, null)
   }
 
   private fun buildPyUnionType(pyElement: PyTypedElement, tspType: PyreflyLsp4jServer.TspType): Ref<PyType?>? {
