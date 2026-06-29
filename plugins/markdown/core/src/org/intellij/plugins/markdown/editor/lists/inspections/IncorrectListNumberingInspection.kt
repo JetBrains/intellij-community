@@ -38,10 +38,11 @@ class IncorrectListNumberingInspection: LocalInspectionTool() {
           return
         }
         val listNumberingIsSequential = settings.state.listNumberingType == ListNumberingType.SEQUENTIAL
+        val startNumber = list.continuationStartNumber()?.takeIf { listNumberingIsSequential } ?: 1
         val quickFix by lazy { ListNumberingFix(list, listNumberingIsSequential) }
         for ((index, item) in list.items.withIndex()) {
           val actualNumber = item.obtainMarkerNumber() ?: continue
-          val expectedNumber = if (listNumberingIsSequential) index + 1 else 1
+          val expectedNumber = if (listNumberingIsSequential) startNumber + index else 1
           if (expectedNumber != actualNumber) {
             val markerElement = item.markerElement!!
             holder.registerProblem(
@@ -54,6 +55,15 @@ class IncorrectListNumberingInspection: LocalInspectionTool() {
         }
       }
     }
+  }
+
+  private fun MarkdownList.continuationStartNumber(): Int? {
+    val first = items.firstOrNull()?.obtainMarkerNumber()?.takeIf { it > 1 } ?: return null
+    val precedingLast = generateSequence(prevSibling) { it.prevSibling }
+      .filterIsInstance<MarkdownList>()
+      .firstOrNull { it.hasType(MarkdownElementTypes.ORDERED_LIST) }
+      ?.items?.lastOrNull()?.obtainMarkerNumber()
+    return first.takeIf { precedingLast == first - 1 }
   }
 
   private class ListNumberingFix(list: MarkdownList, private val sequentially: Boolean): LocalQuickFixOnPsiElement(list) {
