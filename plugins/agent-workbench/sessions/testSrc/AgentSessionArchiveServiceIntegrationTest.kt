@@ -991,7 +991,13 @@ class AgentSessionArchiveServiceIntegrationTest {
 
           val threadToArchive = service.state.value.projects.first().threads.first { it.id == "codex-1" }
           val target = ArchiveThreadTarget.Thread(path = PROJECT_PATH, provider = threadToArchive.provider, threadId = threadToArchive.id)
-          archiveService.archiveThreadsForTest(listOf(target))
+          val archiveCompleted = CompletableDeferred<Unit>()
+          archiveService.archiveThreads(
+            targets = listOf(target),
+            entryPoint = AgentWorkbenchEntryPoint.TREE_POPUP,
+            onComplete = { archiveCompleted.complete(Unit) },
+          )
+          archiveCompleted.await()
           waitForCondition {
             service.state.value.projects.firstOrNull()?.threads?.none { it.id == "codex-1" } == true
           }
