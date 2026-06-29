@@ -1,5 +1,5 @@
 import { o as __toESM } from "./rolldown-runtime.js";
-import { M as require_jsx_runtime, Y as require_react } from "./assistant-ui-core.js";
+import { V as require_jsx_runtime, it as require_react } from "./assistant-ui-core.js";
 import "./devlop.js";
 import { n as VFileMessage, t as toJsxRuntime } from "./hast-util-to-jsx-runtime.js";
 import { n as visit } from "./hast-util-raw.js";

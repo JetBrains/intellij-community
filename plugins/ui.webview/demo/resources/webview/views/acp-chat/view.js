@@ -1,7 +1,7 @@
 const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./assets/mermaid.js","./assets/rolldown-runtime.js","./assets/braintree-sanitize-url.js","./assets/iconify-utils.js","./assets/chevrotain-allstar.js","./assets/chevrotain.js","./assets/cytoscape-cose-bilkent.js","./assets/cose-base.js","./assets/cytoscape-fcose.js","./assets/cytoscape.js","./assets/d3-array.js","./assets/d3-axis.js","./assets/d3.js","./assets/d3-format.js","./assets/d3-hierarchy.js","./assets/d3-interpolate.js","./assets/d3-color.js","./assets/d3-sankey.js","./assets/d3-path.js","./assets/d3-scale-chromatic.js","./assets/d3-scale.js","./assets/d3-selection.js","./assets/d3-shape.js","./assets/dagre-d3-es.js","./assets/dayjs.js","./assets/dompurify.js","./assets/khroma.js","./assets/langium.js","./assets/marked.js"])))=>i.map(i=>d[i]);
 import { o as __toESM } from "./assets/rolldown-runtime.js";
-import { M as require_jsx_runtime, T as useExternalStoreRuntime, Y as require_react } from "./assets/assistant-ui-core.js";
-import { a as message_exports, b as AssistantRuntimeProvider, c as composer_exports, i as thread_exports, l as useTriggerPopoverScopeContext, n as useMessagePartReasoning, o as useSmooth, r as selectionToolbar_exports, s as useMessagePartText, t as unstable_useSlashCommandAdapter, u as attachment_exports, v as useMessage, y as useComposerRuntime } from "./assets/assistant-ui-react.js";
+import { P as useExternalStoreRuntime, V as require_jsx_runtime, it as require_react } from "./assets/assistant-ui-core.js";
+import { S as AssistantRuntimeProvider, a as threadList_exports, b as useMessage, c as useSmooth, d as useTriggerPopoverScopeContext, f as attachment_exports, i as threadListItem_exports, l as useMessagePartText, n as useMessagePartReasoning, o as thread_exports, r as selectionToolbar_exports, s as message_exports, t as unstable_useSlashCommandAdapter, u as composer_exports, x as useComposerRuntime } from "./assets/assistant-ui-react.js";
 import { t as require_client } from "./assets/react-dom.js";
 import { i, n as A, r as b, t as i$1 } from "./assets/lit.js";
 import { a as SelectItem$1, c as SelectPortal, d as SelectTrigger$1, i as SelectIcon, l as SelectScrollDownButton$1, n as SelectContent$1, o as SelectItemIndicator, p as SelectViewport, s as SelectItemText, t as Select$1, u as SelectScrollUpButton$1 } from "./assets/radix-ui-react-select.js";
@@ -624,11 +624,21 @@ var AcpSession = class {
 	sessionId = null;
 	cwd = ".";
 	authMethods = [];
+	capabilities = emptySessionCapabilities();
 	io = null;
 	sink = null;
 	generation = 0;
 	get isActive() {
 		return this.connection != null && this.sessionId != null;
+	}
+	get activeSessionId() {
+		return this.sessionId;
+	}
+	get workingDirectory() {
+		return this.cwd;
+	}
+	get sessionCapabilities() {
+		return this.capabilities;
 	}
 	/** Spawn + connect the agent and attempt to open a session. */
 	async start(agentId, sink) {
@@ -701,6 +711,49 @@ var AcpSession = class {
 			text
 		}]);
 	}
+	async listSessions(cursor) {
+		const connection = this.connection;
+		if (!connection) throw new Error("No agent connection");
+		if (!this.capabilities.list || typeof connection.listSessions !== "function") throw new Error("The selected ACP agent does not support chat history.");
+		const response = await connection.listSessions({
+			cwd: this.cwd,
+			cursor: cursor ?? void 0
+		});
+		return {
+			sessions: Array.isArray(response?.sessions) ? response.sessions.map((session) => toSessionInfoView(session, this.cwd)).filter(isSessionInfoView) : [],
+			nextCursor: stringOrNull(response?.nextCursor)
+		};
+	}
+	async loadSession(sessionInfo) {
+		const connection = this.connection;
+		if (!connection) throw new Error("No agent connection");
+		if (!this.capabilities.load || typeof connection.loadSession !== "function") throw new Error("The selected ACP agent does not support loading existing chats.");
+		const previousSessionId = this.sessionId;
+		const previousCwd = this.cwd;
+		const cwd = sessionInfo.cwd || this.cwd;
+		this.sessionId = sessionInfo.sessionId;
+		this.cwd = cwd;
+		try {
+			const session = await connection.loadSession({
+				sessionId: sessionInfo.sessionId,
+				cwd,
+				additionalDirectories: sessionInfo.additionalDirectories ?? [],
+				mcpServers: []
+			});
+			this.sink?.onSessionModes(toSessionModeViews(session?.modes?.availableModes), stringOrNull(session?.modes?.currentModeId));
+			this.sink?.onConfigOptions(toConfigOptionViews(session?.configOptions));
+		} catch (error) {
+			this.sessionId = previousSessionId;
+			this.cwd = previousCwd;
+			throw error;
+		}
+	}
+	async deleteSession(sessionId) {
+		const connection = this.connection;
+		if (!connection) throw new Error("No agent connection");
+		if (!this.capabilities.delete || typeof connection.deleteSession !== "function") throw new Error("The selected ACP agent does not support deleting chats.");
+		await connection.deleteSession({ sessionId });
+	}
 	async setMode(modeId) {
 		const connection = this.connection;
 		const sessionId = this.sessionId;
@@ -739,6 +792,7 @@ var AcpSession = class {
 		this.connection = null;
 		this.sessionId = null;
 		this.sink = null;
+		this.capabilities = emptySessionCapabilities();
 		const io = this.io;
 		this.io = null;
 		try {
@@ -794,6 +848,7 @@ var AcpSession = class {
 			this.connection = connection;
 			this.sink = sink;
 			this.authMethods = Array.isArray(init?.authMethods) ? init.authMethods : [];
+			this.capabilities = toSessionCapabilitiesView(init?.agentCapabilities);
 			sink.onPromptCapabilities(toPromptCapabilitiesView(init?.agentCapabilities?.promptCapabilities));
 		} catch (error) {
 			io.close();
@@ -808,6 +863,9 @@ var AcpSession = class {
 function handleUpdate(update, sink) {
 	if (!update) return;
 	switch (update.sessionUpdate) {
+		case "user_message_chunk":
+			sink.onUserMessage(textOf(update.content));
+			break;
 		case "agent_message_chunk":
 			sink.onMessageChunk(textOf(update.content));
 			break;
@@ -837,6 +895,9 @@ function handleUpdate(update, sink) {
 			break;
 		case "config_option_update":
 			sink.onConfigOptions(toConfigOptionViews(update.configOptions));
+			break;
+		case "session_info_update":
+			sink.onSessionInfoUpdate(toSessionInfoUpdateView(update));
 			break;
 		default: break;
 	}
@@ -922,6 +983,45 @@ function toPromptCapabilitiesView(capabilities) {
 		audio: capabilities?.audio === true,
 		embeddedContext: capabilities?.embeddedContext === true
 	};
+}
+function emptySessionCapabilities() {
+	return {
+		list: false,
+		load: false,
+		delete: false,
+		resume: false,
+		close: false
+	};
+}
+function toSessionCapabilitiesView(agentCapabilities) {
+	const sessionCapabilities = agentCapabilities?.sessionCapabilities;
+	return {
+		list: sessionCapabilities?.list != null,
+		load: agentCapabilities?.loadSession === true,
+		delete: sessionCapabilities?.delete != null,
+		resume: sessionCapabilities?.resume != null,
+		close: sessionCapabilities?.close != null
+	};
+}
+function toSessionInfoView(session, fallbackCwd) {
+	const sessionId = typeof session?.sessionId === "string" ? session.sessionId : "";
+	if (!sessionId) return null;
+	return {
+		sessionId,
+		cwd: stringOrDefault(session.cwd, fallbackCwd),
+		additionalDirectories: Array.isArray(session.additionalDirectories) ? session.additionalDirectories.filter((dir) => typeof dir === "string") : void 0,
+		title: stringOrNull(session.title),
+		updatedAt: stringOrNull(session.updatedAt)
+	};
+}
+function isSessionInfoView(session) {
+	return session != null;
+}
+function toSessionInfoUpdateView(update) {
+	const view = {};
+	if (Object.prototype.hasOwnProperty.call(update, "title")) view.title = stringOrNull(update.title);
+	if (Object.prototype.hasOwnProperty.call(update, "updatedAt")) view.updatedAt = stringOrNull(update.updatedAt);
+	return view;
 }
 function toSessionModeViews(modes) {
 	if (!Array.isArray(modes)) return [];
@@ -1082,8 +1182,16 @@ function useAcpChat() {
 	const [commands, setCommands] = (0, import_react.useState)([]);
 	const [permission, setPermission] = (0, import_react.useState)(null);
 	const [auth, setAuth] = (0, import_react.useState)(null);
+	const [sessions, setSessions] = (0, import_react.useState)([]);
+	const [activeSessionId, setActiveSessionId] = (0, import_react.useState)(null);
+	const [nextCursor, setNextCursor] = (0, import_react.useState)(null);
+	const [chatListLoading, setChatListLoading] = (0, import_react.useState)(false);
+	const [chatListSupported, setChatListSupported] = (0, import_react.useState)(false);
+	const [chatListCanDelete, setChatListCanDelete] = (0, import_react.useState)(false);
 	const sessionRef = (0, import_react.useRef)(null);
 	const turnRef = (0, import_react.useRef)(null);
+	const lastChunkRoleRef = (0, import_react.useRef)(null);
+	const activeSessionIdRef = (0, import_react.useRef)(null);
 	const plansByIdRef = (0, import_react.useRef)(/* @__PURE__ */ new Map());
 	const assistantSeqRef = (0, import_react.useRef)(0);
 	const authResolveRef = (0, import_react.useRef)(null);
@@ -1098,6 +1206,9 @@ function useAcpChat() {
 			cancelled = true;
 		};
 	}, []);
+	(0, import_react.useEffect)(() => {
+		activeSessionIdRef.current = activeSessionId;
+	}, [activeSessionId]);
 	(0, import_react.useEffect)(() => () => {
 		authResolveRef.current?.(null);
 		sessionRef.current?.stop();
@@ -1154,24 +1265,111 @@ function useAcpChat() {
 		setCurrentModeId(null);
 		setCommands([]);
 	}, []);
-	const sink = (0, import_react.useMemo)(() => ({
-		onMessageChunk(text) {
-			const turn = turnRef.current;
-			if (turn) {
-				turn.text += text;
-				flushTurn();
+	const resetActiveThreadUi = (0, import_react.useCallback)(() => {
+		setMessages([]);
+		turnRef.current = null;
+		lastChunkRoleRef.current = null;
+		clearPlans();
+		setIsRunning(false);
+	}, [clearPlans]);
+	const ensureAssistantTurn = (0, import_react.useCallback)(() => {
+		let turn = turnRef.current;
+		if (!turn) {
+			turn = {
+				reasoning: "",
+				text: "",
+				tools: []
+			};
+			turnRef.current = turn;
+			setMessages((previous) => [...previous, {
+				id: `assistant-${++assistantSeqRef.current}`,
+				role: "assistant",
+				content: []
+			}]);
+		}
+		lastChunkRoleRef.current = "assistant";
+		return turn;
+	}, []);
+	const appendUserChunk = (0, import_react.useCallback)((text) => {
+		if (!text) return;
+		turnRef.current = null;
+		clearPlans();
+		setMessages((previous) => {
+			const next = previous.slice();
+			const last = next[next.length - 1];
+			if (lastChunkRoleRef.current === "user" && last?.role === "user") {
+				next[next.length - 1] = appendTextToMessage(last, text);
+				return next;
 			}
+			next.push({
+				id: `user-${++assistantSeqRef.current}`,
+				role: "user",
+				content: textMessageContent(text)
+			});
+			return next;
+		});
+		lastChunkRoleRef.current = "user";
+	}, [clearPlans]);
+	const upsertSession = (0, import_react.useCallback)((sessionInfo) => {
+		setSessions((previous) => mergeSessions(previous, [sessionInfo]));
+	}, []);
+	const updateActiveSessionInfo = (0, import_react.useCallback)((update) => {
+		const sessionId = activeSessionIdRef.current;
+		if (!sessionId) return;
+		const activeSession = sessionRef.current;
+		setSessions((previous) => {
+			let found = false;
+			const next = previous.map((session) => {
+				if (session.sessionId !== sessionId) return session;
+				found = true;
+				return applySessionInfoUpdate(session, update);
+			});
+			if (!found && activeSession?.activeSessionId === sessionId) next.unshift(applySessionInfoUpdate({
+				sessionId,
+				cwd: activeSession.workingDirectory
+			}, update));
+			return next;
+		});
+	}, []);
+	const loadSessionsPage = (0, import_react.useCallback)(async (session, cursor, append) => {
+		setChatListLoading(true);
+		try {
+			const response = await session.listSessions(cursor);
+			if (sessionRef.current !== session) return;
+			const activeId = session.activeSessionId;
+			let nextSessions = response.sessions;
+			if (activeId && !nextSessions.some((item) => item.sessionId === activeId)) nextSessions = [{
+				sessionId: activeId,
+				cwd: session.workingDirectory,
+				title: "Current chat",
+				updatedAt: null
+			}, ...nextSessions];
+			setSessions((previous) => append ? mergeSessions(previous, nextSessions) : nextSessions);
+			setNextCursor(response.nextCursor);
+			activeSessionIdRef.current = activeId;
+			setActiveSessionId(activeId);
+		} catch (error) {
+			if (sessionRef.current === session) setStatus(errorText(error));
+		} finally {
+			if (sessionRef.current === session) setChatListLoading(false);
+		}
+	}, []);
+	const sink = (0, import_react.useMemo)(() => ({
+		onUserMessage(text) {
+			appendUserChunk(text);
+		},
+		onMessageChunk(text) {
+			const turn = ensureAssistantTurn();
+			turn.text += text;
+			flushTurn();
 		},
 		onThoughtChunk(text) {
-			const turn = turnRef.current;
-			if (turn) {
-				turn.reasoning += text;
-				flushTurn();
-			}
+			const turn = ensureAssistantTurn();
+			turn.reasoning += text;
+			flushTurn();
 		},
 		onToolCall(view) {
-			const turn = turnRef.current;
-			if (!turn) return;
+			const turn = ensureAssistantTurn();
 			const index = turn.tools.findIndex((t) => t.toolCallId === view.toolCallId);
 			if (index >= 0) {
 				const existing = turn.tools[index];
@@ -1214,6 +1412,9 @@ function useAcpChat() {
 		onCommands(nextCommands) {
 			setCommands(nextCommands);
 		},
+		onSessionInfoUpdate(update) {
+			updateActiveSessionInfo(update);
+		},
 		requestPermission(view) {
 			return new Promise((resolve) => {
 				setPermission({
@@ -1236,8 +1437,109 @@ function useAcpChat() {
 			setIsRunning(false);
 			authResolveRef.current?.(null);
 		}
-	}), [flushTurn, publishPlans]);
+	}), [
+		appendUserChunk,
+		ensureAssistantTurn,
+		flushTurn,
+		publishPlans,
+		updateActiveSessionInfo
+	]);
 	const attachmentAdapter = (0, import_react.useMemo)(() => createAttachmentAdapter(promptCapabilities), [promptCapabilities]);
+	const switchToNewThread = (0, import_react.useCallback)(async () => {
+		const session = sessionRef.current;
+		if (!session) {
+			setStatus("Select an agent to start a session first.");
+			return;
+		}
+		resetActiveThreadUi();
+		setStatus("");
+		const outcome = await session.openSession();
+		if (outcome.kind !== "ready") {
+			setStatus(outcome.message);
+			return;
+		}
+		const sessionId = session.activeSessionId;
+		activeSessionIdRef.current = sessionId;
+		setActiveSessionId(sessionId);
+		if (sessionId) upsertSession({
+			sessionId,
+			cwd: session.workingDirectory,
+			title: "New chat",
+			updatedAt: null
+		});
+		if (chatListSupported) loadSessionsPage(session, null, false);
+	}, [
+		chatListSupported,
+		loadSessionsPage,
+		resetActiveThreadUi,
+		upsertSession
+	]);
+	const switchToSession = (0, import_react.useCallback)(async (threadId) => {
+		const session = sessionRef.current;
+		const sessionInfo = sessions.find((item) => item.sessionId === threadId);
+		if (!session || !sessionInfo) {
+			setStatus("The selected chat is not available.");
+			return;
+		}
+		const previousActiveSessionId = activeSessionIdRef.current;
+		resetActiveThreadUi();
+		activeSessionIdRef.current = threadId;
+		setActiveSessionId(threadId);
+		setStatus("");
+		setIsRunning(true);
+		try {
+			await session.loadSession(sessionInfo);
+		} catch (error) {
+			activeSessionIdRef.current = previousActiveSessionId;
+			setActiveSessionId(previousActiveSessionId);
+			setStatus(errorText(error));
+		} finally {
+			setIsRunning(false);
+		}
+	}, [resetActiveThreadUi, sessions]);
+	const deleteChat = (0, import_react.useCallback)(async (threadId) => {
+		const session = sessionRef.current;
+		if (!session) {
+			setStatus("Select an agent to start a session first.");
+			return;
+		}
+		try {
+			await session.deleteSession(threadId);
+			setSessions((previous) => previous.filter((item) => item.sessionId !== threadId));
+			if (activeSessionIdRef.current === threadId) await switchToNewThread();
+		} catch (error) {
+			setStatus(errorText(error));
+		}
+	}, [switchToNewThread]);
+	const loadMoreChats = (0, import_react.useCallback)(() => {
+		const session = sessionRef.current;
+		if (!session || !nextCursor || chatListLoading) return;
+		loadSessionsPage(session, nextCursor, true);
+	}, [
+		chatListLoading,
+		loadSessionsPage,
+		nextCursor
+	]);
+	const threadListAdapter = (0, import_react.useMemo)(() => {
+		if (!chatListSupported) return void 0;
+		return {
+			threadId: activeSessionId ?? void 0,
+			isLoading: chatListLoading,
+			threads: sessions.map(toThreadListData),
+			onSwitchToNewThread: switchToNewThread,
+			onSwitchToThread: switchToSession,
+			onDelete: chatListCanDelete ? deleteChat : void 0
+		};
+	}, [
+		activeSessionId,
+		chatListCanDelete,
+		chatListLoading,
+		chatListSupported,
+		deleteChat,
+		sessions,
+		switchToNewThread,
+		switchToSession
+	]);
 	const onNew = (0, import_react.useCallback)(async (message) => {
 		const session = sessionRef.current;
 		if (!session || !session.isActive) {
@@ -1258,10 +1560,7 @@ function useAcpChat() {
 			{
 				id: `user-${assistantSeqRef.current}`,
 				role: "user",
-				content: text ? [{
-					type: "text",
-					text
-				}] : [],
+				content: text ? textMessageContent(text) : [],
 				attachments: message.attachments,
 				metadata: message.metadata
 			},
@@ -1276,6 +1575,7 @@ function useAcpChat() {
 			text: "",
 			tools: []
 		};
+		lastChunkRoleRef.current = "assistant";
 		clearPlans();
 		setStatus("");
 		setIsRunning(true);
@@ -1295,17 +1595,159 @@ function useAcpChat() {
 		}
 		setIsRunning(false);
 	}, []);
+	const runtime = useExternalStoreRuntime({
+		isRunning,
+		messages,
+		setMessages: (next) => setMessages([...next]),
+		unstable_capabilities: { copy: true },
+		convertMessage: (message) => message,
+		adapters: {
+			attachments: attachmentAdapter,
+			threadList: threadListAdapter
+		},
+		onNew,
+		onCancel
+	});
+	const selectAgent = (0, import_react.useCallback)((agentId) => {
+		setStarting(true);
+		setStatus("");
+		const previous = sessionRef.current;
+		const session = new AcpSession();
+		sessionRef.current = session;
+		(async () => {
+			try {
+				await previous?.stop();
+				resetActiveThreadUi();
+				resetSessionMetadata();
+				setPermission(null);
+				setAuth(null);
+				setSessions([]);
+				activeSessionIdRef.current = null;
+				setActiveSessionId(null);
+				setNextCursor(null);
+				setChatListLoading(false);
+				setChatListSupported(false);
+				setChatListCanDelete(false);
+				setSelectedAgentId(null);
+				let outcome = await session.start(agentId, sink);
+				let authError;
+				while (outcome.kind === "auth-required") {
+					const { methods, message } = outcome;
+					const choice = await new Promise((resolve) => {
+						authResolveRef.current = resolve;
+						setAuth({
+							methods,
+							message,
+							phase: "select",
+							error: authError,
+							onChoose: resolve
+						});
+					});
+					authResolveRef.current = null;
+					if (!choice) {
+						await session.stop();
+						setAuth(null);
+						setStatus("Authentication cancelled.");
+						return;
+					}
+					let cancelledDuringAuth = false;
+					setAuth({
+						methods,
+						message,
+						phase: "authenticating",
+						onChoose: () => {
+							cancelledDuringAuth = true;
+							session.stop();
+						}
+					});
+					try {
+						if (choice.env) await session.reconnectWithEnv(agentId, choice.env, sink);
+						await session.authenticate(choice.methodId);
+						outcome = await session.openSession();
+						authError = void 0;
+					} catch (error) {
+						if (cancelledDuringAuth) {
+							setAuth(null);
+							setStatus("Authentication cancelled.");
+							return;
+						}
+						authError = errorText(error);
+						outcome = {
+							kind: "auth-required",
+							methods,
+							message
+						};
+					}
+					if (cancelledDuringAuth) {
+						setAuth(null);
+						setStatus("Authentication cancelled.");
+						return;
+					}
+				}
+				setAuth(null);
+				if (outcome.kind === "error") {
+					setStatus(outcome.message);
+					return;
+				}
+				setSelectedAgentId(agentId);
+				const capabilities = session.sessionCapabilities;
+				const supportsChatList = capabilities.list && capabilities.load;
+				setChatListSupported(supportsChatList);
+				setChatListCanDelete(capabilities.delete);
+				activeSessionIdRef.current = session.activeSessionId;
+				setActiveSessionId(session.activeSessionId);
+				if (supportsChatList) await loadSessionsPage(session, null, false);
+				else setStatus("The selected ACP agent does not support chat history.");
+			} catch (error) {
+				setAuth(null);
+				setStatus(errorText(error));
+			} finally {
+				setStarting(false);
+			}
+		})();
+	}, [
+		loadSessionsPage,
+		resetActiveThreadUi,
+		resetSessionMetadata,
+		sink
+	]);
+	const selectMode = (0, import_react.useCallback)((modeId) => {
+		const session = sessionRef.current;
+		if (!session || !session.isActive) {
+			setStatus("Select an agent to start a session first.");
+			return;
+		}
+		(async () => {
+			try {
+				setStatus("");
+				await session.setMode(modeId);
+			} catch (error) {
+				setStatus(errorText(error));
+			}
+		})();
+	}, []);
+	const selectConfigOption = (0, import_react.useCallback)((option, value) => {
+		const session = sessionRef.current;
+		if (!session || !session.isActive) {
+			setStatus("Select an agent to start a session first.");
+			return;
+		}
+		(async () => {
+			try {
+				setStatus("");
+				await session.setConfigOption(option.id, option.type, value);
+			} catch (error) {
+				setStatus(errorText(error));
+			}
+		})();
+	}, []);
+	const notifyAttachmentCapabilitiesUnavailable = (0, import_react.useCallback)(() => {
+		if (selectedAgentId == null) setStatus("Image attachment support can be detected only after an ACP agent is activated.");
+		else if (!promptCapabilities.image && promptCapabilities.embeddedContext) setStatus("The active ACP agent does not advertise image prompt attachments.");
+		else setStatus("The active ACP agent does not advertise image or embedded-context prompt attachments.");
+	}, [selectedAgentId, promptCapabilities]);
 	return {
-		runtime: useExternalStoreRuntime({
-			isRunning,
-			messages,
-			setMessages: (next) => setMessages([...next]),
-			unstable_capabilities: { copy: true },
-			convertMessage: (message) => message,
-			adapters: { attachments: attachmentAdapter },
-			onNew,
-			onCancel
-		}),
+		runtime,
 		agents,
 		selectedAgentId,
 		starting,
@@ -1318,130 +1760,67 @@ function useAcpChat() {
 		commands,
 		permission,
 		auth,
-		selectAgent: (0, import_react.useCallback)((agentId) => {
-			setStarting(true);
-			setStatus("");
-			const previous = sessionRef.current;
-			const session = new AcpSession();
-			sessionRef.current = session;
-			(async () => {
-				try {
-					await previous?.stop();
-					setMessages([]);
-					clearPlans();
-					resetSessionMetadata();
-					setPermission(null);
-					setAuth(null);
-					setSelectedAgentId(null);
-					turnRef.current = null;
-					let outcome = await session.start(agentId, sink);
-					let authError;
-					while (outcome.kind === "auth-required") {
-						const { methods, message } = outcome;
-						const choice = await new Promise((resolve) => {
-							authResolveRef.current = resolve;
-							setAuth({
-								methods,
-								message,
-								phase: "select",
-								error: authError,
-								onChoose: resolve
-							});
-						});
-						authResolveRef.current = null;
-						if (!choice) {
-							await session.stop();
-							setAuth(null);
-							setStatus("Authentication cancelled.");
-							return;
-						}
-						let cancelledDuringAuth = false;
-						setAuth({
-							methods,
-							message,
-							phase: "authenticating",
-							onChoose: () => {
-								cancelledDuringAuth = true;
-								session.stop();
-							}
-						});
-						try {
-							if (choice.env) await session.reconnectWithEnv(agentId, choice.env, sink);
-							await session.authenticate(choice.methodId);
-							outcome = await session.openSession();
-							authError = void 0;
-						} catch (error) {
-							if (cancelledDuringAuth) {
-								setAuth(null);
-								setStatus("Authentication cancelled.");
-								return;
-							}
-							authError = errorText(error);
-							outcome = {
-								kind: "auth-required",
-								methods,
-								message
-							};
-						}
-						if (cancelledDuringAuth) {
-							setAuth(null);
-							setStatus("Authentication cancelled.");
-							return;
-						}
-					}
-					setAuth(null);
-					if (outcome.kind === "error") {
-						setStatus(outcome.message);
-						return;
-					}
-					setSelectedAgentId(agentId);
-				} catch (error) {
-					setAuth(null);
-					setStatus(errorText(error));
-				} finally {
-					setStarting(false);
-				}
-			})();
-		}, [
-			clearPlans,
-			resetSessionMetadata,
-			sink
-		]),
-		selectMode: (0, import_react.useCallback)((modeId) => {
-			const session = sessionRef.current;
-			if (!session || !session.isActive) {
-				setStatus("Select an agent to start a session first.");
-				return;
-			}
-			(async () => {
-				try {
-					setStatus("");
-					await session.setMode(modeId);
-				} catch (error) {
-					setStatus(errorText(error));
-				}
-			})();
-		}, []),
-		selectConfigOption: (0, import_react.useCallback)((option, value) => {
-			const session = sessionRef.current;
-			if (!session || !session.isActive) {
-				setStatus("Select an agent to start a session first.");
-				return;
-			}
-			(async () => {
-				try {
-					setStatus("");
-					await session.setConfigOption(option.id, option.type, value);
-				} catch (error) {
-					setStatus(errorText(error));
-				}
-			})();
-		}, []),
-		notifyAttachmentCapabilitiesUnavailable: (0, import_react.useCallback)(() => {
-			if (selectedAgentId == null) setStatus("Image attachment support can be detected only after an ACP agent is activated.");
-			else if (!promptCapabilities.image && promptCapabilities.embeddedContext) setStatus("The active ACP agent does not advertise image prompt attachments.");
-			else setStatus("The active ACP agent does not advertise image or embedded-context prompt attachments.");
-		}, [selectedAgentId, promptCapabilities])
+		chatListSupported,
+		chatListLoading,
+		chatListHasMore: nextCursor != null,
+		chatListCanDelete,
+		activeSessionId,
+		startNewChat: () => {
+			switchToNewThread();
+		},
+		loadMoreChats,
+		selectAgent,
+		selectMode,
+		selectConfigOption,
+		notifyAttachmentCapabilitiesUnavailable
+	};
+}
+function textMessageContent(text) {
+	return [{
+		type: "text",
+		text
+	}];
+}
+function appendTextToMessage(message, text) {
+	const content = Array.isArray(message.content) ? [...message.content] : [];
+	const last = content[content.length - 1];
+	if (last?.type === "text" && typeof last.text === "string") content[content.length - 1] = {
+		...last,
+		text: last.text + text
+	};
+	else content.push({
+		type: "text",
+		text
+	});
+	return {
+		...message,
+		content
+	};
+}
+function mergeSessions(previous, incoming) {
+	const byId = new Map(previous.map((session) => [session.sessionId, session]));
+	for (const session of incoming) byId.set(session.sessionId, {
+		...byId.get(session.sessionId),
+		...session
+	});
+	return Array.from(byId.values());
+}
+function applySessionInfoUpdate(session, update) {
+	return {
+		...session,
+		...update.title !== void 0 ? { title: update.title } : {},
+		...update.updatedAt !== void 0 ? { updatedAt: update.updatedAt } : {}
+	};
+}
+function toThreadListData(session) {
+	return {
+		id: session.sessionId,
+		status: "regular",
+		title: session.title?.trim() || "Untitled chat",
+		custom: {
+			cwd: session.cwd,
+			updatedAt: session.updatedAt ?? null
+		}
 	};
 }
 function createAttachmentAdapter(capabilities) {
@@ -1943,6 +2322,173 @@ function collectEnv(rows) {
 		if (name && value) env[name] = value;
 	}
 	return env;
+}
+//#endregion
+//#region views/acp-chat/src/components/ChatList.tsx
+function ChatList({ chat }) {
+	const [drawerOpen, setDrawerOpen] = (0, import_react.useState)(false);
+	(0, import_react.useEffect)(() => {
+		if (!drawerOpen) return;
+		const onKeyDown = (event) => {
+			if (event.key === "Escape") setDrawerOpen(false);
+		};
+		document.addEventListener("keydown", onKeyDown);
+		return () => document.removeEventListener("keydown", onKeyDown);
+	}, [drawerOpen]);
+	if (!chat.chatListSupported) return null;
+	const closeDrawer = () => setDrawerOpen(false);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("aside", {
+			className: "acpChatListSidebar",
+			"aria-label": "Chats",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChatListPanel, { chat })
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+			type: "button",
+			className: "acpChatListDrawerTrigger",
+			"aria-label": "Open chats",
+			title: "Open chats",
+			"aria-expanded": drawerOpen,
+			onClick: () => setDrawerOpen(true),
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SidebarIcon, {})
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "acpChatListOverlay",
+			"data-open": drawerOpen ? "true" : "false",
+			"aria-hidden": !drawerOpen,
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				type: "button",
+				className: "acpChatListBackdrop",
+				"aria-label": "Close chats",
+				onClick: closeDrawer
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("aside", {
+				className: "acpChatListDrawer",
+				"aria-label": "Chats",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChatListPanel, {
+					chat,
+					onNavigate: closeDrawer
+				})
+			})]
+		})
+	] });
+}
+function ChatListPanel(props) {
+	const { chat, onNavigate } = props;
+	const startNewChat = (event) => {
+		event.preventDefault();
+		onNavigate?.();
+		chat.startNewChat();
+	};
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(threadList_exports.Root, {
+		className: "acpChatListRoot",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "acpChatListHeader",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				className: "acpChatListTitle",
+				children: "Chats"
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(threadList_exports.New, {
+				className: "acpChatListNew",
+				"aria-label": "New chat",
+				title: "New chat",
+				onClick: startNewChat,
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PlusIcon, {})
+			})]
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "acpChatListItems",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(threadList_exports.Items, { children: () => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChatListItem, {
+					canDelete: chat.chatListCanDelete,
+					onNavigate
+				}) }),
+				chat.chatListLoading ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "acpChatListLoading",
+					children: "Loading chats..."
+				}) : null,
+				chat.chatListHasMore ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					className: "acpChatListLoadMore",
+					disabled: chat.chatListLoading,
+					onClick: chat.loadMoreChats,
+					children: "Load more"
+				}) : null
+			]
+		})]
+	});
+}
+function ChatListItem(props) {
+	const { canDelete, onNavigate } = props;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(threadListItem_exports.Root, {
+		className: "acpChatListItem",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(threadListItem_exports.Trigger, {
+			className: "acpChatListItemTrigger",
+			onClick: onNavigate,
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				className: "acpChatListItemTitle",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(threadListItem_exports.Title, { fallback: "Untitled chat" })
+			})
+		}), canDelete ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(threadListItem_exports.Delete, {
+			className: "acpChatListDelete",
+			"aria-label": "Delete chat",
+			title: "Delete chat",
+			onClick: (event) => event.stopPropagation(),
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TrashIcon, {})
+		}) : null]
+	});
+}
+function SidebarIcon() {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", {
+		width: "16",
+		height: "16",
+		viewBox: "0 0 16 16",
+		"aria-hidden": "true",
+		focusable: "false",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M3 2.5h10A1.5 1.5 0 0 1 14.5 4v8a1.5 1.5 0 0 1-1.5 1.5H3A1.5 1.5 0 0 1 1.5 12V4A1.5 1.5 0 0 1 3 2.5Zm3.5 0v11",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: "1.2"
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M4.3 5.2 2.9 8l1.4 2.8",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: "1.2",
+			strokeLinecap: "round",
+			strokeLinejoin: "round"
+		})]
+	});
+}
+function PlusIcon() {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+		width: "14",
+		height: "14",
+		viewBox: "0 0 14 14",
+		"aria-hidden": "true",
+		focusable: "false",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M7 2.5v9M2.5 7h9",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: "1.5",
+			strokeLinecap: "round"
+		})
+	});
+}
+function TrashIcon() {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+		width: "14",
+		height: "14",
+		viewBox: "0 0 14 14",
+		"aria-hidden": "true",
+		focusable: "false",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M2.5 4h9M5.5 4V2.8h3V4m-4.8 0 .5 7.2h5.6l.5-7.2",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: "1.2",
+			strokeLinecap: "round",
+			strokeLinejoin: "round"
+		})
+	});
 }
 //#endregion
 //#region views/acp-chat/src/components/MermaidBlock.tsx
@@ -2733,94 +3279,100 @@ function ChatView() {
 		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 			className: "acpChatLayout",
 			children: [
-				chat.status ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("header", {
-					className: "acpChatHeader",
-					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-						className: "acpChatStatus",
-						children: chat.status
-					})
-				}) : null,
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PlanView, { plan: chat.plan }),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(thread_exports.Root, {
-					className: "acpThread",
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChatList, { chat }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("main", {
+					className: "acpChatMain",
 					children: [
-						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(thread_exports.Viewport, {
-							className: "acpThreadViewport",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(thread_exports.Empty, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-								className: "acpEmpty",
-								children: "Select an agent and send a message to start."
-							}) }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(thread_exports.Messages, { components: {
-								UserMessage,
-								AssistantMessage
-							} })]
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(selectionToolbar_exports.Root, {
-							className: "acpSelectionToolbar",
-							"aria-label": "Selection actions",
-							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(selectionToolbar_exports.Quote, {
-								className: "acpSelectionToolbarButton",
-								children: "Quote"
+						chat.status ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("header", {
+							className: "acpChatHeader",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "acpChatStatus",
+								children: chat.status
 							})
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "acpComposerShell",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Unstable_TriggerPopoverRoot, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(composer_exports.Root, {
-								className: "acpComposer",
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-									className: "acpComposerMain",
-									children: [
-										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(composer_exports.Quote, {
-											className: "acpComposerQuote",
+						}) : null,
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PlanView, { plan: chat.plan }),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(thread_exports.Root, {
+							className: "acpThread",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(thread_exports.Viewport, {
+									className: "acpThreadViewport",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(thread_exports.Empty, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: "acpEmpty",
+										children: "Select an agent and send a message to start."
+									}) }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(thread_exports.Messages, { components: {
+										UserMessage,
+										AssistantMessage
+									} })]
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(selectionToolbar_exports.Root, {
+									className: "acpSelectionToolbar",
+									"aria-label": "Selection actions",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(selectionToolbar_exports.Quote, {
+										className: "acpSelectionToolbarButton",
+										children: "Quote"
+									})
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "acpComposerShell",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Unstable_TriggerPopoverRoot, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(composer_exports.Root, {
+										className: "acpComposer",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											className: "acpComposerMain",
 											children: [
-												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-													className: "acpComposerQuoteLabel",
-													children: "Quote"
+												/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(composer_exports.Quote, {
+													className: "acpComposerQuote",
+													children: [
+														/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+															className: "acpComposerQuoteLabel",
+															children: "Quote"
+														}),
+														/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.QuoteText, { className: "acpComposerQuoteText" }),
+														/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.QuoteDismiss, {
+															className: "acpComposerQuoteDismiss",
+															"aria-label": "Remove quote",
+															title: "Remove quote",
+															children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RemoveIcon, {})
+														})
+													]
 												}),
-												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.QuoteText, { className: "acpComposerQuoteText" }),
-												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.QuoteDismiss, {
-													className: "acpComposerQuoteDismiss",
-													"aria-label": "Remove quote",
-													title: "Remove quote",
-													children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RemoveIcon, {})
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+													className: "acpAttachmentList acpComposerAttachments",
+													children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Attachments, { children: () => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AttachmentChip, { removable: true }) })
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Input, {
+													className: "acpComposerInput",
+													placeholder: "Type your task or use / for commands…",
+													onPaste: notifyOnUnsupportedImagePaste
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Send, {
+													className: "acpComposerSend",
+													"aria-label": "Send",
+													title: "Send",
+													children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-icon", {
+														className: "acpComposerSendIcon",
+														src: ACP_CHAT_ICONS.src(SEND_ICON_PATH)
+													})
 												})
 											]
-										}),
-										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-											className: "acpAttachmentList acpComposerAttachments",
-											children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Attachments, { children: () => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AttachmentChip, { removable: true }) })
-										}),
-										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Input, {
-											className: "acpComposerInput",
-											placeholder: "Type your task or use / for commands…",
-											onPaste: notifyOnUnsupportedImagePaste
-										}),
-										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Send, {
-											className: "acpComposerSend",
-											"aria-label": "Send",
-											title: "Send",
-											children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-icon", {
-												className: "acpComposerSendIcon",
-												src: ACP_CHAT_ICONS.src(SEND_ICON_PATH)
-											})
-										})
-									]
-								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SlashCommandMenu, { commands: chat.commands })]
-							}) }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-								className: "acpComposerToolbar",
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(AgentSelector, {
-									agents: chat.agents,
-									selectedAgentId: chat.selectedAgentId,
-									starting: chat.starting,
-									onSelect: chat.selectAgent
-								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelPicker, {
-									modes: chat.modes,
-									configOptions: chat.configOptions,
-									currentModeId: chat.currentModeId,
-									disabled: chat.starting || chat.selectedAgentId == null,
-									onSelectMode: chat.selectMode,
-									onSelectConfigOption: chat.selectConfigOption
-								})]
-							})]
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SlashCommandMenu, { commands: chat.commands })]
+									}) }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "acpComposerToolbar",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(AgentSelector, {
+											agents: chat.agents,
+											selectedAgentId: chat.selectedAgentId,
+											starting: chat.starting,
+											onSelect: chat.selectAgent
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelPicker, {
+											modes: chat.modes,
+											configOptions: chat.configOptions,
+											currentModeId: chat.currentModeId,
+											disabled: chat.starting || chat.selectedAgentId == null,
+											onSelectMode: chat.selectMode,
+											onSelectConfigOption: chat.selectConfigOption
+										})]
+									})]
+								})
+							]
 						})
 					]
 				}),

@@ -17,6 +17,7 @@ import { useAcpChat } from "../runtime/useAcpChat"
 import { AgentSelector } from "./AgentSelector"
 import { ApprovalPrompt } from "./ApprovalPrompt"
 import { AuthPrompt } from "./AuthPrompt"
+import { ChatList } from "./ChatList"
 import { MarkdownRenderer } from "./MarkdownRenderer"
 import { ModelPicker } from "./ModelPicker"
 import { PlanView } from "./PlanView"
@@ -40,6 +41,8 @@ export function ChatView() {
   return (
     <AssistantRuntimeProvider runtime={chat.runtime}>
       <div className="acpChatLayout">
+        <ChatList chat={chat} />
+        <main className="acpChatMain">
         {chat.status ? <header className="acpChatHeader"><span className="acpChatStatus">{chat.status}</span></header> : null}
         <PlanView plan={chat.plan} />
         <ThreadPrimitive.Root className="acpThread">
@@ -94,6 +97,7 @@ export function ChatView() {
             </div>
           </div>
         </ThreadPrimitive.Root>
+        </main>
         {chat.permission ? <ApprovalPrompt permission={chat.permission} /> : null}
         {chat.auth ? <AuthPrompt auth={chat.auth} /> : null}
       </div>

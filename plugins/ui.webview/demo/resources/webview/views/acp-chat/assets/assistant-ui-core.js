@@ -1446,7 +1446,7 @@ var useTapHost = (callback) => {
 */
 var useDataRenderers = () => {
 	const $ = c(4);
-	const [state, setState] = useState(_temp$18);
+	const [state, setState] = useState(_temp$20);
 	let t0;
 	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
 		t0 = (name, render) => {
@@ -1500,7 +1500,7 @@ var useDataRenderers = () => {
 	return t2;
 };
 var DataRenderers = resource(useDataRenderers);
-function _temp$18() {
+function _temp$20() {
 	return {
 		renderers: {},
 		fallbacks: []
@@ -2640,7 +2640,7 @@ function useClientLookup(elements) {
 	const $ = c(15);
 	let t0;
 	if ($[0] !== elements) {
-		t0 = elements.map(_temp$17);
+		t0 = elements.map(_temp$19);
 		$[0] = elements;
 		$[1] = t0;
 	} else t0 = $[1];
@@ -2701,7 +2701,7 @@ function _temp2$5(acc, resource, index) {
 	acc[resource.key] = index;
 	return acc;
 }
-function _temp$17(el) {
+function _temp$19(el) {
 	return withKey(getElementKey(el), ClientResource(el), el.deps);
 }
 //#endregion
@@ -2724,7 +2724,7 @@ var useTools = (t0) => {
 		$[1] = t1;
 	} else t1 = $[1];
 	const mcpAppOutput = useResources(t1)[0];
-	const [toolUIs, setToolUIs] = useState(_temp$16);
+	const [toolUIs, setToolUIs] = useState(_temp$18);
 	let t2;
 	if ($[2] !== toolUIs) {
 		t2 = Object.fromEntries(Object.entries(toolUIs).map(_temp3$2));
@@ -2819,7 +2819,7 @@ var Tools = resource(useTools);
 attachTransformScopes(useTools, (scopes, parent) => {
 	if (!scopes.modelContext && parent.modelContext.source === null) scopes.modelContext = ModelContext();
 });
-function _temp$16() {
+function _temp$18() {
 	return {};
 }
 function _temp2$4(r) {
@@ -3032,7 +3032,7 @@ var useComposerClient = (t0) => {
 		$[30] = state;
 		$[31] = t7;
 	} else t7 = $[31];
-	const t8 = runtime.beginEdit ?? _temp$15;
+	const t8 = runtime.beginEdit ?? _temp$17;
 	let t9;
 	if ($[32] !== attachments) {
 		t9 = (selector) => {
@@ -3095,7 +3095,7 @@ var useComposerClient = (t0) => {
 	return t12;
 };
 var ComposerClient = resource(useComposerClient);
-function _temp$15() {
+function _temp$17() {
 	throw new Error("beginEdit is not supported in this runtime");
 }
 //#endregion
@@ -3837,7 +3837,7 @@ var useSuggestionsResource = (suggestions) => {
 	let t0;
 	if ($[0] !== suggestions) {
 		t0 = () => {
-			return { suggestions: (suggestions ?? []).map(_temp$14) };
+			return { suggestions: (suggestions ?? []).map(_temp$16) };
 		};
 		$[0] = suggestions;
 		$[1] = t0;
@@ -3878,7 +3878,7 @@ var useSuggestionsResource = (suggestions) => {
 	return t4;
 };
 var Suggestions = resource(useSuggestionsResource);
-function _temp$14(s) {
+function _temp$16(s) {
 	if (typeof s === "string") return {
 		title: s,
 		label: "",
@@ -4156,7 +4156,7 @@ var useTextMessagePartClient = (t0) => {
 	if ($[5] !== state) {
 		t3 = {
 			getState: () => state,
-			addToolResult: _temp$13,
+			addToolResult: _temp$15,
 			resumeToolCall: _temp2$2,
 			respondToToolApproval: _temp3$1
 		};
@@ -4199,7 +4199,7 @@ var TextMessagePartProvider = (t0) => {
 	} else t4 = $[7];
 	return t4;
 };
-function _temp$13() {
+function _temp$15() {
 	throw new Error("Not supported");
 }
 function _temp2$2() {
@@ -4254,7 +4254,7 @@ var ChainOfThoughtClient = resource(useChainOfThoughtClient);
 var ChainOfThoughtByIndicesProvider = (t0) => {
 	const $ = c(5);
 	const { startIndex, endIndex, children } = t0;
-	const parts = useAuiState(_temp$12).slice(startIndex, endIndex + 1);
+	const parts = useAuiState(_temp$14).slice(startIndex, endIndex + 1);
 	const parentAui = useAui();
 	const t2 = ChainOfThoughtClient({
 		parts,
@@ -4283,9 +4283,51 @@ var ChainOfThoughtByIndicesProvider = (t0) => {
 	} else t4 = $[4];
 	return t4;
 };
-function _temp$12(s) {
+function _temp$14(s) {
 	return s.message.parts;
 }
+//#endregion
+//#region node_modules/@assistant-ui/core/dist/react/providers/ThreadListItemByIndexProvider.js
+var ThreadListItemByIndexProvider = (t0) => {
+	const $ = c(8);
+	const { index, archived, children } = t0;
+	let t1;
+	if ($[0] !== archived || $[1] !== index) {
+		t1 = Derived({
+			source: "threads",
+			query: {
+				type: "index",
+				index,
+				archived
+			},
+			get: (aui) => aui.threads().item({
+				index,
+				archived
+			})
+		});
+		$[0] = archived;
+		$[1] = index;
+		$[2] = t1;
+	} else t1 = $[2];
+	let t2;
+	if ($[3] !== t1) {
+		t2 = { threadListItem: t1 };
+		$[3] = t1;
+		$[4] = t2;
+	} else t2 = $[4];
+	const aui_0 = useAui(t2);
+	let t3;
+	if ($[5] !== aui_0 || $[6] !== children) {
+		t3 = /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AuiProvider, {
+			value: aui_0,
+			children
+		});
+		$[5] = aui_0;
+		$[6] = children;
+		$[7] = t3;
+	} else t3 = $[7];
+	return t3;
+};
 //#endregion
 //#region node_modules/@assistant-ui/core/dist/react/providers/SuggestionByIndexProvider.js
 var SuggestionByIndexProvider = (t0) => {
@@ -8019,7 +8061,7 @@ var getComponent$2 = (components, role, isEditing) => {
 var ThreadMessageComponent = (t0) => {
 	const $ = c(6);
 	const { components } = t0;
-	const role = useAuiState(_temp$11);
+	const role = useAuiState(_temp$13);
 	const isEditing = useAuiState(_temp2$1);
 	let t1;
 	if ($[0] !== components || $[1] !== isEditing || $[2] !== role) {
@@ -8116,7 +8158,7 @@ var ThreadPrimitiveMessages = (0, react_shim_exports.memo)(ThreadPrimitiveMessag
 	if (prev.children || next.children) return prev.children === next.children;
 	return isComponentsSame(prev.components, next.components);
 });
-function _temp$11(s) {
+function _temp$13(s) {
 	return s.message.role;
 }
 function _temp2$1(s_0) {
@@ -8229,7 +8271,7 @@ GenerativeUIRender.displayName = "GenerativeUIRender";
 var MessagePrimitiveGenerativeUI = (t0) => {
 	const $ = c(4);
 	const { components, spec, Fallback } = t0;
-	const storeSpec = useAuiState(_temp$10);
+	const storeSpec = useAuiState(_temp$12);
 	const partSpec = spec ?? storeSpec;
 	if (!partSpec) return null;
 	let t1;
@@ -8247,7 +8289,7 @@ var MessagePrimitiveGenerativeUI = (t0) => {
 	return t1;
 };
 MessagePrimitiveGenerativeUI.displayName = "MessagePrimitive.GenerativeUI";
-function _temp$10(s) {
+function _temp$12(s) {
 	const part = s.part;
 	return part?.type === "generative-ui" ? part.spec : void 0;
 }
@@ -9153,11 +9195,11 @@ var MessagePrimitivePartsCompat = (t0) => {
 	} else t4 = $[14];
 	return t4;
 };
-function _temp$9(c) {
+function _temp$11(c) {
 	return c.type;
 }
 function _temp2(s) {
-	return s.message.parts.map(_temp$9);
+	return s.message.parts.map(_temp$11);
 }
 function _temp3(c_0) {
 	return c_0.type === "tool-call" ? c_0.toolCallId : void 0;
@@ -9425,7 +9467,7 @@ var getComponent$1 = (components, attachment) => {
 var AttachmentComponent$1 = (t0) => {
 	const $ = c(5);
 	const { components } = t0;
-	const attachment = useAuiState(_temp$8);
+	const attachment = useAuiState(_temp$10);
 	if (!attachment) return null;
 	const t1 = attachment;
 	let t2;
@@ -9511,7 +9553,7 @@ var MessagePrimitiveAttachments = (t0) => {
 	return t1;
 };
 MessagePrimitiveAttachments.displayName = "MessagePrimitive.Attachments";
-function _temp$8(s) {
+function _temp$10(s) {
 	return s.attachment;
 }
 //#endregion
@@ -9527,7 +9569,7 @@ var getComponent = (components, attachment) => {
 var AttachmentComponent = (t0) => {
 	const $ = c(5);
 	const { components } = t0;
-	const attachment = useAuiState(_temp$7);
+	const attachment = useAuiState(_temp$9);
 	if (!attachment) return null;
 	let t1;
 	if ($[0] !== attachment || $[1] !== components) {
@@ -9609,7 +9651,7 @@ var ComposerPrimitiveAttachments = (t0) => {
 	return t1;
 };
 ComposerPrimitiveAttachments.displayName = "ComposerPrimitive.Attachments";
-function _temp$7(s) {
+function _temp$9(s) {
 	return s.attachment;
 }
 //#endregion
@@ -9644,14 +9686,120 @@ var ComposerPrimitiveQueueInner = ({ children }) => {
 var ComposerPrimitiveQueue = (0, react_shim_exports.memo)(ComposerPrimitiveQueueInner);
 ComposerPrimitiveQueue.displayName = "ComposerPrimitive.Queue";
 //#endregion
+//#region node_modules/@assistant-ui/core/dist/react/primitives/threadList/ThreadListItems.js
+/**
+* Renders a single thread list item at the specified index.
+*/
+var ThreadListPrimitiveItemByIndex = (0, react_shim_exports.memo)((t0) => {
+	const $ = c(6);
+	const { index, archived: t1, components } = t0;
+	const archived = t1 === void 0 ? false : t1;
+	const ThreadListItemComponent = components.ThreadListItem;
+	let t2;
+	if ($[0] !== ThreadListItemComponent) {
+		t2 = /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ThreadListItemComponent, {});
+		$[0] = ThreadListItemComponent;
+		$[1] = t2;
+	} else t2 = $[1];
+	let t3;
+	if ($[2] !== archived || $[3] !== index || $[4] !== t2) {
+		t3 = /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ThreadListItemByIndexProvider, {
+			index,
+			archived,
+			children: t2
+		});
+		$[2] = archived;
+		$[3] = index;
+		$[4] = t2;
+		$[5] = t3;
+	} else t3 = $[5];
+	return t3;
+}, (prev, next) => prev.index === next.index && prev.archived === next.archived && prev.components.ThreadListItem === next.components.ThreadListItem);
+ThreadListPrimitiveItemByIndex.displayName = "ThreadListPrimitive.ItemByIndex";
+var ThreadListPrimitiveItemsInner = ({ archived, children }) => {
+	const contentLength = useAuiState((s) => archived ? s.threads.archivedThreadIds.length : s.threads.threadIds.length);
+	return useMemo(() => Array.from({ length: contentLength }, (_, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ThreadListItemByIndexProvider, {
+		index,
+		archived,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RenderChildrenWithAccessor, {
+			getItemState: (aui) => aui.threads().item({
+				index,
+				archived
+			}).getState(),
+			children: (getItem) => children({ get threadListItem() {
+				return getItem();
+			} })
+		})
+	}, index)), [
+		contentLength,
+		archived,
+		children
+	]);
+};
+var ThreadListPrimitiveItems = (t0) => {
+	const $ = c(8);
+	const { archived: t1, components, children } = t0;
+	const archived = t1 === void 0 ? false : t1;
+	if (components) {
+		const ThreadListItemComponent = components.ThreadListItem;
+		let t2;
+		if ($[0] !== ThreadListItemComponent) {
+			t2 = () => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ThreadListItemComponent, {});
+			$[0] = ThreadListItemComponent;
+			$[1] = t2;
+		} else t2 = $[1];
+		let t3;
+		if ($[2] !== archived || $[3] !== t2) {
+			t3 = /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ThreadListPrimitiveItemsInner, {
+				archived,
+				children: t2
+			});
+			$[2] = archived;
+			$[3] = t2;
+			$[4] = t3;
+		} else t3 = $[4];
+		return t3;
+	}
+	let t2;
+	if ($[5] !== archived || $[6] !== children) {
+		t2 = /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ThreadListPrimitiveItemsInner, {
+			archived,
+			children
+		});
+		$[5] = archived;
+		$[6] = children;
+		$[7] = t2;
+	} else t2 = $[7];
+	return t2;
+};
+ThreadListPrimitiveItems.displayName = "ThreadListPrimitive.Items";
+//#endregion
 //#region node_modules/@assistant-ui/core/dist/react/primitives/messagePart/MessagePartInProgress.js
 var MessagePartPrimitiveInProgress = (t0) => {
 	const { children } = t0;
-	return useAuiState(_temp$6) ? children : null;
+	return useAuiState(_temp$8) ? children : null;
 };
 MessagePartPrimitiveInProgress.displayName = "MessagePartPrimitive.InProgress";
-function _temp$6(s) {
+function _temp$8(s) {
 	return s.part.status.type === "running";
+}
+//#endregion
+//#region node_modules/@assistant-ui/core/dist/react/primitives/threadListItem/ThreadListItemTitle.js
+var ThreadListItemPrimitiveTitle = (t0) => {
+	const $ = c(2);
+	const { fallback } = t0;
+	const t1 = useAuiState(_temp$7) || fallback;
+	let t2;
+	if ($[0] !== t1) {
+		t2 = /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children: t1 });
+		$[0] = t1;
+		$[1] = t2;
+	} else t2 = $[1];
+	return t2;
+};
+ThreadListItemPrimitiveTitle.displayName = "ThreadListItemPrimitive.Title";
+function _temp$7(s) {
+	return s.threadListItem.title;
 }
 //#endregion
 //#region node_modules/@assistant-ui/core/dist/react/primitives/thread/ThreadSuggestions.js
@@ -9779,7 +9927,7 @@ ComposerPrimitiveIf.displayName = "ComposerPrimitive.If";
 var useComposerSend = () => {
 	const $ = c(5);
 	const aui = useAui();
-	const disabled = useAuiState(_temp$5);
+	const disabled = useAuiState(_temp$6);
 	let t0;
 	if ($[0] !== aui) {
 		t0 = (opts) => {
@@ -9801,7 +9949,7 @@ var useComposerSend = () => {
 	} else t1 = $[4];
 	return t1;
 };
-function _temp$5(s) {
+function _temp$6(s) {
 	return !s.composer.canSend || s.thread.isRunning && !s.thread.capabilities.queue;
 }
 //#endregion
@@ -9809,7 +9957,7 @@ function _temp$5(s) {
 var useComposerCancel = () => {
 	const $ = c(5);
 	const aui = useAui();
-	const disabled = useAuiState(_temp$4);
+	const disabled = useAuiState(_temp$5);
 	let t0;
 	if ($[0] !== aui) {
 		t0 = () => {
@@ -9831,7 +9979,7 @@ var useComposerCancel = () => {
 	} else t1 = $[4];
 	return t1;
 };
-function _temp$4(s) {
+function _temp$5(s) {
 	return !s.composer.canCancel;
 }
 //#endregion
@@ -9839,7 +9987,7 @@ function _temp$4(s) {
 var useComposerDictate = () => {
 	const $ = c(5);
 	const aui = useAui();
-	const disabled = useAuiState(_temp$3);
+	const disabled = useAuiState(_temp$4);
 	let t0;
 	if ($[0] !== aui) {
 		t0 = () => {
@@ -9861,7 +10009,7 @@ var useComposerDictate = () => {
 	} else t1 = $[4];
 	return t1;
 };
-function _temp$3(s) {
+function _temp$4(s) {
 	return s.composer.dictation != null || !s.thread.capabilities.dictation || !s.composer.isEditing;
 }
 //#endregion
@@ -9869,7 +10017,7 @@ function _temp$3(s) {
 var useComposerAddAttachment = () => {
 	const $ = c(5);
 	const aui = useAui();
-	const disabled = useAuiState(_temp$2);
+	const disabled = useAuiState(_temp$3);
 	let t0;
 	if ($[0] !== aui) {
 		t0 = (file) => aui.composer().addAttachment(file);
@@ -9889,7 +10037,7 @@ var useComposerAddAttachment = () => {
 	} else t1 = $[4];
 	return t1;
 };
-function _temp$2(s) {
+function _temp$3(s) {
 	return !s.composer.isEditing;
 }
 //#endregion
@@ -9899,7 +10047,7 @@ var useSuggestionTrigger = (t0) => {
 	const { prompt, send, clearComposer: t1 } = t0;
 	const clearComposer = t1 === void 0 ? true : t1;
 	const aui = useAui();
-	const disabled = useAuiState(_temp$1);
+	const disabled = useAuiState(_temp$2);
 	const resolvedSend = send ?? false;
 	let t2;
 	if ($[0] !== aui || $[1] !== clearComposer || $[2] !== prompt || $[3] !== resolvedSend) {
@@ -9939,8 +10087,148 @@ var useSuggestionTrigger = (t0) => {
 	} else t3 = $[7];
 	return t3;
 };
-function _temp$1(s) {
+function _temp$2(s) {
 	return s.thread.isDisabled;
+}
+//#endregion
+//#region node_modules/@assistant-ui/core/dist/react/primitive-hooks/useThreadListItemArchive.js
+var useThreadListItemArchive = () => {
+	const $ = c(4);
+	const aui = useAui();
+	let t0;
+	if ($[0] !== aui) {
+		t0 = () => {
+			aui.threadListItem().archive();
+		};
+		$[0] = aui;
+		$[1] = t0;
+	} else t0 = $[1];
+	const archive = t0;
+	let t1;
+	if ($[2] !== archive) {
+		t1 = { archive };
+		$[2] = archive;
+		$[3] = t1;
+	} else t1 = $[3];
+	return t1;
+};
+//#endregion
+//#region node_modules/@assistant-ui/core/dist/react/primitive-hooks/useThreadListItemDelete.js
+var useThreadListItemDelete = () => {
+	const $ = c(4);
+	const aui = useAui();
+	let t0;
+	if ($[0] !== aui) {
+		t0 = () => {
+			aui.threadListItem().delete();
+		};
+		$[0] = aui;
+		$[1] = t0;
+	} else t0 = $[1];
+	const deleteThread = t0;
+	let t1;
+	if ($[2] !== deleteThread) {
+		t1 = { delete: deleteThread };
+		$[2] = deleteThread;
+		$[3] = t1;
+	} else t1 = $[3];
+	return t1;
+};
+//#endregion
+//#region node_modules/@assistant-ui/core/dist/react/primitive-hooks/useThreadListItemUnarchive.js
+var useThreadListItemUnarchive = () => {
+	const $ = c(4);
+	const aui = useAui();
+	let t0;
+	if ($[0] !== aui) {
+		t0 = () => {
+			aui.threadListItem().unarchive();
+		};
+		$[0] = aui;
+		$[1] = t0;
+	} else t0 = $[1];
+	const unarchive = t0;
+	let t1;
+	if ($[2] !== unarchive) {
+		t1 = { unarchive };
+		$[2] = unarchive;
+		$[3] = t1;
+	} else t1 = $[3];
+	return t1;
+};
+//#endregion
+//#region node_modules/@assistant-ui/core/dist/react/primitive-hooks/useThreadListItemTrigger.js
+var useThreadListItemTrigger = () => {
+	const $ = c(4);
+	const aui = useAui();
+	let t0;
+	if ($[0] !== aui) {
+		t0 = () => {
+			aui.threadListItem().switchTo();
+		};
+		$[0] = aui;
+		$[1] = t0;
+	} else t0 = $[1];
+	const switchTo = t0;
+	let t1;
+	if ($[2] !== switchTo) {
+		t1 = { switchTo };
+		$[2] = switchTo;
+		$[3] = t1;
+	} else t1 = $[3];
+	return t1;
+};
+//#endregion
+//#region node_modules/@assistant-ui/core/dist/react/primitive-hooks/useThreadListNew.js
+var useThreadListNew = () => {
+	const $ = c(4);
+	const aui = useAui();
+	let t0;
+	if ($[0] !== aui) {
+		t0 = () => {
+			aui.threads().switchToNewThread();
+		};
+		$[0] = aui;
+		$[1] = t0;
+	} else t0 = $[1];
+	const switchToNewThread = t0;
+	let t1;
+	if ($[2] !== switchToNewThread) {
+		t1 = { switchToNewThread };
+		$[2] = switchToNewThread;
+		$[3] = t1;
+	} else t1 = $[3];
+	return t1;
+};
+//#endregion
+//#region node_modules/@assistant-ui/core/dist/react/primitive-hooks/useThreadListLoadMore.js
+var useThreadListLoadMore = () => {
+	const $ = c(5);
+	const aui = useAui();
+	const disabled = useAuiState(_temp$1);
+	let t0;
+	if ($[0] !== aui) {
+		t0 = () => {
+			aui.threads().loadMore();
+		};
+		$[0] = aui;
+		$[1] = t0;
+	} else t0 = $[1];
+	const loadMore = t0;
+	let t1;
+	if ($[2] !== disabled || $[3] !== loadMore) {
+		t1 = {
+			loadMore,
+			disabled
+		};
+		$[2] = disabled;
+		$[3] = loadMore;
+		$[4] = t1;
+	} else t1 = $[4];
+	return t1;
+};
+function _temp$1(s) {
+	return !s.threads.hasMore || s.threads.isLoading || s.threads.isLoadingMore;
 }
 //#endregion
 //#region node_modules/@assistant-ui/core/dist/react/primitive-hooks/useMessageError.js
@@ -9988,4 +10276,4 @@ var unstable_defaultDirectiveFormatter = {
 	}
 };
 //#endregion
-export { useAui as A, useContext as B, ThreadPrimitiveMessageByIndex as C, PartByIndexProvider as D, TextMessagePartProvider as E, resource as F, useMemo as G, useEffect as H, c as I, useSyncExternalStore as J, useRef as K, createContext as L, require_jsx_runtime as M, useResource as N, AssistantProviderBase as O, flushTapSync as P, react_shim_exports as R, MessagePrimitiveGenerativeUI as S, useExternalStoreRuntime as T, useEffectEvent as U, useDebugValue as V, useLayoutEffect as W, require_react as Y, MessagePrimitiveQuote as _, useComposerDictate as a, MessagePrimitiveParts as b, ComposerPrimitiveIf as c, MessagePartPrimitiveInProgress as d, ComposerPrimitiveQueue as f, MessagePrimitiveAttachments as g, MessagePrimitiveAttachmentByIndex as h, useComposerAddAttachment as i, normalizeEventSelector as j, useAuiState as k, ThreadPrimitiveSuggestionByIndex as l, ComposerPrimitiveAttachments as m, useMessageError as n, useComposerCancel as o, ComposerPrimitiveAttachmentByIndex as p, useState as q, useSuggestionTrigger as r, useComposerSend as s, unstable_defaultDirectiveFormatter as t, ThreadPrimitiveSuggestions as u, MessagePrimitiveGroupedParts as v, ThreadPrimitiveMessages as w, defaultComponents as x, MessagePrimitivePartByIndex as y, useCallback as z };
+export { useLayoutEffect as $, defaultComponents as A, normalizeEventSelector as B, ComposerPrimitiveAttachments as C, MessagePrimitiveGroupedParts as D, MessagePrimitiveQuote as E, TextMessagePartProvider as F, c as G, useResource as H, PartByIndexProvider as I, useCallback as J, createContext as K, AssistantProviderBase as L, ThreadPrimitiveMessageByIndex as M, ThreadPrimitiveMessages as N, MessagePrimitivePartByIndex as O, useExternalStoreRuntime as P, useEffectEvent as Q, useAuiState as R, ComposerPrimitiveAttachmentByIndex as S, MessagePrimitiveAttachments as T, flushTapSync as U, require_jsx_runtime as V, resource as W, useDebugValue as X, useContext as Y, useEffect as Z, ThreadListItemPrimitiveTitle as _, useThreadListItemTrigger as a, ThreadListPrimitiveItems as b, useThreadListItemArchive as c, useComposerDictate as d, useMemo as et, useComposerCancel as f, ThreadPrimitiveSuggestions as g, ThreadPrimitiveSuggestionByIndex as h, useThreadListNew as i, require_react as it, MessagePrimitiveGenerativeUI as j, MessagePrimitiveParts as k, useSuggestionTrigger as l, ComposerPrimitiveIf as m, useMessageError as n, useState as nt, useThreadListItemUnarchive as o, useComposerSend as p, react_shim_exports as q, useThreadListLoadMore as r, useSyncExternalStore as rt, useThreadListItemDelete as s, unstable_defaultDirectiveFormatter as t, useRef as tt, useComposerAddAttachment as u, MessagePartPrimitiveInProgress as v, MessagePrimitiveAttachmentByIndex as w, ComposerPrimitiveQueue as x, ThreadListPrimitiveItemByIndex as y, useAui as z };

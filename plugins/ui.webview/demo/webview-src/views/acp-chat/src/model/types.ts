@@ -35,6 +35,27 @@ export interface PromptCapabilitiesView {
   embeddedContext: boolean
 }
 
+export interface AcpSessionInfoView {
+  sessionId: string
+  cwd: string
+  additionalDirectories?: string[]
+  title?: string | null
+  updatedAt?: string | null
+}
+
+export interface AcpSessionCapabilitiesView {
+  list: boolean
+  load: boolean
+  delete: boolean
+  resume: boolean
+  close: boolean
+}
+
+export interface AcpSessionInfoUpdateView {
+  title?: string | null
+  updatedAt?: string | null
+}
+
 export interface SessionModeView {
   id: string
   name: string

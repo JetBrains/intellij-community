@@ -1,6 +1,6 @@
 import { o as __toESM } from "./rolldown-runtime.js";
-import { M as require_jsx_runtime, Y as require_react } from "./assistant-ui-core.js";
-import { _ as useComposedRefs, f as useCallbackRef, g as createSlot, m as Primitive, p as composeEventHandlers, x as require_react_dom } from "./assistant-ui-react.js";
+import { V as require_jsx_runtime, it as require_react } from "./assistant-ui-core.js";
+import { C as require_react_dom, g as Primitive, h as composeEventHandlers, m as useCallbackRef, v as createSlot, y as useComposedRefs } from "./assistant-ui-react.js";
 import { n as createContextScope, t as createCollection } from "./radix-ui-react-collection.js";
 import { n as useLayoutEffect2, t as useId } from "./radix-ui-react-id.js";
 import { a as Anchor, c as Root2, d as ReactRemoveScroll, f as Portal, l as createPopperScope, m as useControllableState, o as Arrow, p as Presence, s as Content } from "./radix-ui-react-popover.js";

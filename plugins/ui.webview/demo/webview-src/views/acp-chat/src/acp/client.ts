@@ -4,6 +4,9 @@ import { ClientSideConnection, PROTOCOL_VERSION, type Client, type ContentBlock 
 import { createAgentStdioStream, type AgentStdioStream } from "../bridge/acpStdioStream"
 import { acpBridgeHost } from "../bridge/webviewApi"
 import type {
+  AcpSessionCapabilitiesView,
+  AcpSessionInfoUpdateView,
+  AcpSessionInfoView,
   AuthMethodView,
   CommandView,
   ConfigOptionSelectChoiceView,
@@ -20,6 +23,7 @@ import type {
  * The runtime hook implements this to drive the assistant-ui store.
  */
 export interface AcpEventSink {
+  onUserMessage(text: string): void
   onMessageChunk(text: string): void
   onThoughtChunk(text: string): void
   onToolCall(view: ToolCallView): void
@@ -31,6 +35,7 @@ export interface AcpEventSink {
   onCurrentMode(currentModeId: string): void
   onConfigOptions(options: ConfigOptionView[]): void
   onCommands(commands: CommandView[]): void
+  onSessionInfoUpdate(view: AcpSessionInfoUpdateView): void
   /** Resolve with the chosen optionId, or null to cancel. */
   requestPermission(view: PermissionView): Promise<string | null>
   /** A verification URL for an in-progress OAuth device flow (pushed by the agent via `authenticate/update`). */
@@ -44,6 +49,11 @@ export type StartOutcome =
   | { kind: "auth-required"; methods: AuthMethodView[]; message: string }
   | { kind: "error"; message: string }
 
+export interface ListSessionsOutcome {
+  sessions: AcpSessionInfoView[]
+  nextCursor: string | null
+}
+
 /**
  * One ACP session over a spawned agent. The protocol is handled by the ACP TypeScript SDK; the transport is the
  * Kotlin-bridged process stdio. ACP wire objects are accessed defensively (`any`) so this stays resilient to minor
@@ -54,6 +64,7 @@ export class AcpSession {
   private sessionId: string | null = null
   private cwd = "."
   private authMethods: any[] = []
+  private capabilities: AcpSessionCapabilitiesView = emptySessionCapabilities()
   private io: AgentStdioStream | null = null
   private sink: AcpEventSink | null = null
   // Bumped on every stop()/connect(); an in-flight connect() that finds the value changed was superseded
@@ -62,6 +73,18 @@ export class AcpSession {
 
   get isActive(): boolean {
     return this.connection != null && this.sessionId != null
+  }
+
+  get activeSessionId(): string | null {
+    return this.sessionId
+  }
+
+  get workingDirectory(): string {
+    return this.cwd
+  }
+
+  get sessionCapabilities(): AcpSessionCapabilitiesView {
+    return this.capabilities
   }
 
   /** Spawn + connect the agent and attempt to open a session. */
@@ -124,6 +147,56 @@ export class AcpSession {
     await this.prompt([{ type: "text", text }])
   }
 
+  async listSessions(cursor?: string | null): Promise<ListSessionsOutcome> {
+    const connection = this.connection
+    if (!connection) throw new Error("No agent connection")
+    if (!this.capabilities.list || typeof connection.listSessions !== "function") {
+      throw new Error("The selected ACP agent does not support chat history.")
+    }
+    const response = await connection.listSessions({ cwd: this.cwd, cursor: cursor ?? undefined })
+    return {
+      sessions: Array.isArray(response?.sessions) ? response.sessions.map(session => toSessionInfoView(session, this.cwd)).filter(isSessionInfoView) : [],
+      nextCursor: stringOrNull(response?.nextCursor),
+    }
+  }
+
+  async loadSession(sessionInfo: AcpSessionInfoView): Promise<void> {
+    const connection = this.connection
+    if (!connection) throw new Error("No agent connection")
+    if (!this.capabilities.load || typeof connection.loadSession !== "function") {
+      throw new Error("The selected ACP agent does not support loading existing chats.")
+    }
+    const previousSessionId = this.sessionId
+    const previousCwd = this.cwd
+    const cwd = sessionInfo.cwd || this.cwd
+    this.sessionId = sessionInfo.sessionId
+    this.cwd = cwd
+    try {
+      const session = await connection.loadSession({
+        sessionId: sessionInfo.sessionId,
+        cwd,
+        additionalDirectories: sessionInfo.additionalDirectories ?? [],
+        mcpServers: [],
+      })
+      this.sink?.onSessionModes(toSessionModeViews(session?.modes?.availableModes), stringOrNull(session?.modes?.currentModeId))
+      this.sink?.onConfigOptions(toConfigOptionViews(session?.configOptions))
+    }
+    catch (error) {
+      this.sessionId = previousSessionId
+      this.cwd = previousCwd
+      throw error
+    }
+  }
+
+  async deleteSession(sessionId: string): Promise<void> {
+    const connection = this.connection
+    if (!connection) throw new Error("No agent connection")
+    if (!this.capabilities.delete || typeof connection.deleteSession !== "function") {
+      throw new Error("The selected ACP agent does not support deleting chats.")
+    }
+    await connection.deleteSession({ sessionId })
+  }
+
   async setMode(modeId: string): Promise<void> {
     const connection = this.connection
     const sessionId = this.sessionId
@@ -165,6 +238,7 @@ export class AcpSession {
     this.connection = null
     this.sessionId = null
     this.sink = null
+    this.capabilities = emptySessionCapabilities()
     // Close the stream first so any in-flight request (e.g. a hanging OAuth `authenticate`) rejects promptly.
     const io = this.io
     this.io = null
@@ -226,6 +300,7 @@ export class AcpSession {
       this.connection = connection
       this.sink = sink
       this.authMethods = Array.isArray(init?.authMethods) ? init.authMethods : []
+      this.capabilities = toSessionCapabilitiesView(init?.agentCapabilities)
       sink.onPromptCapabilities(toPromptCapabilitiesView(init?.agentCapabilities?.promptCapabilities))
     }
     catch (error) {
@@ -244,6 +319,9 @@ export class AcpSession {
 function handleUpdate(update: any, sink: AcpEventSink): void {
   if (!update) return
   switch (update.sessionUpdate) {
+    case "user_message_chunk":
+      sink.onUserMessage(textOf(update.content))
+      break
     case "agent_message_chunk":
       sink.onMessageChunk(textOf(update.content))
       break
@@ -273,6 +351,9 @@ function handleUpdate(update: any, sink: AcpEventSink): void {
       break
     case "config_option_update":
       sink.onConfigOptions(toConfigOptionViews(update.configOptions))
+      break
+    case "session_info_update":
+      sink.onSessionInfoUpdate(toSessionInfoUpdateView(update))
       break
     default:
       break
@@ -356,6 +437,44 @@ function toPromptCapabilitiesView(capabilities: any): PromptCapabilitiesView {
     audio: capabilities?.audio === true,
     embeddedContext: capabilities?.embeddedContext === true,
   }
+}
+
+function emptySessionCapabilities(): AcpSessionCapabilitiesView {
+  return { list: false, load: false, delete: false, resume: false, close: false }
+}
+
+function toSessionCapabilitiesView(agentCapabilities: any): AcpSessionCapabilitiesView {
+  const sessionCapabilities = agentCapabilities?.sessionCapabilities
+  return {
+    list: sessionCapabilities?.list != null,
+    load: agentCapabilities?.loadSession === true,
+    delete: sessionCapabilities?.delete != null,
+    resume: sessionCapabilities?.resume != null,
+    close: sessionCapabilities?.close != null,
+  }
+}
+
+function toSessionInfoView(session: any, fallbackCwd: string): AcpSessionInfoView | null {
+  const sessionId = typeof session?.sessionId === "string" ? session.sessionId : ""
+  if (!sessionId) return null
+  return {
+    sessionId,
+    cwd: stringOrDefault(session.cwd, fallbackCwd),
+    additionalDirectories: Array.isArray(session.additionalDirectories) ? session.additionalDirectories.filter((dir: any): dir is string => typeof dir === "string") : undefined,
+    title: stringOrNull(session.title),
+    updatedAt: stringOrNull(session.updatedAt),
+  }
+}
+
+function isSessionInfoView(session: AcpSessionInfoView | null): session is AcpSessionInfoView {
+  return session != null
+}
+
+function toSessionInfoUpdateView(update: any): AcpSessionInfoUpdateView {
+  const view: AcpSessionInfoUpdateView = {}
+  if (Object.prototype.hasOwnProperty.call(update, "title")) view.title = stringOrNull(update.title)
+  if (Object.prototype.hasOwnProperty.call(update, "updatedAt")) view.updatedAt = stringOrNull(update.updatedAt)
+  return view
 }
 
 function toSessionModeViews(modes: any): SessionModeView[] {

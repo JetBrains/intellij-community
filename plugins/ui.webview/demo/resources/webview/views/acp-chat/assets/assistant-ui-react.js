@@ -1,5 +1,5 @@
 import { o as __toESM, t as __commonJSMin } from "./rolldown-runtime.js";
-import { A as useAui, B as useContext, C as ThreadPrimitiveMessageByIndex, D as PartByIndexProvider, E as TextMessagePartProvider, F as resource, G as useMemo, H as useEffect, I as c, J as useSyncExternalStore, K as useRef, L as createContext, M as require_jsx_runtime, N as useResource, O as AssistantProviderBase, P as flushTapSync, R as react_shim_exports, S as MessagePrimitiveGenerativeUI, U as useEffectEvent$1, V as useDebugValue, W as useLayoutEffect$1, Y as require_react, _ as MessagePrimitiveQuote, a as useComposerDictate, b as MessagePrimitiveParts$1, c as ComposerPrimitiveIf, d as MessagePartPrimitiveInProgress, f as ComposerPrimitiveQueue, g as MessagePrimitiveAttachments, h as MessagePrimitiveAttachmentByIndex, i as useComposerAddAttachment, j as normalizeEventSelector, k as useAuiState, l as ThreadPrimitiveSuggestionByIndex, m as ComposerPrimitiveAttachments, n as useMessageError, o as useComposerCancel, p as ComposerPrimitiveAttachmentByIndex, q as useState, r as useSuggestionTrigger, s as useComposerSend$1, t as unstable_defaultDirectiveFormatter, u as ThreadPrimitiveSuggestions, v as MessagePrimitiveGroupedParts, w as ThreadPrimitiveMessages, x as defaultComponents$1, y as MessagePrimitivePartByIndex, z as useCallback } from "./assistant-ui-core.js";
+import { $ as useLayoutEffect$1, A as defaultComponents$1, B as normalizeEventSelector, C as ComposerPrimitiveAttachments, D as MessagePrimitiveGroupedParts, E as MessagePrimitiveQuote, F as TextMessagePartProvider, G as c, H as useResource, I as PartByIndexProvider, J as useCallback, K as createContext, L as AssistantProviderBase, M as ThreadPrimitiveMessageByIndex, N as ThreadPrimitiveMessages, O as MessagePrimitivePartByIndex, Q as useEffectEvent$1, R as useAuiState, S as ComposerPrimitiveAttachmentByIndex, T as MessagePrimitiveAttachments, U as flushTapSync, V as require_jsx_runtime, W as resource, X as useDebugValue, Y as useContext, Z as useEffect, _ as ThreadListItemPrimitiveTitle, a as useThreadListItemTrigger, b as ThreadListPrimitiveItems, c as useThreadListItemArchive, d as useComposerDictate, et as useMemo, f as useComposerCancel, g as ThreadPrimitiveSuggestions, h as ThreadPrimitiveSuggestionByIndex, i as useThreadListNew, it as require_react, j as MessagePrimitiveGenerativeUI, k as MessagePrimitiveParts$1, l as useSuggestionTrigger, m as ComposerPrimitiveIf, n as useMessageError, nt as useState, o as useThreadListItemUnarchive, p as useComposerSend$1, q as react_shim_exports, r as useThreadListLoadMore, rt as useSyncExternalStore, s as useThreadListItemDelete, t as unstable_defaultDirectiveFormatter, tt as useRef, u as useComposerAddAttachment, v as MessagePartPrimitiveInProgress, w as MessagePrimitiveAttachmentByIndex, x as ComposerPrimitiveQueue, y as ThreadListPrimitiveItemByIndex, z as useAui } from "./assistant-ui-core.js";
 //#region node_modules/scheduler/cjs/scheduler.production.min.js
 /**
 * @license React
@@ -7878,7 +7878,7 @@ AttachmentPrimitiveRoot.displayName = "AttachmentPrimitive.Root";
 //#region node_modules/@assistant-ui/react/dist/primitives/attachment/AttachmentThumb.js
 var AttachmentPrimitiveThumb = (0, react_shim_exports.forwardRef)((props, ref) => {
 	const $ = c(4);
-	const ext = useAuiState(_temp$18);
+	const ext = useAuiState(_temp$20);
 	let t0;
 	if ($[0] !== ext || $[1] !== props || $[2] !== ref) {
 		t0 = /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Primitive.div, {
@@ -7894,7 +7894,7 @@ var AttachmentPrimitiveThumb = (0, react_shim_exports.forwardRef)((props, ref) =
 	return t0;
 });
 AttachmentPrimitiveThumb.displayName = "AttachmentPrimitive.unstable_Thumb";
-function _temp$18(s) {
+function _temp$20(s) {
 	const parts = s.attachment.name.split(".");
 	return parts.length > 1 ? parts.pop() : "";
 }
@@ -7902,7 +7902,7 @@ function _temp$18(s) {
 //#region node_modules/@assistant-ui/react/dist/primitives/attachment/AttachmentName.js
 var AttachmentPrimitiveName = () => {
 	const $ = c(2);
-	const name = useAuiState(_temp$17);
+	const name = useAuiState(_temp$19);
 	let t0;
 	if ($[0] !== name) {
 		t0 = /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children: name });
@@ -7912,7 +7912,7 @@ var AttachmentPrimitiveName = () => {
 	return t0;
 };
 AttachmentPrimitiveName.displayName = "AttachmentPrimitive.Name";
-function _temp$17(s) {
+function _temp$19(s) {
 	return s.attachment.name;
 }
 //#endregion
@@ -8023,7 +8023,7 @@ var ComposerInputPluginProvider = (t0) => {
 	if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
 		t3 = () => {
 			const entries = Array.from(pluginsRef.current.entries());
-			entries.sort(_temp$16);
+			entries.sort(_temp$18);
 			snapshotRef.current = entries.map(_temp2$5);
 		};
 		$[2] = t3;
@@ -8069,7 +8069,7 @@ var ComposerInputPluginProvider = (t0) => {
 	} else t7 = $[7];
 	return t7;
 };
-function _temp$16(a, b) {
+function _temp$18(a, b) {
 	return b[1] - a[1];
 }
 function _temp2$5(t0) {
@@ -8185,7 +8185,7 @@ var TriggerPopoverRootInner = (t0) => {
 	if ($[2] !== notify) {
 		t3 = (trigger) => {
 			const { char } = trigger;
-			if (triggersRef.current.has(char)) return _temp$15;
+			if (triggersRef.current.has(char)) return _temp$17;
 			const next = new Map(triggersRef.current);
 			next.set(char, trigger);
 			triggersRef.current = next;
@@ -8339,7 +8339,7 @@ var ComposerPrimitiveTriggerPopoverRoot = (t0) => {
 	return t1;
 };
 ComposerPrimitiveTriggerPopoverRoot.displayName = "ComposerPrimitive.TriggerPopoverRoot";
-function _temp$15() {}
+function _temp$17() {}
 //#endregion
 //#region node_modules/@assistant-ui/react/dist/primitives/composer/trigger/detectTrigger.js
 var WHITESPACE_RE = /\s/u;
@@ -9023,7 +9023,7 @@ var ComposerPrimitiveTriggerPopover$1 = (0, react_shim_exports.forwardRef)((t0, 
 	}
 	const isLoading = t1 === void 0 ? false : t1;
 	const aui = useAui();
-	const text = useAuiState(_temp$14);
+	const text = useAuiState(_temp$16);
 	const popoverId = (0, react_shim_exports.useId)();
 	const behaviorRef = useRef(null);
 	const [behavior, setBehavior] = useState(null);
@@ -9226,7 +9226,7 @@ var ComposerPrimitiveTriggerPopover$1 = (0, react_shim_exports.forwardRef)((t0, 
 	return t17;
 });
 ComposerPrimitiveTriggerPopover$1.displayName = "ComposerPrimitive.TriggerPopover";
-function _temp$14(s) {
+function _temp$16(s) {
 	return s.composer.text;
 }
 //#endregion
@@ -9328,7 +9328,7 @@ ComposerPrimitiveRoot.displayName = "ComposerPrimitive.Root";
 var useOnScrollToBottom = (callback) => {
 	const $ = c(4);
 	const callbackRef = useCallbackRef(callback);
-	const onScrollToBottom = useThreadViewport(_temp$13);
+	const onScrollToBottom = useThreadViewport(_temp$15);
 	let t0;
 	let t1;
 	if ($[0] !== callbackRef || $[1] !== onScrollToBottom) {
@@ -9344,7 +9344,7 @@ var useOnScrollToBottom = (callback) => {
 	}
 	useEffect(t0, t1);
 };
-function _temp$13(vp) {
+function _temp$15(vp) {
 	return vp.onScrollToBottom;
 }
 //#endregion
@@ -10008,7 +10008,7 @@ var ComposerPrimitiveDictate = createActionButton("ComposerPrimitive.Dictate", u
 var useComposerStopDictation = () => {
 	const $ = c(2);
 	const aui = useAui();
-	const isDictating = useAuiState(_temp$12);
+	const isDictating = useAuiState(_temp$14);
 	let t0;
 	if ($[0] !== aui) {
 		t0 = () => {
@@ -10034,7 +10034,7 @@ var useComposerStopDictation = () => {
 * ```
 */
 var ComposerPrimitiveStopDictation = createActionButton("ComposerPrimitive.StopDictation", useComposerStopDictation);
-function _temp$12(s) {
+function _temp$14(s) {
 	return s.composer.dictation != null;
 }
 //#endregion
@@ -10067,7 +10067,7 @@ var ComposerPrimitiveDictationTranscript = (0, react_shim_exports.forwardRef)((t
 		children = $[1];
 		props = $[2];
 	}
-	const transcript = useAuiState(_temp$11);
+	const transcript = useAuiState(_temp$13);
 	if (!transcript) return null;
 	const t1 = children ?? transcript;
 	let t2;
@@ -10085,7 +10085,7 @@ var ComposerPrimitiveDictationTranscript = (0, react_shim_exports.forwardRef)((t
 	return t2;
 });
 ComposerPrimitiveDictationTranscript.displayName = "ComposerPrimitive.DictationTranscript";
-function _temp$11(s) {
+function _temp$13(s) {
 	return s.composer.dictation?.transcript;
 }
 //#endregion
@@ -10104,7 +10104,7 @@ function _temp$11(s) {
 */
 var ComposerPrimitiveQuote = (0, react_shim_exports.forwardRef)((props, forwardedRef) => {
 	const $ = c(3);
-	if (!useAuiState(_temp$10)) return null;
+	if (!useAuiState(_temp$12)) return null;
 	let t0;
 	if ($[0] !== forwardedRef || $[1] !== props) {
 		t0 = /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Primitive.div, {
@@ -10211,7 +10211,7 @@ var ComposerPrimitiveQuoteDismiss = (0, react_shim_exports.forwardRef)((t0, forw
 	return t3;
 });
 ComposerPrimitiveQuoteDismiss.displayName = "ComposerPrimitive.QuoteDismiss";
-function _temp$10(s) {
+function _temp$12(s) {
 	return s.composer.quote;
 }
 function _temp2$4(s) {
@@ -10686,9 +10686,9 @@ var composer_exports = /* @__PURE__ */ __exportAll({
 * See the {@link https://assistant-ui.com/docs/migrations/v0-12 migration guide}.
 */
 var useMessagePartText = () => {
-	return useAuiState(_temp$9);
+	return useAuiState(_temp$11);
 };
-function _temp$9(s) {
+function _temp$11(s) {
 	if (s.part.type !== "text" && s.part.type !== "reasoning") throw new Error("MessagePartText can only be used inside text or reasoning message parts.");
 	return s.part;
 }
@@ -10885,9 +10885,9 @@ var useSmooth = (state, smooth = false) => {
 * See the {@link https://assistant-ui.com/docs/migrations/v0-12 migration guide}.
 */
 var useMessagePartImage = () => {
-	return useAuiState(_temp$8);
+	return useAuiState(_temp$10);
 };
-function _temp$8(s) {
+function _temp$10(s) {
 	if (s.part.type !== "image") throw new Error("MessagePartImage can only be used inside image message parts.");
 	return s.part;
 }
@@ -11080,7 +11080,7 @@ var useIsHoveringRef = () => {
 };
 var useIsTopAnchorUser = () => {
 	const $ = c(2);
-	const activeAnchorId = useThreadViewport(_temp$7);
+	const activeAnchorId = useThreadViewport(_temp$9);
 	let t0;
 	if ($[0] !== activeAnchorId) {
 		t0 = (s_0) => s_0.message.role === "user" && s_0.message.index > 0 && s_0.message.index === s_0.thread.messages.length - 2 && s_0.thread.messages.at(-1)?.role === "assistant" && (s_0.message.id === activeAnchorId || s_0.thread.isRunning);
@@ -11271,7 +11271,7 @@ var MessagePrimitiveRoot = (0, react_shim_exports.forwardRef)((props, forwardedR
 	return t0;
 });
 MessagePrimitiveRoot.displayName = "MessagePrimitive.Root";
-function _temp$7(s) {
+function _temp$9(s) {
 	return s.topAnchorTurn?.anchorId;
 }
 function _temp2$3(s) {
@@ -11391,7 +11391,7 @@ var groupMessagePartsByParentId = (parts) => {
 };
 var useMessagePartsGrouped = (groupingFunction) => {
 	const $ = c(4);
-	const parts = useAuiState(_temp$6);
+	const parts = useAuiState(_temp$8);
 	let t0;
 	bb0: {
 		if (parts.length === 0) {
@@ -11861,7 +11861,7 @@ var MessagePrimitiveUnstable_PartsGroupedByParentId = (t0) => {
 	return t1;
 };
 MessagePrimitiveUnstable_PartsGroupedByParentId.displayName = "MessagePrimitive.Unstable_PartsGroupedByParentId";
-function _temp$6(s) {
+function _temp$8(s) {
 	return s.message.parts;
 }
 function _temp2$2(s) {
@@ -11902,7 +11902,7 @@ var useOnResizeContent = (callback) => {
 				callbackRef();
 			});
 			const mutationObserver = new MutationObserver((mutations) => {
-				if (mutations.some(_temp$5)) callbackRef();
+				if (mutations.some(_temp$7)) callbackRef();
 			});
 			resizeObserver.observe(el);
 			mutationObserver.observe(el, {
@@ -11921,7 +11921,7 @@ var useOnResizeContent = (callback) => {
 	} else t0 = $[1];
 	return useManagedRef(t0);
 };
-function _temp$5(m) {
+function _temp$7(m) {
 	return m.type !== "attributes" || m.attributeName !== "style";
 }
 //#endregion
@@ -12070,10 +12070,10 @@ ThreadPrimitiveRoot.displayName = "ThreadPrimitive.Root";
 */
 var ThreadPrimitiveEmpty = (t0) => {
 	const { children } = t0;
-	return useAuiState(_temp$4) ? children : null;
+	return useAuiState(_temp$6) ? children : null;
 };
 ThreadPrimitiveEmpty.displayName = "ThreadPrimitive.Empty";
-function _temp$4(s) {
+function _temp$6(s) {
 	return s.thread.isEmpty;
 }
 //#endregion
@@ -12350,7 +12350,7 @@ var getActiveTopAnchorTargetId = (options) => getActiveTopAnchorTurn(options)?.t
 //#endregion
 //#region node_modules/@assistant-ui/react/dist/primitives/thread/ThreadViewport.js
 var useViewportSizeRef = () => {
-	return useSizeHandle(useThreadViewport(_temp$3), _temp2$1);
+	return useSizeHandle(useThreadViewport(_temp$5), _temp2$1);
 };
 var useViewportElementRef = () => {
 	return useManagedRef(useThreadViewport(_temp3));
@@ -12562,7 +12562,7 @@ var ThreadPrimitiveViewport = (0, react_shim_exports.forwardRef)((t0, ref) => {
 	return t3;
 });
 ThreadPrimitiveViewport.displayName = "ThreadPrimitive.Viewport";
-function _temp$3(s) {
+function _temp$5(s) {
 	return s.registerViewport;
 }
 function _temp2$1(el) {
@@ -12599,7 +12599,7 @@ function _temp3(s) {
 */
 var ThreadPrimitiveViewportFooter = (0, react_shim_exports.forwardRef)((props, forwardedRef) => {
 	const $ = c(3);
-	const ref = useComposedRefs(forwardedRef, useSizeHandle(useThreadViewport(_temp$2), _temp2));
+	const ref = useComposedRefs(forwardedRef, useSizeHandle(useThreadViewport(_temp$4), _temp2));
 	let t0;
 	if ($[0] !== props || $[1] !== ref) {
 		t0 = /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Primitive.div, {
@@ -12613,7 +12613,7 @@ var ThreadPrimitiveViewportFooter = (0, react_shim_exports.forwardRef)((props, f
 	return t0;
 });
 ThreadPrimitiveViewportFooter.displayName = "ThreadPrimitive.ViewportFooter";
-function _temp$2(s) {
+function _temp$4(s) {
 	return s.registerContentInset;
 }
 function _temp2(el) {
@@ -12631,7 +12631,7 @@ var useThreadScrollToBottom = (t0) => {
 		$[1] = t1;
 	} else t1 = $[1];
 	const { behavior } = t1;
-	const isAtBottom = useThreadViewport(_temp$1);
+	const isAtBottom = useThreadViewport(_temp$3);
 	const threadViewportStore = useThreadViewportStore();
 	let t2;
 	if ($[2] !== behavior || $[3] !== threadViewportStore) {
@@ -12647,7 +12647,7 @@ var useThreadScrollToBottom = (t0) => {
 	return handleScrollToBottom;
 };
 var ThreadPrimitiveScrollToBottom = createActionButton("ThreadPrimitive.ScrollToBottom", useThreadScrollToBottom, ["behavior"]);
-function _temp$1(s) {
+function _temp$3(s) {
 	return s.isAtBottom;
 }
 //#endregion
@@ -12694,6 +12694,169 @@ var thread_exports = /* @__PURE__ */ __exportAll({
 	Viewport: () => ThreadPrimitiveViewport,
 	ViewportFooter: () => ThreadPrimitiveViewportFooter,
 	ViewportProvider: () => ThreadPrimitiveViewportProvider
+});
+//#endregion
+//#region node_modules/@assistant-ui/react/dist/primitives/threadList/ThreadListNew.js
+var ThreadListPrimitiveNew = (0, react_shim_exports.forwardRef)((t0, forwardedRef) => {
+	const $ = c(15);
+	let disabled;
+	let onClick;
+	let props;
+	if ($[0] !== t0) {
+		({onClick, disabled, ...props} = t0);
+		$[0] = t0;
+		$[1] = disabled;
+		$[2] = onClick;
+		$[3] = props;
+	} else {
+		disabled = $[1];
+		onClick = $[2];
+		props = $[3];
+	}
+	const isMain = useAuiState(_temp$2);
+	const { switchToNewThread } = useThreadListNew();
+	let t1;
+	if ($[4] !== isMain) {
+		t1 = isMain ? {
+			"data-active": "true",
+			"aria-current": "true"
+		} : null;
+		$[4] = isMain;
+		$[5] = t1;
+	} else t1 = $[5];
+	let t2;
+	if ($[6] !== onClick || $[7] !== switchToNewThread) {
+		t2 = composeEventHandlers(onClick, switchToNewThread);
+		$[6] = onClick;
+		$[7] = switchToNewThread;
+		$[8] = t2;
+	} else t2 = $[8];
+	let t3;
+	if ($[9] !== disabled || $[10] !== forwardedRef || $[11] !== props || $[12] !== t1 || $[13] !== t2) {
+		t3 = /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Primitive.button, {
+			type: "button",
+			...t1,
+			...props,
+			ref: forwardedRef,
+			disabled,
+			onClick: t2
+		});
+		$[9] = disabled;
+		$[10] = forwardedRef;
+		$[11] = props;
+		$[12] = t1;
+		$[13] = t2;
+		$[14] = t3;
+	} else t3 = $[14];
+	return t3;
+});
+ThreadListPrimitiveNew.displayName = "ThreadListPrimitive.New";
+function _temp$2(s) {
+	return s.threads.newThreadId === s.threads.mainThreadId;
+}
+//#endregion
+//#region node_modules/@assistant-ui/react/dist/primitives/threadList/ThreadListLoadMore.js
+var useThreadListLoadMore$1 = () => {
+	const { loadMore, disabled } = useThreadListLoadMore();
+	if (disabled) return null;
+	return loadMore;
+};
+var ThreadListPrimitiveLoadMore = createActionButton("ThreadListPrimitive.LoadMore", useThreadListLoadMore$1);
+//#endregion
+//#region node_modules/@assistant-ui/react/dist/primitives/threadList/ThreadListRoot.js
+var ThreadListPrimitiveRoot = (0, react_shim_exports.forwardRef)((props, ref) => {
+	const $ = c(3);
+	let t0;
+	if ($[0] !== props || $[1] !== ref) {
+		t0 = /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Primitive.div, {
+			...props,
+			ref
+		});
+		$[0] = props;
+		$[1] = ref;
+		$[2] = t0;
+	} else t0 = $[2];
+	return t0;
+});
+ThreadListPrimitiveRoot.displayName = "ThreadListPrimitive.Root";
+//#endregion
+//#region node_modules/@assistant-ui/react/dist/primitives/threadList.js
+var threadList_exports = /* @__PURE__ */ __exportAll({
+	ItemByIndex: () => ThreadListPrimitiveItemByIndex,
+	Items: () => ThreadListPrimitiveItems,
+	LoadMore: () => ThreadListPrimitiveLoadMore,
+	New: () => ThreadListPrimitiveNew,
+	Root: () => ThreadListPrimitiveRoot
+});
+//#endregion
+//#region node_modules/@assistant-ui/react/dist/primitives/threadListItem/ThreadListItemRoot.js
+var ThreadListItemPrimitiveRoot = (0, react_shim_exports.forwardRef)((props, ref) => {
+	const $ = c(6);
+	const isMain = useAuiState(_temp$1);
+	let t0;
+	if ($[0] !== isMain) {
+		t0 = isMain ? {
+			"data-active": "true",
+			"aria-current": "true"
+		} : null;
+		$[0] = isMain;
+		$[1] = t0;
+	} else t0 = $[1];
+	let t1;
+	if ($[2] !== props || $[3] !== ref || $[4] !== t0) {
+		t1 = /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Primitive.div, {
+			...t0,
+			...props,
+			ref
+		});
+		$[2] = props;
+		$[3] = ref;
+		$[4] = t0;
+		$[5] = t1;
+	} else t1 = $[5];
+	return t1;
+});
+ThreadListItemPrimitiveRoot.displayName = "ThreadListItemPrimitive.Root";
+function _temp$1(s) {
+	return s.threads.mainThreadId === s.threadListItem.id;
+}
+//#endregion
+//#region node_modules/@assistant-ui/react/dist/primitives/threadListItem/ThreadListItemArchive.js
+var useThreadListItemArchive$1 = () => {
+	const { archive } = useThreadListItemArchive();
+	return archive;
+};
+var ThreadListItemPrimitiveArchive = createActionButton("ThreadListItemPrimitive.Archive", useThreadListItemArchive$1);
+//#endregion
+//#region node_modules/@assistant-ui/react/dist/primitives/threadListItem/ThreadListItemUnarchive.js
+var useThreadListItemUnarchive$1 = () => {
+	const { unarchive } = useThreadListItemUnarchive();
+	return unarchive;
+};
+var ThreadListItemPrimitiveUnarchive = createActionButton("ThreadListItemPrimitive.Unarchive", useThreadListItemUnarchive$1);
+//#endregion
+//#region node_modules/@assistant-ui/react/dist/primitives/threadListItem/ThreadListItemDelete.js
+var useThreadListItemDelete$1 = () => {
+	const { delete: deleteThread } = useThreadListItemDelete();
+	return deleteThread;
+};
+var ThreadListItemPrimitiveDelete = createActionButton("ThreadListItemPrimitive.Delete", useThreadListItemDelete$1);
+//#endregion
+//#region node_modules/@assistant-ui/react/dist/primitives/threadListItem/ThreadListItemTrigger.js
+var useThreadListItemTrigger$1 = () => {
+	const { switchTo } = useThreadListItemTrigger();
+	return switchTo;
+};
+var ThreadListItemPrimitiveTrigger = createActionButton("ThreadListItemPrimitive.Trigger", useThreadListItemTrigger$1);
+//#endregion
+//#region node_modules/@assistant-ui/react/dist/primitives/threadListItem.js
+var threadListItem_exports = /* @__PURE__ */ __exportAll({
+	Archive: () => ThreadListItemPrimitiveArchive,
+	Delete: () => ThreadListItemPrimitiveDelete,
+	Root: () => ThreadListItemPrimitiveRoot,
+	Title: () => ThreadListItemPrimitiveTitle,
+	Trigger: () => ThreadListItemPrimitiveTrigger,
+	Unarchive: () => ThreadListItemPrimitiveUnarchive
 });
 //#endregion
 //#region node_modules/@assistant-ui/react/dist/utils/getSelectionMessageId.js
@@ -13033,4 +13196,4 @@ function matchesQuery(cmd, lower) {
 	return false;
 }
 //#endregion
-export { useComposedRefs as _, message_exports as a, AssistantRuntimeProvider as b, composer_exports as c, useEscapeKeydown as d, useCallbackRef as f, createSlot as g, dispatchDiscreteCustomEvent as h, thread_exports as i, useTriggerPopoverScopeContext as l, Primitive$1 as m, useMessagePartReasoning as n, useSmooth as o, composeEventHandlers as p, selectionToolbar_exports as r, useMessagePartText as s, unstable_useSlashCommandAdapter as t, attachment_exports as u, useMessage as v, require_react_dom as x, useComposerRuntime as y };
+export { require_react_dom as C, AssistantRuntimeProvider as S, dispatchDiscreteCustomEvent as _, threadList_exports as a, useMessage as b, useSmooth as c, useTriggerPopoverScopeContext as d, attachment_exports as f, Primitive$1 as g, composeEventHandlers as h, threadListItem_exports as i, useMessagePartText as l, useCallbackRef as m, useMessagePartReasoning as n, thread_exports as o, useEscapeKeydown as p, selectionToolbar_exports as r, message_exports as s, unstable_useSlashCommandAdapter as t, composer_exports as u, createSlot as v, useComposerRuntime as x, useComposedRefs as y };

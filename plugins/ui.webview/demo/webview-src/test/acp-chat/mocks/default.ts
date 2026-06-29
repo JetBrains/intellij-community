@@ -7,6 +7,9 @@ import type { AcpBridgeHostApi, AcpBridgePageApi } from "../../../views/acp-chat
 const acpBridgeHostApiId = apiId<AcpBridgeHostApi>()("acp.bridge")
 const acpBridgePageApiId = apiId<AcpBridgePageApi>()("acp.bridge")
 const sessionId = "mock-session"
+const loadedSessionId = "loaded-session-1"
+const deletedSessionId = "loaded-session-2"
+const mockCwd = "/mock/project"
 const streamingProbePrompt = "streaming probe"
 const markdownFeatureProbePrompt = "markdown feature probe"
 const defaultModeId = "ask"
@@ -29,6 +32,9 @@ export default defineWebViewMock((context) => {
   let currentModeId = defaultModeId
   let currentModelValue = defaultModelValue
   let currentAutonomyValue = defaultAutonomyValue
+  let activeSessionId = sessionId
+  let listedSessions = defaultListedSessions()
+  let newSessionCounter = 0
 
   context.page.whenImplemented(acpBridgePageApiId, api => {
     pageApi = api
@@ -48,7 +54,10 @@ export default defineWebViewMock((context) => {
       currentModeId = defaultModeId
       currentModelValue = defaultModelValue
       currentAutonomyValue = defaultAutonomyValue
-      return { ok: true, cwd: "/mock/project" }
+      activeSessionId = sessionId
+      listedSessions = defaultListedSessions()
+      newSessionCounter = 0
+      return { ok: true, cwd: mockCwd }
     },
     async sendStdin(params) {
       const message = parseJsonRpcMessage(params.line)
@@ -72,28 +81,26 @@ export default defineWebViewMock((context) => {
         await sendPageStdout(response(message.id, {
           protocolVersion: message.params?.protocolVersion ?? 1,
           agentCapabilities: {
+            loadSession: true,
             promptCapabilities: { image: true, audio: false, embeddedContext: true },
+            sessionCapabilities: { list: {}, delete: {} },
           },
           authMethods: [],
         }))
         break
       case "session/new":
+        activeSessionId = newSessionCounter === 0 ? sessionId : `mock-session-new-${newSessionCounter}`
+        newSessionCounter++
         await sendPageStdout(response(message.id, {
-          sessionId,
-          modes: {
-            availableModes: [
-              { id: "ask", name: "Ask", description: "Answer questions without editing files." },
-              { id: "code", name: "Code", description: "Use tools and apply changes." },
-            ],
-            currentModeId,
-          },
+          sessionId: activeSessionId,
+          modes: sessionModes(),
           configOptions: sessionConfigOptions(),
         }))
         await sendPageStdout({
           jsonrpc: "2.0",
           method: "session/update",
           params: {
-            sessionId,
+            sessionId: activeSessionId,
             update: {
               sessionUpdate: "available_commands_update",
               availableCommands: sessionCommands(),
@@ -110,6 +117,18 @@ export default defineWebViewMock((context) => {
       case "session/set_config_option":
         updateConfigOption(message.params)
         await sendPageStdout(response(message.id, { configOptions: sessionConfigOptions() }))
+        break
+      case "session/list":
+        await sendPageStdout(response(message.id, { sessions: listedSessions, nextCursor: null }))
+        break
+      case "session/load":
+        await loadSession(message.id, message.params)
+        break
+      case "session/delete":
+        if (typeof message.params?.sessionId === "string") {
+          listedSessions = listedSessions.filter(session => session.sessionId !== message.params.sessionId)
+        }
+        await sendPageStdout(response(message.id, {}))
         break
       case "session/prompt":
         await sendAssistantResponse(message.id, promptText(message.params?.prompt))
@@ -129,7 +148,7 @@ export default defineWebViewMock((context) => {
         jsonrpc: "2.0",
         method: "session/update",
         params: {
-          sessionId,
+          sessionId: activeSessionId,
           update: {
             sessionUpdate: "agent_message_chunk",
             content: { type: "text", text: "\n\nMock agent cancelled." },
@@ -137,6 +156,39 @@ export default defineWebViewMock((context) => {
         },
       })
     }
+  }
+
+  async function loadSession(requestId: JsonRpcId, params: any): Promise<void> {
+    activeSessionId = typeof params?.sessionId === "string" ? params.sessionId : loadedSessionId
+    await sendSessionUpdate({
+      sessionUpdate: "user_message_chunk",
+      content: { type: "text", text: "Loaded user request" },
+    })
+    await sendSessionUpdate({
+      sessionUpdate: "agent_message_chunk",
+      content: { type: "text", text: "Loaded assistant response" },
+    })
+    const updatedAt = "2026-06-29T09:30:00.000Z"
+    listedSessions = listedSessions.map(session => session.sessionId === activeSessionId
+      ? { ...session, title: "Loaded session renamed", updatedAt }
+      : session)
+    await sendSessionUpdate({
+      sessionUpdate: "session_info_update",
+      title: "Loaded session renamed",
+      updatedAt,
+    })
+    await sendPageStdout(response(requestId, { modes: sessionModes(), configOptions: sessionConfigOptions() }))
+  }
+
+  async function sendSessionUpdate(update: unknown): Promise<void> {
+    await sendPageStdout({
+      jsonrpc: "2.0",
+      method: "session/update",
+      params: {
+        sessionId: activeSessionId,
+        update,
+      },
+    })
   }
 
   async function sendAssistantResponse(requestId: JsonRpcId, text: string): Promise<void> {
@@ -156,7 +208,7 @@ export default defineWebViewMock((context) => {
       jsonrpc: "2.0",
       method: "session/update",
       params: {
-        sessionId,
+        sessionId: activeSessionId,
         update: {
           sessionUpdate: "agent_message_chunk",
           content: { type: "text", text },
@@ -172,6 +224,16 @@ export default defineWebViewMock((context) => {
     }
     else if (params?.configId === "autonomy" && params.type === "boolean" && typeof params.value === "boolean") {
       currentAutonomyValue = params.value
+    }
+  }
+
+  function sessionModes(): unknown {
+    return {
+      availableModes: [
+        { id: "ask", name: "Ask", description: "Answer questions without editing files." },
+        { id: "code", name: "Code", description: "Use tools and apply changes." },
+      ],
+      currentModeId,
     }
   }
 
@@ -223,7 +285,7 @@ export default defineWebViewMock((context) => {
         jsonrpc: "2.0",
         method: "session/update",
         params: {
-          sessionId,
+          sessionId: activeSessionId,
           update: {
             sessionUpdate: "agent_thought_chunk",
             content: { type: "text", text: thoughtChunks[i] },
@@ -234,7 +296,7 @@ export default defineWebViewMock((context) => {
         jsonrpc: "2.0",
         method: "session/update",
         params: {
-          sessionId,
+          sessionId: activeSessionId,
           update: {
             sessionUpdate: "agent_message_chunk",
             content: { type: "text", text: messageChunks[i] },
@@ -274,6 +336,14 @@ function parseJsonRpcMessage(line: string): JsonRpcMessage | null {
 
 function response(id: JsonRpcId, result: unknown): unknown {
   return { jsonrpc: "2.0", id, result }
+}
+
+function defaultListedSessions() {
+  return [
+    { sessionId, cwd: mockCwd, title: "Current mock chat", updatedAt: "2026-06-29T09:00:00.000Z" },
+    { sessionId: loadedSessionId, cwd: mockCwd, title: "Loaded session one", updatedAt: "2026-06-29T08:30:00.000Z" },
+    { sessionId: deletedSessionId, cwd: mockCwd, title: "Loaded session two", updatedAt: "2026-06-28T18:00:00.000Z" },
+  ]
 }
 
 function delay(ms: number): Promise<void> {

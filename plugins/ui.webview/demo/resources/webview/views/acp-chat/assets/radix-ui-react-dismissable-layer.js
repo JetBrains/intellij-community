@@ -1,6 +1,6 @@
 import { o as __toESM } from "./rolldown-runtime.js";
-import { M as require_jsx_runtime, Y as require_react } from "./assistant-ui-core.js";
-import { _ as useComposedRefs, d as useEscapeKeydown, f as useCallbackRef, h as dispatchDiscreteCustomEvent, m as Primitive, p as composeEventHandlers } from "./assistant-ui-react.js";
+import { V as require_jsx_runtime, it as require_react } from "./assistant-ui-core.js";
+import { _ as dispatchDiscreteCustomEvent, g as Primitive, h as composeEventHandlers, m as useCallbackRef, p as useEscapeKeydown, y as useComposedRefs } from "./assistant-ui-react.js";
 //#region node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
 var import_jsx_runtime = require_jsx_runtime();
