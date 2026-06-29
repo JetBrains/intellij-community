@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="intellij-test-discovery" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:intellij-test-discovery-agent:1.0.776">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:intellij-test-discovery-agent:1.0.777">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.776/intellij-test-discovery-agent-1.0.776.jar">
-              <sha256sum>b01cd2cebb3473a3559de471286517dee92c3ec850b96b9c03ce81dc1226623c</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.777/intellij-test-discovery-agent-1.0.777.jar">
+              <sha256sum>8a83b29d50cc0a4f019a34881c554d73fa349c85fa6a49e60a2f7874ddf33b9b</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.776/intellij-test-discovery-agent-1.0.776.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.777/intellij-test-discovery-agent-1.0.777.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.776/intellij-test-discovery-agent-1.0.776-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.777/intellij-test-discovery-agent-1.0.777-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

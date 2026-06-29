@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -29,7 +28,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.coverage.org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassReader;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -224,33 +223,32 @@ public final class PackageAnnotator {
   }
 
   public @Nullable ClassData collectNonCoveredClassInfo(final @NotNull Path classFile, @NotNull ProjectData projectData) {
-    ClassReader classReader = loadClassReader(classFile);
-    if (classReader == null) return null;
-    String className = ClassNameUtil.convertToFQName(classReader.getClassName());
-    return collectNonCoveredClassInfo(className, classReader, projectData);
+    var bytes = loadClassBytes(classFile);
+    if (bytes == null) return null;
+    String className = ClassNameUtil.convertToFQName(new ClassReader(bytes).getClassName());
+    return collectNonCoveredClassInfo(className, bytes, projectData);
   }
 
   private @Nullable ClassData collectNonCoveredClassInfo(final Path classFile, String className, ProjectData projectData) {
-    ClassReader classReader = loadClassReader(classFile);
-    if (classReader == null) return null;
-    return collectNonCoveredClassInfo(className, classReader, projectData);
+    var bytes = loadClassBytes(classFile);
+    if (bytes == null) return null;
+    return collectNonCoveredClassInfo(className, bytes, projectData);
   }
 
   private @Nullable ClassData collectNonCoveredClassInfo(@NotNull String className,
-                                                        @NotNull ClassReader classReader,
-                                                        @NotNull ProjectData projectData) {
-    UnloadedUtil.appendUnloadedClass(projectData, className, classReader, mySuite.isBranchCoverage());
+                                                         byte @NotNull [] bytes,
+                                                         @NotNull ProjectData projectData) {
+    UnloadedUtil.appendUnloadedClass(projectData, className, bytes, mySuite.isBranchCoverage());
     return projectData.getClassData(className);
   }
 
-  private @Nullable ClassReader loadClassReader(@NotNull Path classFile) {
+  private byte @Nullable [] loadClassBytes(@NotNull Path classFile) {
     AnalysisUtils.ArchiveEntryPath archiveEntryPath = AnalysisUtils.splitArchiveEntryPath(classFile);
     if (archiveEntryPath != null) {
-      byte[] content = loadClassBytesFromArchivePath(archiveEntryPath);
-      return content != null ? new ClassReader(content) : null;
+      return loadClassBytesFromArchivePath(archiveEntryPath);
     }
     try (InputStream stream = Files.newInputStream(classFile)) {
-      return new ClassReader(stream);
+      return stream.readAllBytes();
     }
     catch (IOException ignored) {
       return null;
@@ -264,7 +262,7 @@ public final class PackageAnnotator {
       var entry = zip.getEntry(archiveEntryPath.entryPath());
       if (entry == null || entry.isDirectory()) return null;
       try (var stream = zip.getInputStream(entry)) {
-        return FileUtil.loadBytes(stream);
+        return stream.readAllBytes();
       }
     }
     catch (IOException ignored) {
