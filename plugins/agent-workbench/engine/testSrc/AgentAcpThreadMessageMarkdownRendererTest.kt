@@ -51,6 +51,13 @@ class AgentAcpThreadMessageMarkdownRendererTest {
   }
 
   @Test
+  fun `renders markdown links`() {
+    val html = AgentAcpThreadMessageMarkdownRenderer.renderHtmlBody("Open [JetBrains](https://www.jetbrains.com/).")
+
+    assertThat(html).contains("<a href=\"https://www.jetbrains.com/\">JetBrains</a>")
+  }
+
+  @Test
   fun `blank input renders blank html`() {
     assertThat(AgentAcpThreadMessageMarkdownRenderer.renderHtmlBody("")).isEmpty()
     assertThat(AgentAcpThreadMessageMarkdownRenderer.renderHtmlBody(" \n\t ")).isEmpty()

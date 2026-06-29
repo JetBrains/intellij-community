@@ -69,6 +69,7 @@ import javax.swing.JTextArea
 import javax.swing.JViewport
 import javax.swing.ScrollPaneConstants
 import javax.swing.plaf.basic.BasicTextUI
+import javax.swing.text.DefaultCaret
 import javax.swing.text.View
 import kotlin.math.ceil
 
@@ -84,13 +85,11 @@ internal class AgentAcpThreadScreen(
 ) : JPanel(BorderLayout()), AgentThreadViewPreferredFocusableContent {
   private val statusLabel = JBLabel().apply { font = JBFont.label().asBold() }
   private val subtitleLabel = JBLabel().apply { foreground = UIUtil.getContextHelpForeground() }
-  private var renderCounter = 0
   private var followTranscriptTail = true
   private var transcriptScrollToBottomRequested = false
   private var programmaticScrollDepth = 0
   private var lastTranscriptScrollValue = 0
   private var canUnstickTranscriptTail = true
-  private var transcriptScrollInvokeScheduled = false
   private var manualTranscriptTailPauseUntil = 0L
   private var renderedTranscriptEntries: List<ThreadTranscriptEntry>? = null
   private var renderedPendingApprovals = -1
@@ -126,9 +125,9 @@ internal class AgentAcpThreadScreen(
   init {
     border = JBUI.Borders.empty(4)
     transcriptPanel.scrollToBottomIfNeeded = {
-      scheduleTranscriptTailScrollFromLayout()
+      scrollTranscriptTailFromLayout()
     }
-    installTranscriptScrollDiagnostics()
+    installTranscriptScrollListeners()
     add(buildHeader(), BorderLayout.NORTH)
     add(transcriptScrollPane, BorderLayout.CENTER)
     add(buildInput(), BorderLayout.SOUTH)
@@ -151,20 +150,13 @@ internal class AgentAcpThreadScreen(
 
   private fun sendCurrentInput() {
     if (!inputArea.isEnabled) {
-      LOG.info("[$threadId] ACP screen ignored send: input disabled")
       return
     }
     val text = inputArea.text.trim()
     if (text.isEmpty()) return
-    val service = EngineProjectService.getInstance(project)
-    val projectionBeforeSend = service.projection(threadId)
-    LOG.info(
-      "[$threadId] ACP screen send requested: textLength=${text.length}, " +
-      "projection=${projectionBeforeSend.debugSummary()}, scroll=${transcriptScrollDebugState()}, layout=${transcriptLayoutDebugState()}",
-    )
     val sender = EnginePromptSender.forThread(project, threadId)
     if (sender == null) {
-      val projection = service.projection(threadId)
+      val projection = EngineProjectService.getInstance(project).projection(threadId)
       LOG.warn(
         "[$threadId] ACP screen cannot send: no prompt sender, " +
         "status=${projection.thread.status}, runtimeKind=${projection.thread.runtimeKind}, " +
@@ -172,15 +164,8 @@ internal class AgentAcpThreadScreen(
       )
       return
     }
-    LOG.info("[$threadId] ACP screen sending prompt: textLength=${text.length}")
     inputArea.text = ""
     sender.sendPrompt(project, threadId, text)
-    val projectionAfterDispatch = service.projection(threadId)
-    LOG.info(
-      "[$threadId] ACP screen send dispatched: textLength=${text.length}, " +
-      "projection=${projectionAfterDispatch.debugSummary()}, " +
-      "scroll=${transcriptScrollDebugState()}, layout=${transcriptLayoutDebugState()}",
-    )
   }
 
   override fun addNotify() {
@@ -210,21 +195,10 @@ internal class AgentAcpThreadScreen(
     project.messageBus.connect(parent).subscribe(
       EngineEvents.TOPIC,
       object : EngineEvents {
-        override fun eventAppended(event: ThreadEventEnvelope) {
-          if (event.threadId != this@AgentAcpThreadScreen.threadId) return
-          LOG.info(
-            "[$threadId] ACP screen event appended: seq=${event.seq}, type=${event.type}, " +
-            "source=${event.source}, visibility=${event.visibility}, payloadKeys=${event.payload.keys.sorted()}, " +
-            "scroll=${transcriptScrollDebugState()}, layout=${transcriptLayoutDebugState()}",
-          )
-        }
+        override fun eventAppended(event: ThreadEventEnvelope) = Unit
 
         override fun projectionUpdated(threadId: ThreadId) {
           if (threadId != this@AgentAcpThreadScreen.threadId) return
-          LOG.info(
-            "[$threadId] ACP screen projectionUpdated received: " +
-            "scroll=${transcriptScrollDebugState()}, layout=${transcriptLayoutDebugState()}",
-          )
           scheduleProjectionRender()
         }
       },
@@ -241,10 +215,6 @@ internal class AgentAcpThreadScreen(
         true
       }
     }
-    LOG.info(
-      "[$threadId] ACP screen projection render schedule: scheduled=$scheduled, " +
-      "scroll=${transcriptScrollDebugState()}, layout=${transcriptLayoutDebugState()}",
-    )
     if (!scheduled) return
     ApplicationManager.getApplication().invokeLater {
       synchronized(renderScheduleLock) {
@@ -252,10 +222,6 @@ internal class AgentAcpThreadScreen(
       }
       if (!project.isDisposed) {
         val projection = EngineProjectService.getInstance(project).projection(threadId)
-        LOG.info(
-          "[$threadId] ACP screen projectionUpdated rendering: " +
-          "projection=${projection.debugSummary()}, scroll=${transcriptScrollDebugState()}, layout=${transcriptLayoutDebugState()}",
-        )
         render(projection)
         // The user is looking at this thread, so any fresh agent output is already seen.
         if (isShowing) EngineUnreadTracker.getInstance(project).markRead(threadId)
@@ -265,7 +231,6 @@ internal class AgentAcpThreadScreen(
 
   @Suppress("HardCodedStringLiteral")
   private fun render(projection: ThreadProjection) {
-    val renderId = ++renderCounter
     val thread = projection.thread
     val title: @NlsSafe String = thread.title.ifBlank { threadId.value }
     statusLabel.text = title
@@ -275,75 +240,61 @@ internal class AgentAcpThreadScreen(
       humanize(thread.status.name),
     )
 
-    val stickDecision = transcriptStickDecision(projection)
-    LOG.info(
-      "[$threadId] ACP screen render#$renderId start: " +
-      "transcriptSize=${projection.transcript.size}, pendingApprovals=${projection.pendingApprovals}, " +
-      "previousComponents=${transcriptPanel.componentCount}, latest=${projection.transcript.lastOrNull().debugSummary()}, " +
-      "stick=${stickDecision.shouldStickToBottom}, stickReason=${stickDecision.reason}, " +
-      "followTailBefore=${stickDecision.followTailBefore}, followTailAfter=${stickDecision.followTailAfter}, " +
-      "beforeScroll=${stickDecision.scrollState}, layout=${transcriptLayoutDebugState()}",
-    )
-    val emptyStatus = thread.status.takeIf { projection.transcript.isEmpty() }
-    val transcriptRenderChange = renderTranscript(projection, emptyStatus, renderId)
-    if (transcriptRenderChange.changed && stickDecision.shouldStickToBottom) {
-      scheduleScrollTranscriptToBottom(renderId, stickDecision.reason)
-    }
-    else if (transcriptRenderChange.changed) {
-      LOG.info(
-        "[$threadId] ACP screen render#$renderId preserving scroll: " +
-        "reason=${stickDecision.reason}, scroll=${transcriptScrollDebugState()}, layout=${transcriptLayoutDebugState()}",
-      )
+    val visibleTranscriptEntries = projection.visibleTranscriptEntries()
+    val shouldStickToBottom = shouldStickTranscriptToBottom(visibleTranscriptEntries)
+    val emptyStatus = thread.status.takeIf { visibleTranscriptEntries.isEmpty() }
+    val transcriptRenderChange = renderTranscript(projection, visibleTranscriptEntries, emptyStatus)
+    if (transcriptRenderChange.changed && shouldStickToBottom) {
+      scheduleScrollTranscriptToBottom()
     }
 
     val sender = EnginePromptSender.forThread(project, threadId)
     val canSend = thread.runtimeKind == RuntimeKind.Acp &&
                   thread.status != ThreadStatus.Disconnected &&
                   sender != null
-    LOG.info(
-      "[$threadId] ACP screen render#$renderId input: canSend=$canSend, hasSender=${sender != null}, " +
-      "status=${thread.status}, runtimeKind=${thread.runtimeKind}, binding=${projection.runtimeBinding}, " +
-      "transcriptSize=${projection.transcript.size}",
-    )
     inputArea.isEnabled = canSend
     inputArea.emptyText.text = EngineBundle.message(
       if (canSend) "acp.screen.input.hint" else "acp.screen.input.readonly",
     )
   }
 
-  private fun renderTranscript(projection: ThreadProjection, emptyStatus: ThreadStatus?, renderId: Int): TranscriptRenderChange {
+  private fun renderTranscript(
+    projection: ThreadProjection,
+    visibleEntries: List<ThreadTranscriptEntry>,
+    emptyStatus: ThreadStatus?,
+  ): TranscriptRenderChange {
     val previousEntries = renderedTranscriptEntries
-    if (previousEntries == projection.transcript &&
+    if (previousEntries == visibleEntries &&
         renderedPendingApprovals == projection.pendingApprovals &&
         renderedEmptyStatus == emptyStatus) {
-      LOG.info(
-        "[$threadId] ACP screen render#$renderId transcript unchanged: " +
-        "components=${transcriptPanel.componentCount}, scroll=${transcriptScrollDebugState()}, layout=${transcriptLayoutDebugState()}",
-      )
       return TranscriptRenderChange(changed = false)
     }
 
     val requiresFullRebuild = previousEntries == null ||
                               renderedPendingApprovals != projection.pendingApprovals ||
                               renderedEmptyStatus != emptyStatus ||
-                              previousEntries.isEmpty() != projection.transcript.isEmpty() ||
+                              previousEntries.isEmpty() != visibleEntries.isEmpty() ||
                               projection.pendingApprovals > 0 ||
                               renderedPendingApprovals > 0
     return if (requiresFullRebuild) {
-      rebuildTranscript(projection, emptyStatus, renderId)
+      rebuildTranscript(projection, visibleEntries, emptyStatus)
     }
     else {
-      updateTranscriptTail(previousEntries, projection, renderId)
+      updateTranscriptTail(previousEntries, projection, visibleEntries)
     }
   }
 
-  private fun rebuildTranscript(projection: ThreadProjection, emptyStatus: ThreadStatus?, renderId: Int): TranscriptRenderChange {
+  private fun rebuildTranscript(
+    projection: ThreadProjection,
+    visibleEntries: List<ThreadTranscriptEntry>,
+    emptyStatus: ThreadStatus?,
+  ): TranscriptRenderChange {
     transcriptPanel.removeAll()
-    if (projection.transcript.isEmpty()) {
+    if (visibleEntries.isEmpty()) {
       transcriptPanel.add(emptyState(projection.thread.status))
     }
     else {
-      addTranscriptEntries(projection.transcript, startIndex = 0)
+      addTranscriptEntries(visibleEntries, startIndex = 0)
     }
     if (projection.pendingApprovals > 0) {
       transcriptPanel.add(
@@ -354,54 +305,39 @@ internal class AgentAcpThreadScreen(
         },
       )
     }
-    rememberRenderedTranscript(projection, emptyStatus)
+    rememberRenderedTranscript(visibleEntries, projection.pendingApprovals, emptyStatus)
     transcriptPanel.revalidate()
     transcriptPanel.repaint()
-    LOG.info(
-      "[$threadId] ACP screen render#$renderId rows rebuilt: " +
-      "components=${transcriptPanel.componentCount}, afterRevalidateScroll=${transcriptScrollDebugState()}, " +
-      "layout=${transcriptLayoutDebugState()}",
-    )
     return TranscriptRenderChange(changed = true)
   }
 
   private fun updateTranscriptTail(
     previousEntries: List<ThreadTranscriptEntry>,
     projection: ThreadProjection,
-    renderId: Int,
+    visibleEntries: List<ThreadTranscriptEntry>,
   ): TranscriptRenderChange {
-    val changedIndex = firstChangedTranscriptIndex(previousEntries, projection.transcript)
-    if (changedIndex == previousEntries.lastIndex && changedIndex == projection.transcript.lastIndex) {
+    val changedIndex = firstChangedTranscriptIndex(previousEntries, visibleEntries)
+    if (changedIndex == previousEntries.lastIndex && changedIndex == visibleEntries.lastIndex) {
       val row = transcriptPanel.getComponentOrNull(transcriptComponentIndex(changedIndex)) as? TranscriptRowPanel
-      if (row != null && row.updateTranscriptEntry(projection.transcript[changedIndex])) {
-        rememberRenderedTranscript(projection, emptyStatus = null)
+      if (row != null && row.updateTranscriptEntry(visibleEntries[changedIndex])) {
+        rememberRenderedTranscript(visibleEntries, projection.pendingApprovals, emptyStatus = null)
         transcriptPanel.revalidate()
         transcriptPanel.repaint()
-        LOG.info(
-          "[$threadId] ACP screen render#$renderId row updated: index=$changedIndex, " +
-          "components=${transcriptPanel.componentCount}, afterUpdateScroll=${transcriptScrollDebugState()}, " +
-          "layout=${transcriptLayoutDebugState()}",
-        )
         return TranscriptRenderChange(changed = true)
       }
     }
 
     removeTranscriptEntriesFrom(changedIndex)
-    addTranscriptEntries(projection.transcript, startIndex = changedIndex)
-    rememberRenderedTranscript(projection, emptyStatus = null)
+    addTranscriptEntries(visibleEntries, startIndex = changedIndex)
+    rememberRenderedTranscript(visibleEntries, projection.pendingApprovals, emptyStatus = null)
     transcriptPanel.revalidate()
     transcriptPanel.repaint()
-    LOG.info(
-      "[$threadId] ACP screen render#$renderId tail rebuilt: fromIndex=$changedIndex, " +
-      "components=${transcriptPanel.componentCount}, afterRevalidateScroll=${transcriptScrollDebugState()}, " +
-      "layout=${transcriptLayoutDebugState()}",
-    )
     return TranscriptRenderChange(changed = true)
   }
 
-  private fun rememberRenderedTranscript(projection: ThreadProjection, emptyStatus: ThreadStatus?) {
-    renderedTranscriptEntries = projection.transcript.toList()
-    renderedPendingApprovals = projection.pendingApprovals
+  private fun rememberRenderedTranscript(entries: List<ThreadTranscriptEntry>, pendingApprovals: Int, emptyStatus: ThreadStatus?) {
+    renderedTranscriptEntries = entries.toList()
+    renderedPendingApprovals = pendingApprovals
     renderedEmptyStatus = emptyStatus
   }
 
@@ -432,47 +368,35 @@ internal class AgentAcpThreadScreen(
   private fun JPanel.getComponentOrNull(index: Int): Component? =
     if (index in 0 until componentCount) getComponent(index) else null
 
-  private fun transcriptStickDecision(projection: ThreadProjection): TranscriptStickDecision {
+  private fun shouldStickTranscriptToBottom(visibleEntries: List<ThreadTranscriptEntry>): Boolean {
     val previousComponents = transcriptPanel.componentCount
     val scrollState = transcriptScrollState()
     val atBottom = scrollState.isAtBottom
-    val latestIsUserMessage = projection.transcript.lastOrNull().isUserMessage()
+    val latestIsUserMessage = visibleEntries.lastOrNull().isUserMessage()
     if (latestIsUserMessage) {
       manualTranscriptTailPauseUntil = 0L
     }
     val manualTailPauseActive = isManualTranscriptTailPauseActive()
-    val followTailBefore = followTranscriptTail
-    val keepFollowingTailAcrossLayoutDrift = followTailBefore && !manualTailPauseActive && scrollState.isWithinTailDrift
+    val keepFollowingTailAcrossLayoutDrift = followTranscriptTail && !manualTailPauseActive && scrollState.isWithinTailDrift
     val shouldStickToBottom =
       previousComponents == 0 || latestIsUserMessage || (atBottom && !manualTailPauseActive) || keepFollowingTailAcrossLayoutDrift
-    val reason = when {
-      previousComponents == 0 -> "initial-or-empty-panel"
-      latestIsUserMessage -> "latest-entry-is-user-message"
-      atBottom && !manualTailPauseActive -> "viewport-at-bottom"
-      atBottom -> "manual-tail-pause-at-bottom"
-      keepFollowingTailAcrossLayoutDrift -> "tail-follow-layout-drift"
-      else -> "preserve-manual-scroll"
-    }
     followTranscriptTail = shouldStickToBottom
-    return TranscriptStickDecision(
-      shouldStickToBottom = shouldStickToBottom,
-      reason = reason,
-      scrollState = scrollState.debugString(),
-      followTailBefore = followTailBefore,
-      followTailAfter = followTranscriptTail,
-    )
+    return shouldStickToBottom
   }
 
   private fun ThreadTranscriptEntry?.isUserMessage(): Boolean = this is ThreadMessage && role == MessageRole.User
 
-  private fun installTranscriptScrollDiagnostics() {
+  private fun ThreadProjection.visibleTranscriptEntries(): List<ThreadTranscriptEntry> = transcript.filter { entry ->
+    entry !is ThreadToolCall || AgentAcpToolCallPresenter.shouldRenderInTranscript(entry)
+  }
+
+  private fun installTranscriptScrollListeners() {
     val scrollBar = transcriptScrollPane.verticalScrollBar
     scrollBar.addAdjustmentListener { event ->
-      val followTailBefore = followTranscriptTail
       val userAdjustment = event.isUserTranscriptAdjustment()
+      val canUnstickTranscriptTail = userAdjustment && !event.valueIsAdjusting && !transcriptScrollToBottomRequested
       val canUnstick = canUnstickTranscriptTail && programmaticScrollDepth == 0
       val lastScrollValueBefore = lastTranscriptScrollValue
-      val requestedBefore = transcriptScrollToBottomRequested
       val scrollState = transcriptScrollState()
       if (canUnstick) {
         when {
@@ -481,125 +405,54 @@ internal class AgentAcpThreadScreen(
         }
       }
       lastTranscriptScrollValue = scrollState.value
-      LOG.info(
-        "[$threadId] ACP screen scrollbar adjusted: type=${event.adjustmentType.debugAdjustmentType()}, " +
-        "eventValue=${event.value}, valueIsAdjusting=${event.valueIsAdjusting}, " +
-        "programmatic=${programmaticScrollDepth > 0}, canUnstick=$canUnstick, userAdjustment=$userAdjustment, " +
-        "lastValueBefore=$lastScrollValueBefore, " +
-        "followTailBefore=$followTailBefore, followTailAfter=$followTranscriptTail, " +
-        "requestedBefore=$requestedBefore, requestedAfter=$transcriptScrollToBottomRequested, " +
-        "manualTailPauseAfter=${isManualTranscriptTailPauseActive()}, " +
-        "scroll=${scrollState.debugString()}, layout=${transcriptLayoutDebugState()}",
-      )
     }
     transcriptScrollPane.addMouseWheelListener { event ->
-      val followTailBefore = followTranscriptTail
-      val beforeScroll = transcriptScrollState()
       val wheelUp = event.wheelRotation < 0 || event.preciseWheelRotation < 0.0
-      val requestedBefore = transcriptScrollToBottomRequested
       if (wheelUp) {
         pauseTranscriptTailForUserScroll()
       }
-      LOG.info(
-        "[$threadId] ACP screen mouse wheel: rotation=${event.wheelRotation}, " +
-        "preciseRotation=${event.preciseWheelRotation}, units=${event.unitsToScroll}, " +
-        "wheelUp=$wheelUp, requestedBefore=$requestedBefore, requestedAfter=$transcriptScrollToBottomRequested, " +
-        "manualTailPauseAfter=${isManualTranscriptTailPauseActive()}, " +
-        "followTailBefore=$followTailBefore, followTailAfter=$followTranscriptTail, " +
-        "beforeScroll=${beforeScroll.debugString()}, layout=${transcriptLayoutDebugState()}",
-      )
       ApplicationManager.getApplication().invokeLater {
         if (project.isDisposed) return@invokeLater
-        val followTailAfterWheelBefore = followTranscriptTail
         val afterScroll = transcriptScrollState()
         val manualTailPauseActive = isManualTranscriptTailPauseActive()
         if (afterScroll.isAtBottom && !manualTailPauseActive) {
           followTranscriptTail = true
         }
-        LOG.info(
-          "[$threadId] ACP screen mouse wheel applied: " +
-          "manualTailPauseActive=$manualTailPauseActive, " +
-          "followTailBefore=$followTailAfterWheelBefore, followTailAfter=$followTranscriptTail, " +
-          "afterScroll=${afterScroll.debugString()}, layout=${transcriptLayoutDebugState()}",
-        )
       }
     }
   }
 
-  private fun scheduleScrollTranscriptToBottom(renderId: Int, reason: String) {
-    val requestedBefore = transcriptScrollToBottomRequested
+  private fun scheduleScrollTranscriptToBottom() {
     transcriptScrollToBottomRequested = true
-    val scheduled = scheduleTranscriptTailScroll(renderId, reason)
-    LOG.info(
-      "[$threadId] ACP screen render#$renderId schedule scroll-to-bottom: " +
-      "reason=$reason, requestedBefore=$requestedBefore, requestedAfter=true, scheduled=$scheduled, " +
-      "scheduledScroll=${transcriptScrollDebugState()}, layout=${transcriptLayoutDebugState()}",
-    )
   }
 
-  private fun scheduleTranscriptTailScroll(renderId: Int?, reason: String): Boolean {
-    if (transcriptScrollInvokeScheduled) return false
-    transcriptScrollInvokeScheduled = true
-    ApplicationManager.getApplication().invokeLater {
-      transcriptScrollInvokeScheduled = false
-      scrollTranscriptToBottomIfNeeded(renderId, reason)
-    }
-    return true
-  }
-
-  private fun scheduleTranscriptTailScrollFromLayout() {
+  private fun scrollTranscriptTailFromLayout() {
     if (!followTranscriptTail && !transcriptScrollToBottomRequested) return
-    val scheduled = scheduleTranscriptTailScroll(renderId = null, reason = "transcript-panel-layout")
-    if (scheduled) {
-      LOG.info(
-        "[$threadId] ACP screen layout schedule scroll-to-bottom: " +
-        "scroll=${transcriptScrollDebugState()}, layout=${transcriptLayoutDebugState()}",
-      )
-    }
+    scrollTranscriptToBottomIfNeeded()
   }
 
-  private fun scrollTranscriptToBottomIfNeeded(renderId: Int?, reason: String) {
+  private fun scrollTranscriptToBottomIfNeeded() {
     if (project.isDisposed) {
-      LOG.info("[$threadId] ACP screen ${renderDebugLabel(renderId)} skip scroll-to-bottom: trigger=scheduled, project disposed")
       return
     }
     if (!followTranscriptTail && !transcriptScrollToBottomRequested) {
-      LOG.info(
-        "[$threadId] ACP screen ${renderDebugLabel(renderId)} skip scroll-to-bottom: " +
-        "trigger=scheduled, followTail=false, requested=false, reason=$reason, " +
-        "scroll=${transcriptScrollDebugState()}, layout=${transcriptLayoutDebugState()}",
-      )
       return
     }
     if (!isTranscriptViewportWidthStable()) {
       transcriptScrollToBottomRequested = true
-      val scheduled = scheduleTranscriptTailScroll(renderId, reason)
-      LOG.info(
-        "[$threadId] ACP screen ${renderDebugLabel(renderId)} defer scroll-to-bottom: " +
-        "trigger=scheduled, reason=$reason, scheduled=$scheduled, " +
-        "scroll=${transcriptScrollDebugState()}, layout=${transcriptLayoutDebugState()}",
-      )
       return
     }
-    scrollTranscriptToBottom(renderId, reason)
+    scrollTranscriptToBottom()
   }
 
-  private fun scrollTranscriptToBottom(renderId: Int?, reason: String) {
+  private fun scrollTranscriptToBottom() {
     val scrollBar = transcriptScrollPane.verticalScrollBar
-    val beforeScroll = transcriptScrollDebugState()
-    val modelTarget = (scrollBar.maximum - scrollBar.visibleAmount).coerceAtLeast(scrollBar.minimum)
     runWithoutTranscriptUnsticking {
       scrollBar.value = scrollBar.maximum
     }
     lastTranscriptScrollValue = scrollBar.value
     transcriptScrollToBottomRequested = false
     followTranscriptTail = true
-    LOG.info(
-      "[$threadId] ACP screen ${renderDebugLabel(renderId)} scroll-to-bottom applied: " +
-      "trigger=scheduled, reason=$reason, modelTarget=$modelTarget, " +
-      "lastContentBounds=${transcriptPanel.lastContentComponentBoundsDebugString()}, beforeScroll=$beforeScroll, " +
-      "afterScroll=${transcriptScrollDebugState()}, layout=${transcriptLayoutDebugState()}",
-    )
   }
 
   private fun runWithoutTranscriptUnsticking(block: () -> Unit) {
@@ -623,18 +476,12 @@ internal class AgentAcpThreadScreen(
 
   private fun isManualTranscriptTailPauseActive(): Boolean = System.currentTimeMillis() < manualTranscriptTailPauseUntil
 
-  private fun renderDebugLabel(renderId: Int?): String = renderId?.let { "render#$it" } ?: "layout"
-
   private fun isTranscriptViewportWidthStable(): Boolean {
     val viewport = transcriptScrollPane.viewport
     val extentWidth = viewport.extentSize.width
     if (extentWidth <= 0) return true
     val viewWidth = viewport.viewSize.width
     return viewWidth >= extentWidth - JBUI.scale(2)
-  }
-
-  private fun transcriptScrollDebugState(): String {
-    return transcriptScrollState().debugString()
   }
 
   private fun transcriptScrollState(): TranscriptScrollState {
@@ -654,31 +501,6 @@ internal class AgentAcpThreadScreen(
       manualTailPauseActive = isManualTranscriptTailPauseActive(),
     )
   }
-
-  private fun transcriptLayoutDebugState(): String =
-    "panelSize=${transcriptPanel.size.debugString()}, panelPreferred=${transcriptPanel.preferredSize.debugString()}, " +
-    "viewportExtent=${transcriptScrollPane.viewport.extentSize.debugString()}, " +
-    "viewportViewSize=${transcriptScrollPane.viewport.viewSize.debugString()}, " +
-    "viewportViewPosition=${transcriptScrollPane.viewport.viewPosition.debugString()}, " +
-    "visibleRect=${transcriptPanel.visibleRect.debugString()}, " +
-    "lastComponentBounds=${transcriptPanel.lastComponentBoundsDebugString()}, " +
-    "lastContentBounds=${transcriptPanel.lastContentComponentBoundsDebugString()}, showing=$isShowing"
-
-  private fun ThreadTranscriptEntry?.debugSummary(): String = when (this) {
-    null -> "none"
-    is ThreadMessage -> "message(id=$id, role=$role, complete=$complete, textLength=${text.length}, updatedAt=$updatedAt)"
-    is ThreadToolCall -> "tool(id=$id, status=$status, complete=$complete, outputLength=${outputText.length}, updatedAt=$updatedAt)"
-    is ThreadCommand -> "command(id=$id, status=$status, exitCode=$exitCode, complete=$complete, outputLength=${outputText.length}, updatedAt=$updatedAt)"
-    is ThreadPlan -> "plan(id=$id, complete=$complete, items=${items.size}, updatedAt=$updatedAt)"
-    is ThreadFileDiff -> "diff(id=$id, status=$status, newTextLength=${newText?.length ?: 0}, updatedAt=$updatedAt)"
-    is ThreadContextCompaction -> "context(id=$id, summaryLength=${summary?.length ?: 0}, updatedAt=$updatedAt)"
-    is ThreadActionPrompt -> "actionPrompt(id=$id, buttons=${buttons.size}, updatedAt=$updatedAt)"
-  }
-
-  private fun ThreadProjection.debugSummary(): String =
-    "status=${thread.status}, runtimeKind=${thread.runtimeKind}, transcriptSize=${transcript.size}, " +
-    "pendingApprovals=$pendingApprovals, lastSeq=$lastSeq, latest=${transcript.lastOrNull().debugSummary()}, " +
-    "binding=${runtimeBinding != null}"
 
   private fun emptyState(status: ThreadStatus): JComponent =
     JBLabel(EngineBundle.message("acp.screen.empty", humanize(status.name))).apply {
@@ -706,8 +528,7 @@ internal class AgentAcpThreadScreen(
       foreground = UIUtil.getContextHelpForeground()
       border = JBUI.Borders.emptyBottom(2)
     }
-    val bodyText = previewText(message.text)
-    val bodyTextPane = rowMarkdownPane(bodyText)
+    val bodyTextPane = rowMarkdownPane(message.text)
     val body = JPanel().apply {
       layout = BoxLayout(this, BoxLayout.Y_AXIS)
       isOpaque = false
@@ -718,9 +539,8 @@ internal class AgentAcpThreadScreen(
     row.setTranscriptUpdater { entry ->
       val updated = entry as? ThreadMessage ?: return@setTranscriptUpdater false
       if (updated.id != message.id || updated.role != message.role) return@setTranscriptUpdater false
-      val updatedBodyText = previewText(updated.text)
       roleLabel.text = messageLabelText(updated)
-      bodyTextPane.setMarkdownText(updatedBodyText)
+      bodyTextPane.setMarkdownText(updated.text)
       bodyTextPane.invalidate()
       row.invalidate()
       true
@@ -739,30 +559,53 @@ internal class AgentAcpThreadScreen(
   }
 
   private fun toolRow(toolCall: ThreadToolCall): JComponent {
-    val sections = buildList {
-      toolCall.command?.takeIf { it.isNotBlank() }?.let { command ->
-        add(RowBodySection(EngineBundle.message("acp.screen.section.command", command)))
+    val row = TranscriptRowPanel().apply {
+      isOpaque = false
+      alignmentX = LEFT_ALIGNMENT
+    }
+    val body = JPanel().apply {
+      layout = BoxLayout(this, BoxLayout.Y_AXIS)
+      isOpaque = false
+    }
+
+    fun renderToolCall(updatedToolCall: ThreadToolCall) {
+      body.removeAll()
+      val presentation = AgentAcpToolCallPresenter.create(
+        updatedToolCall,
+        textPreview = { previewText(it) },
+        outputPreview = { previewText(it, OUTPUT_PREVIEW_MAX_CHARS, OUTPUT_PREVIEW_MAX_LINES) },
+      )
+      body.add(toolTitleTextArea(presentation.title))
+      presentation.status?.let { status ->
+        body.add(toolStatusLabel(status))
       }
-      toolCall.path?.takeIf { it.isNotBlank() }?.let { path ->
-        add(RowBodySection(EngineBundle.message("acp.screen.section.path", path)))
-      }
-      toolCall.outputText.takeIf { it.isNotBlank() }?.let { output ->
-        add(RowBodySection(EngineBundle.message("acp.screen.section.output",
-                                                previewText(output, OUTPUT_PREVIEW_MAX_CHARS, OUTPUT_PREVIEW_MAX_LINES)), true))
-      }
-      toolCall.summary?.takeIf { it.isNotBlank() }?.let { summary ->
-        add(RowBodySection(EngineBundle.message("acp.screen.section.summary", previewText(summary))))
-      }
-      toolCall.approval?.let { approval ->
-        add(RowBodySection(EngineBundle.message("acp.screen.approval.status", humanize(approval.status.name))))
+      for ((text, monospace) in presentation.details) {
+        body.add(Box.createVerticalStrut(2))
+        body.add(rowTextArea(text, monospace))
       }
     }
-    return entryRow(
-      label = EngineBundle.message("acp.screen.row.tool"),
-      title = toolCall.title ?: toolCall.command ?: toolCall.kind ?: toolCall.id,
-      sections = sections,
-      status = displayStatus(toolCall.status),
-    )
+    renderToolCall(toolCall)
+    row.add(body, BorderLayout.CENTER)
+    row.setTranscriptUpdater { entry ->
+      val updated = entry as? ThreadToolCall ?: return@setTranscriptUpdater false
+      if (updated.id != toolCall.id) return@setTranscriptUpdater false
+      renderToolCall(updated)
+      body.revalidate()
+      body.repaint()
+      row.invalidate()
+      true
+    }
+    return row
+  }
+
+  private fun toolTitleTextArea(title: String): JTextArea = rowTextArea(title, monospace = false).apply {
+    font = UIUtil.getLabelFont().deriveFont(Font.BOLD)
+  }
+
+  private fun toolStatusLabel(status: @NlsSafe String): JBLabel = JBLabel(status).apply {
+    foreground = UIUtil.getContextHelpForeground()
+    border = JBUI.Borders.emptyTop(1)
+    alignmentX = LEFT_ALIGNMENT
   }
 
   private fun commandRow(command: ThreadCommand): JComponent {
@@ -943,9 +786,10 @@ internal class AgentAcpThreadScreen(
     alignmentX = LEFT_ALIGNMENT
   }
 
-  private fun rowMarkdownPane(text: @NlsSafe String): TranscriptMessageMarkdownPane = TranscriptMessageMarkdownPane().apply {
-    setMarkdownText(text)
-  }
+  private fun rowMarkdownPane(text: @NlsSafe String): TranscriptMessageMarkdownPane =
+    TranscriptMessageMarkdownPane(project).apply {
+      setMarkdownText(text)
+    }
 
   private fun previewText(text: String, maxChars: Int = BODY_PREVIEW_MAX_CHARS, maxLines: Int = BODY_PREVIEW_MAX_LINES): @NlsSafe String {
     var truncated = false
@@ -984,36 +828,6 @@ internal class AgentAcpThreadScreen(
     }
   }
 
-  private fun Dimension.debugString(): String = "${width}x${height}"
-
-  private fun Point.debugString(): String = "${x},${y}"
-
-  private fun Rectangle.debugString(): String = "${x},${y} ${width}x${height}"
-
-  private fun JPanel.lastComponentBoundsDebugString(): String {
-    val lastComponent = components.lastOrNull() ?: return "none"
-    return lastComponent.bounds.debugString()
-  }
-
-  private fun JPanel.lastContentComponentBoundsDebugString(): String =
-    lastContentComponent()?.bounds?.debugString() ?: "none"
-
-  private fun JPanel.lastContentComponent(): Component? {
-    for (index in componentCount - 1 downTo 0) {
-      val component = getComponent(index)
-      if (component !is Box.Filler) return component
-    }
-    return null
-  }
-
-  private data class TranscriptStickDecision(
-    val shouldStickToBottom: Boolean,
-    val reason: String,
-    val scrollState: String,
-    val followTailBefore: Boolean,
-    val followTailAfter: Boolean,
-  )
-
   private data class TranscriptRenderChange(
     val changed: Boolean,
   )
@@ -1037,13 +851,6 @@ internal class AgentAcpThreadScreen(
 
     val isWithinTailDrift: Boolean
       get() = distanceToBottom <= tailDriftThreshold
-
-    fun debugString(): String =
-      "value=$value, visible=$visibleAmount, min=$minimum, max=$maximum, " +
-      "distanceToBottom=$distanceToBottom, threshold=$stickThreshold, " +
-      "tailDriftThreshold=$tailDriftThreshold, valueIsAdjusting=$valueIsAdjusting, " +
-      "unitIncrement=$unitIncrement, blockIncrement=$blockIncrement, " +
-      "followTail=$followTail, manualTailPauseActive=$manualTailPauseActive"
   }
 
   private data class RowBodySection(
@@ -1162,8 +969,13 @@ private class TranscriptTextArea(text: @NlsSafe String) : JTextArea(text) {
   }
 }
 
-private class TranscriptMessageMarkdownPane : JBHtmlPane(MARKDOWN_STYLE_CONFIGURATION, MARKDOWN_PANE_CONFIGURATION) {
+private class TranscriptMessageMarkdownPane(
+  private val project: Project,
+) : JBHtmlPane(MARKDOWN_STYLE_CONFIGURATION, MARKDOWN_PANE_CONFIGURATION) {
   private var markdownText: String = ""
+  private val markdownRenderLock = Any()
+  private var pendingMarkdownText: String? = null
+  private var markdownRenderInProgress = false
 
   init {
     isOpaque = false
@@ -1171,14 +983,70 @@ private class TranscriptMessageMarkdownPane : JBHtmlPane(MARKDOWN_STYLE_CONFIGUR
     border = null
     font = UIUtil.getLabelFont()
     alignmentX = LEFT_ALIGNMENT
+    caret = DefaultCaret()
+    putClientProperty("caretWidth", null)
+    caretPosition = 0
+    (caret as? DefaultCaret)?.updatePolicy = DefaultCaret.NEVER_UPDATE
+    addHyperlinkListener { event ->
+      AgentAcpThreadHyperlinkHandler.handle(project, event)
+    }
   }
 
   fun setMarkdownText(text: @NlsSafe String) {
     if (markdownText == text) return
     markdownText = text
-    this.text = AgentAcpThreadMessageMarkdownRenderer.renderHtmlDocument(text)
     isVisible = text.isNotBlank()
-    invalidate()
+    if (text.isBlank()) {
+      synchronized(markdownRenderLock) {
+        pendingMarkdownText = null
+      }
+      applyHtml(text, "")
+      return
+    }
+
+    val shouldScheduleRender = synchronized(markdownRenderLock) {
+      pendingMarkdownText = text
+      if (markdownRenderInProgress) {
+        false
+      }
+      else {
+        markdownRenderInProgress = true
+        true
+      }
+    }
+    if (shouldScheduleRender) {
+      ApplicationManager.getApplication().executeOnPooledThread {
+        renderPendingMarkdown()
+      }
+    }
+  }
+
+  private fun renderPendingMarkdown() {
+    while (true) {
+      val textToRender = synchronized(markdownRenderLock) {
+        val pending = pendingMarkdownText
+        if (pending == null) {
+          markdownRenderInProgress = false
+          return
+        }
+        pendingMarkdownText = null
+        pending
+      }
+      val html = AgentAcpThreadMessageMarkdownRenderer.renderHtmlDocument(textToRender)
+      ApplicationManager.getApplication().invokeLater {
+        applyHtml(textToRender, html)
+      }
+    }
+  }
+
+  private fun applyHtml(textToRender: String, html: String) {
+    if (!project.isDisposed && markdownText == textToRender) {
+      this.text = html
+      isVisible = textToRender.isNotBlank()
+      invalidate()
+      revalidate()
+      repaint()
+    }
   }
 
   override fun getPreferredSize(): Dimension {
@@ -1186,7 +1054,7 @@ private class TranscriptMessageMarkdownPane : JBHtmlPane(MARKDOWN_STYLE_CONFIGUR
     if (availableWidth <= 0) return super.getPreferredSize()
 
     val previousSize = size
-    setSize(availableWidth, Int.MAX_VALUE)
+    setSize(availableWidth, Short.MAX_VALUE.toInt())
     val preferredHeight = super.getPreferredSize().height
     size = previousSize
     return Dimension(availableWidth, preferredHeight)
@@ -1214,14 +1082,6 @@ private fun AdjustmentEvent.isUserTranscriptAdjustment(): Boolean =
     else -> false
   }
 
-private fun Int.debugAdjustmentType(): String = when (this) {
-  AdjustmentEvent.UNIT_INCREMENT -> "UNIT_INCREMENT"
-  AdjustmentEvent.UNIT_DECREMENT -> "UNIT_DECREMENT"
-  AdjustmentEvent.BLOCK_INCREMENT -> "BLOCK_INCREMENT"
-  AdjustmentEvent.BLOCK_DECREMENT -> "BLOCK_DECREMENT"
-  AdjustmentEvent.TRACK -> "TRACK"
-  else -> "UNKNOWN($this)"
-}
 
 /** Splits a PascalCase enum name into spaced words, e.g. `WaitingForApproval` -> `Waiting For Approval`. */
 private fun humanize(name: String): String =
