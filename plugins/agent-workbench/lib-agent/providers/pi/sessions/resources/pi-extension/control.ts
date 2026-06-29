@@ -20,8 +20,28 @@ type AgentWorkbenchControlBridge = {
   close: () => void;
 };
 
+type AgentWorkbenchControlMessageType =
+  | "hello"
+  | "sessionState"
+  | "response"
+  | "navigateTree"
+  | "forkFromEntry"
+  | "getCurrentTaskFolder"
+  | "listTaskFolderThreads"
+  | "getTaskFolderMetadata"
+  | "setTaskFolderMetadata"
+  | "deleteTaskFolderMetadata";
+
+type AgentWorkbenchControlSessionMessageType = "hello" | "sessionState";
+type AgentWorkbenchControlRequestType =
+  | "getCurrentTaskFolder"
+  | "listTaskFolderThreads"
+  | "getTaskFolderMetadata"
+  | "setTaskFolderMetadata"
+  | "deleteTaskFolderMetadata";
+
 type AgentWorkbenchControlCommand = {
-  type?: string;
+  type?: AgentWorkbenchControlMessageType;
   requestId?: string;
   sessionId?: string;
   cwd?: string;
@@ -99,7 +119,7 @@ export function startControlBridge(ctx: ExtensionContext): AgentWorkbenchControl
     onText: (message) => void handleControlMessage(message),
   });
 
-  const sendSessionMessage = (type: "hello" | "sessionState") => {
+  const sendSessionMessage = (type: AgentWorkbenchControlSessionMessageType) => {
     const sessionId = currentCtx.sessionManager.getSessionId();
     const cwd = currentCtx.cwd;
     if (sessionId === undefined || cwd === undefined || !socket.isOpen()) {
@@ -146,7 +166,7 @@ export function startControlBridge(ctx: ExtensionContext): AgentWorkbenchControl
   };
 
   const sendRequest = (
-    type: string,
+    type: AgentWorkbenchControlRequestType,
     payload: Partial<AgentWorkbenchControlCommand> = {},
   ): Promise<AgentWorkbenchControlCommand> => {
     const sessionId = currentCtx.sessionManager.getSessionId();
