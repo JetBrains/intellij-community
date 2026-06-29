@@ -32,6 +32,7 @@ import javax.swing.SwingUtilities
 
 private const val PERSISTENT_SETTING_MUTED_KEY = "input.method.disabler.muted"
 private const val PERSISTENT_SETTING_AUTO_DISABLE_KEY = "input.method.disabler.auto"
+private const val SYSTEM_PROPERTY_MUTED_KEY = "idea.input.method.disabler.notification.muted"
 private const val NOTIFICATION_GROUP = "Input method disabler"
 
 private var IS_NOTIFICATION_REGISTERED = false
@@ -58,6 +59,8 @@ suspend fun disableInputMethodsIfPossible() {
         disableInputMethodsImpl()
       }
     }
+    return
+  } else if (java.lang.Boolean.getBoolean(SYSTEM_PROPERTY_MUTED_KEY)){
     return
   }
 
