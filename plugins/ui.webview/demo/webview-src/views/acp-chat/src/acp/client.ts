@@ -67,6 +67,7 @@ export class AcpSession {
   private capabilities: AcpSessionCapabilitiesView = emptySessionCapabilities()
   private io: AgentStdioStream | null = null
   private sink: AcpEventSink | null = null
+  private extraEnv: Record<string, string> | undefined
   // Bumped on every stop()/connect(); an in-flight connect() that finds the value changed was superseded
   // (e.g. by a Cancel during a re-spawn) and tears itself down instead of installing a live, orphaned session.
   private generation = 0
@@ -87,6 +88,10 @@ export class AcpSession {
     return this.capabilities
   }
 
+  get canCloseActiveSession(): boolean {
+    return this.capabilities.close && typeof this.connection?.closeSession === "function"
+  }
+
   /** Spawn + connect the agent and attempt to open a session. */
   async start(agentId: string, sink: AcpEventSink): Promise<StartOutcome> {
     try {
@@ -102,6 +107,19 @@ export class AcpSession {
   async reconnectWithEnv(agentId: string, env: Record<string, string>, sink: AcpEventSink): Promise<void> {
     await this.stop()
     await this.connect(agentId, sink, env)
+    this.extraEnv = env
+  }
+
+  async restart(agentId: string, sink: AcpEventSink): Promise<StartOutcome> {
+    try {
+      const extraEnv = this.extraEnv
+      await this.stop()
+      await this.connect(agentId, sink, extraEnv)
+    }
+    catch (error) {
+      return { kind: "error", message: messageOf(error) }
+    }
+    return this.openSession()
   }
 
   /** Authenticate the live connection with the chosen method; for OAuth methods the agent drives a device flow. */
@@ -132,6 +150,15 @@ export class AcpSession {
       }
       return { kind: "auth-required", methods, message: authMessage(error) }
     }
+  }
+
+  async closeActiveSession(): Promise<void> {
+    const connection = this.connection
+    const sessionId = this.sessionId
+    if (!connection || !sessionId) return
+    if (!this.canCloseActiveSession) return
+    await connection.closeSession({ sessionId })
+    this.sessionId = null
   }
 
   async prompt(blocks: ContentBlock[]): Promise<void> {
@@ -268,7 +295,9 @@ export class AcpSession {
         throw new Error(result.error ?? `Failed to start agent '${agentId}'`)
       }
       const client: Client = {
-        sessionUpdate(notification: any): void {
+        sessionUpdate: (notification: any): void => {
+          const updateSessionId = stringOrNull(notification?.sessionId)
+          if (updateSessionId && updateSessionId !== this.sessionId) return
           handleUpdate(notification?.update, sink)
         },
         async requestPermission(request: any): Promise<any> {

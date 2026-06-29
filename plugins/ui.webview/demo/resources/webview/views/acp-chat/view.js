@@ -628,6 +628,7 @@ var AcpSession = class {
 	capabilities = emptySessionCapabilities();
 	io = null;
 	sink = null;
+	extraEnv;
 	generation = 0;
 	get isActive() {
 		return this.connection != null && this.sessionId != null;
@@ -640,6 +641,9 @@ var AcpSession = class {
 	}
 	get sessionCapabilities() {
 		return this.capabilities;
+	}
+	get canCloseActiveSession() {
+		return this.capabilities.close && typeof this.connection?.closeSession === "function";
 	}
 	/** Spawn + connect the agent and attempt to open a session. */
 	async start(agentId, sink) {
@@ -657,6 +661,20 @@ var AcpSession = class {
 	async reconnectWithEnv(agentId, env, sink) {
 		await this.stop();
 		await this.connect(agentId, sink, env);
+		this.extraEnv = env;
+	}
+	async restart(agentId, sink) {
+		try {
+			const extraEnv = this.extraEnv;
+			await this.stop();
+			await this.connect(agentId, sink, extraEnv);
+		} catch (error) {
+			return {
+				kind: "error",
+				message: messageOf(error)
+			};
+		}
+		return this.openSession();
 	}
 	/** Authenticate the live connection with the chosen method; for OAuth methods the agent drives a device flow. */
 	async authenticate(methodId) {
@@ -696,6 +714,14 @@ var AcpSession = class {
 				message: authMessage(error)
 			};
 		}
+	}
+	async closeActiveSession() {
+		const connection = this.connection;
+		const sessionId = this.sessionId;
+		if (!connection || !sessionId) return;
+		if (!this.canCloseActiveSession) return;
+		await connection.closeSession({ sessionId });
+		this.sessionId = null;
 	}
 	async prompt(blocks) {
 		const connection = this.connection;
@@ -815,7 +841,9 @@ var AcpSession = class {
 			});
 			if (!result.ok) throw new Error(result.error ?? `Failed to start agent '${agentId}'`);
 			const client = {
-				sessionUpdate(notification) {
+				sessionUpdate: (notification) => {
+					const updateSessionId = stringOrNull(notification?.sessionId);
+					if (updateSessionId && updateSessionId !== this.sessionId) return;
 					handleUpdate(notification?.update, sink);
 				},
 				async requestPermission(request) {
@@ -1195,6 +1223,7 @@ function useAcpChat() {
 	const activeSessionIdRef = (0, import_react.useRef)(null);
 	const plansByIdRef = (0, import_react.useRef)(/* @__PURE__ */ new Map());
 	const assistantSeqRef = (0, import_react.useRef)(0);
+	const newThreadSwitchRef = (0, import_react.useRef)(null);
 	const authResolveRef = (0, import_react.useRef)(null);
 	(0, import_react.useEffect)(() => {
 		let cancelled = false;
@@ -1446,33 +1475,55 @@ function useAcpChat() {
 		updateActiveSessionInfo
 	]);
 	const attachmentAdapter = (0, import_react.useMemo)(() => createAttachmentAdapter(promptCapabilities), [promptCapabilities]);
-	const switchToNewThread = (0, import_react.useCallback)(async () => {
-		const session = sessionRef.current;
-		if (!session) {
-			setStatus("Select an agent to start a session first.");
-			return;
-		}
-		resetActiveThreadUi();
-		setStatus("");
-		const outcome = await session.openSession();
-		if (outcome.kind !== "ready") {
-			setStatus(outcome.message);
-			return;
-		}
-		const sessionId = session.activeSessionId;
-		activeSessionIdRef.current = sessionId;
-		setActiveSessionId(sessionId);
-		if (sessionId) upsertSession({
-			sessionId,
-			cwd: session.workingDirectory,
-			title: "New chat",
-			updatedAt: null
+	const switchToNewThread = (0, import_react.useCallback)(() => {
+		const inFlight = newThreadSwitchRef.current;
+		if (inFlight) return inFlight;
+		const promise = (async () => {
+			const session = sessionRef.current;
+			if (!session) {
+				setStatus("Select an agent to start a session first.");
+				return;
+			}
+			const agentId = selectedAgentId;
+			resetActiveThreadUi();
+			setStatus("");
+			let outcome;
+			if (session.canCloseActiveSession) {
+				try {
+					await session.closeActiveSession();
+				} catch (error) {
+					setStatus(errorText(error));
+				}
+				outcome = await session.openSession();
+			} else if (agentId) outcome = await session.restart(agentId, sink);
+			else outcome = await session.openSession();
+			if (outcome.kind !== "ready") {
+				setStatus(outcome.message);
+				return;
+			}
+			setStatus("");
+			const sessionId = session.activeSessionId;
+			activeSessionIdRef.current = sessionId;
+			setActiveSessionId(sessionId);
+			if (sessionId) upsertSession({
+				sessionId,
+				cwd: session.workingDirectory,
+				title: "New chat",
+				updatedAt: null
+			});
+			if (chatListSupported) loadSessionsPage(session, null, false);
+		})();
+		newThreadSwitchRef.current = promise;
+		promise.finally(() => {
+			if (newThreadSwitchRef.current === promise) newThreadSwitchRef.current = null;
 		});
-		if (chatListSupported) loadSessionsPage(session, null, false);
+		return promise;
 	}, [
 		chatListSupported,
 		loadSessionsPage,
 		resetActiveThreadUi,
+		selectedAgentId,
+		sink,
 		upsertSession
 	]);
 	const switchToSession = (0, import_react.useCallback)(async (threadId) => {
@@ -1766,9 +1817,6 @@ function useAcpChat() {
 		chatListHasMore: nextCursor != null,
 		chatListCanDelete,
 		activeSessionId,
-		startNewChat: () => {
-			switchToNewThread();
-		},
 		loadMoreChats,
 		selectAgent,
 		selectMode,
@@ -2475,11 +2523,6 @@ function ChatList({ chat }) {
 }
 function ChatListPanel(props) {
 	const { chat, onNavigate } = props;
-	const startNewChat = (event) => {
-		event.preventDefault();
-		onNavigate?.();
-		chat.startNewChat();
-	};
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(threadList_exports.Root, {
 		className: "acpChatListRoot",
 		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
@@ -2491,7 +2534,7 @@ function ChatListPanel(props) {
 				className: "acpChatListNew",
 				"aria-label": "New chat",
 				title: "New chat",
-				onClick: startNewChat,
+				onClick: () => onNavigate?.(),
 				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PlusIcon, {})
 			})]
 		}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {

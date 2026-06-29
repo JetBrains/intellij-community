@@ -13,7 +13,7 @@ import {
   type ThreadUserMessagePart,
 } from "@assistant-ui/react"
 import type { ContentBlock } from "@agentclientprotocol/sdk"
-import { AcpSession, type AcpEventSink } from "../acp/client"
+import { AcpSession, type AcpEventSink, type StartOutcome } from "../acp/client"
 import { acpBridgeHost } from "../bridge/webviewApi"
 import type {
   AcpSessionInfoUpdateView,
@@ -65,7 +65,6 @@ export interface AcpChat {
   chatListHasMore: boolean
   chatListCanDelete: boolean
   activeSessionId: string | null
-  startNewChat: () => void
   loadMoreChats: () => void
   selectAgent: (agentId: string) => void
   selectMode: (modeId: string) => void
@@ -101,6 +100,7 @@ export function useAcpChat(): AcpChat {
   const activeSessionIdRef = useRef<string | null>(null)
   const plansByIdRef = useRef(new Map<string, PlanEntryView[]>())
   const assistantSeqRef = useRef(0)
+  const newThreadSwitchRef = useRef<Promise<void> | null>(null)
   // Resolver for the select-phase auth prompt, so a dying agent (or unmount) can unblock the prompt instead of hanging.
   const authResolveRef = useRef<((choice: AuthChoice | null) => void) | null>(null)
 
@@ -337,25 +337,51 @@ export function useAcpChat(): AcpChat {
 
   const attachmentAdapter = useMemo(() => createAttachmentAdapter(promptCapabilities), [promptCapabilities])
 
-  const switchToNewThread = useCallback(async () => {
-    const session = sessionRef.current
-    if (!session) {
-      setStatus("Select an agent to start a session first.")
-      return
-    }
-    resetActiveThreadUi()
-    setStatus("")
-    const outcome = await session.openSession()
-    if (outcome.kind !== "ready") {
-      setStatus(outcome.message)
-      return
-    }
-    const sessionId = session.activeSessionId
-    activeSessionIdRef.current = sessionId
-    setActiveSessionId(sessionId)
-    if (sessionId) upsertSession({ sessionId, cwd: session.workingDirectory, title: "New chat", updatedAt: null })
-    if (chatListSupported) void loadSessionsPage(session, null, false)
-  }, [chatListSupported, loadSessionsPage, resetActiveThreadUi, upsertSession])
+  const switchToNewThread = useCallback((): Promise<void> => {
+    const inFlight = newThreadSwitchRef.current
+    if (inFlight) return inFlight
+    const promise = (async () => {
+      const session = sessionRef.current
+      if (!session) {
+        setStatus("Select an agent to start a session first.")
+        return
+      }
+      const agentId = selectedAgentId
+      resetActiveThreadUi()
+      setStatus("")
+      let outcome: StartOutcome
+      if (session.canCloseActiveSession) {
+        try {
+          await session.closeActiveSession()
+        }
+        catch (error) {
+          setStatus(errorText(error))
+        }
+        outcome = await session.openSession()
+      }
+      else if (agentId) {
+        outcome = await session.restart(agentId, sink)
+      }
+      else {
+        outcome = await session.openSession()
+      }
+      if (outcome.kind !== "ready") {
+        setStatus(outcome.message)
+        return
+      }
+      setStatus("")
+      const sessionId = session.activeSessionId
+      activeSessionIdRef.current = sessionId
+      setActiveSessionId(sessionId)
+      if (sessionId) upsertSession({ sessionId, cwd: session.workingDirectory, title: "New chat", updatedAt: null })
+      if (chatListSupported) void loadSessionsPage(session, null, false)
+    })()
+    newThreadSwitchRef.current = promise
+    void promise.finally(() => {
+      if (newThreadSwitchRef.current === promise) newThreadSwitchRef.current = null
+    })
+    return promise
+  }, [chatListSupported, loadSessionsPage, resetActiveThreadUi, selectedAgentId, sink, upsertSession])
 
   const switchToSession = useCallback(async (threadId: string) => {
     const session = sessionRef.current
@@ -631,7 +657,6 @@ export function useAcpChat(): AcpChat {
     chatListHasMore: nextCursor != null,
     chatListCanDelete,
     activeSessionId,
-    startNewChat: () => { void switchToNewThread() },
     loadMoreChats,
     selectAgent,
     selectMode,

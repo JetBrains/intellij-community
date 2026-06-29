@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import { useEffect, useState, type MouseEvent } from "react"
+import { useEffect, useState } from "react"
 import { ThreadListItemPrimitive, ThreadListPrimitive } from "@assistant-ui/react"
 import type { AcpChat } from "../runtime/useAcpChat"
 
 type ChatListProps = {
-  chat: Pick<AcpChat, "chatListSupported" | "chatListLoading" | "chatListHasMore" | "chatListCanDelete" | "startNewChat" | "loadMoreChats">
+  chat: Pick<AcpChat, "chatListSupported" | "chatListLoading" | "chatListHasMore" | "chatListCanDelete" | "loadMoreChats">
 }
 
 export function ChatList({ chat }: ChatListProps) {
@@ -50,16 +50,11 @@ export function ChatList({ chat }: ChatListProps) {
 
 function ChatListPanel(props: ChatListProps & { onNavigate?: () => void }) {
   const { chat, onNavigate } = props
-  const startNewChat = (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault()
-    onNavigate?.()
-    chat.startNewChat()
-  }
   return (
     <ThreadListPrimitive.Root className="acpChatListRoot">
       <div className="acpChatListHeader">
         <span className="acpChatListTitle">Chats</span>
-        <ThreadListPrimitive.New className="acpChatListNew" aria-label="New chat" title="New chat" onClick={startNewChat}>
+        <ThreadListPrimitive.New className="acpChatListNew" aria-label="New chat" title="New chat" onClick={() => onNavigate?.()}>
           <PlusIcon />
         </ThreadListPrimitive.New>
       </div>

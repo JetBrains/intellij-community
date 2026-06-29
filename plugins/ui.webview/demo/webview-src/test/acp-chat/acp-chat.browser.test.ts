@@ -198,18 +198,49 @@ test("starts a new ACP chat from the thread list", async ({ page }) => {
   await page.getByRole("button", { name: "Loaded session one" }).click()
   await expect(page.getByText("Loaded user request", { exact: true })).toBeVisible()
 
-  await page.locator(".acpChatListSidebar .acpChatListNew").click()
+  await page.getByRole("button", { name: "New chat" }).click()
   await page.waitForFunction(() => !document.body.textContent?.includes("Loaded user request"))
+  await waitForLateMockUpdates(page)
+  await page.waitForFunction(() => !document.body.textContent?.includes("Late stale loaded session request"))
 
   await composerInput(page).fill("new chat probe")
   await page.getByRole("button", { name: "Send" }).click()
   await expect(page.getByText(/Mock response from AI chat: new chat probe/)).toBeVisible()
 
   const rpcMessages = await recordedRpcMessages(page)
-  expect(rpcMessages.filter(message => message.method === "session/new").length).toBeGreaterThan(1)
-  expect(rpcMessages.some(message => message.method === "session/prompt" && message.params?.sessionId === "mock-session-new-1"
+  expect(rpcMessages.filter(message => message.method === "session/new").length === 2).toBe(true)
+  expect(rpcMessages.some(message => message.method === "session/close")).toBe(false)
+  expect(rpcMessages.some(message => message.method === "session/prompt" && message.params?.sessionId === "mock-session-restarted-1"
     && Array.isArray(message.params?.prompt)
     && message.params.prompt.some((block: any) => block?.type === "text" && block.text === "new chat probe"))).toBe(true)
+})
+
+test("starts a new ACP chat from the drawer on narrow panels", async ({ page }) => {
+  await page.setViewportSize({ width: 620, height: 700 })
+  await openPreview(page)
+  await startMockAgent(page)
+
+  await page.getByRole("button", { name: "Open chats" }).click()
+  await page.getByRole("button", { name: "Loaded session one" }).click()
+  await expect(page.getByText("Loaded user request", { exact: true })).toBeVisible()
+
+  await page.getByRole("button", { name: "Open chats" }).click()
+  await page.getByRole("button", { name: "New chat" }).click()
+  await page.waitForFunction(() => document.querySelector(".acpChatListOverlay")?.getAttribute("data-open") === "false")
+  await page.waitForFunction(() => !document.body.textContent?.includes("Loaded user request"))
+  await waitForLateMockUpdates(page)
+  await page.waitForFunction(() => !document.body.textContent?.includes("Late stale loaded session request"))
+
+  await composerInput(page).fill("new drawer chat probe")
+  await page.getByRole("button", { name: "Send" }).click()
+  await expect(page.getByText(/Mock response from AI chat: new drawer chat probe/)).toBeVisible()
+
+  const rpcMessages = await recordedRpcMessages(page)
+  expect(rpcMessages.filter(message => message.method === "session/new").length === 2).toBe(true)
+  expect(rpcMessages.some(message => message.method === "session/close")).toBe(false)
+  expect(rpcMessages.some(message => message.method === "session/prompt" && message.params?.sessionId === "mock-session-restarted-1"
+    && Array.isArray(message.params?.prompt)
+    && message.params.prompt.some((block: any) => block?.type === "text" && block.text === "new drawer chat probe"))).toBe(true)
 })
 
 test("deletes ACP sessions through the assistant-ui thread list", async ({ page }) => {
@@ -711,4 +742,8 @@ async function pasteImageIntoComposer(page: Page): Promise<void> {
 
 function composerInput(page: Page): Locator {
   return page.locator(".acpComposerInput")
+}
+
+async function waitForLateMockUpdates(page: Page): Promise<void> {
+  await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 120)))
 }

@@ -46,6 +46,7 @@ export default defineWebViewMock((context) => {
   let activeSessionId = sessionId
   let listedSessions = defaultListedSessions()
   let newSessionCounter = 0
+  let restartCounter = 0
 
   context.page.whenImplemented(acpBridgePageApiId, api => {
     pageApi = api
@@ -68,9 +69,10 @@ export default defineWebViewMock((context) => {
       currentBraveModeValue = defaultBraveModeValue
       currentThinkMoreValue = defaultThinkMoreValue
       currentDebugModeValue = defaultDebugModeValue
-      activeSessionId = sessionId
+      activeSessionId = restartCounter === 0 ? sessionId : `mock-session-restarted-${restartCounter}`
       listedSessions = defaultListedSessions()
       newSessionCounter = 0
+      restartCounter++
       return { ok: true, cwd: mockCwd }
     },
     async sendStdin(params) {
@@ -103,7 +105,7 @@ export default defineWebViewMock((context) => {
         }))
         break
       case "session/new":
-        activeSessionId = newSessionCounter === 0 ? sessionId : `mock-session-new-${newSessionCounter}`
+        activeSessionId = newSessionCounter === 0 ? activeSessionId : `mock-session-new-${newSessionCounter}`
         newSessionCounter++
         await sendPageStdout(response(message.id, {
           sessionId: activeSessionId,
@@ -121,6 +123,7 @@ export default defineWebViewMock((context) => {
             },
           },
         })
+        if (activeSessionId !== sessionId) void sendLateStaleSessionUpdate(loadedSessionId)
         break
       case "session/set_config_option":
         updateConfigOption(message.params)
@@ -195,6 +198,21 @@ export default defineWebViewMock((context) => {
       params: {
         sessionId: activeSessionId,
         update,
+      },
+    })
+  }
+
+  async function sendLateStaleSessionUpdate(staleSessionId: string): Promise<void> {
+    await delay(50)
+    await sendPageStdout({
+      jsonrpc: "2.0",
+      method: "session/update",
+      params: {
+        sessionId: staleSessionId,
+        update: {
+          sessionUpdate: "user_message_chunk",
+          content: { type: "text", text: "Late stale loaded session request" },
+        },
       },
     })
   }
