@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -16,6 +16,7 @@ import com.intellij.refactoring.rename.JavaNameSuggestionProvider;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameWrongRefHandler;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
+import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
@@ -103,7 +104,13 @@ public class RenameLocalTest extends LightJavaCodeInsightTestCase {
   }
   
   public void testRenameFieldWithConstructorParamAutomatic() {
-    doTest("pp");
+    configureByFile();
+    RenameProcessor processor = new RenameProcessor(getProject(), getTargetElement(), "pp", true, true);
+    for (AutomaticRenamerFactory factory : AutomaticRenamerFactory.EP_NAME.getExtensionList()) {
+      processor.addRenamerFactory(factory);
+    }
+    processor.run();
+    checkResultByFile();
   }
   
   public void testConflictWithPattern() {
