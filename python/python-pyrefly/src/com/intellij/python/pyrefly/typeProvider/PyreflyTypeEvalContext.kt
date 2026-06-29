@@ -56,7 +56,6 @@ import org.jetbrains.annotations.Unmodifiable
 import org.jetbrains.annotations.VisibleForTesting
 import kotlin.time.measureTimedValue
 
-@Suppress("SSBasedInspection")
 open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient, psiFile: PsiFile) : LspTypeEvalContext(psiFile) {
 
   private val snapshot: Int? by lazy {
@@ -156,7 +155,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
       val literal = PyLiteralType.fromLiteralValue(pyElement, value)
       literal?.let {
         thisLogger().info("Pyrefly TSP: built PyLiteralType ${it.name}")
-        Ref.create<PyType?>(it)
+        Ref.create(it)
       }
     }
   }
@@ -223,7 +222,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     return runReadActionBlocking {
       val type = PyBuiltinCache.getInstance(pyElement).getObjectType(name) ?: return@runReadActionBlocking null
       thisLogger().info("Pyrefly TSP: built PyClassType for builtin $name")
-      Ref.create<PyType?>(type)
+      Ref.create(type)
     }
   }
 
@@ -233,7 +232,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
       val elementTypes = typeArgs.map { buildPyType(pyElement, it)?.get() }
       val tupleType = PyTupleType.create(pyElement, elementTypes) ?: return@runReadActionBlocking null
       thisLogger().info("Pyrefly TSP: built PyTupleType with ${elementTypes.size} elements")
-      Ref.create<PyType?>(tupleType)
+      Ref.create(tupleType)
     }
   }
 
@@ -266,7 +265,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     return runReadActionBlocking {
       val callable = PyBuiltinCache.getInstance(pyElement).getByName(name) as? PyCallable ?: return@runReadActionBlocking null
       thisLogger().info("Pyrefly TSP: built PyFunctionType for builtin $name")
-      Ref.create<PyType?>(buildFunctionType(pyElement, callable, tspType))
+      Ref.create(buildFunctionType(pyElement, callable, tspType))
     }
   }
 
@@ -294,7 +293,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     override fun getReturnType(context: TypeEvalContext): PyType? = tspReturnType
 
     override fun dropSelf(context: TypeEvalContext): PyFunctionType {
-      val params = getParameters(context) ?: return this
+      val params = getParameters(context)
       val newParams = ParamHelper.dropSelf(params)
       return if (newParams.size < params.size) PyreflyFunctionType(callable, newParams, tspReturnType) else this
     }
@@ -316,7 +315,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     return runReadActionBlocking {
       val moduleFile = pyElement.manager.findFile(virtualFile) as? PyFile ?: return@runReadActionBlocking null
       thisLogger().info("Pyrefly TSP: built PyModuleType for ${tspType.moduleName ?: moduleFile.name}")
-      Ref.create<PyType?>(PyModuleType(moduleFile))
+      Ref.create(PyModuleType(moduleFile))
     }
   }
 
@@ -327,7 +326,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     val defNode = declaration.node
     if (defNode == null || defNode.uri.isEmpty()) {
       thisLogger().info("Pyrefly TSP: built minimal PyTypeVarType for $name (no declaration node)")
-      return Ref.create<PyType?>(PyTypeVarTypeImpl(name, null))
+      return Ref.create(PyTypeVarTypeImpl(name, null))
     }
     val resolved = runReadActionBlocking {
       val (targetFile, targetElement, offset) = resolveDefTarget(pyElement, defNode) ?: return@runReadActionBlocking null
@@ -355,7 +354,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     }
     if (resolved != null) return resolved
     thisLogger().info("Pyrefly TSP: fell back to minimal PyTypeVarType for $name")
-    return Ref.create<PyType?>(PyTypeVarTypeImpl(name, null))
+    return Ref.create(PyTypeVarTypeImpl(name, null))
   }
 
   private fun buildPyOverloadedType(pyElement: PyTypedElement, tspType: PyreflyLsp4jServer.TspType): Ref<PyType?>? {
@@ -366,7 +365,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     val impl = implementationTsp?.let { buildPyType(pyElement, it) }
     if (items.isEmpty() && impl == null) return null
     thisLogger().info("Pyrefly TSP: built PyOverloadType with ${items.size} overloads (impl=${impl?.get() != null})")
-    return Ref.create<PyType?>(PyOverloadType(items, impl))
+    return Ref.create(PyOverloadType(items, impl))
   }
 
   override fun requestTypes(pyTypedElements: @Unmodifiable Collection<PyTypedElement>): List<String?>? {
