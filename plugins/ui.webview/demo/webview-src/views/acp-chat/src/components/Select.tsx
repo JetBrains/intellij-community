@@ -88,14 +88,15 @@ export interface SelectProps extends Pick<ComponentPropsWithoutRef<typeof Select
   options: readonly SelectOption[]
   placeholder?: string
   className?: string
+  triggerAriaLabel?: string
 }
 
-function Select({ options, placeholder, className, ...props }: SelectProps) {
+function Select({ options, placeholder, className, triggerAriaLabel, ...props }: SelectProps) {
   const selectedOption = options.find(option => option.value === props.value)
 
   return (
     <SelectRoot {...props}>
-      <SelectTrigger className={className}>
+      <SelectTrigger className={className} aria-label={triggerAriaLabel}>
         <span>{selectedOption?.label ?? placeholder}</span>
       </SelectTrigger>
       <SelectContent>

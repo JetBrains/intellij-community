@@ -1,6 +1,6 @@
 import { o as __toESM } from "./rolldown-runtime.js";
 import { V as require_jsx_runtime, it as require_react } from "./assistant-ui-core.js";
-import { v as createSlot, y as useComposedRefs } from "./assistant-ui-react.js";
+import { b as useComposedRefs, v as createSlot } from "./assistant-ui-react.js";
 //#region node_modules/@radix-ui/react-context/dist/index.mjs
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
 var import_jsx_runtime = require_jsx_runtime();

@@ -1,6 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import { IconSet } from "@jetbrains/intellij-webview"
 import "@jetbrains/intellij-webview-controls/define/icon"
 import type { ClipboardEvent } from "react"
 import {
@@ -18,6 +17,7 @@ import { AgentSelector } from "./AgentSelector"
 import { ApprovalPrompt } from "./ApprovalPrompt"
 import { AuthPrompt } from "./AuthPrompt"
 import { ChatList } from "./ChatList"
+import { acpIconSrc, SEND_ICON_PATH } from "./icons/AcpChatIconSet"
 import { MarkdownRenderer } from "./MarkdownRenderer"
 import { ModelPicker } from "./ModelPicker"
 import { PlanView } from "./PlanView"
@@ -26,8 +26,6 @@ import { ThinkingBlock } from "./ThinkingBlock"
 import { ToolCallCard } from "./ToolCallCard"
 
 const SMOOTH_TEXT_OPTIONS = { drainMs: 250, maxCharIntervalMs: 5, minCommitMs: 33 }
-const ACP_CHAT_ICONS = IconSet.define("AcpChatIcons")
-const SEND_ICON_PATH = "icons/acpChatSend.svg"
 
 export function ChatView() {
   const chat = useAcpChat()
@@ -72,27 +70,29 @@ export function ChatView() {
                     </ComposerPrimitive.Attachments>
                   </div>
                   <ComposerPrimitive.Input className="acpComposerInput" placeholder="Type your task or use / for commands…" onPaste={notifyOnUnsupportedImagePaste} />
+                  <div className="acpComposerControls">
+                    <ModelPicker
+                      modes={chat.modes}
+                      configOptions={chat.configOptions}
+                      currentModeId={chat.currentModeId}
+                      disabled={chat.starting || chat.selectedAgentId == null}
+                      onSelectMode={chat.selectMode}
+                      onSelectConfigOption={chat.selectConfigOption}
+                    />
+                  </div>
                   <ComposerPrimitive.Send className="acpComposerSend" aria-label="Send" title="Send">
-                    <jb-icon className="acpComposerSendIcon" src={ACP_CHAT_ICONS.src(SEND_ICON_PATH)} />
+                    <jb-icon className="acpComposerSendIcon" src={acpIconSrc(SEND_ICON_PATH)} />
                   </ComposerPrimitive.Send>
                 </div>
                 <SlashCommandMenu commands={chat.commands} />
               </ComposerPrimitive.Root>
             </ComposerPrimitive.Unstable_TriggerPopoverRoot>
-            <div className="acpComposerToolbar">
+            <div className="acpComposerFooter">
               <AgentSelector
                 agents={chat.agents}
                 selectedAgentId={chat.selectedAgentId}
                 starting={chat.starting}
                 onSelect={chat.selectAgent}
-              />
-              <ModelPicker
-                modes={chat.modes}
-                configOptions={chat.configOptions}
-                currentModeId={chat.currentModeId}
-                disabled={chat.starting || chat.selectedAgentId == null}
-                onSelectMode={chat.selectMode}
-                onSelectConfigOption={chat.selectConfigOption}
               />
             </div>
           </div>

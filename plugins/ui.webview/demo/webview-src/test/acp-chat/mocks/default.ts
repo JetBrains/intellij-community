@@ -12,10 +12,18 @@ const deletedSessionId = "loaded-session-2"
 const mockCwd = "/mock/project"
 const streamingProbePrompt = "streaming probe"
 const markdownFeatureProbePrompt = "markdown feature probe"
-const defaultModeId = "ask"
-const modelConfigId = "gemini_model"
+const modeConfigId = "mode"
+const modelConfigId = "model"
+const effortConfigId = "effort"
+const braveModeConfigId = "brave_mode"
+const thinkMoreConfigId = "think_more"
+const debugModeConfigId = "debug_mode"
+const defaultSessionModeValue = "auto"
 const defaultModelValue = "gemini-2.5-flash"
-const defaultAutonomyValue = false
+const defaultEffortValue = "medium"
+const defaultBraveModeValue = false
+const defaultThinkMoreValue = "off"
+const defaultDebugModeValue = false
 
 type JsonRpcId = string | number | null
 
@@ -29,9 +37,12 @@ interface JsonRpcMessage {
 export default defineWebViewMock((context) => {
   let pageApi: MockCallable<AcpBridgePageApi> | null = null
   const pendingStdout: unknown[] = []
-  let currentModeId = defaultModeId
+  let currentSessionModeValue = defaultSessionModeValue
   let currentModelValue = defaultModelValue
-  let currentAutonomyValue = defaultAutonomyValue
+  let currentEffortValue = defaultEffortValue
+  let currentBraveModeValue = defaultBraveModeValue
+  let currentThinkMoreValue = defaultThinkMoreValue
+  let currentDebugModeValue = defaultDebugModeValue
   let activeSessionId = sessionId
   let listedSessions = defaultListedSessions()
   let newSessionCounter = 0
@@ -51,9 +62,12 @@ export default defineWebViewMock((context) => {
     },
     async startAgent() {
       pendingStdout.length = 0
-      currentModeId = defaultModeId
+      currentSessionModeValue = defaultSessionModeValue
       currentModelValue = defaultModelValue
-      currentAutonomyValue = defaultAutonomyValue
+      currentEffortValue = defaultEffortValue
+      currentBraveModeValue = defaultBraveModeValue
+      currentThinkMoreValue = defaultThinkMoreValue
+      currentDebugModeValue = defaultDebugModeValue
       activeSessionId = sessionId
       listedSessions = defaultListedSessions()
       newSessionCounter = 0
@@ -107,12 +121,6 @@ export default defineWebViewMock((context) => {
             },
           },
         })
-        break
-      case "session/set_mode":
-        if (typeof message.params?.modeId === "string") {
-          currentModeId = message.params.modeId
-        }
-        await sendPageStdout(response(message.id, {}))
         break
       case "session/set_config_option":
         updateConfigOption(message.params)
@@ -219,31 +227,53 @@ export default defineWebViewMock((context) => {
   }
 
   function updateConfigOption(params: any): void {
-    if (params?.configId === modelConfigId && typeof params.value === "string") {
+    if (params?.configId === modeConfigId && typeof params.value === "string") {
+      currentSessionModeValue = params.value
+    }
+    else if (params?.configId === modelConfigId && typeof params.value === "string") {
       currentModelValue = params.value
     }
-    else if (params?.configId === "autonomy" && params.type === "boolean" && typeof params.value === "boolean") {
-      currentAutonomyValue = params.value
+    else if (params?.configId === effortConfigId && typeof params.value === "string") {
+      currentEffortValue = params.value
+    }
+    else if (params?.configId === braveModeConfigId && params.type === "boolean" && typeof params.value === "boolean") {
+      currentBraveModeValue = params.value
+    }
+    else if (params?.configId === thinkMoreConfigId && typeof params.value === "string") {
+      currentThinkMoreValue = params.value
+    }
+    else if (params?.configId === debugModeConfigId && params.type === "boolean" && typeof params.value === "boolean") {
+      currentDebugModeValue = params.value
     }
   }
 
   function sessionModes(): unknown {
     return {
-      availableModes: [
-        { id: "ask", name: "Ask", description: "Answer questions without editing files." },
-        { id: "code", name: "Code", description: "Use tools and apply changes." },
-      ],
-      currentModeId,
+      availableModes: [],
+      currentModeId: null,
     }
   }
 
   function sessionConfigOptions(): unknown[] {
     return [
       {
+        id: modeConfigId,
+        type: "select",
+        name: "Mode",
+        description: "Controls how Junie handles the current session.",
+        currentValue: currentSessionModeValue,
+        options: [
+          { value: "auto", name: "Auto", description: "Let Junie choose the best session mode." },
+          { value: "ask", name: "Ask", description: "Answer questions without editing files." },
+          { value: "code", name: "Code", description: "Use tools and apply changes." },
+        ],
+      },
+      {
         id: modelConfigId,
         type: "select",
-        name: "Gemini model",
+        name: "Model",
         description: "Controls the mocked model profile.",
+        category: "model",
         currentValue: currentModelValue,
         options: [
           { value: "gemini-2.5-flash", name: "Gemini 2.5 Flash", description: "Fast Gemini mock model." },
@@ -251,11 +281,50 @@ export default defineWebViewMock((context) => {
         ],
       },
       {
-        id: "autonomy",
+        id: effortConfigId,
+        type: "select",
+        name: "Effort",
+        description: "Select how much reasoning effort Junie spends for the selected model.",
+        category: "thought_level",
+        currentValue: currentEffortValue,
+        options: [
+          { value: "low", name: "Low effort" },
+          { value: "medium", name: "Medium effort" },
+          { value: "high", name: "High effort" },
+        ],
+      },
+      {
+        id: braveModeConfigId,
         type: "boolean",
-        name: "Autonomy",
-        description: "Allow the mock agent to act independently.",
-        currentValue: currentAutonomyValue,
+        name: "Brave Mode",
+        description: "When enabled, Junie will execute commands without asking for approval.",
+        currentValue: currentBraveModeValue,
+      },
+      {
+        id: thinkMoreConfigId,
+        type: "select",
+        name: "Think More",
+        description: "When enabled, Junie will spend more time thinking before acting.",
+        currentValue: currentThinkMoreValue,
+        options: [
+          { value: "on", name: "On" },
+          { value: "off", name: "Off" },
+        ],
+      },
+      {
+        id: debugModeConfigId,
+        type: "boolean",
+        name: "Debug Mode",
+        description: "When enabled, Junie will use debug-specific behavior.",
+        currentValue: currentDebugModeValue,
+      },
+      {
+        id: "empty_selector",
+        type: "select",
+        name: "Empty selector",
+        description: "This should not be rendered.",
+        currentValue: "",
+        options: [],
       },
     ]
   }

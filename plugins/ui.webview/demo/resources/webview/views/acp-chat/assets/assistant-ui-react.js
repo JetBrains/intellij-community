@@ -7575,6 +7575,13 @@ function createSlot(ownerName) {
 }
 var Slot = /* @__PURE__ */ createSlot("Slot");
 var SLOTTABLE_IDENTIFIER = Symbol.for("radix.slottable");
+// @__NO_SIDE_EFFECTS__
+function createSlottable(ownerName) {
+	const Slottable2 = (props) => "child" in props ? props.children(props.child) : props.children;
+	Slottable2.displayName = `${ownerName}.Slottable`;
+	Slottable2.__radixId = SLOTTABLE_IDENTIFIER;
+	return Slottable2;
+}
 var getSlottableElementFromSlottable = (slottable, child) => {
 	if ("child" in slottable.props) {
 		const child2 = slottable.props.child;
@@ -13196,4 +13203,4 @@ function matchesQuery(cmd, lower) {
 	return false;
 }
 //#endregion
-export { require_react_dom as C, AssistantRuntimeProvider as S, dispatchDiscreteCustomEvent as _, threadList_exports as a, useMessage as b, useSmooth as c, useTriggerPopoverScopeContext as d, attachment_exports as f, Primitive$1 as g, composeEventHandlers as h, threadListItem_exports as i, useMessagePartText as l, useCallbackRef as m, useMessagePartReasoning as n, thread_exports as o, useEscapeKeydown as p, selectionToolbar_exports as r, message_exports as s, unstable_useSlashCommandAdapter as t, composer_exports as u, createSlot as v, useComposerRuntime as x, useComposedRefs as y };
+export { AssistantRuntimeProvider as C, useComposerRuntime as S, dispatchDiscreteCustomEvent as _, threadList_exports as a, useComposedRefs as b, useSmooth as c, useTriggerPopoverScopeContext as d, attachment_exports as f, Primitive$1 as g, composeEventHandlers as h, threadListItem_exports as i, useMessagePartText as l, useCallbackRef as m, useMessagePartReasoning as n, thread_exports as o, useEscapeKeydown as p, selectionToolbar_exports as r, message_exports as s, unstable_useSlashCommandAdapter as t, composer_exports as u, createSlot as v, require_react_dom as w, useMessage as x, createSlottable as y };

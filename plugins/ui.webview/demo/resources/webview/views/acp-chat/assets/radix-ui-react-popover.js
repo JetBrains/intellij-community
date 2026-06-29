@@ -1,6 +1,6 @@
 import { o as __toESM } from "./rolldown-runtime.js";
 import { V as require_jsx_runtime, it as require_react } from "./assistant-ui-core.js";
-import { C as require_react_dom, g as Primitive, h as composeEventHandlers, m as useCallbackRef$1, v as createSlot, y as useComposedRefs } from "./assistant-ui-react.js";
+import { b as useComposedRefs, g as Primitive, h as composeEventHandlers, m as useCallbackRef$1, v as createSlot, w as require_react_dom } from "./assistant-ui-react.js";
 import { n as createContextScope } from "./radix-ui-react-collection.js";
 import { n as useLayoutEffect2, t as useId } from "./radix-ui-react-id.js";
 import { t as DismissableLayer } from "./radix-ui-react-dismissable-layer.js";

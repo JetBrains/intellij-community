@@ -7,6 +7,7 @@ import { startWebViewMockPreview, type MockWebViewCall, type WebViewMockPreviewS
 type Locator = {
   click(): Promise<void>
   fill(value: string): Promise<void>
+  hover(): Promise<void>
   inputValue(): Promise<string>
   press(key: string): Promise<void>
 }
@@ -230,7 +231,7 @@ test("deletes ACP sessions through the assistant-ui thread list", async ({ page 
   expect(rpcMessages.some(message => message.method === "session/delete" && message.params?.sessionId === "loaded-session-2")).toBe(true)
 })
 
-test("drives ACP modes, model selection, and config options through the picker", async ({ page }) => {
+test("drives ACP composer config controls through the picker", async ({ page }) => {
   if (!preview) {
     throw new Error("ACP chat mock preview server was not started")
   }
@@ -239,25 +240,179 @@ test("drives ACP modes, model selection, and config options through the picker",
   await page.locator(".acpAgentSelect").click()
   await page.getByRole("option", { name: "Mock Agent" }).click()
 
-  await expect(page.getByRole("button", { name: "Mode", exact: true })).toBeVisible()
-  await expect(page.getByText("Ask", { exact: true })).toBeVisible()
-  await expect(page.getByRole("button", { name: "Model", exact: true })).toBeVisible()
-  await expect(page.getByText("Gemini 2.5 Flash", { exact: true })).toBeVisible()
+  const controlsLayout = await page.evaluate(() => {
+    const composer = document.querySelector(".acpComposer")
+    const composerControls = document.querySelector(".acpComposerControls")
+    const composerInput = document.querySelector(".acpComposerInput")
+    const composerSend = document.querySelector(".acpComposerSend")
+    const agentSelector = document.querySelector(".acpAgentSelector")
+    const agentIcon = document.querySelector(".acpAgentSelectorIcon")
+    const agentJbIcon = document.querySelector(".acpAgentSelectorIcon > *")
+    const agentSelect = document.querySelector(".acpAgentSelect")
+    const controlIds = ["mode", "model", "effort", "brave_mode", "think_more", "debug_mode"]
+    const allControlsInsideComposer = composer != null && controlIds.every(id => {
+      const control = document.querySelector(`[data-config-id="${id}"]`)
+      return control != null && composer.contains(control)
+    })
+    const composerRect = composer?.getBoundingClientRect()
+    const controlsRect = composerControls?.getBoundingClientRect()
+    const inputRect = composerInput?.getBoundingClientRect()
+    const sendRect = composerSend?.getBoundingClientRect()
+    const agentRect = agentSelector?.getBoundingClientRect()
+    return {
+      legacyModeHidden: document.querySelector('[data-control-id="legacy-mode"]') == null
+        && !document.body.textContent?.includes("No modes"),
+      emptySelectHidden: document.querySelector('[data-config-id="empty_selector"]') == null,
+      agentTitleReplacedWithIcon: document.querySelector(".acpAgentSelectorLabel") == null
+        && agentJbIcon != null
+        && agentJbIcon.tagName.toLocaleLowerCase() === "jb-icon"
+        && !Array.from(agentSelector?.children ?? []).some(child => child.classList.contains("acpAgentSelectorLabel") && child.textContent?.trim() === "Agent"),
+      agentIconWidth: agentIcon ? getComputedStyle(agentIcon).width : null,
+      agentIconSvgWidth: agentJbIcon ? getComputedStyle(agentJbIcon).width : null,
+      agentIconSrc: agentJbIcon?.getAttribute("src"),
+      agentSelectAriaLabel: agentSelect?.getAttribute("aria-label"),
+      allControlsInsideComposer,
+      controlsBelowInput: inputRect != null && controlsRect != null && controlsRect.top >= inputRect.bottom,
+      sendPinnedBottomRight: composerRect != null && sendRect != null
+        && Math.abs(composerRect.right - sendRect.right - 5) <= 2
+        && Math.abs(composerRect.bottom - sendRect.bottom - 5) <= 2,
+      agentSelectorBelowComposer: composerRect != null && agentRect != null && agentRect.top >= composerRect.bottom,
+      selectBackedToggleRendered: document.querySelector('[data-config-id="think_more"] .acpConfigSwitch') != null
+        && document.querySelector('[data-config-id="think_more"] .acpConfigOptionSelect') == null,
+    }
+  })
+  expect(controlsLayout.legacyModeHidden).toBe(true)
+  expect(controlsLayout.emptySelectHidden).toBe(true)
+  expect(controlsLayout.agentTitleReplacedWithIcon
+    && controlsLayout.agentIconWidth === "16px"
+    && controlsLayout.agentIconSvgWidth === "16px"
+    && controlsLayout.agentIconSrc?.includes("/__ij-icons/AcpChatIcons/") === true
+    && controlsLayout.agentIconSrc?.endsWith("/webview/views/acp-chat/assets/acpChatAgent.svg") === true
+    && controlsLayout.agentSelectAriaLabel === "Agent: Mock Agent").toBe(true)
+  expect(controlsLayout.allControlsInsideComposer).toBe(true)
+  expect(controlsLayout.controlsBelowInput).toBe(true)
+  expect(controlsLayout.sendPinnedBottomRight).toBe(true)
+  expect(controlsLayout.agentSelectorBelowComposer).toBe(true)
+  expect(controlsLayout.selectBackedToggleRendered).toBe(true)
 
-  await page.getByRole("button", { name: "Mode", exact: true }).click()
-  await expect(page.getByPlaceholder("Search modes...")).toBeVisible()
-  await page.getByPlaceholder("Search modes...").fill("code")
+  await expect(page.locator('[data-config-id="mode"] .acpConfigOptionSelect')).toBeVisible()
+  await page.waitForFunction(() => document.querySelector('[data-config-id="mode"] .acpConfigOptionSelect')?.textContent?.includes("Auto") === true)
+  await expect(page.locator('[data-config-id="model"] .acpModelSelectorTrigger')).toBeVisible()
+  await page.waitForFunction(() => document.querySelector('[data-config-id="model"] .acpModelSelectorTrigger')?.textContent?.includes("Gemini 2.5 Flash") === true)
+  await expect(page.locator('[data-config-id="effort"] .acpConfigOptionSelect')).toBeVisible()
+  await page.waitForFunction(() => document.querySelector('[data-config-id="effort"] .acpConfigOptionSelect')?.textContent?.includes("Medium effort") === true)
+
+  const controlPresentation = await page.evaluate(() => {
+    const modeSelect = document.querySelector('[data-config-id="mode"] .acpConfigOptionSelect')
+    const modelTrigger = document.querySelector('[data-config-id="model"] .acpModelSelectorTrigger')
+    const controlIcon = document.querySelector('[data-config-id="model"] .acpControlIcon')
+    const controlJbIcon = document.querySelector('[data-config-id="model"] .acpControlIcon > *')
+    const effortJbIcon = document.querySelector('[data-config-id="effort"] .acpControlIcon > *')
+    const thinkMoreJbIcon = document.querySelector('[data-config-id="think_more"] .acpControlIcon > *')
+    return {
+      textLabelsHidden: document.querySelector(".acpModelPickerLabel, .acpConfigToggleLabel") == null,
+      sessionModeHint: document.querySelector('[data-config-id="mode"]')?.getAttribute("data-hint"),
+      modelHint: document.querySelector('[data-config-id="model"]')?.getAttribute("data-hint"),
+      effortHint: document.querySelector('[data-config-id="effort"]')?.getAttribute("data-hint"),
+      braveHint: document.querySelector('[data-config-id="brave_mode"]')?.getAttribute("data-hint"),
+      thinkMoreHint: document.querySelector('[data-config-id="think_more"]')?.getAttribute("data-hint"),
+      debugHint: document.querySelector('[data-config-id="debug_mode"]')?.getAttribute("data-hint"),
+      modeAriaLabel: document.querySelector('[data-config-id="mode"] .acpConfigOptionSelect')?.getAttribute("aria-label"),
+      modelAriaLabel: document.querySelector('[data-config-id="model"] .acpModelSelectorTrigger')?.getAttribute("aria-label"),
+      effortAriaLabel: document.querySelector('[data-config-id="effort"] .acpConfigOptionSelect')?.getAttribute("aria-label"),
+      modeSelectMinWidth: modeSelect ? getComputedStyle(modeSelect).minWidth : null,
+      modelTriggerMinWidth: modelTrigger ? getComputedStyle(modelTrigger).minWidth : null,
+      controlIconWidth: controlIcon ? getComputedStyle(controlIcon).width : null,
+      controlIconSvgWidth: controlJbIcon ? getComputedStyle(controlJbIcon).width : null,
+      controlIconTagName: controlJbIcon?.tagName.toLocaleLowerCase(),
+      modelIcon: controlJbIcon?.getAttribute("src"),
+      effortIcon: effortJbIcon?.getAttribute("src"),
+      thinkMoreIcon: thinkMoreJbIcon?.getAttribute("src"),
+    }
+  })
+  expect(controlPresentation.textLabelsHidden
+    && controlPresentation.sessionModeHint === "Session mode"
+    && controlPresentation.modelHint === "Model"
+    && controlPresentation.effortHint === "Effort"
+    && controlPresentation.braveHint === "Brave Mode"
+    && controlPresentation.thinkMoreHint === "Think More"
+    && controlPresentation.debugHint === "Debug Mode"
+    && controlPresentation.modeAriaLabel === "Session mode: Auto"
+    && controlPresentation.modelAriaLabel === "Model: Gemini 2.5 Flash"
+    && controlPresentation.effortAriaLabel === "Effort: Medium effort"
+    && controlPresentation.modeSelectMinWidth === "0px"
+    && controlPresentation.modelTriggerMinWidth === "0px"
+    && controlPresentation.controlIconWidth === "16px"
+    && controlPresentation.controlIconSvgWidth === "16px"
+    && controlPresentation.controlIconTagName === "jb-icon"
+    && controlPresentation.modelIcon?.includes("/__ij-icons/AcpChatIcons/") === true
+    && controlPresentation.modelIcon?.endsWith("/webview/views/acp-chat/assets/acpChatProcessor.svg") === true
+    && controlPresentation.effortIcon?.endsWith("/webview/views/acp-chat/assets/acpChatEffort.svg") === true
+    && controlPresentation.thinkMoreIcon?.endsWith("/webview/views/acp-chat/assets/acpChatBrain.svg") === true).toBe(true)
+
+  const iconResourcesLoad = await page.evaluate(async () => {
+    const iconSources = [
+      document.querySelector(".acpAgentSelectorIcon > *")?.getAttribute("src"),
+      document.querySelector('[data-config-id="model"] .acpControlIcon > *')?.getAttribute("src"),
+      document.querySelector('[data-config-id="effort"] .acpControlIcon > *')?.getAttribute("src"),
+      document.querySelector('[data-config-id="think_more"] .acpControlIcon > *')?.getAttribute("src"),
+    ].filter((src): src is string => typeof src === "string" && src.length > 0)
+    if (iconSources.length !== 4) return false
+    const responses = await Promise.all(iconSources.map(src => fetch(src)))
+    return responses.every(response => response.ok && response.headers.get("content-type")?.includes("image/svg+xml") === true)
+  })
+  expect(iconResourcesLoad).toBe(true)
+
+  await page.locator('[data-config-id="model"] .acpModelSelectorTrigger').hover()
+  const tooltipAfterSelectorHover = await page.evaluate(async () => {
+    await new Promise(resolve => setTimeout(resolve, 350))
+    return document.querySelector(".acpControlTooltip") != null
+  })
+  expect(tooltipAfterSelectorHover).toBe(false)
+
+  await page.locator('[data-config-id="brave_mode"] .acpControlIcon').hover()
+  await page.waitForSelector(".acpControlTooltip")
+  await expect(page.getByText("Brave Mode", { exact: true })).toBeVisible()
+
+  await page.locator('[data-config-id="mode"] .acpConfigOptionSelect').click()
   await page.getByRole("option", { name: /Code/ }).click()
-  await expect(page.getByText("Code", { exact: true })).toBeVisible()
+  await page.waitForFunction(() => document.querySelector('[data-config-id="mode"] .acpConfigOptionSelect')?.textContent?.includes("Code") === true)
 
-  await page.getByRole("button", { name: "Model", exact: true }).click()
+  await page.locator('[data-config-id="model"] .acpModelSelectorTrigger').click()
   await expect(page.getByPlaceholder("Search models...")).toBeVisible()
   await page.getByPlaceholder("Search models...").fill("pro")
   await page.getByRole("option", { name: /Gemini 2.5 Pro/ }).click()
   await expect(page.getByText("Gemini 2.5 Pro", { exact: true })).toBeVisible()
 
-  await page.getByRole("switch", { name: "Autonomy" }).click()
-  await page.waitForFunction(() => document.querySelector(".acpConfigSwitch")?.getAttribute("data-state") === "checked")
+  await page.locator('[data-config-id="effort"] .acpConfigOptionSelect').click()
+  await page.getByRole("option", { name: /High effort/ }).click()
+  await page.waitForFunction(() => document.querySelector('[data-config-id="effort"] .acpConfigOptionSelect')?.textContent?.includes("High effort") === true)
+
+  await page.getByRole("switch", { name: "Brave Mode" }).click()
+  await page.waitForFunction(() => document.querySelector('[data-config-id="brave_mode"] .acpConfigSwitch')?.getAttribute("data-state") === "checked")
+  await page.getByRole("switch", { name: "Think More" }).click()
+  await page.waitForFunction(() => document.querySelector('[data-config-id="think_more"] .acpConfigSwitch')?.getAttribute("data-state") === "checked")
+  await page.getByRole("switch", { name: "Debug Mode" }).click()
+  await page.waitForFunction(() => document.querySelector('[data-config-id="debug_mode"] .acpConfigSwitch')?.getAttribute("data-state") === "checked")
+
+  await page.setViewportSize({ width: 620, height: 700 })
+  const controlsStayInOneRow = await page.evaluate(() => {
+    const composerRect = document.querySelector(".acpComposer")?.getBoundingClientRect()
+    const picker = document.querySelector(".acpModelPicker")
+    if (!composerRect || !picker) return false
+    const pickerStyle = getComputedStyle(picker)
+    const controls = Array.from(document.querySelectorAll<HTMLElement>(".acpComposerControls .acpControlWithHint"))
+    const visibleControls = controls.filter(control => getComputedStyle(control).display !== "none")
+    const hiddenControlCount = controls.length - visibleControls.length
+    const rowTop = visibleControls[0]?.getBoundingClientRect().top
+    return pickerStyle.flexWrap === "nowrap" && hiddenControlCount > 0 && visibleControls.every(control => {
+      const rect = control.getBoundingClientRect()
+      return Math.abs(rect.top - (rowTop ?? rect.top)) <= 1
+        && rect.left >= composerRect.left
+        && rect.right <= composerRect.right
+    })
+  })
+  expect(controlsStayInOneRow).toBe(true)
 
   const calls = await page.evaluate(() => {
     return (window as MockWindow).__WVI_MOCK__?.calls.byMethod("acp.bridge/sendStdin") ?? []
@@ -265,16 +420,31 @@ test("drives ACP modes, model selection, and config options through the picker",
   const rpcMessages = calls
     .map((call: MockWebViewCall) => parseMockRpcLine(call.params))
     .filter((message: JsonRpcMessage | null): message is JsonRpcMessage => message != null)
-  expect(rpcMessages.some(message => message.method === "session/set_mode"
-    && message.params?.sessionId === "mock-session"
-    && message.params?.modeId === "code")).toBe(true)
   expect(rpcMessages.some(message => message.method === "session/set_config_option"
     && message.params?.sessionId === "mock-session"
-    && message.params?.configId === "gemini_model"
+    && message.params?.configId === "mode"
+    && message.params?.value === "code")).toBe(true)
+  expect(rpcMessages.some(message => message.method === "session/set_config_option"
+    && message.params?.sessionId === "mock-session"
+    && message.params?.configId === "model"
     && message.params?.value === "gemini-2.5-pro")).toBe(true)
   expect(rpcMessages.some(message => message.method === "session/set_config_option"
     && message.params?.sessionId === "mock-session"
-    && message.params?.configId === "autonomy"
+    && message.params?.configId === "effort"
+    && message.params?.value === "high")).toBe(true)
+  expect(rpcMessages.some(message => message.method === "session/set_config_option"
+    && message.params?.sessionId === "mock-session"
+    && message.params?.configId === "brave_mode"
+    && message.params?.type === "boolean"
+    && message.params?.value === true)).toBe(true)
+  expect(rpcMessages.some(message => message.method === "session/set_config_option"
+    && message.params?.sessionId === "mock-session"
+    && message.params?.configId === "think_more"
+    && message.params?.type !== "boolean"
+    && message.params?.value === "on")).toBe(true)
+  expect(rpcMessages.some(message => message.method === "session/set_config_option"
+    && message.params?.sessionId === "mock-session"
+    && message.params?.configId === "debug_mode"
     && message.params?.type === "boolean"
     && message.params?.value === true)).toBe(true)
 })

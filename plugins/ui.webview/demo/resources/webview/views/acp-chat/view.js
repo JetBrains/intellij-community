@@ -1,12 +1,13 @@
 const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./assets/mermaid.js","./assets/rolldown-runtime.js","./assets/braintree-sanitize-url.js","./assets/iconify-utils.js","./assets/chevrotain-allstar.js","./assets/chevrotain.js","./assets/cytoscape-cose-bilkent.js","./assets/cose-base.js","./assets/cytoscape-fcose.js","./assets/cytoscape.js","./assets/d3-array.js","./assets/d3-axis.js","./assets/d3.js","./assets/d3-format.js","./assets/d3-hierarchy.js","./assets/d3-interpolate.js","./assets/d3-color.js","./assets/d3-sankey.js","./assets/d3-path.js","./assets/d3-scale-chromatic.js","./assets/d3-scale.js","./assets/d3-selection.js","./assets/d3-shape.js","./assets/dagre-d3-es.js","./assets/dayjs.js","./assets/dompurify.js","./assets/khroma.js","./assets/langium.js","./assets/marked.js"])))=>i.map(i=>d[i]);
 import { o as __toESM } from "./assets/rolldown-runtime.js";
 import { P as useExternalStoreRuntime, V as require_jsx_runtime, it as require_react } from "./assets/assistant-ui-core.js";
-import { S as AssistantRuntimeProvider, a as threadList_exports, b as useMessage, c as useSmooth, d as useTriggerPopoverScopeContext, f as attachment_exports, i as threadListItem_exports, l as useMessagePartText, n as useMessagePartReasoning, o as thread_exports, r as selectionToolbar_exports, s as message_exports, t as unstable_useSlashCommandAdapter, u as composer_exports, x as useComposerRuntime } from "./assets/assistant-ui-react.js";
+import { C as AssistantRuntimeProvider, S as useComposerRuntime, a as threadList_exports, c as useSmooth, d as useTriggerPopoverScopeContext, f as attachment_exports, i as threadListItem_exports, l as useMessagePartText, n as useMessagePartReasoning, o as thread_exports, r as selectionToolbar_exports, s as message_exports, t as unstable_useSlashCommandAdapter, u as composer_exports, x as useMessage } from "./assets/assistant-ui-react.js";
 import { t as require_client } from "./assets/react-dom.js";
 import { i, n as A, r as b, t as i$1 } from "./assets/lit.js";
 import { a as SelectItem$1, c as SelectPortal, d as SelectTrigger$1, i as SelectIcon, l as SelectScrollDownButton$1, n as SelectContent$1, o as SelectItemIndicator, p as SelectViewport, s as SelectItemText, t as Select$1, u as SelectScrollUpButton$1 } from "./assets/radix-ui-react-select.js";
 import { i as Trigger$1, n as Portal, r as Root2, t as Content2 } from "./assets/radix-ui-react-popover.js";
 import { n as SwitchThumb, t as Switch } from "./assets/radix-ui-react-switch.js";
+import { a as Trigger$2, i as Root3, n as Portal$1, r as Provider, t as Content2$1 } from "./assets/radix-ui-react-tooltip.js";
 import { n as ndJsonStream, t as ClientSideConnection } from "./assets/agentclientprotocol-sdk.js";
 import { n as defaultUrlTransform, t as Markdown } from "./assets/react-markdown.js";
 import { t as rehypeHighlight } from "./assets/rehype-highlight.js";
@@ -48,99 +49,8 @@ import { d as __vitePreload } from "./assets/mermaid.js";
 	}
 })();
 //#endregion
-//#region ../../webview-src/packages/api/src/webViewApi.ts
-var import_client = require_client();
-function apiId() {
-	return function createApiId(namespace) {
-		validateApiNamespace(namespace);
-		return { namespace };
-	};
-}
-function validateApiNamespace(namespace) {
-	if (typeof namespace !== "string" || namespace.length === 0) throw new Error("WebView API namespace must be a non-empty string");
-	if (namespace.startsWith(".") || namespace.endsWith(".") || namespace.startsWith("/") || namespace.endsWith("/")) throw new Error("WebView API namespace must not start or end with '.' or '/': " + namespace);
-	if (!/^[A-Za-z0-9_.-]+$/.test(namespace)) throw new Error("WebView API namespace contains unsupported characters: " + namespace);
-}
-apiId()("webview.theme");
-apiId()("webview.theme");
-function getWebViewTheme() {
-	return window.__WVI_THEME__;
-}
-function requireWebViewTheme() {
-	const theme = getWebViewTheme();
-	if (!theme) throw new Error("WebView theme is not installed. Load /__webview/wvi-platform-features.js after /__webview/wvi-bridge.js before theme-aware application code.");
-	return theme;
-}
-function createLazyWebViewTheme() {
-	return new Proxy({}, {
-		get(_target, property, receiver) {
-			return Reflect.get(requireWebViewTheme(), property, receiver);
-		},
-		set(_target, property, value, receiver) {
-			return Reflect.set(requireWebViewTheme(), property, value, receiver);
-		},
-		has(_target, property) {
-			return property in requireWebViewTheme();
-		}
-	});
-}
-var webViewTheme = createLazyWebViewTheme();
-//#endregion
-//#region ../../webview-src/packages/api/src/iconSet.ts
-var IconSet = /* @__PURE__ */ Object.freeze({ define(id) {
-	validateIconSetId(id);
-	return new DefinedIconSet(id);
-} });
-var DefinedIconSet = class {
-	id;
-	constructor(id) {
-		this.id = id;
-	}
-	src(resourcePath) {
-		validateIconResourcePath(resourcePath);
-		return `./__ij-icons/${this.id}/${webViewTheme.current}/${encodeIconResourcePath(resourcePath)}`;
-	}
-};
-function validateIconSetId(id) {
-	if (!/^[A-Za-z][A-Za-z0-9._-]*$/.test(id)) throw new Error(`Invalid WebView icon set id: ${id}`);
-}
-function validateIconResourcePath(resourcePath) {
-	if (resourcePath.length === 0 || resourcePath.startsWith("/") || resourcePath.includes("\\")) throw new Error(`Invalid WebView icon resource path: ${resourcePath}`);
-	if (/^[A-Za-z][A-Za-z0-9+.-]*:/.test(resourcePath)) throw new Error(`Invalid WebView icon resource path: ${resourcePath}`);
-	if (resourcePath.split("/").some((segment) => segment.length === 0 || segment === "." || segment === "..")) throw new Error(`Invalid WebView icon resource path: ${resourcePath}`);
-	if (!resourcePath.endsWith(".svg") && !resourcePath.endsWith(".png")) throw new Error(`Unsupported WebView icon resource extension: ${resourcePath}`);
-}
-function encodeIconResourcePath(resourcePath) {
-	return resourcePath.split("/").map((segment) => encodeURIComponent(segment)).join("/");
-}
-apiId()("webview.focus");
-apiId()("webview.focus");
-//#endregion
-//#region ../../webview-src/packages/api/src/bridge.ts
-function getWebViewBridge() {
-	return window.__WVI__;
-}
-function requireWebViewBridge() {
-	const bridge = getWebViewBridge();
-	if (!bridge) throw new Error("WebView bridge is not installed. Load /__webview/wvi-bridge.js before application code.");
-	return bridge;
-}
-function createLazyWebViewBridge() {
-	return new Proxy({}, {
-		get(_target, property, receiver) {
-			return Reflect.get(requireWebViewBridge(), property, receiver);
-		},
-		set(_target, property, value, receiver) {
-			return Reflect.set(requireWebViewBridge(), property, value, receiver);
-		},
-		has(_target, property) {
-			return property in requireWebViewBridge();
-		}
-	});
-}
-var webView = createLazyWebViewBridge();
-//#endregion
 //#region ../../webview-src/packages/controls/src/foundation/define.ts
+var import_client = require_client();
 function defineControl(tagName, constructor, registry = customElements) {
 	if (!registry.get(tagName)) registry.define(tagName, constructor);
 }
@@ -552,8 +462,99 @@ function defineJbIcon(registry) {
 //#region ../../webview-src/packages/controls/src/define/icon.ts
 defineJbIcon();
 //#endregion
-//#region views/acp-chat/src/bridge/webviewApi.ts
+//#region ../../webview-src/packages/api/src/webViewApi.ts
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
+function apiId() {
+	return function createApiId(namespace) {
+		validateApiNamespace(namespace);
+		return { namespace };
+	};
+}
+function validateApiNamespace(namespace) {
+	if (typeof namespace !== "string" || namespace.length === 0) throw new Error("WebView API namespace must be a non-empty string");
+	if (namespace.startsWith(".") || namespace.endsWith(".") || namespace.startsWith("/") || namespace.endsWith("/")) throw new Error("WebView API namespace must not start or end with '.' or '/': " + namespace);
+	if (!/^[A-Za-z0-9_.-]+$/.test(namespace)) throw new Error("WebView API namespace contains unsupported characters: " + namespace);
+}
+apiId()("webview.theme");
+apiId()("webview.theme");
+function getWebViewTheme() {
+	return window.__WVI_THEME__;
+}
+function requireWebViewTheme() {
+	const theme = getWebViewTheme();
+	if (!theme) throw new Error("WebView theme is not installed. Load /__webview/wvi-platform-features.js after /__webview/wvi-bridge.js before theme-aware application code.");
+	return theme;
+}
+function createLazyWebViewTheme() {
+	return new Proxy({}, {
+		get(_target, property, receiver) {
+			return Reflect.get(requireWebViewTheme(), property, receiver);
+		},
+		set(_target, property, value, receiver) {
+			return Reflect.set(requireWebViewTheme(), property, value, receiver);
+		},
+		has(_target, property) {
+			return property in requireWebViewTheme();
+		}
+	});
+}
+var webViewTheme = createLazyWebViewTheme();
+//#endregion
+//#region ../../webview-src/packages/api/src/iconSet.ts
+var IconSet = /* @__PURE__ */ Object.freeze({ define(id) {
+	validateIconSetId(id);
+	return new DefinedIconSet(id);
+} });
+var DefinedIconSet = class {
+	id;
+	constructor(id) {
+		this.id = id;
+	}
+	src(resourcePath) {
+		validateIconResourcePath(resourcePath);
+		return `./__ij-icons/${this.id}/${webViewTheme.current}/${encodeIconResourcePath(resourcePath)}`;
+	}
+};
+function validateIconSetId(id) {
+	if (!/^[A-Za-z][A-Za-z0-9._-]*$/.test(id)) throw new Error(`Invalid WebView icon set id: ${id}`);
+}
+function validateIconResourcePath(resourcePath) {
+	if (resourcePath.length === 0 || resourcePath.startsWith("/") || resourcePath.includes("\\")) throw new Error(`Invalid WebView icon resource path: ${resourcePath}`);
+	if (/^[A-Za-z][A-Za-z0-9+.-]*:/.test(resourcePath)) throw new Error(`Invalid WebView icon resource path: ${resourcePath}`);
+	if (resourcePath.split("/").some((segment) => segment.length === 0 || segment === "." || segment === "..")) throw new Error(`Invalid WebView icon resource path: ${resourcePath}`);
+	if (!resourcePath.endsWith(".svg") && !resourcePath.endsWith(".png")) throw new Error(`Unsupported WebView icon resource extension: ${resourcePath}`);
+}
+function encodeIconResourcePath(resourcePath) {
+	return resourcePath.split("/").map((segment) => encodeURIComponent(segment)).join("/");
+}
+apiId()("webview.focus");
+apiId()("webview.focus");
+//#endregion
+//#region ../../webview-src/packages/api/src/bridge.ts
+function getWebViewBridge() {
+	return window.__WVI__;
+}
+function requireWebViewBridge() {
+	const bridge = getWebViewBridge();
+	if (!bridge) throw new Error("WebView bridge is not installed. Load /__webview/wvi-bridge.js before application code.");
+	return bridge;
+}
+function createLazyWebViewBridge() {
+	return new Proxy({}, {
+		get(_target, property, receiver) {
+			return Reflect.get(requireWebViewBridge(), property, receiver);
+		},
+		set(_target, property, value, receiver) {
+			return Reflect.set(requireWebViewBridge(), property, value, receiver);
+		},
+		has(_target, property) {
+			return property in requireWebViewBridge();
+		}
+	});
+}
+var webView = createLazyWebViewBridge();
+//#endregion
+//#region views/acp-chat/src/bridge/webviewApi.ts
 var acpBridgeHost = webView.callable(apiId()("acp.bridge"));
 var currentHandlers = null;
 webView.implement(apiId()("acp.bridge"), {
@@ -2000,6 +2001,101 @@ function errorText(error) {
 	return error instanceof Error ? error.message : String(error);
 }
 //#endregion
+//#region views/acp-chat/src/icons/acpChatAgent.svg
+var acpChatAgent_default = "" + new URL("assets/acpChatAgent.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatAgent_dark.svg
+var acpChatAgent_dark_default = "" + new URL("assets/acpChatAgent_dark.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatBrain.svg
+var acpChatBrain_default = "" + new URL("assets/acpChatBrain.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatBrain_dark.svg
+var acpChatBrain_dark_default = "" + new URL("assets/acpChatBrain_dark.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatDebug.svg
+var acpChatDebug_default = "" + new URL("assets/acpChatDebug.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatDebug_dark.svg
+var acpChatDebug_dark_default = "" + new URL("assets/acpChatDebug_dark.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatEffort.svg
+var acpChatEffort_default = "" + new URL("assets/acpChatEffort.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatEffort_dark.svg
+var acpChatEffort_dark_default = "" + new URL("assets/acpChatEffort_dark.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatMode.svg
+var acpChatMode_default = "" + new URL("assets/acpChatMode.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatMode_dark.svg
+var acpChatMode_dark_default = "" + new URL("assets/acpChatMode_dark.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatProcessor.svg
+var acpChatProcessor_default = "" + new URL("assets/acpChatProcessor.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatProcessor_dark.svg
+var acpChatProcessor_dark_default = "" + new URL("assets/acpChatProcessor_dark.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatSend.svg
+var acpChatSend_default = "" + new URL("assets/acpChatSend.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatSend_dark.svg
+var acpChatSend_dark_default = "" + new URL("assets/acpChatSend_dark.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatShield.svg
+var acpChatShield_default = "" + new URL("assets/acpChatShield.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatShield_dark.svg
+var acpChatShield_dark_default = "" + new URL("assets/acpChatShield_dark.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatToggle.svg
+var acpChatToggle_default = "" + new URL("assets/acpChatToggle.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatToggle_dark.svg
+var acpChatToggle_dark_default = "" + new URL("assets/acpChatToggle_dark.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/components/icons/AcpChatIconSet.ts
+var ACP_CHAT_ICONS = IconSet.define("AcpChatIcons");
+var ACP_CHAT_ICON_RESOURCE_ROOT = "webview/views/acp-chat/assets";
+var AGENT_ICON_PATH = iconResourcePath(acpChatAgent_default, "acpChatAgent.svg");
+var SEND_ICON_PATH = iconResourcePath(acpChatSend_default, "acpChatSend.svg");
+var CONTROL_ICON_PATHS = {
+	mode: iconResourcePath(acpChatMode_default, "acpChatMode.svg"),
+	model: iconResourcePath(acpChatProcessor_default, "acpChatProcessor.svg"),
+	effort: iconResourcePath(acpChatEffort_default, "acpChatEffort.svg"),
+	shield: iconResourcePath(acpChatShield_default, "acpChatShield.svg"),
+	debug: iconResourcePath(acpChatDebug_default, "acpChatDebug.svg"),
+	brain: iconResourcePath(acpChatBrain_default, "acpChatBrain.svg"),
+	toggle: iconResourcePath(acpChatToggle_default, "acpChatToggle.svg")
+};
+keepBundledIconAssets([
+	iconResourcePath(acpChatAgent_dark_default, "acpChatAgent_dark.svg"),
+	iconResourcePath(acpChatBrain_dark_default, "acpChatBrain_dark.svg"),
+	iconResourcePath(acpChatDebug_dark_default, "acpChatDebug_dark.svg"),
+	iconResourcePath(acpChatEffort_dark_default, "acpChatEffort_dark.svg"),
+	iconResourcePath(acpChatMode_dark_default, "acpChatMode_dark.svg"),
+	iconResourcePath(acpChatProcessor_dark_default, "acpChatProcessor_dark.svg"),
+	iconResourcePath(acpChatSend_dark_default, "acpChatSend_dark.svg"),
+	iconResourcePath(acpChatShield_dark_default, "acpChatShield_dark.svg"),
+	iconResourcePath(acpChatToggle_dark_default, "acpChatToggle_dark.svg")
+]);
+function acpControlIconPath(kind) {
+	return CONTROL_ICON_PATHS[kind];
+}
+function acpIconSrc(path) {
+	return ACP_CHAT_ICONS.src(path);
+}
+function iconResourcePath(assetUrl, fileName) {
+	const cleanAssetUrl = assetUrl.split("?", 1)[0];
+	const assetsPathStart = cleanAssetUrl.lastIndexOf("/assets/");
+	if (assetsPathStart >= 0) return `${ACP_CHAT_ICON_RESOURCE_ROOT}/${cleanAssetUrl.substring(assetsPathStart + 8)}`;
+	return `${ACP_CHAT_ICON_RESOURCE_ROOT}/${fileName}`;
+}
+function keepBundledIconAssets(paths) {
+	if (paths.length === 0) throw new Error("ACP chat icon assets are missing");
+}
+//#endregion
 //#region views/acp-chat/src/components/Select.tsx
 var import_jsx_runtime = require_jsx_runtime();
 var SelectRoot = Select$1;
@@ -2076,12 +2172,13 @@ function SelectItem({ children, ...props }) {
 		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectItemText, { children })]
 	});
 }
-function Select({ options, placeholder, className, ...props }) {
+function Select({ options, placeholder, className, triggerAriaLabel, ...props }) {
 	const selectedOption = options.find((option) => option.value === props.value);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(SelectRoot, {
 		...props,
 		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectTrigger, {
 			className,
+			"aria-label": triggerAriaLabel,
 			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: selectedOption?.label ?? placeholder })
 		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectContent, { children: options.map(({ label, disabled, textValue, value }) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectItem, {
 			value,
@@ -2095,18 +2192,22 @@ function Select({ options, placeholder, className, ...props }) {
 //#region views/acp-chat/src/components/AgentSelector.tsx
 function AgentSelector(props) {
 	const placeholder = props.agents.length ? "Select an agent…" : "No agents in ~/.jetbrains/acp.json";
+	const selectedAgent = props.agents.find((agent) => agent.id === props.selectedAgentId);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
 		className: "acpAgentSelector",
 		children: [
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-				className: "acpAgentSelectorLabel",
-				children: "Agent"
+				className: "acpAgentSelectorIcon",
+				title: "Agent",
+				"aria-hidden": "true",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-icon", { src: acpIconSrc(AGENT_ICON_PATH) })
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Select, {
 				className: "acpAgentSelect",
 				value: props.selectedAgentId ?? "",
 				disabled: props.starting || props.agents.length === 0,
 				placeholder,
+				triggerAriaLabel: `Agent: ${selectedAgent?.name ?? placeholder}`,
 				options: props.agents.map((agent) => ({
 					value: agent.id,
 					label: agent.name
@@ -2920,106 +3021,207 @@ var ModelSelector = {
 //#endregion
 //#region views/acp-chat/src/components/ModelPicker.tsx
 function ModelPicker(props) {
+	const hasSessionModes = props.modes.length > 0;
 	const selectedMode = props.modes.find((mode) => mode.id === props.currentModeId);
 	const modelOption = props.configOptions.find(isModelSelectOption);
 	const selectedModel = modelOption?.options.find((option) => option.value === modelOption.currentValue);
-	const otherConfigOptions = props.configOptions.filter((option) => option !== modelOption);
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-		className: "acpModelPicker",
-		children: [
-			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-				className: "acpModelPickerControl",
-				title: selectedMode?.description,
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-					className: "acpModelPickerLabel",
-					children: "Mode"
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(ModelSelector.Root, {
-					value: props.currentModeId ?? "",
-					disabled: props.disabled || props.modes.length === 0,
-					onValueChange: props.onSelectMode,
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.Trigger, { children: selectedMode?.name ?? (props.modes.length > 0 ? "Select mode..." : "No modes") }), props.modes.length > 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(ModelSelector.Content, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.Search, { placeholder: "Search modes..." }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.List, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.Group, {
-						label: "Modes",
-						children: props.modes.map((mode) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.Item, {
-							value: mode.id,
-							label: mode.name,
-							description: mode.description,
-							searchValue: `${mode.name} ${mode.id} ${mode.description ?? ""}`
-						}, mode.id))
-					}) })] }) : null]
-				})]
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-				className: "acpModelPickerControl",
-				title: modelOption?.description,
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-					className: "acpModelPickerLabel",
-					children: "Model"
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(ModelSelector.Root, {
-					value: modelOption?.currentValue ?? "",
-					disabled: props.disabled || !modelOption || modelOption.options.length === 0,
-					onValueChange: (value) => {
-						if (modelOption) props.onSelectConfigOption(modelOption, value);
-					},
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.Trigger, { children: selectedModel?.name ?? (modelOption ? "Select model..." : "No models") }), modelOption ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(ModelSelector.Content, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.Search, { placeholder: "Search models..." }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.List, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.Group, {
-						label: modelOption.name,
-						children: modelOption.options.map((option) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.Item, {
-							value: option.value,
-							label: option.name,
-							description: option.description,
-							searchValue: `${option.name} ${option.value} ${option.description ?? ""}`
-						}, option.value))
-					}) })] }) : null]
-				})]
-			}),
-			otherConfigOptions.map((option) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ConfigOptionControl, {
-				option,
-				disabled: props.disabled,
-				onChange: (value) => props.onSelectConfigOption(option, value)
-			}, option.id))
-		]
+	const otherConfigOptions = props.configOptions.filter((option) => option !== modelOption && isRenderableConfigOption(option));
+	if (!hasSessionModes && !modelOption && otherConfigOptions.length === 0) return null;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Provider, {
+		delayDuration: 250,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "acpModelPicker",
+			children: [
+				hasSessionModes ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(ControlHint, {
+					className: "acpModelPickerControl acpControlWithHint",
+					hint: "Mode",
+					controlId: "legacy-mode",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ControlIcon, {
+						kind: "mode",
+						hint: "Mode"
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(ModelSelector.Root, {
+						value: props.currentModeId ?? "",
+						disabled: props.disabled,
+						onValueChange: props.onSelectMode,
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.Trigger, {
+							"aria-label": `Mode: ${selectedMode?.name ?? "Select mode"}`,
+							children: selectedMode?.name ?? "Select mode..."
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(ModelSelector.Content, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.Search, { placeholder: "Search modes..." }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.List, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.Group, {
+							label: "Modes",
+							children: props.modes.map((mode) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.Item, {
+								value: mode.id,
+								label: mode.name,
+								description: mode.description,
+								searchValue: `${mode.name} ${mode.id} ${mode.description ?? ""}`
+							}, mode.id))
+						}) })] })]
+					})]
+				}) : null,
+				modelOption ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(ControlHint, {
+					className: "acpModelPickerControl acpControlWithHint",
+					hint: "Model",
+					configId: modelOption.id,
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ControlIcon, {
+						kind: "model",
+						hint: "Model"
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(ModelSelector.Root, {
+						value: modelOption.currentValue,
+						disabled: props.disabled,
+						onValueChange: (value) => props.onSelectConfigOption(modelOption, value),
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.Trigger, {
+							"aria-label": `Model: ${selectedModel?.name ?? "Select model"}`,
+							children: selectedModel?.name ?? "Select model..."
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(ModelSelector.Content, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.Search, { placeholder: "Search models..." }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.List, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.Group, {
+							label: modelOption.name,
+							children: modelOption.options.map((option) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelSelector.Item, {
+								value: option.value,
+								label: option.name,
+								description: option.description,
+								searchValue: `${option.name} ${option.value} ${option.description ?? ""}`
+							}, option.value))
+						}) })] })]
+					})]
+				}) : null,
+				otherConfigOptions.map((option) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ConfigOptionControl, {
+					option,
+					disabled: props.disabled,
+					onChange: (value) => props.onSelectConfigOption(option, value)
+				}, option.id))
+			]
+		})
 	});
 }
 function ConfigOptionControl(props) {
 	const { option } = props;
-	if (option.type === "select") return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-		className: "acpModelPickerControl",
-		title: option.description,
-		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-			className: "acpModelPickerLabel",
-			children: option.name
-		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Select, {
-			className: "acpConfigOptionSelect",
-			value: option.currentValue,
-			disabled: props.disabled || option.options.length === 0,
-			placeholder: "Select...",
-			options: option.options.map((choice) => ({
-				value: choice.value,
-				label: choice.name,
-				textValue: `${choice.name} ${choice.value} ${choice.description ?? ""}`
-			})),
-			onValueChange: props.onChange
-		})]
+	if (option.type === "select") {
+		if (option.options.length === 0) return null;
+		const booleanSelect = toBooleanSelectOption(option);
+		if (booleanSelect) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ConfigToggleControl, {
+			option,
+			checked: booleanSelect.checked,
+			disabled: props.disabled,
+			onCheckedChange: (checked) => props.onChange(checked ? booleanSelect.trueValue : booleanSelect.falseValue)
+		});
+		const selectedChoice = option.options.find((choice) => choice.value === option.currentValue);
+		const displayName = configOptionDisplayName(option);
+		return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(ControlHint, {
+			className: "acpModelPickerControl acpControlWithHint",
+			hint: displayName,
+			configId: option.id,
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ControlIcon, {
+				kind: configOptionIconKind(option),
+				hint: displayName
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Select, {
+				className: "acpConfigOptionSelect",
+				value: option.currentValue,
+				disabled: props.disabled,
+				placeholder: "Select...",
+				triggerAriaLabel: `${displayName}: ${selectedChoice?.name ?? "Select"}`,
+				options: option.options.map((choice) => ({
+					value: choice.value,
+					label: choice.name,
+					textValue: `${choice.name} ${choice.value} ${choice.description ?? ""}`
+				})),
+				onValueChange: props.onChange
+			})]
+		});
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ConfigToggleControl, {
+		option,
+		checked: option.currentValue,
+		disabled: props.disabled,
+		onCheckedChange: props.onChange
 	});
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-		className: "acpModelPickerControl acpConfigBooleanControl",
-		title: option.description,
-		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-			className: "acpModelPickerLabel",
-			children: option.name
+}
+function ConfigToggleControl(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(ControlHint, {
+		className: "acpConfigToggle acpControlWithHint",
+		hint: props.option.name,
+		configId: props.option.id,
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ControlIcon, {
+			kind: configOptionIconKind(props.option),
+			hint: props.option.name
 		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Switch, {
 			className: "acpConfigSwitch",
-			checked: option.currentValue,
+			"aria-label": props.option.name,
+			checked: props.checked,
 			disabled: props.disabled,
-			onCheckedChange: props.onChange,
+			onCheckedChange: props.onCheckedChange,
 			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SwitchThumb, { className: "acpConfigSwitchThumb" })
 		})]
 	});
 }
+function ControlHint(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+		className: props.className,
+		"data-hint": props.hint,
+		"data-config-id": props.configId,
+		"data-control-id": props.controlId,
+		children: props.children
+	});
+}
 function isModelSelectOption(option) {
 	if (option.type !== "select") return false;
+	if (option.options.length === 0) return false;
 	if (option.category === "model") return true;
 	if (isModelText(option.id) || isModelText(option.name)) return true;
 	return option.options.some((choice) => isKnownModelText(choice.value) || isKnownModelText(choice.name));
+}
+function isRenderableConfigOption(option) {
+	return option.type === "boolean" || option.options.length > 0;
+}
+function configOptionDisplayName(option) {
+	return option.id === "mode" ? "Session mode" : option.name;
+}
+function toBooleanSelectOption(option) {
+	if (option.options.length !== 2) return null;
+	const trueChoice = option.options.find((choice) => isTrueChoice(choice.value) || isTrueChoice(choice.name));
+	const falseChoice = option.options.find((choice) => isFalseChoice(choice.value) || isFalseChoice(choice.name));
+	if (!trueChoice || !falseChoice || trueChoice.value === falseChoice.value) return null;
+	return {
+		checked: option.currentValue === trueChoice.value,
+		trueValue: trueChoice.value,
+		falseValue: falseChoice.value
+	};
+}
+function isTrueChoice(value) {
+	const normalized = normalizeBooleanChoice(value);
+	return normalized === "true" || normalized === "on" || normalized === "yes" || normalized === "enabled" || normalized === "enable" || normalized === "1";
+}
+function isFalseChoice(value) {
+	const normalized = normalizeBooleanChoice(value);
+	return normalized === "false" || normalized === "off" || normalized === "no" || normalized === "disabled" || normalized === "disable" || normalized === "0";
+}
+function normalizeBooleanChoice(value) {
+	return value.trim().toLocaleLowerCase();
+}
+function configOptionIconKind(option) {
+	const id = option.id.toLocaleLowerCase();
+	const name = option.name.toLocaleLowerCase();
+	const category = option.category?.toLocaleLowerCase();
+	if (id === "mode") return "mode";
+	if (id === "model" || category === "model") return "model";
+	if (id === "effort" || category === "thought_level") return "effort";
+	if (id === "brave_mode" || name.includes("brave") || name.includes("safe") || name.includes("security")) return "shield";
+	if (id === "debug_mode" || name.includes("debug")) return "debug";
+	if (name.includes("think") || name.includes("reason")) return "brain";
+	return "toggle";
+}
+function ControlIcon(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Root3, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Trigger$2, {
+		asChild: true,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+			className: `acpControlIcon acpControlIcon--${props.kind}`,
+			"aria-hidden": "true",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-icon", { src: acpIconSrc(acpControlIconPath(props.kind)) })
+		})
+	}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Portal$1, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Content2$1, {
+		className: "acpControlTooltip",
+		side: "top",
+		align: "center",
+		sideOffset: 6,
+		children: props.hint
+	}) })] });
 }
 function isModelText(value) {
 	return value?.toLocaleLowerCase().includes("model") === true;
@@ -3264,8 +3466,6 @@ var SMOOTH_TEXT_OPTIONS = {
 	maxCharIntervalMs: 5,
 	minCommitMs: 33
 };
-var ACP_CHAT_ICONS = IconSet.define("AcpChatIcons");
-var SEND_ICON_PATH = "icons/acpChatSend.svg";
 function ChatView() {
 	const chat = useAcpChat();
 	const notifyOnUnsupportedImagePaste = (event) => {
@@ -3344,32 +3544,36 @@ function ChatView() {
 													placeholder: "Type your task or use / for commands…",
 													onPaste: notifyOnUnsupportedImagePaste
 												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+													className: "acpComposerControls",
+													children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelPicker, {
+														modes: chat.modes,
+														configOptions: chat.configOptions,
+														currentModeId: chat.currentModeId,
+														disabled: chat.starting || chat.selectedAgentId == null,
+														onSelectMode: chat.selectMode,
+														onSelectConfigOption: chat.selectConfigOption
+													})
+												}),
 												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Send, {
 													className: "acpComposerSend",
 													"aria-label": "Send",
 													title: "Send",
 													children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-icon", {
 														className: "acpComposerSendIcon",
-														src: ACP_CHAT_ICONS.src(SEND_ICON_PATH)
+														src: acpIconSrc(SEND_ICON_PATH)
 													})
 												})
 											]
 										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SlashCommandMenu, { commands: chat.commands })]
-									}) }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-										className: "acpComposerToolbar",
-										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(AgentSelector, {
+									}) }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: "acpComposerFooter",
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AgentSelector, {
 											agents: chat.agents,
 											selectedAgentId: chat.selectedAgentId,
 											starting: chat.starting,
 											onSelect: chat.selectAgent
-										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModelPicker, {
-											modes: chat.modes,
-											configOptions: chat.configOptions,
-											currentModeId: chat.currentModeId,
-											disabled: chat.starting || chat.selectedAgentId == null,
-											onSelectMode: chat.selectMode,
-											onSelectConfigOption: chat.selectConfigOption
-										})]
+										})
 									})]
 								})
 							]

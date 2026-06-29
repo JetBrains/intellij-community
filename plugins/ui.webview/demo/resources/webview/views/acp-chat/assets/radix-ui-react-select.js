@@ -1,6 +1,6 @@
 import { o as __toESM } from "./rolldown-runtime.js";
 import { V as require_jsx_runtime, it as require_react } from "./assistant-ui-core.js";
-import { C as require_react_dom, g as Primitive, h as composeEventHandlers, m as useCallbackRef, v as createSlot, y as useComposedRefs } from "./assistant-ui-react.js";
+import { b as useComposedRefs, g as Primitive, h as composeEventHandlers, m as useCallbackRef, v as createSlot, w as require_react_dom } from "./assistant-ui-react.js";
 import { n as createContextScope, t as createCollection } from "./radix-ui-react-collection.js";
 import { n as useLayoutEffect2, t as useId } from "./radix-ui-react-id.js";
 import { a as Anchor, c as Root2, d as ReactRemoveScroll, f as Portal, l as createPopperScope, m as useControllableState, o as Arrow, p as Presence, s as Content } from "./radix-ui-react-popover.js";
@@ -38,6 +38,7 @@ var VisuallyHidden = import_react.forwardRef((props, forwardedRef) => {
 	});
 });
 VisuallyHidden.displayName = NAME;
+var Root = VisuallyHidden;
 //#endregion
 //#region node_modules/@radix-ui/react-use-previous/dist/index.mjs
 function usePrevious(value) {
@@ -1038,4 +1039,4 @@ function wrapArray(array, startIndex) {
 	return array.map((_, index) => array[(startIndex + index) % array.length]);
 }
 //#endregion
-export { SelectItem as a, SelectPortal as c, SelectTrigger as d, SelectValue as f, SelectIcon as i, SelectScrollDownButton as l, usePrevious as m, SelectContent as n, SelectItemIndicator as o, SelectViewport as p, SelectGroup as r, SelectItemText as s, Select as t, SelectScrollUpButton as u };
+export { SelectItem as a, SelectPortal as c, SelectTrigger as d, SelectValue as f, Root as h, SelectIcon as i, SelectScrollDownButton as l, usePrevious as m, SelectContent as n, SelectItemIndicator as o, SelectViewport as p, SelectGroup as r, SelectItemText as s, Select as t, SelectScrollUpButton as u };

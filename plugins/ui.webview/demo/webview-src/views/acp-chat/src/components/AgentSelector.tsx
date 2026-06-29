@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import type { AgentInfo } from "../model/types"
+import { acpIconSrc, AGENT_ICON_PATH } from "./icons/AcpChatIconSet"
 import { Select } from "./Select"
 
 export function AgentSelector(props: {
@@ -10,14 +11,18 @@ export function AgentSelector(props: {
   onSelect: (agentId: string) => void
 }) {
   const placeholder = props.agents.length ? "Select an agent…" : "No agents in ~/.jetbrains/acp.json"
+  const selectedAgent = props.agents.find(agent => agent.id === props.selectedAgentId)
   return (
     <label className="acpAgentSelector">
-      <span className="acpAgentSelectorLabel">Agent</span>
+      <span className="acpAgentSelectorIcon" title="Agent" aria-hidden="true">
+        <jb-icon src={acpIconSrc(AGENT_ICON_PATH)} />
+      </span>
       <Select
         className="acpAgentSelect"
         value={props.selectedAgentId ?? ""}
         disabled={props.starting || props.agents.length === 0}
         placeholder={placeholder}
+        triggerAriaLabel={`Agent: ${selectedAgent?.name ?? placeholder}`}
         options={props.agents.map(agent => ({ value: agent.id, label: agent.name }))}
         onValueChange={agentId => {
           if (agentId) props.onSelect(agentId)

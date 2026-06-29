@@ -61,8 +61,20 @@ body {
   flex-wrap: wrap;
 }
 
-.acpAgentSelectorLabel {
+.acpAgentSelectorIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
   color: var(--acp-text-muted);
+}
+
+.acpAgentSelectorIcon > * {
+  display: block;
+  width: 16px;
+  height: 16px;
 }
 
 .acpAgentSelect {
@@ -181,29 +193,64 @@ body {
 }
 
 .acpModelPicker {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
-  max-width: 100%;
-  flex: 1 1 260px;
-  flex-wrap: wrap;
+  width: 100%;
+  flex-wrap: nowrap;
+  overflow: hidden;
 }
 
 .acpModelPickerControl {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
   max-width: 100%;
+  min-height: 26px;
+  flex: 0 0 auto;
 }
 
-.acpConfigBooleanControl {
-  flex-wrap: nowrap;
+.acpControlWithHint {
+  position: relative;
+}
+
+.acpControlTooltip {
+  z-index: 1000;
+  max-width: min(240px, calc(100vw - 24px));
+  padding: 4px 7px;
+  border: 1px solid var(--acp-border);
+  border-radius: 4px;
+  background: var(--acp-bg-alt);
+  color: var(--acp-text);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.24);
+  font-size: 12px;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.acpControlIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  color: var(--acp-text-muted);
+}
+
+.acpControlIcon > * {
+  display: block;
+  width: 16px;
+  height: 16px;
 }
 
 .acpModelPickerLabel {
   color: var(--acp-text-muted);
+  font-size: 12px;
   white-space: nowrap;
 }
 
@@ -213,14 +260,16 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  min-width: 120px;
-  max-width: min(240px, 100%);
+  min-width: 0;
+  max-width: min(168px, 100%);
+  min-height: 26px;
   background: var(--acp-bg-alt);
   color: var(--acp-text);
   border: 1px solid var(--acp-border);
   border-radius: 4px;
-  padding: 3px 6px;
+  padding: 2px 6px;
   font: inherit;
+  font-size: 12px;
   cursor: pointer;
 }
 
@@ -346,10 +395,39 @@ body {
   height: 12px;
 }
 
+.acpConfigToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: max-content;
+  min-height: 28px;
+  padding: 2px 6px;
+  border: 1px solid var(--acp-border);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--acp-bg-alt) 86%, transparent);
+  color: var(--acp-text);
+}
+
+.acpConfigToggle:hover,
+.acpConfigToggle:focus-within {
+  border-color: color-mix(in srgb, var(--acp-accent) 42%, var(--acp-border));
+  background: color-mix(in srgb, var(--acp-accent) 10%, var(--acp-bg-alt));
+}
+
+.acpConfigToggleLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--acp-text-muted);
+  font-size: 12px;
+}
+
 .acpConfigSwitch {
   position: relative;
-  width: 26px;
-  height: 16px;
+  width: 34px;
+  height: 18px;
   flex: 0 0 auto;
   border: 1px solid var(--acp-border);
   border-radius: 999px;
@@ -368,10 +446,15 @@ body {
   opacity: 0.6;
 }
 
+.acpConfigSwitch:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--acp-accent) 60%, transparent);
+  outline-offset: 1px;
+}
+
 .acpConfigSwitchThumb {
   display: block;
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: var(--acp-text-muted);
   transform: translateX(1px);
@@ -380,7 +463,7 @@ body {
 
 .acpConfigSwitch[data-state="checked"] .acpConfigSwitchThumb {
   background: #fff;
-  transform: translateX(11px);
+  transform: translateX(17px);
 }
 
 .acpAgentStarting,
@@ -1169,12 +1252,13 @@ body {
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   padding: 8px 12px 10px;
   border-top: 1px solid var(--acp-border);
+  container-type: inline-size;
 }
 
-.acpComposerToolbar {
+.acpComposerFooter {
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -1187,9 +1271,18 @@ body {
 .acpComposer {
   position: relative;
   display: flex;
-  align-items: flex-end;
-  gap: 8px;
+  flex-direction: column;
+  gap: 6px;
   min-width: 0;
+  min-height: 96px;
+  border: 1px solid var(--acp-border);
+  border-radius: 6px;
+  background: var(--acp-bg-alt);
+  padding: 6px 38px 6px 8px;
+}
+
+.acpComposer:focus-within {
+  border-color: color-mix(in srgb, var(--acp-accent) 42%, var(--acp-border));
 }
 
 .acpSelectionToolbar {
@@ -1310,11 +1403,54 @@ body {
 
 .acpComposerMain {
   display: flex;
-  position: relative;
   flex: 1 1 auto;
   flex-direction: column;
   gap: 6px;
   min-width: 0;
+  min-height: 0;
+}
+
+.acpComposerControls {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.acpComposerControls:empty {
+  display: none;
+}
+
+@container (max-width: 680px) {
+  .acpComposerControls .acpModelPicker > .acpControlWithHint:nth-child(n+6) {
+    display: none;
+  }
+}
+
+@container (max-width: 600px) {
+  .acpComposerControls .acpModelPicker > .acpControlWithHint:nth-child(n+5) {
+    display: none;
+  }
+}
+
+@container (max-width: 520px) {
+  .acpComposerControls .acpModelPicker > .acpControlWithHint:nth-child(n+4) {
+    display: none;
+  }
+}
+
+@container (max-width: 420px) {
+  .acpComposerControls .acpModelPicker > .acpControlWithHint:nth-child(n+3) {
+    display: none;
+  }
+}
+
+@container (max-width: 320px) {
+  .acpComposerControls .acpModelPicker > .acpControlWithHint:nth-child(n+2) {
+    display: none;
+  }
 }
 
 .acpComposerQuote {
@@ -1374,21 +1510,22 @@ body {
   box-sizing: border-box;
   width: 100%;
   resize: none;
-  min-height: 36px;
+  min-height: 46px;
   max-height: 160px;
-  background: var(--acp-bg-alt);
+  background: transparent;
   color: var(--acp-text);
-  border: 1px solid var(--acp-border);
-  border-radius: 6px;
-  padding: 8px 42px 8px 8px;
+  border: 0;
+  border-radius: 0;
+  padding: 2px 36px 2px 0;
   font: inherit;
+  outline: none;
 }
 
 .acpComposerSend {
   display: inline-flex;
   position: absolute;
-  right: 2px;
-  bottom: 2px;
+  right: 4px;
+  bottom: 4px;
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
