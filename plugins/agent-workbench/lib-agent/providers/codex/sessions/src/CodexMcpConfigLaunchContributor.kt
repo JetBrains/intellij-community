@@ -95,20 +95,27 @@ private fun tomlKeySegment(value: String): String {
 }
 
 private fun readCodexMcpServersForLaunch(projectPath: Path): List<CodexMcpServerConfig> {
-  return readCodexMcpServers(listOf(CodexCliUtils.codexConfigPath(), projectPath.resolve(CODEX_PROJECT_CONFIG_PATH)))
+  // This path runs only in direct-HTTP mode (the contributor returns early otherwise), where AWB serves MCP
+  // itself. Legacy AWB-agnostic proxies are dropped at read time so they are never passed further: disabling
+  // them via `-c mcp_servers.<legacy>.enabled=false` would add a transport-less entry that aborts Codex
+  // config loading and opens an empty session.
+  return readCodexMcpServers(
+    configFiles = listOf(CodexCliUtils.codexConfigPath(), projectPath.resolve(CODEX_PROJECT_CONFIG_PATH)),
+    excludeLegacy = AwbMcpConfigBuilder.isDirectHttpEnabled(),
+  )
 }
 
-internal fun readCodexMcpServers(configFiles: List<Path>): List<CodexMcpServerConfig> {
+internal fun readCodexMcpServers(configFiles: List<Path>, excludeLegacy: Boolean = false): List<CodexMcpServerConfig> {
   val result = LinkedHashMap<String, CodexMcpServerConfig>()
   for (configFile in configFiles) {
-    for (server in readCodexMcpServers(configFile)) {
+    for (server in readCodexMcpServers(configFile, excludeLegacy)) {
       result[server.name] = server
     }
   }
   return result.values.toList()
 }
 
-internal fun readCodexMcpServers(configFile: Path): List<CodexMcpServerConfig> {
+internal fun readCodexMcpServers(configFile: Path, excludeLegacy: Boolean = false): List<CodexMcpServerConfig> {
   if (!Files.isRegularFile(configFile)) return emptyList()
   return runCatching {
     val root = parseTomlConfig(configFile.readText())
@@ -117,6 +124,7 @@ internal fun readCodexMcpServers(configFile: Path): List<CodexMcpServerConfig> {
     for (entry in servers.entrySet()) {
       val name = entry.key.trim()
       if (name.isEmpty()) continue
+      if (excludeLegacy && name in AwbMcpConfigBuilder.LEGACY_FILTERED_NAMES) continue
 
       val table = entry.getRawValue<Any>() as? UnmodifiableConfig ?: continue
       val headers = table.readConfig("http_headers") ?: table.readConfig("headers")

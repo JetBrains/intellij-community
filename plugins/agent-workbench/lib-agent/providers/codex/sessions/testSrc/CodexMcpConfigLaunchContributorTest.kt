@@ -3,6 +3,7 @@ package com.intellij.platform.ai.agent.codex.sessions
 
 import com.intellij.platform.ai.agent.codex.common.CodexCliUtils
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.sessions.core.launch.AwbMcpConfigBuilder
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
@@ -241,6 +242,25 @@ class CodexMcpConfigLaunchContributorTest {
       CodexMcpServerConfig(name = "userOnly", url = null, projectPath = null, enabled = true),
       CodexMcpServerConfig(name = "ijproxy", url = null, projectPath = null, enabled = true),
     )
+  }
+
+  @Test
+  fun excludesLegacyMcpServersFromReadWhenRequested(@TempDir tempDir: Path) {
+    val legacyNames = AwbMcpConfigBuilder.LEGACY_FILTERED_NAMES
+    assertThat(legacyNames).isNotEmpty()
+    val legacyBlocks = legacyNames.joinToString("\n") { name ->
+      "[mcp_servers.\"$name\"]\ncommand = \"legacy\"\n"
+    }
+    val configFile = tempDir.resolve("config.toml")
+    configFile.writeText(
+      "$legacyBlocks\n[mcp_servers.idea]\nurl = \"$MCP_URL\"\n"
+    )
+
+    assertThat(readCodexMcpServers(configFile, excludeLegacy = true)).containsExactly(
+      CodexMcpServerConfig(name = "idea", url = MCP_URL, projectPath = null, enabled = true),
+    )
+    assertThat(readCodexMcpServers(configFile).map { it.name })
+      .containsExactlyInAnyOrderElementsOf(legacyNames + "idea")
   }
 
   @Test
