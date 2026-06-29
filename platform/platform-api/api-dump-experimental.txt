@@ -872,7 +872,6 @@ com.intellij.util.net.JdkProxyCustomizer
 - *a:getOriginalProxySelector():java.net.ProxySelector
 *f:com.intellij.util.net.PlatformHttpClient
 - <init>():V
-- s:checkResponse(java.net.http.HttpResponse):java.net.http.HttpResponse
 - s:client():java.net.http.HttpClient
 - s:clientBuilder():java.net.http.HttpClient$Builder
 - s:gzipStringBodyHandler():java.net.http.HttpResponse$BodyHandler
