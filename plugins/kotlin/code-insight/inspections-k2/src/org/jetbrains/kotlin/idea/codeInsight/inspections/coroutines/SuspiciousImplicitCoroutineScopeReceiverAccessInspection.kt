@@ -152,7 +152,7 @@ internal class SuspiciousImplicitCoroutineScopeReceiverAccessInspection :
                 }
 
                 // Check if the matching parameter's return type is a suspend type
-                val (functionSymbol, argumentSymbol) = getCallExpressionSymbol(current) ?: continue
+                val (functionSymbol, argumentSymbol) = getCallExpressionSymbol(current) ?: return false
                 // Resolve the outer call of the lambda
                 val parameterType = argumentSymbol.returnType
 

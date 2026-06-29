@@ -16347,6 +16347,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                     runTest("testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/lambdaExtensionReceiver_withLabel_suspendWrapper.kt");
                 }
 
+                @TestMetadata("selectBuilderProperty.kt")
+                public void testSelectBuilderProperty() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/selectBuilderProperty.kt");
+                }
+
                 @TestMetadata("selectExpression.kt")
                 public void testSelectExpression() throws Exception {
                     runTest("testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/selectExpression.kt");
