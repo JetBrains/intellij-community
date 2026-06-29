@@ -17,8 +17,10 @@ import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.platform.find.FindInFilesResult
@@ -57,6 +59,11 @@ internal class FindRemoteApiImpl : FindRemoteApi {
       setCustomScopeById(project, findModel)
       //read action is necessary in case of the loading from a directory
       val scope = readAction { FindInProjectUtil.getGlobalSearchScope(project, findModel) }
+      LOG.debug {
+        "FiF-backend: findByModel start query='${findModel.stringToFind}' scope=$scope isDumb=${DumbService.isDumb(project)} " +
+        "isCustomScope=${findModel.isCustomScope} customScopeId=${findModel.customScopeId} projectScope=${findModel.isProjectScope} " +
+        "directory=${findModel.directoryName} module=${findModel.moduleName} filesToScanInitially=${filesToScanInitially.size} maxUsages=$maxUsagesCount"
+      }
       coroutineToIndicator {
         FindInProjectUtil.findUsages(findModel, project, presentation, filesToScanInitially) { usageInfo ->
           val virtualFile = usageInfo.virtualFile
@@ -100,10 +107,14 @@ internal class FindRemoteApiImpl : FindRemoteApi {
           if (sent.isSuccess) {
             sentItems.incrementAndGet()
           }
+          else {
+            LOG.debug { "FiF-backend: send failed (channel closed=${sent.isClosed}); stopping search for query='${findModel.stringToFind}'" }
+          }
 
           sentItems.get() <= maxUsagesCount
         }
       }
+      LOG.debug { "FiF-backend: findByModel finished query='${findModel.stringToFind}' produced=${sentItems.get()}" }
     }.buffer(capacity = maxUsagesCount)
   }
 
