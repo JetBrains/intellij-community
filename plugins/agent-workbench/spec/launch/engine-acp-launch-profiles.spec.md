@@ -93,12 +93,15 @@ a launch through its own runtime, with ACP being the first consumer.
 - `acp` module absent (e.g. a product build without AI Assistant): neither EP has extensions, so the
   Engine provider lists no generation models and registers no out-of-band launcher; the shared pipeline
   falls back to its default (terminal) behavior.
+- `intellij.ml.llm.*` absent: Workbench ACP behavior must still work when `intellij.agent.workbench.acp`
+  and `intellij.agent.workbench.acp.runtime` are loaded. The LLM/AIA plugin must not be required for ACP
+  actions, catalog population, launch-profile visibility, or process launch.
 
 ## Testing / Local Run
 - `./tests.cmd --module intellij.agent.workbench.engine.tests --test com.intellij.agent.workbench.engine.platform.EngineEventStoreTest`
 - `./tests.cmd --module intellij.agent.workbench.acp.tests --test com.intellij.agent.workbench.acp.AcpThreadEventMapperTest`
-- End-to-end launch verification requires a run configuration with AI Assistant present so
-  `intellij.ml.llm.agents.acp` resolves and `AcpAgentsCatalog` is populated.
+- End-to-end launch verification uses the AIA-less `IDEA (agent workbench)` run configuration. ACP catalog
+  population and launch must come from AWB modules, not from `intellij.ml.llm.agents.acp`.
 
 ## Open Questions / Risks
 - No dedicated test yet asserts the out-of-band branch end to end (it depends on a populated ACP catalog
