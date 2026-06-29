@@ -94,8 +94,9 @@ class SharedCodexAppServerService(serviceScope: CoroutineScope) {
     cwd: String,
     yolo: Boolean,
     model: String?,
+    reasoningEffort: String?,
   ): CodexPrestartedThread {
-    val session = createThreadInternal(cwd = cwd, yolo = yolo, model = model)
+    val session = createThreadInternal(cwd = cwd, yolo = yolo, model = model, reasoningEffort = reasoningEffort)
     val threadId = session.thread.id
     try {
       prestartedThreadSettings[threadId] = CodexPrestartedThreadSettings(
@@ -167,11 +168,22 @@ class SharedCodexAppServerService(serviceScope: CoroutineScope) {
     client.unarchiveThread(threadId)
   }
 
-  private suspend fun createThreadInternal(cwd: String, yolo: Boolean, model: String? = null) = if (yolo) {
-    client.createThreadSession(cwd = cwd, model = model, approvalPolicy = "on-request", sandbox = "workspace-write")
+  private suspend fun createThreadInternal(
+    cwd: String,
+    yolo: Boolean,
+    model: String? = null,
+    reasoningEffort: String? = null,
+  ) = if (yolo) {
+    client.createThreadSession(
+      cwd = cwd,
+      model = model,
+      reasoningEffort = reasoningEffort,
+      approvalPolicy = "on-request",
+      sandbox = "workspace-write",
+    )
   }
   else {
-    client.createThreadSession(cwd = cwd, model = model)
+    client.createThreadSession(cwd = cwd, model = model, reasoningEffort = reasoningEffort)
   }
 }
 

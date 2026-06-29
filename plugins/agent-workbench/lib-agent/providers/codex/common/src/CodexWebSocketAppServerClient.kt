@@ -292,6 +292,7 @@ class CodexWebSocketAppServerClient(
   suspend fun createThreadSession(
     cwd: String? = null,
     model: String? = null,
+    reasoningEffort: String? = null,
     approvalPolicy: String? = null,
     sandbox: String? = null,
     ephemeral: Boolean? = null,
@@ -299,6 +300,7 @@ class CodexWebSocketAppServerClient(
     return startThread(
       cwd = cwd,
       model = model,
+      reasoningEffort = reasoningEffort,
       approvalPolicy = approvalPolicy,
       sandbox = sandbox,
       ephemeral = ephemeral,
@@ -472,6 +474,7 @@ class CodexWebSocketAppServerClient(
   private suspend fun startThread(
     cwd: String? = null,
     model: String? = null,
+    reasoningEffort: String? = null,
     approvalPolicy: String? = null,
     sandbox: String? = null,
     ephemeral: Boolean? = null,
@@ -482,6 +485,7 @@ class CodexWebSocketAppServerClient(
         generator.writeStartObject()
         cwd?.let { generator.writeStringField("cwd", it) }
         model?.let { generator.writeStringField("model", it) }
+        reasoningEffort?.let { generator.writeStringField("reasoningEffort", it) }
         approvalPolicy?.let { generator.writeStringField("approvalPolicy", it) }
         sandbox?.let { generator.writeStringField("sandbox", it) }
         ephemeral?.let { generator.writeBooleanField("ephemeral", it) }

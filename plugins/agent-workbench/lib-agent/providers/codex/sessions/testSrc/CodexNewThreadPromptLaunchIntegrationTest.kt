@@ -68,6 +68,7 @@ class CodexNewThreadPromptLaunchIntegrationTest {
         projectPath = PROJECT_PATH,
         launchMode = AgentSessionLaunchMode.STANDARD,
         model = null,
+        reasoningEffort = null,
       )
     )
   }
@@ -132,6 +133,7 @@ class CodexNewThreadPromptLaunchIntegrationTest {
         projectPath = PROJECT_PATH,
         launchMode = AgentSessionLaunchMode.STANDARD,
         model = "gpt-5.1-codex",
+        reasoningEffort = "high",
       )
     )
 
@@ -172,6 +174,17 @@ class CodexNewThreadPromptLaunchIntegrationTest {
         provider = AgentSessionProvider.from("codex"),
         projectPath = PROJECT_PATH,
         launchMode = AgentSessionLaunchMode.STANDARD,
+        generationSettings = AgentPromptGenerationSettings(
+          modelId = "gpt-5.1-codex",
+          reasoningEffort = AgentPromptReasoningEffort.MEDIUM,
+        ),
+        generationModelCatalog = listOf(
+          AgentPromptGenerationModel(
+            id = "gpt-5.1-codex",
+            displayName = "GPT-5.1 Codex",
+            supportedReasoningEfforts = setOf(AgentPromptReasoningEffort.MEDIUM),
+          ),
+        ),
         initialMessageRequest = AgentPromptInitialMessageRequest(
           prompt = "Refactor selected code",
         ),
@@ -181,7 +194,18 @@ class CodexNewThreadPromptLaunchIntegrationTest {
     assertThat(observation.normalizedPath).isEqualTo(PROJECT_PATH)
     assertThat(observation.identity).isEqualTo("codex:$RECORDED_PLAN_THREAD_ID")
     assertThat(observation.launchSpec.command)
-      .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("resume", "--remote", REMOTE_URL, RECORDED_PLAN_THREAD_ID))
+      .containsExactlyElementsOf(
+        CODEX_BASE_COMMAND + listOf(
+          "--model",
+          "gpt-5.1-codex",
+          "-c",
+          "model_reasoning_effort=\"medium\"",
+          "resume",
+          "--remote",
+          REMOTE_URL,
+          RECORDED_PLAN_THREAD_ID,
+        )
+      )
     assertThat(observation.launchSpec.preallocatedSessionId).isEqualTo(RECORDED_PLAN_THREAD_ID)
     assertThat(observation.startupLaunchSpecOverride).isNull()
     val dispatchStep = observation.postStartDispatchSteps.single()
@@ -195,7 +219,8 @@ class CodexNewThreadPromptLaunchIntegrationTest {
       CodexThreadStartupRequest(
         projectPath = PROJECT_PATH,
         launchMode = AgentSessionLaunchMode.STANDARD,
-        model = null,
+        model = "gpt-5.1-codex",
+        reasoningEffort = "medium",
       )
     )
 
@@ -244,11 +269,13 @@ internal class RecordingThreadStartupBackend : CodexThreadStartupBackend {
     projectPath: String,
     launchMode: AgentSessionLaunchMode,
     model: String?,
+    reasoningEffort: String?,
   ): CodexPrestartedThread {
     requests += CodexThreadStartupRequest(
       projectPath = projectPath,
       launchMode = launchMode,
       model = model,
+      reasoningEffort = reasoningEffort,
     )
     return CodexPrestartedThread(
       threadId = recordingPlanPromptThreadId(requests.size),
@@ -279,6 +306,7 @@ internal data class CodexThreadStartupRequest(
   @JvmField val projectPath: String,
   @JvmField val launchMode: AgentSessionLaunchMode,
   @JvmField val model: String?,
+  @JvmField val reasoningEffort: String?,
 )
 
 internal data class CodexPromptTurnRequest(
