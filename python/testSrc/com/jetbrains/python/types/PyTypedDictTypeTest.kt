@@ -6,6 +6,7 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import com.jetbrains.python.inspections.PyTypeCheckerInspection
 import com.jetbrains.python.psi.LanguageLevel
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -699,6 +700,49 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       required_readonly_dict: IntDictRequiredReadOnly = {"id": 1}
       combined_error: dict[str, int] = required_readonly_dict  # Error: 'id' is both required and read-only
       #                                ^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'dict[str, int]', got 'IntDictRequiredReadOnly' instead
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90596"])
+    fun `closed and extra_items cannot be combined`() = test("""
+      from typing_extensions import TypedDict
+
+      class ClosedTrueWithExtra(TypedDict, closed=True, extra_items=int):  # WARNING Cannot use both 'closed' and 'extra_items' in the same TypedDict definition
+          name: str
+
+      class ClosedFalseWithExtra(TypedDict, closed=False, extra_items=int):  # WARNING Cannot use both 'closed' and 'extra_items' in the same TypedDict definition
+          name: str
+
+      Functional = TypedDict('Functional', {'name': str}, closed=True, extra_items=int)  # WARNING Cannot use both 'closed' and 'extra_items' in the same TypedDict definition
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90596"])
+    fun `functional extra_items value must be a type`() = test(
+      // PyTypeCheckerInspection separately flags the `type`-typed parameter; here we only assert the dedicated check.
+      TestOptions(disableInspections = setOf(PyTypeCheckerInspection::class.java)),
+      """
+      from typing_extensions import TypedDict
+
+      Movie = TypedDict('Movie', {'name': str}, extra_items=2)
+      #                                                     └ WEAK-WARNING Value must be a type
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90596"])
+    fun `closed TypedDict reports unknown key on subscription`() = test(
+      // `enablePyAnyType = false`: the closed-subscription value type is still `null` rather than `Unknown`;
+      // hardening that path is part of the `PyAnyType` migration (PY-88453).
+      TestOptions(enablePyAnyType = false),
+      """
+      from typing_extensions import TypedDict
+
+      class Movie(TypedDict, closed=True):
+          name: str
+
+      def f(m: Movie) -> None:
+          present = m['name']
+          missing = m['year']  # WARNING TypedDict "Movie" has no key 'year'
       """)
   }
 
