@@ -33,6 +33,7 @@ import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTre
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupUnarchiveThreadAction
 import com.intellij.agent.workbench.sessions.toolwindow.actions.CreateTaskFolderRequest
 import com.intellij.agent.workbench.sessions.toolwindow.actions.TaskFolderMetadataEdit
+import com.intellij.agent.workbench.sessions.toolwindow.actions.buildTaskFolderAgentPrompt
 import com.intellij.agent.workbench.sessions.toolwindow.actions.canMoveThreadsToTaskFolder
 import com.intellij.agent.workbench.sessions.toolwindow.actions.createAgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.toolwindow.actions.resolveAgentSessionsTreePopupActionContext
@@ -581,6 +582,36 @@ class AgentSessionsTreePopupActionsTest {
     assertThat(openedFolder?.name).isEqualTo("Authentication rewrite")
     assertThat(openedProfile).isEqualTo(profile)
     assertThat(openedProject).isSameAs(context.project)
+  }
+
+  @Test
+  fun taskFolderAgentPromptForNewFolderOmitsInternalIds() {
+    val prompt = buildTaskFolderAgentPrompt(path = "/work/project-a", folder = null)
+
+    assertThat(prompt)
+      .contains(
+        "Start an Agent Workbench task-folder workflow for this project.",
+        "Project path: /work/project-a",
+        "agent_workbench_create_task_folder",
+      )
+      .doesNotContain("Current thread id", "Task folder id", "thread-1")
+  }
+
+  @Test
+  fun taskFolderAgentPromptForExistingFolderOmitsInternalIds() {
+    val prompt = buildTaskFolderAgentPrompt(
+      path = "/work/project-a",
+      folder = taskFolder(path = "/work/project-a", name = "Authentication rewrite"),
+    )
+
+    assertThat(prompt)
+      .contains(
+        "Continue this Agent Workbench task folder.",
+        "Project path: /work/project-a",
+        "Task folder name: Authentication rewrite",
+        "The IDE has already assigned this thread to the task folder.",
+      )
+      .doesNotContain("Current thread id", "Task folder id", "folder1", "thread-1")
   }
 
   @Test

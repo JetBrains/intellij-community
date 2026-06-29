@@ -16,11 +16,80 @@ private val LOG = logger<AgentPromptContextEnvelopeFormatterLog>()
 object AgentPromptContextEnvelopeFormatter {
   const val DEFAULT_SOFT_CAP_CHARS: Int = 12_000
 
+  data class ContextEnvelopeSelection(
+    @JvmField val items: List<AgentPromptContextItem>,
+    @JvmField val summary: AgentPromptContextEnvelopeSummary,
+    @JvmField val serializedChars: Int,
+    @JvmField val exceedsSoftCap: Boolean,
+  )
+
   data class SoftCapTrimResult(
     @JvmField val items: List<AgentPromptContextItem>,
     @JvmField val serializedChars: Int,
     @JvmField val exceedsSoftCap: Boolean,
   )
+
+  fun prepareContextEnvelopeSelection(
+    items: List<AgentPromptContextItem>,
+    softCapChars: Int = DEFAULT_SOFT_CAP_CHARS,
+    projectPath: String? = null,
+  ): ContextEnvelopeSelection {
+    val summary = AgentPromptContextEnvelopeSummary(
+      softCapChars = softCapChars,
+      softCapExceeded = false,
+      autoTrimApplied = false,
+    )
+    if (items.isEmpty()) {
+      return ContextEnvelopeSelection(
+        items = emptyList(),
+        summary = summary,
+        serializedChars = 0,
+        exceedsSoftCap = false,
+      )
+    }
+    val normalizedItems = items.map { item -> normalizeItem(item) }
+    val serializedChars = measureContextBlockChars(
+      items = normalizedItems,
+      summary = summary,
+      projectPath = projectPath,
+    )
+    return ContextEnvelopeSelection(
+      items = normalizedItems,
+      summary = summary,
+      serializedChars = serializedChars,
+      exceedsSoftCap = serializedChars > softCapChars,
+    )
+  }
+
+  fun markSoftCapExceeded(selection: ContextEnvelopeSelection): ContextEnvelopeSelection {
+    return selection.copy(
+      summary = selection.summary.copy(
+        softCapExceeded = true,
+        autoTrimApplied = false,
+      ),
+      exceedsSoftCap = true,
+    )
+  }
+
+  fun autoTrimContextEnvelopeSelection(
+    selection: ContextEnvelopeSelection,
+    projectPath: String? = null,
+  ): ContextEnvelopeSelection {
+    val trimResult = applySoftCap(
+      items = selection.items,
+      softCapChars = selection.summary.softCapChars,
+      projectPath = projectPath,
+    )
+    return ContextEnvelopeSelection(
+      items = trimResult.items,
+      summary = selection.summary.copy(
+        softCapExceeded = true,
+        autoTrimApplied = true,
+      ),
+      serializedChars = trimResult.serializedChars,
+      exceedsSoftCap = trimResult.exceedsSoftCap,
+    )
+  }
 
   fun composeInitialMessage(request: AgentPromptInitialMessageRequest): String {
     val prompt = request.prompt.trim()

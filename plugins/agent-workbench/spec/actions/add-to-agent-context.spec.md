@@ -51,11 +51,12 @@ Date: 2026-05-09
   [@test] ../../prompt/ui/testSrc/AgentPromptContextPersistenceDecisionsTest.kt
 
 - Context block soft cap is 12,000 characters. Exceeding it requires explicit send-full, auto-trim, or cancel before launch.
-  [@test] ../../prompt/ui/testSrc/AgentPromptContextSoftCapPolicyTest.kt
+  [@test] ../../prompt/core/testSrc/AgentPromptContextEnvelopeFormatterTest.kt
 
 ## Testing / Local Run
 - `./tests.cmd --module intellij.agent.workbench.prompt.ui.tests --test "com.intellij.agent.workbench.prompt.ui.actions.*"`
 - `./tests.cmd --module intellij.agent.workbench.prompt.ui.tests --test "com.intellij.agent.workbench.prompt.ui.AgentPromptContext*Test"`
+- `./tests.cmd --module intellij.agent.workbench.prompt.core.tests --test com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormatterTest`
 - `./tests.cmd --module intellij.agent.workbench.plugin.tests --test com.intellij.agent.workbench.plugin.AgentWorkbenchAddToAgentContextActionRegistrationTest`
 - `./tests.cmd --module intellij.agent.workbench.chat.tests --test com.intellij.agent.workbench.chat.AgentChatOpenTopLevelDispatchTest`
 
