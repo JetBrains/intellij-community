@@ -321,7 +321,7 @@ object CommunityLibraryLicenses {
       .suppliedByOrganizations("SmartBear Software"),
 
     LibraryLicense("dbus-java", libraryName = "dbus-java", url = "https://github.com/hypfvieh/dbus-java")
-      .lgpl2("https://github.com/hypfvieh/dbus-java/blob/dbus-java-3.0/LICENSE")
+      .mit("https://github.com/hypfvieh/dbus-java/blob/dbus-java-parent-4.2.1/LICENSE")
       .suppliedByPersons("David M. <hypfvieh@googlemail.com>"),
 
     LibraryLicense("debugpy", version = LibraryLicense.CUSTOM_REVISION, attachedTo="intellij.python", url = "https://github.com/microsoft/debugpy")
