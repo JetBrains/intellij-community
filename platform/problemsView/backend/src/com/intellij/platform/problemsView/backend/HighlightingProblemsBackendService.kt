@@ -1,11 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.problemsView.backend
 
-import com.intellij.analysis.problemsView.Problem
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewHighlightingFileRoot
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewPanel
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewState
-import com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemEvent
 import com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemEventDto
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.quickfix.LazyQuickFixUpdater
@@ -26,8 +24,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.flow.onStart
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 
@@ -82,22 +78,12 @@ class HighlightingProblemsBackendService(private val project: Project) : Disposa
       return emptyFlow()
     }
 
-    var rootWasCreated = false
     val root = fileRootCache.computeIfAbsent(file) { _ ->
-      rootWasCreated = true
       val mockPanel = MockProblemsViewPanel(project)
       ProblemsViewHighlightingFileRoot(mockPanel, file, document)
     }
 
     return root.problemEvents
-      .onStart {
-        if (!rootWasCreated) {
-          root.getFileProblems(file).forEach { problem ->
-            emit(ProblemEvent.Appeared(problem))
-          }
-        }
-      }
-      .onCompletion { root.resetEventReplayCache() }
       .batchEvents()
       .map { batch -> buildChangelistFromEventsBatch(batch, project, root.lifetime) }
   }
