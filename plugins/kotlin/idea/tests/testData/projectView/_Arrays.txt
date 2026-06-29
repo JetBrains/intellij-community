@@ -61,6 +61,7 @@ Navigation item file #1: kotlin-stdlib.jar!/kotlin/collections/ArraysKt___Arrays
       RingBuffer.class
       ShortIterator
       State.class
+      UByteValueSet
       ArraysKt
       ArraysKt___ArraysJvmKt
       [ArraysKt___ArraysKt]

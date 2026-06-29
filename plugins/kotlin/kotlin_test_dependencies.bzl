@@ -9,7 +9,7 @@ def download_file(name, url, sha256):
 kotlincRepositoryUrl = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies"
 jpsPluginRepositoryUrl = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies"
 
-kotlinCompilerCliVersion = "2.4.20-dev-7381"
+kotlinCompilerCliVersion = "2.4.255-dev-255"
 kotlincKotlinJpsPluginTestsVersion = "2.3.20"
 
 download_file(
