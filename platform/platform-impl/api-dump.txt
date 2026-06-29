@@ -3546,6 +3546,24 @@ f:com.intellij.openapi.options.newEditor.SettingsDialogFactory$Companion
 c:com.intellij.openapi.progress.BackgroundTaskQueue
 - clear():V
 - run(com.intellij.openapi.progress.Task$Backgroundable):V
+com.intellij.openapi.progress.ProgressModel
+- a:addOnChangeAction(kotlin.jvm.functions.Function0):V
+- a:addOnFinishAction(kotlin.jvm.functions.Function1):V
+- a:cancel():V
+- a:finish(com.intellij.openapi.progress.TaskInfo):V
+- a:getCancelTooltipText():java.lang.String
+- a:getCancellation():com.intellij.platform.ide.progress.TaskCancellation
+- a:getDetails():java.lang.String
+- a:getFraction():D
+- a:getProgressIndicator():com.intellij.openapi.wm.ex.ProgressIndicatorEx
+- a:getText():java.lang.String
+- a:getTitle():java.lang.String
+- a:getVisibleInStatusBar():Z
+- a:isCancellable():Z
+- a:isFinished(com.intellij.openapi.progress.TaskInfo):Z
+- a:isIndeterminate():Z
+- a:isRunning():Z
+- a:isStopping(com.intellij.openapi.progress.TaskInfo):Z
 c:com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 - com.intellij.openapi.progress.util.ProgressWindow
 - <init>(com.intellij.openapi.progress.Task$Backgroundable):V
