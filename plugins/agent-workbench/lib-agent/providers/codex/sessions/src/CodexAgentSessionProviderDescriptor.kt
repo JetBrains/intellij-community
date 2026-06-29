@@ -27,6 +27,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPrompt
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryStatus
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptRecord
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentTerminalPromptDispatch
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartNewSessionLaunchRequest
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartedNewSessionLaunch
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentPromptProviderOption
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderImplementation
@@ -177,25 +178,19 @@ internal class CodexAgentSessionProviderDescriptor(
     return AgentSessionTerminalLaunchSpec(command = command)
   }
 
-  override suspend fun prestartNewSessionLaunch(
-    projectPath: String,
-    launchMode: AgentSessionLaunchMode,
-    initialMessagePlan: AgentInitialMessagePlan,
-    generationSettings: AgentPromptGenerationSettings,
-    generationModelCatalog: List<AgentPromptGenerationModel>,
-    launchSpec: AgentSessionTerminalLaunchSpec,
-  ): AgentPrestartedNewSessionLaunch {
+  override suspend fun prestartNewSessionLaunch(request: AgentPrestartNewSessionLaunchRequest): AgentPrestartedNewSessionLaunch {
     val prestarted = threadStartupBackend.prestartThread(
-      projectPath = projectPath,
-      launchMode = launchMode,
-      model = generationSettings.modelId,
+      projectPath = request.projectPath,
+      launchMode = request.launchMode,
+      model = request.generationSettings.modelId,
+      reasoningEffort = resolveThreadReasoningEffort(request.generationSettings),
     )
     return AgentPrestartedNewSessionLaunch(
-      launchSpec = launchSpec.copy(
-        command = launchSpec.command + listOf("resume", "--remote", prestarted.remoteUrl, prestarted.threadId),
+      launchSpec = request.launchSpec.copy(
+        command = request.launchSpec.command + listOf("resume", "--remote", prestarted.remoteUrl, prestarted.threadId),
         preallocatedSessionId = prestarted.threadId,
       ),
-      initialMessageDispatchPlan = buildAppServerInitialMessageDispatchPlan(initialMessagePlan),
+      initialMessageDispatchPlan = buildAppServerInitialMessageDispatchPlan(request.initialMessagePlan),
     )
   }
 
@@ -345,6 +340,7 @@ internal interface CodexThreadStartupBackend {
     projectPath: String,
     launchMode: AgentSessionLaunchMode,
     model: String?,
+    reasoningEffort: String?,
   ): CodexPrestartedThread
 
   suspend fun startTurn(
@@ -384,11 +380,13 @@ private object SharedServiceCodexThreadStartupBackend : CodexThreadStartupBacken
     projectPath: String,
     launchMode: AgentSessionLaunchMode,
     model: String?,
+    reasoningEffort: String?,
   ): CodexPrestartedThread {
     val prestarted = serviceAsync<SharedCodexAppServerService>().prestartThread(
       cwd = projectPath,
       yolo = launchMode == AgentSessionLaunchMode.YOLO,
       model = model,
+      reasoningEffort = reasoningEffort,
     )
     return CodexPrestartedThread(
       threadId = prestarted.threadId,
@@ -452,6 +450,12 @@ private fun buildCodexBaseCommand(executable: String, themeLaunchConfig: CodexTh
 private fun resolvePlanReasoningEffort(settings: AgentPromptGenerationSettings): String? {
   val effort = settings.planReasoningEffort ?: settings.reasoningEffort
   return effort.takeIf { it != AgentPromptReasoningEffort.AUTO }?.codexConfigValue()
+}
+
+private fun resolveThreadReasoningEffort(settings: AgentPromptGenerationSettings): String? {
+  return settings.reasoningEffort
+    .takeIf { effort -> effort != AgentPromptReasoningEffort.AUTO }
+    ?.codexConfigValue()
 }
 
 private fun buildCodexGenerationArgs(

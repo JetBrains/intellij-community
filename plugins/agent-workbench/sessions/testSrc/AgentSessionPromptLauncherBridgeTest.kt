@@ -8,7 +8,6 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetReq
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptContainerLauncher
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
-import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
@@ -57,6 +56,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPrompt
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryStatus
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptRecord
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartNewSessionLaunchRequest
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartedNewSessionLaunch
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentPromptProviderOption
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
@@ -2499,21 +2499,14 @@ private class RecordingPromptLaunchProviderBridge(
     )
   }
 
-  override suspend fun prestartNewSessionLaunch(
-    projectPath: String,
-    launchMode: AgentSessionLaunchMode,
-    initialMessagePlan: AgentInitialMessagePlan,
-    generationSettings: AgentPromptGenerationSettings,
-    generationModelCatalog: List<AgentPromptGenerationModel>,
-    launchSpec: AgentSessionTerminalLaunchSpec,
-  ): AgentPrestartedNewSessionLaunch? {
+  override suspend fun prestartNewSessionLaunch(request: AgentPrestartNewSessionLaunchRequest): AgentPrestartedNewSessionLaunch? {
     val threadId = prestartPlanPromptThreadId ?: return null
-    if (initialMessagePlan.mode != AgentInitialMessageMode.PLAN) return null
-    val prompt = initialMessagePlan.message?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+    if (request.initialMessagePlan.mode != AgentInitialMessageMode.PLAN) return null
+    val prompt = request.initialMessagePlan.message?.trim()?.takeIf { it.isNotEmpty() } ?: return null
     prestartPlanPromptCalls.incrementAndGet()
     return AgentPrestartedNewSessionLaunch(
-      launchSpec = launchSpec.copy(
-        command = launchSpec.command + listOf("resume", "--remote", "ws://test-codex-app-server", threadId),
+      launchSpec = request.launchSpec.copy(
+        command = request.launchSpec.command + listOf("resume", "--remote", "ws://test-codex-app-server", threadId),
         preallocatedSessionId = threadId,
       ),
       initialMessageDispatchPlan = AgentInitialPromptDeliveryPlan(
@@ -2527,7 +2520,7 @@ private class RecordingPromptLaunchProviderBridge(
           steps = listOf(
             AgentInitialMessageDispatchStep(
               text = prompt,
-              timeoutPolicy = initialMessagePlan.timeoutPolicy,
+              timeoutPolicy = request.initialMessagePlan.timeoutPolicy,
               action = AgentInitialMessageDispatchAction.PROVIDER,
             )
           )

@@ -531,6 +531,24 @@ f:com.intellij.platform.ai.agent.sessions.core.providers.AgentPendingSessionMeta
 - bs:copy$default(com.intellij.platform.ai.agent.sessions.core.providers.AgentPendingSessionMetadata,J,java.lang.String,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.providers.AgentPendingSessionMetadata
 - equals(java.lang.Object):Z
 - hashCode():I
+f:com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartNewSessionLaunchRequest
+- f:generationModelCatalog:java.util.List
+- f:generationSettings:com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
+- f:initialMessagePlan:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
+- f:launchMode:com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
+- f:launchSpec:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
+- f:projectPath:java.lang.String
+- <init>(java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,java.util.List,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec):V
+- f:component1():java.lang.String
+- f:component2():com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
+- f:component3():com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
+- f:component4():com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
+- f:component5():java.util.List
+- f:component6():com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
+- f:copy(java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,java.util.List,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec):com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartNewSessionLaunchRequest
+- bs:copy$default(com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartNewSessionLaunchRequest,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,java.util.List,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartNewSessionLaunchRequest
+- equals(java.lang.Object):Z
+- hashCode():I
 f:com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartedNewSessionLaunch
 - f:initialMessageDispatchPlan:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan
 - f:launchSpec:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec

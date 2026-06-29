@@ -13,6 +13,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessag
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageProviderDispatchRequest
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryChannel
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryStatus
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartNewSessionLaunchRequest
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.withProvider
 import com.intellij.openapi.project.ProjectManager
@@ -141,12 +142,14 @@ class CodexPlanPromptRealAppServerIntegrationTest {
           val initialMessagePlan = descriptor.buildInitialMessagePlan(request.initialMessageRequest)
           val launchSpec = descriptor.buildNewSessionLaunchSpec(request.launchMode)
           val prestartedLaunch = descriptor.prestartNewSessionLaunch(
-            projectPath = request.projectPath,
-            launchMode = request.launchMode,
-            initialMessagePlan = initialMessagePlan,
-            generationSettings = request.generationSettings,
-            generationModelCatalog = request.generationModelCatalog,
-            launchSpec = launchSpec,
+            AgentPrestartNewSessionLaunchRequest(
+              projectPath = request.projectPath,
+              launchMode = request.launchMode,
+              initialMessagePlan = initialMessagePlan,
+              generationSettings = request.generationSettings,
+              generationModelCatalog = request.generationModelCatalog,
+              launchSpec = launchSpec,
+            )
           ) ?: error("Codex Plan-mode global prompt did not prestart a remote resume thread")
           val initialMessageDispatchPlan = checkNotNull(prestartedLaunch.initialMessageDispatchPlan)
 
@@ -238,12 +241,19 @@ private class RealCodexThreadStartupBackend(
     projectPath: String,
     launchMode: AgentSessionLaunchMode,
     model: String?,
+    reasoningEffort: String?,
   ): CodexPrestartedThread {
     val session = if (launchMode == AgentSessionLaunchMode.YOLO) {
-      client.createThreadSession(cwd = projectPath, model = model, approvalPolicy = "on-request", sandbox = "workspace-write")
+      client.createThreadSession(
+        cwd = projectPath,
+        model = model,
+        reasoningEffort = reasoningEffort,
+        approvalPolicy = "on-request",
+        sandbox = "workspace-write",
+      )
     }
     else {
-      client.createThreadSession(cwd = projectPath, model = model)
+      client.createThreadSession(cwd = projectPath, model = model, reasoningEffort = reasoningEffort)
     }
     val threadId = session.thread.id
     try {
