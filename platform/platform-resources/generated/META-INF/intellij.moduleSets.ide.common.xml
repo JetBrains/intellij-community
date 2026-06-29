@@ -335,6 +335,11 @@
     <!-- endregion -->
     <!-- endregion -->
 
+    <!-- region nested: lsp -->
+    <module name="intellij.platform.lsp" loading="embedded"/>
+    <module name="intellij.platform.lsp.impl" loading="embedded"/>
+    <!-- endregion -->
+
     <!-- region nested: xml -->
     <module name="intellij.xml.dom" loading="embedded"/>
     <module name="intellij.xml.dom.impl" loading="embedded"/>
