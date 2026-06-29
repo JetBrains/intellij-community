@@ -247,6 +247,14 @@ object CommunityModuleSets {
   }
 
   /**
+   * Language Server Protocol (LSP) support modules.
+   */
+  fun lsp(): ModuleSet = moduleSet("lsp") {
+    embeddedModule("intellij.platform.lsp")
+    embeddedModule("intellij.platform.lsp.impl")
+  }
+
+  /**
    * XML support modules.
    */
   fun xml(): ModuleSet = moduleSet("xml", alias = "com.intellij.modules.xml") {
@@ -413,6 +421,7 @@ object CommunityModuleSets {
 
     moduleSet(gridCore())
     moduleSet(vcs())
+    moduleSet(lsp())
     moduleSet(xml())
     moduleSet(duplicates())
     module("intellij.platform.structuralSearch")
