@@ -60,32 +60,43 @@ internal class AgentPromptClaudeSlashCompletionProvider(
   }
 }
 
-internal fun findClaudeSlashCompletionPrefix(text: String, offset: Int): String? {
+internal fun findClaudeSlashCompletionPrefix(text: CharSequence, offset: Int): String? {
   val safeOffset = offset.coerceIn(0, text.length)
-  val tokenStart = text.lastIndexOfAny(charArrayOf(' ', '\n', '\t', '\r'), startIndex = safeOffset - 1) + 1
+  val tokenStart = findCompletionTokenStart(text, safeOffset)
   if (tokenStart >= safeOffset) {
     return null
   }
 
-  val prefix = text.substring(tokenStart, safeOffset)
+  val prefix = text.subSequence(tokenStart, safeOffset).toString()
   return prefix.takeIf { candidate -> candidate.startsWith('/') }
 }
 
-internal fun findCodexSkillCompletionPrefix(text: String, offset: Int): String? {
+internal fun findCodexSkillCompletionPrefix(text: CharSequence, offset: Int): String? {
   val safeOffset = offset.coerceIn(0, text.length)
-  val tokenStart = text.lastIndexOfAny(charArrayOf(' ', '\n', '\t', '\r'), startIndex = safeOffset - 1) + 1
+  val tokenStart = findCompletionTokenStart(text, safeOffset)
   if (tokenStart >= safeOffset) {
     return null
   }
 
-  val prefix = text.substring(tokenStart, safeOffset)
+  val prefix = text.subSequence(tokenStart, safeOffset).toString()
   return prefix.takeIf { candidate -> candidate.startsWith('$') }
+}
+
+private fun findCompletionTokenStart(text: CharSequence, offset: Int): Int {
+  var index = offset - 1
+  while (index >= 0) {
+    when (text[index]) {
+      ' ', '\n', '\t', '\r' -> return index + 1
+    }
+    index--
+  }
+  return 0
 }
 
 internal fun shouldAutoPopupClaudeSlashCompletion(
   selectedProvider: AgentSessionProvider?,
   workingProjectPaths: Iterable<String?>,
-  text: String,
+  text: CharSequence,
   offsetAfterChange: Int,
   insertedFragment: CharSequence,
 ): Boolean {
@@ -95,7 +106,7 @@ internal fun shouldAutoPopupClaudeSlashCompletion(
   if (insertedFragment.length != 1 || insertedFragment[0] != '/') {
     return false
   }
-  if (offsetAfterChange != 1 || !text.startsWith('/')) {
+  if (offsetAfterChange != 1 || text.isEmpty() || text[0] != '/') {
     return false
   }
   if (findClaudeSlashCompletionPrefix(text, offsetAfterChange) != "/") {
@@ -106,7 +117,7 @@ internal fun shouldAutoPopupClaudeSlashCompletion(
 
 internal fun shouldAutoPopupCodexSkillCompletion(
   selectedProvider: AgentSessionProvider?,
-  text: String,
+  text: CharSequence,
   offsetAfterChange: Int,
   insertedFragment: CharSequence,
 ): Boolean {
@@ -116,7 +127,7 @@ internal fun shouldAutoPopupCodexSkillCompletion(
   if (insertedFragment.length != 1 || insertedFragment[0] != '$') {
     return false
   }
-  if (offsetAfterChange != 1 || !text.startsWith('$')) {
+  if (offsetAfterChange != 1 || text.isEmpty() || text[0] != '$') {
     return false
   }
   return findCodexSkillCompletionPrefix(text, offsetAfterChange) == CODEX_SKILL_PREFIX.toString()

@@ -520,7 +520,7 @@ internal class AgentPromptPaletteSessionController(
     }
 
     val selectedProvider = providerSelector.selectedProvider?.bridge?.provider
-    val documentText = event.document.immutableCharSequence.toString()
+    val documentText = event.document.immutableCharSequence
     val sourceProjectBasePath = launcherProvider()
       ?.resolveSourceProject(invocationData)
       ?.basePath
@@ -582,7 +582,7 @@ internal class AgentPromptPaletteSessionController(
         if (LookupManager.getActiveLookup(editor) != null) {
           return@withContext
         }
-        val text = editor.document.immutableCharSequence.toString()
+        val text = editor.document.immutableCharSequence
         val caretOffset = editor.caretModel.offset
         val currentPrefix = when (expectedPrefix) {
           '/' -> findClaudeSlashCompletionPrefix(text, caretOffset)

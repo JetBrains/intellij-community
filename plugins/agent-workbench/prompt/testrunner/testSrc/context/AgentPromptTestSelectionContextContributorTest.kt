@@ -102,6 +102,38 @@ class AgentPromptTestSelectionContextContributorTest {
   }
 
   @Test
+  fun trimsFocusedConsoleOutputBlankEdges() {
+    val project = ProjectManager.getInstance().defaultProject
+    val documentText = "\n  \nAssertionError: boom\n\n  at MainTest.test(MainTest.kt:42)\n\n"
+    val expectedOutput = "AssertionError: boom\n\n  at MainTest.test(MainTest.kt:42)"
+
+    runInEdtAndWait {
+      val editorFactory = EditorFactory.getInstance()
+      val editor = editorFactory.createViewer(editorFactory.createDocument(documentText), project, EditorKind.CONSOLE)
+      try {
+        val dataContext = SimpleDataContext.builder()
+          .add(CommonDataKeys.EDITOR, editor)
+          .add(AbstractTestProxy.DATA_KEY, testProxy(name = "testSingle", isDefect = true, errorMessage = "single failure"))
+          .build()
+
+        val result = contributor.collect(invocationData(dataContext = dataContext))
+
+        assertThat(result).hasSize(1)
+        val item = result.single()
+        val payload = item.payload.objOrNull()!!
+        assertThat(payload.string("consoleOutput")).isEqualTo(expectedOutput)
+        assertThat(payload.bool("consoleOutputFromSelection")).isFalse()
+        assertThat(item.truncation.originalChars).isEqualTo(item.body.length + expectedOutput.length)
+        assertThat(item.truncation.includedChars).isEqualTo(item.body.length + expectedOutput.length)
+        assertThat(item.truncation.reason).isEqualTo(AgentPromptContextTruncationReason.NONE)
+      }
+      finally {
+        editorFactory.releaseEditor(editor)
+      }
+    }
+  }
+
+  @Test
   fun prefersSelectedConsoleTextOverFullDocument() {
     val project = ProjectManager.getInstance().defaultProject
     val documentText = "\n\nAssertionError: boom\n  at MainTest.test(MainTest.kt:42)\nextra tail\n"
@@ -278,6 +310,8 @@ class AgentPromptTestSelectionContextContributorTest {
         val payload = item.payload.objOrNull()!!
         assertThat(payload.string("consoleOutput")).hasSize(4_000)
         assertThat(payload.bool("consoleOutputFromSelection")).isFalse()
+        assertThat(item.truncation.originalChars).isEqualTo(item.body.length + documentText.length)
+        assertThat(item.truncation.includedChars).isEqualTo(item.body.length + 4_000)
         assertThat(item.truncation.reason).isEqualTo(AgentPromptContextTruncationReason.SOURCE_LIMIT)
       }
       finally {

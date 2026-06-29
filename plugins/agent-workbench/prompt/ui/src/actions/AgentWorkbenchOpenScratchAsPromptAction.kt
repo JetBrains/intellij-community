@@ -84,8 +84,11 @@ internal fun resolveScratchMarkdownPromptText(dataContext: DataContext): String?
     return null
   }
 
-  val promptText = document.immutableCharSequence.toString()
-  return promptText.takeIf(String::isNotBlank)
+  val promptText = document.immutableCharSequence
+  if (promptText.isBlank()) {
+    return null
+  }
+  return promptText.toString()
 }
 
 private fun openGlobalPromptWithInitialText(e: AnActionEvent, promptText: String) {
