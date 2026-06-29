@@ -28,13 +28,12 @@ internal class JavaInlineVariableCompletionCommandProvider : AbstractInlineVaria
     if (element !is PsiIdentifier) return null
     val javaRef = PsiTreeUtil.getParentOfType(element, PsiJavaCodeReferenceElement::class.java) ?: return null
     val onEdt = EDT.isCurrentThreadEdt()
-    fun doResolve(): PsiElement? = javaRef.resolve()
     val psiElement = if (onEdt) {
       runWithModalProgressBlocking(ModalTaskOwner.guess(), JavaBundle.message("command.completion.inline.text"))
-      { readAction { doResolve() } }
+      { readAction { javaRef.resolve() } }
     }
     else {
-      doResolve()
+      javaRef.resolve()
     }
     if (psiElement !is PsiVariable) return null
     if (psiElement is PsiField && psiElement.initializer == null) return null

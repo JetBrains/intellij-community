@@ -62,36 +62,35 @@ abstract class AbstractInlineVariableCompletionCommandProvider : CommandProvider
     val highlightInfo = getHighlightRange(context.offset, context.psiFile)?.let {
       HighlightInfoLookup(it, EditorColors.SEARCH_RESULT_ATTRIBUTES, 0)
     }
-    return listOf(InlineVariableCompletionCommand(presentableName, highlightInfo, ::findElementToInline))
+    return listOf(InlineVariableCompletionCommand(presentableName, highlightInfo))
   }
-}
 
-private class InlineVariableCompletionCommand(
-  override val presentableName: @Nls String,
-  override val highlightInfo: HighlightInfoLookup?,
-  private val elementFinder: (offset: Int, psiFile: PsiFile, editor: Editor?) -> PsiElement?,
-) : CompletionCommand(), DumbAware {
+  private inner class InlineVariableCompletionCommand(
+    override val presentableName: @Nls String,
+    override val highlightInfo: HighlightInfoLookup?,
+  ) : CompletionCommand(), DumbAware {
 
-  override val synonyms: List<String>
-    get() = listOf("inline", "insert")
+    override val synonyms: List<String>
+      get() = listOf("inline", "insert")
 
-  override val additionalInfo: String?
-    get() = KeymapUtil.getFirstKeyboardShortcutText("Inline").takeIf { it.isNotEmpty() }
+    override val additionalInfo: String?
+      get() = KeymapUtil.getFirstKeyboardShortcutText("Inline").takeIf { it.isNotEmpty() }
 
-  override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
-    if (editor == null) return
-    val element = elementFinder(offset, psiFile, editor) ?: return
-    for (extension in InlineActionHandler.EP_NAME.extensionList) {
-      if (extension.canInlineElement(element)) {
-        WriteIntentReadAction.run {
-          extension.inlineElement(psiFile.project, editor, element)
+    override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
+      if (editor == null) return
+      val element = findElementToInline(offset, psiFile, editor) ?: return
+      for (extension in InlineActionHandler.EP_NAME.extensionList) {
+        if (extension.canInlineElement(element)) {
+          WriteIntentReadAction.run {
+            extension.inlineElement(psiFile.project, editor, element)
+          }
+          return
         }
-        return
       }
     }
-  }
 
-  override fun getPreview(): IntentionPreviewInfo {
-    return IntentionPreviewInfo.Html(ActionsBundle.message("action.Inline.description"))
+    override fun getPreview(): IntentionPreviewInfo {
+      return IntentionPreviewInfo.Html(ActionsBundle.message("action.Inline.description"))
+    }
   }
 }
