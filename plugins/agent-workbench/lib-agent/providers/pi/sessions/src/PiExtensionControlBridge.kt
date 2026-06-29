@@ -89,6 +89,7 @@ internal object PiExtensionControlBridge {
       PiControlMessageType.RESPONSE -> handleResponse(webSocketClient, payload)
       PiControlMessageType.GET_CURRENT_TASK_FOLDER,
       PiControlMessageType.LIST_TASK_FOLDER_THREADS,
+      PiControlMessageType.CREATE_AND_ASSIGN_TASK_FOLDER,
       PiControlMessageType.GET_TASK_FOLDER_METADATA,
       PiControlMessageType.SET_TASK_FOLDER_METADATA,
       PiControlMessageType.DELETE_TASK_FOLDER_METADATA,

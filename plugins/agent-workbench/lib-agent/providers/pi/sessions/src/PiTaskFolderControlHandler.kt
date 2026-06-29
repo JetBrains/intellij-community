@@ -26,6 +26,22 @@ internal class PiTaskFolderControlHandler(
           buildTaskFolderAssignmentsResponse(requestId, service.listFolderThreadAssignments(folderId))
         }
       }
+      PiControlMessageType.CREATE_AND_ASSIGN_TASK_FOLDER -> {
+        val name = payload.name?.trim()?.takeIf { it.isNotEmpty() }
+        if (name == null) {
+          buildPiControlErrorResponse(requestId, "Task folder name is required")
+        }
+        else {
+          val folder = service.createFolder(context.projectPath, name, payload.metadata.orEmpty())
+          if (folder == null) {
+            buildPiControlErrorResponse(requestId, "Task folder could not be created")
+          }
+          else {
+            val assigned = service.assignThread(context.projectPath, PI_AGENT_SESSION_PROVIDER, context.sessionId, folder.id)
+            buildTaskFolderCreatedResponse(requestId = requestId, folder = folder, assigned = assigned)
+          }
+        }
+      }
       PiControlMessageType.GET_TASK_FOLDER_METADATA -> {
         val folder = resolveTaskFolder(service, context, payload)
         if (folder == null) {
@@ -60,6 +76,17 @@ internal class PiTaskFolderControlHandler(
       }
       else -> buildPiControlErrorResponse(requestId, "Unsupported task folder request")
     }
+  }
+}
+
+private fun buildTaskFolderCreatedResponse(requestId: String, folder: AgentTaskFolder, assigned: Boolean): String {
+  return buildPiControlJsonObject { generator ->
+    generator.writeStringProperty("type", PiControlMessageType.RESPONSE.wireName)
+    generator.writeStringProperty("requestId", requestId)
+    generator.writeBooleanProperty("ok", true)
+    generator.writeName("folder")
+    writeTaskFolder(generator, folder)
+    generator.writeBooleanProperty("assigned", assigned)
   }
 }
 

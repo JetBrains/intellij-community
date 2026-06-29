@@ -241,6 +241,24 @@ class PiExtensionControlWebSocketHandlerTest {
         val deleteResponse = listener.nextMessage()
         assertThat(deleteResponse).contains("\"changed\":true")
         assertThat(folderService.getFolder(folder.id)?.metadata).doesNotContainKey("review")
+
+        webSocket.sendText(
+          controlTaskFolderRequest(
+            requestId = "request-create",
+            type = "createAndAssignTaskFolder",
+            name = "Follow-up task",
+            metadata = mapOf("issue" to "IJPL-999999"),
+          ),
+          true,
+        ).join()
+        val createResponse = listener.nextMessage()
+        val createdFolder = requireNotNull(folderService.getFolderForThread(projectDir.toString(), PI_AGENT_SESSION_PROVIDER, sessionId))
+        assertThat(createResponse).contains("\"requestId\":\"request-create\"")
+        assertThat(createResponse).contains("\"ok\":true")
+        assertThat(createResponse).contains("\"assigned\":true")
+        assertThat(createResponse).contains("\"id\":${createdFolder.id.jsonString()}")
+        assertThat(createdFolder.name).isEqualTo("Follow-up task")
+        assertThat(createdFolder.metadata).containsEntry("issue", "IJPL-999999")
       }
       finally {
         webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "done").join()
@@ -424,16 +442,25 @@ private fun controlTaskFolderRequest(
   requestId: String,
   type: String,
   folderId: String? = null,
+  name: String? = null,
   key: String? = null,
   value: String? = null,
+  metadata: Map<String, String>? = null,
 ): String {
   val fields = mutableListOf(
     "\"type\":${type.jsonString()}",
     "\"requestId\":${requestId.jsonString()}",
   )
   folderId?.let { fields += "\"folderId\":${it.jsonString()}" }
+  name?.let { fields += "\"name\":${it.jsonString()}" }
   key?.let { fields += "\"key\":${it.jsonString()}" }
   value?.let { fields += "\"value\":${it.jsonString()}" }
+  metadata?.let { values ->
+    val metadataFields = values.entries.joinToString(",") { (metadataKey, metadataValue) ->
+      "${metadataKey.jsonString()}:${metadataValue.jsonString()}"
+    }
+    fields += "\"metadata\":{$metadataFields}"
+  }
   return "{${fields.joinToString(",")}}"
 }
 

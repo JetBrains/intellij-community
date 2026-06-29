@@ -91,8 +91,8 @@ Agent Workbench treats Pi as a first-class terminal-backed provider. Pi sessions
   [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiExtensionControlWebSocketHandlerTest.kt
 
 - The same authenticated control WebSocket may carry explicit task-folder capability requests from the bundled Pi extension to the IDE:
-  `getCurrentTaskFolder`, `listTaskFolderThreads`, `getTaskFolderMetadata`, `setTaskFolderMetadata`, and
-  `deleteTaskFolderMetadata`. These requests must use the bound cwd/session id to resolve current-session context, use global folder id
+  `getCurrentTaskFolder`, `listTaskFolderThreads`, `createAndAssignTaskFolder`, `getTaskFolderMetadata`,
+  `setTaskFolderMetadata`, and `deleteTaskFolderMetadata`. These requests must use the bound cwd/session id to resolve current-session context, use global folder id
   for explicit folder mutations, must not inject prompt context automatically, and must return normal `response` frames with `ok`,
   `requestId`, and the requested folder, assignment, metadata, or mutation result fields.
   [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiExtensionControlWebSocketHandlerTest.kt

@@ -50,6 +50,11 @@
       icon="AllIcons.General.Add"
       class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupCreateTaskFolderAction"/>
     <group
+      id="AgentWorkbenchSessions.TreePopup.TaskFolderAgent"
+      popup="true"
+      icon="AllIcons.General.Add"
+      class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupTaskFolderAgentGroup"/>
+    <group
       id="AgentWorkbenchSessions.TreePopup.MoveToTaskFolder"
       popup="true"
       class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupMoveToTaskFolderGroup"/>
@@ -91,6 +96,7 @@
       <reference ref="AgentWorkbenchSessions.TreePopup.More"/>
       <reference ref="AgentWorkbenchSessions.TreePopup.NewThread"/>
       <reference ref="AgentWorkbenchSessions.TreePopup.CreateTaskFolder"/>
+      <reference ref="AgentWorkbenchSessions.TreePopup.TaskFolderAgent"/>
       <separator/>
       <reference ref="AgentWorkbenchSessions.TreePopup.MoveToTaskFolder"/>
       <reference ref="AgentWorkbenchSessions.TreePopup.RemoveFromTaskFolder"/>
