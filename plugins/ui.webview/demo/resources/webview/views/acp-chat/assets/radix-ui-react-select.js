@@ -1,4 +1,4 @@
-import { i as __toESM } from "./rolldown-runtime.js";
+import { o as __toESM } from "./rolldown-runtime.js";
 import { M as require_jsx_runtime, Y as require_react } from "./assistant-ui-core.js";
 import { _ as useComposedRefs, f as useCallbackRef, g as createSlot, m as Primitive, p as composeEventHandlers, x as require_react_dom } from "./assistant-ui-react.js";
 import { n as createContextScope, t as createCollection } from "./radix-ui-react-collection.js";

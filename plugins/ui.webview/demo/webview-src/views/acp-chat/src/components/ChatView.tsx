@@ -1,6 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import { marked } from "marked"
 import { IconSet } from "@jetbrains/intellij-webview"
 import type { ClipboardEvent } from "react"
 import {
@@ -17,6 +16,7 @@ import { useAcpChat } from "../runtime/useAcpChat"
 import { AgentSelector } from "./AgentSelector"
 import { ApprovalPrompt } from "./ApprovalPrompt"
 import { AuthPrompt } from "./AuthPrompt"
+import { MarkdownRenderer } from "./MarkdownRenderer"
 import { ModelPicker } from "./ModelPicker"
 import { PlanView } from "./PlanView"
 import { SlashCommandMenu } from "./SlashCommandMenu"
@@ -154,6 +154,5 @@ function RemoveIcon() {
 
 function MarkdownText() {
   const { text, status } = useSmooth(useMessagePartText(), SMOOTH_TEXT_OPTIONS)
-  const className = status.type === "running" ? "acpMarkdown acpMarkdown--streaming" : "acpMarkdown"
-  return <div className={className} dangerouslySetInnerHTML={{ __html: marked.parse(text, { async: false }) as string }} />
+  return <MarkdownRenderer text={text} streaming={status.type === "running"} />
 }

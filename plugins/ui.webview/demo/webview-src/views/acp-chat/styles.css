@@ -1,4 +1,5 @@
 /* Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. */
+@import "katex/dist/katex.css";
 
 :root {
   color-scheme: light dark;
@@ -556,6 +557,20 @@ body {
   align-self: stretch;
 }
 
+.acpMarkdown {
+  --acp-code-builtin: #a9b7c6;
+  --acp-code-function: #ffc66d;
+  --acp-code-keyword: #cc7832;
+  --acp-code-meta: #bbb529;
+  --acp-code-number: #6897bb;
+  --acp-code-string: #6aab73;
+  --acp-code-symbol: #bbb529;
+  --acp-code-tag: #e8bf6a;
+  --acp-code-type: #a9b7c6;
+  line-height: 1.55;
+  overflow-wrap: break-word;
+}
+
 .acpMarkdown :first-child {
   margin-top: 0;
 }
@@ -591,6 +606,107 @@ body {
   }
 }
 
+.acpMarkdown h1,
+.acpMarkdown h2,
+.acpMarkdown h3,
+.acpMarkdown h4,
+.acpMarkdown h5,
+.acpMarkdown h6 {
+  margin: 14px 0 8px;
+  line-height: 1.3;
+}
+
+.acpMarkdown h1 {
+  font-size: 20px;
+}
+
+.acpMarkdown h2 {
+  font-size: 17px;
+}
+
+.acpMarkdown h3,
+.acpMarkdown h4,
+.acpMarkdown h5,
+.acpMarkdown h6 {
+  font-size: 14px;
+}
+
+.acpMarkdown p,
+.acpMarkdown ul,
+.acpMarkdown ol,
+.acpMarkdown blockquote,
+.acpMarkdown pre,
+.acpMarkdown table,
+.acpMarkdown details {
+  margin: 8px 0;
+}
+
+.acpMarkdown ul,
+.acpMarkdown ol {
+  padding-left: 22px;
+}
+
+.acpMarkdown li + li {
+  margin-top: 2px;
+}
+
+.acpMarkdown blockquote {
+  padding: 4px 0 4px 10px;
+  border-left: 2px solid var(--acp-border);
+  color: var(--acp-text-muted);
+}
+
+.acpMarkdown a {
+  color: var(--acp-accent);
+  text-decoration: none;
+}
+
+.acpMarkdown a:hover,
+.acpMarkdown a:focus-visible {
+  text-decoration: underline;
+}
+
+.acpMarkdown table {
+  display: block;
+  max-width: 100%;
+  overflow: auto;
+  border-collapse: collapse;
+}
+
+.acpMarkdown th,
+.acpMarkdown td {
+  padding: 5px 8px;
+  border: 1px solid var(--acp-border);
+}
+
+.acpMarkdown th {
+  background: var(--acp-bg-alt);
+  font-weight: 600;
+}
+
+.acpMarkdown img {
+  max-width: 100%;
+  height: auto;
+}
+
+.acpMarkdown code,
+.acpMarkdown kbd {
+  border: 1px solid var(--acp-border);
+  border-radius: 4px;
+  background: var(--acp-bg-alt);
+  font-family: var(--acp-mono), monospace;
+  font-size: 0.92em;
+}
+
+.acpMarkdown code {
+  padding: 1px 4px;
+}
+
+.acpMarkdown kbd {
+  padding: 1px 5px;
+  box-shadow: inset 0 -1px 0 var(--acp-border);
+}
+
 .acpMarkdown pre {
   background: var(--acp-bg-alt);
   border: 1px solid var(--acp-border);
@@ -598,6 +714,139 @@ body {
   padding: 8px;
   overflow-x: auto;
   font-family: var(--acp-mono), monospace;
+}
+
+.acpMarkdown pre code {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.acpMarkdown mark {
+  border-radius: 3px;
+  background: rgba(211, 168, 73, 0.28);
+  color: inherit;
+  padding: 0 2px;
+}
+
+.acpMarkdown .contains-task-list {
+  list-style: none;
+  padding-left: 4px;
+}
+
+.acpMarkdown .task-list-item {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.acpMarkdown .task-list-item input[type="checkbox"] {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.acpMarkdown .footnotes {
+  padding-top: 8px;
+  border-top: 1px solid var(--acp-border);
+  color: var(--acp-text-muted);
+  font-size: 12px;
+}
+
+.acpMarkdown .footnotes h2,
+.acpMarkdown .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.acpMarkdown .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.acpMarkdown .hljs-keyword,
+.acpMarkdown .hljs-selector-tag,
+.acpMarkdown .hljs-literal,
+.acpMarkdown .hljs-section,
+.acpMarkdown .hljs-link {
+  color: var(--acp-code-keyword);
+}
+
+.acpMarkdown .hljs-string,
+.acpMarkdown .hljs-title,
+.acpMarkdown .hljs-name,
+.acpMarkdown .hljs-type,
+.acpMarkdown .hljs-attribute,
+.acpMarkdown .hljs-symbol,
+.acpMarkdown .hljs-bullet,
+.acpMarkdown .hljs-addition,
+.acpMarkdown .hljs-variable,
+.acpMarkdown .hljs-template-tag,
+.acpMarkdown .hljs-template-variable {
+  color: var(--acp-code-string);
+}
+
+.acpMarkdown .hljs-comment,
+.acpMarkdown .hljs-quote,
+.acpMarkdown .hljs-deletion,
+.acpMarkdown .hljs-meta {
+  color: var(--acp-text-muted);
+}
+
+.acpMarkdown .hljs-number,
+.acpMarkdown .hljs-regexp,
+.acpMarkdown .hljs-built_in,
+.acpMarkdown .hljs-builtin-name {
+  color: var(--acp-code-number);
+}
+
+.acpMermaidBlock {
+  min-height: 96px;
+  padding: 10px;
+  overflow: auto;
+  border: 1px solid var(--acp-border);
+  border-radius: 6px;
+  color: var(--acp-text-muted);
+  background: var(--acp-bg-alt);
+}
+
+.acpMermaidBlock svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+.acpMermaidBlock--rendering {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.acpMermaidBlock--error {
+  border-color: var(--acp-error);
+}
+
+.acpMermaidBlock--error pre {
+  margin-bottom: 0;
+}
+
+.acpMermaidError {
+  margin-bottom: 8px;
+  color: var(--acp-error);
+}
+
+.acpThinkingMarkdown {
+  color: inherit;
+  white-space: normal;
 }
 
 .acpThinking {

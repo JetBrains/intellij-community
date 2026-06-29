@@ -1,12 +1,21 @@
-import { i as __toESM } from "./assets/rolldown-runtime.js";
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./assets/mermaid.js","./assets/rolldown-runtime.js","./assets/braintree-sanitize-url.js","./assets/iconify-utils.js","./assets/chevrotain-allstar.js","./assets/chevrotain.js","./assets/cytoscape-cose-bilkent.js","./assets/cose-base.js","./assets/cytoscape-fcose.js","./assets/cytoscape.js","./assets/d3-array.js","./assets/d3-axis.js","./assets/d3.js","./assets/d3-format.js","./assets/d3-hierarchy.js","./assets/d3-interpolate.js","./assets/d3-color.js","./assets/d3-sankey.js","./assets/d3-path.js","./assets/d3-scale-chromatic.js","./assets/d3-scale.js","./assets/d3-selection.js","./assets/d3-shape.js","./assets/dagre-d3-es.js","./assets/dayjs.js","./assets/dompurify.js","./assets/khroma.js","./assets/langium.js","./assets/marked.js"])))=>i.map(i=>d[i]);
+import { o as __toESM } from "./assets/rolldown-runtime.js";
 import { M as require_jsx_runtime, T as useExternalStoreRuntime, Y as require_react } from "./assets/assistant-ui-core.js";
 import { a as message_exports, b as AssistantRuntimeProvider, c as composer_exports, i as thread_exports, l as useTriggerPopoverScopeContext, n as useMessagePartReasoning, o as useSmooth, r as selectionToolbar_exports, s as useMessagePartText, t as unstable_useSlashCommandAdapter, u as attachment_exports, v as useMessage, y as useComposerRuntime } from "./assets/assistant-ui-react.js";
 import { t as require_client } from "./assets/react-dom.js";
-import { t as marked } from "./assets/marked.js";
 import { a as SelectItem$1, c as SelectPortal, d as SelectTrigger$1, i as SelectIcon, l as SelectScrollDownButton$1, n as SelectContent$1, o as SelectItemIndicator, p as SelectViewport, s as SelectItemText, t as Select$1, u as SelectScrollUpButton$1 } from "./assets/radix-ui-react-select.js";
 import { i as Trigger$1, n as Portal, r as Root2, t as Content2 } from "./assets/radix-ui-react-popover.js";
 import { n as SwitchThumb, t as Switch } from "./assets/radix-ui-react-switch.js";
 import { n as ndJsonStream, t as ClientSideConnection } from "./assets/agentclientprotocol-sdk.js";
+import { n as defaultUrlTransform, t as Markdown } from "./assets/react-markdown.js";
+import { t as rehypeHighlight } from "./assets/rehype-highlight.js";
+import { t as rehypeKatex } from "./assets/rehype-katex.js";
+import { t as rehypeRaw } from "./assets/rehype-raw.js";
+import { n as defaultSchema } from "./assets/hast-util-sanitize.js";
+import { t as rehypeSanitize } from "./assets/rehype-sanitize.js";
+import { t as remarkGfm } from "./assets/remark-gfm.js";
+import { t as remarkMath } from "./assets/remark-math.js";
+import { d as __vitePreload } from "./assets/mermaid.js";
 //#region \0vite/modulepreload-polyfill.js
 (function polyfill() {
 	const relList = document.createElement("link").relList;
@@ -1523,6 +1532,263 @@ function collectEnv(rows) {
 	return env;
 }
 //#endregion
+//#region views/acp-chat/src/components/MermaidBlock.tsx
+var mermaidBlockId = 0;
+var mermaidRenderId = 0;
+var mermaidModule;
+function MermaidBlock({ chart }) {
+	const hostId = (0, import_react.useRef)(`acp-chat-mermaid-${++mermaidBlockId}`);
+	const [state, setState] = (0, import_react.useState)({ kind: "rendering" });
+	(0, import_react.useEffect)(() => {
+		let cancelled = false;
+		const renderId = `${hostId.current}-${++mermaidRenderId}`;
+		setState({ kind: "rendering" });
+		loadMermaid().then((mermaid) => {
+			configureMermaid(mermaid);
+			return mermaid.render(renderId, chart);
+		}).then(({ svg }) => {
+			if (!cancelled) setState({
+				kind: "rendered",
+				svg
+			});
+		}).catch((error) => {
+			if (!cancelled) setState({
+				kind: "error",
+				message: error instanceof Error ? error.message : "Failed to render Mermaid diagram"
+			});
+		});
+		return () => {
+			cancelled = true;
+		};
+	}, [chart]);
+	if (state.kind === "rendered") return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		className: "acpMermaidBlock",
+		dangerouslySetInnerHTML: { __html: state.svg }
+	});
+	if (state.kind === "error") return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "acpMermaidBlock acpMermaidBlock--error",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "acpMermaidError",
+			children: state.message
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("pre", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", { children: chart }) })]
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		className: "acpMermaidBlock acpMermaidBlock--rendering",
+		children: "Rendering diagram..."
+	});
+}
+function loadMermaid() {
+	mermaidModule ||= __vitePreload(() => import("./assets/mermaid.js").then((n) => n.t).then((module) => module.default), __vite__mapDeps([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28]), import.meta.url);
+	return mermaidModule;
+}
+function configureMermaid(mermaid) {
+	const panel = cssVariable("--ij-bg-panel", "#2b2d30");
+	const panelAlt = cssVariable("--ij-bg-panel-alt", "#1e1f22");
+	const hover = cssVariable("--ij-bg-hover", "#ffffff17");
+	const border = cssVariable("--ij-border-strong", "#393b40");
+	const textPrimary = cssVariable("--ij-text-primary", "#dfe1e5");
+	const textSecondary = cssVariable("--ij-text-secondary", "#9da0a8");
+	const accent = cssVariable("--ij-accent", "#3574f0");
+	const font = cssVariable("--ij-font", "Inter, Segoe UI, -apple-system, BlinkMacSystemFont, Helvetica Neue, sans-serif");
+	mermaid.initialize({
+		startOnLoad: false,
+		theme: "base",
+		securityLevel: "strict",
+		suppressErrorRendering: true,
+		themeVariables: {
+			fontFamily: font,
+			fontSize: "13px",
+			primaryColor: panel,
+			primaryBorderColor: border,
+			primaryTextColor: textPrimary,
+			secondaryColor: hover,
+			secondaryBorderColor: border,
+			secondaryTextColor: textPrimary,
+			tertiaryColor: panelAlt,
+			tertiaryBorderColor: border,
+			tertiaryTextColor: textPrimary,
+			mainBkg: panel,
+			clusterBkg: panelAlt,
+			clusterBorder: border,
+			lineColor: textSecondary,
+			textColor: textPrimary,
+			titleColor: textPrimary,
+			nodeBorder: border,
+			edgeLabelBackground: panel,
+			signalColor: textPrimary,
+			actorBorder: border,
+			actorBkg: panel,
+			actorTextColor: textPrimary,
+			noteBkgColor: panelAlt,
+			noteBorderColor: border,
+			noteTextColor: textPrimary,
+			activationBkgColor: hover,
+			activationBorderColor: accent
+		},
+		themeCSS: `
+      .node rect,
+      .node circle,
+      .node ellipse,
+      .node polygon,
+      .node path {
+        rx: 4px;
+        ry: 4px;
+      }
+      .label,
+      .edgeLabel,
+      .cluster-label,
+      .messageText {
+        color: ${textPrimary};
+        fill: ${textPrimary};
+        font-family: ${font};
+      }
+      .edgeLabel,
+      .edgeLabel p,
+      .edgeLabel span {
+        background: ${panel};
+        color: ${textPrimary};
+      }
+      .flowchart-link,
+      .messageLine0,
+      .messageLine1 {
+        stroke: ${textSecondary};
+      }
+      .marker {
+        fill: ${textSecondary};
+        stroke: ${textSecondary};
+      }
+    `
+	});
+}
+function cssVariable(name, fallback) {
+	return (getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback).replace(/^#([0-9a-fA-F]{6})[0-9a-fA-F]{2}$/, "#$1");
+}
+//#endregion
+//#region views/acp-chat/src/components/markdownSanitizeSchema.ts
+var defaultAttributes = defaultSchema.attributes || {};
+var markdownSanitizeSchema = {
+	...defaultSchema,
+	tagNames: unique([
+		...defaultSchema.tagNames || [],
+		"abbr",
+		"br",
+		"col",
+		"colgroup",
+		"details",
+		"kbd",
+		"mark",
+		"section",
+		"summary",
+		"sub",
+		"sup"
+	]),
+	attributes: {
+		...defaultAttributes,
+		a: mergeAttributes("a", [["ariaLabel"], ["dataFootnoteBackref"]]),
+		code: mergeAttributes("code", [[
+			"className",
+			/^language-./,
+			"math-display",
+			"math-inline",
+			"no-highlight",
+			"nohighlight"
+		]]),
+		details: mergeAttributes("details", [["open"]]),
+		h2: mergeAttributes("h2", [["className", "sr-only"]]),
+		input: mergeAttributes("input", [
+			["checked"],
+			["disabled"],
+			["type", "checkbox"]
+		]),
+		li: mergeAttributes("li", [["className", "task-list-item"]]),
+		section: mergeAttributes("section", [["className", "footnotes"], ["dataFootnotes"]]),
+		ul: mergeAttributes("ul", [["className", "contains-task-list"]])
+	}
+};
+function mergeAttributes(tagName, additions) {
+	return [...defaultAttributes[tagName] || [], ...additions];
+}
+function unique(values) {
+	return Array.from(new Set(values));
+}
+//#endregion
+//#region views/acp-chat/src/components/MarkdownRenderer.tsx
+var remarkPlugins = [remarkGfm, remarkMath];
+var rehypePlugins = [
+	rehypeRaw,
+	[rehypeSanitize, markdownSanitizeSchema],
+	[rehypeKatex, {
+		strict: "warn",
+		throwOnError: false
+	}],
+	[rehypeHighlight, {
+		detect: true,
+		plainText: [
+			"mermaid",
+			"text",
+			"txt"
+		]
+	}]
+];
+function MarkdownRenderer({ text, streaming = false, className = "acpMarkdown" }) {
+	const idPrefix = `acp-md-${(0, import_react.useId)().replace(/[^a-zA-Z0-9_-]/g, "")}-`;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		className: classNames(className, streaming ? "acpMarkdown--streaming" : void 0),
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Markdown, {
+			remarkPlugins,
+			rehypePlugins,
+			remarkRehypeOptions: { clobberPrefix: idPrefix },
+			components: {
+				a({ href, children, ...props }) {
+					return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+						...props,
+						href,
+						target: "_blank",
+						rel: "noreferrer",
+						children
+					});
+				},
+				pre({ node, className, children, ...props }) {
+					const codeNode = codeNodeFromPreNode(node);
+					const code = hastText(codeNode).replace(/\n$/, "");
+					if (!streaming && hastClassNames(codeNode).includes("language-mermaid")) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MermaidBlock, { chart: code });
+					return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("pre", {
+						className,
+						...props,
+						children
+					});
+				},
+				code({ className, children, ...props }) {
+					return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", {
+						className,
+						...props,
+						children
+					});
+				}
+			},
+			urlTransform: defaultUrlTransform,
+			children: text
+		})
+	});
+}
+function codeNodeFromPreNode(node) {
+	return node?.children?.find((child) => child.tagName === "code");
+}
+function hastClassNames(node) {
+	const className = node?.properties?.className;
+	if (Array.isArray(className)) return className.filter((name) => typeof name === "string");
+	if (typeof className === "string") return className.split(/\s+/);
+	return [];
+}
+function hastText(node) {
+	if (!node) return "";
+	if (typeof node.value === "string") return node.value;
+	return node.children?.map(hastText).join("") ?? "";
+}
+function classNames(...names) {
+	return names.filter(Boolean).join(" ");
+}
+//#endregion
 //#region views/acp-chat/src/components/ModelSelector.tsx
 var ModelSelectorContext = (0, import_react.createContext)(null);
 function useModelSelectorContext() {
@@ -1971,7 +2237,10 @@ function ThinkingBlock() {
 			children: "Thinking"
 		}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 			className: "acpThinkingBody",
-			children: [text, running ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MarkdownRenderer, {
+				text,
+				className: "acpMarkdown acpThinkingMarkdown"
+			}), running ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 				"aria-hidden": "true",
 				className: "acpStreamingCaret"
 			}) : null]
@@ -2218,9 +2487,9 @@ function RemoveIcon() {
 }
 function MarkdownText() {
 	const { text, status } = useSmooth(useMessagePartText(), SMOOTH_TEXT_OPTIONS);
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-		className: status.type === "running" ? "acpMarkdown acpMarkdown--streaming" : "acpMarkdown",
-		dangerouslySetInnerHTML: { __html: marked.parse(text, { async: false }) }
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MarkdownRenderer, {
+		text,
+		streaming: status.type === "running"
 	});
 }
 //#endregion

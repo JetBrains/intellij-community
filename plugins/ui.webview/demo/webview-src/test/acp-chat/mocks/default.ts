@@ -8,6 +8,7 @@ const acpBridgeHostApiId = apiId<AcpBridgeHostApi>()("acp.bridge")
 const acpBridgePageApiId = apiId<AcpBridgePageApi>()("acp.bridge")
 const sessionId = "mock-session"
 const streamingProbePrompt = "streaming probe"
+const markdownFeatureProbePrompt = "markdown feature probe"
 const defaultModeId = "ask"
 const modelConfigId = "gemini_model"
 const defaultModelValue = "gemini-2.5-flash"
@@ -139,10 +140,18 @@ export default defineWebViewMock((context) => {
   }
 
   async function sendAssistantResponse(requestId: JsonRpcId, text: string): Promise<void> {
+    if (text.includes(markdownFeatureProbePrompt)) {
+      await sendAssistantText(requestId, markdownFeatureResponse())
+      return
+    }
     if (text.includes(streamingProbePrompt)) {
       await sendStreamingAssistantResponse(requestId, text)
       return
     }
+    await sendAssistantText(requestId, `Mock response from AI chat: ${text || "Hello from the browser mock."}`)
+  }
+
+  async function sendAssistantText(requestId: JsonRpcId, text: string): Promise<void> {
     await sendPageStdout({
       jsonrpc: "2.0",
       method: "session/update",
@@ -150,7 +159,7 @@ export default defineWebViewMock((context) => {
         sessionId,
         update: {
           sessionUpdate: "agent_message_chunk",
-          content: { type: "text", text: `Mock response from AI chat: ${text || "Hello from the browser mock."}` },
+          content: { type: "text", text },
         },
       },
     })
@@ -276,4 +285,48 @@ function promptText(prompt: unknown): string {
     return ""
   }
   return prompt.map(block => block?.type === "text" && typeof block.text === "string" ? block.text : "").join("")
+}
+
+function markdownFeatureResponse(): string {
+  return `# Markdown feature matrix
+
+| Feature | Status |
+| --- | --- |
+| GFM table | Works |
+| KaTeX | Works |
+
+- [x] Render task lists
+- [ ] Keep unchecked tasks visible
+
+Inline math: $a^2 + b^2 = c^2$.
+
+$$
+\\int_0^1 x^2 dx = \\frac{1}{3}
+$$
+
+\`\`\`mermaid
+flowchart TD
+  A[Markdown] --> B[Mermaid]
+\`\`\`
+
+\`\`\`ts
+const answer: number = 42
+\`\`\`
+
+<details open><summary>Raw HTML details</summary><kbd>Cmd</kbd> + <kbd>K</kbd> with <mark>mark</mark>, H<sub>2</sub>O, and E=mc<sup>2</sup>.</details>
+
+Here is [a safe link](https://example.com).
+
+Footnote reference[^1].
+
+[^1]: Footnote content from ACP chat markdown.
+
+<script>window.__ACP_MARKDOWN_SCRIPT_EXECUTED__ = true</script>
+${unsafeImageHtml()}
+`
+}
+
+function unsafeImageHtml(): string {
+  const eventAttribute = "onerror"
+  return `<img src="https://example.com/unsafe.png" alt="Unsafe image" ${eventAttribute}="window.__ACP_MARKDOWN_ONERROR_EXECUTED__ = true">`
 }

@@ -180,6 +180,47 @@ test("drives ACP modes, model selection, and config options through the picker",
     && message.params?.value === true)).toBe(true)
 })
 
+test("renders rich assistant markdown through the chat message renderer", async ({ page }) => {
+  if (!preview) {
+    throw new Error("ACP chat mock preview server was not started")
+  }
+  await page.goto(preview.url)
+
+  await page.locator(".acpAgentSelect").click()
+  await page.getByRole("option", { name: "Mock Agent" }).click()
+  await page.getByPlaceholder("Message the agent…").fill("markdown feature probe")
+  await page.getByRole("button", { name: "Send" }).click()
+
+  await expect(page.getByText("Markdown feature matrix", { exact: true })).toBeVisible()
+  await expect(page.getByText("GFM table", { exact: true })).toBeVisible()
+  await expect(page.getByText("Render task lists", { exact: true })).toBeVisible()
+  await expect(page.getByText("Raw HTML details", { exact: true })).toBeVisible()
+  await page.waitForFunction(() => document.querySelector(".acpMarkdown .footnotes")?.textContent?.includes("Footnote content from ACP chat markdown.") === true)
+  await page.waitForSelector(".acpMarkdown .katex")
+  await page.waitForSelector(".acpMermaidBlock svg")
+
+  const markdownRenderedSafely = await page.evaluate(() => {
+    const markdown = document.querySelector(".acpMsgAssistant .acpMarkdown")
+    const link = markdown?.querySelector<HTMLAnchorElement>('a[href="https://example.com"]')
+    const unsafeImage = markdown?.querySelector<HTMLImageElement>('img[alt="Unsafe image"]')
+    return Boolean(markdown?.querySelector("table"))
+      && Boolean(markdown?.querySelector('input[type="checkbox"][checked][disabled]'))
+      && Boolean(markdown?.querySelector("pre code .hljs-keyword"))
+      && Boolean(markdown?.querySelector("kbd"))
+      && Boolean(markdown?.querySelector("mark"))
+      && Boolean(markdown?.querySelector("sub"))
+      && Boolean(markdown?.querySelector("sup"))
+      && link?.target === "_blank"
+      && link?.rel === "noreferrer"
+      && unsafeImage != null
+      && !unsafeImage.hasAttribute("onerror")
+      && markdown?.querySelector("script") == null
+      && (window as any).__ACP_MARKDOWN_SCRIPT_EXECUTED__ !== true
+      && (window as any).__ACP_MARKDOWN_ONERROR_EXECUTED__ !== true
+  })
+  expect(markdownRenderedSafely).toBe(true)
+})
+
 test("sends pasted image resources as ACP prompt content blocks", async ({ page }) => {
   if (!preview) {
     throw new Error("ACP chat mock preview server was not started")
