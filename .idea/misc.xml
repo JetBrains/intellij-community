@@ -34,7 +34,7 @@
   <component name="ProjectResources">
     <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_25" project-jdk-name="jbr-25" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_25">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
   <component name="SuppressKotlinCodeStyleNotification">
