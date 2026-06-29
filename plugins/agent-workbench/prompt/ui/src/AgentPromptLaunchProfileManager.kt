@@ -6,6 +6,7 @@ package com.intellij.agent.workbench.prompt.ui
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfileKind
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionLaunchProfileContributors
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderMenuItem
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
@@ -23,6 +24,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import javax.swing.Icon
 
 internal class AgentPromptLaunchProfileManager(
   private val project: Project,
@@ -47,6 +49,7 @@ internal class AgentPromptLaunchProfileManager(
       activeProfileId = launchProfileStateService.getDefaultLaunchProfileId(),
       defaultProfileId = launchProfileStateService.getDefaultLaunchProfileId(),
       builtInProfiles = builtInProfiles,
+      profileIconsById = builtInLaunchProfileIconsById(),
       providerEntries = providerEntries,
       modelCatalogProvider = ::loadedModelCatalog,
       modelCatalogStateProvider = modelCatalogService::catalogState,
@@ -87,6 +90,12 @@ internal class AgentPromptLaunchProfileManager(
     val availabilityService = project.service<AgentSessionProviderAvailabilityService>()
     val menuModel = buildAgentSessionProviderMenuModel(providers, availabilityService.availabilitySnapshot(providers))
     return buildBuiltInLaunchProfiles(menuModel, ::launchProfileLabel, project = project)
+  }
+
+  private fun builtInLaunchProfileIconsById(): Map<String, Icon> {
+    return AgentSessionLaunchProfileContributors.buildBuiltInLaunchProfiles(project)
+      .mapNotNull { profile -> profile.icon?.let { icon -> profile.id to icon } }
+      .toMap()
   }
 
   private fun launchProfileLabel(item: AgentSessionProviderMenuItem): @NlsSafe String {

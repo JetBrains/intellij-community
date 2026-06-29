@@ -1886,6 +1886,64 @@ class AgentPromptProviderSelectorTest {
   }
 
   @Test
+  fun launchProfileEditorListUsesProfileSpecificIconWhenAvailable() {
+    runInEdtAndWait {
+      val profileIcon = EmptyIcon.create(18)
+      val providerIcon = EmptyIcon.create(19)
+      val acpProvider = testProviderBridge(
+        provider = AgentSessionProvider.from("acp"),
+        promptOptions = emptyList(),
+        icon = providerIcon,
+      )
+      val acpProfile = AgentPromptLaunchProfile(
+        id = "builtin:acp:target:cursor:standard",
+        name = "Cursor",
+        kind = AgentPromptLaunchProfileKind.BUILT_IN,
+        providerId = acpProvider.provider.value,
+        launchTargetId = "acp.cursor",
+      )
+      val editor = createLaunchProfileEditorForTest(
+        profiles = listOf(acpProfile),
+        providerOverride = acpProvider,
+        profileIconsById = mapOf(acpProfile.id to profileIcon),
+      )
+      try {
+        assertThat(editor.profileListRendererIconForTest(acpProfile.id)).isSameAs(profileIcon)
+      }
+      finally {
+        editor.closeForTest()
+      }
+    }
+  }
+
+  @Test
+  fun launchProfileEditorListFallsBackToProviderIcon() {
+    runInEdtAndWait {
+      val providerIcon = EmptyIcon.create(18)
+      val codexProvider = testProviderBridge(
+        provider = AgentSessionProvider.from("codex"),
+        promptOptions = emptyList(),
+        icon = providerIcon,
+      )
+      val userProfile = AgentPromptLaunchProfile(
+        id = "user:codex",
+        name = "Codex",
+        providerId = codexProvider.provider.value,
+      )
+      val editor = createLaunchProfileEditorForTest(
+        profiles = listOf(userProfile),
+        providerOverride = codexProvider,
+      )
+      try {
+        assertThat(editor.profileListRendererIconForTest(userProfile.id)).isSameAs(providerIcon)
+      }
+      finally {
+        editor.closeForTest()
+      }
+    }
+  }
+
+  @Test
   fun launchProfileEditorModelComboGroupsModelsBySource() {
     runInEdtAndWait {
       val profile = AgentPromptLaunchProfile(
@@ -3538,6 +3596,7 @@ class AgentPromptProviderSelectorTest {
     onCreateProfile: (AgentPromptLaunchProfile) -> Unit = {},
     onUpdateProfile: (AgentPromptLaunchProfile) -> Unit = {},
     onDeleteProfile: (AgentPromptLaunchProfile) -> Boolean = { true },
+    profileIconsById: Map<String, Icon> = emptyMap(),
   ): AgentPromptLaunchProfileEditorDialog {
     val provider = providerOverride ?: testProviderBridge(
       provider = AgentSessionProvider.from("codex"),
@@ -3552,11 +3611,12 @@ class AgentPromptProviderSelectorTest {
       activeProfileId = activeProfileId,
       defaultProfileId = defaultProfileId,
       builtInProfiles = profiles.filter { profile -> profile.kind == AgentPromptLaunchProfileKind.BUILT_IN },
+      profileIconsById = profileIconsById,
       providerEntries = providers.map { item ->
         ProviderEntry(item,
                       item.provider.value.replaceFirstChar(Char::uppercase),
                       true,
-                      EmptyIcon.ICON_16)
+                      item.icon)
       },
       modelCatalogProvider = { modelCatalog },
       modelCatalogStateProvider = modelCatalogStateProvider,

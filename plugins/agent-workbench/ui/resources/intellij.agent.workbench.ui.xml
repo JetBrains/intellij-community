@@ -6,4 +6,11 @@
     <module name="intellij.platform.ai.agent.sessions.core"/>
   </dependencies>
   <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.sessionThreadIconProvider"
+      interface="com.intellij.agent.workbench.ui.AgentSessionThreadIconProvider"
+      dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>
