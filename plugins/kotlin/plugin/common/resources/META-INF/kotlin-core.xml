@@ -56,22 +56,9 @@
             area="IDEA_PROJECT"
             dynamic="true"/>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoProviderExtension"
-            interface="org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProviderExtension"
-            area="IDEA_PROJECT"
-            dynamic="true"/>
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.failedToDownloadJpsMavenArtifactSuggestedSolutionsContributor"
             interface="org.jetbrains.kotlin.idea.compiler.configuration.FailedToDownloadJpsMavenArtifactSuggestedSolutionsContributor"
             area="IDEA_PROJECT"
-            dynamic="true"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.ktModuleFactory"
-            interface="org.jetbrains.kotlin.idea.base.projectStructure.KaModuleFactory"
-            dynamic="true"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.projectStructureInsightsProvider"
-            interface="org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureInsightsProvider"
             dynamic="true"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.supportAvailability"
