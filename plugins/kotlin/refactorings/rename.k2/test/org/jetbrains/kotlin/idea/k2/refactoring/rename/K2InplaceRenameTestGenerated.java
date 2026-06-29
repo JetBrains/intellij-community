@@ -163,6 +163,11 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/conflicts/typeParameters/TypeParameterVsTypeAlias.kt");
     }
 
+    @TestMetadata("ContextParameterInHierarchy.kt")
+    public void testContextParameterInHierarchy() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/ContextParameterInHierarchy.kt");
+    }
+
     @TestMetadata("DisableInplaceRenameOnThis.kt")
     public void testDisableInplaceRenameOnThis() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/DisableInplaceRenameOnThis.kt");
