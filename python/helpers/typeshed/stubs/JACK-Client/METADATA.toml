@@ -5,7 +5,9 @@ dependencies = ["numpy>=1.20", "types-cffi"]
 
 [tool.stubtest]
 # darwin and win32 are equivalent
-ci-platforms = ["darwin", "linux"]
+# TODO (2026-06-26): darwin temporarily disabled, see
+# https://github.com/python/typeshed/issues/15947
+ci-platforms = ["linux"]
 apt-dependencies = ["libjack-dev"]
 brew-dependencies = ["jack"]
 # No need to install on the CI. Leaving here as information for Windows contributors.

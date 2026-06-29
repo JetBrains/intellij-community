@@ -27,14 +27,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
       - uses: astral-sh/setup-uv@v7
         with:
           version-file: "requirements-tests.txt"
-      - run: uv pip install -r requirements-tests.txt --system
-      - run: python ./tests/check_typeshed_structure.py
+      - run: |
+          uv run \
+          --python=3.13 \
+          --no-project \
+          --with-requirements=requirements-tests.txt \
+          ./tests/check_typeshed_structure.py
 
   mypy:
     name: "mypy: Check stubs"
@@ -69,14 +70,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.14"
       - uses: astral-sh/setup-uv@v7
         with:
           version-file: "requirements-tests.txt"
-      - run: uv pip install -r requirements-tests.txt --system
-      - run: python ./tests/regr_test.py --all --verbosity QUIET
+      - run: |
+          uv run \
+          --python=3.14 \
+          --no-project \
+          --with-requirements=requirements-tests.txt \
+          ./tests/regr_test.py \
+          --all \
+          --verbosity=QUIET
 
   pyright:
     name: "pyright: Run test cases"
@@ -156,15 +160,10 @@ jobs:
         with:
           repository: typeshed-internal/stub_uploader
           path: stub_uploader
-      - uses: actions/setup-python@v6
-        with:
-          # Keep in sync with stub_uploader's check_scripts.yml workflow.
-          python-version: "3.13"
       - uses: astral-sh/setup-uv@v7
         with:
           version-file: "typeshed/requirements-tests.txt"
       - name: Run tests
         run: |
           cd stub_uploader
-          uv pip install -r requirements.txt --system
-          python -m pytest tests
+          uv run --python=3.13 --no-project --with-requirements=requirements.txt -m pytest tests

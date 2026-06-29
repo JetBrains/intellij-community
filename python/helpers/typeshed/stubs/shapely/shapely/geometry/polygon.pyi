@@ -1,5 +1,5 @@
 from collections.abc import Collection
-from typing import NoReturn, TypeAlias, overload
+from typing import Literal, NoReturn, TypeAlias, overload
 from typing_extensions import Self
 
 from .base import BaseGeometry
@@ -17,6 +17,8 @@ class LinearRing(LineString):
     def __new__(self, coordinates: _ConvertibleToLinearRing | None = None) -> Self: ...
     @property
     def is_ccw(self) -> bool: ...
+    @property
+    def geom_type(self) -> Literal["LinearRing"]: ...
 
 class InteriorRingSequence:
     def __init__(self, parent: Polygon) -> None: ...
@@ -42,6 +44,8 @@ class Polygon(BaseGeometry):
     @classmethod
     def from_bounds(cls, xmin: float, ymin: float, xmax: float, ymax: float) -> Self: ...
     # more precise base overrides
+    @property
+    def geom_type(self) -> Literal["Polygon"]: ...
     @property
     def boundary(self) -> MultiLineString: ...
 
