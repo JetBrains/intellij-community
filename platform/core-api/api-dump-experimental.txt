@@ -55,6 +55,7 @@ com.intellij.ide.plugins.DynamicPluginListener
 - s:values():com.intellij.ide.plugins.IdeaPluginOsRequirement[]
 *f:com.intellij.ide.plugins.IdeaPluginOsRequirement$Companion
 - f:fromModuleId(com.intellij.openapi.extensions.PluginId):com.intellij.ide.plugins.IdeaPluginOsRequirement
+- f:fromOs(com.intellij.util.system.OS):com.intellij.ide.plugins.IdeaPluginOsRequirement
 - f:getHostOsModuleIds():java.util.List
 *a:com.intellij.lang.LanguageMatcher
 - s:match(com.intellij.lang.Language):com.intellij.lang.LanguageMatcher
