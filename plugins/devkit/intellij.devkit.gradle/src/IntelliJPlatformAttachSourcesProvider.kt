@@ -90,6 +90,9 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
       // IntelliJ Platform bundled module, such as `bundledModule:intellij.platform.coverage:IC-243.21565.193`
       coordinates.groupId == "bundledModule" -> createAttachBundledModuleSourcesAction(psiFile, coordinates)
 
+      // Non-bundled JetBrains plugins, such as `com.jetbrains.plugins:PythonCore:243.21565.193`
+      coordinates.groupId == IntelliJPlatformSourceCoordinates.JETBRAINS_PLUGIN_GROUP -> createAttachJetBrainsPluginSourcesAction(psiFile, coordinates)
+
       else -> null
     }
   }
@@ -154,6 +157,23 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
    */
   private fun createAttachBundledModuleSourcesAction(psiFile: PsiFile, coordinates: MavenCoordinates) =
     createAttachBundledPluginSourcesAction(psiFile, coordinates)
+
+  /**
+   * Creates an action to attach sources for non-bundled JetBrains plugins hosted on the JetBrains Maven repo.
+   *
+   * Currently, handles PythonCore and Pythonid. Their sources are published
+   * as PyCharm Community sources (`com.jetbrains.intellij.pycharm:pycharmPC`).
+   *
+   * @param psiFile The PSI file that represents the currently handled class.
+   * @param coordinates The Maven coordinates of the plugin whose sources need to be attached.
+   */
+  private fun createAttachJetBrainsPluginSourcesAction(psiFile: PsiFile, coordinates: MavenCoordinates): AttachSourcesAction? {
+    if (coordinates.artifactId != "PythonCore" && coordinates.artifactId != "Pythonid") return null
+    val version = IntelliJPlatformSourceCoordinates.extractActualVersion(coordinates.version)
+    val majorVersion = IntelliJPlatformSourceCoordinates.extractMajorVersion(version)
+    val rangedVersion = "[$majorVersion,$version]!!$version"
+    return createAttachPlatformSourcesAction(psiFile, IntelliJPlatformSourceCoordinates.PYCHARM_COMMUNITY_SOURCES, version, rangedVersion)
+  }
 
   /**
    * Attach the provided sources archive.

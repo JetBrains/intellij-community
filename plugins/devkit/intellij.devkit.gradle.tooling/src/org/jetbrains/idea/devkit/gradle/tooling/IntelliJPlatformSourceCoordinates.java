@@ -12,6 +12,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class IntelliJPlatformSourceCoordinates {
 
+  public static final String JETBRAINS_PLUGIN_GROUP = "com.jetbrains.plugins";
+
   public static final String PYCHARM_COMMUNITY_SOURCES = "com.jetbrains.intellij.pycharm:pycharmPC";
 
   /**

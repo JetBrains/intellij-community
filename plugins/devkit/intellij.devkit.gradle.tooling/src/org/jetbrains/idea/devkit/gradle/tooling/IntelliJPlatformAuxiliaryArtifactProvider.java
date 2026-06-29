@@ -154,7 +154,10 @@ public final class IntelliJPlatformAuxiliaryArtifactProvider implements Auxiliar
     }
 
     // Non-bundled plugins from JetBrains Maven repo
-    if ("com.jetbrains.plugins".equals(group)) {
+    if (IntelliJPlatformSourceCoordinates.JETBRAINS_PLUGIN_GROUP.equals(group)) {
+      if ("PythonCore".equals(name) || "Pythonid".equals(name)) {
+        return IntelliJPlatformSourceCoordinates.PYCHARM_COMMUNITY_SOURCES;
+      }
       return IntelliJPlatformSourceCoordinates.defaultPlatformSources(majorVersion);
     }
 
