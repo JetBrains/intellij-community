@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 export * from "../foundation/types"
+export * from "../jsx"
 export * from "./action-button"
 export * from "./button"
 export * from "./checkbox"

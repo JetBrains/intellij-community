@@ -124,6 +124,10 @@
       "types": "./src/elements/text-field/index.ts",
       "default": "./src/elements/text-field/index.ts"
     },
+    "./jsx": {
+      "types": "./src/jsx.ts",
+      "default": "./src/jsx.ts"
+    },
     "./tokens.css": "./tokens.css",
     "./tokens.json": "./tokens.json",
     "./custom-elements.json": "./custom-elements.json"
