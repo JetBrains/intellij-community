@@ -1,0 +1,39 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.platform.util.annotations` start
+jvm_library(
+    name = "annotations",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.util.annotations",
+    visibility = ["//visibility:public"],
+    deps = ["@lib//:jetbrains-annotations"],
+)
+
+jvm_library(
+    name = "annotations_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.util.annotations",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":annotations"],
+)
+### auto-generated section `build intellij.platform.util.annotations` end
+
+### auto-generated section `iml intellij.platform.util.annotations` start
+exports_files(
+    [
+        "intellij.platform.util.annotations.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.util.annotations` end

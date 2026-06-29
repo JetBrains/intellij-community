@@ -972,6 +972,7 @@ platform/util
 platform/util-class-loader
 platform/util-ex
 platform/util-rt
+platform/util/annotations
 platform/util/base
 platform/util/base/multiplatform
 platform/util/commons-lang-v2-shim
