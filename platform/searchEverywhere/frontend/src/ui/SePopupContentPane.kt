@@ -348,7 +348,7 @@ class SePopupContentPane(
             }
           }
 
-          throttledResultEventFlow.coalesceWhileAvailable(MAX_COALESCING_BATCH_SIZE).onCompletion {
+          throttledResultEventFlow.coalesceWhileAvailable(FIRST_COALESCING_BATCH_SIZE, MAX_COALESCING_BATCH_SIZE).onCompletion {
             withContext(Dispatchers.EDT) {
               SeLog.log(SeLog.THROTTLING) { "Throttled flow completed" }
               isSearchCompleted.store(true)
@@ -1220,6 +1220,7 @@ class SePopupContentPane(
   companion object {
     const val DEFAULT_FROZEN_VISIBLE_PART: Double = 1.1
     const val DEFAULT_FREEZING_DELAY_MS: Long = 800
+    private const val FIRST_COALESCING_BATCH_SIZE: Int = 10
     private const val MAX_COALESCING_BATCH_SIZE: Int = 20
   }
 }
@@ -1231,7 +1232,7 @@ class SePopupContentPane(
  * (as the non-throttled path produces them) pays one EDT context switch and one list/view refresh per item. By draining
  * everything currently buffered into a single batch, a slow collector processes N ready items in one EDT hop instead of N.
  */
-private fun <T> Flow<T>.coalesceWhileAvailable(maxBatchSize: Int): Flow<List<T>> = channelFlow {
+private fun <T> Flow<T>.coalesceWhileAvailable(fastFirstBatchSize: Int, maxBatchSize: Int): Flow<List<T>> = channelFlow {
   val buffer = Channel<T>(maxBatchSize, onBufferOverflow = BufferOverflow.SUSPEND)
   launch {
     try {
@@ -1242,16 +1243,23 @@ private fun <T> Flow<T>.coalesceWhileAvailable(maxBatchSize: Int): Flow<List<T>>
     }
   }
 
+  var sentCount = 0
+
   while (true) {
     val first = buffer.receiveCatching().getOrNull() ?: break
     val batch = ArrayList<T>()
     batch.add(first)
-    while (batch.size < maxBatchSize) {
+    var potentialSentCount = sentCount + batch.size
+
+    while (batch.size < maxBatchSize && potentialSentCount != 1 && potentialSentCount != fastFirstBatchSize) {
       batch.add(buffer.tryReceive().getOrNull() ?: break)
+      potentialSentCount = sentCount + batch.size
     }
+
+    sentCount += batch.size
     send(batch)
   }
-}.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND)
+}.buffer(1, onBufferOverflow = BufferOverflow.SUSPEND)
 
 private fun ThrottledItems<SeResultEvent>.hasResultsUpdates(): Boolean =
   when (this) {
