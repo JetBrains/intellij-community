@@ -82,13 +82,22 @@ class MinimapTokenColorContext(
       computeLineColorRuns(editorEx, lineStart, lineEnd)
     }
 
-    for (run in runs) {
-      if (probeOffset in run.startOffset until run.endOffset) {
-        return run.color
+    return runForOffset(runs, probeOffset)?.color ?: defaultForeground
+  }
+
+  private fun runForOffset(runs: List<ColorRun>, offset: Int): ColorRun? {
+    var low = 0
+    var high = runs.size - 1
+    while (low <= high) {
+      val mid = (low + high) ushr 1
+      val run = runs[mid]
+      when {
+        offset < run.startOffset -> high = mid - 1
+        offset >= run.endOffset -> low = mid + 1
+        else -> return run
       }
     }
-
-    return defaultForeground
+    return null
   }
 
   private fun computeLineColorRuns(editorEx: EditorEx, lineStart: Int, lineEnd: Int): List<ColorRun> {
