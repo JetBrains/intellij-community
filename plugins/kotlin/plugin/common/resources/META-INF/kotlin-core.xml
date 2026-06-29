@@ -569,16 +569,16 @@
 
   <actions>
     <action id="Kotlin.NewFile" class="org.jetbrains.kotlin.idea.actions.NewKotlinFileAction"
-            icon="org.jetbrains.kotlin.idea.KotlinIcons.FILE">
+            icon="icons.KotlinBaseResourcesIcons.Kotlin_file">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewGroup1"/>
     </action>
 
     <action id="Kotlin.NewScript" class="org.jetbrains.kotlin.idea.actions.NewKotlinScriptAction"
-            icon="org.jetbrains.kotlin.idea.KotlinIcons.SCRIPT">
+            icon="icons.KotlinBaseResourcesIcons.Kotlin_script">
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewWebDevelopment"/>
     </action>
 
-    <group id="KotlinToolsGroup" popup="true" icon="org.jetbrains.kotlin.idea.KotlinIcons.SMALL_LOGO"
+    <group id="KotlinToolsGroup" popup="true" icon="icons.KotlinBaseResourcesIcons.Kotlin"
            class="org.jetbrains.kotlin.idea.actions.KotlinActionGroup">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
@@ -586,7 +586,7 @@
     <!-- Standalone action (shown when only 1 action) -->
     <action id="ConvertJavaToKotlin"
             class="org.jetbrains.kotlin.idea.actions.JavaToKotlinAction"
-            icon="org.jetbrains.kotlin.idea.KotlinIcons.J2K">
+            icon="icons.KotlinBaseResourcesIcons.ConvertJavaToKotlin">
       <keyboard-shortcut keymap="$default" first-keystroke="control alt shift K"/>
       <add-to-group group-id="CodeMenu" anchor="last"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
@@ -596,7 +596,7 @@
     <!-- Group shown when more than 1 action -->
     <group id="ConvertJavaToKotlinGroup"
            class="org.jetbrains.kotlin.idea.actions.JavaToKotlinActionGroup"
-           icon="org.jetbrains.kotlin.idea.KotlinIcons.J2K"
+           icon="icons.KotlinBaseResourcesIcons.ConvertJavaToKotlin"
            searchable="false"
            popup="true">
       <action id="ConvertJavaToKotlinInGroup"
