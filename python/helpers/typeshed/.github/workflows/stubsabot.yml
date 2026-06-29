@@ -24,9 +24,6 @@ jobs:
           # use an ssh key so that checks automatically run on stubsabot PRs
           ssh-key: ${{ secrets.STUBSABOT_SSH_PRIVATE_KEY }}
           fetch-depth: 0
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
       - uses: astral-sh/setup-uv@v7
         with:
           version-file: "requirements-tests.txt"
@@ -34,10 +31,15 @@ jobs:
         run: |
           git config --global user.name stubsabot
           git config --global user.email '<>'
-      - name: Install dependencies
-        run: uv pip install -r requirements-tests.txt --system
       - name: Run stubsabot
-        run: GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} python scripts/stubsabot.py --action-level everything
+        run: |
+          GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
+          uv run \
+          --python=3.13 \
+          --no-project \
+          --with-requirements=requirements-tests.txt \
+          scripts/stubsabot.py \
+          --action-level=everything
 
   # https://github.community/t/run-github-actions-job-only-if-previous-job-has-failed/174786/2
   create-issue-on-failure:

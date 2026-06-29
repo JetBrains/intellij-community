@@ -123,18 +123,14 @@ jobs:
         with:
           repository: typeshed-internal/stub_uploader
           path: stub_uploader
-      - uses: actions/setup-python@v6
-        with:
-          # Keep in sync with stub_uploader's check_scripts.yml workflow.
-          python-version: "3.13"
       - uses: astral-sh/setup-uv@v7
         with:
           version-file: "typeshed/requirements-tests.txt"
       - name: Run tests
         run: |
           cd stub_uploader
-          uv pip install -r requirements.txt --system
-          python -m pytest tests
+          # Keep Python version in sync with stub_uploader's check_scripts.yml workflow.
+          uv run --python=3.13 --no-project --with-requirements=requirements.txt -m pytest tests
 
   # https://github.community/t/run-github-actions-job-only-if-previous-job-has-failed/174786/2
   create-issue-on-failure:
