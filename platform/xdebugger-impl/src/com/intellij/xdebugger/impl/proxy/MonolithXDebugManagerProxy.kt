@@ -89,7 +89,7 @@ internal class MonolithXDebugManagerProxy : XDebugManagerProxy {
   }
 
   override fun getDebuggerExecutionPointManager(project: Project): XDebuggerExecutionPointManagerImpl? {
-    if (AppMode.isRemoteDevHost() && SplitDebuggerMode.isSplitDebugger()) {
+    if (AppMode.isRemoteDevHost()) {
       return null
     }
     return XDebuggerExecutionPointManagerImpl.getInstance(project)

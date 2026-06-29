@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.codeInsight.hint.LineTooltipRenderer;
@@ -122,7 +122,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     myBreakpointManager = new XBreakpointManagerImpl(project, this, messageBusConnection, coroutineScope);
     XDebuggerWatchesManagerImpl.getInstance(project);
 
-    if (!SplitDebuggerMode.isSplitDebugger() || AppMode.isRemoteDevHost()) {
+    if (AppMode.isRemoteDevHost()) {
       startContentSelectionListening(messageBusConnection);
     }
     if (!DapMode.isDap()) {
