@@ -154,6 +154,18 @@ private fun resolveIconBytes(
 
 The real implementation should avoid fallback duplication for light requests, set correct content type (`image/svg+xml` or `image/png`), and keep caching headers consistent with existing WebView static assets.
 
+## Mock Preview Resolution
+
+Browser mock previews created by `@jetbrains/intellij-webview-testkit` serve the same `./__ij-icons/<icon-set-id>/<light|dark>/<resource-path>` URLs without starting the IDE. The testkit resolver maps icon resource paths to generated files under the owning package's `resources/webview` output and the current view output directory.
+
+This lets any view use the same frontend `IconSet.src(...)` calls in IDE WebView, browser preview, and Playwright smoke tests. View-local generated icons should still be referenced by their classpath resource path, for example:
+
+```text
+webview/views/<view-id>/assets/myIcon.svg
+```
+
+The mock resolver mirrors production path validation, content types, and dark-resource fallback to `*_dark.svg` / `*_dark.png` when those files exist. It does not enforce Kotlin-side icon-set registration because browser previews do not construct the host `WebViewAssetRoot`; invalid or missing files still return 403 or 404.
+
 ## Validation
 
 TypeScript should reject invalid icon-set ids early when `IconSet.define(...)` is called. Kotlin should reject duplicate ids during `WebViewAssetRoot` construction.

@@ -1,17 +1,22 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import { createServer as createNetServer } from "node:net"
-import { createServer } from "vite"
+import { createServer, type Plugin, type UserConfig } from "vite"
 import { defineWebViewViewConfig } from "../../build/src/index.ts"
+import { resolveWebViewMockIconSetAsset } from "./iconSetAssetResolver.ts"
 import { withWebViewMockBridge } from "./vite.ts"
 import type { StartWebViewMockPreviewOptions, WebViewMockPreviewServer } from "./core.ts"
 
 export async function startWebViewMockPreview(options: StartWebViewMockPreviewOptions): Promise<WebViewMockPreviewServer> {
   const port = options.port ?? await findAvailablePort()
-  const config = withWebViewMockBridge(defineWebViewViewConfig({
+  const viewConfig = defineWebViewViewConfig({
     webviewSrcDir: options.webviewSrcDir,
     id: options.viewId,
-  }), {
+  })
+  const config = withWebViewMockBridge({
+    ...viewConfig,
+    plugins: [webViewMockIconSetPlugin(viewConfig), ...asPluginArray(viewConfig.plugins)],
+  }, {
     mock: options.mock,
   })
   const server = await createServer({
@@ -36,6 +41,39 @@ export async function startWebViewMockPreview(options: StartWebViewMockPreviewOp
       return server.close()
     },
   }
+}
+
+function webViewMockIconSetPlugin(config: UserConfig): Plugin {
+  const viewResourceRoot = typeof config.build?.outDir === "string" ? config.build.outDir : undefined
+  return {
+    name: "intellij-webview-mock-icon-sets",
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        if (!viewResourceRoot || !req.url) {
+          next()
+          return
+        }
+
+        const response = resolveWebViewMockIconSetAsset(req.url, { viewResourceRoot })
+        if (!response) {
+          next()
+          return
+        }
+
+        res.statusCode = response.statusCode
+        if (response.contentType) res.setHeader("Content-Type", response.contentType)
+        for (const [name, value] of Object.entries(response.headers ?? {})) {
+          res.setHeader(name, value)
+        }
+        res.end(response.body)
+      })
+    },
+  }
+}
+
+function asPluginArray(plugins: UserConfig["plugins"]): Plugin[] {
+  if (!plugins) return []
+  return Array.isArray(plugins) ? plugins.filter((plugin): plugin is Plugin => Boolean(plugin) && !Array.isArray(plugin)) : [plugins as Plugin]
 }
 
 function findAvailablePort(): Promise<number> {

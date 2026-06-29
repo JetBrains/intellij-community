@@ -111,6 +111,8 @@ bun webview-preview my-view --mock default
 
 Both entry points serve the view through Vite, replace `/__webview/wvi-bridge.js` with the test bridge, and load the selected mock. Use `defineWebViewMock(...)` from `@jetbrains/intellij-webview-testkit` to implement host APIs and to call page APIs registered by the view.
 
+Mock previews also serve `IconSet` URLs under `/__ij-icons/...` from generated `resources/webview` output, with the same light/dark URL shape used in IDE WebView. If a view uses view-local icons, keep the source assets under `webview-src/views/<view-id>` and make the build emit them into `resources/webview/views/<view-id>/assets`; pass the resulting classpath resource path such as `webview/views/<view-id>/assets/myIcon.svg` to `IconSet.src(...)`.
+
 `runWebViewMockPreview(...)` infers `webviewSrcDir` from `importMetaUrl`, resolves mock names to `test/<view-id>/mocks/<mock>.ts`, and keeps Vite serving independent of the current working directory. If Vite reports that `views/<view-id>/index.html` is outside `server.fs.allow`, treat that as a testkit configuration bug; do not add mock-mode branches to the production view.
 
 Keep mocks and browser smoke tests out of `resources/webview/`; that directory is generated production output. See [Frontend Testability Without IDE](../frontend/WebView-Frontend-Testability.md) for API details and the `demo/webview-src/test/acp-chat` reference mock.
