@@ -69,12 +69,6 @@
       - name: $MAVEN_REPOSITORY$/ai/grazie/tasks-library/tasks-library-model-jvm/0/tasks-library-model-jvm-0.jar
       ai.grazie.gec.util:
       - name: $MAVEN_REPOSITORY$/ai/grazie/gec/gec-util/0/gec-util-0.jar
-      org.jetbrains.intellij.deps.languagetool:languagetool-core:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6/languagetool-core-6.jar
-      - name: $MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1/openregex-1.jar
-      org.jetbrains.intellij.deps.languagetool:language-en:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-en/6/language-en-6.jar
-      - name: $MAVEN_REPOSITORY$/org/languagetool/english-pos-dict/0/english-pos-dict-0.jar
       net.loomchild:segment:2.0.1:
       - name: $MAVEN_REPOSITORY$/net/loomchild/segment/2/segment-2.jar
       org.carrot2:morfologik-stemming:
@@ -141,3 +135,15 @@
 - name: lib/modules/intellij.grazie.properties.jar
   contentModules:
   - name: intellij.grazie.properties
+- name: lib/org.jetbrains.intellij.deps.languagetool-language-en.jar
+  library: org.jetbrains.intellij.deps.languagetool:language-en
+  module: intellij.grazie.core
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-en/6/language-en-6.jar
+  - name: $MAVEN_REPOSITORY$/org/languagetool/english-pos-dict/0/english-pos-dict-0.jar
+- name: lib/org.jetbrains.intellij.deps.languagetool-languagetool-core.jar
+  library: org.jetbrains.intellij.deps.languagetool:languagetool-core
+  module: intellij.grazie.core
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6/languagetool-core-6.jar
+  - name: $MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1/openregex-1.jar
