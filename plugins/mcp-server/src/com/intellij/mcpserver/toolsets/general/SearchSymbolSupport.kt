@@ -50,10 +50,37 @@ import java.nio.file.Path
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * Searches for symbols via Choose By Name models and maps them to [SearchItem]s.
+ * Searches for symbols via a customizable symbol search engine and maps them to [SearchItem]s.
  */
 @ApiStatus.Internal
 suspend fun searchSymbols(
+  q: String,
+  paths: List<String>?,
+  includeExternal: Boolean,
+  limit: Int,
+): SearchResult {
+  return serviceAsync<SymbolSearchEngine>().searchSymbols(q, paths, includeExternal, limit)
+}
+
+//
+// Customizable backend for symbol search.
+//
+@ApiStatus.Internal
+open class SymbolSearchEngine {
+  open suspend fun searchSymbols(
+    q: String,
+    paths: List<String>?,
+    includeExternal: Boolean,
+    limit: Int,
+  ): SearchResult {
+    return chooseByNameSearchSymbols(q, paths, includeExternal, limit)
+  }
+}
+
+/**
+ * Searches for symbols via Choose By Name models and maps them to [SearchItem]s.
+ */
+private suspend fun chooseByNameSearchSymbols(
   q: String,
   paths: List<String>?,
   includeExternal: Boolean,

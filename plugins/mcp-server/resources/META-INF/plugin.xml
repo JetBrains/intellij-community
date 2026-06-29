@@ -47,6 +47,8 @@
     <applicationService serviceImplementation="com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider"/>
     <applicationService serviceImplementation="com.intellij.mcpserver.impl.McpServerService"/>
 
+    <applicationService serviceImplementation="com.intellij.mcpserver.toolsets.general.SymbolSearchEngine" open="true"/>
+
     <serviceViewContributor implementation="com.intellij.mcpserver.services.McpServiceViewContributor"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector"/>
