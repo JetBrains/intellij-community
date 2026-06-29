@@ -1,5 +1,5 @@
 import {type ExtensionAPI, type ExtensionContext} from "@earendil-works/pi-coding-agent";
-import {startControlBridge} from "./control.ts";
+import {registerTaskFolderTool, startControlBridge} from "./control.ts";
 import {registerJbCentralProvider} from "./jbcentral.ts";
 import {parseModelCatalogMetadata} from "./modelCatalog.ts";
 import {registerOmlxProviders} from "./omlx.ts";
@@ -32,6 +32,8 @@ export default async function agentWorkbenchTheme(pi: ExtensionAPI) {
   let lastStatusSignature: string | undefined;
   let lastSessionInfoSignature: string | undefined;
   let lastSessionInfoLeafId: string | null | undefined;
+
+  registerTaskFolderTool(pi, () => controlBridge);
 
   const updateLastStatusSignature = (signature: string) => {
     lastStatusSignature = signature;

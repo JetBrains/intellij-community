@@ -51,7 +51,9 @@ create a new top-level Agent Workbench entity and do not inject context into pro
 
 - Project and worktree rows must offer `New Task Folder`. Thread rows must offer `Move to Task Folder` for in-progress folders on the same
   path and `Remove from Task Folder` for assigned threads. Folder rows must offer rename, delete, explicit metadata set/delete, and mark
-  done actions. User-visible action text and dialog text must live in `AgentSessionsBundle.properties`.
+  done actions. The metadata set dialog must expose an editable metadata key combo with `issue` and `review` key presets while persisting
+  ordinary string key/value metadata. Custom typed keys are stored as entered after trimming.
+  User-visible action text and dialog text must live in `AgentSessionsBundle.properties`.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
 
 - Dragging active thread rows onto an in-progress task folder on the same path must perform the same move as `Move to Task Folder`. If the

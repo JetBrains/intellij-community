@@ -27,6 +27,16 @@ class AgentSessionUiPreferencesStateService(
     return launchProfileStateService.getDefaultLaunchProfileId()
   }
 
+  fun getTaskFolderAgentLaunchProfileId(): String? {
+    return state.taskFolderAgentLaunchProfileId
+  }
+
+  fun setTaskFolderAgentLaunchProfileId(profileId: String?) {
+    updateState { current ->
+      current.copy(taskFolderAgentLaunchProfileId = profileId?.trim()?.takeIf { it.isNotEmpty() })
+    }
+  }
+
   fun getProviderPreferences(): AgentPromptLauncherBridge.ProviderPreferences {
     return AgentPromptLauncherBridge.ProviderPreferences(
       providerOptionsByProviderId = state.providerOptionsByProviderId,
@@ -72,5 +82,6 @@ class AgentSessionUiPreferencesStateService(
   data class UiPreferencesState(
     @JvmField val providerOptionsByProviderId: Map<String, Set<String>> = emptyMap(),
     @JvmField val containerModeEnabled: Boolean = false,
+    @JvmField val taskFolderAgentLaunchProfileId: String? = null,
   )
 }

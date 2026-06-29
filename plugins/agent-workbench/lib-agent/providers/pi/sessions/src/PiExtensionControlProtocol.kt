@@ -21,6 +21,7 @@ internal enum class PiControlMessageType(@JvmField val wireName: String) {
   FORK_FROM_ENTRY("forkFromEntry"),
   GET_CURRENT_TASK_FOLDER("getCurrentTaskFolder"),
   LIST_TASK_FOLDER_THREADS("listTaskFolderThreads"),
+  CREATE_AND_ASSIGN_TASK_FOLDER("createAndAssignTaskFolder"),
   GET_TASK_FOLDER_METADATA("getTaskFolderMetadata"),
   SET_TASK_FOLDER_METADATA("setTaskFolderMetadata"),
   DELETE_TASK_FOLDER_METADATA("deleteTaskFolderMetadata");
@@ -69,8 +70,10 @@ internal data class PiControlPayload(
   @JvmField val thread: PiControlThreadPayload? = null,
   @JvmField val capabilities: PiControlCapabilities? = null,
   @JvmField val folderId: String? = null,
+  @JvmField val name: String? = null,
   @JvmField val key: String? = null,
   @JvmField val value: String? = null,
+  @JvmField val metadata: Map<String, String>? = null,
 )
 
 internal data class PiControlThreadPayload(
@@ -165,8 +168,10 @@ private fun readControlPayload(parser: JsonParser): PiControlPayload {
   var thread: PiControlThreadPayload? = null
   var capabilities: PiControlCapabilities? = null
   var folderId: String? = null
+  var name: String? = null
   var key: String? = null
   var value: String? = null
+  var metadata: Map<String, String>? = null
   forEachJsonObjectField(parser) { fieldName ->
     when (fieldName) {
       "type" -> type = PiControlMessageType.fromWireName(readJsonStringOrNull(parser))
@@ -180,8 +185,10 @@ private fun readControlPayload(parser: JsonParser): PiControlPayload {
       "thread" -> thread = readControlThreadPayload(parser)
       "capabilities" -> capabilities = readControlCapabilities(parser)
       "folderId" -> folderId = readJsonStringOrNull(parser)
+      "name" -> name = readJsonStringOrNull(parser)
       "key" -> key = readJsonStringOrNull(parser)
       "value" -> value = readJsonStringOrNull(parser)
+      "metadata" -> metadata = readControlStringMap(parser)
       else -> parser.skipChildren()
     }
     true
@@ -198,8 +205,10 @@ private fun readControlPayload(parser: JsonParser): PiControlPayload {
     thread = thread,
     capabilities = capabilities,
     folderId = folderId,
+    name = name,
     key = key,
     value = value,
+    metadata = metadata,
   )
 }
 
@@ -241,6 +250,22 @@ private fun readControlCapabilities(parser: JsonParser): PiControlCapabilities? 
     true
   }
   return PiControlCapabilities(navigateTree = navigateTree, fork = fork)
+}
+
+private fun readControlStringMap(parser: JsonParser): Map<String, String>? {
+  if (parser.currentToken() != JsonToken.START_OBJECT) {
+    parser.skipChildren()
+    return null
+  }
+  val result = LinkedHashMap<String, String>()
+  forEachJsonObjectField(parser) { fieldName ->
+    when (parser.currentToken()) {
+      JsonToken.VALUE_STRING -> readJsonStringOrNull(parser)?.let { value -> result[fieldName] = value }
+      else -> parser.skipChildren()
+    }
+    true
+  }
+  return result
 }
 
 @Suppress("DuplicatedCode")

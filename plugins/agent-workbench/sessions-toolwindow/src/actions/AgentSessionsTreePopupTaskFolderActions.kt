@@ -6,6 +6,7 @@ import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveRequestResult
 import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveService
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -14,35 +15,59 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.InputValidatorEx
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.sessions.core.SessionActionTarget
 import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolder
 import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderService
 import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderStatus
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBTextField
+import com.intellij.util.ui.JBUI
+import java.awt.event.ActionEvent
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
+import javax.swing.DefaultComboBoxModel
+import javax.swing.Action
+import javax.swing.JComponent
+import javax.swing.JPanel
 
 internal class AgentSessionsTreePopupCreateTaskFolderAction : DumbAwareAction {
   private val resolveContext: (AnActionEvent) -> AgentSessionsTreePopupActionContext?
-  private val promptForName: (Project) -> String?
-  private val createFolder: (String, String) -> Unit
+  private val promptForCreateRequest: (Project, Boolean) -> CreateTaskFolderRequest?
+  private val createFolder: (String, String) -> AgentTaskFolder?
+  private val taskFolderAgentProfile: (Project) -> AgentPromptLaunchProfile?
+  private val openTaskFolderAgent: (String, AgentTaskFolder, AgentPromptLaunchProfile, Project) -> Unit
 
   @Suppress("unused")
   constructor() {
     resolveContext = ::resolveAgentSessionsTreePopupActionContext
-    promptForName = ::showCreateTaskFolderDialog
+    promptForCreateRequest = ::showCreateTaskFolderDialog
     createFolder = { path, name -> service<AgentTaskFolderService>().createFolder(path, name) }
+    taskFolderAgentProfile = ::resolveTaskFolderAgentQuickStartProfile
+    openTaskFolderAgent = { path, folder, profile, project ->
+      createTaskFolderAgentViaService(path, profile, project, AgentWorkbenchEntryPoint.TREE_POPUP, folder)
+    }
   }
 
   internal constructor(
     resolveContext: (AnActionEvent) -> AgentSessionsTreePopupActionContext?,
-    promptForName: (Project) -> String?,
-    createFolder: (String, String) -> Unit,
+    promptForCreateRequest: (Project, Boolean) -> CreateTaskFolderRequest?,
+    createFolder: (String, String) -> AgentTaskFolder?,
+    taskFolderAgentProfile: (Project) -> AgentPromptLaunchProfile? = { null },
+    openTaskFolderAgent: (String, AgentTaskFolder, AgentPromptLaunchProfile, Project) -> Unit = { _, _, _, _ -> },
   ) {
     this.resolveContext = resolveContext
-    this.promptForName = promptForName
+    this.promptForCreateRequest = promptForCreateRequest
     this.createFolder = createFolder
+    this.taskFolderAgentProfile = taskFolderAgentProfile
+    this.openTaskFolderAgent = openTaskFolderAgent
   }
 
   override fun update(e: AnActionEvent) {
@@ -52,8 +77,13 @@ internal class AgentSessionsTreePopupCreateTaskFolderAction : DumbAwareAction {
   override fun actionPerformed(e: AnActionEvent) {
     val context = resolveContext(e) ?: return
     val path = createFolderPath(context.target) ?: return
-    val name = promptForName(context.project) ?: return
-    createFolder(path, name)
+    val profile = taskFolderAgentProfile(context.project)
+    val request = promptForCreateRequest(context.project, profile != null) ?: return
+    val folder = createFolder(path, request.name) ?: return
+    if (request.createWithAgent) {
+      val effectiveProfile = profile ?: taskFolderAgentProfile(context.project) ?: return
+      openTaskFolderAgent(path, folder, effectiveProfile, context.project)
+    }
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -173,13 +203,26 @@ internal class AgentSessionsTreePopupRemoveFromTaskFolderAction : DumbAwareActio
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
 
-internal class AgentSessionsTreePopupSetTaskFolderMetadataAction : DumbAwareAction() {
-  private val resolveContext: (AnActionEvent) -> AgentSessionsTreePopupActionContext? =
-    ::resolveAgentSessionsTreePopupActionContext
-  private val promptForMetadata: (Project, SessionActionTarget.TaskFolder) -> Pair<String, String>? =
-    ::showSetTaskFolderMetadataDialog
-  private val setMetadata: (SessionActionTarget.TaskFolder, String, String) -> Unit = { target, key, value ->
-    service<AgentTaskFolderService>().setMetadata(target.folderId, key, value)
+internal class AgentSessionsTreePopupSetTaskFolderMetadataAction : DumbAwareAction {
+  private val resolveContext: (AnActionEvent) -> AgentSessionsTreePopupActionContext?
+  private val promptForMetadata: (Project, SessionActionTarget.TaskFolder) -> TaskFolderMetadataEdit?
+  private val setMetadata: (SessionActionTarget.TaskFolder, String, String) -> Unit
+
+  @Suppress("unused")
+  constructor() {
+    resolveContext = ::resolveAgentSessionsTreePopupActionContext
+    promptForMetadata = ::showSetTaskFolderMetadataDialog
+    setMetadata = { target, key, value -> service<AgentTaskFolderService>().setMetadata(target.folderId, key, value) }
+  }
+
+  internal constructor(
+    resolveContext: (AnActionEvent) -> AgentSessionsTreePopupActionContext?,
+    promptForMetadata: (Project, SessionActionTarget.TaskFolder) -> TaskFolderMetadataEdit?,
+    setMetadata: (SessionActionTarget.TaskFolder, String, String) -> Unit,
+  ) {
+    this.resolveContext = resolveContext
+    this.promptForMetadata = promptForMetadata
+    this.setMetadata = setMetadata
   }
 
   override fun update(e: AnActionEvent) {
@@ -189,11 +232,33 @@ internal class AgentSessionsTreePopupSetTaskFolderMetadataAction : DumbAwareActi
   override fun actionPerformed(e: AnActionEvent) {
     val context = resolveContext(e) ?: return
     val target = context.target as? SessionActionTarget.TaskFolder ?: return
-    val (key, value) = promptForMetadata(context.project, target) ?: return
-    setMetadata(target, key, value)
+    val metadata = promptForMetadata(context.project, target)?.let(::resolveTaskFolderMetadataUpdate) ?: return
+    setMetadata(target, metadata.key, metadata.value)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+}
+
+private val TASK_FOLDER_METADATA_KEY_PRESETS: List<@NlsSafe String> = listOf("issue", "review")
+
+internal data class TaskFolderMetadataEdit(
+  @JvmField val key: String,
+  @JvmField val value: String,
+)
+
+internal data class CreateTaskFolderRequest(
+  @JvmField val name: String,
+  @JvmField val createWithAgent: Boolean,
+)
+
+internal data class TaskFolderMetadataUpdate(
+  @JvmField val key: String,
+  @JvmField val value: String,
+)
+
+internal fun resolveTaskFolderMetadataUpdate(edit: TaskFolderMetadataEdit): TaskFolderMetadataUpdate? {
+  val key = edit.key.trim().takeIf { it.isNotEmpty() } ?: return null
+  return TaskFolderMetadataUpdate(key = key, value = edit.value)
 }
 
 internal class AgentSessionsTreePopupDeleteTaskFolderMetadataAction : DumbAwareAction() {
@@ -337,13 +402,10 @@ private fun createFolderPath(target: SessionActionTarget?): String? {
   }
 }
 
-private fun showCreateTaskFolderDialog(project: Project): String? {
-  return showTaskFolderNameDialog(
-    project = project,
-    title = AgentSessionsBundle.message("toolwindow.task.folder.create.dialog.title"),
-    message = AgentSessionsBundle.message("toolwindow.task.folder.create.dialog.message"),
-    initialValue = "",
-  )
+private fun showCreateTaskFolderDialog(project: Project, canCreateWithAgent: Boolean): CreateTaskFolderRequest? {
+  val dialog = CreateTaskFolderDialog(project, canCreateWithAgent)
+  if (!dialog.showAndGet()) return null
+  return dialog.createRequest()
 }
 
 private fun showRenameTaskFolderDialog(project: Project, currentName: String): String? {
@@ -373,24 +435,9 @@ private fun confirmDeleteTaskFolder(project: Project, target: SessionActionTarge
   ) == Messages.YES
 }
 
-private fun showSetTaskFolderMetadataDialog(project: Project, target: SessionActionTarget.TaskFolder): Pair<String, String>? {
-  val key = Messages.showInputDialog(
-    project,
-    AgentSessionsBundle.message("toolwindow.task.folder.metadata.key.dialog.message"),
-    AgentSessionsBundle.message("toolwindow.task.folder.metadata.set.dialog.title"),
-    Messages.getQuestionIcon(),
-    target.metadata.keys.firstOrNull().orEmpty(),
-    NonBlankInputValidator(),
-  ) ?: return null
-  val value = Messages.showInputDialog(
-    project,
-    AgentSessionsBundle.message("toolwindow.task.folder.metadata.value.dialog.message"),
-    AgentSessionsBundle.message("toolwindow.task.folder.metadata.set.dialog.title"),
-    Messages.getQuestionIcon(),
-    target.metadata[key].orEmpty(),
-    null,
-  ) ?: return null
-  return key to value
+private fun showSetTaskFolderMetadataDialog(project: Project, target: SessionActionTarget.TaskFolder): TaskFolderMetadataEdit? {
+  val dialog = TaskFolderMetadataDialog(project, target)
+  return if (dialog.showAndGet()) dialog.metadataEdit() else null
 }
 
 private fun showDeleteTaskFolderMetadataDialog(project: Project, target: SessionActionTarget.TaskFolder): String? {
@@ -412,4 +459,146 @@ private class NonBlankInputValidator : InputValidatorEx {
   override fun getErrorText(inputString: String?): String? {
     return if (checkInput(inputString)) null else AgentSessionsBundle.message("toolwindow.task.folder.dialog.validation.empty")
   }
+}
+
+private class CreateTaskFolderDialog(
+  project: Project,
+  private val canCreateWithAgent: Boolean,
+) : DialogWrapper(project) {
+  private val nameField = JBTextField(32)
+  private var createWithAgent = false
+
+  init {
+    title = AgentSessionsBundle.message("toolwindow.task.folder.create.dialog.title")
+    setOKButtonText(AgentSessionsBundle.message("toolwindow.task.folder.create.dialog.create"))
+    init()
+    initValidation()
+  }
+
+  override fun createCenterPanel(): JComponent {
+    return JPanel(GridBagLayout()).apply {
+      border = JBUI.Borders.empty(8)
+      addMetadataRow(0, AgentSessionsBundle.message("toolwindow.task.folder.create.dialog.message"), nameField)
+    }
+  }
+
+  override fun createActions(): Array<Action> {
+    val createWithAgentAction = object : DialogWrapperAction(AgentSessionsBundle.message("toolwindow.task.folder.create.dialog.with.agent")) {
+      init {
+        isEnabled = canCreateWithAgent
+      }
+
+      override fun doAction(e: ActionEvent?) {
+        createWithAgent = true
+        doOKAction()
+        if (!isOK) {
+          createWithAgent = false
+        }
+      }
+    }
+    return arrayOf(okAction, createWithAgentAction, cancelAction)
+  }
+
+  override fun getPreferredFocusedComponent(): JComponent = nameField
+
+  override fun doValidate(): ValidationInfo? {
+    if (nameField.text.isBlank()) {
+      return ValidationInfo(AgentSessionsBundle.message("toolwindow.task.folder.dialog.validation.empty"), nameField)
+    }
+    return null
+  }
+
+  fun createRequest(): CreateTaskFolderRequest {
+    return CreateTaskFolderRequest(name = nameField.text, createWithAgent = createWithAgent)
+  }
+}
+
+private class TaskFolderMetadataDialog(
+  project: Project,
+  private val target: SessionActionTarget.TaskFolder,
+) : DialogWrapper(project) {
+  private val keyCombo = ComboBox<@NlsSafe String>().apply {
+    model = DefaultComboBoxModel(taskFolderMetadataKeyOptions(target.metadata))
+    isEditable = true
+  }
+  private val valueField = JBTextField(32)
+  private var loadedKey: String? = null
+
+  init {
+    title = AgentSessionsBundle.message("toolwindow.task.folder.metadata.set.dialog.title")
+    val initialKey = initialMetadataKey(target.metadata)
+    keyCombo.selectedItem = initialKey
+    loadedKey = initialKey
+    valueField.text = target.metadata[initialKey].orEmpty()
+    keyCombo.addActionListener { handleKeyChanged() }
+    init()
+    initValidation()
+  }
+
+  override fun createCenterPanel(): JComponent {
+    return JPanel(GridBagLayout()).apply {
+      border = JBUI.Borders.empty(8)
+      addMetadataRow(0, AgentSessionsBundle.message("toolwindow.task.folder.metadata.key.dialog.message"), keyCombo)
+      addMetadataRow(1, AgentSessionsBundle.message("toolwindow.task.folder.metadata.value.dialog.message"), valueField)
+    }
+  }
+
+  override fun getPreferredFocusedComponent(): JComponent = keyCombo
+
+  override fun doValidate(): ValidationInfo? {
+    if (metadataKey().isBlank()) {
+      return ValidationInfo(AgentSessionsBundle.message("toolwindow.task.folder.metadata.key.validation.empty"), keyCombo)
+    }
+    return null
+  }
+
+  fun metadataEdit(): TaskFolderMetadataEdit {
+    return TaskFolderMetadataEdit(
+      key = metadataKey(),
+      value = valueField.text,
+    )
+  }
+
+  private fun handleKeyChanged() {
+    val key = metadataKey()
+    if (key == loadedKey) return
+    target.metadata[key]?.let { value ->
+      valueField.text = value
+    }
+    loadedKey = key
+  }
+
+  private fun metadataKey(): @NlsSafe String {
+    return keyCombo.editor.item?.toString().orEmpty()
+  }
+}
+
+private fun JPanel.addMetadataRow(row: Int, labelText: @NlsContexts.Label String, component: JComponent) {
+  val label = JBLabel(labelText).apply { setLabelFor(component) }
+  add(label, GridBagConstraints().apply {
+    gridx = 0
+    gridy = row
+    anchor = GridBagConstraints.WEST
+    insets = JBUI.insets(0, 0, 8, 8)
+  })
+  add(component, GridBagConstraints().apply {
+    gridx = 1
+    gridy = row
+    fill = GridBagConstraints.HORIZONTAL
+    weightx = 1.0
+    insets = JBUI.insetsBottom(8)
+  })
+}
+
+private fun taskFolderMetadataKeyOptions(metadata: Map<String, String>): Array<@NlsSafe String> {
+  val keys = LinkedHashSet<@NlsSafe String>()
+  keys.addAll(TASK_FOLDER_METADATA_KEY_PRESETS)
+  metadata.keys.filterTo(keys) { key -> key.isNotBlank() }
+  return keys.toTypedArray()
+}
+
+private fun initialMetadataKey(metadata: Map<String, String>): @NlsSafe String {
+  return TASK_FOLDER_METADATA_KEY_PRESETS.firstOrNull(metadata::containsKey)
+         ?: metadata.keys.firstOrNull { key -> key.isNotBlank() }
+         ?: TASK_FOLDER_METADATA_KEY_PRESETS.first()
 }

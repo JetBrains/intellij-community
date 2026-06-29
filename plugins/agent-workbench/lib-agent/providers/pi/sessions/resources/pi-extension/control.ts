@@ -1,4 +1,5 @@
-import {type ExtensionContext} from "@earendil-works/pi-coding-agent";
+import {Type} from "@earendil-works/pi-ai";
+import {defineTool, type ExtensionAPI, type ExtensionContext} from "@earendil-works/pi-coding-agent";
 import * as crypto from "node:crypto";
 import * as http from "node:http";
 import {type Duplex} from "node:stream";
@@ -14,6 +15,7 @@ type AgentWorkbenchControlBridge = {
   setContext: (ctx: ExtensionContext) => void;
   getCurrentTaskFolder: () => Promise<AgentWorkbenchTaskFolder | undefined>;
   listTaskFolderThreads: (folderId?: string) => Promise<AgentWorkbenchTaskFolderThread[]>;
+  createAndAssignTaskFolder: (name: string, metadata?: Record<string, string>) => Promise<AgentWorkbenchCreatedTaskFolder>;
   getTaskFolderMetadata: (folderId?: string) => Promise<Record<string, string> | undefined>;
   setTaskFolderMetadata: (key: string, value: string, folderId?: string) => Promise<boolean>;
   deleteTaskFolderMetadata: (key: string, folderId?: string) => Promise<boolean>;
@@ -28,6 +30,7 @@ type AgentWorkbenchControlMessageType =
   | "forkFromEntry"
   | "getCurrentTaskFolder"
   | "listTaskFolderThreads"
+  | "createAndAssignTaskFolder"
   | "getTaskFolderMetadata"
   | "setTaskFolderMetadata"
   | "deleteTaskFolderMetadata";
@@ -36,6 +39,7 @@ type AgentWorkbenchControlSessionMessageType = "hello" | "sessionState";
 type AgentWorkbenchControlRequestType =
   | "getCurrentTaskFolder"
   | "listTaskFolderThreads"
+  | "createAndAssignTaskFolder"
   | "getTaskFolderMetadata"
   | "setTaskFolderMetadata"
   | "deleteTaskFolderMetadata";
@@ -51,12 +55,14 @@ type AgentWorkbenchControlCommand = {
   cancelled?: boolean;
   error?: string;
   folderId?: string;
+  name?: string;
   key?: string;
   value?: string;
   changed?: boolean;
   folder?: AgentWorkbenchTaskFolder | null;
   threads?: AgentWorkbenchTaskFolderThread[];
   metadata?: Record<string, string>;
+  assigned?: boolean;
 };
 
 type AgentWorkbenchControlThread = {
@@ -82,6 +88,11 @@ type AgentWorkbenchTaskFolderThread = {
   threadId: string;
   folderId: string;
   assignedAt?: number;
+};
+
+type AgentWorkbenchCreatedTaskFolder = {
+  folder: AgentWorkbenchTaskFolder;
+  assigned: boolean;
 };
 
 type AgentWorkbenchControlContext = ExtensionContext & {
@@ -293,6 +304,13 @@ export function startControlBridge(ctx: ExtensionContext): AgentWorkbenchControl
       const response = requireOk(await sendRequest("listTaskFolderThreads", {folderId}));
       return response.threads ?? [];
     },
+    createAndAssignTaskFolder: async (name, metadata) => {
+      const response = requireOk(await sendRequest("createAndAssignTaskFolder", {name, metadata}));
+      if (response.folder === undefined || response.folder === null) {
+        throw new Error("Agent Workbench did not return the created task folder");
+      }
+      return {folder: response.folder, assigned: response.assigned === true};
+    },
     getTaskFolderMetadata: async (folderId) => {
       const response = requireOk(await sendRequest("getTaskFolderMetadata", {folderId}));
       return response.metadata;
@@ -314,6 +332,39 @@ export function startControlBridge(ctx: ExtensionContext): AgentWorkbenchControl
       socket.close();
     },
   };
+}
+
+export function registerTaskFolderTool(
+  pi: ExtensionAPI,
+  bridgeProvider: () => AgentWorkbenchControlBridge | undefined,
+): void {
+  pi.registerTool(defineTool({
+    name: "agent_workbench_create_task_folder",
+    label: "Create Task Folder",
+    description: "Create an Agent Workbench task folder for the current project and assign the current Pi session to it.",
+    promptSnippet: "Create an Agent Workbench task folder and assign this Pi thread to it",
+    promptGuidelines: [
+      "Use agent_workbench_create_task_folder when the user asks to create a task folder or start work in a task folder.",
+      "Pass the issue id as issue when the user mentions an issue tracker id.",
+    ],
+    parameters: Type.Object({
+      name: Type.String({description: "Task folder name"}),
+      issue: Type.Optional(Type.String({description: "Issue tracker id to store as task folder metadata key 'issue'"})),
+    }),
+    async execute(_toolCallId, params, _signal, _onUpdate, _ctx) {
+      const bridge = bridgeProvider();
+      if (bridge === undefined) {
+        throw new Error("Agent Workbench control bridge is unavailable");
+      }
+      const issue = params.issue?.trim();
+      const metadata = issue === undefined || issue.length === 0 ? undefined : {issue};
+      const result = await bridge.createAndAssignTaskFolder(params.name, metadata);
+      return {
+        content: [{type: "text", text: `Created task folder '${result.folder.name}' and assigned this thread.`}],
+        details: result,
+      };
+    },
+  }));
 }
 
 function resolveCapabilities(ctx: ExtensionContext): { navigateTree: boolean; fork: boolean } {
