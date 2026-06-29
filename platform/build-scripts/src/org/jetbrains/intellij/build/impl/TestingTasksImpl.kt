@@ -1543,4 +1543,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.platform.buildScripts.usages.tests",
   "intellij.platform.collaborationTools.tests",
   "intellij.platform.coverage.tests",
+  "intellij.performanceTesting.ui.tests",
 )
