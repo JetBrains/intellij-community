@@ -3,6 +3,8 @@
 package com.intellij.ide.todo;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.ide.todo.model.TodoModel;
+import com.intellij.ide.todo.model.TodoModelChange;
 import com.intellij.ide.todo.model.TodoScope;
 import com.intellij.ide.todo.nodes.LeafTodoItemNode;
 import com.intellij.ide.todo.nodes.TodoFileNode;
@@ -10,6 +12,7 @@ import com.intellij.ide.todo.nodes.TodoItemNode;
 import com.intellij.ide.todo.nodes.TodoRemoteFileNode;
 import com.intellij.ide.todo.nodes.TodoRemoteItemNode;
 import com.intellij.ide.todo.nodes.TodoTreeHelper;
+import com.intellij.ide.todo.rpc.TodoEvent;
 import com.intellij.ide.todo.rpc.TodoFileResult;
 import com.intellij.ide.todo.rpc.TodoResult;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -96,6 +99,13 @@ public abstract class TodoTreeBuilder implements Disposable {
    */
   protected final Set<VirtualFile> myDirtyFileSet = ConcurrentHashMap.newKeySet();
 
+  /**
+   * Holds cached T.O.D.O data received from the backend for each file.
+   * Used in the remote code path to store {@link TodoFileResult}
+   * entries keyed by {@link VirtualFile}.
+   */
+  private final @NotNull TodoModel myTodoModel;
+
   //used from EDT and from StructureTreeModel invoker thread
   protected final Map<VirtualFile, EditorHighlighter> myFile2Highlighter = ContainerUtil.createConcurrentSoftValueMap();
 
@@ -127,6 +137,7 @@ public abstract class TodoTreeBuilder implements Disposable {
                   @NotNull Project project) {
     myTree = tree;
     myProject = project;
+    myTodoModel = new TodoModel();
     myCoroutineHelper = new TodoTreeBuilderCoroutineHelper(this);
 
     Disposer.register(myProject, this);
@@ -465,18 +476,23 @@ public abstract class TodoTreeBuilder implements Disposable {
   }
 
   @ApiStatus.Internal
+  @NotNull TodoModelChange applyRemoteTodoEvent(@NotNull TodoEvent event) {
+    return myTodoModel.applyEvent(event);
+  }
+
+  @ApiStatus.Internal
   public @NotNull List<TodoResult> getCachedRemoteTodos(@NotNull VirtualFile file) {
-    return myCoroutineHelper.getModel().getTodosForFile(file);
+    return myTodoModel.getTodosForFile(file);
   }
 
   @ApiStatus.Internal
   public @Nullable TodoFileResult getCachedRemoteTodoFile(@NotNull VirtualFile file) {
-    return myCoroutineHelper.getModel().getFileResult(file);
+    return myTodoModel.getFileResult(file);
   }
 
   @ApiStatus.Internal
   public boolean hasRemoteTodos(@NotNull VirtualFile file) {
-    return myCoroutineHelper.getModel().hasTodos(file);
+    return myTodoModel.hasTodos(file);
   }
 
   @ApiStatus.Internal

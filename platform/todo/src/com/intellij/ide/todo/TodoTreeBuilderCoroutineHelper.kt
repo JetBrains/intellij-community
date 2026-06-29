@@ -3,7 +3,6 @@ package com.intellij.ide.todo
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
-import com.intellij.ide.todo.model.TodoModel
 import com.intellij.ide.todo.model.TodoModelChange
 import com.intellij.ide.todo.model.TodoScope
 import com.intellij.ide.todo.rpc.TodoEvent
@@ -41,8 +40,6 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
   private val parentScope = treeBuilder.project.service<TodoCoroutineScopeProvider>().coroutineScope
   private val scope = parentScope.childScope("TodoTreeBuilderCoroutineHelper")
   private var remoteTodoFilesWatchJob: Job? = null
-  private val _model = TodoModel()
-  val model: TodoModel get() = _model
 
   init {
     Disposer.register(treeBuilder, this)
@@ -65,7 +62,7 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
       readAction { treeBuilder.clearCache() }
       collectWatchedTodoFiles(treeBuilder.project, todoScope, filter) { event ->
         coroutineContext.ensureActive()
-        val change = _model.applyEvent(event)
+        val change = treeBuilder.applyRemoteTodoEvent(event)
         when (change) {
           is TodoModelChange.FileUpdated -> treeBuilder.addRemoteTodoFileToTree(change.file)
           is TodoModelChange.FileRemoved -> treeBuilder.removeRemoteTodoFileFromTree(change.file)
