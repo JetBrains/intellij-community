@@ -23,8 +23,16 @@ class GCLogAnalyzer(private val ideStartResult: IDEStartResult) {
     private const val gcViewerUrl = "https://packages.jetbrains.team/files/p/ij/intellij-dependencies/gcviewer/gcviewer-1.37-05122022.jar"
   }
 
+  /**
+   * Collects GC metrics by running GCViewer over the IDE's `gcLog.log` and promoting the
+   * [requestedMetrics] fields from the generated `gcSummary` file.
+   *
+   * Only `gcSummary` fields whose GCViewer type is `-`, `M` (counter), `s` (duration), or
+   * `%` (percentage, fractional part dropped) are supported; fields of other types are ignored.
+   */
   fun getGCMetrics(
-    requestedMetrics: Array<String> = arrayOf("gcPause", "fullGCPause", "gcPauseCount", "totalHeapUsedMax", "freedMemoryByGC", "freedMemoryByFullGC", "freedMemory"),
+    requestedMetrics: Array<String> = arrayOf("gcPause", "fullGCPause", "gcPauseCount", "totalHeapUsedMax", "freedMemoryByGC", "freedMemoryByFullGC", "freedMemory",
+                                              "avgfootprintAfterFullGC", "maxPause", "accumPause", "totalPermUsedMax", "throughput"),
   ): Iterable<PerformanceMetrics.Metric> {
     val gcLogFile = (ideStartResult.runContext.reportsDir / "gcLog.log").toFile()
     return if (gcLogFile.exists()) {
@@ -107,6 +115,10 @@ class GCLogAnalyzer(private val ideStartResult: IDEStartResult) {
           }
           "s" -> {
             gcMetrics.add(PerformanceMetrics.Metric.newDuration(parameter, (value * 1000).toInt()))
+          }
+          "%" -> {
+            // GCViewer reports throughput as a percentage; the fractional part is dropped (e.g. 95.68 -> 95)
+            gcMetrics.add(PerformanceMetrics.Metric.newCounter(parameter, value.toInt()))
           }
           else -> {
             println("Unknown type: $type")
