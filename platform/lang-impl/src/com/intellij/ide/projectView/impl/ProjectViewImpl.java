@@ -158,10 +158,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   public static final @NonNls String ANDROID_VIEW_ID = "AndroidView";
 
   private final CopyPasteDelegator copyPasteDelegator;
-  // all these booleans must be accessed only in synchronized code
-  private boolean isInitialized;
-  private boolean isExtensionsLoading = false;
-  private boolean isExtensionsLoaded = false;
+  // all these booleans must be accessed only in synchronized code (or DCL)
+  private volatile boolean isInitialized;
+  private volatile boolean isExtensionsLoading = false;
+  private volatile boolean isExtensionsLoaded = false;
   private final @NotNull Project project;
 
   private boolean firstShow = true;
@@ -1056,15 +1056,21 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   // public for tests
-  public synchronized void setupImpl(@NotNull ToolWindow toolWindow) {
+  public void setupImpl(@NotNull ToolWindow toolWindow) {
     setupImpl(toolWindow, true);
   }
 
   // public for tests
-  public synchronized void setupImpl(@NotNull ToolWindow toolWindow, boolean loadPaneExtensions) {
+  public void setupImpl(@NotNull ToolWindow toolWindow, boolean loadPaneExtensions) {
     ThreadingAssertions.assertEventDispatchThread();
     if (isInitialized) return;
+    synchronized (this) {
+      doSetupImpl(toolWindow, loadPaneExtensions);
+    }
+  }
 
+  private void doSetupImpl(@NotNull ToolWindow toolWindow, boolean loadPaneExtensions) {
+    if (isInitialized) return; // DCL
     MessageBusConnection connection = project.getMessageBus().connect();
     var loadStatisticsReporter = new ProjectViewInitReporter(connection);
     connection.subscribe(ProjectViewListener.TOPIC, loadStatisticsReporter);
@@ -1144,47 +1150,55 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
-  private synchronized void reloadPanes() {
+  private void reloadPanes() {
     if (project.isDisposed() || !isExtensionsLoaded) return; // panes will be loaded later
 
-    Map<String, AbstractProjectViewPane> newPanes = loadPanes();
-    Map<AbstractProjectViewPane, Boolean> oldPanes = new IdentityHashMap<>();
-    uninitializedPanes.forEach(pane -> oldPanes.put(pane, pane == newPanes.get(pane.getId())));
-    idToPane.forEach((id, pane) -> oldPanes.put(pane, pane == newPanes.get(id)));
-    oldPanes.forEach((pane, exists) -> {
-      if (Boolean.FALSE.equals(exists)) {
-        removeProjectPane(pane);
-        Disposer.dispose(pane);
-      }
-    });
-    for (AbstractProjectViewPane pane : newPanes.values()) {
-      if (!Boolean.TRUE.equals(oldPanes.get(pane)) && pane.isInitiallyVisible()) {
-        addProjectPane(pane);
+    synchronized (this) {
+      if (project.isDisposed() || !isExtensionsLoaded) return; // DCL
+      Map<String, AbstractProjectViewPane> newPanes = loadPanes();
+      Map<AbstractProjectViewPane, Boolean> oldPanes = new IdentityHashMap<>();
+      uninitializedPanes.forEach(pane -> oldPanes.put(pane, pane == newPanes.get(pane.getId())));
+      idToPane.forEach((id, pane) -> oldPanes.put(pane, pane == newPanes.get(id)));
+      oldPanes.forEach((pane, exists) -> {
+        if (Boolean.FALSE.equals(exists)) {
+          removeProjectPane(pane);
+          Disposer.dispose(pane);
+        }
+      });
+      for (AbstractProjectViewPane pane : newPanes.values()) {
+        if (!Boolean.TRUE.equals(oldPanes.get(pane)) && pane.isInitiallyVisible()) {
+          addProjectPane(pane);
+        }
       }
     }
   }
 
-  private synchronized void ensurePanesLoaded() {
+  private void ensurePanesLoaded() {
     // one boolean is about avoiding recursion, the other actually checks if the job was already done
     if (project.isDisposed() || isExtensionsLoading || isExtensionsLoaded) {
       return;
     }
 
-    isExtensionsLoading = true;
-    try {
-      for (AbstractProjectViewPane pane : loadPanes().values()) {
-        try {
-          if (pane.isInitiallyVisible()) {
-            addProjectPane(pane);
+    synchronized (this) {
+      if (project.isDisposed() || isExtensionsLoading || isExtensionsLoaded) { // DCL
+        return;
+      }
+      isExtensionsLoading = true;
+      try {
+        for (AbstractProjectViewPane pane : loadPanes().values()) {
+          try {
+            if (pane.isInitiallyVisible()) {
+              addProjectPane(pane);
+            }
+          }
+          catch (Throwable e) {
+            LOG.warn("An exception occurred when trying to add the pane " + pane.getId() + ", it may not appear or may have inconsistent state");
           }
         }
-        catch (Throwable e) {
-          LOG.warn("An exception occurred when trying to add the pane " + pane.getId() + ", it may not appear or may have inconsistent state");
-        }
       }
-    }
-    finally {
-      isExtensionsLoading = false;
+      finally {
+        isExtensionsLoading = false;
+      }
     }
   }
 
