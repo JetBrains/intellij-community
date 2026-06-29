@@ -199,7 +199,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     assert myManualDisposable == null;
     Disposer.register(disposable, () -> {
       myManualDisposable = null;
-      deInitEditor();
+      myDisposable = null; // already disposed via the Disposer tree (registered as a child of the manual disposable)
       // This is a part of the manual dispose process, but not the automatic one
       // (when deInitEditor is called from removeNotify).
       // This is intentional, as in the automatic mode the component lifecycle is not determined:
@@ -209,6 +209,17 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       uninstallDocumentListener(true);
     });
     myManualDisposable = disposable;
+    registerEditorDisposableWithManualDisposable();
+  }
+
+  private void registerEditorDisposableWithManualDisposable() {
+    // Make myDisposable a child of the manual disposable so the editor's lifecycle is visible in the Disposer tree
+    // (eases memory-leak debugging) and is disposed together with the owner.
+    // Runs exactly once per myDisposable instance: either here (the manual disposable is already set when the editor is
+    // initialized) or from setDisposedWith (myDisposable already exists when the manual disposable is set).
+    if (myDisposable != null && myManualDisposable != null) {
+      Disposer.register(myManualDisposable, myDisposable);
+    }
   }
 
   public void setSupplementary(boolean supplementary) {
@@ -559,6 +570,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
         }
       });
     });
+    registerEditorDisposableWithManualDisposable();
   }
 
   private @NotNull EditorEx initEditor() {
