@@ -125,16 +125,12 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     }
   }
 
-  /**
-   * Resolve the [PsiElement] that a TSP declaration node points to.
-   * Must be called inside a read action.
-   */
-  private fun resolveDefTarget(pyElement: PyTypedElement, defNode: PyreflyLsp4jServer.TspNode): PsiElement? {
-    val virtualFile = VirtualFileManager.getInstance().findFileByUrl(defNode.uri) ?: return null
+  private fun findElement(tspNode: PyreflyLsp4jServer.TspNode): PsiElement? {
+    val virtualFile = VirtualFileManager.getInstance().findFileByUrl(tspNode.uri) ?: return null
+    val file = psiFile.manager.findFile(virtualFile) ?: return null
     val document = FileDocumentManager.getInstance().getDocument(virtualFile) ?: return null
-    val offset = getOffsetInDocument(document, defNode.range.start) ?: return null
-    val targetFile = pyElement.manager.findFile(virtualFile) as? PyFile ?: return null
-    return targetFile.findElementAt(offset)
+    val offset = getOffsetInDocument(document, tspNode.range.start) ?: return null
+    return file.findElementAt(offset)
   }
 
   /**
@@ -181,7 +177,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
       }
       return buildBuiltinClassType(pyElement, declaration.name)
     }
-    val target = resolveDefTarget(pyElement, defNode)
+    val target = findElement(defNode)
     val pyClass = target?.let { PsiTreeUtil.getParentOfType(it, PyClass::class.java) }
     if (pyClass == null) {
       // Pyrefly emits a sentinel `range=(0,0)` for builtin instances (e.g. `int` for the literal
@@ -233,7 +229,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
       }
       return buildBuiltinFunctionType(pyElement, declaration.name, tspType)
     }
-    val target = resolveDefTarget(pyElement, defNode)
+    val target = findElement(defNode)
     val callable = target?.let { PsiTreeUtil.getParentOfType(it, PyCallable::class.java) }
     if (callable == null) {
       // Sentinel `range=(0,0)` for builtin callables: PSI lookup at offset 0 misses the actual
@@ -308,7 +304,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
       thisLogger().info("Pyrefly TSP: built minimal PyTypeVarType for $name (no declaration node)")
       return Ref.create(PyTypeVarTypeImpl(name, null))
     }
-    val target = resolveDefTarget(pyElement, defNode)
+    val target = findElement(defNode)
     if (target != null) {
       val context = TypeEvalContext.codeAnalysis(pyElement.project, target.containingFile)
 
