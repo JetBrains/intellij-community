@@ -298,14 +298,12 @@ class CodexWebSocketAppServerClient(
     ephemeral: Boolean? = null,
   ): CodexStartedThreadSession {
     return startThread(
-      CodexThreadStartParams(
-        cwd = cwd,
-        model = model,
-        reasoningEffort = reasoningEffort,
-        approvalPolicy = approvalPolicy,
-        sandbox = sandbox,
-        ephemeral = ephemeral,
-      )
+      cwd = cwd,
+      model = model,
+      reasoningEffort = reasoningEffort,
+      approvalPolicy = approvalPolicy,
+      sandbox = sandbox,
+      ephemeral = ephemeral,
     )
   }
 
@@ -474,11 +472,25 @@ class CodexWebSocketAppServerClient(
   }
 
   private suspend fun startThread(
-    params: CodexThreadStartParams,
+    cwd: String? = null,
+    model: String? = null,
+    reasoningEffort: String? = null,
+    approvalPolicy: String? = null,
+    sandbox: String? = null,
+    ephemeral: Boolean? = null,
   ): CodexStartedThreadSession {
     val thread = request(
       method = "thread/start",
-      paramsWriter = { generator -> writeThreadStartParams(generator, params) },
+      paramsWriter = { generator ->
+        generator.writeStartObject()
+        cwd?.let { generator.writeStringField("cwd", it) }
+        model?.let { generator.writeStringField("model", it) }
+        reasoningEffort?.let { generator.writeStringField("reasoningEffort", it) }
+        approvalPolicy?.let { generator.writeStringField("approvalPolicy", it) }
+        sandbox?.let { generator.writeStringField("sandbox", it) }
+        ephemeral?.let { generator.writeBooleanField("ephemeral", it) }
+        generator.writeEndObject()
+      },
       resultParser = { parser -> protocol.parseThreadStartResult(parser) },
       defaultResult = null,
     )
@@ -927,26 +939,6 @@ private fun ConcurrentHashMap<String, MutableList<CompletableDeferred<Unit>>>.re
 
 private fun ConcurrentHashMap<String, MutableList<CompletableDeferred<Unit>>>.completeThreadSettingsUpdateWaiters(threadId: String) {
   remove(threadSettingsUpdateWaiterKey(threadId))?.forEach { waiter -> waiter.complete(Unit) }
-}
-
-internal data class CodexThreadStartParams(
-  @JvmField val cwd: String? = null,
-  @JvmField val model: String? = null,
-  @JvmField val reasoningEffort: String? = null,
-  @JvmField val approvalPolicy: String? = null,
-  @JvmField val sandbox: String? = null,
-  @JvmField val ephemeral: Boolean? = null,
-)
-
-internal fun writeThreadStartParams(generator: JsonGenerator, params: CodexThreadStartParams) {
-  generator.writeStartObject()
-  params.cwd?.let { generator.writeStringField("cwd", it) }
-  params.model?.let { generator.writeStringField("model", it) }
-  params.reasoningEffort?.let { generator.writeStringField("reasoningEffort", it) }
-  params.approvalPolicy?.let { generator.writeStringField("approvalPolicy", it) }
-  params.sandbox?.let { generator.writeStringField("sandbox", it) }
-  params.ephemeral?.let { generator.writeBooleanField("ephemeral", it) }
-  generator.writeEndObject()
 }
 
 private fun writeTurnStartParams(

@@ -48,6 +48,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessag
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentPendingSessionMetadata
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartNewSessionLaunchRequest
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentTerminalPromptDispatch
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionLaunchProfileResolver
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
@@ -1212,12 +1213,14 @@ class AgentSessionLaunchService internal constructor(
       val baseLaunchSpec = plannedLaunch.baseLaunchSpec
       val plannedLaunchSpec = plannedLaunch.launchSpec
       val prestartedLaunch = descriptor.prestartNewSessionLaunch(
-        projectPath = normalizedPath,
-        launchMode = mode,
-        initialMessagePlan = initialMessagePlan,
-        generationSettings = plannedLaunch.intent.generationSettings,
-        generationModelCatalog = plannedLaunch.generationModelCatalog,
-        launchSpec = plannedLaunchSpec,
+        AgentPrestartNewSessionLaunchRequest(
+          projectPath = normalizedPath,
+          launchMode = mode,
+          initialMessagePlan = initialMessagePlan,
+          generationSettings = plannedLaunch.intent.generationSettings,
+          generationModelCatalog = plannedLaunch.generationModelCatalog,
+          launchSpec = plannedLaunchSpec,
+        )
       )
       val launchSpec = prestartedLaunch?.launchSpec ?: plannedLaunchSpec
       val identity = buildNewSessionIdentity(provider = provider, launchSpec = launchSpec, fallbackPendingIdentity = fallbackPendingIdentity)
