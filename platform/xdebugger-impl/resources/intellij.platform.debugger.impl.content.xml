@@ -207,7 +207,5 @@
   <projectListeners>
     <listener class="com.intellij.xdebugger.impl.dashboard.XDebuggerRunDashboardUpdater"
               topic="com.intellij.execution.ExecutionListener"/>
-    <listener class="com.intellij.xdebugger.impl.proxy.MonolithListenerAdapter"
-              topic="com.intellij.xdebugger.XDebuggerManagerListener"/>
   </projectListeners>
 </idea-plugin>
