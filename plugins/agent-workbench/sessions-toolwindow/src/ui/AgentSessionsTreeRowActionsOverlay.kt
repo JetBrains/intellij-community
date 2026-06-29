@@ -267,6 +267,7 @@ private fun newThreadPath(node: SessionTreeNode): String? {
     is SessionTreeNode.Worktree -> node.worktree.path
     is SessionTreeNode.PinnedSection,
     is SessionTreeNode.SectionSeparator,
+    is SessionTreeNode.TaskFolder,
     is SessionTreeNode.Thread,
     is SessionTreeNode.SubAgent,
     is SessionTreeNode.Warning,

@@ -13,7 +13,7 @@ internal val AGENT_WORKBENCH_TEST_PATH_PREPEND: String = Path.of("custom", "bin"
 
 internal suspend fun <T> withTestLaunchSpecAugmenter(action: suspend () -> T): T {
   return AgentSessionLaunchSpecAugmenters.withAugmenterForTest(
-    AgentSessionLaunchSpecAugmenter { _, _, launchSpec ->
+    AgentSessionLaunchSpecAugmenter { _, _, _, launchSpec ->
       buildAugmentedLaunchSpec(launchSpec)
     },
     action,

@@ -7,9 +7,11 @@ import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
 import com.intellij.agent.workbench.sessions.toolwindow.tree.pathForMoreThreadsNode
+import com.intellij.agent.workbench.sessions.toolwindow.tree.pathForTaskFolderNode
 import com.intellij.agent.workbench.sessions.toolwindow.tree.pathForThreadNode
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderStatus
 
 internal fun createAgentSessionsTreePopupActionContext(
   project: Project,
@@ -17,6 +19,8 @@ internal fun createAgentSessionsTreePopupActionContext(
   node: SessionTreeNode,
   archiveTargets: List<ArchiveThreadTarget>,
   unarchiveTargets: List<ArchiveThreadTarget> = emptyList(),
+  selectedThreadTargets: List<SessionActionTarget.Thread> = emptyList(),
+  taskFolderArchiveTargets: List<ArchiveThreadTarget> = emptyList(),
   newThreadActionAvailable: Boolean = true,
 ): AgentSessionsTreePopupActionContext? {
   val target = resolveSessionActionTarget(nodeId, node) ?: return null
@@ -25,6 +29,8 @@ internal fun createAgentSessionsTreePopupActionContext(
     target = target,
     archiveTargets = archiveTargets,
     unarchiveTargets = unarchiveTargets,
+    selectedThreadTargets = selectedThreadTargets,
+    taskFolderArchiveTargets = taskFolderArchiveTargets,
     newThreadActionAvailable = newThreadActionAvailable,
   )
 }
@@ -47,6 +53,17 @@ internal fun resolveSessionActionTarget(nodeId: SessionTreeId, node: SessionTree
       if (nodeId !is SessionTreeId.Worktree) return null
       SessionActionTarget.Worktree(
         path = normalizeAgentWorkbenchPath(node.worktree.path),
+      )
+    }
+
+    is SessionTreeNode.TaskFolder -> {
+      val path = pathForTaskFolderNode(nodeId) ?: return null
+      SessionActionTarget.TaskFolder(
+        path = normalizeAgentWorkbenchPath(path),
+        folderId = node.folder.id,
+        name = node.folder.name,
+        isDone = node.folder.status == AgentTaskFolderStatus.DONE,
+        metadata = node.folder.metadata,
       )
     }
 

@@ -18,6 +18,7 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.core.session.AgentSubAgent
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionArchivedSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionCostSource
+import com.intellij.platform.ai.agent.sessions.core.providers.BaseAgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPrefetchSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshHintsSource
@@ -46,6 +47,7 @@ import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.state.InMemorySessionWarmState
 import com.intellij.agent.workbench.sessions.state.SessionWarmState
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.CoroutineScope
@@ -126,6 +128,7 @@ data class TestProjectCatalogEntry(
   @JvmField val worktrees: List<TestWorktreeCatalogEntry> = emptyList(),
   @JvmField val branch: String? = null,
   @JvmField val isOpen: Boolean = true,
+  @JvmField val projectDirectory: String? = null,
 )
 
 data class TestWorktreeCatalogEntry(
@@ -133,6 +136,7 @@ data class TestWorktreeCatalogEntry(
   @JvmField val name: String,
   @JvmField val branch: String?,
   @JvmField val isOpen: Boolean = false,
+  @JvmField val projectDirectory: String? = null,
 )
 
 class AgentSessionStateSyncTestFacade(
@@ -243,17 +247,18 @@ class ScriptedSessionSource(
     if (refreshResult != null) {
       return refreshResult
     }
-    val prefetchedThreadsByPath = prefetch(request.paths)
+    val prefetchedThreadsByPath = prefetch(request.sourcePaths())
     val completeThreadsByPath = LinkedHashMap<String, List<AgentSessionThread>>(request.paths.size)
     val failuresByPath = LinkedHashMap<String, Throwable>()
     for (path in request.paths) {
-      val prefetchedThreads = prefetchedThreadsByPath[path]
+      val sourcePath = request.sourcePathFor(path)
+      val prefetchedThreads = prefetchedThreadsByPath[sourcePath]
       if (prefetchedThreads != null) {
         completeThreadsByPath[path] = prefetchedThreads
         continue
       }
       try {
-        completeThreadsByPath[path] = listFromClosedProject(path)
+        completeThreadsByPath[path] = listFromClosedProject(sourcePath)
       }
       catch (e: Throwable) {
         if (e is CancellationException) throw e
@@ -275,6 +280,29 @@ class ScriptedSessionSource(
     refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
   ): Map<String, AgentSessionRefreshHints> {
     return prefetchRefreshThreadSeedsProvider(paths, refreshThreadSeedsByPath)
+  }
+}
+
+class CwdBackedScriptedSessionSource(
+  provider: AgentSessionProvider,
+  canReportExactThreadCount: Boolean = true,
+  private val list: suspend (path: String, openProject: Project?) -> List<AgentSessionThread> = { _, _ -> emptyList() },
+  private val listArchived: suspend (path: String, openProject: Project?) -> List<AgentSessionThread> = { _, _ -> emptyList() },
+  private val prefetch: suspend (paths: List<String>) -> Map<String, List<AgentSessionThread>> = { emptyMap() },
+) : BaseAgentSessionSource(
+  provider = provider,
+  canReportExactThreadCount = canReportExactThreadCount,
+), AgentSessionArchivedSource, AgentSessionPrefetchSource {
+  override suspend fun loadThreads(path: String, openProject: Project?): List<AgentSessionThread> {
+    return list(path, openProject)
+  }
+
+  override suspend fun listArchivedThreads(path: String, openProject: Project?): List<AgentSessionThread> {
+    return listArchived(path, openProject)
+  }
+
+  override suspend fun prefetchThreads(paths: List<String>): Map<String, List<AgentSessionThread>> {
+    return prefetch(paths)
   }
 }
 
@@ -720,6 +748,7 @@ fun openTestProjectEntry(
   name: String,
   worktrees: List<TestWorktreeCatalogEntry> = emptyList(),
   branch: String? = null,
+  projectDirectory: String? = null,
 ): TestProjectCatalogEntry {
   return TestProjectCatalogEntry(
     path = path,
@@ -727,6 +756,7 @@ fun openTestProjectEntry(
     branch = branch,
     worktrees = worktrees,
     isOpen = true,
+    projectDirectory = projectDirectory,
   )
 }
 
@@ -735,11 +765,14 @@ internal fun openProjectEntry(
   name: String,
   worktrees: List<WorktreeEntry> = emptyList(),
   branch: String? = null,
+  projectDirectory: String? = null,
 ): ProjectEntry {
+  val resolvedProjectDirectory = projectDirectory ?: path
   return ProjectEntry(
     path = path,
+    projectDirectory = resolvedProjectDirectory,
     name = name,
-    project = openProjectProxy(name),
+    project = openProjectProxy(name = name, basePath = resolvedProjectDirectory),
     branch = branch,
     worktreeEntries = worktrees,
   )
@@ -750,9 +783,11 @@ internal fun closedProjectEntry(
   name: String,
   worktrees: List<WorktreeEntry> = emptyList(),
   branch: String? = null,
+  projectDirectory: String? = null,
 ): ProjectEntry {
   return ProjectEntry(
     path = path,
+    projectDirectory = projectDirectory ?: path,
     name = name,
     project = null,
     branch = branch,
@@ -760,10 +795,16 @@ internal fun closedProjectEntry(
   )
 }
 
-private fun openProjectProxy(name: String): Project {
+internal fun openProjectProxy(
+  name: String,
+  basePath: String? = null,
+  services: Map<Class<*>, Any> = emptyMap(),
+): Project {
   val handler = InvocationHandler { proxy, method, args ->
     when (method.name) {
       "getName" -> name
+      "getBasePath" -> basePath
+      "getService", "getServiceAsync" -> services[args?.firstOrNull() as? Class<*>]
       "isOpen" -> true
       "isDisposed" -> false
       "toString" -> "MockProject($name)"
@@ -774,7 +815,7 @@ private fun openProjectProxy(name: String): Project {
   }
   return Proxy.newProxyInstance(
     Project::class.java.classLoader,
-    arrayOf(Project::class.java),
+    arrayOf(Project::class.java, ComponentManagerEx::class.java),
     handler,
   ) as Project
 }
@@ -843,20 +884,24 @@ private fun testIntegrationProviderDescriptor(provider: AgentSessionProvider): T
 }
 
 private fun TestProjectCatalogEntry.toProjectEntry(): ProjectEntry {
+  val resolvedProjectDirectory = projectDirectory ?: path
   return ProjectEntry(
     path = path,
+    projectDirectory = resolvedProjectDirectory,
     name = name,
-    project = if (isOpen) openProjectProxy(name) else null,
+    project = if (isOpen) openProjectProxy(name = name, basePath = resolvedProjectDirectory) else null,
     branch = branch,
     worktreeEntries = worktrees.map { it.toWorktreeEntry() },
   )
 }
 
 private fun TestWorktreeCatalogEntry.toWorktreeEntry(): WorktreeEntry {
+  val resolvedProjectDirectory = projectDirectory ?: path
   return WorktreeEntry(
     path = path,
+    projectDirectory = resolvedProjectDirectory,
     name = name,
     branch = branch,
-    project = if (isOpen) openProjectProxy(name) else null,
+    project = if (isOpen) openProjectProxy(name = name, basePath = resolvedProjectDirectory) else null,
   )
 }

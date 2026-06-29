@@ -14,6 +14,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentTerminalPromp
 internal data class AgentChatTabIdentity(
   @JvmField val projectHash: String,
   @JvmField val projectPath: String,
+  @JvmField val projectDirectory: String? = null,
   @JvmField val threadIdentity: String,
   @JvmField val subAgentId: String?,
 )
@@ -58,6 +59,7 @@ internal data class AgentChatTabSnapshot(
     fun create(
       projectHash: String,
       projectPath: String,
+      projectDirectory: String? = null,
       threadIdentity: String,
       threadId: String,
       threadTitle: String,
@@ -99,6 +101,7 @@ internal data class AgentChatTabSnapshot(
       val identity = AgentChatTabIdentity(
         projectHash = projectHash,
         projectPath = projectPath,
+        projectDirectory = projectDirectory,
         threadIdentity = threadIdentity,
         subAgentId = subAgentId,
       )

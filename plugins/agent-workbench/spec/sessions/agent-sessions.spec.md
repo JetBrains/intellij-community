@@ -24,7 +24,7 @@ targets:
 # Agent Threads Tool Window
 
 Status: Draft
-Date: 2026-06-15
+Date: 2026-06-28
 
 ## Summary
 
@@ -38,7 +38,7 @@ behavior; refresh mechanics and detailed tree rendering/interaction contracts li
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsToolWindowFactorySwingTest.kt
 
 - Project catalog rows must merge open projects and recent projects, exclude the dedicated Agent frame project, and group Git worktrees
-  under their parent project when detected.
+  under their parent project when detected. Rows are keyed by the normalized identity path, but may carry a separate project directory used for source loading and worktree grouping. Recent closed projects must preserve remembered identity-to-directory mappings so reopened Bazel project-view identities still load from the workspace root.
   [@test] ../../sessions/testSrc/AgentSessionProjectCatalogTest.kt
   [@test] ../../sessions/testSrc/GitWorktreeDiscoveryTest.kt
 
@@ -62,6 +62,11 @@ behavior; refresh mechanics and detailed tree rendering/interaction contracts li
 - New-thread affordances for project/worktree rows and toolbars must follow `../actions/new-thread.spec.md`.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
   [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
+
+- Task-folder grouping, lifecycle actions, explicit metadata, and folder tree placement must follow `agent-task-folders.spec.md`.
+  [@test] ../../sessions/testSrc/AgentTaskFolderServiceTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreeSnapshotTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
 
 - Archive, unarchive, and rename actions must update the session view through provider-backed refresh paths; unsupported provider
   capabilities must hide or disable the corresponding action without blocking supported targets.
@@ -133,6 +138,7 @@ behavior; refresh mechanics and detailed tree rendering/interaction contracts li
 
 - `agent-sessions-tree.spec.md`
 - `agent-sessions-refresh.spec.md`
+- `agent-task-folders.spec.md`
 - `../core/agent-core-contracts.spec.md`
 - `../chat/agent-chat-editor.spec.md`
 - `../actions/new-thread.spec.md`

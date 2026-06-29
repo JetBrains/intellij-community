@@ -26,6 +26,7 @@ import com.intellij.maven.testFramework.fixtures.projectsTree
 import com.intellij.maven.testFramework.fixtures.scheduleProjectImportAndWait
 import com.intellij.maven.testFramework.fixtures.updateAllProjects
 import com.intellij.maven.testFramework.fixtures.updateSettingsXml
+import com.intellij.maven.testFramework.fixtures.waitForImportWithinTimeout
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.edtWriteAction
@@ -46,7 +47,6 @@ import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.jetbrains.idea.maven.fixtures.waitForImportWithinTimeout
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.junit.jupiter.api.Assertions.assertEquals

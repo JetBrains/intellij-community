@@ -109,7 +109,7 @@ abstract class BaseAgentSessionSource(
     }
 
     val prefetched = try {
-      (this as? AgentSessionPrefetchSource)?.prefetchThreads(request.paths).orEmpty()
+      (this as? AgentSessionPrefetchSource)?.prefetchThreads(request.sourcePaths()).orEmpty()
     }
     catch (e: Throwable) {
       if (e is CancellationException) throw e
@@ -118,13 +118,14 @@ abstract class BaseAgentSessionSource(
     val completeThreadsByPath = LinkedHashMap<String, List<AgentSessionThread>>(request.paths.size)
     val failuresByPath = LinkedHashMap<String, Throwable>()
     for (path in request.paths) {
-      val prefetchedThreads = prefetched[path]
+      val sourcePath = request.sourcePathFor(path)
+      val prefetchedThreads = prefetched[sourcePath]
       if (prefetchedThreads != null) {
         completeThreadsByPath[path] = prefetchedThreads
         continue
       }
       try {
-        completeThreadsByPath[path] = listThreads(path = path, openProject = null)
+        completeThreadsByPath[path] = listThreads(path = sourcePath, openProject = null)
       }
       catch (e: Throwable) {
         if (e is CancellationException) throw e

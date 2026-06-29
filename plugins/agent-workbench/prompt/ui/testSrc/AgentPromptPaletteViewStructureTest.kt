@@ -3,10 +3,12 @@ package com.intellij.agent.workbench.prompt.ui
 
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-composer.spec.md
 
+import com.intellij.agent.workbench.prompt.ui.icons.AgentWorkbenchPromptUIIcons
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
@@ -89,7 +91,7 @@ class AgentPromptPaletteViewStructureTest {
   fun providerOptionActionsAreRenderedOnceInsideHeader() {
     runInEdtAndWait {
       val promptArea = EditorTextField()
-      val planModeAction = AgentPromptHeaderCheckBoxAction("&Plan mode")
+      val planModeAction = createPlanModeHeaderAction()
       val view = createAgentPromptPaletteView(
         promptArea = promptArea,
         contextChipsPanel = JPanel(),
@@ -98,14 +100,16 @@ class AgentPromptPaletteViewStructureTest {
       view.headerControls.setProviderOptionActions(listOf(planModeAction))
       layoutPopupRoot(view.rootPanel)
 
-      val planModeCheckBoxes = collectComponentsOfType(view.rootPanel, JBCheckBox::class.java).filter { it.text == "Plan mode" }
-      val planModeCheckBox = planModeCheckBoxes.single()
+      val planModeButton = findHeaderActionButton(view, planModeAction)
       assertThat(view.headerControls.providerOptionActions).containsExactly(planModeAction)
-      assertThat(SwingUtilities.isDescendingFrom(planModeCheckBox, view.headerControls.toolbarComponent)).isTrue()
-      assertThat(SwingUtilities.isDescendingFrom(planModeCheckBox, view.rightHeaderPanel)).isTrue()
-      assertThat(SwingUtilities.isDescendingFrom(planModeCheckBox, view.generationSettingsPanel)).isFalse()
-      assertThat(SwingUtilities.isDescendingFrom(planModeCheckBox, view.promptEditorPanel)).isFalse()
-      assertThat(planModeCheckBox.isFocusable).isFalse()
+      assertThat(planModeAction.templatePresentation.text).isEqualTo("Plan mode")
+      assertThat(planModeAction.templatePresentation.icon).isSameAs(AgentWorkbenchPromptUIIcons.PlanMode)
+      assertThat(SwingUtilities.isDescendingFrom(planModeButton, view.headerControls.toolbarComponent)).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(planModeButton, view.rightHeaderPanel)).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(planModeButton, view.generationSettingsPanel)).isFalse()
+      assertThat(SwingUtilities.isDescendingFrom(planModeButton, view.promptEditorPanel)).isFalse()
+      assertThat(collectComponentsOfType(view.rootPanel, JBCheckBox::class.java).map { checkBox -> checkBox.text })
+        .doesNotContain("Plan mode")
     }
   }
 
@@ -113,7 +117,7 @@ class AgentPromptPaletteViewStructureTest {
   fun rightHeaderPanelIsRightAlignedAfterTargetTabs() {
     runInEdtAndWait {
       val promptArea = EditorTextField()
-      val planModeAction = AgentPromptHeaderCheckBoxAction("&Plan mode")
+      val planModeAction = createPlanModeHeaderAction()
       val view = createAgentPromptPaletteView(
         promptArea = promptArea,
         contextChipsPanel = JPanel(),
@@ -138,7 +142,7 @@ class AgentPromptPaletteViewStructureTest {
   @Test
   fun popupDefaultWidthStaysStableWhenHeaderOptionsAreVisible() {
     runInEdtAndWait {
-      val planModeAction = AgentPromptHeaderCheckBoxAction("&Plan mode")
+      val planModeAction = createPlanModeHeaderAction()
       val view = createAgentPromptPaletteView(
         promptArea = EditorTextField(),
         contextChipsPanel = JPanel(),
@@ -163,7 +167,7 @@ class AgentPromptPaletteViewStructureTest {
   fun inlineEmptyStatePresentationKeepsCompactGlobalPromptChrome() {
     runInEdtAndWait {
       val promptArea = EditorTextField()
-      val planModeAction = AgentPromptHeaderCheckBoxAction("&Plan mode")
+      val planModeAction = createPlanModeHeaderAction()
       val view = createAgentPromptPaletteView(
         promptArea = promptArea,
         contextChipsPanel = JPanel(),
@@ -249,7 +253,7 @@ class AgentPromptPaletteViewStructureTest {
   fun inlineEmptyStateKeepsPromptUsableAtMinimumSize() {
     runInEdtAndWait {
       val promptArea = EditorTextField()
-      val planModeAction = AgentPromptHeaderCheckBoxAction("&Plan mode")
+      val planModeAction = createPlanModeHeaderAction()
       val view = createAgentPromptPaletteView(
         promptArea = promptArea,
         contextChipsPanel = JPanel(),
@@ -276,7 +280,7 @@ class AgentPromptPaletteViewStructureTest {
   @Test
   fun headerToolbarDoesNotForcePopupWiderThanMinimumWidth() {
     runInEdtAndWait {
-      val planModeAction = AgentPromptHeaderCheckBoxAction("&Plan mode")
+      val planModeAction = createPlanModeHeaderAction()
       val view = createAgentPromptPaletteView(
         promptArea = EditorTextField(),
         contextChipsPanel = JPanel(),
@@ -305,7 +309,7 @@ class AgentPromptPaletteViewStructureTest {
       )
       view.headerControls.setContainerModeVisible(true)
       layoutPopupRoot(view.rootPanel)
-      val containerModeCheckBox = findHeaderCheckBox(view, "Run in container")
+      val containerModeCheckBox = findContainerModeCheckBox(view)
 
       assertThat(SwingUtilities.isDescendingFrom(containerModeCheckBox, view.headerControls.toolbarComponent)).isTrue()
       assertThat(SwingUtilities.isDescendingFrom(containerModeCheckBox, view.rightHeaderPanel)).isTrue()
@@ -322,9 +326,9 @@ class AgentPromptPaletteViewStructureTest {
   }
 
   @Test
-  fun headerOptionCheckBoxesUseSearchEverywhereCheckboxStyle() {
+  fun planModeControlUsesIconOnlyHeaderButton() {
     runInEdtAndWait {
-      val planModeAction = AgentPromptHeaderCheckBoxAction("&Plan mode")
+      val planModeAction = createPlanModeHeaderAction()
       val view = createAgentPromptPaletteView(
         promptArea = EditorTextField(),
         contextChipsPanel = JPanel(),
@@ -333,17 +337,15 @@ class AgentPromptPaletteViewStructureTest {
       view.headerControls.setProviderOptionActions(listOf(planModeAction))
       view.headerControls.setContainerModeVisible(true)
       layoutPopupRoot(view.rootPanel)
-      val planModeCheckBox = findHeaderCheckBox(view, "Plan mode")
-      val containerModeCheckBox = findHeaderCheckBox(view, "Run in container")
+      val planModeButton = findHeaderActionButton(view, planModeAction)
+      val containerModeCheckBox = findContainerModeCheckBox(view)
 
-      val defaultCheckBox = JBCheckBox()
-      assertThat(planModeCheckBox.font).isEqualTo(defaultCheckBox.font)
-      assertThat(containerModeCheckBox.font).isEqualTo(defaultCheckBox.font)
-      assertThat(planModeCheckBox.isOpaque).isEqualTo(containerModeCheckBox.isOpaque)
-      assertThat(planModeCheckBox.isFocusable).isEqualTo(containerModeCheckBox.isFocusable)
-      assertThat(planModeCheckBox.border.getBorderInsets(planModeCheckBox))
-        .isEqualTo(containerModeCheckBox.border.getBorderInsets(containerModeCheckBox))
-      assertThat(abs(yCenterInRoot(planModeCheckBox, view.rootPanel) - yCenterInRoot(containerModeCheckBox, view.rootPanel)))
+      assertThat(planModeAction.templatePresentation.text).isEqualTo("Plan mode")
+      assertThat(planModeAction.templatePresentation.description).isEqualTo("Plan mode")
+      assertThat(planModeAction.templatePresentation.icon).isSameAs(AgentWorkbenchPromptUIIcons.PlanMode)
+      assertThat(collectComponentsOfType(view.rootPanel, JBCheckBox::class.java).map { checkBox -> checkBox.text })
+        .doesNotContain("Plan mode")
+      assertThat(abs(yCenterInRoot(planModeButton, view.rootPanel) - yCenterInRoot(containerModeCheckBox, view.rootPanel)))
         .isLessThanOrEqualTo(1)
     }
   }
@@ -652,10 +654,20 @@ class AgentPromptPaletteViewStructureTest {
     return y + component.height / 2
   }
 
-  private fun findHeaderCheckBox(view: AgentPromptPaletteView, text: String): JBCheckBox {
+  private fun findContainerModeCheckBox(view: AgentPromptPaletteView): JBCheckBox {
     view.headerControls.updateActions()
     layoutPopupRoot(view.rootPanel)
-    return collectComponentsOfType(view.rootPanel, JBCheckBox::class.java).single { checkBox -> checkBox.text == text }
+    return collectComponentsOfType(view.rootPanel, JBCheckBox::class.java).single { checkBox -> checkBox.text == "Run in container" }
+  }
+
+  private fun findHeaderActionButton(view: AgentPromptPaletteView, action: AgentPromptHeaderIconToggleAction): ActionButton {
+    view.headerControls.updateActions()
+    layoutPopupRoot(view.rootPanel)
+    return collectComponentsOfType(view.rootPanel, ActionButton::class.java).single { button -> button.action === action }
+  }
+
+  private fun createPlanModeHeaderAction(): AgentPromptHeaderIconToggleAction {
+    return AgentPromptHeaderIconToggleAction("Plan mode", AgentWorkbenchPromptUIIcons.PlanMode)
   }
 
   private fun triggerMousePressed(component: Component) {

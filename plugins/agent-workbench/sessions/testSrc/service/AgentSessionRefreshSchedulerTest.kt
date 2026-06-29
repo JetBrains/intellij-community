@@ -5,6 +5,7 @@ import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionActivityEvidence
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadActivityUpdate
@@ -82,6 +83,76 @@ class AgentSessionRefreshSchedulerTest {
       AgentThreadActivityReport(
         rowActivity = AgentThreadActivity.PROCESSING,
         chromeActivity = AgentThreadActivity.REVIEWING,
+      )
+    )
+    assertThat(resolved.updatedAt).isEqualTo(300L)
+  }
+
+  @Test
+  fun provisionalActivityUpdatePreservesAttentionChromeActivity() {
+    val thread = AgentSessionThread(
+      id = "thread-a",
+      title = "Thread A",
+      updatedAt = 200L,
+      archived = false,
+      activityReport = AgentThreadActivityReport(
+        rowActivity = AgentThreadActivity.NEEDS_INPUT,
+        chromeActivity = AgentThreadActivity.NEEDS_INPUT,
+      ),
+      provider = AgentSessionProvider.from("codex"),
+    )
+
+    val resolved = resolveAgentThreadActivityReportUpdate(
+      thread = thread,
+      activityUpdate = AgentSessionThreadActivityUpdate(
+        activityReport = AgentThreadActivityReport(
+          rowActivity = AgentThreadActivity.PROCESSING,
+          chromeActivity = AgentThreadActivity.PROCESSING,
+        ),
+        updatedAt = 300L,
+        evidence = AgentSessionActivityEvidence.PROVISIONAL,
+      ),
+    )
+
+    assertThat(resolved.activityReport).isEqualTo(
+      AgentThreadActivityReport(
+        rowActivity = AgentThreadActivity.PROCESSING,
+        chromeActivity = AgentThreadActivity.NEEDS_INPUT,
+      )
+    )
+    assertThat(resolved.updatedAt).isEqualTo(300L)
+  }
+
+  @Test
+  fun snapshotActivityUpdateCanClearAttentionChromeActivity() {
+    val thread = AgentSessionThread(
+      id = "thread-a",
+      title = "Thread A",
+      updatedAt = 200L,
+      archived = false,
+      activityReport = AgentThreadActivityReport(
+        rowActivity = AgentThreadActivity.NEEDS_INPUT,
+        chromeActivity = AgentThreadActivity.NEEDS_INPUT,
+      ),
+      provider = AgentSessionProvider.from("codex"),
+    )
+
+    val resolved = resolveAgentThreadActivityReportUpdate(
+      thread = thread,
+      activityUpdate = AgentSessionThreadActivityUpdate(
+        activityReport = AgentThreadActivityReport(
+          rowActivity = AgentThreadActivity.READY,
+          chromeActivity = AgentThreadActivity.READY,
+        ),
+        updatedAt = 300L,
+        evidence = AgentSessionActivityEvidence.SNAPSHOT,
+      ),
+    )
+
+    assertThat(resolved.activityReport).isEqualTo(
+      AgentThreadActivityReport(
+        rowActivity = AgentThreadActivity.READY,
+        chromeActivity = AgentThreadActivity.READY,
       )
     )
     assertThat(resolved.updatedAt).isEqualTo(300L)
@@ -199,6 +270,48 @@ class AgentSessionRefreshSchedulerTest {
       assertThat(update.updatesChromeActivity).isTrue()
       assertThat(providerHintRefreshes.single().changedProjectFilePaths).containsExactly(firstChangedFile, secondChangedFile)
       assertThat(vfsRefreshes.single().changedProjectFilePaths).containsExactly(firstChangedFile, secondChangedFile)
+    }
+  }
+
+  @Test
+  fun scopedRefreshSignalsMergeProvisionalActivityWithoutClearingAttentionChromeActivity() = runBlocking(Dispatchers.Default) {
+    val projectPath = "/work/project"
+    val scopedEvents = flow {
+      emit(
+        scopedEvent(
+          path = projectPath,
+          threadId = "thread-a",
+          activityUpdatesByThreadId = mapOf("thread-a" to activityUpdate(
+            activity = AgentThreadActivity.NEEDS_INPUT,
+            evidence = AgentSessionActivityEvidence.SNAPSHOT,
+          )),
+        )
+      )
+      delay(100.milliseconds)
+      emit(
+        scopedEvent(
+          path = projectPath,
+          threadId = "thread-a",
+          activityUpdatesByThreadId = mapOf("thread-a" to activityUpdate(
+            activity = AgentThreadActivity.PROCESSING,
+            evidence = AgentSessionActivityEvidence.PROVISIONAL,
+          )),
+        )
+      )
+    }
+
+    withScheduler(scopedEvents) {
+      waitForCondition { providerHintRefreshes.size == 1 }
+      delay(500.milliseconds)
+
+      val update = providerHintRefreshes.single().activityUpdatesByThreadId.getValue("thread-a")
+      assertThat(update.activityReport).isEqualTo(
+        AgentThreadActivityReport(
+          rowActivity = AgentThreadActivity.PROCESSING,
+          chromeActivity = AgentThreadActivity.NEEDS_INPUT,
+        )
+      )
+      assertThat(update.evidence).isEqualTo(AgentSessionActivityEvidence.SNAPSHOT)
     }
   }
 
@@ -435,11 +548,13 @@ private fun activityUpdate(
   chromeActivity: AgentThreadActivity? = activity,
   updatesChromeActivity: Boolean = true,
   updatedAt: Long? = null,
+  evidence: AgentSessionActivityEvidence = AgentSessionActivityEvidence.DERIVED,
 ): AgentSessionThreadActivityUpdate {
   return AgentSessionThreadActivityUpdate(
     activityReport = AgentThreadActivityReport(rowActivity = activity, chromeActivity = chromeActivity),
     updatesChromeActivity = updatesChromeActivity,
     updatedAt = updatedAt,
+    evidence = evidence,
   )
 }
 

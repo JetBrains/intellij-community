@@ -17,11 +17,14 @@ import com.intellij.agent.workbench.sessions.toolwindow.tree.pathForThreadNode
 import com.intellij.agent.workbench.sessions.toolwindow.tree.shouldHandleSingleClick
 import com.intellij.agent.workbench.sessions.toolwindow.tree.shouldRetargetSelectionForContextMenu
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ai.agent.sessions.core.SessionActionTarget
+import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolder
 import com.intellij.ui.hover.HoverListener
 import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.treeStructure.Tree
@@ -40,12 +43,16 @@ import javax.swing.tree.TreePath
 
 internal class AgentSessionsTreeInteractionController(
   private val project: Project,
+  private val parentDisposable: Disposable,
   private val tree: Tree,
   private val rowActionsOverlayProvider: () -> AgentSessionsTreeRowActionsOverlay,
   private val nodeResolver: (SessionTreeId) -> SessionTreeNode?,
   private val isHoverableTreeId: (SessionTreeId) -> Boolean,
   private val selectedArchiveTargets: () -> List<ArchiveThreadTarget>,
   private val selectedUnarchiveTargets: () -> List<ArchiveThreadTarget>,
+  private val selectedThreadTargets: () -> List<SessionActionTarget.Thread>,
+  private val taskFolderArchiveTargets: (SessionTreeId.TaskFolder) -> List<ArchiveThreadTarget>,
+  private val assignThreadToTaskFolder: (SessionActionTarget.Thread, AgentTaskFolder) -> Unit,
   private val showMoreProjects: () -> Unit,
   private val showMoreThreads: (String) -> Unit,
   private val isNewThreadPopupAvailable: () -> Boolean = { true },
@@ -58,8 +65,18 @@ internal class AgentSessionsTreeInteractionController(
     installHoverListener()
     EditSourceOnDoubleClickHandler.install(tree) { activateSelectedNode() }
     installEnterKeyActivation()
+    installTaskFolderDnD()
     installMouseListeners()
     installTreeExpansionListener()
+  }
+
+  private fun installTaskFolderDnD() {
+    AgentSessionsTreeTaskFolderDnDSupport(
+      tree = tree,
+      nodeResolver = nodeResolver,
+      selectedThreadTargets = selectedThreadTargets,
+      assignThread = assignThreadToTaskFolder,
+    ).install(parentDisposable)
   }
 
   private fun installHoverListener() {
@@ -179,6 +196,8 @@ internal class AgentSessionsTreeInteractionController(
       node = treeNode,
       archiveTargets = selectedArchiveTargets(),
       unarchiveTargets = selectedUnarchiveTargets(),
+      selectedThreadTargets = selectedThreadTargets(),
+      taskFolderArchiveTargets = (id as? SessionTreeId.TaskFolder)?.let(taskFolderArchiveTargets).orEmpty(),
       newThreadActionAvailable = isNewThreadPopupAvailable(),
     ) ?: return
     val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, actionGroup)
@@ -222,6 +241,7 @@ internal class AgentSessionsTreeInteractionController(
 
       is SessionTreeNode.PinnedSection,
       is SessionTreeNode.SectionSeparator,
+      is SessionTreeNode.TaskFolder,
         -> false
 
       is SessionTreeNode.Thread -> {

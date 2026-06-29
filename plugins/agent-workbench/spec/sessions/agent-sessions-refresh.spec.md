@@ -18,7 +18,7 @@ targets:
 # Agent Threads Refresh and Loading
 
 Status: Draft
-Date: 2026-05-09
+Date: 2026-06-28
 
 ## Summary
 Session refresh is event-driven and provider-agnostic. It merges provider results per normalized path, keeps useful partial data, and uses warm snapshots only as startup/bootstrap state.
@@ -46,6 +46,10 @@ Session refresh is event-driven and provider-agnostic. It merges provider result
   [@test] ../../sessions/testSrc/AgentSessionRefreshOnDemandIntegrationTest.kt
   [@test] ../../sessions/testSrc/AgentSessionRefreshConcurrencyIntegrationTest.kt
 
+- When a path has a separate project directory, refresh and on-demand loading must invoke provider sources with that directory while merging results, warm snapshots, loading state, and pending-tab rebind requests under the identity path. Refresh hints and thread-scoped source updates must remap provider source paths back to identity paths, and rebind targets must retain the project directory for resume launch planning.
+  [@test] ../../sessions/testSrc/AgentSessionThreadLoadSupportTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
+
 - Source update observation must be event-driven. Observer failures must restart collection so one provider signal failure cannot permanently stop refresh delivery.
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
@@ -69,6 +73,9 @@ Session refresh is event-driven and provider-agnostic. It merges provider result
 - Provider refresh publishes shared thread presentation keyed by normalized path and canonical thread identity so Agent Threads and open editor tabs show the same title/activity. Agent Threads activity counters use canonical thread summary activity; shared presentation may refresh titles without changing counter buckets.
   [@test] ../../sessions/testSrc/AgentSessionThreadPresentationTest.kt
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
+
+- Activity and presentation updates carry evidence authority. Provisional provider signals may update row activity, but must not clear an existing attention-bucket chrome/summary activity. Semantic provider signals and authoritative snapshots may clear attention when they explicitly report a non-attention activity.
+  [@test] ../../sessions/testSrc/service/AgentSessionRefreshSchedulerTest.kt
 
 - File-backed provider watchers must recover after watch-loop failures while the owning watcher remains active.
   [@test] ../../lib-agent/filewatch/testSrc/AgentWorkbenchDirectoryWatcherTest.kt

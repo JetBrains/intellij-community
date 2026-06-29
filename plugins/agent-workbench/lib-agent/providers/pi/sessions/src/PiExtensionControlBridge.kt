@@ -3,6 +3,9 @@ package com.intellij.platform.ai.agent.pi.sessions
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
+import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolder
+import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderService
+import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderThreadAssignment
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.platform.ai.agent.json.createJsonGenerator
 import com.intellij.platform.ai.agent.json.createJsonParser
@@ -10,6 +13,7 @@ import com.intellij.platform.ai.agent.json.forEachJsonObjectField
 import com.intellij.platform.ai.agent.json.readJsonLongOrNull
 import com.intellij.platform.ai.agent.json.readJsonStringOrNull
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Key
 import io.netty.buffer.ByteBufUtil
 import io.netty.channel.ChannelHandlerContext
@@ -97,6 +101,12 @@ internal object PiExtensionControlBridge {
       PI_CONTROL_HELLO_TYPE -> handleHello(webSocketClient, payload)
       PI_CONTROL_SESSION_STATE_TYPE -> handleSessionState(webSocketClient, payload)
       PI_CONTROL_RESPONSE_TYPE -> handleResponse(webSocketClient, payload)
+      PI_CONTROL_GET_CURRENT_TASK_FOLDER_TYPE,
+      PI_CONTROL_LIST_TASK_FOLDER_THREADS_TYPE,
+      PI_CONTROL_GET_TASK_FOLDER_METADATA_TYPE,
+      PI_CONTROL_SET_TASK_FOLDER_METADATA_TYPE,
+      PI_CONTROL_DELETE_TASK_FOLDER_METADATA_TYPE,
+        -> handleTaskFolderRequest(webSocketClient, payload)
       else -> sendProtocolError(webSocketClient, requestId = payload.requestId, error = "Unsupported control message type")
     }
   }
@@ -175,6 +185,61 @@ internal object PiExtensionControlBridge {
         thread = thread,
       )
     )
+  }
+
+  private fun handleTaskFolderRequest(client: WebSocketClient, payload: PiControlPayload) {
+    val connection = client.getUserData(PI_CONTROL_CONNECTION_KEY)
+    val requestId = payload.requestId?.trim()?.takeIf { it.isNotEmpty() }
+    if (connection == null || requestId == null) {
+      sendProtocolError(client, requestId = requestId, error = "Task folder request requires an authenticated control connection")
+      return
+    }
+
+    val service = service<AgentTaskFolderService>()
+    val response = when (payload.type) {
+      PI_CONTROL_GET_CURRENT_TASK_FOLDER_TYPE -> {
+        val folder = service.getFolderForThread(connection.projectPath, PI_AGENT_SESSION_PROVIDER, connection.sessionId)
+        buildTaskFolderResponse(requestId = requestId, folder = folder)
+      }
+      PI_CONTROL_LIST_TASK_FOLDER_THREADS_TYPE -> {
+        val folderId = resolveTaskFolderId(service, connection, payload)
+        if (folderId == null) {
+          buildErrorResponse(requestId, "Task folder is not available")
+        }
+        else {
+          buildTaskFolderAssignmentsResponse(requestId, service.listFolderThreadAssignments(folderId))
+        }
+      }
+      PI_CONTROL_GET_TASK_FOLDER_METADATA_TYPE -> {
+        val folder = resolveTaskFolder(service, connection, payload)
+        if (folder == null) buildErrorResponse(requestId, "Task folder is not available") else buildTaskFolderMetadataResponse(requestId, folder.metadata)
+      }
+      PI_CONTROL_SET_TASK_FOLDER_METADATA_TYPE -> {
+        val folderId = resolveTaskFolderId(service, connection, payload)
+        val key = payload.key?.trim()?.takeIf { it.isNotEmpty() }
+        val value = payload.value
+        if (folderId == null || key == null || value == null) {
+          buildErrorResponse(requestId, "Task folder metadata request is incomplete")
+        }
+        else {
+          val changed = service.setMetadata(folderId, key, value)
+          buildMutationResponse(requestId, changed)
+        }
+      }
+      PI_CONTROL_DELETE_TASK_FOLDER_METADATA_TYPE -> {
+        val folderId = resolveTaskFolderId(service, connection, payload)
+        val key = payload.key?.trim()?.takeIf { it.isNotEmpty() }
+        if (folderId == null || key == null) {
+          buildErrorResponse(requestId, "Task folder metadata request is incomplete")
+        }
+        else {
+          val changed = service.deleteMetadata(folderId, key)
+          buildMutationResponse(requestId, changed)
+        }
+      }
+      else -> buildErrorResponse(requestId, "Unsupported task folder request")
+    }
+    sendControlText(client, response)
   }
 
   private suspend fun sendCommand(path: String, threadId: String, itemId: String, type: String): PiControlResponse? {
@@ -358,6 +423,9 @@ private data class PiControlPayload(
   @JvmField val error: String? = null,
   @JvmField val thread: PiControlThreadPayload? = null,
   @JvmField val capabilities: PiControlCapabilities? = null,
+  @JvmField val folderId: String? = null,
+  @JvmField val key: String? = null,
+  @JvmField val value: String? = null,
 )
 
 private data class PiControlThreadPayload(
@@ -390,6 +458,9 @@ private fun readControlPayload(parser: JsonParser): PiControlPayload {
   var error: String? = null
   var thread: PiControlThreadPayload? = null
   var capabilities: PiControlCapabilities? = null
+  var folderId: String? = null
+  var key: String? = null
+  var value: String? = null
   forEachJsonObjectField(parser) { fieldName ->
     when (fieldName) {
       "type" -> type = readJsonStringOrNull(parser)
@@ -402,6 +473,9 @@ private fun readControlPayload(parser: JsonParser): PiControlPayload {
       "error" -> error = readJsonStringOrNull(parser)
       "thread" -> thread = readControlThreadPayload(parser)
       "capabilities" -> capabilities = readControlCapabilities(parser)
+      "folderId" -> folderId = readJsonStringOrNull(parser)
+      "key" -> key = readJsonStringOrNull(parser)
+      "value" -> value = readJsonStringOrNull(parser)
       else -> parser.skipChildren()
     }
     true
@@ -417,6 +491,9 @@ private fun readControlPayload(parser: JsonParser): PiControlPayload {
     error = error,
     thread = thread,
     capabilities = capabilities,
+    folderId = folderId,
+    key = key,
+    value = value,
   )
 }
 
@@ -510,6 +587,101 @@ private fun buildHelloAcknowledgement(requestId: String?, sessionId: String): St
   }
 }
 
+private fun buildTaskFolderResponse(requestId: String, folder: AgentTaskFolder?): String {
+  return buildJsonObject { generator ->
+    generator.writeStringProperty("type", PI_CONTROL_RESPONSE_TYPE)
+    generator.writeStringProperty("requestId", requestId)
+    generator.writeBooleanProperty("ok", true)
+    generator.writeName("folder")
+    writeTaskFolder(generator, folder)
+  }
+}
+
+private fun buildTaskFolderAssignmentsResponse(requestId: String, assignments: List<AgentTaskFolderThreadAssignment>): String {
+  return buildJsonObject { generator ->
+    generator.writeStringProperty("type", PI_CONTROL_RESPONSE_TYPE)
+    generator.writeStringProperty("requestId", requestId)
+    generator.writeBooleanProperty("ok", true)
+    generator.writeName("threads")
+    generator.writeStartArray()
+    assignments.forEach { assignment -> writeTaskFolderAssignment(generator, assignment) }
+    generator.writeEndArray()
+  }
+}
+
+private fun buildTaskFolderMetadataResponse(requestId: String, metadata: Map<String, String>): String {
+  return buildJsonObject { generator ->
+    generator.writeStringProperty("type", PI_CONTROL_RESPONSE_TYPE)
+    generator.writeStringProperty("requestId", requestId)
+    generator.writeBooleanProperty("ok", true)
+    generator.writeName("metadata")
+    generator.writeStartObject()
+    metadata.forEach { (key, value) -> generator.writeStringProperty(key, value) }
+    generator.writeEndObject()
+  }
+}
+
+private fun buildMutationResponse(requestId: String, changed: Boolean): String {
+  return buildJsonObject { generator ->
+    generator.writeStringProperty("type", PI_CONTROL_RESPONSE_TYPE)
+    generator.writeStringProperty("requestId", requestId)
+    generator.writeBooleanProperty("ok", true)
+    generator.writeBooleanProperty("changed", changed)
+  }
+}
+
+private fun buildErrorResponse(requestId: String, error: String): String {
+  return buildJsonObject { generator ->
+    generator.writeStringProperty("type", PI_CONTROL_RESPONSE_TYPE)
+    generator.writeStringProperty("requestId", requestId)
+    generator.writeBooleanProperty("ok", false)
+    generator.writeStringProperty("error", error)
+  }
+}
+
+private fun writeTaskFolder(generator: tools.jackson.core.JsonGenerator, folder: AgentTaskFolder?) {
+  if (folder == null) {
+    generator.writeNull()
+    return
+  }
+  generator.writeStartObject()
+  generator.writeStringProperty("path", folder.path)
+  generator.writeStringProperty("id", folder.id)
+  generator.writeStringProperty("name", folder.name)
+  generator.writeStringProperty("status", folder.status.name)
+  generator.writeName("metadata")
+  generator.writeStartObject()
+  folder.metadata.forEach { (key, value) -> generator.writeStringProperty(key, value) }
+  generator.writeEndObject()
+  generator.writeNumberProperty("createdAt", folder.createdAt)
+  generator.writeNumberProperty("updatedAt", folder.updatedAt)
+  generator.writeEndObject()
+}
+
+private fun writeTaskFolderAssignment(generator: tools.jackson.core.JsonGenerator, assignment: AgentTaskFolderThreadAssignment) {
+  generator.writeStartObject()
+  generator.writeStringProperty("path", assignment.path)
+  generator.writeStringProperty("provider", assignment.provider.value)
+  generator.writeStringProperty("threadId", assignment.threadId)
+  generator.writeStringProperty("folderId", assignment.folderId)
+  generator.writeNumberProperty("assignedAt", assignment.assignedAt)
+  generator.writeEndObject()
+}
+
+private fun resolveTaskFolder(
+  service: AgentTaskFolderService,
+  connection: PiControlConnection,
+  payload: PiControlPayload,
+): AgentTaskFolder? {
+  val folderId = resolveTaskFolderId(service, connection, payload) ?: return null
+  return service.getFolder(folderId)
+}
+
+private fun resolveTaskFolderId(service: AgentTaskFolderService, connection: PiControlConnection, payload: PiControlPayload): String? {
+  return payload.folderId?.trim()?.takeIf { it.isNotEmpty() }
+         ?: service.getFolderForThread(connection.projectPath, PI_AGENT_SESSION_PROVIDER, connection.sessionId)?.id
+}
+
 private fun sendProtocolError(client: WebSocketClient, requestId: String?, error: String) {
   sendControlText(
     client = client,
@@ -563,4 +735,9 @@ private const val PI_CONTROL_SESSION_STATE_TYPE: String = "sessionState"
 private const val PI_CONTROL_RESPONSE_TYPE: String = "response"
 private const val PI_CONTROL_NAVIGATE_TREE_TYPE: String = "navigateTree"
 private const val PI_CONTROL_FORK_FROM_ENTRY_TYPE: String = "forkFromEntry"
+private const val PI_CONTROL_GET_CURRENT_TASK_FOLDER_TYPE: String = "getCurrentTaskFolder"
+private const val PI_CONTROL_LIST_TASK_FOLDER_THREADS_TYPE: String = "listTaskFolderThreads"
+private const val PI_CONTROL_GET_TASK_FOLDER_METADATA_TYPE: String = "getTaskFolderMetadata"
+private const val PI_CONTROL_SET_TASK_FOLDER_METADATA_TYPE: String = "setTaskFolderMetadata"
+private const val PI_CONTROL_DELETE_TASK_FOLDER_METADATA_TYPE: String = "deleteTaskFolderMetadata"
 private val PI_CONTROL_REQUEST_TIMEOUT = 10.seconds

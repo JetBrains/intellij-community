@@ -17,6 +17,10 @@ import com.intellij.agent.workbench.sessions.toolwindow.tree.buildSessionTreeMod
 import com.intellij.agent.workbench.sessions.toolwindow.tree.overlayPendingAgentChatTabs
 import com.intellij.agent.workbench.sessions.toolwindow.tree.sessionTreeNodeSearchText
 import com.intellij.agent.workbench.sessions.toolwindow.ui.SessionTreeStrictSubstringComparator
+import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolder
+import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderSnapshot
+import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderStatus
+import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderThreadAssignment
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -180,6 +184,132 @@ class AgentSessionsTreeSnapshotTest {
     assertThat(model.entriesById).doesNotContainKey(projectTreeId)
     assertThat(model.entriesById.getValue(recentThreadId).parentId).isNull()
     assertThat(model.entriesById.getValue(pinnedThreadId).parentId).isNull()
+  }
+
+  @Test
+  fun taskFoldersGroupAssignedProjectThreadsAndRemoveThemFromUngroupedRows() {
+    val provider = AgentSessionProvider.from("codex")
+    val projectPath = "/work/project-a"
+    val folderId = "folderauth"
+    val model = buildSessionTreeModel(
+      projects = listOf(
+        AgentProjectSessions(
+          path = projectPath,
+          name = "Project A",
+          isOpen = true,
+          providerLoadStates = loadedProviderStates(provider),
+          threads = listOf(
+            AgentSessionThread(id = "assigned-a", title = "Assigned A", updatedAt = 300, archived = false, provider = provider),
+            AgentSessionThread(id = "ungrouped", title = "Ungrouped", updatedAt = 200, archived = false, provider = provider),
+            AgentSessionThread(id = "assigned-b", title = "Assigned B", updatedAt = 100, archived = false, provider = provider),
+          ),
+        )
+      ),
+      visibleClosedProjectCount = Int.MAX_VALUE,
+      visibleThreadCounts = mapOf(projectPath to 1),
+      treeUiState = InMemorySessionTreeUiState(),
+      taskFolderSnapshot = taskFolderSnapshot(
+        path = projectPath,
+        folderId = folderId,
+        folderName = "Authentication rewrite",
+        assignments = listOf("assigned-a", "assigned-b"),
+        provider = provider,
+      ),
+    )
+
+    val taskFolderId = SessionTreeId.TaskFolder(projectPath = projectPath, path = projectPath, folderId = folderId)
+    val assignedA = SessionTreeId.Thread(projectPath, provider, "assigned-a")
+    val assignedB = SessionTreeId.Thread(projectPath, provider, "assigned-b")
+    val ungrouped = SessionTreeId.Thread(projectPath, provider, "ungrouped")
+    val projectEntry = model.entriesById.getValue(SessionTreeId.Project(projectPath))
+
+    assertThat(projectEntry.childIds).containsExactly(taskFolderId, ungrouped)
+    assertThat(model.entriesById.getValue(taskFolderId).childIds).containsExactly(assignedA, assignedB)
+    assertThat(model.entriesById.getValue(taskFolderId).node)
+      .isEqualTo(SessionTreeNode.TaskFolder(
+        project = projectEntry.node.let { (it as SessionTreeNode.Project).project },
+        folder = AgentTaskFolder(
+          path = projectPath,
+          id = folderId,
+          name = "Authentication rewrite",
+          status = AgentTaskFolderStatus.IN_PROGRESS,
+          createdAt = 1,
+          updatedAt = 1,
+        ),
+        assignedThreadCount = 2,
+      ))
+    assertThat(model.entriesById.getValue(assignedA).parentId).isEqualTo(taskFolderId)
+    assertThat(model.entriesById.getValue(assignedB).parentId).isEqualTo(taskFolderId)
+    assertThat(model.entriesById).doesNotContainKey(SessionTreeId.MoreThreads(projectPath))
+  }
+
+  @Test
+  fun currentProjectScopedModelFlattensTaskFoldersWithProjectRows() {
+    val provider = AgentSessionProvider.from("codex")
+    val projectPath = "/work/project-a"
+    val folderId = "folderauth"
+    val model = buildSessionTreeModel(
+      projects = listOf(
+        AgentProjectSessions(
+          path = projectPath,
+          name = "Project A",
+          isOpen = true,
+          providerLoadStates = loadedProviderStates(provider),
+          threads = listOf(AgentSessionThread(id = "assigned", title = "Assigned", updatedAt = 100, archived = false, provider = provider)),
+        )
+      ),
+      visibleClosedProjectCount = Int.MAX_VALUE,
+      visibleThreadCounts = emptyMap(),
+      treeUiState = InMemorySessionTreeUiState(),
+      currentProjectScopeActive = true,
+      taskFolderSnapshot = taskFolderSnapshot(
+        path = projectPath,
+        folderId = folderId,
+        folderName = "Authentication rewrite",
+        assignments = listOf("assigned"),
+        provider = provider,
+      ),
+    )
+
+    val taskFolderId = SessionTreeId.TaskFolder(projectPath = projectPath, path = projectPath, folderId = folderId)
+    val assigned = SessionTreeId.Thread(projectPath, provider, "assigned")
+    assertThat(model.rootIds).containsExactly(taskFolderId)
+    assertThat(model.entriesById.getValue(taskFolderId).parentId).isNull()
+    assertThat(model.entriesById.getValue(taskFolderId).childIds).containsExactly(assigned)
+    assertThat(model.entriesById.getValue(assigned).parentId).isEqualTo(taskFolderId)
+    assertThat(model.entriesById).doesNotContainKey(SessionTreeId.Project(projectPath))
+  }
+
+  @Test
+  fun doneTaskFoldersAreHiddenFromActiveTreeModel() {
+    val provider = AgentSessionProvider.from("codex")
+    val projectPath = "/work/project-a"
+    val model = buildSessionTreeModel(
+      projects = listOf(
+        AgentProjectSessions(
+          path = projectPath,
+          name = "Project A",
+          isOpen = true,
+          providerLoadStates = loadedProviderStates(provider),
+          threads = listOf(AgentSessionThread(id = "done-thread", title = "Done", updatedAt = 100, archived = false, provider = provider)),
+        )
+      ),
+      visibleClosedProjectCount = Int.MAX_VALUE,
+      visibleThreadCounts = emptyMap(),
+      treeUiState = InMemorySessionTreeUiState(),
+      taskFolderSnapshot = taskFolderSnapshot(
+        path = projectPath,
+        folderId = "done-folder",
+        folderName = "Done work",
+        assignments = listOf("done-thread"),
+        provider = provider,
+        status = AgentTaskFolderStatus.DONE,
+      ),
+    )
+
+    val projectEntry = model.entriesById.getValue(SessionTreeId.Project(projectPath))
+    assertThat(projectEntry.childIds).containsExactly(SessionTreeId.Thread(projectPath, provider, "done-thread"))
+    assertThat(model.entriesById).doesNotContainKey(SessionTreeId.TaskFolder(projectPath, projectPath, "done-folder"))
   }
 
   @Test
@@ -467,6 +597,38 @@ private fun pendingTabsState(
       )
     ),
     pinnedTopLevelThreadIdsByProvider = if (pinnedEditorTab) mapOf(provider to mapOf(path to setOf(threadId))) else emptyMap(),
+  )
+}
+
+private fun taskFolderSnapshot(
+  path: String,
+  folderId: String,
+  folderName: String,
+  assignments: List<String>,
+  provider: AgentSessionProvider,
+  status: AgentTaskFolderStatus = AgentTaskFolderStatus.IN_PROGRESS,
+): AgentTaskFolderSnapshot {
+  val folder = AgentTaskFolder(
+    path = path,
+    id = folderId,
+    name = folderName,
+    status = status,
+    createdAt = 1,
+    updatedAt = 1,
+  )
+  return AgentTaskFolderSnapshot(
+    foldersByPath = mapOf(path to listOf(folder)),
+    assignmentsByPath = mapOf(
+      path to assignments.mapIndexed { index, threadId ->
+        AgentTaskFolderThreadAssignment(
+          path = path,
+          provider = provider,
+          threadId = threadId,
+          folderId = folderId,
+          assignedAt = index.toLong(),
+        )
+      }
+    ),
   )
 }
 

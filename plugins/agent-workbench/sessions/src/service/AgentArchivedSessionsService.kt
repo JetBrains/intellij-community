@@ -200,7 +200,12 @@ class AgentArchivedSessionsService internal constructor(
       coroutineScope {
         pathRequests.map { request ->
           async {
-            request.path to loadArchivedThreads(path = request.path, project = request.project, sources = availableSources)
+            request.path to loadArchivedThreads(
+              path = request.path,
+              projectDirectory = request.projectDirectory,
+              project = request.project,
+              sources = availableSources,
+            )
           }
         }.awaitAll().toMap()
       }
@@ -216,6 +221,7 @@ class AgentArchivedSessionsService internal constructor(
 
   private suspend fun loadArchivedThreads(
     path: String,
+    projectDirectory: String?,
     project: Project?,
     sources: List<AgentSessionArchivedSource>,
   ): AgentSessionLoadResult {
@@ -226,7 +232,8 @@ class AgentArchivedSessionsService internal constructor(
       sources.map { source ->
         async {
           val result = try {
-            val loadedThreads = source.listArchivedThreads(path = path, openProject = project)
+            val sourcePath = projectDirectory?.takeIf { it.isNotBlank() } ?: path
+            val loadedThreads = source.listArchivedThreads(path = sourcePath, openProject = project)
             Result.success(
               archiveTransitionSuppressions.applyArchivedAuthoritative(path = path, provider = source.provider, threads = loadedThreads)
             )
@@ -321,7 +328,7 @@ class AgentArchivedSessionsService internal constructor(
       .mapNotNull { source -> source as? AgentSessionCostSource }
       .associateBy(AgentSessionCostSource::provider)
     val cachedUpdatesByPath = LinkedHashMap<String, MutableMap<AgentSessionProvider, MutableMap<String, ArchivedThreadCostUpdate>>>()
-    val loadRequests = LinkedHashMap<Pair<AgentSessionCostSource, String>, MutableList<ArchivedVisibleThreadSnapshot>>()
+    val loadRequests = LinkedHashMap<Pair<AgentSessionCostSource, ArchivedThreadCostLoadPath>, MutableList<ArchivedVisibleThreadSnapshot>>()
 
     for (visibleThread in visibleThreads) {
       if (normalizeConcreteAgentSessionThreadId(visibleThread.threadId) == null) {
@@ -355,17 +362,17 @@ class AgentArchivedSessionsService internal constructor(
       if (!inFlightCostLoads.add(loadKey)) {
         continue
       }
-      loadRequests.getOrPut(source to visibleThread.path) { ArrayList() }.add(visibleThread)
+      loadRequests.getOrPut(source to visibleThread.costLoadPath) { ArrayList() }.add(visibleThread)
     }
 
     applyArchivedThreadCostUpdates(cachedUpdatesByPath)
 
     for ((requestKey, requestedThreads) in loadRequests) {
-      val (source, path) = requestKey
+      val (source, loadPath) = requestKey
       serviceScope.launch(Dispatchers.IO) {
         try {
           val requestedAgentThreads = requestedThreads.map(ArchivedVisibleThreadSnapshot::thread)
-          val loadedCostsByThreadId = source.loadThreadCosts(path = path, threads = requestedAgentThreads)
+          val loadedCostsByThreadId = source.loadThreadCosts(path = loadPath.sourcePath, threads = requestedAgentThreads)
           val updatesByProvider = LinkedHashMap<AgentSessionProvider, MutableMap<String, ArchivedThreadCostUpdate>>()
           for (visibleThread in requestedThreads) {
             val loadedCost = loadedCostsByThreadId[visibleThread.threadId]
@@ -379,11 +386,11 @@ class AgentArchivedSessionsService internal constructor(
               cost = loadedCost,
             )
           }
-          applyArchivedThreadCostUpdates(mapOf(path to updatesByProvider))
+          applyArchivedThreadCostUpdates(mapOf(loadPath.identityPath to updatesByProvider))
         }
         catch (t: Throwable) {
           ARCHIVED_LOG.debug(t) {
-            "Failed to hydrate archived visible thread costs for ${source.provider.value} path=$path threads=${requestedThreads.size}"
+            "Failed to hydrate archived visible thread costs for ${source.provider.value} path=${loadPath.identityPath} threads=${requestedThreads.size}"
           }
         }
         finally {
@@ -442,6 +449,7 @@ class AgentArchivedSessionsService internal constructor(
     state.projects.forEach { project ->
       collectVisibleThreadsForPath(
         path = project.path,
+        projectDirectory = project.projectDirectory,
         threads = project.threads,
         visibleThreadCounts = state.visibleThreadCounts,
         collector = visibleThreads,
@@ -449,6 +457,7 @@ class AgentArchivedSessionsService internal constructor(
       project.worktrees.forEach { worktree ->
         collectVisibleThreadsForPath(
           path = worktree.path,
+          projectDirectory = worktree.projectDirectory,
           threads = worktree.threads,
           visibleThreadCounts = state.visibleThreadCounts,
           collector = visibleThreads,
@@ -460,6 +469,7 @@ class AgentArchivedSessionsService internal constructor(
 
   private fun collectVisibleThreadsForPath(
     path: String,
+    projectDirectory: String?,
     threads: List<AgentSessionThread>,
     visibleThreadCounts: Map<String, Int>,
     collector: MutableList<ArchivedVisibleThreadSnapshot>,
@@ -471,6 +481,7 @@ class AgentArchivedSessionsService internal constructor(
         collector.add(
           ArchivedVisibleThreadSnapshot(
             path = path,
+            projectDirectory = projectDirectory,
             provider = thread.provider,
             thread = thread,
           )
@@ -481,6 +492,7 @@ class AgentArchivedSessionsService internal constructor(
 
 private data class ArchivedPathRequest(
   @JvmField val path: String,
+  @JvmField val projectDirectory: String?,
   @JvmField val project: Project?,
 )
 
@@ -488,16 +500,22 @@ private fun buildArchivedPathRequests(entries: List<ProjectEntry>): List<Archive
   val requests = ArrayList<ArchivedPathRequest>()
   val seenPaths = LinkedHashSet<String>()
 
-  fun add(path: String, project: Project?) {
+  fun add(path: String, projectDirectory: String?, project: Project?) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
     if (seenPaths.add(normalizedPath)) {
-      requests.add(ArchivedPathRequest(path = normalizedPath, project = project))
+      requests.add(
+        ArchivedPathRequest(
+          path = normalizedPath,
+          projectDirectory = projectDirectory?.takeIf { it.isNotBlank() }?.let(::normalizeAgentWorkbenchPath),
+          project = project,
+        )
+      )
     }
   }
 
   entries.forEach { entry ->
-    add(entry.path, entry.project)
-    entry.worktreeEntries.forEach { worktree -> add(worktree.path, worktree.project) }
+    add(entry.path, entry.projectDirectory, entry.project)
+    entry.worktreeEntries.forEach { worktree -> add(worktree.path, worktree.projectDirectory, worktree.project) }
   }
   return requests
 }
@@ -513,6 +531,7 @@ private fun buildInitialArchivedProjects(
     val previous = previousProjectsByPath[normalizedPath]
     AgentProjectSessions(
       path = normalizedPath,
+      projectDirectory = entry.projectDirectory ?: previous?.projectDirectory,
       name = entry.name,
       branch = entry.branch,
       buildSystemBadge = entry.buildSystemBadge,
@@ -527,6 +546,7 @@ private fun buildInitialArchivedProjects(
         val previousWorktree = previous?.worktrees?.firstOrNull { candidate -> candidate.path == normalizedWorktreePath }
         AgentWorktree(
           path = normalizedWorktreePath,
+          projectDirectory = worktree.projectDirectory ?: previousWorktree?.projectDirectory,
           name = worktree.name,
           branch = worktree.branch,
           isOpen = worktree.project != null,
@@ -635,6 +655,7 @@ private data class ArchivedThreadCostUpdate(
 
 private data class ArchivedVisibleThreadSnapshot(
   @JvmField val path: String,
+  @JvmField val projectDirectory: String?,
   val provider: AgentSessionProvider,
   @JvmField val thread: AgentSessionThread,
 ) {
@@ -652,7 +673,18 @@ private data class ArchivedVisibleThreadSnapshot(
 
   val loadKey: ArchivedThreadLoadKey
     get() = ArchivedThreadLoadKey(path = path, provider = provider, threadId = threadId, updatedAt = updatedAt)
+
+  val costLoadPath: ArchivedThreadCostLoadPath
+    get() = ArchivedThreadCostLoadPath(
+      identityPath = path,
+      sourcePath = projectDirectory?.takeIf { it.isNotBlank() } ?: path,
+    )
 }
+
+private data class ArchivedThreadCostLoadPath(
+  @JvmField val identityPath: String,
+  @JvmField val sourcePath: String,
+)
 
 private data class ArchivedThreadCacheKey(
   @JvmField val path: String,

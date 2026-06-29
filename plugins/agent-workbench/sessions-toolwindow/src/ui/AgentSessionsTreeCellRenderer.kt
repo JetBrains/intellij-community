@@ -245,6 +245,18 @@ internal class SessionTreeCellRenderer(
         }
       }
 
+      is SessionTreeNode.TaskFolder -> {
+        icon = AllIcons.Nodes.Folder
+        val folderName: @NlsSafe String = treeNode.folder.name
+        append(folderName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+        if (treeNode.assignedThreadCount > 0) {
+          append(
+            "  ${AgentSessionsBundle.message("toolwindow.task.folder.thread.count", treeNode.assignedThreadCount)}",
+            SimpleTextAttributes.GRAYED_ATTRIBUTES,
+          )
+        }
+      }
+
       is SessionTreeNode.SubAgent -> {
         icon = agentSessionThreadStatusIcon(AllIcons.Nodes.Plugin, treeNode.subAgent.activity)
         val subAgentLabel: @NlsSafe String = treeNode.subAgent.name.ifBlank { treeNode.subAgent.id }

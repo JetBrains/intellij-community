@@ -3,6 +3,17 @@ package org.jetbrains.idea.maven.navigator.structure
 
 import com.intellij.execution.impl.RunManagerImpl.Companion.getInstanceImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.awaitConfiguration
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.initProjectsManager
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.refreshFiles
+import com.intellij.maven.testFramework.fixtures.updateModulePom
+import com.intellij.maven.testFramework.fixtures.updateProjectPom
+import com.intellij.maven.testFramework.fixtures.updateSettingsXml
+import com.intellij.maven.testFramework.fixtures.waitForImportWithinTimeout
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.vfs.VirtualFile
@@ -16,17 +27,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
-import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
-import com.intellij.maven.testFramework.fixtures.awaitConfiguration
-import com.intellij.maven.testFramework.fixtures.createModulePom
-import com.intellij.maven.testFramework.fixtures.createProjectPom
-import com.intellij.maven.testFramework.fixtures.initProjectsManager
-import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
-import com.intellij.maven.testFramework.fixtures.refreshFiles
-import com.intellij.maven.testFramework.fixtures.updateModulePom
-import com.intellij.maven.testFramework.fixtures.updateProjectPom
-import com.intellij.maven.testFramework.fixtures.updateSettingsXml
-import org.jetbrains.idea.maven.fixtures.waitForImportWithinTimeout
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigatorState

@@ -48,8 +48,9 @@ Workbench shows normalized activity (`NEEDS_INPUT`, `UNREAD`, `REVIEWING`, `PROC
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/backend/CodexThreadActivityProjectionTest.kt
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
-- App-server `thread/started` and `thread/status/changed` notifications may seed raw status/flag hints. Notification hints are timestamped, short-lived, path-normalized, and must not override a newer known thread seed. Snapshot-only promotions such as unread assistant output and review mode require app-server `thread/read`.
+- App-server `thread/started` and `thread/status/changed` notifications may seed raw status/flag hints. Raw status-only notification hints are provisional: they may update row activity but must not clear existing structured-plan or other attention chrome. Notifications with response-required flags are semantic needs-input evidence. Notification hints are timestamped, short-lived, path-normalized, and must not override a newer known thread seed. Snapshot-only promotions such as unread assistant output, pending structured plans, and review mode require app-server `thread/read` snapshot evidence.
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/backend/appserver/CodexAppServerRefreshHintsProviderTest.kt
+  [@test] ../../sessions/testSrc/service/AgentSessionRefreshSchedulerTest.kt
 
 - `CodexSessionSource` must prefetch activity/rebind refresh hints from the app-server provider only. Rollout discovery events forwarded by the source are discovery-only `THREADS_CHANGED` events with scoped paths or project-file-change evidence; source-level forwarding must drop rollout thread ids, activity updates, and presentation updates.
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexSessionSourceRefreshHintsTest.kt

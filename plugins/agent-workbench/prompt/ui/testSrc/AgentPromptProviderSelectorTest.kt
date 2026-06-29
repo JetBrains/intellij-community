@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.icons.AllIcons
+import com.intellij.agent.workbench.prompt.ui.icons.AgentWorkbenchPromptUIIcons
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
@@ -36,6 +37,7 @@ import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbService
@@ -67,7 +69,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
-import java.awt.event.KeyEvent
 import javax.swing.Icon
 import javax.swing.JList
 import javax.swing.JPanel
@@ -88,7 +89,7 @@ class AgentPromptProviderSelectorTest {
   }
 
   @Test
-  fun planModeCheckboxUsesMnemonicAndUpdatesStoredSelection() {
+  fun planModeIconToggleUsesHeaderActionAndUpdatesStoredSelection() {
     runInEdtAndWait {
       val provider = testProviderBridge(
         provider = AgentSessionProvider.from("codex"),
@@ -98,30 +99,30 @@ class AgentPromptProviderSelectorTest {
 
       fixture.selector.refresh()
 
-      assertThat(fixture.selector.selectedOptionIds(provider.provider)).containsExactly(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE)
-      assertThat(fixture.planModeCheckBox().text).isEqualTo("Plan mode")
-      assertThat(fixture.planModeCheckBox().mnemonic).isEqualTo(KeyEvent.VK_P)
-      assertThat(fixture.planModeCheckBox().displayedMnemonicIndex).isEqualTo(0)
-      assertThat(fixture.planModeCheckBox().text).doesNotContain("Alt+P")
-      assertThat(fixture.planModeCheckBox().isSelected).isTrue()
-      assertThat(fixture.planModeCheckBox().font).isEqualTo(JBCheckBox().font)
-      fixture.view.headerControls.setContainerModeVisible(true)
-      val expectedHeaderCheckBox = fixture.headerCheckBox("Run in container")
-      assertThat(fixture.planModeCheckBox().border.getBorderInsets(fixture.planModeCheckBox()))
-        .isEqualTo(expectedHeaderCheckBox.border.getBorderInsets(expectedHeaderCheckBox))
+      val planModeAction = fixture.planModeAction()
+      val planModeEvent = TestActionEvent.createTestEvent(planModeAction)
 
-      fixture.planModeCheckBox().doClick()
+      assertThat(fixture.selector.selectedOptionIds(provider.provider)).containsExactly(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE)
+      assertThat(planModeAction.templatePresentation.text).isEqualTo("Plan mode")
+      assertThat(planModeAction.templatePresentation.description).isEqualTo("Plan mode")
+      assertThat(planModeAction.templatePresentation.icon).isSameAs(AgentWorkbenchPromptUIIcons.PlanMode)
+      assertThat(planModeAction.isSelected(planModeEvent)).isTrue()
+      assertThat(fixture.planModeButton().action).isSameAs(planModeAction)
+      assertThat(collectComponentsOfType(fixture.view.rootPanel, JBCheckBox::class.java).map { it.text })
+        .doesNotContain("Plan mode")
+
+      planModeAction.setSelected(planModeEvent, false)
       assertThat(fixture.selector.selectedOptionIds(provider.provider)).isEmpty()
-      assertThat(fixture.planModeCheckBox().isSelected).isFalse()
+      assertThat(planModeAction.isSelected(planModeEvent)).isFalse()
 
-      fixture.planModeCheckBox().doClick()
+      planModeAction.setSelected(planModeEvent, true)
       assertThat(fixture.selector.selectedOptionIds(provider.provider)).containsExactly(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE)
-      assertThat(fixture.planModeCheckBox().isSelected).isTrue()
+      assertThat(planModeAction.isSelected(planModeEvent)).isTrue()
     }
   }
 
   @Test
-  fun providerWithoutPlanModeOptionDoesNotRenderCheckbox() {
+  fun providerWithoutPlanModeOptionDoesNotRenderPlanToggle() {
     runInEdtAndWait {
       val provider = testProviderBridge(
         provider = AgentSessionProvider.from("claude"),
@@ -3658,14 +3659,17 @@ class AgentPromptProviderSelectorTest {
     val selector: AgentPromptProviderSelector,
     val view: AgentPromptPaletteView,
   ) {
-    fun planModeCheckBox(): JBCheckBox {
-      return headerCheckBox("Plan mode")
+    fun planModeAction(): AgentPromptHeaderIconToggleAction {
+      view.headerControls.updateActions()
+      return view.headerControls.providerOptionActions
+        .single { action -> action.templatePresentation.text == "Plan mode" } as AgentPromptHeaderIconToggleAction
     }
 
-    fun headerCheckBox(text: String): JBCheckBox {
+    fun planModeButton(): ActionButton {
+      val action = planModeAction()
       view.headerControls.updateActions()
       layoutPopupRoot(view.rootPanel)
-      return collectComponentsOfType(view.rootPanel, JBCheckBox::class.java).single { checkBox -> checkBox.text == text }
+      return collectComponentsOfType(view.rootPanel, ActionButton::class.java).single { button -> button.action === action }
     }
   }
 }

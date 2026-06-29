@@ -495,6 +495,27 @@ class ClaudeSessionsStoreTest {
   }
 
   @Test
+  fun findMatchingDirectoriesIncludesContainingGitRootForNestedBazelProjectIdentity() {
+    val repo = tempDir.resolve("repo")
+    val projectFile = repo.resolve("toolbox/toolbox.bazelproject")
+    Files.createDirectories(projectFile.parent)
+    Files.createDirectories(repo.resolve(".git"))
+    Files.createFile(projectFile)
+    val repoClaudeDir =
+      tempDir.resolve(".claude").resolve("projects").resolve(repo.invariantSeparatorsPathString.toClaudeProjectDirectoryName())
+    val legacyParentClaudeDir = tempDir.resolve(".claude").resolve("projects")
+      .resolve(projectFile.parent.invariantSeparatorsPathString.toClaudeProjectDirectoryName())
+    Files.createDirectories(repoClaudeDir)
+    Files.createDirectories(legacyParentClaudeDir)
+
+    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
+
+    val directories = store.findMatchingDirectories(projectFile.invariantSeparatorsPathString)
+
+    assertThat(directories).containsExactly(repoClaudeDir, legacyParentClaudeDir)
+  }
+
+  @Test
   fun parseJsonlFileTailScansForActivity() {
     val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-any-path")
     Files.createDirectories(projectDir)

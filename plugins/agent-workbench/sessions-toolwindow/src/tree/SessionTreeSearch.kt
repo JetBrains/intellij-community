@@ -25,6 +25,7 @@ internal fun sessionTreeNodeSearchText(node: SessionTreeNode): String {
       branchMismatchText(node),
     )
 
+    is SessionTreeNode.TaskFolder -> node.folder.name
     is SessionTreeNode.SubAgent -> node.subAgent.name.ifBlank { node.subAgent.id }
     is SessionTreeNode.Warning -> node.message
     is SessionTreeNode.Error -> node.message

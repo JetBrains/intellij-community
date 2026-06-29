@@ -17,6 +17,7 @@ import com.intellij.platform.ai.agent.codex.sessions.backend.resolveCodexSession
 import com.intellij.platform.ai.agent.codex.sessions.backend.toAgentThreadActivity
 import com.intellij.platform.ai.agent.codex.sessions.backend.toCodexSessionActivity
 import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionActivityEvidence
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
@@ -237,11 +238,13 @@ internal class CodexAppServerRefreshHintsProvider(
           ),
           updatesChromeActivity = activityHint.hasSummaryActivityHint,
           updatedAt = activityHint.updatedAt,
+          evidence = activityHint.evidence,
         )
       )
     }
     return when {
-      notification.kind == CodexAppServerNotificationKind.THREAD_STARTED && startedThreadPath != null -> AgentSessionSourceUpdateEvent.threadsChanged(
+      notification.kind == CodexAppServerNotificationKind.THREAD_STARTED &&
+      startedThreadPath != null -> AgentSessionSourceUpdateEvent.threadsChanged(
         scopedPaths = setOf(startedThreadPath),
         activityUpdatesByThreadId = activityUpdatesByThreadId(),
       )
@@ -313,7 +316,8 @@ internal class CodexAppServerRefreshHintsProvider(
             recordNotificationThreadHint(notification)
             val updateEvent = toUpdateEvent(notification)
             send(updateEvent)
-            if (notification.kind == CodexAppServerNotificationKind.THREAD_STARTED && updateEvent.type == AgentSessionSourceUpdate.THREADS_CHANGED) {
+            if (notification.kind == CodexAppServerNotificationKind.THREAD_STARTED &&
+                updateEvent.type == AgentSessionSourceUpdate.THREADS_CHANGED) {
               // Keep the retry ordered in the collector coroutine: it gives the app-server time to publish the new thread.
               delay(APP_SERVER_REFRESH_RETRY_DELAY_MS.milliseconds)
               send(updateEvent)
@@ -572,6 +576,7 @@ private fun CodexThreadActivitySnapshot.toRefreshActivityHint(verifiedFresh: Boo
     updatedAt = updatedAt,
     responseRequired = activeFlags.isResponseRequired() || hasPendingPlan,
     verifiedFresh = verifiedFresh,
+    evidence = AgentSessionActivityEvidence.SNAPSHOT,
     summaryActivity = summaryActivity,
     hasSummaryActivityHint = true,
   )
@@ -606,10 +611,12 @@ private fun CodexAppServerNotification.toRefreshActivityHintOrNull(receivedAtMs:
   val resolvedActiveFlags = rawActiveFlags.orEmpty()
   val resolvedStatusKind = rawStatusKind ?: CodexThreadStatusKind.UNKNOWN
   val activity = resolveCodexSessionActivity(statusKind = resolvedStatusKind, activeFlags = resolvedActiveFlags).toAgentThreadActivity()
+  val responseRequired = resolvedActiveFlags.isResponseRequired()
   return CodexRefreshActivityHint(
     activity = activity,
     updatedAt = startedThread?.updatedAt ?: receivedAtMs,
-    responseRequired = resolvedActiveFlags.isResponseRequired(),
+    responseRequired = responseRequired,
+    evidence = if (responseRequired) AgentSessionActivityEvidence.SEMANTIC else AgentSessionActivityEvidence.PROVISIONAL,
     summaryActivity = activity,
     hasSummaryActivityHint = true,
   )

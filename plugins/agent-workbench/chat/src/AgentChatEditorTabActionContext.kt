@@ -18,6 +18,7 @@ data class AgentChatEditorTabActionContext(
   @JvmField val threadActivity: AgentThreadActivity = AgentThreadActivity.READY,
   val threadCoordinates: AgentChatThreadCoordinates? = null,
   val sessionActionTarget: SessionActionTarget? = null,
+  @JvmField val projectDirectory: String? = null,
 )
 
 data class AgentChatThreadCoordinates(
@@ -66,6 +67,7 @@ fun resolveAgentChatEditorTabActionContext(event: AnActionEvent): AgentChatEdito
     threadIdentity = selectedChatFile.threadIdentity,
     threadActivity = selectedChatFile.threadActivity,
     threadCoordinates = threadCoordinates,
+    projectDirectory = selectedChatFile.projectDirectory,
     sessionActionTarget = resolveAgentChatSessionActionTarget(
       path = normalizeAgentWorkbenchPath(selectedChatFile.projectPath),
       threadCoordinates = threadCoordinates,

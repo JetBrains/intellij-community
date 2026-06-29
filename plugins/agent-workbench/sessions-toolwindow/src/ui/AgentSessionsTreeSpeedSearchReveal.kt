@@ -131,6 +131,7 @@ private fun ensureVisible(
   when (id) {
     is SessionTreeId.Project -> ensureProjectVisible(id.path)
     is SessionTreeId.Worktree -> ensureProjectVisible(id.projectPath)
+    is SessionTreeId.TaskFolder -> ensureProjectVisible(id.projectPath)
     is SessionTreeId.Thread -> {
       ensureProjectVisible(id.projectPath)
       ensureThreadVisible(id.projectPath, id.provider, id.threadId)

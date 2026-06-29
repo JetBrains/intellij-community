@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -124,8 +125,15 @@ public class LocalFileSystemImpl
       AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(
         () -> {
           var application = ApplicationManager.getApplication();
-          if (application != null && !application.isDisposed()) {
-            storeRefreshStatusToFiles();
+          try {
+            if (application != null && !application.isDisposed()) {
+              ReadAction.runBlocking(() -> {
+                storeRefreshStatusToFiles();
+              });
+            }
+          }
+          catch (Throwable e) {
+            LOG.warn("Exception while marking changed files dirty", e);
           }
         },
         STATUS_UPDATE_PERIOD, STATUS_UPDATE_PERIOD, MILLISECONDS
@@ -154,12 +162,22 @@ public class LocalFileSystemImpl
   private void storeRefreshStatusToFiles() {
     if (myWatcher.isOperational()) {
       var dirtyPaths = myWatcher.getDirtyPaths();
-      var marked = (
+      //TODO RC: this method is sometimes called without RA => it makes some VFS intermediate states visible -- e.g.
+      //         the state there file is already marked as removed, but is not yet removed from it's parent.children
+      //         list => causes FileDeletedException during path resolution.
+      //         We should either:
+      //         a) wrap _all_ the calls in RA -- carries an additional overhead
+      //         b) or deal with intermediate states without failing: e.g., FileNavigator.retryUpToN() is an attempt
+      //            in that direction, and it works, at least partially: most (but not all) of the reports in Diogen
+      //            now are from _successful_ retries, i.e. the issue was hidden from the client. But .retryUpToN()
+      //            is still not 100% a solution.
+      //         I'm yet undecided which approach is the optimal choice...
+      var somethingWasMarkedDirty = (
         markPathsDirty(dirtyPaths.dirtyPaths) |
         markFlatDirsDirty(dirtyPaths.dirtyDirectories) |
         markRecursiveDirsDirty(dirtyPaths.dirtyPathsRecursive)
       );
-      if (marked) {
+      if (somethingWasMarkedDirty) {
         statusRefreshed();
       }
     }
@@ -214,7 +232,14 @@ public class LocalFileSystemImpl
     return marked;
   }
 
-  public void markSuspiciousFilesDirty(@NotNull List<? extends VirtualFile> files) {
+  /// If [#myWatcher] is operational => the method marks dirty the dirty files detected by [#myWatcher],
+  /// plus `myWatcher.manualWatchRoots` (monitored roots that are un-watchable), recursively.
+  /// If [#myWatcher] is !operational (i.e. [#myWatcher] roots can't be trusted) => the method fallbacks
+  /// to using `fallbackCandidateRootsToRefresh`, i.e. marks them dirty, recursively
+  /// TODO RC: the semantics seems quite tangled to me: the `fallbackCandidateRootsToRefresh` passed in are plainly ignored if
+  ///          FileWatcher is operational -- not something a caller would expect. Looks like this is actually a private
+  ///          API, exclusively for RefreshSession, there such semantics has sense.
+  public void markSuspiciousFilesDirty(@NotNull List<? extends VirtualFile> fallbackCandidateRootsToRefresh) {
     storeRefreshStatusToFiles();
 
     if (myWatcher.isOperational()) {
@@ -226,9 +251,9 @@ public class LocalFileSystemImpl
       }
     }
     else {
-      for (var file : files) {
-        if (file.getFileSystem() == this) {
-          ((NewVirtualFile)file).markDirtyRecursively();
+      for (var root : fallbackCandidateRootsToRefresh) {
+        if (root.getFileSystem() == this) {
+          ((NewVirtualFile)root).markDirtyRecursively();
         }
       }
     }

@@ -13,6 +13,7 @@ internal class TerminalSessionLaunchContributor(
 ) : AgentSessionLaunchContributor {
   override suspend fun contribute(
     projectPath: String,
+    @Suppress("UNUSED_PARAMETER") projectDirectory: String?,
     provider: AgentSessionProvider,
     sessionId: String?,
     launchSpec: AgentSessionTerminalLaunchSpec,

@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 
 internal data class ProjectEntry(
   val path: String,
+  val projectDirectory: String? = null,
   val name: String,
   val project: Project?,
   val branch: String? = null,
@@ -14,6 +15,7 @@ internal data class ProjectEntry(
 
 internal data class WorktreeEntry(
   val path: String,
+  val projectDirectory: String? = null,
   val name: String,
   val branch: String?,
   val project: Project?,

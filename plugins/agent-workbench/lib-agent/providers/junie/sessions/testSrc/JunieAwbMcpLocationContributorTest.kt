@@ -60,6 +60,7 @@ class JunieAwbMcpLocationContributorTest {
 
     val launchSpec = contributor(userHomePath = userHomePath).contribute(
       projectPath = projectPath.toString(),
+      projectDirectory = null,
       provider = AgentSessionProvider.from("junie"),
       sessionId = null,
       launchSpec = AgentSessionTerminalLaunchSpec(
@@ -104,6 +105,30 @@ class JunieAwbMcpLocationContributorTest {
   }
 
   @Test
+  fun `direct http launch uses project directory for Bazel project identity`(): Unit = runBlocking {
+    val projectPath = tempDir.resolve("project")
+    val identityPath = projectPath.resolve("toolbox/toolbox.bazelproject")
+    Files.createDirectories(projectPath)
+
+    val launchSpec = contributor().contribute(
+      projectPath = identityPath.toString(),
+      projectDirectory = projectPath.toString(),
+      provider = AgentSessionProvider.from("junie"),
+      sessionId = null,
+      launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("junie")),
+    )
+
+    assertThat(launchSpec.command).containsExactly(
+      "junie",
+      "--mcp-default-locations=false",
+      "--mcp-location",
+      projectPath.resolve(".awb").toString(),
+    )
+    assertThat(launchSpec.envVariables).containsEntry(AwbMcpConfigBuilder.PROJECT_PATH_ENV, projectPath.toString())
+    assertThat(Files.exists(AwbMcpConfigBuilder.configFilePath(projectPath))).isTrue()
+  }
+
+  @Test
   fun `direct http launch falls back to existing awb location when mcp url is unavailable`(): Unit = runBlocking {
     val projectPath = tempDir.resolve("project")
     Files.createDirectories(projectPath.resolve(".awb"))
@@ -111,6 +136,7 @@ class JunieAwbMcpLocationContributorTest {
 
     val launchSpec = contributor(mcpUrl = null).contribute(
       projectPath = projectPath.toString(),
+      projectDirectory = null,
       provider = AgentSessionProvider.from("junie"),
       sessionId = null,
       launchSpec = baseLaunchSpec,
@@ -132,6 +158,7 @@ class JunieAwbMcpLocationContributorTest {
 
     val launchSpec = contributor(isDirectHttpEnabled = false).contribute(
       projectPath = projectPath.toString(),
+      projectDirectory = null,
       provider = AgentSessionProvider.from("junie"),
       sessionId = null,
       launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("junie")),
@@ -151,6 +178,7 @@ class JunieAwbMcpLocationContributorTest {
 
     val launchSpec = contributor().contribute(
       projectPath = tempDir.resolve("project").toString(),
+      projectDirectory = null,
       provider = AgentSessionProvider.from("claude"),
       sessionId = null,
       launchSpec = baseLaunchSpec,

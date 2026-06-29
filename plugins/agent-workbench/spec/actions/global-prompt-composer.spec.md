@@ -41,7 +41,7 @@ The global prompt composer is the task-preparation surface for Agent Workbench. 
 - Launch settings must live in the bottom tray as the right launch-configuration affordance. They configure how a new task starts and must not be duplicated in the header or inside editable prompt text.
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteViewStructureTest.kt
 
-- Header controls must be limited to prompt-surface tools such as Plan mode, Run in container, prompt library, and related surface actions. Header controls must not contain selected context cards, `Add Context`, or the primary launch-settings affordance.
+- Header controls must be limited to prompt-surface tools such as the compact Plan mode icon toggle, Run in container, prompt library, and related surface actions. Header controls must not contain selected context cards, `Add Context`, or the primary launch-settings affordance.
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteViewStructureTest.kt
 
 - Context cards, editable prompt text, `Add Context`, and the right edge of launch settings must share one composer-owned content lane in popup and inline prompt surfaces. The embedded editor must not add hidden horizontal insets that define or compensate for this lane.

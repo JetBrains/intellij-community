@@ -18,17 +18,24 @@ import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailab
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupArchiveThreadAction
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupCopyThreadIdAction
+import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupCreateTaskFolderAction
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupDataKeys
+import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupMarkTaskFolderDoneAction
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupMoreAction
+import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupMoveToTaskFolderGroup
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupNewThreadGroup
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupOpenAction
+import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupRemoveFromTaskFolderAction
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupRenameThreadAction
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupToggleThreadPinAction
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupUnarchiveThreadAction
+import com.intellij.agent.workbench.sessions.toolwindow.actions.canMoveThreadsToTaskFolder
 import com.intellij.agent.workbench.sessions.toolwindow.actions.createAgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.toolwindow.actions.resolveAgentSessionsTreePopupActionContext
+import com.intellij.agent.workbench.sessions.toolwindow.actions.resolveTaskFolderThreadMove
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
+import com.intellij.agent.workbench.sessions.toolwindow.ui.archiveTargetsForTaskFolderAssignments
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -40,7 +47,11 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveRequestResult
 import com.intellij.platform.ai.agent.sessions.core.SessionActionTarget
+import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolder
+import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderStatus
+import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderThreadAssignment
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
@@ -487,6 +498,279 @@ class AgentSessionsTreePopupActionsTest {
   }
 
   @Test
+  fun createTaskFolderActionUsesProjectOrWorktreePath() {
+    var createdPath: String? = null
+    var createdName: String? = null
+    val action = AgentSessionsTreePopupCreateTaskFolderAction(
+      resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
+      promptForName = { "Authentication rewrite" },
+      createFolder = { path, name ->
+        createdPath = path
+        createdName = name
+      },
+    )
+
+    val projectContext = popupContext(
+      nodeId = SessionTreeId.Project("/work/project-a"),
+      node = SessionTreeNode.Project(AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)),
+    )
+    val projectEvent = popupEvent(action, projectContext)
+    action.update(projectEvent)
+    assertThat(projectEvent.presentation.isEnabledAndVisible).isTrue()
+
+    action.actionPerformed(projectEvent)
+
+    assertThat(createdPath).isEqualTo("/work/project-a")
+    assertThat(createdName).isEqualTo("Authentication rewrite")
+
+    val threadContext = popupContext(
+      nodeId = SessionTreeId.Thread("/work/project-a", AgentSessionProvider.from("codex"), "thread-1"),
+      node = SessionTreeNode.Thread(
+        project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true),
+        thread = thread(id = "thread-1", provider = AgentSessionProvider.from("codex")),
+      ),
+    )
+    val threadEvent = popupEvent(action, threadContext)
+    action.update(threadEvent)
+    assertThat(threadEvent.presentation.isEnabledAndVisible).isFalse()
+  }
+
+  @Test
+  fun moveToTaskFolderGroupAssignsSelectedThreads() {
+    val provider = AgentSessionProvider.from("codex")
+    val folder = AgentTaskFolder(
+      path = "/work/project-a",
+      id = "folder1",
+      name = "Research",
+      createdAt = 1,
+      updatedAt = 1,
+    )
+    val firstTarget = SessionActionTarget.Thread(
+      path = "/work/project-a",
+      provider = provider,
+      threadId = "thread-1",
+      title = "Thread 1",
+    )
+    val secondTarget = firstTarget.copy(threadId = "thread-2", title = "Thread 2")
+    val assigned = mutableListOf<Pair<String, String>>()
+    val group = AgentSessionsTreePopupMoveToTaskFolderGroup(
+      resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
+      listFolders = { path -> if (path == "/work/project-a") listOf(folder) else emptyList() },
+      assignThread = { target, targetFolder -> assigned += target.threadId to targetFolder.id },
+    )
+    val context = AgentSessionsTreePopupActionContext(
+      project = ProjectManager.getInstance().defaultProject,
+      target = firstTarget,
+      archiveTargets = emptyList(),
+      selectedThreadTargets = listOf(firstTarget, secondTarget),
+    )
+    val event = popupEvent(group, context)
+
+    group.update(event)
+
+    assertThat(event.presentation.isEnabledAndVisible).isTrue()
+    val child = group.getChildren(event).single()
+    child.actionPerformed(popupEvent(child, context))
+
+    assertThat(assigned).containsExactly("thread-1" to "folder1", "thread-2" to "folder1")
+  }
+
+  @Test
+  fun taskFolderThreadMoveUsesSelectedSamePathThreads() {
+    val provider = AgentSessionProvider.from("codex")
+    val firstTarget = threadActionTarget(path = "/work/project-a", provider = provider, threadId = "thread-1")
+    val secondTarget = threadActionTarget(path = "/work/project-a", provider = provider, threadId = "thread-2")
+
+    val move = resolveTaskFolderThreadMove(firstTarget, listOf(firstTarget, secondTarget))
+
+    assertThat(move?.path).isEqualTo("/work/project-a")
+    assertThat(move?.targets).containsExactly(firstTarget, secondTarget)
+  }
+
+  @Test
+  fun taskFolderThreadMoveFallsBackToPrimaryThread() {
+    val target = threadActionTarget(path = "/work/project-a", threadId = "thread-1")
+
+    val move = resolveTaskFolderThreadMove(target, emptyList())
+
+    assertThat(move?.path).isEqualTo("/work/project-a")
+    assertThat(move?.targets).containsExactly(target)
+  }
+
+  @Test
+  fun taskFolderThreadMoveRejectsMixedPathSelection() {
+    val provider = AgentSessionProvider.from("codex")
+    val firstTarget = threadActionTarget(path = "/work/project-a", provider = provider, threadId = "thread-1")
+    val secondTarget = threadActionTarget(path = "/work/project-b", provider = provider, threadId = "thread-2")
+
+    assertThat(resolveTaskFolderThreadMove(firstTarget, listOf(firstTarget, secondTarget))).isNull()
+  }
+
+  @Test
+  fun taskFolderThreadMoveValidatesSameActiveFolderPath() {
+    val target = threadActionTarget(path = "/work/project-a", threadId = "thread-1")
+    val move = checkNotNull(resolveTaskFolderThreadMove(target, emptyList()))
+
+    assertThat(canMoveThreadsToTaskFolder(move, taskFolder(path = "/work/project-a"))).isTrue()
+    assertThat(canMoveThreadsToTaskFolder(move, taskFolder(path = "/work/project-b"))).isFalse()
+    assertThat(canMoveThreadsToTaskFolder(move, taskFolder(path = "/work/project-a", status = AgentTaskFolderStatus.DONE))).isFalse()
+  }
+
+  @Test
+  fun removeFromTaskFolderActionUnassignsOnlyAssignedThreads() {
+    val provider = AgentSessionProvider.from("codex")
+    val assignedTarget = SessionActionTarget.Thread(
+      path = "/work/project-a",
+      provider = provider,
+      threadId = "assigned",
+      title = "Assigned",
+    )
+    val freeTarget = assignedTarget.copy(threadId = "free", title = "Free")
+    val unassigned = mutableListOf<String>()
+    val action = AgentSessionsTreePopupRemoveFromTaskFolderAction(
+      resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
+      isAssigned = { target -> target.threadId == "assigned" },
+      unassignThread = { target -> unassigned += target.threadId },
+    )
+    val context = AgentSessionsTreePopupActionContext(
+      project = ProjectManager.getInstance().defaultProject,
+      target = assignedTarget,
+      archiveTargets = emptyList(),
+      selectedThreadTargets = listOf(assignedTarget, freeTarget),
+    )
+    val event = popupEvent(action, context)
+
+    action.update(event)
+    action.actionPerformed(event)
+
+    assertThat(event.presentation.isEnabledAndVisible).isTrue()
+    assertThat(unassigned).containsExactly("assigned")
+  }
+
+  @Test
+  fun markTaskFolderDoneArchivesAssignedTargetsBeforeChangingStatus() {
+    val provider = AgentSessionProvider.from("codex")
+    val folderTarget = SessionActionTarget.TaskFolder(
+      path = "/work/project-a",
+      folderId = "folder1",
+      name = "Research",
+      isDone = false,
+    )
+    val loadedArchiveTarget = ArchiveThreadTarget.Thread(path = "/work/project-a", provider = provider, threadId = "loaded-thread")
+    val unloadedArchiveTarget = ArchiveThreadTarget.Thread(path = "/work/project-a", provider = provider, threadId = "unloaded-thread")
+    var archivedTargets: List<ArchiveThreadTarget>? = null
+    var doneTarget: SessionActionTarget.TaskFolder? = null
+    val action = AgentSessionsTreePopupMarkTaskFolderDoneAction(
+      resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
+      canArchiveProvider = { true },
+      archiveThreads = { targets, _, onComplete ->
+        archivedTargets = targets
+        onComplete(AgentSessionArchiveRequestResult(requestedCount = 2, archivedCount = 2))
+      },
+      setFolderDone = { target -> doneTarget = target },
+    )
+    val context = AgentSessionsTreePopupActionContext(
+      project = ProjectManager.getInstance().defaultProject,
+      target = folderTarget,
+      archiveTargets = emptyList(),
+      taskFolderArchiveTargets = listOf(loadedArchiveTarget, unloadedArchiveTarget),
+    )
+    val event = popupEvent(action, context)
+
+    action.update(event)
+    action.actionPerformed(event)
+
+    assertThat(event.presentation.isEnabled).isTrue()
+    assertThat(archivedTargets).containsExactly(loadedArchiveTarget, unloadedArchiveTarget)
+    assertThat(doneTarget).isEqualTo(folderTarget)
+  }
+
+  @Test
+  fun taskFolderArchiveTargetsIncludeAssignmentsAbsentFromLoadedRows() {
+    val codex = AgentSessionProvider.from("codex")
+    val claude = AgentSessionProvider.from("claude")
+    val targets = archiveTargetsForTaskFolderAssignments(
+      listOf(
+        taskFolderAssignment(provider = codex, threadId = "loaded-thread", assignedAt = 1),
+        taskFolderAssignment(provider = codex, threadId = "unloaded-thread", assignedAt = 2),
+        taskFolderAssignment(provider = codex, threadId = "loaded-thread", assignedAt = 3),
+        taskFolderAssignment(provider = claude, threadId = "unloaded-thread", assignedAt = 4),
+      )
+    )
+
+    assertThat(targets).containsExactly(
+      ArchiveThreadTarget.Thread(path = "/work/project-a", provider = codex, threadId = "loaded-thread"),
+      ArchiveThreadTarget.Thread(path = "/work/project-a", provider = codex, threadId = "unloaded-thread"),
+      ArchiveThreadTarget.Thread(path = "/work/project-a", provider = claude, threadId = "unloaded-thread"),
+    )
+  }
+
+  @Test
+  fun markTaskFolderDoneKeepsFolderInProgressWhenAssignedArchiveIsPartial() {
+    val provider = AgentSessionProvider.from("codex")
+    val folderTarget = SessionActionTarget.TaskFolder(
+      path = "/work/project-a",
+      folderId = "folder1",
+      name = "Research",
+      isDone = false,
+    )
+    var doneTarget: SessionActionTarget.TaskFolder? = null
+    val action = AgentSessionsTreePopupMarkTaskFolderDoneAction(
+      resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
+      canArchiveProvider = { true },
+      archiveThreads = { _, _, onComplete ->
+        onComplete(AgentSessionArchiveRequestResult(requestedCount = 2, archivedCount = 1))
+      },
+      setFolderDone = { target -> doneTarget = target },
+    )
+    val context = AgentSessionsTreePopupActionContext(
+      project = ProjectManager.getInstance().defaultProject,
+      target = folderTarget,
+      archiveTargets = emptyList(),
+      taskFolderArchiveTargets = listOf(
+        ArchiveThreadTarget.Thread(path = "/work/project-a", provider = provider, threadId = "loaded-thread"),
+        ArchiveThreadTarget.Thread(path = "/work/project-a", provider = provider, threadId = "unloaded-thread"),
+      ),
+    )
+
+    action.actionPerformed(popupEvent(action, context))
+
+    assertThat(doneTarget).isNull()
+  }
+
+  @Test
+  fun markTaskFolderDoneIsDisabledWhenAssignedProviderCannotArchive() {
+    val codex = AgentSessionProvider.from("codex")
+    val claude = AgentSessionProvider.from("claude")
+    val action = AgentSessionsTreePopupMarkTaskFolderDoneAction(
+      resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
+      canArchiveProvider = { provider -> provider == codex },
+      archiveThreads = { _, _, _ -> },
+      setFolderDone = {},
+    )
+    val context = AgentSessionsTreePopupActionContext(
+      project = ProjectManager.getInstance().defaultProject,
+      target = SessionActionTarget.TaskFolder(
+        path = "/work/project-a",
+        folderId = "folder1",
+        name = "Research",
+        isDone = false,
+      ),
+      archiveTargets = emptyList(),
+      taskFolderArchiveTargets = listOf(
+        ArchiveThreadTarget.Thread(path = "/work/project-a", provider = codex, threadId = "codex-thread"),
+        ArchiveThreadTarget.Thread(path = "/work/project-a", provider = claude, threadId = "claude-thread"),
+      ),
+    )
+    val event = popupEvent(action, context)
+
+    action.update(event)
+
+    assertThat(event.presentation.isVisible).isTrue()
+    assertThat(event.presentation.isEnabled).isFalse()
+  }
+
+  @Test
   fun unarchiveActionUsesCapabilityGateAndSelectedCountLabel() {
     var unarchivedTargets: List<ArchiveThreadTarget>? = null
     val unarchiveAction = AgentSessionsTreePopupUnarchiveThreadAction(
@@ -901,6 +1185,8 @@ private fun popupContext(
   node: SessionTreeNode,
   archiveTargets: List<ArchiveThreadTarget> = emptyList(),
   unarchiveTargets: List<ArchiveThreadTarget> = emptyList(),
+  selectedThreadTargets: List<SessionActionTarget.Thread> = emptyList(),
+  taskFolderArchiveTargets: List<ArchiveThreadTarget> = emptyList(),
   newThreadActionAvailable: Boolean = true,
 ): AgentSessionsTreePopupActionContext {
   return checkNotNull(createAgentSessionsTreePopupActionContext(
@@ -909,6 +1195,8 @@ private fun popupContext(
     node = node,
     archiveTargets = archiveTargets,
     unarchiveTargets = unarchiveTargets,
+    selectedThreadTargets = selectedThreadTargets,
+    taskFolderArchiveTargets = taskFolderArchiveTargets,
     newThreadActionAvailable = newThreadActionAvailable,
   ))
 }
@@ -919,6 +1207,47 @@ private fun popupEvent(action: AnAction, context: AgentSessionsTreePopupActionCo
     .add(AgentSessionsTreePopupDataKeys.CONTEXT, context)
     .build()
   return TestActionEvent.createTestEvent(action, dataContext)
+}
+
+private fun threadActionTarget(
+  path: String,
+  threadId: String,
+  provider: AgentSessionProvider = AgentSessionProvider.from("codex"),
+): SessionActionTarget.Thread {
+  return SessionActionTarget.Thread(
+    path = path,
+    provider = provider,
+    threadId = threadId,
+    title = threadId,
+  )
+}
+
+private fun taskFolder(
+  path: String,
+  status: AgentTaskFolderStatus = AgentTaskFolderStatus.IN_PROGRESS,
+): AgentTaskFolder {
+  return AgentTaskFolder(
+    path = path,
+    id = "folder1",
+    name = "Research",
+    status = status,
+    createdAt = 1,
+    updatedAt = 1,
+  )
+}
+
+private fun taskFolderAssignment(
+  provider: AgentSessionProvider,
+  threadId: String,
+  assignedAt: Long,
+): AgentTaskFolderThreadAssignment {
+  return AgentTaskFolderThreadAssignment(
+    path = "/work/project-a",
+    provider = provider,
+    threadId = threadId,
+    folderId = "folder1",
+    assignedAt = assignedAt,
+  )
 }
 
 private fun thread(id: String, provider: AgentSessionProvider, archived: Boolean = false): AgentSessionThread {

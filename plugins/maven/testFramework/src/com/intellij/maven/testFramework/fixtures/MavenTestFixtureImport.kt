@@ -10,6 +10,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
 import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -28,6 +29,8 @@ import org.jetbrains.idea.maven.indices.MavenIndicesManager
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.ArtifactDownloadResult
 import org.jetbrains.idea.maven.project.MavenDownloadSourcesRequest
+import org.jetbrains.idea.maven.project.MavenImportListener
+import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.idea.maven.project.preimport.MavenProjectStaticImporter
 import org.jetbrains.idea.maven.project.preimport.SimpleStructureProjectVisitor
@@ -36,6 +39,7 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.jupiter.api.Assertions
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicBoolean
 
 // Project import / sync orchestration.
 
@@ -54,6 +58,57 @@ suspend fun MavenTestFixture.awaitConfiguration() {
 private fun logConfigurationMessage(message: String) {
   if (message.contains("scanning")) return
   MavenLog.LOG.warn(message)
+}
+
+/**
+ * Runs [action] and waits for the Maven import it triggers to finish, then asserts the import actually ran.
+ * Ported from `MavenTestCase.waitForImportWithinTimeout`.
+ */
+@RequiresBackgroundThread
+suspend fun MavenImportingTestFixture.waitForImportWithinTimeout(action: suspend () -> Unit) {
+  MavenLog.LOG.warn("waitForImportWithinTimeout started")
+  val importStarted = AtomicBoolean(false)
+  val importFinished = AtomicBoolean(false)
+  val pluginResolutionFinished = AtomicBoolean(true)
+  val artifactDownloadingFinished = AtomicBoolean(true)
+  project.messageBus.connect(testRootDisposable)
+    .subscribe(MavenImportListener.TOPIC, object : MavenImportListener {
+      override fun importStarted() {
+        importStarted.set(true)
+      }
+
+      override fun importFinished(importedProjects: MutableCollection<MavenProject>, newModules: MutableList<Module>) {
+        if (importStarted.get()) {
+          importFinished.set(true)
+        }
+      }
+
+      override fun pluginResolutionStarted() {
+        pluginResolutionFinished.set(false)
+      }
+
+      override fun pluginResolutionFinished() {
+        pluginResolutionFinished.set(true)
+      }
+
+      override fun artifactDownloadingStarted() {
+        artifactDownloadingFinished.set(false)
+      }
+
+      override fun artifactDownloadingFinished() {
+        artifactDownloadingFinished.set(true)
+      }
+    })
+
+  action()
+
+  awaitConfiguration()
+
+  assertTrue("Import failed: start", importStarted.get())
+  assertTrue("Import failed: finish", importFinished.get())
+  assertTrue("Import failed: plugins", pluginResolutionFinished.get())
+  assertTrue("Import failed: artifacts", artifactDownloadingFinished.get())
+  MavenLog.LOG.warn("waitForImportWithinTimeout finished")
 }
 
 suspend fun MavenImportingTestFixture.importProjectAsync(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
