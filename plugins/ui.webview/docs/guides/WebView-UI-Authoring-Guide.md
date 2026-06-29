@@ -78,13 +78,40 @@ webview-src/
   test/my-view/mocks/default.ts
 ```
 
-Run a preview from the owning `webview-src` package:
+For IDE Run UI, add a small runnable preview entry point next to the mock:
+
+```ts
+import { runWebViewMockPreview } from "@jetbrains/intellij-webview-testkit/node"
+
+await runWebViewMockPreview({
+  importMetaUrl: import.meta.url,
+  viewId: "my-view",
+  mock: "default",
+  open: true,
+})
+```
+
+Add a package script for the preview:
+
+```json
+{
+  "scripts": {
+    "preview:my-view": "bun test/my-view/preview.ts"
+  }
+}
+```
+
+Run `webview-src/test/<view-id>/preview.ts` from the IDE or run the package script. The package script is the most predictable IDE entry point because it forces Bun. Direct Run on a `.ts` file uses Bun only when `Settings | Languages & Frameworks | JavaScript Runtime | Preferred runtime` is set to `Bun`; if the IDE already generated a Node.js configuration, delete or recreate that configuration after changing the runtime.
+
+For parameterized CLI runs from the owning `webview-src` package, keep using:
 
 ```shell
 bun webview-preview my-view --mock default
 ```
 
-The command serves the view through Vite, replaces `/__webview/wvi-bridge.js` with the test bridge, and loads the selected mock. Use `defineWebViewMock(...)` from `@jetbrains/intellij-webview-testkit` to implement host APIs and to call page APIs registered by the view.
+Both entry points serve the view through Vite, replace `/__webview/wvi-bridge.js` with the test bridge, and load the selected mock. Use `defineWebViewMock(...)` from `@jetbrains/intellij-webview-testkit` to implement host APIs and to call page APIs registered by the view.
+
+`runWebViewMockPreview(...)` infers `webviewSrcDir` from `importMetaUrl`, resolves mock names to `test/<view-id>/mocks/<mock>.ts`, and keeps Vite serving independent of the current working directory. If Vite reports that `views/<view-id>/index.html` is outside `server.fs.allow`, treat that as a testkit configuration bug; do not add mock-mode branches to the production view.
 
 Keep mocks and browser smoke tests out of `resources/webview/`; that directory is generated production output. See [Frontend Testability Without IDE](../frontend/WebView-Frontend-Testability.md) for API details and the `demo/webview-src/test/acp-chat` reference mock.
 

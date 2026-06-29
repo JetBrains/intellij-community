@@ -1,8 +1,7 @@
 #!/usr/bin/env bun
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import { resolve } from "node:path"
-import { startWebViewMockPreview } from "./preview"
+import { runWebViewMockPreview } from "./node"
 
 interface CliOptions {
   viewId: string
@@ -11,23 +10,7 @@ interface CliOptions {
 }
 
 const options = parseArgs(process.argv.slice(2))
-const webviewSrcDir = process.cwd()
-const mock = resolveMockPath(webviewSrcDir, options.viewId, options.mock)
-const server = await startPreviewOrExit({
-  webviewSrcDir,
-  viewId: options.viewId,
-  mock,
-  port: options.port,
-})
-
-console.log(`WebView mock preview: ${server.url}`)
-
-process.on("SIGINT", () => {
-  void server.close().finally(() => process.exit(0))
-})
-process.on("SIGTERM", () => {
-  void server.close().finally(() => process.exit(0))
-})
+await runPreviewOrExit(options)
 
 function parseArgs(args: string[]): CliOptions {
   const viewId = args[0]
@@ -54,9 +37,15 @@ function parseArgs(args: string[]): CliOptions {
   return { viewId, mock, port }
 }
 
-async function startPreviewOrExit(options: Parameters<typeof startWebViewMockPreview>[0]) {
+async function runPreviewOrExit(options: CliOptions): Promise<void> {
   try {
-    return await startWebViewMockPreview(options)
+    await runWebViewMockPreview({
+      importMetaUrl: import.meta.url,
+      webviewSrcDir: process.cwd(),
+      viewId: options.viewId,
+      mock: options.mock,
+      port: options.port,
+    })
   }
   catch (error) {
     console.error(error instanceof Error ? error.message : String(error))
@@ -70,13 +59,6 @@ function requiredValue(args: string[], index: number, option: string): string {
     throw new Error(option + " requires a value")
   }
   return value
-}
-
-function resolveMockPath(webviewSrcDir: string, viewId: string, mock: string): string {
-  if (mock.includes("/") || mock.includes("\\") || mock.endsWith(".ts") || mock.endsWith(".tsx") || mock.endsWith(".mjs") || mock.endsWith(".js")) {
-    return resolve(webviewSrcDir, mock)
-  }
-  return resolve(webviewSrcDir, "test", viewId, "mocks", `${mock}.ts`)
 }
 
 function usage(): never {

@@ -2,7 +2,7 @@
 
 Experimental engine-neutral WebView runtime for local web UI embedded into IntelliJ Swing UI. It lets platform and plugin code host static TypeScript/HTML/CSS views in Swing, serve bundled assets through WebView asset handlers, and communicate with the page through typed JSON-RPC APIs.
 
-Start with [WebView UI Authoring Guide](docs/guides/WebView-UI-Authoring-Guide.md) when adding a new UI. The guide covers the normal path: frontend sources under `webview-src/views/<view-id>`, built assets under `resources/webview/views/<view-id>`, `createWebViewPanel(...)` on the Kotlin side, and typed `WebViewApi` contracts across the bridge.
+Start with [WebView UI Authoring Guide](docs/guides/WebView-UI-Authoring-Guide.md) when adding a new UI. The guide covers the normal path: frontend sources under `webview-src/views/<view-id>`, built assets under `resources/webview/views/<view-id>`, `createWebViewPanel(...)` on the Kotlin side, typed `WebViewApi` contracts across the bridge, browser mock previews, and Playwright smoke tests.
 
 Plugin-facing main API (all `@ApiStatus.Experimental`):
 
@@ -24,6 +24,8 @@ The browser bridge is JSON-RPC based. Application code should use typed protocol
 Useful local entry points:
 
 - `demo/` - internal WebView demo module loaded by `.idea/runConfigurations/IDEA__WebView_Demo_.xml`.
+- `demo/webview-src/test/acp-chat/preview.ts` and `bun run preview:acp-chat` - browser mock preview of the ACP chat view without Kotlin/IDE.
+- `demo/webview-src/test/acp-chat/acp-chat.browser.test.ts` - Playwright smoke reference for a WebView running through the mock bridge.
 - `tests/testSrc/com/intellij/ui/webview/LightweightStandaloneSampleApp.kt` - standalone JFrame smoke app.
 - `tests/testSrc/com/intellij/ui/webview/*WebViewSmokeTest.kt` and `WebViewRuntimeTest.kt` - runtime, backend, and smoke coverage.
 

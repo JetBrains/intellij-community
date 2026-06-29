@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "bun run build.ts",
+    "preview:acp-chat": "bun test/acp-chat/preview.ts",
     "webview-preview": "bun ../../webview-src/packages/testkit/src/cli.ts",
     "test:browser": "playwright test",
     "typecheck": "tsc -p tsconfig.json --noEmit"

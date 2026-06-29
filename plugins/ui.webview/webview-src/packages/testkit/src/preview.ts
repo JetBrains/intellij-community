@@ -2,9 +2,9 @@
 
 import { createServer as createNetServer } from "node:net"
 import { createServer } from "vite"
-import { defineWebViewViewConfig } from "../../build/src/index"
-import { withWebViewMockBridge } from "./vite"
-import type { StartWebViewMockPreviewOptions, WebViewMockPreviewServer } from "./core"
+import { defineWebViewViewConfig } from "../../build/src/index.ts"
+import { withWebViewMockBridge } from "./vite.ts"
+import type { StartWebViewMockPreviewOptions, WebViewMockPreviewServer } from "./core.ts"
 
 export async function startWebViewMockPreview(options: StartWebViewMockPreviewOptions): Promise<WebViewMockPreviewServer> {
   const port = options.port ?? await findAvailablePort()

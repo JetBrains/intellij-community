@@ -6,15 +6,13 @@
 
 ## 1. Quick start
 
-| I want to…                                                     | Go to                                                                                                                                                                         |
-|----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Add a WebView UI to a feature                                  | [guides/WebView-UI-Authoring-Guide](guides/WebView-UI-Authoring-Guide.md)                                                                                                     |
-| Understand the runtime (engines, providers, asset loading)      | [architecture/WebView-Runtime-Architecture](architecture/WebView-Runtime-Architecture.md)                                                                                     |
-| Review the API surface and the 13-item cleanup state            | [architecture/WebView-Architecture-Review](architecture/WebView-Architecture-Review.md)                                                                                       |
-| Design a new JSON-RPC contract                                 | [architecture/WebView-JsonRpc-Design](architecture/WebView-JsonRpc-Design.md) + [architecture/WebView-TS-RPC-API-Design](architecture/WebView-TS-RPC-API-Design.md)           |
-| Preview or browser-test a WebView UI without IDE/Kotlin         | [frontend/WebView-Frontend-Testability](frontend/WebView-Frontend-Testability.md)                                                                                             |
-| Know what's pending vs done                                     | § 3 Roadmap (this doc)                                                                                                                                                        |
-| Understand why an old approach was changed                      | [historical/historical-decisions](historical/historical-decisions.md)                                                                                                         |
+- Add a WebView UI to a feature: [guides/WebView-UI-Authoring-Guide](guides/WebView-UI-Authoring-Guide.md)
+- Understand the runtime (engines, providers, asset loading): [architecture/WebView-Runtime-Architecture](architecture/WebView-Runtime-Architecture.md)
+- Review the API surface and the 13-item cleanup state: [architecture/WebView-Architecture-Review](architecture/WebView-Architecture-Review.md)
+- Design a new JSON-RPC contract: [architecture/WebView-JsonRpc-Design](architecture/WebView-JsonRpc-Design.md) + [architecture/WebView-TS-RPC-API-Design](architecture/WebView-TS-RPC-API-Design.md)
+- Preview or browser-test a WebView UI without IDE/Kotlin: [guides/WebView-UI-Authoring-Guide](guides/WebView-UI-Authoring-Guide.md) and [frontend/WebView-Frontend-Testability](frontend/WebView-Frontend-Testability.md)
+- Know what's pending vs done: § 3 Roadmap (this doc)
+- Understand why an old approach was changed: [historical/historical-decisions](historical/historical-decisions.md)
 
 ## 2. Decision trees
 
@@ -137,7 +135,7 @@ Use the same status legend everywhere; don't invent new icons.
 ## 4. Documents by folder
 
 ### `guides/` — How-to & conventions
-- [WebView UI Authoring Guide](guides/WebView-UI-Authoring-Guide.md) — start here for new UIs.
+- [WebView UI Authoring Guide](guides/WebView-UI-Authoring-Guide.md) — start here for new UIs, browser mock previews, and Playwright smoke tests.
 - [Coding Guides](guides/Coding-Guides.md) — Kotlin conventions + Threading Model section (EDT vs macOS main thread).
 - [Kotlin Reactive Stream Ownership Guideline](guides/kotlin-reactive-stream-ownership-guideline.md)
 - [Pre-refactoring Tests](guides/pre_refactoring_tests.md) — refactoring safety net.
@@ -155,7 +153,7 @@ Use the same status legend everywhere; don't invent new icons.
 - [Framework Policy](frontend/WebView-Frontend-Framework-Policy.md) — Custom Elements, Lit, Preact/React/Svelte tradeoffs.
 - [View Model Patterns](frontend/WebView-Frontend-View-Model-Patterns.md) — Kotlin/WebView state boundary, DTOs, stores, projections.
 - [SDK Distribution](frontend/WebView-Frontend-SDK-Distribution.md) — ⬜ design only.
-- [Testability Without IDE](frontend/WebView-Frontend-Testability.md) — ⏳ browser mock testkit V1 implemented; Java backend layer deferred.
+- [Testability Without IDE](frontend/WebView-Frontend-Testability.md) — ⏳ browser mock testkit V1 implemented; covers `@jetbrains/intellij-webview-testkit`, TS/Bun preview entry points, package scripts, IDE Bun runtime setup, and Playwright smoke tests.
 - [IconSet Loading Plan](frontend/WebView-IconSet-Loading-Plan.md) — ⬜ design only.
 - [Control Parity Design](frontend/WebView-Control-Parity-Design.md) — ⬜ design only.
 

@@ -138,18 +138,42 @@ export default defineWebViewMock(context => {
 })
 ```
 
-## Preview Command
+## Preview Entry Points
+
+For IDE Run UI, create a runnable TypeScript entry point next to the mock:
+
+```ts
+import { runWebViewMockPreview } from "@jetbrains/intellij-webview-testkit/node"
+
+await runWebViewMockPreview({
+  importMetaUrl: import.meta.url,
+  viewId: "acp-chat",
+  mock: "default",
+  open: true,
+})
+```
 
 For the demo ACP chat view:
+
+```shell
+cd community/plugins/ui.webview/demo/webview-src
+bun test/acp-chat/preview.ts
+```
+
+The entry point resolves `test/acp-chat/mocks/default.ts`, starts Vite, serves `/__webview/wvi-bridge.js` from the testkit, prints a local browser URL, and opens it when `open: true` is set. Use this URL for manual preview, browser automation, or agent-assisted UI iteration. Add a package script such as `"preview:acp-chat": "bun test/acp-chat/preview.ts"` so IDE Run UI can launch the preview through Bun.
+
+Direct Run on a `.ts` preview file uses the IDE's JavaScript runtime setting. Set `Settings | Languages & Frameworks | JavaScript Runtime | Preferred runtime` to `Bun` if you want direct gutter/run actions to create Bun run configurations. If a Node.js configuration was already generated for the preview file, delete or recreate it after switching the runtime. The package script remains the preferred path when the project runtime is not under your control.
+
+`runWebViewMockPreview(...)` is intentionally independent from `process.cwd()`: it derives `webviewSrcDir` from `importMetaUrl` and the testkit adds both the mock directory and the Vite view root to `server.fs.allow`. If Vite says `views/<view-id>/index.html` is outside the serving allow list, fix the testkit Vite allow roots instead of changing production view code, mocks, or the current working directory.
+
+For parameterized CLI runs, use:
 
 ```shell
 cd community/plugins/ui.webview/demo/webview-src
 bun webview-preview acp-chat --mock default
 ```
 
-The command resolves `test/acp-chat/mocks/default.ts`, starts Vite, serves `/__webview/wvi-bridge.js` from the testkit, and prints a local browser URL. Use this URL for manual preview, browser automation, or agent-assisted UI iteration.
-
-For another view, add a mock under `test/<view-id>/mocks/<name>.ts` and run:
+For another view, add a mock under `test/<view-id>/mocks/<name>.ts` and run either a dedicated `test/<view-id>/preview.ts` file or:
 
 ```shell
 bun webview-preview VIEW_ID --mock MOCK_NAME

@@ -24,10 +24,20 @@ export function withWebViewMockBridge(config: UserConfig, options: WebViewMockBr
       ...config.server,
       fs: {
         ...config.server?.fs,
-        allow: [...(config.server?.fs?.allow ?? []), dirname(mockPath), process.cwd()],
+        allow: fileSystemAllowList(config, mockPath),
       },
     },
   }
+}
+
+function fileSystemAllowList(config: UserConfig, mockPath: string): string[] {
+  const allow = [
+    ...(config.server?.fs?.allow ?? []),
+    ...(typeof config.root === "string" ? [resolve(config.root)] : []),
+    dirname(mockPath),
+    process.cwd(),
+  ]
+  return Array.from(new Set(allow))
 }
 
 function webViewMockBridgePlugin(mockPath: string): Plugin {
