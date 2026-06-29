@@ -255,7 +255,7 @@ private fun createPowerSaveModeFlow(serviceScope: CoroutineScope): StateFlow<Boo
 
 private fun AgentSessionsState.hasSleepPreventingWork(): Boolean {
   return projects.any { project ->
-    project.threads.any { thread -> thread.activity.isWorking } ||
-    project.worktrees.any { worktree -> worktree.threads.any { thread -> thread.activity.isWorking } }
+    project.threads.any { thread -> thread.activityReport.rowActivity.isWorking } ||
+    project.worktrees.any { worktree -> worktree.threads.any { thread -> thread.activityReport.rowActivity.isWorking } }
   }
 }

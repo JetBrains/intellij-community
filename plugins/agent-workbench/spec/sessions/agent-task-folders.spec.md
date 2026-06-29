@@ -2,17 +2,17 @@
 name: Agent Task Folders
 description: Requirements for task folders that group Agent Threads work without changing the one-thread-one-session model.
 targets:
-  - ../../lib-agent/sessions-core/src/folders/AgentTaskFolders.kt
-  - ../../lib-agent/sessions-core/src/SessionActionTarget.kt
+  - ../../sessions-task-folders/src/AgentTaskFolders.kt
   - ../../sessions/src/service/AgentSessionArchiveService.kt
   - ../../sessions/resources/messages/AgentSessionsBundle.properties
   - ../../sessions-toolwindow/src/tree/SessionTree.kt
   - ../../sessions-toolwindow/src/tree/SessionTreeSearch.kt
   - ../../sessions-toolwindow/src/ui/AgentSessionsTree*.kt
+  - ../../sessions-toolwindow/src/actions/AgentSessionsTreePopupActions.kt
   - ../../sessions-toolwindow/src/actions/*TaskFolder*.kt
   - ../../sessions-toolwindow/src/actions/SessionTreeActionTargets.kt
   - ../../sessions-toolwindow/resources/intellij.agent.workbench.sessions.toolwindow.xml
-  - ../../sessions/testSrc/AgentTaskFolderServiceTest.kt
+  - ../../sessions-task-folders/testSrc/AgentTaskFolderServiceTest.kt
   - ../../sessions-toolwindow/testSrc/AgentSessionsTreeSnapshotTest.kt
   - ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
 ---
@@ -33,12 +33,12 @@ create a new top-level Agent Workbench entity and do not inject context into pro
 - The folder service must persist app-level, non-roamable folder state keyed by global folder id. New folder ids must be generated as
   platform KSUIDs; persisted folder ids must be trimmed and accepted only if they match KSUID shape. Folder path associations, names,
   assignment thread ids, and metadata keys must be trimmed or normalized; invalid or orphaned persisted records must be dropped on load.
-  [@test] ../../sessions/testSrc/AgentTaskFolderServiceTest.kt
+  [@test] ../../sessions-task-folders/testSrc/AgentTaskFolderServiceTest.kt
 
 - A thread may be assigned to at most one in-progress task folder per normalized path/provider/thread id. Assigning a thread to another
   folder must move it from the previous folder. Folder rename, metadata, delete, and status mutations must address the global folder id,
   not the render path. Done folders must be hidden from the active tree and reject new assignments.
-  [@test] ../../sessions/testSrc/AgentTaskFolderServiceTest.kt
+  [@test] ../../sessions-task-folders/testSrc/AgentTaskFolderServiceTest.kt
 
 - The active Agent Threads tree must render in-progress task folders under their owning project or worktree. Loaded assigned threads must
   appear as children of the folder and must be removed from the normal ungrouped thread rows and `More` counts. Assigned threads that are
@@ -74,6 +74,6 @@ create a new top-level Agent Workbench entity and do not inject context into pro
 
 ## Testing / Local Run
 
-- `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderServiceTest`
+- `./tests.cmd --module intellij.agent.workbench.sessions.task.folders.tests --test com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolderServiceTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.toolwindow.tests --test com.intellij.agent.workbench.sessions.toolwindow.AgentSessionsTreeSnapshotTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.toolwindow.tests --test com.intellij.agent.workbench.sessions.toolwindow.AgentSessionsTreePopupActionsTest`

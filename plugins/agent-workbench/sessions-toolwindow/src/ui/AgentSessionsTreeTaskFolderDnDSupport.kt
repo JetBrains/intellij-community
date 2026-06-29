@@ -15,8 +15,8 @@ import com.intellij.ide.dnd.DnDEvent
 import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.dnd.DnDTargetChecker
 import com.intellij.openapi.Disposable
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolder
 import com.intellij.platform.ai.agent.sessions.core.SessionActionTarget
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolder
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.treeStructure.Tree
 import java.awt.Rectangle

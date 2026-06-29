@@ -8,6 +8,7 @@ import tools.jackson.core.JsonParser
 import tools.jackson.core.JsonToken
 import tools.jackson.core.json.JsonFactory
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.normalizeAgentSessionProjectPath
 import com.intellij.platform.ai.agent.core.normalizeAgentSessionTitle
 import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItemKind
@@ -1431,7 +1432,7 @@ private fun PiSessionIndexEntry.toAgentSessionThread(readTracker: Map<String, Lo
     title = title,
     updatedAt = updatedAt,
     archived = archived,
-    activity = activity ?: resolveCompletedPiActivity(readTracker = readTracker),
+    activityReport = AgentThreadActivityReport(activity ?: resolveCompletedPiActivity(readTracker = readTracker)),
     provider = PI_AGENT_SESSION_PROVIDER,
   )
 }
@@ -1446,10 +1447,12 @@ private fun PiSessionIndexEntry.toAgentSessionThread(
     title = title,
     updatedAt = updatedAt,
     archived = archived,
-    activity = activity ?: resolveCompletedPiActivity(
-      readTracker = readTracker,
-      completedUnreadUpdatedAtByThreadId = completedUnreadUpdatedAtByThreadId,
-      observedUpdatedAtByThreadId = observedUpdatedAtByThreadId,
+    activityReport = AgentThreadActivityReport(
+      activity ?: resolveCompletedPiActivity(
+        readTracker = readTracker,
+        completedUnreadUpdatedAtByThreadId = completedUnreadUpdatedAtByThreadId,
+        observedUpdatedAtByThreadId = observedUpdatedAtByThreadId,
+      )
     ),
     provider = PI_AGENT_SESSION_PROVIDER,
   )

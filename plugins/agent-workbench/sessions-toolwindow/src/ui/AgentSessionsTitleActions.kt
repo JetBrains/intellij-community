@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 // @spec community/plugins/agent-workbench/spec/sessions/agent-sessions-tree.spec.md
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.chromePresentationActivity
 import com.intellij.platform.ai.agent.common.statusColor
 import com.intellij.platform.ai.agent.common.statusMessageKey
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
@@ -277,7 +278,7 @@ private class AgentSessionsActivityOpenThreadAction(
 ) : DumbAwareAction(
   agentSessionsActivityPopupRowText(row, now),
   null,
-  agentSessionThreadStatusIcon(row.thread.provider, row.thread.activity),
+  agentSessionThreadStatusIcon(row.thread.provider, row.thread.activityReport),
 ) {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
@@ -304,7 +305,7 @@ internal fun agentSessionsActivityPopupRowText(
   val timeLabel = row.thread.updatedAt.takeIf { it > 0 }?.let { timestamp ->
     formatRelativeTimeShort(timestamp, now)
   } ?: AgentSessionsBundle.message("toolwindow.time.unknown")
-  val statusLabel = AgentSessionsBundle.message(row.thread.activity.statusMessageKey())
+  val statusLabel = AgentSessionsBundle.message(row.thread.activityReport.chromePresentationActivity().statusMessageKey())
   return AgentSessionsBundle.message("toolwindow.activity.popup.row", title, statusLabel, row.locationLabel, timeLabel)
 }
 

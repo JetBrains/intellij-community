@@ -26,8 +26,10 @@ jvm_library(
         "//platform/util",
         "//plugins/agent-workbench/lib-agent/core",
         "//plugins/agent-workbench/lib-agent/providers/pi/sessions",
-        "//plugins/agent-workbench/sessions",
+        "//plugins/agent-workbench/lib-agent/sessions-core:ai-agent-sessions-core",
+        "//plugins/agent-workbench/sessions-task-folders:agent-workbench-sessions-task-folders",
         "//plugins/agent-workbench/settings",
+        "//libraries/jackson3/jackson:libraries-jackson3",
     ],
 )
 
@@ -48,8 +50,10 @@ jvm_library(
         "//platform/util:util_test_lib",
         "//plugins/agent-workbench/lib-agent/core:core_test_lib",
         "//plugins/agent-workbench/lib-agent/providers/pi/sessions:sessions_test_lib",
-        "//plugins/agent-workbench/sessions:sessions_test_lib",
+        "//plugins/agent-workbench/lib-agent/sessions-core:ai-agent-sessions-core_test_lib",
+        "//plugins/agent-workbench/sessions-task-folders:agent-workbench-sessions-task-folders_test_lib",
         "//plugins/agent-workbench/settings:settings_test_lib",
+        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
     ],
 )
 ### auto-generated section `build intellij.agent.workbench.pi.awb` end

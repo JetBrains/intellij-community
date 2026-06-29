@@ -70,11 +70,11 @@ Session refresh is event-driven and provider-agnostic. It merges provider result
   concurrent project loads cannot observe or prune each other's partial rescan state.
   [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeStoreSessionBackendTest.kt
 
-- Provider refresh publishes shared thread presentation keyed by normalized path and canonical thread identity so Agent Threads and open editor tabs show the same title/activity. Agent Threads activity counters use canonical thread summary activity; shared presentation may refresh titles without changing counter buckets.
+- Provider refresh publishes shared thread presentation keyed by normalized path and canonical thread identity so Agent Threads and open editor tabs show the same title/activity report. Agent Threads rows use canonical row activity, while activity counters use canonical chrome activity; shared presentation may refresh titles without changing counter buckets.
   [@test] ../../sessions/testSrc/AgentSessionThreadPresentationTest.kt
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
 
-- Activity and presentation updates carry evidence authority. Provisional provider signals may update row activity, but must not clear an existing attention-bucket chrome/summary activity. Semantic provider signals and authoritative snapshots may clear attention when they explicitly report a non-attention activity.
+- Activity and presentation updates carry evidence authority. Provisional provider signals may update row activity, but must not clear an existing attention-bucket chrome activity. Semantic provider signals and authoritative snapshots may clear attention when they explicitly report a non-attention activity.
   [@test] ../../sessions/testSrc/service/AgentSessionRefreshSchedulerTest.kt
 
 - File-backed provider watchers must recover after watch-loop failures while the owning watcher remains active.

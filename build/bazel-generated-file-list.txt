@@ -1033,6 +1033,7 @@ plugins/agent-workbench/sessions-actions
 plugins/agent-workbench/sessions-cost
 plugins/agent-workbench/sessions-jbcentral
 plugins/agent-workbench/sessions-launch-config/backend
+plugins/agent-workbench/sessions-task-folders
 plugins/agent-workbench/sessions-toolwindow
 plugins/agent-workbench/settings
 plugins/agent-workbench/ui

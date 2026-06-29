@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.agent.workbench.prompt.core.AgentPromptExistingThreadsSnapshot
@@ -311,7 +312,7 @@ class AgentPromptExistingTaskControllerTest {
       title = title,
       updatedAt = updatedAt,
       archived = false,
-      activity = activity,
+      activityReport = AgentThreadActivityReport(activity),
       provider = AgentSessionProvider.from("codex"),
     )
   }

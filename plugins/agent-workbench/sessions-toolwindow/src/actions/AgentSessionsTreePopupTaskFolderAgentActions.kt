@@ -13,6 +13,8 @@ import com.intellij.agent.workbench.sessions.resolveAgentSessionLaunchProfileSel
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolder
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolderService
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -23,8 +25,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.sessions.core.SessionActionTarget
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolder
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderService
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 import com.intellij.platform.ai.agent.sessions.core.providers.builtInLaunchProfileId
@@ -204,7 +204,7 @@ internal fun buildTaskFolderAgentPrompt(
   """.trimIndent()
 }
 
-private fun taskFolderAgentPathFromTarget(target: SessionActionTarget): String? {
+private fun taskFolderAgentPathFromTarget(target: SessionActionTarget?): String? {
   return when (target) {
     is SessionActionTarget.Project -> target.path
     is SessionActionTarget.Worktree -> target.path

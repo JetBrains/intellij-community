@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ai.agent.sessions.core
 
-import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
@@ -42,18 +41,7 @@ data class AgentSessionThreadPresentation(
   @JvmField val title: @NlsSafe String,
   @JvmField val activityReport: AgentThreadActivityReport,
   @JvmField val updatedAt: Long? = null,
-) {
-  constructor(
-    title: @NlsSafe String,
-    activity: AgentThreadActivity,
-  ) : this(
-    title = title,
-    activityReport = AgentThreadActivityReport(activity),
-  )
-
-  val activity: AgentThreadActivity
-    get() = activityReport.rowActivity
-}
+)
 
 data class AgentSessionThreadPresentationChangeSet(
   @JvmField val changedKeys: Set<AgentSessionThreadPresentationKey>,
@@ -75,17 +63,7 @@ data class AgentSessionThreadActivityPresentationUpdate(
   @JvmField val threadId: String,
   @JvmField val activityReport: AgentThreadActivityReport,
   @JvmField val updatedAt: Long? = null,
-) {
-  constructor(
-    path: String,
-    threadId: String,
-    activity: AgentThreadActivity,
-  ) : this(
-    path = path,
-    threadId = threadId,
-    activityReport = AgentThreadActivityReport(activity),
-  )
-}
+)
 
 @Service(Service.Level.APP)
 class AgentSessionThreadPresentationModel {
@@ -105,8 +83,7 @@ class AgentSessionThreadPresentationModel {
     provider: AgentSessionProvider,
     threadId: String,
     title: String,
-    activity: AgentThreadActivity?,
-    activityReport: AgentThreadActivityReport? = activity?.let(::AgentThreadActivityReport),
+    activityReport: AgentThreadActivityReport? = null,
     updatedAt: Long? = null,
   ): AgentSessionThreadPresentationChangeSet {
     val key = AgentSessionThreadPresentationKey.create(projectPath = path, provider = provider, threadId = threadId)

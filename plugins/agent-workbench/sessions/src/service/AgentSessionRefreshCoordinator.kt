@@ -838,8 +838,8 @@ private fun applyThreadPresentationHintsForPath(
         LOG.debug {
           "Applying ${provider.value} presentation hint path=$path threadId=${thread.id} " +
           "titleChanged=${resolvedUpdate.title != thread.title} " +
-          "activity=${thread.activity}->${resolvedUpdate.activityReport.rowActivity} " +
-          "summaryActivity=${thread.summaryActivity}->${resolvedUpdate.activityReport.chromeActivity} " +
+          "rowActivity=${thread.activityReport.rowActivity}->${resolvedUpdate.activityReport.rowActivity} " +
+          "chromeActivity=${thread.activityReport.chromeActivity}->${resolvedUpdate.activityReport.chromeActivity} " +
           "updatedAt=${thread.updatedAt}->${resolvedUpdate.updatedAt}"
         }
         presentationUpdates += AgentSessionThreadPresentationPatchUpdate(

@@ -5,8 +5,8 @@ import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.json.createJsonParser
 import com.intellij.platform.ai.agent.json.forEachJsonObjectField
 import com.intellij.platform.ai.agent.json.readJsonStringOrNull
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderService
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderStatus
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolderService
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolderStatus
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
@@ -116,7 +116,7 @@ class PiExtensionControlWebSocketHandlerTest {
         assertThat(forkedThread?.id).isEqualTo(forkedSessionId)
         assertThat(forkedThread?.title).isEqualTo("Forked thread")
         assertThat(forkedThread?.updatedAt).isEqualTo(9_000L)
-        assertThat(forkedThread?.activity).isEqualTo(AgentThreadActivity.PROCESSING)
+        assertThat(forkedThread?.activityReport?.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
         assertThat(PiExtensionControlBridge.canNavigateThreadOutlineItem(projectDir.toString(), sessionId, "entry-next")).isFalse()
         assertThat(PiExtensionControlBridge.canNavigateThreadOutlineItem(projectDir.toString(), forkedSessionId, "entry-next")).isTrue()
         assertThat(PiExtensionStatusBridge.authenticateLaunchToken(launchEnvironment.token, sessionId)).isNull()
@@ -402,6 +402,7 @@ class PiExtensionControlWebSocketHandlerTest {
     }
 
   private fun registerControlHandler(disposable: Disposable) {
+    ExtensionTestUtil.maskExtensions(PiControlRequestHandler.EP_NAME, listOf(PiTaskFolderControlHandler()), disposable)
     ExtensionTestUtil.maskExtensions(HttpRequestHandler.EP_NAME, listOf(PiExtensionControlWebSocketHandler()), disposable)
   }
 

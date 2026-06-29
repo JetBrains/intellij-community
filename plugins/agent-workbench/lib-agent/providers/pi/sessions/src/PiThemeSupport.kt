@@ -325,6 +325,7 @@ private val PI_EXTENSION_RESOURCE_FILE_NAMES: List<String> = listOf(
   "omlx.ts",
   "status.ts",
   "terminalInput.ts",
+  "taskFolders.ts",
   "theme.ts",
 )
 private const val PI_EXTENSION_FILE_NAME_HASH_PREFIX_LENGTH: Int = 16

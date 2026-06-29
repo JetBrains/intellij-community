@@ -322,7 +322,7 @@ class AgentSessionsActivitySummaryTest {
                 title = "Parent ready",
                 updatedAt = 100,
                 archived = false,
-                activity = AgentThreadActivity.READY,
+                activityReport = AgentThreadActivityReport(AgentThreadActivity.READY),
                 provider = AgentSessionProvider.from("codex"),
                 subAgents = listOf(AgentSubAgent(id = "child-done", name = "Child done", activity = AgentThreadActivity.UNREAD)),
               ),
@@ -348,7 +348,7 @@ class AgentSessionsActivitySummaryTest {
             isOpen = true,
             providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
-              thread("sub-agent-done", AgentThreadActivity.UNREAD, 100, summaryActivity = null),
+              thread("sub-agent-done", AgentThreadActivity.UNREAD, 100, chromeActivity = null),
             ),
           )
         ),
@@ -561,13 +561,13 @@ class AgentSessionsActivitySummaryTest {
 
     assertThat(
       tracker.collectNotifications(
-        summary(thread("done", AgentThreadActivity.UNREAD, 200, summaryActivity = null)),
+        summary(thread("done", AgentThreadActivity.UNREAD, 200, chromeActivity = null)),
         isLoadedState = true,
       )
     ).isEmpty()
     assertThat(
       tracker.collectNotifications(
-        summary(thread("done", AgentThreadActivity.UNREAD, 300, summaryActivity = AgentThreadActivity.UNREAD)),
+        summary(thread("done", AgentThreadActivity.UNREAD, 300, chromeActivity = AgentThreadActivity.UNREAD)),
         isLoadedState = true,
       )
     ).hasSize(1)
@@ -580,19 +580,19 @@ class AgentSessionsActivitySummaryTest {
 
     assertThat(
       tracker.collectNotifications(
-        summary(thread("needs-input", AgentThreadActivity.NEEDS_INPUT, 200, summaryActivity = AgentThreadActivity.READY)),
+        summary(thread("needs-input", AgentThreadActivity.NEEDS_INPUT, 200, chromeActivity = AgentThreadActivity.READY)),
         isLoadedState = true,
       )
     ).isEmpty()
     assertThat(
       tracker.collectNotifications(
-        summary(thread("needs-input", AgentThreadActivity.NEEDS_INPUT, 300, summaryActivity = null)),
+        summary(thread("needs-input", AgentThreadActivity.NEEDS_INPUT, 300, chromeActivity = null)),
         isLoadedState = true,
       )
     ).isEmpty()
     assertThat(
       tracker.collectNotifications(
-        summary(thread("needs-input", AgentThreadActivity.NEEDS_INPUT, 400, summaryActivity = AgentThreadActivity.NEEDS_INPUT)),
+        summary(thread("needs-input", AgentThreadActivity.NEEDS_INPUT, 400, chromeActivity = AgentThreadActivity.NEEDS_INPUT)),
         isLoadedState = true,
       )
     ).hasSize(1)
@@ -791,16 +791,15 @@ class AgentSessionsActivitySummaryTest {
     activity: AgentThreadActivity,
     updatedAt: Long,
     title: String = id,
-    summaryActivity: AgentThreadActivity? = activity,
+    chromeActivity: AgentThreadActivity? = activity,
   ): AgentSessionThread {
     return AgentSessionThread(
       id = id,
       title = title,
       updatedAt = updatedAt,
       archived = false,
-      activity = activity,
+      activityReport = AgentThreadActivityReport(rowActivity = activity, chromeActivity = chromeActivity),
       provider = AgentSessionProvider.from("codex"),
-      summaryActivity = summaryActivity,
     )
   }
 }

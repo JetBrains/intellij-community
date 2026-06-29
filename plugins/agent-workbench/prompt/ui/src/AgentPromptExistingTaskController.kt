@@ -218,7 +218,7 @@ internal fun formatExistingTaskEntries(
           nowLabel = nowLabel,
           unknownLabel = unknownLabel,
         ),
-        activity = thread.activity,
+        activity = thread.activityReport.rowActivity,
       )
     }
     .toList()

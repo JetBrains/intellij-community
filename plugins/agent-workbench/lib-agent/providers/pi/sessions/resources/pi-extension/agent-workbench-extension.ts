@@ -1,5 +1,5 @@
 import {type ExtensionAPI, type ExtensionContext} from "@earendil-works/pi-coding-agent";
-import {registerTaskFolderTools, startControlBridge} from "./control.ts";
+import {startControlBridge} from "./control.ts";
 import {registerJbCentralProvider} from "./jbcentral.ts";
 import {parseModelCatalogMetadata} from "./modelCatalog.ts";
 import {registerOmlxProviders} from "./omlx.ts";
@@ -11,6 +11,7 @@ import {
   resolveStartupActivity,
 } from "./status.ts";
 import {subscribeShiftEnterTerminalInput} from "./terminalInput.ts";
+import {registerTaskFolderTools} from "./taskFolders.ts";
 import {applyCurrentTheme, startStateWatcher} from "./theme.ts";
 
 const MODEL_CATALOG_ENV = "AGENT_WORKBENCH_PI_MODEL_CATALOG";

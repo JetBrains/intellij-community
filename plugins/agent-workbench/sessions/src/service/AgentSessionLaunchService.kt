@@ -524,7 +524,7 @@ class AgentSessionLaunchService internal constructor(
                       promptLaunchResolved?.invoke(AgentPromptLaunchResult.failure(AgentPromptLaunchError.TARGET_THREAD_NOT_FOUND))
                       return@launchDropAction
                   }
-                  if (effectiveInitialMessagePlan?.isBlockedForExistingThreadPlanMode(refreshedThread.activity) == true) {
+                  if (effectiveInitialMessagePlan?.isBlockedForExistingThreadPlanMode(refreshedThread.activityReport.rowActivity) == true) {
                       promptLaunchResolved?.invoke(AgentPromptLaunchResult.failure(AgentPromptLaunchError.TARGET_THREAD_BUSY_FOR_PLAN_MODE))
                       return@launchDropAction
                   }
@@ -648,7 +648,7 @@ class AgentSessionLaunchService internal constructor(
       provider = thread.provider,
       threadId = thread.id,
       title = thread.title,
-      activity = thread.activity,
+      activity = thread.activityReport.rowActivity,
       updatedAt = thread.updatedAt,
     )
     val matchResult = PendingAgentChatTabMatcher.match(
@@ -1407,7 +1407,7 @@ class AgentSessionLaunchService internal constructor(
                              ?: return@run reportPromptLaunchResolved(AgentPromptLaunchResult.failure(AgentPromptLaunchError.TARGET_THREAD_NOT_FOUND))
           val effectiveInitialMessageRequest = request.initialMessageRequest
           val initialMessagePlan = bridge.buildInitialMessagePlan(effectiveInitialMessageRequest)
-          if (initialMessagePlan.isBlockedForExistingThreadPlanMode(targetThread.activity)) {
+          if (initialMessagePlan.isBlockedForExistingThreadPlanMode(targetThread.activityReport.rowActivity)) {
             return@run reportPromptLaunchResolved(AgentPromptLaunchResult.failure(AgentPromptLaunchError.TARGET_THREAD_BUSY_FOR_PLAN_MODE))
           }
           uiPreferencesState.updateProviderOptionsOnLaunch(
@@ -2252,7 +2252,7 @@ private suspend fun openChatInProject(
     threadId = chatOpenPlan.runtimeThreadId,
     threadTitle = chatOpenPlan.threadTitle,
     subAgentId = chatOpenPlan.subAgentId,
-    threadActivity = thread.activity,
+    threadActivity = thread.activityReport.rowActivity,
     launchMode = serializeAgentChatLaunchMode(launchMode),
     launchProfileId = launchProfileId,
     initialMessageDispatchPlan = effectiveInitialMessageDispatchPlan,

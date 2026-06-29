@@ -277,7 +277,7 @@ internal class ClaudeSessionSource internal constructor(
         title = sourcePrompt.threadTitle,
         updatedAt = System.currentTimeMillis(),
         archived = false,
-        activity = AgentThreadActivity.PROCESSING,
+        activityReport = AgentThreadActivityReport(AgentThreadActivity.PROCESSING),
         provider = CLAUDE_AGENT_SESSION_PROVIDER,
       ),
       launchSpecOverride = launchSpec,
@@ -347,10 +347,12 @@ private fun ClaudeBackendThread.toAgentSessionThread(
     archived = archived,
     provider = CLAUDE_AGENT_SESSION_PROVIDER,
     originBranch = gitBranch,
-    activity = effectiveActivity(
-      readTracker = readTracker,
-      completedUnreadUpdatedAtByThreadId = completedUnreadUpdatedAtByThreadId,
-      observedUpdatedAtByThreadId = observedUpdatedAtByThreadId,
+    activityReport = AgentThreadActivityReport(
+      effectiveActivity(
+        readTracker = readTracker,
+        completedUnreadUpdatedAtByThreadId = completedUnreadUpdatedAtByThreadId,
+        observedUpdatedAtByThreadId = observedUpdatedAtByThreadId,
+      )
     ),
     cost = if (includeCost) usageSnapshots.aggregateAgentSessionUsageCost(calculateCost) else null,
   )

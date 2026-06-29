@@ -76,13 +76,14 @@ class AgentSessionsCodexActivityRenderingIntegrationTest {
         service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
           ?.threads
           ?.singleOrNull()
-          ?.activity == AgentThreadActivity.PROCESSING
+          ?.activityReport
+          ?.rowActivity == AgentThreadActivity.PROCESSING
       }
 
       val state = service.state.value
       val project = state.projects.single { it.path == PROJECT_PATH }
       val thread = project.threads.single()
-      assertThat(thread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(thread.activityReport.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
 
       val model = buildSessionTreeModel(
         projects = state.projects,
@@ -92,7 +93,7 @@ class AgentSessionsCodexActivityRenderingIntegrationTest {
       )
       val threadId = SessionTreeId.Thread(project.path, AgentSessionProvider.from("codex"), thread.id)
       val processingNode = model.entriesById.getValue(threadId).node as SessionTreeNode.Thread
-      assertThat(processingNode.thread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(processingNode.thread.activityReport.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
 
       val tree = createTree()
       val processingRenderer = createRenderer { id -> model.entriesById[id]?.node }
@@ -118,15 +119,14 @@ class AgentSessionsCodexActivityRenderingIntegrationTest {
   }
 
   @Test
-  fun treeRowRendersActualActivityWhenSummaryActivityDoesNotContribute() {
+  fun treeRowRendersActualActivityWhenChromeActivityDoesNotContribute() {
     val thread = AgentSessionThread(
       id = "sub-agent-only",
       title = "Sub-agent only",
       updatedAt = 1_000L,
       archived = false,
-      activity = AgentThreadActivity.UNREAD,
+      activityReport = AgentThreadActivityReport(rowActivity = AgentThreadActivity.UNREAD, chromeActivity = null),
       provider = AgentSessionProvider.from("codex"),
-      summaryActivity = null,
     )
     val project = AgentProjectSessions(
       path = PROJECT_PATH,
@@ -143,8 +143,8 @@ class AgentSessionsCodexActivityRenderingIntegrationTest {
     )
     val threadId = SessionTreeId.Thread(project.path, AgentSessionProvider.from("codex"), thread.id)
     val unreadNode = model.entriesById.getValue(threadId).node as SessionTreeNode.Thread
-    assertThat(unreadNode.thread.activity).isEqualTo(AgentThreadActivity.UNREAD)
-    assertThat(unreadNode.thread.summaryActivity).isNull()
+    assertThat(unreadNode.thread.activityReport.rowActivity).isEqualTo(AgentThreadActivity.UNREAD)
+    assertThat(unreadNode.thread.activityReport.chromeActivity).isNull()
 
     val tree = createTree()
     val unreadRenderer = createRenderer { id -> model.entriesById[id]?.node }
@@ -181,8 +181,7 @@ class AgentSessionsCodexActivityRenderingIntegrationTest {
         title = "Thread 1",
         updatedAt = 1_000L,
         provider = AgentSessionProvider.from("codex"),
-        activity = AgentThreadActivity.PROCESSING,
-        summaryActivity = null,
+        activityReport = AgentThreadActivityReport(rowActivity = AgentThreadActivity.PROCESSING, chromeActivity = null),
       )
     )
   }

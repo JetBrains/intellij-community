@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions.state
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.core.session.AgentSessionCost
 import com.intellij.platform.ai.agent.core.session.AgentSessionCostKind
@@ -202,7 +203,10 @@ private fun AgentSessionWarmStateService.WarmPathSnapshotState.toSnapshot(): Age
         title = threadDisplayTitle(threadId = thread.id, title = thread.title),
         updatedAt = thread.updatedAt,
         archived = false,
-        activity = parseWarmStateThreadActivity(thread.activity),
+        activityReport = AgentThreadActivityReport(
+          rowActivity = parseWarmStateThreadActivity(thread.activity),
+          chromeActivity = parseWarmStateThreadSummaryActivity(thread.summaryActivity),
+        ),
         provider = provider,
         subAgents = thread.subAgents.map { subAgent ->
           AgentSubAgent(
@@ -212,7 +216,6 @@ private fun AgentSessionWarmStateService.WarmPathSnapshotState.toSnapshot(): Age
           )
         },
         originBranch = thread.originBranch,
-        summaryActivity = parseWarmStateThreadSummaryActivity(thread.summaryActivity),
         cost = thread.cost?.toCost(),
       )
     },
@@ -231,13 +234,13 @@ private fun AgentSessionWarmPathSnapshot.toState(): AgentSessionWarmStateService
         id = thread.id,
         title = thread.title,
         updatedAt = thread.updatedAt,
-        activity = thread.activity.name,
+        activity = thread.activityReport.rowActivity.name,
         provider = thread.provider.value,
         subAgents = thread.subAgents.map { subAgent ->
           AgentSessionWarmStateService.WarmSubAgentState(id = subAgent.id, name = subAgent.name, activity = subAgent.activity.name)
         },
         originBranch = thread.originBranch,
-        summaryActivity = thread.summaryActivity?.name,
+        summaryActivity = thread.activityReport.chromeActivity?.name,
         cost = thread.cost?.toState(),
       )
     },

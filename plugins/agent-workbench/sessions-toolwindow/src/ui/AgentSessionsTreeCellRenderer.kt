@@ -399,8 +399,8 @@ internal class SessionTreeCellRenderer(
   }
 
   private fun threadCompositeIcon(treeNode: SessionTreeNode.Thread): Icon {
-    return providerIconProvider?.let { agentSessionThreadStatusIcon(it(treeNode.thread.provider), treeNode.thread.activity) }
-           ?: agentSessionThreadStatusIcon(treeNode.thread.provider, treeNode.thread.activity)
+    return providerIconProvider?.let { agentSessionThreadStatusIcon(it(treeNode.thread.provider), treeNode.thread.activityReport.rowActivity) }
+           ?: agentSessionThreadStatusIcon(treeNode.thread.provider, treeNode.thread.activityReport.rowActivity)
   }
 
   private fun projectCompositeIcon(project: AgentProjectSessions): Icon {

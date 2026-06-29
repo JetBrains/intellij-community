@@ -26,7 +26,6 @@
     <orderEntry type="module" module-name="intellij.platform.ai.agent.core" />
     <orderEntry type="module" module-name="intellij.platform.ai.agent.json" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.sessions" />
     <orderEntry type="module" module-name="intellij.platform.ai.agent.sessions.core" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3" />
     <orderEntry type="module" module-name="intellij.libraries.netty.buffer" />

@@ -196,7 +196,7 @@ internal class AgentSessionThreadRebindSupport(
             provider = provider,
             threadId = thread.id,
             title = thread.title,
-            activity = thread.activity,
+            activity = thread.activityReport.rowActivity,
             updatedAt = thread.updatedAt,
           )
         )

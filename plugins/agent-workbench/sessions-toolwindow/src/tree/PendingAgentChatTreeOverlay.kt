@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.sessions.toolwindow.tree
 import com.intellij.agent.workbench.chat.AgentChatOpenTabsPresentationState
 import com.intellij.agent.workbench.chat.AgentChatPendingTabSnapshot
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.core.parseAgentThreadIdentity
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
@@ -83,7 +84,7 @@ private fun buildPendingThread(
     title = AgentSessionsBundle.message("toolwindow.action.new.thread"),
     updatedAt = pendingTab.pendingFirstInputAtMs ?: pendingTab.pendingCreatedAtMs ?: 0L,
     archived = false,
-    activity = AgentThreadActivity.READY,
+    activityReport = AgentThreadActivityReport(AgentThreadActivity.READY),
     provider = provider,
   )
 }

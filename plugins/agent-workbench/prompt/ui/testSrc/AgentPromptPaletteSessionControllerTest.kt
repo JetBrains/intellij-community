@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
@@ -543,7 +544,7 @@ class AgentPromptPaletteSessionControllerTest {
         title = "${provider.value} thread",
         updatedAt = 100,
         archived = false,
-        activity = AgentThreadActivity.READY,
+        activityReport = AgentThreadActivityReport(AgentThreadActivity.READY),
         provider = provider,
       )
     }

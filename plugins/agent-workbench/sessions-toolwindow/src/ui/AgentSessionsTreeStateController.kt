@@ -17,8 +17,8 @@ import com.intellij.agent.workbench.sessions.toolwindow.tree.buildSessionTreeMod
 import com.intellij.agent.workbench.sessions.toolwindow.tree.diffSessionTreeModels
 import com.intellij.agent.workbench.sessions.toolwindow.tree.overlayPendingAgentChatTabs
 import com.intellij.agent.workbench.sessions.toolwindow.tree.resolveSelectedSessionTreeId
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderService
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderSnapshot
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolderService
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolderSnapshot
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.ui.treeStructure.Tree

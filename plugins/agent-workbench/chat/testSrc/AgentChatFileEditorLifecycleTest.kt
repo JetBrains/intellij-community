@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.buildAgentThreadIdentity
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
@@ -879,7 +880,7 @@ class AgentChatFileEditorLifecycleTest {
           title = "Restored thread",
           updatedAt = 1L,
           archived = true,
-          activity = AgentThreadActivity.READY,
+          activityReport = AgentThreadActivityReport(AgentThreadActivity.READY),
           provider = AgentSessionProvider.from("codex"),
         )
       ),

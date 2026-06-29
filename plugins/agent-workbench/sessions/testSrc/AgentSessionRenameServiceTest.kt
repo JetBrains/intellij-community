@@ -94,7 +94,7 @@ class AgentSessionRenameServiceTest {
       assertThat(stateStore.snapshot().projects.single().threads.single().title).isEqualTo("Renamed thread")
       val presentation = presentationModel.snapshot()[presentationKey("/work/project", AgentSessionProvider.from("codex"), "thread-1")]
       assertThat(presentation?.title).isEqualTo("Renamed thread")
-      assertThat(presentation?.activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(presentation?.activityReport?.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
       assertThat(operationOrder).containsExactly("refresh")
       assertThat(refreshedPaths).containsExactly("/work/project" to AgentSessionProvider.from("codex"))
     }

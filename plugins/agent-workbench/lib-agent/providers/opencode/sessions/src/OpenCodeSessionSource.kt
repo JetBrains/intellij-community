@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ai.agent.opencode.sessions
 
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.normalizeAgentSessionProjectPath
 import com.intellij.platform.ai.agent.core.normalizeAgentSessionTitle
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
@@ -119,7 +120,7 @@ private fun OpenCodeSessionIndexEntry.toAgentSessionThread(readTracker: Map<Stri
     title = title,
     updatedAt = updatedAt,
     archived = archived,
-    activity = resolveReadTrackedActivity(readTracker = readTracker, threadId = sessionId, updatedAt = updatedAt),
+    activityReport = AgentThreadActivityReport(resolveReadTrackedActivity(readTracker = readTracker, threadId = sessionId, updatedAt = updatedAt)),
     provider = OPENCODE_AGENT_SESSION_PROVIDER,
   )
 }

@@ -64,7 +64,7 @@ behavior; refresh mechanics and detailed tree rendering/interaction contracts li
   [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
 
 - Task-folder grouping, lifecycle actions, explicit metadata, and folder tree placement must follow `agent-task-folders.spec.md`.
-  [@test] ../../sessions/testSrc/AgentTaskFolderServiceTest.kt
+  [@test] ../../sessions-task-folders/testSrc/AgentTaskFolderServiceTest.kt
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreeSnapshotTest.kt
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
 

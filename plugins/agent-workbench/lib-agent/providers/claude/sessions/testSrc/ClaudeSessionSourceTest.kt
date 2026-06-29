@@ -54,7 +54,7 @@ class ClaudeSessionSourceTest {
     }
 
     assertThat(result).hasSize(2)
-    assertThat(result).allMatch { it.activity == AgentThreadActivity.READY }
+    assertThat(result).allMatch { it.activityReport.rowActivity == AgentThreadActivity.READY }
   }
 
   @Test
@@ -105,12 +105,12 @@ class ClaudeSessionSourceTest {
     val source = ClaudeSessionSource(backend = dynamicRefreshBackend { currentThreads })
 
     runBlocking(Dispatchers.Default) {
-      assertThat(source.listThreads(path = "/any", openProject = null).single().activity)
+      assertThat(source.listThreads(path = "/any", openProject = null).single().activityReport.rowActivity)
         .isEqualTo(AgentThreadActivity.READY)
 
       // updatedAt increases but thread was never opened → stays READY.
       currentThreads = listOf(ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L))
-      assertThat(source.listThreads(path = "/any", openProject = null).single().activity)
+      assertThat(source.listThreads(path = "/any", openProject = null).single().activityReport.rowActivity)
         .isEqualTo(AgentThreadActivity.READY)
     }
   }
@@ -127,12 +127,12 @@ class ClaudeSessionSourceTest {
 
       // User opens the thread.
       source.markThreadAsRead("s1", 1000L)
-      assertThat(source.listThreads(path = "/any", openProject = null).single().activity)
+      assertThat(source.listThreads(path = "/any", openProject = null).single().activityReport.rowActivity)
         .isEqualTo(AgentThreadActivity.READY)
 
       // Agent replies while user is elsewhere → UNREAD.
       currentThreads = listOf(ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L))
-      assertThat(source.listThreads(path = "/any", openProject = null).single().activity)
+      assertThat(source.listThreads(path = "/any", openProject = null).single().activityReport.rowActivity)
         .isEqualTo(AgentThreadActivity.UNREAD)
     }
   }
@@ -150,12 +150,12 @@ class ClaudeSessionSourceTest {
 
       // Agent replies → UNREAD.
       currentThreads = listOf(ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L))
-      assertThat(source.listThreads(path = "/any", openProject = null).single().activity)
+      assertThat(source.listThreads(path = "/any", openProject = null).single().activityReport.rowActivity)
         .isEqualTo(AgentThreadActivity.UNREAD)
 
       // User returns → mark as read → READY.
       source.markThreadAsRead("s1", 2000L)
-      assertThat(source.listThreads(path = "/any", openProject = null).single().activity)
+      assertThat(source.listThreads(path = "/any", openProject = null).single().activityReport.rowActivity)
         .isEqualTo(AgentThreadActivity.READY)
     }
   }
@@ -175,7 +175,7 @@ class ClaudeSessionSourceTest {
       currentThreads = listOf(
         ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L, activity = ClaudeSessionActivity.PROCESSING),
       )
-      assertThat(source.listThreads(path = "/any", openProject = null).single().activity)
+      assertThat(source.listThreads(path = "/any", openProject = null).single().activityReport.rowActivity)
         .isEqualTo(AgentThreadActivity.PROCESSING)
     }
   }
@@ -195,7 +195,7 @@ class ClaudeSessionSourceTest {
       currentThreads = listOf(
         ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L, activity = ClaudeSessionActivity.NEEDS_INPUT),
       )
-      assertThat(source.listThreads(path = "/any", openProject = null).single().activity)
+      assertThat(source.listThreads(path = "/any", openProject = null).single().activityReport.rowActivity)
         .isEqualTo(AgentThreadActivity.NEEDS_INPUT)
     }
   }
@@ -217,7 +217,7 @@ class ClaudeSessionSourceTest {
       source.markThreadAsRead("s1", 1000L)
 
       currentThreads = listOf(ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L))
-      assertThat(source.listThreads(path = "/any", openProject = null).single().activity)
+      assertThat(source.listThreads(path = "/any", openProject = null).single().activityReport.rowActivity)
         .isEqualTo(AgentThreadActivity.READY)
     }
   }
@@ -240,18 +240,18 @@ class ClaudeSessionSourceTest {
       currentThreads = listOf(
         ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L, activity = ClaudeSessionActivity.PROCESSING)
       )
-      assertThat(source.refreshThreads(refreshRequest()).partialThreadsByPath.getValue("/any").single().activity)
+      assertThat(source.refreshThreads(refreshRequest()).partialThreadsByPath.getValue("/any").single().activityReport.rowActivity)
         .isEqualTo(AgentThreadActivity.PROCESSING)
 
       // Completion should still be surfaced as Done/UNREAD even if the thread remains selected.
       currentThreads = listOf(ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 3000L))
-      assertThat(source.refreshThreads(refreshRequest()).partialThreadsByPath.getValue("/any").single().activity)
+      assertThat(source.refreshThreads(refreshRequest()).partialThreadsByPath.getValue("/any").single().activityReport.rowActivity)
         .isEqualTo(AgentThreadActivity.UNREAD)
 
       // User switches away → clear active. A later update still becomes UNREAD.
       source.setActiveThreadId(null)
       currentThreads = listOf(ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 4000L))
-      assertThat(source.refreshThreads(refreshRequest()).partialThreadsByPath.getValue("/any").single().activity)
+      assertThat(source.refreshThreads(refreshRequest()).partialThreadsByPath.getValue("/any").single().activityReport.rowActivity)
         .isEqualTo(AgentThreadActivity.UNREAD)
     }
   }
@@ -264,18 +264,18 @@ class ClaudeSessionSourceTest {
     val source = ClaudeSessionSource(backend = dynamicRefreshBackend { currentThreads })
 
     runBlocking(Dispatchers.Default) {
-      assertThat(source.listThreads(path = "/any", openProject = null).single().activity)
+      assertThat(source.listThreads(path = "/any", openProject = null).single().activityReport.rowActivity)
         .isEqualTo(AgentThreadActivity.READY)
 
       currentThreads = listOf(ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L))
-      assertThat(source.refreshThreads(refreshRequest()).partialThreadsByPath.getValue("/any").single().activity)
+      assertThat(source.refreshThreads(refreshRequest()).partialThreadsByPath.getValue("/any").single().activityReport.rowActivity)
         .isEqualTo(AgentThreadActivity.UNREAD)
 
-      assertThat(source.refreshThreads(refreshRequest()).partialThreadsByPath.getValue("/any").single().activity)
+      assertThat(source.refreshThreads(refreshRequest()).partialThreadsByPath.getValue("/any").single().activityReport.rowActivity)
         .isEqualTo(AgentThreadActivity.UNREAD)
 
       source.markThreadAsRead("s1", 2000L)
-      assertThat(source.refreshThreads(refreshRequest()).partialThreadsByPath.getValue("/any").single().activity)
+      assertThat(source.refreshThreads(refreshRequest()).partialThreadsByPath.getValue("/any").single().activityReport.rowActivity)
         .isEqualTo(AgentThreadActivity.READY)
     }
   }
@@ -288,13 +288,13 @@ class ClaudeSessionSourceTest {
     val source = ClaudeSessionSource(backend = dynamicRefreshBackend { currentThreads })
 
     runBlocking(Dispatchers.Default) {
-      assertThat(source.listThreads(path = "/any", openProject = null).single().activity)
+      assertThat(source.listThreads(path = "/any", openProject = null).single().activityReport.rowActivity)
         .isEqualTo(AgentThreadActivity.READY)
 
       currentThreads = listOf(
         ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L, awaitingAssistantTurn = true)
       )
-      assertThat(source.refreshThreads(refreshRequest()).partialThreadsByPath.getValue("/any").single().activity)
+      assertThat(source.refreshThreads(refreshRequest()).partialThreadsByPath.getValue("/any").single().activityReport.rowActivity)
         .isEqualTo(AgentThreadActivity.READY)
     }
   }
@@ -410,7 +410,7 @@ class ClaudeSessionSourceTest {
 
     assertThat(result.map { it.id }).containsExactly("archived")
     assertThat(result.single().archived).isTrue()
-    assertThat(result.single().activity).isEqualTo(AgentThreadActivity.PROCESSING)
+    assertThat(result.single().activityReport.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
   }
 
   @Test
@@ -555,7 +555,7 @@ class ClaudeSessionSourceTest {
     assertThat(UUID.fromString(forkResult.thread.id).toString()).isEqualTo(forkResult.thread.id)
     assertThat(forkResult.thread.title).isEqualTo("Source Claude thread")
     assertThat(forkResult.thread.provider).isEqualTo(AgentSessionProvider.from("claude"))
-    assertThat(forkResult.thread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
+    assertThat(forkResult.thread.activityReport.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
     val launchSpec = requireNotNull(forkResult.launchSpecOverride)
     assertThat(launchSpec.command).containsExactly(
       "claude-test",

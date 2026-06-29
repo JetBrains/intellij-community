@@ -6,7 +6,6 @@ import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionCost
 import com.intellij.platform.ai.agent.core.session.AgentSessionCostKind
 import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItemKind
-import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionActivityEvidence
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
@@ -71,8 +70,8 @@ class PiSessionSourceTest {
       assertThat(threads[0].title).isEqualTo("Named Pi session")
       assertThat(threads[0].updatedAt).isEqualTo(3_000L)
       assertThat(threads[0].archived).isFalse()
-      assertThat(threads[0].activity).isEqualTo(AgentThreadActivity.READY)
-      assertThat(threads[0].provider).isEqualTo(AgentSessionProvider.from("pi"))
+      assertThat(threads[0].activityReport.rowActivity).isEqualTo(AgentThreadActivity.READY)
+      assertThat(threads[0].provider).isEqualTo(PI_AGENT_SESSION_PROVIDER)
       assertThat(threads[1].title).isEqualTo("Old task")
     }
   }
@@ -467,7 +466,7 @@ class PiSessionSourceTest {
       val outline = source.loadThreadOutline(projectDir.toString(), "session-outline", null)
 
       assertThat(outline).isNotNull
-      assertThat(outline!!.provider).isEqualTo(AgentSessionProvider.from("pi"))
+      assertThat(outline!!.provider).isEqualTo(PI_AGENT_SESSION_PROVIDER)
       assertThat(outline.threadId).isEqualTo("session-outline")
       assertThat(outline.title).isEqualTo("Named outline")
       assertThat(outline.updatedAt).isEqualTo(3_000L)
@@ -524,7 +523,7 @@ class PiSessionSourceTest {
       )
 
       val forkedThread = checkNotNull(forkResult?.thread)
-      assertThat(forkedThread.provider).isEqualTo(AgentSessionProvider.from("pi"))
+      assertThat(forkedThread.provider).isEqualTo(PI_AGENT_SESSION_PROVIDER)
       assertThat(forkedThread.id).isNotEqualTo("session-local-fork")
       assertThat(forkedThread.title).isEqualTo("First task")
       val forkedOutline = source.loadThreadOutline(projectDir.toString(), forkedThread.id, null)
@@ -617,15 +616,15 @@ class PiSessionSourceTest {
       val store = PiSessionStore(sessionDirResolver = { sessionDir }, timeProvider = { now })
       val source = PiSessionSource(sessionStore = store)
 
-      assertThat(source.listThreads(projectDir.toString(), openProject = null).single().activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(source.listThreads(projectDir.toString(), openProject = null).single().activityReport.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
       assertThat(store.archiveThread(projectDir.toString(), "session-archive-processing")).isTrue()
       val archivedThread = source.listArchivedThreads(projectDir.toString(), openProject = null).single()
-      assertThat(archivedThread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(archivedThread.activityReport.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
 
       now = 5_000L
       assertThat(store.unarchiveThread(projectDir.toString(), "session-archive-processing")).isTrue()
       val activeThread = source.listThreads(projectDir.toString(), openProject = null).single()
-      assertThat(activeThread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(activeThread.activityReport.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
     }
   }
 
@@ -693,10 +692,10 @@ class PiSessionSourceTest {
       val source = sourceFor(sessionDir)
 
       source.markThreadAsRead("session-read", 2_000L)
-      assertThat(source.listThreads(projectDir.toString(), openProject = null).single().activity).isEqualTo(AgentThreadActivity.UNREAD)
+      assertThat(source.listThreads(projectDir.toString(), openProject = null).single().activityReport.rowActivity).isEqualTo(AgentThreadActivity.UNREAD)
 
       source.markThreadAsRead("session-read", 3_000L)
-      assertThat(source.listThreads(projectDir.toString(), openProject = null).single().activity).isEqualTo(AgentThreadActivity.READY)
+      assertThat(source.listThreads(projectDir.toString(), openProject = null).single().activityReport.rowActivity).isEqualTo(AgentThreadActivity.READY)
     }
   }
 
@@ -715,7 +714,7 @@ class PiSessionSourceTest {
 
       val thread = source.listThreads(projectDir.toString(), openProject = null).single()
 
-      assertThat(thread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(thread.activityReport.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
     }
   }
 
@@ -740,7 +739,7 @@ class PiSessionSourceTest {
 
       val thread = source.listThreads(projectDir.toString(), openProject = null).single()
 
-      assertThat(thread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(thread.activityReport.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
     }
   }
 
@@ -760,7 +759,7 @@ class PiSessionSourceTest {
 
       val thread = source.listThreads(projectDir.toString(), openProject = null).single()
 
-      assertThat(thread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(thread.activityReport.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
     }
   }
 
@@ -780,7 +779,7 @@ class PiSessionSourceTest {
 
       val thread = source.listThreads(projectDir.toString(), openProject = null).single()
 
-      assertThat(thread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(thread.activityReport.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
     }
   }
 
@@ -798,17 +797,17 @@ class PiSessionSourceTest {
       val source = sourceFor(sessionDir)
 
       val workingThread = source.listThreads(projectDir.toString(), openProject = null).single()
-      assertThat(workingThread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(workingThread.activityReport.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
       appendPiSessionEntry(
         sessionFile,
         piAssistantMessageEntry(id = "assistant-completed-observed", parentId = "user-completed-observed", timestamp = 4_000L),
       )
 
       val completedThread = source.listThreads(projectDir.toString(), openProject = null).single()
-      assertThat(completedThread.activity).isEqualTo(AgentThreadActivity.UNREAD)
+      assertThat(completedThread.activityReport.rowActivity).isEqualTo(AgentThreadActivity.UNREAD)
       source.markThreadAsRead("session-completed-observed", 4_000L)
       val readThread = source.listThreads(projectDir.toString(), openProject = null).single()
-      assertThat(readThread.activity).isEqualTo(AgentThreadActivity.READY)
+      assertThat(readThread.activityReport.rowActivity).isEqualTo(AgentThreadActivity.READY)
     }
   }
 
@@ -827,14 +826,14 @@ class PiSessionSourceTest {
       source.setActiveThreadId("session-active-completed")
 
       val workingThread = source.listThreads(projectDir.toString(), openProject = null).single()
-      assertThat(workingThread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(workingThread.activityReport.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
       appendPiSessionEntry(
         sessionFile,
         piAssistantMessageEntry(id = "assistant-active-completed", parentId = "user-active-completed", timestamp = 4_000L),
       )
 
       val completedThread = source.listThreads(projectDir.toString(), openProject = null).single()
-      assertThat(completedThread.activity).isEqualTo(AgentThreadActivity.UNREAD)
+      assertThat(completedThread.activityReport.rowActivity).isEqualTo(AgentThreadActivity.UNREAD)
     }
   }
 

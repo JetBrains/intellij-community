@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.sessions.toolwindow.actions
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.sessions.core.SessionActionTarget
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolderStatus
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
 import com.intellij.agent.workbench.sessions.toolwindow.tree.pathForMoreThreadsNode
@@ -11,7 +12,6 @@ import com.intellij.agent.workbench.sessions.toolwindow.tree.pathForTaskFolderNo
 import com.intellij.agent.workbench.sessions.toolwindow.tree.pathForThreadNode
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 import com.intellij.openapi.project.Project
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderStatus
 
 internal fun createAgentSessionsTreePopupActionContext(
   project: Project,
@@ -23,10 +23,13 @@ internal fun createAgentSessionsTreePopupActionContext(
   taskFolderArchiveTargets: List<ArchiveThreadTarget> = emptyList(),
   newThreadActionAvailable: Boolean = true,
 ): AgentSessionsTreePopupActionContext? {
-  val target = resolveSessionActionTarget(nodeId, node) ?: return null
+  val target = resolveSessionActionTarget(nodeId, node)
+  val taskFolderTarget = resolveTaskFolderActionTarget(nodeId, node)
+  if (target == null && taskFolderTarget == null) return null
   return AgentSessionsTreePopupActionContext(
     project = project,
     target = target,
+    taskFolderTarget = taskFolderTarget,
     archiveTargets = archiveTargets,
     unarchiveTargets = unarchiveTargets,
     selectedThreadTargets = selectedThreadTargets,
@@ -56,16 +59,7 @@ internal fun resolveSessionActionTarget(nodeId: SessionTreeId, node: SessionTree
       )
     }
 
-    is SessionTreeNode.TaskFolder -> {
-      val path = pathForTaskFolderNode(nodeId) ?: return null
-      SessionActionTarget.TaskFolder(
-        path = normalizeAgentWorkbenchPath(path),
-        folderId = node.folder.id,
-        name = node.folder.name,
-        isDone = node.folder.status == AgentTaskFolderStatus.DONE,
-        metadata = node.folder.metadata,
-      )
-    }
+    is SessionTreeNode.TaskFolder -> null
 
     is SessionTreeNode.Thread -> {
       if (isAgentSessionNewSessionId(node.thread.id)) return null
@@ -124,4 +118,16 @@ internal fun resolveSessionActionTarget(nodeId: SessionTreeId, node: SessionTree
     is SessionTreeNode.Empty,
       -> null
   }
+}
+
+private fun resolveTaskFolderActionTarget(nodeId: SessionTreeId, node: SessionTreeNode): AgentTaskFolderActionTarget? {
+  if (node !is SessionTreeNode.TaskFolder) return null
+  val path = pathForTaskFolderNode(nodeId) ?: return null
+  return AgentTaskFolderActionTarget(
+    path = normalizeAgentWorkbenchPath(path),
+    folderId = node.folder.id,
+    name = node.folder.name,
+    isDone = node.folder.status == AgentTaskFolderStatus.DONE,
+    metadata = node.folder.metadata,
+  )
 }

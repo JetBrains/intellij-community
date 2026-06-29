@@ -7,6 +7,9 @@ import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveRequestR
 import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveService
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolder
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolderService
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolderStatus
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -24,9 +27,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.sessions.core.SessionActionTarget
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolder
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderService
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderStatus
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
 import com.intellij.util.ui.JBUI
@@ -93,17 +93,17 @@ internal class AgentSessionsTreePopupRenameTaskFolderAction : DumbAwareAction() 
   private val resolveContext: (AnActionEvent) -> AgentSessionsTreePopupActionContext? =
     ::resolveAgentSessionsTreePopupActionContext
   private val promptForName: (Project, String) -> String? = ::showRenameTaskFolderDialog
-  private val renameFolder: (SessionActionTarget.TaskFolder, String) -> Unit = { target, name ->
+  private val renameFolder: (AgentTaskFolderActionTarget, String) -> Unit = { target, name ->
     service<AgentTaskFolderService>().renameFolder(target.folderId, name)
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = resolveContext(e)?.target is SessionActionTarget.TaskFolder
+    e.presentation.isEnabledAndVisible = resolveContext(e)?.taskFolderTarget != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val context = resolveContext(e) ?: return
-    val target = context.target as? SessionActionTarget.TaskFolder ?: return
+    val target = context.taskFolderTarget ?: return
     val name = promptForName(context.project, target.name) ?: return
     renameFolder(target, name)
   }
@@ -114,18 +114,18 @@ internal class AgentSessionsTreePopupRenameTaskFolderAction : DumbAwareAction() 
 internal class AgentSessionsTreePopupDeleteTaskFolderAction : DumbAwareAction() {
   private val resolveContext: (AnActionEvent) -> AgentSessionsTreePopupActionContext? =
     ::resolveAgentSessionsTreePopupActionContext
-  private val confirmDelete: (Project, SessionActionTarget.TaskFolder) -> Boolean = ::confirmDeleteTaskFolder
-  private val deleteFolder: (SessionActionTarget.TaskFolder) -> Unit = { target ->
+  private val confirmDelete: (Project, AgentTaskFolderActionTarget) -> Boolean = ::confirmDeleteTaskFolder
+  private val deleteFolder: (AgentTaskFolderActionTarget) -> Unit = { target ->
     service<AgentTaskFolderService>().deleteFolder(target.folderId)
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = resolveContext(e)?.target is SessionActionTarget.TaskFolder
+    e.presentation.isEnabledAndVisible = resolveContext(e)?.taskFolderTarget != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val context = resolveContext(e) ?: return
-    val target = context.target as? SessionActionTarget.TaskFolder ?: return
+    val target = context.taskFolderTarget ?: return
     if (confirmDelete(context.project, target)) {
       deleteFolder(target)
     }
@@ -205,8 +205,8 @@ internal class AgentSessionsTreePopupRemoveFromTaskFolderAction : DumbAwareActio
 
 internal class AgentSessionsTreePopupSetTaskFolderMetadataAction : DumbAwareAction {
   private val resolveContext: (AnActionEvent) -> AgentSessionsTreePopupActionContext?
-  private val promptForMetadata: (Project, SessionActionTarget.TaskFolder) -> TaskFolderMetadataEdit?
-  private val setMetadata: (SessionActionTarget.TaskFolder, String, String) -> Unit
+  private val promptForMetadata: (Project, AgentTaskFolderActionTarget) -> TaskFolderMetadataEdit?
+  private val setMetadata: (AgentTaskFolderActionTarget, String, String) -> Unit
 
   @Suppress("unused")
   constructor() {
@@ -217,8 +217,8 @@ internal class AgentSessionsTreePopupSetTaskFolderMetadataAction : DumbAwareActi
 
   internal constructor(
     resolveContext: (AnActionEvent) -> AgentSessionsTreePopupActionContext?,
-    promptForMetadata: (Project, SessionActionTarget.TaskFolder) -> TaskFolderMetadataEdit?,
-    setMetadata: (SessionActionTarget.TaskFolder, String, String) -> Unit,
+    promptForMetadata: (Project, AgentTaskFolderActionTarget) -> TaskFolderMetadataEdit?,
+    setMetadata: (AgentTaskFolderActionTarget, String, String) -> Unit,
   ) {
     this.resolveContext = resolveContext
     this.promptForMetadata = promptForMetadata
@@ -226,12 +226,12 @@ internal class AgentSessionsTreePopupSetTaskFolderMetadataAction : DumbAwareActi
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = resolveContext(e)?.target is SessionActionTarget.TaskFolder
+    e.presentation.isEnabledAndVisible = resolveContext(e)?.taskFolderTarget != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val context = resolveContext(e) ?: return
-    val target = context.target as? SessionActionTarget.TaskFolder ?: return
+    val target = context.taskFolderTarget ?: return
     val metadata = promptForMetadata(context.project, target)?.let(::resolveTaskFolderMetadataUpdate) ?: return
     setMetadata(target, metadata.key, metadata.value)
   }
@@ -264,19 +264,19 @@ internal fun resolveTaskFolderMetadataUpdate(edit: TaskFolderMetadataEdit): Task
 internal class AgentSessionsTreePopupDeleteTaskFolderMetadataAction : DumbAwareAction() {
   private val resolveContext: (AnActionEvent) -> AgentSessionsTreePopupActionContext? =
     ::resolveAgentSessionsTreePopupActionContext
-  private val promptForKey: (Project, SessionActionTarget.TaskFolder) -> String? = ::showDeleteTaskFolderMetadataDialog
-  private val deleteMetadata: (SessionActionTarget.TaskFolder, String) -> Unit = { target, key ->
+  private val promptForKey: (Project, AgentTaskFolderActionTarget) -> String? = ::showDeleteTaskFolderMetadataDialog
+  private val deleteMetadata: (AgentTaskFolderActionTarget, String) -> Unit = { target, key ->
     service<AgentTaskFolderService>().deleteMetadata(target.folderId, key)
   }
 
   override fun update(e: AnActionEvent) {
-    val target = resolveContext(e)?.target as? SessionActionTarget.TaskFolder
+    val target = resolveContext(e)?.taskFolderTarget
     e.presentation.isEnabledAndVisible = target?.metadata?.isNotEmpty() == true
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val context = resolveContext(e) ?: return
-    val target = context.target as? SessionActionTarget.TaskFolder ?: return
+    val target = context.taskFolderTarget ?: return
     val key = promptForKey(context.project, target) ?: return
     deleteMetadata(target, key)
   }
@@ -288,7 +288,7 @@ internal class AgentSessionsTreePopupMarkTaskFolderDoneAction : DumbAwareAction 
   private val resolveContext: (AnActionEvent) -> AgentSessionsTreePopupActionContext?
   private val canArchiveProvider: (AgentSessionProvider) -> Boolean
   private val archiveThreads: (List<ArchiveThreadTarget>, AgentWorkbenchEntryPoint, (AgentSessionArchiveRequestResult) -> Unit) -> Unit
-  private val setFolderDone: (SessionActionTarget.TaskFolder) -> Unit
+  private val setFolderDone: (AgentTaskFolderActionTarget) -> Unit
 
   @Suppress("unused")
   constructor() {
@@ -305,7 +305,7 @@ internal class AgentSessionsTreePopupMarkTaskFolderDoneAction : DumbAwareAction 
     resolveContext: (AnActionEvent) -> AgentSessionsTreePopupActionContext?,
     canArchiveProvider: (AgentSessionProvider) -> Boolean,
     archiveThreads: (List<ArchiveThreadTarget>, AgentWorkbenchEntryPoint, (AgentSessionArchiveRequestResult) -> Unit) -> Unit,
-    setFolderDone: (SessionActionTarget.TaskFolder) -> Unit,
+    setFolderDone: (AgentTaskFolderActionTarget) -> Unit,
   ) {
     this.resolveContext = resolveContext
     this.canArchiveProvider = canArchiveProvider
@@ -315,7 +315,7 @@ internal class AgentSessionsTreePopupMarkTaskFolderDoneAction : DumbAwareAction 
 
   override fun update(e: AnActionEvent) {
     val context = resolveContext(e)
-    val target = context?.target as? SessionActionTarget.TaskFolder
+    val target = context?.taskFolderTarget
     if (target == null || target.isDone) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -327,7 +327,7 @@ internal class AgentSessionsTreePopupMarkTaskFolderDoneAction : DumbAwareAction 
 
   override fun actionPerformed(e: AnActionEvent) {
     val context = resolveContext(e) ?: return
-    val target = context.target as? SessionActionTarget.TaskFolder ?: return
+    val target = context.taskFolderTarget ?: return
     if (target.isDone) return
     val archiveTargets = context.taskFolderArchiveTargets
     if (archiveTargets.isEmpty()) {
@@ -426,7 +426,7 @@ private fun showTaskFolderNameDialog(
   return Messages.showInputDialog(project, message, title, Messages.getQuestionIcon(), initialValue, NonBlankInputValidator())
 }
 
-private fun confirmDeleteTaskFolder(project: Project, target: SessionActionTarget.TaskFolder): Boolean {
+private fun confirmDeleteTaskFolder(project: Project, target: AgentTaskFolderActionTarget): Boolean {
   return Messages.showYesNoDialog(
     project,
     AgentSessionsBundle.message("toolwindow.task.folder.delete.dialog.message", target.name),
@@ -435,12 +435,12 @@ private fun confirmDeleteTaskFolder(project: Project, target: SessionActionTarge
   ) == Messages.YES
 }
 
-private fun showSetTaskFolderMetadataDialog(project: Project, target: SessionActionTarget.TaskFolder): TaskFolderMetadataEdit? {
+private fun showSetTaskFolderMetadataDialog(project: Project, target: AgentTaskFolderActionTarget): TaskFolderMetadataEdit? {
   val dialog = TaskFolderMetadataDialog(project, target)
   return if (dialog.showAndGet()) dialog.metadataEdit() else null
 }
 
-private fun showDeleteTaskFolderMetadataDialog(project: Project, target: SessionActionTarget.TaskFolder): String? {
+private fun showDeleteTaskFolderMetadataDialog(project: Project, target: AgentTaskFolderActionTarget): String? {
   return Messages.showInputDialog(
     project,
     AgentSessionsBundle.message("toolwindow.task.folder.metadata.delete.dialog.message"),
@@ -515,7 +515,7 @@ private class CreateTaskFolderDialog(
 
 private class TaskFolderMetadataDialog(
   project: Project,
-  private val target: SessionActionTarget.TaskFolder,
+  private val target: AgentTaskFolderActionTarget,
 ) : DialogWrapper(project) {
   private val keyCombo = ComboBox<@NlsSafe String>().apply {
     model = DefaultComboBoxModel(taskFolderMetadataKeyOptions(target.metadata))

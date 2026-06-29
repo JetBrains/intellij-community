@@ -14,7 +14,9 @@
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.ai.agent.core" />
     <orderEntry type="module" module-name="intellij.platform.ai.agent.pi.sessions" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.sessions" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.sessions.core" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.sessions.task.folders" />
     <orderEntry type="module" module-name="intellij.agent.workbench.settings" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3" />
   </component>
 </module>

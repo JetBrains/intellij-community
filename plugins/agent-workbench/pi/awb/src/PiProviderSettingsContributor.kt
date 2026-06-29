@@ -2,11 +2,8 @@
 package com.intellij.platform.ai.agent.pi.sessions
 
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.settings.AgentWorkbenchCheckboxSetting
 import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsContributor
-
-private val PI_AGENT_SESSION_PROVIDER: AgentSessionProvider = AgentSessionProvider.from("pi")
 
 internal class PiProviderSettingsContributor : AgentWorkbenchSettingsContributor {
   override fun providerCheckboxSettings(provider: AgentSessionProvider): List<AgentWorkbenchCheckboxSetting> {
@@ -15,14 +12,14 @@ internal class PiProviderSettingsContributor : AgentWorkbenchSettingsContributor
     }
     return listOf(
       AgentWorkbenchCheckboxSetting(
-        text = AgentSessionsBundle.message("settings.agent.workbench.provider.pi.omlx.models"),
-        description = AgentSessionsBundle.message("settings.agent.workbench.provider.pi.omlx.models.description"),
+        text = PiSessionsBundle.message("settings.agent.workbench.provider.pi.omlx.models"),
+        description = PiSessionsBundle.message("settings.agent.workbench.provider.pi.omlx.models.description"),
         isSelected = PiOmlxSupportSettings::isEnabled,
         setSelected = PiOmlxSupportSettings::setEnabled,
       ),
       AgentWorkbenchCheckboxSetting(
-        text = AgentSessionsBundle.message("settings.agent.workbench.provider.pi.jbcentral.models"),
-        description = AgentSessionsBundle.message("settings.agent.workbench.provider.pi.jbcentral.models.description"),
+        text = PiSessionsBundle.message("settings.agent.workbench.provider.pi.jbcentral.models"),
+        description = PiSessionsBundle.message("settings.agent.workbench.provider.pi.jbcentral.models.description"),
         isSelected = PiJbCentralSupportSettings::isEnabled,
         setSelected = PiJbCentralSupportSettings::setEnabled,
       )

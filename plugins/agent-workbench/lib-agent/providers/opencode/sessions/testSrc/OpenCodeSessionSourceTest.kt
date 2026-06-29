@@ -80,7 +80,7 @@ class OpenCodeSessionSourceTest {
     assertThat(threads.map { it.title }).containsExactly("New thread", "Worktree session", "Older thread")
     assertThat(threads.map { it.provider }).containsOnly(AgentSessionProvider.from("opencode"))
     assertThat(threads.map { it.archived }).containsOnly(false)
-    assertThat(threads.map { it.activity }).containsOnly(AgentThreadActivity.READY)
+    assertThat(threads.map { it.activityReport.rowActivity }).containsOnly(AgentThreadActivity.READY)
   }
 
   @Test

@@ -783,7 +783,7 @@ class AgentChatEditorServiceTest {
     val updatedTabs = publishThreadPresentation(
       file = file,
       title = "Renamed by source update",
-      activity = AgentThreadActivity.UNREAD,
+      activityReport = AgentThreadActivityReport(AgentThreadActivity.UNREAD),
     )
     assertThat(updatedTabs).isEqualTo(1)
 
@@ -794,7 +794,7 @@ class AgentChatEditorServiceTest {
     val unchangedTabs = publishThreadPresentation(
       file = file,
       title = "Renamed by source update",
-      activity = AgentThreadActivity.UNREAD,
+      activityReport = AgentThreadActivityReport(AgentThreadActivity.UNREAD),
     )
     assertThat(unchangedTabs).isEqualTo(0)
   }
@@ -873,7 +873,7 @@ class AgentChatEditorServiceTest {
       file = file,
       path = "${file.projectPath}/",
       title = "Renamed by normalized source update",
-      activity = AgentThreadActivity.UNREAD,
+      activityReport = AgentThreadActivityReport(AgentThreadActivity.UNREAD),
     )
     assertThat(updatedTabs).isEqualTo(1)
 
@@ -885,7 +885,7 @@ class AgentChatEditorServiceTest {
       file = file,
       path = "${file.projectPath}/",
       title = "Renamed by normalized source update",
-      activity = AgentThreadActivity.UNREAD,
+      activityReport = AgentThreadActivityReport(AgentThreadActivity.UNREAD),
     )
     assertThat(unchangedTabs).isEqualTo(0)
   }
@@ -963,7 +963,7 @@ class AgentChatEditorServiceTest {
     val updatedTabs = publishThreadPresentation(
       file = openedChatFiles().first { it.subAgentId == null },
       title = "Renamed parent",
-      activity = null,
+      activityReport = null,
     )
     assertThat(updatedTabs).isEqualTo(1)
 
@@ -992,7 +992,7 @@ class AgentChatEditorServiceTest {
     val updatedTabs = publishThreadPresentation(
       file = openedChatFiles().first { it.subAgentId == null },
       title = "Renamed parent",
-      activity = AgentThreadActivity.UNREAD,
+      activityReport = AgentThreadActivityReport(AgentThreadActivity.UNREAD),
     )
     assertThat(updatedTabs).isEqualTo(2)
 
@@ -1099,7 +1099,7 @@ class AgentChatEditorServiceTest {
       provider = AgentSessionProvider.from("codex"),
       threadId = targetThreadId,
       title = sharedTitle,
-      activity = AgentThreadActivity.PROCESSING,
+      activityReport = AgentThreadActivityReport(AgentThreadActivity.PROCESSING),
     )).isEqualTo(0)
 
     val rebindReport = rebindOpenPendingCodexTabs(
@@ -1479,7 +1479,7 @@ class AgentChatEditorServiceTest {
       provider = AgentSessionProvider.from("codex"),
       threadId = targetThreadId,
       title = sharedTitle,
-      activity = AgentThreadActivity.PROCESSING,
+      activityReport = AgentThreadActivityReport(AgentThreadActivity.PROCESSING),
     )).isEqualTo(0)
 
     val rebindReport = rebindOpenConcreteCodexTabs(
@@ -1964,7 +1964,7 @@ class AgentChatEditorServiceTest {
       provider = AgentSessionProvider.from("codex"),
       threadId = "thread-1",
       title = "Main thread",
-      activity = AgentThreadActivity.READY,
+      activityReport = AgentThreadActivityReport(AgentThreadActivity.READY),
     )
     assertThat(presentationModel.resolve(rootPresentationKey)).isNotNull
     val matchingTabKeys = beforeCleanup
@@ -2024,7 +2024,7 @@ class AgentChatEditorServiceTest {
       provider = AgentSessionProvider.from("codex"),
       threadId = "thread-1",
       title = "Main thread",
-      activity = AgentThreadActivity.READY,
+      activityReport = AgentThreadActivityReport(AgentThreadActivity.READY),
     )
 
     closeAndForgetAgentChatsForThread(
@@ -2544,23 +2544,7 @@ private suspend fun publishThreadPresentation(
   file: AgentChatVirtualFile,
   path: String = file.projectPath,
   title: String,
-  activity: AgentThreadActivity?,
-): Int {
-  val provider = checkNotNull(file.provider)
-  return publishThreadPresentation(
-    path = path,
-    provider = provider,
-    threadId = file.sessionId,
-    title = title,
-    activity = activity,
-  )
-}
-
-private suspend fun publishThreadPresentation(
-  file: AgentChatVirtualFile,
-  path: String = file.projectPath,
-  title: String,
-  activityReport: AgentThreadActivityReport,
+  activityReport: AgentThreadActivityReport?,
 ): Int {
   val provider = checkNotNull(file.provider)
   return publishThreadPresentation(
@@ -2577,31 +2561,13 @@ private suspend fun publishThreadPresentation(
   provider: AgentSessionProvider,
   threadId: String,
   title: String,
-  activity: AgentThreadActivity?,
+  activityReport: AgentThreadActivityReport?,
 ): Int {
   val changeSet = service<AgentSessionThreadPresentationModel>().updateThread(
     path = path,
     provider = provider,
     threadId = threadId,
     title = title,
-    activity = activity,
-  )
-  return AgentChatOpenTabPresentationInvalidator.invalidate(changeSet)
-}
-
-private suspend fun publishThreadPresentation(
-  path: String,
-  provider: AgentSessionProvider,
-  threadId: String,
-  title: String,
-  activityReport: AgentThreadActivityReport,
-): Int {
-  val changeSet = service<AgentSessionThreadPresentationModel>().updateThread(
-    path = path,
-    provider = provider,
-    threadId = threadId,
-    title = title,
-    activity = null,
     activityReport = activityReport,
   )
   return AgentChatOpenTabPresentationInvalidator.invalidate(changeSet)

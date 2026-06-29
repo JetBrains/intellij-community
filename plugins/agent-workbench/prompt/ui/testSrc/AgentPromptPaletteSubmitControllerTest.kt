@@ -25,6 +25,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ai.agent.common.session.isClaudeMenuCommandPrompt
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
@@ -682,7 +683,7 @@ class AgentPromptPaletteSubmitControllerTest {
               updatedAt = 100,
               archived = false,
               provider = AgentSessionProvider.from("codex"),
-              activity = AgentThreadActivity.PROCESSING,
+              activityReport = AgentThreadActivityReport(AgentThreadActivity.PROCESSING),
               subAgents = emptyList(),
             )
           ),

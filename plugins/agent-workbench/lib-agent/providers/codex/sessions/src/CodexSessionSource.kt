@@ -22,6 +22,7 @@ import com.intellij.platform.ai.agent.codex.sessions.backend.rollout.CodexRollou
 import com.intellij.platform.ai.agent.codex.sessions.backend.toAgentSessionRefreshHints
 import com.intellij.platform.ai.agent.codex.sessions.backend.toAgentThreadActivity
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionCost
 import com.intellij.platform.ai.agent.core.session.AgentSessionCostKind
 import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItem
@@ -598,8 +599,10 @@ private fun toAgentSessionThread(
       )
     },
     originBranch = thread.gitBranch,
-    activity = activity.toAgentThreadActivity(),
-    summaryActivity = summaryActivity?.toAgentThreadActivity(),
+    activityReport = AgentThreadActivityReport(
+      rowActivity = activity.toAgentThreadActivity(),
+      chromeActivity = summaryActivity?.toAgentThreadActivity(),
+    ),
     cost = cost,
   )
 }

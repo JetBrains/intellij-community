@@ -45,8 +45,8 @@ IDE Power Save Mode is a hard override: while it is enabled, sleep prevention mu
   Background projects and worktrees count; behavior must not be limited to the selected tree row, selected tab, or focused project.
   [@test] ../../sessions/testSrc/AgentSessionSleepPreventionServiceTest.kt
 
-- Aggregate working state must be `true` if and only if any loaded thread in any project or worktree has normalized activity `PROCESSING` or `REVIEWING`.
-  Threads with `READY` or `UNREAD` must not keep the blocker held.
+- Aggregate working state must be `true` if and only if any loaded thread in any project or worktree has canonical row activity `PROCESSING` or `REVIEWING` (`AgentSessionThread.activityReport.rowActivity`).
+  Threads with row activity `READY` or `UNREAD` must not keep the blocker held, even when their chrome activity is non-ready.
   [@test] ../../sessions/testSrc/AgentSessionSleepPreventionServiceTest.kt
 
 - When the setting is enabled and aggregate working state becomes active, the service must acquire sleep prevention immediately with no debounce.
@@ -97,7 +97,7 @@ IDE Power Save Mode is a hard override: while it is enabled, sleep prevention mu
 - No new tool-window badge, notification, or status text is required for this feature.
 
 ## Data & Backend
-- Activity aggregation must consume normalized `AgentThreadActivity` values already present in sessions state.
+- Activity aggregation must consume normalized `AgentThreadActivity` row values already present in sessions state.
 - The service may observe `AgentSessionReadService.stateFlow()` or the underlying app-level sessions state store, but behavior must stay event-driven; polling loops are not allowed.
 - The service must also observe IDE Power Save Mode changes and treat Power Save Mode as a hard override on blocker ownership.
 - The 30-second debounce applies only to releasing an already-held blocker. Acquisition is always immediate.

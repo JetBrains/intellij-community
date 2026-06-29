@@ -1,9 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.sessions
+package com.intellij.agent.workbench.sessions.task.folders
 
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderService
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderStatus
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.io.Ksuid
 import org.assertj.core.api.Assertions.assertThat

@@ -1,6 +1,7 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.buildAgentThreadIdentity
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItem
@@ -933,7 +934,7 @@ private class OpenTabDispatchPiForkSource : AgentSessionSource, AgentSessionThre
         title = "Forked Pi thread",
         updatedAt = 5_000L,
         archived = false,
-        activity = AgentThreadActivity.PROCESSING,
+        activityReport = AgentThreadActivityReport(AgentThreadActivity.PROCESSING),
         provider = AgentSessionProvider.from("pi"),
       ),
       launchSpecOverride = AgentSessionTerminalLaunchSpec(
