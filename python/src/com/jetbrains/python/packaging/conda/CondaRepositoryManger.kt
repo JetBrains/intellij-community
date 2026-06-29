@@ -4,8 +4,11 @@ package com.jetbrains.python.packaging.conda
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.mapError
 import com.jetbrains.python.packaging.common.PythonPackageDetails
+import com.jetbrains.python.packaging.management.PythonRepositoryManager.PythonRepositoryIOError
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.repository.PythonRepositoryManagerBase
@@ -31,14 +34,22 @@ internal class CondaRepositoryManger(override val project: Project, val sdk: Sdk
     return packageDetails
   }
 
-  override suspend fun refreshCaches() {
-    pipRepositoryManger.refreshCaches()
-    condaPackageCache.reloadCache(sdk, project, force = true)
+  override suspend fun refreshCaches(): Result<Unit, PythonRepositoryIOError> {
+    pipRepositoryManger
+      .refreshCaches()
+      .getOr { return it }
+
+    return condaPackageCache
+      .reloadCache(sdk, project, force = true)
+      .mapError { PythonRepositoryIOError(it.message) }
   }
 
-  override suspend fun initCaches() {
+  override suspend fun initCaches(): Result<Unit, PythonRepositoryIOError> {
     pipRepositoryManger.waitForInit()
-    condaPackageCache.reloadCache(sdk, project)
+
+    return condaPackageCache
+      .reloadCache(sdk, project)
+      .mapError { PythonRepositoryIOError(it.message) }
   }
 
   override suspend fun getVersions(packageName: String, repository: PyPackageRepository?): List<String>? {

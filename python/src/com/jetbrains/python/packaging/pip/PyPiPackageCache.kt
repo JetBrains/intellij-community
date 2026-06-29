@@ -14,8 +14,11 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.cache.PythonPackageCache
+import com.jetbrains.python.packaging.cache.PythonPackageCacheIOError
+import com.jetbrains.python.packaging.cache.PythonPackageCacheIOError.FailedToFetchPackages
 import com.jetbrains.python.packaging.cache.PythonPackageSearchPage
 import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
+import com.jetbrains.python.packaging.pip.PackedAsciiStringSet.InvalidFormatError
 import com.jetbrains.python.packaging.pip.PackedAsciiStringSet.SearchResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
@@ -87,7 +90,7 @@ class PyPiPackageCache : PythonPackageCache {
     }
 
   @CheckReturnValue
-  suspend fun reloadCache(force: Boolean = false): Result<Unit, PyPiPackageCacheError> {
+  suspend fun reloadCache(force: Boolean = false): Result<Unit, PythonPackageCacheIOError> {
     reloadLock.withLock {
       if ((set.size > 0 && !force) || loadInProgress) {
         return Result.success(Unit)
@@ -151,13 +154,13 @@ class PyPiPackageCache : PythonPackageCache {
   }
 
   @CheckReturnValue
-  private suspend fun refresh(): Result<Unit, PyPiPackageCacheError> {
+  private suspend fun refresh(): Result<Unit, PythonPackageCacheIOError> {
     withContext(Dispatchers.IO) {
       logger.info("Fetching python packages from the PyPI repository")
       val pyPiList = service<PyPiPackageLoader>().loadPackages().getOr { return@withContext it }
       logger.info("Fetched ${pyPiList.size} python packages from the PyPI Repository")
-      remap(pyPiList)
-    }.getOr { return it }
+      remap(pyPiList).orThrow() // cannot fail: recreates the cache file and instantly maps it
+    }
 
     return Result.success(Unit)
   }
@@ -175,7 +178,7 @@ class PyPiPackageCache : PythonPackageCache {
 
   @RequiresBackgroundThread
   @CheckReturnValue
-  private fun remap(storeBeforeLoading: List<String>? = null): Result<Unit, PyPiPackageCacheError> {
+  private fun remap(storeBeforeLoading: List<String>? = null): Result<Unit, InvalidFormatError> {
     var fileToMap = filePath
 
     storeBeforeLoading?.also { packages ->
@@ -202,15 +205,14 @@ class PyPiPackageCache : PythonPackageCache {
           channel.read(buffer)
 
           PackedAsciiStringSet.create(buffer)
-            .getOr { return Result.Failure(PyPiPackageCacheError.InvalidCacheFileFormat(it.error.message)) }
         }
         else {
           PackedAsciiStringSet.create(
             channel
               .map(FileChannel.MapMode.READ_ONLY, 0, channel.size(), arena)
               .asByteBuffer()
-          ).getOr { return Result.Failure(PyPiPackageCacheError.InvalidCacheFileFormat(it.error.message)) }
-        }
+          )
+        }.getOr { return it }
 
         containsCache = createContainsCache()
         searchCache = createSearchCache()
@@ -249,13 +251,13 @@ class PyPiPackageCache : PythonPackageCache {
   class PyPiPackageLoader {
     @RequiresBackgroundThread
     @CheckReturnValue
-    fun loadPackages(): Result<List<String>, PyPiPackageCacheError> =
+    fun loadPackages(): Result<List<String>, FailedToFetchPackages> =
       try {
         val pypiPackages = loadPackagesFromPypi().map { PyPackageName.normalizePackageName(it) }.sorted().toList()
         Result.success(pypiPackages)
       }
       catch (e: IOException) {
-        Result.failure(PyPiPackageCacheError.FailedToFetchPackages(e.message ?: "IOException"))
+        Result.failure(FailedToFetchPackages(e.message ?: "IOException"))
       }
       catch (t: Throwable) {
         logger.warn("Cannot fetch PyPI packages from the internet", t)
@@ -304,17 +306,6 @@ class PyPiPackageCache : PythonPackageCache {
     companion object {
       private val logger = logger<PyPiPackageLoader>()
     }
-  }
-
-  @ApiStatus.Internal
-  sealed interface PyPiPackageCacheError {
-    val message: String
-
-    @ApiStatus.Internal
-    data class FailedToFetchPackages(override val message: String) : PyPiPackageCacheError
-
-    @ApiStatus.Internal
-    data class InvalidCacheFileFormat(override val message: String) : PyPiPackageCacheError
   }
 
   companion object {

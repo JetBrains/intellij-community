@@ -102,3 +102,17 @@ interface PythonPackageSearchPage {
    */
   object DataInvalidatedError
 }
+
+/**
+ * Represents an IO error for Python package cache operations.
+ */
+@ApiStatus.Internal
+sealed interface PythonPackageCacheIOError {
+  val message: String
+
+  /**
+   * Returned when the package cache could not be loaded for some reason (e.g., Internet connection cut out).
+   */
+  @ApiStatus.Internal
+  data class FailedToFetchPackages(override val message: String) : PythonPackageCacheIOError
+}
