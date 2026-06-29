@@ -8,6 +8,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownAlertTitle
@@ -20,6 +21,7 @@ internal class MarkdownAlertLineMarkerProvider : LineMarkerProviderDescriptor() 
   override fun getIcon(): Icon = AllIcons.General.Note
 
   override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? {
+    if (IdeProductMode.isBackend) return null
     val type = (element as? MarkdownAlertTitle)?.getType() ?: return null
     val tooltip = type.name.lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase(getDefault()) else it.toString() }
     return AlertLineMarkerInfo(element, type.icon, tooltip)

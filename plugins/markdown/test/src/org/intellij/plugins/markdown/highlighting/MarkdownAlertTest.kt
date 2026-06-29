@@ -47,6 +47,6 @@ class MarkdownAlertTest : BasePlatformTestCase() {
     myFixture.configureByText("test.md", "> $title\n> Content")
     myFixture.doHighlighting()
     val markers = DaemonCodeAnalyzerImpl.getLineMarkers(myFixture.editor.document, project)
-    assertNotNull("Expected gutter icon $expectedIcon for $title", markers.firstOrNull { it.icon == expectedIcon })
+    assertEquals("Expected exactly one gutter icon $expectedIcon for $title", 1, markers.count { it.icon == expectedIcon })
   }
 }
