@@ -13,6 +13,8 @@ fun UiRobot.pasteText(text: String) {
   }
 }
 
+@Deprecated("Does not work on Wayland. Use dragAndDrop(UiComponent, Point?, UiComponent, Point?) instead.",
+            ReplaceWith("dragAndDrop(from, fromPoint, to, toPoint)"))
 fun UiRobot.dragAndDrop(start: Point, end: Point) {
   try {
     moveMouse(start)
@@ -27,6 +29,17 @@ fun UiRobot.dragAndDrop(start: Point, end: Point) {
   }
 }
 
+@Deprecated("Does not work on Wayland. Use dragAndDrop(UiComponent, Point?, UiComponent, Point?) instead.",
+            ReplaceWith("dragAndDrop(from, fromPoint, to, toPoint)"))
 fun UiComponent.dragAndDrop(to: Point) {
   driver.ui.dragAndDrop(this.center, to)
+}
+
+fun UiRobot.dragAndDrop(from: UiComponent, fromPoint: Point? = null, to: UiComponent, toPoint: Point? = null) {
+  robot.dragAndDrop(
+    from.component,
+    fromPoint ?: from.component.let { Point(it.width / 2, it.height / 2) },
+    to.component,
+    toPoint ?: to.component.let { Point(it.width / 2, it.height / 2) }
+  )
 }
