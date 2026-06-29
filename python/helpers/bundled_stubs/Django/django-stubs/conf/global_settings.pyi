@@ -431,6 +431,7 @@ AUTH_PASSWORD_VALIDATORS: list[_AuthPasswordValidatorsDict]
 # SIGNING #
 ###########
 
+SIGNED_COOKIE_LEGACY_SALT_FALLBACK: bool
 SIGNING_BACKEND: str
 
 ########

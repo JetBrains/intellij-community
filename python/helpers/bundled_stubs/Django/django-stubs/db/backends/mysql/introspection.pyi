@@ -2,6 +2,8 @@ from typing import Any, NamedTuple
 
 from django.db.backends.base.introspection import BaseDatabaseIntrospection
 from django.db.backends.mysql.base import DatabaseWrapper
+from django.db.backends.utils import CursorWrapper
+from typing_extensions import override
 
 FieldInfo: Any
 
@@ -26,3 +28,5 @@ class DatabaseIntrospection(BaseDatabaseIntrospection):
     connection: DatabaseWrapper
     data_types_reverse: Any
     def get_storage_engine(self, cursor: Any, table_name: str) -> str: ...
+    @override
+    def get_table_description(self, cursor: CursorWrapper, table_name: str) -> list[FieldInfo]: ...
