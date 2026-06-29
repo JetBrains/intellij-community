@@ -3033,6 +3033,11 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
             runTest("testData/intentions/specifyRemainingRequiredArgumentsByName/functionOverloadsWithDefaults.kt");
         }
 
+        @TestMetadata("implicitContext.kt")
+        public void testImplicitContext() throws Exception {
+            runTest("testData/intentions/specifyRemainingRequiredArgumentsByName/implicitContext.kt");
+        }
+
         @TestMetadata("multipleOptionalArguments.kt")
         public void testMultipleOptionalArguments() throws Exception {
             runTest("testData/intentions/specifyRemainingRequiredArgumentsByName/multipleOptionalArguments.kt");

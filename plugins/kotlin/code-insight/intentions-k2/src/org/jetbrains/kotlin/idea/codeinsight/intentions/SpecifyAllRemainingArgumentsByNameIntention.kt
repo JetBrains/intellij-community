@@ -30,7 +30,7 @@ internal class SpecifyAllRemainingArgumentsByNameIntention : SpecifyRemainingArg
             project = actionContext.project,
             element = argumentList,
             remainingValueArguments = elementContext.allValueRemainingArguments,
-            remainingContextArguments = elementContext.allContextRemainingArguments,
+            remainingContextArguments = elementContext.allContextRemainingArguments - elementContext.implicitContextArgumentNames,
             allContextParameterNames = elementContext.allContextParameterNames,
             updater = updater
         )

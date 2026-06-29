@@ -13945,6 +13945,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/specifyAllRemainingArgumentsByName/functionOverloadsWithDefaults.kt");
         }
 
+        @TestMetadata("implicitContext.kt")
+        public void testImplicitContext() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/specifyAllRemainingArgumentsByName/implicitContext.kt");
+        }
+
         @TestMetadata("incorrectSignature.kt")
         public void testIncorrectSignature() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/specifyAllRemainingArgumentsByName/incorrectSignature.kt");

@@ -54,6 +54,8 @@ object SpecifyRemainingArgumentsByNameUtil {
         val allContextRemainingArguments: List<Name> = emptyList(),
         // All context parameter names (for identifying existing context args in the call)
         val allContextParameterNames: Set<Name> = emptySet(),
+        // Only context arguments that are implicit receivers
+        val implicitContextArgumentNames: Set<Name> = emptySet()
     )
 
     /**
@@ -181,7 +183,7 @@ object SpecifyRemainingArgumentsByNameUtil {
         val result = linkedMapOf<Name, Name>()
 
         val candidateFunction = candidateCall.symbol as? KaNamedFunctionSymbol ?: return emptyMap()
-        val contextArguments = candidateCall.partiallyAppliedSymbol.contextArguments
+        val contextArguments = candidateCall.contextArguments
 
         // shadowing context case
         val nearestContextParameterByName = candidatesPool.distinctBy { it.name }.associateBy { it.name }
@@ -223,6 +225,13 @@ object SpecifyRemainingArgumentsByNameUtil {
                 arg.value.name.takeIf { !it.isSpecial }?.identifier
             }
 
+        val implicitContextArgumentNames = symbol.contextParameters
+            .mapIndexedNotNullTo(hashSetOf()) { index, parameter ->
+                parameter.name.takeIf {
+                    !it.isSpecial && contextArguments.getOrNull(index) is KaImplicitReceiverValue
+                }
+            }
+
         val existingContextArguments = contextArgumentMapping
             .mapNotNullTo(hashSetOf()) { arg ->
                 arg.value.name.takeIf { !it.isSpecial }?.identifier
@@ -260,7 +269,8 @@ object SpecifyRemainingArgumentsByNameUtil {
             valueRemainingArguments.filter { !it.hasDeclaredDefaultValue }.map { it.name },
             valueRemainingArguments.map { it.name },
             contextRemainingArguments.map { it.name },
-            allContextParamNames
+            allContextParamNames,
+            implicitContextArgumentNames
         )
     }
 

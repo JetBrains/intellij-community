@@ -15,7 +15,6 @@ context(ctx: Ctx)
 fun f1Test() {
     f1(
         v = TODO(),
-        ctx2 = Ctx2(),
-        ctx = TODO()
+        ctx2 = Ctx2()
     ) {}
 }
