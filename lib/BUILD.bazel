@@ -14160,17 +14160,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps/intellij-test-discovery-agent-1.0.776.jar_copy",
-    src = "@org_jetbrains_intellij_deps-intellij-test-discovery-agent-1_0_776_http//file",
-    out = "org.jetbrains.intellij.deps/intellij-test-discovery-agent-1.0.776.jar",
+    name = "org.jetbrains.intellij.deps/intellij-test-discovery-agent-1.0.777.jar_copy",
+    src = "@org_jetbrains_intellij_deps-intellij-test-discovery-agent-1_0_777_http//file",
+    out = "org.jetbrains.intellij.deps/intellij-test-discovery-agent-1.0.777.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-test-discovery-intellij-test-discovery",
-    jar = "@org_jetbrains_intellij_deps-intellij-test-discovery-agent-1_0_776_http//file",
-    source_jar = "@org_jetbrains_intellij_deps-intellij-test-discovery-agent-1_0_776-sources_http//file",
+    jar = "@org_jetbrains_intellij_deps-intellij-test-discovery-agent-1_0_777_http//file",
+    source_jar = "@org_jetbrains_intellij_deps-intellij-test-discovery-agent-1_0_777-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -18994,9 +18994,9 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps/intellij-coverage-reporter-1.0.776.jar_copy",
-    src = "@org_jetbrains_intellij_deps-intellij-coverage-reporter-1_0_776_http//file",
-    out = "org.jetbrains.intellij.deps/intellij-coverage-reporter-1.0.776.jar",
+    name = "org.jetbrains.intellij.deps/intellij-coverage-reporter-1.0.777.jar_copy",
+    src = "@org_jetbrains_intellij_deps-intellij-coverage-reporter-1_0_777_http//file",
+    out = "org.jetbrains.intellij.deps/intellij-coverage-reporter-1.0.777.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -19010,9 +19010,9 @@ copy_file(
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps/intellij-coverage-agent-1.0.776.jar_copy",
-    src = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_776_http//file",
-    out = "org.jetbrains.intellij.deps/intellij-coverage-agent-1.0.776.jar",
+    name = "org.jetbrains.intellij.deps/intellij-coverage-agent-1.0.777.jar_copy",
+    src = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_777_http//file",
+    out = "org.jetbrains.intellij.deps/intellij-coverage-agent-1.0.777.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -19022,17 +19022,17 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":org_jetbrains_intellij_deps-intellij-coverage-reporter-1_0_776_http_import",
+        ":org_jetbrains_intellij_deps-intellij-coverage-reporter-1_0_777_http_import",
         ":org_jetbrains_intellij_deps-coverage-report-1_0_27_http_import",
         ":org_freemarker-freemarker-2_3_32_http_import",
-        ":org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_776_http_import",
+        ":org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_777_http_import",
     ],
 )
 
 jvm_import(
-    name = "org_jetbrains_intellij_deps-intellij-coverage-reporter-1_0_776_http_import",
-    jar = "@org_jetbrains_intellij_deps-intellij-coverage-reporter-1_0_776_http//file",
-    source_jar = "@org_jetbrains_intellij_deps-intellij-coverage-reporter-1_0_776-sources_http//file",
+    name = "org_jetbrains_intellij_deps-intellij-coverage-reporter-1_0_777_http_import",
+    jar = "@org_jetbrains_intellij_deps-intellij-coverage-reporter-1_0_777_http//file",
+    source_jar = "@org_jetbrains_intellij_deps-intellij-coverage-reporter-1_0_777-sources_http//file",
 )
 
 jvm_import(
@@ -19042,9 +19042,9 @@ jvm_import(
 )
 
 jvm_import(
-    name = "org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_776_http_import",
-    jar = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_776_http//file",
-    source_jar = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_776-sources_http//file",
+    name = "org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_777_http_import",
+    jar = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_777_http//file",
+    source_jar = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_777-sources_http//file",
 )
 
 copy_file(
@@ -19388,8 +19388,8 @@ jvm_import(
 
 jvm_import(
     name = "platform-coverage-agent-intellij-coverage",
-    jar = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_776_http//file",
-    source_jar = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_776-sources_http//file",
+    jar = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_777_http//file",
+    source_jar = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_777-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
