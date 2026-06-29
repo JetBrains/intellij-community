@@ -67,6 +67,7 @@ internal class AgentPromptLaunchProfileEditorDialog(
   activeProfileId: String?,
   defaultProfileId: String?,
   builtInProfiles: List<AgentPromptLaunchProfile>,
+  private var profileIconsById: Map<String, Icon> = emptyMap(),
   private var providerEntries: List<ProviderEntry>,
   private val modelCatalogProvider: (String) -> List<AgentPromptGenerationModel>?,
   private val modelCatalogStateProvider: (String) -> AgentPromptGenerationModelCatalogState? = { providerId ->
@@ -232,6 +233,7 @@ internal class AgentPromptLaunchProfileEditorDialog(
     activeProfileId: String?,
     defaultProfileId: String?,
     builtInProfiles: List<AgentPromptLaunchProfile>,
+    profileIconsById: Map<String, Icon>,
     providerEntries: List<ProviderEntry>,
   ) {
     if (hasEditorChanges(selectedProfile())) {
@@ -241,6 +243,7 @@ internal class AgentPromptLaunchProfileEditorDialog(
     currentBuiltInProfiles = builtInProfiles
     selectedProfileId = activeProfileId
     currentDefaultProfileId = defaultProfileId
+    this.profileIconsById = profileIconsById
     this.providerEntries = providerEntries
     reloadListAndSelectProfile(selectedProfileId ?: managedProfiles.firstOrNull()?.id)
     renderSelectedProfile()
@@ -367,6 +370,11 @@ internal class AgentPromptLaunchProfileEditorDialog(
   fun profileListRendererTextForTest(profileId: String): String {
     val component = profileListRendererComponentForTest(profileId) ?: return ""
     return (component as SimpleColoredComponent).getCharSequence(false).toString()
+  }
+
+  fun profileListRendererIconForTest(profileId: String): Icon? {
+    val component = profileListRendererComponentForTest(profileId) ?: return null
+    return (component as SimpleColoredComponent).icon
   }
 
   fun isProfileListRendererNameBoldForTest(profileId: String): Boolean {
@@ -1060,6 +1068,7 @@ internal class AgentPromptLaunchProfileEditorDialog(
   }
 
   private fun profileIcon(profile: AgentPromptLaunchProfile?): Icon {
+    profile?.id?.let { profileId -> profileIconsById[profileId] }?.let { icon -> return icon }
     val provider = profile?.providerId?.let(AgentSessionProvider::fromOrNull)
     return providerEntries.firstOrNull { entry -> entry.bridge.provider == provider }?.icon ?: AllIcons.Nodes.Plugin
   }

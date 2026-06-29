@@ -7,6 +7,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.TestOnly
+import javax.swing.Icon
 
 internal typealias AgentPromptLaunchProfileEditorOpenDialog = ((() -> Unit)?) -> Unit
 
@@ -16,6 +17,7 @@ internal class AgentPromptLaunchProfileEditorRequest(
   @JvmField val activeProfileId: String?,
   @JvmField val defaultProfileId: String?,
   @JvmField val builtInProfiles: List<AgentPromptLaunchProfile>,
+  @JvmField val profileIconsById: Map<String, Icon> = emptyMap(),
   @JvmField val providerEntries: List<ProviderEntry>,
   @JvmField val modelCatalogProvider: (String) -> List<AgentPromptGenerationModel>?,
   @JvmField val modelCatalogStateProvider: (String) -> AgentPromptGenerationModelCatalogState? = { providerId ->
@@ -74,6 +76,7 @@ internal class AgentPromptLaunchProfileEditorWindowService {
       activeProfileId = request.activeProfileId,
       defaultProfileId = request.defaultProfileId,
       builtInProfiles = request.builtInProfiles,
+      profileIconsById = request.profileIconsById,
       providerEntries = request.providerEntries,
       modelCatalogProvider = { providerId -> currentRequest().modelCatalogProvider(providerId) },
       modelCatalogStateProvider = { providerId -> currentRequest().modelCatalogStateProvider(providerId) },
@@ -102,6 +105,7 @@ internal class AgentPromptLaunchProfileEditorWindowService {
       activeProfileId = request.activeProfileId,
       defaultProfileId = request.defaultProfileId,
       builtInProfiles = request.builtInProfiles,
+      profileIconsById = request.profileIconsById,
       providerEntries = request.providerEntries,
     )
   }

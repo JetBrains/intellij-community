@@ -9,6 +9,7 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.ui.agentSessionThreadStatusIcon
 import com.intellij.agent.workbench.ui.clearAgentSessionThreadStatusIconCacheForTests
+import com.intellij.agent.workbench.ui.resolveAgentSessionThreadIcon
 import com.intellij.agent.workbench.ui.withYoloModeBadge
 import com.intellij.ide.FileIconProvider
 import com.intellij.openapi.project.Project
@@ -25,9 +26,10 @@ internal fun clearAgentChatIconCacheForTests() {
 internal class AgentChatFileIconProvider : FileIconProvider {
   override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? {
     val chatFile = file as? AgentChatVirtualFile ?: return null
-    val icon = providerIcon(
+    val activityReport = resolveAgentChatTabIconActivityReport(chatFile)
+    val icon = threadIcon(chatFile, activityReport) ?: providerIcon(
       provider = chatFile.provider,
-      activityReport = resolveAgentChatTabIconActivityReport(chatFile),
+      activityReport = activityReport,
     )
     if (chatFile.pendingLaunchMode == AgentSessionLaunchMode.YOLO.name) {
       return withYoloModeBadge(icon)
@@ -43,6 +45,13 @@ internal fun resolveAgentChatTabIconActivity(file: AgentChatVirtualFile): AgentT
 private fun resolveAgentChatTabIconActivityReport(file: AgentChatVirtualFile): AgentThreadActivityReport {
   // Agent Chat tab icons are chrome signals; row/session activity stays on AgentChatVirtualFile.threadActivity.
   return resolveAgentChatThreadPresentation(file).activityReport
+}
+
+private fun threadIcon(file: AgentChatVirtualFile, activityReport: AgentThreadActivityReport): Icon? {
+  val provider = file.provider ?: return null
+  val threadId = file.threadId.ifBlank { file.sessionId }
+  val baseIcon = resolveAgentSessionThreadIcon(file.projectPath, provider, threadId) ?: return null
+  return agentSessionThreadStatusIcon(baseIcon, activityReport.chromePresentationActivity())
 }
 
 internal fun providerIcon(

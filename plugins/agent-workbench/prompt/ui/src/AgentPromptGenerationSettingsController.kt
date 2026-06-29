@@ -13,6 +13,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderMenuItem
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionLaunchProfileContributors
 import com.intellij.platform.ai.agent.sessions.core.providers.generationSettingsForPlanMode
 import com.intellij.agent.workbench.sessions.providerItemMonochromeIconWithMode
 import com.intellij.agent.workbench.sessions.setLaunchProfileIcon
@@ -661,6 +662,7 @@ internal class AgentPromptGenerationSettingsController(
           selectedModelId = currentSettings().modelId,
         )
       }
+
       val modelRows = modelRows()
       add(AgentPromptPopupRow.Command(
         text = selectedModelPopupText(modelRows, currentSettings.modelId),
@@ -796,7 +798,8 @@ internal class AgentPromptGenerationSettingsController(
     }
     if (planEffortSupported && providerSelector.isPlanModeSelected()) {
       group.add(Separator.create(AgentPromptBundle.message("popup.generation.summary.section.plan.reasoning")))
-      createPlanReasoningEffortActionGroup(supportedEfforts).getChildren(ActionManager.getInstance()).forEach { action -> group.add(action) }
+      createPlanReasoningEffortActionGroup(supportedEfforts).getChildren(ActionManager.getInstance())
+        .forEach { action -> group.add(action) }
     }
     return group
   }
@@ -1007,6 +1010,7 @@ internal class AgentPromptGenerationSettingsController(
       activeProfileId = launchProfileState.selectedProfileId,
       defaultProfileId = launchProfileState.effectiveDefaultProfileId,
       builtInProfiles = builtInLaunchProfiles(),
+      profileIconsById = builtInLaunchProfileIconsById(),
       providerEntries = providerSelector.providerEntries(),
       modelCatalogProvider = ::loadedModelCatalog,
       modelCatalogStateProvider = ::modelCatalogState,
@@ -1030,6 +1034,7 @@ internal class AgentPromptGenerationSettingsController(
       activeProfileId = request.activeProfileId,
       defaultProfileId = request.defaultProfileId,
       builtInProfiles = request.builtInProfiles,
+      profileIconsById = request.profileIconsById,
       providerEntries = request.providerEntries,
       modelCatalogProvider = request.modelCatalogProvider,
       modelCatalogStateProvider = request.modelCatalogStateProvider,
@@ -1149,6 +1154,12 @@ internal class AgentPromptGenerationSettingsController(
 
   private fun builtInLaunchProfiles(): List<AgentPromptLaunchProfile> {
     return providerSelector.builtInLaunchProfiles()
+  }
+
+  private fun builtInLaunchProfileIconsById(): Map<String, Icon> {
+    return AgentSessionLaunchProfileContributors.buildBuiltInLaunchProfiles(invocationData.project)
+      .mapNotNull { profile -> profile.icon?.let { icon -> profile.id to icon } }
+      .toMap()
   }
 
   private fun implicitBuiltInDefaultProfileId(): String? {

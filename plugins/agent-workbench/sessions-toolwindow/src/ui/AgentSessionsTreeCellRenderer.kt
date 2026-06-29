@@ -2,9 +2,11 @@
 package com.intellij.agent.workbench.sessions.toolwindow.ui
 
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.common.statusMessageKey
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.ui.agentSessionThreadStatusIcon
+import com.intellij.agent.workbench.ui.resolveAgentSessionThreadIcon
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
@@ -115,6 +117,7 @@ internal class SessionTreeCellRenderer(
   private val nowProvider: () -> Long,
   private val rowActionsProvider: (row: Int, node: SessionTreeNode, selected: Boolean) -> SessionTreeRowActionPresentation?,
   private val nodeResolver: (SessionTreeId) -> SessionTreeNode?,
+  private val threadIconProvider: ((String, AgentSessionProvider, String) -> Icon?)? = null,
   private val providerIconProvider: ((AgentSessionProvider) -> Icon?)? = null,
 ) : ColoredTreeCellRenderer() {
   private data class SharedTimeColumnWidthCacheKey(
@@ -221,7 +224,8 @@ internal class SessionTreeCellRenderer(
         val baseFontMetrics = getFontMetrics(getBaseFont())
         val sharedTimeColumnWidth = computeSharedTimeColumnWidth(baseFontMetrics)
         val threadRowPresentation = buildSessionTreeThreadRowPresentation(treeNode = treeNode, now = nowProvider())
-        icon = threadCompositeIcon(treeNode)
+        icon =
+          threadCompositeIcon(treeProjectPath(treeId, treeNode), treeNode.thread.provider, treeNode.thread.id, treeNode.thread.activityReport.rowActivity)
         val threadTitle: @NlsSafe String = threadRowPresentation.title
         appendWithClipping(threadTitle, SimpleTextAttributes.REGULAR_ATTRIBUTES, middleTextClipper)
         threadTrailingPaint = computeSessionTreeThreadTrailingPaint(
@@ -398,9 +402,27 @@ internal class SessionTreeCellRenderer(
     return width
   }
 
-  private fun threadCompositeIcon(treeNode: SessionTreeNode.Thread): Icon {
-    return providerIconProvider?.let { agentSessionThreadStatusIcon(it(treeNode.thread.provider), treeNode.thread.activityReport.rowActivity) }
-           ?: agentSessionThreadStatusIcon(treeNode.thread.provider, treeNode.thread.activityReport.rowActivity)
+  private fun threadCompositeIcon(
+    projectPath: String,
+    provider: AgentSessionProvider,
+    threadId: String,
+    activity: AgentThreadActivity,
+  ): Icon {
+    val baseIcon = threadIconProvider?.invoke(projectPath, provider, threadId)
+                   ?: resolveAgentSessionThreadIcon(projectPath, provider, threadId)
+    if (baseIcon != null) {
+      return agentSessionThreadStatusIcon(baseIcon, activity)
+    }
+    return providerIconProvider?.let { agentSessionThreadStatusIcon(it(provider), activity) }
+           ?: agentSessionThreadStatusIcon(provider, activity)
+  }
+
+  private fun treeProjectPath(treeId: SessionTreeId, node: SessionTreeNode.Thread): String {
+    return when (treeId) {
+      is SessionTreeId.Thread -> treeId.projectPath
+      is SessionTreeId.WorktreeThread -> treeId.worktreePath
+      else -> node.project.path
+    }
   }
 
   private fun projectCompositeIcon(project: AgentProjectSessions): Icon {
