@@ -82,4 +82,27 @@ public class LombokUtilsSetterTest {
     assertThat(result, equalTo("setISmyField"));
   }
 
+  @SuppressWarnings("NonAsciiCharacters")
+  @Test
+  public void testToSetterNames_NonBoolean_SpecialCharacter() {
+    String result = makeResults("ß", false);
+
+    assertThat(result, equalTo("setß"));
+  }
+
+  @SuppressWarnings("NonAsciiCharacters")
+  @Test
+  public void testToSetterNames_NonBoolean_MultipleSpecialCharacters() {
+    String result = makeResults("ßßß", false);
+
+    assertThat(result, equalTo("setßßß"));
+  }
+
+  @SuppressWarnings("NonAsciiCharacters")
+  @Test
+  public void testToSetterNames_NonBoolean_Cyrillic() {
+    String result = makeResults("ы", false);
+
+    assertThat(result, equalTo("setЫ"));
+  }
 }
