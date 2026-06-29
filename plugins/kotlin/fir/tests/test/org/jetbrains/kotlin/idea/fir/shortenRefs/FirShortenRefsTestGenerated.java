@@ -378,6 +378,16 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
                     runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/nestedSealedHierarchy.kt");
                 }
 
+                @TestMetadata("nullableType.kt")
+                public void testNullableType() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/nullableType.kt");
+                }
+
+                @TestMetadata("nullableTypeInnerRef.kt")
+                public void testNullableTypeInnerRef() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/nullableTypeInnerRef.kt");
+                }
+
                 @TestMetadata("typeArgumentPartialSelection.kt")
                 public void testTypeArgumentPartialSelection() throws Exception {
                     runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/typeArgumentPartialSelection.kt");
