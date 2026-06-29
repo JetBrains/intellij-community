@@ -80,7 +80,7 @@ internal class AgentSessionRefreshCoordinator(
   private val clearOpenConcreteNewThreadRebindAnchors: (
     AgentSessionProvider,
     Map<String, List<AgentChatConcreteTabSnapshot>>,
-    ) -> Int = ::clearOpenConcreteAgentChatNewThreadRebindAnchors,
+  ) -> Int = ::clearOpenConcreteAgentChatNewThreadRebindAnchors,
   private val archiveTransitionSuppressions: AgentSessionArchiveTransitionSuppressions = AgentSessionArchiveTransitionSuppressions(),
   loadingDelayMs: Long = DEFAULT_AGENT_SESSION_LOADING_DELAY_MS,
 ) {
@@ -196,13 +196,17 @@ internal class AgentSessionRefreshCoordinator(
       update.state
     }
 
+    presentationUpdates = appendScopedPresentationUpdatesForUnknownThreads(
+      existingUpdates = presentationUpdates,
+      normalizedScopedPaths = normalizedScopedPaths,
+      presentationUpdatesByThreadId = presentationUpdatesByThreadId,
+    )
     LOG.debug {
       "Applied ${provider.value} source presentation hints " +
       "scopedPaths=${normalizedScopedPaths.debugSizeText()} " +
       "presentationUpdates=${presentationUpdatesByThreadId.size} " +
       "updates=${presentationUpdates.size}"
     }
-
     if (presentationUpdates.isEmpty()) {
       return
     }
@@ -294,7 +298,10 @@ internal class AgentSessionRefreshCoordinator(
       var loadingProviderLoadStates = buildLoadingProviderLoadStates(sessionSources.map { source -> source.provider })
       pathLoadController.runWithDelayedLoading(
         providerLoadStates = { loadingProviderLoadStates },
-        publishLoading = { providerLoadStates -> markProviderLoadStatesLoading(bootstrap = bootstrap, providerLoadStates = providerLoadStates) },
+        publishLoading = { providerLoadStates ->
+          markProviderLoadStatesLoading(bootstrap = bootstrap,
+                                        providerLoadStates = providerLoadStates)
+        },
       ) {
         val cliAvailabilityByProvider = resolveCliAvailabilityByProvider(sessionSources)
         val availableSessionSources = sessionSources.filter { source -> cliAvailabilityByProvider[source.provider] != false }
@@ -748,6 +755,40 @@ private data class PresentationHintThreadUpdate(
   @JvmField val presentationUpdates: List<AgentSessionThreadPresentationPatchUpdate>,
 )
 
+private fun appendScopedPresentationUpdatesForUnknownThreads(
+  existingUpdates: List<AgentSessionThreadPresentationPatchUpdate>,
+  normalizedScopedPaths: Set<String>?,
+  presentationUpdatesByThreadId: Map<String, AgentSessionThreadPresentationUpdate>,
+): List<AgentSessionThreadPresentationPatchUpdate> {
+  if (normalizedScopedPaths.isNullOrEmpty() || presentationUpdatesByThreadId.isEmpty()) {
+    return existingUpdates
+  }
+
+  val existingKeys = existingUpdates.mapTo(LinkedHashSet()) { update -> update.path to update.threadId }
+  val updates =
+    ArrayList<AgentSessionThreadPresentationPatchUpdate>(existingUpdates.size + normalizedScopedPaths.size * presentationUpdatesByThreadId.size)
+  updates.addAll(existingUpdates)
+  for (path in normalizedScopedPaths) {
+    for ((threadId, presentationUpdate) in presentationUpdatesByThreadId) {
+      if (presentationUpdate.title == null) {
+        continue
+      }
+      val key = path to threadId
+      if (key in existingKeys) {
+        continue
+      }
+      updates += AgentSessionThreadPresentationPatchUpdate(
+        path = path,
+        threadId = threadId,
+        title = presentationUpdate.title,
+        activityReport = presentationUpdate.activityReport,
+        updatedAt = presentationUpdate.updatedAt,
+      )
+    }
+  }
+  return updates
+}
+
 private fun applyThreadPresentationHints(
   state: AgentSessionsState,
   provider: AgentSessionProvider,
@@ -849,7 +890,8 @@ private fun applyThreadPresentationHintsForPath(
           activityReport = resolvedUpdate.activityReport,
           updatedAt = resolvedUpdate.updatedAt,
         )
-        updatedThread = thread.copy(title = resolvedUpdate.title, activityReport = resolvedUpdate.activityReport, updatedAt = resolvedUpdate.updatedAt)
+        updatedThread =
+          thread.copy(title = resolvedUpdate.title, activityReport = resolvedUpdate.activityReport, updatedAt = resolvedUpdate.updatedAt)
       }
     }
 

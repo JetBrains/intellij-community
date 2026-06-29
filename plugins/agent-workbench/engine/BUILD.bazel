@@ -128,6 +128,8 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//platform/util",
         "//platform/util:util_test_lib",
+        "//plugins/agent-workbench/lib-agent/sessions-core:ai-agent-sessions-core",
+        "//plugins/agent-workbench/lib-agent/sessions-core:ai-agent-sessions-core_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//libraries/assertj-core",

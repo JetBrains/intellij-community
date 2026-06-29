@@ -67,14 +67,14 @@ class EngineProjectService(
   /** Nudges subscribers to re-read the projection for [threadId] without appending a new event. */
   fun fireProjectionChanged(threadId: ThreadId) {
     project.messageBus.syncPublisher(EngineEvents.TOPIC).projectionUpdated(threadId)
-    EngineChangeBus.fireChanged(threadId)
+    EngineChangeBus.fireChanged(projectKey(project), threadId)
   }
 
   private fun publish(envelope: ThreadEventEnvelope) {
     val publisher = project.messageBus.syncPublisher(EngineEvents.TOPIC)
     publisher.eventAppended(envelope)
     publisher.projectionUpdated(envelope.threadId)
-    EngineChangeBus.fireChanged(envelope.threadId)
+    EngineChangeBus.fireChanged(projectKey(project), envelope.threadId)
   }
 
   companion object {
