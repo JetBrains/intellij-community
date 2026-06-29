@@ -4,6 +4,13 @@ import com.intellij.ui.icons.IconPathProvider
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icon.IntelliJIconKey
 
+/**
+ * Creates an [IntelliJIconKey] from a Swing [icon] that implements [IconPathProvider], extracting the old-UI and New-UI
+ * resource paths.
+ *
+ * @param icon The Swing icon to convert. Must be an [IconPathProvider] (e.g., icons from `AllIcons`).
+ * @param iconClass The class whose [ClassLoader] will be used to locate the icon resource.
+ */
 public fun IntelliJIconKey.Companion.fromPlatformIcon(
     icon: javax.swing.Icon,
     iconClass: Class<*> = icon::class.java,

@@ -28,6 +28,7 @@ private val islandsColorKeyRegex: Regex
  * @property purple A list of purple colors.
  * @property teal A list of teal colors.
  * @property rawMap A map of all colors in the palette, with their original keys.
+ * @param isIslands Whether the palette uses the Islands theme color key format (e.g., `gray-10` instead of `gray1`).
  */
 @Suppress("MemberVisibilityCanBePrivate", "KDocUnresolvedReference")
 @Immutable
@@ -412,6 +413,7 @@ public class ThemeColorPalette(
             ")"
     }
 
+    /** Provides the [Empty] instance representing a palette with no color entries. */
     public companion object {
         public val Empty: ThemeColorPalette =
             ThemeColorPalette(

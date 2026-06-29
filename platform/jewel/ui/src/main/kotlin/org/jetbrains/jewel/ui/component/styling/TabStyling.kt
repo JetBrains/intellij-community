@@ -14,13 +14,19 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.component.TabState
 import org.jetbrains.jewel.ui.icon.IconKey
 
+/** Combines colors, metrics, icons, content alpha, and scrollbar style for a tab component. */
 @Stable
 @GenerateDataFunctions
 public class TabStyle(
+    /** The color tokens for the tab component. */
     public val colors: TabColors,
+    /** The size and spacing metrics for the tab component. */
     public val metrics: TabMetrics,
+    /** The icon keys for the tab component. */
     public val icons: TabIcons,
+    /** The content alpha values for the tab component. */
     public val contentAlpha: TabContentAlpha,
+    /** The scrollbar style used within the tab strip. */
     public val scrollbarStyle: ScrollbarStyle,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -57,16 +63,23 @@ public class TabStyle(
             ")"
     }
 
+    /** Companion object for [TabStyle]. */
     public companion object
 }
 
+/** Holds size and spacing metrics for the tab component. */
 @Stable
 @GenerateDataFunctions
 public class TabMetrics(
+    /** The thickness of the selected tab's underline indicator. */
     public val underlineThickness: Dp,
+    /** The padding applied inside each tab. */
     public val tabPadding: PaddingValues,
+    /** The height of a tab. */
     public val tabHeight: Dp,
+    /** The spacing between elements inside a tab's content area. */
     public val tabContentSpacing: Dp,
+    /** The gap between the close button and the tab content. */
     public val closeContentGap: Dp,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -103,12 +116,17 @@ public class TabMetrics(
             ")"
     }
 
+    /** Companion object for [TabMetrics]. */
     public companion object
 }
 
+/** Holds the icon key for the tab component's close button. */
 @Immutable
 @GenerateDataFunctions
-public class TabIcons(public val close: IconKey) {
+public class TabIcons(
+    /** The icon key for the tab's close button. */
+    public val close: IconKey
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -122,28 +140,52 @@ public class TabIcons(public val close: IconKey) {
 
     override fun toString(): String = "TabIcons(close=$close)"
 
+    /** Companion object for [TabIcons]. */
     public companion object
 }
 
+/**
+ * Holds color tokens for the tab component in its various states, including background, content, and underline colors.
+ */
 @Immutable
 @GenerateDataFunctions
 public class TabColors(
+    /** The background color in the normal state. */
     public val background: Color,
+    /** The background color when the tab is disabled. */
     public val backgroundDisabled: Color,
+    /** The background color when the tab is pressed. */
     public val backgroundPressed: Color,
+    /** The background color when the tab is hovered. */
     public val backgroundHovered: Color,
+    /** The background color when the tab is selected. */
     public val backgroundSelected: Color,
+    /** The content (text/icon) color in the normal state. */
     public val content: Color,
+    /** The content color when the tab is disabled. */
     public val contentDisabled: Color,
+    /** The content color when the tab is pressed. */
     public val contentPressed: Color,
+    /** The content color when the tab is hovered. */
     public val contentHovered: Color,
+    /** The content color when the tab is selected. */
     public val contentSelected: Color,
+    /** The underline indicator color in the normal state. */
     public val underline: Color,
+    /** The underline indicator color when the tab is disabled. */
     public val underlineDisabled: Color,
+    /** The underline indicator color when the tab is pressed. */
     public val underlinePressed: Color,
+    /** The underline indicator color when the tab is hovered. */
     public val underlineHovered: Color,
+    /** The underline indicator color when the tab is selected. */
     public val underlineSelected: Color,
 ) {
+    /**
+     * Returns a [State] holding the content color appropriate for the given [state].
+     *
+     * @param state The current [TabState].
+     */
     @Composable
     public fun contentFor(state: TabState): State<Color> =
         rememberUpdatedState(
@@ -160,6 +202,11 @@ public class TabColors(
             }
         )
 
+    /**
+     * Returns a [State] holding the background color appropriate for the given [state].
+     *
+     * @param state The current [TabState].
+     */
     @Composable
     public fun backgroundFor(state: TabState): State<Color> =
         rememberUpdatedState(
@@ -173,6 +220,11 @@ public class TabColors(
             }
         )
 
+    /**
+     * Returns a [State] holding the underline color appropriate for the given [state].
+     *
+     * @param state The current [TabState].
+     */
     @Composable
     public fun underlineFor(state: TabState): State<Color> =
         rememberUpdatedState(
@@ -253,23 +305,40 @@ public class TabColors(
             ")"
     }
 
+    /** Companion object for [TabColors]. */
     public companion object
 }
 
+/** Holds alpha values for icon and content in the tab component across its various states. */
 @Immutable
 @GenerateDataFunctions
 public class TabContentAlpha(
+    /** The icon opacity in the normal state. */
     public val iconNormal: Float,
+    /** The icon opacity when the tab is disabled. */
     public val iconDisabled: Float,
+    /** The icon opacity when the tab is pressed. */
     public val iconPressed: Float,
+    /** The icon opacity when the tab is hovered. */
     public val iconHovered: Float,
+    /** The icon opacity when the tab is selected. */
     public val iconSelected: Float,
+    /** The content opacity in the normal state. */
     public val contentNormal: Float,
+    /** The content opacity when the tab is disabled. */
     public val contentDisabled: Float,
+    /** The content opacity when the tab is pressed. */
     public val contentPressed: Float,
+    /** The content opacity when the tab is hovered. */
     public val contentHovered: Float,
+    /** The content opacity when the tab is selected. */
     public val contentSelected: Float,
 ) {
+    /**
+     * Returns a [State] holding the icon opacity appropriate for the given [state].
+     *
+     * @param state The current [TabState].
+     */
     @Composable
     public fun iconFor(state: TabState): State<Float> =
         rememberUpdatedState(
@@ -286,6 +355,11 @@ public class TabContentAlpha(
             }
         )
 
+    /**
+     * Returns a [State] holding the content opacity appropriate for the given [state].
+     *
+     * @param state The current [TabState].
+     */
     @Composable
     public fun contentFor(state: TabState): State<Float> =
         rememberUpdatedState(
@@ -351,6 +425,7 @@ public class TabContentAlpha(
             ")"
     }
 
+    /** Companion object for [TabContentAlpha]. */
     public companion object
 }
 
@@ -365,10 +440,12 @@ private fun <T> TabState.chooseValueIgnoreCompat(normal: T, disabled: T, pressed
         else -> normal
     }
 
+/** CompositionLocal providing the default [TabStyle] for non-editor tabs. */
 public val LocalDefaultTabStyle: ProvidableCompositionLocal<TabStyle> = staticCompositionLocalOf {
     error("No LocalDefaultTabStyle provided. Have you forgotten the theme?")
 }
 
+/** CompositionLocal providing the [TabStyle] for editor tabs. */
 public val LocalEditorTabStyle: ProvidableCompositionLocal<TabStyle> = staticCompositionLocalOf {
     error("No LocalEditorTabStyle provided. Have you forgotten the theme?")
 }

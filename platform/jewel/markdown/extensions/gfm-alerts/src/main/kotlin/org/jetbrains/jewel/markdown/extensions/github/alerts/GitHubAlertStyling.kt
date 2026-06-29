@@ -24,10 +24,15 @@ import org.jetbrains.jewel.ui.icon.IconKey
 @ExperimentalJewelApi
 @GenerateDataFunctions
 public class AlertStyling(
+    /** Styling for the "note" alert. */
     public val note: NoteAlertStyling,
+    /** Styling for the "tip" alert. */
     public val tip: TipAlertStyling,
+    /** Styling for the "important" alert. */
     public val important: ImportantAlertStyling,
+    /** Styling for the "warning" alert. */
     public val warning: WarningAlertStyling,
+    /** Styling for the "caution" alert. */
     public val caution: CautionAlertStyling,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -64,33 +69,34 @@ public class AlertStyling(
             ")"
     }
 
+    /** Companion object for [AlertStyling]. */
     public companion object
 }
 
 /**
- * Base styling for a GFM alert.
- *
- * @property padding The padding to apply to the entire alert.
- * @property lineWidth The width of the vertical line on the side of the alert.
- * @property lineColor The color of the vertical line on the side of the alert.
- * @property pathEffect The path effect to apply to the vertical line, e.g., for dashed lines.
- * @property strokeCap The stroke cap to use for the vertical line.
- * @property titleTextStyle The text style for the alert's title.
- * @property titleIconKey The icon to use in the title.
- * @property titleIconTint The tint to apply to the title icon.
- * @property textColor The text color for the body of the alert.
+ * Base styling for a GFM alert, defining the vertical line, title, icon, and text color properties shared across all
+ * alert types.
  */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public sealed interface BaseAlertStyling {
+    /** The padding applied around the alert content. */
     public val padding: PaddingValues
+    /** The width of the vertical accent line. */
     public val lineWidth: Dp
+    /** The color of the vertical accent line. */
     public val lineColor: Color
+    /** The path effect applied to the vertical accent line, or null for a solid line. */
     public val pathEffect: PathEffect?
+    /** The stroke cap style for the vertical accent line. */
     public val strokeCap: StrokeCap
+    /** The text style applied to the alert title. */
     public val titleTextStyle: TextStyle
+    /** The icon displayed next to the alert title, or null for no icon. */
     public val titleIconKey: IconKey?
+    /** The tint color applied to the title icon. */
     public val titleIconTint: Color
+    /** The color applied to the alert body text. */
     public val textColor: Color
 }
 
@@ -155,6 +161,7 @@ public class NoteAlertStyling(
             ")"
     }
 
+    /** Companion object for [NoteAlertStyling]. */
     public companion object
 }
 
@@ -219,6 +226,7 @@ public class TipAlertStyling(
             ")"
     }
 
+    /** Companion object for [TipAlertStyling]. */
     public companion object
 }
 
@@ -283,6 +291,7 @@ public class ImportantAlertStyling(
             ")"
     }
 
+    /** Companion object for [ImportantAlertStyling]. */
     public companion object
 }
 
@@ -347,6 +356,7 @@ public class WarningAlertStyling(
             ")"
     }
 
+    /** Companion object for [WarningAlertStyling]. */
     public companion object
 }
 
@@ -411,5 +421,6 @@ public class CautionAlertStyling(
             ")"
     }
 
+    /** Companion object for [CautionAlertStyling]. */
     public companion object
 }

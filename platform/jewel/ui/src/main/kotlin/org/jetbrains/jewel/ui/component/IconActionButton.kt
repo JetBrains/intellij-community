@@ -32,6 +32,11 @@ import org.jetbrains.jewel.ui.painter.PainterHint
 import org.jetbrains.jewel.ui.theme.iconButtonStyle
 import org.jetbrains.jewel.ui.theme.tooltipStyle
 
+/**
+ * An icon-only action button that renders the icon identified by [key].
+ *
+ * This overload accepts an optional single [PainterHint] to influence how the icon is painted.
+ */
 @Composable
 public fun IconActionButton(
     key: IconKey,
@@ -63,6 +68,12 @@ public fun IconActionButton(
     )
 }
 
+/**
+ * An icon-only action button that renders the icon identified by [key] with a tooltip.
+ *
+ * This overload accepts an optional single [PainterHint] to influence how the icon is painted, and wraps the button in
+ * a [Tooltip] composable using the provided [tooltip] content.
+ */
 @Suppress("ComposableParamOrder") // To fix in JEWEL-924
 @Composable
 public fun IconActionButton(
@@ -102,6 +113,11 @@ public fun IconActionButton(
     }
 }
 
+/**
+ * An icon-only action button that renders the icon identified by [key].
+ *
+ * This overload accepts an array of [PainterHint]s to influence how the icon is painted.
+ */
 @Composable
 public fun IconActionButton(
     key: IconKey,
@@ -133,6 +149,12 @@ public fun IconActionButton(
     )
 }
 
+/**
+ * An icon-only action button that renders the icon identified by [key] with a tooltip.
+ *
+ * This overload accepts an array of [PainterHint]s to influence how the icon is painted, and wraps the button in a
+ * [Tooltip] composable using the provided [tooltip] content.
+ */
 @Suppress("ComposableParamOrder") // To fix in JEWEL-924
 @Composable
 public fun IconActionButton(
@@ -274,6 +296,7 @@ private fun CoreIconActionButton(
     }
 }
 
+/** An icon-only action button that renders the icon from the given [painter]. */
 @Composable
 public fun IconActionButton(
     painter: Painter,
@@ -299,6 +322,11 @@ public fun IconActionButton(
     )
 }
 
+/**
+ * An icon-only action button that renders the icon from the given [painter] with a tooltip.
+ *
+ * Wraps the button in a [Tooltip] composable using the provided [tooltip] content.
+ */
 @Suppress("ComposableParamOrder") // To fix in JEWEL-924
 @Composable
 public fun IconActionButton(

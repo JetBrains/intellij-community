@@ -11,6 +11,7 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public sealed interface InlineMarkdown {
+    /** An inline code span, rendered with a monospace font. */
     @ApiStatus.Experimental
     @ExperimentalJewelApi
     @GenerateDataFunctions
@@ -53,6 +54,7 @@ public sealed interface InlineMarkdown {
             get() = openingDelimiter
     }
 
+    /** An inline emphasis (italic) node, delimited by [delimiter] and containing [inlineContent]. */
     @ApiStatus.Experimental
     @ExperimentalJewelApi
     @GenerateDataFunctions
@@ -84,8 +86,10 @@ public sealed interface InlineMarkdown {
         override fun toString(): String = "Emphasis(delimiter='$delimiter', inlineContent=$inlineContent)"
     }
 
+    /** A hard line break, rendered as a newline that forces a new line in the output. */
     public data object HardLineBreak : InlineMarkdown
 
+    /** A raw inline HTML tag or entity, passed through as-is during rendering. */
     @ApiStatus.Experimental
     @ExperimentalJewelApi
     @GenerateDataFunctions
@@ -194,6 +198,10 @@ public sealed interface InlineMarkdown {
         }
     }
 
+    /**
+     * An inline hyperlink node holding a [destination] URL, an optional [title], and [inlineContent] for the link
+     * label.
+     */
     @ApiStatus.Experimental
     @ExperimentalJewelApi
     @GenerateDataFunctions
@@ -231,8 +239,10 @@ public sealed interface InlineMarkdown {
         override fun toString(): String = "Link(destination='$destination', title=$title, inlineContent=$inlineContent)"
     }
 
+    /** A soft line break, typically rendered as a space or ignored depending on the renderer. */
     public data object SoftLineBreak : InlineMarkdown
 
+    /** An inline strong emphasis (bold) node, delimited by [delimiter] and containing [inlineContent]. */
     @ApiStatus.Experimental
     @ExperimentalJewelApi
     @GenerateDataFunctions
@@ -264,6 +274,7 @@ public sealed interface InlineMarkdown {
         override fun toString(): String = "StrongEmphasis(delimiter='$delimiter', inlineContent=$inlineContent)"
     }
 
+    /** A plain text node holding a literal [content] string. */
     @ApiStatus.Experimental
     @ExperimentalJewelApi
     @GenerateDataFunctions

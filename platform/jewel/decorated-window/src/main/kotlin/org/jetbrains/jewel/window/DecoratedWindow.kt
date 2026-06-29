@@ -48,6 +48,28 @@ import org.jetbrains.jewel.intui.standalone.window.Window
 import org.jetbrains.jewel.window.styling.DecoratedWindowStyle
 import org.jetbrains.jewel.window.utils.DesktopPlatform
 
+/**
+ * A Compose window with custom JetBrains Runtime (JBR) window decorations, including support for a custom [TitleBar].
+ * Requires the application to run on JetBrains Runtime; an error is thrown at runtime if JBR is not available.
+ *
+ * On Linux, the window is rendered undecorated with a 1dp border drawn by Compose to simulate a native frame.
+ *
+ * @param onCloseRequest Callback invoked when the user requests to close the window.
+ * @param state The [WindowState] controlling the window's size and placement.
+ * @param visible Whether the window is visible.
+ * @param title The title shown in the OS window frame and taskbar.
+ * @param icon The icon shown in the OS window frame and taskbar.
+ * @param resizable Whether the user can resize the window.
+ * @param enabled Whether the window is enabled for user interaction.
+ * @param focusable Whether the window can receive focus.
+ * @param alwaysOnTop Whether the window is always displayed on top of other windows.
+ * @param onPreviewKeyEvent Callback invoked for key events before they are dispatched to children. Return `true` to
+ *   consume the event.
+ * @param onKeyEvent Callback invoked for key events after they are dispatched to children. Return `true` to consume the
+ *   event.
+ * @param style The [DecoratedWindowStyle] controlling the window frame's visual appearance.
+ * @param content The composable content displayed inside the window, scoped to a [DecoratedWindowScope].
+ */
 @Suppress("ModifierMissing")
 @Composable
 public fun DecoratedWindow(
@@ -184,10 +206,13 @@ public fun DecoratedWindow(
     }
 }
 
+/** Scope provided to content composables inside a [DecoratedWindow], exposing the [window] and its [state]. */
 @Stable
 public interface DecoratedWindowScope : FrameWindowScope {
+    /** The [ComposeWindow] backing this decorated window. */
     override val window: ComposeWindow
 
+    /** The current visual state of the decorated window. */
     public val state: DecoratedWindowState
 }
 
@@ -230,21 +255,37 @@ private object DecoratedWindowMeasurePolicy : MeasurePolicy {
     }
 }
 
+/** Encodes the visual state of a decorated window (active, fullscreen, minimized, maximized) as a bit mask. */
 @Immutable
 @JvmInline
-public value class DecoratedWindowState(public val state: ULong) {
+public value class DecoratedWindowState(
+    /** The raw bit mask encoding the current window state flags. */
+    public val state: ULong
+) {
+    /** Whether the window is currently active (focused). */
     public val isActive: Boolean
         get() = state and Active != 0UL
 
+    /** Whether the window is in fullscreen mode. */
     public val isFullscreen: Boolean
         get() = state and Fullscreen != 0UL
 
+    /** Whether the window is minimized. */
     public val isMinimized: Boolean
         get() = state and Minimize != 0UL
 
+    /** Whether the window is maximized. */
     public val isMaximized: Boolean
         get() = state and Maximize != 0UL
 
+    /**
+     * Returns a copy of this [DecoratedWindowState] with the given fields replaced by their new values.
+     *
+     * @param fullscreen Whether the window is in fullscreen mode.
+     * @param minimized Whether the window is minimized.
+     * @param maximized Whether the window is maximized.
+     * @param active Whether the window is active (focused).
+     */
     public fun copy(
         fullscreen: Boolean = isFullscreen,
         minimized: Boolean = isMinimized,
@@ -254,12 +295,28 @@ public value class DecoratedWindowState(public val state: ULong) {
 
     override fun toString(): String = "${javaClass.simpleName}(isFullscreen=$isFullscreen, isActive=$isActive)"
 
+    /** State bit constants and the [of] factory for constructing [DecoratedWindowState] values. */
     public companion object {
+        /** Bit flag for the active (focused) state. */
         public val Active: ULong = 1UL shl 0
+
+        /** Bit flag for the fullscreen state. */
         public val Fullscreen: ULong = 1UL shl 1
+
+        /** Bit flag for the minimized state. */
         public val Minimize: ULong = 1UL shl 2
+
+        /** Bit flag for the maximized state. */
         public val Maximize: ULong = 1UL shl 3
 
+        /**
+         * Constructs a [DecoratedWindowState] from individual boolean flags.
+         *
+         * @param fullscreen Whether the window is in fullscreen mode.
+         * @param minimized Whether the window is minimized.
+         * @param maximized Whether the window is maximized.
+         * @param active Whether the window is active (focused).
+         */
         public fun of(
             fullscreen: Boolean = false,
             minimized: Boolean = false,
@@ -273,6 +330,12 @@ public value class DecoratedWindowState(public val state: ULong) {
                     (if (active) Active else 0UL)
             )
 
+        /**
+         * Constructs a [DecoratedWindowState] by reading the current placement and activation state of the given
+         * [ComposeWindow].
+         *
+         * @param window The [ComposeWindow] to read state from.
+         */
         public fun of(window: ComposeWindow): DecoratedWindowState =
             of(
                 fullscreen = window.placement == WindowPlacement.Fullscreen,

@@ -8,6 +8,10 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.code.MimeType
 
+/**
+ * A functional interface for applying syntax highlighting to source code. Returns a [kotlinx.coroutines.flow.Flow] of
+ * styled [androidx.compose.ui.text.AnnotatedString]s that can update in response to theme or color scheme changes.
+ */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public interface CodeHighlighter {
@@ -55,6 +59,7 @@ public interface CodeHighlighter {
     public fun highlight(code: String, language: String = ""): Flow<AnnotatedString>
 }
 
+/** The composition local that provides the current [CodeHighlighter] instance. */
 @ExperimentalJewelApi
 @get:ApiStatus.Experimental
 public val LocalCodeHighlighter: ProvidableCompositionLocal<CodeHighlighter> = staticCompositionLocalOf {

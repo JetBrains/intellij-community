@@ -20,9 +20,15 @@ import org.jetbrains.jewel.ui.component.IconButtonState
 import org.jetbrains.jewel.ui.component.SelectableIconButtonState
 import org.jetbrains.jewel.ui.component.ToggleableIconButtonState
 
+/** Defines the styling for an icon button, combining its color tokens and size/spacing metrics. */
 @Stable
 @GenerateDataFunctions
-public class IconButtonStyle(public val colors: IconButtonColors, public val metrics: IconButtonMetrics) {
+public class IconButtonStyle(
+    /** The color tokens for each interaction state. */
+    public val colors: IconButtonColors,
+    /** The size and spacing metrics. */
+    public val metrics: IconButtonMetrics,
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -43,28 +49,46 @@ public class IconButtonStyle(public val colors: IconButtonColors, public val met
 
     override fun toString(): String = "IconButtonStyle(colors=$colors, metrics=$metrics)"
 
+    /** Companion object for [IconButtonStyle]. */
     public companion object
 }
 
+/** Holds color tokens for an icon button's background, border, and foreground in each interaction state. */
 @Immutable
 @GenerateDataFunctions
 public class IconButtonColors(
+    /** The foreground color when the button is both selected and the window is active. */
     public val foregroundSelectedActivated: Color,
+    /** The default background color. */
     public val background: Color,
+    /** The background color when the button is disabled. */
     public val backgroundDisabled: Color,
+    /** The background color when the button is selected. */
     public val backgroundSelected: Color,
+    /** The background color when the button is selected and the window is active. */
     public val backgroundSelectedActivated: Color,
+    /** The background color when the button is focused. */
     public val backgroundFocused: Color,
+    /** The background color when the button is pressed. */
     public val backgroundPressed: Color,
+    /** The background color when the button is hovered. */
     public val backgroundHovered: Color,
+    /** The default border color. */
     public val border: Color,
+    /** The border color when the button is disabled. */
     public val borderDisabled: Color,
+    /** The border color when the button is selected. */
     public val borderSelected: Color,
+    /** The border color when the button is selected and the window is active. */
     public val borderSelectedActivated: Color,
+    /** The border color when the button is focused. */
     public val borderFocused: Color,
+    /** The border color when the button is pressed. */
     public val borderPressed: Color,
+    /** The border color when the button is hovered. */
     public val borderHovered: Color,
 ) {
+    /** Returns a [State] holding the background color appropriate for the given [state]. */
     @Composable
     public fun backgroundFor(state: IconButtonState): State<Color> =
         rememberUpdatedState(
@@ -77,6 +101,10 @@ public class IconButtonColors(
             }
         )
 
+    /**
+     * Returns a [State] holding the background color appropriate for the given selectable [state], accounting for
+     * selection and activation.
+     */
     @Composable
     public fun selectableBackgroundFor(state: SelectableIconButtonState): State<Color> =
         rememberUpdatedState(
@@ -91,6 +119,10 @@ public class IconButtonColors(
             }
         )
 
+    /**
+     * Returns a [State] holding the background color appropriate for the given toggleable [state], accounting for
+     * toggle state and activation.
+     */
     @Composable
     public fun toggleableBackgroundFor(state: ToggleableIconButtonState): State<Color> =
         rememberUpdatedState(
@@ -105,6 +137,10 @@ public class IconButtonColors(
             }
         )
 
+    /**
+     * Returns a [State] holding the foreground color appropriate for the given selectable [state], using the
+     * activated-selection color when both active and selected.
+     */
     @Composable
     public fun selectableForegroundFor(state: SelectableIconButtonState): State<Color> =
         rememberUpdatedState(
@@ -114,6 +150,10 @@ public class IconButtonColors(
             }
         )
 
+    /**
+     * Returns a [State] holding the foreground color appropriate for the given toggleable [state], using the
+     * activated-selection color when active and toggled on.
+     */
     @Composable
     public fun toggleableForegroundFor(state: ToggleableIconButtonState): State<Color> =
         rememberUpdatedState(
@@ -123,6 +163,7 @@ public class IconButtonColors(
             }
         )
 
+    /** Returns a [State] holding the border color appropriate for the given [state]. */
     @Composable
     public fun borderFor(state: IconButtonState): State<Color> =
         rememberUpdatedState(
@@ -135,6 +176,10 @@ public class IconButtonColors(
             }
         )
 
+    /**
+     * Returns a [State] holding the border color appropriate for the given selectable [state], accounting for selection
+     * and activation.
+     */
     @Composable
     public fun selectableBorderFor(state: SelectableIconButtonState): State<Color> =
         rememberUpdatedState(
@@ -149,6 +194,10 @@ public class IconButtonColors(
             }
         )
 
+    /**
+     * Returns a [State] holding the border color appropriate for the given toggleable [state], accounting for toggle
+     * state and activation.
+     */
     @Composable
     public fun toggleableBorderFor(state: ToggleableIconButtonState): State<Color> =
         rememberUpdatedState(
@@ -227,15 +276,23 @@ public class IconButtonColors(
             ")"
     }
 
+    /** Companion object for [IconButtonColors]. */
     public companion object
 }
 
+/**
+ * Holds size and spacing metrics for an icon button, including corner size, border width, padding, and minimum size.
+ */
 @Stable
 @GenerateDataFunctions
 public class IconButtonMetrics(
+    /** The corner radius of the button. */
     public val cornerSize: CornerSize,
+    /** The width of the button border. */
     public val borderWidth: Dp,
+    /** The inner padding of the button. */
     public val padding: PaddingValues,
+    /** The minimum size of the button. */
     public val minSize: DpSize,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -269,13 +326,16 @@ public class IconButtonMetrics(
             ")"
     }
 
+    /** Companion object for [IconButtonMetrics]. */
     public companion object
 }
 
+/** CompositionLocal providing the current [IconButtonStyle]. */
 public val LocalIconButtonStyle: ProvidableCompositionLocal<IconButtonStyle> = staticCompositionLocalOf {
     error("No IconButtonStyle provided. Have you forgotten the theme?")
 }
 
+/** CompositionLocal providing the current transparent [IconButtonStyle]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public val LocalTransparentIconButtonStyle: ProvidableCompositionLocal<IconButtonStyle> = staticCompositionLocalOf {

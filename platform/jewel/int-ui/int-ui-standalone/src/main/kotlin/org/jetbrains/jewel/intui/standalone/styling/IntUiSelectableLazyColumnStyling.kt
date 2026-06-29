@@ -7,12 +7,14 @@ import org.jetbrains.jewel.ui.component.styling.SimpleListItemColors
 import org.jetbrains.jewel.ui.component.styling.SimpleListItemMetrics
 import org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle
 
+/** Creates an Int UI light [SelectableLazyColumnStyle] with the provided parameters. */
 public fun SelectableLazyColumnStyle.Companion.light(
     itemHeight: Dp = 24.dp,
     itemColors: SimpleListItemColors = SimpleListItemColors.light(),
     itemMetrics: SimpleListItemMetrics = SimpleListItemMetrics.default(),
 ): SelectableLazyColumnStyle = SelectableLazyColumnStyle(itemHeight, SimpleListItemStyle(itemColors, itemMetrics))
 
+/** Creates an Int UI dark [SelectableLazyColumnStyle] with the provided parameters. */
 public fun SelectableLazyColumnStyle.Companion.dark(
     itemHeight: Dp = 24.dp,
     itemColors: SimpleListItemColors = SimpleListItemColors.dark(),

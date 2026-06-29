@@ -29,6 +29,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalTooltipStyle
 import org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior
 import org.jetbrains.jewel.ui.component.styling.TooltipStyle
 
+/** Showcases the [Tooltip] component. */
 @Composable
 public fun Tooltips(modifier: Modifier = Modifier) {
     var enabled by remember { mutableStateOf(true) }

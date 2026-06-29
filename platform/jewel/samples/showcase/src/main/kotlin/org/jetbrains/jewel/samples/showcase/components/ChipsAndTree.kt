@@ -52,6 +52,7 @@ import org.jetbrains.jewel.ui.component.search.highlightSpeedSearchMatches
 import org.jetbrains.jewel.ui.component.search.highlightTextSearch
 import org.jetbrains.jewel.ui.theme.colorPalette
 
+/** Showcases the Chip, Tree, and SelectableLazyColumn components. */
 @Composable
 public fun ChipsAndTrees(modifier: Modifier = Modifier) {
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -81,6 +82,7 @@ public fun ChipsAndTrees(modifier: Modifier = Modifier) {
     }
 }
 
+/** Showcases the Chip component. */
 @Composable
 public fun ChipsSample(modifier: Modifier = Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -113,6 +115,7 @@ public fun ChipsSample(modifier: Modifier = Modifier) {
     }
 }
 
+/** Showcases the Tree component. */
 @Composable
 public fun TreeSample(modifier: Modifier = Modifier) {
     var isRandom by remember { mutableStateOf(false) }
@@ -171,6 +174,7 @@ public fun TreeSample(modifier: Modifier = Modifier) {
     }
 }
 
+/** Showcases the SelectableLazyColumn component. */
 @Composable
 public fun SelectableLazyColumnSample(modifier: Modifier = Modifier) {
     var randomIndex by remember { mutableStateOf(-1) }

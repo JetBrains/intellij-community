@@ -13,6 +13,7 @@ import org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableMetrics
 import org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableStyling
 import org.jetbrains.jewel.markdown.extensions.github.tables.RowBackgroundStyle
 
+/** Creates an Int UI light [GfmTableStyling]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun GfmTableStyling.Companion.light(
@@ -21,6 +22,7 @@ public fun GfmTableStyling.Companion.light(
     headerBaseFontWeight: FontWeight = FontWeight.SemiBold,
 ): GfmTableStyling = GfmTableStyling(colors, metrics, headerBaseFontWeight)
 
+/** Creates an Int UI dark [GfmTableStyling]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun GfmTableStyling.Companion.dark(
@@ -29,6 +31,7 @@ public fun GfmTableStyling.Companion.dark(
     headerBaseFontWeight: FontWeight = FontWeight.SemiBold,
 ): GfmTableStyling = GfmTableStyling(colors, metrics, headerBaseFontWeight)
 
+/** Creates an Int UI light [GfmTableColors]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun GfmTableColors.Companion.light(
@@ -38,6 +41,7 @@ public fun GfmTableColors.Companion.light(
     rowBackgroundStyle: RowBackgroundStyle = RowBackgroundStyle.Striped,
 ): GfmTableColors = GfmTableColors(borderColor, rowBackgroundColor, alternateRowBackgroundColor, rowBackgroundStyle)
 
+/** Creates an Int UI dark [GfmTableColors]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun GfmTableColors.Companion.dark(
@@ -47,6 +51,7 @@ public fun GfmTableColors.Companion.dark(
     rowBackgroundStyle: RowBackgroundStyle = RowBackgroundStyle.Striped,
 ): GfmTableColors = GfmTableColors(borderColor, rowBackgroundColor, alternateRowBackgroundColor, rowBackgroundStyle)
 
+/** Creates an Int UI default [GfmTableMetrics]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun GfmTableMetrics.Companion.defaults(

@@ -24,6 +24,7 @@ import org.jetbrains.jewel.ui.component.HorizontalProgressBar
 import org.jetbrains.jewel.ui.component.IndeterminateHorizontalProgressBar
 import org.jetbrains.jewel.ui.component.Text
 
+/** Showcases the ProgressBar component. */
 @Composable
 public fun ProgressBar(modifier: Modifier = Modifier) {
     val transition = rememberInfiniteTransition()

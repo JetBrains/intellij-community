@@ -6,7 +6,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey.Selectable
 
+/** Defines the keyboard navigation actions for a selectable lazy column. */
 public interface SelectableColumnOnKeyEvent {
+    /** The keybindings that define keyboard navigation actions for the selectable column. */
     public val keybindings: SelectableColumnKeybindings
 
     /** Select First Node. */
@@ -72,6 +74,13 @@ public interface SelectableColumnOnKeyEvent {
         onSelectPreviousItem(keys, state, initialIndex - 1 downTo 0)
     }
 
+    /**
+     * Selects the previous selectable item found among [possibleIndexes], updating [state] accordingly.
+     *
+     * @param keys All keys in the list.
+     * @param state The current selection state to update.
+     * @param possibleIndexes The candidate indices to search through, in the order they should be checked.
+     */
     @InternalJewelApi
     @ApiStatus.Internal
     public fun onSelectPreviousItem(
@@ -109,6 +118,13 @@ public interface SelectableColumnOnKeyEvent {
         onSelectNextItem(keys, state, initialIndex + 1..keys.lastIndex)
     }
 
+    /**
+     * Selects the next selectable item found among [possibleIndexes], updating [state] accordingly.
+     *
+     * @param keys All keys in the list.
+     * @param state The current selection state to update.
+     * @param possibleIndexes The candidate indices to search through, in the order they should be checked.
+     */
     @InternalJewelApi
     @ApiStatus.Internal
     public fun onSelectNextItem(
@@ -194,7 +210,9 @@ public interface SelectableColumnOnKeyEvent {
     }
 }
 
+/** Default [SelectableColumnOnKeyEvent] implementation backed by a configurable [SelectableColumnKeybindings]. */
 public open class DefaultSelectableOnKeyEvent(override val keybindings: SelectableColumnKeybindings) :
     SelectableColumnOnKeyEvent {
+    /** The default singleton instance using [DefaultSelectableColumnKeybindings]. */
     public companion object : DefaultSelectableOnKeyEvent(DefaultSelectableColumnKeybindings)
 }

@@ -26,6 +26,7 @@ import org.jetbrains.jewel.ui.component.styling.LinkStyle
 import org.jetbrains.jewel.ui.component.styling.LinkUnderlineBehavior
 import org.jetbrains.jewel.ui.theme.linkStyle
 
+/** Showcases the Link component. */
 @Composable
 public fun Links(modifier: Modifier = Modifier) {
     val alwaysUnderline = JewelTheme.linkStyle.copy(underlineBehavior = LinkUnderlineBehavior.ShowAlways)

@@ -58,9 +58,11 @@ public interface Typography {
     @get:Composable public val consoleTextStyle: TextStyle
 }
 
+/** CompositionLocal that provides the current [Typography] instance. */
 public val LocalTypography: ProvidableCompositionLocal<Typography> = staticCompositionLocalOf {
     error("No Typography provided. Have you forgotten the theme?")
 }
 
+/** The current [Typography] provided by the active Jewel theme. */
 public val JewelTheme.Companion.typography: Typography
     @Composable get() = LocalTypography.current

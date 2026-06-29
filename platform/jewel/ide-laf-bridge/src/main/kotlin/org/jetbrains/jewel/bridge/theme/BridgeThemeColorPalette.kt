@@ -11,9 +11,13 @@ import org.jetbrains.jewel.foundation.theme.ThemeColorPalette
 
 private val logger: Logger = Logger.getInstance("BridgeThemeColorPalette")
 
+/** The border color used for Windows-style popups, or null if not defined in the current LaF. */
 public val ThemeColorPalette.windowsPopupBorder: Color?
     get() = lookup("windowsPopupBorder")
 
+/**
+ * Reads [ThemeColorPalette] from the current IntelliJ LaF by extracting named color-palette entries from UIDefaults.
+ */
 public fun ThemeColorPalette.Companion.readFromLaF(): ThemeColorPalette {
     val isIslands = IslandsState.isEnabled()
     val gray = readPaletteColors("Gray", isIslands)

@@ -22,6 +22,20 @@ import org.jetbrains.jewel.ui.component.styling.LazyTreeStyle
 import org.jetbrains.jewel.ui.component.styling.contentFor
 import org.jetbrains.jewel.ui.theme.treeStyle
 
+/**
+ * Renders a lazily-loaded, selectable tree of [Tree.Element] nodes.
+ *
+ * @param T The type of data held by each tree element.
+ * @param tree The [Tree] data structure to display.
+ * @param modifier Modifier to apply to the tree layout.
+ * @param onElementClick Called when a tree element is clicked.
+ * @param treeState The [TreeState] controlling expansion and selection.
+ * @param onElementDoubleClick Called when a tree element is double-clicked.
+ * @param onSelectionChange Called when the set of selected elements changes.
+ * @param keyActions The [KeyActions] handling keyboard navigation.
+ * @param style The [LazyTreeStyle] controlling the visual appearance.
+ * @param nodeContent The composable content rendered for each tree element.
+ */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable
@@ -51,6 +65,21 @@ public fun <T> LazyTree(
     )
 }
 
+/**
+ * Renders a lazily-loaded, selectable tree of [Tree.Element] nodes.
+ *
+ * @param T The type of data held by each tree element.
+ * @param tree The [Tree] data structure to display.
+ * @param modifier Modifier to apply to the tree layout.
+ * @param onElementClick Called when a tree element is clicked.
+ * @param treeState The [TreeState] controlling expansion and selection.
+ * @param onElementDoubleClick Called when a tree element is double-clicked.
+ * @param onSelectionChange Called when the set of selected elements changes.
+ * @param keyActions The [KeyActions] handling keyboard navigation.
+ * @param style The [LazyTreeStyle] controlling the visual appearance.
+ * @param interactionSource The [MutableInteractionSource] tracking user interactions with the tree.
+ * @param nodeContent The composable content rendered for each tree element.
+ */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable

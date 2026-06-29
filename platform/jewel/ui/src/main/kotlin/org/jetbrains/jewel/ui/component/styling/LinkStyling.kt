@@ -14,12 +14,17 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.component.LinkState
 import org.jetbrains.jewel.ui.icon.IconKey
 
+/** Combines [LinkColors], [LinkMetrics], [LinkIcons], and underline behavior for styling a Link component. */
 @Immutable
 @GenerateDataFunctions
 public class LinkStyle(
+    /** The color tokens for the link. */
     public val colors: LinkColors,
+    /** The size and spacing metrics for the link. */
     public val metrics: LinkMetrics,
+    /** The icon keys for the link. */
     public val icons: LinkIcons,
+    /** The underline behavior for the link. */
     public val underlineBehavior: LinkUnderlineBehavior,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -53,19 +58,31 @@ public class LinkStyle(
             ")"
     }
 
+    /** Companion object for [LinkStyle]. */
     public companion object
 }
 
+/** Holds color tokens for the Link component in its various states, including visited and disabled. */
 @Immutable
 @GenerateDataFunctions
 public class LinkColors(
+    /** The content color in the normal state. */
     public val content: Color,
+    /** The content color when the link is disabled. */
     public val contentDisabled: Color,
+    /** The content color when the link is focused. */
     public val contentFocused: Color,
+    /** The content color when the link is pressed. */
     public val contentPressed: Color,
+    /** The content color when the link is hovered. */
     public val contentHovered: Color,
+    /** The content color when the link has been visited. */
     public val contentVisited: Color,
 ) {
+    /**
+     * Returns a [State] holding the content color appropriate for the given [state], including visited and disabled
+     * variants.
+     */
     @Composable
     public fun contentFor(state: LinkState): State<Color> =
         rememberUpdatedState(
@@ -117,14 +134,22 @@ public class LinkColors(
             ")"
     }
 
+    /** Companion object for [LinkColors]. */
     public companion object
 }
 
+/**
+ * Holds size and spacing metrics for the Link component, including focus halo corner size, text-icon gap, and icon
+ * size.
+ */
 @Immutable
 @GenerateDataFunctions
 public class LinkMetrics(
+    /** The corner size of the focus halo. */
     public val focusHaloCornerSize: CornerSize,
+    /** The gap between the link text and its icon. */
     public val textIconGap: Dp,
+    /** The size of the link icon. */
     public val iconSize: DpSize,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -155,12 +180,19 @@ public class LinkMetrics(
             ")"
     }
 
+    /** Companion object for [LinkMetrics]. */
     public companion object
 }
 
+/** Holds icon keys for the Link component, providing the dropdown chevron and external link icons. */
 @Immutable
 @GenerateDataFunctions
-public class LinkIcons(public val dropdownChevron: IconKey, public val externalLink: IconKey) {
+public class LinkIcons(
+    /** The icon key for the dropdown chevron. */
+    public val dropdownChevron: IconKey,
+    /** The icon key for external link indicators. */
+    public val externalLink: IconKey,
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -181,14 +213,20 @@ public class LinkIcons(public val dropdownChevron: IconKey, public val externalL
 
     override fun toString(): String = "LinkIcons(dropdownChevron=$dropdownChevron, externalLink=$externalLink)"
 
+    /** Companion object for [LinkIcons]. */
     public companion object
 }
 
+/** CompositionLocal used to provide the [LinkStyle] to link components. */
 public val LocalLinkStyle: ProvidableCompositionLocal<LinkStyle> = staticCompositionLocalOf {
     error("No LinkStyle provided. Have you forgotten the theme?")
 }
 
+/** Controls when the underline decoration is shown on a Link component. */
 public enum class LinkUnderlineBehavior {
+    /** The underline is always visible. */
     ShowAlways,
+
+    /** The underline is only visible when the link is hovered. */
     ShowOnHover,
 }

@@ -78,6 +78,7 @@ private val languageOptions =
         ProgrammingLanguage("Ruby", AllIconsKeys.Language.Ruby),
     )
 
+/** Showcases the ComboBox component. */
 @Composable
 public fun ComboBoxes(modifier: Modifier = Modifier) {
     Column(modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {

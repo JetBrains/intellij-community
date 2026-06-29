@@ -39,7 +39,7 @@ jobs:
 
       - name: Run :check task
         # Run checks for all modules except the IDE plugin sample, as that is bound to have missing APIs issues
-        run: ./gradlew check --continue --no-daemon
+        run: ./gradlew check -x detekt --continue --no-daemon
 
       - name: Annotate JUnit test failures
         uses: mikepenz/action-junit-report@v5
@@ -57,8 +57,24 @@ jobs:
           retention-days: 7
 
       - name: Run detekt tasks
+        id: detekt
+        if: ${{ !cancelled() }}
         # Run detekt checks for all modules except the IDE plugin sample, as that is bound to have missing APIs issues
         run: ./gradlew detekt detektMain detektTest --continue --no-daemon
+
+      - name: Set up Kotlin ${{ env.KOTLIN_VERSION }}
+        id: kotlin
+        if: ${{ !cancelled() && steps.detekt.outcome != 'skipped' }}
+        uses: ./.github/actions/setup-kotlin
+        with:
+          version: ${{ env.KOTLIN_VERSION }}
+
+      - name: Annotate detekt findings
+        if: ${{ !cancelled() && steps.detekt.outcome != 'skipped' }}
+        # Turn detekt's checkstyle reports (main.xml from detektMain, test.xml from detektTest) into inline
+        #  GitHub annotations on the PR's "Files changed" tab, plus a run summary. The failing detekt task is
+        #  the gate; this is visibility. Works for fork PRs too (annotations, not API-driven comments).
+        run: ${{ steps.kotlin.outputs.bin-dir }}/kotlin ./scripts/annotate-detekt.main.kts
 
   check_paths:
     name: Check changed files

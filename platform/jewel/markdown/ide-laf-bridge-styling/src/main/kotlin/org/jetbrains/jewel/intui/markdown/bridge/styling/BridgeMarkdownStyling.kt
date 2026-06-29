@@ -44,6 +44,7 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Paragraph
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak
 
+/** Creates a [MarkdownStyling] by reading values from the current IntelliJ LaF theme and editor color scheme. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun MarkdownStyling.Companion.create(
@@ -62,11 +63,16 @@ public fun MarkdownStyling.Companion.create(
 ): MarkdownStyling =
     MarkdownStyling(blockVerticalSpacing, paragraph, heading, blockQuote, code, list, image, thematicBreak, htmlBlock)
 
+/** Creates a [Paragraph] styling using the provided [inlinesStyling]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Paragraph.Companion.create(inlinesStyling: InlinesStyling = InlinesStyling.create()): Paragraph =
     Paragraph(inlinesStyling)
 
+/**
+ * Creates a [Heading] styling with font sizes scaled from [baseTextStyle]; every heading level uses a fixed SemiBold
+ * weight.
+ */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Heading.Companion.create(
@@ -122,6 +128,7 @@ public fun Heading.Companion.create(
         ),
 ): Heading = Heading(h1, h2, h3, h4, h5, h6)
 
+/** Creates a [Heading.H1] styling, including an optional underline separator below the heading. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Heading.H1.Companion.create(
@@ -140,6 +147,7 @@ public fun Heading.H1.Companion.create(
     padding: PaddingValues = PaddingValues(top = 24.dp, bottom = 16.dp),
 ): Heading.H1 = Heading.H1(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
+/** Creates a [Heading.H2] styling, including an optional underline separator below the heading. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Heading.H2.Companion.create(
@@ -158,9 +166,10 @@ public fun Heading.H2.Companion.create(
     padding: PaddingValues = PaddingValues(top = 24.dp, bottom = 16.dp),
 ): Heading.H2 = Heading.H2(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
-// This doesn't match Int UI specs as there is no spec for HTML rendering
+/** Creates a [Heading.H3] styling. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
+// This doesn't match Int UI specs as there is no spec for HTML rendering
 public fun Heading.H3.Companion.create(
     baseTextStyle: TextStyle = defaultTextStyle,
     inlinesStyling: InlinesStyling =
@@ -177,9 +186,10 @@ public fun Heading.H3.Companion.create(
     padding: PaddingValues = PaddingValues(top = 24.dp, bottom = 16.dp),
 ): Heading.H3 = Heading.H3(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
-// This doesn't match Int UI specs as there is no spec for HTML rendering
+/** Creates a [Heading.H4] styling. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
+// This doesn't match Int UI specs as there is no spec for HTML rendering
 public fun Heading.H4.Companion.create(
     baseTextStyle: TextStyle = defaultTextStyle,
     inlinesStyling: InlinesStyling =
@@ -196,9 +206,10 @@ public fun Heading.H4.Companion.create(
     padding: PaddingValues = PaddingValues(top = 24.dp, bottom = 16.dp),
 ): Heading.H4 = Heading.H4(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
-// This doesn't match Int UI specs as there is no spec for HTML rendering
+/** Creates a [Heading.H5] styling. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
+// This doesn't match Int UI specs as there is no spec for HTML rendering
 public fun Heading.H5.Companion.create(
     baseTextStyle: TextStyle = defaultTextStyle,
     inlinesStyling: InlinesStyling =
@@ -215,9 +226,10 @@ public fun Heading.H5.Companion.create(
     padding: PaddingValues = PaddingValues(top = 24.dp, bottom = 16.dp),
 ): Heading.H5 = Heading.H5(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
-// This doesn't match Int UI specs as there is no spec for HTML rendering
+/** Creates a [Heading.H6] styling, rendered in a muted color to match the H6 convention. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
+// This doesn't match Int UI specs as there is no spec for HTML rendering
 public fun Heading.H6.Companion.create(
     baseTextStyle: TextStyle = defaultTextStyle,
     inlinesStyling: InlinesStyling =
@@ -235,6 +247,7 @@ public fun Heading.H6.Companion.create(
     padding: PaddingValues = PaddingValues(top = 24.dp, bottom = 16.dp),
 ): Heading.H6 = Heading.H6(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
+/** Creates a [BlockQuote] styling with a vertical accent line and muted text color. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun BlockQuote.Companion.create(
@@ -246,6 +259,7 @@ public fun BlockQuote.Companion.create(
     textColor: Color = Color(0xFF656d76),
 ): BlockQuote = BlockQuote(padding, lineWidth, lineColor, pathEffect, strokeCap, textColor)
 
+/** Creates a [List] styling combining [Ordered] and [Unordered] list styles. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun List.Companion.create(
@@ -281,6 +295,7 @@ public fun Ordered.Companion.create(
         ),
     )
 
+/** Creates an [Ordered] list styling with configurable number format styles per nesting level. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Ordered.Companion.create(
@@ -332,6 +347,7 @@ public fun Unordered.Companion.create(
         Unordered.BulletCharStyles(firstLevel = '•', secondLevel = '◦', thirdLevel = '▪'),
     )
 
+/** Creates an [Unordered] list styling with configurable bullet character styles per nesting level. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Unordered.Companion.create(
@@ -356,6 +372,7 @@ public fun Unordered.Companion.create(
         bulletCharStyles,
     )
 
+/** Creates a [Code] styling combining [Indented] and [Fenced] code block styles. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Code.Companion.create(
@@ -364,6 +381,7 @@ public fun Code.Companion.create(
     fenced: Fenced = Fenced.create(editorTextStyle),
 ): Code = Code(indented, fenced)
 
+/** Creates an [Indented] code block styling using the editor text style and theme background color. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Indented.Companion.create(
@@ -377,6 +395,7 @@ public fun Indented.Companion.create(
     scrollsHorizontally: Boolean = true,
 ): Indented = Indented(textStyle, padding, shape, background, borderWidth, borderColor, fillWidth, scrollsHorizontally)
 
+/** Creates a [Fenced] code block styling, including optional info string display configuration. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Fenced.Companion.create(
@@ -406,6 +425,7 @@ public fun Fenced.Companion.create(
         infoPosition,
     )
 
+/** Creates a default [Image] styling with center alignment and fit content scaling. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Image.Companion.default(
@@ -418,6 +438,7 @@ public fun Image.Companion.default(
     borderColor: Color = Color.Unspecified,
 ): Image = Image(alignment, contentScale, padding, shape, background, borderWidth, borderColor)
 
+/** Creates a [ThematicBreak] styling using the current theme's separator color. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun ThematicBreak.Companion.create(
@@ -426,6 +447,7 @@ public fun ThematicBreak.Companion.create(
     lineColor: Color = dividerColor,
 ): ThematicBreak = ThematicBreak(padding, lineWidth, lineColor)
 
+/** Creates an [HtmlBlock] styling using the editor text style and a bordered rounded container. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun HtmlBlock.Companion.create(
@@ -438,6 +460,7 @@ public fun HtmlBlock.Companion.create(
     fillWidth: Boolean = true,
 ): HtmlBlock = HtmlBlock(textStyle, padding, shape, background, borderWidth, borderColor, fillWidth)
 
+/** Creates an [InlinesStyling] by reading link and label colors from the current IntelliJ LaF theme. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun InlinesStyling.Companion.create(

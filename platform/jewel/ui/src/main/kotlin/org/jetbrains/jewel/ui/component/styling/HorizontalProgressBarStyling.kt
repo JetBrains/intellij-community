@@ -9,11 +9,15 @@ import androidx.compose.ui.unit.Dp
 import kotlin.time.Duration
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
+/** Combines colors, metrics, and indeterminate cycle duration for styling a horizontal progress bar. */
 @Immutable
 @GenerateDataFunctions
 public class HorizontalProgressBarStyle(
+    /** The color tokens for the progress bar. */
     public val colors: HorizontalProgressBarColors,
+    /** The size and spacing metrics for the progress bar. */
     public val metrics: HorizontalProgressBarMetrics,
+    /** The duration of one full indeterminate animation cycle. */
     public val indeterminateCycleDuration: Duration,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -44,15 +48,24 @@ public class HorizontalProgressBarStyle(
             ")"
     }
 
+    /** Companion object for [HorizontalProgressBarStyle]. */
     public companion object
 }
 
+/**
+ * Holds color tokens for the horizontal progress bar component in its various states, including indeterminate
+ * animation.
+ */
 @Immutable
 @GenerateDataFunctions
 public class HorizontalProgressBarColors(
+    /** The color of the track (unfilled portion) of the progress bar. */
     public val track: Color,
+    /** The color of the filled progress indicator. */
     public val progress: Color,
+    /** The base color used during indeterminate animation. */
     public val indeterminateBase: Color,
+    /** The highlight color used during indeterminate animation. */
     public val indeterminateHighlight: Color,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -86,14 +99,22 @@ public class HorizontalProgressBarColors(
             ")"
     }
 
+    /** Companion object for [HorizontalProgressBarColors]. */
     public companion object
 }
 
+/**
+ * Holds size and spacing metrics for the horizontal progress bar component, including corner size and indeterminate
+ * highlight width.
+ */
 @Immutable
 @GenerateDataFunctions
 public class HorizontalProgressBarMetrics(
+    /** The corner radius of the progress bar track and indicator. */
     public val cornerSize: CornerSize,
+    /** The minimum height of the progress bar. */
     public val minHeight: Dp,
+    /** The width of the moving highlight segment during indeterminate animation. */
     public val indeterminateHighlightWidth: Dp,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -124,9 +145,11 @@ public class HorizontalProgressBarMetrics(
             ")"
     }
 
+    /** Companion object for [HorizontalProgressBarMetrics]. */
     public companion object
 }
 
+/** CompositionLocal providing the current [HorizontalProgressBarStyle]. */
 public val LocalHorizontalProgressBarStyle: ProvidableCompositionLocal<HorizontalProgressBarStyle> =
     staticCompositionLocalOf<HorizontalProgressBarStyle> {
         error("No HorizontalProgressBarStyle provided. Have you forgotten the theme?")

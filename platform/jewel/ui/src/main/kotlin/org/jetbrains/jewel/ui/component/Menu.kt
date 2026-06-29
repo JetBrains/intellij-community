@@ -575,6 +575,14 @@ public fun MenuScope.separator() {
     passiveItem { MenuSeparator(JewelTheme.menuStyle.colors.itemColors, JewelTheme.menuStyle.metrics.itemMetrics) }
 }
 
+/**
+ * Adds [count] selectable items to the menu, using index-based selection and click callbacks.
+ *
+ * @param count The number of items to add
+ * @param isSelected Returns whether the item at the given index is currently selected
+ * @param onItemClick Called with the index of the item when it is clicked
+ * @param content The composable content for the item at the given index
+ */
 public fun MenuScope.items(
     count: Int,
     isSelected: (Int) -> Boolean,
@@ -584,6 +592,15 @@ public fun MenuScope.items(
     repeat(count) { selectableItem(isSelected(it), onClick = { onItemClick(it) }) { content(it) } }
 }
 
+/**
+ * Adds a selectable item for each element in [items], using element-based selection and click callbacks.
+ *
+ * @param T The type of items in the list.
+ * @param items The list of items to render.
+ * @param isSelected Returns whether the given item is currently selected.
+ * @param onItemClick Called with the item when it is clicked.
+ * @param content The composable content for the given item.
+ */
 public fun <T> MenuScope.items(
     items: List<T>,
     isSelected: (T) -> Boolean,
@@ -663,12 +680,19 @@ private interface MenuItem {
 @VisibleForTesting
 @GenerateDataFunctions
 public class MenuSelectableItem(
+    /** Whether this item is currently selected. */
     public val isSelected: Boolean,
+    /** Whether this item is enabled and can be interacted with. */
     public val isEnabled: Boolean,
+    /** Optional icon key for displaying an icon before the item content. */
     public val iconKey: IconKey?,
+    /** Optional action type used to resolve and handle the shortcut hint. */
     public val itemOptionAction: ContextMenuItemOptionAction? = null,
+    /** Optional set of keybinding strings to display alongside the item. */
     public val keybinding: Set<String>? = emptySet(),
+    /** Called when the item is clicked. */
     public val onClick: () -> Unit = {},
+    /** The composable content displayed inside this menu item. */
     override val content: @Composable () -> Unit,
 ) : MenuItem {
     override fun equals(other: Any?): Boolean {
@@ -866,6 +890,13 @@ internal fun MenuItemBase(
     }
 }
 
+/**
+ * Low-level submenu menu item implementation, exposed for testing.
+ *
+ * Renders a menu item that opens a nested [submenu] popup when selected. Unlike the public overload, this function
+ * accepts explicit [showIcon] and [selected] arguments and provides the [MenuItemState] to [content], allowing tests to
+ * drive the item's state directly.
+ */
 @VisibleForTesting
 @ApiStatus.Internal
 @InternalJewelApi
@@ -1086,7 +1117,10 @@ internal fun Submenu(
 @InternalJewelApi
 @Immutable
 @JvmInline
-public value class MenuItemState(public val state: ULong) : SelectableComponentState, FocusableComponentState {
+public value class MenuItemState(
+    /** The raw bit-masked state value encoding all interaction flags. */
+    public val state: ULong
+) : SelectableComponentState, FocusableComponentState {
     override val isActive: Boolean
         get() = state and Selected != 0UL
 
@@ -1105,6 +1139,7 @@ public value class MenuItemState(public val state: ULong) : SelectableComponentS
     override val isPressed: Boolean
         get() = state and Pressed != 0UL
 
+    /** Returns a copy of this [MenuItemState] with the given fields replaced by their new values. */
     public fun copy(
         selected: Boolean = isSelected,
         enabled: Boolean = isEnabled,

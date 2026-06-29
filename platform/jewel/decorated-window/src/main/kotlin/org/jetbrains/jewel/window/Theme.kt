@@ -8,8 +8,10 @@ import org.jetbrains.jewel.window.styling.LocalDecoratedWindowStyle
 import org.jetbrains.jewel.window.styling.LocalTitleBarStyle
 import org.jetbrains.jewel.window.styling.TitleBarStyle
 
+/** The default title bar style provided by the current theme. */
 public val JewelTheme.Companion.defaultTitleBarStyle: TitleBarStyle
     @Composable @ReadOnlyComposable get() = LocalTitleBarStyle.current
 
+/** The default decorated window style provided by the current theme. */
 public val JewelTheme.Companion.defaultDecoratedWindowStyle: DecoratedWindowStyle
     @Composable @ReadOnlyComposable get() = LocalDecoratedWindowStyle.current

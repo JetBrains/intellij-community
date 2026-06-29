@@ -16,6 +16,7 @@ import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.WhenScrollin
 import org.jetbrains.jewel.ui.component.styling.TrackClickBehavior
 import org.jetbrains.skiko.hostOs
 
+/** Creates an Int UI light [ScrollbarStyle] for the tab strip, selected based on the current OS. */
 public fun ScrollbarStyle.Companion.tabStripLight(): ScrollbarStyle =
     if (hostOs.isMacOS) {
         ScrollbarStyle.tabStripMacOsLight()
@@ -23,6 +24,7 @@ public fun ScrollbarStyle.Companion.tabStripLight(): ScrollbarStyle =
         ScrollbarStyle.tabStripWindowsAndLinuxLight()
     }
 
+/** Creates an Int UI dark [ScrollbarStyle] for the tab strip, selected based on the current OS. */
 public fun ScrollbarStyle.Companion.tabStripDark(): ScrollbarStyle =
     if (hostOs.isMacOS) {
         ScrollbarStyle.tabStripMacOsDark()
@@ -86,6 +88,7 @@ public fun ScrollbarStyle.Companion.tabStripMacOsDark(
             },
     )
 
+/** Creates an Int UI light [ScrollbarStyle] for the tab strip on Windows and Linux with the provided parameters. */
 public fun ScrollbarStyle.Companion.tabStripWindowsAndLinuxLight(
     colors: ScrollbarColors = ScrollbarColors.windowsAndLinuxLight(),
     metrics: ScrollbarMetrics = ScrollbarMetrics.tabStripWindowsAndLinux(),
@@ -99,6 +102,7 @@ public fun ScrollbarStyle.Companion.tabStripWindowsAndLinuxLight(
         scrollbarVisibility = scrollbarVisibility,
     )
 
+/** Creates an Int UI dark [ScrollbarStyle] for the tab strip on Windows and Linux with the provided parameters. */
 public fun ScrollbarStyle.Companion.tabStripWindowsAndLinuxDark(
     colors: ScrollbarColors = ScrollbarColors.windowsAndLinuxDark(),
     metrics: ScrollbarMetrics = ScrollbarMetrics.tabStripWindowsAndLinux(),
@@ -123,11 +127,13 @@ public fun ScrollbarMetrics.Companion.tabStripMacOs(
     minThumbLength: Dp = 20.dp,
 ): ScrollbarMetrics = ScrollbarMetrics(thumbCornerSize, minThumbLength)
 
+/** Creates an Int UI default [ScrollbarMetrics] for the tab strip on Windows and Linux with the provided parameters. */
 public fun ScrollbarMetrics.Companion.tabStripWindowsAndLinux(
     thumbCornerSize: CornerSize = CornerSize(0),
     minThumbLength: Dp = 20.dp,
 ): ScrollbarMetrics = ScrollbarMetrics(thumbCornerSize, minThumbLength)
 
+/** Creates an Int UI default [ScrollbarVisibility.AlwaysVisible] for the tab strip with the provided parameters. */
 @Deprecated(
     "Replace with 'ScrollbarVisibility.tabStrip()' version",
     ReplaceWith(

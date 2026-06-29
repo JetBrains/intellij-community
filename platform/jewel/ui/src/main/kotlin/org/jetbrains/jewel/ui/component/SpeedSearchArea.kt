@@ -72,6 +72,20 @@ import org.jetbrains.jewel.ui.theme.speedSearchStyle
 import org.jetbrains.jewel.ui.theme.textFieldStyle
 import org.jetbrains.skiko.hostOs
 
+/**
+ * Creates a speed search area that provides keyboard-driven search functionality for its content.
+ *
+ * @param modifier The modifier to be applied to the container.
+ * @param matcherBuilder A function that creates a [SpeedSearchMatcher] from the search text. Defaults to
+ *   [SpeedSearchMatcher.patternMatcher].
+ * @param styling The visual styling for the speed search input overlay.
+ * @param textFieldStyle The styling for the text field within the search overlay.
+ * @param textStyle The text style for the search input text.
+ * @param searchMatchStyle The styling for highlighting matched text in search results.
+ * @param interactionSource The interaction source for tracking focus state. If null, a new one will be created.
+ * @param content The content to be displayed within the speed search area. Use [SpeedSearchScope] to access search
+ *   state and process key events.
+ */
 @Composable
 @ExperimentalJewelApi
 @ApiStatus.Experimental

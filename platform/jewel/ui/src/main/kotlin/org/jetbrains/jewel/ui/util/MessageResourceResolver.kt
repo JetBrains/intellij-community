@@ -25,6 +25,7 @@ public interface MessageResourceResolver {
     public fun resolveIdeBundleMessage(key: String): String
 }
 
+/** The composition local providing the [MessageResourceResolver] for resolving IDE bundle messages. */
 @InternalJewelApi
 @get:ApiStatus.Internal
 public val LocalMessageResourceResolverProvider: ProvidableCompositionLocal<MessageResourceResolver> =

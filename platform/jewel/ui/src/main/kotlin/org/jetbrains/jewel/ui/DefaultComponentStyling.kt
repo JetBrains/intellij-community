@@ -86,48 +86,88 @@ import org.jetbrains.jewel.ui.component.styling.fallbackPopupAdStyle
 import org.jetbrains.jewel.ui.component.styling.fallbackSearchMatchStyle
 import org.jetbrains.jewel.ui.component.styling.fallbackSpeedSearchStyle
 
+/** Default implementation of [ComponentStyling] that aggregates style objects for all built-in Jewel components. */
 @Stable
 @GenerateDataFunctions
 @Suppress("LargeClass")
 public class DefaultComponentStyling(
+    /** The style for checkboxes. */
     public val checkboxStyle: CheckboxStyle,
+    /** The style for chips. */
     public val chipStyle: ChipStyle,
+    /** The style for circular progress indicators. */
     public val circularProgressStyle: CircularProgressStyle,
+    /** The styles for default (block-level) banners. */
     public val defaultBannerStyle: DefaultBannerStyles,
+    /** The style for combo boxes. */
     public val comboBoxStyle: ComboBoxStyle,
+    /** The style for default (filled) buttons. */
     public val defaultButtonStyle: ButtonStyle,
+    /** The style for default dropdowns. */
     public val defaultDropdownStyle: DropdownStyle,
+    /** The style for default split buttons. */
     public val defaultSplitButtonStyle: SplitButtonStyle,
+    /** The style for default tabs. */
     public val defaultTabStyle: TabStyle,
+    /** The style for dividers. */
     public val dividerStyle: DividerStyle,
+    /** The style for editor tabs. */
     public val editorTabStyle: TabStyle,
+    /** The style for group headers. */
     public val groupHeaderStyle: GroupHeaderStyle,
+    /** The style for horizontal progress bars. */
     public val horizontalProgressBarStyle: HorizontalProgressBarStyle,
+    /** The style for icon buttons. */
     public val iconButtonStyle: IconButtonStyle,
+    /** The style for transparent icon buttons. */
     public val transparentIconButtonStyle: IconButtonStyle,
+    /** The styles for inline banners. */
     public val inlineBannerStyle: InlineBannerStyles,
+    /** The style for lazy tree components. */
     public val lazyTreeStyle: LazyTreeStyle,
+    /** The style for links. */
     public val linkStyle: LinkStyle,
+    /** The style for menus. */
     public val menuStyle: MenuStyle,
+    /** The style for outlined buttons. */
     public val outlinedButtonStyle: ButtonStyle,
+    /** The style for popup containers. */
     public val popupContainerStyle: PopupContainerStyle,
+    /** The style for outlined split buttons. */
     public val outlinedSplitButtonStyle: SplitButtonStyle,
+    /** The style for radio buttons. */
     public val radioButtonStyle: RadioButtonStyle,
+    /** The style for scrollbars. */
     public val scrollbarStyle: ScrollbarStyle,
+    /** The style for segmented control buttons. */
     public val segmentedControlButtonStyle: SegmentedControlButtonStyle,
+    /** The style for segmented controls. */
     public val segmentedControlStyle: SegmentedControlStyle,
+    /** The style for selectable lazy columns. */
     public val selectableLazyColumnStyle: SelectableLazyColumnStyle,
+    /** The style for simple list items. */
     public val simpleListItemStyle: SimpleListItemStyle,
+    /** The style for sliders. */
     public val sliderStyle: SliderStyle,
+    /** The style for text areas. */
     public val textAreaStyle: TextAreaStyle,
+    /** The style for text fields. */
     public val textFieldStyle: TextFieldStyle,
+    /** The style for tooltips. */
     public val tooltipStyle: TooltipStyle,
+    /** The style for undecorated dropdowns. */
     public val undecoratedDropdownStyle: DropdownStyle,
+    /** The style for speed search overlays. */
     public val speedSearchStyle: SpeedSearchStyle,
+    /** The style for search match highlights. */
     public val searchMatchStyle: SearchMatchStyle,
+    /** The style for popup ads. */
     public val popupAdStyle: PopupAdStyle,
+    /** The style for default slim buttons. */
     public val defaultSlimButtonStyle: ButtonStyle,
+    /** The style for outlined slim buttons. */
     public val outlinedSlimButtonStyle: ButtonStyle,
+    /** The styles for badges. */
     public val badgeStyle: BadgeStyles,
 ) : ComponentStyling {
     @Deprecated("Use the variant with badgeStyle.", level = DeprecationLevel.HIDDEN)

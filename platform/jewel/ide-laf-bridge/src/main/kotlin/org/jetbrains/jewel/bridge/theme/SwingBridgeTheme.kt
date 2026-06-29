@@ -33,6 +33,13 @@ import org.jetbrains.jewel.ui.util.LocalMessageResourceResolverProvider
 
 private val bridgeThemeReader by lazy { SwingBridgeReader() }
 
+/**
+ * Entry-point composable for using Jewel inside an IntelliJ Platform plugin. Reads the current IntelliJ theme via
+ * [SwingBridgeReader] and applies it as a [BaseJewelTheme] with Swing compatibility mode enabled and the appropriate
+ * platform bridge providers wired up.
+ *
+ * @param content The composable content to render under the bridged theme.
+ */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable

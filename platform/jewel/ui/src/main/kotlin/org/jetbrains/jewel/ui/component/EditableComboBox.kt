@@ -75,6 +75,10 @@ import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.outline
 import org.jetbrains.jewel.ui.theme.comboBoxStyle
 
+/**
+ * Renders an editable combo box composed of a text field and a chevron button that toggles a popup containing
+ * [popupContent].
+ */
 @Suppress("UnavailableSymbol") // TODO(JEWEL-983) Address Metalava suppressions
 @Composable
 public fun EditableComboBox(
@@ -211,6 +215,10 @@ public fun EditableComboBox(
     }
 }
 
+/**
+ * Renders an editable combo box composed of a text field and a chevron button that toggles a popup containing
+ * [popupContent].
+ */
 @Suppress("UnavailableSymbol") // TODO(JEWEL-983) Address Metalava suppressions
 @Composable
 @Deprecated(
@@ -368,24 +376,34 @@ private fun Chevron(
     }
 }
 
+/** Represents the UI state of a [EditableComboBox], encoding enabled, focused, hovered, pressed, and active bits. */
 @Immutable
 @JvmInline
-public value class ComboBoxState(public val state: ULong) : FocusableComponentState {
+public value class ComboBoxState(
+    /** The raw bit mask encoding all active state flags. */
+    public val state: ULong
+) : FocusableComponentState {
+    /** Whether the combo box is in the active (window-focused) state. */
     override val isActive: Boolean
         get() = state and Active != 0UL
 
+    /** Whether the combo box is enabled. */
     override val isEnabled: Boolean
         get() = state and Enabled != 0UL
 
+    /** Whether the combo box has keyboard focus. */
     override val isFocused: Boolean
         get() = state and Focused != 0UL
 
+    /** Whether the combo box is hovered. */
     override val isHovered: Boolean
         get() = state and Hovered != 0UL
 
+    /** Whether the combo box is pressed. */
     override val isPressed: Boolean
         get() = state and Pressed != 0UL
 
+    /** Returns a copy of this [ComboBoxState] with the given fields replaced by their new values. */
     public fun copy(
         enabled: Boolean = isEnabled,
         focused: Boolean = isFocused,
@@ -398,7 +416,9 @@ public value class ComboBoxState(public val state: ULong) : FocusableComponentSt
         "${javaClass.simpleName}(isEnabled=$isEnabled, isFocused=$isFocused, " +
             "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
 
+    /** Companion object for [ComboBoxState]. */
     public companion object {
+        /** Constructs a [ComboBoxState] from individual flags. */
         public fun of(
             enabled: Boolean = true,
             focused: Boolean = false,
@@ -416,6 +436,10 @@ public value class ComboBoxState(public val state: ULong) : FocusableComponentSt
     }
 }
 
+/**
+ * Detects a press-and-cancel gesture within a [PointerInputScope], invoking [onPress] when a pointer is first pressed
+ * down and [onCancel] if the gesture is cancelled before the pointer is released.
+ */
 @InternalJewelApi
 @ApiStatus.Internal
 public suspend fun PointerInputScope.detectPressAndCancel(onPress: () -> Unit, onCancel: () -> Unit) {

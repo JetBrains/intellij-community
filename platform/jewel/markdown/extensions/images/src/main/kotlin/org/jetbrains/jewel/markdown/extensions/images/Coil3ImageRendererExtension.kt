@@ -28,6 +28,7 @@ public class Coil3ImageRendererExtension(private val imageLoader: ImageLoader) :
     override val imageRendererExtension: ImageRendererExtension
         get() = Coil3ImageRendererExtensionImpl(imageLoader)
 
+    /** Provides [withDefaultLoader] factory functions for use when no app-wide Coil image loader is available. */
     public companion object {
         /**
          * A default image loader with a limited in-memory cache.

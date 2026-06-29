@@ -419,10 +419,6 @@ public class MarkdownProcessor(
         return level - 1
     }
 
-    /**
-     * Processes the children of a CommonMark [Node]. This function is public so that it can be accessed from
-     * [MarkdownProcessorExtension]s, but should not be used in other scenarios.
-     */
     @ApiStatus.Internal
     @InternalJewelApi
     public fun processChildren(node: Node): List<MarkdownBlock> = buildList {

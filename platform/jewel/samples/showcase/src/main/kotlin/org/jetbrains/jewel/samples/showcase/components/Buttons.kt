@@ -71,6 +71,7 @@ import org.jetbrains.jewel.ui.theme.defaultSplitButtonStyle
 import org.jetbrains.jewel.ui.theme.outlinedSplitButtonStyle
 import org.jetbrains.jewel.ui.theme.transparentIconButtonStyle
 
+/** Showcases the Button component. */
 @Composable
 public fun Buttons(modifier: Modifier = Modifier) {
     VerticallyScrollableContainer(modifier.fillMaxSize()) {

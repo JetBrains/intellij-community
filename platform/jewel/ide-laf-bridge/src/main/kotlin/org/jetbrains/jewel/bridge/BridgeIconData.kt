@@ -3,6 +3,7 @@ package org.jetbrains.jewel.bridge
 import com.intellij.ide.ui.UITheme
 import org.jetbrains.jewel.foundation.theme.ThemeIconData
 
+/** Reads [ThemeIconData] from the currently active IntelliJ UI theme, including icon overrides and color palettes. */
 @Suppress("UnstableApiUsage")
 public fun ThemeIconData.Companion.readFromLaF(): ThemeIconData {
     val uiTheme = currentUiThemeOrNull()

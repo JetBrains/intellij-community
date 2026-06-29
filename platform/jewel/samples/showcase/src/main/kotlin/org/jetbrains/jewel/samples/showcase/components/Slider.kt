@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.ui.component.Slider
 
+/** Showcases the [Slider][org.jetbrains.jewel.ui.component.Slider] component. */
 @Composable
 public fun Sliders(modifier: Modifier = Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {

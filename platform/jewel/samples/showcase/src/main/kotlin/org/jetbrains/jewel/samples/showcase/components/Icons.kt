@@ -45,6 +45,7 @@ import org.jetbrains.jewel.ui.painter.hints.Size
 import org.jetbrains.jewel.ui.painter.hints.Stroke
 import org.jetbrains.jewel.ui.theme.colorPalette
 
+/** Showcases the [Icon] component. */
 @Composable
 public fun Icons(modifier: Modifier = Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {

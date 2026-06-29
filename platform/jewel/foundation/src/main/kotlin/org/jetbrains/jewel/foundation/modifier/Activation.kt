@@ -254,4 +254,5 @@ private class ActivateChangedNode(var onChanged: (Boolean) -> Unit) :
     }
 }
 
+/** The modifier local that provides the current activation state to child modifiers. */
 public val ModifierLocalActivated: ProvidableModifierLocal<Boolean> = modifierLocalOf { false }

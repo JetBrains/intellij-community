@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.detekt
 
-import dev.detekt.test.TestConfig
+import dev.detekt.api.Config
 import dev.detekt.test.lint
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.jewel.detekt.rules.EqualityMembersRule
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test
 class UtilsTest {
     @Test
     fun `isJewelSymbol should return true for exact org_jetbrains_jewel package`() {
-        val rule = EqualityMembersRule(TestConfig())
+        val rule = EqualityMembersRule(Config.empty)
         val code =
             """
             |package org.jetbrains.jewel
@@ -32,7 +32,7 @@ class UtilsTest {
 
     @Test
     fun `isJewelSymbol should return true for org_jetbrains_jewel subpackages`() {
-        val rule = EqualityMembersRule(TestConfig())
+        val rule = EqualityMembersRule(Config.empty)
         val code =
             """
             |package org.jetbrains.jewel.foundation
@@ -51,7 +51,7 @@ class UtilsTest {
 
     @Test
     fun `isJewelSymbol should return true for deeply nested org_jetbrains_jewel subpackages`() {
-        val rule = EqualityMembersRule(TestConfig())
+        val rule = EqualityMembersRule(Config.empty)
         val code =
             """
             |package org.jetbrains.jewel.ui.component
@@ -70,7 +70,7 @@ class UtilsTest {
 
     @Test
     fun `isJewelSymbol should return true for no package declaration`() {
-        val rule = EqualityMembersRule(TestConfig())
+        val rule = EqualityMembersRule(Config.empty)
         val code =
             """
             |annotation class GenerateDataFunctions
@@ -87,7 +87,7 @@ class UtilsTest {
 
     @Test
     fun `isJewelSymbol should return false for non-jewel packages`() {
-        val rule = EqualityMembersRule(TestConfig())
+        val rule = EqualityMembersRule(Config.empty)
         val code =
             """
             |package com.example.other
@@ -106,7 +106,7 @@ class UtilsTest {
 
     @Test
     fun `MissingApiStatusAnnotationRule should work with exact org_jetbrains_jewel package`() {
-        val rule = MissingApiStatusAnnotationRule(TestConfig())
+        val rule = MissingApiStatusAnnotationRule(Config.empty)
         val code =
             """
             |package org.jetbrains.jewel
@@ -125,7 +125,7 @@ class UtilsTest {
 
     @Test
     fun `MissingApiStatusAnnotationRule should work with Jewel subpackages`() {
-        val rule = MissingApiStatusAnnotationRule(TestConfig())
+        val rule = MissingApiStatusAnnotationRule(Config.empty)
         val code =
             """
             |package org.jetbrains.jewel.foundation
@@ -144,7 +144,7 @@ class UtilsTest {
 
     @Test
     fun `MissingApiStatusAnnotationRule should work with root package`() {
-        val rule = MissingApiStatusAnnotationRule(TestConfig())
+        val rule = MissingApiStatusAnnotationRule(Config.empty)
         val code =
             """
             |import org.jetbrains.jewel.foundation.InternalJewelApi
@@ -161,7 +161,7 @@ class UtilsTest {
 
     @Test
     fun `MissingApiStatusAnnotationRule should not run for non-jewel packages`() {
-        val rule = MissingApiStatusAnnotationRule(TestConfig())
+        val rule = MissingApiStatusAnnotationRule(Config.empty)
         val code =
             """
             |package com.example.other

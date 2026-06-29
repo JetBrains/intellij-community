@@ -265,8 +265,6 @@ public fun InlineSuccessBanner(
  * @param title An optional title, rendered in bold, that appears above the [content].
  * @param icon Slot for an optional icon displayed on the left of the [content] or [title]. If null, there is no icon.
  *   By default, it is the [AllIconsKeys.Status.Success] icon.
- * @param actions Slot for optional primary actions (usually links) to show at the bottom of the banner, below the
- *   [content].
  * @param linkActions A block within the [BannerLinkActionScope] to define optional action items for the banner. If not
  *   provided, no actions will be rendered. Please note that this block will automatically fold the actions into a
  *   "More" dropdown menu if there are more than 3 actions or there is not enough space to fit the actions.

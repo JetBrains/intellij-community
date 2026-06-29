@@ -41,6 +41,7 @@ import org.jetbrains.jewel.ui.outline
 import org.jetbrains.jewel.ui.theme.colorPalette
 import org.jetbrains.jewel.ui.typography
 
+/** Showcases the Borders component. */
 @Composable
 public fun Borders(modifier: Modifier = Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {

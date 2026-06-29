@@ -180,6 +180,7 @@ public value class BadgeState(public val state: ULong) : FocusableComponentState
     override val isPressed: Boolean
         get() = state and Pressed != 0UL
 
+    /** Returns a copy of this [BadgeState] with the given fields replaced by their new values. */
     public fun copy(
         enabled: Boolean = isEnabled,
         focused: Boolean = isFocused,
@@ -192,7 +193,9 @@ public value class BadgeState(public val state: ULong) : FocusableComponentState
         "BadgeState(isEnabled=$isEnabled, isFocused=$isFocused, isHovered=$isHovered, " +
             "isPressed=$isPressed, isActive=$isActive)"
 
+    /** Companion object for [BadgeState]. */
     public companion object {
+        /** Constructs a [BadgeState] from individual flags. */
         public fun of(
             enabled: Boolean = true,
             focused: Boolean = false,
