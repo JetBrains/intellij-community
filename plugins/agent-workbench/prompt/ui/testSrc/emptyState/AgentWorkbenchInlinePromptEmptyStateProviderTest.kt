@@ -31,6 +31,7 @@ import com.intellij.openapi.fileEditor.impl.EditorEmptyStateComponentHost
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -103,6 +104,45 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
     }
     finally {
       disposeComponent(component)
+    }
+  }
+
+  @Test
+  fun disposingInitializedPromptDisposesPromptEditorAndClearsContent() {
+    runInEdtAndWait {
+      val component = AgentWorkbenchInlinePromptEmptyStateComponent(ProjectManager.getInstance().defaultProject)
+      component.ensureContentInitialized()
+      val promptArea = collectComponents(component, AgentPromptTextField::class.java).single()
+      val editor = checkNotNull(promptArea.getEditor(true))
+
+      disposeComponent(component)
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+
+      assertThat(editor.isDisposed).isTrue()
+      assertThat(collectComponents(component, AgentPromptTextField::class.java)).isEmpty()
+      assertThat(component.preferredFocusedComponent).isSameAs(component)
+    }
+  }
+
+  @Test
+  fun disposingInlineNewThreadPromptDisposesPromptEditorAndClearsContent() {
+    runInEdtAndWait {
+      val project = ProjectManager.getInstance().defaultProject
+      val component = createAgentWorkbenchInlineNewThreadPromptComponent(
+        project = project,
+        invocationData = testInvocationData(project),
+        launcherProvider = { TestPromptLauncher },
+        initialLaunchProfileId = null,
+      )
+      val promptArea = collectComponents(component, AgentPromptTextField::class.java).single()
+      val editor = checkNotNull(promptArea.getEditor(true))
+
+      disposeComponent(component)
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+
+      assertThat(editor.isDisposed).isTrue()
+      assertThat(collectComponents(component, AgentPromptTextField::class.java)).isEmpty()
+      assertThat(component.preferredFocusedComponent).isSameAs(component)
     }
   }
 
@@ -302,6 +342,16 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
       runBlocking { provider.createComponent(fileEditorManagerFixture.get().mainSplitters) }
     }
     return component as AgentWorkbenchInlinePromptEmptyStateComponent
+  }
+
+  private fun testInvocationData(project: com.intellij.openapi.project.Project): AgentPromptInvocationData {
+    return AgentPromptInvocationData(
+      project = project,
+      actionId = "AgentWorkbenchPrompt.OpenGlobalPalette",
+      actionText = "Ask Agent",
+      actionPlace = "EditorEmptyState",
+      invokedAtMs = 0L,
+    )
   }
 
   private fun disposeComponent(component: AgentWorkbenchInlinePromptEmptyStateComponent) {

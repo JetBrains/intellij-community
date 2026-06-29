@@ -29,8 +29,11 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
@@ -165,6 +168,32 @@ internal class EditorEmptyTextPainterTest {
     waitForEmptyStateComponentCreation(splitters)
 
     assertThat(findEmptyStateComponent(splitters)).isNotNull()
+  }
+
+  @Test
+  @Suppress("RAW_SCOPE_CREATION")
+  fun splittersScopeDisposesVisibleEmptyStateComponent(@TestDisposable disposable: Disposable) {
+    val disposedComponents = AtomicInteger()
+    registerComponentProvider(disposable, disposedComponents)
+    val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    val splitters = EditorsSplitters(manager = manager, coroutineScope = scope)
+    try {
+      enableRichEmptyStateComponentsWithoutDelay(splitters)
+      splitters.updateEmptyStateComponent()
+      waitForEmptyStateComponentCreation(splitters)
+
+      assertThat(findEmptyStateComponent(splitters)).isNotNull()
+
+      scope.cancel()
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+
+      assertThat(findEmptyStateComponent(splitters)).isNull()
+      assertThat(disposedComponents).hasValue(1)
+    }
+    finally {
+      scope.cancel()
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+    }
   }
 
   @Test

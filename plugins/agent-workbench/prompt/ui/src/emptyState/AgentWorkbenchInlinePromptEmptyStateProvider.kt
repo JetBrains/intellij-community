@@ -183,8 +183,13 @@ class AgentWorkbenchInlinePromptEmptyStateComponent internal constructor(
       return
     }
     disposed = true
-    content?.dispose(configuration.disposeReason)
+    disposeContent(configuration.disposeReason)
+  }
+
+  private fun disposeContent(reason: String) {
+    val promptContent = content ?: return
     content = null
+    promptContent.dispose(reason)
   }
 
   override fun paintComponent(g: Graphics) {
