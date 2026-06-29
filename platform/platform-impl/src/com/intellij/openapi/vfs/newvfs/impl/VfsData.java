@@ -237,7 +237,7 @@ public final class VfsData implements Closeable {
   private void cleanupInvalidatedFileRecords() {
     synchronized (invalidatedQueueLock) {
       if (!fileIdsQueueForCleanup.isEmpty()) {
-        fileIdsQueueForCleanup.addAll(collectUnremovedChildren());
+        fileIdsQueueForCleanup.addAll(collectUnremovedChildren(fileIdsQueueForCleanup));
 
         fileIdsQueueForCleanup.forEach(fileId -> {
           Segment segment = segmentForFileId(fileId, /*create: */ false);
@@ -253,7 +253,7 @@ public final class VfsData implements Closeable {
   }
 
 
-  ///Normally, children should be removed before directory (see `PersistentFSImpl.invalidateSubtree()` )
+  /// Normally, children should be removed before directory (see `PersistentFSImpl.invalidateSubtree()` )
   /// => removed children are added to [fileIdsQueueForCleanup] before removed directory => at this point
   /// `directoryData.children` must be empty -- and since we're in a WA, no one could load a new child
   /// until WA ends.
@@ -266,40 +266,48 @@ public final class VfsData implements Closeable {
   /// (Maybe there are others, too)
   /// In both cases (re-)checking `dir.isValid()` under the directoryData lock could harm performance.
   /// So for now the solution is to re-check for not-yet-removed children here:
-  private @NotNull IntSet collectUnremovedChildren() {
+  private @NotNull IntSet collectUnremovedChildren(@NotNull IntSet fileIdsQueueForCleanup) {
     IntOpenHashSet fileIdsToCheck = new IntOpenHashSet(fileIdsQueueForCleanup);
-    IntOpenHashSet checkedFileIds = new IntOpenHashSet(fileIdsToCheck.size());
-    IntSet unremovedChildIds = null;
-    while (!fileIdsToCheck.isEmpty()) {
-      IntIterator itr = fileIdsToCheck.intIterator();
-      int fileId = itr.nextInt();
-      itr.remove();
+    IntOpenHashSet fileIdsAlreadyChecked = new IntOpenHashSet(fileIdsToCheck.size());
 
-      if (!checkedFileIds.add(fileId)) {
-        continue;
+    IntSet unremovedChildIds = null;
+    IntOpenHashSet unremovedChildrenInTurn = new IntOpenHashSet(1);
+    while (!fileIdsToCheck.isEmpty()) {
+      unremovedChildrenInTurn.clear();
+      for (IntIterator itr = fileIdsToCheck.intIterator(); itr.hasNext(); ) {
+        int fileId = itr.nextInt();
+        itr.remove();
+
+        if (!fileIdsAlreadyChecked.add(fileId)) {
+          continue;
+        }
+
+        Segment segment = segmentForFileId(fileId, /*create: */ false);
+        if (segment != null) {//could be GCed already
+          Object fileData = segment.fileDataById(fileId);
+          if (fileData instanceof DirectoryData directoryData) {
+            ChildrenIds childrenIds;
+            //noinspection SynchronizationOnLocalVariableOrMethodParameter
+            synchronized (directoryData) {
+              childrenIds = directoryData.children;
+              if (childrenIds.size() == 0) {
+                continue;
+              }
+              directoryData.children = ChildrenIds.EMPTY;
+            }
+
+            IntSet unremovedChildren = childrenIds.toIntSet();
+            unremovedChildrenInTurn.addAll(unremovedChildren);
+          }
+        }
       }
 
-      Segment segment = segmentForFileId(fileId, /*create: */ false);
-      if (segment != null) {//could be GCed already
-        Object fileData = segment.fileDataById(fileId);
-        if (fileData instanceof DirectoryData directoryData) {
-          ChildrenIds childrenIds;
-          //noinspection SynchronizationOnLocalVariableOrMethodParameter
-          synchronized (directoryData) {
-            childrenIds = directoryData.children;
-            if (childrenIds.size() == 0) {
-              continue;
-            }
-            directoryData.children = ChildrenIds.EMPTY;
-          }
-
-          if (unremovedChildIds == null) {
-            unremovedChildIds = new IntOpenHashSet(1);
-          }
-          IntSet childrenToCheck = childrenIds.toIntSet();
-          unremovedChildIds.addAll(childrenToCheck);
-          fileIdsToCheck.addAll(childrenToCheck);
+      if (!unremovedChildrenInTurn.isEmpty()) {
+        if (unremovedChildIds == null) {
+          unremovedChildIds = new IntOpenHashSet(unremovedChildrenInTurn.size());
         }
+        unremovedChildIds.addAll(unremovedChildrenInTurn);
+        fileIdsToCheck.addAll(unremovedChildrenInTurn);
       }
     }
     return unremovedChildIds == null ?
