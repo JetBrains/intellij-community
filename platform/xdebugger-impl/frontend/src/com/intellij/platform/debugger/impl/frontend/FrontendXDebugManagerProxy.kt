@@ -15,7 +15,6 @@ import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
-import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XValue
@@ -25,7 +24,7 @@ import kotlinx.coroutines.flow.Flow
 
 internal class FrontendXDebugManagerProxy : XDebugManagerProxy {
   override fun isEnabled(): Boolean {
-    return SplitDebuggerMode.isSplitDebugger()
+    return true
   }
 
   override fun hasBackendCounterpart(xValue: XValue): Boolean {

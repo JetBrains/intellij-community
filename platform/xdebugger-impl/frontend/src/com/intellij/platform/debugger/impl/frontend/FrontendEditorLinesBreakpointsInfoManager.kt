@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.frontend.FrontendApplicationInfo
@@ -203,11 +203,6 @@ internal class EditorLineBreakpointsInfo(
   companion object {
      val EMPTY = EditorLineBreakpointsInfo(listOf(), false)
    }
-}
-
-internal suspend fun getAvailableBreakpointTypesFromServer(project: Project, editor: Editor, line: Int): EditorLineBreakpointsInfo {
-  return getAvailableBreakpointTypesFromServer(project, editor, line, line)?.singleOrNull()
-         ?: EditorLineBreakpointsInfo.EMPTY
 }
 
 private suspend fun getAvailableBreakpointTypesFromServer(project: Project, editor: Editor, start: Int, endInclusive: Int): List<EditorLineBreakpointsInfo>? {

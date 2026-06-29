@@ -13,12 +13,10 @@ internal class FrontendXDebuggerInitializationProjectActivity : ProjectActivity 
     // initialize the debugger manager to start listening for backend state
     FrontendXDebuggerManager.getInstance(project)
 
-    if (SplitDebuggerMode.isSplitDebugger()) {
-      // Do not trigger breakpoint variants computation in tests unrelated to debugger
-      if (!application.isUnitTestMode) {
-        // initialize debugger editor lines breakpoints manager
-        FrontendEditorLinesBreakpointsInfoManager.getInstance(project)
-      }
+    // Do not trigger breakpoint variants computation in tests unrelated to debugger
+    if (!application.isUnitTestMode) {
+      // initialize debugger editor lines breakpoints manager
+      FrontendEditorLinesBreakpointsInfoManager.getInstance(project)
     }
   }
 }

@@ -80,9 +80,7 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
         }
       }
     }
-    if (SplitDebuggerMode.isSplitDebugger()) {
-      startContentSelectionListening()
-    }
+    startContentSelectionListening()
   }
 
   private suspend fun initCapabilities() {

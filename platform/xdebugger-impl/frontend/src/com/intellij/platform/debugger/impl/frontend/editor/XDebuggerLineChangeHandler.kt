@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend.editor
 
 import com.intellij.openapi.diagnostic.thisLogger
@@ -6,9 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.FrontendEditorLinesBreakpointsInfoManager
-import com.intellij.platform.debugger.impl.frontend.getAvailableBreakpointTypesFromServer
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy
-import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import com.intellij.openapi.editor.impl.BreakpointArea
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
@@ -62,12 +60,7 @@ internal class XDebuggerLineChangeHandler(
   }
 
   private suspend fun getBreakpointTypeForLine(project: Project, editor: Editor, line: Int, breakpointArea: BreakpointArea): XBreakpointTypeProxy? {
-    val types: List<XBreakpointTypeProxy> = if (SplitDebuggerMode.isSplitDebugger()) {
-      FrontendEditorLinesBreakpointsInfoManager.getInstance(project).getBreakpointsInfoForLine(editor, line).types
-    }
-    else {
-      getAvailableBreakpointTypesFromServer(project, editor, line).types
-    }
+    val types: List<XBreakpointTypeProxy> = FrontendEditorLinesBreakpointsInfoManager.getInstance(project).getBreakpointsInfoForLine(editor, line).types
     return if (breakpointArea is BreakpointArea.InterLine) {
       types.singleOrNull()?.takeIf { it is XLineBreakpointTypeProxy && it.supportsInterLinePlacement() }
     } else {
