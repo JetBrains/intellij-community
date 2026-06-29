@@ -1351,6 +1351,14 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         }
 
         @Override
+        public void visitPyTypeDeclarationStatement(@NotNull PyTypeDeclarationStatement node) {
+          final PyExpression target = node.getTarget();
+          if (target instanceof PyTargetExpression) {
+            result.add((PyTargetExpression)target);
+          }
+        }
+
+        @Override
         public void visitPyWithStatement(@NotNull PyWithStatement node) {
           StreamEx
             .of(node.getWithItems())
