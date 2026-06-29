@@ -36,10 +36,14 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.ui.components.JBHtmlPane
+import com.intellij.ui.components.JBHtmlPaneConfiguration
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBViewport
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
+import com.intellij.util.ui.ExtendableHTMLViewFactory
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -703,14 +707,12 @@ internal class AgentAcpThreadScreen(
       border = JBUI.Borders.emptyBottom(2)
     }
     val bodyText = previewText(message.text)
-    val bodyTextArea = rowTextArea(bodyText, monospace = false).apply {
-      isVisible = bodyText.isNotBlank()
-    }
+    val bodyTextPane = rowMarkdownPane(bodyText)
     val body = JPanel().apply {
       layout = BoxLayout(this, BoxLayout.Y_AXIS)
       isOpaque = false
       add(roleLabel)
-      add(bodyTextArea)
+      add(bodyTextPane)
     }
     row.add(body, BorderLayout.CENTER)
     row.setTranscriptUpdater { entry ->
@@ -718,11 +720,8 @@ internal class AgentAcpThreadScreen(
       if (updated.id != message.id || updated.role != message.role) return@setTranscriptUpdater false
       val updatedBodyText = previewText(updated.text)
       roleLabel.text = messageLabelText(updated)
-      if (bodyTextArea.text != updatedBodyText) {
-        bodyTextArea.text = updatedBodyText
-      }
-      bodyTextArea.isVisible = updatedBodyText.isNotBlank()
-      bodyTextArea.invalidate()
+      bodyTextPane.setMarkdownText(updatedBodyText)
+      bodyTextPane.invalidate()
       row.invalidate()
       true
     }
@@ -944,6 +943,10 @@ internal class AgentAcpThreadScreen(
     alignmentX = LEFT_ALIGNMENT
   }
 
+  private fun rowMarkdownPane(text: @NlsSafe String): TranscriptMessageMarkdownPane = TranscriptMessageMarkdownPane().apply {
+    setMarkdownText(text)
+  }
+
   private fun previewText(text: String, maxChars: Int = BODY_PREVIEW_MAX_CHARS, maxLines: Int = BODY_PREVIEW_MAX_LINES): @NlsSafe String {
     var truncated = false
     val charLimited = if (text.length > maxChars) {
@@ -1159,6 +1162,48 @@ private class TranscriptTextArea(text: @NlsSafe String) : JTextArea(text) {
   }
 }
 
+private class TranscriptMessageMarkdownPane : JBHtmlPane(MARKDOWN_STYLE_CONFIGURATION, MARKDOWN_PANE_CONFIGURATION) {
+  private var markdownText: String = ""
+
+  init {
+    isOpaque = false
+    isFocusable = false
+    border = null
+    font = UIUtil.getLabelFont()
+    alignmentX = LEFT_ALIGNMENT
+  }
+
+  fun setMarkdownText(text: @NlsSafe String) {
+    if (markdownText == text) return
+    markdownText = text
+    this.text = AgentAcpThreadMessageMarkdownRenderer.renderHtmlDocument(text)
+    isVisible = text.isNotBlank()
+    invalidate()
+  }
+
+  override fun getPreferredSize(): Dimension {
+    val availableWidth = transcriptContentWidth()
+    if (availableWidth <= 0) return super.getPreferredSize()
+
+    val previousSize = size
+    setSize(availableWidth, Int.MAX_VALUE)
+    val preferredHeight = super.getPreferredSize().height
+    size = previousSize
+    return Dimension(availableWidth, preferredHeight)
+  }
+
+  override fun getMaximumSize(): Dimension = Dimension(Int.MAX_VALUE, preferredSize.height)
+
+  private fun transcriptContentWidth(): Int {
+    var component: Component? = parent
+    while (component != null) {
+      if (component is ScrollableTranscriptPanel) return component.contentWidth()
+      component = component.parent
+    }
+    return 0
+  }
+}
+
 private fun AdjustmentEvent.isUserTranscriptAdjustment(): Boolean =
   valueIsAdjusting || when (adjustmentType) {
     AdjustmentEvent.UNIT_INCREMENT,
@@ -1190,5 +1235,30 @@ private const val STICK_TO_BOTTOM_THRESHOLD_PX = 24
 private const val TAIL_FOLLOW_DRIFT_THRESHOLD_PX = 128
 private const val MANUAL_TAIL_PAUSE_MS = 1500L
 private const val TRANSCRIPT_COMPONENTS_PER_ENTRY = 2
+
+private val MARKDOWN_STYLE_CONFIGURATION = JBHtmlPaneStyleConfiguration()
+private val MARKDOWN_PANE_CONFIGURATION = JBHtmlPaneConfiguration {
+  extensions(ExtendableHTMLViewFactory.Extensions.WORD_WRAP)
+  customStyleSheet(
+    """
+    body {
+      margin: 0;
+      padding: 0;
+    }
+    p {
+      margin-top: 0;
+      margin-bottom: 4px;
+    }
+    pre {
+      margin-top: 2px;
+      margin-bottom: 4px;
+    }
+    ul, ol {
+      margin-top: 0;
+      margin-bottom: 4px;
+    }
+    """.trimIndent(),
+  )
+}
 
 private val LOG = logger<AgentAcpThreadScreen>()
