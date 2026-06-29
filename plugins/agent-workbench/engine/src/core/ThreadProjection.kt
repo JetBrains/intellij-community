@@ -250,6 +250,7 @@ fun reduce(state: ThreadProjection, event: ThreadEventEnvelope): ThreadProjectio
   val withSeq = state.copy(lastSeq = event.seq)
   return when (event.type) {
     ThreadEventType.ThreadCreated -> withSeq.withThreadCreated(payload, event.timestamp)
+    ThreadEventType.ThreadUpdated -> withSeq.withThreadMetadataUpdated(payload, event.timestamp)
     ThreadEventType.RuntimeSessionBound -> withSeq.withRuntimeBinding(payload, event.timestamp)
     ThreadEventType.ThreadStarted -> withSeq.withThreadStarted(event.timestamp)
     ThreadEventType.MessageDelta -> withSeq.withMessageDelta(payload, event.timestamp)
@@ -336,6 +337,16 @@ private fun ThreadProjection.withThreadCreated(payload: JsonObject, at: Long): T
   )
   // ACP threads seed the reconnect binding (agentId/cwd) on creation; other runtimes carry no seed.
   return if (payload["agentId"] != null || payload["cwd"] != null) created.withRuntimeBinding(payload, at) else created
+}
+
+private fun ThreadProjection.withThreadMetadataUpdated(payload: JsonObject, at: Long): ThreadProjection {
+  return copy(
+    thread = thread.copy(
+      title = payload.string("title")?.takeIf { it.isNotBlank() } ?: thread.title,
+      summary = payload.string("summary") ?: thread.summary,
+      updatedAt = at,
+    ),
+  )
 }
 
 /**

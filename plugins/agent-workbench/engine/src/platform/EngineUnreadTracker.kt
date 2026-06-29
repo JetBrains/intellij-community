@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap
  * unread until its chat is opened. See [EngineEvents].
  */
 @Service(Service.Level.PROJECT)
-class EngineUnreadTracker(project: Project, scope: CoroutineScope) {
+class EngineUnreadTracker(private val project: Project, scope: CoroutineScope) {
   private val unread = ConcurrentHashMap.newKeySet<String>()
 
   init {
@@ -42,7 +42,7 @@ class EngineUnreadTracker(project: Project, scope: CoroutineScope) {
   /** Marks [threadId] as seen (e.g. its chat was opened/focused) and refreshes the tree if it changed. */
   fun markRead(threadId: ThreadId) {
     if (unread.remove(threadId.value)) {
-      EngineChangeBus.fireChanged(threadId)
+      EngineChangeBus.fireChanged(project.basePath ?: project.locationHash, threadId)
     }
   }
 

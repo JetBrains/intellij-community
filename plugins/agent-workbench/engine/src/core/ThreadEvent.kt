@@ -13,6 +13,7 @@ import kotlinx.serialization.json.JsonObject
 @Serializable
 enum class ThreadEventType {
   ThreadCreated,
+  ThreadUpdated,
   ThreadStarted,
   RuntimeSessionBound,
   MessageDelta,

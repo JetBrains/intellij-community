@@ -23,6 +23,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionRefres
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceRefreshResult
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadPresentationUpdate
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
@@ -753,7 +754,8 @@ class AgentSessionRefreshCoordinatorTest {
       delay(700.milliseconds)
 
       val projects = stateStore.snapshot().projects.associateBy { it.path }
-      assertThat(projects[PROJECT_PATH]?.threads?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }?.updatedAt).isEqualTo(100L)
+      assertThat(projects[PROJECT_PATH]?.threads?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }?.updatedAt).isEqualTo(
+        100L)
       assertThat(projects[projectB]?.threads?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }?.updatedAt).isEqualTo(100L)
       assertThat(closedRefreshInvocations[PROJECT_PATH]?.get() ?: 0).isEqualTo(0)
       assertThat(closedRefreshInvocations[projectB]?.get() ?: 0).isEqualTo(0)
@@ -868,7 +870,8 @@ class AgentSessionRefreshCoordinatorTest {
       delay(700.milliseconds)
 
       val projects = stateStore.snapshot().projects.associateBy { it.path }
-      assertThat(projects[PROJECT_PATH]?.threads?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }?.updatedAt).isEqualTo(100L)
+      assertThat(projects[PROJECT_PATH]?.threads?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }?.updatedAt).isEqualTo(
+        100L)
       assertThat(projects[projectB]?.threads?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }?.updatedAt).isEqualTo(100L)
       assertThat(closedRefreshInvocations[PROJECT_PATH]?.get() ?: 0).isEqualTo(0)
       assertThat(closedRefreshInvocations[projectB]?.get() ?: 0).isEqualTo(0)
@@ -926,7 +929,8 @@ class AgentSessionRefreshCoordinatorTest {
       delay(700.milliseconds)
 
       val projects = stateStore.snapshot().projects.associateBy { it.path }
-      assertThat(projects[PROJECT_PATH]?.threads?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }?.updatedAt).isEqualTo(100L)
+      assertThat(projects[PROJECT_PATH]?.threads?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }?.updatedAt).isEqualTo(
+        100L)
       assertThat(projects[projectB]?.threads?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }?.updatedAt).isEqualTo(100L)
       assertThat(closedRefreshInvocations[PROJECT_PATH]?.get() ?: 0).isEqualTo(0)
       assertThat(closedRefreshInvocations[projectB]?.get() ?: 0).isEqualTo(0)
@@ -1165,6 +1169,53 @@ class AgentSessionRefreshCoordinatorTest {
           ?.firstOrNull { it.provider == AgentSessionProvider.from("codex") }
           ?.updatedAt
       ).isEqualTo(100L)
+    }
+  }
+
+  @Test
+  fun scopedPresentationHintUpdatesPresentationModelWhenStateDoesNotContainThread() = runBlocking(Dispatchers.Default) {
+    val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
+    val presentationModel = AgentSessionThreadPresentationModel()
+    val provider = AgentSessionProvider.from("codex")
+    val source = ScriptedSessionSource(
+      provider = provider,
+      supportsUpdates = true,
+      updateEvents = updates,
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+      presentationModel = presentationModel,
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            providerLoadStates = loadedProviderStates(provider),
+            threads = emptyList(),
+          ),
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+      updates.tryEmit(
+        AgentSessionSourceUpdateEvent.hintsChanged(
+          scopedPaths = setOf(PROJECT_PATH),
+          presentationUpdatesByThreadId = mapOf(
+            "codex-new" to AgentSessionThreadPresentationUpdate(title = "Implement telemetry"),
+          ),
+        )
+      )
+
+      val expectedKey = presentationKey(PROJECT_PATH, provider, "codex-new")
+      waitForCondition {
+        presentationModel.snapshot()[expectedKey]?.title == "Implement telemetry"
+      }
+      assertThat(stateStore.snapshot().projects.single().threads).isEmpty()
     }
   }
 
@@ -2617,7 +2668,10 @@ class AgentSessionRefreshCoordinatorTest {
             isOpen = true,
             providerLoadStates = loadedProviderStates(AgentSessionProvider.from("claude")),
             threads = listOf(
-              thread(id = "claude-1", updatedAt = 100L, provider = AgentSessionProvider.from("claude"), activity = AgentThreadActivity.READY)
+              thread(id = "claude-1",
+                     updatedAt = 100L,
+                     provider = AgentSessionProvider.from("claude"),
+                     activity = AgentThreadActivity.READY)
             ),
           )
         ),
@@ -3205,7 +3259,10 @@ class AgentSessionRefreshCoordinatorTest {
             isOpen = true,
             providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
-              thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.from("codex"), activity = AgentThreadActivity.PROCESSING)
+              thread(id = "codex-1",
+                     updatedAt = 100L,
+                     provider = AgentSessionProvider.from("codex"),
+                     activity = AgentThreadActivity.PROCESSING)
             ),
           )
         ),
@@ -3778,8 +3835,14 @@ class AgentSessionRefreshCoordinatorTest {
             isOpen = true,
             providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
-              thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.from("codex"), activity = AgentThreadActivity.PROCESSING),
-              thread(id = "codex-2", updatedAt = 200L, provider = AgentSessionProvider.from("codex"), activity = AgentThreadActivity.PROCESSING),
+              thread(id = "codex-1",
+                     updatedAt = 100L,
+                     provider = AgentSessionProvider.from("codex"),
+                     activity = AgentThreadActivity.PROCESSING),
+              thread(id = "codex-2",
+                     updatedAt = 200L,
+                     provider = AgentSessionProvider.from("codex"),
+                     activity = AgentThreadActivity.PROCESSING),
             ),
           )
         ),
@@ -3833,8 +3896,14 @@ class AgentSessionRefreshCoordinatorTest {
             isOpen = true,
             providerLoadStates = loadedProviderStates(AgentSessionProvider.from("codex")),
             threads = listOf(
-              thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.from("codex"), activity = AgentThreadActivity.PROCESSING),
-              thread(id = "codex-2", updatedAt = 200L, provider = AgentSessionProvider.from("codex"), activity = AgentThreadActivity.PROCESSING),
+              thread(id = "codex-1",
+                     updatedAt = 100L,
+                     provider = AgentSessionProvider.from("codex"),
+                     activity = AgentThreadActivity.PROCESSING),
+              thread(id = "codex-2",
+                     updatedAt = 200L,
+                     provider = AgentSessionProvider.from("codex"),
+                     activity = AgentThreadActivity.PROCESSING),
             ),
           )
         ),
@@ -5010,7 +5079,8 @@ class AgentSessionRefreshCoordinatorTest {
       assertThat(rebindInvocations).hasSize(1)
       val invocation = rebindInvocations.single()
       assertThat(invocation.pendingThreadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.from("claude"), "new-pending"))
-      assertThat(invocation.target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.from("claude"), "claude-resolved"))
+      assertThat(invocation.target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.from("claude"),
+                                                                                       "claude-resolved"))
       val project = stateStore.snapshot().projects.first { it.path == pendingPath }
       assertThat(project.threads.map { it.id }).containsExactly("claude-resolved")
     }
