@@ -105,6 +105,38 @@ body {
   white-space: nowrap;
 }
 
+.acpAgentSelectItemContent,
+.acpAgentSelectConfigItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.acpAgentSelectItemIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+}
+
+.acpAgentSelectItemIcon > * {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+.acpAgentSelectItemName,
+.acpAgentSelectConfigItem {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .acpSelectIcon {
   flex: 0 0 auto;
   color: var(--acp-text-muted);
@@ -205,11 +237,22 @@ body {
 .acpModelPickerControl {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
   max-width: 100%;
-  min-height: 26px;
+  min-height: 28px;
   flex: 0 0 auto;
+  padding: 2px 6px;
+  border: 1px solid var(--acp-border);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--acp-bg-alt) 86%, transparent);
+  color: var(--acp-text);
+}
+
+.acpModelPickerControl:hover,
+.acpModelPickerControl:focus-within {
+  border-color: color-mix(in srgb, var(--acp-accent) 48%, var(--acp-border));
+  background: color-mix(in srgb, var(--acp-bg-alt) 94%, var(--acp-accent));
 }
 
 .acpControlWithHint {
@@ -262,12 +305,12 @@ body {
   gap: 6px;
   min-width: 0;
   max-width: min(168px, 100%);
-  min-height: 26px;
-  background: var(--acp-bg-alt);
+  min-height: 22px;
+  background: transparent;
   color: var(--acp-text);
-  border: 1px solid var(--acp-border);
-  border-radius: 4px;
-  padding: 2px 6px;
+  border: none;
+  border-radius: 3px;
+  padding: 0;
   font: inherit;
   font-size: 12px;
   cursor: pointer;

@@ -84,6 +84,44 @@ test("explains pasted attachment capabilities before an agent is activated", asy
   await expect(page.getByText("Image attachment support can be detected only after an ACP agent is activated.")).toBeVisible()
 })
 
+test("shows hardcoded Junie first and opens acp.json from the agent selector", async ({ page }) => {
+  if (!preview) {
+    throw new Error("ACP chat mock preview server was not started")
+  }
+  await page.goto(preview.url)
+
+  await page.locator(".acpAgentSelect").click()
+  const selectorState = await page.evaluate(() => {
+    const options = Array.from(document.querySelectorAll<HTMLElement>('[role="option"]'))
+    const junieOption = options.find(option => option.textContent?.trim() === "Junie")
+    const junieIcon = junieOption?.querySelector<HTMLElement>("[src*='acpChatJunie.svg']")
+    return {
+      firstOptionText: options[0]?.textContent?.trim(),
+      lastOptionText: options[options.length - 1]?.textContent?.trim(),
+      junieIconTagName: junieIcon?.tagName.toLowerCase(),
+      junieIconSrc: junieIcon?.getAttribute("src"),
+    }
+  })
+  expect(selectorState.firstOptionText === "Junie"
+    && selectorState.lastOptionText === "Open acp.json"
+    && selectorState.junieIconTagName === "jb-icon"
+    && selectorState.junieIconSrc?.includes("/__ij-icons/AcpChatIcons/") === true
+    && selectorState.junieIconSrc?.endsWith("/webview/views/acp-chat/assets/acpChatJunie.svg") === true).toBe(true)
+
+  await page.getByRole("option", { name: "Junie" }).click()
+  await page.waitForFunction(() => {
+    return Array.from(document.querySelectorAll<HTMLElement>(".acpAgentSelect [src*='acpChatJunie.svg']"))
+      .some(element => element.tagName.toLowerCase() === "jb-icon")
+  })
+
+  await page.locator(".acpAgentSelect").click()
+  await page.getByRole("option", { name: "Open acp.json" }).click()
+  const openConfigCalls = await page.evaluate(() => {
+    return (window as MockWindow).__WVI_MOCK__?.calls.byMethod("acp.bridge/openAcpConfig") ?? []
+  })
+  expect(openConfigCalls.length).toBeGreaterThan(0)
+})
+
 test("renders ACP chat in a real browser with a mock agent", async ({ page }) => {
   if (!preview) {
     throw new Error("ACP chat mock preview server was not started")
@@ -335,7 +373,10 @@ test("drives ACP composer config controls through the picker", async ({ page }) 
 
   const controlPresentation = await page.evaluate(() => {
     const modeSelect = document.querySelector('[data-config-id="mode"] .acpConfigOptionSelect')
+    const modeControl = document.querySelector('[data-config-id="mode"]')
     const modelTrigger = document.querySelector('[data-config-id="model"] .acpModelSelectorTrigger')
+    const modelControl = document.querySelector('[data-config-id="model"]')
+    const effortControl = document.querySelector('[data-config-id="effort"]')
     const controlIcon = document.querySelector('[data-config-id="model"] .acpControlIcon')
     const controlJbIcon = document.querySelector('[data-config-id="model"] .acpControlIcon > *')
     const effortJbIcon = document.querySelector('[data-config-id="effort"] .acpControlIcon > *')
@@ -351,6 +392,11 @@ test("drives ACP composer config controls through the picker", async ({ page }) 
       modeAriaLabel: document.querySelector('[data-config-id="mode"] .acpConfigOptionSelect')?.getAttribute("aria-label"),
       modelAriaLabel: document.querySelector('[data-config-id="model"] .acpModelSelectorTrigger')?.getAttribute("aria-label"),
       effortAriaLabel: document.querySelector('[data-config-id="effort"] .acpConfigOptionSelect')?.getAttribute("aria-label"),
+      modeControlBorderWidth: modeControl ? getComputedStyle(modeControl).borderTopWidth : null,
+      modelControlBorderWidth: modelControl ? getComputedStyle(modelControl).borderTopWidth : null,
+      effortControlBorderWidth: effortControl ? getComputedStyle(effortControl).borderTopWidth : null,
+      modeSelectBorderStyle: modeSelect ? getComputedStyle(modeSelect).borderTopStyle : null,
+      modelTriggerBorderStyle: modelTrigger ? getComputedStyle(modelTrigger).borderTopStyle : null,
       modeSelectMinWidth: modeSelect ? getComputedStyle(modeSelect).minWidth : null,
       modelTriggerMinWidth: modelTrigger ? getComputedStyle(modelTrigger).minWidth : null,
       controlIconWidth: controlIcon ? getComputedStyle(controlIcon).width : null,
@@ -371,6 +417,11 @@ test("drives ACP composer config controls through the picker", async ({ page }) 
     && controlPresentation.modeAriaLabel === "Session mode: Auto"
     && controlPresentation.modelAriaLabel === "Model: Gemini 2.5 Flash"
     && controlPresentation.effortAriaLabel === "Effort: Medium effort"
+    && controlPresentation.modeControlBorderWidth === "1px"
+    && controlPresentation.modelControlBorderWidth === "1px"
+    && controlPresentation.effortControlBorderWidth === "1px"
+    && controlPresentation.modeSelectBorderStyle === "none"
+    && controlPresentation.modelTriggerBorderStyle === "none"
     && controlPresentation.modeSelectMinWidth === "0px"
     && controlPresentation.modelTriggerMinWidth === "0px"
     && controlPresentation.controlIconWidth === "16px"
