@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.inline.codeInliner
 
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -46,6 +47,7 @@ import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.KtUnaryExpression
 import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.buildExpression
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
@@ -235,8 +237,29 @@ abstract class AbstractCodeInliner<TCallElement : KtElement, Parameter : Any, Ko
             }
         }
 
+        codeToInline.collectDescendantsOfType<KtSimpleNameExpression>().forEach {  expr ->
+            val contextParameterUsage = expr.getCopyableUserData(CodeToInline.CONTEXT_PARAMETER_USAGE_KEY)
+            val oldExpression = expr.parent
+            if (contextParameterUsage != null && oldExpression is KtCallExpression) {
+                val calleeExpression = oldExpression.calleeExpression ?: return@forEach
+                val args = contextParameterUsage.mapNotNull { (calleeName, containerName) ->
+                    getContextParameterExplicitArgument(containerName)?.let {
+                       "${calleeName.asString()} = $it"
+                    }
+                }.joinToString()
+                if (args.isEmpty()) return@forEach
+                val firstArgs =
+                    (oldExpression.valueArgumentList?.copy() as? KtValueArgumentList)?.arguments?.joinToString { it.text }
+                val argsList = if (firstArgs != null) "$firstArgs, $args" else args
+                val replacement = KtPsiFactory.contextual(expr).createExpression(calleeExpression.text + "($argsList)" + oldExpression.lambdaArguments.joinToString { it.text })
+                codeToInline.replaceExpression(oldExpression, replacement)
+            }
+        }
+
         return introduceValuesForParameters
     }
+
+    protected abstract fun getContextParameterExplicitArgument(cp: Name): String?
 
     protected fun <TypeParameter> processTypeParameterUsages(
         callElement: KtCallElement?,

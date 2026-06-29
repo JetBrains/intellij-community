@@ -2679,6 +2679,31 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                 runTest("../../idea/tests/testData/refactoring/inline/namedFunction/withContextParameters1.kt");
             }
 
+            @TestMetadata("withExplicitContextArguments.kt")
+            public void testWithExplicitContextArguments() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/withExplicitContextArguments.kt");
+            }
+
+            @TestMetadata("withExplicitContextArgumentsAndUsageInside.kt")
+            public void testWithExplicitContextArgumentsAndUsageInside() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/withExplicitContextArgumentsAndUsageInside.kt");
+            }
+
+            @TestMetadata("withExplicitContextArgumentsDifferentNames.kt")
+            public void testWithExplicitContextArgumentsDifferentNames() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/withExplicitContextArgumentsDifferentNames.kt");
+            }
+
+            @TestMetadata("withExplicitContextArgumentsTrailingLambda.kt")
+            public void testWithExplicitContextArgumentsTrailingLambda() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/withExplicitContextArgumentsTrailingLambda.kt");
+            }
+
+            @TestMetadata("withImplicitContextArguments.kt")
+            public void testWithImplicitContextArguments() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/withImplicitContextArguments.kt");
+            }
+
             @TestMetadata("withImportAlias.kt")
             public void testWithImportAlias() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/inline/namedFunction/withImportAlias.kt");
