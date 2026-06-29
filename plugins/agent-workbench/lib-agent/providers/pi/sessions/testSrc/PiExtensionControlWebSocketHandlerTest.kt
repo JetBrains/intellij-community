@@ -229,6 +229,50 @@ class PiExtensionControlWebSocketHandlerTest {
         val setResponse = listener.nextMessage()
         assertThat(setResponse).contains("\"changed\":true")
         assertThat(folderService.getFolder(folder.id)?.metadata).containsEntry("review", "backend")
+
+        webSocket.sendText(controlTaskFolderRequest("request-get-metadata", "getTaskFolderMetadata", folderId = folder.id), true).join()
+        val metadataResponse = listener.nextMessage()
+        assertThat(metadataResponse).contains("\"requestId\":\"request-get-metadata\"")
+        assertThat(metadataResponse).contains("\"metadata\":")
+        assertThat(metadataResponse).contains("\"review\":\"backend\"")
+
+        webSocket.sendText(controlTaskFolderRequest("request-delete", "deleteTaskFolderMetadata", folderId = folder.id, key = "review"),
+                           true).join()
+        val deleteResponse = listener.nextMessage()
+        assertThat(deleteResponse).contains("\"changed\":true")
+        assertThat(folderService.getFolder(folder.id)?.metadata).doesNotContainKey("review")
+      }
+      finally {
+        webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "done").join()
+      }
+    }
+
+  @Test
+  fun `unsupported control message type is rejected by typed routing`(@TestDisposable disposable: Disposable): Unit =
+    runBlocking(Dispatchers.Default) {
+      registerControlHandler(disposable)
+      val sessionId = "session-ws-unsupported"
+      val projectDir = tempDir.resolve("project-unsupported")
+      val launchEnvironment = createControlLaunchEnvironment(sessionId)
+      val listener = PiControlTestWebSocketListener()
+      val webSocket = connectControlSocket(launchEnvironment, listener)
+      try {
+        webSocket.sendText(
+          controlHelloPayload(
+            token = launchEnvironment.token,
+            sessionId = sessionId,
+            cwd = projectDir.toString(),
+          ),
+          true,
+        ).join()
+        listener.nextMessage()
+
+        webSocket.sendText(controlTaskFolderRequest("request-unsupported", "unknownControl"), true).join()
+        val unsupportedResponse = listener.nextMessage()
+        assertThat(unsupportedResponse).contains("\"type\":\"response\"")
+        assertThat(unsupportedResponse).contains("\"requestId\":\"request-unsupported\"")
+        assertThat(unsupportedResponse).contains("\"ok\":false")
+        assertThat(unsupportedResponse).contains("Unsupported control message type")
       }
       finally {
         webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "done").join()
