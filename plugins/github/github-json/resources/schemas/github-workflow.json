@@ -478,6 +478,18 @@
         },
         {
           "required": ["run"]
+        },
+        {
+          "required": ["wait"]
+        },
+        {
+          "required": ["wait-all"]
+        },
+        {
+          "required": ["cancel"]
+        },
+        {
+          "required": ["parallel"]
         }
       ],
       "properties": {
@@ -556,6 +568,46 @@
               "$ref": "#/definitions/expressionSyntax"
             }
           ]
+        },
+        "background": {
+          "$comment": "https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsbackground",
+          "description": "Runs a step asynchronously so the job continues to the next step without waiting for it to finish. You can use background on steps that use run or uses. To reference a background step from wait or cancel, give it an id. A maximum of 10 background steps can run concurrently in a single job.",
+          "type": "boolean"
+        },
+        "wait": {
+          "$comment": "https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#jobsjob_idstepswait",
+          "description": "Pauses the job until one or more background steps complete. Provide a single step id as a string, or multiple step ids as an array. After a wait step completes, the outputs of the referenced background steps become available to subsequent steps.",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1
+            }
+          ]
+        },
+        "wait-all": {
+          "$comment": "https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#jobsjob_idstepswait-all",
+          "description": "Pauses the job until all active background steps complete. The wait-all keyword takes no arguments.",
+          "type": ["boolean", "null"]
+        },
+        "cancel": {
+          "$comment": "https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#jobsjob_idstepscancel",
+          "description": "Gracefully terminates a running background step. The runner sends the step's process a termination signal (SIGTERM) so it can clean up. The cancel keyword targets a single background step by its id.",
+          "type": "string"
+        },
+        "parallel": {
+          "$comment": "https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsparallel",
+          "description": "Runs a group of steps concurrently, then waits for all of them to finish before continuing. Every step in the group runs as a background step, with an implicit wait at the end of the group.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/step"
+          },
+          "minItems": 1
         }
       }
     },
