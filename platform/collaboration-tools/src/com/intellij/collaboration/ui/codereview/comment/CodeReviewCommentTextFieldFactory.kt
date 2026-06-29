@@ -11,7 +11,7 @@ import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.collaboration.util.exceptionOrNull
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
-import com.intellij.openapi.application.UiImmediate
+import com.intellij.openapi.application.UiWithModelAccessImmediate
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
@@ -23,6 +23,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -57,7 +58,8 @@ object CodeReviewCommentTextFieldFactory {
       component.background = fieldBackground
       asSafely<EditorEx>()?.backgroundColor = fieldBackground
     }
-    cs.launch(Dispatchers.UiImmediate) {
+    // editor release sometimes needs model access and has to happen even when cs was canceled
+    cs.launch(start = CoroutineStart.ATOMIC, context = Dispatchers.UiWithModelAccessImmediate) {
       try {
         coroutineScope {
           launch {
