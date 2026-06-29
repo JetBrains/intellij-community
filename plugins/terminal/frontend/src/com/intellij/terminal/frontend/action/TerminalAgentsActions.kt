@@ -85,7 +85,7 @@ internal class LaunchSelectedAgentAction : DumbAwareAction(), ActionRemoteBehavi
       project,
       agentKey,
       e.getData(PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER),
-      TerminalStartupFusInfo(TerminalTabOpeningWay.OPEN_NEW_TAB),
+      TerminalStartupFusInfo(TerminalTabOpeningWay.AI_AGENTS_BUTTON),
     )
   }
 
