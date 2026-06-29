@@ -32,6 +32,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalGroupHeaderStyle
  * @param startComponent The component to display on the left side of the header.
  * @param endComponent The component to display on the right side of the header.
  * @param style The style to apply to the header.
+ * @param textStyle The text style to apply to the header text. Defaults to [JewelTheme.defaultTextStyle].
  * @see com.intellij.ui.TitledSeparator
  */
 @Composable

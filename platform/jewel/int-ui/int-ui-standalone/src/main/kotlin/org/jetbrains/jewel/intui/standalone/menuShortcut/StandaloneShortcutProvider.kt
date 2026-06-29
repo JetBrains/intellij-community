@@ -13,6 +13,10 @@ import org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction.PasteMenuIte
 import org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction.SelectAllMenuItemOptionAction
 import org.jetbrains.skiko.hostOs
 
+/**
+ * Standalone implementation of [MenuItemShortcutProvider] that maps context menu actions to platform-appropriate key
+ * strokes.
+ */
 @ApiStatus.Internal
 @InternalJewelApi
 public object StandaloneShortcutProvider : MenuItemShortcutProvider {

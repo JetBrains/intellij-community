@@ -12,16 +12,19 @@ import org.jetbrains.jewel.ui.component.styling.TextAreaColors
 import org.jetbrains.jewel.ui.component.styling.TextAreaMetrics
 import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
 
+/** Creates an Int UI light [TextAreaStyle] with the provided parameters. */
 public fun TextAreaStyle.Companion.light(
     colors: TextAreaColors = TextAreaColors.light(),
     metrics: TextAreaMetrics = TextAreaMetrics.defaults(),
 ): TextAreaStyle = TextAreaStyle(colors, metrics)
 
+/** Creates an Int UI dark [TextAreaStyle] with the provided parameters. */
 public fun TextAreaStyle.Companion.dark(
     colors: TextAreaColors = TextAreaColors.dark(),
     metrics: TextAreaMetrics = TextAreaMetrics.defaults(),
 ): TextAreaStyle = TextAreaStyle(colors, metrics)
 
+/** Creates an Int UI light [TextAreaColors] with the provided parameters. */
 public fun TextAreaColors.Companion.light(
     background: Color = IntUiLightTheme.colors.gray(14),
     backgroundDisabled: Color = Color.Unspecified,
@@ -69,6 +72,7 @@ public fun TextAreaColors.Companion.light(
         placeholder = placeholder,
     )
 
+/** Creates an Int UI dark [TextAreaColors] with the provided parameters. */
 public fun TextAreaColors.Companion.dark(
     background: Color = IntUiDarkTheme.colors.gray(2),
     backgroundDisabled: Color = Color.Unspecified,
@@ -116,6 +120,7 @@ public fun TextAreaColors.Companion.dark(
         placeholder = placeholder,
     )
 
+/** Creates an Int UI default [TextAreaMetrics] with the provided parameters. */
 public fun TextAreaMetrics.Companion.defaults(
     cornerSize: CornerSize = CornerSize(4.dp),
     contentPadding: PaddingValues = PaddingValues(horizontal = 5.dp, vertical = 4.dp),

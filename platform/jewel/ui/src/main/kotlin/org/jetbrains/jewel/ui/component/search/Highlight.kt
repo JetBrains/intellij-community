@@ -16,6 +16,12 @@ import org.jetbrains.jewel.foundation.search.SpeedSearchMatcher
 import org.jetbrains.jewel.ui.component.LocalNodeSearchMatchState
 import org.jetbrains.jewel.ui.component.NodeSearchMatchState
 
+/**
+ * Returns an [AnnotatedString] built from this [CharSequence] with the matched character ranges styled according to the
+ * current search highlight style.
+ *
+ * If [matchState] contains no active match, the text is returned unstyled.
+ */
 @Composable
 @ExperimentalJewelApi
 @ApiStatus.Experimental
@@ -33,6 +39,14 @@ public fun CharSequence.highlightTextSearch(
     }
 }
 
+/**
+ * Draws rounded-rectangle highlight backgrounds behind each matched character range reported by [matchState], using the
+ * bounding boxes from [textLayoutResult].
+ *
+ * Ranges that span multiple lines are split per line, and adjacent bounding boxes on the same line are merged into a
+ * single rectangle before drawing. If [matchState] contains no active match or [textLayoutResult] is `null`, the
+ * modifier is a no-op.
+ */
 @Composable
 @ExperimentalJewelApi
 @ApiStatus.Experimental

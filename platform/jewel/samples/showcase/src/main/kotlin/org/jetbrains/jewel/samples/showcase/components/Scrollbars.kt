@@ -79,6 +79,7 @@ import org.jetbrains.jewel.ui.typography
 import org.jetbrains.skiko.OS
 import org.jetbrains.skiko.hostOs
 
+/** Showcases the Scrollbar component. */
 @Composable
 public fun Scrollbars(
     alwaysVisibleScrollbarVisibility: ScrollbarVisibility,

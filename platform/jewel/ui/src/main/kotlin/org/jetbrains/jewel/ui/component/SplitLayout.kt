@@ -52,11 +52,11 @@ import org.jetbrains.jewel.ui.theme.dividerStyle
  * @param second The Composable function representing the second component, that will be placed on the other side of the
  *   divider, typically on the right or below.
  * @param modifier The modifier to be applied to the layout.
+ * @param dividerStyle The divider style to be applied to the layout.
  * @param draggableWidth The width of the draggable area around the divider. This is a invisible, wider area around the
  *   divider that can be dragged by the user to resize the panes.
  * @param firstPaneMinWidth The minimum size of the first component.
  * @param secondPaneMinWidth The minimum size of the second component.
- * @param dividerStyle The divider style to be applied to the layout.
  * @param state The [SplitLayoutState] object that will be used to store the split state.
  */
 @Composable
@@ -92,11 +92,11 @@ public fun HorizontalSplitLayout(
  * @param second The Composable function representing the second component, that will be placed on the other side of the
  *   divider, typically on the right or below.
  * @param modifier The modifier to be applied to the layout.
+ * @param dividerStyle The divider style to be applied to the layout.
  * @param draggableWidth The width of the draggable area around the divider. This is a invisible, wider area around the
  *   divider that can be dragged by the user to resize the panes.
  * @param firstPaneMinWidth The minimum size of the first component.
  * @param secondPaneMinWidth The minimum size of the second component.
- * @param dividerStyle The divider style to be applied to the layout.
  * @param state The [SplitLayoutState] object that will be used to store the split state.
  */
 @Composable

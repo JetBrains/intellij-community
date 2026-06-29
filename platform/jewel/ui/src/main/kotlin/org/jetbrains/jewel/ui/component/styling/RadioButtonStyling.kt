@@ -13,11 +13,15 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.component.RadioButtonState
 import org.jetbrains.jewel.ui.icon.IconKey
 
+/** Combines colors, metrics, and icons to fully style a [org.jetbrains.jewel.ui.component.RadioButton]. */
 @Immutable
 @GenerateDataFunctions
 public class RadioButtonStyle(
+    /** The color tokens for the radio button. */
     public val colors: RadioButtonColors,
+    /** The size and spacing metrics for the radio button. */
     public val metrics: RadioButtonMetrics,
+    /** The icon keys for the radio button. */
     public val icons: RadioButtonIcons,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -42,19 +46,28 @@ public class RadioButtonStyle(
 
     override fun toString(): String = "RadioButtonStyle(colors=$colors, metrics=$metrics, icons=$icons)"
 
+    /** Companion object for [RadioButtonStyle]. */
     public companion object
 }
 
+/** Holds color tokens for a [org.jetbrains.jewel.ui.component.RadioButton] in its various states. */
 @Immutable
 @GenerateDataFunctions
 public class RadioButtonColors(
+    /** The content (label) color in the default state. */
     public val content: Color,
+    /** The content color when the radio button is hovered. */
     public val contentHovered: Color,
+    /** The content color when the radio button is disabled. */
     public val contentDisabled: Color,
+    /** The content color when the radio button is selected. */
     public val contentSelected: Color,
+    /** The content color when the radio button is selected and hovered. */
     public val contentSelectedHovered: Color,
+    /** The content color when the radio button is selected and disabled. */
     public val contentSelectedDisabled: Color,
 ) {
+    /** Returns a [State] holding the content color appropriate for the given [state]. */
     @Composable
     public fun contentFor(state: RadioButtonState): State<Color> =
         rememberUpdatedState(
@@ -105,19 +118,28 @@ public class RadioButtonColors(
             ")"
     }
 
+    /** Companion object for [RadioButtonColors]. */
     public companion object
 }
 
+/** Holds size and spacing metrics for a [org.jetbrains.jewel.ui.component.RadioButton]. */
 @Immutable
 @GenerateDataFunctions
 public class RadioButtonMetrics(
+    /** The size of the radio button indicator. */
     public val radioButtonSize: DpSize,
+    /** The size of the focus outline in the default state. */
     public val outlineSize: DpSize,
+    /** The size of the focus outline when the radio button is focused. */
     public val outlineFocusedSize: DpSize,
+    /** The size of the focus outline when the radio button is selected. */
     public val outlineSelectedSize: DpSize,
+    /** The size of the focus outline when the radio button is selected and focused. */
     public val outlineSelectedFocusedSize: DpSize,
+    /** The gap between the radio button indicator and the label. */
     public val iconContentGap: Dp,
 ) {
+    /** Returns a [State] holding the outline size appropriate for the given [state]. */
     @Composable
     public fun outlineSizeFor(state: RadioButtonState): State<DpSize> =
         rememberUpdatedState(
@@ -166,12 +188,17 @@ public class RadioButtonMetrics(
             ")"
     }
 
+    /** Companion object for [RadioButtonMetrics]. */
     public companion object
 }
 
+/** Holds icon keys for a [org.jetbrains.jewel.ui.component.RadioButton]. */
 @Immutable
 @GenerateDataFunctions
-public class RadioButtonIcons(public val radioButton: IconKey) {
+public class RadioButtonIcons(
+    /** The icon key for the radio button indicator image. */
+    public val radioButton: IconKey
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -185,9 +212,11 @@ public class RadioButtonIcons(public val radioButton: IconKey) {
 
     override fun toString(): String = "RadioButtonIcons(radioButton=$radioButton)"
 
+    /** Companion object for [RadioButtonIcons]. */
     public companion object
 }
 
+/** CompositionLocal providing the current [RadioButtonStyle]. */
 public val LocalRadioButtonStyle: ProvidableCompositionLocal<RadioButtonStyle> = staticCompositionLocalOf {
     error("No RadioButtonStyle provided. Have you forgotten the theme?")
 }

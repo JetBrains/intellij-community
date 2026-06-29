@@ -38,6 +38,10 @@ import org.jetbrains.jewel.ui.painter.hints.Size
 import org.jetbrains.jewel.ui.theme.iconButtonStyle
 import org.jetbrains.jewel.ui.typography
 
+/**
+ * Showcases the components view, combining a toolbar for navigation and a content panel that renders the currently
+ * selected component demo.
+ */
 @ExperimentalLayoutApi
 @Composable
 public fun ComponentsView(
@@ -61,6 +65,10 @@ public fun ComponentsView(
     }
 }
 
+/**
+ * Renders the vertical icon toolbar used to navigate between component demo views, showing a selectable icon button for
+ * each available [ViewInfo].
+ */
 @ExperimentalLayoutApi
 @Composable
 public fun ComponentsToolBar(

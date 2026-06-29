@@ -7,6 +7,7 @@ import com.intellij.util.ui.JBUI
 import org.jetbrains.jewel.bridge.safeValue
 import org.jetbrains.jewel.foundation.GlobalMetrics
 
+/** Reads [GlobalMetrics] from the current IntelliJ LaF, deriving outline width and row height from JBUI. */
 public fun GlobalMetrics.Companion.readFromLaF(): GlobalMetrics =
     GlobalMetrics(
         outlineWidth = DarculaUIUtil.BW.unscaled.dp.safeValue(),

@@ -3,6 +3,7 @@ package org.jetbrains.jewel.foundation.lazy.tree
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
 
+/** Default [TreeViewOnKeyEvent] that handles tree navigation: collapsing/expanding nodes and moving to parent/child. */
 public open class DefaultTreeViewOnKeyEvent(
     override val keybindings: TreeViewKeybindings,
     private val treeState: TreeState,

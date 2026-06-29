@@ -26,7 +26,9 @@ import org.jetbrains.jewel.samples.standalone.viewmodel.MainViewModel.components
 import org.jetbrains.jewel.ui.component.styling.IconButtonMetrics
 import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 
+/** Singleton view model holding navigation state, theme, and component view models for the standalone sample. */
 public object MainViewModel {
+    /** The view model managing the state of the Components showcase view. */
     public val componentsViewModel: ComponentsViewModel
 
     init {
@@ -39,16 +41,21 @@ public object MainViewModel {
             )
     }
 
+    /** Navigates to the view whose title matches [destination]. */
     public fun onNavigateTo(destination: String) {
         currentView = views.first { viewInfo: ViewInfo -> viewInfo.title == destination }
     }
 
+    /** The currently active UI theme. */
     public var theme: IntUiThemes by mutableStateOf(IntUiThemes.Light)
 
+    /** Whether Swing compatibility mode is enabled. */
     public var swingCompat: Boolean by mutableStateOf(false)
 
+    /** Whether the custom popup renderer is enabled. */
     public var useCustomPopupRenderer: Boolean by mutableStateOf(JewelFlags.useCustomPopupRenderer)
 
+    /** The project stripe color derived from the current theme. */
     public val projectColor: Color
         get() =
             if (theme.isLightHeader()) {
@@ -57,8 +64,10 @@ public object MainViewModel {
                 Color(0xFF654B40)
             }
 
+    /** The list of top-level navigation views available in the sample. */
     public val views: SnapshotStateList<ViewInfo> = mainMenuItems
 
+    /** The currently selected navigation view. */
     public var currentView: ViewInfo by mutableStateOf(views.first())
 }
 

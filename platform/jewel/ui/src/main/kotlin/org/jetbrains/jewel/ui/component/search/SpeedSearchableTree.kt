@@ -62,6 +62,7 @@ import org.jetbrains.jewel.ui.theme.treeStyle
  * }
  * ```
  *
+ * @param T the type of data held by each tree element.
  * @param tree The tree structure to be rendered.
  * @param nodeText A function that extracts searchable text from a tree element, or `null` if the node should not be
  *   matched.

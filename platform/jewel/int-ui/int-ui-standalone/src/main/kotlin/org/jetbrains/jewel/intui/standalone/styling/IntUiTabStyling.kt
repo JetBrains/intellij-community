@@ -15,10 +15,13 @@ import org.jetbrains.jewel.ui.component.styling.TabStyle
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
+/** The factory for creating Int UI default [TabStyle] instances. */
 public val TabStyle.Companion.Default: IntUiDefaultTabStyleFactory
     get() = IntUiDefaultTabStyleFactory
 
+/** Factory object for creating Int UI default [TabStyle] instances. */
 public object IntUiDefaultTabStyleFactory {
+    /** Creates an Int UI light default [TabStyle] with the provided parameters. */
     public fun light(
         colors: TabColors = TabColors.Default.light(),
         metrics: TabMetrics = TabMetrics.defaults(),
@@ -27,6 +30,7 @@ public object IntUiDefaultTabStyleFactory {
         scrollbarStyle: ScrollbarStyle = ScrollbarStyle.tabStripLight(),
     ): TabStyle = TabStyle(colors, metrics, icons, contentAlpha, scrollbarStyle)
 
+    /** Creates an Int UI dark default [TabStyle] with the provided parameters. */
     public fun dark(
         colors: TabColors = TabColors.Default.dark(),
         metrics: TabMetrics = TabMetrics.defaults(),
@@ -36,10 +40,13 @@ public object IntUiDefaultTabStyleFactory {
     ): TabStyle = TabStyle(colors, metrics, icons, contentAlpha, scrollbarStyle)
 }
 
+/** The factory for creating Int UI editor [TabStyle] instances. */
 public val TabStyle.Companion.Editor: IntUiEditorTabStyleFactory
     get() = IntUiEditorTabStyleFactory
 
+/** Factory object for creating Int UI editor [TabStyle] instances. */
 public object IntUiEditorTabStyleFactory {
+    /** Creates an Int UI light editor [TabStyle] with the provided parameters. */
     public fun light(
         colors: TabColors = TabColors.Editor.light(),
         metrics: TabMetrics = TabMetrics.defaults(),
@@ -48,6 +55,7 @@ public object IntUiEditorTabStyleFactory {
         scrollbarStyle: ScrollbarStyle = ScrollbarStyle.tabStripLight(),
     ): TabStyle = TabStyle(colors, metrics, icons, contentAlpha, scrollbarStyle)
 
+    /** Creates an Int UI dark editor [TabStyle] with the provided parameters. */
     public fun dark(
         colors: TabColors = TabColors.Editor.dark(),
         metrics: TabMetrics = TabMetrics.defaults(),
@@ -57,10 +65,13 @@ public object IntUiEditorTabStyleFactory {
     ): TabStyle = TabStyle(colors, metrics, icons, contentAlpha, scrollbarStyle)
 }
 
+/** The factory for creating Int UI default [TabColors] instances. */
 public val TabColors.Companion.Default: IntUiDefaultTabColorsFactory
     get() = IntUiDefaultTabColorsFactory
 
+/** Factory object for creating Int UI default [TabColors] instances. */
 public object IntUiDefaultTabColorsFactory {
+    /** Creates an Int UI light default [TabColors] with the provided parameters. */
     public fun light(
         background: Color = IntUiLightTheme.colors.gray(14),
         backgroundHovered: Color = IntUiLightTheme.colors.gray(12),
@@ -96,6 +107,7 @@ public object IntUiDefaultTabColorsFactory {
             underlineSelected = underlineSelected,
         )
 
+    /** Creates an Int UI dark default [TabColors] with the provided parameters. */
     public fun dark(
         background: Color = Color.Unspecified,
         backgroundHovered: Color = IntUiDarkTheme.colors.gray(4),
@@ -132,10 +144,13 @@ public object IntUiDefaultTabColorsFactory {
         )
 }
 
+/** The factory for creating Int UI editor [TabColors] instances. */
 public val TabColors.Companion.Editor: IntUiEditorTabColorsFactory
     get() = IntUiEditorTabColorsFactory
 
+/** Factory object for creating Int UI editor [TabColors] instances. */
 public object IntUiEditorTabColorsFactory {
+    /** Creates an Int UI light editor [TabColors] with the provided parameters. */
     public fun light(
         background: Color = Color.Transparent,
         backgroundHovered: Color = background,
@@ -171,6 +186,7 @@ public object IntUiEditorTabColorsFactory {
             underlineSelected = underlineSelected,
         )
 
+    /** Creates an Int UI dark editor [TabColors] with the provided parameters. */
     public fun dark(
         background: Color = Color.Unspecified,
         backgroundHovered: Color = background,
@@ -207,6 +223,7 @@ public object IntUiEditorTabColorsFactory {
         )
 }
 
+/** Creates an Int UI default [TabMetrics] with the provided parameters. */
 public fun TabMetrics.Companion.defaults(
     underlineThickness: Dp = 3.dp,
     tabPadding: PaddingValues = PaddingValues(horizontal = 8.dp),
@@ -215,6 +232,7 @@ public fun TabMetrics.Companion.defaults(
     tabHeight: Dp = 40.dp,
 ): TabMetrics = TabMetrics(underlineThickness, tabPadding, tabHeight, tabContentSpacing, closeContentGap)
 
+/** Creates an Int UI default [TabContentAlpha] with the provided parameters. */
 public fun TabContentAlpha.Companion.default(
     iconNormal: Float = 1f,
     iconDisabled: Float = iconNormal,
@@ -240,6 +258,7 @@ public fun TabContentAlpha.Companion.default(
         contentSelected = contentSelected,
     )
 
+/** Creates an Int UI editor [TabContentAlpha] with the provided parameters. */
 public fun TabContentAlpha.Companion.editor(
     iconNormal: Float = .7f,
     iconDisabled: Float = iconNormal,
@@ -265,4 +284,5 @@ public fun TabContentAlpha.Companion.editor(
         contentSelected = contentSelected,
     )
 
+/** Creates an Int UI default [TabIcons] with the provided parameters. */
 public fun TabIcons.Companion.defaults(close: IconKey = AllIconsKeys.General.CloseSmall): TabIcons = TabIcons(close)

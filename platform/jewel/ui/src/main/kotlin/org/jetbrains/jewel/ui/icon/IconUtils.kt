@@ -30,31 +30,53 @@ import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 
 @ExperimentalJewelApi
 @ApiStatus.Experimental
+/**
+ * Applies a tint of [composeColor] with [blendMode] to this [IconModifier], converting to the IntelliJ Platform Icons
+ * color and blend-mode types.
+ *
+ * @param composeColor The Compose [Color] to use as the tint.
+ * @param blendMode The [BlendMode] to use for blending. Defaults to [BlendMode.SrcIn].
+ */
 public fun IconModifier.tintColor(composeColor: Color, blendMode: BlendMode = BlendMode.SrcIn): IconModifier =
     tintColor(composeColor.toIconsColor(), blendMode.toIconsBlendMode())
 
+/** Creates a [Circle] shape with the given [radius] for use in the IntelliJ Platform icon DSL. */
 @ExperimentalJewelApi @ApiStatus.Experimental public fun circle(radius: Dp): Circle = circle(radius.toIconsDp())
 
 @ExperimentalJewelApi
 @ApiStatus.Experimental
+/** Creates a [Rectangle] shape with the given dimensions for use in the IntelliJ Platform icon DSL. */
 public fun rectangle(width: Dp, heigth: Dp): Rectangle = rectangle(width.toIconsDp(), heigth.toIconsDp())
 
 @ExperimentalJewelApi
 @ApiStatus.Experimental
+/** Creates a [FitAreaScale] that fits the icon within the given dimensions. */
 public fun fitArea(width: Dp, heigth: Dp): FitAreaScale = fitArea(width.toIconsDp(), heigth.toIconsDp())
 
 @ExperimentalJewelApi
 @ApiStatus.Experimental
+/** Creates a [FillAreaScale] that fills the icon to the given dimensions. */
 public fun fillArea(width: Dp, heigth: Dp): FillAreaScale = fillArea(width.toIconsDp(), heigth.toIconsDp())
 
+/** Converts this Compose [Dp] value to an IntelliJ Platform Icons [DisplayPoint]. */
 @ExperimentalJewelApi @ApiStatus.Experimental public fun Dp.toIconsDp(): DisplayPoint = this.value.dp
 
 @ExperimentalJewelApi
 @ApiStatus.Experimental
+/** Applies a stroke with the given Compose [composeColor] to this [IconModifier]. */
 public fun IconModifier.stroke(composeColor: Color): IconModifier = stroke(composeColor.toIconsColor())
 
 @ExperimentalJewelApi
 @ApiStatus.Experimental
+/**
+ * Adds a badge to this icon using a Compose [color], with configurable [shape], [align], [cutout], and [modifier].
+ *
+ * @param color The Compose color for the badge.
+ * @param shape The shape of the badge. Defaults to a small circle.
+ * @param align Where to position the badge. Defaults to [IconAlign.TopRight].
+ * @param cutout The size of the cutout carved into the icon beneath the badge.
+ * @param modifier Additional icon modifier to apply to the badge.
+ */
 public fun IconDesigner.badge(
     color: Color,
     shape: Shape = circle(2.8.dp),
@@ -67,6 +89,9 @@ public fun IconDesigner.badge(
 
 @ExperimentalJewelApi
 @ApiStatus.Experimental
+/**
+ * Converts this IntelliJ Platform [ColorFilter] to a Compose [ColorFilter][androidx.compose.ui.graphics.ColorFilter].
+ */
 public fun ColorFilter.toCompose(): androidx.compose.ui.graphics.ColorFilter =
     when (this) {
         is TintColorFilter -> androidx.compose.ui.graphics.ColorFilter.tint(color.toCompose(), blendMode.toCompose())
@@ -75,6 +100,7 @@ public fun ColorFilter.toCompose(): androidx.compose.ui.graphics.ColorFilter =
 
 @ExperimentalJewelApi
 @ApiStatus.Experimental
+/** Converts this IntelliJ Platform Icons [Color][com.intellij.platform.icons.design.Color] to a Compose [Color]. */
 public fun com.intellij.platform.icons.design.Color.toCompose(): Color =
     when (this) {
         is DefaultSRGB -> Color(red, green, blue, alpha)
@@ -83,6 +109,10 @@ public fun com.intellij.platform.icons.design.Color.toCompose(): Color =
 
 @ExperimentalJewelApi
 @ApiStatus.Experimental
+/**
+ * Converts this IntelliJ Platform Icons [BlendMode][com.intellij.platform.icons.design.BlendMode] to a Compose
+ * [BlendMode].
+ */
 public fun com.intellij.platform.icons.design.BlendMode.toCompose(): BlendMode =
     when (this) {
         com.intellij.platform.icons.design.BlendMode.SrcIn -> BlendMode.SrcIn
@@ -95,6 +125,10 @@ public fun com.intellij.platform.icons.design.BlendMode.toCompose(): BlendMode =
 
 @ExperimentalJewelApi
 @ApiStatus.Experimental
+/**
+ * Converts this Compose [BlendMode] to the equivalent IntelliJ Platform Icons
+ * [BlendMode][com.intellij.platform.icons.design.BlendMode].
+ */
 public fun BlendMode.toIconsBlendMode(): com.intellij.platform.icons.design.BlendMode =
     when (this) {
         BlendMode.SrcIn -> com.intellij.platform.icons.design.BlendMode.SrcIn
@@ -108,4 +142,5 @@ public fun BlendMode.toIconsBlendMode(): com.intellij.platform.icons.design.Blen
 
 @ExperimentalJewelApi
 @ApiStatus.Experimental
+/** Converts this Compose [Color] to an IntelliJ Platform Icons [Color][com.intellij.platform.icons.design.Color]. */
 public fun Color.toIconsColor(): com.intellij.platform.icons.design.Color = DefaultSRGB(red, green, blue, alpha)

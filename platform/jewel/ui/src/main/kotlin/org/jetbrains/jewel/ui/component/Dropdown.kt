@@ -198,7 +198,10 @@ public fun Dropdown(
 @ApiStatus.Experimental
 @Immutable
 @JvmInline
-public value class DropdownState(public val state: ULong) : FocusableComponentState {
+public value class DropdownState(
+    /** The raw bit mask encoding all active state flags. */
+    public val state: ULong
+) : FocusableComponentState {
     override val isActive: Boolean
         get() = state and Active != 0UL
 
@@ -214,6 +217,7 @@ public value class DropdownState(public val state: ULong) : FocusableComponentSt
     override val isPressed: Boolean
         get() = state and Pressed != 0UL
 
+    /** Returns a copy of this [DropdownState] with the given fields replaced by their new values. */
     public fun copy(
         enabled: Boolean = isEnabled,
         focused: Boolean = isFocused,
@@ -226,7 +230,9 @@ public value class DropdownState(public val state: ULong) : FocusableComponentSt
         "${javaClass.simpleName}(isEnabled=$isEnabled, isFocused=$isFocused, " +
             "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
 
+    /** Companion object for [DropdownState]. */
     public companion object {
+        /** Constructs a [DropdownState] from individual flags. */
         public fun of(
             enabled: Boolean = true,
             focused: Boolean = false,

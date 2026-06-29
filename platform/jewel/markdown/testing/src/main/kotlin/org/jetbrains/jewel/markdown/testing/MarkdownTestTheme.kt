@@ -45,6 +45,7 @@ import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
 import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 import org.jetbrains.jewel.ui.component.styling.TrackClickBehavior
 
+/** Applies a minimal test theme for Markdown rendering tests, providing stub styles and a [NoOpCodeHighlighter]. */
 @Composable
 fun MarkdownTestTheme(content: @Composable () -> Unit) {
     CompositionLocalProvider(
@@ -57,9 +58,11 @@ fun MarkdownTestTheme(content: @Composable () -> Unit) {
     }
 }
 
+/** Creates a minimal [DividerStyle] with a 1dp black line for use in Markdown rendering tests. */
 fun createMarkdownTestDividerStyle() =
     DividerStyle(color = Color.Black, metrics = DividerMetrics(thickness = 1.dp, startIndent = 0.dp))
 
+/** Creates a minimal [ScrollbarStyle] with stub colors and metrics for use in Markdown rendering tests. */
 fun createMarkdownTestScrollbarStyle() =
     ScrollbarStyle(
         colors =
@@ -91,6 +94,7 @@ fun createMarkdownTestScrollbarStyle() =
             ),
     )
 
+/** Creates a minimal [ThemeDefinition] with stub colors and metrics for use in Markdown rendering tests. */
 fun createMarkdownTestThemeDefinition(): ThemeDefinition =
     ThemeDefinition(
         name = "Test",

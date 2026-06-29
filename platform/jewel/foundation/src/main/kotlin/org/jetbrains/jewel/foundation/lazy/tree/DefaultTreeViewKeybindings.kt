@@ -11,7 +11,9 @@ import org.jetbrains.jewel.foundation.lazy.DefaultSelectableColumnKeybindings
 import org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings
 import org.jetbrains.skiko.hostOs
 
+/** Default [TreeViewKeybindings]: left/right arrows collapse/expand nodes; F2 edits. */
 public open class DefaultTreeViewKeybindings : DefaultSelectableColumnKeybindings(), TreeViewKeybindings {
+    /** The default singleton instance. */
     public companion object : DefaultTreeViewKeybindings()
 
     override val KeyEvent.isSelectParent: Boolean
@@ -32,10 +34,12 @@ public open class DefaultTreeViewKeybindings : DefaultSelectableColumnKeybinding
     override val KeyEvent.isSelectPreviousSibling: Boolean
         get() = false
 
+    /** Whether the event triggers an inline edit action (F2). */
     override val KeyEvent.isEdit: Boolean
         get() = key == Key.F2 && !isContiguousSelectionKeyPressed
 }
 
+/** Extends [SelectableColumnKeybindings] with tree-specific navigation: expand/collapse and sibling traversal. */
 public interface TreeViewKeybindings : SelectableColumnKeybindings {
     /** Select Parent Node. */
     public val KeyEvent.isSelectParent: Boolean
@@ -56,6 +60,7 @@ public interface TreeViewKeybindings : SelectableColumnKeybindings {
     public val KeyEvent.isSelectPreviousSibling: Boolean
 }
 
+/** Default click modifier handler that uses Ctrl on Windows/Linux and Meta (⌘) on macOS. */
 @Suppress("unused")
 public val DefaultWindowsTreeViewClickModifierHandler: TreeViewClickModifierHandler
     get() = {
@@ -66,9 +71,12 @@ public val DefaultWindowsTreeViewClickModifierHandler: TreeViewClickModifierHand
         }
     }
 
+/** Function type for determining whether a pointer event's modifier keys constitute a multi-selection click. */
 public typealias TreeViewClickModifierHandler = PointerKeyboardModifiers.() -> Boolean
 
+/** [DefaultTreeViewKeybindings] for macOS, overriding the multi-selection modifier to `Meta` (⌘). */
 public open class DefaultMacOsTreeColumnKeybindings : DefaultTreeViewKeybindings() {
+    /** The default singleton instance for macOS. */
     public companion object : DefaultMacOsTreeColumnKeybindings()
 
     override val KeyEvent.isMultiSelectionKeyPressed: Boolean

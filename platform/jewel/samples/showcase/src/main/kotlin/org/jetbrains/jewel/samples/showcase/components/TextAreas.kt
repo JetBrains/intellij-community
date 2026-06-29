@@ -33,6 +33,7 @@ private const val LOREM_IPSUM =
         "Duis ultricies, mauris in aliquam interdum, orci nulla finibus massa, a tristique urna sapien vel quam. \n" +
         "Sed nec sapien nec dui rhoncus bibendum. Sed blandit bibendum libero."
 
+/** Showcases the [TextArea] component. */
 @Composable
 public fun TextAreas(modifier: Modifier = Modifier) {
     VerticallyScrollableContainer(modifier.fillMaxSize()) {

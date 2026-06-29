@@ -62,6 +62,7 @@ public class ScrollbarStyle(
             ")"
     }
 
+    /** Companion object for [ScrollbarStyle]. */
     public companion object
 }
 
@@ -151,6 +152,7 @@ public class ScrollbarColors(
             "trackOpaqueBackgroundHovered=$trackOpaqueBackgroundHovered" +
             ")"
 
+    /** Companion object for [ScrollbarColors]. */
     public companion object
 }
 
@@ -184,6 +186,7 @@ public class ScrollbarMetrics(public val thumbCornerSize: CornerSize, public val
     override fun toString(): String =
         "ScrollbarMetrics(thumbCornerSize=$thumbCornerSize, minThumbLength=$minThumbLength)"
 
+    /** Companion object for [ScrollbarMetrics]. */
     public companion object
 }
 
@@ -221,6 +224,7 @@ public sealed interface ScrollbarVisibility {
      */
     public val lingerDuration: Duration
 
+    /** Companion object for [ScrollbarVisibility]. */
     public companion object
 
     /**
@@ -244,6 +248,10 @@ public sealed interface ScrollbarVisibility {
      * @param trackColorAnimationDuration The duration for the track color animation.
      * @param scrollbarBackgroundColorLight The background color in light theme.
      * @param scrollbarBackgroundColorDark The background color in dark theme.
+     * @param trackThicknessExpanded The thickness of the track when expanded. Defaults to [trackThickness].
+     * @param trackPaddingExpanded The padding around the track when expanded. Defaults to [trackPadding].
+     * @param expandAnimationDuration The duration of the expand animation. Defaults to 0ms (no animation).
+     * @param lingerDuration How long the scrollbar lingers after scrolling stops. Defaults to 0ms.
      */
     @GenerateDataFunctions
     public class AlwaysVisible(
@@ -334,6 +342,7 @@ public sealed interface ScrollbarVisibility {
                 ")"
         }
 
+        /** Companion object for [AlwaysVisible]. */
         public companion object
     }
 
@@ -412,6 +421,7 @@ public sealed interface ScrollbarVisibility {
                 ")"
         }
 
+        /** Companion object for [WhenScrolling]. */
         public companion object
     }
 }

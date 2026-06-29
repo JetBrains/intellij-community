@@ -28,6 +28,7 @@ import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextField
 import org.jetbrains.jewel.ui.component.VerticalSplitLayout
 
+/** Showcases the [HorizontalSplitLayout] and [VerticalSplitLayout] components. */
 @Composable
 public fun SplitLayouts(
     outerSplitState: SplitLayoutState,

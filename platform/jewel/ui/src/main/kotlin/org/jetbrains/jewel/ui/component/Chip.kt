@@ -313,9 +313,13 @@ private fun ChipImpl(
     }
 }
 
+/** Encodes the enabled, focused, selected, hovered, pressed, and active states of a chip as a bit mask. */
 @Immutable
 @JvmInline
-public value class ChipState(public val state: ULong) : FocusableComponentState, SelectableComponentState {
+public value class ChipState(
+    /** The raw bit mask encoding all interaction states. */
+    public val state: ULong
+) : FocusableComponentState, SelectableComponentState {
     override val isActive: Boolean
         get() = state and Active != 0UL
 
@@ -334,6 +338,7 @@ public value class ChipState(public val state: ULong) : FocusableComponentState,
     override val isPressed: Boolean
         get() = state and Pressed != 0UL
 
+    /** Returns a copy of this [ChipState] with the given fields replaced by their new values. */
     public fun copy(
         enabled: Boolean = isEnabled,
         focused: Boolean = isFocused,
@@ -355,7 +360,9 @@ public value class ChipState(public val state: ULong) : FocusableComponentState,
         "ChipState(isEnabled=$isEnabled, isFocused=$isFocused, isSelected=$isSelected, " +
             "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
 
+    /** Companion object for [ChipState]. */
     public companion object {
+        /** Constructs a [ChipState] from individual flags. */
         public fun of(
             enabled: Boolean = true,
             focused: Boolean = false,

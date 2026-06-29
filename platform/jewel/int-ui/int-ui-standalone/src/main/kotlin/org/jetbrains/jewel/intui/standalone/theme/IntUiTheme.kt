@@ -236,6 +236,10 @@ public fun JewelTheme.Companion.darkThemeDefinition(
         disabledAppearanceValues,
     )
 
+/**
+ * Creates the default Int UI [ComponentStyling] by automatically selecting the light or dark variant based on the
+ * current theme.
+ */
 @Composable
 public fun ComponentStyling.default(): ComponentStyling = with {
     // It's ok to use isDark here instead of instanceUuid, since we're building
@@ -260,6 +264,7 @@ public fun ComponentStyling.default(): ComponentStyling = with {
     }
 }
 
+/** Creates an Int UI dark [ComponentStyling] with the provided parameters. */
 @Suppress("UnusedReceiverParameter")
 public fun ComponentStyling.dark(
     checkboxStyle: CheckboxStyle = CheckboxStyle.dark(),
@@ -852,6 +857,7 @@ public fun ComponentStyling.dark(
         gotItButtonStyle = ButtonStyle.GotIt.dark(),
     )
 
+/** Creates an Int UI light [ComponentStyling] with the provided parameters. */
 @Suppress("UnusedReceiverParameter")
 public fun ComponentStyling.light(
     checkboxStyle: CheckboxStyle = CheckboxStyle.light(),
@@ -1444,6 +1450,7 @@ public fun ComponentStyling.light(
         gotItButtonStyle = ButtonStyle.GotIt.light(),
     )
 
+/** Applies the Int UI standalone theme with automatically selected light or dark component styling. */
 @Composable
 public fun IntUiTheme(isDark: Boolean = false, swingCompatMode: Boolean = false, content: @Composable () -> Unit) {
     // It's ok to use isDark here instead of instanceUuid, since we're building
@@ -1465,6 +1472,7 @@ public fun IntUiTheme(isDark: Boolean = false, swingCompatMode: Boolean = false,
     )
 }
 
+/** Applies the Int UI standalone theme using the given [ThemeDefinition] and [ComponentStyling]. */
 @Composable
 public fun IntUiTheme(
     theme: ThemeDefinition,

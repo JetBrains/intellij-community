@@ -11,12 +11,19 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
+/**
+ * Combines styling for all severity variants (information, success, warning, error) of the default banner component.
+ */
 @Stable
 @GenerateDataFunctions
 public class DefaultBannerStyles(
+    /** The style for the information severity variant. */
     public val information: DefaultBannerStyle,
+    /** The style for the success severity variant. */
     public val success: DefaultBannerStyle,
+    /** The style for the warning severity variant. */
     public val warning: DefaultBannerStyle,
+    /** The style for the error severity variant. */
     public val error: DefaultBannerStyle,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -50,12 +57,19 @@ public class DefaultBannerStyles(
             ")"
     }
 
+    /** Companion object for [DefaultBannerStyles]. */
     public companion object
 }
 
+/** Combines the colors and metrics that style a single-severity default banner component. */
 @Stable
 @GenerateDataFunctions
-public class DefaultBannerStyle(public val colors: BannerColors, public val metrics: BannerMetrics) {
+public class DefaultBannerStyle(
+    /** The color tokens for the banner. */
+    public val colors: BannerColors,
+    /** The geometric and spacing properties for the banner. */
+    public val metrics: BannerMetrics,
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -76,15 +90,21 @@ public class DefaultBannerStyle(public val colors: BannerColors, public val metr
 
     override fun toString(): String = "DefaultBannerStyle(colors=$colors, metrics=$metrics)"
 
+    /** Companion object for [DefaultBannerStyle]. */
     public companion object
 }
 
+/** Combines styling for all severity variants (information, success, warning, error) of the inline banner component. */
 @Stable
 @GenerateDataFunctions
 public class InlineBannerStyles(
+    /** The style for the information severity variant. */
     public val information: InlineBannerStyle,
+    /** The style for the success severity variant. */
     public val success: InlineBannerStyle,
+    /** The style for the warning severity variant. */
     public val warning: InlineBannerStyle,
+    /** The style for the error severity variant. */
     public val error: InlineBannerStyle,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -118,12 +138,19 @@ public class InlineBannerStyles(
             ")"
     }
 
+    /** Companion object for [InlineBannerStyles]. */
     public companion object
 }
 
+/** Combines the colors and metrics that style a single-severity inline banner component. */
 @Stable
 @GenerateDataFunctions
-public class InlineBannerStyle(public val colors: BannerColors, public val metrics: BannerMetrics) {
+public class InlineBannerStyle(
+    /** The color tokens for the banner. */
+    public val colors: BannerColors,
+    /** The geometric and spacing properties for the banner. */
+    public val metrics: BannerMetrics,
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -144,12 +171,19 @@ public class InlineBannerStyle(public val colors: BannerColors, public val metri
 
     override fun toString(): String = "InlineBannerStyle(colors=$colors, metrics=$metrics)"
 
+    /** Companion object for [InlineBannerStyle]. */
     public companion object
 }
 
+/** Holds color tokens for the banner component, covering background and border colors. */
 @Immutable
 @GenerateDataFunctions
-public class BannerColors(public val background: Color, public val border: Color) {
+public class BannerColors(
+    /** The background color. */
+    public val background: Color,
+    /** The border color. */
+    public val border: Color,
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -170,6 +204,7 @@ public class BannerColors(public val background: Color, public val border: Color
 
     override fun toString(): String = "BannerColors(background=$background, border=$border)"
 
+    /** Companion object for [BannerColors]. */
     public companion object
 }
 
@@ -183,8 +218,11 @@ public class BannerColors(public val background: Color, public val border: Color
 @Stable
 @GenerateDataFunctions
 public class BannerMetrics(
+    /** The width of the banner's border stroke. */
     public val borderWidth: Dp,
+    /** The corner radius applied to the banner's shape. */
     public val cornerSize: CornerSize,
+    /** The internal padding applied to the banner's content area. */
     public val padding: PaddingValues,
 ) {
     @Deprecated(
@@ -216,13 +254,16 @@ public class BannerMetrics(
     override fun toString(): String =
         "BannerMetrics(" + "borderWidth=$borderWidth, " + "cornerSize=$cornerSize, " + "padding=$padding" + ")"
 
+    /** Companion object for [BannerMetrics]. */
     public companion object
 }
 
+/** CompositionLocal providing the [DefaultBannerStyles] for the current theme. */
 public val LocalDefaultBannerStyle: ProvidableCompositionLocal<DefaultBannerStyles> = staticCompositionLocalOf {
     error("No DefaultBannerStyle provided. Have you forgotten the theme?")
 }
 
+/** CompositionLocal providing the [InlineBannerStyles] for the current theme. */
 public val LocalInlineBannerStyle: ProvidableCompositionLocal<InlineBannerStyles> = staticCompositionLocalOf {
     error("No InlineBannerStyle provided. Have you forgotten the theme?")
 }

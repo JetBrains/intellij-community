@@ -69,6 +69,7 @@ public class GlobalColors(
             "toolwindowBackground=$toolwindowBackground" +
             ")"
 
+    /** Companion object for [GlobalColors]. */
     public companion object
 }
 
@@ -138,6 +139,7 @@ public class TextColors(
         "TextColors(normal=$normal, selected=$selected, disabled=$disabled, disabledSelected=$disabledSelected, " +
             "info=$info, error=$error, warning=$warning)"
 
+    /** Companion object for [TextColors]. */
     public companion object
 }
 
@@ -173,6 +175,7 @@ public class BorderColors(public val normal: Color, public val focused: Color, p
 
     override fun toString(): String = "BorderColors(normal=$normal, focused=$focused, disabled=$disabled)"
 
+    /** Companion object for [BorderColors]. */
     public companion object
 }
 
@@ -227,6 +230,7 @@ public class OutlineColors(
             "error=$error" +
             ")"
 
+    /** Companion object for [OutlineColors]. */
     public companion object
 }
 

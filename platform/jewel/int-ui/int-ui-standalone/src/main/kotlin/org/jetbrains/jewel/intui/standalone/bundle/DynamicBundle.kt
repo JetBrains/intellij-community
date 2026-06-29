@@ -49,9 +49,11 @@ public open class DynamicBundle(bundleClass: Class<*>, private val pathToBundle:
 
     private val cache = ConcurrentHashMap<String, ResourceBundle>()
 
+    /** Returns the localized message for [key], substituting any [params] into the format pattern. */
     public fun getMessage(key: @NonNls String, vararg params: Any?): @Nls String =
         @Suppress("HardCodedStringLiteral") getResourceBundle().messageOrDefault(key, params = params)
 
+    /** Returns a lazy [Supplier] that retrieves the localized message for [key] with optional [params] on demand. */
     public fun getLazyMessage(key: @NonNls String, vararg params: Any?): Supplier<@Nls String> = Supplier {
         getMessage(key, params = params)
     }
@@ -82,6 +84,7 @@ public open class DynamicBundle(bundleClass: Class<*>, private val pathToBundle:
             }
         }
 
+    /** Companion object for [DynamicBundle]. */
     public companion object {
         @Suppress("HardCodedStringLiteral")
         internal fun postprocessValue(

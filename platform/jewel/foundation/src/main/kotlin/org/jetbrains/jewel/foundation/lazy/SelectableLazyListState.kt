@@ -15,14 +15,18 @@ import org.jetbrains.jewel.foundation.util.JewelLogger
 
 private val logger = JewelLogger.getInstance(SelectableLazyListState::class.java)
 
+/** The index range of currently visible items in this [LazyListState]. */
 @Suppress("unused")
 public val LazyListState.visibleItemsRange: IntRange
     get() = firstVisibleItemIndex until firstVisibleItemIndex + layoutInfo.visibleItemsInfo.size
 
+/** The index range of currently visible items in this [SelectableLazyListState]. */
 public val SelectableLazyListState.visibleItemsRange: IntRange
     get() = firstVisibleItemIndex until firstVisibleItemIndex + layoutInfo.visibleItemsInfo.size
 
+/** Exposes mutable [selectedKeys] to composables and state holders managing a selectable list. */
 public interface SelectableScope {
+    /** The set of keys currently selected in the list. */
     public var selectedKeys: Set<Any>
 }
 
@@ -63,8 +67,10 @@ public constructor(
     /** Flag indicating whether the user is currently navigating via keyboard */
     public var isKeyboardNavigating: Boolean by mutableStateOf(false)
 
+    /** The set of keys currently selected in the list. */
     override var selectedKeys: Set<Any> by mutableStateOf(initialSelectedKeys)
 
+    /** The index of the last item that was made active, or null if no item has been activated yet. */
     public var lastActiveItemIndex: Int? = null
 
     /**
@@ -90,6 +96,7 @@ public constructor(
         lastActiveItemIndex = itemIndex
     }
 
+    /** Layout information about the currently visible items and overall list state. */
     public val layoutInfo: LazyListLayoutInfo
         get() = lazyListState.layoutInfo
 
@@ -113,6 +120,10 @@ public constructor(
         get() = lazyListState.interactionSource
 }
 
+/**
+ * Type-safe state holder for single-selection lazy lists, enforcing [SelectionMode.Single] semantics. Delegates scroll
+ * and layout to an underlying [SelectableLazyListState].
+ */
 public class SingleSelectionLazyListState internal constructor(internal val delegate: SelectableLazyListState) :
     ScrollableState by delegate, SelectableScope {
     /**
@@ -138,12 +149,15 @@ public class SingleSelectionLazyListState internal constructor(internal val dele
         )
     )
 
+    /** The underlying [LazyListState] used for scroll and layout. */
     public val lazyListState: LazyListState
         get() = delegate.lazyListState
 
+    /** The selection mode, always [SelectionMode.Single] for this state. */
     public val selectionMode: SelectionMode
         get() = SelectionMode.Single
 
+    /** The set of keys currently selected; enforces at most one key. */
     override var selectedKeys: Set<Any>
         get() = delegate.selectedKeys
         set(value) {
@@ -156,36 +170,56 @@ public class SingleSelectionLazyListState internal constructor(internal val dele
             delegate.selectedKeys = if (value.isEmpty()) emptySet() else setOf(value.first())
         }
 
+    /** Whether the user is currently navigating via keyboard. */
     public var isKeyboardNavigating: Boolean
         get() = delegate.isKeyboardNavigating
         set(value) {
             delegate.isKeyboardNavigating = value
         }
 
+    /** The index of the last item that was made active, or null if no item has been activated yet. */
     public var lastActiveItemIndex: Int?
         get() = delegate.lastActiveItemIndex
         set(value) {
             delegate.lastActiveItemIndex = value
         }
 
+    /**
+     * Scrolls to the item at [itemIndex], optionally animating and applying a [scrollOffset].
+     *
+     * @param itemIndex The index of the item to scroll to.
+     * @param animateScroll Whether to animate the scroll. Defaults to `false`.
+     * @param scrollOffset Offset from the start of the item. Defaults to `0`.
+     */
     public suspend fun scrollToItem(itemIndex: Int, animateScroll: Boolean = false, scrollOffset: Int = 0) {
         delegate.scrollToItem(itemIndex, animateScroll, scrollOffset)
     }
 
+    /** Layout information about the currently visible items and overall list state. */
     public val layoutInfo: LazyListLayoutInfo
         get() = delegate.layoutInfo
 
+    /** The index of the first item that is visible. */
     public val firstVisibleItemIndex: Int
         get() = delegate.firstVisibleItemIndex
 
+    /** The scroll offset of the first visible item. */
     @Suppress("unused")
     public val firstVisibleItemScrollOffset: Int
         get() = delegate.firstVisibleItemScrollOffset
 
+    /**
+     * [InteractionSource] that will be used to dispatch drag events when this list is being dragged. If you want to
+     * know whether the fling (or animated scroll) is in progress, use [isScrollInProgress].
+     */
     public val interactionSource: InteractionSource
         get() = delegate.interactionSource
 }
 
+/**
+ * Type-safe state holder for multi-selection lazy lists, enforcing [SelectionMode.Multiple] semantics. Delegates scroll
+ * and layout to an underlying [SelectableLazyListState].
+ */
 public class MultiSelectionLazyListState internal constructor(internal val delegate: SelectableLazyListState) :
     ScrollableState by delegate, SelectableScope {
     /**
@@ -211,44 +245,63 @@ public class MultiSelectionLazyListState internal constructor(internal val deleg
         )
     )
 
+    /** The underlying [LazyListState] used for scroll and layout. */
     public val lazyListState: LazyListState
         get() = delegate.lazyListState
 
+    /** The selection mode, always [SelectionMode.Multiple] for this state. */
     public val selectionMode: SelectionMode
         get() = SelectionMode.Multiple
 
+    /** The set of keys currently selected in the list. */
     override var selectedKeys: Set<Any>
         get() = delegate.selectedKeys
         set(value) {
             delegate.selectedKeys = value
         }
 
+    /** Whether the user is currently navigating via keyboard. */
     public var isKeyboardNavigating: Boolean
         get() = delegate.isKeyboardNavigating
         set(value) {
             delegate.isKeyboardNavigating = value
         }
 
+    /** The index of the last item that was made active, or null if no item has been activated yet. */
     public var lastActiveItemIndex: Int?
         get() = delegate.lastActiveItemIndex
         set(value) {
             delegate.lastActiveItemIndex = value
         }
 
+    /**
+     * Scrolls to the item at [itemIndex], optionally animating and applying a [scrollOffset].
+     *
+     * @param itemIndex The index of the item to scroll to.
+     * @param animateScroll Whether to animate the scroll. Defaults to `false`.
+     * @param scrollOffset Offset from the start of the item. Defaults to `0`.
+     */
     public suspend fun scrollToItem(itemIndex: Int, animateScroll: Boolean = false, scrollOffset: Int = 0) {
         delegate.scrollToItem(itemIndex, animateScroll, scrollOffset)
     }
 
+    /** Layout information about the currently visible items and overall list state. */
     public val layoutInfo: LazyListLayoutInfo
         get() = delegate.layoutInfo
 
+    /** The index of the first item that is visible. */
     public val firstVisibleItemIndex: Int
         get() = delegate.firstVisibleItemIndex
 
+    /** The scroll offset of the first visible item. */
     @Suppress("unused")
     public val firstVisibleItemScrollOffset: Int
         get() = delegate.firstVisibleItemScrollOffset
 
+    /**
+     * [InteractionSource] that will be used to dispatch drag events when this list is being dragged. If you want to
+     * know whether the fling (or animated scroll) is in progress, use [isScrollInProgress].
+     */
     public val interactionSource: InteractionSource
         get() = delegate.interactionSource
 }
@@ -292,8 +345,15 @@ public sealed class SelectableLazyListKey {
     override fun hashCode(): Int = key.hashCode()
 }
 
+/** Extends [LazyItemScope] with [isSelected] and [isActive] flags for items inside a selectable lazy column. */
 public interface SelectableLazyItemScope : LazyItemScope {
+    /** Whether this item is currently selected. */
     public val isSelected: Boolean
+
+    /**
+     * Whether this item's parent list is currently focused. This reflects the list-wide focus state and is the same for
+     * every item in the list.
+     */
     public val isActive: Boolean
 }
 

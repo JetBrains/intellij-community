@@ -37,6 +37,7 @@ import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.foundation.theme.LocalTextStyle
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle
 
+/** Scope for content composables placed inside a segmented control button. */
 public interface SegmentedControlButtonScope
 
 internal class SegmentedControlButtonScopeContainer : SegmentedControlButtonScope
@@ -118,9 +119,13 @@ internal fun SegmentedControlButton(
     }
 }
 
+/** Encodes the selected, enabled, pressed, hovered, and active states of a segmented control button as a bit mask. */
 @Immutable
 @JvmInline
-public value class SegmentedControlButtonState(public val state: ULong) : SelectableComponentState {
+public value class SegmentedControlButtonState(
+    /** The raw bit mask encoding all state flags. */
+    public val state: ULong
+) : SelectableComponentState {
 
     override val isActive: Boolean
         get() = state and Active != 0UL
@@ -137,6 +142,7 @@ public value class SegmentedControlButtonState(public val state: ULong) : Select
     override val isPressed: Boolean
         get() = state and Pressed != 0UL
 
+    /** Returns a copy of this [SegmentedControlButtonState] with the given fields replaced by their new values. */
     public fun copy(
         selected: Boolean = isSelected,
         enabled: Boolean = isEnabled,
@@ -150,8 +156,10 @@ public value class SegmentedControlButtonState(public val state: ULong) : Select
         "${javaClass.simpleName}(isSelected=$isSelected, isEnabled=$isEnabled, " +
             "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
 
+    /** Companion object for [SegmentedControlButtonState]. */
     public companion object {
 
+        /** Constructs a [SegmentedControlButtonState] from individual flags. */
         public fun of(
             selected: Boolean,
             enabled: Boolean = true,

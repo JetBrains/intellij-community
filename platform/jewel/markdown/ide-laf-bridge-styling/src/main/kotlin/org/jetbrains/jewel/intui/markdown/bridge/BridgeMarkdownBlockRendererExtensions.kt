@@ -10,6 +10,10 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 import org.jetbrains.jewel.markdown.rendering.create
 
+/**
+ * Creates a [MarkdownBlockRenderer] backed by a [DefaultMarkdownBlockRenderer], using the current IntelliJ LaF theme
+ * for default styling.
+ */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun MarkdownBlockRenderer.Companion.create(

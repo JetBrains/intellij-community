@@ -11,11 +11,15 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
+/** Combines color and size/spacing metrics for styling the popup container component. */
 @Stable
 @GenerateDataFunctions
 public class PopupContainerStyle(
+    /** Whether the popup container is using a dark color scheme. */
     public val isDark: Boolean,
+    /** The color tokens for the popup container. */
     public val colors: PopupContainerColors,
+    /** The size and spacing metrics for the popup container. */
     public val metrics: PopupContainerMetrics,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -40,12 +44,21 @@ public class PopupContainerStyle(
 
     override fun toString(): String = "PopupContainerStyle(isDark=$isDark, colors=$colors, metrics=$metrics)"
 
+    /** Companion object for [PopupContainerStyle]. */
     public companion object
 }
 
+/** Holds color tokens for the popup container component, covering its background, border, and shadow. */
 @Immutable
 @GenerateDataFunctions
-public class PopupContainerColors(public val background: Color, public val border: Color, public val shadow: Color) {
+public class PopupContainerColors(
+    /** The background color. */
+    public val background: Color,
+    /** The border color. */
+    public val border: Color,
+    /** The shadow color. */
+    public val shadow: Color,
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -68,17 +81,28 @@ public class PopupContainerColors(public val background: Color, public val borde
 
     override fun toString(): String = "PopupContainerColors(background=$background, border=$border, shadow=$shadow)"
 
+    /** Companion object for [PopupContainerColors]. */
     public companion object
 }
 
+/**
+ * Holds size and spacing metrics for the popup container component, including corner size, margins, padding, offset,
+ * shadow size, and border width.
+ */
 @Stable
 @GenerateDataFunctions
 public class PopupContainerMetrics(
+    /** The corner radius of the popup container. */
     public val cornerSize: CornerSize,
+    /** The outer margin around the popup menu. */
     public val menuMargin: PaddingValues,
+    /** The inner content padding of the popup container. */
     public val contentPadding: PaddingValues,
+    /** The positional offset applied to the popup. */
     public val offset: DpOffset,
+    /** The size of the drop shadow around the popup container. */
     public val shadowSize: Dp,
+    /** The width of the popup container border. */
     public val borderWidth: Dp,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -118,9 +142,11 @@ public class PopupContainerMetrics(
             ")"
     }
 
+    /** Companion object for [PopupContainerMetrics]. */
     public companion object
 }
 
+/** CompositionLocal providing the current [PopupContainerStyle]. */
 public val LocalPopupContainerStyle: ProvidableCompositionLocal<PopupContainerStyle> = staticCompositionLocalOf {
     error("No PopupContainerStyle provided. Have you forgotten the theme?")
 }

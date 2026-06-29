@@ -149,9 +149,11 @@ private fun TextUnit.scaledFrom(baseFontSize: TextUnit, requestedFontSize: TextU
         else -> this
     }
 
+/** CompositionLocal that provides the current [Typography] instance. */
 public val LocalTypography: ProvidableCompositionLocal<Typography> = staticCompositionLocalOf {
     error("No Typography provided. Have you forgotten the theme?")
 }
 
+/** The current [Typography] provided by the active Jewel theme. */
 public val JewelTheme.Companion.typography: Typography
     @Composable get() = LocalTypography.current

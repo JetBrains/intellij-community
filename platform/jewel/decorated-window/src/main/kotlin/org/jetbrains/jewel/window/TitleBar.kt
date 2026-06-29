@@ -60,6 +60,18 @@ internal const val TITLE_BAR_LAYOUT_ID = "__TITLE_BAR_CONTENT__"
 
 internal const val TITLE_BAR_BORDER_LAYOUT_ID = "__TITLE_BAR_BORDER__"
 
+/**
+ * Renders the title bar for a [DecoratedWindow], routing to the platform-specific implementation for macOS, Windows,
+ * and Linux. Content is laid out using [TitleBarScope.align] to position children at the start, center, or end of the
+ * bar.
+ *
+ * @param modifier The [Modifier] to apply to the title bar container.
+ * @param gradientStartColor An optional color used as the center point of a horizontal gradient blended with the
+ *   background. Use [Color.Unspecified] for a solid background.
+ * @param style The [TitleBarStyle] controlling the bar's visual appearance.
+ * @param content The composable content rendered inside the title bar, provided with the current
+ *   [DecoratedWindowState].
+ */
 @Composable
 public fun DecoratedWindowScope.TitleBar(
     modifier: Modifier = Modifier,
@@ -243,11 +255,18 @@ internal fun rememberTitleBarMeasurePolicy(
     applyTitleBar: (Dp, DecoratedWindowState) -> PaddingValues,
 ): MeasurePolicy = remember(window, state, applyTitleBar) { TitleBarMeasurePolicy(window, state, applyTitleBar) }
 
+/** Scope provided to content composables inside a title bar, exposing the window [title], [icon], and alignment. */
 public interface TitleBarScope {
     public val title: String
 
     public val icon: Painter?
 
+    /**
+     * Aligns this title bar child element horizontally to [Start][Alignment.Start], [End][Alignment.End], or
+     * [CenterHorizontally][Alignment.CenterHorizontally].
+     *
+     * @param alignment The horizontal alignment to apply to this element.
+     */
     @Stable public fun Modifier.align(alignment: Alignment.Horizontal): Modifier
 }
 

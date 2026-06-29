@@ -14,6 +14,7 @@ import org.jetbrains.jewel.ui.component.styling.SplitButtonStyle
 private val dividerPadding: Int
     get() = if (isNewUiTheme()) 4 else 1
 
+/** Reads the [SplitButtonStyle] for the outlined variant from the current IntelliJ JBUI theme values. */
 public fun readOutlinedSplitButtonStyle(): SplitButtonStyle =
     SplitButtonStyle(
         button = readOutlinedButtonStyle(),
@@ -26,6 +27,7 @@ public fun readOutlinedSplitButtonStyle(): SplitButtonStyle =
         metrics = SplitButtonMetrics(dividerMetrics = readDividerStyle().metrics, dividerPadding = dividerPadding.dp),
     )
 
+/** Reads the [SplitButtonStyle] for the default (filled) variant from the current IntelliJ JBUI theme values. */
 public fun readDefaultSplitButtonStyle(): SplitButtonStyle =
     SplitButtonStyle(
         button = readDefaultButtonStyle(),

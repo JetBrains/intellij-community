@@ -18,18 +18,21 @@ import org.jetbrains.jewel.ui.component.styling.SubmenuMetrics
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
+/** Creates an Int UI light [MenuStyle] with the provided parameters. */
 public fun MenuStyle.Companion.light(
     colors: MenuColors = MenuColors.light(),
     metrics: MenuMetrics = MenuMetrics.defaults(),
     icons: MenuIcons = MenuIcons.defaults(),
 ): MenuStyle = MenuStyle(isDark = false, colors, metrics, icons)
 
+/** Creates an Int UI dark [MenuStyle] with the provided parameters. */
 public fun MenuStyle.Companion.dark(
     colors: MenuColors = MenuColors.dark(),
     metrics: MenuMetrics = MenuMetrics.defaults(),
     icons: MenuIcons = MenuIcons.defaults(),
 ): MenuStyle = MenuStyle(isDark = true, colors, metrics, icons)
 
+/** Creates an Int UI light [MenuColors] with the provided parameters. */
 public fun MenuColors.Companion.light(
     background: Color = IntUiLightTheme.colors.gray(14),
     border: Color = IntUiLightTheme.colors.gray(9),
@@ -37,6 +40,7 @@ public fun MenuColors.Companion.light(
     itemColors: MenuItemColors = MenuItemColors.light(),
 ): MenuColors = MenuColors(background = background, border = border, shadow = shadow, itemColors = itemColors)
 
+/** Creates an Int UI dark [MenuColors] with the provided parameters. */
 public fun MenuColors.Companion.dark(
     background: Color = IntUiDarkTheme.colors.gray(2),
     border: Color = IntUiDarkTheme.colors.gray(3),
@@ -44,6 +48,7 @@ public fun MenuColors.Companion.dark(
     itemColors: MenuItemColors = MenuItemColors.dark(),
 ): MenuColors = MenuColors(background = background, border = border, shadow = shadow, itemColors = itemColors)
 
+/** Creates an Int UI light [MenuItemColors] with the provided parameters. */
 public fun MenuItemColors.Companion.light(
     background: Color = IntUiLightTheme.colors.gray(14),
     backgroundDisabled: Color = IntUiLightTheme.colors.gray(14),
@@ -91,6 +96,7 @@ public fun MenuItemColors.Companion.light(
         separator = separator,
     )
 
+/** Creates an Int UI dark [MenuItemColors] with the provided parameters. */
 public fun MenuItemColors.Companion.dark(
     background: Color = IntUiDarkTheme.colors.gray(2),
     backgroundDisabled: Color = IntUiDarkTheme.colors.gray(2),
@@ -138,6 +144,7 @@ public fun MenuItemColors.Companion.dark(
         keybindingTintHovered = keybindingTintHovered,
     )
 
+/** Creates an Int UI default [MenuMetrics] with the provided parameters. */
 public fun MenuMetrics.Companion.defaults(
     cornerSize: CornerSize = CornerSize(8.dp),
     menuMargin: PaddingValues = PaddingValues(vertical = 6.dp),
@@ -150,6 +157,7 @@ public fun MenuMetrics.Companion.defaults(
 ): MenuMetrics =
     MenuMetrics(cornerSize, menuMargin, contentPadding, offset, shadowSize, borderWidth, itemMetrics, submenuMetrics)
 
+/** Creates an Int UI default [MenuItemMetrics] with the provided parameters. */
 public fun MenuItemMetrics.Companion.defaults(
     selectionCornerSize: CornerSize = CornerSize(4.dp),
     outerPadding: PaddingValues = PaddingValues(horizontal = 6.dp),
@@ -173,8 +181,10 @@ public fun MenuItemMetrics.Companion.defaults(
         minHeight,
     )
 
+/** Creates an Int UI default [SubmenuMetrics] with the provided parameters. */
 public fun SubmenuMetrics.Companion.defaults(offset: DpOffset = DpOffset(0.dp, (-8).dp)): SubmenuMetrics =
     SubmenuMetrics(offset)
 
+/** Creates an Int UI default [MenuIcons] with the provided parameters. */
 public fun MenuIcons.Companion.defaults(submenuChevron: IconKey = AllIconsKeys.General.ChevronRight): MenuIcons =
     MenuIcons(submenuChevron)

@@ -44,6 +44,7 @@ public interface ScrollbarHelper {
      */
     public val scrollbarVisibilityStyle: ScrollbarVisibility
 
+    /** Delegates to the macOS-specific [StandaloneScrollbarHelper] on macOS, or a no-op dummy on other platforms. */
     public companion object : ScrollbarHelper by if (hostOs == OS.MacOS) scrollbarService else DummyScrollbarHelper
 }
 

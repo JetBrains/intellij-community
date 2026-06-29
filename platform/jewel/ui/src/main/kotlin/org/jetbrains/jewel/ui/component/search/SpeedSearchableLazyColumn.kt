@@ -211,9 +211,25 @@ internal class SpeedSearchableLazyColumnKeyActions(
     }
 }
 
+/**
+ * Defines the DSL scope for adding items to a [SpeedSearchableLazyColumn], associating each entry with its searchable
+ * text content.
+ */
 @ExperimentalJewelApi
 @ApiStatus.Experimental
 public interface SpeedSearchableLazyColumnScope {
+    /**
+     * Adds a list of items to the column, associating each item with its searchable text content.
+     *
+     * @param T The type of items in the list.
+     * @param items The list of items to display.
+     * @param textContent A function that returns the searchable text for a given item, or `null` if the item should not
+     *   be matched.
+     * @param key A function that returns a stable, unique key for a given item.
+     * @param contentType A function that returns the content type for a given item, used for composition reuse.
+     * @param selectable A function that returns whether a given item is selectable.
+     * @param itemContent The composable content for each item.
+     */
     public fun <T : Any> items(
         items: List<T>,
         textContent: (item: T) -> String?,
@@ -223,6 +239,16 @@ public interface SpeedSearchableLazyColumnScope {
         itemContent: @Composable SelectableLazyItemScope.(item: T) -> Unit,
     )
 
+    /**
+     * Adds a single item to the column, associating it with its searchable text content.
+     *
+     * @param key A stable, unique key for this item.
+     * @param textContent A function that returns the searchable text for this item, or `null` if the item should not be
+     *   matched.
+     * @param contentType The content type for this item, used for composition reuse.
+     * @param selectable Whether this item is selectable.
+     * @param content The composable content for this item.
+     */
     public fun item(
         key: Any,
         textContent: () -> String?,
@@ -231,6 +257,16 @@ public interface SpeedSearchableLazyColumnScope {
         content: @Composable (SelectableLazyItemScope.() -> Unit),
     )
 
+    /**
+     * Adds a sticky header item to the column, associating it with its searchable text content.
+     *
+     * @param key A stable, unique key for this header.
+     * @param textContent A function that returns the searchable text for this header, or `null` if the header should
+     *   not be matched.
+     * @param contentType The content type for this header, used for composition reuse.
+     * @param selectable Whether this header is selectable.
+     * @param content The composable content for this header.
+     */
     public fun stickyHeader(
         key: Any,
         textContent: () -> String?,

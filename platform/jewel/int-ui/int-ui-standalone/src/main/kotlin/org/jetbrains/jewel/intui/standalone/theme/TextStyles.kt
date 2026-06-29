@@ -436,6 +436,7 @@ private fun computeJetBrainsMonoLineHeightPx(@Px fontSize: Float): Int {
  */
 private const val EDITOR_LINE_HEIGHT_FACTOR = 0.87f
 
+/** The multiplier applied to the computed line height when creating an editor text style. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 @Suppress("ktlint:standard:property-naming", "TopLevelPropertyNaming")

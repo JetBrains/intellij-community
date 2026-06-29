@@ -20,6 +20,7 @@ public fun TooltipStyle.Companion.light(
         autoHideBehavior = TooltipAutoHideBehavior.Normal,
     )
 
+/** Creates an Int UI light [TooltipStyle] with the provided parameters. */
 public fun TooltipStyle.Companion.light(
     intUiTooltipColors: TooltipColors = TooltipColors.light(),
     intUiTooltipMetrics: TooltipMetrics = TooltipMetrics.defaults(regularDisappearDelay = 10000.milliseconds),
@@ -38,6 +39,7 @@ public fun TooltipStyle.Companion.dark(
         autoHideBehavior = TooltipAutoHideBehavior.Normal,
     )
 
+/** Creates an Int UI dark [TooltipStyle] with the provided parameters. */
 public fun TooltipStyle.Companion.dark(
     intUiTooltipColors: TooltipColors = TooltipColors.dark(),
     intUiTooltipMetrics: TooltipMetrics = TooltipMetrics.defaults(regularDisappearDelay = 10000.milliseconds),
@@ -45,6 +47,7 @@ public fun TooltipStyle.Companion.dark(
 ): TooltipStyle =
     TooltipStyle(colors = intUiTooltipColors, metrics = intUiTooltipMetrics, autoHideBehavior = autoHideBehavior)
 
+/** Creates an Int UI light [TooltipColors] with the provided parameters. */
 public fun TooltipColors.Companion.light(
     backgroundColor: Color = IntUiLightTheme.colors.gray(2),
     contentColor: Color = IntUiLightTheme.colors.gray(12),
@@ -52,6 +55,7 @@ public fun TooltipColors.Companion.light(
     shadow: Color = Color(0x78919191), // Not a palette color
 ): TooltipColors = TooltipColors(backgroundColor, contentColor, borderColor, shadow)
 
+/** Creates an Int UI dark [TooltipColors] with the provided parameters. */
 public fun TooltipColors.Companion.dark(
     backgroundColor: Color = IntUiDarkTheme.colors.gray(2),
     contentColor: Color = IntUiDarkTheme.colors.gray(12),

@@ -100,6 +100,7 @@ public class StandalonePainterHintsProvider(theme: ThemeDefinition) :
         add(Dark(JewelTheme.isDark))
     }
 
+    /** Companion object for [StandalonePainterHintsProvider]. */
     public companion object {
         // Extracted from com.intellij.ide.ui.UITheme#colorPalette
         private val intellijColorPalette =

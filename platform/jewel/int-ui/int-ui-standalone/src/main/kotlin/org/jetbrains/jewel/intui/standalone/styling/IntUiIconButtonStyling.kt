@@ -14,16 +14,19 @@ import org.jetbrains.jewel.ui.component.styling.IconButtonColors
 import org.jetbrains.jewel.ui.component.styling.IconButtonMetrics
 import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
 
+/** Creates an Int UI light [IconButtonStyle] with the provided parameters. */
 public fun IconButtonStyle.Companion.light(
     colors: IconButtonColors = IconButtonColors.light(),
     metrics: IconButtonMetrics = IconButtonMetrics.defaults(),
 ): IconButtonStyle = IconButtonStyle(colors, metrics)
 
+/** Creates an Int UI dark [IconButtonStyle] with the provided parameters. */
 public fun IconButtonStyle.Companion.dark(
     colors: IconButtonColors = IconButtonColors.dark(),
     metrics: IconButtonMetrics = IconButtonMetrics.defaults(),
 ): IconButtonStyle = IconButtonStyle(colors, metrics)
 
+/** Creates an Int UI light [IconButtonStyle] with a fully transparent background. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun IconButtonStyle.Companion.lightTransparentBackground(
@@ -31,6 +34,7 @@ public fun IconButtonStyle.Companion.lightTransparentBackground(
     metrics: IconButtonMetrics = IconButtonMetrics.defaults(),
 ): IconButtonStyle = IconButtonStyle(colors, metrics)
 
+/** Creates an Int UI dark [IconButtonStyle] with a fully transparent background. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun IconButtonStyle.Companion.darkTransparentBackground(
@@ -38,6 +42,7 @@ public fun IconButtonStyle.Companion.darkTransparentBackground(
     metrics: IconButtonMetrics = IconButtonMetrics.defaults(),
 ): IconButtonStyle = IconButtonStyle(colors, metrics)
 
+/** Creates an Int UI light [IconButtonColors] with the provided parameters. */
 public fun IconButtonColors.Companion.light(
     foregroundSelectedActivated: Color = IntUiLightTheme.colors.gray(14),
     background: Color = Color.Unspecified,
@@ -73,6 +78,7 @@ public fun IconButtonColors.Companion.light(
         borderHovered = borderHovered,
     )
 
+/** Creates an Int UI light [IconButtonColors] with a fully transparent background. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun IconButtonColors.Companion.lightTransparentBackground(
@@ -96,6 +102,7 @@ public fun IconButtonColors.Companion.lightTransparentBackground(
         borderHovered = Color.Transparent,
     )
 
+/** Creates an Int UI dark [IconButtonColors] with the provided parameters. */
 public fun IconButtonColors.Companion.dark(
     foregroundSelectedActivated: Color = IntUiDarkTheme.colors.gray(14),
     background: Color = Color.Unspecified,
@@ -131,6 +138,7 @@ public fun IconButtonColors.Companion.dark(
         borderHovered = borderHovered,
     )
 
+/** Creates an Int UI dark [IconButtonColors] with a fully transparent background. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun IconButtonColors.Companion.darkTransparentBackground(
@@ -154,6 +162,7 @@ public fun IconButtonColors.Companion.darkTransparentBackground(
         borderHovered = Color.Transparent,
     )
 
+/** Creates an Int UI default [IconButtonMetrics] with the provided parameters. */
 public fun IconButtonMetrics.Companion.defaults(
     cornerSize: CornerSize = CornerSize(4.dp),
     borderWidth: Dp = 1.dp,

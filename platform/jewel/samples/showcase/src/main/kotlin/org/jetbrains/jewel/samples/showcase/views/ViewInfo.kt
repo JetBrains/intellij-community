@@ -7,10 +7,14 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.skiko.hostOs
 
+/** Represents a platform-specific keyboard shortcut, with separate key sets for macOS, Windows, and Linux. */
 @GenerateDataFunctions
 public class KeyBinding(
+    /** The key set for macOS. */
     public val macOs: Set<String> = emptySet(),
+    /** The key set for Windows. */
     public val windows: Set<String> = emptySet(),
+    /** The key set for Linux. */
     public val linux: Set<String> = emptySet(),
 ) {
     override fun equals(other: Any?): Boolean {
@@ -35,9 +39,11 @@ public class KeyBinding(
 
     override fun toString(): String = "KeyBinding(macOs=$macOs, windows=$windows, linux=$linux)"
 
+    /** Companion object for [KeyBinding]. */
     public companion object
 }
 
+/** Returns the key set from this [KeyBinding] that corresponds to the current operating system. */
 public fun KeyBinding.forCurrentOs(): Set<String> =
     when {
         hostOs.isMacOS -> macOs
@@ -45,11 +51,19 @@ public fun KeyBinding.forCurrentOs(): Set<String> =
         else -> windows
     }
 
+/**
+ * Holds the metadata and composable content for a single showcase view entry, including its title, icon, optional
+ * keyboard shortcut, and the composable that renders the view.
+ */
 @GenerateDataFunctions
 public class ViewInfo(
+    /** The display title of the view. */
     public val title: String,
+    /** The icon key used to identify the view's icon. */
     public val iconKey: IconKey,
+    /** The optional keyboard shortcut associated with this view. */
     public val keyboardShortcut: KeyBinding? = null,
+    /** The composable that renders the view content. */
     public val content: @Composable () -> Unit,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -83,5 +97,6 @@ public class ViewInfo(
             ")"
     }
 
+    /** Companion object for [ViewInfo]. */
     public companion object
 }

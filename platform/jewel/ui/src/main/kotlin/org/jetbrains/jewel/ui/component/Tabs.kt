@@ -56,7 +56,13 @@ import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.theme.defaultTabStyle
 import org.jetbrains.jewel.ui.theme.editorTabStyle
 
+/** Scope provided to tab content composables, offering modifier extensions such as [tabContentAlpha]. */
 public interface TabContentScope {
+    /**
+     * Applies the tab content alpha from the current editor tab style to this [Modifier], based on [state].
+     *
+     * @param state The current [TabState] of the tab.
+     */
     @Composable
     public fun Modifier.tabContentAlpha(state: TabState): Modifier =
         alpha(JewelTheme.editorTabStyle.contentAlpha.contentFor(state).value)
@@ -64,6 +70,7 @@ public interface TabContentScope {
 
 internal class TabContentScopeContainer : TabContentScope
 
+/** Renders a simple tab content row with an optional [icon] painter and a text [label]. */
 @Composable
 public fun TabContentScope.SimpleTabContent(
     @Nls label: String,
@@ -79,6 +86,7 @@ public fun TabContentScope.SimpleTabContent(
     )
 }
 
+/** Renders a simple tab content row with an optional icon loaded from [iconKey] and a text [label]. */
 @Suppress("ComposableParamOrder") // It dislikes the vararg
 @Composable
 public fun TabContentScope.SimpleTabContent(
@@ -96,6 +104,7 @@ public fun TabContentScope.SimpleTabContent(
     )
 }
 
+/** Renders a simple tab content row with an optional composable [icon] slot and a composable [label] slot. */
 @Composable
 public fun TabContentScope.SimpleTabContent(
     state: TabState,
@@ -230,9 +239,13 @@ internal fun TabImpl(
     }
 }
 
+/** Encodes the visual state of a tab as a bit mask, including selected, enabled, hovered, pressed, and active flags. */
 @Immutable
 @JvmInline
-public value class TabState(public val state: ULong) : SelectableComponentState {
+public value class TabState(
+    /** The raw bit mask encoding all state flags for this tab. */
+    public val state: ULong
+) : SelectableComponentState {
     override val isActive: Boolean
         get() = state and Active != 0UL
 
@@ -248,6 +261,7 @@ public value class TabState(public val state: ULong) : SelectableComponentState 
     override val isPressed: Boolean
         get() = state and Pressed != 0UL
 
+    /** Returns a copy of this [TabState] with the given fields replaced by their new values. */
     public fun copy(
         selected: Boolean = isSelected,
         enabled: Boolean = isEnabled,
@@ -260,7 +274,9 @@ public value class TabState(public val state: ULong) : SelectableComponentState 
         "${javaClass.simpleName}(isSelected=$isSelected, isEnabled=$isEnabled, " +
             "isHovered=$isHovered, isPressed=$isPressed isActive=$isActive)"
 
+    /** Companion object for [TabState]. */
     public companion object {
+        /** Constructs a [TabState] from individual flags. */
         public fun of(
             selected: Boolean,
             enabled: Boolean = true,

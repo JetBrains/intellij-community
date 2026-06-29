@@ -42,6 +42,7 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Paragraph
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak
 
+/** Creates an Int UI light [MarkdownStyling]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun MarkdownStyling.Companion.light(
@@ -60,6 +61,7 @@ public fun MarkdownStyling.Companion.light(
 ): MarkdownStyling =
     MarkdownStyling(blockVerticalSpacing, paragraph, heading, blockQuote, code, list, image, thematicBreak, htmlBlock)
 
+/** Creates an Int UI dark [MarkdownStyling]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun MarkdownStyling.Companion.dark(
@@ -78,18 +80,21 @@ public fun MarkdownStyling.Companion.dark(
 ): MarkdownStyling =
     MarkdownStyling(blockVerticalSpacing, paragraph, heading, blockQuote, code, list, image, thematicBreak, htmlBlock)
 
+/** Creates an Int UI light [Paragraph]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Paragraph.Companion.light(
     inlinesStyling: InlinesStyling = InlinesStyling.light(defaultTextStyle, defaultEditorTextStyle)
 ): Paragraph = Paragraph(inlinesStyling)
 
+/** Creates an Int UI dark [Paragraph]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Paragraph.Companion.dark(
     inlinesStyling: InlinesStyling = InlinesStyling.dark(defaultTextStyle, defaultEditorTextStyle)
 ): Paragraph = Paragraph(inlinesStyling)
 
+/** Creates an Int UI light [Heading]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Heading.Companion.light(
@@ -145,6 +150,7 @@ public fun Heading.Companion.light(
         ),
 ): Heading = Heading(h1, h2, h3, h4, h5, h6)
 
+/** Creates an Int UI dark [Heading]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Heading.Companion.dark(
@@ -200,6 +206,7 @@ public fun Heading.Companion.dark(
         ),
 ): Heading = Heading(h1, h2, h3, h4, h5, h6)
 
+/** Creates an Int UI light [Heading.H1]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Heading.H1.Companion.light(
@@ -216,6 +223,7 @@ public fun Heading.H1.Companion.light(
     padding: PaddingValues = PaddingValues(top = 24.dp, bottom = 16.dp),
 ): Heading.H1 = Heading.H1(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
+/** Creates an Int UI dark [Heading.H1]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Heading.H1.Companion.dark(
@@ -232,6 +240,7 @@ public fun Heading.H1.Companion.dark(
     padding: PaddingValues = PaddingValues(top = 24.dp, bottom = 16.dp),
 ): Heading.H1 = Heading.H1(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
+/** Creates an Int UI light [Heading.H2]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Heading.H2.Companion.light(
@@ -248,6 +257,7 @@ public fun Heading.H2.Companion.light(
     padding: PaddingValues = PaddingValues(top = 24.dp, bottom = 16.dp),
 ): Heading.H2 = Heading.H2(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
+/** Creates an Int UI dark [Heading.H2]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Heading.H2.Companion.dark(
@@ -264,9 +274,10 @@ public fun Heading.H2.Companion.dark(
     padding: PaddingValues = PaddingValues(top = 24.dp, bottom = 16.dp),
 ): Heading.H2 = Heading.H2(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
-// This doesn't match Int UI specs as there is no spec for HTML rendering
+/** Creates an Int UI light [Heading.H3]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
+// This doesn't match Int UI specs as there is no spec for HTML rendering
 public fun Heading.H3.Companion.light(
     baseTextStyle: TextStyle =
         defaultTextStyle.copy(
@@ -281,9 +292,10 @@ public fun Heading.H3.Companion.light(
     padding: PaddingValues = PaddingValues(top = 24.dp, bottom = 16.dp),
 ): Heading.H3 = Heading.H3(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
-// This doesn't match Int UI specs as there is no spec for HTML rendering
+/** Creates an Int UI dark [Heading.H3]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
+// This doesn't match Int UI specs as there is no spec for HTML rendering
 public fun Heading.H3.Companion.dark(
     baseTextStyle: TextStyle =
         defaultTextStyle.copy(
@@ -298,9 +310,10 @@ public fun Heading.H3.Companion.dark(
     padding: PaddingValues = PaddingValues(top = 24.dp, bottom = 16.dp),
 ): Heading.H3 = Heading.H3(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
-// This doesn't match Int UI specs as there is no spec for HTML rendering
+/** Creates an Int UI light [Heading.H4]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
+// This doesn't match Int UI specs as there is no spec for HTML rendering
 public fun Heading.H4.Companion.light(
     baseTextStyle: TextStyle =
         defaultTextStyle.copy(
@@ -315,9 +328,10 @@ public fun Heading.H4.Companion.light(
     padding: PaddingValues = PaddingValues(top = 24.dp, bottom = 16.dp),
 ): Heading.H4 = Heading.H4(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
-// This doesn't match Int UI specs as there is no spec for HTML rendering
+/** Creates an Int UI dark [Heading.H4]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
+// This doesn't match Int UI specs as there is no spec for HTML rendering
 public fun Heading.H4.Companion.dark(
     baseTextStyle: TextStyle =
         defaultTextStyle.copy(
@@ -332,9 +346,10 @@ public fun Heading.H4.Companion.dark(
     padding: PaddingValues = PaddingValues(top = 24.dp, bottom = 16.dp),
 ): Heading.H4 = Heading.H4(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
-// H5 is identical to H4 and H6
+/** Creates an Int UI light [Heading.H5]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
+// H5 is identical to H4 and H6
 public fun Heading.H5.Companion.light(
     baseTextStyle: TextStyle =
         defaultTextStyle.copy(
@@ -349,9 +364,10 @@ public fun Heading.H5.Companion.light(
     padding: PaddingValues = PaddingValues(top = 24.dp, bottom = 16.dp),
 ): Heading.H5 = Heading.H5(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
-// H5 is identical to H4 and H6
+/** Creates an Int UI dark [Heading.H5]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
+// H5 is identical to H4 and H6
 public fun Heading.H5.Companion.dark(
     baseTextStyle: TextStyle =
         defaultTextStyle.copy(
@@ -366,9 +382,10 @@ public fun Heading.H5.Companion.dark(
     padding: PaddingValues = PaddingValues(top = 24.dp, bottom = 16.dp),
 ): Heading.H5 = Heading.H5(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
-// H6 is identical to H4 and H5
+/** Creates an Int UI light [Heading.H6]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
+// H6 is identical to H4 and H5
 public fun Heading.H6.Companion.light(
     baseTextStyle: TextStyle =
         defaultTextStyle.copy(
@@ -384,9 +401,10 @@ public fun Heading.H6.Companion.light(
     padding: PaddingValues = PaddingValues(top = 24.dp, bottom = 16.dp),
 ): Heading.H6 = Heading.H6(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
-// H6 is identical to H4 and H5
+/** Creates an Int UI dark [Heading.H6]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
+// H6 is identical to H4 and H5
 public fun Heading.H6.Companion.dark(
     baseTextStyle: TextStyle =
         defaultTextStyle.copy(
@@ -402,6 +420,7 @@ public fun Heading.H6.Companion.dark(
     padding: PaddingValues = PaddingValues(top = 24.dp, bottom = 16.dp),
 ): Heading.H6 = Heading.H6(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
+/** Creates an Int UI light [BlockQuote]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun BlockQuote.Companion.light(
@@ -413,6 +432,7 @@ public fun BlockQuote.Companion.light(
     textColor: Color = Color(0xFF656d76),
 ): BlockQuote = BlockQuote(padding, lineWidth, lineColor, pathEffect, strokeCap, textColor)
 
+/** Creates an Int UI dark [BlockQuote]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun BlockQuote.Companion.dark(
@@ -424,6 +444,7 @@ public fun BlockQuote.Companion.dark(
     textColor: Color = Color(0xFF848d97),
 ): BlockQuote = BlockQuote(padding, lineWidth, lineColor, pathEffect, strokeCap, textColor)
 
+/** Creates an Int UI light [List]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun List.Companion.light(
@@ -445,6 +466,7 @@ public fun List.Companion.light(
         ),
 ): List = List(ordered, unordered)
 
+/** Creates an Int UI dark [List]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun List.Companion.dark(
@@ -493,6 +515,7 @@ public fun Ordered.Companion.light(
         ),
     )
 
+/** Creates an Int UI light [Ordered]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Ordered.Companion.light(
@@ -548,6 +571,7 @@ public fun Ordered.Companion.dark(
         ),
     )
 
+/** Creates an Int UI dark [Ordered]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Ordered.Companion.dark(
@@ -599,6 +623,7 @@ public fun Unordered.Companion.light(
         Unordered.BulletCharStyles(firstLevel = '•', secondLevel = '◦', thirdLevel = '▪'),
     )
 
+/** Creates an Int UI light [Unordered]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Unordered.Companion.light(
@@ -646,6 +671,7 @@ public fun Unordered.Companion.dark(
         Unordered.BulletCharStyles(firstLevel = '•', secondLevel = '◦', thirdLevel = '▪'),
     )
 
+/** Creates an Int UI dark [Unordered]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Unordered.Companion.dark(
@@ -670,6 +696,7 @@ public fun Unordered.Companion.dark(
         bulletCharStyles,
     )
 
+/** Creates an Int UI light [Code]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Code.Companion.light(
@@ -678,6 +705,7 @@ public fun Code.Companion.light(
     fenced: Fenced = Fenced.light(editorTextStyle),
 ): Code = Code(indented, fenced)
 
+/** Creates an Int UI dark [Code]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Code.Companion.dark(
@@ -686,6 +714,7 @@ public fun Code.Companion.dark(
     fenced: Fenced = Fenced.dark(editorTextStyle),
 ): Code = Code(indented, fenced)
 
+/** Creates an Int UI light [Indented]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Indented.Companion.light(
@@ -700,6 +729,7 @@ public fun Indented.Companion.light(
 ): Indented =
     Indented(editorTextStyle, padding, shape, background, borderWidth, borderColor, fillWidth, scrollsHorizontally)
 
+/** Creates an Int UI dark [Indented]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Indented.Companion.dark(
@@ -714,6 +744,7 @@ public fun Indented.Companion.dark(
 ): Indented =
     Indented(editorTextStyle, padding, shape, background, borderWidth, borderColor, fillWidth, scrollsHorizontally)
 
+/** Creates an Int UI light [Fenced]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Fenced.Companion.light(
@@ -743,6 +774,7 @@ public fun Fenced.Companion.light(
         infoPosition,
     )
 
+/** Creates an Int UI dark [Fenced]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Fenced.Companion.dark(
@@ -772,6 +804,7 @@ public fun Fenced.Companion.dark(
         infoPosition,
     )
 
+/** Creates an Int UI default [Image]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Image.Companion.default(
@@ -784,6 +817,7 @@ public fun Image.Companion.default(
     borderColor: Color = Color.Unspecified,
 ): Image = Image(alignment, contentScale, padding, shape, background, borderWidth, borderColor)
 
+/** Creates an Int UI light [ThematicBreak]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun ThematicBreak.Companion.light(
@@ -792,6 +826,7 @@ public fun ThematicBreak.Companion.light(
     lineColor: Color = Color.LightGray,
 ): ThematicBreak = ThematicBreak(padding, lineWidth, lineColor)
 
+/** Creates an Int UI dark [ThematicBreak]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun ThematicBreak.Companion.dark(
@@ -800,6 +835,7 @@ public fun ThematicBreak.Companion.dark(
     lineColor: Color = Color.DarkGray,
 ): ThematicBreak = ThematicBreak(padding, lineWidth, lineColor)
 
+/** Creates an Int UI light [HtmlBlock]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun HtmlBlock.Companion.light(
@@ -812,6 +848,7 @@ public fun HtmlBlock.Companion.light(
     fillWidth: Boolean = true,
 ): HtmlBlock = HtmlBlock(textStyle, padding, shape, background, borderWidth, borderColor, fillWidth)
 
+/** Creates an Int UI dark [HtmlBlock]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun HtmlBlock.Companion.dark(
@@ -824,6 +861,7 @@ public fun HtmlBlock.Companion.dark(
     fillWidth: Boolean = true,
 ): HtmlBlock = HtmlBlock(textStyle, padding, shape, background, borderWidth, borderColor, fillWidth)
 
+/** Creates an Int UI light [InlinesStyling]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun InlinesStyling.Companion.light(
@@ -907,6 +945,7 @@ public fun InlinesStyling.Companion.light(
         inlineHtml = inlineHtml,
     )
 
+/** Creates an Int UI dark [InlinesStyling]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun InlinesStyling.Companion.dark(

@@ -18,6 +18,10 @@ import org.jetbrains.jewel.ui.painter.hints.Stroke
 import org.jetbrains.jewel.ui.theme.iconButtonStyle
 import org.jetbrains.jewel.ui.theme.tooltipStyle
 
+/**
+ * Renders a selectable icon action button that displays an icon resolved from [key], with an optional [extraHint]
+ * applied to the painter.
+ */
 @Composable
 public fun SelectableIconActionButton(
     key: IconKey,
@@ -51,6 +55,10 @@ public fun SelectableIconActionButton(
     )
 }
 
+/**
+ * Renders a selectable icon action button that displays an icon resolved from [key], with an optional [extraHint]
+ * applied to the painter.
+ */
 @Suppress("ComposableParamOrder") // To fix in JEWEL-930
 @Composable
 public fun SelectableIconActionButton(
@@ -92,6 +100,10 @@ public fun SelectableIconActionButton(
     }
 }
 
+/**
+ * Renders a selectable icon action button that displays an icon resolved from [key], with an optional [extraHint]
+ * applied to the painter.
+ */
 @Composable
 public fun SelectableIconActionButton(
     key: IconKey,
@@ -125,6 +137,10 @@ public fun SelectableIconActionButton(
     )
 }
 
+/**
+ * Renders a selectable icon action button that displays an icon resolved from [key], with [extraHints] applied to the
+ * painter, and shows a [tooltip] on hover.
+ */
 @Suppress("ComposableParamOrder") // To fix in JEWEL-930
 @Composable
 public fun SelectableIconActionButton(

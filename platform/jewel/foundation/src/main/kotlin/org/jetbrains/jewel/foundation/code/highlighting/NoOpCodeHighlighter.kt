@@ -7,6 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.code.MimeType
 
+/** A [CodeHighlighter] that applies no syntax highlighting, returning the code as a plain unstyled string. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public object NoOpCodeHighlighter : CodeHighlighter {

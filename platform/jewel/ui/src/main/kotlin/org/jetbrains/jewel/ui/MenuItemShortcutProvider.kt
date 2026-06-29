@@ -18,6 +18,7 @@ public interface MenuItemShortcutProvider {
     public fun getShortcutKeyStroke(actionType: ContextMenuItemOptionAction): KeyStroke?
 }
 
+/** Composition local that provides the [MenuItemShortcutProvider] for the current theme. */
 public val LocalMenuItemShortcutProvider: ProvidableCompositionLocal<MenuItemShortcutProvider> =
     staticCompositionLocalOf {
         error("No LocalMenuItemShortcutProvider provided. Have you forgotten the theme?")

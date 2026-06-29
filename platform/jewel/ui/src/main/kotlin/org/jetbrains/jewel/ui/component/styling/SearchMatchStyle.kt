@@ -9,8 +9,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
+/** Combines colors and metrics styling for the search match highlight component. */
 @GenerateDataFunctions
-public class SearchMatchStyle(public val colors: SearchMatchColors, public val metrics: SearchMatchMetrics) {
+public class SearchMatchStyle(
+    /** The color tokens for the search match highlight. */
+    public val colors: SearchMatchColors,
+    /** The size and spacing metrics for the search match highlight. */
+    public val metrics: SearchMatchMetrics,
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -31,13 +37,18 @@ public class SearchMatchStyle(public val colors: SearchMatchColors, public val m
 
     override fun toString(): String = "SearchMatchStyle(colors=$colors, metrics=$metrics)"
 
+    /** Companion object for [SearchMatchStyle]. */
     public companion object
 }
 
+/** Holds color tokens for the search match highlight component, including gradient background and foreground colors. */
 @GenerateDataFunctions
 public class SearchMatchColors(
+    /** The start color of the background gradient. */
     public val startBackground: Color,
+    /** The end color of the background gradient. */
     public val endBackground: Color,
+    /** The foreground (text) color. */
     public val foreground: Color,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -63,11 +74,18 @@ public class SearchMatchColors(
     override fun toString(): String =
         "SearchMatchColors(startBackground=$startBackground, endBackground=$endBackground, foreground=$foreground)"
 
+    /** Companion object for [SearchMatchColors]. */
     public companion object
 }
 
+/** Holds size and spacing metrics for the search match highlight component, including corner size and padding. */
 @GenerateDataFunctions
-public class SearchMatchMetrics(public val cornerSize: CornerSize, public val padding: PaddingValues) {
+public class SearchMatchMetrics(
+    /** The corner radius of the highlight shape. */
+    public val cornerSize: CornerSize,
+    /** The padding applied inside the highlight. */
+    public val padding: PaddingValues,
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -88,9 +106,11 @@ public class SearchMatchMetrics(public val cornerSize: CornerSize, public val pa
 
     override fun toString(): String = "SearchMatchMetrics(cornerSize=$cornerSize, verticalPadding=$padding)"
 
+    /** Companion object for [SearchMatchMetrics]. */
     public companion object
 }
 
+/** CompositionLocal providing the current [SearchMatchStyle]. */
 public val LocalSearchMatchStyle: ProvidableCompositionLocal<SearchMatchStyle> = staticCompositionLocalOf {
     error("No SearchMatchStyle provided. Have you forgotten the theme?")
 }

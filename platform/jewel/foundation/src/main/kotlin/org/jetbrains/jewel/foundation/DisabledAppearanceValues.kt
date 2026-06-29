@@ -52,9 +52,11 @@ public class DisabledAppearanceValues(public val brightness: Int, public val con
 
     override fun toString(): String = "GrayFilterValues(brightness=$brightness, contrast=$contrast, alpha=$alpha)"
 
+    /** Companion object for [DisabledAppearanceValues]. */
     public companion object
 }
 
+/** The composition local that provides [DisabledAppearanceValues] to the composition tree. */
 public val LocalDisabledAppearanceValues: ProvidableCompositionLocal<DisabledAppearanceValues> =
     staticCompositionLocalOf {
         error("No DisabledAppearanceValues provided. Have you forgotten the theme?")

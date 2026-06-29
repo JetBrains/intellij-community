@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.TriStateCheckboxRow
 
+/** Showcases the Checkbox component. */
 @Composable
 public fun Checkboxes(modifier: Modifier = Modifier) {
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {

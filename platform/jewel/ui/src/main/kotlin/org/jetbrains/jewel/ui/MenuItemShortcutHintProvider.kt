@@ -5,6 +5,7 @@ import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.staticCompositionLocalOf
 import org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction
 
+/** Provides formatted shortcut hint strings for [ContextMenuItemOptionAction] entries shown in menus. */
 public interface MenuItemShortcutHintProvider {
     /**
      * Gets the formatted shortcut string for the given action identifier.
@@ -16,6 +17,7 @@ public interface MenuItemShortcutHintProvider {
     public fun getShortcutHint(actionType: ContextMenuItemOptionAction): String
 }
 
+/** Composition local providing the [MenuItemShortcutHintProvider] for the current theme. */
 public val LocalMenuItemShortcutHintProvider: ProvidableCompositionLocal<MenuItemShortcutHintProvider> =
     staticCompositionLocalOf {
         error("No LocalMenuItemShortcutHintProvider provided. Have you forgotten the theme?")

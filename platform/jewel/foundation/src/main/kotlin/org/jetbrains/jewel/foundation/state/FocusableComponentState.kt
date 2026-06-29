@@ -3,7 +3,12 @@ package org.jetbrains.jewel.foundation.state
 import androidx.compose.runtime.Composable
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 
+/**
+ * An [InteractiveComponentState] that also tracks focus. Provides a composable `chooseValue` helper that resolves a
+ * state-dependent value based on the current enabled, pressed, hovered, focused, and active flags.
+ */
 public interface FocusableComponentState : InteractiveComponentState {
+    /** Whether the component currently has keyboard focus. */
     public val isFocused: Boolean
 
     /**

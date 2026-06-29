@@ -8,9 +8,15 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
+/** Combines the color and metrics styling for a divider component. */
 @Immutable
 @GenerateDataFunctions
-public class DividerStyle(public val color: Color, public val metrics: DividerMetrics) {
+public class DividerStyle(
+    /** The color of the divider line. */
+    public val color: Color,
+    /** The size and spacing metrics for the divider. */
+    public val metrics: DividerMetrics,
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -31,12 +37,19 @@ public class DividerStyle(public val color: Color, public val metrics: DividerMe
 
     override fun toString(): String = "DividerStyle(color=$color, metrics=$metrics)"
 
+    /** Companion object for [DividerStyle]. */
     public companion object
 }
 
+/** Holds size and spacing metrics for the divider component. */
 @Immutable
 @GenerateDataFunctions
-public class DividerMetrics(public val thickness: Dp, public val startIndent: Dp) {
+public class DividerMetrics(
+    /** The thickness of the divider line. */
+    public val thickness: Dp,
+    /** The indent applied at the start of the divider. */
+    public val startIndent: Dp,
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -57,12 +70,15 @@ public class DividerMetrics(public val thickness: Dp, public val startIndent: Dp
 
     override fun toString(): String = "DividerMetrics(thickness=$thickness, startIndent=$startIndent)"
 
+    /** Companion object for [DividerMetrics]. */
     public companion object {
+        /** Returns a [DividerMetrics] instance with default thickness and start indent values. */
         public fun defaults(thickness: Dp = 1.dp, startIndent: Dp = 0.dp): DividerMetrics =
             DividerMetrics(thickness, startIndent)
     }
 }
 
+/** CompositionLocal used to provide the current [DividerStyle] down the composition tree. */
 public val LocalDividerStyle: ProvidableCompositionLocal<DividerStyle> = staticCompositionLocalOf {
     error("No DividerStyle provided. Have you forgotten the theme?")
 }

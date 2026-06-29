@@ -418,6 +418,7 @@ public class ThemeColorPalette(
             ")"
     }
 
+    /** Provides the [Empty] instance representing a palette with no color entries. */
     public companion object {
         public val Empty: ThemeColorPalette =
             ThemeColorPalette(

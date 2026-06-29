@@ -35,8 +35,8 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
  * High-level element that renders Markdown text.
  *
  * @param text The text to be displayed.
- * @param enabled True if the block should be enabled, false otherwise.
  * @param modifier The modifier to be applied to the composable.
+ * @param enabled True if the block should be enabled, false otherwise.
  * @param color [Color] to apply to the text. If it is [Color.Unspecified], this will be [LocalContentColor].
  * @param fontSize The size of glyphs to use when painting the text. See [TextStyle.fontSize].
  * @param fontStyle The typeface variant to use when drawing the letters (e.g., italic). See [TextStyle.fontStyle].
@@ -50,6 +50,7 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
  * @param softWrap Whether the text should break at soft line breaks. If false, the glyphs in the text will be
  *   positioned as if there was unlimited horizontal space. If [softWrap] is false, [overflow] and [textAlign] may have
  *   unexpected effects.
+ * @param maxLines The maximum number of lines to display.
  * @param onTextLayout Callback that is executed when a new text layout is calculated. A [TextLayoutResult] object that
  *   callback provides contains paragraph information, size of the text, baselines and other details. The callback can
  *   be used to add additional decoration or functionality to the text. For example, to draw selection around the text.
@@ -115,8 +116,8 @@ public fun MarkdownText(
  * High-level element that renders Markdown text.
  *
  * @param paragraph The paragraph to render.
- * @param enabled True if the block should be enabled, false otherwise.
  * @param modifier The modifier to be applied to the composable.
+ * @param enabled True if the block should be enabled, false otherwise.
  * @param color [Color] to apply to the text. If it is [Color.Unspecified], this will be [LocalContentColor].
  * @param fontSize The size of glyphs to use when painting the text. See [TextStyle.fontSize].
  * @param fontStyle The typeface variant to use when drawing the letters (e.g., italic). See [TextStyle.fontStyle].
@@ -130,6 +131,7 @@ public fun MarkdownText(
  * @param softWrap Whether the text should break at soft line breaks. If false, the glyphs in the text will be
  *   positioned as if there was unlimited horizontal space. If [softWrap] is false, [overflow] and [textAlign] may have
  *   unexpected effects.
+ * @param maxLines The maximum number of lines to display.
  * @param onTextLayout Callback that is executed when a new text layout is calculated. A [TextLayoutResult] object that
  *   callback provides contains paragraph information, size of the text, baselines and other details. The callback can
  *   be used to add additional decoration or functionality to the text. For example, to draw selection around the text.

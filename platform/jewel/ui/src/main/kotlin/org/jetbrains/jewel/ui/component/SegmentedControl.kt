@@ -138,13 +138,20 @@ public fun SegmentedControl(
     }
 }
 
+/**
+ * Holds the data for a single segment in a [SegmentedControl], including its selection state, content composable, and
+ * selection callback.
+ */
 @Immutable
 @GenerateDataFunctions
 public class SegmentedControlButtonData(
+    /** Whether this segment is currently selected. */
     public val selected: Boolean,
+    /** The composable content rendered inside this segment button. */
     public val content:
         @Composable
         SegmentedControlButtonScope.(segmentedControlButtonState: SegmentedControlButtonState) -> Unit,
+    /** Callback invoked when this segment is selected by the user. */
     public val onSelect: () -> Unit,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -176,24 +183,34 @@ public class SegmentedControlButtonData(
     }
 }
 
+/** Encodes the enabled, focused, hovered, pressed, and active states of a [SegmentedControl] as a bit mask. */
 @Immutable
 @JvmInline
-public value class SegmentedControlState(public val state: ULong) : FocusableComponentState {
+public value class SegmentedControlState(
+    /** The raw bit mask encoding all state flags. */
+    public val state: ULong
+) : FocusableComponentState {
+    /** Whether the control's host window is currently active. */
     override val isActive: Boolean
         get() = state and CommonStateBitMask.Active != 0UL
 
+    /** Whether the control is enabled and can receive input. */
     override val isEnabled: Boolean
         get() = state and CommonStateBitMask.Enabled != 0UL
 
+    /** Whether the control is currently focused. */
     override val isFocused: Boolean
         get() = state and CommonStateBitMask.Focused != 0UL
 
+    /** Whether the pointer is currently hovering over the control. */
     override val isHovered: Boolean
         get() = state and CommonStateBitMask.Hovered != 0UL
 
+    /** Whether the control is currently being pressed. */
     override val isPressed: Boolean
         get() = state and CommonStateBitMask.Pressed != 0UL
 
+    /** Returns a copy of this [SegmentedControlState] with the given fields replaced by their new values. */
     public fun copy(
         enabled: Boolean = isEnabled,
         focused: Boolean = isFocused,
@@ -207,7 +224,9 @@ public value class SegmentedControlState(public val state: ULong) : FocusableCom
         "${javaClass.simpleName}(isEnabled=$isEnabled, isFocused=$isFocused, isHovered=$isHovered, " +
             "isPressed=$isPressed, isActive=$isActive)"
 
+    /** Companion object for [SegmentedControlState]. */
     public companion object {
+        /** Constructs a [SegmentedControlState] from individual flags. */
         public fun of(
             enabled: Boolean = true,
             focused: Boolean = false,

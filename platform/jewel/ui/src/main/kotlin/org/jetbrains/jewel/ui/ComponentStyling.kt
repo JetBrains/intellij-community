@@ -3,25 +3,38 @@ package org.jetbrains.jewel.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ProvidedValue
 
+/**
+ * Defines a composable styling contract that provides [ProvidedValue] entries for Jewel components, and can be combined
+ * or layered with other instances.
+ */
 public interface ComponentStyling {
+    /** Returns a new [ComponentStyling] that appends the given static [values] to this styling's provided values. */
     public fun provide(vararg values: ProvidedValue<*>): ComponentStyling {
         if (values.isEmpty()) return this
         return with(StaticComponentStyling(values = values))
     }
 
+    /** Returns a new [ComponentStyling] that appends values produced lazily by [provider] at composition time. */
     public fun provide(provider: @Composable () -> Array<out ProvidedValue<*>>): ComponentStyling =
         with(LazyComponentStyling(provider))
 
+    /** Returns a new [ComponentStyling] that combines this styling with [styling], applying [styling] last. */
     public fun with(styling: ComponentStyling): ComponentStyling {
         if (styling is Companion) return this
         return CombinedComponentStyling(this, styling)
     }
 
+    /**
+     * Returns a new [ComponentStyling] that combines this styling with the [ComponentStyling] produced lazily by
+     * [styling] at composition time.
+     */
     public fun with(styling: @Composable () -> ComponentStyling): ComponentStyling =
         with(LazyComponentStyling { styling().styles() })
 
+    /** Returns the array of [ProvidedValue] entries that this styling contributes to the composition. */
     @Composable public fun styles(): Array<out ProvidedValue<*>>
 
+    /** Companion object for [ComponentStyling]. */
     public companion object : ComponentStyling {
         override fun with(styling: ComponentStyling): ComponentStyling = styling
 

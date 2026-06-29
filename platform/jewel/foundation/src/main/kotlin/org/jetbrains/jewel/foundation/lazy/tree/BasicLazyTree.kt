@@ -49,6 +49,7 @@ import org.jetbrains.jewel.foundation.state.SelectableComponentState
 /**
  * Renders a lazy tree view based on the provided tree data structure.
  *
+ * @param T the type of data held by each tree element.
  * @param tree The tree structure to be rendered.
  * @param selectionMode The selection mode for the tree nodes.
  * @param onElementClick Callback function triggered when a tree node is clicked.
@@ -127,6 +128,7 @@ public fun <T> BasicLazyTree(
 /**
  * Renders a lazy tree view based on the provided tree data structure.
  *
+ * @param T the type of data held by each tree element.
  * @param tree The tree structure to be rendered.
  * @param elementBackgroundFocused The background color of a tree node when focused.
  * @param elementBackgroundSelectedFocused The background color of a selected tree node when focused.
@@ -333,9 +335,16 @@ private fun Modifier.elementBackground(
         shape = backgroundShape,
     )
 
+/**
+ * Encodes the visual state of a tree element as a bit mask, including enabled, focused, expanded, pressed, hovered,
+ * active, and selected flags.
+ */
 @Immutable
 @JvmInline
-public value class TreeElementState(public val state: ULong) : FocusableComponentState, SelectableComponentState {
+public value class TreeElementState(
+    /** The raw bit mask encoding all state flags for this tree element. */
+    public val state: ULong
+) : FocusableComponentState, SelectableComponentState {
     @Stable
     override val isActive: Boolean
         get() = state and Active != 0UL
@@ -360,6 +369,7 @@ public value class TreeElementState(public val state: ULong) : FocusableComponen
     override val isSelected: Boolean
         get() = state and Selected != 0UL
 
+    /** Whether the node is expanded. */
     @Stable
     public val isExpanded: Boolean
         get() = state and Expanded != 0UL
@@ -368,6 +378,17 @@ public value class TreeElementState(public val state: ULong) : FocusableComponen
         "${javaClass.simpleName}(enabled=$isEnabled, focused=$isFocused, expanded=$isExpanded, " +
             "pressed=$isPressed, hovered=$isHovered, active=$isActive, selected=$isSelected)"
 
+    /**
+     * Returns a copy of this [TreeElementState] with the given fields replaced by their new values.
+     *
+     * @param enabled Whether the element is enabled.
+     * @param focused Whether the element is focused.
+     * @param expanded Whether the element is expanded.
+     * @param pressed Whether the element is pressed.
+     * @param hovered Whether the element is hovered.
+     * @param active Whether the element's parent list is active (focused).
+     * @param selected Whether the element is selected.
+     */
     public fun copy(
         enabled: Boolean = isEnabled,
         focused: Boolean = isFocused,
@@ -387,11 +408,23 @@ public value class TreeElementState(public val state: ULong) : FocusableComponen
             selected = selected,
         )
 
+    /** State bit constants and the [of] factory for constructing [TreeElementState] values. */
     public companion object {
         private const val EXPANDED_BIT_OFFSET = CommonStateBitMask.FIRST_AVAILABLE_OFFSET
 
         private val Expanded = 1UL shl EXPANDED_BIT_OFFSET
 
+        /**
+         * Constructs a [TreeElementState] from individual boolean flags.
+         *
+         * @param enabled Whether the element is enabled.
+         * @param focused Whether the element is focused.
+         * @param expanded Whether the node is expanded.
+         * @param hovered Whether the element is hovered.
+         * @param pressed Whether the element is pressed.
+         * @param active Whether the element's parent list is active (focused).
+         * @param selected Whether the element is selected.
+         */
         public fun of(
             enabled: Boolean = true,
             focused: Boolean = false,

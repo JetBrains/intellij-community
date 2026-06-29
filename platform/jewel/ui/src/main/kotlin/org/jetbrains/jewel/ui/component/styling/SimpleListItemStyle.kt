@@ -13,8 +13,14 @@ import androidx.compose.ui.unit.Dp
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.component.ListItemState
 
+/** Combines [SimpleListItemColors] and [SimpleListItemMetrics] to style a simple list item. */
 @GenerateDataFunctions
-public class SimpleListItemStyle(public val colors: SimpleListItemColors, public val metrics: SimpleListItemMetrics) {
+public class SimpleListItemStyle(
+    /** The color tokens for this list item. */
+    public val colors: SimpleListItemColors,
+    /** The size and spacing metrics for this list item. */
+    public val metrics: SimpleListItemMetrics,
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -35,21 +41,37 @@ public class SimpleListItemStyle(public val colors: SimpleListItemColors, public
 
     override fun toString(): String = "SimpleListItemStyle(colors=$colors, metrics=$metrics)"
 
+    /** Companion object for [SimpleListItemStyle]. */
     public companion object
 }
 
+/** Holds color tokens for a simple list item in its various selection and activation states. */
 @Stable
 @GenerateDataFunctions
 public class SimpleListItemColors(
+    /** The default background color. */
     public val background: Color,
+    /** The background color when the item is active (focused container). */
     public val backgroundActive: Color,
+    /** The background color when the item is selected. */
     public val backgroundSelected: Color,
+    /** The background color when the item is both selected and active. */
     public val backgroundSelectedActive: Color,
+    /** The default content (text/icon) color. */
     public val content: Color,
+    /** The content color when the item is active. */
     public val contentActive: Color,
+    /** The content color when the item is selected. */
     public val contentSelected: Color,
+    /** The content color when the item is both selected and active. */
     public val contentSelectedActive: Color,
 ) {
+    /**
+     * Returns a [State] holding the content color appropriate for the given [state]: selected-active, selected, active,
+     * or default.
+     *
+     * @param state The current [ListItemState] of the item.
+     */
     @Composable
     public fun contentFor(state: ListItemState): State<Color> =
         rememberUpdatedState(
@@ -61,6 +83,12 @@ public class SimpleListItemColors(
             }
         )
 
+    /**
+     * Returns a [State] holding the background color appropriate for the given [state]: selected-active, selected,
+     * active, or default.
+     *
+     * @param state The current [ListItemState] of the item.
+     */
     @Composable
     public fun backgroundFor(state: ListItemState): State<Color> =
         rememberUpdatedState(
@@ -115,15 +143,21 @@ public class SimpleListItemColors(
             ")"
     }
 
+    /** Companion object for [SimpleListItemColors]. */
     public companion object
 }
 
+/** Holds size and spacing metrics for a simple list item, including padding, corner size, and icon-text gap. */
 @Stable
 @GenerateDataFunctions
 public class SimpleListItemMetrics(
+    /** The padding applied inside the item content area. */
     public val innerPadding: PaddingValues,
+    /** The padding applied outside the item, around the selection background. */
     public val outerPadding: PaddingValues,
+    /** The corner size of the selection background shape. */
     public val selectionBackgroundCornerSize: CornerSize,
+    /** The gap between an icon and its accompanying text. */
     public val iconTextGap: Dp,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -157,9 +191,11 @@ public class SimpleListItemMetrics(
             ")"
     }
 
+    /** Companion object for [SimpleListItemMetrics]. */
     public companion object
 }
 
+/** CompositionLocal providing the [SimpleListItemStyle] for the current theme. */
 public val LocalSimpleListItemStyleStyle: ProvidableCompositionLocal<SimpleListItemStyle> = staticCompositionLocalOf {
     error("No LocalSimpleListItemStyleStyle provided. Have you forgotten the theme?")
 }

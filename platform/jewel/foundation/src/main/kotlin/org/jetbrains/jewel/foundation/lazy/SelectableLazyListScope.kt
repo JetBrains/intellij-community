@@ -152,6 +152,16 @@ internal class SelectableLazyListScopeContainer : SelectableLazyListScope {
     }
 }
 
+/**
+ * Convenience extension that adds all elements of [items] to this [SelectableLazyListScope].
+ *
+ * @param T The type of items in the list.
+ * @param items The list of items to add.
+ * @param key A function producing a stable unique key for each item. Defaults to the item itself.
+ * @param contentType A function returning the content type of each item, used for composition reuse.
+ * @param selectable A function returning whether each item is selectable. Defaults to `true`.
+ * @param itemContent The composable content for each item.
+ */
 public fun <T : Any> SelectableLazyListScope.items(
     items: List<T>,
     key: (item: T) -> Any = { it },
@@ -168,6 +178,16 @@ public fun <T : Any> SelectableLazyListScope.items(
     )
 }
 
+/**
+ * Convenience extension that adds all elements of [items] with their indices to this [SelectableLazyListScope].
+ *
+ * @param T The type of items in the list.
+ * @param items The list of items to add.
+ * @param key A function producing a stable unique key for each item by index and value.
+ * @param contentType A function returning the content type of each item by index and value.
+ * @param selectable A function returning whether each item is selectable by index and value.
+ * @param itemContent The composable content for each item, receiving both the index and the item.
+ */
 public fun <T : Any> SelectableLazyListScope.itemsIndexed(
     items: List<T>,
     key: (index: Int, item: T) -> Any = { _, item -> item },
@@ -184,6 +204,12 @@ public fun <T : Any> SelectableLazyListScope.itemsIndexed(
     )
 }
 
+/**
+ * Creates a [SelectableLazyItemScope] for this [LazyItemScope], decorating it with selection and focus state.
+ *
+ * @param isSelected Whether this item is currently selected.
+ * @param isActive Whether this item's parent list is currently focused.
+ */
 @Composable
 public fun LazyItemScope.SelectableLazyItemScope(
     isSelected: Boolean = false,

@@ -638,8 +638,8 @@ internal class MissingApiStatusAnnotationRuleSpec {
                     """
                     |import org.jetbrains.annotations.ApiStatus
                     |import org.jetbrains.jewel.foundation.InternalJewelApi
-                    |@InternalJewelApi
                     |@ApiStatus.Internal
+                    |@InternalJewelApi
                     |class MyClass
                     """
                         .trimMargin()
@@ -668,8 +668,8 @@ internal class MissingApiStatusAnnotationRuleSpec {
                     """
                     |import org.jetbrains.annotations.ApiStatus
                     |import org.jetbrains.jewel.foundation.ExperimentalJewelApi
-                    |@ExperimentalJewelApi
                     |@ApiStatus.Experimental
+                    |@ExperimentalJewelApi
                     |class MyClass
                     """
                         .trimMargin()
@@ -698,8 +698,8 @@ internal class MissingApiStatusAnnotationRuleSpec {
                     """
                     |import org.jetbrains.annotations.ApiStatus
                     |import org.jetbrains.jewel.foundation.InternalJewelApi
-                    |@InternalJewelApi
                     |@ApiStatus.Internal
+                    |@InternalJewelApi
                     |fun myFunction() {}
                     """
                         .trimMargin()
@@ -728,8 +728,8 @@ internal class MissingApiStatusAnnotationRuleSpec {
                     """
                     |import org.jetbrains.annotations.ApiStatus
                     |import org.jetbrains.jewel.foundation.ExperimentalJewelApi
-                    |@ExperimentalJewelApi
                     |@ApiStatus.Experimental
+                    |@ExperimentalJewelApi
                     |fun myFunction() {}
                     """
                         .trimMargin()
@@ -758,8 +758,8 @@ internal class MissingApiStatusAnnotationRuleSpec {
                     """
                     |import org.jetbrains.annotations.ApiStatus
                     |import org.jetbrains.jewel.foundation.InternalJewelApi
-                    |@InternalJewelApi
                     |@ApiStatus.Internal
+                    |@InternalJewelApi
                     |val myVal = 0
                     """
                         .trimMargin()
@@ -788,8 +788,8 @@ internal class MissingApiStatusAnnotationRuleSpec {
                     """
                     |import org.jetbrains.annotations.ApiStatus
                     |import org.jetbrains.jewel.foundation.ExperimentalJewelApi
-                    |@ExperimentalJewelApi
                     |@ApiStatus.Experimental
+                    |@ExperimentalJewelApi
                     |val myVal = 0
                     """
                         .trimMargin()
@@ -818,8 +818,8 @@ internal class MissingApiStatusAnnotationRuleSpec {
                     """
                     |import org.jetbrains.annotations.ApiStatus
                     |import org.jetbrains.jewel.foundation.InternalJewelApi
-                    |@InternalJewelApi
                     |@ApiStatus.Internal
+                    |@InternalJewelApi
                     |typealias MyAlias = String
                     """
                         .trimMargin()
@@ -848,8 +848,8 @@ internal class MissingApiStatusAnnotationRuleSpec {
                     """
                     |import org.jetbrains.annotations.ApiStatus
                     |import org.jetbrains.jewel.foundation.ExperimentalJewelApi
-                    |@ExperimentalJewelApi
                     |@ApiStatus.Experimental
+                    |@ExperimentalJewelApi
                     |typealias MyAlias = String
                     """
                         .trimMargin()
@@ -878,8 +878,8 @@ internal class MissingApiStatusAnnotationRuleSpec {
                     """
                     |import org.jetbrains.annotations.ApiStatus
                     |import org.jetbrains.jewel.foundation.InternalJewelApi
-                    |@InternalJewelApi
                     |@ApiStatus.Internal
+                    |@InternalJewelApi
                     |object MyObject
                     """
                         .trimMargin()
@@ -907,8 +907,8 @@ internal class MissingApiStatusAnnotationRuleSpec {
                     """
                     |import org.jetbrains.annotations.ApiStatus
                     |import org.jetbrains.jewel.foundation.ExperimentalJewelApi
-                    |class MyClass @ExperimentalJewelApi
-                    |@ApiStatus.Experimental constructor()
+                    |class MyClass @ApiStatus.Experimental
+                    |@ExperimentalJewelApi constructor()
                     """
                         .trimMargin()
                 )
@@ -939,8 +939,8 @@ internal class MissingApiStatusAnnotationRuleSpec {
                     |import org.jetbrains.annotations.ApiStatus
                     |import org.jetbrains.jewel.foundation.InternalJewelApi
                     |class MyClass {
-                    |  @InternalJewelApi
-                    |@ApiStatus.Internal
+                    |  @ApiStatus.Internal
+                    |@InternalJewelApi
                     |  constructor()
                     |}
                     """
@@ -973,8 +973,8 @@ internal class MissingApiStatusAnnotationRuleSpec {
                     |import org.jetbrains.annotations.ApiStatus
                     |import org.jetbrains.jewel.foundation.ExperimentalJewelApi
                     |class MyClass {
-                    |  @ExperimentalJewelApi
-                    |@ApiStatus.Experimental
+                    |  @ApiStatus.Experimental
+                    |@ExperimentalJewelApi
                     |  init {}
                     |}
                     """
@@ -1009,8 +1009,8 @@ internal class MissingApiStatusAnnotationRuleSpec {
                     |import org.jetbrains.jewel.foundation.InternalJewelApi
                     |class MyClass {
                     |  val myVal: Int
-                    |    @InternalJewelApi
-                    |@ApiStatus.Internal
+                    |    @ApiStatus.Internal
+                    |@InternalJewelApi
                     |    get() = 1
                     |}
                     """
@@ -1045,8 +1045,8 @@ internal class MissingApiStatusAnnotationRuleSpec {
                     |import org.jetbrains.jewel.foundation.ExperimentalJewelApi
                     |class MyClass {
                     |  var myVal: Int = 1
-                    |    @ExperimentalJewelApi
-                    |@ApiStatus.Experimental
+                    |    @ApiStatus.Experimental
+                    |@ExperimentalJewelApi
                     |    set(value) {}
                     |}
                     """
@@ -1075,8 +1075,8 @@ internal class MissingApiStatusAnnotationRuleSpec {
                     """
                     |import org.jetbrains.annotations.ApiStatus
                     |import org.jetbrains.jewel.foundation.InternalJewelApi
-                    |fun myFunction(@InternalJewelApi
-                    |@ApiStatus.Internal param: Int) {}
+                    |fun myFunction(@ApiStatus.Internal
+                    |@InternalJewelApi param: Int) {}
                     """
                         .trimMargin()
                 )
@@ -1104,8 +1104,8 @@ internal class MissingApiStatusAnnotationRuleSpec {
                     """
                     |import org.jetbrains.annotations.ApiStatus
                     |import org.jetbrains.jewel.foundation.InternalJewelApi
-                    |@InternalJewelApi
                     |@ApiStatus.Internal
+                    |@InternalJewelApi
                     |interface MyInterface
                     """
                         .trimMargin()
@@ -1134,8 +1134,8 @@ internal class MissingApiStatusAnnotationRuleSpec {
                     """
                     |import org.jetbrains.annotations.ApiStatus
                     |import org.jetbrains.jewel.foundation.ExperimentalJewelApi
-                    |@ExperimentalJewelApi
                     |@ApiStatus.Experimental
+                    |@ExperimentalJewelApi
                     |enum class MyEnum
                     """
                         .trimMargin()
@@ -1167,8 +1167,8 @@ internal class MissingApiStatusAnnotationRuleSpec {
                     |import org.jetbrains.annotations.ApiStatus
                     |import org.jetbrains.jewel.foundation.InternalJewelApi
                     |class MyClass {
-                    |  @InternalJewelApi
-                    |@ApiStatus.Internal
+                    |  @ApiStatus.Internal
+                    |@InternalJewelApi
                     |  companion object
                     |}
                     """
@@ -1201,8 +1201,8 @@ internal class MissingApiStatusAnnotationRuleSpec {
                     |import org.jetbrains.annotations.ApiStatus
                     |import org.jetbrains.jewel.foundation.ExperimentalJewelApi
                     |class MyClass(
-                    |  @ExperimentalJewelApi
-                    |@ApiStatus.Experimental
+                    |  @ApiStatus.Experimental
+                    |@ExperimentalJewelApi
                     |  val myVal: Int
                     |)
                     """
@@ -1239,10 +1239,10 @@ internal class MissingApiStatusAnnotationRuleSpec {
                     |import org.jetbrains.annotations.ApiStatus
                     |import org.jetbrains.jewel.foundation.InternalJewelApi
                     |import org.jetbrains.jewel.foundation.ExperimentalJewelApi
-                    |@ExperimentalJewelApi
                     |@ApiStatus.Internal
                     |@InternalJewelApi
                     |@ApiStatus.Experimental
+                    |@ExperimentalJewelApi
                     |class MismatchedAnnotation
                     """
                         .trimMargin()
@@ -1278,9 +1278,9 @@ internal class MissingApiStatusAnnotationRuleSpec {
                     |import org.jetbrains.jewel.foundation.ExperimentalJewelApi
                     |import org.jetbrains.jewel.foundation.InternalJewelApi
                     |@ApiStatus.Experimental
-                    |@InternalJewelApi
                     |@ExperimentalJewelApi
                     |@ApiStatus.Internal
+                    |@InternalJewelApi
                     |class MismatchedAnnotation
                     """
                         .trimMargin()
