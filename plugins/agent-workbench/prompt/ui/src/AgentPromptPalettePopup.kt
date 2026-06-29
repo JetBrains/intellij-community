@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
+import com.intellij.util.runSuppressing
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -193,25 +194,15 @@ internal class AgentPromptPaletteContent(
       return
     }
     disposed = true
-    imageDropSupportScope.cancel(reason)
-    try {
-      sessionController.onHostClosed()
-    }
-    finally {
-      try {
-        view.headerToolbar.targetComponent = null
-        view.footerPinToolbar.targetComponent = null
-        rootPanel.parent?.remove(rootPanel)
-      }
-      finally {
-        try {
-          Disposer.dispose(swingDisposable)
-        }
-        finally {
-          sessionScope.cancel(reason)
-        }
-      }
-    }
+    runSuppressing(
+      { imageDropSupportScope.cancel(reason) },
+      { sessionController.onHostClosed() },
+      { view.headerToolbar.targetComponent = null },
+      { view.footerPinToolbar.targetComponent = null },
+      { rootPanel.parent?.remove(rootPanel) },
+      { Disposer.dispose(swingDisposable) },
+      { sessionScope.cancel(reason) },
+    )
   }
 }
 
@@ -330,10 +321,14 @@ internal fun createAgentPromptPaletteContent(
   }
   catch (error: Throwable) {
     try {
-      imageDropSupportScope.cancel("Agent prompt palette content creation failed", error)
+      runSuppressing(
+        { imageDropSupportScope.cancel("Agent prompt palette content creation failed", error) },
+        { Disposer.dispose(swingDisposable) },
+        { sessionScope.cancel("Agent prompt palette content creation failed", error) },
+      )
     }
-    finally {
-      Disposer.dispose(swingDisposable)
+    catch (cleanupError: Throwable) {
+      error.addSuppressed(cleanupError)
     }
     throw error
   }

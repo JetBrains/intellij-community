@@ -3,6 +3,8 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -14,6 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -51,6 +54,12 @@ internal class EditorEmptyStateComponentController(
   private var richComponentsEnabled: Boolean = false
   private var creationDelay: Duration = EMPTY_STATE_COMPONENT_CREATION_DELAY
   private var creationGate: (suspend () -> Unit)? = null
+
+  init {
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      disposeComponentsOnEdt()
+    }
+  }
 
   fun isCreationPending(): Boolean = creationJob != null
 
@@ -107,6 +116,16 @@ internal class EditorEmptyStateComponentController(
     componentEntries = emptyList()
     splitters.revalidate()
     splitters.repaint()
+  }
+
+  private fun disposeComponentsOnEdt() {
+    val application = ApplicationManager.getApplication()
+    if (application.isDispatchThread) {
+      disposeComponents()
+    }
+    else {
+      application.invokeLater({ disposeComponents() }, ModalityState.any())
+    }
   }
 
   fun setCreationDelayForTests(delay: Duration) {
