@@ -5,6 +5,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
@@ -50,14 +51,14 @@ public final class NoArgsConstructorProcessor extends AbstractConstructorClassPr
   }
 
   public @NotNull Collection<PsiMethod> createNoArgsConstructor(@NotNull PsiClass psiClass,
-                                                                @NotNull String methodVisibility,
+                                                                @PsiModifier.ModifierConstant @NotNull String methodVisibility,
                                                                 @NotNull PsiAnnotation psiAnnotation) {
     final boolean forceConstructorWithJavaDefaults = isForceConstructor(psiAnnotation);
     return createNoArgsConstructor(psiClass, methodVisibility, psiAnnotation, forceConstructorWithJavaDefaults);
   }
 
   public @NotNull Collection<PsiMethod> createNoArgsConstructor(@NotNull PsiClass psiClass,
-                                                                @NotNull String methodVisibility,
+                                                                @PsiModifier.ModifierConstant @NotNull String methodVisibility,
                                                                 @NotNull PsiAnnotation psiAnnotation,
                                                                 boolean withJavaDefaults) {
     final Collection<PsiField> params = getConstructorFields(psiClass, withJavaDefaults);

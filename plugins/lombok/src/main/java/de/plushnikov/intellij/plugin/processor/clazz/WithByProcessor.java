@@ -97,8 +97,8 @@ public final class WithByProcessor extends AbstractClassProcessor {
   }
 
   private @NotNull Collection<PsiMethod> createFieldWithBys(@NotNull PsiClass psiClass,
-                                                                                                @NotNull String methodModifier,
-                                                                                                @Nullable String nameHint) {
+                                                            @PsiModifier.ModifierConstant @NotNull String methodModifier,
+                                                            @Nullable String nameHint) {
     Collection<PsiMethod> result = new ArrayList<>();
 
     final Collection<PsiField> psiFields = filterWithByElements(psiClass);

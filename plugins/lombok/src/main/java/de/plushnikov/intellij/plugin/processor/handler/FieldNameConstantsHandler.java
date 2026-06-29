@@ -77,7 +77,10 @@ public final class FieldNameConstantsHandler {
       }).collect(Collectors.toList());
   }
 
-  private static @NotNull LombokLightClassBuilder createEnum(@NotNull String name, @NotNull PsiClass containingClass, @NotNull String accessLevel, @NotNull PsiElement navigationElement) {
+  private static @NotNull LombokLightClassBuilder createEnum(@NotNull String name,
+                                                             @NotNull PsiClass containingClass,
+                                                             @PsiModifier.ModifierConstant @NotNull String accessLevel,
+                                                             @NotNull PsiElement navigationElement) {
     final String innerClassQualifiedName = containingClass.getQualifiedName() + "." + name;
     final LombokLightClassBuilder lazyClassBuilder = new LombokLightClassBuilder(containingClass, name, innerClassQualifiedName);
     lazyClassBuilder.withContainingClass(containingClass)
@@ -131,7 +134,10 @@ public final class FieldNameConstantsHandler {
     return makeUppercased ? LombokUtils.camelCaseToConstant(fieldName) : fieldName;
   }
 
-  private static @NotNull LombokLightClassBuilder createInnerClass(@NotNull String name, @NotNull PsiClass containingClass, @NotNull String accessLevel, @NotNull PsiElement navigationElement) {
+  private static @NotNull LombokLightClassBuilder createInnerClass(@NotNull String name,
+                                                                   @NotNull PsiClass containingClass,
+                                                                   @PsiModifier.ModifierConstant @NotNull String accessLevel,
+                                                                   @NotNull PsiElement navigationElement) {
     final String innerClassQualifiedName = containingClass.getQualifiedName() + "." + name;
     final LombokLightClassBuilder lazyClassBuilder = new LombokLightClassBuilder(containingClass, name, innerClassQualifiedName);
     lazyClassBuilder.withContainingClass(containingClass)

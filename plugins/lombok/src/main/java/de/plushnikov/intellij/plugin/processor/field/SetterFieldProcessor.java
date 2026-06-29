@@ -116,7 +116,9 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
   }
 
   @Contract("_,_,_,null -> !null")
-  public static @Nullable PsiMethod createSetterMethod(@NotNull PsiField psiField, @NotNull PsiClass psiClass, @NotNull String methodModifier,
+  public static @Nullable PsiMethod createSetterMethod(@NotNull PsiField psiField,
+                                                       @NotNull PsiClass psiClass,
+                                                       @PsiModifier.ModifierConstant @NotNull String methodModifier,
                                                        @Nullable String nameHint) {
     final String fieldName = psiField.getName();
     final PsiType psiFieldType = psiField.getType();
