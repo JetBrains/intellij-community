@@ -87,7 +87,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     val position = getLsp4jPosition(document, offsetDetector.offset)
     val node = PyreflyLsp4jServer.TspNode(sourceUri, Range(position, position))
 
-    val snapshot = this.snapshot ?: return null
+    val snapshot = snapshot ?: return null
     val tspType = try {
       lspClient.sendRequestSync(LspClient.DEFAULT_REQUEST_TIMEOUT_MS) {
         (it as PyreflyLsp4jServer).getComputedType(
@@ -125,19 +125,16 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     }
   }
 
-  private data class ResolvedDefTarget(val file: PyFile, val element: PsiElement, val offset: Int)
-
   /**
-   * Resolve the [PyFile] and the [PsiElement] (plus its offset) that a TSP declaration node points to.
+   * Resolve the [PsiElement] that a TSP declaration node points to.
    * Must be called inside a read action.
    */
-  private fun resolveDefTarget(pyElement: PyTypedElement, defNode: PyreflyLsp4jServer.TspNode): ResolvedDefTarget? {
+  private fun resolveDefTarget(pyElement: PyTypedElement, defNode: PyreflyLsp4jServer.TspNode): PsiElement? {
     val virtualFile = VirtualFileManager.getInstance().findFileByUrl(defNode.uri) ?: return null
     val document = FileDocumentManager.getInstance().getDocument(virtualFile) ?: return null
     val offset = getOffsetInDocument(document, defNode.range.start) ?: return null
     val targetFile = pyElement.manager.findFile(virtualFile) as? PyFile ?: return null
-    val targetElement = targetFile.findElementAt(offset) ?: return null
-    return ResolvedDefTarget(targetFile, targetElement, offset)
+    return targetFile.findElementAt(offset)
   }
 
   /**
@@ -185,7 +182,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
       return buildBuiltinClassType(pyElement, declaration.name)
     }
     val target = resolveDefTarget(pyElement, defNode)
-    val pyClass = target?.let { PsiTreeUtil.getParentOfType(it.element, PyClass::class.java) }
+    val pyClass = target?.let { PsiTreeUtil.getParentOfType(it, PyClass::class.java) }
     if (pyClass == null) {
       // Pyrefly emits a sentinel `range=(0,0)` for builtin instances (e.g. `int` for the literal
       // default value `5`). The offset points to the start of `builtins.pyi`, so PSI gives us no
@@ -205,7 +202,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     else {
       PyClassTypeImpl(pyClass, false)
     }
-    thisLogger().info("Pyrefly TSP: built PyClassType for ${pyClass.qualifiedName ?: pyClass.name} at ${defNode.uri}:${target.offset} (typeArgs=${typeArgs?.size ?: 0})")
+    thisLogger().info("Pyrefly TSP: built PyClassType for ${pyClass.qualifiedName ?: pyClass.name} at ${defNode.uri}:${defNode.range.start} (typeArgs=${typeArgs?.size ?: 0})")
     return Ref.create(classType)
   }
 
@@ -237,13 +234,13 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
       return buildBuiltinFunctionType(pyElement, declaration.name, tspType)
     }
     val target = resolveDefTarget(pyElement, defNode)
-    val callable = target?.let { PsiTreeUtil.getParentOfType(it.element, PyCallable::class.java) }
+    val callable = target?.let { PsiTreeUtil.getParentOfType(it, PyCallable::class.java) }
     if (callable == null) {
       // Sentinel `range=(0,0)` for builtin callables: PSI lookup at offset 0 misses the actual
       // `def`, so resolve by `declaration.name` via the builtin cache.
       return buildBuiltinFunctionType(pyElement, declaration.name, tspType)
     }
-    thisLogger().info("Pyrefly TSP: built PyFunctionType for ${callable.name} at ${defNode.uri}:${target.offset}")
+    thisLogger().info("Pyrefly TSP: built PyFunctionType for ${callable.name} at ${defNode.uri}:${defNode.range.start}")
     return Ref.create(buildFunctionType(pyElement, callable, tspType))
   }
 
@@ -313,22 +310,22 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     }
     val target = resolveDefTarget(pyElement, defNode)
     if (target != null) {
-      val context = TypeEvalContext.codeAnalysis(pyElement.project, target.file)
+      val context = TypeEvalContext.codeAnalysis(pyElement.project, target.containingFile)
 
-      val typeParameter = PsiTreeUtil.getParentOfType(target.element, PyTypeParameter::class.java)
+      val typeParameter = PsiTreeUtil.getParentOfType(target, PyTypeParameter::class.java)
       if (typeParameter != null) {
         val pep695Type = PyTypingTypeProvider.getTypeParameterTypeFromTypeParameter(typeParameter, context)
         if (pep695Type is PyTypeVarType) {
-          thisLogger().info("Pyrefly TSP: built PyTypeVarType for $name from PyTypeParameter at ${defNode.uri}:${target.offset}")
+          thisLogger().info("Pyrefly TSP: built PyTypeVarType for $name from PyTypeParameter at ${defNode.uri}:${defNode.range.start}")
           return Ref.create(pep695Type)
         }
       }
 
-      val targetExpression = PsiTreeUtil.getParentOfType(target.element, PyTargetExpression::class.java)
+      val targetExpression = PsiTreeUtil.getParentOfType(target, PyTargetExpression::class.java)
       if (targetExpression != null) {
         val assignedType = context.getType(targetExpression)
         if (assignedType is PyTypeVarType) {
-          thisLogger().info("Pyrefly TSP: built PyTypeVarType for $name from PyTargetExpression at ${defNode.uri}:${target.offset}")
+          thisLogger().info("Pyrefly TSP: built PyTypeVarType for $name from PyTargetExpression at ${defNode.uri}:${defNode.range.start}")
           return Ref.create(assignedType)
         }
       }
