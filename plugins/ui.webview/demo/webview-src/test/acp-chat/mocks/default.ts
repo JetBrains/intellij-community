@@ -57,6 +57,7 @@ export default defineWebViewMock((context) => {
     async listAgents() {
       return {
         agents: [
+          { id: "junie", name: "Junie", icon: "junie" },
           { id: "mock-agent", name: "Mock Agent" },
         ],
       }
@@ -74,6 +75,9 @@ export default defineWebViewMock((context) => {
       newSessionCounter = 0
       restartCounter++
       return { ok: true, cwd: mockCwd }
+    },
+    async openAcpConfig() {
+      return { ok: true }
     },
     async sendStdin(params) {
       const message = parseJsonRpcMessage(params.line)

@@ -5,6 +5,7 @@
 export interface AgentInfo {
   id: string
   name: string
+  icon?: "junie"
 }
 
 export type ToolStatus = "pending" | "in_progress" | "completed" | "failed"

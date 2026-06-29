@@ -93,6 +93,7 @@ export function ChatView() {
                 selectedAgentId={chat.selectedAgentId}
                 starting={chat.starting}
                 onSelect={chat.selectAgent}
+                onOpenConfig={chat.openAcpConfig}
               />
             </div>
           </div>

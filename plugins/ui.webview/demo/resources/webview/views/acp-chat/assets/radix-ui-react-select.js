@@ -1039,4 +1039,4 @@ function wrapArray(array, startIndex) {
 	return array.map((_, index) => array[(startIndex + index) % array.length]);
 }
 //#endregion
-export { SelectItem as a, SelectPortal as c, SelectTrigger as d, SelectValue as f, Root as h, SelectIcon as i, SelectScrollDownButton as l, usePrevious as m, SelectContent as n, SelectItemIndicator as o, SelectViewport as p, SelectGroup as r, SelectItemText as s, Select as t, SelectScrollUpButton as u };
+export { SelectItem as a, SelectPortal as c, SelectSeparator as d, SelectTrigger as f, Root as g, usePrevious as h, SelectIcon as i, SelectScrollDownButton as l, SelectViewport as m, SelectContent as n, SelectItemIndicator as o, SelectValue as p, SelectGroup as r, SelectItemText as s, Select as t, SelectScrollUpButton as u };

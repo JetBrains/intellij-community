@@ -9,6 +9,7 @@ import debugIcon from "../../icons/acpChatDebug.svg"
 import debugDarkIcon from "../../icons/acpChatDebug_dark.svg"
 import effortIcon from "../../icons/acpChatEffort.svg"
 import effortDarkIcon from "../../icons/acpChatEffort_dark.svg"
+import junieIcon from "../../icons/acpChatJunie.svg"
 import modeIcon from "../../icons/acpChatMode.svg"
 import modeDarkIcon from "../../icons/acpChatMode_dark.svg"
 import processorIcon from "../../icons/acpChatProcessor.svg"
@@ -26,6 +27,7 @@ export const ACP_CHAT_ICONS = IconSet.define("AcpChatIcons")
 const ACP_CHAT_ICON_RESOURCE_ROOT = "webview/views/acp-chat/assets"
 
 export const AGENT_ICON_PATH = iconResourcePath(agentIcon, "acpChatAgent.svg")
+export const JUNIE_ICON_PATH = iconResourcePath(junieIcon, "acpChatJunie.svg")
 export const SEND_ICON_PATH = iconResourcePath(sendIcon, "acpChatSend.svg")
 
 const CONTROL_ICON_PATHS: Record<AcpControlIconKind, string> = {

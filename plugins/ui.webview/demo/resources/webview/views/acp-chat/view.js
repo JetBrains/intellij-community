@@ -4,7 +4,7 @@ import { P as useExternalStoreRuntime, V as require_jsx_runtime, it as require_r
 import { C as AssistantRuntimeProvider, S as useComposerRuntime, a as threadList_exports, c as useSmooth, d as useTriggerPopoverScopeContext, f as attachment_exports, i as threadListItem_exports, l as useMessagePartText, n as useMessagePartReasoning, o as thread_exports, r as selectionToolbar_exports, s as message_exports, t as unstable_useSlashCommandAdapter, u as composer_exports, x as useMessage } from "./assets/assistant-ui-react.js";
 import { t as require_client } from "./assets/react-dom.js";
 import { i, n as A, r as b, t as i$1 } from "./assets/lit.js";
-import { a as SelectItem$1, c as SelectPortal, d as SelectTrigger$1, i as SelectIcon, l as SelectScrollDownButton$1, n as SelectContent$1, o as SelectItemIndicator, p as SelectViewport, s as SelectItemText, t as Select$1, u as SelectScrollUpButton$1 } from "./assets/radix-ui-react-select.js";
+import { a as SelectItem$1, c as SelectPortal, d as SelectSeparator$1, f as SelectTrigger$1, i as SelectIcon, l as SelectScrollDownButton$1, m as SelectViewport, n as SelectContent$1, o as SelectItemIndicator, s as SelectItemText, t as Select$1, u as SelectScrollUpButton$1 } from "./assets/radix-ui-react-select.js";
 import { i as Trigger$1, n as Portal, r as Root2, t as Content2 } from "./assets/radix-ui-react-popover.js";
 import { n as SwitchThumb, t as Switch } from "./assets/radix-ui-react-switch.js";
 import { a as Trigger$2, i as Root3, n as Portal$1, r as Provider, t as Content2$1 } from "./assets/radix-ui-react-tooltip.js";
@@ -1572,6 +1572,17 @@ function useAcpChat() {
 		loadSessionsPage,
 		nextCursor
 	]);
+	const openAcpConfig = (0, import_react.useCallback)(() => {
+		(async () => {
+			try {
+				setStatus("");
+				const result = await acpBridgeHost.openAcpConfig();
+				if (!result.ok) setStatus(result.error ?? "Failed to open ACP configuration.");
+			} catch (error) {
+				setStatus(errorText(error));
+			}
+		})();
+	}, []);
 	const threadListAdapter = (0, import_react.useMemo)(() => {
 		if (!chatListSupported) return void 0;
 		return {
@@ -1819,6 +1830,7 @@ function useAcpChat() {
 		activeSessionId,
 		loadMoreChats,
 		selectAgent,
+		openAcpConfig,
 		selectMode,
 		selectConfigOption,
 		notifyAttachmentCapabilitiesUnavailable
@@ -2073,6 +2085,9 @@ var acpChatEffort_default = "" + new URL("assets/acpChatEffort.svg", import.meta
 //#region views/acp-chat/src/icons/acpChatEffort_dark.svg
 var acpChatEffort_dark_default = "" + new URL("assets/acpChatEffort_dark.svg", import.meta.url).href;
 //#endregion
+//#region views/acp-chat/src/icons/acpChatJunie.svg
+var acpChatJunie_default = "" + new URL("assets/acpChatJunie.svg", import.meta.url).href;
+//#endregion
 //#region views/acp-chat/src/icons/acpChatMode.svg
 var acpChatMode_default = "" + new URL("assets/acpChatMode.svg", import.meta.url).href;
 //#endregion
@@ -2107,6 +2122,7 @@ var acpChatToggle_dark_default = "" + new URL("assets/acpChatToggle_dark.svg", i
 var ACP_CHAT_ICONS = IconSet.define("AcpChatIcons");
 var ACP_CHAT_ICON_RESOURCE_ROOT = "webview/views/acp-chat/assets";
 var AGENT_ICON_PATH = iconResourcePath(acpChatAgent_default, "acpChatAgent.svg");
+var JUNIE_ICON_PATH = iconResourcePath(acpChatJunie_default, "acpChatJunie.svg");
 var SEND_ICON_PATH = iconResourcePath(acpChatSend_default, "acpChatSend.svg");
 var CONTROL_ICON_PATHS = {
 	mode: iconResourcePath(acpChatMode_default, "acpChatMode.svg"),
@@ -2220,7 +2236,14 @@ function SelectItem({ children, ...props }) {
 		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectItemText, { children })]
 	});
 }
-function Select({ options, placeholder, className, triggerAriaLabel, ...props }) {
+function SelectSeparator(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectSeparator$1, {
+		"data-slot": "select-separator",
+		className: "acpSelectSeparator",
+		...props
+	});
+}
+function Select({ options, children, placeholder, className, triggerAriaLabel, ...props }) {
 	const selectedOption = options.find((option) => option.value === props.value);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(SelectRoot, {
 		...props,
@@ -2228,7 +2251,7 @@ function Select({ options, placeholder, className, triggerAriaLabel, ...props })
 			className,
 			"aria-label": triggerAriaLabel,
 			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: selectedOption?.label ?? placeholder })
-		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectContent, { children: options.map(({ label, disabled, textValue, value }) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectItem, {
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectContent, { children: children ?? options.map(({ label, disabled, textValue, value }) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectItem, {
 			value,
 			disabled,
 			textValue: textValue ?? (typeof label === "string" ? label : value),
@@ -2238,9 +2261,15 @@ function Select({ options, placeholder, className, triggerAriaLabel, ...props })
 }
 //#endregion
 //#region views/acp-chat/src/components/AgentSelector.tsx
+var OPEN_ACP_CONFIG_VALUE = "__open_acp_config__";
 function AgentSelector(props) {
 	const placeholder = props.agents.length ? "Select an agent…" : "No agents in ~/.jetbrains/acp.json";
 	const selectedAgent = props.agents.find((agent) => agent.id === props.selectedAgentId);
+	const options = props.agents.map((agent) => ({
+		value: agent.id,
+		label: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AgentSelectItem, { agent }),
+		textValue: agent.name
+	}));
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
 		className: "acpAgentSelector",
 		children: [
@@ -2250,25 +2279,52 @@ function AgentSelector(props) {
 				"aria-hidden": "true",
 				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-icon", { src: acpIconSrc(AGENT_ICON_PATH) })
 			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Select, {
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
 				className: "acpAgentSelect",
 				value: props.selectedAgentId ?? "",
-				disabled: props.starting || props.agents.length === 0,
+				disabled: props.starting,
 				placeholder,
 				triggerAriaLabel: `Agent: ${selectedAgent?.name ?? placeholder}`,
-				options: props.agents.map((agent) => ({
-					value: agent.id,
-					label: agent.name
-				})),
-				onValueChange: (agentId) => {
-					if (agentId) props.onSelect(agentId);
-				}
+				options,
+				onValueChange: (value) => {
+					if (value === OPEN_ACP_CONFIG_VALUE) props.onOpenConfig();
+					else if (value) props.onSelect(value);
+				},
+				children: [
+					props.agents.map((agent, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectItem, {
+						value: agent.id,
+						textValue: agent.name,
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AgentSelectItem, { agent })
+					}, `${agent.id}-${index}`)),
+					props.agents.length > 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectSeparator, {}) : null,
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectItem, {
+						value: OPEN_ACP_CONFIG_VALUE,
+						textValue: "Open acp.json",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "acpAgentSelectConfigItem",
+							children: "Open acp.json"
+						})
+					})
+				]
 			}),
 			props.starting && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 				className: "acpAgentStarting",
 				children: "Starting…"
 			})
 		]
+	});
+}
+function AgentSelectItem(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+		className: "acpAgentSelectItemContent",
+		children: [props.agent.icon === "junie" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+			className: "acpAgentSelectItemIcon",
+			"aria-hidden": "true",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-icon", { src: acpIconSrc(JUNIE_ICON_PATH) })
+		}) : null, /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+			className: "acpAgentSelectItemName",
+			children: props.agent.name
+		})]
 	});
 }
 //#endregion
@@ -3615,7 +3671,8 @@ function ChatView() {
 											agents: chat.agents,
 											selectedAgentId: chat.selectedAgentId,
 											starting: chat.starting,
-											onSelect: chat.selectAgent
+											onSelect: chat.selectAgent,
+											onOpenConfig: chat.openAcpConfig
 										})
 									})]
 								})

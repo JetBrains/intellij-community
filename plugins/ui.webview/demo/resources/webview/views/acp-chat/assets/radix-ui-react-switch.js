@@ -1,7 +1,7 @@
 import { o as __toESM } from "./rolldown-runtime.js";
 import { V as require_jsx_runtime, it as require_react } from "./assistant-ui-core.js";
 import { b as useComposedRefs, g as Primitive, h as composeEventHandlers } from "./assistant-ui-react.js";
-import { m as usePrevious } from "./radix-ui-react-select.js";
+import { h as usePrevious } from "./radix-ui-react-select.js";
 import { n as createContextScope } from "./radix-ui-react-collection.js";
 import { m as useControllableState, u as useSize } from "./radix-ui-react-popover.js";
 //#region node_modules/@radix-ui/react-switch/dist/index.mjs

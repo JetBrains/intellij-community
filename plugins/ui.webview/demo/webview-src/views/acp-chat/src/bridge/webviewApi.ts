@@ -7,6 +7,7 @@ import { apiId, webView, type WebViewCallable, type WebViewImplementable } from 
 export interface AgentDto {
   id: string
   name: string
+  icon?: "junie"
 }
 
 export interface AgentListDto {
@@ -25,6 +26,11 @@ export interface StartAgentResult {
   error?: string | null
 }
 
+export interface OpenAcpConfigResult {
+  ok: boolean
+  error?: string | null
+}
+
 export interface LineDto {
   line: string
 }
@@ -37,6 +43,7 @@ export interface ExitDto {
 export interface AcpBridgeHostApi extends WebViewCallable {
   listAgents(): Promise<AgentListDto>
   startAgent(params: StartAgentRequest): Promise<StartAgentResult>
+  openAcpConfig(): Promise<OpenAcpConfigResult>
   sendStdin(params: LineDto): Promise<void>
   stopAgent(): Promise<void>
 }

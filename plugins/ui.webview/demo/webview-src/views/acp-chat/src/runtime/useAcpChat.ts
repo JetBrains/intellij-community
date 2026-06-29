@@ -67,6 +67,7 @@ export interface AcpChat {
   activeSessionId: string | null
   loadMoreChats: () => void
   selectAgent: (agentId: string) => void
+  openAcpConfig: () => void
   selectMode: (modeId: string) => void
   selectConfigOption: (option: ConfigOptionView, value: string | boolean) => void
   notifyAttachmentCapabilitiesUnavailable: () => void
@@ -431,6 +432,19 @@ export function useAcpChat(): AcpChat {
     void loadSessionsPage(session, nextCursor, true)
   }, [chatListLoading, loadSessionsPage, nextCursor])
 
+  const openAcpConfig = useCallback(() => {
+    void (async () => {
+      try {
+        setStatus("")
+        const result = await acpBridgeHost.openAcpConfig()
+        if (!result.ok) setStatus(result.error ?? "Failed to open ACP configuration.")
+      }
+      catch (error) {
+        setStatus(errorText(error))
+      }
+    })()
+  }, [])
+
   const threadListAdapter = useMemo<ExternalStoreThreadListAdapter | undefined>(() => {
     if (!chatListSupported) return undefined
     return {
@@ -659,6 +673,7 @@ export function useAcpChat(): AcpChat {
     activeSessionId,
     loadMoreChats,
     selectAgent,
+    openAcpConfig,
     selectMode,
     selectConfigOption,
     notifyAttachmentCapabilitiesUnavailable,
