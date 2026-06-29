@@ -28,8 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -59,12 +57,9 @@ public final class JavaNameSuggestionProvider implements NameSuggestionProvider 
         }
       }
     }
+    final List<String> list = suggestProperlyCasedNames(element);
     final String[] strings = info != null ? info.names : ArrayUtilRt.EMPTY_STRING_ARRAY;
-    final ArrayList<String> list = new ArrayList<>(Arrays.asList(strings));
-    final String[] properlyCased = suggestProperlyCasedName(element);
-    if (properlyCased != null) {
-      Collections.addAll(list, properlyCased);
-    }
+    ContainerUtil.addAll(list, strings);
     if (parameterName != null && !list.contains(parameterName)) {
       list.add(parameterName);
     }
@@ -89,42 +84,64 @@ public final class JavaNameSuggestionProvider implements NameSuggestionProvider 
     return null;
   }
 
-  private static String @Nullable [] suggestProperlyCasedName(PsiElement psiElement) {
-    if (psiElement instanceof PsiFile || !(psiElement instanceof PsiNamedElement named)) return null;
+  private static List<String> suggestProperlyCasedNames(PsiElement element) {
+    final List<String> result = new ArrayList<>();
+    if (element instanceof PsiFile || !(element instanceof PsiNamedElement named)) return result;
     String name = named.getName();
-    if (name == null) return null;
+    if (name == null) return result;
     String prefix = "";
-    if (psiElement instanceof PsiVariable var) {
-      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(psiElement.getProject());
+    boolean capitalize = element instanceof PsiClass;
+    if (element instanceof PsiVariable var) {
+      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(element.getProject());
       final VariableKind kind = codeStyleManager.getVariableKind(var);
       prefix = codeStyleManager.getPrefixByVariableKind(kind);
       if (kind == VariableKind.STATIC_FINAL_FIELD) {
         final List<@NotNull String> words = NameUtilCore.splitNameIntoWordList(name);
-        String buffer = words.stream().map(StringUtil::toUpperCase).collect(Collectors.joining("_"));
-        return new String[] {buffer};
+        do {
+          result.add(words.stream().map(StringUtil::toUpperCase).collect(Collectors.joining("_")));
+          words.removeFirst();
+        } while (!words.isEmpty());
+        return result;
+      }
+      else if (isUpperCase(name)) {
+        suggestProperlyCasedNames(prefix, NameUtilCore.splitNameIntoWordList(StringUtil.toLowerCase(name)), capitalize, result);
       }
     }
-    final List<String> result = new ArrayList<>();
-    result.add(suggestProperlyCasedName(prefix, NameUtilCore.splitNameIntoWordList(name)));
+    if (!isUpperCase(name)) {
+      suggestProperlyCasedNames(prefix, NameUtilCore.splitNameIntoWordList(name), capitalize, result);
+    }
     if (name.startsWith(prefix) && !prefix.isEmpty()) {
       name = name.substring(prefix.length());
-      result.add(suggestProperlyCasedName(prefix, NameUtilCore.splitNameIntoWordList(name)));
+      suggestProperlyCasedNames(prefix, NameUtilCore.splitNameIntoWordList(name), capitalize, result);
     }
-    result.add(suggestProperlyCasedName(prefix, NameUtilCore.splitNameIntoWordList(StringUtil.toLowerCase(name))));
-    return ArrayUtilRt.toStringArray(result);
+    return result;
+  }
+  
+  private static boolean isUpperCase(String s) {
+    for (int i = 0, length = s.length(); i < length; i++) {
+      char c = s.charAt(i);
+      if (!Character.isUpperCase(c) && Character.isLetter(c)) return false;
+    }
+    return true;
   }
 
-  private static String suggestProperlyCasedName(String prefix, List<@NotNull String> words) {
+  private static void suggestProperlyCasedNames(String prefix, List<@NotNull String> words, boolean capitalize, List<String> result) {
     StringBuilder buffer = new StringBuilder(prefix);
     for (int i = 0; i < words.size(); i++) {
       String word = words.get(i);
-      final boolean requiresCapitalization = i > 0 || !prefix.isEmpty() && !StringUtil.endsWithChar(prefix, '_');
+      boolean requiresCapitalization = capitalize || i > 0 || !prefix.isEmpty() && !StringUtil.endsWithChar(prefix, '_');
       buffer.append(requiresCapitalization ? StringUtil.capitalize(word) : StringUtil.decapitalize(word));
     }
-    return buffer.toString();
+    if (!buffer.isEmpty() && Character.isJavaIdentifierStart(buffer.charAt(0))) {
+      result.add(buffer.toString());
+    }
+    if (words.size() > 1) {
+      words.removeFirst();
+      suggestProperlyCasedNames(prefix, words, capitalize, result);
+    }
   }
 
-  private static @Nullable SuggestedNameInfo suggestNamesForElement(final PsiElement element, PsiElement nameSuggestionContext) {
+  private static @Nullable SuggestedNameInfo suggestNamesForElement(PsiElement element, PsiElement nameSuggestionContext) {
     PsiVariable variable = null;
     if (element instanceof PsiVariable var) {
       variable = var;
@@ -137,9 +154,8 @@ public final class JavaNameSuggestionProvider implements NameSuggestionProvider 
 
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(element.getProject());
     VariableKind variableKind = codeStyleManager.getVariableKind(variable);
-    final SuggestedNameInfo nameInfo = 
-      codeStyleManager.suggestVariableName(variableKind, null, variable.getInitializer(), variable.getType());
-    final PsiExpression expression =
+    SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(variableKind, null, variable.getInitializer(), variable.getType());
+    PsiExpression expression =
       PsiTreeUtil.getParentOfType(nameSuggestionContext, PsiCallExpression.class, false, PsiLambdaExpression.class, PsiClass.class);
     if (expression == null) {
       return nameInfo;
@@ -147,5 +163,4 @@ public final class JavaNameSuggestionProvider implements NameSuggestionProvider 
     String[] names = codeStyleManager.suggestVariableName(variableKind, null, expression, variable.getType()).names;
     return new SuggestedNameInfo.Delegate(names, nameInfo);
   }
-
 }
