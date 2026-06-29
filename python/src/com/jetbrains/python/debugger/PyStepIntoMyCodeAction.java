@@ -99,6 +99,9 @@ public class PyStepIntoMyCodeAction extends XDebuggerActionBase
     if (!(session.getDebugProcess() instanceof PyStepIntoSupport support)) return null;
     if (support.isStepIntoMyCodeAvailable()) return null;
     if (!support.getCanApplyJustMyCodeChange()) return null;
-    return new TooltipLink(PyBundle.message("debugger.step.into.my.code.switch.link"), () -> support.applyJustMyCodeChange(true));
+    String linkText = support.getCanApplyJustMyCodeChangeWithoutRestart()
+                      ? PyBundle.message("debugger.step.into.my.code.switch.link.without.restart")
+                      : PyBundle.message("debugger.step.into.my.code.switch.link");
+    return new TooltipLink(linkText, () -> support.applyJustMyCodeChange(true));
   }
 }

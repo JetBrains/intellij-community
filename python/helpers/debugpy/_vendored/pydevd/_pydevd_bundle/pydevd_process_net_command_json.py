@@ -932,7 +932,7 @@ class PyDevJsonCommandProcessor(object):
                 if py_db.get_use_libraries_filter():
                     error_msg += (
                         '\nNote: may be excluded because of "justMyCode" option (default == true).'
-                        'Try setting "justMyCode": false in the debug configuration (e.g., launch.json).\n'
+                        'Try setting "justMyCode": false in the debug configuration.\n'
                     )
 
             elif error_code == self.api.ADD_BREAKPOINT_LAZY_VALIDATION:
@@ -1055,6 +1055,16 @@ class PyDevJsonCommandProcessor(object):
         # Note: no body required on success.
         set_breakpoints_response = pydevd_base_schema.build_response(request)
         return NetCommand(CMD_RETURN, 0, set_breakpoints_response, is_json=True)
+
+    def _update_exception_breakpoints_ignore_libraries(self, py_db):
+        ignore_libraries = 1 if py_db.get_use_libraries_filter() else 0
+        for exception_breakpoints in (
+            py_db.break_on_uncaught_exceptions,
+            py_db.break_on_caught_exceptions,
+            py_db.break_on_user_uncaught_exceptions,
+        ):
+            for exception_breakpoint in exception_breakpoints.values():
+                exception_breakpoint.ignore_libraries = ignore_libraries
 
     def on_stacktrace_request(self, py_db, request):
         """
@@ -1334,8 +1344,11 @@ class PyDevJsonCommandProcessor(object):
         if args.multiThreadsSingleNotification is not None:
             py_db.multi_threads_single_notification = args.multiThreadsSingleNotification
 
+        if args.justMyCode is not None:
+            self.api.set_use_libraries_filter(py_db, args.justMyCode)
+            self._update_exception_breakpoints_ignore_libraries(py_db)
+
         # TODO: Support other common settings. Note that not all of these might be relevant to python.
-        # JustMyCodeStepping: 0 or 1
         # AllowOutOfProcessSymbols: 0 or 1
         # DisableJITOptimization: 0 or 1
         # InterpreterOptions: 0 or 1
