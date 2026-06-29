@@ -308,15 +308,17 @@ and `RuntimeSessionBound` carries the *server-issued* `agentSessionId` once a se
      JSONL replay (including `AuditOnly` binding events), and that repeated binding events merge without erasing an
      existing `agentSessionId`.
      [@test] ../../engine/testSrc/EngineEventStoreTest.kt
-   - A new ACP restore test (e.g. `AcpSessionManagerRestoreTest`) verifies that the ACP connector rehydrates ownership
-     from persisted binding data, `handles(threadId)` observes only the rehydrated in-memory owner, and
-     `sendPrompt(...)` does not append a user message when the runtime cannot be contacted.
-   - ACP startup tests verify that stored `agentSessionId` plus `loadSession` support uses `loadSession`, that missing
-     `loadSession` support does not fall back to `resumeSession` or `newSession`, that a restored transcript without an
-     `agentSessionId` does not call `newSession`, and that a `loadSession` replay does not duplicate the existing
-     transcript.
-   - Connector tests cover catalog warm-up: a restored tab with a valid binding stays read-only while the catalog is not
-     ready, then rehydrates ownership and enables sending once the matching ACP entry appears.
+   - ACP continuation-decision tests verify that a stored `agentSessionId` with `loadSession` support resumes via
+     `loadSession`, that missing `loadSession` support refuses (no fallback to `resumeSession` or `newSession`), and that
+     no stored session id creates a fresh session (brand-new chat, or legacy restored chat continued by the user).
+     [@test] ../../../../../plugins/agent-workbench/acp/testSrc/AcpContinuationTest.kt
+   - ACP recovery tests verify `shouldRecoverDisconnectedAcpThread`: a `Disconnected` ACP thread (by thread or binding
+     `runtimeKind`) is a recovery target, while connected or non-ACP threads are not.
+     [@test] ../../../../../plugins/agent-workbench/acp/testSrc/AcpSessionManagerTest.kt
+   - Integration follow-ups (require a project + ACP catalog fixture, not yet implemented): the connector rehydrates
+     ownership from persisted binding data so `handles(threadId)` flips true and input re-enables (incl. catalog
+     warm-up), `sendPrompt(...)` records `ThreadDisconnected` instead of an undeliverable user message, and a
+     `loadSession` replay does not duplicate the local transcript.
    - Existing chat restore tests continue to prove that restored structured ACP tabs never synthesize a terminal
      launch spec.
      [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
