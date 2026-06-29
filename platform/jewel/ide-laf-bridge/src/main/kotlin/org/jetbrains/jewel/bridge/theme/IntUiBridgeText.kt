@@ -112,6 +112,7 @@ private val image = ImageUtil.createImage(1, 1, TYPE_INT_ARGB)
  * Computes the "base" line height with the same logic used by
  * [com.intellij.openapi.editor.impl.view.EditorView.initMetricsIfNeeded].
  *
+ * @param font The font for which to compute the line height.
  * @param treatAsUnscaled When true, the font metrics are treated as "unscaled" (i.e., they do not need compensation for
  *   the IDE scale). This is useful e.g., for editor scheme fonts, which are not scaled, contrary to LaF fonts.
  */

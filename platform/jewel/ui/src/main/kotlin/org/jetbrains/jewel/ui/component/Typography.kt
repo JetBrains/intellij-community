@@ -17,6 +17,7 @@ import java.awt.image.BufferedImage.TYPE_INT_ARGB
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 
+/** Returns the sum of this [TextUnit] and [other], provided they share the same unit type. */
 public operator fun TextUnit.plus(other: TextUnit): TextUnit =
     when {
         isSp && other.isSp -> TextUnit(value + other.value, TextUnitType.Sp)
@@ -25,6 +26,7 @@ public operator fun TextUnit.plus(other: TextUnit): TextUnit =
         else -> error("Can't add together different TextUnits. Got $type and ${other.type}")
     }
 
+/** Returns the difference between this [TextUnit] and [other], provided they share the same unit type. */
 public operator fun TextUnit.minus(other: TextUnit): TextUnit =
     when {
         isSp && other.isSp -> TextUnit(value - other.value, TextUnitType.Sp)

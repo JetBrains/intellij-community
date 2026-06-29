@@ -4,9 +4,9 @@ package org.jetbrains.jewel.detekt.rules
 import dev.detekt.api.Config
 import dev.detekt.api.Entity
 import dev.detekt.api.Finding
-import dev.detekt.api.Rule
 import dev.detekt.api.internal.AutoCorrectable
 import org.jetbrains.kotlin.psi.KtAnnotated
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtClassInitializer
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -32,7 +32,7 @@ private const val RULE_DESCRIPTION =
  * Auto-correction will add the missing annotation, but formatting is left to the IDE's formatter/ktfmt.
  */
 @AutoCorrectable(since = "0.38.0")
-class MissingApiStatusAnnotationRule(config: Config) : Rule(config, RULE_DESCRIPTION) {
+class MissingApiStatusAnnotationRule(config: Config) : JewelBaseRule(config, RULE_DESCRIPTION) {
     private val annotationsMap =
         mapOf("InternalJewelApi" to "ApiStatus.Internal", "ExperimentalJewelApi" to "ApiStatus.Experimental")
 
@@ -140,8 +140,27 @@ class MissingApiStatusAnnotationRule(config: Config) : Rule(config, RULE_DESCRIP
     private fun KtDeclaration.addAnnotation(annotationName: String) {
         val factory = KtPsiFactory(project)
         val annotationEntry = factory.createAnnotationEntry("@$annotationName")
-        val added = addAnnotationEntry(annotationEntry)
-        modifierList?.addAfter(factory.createNewLine(1), added)
+
+        // When inserting a Jewel annotation, find the paired ApiStatus one and insert after it.
+        val pairedApiStatus = annotationsMap[annotationName]
+        val anchorEntry =
+            if (pairedApiStatus != null) {
+                annotationEntries.firstOrNull { entry ->
+                    val name = entry.shortName.toString()
+                    name == pairedApiStatus || name == pairedApiStatus.removePrefix("ApiStatus.")
+                }
+            } else {
+                null
+            }
+
+        if (anchorEntry != null) {
+            val modList = checkNotNull(modifierList)
+            val added = modList.addAfter(annotationEntry, anchorEntry) as KtAnnotationEntry
+            modList.addBefore(factory.createNewLine(1), added)
+        } else {
+            val added = addAnnotationEntry(annotationEntry)
+            modifierList?.addAfter(factory.createNewLine(1), added)
+        }
     }
 
     private fun KtFile.addImportIfNeeded(fqName: String) {

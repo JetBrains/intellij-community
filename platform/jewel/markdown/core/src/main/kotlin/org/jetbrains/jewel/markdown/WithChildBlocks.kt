@@ -9,5 +9,6 @@ import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public interface WithChildBlocks {
+    /** The child blocks contained within this block. */
     public val children: List<MarkdownBlock>
 }

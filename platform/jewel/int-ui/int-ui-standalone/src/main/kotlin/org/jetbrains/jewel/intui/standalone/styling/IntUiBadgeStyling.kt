@@ -14,6 +14,7 @@ import org.jetbrains.jewel.ui.component.styling.BadgeMetrics
 import org.jetbrains.jewel.ui.component.styling.BadgeStyle
 import org.jetbrains.jewel.ui.component.styling.BadgeStyles
 
+/** Creates an Int UI light [BadgeStyles] with the provided parameters. */
 public fun BadgeStyles.Companion.light(
     blue: BadgeStyle = BadgeStyle.Blue.light(),
     blueSecondary: BadgeStyle = BadgeStyle.BlueSecondary.light(),
@@ -31,6 +32,7 @@ public fun BadgeStyles.Companion.light(
         graySecondary = graySecondary,
     )
 
+/** Creates an Int UI dark [BadgeStyles] with the provided parameters. */
 public fun BadgeStyles.Companion.dark(
     blue: BadgeStyle = BadgeStyle.Blue.dark(),
     blueSecondary: BadgeStyle = BadgeStyle.BlueSecondary.dark(),
@@ -48,24 +50,30 @@ public fun BadgeStyles.Companion.dark(
         graySecondary = graySecondary,
     )
 
+/** Provides access to the Int UI blue [BadgeStyle] factory. */
 public val BadgeStyle.Companion.Blue: IntUiBlueBadgeStyleFactory
     get() = IntUiBlueBadgeStyleFactory
 
+/** Factory object for creating Int UI blue [BadgeStyle] instances. */
 public object IntUiBlueBadgeStyleFactory {
+    /** Creates an Int UI light blue [BadgeStyle] with the provided parameters. */
     public fun light(
         colors: BadgeColors = BadgeColors.Blue.light(),
         metrics: BadgeMetrics = BadgeMetrics.default(),
     ): BadgeStyle = BadgeStyle(colors = colors, metrics = metrics)
 
+    /** Creates an Int UI dark blue [BadgeStyle] with the provided parameters. */
     public fun dark(
         colors: BadgeColors = BadgeColors.Blue.dark(),
         metrics: BadgeMetrics = BadgeMetrics.default(),
     ): BadgeStyle = BadgeStyle(colors = colors, metrics = metrics)
 }
 
+/** Provides access to the Int UI blue [BadgeColors] factory. */
 public val BadgeColors.Companion.Blue: IntUiBlueBadgeColorsFactory
     get() = IntUiBlueBadgeColorsFactory
 
+/** Factory object for creating Int UI blue [BadgeColors] instances. */
 public object IntUiBlueBadgeColorsFactory {
     private val lightBackground = IntUiLightTheme.colors.blueOrNull(4) ?: Color(0xFF3574F0)
     private val lightContent = IntUiLightTheme.colors.grayOrNull(14) ?: Color(0xFFFFFFFF)
@@ -75,6 +83,7 @@ public object IntUiBlueBadgeColorsFactory {
     private val darkContent = IntUiDarkTheme.colors.grayOrNull(1) ?: Color(0xFF1E1F22)
     private val darkDisabled = IntUiDisabledBadgeColorsFactory.dark()
 
+    /** Creates an Int UI light blue [BadgeColors] with the provided parameters. */
     public fun light(
         background: Brush = SolidColor(lightBackground),
         backgroundDisabled: Brush = SolidColor(lightDisabled.background),
@@ -100,6 +109,7 @@ public object IntUiBlueBadgeColorsFactory {
             contentHovered = contentHovered,
         )
 
+    /** Creates an Int UI dark blue [BadgeColors] with the provided parameters. */
     public fun dark(
         background: Brush = SolidColor(darkBackground),
         backgroundDisabled: Brush = SolidColor(darkDisabled.background),
@@ -126,24 +136,30 @@ public object IntUiBlueBadgeColorsFactory {
         )
 }
 
+/** Provides access to the Int UI blue-secondary [BadgeStyle] factory. */
 public val BadgeStyle.Companion.BlueSecondary: IntUiBlueSecondaryBadgeStyleFactory
     get() = IntUiBlueSecondaryBadgeStyleFactory
 
+/** Factory object for creating Int UI blue-secondary [BadgeStyle] instances. */
 public object IntUiBlueSecondaryBadgeStyleFactory {
+    /** Creates an Int UI light blue-secondary [BadgeStyle] with the provided parameters. */
     public fun light(
         colors: BadgeColors = BadgeColors.BlueSecondary.light(),
         metrics: BadgeMetrics = BadgeMetrics.default(),
     ): BadgeStyle = BadgeStyle(colors = colors, metrics = metrics)
 
+    /** Creates an Int UI dark blue-secondary [BadgeStyle] with the provided parameters. */
     public fun dark(
         colors: BadgeColors = BadgeColors.BlueSecondary.dark(),
         metrics: BadgeMetrics = BadgeMetrics.default(),
     ): BadgeStyle = BadgeStyle(colors = colors, metrics = metrics)
 }
 
+/** Provides access to the Int UI blue-secondary [BadgeColors] factory. */
 public val BadgeColors.Companion.BlueSecondary: IntUiBlueSecondaryBadgeColorsFactory
     get() = IntUiBlueSecondaryBadgeColorsFactory
 
+/** Factory object for creating Int UI blue-secondary [BadgeColors] instances. */
 public object IntUiBlueSecondaryBadgeColorsFactory {
     private val lightBackground = Color(0x293574F0)
     private val lightContent = IntUiLightTheme.colors.blueOrNull(1) ?: Color(0xFF2E55A3)
@@ -153,6 +169,7 @@ public object IntUiBlueSecondaryBadgeColorsFactory {
     private val darkContent = IntUiDarkTheme.colors.blueOrNull(12) ?: Color(0xFFB5CEFF)
     private val darkDisabled = IntUiDisabledBadgeColorsFactory.dark()
 
+    /** Creates an Int UI light blue-secondary [BadgeColors] with the provided parameters. */
     public fun light(
         background: Brush = SolidColor(lightBackground),
         backgroundDisabled: Brush = SolidColor(lightDisabled.background),
@@ -178,6 +195,7 @@ public object IntUiBlueSecondaryBadgeColorsFactory {
             contentHovered = contentHovered,
         )
 
+    /** Creates an Int UI dark blue-secondary [BadgeColors] with the provided parameters. */
     public fun dark(
         background: Brush = SolidColor(darkBackground),
         backgroundDisabled: Brush = SolidColor(darkDisabled.background),
@@ -204,24 +222,30 @@ public object IntUiBlueSecondaryBadgeColorsFactory {
         )
 }
 
+/** Provides access to the Int UI purple-secondary [BadgeStyle] factory. */
 public val BadgeStyle.Companion.PurpleSecondary: IntUiPurpleSecondaryBadgeStyleFactory
     get() = IntUiPurpleSecondaryBadgeStyleFactory
 
+/** Factory object for creating Int UI purple-secondary [BadgeStyle] instances. */
 public object IntUiPurpleSecondaryBadgeStyleFactory {
+    /** Creates an Int UI light purple-secondary [BadgeStyle] with the provided parameters. */
     public fun light(
         colors: BadgeColors = BadgeColors.PurpleSecondary.light(),
         metrics: BadgeMetrics = BadgeMetrics.default(),
     ): BadgeStyle = BadgeStyle(colors = colors, metrics = metrics)
 
+    /** Creates an Int UI dark purple-secondary [BadgeStyle] with the provided parameters. */
     public fun dark(
         colors: BadgeColors = BadgeColors.PurpleSecondary.dark(),
         metrics: BadgeMetrics = BadgeMetrics.default(),
     ): BadgeStyle = BadgeStyle(colors = colors, metrics = metrics)
 }
 
+/** Provides access to the Int UI purple-secondary [BadgeColors] factory. */
 public val BadgeColors.Companion.PurpleSecondary: IntUiPurpleSecondaryBadgeColorsFactory
     get() = IntUiPurpleSecondaryBadgeColorsFactory
 
+/** Factory object for creating Int UI purple-secondary [BadgeColors] instances. */
 public object IntUiPurpleSecondaryBadgeColorsFactory {
     private val lightBackground = Color(0x29834DF0)
     private val lightContent = IntUiLightTheme.colors.purpleOrNull(1) ?: Color(0xFF55339C)
@@ -231,6 +255,7 @@ public object IntUiPurpleSecondaryBadgeColorsFactory {
     private val darkContent = IntUiDarkTheme.colors.purpleOrNull(12) ?: Color(0xFFE4CEFF)
     private val darkDisabled = IntUiDisabledBadgeColorsFactory.dark()
 
+    /** Creates an Int UI light purple-secondary [BadgeColors] with the provided parameters. */
     public fun light(
         background: Brush = SolidColor(lightBackground),
         backgroundDisabled: Brush = SolidColor(lightDisabled.background),
@@ -256,6 +281,7 @@ public object IntUiPurpleSecondaryBadgeColorsFactory {
             contentHovered = contentHovered,
         )
 
+    /** Creates an Int UI dark purple-secondary [BadgeColors] with the provided parameters. */
     public fun dark(
         background: Brush = SolidColor(darkBackground),
         backgroundDisabled: Brush = SolidColor(darkDisabled.background),
@@ -282,24 +308,30 @@ public object IntUiPurpleSecondaryBadgeColorsFactory {
         )
 }
 
+/** Provides access to the Int UI green [BadgeStyle] factory. */
 public val BadgeStyle.Companion.Green: IntUiGreenBadgeStyleFactory
     get() = IntUiGreenBadgeStyleFactory
 
+/** Factory object for creating Int UI green [BadgeStyle] instances. */
 public object IntUiGreenBadgeStyleFactory {
+    /** Creates an Int UI light green [BadgeStyle] with the provided parameters. */
     public fun light(
         colors: BadgeColors = BadgeColors.Green.light(),
         metrics: BadgeMetrics = BadgeMetrics.default(),
     ): BadgeStyle = BadgeStyle(colors = colors, metrics = metrics)
 
+    /** Creates an Int UI dark green [BadgeStyle] with the provided parameters. */
     public fun dark(
         colors: BadgeColors = BadgeColors.Green.dark(),
         metrics: BadgeMetrics = BadgeMetrics.default(),
     ): BadgeStyle = BadgeStyle(colors = colors, metrics = metrics)
 }
 
+/** Provides access to the Int UI green [BadgeColors] factory. */
 public val BadgeColors.Companion.Green: IntUiGreenBadgeColorsFactory
     get() = IntUiGreenBadgeColorsFactory
 
+/** Factory object for creating Int UI green [BadgeColors] instances. */
 public object IntUiGreenBadgeColorsFactory {
     private val lightBackground = IntUiLightTheme.colors.greenOrNull(4) ?: Color(0xFF208A3C)
     private val lightContent = IntUiLightTheme.colors.grayOrNull(14) ?: Color(0xFFFFFFFF)
@@ -309,6 +341,7 @@ public object IntUiGreenBadgeColorsFactory {
     private val darkContent = IntUiDarkTheme.colors.grayOrNull(1) ?: Color(0xFF1E1F22)
     private val darkDisabled = IntUiDisabledBadgeColorsFactory.dark()
 
+    /** Creates an Int UI light green [BadgeColors] with the provided parameters. */
     public fun light(
         background: Brush = SolidColor(lightBackground),
         backgroundDisabled: Brush = SolidColor(lightDisabled.background),
@@ -334,6 +367,7 @@ public object IntUiGreenBadgeColorsFactory {
             contentHovered = contentHovered,
         )
 
+    /** Creates an Int UI dark green [BadgeColors] with the provided parameters. */
     public fun dark(
         background: Brush = SolidColor(darkBackground),
         backgroundDisabled: Brush = SolidColor(darkDisabled.background),
@@ -360,24 +394,30 @@ public object IntUiGreenBadgeColorsFactory {
         )
 }
 
+/** Provides access to the Int UI green-secondary [BadgeStyle] factory. */
 public val BadgeStyle.Companion.GreenSecondary: IntUiGreenSecondaryBadgeStyleFactory
     get() = IntUiGreenSecondaryBadgeStyleFactory
 
+/** Factory object for creating Int UI green-secondary [BadgeStyle] instances. */
 public object IntUiGreenSecondaryBadgeStyleFactory {
+    /** Creates an Int UI light green-secondary [BadgeStyle] with the provided parameters. */
     public fun light(
         colors: BadgeColors = BadgeColors.GreenSecondary.light(),
         metrics: BadgeMetrics = BadgeMetrics.default(),
     ): BadgeStyle = BadgeStyle(colors = colors, metrics = metrics)
 
+    /** Creates an Int UI dark green-secondary [BadgeStyle] with the provided parameters. */
     public fun dark(
         colors: BadgeColors = BadgeColors.GreenSecondary.dark(),
         metrics: BadgeMetrics = BadgeMetrics.default(),
     ): BadgeStyle = BadgeStyle(colors = colors, metrics = metrics)
 }
 
+/** Provides access to the Int UI green-secondary [BadgeColors] factory. */
 public val BadgeColors.Companion.GreenSecondary: IntUiGreenSecondaryBadgeColorsFactory
     get() = IntUiGreenSecondaryBadgeColorsFactory
 
+/** Factory object for creating Int UI green-secondary [BadgeColors] instances. */
 public object IntUiGreenSecondaryBadgeColorsFactory {
     private val lightBackground = Color(0x29208A3C)
     private val lightContent = IntUiLightTheme.colors.greenOrNull(1) ?: Color(0xFF1E6B33)
@@ -387,6 +427,7 @@ public object IntUiGreenSecondaryBadgeColorsFactory {
     private val darkContent = IntUiDarkTheme.colors.greenOrNull(12) ?: Color(0xFFD4FAD7)
     private val darkDisabled = IntUiDisabledBadgeColorsFactory.dark()
 
+    /** Creates an Int UI light green-secondary [BadgeColors] with the provided parameters. */
     public fun light(
         background: Brush = SolidColor(lightBackground),
         backgroundDisabled: Brush = SolidColor(lightDisabled.background),
@@ -412,6 +453,7 @@ public object IntUiGreenSecondaryBadgeColorsFactory {
             contentHovered = contentHovered,
         )
 
+    /** Creates an Int UI dark green-secondary [BadgeColors] with the provided parameters. */
     public fun dark(
         background: Brush = SolidColor(darkBackground),
         backgroundDisabled: Brush = SolidColor(darkDisabled.background),
@@ -438,24 +480,30 @@ public object IntUiGreenSecondaryBadgeColorsFactory {
         )
 }
 
+/** Provides access to the Int UI gray-secondary [BadgeStyle] factory. */
 public val BadgeStyle.Companion.GraySecondary: IntUiGraySecondaryBadgeStyleFactory
     get() = IntUiGraySecondaryBadgeStyleFactory
 
+/** Factory object for creating Int UI gray-secondary [BadgeStyle] instances. */
 public object IntUiGraySecondaryBadgeStyleFactory {
+    /** Creates an Int UI light gray-secondary [BadgeStyle] with the provided parameters. */
     public fun light(
         colors: BadgeColors = BadgeColors.GraySecondary.light(),
         metrics: BadgeMetrics = BadgeMetrics.default(),
     ): BadgeStyle = BadgeStyle(colors = colors, metrics = metrics)
 
+    /** Creates an Int UI dark gray-secondary [BadgeStyle] with the provided parameters. */
     public fun dark(
         colors: BadgeColors = BadgeColors.GraySecondary.dark(),
         metrics: BadgeMetrics = BadgeMetrics.default(),
     ): BadgeStyle = BadgeStyle(colors = colors, metrics = metrics)
 }
 
+/** Provides access to the Int UI gray-secondary [BadgeColors] factory. */
 public val BadgeColors.Companion.GraySecondary: IntUiGraySecondaryBadgeColorsFactory
     get() = IntUiGraySecondaryBadgeColorsFactory
 
+/** Factory object for creating Int UI gray-secondary [BadgeColors] instances. */
 public object IntUiGraySecondaryBadgeColorsFactory {
     private val lightBackground = Color(0x1F6C707E)
     private val lightContent = IntUiLightTheme.colors.grayOrNull(6) ?: Color(0xFF6C707E)
@@ -465,6 +513,7 @@ public object IntUiGraySecondaryBadgeColorsFactory {
     private val darkContent = IntUiDarkTheme.colors.grayOrNull(10) ?: Color(0xFFB4B8BF)
     private val darkDisabled = IntUiDisabledBadgeColorsFactory.dark()
 
+    /** Creates an Int UI light gray-secondary [BadgeColors] with the provided parameters. */
     public fun light(
         background: Brush = SolidColor(lightBackground.copy(alpha = .12f)),
         backgroundDisabled: Brush = SolidColor(lightDisabled.background),
@@ -490,6 +539,7 @@ public object IntUiGraySecondaryBadgeColorsFactory {
             contentHovered = contentHovered,
         )
 
+    /** Creates an Int UI dark gray-secondary [BadgeColors] with the provided parameters. */
     public fun dark(
         background: Brush = SolidColor(darkBackground.copy(alpha = .20f)),
         backgroundDisabled: Brush = SolidColor(darkDisabled.background),
@@ -516,6 +566,7 @@ public object IntUiGraySecondaryBadgeColorsFactory {
         )
 }
 
+/** Creates an Int UI default [BadgeMetrics] with the provided parameters. */
 public fun BadgeMetrics.Companion.default(
     cornerSize: CornerSize = CornerSize(100),
     padding: PaddingValues = PaddingValues(horizontal = 6.dp),

@@ -34,6 +34,7 @@ public object CommonPainterHintsProvider : PainterHintsProvider {
     @Composable override fun hints(path: String): List<PainterHint> = listOf(HiDpi(), Dark(JewelTheme.isDark))
 }
 
+/** The composition local that provides the current [PainterHintsProvider]. */
 public val LocalPainterHintsProvider: ProvidableCompositionLocal<PainterHintsProvider> = staticCompositionLocalOf {
     CommonPainterHintsProvider
 }

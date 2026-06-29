@@ -15,16 +15,20 @@ import org.jetbrains.jewel.ui.component.styling.ButtonColors
 import org.jetbrains.jewel.ui.component.styling.ButtonMetrics
 import org.jetbrains.jewel.ui.component.styling.ButtonStyle
 
+/** Factory for creating Int UI default [ButtonStyle] instances. */
 public val ButtonStyle.Companion.Default: IntUiDefaultButtonStyleFactory
     get() = IntUiDefaultButtonStyleFactory
 
+/** Factory object that creates Int UI default [ButtonStyle] instances for light and dark themes. */
 public object IntUiDefaultButtonStyleFactory {
+    /** Creates an Int UI light default [ButtonStyle] with the provided parameters. */
     public fun light(
         colors: ButtonColors = ButtonColors.Default.light(),
         metrics: ButtonMetrics = ButtonMetrics.default(),
         focusOutlineAlignment: Stroke.Alignment = Stroke.Alignment.Center,
     ): ButtonStyle = ButtonStyle(colors, metrics, focusOutlineAlignment)
 
+    /** Creates an Int UI dark default [ButtonStyle] with the provided parameters. */
     public fun dark(
         colors: ButtonColors = ButtonColors.Default.dark(),
         metrics: ButtonMetrics = ButtonMetrics.default(),
@@ -32,16 +36,20 @@ public object IntUiDefaultButtonStyleFactory {
     ): ButtonStyle = ButtonStyle(colors, metrics, focusOutlineAlignment)
 }
 
+/** Factory for creating Int UI outlined [ButtonStyle] instances. */
 public val ButtonStyle.Companion.Outlined: IntUiOutlinedButtonStyleFactory
     get() = IntUiOutlinedButtonStyleFactory
 
+/** Factory object that creates Int UI outlined [ButtonStyle] instances for light and dark themes. */
 public object IntUiOutlinedButtonStyleFactory {
+    /** Creates an Int UI light outlined [ButtonStyle] with the provided parameters. */
     public fun light(
         colors: ButtonColors = ButtonColors.Outlined.light(),
         metrics: ButtonMetrics = ButtonMetrics.outlined(),
         focusOutlineAlignment: Stroke.Alignment = Stroke.Alignment.Center,
     ): ButtonStyle = ButtonStyle(colors, metrics, focusOutlineAlignment)
 
+    /** Creates an Int UI dark outlined [ButtonStyle] with the provided parameters. */
     public fun dark(
         colors: ButtonColors = ButtonColors.Outlined.dark(),
         metrics: ButtonMetrics = ButtonMetrics.outlined(),
@@ -49,10 +57,13 @@ public object IntUiOutlinedButtonStyleFactory {
     ): ButtonStyle = ButtonStyle(colors, metrics, focusOutlineAlignment)
 }
 
+/** Factory for creating Int UI default [ButtonColors] instances. */
 public val ButtonColors.Companion.Default: IntUiDefaultButtonColorFactory
     get() = IntUiDefaultButtonColorFactory
 
+/** Factory object that creates Int UI default [ButtonColors] instances for light and dark themes. */
 public object IntUiDefaultButtonColorFactory {
+    /** Creates an Int UI light default [ButtonColors] with the provided parameters. */
     public fun light(
         background: Brush = SolidColor(IntUiLightTheme.colors.blue(4)),
         backgroundDisabled: Brush = SolidColor(Color.Unspecified),
@@ -88,6 +99,7 @@ public object IntUiDefaultButtonColorFactory {
             borderHovered = borderHovered,
         )
 
+    /** Creates an Int UI dark default [ButtonColors] with the provided parameters. */
     public fun dark(
         background: Brush = SolidColor(IntUiDarkTheme.colors.blue(6)),
         backgroundDisabled: Brush = SolidColor(Color.Unspecified),
@@ -124,10 +136,13 @@ public object IntUiDefaultButtonColorFactory {
         )
 }
 
+/** Factory for creating Int UI outlined [ButtonColors] instances. */
 public val ButtonColors.Companion.Outlined: IntUiOutlinedButtonColorFactory
     get() = IntUiOutlinedButtonColorFactory
 
+/** Factory object that creates Int UI outlined [ButtonColors] instances for light and dark themes. */
 public object IntUiOutlinedButtonColorFactory {
+    /** Creates an Int UI light outlined [ButtonColors] with the provided parameters. */
     public fun light(
         background: Brush = SolidColor(IntUiLightTheme.colors.gray(14)),
         backgroundDisabled: Brush = SolidColor(Color.Unspecified),
@@ -163,6 +178,7 @@ public object IntUiOutlinedButtonColorFactory {
             borderHovered = borderHovered,
         )
 
+    /** Creates an Int UI dark outlined [ButtonColors] with the provided parameters. */
     public fun dark(
         background: Brush = SolidColor(Color.Transparent),
         backgroundDisabled: Brush = SolidColor(Color.Unspecified),
@@ -199,6 +215,7 @@ public object IntUiOutlinedButtonColorFactory {
         )
 }
 
+/** Creates an Int UI default [ButtonMetrics] with the provided parameters. */
 public fun ButtonMetrics.Companion.default(
     cornerSize: CornerSize = CornerSize(4.dp),
     padding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
@@ -207,6 +224,7 @@ public fun ButtonMetrics.Companion.default(
     focusOutlineExpand: Dp = 1.5.dp,
 ): ButtonMetrics = ButtonMetrics(cornerSize, padding, minSize, borderWidth, focusOutlineExpand)
 
+/** Creates an Int UI outlined [ButtonMetrics] with the provided parameters. */
 public fun ButtonMetrics.Companion.outlined(
     cornerSize: CornerSize = CornerSize(4.dp),
     padding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
@@ -215,24 +233,31 @@ public fun ButtonMetrics.Companion.outlined(
     focusOutlineExpand: Dp = Dp.Unspecified,
 ): ButtonMetrics = ButtonMetrics(cornerSize, padding, minSize, borderWidth, focusOutlineExpand)
 
+/** Factory for creating Int UI slim [ButtonStyle] instances. */
 public val ButtonStyle.Companion.Slim: IntUiSlimButtonStyleFactory
     get() = IntUiSlimButtonStyleFactory
 
+/** Factory object that provides access to slim default and outlined [ButtonStyle] factories. */
 public object IntUiSlimButtonStyleFactory {
+    /** Factory for creating Int UI slim default [ButtonStyle] instances. */
     public val Default: IntUiSlimDefaultButtonStyleFactory
         get() = IntUiSlimDefaultButtonStyleFactory
 
+    /** Factory for creating Int UI slim outlined [ButtonStyle] instances. */
     public val Outlined: IntUiSlimOutlinedButtonStyleFactory
         get() = IntUiSlimOutlinedButtonStyleFactory
 }
 
+/** Factory object that creates Int UI slim default [ButtonStyle] instances for light and dark themes. */
 public object IntUiSlimDefaultButtonStyleFactory {
+    /** Creates an Int UI light slim default [ButtonStyle] with the provided parameters. */
     public fun light(
         colors: ButtonColors = ButtonColors.Default.light(),
         metrics: ButtonMetrics = ButtonMetrics.Slim.default(),
         focusOutlineAlignment: Stroke.Alignment = Stroke.Alignment.Center,
     ): ButtonStyle = ButtonStyle(colors, metrics, focusOutlineAlignment)
 
+    /** Creates an Int UI dark slim default [ButtonStyle] with the provided parameters. */
     public fun dark(
         colors: ButtonColors = ButtonColors.Default.dark(),
         metrics: ButtonMetrics = ButtonMetrics.Slim.default(),
@@ -240,13 +265,16 @@ public object IntUiSlimDefaultButtonStyleFactory {
     ): ButtonStyle = ButtonStyle(colors, metrics, focusOutlineAlignment)
 }
 
+/** Factory object that creates Int UI slim outlined [ButtonStyle] instances for light and dark themes. */
 public object IntUiSlimOutlinedButtonStyleFactory {
+    /** Creates an Int UI light slim outlined [ButtonStyle] with the provided parameters. */
     public fun light(
         colors: ButtonColors = ButtonColors.Outlined.light(),
         metrics: ButtonMetrics = ButtonMetrics.Slim.outlined(),
         focusOutlineAlignment: Stroke.Alignment = Stroke.Alignment.Center,
     ): ButtonStyle = ButtonStyle(colors, metrics, focusOutlineAlignment)
 
+    /** Creates an Int UI dark slim outlined [ButtonStyle] with the provided parameters. */
     public fun dark(
         colors: ButtonColors = ButtonColors.Outlined.dark(),
         metrics: ButtonMetrics = ButtonMetrics.Slim.outlined(),
@@ -254,10 +282,13 @@ public object IntUiSlimOutlinedButtonStyleFactory {
     ): ButtonStyle = ButtonStyle(colors, metrics, focusOutlineAlignment)
 }
 
+/** Factory for creating Int UI slim [ButtonMetrics] instances. */
 public val ButtonMetrics.Companion.Slim: IntUiSlimButtonMetricsFactory
     get() = IntUiSlimButtonMetricsFactory
 
+/** Factory object that creates Int UI slim [ButtonMetrics] instances. */
 public object IntUiSlimButtonMetricsFactory {
+    /** Creates an Int UI slim default [ButtonMetrics] with the provided parameters. */
     public fun default(
         cornerSize: CornerSize = CornerSize(4.dp),
         padding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 2.dp),
@@ -266,6 +297,7 @@ public object IntUiSlimButtonMetricsFactory {
         focusOutlineExpand: Dp = 1.5.dp,
     ): ButtonMetrics = ButtonMetrics(cornerSize, padding, minSize, borderWidth, focusOutlineExpand)
 
+    /** Creates an Int UI slim outlined [ButtonMetrics] with the provided parameters. */
     public fun outlined(
         cornerSize: CornerSize = CornerSize(4.dp),
         padding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 2.dp),

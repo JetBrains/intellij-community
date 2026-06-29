@@ -14,16 +14,19 @@ import org.jetbrains.jewel.ui.component.styling.ChipColors
 import org.jetbrains.jewel.ui.component.styling.ChipMetrics
 import org.jetbrains.jewel.ui.component.styling.ChipStyle
 
+/** Creates an Int UI light [ChipStyle] with the provided parameters. */
 public fun ChipStyle.Companion.light(
     colors: ChipColors = ChipColors.light(),
     metrics: ChipMetrics = ChipMetrics.defaults(),
 ): ChipStyle = ChipStyle(colors, metrics)
 
+/** Creates an Int UI dark [ChipStyle] with the provided parameters. */
 public fun ChipStyle.Companion.dark(
     colors: ChipColors = ChipColors.dark(),
     metrics: ChipMetrics = ChipMetrics.defaults(),
 ): ChipStyle = ChipStyle(colors, metrics)
 
+/** Creates an Int UI light [ChipColors] with the provided parameters. */
 public fun ChipColors.Companion.light(
     background: Brush = SolidColor(IntUiLightTheme.colors.gray(14)),
     backgroundDisabled: Brush = SolidColor(IntUiLightTheme.colors.gray(12)),
@@ -89,6 +92,7 @@ public fun ChipColors.Companion.light(
         borderSelectedHovered = borderSelectedHovered,
     )
 
+/** Creates an Int UI dark [ChipColors] with the provided parameters. */
 public fun ChipColors.Companion.dark(
     background: Brush = SolidColor(IntUiDarkTheme.colors.gray(2)),
     backgroundDisabled: Brush = SolidColor(IntUiDarkTheme.colors.gray(4)),
@@ -154,6 +158,7 @@ public fun ChipColors.Companion.dark(
         borderSelectedHovered = borderSelectedHovered,
     )
 
+/** Creates an Int UI default [ChipMetrics] with the provided parameters. */
 @Deprecated("Use the version with 'minSize' instead", level = DeprecationLevel.HIDDEN)
 public fun ChipMetrics.Companion.defaults(
     cornerSize: CornerSize = CornerSize(100),
@@ -162,6 +167,7 @@ public fun ChipMetrics.Companion.defaults(
     borderWidthSelected: Dp = 2.dp,
 ): ChipMetrics = ChipMetrics(cornerSize, padding, borderWidth, borderWidthSelected, DpSize(72.dp, 28.dp))
 
+/** Creates an Int UI default [ChipMetrics] with the provided parameters. */
 public fun ChipMetrics.Companion.defaults(
     cornerSize: CornerSize = CornerSize(100),
     padding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 8.dp),

@@ -37,6 +37,7 @@ import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.theme.textFieldStyle
 
+/** Showcases the [TextField] component. */
 @Composable
 public fun TextFields(modifier: Modifier = Modifier) {
     VerticallyScrollableContainer(modifier.fillMaxSize()) {

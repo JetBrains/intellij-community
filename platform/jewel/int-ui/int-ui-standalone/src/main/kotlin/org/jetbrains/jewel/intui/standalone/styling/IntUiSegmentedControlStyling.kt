@@ -12,16 +12,19 @@ import org.jetbrains.jewel.ui.component.styling.SegmentedControlColors
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlMetrics
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle
 
+/** Creates an Int UI light [SegmentedControlStyle] with the provided parameters. */
 public fun SegmentedControlStyle.Companion.light(
     colors: SegmentedControlColors = SegmentedControlColors.light(),
     metrics: SegmentedControlMetrics = SegmentedControlMetrics.defaults(),
 ): SegmentedControlStyle = SegmentedControlStyle(colors, metrics)
 
+/** Creates an Int UI dark [SegmentedControlStyle] with the provided parameters. */
 public fun SegmentedControlStyle.Companion.dark(
     colors: SegmentedControlColors = SegmentedControlColors.dark(),
     metrics: SegmentedControlMetrics = SegmentedControlMetrics.defaults(),
 ): SegmentedControlStyle = SegmentedControlStyle(colors, metrics)
 
+/** Creates an Int UI light [SegmentedControlColors] with the provided parameters. */
 public fun SegmentedControlColors.Companion.light(
     border: Brush = SolidColor(IntUiLightTheme.colors.gray(9)),
     borderDisabled: Brush = SolidColor(IntUiLightTheme.colors.gray(11)),
@@ -37,6 +40,7 @@ public fun SegmentedControlColors.Companion.light(
         borderFocused = borderFocused,
     )
 
+/** Creates an Int UI dark [SegmentedControlColors] with the provided parameters. */
 public fun SegmentedControlColors.Companion.dark(
     border: Brush = SolidColor(IntUiDarkTheme.colors.gray(5)),
     borderDisabled: Brush = SolidColor(IntUiDarkTheme.colors.gray(4)),
@@ -52,6 +56,7 @@ public fun SegmentedControlColors.Companion.dark(
         borderFocused = borderFocused,
     )
 
+/** Creates an Int UI default [SegmentedControlMetrics] with the provided parameters. */
 public fun SegmentedControlMetrics.Companion.defaults(
     cornerSize: CornerSize = CornerSize(3.dp),
     borderWidth: Dp = 1.dp,

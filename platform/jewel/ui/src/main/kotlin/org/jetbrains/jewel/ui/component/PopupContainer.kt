@@ -95,6 +95,17 @@ public fun PopupContainer(
     }
 }
 
+/**
+ * A reusable popup container that provides standard visual styling for floating content.
+ *
+ * @param onDismissRequest Called when the popup should be dismissed (e.g., clicking outside or pressing Esc)
+ * @param horizontalAlignment The horizontal alignment of the popup relative to its anchor point
+ * @param modifier Modifier to be applied to the container
+ * @param style The visual styling configuration for the popup container
+ * @param popupProperties Properties controlling the popup window behavior
+ * @param popupPositionProvider Determines the position of the popup on the screen
+ * @param content The main content to display inside the popup container
+ */
 @Composable
 @Deprecated(message = "Deprecated in favor of the method with 'adContent' parameter", level = DeprecationLevel.HIDDEN)
 public fun PopupContainer(

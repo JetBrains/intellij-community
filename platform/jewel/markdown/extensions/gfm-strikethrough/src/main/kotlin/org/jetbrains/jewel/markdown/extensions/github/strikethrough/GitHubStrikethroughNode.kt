@@ -17,7 +17,12 @@ import org.jetbrains.jewel.markdown.WithInlineMarkdown
  */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
-public data class GitHubStrikethroughNode(val delimiter: String, override val inlineContent: List<InlineMarkdown>) :
-    InlineMarkdown.CustomDelimitedNode, WithInlineMarkdown {
+public data class GitHubStrikethroughNode(
+    /** The delimiter string used to mark the start and end of the strikethrough (e.g., `~~`). */
+    val delimiter: String,
+    /** The inline child nodes contained within this strikethrough span. */
+    override val inlineContent: List<InlineMarkdown>,
+) : InlineMarkdown.CustomDelimitedNode, WithInlineMarkdown {
+    /** The opening delimiter string, equal to [delimiter]. */
     override val openingDelimiter: String = delimiter
 }

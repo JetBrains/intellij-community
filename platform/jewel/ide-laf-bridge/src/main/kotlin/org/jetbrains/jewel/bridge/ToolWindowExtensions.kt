@@ -8,11 +8,11 @@ import org.jetbrains.jewel.foundation.enableNewSwingCompositing
 /**
  * Adds a new tab to the tool window with Compose content.
  *
- * @param focusOnClickInside If `true`, the underlying [ComposePanel] will request focus when a mouse click occurs
- *   inside it, even if it does not hit a "focusable" element.
  * @param tabDisplayName The title of the tab.
  * @param isLockable Whether the tab can be locked.
  * @param isCloseable Whether the tab can be closed.
+ * @param focusOnClickInside If `true`, the underlying [ComposePanel] will request focus when a mouse click occurs
+ *   inside it, even if it does not hit a "focusable" element.
  * @param content The Composable content of the tab.
  */
 public fun ToolWindow.addComposeTab(

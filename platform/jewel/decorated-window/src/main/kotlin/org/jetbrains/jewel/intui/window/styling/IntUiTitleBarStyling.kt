@@ -27,6 +27,13 @@ import org.jetbrains.jewel.window.styling.TitleBarIcons
 import org.jetbrains.jewel.window.styling.TitleBarMetrics
 import org.jetbrains.jewel.window.styling.TitleBarStyle
 
+/**
+ * Creates an Int UI light [TitleBarStyle] with the standard IntelliJ dark-header appearance.
+ *
+ * @param colors The [TitleBarColors] to use. Defaults to [TitleBarColors.light].
+ * @param metrics The [TitleBarMetrics] to use. Defaults to [TitleBarMetrics.defaults].
+ * @param icons The [TitleBarIcons] to use. Defaults to [TitleBarIcons.defaults].
+ */
 @Composable
 public fun TitleBarStyle.Companion.light(
     colors: TitleBarColors = TitleBarColors.light(),
@@ -78,6 +85,13 @@ public fun TitleBarStyle.Companion.light(
             ),
     )
 
+/**
+ * Creates an Int UI [TitleBarStyle] with a light-colored header, matching the "New UI" appearance.
+ *
+ * @param colors The [TitleBarColors] to use. Defaults to [TitleBarColors.lightWithLightHeader].
+ * @param metrics The [TitleBarMetrics] to use. Defaults to [TitleBarMetrics.defaults].
+ * @param icons The [TitleBarIcons] to use. Defaults to [TitleBarIcons.defaults].
+ */
 @Composable
 public fun TitleBarStyle.Companion.lightWithLightHeader(
     colors: TitleBarColors = TitleBarColors.lightWithLightHeader(),
@@ -128,6 +142,13 @@ public fun TitleBarStyle.Companion.lightWithLightHeader(
             ),
     )
 
+/**
+ * Creates an Int UI dark [TitleBarStyle].
+ *
+ * @param colors The [TitleBarColors] to use. Defaults to [TitleBarColors.dark].
+ * @param metrics The [TitleBarMetrics] to use. Defaults to [TitleBarMetrics.defaults].
+ * @param icons The [TitleBarIcons] to use. Defaults to [TitleBarIcons.defaults].
+ */
 @Composable
 public fun TitleBarStyle.Companion.dark(
     colors: TitleBarColors = TitleBarColors.dark(),
@@ -200,6 +221,7 @@ private fun titleBarIconButtonStyle(hoveredBackground: Color, pressedBackground:
         metrics,
     )
 
+/** Creates Int UI light [TitleBarColors] for the standard IntelliJ dark-header title bar. */
 @Composable
 public fun TitleBarColors.Companion.light(
     backgroundColor: Color = IntUiLightTheme.colors.gray(2),
@@ -247,6 +269,7 @@ public fun TitleBarColors.Companion.light(
         dropdownPressedBackground = dropdownPressedBackground,
     )
 
+/** Creates Int UI [TitleBarColors] for a light-colored title bar header, as used in the New UI. */
 @Composable
 public fun TitleBarColors.Companion.lightWithLightHeader(
     backgroundColor: Color = IntUiLightTheme.colors.gray(13),
@@ -279,6 +302,7 @@ public fun TitleBarColors.Companion.lightWithLightHeader(
         dropdownPressedBackground = dropdownPressedBackground,
     )
 
+/** Creates Int UI dark [TitleBarColors]. */
 @Composable
 public fun TitleBarColors.Companion.dark(
     backgroundColor: Color = IntUiDarkTheme.colors.gray(2),
@@ -311,6 +335,14 @@ public fun TitleBarColors.Companion.dark(
         dropdownPressedBackground = dropdownPressedBackground,
     )
 
+/**
+ * Creates default [TitleBarMetrics] with standard Int UI values.
+ *
+ * @param height The title bar height. Defaults to `40.dp`.
+ * @param gradientStartX The horizontal start position of the background gradient. Defaults to `-100.dp`.
+ * @param gradientEndX The horizontal end position of the background gradient. Defaults to `400.dp`.
+ * @param titlePaneButtonSize The size of window control buttons (minimize, maximize, close). Defaults to `40x40.dp`.
+ */
 public fun TitleBarMetrics.Companion.defaults(
     height: Dp = 40.dp,
     gradientStartX: Dp = (-100).dp,
@@ -318,6 +350,14 @@ public fun TitleBarMetrics.Companion.defaults(
     titlePaneButtonSize: DpSize = DpSize(40.dp, 40.dp),
 ): TitleBarMetrics = TitleBarMetrics(height, gradientStartX, gradientEndX, titlePaneButtonSize)
 
+/**
+ * Creates default [TitleBarIcons] using the standard [DecoratedWindowIconKeys] for window controls.
+ *
+ * @param minimizeButton The icon key for the minimize button.
+ * @param maximizeButton The icon key for the maximize button.
+ * @param restoreButton The icon key for the restore button.
+ * @param closeButton The icon key for the close button.
+ */
 public fun TitleBarIcons.Companion.defaults(
     minimizeButton: IconKey = DecoratedWindowIconKeys.minimize,
     maximizeButton: IconKey = DecoratedWindowIconKeys.maximize,

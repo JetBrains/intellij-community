@@ -25,6 +25,7 @@ import org.jetbrains.jewel.ui.component.separator
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.typography
 
+/** Showcases the [PopupMenu] component. */
 @Composable
 public fun Menus(modifier: Modifier = Modifier) {
     VerticallyScrollableContainer(modifier.fillMaxSize()) {

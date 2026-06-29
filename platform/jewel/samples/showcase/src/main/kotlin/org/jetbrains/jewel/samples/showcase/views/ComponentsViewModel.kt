@@ -34,6 +34,7 @@ import org.jetbrains.jewel.samples.showcase.components.TypographyShowcase
 import org.jetbrains.jewel.ui.component.SplitLayoutState
 import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 
+/** ViewModel that holds the list of component showcase views and tracks which view is currently selected. */
 public class ComponentsViewModel(
     alwaysVisibleScrollbarVisibility: ScrollbarVisibility.AlwaysVisible,
     whenScrollingScrollbarVisibility: ScrollbarVisibility.WhenScrolling,
@@ -42,6 +43,7 @@ public class ComponentsViewModel(
     private var verticalSplitState by mutableStateOf(SplitLayoutState(0.5f))
     private var innerSplitState by mutableStateOf(SplitLayoutState(0.5f))
 
+    /** Returns the list of all available component showcase views. */
     public fun getViews(): SnapshotStateList<ViewInfo> = views
 
     private val views: SnapshotStateList<ViewInfo> =
@@ -117,8 +119,10 @@ public class ComponentsViewModel(
 
     private var _currentView: ViewInfo by mutableStateOf(views.first())
 
+    /** Returns the currently selected component showcase view. */
     public fun getCurrentView(): ViewInfo = _currentView
 
+    /** Sets [view] as the currently selected component showcase view. */
     public fun setCurrentView(view: ViewInfo) {
         _currentView = view
     }

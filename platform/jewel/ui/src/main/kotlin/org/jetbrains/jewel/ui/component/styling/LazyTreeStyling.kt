@@ -14,11 +14,15 @@ import org.jetbrains.jewel.foundation.lazy.tree.TreeElementState
 import org.jetbrains.jewel.ui.icon.IconKey
 
 // TODO: Composition with SimpleItemStyle
+/** Combines the colors, metrics, and icons that style a lazy tree component. */
 @Stable
 @GenerateDataFunctions
 public class LazyTreeStyle(
+    /** The colors used to render list items in the tree. */
     public val colors: SimpleListItemColors,
+    /** The size and spacing metrics for the tree. */
     public val metrics: LazyTreeMetrics,
+    /** The icons used for the tree chevrons. */
     public val icons: LazyTreeIcons,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -43,9 +47,11 @@ public class LazyTreeStyle(
 
     override fun toString(): String = "LazyTreeStyle(colors=$colors, metrics=$metrics, icons=$icons)"
 
+    /** Companion object for [LazyTreeStyle]. */
     public companion object
 }
 
+/** Returns a [State] holding the content color appropriate for the given [state]. */
 @Composable
 public fun SimpleListItemColors.contentFor(state: TreeElementState): State<Color> =
     rememberUpdatedState(
@@ -57,12 +63,17 @@ public fun SimpleListItemColors.contentFor(state: TreeElementState): State<Color
         }
     )
 
+/** Holds size and spacing metrics for the lazy tree component. */
 @Stable
 @GenerateDataFunctions
 public class LazyTreeMetrics(
+    /** The horizontal indentation per tree depth level. */
     public val indentSize: Dp,
+    /** The minimum height of a single tree element row. */
     public val elementMinHeight: Dp,
+    /** The gap between the chevron icon and the row content. */
     public val chevronContentGap: Dp,
+    /** The metrics applied to each simple list item within the tree. */
     public val simpleListItemMetrics: SimpleListItemMetrics,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -96,17 +107,24 @@ public class LazyTreeMetrics(
             ")"
     }
 
+    /** Companion object for [LazyTreeMetrics]. */
     public companion object
 }
 
+/** Holds icon keys for the chevron in its collapsed, expanded, selected-collapsed, and selected-expanded states. */
 @Immutable
 @GenerateDataFunctions
 public class LazyTreeIcons(
+    /** The icon key for the chevron in the collapsed, unselected state. */
     public val chevronCollapsed: IconKey,
+    /** The icon key for the chevron in the expanded, unselected state. */
     public val chevronExpanded: IconKey,
+    /** The icon key for the chevron in the collapsed, selected state. */
     public val chevronSelectedCollapsed: IconKey,
+    /** The icon key for the chevron in the expanded, selected state. */
     public val chevronSelectedExpanded: IconKey,
 ) {
+    /** Returns the [IconKey] for the chevron icon appropriate for the given [isExpanded] and [isSelected] states. */
     @Composable
     public fun chevron(isExpanded: Boolean, isSelected: Boolean): IconKey =
         when {
@@ -147,9 +165,11 @@ public class LazyTreeIcons(
             ")"
     }
 
+    /** Companion object for [LazyTreeIcons]. */
     public companion object
 }
 
+/** Composition local providing the current [LazyTreeStyle]. */
 public val LocalLazyTreeStyle: ProvidableCompositionLocal<LazyTreeStyle> = staticCompositionLocalOf {
     error("No LazyTreeStyle provided. Have you forgotten the theme?")
 }

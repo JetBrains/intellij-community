@@ -25,16 +25,29 @@ import com.intellij.platform.icons.scale.fitArea
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.InternalJewelApi
 
+/** A [LayerPaintingContext] implementation that delegates drawing operations to a Compose [DrawScope]. */
 @InternalJewelApi
 @ApiStatus.Internal
 public class ComposeLayerPaintingContext(
+    /** The Compose [DrawScope] to which drawing operations are delegated. */
     public val drawScope: DrawScope,
+    /**
+     * The horizontal offset in pixels of this layer. Used only as the fallback x position when creating a nested layer
+     * via [createNestedLayer]; it is not added to the coordinates of drawing operations in this context.
+     */
     public override val offsetX: Int = 0,
+    /**
+     * The layer's vertical offset in pixels. Used only as the fallback y position for a nested layer created via
+     * [createNestedLayer]; it is not added to the coordinates of this context's own drawing operations.
+     */
     public override val offsetY: Int = 0,
+    /** The width of the slot in pixels, or null if unconstrained. */
     override val slotWidth: Int? = null,
+    /** The height of the slot in pixels, or null if unconstrained. */
     override val slotHeight: Int? = null,
     private val overrideColorFilter: ColorFilter? = null,
     override val alpha: Float = 1f,
+    /** The scaling context used to resolve display density and context scale. */
     override val scaling: ScalingContext = DefaultScalingContext(drawScope.drawContext.density.density, 1f),
 ) : LayerPaintingContext {
     override fun createNestedLayer(

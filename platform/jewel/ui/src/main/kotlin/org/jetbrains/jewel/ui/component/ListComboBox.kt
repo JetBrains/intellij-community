@@ -76,6 +76,7 @@ import org.jetbrains.jewel.ui.theme.popupContainerStyle
  * **Swing equivalent:**
  * [`ComboBox`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/openapi/ui/ComboBox.java)
  *
+ * @param T the type of items in the list.
  * @param items The list of items to display in the dropdown
  * @param selectedIndex The index of the currently selected item
  * @param onSelectedItemChange Called when an item is selected, with the new index
@@ -168,6 +169,7 @@ public fun <T : Any> ListComboBox(
  * **Swing equivalent:**
  * [`ComboBox`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/openapi/ui/ComboBox.java)
  *
+ * @param T the type of items in the list.
  * @param items The list of items to display in the dropdown
  * @param selectedIndex The index of the currently selected item
  * @param onSelectedItemChange Called when an item is selected, with the new index
@@ -418,6 +420,7 @@ public fun ListComboBox(
  * @param selectedIndex The index of the currently selected item
  * @param onSelectedItemChange Called when the selected item changes, with the new index and item
  * @param modifier Modifier to be applied to the combo box
+ * @param popupModifier Modifier to be applied to the popup of the combo box
  * @param enabled Controls whether the combo box can be interacted with
  * @param outline The outline style to be applied to the combo box
  * @param maxPopupHeight The maximum height of the popup list. If unspecified, the height is automatically calculated

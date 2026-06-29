@@ -19,6 +19,10 @@ import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.styling.DividerStyle
 import org.jetbrains.jewel.ui.theme.dividerStyle
 
+/**
+ * Renders a thin decorative line that visually separates content, drawn either horizontally or vertically according to
+ * [orientation].
+ */
 @Composable
 public fun Divider(
     orientation: Orientation,

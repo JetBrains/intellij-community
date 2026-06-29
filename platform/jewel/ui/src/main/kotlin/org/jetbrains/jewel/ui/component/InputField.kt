@@ -259,9 +259,15 @@ private fun Modifier.hideCursor(
     false // returning false so the text field can handle the key event properly
 }
 
+/**
+ * Represents the state of an input field, encoding enabled, focused, hovered, pressed, and active flags in a bit mask.
+ */
 @Immutable
 @JvmInline
-public value class InputFieldState(public val state: ULong) : FocusableComponentState {
+public value class InputFieldState(
+    /** The raw bit mask encoding all state flags. */
+    public val state: ULong
+) : FocusableComponentState {
     override val isActive: Boolean
         get() = state and Active != 0UL
 
@@ -277,6 +283,7 @@ public value class InputFieldState(public val state: ULong) : FocusableComponent
     override val isPressed: Boolean
         get() = state and Pressed != 0UL
 
+    /** Returns a copy of this [InputFieldState] with the given fields replaced by their new values. */
     public fun copy(
         enabled: Boolean = isEnabled,
         focused: Boolean = isFocused,
@@ -289,7 +296,9 @@ public value class InputFieldState(public val state: ULong) : FocusableComponent
         "${javaClass.simpleName}(isEnabled=$isEnabled, isFocused=$isFocused, " +
             "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
 
+    /** Companion object for [InputFieldState]. */
     public companion object {
+        /** Constructs an [InputFieldState] from individual flags. */
         public fun of(
             enabled: Boolean = true,
             focused: Boolean = false,

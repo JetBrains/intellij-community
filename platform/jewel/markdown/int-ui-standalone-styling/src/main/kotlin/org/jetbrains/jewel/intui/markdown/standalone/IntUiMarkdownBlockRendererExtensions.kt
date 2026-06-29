@@ -11,6 +11,7 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 import org.jetbrains.jewel.markdown.rendering.create
 
+/** Creates an Int UI light [MarkdownBlockRenderer]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun MarkdownBlockRenderer.Companion.light(
@@ -19,6 +20,7 @@ public fun MarkdownBlockRenderer.Companion.light(
     inlineRenderer: InlineMarkdownRenderer = InlineMarkdownRenderer.create(rendererExtensions),
 ): MarkdownBlockRenderer = DefaultMarkdownBlockRenderer(styling, rendererExtensions, inlineRenderer)
 
+/** Creates an Int UI dark [MarkdownBlockRenderer]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun MarkdownBlockRenderer.Companion.dark(

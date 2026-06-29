@@ -13,10 +13,13 @@ import org.jetbrains.jewel.ui.component.styling.SplitButtonColors
 import org.jetbrains.jewel.ui.component.styling.SplitButtonMetrics
 import org.jetbrains.jewel.ui.component.styling.SplitButtonStyle
 
+/** The default [SplitButtonStyle] factory for the Int UI theme. */
 public val SplitButtonStyle.Companion.Default: IntUiDefaultSplitButtonStyleFactory
     get() = IntUiDefaultSplitButtonStyleFactory
 
+/** Factory object for creating Int UI default [SplitButtonStyle] instances. */
 public object IntUiDefaultSplitButtonStyleFactory {
+    /** Creates an Int UI light default [SplitButtonStyle] with the provided parameters. */
     public fun light(
         buttonStyle: ButtonStyle = ButtonStyle.Default.light(),
         dividerMetrics: DividerMetrics = DividerMetrics.defaults(),
@@ -31,6 +34,7 @@ public object IntUiDefaultSplitButtonStyleFactory {
             colors = SplitButtonColors(dividerColor, dividerDisabledColor, chevronColor),
         )
 
+    /** Creates an Int UI dark default [SplitButtonStyle] with the provided parameters. */
     public fun dark(
         buttonStyle: ButtonStyle = ButtonStyle.Default.dark(),
         dividerMetrics: DividerMetrics = DividerMetrics.defaults(),
@@ -46,10 +50,13 @@ public object IntUiDefaultSplitButtonStyleFactory {
         )
 }
 
+/** The outlined [SplitButtonStyle] factory for the Int UI theme. */
 public val SplitButtonStyle.Companion.Outlined: IntUiOutlinedSplitButtonStyleFactory
     get() = IntUiOutlinedSplitButtonStyleFactory
 
+/** Factory object for creating Int UI outlined [SplitButtonStyle] instances. */
 public object IntUiOutlinedSplitButtonStyleFactory {
+    /** Creates an Int UI light outlined [SplitButtonStyle] with the provided parameters. */
     public fun light(
         buttonStyle: ButtonStyle = ButtonStyle.Outlined.light(),
         dividerMetrics: DividerMetrics = DividerMetrics.defaults(),
@@ -64,6 +71,7 @@ public object IntUiOutlinedSplitButtonStyleFactory {
             colors = SplitButtonColors(dividerColor, dividerDisabledColor, chevronColor),
         )
 
+    /** Creates an Int UI dark outlined [SplitButtonStyle] with the provided parameters. */
     public fun dark(
         buttonStyle: ButtonStyle = ButtonStyle.Outlined.dark(),
         dividerMetrics: DividerMetrics = DividerMetrics.defaults(),

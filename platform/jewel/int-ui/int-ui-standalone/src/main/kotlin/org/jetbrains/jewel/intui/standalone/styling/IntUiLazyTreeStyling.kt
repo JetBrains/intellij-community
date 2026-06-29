@@ -19,7 +19,9 @@ import org.jetbrains.jewel.ui.icons.AllIconsKeys
 private val SimpleListItemStyle.Companion.LazyTree: IntUiDefaultSimpleListItemLazyTreeStyleFactory
     get() = IntUiDefaultSimpleListItemLazyTreeStyleFactory
 
+/** Factory object for creating Int UI [SimpleListItemColors] instances for lazy tree nodes. */
 public object IntUiDefaultSimpleListItemLazyTreeStyleFactory {
+    /** Creates an Int UI light [SimpleListItemColors] for lazy tree nodes with the provided parameters. */
     public fun light(
         content: Color = Color.Unspecified,
         contentActive: Color = content,
@@ -41,6 +43,7 @@ public object IntUiDefaultSimpleListItemLazyTreeStyleFactory {
             contentSelectedActive = contentSelectedActive,
         )
 
+    /** Creates an Int UI dark [SimpleListItemColors] for lazy tree nodes with the provided parameters. */
     public fun dark(
         content: Color = Color.Unspecified,
         contentActive: Color = content,
@@ -63,18 +66,21 @@ public object IntUiDefaultSimpleListItemLazyTreeStyleFactory {
         )
 }
 
+/** Creates an Int UI light [LazyTreeStyle] with the provided parameters. */
 public fun LazyTreeStyle.Companion.light(
     colors: SimpleListItemColors = SimpleListItemStyle.LazyTree.light(),
     metrics: LazyTreeMetrics = LazyTreeMetrics.defaults(),
     icons: LazyTreeIcons = LazyTreeIcons.defaults(),
 ): LazyTreeStyle = LazyTreeStyle(colors, metrics, icons)
 
+/** Creates an Int UI dark [LazyTreeStyle] with the provided parameters. */
 public fun LazyTreeStyle.Companion.dark(
     colors: SimpleListItemColors = SimpleListItemStyle.LazyTree.dark(),
     metrics: LazyTreeMetrics = LazyTreeMetrics.defaults(),
     icons: LazyTreeIcons = LazyTreeIcons.defaults(),
 ): LazyTreeStyle = LazyTreeStyle(colors, metrics, icons)
 
+/** Creates an Int UI default [LazyTreeMetrics] with the provided parameters. */
 public fun LazyTreeMetrics.Companion.defaults(
     indentSize: Dp = 7.dp + 16.dp,
     elementBackgroundCornerSize: CornerSize = CornerSize(2.dp),
@@ -97,6 +103,7 @@ public fun LazyTreeMetrics.Companion.defaults(
             ),
     )
 
+/** Creates an Int UI default [LazyTreeIcons] with the provided parameters. */
 public fun LazyTreeIcons.Companion.defaults(
     chevronCollapsed: IconKey = AllIconsKeys.General.ChevronRight,
     chevronExpanded: IconKey = AllIconsKeys.General.ChevronDown,

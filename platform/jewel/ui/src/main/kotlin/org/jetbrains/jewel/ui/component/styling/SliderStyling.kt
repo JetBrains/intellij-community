@@ -15,11 +15,15 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.SliderState
 
+/** Combines the [colors], [metrics], and [thumbShape] that define the appearance of a Slider component. */
 @Stable
 @GenerateDataFunctions
 public class SliderStyle(
+    /** The color tokens for the slider. */
     public val colors: SliderColors,
+    /** The size and spacing metrics for the slider. */
     public val metrics: SliderMetrics,
+    /** The shape used for the thumb. */
     public val thumbShape: Shape,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -44,28 +48,50 @@ public class SliderStyle(
 
     override fun toString(): String = "SliderStyle(colors=$colors, metrics=$metrics, thumbShape=$thumbShape)"
 
+    /** Companion object for [SliderStyle]. */
     public companion object
 }
 
+/** Holds color tokens for the Slider component's track, step markers, and thumb in all states. */
 @Immutable
 @GenerateDataFunctions
 public class SliderColors(
+    /** The track color when enabled. */
     public val track: Color,
+    /** The filled portion of the track color when enabled. */
     public val trackFilled: Color,
+    /** The track color when disabled. */
     public val trackDisabled: Color,
+    /** The filled portion of the track color when disabled. */
     public val trackFilledDisabled: Color,
+    /** The color of the step marker indicators. */
     public val stepMarker: Color,
+    /** The thumb fill color in the normal state. */
     public val thumbFill: Color,
+    /** The thumb fill color when disabled. */
     public val thumbFillDisabled: Color,
+    /** The thumb fill color when focused. */
     public val thumbFillFocused: Color,
+    /** The thumb fill color when pressed. */
     public val thumbFillPressed: Color,
+    /** The thumb fill color when hovered. */
     public val thumbFillHovered: Color,
+    /** The thumb border color in the normal state. */
     public val thumbBorder: Color,
+    /** The thumb border color when focused. */
     public val thumbBorderFocused: Color,
+    /** The thumb border color when disabled. */
     public val thumbBorderDisabled: Color,
+    /** The thumb border color when pressed. */
     public val thumbBorderPressed: Color,
+    /** The thumb border color when hovered. */
     public val thumbBorderHovered: Color,
 ) {
+    /**
+     * Returns a [State] holding the thumb fill color appropriate for the given [state].
+     *
+     * @param state The current [SliderState].
+     */
     @Composable
     public fun thumbFillFor(state: SliderState): State<Color> =
         rememberUpdatedState(
@@ -78,6 +104,11 @@ public class SliderColors(
             )
         )
 
+    /**
+     * Returns a [State] holding the thumb border color appropriate for the given [state].
+     *
+     * @param state The current [SliderState].
+     */
     @Composable
     public fun thumbBorderFor(state: SliderState): State<Color> =
         rememberUpdatedState(
@@ -170,17 +201,25 @@ public class SliderColors(
             ")"
     }
 
+    /** Companion object for [SliderColors]. */
     public companion object
 }
 
+/** Holds size and spacing metrics for the Slider component's track, thumb, and step line indicators. */
 @Immutable
 @GenerateDataFunctions
 public class SliderMetrics(
+    /** The height of the track. */
     public val trackHeight: Dp,
+    /** The size of the thumb. */
     public val thumbSize: DpSize,
+    /** The width of the thumb border. */
     public val thumbBorderWidth: Dp,
+    /** The height of the step line indicators. */
     public val stepLineHeight: Dp,
+    /** The width of the step line indicators. */
     public val stepLineWidth: Dp,
+    /** The spacing between the track and the step line indicators. */
     public val trackToStepSpacing: Dp,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -220,9 +259,11 @@ public class SliderMetrics(
             ")"
     }
 
+    /** Companion object for [SliderMetrics]. */
     public companion object
 }
 
+/** CompositionLocal providing the [SliderStyle] for the current theme. */
 public val LocalSliderStyle: ProvidableCompositionLocal<SliderStyle> = staticCompositionLocalOf {
     error("No default SliderStyle provided. Have you forgotten the theme?")
 }

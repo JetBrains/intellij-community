@@ -44,6 +44,10 @@ import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
 import org.jetbrains.jewel.ui.disabledAppearance
 import org.jetbrains.jewel.ui.theme.iconButtonStyle
 
+/**
+ * Renders a clickable icon button that applies the given [style] and exposes its current [IconButtonState] to
+ * [content].
+ */
 @Composable
 public fun IconButton(
     onClick: () -> Unit,
@@ -98,6 +102,10 @@ public fun IconButton(
     )
 }
 
+/**
+ * Renders a selectable icon button that applies the given [style] and exposes its current [SelectableIconButtonState]
+ * to [content].
+ */
 @Composable
 public fun SelectableIconButton(
     selected: Boolean,
@@ -155,6 +163,10 @@ public fun SelectableIconButton(
     )
 }
 
+/**
+ * Renders a toggleable icon button that applies the given [style] and exposes its current [ToggleableIconButtonState]
+ * to [content].
+ */
 @Composable
 public fun ToggleableIconButton(
     value: Boolean,
@@ -214,9 +226,13 @@ public fun ToggleableIconButton(
     )
 }
 
+/** Encodes the enabled, focused, hovered, pressed, and active states of an [IconButton] as a bit mask. */
 @Immutable
 @JvmInline
-public value class IconButtonState(public val state: ULong) : FocusableComponentState {
+public value class IconButtonState(
+    /** The raw bit mask encoding all state flags. */
+    public val state: ULong
+) : FocusableComponentState {
     override val isActive: Boolean
         get() = state and Active != 0UL
 
@@ -232,6 +248,7 @@ public value class IconButtonState(public val state: ULong) : FocusableComponent
     override val isPressed: Boolean
         get() = state and Pressed != 0UL
 
+    /** Returns a copy of this [IconButtonState] with the given fields replaced by their new values. */
     public fun copy(
         enabled: Boolean = isEnabled,
         focused: Boolean = isFocused,
@@ -244,7 +261,9 @@ public value class IconButtonState(public val state: ULong) : FocusableComponent
         "${javaClass.simpleName}(isEnabled=$isEnabled, isFocused=$isFocused, isHovered=$isHovered, " +
             "isPressed=$isPressed, isActive=$isActive)"
 
+    /** Companion object for [IconButtonState]. */
     public companion object {
+        /** Constructs an [IconButtonState] from individual flags. */
         public fun of(
             enabled: Boolean = true,
             focused: Boolean = false,
@@ -262,10 +281,16 @@ public value class IconButtonState(public val state: ULong) : FocusableComponent
     }
 }
 
+/**
+ * Encodes the enabled, focused, hovered, pressed, active, and toggleable states of a [ToggleableIconButton] as a bit
+ * mask.
+ */
 @Immutable
 @JvmInline
-public value class ToggleableIconButtonState(public val state: ULong) :
-    FocusableComponentState, ToggleableComponentState {
+public value class ToggleableIconButtonState(
+    /** The raw bit mask encoding all state flags. */
+    public val state: ULong
+) : FocusableComponentState, ToggleableComponentState {
     override val toggleableState: ToggleableState
         get() = state.readToggleableState()
 
@@ -284,6 +309,7 @@ public value class ToggleableIconButtonState(public val state: ULong) :
     override val isPressed: Boolean
         get() = state and Pressed != 0UL
 
+    /** Returns a copy of this [ToggleableIconButtonState] with the given fields replaced by their new values. */
     public fun copy(
         enabled: Boolean = isEnabled,
         toggleableState: ToggleableState = this.toggleableState,
@@ -305,7 +331,9 @@ public value class ToggleableIconButtonState(public val state: ULong) :
         "${javaClass.simpleName}(isEnabled=$isEnabled, isFocused=$isFocused, isHovered=$isHovered, " +
             "isPressed=$isPressed, isActive=$isActive, toggleableState=$toggleableState)"
 
+    /** Companion object for [ToggleableIconButtonState]. */
     public companion object {
+        /** Constructs a [ToggleableIconButtonState] from individual flags. */
         public fun of(
             enabled: Boolean = true,
             toggleableState: ToggleableState = ToggleableState.Off,
@@ -326,10 +354,16 @@ public value class ToggleableIconButtonState(public val state: ULong) :
     }
 }
 
+/**
+ * Encodes the enabled, focused, hovered, pressed, active, and selected states of a [SelectableIconButton] as a bit
+ * mask.
+ */
 @Immutable
 @JvmInline
-public value class SelectableIconButtonState(public val state: ULong) :
-    FocusableComponentState, SelectableComponentState {
+public value class SelectableIconButtonState(
+    /** The raw bit mask encoding all state flags. */
+    public val state: ULong
+) : FocusableComponentState, SelectableComponentState {
     override val isSelected: Boolean
         get() = state and Selected != 0UL
 
@@ -348,6 +382,7 @@ public value class SelectableIconButtonState(public val state: ULong) :
     override val isPressed: Boolean
         get() = state and Pressed != 0UL
 
+    /** Returns a copy of this [SelectableIconButtonState] with the given fields replaced by their new values. */
     public fun copy(
         enabled: Boolean = isEnabled,
         selected: Boolean = isSelected,
@@ -370,7 +405,9 @@ public value class SelectableIconButtonState(public val state: ULong) :
             "isFocused=$isFocused, isHovered=$isHovered, isPressed=$isPressed, " +
             "isActive=$isActive)"
 
+    /** Companion object for [SelectableIconButtonState]. */
     public companion object {
+        /** Constructs a [SelectableIconButtonState] from individual flags. */
         public fun of(
             enabled: Boolean = true,
             selected: Boolean = false,

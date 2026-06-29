@@ -17,9 +17,15 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.ChipState
 
+/** Defines the styling for a Chip component, combining [ChipColors] and [ChipMetrics]. */
 @Stable
 @GenerateDataFunctions
-public class ChipStyle(public val colors: ChipColors, public val metrics: ChipMetrics) {
+public class ChipStyle(
+    /** The color tokens used to paint the chip in its various states. */
+    public val colors: ChipColors,
+    /** The size and spacing metrics used to lay out the chip. */
+    public val metrics: ChipMetrics,
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -40,43 +46,82 @@ public class ChipStyle(public val colors: ChipColors, public val metrics: ChipMe
 
     override fun toString(): String = "ChipStyle(colors=$colors, metrics=$metrics)"
 
+    /** Companion object for [ChipStyle]. */
     public companion object
 }
 
+/**
+ * Holds color tokens for the Chip component in its various states, including selected, focused, pressed, hovered, and
+ * disabled.
+ */
 @Immutable
 @GenerateDataFunctions
 public class ChipColors(
+    /** The background brush in the default state. */
     public val background: Brush,
+    /** The background brush when the chip is disabled. */
     public val backgroundDisabled: Brush,
+    /** The background brush when the chip is focused. */
     public val backgroundFocused: Brush,
+    /** The background brush when the chip is pressed. */
     public val backgroundPressed: Brush,
+    /** The background brush when the chip is hovered. */
     public val backgroundHovered: Brush,
+    /** The background brush when the chip is selected. */
     public val backgroundSelected: Brush,
+    /** The background brush when the chip is selected and disabled. */
     public val backgroundSelectedDisabled: Brush,
+    /** The background brush when the chip is selected and pressed. */
     public val backgroundSelectedPressed: Brush,
+    /** The background brush when the chip is selected and focused. */
     public val backgroundSelectedFocused: Brush,
+    /** The background brush when the chip is selected and hovered. */
     public val backgroundSelectedHovered: Brush,
+    /** The content color in the default state. */
     public val content: Color,
+    /** The content color when the chip is disabled. */
     public val contentDisabled: Color,
+    /** The content color when the chip is focused. */
     public val contentFocused: Color,
+    /** The content color when the chip is pressed. */
     public val contentPressed: Color,
+    /** The content color when the chip is hovered. */
     public val contentHovered: Color,
+    /** The content color when the chip is selected. */
     public val contentSelected: Color,
+    /** The content color when the chip is selected and disabled. */
     public val contentSelectedDisabled: Color,
+    /** The content color when the chip is selected and pressed. */
     public val contentSelectedPressed: Color,
+    /** The content color when the chip is selected and focused. */
     public val contentSelectedFocused: Color,
+    /** The content color when the chip is selected and hovered. */
     public val contentSelectedHovered: Color,
+    /** The border color in the default state. */
     public val border: Color,
+    /** The border color when the chip is disabled. */
     public val borderDisabled: Color,
+    /** The border color when the chip is focused. */
     public val borderFocused: Color,
+    /** The border color when the chip is pressed. */
     public val borderPressed: Color,
+    /** The border color when the chip is hovered. */
     public val borderHovered: Color,
+    /** The border color when the chip is selected. */
     public val borderSelected: Color,
+    /** The border color when the chip is selected and disabled. */
     public val borderSelectedDisabled: Color,
+    /** The border color when the chip is selected and pressed. */
     public val borderSelectedPressed: Color,
+    /** The border color when the chip is selected and focused. */
     public val borderSelectedFocused: Color,
+    /** The border color when the chip is selected and hovered. */
     public val borderSelectedHovered: Color,
 ) {
+    /**
+     * Returns a [State] holding the background [Brush] appropriate for the given [state], accounting for selection,
+     * enabled, pressed, focused, and hovered conditions.
+     */
     @Composable
     public fun backgroundFor(state: ChipState): State<Brush> =
         rememberUpdatedState(
@@ -99,6 +144,10 @@ public class ChipColors(
             }
         )
 
+    /**
+     * Returns a [State] holding the content [Color] appropriate for the given [state], accounting for selection,
+     * enabled, pressed, focused, and hovered conditions.
+     */
     @Composable
     public fun contentFor(state: ChipState): State<Color> =
         rememberUpdatedState(
@@ -121,6 +170,10 @@ public class ChipColors(
             }
         )
 
+    /**
+     * Returns a [State] holding the border [Color] appropriate for the given [state], accounting for selection,
+     * enabled, pressed, focused, and hovered conditions.
+     */
     @Composable
     public fun borderFor(state: ChipState): State<Color> =
         rememberUpdatedState(
@@ -252,16 +305,26 @@ public class ChipColors(
             ")"
     }
 
+    /** Companion object for [ChipColors]. */
     public companion object
 }
 
+/**
+ * Holds size and spacing metrics for the Chip component, including corner size, padding, border widths, and minimum
+ * size.
+ */
 @Stable
 @GenerateDataFunctions
 public class ChipMetrics(
+    /** The corner radius of the chip. */
     public val cornerSize: CornerSize,
+    /** The inner padding applied to the chip content. */
     public val padding: PaddingValues,
+    /** The width of the chip border in the default state. */
     public val borderWidth: Dp,
+    /** The width of the chip border when selected. */
     public val borderWidthSelected: Dp,
+    /** The minimum size of the chip. */
     public val minSize: DpSize,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -298,9 +361,11 @@ public class ChipMetrics(
             ")"
     }
 
+    /** Companion object for [ChipMetrics]. */
     public companion object
 }
 
+/** CompositionLocal providing the current [ChipStyle]. */
 public val LocalChipStyle: ProvidableCompositionLocal<ChipStyle> = staticCompositionLocalOf {
     error("No ChipStyle provided. Have you forgotten the theme?")
 }
