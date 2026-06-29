@@ -2,6 +2,8 @@ from typing import NamedTuple
 
 from django.db.backends.base.introspection import BaseDatabaseIntrospection
 from django.db.backends.postgresql.base import DatabaseWrapper
+from django.db.backends.utils import CursorWrapper
+from typing_extensions import override
 
 class FieldInfo(NamedTuple):
     name: str
@@ -26,3 +28,6 @@ class DatabaseIntrospection(BaseDatabaseIntrospection):
     data_types_reverse: dict[int, str]
     index_default_access_method: str
     ignored_tables: list[str]
+
+    @override
+    def get_table_description(self, cursor: CursorWrapper, table_name: str) -> list[FieldInfo]: ...

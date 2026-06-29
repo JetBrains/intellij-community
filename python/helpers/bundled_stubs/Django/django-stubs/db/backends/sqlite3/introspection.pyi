@@ -2,6 +2,8 @@ from typing import Any, NamedTuple
 
 from django.db.backends.base.introspection import BaseDatabaseIntrospection
 from django.db.backends.sqlite3.base import DatabaseWrapper
+from django.db.backends.utils import CursorWrapper
+from typing_extensions import override
 
 class FieldInfo(NamedTuple):
     name: str
@@ -26,3 +28,6 @@ class FlexibleFieldLookupDict:
 
 class DatabaseIntrospection(BaseDatabaseIntrospection):
     connection: DatabaseWrapper
+
+    @override
+    def get_table_description(self, cursor: CursorWrapper, table_name: str) -> list[FieldInfo]: ...

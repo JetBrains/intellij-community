@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from typing import Any, ClassVar
 
 from django.db.backends.base.base import BaseDatabaseWrapper
-from django.db.models.expressions import Combinable, Func
+from django.db.models.expressions import BaseExpression, Combinable, Func
 from django.db.models.fields import IntegerField
 from django.db.models.functions.mixins import FixDurationInputMixin, NumericOutputFieldMixin
 from django.db.models.query import _OrderByFieldName
@@ -20,7 +20,7 @@ class Aggregate(Func):
         self,
         *expressions: Any,
         distinct: bool = False,
-        filter: Q | None = None,
+        filter: Q | BaseExpression | None = None,
         default: Any | None = None,
         order_by: _OrderByFieldName | Sequence[_OrderByFieldName] | None = None,
         **extra: Any,
@@ -45,7 +45,7 @@ class Count(Aggregate):
     def __init__(
         self,
         expression: Combinable | str,
-        filter: Q | None = None,
+        filter: Q | BaseExpression | None = None,
         *,
         distinct: bool = False,
         **extra: Any,
@@ -60,7 +60,7 @@ class StdDev(NumericOutputFieldMixin, Aggregate):
         expression: Combinable | str,
         sample: bool = False,
         *,
-        filter: Q | None = None,
+        filter: Q | BaseExpression | None = None,
         default: Any | None = None,
         **extra: Any,
     ) -> None: ...
@@ -72,7 +72,7 @@ class StringAgg(Aggregate):
         delimiter: str | Combinable,
         *,
         distinct: bool = False,
-        filter: Q | None = None,
+        filter: Q | BaseExpression | None = None,
         default: Any | None = None,
         order_by: _OrderByFieldName | Sequence[_OrderByFieldName] | None = None,
         **extra: Any,
@@ -90,7 +90,7 @@ class Variance(NumericOutputFieldMixin, Aggregate):
         expression: Combinable | str,
         sample: bool = False,
         *,
-        filter: Q | None = None,
+        filter: Q | BaseExpression | None = None,
         default: Any | None = None,
         **extra: Any,
     ) -> None: ...
