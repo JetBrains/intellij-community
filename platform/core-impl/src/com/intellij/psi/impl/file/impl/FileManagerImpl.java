@@ -475,7 +475,7 @@ public final class FileManagerImpl implements FileManagerEx {
     if (vFile.isDirectory()) return null;
 
     if (!vFile.isValid()) {
-      LOG.error(new InvalidVirtualFileAccessException(vFile));
+      LOG.warn(new InvalidVirtualFileAccessException(vFile));
       return null;
     }
 

@@ -68,6 +68,7 @@ import javax.swing.JList;
 import java.awt.Component;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -233,9 +234,10 @@ public class ExecutorAction extends AnAction implements DumbAware, RequiresPermi
     Project project = Objects.requireNonNull(e.getProject());
 
     VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
-    if (files.length == 1) {
+    VirtualFile[] validFiles = Arrays.stream(files).filter(f -> f.isValid()).toArray(VirtualFile[]::new);
+    if (validFiles.length == 1) {
       // There's only one visible editor, let's use the file from this editor, even if the editor is not in focus.
-      PsiFile psiFile = PsiManager.getInstance(project).findFile(files[0]);
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(validFiles[0]);
       if (psiFile == null) {
         String tooltip = ExecutionBundle.message("run.button.on.toolbar.tooltip.current.file.not.runnable");
         return RunCurrentFileActionStatus.createDisabled(tooltip, myExecutor.getIcon());
