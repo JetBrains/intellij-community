@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import { IconSet } from "@jetbrains/intellij-webview"
+import "@jetbrains/intellij-webview-controls/define/icon"
 import type { ClipboardEvent } from "react"
 import {
   AssistantRuntimeProvider,
@@ -67,9 +68,9 @@ export function ChatView() {
                       {() => <AttachmentChip removable />}
                     </ComposerPrimitive.Attachments>
                   </div>
-                  <ComposerPrimitive.Input className="acpComposerInput" placeholder="Message the agent…" onPaste={notifyOnUnsupportedImagePaste} />
+                  <ComposerPrimitive.Input className="acpComposerInput" placeholder="Type your task or use / for commands…" onPaste={notifyOnUnsupportedImagePaste} />
                   <ComposerPrimitive.Send className="acpComposerSend" aria-label="Send" title="Send">
-                    <img className="acpComposerSendIcon" src={ACP_CHAT_ICONS.src(SEND_ICON_PATH)} alt="" draggable={false} />
+                    <jb-icon className="acpComposerSendIcon" src={ACP_CHAT_ICONS.src(SEND_ICON_PATH)} />
                   </ComposerPrimitive.Send>
                 </div>
                 <SlashCommandMenu commands={chat.commands} />

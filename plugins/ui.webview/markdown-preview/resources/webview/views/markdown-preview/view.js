@@ -137,6 +137,7 @@ function createLazyWebViewBridge() {
 var webView = createLazyWebViewBridge();
 //#endregion
 //#region ../../webview-src/packages/controls/src/foundation/define.ts
+var import_react = require_react();
 function defineControl(tagName, constructor, registry = customElements) {
 	if (!registry.get(tagName)) registry.define(tagName, constructor);
 }
@@ -549,7 +550,6 @@ function defineJbIcon(registry) {
 defineJbIcon();
 //#endregion
 //#region views/markdown-preview/src/MermaidBlock.tsx
-var import_react = require_react();
 var import_jsx_runtime = require_jsx_runtime();
 var mermaidBlockId = 0;
 var mermaidRenderId = 0;

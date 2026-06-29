@@ -92,13 +92,13 @@ test("renders ACP chat in a real browser with a mock agent", async ({ page }) =>
   await page.getByRole("option", { name: "Mock Agent" }).click()
   await expect(page.getByText("Mock Agent")).toBeVisible()
 
-  await page.getByPlaceholder("Message the agent…").fill("Hello mock")
+  await composerInput(page).fill("Hello mock")
   await page.getByRole("button", { name: "Send" }).click()
 
   await expect(page.getByText("Hello mock", { exact: true })).toBeVisible()
   await expect(page.getByText(/Mock response from AI chat: Hello mock/)).toBeVisible()
 
-  await page.getByPlaceholder("Message the agent…").fill("streaming probe")
+  await composerInput(page).fill("streaming probe")
   await page.getByRole("button", { name: "Send" }).click()
 
   await Promise.all([
@@ -188,7 +188,7 @@ test("renders rich assistant markdown through the chat message renderer", async 
 
   await page.locator(".acpAgentSelect").click()
   await page.getByRole("option", { name: "Mock Agent" }).click()
-  await page.getByPlaceholder("Message the agent…").fill("markdown feature probe")
+  await composerInput(page).fill("markdown feature probe")
   await page.getByRole("button", { name: "Send" }).click()
 
   await expect(page.getByText("Markdown feature matrix", { exact: true })).toBeVisible()
@@ -232,7 +232,7 @@ test("sends pasted image resources as ACP prompt content blocks", async ({ page 
   await pasteImageIntoComposer(page)
   await expect(page.getByText("pasted.png", { exact: true })).toBeVisible()
 
-  await page.getByPlaceholder("Message the agent…").fill("attachment probe")
+  await composerInput(page).fill("attachment probe")
   await page.getByRole("button", { name: "Send" }).click()
   await expect(page.getByText(/Mock response from AI chat: attachment probe/)).toBeVisible()
 
@@ -267,7 +267,7 @@ test("inserts ACP slash commands into the composer and sends them as prompt pref
   await page.locator(".acpAgentSelect").click()
   await page.getByRole("option", { name: "Mock Agent" }).click()
 
-  const input = page.getByPlaceholder("Message the agent…")
+  const input = composerInput(page)
   await input.fill("/")
   await expect(page.getByRole("option", { name: /\/summarize/ })).toBeVisible()
   await expect(page.getByRole("option", { name: /\/explain/ })).toBeVisible()
@@ -302,7 +302,7 @@ test("quotes selected assistant text and sends quoted context before the prompt"
   await page.locator(".acpAgentSelect").click()
   await page.getByRole("option", { name: "Mock Agent" }).click()
 
-  await page.getByPlaceholder("Message the agent…").fill("quote source")
+  await composerInput(page).fill("quote source")
   await page.getByRole("button", { name: "Send" }).click()
   await expect(page.getByText(/Mock response from AI chat: quote source/)).toBeVisible()
 
@@ -337,7 +337,7 @@ test("quotes selected assistant text and sends quoted context before the prompt"
   const composerQuoteVisible = await page.evaluate(() => document.querySelector(".acpComposerQuoteText")?.textContent === "Mock response from AI chat")
   expect(composerQuoteVisible).toBe(true)
 
-  await page.getByPlaceholder("Message the agent…").fill("quote follow-up")
+  await composerInput(page).fill("quote follow-up")
   await page.getByRole("button", { name: "Send" }).click()
   await expect(page.getByText("quote follow-up", { exact: true })).toBeVisible()
   await page.waitForSelector(".acpMsgUser .acpMessageQuote")
@@ -374,7 +374,7 @@ test("keeps the keyboard-highlighted slash command visible while navigating", as
   await page.locator(".acpAgentSelect").click()
   await page.getByRole("option", { name: "Mock Agent" }).click()
 
-  const input = page.getByPlaceholder("Message the agent…")
+  const input = composerInput(page)
   await input.fill("/")
   await expect(page.getByRole("option", { name: /\/summarize/ })).toBeVisible()
   for (let i = 0; i < 11; i++) {
@@ -406,7 +406,7 @@ function parseMockRpcLine(params: unknown): JsonRpcMessage | null {
 }
 
 async function pasteImageIntoComposer(page: Page): Promise<void> {
-  await page.getByPlaceholder("Message the agent…").click()
+  await composerInput(page).click()
   await page.evaluate(() => {
     const input = document.querySelector(".acpComposerInput")
     if (!input) throw new Error("No ACP composer input found")
@@ -416,4 +416,8 @@ async function pasteImageIntoComposer(page: Page): Promise<void> {
     Object.defineProperty(event, "clipboardData", { value: dataTransfer })
     input.dispatchEvent(event)
   })
+}
+
+function composerInput(page: Page): Locator {
+  return page.locator(".acpComposerInput")
 }

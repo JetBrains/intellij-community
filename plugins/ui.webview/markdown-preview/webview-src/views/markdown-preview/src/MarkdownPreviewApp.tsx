@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react"
 import { AllIcons } from "@jetbrains/intellij-webview"
+import "@jetbrains/intellij-webview-controls/define/icon"
 import renderMathInElement from "katex/contrib/auto-render"
 import ReactMarkdown, { type Components, type Options } from "react-markdown"
 import rehypeHighlight from "rehype-highlight"
@@ -12,20 +13,6 @@ import remarkFrontmatter from "remark-frontmatter"
 import remarkGfm from "remark-gfm"
 import { MermaidBlock } from "./MermaidBlock"
 import { markdownSanitizeSchema } from "./markdownSanitizeSchema"
-
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      "jb-icon": {
-        src?: string
-        label?: string
-        size?: string
-        className?: string
-        "aria-hidden"?: boolean | "true" | "false"
-      }
-    }
-  }
-}
 
 interface MarkdownPreviewAppProps {
   markdown: string
