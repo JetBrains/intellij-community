@@ -732,7 +732,9 @@ No frontend or backend dependencies were found for module 'light_idea_test_case'
     """.trimIndent()
     )
 
-    launchActionAndWait("Make module 'light_idea_test_case' work in 'frontend' only") {
+    val intention = myFixture.findSingleIntention("Make module 'light_idea_test_case' work in 'frontend' only")
+    assertNull(myFixture.getIntentionPreviewText(intention))
+    launchActionAndWait(intention) {
       getModuleDependencyNames().contains("intellij.platform.frontend")
     }
 
@@ -854,7 +856,8 @@ No frontend or backend dependencies were found for module 'light_idea_test_case'
     )
     addCurrentModuleDependencies("intellij.platform.frontend")
 
-    launchActionAndWait("Make module 'light_idea_test_case' work in 'backend' only") {
+    val intention = myFixture.findSingleIntention("Make module 'light_idea_test_case' work in 'backend' only")
+    launchActionAndWait(intention) {
       !getModuleDependencyNames().contains("intellij.platform.frontend")
     }
 
@@ -877,11 +880,6 @@ No frontend or backend dependencies were found for module 'light_idea_test_case'
         }
       }
     }
-  }
-
-  private fun launchActionAndWait(intentionText: String, condition: () -> Boolean) {
-    val intention = myFixture.findSingleIntention(intentionText)
-    launchActionAndWait(intention, condition)
   }
 
   private fun launchActionAndWait(intention: IntentionAction, condition: () -> Boolean) {
