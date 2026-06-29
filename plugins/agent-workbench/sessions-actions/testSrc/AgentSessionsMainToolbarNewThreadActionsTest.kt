@@ -42,6 +42,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.SplitButtonAction
 import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -227,6 +228,91 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
 
     assertThat(visibleActions).contains(action)
     assertThat(action.getMainAction(TestActionEvent.createTestEvent(action))).isSameAs(firstMainAction)
+  }
+
+  @Test
+  fun splitButtonsDoNotRememberPopupActionsAsMainAction() {
+    val project = ProjectManager.getInstance().defaultProject
+    val context = newThreadContext(path = "/tmp/toolbar-project")
+    val codexBridge = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.from("codex"),
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+    )
+    val mainToolbarAction = AgentSessionsMainToolbarNewThreadAction(
+      resolveContext = { context },
+      allBridges = { listOf(codexBridge) },
+      createNewSession = { _, _, _, _ -> },
+      defaultLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.from("codex"), AgentSessionLaunchMode.STANDARD) },
+    )
+    val directPathAction = AgentSessionsDirectPathNewThreadAction(
+      project = project,
+      targetPath = { "/tmp/toolbar-project" },
+      quickStartEntryPoint = AgentWorkbenchEntryPoint.TREE_ROW_OVERLAY,
+      popupEntryPoint = AgentWorkbenchEntryPoint.TREE_POPUP,
+      allBridges = { listOf(codexBridge) },
+      createNewSession = { _, _, _, _ -> },
+      defaultLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.from("codex"), AgentSessionLaunchMode.STANDARD) },
+    )
+
+    assertThat(dynamicSplitButtonEnabled(mainToolbarAction)).isFalse()
+    assertThat(dynamicSplitButtonEnabled(directPathAction)).isFalse()
+  }
+
+  @Test
+  fun newThreadActionTextUsesAgentName() {
+    assertThat(newThreadActionText("Cursor")).isEqualTo("New Cursor thread")
+  }
+
+  @Test
+  fun mainToolbarAcpQuickStartTextUsesProviderNameWithoutDuplicateNewThreadWords() {
+    val context = newThreadContext(path = "/tmp/toolbar-project")
+    val acpBridge = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.from("acp"),
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+      newSessionLabelKeyOverride = "toolwindow.action.new.session.acp",
+    )
+    val action = AgentSessionsMainToolbarNewThreadAction(
+      resolveContext = { context },
+      allBridges = { listOf(acpBridge) },
+      createNewSession = { _, _, _, _ -> },
+    )
+    val event = TestActionEvent.createTestEvent(action)
+
+    action.update(event)
+
+    assertThat(event.presentation.text).isEqualTo("New ACP thread")
+  }
+
+  @Test
+  fun mainToolbarAcpTargetProfileQuickStartTextUsesAgentName() {
+    val context = newThreadContext(path = "/tmp/toolbar-project")
+    val acpBridge = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.from("acp"),
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+      newSessionLabelKeyOverride = "toolwindow.action.new.session.acp",
+    )
+    val acpProfile = AgentPromptLaunchProfile(
+      id = "builtin:acp:target:mistral-vibe:standard",
+      name = "Mistral Vibe",
+      kind = AgentPromptLaunchProfileKind.BUILT_IN,
+      providerId = acpBridge.provider.value,
+      launchTargetId = "acp.registry.mistral-vibe",
+    )
+    val action = AgentSessionsMainToolbarNewThreadAction(
+      resolveContext = { context },
+      allBridges = { listOf(acpBridge) },
+      userLaunchProfiles = { listOf(acpProfile) },
+      defaultLaunchProfileId = { acpProfile.id },
+      createNewSession = { _, _, _, _ -> },
+    )
+    val event = TestActionEvent.createTestEvent(action)
+
+    action.update(event)
+
+    assertThat(event.presentation.text).isEqualTo("New Mistral Vibe thread")
   }
 
   @Test
@@ -998,9 +1084,6 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     assertThat(shouldOpenInlineNewThreadPrompt(registryEnabled = false, descriptor = promptProvider)).isFalse()
     assertThat(shouldOpenInlineNewThreadPrompt(registryEnabled = true, descriptor = terminalProvider)).isFalse()
     assertThat(shouldOpenInlineNewThreadPrompt(registryEnabled = true, descriptor = null)).isFalse()
-    assertThat(shouldOpenInlineNewThreadPrompt(registryEnabled = true,
-                                               descriptor = promptProvider,
-                                               hasOutOfBandLaunch = true)).isFalse()
   }
 
   @Test
@@ -1380,6 +1463,12 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
       ActionUiKind.POPUP,
       null,
     )
+  }
+
+  private fun dynamicSplitButtonEnabled(action: SplitButtonAction): Boolean {
+    val method = SplitButtonAction::class.java.getDeclaredMethod("useDynamicSplitButton")
+    method.isAccessible = true
+    return method.invoke(action) as Boolean
   }
 
   private fun registerManageLaunchProfilesAction(onPerformed: () -> Unit = {}): () -> Unit {

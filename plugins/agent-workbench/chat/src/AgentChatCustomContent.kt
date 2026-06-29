@@ -31,6 +31,11 @@ interface AgentChatCustomContentProvider {
 }
 
 @ApiStatus.Internal
+interface AgentChatPreferredFocusableContent {
+  val preferredFocusedComponent: JComponent?
+}
+
+@ApiStatus.Internal
 object AgentChatCustomContent {
   private val EP: ExtensionPointName<AgentChatCustomContentProvider> =
     ExtensionPointName("com.intellij.agent.workbench.chatCustomContent")

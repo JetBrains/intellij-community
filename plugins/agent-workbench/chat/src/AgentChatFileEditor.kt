@@ -121,6 +121,7 @@ internal class AgentChatFileEditor(
   private var initializationStarted: Boolean = false
   private var initializationRequested: Boolean = false
   private var customContentInstalled: Boolean = false
+  private var customContentPreferredFocusedComponent: JComponent? = null
   private var focusTerminalAfterInitialization: Boolean = false
   private var stateApplied: Boolean = file.projectPath.isNotBlank() || file.threadIdentity.isNotBlank()
   private var initializationJob: Job? = null
@@ -140,6 +141,7 @@ internal class AgentChatFileEditor(
 
   override fun getPreferredFocusedComponent(): JComponent {
     file.deferredStartContent()?.preferredFocusedComponent?.let { return it }
+    customContentPreferredFocusedComponent?.let { return it }
     return tab?.preferredFocusableComponent ?: component
   }
 
@@ -300,6 +302,7 @@ internal class AgentChatFileEditor(
       threadId = file.threadId.ifBlank { file.threadIdentity },
       parent = this,
     )
+    customContentPreferredFocusedComponent = (customComponent as? AgentChatPreferredFocusableContent)?.preferredFocusedComponent
     disposeDeferredStartProgressTimers(component)
     component.removeAll()
     component.add(customComponent, BorderLayout.CENTER)
@@ -659,6 +662,7 @@ internal class AgentChatFileEditor(
     terminalRestoreContextController?.dispose()
     terminalRestoreContextController = null
     tab = null
+    customContentPreferredFocusedComponent = null
     disposeDeferredStartProgressTimers(component)
     component.removeAll()
     pendingContextPanelInstalled = false
