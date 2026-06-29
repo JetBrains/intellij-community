@@ -1538,4 +1538,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.platform.backend.observation.tests",
   "intellij.platform.completion.common.tests",
   "intellij.platform.compose.tests",
+  "intellij.performanceTesting.tests",
 )
