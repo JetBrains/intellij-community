@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.events;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.ApiStatus;
@@ -30,6 +32,12 @@ public final class VFileDeleteEvent extends VFileEvent {
 
   @Override
   public String toString() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      Object requestor = getRequestor();
+      if (requestor != null) {
+        return "VfsEvent[deleted: " + myFile.getUrl() + ", requestor: " + requestor.getClass() + "]";
+      }
+    }
     return "VfsEvent[deleted: " + myFile.getUrl() + "]";
   }
 
