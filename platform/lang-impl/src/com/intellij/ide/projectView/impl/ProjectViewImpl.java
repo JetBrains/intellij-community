@@ -781,15 +781,27 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
+  private void withLock(@NotNull Runnable code) {
+    synchronized (this) {
+      code.run();
+    }
+  }
+
   @Override
   @CalledInAny
-  public synchronized void addProjectPane(final @NotNull AbstractProjectViewPane pane) {
+  public void addProjectPane(final @NotNull AbstractProjectViewPane pane) {
     addProjectPane(pane, false);
   }
 
   @ApiStatus.Internal
   @CalledInAny
-  public synchronized void addProjectPane(final @NotNull AbstractProjectViewPane pane, boolean restoreState) {
+  public void addProjectPane(final @NotNull AbstractProjectViewPane pane, boolean restoreState) {
+    withLock(() -> {
+      doAddProjectPane(pane, restoreState);
+    });
+  }
+
+  private void doAddProjectPane(final @NotNull AbstractProjectViewPane pane, boolean restoreState) {
     if (idToPane.containsKey(pane.getId())) {
       LOG.error("Pane with ID=" + pane.getId() + " already exists. Please remove it first with removeProjectPane(pane).");
       removeProjectPane(idToPane.get(pane.getId()));
@@ -813,15 +825,21 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
     if (isInitialized) {
       if (ApplicationManager.getApplication().isDispatchThread()) {
-        doAddUninitializedPanes();
+        addUninitializedPanesImpl();
       } else {
-        ApplicationManager.getApplication().invokeLater(this::doAddUninitializedPanes);
+        ApplicationManager.getApplication().invokeLater(this::addUninitializedPanesImpl);
       }
     }
   }
 
   @Override
-  public synchronized void removeProjectPane(@NotNull AbstractProjectViewPane pane) {
+  public void removeProjectPane(@NotNull AbstractProjectViewPane pane) {
+    withLock(() -> {
+      doRemoveProjectPane(pane);
+    });
+  }
+
+  private void doRemoveProjectPane(@NotNull AbstractProjectViewPane pane) {
     ThreadingAssertions.assertEventDispatchThread();
     //assume we are completely initialized here
     @NotNull String idToRemove = pane.getId();
@@ -845,7 +863,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     viewSelectionChanged();
   }
 
-  private synchronized void doAddUninitializedPanes() {
+  private void addUninitializedPanesImpl() {
+    withLock(() -> {
+      doAddUninitializedPanesImpl();
+    });
+  }
+
+  private void doAddUninitializedPanesImpl() {
     for (AbstractProjectViewPane pane : uninitializedPanes) {
       doAddPane(pane);
     }
@@ -1064,9 +1088,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   public void setupImpl(@NotNull ToolWindow toolWindow, boolean loadPaneExtensions) {
     ThreadingAssertions.assertEventDispatchThread();
     if (isInitialized) return;
-    synchronized (this) {
+    withLock(() -> {
       doSetupImpl(toolWindow, loadPaneExtensions);
-    }
+    });
   }
 
   private void doSetupImpl(@NotNull ToolWindow toolWindow, boolean loadPaneExtensions) {
@@ -1094,7 +1118,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       ensurePanesLoaded();
     }
     isInitialized = true;
-    doAddUninitializedPanes();
+    addUninitializedPanesImpl();
 
     getContentManager().addContentManagerListener(new ContentManagerListener() {
       @Override
@@ -1153,22 +1177,26 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private void reloadPanes() {
     if (project.isDisposed() || !isExtensionsLoaded) return; // panes will be loaded later
 
-    synchronized (this) {
-      if (project.isDisposed() || !isExtensionsLoaded) return; // DCL
-      Map<String, AbstractProjectViewPane> newPanes = loadPanes();
-      Map<AbstractProjectViewPane, Boolean> oldPanes = new IdentityHashMap<>();
-      uninitializedPanes.forEach(pane -> oldPanes.put(pane, pane == newPanes.get(pane.getId())));
-      idToPane.forEach((id, pane) -> oldPanes.put(pane, pane == newPanes.get(id)));
-      oldPanes.forEach((pane, exists) -> {
-        if (Boolean.FALSE.equals(exists)) {
-          removeProjectPane(pane);
-          Disposer.dispose(pane);
-        }
-      });
-      for (AbstractProjectViewPane pane : newPanes.values()) {
-        if (!Boolean.TRUE.equals(oldPanes.get(pane)) && pane.isInitiallyVisible()) {
-          addProjectPane(pane);
-        }
+    withLock(() -> {
+      doReloadPanes();
+    });
+  }
+
+  private void doReloadPanes() {
+    if (project.isDisposed() || !isExtensionsLoaded) return;
+    Map<String, AbstractProjectViewPane> newPanes = loadPanes();
+    Map<AbstractProjectViewPane, Boolean> oldPanes = new IdentityHashMap<>();
+    uninitializedPanes.forEach(pane -> oldPanes.put(pane, pane == newPanes.get(pane.getId())));
+    idToPane.forEach((id, pane) -> oldPanes.put(pane, pane == newPanes.get(id)));
+    oldPanes.forEach((pane, exists) -> {
+      if (Boolean.FALSE.equals(exists)) {
+        removeProjectPane(pane);
+        Disposer.dispose(pane);
+      }
+    });
+    for (AbstractProjectViewPane pane : newPanes.values()) {
+      if (!Boolean.TRUE.equals(oldPanes.get(pane)) && pane.isInitiallyVisible()) {
+        addProjectPane(pane);
       }
     }
   }
@@ -1179,30 +1207,34 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       return;
     }
 
-    synchronized (this) {
-      if (project.isDisposed() || isExtensionsLoading || isExtensionsLoaded) { // DCL
-        return;
-      }
-      isExtensionsLoading = true;
-      try {
-        for (AbstractProjectViewPane pane : loadPanes().values()) {
-          try {
-            if (pane.isInitiallyVisible()) {
-              addProjectPane(pane);
-            }
-          }
-          catch (Throwable e) {
-            LOG.warn("An exception occurred when trying to add the pane " + pane.getId() + ", it may not appear or may have inconsistent state");
+    withLock(() -> {
+      doEnsurePanesLoaded();
+    });
+  }
+
+  private void doEnsurePanesLoaded() {
+    if (project.isDisposed() || isExtensionsLoading || isExtensionsLoaded) { // DCL
+      return;
+    }
+    isExtensionsLoading = true;
+    try {
+      for (AbstractProjectViewPane pane : loadPanes().values()) {
+        try {
+          if (pane.isInitiallyVisible()) {
+            addProjectPane(pane);
           }
         }
+        catch (Throwable e) {
+          LOG.warn("An exception occurred when trying to add the pane " + pane.getId() + ", it may not appear or may have inconsistent state");
+        }
       }
-      finally {
-        isExtensionsLoading = false;
-      }
+    }
+    finally {
+      isExtensionsLoading = false;
     }
   }
 
-  private synchronized @NotNull Map<String, AbstractProjectViewPane> loadPanes() {
+  private @NotNull Map<String, AbstractProjectViewPane> loadPanes() {
     Map<String, AbstractProjectViewPane> map = new LinkedHashMap<>();
     List<AbstractProjectViewPane> toSort = new ArrayList<>(AbstractProjectViewPane.EP.getExtensions(project));
     toSort.sort(PANE_WEIGHT_COMPARATOR);
@@ -1556,7 +1588,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     Element panesElement = parentNode.getChild(ELEMENT_PANES);
     if (panesElement != null) {
-      readPaneState(panesElement);
+      withLock(() -> {
+        readPaneState(panesElement);
+      });
     }
   }
 
@@ -1570,7 +1604,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return ProjectViewPane.ID;
   }
 
-  private synchronized void readPaneState(@NotNull Element panesElement) {
+  private void readPaneState(@NotNull Element panesElement) {
     List<Element> paneElements = panesElement.getChildren(ELEMENT_PANE);
     for (Element paneElement : paneElements) {
       String paneId = paneElement.getAttributeValue(ATTRIBUTE_ID);
@@ -1588,7 +1622,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
-  private static synchronized void applyPaneState(@NotNull AbstractProjectViewPane pane, @NotNull Element element) {
+  private static void applyPaneState(@NotNull AbstractProjectViewPane pane, @NotNull Element element) {
     try {
       pane.readExternal(element);
     }
