@@ -184,7 +184,7 @@ public class PluginUpdateDialog extends DialogWrapper {
 
   public static boolean showDialogAndUpdate(@NotNull PluginUpdateDialog dialog) {
     if (dialog.showAndGet()) {
-      PluginUpdateHandler.installUpdates(dialog.getSelectedPluginModels(), dialog.getContentPanel(), dialog.myFinishCallback, null);
+      PluginUpdateHandler.installUpdatesInBackground(dialog.getSelectedPluginModels(), dialog.getContentPanel(), dialog.myFinishCallback, null);
       return true;
     }
     return false;
