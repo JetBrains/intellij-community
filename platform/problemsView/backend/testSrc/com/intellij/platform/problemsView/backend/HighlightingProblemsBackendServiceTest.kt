@@ -1,7 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.problemsView.backend
 
+import com.intellij.analysis.problemsView.Problem
+import com.intellij.analysis.problemsView.ProblemsCollector
+import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.analysis.problemsView.toolWindow.HighlightingProblem
+import com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemEvent
 import com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemEventDto
 import com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemLifetime
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
@@ -16,6 +20,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
+import com.intellij.platform.problemsView.collector.ProjectErrorsCollector
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.junit5.TestApplication
@@ -23,6 +28,7 @@ import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.psiFileFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
@@ -47,7 +53,7 @@ class HighlightingProblemsBackendServiceTest {
   private val testFile by projectFixture
     .moduleFixture("testModule")
     .sourceRootFixture()
-    .psiFileFixture("testFile.java", "\n" )
+    .psiFileFixture("testFile.java", "\n")
 
   private suspend fun createTestHighlightingProblems(problemCount: Int): List<HighlightInfo> = readAction {
     (1..problemCount).mapNotNull { i ->
@@ -79,7 +85,7 @@ class HighlightingProblemsBackendServiceTest {
   private suspend fun waitForAllExpectedProblemEvents(
     batches: MutableList<List<ProblemEventDto>>,
     expectedCount: Int,
-    timeout: Duration = 3.seconds
+    timeout: Duration = 3.seconds,
   ): List<ProblemEventDto> {
     return requireNotNull(
       withTimeoutOrNull(timeout) {
@@ -88,10 +94,20 @@ class HighlightingProblemsBackendServiceTest {
         }
         batches.flatten()
       }
-    ) { "Expected $expectedCount events within $timeout, but got ${batches.flatten().size}" } }
+    ) { "Expected $expectedCount events within $timeout, but got ${batches.flatten().size}" }
+  }
 
+  private suspend fun waitForCondition(timeout: Duration = 3.seconds, condition: () -> Boolean) {
+    requireNotNull(
+      withTimeoutOrNull(timeout) {
+        while (!condition()) {
+          delay(10.milliseconds)
+        }
+      }
+    ) { "Condition was not met within $timeout" }
+  }
 
-    private suspend fun closeFile(file: PsiFile, project: Project) {
+  private suspend fun closeFile(file: PsiFile, project: Project) {
     withContext(Dispatchers.EDT) {
       project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
         .fileClosed(FileEditorManager.getInstance(project), file.virtualFile)
@@ -198,6 +214,71 @@ class HighlightingProblemsBackendServiceTest {
   }
 
   @Test
+  fun `project error appeared during history replay is delivered`() = runBlocking {
+    val collector = ProblemsCollector.getInstance(project) as ProjectErrorsCollector
+    val provider = TestProblemsProvider(project)
+    val existingProblems = (1..10).map { TestProblem(provider, "existing problem $it") }
+    val lateProblem = TestProblem(provider, "late problem")
+    val markerProblem = existingProblems.first()
+    val receivedEvents = mutableListOf<ProblemEvent>()
+    val historyReplayStarted = CompletableDeferred<Unit>()
+    val releaseHistoryReplay = CompletableDeferred<Unit>()
+    val liveMarkerEventReceived = CompletableDeferred<Unit>()
+    val lateProblemDisappeared = CompletableDeferred<Unit>()
+    var collectorJob: kotlinx.coroutines.Job? = null
+
+    suspend fun waitForLiveEventsCollection() {
+      requireNotNull(withTimeoutOrNull(3.seconds) {
+        while (!liveMarkerEventReceived.isCompleted) {
+          collector.problemUpdated(markerProblem)
+          withTimeoutOrNull(10.milliseconds) { liveMarkerEventReceived.await() }
+        }
+      }) { "Live problem events were not collected" }
+    }
+
+    try {
+      existingProblems.forEach { collector.problemAppeared(it) }
+
+      collectorJob = launch {
+        collector.getProblemEventsFlow().collect { event ->
+          if (event is ProblemEvent.Appeared && event.problem !== lateProblem && !historyReplayStarted.isCompleted) {
+            historyReplayStarted.complete(Unit)
+            releaseHistoryReplay.await()
+          }
+          receivedEvents.add(event)
+          if (event is ProblemEvent.Updated && event.problem === markerProblem) {
+            liveMarkerEventReceived.complete(Unit)
+          }
+          if (event is ProblemEvent.Disappeared && event.problem === lateProblem) {
+            lateProblemDisappeared.complete(Unit)
+          }
+        }
+      }
+
+      requireNotNull(withTimeoutOrNull(3.seconds) { historyReplayStarted.await() }) { "History replay did not start" }
+      collector.problemAppeared(lateProblem)
+      releaseHistoryReplay.complete(Unit)
+      waitForCondition { receivedEvents.count { it is ProblemEvent.Appeared && it.problem !== lateProblem } == existingProblems.size }
+
+      waitForLiveEventsCollection()
+
+      collector.problemDisappeared(lateProblem)
+      requireNotNull(withTimeoutOrNull(3.seconds) { lateProblemDisappeared.await() }) {
+        "Late problem Disappeared event was not delivered"
+      }
+
+      assertTrue(receivedEvents.any { it is ProblemEvent.Appeared && it.problem === lateProblem },
+                 "Problem appeared during initial history replay should be delivered by the time the corresponding Disappeared event is received")
+    }
+    finally {
+      releaseHistoryReplay.complete(Unit)
+      collectorJob?.cancel()
+      existingProblems.forEach { collector.problemDisappeared(it) }
+      collector.problemDisappeared(lateProblem)
+    }
+  }
+
+  @Test
   fun `closing file removes all problem ids from storage`() = runBlocking {
     val lifetimeManager = ProblemLifetimeManager.getInstance(project)
 
@@ -279,15 +360,15 @@ class HighlightingProblemsBackendServiceTest {
       .filter { it.problemDto.id == problemId }
 
     val updated = withTimeoutOrNull(3.seconds) {
-        while (updatesOfProblem().isEmpty()) {
-          delay(50.milliseconds)
-        }
-        updatesOfProblem().first()
+      while (updatesOfProblem().isEmpty()) {
+        delay(50.milliseconds)
       }
+      updatesOfProblem().first()
+    }
 
     collectorJob.cancel()
 
-    requireNotNull(updated) {"Expected an Updated event for problem $problemId after quick fixes became available" }
+    requireNotNull(updated) { "Expected an Updated event for problem $problemId after quick fixes became available" }
     assertEquals(problemId, updated.problemDto.id, "the same problem should be updated, not a new one")
   }
 
@@ -334,4 +415,8 @@ class HighlightingProblemsBackendServiceTest {
       lifetimeScope.cancel()
     }
   }
+
+  private class TestProblemsProvider(override val project: Project) : ProblemsProvider
+
+  private class TestProblem(override val provider: ProblemsProvider, override val text: String) : Problem
 }
