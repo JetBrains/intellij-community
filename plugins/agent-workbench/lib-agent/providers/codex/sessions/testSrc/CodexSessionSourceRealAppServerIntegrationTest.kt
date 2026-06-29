@@ -14,16 +14,16 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import org.assertj.core.api.Assertions.assertThat
@@ -137,8 +137,11 @@ class CodexSessionSourceRealAppServerIntegrationTest {
           assertThat(forkAfterRename.title).isEqualTo("Renamed fork")
         }
         finally {
-          notificationBridge.cancelAndJoin()
-          client.shutdown()
+          withContext(NonCancellable) {
+            notificationBridge.cancel()
+            client.shutdown()
+            notificationBridge.join()
+          }
         }
       }
     }
@@ -172,16 +175,28 @@ class CodexSessionSourceRealAppServerIntegrationTest {
         }
       }
       try {
-        delay(500.milliseconds)
-        val replacement = Files.createTempFile(projectDir, "rollout-replace", ".tmp")
-        Files.writeString(replacement, "line1\n")
-        Files.move(replacement, watchedFile, StandardCopyOption.REPLACE_EXISTING)
-        assertThat(withTimeout(10.seconds) { changes.receive() }.toAbsolutePath().normalize()).isEqualTo(expectedPath)
+        val observedPath = eventually(timeout = 30.seconds, interval = 250.milliseconds) {
+          val replacement = Files.createTempFile(projectDir, "rollout-replace", ".tmp")
+          Files.writeString(replacement, "line-${System.nanoTime()}\n")
+          Files.move(replacement, watchedFile, StandardCopyOption.REPLACE_EXISTING)
+          withTimeoutOrNull(2.seconds) {
+            while (true) {
+              val changedPath = changes.receive().toAbsolutePath().normalize()
+              if (changedPath == expectedPath) {
+                return@withTimeoutOrNull changedPath
+              }
+            }
+          }
+        } ?: error("Timed out waiting for Codex app-server fs/watch to report atomic replace of $expectedPath")
+        assertThat(observedPath).isEqualTo(expectedPath)
       }
       finally {
-        watchJob.cancelAndJoin()
-        changes.close()
-        client.shutdown()
+        withContext(NonCancellable) {
+          watchJob.cancel()
+          client.shutdown()
+          watchJob.join()
+          changes.close()
+        }
       }
     }
   }
