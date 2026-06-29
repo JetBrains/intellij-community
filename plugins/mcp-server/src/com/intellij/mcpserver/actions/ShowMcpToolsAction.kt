@@ -5,6 +5,7 @@ import com.intellij.mcpserver.McpTool
 import com.intellij.mcpserver.McpToolCategory
 import com.intellij.mcpserver.McpToolsMarkdownExporter
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.presentableDescription
 import com.intellij.mcpserver.presentableName
 import com.intellij.mcpserver.settings.McpToolFilterOptimizer
 import com.intellij.mcpserver.settings.McpToolFilterSettings
@@ -182,6 +183,9 @@ private class McpToolTreeCellRenderer : CheckboxTree.CheckboxTreeCellRenderer() 
     when (val userObject = node.userObject) {
       is CategoryNode -> {
         textRenderer.append(userObject.category.presentableName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+        userObject.category.presentableDescription?.let { description ->
+          textRenderer.append("  $description", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+        }
       }
       is McpTool -> {
         textRenderer.append(userObject.descriptor.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
@@ -196,7 +200,7 @@ private class DescriptionColumnInfo : ColumnInfo<DefaultMutableTreeNode, String>
   override fun valueOf(node: DefaultMutableTreeNode): String {
     return when (val userObject = node.userObject) {
       is CategoryNode -> ""
-      is McpTool -> userObject.descriptor.description.trimIndent()
+      is McpTool -> userObject.descriptor.presentableDescription.trimIndent()
       else -> ""
     }
   }

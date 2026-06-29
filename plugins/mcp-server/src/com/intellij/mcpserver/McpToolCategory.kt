@@ -13,6 +13,8 @@ import org.jetbrains.annotations.Nls
  * @property alwaysIncluded Whether this category contains tools that should always be included as directly accessible MCP tools
  * @property displayName Optional plugin-provided human-readable name for this category (see [McpToolset.displayName]).
  * When `null`, [presentableName] derives a name from [shortName].
+ * @property displayDescription Optional plugin-provided human-readable description for this category (see [McpToolset.displayDescription]).
+ * When `null`, no group description is shown ([presentableDescription] is `null`).
  */
 data class McpToolCategory(
   val shortName: @NlsSafe String,
@@ -20,6 +22,7 @@ data class McpToolCategory(
   val isExperimental: Boolean = false,
   val alwaysIncluded: Boolean = false,
   val displayName: @Nls String? = null,
+  val displayDescription: @Nls String? = null,
 )
 
 /**
@@ -29,3 +32,10 @@ data class McpToolCategory(
 val McpToolCategory.presentableName: @Nls String
   @Suppress("HardCodedStringLiteral")
   get() = displayName ?: NameUtilCore.splitNameIntoWordList(shortName.removeSuffix("Toolset")).joinToString(" ")
+
+/**
+ * The group description to present in the UI: the plugin-provided [McpToolCategory.displayDescription], or `null`
+ * when the toolset did not provide one (groups have no agent-facing description to fall back to).
+ */
+val McpToolCategory.presentableDescription: @Nls String?
+  get() = displayDescription

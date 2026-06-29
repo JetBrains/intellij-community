@@ -71,6 +71,24 @@ interface McpToolset {
    */
   fun displayName(): @Nls String? = null
 
+  /**
+   * Human-readable description for this toolset group, shown in
+   * Settings | Tools | MCP Server | Exposed Tools and other UI surfaces.
+   *
+   * Return a localized string (typically from your plugin's message bundle).
+   * When `null`, no group description is shown.
+   */
+  fun displayDescription(): @Nls String? = null
+
+  /**
+   * Human-readable description for a single tool, shown in the UI instead of the
+   * agent-facing `@McpDescription`. [toolName] is the resolved MCP tool name.
+   *
+   * Return a localized string (typically from your plugin's message bundle).
+   * When `null`, the agent-facing description is shown.
+   */
+  fun displayDescription(toolName: String): @Nls String? = null
+
   /*
    * If true, then tools from this toolset are always included in the list of directly accessible MCP tools,
    * even in "Universal tool-router mode".
