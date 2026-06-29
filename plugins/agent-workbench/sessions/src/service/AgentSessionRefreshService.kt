@@ -83,6 +83,8 @@ class AgentSessionRefreshService internal constructor(
   private val currentTimeMillis: () -> Long = System::currentTimeMillis,
   private val archiveTransitionSuppressions: AgentSessionArchiveTransitionSuppressions = AgentSessionArchiveTransitionSuppressions(),
   private val loadingDelayMs: Long = DEFAULT_AGENT_SESSION_LOADING_DELAY_MS,
+  private val visibleCostHydrationDelayMs: Long = 750L,
+  private val workingThreadCostCacheTtlMs: Long = 60_000L,
 ) {
   @Suppress("unused")
   constructor(serviceScope: CoroutineScope) : this(
@@ -130,6 +132,8 @@ class AgentSessionRefreshService internal constructor(
     sessionSourcesProvider = sessionSourcesProvider,
     toolWindowVisibleFlow = toolWindowVisibleFlow,
     currentTimeMillis = currentTimeMillis,
+    visibleCostHydrationDelayMs = visibleCostHydrationDelayMs,
+    workingThreadCostCacheTtlMs = workingThreadCostCacheTtlMs,
   )
 
   init {

@@ -452,6 +452,8 @@ internal suspend fun withTestServiceAndLaunch(
   toolWindowVisibleFlow: StateFlow<Boolean> = MutableStateFlow(true),
   currentTimeMillis: () -> Long = System::currentTimeMillis,
   loadingDelayMs: Long = 0L,
+  visibleCostHydrationDelayMs: Long = 750L,
+  workingThreadCostCacheTtlMs: Long = 60_000L,
   branchMismatchConfirmation: suspend (Project?, String, String) -> Boolean = { _, _, _ ->
     error("Unexpected branch mismatch confirmation")
   },
@@ -472,6 +474,8 @@ internal suspend fun withTestServiceAndLaunch(
     toolWindowVisibleFlow = toolWindowVisibleFlow,
     currentTimeMillis = currentTimeMillis,
     loadingDelayMs = loadingDelayMs,
+    visibleCostHydrationDelayMs = visibleCostHydrationDelayMs,
+    workingThreadCostCacheTtlMs = workingThreadCostCacheTtlMs,
     branchMismatchConfirmation = branchMismatchConfirmation,
     action = action,
   )
@@ -501,6 +505,8 @@ internal suspend fun withService(
   toolWindowVisibleFlow: StateFlow<Boolean> = MutableStateFlow(true),
   currentTimeMillis: () -> Long = System::currentTimeMillis,
   loadingDelayMs: Long = 0L,
+  visibleCostHydrationDelayMs: Long = 750L,
+  workingThreadCostCacheTtlMs: Long = 60_000L,
   action: suspend (AgentSessionStateSyncTestFacade) -> Unit,
 ) {
   withServiceAndLaunch(
@@ -518,6 +524,8 @@ internal suspend fun withService(
     toolWindowVisibleFlow = toolWindowVisibleFlow,
     currentTimeMillis = currentTimeMillis,
     loadingDelayMs = loadingDelayMs,
+    visibleCostHydrationDelayMs = visibleCostHydrationDelayMs,
+    workingThreadCostCacheTtlMs = workingThreadCostCacheTtlMs,
   ) { service, _ ->
     action(service)
   }
@@ -547,6 +555,8 @@ internal suspend fun withServiceAndLaunch(
   toolWindowVisibleFlow: StateFlow<Boolean> = MutableStateFlow(true),
   currentTimeMillis: () -> Long = System::currentTimeMillis,
   loadingDelayMs: Long = 0L,
+  visibleCostHydrationDelayMs: Long = 750L,
+  workingThreadCostCacheTtlMs: Long = 60_000L,
   branchMismatchConfirmation: suspend (Project?, String, String) -> Boolean = { _, _, _ ->
     error("Unexpected branch mismatch confirmation")
   },
@@ -568,6 +578,8 @@ internal suspend fun withServiceAndLaunch(
     toolWindowVisibleFlow = toolWindowVisibleFlow,
     currentTimeMillis = currentTimeMillis,
     loadingDelayMs = loadingDelayMs,
+    visibleCostHydrationDelayMs = visibleCostHydrationDelayMs,
+    workingThreadCostCacheTtlMs = workingThreadCostCacheTtlMs,
     branchMismatchConfirmation = branchMismatchConfirmation,
   ) { service, _, launchService ->
     action(service, launchService)
@@ -600,6 +612,8 @@ internal suspend fun withServiceAndArchive(
   toolWindowVisibleFlow: StateFlow<Boolean> = MutableStateFlow(true),
   currentTimeMillis: () -> Long = System::currentTimeMillis,
   loadingDelayMs: Long = 0L,
+  visibleCostHydrationDelayMs: Long = 750L,
+  workingThreadCostCacheTtlMs: Long = 60_000L,
   action: suspend (AgentSessionStateSyncTestFacade, AgentSessionArchiveService) -> Unit,
 ) {
   withServiceAndArchiveAndLaunch(
@@ -619,6 +633,8 @@ internal suspend fun withServiceAndArchive(
     toolWindowVisibleFlow = toolWindowVisibleFlow,
     currentTimeMillis = currentTimeMillis,
     loadingDelayMs = loadingDelayMs,
+    visibleCostHydrationDelayMs = visibleCostHydrationDelayMs,
+    workingThreadCostCacheTtlMs = workingThreadCostCacheTtlMs,
   ) { service, archiveService, _ ->
     action(service, archiveService)
   }
@@ -650,6 +666,8 @@ internal suspend fun withServiceAndArchiveAndLaunch(
   toolWindowVisibleFlow: StateFlow<Boolean> = MutableStateFlow(true),
   currentTimeMillis: () -> Long = System::currentTimeMillis,
   loadingDelayMs: Long = 0L,
+  visibleCostHydrationDelayMs: Long = 750L,
+  workingThreadCostCacheTtlMs: Long = 60_000L,
   branchMismatchConfirmation: suspend (Project?, String, String) -> Boolean = { _, _, _ ->
     error("Unexpected branch mismatch confirmation")
   },
@@ -691,6 +709,8 @@ internal suspend fun withServiceAndArchiveAndLaunch(
       currentTimeMillis = currentTimeMillis,
       archiveTransitionSuppressions = archiveTransitionSuppressions,
       loadingDelayMs = loadingDelayMs,
+      visibleCostHydrationDelayMs = visibleCostHydrationDelayMs,
+      workingThreadCostCacheTtlMs = workingThreadCostCacheTtlMs,
       subscribeToProjectLifecycle = false,
     )
     val service = AgentSessionStateSyncTestFacade(

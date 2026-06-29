@@ -26,8 +26,8 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<AgentSessionVisibleCostHydrationSupport>()
-private val VISIBLE_COST_HYDRATION_DELAY = 750.milliseconds
-private const val WORKING_THREAD_COST_CACHE_TTL_MS = 60_000L
+private const val DEFAULT_VISIBLE_COST_HYDRATION_DELAY_MS = 750L
+private const val DEFAULT_WORKING_THREAD_COST_CACHE_TTL_MS = 60_000L
 
 internal class AgentSessionVisibleCostHydrationSupport(
   private val serviceScope: CoroutineScope,
@@ -36,6 +36,8 @@ internal class AgentSessionVisibleCostHydrationSupport(
   private val sessionSourcesProvider: () -> List<AgentSessionSource>,
   private val toolWindowVisibleFlow: StateFlow<Boolean>,
   private val currentTimeMillis: () -> Long = System::currentTimeMillis,
+  private val visibleCostHydrationDelayMs: Long = DEFAULT_VISIBLE_COST_HYDRATION_DELAY_MS,
+  private val workingThreadCostCacheTtlMs: Long = DEFAULT_WORKING_THREAD_COST_CACHE_TTL_MS,
 ) {
   private val costCache = ConcurrentHashMap<ThreadCacheKey, ThreadCostCacheEntry>()
   private val inFlightLoads = ConcurrentHashMap.newKeySet<ThreadLoadKey>()
@@ -52,9 +54,30 @@ internal class AgentSessionVisibleCostHydrationSupport(
         if (!snapshot.toolWindowVisible || !snapshot.costEnabled) {
           return@collectLatest
         }
-        delay(VISIBLE_COST_HYDRATION_DELAY)
+        delay(visibleCostHydrationDelayMs.milliseconds)
         hydrateVisibleThreadCosts(snapshot.state)
+
+        while (hasVisibleWorkingThreadCostsToHydrate(stateStore.state.value)) {
+          delay(workingThreadCostCacheTtlMs.milliseconds)
+          if (!toolWindowVisibleFlow.value || !AgentSessionCostPresentationSettings.isEnabled()) {
+            return@collectLatest
+          }
+          hydrateVisibleThreadCosts(stateStore.state.value)
+        }
       }
+    }
+  }
+
+  private fun hasVisibleWorkingThreadCostsToHydrate(state: AgentSessionsState): Boolean {
+    val costSourceProviders = sessionSourcesProvider()
+      .asSequence()
+      .mapNotNull { source -> source as? AgentSessionCostSource }
+      .map { source -> source.provider }
+      .toSet()
+    return costSourceProviders.isNotEmpty() && collectVisibleThreads(state).any { visibleThread ->
+      visibleThread.provider in costSourceProviders &&
+      visibleThread.activity.isWorking &&
+      normalizeConcreteAgentSessionThreadId(visibleThread.threadId) != null
     }
   }
 
@@ -89,7 +112,7 @@ internal class AgentSessionVisibleCostHydrationSupport(
       }
 
       val effectiveCacheEntry = costCache[cacheKey]
-      if (effectiveCacheEntry != null && shouldReuseCachedCost(visibleThread, effectiveCacheEntry, now)) {
+      if (effectiveCacheEntry != null && shouldReuseCachedCost(visibleThread, effectiveCacheEntry, now, workingThreadCostCacheTtlMs)) {
         if (visibleThread.cost != effectiveCacheEntry.cost) {
           cachedUpdatesByPath
             .getOrPut(visibleThread.path) { LinkedHashMap() }
@@ -212,6 +235,7 @@ private fun shouldReuseCachedCost(
   visibleThread: VisibleThreadSnapshot,
   cacheEntry: ThreadCostCacheEntry,
   nowMs: Long,
+  workingThreadCostCacheTtlMs: Long,
 ): Boolean {
   if (cacheEntry.updatedAt != visibleThread.updatedAt) {
     return false
@@ -219,7 +243,7 @@ private fun shouldReuseCachedCost(
   if (!visibleThread.activity.isWorking) {
     return true
   }
-  return nowMs - cacheEntry.refreshedAtMs < WORKING_THREAD_COST_CACHE_TTL_MS
+  return nowMs - cacheEntry.refreshedAtMs < workingThreadCostCacheTtlMs
 }
 
 internal data class ThreadCostUpdate(
