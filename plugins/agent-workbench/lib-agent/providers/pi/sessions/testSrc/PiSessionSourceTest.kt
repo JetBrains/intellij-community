@@ -3,8 +3,11 @@ package com.intellij.platform.ai.agent.pi.sessions
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
+import com.intellij.platform.ai.agent.core.session.AgentSessionCost
+import com.intellij.platform.ai.agent.core.session.AgentSessionCostKind
 import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItemKind
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionActivityEvidence
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
@@ -22,6 +25,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.io.TempDir
+import java.math.BigDecimal
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
@@ -91,6 +95,222 @@ class PiSessionSourceTest {
       val thread = source.listThreads(projectDir.toString(), openProject = null).single()
 
       assertThat(thread.title).isEqualTo("New name")
+    }
+  }
+
+  @Test
+  fun `loads thread costs from pi assistant usage snapshots`() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-usage")
+      val sessionDir = tempDir.resolve("usage-sessions")
+      val capturedUsages = ArrayList<AgentSessionUsageSnapshot>()
+      writePiSession(
+        sessionDir = sessionDir,
+        sessionId = "session-usage",
+        cwd = projectDir,
+        piUserMessageEntry(id = "user-usage", content = "Count usage", timestamp = 1_000L),
+        piAssistantUsageMessageEntry(
+          id = "assistant-usage-1",
+          parentId = "user-usage",
+          model = "gpt-5.5",
+          input = 100,
+          output = 20,
+          cacheRead = 30,
+          cacheWrite = 40,
+          totalTokens = 250,
+        ),
+        piAssistantUsageMessageEntry(
+          id = "assistant-usage-2",
+          parentId = "assistant-usage-1",
+          model = "gpt-5.4",
+          input = 10,
+          output = 0,
+          cacheRead = 5,
+          cacheWrite = 5,
+          totalTokens = 50,
+        ),
+      )
+      val source = PiSessionSource(
+        sessionStore = PiSessionStore(sessionDirResolver = { sessionDir }),
+        calculateCost = { usage ->
+          capturedUsages += usage
+          AgentSessionCost(
+            amountUsd = BigDecimal.valueOf(usage.inputTokens + usage.outputTokens + usage.cacheReadTokens + usage.cacheWriteTokens),
+            kind = AgentSessionCostKind.ESTIMATED,
+            matchedModelId = usage.modelId,
+          )
+        },
+      )
+
+      val thread = source.listThreads(projectDir.toString(), openProject = null).single()
+      val costs = source.loadThreadCosts(projectDir.toString(), listOf(thread))
+
+      assertThat(costs).containsOnlyKeys("session-usage")
+      assertThat(costs["session-usage"]?.kind).isEqualTo(AgentSessionCostKind.ESTIMATED)
+      assertThat(costs["session-usage"]?.amountUsd).isEqualByComparingTo("240")
+      assertThat(costs["session-usage"]?.matchedModelId).isNull()
+      assertThat(capturedUsages).containsExactly(
+        AgentSessionUsageSnapshot(
+          modelId = "[pi] gpt-5.5",
+          inputTokens = 100,
+          outputTokens = 20,
+          cacheReadTokens = 30,
+          cacheWriteTokens = 40,
+          requestCount = 1,
+        ),
+        AgentSessionUsageSnapshot(
+          modelId = "[pi] gpt-5.4",
+          inputTokens = 10,
+          outputTokens = 30,
+          cacheReadTokens = 5,
+          cacheWriteTokens = 5,
+          requestCount = 1,
+        ),
+      )
+    }
+  }
+
+  @Test
+  fun `ignores zero JetBrains Central usage cost for paid pi model pricing`() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-jbcentral-zero-cost")
+      val sessionDir = tempDir.resolve("jbcentral-zero-cost-sessions")
+      val capturedUsages = ArrayList<AgentSessionUsageSnapshot>()
+      writePiSession(
+        sessionDir = sessionDir,
+        sessionId = "session-jbcentral-zero-cost",
+        cwd = projectDir,
+        piUserMessageEntry(id = "user-jbcentral-zero-cost", content = "Count paid usage", timestamp = 1_000L),
+        piAssistantUsageMessageEntry(
+          id = "assistant-free-proxy",
+          parentId = "user-jbcentral-zero-cost",
+          provider = "proxy",
+          model = "nemotron-ultra",
+          input = 10,
+          output = 2,
+          cacheRead = 0,
+          cacheWrite = 0,
+          totalTokens = 12,
+          costTotal = BigDecimal.ZERO,
+        ),
+        piAssistantUsageMessageEntry(
+          id = "assistant-paid-jbcentral",
+          parentId = "assistant-free-proxy",
+          provider = PI_JBCENTRAL_PROVIDER_NAME,
+          model = "gpt-5.5",
+          input = 100,
+          output = 20,
+          cacheRead = 30,
+          cacheWrite = 0,
+          totalTokens = 150,
+          costTotal = BigDecimal.ZERO,
+        ),
+      )
+      val source = PiSessionSource(
+        sessionStore = PiSessionStore(sessionDirResolver = { sessionDir }),
+        calculateCost = { usage ->
+          capturedUsages += usage
+          if (usage.nativeExactCostUsd != null) {
+            AgentSessionCost(
+              amountUsd = usage.nativeExactCostUsd,
+              kind = AgentSessionCostKind.EXACT,
+              matchedModelId = usage.modelId,
+            )
+          }
+          else {
+            AgentSessionCost(
+              amountUsd = BigDecimal.valueOf(42),
+              kind = AgentSessionCostKind.ESTIMATED,
+              matchedModelId = usage.modelId,
+            )
+          }
+        },
+      )
+
+      val thread = source.listThreads(projectDir.toString(), openProject = null).single()
+      val costs = source.loadThreadCosts(projectDir.toString(), listOf(thread))
+
+      assertThat(costs["session-jbcentral-zero-cost"]?.amountUsd).isEqualByComparingTo("42")
+      assertThat(costs["session-jbcentral-zero-cost"]?.kind).isEqualTo(AgentSessionCostKind.ESTIMATED)
+      assertThat(capturedUsages).containsExactly(
+        AgentSessionUsageSnapshot(
+          modelId = "[pi] nemotron-ultra",
+          inputTokens = 10,
+          outputTokens = 2,
+          requestCount = 1,
+          nativeExactCostUsd = BigDecimal.ZERO,
+        ),
+        AgentSessionUsageSnapshot(
+          modelId = "[pi] gpt-5.5",
+          inputTokens = 100,
+          outputTokens = 20,
+          cacheReadTokens = 30,
+          requestCount = 1,
+        ),
+      )
+    }
+  }
+
+  @Test
+  fun `keeps non zero JetBrains Central usage cost as exact cost`() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-jbcentral-exact-cost")
+      val sessionDir = tempDir.resolve("jbcentral-exact-cost-sessions")
+      val capturedUsages = ArrayList<AgentSessionUsageSnapshot>()
+      writePiSession(
+        sessionDir = sessionDir,
+        sessionId = "session-jbcentral-exact-cost",
+        cwd = projectDir,
+        piUserMessageEntry(id = "user-jbcentral-exact-cost", content = "Count exact usage", timestamp = 1_000L),
+        piAssistantUsageMessageEntry(
+          id = "assistant-paid-jbcentral",
+          parentId = "user-jbcentral-exact-cost",
+          provider = PI_JBCENTRAL_PROVIDER_NAME,
+          model = "gpt-5.5",
+          input = 100,
+          output = 20,
+          cacheRead = 30,
+          cacheWrite = 0,
+          totalTokens = 150,
+          costTotal = BigDecimal("0.5"),
+        ),
+      )
+      val source = PiSessionSource(
+        sessionStore = PiSessionStore(sessionDirResolver = { sessionDir }),
+        calculateCost = { usage ->
+          capturedUsages += usage
+          if (usage.nativeExactCostUsd != null) {
+            AgentSessionCost(
+              amountUsd = usage.nativeExactCostUsd,
+              kind = AgentSessionCostKind.EXACT,
+              matchedModelId = usage.modelId,
+            )
+          }
+          else {
+            AgentSessionCost(
+              amountUsd = BigDecimal.valueOf(42),
+              kind = AgentSessionCostKind.ESTIMATED,
+              matchedModelId = usage.modelId,
+            )
+          }
+        },
+      )
+
+      val thread = source.listThreads(projectDir.toString(), openProject = null).single()
+      val costs = source.loadThreadCosts(projectDir.toString(), listOf(thread))
+
+      assertThat(costs["session-jbcentral-exact-cost"]?.amountUsd).isEqualByComparingTo("0.5")
+      assertThat(costs["session-jbcentral-exact-cost"]?.kind).isEqualTo(AgentSessionCostKind.EXACT)
+      assertThat(capturedUsages).containsExactly(
+        AgentSessionUsageSnapshot(
+          modelId = "[pi] gpt-5.5",
+          inputTokens = 100,
+          outputTokens = 20,
+          cacheReadTokens = 30,
+          requestCount = 1,
+          nativeExactCostUsd = BigDecimal("0.5"),
+        ),
+      )
     }
   }
 
@@ -731,6 +951,42 @@ private fun piAssistantMessageEntry(id: String, parentId: String, timestamp: Lon
     parentId = parentId,
     entryTimestamp = "2026-01-01T00:00:03Z",
     messageFields = "\"role\":\"assistant\",\"content\":[],\"stopReason\":${stopReason.jsonString()},\"timestamp\":$timestamp",
+  )
+}
+
+private fun piAssistantUsageMessageEntry(
+  id: String,
+  parentId: String,
+  provider: String? = null,
+  model: String,
+  input: Long,
+  output: Long,
+  cacheRead: Long,
+  cacheWrite: Long,
+  totalTokens: Long,
+  costTotal: BigDecimal? = null,
+): String {
+  val providerField = provider?.let { "\"provider\":${it.jsonString()}," }.orEmpty()
+  val costField = costTotal?.let { ",\"cost\":{\"total\":${it.toPlainString()}}" }.orEmpty()
+  val messageFields = """
+    "role":"assistant",
+    $providerField
+    "model":${model.jsonString()},
+    "content":[],
+    "timestamp":2000,
+    "usage":{
+      "input":$input,
+      "output":$output,
+      "cacheRead":$cacheRead,
+      "cacheWrite":$cacheWrite,
+      "totalTokens":$totalTokens$costField
+    }
+  """.trimIndent().replace("\n", "")
+  return piMessageEntry(
+    id = id,
+    parentId = parentId,
+    entryTimestamp = "2026-01-01T00:00:03Z",
+    messageFields = messageFields,
   )
 }
 
