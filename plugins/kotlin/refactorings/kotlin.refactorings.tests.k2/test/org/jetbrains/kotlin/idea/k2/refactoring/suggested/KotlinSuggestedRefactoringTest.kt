@@ -181,6 +181,37 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
         }
     }
 
+    fun testRenameContextParameter() {
+        withCustomCompilerOptions("// COMPILER_ARGUMENTS: -Xcontext-parameters", this.project, this.module) {
+            doTestRename(
+                initialText = """
+                                abstract class Foo {
+                                    context(b<caret>: String)
+                                    abstract fun foo(a: String)
+                                }
+                
+                                class Bar : Foo() {
+                                    context(b: String) override fun foo(a: String) {}
+                                }
+                            """.trimIndent(),
+                textAfterRefactoring = """
+                                abstract class Foo {
+                                    context(bc: String)
+                                    abstract fun foo(a: String)
+                                }
+                                
+                                class Bar : Foo() {
+                                    context(bc: String) override fun foo(a: String) {}
+                                }
+                            """.trimIndent(),
+                oldName = "b",
+                newName = "bc"
+            ) {
+                type("c")
+            }
+        }
+    }
+
     fun testRemoveParameter() {
         doTestChangeSignature(
             """
