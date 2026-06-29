@@ -190,6 +190,69 @@ class AgentSessionRefreshServiceIntegrationTest {
   }
 
   @Test
+  fun workingVisibleThreadCostReloadsAfterTtlWithoutStateRefresh() = runBlocking(Dispatchers.Default) {
+    var nowMs = 1_000L
+    val costLoadCount = AtomicInteger(0)
+
+    withService(
+      sessionSourcesProvider = {
+        listOf(
+          ScriptedSessionSource(
+            provider = AgentSessionProvider.from("claude"),
+            listFromOpenProject = { _, _ ->
+              listOf(
+                thread(
+                  id = "claude-1",
+                  updatedAt = 100L,
+                  activity = AgentThreadActivity.PROCESSING,
+                  provider = AgentSessionProvider.from("claude"),
+                )
+              )
+            },
+            loadThreadCostsProvider = { _, requestedThreads ->
+              val loadNumber = costLoadCount.incrementAndGet()
+              requestedThreads.associate { thread ->
+                thread.id to AgentSessionCost(
+                  amountUsd = BigDecimal(loadNumber),
+                  kind = AgentSessionCostKind.EXACT,
+                )
+              }
+            },
+          )
+        )
+      },
+      projectEntriesProvider = {
+        listOf(openProjectEntry(PROJECT_PATH, "Project A"))
+      },
+      currentTimeMillis = { nowMs },
+      visibleCostHydrationDelayMs = 10L,
+      workingThreadCostCacheTtlMs = 100L,
+    ) { service ->
+      service.refresh()
+
+      waitForCondition {
+        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
+          ?.threads
+          ?.singleOrNull()
+          ?.cost
+          ?.amountUsd == BigDecimal.ONE
+      }
+      assertThat(costLoadCount.get()).isEqualTo(1)
+
+      nowMs += 101L
+
+      waitForCondition {
+        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
+          ?.threads
+          ?.singleOrNull()
+          ?.cost
+          ?.amountUsd == BigDecimal.valueOf(2)
+      }
+      assertThat(costLoadCount.get()).isEqualTo(2)
+    }
+  }
+
+  @Test
   fun persistedWarmSnapshotCostSurvivesRefreshAndSkipsReload() = runBlocking(Dispatchers.Default) {
     val persistedWarmState = AgentSessionWarmStateService()
     persistedWarmState.setPathSnapshot(
