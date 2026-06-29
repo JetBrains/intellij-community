@@ -5,6 +5,21 @@
   contentModules:
   - name: intellij.agent.workbench.acp
 - name: lib/modules/intellij.agent.workbench.acp.runtime.jar
+  projectLibraries:
+  - name: agentclientprotocol.acp.jvm
+    files:
+    - name: $MAVEN_REPOSITORY$/com/agentclientprotocol/acp-jvm/0/acp-jvm-0.jar
+    - name: $MAVEN_REPOSITORY$/com/agentclientprotocol/acp-model-jvm/0/acp-model-jvm-0.jar
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlinx/atomicfu-jvm/0/atomicfu-jvm-0.jar
+    reason: <- intellij.agent.workbench.acp.runtime
+  - name: agentclientprotocol.acp.ktor
+    files:
+    - name: $MAVEN_REPOSITORY$/com/agentclientprotocol/acp-ktor-jvm/0/acp-ktor-jvm-0.jar
+    reason: <- intellij.agent.workbench.acp.runtime
+  - name: io.github.oshai.kotlin.logging.jvm
+    files:
+    - name: $MAVEN_REPOSITORY$/io/github/oshai/kotlin-logging-jvm/7/kotlin-logging-jvm-7.jar
+    reason: <- intellij.agent.workbench.acp.runtime
   contentModules:
   - name: intellij.agent.workbench.acp.runtime
 - name: lib/modules/intellij.agent.workbench.ai.code.review.integration.jar
