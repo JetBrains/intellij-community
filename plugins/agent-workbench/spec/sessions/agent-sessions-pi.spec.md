@@ -96,6 +96,7 @@ Agent Workbench treats Pi as a first-class terminal-backed provider. Pi sessions
   for explicit folder mutations, must not inject prompt context automatically, and must return normal `response` frames with `ok`,
   `requestId`, and the requested folder, assignment, metadata, or mutation result fields.
   [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiExtensionControlWebSocketHandlerTest.kt
+  [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiThemeSupportTest.kt
 
 - Rename must append a Pi-compatible `session_info` entry to the session JSONL file while preserving the thread's current archive state. Archive and unarchive must use the same mechanism by writing a title with or without the shared `[archived] ` prefix; loaded Pi titles must strip that prefix for display and use it only as Agent Workbench archive state.
   [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiSessionSourceTest.kt

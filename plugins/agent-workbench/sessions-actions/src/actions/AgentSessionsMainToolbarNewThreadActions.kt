@@ -5,6 +5,8 @@ package com.intellij.agent.workbench.sessions.actions
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-task-cost-profiles.spec.md
 
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
+import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY
+import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.sessions.AgentSessionLaunchProfileMenuItem
 import com.intellij.agent.workbench.sessions.AgentSessionLaunchProfileSelection
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
@@ -25,6 +27,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProvid
 import com.intellij.platform.ai.agent.sessions.core.providers.hasEntries
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
+import com.intellij.agent.workbench.ui.AgentWorkbenchActionIds
 import com.intellij.agent.workbench.ui.AgentWorkbenchPopupRow
 import com.intellij.agent.workbench.ui.createAgentWorkbenchListPopup
 import com.intellij.icons.AllIcons
@@ -50,6 +53,22 @@ import org.jetbrains.annotations.TestOnly
 import java.awt.Dimension
 import javax.swing.JComponent
 
+internal typealias ToolbarNewThreadLauncher = (
+  String,
+  AgentPromptLaunchProfile,
+  Project,
+  AgentWorkbenchEntryPoint,
+  AgentPromptInvocationData?,
+) -> Unit
+
+private fun adaptLegacyNewThreadLauncher(
+  createNewSession: (String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit,
+): ToolbarNewThreadLauncher {
+  return { path, profile, project, entryPoint, _ ->
+    createNewSession(path, profile, project, entryPoint)
+  }
+}
+
 /**
  * Single split-button entry on `MainToolbarRight` that exposes "New Thread":
  * the icon shows the effective launch profile provider+mode badge, falling back to the first available profile when no default exists yet.
@@ -61,7 +80,7 @@ import javax.swing.JComponent
 internal class AgentSessionsMainToolbarNewThreadAction private constructor(
   private val resolveContext: (AnActionEvent) -> AgentSessionsNewThreadContext?,
   private val allBridges: () -> List<AgentSessionProviderDescriptor>,
-  createNewSession: (String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit,
+  createNewSession: ToolbarNewThreadLauncher,
   private val userLaunchProfiles: () -> List<AgentPromptLaunchProfile>,
   private val defaultLaunchProfileId: () -> String?,
   pickerGroup: ProfilePickerActionGroup,
@@ -86,20 +105,21 @@ internal class AgentSessionsMainToolbarNewThreadAction private constructor(
       resolveAgentSessionsMainToolbarNewThreadContext(event)
     },
     allBridges: () -> List<AgentSessionProviderDescriptor> = AgentSessionProviders::allProviders,
-    createNewSession: (String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit = ::createNewThreadViaService,
+    createNewSession: ((String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit)? = null,
+    createNewSessionWithInvocationData: ToolbarNewThreadLauncher = ::createNewThreadViaService,
     userLaunchProfiles: () -> List<AgentPromptLaunchProfile> = { service<AgentSessionUiPreferencesStateService>().getUserLaunchProfiles() },
     defaultLaunchProfileId: () -> String? = { service<AgentSessionUiPreferencesStateService>().getDefaultLaunchProfileId() },
     showPicker: (ActionGroup, AnActionEvent) -> Unit = ::showToolbarProfilePicker,
   ) : this(
     resolveContext = resolveContext,
     allBridges = allBridges,
-    createNewSession = createNewSession,
+    createNewSession = createNewSession?.let(::adaptLegacyNewThreadLauncher) ?: createNewSessionWithInvocationData,
     userLaunchProfiles = userLaunchProfiles,
     defaultLaunchProfileId = defaultLaunchProfileId,
     pickerGroup = ProfilePickerActionGroup(
       resolveContext = resolveContext,
       allBridges = allBridges,
-      createNewSession = createNewSession,
+      createNewSession = createNewSession?.let(::adaptLegacyNewThreadLauncher) ?: createNewSessionWithInvocationData,
       userLaunchProfiles = userLaunchProfiles,
       defaultLaunchProfileId = defaultLaunchProfileId,
       entryPoint = AgentWorkbenchEntryPoint.TOOLBAR,
@@ -155,7 +175,7 @@ internal class AgentSessionsMainToolbarNewThreadAction private constructor(
 private class ProfilePickerActionGroup(
   private val resolveContext: (AnActionEvent) -> AgentSessionsNewThreadContext?,
   private val allBridges: () -> List<AgentSessionProviderDescriptor>,
-  private val createNewSession: (String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit,
+  private val createNewSession: ToolbarNewThreadLauncher,
   private val userLaunchProfiles: () -> List<AgentPromptLaunchProfile>,
   private val defaultLaunchProfileId: () -> String?,
   private val entryPoint: AgentWorkbenchEntryPoint = AgentWorkbenchEntryPoint.TOOLBAR,
@@ -168,13 +188,14 @@ private class ProfilePickerActionGroup(
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val content = e?.let(::resolveContent) ?: return emptyArray()
+    val launchNewThread = createEventAwareNewThreadLauncher(e, content.context)
     return when (val target = content.target) {
       is AgentSessionsNewThreadTarget.Direct -> buildAgentSessionLaunchProfileMenuActions(
         path = target.path,
         project = content.context.project,
         selection = content.selection,
         entryPoint = entryPoint,
-        createNewSession = createNewSession,
+        createNewSession = launchNewThread,
       )
       is AgentSessionsNewThreadTarget.Candidates -> target.candidates.mapTo(mutableListOf<AnAction>()) { candidate ->
         DefaultActionGroup(candidate.displayName, true).apply {
@@ -183,7 +204,7 @@ private class ProfilePickerActionGroup(
             project = content.context.project,
             selection = content.selection,
             entryPoint = entryPoint,
-            createNewSession = createNewSession,
+            createNewSession = launchNewThread,
             includeManageAction = false,
           ).forEach(::add)
         }
@@ -193,13 +214,14 @@ private class ProfilePickerActionGroup(
 
   fun createRows(e: AnActionEvent): List<AgentWorkbenchPopupRow> {
     val content = resolveContent(e) ?: return emptyList()
+    val launchNewThread = createEventAwareNewThreadLauncher(e, content.context)
     return when (val target = content.target) {
       is AgentSessionsNewThreadTarget.Direct -> buildAgentSessionLaunchProfileMenuRows(
         path = target.path,
         project = content.context.project,
         selection = content.selection,
         entryPoint = entryPoint,
-        createNewSession = createNewSession,
+        createNewSession = launchNewThread,
         event = e,
       )
       is AgentSessionsNewThreadTarget.Candidates -> target.candidates.map { candidate ->
@@ -212,12 +234,22 @@ private class ProfilePickerActionGroup(
             project = content.context.project,
             selection = content.selection,
             entryPoint = entryPoint,
-            createNewSession = createNewSession,
+            createNewSession = launchNewThread,
             includeManageAction = false,
             event = e,
           ),
         )
       }.let { rows -> appendManageLaunchProfilesRow(rows.toMutableList(), e) }
+    }
+  }
+
+  private fun createEventAwareNewThreadLauncher(
+    e: AnActionEvent,
+    context: AgentSessionsNewThreadContext,
+  ): (String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit {
+    val invocationData = createToolbarNewThreadInvocationData(e, context.project)
+    return { path, profile, project, entryPoint ->
+      createNewSession(path, profile, project, entryPoint, invocationData)
     }
   }
 
@@ -241,7 +273,7 @@ private class ProfilePickerActionGroup(
 internal class ProfileQuickStartAction(
   private val resolveContext: (AnActionEvent) -> AgentSessionsNewThreadContext?,
   private val allBridges: () -> List<AgentSessionProviderDescriptor>,
-  private val createNewSession: (String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit,
+  private val createNewSession: ToolbarNewThreadLauncher,
   private val userLaunchProfiles: () -> List<AgentPromptLaunchProfile>,
   private val defaultLaunchProfileId: () -> String?,
   private val entryPoint: AgentWorkbenchEntryPoint,
@@ -278,7 +310,13 @@ internal class ProfileQuickStartAction(
           showPicker(pickerGroup, e)
           return
         }
-        createNewSession(target.path, quickStart.profile, context.project, entryPoint)
+        createNewSession(
+          target.path,
+          quickStart.profile,
+          context.project,
+          entryPoint,
+          createToolbarNewThreadInvocationData(e, context.project),
+        )
       }
       is AgentSessionsNewThreadTarget.Candidates, null -> showPicker(pickerGroup, e)
     }
@@ -532,4 +570,20 @@ private fun showToolbarPopup(popup: ListPopup, e: AnActionEvent) {
   else {
     popup.showInBestPositionFor(e.dataContext)
   }
+}
+
+private fun createToolbarNewThreadInvocationData(
+  e: AnActionEvent,
+  project: Project,
+): AgentPromptInvocationData {
+  return AgentPromptInvocationData(
+    project = project,
+    actionId = AgentWorkbenchActionIds.Sessions.MainToolbar.NEW_THREAD,
+    actionText = e.presentation.text,
+    actionPlace = e.place,
+    invokedAtMs = System.currentTimeMillis(),
+    attributes = mapOf(
+      AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY to e.dataContext,
+    ),
+  )
 }

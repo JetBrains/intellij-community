@@ -34,14 +34,15 @@ Prompt context is collected by contributors, normalized by the prompt UI, and re
 - Context normalization removes invalid/blank entries, preserves meaningful payload metadata, and applies truncation metadata rather than silently dropping source context.
   [@test] ../../prompt/ui/testSrc/AgentPromptContextNormalizationDecisionsTest.kt
 
-- Context soft cap is enforced before launch and requires explicit user choice when exceeded.
-  [@test] ../../prompt/ui/testSrc/AgentPromptContextSoftCapPolicyTest.kt
+- Context soft cap preparation and auto-trim policy live in prompt core. UI launch paths require explicit user choice when the prepared context exceeds the soft cap.
+  [@test] ../../prompt/core/testSrc/AgentPromptContextEnvelopeFormatterTest.kt
 
 - Prompt draft persistence must not serialize manual context; runtime-only session state may preserve context for the current IDE session.
   [@test] ../../prompt/ui/testSrc/AgentPromptUiSessionStateServiceTest.kt
 
 ## Testing / Local Run
 - `./tests.cmd --module intellij.agent.workbench.prompt.core.tests --test com.intellij.agent.workbench.prompt.core.AgentPromptContextResolverServiceTest`
+- `./tests.cmd --module intellij.agent.workbench.prompt.core.tests --test com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormatterTest`
 - `./tests.cmd --module intellij.agent.workbench.prompt.ui.tests --test "com.intellij.agent.workbench.prompt.ui.AgentPromptContext*Test"`
 - `./tests.cmd --module intellij.agent.workbench.prompt.ui.tests --test com.intellij.agent.workbench.prompt.ui.AgentPromptUiSessionStateServiceTest`
 

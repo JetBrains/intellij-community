@@ -79,6 +79,9 @@ New-thread actions let users start provider-backed threads from project/worktree
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteSessionControllerTest.kt
   [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
 
+- Main-toolbar new-thread captures the toolbar `AnActionEvent` data context at the UI action boundary. Inline prompt launches reuse that invocation data, and non-inline launches collect the same default prompt context into the initial message request, auto-trimming oversized context without showing an extra dialog.
+  [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
+
 - Generic new-thread deferred tabs show provider-neutral centered regular-weight progress copy with secondary detail text when present. The spinner appears only after a short delay so quick launches do not flash progress chrome.
   [@test] ../../sessions/testSrc/AgentSessionLaunchServiceTest.kt
   [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt

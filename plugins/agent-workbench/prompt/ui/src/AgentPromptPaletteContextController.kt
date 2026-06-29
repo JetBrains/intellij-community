@@ -202,28 +202,18 @@ internal class AgentPromptPaletteContextController(
     }
 
     fun resolveContextSelection(items: List<AgentPromptContextItem>, projectPath: String?): AgentPromptPaletteContextSelection? {
-        val baseSummary = AgentPromptContextEnvelopeSummary(
+        val selection = AgentPromptContextEnvelopeFormatter.prepareContextEnvelopeSelection(
+            items = items,
             softCapChars = CONTEXT_SOFT_CAP_CHARS,
-            softCapExceeded = false,
-            autoTrimApplied = false,
-        )
-        if (items.isEmpty()) {
-            return AgentPromptPaletteContextSelection(items = emptyList(), summary = baseSummary)
-        }
-
-        val normalizedItems = items.map { item -> item.copy(body = item.body.trim()) }
-        val serializedChars = AgentPromptContextEnvelopeFormatter.measureContextBlockChars(
-            items = normalizedItems,
-            summary = baseSummary,
             projectPath = projectPath,
         )
-        if (serializedChars <= CONTEXT_SOFT_CAP_CHARS) {
-            return AgentPromptPaletteContextSelection(items = normalizedItems, summary = baseSummary)
+        if (!selection.exceedsSoftCap) {
+            return AgentPromptPaletteContextSelection(items = selection.items, summary = selection.summary)
         }
 
         val choice = Messages.showDialog(
             project,
-            AgentPromptBundle.message("popup.context.softcap.message", serializedChars, CONTEXT_SOFT_CAP_CHARS),
+            AgentPromptBundle.message("popup.context.softcap.message", selection.serializedChars, CONTEXT_SOFT_CAP_CHARS),
             AgentPromptBundle.message("popup.context.softcap.title"),
             arrayOf(
                 AgentPromptBundle.message("popup.context.softcap.action.send.full"),
@@ -235,30 +225,12 @@ internal class AgentPromptPaletteContextController(
         )
 
         return when (choice) {
-            0 -> AgentPromptPaletteContextSelection(
-                items = normalizedItems,
-                summary = AgentPromptContextEnvelopeSummary(
-                    softCapChars = CONTEXT_SOFT_CAP_CHARS,
-                    softCapExceeded = true,
-                    autoTrimApplied = false,
-                ),
-            )
+            0 -> AgentPromptContextEnvelopeFormatter.markSoftCapExceeded(selection).toPaletteContextSelection()
 
-            1 -> {
-                val trimResult = AgentPromptContextEnvelopeFormatter.applySoftCap(
-                    items = normalizedItems,
-                    softCapChars = CONTEXT_SOFT_CAP_CHARS,
-                    projectPath = projectPath,
-                )
-                AgentPromptPaletteContextSelection(
-                    items = trimResult.items,
-                    summary = AgentPromptContextEnvelopeSummary(
-                        softCapChars = CONTEXT_SOFT_CAP_CHARS,
-                        softCapExceeded = true,
-                        autoTrimApplied = true,
-                    ),
-                )
-            }
+            1 -> AgentPromptContextEnvelopeFormatter.autoTrimContextEnvelopeSelection(
+                selection = selection,
+                projectPath = projectPath,
+            ).toPaletteContextSelection()
 
             else -> null
         }
@@ -358,3 +330,7 @@ internal data class AgentPromptPaletteContextSelection(
     @JvmField val items: List<AgentPromptContextItem>,
     @JvmField val summary: AgentPromptContextEnvelopeSummary,
 )
+
+private fun AgentPromptContextEnvelopeFormatter.ContextEnvelopeSelection.toPaletteContextSelection(): AgentPromptPaletteContextSelection {
+    return AgentPromptPaletteContextSelection(items = items, summary = summary)
+}

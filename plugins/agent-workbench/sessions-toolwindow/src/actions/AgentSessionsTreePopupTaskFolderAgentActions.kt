@@ -10,7 +10,6 @@ import com.intellij.agent.workbench.sessions.buildAgentSessionLaunchProfileMenuM
 import com.intellij.agent.workbench.sessions.launchQuickStartProfile
 import com.intellij.agent.workbench.sessions.providerItemIconWithMode
 import com.intellij.agent.workbench.sessions.resolveAgentSessionLaunchProfileSelection
-import com.intellij.agent.workbench.sessions.service.AgentPreparedNewSessionLaunchContext
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
@@ -61,7 +60,8 @@ internal class AgentSessionsTreePopupTaskFolderAgentGroup @JvmOverloads construc
     e.presentation.isPerformGroup = enabled
     e.presentation.icon = quickStartItem?.let { providerItemIconWithMode(it.menuItem) }
     if (!enabled) {
-      e.presentation.description = AgentSessionsBundle.message("action.AgentWorkbenchSessions.TreePopup.TaskFolderAgent.disabled.description")
+      e.presentation.description =
+        AgentSessionsBundle.message("action.AgentWorkbenchSessions.TreePopup.TaskFolderAgent.disabled.description")
     }
   }
 
@@ -145,8 +145,8 @@ internal fun createTaskFolderAgentViaService(
     launchProfileId = profile.id,
     entryPoint = entryPoint,
     currentProject = project,
-    initialMessageRequestBuilder = { context ->
-      AgentPromptInitialMessageRequest(prompt = buildTaskFolderAgentPrompt(path = path, folder = folder, context = context))
+    initialMessageRequestBuilder = {
+      AgentPromptInitialMessageRequest(prompt = buildTaskFolderAgentPrompt(path = path, folder = folder))
     },
     preparedLaunchHandler = folder?.let { taskFolder ->
       { context ->
@@ -178,10 +178,9 @@ private fun resolveTaskFolderAgentLaunchProfileSelection(
   )
 }
 
-private fun buildTaskFolderAgentPrompt(
+internal fun buildTaskFolderAgentPrompt(
   path: String,
   folder: AgentTaskFolder?,
-  context: AgentPreparedNewSessionLaunchContext,
 ): String {
   if (folder != null) {
     return """
@@ -189,8 +188,6 @@ private fun buildTaskFolderAgentPrompt(
 
       Project path: $path
       Task folder name: ${folder.name}
-      Task folder id: ${folder.id}
-      Current thread id: ${context.threadId}
 
       The IDE has already assigned this thread to the task folder. If the work needs issue tracker association, use task folder metadata key "issue".
       Ask for any missing task details, then proceed with the task.
@@ -201,7 +198,6 @@ private fun buildTaskFolderAgentPrompt(
     Start an Agent Workbench task-folder workflow for this project.
 
     Project path: $path
-    Current thread id: ${context.threadId}
 
     When you know the task folder name, call the agent_workbench_create_task_folder tool. If the user mentions an issue tracker id, pass it as the issue parameter.
     If the task details are missing, ask one concise follow-up before creating the folder.

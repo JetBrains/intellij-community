@@ -6,16 +6,22 @@ import com.intellij.agent.workbench.ui.AgentWorkbenchActionIds
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormatter
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
+import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfileKind
 import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
+import com.intellij.agent.workbench.prompt.core.dataContextOrNull
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsDirectPathNewThreadAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsNewThreadContext
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsNewThreadTarget
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsMainToolbarNewThreadAction
 import com.intellij.agent.workbench.sessions.actions.ProfileQuickStartAction
+import com.intellij.agent.workbench.sessions.actions.buildNewThreadInitialMessageRequest
 import com.intellij.agent.workbench.sessions.actions.resolveAgentSessionsMainToolbarNewThreadContext
 import com.intellij.agent.workbench.sessions.actions.resolveQuickStartProjectPopupAnchor
 import com.intellij.agent.workbench.sessions.actions.shouldOpenInlineNewThreadPrompt
@@ -264,6 +270,34 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     assertThat(launchedProjectName).isEqualTo(context.project.name)
     assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.TOOLBAR)
     assertThat(activeProfileId).isEqualTo(builtInLaunchProfileId(AgentSessionProvider.from("codex"), AgentSessionLaunchMode.YOLO))
+  }
+
+  @Test
+  fun mainToolbarQuickStartPassesActionDataContextToInvocationData() {
+    val context = newThreadContext(path = "/tmp/toolbar-project")
+    val dataContext = SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, context.project)
+      .build()
+    var capturedInvocationData: AgentPromptInvocationData? = null
+    val codexBridge = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.from("codex"),
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+    )
+    val action = AgentSessionsMainToolbarNewThreadAction(
+      resolveContext = { context },
+      allBridges = { listOf(codexBridge) },
+      createNewSessionWithInvocationData = { _, _, _, _, invocationData ->
+        capturedInvocationData = invocationData
+      },
+      defaultLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.from("codex"), AgentSessionLaunchMode.STANDARD) },
+    )
+    val mainAction = checkNotNull(action.getMainAction(TestActionEvent.createTestEvent(action, dataContext)))
+
+    mainAction.actionPerformed(TestActionEvent.createTestEvent(mainAction, dataContext))
+
+    assertThat(capturedInvocationData?.actionId).isEqualTo(AgentWorkbenchActionIds.Sessions.MainToolbar.NEW_THREAD)
+    assertThat(capturedInvocationData?.dataContextOrNull()).isSameAs(dataContext)
   }
 
   @Test
@@ -628,6 +662,37 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
   }
 
   @Test
+  fun mainToolbarPickerRowPassesActionDataContextToInvocationData() {
+    val context = newThreadContext(path = "/tmp/repo-direct")
+    val dataContext = SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, context.project)
+      .build()
+    var capturedInvocationData: AgentPromptInvocationData? = null
+    val codexBridge = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.from("codex"),
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+    )
+    val action = AgentSessionsMainToolbarNewThreadAction(
+      resolveContext = { context },
+      allBridges = { listOf(codexBridge) },
+      createNewSessionWithInvocationData = { _, _, _, _, invocationData ->
+        capturedInvocationData = invocationData
+      },
+      defaultLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.from("codex"), AgentSessionLaunchMode.STANDARD) },
+    )
+    val event = TestActionEvent.createTestEvent(action, dataContext)
+    val row = action.createProfilePickerRowsForTest(event).single { popupRow ->
+      popupRow.text == AgentSessionsBundle.message("toolwindow.action.new.session.codex")
+    }
+
+    checkNotNull(row.onChosen).invoke()
+
+    assertThat(capturedInvocationData?.actionId).isEqualTo(AgentWorkbenchActionIds.Sessions.MainToolbar.NEW_THREAD)
+    assertThat(capturedInvocationData?.dataContextOrNull()).isSameAs(dataContext)
+  }
+
+  @Test
   fun mainToolbarPickerSelectionDoesNotChangeDefaultProfileMarking() {
     val context = newThreadContext(path = "/tmp/repo-direct")
     val defaultProfileId = builtInLaunchProfileId(AgentSessionProvider.from("codex"), AgentSessionLaunchMode.STANDARD)
@@ -855,6 +920,62 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
 
     assertThat(request.prompt).isEmpty()
     assertThat(request.providerOptionIds).isEmpty()
+  }
+
+  @Test
+  fun nonInlineNewThreadInitialMessageRequestIncludesCollectedInvocationContext() {
+    val profile = AgentPromptLaunchProfile(
+      id = "user:context",
+      name = "Context Codex",
+      providerId = AgentSessionProvider.from("codex").value,
+    )
+    val invocationData = invocationData()
+    var collectedInvocationData: AgentPromptInvocationData? = null
+
+    val request = buildNewThreadInitialMessageRequest(
+      profile = profile,
+      projectPath = "/work/repo",
+      invocationData = invocationData,
+      collectDefaultContext = { data ->
+        collectedInvocationData = data
+        listOf(contextItem(body = "  selected code  "))
+      },
+    )
+
+    assertThat(collectedInvocationData).isSameAs(invocationData)
+    assertThat(request.prompt).isEmpty()
+    assertThat(request.projectPath).isEqualTo("/work/repo")
+    assertThat(request.contextItems.single().body).isEqualTo("selected code")
+    assertThat(request.contextEnvelopeSummary?.softCapExceeded).isFalse()
+    assertThat(request.contextEnvelopeSummary?.autoTrimApplied).isFalse()
+  }
+
+  @Test
+  fun nonInlineNewThreadInitialMessageRequestAutoTrimsOversizedInvocationContext() {
+    val profile = AgentPromptLaunchProfile(
+      id = "user:large-context",
+      name = "Large Context Codex",
+      providerId = AgentSessionProvider.from("codex").value,
+    )
+    val oversizedBody = "x".repeat(AgentPromptContextEnvelopeFormatter.DEFAULT_SOFT_CAP_CHARS * 2)
+
+    val request = buildNewThreadInitialMessageRequest(
+      profile = profile,
+      projectPath = "/work/repo",
+      invocationData = invocationData(),
+      collectDefaultContext = { listOf(contextItem(body = oversizedBody)) },
+    )
+    val summary = checkNotNull(request.contextEnvelopeSummary)
+
+    assertThat(summary.softCapExceeded).isTrue()
+    assertThat(summary.autoTrimApplied).isTrue()
+    assertThat(request.contextItems).isNotEmpty()
+    assertThat(request.contextItems.joinToString("\n") { item -> item.body }).isNotEqualTo(oversizedBody)
+    assertThat(AgentPromptContextEnvelopeFormatter.measureContextBlockChars(
+      items = request.contextItems,
+      summary = summary,
+      projectPath = request.projectPath,
+    )).isLessThanOrEqualTo(AgentPromptContextEnvelopeFormatter.DEFAULT_SOFT_CAP_CHARS)
   }
 
   @Test
@@ -1231,5 +1352,25 @@ private fun editorContext(): AgentChatEditorTabActionContext {
     project = ProjectManager.getInstance().defaultProject,
     path = normalizedPath,
     tabKey = "codex:$normalizedPath:thread-1",
+  )
+}
+
+private fun invocationData(): AgentPromptInvocationData {
+  val project = ProjectManager.getInstance().defaultProject
+  return AgentPromptInvocationData(
+    project = project,
+    actionId = AgentWorkbenchActionIds.Sessions.MainToolbar.NEW_THREAD,
+    actionText = "New Thread",
+    actionPlace = ActionPlaces.MAIN_TOOLBAR,
+    invokedAtMs = 0,
+  )
+}
+
+private fun contextItem(body: String): AgentPromptContextItem {
+  return AgentPromptContextItem(
+    rendererId = AgentPromptContextRendererIds.SNIPPET,
+    title = "Selection",
+    body = body,
+    source = "test",
   )
 }

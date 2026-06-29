@@ -205,6 +205,26 @@ class PiThemeSupportTest {
     )
   }
 
+  @Test
+  fun bundledExtensionRegistersTaskFolderToolForPi() {
+    val entrypoint = readBundledPiExtensionText("agent-workbench-extension.ts")
+    val control = readBundledPiExtensionText("control.ts")
+
+    assertThat(entrypoint).contains(
+      "import {registerTaskFolderTool, startControlBridge} from \"./control.ts\";",
+      "registerTaskFolderTool(pi, () => controlBridge);",
+    )
+    assertThat(control).contains(
+      "pi.registerTool(defineTool({",
+      "name: \"agent_workbench_create_task_folder\"",
+      "parameters: Type.Object({",
+      "name: Type.String({description: \"Task folder name\"})",
+      "issue: Type.Optional(Type.String({description: \"Issue tracker id to store as task folder metadata key 'issue'\"}))",
+      "const result = await bridge.createAndAssignTaskFolder(params.name, metadata);",
+      "details: result",
+    )
+  }
+
   private fun supportFor(
     extension: PiBundledExtensionResources,
     themeSnapshotProvider: () -> PiThemeSnapshot = { snapshot("islands-dark", "Islands Dark", dark = true) },
