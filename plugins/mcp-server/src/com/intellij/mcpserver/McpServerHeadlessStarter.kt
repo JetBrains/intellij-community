@@ -135,6 +135,12 @@ internal class McpServerHeadlessStarter : ModernApplicationStarter() {
         }
       """.trimIndent())
 
+      println("For Codex: copy-pastable to ~/.codex/config.toml:")
+      println("""
+        [mcp_servers.ide-headless-mcp]
+        url="$sseUrl"
+      """.trimIndent())
+
       awaitCancellation()
     }
     finally {
