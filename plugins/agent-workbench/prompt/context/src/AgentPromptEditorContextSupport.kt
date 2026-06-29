@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -216,10 +215,11 @@ object AgentPromptEditorContextSupport {
                                    .map { range -> range.shiftRight(elementStartOffset) }
                                    .firstOrNull { range -> range.containsOffset(offset) }
                                  ?: return null
-    if (absoluteReferenceRange.startOffset < 0 || absoluteReferenceRange.endOffset > document.textLength) {
+    val documentChars = document.immutableCharSequence
+    if (absoluteReferenceRange.startOffset < 0 || absoluteReferenceRange.endOffset > documentChars.length) {
       return null
     }
-    val referenceText = document.getText(absoluteReferenceRange)
+    val referenceText = documentChars.subSequence(absoluteReferenceRange.startOffset, absoluteReferenceRange.endOffset).toString()
     return extractReferenceSymbolName(referenceText, offset - absoluteReferenceRange.startOffset)
   }
 
@@ -313,11 +313,12 @@ object AgentPromptEditorContextSupport {
   }
 
   private fun truncate(document: Document, startOffset: Int, endOffsetExclusive: Int): TruncateOutcome {
-    val safeStartOffset = startOffset.coerceIn(0, document.textLength)
-    val safeEndOffset = endOffsetExclusive.coerceIn(safeStartOffset, document.textLength)
+    val documentChars = document.immutableCharSequence
+    val safeStartOffset = startOffset.coerceIn(0, documentChars.length)
+    val safeEndOffset = endOffsetExclusive.coerceIn(safeStartOffset, documentChars.length)
     val originalChars = safeEndOffset - safeStartOffset
     if (originalChars <= AGENT_PROMPT_MAX_SNIPPET_CHARS) {
-      val text = document.getText(TextRange(safeStartOffset, safeEndOffset))
+      val text = documentChars.subSequence(safeStartOffset, safeEndOffset).toString()
       return TruncateOutcome(
         text = text,
         originalChars = originalChars,
@@ -327,7 +328,7 @@ object AgentPromptEditorContextSupport {
       )
     }
     val includedEndOffset = safeStartOffset + AGENT_PROMPT_MAX_SNIPPET_CHARS
-    val prefix = document.getText(TextRange(safeStartOffset, includedEndOffset))
+    val prefix = documentChars.subSequence(safeStartOffset, includedEndOffset).toString()
     val truncatedText = buildString(AGENT_PROMPT_MAX_SNIPPET_CHARS + 32) {
       append(prefix)
       append("\n...[truncated]")

@@ -146,18 +146,25 @@ internal class AgentPromptTestSelectionContextContributor : AgentPromptContextCo
 
   private fun extractConsoleOutput(dataContext: DataContext): ConsoleOutputExcerpt? {
     val editor = consoleEditor(dataContext) ?: return null
-    val selectedText = editor.selectionModel.selectedText
-      ?.let(::normalizeConsoleOutput)
-      ?.takeIf { it.isNotEmpty() }
-    if (selectedText != null) {
-      return truncateConsoleOutput(selectedText, fromSelection = true)
+    val documentChars = editor.document.immutableCharSequence
+    val selectionModel = editor.selectionModel
+    if (selectionModel.hasSelection()) {
+      buildConsoleOutputExcerpt(
+        rawText = documentChars,
+        startOffset = selectionModel.selectionStart,
+        endOffsetExclusive = selectionModel.selectionEnd,
+        fromSelection = true,
+      )?.let { excerpt ->
+        return excerpt
+      }
     }
 
-    val documentText = normalizeConsoleOutput(editor.document.text)
-    if (documentText.isEmpty()) {
-      return null
-    }
-    return truncateConsoleOutput(documentText, fromSelection = false)
+    return buildConsoleOutputExcerpt(
+      rawText = documentChars,
+      startOffset = 0,
+      endOffsetExclusive = documentChars.length,
+      fromSelection = false,
+    )
   }
 
   private fun consoleEditor(dataContext: DataContext): Editor? {
@@ -263,32 +270,107 @@ internal class AgentPromptTestSelectionContextContributor : AgentPromptContextCo
   }
 }
 
-private fun normalizeConsoleOutput(rawText: String): String {
-  val normalizedNewlines = rawText
-    .replace("\r\n", "\n")
-    .replace('\r', '\n')
-  val lines = normalizedNewlines.lines()
-  val firstNonBlank = lines.indexOfFirst { line -> line.isNotBlank() }
-  if (firstNonBlank < 0) {
-    return ""
-  }
-  val lastNonBlank = lines.indexOfLast { line -> line.isNotBlank() }
-  return lines.subList(firstNonBlank, lastNonBlank + 1).joinToString(separator = "\n")
-}
+private fun buildConsoleOutputExcerpt(
+  rawText: CharSequence,
+  startOffset: Int,
+  endOffsetExclusive: Int,
+  fromSelection: Boolean,
+): ConsoleOutputExcerpt? {
+  val safeStartOffset = startOffset.coerceIn(0, rawText.length)
+  val safeEndOffset = endOffsetExclusive.coerceIn(safeStartOffset, rawText.length)
+  val includedText = StringBuilder(MAX_CONSOLE_OUTPUT_CHARS.coerceAtMost(safeEndOffset - safeStartOffset))
+  var originalChars = 0
+  var hasRetainedLine = false
+  var pendingBlankLines = 0
 
-private fun truncateConsoleOutput(text: String, fromSelection: Boolean): ConsoleOutputExcerpt {
-  val includedText = if (text.length <= MAX_CONSOLE_OUTPUT_CHARS) {
-    text
+  forEachNormalizedLine(rawText, safeStartOffset, safeEndOffset) { lineStart, lineEnd ->
+    if (isBlankLine(rawText, lineStart, lineEnd)) {
+      if (hasRetainedLine) {
+        pendingBlankLines++
+      }
+      return@forEachNormalizedLine
+    }
+
+    if (hasRetainedLine) {
+      repeat(pendingBlankLines + 1) {
+        appendIncludedNewline(includedText)
+        originalChars++
+      }
+    }
+
+    appendIncludedRange(includedText, rawText, lineStart, lineEnd)
+    originalChars += lineEnd - lineStart
+    hasRetainedLine = true
+    pendingBlankLines = 0
   }
-  else {
-    text.take(MAX_CONSOLE_OUTPUT_CHARS)
+
+  if (!hasRetainedLine) {
+    return null
   }
+
   return ConsoleOutputExcerpt(
-    text = includedText,
+    text = includedText.toString(),
     fromSelection = fromSelection,
-    originalChars = text.length,
+    originalChars = originalChars,
     includedChars = includedText.length,
   )
+}
+
+private inline fun forEachNormalizedLine(
+  text: CharSequence,
+  startOffset: Int,
+  endOffsetExclusive: Int,
+  action: (lineStart: Int, lineEnd: Int) -> Unit,
+) {
+  var lineStart = startOffset
+  var index = startOffset
+  while (index < endOffsetExclusive) {
+    when (text[index]) {
+      '\n' -> {
+        action(lineStart, index)
+        index++
+        lineStart = index
+      }
+      '\r' -> {
+        action(lineStart, index)
+        index++
+        if (index < endOffsetExclusive && text[index] == '\n') {
+          index++
+        }
+        lineStart = index
+      }
+      else -> index++
+    }
+  }
+  action(lineStart, endOffsetExclusive)
+}
+
+private fun isBlankLine(text: CharSequence, startOffset: Int, endOffsetExclusive: Int): Boolean {
+  for (index in startOffset until endOffsetExclusive) {
+    if (!text[index].isWhitespace()) {
+      return false
+    }
+  }
+  return true
+}
+
+private fun appendIncludedRange(
+  target: StringBuilder,
+  text: CharSequence,
+  startOffset: Int,
+  endOffsetExclusive: Int,
+) {
+  var index = startOffset
+  while (index < endOffsetExclusive && target.length < MAX_CONSOLE_OUTPUT_CHARS) {
+    target.append(text[index])
+    index++
+  }
+}
+
+private fun appendIncludedNewline(target: StringBuilder) {
+  if (target.length < MAX_CONSOLE_OUTPUT_CHARS) {
+    target.append('\n')
+  }
 }
 
 private fun renderLine(entry: SelectedTestContext): String {
