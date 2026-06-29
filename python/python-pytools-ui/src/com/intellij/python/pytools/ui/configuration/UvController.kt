@@ -14,12 +14,12 @@ import com.intellij.python.pytools.ui.PyToolsUiBundle
 import com.intellij.python.uv.backend.cli.uv.UvTool
 import com.intellij.python.uv.backend.runtime.createUvToolRuntime
 import com.intellij.python.uv.backend.runtime.uvCli
+import com.intellij.python.uv.backend.setUvExecutableLocal
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.installExecutableViaPythonScript
 import com.jetbrains.python.sdk.uv.impl.getUvExecutableLocal
 import com.jetbrains.python.sdk.uv.impl.hasUvExecutableLocal
-import com.jetbrains.python.sdk.uv.impl.setUvExecutableLocal
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
+import com.intellij.python.uv.backend.setUvExecutableLocal
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindItem
@@ -35,7 +36,6 @@ import com.jetbrains.python.sdk.add.v2.savePathForEelOnly
 import com.jetbrains.python.sdk.add.v2.validatablePathField
 import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
-import com.jetbrains.python.sdk.uv.impl.setUvExecutableLocal
 import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.errorProcessing.ErrorSink

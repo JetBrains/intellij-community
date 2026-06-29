@@ -2,18 +2,17 @@
 package com.jetbrains.python.sdk.uv.impl
 
 import com.intellij.execution.target.FullPathOnTarget
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.execService.DownloadConfig
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
+import com.intellij.python.uv.backend.UV_TOOL
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
-import com.jetbrains.python.sdk.ToolCommandExecutor
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
@@ -24,23 +23,8 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
-import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.minutes
 
-private const val UV_PATH_SETTING: String = "PyCharm.Uv.Path"
-
-private var PropertiesComponent.uvPath: Path?
-  get() {
-    return getValue(UV_PATH_SETTING)?.let { Path.of(it) }
-  }
-  set(value) {
-    setValue(UV_PATH_SETTING, value.toString())
-  }
-
-private val UV_TOOL: ToolCommandExecutor = ToolCommandExecutor(
-  "uv",
-  getToolPathFromSettings = { uvPath?.pathString }
-)
 
 private fun <P : PathHolder> validateUvExecutable(uvPath: P?, platformAndRoot: PlatformAndRoot): ValidationInfo? {
   return validateExecutableFile(ValidationRequest(
@@ -90,9 +74,6 @@ suspend fun getUvExecutableLocal(eel: EelApi = localEel): Path? = getUvExecutabl
 internal suspend fun <P : PathHolder> getUvExecutable(fileSystem: FileSystem<P>, pathFromSdk: FullPathOnTarget?): P? =
   UV_TOOL.getToolExecutable(fileSystem, pathFromSdk)
 
-fun setUvExecutableLocal(path: Path) {
-  PropertiesComponent.getInstance().uvPath = path
-}
 
 suspend fun hasUvExecutableLocal(): Boolean {
   return getUvExecutableLocal() != null

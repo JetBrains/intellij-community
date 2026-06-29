@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.add.v2.uv
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.uv.backend.setUvExecutableLocal
 import com.intellij.python.uv.common.UV_UI_INFO
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
@@ -16,7 +17,6 @@ import com.jetbrains.python.sdk.add.v2.ToolValidator
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.add.v2.savePathForEelOnly
 import com.jetbrains.python.sdk.baseDir
-import com.jetbrains.python.sdk.uv.impl.setUvExecutableLocal
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.uv.sdk.configuration.isUvEnv
