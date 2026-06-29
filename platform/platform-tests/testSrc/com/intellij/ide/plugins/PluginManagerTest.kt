@@ -281,6 +281,56 @@ class PluginManagerTest {
     }
   }
 
+  @Test
+  fun `unfulfilled os requirement is inferred from version when dependencies are empty`() {
+    fun descriptor(version: String?) = object : TestIdeaPluginDescriptor() {
+      override fun getDependencies(): List<IdeaPluginDependency> = emptyList()
+      override fun getVersion(): String? = version
+      override fun getPluginId(): PluginId = PluginId.getId("test.plugin")
+    }
+    fun assertInferred(version: String?, expected: IdeaPluginOsRequirement?) {
+      assertThat(PluginManagerCore.getUnfulfilledOsRequirement(descriptor(version)))
+        .isEqualTo(expected?.takeIf { !it.isHostOs() })
+    }
+
+    assertInferred("1.0.0-windows-amd64", IdeaPluginOsRequirement.Windows)
+    assertInferred("1.0.0-mac-arm64", IdeaPluginOsRequirement.Mac)
+    assertInferred("1.0.0-linux-amd64", IdeaPluginOsRequirement.Linux)
+    assertInferred("1.0.0-freebsd-amd64", IdeaPluginOsRequirement.FreeBSD)
+    // unrecognized OS tag maps to OS.Other and is filtered out
+    assertInferred("1.0.0-solaris-amd64", null)
+    // versions that do not match the <version>-<os>-<arch> pattern infer nothing
+    assertInferred("1.0.0", null)
+    assertInferred("241.SNAPSHOT", null)
+    // a missing version must not throw and infers nothing
+    assertInferred(null, null)
+  }
+
+  @Test
+  fun `unfulfilled cpu arch requirement is inferred from version when dependencies are empty`() {
+    fun descriptor(version: String?) = object : TestIdeaPluginDescriptor() {
+      override fun getDependencies(): List<IdeaPluginDependency> = emptyList()
+      override fun getVersion(): String? = version
+      override fun getPluginId(): PluginId = PluginId.getId("test.plugin")
+    }
+    fun assertInferred(version: String?, expected: PluginCpuArchRequirement?) {
+      assertThat(PluginManagerCore.getUnfulfilledCpuArchRequirement(descriptor(version)))
+        .isEqualTo(expected?.takeIf { !it.isHostArch() })
+    }
+
+    assertInferred("1.0.0-windows-amd64", PluginCpuArchRequirement.X86_64)
+    assertInferred("1.0.0-windows-x86_64", PluginCpuArchRequirement.X86_64)
+    assertInferred("1.0.0-windows-x86", PluginCpuArchRequirement.X86)
+    assertInferred("1.0.0-windows-arm64", PluginCpuArchRequirement.ARM64)
+    assertInferred("1.0.0-windows-aarch64", PluginCpuArchRequirement.ARM64)
+    // unrecognized arch tag maps to CpuArch.OTHER/UNKNOWN and is filtered out
+    assertInferred("1.0.0-windows-sparc", null)
+    // versions that do not match the <version>-<os>-<arch> pattern infer nothing
+    assertInferred("1.0.0", null)
+    // a missing version must not throw and infers nothing
+    assertInferred(null, null)
+  }
+
   companion object {
     private val testDataPath: String
       get() = PlatformTestUtil.getPlatformTestDataPath() + "plugins/sort"

@@ -48,6 +48,8 @@ private const val PLATFORM_ALIAS_DEPENDENCY_PREFIX = "com.intellij.module"
 internal val QODANA_PLUGINS_THIRD_PARTY_ACCEPT = System.getProperty("idea.qodana.thirdpartyplugins.accept").toBoolean()
 internal val FLEET_BACKEND_PLUGINS_THIRD_PARTY_ACCEPT = System.getProperty("fleet.backend.third-party.plugins.accept").toBoolean()
 
+private val LOG = Logger.getInstance(PluginManagerCore::class.java)
+
 /**
  * See [Plugin Model](https://youtrack.jetbrains.com/articles/IJPL-A-31/Plugin-Model) documentation.
  *
@@ -454,8 +456,23 @@ object PluginManagerCore {
   fun isIncompatible(descriptor: IdeaPluginDescriptor, buildNumber: BuildNumber?): Boolean =
     checkBuildNumberCompatibility(descriptor, buildNumber ?: PluginManagerCore.buildNumber) != null
 
+  private val OS_ARCH_DEPENDENCY_VERSION: Regex = Regex("([\\w.]+)-(\\w+)-(\\w+)")
+
   @ApiStatus.Internal
   fun getUnfulfilledOsRequirement(descriptor: IdeaPluginDescriptor): IdeaPluginOsRequirement? {
+    if (descriptor.dependencies.isEmpty()) {
+      // try to infer Arch requirement from version, some plugin repositories do not provide dependencies
+      val matchedVersion = descriptor.version?.let { OS_ARCH_DEPENDENCY_VERSION.matchEntire(it) }
+      val osTag = matchedVersion?.groupValues[2] ?: return null
+
+      LOG.debug("Inferred OS for version: ${descriptor.version} of ${descriptor.pluginId} is $osTag")
+
+      return OS.fromString(osTag)
+        .takeIf { it != OS.Other }
+        ?.let { IdeaPluginOsRequirement.fromOs(it) }
+        ?.takeIf { osReq -> !osReq.isHostOs() }
+    }
+
     return descriptor.getDependencies().asSequence()
       .mapNotNull { dep -> IdeaPluginOsRequirement.fromModuleId(dep.pluginId).takeIf { !dep.isOptional } }
       .firstOrNull { osReq -> !osReq.isHostOs() }
@@ -463,6 +480,19 @@ object PluginManagerCore {
 
   @ApiStatus.Internal
   fun getUnfulfilledCpuArchRequirement(descriptor: IdeaPluginDescriptor): PluginCpuArchRequirement? {
+    if (descriptor.dependencies.isEmpty()) {
+      // try to infer Arch requirement from version, some plugin repositories do not provide dependencies
+      val matchedVersion = descriptor.version?.let { OS_ARCH_DEPENDENCY_VERSION.matchEntire(it) }
+      val archTag = matchedVersion?.groupValues[3] ?: return null
+
+      LOG.debug("Inferred arch for version: ${descriptor.version} of ${descriptor.pluginId} is $archTag")
+
+      return CpuArch.fromString(archTag)
+        .takeIf { it != CpuArch.OTHER && it != CpuArch.UNKNOWN }
+        ?.let { PluginCpuArchRequirement.fromArch(it) }
+        ?.takeIf { osReq -> !osReq.isHostArch() }
+    }
+
     return descriptor.getDependencies().asSequence()
       .mapNotNull { dep -> PluginCpuArchRequirement.fromPluginId(dep.pluginId).takeIf { !dep.isOptional } }
       .firstOrNull { osReq -> !osReq.isHostArch() }

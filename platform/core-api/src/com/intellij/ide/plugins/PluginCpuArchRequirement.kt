@@ -44,6 +44,10 @@ enum class PluginCpuArchRequirement {
       return directory[pluginId] ?: Unknown.takeIf { looksLikeCpuArchModuleId(pluginId.idString) }
     }
 
+    fun fromArch(arch: CpuArch): PluginCpuArchRequirement? {
+      return fromPluginId(PluginId.getId(archPluginAliasIdPrefix + arch.name.lowercase()))
+    }
+
     private fun looksLikeCpuArchModuleId(idString: String): Boolean = idString.startsWith(archPluginAliasIdPrefix)
   }
 }
