@@ -69,6 +69,18 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.java.guiForms.jps", "jps/java-guiForms-jps.jar")
     },
     CommunityKotlinPluginBuilder.kotlinPlugin(),
+    pluginAuto("intellij.grazie") { spec ->
+      spec.withModuleLibrary(
+        libraryName = "org.jetbrains.intellij.deps.languagetool:languagetool-core",
+        moduleName = "intellij.grazie.core",
+        relativeOutputPath = "org.jetbrains.intellij.deps.languagetool-languagetool-core.jar",
+      )
+      spec.withModuleLibrary(
+        libraryName = "org.jetbrains.intellij.deps.languagetool:language-en",
+        moduleName = "intellij.grazie.core",
+        relativeOutputPath = "org.jetbrains.intellij.deps.languagetool-language-en.jar",
+      )
+    },
     pluginAuto(listOf("intellij.vcs.git")) { spec ->
       spec.withModule("intellij.vcs.git.rt", "git4idea-rt.jar")
     },
