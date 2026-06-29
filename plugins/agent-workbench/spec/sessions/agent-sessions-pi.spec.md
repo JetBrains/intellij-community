@@ -90,11 +90,13 @@ Agent Workbench treats Pi as a first-class terminal-backed provider. Pi sessions
 - The bundled Pi extension must open one private IDE-local WebSocket control connection for live Structure View actions. The WebSocket handshake must be authenticated with `Authorization: Bearer <launchToken>`, the first `hello` frame must bind the connection to the same launch-scoped token/session id/cwd, and every command must target the currently bound session id. The IDE may send `navigateTree` and `forkFromEntry` commands only when the live connection advertises those capabilities. Fork commands must use Pi `fork(entryId, { position: "at", withSession })` and return the fresh replacement session state captured from `withSession`; there is no long-polling, polling, slash-command, or unauthenticated fallback.
   [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiExtensionControlWebSocketHandlerTest.kt
 
-- The same authenticated control WebSocket may carry explicit task-folder capability requests from the bundled Pi extension to the IDE:
-  `getCurrentTaskFolder`, `listTaskFolderThreads`, `createAndAssignTaskFolder`, `getTaskFolderMetadata`,
-  `setTaskFolderMetadata`, and `deleteTaskFolderMetadata`. These requests must use the bound cwd/session id to resolve current-session context, use global folder id
-  for explicit folder mutations, must not inject prompt context automatically, and must return normal `response` frames with `ok`,
-  `requestId`, and the requested folder, assignment, metadata, or mutation result fields.
+- The same authenticated control WebSocket may carry explicit task-folder capability requests from the bundled Pi extension to the IDE using
+  `taskFolderRequest` frames with an `operation` string and nested `arguments` object. Supported operations cover current-folder lookup,
+  folder listing, thread assignment listing, create-and-assign, current-thread assign/unassign, rename, metadata set/delete, mark done,
+  and delete. These requests must use the bound cwd/session id to resolve current-session context, use global folder id for explicit
+  folder mutations, must not inject prompt context automatically, and must return normal `response` frames with `ok`, `requestId`, and a
+  `result` object containing the requested folder, assignment, metadata, or mutation fields. Metadata is ordinary string key/value data;
+  `issue` and `review` are conventional keys, not separate protocol fields.
   [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiExtensionControlWebSocketHandlerTest.kt
   [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiThemeSupportTest.kt
 

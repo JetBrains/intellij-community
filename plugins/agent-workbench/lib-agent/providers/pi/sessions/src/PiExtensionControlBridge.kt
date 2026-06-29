@@ -87,13 +87,7 @@ internal object PiExtensionControlBridge {
       PiControlMessageType.HELLO -> handleHello(webSocketClient, payload)
       PiControlMessageType.SESSION_STATE -> handleSessionState(webSocketClient, payload)
       PiControlMessageType.RESPONSE -> handleResponse(webSocketClient, payload)
-      PiControlMessageType.GET_CURRENT_TASK_FOLDER,
-      PiControlMessageType.LIST_TASK_FOLDER_THREADS,
-      PiControlMessageType.CREATE_AND_ASSIGN_TASK_FOLDER,
-      PiControlMessageType.GET_TASK_FOLDER_METADATA,
-      PiControlMessageType.SET_TASK_FOLDER_METADATA,
-      PiControlMessageType.DELETE_TASK_FOLDER_METADATA,
-        -> handleTaskFolderRequest(webSocketClient, payload)
+      PiControlMessageType.TASK_FOLDER_REQUEST -> handleTaskFolderRequest(webSocketClient, payload)
       PiControlMessageType.NAVIGATE_TREE,
       PiControlMessageType.FORK_FROM_ENTRY,
       null,
@@ -185,13 +179,11 @@ internal object PiExtensionControlBridge {
       return
     }
 
-    sendControlText(
-      client = client,
-      text = taskFolderControlHandler.handle(
-        context = PiControlSessionContext(projectPath = connection.projectPath, sessionId = connection.sessionId),
-        payload = payload,
-        requestId = requestId,
-      ),
+    taskFolderControlHandler.handle(
+      context = PiControlSessionContext(projectPath = connection.projectPath, sessionId = connection.sessionId),
+      payload = payload,
+      requestId = requestId,
+      sendResponse = { response -> sendControlText(client = client, text = response) },
     )
   }
 

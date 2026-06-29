@@ -6,6 +6,7 @@ import com.intellij.platform.ai.agent.json.createJsonParser
 import com.intellij.platform.ai.agent.json.forEachJsonObjectField
 import com.intellij.platform.ai.agent.json.readJsonStringOrNull
 import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderService
+import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderStatus
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
@@ -210,42 +211,60 @@ class PiExtensionControlWebSocketHandlerTest {
         ).join()
         listener.nextMessage()
 
-        webSocket.sendText(controlTaskFolderRequest("request-current", "getCurrentTaskFolder"), true).join()
+        webSocket.sendText(controlTaskFolderRequest("request-current", "getCurrent"), true).join()
         val currentFolderResponse = listener.nextMessage()
         assertThat(currentFolderResponse).contains("\"requestId\":\"request-current\"")
         assertThat(currentFolderResponse).contains("\"ok\":true")
+        assertThat(currentFolderResponse).contains("\"result\":")
         assertThat(currentFolderResponse).contains("\"id\":${folder.id.jsonString()}")
         assertThat(currentFolderResponse).contains("\"issue\":\"IJPL-248623\"")
 
-        webSocket.sendText(controlTaskFolderRequest("request-list", "listTaskFolderThreads", folderId = folder.id), true).join()
+        webSocket.sendText(controlTaskFolderRequest("request-folders", "listFolders"), true).join()
+        val foldersResponse = listener.nextMessage()
+        assertThat(foldersResponse).contains("\"folders\":")
+        assertThat(foldersResponse).contains("\"name\":\"Research\"")
+
+        webSocket.sendText(controlTaskFolderRequest("request-list", "listThreads", folderId = folder.id), true).join()
         val listResponse = listener.nextMessage()
         assertThat(listResponse).contains("\"threadId\":${sessionId.jsonString()}")
         assertThat(listResponse).contains("\"folderId\":${folder.id.jsonString()}")
 
         webSocket.sendText(
-          controlTaskFolderRequest("request-set", "setTaskFolderMetadata", folderId = folder.id, key = "review", value = "backend"),
+          controlTaskFolderRequest("request-set", "setMetadata", folderId = folder.id, key = "review", value = "backend"),
           true,
         ).join()
         val setResponse = listener.nextMessage()
         assertThat(setResponse).contains("\"changed\":true")
         assertThat(folderService.getFolder(folder.id)?.metadata).containsEntry("review", "backend")
 
-        webSocket.sendText(controlTaskFolderRequest("request-get-metadata", "getTaskFolderMetadata", folderId = folder.id), true).join()
-        val metadataResponse = listener.nextMessage()
-        assertThat(metadataResponse).contains("\"requestId\":\"request-get-metadata\"")
-        assertThat(metadataResponse).contains("\"metadata\":")
-        assertThat(metadataResponse).contains("\"review\":\"backend\"")
-
-        webSocket.sendText(controlTaskFolderRequest("request-delete", "deleteTaskFolderMetadata", folderId = folder.id, key = "review"),
+        webSocket.sendText(controlTaskFolderRequest("request-delete-metadata", "deleteMetadata", folderId = folder.id, key = "review"),
                            true).join()
-        val deleteResponse = listener.nextMessage()
-        assertThat(deleteResponse).contains("\"changed\":true")
+        val deleteMetadataResponse = listener.nextMessage()
+        assertThat(deleteMetadataResponse).contains("\"changed\":true")
         assertThat(folderService.getFolder(folder.id)?.metadata).doesNotContainKey("review")
 
         webSocket.sendText(
           controlTaskFolderRequest(
+            requestId = "request-duplicate-create",
+            operation = "createAndAssign",
+            name = "Should not be created",
+            metadata = mapOf("issue" to "IJPL-000000"),
+          ),
+          true,
+        ).join()
+        val duplicateCreateResponse = listener.nextMessage()
+        assertThat(duplicateCreateResponse).contains("\"created\":false")
+        assertThat(folderService.getFolderForThread(projectDir.toString(), PI_AGENT_SESSION_PROVIDER, sessionId)?.id).isEqualTo(folder.id)
+
+        webSocket.sendText(controlTaskFolderRequest("request-unassign", "unassignCurrentThread"), true).join()
+        val unassignResponse = listener.nextMessage()
+        assertThat(unassignResponse).contains("\"changed\":true")
+        assertThat(folderService.getFolderForThread(projectDir.toString(), PI_AGENT_SESSION_PROVIDER, sessionId)).isNull()
+
+        webSocket.sendText(
+          controlTaskFolderRequest(
             requestId = "request-create",
-            type = "createAndAssignTaskFolder",
+            operation = "createAndAssign",
             name = "Follow-up task",
             metadata = mapOf("issue" to "IJPL-999999"),
           ),
@@ -255,10 +274,39 @@ class PiExtensionControlWebSocketHandlerTest {
         val createdFolder = requireNotNull(folderService.getFolderForThread(projectDir.toString(), PI_AGENT_SESSION_PROVIDER, sessionId))
         assertThat(createResponse).contains("\"requestId\":\"request-create\"")
         assertThat(createResponse).contains("\"ok\":true")
+        assertThat(createResponse).contains("\"created\":true")
         assertThat(createResponse).contains("\"assigned\":true")
         assertThat(createResponse).contains("\"id\":${createdFolder.id.jsonString()}")
         assertThat(createdFolder.name).isEqualTo("Follow-up task")
         assertThat(createdFolder.metadata).containsEntry("issue", "IJPL-999999")
+
+        webSocket.sendText(controlTaskFolderRequest("request-rename", "rename", name = "Renamed task"), true).join()
+        val renameResponse = listener.nextMessage()
+        assertThat(renameResponse).contains("\"changed\":true")
+        assertThat(folderService.getFolder(createdFolder.id)?.name).isEqualTo("Renamed task")
+
+        webSocket.sendText(controlTaskFolderRequest("request-assign-existing", "assignCurrentThread", folderId = folder.id), true).join()
+        val assignResponse = listener.nextMessage()
+        assertThat(assignResponse).contains("\"changed\":true")
+        assertThat(folderService.getFolderForThread(projectDir.toString(), PI_AGENT_SESSION_PROVIDER, sessionId)?.id).isEqualTo(folder.id)
+
+        val otherProjectFolder = requireNotNull(folderService.createFolder(tempDir.resolve("other-project").toString(), "Other"))
+        webSocket.sendText(controlTaskFolderRequest("request-cross-path", "listThreads", folderId = otherProjectFolder.id), true).join()
+        val crossPathResponse = listener.nextMessage()
+        assertThat(crossPathResponse).contains("\"ok\":false")
+        assertThat(crossPathResponse).contains("Task folder is not available")
+
+        val emptyFolder = requireNotNull(folderService.createFolder(projectDir.toString(), "Empty"))
+        webSocket.sendText(controlTaskFolderRequest("request-mark-done", "markDone", folderId = emptyFolder.id), true).join()
+        val markDoneResponse = listener.nextMessage()
+        assertThat(markDoneResponse).contains("\"changed\":true")
+        assertThat(markDoneResponse).contains("\"requestedCount\":0")
+        assertThat(folderService.getFolder(emptyFolder.id)?.status).isEqualTo(AgentTaskFolderStatus.DONE)
+
+        webSocket.sendText(controlTaskFolderRequest("request-delete-folder", "delete", folderId = emptyFolder.id), true).join()
+        val deleteFolderResponse = listener.nextMessage()
+        assertThat(deleteFolderResponse).contains("\"changed\":true")
+        assertThat(folderService.getFolder(emptyFolder.id)).isNull()
       }
       finally {
         webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "done").join()
@@ -285,7 +333,7 @@ class PiExtensionControlWebSocketHandlerTest {
         ).join()
         listener.nextMessage()
 
-        webSocket.sendText(controlTaskFolderRequest("request-unsupported", "unknownControl"), true).join()
+        webSocket.sendText("{\"type\":\"unknownControl\",\"requestId\":\"request-unsupported\"}", true).join()
         val unsupportedResponse = listener.nextMessage()
         assertThat(unsupportedResponse).contains("\"type\":\"response\"")
         assertThat(unsupportedResponse).contains("\"requestId\":\"request-unsupported\"")
@@ -440,27 +488,32 @@ private fun controlForkResponsePayload(requestId: String, forkedSessionId: Strin
 
 private fun controlTaskFolderRequest(
   requestId: String,
-  type: String,
+  operation: String,
   folderId: String? = null,
   name: String? = null,
   key: String? = null,
   value: String? = null,
+  includeDone: Boolean? = null,
   metadata: Map<String, String>? = null,
 ): String {
-  val fields = mutableListOf(
-    "\"type\":${type.jsonString()}",
-    "\"requestId\":${requestId.jsonString()}",
-  )
-  folderId?.let { fields += "\"folderId\":${it.jsonString()}" }
-  name?.let { fields += "\"name\":${it.jsonString()}" }
-  key?.let { fields += "\"key\":${it.jsonString()}" }
-  value?.let { fields += "\"value\":${it.jsonString()}" }
+  val arguments = mutableListOf<String>()
+  folderId?.let { arguments += "\"folderId\":${it.jsonString()}" }
+  name?.let { arguments += "\"name\":${it.jsonString()}" }
+  key?.let { arguments += "\"key\":${it.jsonString()}" }
+  value?.let { arguments += "\"value\":${it.jsonString()}" }
+  includeDone?.let { arguments += "\"includeDone\":$it" }
   metadata?.let { values ->
     val metadataFields = values.entries.joinToString(",") { (metadataKey, metadataValue) ->
       "${metadataKey.jsonString()}:${metadataValue.jsonString()}"
     }
-    fields += "\"metadata\":{$metadataFields}"
+    arguments += "\"metadata\":{$metadataFields}"
   }
+  val fields = mutableListOf(
+    "\"type\":\"taskFolderRequest\"",
+    "\"requestId\":${requestId.jsonString()}",
+    "\"operation\":${operation.jsonString()}",
+    "\"arguments\":{${arguments.joinToString(",")}}",
+  )
   return "{${fields.joinToString(",")}}"
 }
 

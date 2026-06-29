@@ -199,7 +199,7 @@ internal fun buildTaskFolderAgentPrompt(
 
     Project path: $path
 
-    When you know the task folder name, call the agent_workbench_create_task_folder tool. If the user mentions an issue tracker id, pass it as the issue parameter.
+    When you know the task folder name, call the agent_workbench_create_task_folder tool. If the user mentions an issue tracker id, store it in metadata key "issue".
     If the task details are missing, ask one concise follow-up before creating the folder.
   """.trimIndent()
 }
