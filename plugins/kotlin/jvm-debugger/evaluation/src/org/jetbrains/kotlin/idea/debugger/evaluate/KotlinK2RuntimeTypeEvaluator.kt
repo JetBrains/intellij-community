@@ -13,7 +13,6 @@ import com.sun.jdi.ClassType
 import com.sun.jdi.Value
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.eval4j.jdi.asValue
-import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypePointer
@@ -54,7 +53,8 @@ abstract class KotlinK2RuntimeTypeEvaluator(
         val psiClass = runReadAction {
             DebuggerUtils.findClass(jvmName.asString(), project, scope, true)
         } ?: return null
-        return runDumbAnalyze(expression, fallback = null) {
+        val useSiteElement = psiClass.asKtClassOrObject() ?: return null
+        return runDumbAnalyze(useSiteElement, fallback = null) {
             val runtimeType = (psiClass.asKtClassOrObject()?.namedClassSymbol ?: psiClass.namedClassSymbol)?.defaultType
             runtimeType?.createPointer()
         }
@@ -72,7 +72,8 @@ abstract class KotlinK2RuntimeTypeEvaluator(
             }
         }
         if (psiClasses.isEmpty()) return null
-        return runDumbAnalyze(expression, fallback = null) {
+        val useSiteElement = psiClasses.firstNotNullOfOrNull { it.asKtClassOrObject() } ?: return null
+        return runDumbAnalyze(useSiteElement, fallback = null) {
             val kaConjuncts = psiClasses.mapNotNull {
                 (it.asKtClassOrObject()?.namedClassSymbol ?: it.namedClassSymbol)?.defaultType
             }
