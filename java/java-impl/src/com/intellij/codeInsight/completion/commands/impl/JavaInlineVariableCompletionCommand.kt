@@ -4,10 +4,7 @@ package com.intellij.codeInsight.completion.commands.impl
 import com.intellij.codeInsight.completion.command.commands.AbstractInlineVariableCompletionCommandProvider
 import com.intellij.codeInsight.completion.command.getCommandContext
 import com.intellij.java.JavaBundle
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.platform.ide.progress.ModalTaskOwner
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiFile
@@ -16,7 +13,6 @@ import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiVariable
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.Nls
 
 internal class JavaInlineVariableCompletionCommandProvider : AbstractInlineVariableCompletionCommandProvider() {
@@ -27,14 +23,7 @@ internal class JavaInlineVariableCompletionCommandProvider : AbstractInlineVaria
     val element = getCommandContext(offset, psiFile) ?: return null
     if (element !is PsiIdentifier) return null
     val javaRef = PsiTreeUtil.getParentOfType(element, PsiJavaCodeReferenceElement::class.java) ?: return null
-    val onEdt = EDT.isCurrentThreadEdt()
-    val psiElement = if (onEdt) {
-      runWithModalProgressBlocking(ModalTaskOwner.guess(), JavaBundle.message("command.completion.inline.text"))
-      { readAction { javaRef.resolve() } }
-    }
-    else {
-      javaRef.resolve()
-    }
+    val psiElement = javaRef.resolve()
     if (psiElement !is PsiVariable) return null
     if (psiElement is PsiField && psiElement.initializer == null) return null
     if (psiElement is PsiParameter) return null

@@ -3,16 +3,12 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands
 
 import com.intellij.codeInsight.completion.command.commands.AbstractInlineVariableCompletionCommandProvider
 import com.intellij.codeInsight.completion.command.getCommandContext
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.platform.ide.progress.ModalTaskOwner
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
-import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -55,15 +51,7 @@ private fun findInlinableProperty(offset: Int, psiFile: PsiFile): KtProperty? {
 
 private fun resolveToProperty(reference: PsiElement): KtProperty? {
     if (reference !is KtNameReferenceExpression) return null
-    val onEdt = EDT.isCurrentThreadEdt()
-    fun doResolve(): PsiElement? = analyze(reference) { reference.mainReference.resolve() }
-    val resolved = if (onEdt) {
-        runWithModalProgressBlocking(ModalTaskOwner.guess(), KotlinBundle.message("title.inline.property"))
-        { readAction { doResolve() } }
-    } else {
-        doResolve()
-    }
-    return resolved as? KtProperty
+    return (analyze(reference) { reference.mainReference.resolve() }) as? KtProperty
 }
 
 private fun isPropertyInlinable(property: KtProperty): Boolean {

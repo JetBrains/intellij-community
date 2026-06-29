@@ -10,11 +10,14 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.idea.ActionsBundle
 import com.intellij.lang.refactoring.InlineActionHandler
 import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
@@ -35,6 +38,10 @@ abstract class AbstractInlineVariableCompletionCommandProvider : CommandProvider
 
   /**
    * Returns the element to inline when the caret is at [offset], or `null` if inlining is not applicable here.
+   *
+   * Invoked under a read action; implementations must not start their own progress or thread switching. The caller
+   * provides the appropriate threading context: the availability check runs it directly on a background thread, while
+   * the execute path wraps it in a modal progress.
    */
   protected abstract fun findElementToInline(offset: Int, psiFile: PsiFile, editor: Editor?): PsiElement?
 
@@ -78,7 +85,9 @@ abstract class AbstractInlineVariableCompletionCommandProvider : CommandProvider
 
     override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
       if (editor == null) return
-      val element = findElementToInline(offset, psiFile, editor) ?: return
+      val element = runWithModalProgressBlocking(ModalTaskOwner.guess(), presentableName) {
+        readAction { findElementToInline(offset, psiFile, editor) }
+      } ?: return
       for (extension in InlineActionHandler.EP_NAME.extensionList) {
         if (extension.canInlineElement(element)) {
           WriteIntentReadAction.run {
