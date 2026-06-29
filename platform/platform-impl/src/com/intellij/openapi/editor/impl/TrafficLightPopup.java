@@ -38,6 +38,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -64,6 +65,7 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -133,6 +135,10 @@ final class TrafficLightPopup {
     popupAlarm.cancelAndRequest(Registry.intValue("ide.tooltip.initialReshowDelay"), () -> showPopup(event, analyzerStatus));
   }
 
+  void scheduleShow(@NotNull RelativeRectangle anchor, @NotNull AnalyzerStatus analyzerStatus) {
+    popupAlarm.cancelAndRequest(Registry.intValue("ide.tooltip.initialReshowDelay"), () -> showPopup(anchor, analyzerStatus));
+  }
+
   void scheduleHide() {
     popupAlarm.cancelAndRequest(Registry.intValue("ide.tooltip.initialDelay.highlighter"), () -> {
       if (canClose()) {
@@ -141,7 +147,7 @@ final class TrafficLightPopup {
     });
   }
 
-  private void showPopup(@NotNull InputEvent event, @NotNull AnalyzerStatus analyzerStatus) {
+  private void showPopup(@NotNull RelativeRectangle anchor, @NotNull AnalyzerStatus analyzerStatus) {
     hidePopup();
     if (analyzerStatus.isEmpty()) return; // do not show new popup
 
@@ -163,17 +169,25 @@ final class TrafficLightPopup {
     myPopup.addListener(myPopupListener);
     myEditor.getComponent().addAncestorListener(myAncestorListener);
 
-    JComponent owner = (JComponent)event.getComponent();
     Dimension size = myContent.getPreferredSize();
     size.width = Math.max(size.width, JBUIScale.scale(296));
 
-    RelativePoint point = new RelativePoint(owner,
-                                            new Point(owner.getWidth() - owner.getInsets().right + JBUIScale.scale(DELTA_X) - size.width,
-                                                      owner.getHeight() + JBUIScale.scale(DELTA_Y)));
-
     myPopup.setSize(size);
     InspectionWidgetUsageCollector.logPopupShown(myEditor.getProject());
-    myPopup.show(point);
+    myPopup.show(getPopupPoint(anchor, size));
+  }
+
+  private void showPopup(@NotNull InputEvent event, @NotNull AnalyzerStatus analyzerStatus) {
+    JComponent owner = (JComponent)event.getComponent();
+    showPopup(new RelativeRectangle(owner, new Rectangle(0, 0, owner.getWidth() - owner.getInsets().right, owner.getHeight())),
+              analyzerStatus);
+  }
+
+  static @NotNull RelativePoint getPopupPoint(@NotNull RelativeRectangle anchor, @NotNull Dimension popupSize) {
+    Point anchorBottomRight = anchor.getMaxPoint().getPoint();
+    return new RelativePoint(anchor.getComponent(),
+                             new Point(anchorBottomRight.x + JBUIScale.scale(DELTA_X) - popupSize.width,
+                                       anchorBottomRight.y + JBUIScale.scale(DELTA_Y)));
   }
 
   void hidePopup() {
