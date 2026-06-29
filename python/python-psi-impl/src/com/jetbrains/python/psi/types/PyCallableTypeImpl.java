@@ -38,19 +38,6 @@ public class PyCallableTypeImpl implements PyCallableType {
     this(null, parametersType, returnType, null, null);
   }
 
-  /**
-   * remove in 2026.3
-   *
-   * @deprecated provide `typeParameters`
-   */
-  @Deprecated(forRemoval = true)
-  public PyCallableTypeImpl(@Nullable PyCallableParameterVariadicType parametersType,
-                            @Nullable PyType returnType,
-                            @Nullable PyCallable callable,
-                            @Nullable PyFunction.Modifier modifier) {
-    this(null, parametersType, returnType, callable, modifier);
-  }
-
   public PyCallableTypeImpl(@Nullable List<PyTypeParameterType> typeParameters,
                             @Nullable PyCallableParameterVariadicType parametersType,
                             @Nullable PyType returnType,
