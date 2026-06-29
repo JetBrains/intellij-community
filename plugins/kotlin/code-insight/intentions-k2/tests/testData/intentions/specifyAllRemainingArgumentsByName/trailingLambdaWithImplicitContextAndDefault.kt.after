@@ -16,7 +16,6 @@ fun f1Test() {
     f1(
         v = TODO(),
         d = TODO(),
-        ctx2 = Ctx2(),
-        ctx = TODO()
+        ctx2 = Ctx2()
     ) {}
 }

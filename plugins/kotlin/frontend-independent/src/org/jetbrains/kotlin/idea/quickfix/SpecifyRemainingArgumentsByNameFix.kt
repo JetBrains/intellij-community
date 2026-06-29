@@ -37,7 +37,7 @@ sealed class SpecifyRemainingArgumentsByNameFix(
                         SpecifyAllRemainingArgumentsByNameFix(
                             argumentList,
                             remainingValueArguments,
-                            remainingArguments.allContextRemainingArguments,
+                            remainingArguments.allContextRemainingArguments - remainingArguments.implicitContextArgumentNames,
                             remainingArguments.allContextParameterNames
                         )
                     )
