@@ -21,6 +21,8 @@ python_installations = [
     r"%s\py310_64\python.exe" % miniconda_envs,
     r"%s\py311_64\python.exe" % miniconda_envs,
     r"%s\py312_64\python.exe" % miniconda_envs,
+    r"%s\py313_64\python.exe" % miniconda_envs,
+    r"%s\py314_64\python.exe" % miniconda_envs,
     # See: build_tools\pydevd_release_process.txt when adding a new one
 ]
 

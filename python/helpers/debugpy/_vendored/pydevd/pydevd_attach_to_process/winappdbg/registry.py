@@ -609,7 +609,7 @@ class Registry(_RegistryContainer):
     def __delitem__(self, path):
         hive, subpath = self._parse_path(path)
         if not subpath:
-            raise TypeError("Are you SURE you want to wipe out an entire hive?!" " Call win32.RegDeleteTree() directly if you must...")
+            raise TypeError("Are you SURE you want to wipe out an entire hive?! Call win32.RegDeleteTree() directly if you must...")
         try:
             win32.RegDeleteTree(hive, subpath)
         except WindowsError:

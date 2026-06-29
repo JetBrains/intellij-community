@@ -225,7 +225,6 @@ if __name__ == "__main__":
             windows_path = pathlib.Path(sys.path[0])
             sys.path[0] = str(windows_path.parent.parent)
         else:
-            print(sys.path)
             sys.path[0] = sys.path[0] + "/../../"
         __import__("debugpy")
         del sys.path[0]

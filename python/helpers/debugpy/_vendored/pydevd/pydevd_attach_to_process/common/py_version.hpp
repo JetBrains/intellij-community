@@ -24,6 +24,7 @@ enum PythonVersion {
     PythonVersion_311 = 0x030B,
     PythonVersion_312 = 0x030C,
     PythonVersion_313 = 0x030D,
+    PythonVersion_314 = 0x030E,
 };
 
 
@@ -77,6 +78,9 @@ static PythonVersion GetPythonVersion(void *module) {
                     }
                     if(version[3] == '3'){
                         return PythonVersion_313;
+                    }
+                    if(version[3] == '4'){
+                        return PythonVersion_314;
                     }
                 }
                 return PythonVersion_Unknown; // we don't care about 3.1 anymore...

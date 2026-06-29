@@ -164,6 +164,7 @@ DONT_TRACE['_jb_runner_tools.py'] = PYDEV_FILE
     exclude_dirs = [
         ".git",
         ".settings",
+        ".venv",
         "build",
         "build_tools",
         "dist",

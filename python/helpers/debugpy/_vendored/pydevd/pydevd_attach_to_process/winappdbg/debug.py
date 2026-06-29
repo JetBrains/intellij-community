@@ -239,7 +239,7 @@ class Debug(EventDispatcher, _BreakpointContainer):
         # This also allows the user to stop attaching altogether,
         # depending on how the warnings are configured.
         if System.bits != aProcess.get_bits():
-            msg = "Mixture of 32 and 64 bits is considered experimental." " Use at your own risk!"
+            msg = "Mixture of 32 and 64 bits is considered experimental. Use at your own risk!"
             warnings.warn(msg, MixedBitsWarning)
 
         # Attach to the process.
@@ -474,7 +474,7 @@ class Debug(EventDispatcher, _BreakpointContainer):
                 if dwParentProcessId:
                     kwargs["dwParentProcessId"] = dwParentProcessId
                 else:
-                    msg = 'Failed to find "explorer.exe"!' " Using the debugger as parent process."
+                    msg = 'Failed to find "explorer.exe"! Using the debugger as parent process.'
                     warnings.warn(msg, RuntimeWarning)
 
         # Start the new process.
@@ -490,7 +490,7 @@ class Debug(EventDispatcher, _BreakpointContainer):
             # This also allows the user to stop attaching altogether,
             # depending on how the warnings are configured.
             if System.bits != aProcess.get_bits():
-                msg = "Mixture of 32 and 64 bits is considered experimental." " Use at your own risk!"
+                msg = "Mixture of 32 and 64 bits is considered experimental. Use at your own risk!"
                 warnings.warn(msg, MixedBitsWarning)
 
             # Add the new PID to the set of debugees.

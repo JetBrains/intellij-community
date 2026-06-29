@@ -401,7 +401,6 @@ pycodestyle.register_check(continued_indentation)
 
 
 class FixPEP8(object):
-
     """Fix invalid code.
 
     Fixer methods are prefixed "fix_". The _fix_source() method looks for these
@@ -980,7 +979,7 @@ class FixPEP8(object):
         for line in logical_lines:
             if result["id"] == "E702" and ":" in line and STARTSWITH_INDENT_STATEMENT_REGEX.match(line):
                 if self.options.verbose:
-                    print("---> avoid fixing {error} with " "other compound statements".format(error=result["id"]), file=sys.stderr)
+                    print("---> avoid fixing {error} with other compound statements".format(error=result["id"]), file=sys.stderr)
                 return []
 
         line_index = result["line"] - 1
@@ -1837,7 +1836,6 @@ Token = collections.namedtuple("Token", ["token_type", "token_string", "spos", "
 
 
 class ReformattedLines(object):
-
     """The reflowed lines of atoms.
 
     Each part of the line is represented as an "atom." They can be moved
@@ -1849,7 +1847,6 @@ class ReformattedLines(object):
     # Private Classes
 
     class _Indent(object):
-
         """Represent an indentation in the atom stream."""
 
         def __init__(self, indent_amt):
@@ -1863,7 +1860,6 @@ class ReformattedLines(object):
             return self._indent_amt
 
     class _Space(object):
-
         """Represent a space in the atom stream."""
 
         def emit(self):
@@ -1874,7 +1870,6 @@ class ReformattedLines(object):
             return 1
 
     class _LineBreak(object):
-
         """Represent a line break in the atom stream."""
 
         def emit(self):
@@ -2168,7 +2163,6 @@ class ReformattedLines(object):
 
 
 class Atom(object):
-
     """The smallest unbreakable unit that can be reflowed."""
 
     def __init__(self, atom):
@@ -2243,7 +2237,6 @@ class Atom(object):
 
 
 class Container(object):
-
     """Base class for all container types."""
 
     def __init__(self, items):
@@ -2393,7 +2386,6 @@ class Container(object):
 
 
 class Tuple(Container):
-
     """A high-level representation of a tuple."""
 
     @property
@@ -2406,7 +2398,6 @@ class Tuple(Container):
 
 
 class List(Container):
-
     """A high-level representation of a list."""
 
     @property
@@ -2419,7 +2410,6 @@ class List(Container):
 
 
 class DictOrSet(Container):
-
     """A high-level representation of a dictionary or set."""
 
     @property
@@ -2432,7 +2422,6 @@ class DictOrSet(Container):
 
 
 class ListComprehension(Container):
-
     """A high-level representation of a list comprehension."""
 
     @property
@@ -2446,7 +2435,6 @@ class ListComprehension(Container):
 
 
 class IfExpression(Container):
-
     """A high-level representation of an if-expression."""
 
 
@@ -2733,7 +2721,6 @@ def _execute_pep8(pep8_options, source):
     """Execute pycodestyle via python method calls."""
 
     class QuietReport(pycodestyle.BaseReport):
-
         """Version of checker that does not print."""
 
         def __init__(self, options):
@@ -2768,7 +2755,6 @@ def _remove_leading_and_normalize(line, with_rstrip=True):
 
 
 class Reindenter(object):
-
     """Reindents badly-indented code to uniformly use four-space indentation.
 
     Released to the public domain, by Tim Peters, 03 October 2000.
@@ -3461,7 +3447,7 @@ def create_parser():
     parser = argparse.ArgumentParser(description=docstring_summary(__doc__), prog="autopep8")
     parser.add_argument("--version", action="version", version="%(prog)s {} ({})".format(__version__, _get_package_version()))
     parser.add_argument(
-        "-v", "--verbose", action="count", default=0, help="print verbose messages; " "multiple -v result in more verbose messages"
+        "-v", "--verbose", action="count", default=0, help="print verbose messages; multiple -v result in more verbose messages"
     )
     parser.add_argument("-d", "--diff", action="store_true", help="print the diff for the fixed source")
     parser.add_argument("-i", "--in-place", action="store_true", help="make changes to files in place")
@@ -3469,9 +3455,7 @@ def create_parser():
         "--global-config",
         metavar="filename",
         default=DEFAULT_CONFIG,
-        help="path to a global pep8 config file; if this file " "does not exist then this is ignored " "(default: {})".format(
-            DEFAULT_CONFIG
-        ),
+        help="path to a global pep8 config file; if this file does not exist then this is ignored (default: {})".format(DEFAULT_CONFIG),
     )
     parser.add_argument(
         "--ignore-local-config",
@@ -3481,30 +3465,30 @@ def create_parser():
         "config files in the project's root directory",
     )
     parser.add_argument(
-        "-r", "--recursive", action="store_true", help="run recursively over directories; " "must be used with --in-place or --diff"
+        "-r", "--recursive", action="store_true", help="run recursively over directories; must be used with --in-place or --diff"
     )
     parser.add_argument(
-        "-j", "--jobs", type=int, metavar="n", default=1, help="number of parallel jobs; " "match CPU count if value is less than 1"
+        "-j", "--jobs", type=int, metavar="n", default=1, help="number of parallel jobs; match CPU count if value is less than 1"
     )
     parser.add_argument(
-        "-p", "--pep8-passes", metavar="n", default=-1, type=int, help="maximum number of additional pep8 passes " "(default: infinite)"
+        "-p", "--pep8-passes", metavar="n", default=-1, type=int, help="maximum number of additional pep8 passes (default: infinite)"
     )
     parser.add_argument(
         "-a",
         "--aggressive",
         action="count",
         default=0,
-        help="enable non-whitespace changes; " "multiple -a result in more aggressive changes",
+        help="enable non-whitespace changes; multiple -a result in more aggressive changes",
     )
     parser.add_argument("--experimental", action="store_true", help="enable experimental fixes")
-    parser.add_argument("--exclude", metavar="globs", help="exclude file/directory names that match these " "comma-separated globs")
-    parser.add_argument("--list-fixes", action="store_true", help="list codes for fixes; " "used by --ignore and --select")
+    parser.add_argument("--exclude", metavar="globs", help="exclude file/directory names that match these comma-separated globs")
+    parser.add_argument("--list-fixes", action="store_true", help="list codes for fixes; used by --ignore and --select")
     parser.add_argument(
-        "--ignore", metavar="errors", default="", help="do not fix these errors/warnings " "(default: {})".format(DEFAULT_IGNORE)
+        "--ignore", metavar="errors", default="", help="do not fix these errors/warnings (default: {})".format(DEFAULT_IGNORE)
     )
     parser.add_argument("--select", metavar="errors", default="", help="fix only these errors/warnings (e.g. E4,W)")
     parser.add_argument(
-        "--max-line-length", metavar="n", default=79, type=int, help="set maximum allowed line length " "(default: %(default)s)"
+        "--max-line-length", metavar="n", default=79, type=int, help="set maximum allowed line length (default: %(default)s)"
     )
     parser.add_argument(
         "--line-range",
@@ -3513,7 +3497,7 @@ def create_parser():
         default=None,
         type=int,
         nargs=2,
-        help="only fix errors found within this inclusive " "range of line numbers (e.g. 1 99); " "line numbers are indexed at 1",
+        help="only fix errors found within this inclusive range of line numbers (e.g. 1 99); line numbers are indexed at 1",
     )
     parser.add_argument("--indent-size", default=DEFAULT_INDENT_SIZE, type=int, help=argparse.SUPPRESS)
     parser.add_argument("--hang-closing", action="store_true", help="hang-closing option passed to pycodestyle")
@@ -3612,7 +3596,7 @@ def parse_args(arguments, apply_config=False):
     if len(args.files) > 1 and not (args.in_place or args.diff):
         parser.exit(
             EXIT_CODE_ARGPARSE_ERROR,
-            "autopep8 only takes one filename as argument " 'unless the "--in-place" or "--diff" args are used',
+            'autopep8 only takes one filename as argument unless the "--in-place" or "--diff" args are used',
         )
 
     if args.recursive and not (args.in_place or args.diff):
@@ -3680,7 +3664,7 @@ def parse_args(arguments, apply_config=False):
         if args.line_range[0] > args.line_range[1]:
             parser.exit(
                 EXIT_CODE_ARGPARSE_ERROR,
-                "First value of --range should be less than or equal " "to the second",
+                "First value of --range should be less than or equal to the second",
             )
 
     return args
@@ -3783,7 +3767,7 @@ def read_pyproject_toml(args, parser):
         else:
             value = v
         if args.verbose:
-            print("enable pyproject.toml config: " "key={}, value={}".format(k, value))
+            print("enable pyproject.toml config: key={}, value={}".format(k, value))
         defaults[norm_opt] = value
 
     if defaults:
@@ -4009,7 +3993,6 @@ def split_at_offsets(line, offsets):
 
 
 class LineEndingWrapper(object):
-
     r"""Replace line endings to work with sys.stdout.
 
     It seems that sys.stdout expects only '\n' as the line ending, no matter
@@ -4211,7 +4194,6 @@ def main(argv=None, apply_config=True):
 
 
 class CachedTokenizer(object):
-
     """A one-element cache around tokenize.generate_tokens().
 
     Original code written by Ned Batchelder, in coverage.py.

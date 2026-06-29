@@ -46,6 +46,7 @@ W warnings
 700 statements
 900 syntax error
 """
+
 from __future__ import with_statement
 
 import inspect
@@ -249,7 +250,7 @@ def maximum_line_length(physical_line, max_line_length, multiline, noqa):
             except UnicodeError:
                 pass
         if length > max_line_length:
-            return (max_line_length, "E501 line too long " "(%d > %d characters)" % (length, max_line_length))
+            return (max_line_length, "E501 line too long (%d > %d characters)" % (length, max_line_length))
 
 
 ##############################################################################
@@ -313,13 +314,13 @@ def blank_lines(
                         if nested or ancestor_level == 0:
                             break
                 if nested:
-                    yield 0, "E306 expected 1 blank line before a " "nested definition, found 0"
+                    yield 0, "E306 expected 1 blank line before a nested definition, found 0"
                 else:
                     yield 0, "E301 expected 1 blank line, found 0"
         elif blank_before != 2:
             yield 0, "E302 expected 2 blank lines, found %d" % blank_before
     elif logical_line and not indent_level and blank_before != 2 and previous_unindented_logical_line.startswith(("def ", "class ")):
-        yield 0, "E305 expected 2 blank lines after " "class or function definition, found %d" % blank_before
+        yield 0, "E305 expected 2 blank lines after class or function definition, found %d" % blank_before
 
 
 def extraneous_whitespace(logical_line):
@@ -539,7 +540,7 @@ def continued_indentation(logical_line, tokens, indent_level, hang_closing, inde
             if close_bracket and indent[depth]:
                 # closing bracket for visual indent
                 if start[1] != indent[depth]:
-                    yield (start, "E124 closing bracket does not match " "visual indentation")
+                    yield (start, "E124 closing bracket does not match visual indentation")
             elif close_bracket and not hang:
                 # closing bracket matches indentation of opening bracket's line
                 if hang_closing:
@@ -547,11 +548,11 @@ def continued_indentation(logical_line, tokens, indent_level, hang_closing, inde
             elif indent[depth] and start[1] < indent[depth]:
                 if visual_indent is not True:
                     # visual indent is broken
-                    yield (start, "E128 continuation line " "under-indented for visual indent")
+                    yield (start, "E128 continuation line under-indented for visual indent")
             elif hanging_indent or (indent_next and rel_indent[row] == 8):
                 # hanging indent is verified
                 if close_bracket and not hang_closing:
-                    yield (start, "E123 closing bracket does not match " "indentation of opening bracket's line")
+                    yield (start, "E123 closing bracket does not match indentation of opening bracket's line")
                 hangs[depth] = hang
             elif visual_indent is True:
                 # visual indent is verified
@@ -756,7 +757,7 @@ def missing_whitespace_around_operator(logical_line, tokens):
                         code, optype = "E228", "modulo"
                     elif prev_text not in ARITHMETIC_OP:
                         code, optype = "E227", "bitwise or shift"
-                    yield (need_space[0], "%s missing whitespace " "around %s operator" % (code, optype))
+                    yield (need_space[0], "%s missing whitespace around %s operator" % (code, optype))
                 need_space = False
         elif token_type == tokenize.OP and prev_end is not None:
             if text == "=" and parens:
@@ -1013,7 +1014,7 @@ def compound_statements(logical_line):
             if lambda_kw:
                 before = line[: lambda_kw.start()].rstrip()
                 if before[-1:] == "=" and isidentifier(before[:-1].strip()):
-                    yield 0, ("E731 do not assign a lambda expression, use a " "def")
+                    yield 0, ("E731 do not assign a lambda expression, use a def")
                 break
             if STARTSWITH_DEF_REGEX.match(line):
                 yield 0, "E704 multiple statements on one line (def)"
@@ -2096,35 +2097,33 @@ def get_parser(prog="pycodestyle", version=__version__):
         "--exclude",
         metavar="patterns",
         default=DEFAULT_EXCLUDE,
-        help="exclude files or directories which match these " "comma separated patterns (default: %default)",
+        help="exclude files or directories which match these comma separated patterns (default: %default)",
     )
     parser.add_option(
         "--filename",
         metavar="patterns",
         default="*.py",
-        help="when parsing directories, only check filenames " "matching these comma separated patterns " "(default: %default)",
+        help="when parsing directories, only check filenames matching these comma separated patterns (default: %default)",
     )
     parser.add_option("--select", metavar="errors", default="", help="select errors and warnings (e.g. E,W6)")
-    parser.add_option(
-        "--ignore", metavar="errors", default="", help="skip errors and warnings (e.g. E4,W) " "(default: %s)" % DEFAULT_IGNORE
-    )
+    parser.add_option("--ignore", metavar="errors", default="", help="skip errors and warnings (e.g. E4,W) (default: %s)" % DEFAULT_IGNORE)
     parser.add_option("--show-source", action="store_true", help="show source code for each error")
-    parser.add_option("--show-pep8", action="store_true", help="show text of PEP 8 for each error " "(implies --first)")
+    parser.add_option("--show-pep8", action="store_true", help="show text of PEP 8 for each error (implies --first)")
     parser.add_option("--statistics", action="store_true", help="count errors and warnings")
     parser.add_option(
         "--count",
         action="store_true",
-        help="print total number of errors and warnings " "to standard error and set exit code to 1 if " "total is not null",
+        help="print total number of errors and warnings to standard error and set exit code to 1 if total is not null",
     )
     parser.add_option(
-        "--max-line-length", type="int", metavar="n", default=MAX_LINE_LENGTH, help="set maximum allowed line length " "(default: %default)"
+        "--max-line-length", type="int", metavar="n", default=MAX_LINE_LENGTH, help="set maximum allowed line length (default: %default)"
     )
     parser.add_option(
-        "--hang-closing", action="store_true", help="hang closing bracket instead of matching " "indentation of opening bracket's line"
+        "--hang-closing", action="store_true", help="hang closing bracket instead of matching indentation of opening bracket's line"
     )
     parser.add_option("--format", metavar="format", default="default", help="set the error format [default|pylint|<custom>]")
     parser.add_option(
-        "--diff", action="store_true", help="report changes only within line number ranges in " "the unified diff received on STDIN"
+        "--diff", action="store_true", help="report changes only within line number ranges in the unified diff received on STDIN"
     )
     group = parser.add_option_group("Testing Options")
     if os.path.exists(TESTSUITE_PATH):
