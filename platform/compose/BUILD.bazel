@@ -2,6 +2,15 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
+jps_test(
+    name = "compose-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":compose-tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.compose.tests`
+
 ### auto-generated section `build intellij.platform.compose` start
 
 jvm_library(
@@ -200,11 +209,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.compose.tests` end
-
-### auto-generated section `test intellij.platform.compose.tests` start
-
-jps_test(
-    name = "compose-tests_test",
-    runtime_deps = [":compose-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.compose.tests` end
