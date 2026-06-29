@@ -419,6 +419,8 @@ c:com.intellij.codeInsight.template.impl.Variable
 c:com.intellij.codeInspection.AddToInspectionOptionListFix
 - availableInBatchMode():Z
 com.intellij.codeInspection.AggregateResultsInspection
+c:com.intellij.codeInspection.DefaultInspectionToolResultExporter
+- p:getToolWrapper(com.intellij.codeInspection.CommonProblemDescriptor):com.intellij.codeInspection.ex.InspectionToolWrapper
 c:com.intellij.codeInspection.ExternalAnnotatorInspectionVisitor$LocalQuickFixBackedByIntentionAction
 - <init>(com.intellij.codeInsight.intention.IntentionAction):V
 a:com.intellij.codeInspection.InspectionManagerBase
