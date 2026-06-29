@@ -48,6 +48,7 @@ import com.intellij.ui.ToolbarService
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.ui.ImageUtil
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -355,6 +356,8 @@ private class MyJFrame(
     }
     MouseGestureManager.getInstance().add(this)
     focusTraversalPolicy = IdeFocusTraversalPolicy()
+
+    rootPane.border = JBUI.CurrentTheme.Window.getDialogBorder(isUndecorated)
   }
 
   override fun isWindowDisposed(): Boolean = owner.isDisposed
@@ -471,6 +474,8 @@ private class MyJDialog(
     background = UIUtil.getPanelBackground()
     MouseGestureManager.getInstance().add(this)
     focusTraversalPolicy = IdeFocusTraversalPolicy()
+
+    rootPane.border = JBUI.CurrentTheme.Window.getDialogBorder(isUndecorated)
   }
 
   override fun setFrameTitle(title: String) {
