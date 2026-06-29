@@ -11,6 +11,7 @@ import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.scratch.JavaScratchConfiguration
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.util.PlatformUtils
@@ -34,7 +35,9 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       !IntelliJProjectUtil.isIntelliJPlatformProject(project)
     ) return
 
-    val mainClass = configuration.runClass ?: return
+    val mainClass = ReadAction.nonBlocking<String> {
+      configuration.runClass
+    }.executeSynchronously() ?: return
 
     passDataAboutBuiltInServer(javaParameters, project)
     val vmParameters = javaParameters.vmParametersList
