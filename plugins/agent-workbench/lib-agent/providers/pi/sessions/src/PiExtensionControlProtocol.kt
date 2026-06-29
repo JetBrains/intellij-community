@@ -19,12 +19,7 @@ internal enum class PiControlMessageType(@JvmField val wireName: String) {
   RESPONSE("response"),
   NAVIGATE_TREE("navigateTree"),
   FORK_FROM_ENTRY("forkFromEntry"),
-  GET_CURRENT_TASK_FOLDER("getCurrentTaskFolder"),
-  LIST_TASK_FOLDER_THREADS("listTaskFolderThreads"),
-  CREATE_AND_ASSIGN_TASK_FOLDER("createAndAssignTaskFolder"),
-  GET_TASK_FOLDER_METADATA("getTaskFolderMetadata"),
-  SET_TASK_FOLDER_METADATA("setTaskFolderMetadata"),
-  DELETE_TASK_FOLDER_METADATA("deleteTaskFolderMetadata");
+  TASK_FOLDER_REQUEST("taskFolderRequest");
 
   companion object {
     private val byWireName: Map<String, PiControlMessageType> = entries.associateBy(PiControlMessageType::wireName)
@@ -69,10 +64,16 @@ internal data class PiControlPayload(
   @JvmField val error: String? = null,
   @JvmField val thread: PiControlThreadPayload? = null,
   @JvmField val capabilities: PiControlCapabilities? = null,
+  @JvmField val operation: String? = null,
+  @JvmField val arguments: PiTaskFolderControlArguments? = null,
+)
+
+internal data class PiTaskFolderControlArguments(
   @JvmField val folderId: String? = null,
   @JvmField val name: String? = null,
   @JvmField val key: String? = null,
   @JvmField val value: String? = null,
+  @JvmField val includeDone: Boolean? = null,
   @JvmField val metadata: Map<String, String>? = null,
 )
 
@@ -128,15 +129,6 @@ internal fun buildPiControlHelloAcknowledgement(requestId: String?, sessionId: S
   }
 }
 
-internal fun buildPiControlMutationResponse(requestId: String, changed: Boolean): String {
-  return buildPiControlJsonObject { generator ->
-    generator.writeStringProperty("type", PiControlMessageType.RESPONSE.wireName)
-    generator.writeStringProperty("requestId", requestId)
-    generator.writeBooleanProperty("ok", true)
-    generator.writeBooleanProperty("changed", changed)
-  }
-}
-
 internal fun buildPiControlErrorResponse(requestId: String?, error: String): String {
   return buildPiControlJsonObject { generator ->
     generator.writeStringProperty("type", PiControlMessageType.RESPONSE.wireName)
@@ -167,11 +159,8 @@ private fun readControlPayload(parser: JsonParser): PiControlPayload {
   var error: String? = null
   var thread: PiControlThreadPayload? = null
   var capabilities: PiControlCapabilities? = null
-  var folderId: String? = null
-  var name: String? = null
-  var key: String? = null
-  var value: String? = null
-  var metadata: Map<String, String>? = null
+  var operation: String? = null
+  var arguments: PiTaskFolderControlArguments? = null
   forEachJsonObjectField(parser) { fieldName ->
     when (fieldName) {
       "type" -> type = PiControlMessageType.fromWireName(readJsonStringOrNull(parser))
@@ -184,11 +173,8 @@ private fun readControlPayload(parser: JsonParser): PiControlPayload {
       "error" -> error = readJsonStringOrNull(parser)
       "thread" -> thread = readControlThreadPayload(parser)
       "capabilities" -> capabilities = readControlCapabilities(parser)
-      "folderId" -> folderId = readJsonStringOrNull(parser)
-      "name" -> name = readJsonStringOrNull(parser)
-      "key" -> key = readJsonStringOrNull(parser)
-      "value" -> value = readJsonStringOrNull(parser)
-      "metadata" -> metadata = readControlStringMap(parser)
+      "operation" -> operation = readJsonStringOrNull(parser)
+      "arguments" -> arguments = readTaskFolderControlArguments(parser)
       else -> parser.skipChildren()
     }
     true
@@ -204,10 +190,40 @@ private fun readControlPayload(parser: JsonParser): PiControlPayload {
     error = error,
     thread = thread,
     capabilities = capabilities,
+    operation = operation,
+    arguments = arguments,
+  )
+}
+
+private fun readTaskFolderControlArguments(parser: JsonParser): PiTaskFolderControlArguments? {
+  if (parser.currentToken() != JsonToken.START_OBJECT) {
+    parser.skipChildren()
+    return null
+  }
+  var folderId: String? = null
+  var name: String? = null
+  var key: String? = null
+  var value: String? = null
+  var includeDone: Boolean? = null
+  var metadata: Map<String, String>? = null
+  forEachJsonObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "folderId" -> folderId = readJsonStringOrNull(parser)
+      "name" -> name = readJsonStringOrNull(parser)
+      "key" -> key = readJsonStringOrNull(parser)
+      "value" -> value = readJsonStringOrNull(parser)
+      "includeDone" -> includeDone = readJsonBooleanOrNull(parser)
+      "metadata" -> metadata = readControlStringMap(parser)
+      else -> parser.skipChildren()
+    }
+    true
+  }
+  return PiTaskFolderControlArguments(
     folderId = folderId,
     name = name,
     key = key,
     value = value,
+    includeDone = includeDone,
     metadata = metadata,
   )
 }

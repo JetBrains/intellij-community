@@ -1,110 +1,235 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ai.agent.pi.sessions
 
+import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
+import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveService
+import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
 import com.intellij.openapi.components.service
 import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolder
 import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderService
+import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderStatus
 import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderThreadAssignment
 import tools.jackson.core.JsonGenerator
 
 internal class PiTaskFolderControlHandler(
   private val taskFolderServiceProvider: () -> AgentTaskFolderService = { service<AgentTaskFolderService>() },
+  private val archiveServiceProvider: () -> AgentSessionArchiveService = { service<AgentSessionArchiveService>() },
 ) {
-  fun handle(context: PiControlSessionContext, payload: PiControlPayload, requestId: String): String {
+  fun handle(
+    context: PiControlSessionContext,
+    payload: PiControlPayload,
+    requestId: String,
+    sendResponse: (String) -> Unit,
+  ) {
     val service = taskFolderServiceProvider()
-    return when (payload.type) {
-      PiControlMessageType.GET_CURRENT_TASK_FOLDER -> {
+    val arguments = payload.arguments ?: PiTaskFolderControlArguments()
+    when (payload.operation?.trim()) {
+      OP_GET_CURRENT -> {
         val folder = service.getFolderForThread(context.projectPath, PI_AGENT_SESSION_PROVIDER, context.sessionId)
-        buildTaskFolderResponse(requestId = requestId, folder = folder)
+        sendResponse(buildTaskFolderResponse(requestId = requestId, folder = folder))
       }
-      PiControlMessageType.LIST_TASK_FOLDER_THREADS -> {
-        val folderId = resolveTaskFolderId(service, context, payload)
-        if (folderId == null) {
-          buildPiControlErrorResponse(requestId, "Task folder is not available")
-        }
-        else {
-          buildTaskFolderAssignmentsResponse(requestId, service.listFolderThreadAssignments(folderId))
-        }
+      OP_LIST_FOLDERS -> {
+        val folders = service.listFolders(context.projectPath, includeDone = arguments.includeDone == true)
+        sendResponse(buildTaskFoldersResponse(requestId = requestId, folders = folders))
       }
-      PiControlMessageType.CREATE_AND_ASSIGN_TASK_FOLDER -> {
-        val name = payload.name?.trim()?.takeIf { it.isNotEmpty() }
-        if (name == null) {
-          buildPiControlErrorResponse(requestId, "Task folder name is required")
-        }
-        else {
-          val folder = service.createFolder(context.projectPath, name, payload.metadata.orEmpty())
-          if (folder == null) {
-            buildPiControlErrorResponse(requestId, "Task folder could not be created")
-          }
-          else {
-            val assigned = service.assignThread(context.projectPath, PI_AGENT_SESSION_PROVIDER, context.sessionId, folder.id)
-            buildTaskFolderCreatedResponse(requestId = requestId, folder = folder, assigned = assigned)
-          }
-        }
-      }
-      PiControlMessageType.GET_TASK_FOLDER_METADATA -> {
-        val folder = resolveTaskFolder(service, context, payload)
+      OP_LIST_THREADS -> {
+        val folder = resolveTaskFolder(service, context, arguments)
         if (folder == null) {
-          buildPiControlErrorResponse(requestId, "Task folder is not available")
+          sendResponse(buildPiControlErrorResponse(requestId, "Task folder is not available"))
         }
         else {
-          buildTaskFolderMetadataResponse(requestId, folder.metadata)
+          sendResponse(buildTaskFolderAssignmentsResponse(requestId, service.listFolderThreadAssignments(folder.id)))
         }
       }
-      PiControlMessageType.SET_TASK_FOLDER_METADATA -> {
-        val folderId = resolveTaskFolderId(service, context, payload)
-        val key = payload.key?.trim()?.takeIf { it.isNotEmpty() }
-        val value = payload.value
-        if (folderId == null || key == null || value == null) {
-          buildPiControlErrorResponse(requestId, "Task folder metadata request is incomplete")
+      OP_CREATE_AND_ASSIGN -> {
+        createAndAssignCurrentThread(service, context, arguments, requestId, sendResponse)
+      }
+      OP_ASSIGN_CURRENT_THREAD -> {
+        val folder = resolveTaskFolder(service, context, arguments)
+        if (folder == null) {
+          sendResponse(buildPiControlErrorResponse(requestId, "Task folder is not available"))
         }
         else {
-          val changed = service.setMetadata(folderId, key, value)
-          buildPiControlMutationResponse(requestId, changed)
+          val changed = service.assignThread(context.projectPath, PI_AGENT_SESSION_PROVIDER, context.sessionId, folder.id)
+          sendResponse(buildTaskFolderMutationResponse(requestId = requestId,
+                                                       changed = changed,
+                                                       folder = refreshedFolder(service, context, folder.id)))
         }
       }
-      PiControlMessageType.DELETE_TASK_FOLDER_METADATA -> {
-        val folderId = resolveTaskFolderId(service, context, payload)
-        val key = payload.key?.trim()?.takeIf { it.isNotEmpty() }
-        if (folderId == null || key == null) {
-          buildPiControlErrorResponse(requestId, "Task folder metadata request is incomplete")
+      OP_UNASSIGN_CURRENT_THREAD -> {
+        val folder = service.getFolderForThread(context.projectPath, PI_AGENT_SESSION_PROVIDER, context.sessionId)
+        val changed = service.unassignThread(context.projectPath, PI_AGENT_SESSION_PROVIDER, context.sessionId)
+        sendResponse(buildTaskFolderMutationResponse(requestId = requestId, changed = changed, folder = folder))
+      }
+      OP_RENAME -> {
+        val folder = resolveTaskFolder(service, context, arguments)
+        val name = arguments.name?.trim()?.takeIf { it.isNotEmpty() }
+        if (folder == null || name == null) {
+          sendResponse(buildPiControlErrorResponse(requestId, "Task folder rename request is incomplete"))
         }
         else {
-          val changed = service.deleteMetadata(folderId, key)
-          buildPiControlMutationResponse(requestId, changed)
+          val changed = service.renameFolder(folder.id, name)
+          sendResponse(buildTaskFolderMutationResponse(requestId = requestId,
+                                                       changed = changed,
+                                                       folder = refreshedFolder(service, context, folder.id)))
         }
       }
-      else -> buildPiControlErrorResponse(requestId, "Unsupported task folder request")
+      OP_SET_METADATA -> {
+        val folder = resolveTaskFolder(service, context, arguments)
+        val key = arguments.key?.trim()?.takeIf { it.isNotEmpty() }
+        val value = arguments.value
+        if (folder == null || key == null || value == null) {
+          sendResponse(buildPiControlErrorResponse(requestId, "Task folder metadata request is incomplete"))
+        }
+        else {
+          val changed = service.setMetadata(folder.id, key, value)
+          sendResponse(buildTaskFolderMutationResponse(requestId = requestId,
+                                                       changed = changed,
+                                                       folder = refreshedFolder(service, context, folder.id)))
+        }
+      }
+      OP_DELETE_METADATA -> {
+        val folder = resolveTaskFolder(service, context, arguments)
+        val key = arguments.key?.trim()?.takeIf { it.isNotEmpty() }
+        if (folder == null || key == null) {
+          sendResponse(buildPiControlErrorResponse(requestId, "Task folder metadata request is incomplete"))
+        }
+        else {
+          val changed = service.deleteMetadata(folder.id, key)
+          sendResponse(buildTaskFolderMutationResponse(requestId = requestId,
+                                                       changed = changed,
+                                                       folder = refreshedFolder(service, context, folder.id)))
+        }
+      }
+      OP_MARK_DONE -> {
+        val folder = resolveTaskFolder(service, context, arguments)
+        if (folder == null) {
+          sendResponse(buildPiControlErrorResponse(requestId, "Task folder is not available"))
+        }
+        else {
+          markDone(service, archiveServiceProvider, context, folder, requestId, sendResponse)
+        }
+      }
+      OP_DELETE -> {
+        val folder = resolveTaskFolder(service, context, arguments)
+        if (folder == null) {
+          sendResponse(buildPiControlErrorResponse(requestId, "Task folder is not available"))
+        }
+        else {
+          val changed = service.deleteFolder(folder.id)
+          sendResponse(buildTaskFolderMutationResponse(requestId = requestId, changed = changed, folder = folder))
+        }
+      }
+      else -> sendResponse(buildPiControlErrorResponse(requestId, "Unsupported task folder operation"))
     }
   }
 }
 
-private fun buildTaskFolderCreatedResponse(requestId: String, folder: AgentTaskFolder, assigned: Boolean): String {
-  return buildPiControlJsonObject { generator ->
-    generator.writeStringProperty("type", PiControlMessageType.RESPONSE.wireName)
-    generator.writeStringProperty("requestId", requestId)
-    generator.writeBooleanProperty("ok", true)
+private fun createAndAssignCurrentThread(
+  service: AgentTaskFolderService,
+  context: PiControlSessionContext,
+  arguments: PiTaskFolderControlArguments,
+  requestId: String,
+  sendResponse: (String) -> Unit,
+) {
+  val existing = service.getFolderForThread(context.projectPath, PI_AGENT_SESSION_PROVIDER, context.sessionId)
+  if (existing != null) {
+    sendResponse(buildTaskFolderCreatedResponse(requestId = requestId, folder = existing, created = false, assigned = true))
+    return
+  }
+
+  val name = arguments.name?.trim()?.takeIf { it.isNotEmpty() }
+  if (name == null) {
+    sendResponse(buildPiControlErrorResponse(requestId, "Task folder name is required"))
+    return
+  }
+  val folder = service.createFolder(context.projectPath, name, arguments.metadata.orEmpty())
+  if (folder == null) {
+    sendResponse(buildPiControlErrorResponse(requestId, "Task folder could not be created"))
+    return
+  }
+  val assigned = service.assignThread(context.projectPath, PI_AGENT_SESSION_PROVIDER, context.sessionId, folder.id)
+  sendResponse(buildTaskFolderCreatedResponse(requestId = requestId, folder = folder, created = true, assigned = assigned))
+}
+
+private fun markDone(
+  service: AgentTaskFolderService,
+  archiveServiceProvider: () -> AgentSessionArchiveService,
+  context: PiControlSessionContext,
+  folder: AgentTaskFolder,
+  requestId: String,
+  sendResponse: (String) -> Unit,
+) {
+  if (folder.status == AgentTaskFolderStatus.DONE) {
+    sendResponse(buildTaskFolderDoneResponse(requestId = requestId,
+                                             changed = false,
+                                             folder = folder,
+                                             requestedCount = 0,
+                                             archivedCount = 0))
+    return
+  }
+  val targets = service.listFolderThreadAssignments(folder.id)
+    .map { assignment -> ArchiveThreadTarget.Thread(assignment.path, assignment.provider, assignment.threadId) }
+    .distinctBy { target -> ArchiveTargetKey(target.path, target.provider.value, target.threadId) }
+  if (targets.isEmpty()) {
+    val changed = service.setFolderStatus(folder.id, AgentTaskFolderStatus.DONE)
+    sendResponse(
+      buildTaskFolderDoneResponse(
+        requestId = requestId,
+        changed = changed,
+        folder = refreshedFolder(service, context, folder.id),
+        requestedCount = 0,
+        archivedCount = 0,
+      )
+    )
+    return
+  }
+  val archiveService = archiveServiceProvider()
+  if (!targets.all { target -> archiveService.canArchiveProvider(target.provider) }) {
+    sendResponse(buildPiControlErrorResponse(requestId, "Task folder contains threads that cannot be archived"))
+    return
+  }
+  archiveService.archiveThreads(targets, AgentWorkbenchEntryPoint.TREE_POPUP) { result ->
+    val changed = result.allRequestedArchived && service.setFolderStatus(folder.id, AgentTaskFolderStatus.DONE)
+    sendResponse(
+      buildTaskFolderDoneResponse(
+        requestId = requestId,
+        changed = changed,
+        folder = refreshedFolder(service, context, folder.id) ?: folder,
+        requestedCount = result.requestedCount,
+        archivedCount = result.archivedCount,
+      )
+    )
+  }
+}
+
+private fun buildTaskFolderCreatedResponse(requestId: String, folder: AgentTaskFolder, created: Boolean, assigned: Boolean): String {
+  return buildTaskFolderResultResponse(requestId) { generator ->
     generator.writeName("folder")
     writeTaskFolder(generator, folder)
+    generator.writeBooleanProperty("created", created)
     generator.writeBooleanProperty("assigned", assigned)
   }
 }
 
 private fun buildTaskFolderResponse(requestId: String, folder: AgentTaskFolder?): String {
-  return buildPiControlJsonObject { generator ->
-    generator.writeStringProperty("type", PiControlMessageType.RESPONSE.wireName)
-    generator.writeStringProperty("requestId", requestId)
-    generator.writeBooleanProperty("ok", true)
+  return buildTaskFolderResultResponse(requestId) { generator ->
     generator.writeName("folder")
     writeTaskFolder(generator, folder)
   }
 }
 
+private fun buildTaskFoldersResponse(requestId: String, folders: List<AgentTaskFolder>): String {
+  return buildTaskFolderResultResponse(requestId) { generator ->
+    generator.writeName("folders")
+    generator.writeStartArray()
+    folders.forEach { folder -> writeTaskFolder(generator, folder) }
+    generator.writeEndArray()
+  }
+}
+
 private fun buildTaskFolderAssignmentsResponse(requestId: String, assignments: List<AgentTaskFolderThreadAssignment>): String {
-  return buildPiControlJsonObject { generator ->
-    generator.writeStringProperty("type", PiControlMessageType.RESPONSE.wireName)
-    generator.writeStringProperty("requestId", requestId)
-    generator.writeBooleanProperty("ok", true)
+  return buildTaskFolderResultResponse(requestId) { generator ->
     generator.writeName("threads")
     generator.writeStartArray()
     assignments.forEach { assignment -> writeTaskFolderAssignment(generator, assignment) }
@@ -112,14 +237,38 @@ private fun buildTaskFolderAssignmentsResponse(requestId: String, assignments: L
   }
 }
 
-private fun buildTaskFolderMetadataResponse(requestId: String, metadata: Map<String, String>): String {
+private fun buildTaskFolderMutationResponse(requestId: String, changed: Boolean, folder: AgentTaskFolder?): String {
+  return buildTaskFolderResultResponse(requestId) { generator ->
+    generator.writeBooleanProperty("changed", changed)
+    generator.writeName("folder")
+    writeTaskFolder(generator, folder)
+  }
+}
+
+private fun buildTaskFolderDoneResponse(
+  requestId: String,
+  changed: Boolean,
+  folder: AgentTaskFolder?,
+  requestedCount: Int,
+  archivedCount: Int,
+): String {
+  return buildTaskFolderResultResponse(requestId) { generator ->
+    generator.writeBooleanProperty("changed", changed)
+    generator.writeNumberProperty("requestedCount", requestedCount)
+    generator.writeNumberProperty("archivedCount", archivedCount)
+    generator.writeName("folder")
+    writeTaskFolder(generator, folder)
+  }
+}
+
+private fun buildTaskFolderResultResponse(requestId: String, writeResult: (JsonGenerator) -> Unit): String {
   return buildPiControlJsonObject { generator ->
     generator.writeStringProperty("type", PiControlMessageType.RESPONSE.wireName)
     generator.writeStringProperty("requestId", requestId)
     generator.writeBooleanProperty("ok", true)
-    generator.writeName("metadata")
+    generator.writeName("result")
     generator.writeStartObject()
-    metadata.forEach { (key, value) -> generator.writeStringProperty(key, value) }
+    writeResult(generator)
     generator.writeEndObject()
   }
 }
@@ -156,13 +305,33 @@ private fun writeTaskFolderAssignment(generator: JsonGenerator, assignment: Agen
 private fun resolveTaskFolder(
   service: AgentTaskFolderService,
   context: PiControlSessionContext,
-  payload: PiControlPayload,
+  arguments: PiTaskFolderControlArguments,
 ): AgentTaskFolder? {
-  val folderId = resolveTaskFolderId(service, context, payload) ?: return null
-  return service.getFolder(folderId)
+  val explicitFolderId = arguments.folderId?.trim()?.takeIf { it.isNotEmpty() }
+  if (explicitFolderId != null) {
+    return service.snapshot(includeDone = true).folder(context.projectPath, explicitFolderId)
+  }
+  return service.getFolderForThread(context.projectPath, PI_AGENT_SESSION_PROVIDER, context.sessionId)
 }
 
-private fun resolveTaskFolderId(service: AgentTaskFolderService, context: PiControlSessionContext, payload: PiControlPayload): String? {
-  return payload.folderId?.trim()?.takeIf { it.isNotEmpty() }
-         ?: service.getFolderForThread(context.projectPath, PI_AGENT_SESSION_PROVIDER, context.sessionId)?.id
+private fun refreshedFolder(service: AgentTaskFolderService, context: PiControlSessionContext, folderId: String): AgentTaskFolder? {
+  return service.snapshot(includeDone = true).folder(context.projectPath, folderId)
 }
+
+private data class ArchiveTargetKey(
+  @JvmField val path: String,
+  @JvmField val providerId: String,
+  @JvmField val threadId: String,
+)
+
+private const val OP_GET_CURRENT: String = "getCurrent"
+private const val OP_LIST_FOLDERS: String = "listFolders"
+private const val OP_LIST_THREADS: String = "listThreads"
+private const val OP_CREATE_AND_ASSIGN: String = "createAndAssign"
+private const val OP_ASSIGN_CURRENT_THREAD: String = "assignCurrentThread"
+private const val OP_UNASSIGN_CURRENT_THREAD: String = "unassignCurrentThread"
+private const val OP_RENAME: String = "rename"
+private const val OP_SET_METADATA: String = "setMetadata"
+private const val OP_DELETE_METADATA: String = "deleteMetadata"
+private const val OP_MARK_DONE: String = "markDone"
+private const val OP_DELETE: String = "delete"
