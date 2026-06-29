@@ -340,6 +340,21 @@
     <module name="intellij.platform.vcs.dvcs.impl.shared"/>
     <!-- endregion -->
 
+    <!-- region nested: lsp -->
+    <!-- region nested: lsp > libraries.lsp4j -->
+    <module name="intellij.libraries.eclipse.lsp4j" loading="embedded"/>
+    <module name="intellij.libraries.eclipse.lsp4j.debug" loading="embedded"/>
+    <module name="intellij.libraries.eclipse.lsp4j.jsonrpc" loading="embedded"/>
+    <module name="intellij.libraries.eclipse.lsp4j.jsonrpc.debug" loading="embedded"/>
+    <!-- endregion -->
+
+    <!-- region direct modules -->
+    <module name="intellij.platform.lsp" loading="embedded"/>
+    <module name="intellij.platform.lsp.impl" loading="embedded"/>
+    <module name="intellij.platform.lsp.impl.structureView"/>
+    <!-- endregion -->
+    <!-- endregion -->
+
     <!-- region nested: xml -->
     <module name="intellij.xml.dom" loading="embedded"/>
     <module name="intellij.xml.dom.impl" loading="embedded"/>

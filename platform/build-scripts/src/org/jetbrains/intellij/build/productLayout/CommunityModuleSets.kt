@@ -200,6 +200,16 @@ object CommunityModuleSets {
   }
 
   /**
+   * Language Server Protocol (LSP) support modules.
+   */
+  fun lsp(): ModuleSet = moduleSet("lsp") {
+    moduleSet(CoreModuleSets.librariesLsp4j())
+    embeddedModule("intellij.platform.lsp")
+    embeddedModule("intellij.platform.lsp.impl")
+    module("intellij.platform.lsp.impl.structureView")
+  }
+
+  /**
    * XML support modules.
    */
   fun xml(): ModuleSet = moduleSet("xml", alias = "com.intellij.modules.xml") {
@@ -383,6 +393,7 @@ object CommunityModuleSets {
 
     embeddedModule("intellij.platform.vcs")
     moduleSet(vcsShared())
+    moduleSet(lsp())
     moduleSet(xml())
     moduleSet(duplicates())
     embeddedModule("intellij.libraries.batik")
