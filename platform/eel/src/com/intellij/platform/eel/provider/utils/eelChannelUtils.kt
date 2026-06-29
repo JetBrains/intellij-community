@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.platform.eel.EelLowLevelObjectsPool
@@ -44,12 +44,12 @@ import kotlin.time.Duration.Companion.milliseconds
 
 
 @ApiStatus.Experimental
-fun ReadableByteChannel.consumeAsEelChannel(): EelReceiveChannel =
-  NioReadToEelAdapter(this) { 0 }
+fun ReadableByteChannel.consumeAsEelChannel(dispatcher: CoroutineContext = unlimitedDispatcher): EelReceiveChannel =
+  NioReadToEelAdapter(this, dispatcher) { 0 }
 
 @ApiStatus.Experimental
-fun WritableByteChannel.asEelChannel(): EelSendChannel =
-  NioWriteToEelAdapter(this)
+fun WritableByteChannel.asEelChannel(dispatcher: CoroutineContext = unlimitedDispatcher): EelSendChannel =
+  NioWriteToEelAdapter(this, dispatcher)
 
 // Flushes data after each writing.
 @ApiStatus.Experimental

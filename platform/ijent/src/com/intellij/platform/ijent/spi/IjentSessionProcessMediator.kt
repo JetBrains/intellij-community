@@ -28,6 +28,16 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.FilterInputStream
+import java.io.FilterOutputStream
+import java.io.InputStream
+import java.io.OutputStream
+import java.nio.channels.ReadableByteChannel
+import java.nio.channels.WritableByteChannel
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -66,15 +76,21 @@ class IjentSessionProcessMediator private constructor(
   }
 
   @OptIn(DelicateCoroutinesApi::class)
-  class JavaProcessFacade(private val ijentProcessScope: IjentScope, private val process: Process) : ProcessFacade {
-    // Pump the process std-streams on `IjentThreadPool` instead of the default `Dispatchers.IO`-backed
-    // `unlimitedDispatcher`. The blocking native `read()`/`write()` calls park a worker thread for the whole
-    // session; `DefaultDispatcher-worker-*` is not whitelisted by `ThreadLeakTracker`, while `IjentThreadPool-` is.
-    // And it's also legit even not taking tests into account. The reason why IjentThreadPool exists is written in its docs,
-    // and here's exactly a case described there.
-    override val stdin: EelSendChannel = process.outputStream.asEelChannel(IjentThreadPool.coroutineContext)
-    override val stdout: PeekableEelReceiveChannel = process.inputStream.consumeAsEelChannel(IjentThreadPool.coroutineContext).peekable()
-    override val stderr: EelReceiveChannel = process.errorStream.consumeAsEelChannel(IjentThreadPool.coroutineContext)
+  class JavaProcessFacade(ijentProcessScope: IjentScope, private val process: Process) : ProcessFacade {
+    init {
+      require(process.javaClass.name == "java.lang.ProcessImpl") {
+        "This code performs black magic with internals of java.lang.ProcessImpl, this class is not supported: ${process.javaClass.name}"
+      }
+    }
+
+    override val stdin: EelSendChannel =
+      process.outputStream.extractRawProcessStream().asEelChannel(IjentThreadPool.coroutineContext)
+
+    override val stdout: PeekableEelReceiveChannel =
+      process.inputStream.extractRawProcessStream().consumeAsEelChannel(IjentThreadPool.coroutineContext).peekable()
+
+    override val stderr: EelReceiveChannel =
+      process.errorStream.extractRawProcessStream().consumeAsEelChannel(IjentThreadPool.coroutineContext)
 
     // Pin the blocking `Process.waitFor()` call to `IjentThreadPool` via the explicit
     // `runInterruptible` context. `Process.awaitExit()` would otherwise route the JDK
@@ -247,6 +263,32 @@ private suspend fun awaitProcessExit(process: IjentSessionProcessMediator.Proces
   val deadline = System.nanoTime() + timeout.inWholeNanoseconds
   while (process.isAlive && System.nanoTime() < deadline) {
     delay(50.milliseconds)
+  }
+}
+
+private tailrec fun InputStream.extractRawProcessStream(): ReadableByteChannel {
+  return when (this) {
+    is FileInputStream -> channel
+    is BufferedInputStream -> FilterInputStream::class.java
+      .getDeclaredField("in")
+      .apply { this.isAccessible = true }
+      .get(this)
+      .let { it as InputStream }
+      .extractRawProcessStream()
+    else -> throw IllegalStateException("Unexpected stream type: ${this::class.java}")
+  }
+}
+
+private fun OutputStream.extractRawProcessStream(): WritableByteChannel {
+  return when (this) {
+    is FileOutputStream -> channel
+    is BufferedOutputStream -> FilterOutputStream::class.java
+      .getDeclaredField("out")
+      .apply { this.isAccessible = true }
+      .get(this)
+      .let { it as OutputStream }
+      .extractRawProcessStream()
+    else -> throw IllegalStateException("Unexpected stream type: ${this::class.java}")
   }
 }
 
