@@ -127,9 +127,7 @@ public class AssertJInliner implements CallInliner {
           builder.ensure(RelationType.NE, DfTypes.NULL, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
         }
       }
-      case "isInstanceOf" -> {
-        instanceOf(builder, call);
-      }
+      case "isInstanceOf" -> instanceOf(builder, call);
       case "hasSize" -> sizeLimit(builder, call, field, RelationType.EQ);
       case "hasSizeGreaterThan" -> sizeLimit(builder, call, field, RelationType.GT);
       case "hasSizeLessThan" -> sizeLimit(builder, call, field, RelationType.LT);
