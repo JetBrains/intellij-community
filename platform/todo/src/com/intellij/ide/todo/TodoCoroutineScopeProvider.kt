@@ -7,6 +7,6 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-internal class TodoCoroutineScopeProvider(
+class TodoCoroutineScopeProvider(
   val coroutineScope: CoroutineScope,
 )

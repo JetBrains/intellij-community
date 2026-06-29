@@ -20,7 +20,7 @@ import com.intellij.util.text.CharArrayUtil
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-internal object TodoFileResultBuilder {
+object TodoFileResultBuilder {
 
   fun buildTodoFileResult(
     project: Project,
@@ -30,12 +30,7 @@ internal object TodoFileResultBuilder {
   ) : TodoFileResult? {
     val helper = PsiTodoSearchHelper.getInstance(project)
 
-    val matchesFilter = if (filter != null) {
-      filter.accept(helper, psiFile)
-    }
-    else {
-      helper.getTodoItemsCount(psiFile) > 0
-    }
+    val matchesFilter = filter?.accept(helper, psiFile) ?: (helper.getTodoItemsCount(psiFile) > 0)
     if (!matchesFilter) {
       return null
     }
@@ -61,7 +56,7 @@ internal object TodoFileResultBuilder {
     virtualFile: VirtualFile,
     filter: TodoFilter?,
   ) : List<TodoResult> {
-    val document = psiFile.viewProvider?.document
+    val document = psiFile.viewProvider.document
 
     val allTodoItems = PsiTodoSearchHelper.getInstance(project).findTodoItems(psiFile)
     val filteredTodoItems = if (filter != null) {
@@ -101,7 +96,7 @@ internal object TodoFileResultBuilder {
 
     val startInLine = todoItem.textRange.startOffset - lineStartNonWs
     val endInLine = todoItem.textRange.endOffset - lineStartNonWs
-    if (startInLine < 0 || endInLine <= startInLine || endInLine > text.length) {
+    if (startInLine !in 0..<endInLine || endInLine > text.length) {
       return listOf(SerializableTextChunk(text))
     }
 
@@ -128,6 +123,6 @@ internal object TodoFileResultBuilder {
     val parent = virtualFile.parent ?: return null
 
     val relativePath = VfsUtilCore.getRelativePath(parent, sourceRoot, '/') ?: return null
-    return relativePath?.takeIf { it.isNotEmpty() }
+    return relativePath.takeIf { it.isNotEmpty() }
   }
 }
