@@ -205,7 +205,11 @@ fun createMarkdownTestStyling(codeEditorTextStyle: TextStyle = TextStyle.Default
                         itemVerticalSpacingTight = 2.dp,
                         padding = PaddingValues(4.dp),
                         numberFormatStyles =
-                            MarkdownStyling.List.Ordered.NumberFormatStyles(firstLevel = NumberFormatStyle.Decimal),
+                            MarkdownStyling.List.Ordered.NumberFormatStyles(
+                                firstLevel = NumberFormatStyle.Decimal,
+                                secondLevel = NumberFormatStyle.Roman,
+                                thirdLevel = NumberFormatStyle.Alphabetical,
+                            ),
                     ),
                 unordered =
                     MarkdownStyling.List.Unordered(
