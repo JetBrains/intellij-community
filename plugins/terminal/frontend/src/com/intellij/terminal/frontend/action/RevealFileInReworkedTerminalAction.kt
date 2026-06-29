@@ -22,6 +22,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
+import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
+import org.jetbrains.plugins.terminal.fus.TerminalTabOpeningWay
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 
@@ -43,7 +45,11 @@ internal class RevealFileInReworkedTerminalAction : DumbAwareAction(), ActionRem
     e.coroutineScope.launch(Dispatchers.IO) {
       val path = getNearestDirectoryPath(file, project) ?: return@launch
       withContext(Dispatchers.EDT) {
-        createTerminalTab(project, workingDirectory = path.toString())
+        createTerminalTab(
+          project,
+          workingDirectory = path.toString(),
+          startupFusInfo = TerminalStartupFusInfo(TerminalTabOpeningWay.OPEN_IN_TERMINAL)
+        )
       }
     }
   }
