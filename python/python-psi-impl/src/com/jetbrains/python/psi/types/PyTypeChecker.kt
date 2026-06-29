@@ -1164,23 +1164,43 @@ object PyTypeChecker {
 
   /**
    * Binds TypeVars from the self parameter annotation of protocol member to [classType].
+   * For an instance, it also replaces `Self` in the member with [classType].
    */
   private fun substituteSelfInProtocolMember(classType: PyClassType, elementType: PyType?, context: TypeEvalContext): PyType? {
     if (elementType !is PyCallableType) return elementType
     val parameters = elementType.getParameters(context)
     if (parameters.isNullOrEmpty() || !parameters.first().isSelf) return elementType
     val selfParamType = parameters.first().getType(context) ?: return elementType
-    // An unannotated `self` has the `Self` type, which binds no type variable
-    if (selfParamType is PySelfType) return elementType
+    if (selfParamType is PySelfType) {
+      // A class object keeps its `Self`. Resolving it breaks the match of a class object against a `__call__` protocol.
+      if (classType.isDefinition) return elementType
+      // Without another `Self`, the member needs no substitution and keeps its function type
+      if (!hasSelfOutsideSelfParameter(elementType, parameters, context)) return elementType
+    }
     val selfSubstitutions = GenericSubstitutions()
+    if (!classType.isDefinition) {
+      selfSubstitutions.selfType = classType
+    }
 
-    /**
-     * Note: intentionally does not propagate [literalInference] into the self-binding sub-context;
-     * binding `self` is a separate concern from the conversion of [convertToType], so this match keeps the widening default.
-     */
-    val selfMatchContext = MatchContext(context, selfSubstitutions, false)
-    if (!match(selfParamType, classType, selfMatchContext).orElse(true)) return elementType
+    // An unannotated `self` has the `Self` type. It binds no type variable, so the self match is skipped.
+    if (selfParamType !is PySelfType) {
+      /**
+       * Note: intentionally does not propagate [literalInference] into the self-binding sub-context;
+       * binding `self` is a separate concern from the conversion of [convertToType], so this match keeps the widening default.
+       */
+      val selfMatchContext = MatchContext(context, selfSubstitutions, false)
+      if (!match(selfParamType, classType, selfMatchContext).orElse(true)) return elementType
+    }
     return substitute(elementType, selfSubstitutions, context) as? PyCallableType ?: elementType
+  }
+
+  private fun hasSelfOutsideSelfParameter(
+    callable: PyCallableType,
+    parameters: List<PyCallableParameter>,
+    context: TypeEvalContext,
+  ): Boolean {
+    return callable.getReturnType(context).collectGenerics(context).self != null ||
+           parameters.asSequence().drop(1).any { it.getType(context).collectGenerics(context).self != null }
   }
 
   // https://typing.python.org/en/latest/spec/tuples.html#type-compatibility-rules

@@ -28,7 +28,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       # └ TYPE set[int]
       """.trimIndent())
 
-    // PY-7020
+    @TestFor(issues = ["PY-7020"])
     @Test
     @TestCaseOptions(assertRecursionPrevention = false)
     fun `list comprehension type`() = test("""
@@ -36,7 +36,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       # └ TYPE list[str]
       """.trimIndent())
 
-    // PY-7021
+    @TestFor(issues = ["PY-7021"])
     @Test
     @TestCaseOptions(assertRecursionPrevention = false)
     fun `generator comprehension type`() = test("""
@@ -44,7 +44,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       # └ TYPE Generator[str, Unknown, None]
       """.trimIndent())
 
-    // PY-7021
+    @TestFor(issues = ["PY-7021"])
     @Test
     @TestCaseOptions(assertRecursionPrevention = false)
     fun `iterate over generator comprehension`() = test("""
@@ -750,11 +750,70 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       def g(x):
           return x.lower()
       """.trimIndent())
+
+    @TestFor(issues = ["PY-90570"])
+    @Test
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `dict from enumerate`() = test("""
+      from string import ascii_lowercase
+      expr = dict(enumerate(ascii_lowercase))
+      # └ TYPE dict[int, str]
+      """.trimIndent())
+
+    @TestFor(issues = ["PY-90570"])
+    @Test
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `list from enumerate`() = test("""
+      from string import ascii_lowercase
+      expr = list(enumerate(ascii_lowercase))
+      # └ TYPE list[tuple[int, str]]
+      """.trimIndent())
+
+    @TestFor(issues = ["PY-90570"])
+    @Test
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `dict from zip`() = test("""
+      def f(a: list[int], b: list[str]):
+          expr = dict(zip(a, b))
+      #   └ TYPE dict[int, str]
+      """.trimIndent())
+
+    @TestFor(issues = ["PY-90570"])
+    @Test
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `list from user-defined structural iterator`() = test("""
+      from typing import Self
+
+      class Countdown[T]:
+          def __iter__(self) -> Self: ...
+          def __next__(self) -> T: ...
+
+      def f(c: Countdown[str]):
+          expr = list(c)
+      #   └ TYPE list[str]
+      """.trimIndent())
+
+    @TestFor(issues = ["PY-90570"])
+    @Test
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `list from structural iterator with inherited Self`() = test("""
+      from typing import Self
+
+      class Base[T]:
+          def __iter__(self) -> Self: ...
+          def __next__(self) -> T: ...
+
+      class Sub(Base[int]): ...
+
+      def f(s: Sub):
+          expr = list(s)
+      #   └ TYPE list[int]
+      """.trimIndent())
   }
 
   @Nested
   inner class GeneratorsAndYield {
-    // PY-5831
+    @TestFor(issues = ["PY-5831"])
     @Test
     fun `yield expression type`() = test("""
       def f():
@@ -762,7 +821,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       #   └ TYPE Unknown
       """.trimIndent())
 
-    // PY-9590
+    @TestFor(issues = ["PY-9590"])
     @Test
     fun `parenthesized yield expression type`() = test("""
       def f():
@@ -770,7 +829,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       #   └ TYPE Unknown
       """.trimIndent())
 
-    // PY-7215
+    @TestFor(issues = ["PY-7215"])
     @Test
     fun `function with nested generator`() = test("""
       def f():
@@ -935,7 +994,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       # └ TYPE Generator[int | Literal["str"], str | Unknown, bool | Literal[True]]
       """.trimIndent())
 
-    // PY-6702
+    @TestFor(issues = ["PY-6702"])
     @Test
     fun `yield from type`() = test("""
       def subgen():
@@ -1092,7 +1151,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       #   └ TYPE C
       """.trimIndent())
 
-    // PY-6729
+    @TestFor(issues = ["PY-6729"])
     @Test
     @TestCaseOptions(assertRecursionPrevention = false)
     fun `yield from non-iterable`() = test(
