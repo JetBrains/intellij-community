@@ -9,8 +9,10 @@ import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.newui.EventHandler
 import com.intellij.internal.statistic.eventLog.getUiEventLogger
 import com.intellij.openapi.MnemonicHelper
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
@@ -209,11 +211,17 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
     EventHandler.getShortcuts(IdeActions.ACTION_FIND)?.let { shortcut ->
       SearchTextField.FindAction().registerCustomShortcutSet(shortcut, rootPane, frameDisposable)
     }
+    ActionManager.getInstance().getAction("\$Paste")?.shortcutSet?.let { shortcuts ->
+      val pasteAction = SettingsPasteAction()
+      ActionUtil.mergeFrom(pasteAction, "Settings.Paste")
+      pasteAction.registerCustomShortcutSet(shortcuts, rootPane, frameDisposable)
+    }
   }
 
   override fun uiDataSnapshot(sink: DataSink) {
     super.uiDataSnapshot(sink)
     sink.uiDataSnapshot(editor)
+    sink[IS_SETTINGS_CONTEXT] = true
   }
 
   override fun dispose() {
