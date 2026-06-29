@@ -8,8 +8,12 @@ import com.intellij.execution.ui.RunContentManagerImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.Project
 import com.intellij.ui.content.Content
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ensureActive
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import kotlin.time.TimeSource
@@ -36,6 +40,11 @@ abstract class TerminalTabCloseListener(
       if (!shouldConfirmClosing(content)) {
         return true
       }
+    }
+    catch (_: CancellationException) {
+      ProgressManager.checkCanceled()
+      // User pressed "Cancel" in the modal progress dialog shown inside `shouldConfirmClosing`.
+      return false
     }
     catch (e: Exception) {
       LOG.error(e)
