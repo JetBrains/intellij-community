@@ -118,24 +118,37 @@ public final class JavaNameSuggestionProvider implements NameSuggestionProvider 
   }
   
   private static boolean isUpperCase(String s) {
+    boolean seenUpperCaseLetter = false;
     for (int i = 0, length = s.length(); i < length; i++) {
       char c = s.charAt(i);
-      if (!Character.isUpperCase(c) && Character.isLetter(c)) return false;
+      if (Character.isLetter(c)) {
+        if (!Character.isUpperCase(c)) return false;
+        seenUpperCaseLetter = true;
+      }
     }
-    return true;
+    return seenUpperCaseLetter;
   }
 
-  private static void suggestProperlyCasedNames(String prefix, List<@NotNull String> words, boolean capitalize, List<String> result) {
+  private static void suggestProperlyCasedNames(String prefix, List<String> words, boolean capitalize, List<String> result) {
     StringBuilder buffer = new StringBuilder(prefix);
+    boolean hasUpperCase = false;
     for (int i = 0; i < words.size(); i++) {
       String word = words.get(i);
+      hasUpperCase |= isUpperCase(word);
       boolean requiresCapitalization = capitalize || i > 0 || !prefix.isEmpty() && !StringUtil.endsWithChar(prefix, '_');
-      buffer.append(requiresCapitalization ? StringUtil.capitalize(word) : StringUtil.decapitalize(word));
+      buffer.append(requiresCapitalization ? StringUtil.capitalize(word) : StringUtil.decapitalize(StringUtil.toLowerCase(word)));
     }
     if (!buffer.isEmpty() && Character.isJavaIdentifierStart(buffer.charAt(0))) {
       result.add(buffer.toString());
     }
     if (words.size() > 1) {
+      if (hasUpperCase) {
+        List<String> lowerCasedWords = new ArrayList<>();
+        for (String word : words) {
+          lowerCasedWords.add(StringUtil.toLowerCase(word));
+        }
+        suggestProperlyCasedNames(prefix, lowerCasedWords, capitalize, result);
+      }
       words.removeFirst();
       suggestProperlyCasedNames(prefix, words, capitalize, result);
     }

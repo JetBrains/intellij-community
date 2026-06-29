@@ -166,6 +166,20 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
                                               """);
     assertEquals(List.of("ChangedFilesState", "FilesState", "State"), names);
   }
+  
+  public void testAcronyms() {
+    List<String> names = getNameSuggestions("""
+                                              class APIClient {
+                                                String <caret>fileAPI;
+                                              }""");
+    assertEquals(List.of("fileApi", "api", "string"), names);
+
+    List<String> names2 = getNameSuggestions("""
+                                              class <caret>APIClient {
+                                                String fileAPI;
+                                              }""");
+    assertEquals(List.of("ApiClient", "Client"), names2);
+  }
 
   private void doTestSuggestionAvailable(String text, String... expectedSuggestions) {
     List<String> suggestions = getNameSuggestions(text);
