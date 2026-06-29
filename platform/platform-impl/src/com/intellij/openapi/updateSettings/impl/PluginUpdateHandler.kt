@@ -3,8 +3,12 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.newui.PluginUiModel
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
@@ -26,13 +30,13 @@ interface PluginUpdateHandler {
     fun getInstance(): PluginUpdateHandler = PluginUpdateHandlerProvider.getInstance().getPluginUpdateHandler()
 
     @JvmStatic
-    fun installUpdates(
+    fun installUpdatesInBackground(
       updates: Collection<PluginUiModel>,
       component: JComponent?,
       finishCallback: Runnable?,
       customRestarter: Consumer<Boolean>? = null,
     ) {
-      runBlockingMaybeCancellable {
+      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.IO) {
         getInstance().installUpdates(updates, component, finishCallback, customRestarter)
       }
     }
