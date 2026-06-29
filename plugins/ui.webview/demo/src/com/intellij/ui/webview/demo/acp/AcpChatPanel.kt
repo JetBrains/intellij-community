@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.ui.webview.api.WebViewAssetPath
 import com.intellij.ui.webview.api.WebViewAssetRoot
+import com.intellij.ui.webview.api.WebViewIconSet
 import com.intellij.ui.webview.api.WebViewPanelOptions
 import com.intellij.ui.webview.api.createWebViewPanel
 import kotlinx.coroutines.CoroutineScope
@@ -69,6 +70,8 @@ internal class AcpChatPanel(
   private companion object {
     private const val RESOURCE_ROOT = "webview/views/acp-chat"
     private val LOG = logger<AcpChatPanel>()
-    private val ASSET_ROOT = WebViewAssetRoot.fromClasspath(AcpChatPanel::class.java, WebViewAssetPath.of(RESOURCE_ROOT))
+    private val ASSET_ROOT = WebViewAssetRoot
+      .fromClasspath(AcpChatPanel::class.java, WebViewAssetPath.of(RESOURCE_ROOT))
+      .withIconSets(WebViewIconSet.of("AcpChatIcons", AcpChatPanel::class.java))
   }
 }

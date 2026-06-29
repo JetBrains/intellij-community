@@ -39,7 +39,6 @@ import { n as ndJsonStream, t as ClientSideConnection } from "./assets/agentclie
 })();
 //#endregion
 //#region ../../webview-src/packages/api/src/webViewApi.ts
-var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
 var import_client = require_client();
 function apiId() {
 	return function createApiId(namespace) {
@@ -75,7 +74,35 @@ function createLazyWebViewTheme() {
 		}
 	});
 }
-createLazyWebViewTheme();
+var webViewTheme = createLazyWebViewTheme();
+//#endregion
+//#region ../../webview-src/packages/api/src/iconSet.ts
+var IconSet = /* @__PURE__ */ Object.freeze({ define(id) {
+	validateIconSetId(id);
+	return new DefinedIconSet(id);
+} });
+var DefinedIconSet = class {
+	id;
+	constructor(id) {
+		this.id = id;
+	}
+	src(resourcePath) {
+		validateIconResourcePath(resourcePath);
+		return `./__ij-icons/${this.id}/${webViewTheme.current}/${encodeIconResourcePath(resourcePath)}`;
+	}
+};
+function validateIconSetId(id) {
+	if (!/^[A-Za-z][A-Za-z0-9._-]*$/.test(id)) throw new Error(`Invalid WebView icon set id: ${id}`);
+}
+function validateIconResourcePath(resourcePath) {
+	if (resourcePath.length === 0 || resourcePath.startsWith("/") || resourcePath.includes("\\")) throw new Error(`Invalid WebView icon resource path: ${resourcePath}`);
+	if (/^[A-Za-z][A-Za-z0-9+.-]*:/.test(resourcePath)) throw new Error(`Invalid WebView icon resource path: ${resourcePath}`);
+	if (resourcePath.split("/").some((segment) => segment.length === 0 || segment === "." || segment === "..")) throw new Error(`Invalid WebView icon resource path: ${resourcePath}`);
+	if (!resourcePath.endsWith(".svg") && !resourcePath.endsWith(".png")) throw new Error(`Unsupported WebView icon resource extension: ${resourcePath}`);
+}
+function encodeIconResourcePath(resourcePath) {
+	return resourcePath.split("/").map((segment) => encodeURIComponent(segment)).join("/");
+}
 apiId()("webview.focus");
 apiId()("webview.focus");
 //#endregion
@@ -104,6 +131,7 @@ function createLazyWebViewBridge() {
 var webView = createLazyWebViewBridge();
 //#endregion
 //#region views/acp-chat/src/bridge/webviewApi.ts
+var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
 var acpBridgeHost = webView.callable(apiId()("acp.bridge"));
 var currentHandlers = null;
 webView.implement(apiId()("acp.bridge"), {
@@ -2008,9 +2036,10 @@ var SMOOTH_TEXT_OPTIONS = {
 	maxCharIntervalMs: 5,
 	minCommitMs: 33
 };
+var ACP_CHAT_ICONS = IconSet.define("AcpChatIcons");
+var SEND_ICON_PATH = "icons/acpChatSend.svg";
 function ChatView() {
 	const chat = useAcpChat();
-	const attachmentsEnabled = chat.promptCapabilities.image || chat.promptCapabilities.embeddedContext;
 	const notifyOnUnsupportedImagePaste = (event) => {
 		if (chat.promptCapabilities.image) return;
 		if (!Array.from(event.clipboardData.files).some((file) => file.type.startsWith("image/"))) return;
@@ -2055,56 +2084,47 @@ function ChatView() {
 							className: "acpComposerShell",
 							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Unstable_TriggerPopoverRoot, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(composer_exports.Root, {
 								className: "acpComposer",
-								children: [
-									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-										className: "acpComposerMain",
-										children: [
-											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(composer_exports.Quote, {
-												className: "acpComposerQuote",
-												children: [
-													/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-														className: "acpComposerQuoteLabel",
-														children: "Quote"
-													}),
-													/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.QuoteText, { className: "acpComposerQuoteText" }),
-													/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.QuoteDismiss, {
-														className: "acpComposerQuoteDismiss",
-														"aria-label": "Remove quote",
-														title: "Remove quote",
-														children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RemoveIcon, {})
-													})
-												]
-											}),
-											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-												className: "acpAttachmentList acpComposerAttachments",
-												children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Attachments, { children: () => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AttachmentChip, { removable: true }) })
-											}),
-											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Input, {
-												className: "acpComposerInput",
-												placeholder: "Message the agent…",
-												onPaste: notifyOnUnsupportedImagePaste
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "acpComposerMain",
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(composer_exports.Quote, {
+											className: "acpComposerQuote",
+											children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: "acpComposerQuoteLabel",
+													children: "Quote"
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.QuoteText, { className: "acpComposerQuoteText" }),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.QuoteDismiss, {
+													className: "acpComposerQuoteDismiss",
+													"aria-label": "Remove quote",
+													title: "Remove quote",
+													children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RemoveIcon, {})
+												})
+											]
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+											className: "acpAttachmentList acpComposerAttachments",
+											children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Attachments, { children: () => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AttachmentChip, { removable: true }) })
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Input, {
+											className: "acpComposerInput",
+											placeholder: "Message the agent…",
+											onPaste: notifyOnUnsupportedImagePaste
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Send, {
+											className: "acpComposerSend",
+											"aria-label": "Send",
+											title: "Send",
+											children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+												className: "acpComposerSendIcon",
+												src: ACP_CHAT_ICONS.src(SEND_ICON_PATH),
+												alt: "",
+												draggable: false
 											})
-										]
-									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SlashCommandMenu, { commands: chat.commands }),
-									attachmentsEnabled ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.AddAttachment, {
-										className: "acpComposerAttach",
-										"aria-label": "Attach file",
-										title: "Attach file",
-										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AttachmentIcon, {})
-									}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-										className: "acpComposerAttach",
-										type: "button",
-										"aria-label": "Attach file",
-										title: "Attach file",
-										onClick: chat.notifyAttachmentCapabilitiesUnavailable,
-										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AttachmentIcon, {})
-									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(composer_exports.Send, {
-										className: "acpComposerSend",
-										children: "Send"
-									})
-								]
+										})
+									]
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SlashCommandMenu, { commands: chat.commands })]
 							}) }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 								className: "acpComposerToolbar",
 								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(AgentSelector, {
@@ -2178,23 +2198,6 @@ function AttachmentChip(props) {
 				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RemoveIcon, {})
 			}) : null
 		]
-	});
-}
-function AttachmentIcon() {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
-		width: "14",
-		height: "14",
-		viewBox: "0 0 14 14",
-		"aria-hidden": "true",
-		focusable: "false",
-		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
-			d: "M5 10.5L10.6 4.9C11.4 4.1 11.4 2.8 10.6 2C9.8 1.2 8.5 1.2 7.7 2L2.4 7.3C1.3 8.4 1.3 10.2 2.4 11.3C3.5 12.4 5.3 12.4 6.4 11.3L11.3 6.4",
-			fill: "none",
-			stroke: "currentColor",
-			strokeWidth: "1.4",
-			strokeLinecap: "round",
-			strokeLinejoin: "round"
-		})
 	});
 }
 function RemoveIcon() {

@@ -11,16 +11,6 @@ type Locator = {
   press(key: string): Promise<void>
 }
 
-type FilePayload = {
-  name: string
-  mimeType: string
-  buffer: Buffer
-}
-
-type FileChooser = {
-  setFiles(files: FilePayload | FilePayload[]): Promise<void>
-}
-
 type Page = {
   goto(url: string): Promise<void>
   getByRole(role: string, options?: { name?: string | RegExp; exact?: boolean }): Locator
@@ -28,7 +18,6 @@ type Page = {
   getByText(text: string | RegExp, options?: { exact?: boolean }): Locator
   locator(selector: string): Locator
   evaluate<Result>(pageFunction: () => Result | Promise<Result>): Promise<Result>
-  waitForEvent(event: "filechooser"): Promise<FileChooser>
   waitForFunction(pageFunction: () => boolean): Promise<unknown>
   waitForSelector(selector: string): Promise<unknown>
 }
@@ -83,16 +72,13 @@ test.afterAll(async () => {
   await preview?.close()
 })
 
-test("explains attachment capabilities before an agent is activated", async ({ page }) => {
+test("explains pasted attachment capabilities before an agent is activated", async ({ page }) => {
   if (!preview) {
     throw new Error("ACP chat mock preview server was not started")
   }
   await page.goto(preview.url)
 
-  await expect(page.getByRole("button", { name: "Attach file" })).toBeVisible()
   await pasteImageIntoComposer(page)
-  await expect(page.getByText("Image attachment support can be detected only after an ACP agent is activated.")).toBeVisible()
-  await page.getByRole("button", { name: "Attach file" }).click()
   await expect(page.getByText("Image attachment support can be detected only after an ACP agent is activated.")).toBeVisible()
 })
 
@@ -194,7 +180,7 @@ test("drives ACP modes, model selection, and config options through the picker",
     && message.params?.value === true)).toBe(true)
 })
 
-test("sends attached image and text resources as ACP prompt content blocks", async ({ page }) => {
+test("sends pasted image resources as ACP prompt content blocks", async ({ page }) => {
   if (!preview) {
     throw new Error("ACP chat mock preview server was not started")
   }
@@ -202,18 +188,8 @@ test("sends attached image and text resources as ACP prompt content blocks", asy
 
   await page.locator(".acpAgentSelect").click()
   await page.getByRole("option", { name: "Mock Agent" }).click()
-  await expect(page.getByRole("button", { name: "Attach file" })).toBeVisible()
-
-  const fileChooserPromise = page.waitForEvent("filechooser")
-  await page.getByRole("button", { name: "Attach file" }).click()
-  const fileChooser = await fileChooserPromise
-  await fileChooser.setFiles([
-    { name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("attached text") },
-    { name: "pixel.png", mimeType: "image/png", buffer: Buffer.from([0x89, 0x50, 0x4e, 0x47]) },
-  ])
-
-  await expect(page.getByText("notes.txt", { exact: true })).toBeVisible()
-  await expect(page.getByText("pixel.png", { exact: true })).toBeVisible()
+  await pasteImageIntoComposer(page)
+  await expect(page.getByText("pasted.png", { exact: true })).toBeVisible()
 
   await page.getByPlaceholder("Message the agent…").fill("attachment probe")
   await page.getByRole("button", { name: "Send" }).click()
@@ -238,13 +214,7 @@ test("sends attached image and text resources as ACP prompt content blocks", asy
     && block.data.length > 0
     && typeof block.uri === "string"
     && block.uri.startsWith("attachment://"))
-  const hasTextResourceBlock: boolean = prompt.some((block: any) => block?.type === "resource"
-    && block.resource?.mimeType === "text/plain"
-    && block.resource?.text === "attached text"
-    && typeof block.resource?.uri === "string"
-    && block.resource.uri.startsWith("attachment://"))
   expect(hasImageBlock).toBe(true)
-  expect(hasTextResourceBlock).toBe(true)
 })
 
 test("inserts ACP slash commands into the composer and sends them as prompt prefixes", async ({ page }) => {

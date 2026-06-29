@@ -825,6 +825,7 @@ body {
 
 .acpComposerMain {
   display: flex;
+  position: relative;
   flex: 1 1 auto;
   flex-direction: column;
   gap: 6px;
@@ -894,51 +895,45 @@ body {
   color: var(--acp-text);
   border: 1px solid var(--acp-border);
   border-radius: 6px;
-  padding: 8px;
+  padding: 8px 42px 8px 8px;
   font: inherit;
-}
-
-.acpComposerAttach {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  width: 34px;
-  height: 34px;
-  align-self: flex-end;
-  background: var(--acp-bg-alt);
-  color: var(--acp-text-muted);
-  border: 1px solid var(--acp-border);
-  border-radius: 6px;
-  padding: 0;
-  cursor: pointer;
-}
-
-.acpComposerAttach:hover,
-.acpComposerAttach:focus-visible {
-  color: var(--acp-text);
-  outline: none;
-}
-
-.acpComposerAttach:disabled {
-  opacity: 0.5;
-  cursor: default;
 }
 
 .acpComposerSend {
-  align-self: flex-end;
-  background: var(--acp-accent);
-  color: #fff;
+  display: inline-flex;
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  color: var(--acp-text-muted);
   border: none;
-  border-radius: 6px;
-  padding: 8px 14px;
+  border-radius: 4px;
+  padding: 0;
   cursor: pointer;
   font: inherit;
+}
+
+.acpComposerSend:hover,
+.acpComposerSend:focus-visible {
+  color: var(--acp-text);
+  outline: none;
 }
 
 .acpComposerSend:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+.acpComposerSendIcon {
+  display: block;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
 }
 
 .acpApprovalOverlay {
