@@ -102,6 +102,73 @@ class LiteLlmPriceCatalogServiceTest {
     assertThat(exact.amountUsd).isEqualByComparingTo(BigDecimal("1.23"))
   }
 
+  @Test
+  fun calculatesEstimatedCostForPiPricingOverrideModel() {
+    val service = LiteLlmPriceCatalogService(
+      configDirProvider = { tempDir },
+      fetchPricingJson = {
+        """
+          {
+            "[pi] gpt-5.4": {
+              "input_cost_per_token": 0.0000025,
+              "output_cost_per_token": 0.000015,
+              "cache_read_input_token_cost": 0.00000025
+            }
+          }
+        """.trimIndent()
+      },
+      clock = fixedClock(),
+    )
+    service.refreshAtStartup()
+
+    val estimated = service.calculateCost(
+      AgentSessionUsageSnapshot(
+        modelId = "[pi] gpt-5.4",
+        inputTokens = 1_000,
+        outputTokens = 200,
+        cacheReadTokens = 500,
+        cacheWriteTokens = 300,
+      ),
+    )
+
+    assertThat(estimated.kind).isEqualTo(AgentSessionCostKind.ESTIMATED)
+    assertThat(estimated.matchedModelId).isEqualTo("[pi] gpt-5.4")
+    assertThat(estimated.amountUsd).isEqualByComparingTo(BigDecimal("0.006562500"))
+  }
+
+  @Test
+  fun calculatesEstimatedCostForPiModelFromUnderlyingModelPricing() {
+    val service = LiteLlmPriceCatalogService(
+      configDirProvider = { tempDir },
+      fetchPricingJson = {
+        """
+          {
+            "gpt-5.5": {
+              "input_cost_per_token": 0.000005,
+              "output_cost_per_token": 0.00003,
+              "cache_read_input_token_cost": 0.0000005
+            }
+          }
+        """.trimIndent()
+      },
+      clock = fixedClock(),
+    )
+    service.refreshAtStartup()
+
+    val estimated = service.calculateCost(
+      AgentSessionUsageSnapshot(
+        modelId = "[pi] gpt-5.5",
+        inputTokens = 209_514,
+        outputTokens = 10_040,
+        cacheReadTokens = 2_660_352,
+      ),
+    )
+
+    assertThat(estimated.kind).isEqualTo(AgentSessionCostKind.ESTIMATED)
+    assertThat(estimated.matchedModelId).isEqualTo("openai/gpt-5.5")
+    assertThat(estimated.amountUsd).isEqualByComparingTo(BigDecimal("2.6789460"))
+  }
+
   private fun fixedClock(): Clock = Clock.fixed(Instant.parse("2026-06-16T10:15:30Z"), ZoneOffset.UTC)
 
   private fun minimalCatalogJson(): String {

@@ -72,6 +72,9 @@ Agent Workbench treats Pi as a first-class terminal-backed provider. Pi sessions
 - Listed Pi threads must be filtered by the session header `cwd`, use the header `id`, use the latest `session_info.name` as the title, fall back to the first user message, and sort newest first by latest user/assistant activity timestamp, header timestamp, or file mtime.
   [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiSessionSourceTest.kt
 
+- Pi must expose session costs through the shared Agent Workbench `AgentSessionCostSource` hydration flow. Cost loading must parse assistant `message.usage` snapshots from the persisted Pi JSONL, prefix model ids as `[pi] <model>`, include input/output/cache-read/cache-write token counts, and apply Pi `totalTokens` fallback the same way as ccusage by filling missing output tokens only when output is otherwise absent.
+  [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiSessionSourceTest.kt
+
 - Pi thread outlines must be loaded from persisted JSONL without launching Pi or parsing interactive `/tree` output. Outline loading follows Pi tree display semantics by showing normal visible conversation/work rows as a chronological top-level timeline, keeping tool details under their owning assistant/work rows, hiding bookkeeping nodes, and mapping conversation/tool records to the shared Agent Chat Structure View outline kinds.
   [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiSessionSourceTest.kt
 

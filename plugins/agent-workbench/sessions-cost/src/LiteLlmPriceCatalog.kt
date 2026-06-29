@@ -16,6 +16,7 @@ import java.time.Instant
 
 private const val EMBEDDED_LITELLM_PRICING_RESOURCE = "session_costs_pricing/litellm/model_prices_and_context_window.json"
 private const val ONLINE_CACHE_FILE_NAME = "litellm-online-pricing.json"
+private const val PI_PRICING_MODEL_PREFIX = "[pi] "
 private val ONLINE_CACHE_TTL: Duration = Duration.ofHours(24)
 private val CACHE_CREATE_MULTIPLIER = BigDecimal("1.25")
 private val CACHE_READ_MULTIPLIER = BigDecimal("0.1")
@@ -151,7 +152,12 @@ object LiteLlmPriceCatalog {
     normalized.firstNotNullOfOrNull { alias -> snapshot.matchedAliasEntries[alias]?.let(snapshot.aliasEntries::get) }?.let { return it }
     findEntry(snapshot.aliasEntries, resolvedModelName)?.let { return it }
     normalized.firstNotNullOfOrNull { alias -> snapshot.matchedDirectEntries[alias]?.let(snapshot.directEntries::get) }?.let { return it }
-    return findEntry(snapshot.directEntries, resolvedModelName)
+    findEntry(snapshot.directEntries, resolvedModelName)?.let { return it }
+
+    if (resolvedModelName.startsWith(PI_PRICING_MODEL_PREFIX, ignoreCase = true)) {
+      return matchEntry(resolvedModelName.substring(PI_PRICING_MODEL_PREFIX.length), snapshot)
+    }
+    return null
   }
 
   fun primaryAlias(entry: LiteLlmPricingEntry): String? = entry.aliases.firstOrNull()
@@ -359,6 +365,7 @@ object LiteLlmPriceCatalog {
   fun isRelevantModelKey(model: String): Boolean {
     return listOf(
       "gpt-",
+      PI_PRICING_MODEL_PREFIX,
       "openai/",
       "claude-",
       "anthropic.",

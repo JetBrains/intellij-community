@@ -11,6 +11,7 @@ import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.normalizeAgentSessionProjectPath
 import com.intellij.platform.ai.agent.core.normalizeAgentSessionTitle
 import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineItemKind
+import com.intellij.platform.ai.agent.core.session.AgentSessionCost
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.core.session.AgentSessionThreadOutline
 import com.intellij.platform.ai.agent.core.session.AgentSessionOutlineTreeRecord
@@ -25,8 +26,13 @@ import com.intellij.platform.ai.agent.json.WorkbenchJsonlScanner
 import com.intellij.platform.ai.agent.json.forEachJsonObjectField
 import com.intellij.platform.ai.agent.json.readJsonLongOrNull
 import com.intellij.platform.ai.agent.json.readJsonStringOrNull
+import com.intellij.platform.ai.agent.sessions.core.cost.AgentSessionUsageCostCalculators
+import com.intellij.platform.ai.agent.sessions.core.cost.AgentSessionUsageSnapshot
+import com.intellij.platform.ai.agent.sessions.core.cost.aggregateAgentSessionUsageCost
+import com.intellij.platform.ai.agent.sessions.core.normalizeConcreteAgentSessionThreadId
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionActiveThreadUpdateSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionArchivedSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionCostSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionOutlineForkResult
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadOutlineForkSource
@@ -43,6 +49,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.merge
+import java.math.BigDecimal
 import java.io.StringWriter
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -83,6 +90,18 @@ internal class PiSessionStore(
   fun loadOutline(projectPath: String, threadId: String): AgentSessionThreadOutline? {
     val entry = findEntry(projectPath, threadId) ?: return null
     return parseSessionOutline(entry)
+  }
+
+  fun loadUsageSnapshots(projectPath: String, threadIds: Set<String>): Map<String, List<AgentSessionUsageSnapshot>> {
+    if (threadIds.isEmpty()) return emptyMap()
+    val normalizedProjectPath = normalizePiProjectPath(projectPath) ?: return emptyMap()
+    val result = LinkedHashMap<String, List<AgentSessionUsageSnapshot>>()
+    loadEntries(projectPath).asSequence()
+      .filter { entry -> entry.normalizedProjectDir == normalizedProjectPath && entry.sessionId in threadIds }
+      .forEach { entry ->
+        result[entry.sessionId] = parseSessionUsageSnapshots(entry)
+      }
+    return result
   }
 
   fun canForkThreadFromOutlineItem(path: String, threadId: String, itemId: String): Boolean {
@@ -185,6 +204,23 @@ internal class PiSessionStore(
       updatedAt = updatedAt,
       items = buildAgentSessionOutlineTree(state.records),
     )
+  }
+
+  private fun parseSessionUsageSnapshots(entry: PiSessionIndexEntry): List<AgentSessionUsageSnapshot> {
+    return try {
+      WorkbenchJsonlScanner.scanJsonObjects(
+        path = entry.sessionFile,
+        jsonFactory = jsonFactory,
+        newState = { ArrayList() },
+      ) { parser, snapshots ->
+        parsePiUsageSnapshot(parser)?.let(snapshots::add)
+        true
+      }
+    }
+    catch (e: Exception) {
+      LOG.debug("Failed to parse Pi session usage: ${entry.sessionFile}", e)
+      emptyList()
+    }
   }
 
   private fun resolveForkBranch(sessionFile: Path, itemId: String): List<PiForkRawEntry>? {
@@ -355,10 +391,12 @@ internal class PiSessionSource(
   extensionStatusEvents: Flow<AgentSessionSourceUpdateEvent> = PiExtensionStatusBridge.updateEvents,
   fileWatchFallbackEnabledProvider: () -> Boolean = ::isPiFileWatchFallbackEnabled,
   sessionUpdateEventsContributorProvider: () -> List<PiSessionUpdateEventsContributor> = ::piSessionUpdateEventsContributors,
+  private val calculateCost: (AgentSessionUsageSnapshot) -> AgentSessionCost = AgentSessionUsageCostCalculators::calculateCost,
 ) : BaseAgentSessionSource(PI_AGENT_SESSION_PROVIDER),
     AgentSessionUpdateSource,
     AgentSessionActiveThreadUpdateSource,
     AgentSessionArchivedSource,
+    AgentSessionCostSource,
     AgentSessionThreadOutlineSource,
     AgentSessionThreadOutlineNavigationSource,
     AgentSessionThreadOutlineForkSource {
@@ -410,6 +448,25 @@ internal class PiSessionSource(
       .filter(PiSessionIndexEntry::archived)
       .sortedByDescending(PiSessionIndexEntry::updatedAt)
       .map { entry -> entry.toAgentSessionThread(readTracker) }
+  }
+
+  override suspend fun loadThreadCosts(path: String, threads: List<AgentSessionThread>): Map<String, AgentSessionCost?> {
+    if (threads.isEmpty()) {
+      return emptyMap()
+    }
+
+    val requestedThreadIds = threads.asSequence()
+      .map(AgentSessionThread::id)
+      .mapNotNull(::normalizeConcreteAgentSessionThreadId)
+      .toCollection(LinkedHashSet())
+    if (requestedThreadIds.isEmpty()) {
+      return emptyMap()
+    }
+
+    val usageSnapshotsByThreadId = sessionStore.loadUsageSnapshots(path, requestedThreadIds)
+    return requestedThreadIds.associateWith { threadId ->
+      usageSnapshotsByThreadId[threadId]?.aggregateAgentSessionUsageCost(calculateCost)
+    }
   }
 
   override suspend fun loadThreadOutline(path: String, threadId: String, subAgentId: String?): AgentSessionThreadOutline? {
@@ -746,6 +803,112 @@ private fun parseSessionObject(parser: JsonParser, state: PiSessionFileState) {
   }
 }
 
+private fun parsePiUsageSnapshot(parser: JsonParser): AgentSessionUsageSnapshot? {
+  var type: String? = null
+  var usageMessage: PiUsageMessage? = null
+
+  forEachJsonObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "type" -> type = readJsonStringOrNull(parser)
+      "message" -> usageMessage = parsePiUsageMessage(parser)
+      else -> parser.skipChildren()
+    }
+    true
+  }
+
+  val normalizedType = type?.trim()
+  if (normalizedType != null && normalizedType != "message") return null
+  val message = usageMessage ?: return null
+  if (message.role != "assistant") return null
+  val usage = message.usage?.withTotalTokensFallback() ?: return null
+  if (!usage.hasTokens()) return null
+  return AgentSessionUsageSnapshot(
+    modelId = message.model?.let { model -> PI_COST_MODEL_PREFIX + model },
+    inputTokens = usage.inputTokens,
+    outputTokens = usage.outputTokens,
+    cacheReadTokens = usage.cacheReadTokens,
+    cacheWriteTokens = usage.cacheWriteTokens,
+    requestCount = 1,
+    nativeExactCostUsd = usage.nativeExactCostUsdForProvider(message.provider),
+  )
+}
+
+private fun parsePiUsageMessage(parser: JsonParser): PiUsageMessage? {
+  if (parser.currentToken() != JsonToken.START_OBJECT) {
+    parser.skipChildren()
+    return null
+  }
+
+  var role: String? = null
+  var provider: String? = null
+  var model: String? = null
+  var usage: PiUsageTokens? = null
+  forEachJsonObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "role" -> role = readJsonStringOrNull(parser)?.trim()?.takeIf { it.isNotEmpty() }
+      "provider" -> provider = readJsonStringOrNull(parser)?.trim()?.takeIf { it.isNotEmpty() }
+      "model" -> model = readJsonStringOrNull(parser)?.trim()?.takeIf { it.isNotEmpty() }
+      "usage" -> usage = parsePiUsageTokens(parser)
+      else -> parser.skipChildren()
+    }
+    true
+  }
+  return PiUsageMessage(role = role, provider = provider, model = model, usage = usage)
+}
+
+private fun parsePiUsageTokens(parser: JsonParser): PiUsageTokens? {
+  if (parser.currentToken() != JsonToken.START_OBJECT) {
+    parser.skipChildren()
+    return null
+  }
+
+  var inputTokens = 0L
+  var outputTokens = 0L
+  var cacheReadTokens = 0L
+  var cacheWriteTokens = 0L
+  var totalTokens = 0L
+  var nativeExactCostUsd: BigDecimal? = null
+  forEachJsonObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "input" -> inputTokens = readJsonNonNegativeLongOrZero(parser)
+      "output" -> outputTokens = readJsonNonNegativeLongOrZero(parser)
+      "cacheRead" -> cacheReadTokens = readJsonNonNegativeLongOrZero(parser)
+      "cacheWrite" -> cacheWriteTokens = readJsonNonNegativeLongOrZero(parser)
+      "totalTokens" -> totalTokens = readJsonNonNegativeLongOrZero(parser)
+      "cost" -> nativeExactCostUsd = parsePiUsageCostTotal(parser)
+      else -> parser.skipChildren()
+    }
+    true
+  }
+  return PiUsageTokens(
+    inputTokens = inputTokens,
+    outputTokens = outputTokens,
+    cacheReadTokens = cacheReadTokens,
+    cacheWriteTokens = cacheWriteTokens,
+    totalTokens = totalTokens,
+    nativeExactCostUsd = nativeExactCostUsd,
+  )
+}
+
+private fun parsePiUsageCostTotal(parser: JsonParser): BigDecimal? {
+  if (parser.currentToken() != JsonToken.START_OBJECT) {
+    parser.skipChildren()
+    return null
+  }
+
+  var total: BigDecimal? = null
+  forEachJsonObjectField(parser) { fieldName ->
+    if (fieldName == "total") {
+      total = readJsonBigDecimalOrNull(parser)
+    }
+    else {
+      parser.skipChildren()
+    }
+    true
+  }
+  return total
+}
+
 private fun shouldPreserveLeafForPiSessionInfo(previousName: String?, nextName: String?): Boolean {
   val normalizedNextName = nextName?.trim()?.takeIf { it.isNotEmpty() } ?: return false
   return isAgentSessionArchivedThreadTitle(normalizedNextName) || previousName?.let(::isAgentSessionArchivedThreadTitle) == true
@@ -960,6 +1123,41 @@ private data class PiParsedMessage(
   val timestamp: Long?,
   val stopReason: String?,
 )
+
+private data class PiUsageMessage(
+  val role: String?,
+  val provider: String?,
+  val model: String?,
+  val usage: PiUsageTokens?,
+)
+
+private data class PiUsageTokens(
+  val inputTokens: Long,
+  val outputTokens: Long,
+  val cacheReadTokens: Long,
+  val cacheWriteTokens: Long,
+  val totalTokens: Long,
+  val nativeExactCostUsd: BigDecimal?,
+) {
+  fun withTotalTokensFallback(): PiUsageTokens {
+    if (outputTokens != 0L) return this
+    val knownTokens = inputTokens + cacheReadTokens + cacheWriteTokens
+    val missingTokens = (totalTokens - knownTokens).coerceAtLeast(0L)
+    return if (missingTokens == 0L) this else copy(outputTokens = missingTokens)
+  }
+
+  fun hasTokens(): Boolean {
+    return inputTokens + outputTokens + cacheReadTokens + cacheWriteTokens > 0L
+  }
+
+  fun nativeExactCostUsdForProvider(provider: String?): BigDecimal? {
+    val exactCost = nativeExactCostUsd ?: return null
+    if (hasTokens() && exactCost.signum() == 0 && provider?.equals(PI_JBCENTRAL_PROVIDER_NAME, ignoreCase = true) == true) {
+      return null
+    }
+    return exactCost
+  }
+}
 
 private data class PiOutlineMessage(
   val role: String?,
@@ -1188,6 +1386,24 @@ private fun readPiTextBlock(parser: JsonParser): String? {
   return if (type == "text") text else null
 }
 
+private fun readJsonNonNegativeLongOrZero(parser: JsonParser): Long {
+  return readJsonLongOrNull(parser)?.takeIf { it > 0L } ?: 0L
+}
+
+private fun readJsonBigDecimalOrNull(parser: JsonParser): BigDecimal? {
+  return when (parser.currentToken()) {
+    JsonToken.VALUE_STRING -> parser.string?.toBigDecimalOrNull()
+    JsonToken.VALUE_NUMBER_INT,
+    JsonToken.VALUE_NUMBER_FLOAT,
+      -> parser.numberValue?.toString()?.toBigDecimalOrNull()
+    JsonToken.VALUE_NULL -> null
+    else -> {
+      parser.skipChildren()
+      null
+    }
+  }
+}
+
 private fun readPiSettingsSessionDir(settingsPath: Path): String? {
   if (!Files.isRegularFile(settingsPath)) return null
   return try {
@@ -1313,5 +1529,6 @@ private val PI_SESSION_DIR_UNSAFE_CHARS = Regex("[/\\\\:]")
 
 private const val PI_CURRENT_SESSION_VERSION = 3
 private const val PI_CONFIG_DIR = ".pi"
+private const val PI_COST_MODEL_PREFIX = "[pi] "
 private const val PI_AGENT_DIR_ENV = "PI_CODING_AGENT_DIR"
 private const val PI_SESSION_DIR_ENV = "PI_CODING_AGENT_SESSION_DIR"

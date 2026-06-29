@@ -15,6 +15,8 @@ targets:
   - ../../lib-agent/providers/claude/common/src/*.kt
   - ../../lib-agent/providers/claude/sessions/src/**/*.kt
   - ../../lib-agent/providers/claude/sessions/testSrc/**/*.kt
+  - ../../lib-agent/providers/pi/sessions/src/**/*.kt
+  - ../../lib-agent/providers/pi/sessions/testSrc/**/*.kt
   - ../../claude/awb/src/**/*.kt
   - ../../claude/awb/testSrc/**/*.kt
   - ../../claude/awb/resources/intellij.agent.workbench.claude.awb.xml
@@ -68,6 +70,10 @@ The Agent Threads tree must optionally show per-session cost when the provider a
 - When exact cost is unavailable but normalized usage and an unambiguous OpenRouter model match exist, Agent Workbench must show an estimated session cost derived from the persisted snapshot.
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexSessionSourceRolloutIntegrationTest.kt
   [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeSessionsStoreTest.kt
+
+- Pi session usage must support ccusage-compatible `[pi] <model>` pricing keys, including cache read and cache write token pricing. Exact `[pi] <model>` pricing entries must remain distinct from ordinary provider model ids, while prefixed Pi model ids without an exact Pi entry may fall back to the underlying `<model>` price.
+  [@test] ../../sessions-cost/testSrc/LiteLlmPriceCatalogServiceTest.kt
+  [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiSessionSourceTest.kt
 
 - When exact cost is unavailable and the model match is missing or ambiguous, Agent Workbench must treat the session cost as unavailable and must not display a guessed amount.
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexSessionSourceTest.kt
