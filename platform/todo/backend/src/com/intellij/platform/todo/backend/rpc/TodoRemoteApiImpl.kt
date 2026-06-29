@@ -46,13 +46,21 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
   ): Flow<TodoEvent> = channelFlow {
     val project = projectId.findProjectOrNull() ?: return@channelFlow
     val filter = resolveFilter(project, request.filter)
+
+    val fileChangesQueue = Channel<VirtualFile>(Channel.UNLIMITED)
+    launch {
+      for (file in fileChangesQueue) {
+        scheduleFileChanges(project, file, filter)
+      }
+    }
+
     readAction {
       blockingContextToIndicator {
         buildInitialScanEvents(project, request.scope, filter)
       }
       if (shouldUseSplitTodo()) {
         PsiManager.getInstance(project).addPsiTreeChangeListener(
-          TodoBackendPsiListener { file -> scheduleFileChanges(project, file, filter)},
+          TodoBackendPsiListener { file -> fileChangesQueue.trySend(file) },
           this@channelFlow.asDisposable()
         )
       }
@@ -88,26 +96,24 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
     trySend(TodoEvent.ScanFinished)
   }
 
-  private fun ProducerScope<TodoEvent>.scheduleFileChanges(project: Project, file: VirtualFile, filter: TodoFilter? ) {
-    launch {
-      readAction {
-        val psiManager = PsiManager.getInstance(project)
-        val helper = PsiTodoSearchHelper.getInstance(project)
+  private suspend fun ProducerScope<TodoEvent>.scheduleFileChanges(project: Project, file: VirtualFile, filter: TodoFilter? ) {
+    readAction {
+      val psiManager = PsiManager.getInstance(project)
+      val helper = PsiTodoSearchHelper.getInstance(project)
 
-        if (!file.isValid) {
-          trySend(TodoEvent.ItemRemoved(file.rpcId()))
-          return@readAction
-        }
-
-        val psiFile = psiManager.findFile(file)
-        if (psiFile == null || helper.getTodoItemsCount(psiFile) == 0) {
-          trySend(TodoEvent.ItemRemoved(file.rpcId()))
-          return@readAction
-        }
-        val result = buildTodoFileResult(project, psiFile, file, filter)
-        if (result != null) trySend(TodoEvent.ItemUpserted(result))
-        else trySend(TodoEvent.ItemRemoved(file.rpcId()))
+      if (!file.isValid) {
+        trySend(TodoEvent.ItemRemoved(file.rpcId()))
+        return@readAction
       }
+
+      val psiFile = psiManager.findFile(file)
+      if (psiFile == null || helper.getTodoItemsCount(psiFile) == 0) {
+        trySend(TodoEvent.ItemRemoved(file.rpcId()))
+        return@readAction
+      }
+      val result = buildTodoFileResult(project, psiFile, file, filter)
+      if (result != null) trySend(TodoEvent.ItemUpserted(result))
+      else trySend(TodoEvent.ItemRemoved(file.rpcId()))
     }
   }
 
