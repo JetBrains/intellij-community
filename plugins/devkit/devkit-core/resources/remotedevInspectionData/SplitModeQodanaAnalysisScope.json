@@ -43,8 +43,6 @@
     "intellij.ml.llm.agents.contrib.tests",
     "intellij.ml.llm.agents.frontend",
     "intellij.ml.llm.agents.frontend.tests",
-    "intellij.ml.llm.agents.gemini",
-    "intellij.ml.llm.agents.gemini.tests",
     "intellij.ml.llm.agents.impl",
     "intellij.ml.llm.agents.impl.tests",
     "intellij.ml.llm.agents.shared",
