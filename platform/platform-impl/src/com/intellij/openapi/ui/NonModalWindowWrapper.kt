@@ -270,7 +270,7 @@ abstract class NonModalWindowWrapper(
         dialog.setLocationRelativeTo(dialog.owner)
         dialog.glassPane = IdeGlassPaneImpl(dialog.rootPane)
         ComponentUtil.decorateWindowHeader(dialog.rootPane)
-        dialog.rootPane.border = JBUI.CurrentTheme.Window.getBorder(false)
+        dialog.rootPane.border = JBUI.CurrentTheme.Window.getDialogBorder(false)
         dialog.accessibleContext.accessibleName = getAccessibleWindowName()
         val wd = Disposer.newDisposable(frameDisposable)
         windowDisposable = wd
@@ -293,7 +293,7 @@ abstract class NonModalWindowWrapper(
         frame.setLocationRelativeTo(getIdeJFrame())
         frame.glassPane = IdeGlassPaneImpl(frame.rootPane)
         ComponentUtil.decorateWindowHeader(frame.rootPane)
-        frame.rootPane.border = JBUI.CurrentTheme.Window.getBorder(false)
+        frame.rootPane.border = JBUI.CurrentTheme.Window.getDialogBorder(false)
         frame.accessibleContext.accessibleName = getAccessibleWindowName()
         val wd = Disposer.newDisposable(frameDisposable)
         windowDisposable = wd
