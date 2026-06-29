@@ -3,6 +3,7 @@ package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import com.jetbrains.python.psi.impl.PyClassImpl
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -704,6 +705,32 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
               g().x = 'foo'
           expr = x
       #   └ TYPE Literal[42]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-40882"])
+    fun `type hinted instance attribute without assignment is resolved`() = test("""
+      class A:
+          def __init__(self, a: int):
+              self.a: int | None
+              if bool():
+                  self.a = a
+              else:
+                  self.a = None
+
+
+      class B:
+          def __init__(self):
+              self.b: int
+
+          def get_b(self) -> int:
+              return self.b
+
+
+      print(A(1).a)
+
+      expr = B().b
+      # └ TYPE int
       """)
   }
 
