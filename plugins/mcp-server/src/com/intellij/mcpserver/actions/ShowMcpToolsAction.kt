@@ -5,6 +5,7 @@ import com.intellij.mcpserver.McpTool
 import com.intellij.mcpserver.McpToolCategory
 import com.intellij.mcpserver.McpToolsMarkdownExporter
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.presentableName
 import com.intellij.mcpserver.settings.McpToolFilterOptimizer
 import com.intellij.mcpserver.settings.McpToolFilterSettings
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -180,7 +181,7 @@ private class McpToolTreeCellRenderer : CheckboxTree.CheckboxTreeCellRenderer() 
     val node = value as? DefaultMutableTreeNode ?: return
     when (val userObject = node.userObject) {
       is CategoryNode -> {
-        textRenderer.append(userObject.category.shortName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+        textRenderer.append(userObject.category.presentableName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
       }
       is McpTool -> {
         textRenderer.append(userObject.descriptor.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)

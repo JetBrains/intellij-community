@@ -8,8 +8,9 @@ import com.intellij.mcpserver.McpTool
 import com.intellij.mcpserver.McpToolCategory
 import com.intellij.mcpserver.McpToolsMarkdownExporter
 import com.intellij.mcpserver.impl.McpServerService
-import com.intellij.mcpserver.toolsets.general.UniversalToolset
+import com.intellij.mcpserver.presentableName
 import com.intellij.mcpserver.settings.McpToolDisallowListSettings.ToolState
+import com.intellij.mcpserver.toolsets.general.UniversalToolset
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.options.SearchableConfigurable
@@ -31,7 +32,6 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.rows
 import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
-import com.intellij.util.text.NameUtilCore
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.UIUtil
@@ -463,7 +463,7 @@ class McpToolFilterConfigurable : SearchableConfigurable {
         tool.descriptor.name,
         tool.descriptor.category.shortName,
         tool.descriptor.description,
-        NameUtilCore.splitNameIntoWordList(tool.descriptor.category.shortName.removeSuffix("Toolset")).joinToString(" "),
+        tool.descriptor.category.presentableName,
       ).joinToString("\n").lowercase()
     })
 
@@ -595,8 +595,7 @@ class McpToolFilterConfigurable : SearchableConfigurable {
       isOpaque = false
     }
 
-    @Suppress("HardCodedStringLiteral")
-    val readableTitle = NameUtilCore.splitNameIntoWordList(group.category.shortName.removeSuffix("Toolset")).joinToString(" ")
+    val readableTitle = group.category.presentableName
     val separator = CollapsibleTitledSeparatorImpl(readableTitle).apply {
       expanded = categoryExpandedStates.getOrDefault(categoryKey, true)
       setLabelFocusable(true)

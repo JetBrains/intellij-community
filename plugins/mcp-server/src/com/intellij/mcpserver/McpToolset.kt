@@ -1,6 +1,7 @@
 package com.intellij.mcpserver
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.Nls
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -60,6 +61,15 @@ interface McpToolset {
   fun isEnabled(): Boolean = true
   
   fun isExperimental(): Boolean = true
+
+  /**
+   * Human-readable display name for this toolset group, shown in
+   * Settings | Tools | MCP Server | Exposed Tools and other UI surfaces.
+   *
+   * Return a localized string (typically from your plugin's message bundle).
+   * When `null`, the name is derived from the implementing class' simple name.
+   */
+  fun displayName(): @Nls String? = null
 
   /*
    * If true, then tools from this toolset are always included in the list of directly accessible MCP tools,

@@ -71,6 +71,7 @@ fun <T : McpToolset> KClass<out T>.asTools(json: Json = McpServerJson, thisRef: 
     fullyQualifiedName = this.qualifiedName ?: "Unknown",
     isExperimental = thisRef?.isExperimental() ?: false,
     alwaysIncluded = thisRef?.alwaysIncluded() ?: false,
+    displayName = thisRef?.displayName(),
   )
   return this.functions.filter { m ->
     m.getPreferredToolAnnotation() != null
