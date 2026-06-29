@@ -1268,7 +1268,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         setGlassPane(new IdeGlassPaneImpl(this));
         myGlassPaneIsSet = true;
         putClientProperty("DIALOG_ROOT_PANE", true);
-        setBorder(JBUI.CurrentTheme.Window.getBorder(isUndecorated()));
+        setBorder(JBUI.CurrentTheme.Window.getDialogBorder(isUndecorated()));
       }
 
       @Override
