@@ -562,6 +562,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   private VirtualFile @NotNull [] loadAllChildren(boolean sortChildrenOnLoading) {
+    if (directoryData.children.isInvalidated()) {
+      return VirtualFile.EMPTY_ARRAY;
+    }
+
     VfsData vfsData = getVfsData();
     PersistentFSImpl pFS = vfsData.owningPersistentFS();
 
@@ -575,6 +579,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     pFS.listAll(this);
 
     synchronized (directoryData) {
+      if (directoryData.children.isInvalidated()) {
+        return VirtualFile.EMPTY_ARRAY;
+      }
+
       List<? extends ChildInfo> childrenInfo = pFS.listAll(this);
       if (childrenInfo.isEmpty()) {
         directoryData.clearAdoptedNames();
@@ -704,6 +712,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
 
     synchronized (directoryData) {
+      VfsData.ChildrenIds children = directoryData.children;
+      if (children.isInvalidated()) {
+        return null;
+      }
+
       if (child == null) {//childId hasn't been loaded from persistence yet: load it
         if (!vfsData.isFileValid(childId)) {
           return null;
@@ -712,7 +725,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
 
       //now check child is indeed a child of this dir:
-      VfsData.ChildrenIds children = directoryData.children;
 
       //MAYBE RC: the code below is similar to addChild(child) -- how to reduce code duplication?
 
@@ -825,6 +837,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     int addedSize = added.size();
     if (addedSize <= 1) {//fast-path:
       synchronized (directoryData) {
+        if (directoryData.children.isInvalidated()) {
+          return;
+        }
+
         for (int i = 0; i < addedSize; i++) {
           ChildInfo info = added.get(i);
           assert info.getId() > 0 : info;
@@ -858,6 +874,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     FSRecordsImpl vfsPeer = owningPersistentFS().peer();
     synchronized (directoryData) {
+      if (directoryData.children.isInvalidated()) {
+        return;
+      }
+
       //TODO RC: if children is not sorted -- we could still work with unsorted, merge the lists by-id
       VfsData.ChildrenIds oldChildren = ensureChildrenSorted(isCaseSensitive);
       IntList mergedIds = new IntArrayList(oldChildren.size() + addedSize);
@@ -914,10 +934,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     String childName = child.getName();
     synchronized (directoryData) {
-      //MAYBE RC: check directory is not yet invalidated (.isValid())?
+      VfsData.ChildrenIds children = directoryData.children;
+      if (children.isInvalidated()) {
+        return;
+      }
+
       directoryData.removeAdoptedName(childName);
 
-      VfsData.ChildrenIds children = directoryData.children;
       if (children.isSorted() && worthBinarySearch(children)) {
         //If children are sorted => 99% caseSensitivity _is_ known; otherwise how could children be sorted?
         // The only exception is children.size=1, but this is rejected by .worthBinarySearch(). But lets be on a safe side:
@@ -948,6 +971,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     int childId = child.getId();
     synchronized (directoryData) {
       VfsData.ChildrenIds children = directoryData.children;
+      if (children.isInvalidated()) {
+        return;
+      }
 
       int childIndex;
       if (children.isSorted() && worthBinarySearch(children)) {
@@ -977,6 +1003,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   public void removeChildren(@NotNull IntSet idsToRemove, @NotNull List<? extends CharSequence> namesToRemove) {
     boolean isCaseSensitive = isCaseSensitive();
     synchronized (directoryData) {
+      if (directoryData.children.isInvalidated()) {
+        return;
+      }
+
       directoryData.children = directoryData.children.removeIds(idsToRemove);
 
       if (!allChildrenLoaded()) {
@@ -1092,10 +1122,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @Override
   public void invalidate(@NotNull Object source, @NotNull Object reason) {
     super.invalidate(source, reason);
-    //MAYBE RC: how to protect from modifying already invalidated file:
-    //          create a new INVALIDATED flag, and ChildrenIds.INVALIDATED_CHILDREN=ChildrenIds(empty,INVALIDATED)
-    //          check the flag in each ChildrenIds modification methods?
-    directoryData.children = VfsData.ChildrenIds.EMPTY;
+    synchronized (directoryData) {
+      directoryData.clearAdoptedNames();
+      directoryData.children = VfsData.ChildrenIds.INVALIDATED;
+    }
   }
 
   // optimization: do not travel up unnecessarily

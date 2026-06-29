@@ -290,10 +290,13 @@ public final class VfsData implements Closeable {
             //noinspection SynchronizationOnLocalVariableOrMethodParameter
             synchronized (directoryData) {
               childrenIds = directoryData.children;
+              if (!childrenIds.isInvalidated()) {
+                continue;
+              }
+              directoryData.children = ChildrenIds.INVALIDATED;
               if (childrenIds.size() == 0) {
                 continue;
               }
-              directoryData.children = ChildrenIds.EMPTY;
             }
 
             IntSet unremovedChildren = childrenIds.toIntSet();
@@ -866,13 +869,20 @@ public final class VfsData implements Closeable {
 
   @ApiStatus.Internal
   public static final class ChildrenIds {
-    public static final ChildrenIds EMPTY = new ChildrenIds(ArrayUtilRt.EMPTY_INT_ARRAY, /*sorted:*/ true, /*allLoaded: */ false);
+    //@formatter:off
+    private static final byte SORTED_BY_NAME_MASK       = 0b0001;
+    private static final byte ALL_CHILDREN_LOADED_MASK  = 0b0010;
+    private static final byte INVALIDATED_MASK          = 0b0100;
+    //@formatter:on
 
-    private static final byte SORTED_BY_NAME_MASK = 0b01;
-    private static final byte ALL_CHILDREN_LOADED_MASK = 0b10;
+    public static final ChildrenIds EMPTY = new ChildrenIds(ArrayUtilRt.EMPTY_INT_ARRAY, /*sorted:*/ true, /*allLoaded: */ false);
+    public static final ChildrenIds INVALIDATED = new ChildrenIds(
+      ArrayUtilRt.EMPTY_INT_ARRAY,
+      SORTED_BY_NAME_MASK | ALL_CHILDREN_LOADED_MASK | INVALIDATED_MASK
+    );
 
     private final int[] ids;
-    /** bitmask: SORTED_BY_NAME_MASK | ALL_CHILDREN_LOADED_MASK */
+    /** bitmask: SORTED_BY_NAME_MASK | ALL_CHILDREN_LOADED_MASK | INVALIDATED_MASK */
     private final int flags;
 
 
@@ -904,6 +914,11 @@ public final class VfsData implements Closeable {
       return (flags & ALL_CHILDREN_LOADED_MASK) != 0;
     }
 
+    /// A deleted directory whose children list must not be repopulated.
+    public boolean isInvalidated() {
+      return (flags & INVALIDATED_MASK) != 0;
+    }
+
     public IntOpenHashSet toIntSet() {
       return new IntOpenHashSet(ids);
     }
@@ -920,6 +935,9 @@ public final class VfsData implements Closeable {
 
 
     public @NotNull ChildrenIds withAllChildrenLoaded(boolean allChildrenLoaded) {
+      if (isInvalidated()) {
+        return this;
+      }
       if (areAllChildrenLoaded() == allChildrenLoaded) {
         return this;
       }
@@ -927,12 +945,18 @@ public final class VfsData implements Closeable {
     }
 
     public @NotNull ChildrenIds withIds(int[] updatedIds) {
+      if (isInvalidated()) {
+        return this;
+      }
       return new ChildrenIds(updatedIds, flags);
     }
 
     /** @return children sorted with the supplied comparator and fileLoader, regardless of current .sortedByName value */
     public ChildrenIds sorted(@NotNull IntFunction<? extends @NotNull VirtualFileSystemEntry> fileLoader,
                               @NotNull Comparator<? super VirtualFileSystemEntry> comparator) {
+      if (isInvalidated()) {
+        return this;
+      }
       //Since fileLoader/comparator is supplied externally, we can't rely on .sortedByName  -- it should be checked
       // by this method's caller, and it's up to the caller to decide to trust it or not
       if (ids.length <= 1) {
@@ -973,6 +997,9 @@ public final class VfsData implements Closeable {
 
 
     public @NotNull ChildrenIds insertAt(int index, int id) {
+      if (isInvalidated()) {
+        return this;
+      }
       int[] updatedIds = ArrayUtil.insert(ids, index, id);
       return withIds(updatedIds);
     }
@@ -983,16 +1010,25 @@ public final class VfsData implements Closeable {
     }
 
     public @NotNull ChildrenIds appendId(int id, boolean stillSorted) {
+      if (isInvalidated()) {
+        return this;
+      }
       int[] updatedIds = ArrayUtil.append(ids, id);
       return new ChildrenIds(updatedIds, stillSorted, areAllChildrenLoaded());
     }
 
     public @NotNull ChildrenIds removeAt(int index) {
+      if (isInvalidated()) {
+        return this;
+      }
       int[] updatedIds = ArrayUtil.remove(ids, index);
       return withIds(updatedIds);
     }
 
     public @NotNull ChildrenIds removeIds(@NotNull IntSet idsToRemove) {
+      if (isInvalidated()) {
+        return this;
+      }
       int[] newIds = new int[ids.length];
       int newIdsCount = 0;
       for (int id : ids) {
@@ -1010,6 +1046,9 @@ public final class VfsData implements Closeable {
 
     @Override
     public String toString() {
+      if (isInvalidated()) {
+        return "Children[INVALIDATED]";
+      }
       return "Children[ids: " + Arrays.toString(ids) + ", sortedByName: " + isSorted() + ", allLoaded: " + areAllChildrenLoaded() + "]";
     }
   }
