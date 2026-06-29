@@ -105,11 +105,15 @@ public final class TodoFileNode extends PsiFileNode {
                                                                @NotNull PsiTodoSearchHelper helper) {
     List<TodoItem> todoItems = new ArrayList<>(Arrays.asList(helper.findTodoItems(psiFile)));
 
+    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.getProject());
     psiFile.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
         if (element instanceof PsiLanguageInjectionHost) {
-          InjectedLanguageManager.getInstance(psiFile.getProject()).enumerate(element, (injectedPsi, places) -> {
+          injectedLanguageManager.enumerate(element, (injectedPsi, places) -> {
+            if (injectedLanguageManager.shouldInspectionsBeLenient(injectedPsi)) {
+              return;
+            }
             if (places.size() == 1) {
               Document document = PsiDocumentManager.getInstance(injectedPsi.getProject()).getCachedDocument(injectedPsi);
               if (!(document instanceof DocumentWindow)) return;

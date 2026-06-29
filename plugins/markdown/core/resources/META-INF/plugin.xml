@@ -278,7 +278,7 @@
     <usageViewElementsListener implementation="org.intellij.plugins.markdown.lang.references.backtick.BacktickUsageViewElementsListener"/>
 
     <todoIndexer filetype="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownTodoIndexer"/>
-    <indexPatternBuilder implementation="org.intellij.plugins.markdown.highlighting.MarkdownIndexPatternBuilder"/>
+    <indexPatternBuilder implementation="org.intellij.plugins.markdown.highlighting.MarkdownIndexPatternBuilder" order="last"/>
     <copyPastePreProcessor implementation="org.intellij.plugins.markdown.editor.MarkdownLinkPastePreProcessor"/>
     <enterHandlerDelegate id="MarkdownEnterHandler"
                           implementation="org.intellij.plugins.markdown.editor.MarkdownEnterHandler"/>
