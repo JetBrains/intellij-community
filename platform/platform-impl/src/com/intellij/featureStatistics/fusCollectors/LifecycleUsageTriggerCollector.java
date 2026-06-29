@@ -25,12 +25,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.UnhandledException;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlatformPlugin;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfoById;
@@ -39,7 +41,9 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlug
 public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(LifecycleUsageTriggerCollector.class);
 
-  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 78);
+  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 79);
+
+  private static final AtomicInteger MAX_SIMULTANEOUS_PROJECTS = new AtomicInteger(0);
 
   private static final EventField<Boolean> eapField = EventFields.Boolean("eap");
   private static final EventField<Boolean> testField = EventFields.Boolean("test");
@@ -59,6 +63,10 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
     LIFECYCLE.registerEvent("project.opening.finished", EventFields.Long("duration_ms"), EventFields.Boolean("project_tab"));
 
   private static final EventId PROJECT_OPENED = LIFECYCLE.registerEvent("project.opened");
+
+  private static final EventId1<Integer> PROJECT_MAX_SIMULTANEOUS =
+    LIFECYCLE.registerEvent("project.max.simultaneous",
+                           EventFields.BoundedInt("count", new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}));
 
   private static final EventId PROJECT_CLOSED = LIFECYCLE.registerEvent("project.closed"); // actually called before closed and disposed
 
@@ -145,6 +153,7 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
     var providers = IdeShutdownSessionTypeProvider.EP_NAME.getExtensionList();
     SessionType sessionType = providers.isEmpty() ? SessionType.SMART_ONLY : providers.getFirst().sessionType();
     IDE_CLOSE.log(restartField.with(restart), sessionTypeField.with(sessionType));
+    PROJECT_MAX_SIMULTANEOUS.log(MAX_SIMULTANEOUS_PROJECTS.get());
   }
 
   public static void onProjectOpenFinished(@NotNull Project project, long time, boolean isTab) {
@@ -153,6 +162,8 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
 
   public static void onProjectOpened(@NotNull Project project) {
     PROJECT_OPENED.log(project);
+    int current = ProjectManager.getInstance().getOpenProjects().length;
+    MAX_SIMULTANEOUS_PROJECTS.updateAndGet(prev -> Math.max(prev, current));
   }
 
   public static void onBeforeProjectClosed(@NotNull Project project) {
