@@ -2067,6 +2067,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/convertLambdaToReference/constructor2.kt");
             }
 
+            @TestMetadata("contextParameters.kt")
+            public void testContextParameters() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertLambdaToReference/contextParameters.kt");
+            }
+
             @TestMetadata("conversion.kt")
             public void testConversion() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/convertLambdaToReference/conversion.kt");
