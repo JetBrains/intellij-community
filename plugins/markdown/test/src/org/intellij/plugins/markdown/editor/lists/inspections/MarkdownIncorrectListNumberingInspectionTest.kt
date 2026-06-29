@@ -20,6 +20,9 @@ class MarkdownIncorrectListNumberingInspectionTest: LightPlatformCodeInsightFixt
   @Test
   fun `test problem registered in deep sublists`() = doTest()
 
+  @Test
+  fun `test no warning for list item with code block`() = doTest()
+
   private fun doTest() {
     val name = getTestName(true)
     myFixture.configureByFile("$name.md")
