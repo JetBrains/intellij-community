@@ -1055,10 +1055,10 @@ class AgentChatFileEditorProviderTest {
     val otherPathKey = presentationKey("/work/project-b", AgentSessionProvider.from("codex"), "thread-3")
     model.replaceForTests(
       mapOf(
-        refreshedKey to AgentSessionThreadPresentation(title = "Old title", activity = AgentThreadActivity.READY),
-        removedKey to AgentSessionThreadPresentation(title = "Removed title", activity = AgentThreadActivity.UNREAD),
-        otherProviderKey to AgentSessionThreadPresentation(title = "Claude title", activity = AgentThreadActivity.PROCESSING),
-        otherPathKey to AgentSessionThreadPresentation(title = "Other path", activity = AgentThreadActivity.READY),
+        refreshedKey to AgentSessionThreadPresentation(title = "Old title", activityReport = AgentThreadActivityReport(AgentThreadActivity.READY)),
+        removedKey to AgentSessionThreadPresentation(title = "Removed title", activityReport = AgentThreadActivityReport(AgentThreadActivity.UNREAD)),
+        otherProviderKey to AgentSessionThreadPresentation(title = "Claude title", activityReport = AgentThreadActivityReport(AgentThreadActivity.PROCESSING)),
+        otherPathKey to AgentSessionThreadPresentation(title = "Other path", activityReport = AgentThreadActivityReport(AgentThreadActivity.READY)),
       )
     )
 
@@ -1084,9 +1084,9 @@ class AgentChatFileEditorProviderTest {
       )
     assertThat(model.resolve(removedKey)).isNull()
     assertThat(model.resolve(otherProviderKey))
-      .isEqualTo(AgentSessionThreadPresentation(title = "Claude title", activity = AgentThreadActivity.PROCESSING))
+      .isEqualTo(AgentSessionThreadPresentation(title = "Claude title", activityReport = AgentThreadActivityReport(AgentThreadActivity.PROCESSING)))
     assertThat(model.resolve(otherPathKey))
-      .isEqualTo(AgentSessionThreadPresentation(title = "Other path", activity = AgentThreadActivity.READY))
+      .isEqualTo(AgentSessionThreadPresentation(title = "Other path", activityReport = AgentThreadActivityReport(AgentThreadActivity.READY)))
   }
 
   @Test
@@ -1099,7 +1099,7 @@ class AgentChatFileEditorProviderTest {
         provider = AgentSessionProvider.from("codex"),
         threadId = "thread-1",
         title = "Existing title",
-        activity = AgentThreadActivity.READY,
+        activityReport = AgentThreadActivityReport(AgentThreadActivity.READY),
       )
 
       val changeSet = model.updateActivityHints(
@@ -1108,14 +1108,14 @@ class AgentChatFileEditorProviderTest {
           com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadActivityPresentationUpdate(
             path = "/work/project-a",
             threadId = "thread-1",
-            activity = AgentThreadActivity.UNREAD,
+            activityReport = AgentThreadActivityReport(AgentThreadActivity.UNREAD),
           )
         ),
       )
 
       assertThat(changeSet.changedKeys).containsExactly(key)
       assertThat(model.resolve(key))
-        .isEqualTo(AgentSessionThreadPresentation(title = "Existing title", activity = AgentThreadActivity.UNREAD))
+        .isEqualTo(AgentSessionThreadPresentation(title = "Existing title", activityReport = AgentThreadActivityReport(AgentThreadActivity.UNREAD)))
     }
   }
 
@@ -1143,7 +1143,7 @@ class AgentChatFileEditorProviderTest {
         assertThat(file).isNotNull
         assertThat(model.resolve(key)).isNull()
         assertThat(resolveAgentChatThreadPresentation(checkNotNull(file)))
-          .isEqualTo(AgentSessionThreadPresentation(title = "Restored thread", activity = AgentThreadActivity.UNREAD))
+          .isEqualTo(AgentSessionThreadPresentation(title = "Restored thread", activityReport = AgentThreadActivityReport(AgentThreadActivity.UNREAD)))
       }
       finally {
         tabsService.forget(snapshot.tabKey)
@@ -1172,7 +1172,7 @@ class AgentChatFileEditorProviderTest {
           provider = AgentSessionProvider.from("codex"),
           threadId = snapshot.runtime.threadId,
           title = "Forget me",
-          activity = AgentThreadActivity.UNREAD,
+          activityReport = AgentThreadActivityReport(AgentThreadActivity.UNREAD),
         )
         assertThat(model.resolve(key)).isNotNull
 
@@ -1475,7 +1475,7 @@ private fun threadModel(
     title = title,
     updatedAt = 1L,
     archived = false,
-    activity = activity,
+    activityReport = AgentThreadActivityReport(activity),
     provider = provider,
   )
 }

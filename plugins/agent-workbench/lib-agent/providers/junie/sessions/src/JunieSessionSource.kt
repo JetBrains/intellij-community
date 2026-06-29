@@ -5,6 +5,7 @@ import tools.jackson.core.JsonParser
 import tools.jackson.core.JsonToken
 import tools.jackson.core.json.JsonFactory
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionCost
 import com.intellij.platform.ai.agent.core.normalizeAgentSessionProjectPath
 import com.intellij.platform.ai.agent.core.normalizeAgentSessionTitle
@@ -339,7 +340,7 @@ internal class JunieSessionSource(
             threadId = thread.id,
             title = thread.title,
             updatedAt = thread.updatedAt,
-            activity = thread.activity,
+            activity = thread.activityReport.rowActivity,
           )
         }
       }
@@ -497,7 +498,7 @@ private fun JunieSessionIndexEntry.toAgentSessionThread(
     title = title,
     updatedAt = updatedAt,
     archived = archived == true,
-    activity = effectiveActivity(readTracker, eventsAnalysis),
+    activityReport = AgentThreadActivityReport(effectiveActivity(readTracker, eventsAnalysis)),
     provider = JUNIE_AGENT_SESSION_PROVIDER,
   )
 }

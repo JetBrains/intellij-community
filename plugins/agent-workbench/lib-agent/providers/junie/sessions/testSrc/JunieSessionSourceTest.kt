@@ -61,7 +61,7 @@ class JunieSessionSourceTest {
       assertThat(threads[0].title).isEqualTo("Review changes")
       assertThat(threads[0].updatedAt).isEqualTo(2000L)
       assertThat(threads[0].archived).isFalse()
-      assertThat(threads[0].activity).isEqualTo(AgentThreadActivity.READY)
+      assertThat(threads[0].activityReport.rowActivity).isEqualTo(AgentThreadActivity.READY)
       assertThat(threads[0].provider).isEqualTo(AgentSessionProvider.from("junie"))
     }
   }
@@ -100,7 +100,7 @@ class JunieSessionSourceTest {
       assertThat(threads.map { it.id }).containsExactly("session-archived")
       assertThat(threads.single().title).isEqualTo("Archived")
       assertThat(threads.single().archived).isTrue()
-      assertThat(threads.single().activity).isEqualTo(AgentThreadActivity.READY)
+      assertThat(threads.single().activityReport.rowActivity).isEqualTo(AgentThreadActivity.READY)
       assertThat(threads.single().provider).isEqualTo(AgentSessionProvider.from("junie"))
     }
   }
@@ -248,12 +248,12 @@ class JunieSessionSourceTest {
       source.markThreadAsRead("session-read-state", 2000L)
 
       val unreadThreads = source.listThreads(projectDir.toString(), openProject = null)
-      assertThat(unreadThreads.single().activity).isEqualTo(AgentThreadActivity.UNREAD)
+      assertThat(unreadThreads.single().activityReport.rowActivity).isEqualTo(AgentThreadActivity.UNREAD)
 
       source.markThreadAsRead("session-read-state", 3000L)
 
       val readyThreads = source.listThreads(projectDir.toString(), openProject = null)
-      assertThat(readyThreads.single().activity).isEqualTo(AgentThreadActivity.READY)
+      assertThat(readyThreads.single().activityReport.rowActivity).isEqualTo(AgentThreadActivity.READY)
     }
   }
 
@@ -342,15 +342,15 @@ class JunieSessionSourceTest {
       val source = JunieSessionSource(sessionIndexPathProvider = { index })
 
       val listedThreads = source.listThreads(projectDir.toString(), openProject = null)
-      assertThat(listedThreads.single().activity).isEqualTo(AgentThreadActivity.READY)
+      assertThat(listedThreads.single().activityReport.rowActivity).isEqualTo(AgentThreadActivity.READY)
 
       val refreshResult = source.refreshThreads(
         threadScopedRequest(projectDir, "session-running-status")
       )
 
       val refreshedThread = refreshResult.partialThreadsByPath.getValue(projectDir.toString()).single()
-      assertThat(refreshedThread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
-      assertThat(source.listThreads(projectDir.toString(), openProject = null).single().activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(refreshedThread.activityReport.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(source.listThreads(projectDir.toString(), openProject = null).single().activityReport.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
     }
   }
 
@@ -380,7 +380,7 @@ class JunieSessionSourceTest {
       )
 
       val refreshedThread = refreshResult.partialThreadsByPath.getValue(projectDir.toString()).single()
-      assertThat(refreshedThread.activity).isEqualTo(AgentThreadActivity.UNREAD)
+      assertThat(refreshedThread.activityReport.rowActivity).isEqualTo(AgentThreadActivity.UNREAD)
     }
   }
 

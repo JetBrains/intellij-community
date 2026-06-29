@@ -69,7 +69,7 @@ class AgentSessionReadService private constructor(
       threadIdentity = buildAgentSessionIdentity(provider = thread.provider, sessionId = thread.id),
       threadId = thread.id,
       threadTitle = thread.title,
-      threadActivity = thread.activity,
+      threadActivity = thread.activityReport.rowActivity,
       threadUpdatedAt = thread.updatedAt,
     )
   }

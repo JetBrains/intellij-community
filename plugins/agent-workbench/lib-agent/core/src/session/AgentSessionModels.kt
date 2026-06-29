@@ -50,36 +50,7 @@ data class AgentSessionThread(
   @JvmField val subAgents: List<AgentSubAgent> = emptyList(),
   @JvmField val originBranch: String? = null,
   @JvmField val cost: AgentSessionCost? = null,
-) {
-  constructor(
-    id: String,
-    title: String,
-    updatedAt: Long,
-    archived: Boolean,
-    activity: AgentThreadActivity,
-    provider: AgentSessionProvider,
-    subAgents: List<AgentSubAgent> = emptyList(),
-    originBranch: String? = null,
-    summaryActivity: AgentThreadActivity? = activity,
-    cost: AgentSessionCost? = null,
-  ) : this(
-    id = id,
-    title = title,
-    updatedAt = updatedAt,
-    archived = archived,
-    activityReport = AgentThreadActivityReport(rowActivity = activity, chromeActivity = summaryActivity),
-    provider = provider,
-    subAgents = subAgents,
-    originBranch = originBranch,
-    cost = cost,
-  )
-
-  val activity: AgentThreadActivity
-    get() = activityReport.rowActivity
-
-  val summaryActivity: AgentThreadActivity?
-    get() = activityReport.chromeActivity
-}
+)
 
 /**
  * Provider-neutral outline for a persisted agent thread.

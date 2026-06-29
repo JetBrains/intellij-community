@@ -408,7 +408,8 @@ class AgentSessionRefreshServiceIntegrationTest {
         service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
           ?.threads
           ?.singleOrNull()
-          ?.activity == AgentThreadActivity.PROCESSING
+          ?.activityReport
+          ?.rowActivity == AgentThreadActivity.PROCESSING
       }
 
       waitForCondition {
@@ -1423,7 +1424,8 @@ class AgentSessionRefreshServiceIntegrationTest {
         service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
           ?.threads
           ?.firstOrNull()
-          ?.activity == AgentThreadActivity.UNREAD
+          ?.activityReport
+          ?.rowActivity == AgentThreadActivity.UNREAD
       }
 
       service.markThreadAsRead(PROJECT_PATH, AgentSessionProvider.from("claude"), "claude-1", 100)
@@ -1432,14 +1434,15 @@ class AgentSessionRefreshServiceIntegrationTest {
         service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
           ?.threads
           ?.firstOrNull()
-          ?.activity
+          ?.activityReport
+          ?.rowActivity
       ).isEqualTo(AgentThreadActivity.READY)
-      assertThat(warmState.getPathSnapshot(PROJECT_PATH)?.threads?.firstOrNull()?.activity)
+      assertThat(warmState.getPathSnapshot(PROJECT_PATH)?.threads?.firstOrNull()?.activityReport?.rowActivity)
         .isEqualTo(AgentThreadActivity.READY)
       val presentationKey = checkNotNull(
         AgentSessionThreadPresentationKey.create(PROJECT_PATH, AgentSessionProvider.from("claude"), "claude-1")
       )
-      assertThat(service<AgentSessionThreadPresentationModel>().resolve(presentationKey)?.activity)
+      assertThat(service<AgentSessionThreadPresentationModel>().resolve(presentationKey)?.activityReport?.rowActivity)
         .isEqualTo(AgentThreadActivity.READY)
     }
   }
@@ -1460,8 +1463,10 @@ class AgentSessionRefreshServiceIntegrationTest {
                     id = "claude-1",
                     updatedAt = 100,
                     provider = AgentSessionProvider.from("claude"),
-                    activity = AgentThreadActivity.PROCESSING,
-                    summaryActivity = AgentThreadActivity.UNREAD,
+                    activityReport = AgentThreadActivityReport(
+                      rowActivity = AgentThreadActivity.PROCESSING,
+                      chromeActivity = AgentThreadActivity.UNREAD,
+                    ),
                   )
                 )
               }
@@ -1482,7 +1487,8 @@ class AgentSessionRefreshServiceIntegrationTest {
         service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
           ?.threads
           ?.firstOrNull()
-          ?.summaryActivity == AgentThreadActivity.UNREAD
+          ?.activityReport
+          ?.chromeActivity == AgentThreadActivity.UNREAD
       }
 
       service.markThreadAsRead(PROJECT_PATH, AgentSessionProvider.from("claude"), "claude-1", 100)
@@ -1490,12 +1496,12 @@ class AgentSessionRefreshServiceIntegrationTest {
       val runtimeThread = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
         ?.threads
         ?.firstOrNull()
-      assertThat(runtimeThread?.activity).isEqualTo(AgentThreadActivity.PROCESSING)
-      assertThat(runtimeThread?.summaryActivity).isEqualTo(AgentThreadActivity.READY)
+      assertThat(runtimeThread?.activityReport?.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(runtimeThread?.activityReport?.chromeActivity).isEqualTo(AgentThreadActivity.READY)
 
       val warmThread = warmState.getPathSnapshot(PROJECT_PATH)?.threads?.firstOrNull()
-      assertThat(warmThread?.activity).isEqualTo(AgentThreadActivity.PROCESSING)
-      assertThat(warmThread?.summaryActivity).isEqualTo(AgentThreadActivity.READY)
+      assertThat(warmThread?.activityReport?.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(warmThread?.activityReport?.chromeActivity).isEqualTo(AgentThreadActivity.READY)
 
       val presentationKey = checkNotNull(AgentSessionThreadPresentationKey.create(PROJECT_PATH, AgentSessionProvider.from("claude"), "claude-1"))
       assertThat(service<AgentSessionThreadPresentationModel>().resolve(presentationKey)?.activityReport)

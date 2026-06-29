@@ -103,7 +103,7 @@ internal class AgentChatVirtualFile internal constructor(
     get() = resolveAgentChatThreadPresentation(this).title
 
   override val threadActivity: AgentThreadActivity
-    get() = resolveAgentChatThreadPresentation(this).activity
+    get() = resolveAgentChatThreadPresentation(this).activityReport.rowActivity
 
   var pendingCreatedAtMs: Long? = null
     private set

@@ -3,7 +3,6 @@ f:com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadActivityPresent
 - f:path:java.lang.String
 - f:threadId:java.lang.String
 - f:updatedAt:java.lang.Long
-- <init>(java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.AgentThreadActivity):V
 - <init>(java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.AgentThreadActivityReport,java.lang.Long):V
 - b:<init>(java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.AgentThreadActivityReport,java.lang.Long,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:component1():java.lang.String
@@ -21,7 +20,6 @@ f:com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentation
 - f:activityReport:com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 - f:title:java.lang.String
 - f:updatedAt:java.lang.Long
-- <init>(java.lang.String,com.intellij.platform.ai.agent.core.AgentThreadActivity):V
 - <init>(java.lang.String,com.intellij.platform.ai.agent.core.AgentThreadActivityReport,java.lang.Long):V
 - b:<init>(java.lang.String,com.intellij.platform.ai.agent.core.AgentThreadActivityReport,java.lang.Long,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:component1():java.lang.String
@@ -30,7 +28,6 @@ f:com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentation
 - f:copy(java.lang.String,com.intellij.platform.ai.agent.core.AgentThreadActivityReport,java.lang.Long):com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentation
 - bs:copy$default(com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentation,java.lang.String,com.intellij.platform.ai.agent.core.AgentThreadActivityReport,java.lang.Long,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentation
 - equals(java.lang.Object):Z
-- f:getActivity():com.intellij.platform.ai.agent.core.AgentThreadActivity
 - hashCode():I
 f:com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationChangeSet
 - sf:Companion:com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationChangeSet$Companion
@@ -80,8 +77,8 @@ f:com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationMod
 - f:updateActivityHints-9c6lQVA(java.lang.String,java.util.Collection):com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationChangeSet
 - f:updatePresentationHints-9c6lQVA(java.lang.String,java.util.Collection):com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationChangeSet
 - f:updateProviderSnapshot-3n3rsyc(java.lang.String,java.util.Set,java.util.Map):com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationChangeSet
-- f:updateThread-AlqNjB4(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.AgentThreadActivity,com.intellij.platform.ai.agent.core.AgentThreadActivityReport,java.lang.Long):com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationChangeSet
-- bs:updateThread-AlqNjB4$default(com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationModel,java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.AgentThreadActivity,com.intellij.platform.ai.agent.core.AgentThreadActivityReport,java.lang.Long,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationChangeSet
+- f:updateThread-RmkVQ7I(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.AgentThreadActivityReport,java.lang.Long):com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationChangeSet
+- bs:updateThread-RmkVQ7I$default(com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationModel,java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.AgentThreadActivityReport,java.lang.Long,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationChangeSet
 f:com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationPatchUpdate
 - f:activityReport:com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 - f:path:java.lang.String
@@ -158,24 +155,6 @@ f:com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$SubAgent
 - getProvider-dBzBBrw():java.lang.String
 - getThreadId():java.lang.String
 - getTitle():java.lang.String
-- hashCode():I
-f:com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$TaskFolder
-- com.intellij.platform.ai.agent.sessions.core.SessionActionTarget
-- f:folderId:java.lang.String
-- f:isDone:Z
-- f:metadata:java.util.Map
-- f:name:java.lang.String
-- f:path:java.lang.String
-- <init>(java.lang.String,java.lang.String,java.lang.String,Z,java.util.Map):V
-- b:<init>(java.lang.String,java.lang.String,java.lang.String,Z,java.util.Map,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:component1():java.lang.String
-- f:component2():java.lang.String
-- f:component3():java.lang.String
-- f:component4():Z
-- f:component5():java.util.Map
-- f:copy(java.lang.String,java.lang.String,java.lang.String,Z,java.util.Map):com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$TaskFolder
-- bs:copy$default(com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$TaskFolder,java.lang.String,java.lang.String,java.lang.String,Z,java.util.Map,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$TaskFolder
-- equals(java.lang.Object):Z
 - hashCode():I
 f:com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$Thread
 - com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$Conversation

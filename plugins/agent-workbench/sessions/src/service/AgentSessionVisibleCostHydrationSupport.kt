@@ -240,7 +240,7 @@ private fun shouldReuseCachedCost(
   if (cacheEntry.updatedAt != visibleThread.updatedAt) {
     return false
   }
-  if (!visibleThread.activity.isWorking) {
+  if (!visibleThread.rowActivity.isWorking) {
     return true
   }
   return nowMs - cacheEntry.refreshedAtMs < workingThreadCostCacheTtlMs
@@ -265,8 +265,8 @@ private data class VisibleThreadSnapshot(
   val cost: AgentSessionCost?
     get() = thread.cost
 
-  val activity: AgentThreadActivity
-    get() = thread.activity
+  val rowActivity: AgentThreadActivity
+    get() = thread.activityReport.rowActivity
 
   val cacheKey: ThreadCacheKey
     get() = ThreadCacheKey(path = path, provider = provider, threadId = threadId)

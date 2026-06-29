@@ -21,6 +21,10 @@
       qualifiedName="com.intellij.agent.workbench.pi.jbCentralModelContributor"
       interface="com.intellij.platform.ai.agent.pi.sessions.PiJbCentralModelContributor"
       dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.pi.controlRequestHandler"
+      interface="com.intellij.platform.ai.agent.pi.sessions.PiControlRequestHandler"
+      dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

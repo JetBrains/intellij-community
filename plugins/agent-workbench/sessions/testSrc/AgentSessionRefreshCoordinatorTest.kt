@@ -10,6 +10,7 @@ import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindStatus
 import com.intellij.agent.workbench.chat.AgentChatPendingTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.core.session.AgentSubAgent
@@ -1153,7 +1154,7 @@ class AgentSessionRefreshCoordinatorTest {
       val expectedKey = presentationKey(projectB, AgentSessionProvider.from("codex"), "codex-open")
       waitForCondition {
         presentationModel.snapshot()[expectedKey]?.title == "Open concrete tab thread" &&
-        presentationModel.snapshot()[expectedKey]?.activity == AgentThreadActivity.UNREAD
+        presentationModel.snapshot()[expectedKey]?.activityReport?.rowActivity == AgentThreadActivity.UNREAD
       }
 
       assertThat(closedRefreshInvocations[PROJECT_PATH]?.get() ?: 0).isEqualTo(0)
@@ -1676,7 +1677,7 @@ class AgentSessionRefreshCoordinatorTest {
       val expectedKey = presentationKey(PROJECT_PATH, AgentSessionProvider.from("codex"), "codex-1")
       waitForCondition {
         presentationModel.snapshot()[expectedKey]?.title == "Renamed from source update" &&
-        presentationModel.snapshot()[expectedKey]?.activity == AgentThreadActivity.READY
+        presentationModel.snapshot()[expectedKey]?.activityReport?.rowActivity == AgentThreadActivity.READY
       }
     }
   }
@@ -1748,7 +1749,7 @@ class AgentSessionRefreshCoordinatorTest {
       provider = AgentSessionProvider.from("codex"),
       threadId = "codex-1",
       title = "Existing title",
-      activity = AgentThreadActivity.UNREAD,
+      activityReport = AgentThreadActivityReport(AgentThreadActivity.UNREAD),
     )
 
     val source = ScriptedSessionSource(
@@ -1802,12 +1803,12 @@ class AgentSessionRefreshCoordinatorTest {
       assertThat(project.threads).hasSize(1)
       assertThat(project.threads.single().id).isEqualTo("codex-1")
       assertThat(project.threads.single().title).isEqualTo("Existing title")
-      assertThat(project.threads.single().activity).isEqualTo(AgentThreadActivity.UNREAD)
+      assertThat(project.threads.single().activityReport.rowActivity).isEqualTo(AgentThreadActivity.UNREAD)
       assertThat(project.providerWarnings).hasSize(1)
       assertThat(project.providerWarnings.single().provider).isEqualTo(AgentSessionProvider.from("codex"))
       val presentation = presentationModel.snapshot()[presentationKey(PROJECT_PATH, AgentSessionProvider.from("codex"), "codex-1")]
       assertThat(presentation?.title).isEqualTo("Existing title")
-      assertThat(presentation?.activity).isEqualTo(AgentThreadActivity.UNREAD)
+      assertThat(presentation?.activityReport?.rowActivity).isEqualTo(AgentThreadActivity.UNREAD)
     }
   }
 
@@ -2580,8 +2581,8 @@ class AgentSessionRefreshCoordinatorTest {
                             ?.threads
                             ?.associateBy { it.id }
                           ?: return@waitForCondition false
-        threadsById["codex-with-hint"]?.activity == AgentThreadActivity.REVIEWING &&
-        threadsById["codex-without-hint"]?.activity == AgentThreadActivity.UNREAD
+        threadsById["codex-with-hint"]?.activityReport?.rowActivity == AgentThreadActivity.REVIEWING &&
+        threadsById["codex-without-hint"]?.activityReport?.rowActivity == AgentThreadActivity.UNREAD
       }
     }
   }
@@ -2637,7 +2638,7 @@ class AgentSessionRefreshCoordinatorTest {
                        ?.threads
                        ?.firstOrNull { it.id == "claude-1" }
                      ?: return@waitForCondition false
-        thread.activity == AgentThreadActivity.UNREAD && thread.summaryActivity == AgentThreadActivity.UNREAD
+        thread.activityReport.rowActivity == AgentThreadActivity.UNREAD && thread.activityReport.chromeActivity == AgentThreadActivity.UNREAD
       }
 
       assertThat(closedRefreshInvocations.get()).isEqualTo(0)
@@ -2699,13 +2700,13 @@ class AgentSessionRefreshCoordinatorTest {
                        ?.threads
                        ?.firstOrNull { it.id == "codex-1" }
                      ?: return@waitForCondition false
-        thread.activity == AgentThreadActivity.PROCESSING && thread.summaryActivity == null && thread.updatedAt == 200L
+        thread.activityReport.rowActivity == AgentThreadActivity.PROCESSING && thread.activityReport.chromeActivity == null && thread.updatedAt == 200L
       }
 
       val expectedKey = presentationKey(PROJECT_PATH, AgentSessionProvider.from("codex"), "codex-1")
       waitForCondition {
         val presentation = presentationModel.snapshot()[expectedKey] ?: return@waitForCondition false
-        presentation.activity == AgentThreadActivity.PROCESSING && presentation.activityReport.chromeActivity == null && presentation.updatedAt == 200L
+        presentation.activityReport.rowActivity == AgentThreadActivity.PROCESSING && presentation.activityReport.chromeActivity == null && presentation.updatedAt == 200L
       }
 
       assertThat(closedRefreshInvocations.get()).isEqualTo(0)
@@ -2747,7 +2748,7 @@ class AgentSessionRefreshCoordinatorTest {
                 updatedAt = 100L,
                 provider = AgentSessionProvider.from("codex"),
                 activity = AgentThreadActivity.PROCESSING,
-                summaryActivity = AgentThreadActivity.PROCESSING,
+                chromeActivity = AgentThreadActivity.PROCESSING,
               )
             ),
           )
@@ -2776,7 +2777,7 @@ class AgentSessionRefreshCoordinatorTest {
                        ?.threads
                        ?.firstOrNull { it.id == "codex-1" }
                      ?: return@waitForCondition false
-        thread.activity == AgentThreadActivity.READY && thread.summaryActivity == AgentThreadActivity.READY && thread.updatedAt == 200L
+        thread.activityReport.rowActivity == AgentThreadActivity.READY && thread.activityReport.chromeActivity == AgentThreadActivity.READY && thread.updatedAt == 200L
       }
 
       assertThat(closedRefreshInvocations.get()).isEqualTo(0)
@@ -2853,8 +2854,8 @@ class AgentSessionRefreshCoordinatorTest {
                        ?.threads
                        ?.firstOrNull { it.id == "codex-parent" }
                      ?: return@waitForCondition false
-        parent.activity == AgentThreadActivity.READY &&
-        parent.summaryActivity == AgentThreadActivity.READY &&
+        parent.activityReport.rowActivity == AgentThreadActivity.READY &&
+        parent.activityReport.chromeActivity == AgentThreadActivity.READY &&
         parent.subAgents.singleOrNull()?.activity == AgentThreadActivity.PROCESSING
       }
 
@@ -2990,7 +2991,7 @@ class AgentSessionRefreshCoordinatorTest {
                        ?.threads
                        ?.firstOrNull { it.id == "codex-1" }
                      ?: return@waitForCondition false
-        thread.activity == AgentThreadActivity.READY && thread.summaryActivity == AgentThreadActivity.UNREAD && thread.updatedAt == 300L
+        thread.activityReport.rowActivity == AgentThreadActivity.READY && thread.activityReport.chromeActivity == AgentThreadActivity.UNREAD && thread.updatedAt == 300L
       }
     }
   }
@@ -3071,12 +3072,12 @@ class AgentSessionRefreshCoordinatorTest {
                      ?: return@waitForCondition false
         closedRefreshInvocations.get() == 1 &&
         thread.updatedAt == 500L &&
-        thread.activity == AgentThreadActivity.UNREAD
+        thread.activityReport.rowActivity == AgentThreadActivity.UNREAD
       }
 
       val expectedKey = presentationKey(PROJECT_PATH, AgentSessionProvider.from("codex"), "codex-1")
       waitForCondition {
-        presentationModel.snapshot()[expectedKey]?.activity == AgentThreadActivity.UNREAD
+        presentationModel.snapshot()[expectedKey]?.activityReport?.rowActivity == AgentThreadActivity.UNREAD
       }
     }
   }
@@ -3100,7 +3101,7 @@ class AgentSessionRefreshCoordinatorTest {
               updatedAt = 500L,
               provider = AgentSessionProvider.from("codex"),
               activity = AgentThreadActivity.READY,
-              summaryActivity = null,
+              chromeActivity = null,
             )
           )
         }
@@ -3139,7 +3140,7 @@ class AgentSessionRefreshCoordinatorTest {
                 updatedAt = 100L,
                 provider = AgentSessionProvider.from("codex"),
                 activity = AgentThreadActivity.READY,
-                summaryActivity = null,
+                chromeActivity = null,
               )
             ),
           )
@@ -3161,8 +3162,8 @@ class AgentSessionRefreshCoordinatorTest {
                        ?.firstOrNull { it.id == "codex-sub-agent" }
                      ?: return@waitForCondition false
         thread.updatedAt == 500L &&
-        thread.activity == AgentThreadActivity.UNREAD &&
-        thread.summaryActivity == null
+        thread.activityReport.rowActivity == AgentThreadActivity.UNREAD &&
+        thread.activityReport.chromeActivity == null
       }
     }
   }
@@ -3223,7 +3224,8 @@ class AgentSessionRefreshCoordinatorTest {
         stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
           ?.threads
           ?.firstOrNull { it.id == "codex-1" }
-          ?.activity == AgentThreadActivity.UNREAD
+          ?.activityReport
+          ?.rowActivity == AgentThreadActivity.UNREAD
       }
     }
   }
@@ -3296,7 +3298,8 @@ class AgentSessionRefreshCoordinatorTest {
           .firstOrNull { it.path == PROJECT_PATH }
           ?.threads
           ?.firstOrNull { it.id == "codex-listed" }
-          ?.activity == AgentThreadActivity.UNREAD
+          ?.activityReport
+          ?.rowActivity == AgentThreadActivity.UNREAD
       }
 
       assertThat(capturedRefreshThreadSeedsByPath).isNotEmpty()

@@ -44,7 +44,8 @@ internal object AgentSessionsTreePopupDataKeys {
 
 internal data class AgentSessionsTreePopupActionContext(
   @JvmField val project: Project,
-  val target: SessionActionTarget,
+  val target: SessionActionTarget? = null,
+  @JvmField val taskFolderTarget: AgentTaskFolderActionTarget? = null,
   @JvmField val archiveTargets: List<ArchiveThreadTarget>,
   @JvmField val unarchiveTargets: List<ArchiveThreadTarget> = emptyList(),
   @JvmField val selectedThreadTargets: List<SessionActionTarget.Thread> = emptyList(),
@@ -255,7 +256,15 @@ internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
   )
 }
 
-private fun newThreadPathFromTarget(target: SessionActionTarget): String? {
+internal data class AgentTaskFolderActionTarget(
+  @JvmField val path: String,
+  @JvmField val folderId: String,
+  @JvmField val name: String,
+  @JvmField val isDone: Boolean,
+  @JvmField val metadata: Map<String, String> = emptyMap(),
+)
+
+private fun newThreadPathFromTarget(target: SessionActionTarget?): String? {
   return when (target) {
     is SessionActionTarget.Project -> target.path
     is SessionActionTarget.Worktree -> target.path
@@ -263,7 +272,7 @@ private fun newThreadPathFromTarget(target: SessionActionTarget): String? {
   }
 }
 
-private fun morePopupLabel(target: SessionActionTarget): @Nls String {
+private fun morePopupLabel(target: SessionActionTarget?): @Nls String {
   return when (target) {
     is SessionActionTarget.MoreProjects -> AgentSessionsBundle.message("toolwindow.action.more.count", target.hiddenCount)
     is SessionActionTarget.MoreThreads ->

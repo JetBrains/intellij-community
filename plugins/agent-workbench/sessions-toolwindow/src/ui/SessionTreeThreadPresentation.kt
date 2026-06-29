@@ -36,15 +36,15 @@ internal fun buildSessionTreeThreadRowPresentation(
   treeNode: SessionTreeNode.Thread,
   now: Long,
 ): SessionTreeThreadRowPresentation {
-  val activityColor = treeNode.thread.activity.statusColor()
+  val rowActivity = treeNode.thread.activityReport.rowActivity
+  val activityColor = rowActivity.statusColor()
   val timeLabel = treeNode.thread.updatedAt.takeIf { it > 0 }?.let { timestamp ->
     formatRelativeTimeShort(timestamp, now)
   } ?: AgentSessionsBundle.message("toolwindow.time.unknown")
-  val activity = treeNode.thread.activity
-  val statusLabel = threadActivityDisplayName(activity)
+  val statusLabel = threadActivityDisplayName(rowActivity)
   val costLabel = treeNode.thread.cost.takeIf { AgentSessionCostPresentationSettings.isEnabled() }?.toDisplayLabel()
   val trailingMetadataLabel = listOfNotNull(
-    statusLabel.takeIf { activity.hasVisibleTrailingStatus() },
+    statusLabel.takeIf { rowActivity.hasVisibleTrailingStatus() },
     costLabel,
   ).joinToString(separator = " · ").takeIf { it.isNotEmpty() }
   val originBranch = treeNode.thread.originBranch

@@ -2,5 +2,7 @@
 package com.intellij.platform.ai.agent.pi.sessions
 
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import org.jetbrains.annotations.ApiStatus
 
-internal val PI_AGENT_SESSION_PROVIDER: AgentSessionProvider = AgentSessionProvider.from("pi")
+@ApiStatus.Internal
+val PI_AGENT_SESSION_PROVIDER: AgentSessionProvider = AgentSessionProvider.from("pi")

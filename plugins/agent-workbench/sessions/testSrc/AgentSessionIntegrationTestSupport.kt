@@ -357,7 +357,8 @@ fun thread(
   provider: AgentSessionProvider,
   title: String = id,
   activity: AgentThreadActivity = AgentThreadActivity.READY,
-  summaryActivity: AgentThreadActivity? = activity,
+  chromeActivity: AgentThreadActivity? = activity,
+  activityReport: AgentThreadActivityReport = AgentThreadActivityReport(rowActivity = activity, chromeActivity = chromeActivity),
   subAgents: List<AgentSubAgent> = emptyList(),
   cost: AgentSessionCost? = null,
 ): AgentSessionThread {
@@ -366,9 +367,8 @@ fun thread(
     title = title,
     updatedAt = updatedAt,
     archived = false,
+    activityReport = activityReport,
     provider = provider,
-    activity = activity,
-    summaryActivity = summaryActivity,
     subAgents = subAgents,
     cost = cost,
   )

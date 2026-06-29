@@ -210,7 +210,6 @@ f:com.intellij.platform.ai.agent.core.session.AgentSessionThread
 - f:subAgents:java.util.List
 - f:title:java.lang.String
 - f:updatedAt:J
-- b:<init>(java.lang.String,java.lang.String,J,Z,com.intellij.platform.ai.agent.core.AgentThreadActivity,java.lang.String,java.util.List,java.lang.String,com.intellij.platform.ai.agent.core.AgentThreadActivity,com.intellij.platform.ai.agent.core.session.AgentSessionCost,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - b:<init>(java.lang.String,java.lang.String,J,Z,com.intellij.platform.ai.agent.core.AgentThreadActivityReport,java.lang.String,java.util.List,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionCost,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:component1():java.lang.String
 - f:component2():java.lang.String
@@ -224,9 +223,7 @@ f:com.intellij.platform.ai.agent.core.session.AgentSessionThread
 - f:copy-JxZNnm8(java.lang.String,java.lang.String,J,Z,com.intellij.platform.ai.agent.core.AgentThreadActivityReport,java.lang.String,java.util.List,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionCost):com.intellij.platform.ai.agent.core.session.AgentSessionThread
 - bs:copy-JxZNnm8$default(com.intellij.platform.ai.agent.core.session.AgentSessionThread,java.lang.String,java.lang.String,J,Z,com.intellij.platform.ai.agent.core.AgentThreadActivityReport,java.lang.String,java.util.List,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionCost,I,java.lang.Object):com.intellij.platform.ai.agent.core.session.AgentSessionThread
 - equals(java.lang.Object):Z
-- f:getActivity():com.intellij.platform.ai.agent.core.AgentThreadActivity
 - f:getProvider-dBzBBrw():java.lang.String
-- f:getSummaryActivity():com.intellij.platform.ai.agent.core.AgentThreadActivity
 - hashCode():I
 f:com.intellij.platform.ai.agent.core.session.AgentSessionThreadOutline
 - f:items:java.util.List

@@ -200,6 +200,7 @@ class PiThemeSupportTest {
       "from \"./jbcentral.ts\"",
       "from \"./omlx.ts\"",
       "from \"./status.ts\"",
+      "from \"./taskFolders.ts\"",
       "from \"./theme.ts\"",
       "controlBridge = startControlBridge(ctx)",
     )
@@ -208,13 +209,14 @@ class PiThemeSupportTest {
   @Test
   fun bundledExtensionRegistersTaskFolderToolForPi() {
     val entrypoint = readBundledPiExtensionText("agent-workbench-extension.ts")
-    val control = readBundledPiExtensionText("control.ts")
+    val taskFolders = readBundledPiExtensionText("taskFolders.ts")
 
     assertThat(entrypoint).contains(
-      "import {registerTaskFolderTools, startControlBridge} from \"./control.ts\";",
+      "import {startControlBridge} from \"./control.ts\";",
+      "import {registerTaskFolderTools} from \"./taskFolders.ts\";",
       "registerTaskFolderTools(pi, () => controlBridge);",
     )
-    assertThat(control).contains(
+    assertThat(taskFolders).contains(
       "const TASK_FOLDER_TOOL_DEFINITIONS",
       "pi.registerTool(defineTool({",
       "name: \"agent_workbench_get_current_task_folder\"",
@@ -227,7 +229,7 @@ class PiThemeSupportTest {
       "name: Type.String({description: \"Task folder name\"})",
       "metadata: Type.Optional(Type.Record(Type.String(), Type.String({description: TASK_FOLDER_METADATA_DESCRIPTION})))",
       "Use metadata key 'issue' for issue tracker ids and 'review' for review ids; do not use separate issue parameters.",
-      "const result = await bridge.requestTaskFolder(definition.operation, definition.arguments?.(normalizedParams) ?? normalizedParams);",
+      "const result = await bridge.request(TASK_FOLDER_REQUEST_TYPE, {operation: definition.operation, arguments: args});",
       "details: result",
     )
   }

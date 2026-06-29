@@ -15,14 +15,6 @@ sealed interface SessionActionTarget {
     @JvmField val path: String,
   ) : SessionActionTarget
 
-  data class TaskFolder(
-    @JvmField val path: String,
-    @JvmField val folderId: String,
-    @JvmField val name: String,
-    @JvmField val isDone: Boolean,
-    @JvmField val metadata: Map<String, String> = emptyMap(),
-  ) : SessionActionTarget
-
   sealed interface Conversation : SessionActionTarget {
     val path: String
     val provider: AgentSessionProvider

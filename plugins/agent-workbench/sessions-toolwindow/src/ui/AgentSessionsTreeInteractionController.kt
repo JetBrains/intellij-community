@@ -24,7 +24,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ai.agent.sessions.core.SessionActionTarget
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolder
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolder
 import com.intellij.ui.hover.HoverListener
 import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.treeStructure.Tree

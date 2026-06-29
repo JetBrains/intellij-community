@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions.model
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import org.assertj.core.api.Assertions.assertThat
@@ -109,7 +110,7 @@ class AgentSessionThreadOrderingTest {
       title = title,
       updatedAt = updatedAt,
       archived = false,
-      activity = activity,
+      activityReport = AgentThreadActivityReport(activity),
       provider = provider,
     )
   }

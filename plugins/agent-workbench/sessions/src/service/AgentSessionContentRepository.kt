@@ -449,8 +449,8 @@ private fun markThreadAsRead(
       changed = true
       thread.copy(
         activityReport = AgentThreadActivityReport(
-          rowActivity = thread.activity.takeUnless { it == AgentThreadActivity.UNREAD } ?: AgentThreadActivity.READY,
-          chromeActivity = thread.summaryActivity?.takeUnless { it == AgentThreadActivity.UNREAD } ?: AgentThreadActivity.READY,
+          rowActivity = thread.activityReport.rowActivity.takeUnless { it == AgentThreadActivity.UNREAD } ?: AgentThreadActivity.READY,
+          chromeActivity = thread.activityReport.chromeActivity?.takeUnless { it == AgentThreadActivity.UNREAD } ?: AgentThreadActivity.READY,
         ),
       )
     }

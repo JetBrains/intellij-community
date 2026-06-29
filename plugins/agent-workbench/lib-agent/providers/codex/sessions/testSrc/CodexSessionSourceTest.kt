@@ -1081,7 +1081,7 @@ class CodexSessionSourceTest {
       assertThat(archivedThreads).hasSize(1)
       assertThat(archivedThreads.single().id).isEqualTo("archived-1")
       assertThat(archivedThreads.single().archived).isTrue()
-      assertThat(archivedThreads.single().activity).isEqualTo(AgentThreadActivity.READY)
+      assertThat(archivedThreads.single().activityReport.rowActivity).isEqualTo(AgentThreadActivity.READY)
     }
   }
 
@@ -1143,7 +1143,7 @@ class CodexSessionSourceTest {
       val loadedCosts = source.loadThreadCosts(PROJECT_PATH, archivedThreads)
 
       assertThat(archivedThreads).hasSize(1)
-      assertThat(archivedThreads.single().activity).isEqualTo(AgentThreadActivity.READY)
+      assertThat(archivedThreads.single().activityReport.rowActivity).isEqualTo(AgentThreadActivity.READY)
       assertThat(archivedThreads.single().cost).isNull()
       assertThat(loadedCosts.getValue(archivedThreadId)).isEqualTo(
         AgentSessionCost(
@@ -1377,7 +1377,7 @@ class CodexSessionSourceTest {
 
       assertThat(observedAppServerSeeds).isEmpty()
       assertThat(observedRolloutSeeds).isEmpty()
-      assertThat(threads.single().activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(threads.single().activityReport.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
     }
   }
 
@@ -1427,7 +1427,7 @@ class CodexSessionSourceTest {
 
       assertThat(observedAppServerSeeds).isEmpty()
       assertThat(observedRolloutSeeds).isEmpty()
-      assertThat(prefetched.getValue(PROJECT_PATH).single().activity).isEqualTo(AgentThreadActivity.READY)
+      assertThat(prefetched.getValue(PROJECT_PATH).single().activityReport.rowActivity).isEqualTo(AgentThreadActivity.READY)
     }
   }
 }

@@ -5,6 +5,7 @@ import com.intellij.agent.workbench.chat.AgentChatOpenTabsPresentationState
 import com.intellij.agent.workbench.chat.AgentChatPendingTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatTabSelection
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.buildAgentThreadIdentity
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
@@ -532,7 +533,7 @@ private fun stateWithThread(
             updatedAt = updatedAt,
             archived = false,
             provider = AgentSessionProvider.from("codex"),
-            activity = activity,
+            activityReport = AgentThreadActivityReport(activity),
           )
         ),
       )
@@ -575,7 +576,7 @@ private fun thread(
     updatedAt = updatedAt,
     archived = false,
     provider = AgentSessionProvider.from("codex"),
-    activity = activity,
+    activityReport = AgentThreadActivityReport(activity),
   )
 }
 

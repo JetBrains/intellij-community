@@ -179,7 +179,6 @@ class AgentSessionRenameService internal constructor(
       provider = target.provider,
       threadId = target.threadId,
       title = normalizedRequestedName,
-      activity = null,
       activityReport = activityReport,
     )
   }

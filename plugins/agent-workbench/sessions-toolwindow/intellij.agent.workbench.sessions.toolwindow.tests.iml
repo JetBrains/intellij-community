@@ -57,6 +57,7 @@
     <orderEntry type="module" module-name="intellij.platform.ai.agent.claude.sessions" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.chat" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.sessions.task.folders" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.jbcentral" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.actions" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3" scope="TEST" />

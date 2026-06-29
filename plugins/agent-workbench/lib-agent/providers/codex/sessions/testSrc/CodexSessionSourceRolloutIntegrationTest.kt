@@ -72,7 +72,7 @@ class CodexSessionSourceRolloutIntegrationTest {
       val listedThreads = source.listThreads(projectDir.toString(), openProject = null)
 
       assertThat(listedThreads).hasSize(1)
-      assertThat(listedThreads.single().activity).isEqualTo(AgentThreadActivity.READY)
+      assertThat(listedThreads.single().activityReport.rowActivity).isEqualTo(AgentThreadActivity.READY)
     }
   }
 
@@ -236,7 +236,7 @@ class CodexSessionSourceRolloutIntegrationTest {
       val listedThreads = source.listThreads(projectDir.toString(), openProject = null)
 
       assertThat(listedThreads).hasSize(1)
-      assertThat(listedThreads.single().activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(listedThreads.single().activityReport.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
     }
   }
 
@@ -296,7 +296,7 @@ class CodexSessionSourceRolloutIntegrationTest {
       )
 
       assertThat(refreshResult.completeThreadsByPath[projectPath]).hasSize(1)
-      assertThat(refreshResult.completeThreadsByPath.getValue(projectPath).single().activity).isEqualTo(AgentThreadActivity.READY)
+      assertThat(refreshResult.completeThreadsByPath.getValue(projectPath).single().activityReport.rowActivity).isEqualTo(AgentThreadActivity.READY)
     }
   }
 
@@ -323,7 +323,7 @@ class CodexSessionSourceRolloutIntegrationTest {
       val listedThreads = source.listThreads(projectDir.toString(), openProject = null)
 
       assertThat(listedThreads).hasSize(1)
-      assertThat(listedThreads.single().activity).isEqualTo(AgentThreadActivity.NEEDS_INPUT)
+      assertThat(listedThreads.single().activityReport.rowActivity).isEqualTo(AgentThreadActivity.NEEDS_INPUT)
     }
   }
 
@@ -354,7 +354,7 @@ class CodexSessionSourceRolloutIntegrationTest {
       val listedThreads = source.listThreads(projectDir.toString(), openProject = null)
 
       assertThat(listedThreads).hasSize(1)
-      assertThat(listedThreads.single().activity).isEqualTo(AgentThreadActivity.NEEDS_INPUT)
+      assertThat(listedThreads.single().activityReport.rowActivity).isEqualTo(AgentThreadActivity.NEEDS_INPUT)
     }
   }
 

@@ -20,9 +20,9 @@ import com.intellij.agent.workbench.sessions.model.hasAnyProviderSnapshot
 import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_THREAD_COUNT
 import com.intellij.agent.workbench.sessions.state.SessionTreeUiState
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolder
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderSnapshot
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderStatus
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolder
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolderSnapshot
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolderStatus
 import com.intellij.openapi.util.NlsSafe
 
 internal data class SessionTreeModel(

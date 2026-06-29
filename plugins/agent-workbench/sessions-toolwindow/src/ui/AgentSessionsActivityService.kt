@@ -182,7 +182,7 @@ private fun AgentSessionsActivitySummary.rowsDebugText(): String {
   return rows.take(MAX_ACTIVITY_DEBUG_ROWS).joinToString(prefix = "[", postfix = postfix) { bucketedRow ->
     val row = bucketedRow.row
     "${bucketedRow.bucket}:${row.path}:${row.thread.provider.value}:${row.thread.id}:" +
-    "activity=${row.thread.activity}:summaryActivity=${row.thread.summaryActivity}:updatedAt=${row.thread.updatedAt}"
+    "rowActivity=${row.thread.activityReport.rowActivity}:chromeActivity=${row.thread.activityReport.chromeActivity}:updatedAt=${row.thread.updatedAt}"
   }
 }
 

@@ -2,6 +2,7 @@
 package com.intellij.platform.ai.agent.pi.sessions
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.json.createJsonGenerator
 import com.intellij.platform.ai.agent.json.createJsonParser
@@ -11,6 +12,7 @@ import com.intellij.platform.ai.agent.json.readJsonStringOrNull
 import tools.jackson.core.JsonParser
 import tools.jackson.core.JsonToken
 import tools.jackson.core.json.JsonFactory
+import org.jetbrains.annotations.ApiStatus
 import java.io.StringWriter
 
 internal enum class PiControlMessageType(@JvmField val wireName: String) {
@@ -18,8 +20,7 @@ internal enum class PiControlMessageType(@JvmField val wireName: String) {
   SESSION_STATE("sessionState"),
   RESPONSE("response"),
   NAVIGATE_TREE("navigateTree"),
-  FORK_FROM_ENTRY("forkFromEntry"),
-  TASK_FOLDER_REQUEST("taskFolderRequest");
+  FORK_FROM_ENTRY("forkFromEntry");
 
   companion object {
     private val byWireName: Map<String, PiControlMessageType> = entries.associateBy(PiControlMessageType::wireName)
@@ -30,9 +31,16 @@ internal enum class PiControlMessageType(@JvmField val wireName: String) {
   }
 }
 
-internal data class PiControlSessionContext(
+@ApiStatus.Internal
+data class PiControlSessionContext(
   @JvmField val projectPath: String,
   @JvmField val sessionId: String,
+)
+
+@ApiStatus.Internal
+data class PiControlExtensionRequest(
+  @JvmField val operation: String? = null,
+  @JvmField val arguments: PiControlRequestArguments? = null,
 )
 
 internal data class PiControlCapabilities(
@@ -55,6 +63,7 @@ internal data class PiControlResponse(
 
 internal data class PiControlPayload(
   @JvmField val type: PiControlMessageType? = null,
+  @JvmField val typeName: String? = null,
   @JvmField val requestId: String? = null,
   @JvmField val token: String? = null,
   @JvmField val sessionId: String? = null,
@@ -65,10 +74,11 @@ internal data class PiControlPayload(
   @JvmField val thread: PiControlThreadPayload? = null,
   @JvmField val capabilities: PiControlCapabilities? = null,
   @JvmField val operation: String? = null,
-  @JvmField val arguments: PiTaskFolderControlArguments? = null,
+  @JvmField val arguments: PiControlRequestArguments? = null,
 )
 
-internal data class PiTaskFolderControlArguments(
+@ApiStatus.Internal
+data class PiControlRequestArguments(
   @JvmField val folderId: String? = null,
   @JvmField val name: String? = null,
   @JvmField val key: String? = null,
@@ -90,7 +100,7 @@ internal data class PiControlThreadPayload(
       title = title?.trim()?.takeIf { it.isNotEmpty() } ?: threadId,
       updatedAt = updatedAt ?: System.currentTimeMillis(),
       archived = false,
-      activity = activity ?: AgentThreadActivity.READY,
+      activityReport = AgentThreadActivityReport(activity ?: AgentThreadActivity.READY),
       provider = PI_AGENT_SESSION_PROVIDER,
     )
   }
@@ -129,12 +139,26 @@ internal fun buildPiControlHelloAcknowledgement(requestId: String?, sessionId: S
   }
 }
 
-internal fun buildPiControlErrorResponse(requestId: String?, error: String): String {
+@ApiStatus.Internal
+fun buildPiControlErrorResponse(requestId: String?, error: String): String {
   return buildPiControlJsonObject { generator ->
     generator.writeStringProperty("type", PiControlMessageType.RESPONSE.wireName)
     requestId?.let { generator.writeStringProperty("requestId", it) }
     generator.writeBooleanProperty("ok", false)
     generator.writeStringProperty("error", error)
+  }
+}
+
+@ApiStatus.Internal
+fun buildPiControlResultResponse(requestId: String, writeResult: (tools.jackson.core.JsonGenerator) -> Unit): String {
+  return buildPiControlJsonObject { generator ->
+    generator.writeStringProperty("type", PiControlMessageType.RESPONSE.wireName)
+    generator.writeStringProperty("requestId", requestId)
+    generator.writeBooleanProperty("ok", true)
+    generator.writeName("result")
+    generator.writeStartObject()
+    writeResult(generator)
+    generator.writeEndObject()
   }
 }
 
@@ -150,6 +174,7 @@ internal fun buildPiControlJsonObject(builder: (tools.jackson.core.JsonGenerator
 
 private fun readControlPayload(parser: JsonParser): PiControlPayload {
   var type: PiControlMessageType? = null
+  var typeName: String? = null
   var requestId: String? = null
   var token: String? = null
   var sessionId: String? = null
@@ -160,10 +185,14 @@ private fun readControlPayload(parser: JsonParser): PiControlPayload {
   var thread: PiControlThreadPayload? = null
   var capabilities: PiControlCapabilities? = null
   var operation: String? = null
-  var arguments: PiTaskFolderControlArguments? = null
+  var arguments: PiControlRequestArguments? = null
   forEachJsonObjectField(parser) { fieldName ->
     when (fieldName) {
-      "type" -> type = PiControlMessageType.fromWireName(readJsonStringOrNull(parser))
+      "type" -> {
+        val wireName = readJsonStringOrNull(parser)
+        typeName = wireName
+        type = PiControlMessageType.fromWireName(wireName)
+      }
       "requestId" -> requestId = readJsonStringOrNull(parser)
       "token" -> token = readJsonStringOrNull(parser)
       "sessionId" -> sessionId = readJsonStringOrNull(parser)
@@ -174,13 +203,14 @@ private fun readControlPayload(parser: JsonParser): PiControlPayload {
       "thread" -> thread = readControlThreadPayload(parser)
       "capabilities" -> capabilities = readControlCapabilities(parser)
       "operation" -> operation = readJsonStringOrNull(parser)
-      "arguments" -> arguments = readTaskFolderControlArguments(parser)
+      "arguments" -> arguments = readControlRequestArguments(parser)
       else -> parser.skipChildren()
     }
     true
   }
   return PiControlPayload(
     type = type,
+    typeName = typeName,
     requestId = requestId,
     token = token,
     sessionId = sessionId,
@@ -195,7 +225,7 @@ private fun readControlPayload(parser: JsonParser): PiControlPayload {
   )
 }
 
-private fun readTaskFolderControlArguments(parser: JsonParser): PiTaskFolderControlArguments? {
+private fun readControlRequestArguments(parser: JsonParser): PiControlRequestArguments? {
   if (parser.currentToken() != JsonToken.START_OBJECT) {
     parser.skipChildren()
     return null
@@ -218,7 +248,7 @@ private fun readTaskFolderControlArguments(parser: JsonParser): PiTaskFolderCont
     }
     true
   }
-  return PiTaskFolderControlArguments(
+  return PiControlRequestArguments(
     folderId = folderId,
     name = name,
     key = key,

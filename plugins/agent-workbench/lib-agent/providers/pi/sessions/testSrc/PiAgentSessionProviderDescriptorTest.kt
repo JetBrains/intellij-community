@@ -51,7 +51,7 @@ class PiAgentSessionProviderDescriptorTest {
 
   @Test
   fun exposesPiProviderMetadata() {
-    assertThat(PI_AGENT_SESSION_PROVIDER).isEqualTo(AgentSessionProvider.from("pi"))
+    assertThat(descriptor.sessionSource.provider).isEqualTo(PI_AGENT_SESSION_PROVIDER)
     assertThat(descriptor.displayPriority).isEqualTo(3)
     assertThat(descriptor.displayNameKey).isEqualTo("toolwindow.provider.pi")
     assertThat(descriptor.newSessionLabelKey).isEqualTo("toolwindow.action.new.session.pi")
@@ -1063,7 +1063,7 @@ private fun knownSelection(provider: String, modelId: String, reasoning: Boolean
 private fun emptySource(): AgentSessionSource {
   return object : AgentSessionSource {
     override val provider: AgentSessionProvider
-      get() = AgentSessionProvider.from("pi")
+      get() = PI_AGENT_SESSION_PROVIDER
 
     override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> = emptyList()
 

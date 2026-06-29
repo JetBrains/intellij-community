@@ -55,8 +55,8 @@ import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderService
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderThreadAssignment
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolderService
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolderThreadAssignment
 import java.awt.BorderLayout
 import java.awt.Graphics
 import java.util.Collections

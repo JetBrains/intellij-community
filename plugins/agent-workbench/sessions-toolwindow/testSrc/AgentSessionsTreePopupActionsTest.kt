@@ -15,6 +15,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.builtInLaunchProfi
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
+import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentTaskFolderActionTarget
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupArchiveThreadAction
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupCopyThreadIdAction
@@ -54,9 +55,9 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveRequestResult
 import com.intellij.platform.ai.agent.sessions.core.SessionActionTarget
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolder
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderStatus
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderThreadAssignment
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolder
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolderStatus
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolderThreadAssignment
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
@@ -807,7 +808,7 @@ class AgentSessionsTreePopupActionsTest {
   @Test
   fun markTaskFolderDoneArchivesAssignedTargetsBeforeChangingStatus() {
     val provider = AgentSessionProvider.from("codex")
-    val folderTarget = SessionActionTarget.TaskFolder(
+    val folderTarget = AgentTaskFolderActionTarget(
       path = "/work/project-a",
       folderId = "folder1",
       name = "Research",
@@ -816,7 +817,7 @@ class AgentSessionsTreePopupActionsTest {
     val loadedArchiveTarget = ArchiveThreadTarget.Thread(path = "/work/project-a", provider = provider, threadId = "loaded-thread")
     val unloadedArchiveTarget = ArchiveThreadTarget.Thread(path = "/work/project-a", provider = provider, threadId = "unloaded-thread")
     var archivedTargets: List<ArchiveThreadTarget>? = null
-    var doneTarget: SessionActionTarget.TaskFolder? = null
+    var doneTarget: AgentTaskFolderActionTarget? = null
     val action = AgentSessionsTreePopupMarkTaskFolderDoneAction(
       resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
       canArchiveProvider = { true },
@@ -828,7 +829,7 @@ class AgentSessionsTreePopupActionsTest {
     )
     val context = AgentSessionsTreePopupActionContext(
       project = ProjectManager.getInstance().defaultProject,
-      target = folderTarget,
+      taskFolderTarget = folderTarget,
       archiveTargets = emptyList(),
       taskFolderArchiveTargets = listOf(loadedArchiveTarget, unloadedArchiveTarget),
     )
@@ -865,13 +866,13 @@ class AgentSessionsTreePopupActionsTest {
   @Test
   fun markTaskFolderDoneKeepsFolderInProgressWhenAssignedArchiveIsPartial() {
     val provider = AgentSessionProvider.from("codex")
-    val folderTarget = SessionActionTarget.TaskFolder(
+    val folderTarget = AgentTaskFolderActionTarget(
       path = "/work/project-a",
       folderId = "folder1",
       name = "Research",
       isDone = false,
     )
-    var doneTarget: SessionActionTarget.TaskFolder? = null
+    var doneTarget: AgentTaskFolderActionTarget? = null
     val action = AgentSessionsTreePopupMarkTaskFolderDoneAction(
       resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
       canArchiveProvider = { true },
@@ -882,7 +883,7 @@ class AgentSessionsTreePopupActionsTest {
     )
     val context = AgentSessionsTreePopupActionContext(
       project = ProjectManager.getInstance().defaultProject,
-      target = folderTarget,
+      taskFolderTarget = folderTarget,
       archiveTargets = emptyList(),
       taskFolderArchiveTargets = listOf(
         ArchiveThreadTarget.Thread(path = "/work/project-a", provider = provider, threadId = "loaded-thread"),
@@ -907,7 +908,7 @@ class AgentSessionsTreePopupActionsTest {
     )
     val context = AgentSessionsTreePopupActionContext(
       project = ProjectManager.getInstance().defaultProject,
-      target = SessionActionTarget.TaskFolder(
+      taskFolderTarget = AgentTaskFolderActionTarget(
         path = "/work/project-a",
         folderId = "folder1",
         name = "Research",

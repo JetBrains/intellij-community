@@ -1,29 +1,43 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ai.agent.pi.sessions
 
-import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
-import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveService
-import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolder
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolderService
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolderStatus
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolderThreadAssignment
 import com.intellij.openapi.components.service
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolder
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderService
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderStatus
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderThreadAssignment
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
+import kotlinx.coroutines.CancellationException
+import org.jetbrains.annotations.ApiStatus
 import tools.jackson.core.JsonGenerator
 
-internal class PiTaskFolderControlHandler(
-  private val taskFolderServiceProvider: () -> AgentTaskFolderService = { service<AgentTaskFolderService>() },
-  private val archiveServiceProvider: () -> AgentSessionArchiveService = { service<AgentSessionArchiveService>() },
-) {
-  fun handle(
+@ApiStatus.Internal
+class PiTaskFolderControlHandler : PiControlRequestHandler {
+  private val taskFolderServiceProvider: () -> AgentTaskFolderService
+
+  constructor() : this(
+    taskFolderServiceProvider = { service<AgentTaskFolderService>() },
+  )
+
+  internal constructor(
+    taskFolderServiceProvider: () -> AgentTaskFolderService,
+  ) {
+    this.taskFolderServiceProvider = taskFolderServiceProvider
+  }
+
+  override val messageType: String = PI_TASK_FOLDER_CONTROL_MESSAGE_TYPE
+
+  override fun handle(
     context: PiControlSessionContext,
-    payload: PiControlPayload,
+    request: PiControlExtensionRequest,
     requestId: String,
     sendResponse: (String) -> Unit,
   ) {
     val service = taskFolderServiceProvider()
-    val arguments = payload.arguments ?: PiTaskFolderControlArguments()
-    when (payload.operation?.trim()) {
+    val arguments = request.arguments ?: PiControlRequestArguments()
+    when (request.operation?.trim()) {
       OP_GET_CURRENT -> {
         val folder = service.getFolderForThread(context.projectPath, PI_AGENT_SESSION_PROVIDER, context.sessionId)
         sendResponse(buildTaskFolderResponse(requestId = requestId, folder = folder))
@@ -107,7 +121,7 @@ internal class PiTaskFolderControlHandler(
           sendResponse(buildPiControlErrorResponse(requestId, "Task folder is not available"))
         }
         else {
-          markDone(service, archiveServiceProvider, context, folder, requestId, sendResponse)
+          markDone(service, context, folder, requestId, sendResponse)
         }
       }
       OP_DELETE -> {
@@ -128,7 +142,7 @@ internal class PiTaskFolderControlHandler(
 private fun createAndAssignCurrentThread(
   service: AgentTaskFolderService,
   context: PiControlSessionContext,
-  arguments: PiTaskFolderControlArguments,
+  arguments: PiControlRequestArguments,
   requestId: String,
   sendResponse: (String) -> Unit,
 ) {
@@ -154,7 +168,6 @@ private fun createAndAssignCurrentThread(
 
 private fun markDone(
   service: AgentTaskFolderService,
-  archiveServiceProvider: () -> AgentSessionArchiveService,
   context: PiControlSessionContext,
   folder: AgentTaskFolder,
   requestId: String,
@@ -169,8 +182,8 @@ private fun markDone(
     return
   }
   val targets = service.listFolderThreadAssignments(folder.id)
-    .map { assignment -> ArchiveThreadTarget.Thread(assignment.path, assignment.provider, assignment.threadId) }
-    .distinctBy { target -> ArchiveTargetKey(target.path, target.provider.value, target.threadId) }
+    .map { assignment -> TaskFolderArchiveTarget(assignment.path, assignment.provider, assignment.threadId) }
+    .distinct()
   if (targets.isEmpty()) {
     val changed = service.setFolderStatus(folder.id, AgentTaskFolderStatus.DONE)
     sendResponse(
@@ -184,23 +197,38 @@ private fun markDone(
     )
     return
   }
-  val archiveService = archiveServiceProvider()
-  if (!targets.all { target -> archiveService.canArchiveProvider(target.provider) }) {
+  if (!targets.all { target -> AgentSessionProviders.find(target.provider)?.supportsArchiveThread == true }) {
     sendResponse(buildPiControlErrorResponse(requestId, "Task folder contains threads that cannot be archived"))
     return
   }
-  archiveService.archiveThreads(targets, AgentWorkbenchEntryPoint.TREE_POPUP) { result ->
-    val changed = result.allRequestedArchived && service.setFolderStatus(folder.id, AgentTaskFolderStatus.DONE)
-    sendResponse(
-      buildTaskFolderDoneResponse(
-        requestId = requestId,
-        changed = changed,
-        folder = refreshedFolder(service, context, folder.id) ?: folder,
-        requestedCount = result.requestedCount,
-        archivedCount = result.archivedCount,
-      )
+  val result = archiveTargets(targets)
+  val changed = result.allRequestedArchived && service.setFolderStatus(folder.id, AgentTaskFolderStatus.DONE)
+  sendResponse(
+    buildTaskFolderDoneResponse(
+      requestId = requestId,
+      changed = changed,
+      folder = refreshedFolder(service, context, folder.id) ?: folder,
+      requestedCount = result.requestedCount,
+      archivedCount = result.archivedCount,
     )
+  )
+}
+
+private fun archiveTargets(targets: List<TaskFolderArchiveTarget>): TaskFolderArchiveResult {
+  var archivedCount = 0
+  targets.forEach { target ->
+    val descriptor = AgentSessionProviders.find(target.provider)
+    if (descriptor?.supportsArchiveThread != true) return@forEach
+    val archived = try {
+      runBlockingCancellable { descriptor.archiveThread(path = target.path, threadId = target.threadId) }
+    }
+    catch (t: Throwable) {
+      if (t is CancellationException) throw t
+      false
+    }
+    if (archived) archivedCount++
   }
+  return TaskFolderArchiveResult(requestedCount = targets.size, archivedCount = archivedCount)
 }
 
 private fun buildTaskFolderCreatedResponse(requestId: String, folder: AgentTaskFolder, created: Boolean, assigned: Boolean): String {
@@ -262,15 +290,7 @@ private fun buildTaskFolderDoneResponse(
 }
 
 private fun buildTaskFolderResultResponse(requestId: String, writeResult: (JsonGenerator) -> Unit): String {
-  return buildPiControlJsonObject { generator ->
-    generator.writeStringProperty("type", PiControlMessageType.RESPONSE.wireName)
-    generator.writeStringProperty("requestId", requestId)
-    generator.writeBooleanProperty("ok", true)
-    generator.writeName("result")
-    generator.writeStartObject()
-    writeResult(generator)
-    generator.writeEndObject()
-  }
+  return buildPiControlResultResponse(requestId, writeResult)
 }
 
 private fun writeTaskFolder(generator: JsonGenerator, folder: AgentTaskFolder?) {
@@ -305,7 +325,7 @@ private fun writeTaskFolderAssignment(generator: JsonGenerator, assignment: Agen
 private fun resolveTaskFolder(
   service: AgentTaskFolderService,
   context: PiControlSessionContext,
-  arguments: PiTaskFolderControlArguments,
+  arguments: PiControlRequestArguments,
 ): AgentTaskFolder? {
   val explicitFolderId = arguments.folderId?.trim()?.takeIf { it.isNotEmpty() }
   if (explicitFolderId != null) {
@@ -318,11 +338,19 @@ private fun refreshedFolder(service: AgentTaskFolderService, context: PiControlS
   return service.snapshot(includeDone = true).folder(context.projectPath, folderId)
 }
 
-private data class ArchiveTargetKey(
+private data class TaskFolderArchiveTarget(
   @JvmField val path: String,
-  @JvmField val providerId: String,
+  val provider: AgentSessionProvider,
   @JvmField val threadId: String,
 )
+
+private data class TaskFolderArchiveResult(
+  @JvmField val requestedCount: Int,
+  @JvmField val archivedCount: Int,
+) {
+  val allRequestedArchived: Boolean
+    get() = requestedCount > 0 && requestedCount == archivedCount
+}
 
 private const val OP_GET_CURRENT: String = "getCurrent"
 private const val OP_LIST_FOLDERS: String = "listFolders"
@@ -335,3 +363,4 @@ private const val OP_SET_METADATA: String = "setMetadata"
 private const val OP_DELETE_METADATA: String = "deleteMetadata"
 private const val OP_MARK_DONE: String = "markDone"
 private const val OP_DELETE: String = "delete"
+private const val PI_TASK_FOLDER_CONTROL_MESSAGE_TYPE: String = "taskFolderRequest"

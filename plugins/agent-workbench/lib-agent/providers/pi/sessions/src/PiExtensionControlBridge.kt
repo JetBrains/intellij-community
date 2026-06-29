@@ -30,7 +30,6 @@ private val CONTROL_LOG = logger<PiExtensionControlBridge>()
 private val PI_CONTROL_CONNECTION_KEY: Key<PiControlConnection> = Key.create("agent.workbench.pi.control.connection")
 
 internal object PiExtensionControlBridge {
-  private val taskFolderControlHandler = PiTaskFolderControlHandler()
   private val connectionsBySessionId = ConcurrentHashMap<String, PiControlConnection>()
   private val controlUpdates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(
     extraBufferCapacity = 64,
@@ -87,11 +86,12 @@ internal object PiExtensionControlBridge {
       PiControlMessageType.HELLO -> handleHello(webSocketClient, payload)
       PiControlMessageType.SESSION_STATE -> handleSessionState(webSocketClient, payload)
       PiControlMessageType.RESPONSE -> handleResponse(webSocketClient, payload)
-      PiControlMessageType.TASK_FOLDER_REQUEST -> handleTaskFolderRequest(webSocketClient, payload)
       PiControlMessageType.NAVIGATE_TREE,
       PiControlMessageType.FORK_FROM_ENTRY,
-      null,
         -> sendProtocolError(webSocketClient, requestId = payload.requestId, error = "Unsupported control message type")
+      null -> if (!handleExtensionRequest(webSocketClient, payload)) {
+        sendProtocolError(webSocketClient, requestId = payload.requestId, error = "Unsupported control message type")
+      }
     }
   }
 
@@ -171,20 +171,24 @@ internal object PiExtensionControlBridge {
     )
   }
 
-  private fun handleTaskFolderRequest(client: WebSocketClient, payload: PiControlPayload) {
+  private fun handleExtensionRequest(client: WebSocketClient, payload: PiControlPayload): Boolean {
+    val messageType = payload.typeName?.trim()?.takeIf { it.isNotEmpty() } ?: return false
+    val handler = PiControlRequestHandler.EP_NAME.extensionList.firstOrNull { candidate -> candidate.messageType == messageType }
+                  ?: return false
     val connection = client.getUserData(PI_CONTROL_CONNECTION_KEY)
     val requestId = payload.requestId?.trim()?.takeIf { it.isNotEmpty() }
     if (connection == null || requestId == null) {
-      sendProtocolError(client, requestId = requestId, error = "Task folder request requires an authenticated control connection")
-      return
+      sendProtocolError(client, requestId = requestId, error = "Control request requires an authenticated control connection")
+      return true
     }
 
-    taskFolderControlHandler.handle(
+    handler.handle(
       context = PiControlSessionContext(projectPath = connection.projectPath, sessionId = connection.sessionId),
-      payload = payload,
+      request = PiControlExtensionRequest(operation = payload.operation, arguments = payload.arguments),
       requestId = requestId,
       sendResponse = { response -> sendControlText(client = client, text = response) },
     )
+    return true
   }
 
   private suspend fun sendCommand(path: String, threadId: String, itemId: String, type: PiControlMessageType): PiControlResponse? {

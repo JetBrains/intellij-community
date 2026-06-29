@@ -1,6 +1,7 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionCost
 import com.intellij.platform.ai.agent.core.session.AgentSessionCostKind
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
@@ -55,7 +56,7 @@ class AgentSessionWarmStateServiceTest {
     assertThat(snapshot?.hasUnknownThreadCount).isTrue()
     assertThat(snapshot?.threads?.map { it.id }).isEqualTo(listOf("claude-thread", "codex-thread"))
     assertThat(snapshot?.threads?.map { it.provider }).isEqualTo(listOf(AgentSessionProvider.from("claude"), AgentSessionProvider.from("codex")))
-    assertThat(snapshot?.threads?.map { it.activity }).isEqualTo(listOf(AgentThreadActivity.UNREAD, AgentThreadActivity.READY))
+    assertThat(snapshot?.threads?.map { it.activityReport.rowActivity }).isEqualTo(listOf(AgentThreadActivity.UNREAD, AgentThreadActivity.READY))
     assertThat(snapshot?.threads?.first()?.subAgents?.map { it.id }).isEqualTo(listOf("claude-sub-1"))
     assertThat(snapshot?.threads?.first()?.originBranch).isEqualTo("feature/x")
     assertThat(snapshot?.threads?.first()?.cost).isEqualTo(
@@ -143,7 +144,7 @@ class AgentSessionWarmStateServiceTest {
     assertThat(snapshot?.hasUnknownThreadCount).isTrue()
     assertThat(snapshot?.threads?.map { it.id }).isEqualTo(listOf("claude-thread", "codex-thread"))
     assertThat(snapshot?.threads?.map { it.provider }).isEqualTo(listOf(AgentSessionProvider.from("claude"), AgentSessionProvider.from("codex")))
-    assertThat(snapshot?.threads?.map { it.activity }).isEqualTo(listOf(AgentThreadActivity.UNREAD, AgentThreadActivity.READY))
+    assertThat(snapshot?.threads?.map { it.activityReport.rowActivity }).isEqualTo(listOf(AgentThreadActivity.UNREAD, AgentThreadActivity.READY))
     assertThat(snapshot?.threads?.first()?.cost).isEqualTo(
       AgentSessionCost(
         amountUsd = BigDecimal("2.50"),
@@ -154,7 +155,7 @@ class AgentSessionWarmStateServiceTest {
   }
 
   @Test
-  fun warmStateRoundTripPreservesNonContributingSummaryActivity() {
+  fun warmStateRoundTripPreservesNonContributingChromeActivity() {
     val original = AgentSessionWarmStateService()
     original.setPathSnapshot(
       "/work/project-a/",
@@ -164,8 +165,7 @@ class AgentSessionWarmStateServiceTest {
             id = "codex-sub-agent",
             updatedAt = 10,
             provider = AgentSessionProvider.from("codex"),
-            activity = AgentThreadActivity.UNREAD,
-            summaryActivity = null,
+            activityReport = AgentThreadActivityReport(rowActivity = AgentThreadActivity.UNREAD, chromeActivity = null),
           ),
         ),
         updatedAt = 200,
@@ -176,7 +176,7 @@ class AgentSessionWarmStateServiceTest {
     reloaded.loadState(original.state)
 
     val thread = reloaded.getPathSnapshot("/work/project-a")?.threads?.single()
-    assertThat(thread?.activity).isEqualTo(AgentThreadActivity.UNREAD)
-    assertThat(thread?.summaryActivity).isNull()
+    assertThat(thread?.activityReport?.rowActivity).isEqualTo(AgentThreadActivity.UNREAD)
+    assertThat(thread?.activityReport?.chromeActivity).isNull()
   }
 }

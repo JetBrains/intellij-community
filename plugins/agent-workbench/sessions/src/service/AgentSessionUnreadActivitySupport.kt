@@ -5,5 +5,5 @@ import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 
 internal fun AgentSessionThread.hasUnreadActivitySignal(): Boolean {
-  return activity == AgentThreadActivity.UNREAD || summaryActivity == AgentThreadActivity.UNREAD
+  return activityReport.rowActivity == AgentThreadActivity.UNREAD || activityReport.chromeActivity == AgentThreadActivity.UNREAD
 }

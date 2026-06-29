@@ -49,6 +49,7 @@
     <module name="intellij.agent.workbench.prompt.vcs.ui"/>
     <module name="intellij.agent.workbench.prompt.testrunner"/>
     <module name="intellij.agent.workbench.sessions"/>
+    <module name="intellij.agent.workbench.sessions.task.folders"/>
     <module name="intellij.agent.workbench.sessions.jbcentral"/>
     <module name="intellij.agent.workbench.ui"/>
     <module name="intellij.agent.workbench.sessions.actions"/>

@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
@@ -42,6 +43,34 @@ class AgentSessionSleepPreventionServiceTest {
     val fixture = sleepPreventionFixture()
 
     fixture.stateFlow.value = sessionsState(projectThreads = listOf(activeThread(AgentThreadActivity.REVIEWING)))
+    fixture.service.refreshState()
+
+    assertThat(fixture.inhibitor.acquireCalls).isEqualTo(1)
+    fixture.dispose()
+  }
+
+  @Test
+  fun chromeOnlyWorkingActivityDoesNotKeepSystemAwake() {
+    val fixture = sleepPreventionFixture()
+
+    fixture.stateFlow.value = sessionsState(
+      projectThreads = listOf(activeThread(AgentThreadActivity.READY, chromeActivity = AgentThreadActivity.REVIEWING)),
+      worktreeThreads = listOf(activeThread(AgentThreadActivity.READY, id = "thread-2", chromeActivity = AgentThreadActivity.PROCESSING)),
+    )
+    fixture.service.refreshState()
+
+    assertThat(fixture.inhibitor.acquireCalls).isZero()
+    assertThat(fixture.inhibitor.releaseCalls).isZero()
+    fixture.dispose()
+  }
+
+  @Test
+  fun rowWorkingActivityKeepsSystemAwakeWhenChromeActivityIsReady() {
+    val fixture = sleepPreventionFixture()
+
+    fixture.stateFlow.value = sessionsState(
+      projectThreads = listOf(activeThread(AgentThreadActivity.PROCESSING, chromeActivity = AgentThreadActivity.READY)),
+    )
     fixture.service.refreshState()
 
     assertThat(fixture.inhibitor.acquireCalls).isEqualTo(1)
@@ -339,11 +368,15 @@ private fun sessionsState(
   )
 }
 
-private fun activeThread(activity: AgentThreadActivity, id: String = "thread-1") = thread(
+private fun activeThread(
+  rowActivity: AgentThreadActivity,
+  id: String = "thread-1",
+  chromeActivity: AgentThreadActivity? = rowActivity,
+) = thread(
   id = id,
   updatedAt = 1,
   provider = AgentSessionProvider.from("codex"),
-  activity = activity,
+  activityReport = AgentThreadActivityReport(rowActivity = rowActivity, chromeActivity = chromeActivity),
 )
 
 private class RecordingServiceSleepInhibitor : AgentSleepInhibitor {

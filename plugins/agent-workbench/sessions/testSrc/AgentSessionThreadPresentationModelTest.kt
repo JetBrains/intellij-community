@@ -21,13 +21,13 @@ class AgentSessionThreadPresentationModelTest {
       provider = AgentSessionProvider.from("codex"),
       threadId = " thread-1 ",
       title = "  Renamed\n\n  thread  ",
-      activity = AgentThreadActivity.PROCESSING,
+      activityReport = AgentThreadActivityReport(AgentThreadActivity.PROCESSING),
     )
 
     val key = presentationKey("/work/project", AgentSessionProvider.from("codex"), "thread-1")
     assertThat(changeSet.changedKeys).containsExactly(key)
     assertThat(model.snapshot()[key]?.title).isEqualTo("Renamed thread")
-    assertThat(model.snapshot()[key]?.activity).isEqualTo(AgentThreadActivity.PROCESSING)
+    assertThat(model.snapshot()[key]?.activityReport?.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
   }
 
   @Test
@@ -40,7 +40,7 @@ class AgentSessionThreadPresentationModelTest {
         AgentSessionThreadActivityPresentationUpdate(
           path = "/work/project",
           threadId = "thread-1",
-          activity = AgentThreadActivity.PROCESSING,
+          activityReport = AgentThreadActivityReport(AgentThreadActivity.PROCESSING),
         )
       ),
     )
@@ -48,7 +48,7 @@ class AgentSessionThreadPresentationModelTest {
     val key = presentationKey("/work/project", AgentSessionProvider.from("codex"), "thread-1")
     assertThat(changeSet.changedKeys).containsExactly(key)
     assertThat(model.snapshot()[key]?.title).isEmpty()
-    assertThat(model.snapshot()[key]?.activity).isEqualTo(AgentThreadActivity.PROCESSING)
+    assertThat(model.snapshot()[key]?.activityReport?.rowActivity).isEqualTo(AgentThreadActivity.PROCESSING)
   }
 
   @Test
@@ -110,7 +110,7 @@ class AgentSessionThreadPresentationModelTest {
 
     val key = presentationKey("/work/project", AgentSessionProvider.from("codex"), "thread-1")
     val presentation = model.snapshot()[key]
-    assertThat(presentation?.activity).isEqualTo(AgentThreadActivity.NEEDS_INPUT)
+    assertThat(presentation?.activityReport?.rowActivity).isEqualTo(AgentThreadActivity.NEEDS_INPUT)
     assertThat(presentation?.updatedAt).isEqualTo(100L)
   }
 
@@ -149,7 +149,7 @@ class AgentSessionThreadPresentationModelTest {
     val key = presentationKey("/work/project", AgentSessionProvider.from("codex"), "thread-1")
     val presentation = model.snapshot()[key]
     assertThat(presentation?.title).isEqualTo("Thread title")
-    assertThat(presentation?.activity).isEqualTo(AgentThreadActivity.REVIEWING)
+    assertThat(presentation?.activityReport?.rowActivity).isEqualTo(AgentThreadActivity.REVIEWING)
     assertThat(presentation?.updatedAt).isEqualTo(200L)
   }
 
@@ -162,7 +162,7 @@ class AgentSessionThreadPresentationModelTest {
       provider = AgentSessionProvider.from("codex"),
       threadId = "removed",
       title = "Removed",
-      activity = AgentThreadActivity.READY,
+      activityReport = AgentThreadActivityReport(AgentThreadActivity.READY),
     )
 
     val changeSet = model.updateProviderSnapshot(
@@ -175,7 +175,7 @@ class AgentSessionThreadPresentationModelTest {
             "thread-1",
             "Codex thread",
             AgentThreadActivity.READY,
-            summaryActivity = null,
+            chromeActivity = null,
             updatedAt = 10L,
           ),
           threadModel(AgentSessionProvider.from("claude"), "thread-2", "Claude thread", AgentThreadActivity.PROCESSING),
@@ -199,7 +199,7 @@ private fun threadModel(
   id: String,
   title: String,
   activity: AgentThreadActivity,
-  summaryActivity: AgentThreadActivity? = activity,
+  chromeActivity: AgentThreadActivity? = activity,
   updatedAt: Long = 1L,
 ): AgentSessionThread {
   return AgentSessionThread(
@@ -207,8 +207,7 @@ private fun threadModel(
     title = title,
     updatedAt = updatedAt,
     archived = false,
-    activity = activity,
-    summaryActivity = summaryActivity,
+    activityReport = AgentThreadActivityReport(rowActivity = activity, chromeActivity = chromeActivity),
     provider = provider,
   )
 }

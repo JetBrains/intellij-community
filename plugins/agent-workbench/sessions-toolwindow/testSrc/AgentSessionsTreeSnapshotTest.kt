@@ -17,10 +17,10 @@ import com.intellij.agent.workbench.sessions.toolwindow.tree.buildSessionTreeMod
 import com.intellij.agent.workbench.sessions.toolwindow.tree.overlayPendingAgentChatTabs
 import com.intellij.agent.workbench.sessions.toolwindow.tree.sessionTreeNodeSearchText
 import com.intellij.agent.workbench.sessions.toolwindow.ui.SessionTreeStrictSubstringComparator
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolder
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderSnapshot
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderStatus
-import com.intellij.platform.ai.agent.sessions.core.folders.AgentTaskFolderThreadAssignment
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolder
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolderSnapshot
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolderStatus
+import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolderThreadAssignment
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -483,7 +483,7 @@ class AgentSessionsTreeSnapshotTest {
     assertThat(pendingThread.id).isEqualTo("new-pending")
     assertThat(pendingThread.title).isEqualTo(AgentSessionsBundle.message("toolwindow.action.new.thread"))
     assertThat(pendingThread.updatedAt).isEqualTo(700L)
-    assertThat(pendingThread.activity).isEqualTo(AgentThreadActivity.READY)
+    assertThat(pendingThread.activityReport.rowActivity).isEqualTo(AgentThreadActivity.READY)
     assertThat(pendingThread.provider).isEqualTo(AgentSessionProvider.from("codex"))
   }
 

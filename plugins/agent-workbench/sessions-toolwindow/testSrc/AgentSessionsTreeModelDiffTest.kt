@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions.toolwindow
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.model.ProjectBuildSystemBadge
@@ -173,7 +174,7 @@ class AgentSessionsTreeModelDiffTest {
               title = "Thread 1",
               updatedAt = 100,
               archived = false,
-              activity = AgentThreadActivity.READY,
+              activityReport = AgentThreadActivityReport(AgentThreadActivity.READY),
               provider = AgentSessionProvider.from("codex"),
             )
           ),
@@ -196,7 +197,7 @@ class AgentSessionsTreeModelDiffTest {
               title = "Thread 1",
               updatedAt = 100,
               archived = false,
-              activity = AgentThreadActivity.PROCESSING,
+              activityReport = AgentThreadActivityReport(AgentThreadActivity.PROCESSING),
               provider = AgentSessionProvider.from("codex"),
             )
           ),
