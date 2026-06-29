@@ -512,7 +512,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     try {
       customizer.processPluginNameAndButtonsComponent(nameAndButtons)
     }
-    catch (e: Exception) {
+    catch (e: Throwable) {
       LOG.error("Error during PluginDetailsPage customization", e)
     }
   }
