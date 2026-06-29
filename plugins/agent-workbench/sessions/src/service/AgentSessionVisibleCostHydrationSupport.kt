@@ -76,7 +76,7 @@ internal class AgentSessionVisibleCostHydrationSupport(
       .toSet()
     return costSourceProviders.isNotEmpty() && collectVisibleThreads(state).any { visibleThread ->
       visibleThread.provider in costSourceProviders &&
-      visibleThread.activity.isWorking &&
+      visibleThread.rowActivity.isWorking &&
       normalizeConcreteAgentSessionThreadId(visibleThread.threadId) != null
     }
   }
