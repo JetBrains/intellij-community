@@ -1463,6 +1463,7 @@ plugins/laf/macos
 plugins/laf/win10
 plugins/lombok
 plugins/lombok/generated
+plugins/lombok/plugin
 plugins/lsp.ui
 plugins/lsp.ui/idea.product.modules
 plugins/markdown/compose

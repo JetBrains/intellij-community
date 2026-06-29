@@ -231,7 +231,9 @@ object CommunityRepositoryModules {
     pluginAuto(listOf("intellij.findUsagesMl")) { spec ->
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE
     },
-    pluginAuto(listOf("intellij.lombok", "intellij.lombok.generated")),
+    pluginAutoWithCustomDirName("intellij.lombok.plugin") { spec ->
+      spec.directoryName = "lombok"
+    },
     pluginAuto(listOf("intellij.performanceTesting.ui")),
     pluginAuto(listOf("intellij.vcs.github")),
     pluginAuto(listOf("intellij.vcs.gitlab")),

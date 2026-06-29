@@ -1189,6 +1189,7 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/xz/intellij.libraries.xz.iml" filepath="$PROJECT_DIR$/libraries/xz/intellij.libraries.xz.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/lombok/intellij.lombok.iml" filepath="$PROJECT_DIR$/plugins/lombok/intellij.lombok.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/lombok/generated/intellij.lombok.generated.iml" filepath="$PROJECT_DIR$/plugins/lombok/generated/intellij.lombok.generated.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/lombok/plugin/intellij.lombok.plugin.iml" filepath="$PROJECT_DIR$/plugins/lombok/plugin/intellij.lombok.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/lombok/intellij.lombok.tests.iml" filepath="$PROJECT_DIR$/plugins/lombok/intellij.lombok.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/lsp.ui/intellij.lsp.ui.iml" filepath="$PROJECT_DIR$/plugins/lsp.ui/intellij.lsp.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/lsp.ui/idea.product.modules/intellij.lsp.ui.idea.product.modules.iml" filepath="$PROJECT_DIR$/plugins/lsp.ui/idea.product.modules/intellij.lsp.ui.idea.product.modules.iml" />

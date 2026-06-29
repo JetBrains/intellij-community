@@ -275,6 +275,8 @@ jvm_library(
         "//platform/code-style-api:codeStyle_test_lib",
         "//platform/util:util-ui",
         "//platform/util:util-ui_test_lib",
+        "//plugins/lombok/plugin",
+        "//plugins/lombok/plugin:plugin_test_lib",
         "//platform/statistics",
         "//platform/statistics:statistics_test_lib",
         "//libraries/junit5",
