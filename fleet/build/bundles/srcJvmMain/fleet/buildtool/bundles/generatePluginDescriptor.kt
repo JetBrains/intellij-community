@@ -2,7 +2,6 @@ package fleet.buildtool.bundles
 
 import fleet.buildtool.sign.FleetSigner
 import fleet.buildtool.sign.jetSignJsonContentType
-import fleet.buildtool.scrambling.JarScrambler
 import fleet.bundles.LayerSelector
 import fleet.bundles.PluginDescriptor
 import fleet.bundles.PluginName
@@ -58,7 +57,6 @@ suspend fun generatePluginDescriptor(
 
   logger: Logger,
   signer: FleetSigner,
-  scrambler: JarScrambler,
 
   pluginPartsFileOutput: Path,
   pluginDescriptorFileOutput: Path,
@@ -105,12 +103,6 @@ suspend fun generatePluginDescriptor(
               outputDirectory = temporaryDir.resolve("packedJars"),
               logger = logger,
               pluginId = pluginId,
-            )
-            .scrambleModuleJars(
-              fullClasspath = runtimeClasspathByLayer,
-              outputDirectory = temporaryDir.resolve("scrambledJars"),
-              logger = logger,
-              scrambler = scrambler,
             )
         }
       }
