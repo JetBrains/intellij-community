@@ -221,7 +221,17 @@ object PyTypeInferenceCspFactory {
     // not calling ensureBoundsAndConstraints since sequences have no bounds/constraints
 
     val sequenceElements = unpackStarredListLiterals(si.expression.elements).take(10)
-    val elementTypes = sequenceElements.map { buildNestedCsp(it, builder, context) }
+    val elementTypes = sequenceElements.map { element ->
+      // A star element that survived unpacking (its operand isn't a list/set literal) contributes its
+      // iterated item type, not the type of the iterable itself (mirrors getListOrSetIteratedValueType).
+      val starOperand = (element as? PyStarExpression)?.expression
+      if (starOperand != null) {
+        (context.getType(starOperand) as? PyClassType)?.let { PyTypeChecker.getIteratedItemType(it, context) }
+      }
+      else {
+        buildNestedCsp(element, builder, context)
+      }
+    }
     val sequenceTypeArg = PyUnionType.union(elementTypes)
 
     // Literal element types as union

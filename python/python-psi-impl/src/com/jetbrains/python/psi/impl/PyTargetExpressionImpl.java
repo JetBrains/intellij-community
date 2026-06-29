@@ -309,7 +309,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       else {
         final PyType iterationType = assignedIterable != null
                                      ? getIterationType(assignedType, assignedIterable, assignedIterable, false, context)
-                                     : getIterationType(assignedType, topmostContainingTupleOrList, context);
+                                     : getIterationType(assignedType, context);
         if (iterationType == null) {
           return null;
         }
@@ -469,15 +469,15 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return null;
   }
 
-  private static @Nullable PyType getIterationType(@Nullable PyType iterableType,
-                                                   @NotNull PsiElement anchor,
-                                                   @NotNull TypeEvalContext context) {
+  private static @Nullable PyType getIterationType(@Nullable PyType iterableType, @NotNull TypeEvalContext context) {
     if (iterableType instanceof PyTupleType tupleType) {
       return tupleType.getIteratedItemType();
     }
-    PyType type = PyTypeUtil.convertToType(iterableType, "typing.Iterable", anchor, context);
-    if (type instanceof PyClassType pyClassType && pyClassType.isParameterized()) {
-      return pyClassType.getIteratedItemType();
+    if (iterableType instanceof PyClassType classType) {
+      final PyType element = PyTypeChecker.getIteratedItemType(classType, context);
+      if (element != null) {
+        return element;
+      }
     }
     return PyAnyType.getUnknown();
   }

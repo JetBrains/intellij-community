@@ -575,12 +575,12 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         if (type.isProtocol(context)) {
           var yieldType: PyType?
 
-          val syncUpcast = type.convertToType("typing.Iterable", type.pyClass, context)
+          val syncUpcast = type.convertToType(ITERABLE, type.pyClass, context)
           if (syncUpcast is PyClassType && syncUpcast.isParameterized) {
             yieldType = syncUpcast.iteratedItemType
             return GeneratorTypeDescriptor(yieldType, PyAnyType.unknown, PyAnyType.unknown, false)
           }
-          val asyncUpcast = type.convertToType("typing.AsyncIterable", type.pyClass, context)
+          val asyncUpcast = type.convertToType(ASYNC_ITERABLE, type.pyClass, context)
           if (asyncUpcast is PyClassType && asyncUpcast.isParameterized) {
             yieldType = asyncUpcast.iteratedItemType
             return GeneratorTypeDescriptor(yieldType, PyAnyType.unknown, PyAnyType.unknown, true)
@@ -785,6 +785,9 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     const val READONLY: String = "typing.ReadOnly"
     const val READONLY_EXT: String = "typing_extensions.ReadOnly"
     const val ITERABLE: String = "typing.Iterable"
+    const val ITERATOR: String = "typing.Iterator"
+    const val ASYNC_ITERABLE: String = "typing.AsyncIterable"
+    const val ASYNC_ITERATOR: String = "typing.AsyncIterator"
 
     val TYPE_PARAMETER_FACTORIES: Set<String> = setOf(
       TYPE_VAR, TYPE_VAR_EXT,

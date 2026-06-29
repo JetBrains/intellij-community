@@ -32,8 +32,13 @@ public interface PyClassType extends PyClassLikeType, UserDataHolder {
   /**
    * The element type produced when iterating over an instance of this type, or {@code null} if it is not iterable.
    * For most parameterized collections it is the first type argument; for mappings it is the key type.
+   *
+   * @deprecated resolves the element type without a caller-supplied {@link TypeEvalContext} (it falls back to
+   * {@code codeInsightFallback}) and hard-codes the {@code Iterable} protocol. Callers should instead choose the
+   * protocol they need and pass their own context, e.g. {@code PyTypeChecker.getIteratedItemType(classType, context)}.
    */
   @ApiStatus.Internal
+  @Deprecated
   @Nullable
   PyType getIteratedItemType();
 

@@ -53,7 +53,6 @@ import com.jetbrains.python.psi.types.PyLiteralStringType.Companion.match
 import com.jetbrains.python.psi.types.PyLiteralType.Companion.match
 import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser
 import com.jetbrains.python.psi.types.PyTypeChecker.convertToType
-import com.jetbrains.python.psi.types.PyTypeChecker.explainMismatch
 import com.jetbrains.python.psi.types.PyTypeChecker.match
 import com.jetbrains.python.psi.types.PyTypeChecker.recordFrame
 import com.jetbrains.python.psi.types.PyTypeChecker.recordLeaf
@@ -2753,6 +2752,39 @@ object PyTypeChecker {
       val resolvableTypeParams = superType.collectGenerics(context)
       val substitutions = substituteUnboundTypeVarsWithDefaultOrAny(superType, resolvableTypeParams, matchContext.mySubstitutions, context)
       return substitute(superType, substitutions, context)
+    }
+    return null
+  }
+
+  /**
+   * Computes the type produced when iterating over an instance of [classType], or `null` if it is not iterable.
+   *
+   * The first type argument cannot be assumed to be the iterated element: a class may parameterize its `Iterable`
+   * ancestor with a concrete type (e.g. `class A\[T](list\[str])` iterates over `str`, not `T`) or remap its type
+   * parameters (e.g. a mapping iterates over its key). The element is therefore resolved by upcasting to the
+   * (sync or async) `Iterable` protocol, except for the iterable/iterator protocols themselves, whose first type
+   * argument is returned directly so that literal type arguments are preserved.
+   */
+  @JvmStatic
+  @ApiStatus.Internal
+  fun getIteratedItemType(classType: PyClassType, context: TypeEvalContext): PyType? {
+    val typeArguments = classType.typeArguments
+    // For the (sync/async) iterable and iterator protocols themselves the first type argument *is* the element type.
+    // Shortcut them so that a literal type argument (e.g. `Iterator[LiteralString]`) is preserved instead of being
+    // widened by upcasting to `Iterable[T]`.
+    if (PyTypingTypeProvider.ITERABLE == classType.classQName ||
+        PyTypingTypeProvider.ITERATOR == classType.classQName ||
+        PyTypingTypeProvider.ASYNC_ITERABLE == classType.classQName ||
+        PyTypingTypeProvider.ASYNC_ITERATOR == classType.classQName) {
+      return typeArguments.firstOrNull()
+    }
+    val iterable = with(PyTypeUtil) { classType.convertToType(PyTypingTypeProvider.ITERABLE, classType.pyClass, context) }
+    if (iterable is PyClassType && iterable.isParameterized) {
+      return getIteratedItemType(iterable, context)
+    }
+    val asyncIterable = with(PyTypeUtil) { classType.convertToType(PyTypingTypeProvider.ASYNC_ITERABLE, classType.pyClass, context) }
+    if (asyncIterable is PyClassType && asyncIterable.isParameterized) {
+      return getIteratedItemType(asyncIterable, context)
     }
     return null
   }

@@ -43,7 +43,10 @@ object PyCollectionTypeUtil {
         if (element is PyStarExpression) {
           val innerExpr = element.expression ?: return@map null
           val innerType = context.getType(innerExpr)
-          PyTypeUtil.widenLiteralAndNumeric((innerType as? PyCollectionType)?.iteratedItemType)
+          // Resolve the element via the context-aware entry point: the context-less `iteratedItemType`
+          // can't upcast a local generic subclass (e.g. `class A[T](list[str])`) to `Iterable`.
+          val elementType = (innerType as? PyClassType)?.let { PyTypeChecker.getIteratedItemType(it, context) }
+          PyTypeUtil.widenLiteralAndNumeric(elementType)
         }
         else {
           PyTypeUtil.widenLiteralAndNumeric(context.getType(element))

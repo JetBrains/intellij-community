@@ -136,16 +136,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
   @Override
   public @Nullable PyType getIteratedItemType() {
-    if (myTypeArguments.size() >= 2) {
-      if (!PyTypingTypeProvider.ITERABLE.equals(getClassQName())) {
-        TypeEvalContext context = TypeEvalContext.codeInsightFallback(getPyClass().getProject());
-        PyType asIterable = PyTypeUtil.convertToType(this, PyTypingTypeProvider.ITERABLE, getPyClass(), context);
-        if (asIterable instanceof PyClassType classType && classType.isParameterized()) {
-          return classType.getIteratedItemType();
-        }
-      }
-    }
-    return ContainerUtil.getFirstItem(myTypeArguments);
+    return PyTypeChecker.getIteratedItemType(this, TypeEvalContext.codeInsightFallback(getPyClass().getProject()));
   }
 
   public <T> PyClassTypeImpl withUserData(Key<T> key, T value) {
