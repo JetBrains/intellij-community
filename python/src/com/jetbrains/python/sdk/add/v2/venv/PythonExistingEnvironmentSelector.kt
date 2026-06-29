@@ -38,6 +38,8 @@ class PythonExistingEnvironmentSelector<P : PathHolder>(model: PythonAddInterpre
         selectedSdkProperty = model.state.selectedInterpreter,
         validationRequestor = validationRequestor,
         onPathSelected = model::addManuallyAddedPythonNotNecessarilySystem,
+        // Existing < 3.8 interpreters stay usable, but the IDE no longer provides pip/setuptools for them.
+        additionalValidation = { unsupportedPythonManagementWarning(it) },
       )
     }
   }

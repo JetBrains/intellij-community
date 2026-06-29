@@ -7,6 +7,7 @@ import com.intellij.openapi.observable.util.addMouseHoverListener
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.TextComponentAccessor
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.AnimatedIcon
@@ -42,6 +43,7 @@ class ComboBoxWithBrowseButtonEditor<P : PathHolder>(
   val comboBox: ComboBox<PythonSelectableInterpreter<P>?>,
   val fileSystem: FileSystem<P>,
   val browseTitle: @NlsContexts.DialogTitle String,
+  private val interpreterValidator: ((PythonSelectableInterpreter<*>) -> ValidationInfo?)? = null,
   onPathSelected: (String) -> Unit,
 ) : ComboBoxEditor {
   private val component = SimpleColoredComponent()
@@ -127,7 +129,9 @@ class ComboBoxWithBrowseButtonEditor<P : PathHolder>(
     if (_item == anObject) return
     _item = anObject
     component.clear()
-    component.customizeForPythonInterpreter(isBusy, anObject as? PythonSelectableInterpreter<*>)
+    val interpreter = anObject as? PythonSelectableInterpreter<*>
+    val validation = if (interpreter != null) interpreterValidator?.invoke(interpreter) else null
+    component.customizeForPythonInterpreter(isBusy, interpreter, validation)
   }
 
   fun setBusy(busy: Boolean) {
@@ -136,8 +140,9 @@ class ComboBoxWithBrowseButtonEditor<P : PathHolder>(
     component.isEnabled = !isBusy
     comboBox.isEnabled = !isBusy
     component.clear()
-    (item as? PythonSelectableInterpreter<*>).takeIf { !busy }.let {
-      component.customizeForPythonInterpreter(busy, it)
+    (item as? PythonSelectableInterpreter<*>).takeIf { !busy }.let { interpreter ->
+      val validation = if (interpreter != null) interpreterValidator?.invoke(interpreter) else null
+      component.customizeForPythonInterpreter(busy, interpreter, validation)
     }
   }
 
