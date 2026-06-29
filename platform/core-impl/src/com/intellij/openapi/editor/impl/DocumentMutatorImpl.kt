@@ -116,9 +116,6 @@ internal abstract class DocumentMutatorImpl(
         )
       }
     )
-    // TODO: can the whole api DocumentFullUpdateListener be removed?
-    //  see event.getInitialStartOffset() and event.getInitialOldLength()
-    dispatcher.fireDocumentFullUpdated(hostDocument)
   }
 
   override fun moveText(

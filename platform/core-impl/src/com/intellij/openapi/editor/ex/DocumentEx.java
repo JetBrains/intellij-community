@@ -26,14 +26,6 @@ public interface DocumentEx extends Document {
   default void removeEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
   }
 
-  @ApiStatus.Internal
-  default void addFullUpdateListener(@NotNull DocumentFullUpdateListener listener) {
-  }
-
-  @ApiStatus.Internal
-  default void removeFullUpdateListener(@NotNull DocumentFullUpdateListener listener) {
-  }
-
   void replaceText(@NotNull CharSequence chars, long newModificationStamp);
 
   /**

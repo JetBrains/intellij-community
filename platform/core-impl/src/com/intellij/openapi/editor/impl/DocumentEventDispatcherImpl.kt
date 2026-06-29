@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.DocumentEventDispatcher
-import com.intellij.openapi.editor.ex.DocumentFullUpdateListener
 import com.intellij.openapi.editor.ex.DocumentSettings
 import com.intellij.openapi.editor.ex.EditReadOnlyListener
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
@@ -22,7 +21,6 @@ internal open class DocumentEventDispatcherImpl private constructor(
   protected val listeners: LockFreeCOWSortedArray<DocumentListener>,
   private val propertyListeners: DocumentPropertyChangeSupport,
   private val readOnlyListeners: MutableList<EditReadOnlyListener>,
-  private val fullUpdateListeners: MutableList<DocumentFullUpdateListener>,
 ): DocumentEventDispatcher {
   protected val textUpdate: DocumentTextUpdate = DocumentTextUpdate.Real(settings, listeners)
   protected val bulkUpdate: DocumentBulkUpdate = DocumentBulkUpdate.Real(settings, listeners)
@@ -31,7 +29,6 @@ internal open class DocumentEventDispatcherImpl private constructor(
     settings,
     LockFreeCOWSortedArray(PrioritizedDocumentListener.COMPARATOR, DocumentListener.ARRAY_FACTORY),
     DocumentPropertyChangeSupport(),
-    ContainerUtil.createLockFreeCopyOnWriteList(),
     ContainerUtil.createLockFreeCopyOnWriteList(),
   )
 
@@ -97,14 +94,6 @@ internal open class DocumentEventDispatcherImpl private constructor(
     readOnlyListeners.remove(listener)
   }
 
-  final override fun addFullUpdateListener(listener: DocumentFullUpdateListener) {
-    fullUpdateListeners.add(listener)
-  }
-
-  final override fun removeFullUpdateListener(listener: DocumentFullUpdateListener) {
-    fullUpdateListeners.remove(listener)
-  }
-
   final override fun firePropertyChange(hostDocument: Document, isReadOnly: Boolean) {
     propertyListeners.firePropertyChange(
       hostDocument,
@@ -117,12 +106,6 @@ internal open class DocumentEventDispatcherImpl private constructor(
   final override fun fireReadOnlyModificationAttempt(hostDocument: Document) {
     for (listener in readOnlyListeners) {
       listener.readOnlyModificationAttempt(hostDocument)
-    }
-  }
-
-  final override fun fireDocumentFullUpdated(hostDocument: Document) {
-    for (listener in fullUpdateListeners) {
-      listener.onFullUpdateDocument(hostDocument)
     }
   }
 

@@ -11,7 +11,6 @@ import java.beans.PropertyChangeListener
  * This interface is responsible for storing document listeners and dispatching document-related notifications
  *
  * @see DocumentListener
- * @see DocumentFullUpdateListener
  * @see EditReadOnlyListener
  * @see Document.addPropertyChangeListener
  */
@@ -34,9 +33,4 @@ interface DocumentEventDispatcher {
   fun addEditReadOnlyListener(listener: EditReadOnlyListener)
   fun removeEditReadOnlyListener(listener: EditReadOnlyListener)
   fun fireReadOnlyModificationAttempt(hostDocument: Document)
-
-  // TODO: FullUpdate api looks redundant
-  fun addFullUpdateListener(listener: DocumentFullUpdateListener)
-  fun removeFullUpdateListener(listener: DocumentFullUpdateListener)
-  fun fireDocumentFullUpdated(hostDocument: Document)
 }

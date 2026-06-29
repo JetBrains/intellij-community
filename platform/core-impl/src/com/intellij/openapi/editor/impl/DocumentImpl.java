@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHand
 import com.intellij.openapi.editor.elf.ElfFeatureFlag;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.DocumentFullUpdateListener;
 import com.intellij.openapi.editor.ex.DocumentCore;
 import com.intellij.openapi.editor.ex.EditReadOnlyListener;
 import com.intellij.openapi.editor.ex.LineIterator;
@@ -383,18 +382,6 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   @Override
   public void unSuppressGuardedExceptions(boolean onlyWholeText) {
     impl.settings().unsuppressGuardCheck(onlyWholeText);
-  }
-
-  @ApiStatus.Internal
-  @Override
-  public void addFullUpdateListener(@NotNull DocumentFullUpdateListener listener) {
-    impl.dispatcher().addFullUpdateListener(listener);
-  }
-
-  @ApiStatus.Internal
-  @Override
-  public void removeFullUpdateListener(@NotNull DocumentFullUpdateListener listener) {
-    impl.dispatcher().removeFullUpdateListener(listener);
   }
 
   @ApiStatus.Internal

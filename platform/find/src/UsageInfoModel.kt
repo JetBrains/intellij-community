@@ -14,8 +14,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.ex.DocumentEx
-import com.intellij.openapi.editor.ex.DocumentFullUpdateListener
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.impl.event.DocumentEventImpl
 import com.intellij.openapi.fileEditor.FileEditorLocation
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -89,18 +90,27 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
     TextRange(it, it + model.length)
   }
 
-  private val fullUpdateListener = object : DocumentFullUpdateListener {
-    // TODO: replace with simple DocumentListener,
-    //  see DocumentEventImpl.getInitialStartOffset, getInitialOldLength
-    override fun onFullUpdateDocument(document: Document) {
-      PsiDocumentManager.getInstance(project).performForCommittedDocument(document) {
+  // UsageInfoModel is shared, but this listener is registered only for rem-dev frontend usage models
+  // to refresh local preview data after a full document replacement.
+  @Suppress("SplitModeApiUsage")
+  private val fullUpdateListener = object : DocumentListener {
+    override fun documentChanged(event: DocumentEvent) {
+      if (!isFullUpdate(event)) return
+      PsiDocumentManager.getInstance(project).performForCommittedDocument(event.document) {
         initialize()
       }
     }
   }
 
   override fun dispose() {
-    (document as? DocumentEx)?.removeFullUpdateListener(fullUpdateListener)
+  }
+
+  private fun isFullUpdate(event: DocumentEvent): Boolean {
+    val eventImpl = event as? DocumentEventImpl ?: return false
+    val oldDocumentLength = event.document.textLength - event.newLength + event.oldLength
+    return eventImpl.isWholeTextReplaced &&
+           eventImpl.initialStartOffset == 0 &&
+           eventImpl.initialOldLength == oldDocumentLength
   }
 
   init {
@@ -148,7 +158,7 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
             }
             cachedPsiFile = psiFile
             if (document == null) document = psiFile?.fileDocument?.also {
-              (it as? DocumentEx)?.addFullUpdateListener(fullUpdateListener)
+              it.addDocumentListener(fullUpdateListener, this@UsageInfoModel)
             }
 
             if (psiFile == null) {
@@ -320,7 +330,7 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
         if (doc != null && document == null) {
           document = doc
           if (isRemDev()) {
-            (doc as? DocumentEx)?.addFullUpdateListener(fullUpdateListener)
+            doc.addDocumentListener(fullUpdateListener, this@UsageInfoModel)
           }
         }
         doc
