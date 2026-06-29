@@ -153,6 +153,8 @@
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyMetaClassCompletionContributor"/>
     <completion.contributor language="Python"
+                            implementationClass="com.jetbrains.python.codeInsight.completion.PyTypedDictKeywordArgumentCompletionContributor"/>
+    <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyStructuralTypeAttributesCompletionContributor"/>
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyDataclassCompletionContributor"/>

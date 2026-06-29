@@ -31,6 +31,7 @@ import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyTypedDictType;
 import com.jetbrains.python.psi.types.PyUnionType;
@@ -41,6 +42,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 
 
 public class PySubscriptionExpressionImpl extends PyElementImpl implements PySubscriptionExpression {
@@ -77,6 +80,12 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
         if (operandType instanceof PyTypedDictType typedDictType) {
           List<String> indexPossibleValues = getIndexExpressionPossibleValues(indexExpression, context, String.class);
           if (typedDictType.getExtraItemsType() != null && !typedDictType.isClosed()) {
+            if (indexPossibleValues.isEmpty() && !isUnknown(typedDictType.getExtraItemsType()) && isStringIndex(indexExpression, context)) {
+              // Non-literal `str` key: the value can be any declared item or an explicitly typed extra item.
+              List<PyType> types = new ArrayList<>(ContainerUtil.map(typedDictType.getFields().values(), field -> field.getType()));
+              types.add(typedDictType.getExtraItemsType());
+              return PyUnionType.union(types);
+            }
             List<PyType> types = new ArrayList<>();
             for (String indexValue : indexPossibleValues) {
               if (typedDictType.getFields().containsKey(indexValue)) {
@@ -128,6 +137,18 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
       result.add(val);
     }
     return result;
+  }
+
+  private static boolean isStringIndex(@Nullable PyExpression indexExpression, @NotNull TypeEvalContext context) {
+    if (indexExpression == null) {
+      return false;
+    }
+    PyType indexType = context.getType(indexExpression);
+    if (indexType == null || isUnknown(indexType)) {
+      return false;
+    }
+    PyType strType = PyBuiltinCache.getInstance(indexExpression).getStrType();
+    return strType != null && PyTypeChecker.match(strType, indexType, context);
   }
 
   @SuppressWarnings("unchecked")

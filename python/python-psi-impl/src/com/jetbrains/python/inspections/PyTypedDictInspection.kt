@@ -472,6 +472,9 @@ class PyTypedDictInspection : PyInspection() {
           if (targetType.fields[indexString]?.qualifiers?.isReadOnly == true) {
             registerProblem(target, PyPsiBundle.message("INSP.typeddict.typeddict.field.is.readonly", indexString))
           }
+          else if (indexString !in targetType.fields && targetType.extraItemsQualifiers.isReadOnly) {
+            registerProblem(target, PyPsiBundle.message("INSP.typeddict.typeddict.field.is.readonly", indexString))
+          }
 
           val expected = targetType.getElementType(indexString)
           val actualExpressions = targetsToValuesMapping.filter { it.first == target }.map { it.second }

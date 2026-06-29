@@ -240,6 +240,22 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
     )
 
     @Test
+    @TestFor(issues = ["PY-90620"])
+    fun `extra_items non-literal str key`() = test(
+      TestOptions(languageLevel = LanguageLevel.PYTHON313),
+      """
+      from typing_extensions import TypedDict
+
+      class Foo(TypedDict, extra_items=int):
+          pass
+
+      def bar(foo: Foo, key: str) -> None:
+          expr = foo[key]
+      #   └ TYPE int
+      """,
+    )
+
+    @Test
     @TestFor(issues = ["PY-85421"])
     fun `extra_items reflected in items`() = test(
       TestOptions(languageLevel = LanguageLevel.PYTHON313, assertRecursionPrevention = false),
@@ -743,6 +759,22 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       def f(m: Movie) -> None:
           present = m['name']
           missing = m['year']  # WARNING TypedDict "Movie" has no key 'year'
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90618"])
+    fun `assigning to a read-only extra item is reported`() = test(
+      // `enablePyAnyType = false`: writing an extra key feeds a `null` expected type into the value check;
+      // making that path yield the extra-items type instead is part of the `PyAnyType` migration (PY-88453).
+      TestOptions(enablePyAnyType = false),
+      """
+      from typing_extensions import TypedDict, ReadOnly
+
+      class Foo(TypedDict, extra_items=ReadOnly[int]):
+          pass
+
+      def f(foo: Foo) -> None:
+          foo["bar"] = 43  # WARNING TypedDict key "bar" is ReadOnly
       """)
   }
 
