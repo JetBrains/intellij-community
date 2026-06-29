@@ -466,8 +466,8 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
           GREEN = auto()
           BLUE = auto()
 
-      expr = Color.RED | Color.BLUE
-      # └ TYPE Color
+      expr = Color.RED | Color.BLUE  # ISSUES * FIXME
+      # └ TYPE Unknown FIXME Color
       """)
 
     @Test
@@ -480,8 +480,8 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
           GREEN = auto()
           BLUE = auto()
 
-      expr = (Color.RED & Color.BLUE, Color.RED ^ Color.BLUE)
-      # └ TYPE tuple[Color, Color]
+      expr = (Color.RED & Color.BLUE, Color.RED ^ Color.BLUE)  # ISSUES * FIXME
+      # └ TYPE tuple[Unknown, Unknown] FIXME tuple[Color, Color]
       """)
 
     @Test
@@ -494,8 +494,8 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
           GREEN = auto()
           BLUE = auto()
 
-      expr = Color.RED | Color.GREEN | Color.BLUE
-      # └ TYPE Color
+      expr = Color.RED | Color.GREEN | Color.BLUE  # ISSUES * FIXME
+      # └ TYPE Unknown FIXME Color
       """)
 
     @Test

@@ -233,6 +233,22 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
     )
 
     @Test
+    @TestFor(issues = ["PY-90620"])
+    fun `extra_items non-literal str key`() = test(
+      TestOptions(languageLevel = LanguageLevel.PYTHON313),
+      """
+      from typing_extensions import TypedDict
+
+      class Foo(TypedDict, extra_items=int):
+          pass
+
+      def bar(foo: Foo, key: str) -> None:
+          expr = foo[key]
+      #   └ TYPE int
+      """,
+    )
+
+    @Test
     @TestFor(issues = ["PY-85421"])
     fun `extra_items reflected in items`() = test(
       TestOptions(languageLevel = LanguageLevel.PYTHON313, assertRecursionPrevention = false),
@@ -514,7 +530,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-38873"])
-    fun `value access through list field`() = test("""
+    fun `value access through list field`() = test(TestOptions(enablePyAnyType = false), """
       from typing import TypedDict, List, LiteralString
       Movie = TypedDict('Movie', {'address': List[str]}, total=False)
       class Movie2(TypedDict, total=False):
@@ -693,6 +709,22 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       required_readonly_dict: IntDictRequiredReadOnly = {"id": 1}
       combined_error: dict[str, int] = required_readonly_dict  # Error: 'id' is both required and read-only
       #                                ^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'dict[str, int]', got 'IntDictRequiredReadOnly' instead
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90618"])
+    fun `assigning to a read-only extra item is reported`() = test(
+      // `enablePyAnyType = false`: writing an extra key feeds a `null` expected type into the value check;
+      // making that path yield the extra-items type instead is part of the `PyAnyType` migration (PY-88453).
+      TestOptions(enablePyAnyType = false),
+      """
+      from typing_extensions import TypedDict, ReadOnly
+
+      class Foo(TypedDict, extra_items=ReadOnly[int]):
+          pass
+
+      def f(foo: Foo) -> None:
+          foo["bar"] = 43  # WARNING TypedDict key "bar" is ReadOnly
       """)
   }
 
@@ -886,7 +918,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
 
   @Test
   @TestFor(issues = ["PY-90291"])
-  fun `TypedDict as Mapping or dict`() = test("""
+  fun `TypedDict as Mapping or dict`() = test(TestOptions(enablePyAnyType = false), """
     from typing import Mapping, TypedDict, NotRequired
     
     

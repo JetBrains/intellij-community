@@ -2143,7 +2143,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-82871"])
-    fun `Concatenate with ellipsis assignability`() = test("""
+    fun `Concatenate with ellipsis assignability`() = test(TestOptions(enablePyAnyType = false), """
       from typing import Callable, Concatenate
 
       call: Callable[Concatenate[int, ...], str]
