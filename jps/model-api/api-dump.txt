@@ -503,6 +503,8 @@ e:org.jetbrains.jps.model.java.LanguageLevel
 - sf:JDK_25_PREVIEW:org.jetbrains.jps.model.java.LanguageLevel
 - sf:JDK_26:org.jetbrains.jps.model.java.LanguageLevel
 - sf:JDK_26_PREVIEW:org.jetbrains.jps.model.java.LanguageLevel
+- sf:JDK_27:org.jetbrains.jps.model.java.LanguageLevel
+- sf:JDK_27_PREVIEW:org.jetbrains.jps.model.java.LanguageLevel
 - sf:JDK_X:org.jetbrains.jps.model.java.LanguageLevel
 - feature():I
 - isPreview():Z

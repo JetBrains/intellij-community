@@ -299,8 +299,7 @@ enum class JavaFeature {
   JAVA_LANG_IO(LanguageLevel.JDK_25, "feature.java.lang.io"),
 
   /**
-   * JEP 502,
-   * JEP 526
+   * JEP 502, JEP 526, JEP 531
    * @see STABLE_VALUES
    */
   LAZY_CONSTANTS(LanguageLevel.JDK_26_PREVIEW, "feature.lazy.constants"),
