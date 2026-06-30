@@ -4,7 +4,6 @@ package com.intellij.internal.statistic.eventLog
 import com.intellij.ide.plugins.ProductLoadingStrategy
 import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.StatisticsServiceScope
-import com.intellij.internal.statistic.eventLog.dispatcher.DispatcherBackedEventLogWriter
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent
 import com.intellij.openapi.application.ApplicationManager
@@ -197,7 +196,6 @@ abstract class StatisticsEventLoggerProvider(
     val dispatcher = IntellijSensitiveDataValidator.getInstance(recorderId).reportDispatcher
                      ?: error("FusComponents.reportDispatcher is null for recorder '$recorderId'; logger creation requires the production FusComponents path.")
     val eventLogDir = eventLogConfiguration.getEventLogDataPath().resolve("logs").resolve(recorderId)
-    val writer = DispatcherBackedEventLogWriter(dispatcher, eventLogDir)
 
     val logger = StatisticsFileEventLogger(
       recorderId = recorderId,
@@ -206,9 +204,11 @@ abstract class StatisticsEventLoggerProvider(
       build = eventLogConfiguration.build,
       bucket = config.bucket.toString(),
       recorderVersion = version.toString(),
-      // Throttling now runs once, inside the dispatcher's SDK EventThrottle (same 24k/12k/6k thresholds,
+      // Events flow straight to the dispatcher: merge + system-field injection here, then SDK validate/merge/throttle
+      // and PersistentQueue file I/O. Throttling runs once, in the SDK EventThrottle (same 24k/12k/6k thresholds,
       // dynamic refresh via REMOTE_CONFIG_OPTIONS_UPDATED, and TOO_MANY_EVENTS markers in <recorder>.event.log).
-      writer = writer,
+      dispatcher = dispatcher,
+      eventLogDir = eventLogDir,
       systemEventIdProvider = UsageStatisticsPersistenceComponent.getInstance(),
       mergeStrategy = createEventsMergeStrategy(),
       ideMode = ideMode,

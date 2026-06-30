@@ -8,14 +8,16 @@ import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.jetbrains.fus.reporting.FusReportDispatcher
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import com.jetbrains.fus.reporting.model.lion3.LogEventAction
 import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
+import com.jetbrains.fus.reporting.model.lion3.ValidatedFusReport
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
 import java.util.concurrent.RejectedExecutionException
@@ -39,7 +41,8 @@ open class StatisticsFileEventLogger(
   private val build: String,
   private val bucket: String,
   private val recorderVersion: String,
-  private val writer: StatisticsEventLogWriter,
+  private val dispatcher: FusReportDispatcher<LogEvent, ValidatedFusReport>,
+  private val eventLogDir: Path,
   private val systemEventIdProvider: StatisticsSystemEventIdProvider,
   private val mergeStrategy: StatisticsEventMergeStrategy = FilteredEventMergeStrategy(emptySet()),
   private val ideMode: String? = null,
@@ -136,6 +139,7 @@ open class StatisticsFileEventLogger(
   }
 
   // TODO: move the event extension mechanism to dispatcher extension
+  @Suppress("RAW_RUN_BLOCKING")
   private fun logLastEvent() {
     lastEvent?.let {
       val event = it.validatedEvent.event
@@ -156,7 +160,9 @@ open class StatisticsFileEventLogger(
       application.getUserData(LICENSE_CODE_KEY)?.let {
         event.data["auto_license_type"] = it
       }
-      writer.log(it.validatedEvent)
+      // The dispatcher's PersistentQueue does the file I/O on its own coroutine context; the brief runBlocking here
+      // (on the single-threaded logExecutor) preserves event order, exactly as the removed writer chain did.
+      runBlocking { dispatcher.queueEvent(it.validatedEvent) }
       application.getService(EventLogListenersManager::class.java)
         .notifySubscribers(recorderId, it.validatedEvent, it.rawEventId, it.rawData, false)
     }
@@ -164,20 +170,24 @@ open class StatisticsFileEventLogger(
   }
 
   override fun getActiveLogFile(): EventLogFile? {
-    return writer.getActiveFile()
+    val active = activeLogFileName() ?: return null
+    return EventLogFile(eventLogDir.resolve(active).toFile())
   }
 
-  override fun getLogFilesProvider(): EventLogFilesProvider {
-    return writer.getLogFilesProvider()
-  }
+  override fun getLogFilesProvider(): EventLogFilesProvider = DefaultEventLogFilesProvider(eventLogDir) { activeLogFileName() }
 
   override fun cleanup() {
-    writer.cleanup()
+    // Best-effort: remove the recorder's queue files. PersistentQueue recreates them on the next write.
+    eventLogDir.toFile().listFiles()?.filter { it.name.endsWith(".log") || it.name.endsWith(".log.meta") }?.forEach { it.delete() }
   }
 
   override fun rollOver() {
-    writer.rollOver()
+    // PersistentQueue rotates on size internally; there is no forced-rollover API today, so this is a no-op.
   }
+
+  // PersistentQueue appends to the most recently modified `.log` file.
+  private fun activeLogFileName(): String? =
+    eventLogDir.toFile().listFiles()?.filter { it.name.endsWith(".log") }?.maxByOrNull { it.lastModified() }?.name
 
   override fun dispose() {
     lastEventFlushFuture?.cancel(false)
@@ -188,7 +198,6 @@ open class StatisticsFileEventLogger(
       // executor may already be shut down, interrupted, or timed out; last event is lost in that case
     }
     logExecutor.shutdown()
-    Disposer.dispose(writer)
   }
 
   fun flush(): CompletableFuture<Void> {

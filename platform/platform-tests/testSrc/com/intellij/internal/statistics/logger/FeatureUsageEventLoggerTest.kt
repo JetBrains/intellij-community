@@ -2,12 +2,8 @@
 package com.intellij.internal.statistics.logger
 
 import com.intellij.internal.statistic.FUCollectorTestCase
-import com.intellij.internal.statistic.eventLog.EmptyEventLogFilesProvider
-import com.intellij.internal.statistic.eventLog.EventLogFile
-import com.intellij.internal.statistic.eventLog.EventLogFilesProvider
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FilteredEventMergeStrategy
-import com.intellij.internal.statistic.eventLog.StatisticsEventLogWriter
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 import com.intellij.internal.statistic.eventLog.StatisticsEventMergeStrategy
 import com.intellij.internal.statistic.eventLog.StatisticsFileEventLogger
@@ -26,8 +22,11 @@ import com.intellij.internal.statistics.StatisticsTestEventFactory.newStateEvent
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.UsefulTestCase
+import com.jetbrains.fus.reporting.FusReportDispatcher
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
+import com.jetbrains.fus.reporting.model.lion3.ValidatedFusReport
 import org.junit.Test
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertTrue
 
@@ -703,8 +702,9 @@ class TestFeatureUsageFileEventLogger(session: String = DEFAULT_SESSION_ID,
                                       writer: TestFeatureUsageEventWriter = TestFeatureUsageEventWriter(),
                                       systemEventIdProvider: StatisticsSystemEventIdProvider = TestSystemEventIdProvider(0),
                                       mergeStrategy: StatisticsEventMergeStrategy = FilteredEventMergeStrategy(emptySet()),
-                                      headless: Boolean = false) :
-  StatisticsFileEventLogger(TEST_RECORDER, session, headless, build, bucket, recorderVersion, writer, systemEventIdProvider, mergeStrategy) {
+                                      headless: Boolean = false,
+                                      eventLogDir: Path = Path.of(System.getProperty("java.io.tmpdir"), "fus-test-event-logs")) :
+  StatisticsFileEventLogger(TEST_RECORDER, session, headless, build, bucket, recorderVersion, writer, eventLogDir, systemEventIdProvider, mergeStrategy) {
   val testWriter = writer
 
   override fun dispose() {
@@ -713,18 +713,21 @@ class TestFeatureUsageFileEventLogger(session: String = DEFAULT_SESSION_ID,
   }
 }
 
-class TestFeatureUsageEventWriter : StatisticsEventLogWriter {
+/**
+ * Test seam capturing the events the logger forwards to the dispatcher. Keeps the `...EventWriter` name for continuity
+ * with existing call sites; it is a [FusReportDispatcher] fake now that the logger talks to the dispatcher directly.
+ */
+class TestFeatureUsageEventWriter : FusReportDispatcher<LogEvent, ValidatedFusReport> {
   val logged = ArrayList<LogEvent>()
 
-  override fun log(logEvent: LogEvent) {
-    logged.add(logEvent)
+  override suspend fun queueEvent(event: LogEvent) {
+    logged.add(event)
   }
 
-  override fun getActiveFile(): EventLogFile? = null
-  override fun getLogFilesProvider(): EventLogFilesProvider = EmptyEventLogFilesProvider
-  override fun cleanup() = Unit
-  override fun rollOver() = Unit
-  override fun dispose() = Unit
+  override suspend fun send(): Boolean = false
+  override suspend fun flush() = Unit
+  override suspend fun scheduleSend() = Unit
+  override suspend fun close() = Unit
 }
 
 class TestSystemEventIdProvider(var value: Long) : StatisticsSystemEventIdProvider {
