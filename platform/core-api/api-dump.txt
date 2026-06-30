@@ -808,6 +808,7 @@ f:com.intellij.openapi.application.ReadAction
 - s:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - s:computeBlocking(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - s:computeCancellable(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- s:computeCancellableUnsafe(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - s:nonBlocking(java.lang.Runnable):com.intellij.openapi.application.NonBlockingReadAction
 - s:nonBlocking(java.util.concurrent.Callable):com.intellij.openapi.application.NonBlockingReadAction
 - s:run(com.intellij.util.ThrowableRunnable):V

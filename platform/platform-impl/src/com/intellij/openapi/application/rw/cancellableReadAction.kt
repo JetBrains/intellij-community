@@ -58,7 +58,7 @@ internal fun <X> cancellableReadActionInternal(ctx: CoroutineContext, action: ()
     // `job.completeExceptionally(e)` will fail parent Job,
     // which is not desired when this Job is a read action Job.
     //
-    // ReadAction.computeCancellable {
+    // ReadAction.computeCancellableUnsafe {
     //   throw X
     // }
     // X will be re-thrown, but the caller is not expected to become cancelled

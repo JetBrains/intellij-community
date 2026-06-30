@@ -33,8 +33,8 @@ abstract class CancellableReadActionTests {
   }
 }
 
-fun <X> computeCancellable(action: () -> X): X {
-  return ReadAction.computeCancellable<X, Nothing>(action)
+fun <X> computeCancellableUnsafe(action: () -> X): X {
+  return ReadAction.computeCancellableUnsafe<X, Nothing>(action)
 }
 
 fun testComputeCancellableRethrow() {
@@ -45,7 +45,7 @@ fun testComputeCancellableRethrow() {
 
 private inline fun <reified T : Throwable> testComputeCancellableRethrow(t: T) {
   val thrown = assertThrows<T> {
-    computeCancellable {
+    computeCancellableUnsafe {
       throw t
     }
   }
@@ -55,7 +55,7 @@ private inline fun <reified T : Throwable> testComputeCancellableRethrow(t: T) {
 fun testThrowsIfPendingWrite() {
   val finishWrite = waitForPendingWrite()
   assertThrows<CannotReadException> {
-    computeCancellable {
+    computeCancellableUnsafe {
       fail()
     }
   }
@@ -65,7 +65,7 @@ fun testThrowsIfPendingWrite() {
 fun testThrowsIfRunningWrite() {
   val finishWrite = waitForWrite()
   assertThrows<CannotReadException> {
-    computeCancellable {
+    computeCancellableUnsafe {
       fail()
     }
   }
@@ -86,7 +86,7 @@ private fun waitForWrite(): Semaphore {
 }
 
 fun testDoesntThrowWhenAlmostFinished() {
-  val result = computeCancellable {
+  val result = computeCancellableUnsafe {
     testNoExceptions()
     waitForPendingWrite().up()
     assertThrows<CannotReadException> { // cancelled
@@ -99,7 +99,7 @@ fun testDoesntThrowWhenAlmostFinished() {
 
 fun testThrowsOnWrite() {
   assertThrows<CannotReadException> {
-    computeCancellable {
+    computeCancellableUnsafe {
       testNoExceptions()
       waitForPendingWrite().up()
       testReadExceptions()
