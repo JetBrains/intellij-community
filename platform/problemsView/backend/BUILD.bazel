@@ -1,6 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "problemView-backend-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":problemView-backend-tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.problemView.backend.tests`
+
 ### auto-generated section `build intellij.platform.problemView.backend` start
 
 jvm_library(
@@ -165,6 +174,8 @@ jvm_library(
         "//platform/problemsView/shared:shared_test_lib",
         "//platform/problemsView/ui",
         "//platform/problemsView/ui:ui_test_lib",
+        "//platform/problemsView/plugin",
+        "//platform/problemsView/plugin:plugin_test_lib",
         "//platform/lang-impl",
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/analysis-api:analysis",
@@ -197,11 +208,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.problemView.backend.tests` end
-
-### auto-generated section `test intellij.platform.problemView.backend.tests` start
-
-jps_test(
-    name = "problemView-backend-tests_test",
-    runtime_deps = [":problemView-backend-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.problemView.backend.tests` end
