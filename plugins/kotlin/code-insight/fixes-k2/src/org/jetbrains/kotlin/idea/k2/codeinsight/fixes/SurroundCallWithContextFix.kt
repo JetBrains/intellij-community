@@ -7,6 +7,7 @@ import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
+import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
@@ -37,7 +38,14 @@ internal class SurroundCallWithContextFix(
         }
         val newExpression = psiFactory.createExpression(expressionText)
         shortenReferences(newExpression)
-        element.replace(newExpression)
+        val replace = element.replace(newExpression) as? KtCallExpression
+
+        if (candidateName == null && replace != null) {
+            val valueArgument = replace.valueArguments.firstOrNull()
+            val insertedExpression = valueArgument?.getArgumentExpression() ?: return
+            updater.moveCaretTo(insertedExpression)
+            updater.templateBuilder().field(insertedExpression, insertedExpression.text)
+        }
     }
 
     override fun getActionPresentation(context: ActionContext, element: KtExpression): Presentation =
