@@ -66,10 +66,10 @@
                  description="Overrides default value ('true' in RemDev mode, 'false' otherwise) for enabling RemDev-native view for local changes.
                  Note that in RemDev mode this setting should be set for both client and backend."/>
 
-    <registryKey key="vcs.merge.conflict.iterative.resolution" defaultValue="false" restartRequired="false"
+    <registryKey key="vcs.merge.conflict.iterative.resolution" defaultValue="true" restartRequired="false"
                  description="Enable iterative VCS conflict resolution flow"/>
 
-    <registryKey key="vcs.merge.conflict.file.suggestion" defaultValue="false" restartRequired="false"
+    <registryKey key="vcs.merge.conflict.file.suggestion" defaultValue="true" restartRequired="false"
                  description="Automatically open the next file in the merge conflict"/>
 
     <projectService serviceInterface="com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings"
