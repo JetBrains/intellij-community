@@ -7,23 +7,27 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiManager
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.SLRUMap
 import com.intellij.xdebugger.impl.hotswap.HotSwapChangesCompatibility
 import com.intellij.xdebugger.impl.hotswap.SourceFileChange
 import com.intellij.xdebugger.impl.hotswap.SourceFileChangeCompatibilityChecker
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.atomic.AtomicLong
 
 @ApiStatus.Internal
 abstract class JvmBaseSourceFileChangeCompatibilityChecker(
   private val project: Project,
   private val fileType: FileType,
 ) : SourceFileChangeCompatibilityChecker {
-  private val cache = ContentBasedCache()
+  private val oldContentCache = ContentBasedCache()
+  private val shapeCache = ShapeCache()
 
   final override suspend fun getCompatibility(change: SourceFileChange): HotSwapChangesCompatibility {
     if (change.file.fileType != fileType) return HotSwapChangesCompatibility.Irrelevant
@@ -33,14 +37,7 @@ abstract class JvmBaseSourceFileChangeCompatibilityChecker(
   private fun classify(project: Project, file: VirtualFile, oldContent: CharSequence): HotSwapChangesCompatibility {
     val currentFile = PsiManager.getInstance(project).findFile(file) ?: return HotSwapChangesCompatibility.Unknown
     return classify(currentFile) {
-      cache.fetchClassShapes(file, oldContent)
-    }
-  }
-
-  @TestOnly
-  fun classify(currentFile: PsiFile, oldFile: PsiFile): HotSwapChangesCompatibility {
-    return classify(currentFile) {
-      computeClassShapesBuildResult(oldFile)
+      oldContentCache.fetchClassShapes(file, oldContent)
     }
   }
 
@@ -60,6 +57,11 @@ abstract class JvmBaseSourceFileChangeCompatibilityChecker(
     return HotSwapChangesCompatibility.Compatible
   }
 
+  /**
+   * Builds the per-class shapes of [file].
+   * [Context] carries the context required for caching.
+   */
+  context(_: Context)
   protected abstract fun buildClassShapes(file: PsiFile): Map<String, HotSwapClassShape>
 
   protected fun unknownClassShapes(reason: String): Nothing {
@@ -67,10 +69,47 @@ abstract class JvmBaseSourceFileChangeCompatibilityChecker(
     throw CannotBuildClassShapesException(reason)
   }
 
+  /**
+   * A fast to build, resolve-free fingerprint of a file's resolution context.
+   *
+   * Having the same fingerprint confirms internal caches' validity.
+   * While changes in the resolution context invalidate internal caches.
+   */
+  protected data class ResolutionFingerprint(
+    val packageName: String,
+    val importsText: String,
+    val typeNames: Set<String>,
+  )
+
+  protected abstract fun resolutionFingerprint(file: PsiFile): ResolutionFingerprint
+
+  protected sealed interface Context
+  private class Token(val token: Long) : Context
+
+  /**
+   * Caches computation of [compute] for [element].
+   * [type] distinguishes different cached purposes for the same element.
+   *
+   * If the context of the element is not changed, the cached value is returned.
+   * Context includes [element] and [dependency] state, along with the fingerprint provided by [resolutionFingerprint].
+   */
+  context(context: Context)
+  protected fun <T : Any> cached(
+    element: PsiElement,
+    type: String,
+    dependency: PsiElement = element,
+    compute: () -> T,
+  ): T = shapeCache.cached(element, (context as Token).token, type, dependency, compute)
+
   private fun computeClassShapesBuildResult(file: PsiFile): ClassShapesBuildResult? {
     if (hasErrors(file)) return ClassShapesBuildResult.HasErrors
     return try {
-      ClassShapesBuildResult.Built(buildClassShapes(file))
+      val fingerprint = resolutionFingerprint(file)
+      val token = shapeCache.fileToken(file, fingerprint)
+      val shapes = context(Token(token)) {
+        buildClassShapes(file)
+      }
+      ClassShapesBuildResult.Built(shapes)
     }
     catch (_: CannotBuildClassShapesException) {
       ClassShapesBuildResult.Unknown
@@ -92,11 +131,48 @@ abstract class JvmBaseSourceFileChangeCompatibilityChecker(
     data object Unknown : ClassShapesBuildResult
   }
 
+  private class ShapeCache {
+    private val epoch = AtomicLong(0L)
+    private val fileTokens = SLRUMap<SmartPsiElementPointer<PsiFile>, FileToken>(20, 20)
+    private val shapes = SLRUMap<ShapeKey, CachedShape>(1000, 1000)
+
+    fun fileToken(file: PsiFile, fingerprint: ResolutionFingerprint): Long {
+      val pointer = file.createSmartPointer()
+      synchronized(fileTokens) {
+        val previous = fileTokens[pointer]
+        if (previous != null && previous.fingerprint == fingerprint) return previous.token
+        val token = epoch.getAndIncrement()
+        fileTokens.put(pointer, FileToken(fingerprint, token))
+        return token
+      }
+    }
+
+    fun <T : Any> cached(element: PsiElement, token: Long, type: String, dependency: PsiElement, compute: () -> T): T {
+      val key = ShapeKey(element.createSmartPointer(), type)
+      val contentHash = dependency.text.hashCode()
+      synchronized(shapes) {
+        val existing = shapes[key]
+        if (existing != null && existing.token == token && existing.contentHash == contentHash) {
+          @Suppress("UNCHECKED_CAST")
+          return existing.value as T
+        }
+      }
+      val value = compute()
+      synchronized(shapes) {
+        shapes.put(key, CachedShape(token, contentHash, value))
+      }
+      return value
+    }
+
+    private data class ShapeKey(val pointer: SmartPsiElementPointer<PsiElement>, val type: String)
+    private class CachedShape(val token: Long, val contentHash: Int, val value: Any)
+    private class FileToken(val fingerprint: ResolutionFingerprint, val token: Long)
+  }
+
   /**
    * Caches calls of [computeClassShapesBuildResult] for requests with the same file contents.
    */
   private inner class ContentBasedCache {
-    private val files = SLRUMap<Key, PsiFile>(10, 10)
     private val classShapes = SLRUMap<Key, ClassShapesBuildResult>(10, 10)
 
     // Can be called from multiple threads, but the calls are sequential.
@@ -106,26 +182,13 @@ abstract class JvmBaseSourceFileChangeCompatibilityChecker(
         classShapes.get(key)?.let { return it }
       }
 
-      val psiFile = fetchPsiFile(key)
+      val psiFile = PsiFileFactory.getInstance(project).createFileFromText(key.fileName, fileType, key.oldText)
       val result = computeClassShapesBuildResult(psiFile) ?: return null
       synchronized(classShapes) {
         classShapes.get(key)?.let { return it }
         classShapes.put(key, result)
       }
       return result
-    }
-
-    private fun fetchPsiFile(key: Key): PsiFile {
-      synchronized(files) {
-        files.get(key)?.let { return it }
-      }
-
-      val file = PsiFileFactory.getInstance(project).createFileFromText(key.fileName, fileType, key.oldText)
-      synchronized(files) {
-        files.get(key)?.let { return it }
-        files.put(key, file)
-      }
-      return file
     }
   }
 

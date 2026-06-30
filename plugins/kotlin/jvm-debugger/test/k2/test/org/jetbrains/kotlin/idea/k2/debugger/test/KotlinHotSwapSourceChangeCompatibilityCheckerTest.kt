@@ -1,16 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.debugger.test
 
-import com.intellij.debugger.impl.hotswap.HotSwapIncompatibilityReasons
 import com.intellij.debugger.impl.hotswap.HotSwapClassShape
+import com.intellij.debugger.impl.hotswap.HotSwapIncompatibilityReasons
+import com.intellij.debugger.impl.hotswap.HotSwapSourceChangeCompatibilityCheckerTestUtil
 import com.intellij.debugger.impl.hotswap.JvmBaseSourceFileChangeCompatibilityChecker
-import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiFileFactory
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.DumbModeTestUtils
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.xdebugger.impl.hotswap.HotSwapChangesCompatibility
+import com.intellij.xdebugger.impl.hotswap.SourceFileChange
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.debugger.core.hotswap.KotlinHotSwapSourceChangeCompatibilityChecker
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -691,14 +692,17 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
   @Test
   fun `dumb mode returns unknown`() {
     val checker = object : JvmBaseSourceFileChangeCompatibilityChecker(project, KotlinFileType.INSTANCE) {
+      override fun resolutionFingerprint(file: PsiFile): ResolutionFingerprint = ResolutionFingerprint("", "", emptySet())
+
+      context(_: Context)
       override fun buildClassShapes(file: PsiFile): Map<String, HotSwapClassShape> {
         throw IndexNotReadyException.create()
       }
     }
     DumbModeTestUtils.runInDumbModeSynchronously(project) {
-      runReadActionBlocking {
-        assertSame(HotSwapChangesCompatibility.Unknown, checker.classify(createFile("class A"), createFile("class A")))
-      }
+      val currentFile = myFixture.addFileToProject("A.kt", "class A")
+      val compatibility = runBlocking { checker.getCompatibility(SourceFileChange(currentFile.virtualFile, "class A")) }
+      assertSame(HotSwapChangesCompatibility.Unknown, compatibility)
     }
   }
 
@@ -778,14 +782,16 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
   }
 
   private fun assertUnknown(before: String, after: String) {
-    assertSame(HotSwapChangesCompatibility.Unknown, classify(before, after))
+    assertSame(HotSwapChangesCompatibility.Unknown, classify(before, after, validateOriginal = false))
   }
 
-  private fun classify(before: String, after: String): HotSwapChangesCompatibility =
-    runReadActionBlocking {
-      KotlinHotSwapSourceChangeCompatibilityChecker(project).classify(createFile(after), createFile(before))
-    }
-
-  private fun createFile(text: String): PsiFile =
-    PsiFileFactory.getInstance(project).createFileFromText("A.kt", KotlinFileType.INSTANCE, text)
+  private fun classify(before: String, after: String, validateOriginal: Boolean = true): HotSwapChangesCompatibility =
+    HotSwapSourceChangeCompatibilityCheckerTestUtil.classifyDocumentChange(
+      project,
+      KotlinHotSwapSourceChangeCompatibilityChecker(project),
+      myFixture.addFileToProject("A.kt", before),
+      before,
+      after,
+      validateOriginal,
+    )
 }

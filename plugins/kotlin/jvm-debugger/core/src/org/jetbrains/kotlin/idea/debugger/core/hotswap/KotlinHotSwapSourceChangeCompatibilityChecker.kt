@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtDeclarationContainer
@@ -37,6 +38,7 @@ import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtObjectLiteralExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.KtValVarKeywordOwner
 import org.jetbrains.kotlin.types.Variance
@@ -51,6 +53,15 @@ internal class KotlinHotSwapSourceChangeCompatibilityCheckerProvider : HotSwapSo
 class KotlinHotSwapSourceChangeCompatibilityChecker(project: Project) :
     JvmBaseSourceFileChangeCompatibilityChecker(project, KotlinFileType.INSTANCE) {
 
+    override fun resolutionFingerprint(file: PsiFile): ResolutionFingerprint {
+        val ktFile = file as? KtFile ?: unknownClassShapes("Expected KtFile, got ${file::class.java.name}")
+        val typeNames = hashSetOf<String>()
+        PsiTreeUtil.collectElementsOfType(ktFile, KtClassOrObject::class.java).mapNotNullTo(typeNames) { it.fqName?.asString() }
+        PsiTreeUtil.collectElementsOfType(ktFile, KtTypeAlias::class.java).mapNotNullTo(typeNames) { it.fqName?.asString() }
+        return ResolutionFingerprint(ktFile.packageFqName.asString(), ktFile.importList?.text.orEmpty(), typeNames)
+    }
+
+    context(_: Context)
     override fun buildClassShapes(file: PsiFile): Map<String, HotSwapClassShape> {
         val ktFile = file as? KtFile ?: unknownClassShapes("Expected KtFile, got ${file::class.java.name}")
         val fileClass = ktFile.fileClassSnapshot()
@@ -58,6 +69,7 @@ class KotlinHotSwapSourceChangeCompatibilityChecker(project: Project) :
         return (fileClass + declaredClasses).associateByTo(linkedMapOf()) { it.name }
     }
 
+    context(_: Context)
     private fun KtFile.fileClassSnapshot(): List<HotSwapClassShape> {
         val className = buildFileClassName()
         val innerClasses = sourceAnonymousClasses()
@@ -80,6 +92,7 @@ class KotlinHotSwapSourceChangeCompatibilityChecker(project: Project) :
         return if (packageName.isEmpty()) fileClassName else "$packageName.$fileClassName"
     }
 
+    context(_: Context)
     private fun KtClassOrObject.snapshot(
         prefix: String = "",
         syntheticName: String? = null,
@@ -98,14 +111,22 @@ class KotlinHotSwapSourceChangeCompatibilityChecker(project: Project) :
             className,
             kind(anonymous),
             modifiers(CLASS_MODIFIERS),
-            superTypeListEntries.mapTo(hashSetOf()) {
-                it.resolvedTypeSignature(it.typeReference, "Kotlin supertype '${it.text.filterNot { char -> char.isWhitespace() }}'")
-            },
+            superTypeSignatures(),
             innerClasses.mapTo(hashSetOf()) { "$className.${it.name}" },
             fields,
             methods,
         )
         return listOf(shape) + innerClasses.flatMap { it.classOrObject.snapshot("$className.", it.name, it.isAnonymous) }
+    }
+
+    context(_: Context)
+    private fun KtClassOrObject.superTypeSignatures(): Set<String> {
+        val list = superTypeListEntries.firstOrNull()?.parent ?: return emptySet()
+        return cached(list, "superTypeList") {
+            superTypeListEntries.mapTo(hashSetOf()) {
+                it.resolvedTypeSignature(it.typeReference, "Kotlin supertype '${it.text.filterNot { char -> char.isWhitespace() }}'")
+            }
+        }
     }
 
     private fun KtClassOrObject.className(): String =
@@ -147,64 +168,107 @@ class KotlinHotSwapSourceChangeCompatibilityChecker(project: Project) :
 
     private fun PsiElement.enclosingSourceClass(): KtClassOrObject? = PsiTreeUtil.getParentOfType(this, KtClassOrObject::class.java, true)
 
+    /**
+     * The innermost member (function, property, initializer) of a static class/object boundary or of
+     * the file that encloses this element, skipping object literals and local classes. Captured variables
+     * of a lambda or anonymous object may be declared anywhere in that member, so hashing its text detects
+     * any change to a captured variable's type even when the lambda's own text (and PSI identity) is unchanged.
+     */
+    private fun PsiElement.enclosingTopLevelMember(): PsiElement {
+        var element: PsiElement = this
+        var parent: PsiElement? = element.parent
+        while (parent != null) {
+            if (parent is KtFile) return element
+            val owner = (parent as? KtClassBody)?.parent
+            if (owner is KtClassOrObject && owner.isStaticCaptureBoundary()) return element
+            element = parent
+            parent = element.parent
+        }
+        return element
+    }
+
+    private fun KtClassOrObject.isStaticCaptureBoundary(): Boolean {
+        if (parent is KtFile) return true
+        if (parent !is KtClassBody) return false
+        return this !is KtClass || !hasModifier(KtTokens.INNER_KEYWORD)
+    }
+
+    context(_: Context)
     private fun List<KtProperty>.associatePropertyShapes(): Map<String, HotSwapFieldShape> {
         val result = linkedMapOf<String, HotSwapFieldShape>()
         for (property in this) {
             val name = property.name ?: unknownClassShapes("Cannot determine Kotlin property name")
-            val type = property.resolvedTypeSignature("type for Kotlin property '$name'")
-            result[name] = HotSwapFieldShape(type, property.fieldModifiers())
+            result[name] = cached(property, "property") {
+                HotSwapFieldShape(property.resolvedTypeSignature("type for Kotlin property '$name'"), property.fieldModifiers())
+            }
         }
         return result
     }
 
+    context(_: Context)
     private fun List<KtParameter>.associateParameterPropertyShapes(): Map<String, HotSwapFieldShape> {
         val result = linkedMapOf<String, HotSwapFieldShape>()
         for (parameter in this) {
             val name = parameter.name ?: unknownClassShapes("Cannot determine Kotlin parameter property name")
-            val type = parameter.resolvedTypeSignature("type for Kotlin parameter property '$name'")
-            result[name] = HotSwapFieldShape(type, parameter.fieldModifiers())
+            result[name] = cached(parameter, "parameter") {
+                HotSwapFieldShape(parameter.resolvedTypeSignature("type for Kotlin parameter property '$name'"), parameter.fieldModifiers())
+            }
         }
         return result
     }
 
+    context(_: Context)
     private fun List<KtNamedFunction>.associateFunctionShapes(): Map<HotSwapMethodId, HotSwapMethodShape> {
         val result = linkedMapOf<HotSwapMethodId, HotSwapMethodShape>()
         for (function in this) {
             val name = function.name ?: unknownClassShapes("Cannot determine Kotlin function name")
-            val parameterTypes = function.valueParameters.map {
-                it.resolvedTypeSignature("type for Kotlin function parameter '${it.name.orEmpty()}'")
+            val (id, shape) = cached(function, "function") {
+                val parameterTypes = function.valueParameters.map {
+                    it.resolvedTypeSignature("type for Kotlin function parameter '${it.name.orEmpty()}'")
+                }
+                val returnType = function.resolvedTypeSignature("return type for Kotlin function '$name'")
+                HotSwapMethodId(name, false, parameterTypes) to HotSwapMethodShape(returnType, function.modifiers(METHOD_MODIFIERS))
             }
-            val returnType = function.resolvedTypeSignature("return type for Kotlin function '$name'")
-            val id = HotSwapMethodId(name, false, parameterTypes)
-            result[id] = HotSwapMethodShape(returnType, function.modifiers(METHOD_MODIFIERS))
+            result[id] = shape
         }
         return result
     }
 
+    context(_: Context)
     private fun List<KtConstructor<*>>.associateConstructorShapes(): Map<HotSwapMethodId, HotSwapMethodShape> {
         val result = linkedMapOf<HotSwapMethodId, HotSwapMethodShape>()
         for (constructor in this) {
-            val parameterTypes = constructor.valueParameters.map {
-                it.resolvedTypeSignature("type for Kotlin constructor parameter '${it.name.orEmpty()}'")
+            val (id, shape) = cached(constructor, "constructor") {
+                val parameterTypes = constructor.valueParameters.map {
+                    it.resolvedTypeSignature("type for Kotlin constructor parameter '${it.name.orEmpty()}'")
+                }
+                HotSwapMethodId("<init>", true, parameterTypes) to HotSwapMethodShape(null, constructor.modifiers(METHOD_MODIFIERS))
             }
-            result[HotSwapMethodId("<init>", true, parameterTypes)] = HotSwapMethodShape(null, constructor.modifiers(METHOD_MODIFIERS))
+            result[id] = shape
         }
         return result
     }
 
+    context(_: Context)
     private fun KtLambdaExpression.snapshot(index: Int): Pair<HotSwapMethodId, HotSwapMethodShape> {
-        val (declaredParameters, returnType) = signature()
-        val capturedParameters = capturedVariables().map { it.capturedSignature() }
-        val id = HotSwapMethodId("lambda$index", false, capturedParameters + declaredParameters)
+        val (parameters, returnType) = cached(this, "lambda", dependency = enclosingTopLevelMember()) {
+            val (declaredParameters, lambdaReturnType) = signature()
+            val capturedParameters = capturedVariables().map { it.capturedSignature() }
+            (capturedParameters + declaredParameters) to lambdaReturnType
+        }
+        val id = HotSwapMethodId("lambda$index", false, parameters)
         return id to HotSwapMethodShape(returnType, emptySet())
     }
 
+    context(_: Context)
     private fun KtClassOrObject.capturedFields(anonymous: Boolean): Map<String, HotSwapFieldShape> {
         if (!anonymous) return emptyMap()
-        return capturedVariables().mapIndexed { index, declaration ->
-            val type = declaration.resolvedTypeSignature("type for captured Kotlin variable '${declaration.name.orEmpty()}'")
-            "capture$index${declaration.name.orEmpty()}" to HotSwapFieldShape(type, emptySet())
-        }.toMap()
+        return cached(this, "object", dependency = enclosingTopLevelMember()) {
+            capturedVariables().mapIndexed { index, declaration ->
+                val type = declaration.resolvedTypeSignature("type for captured Kotlin variable '${declaration.name.orEmpty()}'")
+                "capture$index${declaration.name.orEmpty()}" to HotSwapFieldShape(type, emptySet())
+            }.toMap()
+        }
     }
 
     private fun KtCallableDeclaration.capturedSignature(): String =
