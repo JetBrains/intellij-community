@@ -55,7 +55,7 @@ private fun implWsBuilderBlockingCode(receiver: ObjClass<*>, valueType: ValueTyp
     """.trimIndent()
 
     is ValueType.ObjRef -> {
-      val connectionName = field.refsConnectionId
+      val connectionName = getRefsConnectionId(field)
       val getterSetterNames = field.refNames()
 
       // Opposite field may be either one-to-one or one-to-many
@@ -65,9 +65,10 @@ private fun implWsBuilderBlockingCode(receiver: ObjClass<*>, valueType: ValueTyp
           section("get()") {
             line("val _diff = diff")
             line("return if (_diff != null) {")
-            line("((_diff as $MutableEntityStorageInstrumentation).${getterSetterNames.getterBuilder}($connectionName, this) as? ${valueType.javaBuilderTypeWithGeneric}) ?: (this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] as? ${valueType.javaBuilderTypeWithGeneric})$notNullAssertion")
+            line("((_diff as $MutableEntityStorageInstrumentation).${getterSetterNames.getterBuilder}($connectionName, this) as? ${valueType.javaBuilderTypeWithGeneric}) ?: (this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${getRefsConnectionId(
+              field)})] as? ${valueType.javaBuilderTypeWithGeneric})$notNullAssertion")
             line("} else {")
-            line("(this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] as? ${valueType.javaBuilderTypeWithGeneric})$notNullAssertion")
+            line("(this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${getRefsConnectionId(field)})] as? ${valueType.javaBuilderTypeWithGeneric})$notNullAssertion")
             line("}")
           }
           section("set(value)") {
@@ -87,7 +88,7 @@ private fun implWsBuilderBlockingCode(receiver: ObjClass<*>, valueType: ValueTyp
             }
             section("else") {
               backrefSetup(field)
-              line("this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] = value")
+              line("this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${getRefsConnectionId(field)})] = value")
             }
             line("changedProperty.add(\"${field.javaName}\")")
             symbolicIdReferenceCode(receiver, field)
@@ -99,7 +100,7 @@ private fun implWsBuilderBlockingCode(receiver: ObjClass<*>, valueType: ValueTyp
     is ValueType.List<*> -> {
       val elementType = valueType.elementType
       if (valueType.isRefType()) {
-        val connectionName = field.refsConnectionId
+        val connectionName = getRefsConnectionId(field)
         val notNullAssertion = if (optionalSuffix.isBlank()) "!!" else error("It's prohibited to have nullable reference list")
         if ((elementType as ValueType.ObjRef<*>).target.openness.extendable) {
           lines {
@@ -107,9 +108,10 @@ private fun implWsBuilderBlockingCode(receiver: ObjClass<*>, valueType: ValueTyp
               section("get()") {
                 line("val _diff = diff")
                 line("return if (_diff != null) {")
-                line("((_diff as $MutableEntityStorageInstrumentation).getManyChildrenBuilders($connectionName, this)$notNullAssertion.toList() as ${valueType.javaBuilderTypeWithGeneric}) + (this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] as? ${valueType.javaBuilderTypeWithGeneric} ?: emptyList())")
+                line("((_diff as $MutableEntityStorageInstrumentation).getManyChildrenBuilders($connectionName, this)$notNullAssertion.toList() as ${valueType.javaBuilderTypeWithGeneric}) + (this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${getRefsConnectionId(
+                  field)})] as? ${valueType.javaBuilderTypeWithGeneric} ?: emptyList())")
                 line("} else {")
-                line("this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] as ${valueType.javaBuilderTypeWithGeneric} ${if (notNullAssertion.isNotBlank()) "?: emptyList()" else ""}")
+                line("this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${getRefsConnectionId(field)})] as ${valueType.javaBuilderTypeWithGeneric} ${if (notNullAssertion.isNotBlank()) "?: emptyList()" else ""}")
                 line("}")
               }
               section("set(value)") {
@@ -130,7 +132,7 @@ private fun implWsBuilderBlockingCode(receiver: ObjClass<*>, valueType: ValueTyp
                 }
                 `else` {
                   backrefListSetup(field)
-                  line("this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] = value")
+                  line("this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${getRefsConnectionId(field)})] = value")
                 }
                 line("changedProperty.add(\"${field.javaName}\")")
               }
@@ -146,9 +148,10 @@ private fun implWsBuilderBlockingCode(receiver: ObjClass<*>, valueType: ValueTyp
                 lineComment("Getter of the list of non-abstract referenced types")
                 line("val _diff = diff")
                 line("return if (_diff != null) {")
-                line("((_diff as $MutableEntityStorageInstrumentation).getManyChildrenBuilders($connectionName, this)$notNullAssertion.toList() as ${valueType.javaBuilderTypeWithGeneric}) + (this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] as? ${valueType.javaBuilderTypeWithGeneric} ?: emptyList())")
+                line("((_diff as $MutableEntityStorageInstrumentation).getManyChildrenBuilders($connectionName, this)$notNullAssertion.toList() as ${valueType.javaBuilderTypeWithGeneric}) + (this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${getRefsConnectionId(
+                  field)})] as? ${valueType.javaBuilderTypeWithGeneric} ?: emptyList())")
                 line("} else {")
-                line("this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] as? ${valueType.javaBuilderTypeWithGeneric} ${if (notNullAssertion.isNotBlank()) "?: emptyList()" else ""}")
+                line("this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${getRefsConnectionId(field)})] as? ${valueType.javaBuilderTypeWithGeneric} ${if (notNullAssertion.isNotBlank()) "?: emptyList()" else ""}")
                 line("}")
               }
               section("set(value)") {
@@ -167,7 +170,7 @@ private fun implWsBuilderBlockingCode(receiver: ObjClass<*>, valueType: ValueTyp
                 }
                 `else` {
                   backrefListSetup(field)
-                  line("this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] = value")
+                  line("this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${getRefsConnectionId(field)})] = value")
                 }
                 line("changedProperty.add(\"${field.javaName}\")")
               }
@@ -277,8 +280,8 @@ private fun LinesBuilder.backrefSetup(
     is ValueType.List<*> -> {
       lineComment("Setting backref of the list")
       `if`("$varName is ${ModifiableWorkspaceEntityBase}<*, *>") {
-        line("val data = ($varName.entityLinks[${EntityLink}($isChild, ${field.refsConnectionId})] as? List<Any> ?: emptyList()) + this")
-        line("$varName.entityLinks[${EntityLink}($isChild, ${field.refsConnectionId})] = data")
+        line("val data = ($varName.entityLinks[${EntityLink}($isChild, ${getRefsConnectionId(field)})] as? List<Any> ?: emptyList()) + this")
+        line("$varName.entityLinks[${EntityLink}($isChild, ${getRefsConnectionId(field)})] = data")
       }
       line("// else you're attaching a new entity to an existing entity that is not modifiable")
     }
@@ -286,22 +289,22 @@ private fun LinesBuilder.backrefSetup(
     is ValueType.Set<*> -> {
       lineComment("Setting backref of the set")
       `if`("$varName is ${ModifiableWorkspaceEntityBase}<*, *>") {
-        line("val data = ($varName.entityLinks[${EntityLink}($isChild, ${field.refsConnectionId})] as? Set<Any> ?: emptySet()) + this")
-        line("$varName.entityLinks[${EntityLink}($isChild, ${field.refsConnectionId})] = data")
+        line("val data = ($varName.entityLinks[${EntityLink}($isChild, ${getRefsConnectionId(field)})] as? Set<Any> ?: emptySet()) + this")
+        line("$varName.entityLinks[${EntityLink}($isChild, ${getRefsConnectionId(field)})] = data")
       }
       line("// else you're attaching a new entity to an existing entity that is not modifiable")
     }
 
     is ValueType.Optional<*> -> {
       `if`("$varName is ${ModifiableWorkspaceEntityBase}<*, *>") {
-        line("$varName.entityLinks[${EntityLink}($isChild, ${field.refsConnectionId})] = this")
+        line("$varName.entityLinks[${EntityLink}($isChild, ${getRefsConnectionId(field)})] = this")
       }
       line("// else you're attaching a new entity to an existing entity that is not modifiable")
     }
 
     is ValueType.ObjRef<*> -> {
       `if`("$varName is ${ModifiableWorkspaceEntityBase}<*, *>") {
-        line("$varName.entityLinks[${EntityLink}($isChild, ${field.refsConnectionId})] = this")
+        line("$varName.entityLinks[${EntityLink}($isChild, ${getRefsConnectionId(field)})] = this")
       }
       line("// else you're attaching a new entity to an existing entity that is not modifiable")
     }
@@ -326,11 +329,11 @@ fun LinesBuilder.implWsBuilderIsInitializedCode(field: ObjProperty<*, *>) {
     is ValueType.List<*> -> if (field.valueType.isRefType()) {
       lineComment("Check initialization for list with ref type")
       ifElse("_diff != null", {
-        `if`("_diff.${Instrumentation.getManyChildrenBuilders}(${field.refsConnectionId}, this) == null") {
+        `if`("_diff.${Instrumentation.getManyChildrenBuilders}(${getRefsConnectionId(field)}, this) == null") {
           line("error(\"Field ${field.receiver.name}#$javaName should be initialized\")")
         }
       }) {
-        isInitializedBaseCode(field, "this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] == null")
+        isInitializedBaseCode(field, "this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${getRefsConnectionId(field)})] == null")
       }
     }
     else {
@@ -344,7 +347,7 @@ fun LinesBuilder.implWsBuilderIsInitializedCode(field: ObjProperty<*, *>) {
           line("error(\"Field ${field.receiver.name}#$javaName should be initialized\")")
         }
       }) {
-        isInitializedBaseCode(field, "this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] == null")
+        isInitializedBaseCode(field, "this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${getRefsConnectionId(field)})] == null")
       }.toString()
     }
 
