@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.service
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion.version
+import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
@@ -12,7 +13,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.listDirectoryEntries
 
-class GradleInstallationManagerIoTest : GradleInstallationManagerTestCase() {
+class GradleInstallationManagerImportingTest : GradleImportingTestCase() {
 
   @Test
   fun testGetGradleHome(): Unit = runBlocking {
