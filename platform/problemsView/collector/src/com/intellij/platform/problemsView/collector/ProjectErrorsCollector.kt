@@ -177,42 +177,56 @@ class ProjectErrorsCollector(val project: Project, cs: CoroutineScope) : Problem
              otherProblems.map { ProblemEvent.Appeared(it) }
     }
 
-    fun problemAppeared(problem: Problem) = updateHistoryAndEmit {
-      addProblem(problem)
-      ProblemEvent.Appeared(problem)
-    }
+    fun problemAppeared(problem: Problem) =
+      problemAppearedOrUpdated(problem, shouldAlreadyExist = false) { ProblemEvent.Appeared(it) }
 
     fun problemDisappeared(problem: Problem) = updateHistoryAndEmit {
-      removeProblem(problem)
-      ProblemEvent.Disappeared(problem)
+      if (removeProblem(problem)) ProblemEvent.Disappeared(problem) else null
     }
 
-    fun problemUpdated(problem: Problem) = updateHistoryAndEmit {
+    fun problemUpdated(problem: Problem) =
+      problemAppearedOrUpdated(problem, shouldAlreadyExist = true) { ProblemEvent.Updated(it) }
+
+    private fun problemAppearedOrUpdated(
+      problem: Problem,
+      shouldAlreadyExist: Boolean,
+      eventFactory: (Problem) -> ProblemEvent,
+    ) = updateHistoryAndEmit {
+      if (containsProblem(problem) != shouldAlreadyExist) {
+        return@updateHistoryAndEmit null
+      }
       removeProblem(problem)
       addProblem(problem)
-      ProblemEvent.Updated(problem)
+      eventFactory(problem)
+    }
+
+    private fun containsProblem(problem: Problem): Boolean {
+      return when (problem) {
+        is FileProblem -> fileProblems[problem.file]?.contains(problem) == true
+        else -> otherProblems.contains(problem)
+      }
     }
 
     private fun addProblem(problem: Problem) {
-      if (problem is FileProblem) {
-        fileProblems.computeIfAbsent(problem.file) { mutableSetOf() }.add(problem)
-      }
-      else {
-        otherProblems.add(problem)
+      when (problem) {
+        is FileProblem -> fileProblems.computeIfAbsent(problem.file) { mutableSetOf() }.add(problem)
+        else -> otherProblems.add(problem)
       }
     }
 
-    private fun removeProblem(problem: Problem) {
-      if (problem is FileProblem) {
-        fileProblems[problem.file]?.let { problems ->
-          problems.remove(problem)
-          if (problems.isEmpty()) {
-            fileProblems.remove(problem.file)
+    private fun removeProblem(problem: Problem): Boolean {
+      return when (problem) {
+        is FileProblem -> {
+          var removed = false
+          fileProblems[problem.file]?.let { problems ->
+            removed = problems.remove(problem)
+            if (problems.isEmpty()) {
+              fileProblems.remove(problem.file)
+            }
           }
+          removed
         }
-      }
-      else {
-        otherProblems.remove(problem)
+        else -> otherProblems.remove(problem)
       }
     }
   }

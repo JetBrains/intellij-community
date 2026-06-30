@@ -116,20 +116,27 @@ open class ProblemsViewHighlightingFileRoot(
       return problems.map { ProblemEvent.Appeared(it) }
     }
 
-    fun problemAppeared(problem: HighlightingProblem) = updateHistoryAndEmit {
-      problems.add(problem)
-      ProblemEvent.Appeared(problem)
-    }
+    fun problemAppeared(problem: HighlightingProblem) =
+      problemAppearedOrUpdated(problem, shouldAlreadyExist = false) { ProblemEvent.Appeared(it) }
 
     fun problemDisappeared(problem: HighlightingProblem) = updateHistoryAndEmit {
-      problems.remove(problem)
-      ProblemEvent.Disappeared(problem)
+      if (problems.remove(problem)) ProblemEvent.Disappeared(problem) else null
     }
 
-    fun problemUpdated(problem: HighlightingProblem) = updateHistoryAndEmit {
+    fun problemUpdated(problem: HighlightingProblem) =
+      problemAppearedOrUpdated(problem, shouldAlreadyExist = true) { ProblemEvent.Updated(it) }
+
+    private fun problemAppearedOrUpdated(
+      problem: HighlightingProblem,
+      shouldAlreadyExist: Boolean,
+      eventFactory: (HighlightingProblem) -> ProblemEvent,
+    ) = updateHistoryAndEmit {
+      if (problems.contains(problem) != shouldAlreadyExist) {
+        return@updateHistoryAndEmit null
+      }
       problems.remove(problem)
       problems.add(problem)
-      ProblemEvent.Updated(problem)
+      eventFactory(problem)
     }
   }
 }
