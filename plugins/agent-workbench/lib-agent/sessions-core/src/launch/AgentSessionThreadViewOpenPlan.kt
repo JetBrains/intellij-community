@@ -10,6 +10,8 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 data class AgentSessionThreadViewOpenPlan(
   @JvmField val threadIdentity: String,
@@ -36,21 +38,23 @@ suspend fun resolveAgentSessionThreadViewOpenPlan(
   val threadIdentity = buildAgentThreadIdentity(providerId = thread.provider.value, threadId = thread.id)
   val runtimeThreadId = subAgent?.id ?: thread.id
   val launchSpec = launchSpecOverride
-                   ?: AgentSessionLaunchPlanner.plan(
-                     intent = AgentSessionLaunchIntent(
-                       projectPath = projectPath,
-                       projectDirectory = projectDirectory,
-                       provider = thread.provider,
-                       operation = AgentSessionLaunchOperation.RESUME,
-                       sessionId = runtimeThreadId,
-                       launchMode = launchMode,
-                       launchTargetId = launchTargetId,
-                       surfaceId = surfaceId,
-                       generationSettings = generationSettings,
-                     ),
-                     project = project,
-                     resumeLaunchSpecProvider = resumeLaunchSpecProvider,
-                   ).launchSpec
+                   ?: withContext(Dispatchers.Default) {
+                     AgentSessionLaunchPlanner.plan(
+                       intent = AgentSessionLaunchIntent(
+                         projectPath = projectPath,
+                         projectDirectory = projectDirectory,
+                         provider = thread.provider,
+                         operation = AgentSessionLaunchOperation.RESUME,
+                         sessionId = runtimeThreadId,
+                         launchMode = launchMode,
+                         launchTargetId = launchTargetId,
+                         surfaceId = surfaceId,
+                         generationSettings = generationSettings,
+                       ),
+                       project = project,
+                       resumeLaunchSpecProvider = resumeLaunchSpecProvider,
+                     ).launchSpec
+                   }
   val threadTitle = subAgent?.name?.ifBlank { subAgent.id } ?: thread.title
   return AgentSessionThreadViewOpenPlan(
     threadIdentity = threadIdentity,
