@@ -33,9 +33,8 @@
                  description="Enable JSONL file watching as a fallback source of Pi session updates"
                  restartRequired="true"/>
     <agent.workbench.sessionProvider
-      id="agentWorkbenchPi"
-      providerId="pi"
-      order="after agentWorkbenchJunie"
+      id="pi"
+      order="after junie"
       implementation="com.intellij.platform.ai.agent.pi.sessions.PiAgentSessionProviderDescriptor"/>
     <httpRequestHandler implementation="com.intellij.platform.ai.agent.pi.sessions.PiExtensionStatusHttpRequestHandler"/>
     <httpRequestHandler implementation="com.intellij.platform.ai.agent.pi.sessions.PiExtensionControlWebSocketHandler"/>

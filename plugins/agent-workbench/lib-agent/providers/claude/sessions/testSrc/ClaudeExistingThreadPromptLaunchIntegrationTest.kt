@@ -8,7 +8,6 @@ import com.intellij.agent.workbench.sessions.assertExistingThreadLaunchUsesStart
 import com.intellij.agent.workbench.sessions.existingThreadPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.thread
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
-import com.intellij.platform.ai.agent.sessions.core.providers.withProvider
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -77,7 +76,7 @@ private fun descriptor(): AgentSessionProviderDescriptor {
     executableResolver = { ClaudeCliSupport.CLAUDE_COMMAND },
     cliAvailableProbe = { true },
     hookSettingsProvider = ::testHookSettingsArgument,
-  ).withProvider(CLAUDE_AGENT_SESSION_PROVIDER)
+  )
 }
 
 private fun testHookSettingsArgument(sessionId: String): String = "/tmp/agent-workbench-claude-hooks-$sessionId.json"

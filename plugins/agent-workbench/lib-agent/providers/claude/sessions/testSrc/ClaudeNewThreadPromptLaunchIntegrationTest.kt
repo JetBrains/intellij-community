@@ -5,7 +5,6 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.ScriptedSessionSource
 import com.intellij.agent.workbench.sessions.assertNewThreadPromptLaunchOpensNewChat
 import com.intellij.agent.workbench.sessions.newThreadPromptLaunchRequest
-import com.intellij.platform.ai.agent.sessions.core.providers.withProvider
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -23,7 +22,7 @@ class ClaudeNewThreadPromptLaunchIntegrationTest {
         executableResolver = { ClaudeCliSupport.CLAUDE_COMMAND },
         cliAvailableProbe = { true },
         hookSettingsProvider = ::testHookSettingsArgument,
-      ).withProvider(CLAUDE_AGENT_SESSION_PROVIDER),
+      ),
       request = newThreadPromptLaunchRequest(
         provider = AgentSessionProvider.from("claude"),
         projectPath = PROJECT_PATH,

@@ -13,7 +13,6 @@ import com.intellij.agent.workbench.sessions.assertExistingThreadLaunchUsesStart
 import com.intellij.agent.workbench.sessions.existingThreadPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.thread
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
-import com.intellij.platform.ai.agent.sessions.core.providers.withProvider
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -117,7 +116,7 @@ private fun descriptor(cliVersion: JunieCliVersion? = JunieCliVersion(2030, 1)):
     ),
     executableResolver = { JunieCliSupport.JUNIE_COMMAND },
     cliInfoResolver = { JunieCliInfo(JunieCliSupport.JUNIE_COMMAND, cliVersion) },
-  ).withProvider(JUNIE_AGENT_SESSION_PROVIDER)
+  )
 }
 
 private const val PROJECT_PATH: String = "/work/project-a"

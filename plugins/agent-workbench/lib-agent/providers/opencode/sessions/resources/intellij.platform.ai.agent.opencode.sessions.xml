@@ -14,9 +14,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <agent.workbench.sessionProvider
-      id="agentWorkbenchOpenCode"
-      providerId="opencode"
-      order="after agentWorkbenchPi, before agentWorkbenchTerminal"
+      id="opencode"
+      order="after pi, before terminal"
       implementation="com.intellij.platform.ai.agent.opencode.sessions.OpenCodeAgentSessionProviderDescriptor"/>
     <agent.workbench.sessionLaunchContributor implementation="com.intellij.platform.ai.agent.opencode.sessions.OpenCodeMcpUrlLaunchContributor"/>
   </extensions>

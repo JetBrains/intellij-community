@@ -30,7 +30,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentTerminalPromp
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartNewSessionLaunchRequest
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartedNewSessionLaunch
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentPromptProviderOption
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderImplementation
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentThreadRenameAction
@@ -59,7 +59,9 @@ internal class CodexAgentSessionProviderDescriptor(
   private val executableResolver: suspend () -> String = CodexCliUtils::resolveExecutableOrDefaultViaTerminalResolver,
   private val cliAvailableProbe: suspend () -> Boolean = { CodexCliUtils.findExecutableViaTerminalResolver() != null },
   private val themeLaunchConfigResolver: () -> CodexThemeLaunchConfig? = CodexThemeSupport.DEFAULT::launchConfigOrNull,
-) : AgentSessionProviderImplementation {
+) : AgentSessionProviderDescriptor {
+  override val provider = CODEX_AGENT_SESSION_PROVIDER
+
   override val displayPriority: Int
     get() = 0
 

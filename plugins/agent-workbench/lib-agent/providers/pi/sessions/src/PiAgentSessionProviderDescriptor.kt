@@ -14,7 +14,7 @@ import com.intellij.platform.ai.agent.sessions.core.launch.insertArgumentsBefore
 import com.intellij.platform.ai.agent.sessions.core.launch.removeOptions
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderCliVisibilityPolicy
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderImplementation
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderFeatureSettingsExtensions
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
@@ -58,7 +58,9 @@ internal class PiAgentSessionProviderDescriptor(
     PiKnownModelCatalog.DEFAULT::listAvailableGenerationModels,
   private val omlxSupportEnabledResolver: () -> Boolean = PiOmlxSupportSettings::isEnabled,
   private val jbCentralSupportEnabledResolver: () -> Boolean = PiJbCentralSupportSettings::isEnabled,
-) : AgentSessionProviderImplementation {
+) : AgentSessionProviderDescriptor {
+  override val provider = PI_AGENT_SESSION_PROVIDER
+
   override val displayPriority: Int
     get() = 3
 

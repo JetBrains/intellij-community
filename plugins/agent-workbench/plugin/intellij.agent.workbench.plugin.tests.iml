@@ -57,6 +57,7 @@
     <orderEntry type="module" module-name="intellij.agent.workbench.pi.awb" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ai.agent.terminal.sessions" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.launch.config.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.suites" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />

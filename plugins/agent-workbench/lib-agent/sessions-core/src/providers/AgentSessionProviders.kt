@@ -6,61 +6,14 @@ import com.intellij.platform.ai.agent.core.extensions.SnapshotExtensionPointCach
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.RequiredElement
-import com.intellij.serviceContainer.BaseKeyedLazyInstance
-import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus.Internal
 
 private class AgentSessionProviderRegistryLog
 
 private val LOG = logger<AgentSessionProviderRegistryLog>()
 
-private val AGENT_SESSION_PROVIDER_EP: ExtensionPointName<AgentSessionProviderBean> =
+private val AGENT_SESSION_PROVIDER_EP: ExtensionPointName<AgentSessionProviderDescriptor> =
   ExtensionPointName("com.intellij.agent.workbench.sessionProvider")
-
-@Internal
-class AgentSessionProviderBean : BaseKeyedLazyInstance<AgentSessionProviderImplementation>() {
-  @Attribute("providerId")
-  @JvmField
-  @RequiredElement
-  var providerId: String = ""
-
-  @Attribute("implementation")
-  @JvmField
-  @RequiredElement
-  var implementation: String = ""
-
-  override fun getImplementationClassName(): String = implementation
-
-  fun descriptorOrNull(): AgentSessionProviderDescriptor? {
-    val provider = AgentSessionProvider.fromOrNull(providerId)
-    if (provider == null) {
-      LOG.warn("Ignoring session provider with invalid providerId '$providerId': $implementation")
-      return null
-    }
-    val providerImplementation = instance
-    if (providerImplementation is AgentSessionProviderDescriptor && providerImplementation.provider == provider) {
-      return providerImplementation
-    }
-    return RegisteredAgentSessionProviderDescriptor(provider, providerImplementation)
-  }
-}
-
-private class RegisteredAgentSessionProviderDescriptor(
-  override val provider: AgentSessionProvider,
-  private val implementation: AgentSessionProviderImplementation,
-) : AgentSessionProviderDescriptor, AgentSessionProviderImplementation by implementation {
-  override val displayNameFallback: String
-    get() = implementation.displayNameFallback ?: super<AgentSessionProviderDescriptor>.displayNameFallback
-
-  override val cliDisplayNameFallback: String
-    get() = implementation.cliDisplayNameFallback ?: displayNameFallback
-}
-
-@Internal
-fun AgentSessionProviderImplementation.withProvider(provider: AgentSessionProvider): AgentSessionProviderDescriptor {
-  return RegisteredAgentSessionProviderDescriptor(provider, this)
-}
 
 private data class AgentSessionProviderSnapshot(
   @JvmField val providersById: Map<AgentSessionProvider, AgentSessionProviderDescriptor>,
@@ -98,13 +51,7 @@ interface AgentSessionProviderRegistry {
   fun sessionSources(): List<AgentSessionSource>
 }
 
-private fun buildAgentSessionProviderSnapshot(providerBeans: Iterable<AgentSessionProviderBean>): AgentSessionProviderSnapshot {
-  return buildAgentSessionProviderSnapshotFromDescriptors(providerBeans.mapNotNull { providerBean -> providerBean.descriptorOrNull() })
-}
-
-private fun buildAgentSessionProviderSnapshotFromDescriptors(
-  providers: Iterable<AgentSessionProviderDescriptor>,
-): AgentSessionProviderSnapshot {
+private fun buildAgentSessionProviderSnapshot(providers: Iterable<AgentSessionProviderDescriptor>): AgentSessionProviderSnapshot {
   val providersById = LinkedHashMap<AgentSessionProvider, AgentSessionProviderDescriptor>()
   val uniqueProviders = ArrayList<AgentSessionProviderDescriptor>()
   for (provider in providers) {
@@ -155,7 +102,7 @@ private fun snapshotOrEmpty(): AgentSessionProviderSnapshot {
 class InMemoryAgentSessionProviderRegistry(
   providers: Iterable<AgentSessionProviderDescriptor>,
 ) : AgentSessionProviderRegistry {
-  private val snapshot = buildAgentSessionProviderSnapshotFromDescriptors(providers)
+  private val snapshot = buildAgentSessionProviderSnapshot(providers)
 
   override fun find(provider: AgentSessionProvider): AgentSessionProviderDescriptor? {
     return snapshot.providersById[provider]

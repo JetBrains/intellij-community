@@ -231,14 +231,18 @@ data class AgentPendingSessionMetadata(
 )
 
 @ApiStatus.Internal
-interface AgentSessionProviderImplementation {
+interface AgentSessionProviderDescriptor {
+  val provider: AgentSessionProvider
+
   val displayNameKey: String
-  val displayNameFallback: String?
-    get() = null
+  val displayNameFallback: String
+    get() = provider.value.replaceFirstChar { char ->
+      if (char.isLowerCase()) char.titlecase() else char.toString()
+    }
   val cliDisplayNameKey: String
     get() = displayNameKey
-  val cliDisplayNameFallback: String?
-    get() = null
+  val cliDisplayNameFallback: String
+    get() = displayNameFallback
   val displayPriority: Int
     get() = Int.MAX_VALUE
   val newSessionLabelKey: String
@@ -512,19 +516,6 @@ interface AgentSessionProviderImplementation {
   fun shouldStripContextForPrompt(prompt: String): Boolean = false
 
   fun isCliMissingError(throwable: Throwable): Boolean = false
-}
-
-@ApiStatus.Internal
-interface AgentSessionProviderDescriptor : AgentSessionProviderImplementation {
-  val provider: AgentSessionProvider
-
-  override val displayNameFallback: String
-    get() = provider.value.replaceFirstChar { char ->
-      if (char.isLowerCase()) char.titlecase() else char.toString()
-    }
-
-  override val cliDisplayNameFallback: String
-    get() = displayNameFallback
 
   fun resolvePendingSessionMetadata(
     identity: String,
