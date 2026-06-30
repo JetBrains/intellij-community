@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pom.java
 
 import com.intellij.java.syntax.JavaSyntaxBundle.messagePointer
@@ -70,8 +70,9 @@ enum class LanguageLevel {
   JDK_25_PREVIEW(messagePointer("jdk.25.preview.language.level.description"), 25),
   JDK_26(messagePointer("jdk.26.language.level.description"), 26),
   JDK_26_PREVIEW(messagePointer("jdk.26.preview.language.level.description"), 26),
-  JDK_X(messagePointer("jdk.X.language.level.description"), 27),
-  ;
+  JDK_27(messagePointer("jdk.27.language.level.description"), 27),
+  JDK_27_PREVIEW(messagePointer("jdk.27.preview.language.level.description"), 27),
+  JDK_X(messagePointer("jdk.X.language.level.description"), 28);
 
   private val myPresentableText: () -> @Nls String
   private val myVersion: JavaVersion
@@ -199,7 +200,7 @@ enum class LanguageLevel {
      * The highest language level supported by the analyzer.
      */
     @JvmField
-    val HIGHEST: LanguageLevel = JDK_26
+    val HIGHEST: LanguageLevel = JDK_27
 
     private val ourStandardVersions: Map<Int, LanguageLevel> = LanguageLevel.entries.asSequence()
       .filterNot { ver -> ver.isPreview }
