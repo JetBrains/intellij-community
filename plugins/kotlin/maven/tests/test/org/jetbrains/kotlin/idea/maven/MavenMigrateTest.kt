@@ -2,15 +2,25 @@
 
 package org.jetbrains.kotlin.idea.maven
 
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.testRootDisposable
 import com.intellij.notification.Notification
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.notification.asText
 import org.jetbrains.kotlin.idea.notification.catchNotificationsAsync
-import org.junit.internal.runners.JUnit38ClassRunner
-import org.junit.runner.RunWith
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-@RunWith(JUnit38ClassRunner::class)
-class MavenMigrateTest : KotlinMavenImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenMigrateTest(mavenVersion: String, modelVersion: String) :
+    KotlinMavenImportingTestBase(mavenVersion, modelVersion, createStdProjectFolders = false) {
+    @Test
     fun testMigrateApiAndLanguageVersions() = runBlocking {
         val notifications = doMigrationTest(
             before = """
@@ -72,16 +82,16 @@ class MavenMigrateTest : KotlinMavenImportingTestCase() {
         )
 
         assertTrue(
-            /* message = */ notifications.asText(),
-            /* condition = */ notifications.any {
+            notifications.any {
                 it.content == "Update your code to replace the use of deprecated language and library features with supported constructs<br/><br/>Detected migration:<br/>&nbsp;&nbsp;Language version: 1.5 to 1.6<br/>&nbsp;&nbsp;API version: 1.5 to 1.6<br/>"
-            }
+            },
+            notifications.asText(),
         )
     }
 
     private suspend fun doMigrationTest(before: String, after: String): List<Notification> =
-        catchNotificationsAsync(project, testRootDisposable) {
-            importProjectAsync(before)
-            importProjectAsync(after)
+        catchNotificationsAsync(project, maven.testRootDisposable) {
+            maven.importProjectAsync(before)
+            maven.importProjectAsync(after)
         }
 }
