@@ -57,7 +57,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
 
   private val snapshot: Int? by lazy {
     try {
-      lspClient.sendRequestSync(LspClient.DEFAULT_REQUEST_TIMEOUT_MS) {
+      lspClient.sendRequestSync {
         (it as PyreflyLsp4jServer).getSnapshot()
       }
     }
@@ -87,7 +87,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
 
     val snapshot = snapshot ?: return null
     val tspType = try {
-      lspClient.sendRequestSync(LspClient.DEFAULT_REQUEST_TIMEOUT_MS) {
+      lspClient.sendRequestSync {
         (it as PyreflyLsp4jServer).getComputedType(
           PyreflyLsp4jServer.GetComputedTypeParams(arg = node, snapshot = snapshot)
         )
