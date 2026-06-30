@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.EventLogFilesProvider
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FilteredEventMergeStrategy
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogWriter
+import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 import com.intellij.internal.statistic.eventLog.StatisticsEventMergeStrategy
 import com.intellij.internal.statistic.eventLog.StatisticsFileEventLogger
 import com.intellij.internal.statistic.eventLog.StatisticsSystemEventIdProvider
@@ -614,6 +615,40 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   }
 
   enum class TestEnum { FOO, BAR }
+
+  @Test
+  fun testMergeStrategyDerivedFromProviderIgnoredFields() {
+    val ts = System.currentTimeMillis()
+    val first = newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to ts))
+    val second = newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to ts + 100))
+
+    // A provider that excludes start_time must merge events differing only in start_time...
+    val ignoringProvider = object : StatisticsEventLoggerProvider(
+      recorderId = "TEST_MERGE_IGNORED",
+      version = 1,
+      sendFrequencyMs = DEFAULT_SEND_FREQUENCY_MS,
+      maxFileSizeInBytes = DEFAULT_MAX_FILE_SIZE_BYTES,
+      sendLogsOnIdeClose = false,
+    ) {
+      override fun isRecordEnabled(): Boolean = false
+      override fun isSendEnabled(): Boolean = false
+      override val mergeIgnoredFields: Set<String> get() = setOf("start_time")
+    }
+    assertTrue(ignoringProvider.createEventsMergeStrategy().shouldMerge(first, second))
+
+    // ...while the default provider (no ignored fields) must not.
+    val defaultProvider = object : StatisticsEventLoggerProvider(
+      recorderId = "TEST_MERGE_DEFAULT",
+      version = 1,
+      sendFrequencyMs = DEFAULT_SEND_FREQUENCY_MS,
+      maxFileSizeInBytes = DEFAULT_MAX_FILE_SIZE_BYTES,
+      sendLogsOnIdeClose = false,
+    ) {
+      override fun isRecordEnabled(): Boolean = false
+      override fun isSendEnabled(): Boolean = false
+    }
+    assertFalse(defaultProvider.createEventsMergeStrategy().shouldMerge(first, second))
+  }
 
   private fun testLogger(callback: (TestFeatureUsageFileEventLogger) -> Unit, vararg expected: LogEvent) {
     val logger = TestFeatureUsageFileEventLogger(DEFAULT_SESSION_ID, "999.999", "0", "1", TestFeatureUsageEventWriter())

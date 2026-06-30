@@ -5,7 +5,6 @@ import com.intellij.ide.plugins.ProductLoadingStrategy
 import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.StatisticsServiceScope
 import com.intellij.internal.statistic.eventLog.dispatcher.DispatcherBackedEventLogWriter
-import com.intellij.internal.statistic.eventLog.logger.StatisticsEventLogThrottleWriter
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent
 import com.intellij.openapi.application.ApplicationManager
@@ -162,8 +161,20 @@ abstract class StatisticsEventLoggerProvider(
    */
   @Internal
   open fun createEventsMergeStrategy(): StatisticsEventMergeStrategy {
-    return FilteredEventMergeStrategy(emptySet())
+    return FilteredEventMergeStrategy(mergeIgnoredFields)
   }
+
+  /**
+   * Event data fields excluded from merge equality (e.g. `start_time`), so successive events that differ only in
+   * these fields still merge into a single counted event.
+   *
+   * TODO(AP-7777): once the FUS reporting SDK's merger accepts ignored fields, forward this set to the dispatcher
+   *   (see [com.intellij.internal.statistic.eventLog.dispatcher.IntellijReportDispatcher]) and drop the IntelliJ-side
+   *   merger in [StatisticsFileEventLogger]. The SDK merger currently compares all data fields.
+   */
+  @get:Internal
+  open val mergeIgnoredFields: Set<String>
+    get() = emptySet()
 
   private fun createLogger(): StatisticsEventLogger {
     val app = ApplicationManager.getApplication()
@@ -188,15 +199,6 @@ abstract class StatisticsEventLoggerProvider(
     val eventLogDir = eventLogConfiguration.getEventLogDataPath().resolve("logs").resolve(recorderId)
     val writer = DispatcherBackedEventLogWriter(dispatcher, eventLogDir)
 
-    val configService = EventLogConfigOptionsService.getInstance()
-    val throttledWriter = StatisticsEventLogThrottleWriter(
-      configOptionsService = configService,
-      recorderId = recorderId,
-      recorderVersion = version.toString(),
-      delegate = writer,
-      coroutineScope = coroutineScope,
-    )
-
     val logger = StatisticsFileEventLogger(
       recorderId = recorderId,
       sessionId = config.sessionId,
@@ -204,7 +206,9 @@ abstract class StatisticsEventLoggerProvider(
       build = eventLogConfiguration.build,
       bucket = config.bucket.toString(),
       recorderVersion = version.toString(),
-      writer = throttledWriter,
+      // Throttling now runs once, inside the dispatcher's SDK EventThrottle (same 24k/12k/6k thresholds,
+      // dynamic refresh via REMOTE_CONFIG_OPTIONS_UPDATED, and TOO_MANY_EVENTS markers in <recorder>.event.log).
+      writer = writer,
       systemEventIdProvider = UsageStatisticsPersistenceComponent.getInstance(),
       mergeStrategy = createEventsMergeStrategy(),
       ideMode = ideMode,
