@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
@@ -106,8 +107,10 @@ class GHPRRepositoryDataServiceImpl internal constructor(
     requestExecutor.executeSuspend(GHGQLRequests.Repo.findMentionableUsers(repositoryCoordinates, serverPath, it))
   }.map { it.nodes }
 
-
-  override fun loadBatchedTeams(): Flow<List<GHTeam>> = teamsLoader.getBatches()
+  override fun loadBatchedTeams(): Flow<List<GHTeam>> {
+    if (repoOwner !is GHRepositoryOwnerName.Organization) return flowOf(emptyList())
+    return teamsLoader.getBatches()
+  }
 
   private val templatesRequest: Deferred<List<GHRepositoryPullRequestTemplate>> = cs.async(start = CoroutineStart.LAZY) {
     requestExecutor.executeSuspend(GHGQLRequests.Repo.loadPullRequestTemplates(repositoryCoordinates)).orEmpty()
