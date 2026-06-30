@@ -7,10 +7,13 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -23,15 +26,16 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Consumer
+import kotlin.concurrent.Volatile
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -48,7 +52,8 @@ typealias PluginUpdateCallback = Consumer<PluginUpdatesEvent>
 class PluginUpdatesService(val coroutineScope: CoroutineScope) {
 
   private val myCallbacks = CopyOnWriteArrayList<PluginUpdateCallback>()
-  private val pluginUpdateFlow = MutableStateFlow<PluginUpdatesEvent?>(null)
+  private val pluginUpdateFlow = MutableSharedFlow<PluginUpdatesEvent>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  @Volatile private var lastUpdates: PluginUpdatesEvent? = null
   private val updateIdsFlow = MutableStateFlow<Set<PluginId>?>(null)
   private val updateRequestFlow = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val providerSnapshots = ConcurrentHashMap<PluginUpdatesProvider, PluginUpdatesEvent>()
@@ -74,10 +79,11 @@ class PluginUpdatesService(val coroutineScope: CoroutineScope) {
   init {
     startUpdateCollection()
     startUpdateTrigger()
+    startDispatchingCallbacks()
   }
 
   private suspend fun ensureUpdatesStarted() {
-    if (pluginUpdateFlow.value == null) {
+    if (lastUpdates == null) {
       triggerUpdates()
     }
   }
@@ -98,22 +104,24 @@ class PluginUpdatesService(val coroutineScope: CoroutineScope) {
   }
 
   private suspend fun onProviderUpdated() {
-    val merged = updateMutex.withLock {
+    updateMutex.withLock {
       val merged = mergeUpdates(providerSnapshots.values)
-      pluginUpdateFlow.value = merged
+      lastUpdates = merged
+      pluginUpdateFlow.emit(merged)
       updateIdsFlow.value = merged.all.mapTo(HashSet()) { plugin -> plugin.pluginId }
-      merged
-    }
-    withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
-      dispatchCallbacks(merged)
     }
   }
 
+  private fun startDispatchingCallbacks() = coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
+    pluginUpdateFlow
+      .collect { dispatchCallbacks(it) }
+  }
+
   private fun startUpdateTrigger() = coroutineScope.launch {
-    updateRequestFlow
-      .debounce(300.milliseconds)
-      .collect {
-        PluginUpdatesProvider.getInstances().forEach { it.update() }
+    updateRequestFlow.debounce(300.milliseconds).collect {
+        PluginUpdatesProvider.getInstances().forEach {
+          runCatching { it.update() }.getOrHandleException { e -> LOG.warn("PluginUpdatesProvider.update() failed:", e) }
+        }
       }
   }
 
@@ -149,7 +157,7 @@ class PluginUpdatesService(val coroutineScope: CoroutineScope) {
 
   suspend fun awaitUpdates(): Collection<PluginUiModel> {
     ensureUpdatesStarted()
-    return pluginUpdateFlow.filterNotNull().first().all
+    return pluginUpdateFlow.first().all
   }
 
   @VisibleForTesting
@@ -169,11 +177,14 @@ class PluginUpdatesService(val coroutineScope: CoroutineScope) {
   }
 
   private fun getLastUpdates(): PluginUpdatesEvent? {
-    return pluginUpdateFlow.value
+    return lastUpdates
   }
 
   private fun dispatchCallbacks(updates: PluginUpdatesEvent) {
-    myCallbacks.forEach { it.accept(updates) }
+    myCallbacks.forEach {
+      runCatching { it.accept(updates) }
+        .getOrHandleException { e -> LOG.warn("PluginUpdatesEvent callback ${it.javaClass.name} failed:", e) }
+    }
   }
 
   @VisibleForTesting
