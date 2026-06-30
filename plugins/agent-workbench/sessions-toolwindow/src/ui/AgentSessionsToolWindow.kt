@@ -32,6 +32,7 @@ import com.intellij.agent.workbench.settings.AgentSessionProviderSettingsListene
 import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsListener
 import com.intellij.agent.workbench.sessions.state.AgentSessionThreadViewStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
+import com.intellij.agent.workbench.sessions.toolwindow.actions.resolveCurrentTaskFolderSourcePath
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModel
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModelDiff
@@ -180,6 +181,8 @@ internal class AgentSessionsToolWindowPanel(
     }
   }
 
+  private val scrollPane = createSessionTreeScrollPane(tree)
+
   private val stateController = AgentSessionsTreeStateController(
     sessionsStateFlow = service<AgentSessionReadService>().stateFlow(),
     archivedSessionsStateFlow = service<AgentArchivedSessionsService>().stateFlow(),
@@ -239,6 +242,7 @@ internal class AgentSessionsToolWindowPanel(
       showMoreProjects = ::showMoreProjectsForCurrentView,
       showMoreThreads = ::showMoreThreadsForCurrentView,
       isNewThreadPopupAvailable = { !stateController.isCurrentProjectScopeActive() },
+      currentSourcePath = { resolveCurrentTaskFolderSourcePath(project) },
     )
 
     rowActionsOverlay = AgentSessionsTreeRowActionsOverlay(
@@ -252,9 +256,9 @@ internal class AgentSessionsToolWindowPanel(
     installProjectScopeRefresh()
     configureTree()
     add(northPanel, BorderLayout.NORTH)
-    add(createSessionTreeScrollPane(tree), BorderLayout.CENTER)
+    add(scrollPane, BorderLayout.CENTER)
 
-    interactionController.install()
+    interactionController.install(emptyAreaPopupComponent = scrollPane.viewport)
     installToolWindowVisibilityTracker()
     publishInitialToolWindowVisibility()
     stateController.start()

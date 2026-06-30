@@ -37,6 +37,7 @@ import com.intellij.agent.workbench.sessions.toolwindow.actions.CreateTaskFolder
 import com.intellij.agent.workbench.sessions.toolwindow.actions.TaskFolderMetadataEdit
 import com.intellij.agent.workbench.sessions.toolwindow.actions.buildTaskFolderAgentPrompt
 import com.intellij.agent.workbench.sessions.toolwindow.actions.canMoveThreadsToTaskFolder
+import com.intellij.agent.workbench.sessions.toolwindow.actions.createAgentSessionsTreeEmptyAreaPopupActionContext
 import com.intellij.agent.workbench.sessions.toolwindow.actions.createAgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.toolwindow.actions.resolveAgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.toolwindow.actions.resolveTaskFolderThreadMove
@@ -634,6 +635,33 @@ class AgentSessionsTreePopupActionsTest {
   }
 
   @Test
+  fun createTaskFolderActionUsesEmptyAreaSourcePath() {
+    var createdPath: String? = null
+    var createdName: String? = null
+    val action = AgentSessionsTreePopupCreateTaskFolderAction(
+      resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
+      promptForCreateRequest = { _, canCreateWithAgent ->
+        assertThat(canCreateWithAgent).isFalse()
+        CreateTaskFolderRequest(name = "Authentication rewrite", createWithAgent = false)
+      },
+      createFolder = { path, name ->
+        createdPath = path
+        createdName = name
+        taskFolder(path = path, name = name)
+      },
+    )
+    val context = emptyAreaPopupContext(sourcePath = " /work/project-a ")
+    val event = popupEvent(action, context)
+
+    action.update(event)
+    action.actionPerformed(event)
+
+    assertThat(event.presentation.isEnabledAndVisible).isTrue()
+    assertThat(createdPath).isEqualTo("/work/project-a")
+    assertThat(createdName).isEqualTo("Authentication rewrite")
+  }
+
+  @Test
   fun toolWindowCreateTaskFolderActionCanOpenCreatedFolderWithAgent() {
     val profile = AgentPromptLaunchProfile(
       id = "user:task-pi",
@@ -811,10 +839,122 @@ class AgentSessionsTreePopupActionsTest {
     group.update(event)
 
     assertThat(event.presentation.isEnabledAndVisible).isTrue()
-    val child = group.getChildren(event).single()
+    val child = group.getChildren(event).first()
     child.actionPerformed(popupEvent(child, context))
 
     assertThat(assigned).containsExactly("thread-1" to "folder1", "thread-2" to "folder1")
+  }
+
+  @Test
+  fun moveToTaskFolderGroupListsFoldersThenCreateOption() {
+    val provider = AgentSessionProvider.from("codex")
+    val firstFolder = taskFolder(path = "/work/project-a", name = "Research")
+    val secondFolder = taskFolder(path = "/work/project-a", name = "Implementation").copy(id = "folder2")
+    val target = threadActionTarget(path = "/work/project-a", provider = provider, threadId = "thread-1")
+    val group = AgentSessionsTreePopupMoveToTaskFolderGroup(
+      resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
+      listFolders = { path -> if (path == "/work/project-a") listOf(firstFolder, secondFolder) else emptyList() },
+      assignThread = { _, _ -> },
+      promptForCreateRequest = { _, _ -> error("Create action should not be invoked while listing children") },
+      createFolder = { _, _ -> error("Create action should not be invoked while listing children") },
+    )
+    val context = AgentSessionsTreePopupActionContext(
+      project = ProjectManager.getInstance().defaultProject,
+      target = target,
+      archiveTargets = emptyList(),
+      selectedThreadTargets = listOf(target),
+    )
+    val event = popupEvent(group, context)
+
+    group.update(event)
+    val children = group.getChildren(event)
+
+    assertThat(event.presentation.isEnabledAndVisible).isTrue()
+    assertThat(children).hasSize(4)
+    assertThat(children[0].templatePresentation.text).isEqualTo("Research")
+    assertThat(children[1].templatePresentation.text).isEqualTo("Implementation")
+    assertThat(children[2]).isInstanceOf(Separator::class.java)
+    assertThat(children[3].templatePresentation.text)
+      .isEqualTo(AgentSessionsBundle.message("action.AgentWorkbenchSessions.TreePopup.MoveToTaskFolder.NewTaskFolder.text"))
+  }
+
+  @Test
+  fun moveToTaskFolderGroupCreatesFolderAndAssignsSelectedThreads() {
+    val provider = AgentSessionProvider.from("codex")
+    val firstTarget = threadActionTarget(path = "/work/project-a", provider = provider, threadId = "thread-1")
+    val secondTarget = threadActionTarget(path = "/work/project-a", provider = provider, threadId = "thread-2")
+    var createdPath: String? = null
+    var createdName: String? = null
+    var canCreateWithAgentPrompt: Boolean? = null
+    val assigned = mutableListOf<Pair<String, String>>()
+    val group = AgentSessionsTreePopupMoveToTaskFolderGroup(
+      resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
+      listFolders = { emptyList() },
+      assignThread = { target, folder -> assigned += target.threadId to folder.id },
+      promptForCreateRequest = { _, canCreateWithAgent ->
+        canCreateWithAgentPrompt = canCreateWithAgent
+        CreateTaskFolderRequest(name = "Authentication rewrite", createWithAgent = false)
+      },
+      createFolder = { path, name ->
+        createdPath = path
+        createdName = name
+        taskFolder(path = path, name = name)
+      },
+      taskFolderAgentProfile = { null },
+    )
+    val context = AgentSessionsTreePopupActionContext(
+      project = ProjectManager.getInstance().defaultProject,
+      target = firstTarget,
+      archiveTargets = emptyList(),
+      selectedThreadTargets = listOf(firstTarget, secondTarget),
+    )
+    val event = popupEvent(group, context)
+
+    group.update(event)
+    val child = group.getChildren(event).single()
+    child.actionPerformed(popupEvent(child, context))
+
+    assertThat(event.presentation.isEnabledAndVisible).isTrue()
+    assertThat(canCreateWithAgentPrompt).isFalse()
+    assertThat(createdPath).isEqualTo("/work/project-a")
+    assertThat(createdName).isEqualTo("Authentication rewrite")
+    assertThat(assigned).containsExactly("thread-1" to "folder1", "thread-2" to "folder1")
+  }
+
+  @Test
+  fun moveToTaskFolderGroupAssignsThreadsBeforeOpeningCreatedFolderAgent() {
+    val provider = AgentSessionProvider.from("codex")
+    val target = threadActionTarget(path = "/work/project-a", provider = provider, threadId = "thread-1")
+    val profile = AgentPromptLaunchProfile(
+      id = "user:task-pi",
+      name = "Task Pi",
+      providerId = AgentSessionProvider.from("pi").value,
+      launchMode = AgentSessionLaunchMode.STANDARD,
+    )
+    val events = mutableListOf<String>()
+    val group = AgentSessionsTreePopupMoveToTaskFolderGroup(
+      resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
+      listFolders = { emptyList() },
+      assignThread = { assignedTarget, folder -> events += "assign:${assignedTarget.threadId}:${folder.id}" },
+      promptForCreateRequest = { _, canCreateWithAgent ->
+        assertThat(canCreateWithAgent).isTrue()
+        CreateTaskFolderRequest(name = "Authentication rewrite", createWithAgent = true)
+      },
+      createFolder = { path, name -> taskFolder(path = path, name = name) },
+      taskFolderAgentProfile = { profile },
+      openTaskFolderAgent = { _, folder, launchProfile, _ -> events += "open:${folder.id}:${launchProfile.id}" },
+    )
+    val context = AgentSessionsTreePopupActionContext(
+      project = ProjectManager.getInstance().defaultProject,
+      target = target,
+      archiveTargets = emptyList(),
+      selectedThreadTargets = listOf(target),
+    )
+    val child = group.getChildren(popupEvent(group, context)).single()
+
+    child.actionPerformed(popupEvent(child, context))
+
+    assertThat(events).containsExactly("assign:thread-1:folder1", "open:folder1:user:task-pi")
   }
 
   @Test
@@ -1186,6 +1326,41 @@ class AgentSessionsTreePopupActionsTest {
   }
 
   @Test
+  fun newThreadGroupUsesEmptyAreaSourcePath() {
+    var launchedPath: String? = null
+    var launchedProfile: AgentPromptLaunchProfile? = null
+    var launchedProject: Project? = null
+    var entryPoint: AgentWorkbenchEntryPoint? = null
+    val codexBridge = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.from("codex"),
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+    )
+    val group = AgentSessionsTreePopupNewThreadGroup(
+      resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
+      allBridges = { listOf(codexBridge) },
+      defaultLaunchProfileId = { null },
+      createNewSession = { path, profile, project, capturedEntryPoint ->
+        launchedPath = path
+        launchedProfile = profile
+        launchedProject = project
+        entryPoint = capturedEntryPoint
+      },
+    )
+    val context = emptyAreaPopupContext(sourcePath = "/work/project-a")
+    val event = popupEvent(group, context)
+
+    group.update(event)
+    group.actionPerformed(event)
+
+    assertThat(event.presentation.isEnabledAndVisible).isTrue()
+    assertThat(launchedPath).isEqualTo("/work/project-a")
+    assertThat(launchedProfile?.providerId).isEqualTo(AgentSessionProvider.from("codex").value)
+    assertThat(launchedProject).isSameAs(context.project)
+    assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_POPUP)
+  }
+
+  @Test
   fun newThreadGroupVisibilityAndDispatchUsesDefaultLaunchProfile() {
     var launchedPath: String? = null
     var launchedProfile: AgentPromptLaunchProfile? = null
@@ -1480,6 +1655,48 @@ class AgentSessionsTreePopupActionsTest {
   }
 
   @Test
+  fun taskFolderAgentGroupUsesEmptyAreaSourcePath() {
+    var launchedPath: String? = null
+    var launchedProfile: AgentPromptLaunchProfile? = null
+    var launchedProject: Project? = null
+    var entryPoint: AgentWorkbenchEntryPoint? = null
+    val piProfile = AgentPromptLaunchProfile(
+      id = "user:pi-task-profile",
+      name = "Pi Task Profile",
+      providerId = AgentSessionProvider.from("pi").value,
+      launchMode = AgentSessionLaunchMode.STANDARD,
+    )
+    val piBridge = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.from("pi"),
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+    )
+    val group = AgentSessionsTreePopupTaskFolderAgentGroup(
+      resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
+      allBridges = { listOf(piBridge) },
+      userLaunchProfiles = { listOf(piProfile) },
+      taskFolderAgentLaunchProfileId = { piProfile.id },
+      createTaskFolderAgent = { path, profile, project, capturedEntryPoint ->
+        launchedPath = path
+        launchedProfile = profile
+        launchedProject = project
+        entryPoint = capturedEntryPoint
+      },
+    )
+    val context = emptyAreaPopupContext(sourcePath = "/work/project-a")
+    val event = popupEvent(group, context)
+
+    group.update(event)
+    group.actionPerformed(event)
+
+    assertThat(event.presentation.isEnabledAndVisible).isTrue()
+    assertThat(launchedPath).isEqualTo("/work/project-a")
+    assertThat(launchedProfile).isEqualTo(piProfile)
+    assertThat(launchedProject).isSameAs(context.project)
+    assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_POPUP)
+  }
+
+  @Test
   fun taskFolderAgentGroupIsVisibleButDisabledWithoutPi() {
     val codexBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.from("codex"),
@@ -1540,6 +1757,17 @@ private fun popupEvent(action: AnAction, context: AgentSessionsTreePopupActionCo
     .add(AgentSessionsTreePopupDataKeys.CONTEXT, context)
     .build()
   return TestActionEvent.createTestEvent(action, dataContext)
+}
+
+private fun emptyAreaPopupContext(
+  sourcePath: String,
+  newThreadActionAvailable: Boolean = true,
+): AgentSessionsTreePopupActionContext {
+  return checkNotNull(createAgentSessionsTreeEmptyAreaPopupActionContext(
+    project = ProjectManager.getInstance().defaultProject,
+    sourcePath = sourcePath,
+    newThreadActionAvailable = newThreadActionAvailable,
+  ))
 }
 
 private fun projectEvent(action: AnAction, project: Project = ProjectManager.getInstance().defaultProject): AnActionEvent {
