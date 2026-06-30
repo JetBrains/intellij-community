@@ -13,8 +13,6 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.LookupManagerListener
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.sessions
 import com.intellij.openapi.diagnostic.Logger
@@ -80,20 +78,10 @@ open class LookupManagerImpl(private val myProject: Project) : LookupManager() {
         // and the container fails to resolve even nullable service of such kind of a session
         for (session in myProject.sessions(ClientKind.LOCAL) + myProject.sessions(ClientKind.REMOTE)) {
           val clientLookupManager = ClientLookupManager.getInstance(session) ?: continue
-          if (event.editor == getEditor(clientLookupManager)) {
+          if (event.editor == clientLookupManager.getActiveLookup()?.editor) {
             clientLookupManager.hideActiveLookup()
           }
         }
-      }
-
-      private fun getEditor(clientLookupManager: ClientLookupManager): Editor? {
-        val activeLookup = clientLookupManager.getActiveLookup() ?: return null
-        val application = ApplicationManager.getApplication()
-        if (application.isDispatchThread && !application.isReadAccessAllowed) {
-          //editor in injected fragment requires read action
-          return runReadActionBlocking { activeLookup.editor }
-        }
-        return activeLookup.editor
       }
     }, myProject)
   }
