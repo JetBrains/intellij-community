@@ -7,6 +7,8 @@ import com.intellij.ide.plugins.PluginEnableStateChangedListener
 import com.intellij.ide.plugins.PluginStateListener
 import com.intellij.ide.plugins.PluginStateManager
 import com.intellij.ide.plugins.api.PluginDto
+import com.intellij.openapi.diagnostic.getOrHandleException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.PluginUpdateHandler
 import kotlinx.coroutines.CoroutineScope
@@ -23,6 +25,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(FlowPreview::class)
@@ -32,6 +35,10 @@ class DefaultPluginUpdatesProvider(private val coroutineScope: CoroutineScope) :
   private val flow = MutableStateFlow<PluginUpdatesEvent?>(null)
   private val updateRequestFlow = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private var lastPluginUpdates: PluginUpdatesEvent? = null
+
+  companion object {
+    private val LOG = logger<DefaultPluginUpdatesProvider>()
+  }
 
   init {
     PluginStateManager.addStateListener(object : PluginStateListener {
@@ -64,12 +71,14 @@ class DefaultPluginUpdatesProvider(private val coroutineScope: CoroutineScope) :
       .debounce(300.milliseconds)
       .collectLatest {
         updateMutex.withLock {
-          val model = (PluginUpdateHandler.getInstance().loadAndStorePluginUpdates(null))
-          val pluginUpdates = PluginUpdatesEvent(model.pluginUpdates.markLocal(),
-                                                 model.disabledPluginUpdates.markLocal(),
-                                                 model.updatesFromCustomRepositories.markLocal())
-          lastPluginUpdates = pluginUpdates
-          emitUpdates(pluginUpdates)
+          runCatching {
+            val model = (PluginUpdateHandler.getInstance().loadAndStorePluginUpdates(null))
+            val pluginUpdates = PluginUpdatesEvent(model.pluginUpdates.markLocal(),
+                                                    model.disabledPluginUpdates.markLocal(),
+                                                    model.updatesFromCustomRepositories.markLocal())
+            lastPluginUpdates = pluginUpdates
+            emitUpdates(pluginUpdates)
+          }.getOrHandleException { e -> LOG.warn("Failed to load plugin updates:", e) }
         }
       }
   }
