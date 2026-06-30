@@ -11,13 +11,14 @@ internal data class ProjectViewNodeModelDTO(
   val flags: Int,
 )
 
-internal fun ProjectViewNodeModelImpl.toDTO(): ProjectViewNodeModelDTO = ProjectViewNodeModelDTO(
+internal fun ProjectViewNodeModelImpl<*>.toDTO(): ProjectViewNodeModelDTO = ProjectViewNodeModelDTO(
   id = id,
   presentationDTO = presentation.toDTO(),
   flags = flags,
 )
 
-internal fun ProjectViewNodeModelDTO.toModel(): ProjectViewNodeModelImpl = ProjectViewNodeModelImpl(
+internal fun ProjectViewNodeModelDTO.toModel(): ProjectViewNodeModelImpl<*> = ProjectViewNodeModelImpl(
+  maybeUserObject = null,
   id = id,
   presentation = presentationDTO.toPresentation() as TreeNodePresentationImpl,
   flags = flags,

@@ -474,7 +474,7 @@ private class AbstractProjectViewPaneStateManager(
   }
 
   private suspend fun createNodeModel(id: Long, node: Any): ProjectViewNodeModel {
-    return buildProjectViewNodeModel(id) { nodeBuilder ->
+    return buildProjectViewNodeModel(id, node) { nodeBuilder ->
       nodeBuilder.buildPresentation { presentationBuilder ->
         buildNodePresentation(node, presentationBuilder)
       }

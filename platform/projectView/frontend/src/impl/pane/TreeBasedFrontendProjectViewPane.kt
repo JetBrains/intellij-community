@@ -1,6 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(ExperimentalAtomicApi::class)
-
 package com.intellij.platform.projectView.frontend.impl.pane
 
 import com.intellij.ide.DefaultTreeExpander
@@ -27,14 +25,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.projectView.pane.NestingRuleDTO
-import com.intellij.platform.projectView.pane.ProjectViewPaneSettingsStateDTO
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
-import com.intellij.platform.projectView.pane.ProjectViewPaneOptionDTO
 import com.intellij.platform.projectView.actions.ProjectViewOptionMenuUpdater
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
+import com.intellij.platform.projectView.pane.NestingRuleDTO
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
-import com.intellij.platform.projectView.pane.ProjectViewSettingsStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewChildRemoved
 import com.intellij.platform.projectView.pane.ProjectViewChildrenLoaded
 import com.intellij.platform.projectView.pane.ProjectViewChildrenRemoved
@@ -50,9 +45,12 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneChangeSortKeyReques
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneOptionDTO
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneSelectionChanged
+import com.intellij.platform.projectView.pane.ProjectViewPaneSettingsStateDTO
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
+import com.intellij.platform.projectView.pane.ProjectViewSettingsStateEvent
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
 import com.intellij.platform.projectView.pane.SuperRootModel
 import com.intellij.pom.Navigatable
@@ -99,7 +97,6 @@ import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
-import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.time.ComparableTimeMark
 import kotlin.time.TimeSource
 
@@ -588,8 +585,8 @@ internal abstract class TreeBasedFrontendProjectViewPane(
 private class Node(
   model: ProjectViewNodeModel,
 ) : DefaultMutableTreeNode(model), TreeNodeWithPresentation, PathElementIdProvider {
-  val projectViewNode: ProjectViewNodeModelImpl
-    get() = userObject as ProjectViewNodeModelImpl
+  val projectViewNode: ProjectViewNodeModelImpl<*>
+    get() = userObject as ProjectViewNodeModelImpl<*>
   
   var isChildrenLoaded: Boolean = false
   
@@ -597,7 +594,7 @@ private class Node(
     get() = projectViewNode.id
 
   override val presentation: TreeNodePresentationImpl
-    get() = projectViewNode.presentation as TreeNodePresentationImpl
+    get() = projectViewNode.presentation
 
   override fun isLeaf(): Boolean {
     return projectViewNode.presentation.isLeaf
@@ -618,7 +615,8 @@ private class ProjectViewTreeExpander(tree: Tree, private val expandRequests: Se
   }
 
   override fun expandSelected(tree: JTree) {
-    val result = expandRequests.trySend(ExpandRequest(tree.selectionPaths.toList()))
+    val selection = tree.selectionPaths?.toList() ?: return
+    val result = expandRequests.trySend(ExpandRequest(selection))
     check(!result.isFailure)
   }
 

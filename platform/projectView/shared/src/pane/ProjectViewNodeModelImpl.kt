@@ -7,7 +7,7 @@ import com.intellij.ui.treeStructure.TreeNodePresentationImpl
 import org.jetbrains.annotations.ApiStatus
 
 
-internal class ProjectViewNodeModelBuilderImpl(private val id: Long) : ProjectViewNodeModelBuilder {
+internal class ProjectViewNodeModelBuilderImpl<T>(private val id: Long, private val userObject: T) : ProjectViewNodeModelBuilder {
   private val presentationBuilder = TreeNodePresentationBuilderImpl()
   private var canNavigate = false
   private var canNavigateToSource = false
@@ -34,8 +34,9 @@ internal class ProjectViewNodeModelBuilderImpl(private val id: Long) : ProjectVi
     this.isDirectory = isDirectory
   }
 
-  fun build(): ProjectViewNodeModelImpl {
+  fun build(): ProjectViewNodeModelImpl<T> {
     return ProjectViewNodeModelImpl(
+      maybeUserObject = userObject,
       id = id,
       presentation = presentationBuilder.build(),
       canNavigate = canNavigate,
@@ -47,12 +48,14 @@ internal class ProjectViewNodeModelBuilderImpl(private val id: Long) : ProjectVi
 }
 
 @ApiStatus.Internal
-data class ProjectViewNodeModelImpl(
+data class ProjectViewNodeModelImpl<T>(
+  private val maybeUserObject: T?,
   override val id: Long,
   override val presentation: TreeNodePresentationImpl,
   val flags: Int = 0,
-) : ProjectViewNodeModel {
+) : BackendProjectViewNodeModel<T> {
   constructor(
+    maybeUserObject: T?,
     id: Long,
     presentation: TreeNodePresentationImpl,
     canNavigate: Boolean,
@@ -60,10 +63,14 @@ data class ProjectViewNodeModelImpl(
     isIncludedInExpandAll: Boolean,
     isDirectory: Boolean,
   ) : this(
+    maybeUserObject,
     id,
     presentation,
     flags(canNavigate, canNavigateToSource, isIncludedInExpandAll, isDirectory),
   )
+
+  override val userObject: T
+    get() = checkNotNull(maybeUserObject) { "The user object is only available on the backend" }
 
   override fun canNavigate(): Boolean = (flags and FLAG_CAN_NAVIGATE) != 0
 
@@ -97,4 +104,4 @@ val SuperRootPresentation: TreeNodePresentationImpl = TreeNodePresentationBuilde
 }.build()
 
 @ApiStatus.Internal
-val SuperRootModel: ProjectViewNodeModel = ProjectViewNodeModelImpl(SUPER_ROOT_ID, SuperRootPresentation)
+val SuperRootModel: ProjectViewNodeModel = ProjectViewNodeModelImpl(null, SUPER_ROOT_ID, SuperRootPresentation)
