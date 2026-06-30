@@ -12,5 +12,13 @@
     <lang.formatter language="EditorConfig"
                     implementationClass="com.intellij.editorconfig.common.formatting.EditorConfigFormattingModelBuilder"/>
     <lang.commenter language="EditorConfig" implementationClass="com.intellij.editorconfig.common.lang.EditorConfigCommenter"/>
+    <lang.syntaxHighlighterFactory language="EditorConfig"
+                                   implementationClass="com.intellij.editorconfig.common.highlighting.EditorConfigSyntaxHighlighterFactory"/>
+
+    <statementUpDownMover implementation="com.intellij.editorconfig.common.editor.EditorConfigStatementUpDownMover"/>
+    <moveLeftRightHandler language="EditorConfig"
+                          implementationClass="com.intellij.editorconfig.common.editor.EditorConfigMoveElementLeftRightHandler"/>
+    <enterHandlerDelegate implementation="com.intellij.editorconfig.common.editor.EnterInEditorConfigFileHandler"/>
+    <typedHandler implementation="com.intellij.editorconfig.common.editor.EditorConfigTypedHandlerDelegate"/>
   </extensions>
 </idea-plugin>
