@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
+import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.GitDisposable
 import git4idea.GitLocalBranch
 import git4idea.GitUtil
@@ -56,6 +57,8 @@ class GitRepositoryImpl private constructor(
   @Volatile
   private var repoInfo: GitRepoInfo
 
+  private val objectFormat: GitObjectFormat
+
   @Volatile
   private var recentCheckoutBranches = emptyList<GitLocalBranch>()
 
@@ -77,7 +80,11 @@ class GitRepositoryImpl private constructor(
     tagsHolder = GitRepositoryTagsHolderImpl(this)
 
     workingTreeHolder = GitWorkingTreeHolderImpl(this)
-    repoInfo = readRepoInfo()
+    val config = readConfig()
+
+    objectFormat = config.objectFormat
+    repoInfo = readRepoInfo(config)
+
     runBlockingMaybeCancellable {
       workingTreeHolder.updateState()
     }
@@ -146,6 +153,10 @@ class GitRepositoryImpl private constructor(
     return currentBranch?.name
   }
 
+  override fun getFullHashLength(): Int {
+    return objectFormat.hashLength
+  }
+
   override fun getVcs(): GitVcs {
     return vcs
   }
@@ -195,12 +206,15 @@ class GitRepositoryImpl private constructor(
     notifyIfRepoChanged(this, previousInfo, repoInfo)
   }
 
-  private fun readRepoInfo(): GitRepoInfo {
+  private fun readConfig(): GitConfig = GitConfig.read(project, repositoryFiles.rootDir.toNioPath())
+
+  private fun readRepoInfo(): GitRepoInfo = readRepoInfo(readConfig())
+
+  private fun readRepoInfo(config: GitConfig): GitRepoInfo {
     return getInstance().getTracer(VcsScope).spanBuilder(GitBackendTelemetrySpan.Repository.ReadGitRepositoryInfo.getName()).use { span ->
       span.setAttribute("repository", DvcsUtil.getShortRepositoryName(this))
 
-      val config = GitConfig.read(project, repositoryFiles.rootDir.toNioPath())
-      repositoryFiles.updateCustomPaths(config.parseCore())
+      repositoryFiles.updateCustomPaths(config.core)
 
       val remotes = config.parseRemotes()
       val state = repositoryReader.readState(remotes)
@@ -235,7 +249,6 @@ class GitRepositoryImpl private constructor(
   override fun toLogString(): String {
     return "GitRepository $root : $repoInfo"
   }
-
 
 
   companion object {
