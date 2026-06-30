@@ -1603,4 +1603,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.platform.smRunner.tests",
   "intellij.platform.sqlite.tests",
   "intellij.platform.statistics.tests",
+  "intellij.platform.structuralSearch.tests",
 )
