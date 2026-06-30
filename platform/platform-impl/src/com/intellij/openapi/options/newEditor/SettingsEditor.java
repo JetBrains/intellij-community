@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.BackedByPersistentState;
+import com.intellij.openapi.options.NoAutomaticReset;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
@@ -72,7 +73,6 @@ import javax.swing.JPanel;
 import java.awt.AWTEvent;
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -704,9 +704,14 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     if (isModified == null) return;
     LOG.debug("resetUnmodifiedOnWindowFocus: current=" + current.getDisplayName() + ", leaveState=" + leaveState + ", isModified=" + isModified);
     if (leaveState == Boolean.FALSE && isModified) {
-      LOG.warn("resetUnmodifiedOnWindowFocus: resetting " + current.getDisplayName());
-      current.reset();
-      filter.context.fireReset(current);
+      if (ConfigurableWrapper.cast(NoAutomaticReset.class, current) != null) {
+        LOG.debug("resetUnmodifiedOnWindowFocus: skipping reset for " + current.getDisplayName() + " (NoAutomaticReset)");
+      }
+      else {
+        LOG.warn("resetUnmodifiedOnWindowFocus: resetting " + current.getDisplayName());
+        current.reset();
+        filter.context.fireReset(current);
+      }
     }
     detectExternalChangesOnFocusGain();
   }

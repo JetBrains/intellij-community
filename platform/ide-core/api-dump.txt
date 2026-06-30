@@ -844,6 +844,7 @@ c:com.intellij.openapi.options.ConfigurationException
 - setQuickFix(com.intellij.openapi.options.ConfigurationQuickFix):V
 - setQuickFix(java.lang.Runnable):V
 - withHtmlMessage():com.intellij.openapi.options.ConfigurationException
+com.intellij.openapi.options.NoAutomaticReset
 f:com.intellij.openapi.options.OptionsBundle
 - com.intellij.DynamicBundle
 com.intellij.openapi.options.SearchableConfigurable
