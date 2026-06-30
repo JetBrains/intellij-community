@@ -9,6 +9,7 @@ import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.testFramework.assertErrorLogged
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.SystemProperty
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -265,6 +266,7 @@ class RunBlockingCancellableTest : CancellationTest() {
 
   @Test
   @RegistryKey("ide.run.blocking.cancellable.assert.in.tests", "true")
+  @SystemProperty("intellij.progress.task.ignoreHeadless", "true")
   fun `runBlockingCancellable is not allowed in wa`(): Unit = timeoutRunBlocking {
     edtWriteAction {
       assertErrorLogged<java.lang.IllegalStateException> {
