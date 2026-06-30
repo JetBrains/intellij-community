@@ -172,34 +172,26 @@ public final class CoroutinesDebugHelper {
     return current.getClass().getSimpleName().contains(COROUTINE_OWNER_CLASS);
   }
 
-  public static Object[] dumpCoroutinesInfoAsJsonAndReferences(Class<?> debugProbesImplClass) {
-    try {
-      Object debugProbesImplInstance = debugProbesImplClass.getField("INSTANCE").get(null);
-      Object[] infos = (Object[])invoke(debugProbesImplInstance, "dumpCoroutinesInfoAsJsonAndReferences");
-      return infos;
-    } catch (Throwable e) {
-      return null;
-    }
+  public static Object[] dumpCoroutinesInfoAsJsonAndReferences(Class<?> debugProbesImplClass) throws Throwable {
+    Object debugProbesImplInstance = debugProbesImplClass.getField("INSTANCE").get(null);
+    Object[] infos = (Object[])invoke(debugProbesImplInstance, "dumpCoroutinesInfoAsJsonAndReferences");
+    return infos;
   }
 
-  public static Object[] dumpCoroutinesWithStacktracesAsJson(Class<?> debugProbesImplClass) {
-    try {
-      Object debugProbesImplInstance = debugProbesImplClass.getField("INSTANCE").get(null);
-      Object[] dump = (Object[])invoke(debugProbesImplInstance, "dumpCoroutinesInfoAsJsonAndReferences");
-      Object[] coroutineInfos = (Object[])dump[3];
-      String[] lastObservedStackTraces = new String[coroutineInfos.length];
-      for (int i = 0; i < coroutineInfos.length; i++) {
-        lastObservedStackTraces[i] = lastObservedStackTrace(coroutineInfos[i]);
-      }
-      dump = Arrays.copyOf(dump, dump.length + 2);
-      dump[4] = lastObservedStackTraces;
-
-      Object[] lastObservedThreads = (Object[])dump[1];
-      dump[5] = getAsyncStackTracesForThreads(lastObservedThreads);
-      return dump;
-    } catch (Throwable e) {
-      return null;
+  @SuppressWarnings("unused")
+  public static Object[] dumpCoroutinesWithStacktracesAsJson(Class<?> debugProbesImplClass) throws Throwable {
+    Object[] dump = dumpCoroutinesInfoAsJsonAndReferences(debugProbesImplClass);
+    Object[] coroutineInfos = (Object[])dump[3];
+    String[] lastObservedStackTraces = new String[coroutineInfos.length];
+    for (int i = 0; i < coroutineInfos.length; i++) {
+      lastObservedStackTraces[i] = lastObservedStackTrace(coroutineInfos[i]);
     }
+    dump = Arrays.copyOf(dump, dump.length + 2);
+    dump[4] = lastObservedStackTraces;
+
+    Object[] lastObservedThreads = (Object[])dump[1];
+    dump[5] = getAsyncStackTracesForThreads(lastObservedThreads);
+    return dump;
   }
 
   private static String lastObservedStackTrace(Object debugCoroutineInfo) throws Throwable {
@@ -212,28 +204,25 @@ public final class CoroutinesDebugHelper {
    * Invokes com.intellij.rt.debugger.agent.CaptureStorage#getAllCapturedStacks method
    * which returns a map of threads to their captured async stack traces.
    * If `debugger.async.stack.trace.for.all.threads` is false, only the current thread's stack trace is returned.
-   *
+   * <p>
    * If debugger-agent is not available, e.g. in attach, returns null
    */
-  private static String[] getAsyncStackTracesForThreads(Object[] threads) {
-    try {
-      Class<?> captureStorageClass = Class.forName(DEBUGGER_AGENT_CAPTURE_STORAGE_FQN, false, null);
-      Method getAllCapturedStacks = captureStorageClass.getMethod("getAllCapturedStacks", int.class);
+  private static String[] getAsyncStackTracesForThreads(Object[] threads) throws Throwable {
+    Class<?> captureStorageClass = Class.forName(DEBUGGER_AGENT_CAPTURE_STORAGE_FQN, false, null);
+    Method getAllCapturedStacks = captureStorageClass.getMethod("getAllCapturedStacks", int.class);
 
-      Map<Thread, String> threadToStackTrace = (Map<Thread, String>)invoke(null, getAllCapturedStacks, 500);
+    @SuppressWarnings("unchecked")
+    Map<Thread, String> threadToStackTrace = (Map<Thread, String>)invoke(null, getAllCapturedStacks, 500);
 
-      String[] asyncStackTraces = new String[threads.length];
+    String[] asyncStackTraces = new String[threads.length];
 
-      for (int i = 0; i < threads.length; i++) {
-        Object thread = threads[i];
-        if (thread != null) {
-          asyncStackTraces[i] = threadToStackTrace.get(thread);
-        }
+    for (int i = 0; i < threads.length; i++) {
+      Object thread = threads[i];
+      if (thread != null) {
+        asyncStackTraces[i] = threadToStackTrace.get(thread);
       }
-      return asyncStackTraces;
-    } catch (Throwable e) {
-      return null;
     }
+    return asyncStackTraces;
   }
 
   /**
