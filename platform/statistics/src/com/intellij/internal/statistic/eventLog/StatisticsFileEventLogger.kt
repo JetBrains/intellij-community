@@ -83,10 +83,9 @@ open class StatisticsFileEventLogger(
           event = LogEventAction(eventId, isState, eventData),
         )
           .also { if (escapeCharsInData) it.escape() else it.escapeExceptData() }
-        val validatedEvent = validator.validateEvent(event)
-        if (validatedEvent != null) {
-          log(validatedEvent, System.currentTimeMillis(), eventId, data)
-        }
+        // Validation runs once, inside the dispatcher (IntellijReportValidator), after merge and
+        // system-field injection. The isGroupAllowed check above stays as a cheap early-out.
+        log(event, System.currentTimeMillis(), eventId, data)
       }, logExecutor)
     }
     catch (e: RejectedExecutionException) {
