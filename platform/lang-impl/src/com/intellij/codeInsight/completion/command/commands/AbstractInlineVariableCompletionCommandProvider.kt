@@ -85,15 +85,16 @@ abstract class AbstractInlineVariableCompletionCommandProvider : CommandProvider
 
     override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
       if (editor == null) return
-      val element = runWithModalProgressBlocking(ModalTaskOwner.guess(), presentableName) {
-        readAction { findElementToInline(offset, psiFile, editor) }
-      } ?: return
-      for (extension in InlineActionHandler.EP_NAME.extensionList) {
-        if (extension.canInlineElement(element)) {
-          WriteIntentReadAction.run {
+      WriteIntentReadAction.run {
+        val element = runWithModalProgressBlocking(ModalTaskOwner.guess(), presentableName) {
+          readAction { findElementToInline(offset, psiFile, editor) }
+        } ?: return@run
+
+        for (extension in InlineActionHandler.EP_NAME.extensionList) {
+          if (extension.canInlineElement(element)) {
             extension.inlineElement(psiFile.project, editor, element)
+            return@run
           }
-          return
         }
       }
     }
