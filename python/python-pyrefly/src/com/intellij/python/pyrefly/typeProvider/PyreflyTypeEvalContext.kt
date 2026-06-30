@@ -47,7 +47,6 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.TextDocumentIdentifier
-import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Unmodifiable
 import org.jetbrains.annotations.VisibleForTesting
@@ -56,15 +55,7 @@ import kotlin.time.measureTimedValue
 open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient, psiFile: PsiFile) : LspTypeEvalContext(psiFile) {
 
   private val snapshot: Int? by lazy {
-    try {
-      lspClient.sendRequestSync {
-        (it as PyreflyLsp4jServer).getSnapshot()
-      }
-    }
-    catch (e: ResponseErrorException) {
-      e.responseError?.code
-      null
-    }
+    lspClient.sendRequestSync { (it as PyreflyLsp4jServer).getSnapshot() }
   }
 
   override fun provideType(element: PyTypedElement, isUserInitiated: Boolean): Ref<PyType?>? {
@@ -86,16 +77,8 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     val node = PyreflyLsp4jServer.TspNode(sourceUri, Range(position, position))
 
     val snapshot = snapshot ?: return null
-    val tspType = try {
-      lspClient.sendRequestSync {
-        (it as PyreflyLsp4jServer).getComputedType(
-          PyreflyLsp4jServer.GetComputedTypeParams(arg = node, snapshot = snapshot)
-        )
-      }
-    }
-    catch (e: ResponseErrorException) {
-      e.responseError?.code
-      null
+    val tspType = lspClient.sendRequestSync {
+      (it as PyreflyLsp4jServer).getComputedType(PyreflyLsp4jServer.GetComputedTypeParams(arg = node, snapshot = snapshot))
     } ?: return null
 
     //logTypeDefinition(node, tspType)
@@ -344,14 +327,8 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
       val textDocument = group.first().value.textDocument
       val positions = group.map { it.value.position }
 
-      val response = try {
-        lspClient.sendRequestSync {
-          (it as PyreflyLsp4jServer).provideType(textDocument, positions)
-        }
-      }
-      catch (e: ResponseErrorException) {
-        e.responseError?.code
-        return null
+      val response = lspClient.sendRequestSync {
+        (it as PyreflyLsp4jServer).provideType(textDocument, positions)
       }
       val groupContents = response?.contents?.map { it.value } ?: return null
       if (groupContents.size != group.size) return null
