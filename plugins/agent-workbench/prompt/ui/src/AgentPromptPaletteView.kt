@@ -28,6 +28,7 @@ import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
@@ -52,7 +53,6 @@ import java.awt.Container
 import java.awt.Cursor
 import java.awt.Dimension
 import java.awt.FlowLayout
-import java.awt.Graphics
 import java.awt.event.ContainerAdapter
 import java.awt.event.ContainerEvent
 import java.awt.event.MouseAdapter
@@ -317,12 +317,6 @@ internal class AgentPromptToolbarIconToggleAction(
 internal class HeaderActionLink(text: @Nls String) : ActionLink(text) {
   var onVisibilityChanged: (() -> Unit)? = null
   var onPresentationChanged: (() -> Unit)? = null
-  var trailingIcon: Icon? = null
-    set(value) {
-      field = value
-      revalidate()
-      repaint()
-    }
 
   override fun setVisible(aFlag: Boolean) {
     val visibilityChanged = isVisible != aFlag
@@ -339,32 +333,14 @@ internal class HeaderActionLink(text: @Nls String) : ActionLink(text) {
       onPresentationChanged?.invoke()
     }
   }
+}
 
-  override fun getPreferredSize(): Dimension {
-    return super.getPreferredSize().withTrailingIconWidth()
-  }
-
-  override fun getMinimumSize(): Dimension {
-    return super.getMinimumSize().withTrailingIconWidth()
-  }
-
-  override fun paintComponent(g: Graphics) {
-    super.paintComponent(g)
-    val icon = trailingIcon ?: return
-    val x = if (componentOrientation.isLeftToRight) {
-      width - insets.right - icon.iconWidth
-    }
-    else {
-      insets.left
-    }
-    val y = (height - icon.iconHeight) / 2
-    icon.paintIcon(this, g, x, y)
-  }
-
-  private fun Dimension.withTrailingIconWidth(): Dimension {
-    val icon = trailingIcon ?: return this
-    width += icon.iconWidth + iconTextGap
-    return this
+internal class HeaderDropDownLink(
+  text: @Nls String,
+  private val onPerform: (HeaderDropDownLink) -> Unit,
+) : DropDownLink<String>(text, { error("HeaderDropDownLink handles popup display in performAction") }) {
+  override fun performAction() {
+    onPerform(this)
   }
 }
 
@@ -383,23 +359,42 @@ internal class AgentPromptToolbarProfileAction(
   var onPresentationChanged: (() -> Unit)? = null
 
   @JvmField
-  val link: HeaderActionLink = HeaderActionLink(initialText).apply {
+  val link: HeaderDropDownLink = HeaderDropDownLink(initialText) { source ->
+    popupHandler.invoke(DataManager.getInstance().getDataContext(source), source)
+  }.apply {
     autoHideOnDisable = false
     withFont(JBUI.Fonts.smallFont().asPlain())
     foreground = UIUtil.getContextHelpForeground()
     border = JBUI.Borders.empty()
-    setIcon(initialIcon, false)
-    trailingIcon = AllIcons.General.LinkDropTriangle
     setToolTipText(HtmlChunk.text(initialDescription))
     accessibleContext.accessibleName = initialText
     accessibleContext.accessibleDescription = initialDescription
-    addActionListener {
-      popupHandler.invoke(DataManager.getInstance().getDataContext(this), this)
-    }
   }
 
-  val customComponent: JComponent
-    get() = link
+  @JvmField
+  val iconLabel: JLabel = JLabel(initialIcon).apply {
+    cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+    border = JBUI.Borders.emptyRight(4)
+    labelFor = link
+    setToolTipText(HtmlChunk.text(initialDescription))
+    accessibleContext.accessibleName = initialText
+    accessibleContext.accessibleDescription = initialDescription
+    addMouseListener(object : MouseAdapter() {
+      override fun mousePressed(e: MouseEvent) {
+        if (e.button == MouseEvent.BUTTON1 && link.isEnabled) {
+          link.doClick()
+        }
+      }
+    })
+  }
+
+  private val component = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)).apply {
+    isOpaque = false
+    add(iconLabel)
+    add(link)
+  }
+
+  val customComponent: JComponent = component
 
   val textForTest: @Nls String
     get() = profileText
@@ -430,19 +425,28 @@ internal class AgentPromptToolbarProfileAction(
     templatePresentation.description = description
     templatePresentation.icon = icon
     link.text = text
+    component.isVisible = visible
+    component.isEnabled = enabled
     link.isVisible = visible
     link.isEnabled = enabled
-    link.setIcon(icon, false)
+    iconLabel.icon = icon
+    iconLabel.isVisible = visible
+    iconLabel.isEnabled = enabled
     link.setToolTipText(HtmlChunk.text(description))
     link.accessibleContext.accessibleName = text
     link.accessibleContext.accessibleDescription = description
+    iconLabel.setToolTipText(HtmlChunk.text(description))
+    iconLabel.accessibleContext.accessibleName = text
+    iconLabel.accessibleContext.accessibleDescription = description
+    component.revalidate()
+    component.repaint()
     link.revalidate()
     link.repaint()
     onPresentationChanged?.invoke()
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    return link
+    return component
   }
 
   override fun update(e: AnActionEvent) {
@@ -710,7 +714,7 @@ internal fun createAgentPromptPaletteView(
   }
   val generationSettingsActionsPanel = JPanel(FlowLayout(FlowLayout.RIGHT, 0, 0)).apply {
     isOpaque = false
-    add(launchProfileLink)
+    add(profileSelectorAction.customComponent)
     defaultProfileActionControl.component.border = JBUI.Borders.emptyLeft(if (isInlinePrompt) 6 else 8)
     add(defaultProfileActionControl.component)
   }
