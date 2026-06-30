@@ -44,6 +44,11 @@ class IntellijReportDispatcher(
   eventQueue: EventQueue<LogEvent>,
   device: String,
   isInternal: Boolean,
+  // Event data fields excluded from merge equality (e.g. `start_time`). Held for now: the underlying
+  // SimpleLegacyReportDispatcher's merger compares all data fields and has no hook to ignore some of them, so the
+  // IntelliJ-side merger in StatisticsFileEventLogger still does the real merging.
+  // TODO(AP-7777): forward this set to the SDK merger once it accepts ignored fields, then drop the IntelliJ merger.
+  @Suppress("unused") private val mergeIgnoredFields: Set<String>,
 ) : FusReportDispatcher<LogEvent, ValidatedFusReport> {
   private val delegate: SimpleLegacyReportDispatcher = SimpleLegacyReportDispatcher(
     messageBus = messageBus,

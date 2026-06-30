@@ -4,9 +4,7 @@ package com.intellij.internal.statistic.eventLog.fus
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.JetBrainsConsentProvider
-import com.intellij.internal.statistic.eventLog.FilteredEventMergeStrategy
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProviderExt
-import com.intellij.internal.statistic.eventLog.StatisticsEventMergeStrategy
 import com.intellij.internal.statistic.eventLog.events.EventFieldIds
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationInfo
@@ -45,9 +43,7 @@ internal class FeatureUsageEventLoggerProvider : StatisticsEventLoggerProviderEx
 
   private fun isCompatibleVendor(): Boolean = "AndroidStudio" == PlatformUtils.getPlatformPrefix()
 
-  override fun createEventsMergeStrategy(): StatisticsEventMergeStrategy {
+  override val mergeIgnoredFields: Set<String>
     // this happens rather early on startup, do not touch EventFields.*
-    val ignoredFields = EventFieldIds.FieldsIgnoredByMerge.toSet()
-    return FilteredEventMergeStrategy(ignoredFields)
-  }
+    get() = EventFieldIds.FieldsIgnoredByMerge.toSet()
 }

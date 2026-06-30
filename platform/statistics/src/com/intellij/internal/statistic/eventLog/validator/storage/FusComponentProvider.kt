@@ -331,6 +331,7 @@ object FusComponentProvider {
       eventQueue = persistentQueue,
       device = device,
       isInternal = applicationInfo.isInternal,
+      mergeIgnoredFields = eventLogProvider.mergeIgnoredFields,
     )
 
     return FusComponents(
