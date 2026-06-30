@@ -92,6 +92,7 @@ class AgentSessionArchiveService internal constructor(
     entryPoint: AgentWorkbenchEntryPoint,
     preferredSingleArchivedLabel: @NlsSafe String? = null,
     onComplete: ((AgentSessionArchiveRequestResult) -> Unit)? = null,
+    onDropped: (() -> Unit)? = null,
   ) {
     val normalizedTargets = normalizeArchiveTargets(targets)
     if (normalizedTargets.isEmpty()) {
@@ -100,6 +101,7 @@ class AgentSessionArchiveService internal constructor(
     launchDropAction(
       key = buildArchiveThreadsActionKey(normalizedTargets),
       droppedActionMessage = "Dropped duplicate archive threads action for ${normalizedTargets.size} targets",
+      onDropped = onDropped,
     ) {
       AgentWorkbenchTelemetry.logThreadArchiveRequested(entryPoint, normalizedTargets.singleProviderOrNull())
       val preparedBatch = prepareArchiveTargets(normalizedTargets, preferredSingleArchivedLabel)
@@ -383,13 +385,17 @@ class AgentSessionArchiveService internal constructor(
     key: String,
     droppedActionMessage: String,
     policy: SingleFlightPolicy = SingleFlightPolicy.DROP,
+    onDropped: (() -> Unit)? = null,
     block: suspend () -> Unit,
   ) {
     actionGate.launch(
       scope = serviceScope,
       key = key,
       policy = policy,
-      onDrop = { LOG.debug(droppedActionMessage) },
+      onDrop = {
+        LOG.debug(droppedActionMessage)
+        onDropped?.invoke()
+      },
       block = block,
     )
   }

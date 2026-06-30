@@ -56,6 +56,9 @@ create a new top-level Agent Workbench entity and do not inject context into pro
   User-visible action text and dialog text must live in `AgentSessionsBundle.properties`.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
 
+- Agent/tool integrations that expose task-folder move/remove operations for arbitrary thread ids must validate against loaded active threads
+  in the current project/worktree path and must not create synthetic assignments for unloaded, archived, pending, or cross-path threads.
+
 - Dragging active thread rows onto an in-progress task folder on the same path must perform the same move as `Move to Task Folder`. If the
   dragged row is selected, all selected active same-path thread rows move together; if it is not selected, only the dragged row moves.
   Mixed-path selections and drops onto other paths or done folders must be rejected.

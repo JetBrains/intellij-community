@@ -40,7 +40,7 @@ data class PiControlSessionContext(
 @ApiStatus.Internal
 data class PiControlExtensionRequest(
   @JvmField val operation: String? = null,
-  @JvmField val arguments: PiControlRequestArguments? = null,
+  @JvmField val argumentsJson: String? = null,
 )
 
 internal data class PiControlCapabilities(
@@ -74,17 +74,7 @@ internal data class PiControlPayload(
   @JvmField val thread: PiControlThreadPayload? = null,
   @JvmField val capabilities: PiControlCapabilities? = null,
   @JvmField val operation: String? = null,
-  @JvmField val arguments: PiControlRequestArguments? = null,
-)
-
-@ApiStatus.Internal
-data class PiControlRequestArguments(
-  @JvmField val folderId: String? = null,
-  @JvmField val name: String? = null,
-  @JvmField val key: String? = null,
-  @JvmField val value: String? = null,
-  @JvmField val includeDone: Boolean? = null,
-  @JvmField val metadata: Map<String, String>? = null,
+  @JvmField val argumentsJson: String? = null,
 )
 
 internal data class PiControlThreadPayload(
@@ -185,7 +175,7 @@ private fun readControlPayload(parser: JsonParser): PiControlPayload {
   var thread: PiControlThreadPayload? = null
   var capabilities: PiControlCapabilities? = null
   var operation: String? = null
-  var arguments: PiControlRequestArguments? = null
+  var argumentsJson: String? = null
   forEachJsonObjectField(parser) { fieldName ->
     when (fieldName) {
       "type" -> {
@@ -203,7 +193,7 @@ private fun readControlPayload(parser: JsonParser): PiControlPayload {
       "thread" -> thread = readControlThreadPayload(parser)
       "capabilities" -> capabilities = readControlCapabilities(parser)
       "operation" -> operation = readJsonStringOrNull(parser)
-      "arguments" -> arguments = readControlRequestArguments(parser)
+      "arguments" -> argumentsJson = readRawJsonValueOrNull(parser)
       else -> parser.skipChildren()
     }
     true
@@ -221,40 +211,7 @@ private fun readControlPayload(parser: JsonParser): PiControlPayload {
     thread = thread,
     capabilities = capabilities,
     operation = operation,
-    arguments = arguments,
-  )
-}
-
-private fun readControlRequestArguments(parser: JsonParser): PiControlRequestArguments? {
-  if (parser.currentToken() != JsonToken.START_OBJECT) {
-    parser.skipChildren()
-    return null
-  }
-  var folderId: String? = null
-  var name: String? = null
-  var key: String? = null
-  var value: String? = null
-  var includeDone: Boolean? = null
-  var metadata: Map<String, String>? = null
-  forEachJsonObjectField(parser) { fieldName ->
-    when (fieldName) {
-      "folderId" -> folderId = readJsonStringOrNull(parser)
-      "name" -> name = readJsonStringOrNull(parser)
-      "key" -> key = readJsonStringOrNull(parser)
-      "value" -> value = readJsonStringOrNull(parser)
-      "includeDone" -> includeDone = readJsonBooleanOrNull(parser)
-      "metadata" -> metadata = readControlStringMap(parser)
-      else -> parser.skipChildren()
-    }
-    true
-  }
-  return PiControlRequestArguments(
-    folderId = folderId,
-    name = name,
-    key = key,
-    value = value,
-    includeDone = includeDone,
-    metadata = metadata,
+    argumentsJson = argumentsJson,
   )
 }
 
@@ -298,20 +255,15 @@ private fun readControlCapabilities(parser: JsonParser): PiControlCapabilities? 
   return PiControlCapabilities(navigateTree = navigateTree, fork = fork)
 }
 
-private fun readControlStringMap(parser: JsonParser): Map<String, String>? {
-  if (parser.currentToken() != JsonToken.START_OBJECT) {
-    parser.skipChildren()
+private fun readRawJsonValueOrNull(parser: JsonParser): String? {
+  if (parser.currentToken() == JsonToken.VALUE_NULL) {
     return null
   }
-  val result = LinkedHashMap<String, String>()
-  forEachJsonObjectField(parser) { fieldName ->
-    when (parser.currentToken()) {
-      JsonToken.VALUE_STRING -> readJsonStringOrNull(parser)?.let { value -> result[fieldName] = value }
-      else -> parser.skipChildren()
-    }
-    true
+  val writer = StringWriter()
+  PI_CONTROL_JSON_FACTORY.createJsonGenerator(writer).use { generator ->
+    generator.copyCurrentStructure(parser)
   }
-  return result
+  return writer.toString()
 }
 
 @Suppress("DuplicatedCode")

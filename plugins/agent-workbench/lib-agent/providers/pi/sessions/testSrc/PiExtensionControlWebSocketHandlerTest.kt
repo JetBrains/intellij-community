@@ -5,8 +5,12 @@ import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.json.createJsonParser
 import com.intellij.platform.ai.agent.json.forEachJsonObjectField
 import com.intellij.platform.ai.agent.json.readJsonStringOrNull
+import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
+import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolderService
 import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolderStatus
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
@@ -197,6 +201,24 @@ class PiExtensionControlWebSocketHandlerTest {
       val folderService = service<AgentTaskFolderService>()
       val folder = requireNotNull(folderService.createFolder(projectDir.toString(), "Research", mapOf("issue" to "IJPL-248623")))
       assertThat(folderService.assignThread(projectDir.toString(), PI_AGENT_SESSION_PROVIDER, sessionId, folder.id)).isTrue()
+      val codexProvider = AgentSessionProvider.from("codex")
+      val codexThreadId = "codex-folder-admin"
+      service<AgentSessionsStateStore>().replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = requireNotNull(normalizePiProjectPath(projectDir.toString())),
+            name = "Project task folder",
+            isOpen = true,
+            threads = listOf(
+              controlThread(sessionId, "Current Pi thread", PI_AGENT_SESSION_PROVIDER, updatedAt = 1_000L),
+              controlThread(codexThreadId, "Codex loaded thread", codexProvider, updatedAt = 900L),
+              controlThread("new-pending", "Pending thread", codexProvider, updatedAt = 800L),
+              controlThread("archived-thread", "Archived thread", codexProvider, updatedAt = 700L, archived = true),
+            ),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
       val launchEnvironment = createControlLaunchEnvironment(sessionId)
       val listener = PiControlTestWebSocketListener()
       val webSocket = connectControlSocket(launchEnvironment, listener)
@@ -229,6 +251,59 @@ class PiExtensionControlWebSocketHandlerTest {
         assertThat(listResponse).contains("\"threadId\":${sessionId.jsonString()}")
         assertThat(listResponse).contains("\"folderId\":${folder.id.jsonString()}")
 
+        webSocket.sendText(controlTaskFolderRequest("request-project-threads", "listProjectThreads"), true).join()
+        val projectThreadsResponse = listener.nextMessage()
+        assertThat(projectThreadsResponse).contains("\"threadId\":${sessionId.jsonString()}")
+        assertThat(projectThreadsResponse).contains("\"threadId\":${codexThreadId.jsonString()}")
+        assertThat(projectThreadsResponse).contains("\"title\":\"Codex loaded thread\"")
+        assertThat(projectThreadsResponse).doesNotContain("new-pending", "archived-thread")
+
+        webSocket.sendText(
+          controlTaskFolderRequest(
+            requestId = "request-move-thread",
+            operation = "moveThreadToFolder",
+            folderId = folder.id,
+            provider = codexProvider.value,
+            threadId = codexThreadId,
+          ),
+          true,
+        ).join()
+        val moveThreadResponse = listener.nextMessage()
+        assertThat(moveThreadResponse).contains("\"changed\":true")
+        assertThat(moveThreadResponse).contains("\"provider\":\"codex\"")
+        assertThat(moveThreadResponse).contains("\"threadId\":${codexThreadId.jsonString()}")
+        assertThat(moveThreadResponse).contains("\"folderId\":${folder.id.jsonString()}")
+        assertThat(folderService.getFolderForThread(projectDir.toString(), codexProvider, codexThreadId)?.id).isEqualTo(folder.id)
+
+        webSocket.sendText(
+          controlTaskFolderRequest(
+            requestId = "request-remove-thread",
+            operation = "removeThreadFromFolder",
+            provider = codexProvider.value,
+            threadId = codexThreadId,
+          ),
+          true,
+        ).join()
+        val removeThreadResponse = listener.nextMessage()
+        assertThat(removeThreadResponse).contains("\"changed\":true")
+        assertThat(removeThreadResponse).contains("\"threadId\":${codexThreadId.jsonString()}")
+        assertThat(folderService.getFolderForThread(projectDir.toString(), codexProvider, codexThreadId)).isNull()
+
+        webSocket.sendText(
+          controlTaskFolderRequest(
+            requestId = "request-cross-thread-path",
+            operation = "moveThreadToFolder",
+            folderId = folder.id,
+            path = tempDir.resolve("other-task-folder-project").toString(),
+            provider = codexProvider.value,
+            threadId = codexThreadId,
+          ),
+          true,
+        ).join()
+        val crossThreadPathResponse = listener.nextMessage()
+        assertThat(crossThreadPathResponse).contains("\"ok\":false")
+        assertThat(crossThreadPathResponse).contains("Thread path must match the current project")
+
         webSocket.sendText(
           controlTaskFolderRequest("request-set", "setMetadata", folderId = folder.id, key = "review", value = "backend"),
           true,
@@ -254,6 +329,20 @@ class PiExtensionControlWebSocketHandlerTest {
         ).join()
         val duplicateCreateResponse = listener.nextMessage()
         assertThat(duplicateCreateResponse).contains("\"created\":false")
+        assertThat(folderService.getFolderForThread(projectDir.toString(), PI_AGENT_SESSION_PROVIDER, sessionId)?.id).isEqualTo(folder.id)
+
+        webSocket.sendText(
+          controlTaskFolderRequest(
+            requestId = "request-create-unassigned",
+            operation = "createAndAssign",
+            name = "Unassigned folder",
+            assignCurrentThread = false,
+          ),
+          true,
+        ).join()
+        val unassignedCreateResponse = listener.nextMessage()
+        assertThat(unassignedCreateResponse).contains("\"created\":true")
+        assertThat(unassignedCreateResponse).contains("\"assigned\":false")
         assertThat(folderService.getFolderForThread(projectDir.toString(), PI_AGENT_SESSION_PROVIDER, sessionId)?.id).isEqualTo(folder.id)
 
         webSocket.sendText(controlTaskFolderRequest("request-unassign", "unassignCurrentThread"), true).join()
@@ -496,6 +585,10 @@ private fun controlTaskFolderRequest(
   value: String? = null,
   includeDone: Boolean? = null,
   metadata: Map<String, String>? = null,
+  assignCurrentThread: Boolean? = null,
+  path: String? = null,
+  provider: String? = null,
+  threadId: String? = null,
 ): String {
   val arguments = mutableListOf<String>()
   folderId?.let { arguments += "\"folderId\":${it.jsonString()}" }
@@ -503,6 +596,10 @@ private fun controlTaskFolderRequest(
   key?.let { arguments += "\"key\":${it.jsonString()}" }
   value?.let { arguments += "\"value\":${it.jsonString()}" }
   includeDone?.let { arguments += "\"includeDone\":$it" }
+  assignCurrentThread?.let { arguments += "\"assignCurrentThread\":$it" }
+  path?.let { arguments += "\"path\":${it.jsonString()}" }
+  provider?.let { arguments += "\"provider\":${it.jsonString()}" }
+  threadId?.let { arguments += "\"threadId\":${it.jsonString()}" }
   metadata?.let { values ->
     val metadataFields = values.entries.joinToString(",") { (metadataKey, metadataValue) ->
       "${metadataKey.jsonString()}:${metadataValue.jsonString()}"
@@ -516,6 +613,22 @@ private fun controlTaskFolderRequest(
     "\"arguments\":{${arguments.joinToString(",")}}",
   )
   return "{${fields.joinToString(",")}}"
+}
+
+private fun controlThread(
+  id: String,
+  title: String,
+  provider: AgentSessionProvider,
+  updatedAt: Long,
+  archived: Boolean = false,
+): AgentSessionThread {
+  return AgentSessionThread(
+    id = id,
+    title = title,
+    updatedAt = updatedAt,
+    archived = archived,
+    provider = provider,
+  )
 }
 
 private fun String.readRequestId(): String {
