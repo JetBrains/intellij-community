@@ -48,7 +48,7 @@ object LspDidChangeUtil {
   }
 
   @RequiresReadLock
-  internal fun createFullDidChangeParams(
+  fun createFullDidChangeParams(
     lspClient: LspClient,
     document: Document,
     virtualFile: VirtualFile,
