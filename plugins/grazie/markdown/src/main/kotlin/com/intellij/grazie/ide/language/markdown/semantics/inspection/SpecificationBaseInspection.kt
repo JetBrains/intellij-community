@@ -12,7 +12,7 @@ import com.intellij.grazie.cloud.GrazieCloudConnector
 import com.intellij.grazie.cloud.GrazieCloudConnector.Companion.hasQuota
 import com.intellij.grazie.cloud.GrazieCloudConnector.Companion.seemsCloudConnected
 import com.intellij.grazie.ide.language.markdown.semantics.analyzer.SpecificationAnalyzer
-import com.intellij.grazie.ide.language.markdown.semantics.inspection.quickfix.ReplacementQuickFix
+import com.intellij.grazie.ide.language.markdown.semantics.inspection.quickfix.SpecificationReplacementQuickFix
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
@@ -21,12 +21,13 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.jetbrains.annotations.ApiStatus
+import java.util.UUID
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
 abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
 
-  open fun reportProblem(holder: ProblemsHolder, file: PsiFile, issue: LlmIssue<T>) {
+  private fun reportProblem(holder: ProblemsHolder, file: PsiFile, id: UUID, issue: LlmIssue<T>) {
     if (issue.startOffset() == -1 && issue.endOffset() == -1) {
       thisLogger().warn("No occurrences found by ${javaClass.name} in text")
       return
@@ -35,7 +36,11 @@ abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
     val range = TextRange(issue.startOffset(), issue.endOffset())
     val underline = SmartPointerManager.getInstance(file.project).createSmartPsiFileRangePointer(file, range)
     val replacements = issue.replacements
-    val fixes = if (replacements.isNotEmpty()) ReplacementQuickFix(underline, replacements).getAllAsFixes().toTypedArray() else emptyArray()
+    val fixes = if (replacements.isNotEmpty()) {
+      SpecificationReplacementQuickFix(id, underline, replacements).getAllAsFixes().toTypedArray()
+    } else {
+      emptyArray()
+    }
     val descriptor = ProblemDescriptorBase(
       file, file, issue.message, fixes,
       ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
@@ -64,8 +69,8 @@ abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
           return
         }
         val analyzer = getAnalyzer(file) ?: return
-        SpecificationAnalyzer.analyze(analyzer, file, client)
-          .forEach { problem -> reportProblem(holder, file, problem) }
+        val (id, issues) = SpecificationAnalyzer.analyze(analyzer, file, client)
+        issues.forEach { reportProblem(holder, file, id, it) }
       }
     }
   }
