@@ -4,7 +4,6 @@ package com.intellij.agent.workbench.chat
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.extensions.SnapshotExtensionPointCache
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
-import com.intellij.platform.ai.agent.common.session.isClaudeMenuCommandPrompt
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
@@ -168,9 +167,3 @@ interface AgentChatProviderBehavior {
 }
 
 private object DefaultAgentChatProviderBehavior : AgentChatProviderBehavior
-
-internal class ClaudeAgentChatProviderBehavior : AgentChatProviderBehavior {
-  override fun shouldUseBracketedPasteMode(text: String): Boolean {
-    return !text.isClaudeMenuCommandPrompt()
-  }
-}

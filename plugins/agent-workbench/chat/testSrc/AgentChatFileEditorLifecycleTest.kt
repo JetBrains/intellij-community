@@ -7,7 +7,6 @@ import com.intellij.platform.ai.agent.core.buildAgentThreadIdentity
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
-import com.intellij.platform.ai.agent.common.session.isClaudeMenuCommandPrompt
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadRebindPolicy
@@ -22,6 +21,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessag
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryChannel
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryStatus
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptRecord
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionMenuCommand
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionArchivedSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
@@ -2227,7 +2227,7 @@ private fun testEditor(
   pendingScopedRefreshRetryIntervalMs: Long = AgentSessionThreadRebindPolicy.PENDING_THREAD_REFRESH_RETRY_INTERVAL_MS,
   editorCoroutineScope: CoroutineScope? = unconfinedTestScope(),
   showComponent: Boolean = true,
-  providerDescriptorResolver: (AgentSessionProvider) -> AgentSessionProviderDescriptor? = { null },
+  providerDescriptorResolver: (AgentSessionProvider) -> AgentSessionProviderDescriptor? = ::testAgentSessionProviderDescriptor,
   customContentProviderResolver: (AgentChatContentContext) -> AgentChatCustomContentProvider? = { null },
   behaviorResolver: (AgentSessionProvider?) -> AgentChatProviderBehavior = ::testAgentChatProviderBehavior,
 ): AgentChatFileEditor {
@@ -2254,19 +2254,12 @@ private fun testEditor(
 private fun testAgentChatProviderBehavior(provider: AgentSessionProvider?): AgentChatProviderBehavior {
   return when (provider) {
     AgentSessionProvider.from("codex") -> TestCodexAgentChatProviderBehavior
-    AgentSessionProvider.from("claude") -> TestClaudeAgentChatProviderBehavior
     AgentSessionProvider.from("junie") -> TestJunieAgentChatProviderBehavior
     else -> TestDefaultAgentChatProviderBehavior
   }
 }
 
 private object TestDefaultAgentChatProviderBehavior : AgentChatProviderBehavior
-
-private object TestClaudeAgentChatProviderBehavior : AgentChatProviderBehavior {
-  override fun shouldUseBracketedPasteMode(text: String): Boolean {
-    return !text.isClaudeMenuCommandPrompt()
-  }
-}
 
 private object TestJunieAgentChatProviderBehavior : AgentChatProviderBehavior {
   override suspend fun beforeInitialMessageSend(
@@ -2454,6 +2447,38 @@ private data class ClosedTerminalSession(
   @JvmField val path: String,
   @JvmField val threadId: String,
 )
+
+private fun testAgentSessionProviderDescriptor(provider: AgentSessionProvider): AgentSessionProviderDescriptor? {
+  return when (provider) {
+    AgentSessionProvider.from("claude") -> TestClaudeAgentSessionProviderDescriptor
+    else -> null
+  }
+}
+
+private object TestClaudeAgentSessionProviderDescriptor : AgentSessionProviderDescriptor {
+  override val provider: AgentSessionProvider = AgentSessionProvider.from("claude")
+  override val displayNameKey: String = "provider.claude"
+  override val newSessionLabelKey: String = displayNameKey
+  override val icon: Icon = EmptyIcon.ICON_0
+  override val sessionSource: AgentSessionSource
+    get() = error("Not required for this test")
+  override val cliMissingMessageKey: String = displayNameKey
+  override val menuCommands: List<AgentSessionMenuCommand> = listOf(AgentSessionMenuCommand("/mcp"))
+
+  override suspend fun isCliAvailable(): Boolean = true
+
+  override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
+    return AgentSessionTerminalLaunchSpec(command = emptyList())
+  }
+
+  override suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
+    return AgentSessionTerminalLaunchSpec(command = emptyList())
+  }
+
+  override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {
+    return AgentInitialMessagePlan.EMPTY
+  }
+}
 
 private class ArchivedThreadsProviderDescriptor(
   override val provider: AgentSessionProvider,

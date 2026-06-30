@@ -14,6 +14,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessag
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryChannel
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryStatus
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptRecord
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionMenuCommand
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
@@ -45,6 +46,25 @@ import kotlin.time.Duration.Companion.milliseconds
 @TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentChatInitialMessageDispatcherTest {
+  @Test
+  fun menuCommandInitialMessageUsesTypedInputInsteadOfBracketedPaste(): Unit = timeoutRunBlocking {
+    val provider = AgentSessionProvider.from("codex")
+    val file = createFile(
+      steps = listOf(AgentInitialMessageDispatchStep(text = "/mcp")),
+      provider = provider,
+    )
+    val tab = FakeTerminalTab(coroutineScope = this)
+    val descriptor = RecordingProviderDispatchDescriptor(
+      menuCommands = listOf(AgentSessionMenuCommand("/mcp")),
+    )
+
+    createDispatcher(file, provider = provider, descriptor = descriptor).schedule(tab)
+
+    waitForCondition { file.initialMessageSent }
+    assertThat(tab.sentInitialMessageTexts)
+      .containsExactly(SentInitialMessageText("/mcp", shouldExecute = true, useBracketedPasteMode = false))
+  }
+
   @Test
   fun preSendRetriesDoNotConsumePostSendConfirmationBudget(): Unit = timeoutRunBlocking {
     val behavior = DelayedObservedDispatchBehavior(preSendRetryCount = 6)
@@ -438,6 +458,7 @@ private class FakeTerminalTab(
   override val keyEventsFlow: Flow<TerminalKeyEvent> = emptyFlow()
   override val terminalView: TerminalView? = null
   val events: MutableList<String> = mutableListOf()
+  val sentInitialMessageTexts: MutableList<SentInitialMessageText> = mutableListOf()
   private val observations = ArrayDeque(outputObservations)
 
   override suspend fun captureOutputCheckpoint(): AgentChatTerminalOutputCheckpoint {
@@ -482,11 +503,20 @@ private class FakeTerminalTab(
     shouldExecute: Boolean,
     useBracketedPasteMode: Boolean,
   ) {
+    sentInitialMessageTexts += SentInitialMessageText(text, shouldExecute, useBracketedPasteMode)
     sendText(text, shouldExecute, useBracketedPasteMode)
   }
 }
 
-private class RecordingProviderDispatchDescriptor : AgentSessionProviderDescriptor {
+private data class SentInitialMessageText(
+  @JvmField val text: String,
+  @JvmField val shouldExecute: Boolean,
+  @JvmField val useBracketedPasteMode: Boolean,
+)
+
+private class RecordingProviderDispatchDescriptor(
+  override val menuCommands: List<AgentSessionMenuCommand> = emptyList(),
+) : AgentSessionProviderDescriptor {
   override val provider: AgentSessionProvider = AgentSessionProvider.from("codex")
   override val displayNameKey: String = "test.provider.codex"
   override val newSessionLabelKey: String = "test.new.codex"

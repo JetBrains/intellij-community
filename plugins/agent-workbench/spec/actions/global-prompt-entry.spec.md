@@ -70,7 +70,7 @@ The global prompt opens a project-scoped prompt surface for starting a new task 
   [@test] ../../prompt/ui/testSrc/AgentPromptFooterHintDecisionsTest.kt
 
 - Claude slash completion is available only for Claude provider prompts and only for explicit slash-token completion; it merges built-in Claude menu commands with project `.claude/commands` and `.claude/skills` definitions.
-  [@test] ../../prompt/ui/testSrc/AgentPromptClaudeSlashCompletionProviderTest.kt
+  [@test] ../../prompt/ui/testSrc/AgentPromptCommandCompletionProviderTest.kt
 
 - New-task provider, mode, and generation defaults restore through launch profiles. Prompt drafts may persist provider options and container mode, but they must not persist a separate provider id default.
   [@test] ../../prompt/ui/testSrc/AgentPromptLaunchProfileStateTest.kt

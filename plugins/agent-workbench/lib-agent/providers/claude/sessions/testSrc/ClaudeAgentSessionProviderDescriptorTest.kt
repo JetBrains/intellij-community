@@ -16,6 +16,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessag
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageTimeoutPolicy
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPromptCommandCompletionKind
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.junit5.TestApplication
@@ -25,6 +26,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import java.util.UUID
@@ -572,6 +574,133 @@ class ClaudeAgentSessionProviderDescriptorTest {
       assertThat(renamedPath).isEqualTo("/tmp/project")
       assertThat(renamedThreadId).isEqualTo("session-1")
       assertThat(renamedNewTitle).isEqualTo("Renamed thread")
+    }
+  }
+
+  @Test
+  fun builtInMenuCommandsRecognizeRenamePrompt() {
+    assertThat(bridge.menuCommands.map { command -> command.command }).contains("/rename")
+    assertThat(bridge.isMenuCommandPrompt("/rename Archived thread")).isTrue()
+    assertThat(bridge.isMenuCommandPrompt("/review changes")).isFalse()
+  }
+
+  @Test
+  fun includesBuiltInClaudeMenuCompletionEntries() {
+    val entries = bridge.collectPromptCommandCompletionEntries(emptyList<String>())
+
+    assertThat(entries.filter { entry -> entry.kind == AgentSessionPromptCommandCompletionKind.MENU }.map { entry -> entry.command })
+      .contains("/mcp", "/memory", "/model")
+    assertThat(entries.single { entry -> entry.command == "/compact" }.argumentHint).isEqualTo("[instructions]")
+    assertThat(entries.single { entry -> entry.command == "/model" }.argumentHint).isEqualTo("[model]")
+    assertThat(entries.single { entry -> entry.command == "/resume" }.argumentHint).isEqualTo("[session]")
+  }
+
+  @Test
+  fun collectsEntriesFromClaudeAncestorChain() {
+    val workspaceRoot = tempDir.resolve("workspace")
+    val projectPath = workspaceRoot.resolve("project")
+    Files.createDirectories(projectPath)
+    writeCommand(tempDir, "repair")
+    writeSkill(workspaceRoot, "safe-push")
+
+    assertThat(collectLocallySourcedNonMenuCommands(projectPath))
+      .containsExactly("/repair", "/safe-push")
+  }
+
+  @Test
+  fun nearerAncestorOverridesSameKindEntries() {
+    val workspaceRoot = tempDir.resolve("workspace")
+    val projectPath = workspaceRoot.resolve("project")
+    Files.createDirectories(projectPath)
+    val parentCommand = writeCommand(tempDir, "review")
+    val nearerCommand = writeCommand(workspaceRoot, "review")
+
+    val entries = bridge.collectPromptCommandCompletionEntries(listOf(projectPath.toString()))
+      .filter { entry -> entry.kind == AgentSessionPromptCommandCompletionKind.COMMAND && entry.command == "/review" }
+    val entry = entries.single()
+
+    assertThat(entry.command).isEqualTo("/review")
+    assertThat(entry.kind).isEqualTo(AgentSessionPromptCommandCompletionKind.COMMAND)
+    assertThat(entry.sourcePath).isEqualTo(nearerCommand)
+    assertThat(entry.sourcePath).isNotEqualTo(parentCommand)
+  }
+
+  @Test
+  fun sameNameCommandAndSkillAreBothReturnedWithCommandFirst() {
+    val projectPath = tempDir.resolve("project")
+    Files.createDirectories(projectPath)
+    writeCommand(tempDir, "review")
+    writeSkill(tempDir, "review")
+
+    val entries = bridge.collectPromptCommandCompletionEntries(listOf(projectPath.toString())).filter { entry -> entry.command == "/review" }
+
+    assertThat(entries.map { entry -> entry.kind })
+      .containsExactly(AgentSessionPromptCommandCompletionKind.COMMAND, AgentSessionPromptCommandCompletionKind.SKILL)
+  }
+
+  @Test
+  fun collectsArgumentHintsFromCommandAndSkillFrontmatter() {
+    val projectPath = tempDir.resolve("project")
+    Files.createDirectories(projectPath)
+    writeCommand(tempDir, "review", argumentHint = "[PR number]")
+    writeSkill(tempDir, "safe-push", argumentHint = "[focus]")
+
+    val entriesByCommand = bridge.collectPromptCommandCompletionEntries(listOf(projectPath.toString())).associateBy { entry -> entry.command }
+
+    assertThat(entriesByCommand["/review"]?.argumentHint).isEqualTo("[PR number]")
+    assertThat(entriesByCommand["/safe-push"]?.argumentHint).isEqualTo("[focus]")
+  }
+
+  @Test
+  fun onlyImmediateClaudeLocationsAreRecognized() {
+    val projectPath = tempDir.resolve("project")
+    Files.createDirectories(projectPath)
+    writeCommand(tempDir, "review")
+    Files.createDirectories(tempDir.resolve(".claude").resolve("commands").resolve("nested"))
+    Files.writeString(tempDir.resolve(".claude").resolve("commands").resolve("nested").resolve("ignored.md"), "# nested")
+    Files.createDirectories(tempDir.resolve(".claude").resolve("skills").resolve("safe-push").resolve("nested"))
+    Files.writeString(
+      tempDir.resolve(".claude").resolve("skills").resolve("safe-push").resolve("nested").resolve("SKILL.md"),
+      "# nested",
+    )
+
+    assertThat(collectLocallySourcedNonMenuCommands(projectPath))
+      .containsExactly("/review")
+  }
+
+  private fun collectLocallySourcedNonMenuCommands(projectPath: Path): List<String> {
+    val testRoot = tempDir.toAbsolutePath().normalize()
+    return bridge.collectPromptCommandCompletionEntries(listOf(projectPath.toString()))
+      .asSequence()
+      .filter { entry -> entry.kind != AgentSessionPromptCommandCompletionKind.MENU }
+      .filter { entry -> entry.sourcePath?.toAbsolutePath()?.normalize()?.startsWith(testRoot) == true }
+      .map { entry -> entry.command }
+      .toList()
+  }
+
+  private fun writeCommand(root: Path, name: String, argumentHint: String? = null): Path {
+    val commandFile = root.resolve(".claude").resolve("commands").resolve("$name.md")
+    Files.createDirectories(commandFile.parent)
+    Files.writeString(commandFile, buildSlashCompletionContent(name, argumentHint))
+    return commandFile
+  }
+
+  private fun writeSkill(root: Path, name: String, argumentHint: String? = null): Path {
+    val skillFile = root.resolve(".claude").resolve("skills").resolve(name).resolve("SKILL.md")
+    Files.createDirectories(skillFile.parent)
+    Files.writeString(skillFile, buildSlashCompletionContent(name, argumentHint))
+    return skillFile
+  }
+
+  private fun buildSlashCompletionContent(name: String, argumentHint: String?): String {
+    return buildString {
+      if (!argumentHint.isNullOrBlank()) {
+        appendLine("---")
+        appendLine("argument-hint: $argumentHint")
+        appendLine("---")
+        appendLine()
+      }
+      append("# $name")
     }
   }
 }

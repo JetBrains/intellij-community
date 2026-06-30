@@ -6,7 +6,7 @@ targets:
   - ../../prompt/core/src/AgentPromptLauncherBridge.kt
   - ../../prompt/ui/src/AgentPromptLibraryModel.kt
   - ../../prompt/ui/src/AgentPromptPaletteSessionController.kt
-  - ../../prompt/ui/src/AgentPromptClaudeSlashCompletionProvider.kt
+  - ../../prompt/ui/src/AgentPromptCommandCompletionProvider.kt
   - ../../prompt/ui/src/AgentPromptReusableSourceCollector.kt
   - ../../prompt/ui/src/AgentPromptUiSessionStateService.kt
   - ../../prompt/ui/testSrc/AgentPrompt*Test.kt
@@ -52,13 +52,13 @@ The global prompt popup lets users reuse saved prompts, recent submitted prompts
   [@test] ../../prompt/ui/testSrc/AgentPromptReusableSourceCollectorTest.kt
 
 - Claude command completion must reuse existing slash-completion discovery for built-in menu commands, project commands, and skills. Accepted Claude entries insert their slash invocation text.
-  [@test] ../../prompt/ui/testSrc/AgentPromptClaudeSlashCompletionProviderTest.kt
+  [@test] ../../prompt/ui/testSrc/AgentPromptCommandCompletionProviderTest.kt
 
 - Provider-specific completion entries must flow through `AgentPromptLauncherBridge` and `AgentSessionProviderDescriptor` so prompt UI does not call provider session internals directly.
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
 - Codex skill completion entries must come from the app-server `skills/list` method through `AgentPromptLauncherBridge`, include only enabled skills, and insert `$skillName ` for accepted entries.
-  [@test] ../../prompt/ui/testSrc/AgentPromptClaudeSlashCompletionProviderTest.kt
+  [@test] ../../prompt/ui/testSrc/AgentPromptCommandCompletionProviderTest.kt
   [@test] ../../lib-agent/providers/codex/common/testSrc/CodexAppServerProtocolTest.kt
 
 ## User Experience

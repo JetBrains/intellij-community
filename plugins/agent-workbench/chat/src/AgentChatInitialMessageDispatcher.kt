@@ -328,7 +328,7 @@ internal class AgentChatInitialMessageDispatcher(
           tab.sendInitialMessageText(
             dispatch.message,
             shouldExecute = true,
-            useBracketedPasteMode = behavior.shouldUseBracketedPasteMode(dispatch.message),
+            useBracketedPasteMode = behavior.shouldUseBracketedPasteMode(dispatch.message) && descriptor?.isMenuCommandPrompt(dispatch.message) != true,
           )
           true
         }

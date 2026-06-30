@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.ui
 
-import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupManager
@@ -11,22 +11,28 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPromptCommandCompletionEntry
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPromptCommandCompletionKind
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBTabbedPane
+import com.intellij.util.ui.EmptyIcon
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
-import org.junit.jupiter.api.io.TempDir
 import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
-import java.nio.file.Files
-import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.KeyStroke
@@ -52,19 +58,21 @@ class AgentPromptEnterHandlersTest {
   }
 
   @Test
-  fun enterChoosesActiveLookupItemInsteadOfSubmitting(@TempDir tempDir: Path) {
+  fun enterChoosesActiveLookupItemInsteadOfSubmitting() {
     runInEdtAndWait {
-      val projectPath = tempDir.resolve("project")
-      Files.createDirectories(projectPath)
-      writeCommand(projectPath, "review")
-      writeCommand(projectPath, "safe-push")
-
       val project = ProjectManager.getInstance().defaultProject
       val promptArea = AgentPromptTextField(
         project,
-        AgentPromptClaudeSlashCompletionProvider(
-          selectedProvider = { AgentSessionProvider.from("claude") },
-          resolveWorkingProjectPaths = { listOf(projectPath.toString()) },
+        AgentPromptCommandCompletionProvider(
+          selectedProvider = {
+            testProviderDescriptor(
+              listOf(
+                promptCommandEntry("/review"),
+                promptCommandEntry("/safe-push"),
+              ),
+            )
+          },
+          resolveWorkingProjectPaths = { emptyList() },
         ),
       )
       var submitCalls = 0
@@ -161,19 +169,21 @@ class AgentPromptEnterHandlersTest {
   }
 
   @Test
-  fun tabChoosesActiveLookupItemInsteadOfPromptTabAction(@TempDir tempDir: Path) {
+  fun tabChoosesActiveLookupItemInsteadOfPromptTabAction() {
     runInEdtAndWait {
-      val projectPath = tempDir.resolve("project")
-      Files.createDirectories(projectPath)
-      writeCommand(projectPath, "review")
-      writeCommand(projectPath, "safe-push")
-
       val project = ProjectManager.getInstance().defaultProject
       val promptArea = AgentPromptTextField(
         project,
-        AgentPromptClaudeSlashCompletionProvider(
-          selectedProvider = { AgentSessionProvider.from("claude") },
-          resolveWorkingProjectPaths = { listOf(projectPath.toString()) },
+        AgentPromptCommandCompletionProvider(
+          selectedProvider = {
+            testProviderDescriptor(
+              listOf(
+                promptCommandEntry("/review"),
+                promptCommandEntry("/safe-push"),
+              ),
+            )
+          },
+          resolveWorkingProjectPaths = { emptyList() },
         ),
       )
       var submitCalls = 0
@@ -385,10 +395,41 @@ class AgentPromptEnterHandlersTest {
     assertThat(LookupManager.getActiveLookup(editor)).isNotNull
   }
 
-  private fun writeCommand(root: Path, name: String): Path {
-    val commandFile = root.resolve(".claude").resolve("commands").resolve("$name.md")
-    Files.createDirectories(commandFile.parent)
-    Files.writeString(commandFile, "# $name")
-    return commandFile
+  private fun testProviderDescriptor(commandEntries: List<AgentSessionPromptCommandCompletionEntry>): AgentSessionProviderDescriptor {
+    return object : AgentSessionProviderDescriptor {
+      override val provider: AgentSessionProvider = AgentSessionProvider.from("claude")
+      override val displayNameKey: String = "provider.claude"
+      override val newSessionLabelKey: String = displayNameKey
+      override val sessionSource: AgentSessionSource
+        get() = error("Not required for this test")
+      override val cliMissingMessageKey: String = displayNameKey
+      override val icon = EmptyIcon.ICON_16
+
+      override suspend fun isCliAvailable(): Boolean = true
+
+      override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
+        return AgentSessionTerminalLaunchSpec(command = emptyList())
+      }
+
+      override suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
+        return AgentSessionTerminalLaunchSpec(command = emptyList())
+      }
+
+      override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {
+        return AgentInitialMessagePlan.EMPTY
+      }
+
+      override fun collectPromptCommandCompletionEntries(projectPaths: Iterable<String?>): List<AgentSessionPromptCommandCompletionEntry> {
+        return commandEntries
+      }
+    }
+  }
+
+  private fun promptCommandEntry(command: String): AgentSessionPromptCommandCompletionEntry {
+    return AgentSessionPromptCommandCompletionEntry(
+      command = command,
+      kind = AgentSessionPromptCommandCompletionKind.COMMAND,
+      sourceKey = "test:$command",
+    )
   }
 }
