@@ -23,7 +23,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.findModule
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct
 import org.jetbrains.idea.devkit.run.ProductInfo
-import org.jetbrains.idea.devkit.gradle.tooling.IntelliJPlatformSourceCoordinates
+import com.intellij.devkit.gradle.tooling.IntelliJPlatformSourceCoordinates
 import org.jetbrains.idea.devkit.run.loadProductInfo
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.service.project.GradleNotification
