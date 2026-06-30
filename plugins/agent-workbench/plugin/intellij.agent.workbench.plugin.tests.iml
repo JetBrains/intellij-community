@@ -94,6 +94,7 @@
     <orderEntry type="module" module-name="intellij.platform.ai.agent.codex.common.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.launch.config.backend.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.task.folders.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.engine.tests" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.agent.workbench.plugin" />
 </module>

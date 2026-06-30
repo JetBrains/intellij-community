@@ -274,6 +274,8 @@ jvm_library(
         "//plugins/agent-workbench/sessions-launch-config/backend:agent-workbench-sessions-launch-config-backend-tests_test_lib",
         "//plugins/agent-workbench/sessions-task-folders:agent-workbench-sessions-task-folders-tests",
         "//plugins/agent-workbench/sessions-task-folders:agent-workbench-sessions-task-folders-tests_test_lib",
+        "//plugins/agent-workbench/engine:agent-workbench-engine-tests",
+        "//plugins/agent-workbench/engine:agent-workbench-engine-tests_test_lib",
     ],
 )
 ### auto-generated section `build intellij.agent.workbench.plugin.tests` end
