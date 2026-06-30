@@ -4,8 +4,8 @@
 context(s: String, l: Long) fun bar() {}
 
 fun foo(i: Int) {
-    context("a", TODO("Provide Long") as Long) {
-        <caret>bar()
+    context("a", TODO("Provide Long") as Long<caret>) {
+        bar()
     }
 }
 
