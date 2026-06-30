@@ -209,6 +209,8 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
    * Setting [LANGUAGE_LEVEL], [SINCE_VERSION] and [JDK_HOME] is required.
    */
   private fun doCollectSinceApiUsages() {
+    println("Generating api${LANGUAGE_LEVEL.feature()}.txt:")
+    println()
     val previews = mutableSetOf<String>()
     val previewContentIterator = object : ContentIterator {
       override fun processFile(fileOrDir: VirtualFile): Boolean {
