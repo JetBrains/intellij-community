@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
-import com.intellij.ide.ApplicationActivity
+import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeBundle
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
@@ -21,13 +21,14 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 
 // TODO add trigger on dynamic plugin set change
-internal class PluginInitializationErrorReporterStartupActivity : ApplicationActivity {
-
+internal class PluginInitializationErrorStartupReporter : AppLifecycleListener {
   val handlers: List<PluginInitializationErrorHandler> by lazy { PluginInitializationErrorHandler.getInstances() }
 
-  override suspend fun execute() {
-    if (!IdeProductMode.isBackend) {
-      reportPluginErrors()
+  override fun appStarted() {
+    service<PluginManagerCoroutineScopeHolder>().coroutineScope.launch {
+      if (!IdeProductMode.isBackend) {
+        reportPluginErrors()
+      }
     }
   }
 
