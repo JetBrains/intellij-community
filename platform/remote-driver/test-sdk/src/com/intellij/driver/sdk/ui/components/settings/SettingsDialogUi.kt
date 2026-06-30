@@ -1,5 +1,6 @@
 package com.intellij.driver.sdk.ui.components.settings
 
+import com.intellij.driver.model.TreePathToRow
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.components.ComponentData
@@ -28,7 +29,7 @@ private fun Finder.onSettingsDialog(
   x(SettingsDialogUiComponent::class.java, locator).apply(action)
 
 open class SettingsDialogUiComponent(data: ComponentData) : DialogUiComponent(data) {
-  open val settingsTree: JTreeUiComponent = accessibleTree { byAccessibleName("Settings categories") }
+  open val settingsTree: JTreeUiComponent = accessibleTree(SettingsTreeUiComponent::class.java) { byAccessibleName("Settings categories") }
   val searchTextField = textField { and(byType(JTextField::class.java), byAccessibleName("Search")) }
   val applyButton = button("Apply")
 
@@ -39,4 +40,14 @@ open class SettingsDialogUiComponent(data: ComponentData) : DialogUiComponent(da
 
   fun content(action: UiComponent.() -> Unit = {}): UiComponent =
     x { byType("com.intellij.openapi.options.ex.ConfigurableCardPanel") }.apply(action)
+
+  protected class SettingsTreeUiComponent(data: ComponentData): JTreeUiComponent(data) {
+    override fun collectExpandedPaths(): List<TreePathToRow> {
+      return super.collectExpandedPaths().map {
+        it.apply {
+          path = path.map { rowValue -> rowValue.substringBeforeLast(" New") } // remove "New" badge
+        }
+      }
+    }
+  }
 }
