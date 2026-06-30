@@ -69,7 +69,7 @@ Use `bun build/jps-module.mjs register <path-to-iml> --fix-iml-eof` for module r
 
 ## Tools
 
-Never use the `search-tools-instructions` skill; the search tools below replace it.
+Never use the `code-search` skill; the search tools below replace it.
 
 ### File operations (read / edit / write / list)
 
