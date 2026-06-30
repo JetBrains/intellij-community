@@ -1911,7 +1911,6 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  description="Capture all threads including sleeping and blocked (wall-clock mode)"/>
 
     <applicationActivity implementation="com.intellij.internal.DumpPluginDescriptorsOnAppStartTrigger"/>
-    <applicationActivity implementation="com.intellij.ide.plugins.PluginInitializationErrorReporterStartupActivity"/>
 
     <registryKey key="search.everywhere.footer.extended.info"
                  defaultValue="true"
@@ -2184,6 +2183,8 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
   <applicationListeners>
     <listener class="com.intellij.ide.plugins.DynamicPluginsFrameStateListener"
               topic="com.intellij.openapi.application.ApplicationActivationListener"/>
+    <listener class="com.intellij.ide.plugins.PluginInitializationErrorStartupReporter"
+              topic="com.intellij.ide.AppLifecycleListener"/>
     <listener class="com.intellij.openapi.updateSettings.impl.UpdateCheckerService$MyAppLifecycleListener"
               topic="com.intellij.ide.AppLifecycleListener"/>
     <listener class="com.intellij.openapi.updateSettings.impl.PluginAutoUpdateService$PluginAutoUpdateAppLifecycleListener"
