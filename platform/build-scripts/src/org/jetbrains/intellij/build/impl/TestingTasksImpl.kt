@@ -1606,4 +1606,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.platform.structuralSearch.tests",
   "intellij.platform.syntax.extensions.tests",
   "intellij.platform.syntax.i18n.tests",
+  "intellij.platform.syntax.psi.tests",
 )
