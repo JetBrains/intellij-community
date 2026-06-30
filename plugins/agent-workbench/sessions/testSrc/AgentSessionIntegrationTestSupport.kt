@@ -1,14 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-import com.intellij.agent.workbench.chat.AgentChatConcreteTabSnapshot
-import com.intellij.agent.workbench.chat.AgentChatOpenTabsRefreshSnapshot
-import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindReport
-import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindRequest
-import com.intellij.agent.workbench.chat.AgentChatPendingTabSnapshot
-import com.intellij.agent.workbench.chat.collectOpenConcreteAgentChatThreadIdentitiesByPath
-import com.intellij.agent.workbench.chat.collectOpenPendingAgentChatTabsByPath
-import com.intellij.agent.workbench.chat.rebindOpenPendingAgentChatTabs
+import com.intellij.agent.workbench.thread.view.AgentThreadViewConcreteTabSnapshot
+import com.intellij.agent.workbench.thread.view.AgentThreadViewOpenTabsRefreshSnapshot
+import com.intellij.agent.workbench.thread.view.AgentThreadViewPendingTabRebindReport
+import com.intellij.agent.workbench.thread.view.AgentThreadViewPendingTabRebindRequest
+import com.intellij.agent.workbench.thread.view.AgentThreadViewPendingTabSnapshot
+import com.intellij.agent.workbench.thread.view.collectOpenConcreteAgentThreadViewThreadIdentitiesByPath
+import com.intellij.agent.workbench.thread.view.collectOpenPendingAgentThreadViewTabsByPath
+import com.intellij.agent.workbench.thread.view.rebindOpenPendingAgentThreadViewTabs
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionCost
@@ -30,14 +30,14 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadActivityUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionUpdateSource
-import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
+import com.intellij.agent.workbench.sessions.frame.AgentThreadViewOpenModeSettings
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.model.WorktreeEntry
 import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveBackgroundTaskRunner
 import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveService
 import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveTransitionSuppressions
-import com.intellij.agent.workbench.sessions.service.AgentSessionChatOpenExecutor
+import com.intellij.agent.workbench.sessions.service.AgentSessionThreadViewOpenExecutor
 import com.intellij.agent.workbench.sessions.service.AgentSessionContentRepository
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchProfileResolverImpl
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
@@ -67,13 +67,13 @@ import kotlin.time.Duration.Companion.milliseconds
 internal const val PROJECT_PATH = "/work/project-a"
 internal const val WORKTREE_PATH = "/work/project-feature"
 
-internal fun buildOpenChatRefreshSnapshot(
+internal fun buildOpenThreadViewRefreshSnapshot(
   openProjectPaths: Set<String> = emptySet(),
-  selectedChatThreadIdentity: Pair<AgentSessionProvider, String>? = null,
-  pendingTabsByProvider: Map<AgentSessionProvider, Map<String, List<AgentChatPendingTabSnapshot>>> = emptyMap(),
-  concreteTabsAwaitingNewThreadRebindByProvider: Map<AgentSessionProvider, Map<String, List<AgentChatConcreteTabSnapshot>>> = emptyMap(),
+  selectedThreadViewThreadIdentity: Pair<AgentSessionProvider, String>? = null,
+  pendingTabsByProvider: Map<AgentSessionProvider, Map<String, List<AgentThreadViewPendingTabSnapshot>>> = emptyMap(),
+  concreteTabsAwaitingNewThreadRebindByProvider: Map<AgentSessionProvider, Map<String, List<AgentThreadViewConcreteTabSnapshot>>> = emptyMap(),
   concreteThreadIdentitiesByPath: Map<String, Set<String>> = emptyMap(),
-): AgentChatOpenTabsRefreshSnapshot {
+): AgentThreadViewOpenTabsRefreshSnapshot {
   val normalizedOpenProjectPaths = LinkedHashSet<String>()
   openProjectPaths.asSequence().map(::normalizeAgentWorkbenchPath).forEach(normalizedOpenProjectPaths::add)
 
@@ -100,9 +100,9 @@ internal fun buildOpenChatRefreshSnapshot(
     normalizedOpenProjectPaths.add(normalizedPath)
   }
 
-  return AgentChatOpenTabsRefreshSnapshot(
+  return AgentThreadViewOpenTabsRefreshSnapshot(
     openProjectPaths = normalizedOpenProjectPaths,
-    selectedChatThreadIdentity = selectedChatThreadIdentity,
+    selectedThreadViewThreadIdentity = selectedThreadViewThreadIdentity,
     pendingTabsByProvider = normalizedPendingTabsByProvider,
     concreteTabsAwaitingNewThreadRebindByProvider = normalizedConcreteTabsByProvider,
     concreteThreadIdentitiesByPath = normalizedConcreteThreadIdentitiesByPath,
@@ -160,7 +160,7 @@ class AgentSessionStateSyncTestFacade(
 
   fun rebindPendingTabsInBackground(
     provider: AgentSessionProvider,
-    requestsByProjectPath: Map<String, List<AgentChatPendingTabRebindRequest>>,
+    requestsByProjectPath: Map<String, List<AgentThreadViewPendingTabRebindRequest>>,
   ) {
     syncService.rebindPendingTabsInBackground(provider = provider, requestsByProjectPath = requestsByProjectPath)
   }
@@ -394,7 +394,7 @@ suspend fun withRegisteredTestService(
     stateStore = stateStore,
     warmState = warmState,
     scheduleVfsRefresh = { _ -> },
-    openAgentChatSnapshotProvider = { buildOpenChatRefreshSnapshot() },
+    openAgentThreadViewSnapshotProvider = { buildOpenThreadViewRefreshSnapshot() },
     providerDescriptorProvider = { provider -> testIntegrationProviderDescriptor(provider) },
     toolWindowVisibleFlow = toolWindowVisibleFlow,
     loadingDelayMs = 0L,
@@ -433,21 +433,21 @@ internal suspend fun withTestServiceAndLaunch(
   projectEntriesProvider: suspend () -> List<TestProjectCatalogEntry>,
   warmState: SessionWarmState = InMemorySessionWarmState(),
   uiPreferencesState: AgentSessionUiPreferencesStateService = AgentSessionUiPreferencesStateService(),
-  chatOpenExecutor: AgentSessionChatOpenExecutor? = null,
-  openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingTabSnapshot>> =
+  threadViewOpenExecutor: AgentSessionThreadViewOpenExecutor? = null,
+  openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentThreadViewPendingTabSnapshot>> =
     ::collectOpenPendingCodexTabsByPath,
-  openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> =
-    ::collectOpenConcreteAgentChatThreadIdentitiesByPath,
-  openAgentChatPendingTabsBinder: suspend (
-    Map<String, List<AgentChatPendingTabRebindRequest>>,
-  ) -> AgentChatPendingTabRebindReport = ::rebindOpenPendingCodexTabs,
-  openPendingAgentChatTabsProvider: suspend (AgentSessionProvider) -> Map<String, List<AgentChatPendingTabSnapshot>> = { provider ->
-    if (provider == AgentSessionProvider.from("codex")) openPendingCodexTabsProvider() else collectOpenPendingAgentChatTabsByPath(provider)
+  openConcreteThreadViewThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> =
+    ::collectOpenConcreteAgentThreadViewThreadIdentitiesByPath,
+  openAgentThreadViewPendingTabsBinder: suspend (
+    Map<String, List<AgentThreadViewPendingTabRebindRequest>>,
+  ) -> AgentThreadViewPendingTabRebindReport = ::rebindOpenPendingCodexTabs,
+  openPendingAgentThreadViewTabsProvider: suspend (AgentSessionProvider) -> Map<String, List<AgentThreadViewPendingTabSnapshot>> = { provider ->
+    if (provider == AgentSessionProvider.from("codex")) openPendingCodexTabsProvider() else collectOpenPendingAgentThreadViewTabsByPath(provider)
   },
-  openAgentChatPendingTabsBinderWithProvider: suspend (
+  openAgentThreadViewPendingTabsBinderWithProvider: suspend (
     AgentSessionProvider,
-    Map<String, List<AgentChatPendingTabRebindRequest>>,
-  ) -> AgentChatPendingTabRebindReport = { _, requestsByPath -> openAgentChatPendingTabsBinder(requestsByPath) },
+    Map<String, List<AgentThreadViewPendingTabRebindRequest>>,
+  ) -> AgentThreadViewPendingTabRebindReport = { _, requestsByPath -> openAgentThreadViewPendingTabsBinder(requestsByPath) },
   archivedSessionsRefreshIfLoaded: () -> Unit = {},
   toolWindowVisibleFlow: StateFlow<Boolean> = MutableStateFlow(true),
   currentTimeMillis: () -> Long = System::currentTimeMillis,
@@ -464,12 +464,12 @@ internal suspend fun withTestServiceAndLaunch(
     projectEntriesProvider = { projectEntriesProvider().map { it.toProjectEntry() } },
     warmState = warmState,
     uiPreferencesState = uiPreferencesState,
-    chatOpenExecutor = chatOpenExecutor,
+    threadViewOpenExecutor = threadViewOpenExecutor,
     openPendingCodexTabsProvider = openPendingCodexTabsProvider,
-    openConcreteChatThreadIdentitiesByPathProvider = openConcreteChatThreadIdentitiesByPathProvider,
-    openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinder,
-    openPendingAgentChatTabsProvider = openPendingAgentChatTabsProvider,
-    openAgentChatPendingTabsBinderWithProvider = openAgentChatPendingTabsBinderWithProvider,
+    openConcreteThreadViewThreadIdentitiesByPathProvider = openConcreteThreadViewThreadIdentitiesByPathProvider,
+    openAgentThreadViewPendingTabsBinder = openAgentThreadViewPendingTabsBinder,
+    openPendingAgentThreadViewTabsProvider = openPendingAgentThreadViewTabsProvider,
+    openAgentThreadViewPendingTabsBinderWithProvider = openAgentThreadViewPendingTabsBinderWithProvider,
     archivedSessionsRefreshIfLoaded = archivedSessionsRefreshIfLoaded,
     toolWindowVisibleFlow = toolWindowVisibleFlow,
     currentTimeMillis = currentTimeMillis,
@@ -486,21 +486,21 @@ internal suspend fun withService(
   projectEntriesProvider: suspend () -> List<ProjectEntry>,
   warmState: SessionWarmState = InMemorySessionWarmState(),
   uiPreferencesState: AgentSessionUiPreferencesStateService = AgentSessionUiPreferencesStateService(),
-  chatOpenExecutor: AgentSessionChatOpenExecutor? = null,
-  openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingTabSnapshot>> =
+  threadViewOpenExecutor: AgentSessionThreadViewOpenExecutor? = null,
+  openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentThreadViewPendingTabSnapshot>> =
     ::collectOpenPendingCodexTabsByPath,
-  openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> =
-    ::collectOpenConcreteAgentChatThreadIdentitiesByPath,
-  openAgentChatPendingTabsBinder: suspend (
-    Map<String, List<AgentChatPendingTabRebindRequest>>,
-  ) -> AgentChatPendingTabRebindReport = ::rebindOpenPendingCodexTabs,
-  openPendingAgentChatTabsProvider: suspend (AgentSessionProvider) -> Map<String, List<AgentChatPendingTabSnapshot>> = { provider ->
-    if (provider == AgentSessionProvider.from("codex")) openPendingCodexTabsProvider() else collectOpenPendingAgentChatTabsByPath(provider)
+  openConcreteThreadViewThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> =
+    ::collectOpenConcreteAgentThreadViewThreadIdentitiesByPath,
+  openAgentThreadViewPendingTabsBinder: suspend (
+    Map<String, List<AgentThreadViewPendingTabRebindRequest>>,
+  ) -> AgentThreadViewPendingTabRebindReport = ::rebindOpenPendingCodexTabs,
+  openPendingAgentThreadViewTabsProvider: suspend (AgentSessionProvider) -> Map<String, List<AgentThreadViewPendingTabSnapshot>> = { provider ->
+    if (provider == AgentSessionProvider.from("codex")) openPendingCodexTabsProvider() else collectOpenPendingAgentThreadViewTabsByPath(provider)
   },
-  openAgentChatPendingTabsBinderWithProvider: suspend (
+  openAgentThreadViewPendingTabsBinderWithProvider: suspend (
     AgentSessionProvider,
-    Map<String, List<AgentChatPendingTabRebindRequest>>,
-  ) -> AgentChatPendingTabRebindReport = { _, requestsByPath -> openAgentChatPendingTabsBinder(requestsByPath) },
+    Map<String, List<AgentThreadViewPendingTabRebindRequest>>,
+  ) -> AgentThreadViewPendingTabRebindReport = { _, requestsByPath -> openAgentThreadViewPendingTabsBinder(requestsByPath) },
   archivedSessionsRefreshIfLoaded: () -> Unit = {},
   toolWindowVisibleFlow: StateFlow<Boolean> = MutableStateFlow(true),
   currentTimeMillis: () -> Long = System::currentTimeMillis,
@@ -514,12 +514,12 @@ internal suspend fun withService(
     projectEntriesProvider = projectEntriesProvider,
     warmState = warmState,
     uiPreferencesState = uiPreferencesState,
-    chatOpenExecutor = chatOpenExecutor,
+    threadViewOpenExecutor = threadViewOpenExecutor,
     openPendingCodexTabsProvider = openPendingCodexTabsProvider,
-    openConcreteChatThreadIdentitiesByPathProvider = openConcreteChatThreadIdentitiesByPathProvider,
-    openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinder,
-    openPendingAgentChatTabsProvider = openPendingAgentChatTabsProvider,
-    openAgentChatPendingTabsBinderWithProvider = openAgentChatPendingTabsBinderWithProvider,
+    openConcreteThreadViewThreadIdentitiesByPathProvider = openConcreteThreadViewThreadIdentitiesByPathProvider,
+    openAgentThreadViewPendingTabsBinder = openAgentThreadViewPendingTabsBinder,
+    openPendingAgentThreadViewTabsProvider = openPendingAgentThreadViewTabsProvider,
+    openAgentThreadViewPendingTabsBinderWithProvider = openAgentThreadViewPendingTabsBinderWithProvider,
     archivedSessionsRefreshIfLoaded = archivedSessionsRefreshIfLoaded,
     toolWindowVisibleFlow = toolWindowVisibleFlow,
     currentTimeMillis = currentTimeMillis,
@@ -536,21 +536,21 @@ internal suspend fun withServiceAndLaunch(
   projectEntriesProvider: suspend () -> List<ProjectEntry>,
   warmState: SessionWarmState = InMemorySessionWarmState(),
   uiPreferencesState: AgentSessionUiPreferencesStateService = AgentSessionUiPreferencesStateService(),
-  chatOpenExecutor: AgentSessionChatOpenExecutor? = null,
-  openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingTabSnapshot>> =
+  threadViewOpenExecutor: AgentSessionThreadViewOpenExecutor? = null,
+  openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentThreadViewPendingTabSnapshot>> =
     ::collectOpenPendingCodexTabsByPath,
-  openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> =
-    ::collectOpenConcreteAgentChatThreadIdentitiesByPath,
-  openAgentChatPendingTabsBinder: suspend (
-    Map<String, List<AgentChatPendingTabRebindRequest>>,
-  ) -> AgentChatPendingTabRebindReport = ::rebindOpenPendingCodexTabs,
-  openPendingAgentChatTabsProvider: suspend (AgentSessionProvider) -> Map<String, List<AgentChatPendingTabSnapshot>> = { provider ->
-    if (provider == AgentSessionProvider.from("codex")) openPendingCodexTabsProvider() else collectOpenPendingAgentChatTabsByPath(provider)
+  openConcreteThreadViewThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> =
+    ::collectOpenConcreteAgentThreadViewThreadIdentitiesByPath,
+  openAgentThreadViewPendingTabsBinder: suspend (
+    Map<String, List<AgentThreadViewPendingTabRebindRequest>>,
+  ) -> AgentThreadViewPendingTabRebindReport = ::rebindOpenPendingCodexTabs,
+  openPendingAgentThreadViewTabsProvider: suspend (AgentSessionProvider) -> Map<String, List<AgentThreadViewPendingTabSnapshot>> = { provider ->
+    if (provider == AgentSessionProvider.from("codex")) openPendingCodexTabsProvider() else collectOpenPendingAgentThreadViewTabsByPath(provider)
   },
-  openAgentChatPendingTabsBinderWithProvider: suspend (
+  openAgentThreadViewPendingTabsBinderWithProvider: suspend (
     AgentSessionProvider,
-    Map<String, List<AgentChatPendingTabRebindRequest>>,
-  ) -> AgentChatPendingTabRebindReport = { _, requestsByPath -> openAgentChatPendingTabsBinder(requestsByPath) },
+    Map<String, List<AgentThreadViewPendingTabRebindRequest>>,
+  ) -> AgentThreadViewPendingTabRebindReport = { _, requestsByPath -> openAgentThreadViewPendingTabsBinder(requestsByPath) },
   archivedSessionsRefreshIfLoaded: () -> Unit = {},
   toolWindowVisibleFlow: StateFlow<Boolean> = MutableStateFlow(true),
   currentTimeMillis: () -> Long = System::currentTimeMillis,
@@ -567,13 +567,13 @@ internal suspend fun withServiceAndLaunch(
     projectEntriesProvider = projectEntriesProvider,
     warmState = warmState,
     uiPreferencesState = uiPreferencesState,
-    archiveChatCleanup = { _, _, _ -> },
-    chatOpenExecutor = chatOpenExecutor,
+    archiveThreadViewCleanup = { _, _, _ -> },
+    threadViewOpenExecutor = threadViewOpenExecutor,
     openPendingCodexTabsProvider = openPendingCodexTabsProvider,
-    openConcreteChatThreadIdentitiesByPathProvider = openConcreteChatThreadIdentitiesByPathProvider,
-    openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinder,
-    openPendingAgentChatTabsProvider = openPendingAgentChatTabsProvider,
-    openAgentChatPendingTabsBinderWithProvider = openAgentChatPendingTabsBinderWithProvider,
+    openConcreteThreadViewThreadIdentitiesByPathProvider = openConcreteThreadViewThreadIdentitiesByPathProvider,
+    openAgentThreadViewPendingTabsBinder = openAgentThreadViewPendingTabsBinder,
+    openPendingAgentThreadViewTabsProvider = openPendingAgentThreadViewTabsProvider,
+    openAgentThreadViewPendingTabsBinderWithProvider = openAgentThreadViewPendingTabsBinderWithProvider,
     archivedSessionsRefreshIfLoaded = archivedSessionsRefreshIfLoaded,
     toolWindowVisibleFlow = toolWindowVisibleFlow,
     currentTimeMillis = currentTimeMillis,
@@ -591,23 +591,23 @@ internal suspend fun withServiceAndArchive(
   projectEntriesProvider: suspend () -> List<ProjectEntry>,
   warmState: SessionWarmState = InMemorySessionWarmState(),
   uiPreferencesState: AgentSessionUiPreferencesStateService = AgentSessionUiPreferencesStateService(),
-  archiveChatCleanup: suspend (projectPath: String, threadIdentity: String, subAgentId: String?) -> Unit = { _, _, _ -> },
+  archiveThreadViewCleanup: suspend (projectPath: String, threadIdentity: String, subAgentId: String?) -> Unit = { _, _, _ -> },
   archiveBackgroundTaskRunner: AgentSessionArchiveBackgroundTaskRunner = AgentSessionArchiveBackgroundTaskRunner { _, _, block -> block() },
-  chatOpenExecutor: AgentSessionChatOpenExecutor? = null,
-  openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingTabSnapshot>> =
+  threadViewOpenExecutor: AgentSessionThreadViewOpenExecutor? = null,
+  openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentThreadViewPendingTabSnapshot>> =
     ::collectOpenPendingCodexTabsByPath,
-  openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> =
-    ::collectOpenConcreteAgentChatThreadIdentitiesByPath,
-  openAgentChatPendingTabsBinder: suspend (
-    Map<String, List<AgentChatPendingTabRebindRequest>>,
-  ) -> AgentChatPendingTabRebindReport = ::rebindOpenPendingCodexTabs,
-  openPendingAgentChatTabsProvider: suspend (AgentSessionProvider) -> Map<String, List<AgentChatPendingTabSnapshot>> = { provider ->
-    if (provider == AgentSessionProvider.from("codex")) openPendingCodexTabsProvider() else collectOpenPendingAgentChatTabsByPath(provider)
+  openConcreteThreadViewThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> =
+    ::collectOpenConcreteAgentThreadViewThreadIdentitiesByPath,
+  openAgentThreadViewPendingTabsBinder: suspend (
+    Map<String, List<AgentThreadViewPendingTabRebindRequest>>,
+  ) -> AgentThreadViewPendingTabRebindReport = ::rebindOpenPendingCodexTabs,
+  openPendingAgentThreadViewTabsProvider: suspend (AgentSessionProvider) -> Map<String, List<AgentThreadViewPendingTabSnapshot>> = { provider ->
+    if (provider == AgentSessionProvider.from("codex")) openPendingCodexTabsProvider() else collectOpenPendingAgentThreadViewTabsByPath(provider)
   },
-  openAgentChatPendingTabsBinderWithProvider: suspend (
+  openAgentThreadViewPendingTabsBinderWithProvider: suspend (
     AgentSessionProvider,
-    Map<String, List<AgentChatPendingTabRebindRequest>>,
-  ) -> AgentChatPendingTabRebindReport = { _, requestsByPath -> openAgentChatPendingTabsBinder(requestsByPath) },
+    Map<String, List<AgentThreadViewPendingTabRebindRequest>>,
+  ) -> AgentThreadViewPendingTabRebindReport = { _, requestsByPath -> openAgentThreadViewPendingTabsBinder(requestsByPath) },
   archivedSessionsRefreshIfLoaded: () -> Unit = {},
   toolWindowVisibleFlow: StateFlow<Boolean> = MutableStateFlow(true),
   currentTimeMillis: () -> Long = System::currentTimeMillis,
@@ -621,14 +621,14 @@ internal suspend fun withServiceAndArchive(
     projectEntriesProvider = projectEntriesProvider,
     warmState = warmState,
     uiPreferencesState = uiPreferencesState,
-    archiveChatCleanup = archiveChatCleanup,
+    archiveThreadViewCleanup = archiveThreadViewCleanup,
     archiveBackgroundTaskRunner = archiveBackgroundTaskRunner,
-    chatOpenExecutor = chatOpenExecutor,
+    threadViewOpenExecutor = threadViewOpenExecutor,
     openPendingCodexTabsProvider = openPendingCodexTabsProvider,
-    openConcreteChatThreadIdentitiesByPathProvider = openConcreteChatThreadIdentitiesByPathProvider,
-    openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinder,
-    openPendingAgentChatTabsProvider = openPendingAgentChatTabsProvider,
-    openAgentChatPendingTabsBinderWithProvider = openAgentChatPendingTabsBinderWithProvider,
+    openConcreteThreadViewThreadIdentitiesByPathProvider = openConcreteThreadViewThreadIdentitiesByPathProvider,
+    openAgentThreadViewPendingTabsBinder = openAgentThreadViewPendingTabsBinder,
+    openPendingAgentThreadViewTabsProvider = openPendingAgentThreadViewTabsProvider,
+    openAgentThreadViewPendingTabsBinderWithProvider = openAgentThreadViewPendingTabsBinderWithProvider,
     archivedSessionsRefreshIfLoaded = archivedSessionsRefreshIfLoaded,
     toolWindowVisibleFlow = toolWindowVisibleFlow,
     currentTimeMillis = currentTimeMillis,
@@ -645,23 +645,23 @@ internal suspend fun withServiceAndArchiveAndLaunch(
   projectEntriesProvider: suspend () -> List<ProjectEntry>,
   warmState: SessionWarmState = InMemorySessionWarmState(),
   uiPreferencesState: AgentSessionUiPreferencesStateService = AgentSessionUiPreferencesStateService(),
-  archiveChatCleanup: suspend (projectPath: String, threadIdentity: String, subAgentId: String?) -> Unit = { _, _, _ -> },
+  archiveThreadViewCleanup: suspend (projectPath: String, threadIdentity: String, subAgentId: String?) -> Unit = { _, _, _ -> },
   archiveBackgroundTaskRunner: AgentSessionArchiveBackgroundTaskRunner = AgentSessionArchiveBackgroundTaskRunner { _, _, block -> block() },
-  chatOpenExecutor: AgentSessionChatOpenExecutor? = null,
-  openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingTabSnapshot>> =
+  threadViewOpenExecutor: AgentSessionThreadViewOpenExecutor? = null,
+  openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentThreadViewPendingTabSnapshot>> =
     ::collectOpenPendingCodexTabsByPath,
-  openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> =
-    ::collectOpenConcreteAgentChatThreadIdentitiesByPath,
-  openAgentChatPendingTabsBinder: suspend (
-    Map<String, List<AgentChatPendingTabRebindRequest>>,
-  ) -> AgentChatPendingTabRebindReport = ::rebindOpenPendingCodexTabs,
-  openPendingAgentChatTabsProvider: suspend (AgentSessionProvider) -> Map<String, List<AgentChatPendingTabSnapshot>> = { provider ->
-    if (provider == AgentSessionProvider.from("codex")) openPendingCodexTabsProvider() else collectOpenPendingAgentChatTabsByPath(provider)
+  openConcreteThreadViewThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> =
+    ::collectOpenConcreteAgentThreadViewThreadIdentitiesByPath,
+  openAgentThreadViewPendingTabsBinder: suspend (
+    Map<String, List<AgentThreadViewPendingTabRebindRequest>>,
+  ) -> AgentThreadViewPendingTabRebindReport = ::rebindOpenPendingCodexTabs,
+  openPendingAgentThreadViewTabsProvider: suspend (AgentSessionProvider) -> Map<String, List<AgentThreadViewPendingTabSnapshot>> = { provider ->
+    if (provider == AgentSessionProvider.from("codex")) openPendingCodexTabsProvider() else collectOpenPendingAgentThreadViewTabsByPath(provider)
   },
-  openAgentChatPendingTabsBinderWithProvider: suspend (
+  openAgentThreadViewPendingTabsBinderWithProvider: suspend (
     AgentSessionProvider,
-    Map<String, List<AgentChatPendingTabRebindRequest>>,
-  ) -> AgentChatPendingTabRebindReport = { _, requestsByPath -> openAgentChatPendingTabsBinder(requestsByPath) },
+    Map<String, List<AgentThreadViewPendingTabRebindRequest>>,
+  ) -> AgentThreadViewPendingTabRebindReport = { _, requestsByPath -> openAgentThreadViewPendingTabsBinder(requestsByPath) },
   archivedSessionsRefreshIfLoaded: () -> Unit = {},
   toolWindowVisibleFlow: StateFlow<Boolean> = MutableStateFlow(true),
   currentTimeMillis: () -> Long = System::currentTimeMillis,
@@ -679,8 +679,8 @@ internal suspend fun withServiceAndArchiveAndLaunch(
   val scope = CoroutineScope(job + Dispatchers.Default)
   var previousOpenInDedicatedFrame: Boolean? = null
   try {
-    previousOpenInDedicatedFrame = AgentChatOpenModeSettings.openInDedicatedFrame()
-    AgentChatOpenModeSettings.setOpenInDedicatedFrame(true)
+    previousOpenInDedicatedFrame = AgentThreadViewOpenModeSettings.openInDedicatedFrame()
+    AgentThreadViewOpenModeSettings.setOpenInDedicatedFrame(true)
     val stateStore = AgentSessionsStateStore()
     val archiveTransitionSuppressions = AgentSessionArchiveTransitionSuppressions()
     val contentRepository = AgentSessionContentRepository(
@@ -694,16 +694,16 @@ internal suspend fun withServiceAndArchiveAndLaunch(
       stateStore = stateStore,
       warmState = warmState,
       scheduleVfsRefresh = { _ -> },
-      openAgentChatSnapshotProvider = {
-        buildOpenChatRefreshSnapshot(
+      openAgentThreadViewSnapshotProvider = {
+        buildOpenThreadViewRefreshSnapshot(
           pendingTabsByProvider = mapOf(
-            AgentSessionProvider.from("codex") to openPendingAgentChatTabsProvider(AgentSessionProvider.from("codex")),
-            AgentSessionProvider.from("claude") to openPendingAgentChatTabsProvider(AgentSessionProvider.from("claude")),
+            AgentSessionProvider.from("codex") to openPendingAgentThreadViewTabsProvider(AgentSessionProvider.from("codex")),
+            AgentSessionProvider.from("claude") to openPendingAgentThreadViewTabsProvider(AgentSessionProvider.from("claude")),
           ),
-          concreteThreadIdentitiesByPath = openConcreteChatThreadIdentitiesByPathProvider(),
+          concreteThreadIdentitiesByPath = openConcreteThreadViewThreadIdentitiesByPathProvider(),
         )
       },
-      openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinderWithProvider,
+      openAgentThreadViewPendingTabsBinder = openAgentThreadViewPendingTabsBinderWithProvider,
       providerDescriptorProvider = { provider -> testIntegrationProviderDescriptor(provider) },
       toolWindowVisibleFlow = toolWindowVisibleFlow,
       currentTimeMillis = currentTimeMillis,
@@ -718,7 +718,7 @@ internal suspend fun withServiceAndArchiveAndLaunch(
       syncService = syncService,
     )
     val launchProfileResolver = AgentSessionLaunchProfileResolverImpl(uiPreferencesState)
-    val launchService = if (chatOpenExecutor == null) {
+    val launchService = if (threadViewOpenExecutor == null) {
       AgentSessionLaunchService(
         serviceScope = scope,
         stateStore = stateStore,
@@ -726,8 +726,8 @@ internal suspend fun withServiceAndArchiveAndLaunch(
         uiPreferencesState = uiPreferencesState,
         launchProfileResolver = launchProfileResolver,
         archiveTransitionSuppressions = archiveTransitionSuppressions,
-        openPendingAgentChatTabsProvider = openPendingAgentChatTabsProvider,
-        openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinderWithProvider,
+        openPendingAgentThreadViewTabsProvider = openPendingAgentThreadViewTabsProvider,
+        openAgentThreadViewPendingTabsBinder = openAgentThreadViewPendingTabsBinderWithProvider,
         archivedSessionsRefreshIfLoaded = archivedSessionsRefreshIfLoaded,
         branchMismatchConfirmation = branchMismatchConfirmation,
       )
@@ -739,10 +739,10 @@ internal suspend fun withServiceAndArchiveAndLaunch(
         syncService = syncService,
         uiPreferencesState = uiPreferencesState,
         launchProfileResolver = launchProfileResolver,
-        chatOpenExecutor = chatOpenExecutor,
+        threadViewOpenExecutor = threadViewOpenExecutor,
         archiveTransitionSuppressions = archiveTransitionSuppressions,
-        openPendingAgentChatTabsProvider = openPendingAgentChatTabsProvider,
-        openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinderWithProvider,
+        openPendingAgentThreadViewTabsProvider = openPendingAgentThreadViewTabsProvider,
+        openAgentThreadViewPendingTabsBinder = openAgentThreadViewPendingTabsBinderWithProvider,
         archivedSessionsRefreshIfLoaded = archivedSessionsRefreshIfLoaded,
         branchMismatchConfirmation = branchMismatchConfirmation,
       )
@@ -751,14 +751,14 @@ internal suspend fun withServiceAndArchiveAndLaunch(
       serviceScope = scope,
       syncService = syncService,
       contentRepository = contentRepository,
-      archiveChatCleanup = archiveChatCleanup,
+      archiveThreadViewCleanup = archiveThreadViewCleanup,
       backgroundTaskRunner = archiveBackgroundTaskRunner,
       archiveTransitionSuppressions = archiveTransitionSuppressions,
     )
     action(service, archiveService, launchService)
   }
   finally {
-    previousOpenInDedicatedFrame?.let { AgentChatOpenModeSettings.setOpenInDedicatedFrame(it) }
+    previousOpenInDedicatedFrame?.let { AgentThreadViewOpenModeSettings.setOpenInDedicatedFrame(it) }
     job.cancelAndJoin()
   }
 }
@@ -855,14 +855,14 @@ private fun defaultValue(returnType: Class<*>): Any? {
   }
 }
 
-private suspend fun collectOpenPendingCodexTabsByPath(): Map<String, List<AgentChatPendingTabSnapshot>> {
-  return collectOpenPendingAgentChatTabsByPath(AgentSessionProvider.from("codex"))
+private suspend fun collectOpenPendingCodexTabsByPath(): Map<String, List<AgentThreadViewPendingTabSnapshot>> {
+  return collectOpenPendingAgentThreadViewTabsByPath(AgentSessionProvider.from("codex"))
 }
 
 private suspend fun rebindOpenPendingCodexTabs(
-  requestsByProjectPath: Map<String, List<AgentChatPendingTabRebindRequest>>,
-): AgentChatPendingTabRebindReport {
-  return rebindOpenPendingAgentChatTabs(
+  requestsByProjectPath: Map<String, List<AgentThreadViewPendingTabRebindRequest>>,
+): AgentThreadViewPendingTabRebindReport {
+  return rebindOpenPendingAgentThreadViewTabs(
     provider = AgentSessionProvider.from("codex"),
     requestsByProjectPath = requestsByProjectPath,
   )

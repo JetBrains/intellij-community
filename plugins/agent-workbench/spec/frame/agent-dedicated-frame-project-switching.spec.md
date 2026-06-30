@@ -21,16 +21,16 @@ targets:
   - ../../sessions/src/service/AgentSessionLaunchService.kt
   - ../../sessions/src/frame/AgentWorkbenchDedicatedFrameProjectManager.kt
   - ../../sessions/src/frame/AgentWorkbenchProjectFrameCapabilitiesProvider.kt
-  - ../../sessions/src/service/AgentSourceChatSwitching.kt
+  - ../../sessions/src/service/AgentSourceThread ViewSwitching.kt
   - ../../sessions-actions/src/actions/AgentSessionsGoToSourceProjectFromToolbarAction.kt
-  - ../../sessions-actions/src/actions/AgentSessionsSwitchSourceAndChatAction.kt
-  - ../../chat/src/AgentChatFocusService.kt
+  - ../../sessions-actions/src/actions/AgentSessionsSwitchSourceAndAgentThreadViewAction.kt
+  - ../../thread-view/src/AgentThreadViewFocusService.kt
   - ../../sessions-actions/src/actions/AgentSessionsGoToSourceProjectFromEditorTabAction.kt
   - ../../sessions/resources/intellij.agent.workbench.sessions.xml
   - ../../sessions/testSrc/*.kt
-  - ../../chat/src/AgentChatEditorTabColorProvider.kt
-  - ../../chat/resources/intellij.agent.workbench.chat.xml
-  - ../../chat/testSrc/AgentChatEditorTabColorProviderTest.kt
+  - ../../thread-view/src/AgentThreadViewEditorTabColorProvider.kt
+  - ../../thread-view/resources/intellij.agent.workbench.thread.view.xml
+  - ../../thread-view/testSrc/AgentThreadViewEditorTabColorProviderTest.kt
 ---
 
 # Dedicated Frame Project Switching
@@ -47,8 +47,8 @@ This spec owns:
 - init-time main-toolbar pruning by `(frameType, place, id)`,
 - dedicated-frame main-toolbar source-project one-click affordance,
 - dedicated-frame explicit open/focus affordance,
-- source-frame active-chat focus affordance,
-- bidirectional source/chat focus action for user keymap binding,
+- source-frame active-thread view focus affordance,
+- bidirectional source/thread view focus action for user keymap binding,
 - editor-tab popup affordance to jump to source project.
 
 Terminal hyperlink click routing in dedicated frame is owned by `agent-dedicated-frame-terminal-hyperlink-routing.spec.md`.
@@ -58,13 +58,13 @@ Source-frame main-toolbar Agent activity is owned by `agent-main-toolbar-activit
 - Keep dedicated frame out of project-window cycling while preserving it in global window cycling.
 - Remove unneeded dedicated-frame toolbar widgets at init time (do not create then hide).
 - Keep source-project switching explicit and discoverable from dedicated frame.
-- Let users explicitly switch between source code and the active Agent chat without relying on OS window traversal.
+- Let users explicitly switch between source code and the active Agent thread view without relying on OS window traversal.
 
 ## Non-goals
 - Source-aware `Cmd+\`` routing from dedicated frame.
 - Opening multiple dedicated frames for parallel source projects.
 - Runtime replacement of `NewUiRunWidget` or toolbar actions via `ActionConfigurationCustomizer`.
-- A bundled default shortcut for source/chat switching.
+- A bundled default shortcut for source/thread view switching.
 
 ## Requirements
 - Dedicated frame capability set must include `ProjectFrameCapability.EXCLUDE_FROM_PROJECT_WINDOW_SWITCH_ORDER`.
@@ -100,25 +100,25 @@ Source-frame main-toolbar Agent activity is owned by `agent-main-toolbar-activit
   [@test] ../../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
   [@test] ../../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
-- In dedicated frame, Agent chat editor tabs must reuse the source project's stored project color when `UISettings.differentiateProjects` is enabled:
+- In dedicated frame, Agent thread view editor tabs must reuse the source project's stored project color when `UISettings.differentiateProjects` is enabled:
   - use the platform recent-project soft background palette keyed by the stored source-project color index,
   - derive a muted tab color from stored custom project colors,
   - do not generate or persist project color metadata during tab color resolution,
   - expose the source project path in the tab tooltip so color is not the only project-identification cue.
-  [@test] ../../chat/testSrc/AgentChatEditorTabColorProviderTest.kt
-  [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
+  [@test] ../../thread-view/testSrc/AgentThreadViewEditorTabColorProviderTest.kt
+  [@test] ../../thread-view/testSrc/AgentThreadViewEditorServiceTest.kt
 
-- Agent chat editor tabs can be dragged from the dedicated frame to the matching already-open source project frame:
+- Agent thread view editor tabs can be dragged from the dedicated frame to the matching already-open source project frame:
   - the matching source project frame accepts the drop,
   - other project frames reject the drop,
   - closed source projects are not opened during drag-and-drop,
   - the running terminal-backed agent session is preserved and must not restart.
-  [@test] ../../chat/testSrc/AgentChatCrossProjectDockTargetRegistrarTest.kt
-  [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+  [@test] ../../thread-view/testSrc/AgentThreadViewCrossProjectDockTargetRegistrarTest.kt
+  [@test] ../../thread-view/testSrc/AgentThreadViewFileEditorLifecycleTest.kt
 
 - In dedicated frame, main toolbar must expose `AgentWorkbenchSessions.GoToSourceProjectFromToolbar`:
   - visible only in dedicated projects,
-  - shows active chat tab source project name and opens/focuses source project in one click,
+  - shows active Thread View source project name and opens/focuses source project in one click,
   - shows disabled `No source project` placeholder when no valid active source project path is available.
   [@test] ../../sessions-actions/testSrc/AgentSessionsGoToSourceProjectFromToolbarActionTest.kt
   [@test] ../../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
@@ -129,13 +129,13 @@ Source-frame main-toolbar Agent activity is owned by `agent-main-toolbar-activit
   [@test] ../../sessions-actions/testSrc/AgentSessionsOpenDedicatedFrameActionTest.kt
   [@test] ../../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
-- Sessions plugin must register `AgentWorkbenchSessions.SwitchSourceAndChat` in `OpenProjectWindows` after
+- Sessions plugin must register `AgentWorkbenchSessions.SwitchSourceAndAgentThreadView` in `OpenProjectWindows` after
   `AgentWorkbenchSessions.OpenDedicatedFrame`, without any bundled default keyboard shortcut:
-  - from a source project frame, it focuses the most recently focused Agent chat tab for that source project in the dedicated frame,
-    falling back to the first open chat tab for that source project and then to opening/focusing the dedicated frame without selecting an unrelated chat,
-  - from the dedicated frame, it opens/focuses the source project for the selected Agent chat tab,
-  - in the dedicated frame, it stays disabled when the selected chat tab has no openable source project.
-  [@test] ../../sessions-actions/testSrc/AgentSessionsSwitchSourceAndChatActionTest.kt
+  - from a source project frame, it focuses the most recently focused Agent Thread View for that source project in the dedicated frame,
+    falling back to the first open Thread View for that source project and then to opening/focusing the dedicated frame without selecting an unrelated thread view,
+  - from the dedicated frame, it opens/focuses the source project for the selected Agent Thread View,
+  - in the dedicated frame, it stays disabled when the selected Thread View has no openable source project.
+  [@test] ../../sessions-actions/testSrc/AgentSessionsSwitchSourceAndAgentThreadViewActionTest.kt
   [@test] ../../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
 ## User Experience
@@ -143,8 +143,8 @@ Source-frame main-toolbar Agent activity is owned by `agent-main-toolbar-activit
 - `Next/Previous Project Window` skips dedicated frame windows as targets but still works when invoked from dedicated frame (switch anchor stays valid).
 - Dedicated frame does not show VCS quick actions or run-target/run-widget controls.
 - Users can explicitly open/focus dedicated frame via `Open Agent Dedicated Frame` action.
-- Users can bind `Switch Between Source and Agent Chat` in Keymap to toggle focus between code and the active Agent chat.
-- Dedicated frame main toolbar shows active source project (from selected chat tab) and allows one-click open/focus of that source project.
+- Users can bind `Switch Between Source and Agent Thread View` in Keymap to toggle focus between code and the active Agent thread view.
+- Dedicated frame main toolbar shows active source project (from selected Thread View) and allows one-click open/focus of that source project.
 - From dedicated frame, users can jump to source project via editor-tab popup action `Go to Source Project`.
 
 ## Data & Backend
@@ -152,13 +152,13 @@ Source-frame main-toolbar Agent activity is owned by `agent-main-toolbar-activit
 - `AgentSessionLaunchService` sets `OpenProjectTask.projectFrameTypeId` when opening dedicated frame project.
 - `AgentWorkbenchDedicatedFrameProjectManager.configureProject` persists `projectFrameTypeId` into recent metadata.
 - Source project open/focus behavior uses `AgentSessionLaunchService.openOrFocusProject(path)`.
-- Source/chat switching behavior is centralized in `AgentSourceChatSwitching`.
-- Source-frame active-chat focus uses `AgentChatFocusService` to select the most recently focused Agent chat tab for the source project
-  from platform editor history, falling back to the first open Agent chat tab for that source project.
-- Agent chat tab colors read only stored recent-project color metadata for the source project. They must not call
+- Source/thread view switching behavior is centralized in `AgentSourceThread ViewSwitching`.
+- Source-frame active-thread view focus uses `AgentThreadViewFocusService` to select the most recently focused Agent Thread View for the source project
+  from platform editor history, falling back to the first open Agent Thread View for that source project.
+- Agent Thread View colors read only stored recent-project color metadata for the source project. They must not call
   path-based platform project color helpers because those helpers can generate and persist a missing color index for
   a project path; dedicated-frame tabs can refer to many closed source projects.
-- Toolbar source-project action resolves active chat-tab source path via `AgentChatTabSelectionService.selectedChatTab`.
+- Toolbar source-project action resolves active thread view-tab source path via `AgentThreadViewTabSelectionService.selectedThread ViewTab`.
 - Dedicated frame open/focus behavior uses `AgentSessionLaunchService.openOrFocusDedicatedFrame(currentProject)`.
 
 ## Testing / Local Run
@@ -166,9 +166,9 @@ Source-frame main-toolbar Agent activity is owned by `agent-main-toolbar-activit
 - `./tests.cmd --module intellij.platform.lang.tests --test com.intellij.openapi.wm.impl.ProjectWindowActionGroupTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.actions.tests --test com.intellij.agent.workbench.sessions.AgentSessionsEditorTabActionsTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.actions.tests --test com.intellij.agent.workbench.sessions.AgentSessionsGoToSourceProjectFromToolbarActionTest`
-- `./tests.cmd --module intellij.agent.workbench.sessions.actions.tests --test com.intellij.agent.workbench.sessions.AgentSessionsSwitchSourceAndChatActionTest`
+- `./tests.cmd --module intellij.agent.workbench.sessions.actions.tests --test com.intellij.agent.workbench.sessions.AgentSessionsSwitchSourceAndAgentThreadViewActionTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.actions.tests --test com.intellij.agent.workbench.sessions.AgentSessionsGearActionsTest`
-- `./tests.cmd --module intellij.agent.workbench.chat.tests --test com.intellij.agent.workbench.chat.AgentChatFocusServiceTest`
+- `./tests.cmd --module intellij.agent.workbench.thread.view.tests --test com.intellij.agent.workbench.thread.view.AgentThreadViewFocusServiceTest`
 
 ## Open Questions / Risks
 - If source-aware `Cmd+\`` behavior becomes required later, this spec should evolve to define platform-level semantics explicitly.

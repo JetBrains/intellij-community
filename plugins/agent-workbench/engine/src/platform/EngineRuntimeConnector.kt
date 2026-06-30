@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Re-binds a restored structured thread to its runtime owner. Called when a structured chat tab is
+ * Re-binds a restored structured thread to its runtime owner. Called when a structured threadView tab is
  * restored, so the runtime adapter can rehydrate ownership from the persisted
  * `ThreadProjection.runtimeBinding` off the UI thread and re-enable prompt input — without the
  * community Engine UI depending on a specific runtime adapter (e.g. ACP).

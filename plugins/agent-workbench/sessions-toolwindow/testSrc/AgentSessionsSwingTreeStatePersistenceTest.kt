@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.toolwindow
 
-import com.intellij.agent.workbench.chat.AgentChatOpenTabsPresentationState
+import com.intellij.agent.workbench.thread.view.AgentThreadViewOpenTabsPresentationState
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.core.session.AgentSubAgent
@@ -199,7 +199,7 @@ class AgentSessionsSwingTreeStatePersistenceTest {
       visibleClosedProjectCount = Int.MAX_VALUE,
       visibleThreadCounts = emptyMap(),
       treeUiState = InMemorySessionTreeUiState(),
-      openTabsPresentationState = AgentChatOpenTabsPresentationState(
+      openTabsPresentationState = AgentThreadViewOpenTabsPresentationState(
         pinnedTopLevelThreadIdsByProvider = mapOf(provider to mapOf(projectPath to setOf("thread-a"))),
       ),
     )
@@ -242,7 +242,7 @@ class AgentSessionsSwingTreeStatePersistenceTest {
       visibleThreadCounts = emptyMap(),
       treeUiState = InMemorySessionTreeUiState(),
       currentProjectScopeActive = true,
-      openTabsPresentationState = AgentChatOpenTabsPresentationState(
+      openTabsPresentationState = AgentThreadViewOpenTabsPresentationState(
         pinnedTopLevelThreadIdsByProvider = mapOf(provider to mapOf(projectPath to setOf("thread-a"))),
       ),
     )

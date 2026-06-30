@@ -1,0 +1,72 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="org.jetbrains.plugins.terminal"/>
+    <module name="intellij.platform.ai.agent.common"/>
+    <module name="intellij.platform.ai.agent.core"/>
+    <module name="intellij.agent.workbench.prompt.context"/>
+    <module name="intellij.agent.workbench.prompt.core"/>
+    <module name="intellij.platform.ai.agent.sessions.core"/>
+    <module name="intellij.agent.workbench.settings"/>
+    <module name="intellij.agent.workbench.ui"/>
+    <module name="intellij.terminal.frontend"/>
+  </dependencies>
+  <!-- endregion -->
+  <resource-bundle>messages.AgentThreadViewBundle</resource-bundle>
+
+  <extensionPoints>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.agentThreadViewTerminalTitleThreadRebindContributor"
+      beanClass="com.intellij.agent.workbench.thread.view.AgentThreadViewTerminalTitleThreadRebindContributorBean"
+      dynamic="true">
+      <with attribute="implementation" implements="com.intellij.agent.workbench.thread.view.AgentThreadViewTerminalTitleThreadRebindContributor"/>
+    </extensionPoint>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.agentThreadViewProviderBehavior"
+      beanClass="com.intellij.agent.workbench.thread.view.AgentThreadViewProviderBehaviorBean"
+      dynamic="true">
+      <with attribute="implementation" implements="com.intellij.agent.workbench.thread.view.AgentThreadViewProviderBehavior"/>
+    </extensionPoint>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.agentThreadViewCustomContent"
+      interface="com.intellij.agent.workbench.thread.view.AgentThreadViewCustomContentProvider"
+      dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.platform.ai.agent.sessions.core.providers.AgentOpenTopLevelThreadDispatchService"
+                        serviceImplementation="com.intellij.agent.workbench.thread.view.AgentThreadViewOpenTopLevelThreadDispatchService"/>
+    <virtualFileSystem key="agent-thread-view" implementationClass="com.intellij.agent.workbench.thread.view.AgentThreadViewVirtualFileSystem"/>
+    <notificationGroup id="Agent Workbench Thread View" displayType="BALLOON" bundle="messages.AgentThreadViewBundle"
+                       key="notification.group.agent.workbench.thread.view"/>
+    <fileIconProvider implementation="com.intellij.agent.workbench.thread.view.AgentThreadViewFileIconProvider"/>
+    <fileEditorProvider id="agent.workbench-thread-view-editor" implementation="com.intellij.agent.workbench.thread.view.AgentThreadViewFileEditorProvider"/>
+    <virtualFilePreCloseCheck implementation="com.intellij.agent.workbench.thread.view.AgentThreadViewPreCloseCheck"/>
+    <editorTabTitleProvider implementation="com.intellij.agent.workbench.thread.view.AgentThreadViewEditorTabTitleProvider"/>
+    <editorTabColorProvider implementation="com.intellij.agent.workbench.thread.view.AgentThreadViewEditorTabColorProvider"/>
+    <applicationSettings service="com.intellij.agent.workbench.thread.view.AgentThreadViewTabsStateService"/>
+  </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.agent.workbench.thread.view.AgentThreadViewProjectColorChangeListener"
+              topic="com.intellij.ide.ProjectColorChangeListener"/>
+    <listener class="com.intellij.agent.workbench.thread.view.AgentThreadViewSettingsChangeListener"
+              topic="com.intellij.agent.workbench.settings.AgentWorkbenchSettingsListener"/>
+    <listener class="com.intellij.agent.workbench.thread.view.AgentThreadViewThreadPresentationStartupListener" activeInTestMode="true"
+              activeInHeadlessMode="true"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
+
+  <extensions defaultExtensionNs="com.intellij.agent.workbench">
+    <settingsContributor implementation="com.intellij.agent.workbench.thread.view.AgentThreadViewSettingsContributor"/>
+  </extensions>
+
+  <actions resource-bundle="messages.AgentThreadViewBundle">
+    <action
+      id="AgentWorkbenchSessions.ThreadOutline.StartNewThreadFromHere"
+      class="com.intellij.agent.workbench.thread.view.AgentThreadViewThreadOutlineForkAction"/>
+    <group id="AgentWorkbenchSessions.ThreadOutline.Popup" class="com.intellij.agent.workbench.thread.view.AgentThreadViewThreadOutlinePopupGroup">
+      <reference ref="AgentWorkbenchSessions.ThreadOutline.StartNewThreadFromHere"/>
+    </group>
+  </actions>
+</idea-plugin>

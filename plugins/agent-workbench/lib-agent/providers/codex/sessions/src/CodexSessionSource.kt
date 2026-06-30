@@ -3,7 +3,7 @@ package com.intellij.platform.ai.agent.codex.sessions
 
 // @spec community/plugins/agent-workbench/spec/sessions/agent-sessions.spec.md
 // @spec community/plugins/agent-workbench/spec/sessions/agent-sessions-codex-rollout-source.spec.md
-// @spec community/plugins/agent-workbench/spec/chat/agent-chat-structure-view.spec.md
+// @spec community/plugins/agent-workbench/spec/thread-view/agent-thread-view-structure.spec.md
 
 import com.intellij.platform.ai.agent.codex.common.CodexThread
 import com.intellij.platform.ai.agent.codex.sessions.backend.CodexBackendThread

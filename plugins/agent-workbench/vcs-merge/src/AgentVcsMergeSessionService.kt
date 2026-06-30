@@ -193,7 +193,7 @@ internal class AgentVcsMergeSessionService(
       val deferredHandle = openDeferredHandle(
         projectPath = projectPath,
         request = normalizedRequest,
-        openedChatHandler = { _, file ->
+        openedThreadViewHandler = { _, file ->
           session.threadFile = file
           pinThread(file)
           recordActiveVcsMergeLaunchProfile(session.launchProfileId)
@@ -227,7 +227,7 @@ internal class AgentVcsMergeSessionService(
         val deferredHandle = openDeferredHandle(
           projectPath = projectPath,
           request = request,
-          openedChatHandler = { _, _ ->
+          openedThreadViewHandler = { _, _ ->
             recordActiveVcsMergeLaunchProfile(request.launchProfileId)
           },
         ) ?: return@launch
@@ -242,7 +242,7 @@ internal class AgentVcsMergeSessionService(
   private suspend fun openDeferredHandle(
     projectPath: String,
     request: AgentVcsMergeLaunchRequest,
-    openedChatHandler: suspend (Project, VirtualFile) -> Unit,
+    openedThreadViewHandler: suspend (Project, VirtualFile) -> Unit,
   ): AgentDeferredNewSessionHandle? {
     val deferredLaunch = try {
       serviceAsync<AgentSessionLaunchService>().createDeferredNewSession(
@@ -254,7 +254,7 @@ internal class AgentVcsMergeSessionService(
         launchTargetId = request.launchTargetId,
         generationSettings = request.generationSettings,
         preferredDedicatedFrame = false,
-        openedChatHandler = openedChatHandler,
+        openedThreadViewHandler = openedThreadViewHandler,
         updateGeneralProviderPreferences = false,
         threadTitle = AgentVcsMergeBundle.message("merge.agent.thread.title"),
         waitingTitle = AgentVcsMergeBundle.message("merge.agent.thread.preparing.title"),

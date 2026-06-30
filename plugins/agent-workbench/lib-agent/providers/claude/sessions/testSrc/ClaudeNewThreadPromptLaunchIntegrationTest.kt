@@ -3,7 +3,7 @@ package com.intellij.platform.ai.agent.claude.sessions
 
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.ScriptedSessionSource
-import com.intellij.agent.workbench.sessions.assertNewThreadPromptLaunchOpensNewChat
+import com.intellij.agent.workbench.sessions.assertNewThreadPromptLaunchOpensNewThreadView
 import com.intellij.agent.workbench.sessions.newThreadPromptLaunchRequest
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 class ClaudeNewThreadPromptLaunchIntegrationTest {
   @Test
   fun newThreadPlanModePromptUsesStartupPlanFlag() {
-    val observation = assertNewThreadPromptLaunchOpensNewChat(
+    val observation = assertNewThreadPromptLaunchOpensNewThreadView(
       descriptor = ClaudeAgentSessionProviderDescriptor(
         sessionSource = ScriptedSessionSource(provider = AgentSessionProvider.from("claude")),
         executableResolver = { ClaudeCliSupport.CLAUDE_COMMAND },

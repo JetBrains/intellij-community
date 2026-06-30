@@ -58,7 +58,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.chat" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.thread.view" scope="TEST" />
     <orderEntry type="module" module-name="intellij.terminal" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="jna" level="project" />

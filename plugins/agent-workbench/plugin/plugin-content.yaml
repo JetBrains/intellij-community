@@ -37,21 +37,18 @@
 - name: lib/modules/intellij.agent.workbench.ai.review.space.jar
   contentModules:
   - name: intellij.agent.workbench.ai.review.space
-- name: lib/modules/intellij.agent.workbench.chat.jar
-  contentModules:
-  - name: intellij.agent.workbench.chat
 - name: lib/modules/intellij.agent.workbench.claude.awb.jar
   contentModules:
   - name: intellij.agent.workbench.claude.awb
-- name: lib/modules/intellij.agent.workbench.codex.chat.jar
-  contentModules:
-  - name: intellij.agent.workbench.codex.chat
 - name: lib/modules/intellij.agent.workbench.codex.ide.jar
   contentModules:
   - name: intellij.agent.workbench.codex.ide
 - name: lib/modules/intellij.agent.workbench.codex.prompt.suggestions.jar
   contentModules:
   - name: intellij.agent.workbench.codex.prompt.suggestions
+- name: lib/modules/intellij.agent.workbench.codex.thread.view.jar
+  contentModules:
+  - name: intellij.agent.workbench.codex.thread.view
 - name: lib/modules/intellij.agent.workbench.container.eel.jar
   contentModules:
   - name: intellij.agent.workbench.container.eel
@@ -116,6 +113,9 @@
 - name: lib/modules/intellij.agent.workbench.settings.jar
   contentModules:
   - name: intellij.agent.workbench.settings
+- name: lib/modules/intellij.agent.workbench.thread.view.jar
+  contentModules:
+  - name: intellij.agent.workbench.thread.view
 - name: lib/modules/intellij.agent.workbench.ui.jar
   contentModules:
   - name: intellij.agent.workbench.ui

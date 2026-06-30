@@ -54,7 +54,7 @@ interface AgentPromptLauncherBridge {
     return emptyList()
   }
 
-  suspend fun addContextToOpenChatTarget(request: AgentPromptAddContextToTargetRequest): AgentPromptAddContextToTargetResult {
+  suspend fun addContextToOpenThreadViewTarget(request: AgentPromptAddContextToTargetRequest): AgentPromptAddContextToTargetResult {
     return AgentPromptAddContextToTargetResult.UNAVAILABLE
   }
 

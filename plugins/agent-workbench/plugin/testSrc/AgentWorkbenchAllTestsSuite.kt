@@ -7,7 +7,7 @@ import org.junit.platform.suite.api.Suite
 @Suite
 @SelectPackages(
   "com.intellij.platform.ai.agent.common",
-  "com.intellij.agent.workbench.chat",
+  "com.intellij.agent.workbench.thread.view",
   "com.intellij.platform.ai.agent.claude.sessions",
   "com.intellij.agent.workbench.codex.ide",
   "com.intellij.platform.ai.agent.codex.sessions",

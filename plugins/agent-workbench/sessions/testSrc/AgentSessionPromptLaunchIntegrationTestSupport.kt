@@ -19,10 +19,10 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTermin
 import com.intellij.platform.ai.agent.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
-import com.intellij.agent.workbench.sessions.service.AgentSessionChatOpenExecutor
-import com.intellij.agent.workbench.sessions.service.DeferredAgentSessionChatOpenResult
-import com.intellij.agent.workbench.chat.AgentChatDeferredStartContent
-import com.intellij.agent.workbench.chat.AgentChatDeferredStartState
+import com.intellij.agent.workbench.sessions.service.AgentSessionThreadViewOpenExecutor
+import com.intellij.agent.workbench.sessions.service.DeferredAgentSessionThreadViewOpenResult
+import com.intellij.agent.workbench.thread.view.AgentThreadViewDeferredStartContent
+import com.intellij.agent.workbench.thread.view.AgentThreadViewDeferredStartState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
@@ -110,13 +110,13 @@ fun assertExistingThreadLaunchUsesPostStartDispatch(
   projectName: String = "Project A",
 ) {
   val provider = descriptor.provider
-  val chatOpenExecutor = RecordingChatOpenExecutor()
+  val threadViewOpenExecutor = RecordingThreadViewOpenExecutor()
   AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
     runBlocking(Dispatchers.Default) {
       withTestServiceAndLaunch(
         sessionSourcesProvider = { listOf(descriptor.sessionSource) },
         projectEntriesProvider = { listOf(openTestProjectEntry(projectPath, projectName)) },
-        chatOpenExecutor = chatOpenExecutor,
+        threadViewOpenExecutor = threadViewOpenExecutor,
       ) { service, launchService ->
         service.refresh()
         waitForCondition(timeoutMs = PROMPT_LAUNCH_WAIT_TIMEOUT_MS) {
@@ -129,13 +129,13 @@ fun assertExistingThreadLaunchUsesPostStartDispatch(
 
         assertThat(result.launched).isTrue()
         assertThat(result.error).isNull()
-        chatOpenExecutor.awaitOpenChatCalls(1)
+        threadViewOpenExecutor.awaitOpenThreadViewCalls(1)
 
-        val openRequest = checkNotNull(chatOpenExecutor.lastOpenChatRequest.get())
+        val openRequest = checkNotNull(threadViewOpenExecutor.lastOpenThreadViewRequest.get())
         val initialMessagePlan = descriptor.buildInitialMessagePlan(request.initialMessageRequest)
         val expectedSteps = descriptor.buildPostStartDispatchSteps(initialMessagePlan)
 
-        assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
+        assertThat(threadViewOpenExecutor.openNewThreadViewCalls.get()).isZero()
         assertThat(openRequest.normalizedPath).isEqualTo(projectPath)
         assertThat(openRequest.thread.id).isEqualTo(threadId)
         assertThat(openRequest.thread.provider).isEqualTo(provider)
@@ -157,13 +157,13 @@ fun assertExistingThreadLaunchUsesNoInitialPromptDelivery(
   projectName: String = "Project A",
 ) {
   val provider = descriptor.provider
-  val chatOpenExecutor = RecordingChatOpenExecutor()
+  val threadViewOpenExecutor = RecordingThreadViewOpenExecutor()
   AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
     runBlocking(Dispatchers.Default) {
       withTestServiceAndLaunch(
         sessionSourcesProvider = { listOf(descriptor.sessionSource) },
         projectEntriesProvider = { listOf(openTestProjectEntry(projectPath, projectName)) },
-        chatOpenExecutor = chatOpenExecutor,
+        threadViewOpenExecutor = threadViewOpenExecutor,
       ) { service, launchService ->
         service.refresh()
         waitForCondition(timeoutMs = PROMPT_LAUNCH_WAIT_TIMEOUT_MS) {
@@ -176,11 +176,11 @@ fun assertExistingThreadLaunchUsesNoInitialPromptDelivery(
 
         assertThat(result.launched).isTrue()
         assertThat(result.error).isNull()
-        chatOpenExecutor.awaitOpenChatCalls(1)
+        threadViewOpenExecutor.awaitOpenThreadViewCalls(1)
 
-        val openRequest = checkNotNull(chatOpenExecutor.lastOpenChatRequest.get())
+        val openRequest = checkNotNull(threadViewOpenExecutor.lastOpenThreadViewRequest.get())
 
-        assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
+        assertThat(threadViewOpenExecutor.openNewThreadViewCalls.get()).isZero()
         assertThat(openRequest.normalizedPath).isEqualTo(projectPath)
         assertThat(openRequest.thread.id).isEqualTo(threadId)
         assertThat(openRequest.thread.provider).isEqualTo(provider)
@@ -203,14 +203,14 @@ fun assertExistingThreadLaunchUsesStartupOverride(
   expectInitialMessageToken: Boolean = true,
 ): ExistingThreadPromptLaunchObservation {
   val provider = descriptor.provider
-  val chatOpenExecutor = RecordingChatOpenExecutor()
+  val threadViewOpenExecutor = RecordingThreadViewOpenExecutor()
   var observation: ExistingThreadPromptLaunchObservation? = null
   AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
     runBlocking(Dispatchers.Default) {
       withTestServiceAndLaunch(
         sessionSourcesProvider = { listOf(descriptor.sessionSource) },
         projectEntriesProvider = { listOf(openTestProjectEntry(projectPath, projectName)) },
-        chatOpenExecutor = chatOpenExecutor,
+        threadViewOpenExecutor = threadViewOpenExecutor,
       ) { service, launchService ->
         service.refresh()
         waitForCondition(timeoutMs = PROMPT_LAUNCH_WAIT_TIMEOUT_MS) {
@@ -223,12 +223,12 @@ fun assertExistingThreadLaunchUsesStartupOverride(
 
         assertThat(result.launched).isTrue()
         assertThat(result.error).isNull()
-        chatOpenExecutor.awaitOpenChatCalls(1)
+        threadViewOpenExecutor.awaitOpenThreadViewCalls(1)
 
-        val openRequest = checkNotNull(chatOpenExecutor.lastOpenChatRequest.get())
+        val openRequest = checkNotNull(threadViewOpenExecutor.lastOpenThreadViewRequest.get())
         val initialMessagePlan = descriptor.buildInitialMessagePlan(request.initialMessageRequest)
 
-        assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
+        assertThat(threadViewOpenExecutor.openNewThreadViewCalls.get()).isZero()
         assertThat(openRequest.normalizedPath).isEqualTo(projectPath)
         assertThat(openRequest.thread.id).isEqualTo(threadId)
         assertThat(openRequest.thread.provider).isEqualTo(provider)
@@ -261,7 +261,7 @@ fun assertExistingThreadLaunchUsesStartupOverride(
   return checkNotNull(observation)
 }
 
-fun assertNewThreadPromptLaunchOpensNewChat(
+fun assertNewThreadPromptLaunchOpensNewThreadView(
   descriptor: AgentSessionProviderDescriptor,
   request: AgentPromptLaunchRequest,
   projectName: String = "Project A",
@@ -270,7 +270,7 @@ fun assertNewThreadPromptLaunchOpensNewChat(
     "New-thread prompt launch assertions require request.targetThreadId to be null"
   }
 
-  val chatOpenExecutor = RecordingChatOpenExecutor()
+  val threadViewOpenExecutor = RecordingThreadViewOpenExecutor()
   var observation: NewThreadPromptLaunchObservation? = null
 
   AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
@@ -278,7 +278,7 @@ fun assertNewThreadPromptLaunchOpensNewChat(
       withTestServiceAndLaunch(
         sessionSourcesProvider = { listOf(descriptor.sessionSource) },
         projectEntriesProvider = { listOf(openTestProjectEntry(request.projectPath, projectName)) },
-        chatOpenExecutor = chatOpenExecutor,
+        threadViewOpenExecutor = threadViewOpenExecutor,
       ) { service, launchService ->
         service.refresh()
         waitForCondition(timeoutMs = PROMPT_LAUNCH_WAIT_TIMEOUT_MS) {
@@ -291,10 +291,10 @@ fun assertNewThreadPromptLaunchOpensNewChat(
 
         assertThat(result.launched).isTrue()
         assertThat(result.error).isNull()
-        chatOpenExecutor.awaitOpenNewChatCalls(1)
+        threadViewOpenExecutor.awaitOpenNewThreadViewCalls(1)
 
-        assertThat(chatOpenExecutor.openChatCalls.get()).isZero()
-        val openRequest = checkNotNull(chatOpenExecutor.lastOpenNewChatRequest.get())
+        assertThat(threadViewOpenExecutor.openThreadViewCalls.get()).isZero()
+        val openRequest = checkNotNull(threadViewOpenExecutor.lastOpenNewThreadViewRequest.get())
         observation = NewThreadPromptLaunchObservation(
           launchResult = result,
           normalizedPath = openRequest.normalizedPath,
@@ -318,11 +318,11 @@ fun assertNewThreadPromptLaunchOpensNewChat(
   return checkNotNull(observation)
 }
 
-fun launchNewThreadPromptRequestWithDefaultChatOpenExecutor(
+fun launchNewThreadPromptRequestWithDefaultThreadViewOpenExecutor(
   descriptor: AgentSessionProviderDescriptor,
   request: AgentPromptLaunchRequest,
   projectName: String = "Project A",
-  openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
+  openedThreadViewHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
   verifyLaunchSideEffects: suspend () -> Unit = {},
 ) {
   require(request.targetThreadId == null) {
@@ -353,7 +353,7 @@ fun launchNewThreadPromptRequestWithDefaultChatOpenExecutor(
           entryPoint = AgentWorkbenchEntryPoint.PROMPT,
           initialMessageRequest = request.initialMessageRequest,
           preferredDedicatedFrame = request.preferredDedicatedFrame,
-          openedChatHandler = openedChatHandler,
+          openedThreadViewHandler = openedThreadViewHandler,
           promptLaunchResolved = { launchResult -> result.complete(launchResult) },
           generationSettings = request.generationSettings,
           extraEnvVariables = request.containerSessionEnvVariables,
@@ -369,44 +369,44 @@ fun launchNewThreadPromptRequestWithDefaultChatOpenExecutor(
   }
 }
 
-internal class RecordingChatOpenExecutor(
-  private val onOpenChat: (suspend (OpenChatRequest, Int) -> Unit)? = null,
-  private val onOpenNewChat: (suspend (OpenNewChatRequest, Int) -> Unit)? = null,
-  private val onOpenPreparingNewChat: (suspend (OpenPreparingNewChatRequest, Int) -> Unit)? = null,
-) : AgentSessionChatOpenExecutor {
-  val openChatCalls: AtomicInteger = AtomicInteger(0)
-  val openNewChatCalls: AtomicInteger = AtomicInteger(0)
-  val openPreparingNewChatCalls: AtomicInteger = AtomicInteger(0)
-  val failPreparingNewChatCalls: AtomicInteger = AtomicInteger(0)
-  val openChatRequests: CopyOnWriteArrayList<OpenChatRequest> = CopyOnWriteArrayList()
-  val lastOpenChatRequest: AtomicReference<OpenChatRequest?> = AtomicReference(null)
-  val lastOpenChatHandler: AtomicReference<(suspend (Project, VirtualFile) -> Unit)?> = AtomicReference(null)
-  val lastOpenNewChatRequest: AtomicReference<OpenNewChatRequest?> = AtomicReference(null)
-  val lastOpenPreparingNewChatRequest: AtomicReference<OpenPreparingNewChatRequest?> = AtomicReference(null)
-  val lastFailPreparingNewChatMessage: AtomicReference<String?> = AtomicReference(null)
-  private val openChatCallsFlow: MutableStateFlow<Int> = MutableStateFlow(0)
-  private val openNewChatCallsFlow: MutableStateFlow<Int> = MutableStateFlow(0)
-  private val openPreparingNewChatCallsFlow: MutableStateFlow<Int> = MutableStateFlow(0)
+internal class RecordingThreadViewOpenExecutor(
+  private val onOpenThreadView: (suspend (OpenThreadViewRequest, Int) -> Unit)? = null,
+  private val onOpenNewThreadView: (suspend (OpenNewThreadViewRequest, Int) -> Unit)? = null,
+  private val onOpenPreparingNewThreadView: (suspend (OpenPreparingNewThreadViewRequest, Int) -> Unit)? = null,
+) : AgentSessionThreadViewOpenExecutor {
+  val openThreadViewCalls: AtomicInteger = AtomicInteger(0)
+  val openNewThreadViewCalls: AtomicInteger = AtomicInteger(0)
+  val openPreparingNewThreadViewCalls: AtomicInteger = AtomicInteger(0)
+  val failPreparingNewThreadViewCalls: AtomicInteger = AtomicInteger(0)
+  val openThreadViewRequests: CopyOnWriteArrayList<OpenThreadViewRequest> = CopyOnWriteArrayList()
+  val lastOpenThreadViewRequest: AtomicReference<OpenThreadViewRequest?> = AtomicReference(null)
+  val lastOpenThreadViewHandler: AtomicReference<(suspend (Project, VirtualFile) -> Unit)?> = AtomicReference(null)
+  val lastOpenNewThreadViewRequest: AtomicReference<OpenNewThreadViewRequest?> = AtomicReference(null)
+  val lastOpenPreparingNewThreadViewRequest: AtomicReference<OpenPreparingNewThreadViewRequest?> = AtomicReference(null)
+  val lastFailPreparingNewThreadViewMessage: AtomicReference<String?> = AtomicReference(null)
+  private val openThreadViewCallsFlow: MutableStateFlow<Int> = MutableStateFlow(0)
+  private val openNewThreadViewCallsFlow: MutableStateFlow<Int> = MutableStateFlow(0)
+  private val openPreparingNewThreadViewCallsFlow: MutableStateFlow<Int> = MutableStateFlow(0)
 
-  suspend fun awaitOpenChatCalls(expected: Int, timeoutMs: Long = PROMPT_LAUNCH_WAIT_TIMEOUT_MS) {
+  suspend fun awaitOpenThreadViewCalls(expected: Int, timeoutMs: Long = PROMPT_LAUNCH_WAIT_TIMEOUT_MS) {
     withTimeout(timeoutMs.milliseconds) {
-      openChatCallsFlow.first { calls -> calls >= expected }
+      openThreadViewCallsFlow.first { calls -> calls >= expected }
     }
   }
 
-  suspend fun awaitOpenNewChatCalls(expected: Int, timeoutMs: Long = PROMPT_LAUNCH_WAIT_TIMEOUT_MS) {
+  suspend fun awaitOpenNewThreadViewCalls(expected: Int, timeoutMs: Long = PROMPT_LAUNCH_WAIT_TIMEOUT_MS) {
     withTimeout(timeoutMs.milliseconds) {
-      openNewChatCallsFlow.first { calls -> calls >= expected }
+      openNewThreadViewCallsFlow.first { calls -> calls >= expected }
     }
   }
 
-  suspend fun awaitOpenPreparingNewChatCalls(expected: Int, timeoutMs: Long = PROMPT_LAUNCH_WAIT_TIMEOUT_MS) {
+  suspend fun awaitOpenPreparingNewThreadViewCalls(expected: Int, timeoutMs: Long = PROMPT_LAUNCH_WAIT_TIMEOUT_MS) {
     withTimeout(timeoutMs.milliseconds) {
-      openPreparingNewChatCallsFlow.first { calls -> calls >= expected }
+      openPreparingNewThreadViewCallsFlow.first { calls -> calls >= expected }
     }
   }
 
-  override suspend fun openChat(
+  override suspend fun openThreadView(
     normalizedPath: String,
     projectDirectory: String?,
     thread: AgentSessionThread,
@@ -418,9 +418,9 @@ internal class RecordingChatOpenExecutor(
     launchTargetId: String?,
     surfaceId: AgentSessionSurfaceId?,
     generationSettings: AgentPromptGenerationSettings,
-    openedChatHandler: (suspend (Project, VirtualFile) -> Unit)?,
+    openedThreadViewHandler: (suspend (Project, VirtualFile) -> Unit)?,
   ) {
-    val request = OpenChatRequest(
+    val request = OpenThreadViewRequest(
       normalizedPath = normalizedPath,
       projectDirectory = projectDirectory,
       thread = thread,
@@ -438,15 +438,15 @@ internal class RecordingChatOpenExecutor(
       surfaceId = surfaceId,
       generationSettings = generationSettings,
     )
-    val callIndex = openChatCalls.incrementAndGet()
-    openChatRequests.add(request)
-    lastOpenChatRequest.set(request)
-    lastOpenChatHandler.set(openedChatHandler)
-    openChatCallsFlow.value = callIndex
-    onOpenChat?.invoke(request, callIndex)
+    val callIndex = openThreadViewCalls.incrementAndGet()
+    openThreadViewRequests.add(request)
+    lastOpenThreadViewRequest.set(request)
+    lastOpenThreadViewHandler.set(openedThreadViewHandler)
+    openThreadViewCallsFlow.value = callIndex
+    onOpenThreadView?.invoke(request, callIndex)
   }
 
-  override suspend fun openNewChat(
+  override suspend fun openNewThreadView(
     normalizedPath: String,
     projectDirectory: String?,
     identity: String,
@@ -458,10 +458,10 @@ internal class RecordingChatOpenExecutor(
     surfaceId: AgentSessionSurfaceId?,
     generationSettings: AgentPromptGenerationSettings,
     preferredDedicatedFrame: Boolean?,
-    openedChatHandler: (suspend (Project, VirtualFile) -> Unit)?,
+    openedThreadViewHandler: (suspend (Project, VirtualFile) -> Unit)?,
     threadTitle: String?,
   ) {
-    val request = OpenNewChatRequest(
+    val request = OpenNewThreadViewRequest(
       normalizedPath = normalizedPath,
       projectDirectory = projectDirectory,
       identity = identity,
@@ -479,14 +479,14 @@ internal class RecordingChatOpenExecutor(
       generationSettings = generationSettings,
       preferredDedicatedFrame = preferredDedicatedFrame,
     )
-    val callIndex = openNewChatCalls.incrementAndGet()
-    lastOpenNewChatRequest.set(request)
-    openNewChatCallsFlow.value = callIndex
-    onOpenNewChat?.invoke(request, callIndex)
-    openedChatHandler?.invoke(ProjectManager.getInstance().defaultProject, LightVirtualFile("opened-chat-$callIndex"))
+    val callIndex = openNewThreadViewCalls.incrementAndGet()
+    lastOpenNewThreadViewRequest.set(request)
+    openNewThreadViewCallsFlow.value = callIndex
+    onOpenNewThreadView?.invoke(request, callIndex)
+    openedThreadViewHandler?.invoke(ProjectManager.getInstance().defaultProject, LightVirtualFile("opened-threadView-$callIndex"))
   }
 
-  override suspend fun openPreparingNewChat(
+  override suspend fun openPreparingNewThreadView(
     normalizedPath: String,
     projectDirectory: String?,
     identity: String,
@@ -497,12 +497,12 @@ internal class RecordingChatOpenExecutor(
     surfaceId: AgentSessionSurfaceId?,
     generationSettings: AgentPromptGenerationSettings,
     preferredDedicatedFrame: Boolean?,
-    openedChatHandler: (suspend (Project, VirtualFile) -> Unit)?,
+    openedThreadViewHandler: (suspend (Project, VirtualFile) -> Unit)?,
     threadTitle: String?,
-    waitingState: AgentChatDeferredStartState,
-    deferredStartContentProvider: ((Project) -> AgentChatDeferredStartContent)?,
-  ): DeferredAgentSessionChatOpenResult {
-    val request = OpenPreparingNewChatRequest(
+    waitingState: AgentThreadViewDeferredStartState,
+    deferredStartContentProvider: ((Project) -> AgentThreadViewDeferredStartContent)?,
+  ): DeferredAgentSessionThreadViewOpenResult {
+    val request = OpenPreparingNewThreadViewRequest(
       normalizedPath = normalizedPath,
       projectDirectory = projectDirectory,
       identity = identity,
@@ -516,18 +516,18 @@ internal class RecordingChatOpenExecutor(
       waitingState = waitingState,
       hasDeferredStartContentProvider = deferredStartContentProvider != null,
     )
-    val callIndex = openPreparingNewChatCalls.incrementAndGet()
-    lastOpenPreparingNewChatRequest.set(request)
-    openPreparingNewChatCallsFlow.value = callIndex
-    onOpenPreparingNewChat?.invoke(request, callIndex)
+    val callIndex = openPreparingNewThreadViewCalls.incrementAndGet()
+    lastOpenPreparingNewThreadViewRequest.set(request)
+    openPreparingNewThreadViewCallsFlow.value = callIndex
+    onOpenPreparingNewThreadView?.invoke(request, callIndex)
     val project = ProjectManager.getInstance().defaultProject
-    val file = LightVirtualFile("preparing-chat-$callIndex")
-    openedChatHandler?.invoke(project, file)
-    return DeferredAgentSessionChatOpenResult(project = project, file = file)
+    val file = LightVirtualFile("preparing-threadView-$callIndex")
+    openedThreadViewHandler?.invoke(project, file)
+    return DeferredAgentSessionThreadViewOpenResult(project = project, file = file)
   }
 
-  override suspend fun completePreparingNewChat(
-    openedChat: DeferredAgentSessionChatOpenResult,
+  override suspend fun completePreparingNewThreadView(
+    openedThreadView: DeferredAgentSessionThreadViewOpenResult,
     projectPath: String,
     identity: String,
     launchSpec: AgentSessionTerminalLaunchSpec,
@@ -541,7 +541,7 @@ internal class RecordingChatOpenExecutor(
     threadTitle: String,
     pendingMetadata: AgentPendingSessionMetadata?,
   ) {
-    openNewChat(
+    openNewThreadView(
       normalizedPath = projectPath,
       projectDirectory = null,
       identity = identity,
@@ -553,22 +553,22 @@ internal class RecordingChatOpenExecutor(
       surfaceId = surfaceId,
       generationSettings = generationSettings,
       preferredDedicatedFrame = preferredDedicatedFrame,
-      openedChatHandler = null,
+      openedThreadViewHandler = null,
       threadTitle = threadTitle,
     )
   }
 
-  override suspend fun failPreparingNewChat(
-    openedChat: DeferredAgentSessionChatOpenResult,
+  override suspend fun failPreparingNewThreadView(
+    openedThreadView: DeferredAgentSessionThreadViewOpenResult,
     title: String,
     message: String?,
   ) {
-    failPreparingNewChatCalls.incrementAndGet()
-    lastFailPreparingNewChatMessage.set(message)
+    failPreparingNewThreadViewCalls.incrementAndGet()
+    lastFailPreparingNewThreadViewMessage.set(message)
   }
 }
 
-internal data class OpenChatRequest(
+internal data class OpenThreadViewRequest(
   @JvmField val normalizedPath: String,
   @JvmField val projectDirectory: String?,
   @JvmField val thread: AgentSessionThread,
@@ -590,7 +590,7 @@ internal data class OpenChatRequest(
     get() = initialPromptMessage ?: postStartDispatchSteps.singleOrNull()?.text
 }
 
-internal data class OpenNewChatRequest(
+internal data class OpenNewThreadViewRequest(
   @JvmField val normalizedPath: String,
   @JvmField val projectDirectory: String?,
   @JvmField val identity: String,
@@ -612,7 +612,7 @@ internal data class OpenNewChatRequest(
     get() = initialPromptMessage ?: postStartDispatchSteps.singleOrNull()?.text
 }
 
-internal data class OpenPreparingNewChatRequest(
+internal data class OpenPreparingNewThreadViewRequest(
   @JvmField val normalizedPath: String,
   @JvmField val projectDirectory: String?,
   @JvmField val identity: String,
@@ -623,7 +623,7 @@ internal data class OpenPreparingNewChatRequest(
   val surfaceId: AgentSessionSurfaceId?,
   @JvmField val generationSettings: AgentPromptGenerationSettings,
   @JvmField val preferredDedicatedFrame: Boolean?,
-  @JvmField val waitingState: AgentChatDeferredStartState,
+  @JvmField val waitingState: AgentThreadViewDeferredStartState,
   @JvmField val hasDeferredStartContentProvider: Boolean,
 )
 

@@ -3,14 +3,14 @@
 
 package com.intellij.agent.workbench.sessions.service
 
-import com.intellij.agent.workbench.chat.AgentChatConcreteTabSnapshot
-import com.intellij.agent.workbench.chat.AgentChatOpenTabsRefreshSnapshot
-import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindReport
-import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindRequest
-import com.intellij.agent.workbench.chat.agentChatScopedRefreshSignals
-import com.intellij.agent.workbench.chat.clearOpenConcreteAgentChatNewThreadRebindAnchors
-import com.intellij.agent.workbench.chat.collectOpenAgentChatRefreshSnapshot
-import com.intellij.agent.workbench.chat.rebindOpenPendingAgentChatTabs
+import com.intellij.agent.workbench.thread.view.AgentThreadViewConcreteTabSnapshot
+import com.intellij.agent.workbench.thread.view.AgentThreadViewOpenTabsRefreshSnapshot
+import com.intellij.agent.workbench.thread.view.AgentThreadViewPendingTabRebindReport
+import com.intellij.agent.workbench.thread.view.AgentThreadViewPendingTabRebindRequest
+import com.intellij.agent.workbench.thread.view.agentThreadViewScopedRefreshSignals
+import com.intellij.agent.workbench.thread.view.clearOpenConcreteAgentThreadViewNewThreadRebindAnchors
+import com.intellij.agent.workbench.thread.view.collectOpenAgentThreadViewRefreshSnapshot
+import com.intellij.agent.workbench.thread.view.rebindOpenPendingAgentThreadViewTabs
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.core.parseAgentWorkbenchPathOrNull
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
@@ -66,21 +66,21 @@ internal class AgentSessionRefreshCoordinator(
   private val scheduleVfsRefresh: (Set<String>) -> Unit = ::scheduleAgentWorkbenchVfsRefresh,
   private val isVfsRefreshOnStatusUpdatesEnabled: (String) -> Boolean =
     AgentWorkbenchProjectRuntimeConfigs::isRefreshVfsOnStatusUpdatesEnabled,
-  private val openAgentChatSnapshotProvider: suspend () -> AgentChatOpenTabsRefreshSnapshot = ::collectOpenAgentChatRefreshSnapshot,
+  private val openAgentThreadViewSnapshotProvider: suspend () -> AgentThreadViewOpenTabsRefreshSnapshot = ::collectOpenAgentThreadViewRefreshSnapshot,
   private val providerDescriptorsByIdProvider: () -> List<AgentSessionProviderDescriptor> = AgentSessionProviders::allProvidersById,
   private val providerDescriptorProvider: (AgentSessionProvider) -> AgentSessionProviderDescriptor? = AgentSessionProviders::find,
   scopedRefreshSignalsProvider: (AgentSessionProvider) -> Flow<AgentSessionSourceUpdateEvent> = { provider ->
-    agentChatScopedRefreshSignals(provider)
+    agentThreadViewScopedRefreshSignals(provider)
   },
   private val presentationModel: AgentSessionThreadPresentationModel = service<AgentSessionThreadPresentationModel>(),
-  private val openAgentChatPendingTabsBinder: suspend (
+  private val openAgentThreadViewPendingTabsBinder: suspend (
     AgentSessionProvider,
-    Map<String, List<AgentChatPendingTabRebindRequest>>,
-  ) -> AgentChatPendingTabRebindReport = ::rebindOpenPendingAgentChatTabs,
+    Map<String, List<AgentThreadViewPendingTabRebindRequest>>,
+  ) -> AgentThreadViewPendingTabRebindReport = ::rebindOpenPendingAgentThreadViewTabs,
   private val clearOpenConcreteNewThreadRebindAnchors: (
     AgentSessionProvider,
-    Map<String, List<AgentChatConcreteTabSnapshot>>,
-  ) -> Int = ::clearOpenConcreteAgentChatNewThreadRebindAnchors,
+    Map<String, List<AgentThreadViewConcreteTabSnapshot>>,
+  ) -> Int = ::clearOpenConcreteAgentThreadViewNewThreadRebindAnchors,
   private val archiveTransitionSuppressions: AgentSessionArchiveTransitionSuppressions = AgentSessionArchiveTransitionSuppressions(),
   loadingDelayMs: Long = DEFAULT_AGENT_SESSION_LOADING_DELAY_MS,
 ) {
@@ -121,7 +121,7 @@ internal class AgentSessionRefreshCoordinator(
     resolveProviderWarningMessage = { provider, throwable ->
       resolveProviderWarningMessage(providerDescriptorProvider = providerDescriptorProvider, provider = provider, t = throwable)
     },
-    openAgentChatSnapshotProvider = openAgentChatSnapshotProvider,
+    openAgentThreadViewSnapshotProvider = openAgentThreadViewSnapshotProvider,
     presentationModel = presentationModel,
   )
   private val refreshScheduler = AgentSessionRefreshScheduler(
@@ -163,9 +163,9 @@ internal class AgentSessionRefreshCoordinator(
       providerRefreshSupportByProvider.getOrPut(provider) {
         AgentSessionThreadRebindSupport(
           provider = provider,
-          canBindPendingOpenChatTabs = descriptor.supportsPendingEditorTabRebind,
+          canBindPendingOpenThreadViewTabs = descriptor.supportsPendingEditorTabRebind,
           canRebindConcreteNewThreads = descriptor.supportsNewThreadRebind,
-          openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinder,
+          openAgentThreadViewPendingTabsBinder = openAgentThreadViewPendingTabsBinder,
           clearOpenConcreteNewThreadRebindAnchors = clearOpenConcreteNewThreadRebindAnchors,
         )
       }

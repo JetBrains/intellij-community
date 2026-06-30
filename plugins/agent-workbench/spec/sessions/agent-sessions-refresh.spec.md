@@ -61,7 +61,7 @@ Session refresh is event-driven and provider-agnostic. It merges provider result
 - Thread-targeted source updates must refresh only resolvable loaded/open paths and must not widen unresolved thread-only events into a full refresh.
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
-- Refresh and rebind flows may inspect open pending Agent Chat tabs for materialization or rebind, but synthetic pending rows must not be persisted to `AgentSessionsStateStore`.
+- Refresh and rebind flows may inspect open pending Agent Thread View tabs for materialization or rebind, but synthetic pending rows must not be persisted to `AgentSessionsStateStore`.
 
 - Provider refresh outcomes may be complete path snapshots or partial thread updates/removals. Partial outcomes must not remove unrelated provider rows or shared thread presentation.
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
@@ -72,7 +72,7 @@ Session refresh is event-driven and provider-agnostic. It merges provider result
 
 - Provider refresh publishes shared thread presentation keyed by normalized path and canonical thread identity so Agent Threads and open editor tabs show the same title/activity report. Agent Threads rows use canonical row activity, while activity counters use canonical chrome activity; shared presentation may refresh titles without changing counter buckets.
   [@test] ../../sessions/testSrc/AgentSessionThreadPresentationTest.kt
-  [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
+  [@test] ../../thread-view/testSrc/AgentThreadViewEditorServiceTest.kt
 
 - Activity and presentation updates carry evidence authority. Provisional provider signals may update row activity, but must not clear an existing attention-bucket chrome activity. Semantic provider signals and authoritative snapshots may clear attention when they explicitly report a non-attention activity.
   [@test] ../../sessions/testSrc/service/AgentSessionRefreshSchedulerTest.kt
@@ -90,4 +90,4 @@ Session refresh is event-driven and provider-agnostic. It merges provider result
 - `agent-sessions.spec.md`
 - `agent-sessions-tree.spec.md`
 - `agent-sessions-thread-visibility.spec.md`
-- `../chat/agent-chat-editor.spec.md`
+- `../thread-view/agent-thread-view.spec.md`

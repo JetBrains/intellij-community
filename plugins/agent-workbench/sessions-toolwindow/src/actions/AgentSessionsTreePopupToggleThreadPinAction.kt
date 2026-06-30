@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.toolwindow.actions
 
-import com.intellij.agent.workbench.chat.AgentChatOpenTabsPresentationStateService
-import com.intellij.agent.workbench.chat.setAgentChatEditorTabPinned
-import com.intellij.agent.workbench.chat.setOpenTopLevelAgentChatThreadTabsPinned
+import com.intellij.agent.workbench.thread.view.AgentThreadViewOpenTabsPresentationStateService
+import com.intellij.agent.workbench.thread.view.setAgentThreadViewEditorTabPinned
+import com.intellij.agent.workbench.thread.view.setOpenTopLevelAgentThreadViewThreadTabsPinned
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
@@ -32,24 +32,24 @@ internal class AgentSessionsTreePopupToggleThreadPinAction : DumbAwareAction {
   constructor() {
     resolveContext = ::resolveAgentSessionsTreePopupActionContext
     isThreadPinned = { target ->
-      service<AgentChatOpenTabsPresentationStateService>().state.value.isPinnedTopLevelThread(
+      service<AgentThreadViewOpenTabsPresentationStateService>().state.value.isPinnedTopLevelThread(
         provider = target.provider,
         projectPath = target.path,
         threadId = target.threadId,
       )
     }
-    openThread = openThread@{ context, target, openedChatHandler ->
+    openThread = openThread@{ context, target, openedThreadViewHandler ->
       val thread = target.thread ?: return@openThread
-      service<AgentSessionLaunchService>().openChatThread(
+      service<AgentSessionLaunchService>().openThreadViewThread(
         path = target.path,
         thread = thread,
         entryPoint = AgentWorkbenchEntryPoint.TREE_POPUP,
         currentProject = context.project,
-        openedChatHandler = openedChatHandler,
+        openedThreadViewHandler = openedThreadViewHandler,
       )
     }
     setOpenTabsPinned = ::setOpenTabsPinnedForTarget
-    setOpenedFilePinned = ::setAgentChatEditorTabPinned
+    setOpenedFilePinned = ::setAgentThreadViewEditorTabPinned
   }
 
   internal constructor(
@@ -117,7 +117,7 @@ internal class AgentSessionsTreePopupToggleThreadPinAction : DumbAwareAction {
 }
 
 private suspend fun setOpenTabsPinnedForTarget(target: SessionActionTarget.Thread, pinned: Boolean): Int {
-  return setOpenTopLevelAgentChatThreadTabsPinned(
+  return setOpenTopLevelAgentThreadViewThreadTabsPinned(
     provider = target.provider,
     projectPath = target.path,
     threadId = target.threadId,

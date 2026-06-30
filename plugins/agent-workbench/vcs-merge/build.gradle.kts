@@ -59,7 +59,7 @@ dependencies {
 
   implementation(project(":common"))
   implementation(project(":core"))
-  implementation(project(":chat"))
+  implementation(project(":thread-view"))
   implementation(project(":prompt-core"))
   implementation(project(":sessions"))
   implementation(project(":sessions-core"))

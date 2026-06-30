@@ -3,7 +3,7 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 
 // @spec community/plugins/agent-workbench/spec/sessions/agent-sessions.spec.md
 
-import com.intellij.agent.workbench.chat.AGENT_CHAT_THREAD_OUTLINE_TOOL_WINDOW_ID
+import com.intellij.agent.workbench.thread.view.AGENT_THREAD_VIEW_THREAD_OUTLINE_TOOL_WINDOW_ID
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.toolWindow.DefaultToolWindowDescriptorBuilder
 import com.intellij.toolWindow.DefaultToolWindowLayoutBuilder
@@ -53,7 +53,7 @@ private fun addAgentToolWindows(builder: DefaultToolWindowStripeBuilder) {
     weight = AGENT_TOOL_WINDOW_WEIGHT
     isSplit = true
   }
-  builder.addOrUpdate(AGENT_CHAT_THREAD_OUTLINE_TOOL_WINDOW_ID) {
+  builder.addOrUpdate(AGENT_THREAD_VIEW_THREAD_OUTLINE_TOOL_WINDOW_ID) {
     weight = AGENT_TOOL_WINDOW_WEIGHT
     isSplit = true
   }

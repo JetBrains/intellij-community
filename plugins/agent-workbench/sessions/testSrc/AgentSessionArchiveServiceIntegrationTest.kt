@@ -207,7 +207,7 @@ class AgentSessionArchiveServiceIntegrationTest {
         withServiceAndArchive(
           sessionSourcesProvider = { listOf(sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
-          archiveChatCleanup = { projectPath, threadIdentity, _ ->
+          archiveThreadViewCleanup = { projectPath, threadIdentity, _ ->
             cleanupCalls.add(projectPath to threadIdentity)
           },
         ) { service, archiveService ->
@@ -280,7 +280,7 @@ class AgentSessionArchiveServiceIntegrationTest {
         withServiceAndArchive(
           sessionSourcesProvider = { listOf(sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
-          archiveChatCleanup = { projectPath, threadIdentity, _ ->
+          archiveThreadViewCleanup = { projectPath, threadIdentity, _ ->
             cleanupCalls.add(projectPath to threadIdentity)
           },
         ) { service, archiveService ->
@@ -492,7 +492,7 @@ class AgentSessionArchiveServiceIntegrationTest {
         withServiceAndArchive(
           sessionSourcesProvider = { listOf(sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
-          archiveChatCleanup = { projectPath, threadIdentity, _ -> cleanupCalls.add(projectPath to threadIdentity) },
+          archiveThreadViewCleanup = { projectPath, threadIdentity, _ -> cleanupCalls.add(projectPath to threadIdentity) },
           archiveBackgroundTaskRunner = backgroundRunner,
         ) { service, archiveService ->
           service.refresh()
@@ -591,7 +591,7 @@ class AgentSessionArchiveServiceIntegrationTest {
   }
 
   @Test
-  fun archiveThreadDoesNotCleanupChatMetadataWhenArchiveFails() = runBlocking(Dispatchers.Default) {
+  fun archiveThreadDoesNotCleanupThreadViewMetadataWhenArchiveFails() = runBlocking(Dispatchers.Default) {
     val archiveCalls = AtomicInteger(0)
     val cleanupCalls = CopyOnWriteArrayList<Pair<String, String>>()
     val backgroundRunner = PausedArchiveBackgroundTaskRunner()
@@ -621,7 +621,7 @@ class AgentSessionArchiveServiceIntegrationTest {
         withServiceAndArchive(
           sessionSourcesProvider = { listOf(sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
-          archiveChatCleanup = { projectPath, threadIdentity, _ ->
+          archiveThreadViewCleanup = { projectPath, threadIdentity, _ ->
             cleanupCalls.add(projectPath to threadIdentity)
           },
           archiveBackgroundTaskRunner = backgroundRunner,
@@ -674,7 +674,7 @@ class AgentSessionArchiveServiceIntegrationTest {
         withServiceAndArchive(
           sessionSourcesProvider = { listOf(sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
-          archiveChatCleanup = { projectPath, threadIdentity, _ ->
+          archiveThreadViewCleanup = { projectPath, threadIdentity, _ ->
             cleanupCalls.add(projectPath to threadIdentity)
           },
         ) { service, archiveService ->
@@ -739,7 +739,7 @@ class AgentSessionArchiveServiceIntegrationTest {
           sessionSourcesProvider = { listOf(sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
           warmState = warmState,
-          archiveChatCleanup = { projectPath, threadIdentity, subAgentId ->
+          archiveThreadViewCleanup = { projectPath, threadIdentity, subAgentId ->
             cleanupCalls.add(Triple(projectPath, threadIdentity, subAgentId))
           },
         ) { service, archiveService ->
@@ -831,7 +831,7 @@ class AgentSessionArchiveServiceIntegrationTest {
           withServiceAndArchive(
             sessionSourcesProvider = { listOf(sessionSource) },
             projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
-            archiveChatCleanup = { _, _, _ -> error("cleanup failed") },
+            archiveThreadViewCleanup = { _, _, _ -> error("cleanup failed") },
           ) { service, archiveService ->
             service.refresh()
             waitForCondition {
@@ -884,7 +884,7 @@ class AgentSessionArchiveServiceIntegrationTest {
         withServiceAndArchive(
           sessionSourcesProvider = { listOf(sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
-          archiveChatCleanup = { projectPath, threadIdentity, subAgentId ->
+          archiveThreadViewCleanup = { projectPath, threadIdentity, subAgentId ->
             operations.add(listOf("cleanup", projectPath, threadIdentity, subAgentId))
           },
         ) { service, archiveService ->
@@ -944,7 +944,7 @@ class AgentSessionArchiveServiceIntegrationTest {
           withServiceAndArchive(
             sessionSourcesProvider = { listOf(sessionSource) },
             projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
-            archiveChatCleanup = { _, _, _ ->
+            archiveThreadViewCleanup = { _, _, _ ->
               cleanupCalls.incrementAndGet()
               error("pre-archive cleanup failed")
             },
@@ -1206,7 +1206,7 @@ private fun testClaudeBridge(
     override val supportsArchiveThread: Boolean
       get() = true
 
-    override val closeOpenChatBeforeArchiveThread: Boolean
+    override val closeOpenThreadViewBeforeArchiveThread: Boolean
       get() = true
 
     override val supportsUnarchiveThread: Boolean

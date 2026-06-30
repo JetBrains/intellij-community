@@ -39,7 +39,7 @@ Codex rollout files are parsed for discovery, project-file-change evidence, cost
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexRolloutSessionsWatcherTest.kt
   [@test] ../../lib-agent/filewatch/testSrc/AgentWorkbenchDirectoryWatcherTest.kt
 
-- Active chat terminal refresh may watch concrete rollout files for live outline invalidation and project-file-change evidence. Activity-only or title-only rollout appends may emit neutral scoped active-thread invalidation events, but must not carry thread ids, activity updates, or presentation updates. Workbench uses Codex app-server `fs/watch`/`fs/changed` for app-server-backed filesystem notifications such as replace or rename updates.
+- Active thread view terminal refresh may watch concrete rollout files for live outline invalidation and project-file-change evidence. Activity-only or title-only rollout appends may emit neutral scoped active-thread invalidation events, but must not carry thread ids, activity updates, or presentation updates. Workbench uses Codex app-server `fs/watch`/`fs/changed` for app-server-backed filesystem notifications such as replace or rename updates.
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexSessionSourceRealAppServerIntegrationTest.kt
 

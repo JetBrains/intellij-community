@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
-import com.intellij.agent.workbench.chat.AgentChatThreadCoordinates
+import com.intellij.agent.workbench.thread.view.AgentThreadViewEditorTabActionContext
+import com.intellij.agent.workbench.thread.view.AgentThreadViewThreadCoordinates
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
@@ -38,12 +38,12 @@ class PendingThreadRebindTargetResolverTest {
       },
     )
 
-    val context = AgentChatEditorTabActionContext(
+    val context = AgentThreadViewEditorTabActionContext(
       project = ProjectManager.getInstance().defaultProject,
       path = PROJECT_PATH,
       tabKey = "pending-codex:new-1",
       threadIdentity = "codex:new-1",
-      threadCoordinates = AgentChatThreadCoordinates(
+      threadCoordinates = AgentThreadViewThreadCoordinates(
         provider = AgentSessionProvider.from("codex"),
         sessionId = "new-1",
         isPending = true,
@@ -81,12 +81,12 @@ class PendingThreadRebindTargetResolverTest {
       },
     )
 
-    val context = AgentChatEditorTabActionContext(
+    val context = AgentThreadViewEditorTabActionContext(
       project = ProjectManager.getInstance().defaultProject,
       path = PROJECT_PATH,
       tabKey = "pending-codex:new-1",
       threadIdentity = "codex:new-1",
-      threadCoordinates = AgentChatThreadCoordinates(
+      threadCoordinates = AgentThreadViewThreadCoordinates(
         provider = AgentSessionProvider.from("codex"),
         sessionId = "new-1",
         isPending = true,
@@ -121,12 +121,12 @@ class PendingThreadRebindTargetResolverTest {
       },
     )
 
-    val context = AgentChatEditorTabActionContext(
+    val context = AgentThreadViewEditorTabActionContext(
       project = ProjectManager.getInstance().defaultProject,
       path = PROJECT_PATH,
       tabKey = "pending-codex:new-1",
       threadIdentity = "codex:new-1",
-      threadCoordinates = AgentChatThreadCoordinates(
+      threadCoordinates = AgentThreadViewThreadCoordinates(
         provider = AgentSessionProvider.from("codex"),
         sessionId = "new-1",
         isPending = true,
@@ -155,12 +155,12 @@ class PendingThreadRebindTargetResolverTest {
         },
       )
 
-      val context = AgentChatEditorTabActionContext(
+      val context = AgentThreadViewEditorTabActionContext(
         project = ProjectManager.getInstance().defaultProject,
         path = PROJECT_PATH,
         tabKey = "pending-codex:new-1",
         threadIdentity = "codex:new-1",
-        threadCoordinates = AgentChatThreadCoordinates(
+        threadCoordinates = AgentThreadViewThreadCoordinates(
           provider = AgentSessionProvider.from("codex"),
           sessionId = "new-1",
           isPending = true,
@@ -204,12 +204,12 @@ class PendingThreadRebindTargetResolverTest {
       },
     )
 
-    val context = AgentChatEditorTabActionContext(
+    val context = AgentThreadViewEditorTabActionContext(
       project = ProjectManager.getInstance().defaultProject,
       path = PROJECT_PATH,
       tabKey = "pending-claude:new-1",
       threadIdentity = "claude:new-1",
-      threadCoordinates = AgentChatThreadCoordinates(
+      threadCoordinates = AgentThreadViewThreadCoordinates(
         provider = AgentSessionProvider.from("claude"),
         sessionId = "new-1",
         isPending = true,
@@ -246,12 +246,12 @@ class PendingThreadRebindTargetResolverTest {
       },
     )
 
-    val context = AgentChatEditorTabActionContext(
+    val context = AgentThreadViewEditorTabActionContext(
       project = ProjectManager.getInstance().defaultProject,
       path = PROJECT_PATH,
       tabKey = "pending-claude:new-1",
       threadIdentity = "claude:new-1",
-      threadCoordinates = AgentChatThreadCoordinates(
+      threadCoordinates = AgentThreadViewThreadCoordinates(
         provider = AgentSessionProvider.from("claude"),
         sessionId = "new-1",
         isPending = true,
@@ -284,12 +284,12 @@ class PendingThreadRebindTargetResolverTest {
       },
     )
 
-    val context = AgentChatEditorTabActionContext(
+    val context = AgentThreadViewEditorTabActionContext(
       project = ProjectManager.getInstance().defaultProject,
       path = PROJECT_PATH,
       tabKey = "pending-codex:new-1",
       threadIdentity = "codex:new-1",
-      threadCoordinates = AgentChatThreadCoordinates(
+      threadCoordinates = AgentThreadViewThreadCoordinates(
         provider = AgentSessionProvider.from("codex"),
         sessionId = "new-1",
         isPending = true,

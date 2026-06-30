@@ -5,16 +5,16 @@ package com.intellij.agent.workbench.sessions.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
+import com.intellij.agent.workbench.sessions.frame.AgentThreadViewOpenModeSettings
 import com.intellij.openapi.project.DumbAwareToggleAction
 
 internal class AgentSessionsDedicatedFrameToggleAction : DumbAwareToggleAction() {
   override fun isSelected(e: AnActionEvent): Boolean {
-    return AgentChatOpenModeSettings.openInDedicatedFrame()
+    return AgentThreadViewOpenModeSettings.openInDedicatedFrame()
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    AgentChatOpenModeSettings.setOpenInDedicatedFrame(state)
+    AgentThreadViewOpenModeSettings.setOpenInDedicatedFrame(state)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

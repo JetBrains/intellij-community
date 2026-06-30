@@ -210,7 +210,7 @@ private fun initialMessageRequestWithSelectionHint(): AgentPromptInitialMessageR
 }
 
 private class RecordingDeferredNewSessionHandle : AgentDeferredNewSessionHandle {
-  override val file: VirtualFile = LightVirtualFile("agent-chat", "")
+  override val file: VirtualFile = LightVirtualFile("agent-thread-view", "")
   val events = mutableListOf<String>()
   var startedRequest: AgentPromptInitialMessageRequest? = null
     private set

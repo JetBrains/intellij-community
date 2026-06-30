@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.actions
 
-import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
-import com.intellij.agent.workbench.chat.resolveAgentChatEditorTabActionContext
+import com.intellij.agent.workbench.thread.view.AgentThreadViewEditorTabActionContext
+import com.intellij.agent.workbench.thread.view.resolveAgentThreadViewEditorTabActionContext
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -17,19 +17,19 @@ internal class AgentSessionsSelectThreadInToolWindowAction @JvmOverloads constru
   private val activateSessionsToolWindow: (Project) -> Unit = { project ->
     ToolWindowManager.getInstance(project).getToolWindow(AGENT_SESSIONS_TOOL_WINDOW_ID)?.activate(null)
   },
-  resolveContext: (AnActionEvent) -> AgentChatEditorTabActionContext? = ::resolveAgentChatEditorTabActionContext,
+  resolveContext: (AnActionEvent) -> AgentThreadViewEditorTabActionContext? = ::resolveAgentThreadViewEditorTabActionContext,
 ) : AgentSessionsEditorTabActionBase(resolveContext) {
 
   override fun actionPerformed(e: AnActionEvent) {
     val context = resolveEditorTabContext(e) ?: return
-    val conversationTarget = resolveEditorTabConversationTarget(context) ?: return
-    ensureThreadVisible(context.path, conversationTarget.provider, conversationTarget.threadId)
+    val threadTarget = resolveEditorTabThreadTarget(context) ?: return
+    ensureThreadVisible(context.path, threadTarget.provider, threadTarget.threadId)
     activateSessionsToolWindow(context.project)
   }
 
   override fun update(e: AnActionEvent) {
     val context = resolveEditorTabContext(e)
-    e.presentation.isEnabledAndVisible = context != null && resolveEditorTabConversationTarget(context) != null
+    e.presentation.isEnabledAndVisible = context != null && resolveEditorTabThreadTarget(context) != null
   }
 }
 

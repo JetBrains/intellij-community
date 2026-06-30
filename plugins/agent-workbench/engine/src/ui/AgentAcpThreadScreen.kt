@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.engine.ui
 
-import com.intellij.agent.workbench.chat.AgentChatPreferredFocusableContent
+import com.intellij.agent.workbench.thread.view.AgentThreadViewPreferredFocusableContent
 import com.intellij.agent.workbench.engine.core.RuntimeKind
 import com.intellij.agent.workbench.engine.core.ThreadActionPrompt
 import com.intellij.agent.workbench.engine.core.ThreadActionPromptButton
@@ -75,13 +75,13 @@ import kotlin.math.ceil
 /**
  * Non-terminal, IDE-native screen for a Engine/ACP thread. Renders the live [ThreadProjection]
  * (status, title, transcript) from the Engine and re-renders on every projection update, so an ACP
- * (or mock/remote) session appears inside the same Agent Chat editor tab instead of a terminal.
+ * (or mock/remote) session appears inside the same Agent Thread View editor tab instead of a terminal.
  */
 internal class AgentAcpThreadScreen(
   private val project: Project,
   private val threadId: ThreadId,
   parent: Disposable,
-) : JPanel(BorderLayout()), AgentChatPreferredFocusableContent {
+) : JPanel(BorderLayout()), AgentThreadViewPreferredFocusableContent {
   private val statusLabel = JBLabel().apply { font = JBFont.label().asBold() }
   private val subtitleLabel = JBLabel().apply { foreground = UIUtil.getContextHelpForeground() }
   private var renderCounter = 0
@@ -185,7 +185,7 @@ internal class AgentAcpThreadScreen(
 
   override fun addNotify() {
     super.addNotify()
-    // Opening/focusing the chat clears its "unread" attention badge.
+    // Opening/focusing the threadView clears its "unread" attention badge.
     if (!project.isDisposed) EngineUnreadTracker.getInstance(project).markRead(threadId)
   }
 

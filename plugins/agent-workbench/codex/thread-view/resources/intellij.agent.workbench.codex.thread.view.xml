@@ -1,0 +1,19 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.agent.workbench.thread.view"/>
+    <module name="intellij.platform.ai.agent.common"/>
+    <module name="intellij.platform.ai.agent.core"/>
+    <module name="intellij.platform.ai.agent.sessions.core"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <agent.workbench.agentThreadViewProviderBehavior
+      providerId="codex"
+      implementation="com.intellij.agent.workbench.codex.thread.view.CodexAgentThreadViewProviderBehavior"/>
+    <agent.workbench.agentThreadViewTerminalTitleThreadRebindContributor
+      providerId="codex"
+      implementation="com.intellij.agent.workbench.codex.thread.view.CodexTerminalTitleThreadRebindContributor"/>
+  </extensions>
+</idea-plugin>

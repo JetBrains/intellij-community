@@ -15,7 +15,7 @@ sealed interface SessionActionTarget {
     @JvmField val path: String,
   ) : SessionActionTarget
 
-  sealed interface Conversation : SessionActionTarget {
+  sealed interface ThreadTarget : SessionActionTarget {
     val path: String
     val provider: AgentSessionProvider
     val threadId: String
@@ -28,7 +28,7 @@ sealed interface SessionActionTarget {
     override val threadId: String,
     override val title: String,
     val thread: AgentSessionThread? = null,
-  ) : Conversation
+  ) : ThreadTarget
 
   data class SubAgent(
     override val path: String,
@@ -38,7 +38,7 @@ sealed interface SessionActionTarget {
     override val title: String,
     @JvmField val thread: AgentSessionThread? = null,
     @JvmField val subAgent: AgentSubAgent? = null,
-  ) : Conversation {
+  ) : ThreadTarget {
     override val threadId: String
       get() = subAgentId
   }

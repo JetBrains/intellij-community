@@ -197,7 +197,7 @@ class PiJbCentralModelCatalogTest {
               "id": "openai-gpt-5-5",
               "providerModelID": "gpt-5.5",
               "features": ["Responses", "Proxy"],
-              "chatDefinition": {
+              "threadViewDefinition": {
                 "parameters": [
                   {"fqdn": "llm.parameters.reasoning-effort"}
                 ],
@@ -214,8 +214,8 @@ class PiJbCentralModelCatalogTest {
             },
             {
               "id": "anthropic-claude-4-5-sonnet",
-              "features": ["Chat", "Proxy"],
-              "chatDefinition": {
+              "features": ["ThreadView", "Proxy"],
+              "threadViewDefinition": {
                 "roles": ["user", "assistant", "system", "tool"],
                 "parameters": [
                   {"fqdn": "llm.parameters.tools"}
@@ -231,14 +231,14 @@ class PiJbCentralModelCatalogTest {
             {
               "id": "openai-gpt-4-1",
               "providerModelID": "gpt-4.1",
-              "features": ["Chat"],
+              "features": ["ThreadView"],
               "provider": "OpenAI",
               "modelName": "GPT-4.1"
             },
             {
               "id": "anthropic-claude-fable-5",
-              "features": ["Chat", "Proxy"],
-              "chatDefinition": {
+              "features": ["ThreadView", "Proxy"],
+              "threadViewDefinition": {
                 "roles": ["user", "assistant", "system", "tool"],
                 "parameters": [
                   {"fqdn": "llm.parameters.tools"}
@@ -251,8 +251,8 @@ class PiJbCentralModelCatalogTest {
             {
               "id": "google-gemini-2-5-flash",
               "providerModelID": "gemini-2.5-flash",
-              "features": ["Chat", "Proxy"],
-              "chatDefinition": {
+              "features": ["ThreadView", "Proxy"],
+              "threadViewDefinition": {
                 "roles": ["user", "assistant", "system", "tool"],
                 "parameters": [
                   {"fqdn": "llm.parameters.tools"},
@@ -272,8 +272,8 @@ class PiJbCentralModelCatalogTest {
             {
               "id": "google-gemini-2-5-flash-no-tools",
               "providerModelID": "gemini-2.5-flash",
-              "features": ["Chat", "Proxy"],
-              "chatDefinition": {
+              "features": ["ThreadView", "Proxy"],
+              "threadViewDefinition": {
                 "roles": ["user", "assistant", "system"]
               },
               "provider": "Google Vertex AI",

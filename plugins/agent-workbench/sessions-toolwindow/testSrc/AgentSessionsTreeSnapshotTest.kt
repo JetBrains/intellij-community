@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.toolwindow
 
-import com.intellij.agent.workbench.chat.AgentChatOpenTabsPresentationState
-import com.intellij.agent.workbench.chat.AgentChatPendingTabSnapshot
+import com.intellij.agent.workbench.thread.view.AgentThreadViewOpenTabsPresentationState
+import com.intellij.agent.workbench.thread.view.AgentThreadViewPendingTabSnapshot
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.buildAgentThreadIdentity
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
@@ -14,7 +14,7 @@ import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
 import com.intellij.agent.workbench.sessions.toolwindow.tree.archiveTargetFromThreadNode
 import com.intellij.agent.workbench.sessions.toolwindow.tree.buildSessionTreeModel
-import com.intellij.agent.workbench.sessions.toolwindow.tree.overlayPendingAgentChatTabs
+import com.intellij.agent.workbench.sessions.toolwindow.tree.overlayPendingAgentThreadViewTabs
 import com.intellij.agent.workbench.sessions.toolwindow.tree.sessionTreeNodeSearchText
 import com.intellij.agent.workbench.sessions.toolwindow.ui.SessionTreeStrictSubstringComparator
 import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolder
@@ -131,7 +131,7 @@ class AgentSessionsTreeSnapshotTest {
       visibleClosedProjectCount = Int.MAX_VALUE,
       visibleThreadCounts = mapOf(projectPath to 1),
       treeUiState = InMemorySessionTreeUiState(),
-      openTabsPresentationState = AgentChatOpenTabsPresentationState(
+      openTabsPresentationState = AgentThreadViewOpenTabsPresentationState(
         pinnedTopLevelThreadIdsByProvider = mapOf(provider to mapOf(projectPath to setOf("pinned"))),
       ),
     )
@@ -171,7 +171,7 @@ class AgentSessionsTreeSnapshotTest {
       visibleThreadCounts = emptyMap(),
       treeUiState = InMemorySessionTreeUiState(),
       currentProjectScopeActive = true,
-      openTabsPresentationState = AgentChatOpenTabsPresentationState(
+      openTabsPresentationState = AgentThreadViewOpenTabsPresentationState(
         pinnedTopLevelThreadIdsByProvider = mapOf(provider to mapOf(projectPath to setOf("pinned"))),
       ),
     )
@@ -461,14 +461,14 @@ class AgentSessionsTreeSnapshotTest {
   }
 
   @Test
-  fun pendingAgentChatOverlayAddsProjectThreadWithoutMutatingBaseState() {
+  fun pendingAgentThreadViewOverlayAddsProjectThreadWithoutMutatingBaseState() {
     val state = AgentSessionsState(
       projects = listOf(
         AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
       )
     )
 
-    val overlaidState = overlayPendingAgentChatTabs(
+    val overlaidState = overlayPendingAgentThreadViewTabs(
       state = state,
       openTabsPresentationState = pendingTabsState(
         path = "/work/project-a",
@@ -488,7 +488,7 @@ class AgentSessionsTreeSnapshotTest {
   }
 
   @Test
-  fun pendingAgentChatOverlayAddsWorktreeThreadOnlyToMatchingWorktree() {
+  fun pendingAgentThreadViewOverlayAddsWorktreeThreadOnlyToMatchingWorktree() {
     val state = AgentSessionsState(
       projects = listOf(
         AgentProjectSessions(
@@ -502,7 +502,7 @@ class AgentSessionsTreeSnapshotTest {
       )
     )
 
-    val overlaidState = overlayPendingAgentChatTabs(
+    val overlaidState = overlayPendingAgentThreadViewTabs(
       state = state,
       openTabsPresentationState = pendingTabsState(
         path = "/work/project-a-feature",
@@ -518,13 +518,13 @@ class AgentSessionsTreeSnapshotTest {
   }
 
   @Test
-  fun pendingAgentChatOverlaySkipsUnknownPathsAndMalformedIdentities() {
+  fun pendingAgentThreadViewOverlaySkipsUnknownPathsAndMalformedIdentities() {
     val state = AgentSessionsState(
       projects = listOf(
         AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
       )
     )
-    val pendingTabsState = AgentChatOpenTabsPresentationState(
+    val pendingTabsState = AgentThreadViewOpenTabsPresentationState(
       mapOf(
         AgentSessionProvider.from("codex") to mapOf(
           "/work/unknown" to listOf(pendingTab(path = "/work/unknown", provider = AgentSessionProvider.from("codex"), threadId = "new-pending")),
@@ -535,20 +535,20 @@ class AgentSessionsTreeSnapshotTest {
       )
     )
 
-    val overlaidState = overlayPendingAgentChatTabs(state = state, openTabsPresentationState = pendingTabsState)
+    val overlaidState = overlayPendingAgentThreadViewTabs(state = state, openTabsPresentationState = pendingTabsState)
 
     assertThat(overlaidState).isSameAs(state)
     assertThat(overlaidState.projects.single().threads).isEmpty()
   }
 
   @Test
-  fun pendingAgentChatOverlayDeduplicatesByProviderAndThreadId() {
+  fun pendingAgentThreadViewOverlayDeduplicatesByProviderAndThreadId() {
     val state = AgentSessionsState(
       projects = listOf(
         AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
       )
     )
-    val pendingTabsState = AgentChatOpenTabsPresentationState(
+    val pendingTabsState = AgentThreadViewOpenTabsPresentationState(
       mapOf(
         AgentSessionProvider.from("codex") to mapOf(
           "/work/project-a" to listOf(
@@ -565,7 +565,7 @@ class AgentSessionsTreeSnapshotTest {
       )
     )
 
-    val pendingThreads = overlayPendingAgentChatTabs(state = state, openTabsPresentationState = pendingTabsState)
+    val pendingThreads = overlayPendingAgentThreadViewTabs(state = state, openTabsPresentationState = pendingTabsState)
       .projects
       .single()
       .threads
@@ -581,8 +581,8 @@ private fun pendingTabsState(
   threadId: String,
   pendingCreatedAtMs: Long,
   pinnedEditorTab: Boolean = false,
-): AgentChatOpenTabsPresentationState {
-  return AgentChatOpenTabsPresentationState(
+): AgentThreadViewOpenTabsPresentationState {
+  return AgentThreadViewOpenTabsPresentationState(
     pendingTabsByProvider = mapOf(
       provider to mapOf(
         path to listOf(
@@ -639,8 +639,8 @@ private fun pendingTab(
   pendingThreadIdentity: String = buildAgentThreadIdentity(provider.value, threadId),
   pendingCreatedAtMs: Long? = null,
   pinnedEditorTab: Boolean = false,
-): AgentChatPendingTabSnapshot {
-  return AgentChatPendingTabSnapshot(
+): AgentThreadViewPendingTabSnapshot {
+  return AgentThreadViewPendingTabSnapshot(
     projectPath = path,
     pendingTabKey = "pending-$pendingThreadIdentity",
     pendingThreadIdentity = pendingThreadIdentity,

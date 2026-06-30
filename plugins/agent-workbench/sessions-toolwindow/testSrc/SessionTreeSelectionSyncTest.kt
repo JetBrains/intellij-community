@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.toolwindow
 
-import com.intellij.agent.workbench.chat.AgentChatTabSelection
+import com.intellij.agent.workbench.thread.view.AgentThreadViewTabSelection
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.core.session.AgentSubAgent
@@ -40,7 +40,7 @@ class SessionTreeSelectionSyncTest {
       )
     )
 
-    val selection = AgentChatTabSelection(
+    val selection = AgentThreadViewTabSelection(
       projectPath = "/work/project-a",
       threadIdentity = "codex:thread-1",
       threadId = "thread-1",
@@ -74,7 +74,7 @@ class SessionTreeSelectionSyncTest {
 
     val selectedSubAgent = resolveSelectedSessionTreeId(
       projects,
-      AgentChatTabSelection(
+      AgentThreadViewTabSelection(
         projectPath = "/work/project-a",
         threadIdentity = "codex:thread-1",
         threadId = "thread-1",
@@ -83,7 +83,7 @@ class SessionTreeSelectionSyncTest {
     )
     val fallbackToThread = resolveSelectedSessionTreeId(
       projects,
-      AgentChatTabSelection(
+      AgentThreadViewTabSelection(
         projectPath = "/work/project-a",
         threadIdentity = "codex:thread-1",
         threadId = "thread-1",
@@ -125,7 +125,7 @@ class SessionTreeSelectionSyncTest {
 
     val threadSelection = resolveSelectedSessionTreeId(
       projects,
-      AgentChatTabSelection(
+      AgentThreadViewTabSelection(
         projectPath = "/work/project-feature",
         threadIdentity = "claude:thread-wt",
         threadId = "thread-wt",
@@ -134,7 +134,7 @@ class SessionTreeSelectionSyncTest {
     )
     val subAgentSelection = resolveSelectedSessionTreeId(
       projects,
-      AgentChatTabSelection(
+      AgentThreadViewTabSelection(
         projectPath = "/work/project-feature",
         threadIdentity = "claude:thread-wt",
         threadId = "thread-wt",
@@ -168,7 +168,7 @@ class SessionTreeSelectionSyncTest {
 
     val malformedIdentity = resolveSelectedSessionTreeId(
       projects,
-      AgentChatTabSelection(
+      AgentThreadViewTabSelection(
         projectPath = "/work/project-a",
         threadIdentity = "malformed",
         threadId = "thread-1",
@@ -177,7 +177,7 @@ class SessionTreeSelectionSyncTest {
     )
     val unknownPath = resolveSelectedSessionTreeId(
       projects,
-      AgentChatTabSelection(
+      AgentThreadViewTabSelection(
         projectPath = "/work/missing",
         threadIdentity = "codex:thread-1",
         threadId = "thread-1",
@@ -190,35 +190,35 @@ class SessionTreeSelectionSyncTest {
   }
 
   @Test
-  fun stateRefreshPreservesUserSelectionOverActiveChat() {
+  fun stateRefreshPreservesUserSelectionOverActiveThreadView() {
     val model = modelForSelectionTests(projectWithThreads("thread-1", "thread-2"))
     val userSelection = listOf(SessionTreeId.Thread("/work/project-a", AgentSessionProvider.from("codex"), "thread-2"))
-    val activeChat = SessionTreeId.Thread("/work/project-a", AgentSessionProvider.from("codex"), "thread-1")
+    val activeThreadView = SessionTreeId.Thread("/work/project-a", AgentSessionProvider.from("codex"), "thread-1")
 
     val selection = sessionTreeSelectionTargetsAfterModelSwap(
       model = model,
       reason = SessionTreeRebuildReason.SESSION_STATE_CHANGED,
       previouslySelectedTreeIds = userSelection,
-      selectedChatTreeId = activeChat,
+      selectedThreadViewTreeId = activeThreadView,
     )
 
     assertThat(selection).containsExactlyElementsOf(userSelection)
   }
 
   @Test
-  fun chatTabSelectionSelectsActiveChatRow() {
+  fun threadViewTabSelectionSelectsActiveThreadViewRow() {
     val model = modelForSelectionTests(projectWithThreads("thread-1", "thread-2"))
     val userSelection = listOf(SessionTreeId.Thread("/work/project-a", AgentSessionProvider.from("codex"), "thread-2"))
-    val activeChat = SessionTreeId.Thread("/work/project-a", AgentSessionProvider.from("codex"), "thread-1")
+    val activeThreadView = SessionTreeId.Thread("/work/project-a", AgentSessionProvider.from("codex"), "thread-1")
 
     val selection = sessionTreeSelectionTargetsAfterModelSwap(
       model = model,
-      reason = SessionTreeRebuildReason.CHAT_TAB_SELECTION_CHANGED,
+      reason = SessionTreeRebuildReason.THREAD_VIEW_TAB_SELECTION_CHANGED,
       previouslySelectedTreeIds = userSelection,
-      selectedChatTreeId = activeChat,
+      selectedThreadViewTreeId = activeThreadView,
     )
 
-    assertThat(selection).containsExactly(activeChat)
+    assertThat(selection).containsExactly(activeThreadView)
   }
 
   @Test
@@ -231,73 +231,73 @@ class SessionTreeSelectionSyncTest {
       model = model,
       reason = SessionTreeRebuildReason.SESSION_STATE_CHANGED,
       previouslySelectedTreeIds = listOf(survivingSelection, removedSelection),
-      selectedChatTreeId = null,
+      selectedThreadViewTreeId = null,
     )
 
     assertThat(selection).containsExactly(survivingSelection)
   }
 
   @Test
-  fun stateRefreshFallsBackToActiveChatWhenNoSelectionSurvives() {
+  fun stateRefreshFallsBackToActiveThreadViewWhenNoSelectionSurvives() {
     val model = modelForSelectionTests(projectWithThreads("thread-1"))
     val removedSelection = SessionTreeId.Thread("/work/project-a", AgentSessionProvider.from("codex"), "thread-2")
-    val activeChat = SessionTreeId.Thread("/work/project-a", AgentSessionProvider.from("codex"), "thread-1")
+    val activeThreadView = SessionTreeId.Thread("/work/project-a", AgentSessionProvider.from("codex"), "thread-1")
 
     val selection = sessionTreeSelectionTargetsAfterModelSwap(
       model = model,
       reason = SessionTreeRebuildReason.SESSION_STATE_CHANGED,
       previouslySelectedTreeIds = listOf(removedSelection),
-      selectedChatTreeId = activeChat,
+      selectedThreadViewTreeId = activeThreadView,
     )
 
-    assertThat(selection).containsExactly(activeChat)
+    assertThat(selection).containsExactly(activeThreadView)
   }
 
   @Test
-  fun stateRefreshFallsBackToActiveChatWhenNoSelectionWasEverApplied() {
+  fun stateRefreshFallsBackToActiveThreadViewWhenNoSelectionWasEverApplied() {
     val model = modelForSelectionTests(projectWithThreads("thread-1"))
-    val activeChat = SessionTreeId.Thread("/work/project-a", AgentSessionProvider.from("codex"), "thread-1")
+    val activeThreadView = SessionTreeId.Thread("/work/project-a", AgentSessionProvider.from("codex"), "thread-1")
 
     val selection = sessionTreeSelectionTargetsAfterModelSwap(
       model = model,
       reason = SessionTreeRebuildReason.SESSION_STATE_CHANGED,
       previouslySelectedTreeIds = emptyList(),
-      selectedChatTreeId = activeChat,
+      selectedThreadViewTreeId = activeThreadView,
       selectionInitialized = true,
       lastAppliedSelectedTreeIds = emptyList(),
     )
 
-    assertThat(selection).containsExactly(activeChat)
+    assertThat(selection).containsExactly(activeThreadView)
   }
 
   @Test
   fun stateRefreshPreservesDeliberatelyClearedSelection() {
     val model = modelForSelectionTests(projectWithThreads("thread-1"))
-    val activeChat = SessionTreeId.Thread("/work/project-a", AgentSessionProvider.from("codex"), "thread-1")
+    val activeThreadView = SessionTreeId.Thread("/work/project-a", AgentSessionProvider.from("codex"), "thread-1")
 
     val selection = sessionTreeSelectionTargetsAfterModelSwap(
       model = model,
       reason = SessionTreeRebuildReason.SESSION_STATE_CHANGED,
       previouslySelectedTreeIds = emptyList(),
-      selectedChatTreeId = activeChat,
+      selectedThreadViewTreeId = activeThreadView,
       selectionInitialized = true,
-      lastAppliedSelectedTreeIds = listOf(activeChat),
+      lastAppliedSelectedTreeIds = listOf(activeThreadView),
     )
 
     assertThat(selection).isEmpty()
   }
 
   @Test
-  fun unresolvedChatSelectionDoesNotClearUserSelection() {
+  fun unresolvedThreadViewSelectionDoesNotClearUserSelection() {
     val model = modelForSelectionTests(projectWithThreads("thread-1"))
     val userSelection = listOf(SessionTreeId.Thread("/work/project-a", AgentSessionProvider.from("codex"), "thread-1"))
-    val unresolvedActiveChat = SessionTreeId.Thread("/work/project-a", AgentSessionProvider.from("codex"), "missing")
+    val unresolvedActiveThreadView = SessionTreeId.Thread("/work/project-a", AgentSessionProvider.from("codex"), "missing")
 
     val selection = sessionTreeSelectionTargetsAfterModelSwap(
       model = model,
-      reason = SessionTreeRebuildReason.CHAT_TAB_SELECTION_CHANGED,
+      reason = SessionTreeRebuildReason.THREAD_VIEW_TAB_SELECTION_CHANGED,
       previouslySelectedTreeIds = userSelection,
-      selectedChatTreeId = unresolvedActiveChat,
+      selectedThreadViewTreeId = unresolvedActiveThreadView,
     )
 
     assertThat(selection).containsExactlyElementsOf(userSelection)

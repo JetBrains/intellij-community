@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.toolwindow
 
-import com.intellij.agent.workbench.chat.AgentChatOpenTabsPresentationState
+import com.intellij.agent.workbench.thread.view.AgentThreadViewOpenTabsPresentationState
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
@@ -338,7 +338,7 @@ private fun pinnedSectionModel(currentProjectScopeActive: Boolean) = buildSessio
   visibleThreadCounts = emptyMap(),
   treeUiState = InMemorySessionTreeUiState(),
   currentProjectScopeActive = currentProjectScopeActive,
-  openTabsPresentationState = AgentChatOpenTabsPresentationState(
+  openTabsPresentationState = AgentThreadViewOpenTabsPresentationState(
     pinnedTopLevelThreadIdsByProvider = mapOf(AgentSessionProvider.from("codex") to mapOf(PROJECT_PATH to setOf(PINNED_THREAD_ID))),
   ),
 )

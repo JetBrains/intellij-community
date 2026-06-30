@@ -48,7 +48,7 @@ dependencies {
   implementation(project(":prompt-core"))
   implementation(project(":sessions-core"))
   implementation(project(":ui"))
-  implementation(project(":chat"))
+  implementation(project(":thread-view"))
   implementation(project(":sessions"))
   implementation(project(":sessions-jbcentral"))
   implementation(project(":sessions-actions"))

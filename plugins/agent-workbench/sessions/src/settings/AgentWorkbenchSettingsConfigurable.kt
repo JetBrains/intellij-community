@@ -5,7 +5,7 @@ package com.intellij.agent.workbench.sessions.settings
 
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
-import com.intellij.agent.workbench.settings.AGENT_WORKBENCH_CHAT_SETTINGS_COMPONENT_ID
+import com.intellij.agent.workbench.settings.AGENT_WORKBENCH_THREAD_VIEW_SETTINGS_COMPONENT_ID
 import com.intellij.agent.workbench.settings.AGENT_WORKBENCH_PROVIDERS_SETTINGS_CONFIGURABLE_ID
 import com.intellij.agent.workbench.settings.AGENT_WORKBENCH_SETTINGS_CONFIGURABLE_ID
 import com.intellij.agent.workbench.settings.AGENT_WORKBENCH_STATUS_BAR_WIDGETS_SETTINGS_COMPONENT_ID
@@ -14,7 +14,7 @@ import com.intellij.agent.workbench.settings.AgentWorkbenchSettings
 import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsComponent
 import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsContributors
 import com.intellij.agent.workbench.settings.AgentSessionProviderSettingsService
-import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
+import com.intellij.agent.workbench.sessions.frame.AgentThreadViewOpenModeSettings
 import com.intellij.agent.workbench.sessions.sleep.AgentSleepPreventionSettings
 import com.intellij.ide.ActivityTracker
 import com.intellij.openapi.components.service
@@ -86,7 +86,7 @@ internal class AgentWorkbenchProvidersSettingsConfigurable : BoundSearchableConf
 }
 
 private fun settingsComponents(): List<AgentWorkbenchSettingsComponent> {
-  return mergeSettingsComponents(listOf(chatSettingsComponent()) + AgentWorkbenchSettingsContributors.components())
+  return mergeSettingsComponents(listOf(threadViewSettingsComponent()) + AgentWorkbenchSettingsContributors.components())
 }
 
 private fun AgentWorkbenchSettingsComponent.isStatusBarWidgetsComponent(): Boolean {
@@ -107,16 +107,16 @@ private fun mergeSettingsComponents(components: List<AgentWorkbenchSettingsCompo
   return merged.values.toList()
 }
 
-private fun chatSettingsComponent(): AgentWorkbenchSettingsComponent {
+private fun threadViewSettingsComponent(): AgentWorkbenchSettingsComponent {
   return AgentWorkbenchSettingsComponent(
-    id = AGENT_WORKBENCH_CHAT_SETTINGS_COMPONENT_ID,
-    displayName = AgentSessionsBundle.message("settings.agent.workbench.chat.group"),
+    id = AGENT_WORKBENCH_THREAD_VIEW_SETTINGS_COMPONENT_ID,
+    displayName = AgentSessionsBundle.message("settings.agent.workbench.thread.view.group"),
     checkboxSettings = listOf(
       AgentWorkbenchCheckboxSetting(
-        text = AgentSessionsBundle.message("settings.agent.workbench.chat.open.in.dedicated.frame"),
-        description = AgentSessionsBundle.message("settings.agent.workbench.chat.open.in.dedicated.frame.description"),
-        isSelected = AgentChatOpenModeSettings::openInDedicatedFrame,
-        setSelected = AgentChatOpenModeSettings::setOpenInDedicatedFrame,
+        text = AgentSessionsBundle.message("settings.agent.workbench.thread.view.open.in.dedicated.frame"),
+        description = AgentSessionsBundle.message("settings.agent.workbench.thread.view.open.in.dedicated.frame.description"),
+        isSelected = AgentThreadViewOpenModeSettings::openInDedicatedFrame,
+        setSelected = AgentThreadViewOpenModeSettings::setOpenInDedicatedFrame,
       )
     ),
   )

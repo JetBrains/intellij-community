@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.actions
 
-import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
-import com.intellij.agent.workbench.chat.resolveAgentChatEditorTabActionContext
+import com.intellij.agent.workbench.thread.view.AgentThreadViewEditorTabActionContext
+import com.intellij.agent.workbench.thread.view.resolveAgentThreadViewEditorTabActionContext
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
@@ -14,7 +14,7 @@ internal class AgentSessionsGoToSourceProjectFromEditorTabAction @JvmOverloads c
   private val isDedicatedProject: (Project) -> Boolean = AgentWorkbenchDedicatedFrameProjectManager::isDedicatedProject,
   private val openProject: (String, AgentWorkbenchEntryPoint) -> Unit =
     { path, entryPoint -> service<AgentSessionLaunchService>().openOrFocusProject(path, entryPoint) },
-  resolveContext: (AnActionEvent) -> AgentChatEditorTabActionContext? = ::resolveAgentChatEditorTabActionContext,
+  resolveContext: (AnActionEvent) -> AgentThreadViewEditorTabActionContext? = ::resolveAgentThreadViewEditorTabActionContext,
 ) : AgentSessionsEditorTabActionBase(resolveContext) {
 
   override fun actionPerformed(e: AnActionEvent) {

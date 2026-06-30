@@ -11,12 +11,12 @@ targets:
   - ../../lib-agent/sessions-core/src/providers/AgentSessionProviderDescriptor.kt
   - ../../lib-agent/sessions-core/resources/intellij.platform.ai.agent.sessions.core.xml
   - ../../sessions/src/service/AgentSessionLaunchService.kt
-  - ../../chat/src/AgentChatCustomContent.kt
-  - ../../chat/src/AgentChatStartupIntent.kt
-  - ../../chat/src/AgentChatFileEditorState.kt
-  - ../../chat/src/AgentChatTabModel.kt
-  - ../../chat/src/AgentChatVirtualFile.kt
-  - ../../chat/src/AgentChatTabsStateService.kt
+  - ../../thread-view/src/AgentThreadViewCustomContent.kt
+  - ../../thread-view/src/AgentThreadViewStartupIntent.kt
+  - ../../thread-view/src/AgentThreadViewFileEditorState.kt
+  - ../../thread-view/src/AgentThreadViewTabModel.kt
+  - ../../thread-view/src/AgentThreadViewVirtualFile.kt
+  - ../../thread-view/src/AgentThreadViewTabsStateService.kt
   - ../../engine/src/ui/EngineSessionProviderDescriptor.kt
   - ../../../../../plugins/agent-workbench/acp/src/AcpOutOfBandLaunch.kt
   - ../../../../../plugins/agent-workbench/acp/src/AcpLaunchProfileContributor.kt
@@ -47,10 +47,10 @@ The key design rule is to keep four independent axes separate:
 ## Current State
 
 - Terminal providers (`codex`, `claude`, and similar providers) build an `AgentSessionTerminalLaunchSpec` and
-  render inside the embedded terminal in Agent Chat.
+  render inside the embedded terminal in Agent Thread View.
 - ACP uses `AgentSessionOutOfBandLaunch` to skip terminal dispatch. `AcpOutOfBandLaunch` prepares an ACP session
   and sends the initial prompt directly to the runtime.
-- `AgentChatCustomContentProvider` is currently selected only by provider. This means `provider=acp` always uses
+- `AgentThreadViewCustomContentProvider` is currently selected only by provider. This means `provider=acp` always uses
   custom UI, while `provider=codex` and `provider=claude` always use terminal content.
 - Launch profile migration work already separates `launchTargetId` from generation settings. That is the right
   foundation, but it still needs an explicit launch-surface axis.
@@ -92,13 +92,13 @@ ACP descriptors set both values to `AgentSessionSurfaces.ACP`. Launch code must 
 - `AgentPromptLaunchProfile` must store a nullable `surfaceId`. Null means provider default for backward
   compatibility.
 - `AgentSessionLaunchIntent` must carry `AgentSessionSurfaceId?`; resolved launch profiles,
-  `AgentSessionOutOfBandLaunchContext`, and `AgentChatContentContext` must carry a resolved `AgentSessionSurfaceId`.
+  `AgentSessionOutOfBandLaunchContext`, and `AgentThreadViewContentContext` must carry a resolved `AgentSessionSurfaceId`.
   [@test] ../../sessions/testSrc/AgentSessionLaunchProfileResolutionTest.kt
 - `AgentSessionOutOfBandLaunch.handles(context)` must be context-aware. Provider-wide matching is too broad
   because the same provider/target may later support both terminal and ACP UI surfaces.
-- `AgentChatCustomContentProvider` lookup must be context-aware instead of provider-only. It needs enough data to
+- `AgentThreadViewCustomContentProvider` lookup must be context-aware instead of provider-only. It needs enough data to
   decide whether a tab should render native content or attach a terminal.
-- `AgentChatStartupIntent`, `AgentChatTabRuntime`, and `AgentChatFileEditorState` must persist `surfaceId` as tab
+- `AgentThreadViewStartupIntent`, `AgentThreadViewTabRuntime`, and `AgentThreadViewFileEditorState` must persist `surfaceId` as tab
   metadata. On restore, `launchProfileId` is authoritative: the current effective profile settings resolve the
   provider, launch target, launch mode, surface, and generation settings. Persisted `surfaceId` is only a fallback
   cache when no profile can be resolved.
@@ -121,7 +121,7 @@ New-session launch should resolve in this order:
    and suppress terminal prompt dispatch.
 4. If `surfaceId == AgentSessionSurfaces.TERMINAL`, attach the embedded terminal and use the provider's terminal
    launch spec.
-5. Persist the resolved `surfaceId` in the chat tab runtime state as fallback/cache metadata.
+5. Persist the resolved `surfaceId` in the Thread View runtime state as fallback/cache metadata.
 
 `AgentSessionLaunchMode` must not be reused for this. It describes permission and safety behavior, not UI/runtime
 hosting.
@@ -131,13 +131,13 @@ hosting.
 The current API:
 
 ```kotlin
-AgentChatCustomContent.find(provider)
+AgentThreadViewCustomContent.find(provider)
 ```
 
 should become context-based, for example:
 
 ```kotlin
-data class AgentChatContentContext(
+data class AgentThreadViewContentContext(
   val provider: AgentSessionProvider,
   val surfaceId: AgentSessionSurfaceId,
   val launchTargetId: String?,
@@ -145,7 +145,7 @@ data class AgentChatContentContext(
   val threadIdentity: String,
 )
 
-AgentChatCustomContent.find(context)
+AgentThreadViewCustomContent.find(context)
 ```
 
 Then ACP UI is installed only when the resolved surface says so. Terminal launch for an ACP-capable target remains
@@ -225,7 +225,7 @@ For ACP UI, container support should be decided per ACP agent/wrapper:
 2. Make provider descriptors own `defaultLaunchSurface` and `supportedLaunchSurfaces`.
 3. Make `AgentSessionOutOfBandLaunch` context-aware and gate ACP out-of-band launch on
    `surfaceId == AgentSessionSurfaces.ACP`.
-4. Make `AgentChatCustomContentProvider` context-aware and install ACP UI only for ACP-surface tabs.
+4. Make `AgentThreadViewCustomContentProvider` context-aware and install ACP UI only for ACP-surface tabs.
 5. Generate ACP launch profiles from stable ACP agent ids with `surfaceId="acp"` by default.
 6. Add terminal-surface profiles or profile variants for wrappers that support both surfaces.
 7. Add provider-specific bridge APIs for existing-thread surface actions only after the launch-time model is stable.
@@ -239,7 +239,7 @@ For ACP UI, container support should be decided per ACP agent/wrapper:
 - Launch planner preserves typed `surfaceId` through `AgentSessionLaunchIntent` and out-of-band context.
 - ACP UI launch suppresses terminal dispatch only when `surfaceId == AgentSessionSurfaces.ACP`.
 - Terminal launch for an ACP-capable target does not install custom content or call `AcpOutOfBandLaunch`.
-- Restored chat tabs resolve current effective profile settings from persisted `launchProfileId`; persisted `surfaceId`
+- Restored Thread Views resolve current effective profile settings from persisted `launchProfileId`; persisted `surfaceId`
   is only fallback/cache metadata.
 - Existing terminal providers keep their current behavior when `surfaceId` is absent.
 
@@ -249,7 +249,7 @@ For ACP UI, container support should be decided per ACP agent/wrapper:
 - Use generation model for ACP agent selection. Rejected because ACP agents are launch targets, not models.
 - Create one provider id per ACP wrapper. Rejected because provider ids describe integration families, while ACP
   registry entries are launch targets.
-- Make `AgentChatCustomContentProvider` provider-wide and add exceptions. Rejected because exceptions would spread
+- Make `AgentThreadViewCustomContentProvider` provider-wide and add exceptions. Rejected because exceptions would spread
   surface decisions across editor startup, restore, and launch code.
 
 ## Open Questions

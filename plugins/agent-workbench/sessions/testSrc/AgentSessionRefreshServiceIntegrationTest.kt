@@ -1,12 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindOutcome
-import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindReport
-import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindRequest
-import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindStatus
-import com.intellij.agent.workbench.chat.AgentChatPendingTabSnapshot
-import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
+import com.intellij.agent.workbench.thread.view.AgentThreadViewPendingTabRebindOutcome
+import com.intellij.agent.workbench.thread.view.AgentThreadViewPendingTabRebindReport
+import com.intellij.agent.workbench.thread.view.AgentThreadViewPendingTabRebindRequest
+import com.intellij.agent.workbench.thread.view.AgentThreadViewPendingTabRebindStatus
+import com.intellij.agent.workbench.thread.view.AgentThreadViewPendingTabSnapshot
+import com.intellij.agent.workbench.thread.view.AgentThreadViewTabRebindTarget
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionCost
@@ -481,7 +481,7 @@ class AgentSessionRefreshServiceIntegrationTest {
       openPendingCodexTabsProvider = {
         mapOf(
           PROJECT_PATH to listOf(
-            AgentChatPendingTabSnapshot(
+            AgentThreadViewPendingTabSnapshot(
               projectPath = PROJECT_PATH,
               pendingTabKey = "pending-codex:new-cost",
               pendingThreadIdentity = "codex:new-cost",
@@ -1220,7 +1220,7 @@ class AgentSessionRefreshServiceIntegrationTest {
       openPendingCodexTabsProvider = {
         mapOf(
           PROJECT_PATH to listOf(
-            AgentChatPendingTabSnapshot(
+            AgentThreadViewPendingTabSnapshot(
               projectPath = PROJECT_PATH,
               pendingTabKey = "pending-codex:new-1",
               pendingThreadIdentity = "codex:new-1",
@@ -1231,8 +1231,8 @@ class AgentSessionRefreshServiceIntegrationTest {
           )
         )
       },
-      openConcreteChatThreadIdentitiesByPathProvider = { emptyMap() },
-      openAgentChatPendingTabsBinder = { requestsByPath ->
+      openConcreteThreadViewThreadIdentitiesByPathProvider = { emptyMap() },
+      openAgentThreadViewPendingTabsBinder = { requestsByPath ->
         requestsByPath.forEach { (path, requests) ->
           requests.forEach { request ->
             rebindInvocations.add(
@@ -1332,7 +1332,7 @@ class AgentSessionRefreshServiceIntegrationTest {
       openPendingCodexTabsProvider = {
         mapOf(
           PROJECT_PATH to listOf(
-            AgentChatPendingTabSnapshot(
+            AgentThreadViewPendingTabSnapshot(
               projectPath = PROJECT_PATH,
               pendingTabKey = "pending-codex:new-ea4cecdd-f115-410d-9c73-f652c21558a9",
               pendingThreadIdentity = "codex:new-ea4cecdd-f115-410d-9c73-f652c21558a9",
@@ -1343,7 +1343,7 @@ class AgentSessionRefreshServiceIntegrationTest {
           )
         )
       },
-      openConcreteChatThreadIdentitiesByPathProvider = {
+      openConcreteThreadViewThreadIdentitiesByPathProvider = {
         mapOf(
           PROJECT_PATH to setOf(
             "codex:new-ea4cecdd-f115-410d-9c73-f652c21558a9",
@@ -1558,7 +1558,7 @@ class AgentSessionRefreshServiceIntegrationTest {
     val pendingTabsRef = AtomicReference(
       mapOf(
         PROJECT_PATH to listOf(
-          AgentChatPendingTabSnapshot(
+          AgentThreadViewPendingTabSnapshot(
             projectPath = PROJECT_PATH,
             pendingTabKey = "pending-codex:rebind-tree",
             pendingThreadIdentity = pendingIdentity,
@@ -1570,7 +1570,7 @@ class AgentSessionRefreshServiceIntegrationTest {
       )
     )
     val rebindInvocations = mutableListOf<ServicePendingCodexRebindInvocation>()
-    val concreteTarget = AgentChatTabRebindTarget(
+    val concreteTarget = AgentThreadViewTabRebindTarget(
       projectPath = PROJECT_PATH,
       provider = AgentSessionProvider.from("codex"),
       threadIdentity = buildAgentSessionIdentity(AgentSessionProvider.from("codex"), "codex-1"),
@@ -1618,8 +1618,8 @@ class AgentSessionRefreshServiceIntegrationTest {
         listOf(openProjectEntry(PROJECT_PATH, "Project A"))
       },
       openPendingCodexTabsProvider = { pendingTabsRef.get() },
-      openConcreteChatThreadIdentitiesByPathProvider = { emptyMap() },
-      openAgentChatPendingTabsBinder = { requestsByPath ->
+      openConcreteThreadViewThreadIdentitiesByPathProvider = { emptyMap() },
+      openAgentThreadViewPendingTabsBinder = { requestsByPath ->
         requestsByPath.forEach { (path, requests) ->
           requests.forEach { request ->
             rebindInvocations.add(
@@ -1632,7 +1632,7 @@ class AgentSessionRefreshServiceIntegrationTest {
             )
           }
         }
-        // Real binder drops the rebound pending tab from the AgentChatTabsService snapshot.
+        // Real binder drops the rebound pending tab from the AgentThreadViewTabsService snapshot.
         pendingTabsRef.set(emptyMap())
         successfulPendingCodexRebindReport(requestsByPath)
       },
@@ -1653,7 +1653,7 @@ class AgentSessionRefreshServiceIntegrationTest {
         provider = AgentSessionProvider.from("codex"),
         requestsByProjectPath = mapOf(
           PROJECT_PATH to listOf(
-            AgentChatPendingTabRebindRequest(
+            AgentThreadViewPendingTabRebindRequest(
               pendingTabKey = "pending-codex:rebind-tree",
               pendingThreadIdentity = pendingIdentity,
               target = concreteTarget,
@@ -1678,27 +1678,27 @@ private data class ServicePendingCodexRebindInvocation(
   @JvmField val path: String,
   @JvmField val pendingTabKey: String,
   @JvmField val pendingThreadIdentity: String,
-  @JvmField val target: AgentChatTabRebindTarget,
+  @JvmField val target: AgentThreadViewTabRebindTarget,
 )
 
 private fun successfulPendingCodexRebindReport(
-  requestsByPath: Map<String, List<AgentChatPendingTabRebindRequest>>,
-): AgentChatPendingTabRebindReport {
-  val outcomesByPath = LinkedHashMap<String, List<AgentChatPendingTabRebindOutcome>>()
+  requestsByPath: Map<String, List<AgentThreadViewPendingTabRebindRequest>>,
+): AgentThreadViewPendingTabRebindReport {
+  val outcomesByPath = LinkedHashMap<String, List<AgentThreadViewPendingTabRebindOutcome>>()
   var requestedBindings = 0
   for ((path, requests) in requestsByPath) {
     requestedBindings += requests.size
     outcomesByPath[path] = requests.map { request ->
-      AgentChatPendingTabRebindOutcome(
+      AgentThreadViewPendingTabRebindOutcome(
         projectPath = path,
         request = request,
-        status = AgentChatPendingTabRebindStatus.REBOUND,
+        status = AgentThreadViewPendingTabRebindStatus.REBOUND,
         reboundFiles = 1,
       )
     }
   }
 
-  return AgentChatPendingTabRebindReport(
+  return AgentThreadViewPendingTabRebindReport(
     requestedBindings = requestedBindings,
     reboundBindings = requestedBindings,
     reboundFiles = requestedBindings,

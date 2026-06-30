@@ -243,7 +243,7 @@ class EngineEventStoreTest {
     store.append(
       threadId, EventSource.Runtime, ThreadEventType.ThreadCreated,
       buildJsonObject {
-        put("title", "ACP chat")
+        put("title", "ACP threadView")
         put("runtimeKind", RuntimeKind.Acp.name)
         put("agentId", "acp.goose")
         put("cwd", "/work/project")

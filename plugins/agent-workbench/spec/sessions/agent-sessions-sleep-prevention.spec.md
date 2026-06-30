@@ -28,7 +28,7 @@ IDE Power Save Mode is a hard override: while it is enabled, sleep prevention mu
 ## Non-goals
 - Linux sleep inhibition or any external-process/D-Bus integration.
 - Preventing display sleep, screen lock, or explicit user-initiated sleep.
-- Inferring activity from pending chat tabs before a thread appears in sessions state.
+- Inferring activity from pending Thread Views before a thread appears in sessions state.
 - Adding new backend activity states or provider-specific wake-lock logic.
 
 ## Requirements
@@ -103,7 +103,7 @@ IDE Power Save Mode is a hard override: while it is enabled, sleep prevention mu
 - The 30-second debounce applies only to releasing an already-held blocker. Acquisition is always immediate.
 
 ## Error Handling
-- Native inhibitor errors must not block session loading, refresh, chat opening, or tool-window rendering.
+- Native inhibitor errors must not block session loading, refresh, thread view opening, or tool-window rendering.
 - Failed native release must not make the service forget a blocker that may still be held; release must remain retryable.
 - Repeated inactive state updates during a pending release debounce must not schedule duplicate release timers.
 - Multiple active threads must not cause duplicate acquires, and one thread becoming inactive must not release the blocker while other active threads remain.

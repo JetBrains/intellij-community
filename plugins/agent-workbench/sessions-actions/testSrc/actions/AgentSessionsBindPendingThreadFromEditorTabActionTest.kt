@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.actions
 
-import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
-import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
-import com.intellij.agent.workbench.chat.AgentChatThreadCoordinates
+import com.intellij.agent.workbench.thread.view.AgentThreadViewEditorTabActionContext
+import com.intellij.agent.workbench.thread.view.AgentThreadViewTabRebindTarget
+import com.intellij.agent.workbench.thread.view.AgentThreadViewThreadCoordinates
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.agent.workbench.ui.AgentWorkbenchActionIds
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
@@ -34,7 +34,7 @@ class AgentSessionsBindPendingThreadFromEditorTabActionTest {
       sessionId = "new-1",
       isPendingThread = true,
     )
-    val target = AgentChatTabRebindTarget(
+    val target = AgentThreadViewTabRebindTarget(
       projectPath = normalizedPath,
       provider = AgentSessionProvider.from("codex"),
       threadIdentity = "codex:thread-42",
@@ -93,7 +93,7 @@ class AgentSessionsBindPendingThreadFromEditorTabActionTest {
       sessionId = "new-1",
       isPendingThread = true,
     )
-    val target = AgentChatTabRebindTarget(
+    val target = AgentThreadViewTabRebindTarget(
       projectPath = normalizedPath,
       provider = AgentSessionProvider.from("claude"),
       threadIdentity = "claude:thread-42",
@@ -125,7 +125,7 @@ class AgentSessionsBindPendingThreadFromEditorTabActionTest {
       sessionId = "new-1",
       isPendingThread = true,
     )
-    val target = AgentChatTabRebindTarget(
+    val target = AgentThreadViewTabRebindTarget(
       projectPath = normalizedPath,
       provider = AgentSessionProvider.from("codex"),
       threadIdentity = "codex:thread-42",
@@ -136,7 +136,7 @@ class AgentSessionsBindPendingThreadFromEditorTabActionTest {
     var reboundPath: String? = null
     var reboundPendingTabKey: String? = null
     var reboundPendingIdentity: String? = null
-    var reboundTarget: AgentChatTabRebindTarget? = null
+    var reboundTarget: AgentThreadViewTabRebindTarget? = null
 
     val action = AgentSessionsBindPendingThreadFromEditorTabAction(
       resolveContext = { context },
@@ -188,18 +188,18 @@ private fun editorContext(
   sessionId: String = "thread-1",
   isPendingThread: Boolean = false,
   participatesInPendingThreadLifecycle: Boolean = isPendingThread,
-): AgentChatEditorTabActionContext {
+): AgentThreadViewEditorTabActionContext {
   val threadCoordinates = provider
     ?.takeIf { sessionId.isNotBlank() }
     ?.let { resolvedProvider ->
-      AgentChatThreadCoordinates(
+      AgentThreadViewThreadCoordinates(
         provider = resolvedProvider,
         sessionId = sessionId,
         isPending = isPendingThread,
         participatesInPendingThreadLifecycle = participatesInPendingThreadLifecycle,
       )
     }
-  return AgentChatEditorTabActionContext(
+  return AgentThreadViewEditorTabActionContext(
     project = ProjectManager.getInstance().defaultProject,
     path = normalizeAgentWorkbenchPath(path),
     tabKey = tabKey,

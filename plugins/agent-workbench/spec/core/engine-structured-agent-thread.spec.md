@@ -1,13 +1,13 @@
 ---
 name: Engine Structured Agent Thread
-description: Requirements for the permanent split between terminal-backed Agent Chat providers and Engine structured thread providers, including the Engine event log, transcript projection, and ACP runtime adapter boundary.
+description: Requirements for the permanent split between terminal-backed Agent Thread View providers and Engine structured thread providers, including the Engine event log, transcript projection, and ACP runtime adapter boundary.
 targets:
   - ../../engine/src/core/*.kt
   - ../../engine/src/platform/*.kt
   - ../../engine/src/ui/*.kt
   - ../../engine/resources/intellij.agent.workbench.engine.xml
-  - ../../chat/src/AgentChatCustomContent.kt
-  - ../../chat/src/AgentChatFileEditor.kt
+  - ../../thread-view/src/AgentThreadViewCustomContent.kt
+  - ../../thread-view/src/AgentThreadViewFileEditor.kt
   - ../../../../../plugins/agent-workbench/acp/src/*.kt
   - ../../../../../plugins/agent-workbench/acp/resources/intellij.agent.workbench.acp.xml
 ---
@@ -20,7 +20,7 @@ Date: 2026-06-26
 ## Summary
 
 Agent Workbench has two permanent runtime families. Terminal-backed providers (`claude`, `codex`,
-`opencode`, `junie`, and similar CLIs) continue to own their embedded-terminal Agent Chat lifecycle.
+`opencode`, `junie`, and similar CLIs) continue to own their embedded-terminal Agent Thread View lifecycle.
 Structured Workbench providers render an IDE-native thread by writing canonical events into the Engine log
 and reducing them into `ThreadProjection`: the materialized read model used by the UI. The first
 production structured provider is `acp`; mock, remote, and future structured runtimes are Engine runtime
@@ -46,32 +46,32 @@ history format, and not a contract that terminal-backed providers must implement
 
 ## Non-goals
 
-- Replacing terminal-backed Agent Chat tabs with Engine UI for existing CLI providers.
+- Replacing terminal-backed Agent Thread View tabs with Engine UI for existing CLI providers.
 - Requiring terminal providers to emit `ThreadEventEnvelope`s or expose `ThreadProjection`s.
 - Moving provider-specific terminal history parsers into Engine.
 - Making AUI events or `Acp2ToAUIConverter` the foundation for Agent Workbench structured threads.
 
 ## Requirements
 
-- Agent Chat must permanently route by provider capability. Providers with an
-  `AgentChatCustomContentProvider` render custom IDE-native content; providers without one use the
+- Agent Thread View must permanently route by provider capability. Providers with an
+  `AgentThreadViewCustomContentProvider` render custom IDE-native content; providers without one use the
   existing embedded-terminal lifecycle. This routing is not a fallback or a temporary migration path.
-  [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+  [@test] ../../thread-view/testSrc/AgentThreadViewFileEditorLifecycleTest.kt
 
 - Structured provider identity and Engine runtime identity are separate. Workbench tab/session identity is
   always built from `AgentSessionProvider` plus the provider-owned thread id; `RuntimeKind` and runtime ids
   are Engine metadata used inside the projection, not substitutes for Workbench provider identity. Shared
-  chat, sessions, and outline code must treat thread ids as opaque and must not infer routing from prefixes
+  thread view, sessions, and outline code must treat thread ids as opaque and must not infer routing from prefixes
   such as `acp:`. Future structured providers must register an explicit provider descriptor/custom-content
   provider, or deliberately reuse an existing structured provider id as a product decision.
-  [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+  [@test] ../../thread-view/testSrc/AgentThreadViewFileEditorLifecycleTest.kt
   [@test] ../../sessions/testSrc/AgentSessionLaunchServiceTest.kt
 
 - Terminal-backed providers must remain valid without any Engine event store record or
   `ThreadProjection`. Opening, restoring, archiving, and prompt dispatch for terminal providers must
   continue through their existing provider descriptors, launch specs, session sources, and terminal
   controllers.
-  [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+  [@test] ../../thread-view/testSrc/AgentThreadViewFileEditorLifecycleTest.kt
   [@test] ../../sessions/testSrc/AgentSessionLaunchServiceTest.kt
 
 - The Engine module owns structured thread state only. Its source of truth is the ordered
@@ -84,7 +84,7 @@ history format, and not a contract that terminal-backed providers must implement
   implement `AgentRuntime`, emit Engine events, or surface through `ThreadProjection`. Any
   `RuntimeKind.Terminal` or terminal-like Engine event is limited to structured-runtime terminal content,
   debug/migration experiments, or legacy mirrors that are explicitly filtered out of normal terminal
-  provider Agent Chat surfaces.
+  provider Agent Thread View surfaces.
   [@test] ../../engine/testSrc/EngineEventStoreTest.kt
 
 - `ThreadProjection` must expose a rich ordered transcript for structured threads. The visible order is a
@@ -106,7 +106,7 @@ history format, and not a contract that terminal-backed providers must implement
   [@test] ../../../../../plugins/agent-workbench/acp/testSrc/AcpThreadEventMapperTest.kt
 
 - Terminal command content inside structured threads is modeled as structured tool/command content, not as
-  a separate Agent Chat terminal tab. Output received before the corresponding terminal/tool entry is
+  a separate Agent Thread View terminal tab. Output received before the corresponding terminal/tool entry is
   created must be buffered or otherwise replayed so transcript order and terminal content remain coherent.
   [@test] ../../engine/testSrc/EngineEventStoreTest.kt
 
@@ -142,13 +142,13 @@ history format, and not a contract that terminal-backed providers must implement
   synthesize a terminal launch spec, or fall back to a terminal tab when the structured runtime is missing.
   Missing projection data, missing adapter support, and failed runtime reconnects must render explicit
   structured-thread states owned by Engine/adapter code.
-  [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+  [@test] ../../thread-view/testSrc/AgentThreadViewFileEditorLifecycleTest.kt
 
 ## User Experience
 
-- Terminal-backed chats continue to look and behave like embedded terminal sessions, including provider
+- Terminal-backed thread views continue to look and behave like embedded terminal sessions, including provider
   TUI behavior and terminal readiness-gated prompt dispatch.
-- Structured Engine chats open in the same Agent Chat editor surface but render IDE-native transcript rows
+- Structured Engine thread views open in the same Agent Thread View editor surface but render IDE-native transcript rows
   for messages, thoughts, tools, approvals, plans, diffs, and terminal output.
 - Session rows, editor tab identity, activity badges, and structure view outline should remain consistent
   across both families even though their backing state models differ.
@@ -169,17 +169,17 @@ history format, and not a contract that terminal-backed providers must implement
 
 ACP restore uses three separate persisted surfaces:
 
-- Agent Chat tab state restores the editor tab identity only: provider `acp`, project path,
+- Agent Thread View tab state restores the editor tab identity only: provider `acp`, project path,
   `threadIdentity`, Engine `threadId`, last known title, and activity. Restoring this state must open the
   Engine custom-content screen and must not synthesize a terminal launch spec.
-- The Engine event log restores local visible chat state. The screen may render immediately by replaying
+- The Engine event log restores local visible thread view state. The screen may render immediately by replaying
   `events.jsonl` into `ThreadProjection`, even before an ACP process is connected.
 - ACP runtime binding restores whether the agent can be contacted again. The binding must include the ACP
   agent identity and the server-issued `agentSessionId` once the runtime returns one. It may also include
   non-secret launch context such as cwd, remote branch, or organization id when required by the ACP
   implementation.
 
-ACP continuation is load-first. On restored structured chats, the adapter should initialize the ACP client,
+ACP continuation is load-first. On restored structured thread views, the adapter should initialize the ACP client,
 read the agent capabilities, and continue only when a stored `agentSessionId` exists and the runtime reports
 `loadSession` support. In that case it calls ACP `loadSession(agentSessionId, sessionParameters)`. Any ACP
 `session/update` history replayed by `loadSession` is not appended to the Engine log as fresh transcript events:
@@ -188,19 +188,19 @@ updates from subsequent prompt turns are mapped back into canonical Engine event
 
 Automatic fallback from `loadSession` to ACP `resumeSession` is intentionally not part of restored Workbench
 ACP semantics. `resumeSession` has different behavior and may reconnect transport without replaying the
-session history expected by the Engine transcript. If a restored chat has an ACP binding but the runtime does
+session history expected by the Engine transcript. If a restored thread view has an ACP binding but the runtime does
 not support `loadSession`, or loading fails, the Engine transcript remains visible from the local event log but
 prompt input, approvals, and reconnect actions must be disabled until the user explicitly starts a new
 session/continuation flow.
 
-For brand-new ACP chats with no stored `agentSessionId`, the adapter may create a new ACP session. After the
+For brand-new ACP thread views with no stored `agentSessionId`, the adapter may create a new ACP session. After the
 session is acquired, it must persist the server-issued session id in the ACP runtime binding before accepting
 future restore/load continuation as available.
 
 #### ACP Persistence Implementation Plan
 
 The persistence layer should reuse the Engine JSONL event log as the durable source of truth. Workbench must not
-add a separate ACP-specific session-state file for structured chats: visible transcript state and reconnectable
+add a separate ACP-specific session-state file for structured thread views: visible transcript state and reconnectable
 runtime binding are both reconstructed from `ThreadProjection`.
 
 Two events feed the binding: `ThreadCreated` carries the binding *seed* known at prepare time (`agentId`, `cwd`),
@@ -225,7 +225,7 @@ and `RuntimeSessionBound` carries the *server-issued* `agentSessionId` once a se
    - The binding is always reduced into side state regardless of `EventVisibility`. `AuditOnly` only hides an event
      from the user-visible transcript; it must not exclude the event from replay or from `runtimeBinding`.
 
-2. Seed the binding when a chat is prepared.
+2. Seed the binding when a thread view is prepared.
    - `AcpSessionManager.prepare(threadId, entry)` continues to write `ThreadCreated` and `ThreadWaiting`.
    - `ThreadCreated` must carry `runtimeKind = Acp`, `agentId = entry.id.fullId`, and the non-secret launch context
      available at prepare time, especially project `cwd`. The reducer seeds these into `runtimeBinding`.
@@ -271,9 +271,9 @@ and `RuntimeSessionBound` carries the *server-issued* `agentSessionId` once a se
      reconnect) so the projection can leave `ThreadStatus.Disconnected`.
    - If `agentSessionId` exists but the runtime does not support `loadSession`, record `ThreadDisconnected` and do not
      call `resumeSession` or `newSession` automatically.
-   - If no `agentSessionId` exists for a brand-new prepared chat with no prior transcript, create a new ACP session and
+   - If no `agentSessionId` exists for a brand-new prepared thread view with no prior transcript, create a new ACP session and
      persist the acquired id as in step 3.
-   - If no `agentSessionId` exists for a restored chat that already has local transcript/history, treat it as a legacy
+   - If no `agentSessionId` exists for a restored thread view that already has local transcript/history, treat it as a legacy
      pre-binding thread. Do not start a process during tab restore, but once ACP ownership is rehydrated the adapter may
      recover the projection to `ThreadWaiting` so the user can explicitly continue. The first prompt in that state
      creates a fresh ACP session, persists its `RuntimeSessionBound`, and does not replay the local transcript into the
@@ -310,7 +310,7 @@ and `RuntimeSessionBound` carries the *server-issued* `agentSessionId` once a se
      [@test] ../../engine/testSrc/EngineEventStoreTest.kt
    - ACP continuation-decision tests verify that a stored `agentSessionId` with `loadSession` support resumes via
      `loadSession`, that missing `loadSession` support refuses (no fallback to `resumeSession` or `newSession`), and that
-     no stored session id creates a fresh session (brand-new chat, or legacy restored chat continued by the user).
+     no stored session id creates a fresh session (brand-new thread view, or legacy restored thread view continued by the user).
      [@test] ../../../../../plugins/agent-workbench/acp/testSrc/AcpContinuationTest.kt
    - ACP recovery tests verify `shouldRecoverDisconnectedAcpThread`: a `Disconnected` ACP thread (by thread or binding
      `runtimeKind`) is a recovery target, while connected or non-ACP threads are not.
@@ -319,9 +319,9 @@ and `RuntimeSessionBound` carries the *server-issued* `agentSessionId` once a se
      ownership from persisted binding data so `handles(threadId)` flips true and input re-enables (incl. catalog
      warm-up), `sendPrompt(...)` records `ThreadDisconnected` instead of an undeliverable user message, and a
      `loadSession` replay does not duplicate the local transcript.
-   - Existing chat restore tests continue to prove that restored structured ACP tabs never synthesize a terminal
+   - Existing thread view restore tests continue to prove that restored structured ACP tabs never synthesize a terminal
      launch spec.
-     [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+     [@test] ../../thread-view/testSrc/AgentThreadViewFileEditorLifecycleTest.kt
 
 ### Canonical Event Payloads
 
@@ -384,7 +384,7 @@ and `RuntimeSessionBound` carries the *server-issued* `agentSessionId` once a se
 
 - `./tests.cmd --module intellij.agent.workbench.engine.tests --test com.intellij.agent.workbench.engine.platform.EngineEventStoreTest`
 - `./tests.cmd --module intellij.agent.workbench.acp.tests --test com.intellij.agent.workbench.acp.AcpThreadEventMapperTest`
-- `./tests.cmd --module intellij.agent.workbench.chat.tests --test com.intellij.agent.workbench.chat.AgentChatFileEditorLifecycleTest`
+- `./tests.cmd --module intellij.agent.workbench.thread.view.tests --test com.intellij.agent.workbench.thread.view.AgentThreadViewFileEditorLifecycleTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionLaunchServiceTest`
 
 ## Open Questions / Risks
@@ -400,6 +400,6 @@ and `RuntimeSessionBound` carries the *server-issued* `agentSessionId` once a se
 ## References
 
 - `../launch/engine-acp-launch-profiles.spec.md`
-- `../chat/agent-chat-editor.spec.md`
-- `../chat/agent-chat-structure-view.spec.md`
+- `../thread-view/agent-thread-view.spec.md`
+- `../thread-view/agent-thread-view-structure.spec.md`
 - `../sessions/agent-sessions.spec.md`

@@ -17,16 +17,16 @@ import java.util.concurrent.TimeUnit
 class AgentWorkbenchPluginLoadingTest {
   @Test
   fun loadsAgentWorkbenchContentModulesAndRegistrations() {
-    val fileSystem = VirtualFileManager.getInstance().getFileSystem("agent-chat")
+    val fileSystem = VirtualFileManager.getInstance().getFileSystem("agent-thread-view")
 
     assertThat(fileSystem)
       .isNotNull
     assertThat(checkNotNull(fileSystem).javaClass.name)
-      .isEqualTo("com.intellij.agent.workbench.chat.AgentChatVirtualFileSystem")
+      .isEqualTo("com.intellij.agent.workbench.thread.view.AgentThreadViewVirtualFileSystem")
     assertThat(EditorTabColorProvider.EP_NAME.extensionList.map { it.javaClass.name })
-      .contains("com.intellij.agent.workbench.chat.AgentChatEditorTabColorProvider")
+      .contains("com.intellij.agent.workbench.thread.view.AgentThreadViewEditorTabColorProvider")
     assertThat(AgentWorkbenchSettingsContributors.all().map { it.javaClass.name })
-      .contains("com.intellij.agent.workbench.chat.AgentChatSettingsContributor")
+      .contains("com.intellij.agent.workbench.thread.view.AgentThreadViewSettingsContributor")
 
     assertThat(ActionManager.getInstance().getAction(AgentWorkbenchActionIds.Sessions.OPEN_DEDICATED_FRAME))
       .isNotNull

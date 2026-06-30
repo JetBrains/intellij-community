@@ -1,14 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.actions
 
-import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
-import com.intellij.agent.workbench.chat.resolveAgentChatEditorTabActionContext
+import com.intellij.agent.workbench.thread.view.AgentThreadViewEditorTabActionContext
+import com.intellij.agent.workbench.thread.view.resolveAgentThreadViewEditorTabActionContext
 import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.service.buildAgentSessionProjectPathCandidates
 import com.intellij.agent.workbench.sessions.service.collectOpenAgentSessionProjectPaths
 import com.intellij.agent.workbench.sessions.service.normalizeOpenableSourceProjectPath
-import com.intellij.agent.workbench.sessions.service.selectedChatSourceProjectPath
+import com.intellij.agent.workbench.sessions.service.selectedThreadViewSourceProjectPath
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.project.Project
@@ -40,33 +40,33 @@ internal fun resolveAgentSessionsMainToolbarNewThreadContext(
   event: AnActionEvent,
   isDedicatedProject: (Project) -> Boolean = AgentWorkbenchDedicatedFrameProjectManager::isDedicatedProject,
   openProjectPaths: () -> List<String> = ::collectOpenAgentSessionProjectPaths,
-  resolveChatContext: (AnActionEvent) -> AgentChatEditorTabActionContext? = ::resolveAgentChatEditorTabActionContext,
-  selectedSourcePath: (Project) -> String? = ::selectedChatSourceProjectPath,
+  resolveThreadViewContext: (AnActionEvent) -> AgentThreadViewEditorTabActionContext? = ::resolveAgentThreadViewEditorTabActionContext,
+  selectedSourcePath: (Project) -> String? = ::selectedThreadViewSourceProjectPath,
 ): AgentSessionsNewThreadContext? {
   val project = event.project ?: return null
-  val chatContext = resolveChatContext(event)
+  val threadViewContext = resolveThreadViewContext(event)
   return if (isDedicatedProject(project)) {
     AgentSessionsNewThreadContext(
       project = project,
-      resolveTarget = { resolveDedicatedFrameNewThreadTarget(chatContext, openProjectPaths) },
+      resolveTarget = { resolveDedicatedFrameNewThreadTarget(threadViewContext, openProjectPaths) },
       resolveTargetForUpdate = { null },
     )
   }
   else {
-    val target = resolveMainToolbarProjectFrameNewThreadTarget(project, chatContext, selectedSourcePath) ?: return null
+    val target = resolveMainToolbarProjectFrameNewThreadTarget(project, threadViewContext, selectedSourcePath) ?: return null
     AgentSessionsNewThreadContext(project) { target }
   }
 }
 
 private fun resolveDedicatedFrameNewThreadTarget(
-  chatContext: AgentChatEditorTabActionContext?,
+  threadViewContext: AgentThreadViewEditorTabActionContext?,
   openProjectPaths: () -> List<String>,
 ): AgentSessionsNewThreadTarget? {
   // Source-project candidates are resolved lazily on click/popup open. In a multi-project dedicated frame,
   // require an explicit choice instead of silently using the active Agent tab's source path.
   val candidates = buildAgentSessionProjectPathCandidates(openProjectPaths())
   return when (candidates.size) {
-    0 -> chatContext?.let { AgentSessionsNewThreadTarget.Direct(it.path) }
+    0 -> threadViewContext?.let { AgentSessionsNewThreadTarget.Direct(it.path) }
     1 -> AgentSessionsNewThreadTarget.Direct(candidates.single().path)
     else -> AgentSessionsNewThreadTarget.Candidates(candidates)
   }
@@ -74,10 +74,10 @@ private fun resolveDedicatedFrameNewThreadTarget(
 
 private fun resolveMainToolbarProjectFrameNewThreadTarget(
   project: Project,
-  chatContext: AgentChatEditorTabActionContext?,
+  threadViewContext: AgentThreadViewEditorTabActionContext?,
   selectedSourcePath: (Project) -> String?,
 ): AgentSessionsNewThreadTarget? {
-  val path = chatContext?.path
+  val path = threadViewContext?.path
              ?: normalizeOpenableSourceProjectPath(selectedSourcePath(project))
              ?: normalizeOpenableSourceProjectPath(project.basePath)
              ?: return null

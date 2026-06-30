@@ -1,11 +1,11 @@
 ---
 name: Agent Threads Testing
-description: Coverage ownership matrix for Agent Threads, Agent Chat, provider backends, and prompt-launch contracts.
+description: Coverage ownership matrix for Agent Threads, Agent Thread View, provider backends, and prompt-launch contracts.
 targets:
   - ../../sessions/testSrc/*.kt
   - ../../sessions-toolwindow/testSrc/*.kt
   - ../../sessions-actions/testSrc/*.kt
-  - ../../chat/testSrc/*.kt
+  - ../../thread-view/testSrc/*.kt
   - ../../lib-agent/providers/claude/sessions/testSrc/**/*.kt
   - ../../claude/awb/testSrc/*.kt
   - ../../sessions-jbcentral/testSrc/**/*.kt
@@ -26,7 +26,7 @@ This spec maps Agent Workbench behavior specs to their primary module tests. It 
 - Sessions loading and refresh: `AgentSessionLoadAggregationTest`, `AgentSessionRefreshServiceIntegrationTest`, `AgentSessionRefreshOnDemandIntegrationTest`, `AgentSessionRefreshConcurrencyIntegrationTest`, and `AgentSessionRefreshCoordinatorTest`.
 - Swing tree UI: `AgentSessionsSwingTreeRenderingTest`, `AgentSessionsSwingTreeCellRendererTest`, `AgentSessionsSwingTreeInteractionTest`, `AgentSessionsSwingTreeStatePersistenceTest`, and `AgentSessionsTreeSnapshotTest`.
 - New-thread actions: `AgentSessionsSwingNewSessionActionsTest`, `AgentSessionsTreePopupActionsTest`, `AgentSessionsEditorTabActionsTest`, and `AgentSessionsMainToolbarNewThreadActionsTest`.
-- Chat tab lifecycle and dispatch: `AgentChatEditorServiceTest`, `AgentChatFileEditorProviderTest`, `AgentChatFileEditorLifecycleTest`, `AgentChatTabSelectionServiceTest`, and `AgentChatOpenTopLevelDispatchTest`.
+- Thread View tab lifecycle and dispatch: `AgentThreadViewEditorServiceTest`, `AgentThreadViewFileEditorProviderTest`, `AgentThreadViewFileEditorLifecycleTest`, `AgentThreadViewTabSelectionServiceTest`, and `AgentThreadViewOpenTopLevelDispatchTest`.
 - Archive, rename, and provider capability behavior: `AgentSessionArchiveServiceIntegrationTest`, `AgentSessionRenameServiceTest`, provider descriptor tests, and Claude rename/store tests.
 - Dedicated frame behavior: `AgentSessionsGearActionsTest`, `AgentSessionPromptLauncherBridgeTest`, project frame capability tests, and terminal hyperlink routing tests.
 - Codex source/backend behavior: `CodexAppServerProtocolTest`, `CodexAppServerSessionBackendTest`, `CodexSessionBackendSelectorTest`, rollout parser/watcher tests, refresh-hints tests, and activity resolver tests.
@@ -43,7 +43,7 @@ This spec maps Agent Workbench behavior specs to their primary module tests. It 
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionLoadAggregationTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test "com.intellij.agent.workbench.sessions.AgentSessionRefresh*Test"`
 - `./tests.cmd --module intellij.agent.workbench.sessions.toolwindow.tests --test "com.intellij.agent.workbench.sessions.toolwindow.AgentSessionsSwing*Test"`
-- `./tests.cmd --module intellij.agent.workbench.chat.tests --test "com.intellij.agent.workbench.chat.AgentChat*Test"`
+- `./tests.cmd --module intellij.agent.workbench.thread.view.tests --test "com.intellij.agent.workbench.thread.view.AgentThreadView*Test"`
 - `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test "com.intellij.platform.ai.agent.codex.sessions.CodexRollout*Test"`
 - `./tests.cmd --module intellij.platform.ai.agent.codex.sessions.tests --test com.intellij.platform.ai.agent.codex.sessions.backend.appserver.CodexAppServerRefreshHintsProviderTest`
 - `./tests.cmd --module intellij.platform.ai.agent.codex.common.tests --test com.intellij.platform.ai.agent.codex.common.CodexAppServerProtocolTest`
@@ -53,6 +53,6 @@ This spec maps Agent Workbench behavior specs to their primary module tests. It 
 - `agent-sessions.spec.md`
 - `agent-sessions-tree.spec.md`
 - `agent-sessions-refresh.spec.md`
-- `../chat/agent-chat-editor.spec.md`
+- `../thread-view/agent-thread-view.spec.md`
 - `../actions/new-thread.spec.md`
 - `agent-sessions-codex-rollout-source.spec.md`

@@ -283,7 +283,7 @@ private class AgentSessionsActivityOpenThreadAction(
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun actionPerformed(e: AnActionEvent) {
-    service<AgentSessionLaunchService>().openChatThread(
+    service<AgentSessionLaunchService>().openThreadViewThread(
       path = row.path,
       thread = row.thread,
       entryPoint = entryPoint,

@@ -34,7 +34,7 @@ internal fun interface ClaudeOpenTabRenameDispatcher {
   ): Boolean
 }
 
-internal object ClaudeChatOpenTabRenameDispatcher : ClaudeOpenTabRenameDispatcher {
+internal object ClaudeThreadViewOpenTabRenameDispatcher : ClaudeOpenTabRenameDispatcher {
   override suspend fun dispatch(
       path: String,
       threadId: String,
@@ -56,7 +56,7 @@ internal object ClaudeChatOpenTabRenameDispatcher : ClaudeOpenTabRenameDispatche
 internal class ClaudeOpenTabAwareThreadRenameEngine(
   private val backend: ClaudeSessionBackend,
   private val fallbackEngine: ClaudeThreadRenameEngine,
-  private val openTabDispatcher: ClaudeOpenTabRenameDispatcher = ClaudeChatOpenTabRenameDispatcher,
+  private val openTabDispatcher: ClaudeOpenTabRenameDispatcher = ClaudeThreadViewOpenTabRenameDispatcher,
   private val waitTimeoutMs: Long = DEFAULT_CLAUDE_THREAD_RENAME_WAIT_TIMEOUT_MS,
   private val pollIntervalMs: Long = DEFAULT_CLAUDE_THREAD_RENAME_POLL_INTERVAL_MS,
   private val currentTimeMs: () -> Long = System::currentTimeMillis,

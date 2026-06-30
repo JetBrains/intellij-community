@@ -248,7 +248,7 @@ internal class AgentSessionsTreeInteractionController(
         if (!includeOpenActions) return false
         if (isAgentSessionNewSessionId(treeNode.thread.id)) return false
         val path = pathForThreadNode(id, treeNode.project.path)
-        service<AgentSessionLaunchService>().openChatThread(
+        service<AgentSessionLaunchService>().openThreadViewThread(
           path = path,
           thread = treeNode.thread,
           entryPoint = AgentWorkbenchEntryPoint.TREE_ROW,
@@ -260,7 +260,7 @@ internal class AgentSessionsTreeInteractionController(
       is SessionTreeNode.SubAgent -> {
         if (!includeOpenActions) return false
         val path = pathForThreadNode(id, treeNode.project.path)
-        service<AgentSessionLaunchService>().openChatSubAgent(
+        service<AgentSessionLaunchService>().openThreadViewSubAgent(
           path = path,
           thread = treeNode.thread,
           subAgent = treeNode.subAgent,

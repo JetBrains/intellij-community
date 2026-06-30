@@ -131,7 +131,7 @@ Agent Workbench owns the only concrete contributed action today. Platform and `g
 - Prepared backend sessions must be project-scoped so duplicate selected-file launches for the same worktree converge on one active merge session in that project. Prompt-only launches without selected files do not create backend merge-session state, but duplicate prompt-only invocations must be ignored while the deferred thread is being opened and started.
 - The prepared merge session owns unresolved-file tracking, merge-model preparation, file finalization, dirty-scope updates, and pin cleanup.
 - The generic non-iterative action layer owns only action presentation and event wiring; merge-specific object lookup for non-iterative launches stays in the agent plugin.
-- The merge prompt may include a compact launch-selection hint, but the thread itself remains a normal Agent Workbench chat/editor surface and must not rely on an exhaustive conflicted-file prompt attachment or any fallback to full launch-surface conflict inventories when no explicit selection exists.
+- The merge prompt may include a compact launch-selection hint, but the thread itself remains a normal Agent Workbench thread view/editor surface and must not rely on an exhaustive conflicted-file prompt attachment or any fallback to full launch-surface conflict inventories when no explicit selection exists.
 - Unsupported binary files may remain in the selected active merge set for manual resolution. Selected text conflicts may still launch and are expected to be resolved through normal workflow.
 
 ## Error Handling

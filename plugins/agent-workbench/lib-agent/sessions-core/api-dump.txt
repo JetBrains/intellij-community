@@ -97,12 +97,6 @@ f:com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationPat
 - equals(java.lang.Object):Z
 - hashCode():I
 com.intellij.platform.ai.agent.sessions.core.SessionActionTarget
-com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$Conversation
-- com.intellij.platform.ai.agent.sessions.core.SessionActionTarget
-- a:getPath():java.lang.String
-- a:getProvider-dBzBBrw():java.lang.String
-- a:getThreadId():java.lang.String
-- a:getTitle():java.lang.String
 f:com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$MoreProjects
 - com.intellij.platform.ai.agent.sessions.core.SessionActionTarget
 - f:hiddenCount:I
@@ -135,7 +129,7 @@ f:com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$Project
 - equals(java.lang.Object):Z
 - hashCode():I
 f:com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$SubAgent
-- com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$Conversation
+- com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$ThreadTarget
 - f:parentThreadId:java.lang.String
 - f:subAgent:com.intellij.platform.ai.agent.core.session.AgentSubAgent
 - f:subAgentId:java.lang.String
@@ -157,7 +151,7 @@ f:com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$SubAgent
 - getTitle():java.lang.String
 - hashCode():I
 f:com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$Thread
-- com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$Conversation
+- com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$ThreadTarget
 - b:<init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionThread,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:component1():java.lang.String
 - f:component2-dBzBBrw():java.lang.String
@@ -173,6 +167,12 @@ f:com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$Thread
 - getThreadId():java.lang.String
 - getTitle():java.lang.String
 - hashCode():I
+com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$ThreadTarget
+- com.intellij.platform.ai.agent.sessions.core.SessionActionTarget
+- a:getPath():java.lang.String
+- a:getProvider-dBzBBrw():java.lang.String
+- a:getThreadId():java.lang.String
+- a:getTitle():java.lang.String
 f:com.intellij.platform.ai.agent.sessions.core.SessionActionTarget$Worktree
 - com.intellij.platform.ai.agent.sessions.core.SessionActionTarget
 - f:path:java.lang.String
@@ -222,28 +222,6 @@ f:com.intellij.platform.ai.agent.sessions.core.cost.AgentSessionUsageSnapshot
 - hashCode():I
 f:com.intellij.platform.ai.agent.sessions.core.cost.AgentSessionUsageSnapshotKt
 - sf:aggregateAgentSessionUsageCost(java.util.List,kotlin.jvm.functions.Function1):com.intellij.platform.ai.agent.core.session.AgentSessionCost
-f:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionChatOpenPlan
-- f:initialMessageDispatchPlan:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan
-- f:launchSpec:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
-- f:runtimeThreadId:java.lang.String
-- f:subAgentId:java.lang.String
-- f:threadIdentity:java.lang.String
-- f:threadTitle:java.lang.String
-- <init>(java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan):V
-- b:<init>(java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:component1():java.lang.String
-- f:component2():com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
-- f:component3():java.lang.String
-- f:component4():java.lang.String
-- f:component5():java.lang.String
-- f:component6():com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan
-- f:copy(java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan):com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionChatOpenPlan
-- bs:copy$default(com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionChatOpenPlan,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionChatOpenPlan
-- equals(java.lang.Object):Z
-- hashCode():I
-f:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionChatOpenPlanKt
-- sf:resolveAgentSessionChatOpenPlan-e88xiWE(java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionThread,com.intellij.platform.ai.agent.core.session.AgentSubAgent,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,java.lang.String,java.lang.String,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function4,kotlin.coroutines.Continuation):java.lang.Object
-- bs:resolveAgentSessionChatOpenPlan-e88xiWE$default(java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionThread,com.intellij.platform.ai.agent.core.session.AgentSubAgent,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,java.lang.String,java.lang.String,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function4,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchContributor
 - a:contribute-rVRrr4o(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchContributors
@@ -345,6 +323,28 @@ f:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionPlannedLaunch
 - bs:copy$default(com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionPlannedLaunch,com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchIntent,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,java.util.List,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionPlannedLaunch
 - equals(java.lang.Object):Z
 - hashCode():I
+f:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionThreadViewOpenPlan
+- f:initialMessageDispatchPlan:com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan
+- f:launchSpec:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
+- f:runtimeThreadId:java.lang.String
+- f:subAgentId:java.lang.String
+- f:threadIdentity:java.lang.String
+- f:threadTitle:java.lang.String
+- <init>(java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan):V
+- b:<init>(java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
+- f:component3():java.lang.String
+- f:component4():java.lang.String
+- f:component5():java.lang.String
+- f:component6():com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan
+- f:copy(java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan):com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionThreadViewOpenPlan
+- bs:copy$default(com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionThreadViewOpenPlan,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionThreadViewOpenPlan
+- equals(java.lang.Object):Z
+- hashCode():I
+f:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionThreadViewOpenPlanKt
+- sf:resolveAgentSessionThreadViewOpenPlan-e88xiWE(java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionThread,com.intellij.platform.ai.agent.core.session.AgentSubAgent,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,java.lang.String,java.lang.String,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function4,kotlin.coroutines.Continuation):java.lang.Object
+- bs:resolveAgentSessionThreadViewOpenPlan-e88xiWE$default(java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionThread,com.intellij.platform.ai.agent.core.session.AgentSubAgent,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,java.lang.String,java.lang.String,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function4,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 f:com.intellij.platform.ai.agent.sessions.core.launch.AwbMcpConfig
 - <init>(java.util.Set,kotlin.jvm.functions.Function1):V
 - f:component1():java.util.Set
@@ -676,7 +676,7 @@ f:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderPla
 - sf:isPlanModeRequested(com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest):Z
 com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderUiContributor
 - createToolWindowNorthComponent(com.intellij.openapi.project.Project):javax.swing.JComponent
-- onConversationOpened():V
+- onThreadViewOpened():V
 f:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderUiContributorBean
 - com.intellij.serviceContainer.BaseKeyedLazyInstance
 - implementation:java.lang.String

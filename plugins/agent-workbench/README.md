@@ -4,9 +4,9 @@
 
 The Agent Workbench plugin reimagines the IDE experience around AI-assisted development. Rather than treating AI as an add-on feature, the plugin creates a seamless workflow where developers can:
 
-- **Start conversations naturally** - Begin coding discussions from any context in the IDE
-- **Maintain persistent threads** - Keep conversation history organized and accessible across sessions
-- **Navigate AI interactions** - Browse, search, and resume previous conversations efficiently
+- **Start threads naturally** - Begin agent tasks from any context in the IDE
+- **Maintain persistent threads** - Keep thread history organized and accessible across sessions
+- **Navigate AI interactions** - Browse, search, and resume previous threads efficiently
 - **Integrate with development flow** - Connect AI assistance directly to code navigation, editing, and debugging
 
 The goal is to make AI assistance feel like a native part of the development environment, reducing context switching and keeping developers in flow.
@@ -21,7 +21,7 @@ The palette:
 - Captures invocation context (selection/caret snippet, file, symbol, project).
 - Falls back to last selected editor context when invoked outside editors.
 - Uses invocation-derived context chips; add extra details directly in prompt text.
-- Sends the composed first prompt into a newly opened chat session.
+- Sends the composed first prompt into a newly opened Agent Thread View.
 
 ## Architecture
 
@@ -33,13 +33,13 @@ The plugin provides two complementary views for working with AI-assisted develop
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │   ┌─────────────────────────────────┐   ┌─────────────────────────────────┐ │
-│   │      PROJECT FRAME              │   │    AI-CHAT DEDICATED VIEW       │ │
+│   │      PROJECT FRAME              │   │       AGENT THREAD VIEW          │ │
 │   │  (traditional development)      │   │   (task orchestration)          │ │
 │   │                                 │   │                                 │ │
 │   │  ┌────────┐ ┌────────────────┐  │   │  ┌────────┐ ┌────────────────┐  │ │
 │   │  │ Agent  │ │                │  │   │  │ Agent  │ │                │  │ │
-│   │  │Sessions│ │     Editor     │  │◄─►│  │Sessions│ │   Chat Panel   │  │ │
-│   │  │  Tool  │ │                │  │   │  │  Tool  │ │                │  │ │
+│   │  │Sessions│ │     Editor     │  │◄─►│  │Sessions│ │ Agent Thread  │  │ │
+│   │  │  Tool  │ │                │  │   │  │  Tool  │ │      View      │  │ │
 │   │  │ Window │ │                │  │   │  │ Window │ │  • Status      │  │ │
 │   │  │        │ │  • Navigate    │  │   │  │        │ │  • Input       │  │ │
 │   │  │Projects│ │  • Edit        │  │   │  │Projects│ │  • History     │  │ │
@@ -56,7 +56,7 @@ The plugin provides two complementary views for working with AI-assisted develop
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-The Agent Threads Tool Window organizes conversations by project:
+The Agent Threads Tool Window organizes threads by project:
 
 ```
 Projects
@@ -86,7 +86,7 @@ com.intellij.agent.workbench
 `- intellij.agent.workbench.plugin          plugin wrapper; owns plugin.xml
    `- runtime content modules
       |- lib-agent/*                       provider/runtime contracts and implementations
-      |- sessions, chat, prompt/*          app services and user workflows
+       |- sessions, thread-view, prompt/*          app services and user workflows
       |- sessions-toolwindow, actions      visible Agent Threads surfaces
       |- ui, settings                      shared UI helpers and persisted preferences
       |- codex/*, claude/awb, pi/awb       provider-specific IDE integrations
@@ -101,7 +101,7 @@ feature and UI modules
   sessions-toolwindow
   sessions-actions
   prompt/ui
-  chat
+  thread-view
   vcs-merge / ai-review
           |
           v
@@ -153,7 +153,7 @@ lib-agent/common
 |- AgentThreadActivityIcons               badges Swing icons
 `- icons/AgentWorkbenchCommonIcons        shared provider logos
       |
-      `- used by provider descriptors, session/chat tests, and provider-specific UI
+      `- used by provider descriptors, session/thread view tests, and provider-specific UI
 
 lib-agent/sessions-core
 `- AgentSessionProviderDescriptor         exposes provider Icon and optional JComponent hooks
@@ -170,8 +170,8 @@ Detailed requirements and testing contracts are documented in `spec/`.
 - [Core Contracts](spec/core/agent-core-contracts.spec.md) - Canonical cross-feature contracts: identity, command mapping, shared editor-tab actions, and shared visibility primitives.
 - [Agent Threads Tool Window](spec/sessions/agent-sessions.spec.md) - Provider aggregation, load/refresh lifecycle, deduplication, and project/worktree tree behavior.
 - [Agent Threads Visibility and More Row](spec/sessions/agent-sessions-thread-visibility.spec.md) - Deterministic visibility rendering and More-row precedence rules.
-- [Agent Chat Editor](spec/chat/agent-chat-editor.spec.md) - Chat tab lifecycle, persistence/restore, lazy terminal initialization, titles/icons.
-- [Agent Chat Dedicated Frame](spec/frame/agent-dedicated-frame.spec.md) - Dedicated-frame mode routing, lifecycle, shortcut semantics, and filtering.
+- [Agent Thread View Editor](spec/thread-view/agent-thread-view.spec.md) - Agent Thread View lifecycle, persistence/restore, lazy terminal initialization, titles/icons.
+- [Agent Thread View Dedicated Frame](spec/frame/agent-dedicated-frame.spec.md) - Dedicated-frame mode routing, lifecycle, shortcut semantics, and filtering.
 - [Agent Main Toolbar Activity](spec/frame/agent-main-toolbar-activity.spec.md) - Global Agent activity counters shown in source-project main toolbars.
 - [Codex Sessions Rollout Source](spec/sessions/agent-sessions-codex-rollout-source.spec.md) - Rollout-default Codex discovery, watcher semantics, backend selector, and app-server write interoperability.
 - [Agent Sessions New-Session Actions](spec/actions/new-thread.spec.md) - New-thread UX, provider/YOLO selection, creation dedup, pending-thread rebinding.

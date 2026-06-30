@@ -13,8 +13,8 @@ targets:
   - ../../sessions/src/service/AgentSessionLaunchService.kt
   - ../../sessions/src/service/AgentSessionPromptLauncherBridge.kt
   - ../../sessions/src/state/AgentSessionLaunchProfileStateService.kt
-  - ../../chat/src/AgentChatStartupIntent.kt
-  - ../../chat/src/AgentChatFileEditorState.kt
+  - ../../thread-view/src/AgentThreadViewStartupIntent.kt
+  - ../../thread-view/src/AgentThreadViewFileEditorState.kt
   - ../../engine/src/ui/EngineSessionProviderDescriptor.kt
   - ../../engine/src/platform/EngineLaunchAgents.kt
   - ../../../../../plugins/agent-workbench/acp/src/AcpEngineLaunchAgentProvider.kt
@@ -78,10 +78,10 @@ switch later.
   launch pipeline. ACP launch code must resolve the ACP catalog entry from `launchTargetId`, not from
   `generationSettings.modelId`.
   [@test] ../../sessions/testSrc/AgentSessionLaunchServiceTest.kt
-- Chat startup/restoration metadata must retain the launch target when a pending new ACP thread is reopened.
+- Thread View startup/restoration metadata must retain the launch target when a pending new ACP thread is reopened.
   `launchProfileId` is not enough because a built-in profile can disappear, be renamed, or be regenerated while
   the stable target remains the identity needed to finish launch.
-  [@test] ../../chat/testSrc/AgentChatOpenTopLevelDispatchTest.kt
+  [@test] ../../thread-view/testSrc/AgentThreadViewOpenTopLevelDispatchTest.kt
 - `AgentPromptGenerationSettings.modelId` must keep its current meaning: a generation model id. ACP agent ids
   must not be written to this field by new code. ACP-specific model ids may be written there only after a
   real ACP model list is available from handshake or an explicit cache of handshake capabilities.
@@ -136,7 +136,7 @@ switch later.
 ## User Experience
 - New Task shows one top-level launch profile list. Existing terminal profiles stay visible, and installed ACP
   agents from the registry appear as peer entries.
-- Selecting an ACP registry profile opens an Agent Workbench chat thread and starts the ACP agent through the
+- Selecting an ACP registry profile opens an Agent Workbench thread view thread and starts the ACP agent through the
   native UI path by default, without showing an embedded terminal.
 - Advanced users should be able to switch an ACP profile or launch action to terminal launch when that surface
   is implemented. This switch should be explicit and reversible.
@@ -180,7 +180,7 @@ would preserve the original modeling error.
 - Phase 0: Land this spec and mark `engine-acp-launch-profiles.spec.md` as superseded for the agent-as-model
   part during the first implementation change.
 - Phase 1: Add `launchTargetId` to launch profile data, serialization, normalization, resolved-profile objects,
-  prompt launch requests, launch intents, prepared launch state, and chat startup metadata. Add compatibility
+  prompt launch requests, launch intents, prepared launch state, and thread view startup metadata. Add compatibility
   conversion for legacy ACP profiles.
 - Phase 2: Centralize built-in profile generation and add ACP profiles from installed and launchable catalog
   entries. Keep terminal-provider built-ins unchanged.

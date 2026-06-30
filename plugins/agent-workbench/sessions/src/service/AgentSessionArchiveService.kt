@@ -3,7 +3,7 @@ package com.intellij.agent.workbench.sessions.service
 
 // @spec community/plugins/agent-workbench/spec/core/agent-workbench-telemetry.spec.md
 
-import com.intellij.agent.workbench.chat.closeAndForgetAgentChatsForThread
+import com.intellij.agent.workbench.thread.view.closeAndForgetAgentThreadViewsForThread
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
@@ -54,7 +54,7 @@ class AgentSessionArchiveService internal constructor(
   private val serviceScope: CoroutineScope,
   private val syncService: AgentSessionRefreshService,
   private val contentRepository: AgentSessionContentRepository,
-  private val archiveChatCleanup: suspend (projectPath: String, threadIdentity: String, subAgentId: String?) -> Unit,
+  private val archiveThreadViewCleanup: suspend (projectPath: String, threadIdentity: String, subAgentId: String?) -> Unit,
   private val backgroundTaskRunner: AgentSessionArchiveBackgroundTaskRunner,
   private val archiveTransitionSuppressions: AgentSessionArchiveTransitionSuppressions = AgentSessionArchiveTransitionSuppressions(),
   private val archivedSessionsRefreshIfLoaded: () -> Unit = {},
@@ -67,8 +67,8 @@ class AgentSessionArchiveService internal constructor(
       stateStore = service(),
       warmState = service<AgentSessionWarmStateService>(),
     ),
-    archiveChatCleanup = { projectPath, threadIdentity, subAgentId ->
-      closeAndForgetAgentChatsForThread(projectPath = projectPath, threadIdentity = threadIdentity, subAgentId = subAgentId)
+    archiveThreadViewCleanup = { projectPath, threadIdentity, subAgentId ->
+      closeAndForgetAgentThreadViewsForThread(projectPath = projectPath, threadIdentity = threadIdentity, subAgentId = subAgentId)
     },
     backgroundTaskRunner = IdeAgentSessionArchiveBackgroundTaskRunner,
     archiveTransitionSuppressions = service<AgentSessionArchiveTransitionSuppressions>(),
@@ -186,18 +186,18 @@ class AgentSessionArchiveService internal constructor(
 
     targets.forEach { target ->
       val provider = target.provider
-      val cleanupTarget = target.toArchivedChatCleanupTarget()
+      val cleanupTarget = target.toArchivedThreadViewCleanupTarget()
 
       if (target.isPendingThread()) {
         contentRepository.removeArchivedTarget(target)
         try {
-          archiveChatCleanup(target.path, cleanupTarget.threadIdentity, cleanupTarget.subAgentId)
+          archiveThreadViewCleanup(target.path, cleanupTarget.threadIdentity, cleanupTarget.subAgentId)
         }
         catch (t: Throwable) {
           if (t is CancellationException) {
             throw t
           }
-          LOG.warn("Failed to clean archived pending thread chat metadata for ${provider}:${target.threadId}", t)
+          LOG.warn("Failed to clean archived pending thread threadView metadata for ${provider}:${target.threadId}", t)
         }
         archivedTargets.add(target)
         return@forEach
@@ -254,8 +254,8 @@ class AgentSessionArchiveService internal constructor(
           val provider = target.provider
           val descriptor = preparedTarget.descriptor
           val archived = try {
-            if (descriptor.closeOpenChatBeforeArchiveThread) {
-              archiveChatCleanup(target.path, preparedTarget.cleanupTarget.threadIdentity, preparedTarget.cleanupTarget.subAgentId)
+            if (descriptor.closeOpenThreadViewBeforeArchiveThread) {
+              archiveThreadViewCleanup(target.path, preparedTarget.cleanupTarget.threadIdentity, preparedTarget.cleanupTarget.subAgentId)
             }
             descriptor.archiveThread(path = target.path, threadId = target.threadId)
           }
@@ -276,7 +276,7 @@ class AgentSessionArchiveService internal constructor(
           refreshDelayMs = maxOf(refreshDelayMs, descriptor.archiveRefreshDelayMs)
 
           try {
-            archiveChatCleanup(target.path, preparedTarget.cleanupTarget.threadIdentity, preparedTarget.cleanupTarget.subAgentId)
+            archiveThreadViewCleanup(target.path, preparedTarget.cleanupTarget.threadIdentity, preparedTarget.cleanupTarget.subAgentId)
           }
           catch (t: Throwable) {
             if (t is CancellationException) {
@@ -284,7 +284,7 @@ class AgentSessionArchiveService internal constructor(
             }
             // Archive is already successful at provider level; cleanup is best-effort and must not
             // resurrect the thread in UI by short-circuiting state update/refresh.
-            LOG.warn("Failed to clean archived thread chat metadata for ${provider}:${target.threadId}", t)
+            LOG.warn("Failed to clean archived thread threadView metadata for ${provider}:${target.threadId}", t)
           }
 
           archivedTargets.add(target)
@@ -488,7 +488,7 @@ private data class PreparedArchiveBatch(
 private data class PreparedArchiveTarget(
   @JvmField val target: ArchiveThreadTarget,
   @JvmField val descriptor: AgentSessionProviderDescriptor,
-  @JvmField val cleanupTarget: ArchivedChatCleanupTarget,
+  @JvmField val cleanupTarget: ArchivedThreadViewCleanupTarget,
   @JvmField val suppressed: Boolean,
   @JvmField val rollbackThread: AgentSessionThread?,
 )
@@ -515,7 +515,7 @@ private fun ArchiveBatchOutcome.toRequestResult(): AgentSessionArchiveRequestRes
   )
 }
 
-private data class ArchivedChatCleanupTarget(
+private data class ArchivedThreadViewCleanupTarget(
   @JvmField val threadIdentity: String,
   @JvmField val subAgentId: String?,
 )
@@ -534,14 +534,14 @@ private fun logMissingProviderDescriptor(provider: AgentSessionProvider) {
   LOG.warn("No session provider registered for ${provider.value}")
 }
 
-private fun ArchiveThreadTarget.toArchivedChatCleanupTarget(): ArchivedChatCleanupTarget {
+private fun ArchiveThreadTarget.toArchivedThreadViewCleanupTarget(): ArchivedThreadViewCleanupTarget {
   return when (this) {
-    is ArchiveThreadTarget.Thread -> ArchivedChatCleanupTarget(
+    is ArchiveThreadTarget.Thread -> ArchivedThreadViewCleanupTarget(
       threadIdentity = buildAgentSessionIdentity(provider, threadId),
       subAgentId = null,
     )
 
-    is ArchiveThreadTarget.SubAgent -> ArchivedChatCleanupTarget(
+    is ArchiveThreadTarget.SubAgent -> ArchivedThreadViewCleanupTarget(
       threadIdentity = buildAgentSessionIdentity(provider, parentThreadId),
       subAgentId = subAgentId,
     )
