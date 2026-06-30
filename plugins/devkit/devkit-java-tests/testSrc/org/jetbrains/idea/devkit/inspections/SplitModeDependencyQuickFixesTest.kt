@@ -297,7 +297,7 @@ internal class SplitModeDependencyQuickFixesTest : JavaCodeInsightFixtureTestCas
             <module name="intellij.platform.core"/>
           </dependencies>
           <extensions defaultExtensionNs="com.intellij">
-            <applicationConfigurable<caret>/>
+            <annotator<caret>/>
           </extensions>
         </idea-plugin>
       """.trimIndent()

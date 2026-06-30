@@ -33,6 +33,8 @@
   {"apiName": "com.intellij.openapi.ui.popup.JBPopupListener", "extensionPointNames": [], "targetModules": ["frontend"], "restrictionKind": "ui"},
   {"apiName": "com.intellij.openapi.editor.ex.FoldingListener", "extensionPointNames": [], "targetModules": ["frontend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.analysis.problemsView.toolWindow.ProblemsViewPanelProvider", "extensionPointNames": ["com.intellij.problemsViewPanelProvider"], "targetModules": ["frontend"], "restrictionKind": "ui"},
+  {"apiName": "com.intellij.openapi.options.Configurable", "extensionPointNames": ["com.intellij.applicationConfigurable", "com.intellij.projectConfigurable"], "targetModules": ["frontend"], "restrictionKind": "genericPlatformApi"},
+
 
   // frontend generic apis
   {"apiName": "com.intellij.openapi.editor.event.DocumentListener", "extensionPointNames": [], "targetModules": ["frontend"], "restrictionKind": "genericPlatformApi"},
@@ -322,7 +324,6 @@
   // example: shared plugin loading listener with logic touching VFS will not effectively work in frontend, so either there must be two different implementations, or a single registered where the necessary resources (VFS) exist
   {"apiName": "com.intellij.openapi.util.registry.RegistryValueListener", "extensionPointNames": [], "targetModules": ["frontend", "backend"], "restrictionKind": "genericPlatformApi", "hint": "Registry values are different on frontend and backend, prefer listening to them explicitly in desired IDE part"},
   {"apiName": "com.intellij.ide.plugins.DynamicPluginListener", "extensionPointNames": [], "targetModules": ["frontend", "backend"], "restrictionKind": "genericPlatformApi", "hint": "Plugin lists are different on frontend and backend, prefer listening to them explicitly in desired IDE part"},
-  {"apiName": "com.intellij.openapi.options.Configurable", "extensionPointNames": ["com.intellij.applicationConfigurable", "com.intellij.projectConfigurable"], "targetModules": ["frontend", "backend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.lang.annotation.Annotator", "extensionPointNames": ["com.intellij.annotator"], "targetModules": ["frontend", "backend"], "restrictionKind": "genericPlatformApi", "hint": "Resolve-dependent annotators belong to the backend, while lightweight ones belong to frontend"},
   {"apiName": "com.intellij.lang.annotation.ContributedReferencesAnnotator", "extensionPointNames": ["com.intellij.contributedReferencesAnnotator"], "targetModules": ["frontend", "backend"], "restrictionKind": "genericPlatformApi", "hint": "Resolve-dependent annotators belong to the backend, while lightweight ones belong to frontend"},
 

@@ -357,7 +357,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
     myFixture.checkHighlighting()
   }
 
-  fun testConfigurableApiInBackendModule() {
+  fun testFrontendOrBackendApiInBackendModule() {
     configurePluginXml(
       """
       <idea-plugin>
@@ -369,12 +369,12 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
     )
 
     myFixture.configureByText(
-      "BackendConfigurable.kt", """
+      "BackendDynamicPluginListener.kt", """
       package com.example.backend
 
-      import com.intellij.openapi.options.Configurable
+      import com.intellij.ide.plugins.DynamicPluginListener
 
-      class BackendConfigurable : Configurable
+      class BackendDynamicPluginListener : DynamicPluginListener
     """.trimIndent()
     )
 
