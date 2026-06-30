@@ -64,7 +64,7 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.LoadingNode
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.RestoreSelectionListener
-import com.intellij.ui.tree.buildPresentation
+import com.intellij.ui.tree.buildTreeNodeDescriptorPresentation
 import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.ui.treeStructure.ProjectViewUpdateCause
 import com.intellij.ui.treeStructure.TreeNodePresentation
@@ -491,7 +491,7 @@ private class AbstractProjectViewPaneStateManager(
     builder.setLeaf(treeModel.isLeaf(node))
     return when (val userObject = TreeUtil.getUserObject(node)) {
       is PresentableNodeDescriptor<*> -> {
-        buildPresentation(userObject, builder)
+        buildTreeNodeDescriptorPresentation(userObject, builder)
       }
       else -> {
         builder.apply {
