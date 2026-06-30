@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -42,7 +42,9 @@ public abstract class JdkVersionDetector {
     Kona("kona", "Tencent Kona"),
     Liberica("liberica", "BellSoft Liberica"),
     Microsoft("ms", "Microsoft OpenJDK"),
+    Ojdkbuild("ojdkbuild", "ojdkbuild"),
     Oracle(null, "Oracle OpenJDK"),
+    RedHat("redhat", "Red Hat OpenJDK"),
     SapMachine("sap", "SAP SapMachine"),
     Semeru("semeru", "IBM Semeru"),
     Temurin("temurin", "Eclipse Temurin"),
