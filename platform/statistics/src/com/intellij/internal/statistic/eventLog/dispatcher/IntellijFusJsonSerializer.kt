@@ -17,7 +17,7 @@ import kotlin.reflect.KClass
  *
  * `LogEvent` (lion3) and `ValidatedFusReport` are routed through [LogEventSerializer] so the JSON keys
  * (`recorder_version`, conditional `state`/`count`, conditional `internal`, etc.) stay identical to what
- * `StatisticsEventLogFileWriter` and `EventLogStatisticsService` have produced historically. Anything else
+ * the legacy file writer and `EventLogStatisticsService` have produced historically. Anything else
  * (SDK configuration payloads, remote-config blobs, etc.) is delegated to [delegate] — the regular Jackson
  * serializer already used by `FusComponentProvider`.
  *
