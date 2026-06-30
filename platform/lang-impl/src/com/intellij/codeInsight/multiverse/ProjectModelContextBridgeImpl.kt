@@ -23,20 +23,20 @@ internal class ProjectModelContextBridgeImpl(private val project: Project) : Pro
 
   private val sdkCachedValue = CachedValueWithParameter<Sdk, SdkContext> { storage, parameter ->
     val sdkEntity = storage.findSdkEntity(parameter)
-    val context = sdkEntity?.let { SdkContextImpl(sdkEntity.createPointer(), project) }
+    val context = sdkEntity?.let { SdkContextImpl(sdkEntity.symbolicId, project) }
     context ?: NULL
   }
 
   override fun getContext(entry: Module): ModuleContext? {
     val snapshot = currentSnapshot
     val moduleEntity = entry.findModuleEntity(snapshot) ?: return null
-    return ModuleContextImpl(moduleEntity.createPointer(), project)
+    return ModuleContextImpl(moduleEntity.symbolicId, project)
   }
 
   override fun getContext(entry: Library): LibraryContext? {
     val snapshot = currentSnapshot
     val lib = snapshot.findLibraryEntity(entry as LibraryBridge) ?: return null
-    return LibraryContextImpl(lib.createPointer(), project)
+    return LibraryContextImpl(lib.symbolicId, project)
   }
 
   override fun getContext(entry: Sdk): SdkContext? {
