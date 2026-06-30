@@ -49,10 +49,11 @@ create a new top-level Agent Workbench entity and do not inject context into pro
   folder. Folder rows are searchable by folder name and copy/prompt path context resolves to the folder's owning path.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreeSnapshotTest.kt
 
-- Project and worktree rows must offer `New Task Folder`. Thread rows must offer `Move to Task Folder` for in-progress folders on the same
-  path and `Remove from Task Folder` for assigned threads. Folder rows must offer rename, delete, explicit metadata set/delete, and mark
-  done actions. The metadata set dialog must expose an editable metadata key combo with `issue` and `review` key presets while persisting
-  ordinary string key/value metadata. Custom typed keys are stored as entered after trimming.
+- Project and worktree rows must offer `New Task Folder`. The Agent Threads title toolbar must also offer `New Task Folder` for the resolved
+  current source project path so users can create a task folder when no project/worktree row is available. Thread rows must offer
+  `Move to Task Folder` for in-progress folders on the same path and `Remove from Task Folder` for assigned threads. Folder rows must offer
+  rename, delete, explicit metadata set/delete, and mark done actions. The metadata set dialog must expose an editable metadata key combo
+  with `issue` and `review` key presets while persisting ordinary string key/value metadata. Custom typed keys are stored as entered after trimming.
   User-visible action text and dialog text must live in `AgentSessionsBundle.properties`.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
 

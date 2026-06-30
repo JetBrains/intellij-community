@@ -5,6 +5,9 @@ import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveRequestResult
 import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveService
+import com.intellij.agent.workbench.sessions.service.normalizeOpenableSourceProjectPath
+import com.intellij.agent.workbench.sessions.service.openableSourceProjectPath
+import com.intellij.agent.workbench.sessions.service.selectedThreadViewSourceProjectPath
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.agent.workbench.sessions.task.folders.AgentTaskFolder
@@ -83,6 +86,62 @@ internal class AgentSessionsTreePopupCreateTaskFolderAction : DumbAwareAction {
     if (request.createWithAgent) {
       val effectiveProfile = profile ?: taskFolderAgentProfile(context.project) ?: return
       openTaskFolderAgent(path, folder, effectiveProfile, context.project)
+    }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+}
+
+internal class AgentSessionsToolWindowCreateTaskFolderAction : DumbAwareAction {
+  private val resolveProject: (AnActionEvent) -> Project?
+  private val currentSourcePath: (Project) -> String?
+  private val promptForCreateRequest: (Project, Boolean) -> CreateTaskFolderRequest?
+  private val createFolder: (String, String) -> AgentTaskFolder?
+  private val taskFolderAgentProfile: (Project) -> AgentPromptLaunchProfile?
+  private val openTaskFolderAgent: (String, AgentTaskFolder, AgentPromptLaunchProfile, Project) -> Unit
+
+  @Suppress("unused")
+  constructor() {
+    resolveProject = { event -> event.project }
+    currentSourcePath = ::resolveCurrentTaskFolderSourcePath
+    promptForCreateRequest = ::showCreateTaskFolderDialog
+    createFolder = { path, name -> service<AgentTaskFolderService>().createFolder(path, name) }
+    taskFolderAgentProfile = ::resolveTaskFolderAgentQuickStartProfile
+    openTaskFolderAgent = { path, folder, profile, project ->
+      createTaskFolderAgentViaService(path, profile, project, AgentWorkbenchEntryPoint.TOOLBAR, folder)
+    }
+  }
+
+  internal constructor(
+    resolveProject: (AnActionEvent) -> Project? = { event -> event.project },
+    currentSourcePath: (Project) -> String?,
+    promptForCreateRequest: (Project, Boolean) -> CreateTaskFolderRequest?,
+    createFolder: (String, String) -> AgentTaskFolder?,
+    taskFolderAgentProfile: (Project) -> AgentPromptLaunchProfile? = { null },
+    openTaskFolderAgent: (String, AgentTaskFolder, AgentPromptLaunchProfile, Project) -> Unit = { _, _, _, _ -> },
+  ) {
+    this.resolveProject = resolveProject
+    this.currentSourcePath = currentSourcePath
+    this.promptForCreateRequest = promptForCreateRequest
+    this.createFolder = createFolder
+    this.taskFolderAgentProfile = taskFolderAgentProfile
+    this.openTaskFolderAgent = openTaskFolderAgent
+  }
+
+  override fun update(e: AnActionEvent) {
+    val project = resolveProject(e)
+    e.presentation.isEnabledAndVisible = project != null && currentSourcePath(project) != null
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = resolveProject(e) ?: return
+    val path = currentSourcePath(project) ?: return
+    val profile = taskFolderAgentProfile(project)
+    val request = promptForCreateRequest(project, profile != null) ?: return
+    val folder = createFolder(path, request.name) ?: return
+    if (request.createWithAgent) {
+      val effectiveProfile = profile ?: taskFolderAgentProfile(project) ?: return
+      openTaskFolderAgent(path, folder, effectiveProfile, project)
     }
   }
 
@@ -400,6 +459,11 @@ private fun createFolderPath(target: SessionActionTarget?): String? {
     is SessionActionTarget.Worktree -> target.path
     else -> null
   }
+}
+
+private fun resolveCurrentTaskFolderSourcePath(project: Project): String? {
+  return normalizeOpenableSourceProjectPath(selectedThreadViewSourceProjectPath(project))
+         ?: openableSourceProjectPath(project)
 }
 
 private fun showCreateTaskFolderDialog(project: Project, canCreateWithAgent: Boolean): CreateTaskFolderRequest? {

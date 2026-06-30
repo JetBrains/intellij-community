@@ -126,6 +126,16 @@ class AgentSessionsToolWindowFactorySwingTest {
   }
 
   @Test
+  fun descriptorRegistersTitleToolbarTaskFolderAction() {
+    val actionManager = ActionManager.getInstance()
+    val entries = actionManager.childActionEntries(AgentWorkbenchActionIds.Sessions.TOOL_WINDOW_TITLE_ACTIONS)
+
+    assertThat(entries).contains(AgentWorkbenchActionIds.Sessions.TOOL_WINDOW_CREATE_TASK_FOLDER)
+    assertThat(actionManager.getAction(AgentWorkbenchActionIds.Sessions.TOOL_WINDOW_CREATE_TASK_FOLDER)?.templatePresentation?.icon)
+      .isEqualTo(AllIcons.Actions.NewFolder)
+  }
+
+  @Test
   fun northComponentsIncludeGlobalHintBanners(@TestDisposable disposable: Disposable) {
     val components = createAgentSessionsNorthComponents(
       project = ProjectManager.getInstance().defaultProject,
@@ -454,6 +464,8 @@ class AgentSessionsToolWindowFactorySwingTest {
       .isNotNull
     assertThat(actionManager.getAction("AgentWorkbenchSessions.TreePopup.NewThread")?.templatePresentation?.icon)
       .isEqualTo(AllIcons.General.Add)
+    assertThat(actionManager.getAction("AgentWorkbenchSessions.TreePopup.CreateTaskFolder")?.templatePresentation?.icon)
+      .isEqualTo(AllIcons.Actions.NewFolder)
   }
 
   private fun ActionManager.childActionEntries(groupId: String): List<String> {

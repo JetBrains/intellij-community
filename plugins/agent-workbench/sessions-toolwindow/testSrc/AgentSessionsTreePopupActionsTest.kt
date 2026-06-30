@@ -32,6 +32,7 @@ import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTre
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupSetTaskFolderMetadataAction
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupToggleThreadPinAction
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupUnarchiveThreadAction
+import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsToolWindowCreateTaskFolderAction
 import com.intellij.agent.workbench.sessions.toolwindow.actions.CreateTaskFolderRequest
 import com.intellij.agent.workbench.sessions.toolwindow.actions.TaskFolderMetadataEdit
 import com.intellij.agent.workbench.sessions.toolwindow.actions.buildTaskFolderAgentPrompt
@@ -583,6 +584,89 @@ class AgentSessionsTreePopupActionsTest {
     assertThat(openedFolder?.name).isEqualTo("Authentication rewrite")
     assertThat(openedProfile).isEqualTo(profile)
     assertThat(openedProject).isSameAs(context.project)
+  }
+
+  @Test
+  fun toolWindowCreateTaskFolderActionUsesCurrentSourcePath() {
+    var createdPath: String? = null
+    var createdName: String? = null
+    val action = AgentSessionsToolWindowCreateTaskFolderAction(
+      currentSourcePath = { "/work/project-a" },
+      promptForCreateRequest = { _, canCreateWithAgent ->
+        assertThat(canCreateWithAgent).isFalse()
+        CreateTaskFolderRequest(name = "Authentication rewrite", createWithAgent = false)
+      },
+      createFolder = { path, name ->
+        createdPath = path
+        createdName = name
+        taskFolder(path = path, name = name)
+      },
+    )
+    val event = projectEvent(action)
+
+    action.update(event)
+    assertThat(event.presentation.isEnabledAndVisible).isTrue()
+
+    action.actionPerformed(event)
+
+    assertThat(createdPath).isEqualTo("/work/project-a")
+    assertThat(createdName).isEqualTo("Authentication rewrite")
+  }
+
+  @Test
+  fun toolWindowCreateTaskFolderActionHiddenWhenCurrentSourcePathIsUnavailable() {
+    var prompted = false
+    val action = AgentSessionsToolWindowCreateTaskFolderAction(
+      currentSourcePath = { null },
+      promptForCreateRequest = { _, _ ->
+        prompted = true
+        null
+      },
+      createFolder = { _, _ -> error("Folder creation should not run without a source path") },
+    )
+    val event = projectEvent(action)
+
+    action.update(event)
+    action.actionPerformed(event)
+
+    assertThat(event.presentation.isEnabledAndVisible).isFalse()
+    assertThat(prompted).isFalse()
+  }
+
+  @Test
+  fun toolWindowCreateTaskFolderActionCanOpenCreatedFolderWithAgent() {
+    val profile = AgentPromptLaunchProfile(
+      id = "user:task-pi",
+      name = "Task Pi",
+      providerId = AgentSessionProvider.from("pi").value,
+      launchMode = AgentSessionLaunchMode.STANDARD,
+    )
+    var openedPath: String? = null
+    var openedFolder: AgentTaskFolder? = null
+    var openedProfile: AgentPromptLaunchProfile? = null
+    var openedProject: Project? = null
+    val action = AgentSessionsToolWindowCreateTaskFolderAction(
+      currentSourcePath = { "/work/project-a" },
+      promptForCreateRequest = { _, canCreateWithAgent ->
+        assertThat(canCreateWithAgent).isTrue()
+        CreateTaskFolderRequest(name = "Authentication rewrite", createWithAgent = true)
+      },
+      createFolder = { path, name -> taskFolder(path = path, name = name) },
+      taskFolderAgentProfile = { profile },
+      openTaskFolderAgent = { path, folder, launchProfile, project ->
+        openedPath = path
+        openedFolder = folder
+        openedProfile = launchProfile
+        openedProject = project
+      },
+    )
+
+    action.actionPerformed(projectEvent(action))
+
+    assertThat(openedPath).isEqualTo("/work/project-a")
+    assertThat(openedFolder?.name).isEqualTo("Authentication rewrite")
+    assertThat(openedProfile).isEqualTo(profile)
+    assertThat(openedProject).isSameAs(ProjectManager.getInstance().defaultProject)
   }
 
   @Test
@@ -1454,6 +1538,13 @@ private fun popupEvent(action: AnAction, context: AgentSessionsTreePopupActionCo
   val dataContext = SimpleDataContext.builder()
     .add(CommonDataKeys.PROJECT, context.project)
     .add(AgentSessionsTreePopupDataKeys.CONTEXT, context)
+    .build()
+  return TestActionEvent.createTestEvent(action, dataContext)
+}
+
+private fun projectEvent(action: AnAction, project: Project = ProjectManager.getInstance().defaultProject): AnActionEvent {
+  val dataContext = SimpleDataContext.builder()
+    .add(CommonDataKeys.PROJECT, project)
     .build()
   return TestActionEvent.createTestEvent(action, dataContext)
 }
