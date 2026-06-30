@@ -108,7 +108,7 @@ private fun readStartupIntent(
     launchMode = parseEnum(sourceElement.getAttributeValue(ATTR_STARTUP_LAUNCH_MODE), parseAgentChatLaunchMode(pendingLaunchMode)),
     launchProfileId = sourceElement.getAttributeValue(ATTR_STARTUP_LAUNCH_PROFILE_ID),
     launchTargetId = sourceElement.getAttributeValue(ATTR_STARTUP_LAUNCH_TARGET_ID),
-    surfaceId = normalizeAgentChatSurfaceId(sourceElement.getAttributeValue(ATTR_STARTUP_SURFACE_ID)),
+    surfaceId = parseAgentChatSurfaceId(sourceElement.getAttributeValue(ATTR_STARTUP_SURFACE_ID)),
   )
 }
 
@@ -120,7 +120,7 @@ private fun writeStartupIntent(startupIntent: AgentChatStartupIntent?, targetEle
       targetElement.setAttribute(ATTR_STARTUP_LAUNCH_MODE, startupIntent.launchMode.name)
       targetElement.setNullableAttribute(ATTR_STARTUP_LAUNCH_PROFILE_ID, startupIntent.launchProfileId)
       targetElement.setNullableAttribute(ATTR_STARTUP_LAUNCH_TARGET_ID, startupIntent.launchTargetId)
-      targetElement.setNullableAttribute(ATTR_STARTUP_SURFACE_ID, startupIntent.surfaceId)
+      targetElement.setNullableAttribute(ATTR_STARTUP_SURFACE_ID, startupIntent.surfaceId?.value)
     }
     null -> Unit
   }

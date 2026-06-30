@@ -8,6 +8,8 @@ targets:
   - ../../lib-agent/sessions-core/src/launch/AgentSessionLaunchPlanner.kt
   - ../../lib-agent/sessions-core/src/launch/AgentSessionOutOfBandLaunch.kt
   - ../../lib-agent/sessions-core/src/providers/AgentSessionLaunchProfiles.kt
+  - ../../lib-agent/sessions-core/src/providers/AgentSessionProviderDescriptor.kt
+  - ../../lib-agent/sessions-core/resources/intellij.platform.ai.agent.sessions.core.xml
   - ../../sessions/src/service/AgentSessionLaunchService.kt
   - ../../chat/src/AgentChatCustomContent.kt
   - ../../chat/src/AgentChatStartupIntent.kt
@@ -25,7 +27,7 @@ targets:
 # Agent Launch Surface Switching
 
 Status: Draft
-Date: 2026-06-29
+Date: 2026-06-30
 
 ## Summary
 
@@ -55,25 +57,43 @@ The key design rule is to keep four independent axes separate:
 
 ## Decision
 
-Introduce an explicit launch surface id field:
+Introduce an explicit launch surface id as a typed runtime value:
 
 ```kotlin
-val surfaceId: String?
+@JvmInline
+value class AgentSessionSurfaceId private constructor(val value: String)
 
 const val AGENT_SESSION_SURFACE_TERMINAL = "terminal"
 const val AGENT_SESSION_SURFACE_ACP = "acp"
+
+object AgentSessionSurfaces {
+  val TERMINAL: AgentSessionSurfaceId
+  val ACP: AgentSessionSurfaceId
+}
 ```
 
-The field should be carried through launch profiles, prompt launch requests, launch intents, chat startup intents,
-tab runtime snapshots, editor state, and out-of-band launch context. It is intentionally string-backed, not an enum,
-so providers can add future surfaces without changing the shared core API. Existing terminal providers default to
-`"terminal"`. ACP launch profiles default to `"acp"` unless the user explicitly selects terminal launch.
+Runtime launch APIs should carry `AgentSessionSurfaceId`, not raw strings. Persisted models and request DTOs keep
+`surfaceId: String?` for compatibility; they are parsed into `AgentSessionSurfaceId` only after loading/resolution.
+Invalid, blank, or unsupported persisted ids are ignored and fall back to the provider descriptor's default surface.
+The id is intentionally not an enum so providers/plugins can add future surfaces without changing core enum values.
+
+`AgentSessionProviderDescriptor` owns defaulting:
+
+```kotlin
+val defaultLaunchSurface: AgentSessionSurfaceId = AgentSessionSurfaces.TERMINAL
+val supportedLaunchSurfaces: Set<AgentSessionSurfaceId> = setOf(defaultLaunchSurface)
+```
+
+ACP descriptors set both values to `AgentSessionSurfaces.ACP`. Launch code must not special-case
+`provider.value == "acp"` to select a default surface.
 
 ## Requirements
 
 - `AgentPromptLaunchProfile` must store a nullable `surfaceId`. Null means provider default for backward
   compatibility.
-- `AgentSessionLaunchIntent` and `AgentSessionOutOfBandLaunchContext` must carry the resolved `surfaceId`.
+- `AgentSessionLaunchIntent` must carry `AgentSessionSurfaceId?`; resolved launch profiles,
+  `AgentSessionOutOfBandLaunchContext`, and `AgentChatContentContext` must carry a resolved `AgentSessionSurfaceId`.
+  [@test] ../../sessions/testSrc/AgentSessionLaunchProfileResolutionTest.kt
 - `AgentSessionOutOfBandLaunch.handles(context)` must be context-aware. Provider-wide matching is too broad
   because the same provider/target may later support both terminal and ACP UI surfaces.
 - `AgentChatCustomContentProvider` lookup must be context-aware instead of provider-only. It needs enough data to
@@ -84,6 +104,11 @@ so providers can add future surfaces without changing the shared core API. Exist
   cache when no profile can be resolved.
 - A launch profile must not store an ACP agent id in `generationSettings.modelId`. ACP agent identity belongs in
   `launchTargetId`; model selection can be added later from ACP handshake capabilities.
+- `AgentSessionSurfaceId` must normalize ids by trimming and lowercasing with the same id style used for providers:
+  `[a-z][a-z0-9._-]*`.
+  [@test] ../../sessions/testSrc/AgentSessionSurfacesTest.kt
+- Surface discovery is limited to built-in descriptors for terminal and ACP plus an optional contributor extension
+  point. The registry is for discovery only; provider descriptors remain the source of launch support/defaulting.
 
 ## Launch Flow
 
@@ -92,9 +117,10 @@ New-session launch should resolve in this order:
 1. Resolve profile and normalize `provider`, `launchTargetId`, `launchMode`, `surfaceId`, and generation
    settings.
 2. Build a launch plan from the resolved intent.
-3. If `surfaceId == "acp"`, let `AgentSessionOutOfBandLaunch.forContext(context)` handle startup and suppress
-   terminal prompt dispatch.
-4. If `surfaceId == "terminal"`, attach the embedded terminal and use the provider's terminal launch spec.
+3. If `surfaceId == AgentSessionSurfaces.ACP`, let `AgentSessionOutOfBandLaunch.forContext(context)` handle startup
+   and suppress terminal prompt dispatch.
+4. If `surfaceId == AgentSessionSurfaces.TERMINAL`, attach the embedded terminal and use the provider's terminal
+   launch spec.
 5. Persist the resolved `surfaceId` in the chat tab runtime state as fallback/cache metadata.
 
 `AgentSessionLaunchMode` must not be reused for this. It describes permission and safety behavior, not UI/runtime
@@ -113,10 +139,10 @@ should become context-based, for example:
 ```kotlin
 data class AgentChatContentContext(
   val provider: AgentSessionProvider,
+  val surfaceId: AgentSessionSurfaceId,
+  val launchTargetId: String?,
   val threadId: String,
   val threadIdentity: String,
-  val launchTargetId: String?,
-  val surfaceId: String?,
 )
 
 AgentChatCustomContent.find(context)
@@ -194,19 +220,24 @@ For ACP UI, container support should be decided per ACP agent/wrapper:
 
 ## Migration Plan
 
-1. Add string-backed `surfaceId` constants/helpers and thread them through launch profile state, resolved profiles, prompt requests,
-   launch intents, startup intents, tab runtime snapshots, and editor state.
-2. Make `AgentSessionOutOfBandLaunch` context-aware and gate ACP out-of-band launch on `surfaceId == "acp"`.
-3. Make `AgentChatCustomContentProvider` context-aware and install ACP UI only for `surfaceId == "acp"` tabs.
-4. Generate ACP launch profiles from stable ACP agent ids with `surfaceId="acp"` by default.
-5. Add terminal-surface profiles or profile variants for wrappers that support both surfaces.
-6. Add provider-specific bridge APIs for existing-thread surface actions only after the launch-time model is stable.
+1. Add typed `AgentSessionSurfaceId` constants/helpers while keeping launch profile state, prompt requests, tab
+   runtime snapshots, and editor state string-backed at persistence/request boundaries.
+2. Make provider descriptors own `defaultLaunchSurface` and `supportedLaunchSurfaces`.
+3. Make `AgentSessionOutOfBandLaunch` context-aware and gate ACP out-of-band launch on
+   `surfaceId == AgentSessionSurfaces.ACP`.
+4. Make `AgentChatCustomContentProvider` context-aware and install ACP UI only for ACP-surface tabs.
+5. Generate ACP launch profiles from stable ACP agent ids with `surfaceId="acp"` by default.
+6. Add terminal-surface profiles or profile variants for wrappers that support both surfaces.
+7. Add provider-specific bridge APIs for existing-thread surface actions only after the launch-time model is stable.
 
 ## Testing
 
 - Launch profile serialization keeps `surfaceId` and defaults missing values safely.
-- Launch planner preserves `surfaceId` through `AgentSessionLaunchIntent` and out-of-band context.
-- ACP UI launch suppresses terminal dispatch only when `surfaceId == "acp"`.
+- Launch profile resolution ignores missing, blank, invalid, or unsupported persisted surface ids and falls back to the
+  descriptor default. `provider=acp` alone must not imply ACP surface.
+  [@test] ../../sessions/testSrc/AgentSessionLaunchProfileResolutionTest.kt
+- Launch planner preserves typed `surfaceId` through `AgentSessionLaunchIntent` and out-of-band context.
+- ACP UI launch suppresses terminal dispatch only when `surfaceId == AgentSessionSurfaces.ACP`.
 - Terminal launch for an ACP-capable target does not install custom content or call `AcpOutOfBandLaunch`.
 - Restored chat tabs resolve current effective profile settings from persisted `launchProfileId`; persisted `surfaceId`
   is only fallback/cache metadata.

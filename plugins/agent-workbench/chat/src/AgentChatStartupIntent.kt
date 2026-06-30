@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionSurfaceId
 import com.intellij.platform.ai.agent.sessions.core.launch.normalizeAgentSessionSurfaceId
 import java.util.Locale
 
@@ -12,7 +13,7 @@ internal sealed interface AgentChatStartupIntent {
     val launchMode: AgentSessionLaunchMode,
     val launchProfileId: String? = null,
     val launchTargetId: String? = null,
-    val surfaceId: String? = null,
+    val surfaceId: AgentSessionSurfaceId? = null,
   ) : AgentChatStartupIntent
 }
 
@@ -23,7 +24,7 @@ internal fun resolveAgentChatNewSessionStartupIntent(file: AgentChatVirtualFile)
     launchMode = parseAgentChatLaunchMode(file.pendingLaunchMode),
     launchProfileId = file.launchProfileId,
     launchTargetId = file.launchTargetId,
-    surfaceId = file.surfaceId,
+    surfaceId = parseAgentChatSurfaceId(file.surfaceId),
   )
 }
 
@@ -46,4 +47,8 @@ internal fun normalizeAgentChatLaunchMode(value: String?): String? {
 
 internal fun normalizeAgentChatSurfaceId(value: String?): String? {
   return normalizeAgentSessionSurfaceId(value)
+}
+
+internal fun parseAgentChatSurfaceId(value: String?): AgentSessionSurfaceId? {
+  return AgentSessionSurfaceId.fromOrNull(value)
 }

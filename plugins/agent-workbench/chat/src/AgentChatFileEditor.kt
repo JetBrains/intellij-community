@@ -14,6 +14,7 @@ import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadRebindPoli
 import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchIntent
 import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchOperation
 import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchPlanner
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionSurfaces
 import com.intellij.platform.ai.agent.sessions.core.launch.effectiveAgentSessionSurfaceId
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryChannel
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionArchivedSource
@@ -384,7 +385,7 @@ internal class AgentChatFileEditor(
       requiredProvider = provider,
     )
     val launchTargetId = resolvedLaunchProfile?.launchTargetId ?: file.launchTargetId
-    val surfaceId = resolvedLaunchProfile?.surfaceId ?: file.surfaceId
+    val surfaceId = resolvedLaunchProfile?.surfaceId ?: parseAgentChatSurfaceId(file.surfaceId)
     return AgentSessionLaunchPlanner.plan(
       intent = AgentSessionLaunchIntent(
         projectPath = file.projectPath,
@@ -419,10 +420,10 @@ internal class AgentChatFileEditor(
       launchProfileId = launchProfileId,
       requiredProvider = provider,
     )
-    val surfaceId = effectiveAgentSessionSurfaceId(
-      provider = provider,
-      surfaceId = resolvedLaunchProfile?.surfaceId ?: startupIntent?.surfaceId ?: file.surfaceId,
-    )
+    val requestedSurfaceId = resolvedLaunchProfile?.surfaceId ?: startupIntent?.surfaceId ?: parseAgentChatSurfaceId(file.surfaceId)
+    val surfaceId = providerDescriptorResolver(provider)?.let { descriptor ->
+      effectiveAgentSessionSurfaceId(descriptor, requestedSurfaceId)
+    } ?: requestedSurfaceId ?: AgentSessionSurfaces.TERMINAL
     return AgentChatContentContext(
       provider = provider,
       surfaceId = surfaceId,

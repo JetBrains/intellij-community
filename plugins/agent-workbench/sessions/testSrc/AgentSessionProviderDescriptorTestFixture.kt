@@ -6,6 +6,8 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionSurfaceId
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionSurfaces
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderCliVisibilityPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
@@ -34,6 +36,8 @@ open class TestAgentSessionProviderDescriptor(
   override val suppressArchivedThreadsDuringRefresh: Boolean = false,
   override val supportsArchiveThread: Boolean = false,
   override val supportsUnarchiveThread: Boolean = false,
+  override val defaultLaunchSurface: AgentSessionSurfaceId = AgentSessionSurfaces.TERMINAL,
+  override val supportedLaunchSurfaces: Set<AgentSessionSurfaceId> = setOf(defaultLaunchSurface),
   private val displayNameKeyOverride: String? = null,
   private val newSessionLabelKeyOverride: String? = null,
   override val quickStartActionTextKey: String = "action.AgentWorkbenchSessions.NewThreadQuick.text",

@@ -12,7 +12,7 @@ data class AgentSessionOutOfBandLaunchContext(
   @JvmField val launchMode: AgentSessionLaunchMode,
   @JvmField val launchProfileId: String?,
   @JvmField val launchTargetId: String?,
-  @JvmField val surfaceId: String?,
+  val surfaceId: AgentSessionSurfaceId,
   @JvmField val generationSettings: AgentPromptGenerationSettings,
 )
 

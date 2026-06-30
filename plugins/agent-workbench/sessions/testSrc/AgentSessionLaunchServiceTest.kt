@@ -19,6 +19,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.platform.ai.agent.sessions.core.launch.AGENT_SESSION_SURFACE_ACP
 import com.intellij.platform.ai.agent.sessions.core.launch.AGENT_SESSION_SURFACE_TERMINAL
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionSurfaces
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.platform.ai.agent.sessions.core.providers.InMemoryAgentSessionProviderRegistry
@@ -382,7 +383,7 @@ class AgentSessionLaunchServiceTest {
           assertThat(openRequest.launchMode).isEqualTo(AgentSessionLaunchMode.YOLO)
           assertThat(openRequest.launchProfileId).isEqualTo(profileId)
           assertThat(openRequest.launchTargetId).isEqualTo("codex.test.target")
-          assertThat(openRequest.surfaceId).isEqualTo(AGENT_SESSION_SURFACE_TERMINAL)
+          assertThat(openRequest.surfaceId).isEqualTo(AgentSessionSurfaces.TERMINAL)
           assertThat(openRequest.generationSettings).isEqualTo(profileSettings)
         }
       }
@@ -433,7 +434,7 @@ class AgentSessionLaunchServiceTest {
           assertThat(openRequest.launchMode).isEqualTo(AgentSessionLaunchMode.YOLO)
           assertThat(openRequest.launchProfileId).isEqualTo(profileId)
           assertThat(openRequest.launchTargetId).isEqualTo("codex.active.target")
-          assertThat(openRequest.surfaceId).isEqualTo(AGENT_SESSION_SURFACE_TERMINAL)
+          assertThat(openRequest.surfaceId).isEqualTo(AgentSessionSurfaces.TERMINAL)
           assertThat(openRequest.generationSettings).isEqualTo(profileSettings)
         }
       }
@@ -473,7 +474,7 @@ class AgentSessionLaunchServiceTest {
           chatOpenExecutor.awaitOpenPreparingNewChatCalls(1)
           val preparingRequest = checkNotNull(chatOpenExecutor.lastOpenPreparingNewChatRequest.get())
           assertThat(preparingRequest.hasDeferredStartContentProvider).isFalse()
-          assertThat(preparingRequest.surfaceId).isEqualTo(AGENT_SESSION_SURFACE_TERMINAL)
+          assertThat(preparingRequest.surfaceId).isEqualTo(AgentSessionSurfaces.TERMINAL)
           withTimeout(5_000.milliseconds) { launchSpecRequested.await() }
           assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
 
@@ -481,18 +482,20 @@ class AgentSessionLaunchServiceTest {
           chatOpenExecutor.awaitOpenNewChatCalls(1)
           val openRequest = checkNotNull(chatOpenExecutor.lastOpenNewChatRequest.get())
           assertThat(openRequest.launchSpec.command).containsExactly("test", "new", AgentSessionLaunchMode.STANDARD.name)
-          assertThat(openRequest.surfaceId).isEqualTo(AGENT_SESSION_SURFACE_TERMINAL)
+          assertThat(openRequest.surfaceId).isEqualTo(AgentSessionSurfaces.TERMINAL)
         }
       }
     }
   }
 
   @Test
-  fun createNewSessionDefaultsAcpProviderToAcpSurface() {
+  fun createNewSessionDefaultsToDescriptorSurface() {
     val descriptor = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.from("acp"),
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
+      defaultLaunchSurface = AgentSessionSurfaces.ACP,
+      supportedLaunchSurfaces = setOf(AgentSessionSurfaces.ACP),
     )
     val chatOpenExecutor = RecordingChatOpenExecutor()
 
@@ -513,8 +516,8 @@ class AgentSessionLaunchServiceTest {
           chatOpenExecutor.awaitOpenNewChatCalls(1)
           val preparingRequest = checkNotNull(chatOpenExecutor.lastOpenPreparingNewChatRequest.get())
           val openRequest = checkNotNull(chatOpenExecutor.lastOpenNewChatRequest.get())
-          assertThat(preparingRequest.surfaceId).isEqualTo(AGENT_SESSION_SURFACE_ACP)
-          assertThat(openRequest.surfaceId).isEqualTo(AGENT_SESSION_SURFACE_ACP)
+          assertThat(preparingRequest.surfaceId).isEqualTo(AgentSessionSurfaces.ACP)
+          assertThat(openRequest.surfaceId).isEqualTo(AgentSessionSurfaces.ACP)
         }
       }
     }

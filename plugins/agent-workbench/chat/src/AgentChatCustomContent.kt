@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionSurfaceId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -11,7 +12,7 @@ import javax.swing.JComponent
 @ApiStatus.Internal
 data class AgentChatContentContext(
   val provider: AgentSessionProvider,
-  @JvmField val surfaceId: String?,
+  val surfaceId: AgentSessionSurfaceId,
   @JvmField val launchTargetId: String?,
   @JvmField val threadIdentity: String,
   @JvmField val threadId: String,

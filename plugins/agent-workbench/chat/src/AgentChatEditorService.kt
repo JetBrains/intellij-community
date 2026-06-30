@@ -303,7 +303,7 @@ suspend fun openChat(
                                         launchMode = parseAgentChatLaunchMode(pendingLaunchMode),
                                         launchProfileId = effectiveLaunchProfileId,
                                         launchTargetId = effectiveLaunchTargetId,
-                                        surfaceId = effectiveSurfaceId)
+                                        surfaceId = parseAgentChatSurfaceId(effectiveSurfaceId))
     }
   }
   else {
@@ -459,7 +459,7 @@ private fun buildNewSessionStartupIntent(
     launchMode = launchMode ?: AgentSessionLaunchMode.STANDARD,
     launchProfileId = launchProfileId,
     launchTargetId = launchTargetId,
-    surfaceId = surfaceId,
+    surfaceId = parseAgentChatSurfaceId(surfaceId),
   )
 }
 
