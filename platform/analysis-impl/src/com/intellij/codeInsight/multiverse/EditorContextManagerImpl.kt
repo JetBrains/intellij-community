@@ -56,12 +56,18 @@ internal class EditorContextManagerImpl(
       return SingleEditorContext(defaultContext())
     }
 
+    val file = FileDocumentManager.getInstance().getFile(editor.document) ?: run {
+      // Do not cache the default fallback used when the document is not (yet) backed by a file.
+      // The cache is only refreshed on CodeInsightContextManager.contextsChanged, while a document
+      // becoming file-backed does not fire that event. Caching the fallback would therefore pin the
+      // editor to DefaultContext forever, even after its real (e.g. library/module) context becomes
+      // available, and later highlighting would fail the editor-vs-file context check (IJPL-240162).
+      // See MultiverseHighlightingTest.testDefaultContextOfFilelessDocumentIsNotCached.
+      log.trace { "editor context for $editor is set to default (uncached): document has no file" }
+      return SingleEditorContext(defaultContext())
+    }
+
     val context = currentContextCache.computeIfAbsent(editor) {
-      val file = FileDocumentManager.getInstance().getFile(editor.document)
-      if (file == null) {
-        log.trace { "editor context for $editor is set to default" }
-        return@computeIfAbsent SingleEditorContext(defaultContext())
-      }
       val preferredContext = CodeInsightContextManager.getInstance(project).getPreferredContext(file)
       val contexts = SingleEditorContext(preferredContext)
 
@@ -73,10 +79,7 @@ internal class EditorContextManagerImpl(
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode) {
-      val file = FileDocumentManager.getInstance().getFile(editor.document)
-      if (file != null) {
-        ensureContextRelevant(file, context.mainContext, project)
-      }
+      ensureContextRelevant(file, context.mainContext, project)
     }
 
     return context
