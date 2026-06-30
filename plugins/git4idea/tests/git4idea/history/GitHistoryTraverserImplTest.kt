@@ -13,6 +13,7 @@ import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitCommit
 import git4idea.log.createLogDataIn
 import git4idea.log.refreshAndWait
+import git4idea.repo.GitObjectFormat
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.makeCommit
 import kotlinx.coroutines.CoroutineScope
@@ -220,7 +221,7 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
     }
     fun getRandomHash(): Hash = HashImpl.build(
       buildString {
-        repeat(VcsLogUtil.FULL_HASH_LENGTH) {
+        repeat(GitObjectFormat.SHA1.hashLength) {
           val randomHexChar = kotlin.random.Random.nextInt(0 until 16).toString(16)
           append(randomHexChar)
         }
