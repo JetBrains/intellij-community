@@ -22,6 +22,7 @@ import com.intellij.agent.workbench.prompt.ui.PromptTargetMode
 import com.intellij.agent.workbench.prompt.ui.layoutRecursively
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.extensions.ExtensionPoint
@@ -32,13 +33,17 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.RoundedLineBorder
 import com.intellij.ui.components.JBTabbedPane
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -314,7 +319,7 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
   }
 
   @Test
-  fun providerRestoresSavedPromptTextAfterStrictUiInitialization() {
+  fun providerRestoresSavedPromptTextAfterStrictUiInitialization(): Unit = timeoutRunBlocking {
     val project = projectFixture.get()
     project.service<AgentPromptUiSessionStateService>().saveDraft(
       AgentPromptUiDraft(
@@ -325,13 +330,15 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
 
     val component = createProviderComponentWithLauncher()
     try {
-      runInEdtAndWait { }
-
-      val promptArea = collectComponents(component, AgentPromptTextField::class.java).single()
-      assertThat(promptArea.text).isEqualTo("saved prompt")
+      val promptText = withContext(Dispatchers.EDT) {
+        collectComponents(component, AgentPromptTextField::class.java).single().text
+      }
+      assertThat(promptText).isEqualTo("saved prompt")
     }
     finally {
-      disposeComponent(component)
+      withContext(NonCancellable + Dispatchers.EDT) {
+        Disposer.dispose(component)
+      }
     }
   }
 
