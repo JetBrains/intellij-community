@@ -1,6 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "smRunner-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":smRunner-tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.smRunner.tests`
+
 ### auto-generated section `build intellij.platform.smRunner` start
 
 jvm_library(
@@ -179,6 +188,8 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/testRunner",
         "//platform/testRunner:testRunner_test_lib",
+        "//platform/testRunner/plugin",
+        "//platform/testRunner/plugin:plugin_test_lib",
         "//platform/xdebugger-api:debugger",
         "//platform/xdebugger-api:debugger_test_lib",
         "//platform/platform-impl:ide-impl",
@@ -225,11 +236,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.smRunner.tests` end
-
-### auto-generated section `test intellij.platform.smRunner.tests` start
-
-jps_test(
-    name = "smRunner-tests_test",
-    runtime_deps = [":smRunner-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.smRunner.tests` end
