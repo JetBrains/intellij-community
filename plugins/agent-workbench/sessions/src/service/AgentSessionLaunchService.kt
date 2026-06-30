@@ -55,14 +55,12 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessag
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentPendingSessionMetadata
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartNewSessionLaunchRequest
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentTerminalPromptDispatch
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentPromptProviderOptionTarget
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionLaunchProfileResolver
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderUiContributors
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.platform.ai.agent.sessions.core.providers.isBlockedForExistingThreadPlanMode
-import com.intellij.platform.ai.agent.sessions.core.providers.resolveEffectiveProviderOptionIds
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchTargetKind
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchTelemetry
@@ -1290,12 +1288,8 @@ class AgentSessionLaunchService internal constructor(
         return NewSessionLaunchPreparationResult.Failed(AgentPromptLaunchError.PROVIDER_UNAVAILABLE)
       }
       notifyAgentSessionConversationOpened(descriptor)
-      val staticInitialMessageRequest = initialMessageRequest?.withEffectiveProviderOptions(
-        descriptor = descriptor,
-        target = AgentPromptProviderOptionTarget.NEW_TASK,
-      )
       val staticInitialMessagePlan = if (initialMessageRequestBuilder == null) {
-        staticInitialMessageRequest?.let(descriptor::buildInitialMessagePlan) ?: AgentInitialMessagePlan.EMPTY
+        initialMessageRequest?.let(descriptor::buildInitialMessagePlan) ?: AgentInitialMessagePlan.EMPTY
       }
       else {
         AgentInitialMessagePlan.EMPTY
@@ -1332,11 +1326,7 @@ class AgentSessionLaunchService internal constructor(
         launchProfileId = launchProfileId,
         launchTargetId = plannedLaunch.intent.launchTargetId,
       )
-      val effectiveInitialMessageRequest = (initialMessageRequestBuilder?.invoke(preliminaryContext) ?: staticInitialMessageRequest)
-        ?.withEffectiveProviderOptions(
-          descriptor = descriptor,
-          target = AgentPromptProviderOptionTarget.NEW_TASK,
-        )
+      val effectiveInitialMessageRequest = initialMessageRequestBuilder?.invoke(preliminaryContext) ?: initialMessageRequest
       if (updateGeneralProviderPreferences && descriptor.supportsPromptLaunch) {
         uiPreferencesState.updateProviderOptionsOnLaunch(provider.value, effectiveInitialMessageRequest)
       }
@@ -1498,10 +1488,7 @@ class AgentSessionLaunchService internal constructor(
             threadId = targetThreadId,
           )
                              ?: return@run reportPromptLaunchResolved(AgentPromptLaunchResult.failure(AgentPromptLaunchError.TARGET_THREAD_NOT_FOUND))
-          val effectiveInitialMessageRequest = request.initialMessageRequest.withEffectiveProviderOptions(
-            descriptor = bridge,
-            target = AgentPromptProviderOptionTarget.EXISTING_TASK,
-          )
+          val effectiveInitialMessageRequest = request.initialMessageRequest
           val initialMessagePlan = bridge.buildInitialMessagePlan(effectiveInitialMessageRequest)
           if (initialMessagePlan.isBlockedForExistingThreadPlanMode(targetThread.activityReport.rowActivity)) {
             return@run reportPromptLaunchResolved(AgentPromptLaunchResult.failure(AgentPromptLaunchError.TARGET_THREAD_BUSY_FOR_PLAN_MODE))
@@ -1811,18 +1798,6 @@ private fun resolveLaunchProjectDirectory(
     return projectDirectory
   }
   return resolveAgentWorkbenchProjectDirectory(identityPath = path)
-}
-
-private fun AgentPromptInitialMessageRequest.withEffectiveProviderOptions(
-  descriptor: AgentSessionProviderDescriptor,
-  target: AgentPromptProviderOptionTarget,
-): AgentPromptInitialMessageRequest {
-  val effectiveOptionIds = resolveEffectiveProviderOptionIds(
-    selectedProvider = descriptor,
-    selectedOptionIds = providerOptionIds,
-    target = target,
-  )
-  return if (effectiveOptionIds == providerOptionIds) this else copy(providerOptionIds = effectiveOptionIds)
 }
 
 private suspend fun resolvePromptInitialMessageDispatchPlan(
