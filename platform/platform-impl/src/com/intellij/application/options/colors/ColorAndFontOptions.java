@@ -1046,8 +1046,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     public @Nullable Pair<ColorAndFontDescriptorsProvider, ? extends AbstractKeyDescriptor> getFallbackKeyDescriptor() {
       return myBaseAttributeDescriptor;
     }
-    @Override
-    public boolean isTransparencyEnabled() { return true; }
   }
 
   private static final class EditorSettingColorDescription extends ColorAndFontDescription implements UiInspectorContextProvider {
