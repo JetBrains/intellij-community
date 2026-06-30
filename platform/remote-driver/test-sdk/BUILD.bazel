@@ -34,6 +34,7 @@ jvm_library(
         "//platform/remote-driver/model",
         "//platform/util",
         "//platform/platform-api:ide",
+        "//tools/intellij.tools.ide.util.common:ide-util-common",
     ],
 )
 
@@ -63,6 +64,7 @@ jvm_library(
         "//platform/remote-driver/model:model_test_lib",
         "//platform/util:util_test_lib",
         "//platform/platform-api:ide_test_lib",
+        "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
     ],
 )
 ### auto-generated section `build intellij.driver.sdk` end

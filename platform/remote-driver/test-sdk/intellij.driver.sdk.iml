@@ -16,7 +16,6 @@
             <arrayArg name="pluginClasspaths">
               <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
             </arrayArg>
-            <arrayArg name="pluginOptions" />
           </arrayArguments>
         </compilerArguments>
       </configuration>
@@ -39,5 +38,6 @@
     <orderEntry type="module" module-name="intellij.driver.model" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.tools.ide.util.common" />
   </component>
 </module>

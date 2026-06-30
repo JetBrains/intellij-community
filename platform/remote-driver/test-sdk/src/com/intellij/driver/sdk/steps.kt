@@ -2,6 +2,7 @@ package com.intellij.driver.sdk
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.sdk.ui.Finder
+import com.intellij.tools.ide.util.common.logOutput
 import java.util.ServiceLoader
 
 
@@ -32,7 +33,7 @@ class ConsoleStepsProvider : StepsProvider {
   override fun <T> Finder.step(name: String, action: () -> T): T = printStep(name, action)
 
   private fun <T> printStep(name: String, action: () -> T): T {
-    println("Step '$name' is started")
-    return action().also { println("Step '$name' is finished") }
+    logOutput("Step '$name' is started")
+    return action().also { logOutput("Step '$name' is finished") }
   }
 }
