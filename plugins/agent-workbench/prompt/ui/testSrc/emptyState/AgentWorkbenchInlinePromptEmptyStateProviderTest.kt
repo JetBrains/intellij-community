@@ -237,6 +237,27 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
   }
 
   @Test
+  fun inlinePromptEmptyStateExpandsOuterSizeWhenPromptTextGrows() {
+    runInEdtAndWait {
+      val component = AgentWorkbenchInlinePromptEmptyStateComponent(ProjectManager.getInstance().defaultProject)
+      try {
+        component.ensureContentInitialized()
+        val compactPreferredHeight = component.preferredSize.height
+        val promptArea = collectComponents(component, AgentPromptTextField::class.java).single()
+
+        promptArea.text = longPromptText()
+
+        val rootPanel = component.components.single() as JComponent
+        assertThat(contentAreaSize(component.preferredSize, component)).isEqualTo(rootPanel.preferredSize)
+        assertThat(component.preferredSize.height).isGreaterThan(compactPreferredHeight)
+      }
+      finally {
+        disposeComponent(component)
+      }
+    }
+  }
+
+  @Test
   fun inlinePromptEditorHostUsesRichEmptyStateLayout() {
     runInEdtAndWait {
       val component = AgentWorkbenchInlinePromptEmptyStateComponent(ProjectManager.getInstance().defaultProject)
@@ -304,7 +325,7 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
 
     val component = createProviderComponentWithLauncher()
     try {
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+      runInEdtAndWait { }
 
       val promptArea = collectComponents(component, AgentPromptTextField::class.java).single()
       assertThat(promptArea.text).isEqualTo("saved prompt")
@@ -437,6 +458,10 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
         source = "test",
       )
     }
+  }
+
+  private fun longPromptText(): String {
+    return (1..20).joinToString("\n") { index -> "Line $index" }
   }
 
   private fun testContextContributor(items: List<AgentPromptContextItem>): AgentPromptContextContributorBridge {

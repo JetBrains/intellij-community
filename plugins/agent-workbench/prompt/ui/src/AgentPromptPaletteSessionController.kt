@@ -218,6 +218,7 @@ internal class AgentPromptPaletteSessionController(
     clearStatus()
     updateTargetModeUi()
     updateSendAvailability()
+    syncInlineSize()
   }
 
   fun installHandlers() {
@@ -509,6 +510,16 @@ internal class AgentPromptPaletteSessionController(
     draftController.onPromptChanged()
     updateSendAvailability()
     clearStatus()
+    syncInlineSize()
+  }
+
+  private fun syncInlineSize() {
+    if (!hostMode.isInlinePrompt) {
+      return
+    }
+
+    view.syncInlineSize()
+    revalidateHost()
   }
 
   private fun autoPopupCommandCompletionIfNeeded(event: DocumentEvent) {

@@ -53,6 +53,9 @@ The global prompt composer is the task-preparation surface for Agent Workbench. 
 - Inline empty-state and popup composers must use the same composition model. Inline mode may use compact typography, focus forwarding, and smaller vertical gaps, but it must keep the same context/text/tray ownership.
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteViewStructureTest.kt
 
+- Inline composers must keep a compact initial height, grow vertically as editable prompt text needs more lines, and cap text-driven growth before falling back to the prompt editor's vertical scrolling. Popup composers remain manually resizable and must not auto-grow from prompt text changes.
+  [@test] ../../prompt/ui/testSrc/AgentPromptPaletteViewLayoutTest.kt
+
 ## User Experience
 - Users should read the composer from top to bottom as: selected context, instruction, composition and launch controls.
 - Context cards should be inspectable and removable, but visually secondary to the instruction and launch action.
