@@ -41,6 +41,7 @@ a:com.intellij.diagnostic.logging.LogConsoleManagerBase
 f:com.intellij.diagnostic.logging.LogsGroupFragment
 - com.intellij.execution.ui.NestedGroupFragment
 - <init>():V
+- <init>(com.intellij.openapi.project.Project):V
 com.intellij.execution.CommonProgramRunConfigurationParameters
 - a:getEnvs():java.util.Map
 - a:getProgramParameters():java.lang.String
@@ -515,6 +516,7 @@ a:com.intellij.execution.ui.RunConfigurationEditorFragment
 a:com.intellij.execution.ui.RunConfigurationFragmentedEditor
 - com.intellij.execution.ui.FragmentedSettingsEditor
 - p:<init>(com.intellij.execution.configurations.RunConfigurationBase):V
+- pf:createLogGroupFragment():com.intellij.diagnostic.logging.LogsGroupFragment
 - p:getProject():com.intellij.openapi.project.Project
 f:com.intellij.execution.ui.RunContentManagerImpl
 - com.intellij.execution.ui.RunContentManager
