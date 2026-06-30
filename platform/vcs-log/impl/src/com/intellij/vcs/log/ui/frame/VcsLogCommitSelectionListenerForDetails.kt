@@ -18,7 +18,6 @@ import com.intellij.vcs.log.data.ContainingBranchesGetter
 import com.intellij.vcs.log.data.VcsCommitExternalStatus
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.getLogProvider
-import com.intellij.vcs.log.data.roots
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.refsToCommit
 import com.intellij.vcs.log.ui.VcsLogColorManager
@@ -119,17 +118,24 @@ class VcsLogCommitSelectionListenerForDetails(
                               unResolvedHashes: MutableSet<String>): List<CommitPresentation> {
     val resolvedHashes = MultiMap<String, CommitId>()
 
-    val fullHashes = unResolvedHashes.filter { it.length == VcsLogUtil.FULL_HASH_LENGTH }
+    unResolvedHashes.removeAll { hash ->
+      var resolvedInSomeRoot = false
+      var isFullHashInAllRoots = true
 
-    for (fullHash in fullHashes) {
-      val hash = HashImpl.build(fullHash)
-      for (root in logData.roots) {
-        val id = CommitId(hash, root)
-        if (logData.storage.containsCommit(id)) {
-          resolvedHashes.putValue(fullHash, id)
+      for ((root, provider) in logData.logProviders) {
+        if (!provider.isFullHash(root, hash)) {
+          isFullHashInAllRoots = false
+          continue
+        }
+
+        val commitId = CommitId(HashImpl.build(hash), root)
+        if (logData.storage.containsCommit(commitId)) {
+          resolvedInSomeRoot = true
+          resolvedHashes.putValue(hash, commitId)
         }
       }
-      unResolvedHashes.remove(fullHash)
+
+      resolvedInSomeRoot || isFullHashInAllRoots
     }
 
     if (unResolvedHashes.isNotEmpty()) {

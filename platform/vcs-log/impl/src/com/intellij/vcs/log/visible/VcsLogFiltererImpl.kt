@@ -54,7 +54,6 @@ import com.intellij.vcs.log.statistics.vcsToStringPresentation
 import com.intellij.vcs.log.util.GraphOptionsUtil.kindName
 import com.intellij.vcs.log.util.IntCollectionUtil
 import com.intellij.vcs.log.util.VcsLogUtil
-import com.intellij.vcs.log.util.VcsLogUtil.FULL_HASH_LENGTH
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.keysToSet
 import com.intellij.vcs.log.visible.filters.matchesAll
@@ -325,24 +324,33 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   @Throws(VcsException::class)
   private fun applyHashFilter(
     dataPack: VcsLogGraphData,
-                              hashFilter: VcsLogHashFilter,
-                              graphOptions: PermanentGraph.Options,
-                              commitCount: CommitCountStage): FilterByHashResult? {
+    hashFilter: VcsLogHashFilter,
+    graphOptions: PermanentGraph.Options,
+    commitCount: CommitCountStage,
+  ): FilterByHashResult? {
     val hashFilterResult = IntOpenHashSet()
     for (partOfHash in hashFilter.hashes) {
-      if (partOfHash.length == FULL_HASH_LENGTH) {
-        val hash = HashImpl.build(partOfHash)
-        for (root in dataPack.logProviders.keys) {
+      var resolvedInSomeRoot = false
+      var isFullHashInAllRoots = true
+      for ((root, provider) in dataPack.logProviders) {
+        if (provider.isFullHash(root, partOfHash)) {
+          val hash = HashImpl.build(partOfHash)
           if (storage.containsCommit(CommitId(hash, root))) {
+            resolvedInSomeRoot = true
             hashFilterResult.add(storage.getCommitIndex(hash, root))
           }
         }
+        else {
+          isFullHashInAllRoots = false
+        }
       }
-      else {
+
+      if (!resolvedInSomeRoot && !isFullHashInAllRoots) {
         val commitId = storage.findCommitId(CommitIdByStringCondition(partOfHash))
         if (commitId != null) hashFilterResult.add(storage.getCommitIndex(commitId.hash, commitId.root))
       }
     }
+
     val filterMessages = Registry.`is`("vcs.log.filter.messages.by.hash")
     if (!filterMessages || commitCount.isInitial) {
       if (hashFilterResult.isEmpty()) return null

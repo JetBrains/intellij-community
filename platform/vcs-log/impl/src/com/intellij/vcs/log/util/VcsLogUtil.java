@@ -249,10 +249,6 @@ public final class VcsLogUtil {
     return com.intellij.platform.vcs.VcsUtil.getShortHash(hashString, shortHashLength);
   }
 
-  public static boolean isFullHash(@NotNull String s) {
-    return s.length() == FULL_HASH_LENGTH && HASH_REGEX.matcher(s).matches();
-  }
-
   public static @Nullable VcsRef findBranch(@NotNull VcsLogAggregatedStoredRefs refs,
                                             @NotNull VirtualFile root,
                                             @NotNull String branchName) {
