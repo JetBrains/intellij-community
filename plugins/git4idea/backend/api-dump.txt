@@ -176,6 +176,7 @@ a:git4idea.ignore.GitRepositoryIgnoredFilesHolder
 - a:containsFile(com.intellij.openapi.vcs.FilePath):Z
 f:git4idea.log.GitLogProvider
 - <init>(com.intellij.openapi.project.Project):V
+- isFullHash(com.intellij.openapi.vfs.VirtualFile,java.lang.String):Z
 f:git4idea.log.GitRefManager
 - sf:getRefType(java.lang.String):com.intellij.vcs.log.VcsRefType
 c:git4idea.merge.GitConflictResolver

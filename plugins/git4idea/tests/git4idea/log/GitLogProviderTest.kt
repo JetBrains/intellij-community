@@ -29,11 +29,13 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromBranch
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromPattern
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromRange
 import git4idea.config.GitVersion
+import git4idea.repo.GitObjectFormat
 import git4idea.repo.GitRepositoryTagsHolderImpl
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.USER_EMAIL
 import git4idea.test.USER_NAME
 import git4idea.test.addCommit
+import git4idea.test.createRepository
 import git4idea.test.findGitLogProvider
 import git4idea.test.last
 import git4idea.test.log
@@ -58,6 +60,32 @@ class GitLogProviderTest : GitLogProviderTestBase() {
     val collector: MutableList<TimedVcsCommit?> = ArrayList<TimedVcsCommit?>()
     myLogProvider.readAllHashes(projectRoot, CollectConsumer<TimedVcsCommit?>(collector))
     assertOrderedEquals<TimedVcsCommit?>(expectedLog, collector)
+  }
+
+  fun test_full_hash_check_sha1_repository() {
+    val sha1Repo = createRepository(project, testNioRoot.resolve("sha1-repo"), makeInitialCommit = true)
+    val headHash = last()
+    assertEquals(GitObjectFormat.SHA1.hashLength, headHash.length)
+
+    assertTrue(myLogProvider.isFullHash(sha1Repo.root, headHash))
+
+    val hashPrefix = headHash.take(7)
+    assertFalse(myLogProvider.isFullHash(sha1Repo.root, hashPrefix))
+
+    val notHex = "z".repeat(GitObjectFormat.SHA1.hashLength)
+    assertFalse(myLogProvider.isFullHash(sha1Repo.root, notHex))
+  }
+
+  fun test_full_hash_check_sha256_repository() {
+    val sha256Repo = createRepository(project, testNioRoot.resolve("sha256-repo"), makeInitialCommit = true,
+                                      objectFormat = GitObjectFormat.SHA256)
+    val headHash = last()
+    assertEquals(GitObjectFormat.SHA256.hashLength, headHash.length)
+
+    assertTrue(myLogProvider.isFullHash(sha256Repo.root, headHash))
+
+    val hashPrefix = headHash.take(40)
+    assertFalse(myLogProvider.isFullHash(sha256Repo.root, hashPrefix))
   }
 
   fun test_get_current_user() {
