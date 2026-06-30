@@ -123,6 +123,7 @@
 
     <taskManager implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinTestGradleTaskManagerExtension"/>
     <taskManager implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinCoroutineDebugGradleTaskManagerExtension"/>
+    <testLocator implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMppGradleTestLocator"/>
 
     <orderEnumerationHandlerFactory implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinGradleOrderEnumerationHandler$Factory" order="first"/>
 
