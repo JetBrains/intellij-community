@@ -15,6 +15,7 @@ object AgentWorkbenchActionIds {
     const val SWITCH_SOURCE_AND_THREAD_VIEW: String = "AgentWorkbenchSessions.SwitchSourceAndAgentThreadView"
     const val TOOL_WINDOW_GEAR_ACTIONS: String = "AgentWorkbenchSessions.ToolWindow.GearActions"
     const val TOOL_WINDOW_TITLE_ACTIONS: String = "AgentWorkbenchSessions.ToolWindow.TitleActions"
+    const val TOOL_WINDOW_CREATE_TASK_FOLDER: String = "AgentWorkbenchSessions.ToolWindow.CreateTaskFolder"
     const val BIND_PENDING_AGENT_THREAD_FROM_EDITOR_TAB: String = "AgentWorkbenchSessions.BindPendingAgentThreadFromEditorTab"
 
     object MainToolbar {

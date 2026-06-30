@@ -32,7 +32,12 @@
   <actions resource-bundle="messages.AgentSessionsBundle">
     <!-- Toolbar (title actions) slot other runtimes (e.g. ACP) contribute buttons into. -->
     <group id="AgentWorkbenchSessions.ToolWindow.TitleActions"
-           class="com.intellij.agent.workbench.sessions.actions.DumbAwareDefaultActionGroup"/>
+           class="com.intellij.agent.workbench.sessions.actions.DumbAwareDefaultActionGroup">
+      <action
+        id="AgentWorkbenchSessions.ToolWindow.CreateTaskFolder"
+        icon="AllIcons.Actions.NewFolder"
+        class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsToolWindowCreateTaskFolderAction"/>
+    </group>
     <group
       id="AgentWorkbenchSessions.MainToolbar.Activity"
       class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsMainToolbarActivityGroup">
@@ -51,7 +56,7 @@
       class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupNewThreadGroup"/>
     <action
       id="AgentWorkbenchSessions.TreePopup.CreateTaskFolder"
-      icon="AllIcons.General.Add"
+      icon="AllIcons.Actions.NewFolder"
       class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupCreateTaskFolderAction"/>
     <group
       id="AgentWorkbenchSessions.TreePopup.TaskFolderAgent"
