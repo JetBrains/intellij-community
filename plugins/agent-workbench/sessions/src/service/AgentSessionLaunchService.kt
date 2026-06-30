@@ -41,6 +41,7 @@ import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchPla
 import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionOutOfBandLaunch
 import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionOutOfBandLaunchContext
 import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionPlannedLaunch
+import com.intellij.platform.ai.agent.sessions.core.launch.effectiveAgentSessionSurfaceId
 import com.intellij.platform.ai.agent.sessions.core.launch.resolveAgentSessionChatOpenPlan
 import com.intellij.platform.ai.agent.sessions.core.paths.resolveAgentWorkbenchOwningProjectBasePath
 import com.intellij.platform.ai.agent.sessions.core.paths.resolveAgentWorkbenchProjectDirectory
@@ -144,6 +145,7 @@ internal interface AgentSessionChatOpenExecutor {
     launchMode: AgentSessionLaunchMode?,
     launchProfileId: String?,
     launchTargetId: String?,
+    surfaceId: String?,
     generationSettings: AgentPromptGenerationSettings,
     openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
   )
@@ -157,6 +159,7 @@ internal interface AgentSessionChatOpenExecutor {
     launchMode: AgentSessionLaunchMode?,
     launchProfileId: String?,
     launchTargetId: String?,
+    surfaceId: String?,
     generationSettings: AgentPromptGenerationSettings,
     preferredDedicatedFrame: Boolean?,
     openedChatHandler: (suspend (Project, VirtualFile) -> Unit)?,
@@ -171,6 +174,7 @@ internal interface AgentSessionChatOpenExecutor {
     launchMode: AgentSessionLaunchMode?,
     launchProfileId: String?,
     launchTargetId: String?,
+    surfaceId: String?,
     generationSettings: AgentPromptGenerationSettings,
     preferredDedicatedFrame: Boolean?,
     openedChatHandler: (suspend (Project, VirtualFile) -> Unit)?,
@@ -187,6 +191,7 @@ internal interface AgentSessionChatOpenExecutor {
     launchMode: AgentSessionLaunchMode?,
     launchProfileId: String?,
     launchTargetId: String?,
+    surfaceId: String?,
     generationSettings: AgentPromptGenerationSettings,
     preferredDedicatedFrame: Boolean?,
     initialMessageDispatchPlan: AgentInitialPromptDeliveryPlan,
@@ -212,6 +217,7 @@ private data class PreparedNewSessionLaunch(
   val mode: AgentSessionLaunchMode,
   val launchProfileId: String?,
   val launchTargetId: String?,
+  val surfaceId: String?,
   val generationSettings: AgentPromptGenerationSettings,
   val launchSpec: AgentSessionTerminalLaunchSpec,
   val identity: String,
@@ -240,6 +246,7 @@ data class AgentPreparedNewSessionLaunchContext(
   @JvmField val identity: String,
   @JvmField val launchProfileId: String?,
   @JvmField val launchTargetId: String?,
+  @JvmField val surfaceId: String?,
 )
 
 interface AgentDeferredNewSessionHandle {
@@ -273,6 +280,7 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
     launchMode: AgentSessionLaunchMode?,
     launchProfileId: String?,
     launchTargetId: String?,
+    surfaceId: String?,
     generationSettings: AgentPromptGenerationSettings,
     openedChatHandler: (suspend (Project, VirtualFile) -> Unit)?,
   ) {
@@ -286,6 +294,7 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
       launchMode = launchMode,
       launchProfileId = launchProfileId,
       launchTargetId = launchTargetId,
+      surfaceId = surfaceId,
       generationSettings = generationSettings,
       openedChatHandler = openedChatHandler,
     )
@@ -300,6 +309,7 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
     launchMode: AgentSessionLaunchMode?,
     launchProfileId: String?,
     launchTargetId: String?,
+    surfaceId: String?,
     generationSettings: AgentPromptGenerationSettings,
     preferredDedicatedFrame: Boolean?,
     openedChatHandler: (suspend (Project, VirtualFile) -> Unit)?,
@@ -314,6 +324,7 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
       launchMode = launchMode,
       launchProfileId = launchProfileId,
       launchTargetId = launchTargetId,
+      surfaceId = surfaceId,
       generationSettings = generationSettings,
       preferredDedicatedFrame = preferredDedicatedFrame,
       openedChatHandler = openedChatHandler,
@@ -329,6 +340,7 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
     launchMode: AgentSessionLaunchMode?,
     launchProfileId: String?,
     launchTargetId: String?,
+    surfaceId: String?,
     generationSettings: AgentPromptGenerationSettings,
     preferredDedicatedFrame: Boolean?,
     openedChatHandler: (suspend (Project, VirtualFile) -> Unit)?,
@@ -344,6 +356,7 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
       launchMode = launchMode,
       launchProfileId = launchProfileId,
       launchTargetId = launchTargetId,
+      surfaceId = surfaceId,
       generationSettings = generationSettings,
       preferredDedicatedFrame = preferredDedicatedFrame,
       openedChatHandler = openedChatHandler,
@@ -361,6 +374,7 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
     launchMode: AgentSessionLaunchMode?,
     launchProfileId: String?,
     launchTargetId: String?,
+    surfaceId: String?,
     generationSettings: AgentPromptGenerationSettings,
     preferredDedicatedFrame: Boolean?,
     initialMessageDispatchPlan: AgentInitialPromptDeliveryPlan,
@@ -383,6 +397,7 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
       newSessionLaunchMode = launchMode,
       launchProfileId = launchProfileId,
       launchTargetId = launchTargetId,
+      surfaceId = surfaceId,
       generationSettings = generationSettings,
       persistSnapshot = true,
     )
@@ -484,6 +499,7 @@ class AgentSessionLaunchService internal constructor(
     initialMessageRequest: AgentPromptInitialMessageRequest? = null,
     launchProfileId: String? = null,
     launchTargetId: String? = null,
+    surfaceId: String? = null,
     generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
     precomputedInitialMessagePlan: AgentInitialMessagePlan? = null,
     resumeLaunchMode: AgentSessionLaunchMode? = null,
@@ -578,6 +594,7 @@ class AgentSessionLaunchService internal constructor(
         }
         val launchGenerationSettings = resolvedLaunchProfile?.generationSettings ?: generationSettings
         val effectiveLaunchTargetId = resolvedLaunchProfile?.launchTargetId ?: launchTargetId?.trim()?.takeIf(String::isNotEmpty)
+        val effectiveSurfaceId = resolvedLaunchProfile?.surfaceId ?: effectiveAgentSessionSurfaceId(effectiveThread.provider, surfaceId)
         val requestedResumeLaunchMode = resolvedLaunchProfile?.launchMode ?: resumeLaunchMode
         val effectiveResumeLaunchMode = resolveResumeLaunchMode(
           descriptor = descriptor,
@@ -598,6 +615,7 @@ class AgentSessionLaunchService internal constructor(
             sessionId = effectiveThread.id,
             launchMode = effectiveResumeLaunchMode,
             launchTargetId = effectiveLaunchTargetId,
+            surfaceId = effectiveSurfaceId,
             generationSettings = launchGenerationSettings,
           ),
           project = currentProject,
@@ -629,6 +647,7 @@ class AgentSessionLaunchService internal constructor(
           launchMode = launchModeForChatState,
           launchProfileId = resolvedLaunchProfile?.id ?: launchProfileId,
           launchTargetId = effectiveLaunchTargetId,
+          surfaceId = effectiveSurfaceId,
           generationSettings = plannedResumeLaunch.intent.generationSettings,
           openedChatHandler = openedChatHandler,
         )
@@ -744,6 +763,7 @@ class AgentSessionLaunchService internal constructor(
         launchMode = null,
         launchProfileId = null,
         launchTargetId = null,
+        surfaceId = effectiveAgentSessionSurfaceId(thread.provider, null),
         generationSettings = AgentPromptGenerationSettings.AUTO,
       )
       scheduleRefreshAfterArchivedThreadOpen(archiveResolution)
@@ -854,6 +874,7 @@ class AgentSessionLaunchService internal constructor(
       mode = resolvedLaunchProfile.launchMode,
       launchProfileId = resolvedLaunchProfile.id,
       launchTargetId = resolvedLaunchProfile.launchTargetId,
+      surfaceId = resolvedLaunchProfile.surfaceId,
       entryPoint = entryPoint,
       currentProject = currentProject,
       initialMessageRequest = initialMessageRequest,
@@ -879,6 +900,7 @@ class AgentSessionLaunchService internal constructor(
     mode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
     launchProfileId: String? = null,
     launchTargetId: String? = null,
+    surfaceId: String? = null,
     entryPoint: AgentWorkbenchEntryPoint,
     currentProject: Project? = null,
     initialMessageRequest: AgentPromptInitialMessageRequest? = null,
@@ -907,6 +929,7 @@ class AgentSessionLaunchService internal constructor(
     val effectiveGenerationSettings = resolvedLaunchProfile?.generationSettings ?: generationSettings
     val effectiveLaunchProfileId = resolvedLaunchProfile?.id ?: launchProfileId
     val effectiveLaunchTargetId = resolvedLaunchProfile?.launchTargetId ?: launchTargetId?.trim()?.takeIf(String::isNotEmpty)
+    val effectiveSurfaceId = resolvedLaunchProfile?.surfaceId ?: effectiveAgentSessionSurfaceId(effectiveProvider, surfaceId)
     val normalizedPath = normalizeAgentWorkbenchPath(path)
     val createSessionActionKey = buildCreateSessionActionKey(
       path = normalizedPath,
@@ -932,6 +955,7 @@ class AgentSessionLaunchService internal constructor(
             mode = effectiveMode,
             launchProfileId = effectiveLaunchProfileId,
             launchTargetId = effectiveLaunchTargetId,
+            surfaceId = effectiveSurfaceId,
             generationSettings = effectiveGenerationSettings,
             preferredDedicatedFrame = preferredDedicatedFrame,
             openedChatHandler = openedChatHandler,
@@ -945,6 +969,7 @@ class AgentSessionLaunchService internal constructor(
           mode = effectiveMode,
           launchProfileId = effectiveLaunchProfileId,
           launchTargetId = effectiveLaunchTargetId,
+          surfaceId = effectiveSurfaceId,
           currentProject = currentProject,
           initialMessageRequest = initialMessageRequest,
           initialMessageRequestBuilder = initialMessageRequestBuilder,
@@ -977,6 +1002,7 @@ class AgentSessionLaunchService internal constructor(
             launchMode = launch.mode,
             launchProfileId = launch.launchProfileId,
             launchTargetId = launch.launchTargetId,
+            surfaceId = launch.surfaceId,
             generationSettings = launch.generationSettings,
             preferredDedicatedFrame = preferredDedicatedFrame,
             threadTitle = resolveNewSessionTitle(identity = launch.identity, threadTitle = threadTitle),
@@ -1009,6 +1035,7 @@ class AgentSessionLaunchService internal constructor(
     updateGeneralProviderPreferences: Boolean = true,
     launchProfileId: String? = null,
     launchTargetId: String? = null,
+    surfaceId: String? = null,
     generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
     launchModalityState: ModalityState? = null,
     threadTitle: String? = null,
@@ -1027,6 +1054,7 @@ class AgentSessionLaunchService internal constructor(
     val effectiveGenerationSettings = resolvedLaunchProfile?.generationSettings ?: generationSettings
     val effectiveLaunchProfileId = resolvedLaunchProfile?.id ?: launchProfileId
     val effectiveLaunchTargetId = resolvedLaunchProfile?.launchTargetId ?: launchTargetId?.trim()?.takeIf(String::isNotEmpty)
+    val effectiveSurfaceId = resolvedLaunchProfile?.surfaceId ?: effectiveAgentSessionSurfaceId(effectiveProvider, surfaceId)
     val normalizedPath = normalizeAgentWorkbenchPath(path)
     val preliminaryIdentity = buildAgentSessionNewIdentity(effectiveProvider)
     val openedChat = withContext(launchModalityState?.asContextElement() ?: EmptyCoroutineContext) {
@@ -1036,6 +1064,7 @@ class AgentSessionLaunchService internal constructor(
         mode = effectiveMode,
         launchProfileId = effectiveLaunchProfileId,
         launchTargetId = effectiveLaunchTargetId,
+        surfaceId = effectiveSurfaceId,
         generationSettings = effectiveGenerationSettings,
         preferredDedicatedFrame = preferredDedicatedFrame,
         openedChatHandler = openedChatHandler,
@@ -1079,6 +1108,7 @@ class AgentSessionLaunchService internal constructor(
           val launchMode = resolvedLaunchProfile?.launchMode ?: request.launchMode
           val launchProfileId = resolvedLaunchProfile?.id ?: request.launchProfileId
           val launchTargetId = resolvedLaunchProfile?.launchTargetId ?: request.launchTargetId?.trim()?.takeIf(String::isNotEmpty)
+          val surfaceId = resolvedLaunchProfile?.surfaceId ?: effectiveAgentSessionSurfaceId(launchProvider, request.surfaceId)
           val launchGenerationSettings = resolvedLaunchProfile?.generationSettings ?: request.generationSettings
           val descriptor = AgentSessionProviders.find(launchProvider)
                            ?: return AgentPromptLaunchResult.failure(AgentPromptLaunchError.PROVIDER_UNAVAILABLE)
@@ -1095,6 +1125,7 @@ class AgentSessionLaunchService internal constructor(
             mode = launchMode,
             launchProfileId = launchProfileId,
             launchTargetId = launchTargetId,
+            surfaceId = surfaceId,
             currentProject = openedChat.project,
             initialMessageRequest = request.initialMessageRequest,
             updateGeneralProviderPreferences = updateGeneralProviderPreferences,
@@ -1121,6 +1152,7 @@ class AgentSessionLaunchService internal constructor(
             launchMode = launch.mode,
             launchProfileId = launch.launchProfileId,
             launchTargetId = launch.launchTargetId,
+            surfaceId = launch.surfaceId,
             generationSettings = launch.generationSettings,
             preferredDedicatedFrame = preferredDedicatedFrame,
             threadTitle = resolveNewSessionTitle(identity = launch.identity, threadTitle = threadTitle),
@@ -1143,6 +1175,7 @@ class AgentSessionLaunchService internal constructor(
             mode = effectiveMode,
             launchProfileId = effectiveLaunchProfileId,
             launchTargetId = effectiveLaunchTargetId,
+            surfaceId = effectiveSurfaceId,
             currentProject = openedChat.project,
             initialMessageRequest = initialMessageRequest,
             updateGeneralProviderPreferences = updateGeneralProviderPreferences,
@@ -1168,6 +1201,7 @@ class AgentSessionLaunchService internal constructor(
             launchMode = launch.mode,
             launchProfileId = launch.launchProfileId,
             launchTargetId = launch.launchTargetId,
+            surfaceId = launch.surfaceId,
             generationSettings = launch.generationSettings,
             preferredDedicatedFrame = preferredDedicatedFrame,
             threadTitle = resolveNewSessionTitle(identity = launch.identity, threadTitle = threadTitle),
@@ -1222,6 +1256,7 @@ class AgentSessionLaunchService internal constructor(
     mode: AgentSessionLaunchMode,
     launchProfileId: String?,
     launchTargetId: String?,
+    surfaceId: String?,
     generationSettings: AgentPromptGenerationSettings,
     preferredDedicatedFrame: Boolean?,
     openedChatHandler: (suspend (Project, VirtualFile) -> Unit)?,
@@ -1239,6 +1274,7 @@ class AgentSessionLaunchService internal constructor(
       launchMode = mode,
       launchProfileId = launchProfileId,
       launchTargetId = launchTargetId,
+      surfaceId = surfaceId,
       generationSettings = generationSettings,
       preferredDedicatedFrame = preferredDedicatedFrame,
       openedChatHandler = openedChatHandler,
@@ -1258,6 +1294,7 @@ class AgentSessionLaunchService internal constructor(
     mode: AgentSessionLaunchMode,
     launchProfileId: String?,
     launchTargetId: String?,
+    surfaceId: String?,
     currentProject: Project?,
     initialMessageRequest: AgentPromptInitialMessageRequest?,
     initialMessageRequestBuilder: ((AgentPreparedNewSessionLaunchContext) -> AgentPromptInitialMessageRequest?)? = null,
@@ -1303,6 +1340,7 @@ class AgentSessionLaunchService internal constructor(
           operation = AgentSessionLaunchOperation.NEW,
           launchMode = mode,
           launchTargetId = launchTargetId,
+          surfaceId = surfaceId,
           generationSettings = generationSettings,
         ),
         project = currentProject,
@@ -1325,6 +1363,7 @@ class AgentSessionLaunchService internal constructor(
         identity = preliminaryIdentity,
         launchProfileId = launchProfileId,
         launchTargetId = plannedLaunch.intent.launchTargetId,
+        surfaceId = plannedLaunch.intent.surfaceId,
       )
       val effectiveInitialMessageRequest = initialMessageRequestBuilder?.invoke(preliminaryContext) ?: initialMessageRequest
       if (updateGeneralProviderPreferences && descriptor.supportsPromptLaunch) {
@@ -1359,6 +1398,7 @@ class AgentSessionLaunchService internal constructor(
           identity = identity,
           launchProfileId = launchProfileId,
           launchTargetId = plannedLaunch.intent.launchTargetId,
+          surfaceId = plannedLaunch.intent.surfaceId,
         )
       }
       preparedLaunchHandler?.invoke(preparedContext)
@@ -1367,6 +1407,7 @@ class AgentSessionLaunchService internal constructor(
         launchMode = mode,
         launchProfileId = launchProfileId,
         launchTargetId = plannedLaunch.intent.launchTargetId,
+        surfaceId = plannedLaunch.intent.surfaceId,
         generationSettings = plannedLaunch.intent.generationSettings,
       )
       val outOfBandLaunch = AgentSessionOutOfBandLaunch.forContext(outOfBandContext)
@@ -1398,6 +1439,7 @@ class AgentSessionLaunchService internal constructor(
           mode = mode,
           launchProfileId = launchProfileId,
           launchTargetId = plannedLaunch.intent.launchTargetId,
+          surfaceId = plannedLaunch.intent.surfaceId,
           generationSettings = plannedLaunch.intent.generationSettings,
           launchSpec = launchSpec,
           identity = identity,
@@ -1447,6 +1489,7 @@ class AgentSessionLaunchService internal constructor(
       val launchMode = resolvedLaunchProfile?.launchMode ?: request.launchMode
       val launchProfileId = resolvedLaunchProfile?.id ?: request.launchProfileId
       val launchTargetId = resolvedLaunchProfile?.launchTargetId ?: request.launchTargetId?.trim()?.takeIf(String::isNotEmpty)
+      val surfaceId = resolvedLaunchProfile?.surfaceId ?: effectiveAgentSessionSurfaceId(launchProvider, request.surfaceId)
       val launchGenerationSettings = resolvedLaunchProfile?.generationSettings ?: request.generationSettings
       val bridge = AgentSessionProviders.find(launchProvider)
                    ?: return@run reportPromptLaunchResolved(AgentPromptLaunchResult.failure(AgentPromptLaunchError.PROVIDER_UNAVAILABLE))
@@ -1470,6 +1513,7 @@ class AgentSessionLaunchService internal constructor(
             mode = launchMode,
             launchProfileId = launchProfileId,
             launchTargetId = launchTargetId,
+            surfaceId = surfaceId,
             entryPoint = AgentWorkbenchEntryPoint.PROMPT,
             initialMessageRequest = request.initialMessageRequest,
             preferredDedicatedFrame = request.preferredDedicatedFrame,
@@ -1506,6 +1550,7 @@ class AgentSessionLaunchService internal constructor(
             precomputedInitialMessagePlan = initialMessagePlan,
             launchProfileId = launchProfileId,
             launchTargetId = launchTargetId,
+            surfaceId = surfaceId,
             generationSettings = launchGenerationSettings,
             resumeLaunchMode = launchMode,
             singleFlightPolicy = SingleFlightPolicy.RESTART_LATEST,
@@ -1612,6 +1657,7 @@ private suspend fun openAgentSessionChat(
   launchMode: AgentSessionLaunchMode? = null,
   launchProfileId: String? = null,
   launchTargetId: String? = null,
+  surfaceId: String? = null,
   generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
   openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
 ) {
@@ -1626,6 +1672,7 @@ private suspend fun openAgentSessionChat(
       launchMode = launchMode,
       launchProfileId = launchProfileId,
       launchTargetId = launchTargetId,
+      surfaceId = surfaceId,
       generationSettings = generationSettings,
       openedChatHandler = openedChatHandler,
     )
@@ -1643,6 +1690,7 @@ private suspend fun openAgentSessionChat(
     launchMode = launchMode,
     launchProfileId = launchProfileId,
     launchTargetId = launchTargetId,
+    surfaceId = surfaceId,
     generationSettings = generationSettings,
     openedChatHandler = openedChatHandler,
   )
@@ -1911,6 +1959,7 @@ private suspend fun openAgentSessionNewChat(
   launchMode: AgentSessionLaunchMode?,
   launchProfileId: String?,
   launchTargetId: String?,
+  surfaceId: String?,
   generationSettings: AgentPromptGenerationSettings,
   preferredDedicatedFrame: Boolean?,
   openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
@@ -1929,6 +1978,7 @@ private suspend fun openAgentSessionNewChat(
       launchMode = launchMode,
       launchProfileId = launchProfileId,
       launchTargetId = launchTargetId,
+      surfaceId = surfaceId,
       generationSettings = generationSettings,
       openedChatHandler = openedChatHandler,
     )
@@ -1946,6 +1996,7 @@ private suspend fun openAgentSessionNewChat(
     launchMode = launchMode,
     launchProfileId = launchProfileId,
     launchTargetId = launchTargetId,
+    surfaceId = surfaceId,
     generationSettings = generationSettings,
     openedChatHandler = openedChatHandler,
   )
@@ -1959,6 +2010,7 @@ private suspend fun openAgentSessionDeferredNewChat(
   launchMode: AgentSessionLaunchMode?,
   launchProfileId: String?,
   launchTargetId: String?,
+  surfaceId: String?,
   generationSettings: AgentPromptGenerationSettings,
   preferredDedicatedFrame: Boolean?,
   openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
@@ -1977,6 +2029,7 @@ private suspend fun openAgentSessionDeferredNewChat(
       launchMode = launchMode,
       launchProfileId = launchProfileId,
       launchTargetId = launchTargetId,
+      surfaceId = surfaceId,
       generationSettings = generationSettings,
       title = title,
       openedChatHandler = openedChatHandler,
@@ -1994,6 +2047,7 @@ private suspend fun openAgentSessionDeferredNewChat(
     launchMode = launchMode,
     launchProfileId = launchProfileId,
     launchTargetId = launchTargetId,
+    surfaceId = surfaceId,
     generationSettings = generationSettings,
     title = title,
     openedChatHandler = openedChatHandler,
@@ -2012,6 +2066,7 @@ private suspend fun openNewChatInDedicatedFrame(
   launchMode: AgentSessionLaunchMode?,
   launchProfileId: String?,
   launchTargetId: String?,
+  surfaceId: String?,
   generationSettings: AgentPromptGenerationSettings,
   openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
 ) {
@@ -2030,6 +2085,7 @@ private suspend fun openNewChatInDedicatedFrame(
       launchMode = launchMode,
       launchProfileId = launchProfileId,
       launchTargetId = launchTargetId,
+      surfaceId = surfaceId,
       generationSettings = generationSettings,
       openedChatHandler = openedChatHandler,
     )
@@ -2060,6 +2116,7 @@ private suspend fun openNewChatInDedicatedFrame(
     launchMode = launchMode,
     launchProfileId = launchProfileId,
     launchTargetId = launchTargetId,
+    surfaceId = surfaceId,
     generationSettings = generationSettings,
     openedChatHandler = openedChatHandler,
   )
@@ -2073,6 +2130,7 @@ private suspend fun openDeferredNewChatInDedicatedFrame(
   launchMode: AgentSessionLaunchMode?,
   launchProfileId: String?,
   launchTargetId: String?,
+  surfaceId: String?,
   generationSettings: AgentPromptGenerationSettings,
   title: String,
   openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
@@ -2092,6 +2150,7 @@ private suspend fun openDeferredNewChatInDedicatedFrame(
       launchMode = launchMode,
       launchProfileId = launchProfileId,
       launchTargetId = launchTargetId,
+      surfaceId = surfaceId,
       generationSettings = generationSettings,
       title = title,
       openedChatHandler = openedChatHandler,
@@ -2122,6 +2181,7 @@ private suspend fun openDeferredNewChatInDedicatedFrame(
     launchMode = launchMode,
     launchProfileId = launchProfileId,
     launchTargetId = launchTargetId,
+    surfaceId = surfaceId,
     generationSettings = generationSettings,
     title = title,
     openedChatHandler = openedChatHandler,
@@ -2141,6 +2201,7 @@ private suspend fun openNewChatInProject(
   launchMode: AgentSessionLaunchMode?,
   launchProfileId: String?,
   launchTargetId: String?,
+  surfaceId: String?,
   generationSettings: AgentPromptGenerationSettings,
   openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
 ) {
@@ -2163,6 +2224,7 @@ private suspend fun openNewChatInProject(
     launchMode = serializeAgentChatLaunchMode(launchMode) ?: pendingMetadata?.launchMode,
     launchProfileId = launchProfileId,
     launchTargetId = launchTargetId,
+    surfaceId = surfaceId,
     newSessionProvider = provider,
     newSessionLaunchMode = launchMode,
     initialMessageDispatchPlan = initialMessageDispatchPlan,
@@ -2216,6 +2278,7 @@ private suspend fun openDeferredNewChatInProject(
   launchMode: AgentSessionLaunchMode?,
   launchProfileId: String?,
   launchTargetId: String?,
+  surfaceId: String?,
   generationSettings: AgentPromptGenerationSettings,
   title: String,
   openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
@@ -2246,6 +2309,7 @@ private suspend fun openDeferredNewChatInProject(
     launchMode = serializeAgentChatLaunchMode(launchMode) ?: pendingMetadata?.launchMode,
     launchProfileId = launchProfileId,
     launchTargetId = launchTargetId,
+    surfaceId = surfaceId,
     newSessionProvider = provider,
     newSessionLaunchMode = launchMode,
     initialMessageDispatchPlan = AgentInitialPromptDeliveryPlan.EMPTY,
@@ -2270,6 +2334,7 @@ private suspend fun openChatInDedicatedFrame(
   launchMode: AgentSessionLaunchMode? = null,
   launchProfileId: String? = null,
   launchTargetId: String? = null,
+  surfaceId: String? = null,
   generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
   openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
 ) {
@@ -2288,6 +2353,7 @@ private suspend fun openChatInDedicatedFrame(
       launchMode = launchMode,
       launchProfileId = launchProfileId,
       launchTargetId = launchTargetId,
+      surfaceId = surfaceId,
       generationSettings = generationSettings,
       openedChatHandler = openedChatHandler,
     )
@@ -2315,6 +2381,7 @@ private suspend fun openChatInDedicatedFrame(
     launchMode = launchMode,
     launchProfileId = launchProfileId,
     launchTargetId = launchTargetId,
+    surfaceId = surfaceId,
     generationSettings = generationSettings,
     openedChatHandler = openedChatHandler,
   )
@@ -2331,6 +2398,7 @@ private suspend fun openChatInProject(
   launchMode: AgentSessionLaunchMode? = null,
   launchProfileId: String? = null,
   launchTargetId: String? = null,
+  surfaceId: String? = null,
   generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
   openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
 ) {
@@ -2343,6 +2411,7 @@ private suspend fun openChatInProject(
     launchSpecOverride = launchSpecOverride,
     launchMode = launchMode ?: AgentSessionLaunchMode.STANDARD,
     launchTargetId = launchTargetId,
+    surfaceId = surfaceId,
     generationSettings = generationSettings,
     project = project,
   )
@@ -2366,6 +2435,7 @@ private suspend fun openChatInProject(
     launchMode = serializeAgentChatLaunchMode(launchMode),
     launchProfileId = launchProfileId,
     launchTargetId = launchTargetId,
+    surfaceId = surfaceId,
     initialMessageDispatchPlan = effectiveInitialMessageDispatchPlan,
     generationSettings = generationSettings,
     startupLaunchSpec = chatOpenPlan.launchSpec,

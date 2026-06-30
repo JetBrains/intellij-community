@@ -11,6 +11,8 @@ import com.intellij.platform.ai.agent.common.session.isClaudeMenuCommandPrompt
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadRebindPolicy
+import com.intellij.platform.ai.agent.sessions.core.launch.AGENT_SESSION_SURFACE_ACP
+import com.intellij.platform.ai.agent.sessions.core.launch.AGENT_SESSION_SURFACE_TERMINAL
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
@@ -439,6 +441,7 @@ class AgentChatFileEditorLifecycleTest {
     val terminalTabs = FakeAgentChatTerminalTabs()
     val customContent = JPanel()
     val createdThreadIds = ArrayList<String>()
+    val resolvedContexts = ArrayList<AgentChatContentContext>()
     val customContentProvider = object : AgentChatCustomContentProvider {
       override val provider: AgentSessionProvider = provider
 
@@ -451,7 +454,8 @@ class AgentChatFileEditorLifecycleTest {
       file = file,
       terminalTabs = terminalTabs,
       customContentProviderResolver = { candidate ->
-        if (candidate == provider) customContentProvider else null
+        resolvedContexts += candidate
+        if (candidate.provider == provider) customContentProvider else null
       },
     )
 
@@ -469,6 +473,7 @@ class AgentChatFileEditorLifecycleTest {
     )
     editor.refreshForFileStateChange()
 
+    assertThat(resolvedContexts.single().surfaceId).isEqualTo(AGENT_SESSION_SURFACE_TERMINAL)
     assertThat(createdThreadIds).containsExactly("new-thread")
     assertThat(editor.component.components).containsExactly(customContent)
     assertThat(file.deferredStartState).isNull()
@@ -500,7 +505,7 @@ class AgentChatFileEditorLifecycleTest {
       file = file,
       terminalTabs = terminalTabs,
       customContentProviderResolver = { candidate ->
-        if (candidate == provider) customContentProvider else null
+        if (candidate.provider == provider) customContentProvider else null
       },
     )
 
@@ -509,6 +514,60 @@ class AgentChatFileEditorLifecycleTest {
     assertThat(editor.component.components).containsExactly(customContent)
     assertThat(editor.preferredFocusedComponent).isSameAs(inputComponent)
     assertThat(terminalTabs.createCalls).isZero()
+  }
+
+  @Test
+  fun customContentResolverUsesSurfaceContext() {
+    val provider = AgentSessionProvider.from("acp")
+    val customContent = JPanel()
+    val terminalFile = testFile(
+      threadIdentity = buildAgentThreadIdentity(provider.value, "terminal-thread"),
+      shellCommand = emptyList(),
+    ).also { file ->
+      file.updateThreadId("terminal-thread")
+      file.updateSurfaceId(AGENT_SESSION_SURFACE_TERMINAL)
+      file.setStartupLaunchSpecOverride(AgentSessionTerminalLaunchSpec(command = listOf("acp", "resume", "terminal-thread")))
+    }
+    val acpFile = testFile(
+      threadIdentity = buildAgentThreadIdentity(provider.value, "acp-thread"),
+      shellCommand = emptyList(),
+    ).also { file ->
+      file.updateThreadId("acp-thread")
+      file.updateSurfaceId(AGENT_SESSION_SURFACE_ACP)
+    }
+    val customContentProvider = object : AgentChatCustomContentProvider {
+      override val provider: AgentSessionProvider = provider
+
+      override fun handles(context: AgentChatContentContext): Boolean {
+        return context.provider == provider && context.surfaceId == AGENT_SESSION_SURFACE_ACP
+      }
+
+      override fun createComponent(project: Project, threadIdentity: String, threadId: String, parent: Disposable): JComponent {
+        return customContent
+      }
+    }
+
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    val terminalEditor = testEditor(
+      file = terminalFile,
+      terminalTabs = terminalTabs,
+      customContentProviderResolver = { context -> customContentProvider.takeIf { it.handles(context) } },
+    )
+    terminalEditor.selectNotify()
+
+    assertThat(terminalEditor.component.components).doesNotContain(customContent)
+    assertThat(terminalTabs.createCalls).isEqualTo(1)
+
+    val acpTerminalTabs = FakeAgentChatTerminalTabs()
+    val acpEditor = testEditor(
+      file = acpFile,
+      terminalTabs = acpTerminalTabs,
+      customContentProviderResolver = { context -> customContentProvider.takeIf { it.handles(context) } },
+    )
+    acpEditor.selectNotify()
+
+    assertThat(acpEditor.component.components).containsExactly(customContent)
+    assertThat(acpTerminalTabs.createCalls).isZero()
   }
 
   @Test
@@ -2168,7 +2227,7 @@ private fun testEditor(
   editorCoroutineScope: CoroutineScope? = unconfinedTestScope(),
   showComponent: Boolean = true,
   providerDescriptorResolver: (AgentSessionProvider) -> AgentSessionProviderDescriptor? = { null },
-  customContentProviderResolver: (AgentSessionProvider) -> AgentChatCustomContentProvider? = { null },
+  customContentProviderResolver: (AgentChatContentContext) -> AgentChatCustomContentProvider? = { null },
   behaviorResolver: (AgentSessionProvider?) -> AgentChatProviderBehavior = ::testAgentChatProviderBehavior,
 ): AgentChatFileEditor {
   return AgentChatFileEditor(
