@@ -7,6 +7,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptPaletteExtensionContext
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.ui.EditorTextField
 import javax.swing.JPanel
 import javax.swing.JTabbedPane
@@ -30,6 +31,9 @@ internal class AgentPromptPaletteDraftController(
   private val getContainerModeSelected: () -> Boolean = { false },
   private val restoreContainerModeSelection: (Boolean) -> Unit = {},
 ) {
+  private var pendingProgrammaticPromptText: String? = null
+  private var programmaticPromptTextUpdateScheduled = false
+
   fun snapshotPrompt(): AgentPromptPalettePromptSnapshot {
     return AgentPromptPalettePromptSnapshot(
       taskKey = draftState.activeTaskKey,
@@ -250,6 +254,25 @@ internal class AgentPromptPaletteDraftController(
   }
 
   fun setPromptAreaTextProgrammatically(promptText: String) {
+    if (promptArea.document.immutableCharSequence.contentEquals(promptText)) {
+      return
+    }
+
+    val application = ApplicationManager.getApplication()
+    if (application.lockProhibitedAdvice != null) {
+      pendingProgrammaticPromptText = promptText
+      if (!programmaticPromptTextUpdateScheduled) {
+        programmaticPromptTextUpdateScheduled = true
+        application.invokeLater {
+          programmaticPromptTextUpdateScheduled = false
+          val pendingText = pendingProgrammaticPromptText ?: return@invokeLater
+          pendingProgrammaticPromptText = null
+          setPromptAreaTextProgrammatically(pendingText)
+        }
+      }
+      return
+    }
+
     draftState.isProgrammaticPromptUpdate = true
     try {
       promptArea.text = promptText

@@ -16,7 +16,7 @@ import com.intellij.agent.workbench.prompt.ui.AgentPromptSessionsMessageResolver
 import com.intellij.agent.workbench.prompt.ui.AgentPromptUiSessionStateService
 import com.intellij.agent.workbench.prompt.ui.createAgentPromptPaletteContent
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.impl.EditorEmptyStateComponentHost
@@ -37,16 +37,8 @@ import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.RenderingHints
-import java.awt.event.ActionEvent
-import java.awt.event.KeyEvent
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
-import javax.swing.AbstractAction
-import javax.swing.JLabel
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.KeyStroke
-import javax.swing.SwingConstants
 
 internal class AgentWorkbenchInlinePromptEmptyStateProvider : EditorEmptyStateComponentProvider {
   override fun isAvailable(splitters: EditorsSplitters): Boolean = isInlineEmptyStatePromptEnabled()
@@ -55,9 +47,17 @@ internal class AgentWorkbenchInlinePromptEmptyStateProvider : EditorEmptyStateCo
     if (!isInlineEmptyStatePromptEnabled()) {
       return null
     }
-    return withContext(Dispatchers.EDT) {
+    return withContext(Dispatchers.UI) {
       val project = splitters.manager.project
-      AgentWorkbenchInlinePromptEmptyStateComponent(project)
+      val component = AgentWorkbenchInlinePromptEmptyStateComponent(project)
+      try {
+        component.ensureContentInitialized()
+        component
+      }
+      catch (e: Throwable) {
+        Disposer.dispose(component)
+        throw e
+      }
     }
   }
 
@@ -87,28 +87,6 @@ class AgentWorkbenchInlinePromptEmptyStateComponent internal constructor(
     val accessibleName = AgentPromptBundle.message("inline.empty.state.prompt.accessible.name")
     getAccessibleContext().accessibleName = accessibleName
     getAccessibleContext().accessibleDescription = AgentPromptBundle.message("inline.empty.state.prompt.accessible.description")
-
-    val activationMouseListener = object : MouseAdapter() {
-      override fun mouseClicked(e: MouseEvent) {
-        ensureContentInitialized(requestFocus = true)
-      }
-    }
-    addMouseListener(activationMouseListener)
-
-    add(JLabel(accessibleName, SwingConstants.CENTER).apply {
-      isOpaque = false
-      getAccessibleContext().accessibleName = accessibleName
-      addMouseListener(activationMouseListener)
-    }, BorderLayout.CENTER)
-
-    val initializeActionName = "initializeAgentPrompt"
-    actionMap.put(initializeActionName, object : AbstractAction() {
-      override fun actionPerformed(e: ActionEvent?) {
-        ensureContentInitialized(requestFocus = true)
-      }
-    })
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), initializeActionName)
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), initializeActionName)
   }
 
   val preferredFocusedComponent: JComponent

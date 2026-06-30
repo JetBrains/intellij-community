@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ex.CheckboxAction
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -248,6 +249,7 @@ internal class AgentPromptHeaderControls(
   private val promptLibraryAction: AgentPromptToolbarIconAction,
 ) {
   private var providerOptionsVisible = true
+  private var updateScheduled = false
 
   var providerOptionActions: List<AnAction> = emptyList()
     private set
@@ -286,8 +288,20 @@ internal class AgentPromptHeaderControls(
   }
 
   fun updateActions() {
-    @Suppress("DEPRECATION")
-    toolbar.updateActionsImmediately()
+    val application = ApplicationManager.getApplication()
+    if (application.lockProhibitedAdvice != null) {
+      if (!updateScheduled) {
+        updateScheduled = true
+        application.invokeLater {
+          updateScheduled = false
+          updateActions()
+        }
+      }
+      return
+    }
+
+    updateScheduled = false
+    updateToolbarActionsImmediately(toolbar)
   }
 
   private fun rebuildActions() {
@@ -812,8 +826,7 @@ internal fun createAgentPromptPaletteView(
   headerToolbar.targetComponent = rootPanel
   footerPinToolbar.targetComponent = rootPanel
   headerControls.updateActions()
-  @Suppress("DEPRECATION")
-  footerPinToolbar.updateActionsImmediately()
+  updateToolbarActions(footerPinToolbar)
 
   WindowMoveListener(rootPanel).installTo(headerPanel)
 
@@ -848,6 +861,21 @@ internal fun createAgentPromptPaletteView(
     footerPinToolbar = footerPinToolbar,
     footerPinAction = pinAction,
   )
+}
+
+private fun updateToolbarActions(toolbar: ActionToolbar) {
+  val application = ApplicationManager.getApplication()
+  if (application.lockProhibitedAdvice != null) {
+    application.invokeLater { updateToolbarActions(toolbar) }
+    return
+  }
+
+  updateToolbarActionsImmediately(toolbar)
+}
+
+private fun updateToolbarActionsImmediately(toolbar: ActionToolbar) {
+  @Suppress("DEPRECATION")
+  toolbar.updateActionsImmediately()
 }
 
 private fun installInlinePromptChromeFocusForwarding(
