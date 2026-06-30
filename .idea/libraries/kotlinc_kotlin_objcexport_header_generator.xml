@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-objcexport-header-generator" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-objcexport-header-generator-for-ide:2.4.20-dev-7381">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-objcexport-header-generator-for-ide:2.4.20-dev-8332">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-objcexport-header-generator-for-ide/2.4.20-dev-7381/kotlin-objcexport-header-generator-for-ide-2.4.20-dev-7381.jar">
-          <sha256sum>5ca2d903384bf6399badd18dfaf37e6af7755cca1a39ec0c9f21984f7b7291c4</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-objcexport-header-generator-for-ide/2.4.20-dev-8332/kotlin-objcexport-header-generator-for-ide-2.4.20-dev-8332.jar">
+          <sha256sum>5b3823940c28bfdf2b83306a4313f3e662c0bbc32e9bb8bec9b1acb28a02ae70</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-objcexport-header-generator-for-ide/2.4.20-dev-7381/kotlin-objcexport-header-generator-for-ide-2.4.20-dev-7381.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-objcexport-header-generator-for-ide/2.4.20-dev-8332/kotlin-objcexport-header-generator-for-ide-2.4.20-dev-8332.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-objcexport-header-generator-for-ide/2.4.20-dev-7381/kotlin-objcexport-header-generator-for-ide-2.4.20-dev-7381-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-objcexport-header-generator-for-ide/2.4.20-dev-8332/kotlin-objcexport-header-generator-for-ide-2.4.20-dev-8332-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

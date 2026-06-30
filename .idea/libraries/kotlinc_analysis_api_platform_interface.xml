@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.analysis-api-platform-interface" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-platform-interface-for-ide:2.4.20-dev-7381">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-platform-interface-for-ide:2.4.20-dev-8332">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.4.20-dev-7381/analysis-api-platform-interface-for-ide-2.4.20-dev-7381.jar">
-          <sha256sum>15ddeec4d9053d45556db88ccac3377e21c587c50b587f8e36df8e8575398596</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.4.20-dev-8332/analysis-api-platform-interface-for-ide-2.4.20-dev-8332.jar">
+          <sha256sum>8b0d75a1d5ca8f6117f44e6fd37d40cfb861361e31d58e4be0efd62ae4e72226</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.4.20-dev-7381/analysis-api-platform-interface-for-ide-2.4.20-dev-7381.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.4.20-dev-8332/analysis-api-platform-interface-for-ide-2.4.20-dev-8332.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.4.20-dev-7381/analysis-api-platform-interface-for-ide-2.4.20-dev-7381-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.4.20-dev-8332/analysis-api-platform-interface-for-ide-2.4.20-dev-8332-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
