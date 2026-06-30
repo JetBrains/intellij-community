@@ -1877,6 +1877,7 @@ f:com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 - f:shelveChanges(java.util.Collection,java.lang.String,Z,Z):com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 - f:shelveChanges(java.util.Collection,java.lang.String,Z,Z,Z):com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 - f:shelveSilentlyUnderProgress(java.util.List,Z):V
+- sf:suggestPatchName(com.intellij.openapi.project.Project,java.lang.String,java.io.File,java.lang.String):java.io.File
 - sf:suggestPatchName(com.intellij.openapi.project.Project,java.lang.String,java.nio.file.Path,java.lang.String):java.nio.file.Path
 - f:unshelveChangeList(com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList,java.util.List,java.util.List,com.intellij.openapi.vcs.changes.LocalChangeList,Z):V
 - f:unshelveChangeList(com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList,java.util.List,java.util.List,com.intellij.openapi.vcs.changes.LocalChangeList,Z,Z,Z,java.lang.String,java.lang.String,Z):com.intellij.openapi.diff.impl.patch.ApplyPatchStatus
@@ -1890,6 +1891,7 @@ f:com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager$Companion
 - f:getShelfPath(com.intellij.openapi.project.Project):java.lang.String
 - f:loadPatches(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.openapi.vcs.changes.CommitContext):java.util.List
 - f:loadPatchesWithoutContent(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.openapi.vcs.changes.CommitContext):java.util.List
+- f:suggestPatchName(com.intellij.openapi.project.Project,java.lang.String,java.io.File,java.lang.String):java.io.File
 - f:suggestPatchName(com.intellij.openapi.project.Project,java.lang.String,java.nio.file.Path,java.lang.String):java.nio.file.Path
 f:com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch
 - com.intellij.openapi.diff.impl.patch.FilePatch

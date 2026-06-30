@@ -1493,6 +1493,17 @@ class ShelveChangesManager @Internal constructor(
       return suggestPatchNamePath(project, commitMessage, directory, extension)
     }
 
+    @Suppress("IO_FILE_USAGE")
+    @JvmStatic
+    @Deprecated(
+      message = "Use suggestPatchName(Project, String?, Path, String?)",
+      replaceWith = ReplaceWith("suggestPatchName(project, commitMessage, file!!.toPath(), extension).toFile()"),
+      level = DeprecationLevel.WARNING
+    )
+    fun suggestPatchName(project: Project, commitMessage: String?, file: java.io.File, extension: String?): java.io.File {
+      return suggestPatchName(project, commitMessage, file.toPath(), extension).toFile()
+    }
+
     @Internal
     @RequiresEdt
     fun unshelveSilentlyWithDnd(
