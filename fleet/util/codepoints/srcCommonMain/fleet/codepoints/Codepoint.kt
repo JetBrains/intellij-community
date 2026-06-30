@@ -109,7 +109,11 @@ value class Codepoint(val codepoint: Int) {
   fun isISOControl(): Boolean = isISOControl(codepoint)
 
   fun asString(): String {
-    return codepointsToString(codepoint)
+    return if (codepoint ushr 16 == 0) {
+      charArrayOf(codepoint.toChar())
+    } else {
+      charArrayOf(highSurrogate(codepoint), lowSurrogate(codepoint))
+    }.concatToString()
   }
 
   override fun toString(): String = "Codepoint(0x${codepoint.toString(16).uppercase()})"

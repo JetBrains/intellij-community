@@ -2,7 +2,6 @@ package fleet.codepoints
 
 import fleet.util.multiplatform.linkToActual
 
-internal fun codepointsToString(vararg codepoints: Int): String = linkToActual()
 internal fun codepointOf(highSurrogate: Char, lowSurrogate: Char): Codepoint = linkToActual()
 internal fun highSurrogate(codepoint: Int): Char = linkToActual()
 internal fun lowSurrogate(codepoint: Int): Char = linkToActual()
