@@ -40,7 +40,10 @@ import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.PopupHandler
@@ -55,14 +58,16 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.Consumer
 import com.intellij.util.SystemProperties
-import com.intellij.util.containers.isEmpty
 import com.intellij.util.containers.toArray
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -95,6 +100,7 @@ import javax.swing.event.TreeWillExpandListener
 import javax.swing.tree.ExpandVetoException
 import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
+import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.name
 import kotlin.time.Duration.Companion.seconds
@@ -848,14 +854,19 @@ object UniversalFileChooser {
         val selected = fileTree.getSelectedFile() ?: return false
         if (roots.contains(selected.invariantSeparatorsPathString)) return false
         if (!Files.isWritable(selected)) return false
-        if (Files.isDirectory(selected) && !runCatching { Files.list(selected).isEmpty() }.getOrElse { true }) return false
         return true
       }
 
       fun deleteSelectedFile() {
         val selected = fileTree.getSelectedFile() ?: return
+        val confirmMessage = if (Files.isDirectory(selected) && !runCatching { Files.list(selected).use { it.findAny().isPresent } }.getOrElse { false }) {
+          IdeBundle.message("universal.file.chooser.action.delete.confirm.directory", selected.name)
+        }
+        else {
+          IdeBundle.message("universal.file.chooser.action.delete.confirm", selected.name)
+        }
         if (Messages.showYesNoDialog(
-            IdeBundle.message("universal.file.chooser.action.delete.confirm", selected.name),
+            confirmMessage,
             IdeBundle.message("universal.file.chooser.action.delete.text"),
             Messages.getWarningIcon()
           ) != Messages.YES) return
@@ -863,22 +874,46 @@ object UniversalFileChooser {
         val nextSelection = fileTree.computeSelectionAfterDeletion()
 
         scope.launch {
-          withContext(Dispatchers.IO) {
-            val result = runCatching { Files.delete(selected) }
-            runOnEdt {
-              if (result.isSuccess) {
-                fileTree.updateTree()
-                if (nextSelection != null) {
-                  fileTree.select(nextSelection, null)
+          var failure: Exception? = null
+          try {
+            withBackgroundProgress(project, IdeBundle.message("universal.file.chooser.action.delete.progress.title", selected.name)) {
+              withContext(Dispatchers.IO) {
+                val deletionContext = currentCoroutineContext()
+                reportRawProgress { reporter ->
+                  deleteRecursively(selected, reporter, deletionContext)
                 }
-              }
-              else {
-                val message = result.exceptionOrNull()?.message ?: ""
-                Messages.showErrorDialog(message, IdeBundle.message("universal.file.chooser.action.delete.text"))
               }
             }
           }
+          catch (e: CancellationException) {
+            // The user cancelled the progress (or the dialog was disposed): reflect the partial deletion, then propagate.
+            runOnEdt { fileTree.updateTree() }
+            throw e
+          }
+          catch (e: Exception) {
+            failure = e
+          }
+          runOnEdt {
+            fileTree.updateTree()
+            when {
+              failure != null -> Messages.showErrorDialog(failure.message ?: "", IdeBundle.message("universal.file.chooser.action.delete.text"))
+              nextSelection != null -> fileTree.select(nextSelection, null)
+            }
+          }
         }
+      }
+
+      private fun deleteRecursively(path: Path, reporter: RawProgressReporter, context: CoroutineContext) {
+        context.ensureActive()
+        if (Files.isDirectory(path) && !Files.isSymbolicLink(path)) {
+          Files.newDirectoryStream(path).use { children ->
+            for (child in children) {
+              deleteRecursively(child, reporter, context)
+            }
+          }
+        }
+        reporter.text(IdeBundle.message("universal.file.chooser.action.delete.progress.deleting", path.fileName?.toString() ?: path.toString()))
+        Files.delete(path)
       }
 
       private fun findRootPath(nioPath: Path): String? {
