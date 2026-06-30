@@ -2,6 +2,15 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
+jps_test(
+    name = "ideLafBridge-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":ideLafBridge-tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.jewel.ideLafBridge.tests`
+
 ### auto-generated section `build intellij.platform.jewel.ideLafBridge` start
 
 create_kotlinc_options(
@@ -248,11 +257,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.jewel.ideLafBridge.tests` end
-
-### auto-generated section `test intellij.platform.jewel.ideLafBridge.tests` start
-
-jps_test(
-    name = "ideLafBridge-tests_test",
-    runtime_deps = [":ideLafBridge-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.jewel.ideLafBridge.tests` end
