@@ -79,6 +79,15 @@ export default defineWebViewMock((context) => {
     async openAcpConfig() {
       return { ok: true }
     },
+    async resolvePathLinks(params) {
+      const resolvedRawPaths = new Set([
+        "views/acp-chat/src/components/MarkdownRenderer.tsx:47",
+        "community/plugins/ui.webview/demo/webview-src/views/acp-chat/src/bridge/webviewApi.ts#L1",
+      ])
+      return { resolvedIds: params.candidates.filter(candidate => resolvedRawPaths.has(candidate.rawPath)).map(candidate => candidate.id) }
+    },
+    async navigatePathLink() {
+    },
     async sendStdin(params) {
       const message = parseJsonRpcMessage(params.line)
       if (!message || typeof message.method !== "string") {
@@ -467,11 +476,17 @@ $$
 
 \`\`\`mermaid
 flowchart TD
-  A[Markdown] --> B[Mermaid]
+  A[src/Mermaid.kt] --> B[Mermaid]
 \`\`\`
+
+Inline path: \`views/acp-chat/src/components/MarkdownRenderer.tsx:47\` and unresolved path: \`missing/Nope.kt\`.
 
 \`\`\`ts
 const answer: number = 42
+\`\`\`
+
+\`\`\`text
+community/plugins/ui.webview/demo/webview-src/views/acp-chat/src/bridge/webviewApi.ts#L1
 \`\`\`
 
 <details open><summary>Raw HTML details</summary><kbd>Cmd</kbd> + <kbd>K</kbd> with <mark>mark</mark>, H<sub>2</sub>O, and E=mc<sup>2</sup>.</details>

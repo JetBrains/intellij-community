@@ -7,13 +7,19 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import javax.swing.JComponent
 
 internal class AcpBridgeHostApiImpl(
   private val project: Project,
+  scope: CoroutineScope,
   private val bridge: AcpProcessBridge,
+  private val component: JComponent,
 ) : AcpBridgeHostApi {
+  private val pathLinkResolver = AcpPathLinkResolver(project, scope)
+
   override suspend fun listAgents(): AgentListDto = withContext(Dispatchers.IO) {
     val agents = runCatching { AcpConfig.loadAgents() }
       .onFailure { LOG.warn("Failed to read acp.json at ${AcpConfig.configPath()}", it) }
@@ -53,6 +59,24 @@ internal class AcpBridgeHostApiImpl(
       LOG.warn("Failed to open ACP configuration file at ${AcpConfig.configPath()}", t)
       OpenAcpConfigResult(ok = false, error = t.message ?: t.toString())
     }
+  }
+
+  override suspend fun resolvePathLinks(params: ResolvePathLinksRequest): ResolvePathLinksResult {
+    val resolved = mutableMapOf<String, Boolean>()
+    val resolvedIds = mutableListOf<String>()
+    for ((id, rawPath) in params.candidates) {
+      val isResolved = resolved[rawPath] ?: pathLinkResolver.resolve(rawPath).isNotEmpty().also {
+        resolved[rawPath] = it
+      }
+      if (isResolved) {
+        resolvedIds.add(id)
+      }
+    }
+    return ResolvePathLinksResult(resolvedIds)
+  }
+
+  override suspend fun navigatePathLink(params: NavigatePathLinkRequest) {
+    pathLinkResolver.navigate(params.rawPath, component, params.clientX, params.clientY)
   }
 
   override suspend fun sendStdin(params: LineDto) {

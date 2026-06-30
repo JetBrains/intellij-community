@@ -40,6 +40,7 @@ internal class AcpProcessBridge(
     }
     val builder = ProcessBuilder(command)
     val cwd = project.basePath
+    val effectiveCwd = cwd ?: System.getProperty("user.dir")
     if (cwd != null) builder.directory(java.io.File(cwd))
     builder.environment().putAll(agent.env)
     // Credentials entered for an env_var auth method are injected here on re-spawn; they win over the config env.
@@ -75,7 +76,7 @@ internal class AcpProcessBridge(
       }
     }
 
-    return cwd ?: System.getProperty("user.dir")
+    return effectiveCwd
   }
 
   @Synchronized

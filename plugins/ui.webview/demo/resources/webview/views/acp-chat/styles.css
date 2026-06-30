@@ -2161,6 +2161,24 @@ body {
 .acpMarkdown code {
   padding: 1px 4px;
 }
+.acpMarkdownPathLink {
+  margin: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--acp-accent);
+  cursor: pointer;
+  font: inherit;
+  text-align: inherit;
+}
+.acpMarkdownPathLink:hover,
+.acpMarkdownPathLink:focus-visible {
+  text-decoration: underline;
+}
+.acpMarkdownPathLink:focus-visible {
+  outline: 1px solid var(--acp-accent);
+  outline-offset: 2px;
+}
 .acpMarkdown kbd {
   padding: 1px 5px;
   box-shadow: inset 0 -1px 0 var(--acp-border);

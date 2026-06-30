@@ -566,10 +566,13 @@ test("renders rich assistant markdown through the chat message renderer", async 
   await page.waitForSelector(".acpMarkdown .katex")
   await page.waitForSelector(".acpMermaidBlock svg")
   await verifyAcpMermaidViewport(page)
+  await expect(page.getByRole("button", { name: "views/acp-chat/src/components/MarkdownRenderer.tsx:47" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "community/plugins/ui.webview/demo/webview-src/views/acp-chat/src/bridge/webviewApi.ts#L1" })).toBeVisible()
 
   const markdownRenderedSafely = await page.evaluate(() => {
     const markdown = document.querySelector(".acpMsgAssistant .acpMarkdown")
     const link = markdown?.querySelector<HTMLAnchorElement>('a[href="https://example.com"]')
+    const pathLinks = Array.from(markdown?.querySelectorAll<HTMLButtonElement>(".acpMarkdownPathLink") ?? [])
     const unsafeImage = markdown?.querySelector<HTMLImageElement>('img[alt="Unsafe image"]')
     return Boolean(markdown?.querySelector("table"))
       && Boolean(markdown?.querySelector('input[type="checkbox"][checked][disabled]'))
@@ -580,6 +583,10 @@ test("renders rich assistant markdown through the chat message renderer", async 
       && Boolean(markdown?.querySelector("sup"))
       && link?.target === "_blank"
       && link?.rel === "noreferrer"
+      && pathLinks.some(button => button.textContent === "views/acp-chat/src/components/MarkdownRenderer.tsx:47")
+      && pathLinks.some(button => button.textContent === "community/plugins/ui.webview/demo/webview-src/views/acp-chat/src/bridge/webviewApi.ts#L1")
+      && !pathLinks.some(button => button.textContent === "missing/Nope.kt")
+      && !pathLinks.some(button => button.textContent === "src/Mermaid.kt")
       && unsafeImage != null
       && !unsafeImage.hasAttribute("onerror")
       && markdown?.querySelector("script") == null
@@ -587,6 +594,18 @@ test("renders rich assistant markdown through the chat message renderer", async 
       && (window as any).__ACP_MARKDOWN_ONERROR_EXECUTED__ !== true
   })
   expect(markdownRenderedSafely).toBe(true)
+
+  await page.getByRole("button", { name: "views/acp-chat/src/components/MarkdownRenderer.tsx:47" }).click()
+  const navigatePathLinkCalled = await page.evaluate(() => {
+    const calls = (window as MockWindow).__WVI_MOCK__?.calls.byMethod("acp.bridge/navigatePathLink") ?? []
+    return calls.some(call => {
+      const params = call.params as { rawPath?: unknown; clientX?: unknown; clientY?: unknown }
+      return params.rawPath === "views/acp-chat/src/components/MarkdownRenderer.tsx:47"
+        && typeof params.clientX === "number"
+        && typeof params.clientY === "number"
+    })
+  })
+  expect(navigatePathLinkCalled).toBe(true)
 })
 
 test("sends pasted image resources as ACP prompt content blocks", async ({ page }) => {

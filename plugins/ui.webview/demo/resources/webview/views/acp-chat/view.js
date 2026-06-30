@@ -3034,8 +3034,29 @@ var rehypePlugins = [
 ];
 function MarkdownRenderer({ text, streaming = false, className = "acpMarkdown" }) {
 	const idPrefix = `acp-md-${(0, import_react.useId)().replace(/[^a-zA-Z0-9_-]/g, "")}-`;
+	const rootClassName = classNames(className, streaming ? "acpMarkdown--streaming" : void 0);
+	const pathLinkCandidates = (0, import_react.useMemo)(() => streaming ? [] : collectPathLinkCandidates(text), [streaming, text]);
+	const [resolvedRawPaths, setResolvedRawPaths] = (0, import_react.useState)(() => /* @__PURE__ */ new Set());
+	(0, import_react.useEffect)(() => {
+		if (pathLinkCandidates.length === 0) {
+			setResolvedRawPaths(/* @__PURE__ */ new Set());
+			return;
+		}
+		let cancelled = false;
+		setResolvedRawPaths(/* @__PURE__ */ new Set());
+		acpBridgeHost.resolvePathLinks({ candidates: pathLinkCandidates }).then((result) => {
+			if (cancelled) return;
+			const resolvedIds = new Set(result.resolvedIds);
+			setResolvedRawPaths(new Set(pathLinkCandidates.filter((candidate) => resolvedIds.has(candidate.id)).map((candidate) => candidate.rawPath)));
+		}).catch(() => {
+			if (!cancelled) setResolvedRawPaths(/* @__PURE__ */ new Set());
+		});
+		return () => {
+			cancelled = true;
+		};
+	}, [pathLinkCandidates]);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-		className: classNames(className, streaming ? "acpMarkdown--streaming" : void 0),
+		className: rootClassName,
 		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Markdown, {
 			remarkPlugins,
 			rehypePlugins,
@@ -3061,10 +3082,11 @@ function MarkdownRenderer({ text, streaming = false, className = "acpMarkdown" }
 					});
 				},
 				code({ className, children, ...props }) {
+					const linkedChildren = streaming ? children : renderPathLinks(children, resolvedRawPaths, "code");
 					return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", {
 						className,
 						...props,
-						children
+						children: linkedChildren
 					});
 				}
 			},
@@ -3087,9 +3109,116 @@ function hastText(node) {
 	if (typeof node.value === "string") return node.value;
 	return node.children?.map(hastText).join("") ?? "";
 }
+function collectPathLinkCandidates(markdown) {
+	const codeSegments = markdownCodeSegments(markdown);
+	const candidates = [];
+	const seen = /* @__PURE__ */ new Set();
+	for (const codeSegment of codeSegments) for (const token of pathTokens(codeSegment)) {
+		if (seen.has(token.rawPath)) continue;
+		seen.add(token.rawPath);
+		candidates.push({
+			id: `path-${candidates.length}`,
+			rawPath: token.rawPath
+		});
+	}
+	return candidates;
+}
+function markdownCodeSegments(markdown) {
+	const segments = [];
+	const markdownWithoutFencedCode = markdown.replace(FENCED_CODE_BLOCK_PATTERN, (match, _prefix, _fence, info, code) => {
+		if (String(info).trim().split(/\s+/)[0]?.toLowerCase() !== "mermaid") segments.push(String(code));
+		return " ".repeat(match.length);
+	});
+	for (const match of markdownWithoutFencedCode.matchAll(INLINE_CODE_PATTERN)) segments.push(match[1]);
+	return segments;
+}
+function renderPathLinks(node, resolvedRawPaths, keyPrefix) {
+	if (typeof node === "string") return renderTextPathLinks(node, resolvedRawPaths, keyPrefix);
+	if (Array.isArray(node)) return node.map((child, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_react.Fragment, { children: renderPathLinks(child, resolvedRawPaths, `${keyPrefix}-${index}`) }, `${keyPrefix}-${index}`));
+	if ((0, import_react.isValidElement)(node)) {
+		const element = node;
+		if (element.props.children == null) return element;
+		return (0, import_react.cloneElement)(element, void 0, renderPathLinks(element.props.children, resolvedRawPaths, keyPrefix));
+	}
+	return node;
+}
+function renderTextPathLinks(text, resolvedRawPaths, keyPrefix) {
+	const tokens = pathTokens(text).filter((token) => resolvedRawPaths.has(token.rawPath));
+	if (tokens.length === 0) return text;
+	const parts = [];
+	let offset = 0;
+	for (const [index, token] of tokens.entries()) {
+		if (token.start < offset) continue;
+		if (offset < token.start) parts.push(text.slice(offset, token.start));
+		const label = text.slice(token.start, token.end);
+		parts.push(/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+			type: "button",
+			className: "acpMarkdownPathLink",
+			onClick: (event) => {
+				event.preventDefault();
+				event.stopPropagation();
+				acpBridgeHost.navigatePathLink({
+					rawPath: token.rawPath,
+					clientX: event.clientX,
+					clientY: event.clientY
+				});
+			},
+			children: label
+		}, `${keyPrefix}-${token.start}-${index}`));
+		offset = token.end;
+	}
+	if (offset < text.length) parts.push(text.slice(offset));
+	return parts;
+}
+function pathTokens(text) {
+	const tokens = [];
+	for (const match of text.matchAll(PATH_CANDIDATE_PATTERN)) {
+		const matchText = match[0];
+		const rawPath = trimPathCandidate(matchText);
+		if (!rawPath || !isPathLike(rawPath)) continue;
+		const leadingTrim = matchText.indexOf(rawPath);
+		const start = (match.index ?? 0) + leadingTrim;
+		tokens.push({
+			rawPath,
+			start,
+			end: start + rawPath.length
+		});
+	}
+	return tokens;
+}
+function trimPathCandidate(candidate) {
+	let start = 0;
+	let end = candidate.length;
+	while (start < end && PATH_TRIM_START.has(candidate[start])) start++;
+	while (end > start && PATH_TRIM_END.has(candidate[end - 1])) end--;
+	return candidate.slice(start, end);
+}
+function isPathLike(rawPath) {
+	return !URL_SCHEME_PATTERN.test(rawPath) && (rawPath.includes("/") || rawPath.includes("\\") || FILE_EXTENSION_PATTERN.test(rawPath));
+}
 function classNames(...names) {
 	return names.filter(Boolean).join(" ");
 }
+var FENCED_CODE_BLOCK_PATTERN = /(^|\n)(`{3,}|~{3,})([^\n]*)\n([\s\S]*?)\n\2(?=\n|$)/g;
+var INLINE_CODE_PATTERN = /`([^`\n]+)`/g;
+var FILE_EXTENSION_PATTERN = /\.[A-Za-z0-9]+(?:#L\d+|:\d+(?::\d+)?)?$/;
+var PATH_CANDIDATE_PATTERN = /(?:(?:(?:~|\.{1,2})[\\/]|[\\/]|[A-Za-z]:[\\/]|[A-Za-z0-9_.-]+[\\/])[^\s`<>"']+|[A-Za-z0-9_.-]+\.(?:bazel|bzl|c|cmd|cpp|cs|css|go|gradle|h|hpp|html|iml|java|js|jsx|json|kt|kts|md|mjs|properties|py|rs|scss|sh|ts|tsx|txt|xml|yaml|yml))(?:#L\d+|:\d+(?::\d+)?)?/gi;
+var PATH_TRIM_START = new Set([
+	"(",
+	"[",
+	"{",
+	"<"
+]);
+var PATH_TRIM_END = new Set([
+	")",
+	"]",
+	"}",
+	">",
+	".",
+	",",
+	";"
+]);
+var URL_SCHEME_PATTERN = /^[a-z][a-z0-9+.-]*:\/\//i;
 //#endregion
 //#region views/acp-chat/src/components/ModelSelector.tsx
 var ModelSelectorContext = (0, import_react.createContext)(null);

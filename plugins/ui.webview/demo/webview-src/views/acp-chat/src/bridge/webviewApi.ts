@@ -31,6 +31,25 @@ export interface OpenAcpConfigResult {
   error?: string | null
 }
 
+export interface ResolvePathLinksRequest {
+  candidates: PathLinkCandidateDto[]
+}
+
+export interface ResolvePathLinksResult {
+  resolvedIds: string[]
+}
+
+export interface PathLinkCandidateDto {
+  id: string
+  rawPath: string
+}
+
+export interface NavigatePathLinkRequest {
+  rawPath: string
+  clientX: number
+  clientY: number
+}
+
 export interface LineDto {
   line: string
 }
@@ -44,6 +63,8 @@ export interface AcpBridgeHostApi extends WebViewCallable {
   listAgents(): Promise<AgentListDto>
   startAgent(params: StartAgentRequest): Promise<StartAgentResult>
   openAcpConfig(): Promise<OpenAcpConfigResult>
+  resolvePathLinks(params: ResolvePathLinksRequest): Promise<ResolvePathLinksResult>
+  navigatePathLink(params: NavigatePathLinkRequest): Promise<void>
   sendStdin(params: LineDto): Promise<void>
   stopAgent(): Promise<void>
 }

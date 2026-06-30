@@ -53,7 +53,7 @@ internal class AcpChatPanel(
             val pageApi = webViewPanel.interop.callable(AcpBridgePageApi.ID)
             val processBridge = AcpProcessBridge(project, scope, pageApi)
             bridge = processBridge
-            webViewPanel.interop.implement(AcpBridgeHostApi.ID, AcpBridgeHostApiImpl(project, processBridge))
+            webViewPanel.interop.implement(AcpBridgeHostApi.ID, AcpBridgeHostApiImpl(project, scope, processBridge, webViewPanel.component))
             webViewPanel.reload()
             component.add(webViewPanel.component, BorderLayout.CENTER)
             component.revalidate()
