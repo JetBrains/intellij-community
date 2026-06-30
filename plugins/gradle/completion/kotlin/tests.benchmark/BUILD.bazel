@@ -1,21 +1,21 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.gradle.completion.kotlin.performanceTests` start
+### auto-generated section `build intellij.gradle.completion.kotlin.tests.benchmark` start
 
 jvm_library(
-    name = "performanceTests",
+    name = "tests.benchmark",
     srcs = glob(
         [],
         allow_empty = True,
     ),
-    module_name = "intellij.gradle.completion.kotlin.performanceTests",
+    module_name = "intellij.gradle.completion.kotlin.tests.benchmark",
     visibility = ["//visibility:public"],
     runtime_deps = ["//plugins/kotlin/plugin/k2"],
 )
 
 jvm_library(
-    name = "performanceTests_test_lib",
+    name = "tests.benchmark_test_lib",
     testonly = True,
     srcs = glob(
         [
@@ -25,11 +25,11 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.gradle.completion.kotlin.performanceTests",
+    module_name = "intellij.gradle.completion.kotlin.tests.benchmark",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":performanceTests",
+        ":tests.benchmark",
         "//plugins/kotlin/plugin/k2:k2_test_lib",
     ],
     deps = [
@@ -74,21 +74,21 @@ jvm_library(
         "//plugins/groovy:groovy-tests_test_lib",
     ],
 )
-### auto-generated section `build intellij.gradle.completion.kotlin.performanceTests` end
+### auto-generated section `build intellij.gradle.completion.kotlin.tests.benchmark` end
 
-### auto-generated section `iml intellij.gradle.completion.kotlin.performanceTests` start
+### auto-generated section `iml intellij.gradle.completion.kotlin.tests.benchmark` start
 exports_files(
     [
-        "intellij.gradle.completion.kotlin.performanceTests.iml",
+        "intellij.gradle.completion.kotlin.tests.benchmark.iml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml intellij.gradle.completion.kotlin.performanceTests` end
+### auto-generated section `iml intellij.gradle.completion.kotlin.tests.benchmark` end
 
-### auto-generated section `test intellij.gradle.completion.kotlin.performanceTests` start
+### auto-generated section `test intellij.gradle.completion.kotlin.tests.benchmark` start
 
 jps_test(
-    name = "performanceTests_test",
-    runtime_deps = [":performanceTests_test_lib"],
+    name = "tests.benchmark_test",
+    runtime_deps = [":tests.benchmark_test_lib"],
 )
-### auto-generated section `test intellij.gradle.completion.kotlin.performanceTests` end
+### auto-generated section `test intellij.gradle.completion.kotlin.tests.benchmark` end
