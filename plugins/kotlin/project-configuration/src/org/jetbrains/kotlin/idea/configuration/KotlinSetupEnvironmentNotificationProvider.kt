@@ -109,6 +109,28 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
         var fileParent = file.parent ?: return false
         var srcParentExists = false
         val parentsList = mutableListOf<String>()
+
+        /*
+         * Handle edge case in multi-module projects where projectParent is "src".
+         *
+         * Multi-module directory structure:
+         *
+         * my-project/
+         * ├── app/
+         * │   └── src/                ← projectParent
+         * │       └── main/           ← content root
+         * │           └── kotlin/
+         * │               └── App.kt
+         * └── utils/
+         *     └── src/                ← projectParent
+         *         └── main/           ← content root
+         *             └── kotlin/
+         *                 └── Utilities.kt
+         */
+        if (projectParent.name == "src") {
+            srcParentExists = true
+        }
+
         while (fileParent != projectParent) {
             val fileParentName = fileParent.name
             if (fileParentName == "src") {
@@ -122,6 +144,11 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
             !srcParentExists -> false
             parentsList.size < MAIN_KOTLIN_OR_TEST_KOTLIN_PATH_SIZE -> false
             parentsList.last() in mainAndTestDirNames && parentsList[parentsList.lastIndex - 1] == "kotlin" -> true
+            // Kotlin Multiplatform structure: src/{platform}Main|{platform}Test/kotlin
+            // e.g., src/commonMain/kotlin, src/androidMain/kotlin, src/iosMain/kotlin
+            (parentsList.last().endsWith("Main") || parentsList.last().endsWith("Test")) &&
+                    parentsList[parentsList.lastIndex - 1] == "kotlin" -> true
+
             else -> false
         }
     }
