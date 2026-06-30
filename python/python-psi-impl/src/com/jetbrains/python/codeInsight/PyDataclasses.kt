@@ -171,6 +171,10 @@ object PyDataclassNames {
     const val ALIASES_ALIAS_CHOICES: String = "pydantic.aliases.AliasChoices"
     val ALIAS_CHOICES_QUALIFIED_NAMES: Set<String> = setOf(ALIAS_CHOICES, ALIASES_ALIAS_CHOICES)
 
+    const val CONFIG_DICT: String = "pydantic.ConfigDict"
+    const val CONFIG_CONFIG_DICT: String = "pydantic.config.ConfigDict"
+    val CONFIG_DICT_QUALIFIED_NAMES: Set<String> = setOf(CONFIG_DICT, CONFIG_CONFIG_DICT)
+
     val DECORATOR_PARAMETERS: Set<String> = setOf(
       "config"
     )
@@ -980,7 +984,7 @@ fun isPydanticModel(
   return metaClassName != null && metaClassName == PyDataclassNames.Pydantic.MODEL_METACLASS
 }
 
-private fun hasPydanticDataclassDecorator(
+internal fun hasPydanticDataclassDecorator(
   pyClass: PyClass,
   context: TypeEvalContext,
 ): Boolean {

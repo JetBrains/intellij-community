@@ -539,6 +539,81 @@ public class Py3CompletionTest extends PyTestCase {
     assertContainsElements(myFixture.getLookupElementStrings(), "city");
   }
 
+  @TestFor(issues = "PY-90108")
+  public void testPydanticModelConfigKeywordCompletion() {
+    runWithAdditionalClassEntryInSdkRoots("../stubs", () -> {
+      final List<String> suggested = doTestByText(
+        """
+          from pydantic import BaseModel
+          
+          class Model(BaseModel, <caret>):
+              pass
+          """);
+      assertNotNull(suggested);
+      assertContainsElements(suggested,
+                             "validate_by_name=",
+                             "validate_by_alias=",
+                             "populate_by_name=",
+                             "frozen=",
+                             "strict="
+      );
+    });
+  }
+
+  @TestFor(issues = "PY-90108")
+  public void testPydanticModelConfigKeywordCompletionExcludesExisting() {
+    runWithAdditionalClassEntryInSdkRoots("../stubs", () -> {
+      final List<String> suggested = doTestByText(
+        """
+          from pydantic import BaseModel
+          
+          class Model(BaseModel, frozen=True, <caret>):
+              pass
+          """);
+      assertNotNull(suggested);
+      assertContainsElements(suggested, "strict=", "populate_by_name=");
+      assertDoesntContain(suggested, "frozen=");
+    });
+  }
+
+  @TestFor(issues = "PY-90108")
+  public void testPydanticModelConfigKeywordCompletionNotSuggestedForPlainClass() {
+    runWithAdditionalClassEntryInSdkRoots("../stubs", () -> {
+      final List<String> suggested = doTestByText(
+        """
+          class Model(object, <caret>):
+              pass
+          """);
+      assertNotNull(suggested);
+      assertDoesntContain(suggested, "frozen=", "strict=", "populate_by_name=");
+    });
+  }
+
+  @TestFor(issues = "PY-90108")
+  public void testPydanticDataclassNoConfigKeywordCompletionInBaseList() {
+    runWithAdditionalClassEntryInSdkRoots("../stubs", () -> {
+      final List<String> suggested = doTestByText(
+        """
+          from pydantic.dataclasses import dataclass
+          
+          class Mixin:
+              pass
+          
+          @dataclass
+          class Model(Mixin, <caret>):
+              pass
+          """);
+      assertNotNull(suggested);
+      assertDoesntContain(suggested,
+                          "validate_by_name=",
+                          "validate_by_alias=",
+                          "populate_by_name=",
+                          "frozen=",
+                          "strict="
+      );
+    });
+  }
+
   // PY-48665
   public void testFStringLikeCompletionNotAvailableInLiteralPatterns() {
     doNegativeTest();
