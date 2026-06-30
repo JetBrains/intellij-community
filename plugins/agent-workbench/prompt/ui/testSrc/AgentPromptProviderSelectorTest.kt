@@ -3284,30 +3284,49 @@ class AgentPromptProviderSelectorTest {
         generationSettingsPanel = fixture.view.generationSettingsPanel,
         modelSelectorLink = fixture.view.modelSelectorLink,
         reasoningEffortLink = fixture.view.reasoningEffortLink,
-        planReasoningEffortLink = fixture.view.planReasoningEffortLink,
         modelCatalogScope = testScope(),
         launcherProvider = { null },
         onDefaultSaved = { _ -> },
       )
 
       controller.refreshPresentation()
-      val extraHighPlanAction = checkNotNull(controller.createPlanReasoningEffortActionGroupForTest())
-        .getChildren(TestActionEvent.createTestEvent())
-        .single { action -> action.templatePresentation.text == "Extra High" }
-      extraHighPlanAction.actionPerformed(TestActionEvent.createTestEvent(extraHighPlanAction))
+      val planSubmenu = launchSettingsPlanEffortSubmenu(controller)
+      assertThat(planSubmenu.text).isEqualTo("Same as Effort")
+      assertThat(planSubmenu.separatorText).isEqualTo("Plan Effort")
+      assertThat(planSubmenu.secondaryIcon).isSameAs(AllIcons.General.ChevronRight)
+      assertThat(popupRowEntries(planSubmenu.subRows)).containsExactly(
+        "separator:Plan Effort",
+        "row:Same as Effort",
+        "row:Provider Default",
+        "row:High",
+        "row:Extra High",
+      )
+      assertThat(popupCommand(planSubmenu.subRows, "Same as Effort").selected).isTrue()
+      assertThat(popupCommand(planSubmenu.subRows, "Extra High").selected).isFalse()
 
-      assertThat(fixture.view.planReasoningEffortLink.isVisible).isFalse()
-      assertThat(fixture.view.planReasoningEffortLink.text).isEqualTo("Plan Effort Extra High")
+      val workbenchPlanSubmenu = launchSettingsWorkbenchPlanEffortSubmenu(controller)
+      assertThat(workbenchPlanSubmenu.text).isEqualTo(planSubmenu.text)
+      assertThat(workbenchPlanSubmenu.subRows.map { row -> row.text }).containsExactly(
+        "Same as Effort",
+        "Provider Default",
+        "High",
+        "Extra High",
+      )
+      assertThat(workbenchPlanSubmenu.subRowsProvider != null).isTrue()
+
+      popupCommand(planSubmenu.subRows, "Extra High").onChosen()
+
       assertThat(controller.currentLaunchSettings().planReasoningEffort).isEqualTo(AgentPromptReasoningEffort.XHIGH)
+      val selectedPlanSubmenu = launchSettingsPlanEffortSubmenu(controller)
+      assertThat(selectedPlanSubmenu.text).isEqualTo("Extra High")
+      assertThat(popupCommand(selectedPlanSubmenu.subRows, "Extra High").selected).isTrue()
+      assertThat(popupCommand(selectedPlanSubmenu.subRows, "Extra High").secondaryIcon).isNotNull()
 
       fixture.selector.setPlanModeSelected(false)
       controller.refreshPresentation()
 
-      assertThat(fixture.view.planReasoningEffortLink.isVisible).isFalse()
-      assertThat(fixture.view.planReasoningEffortLink.isEnabled).isFalse()
-      assertThat(fixture.view.planReasoningEffortLink.toolTipText)
-        .contains(AgentPromptBundle.message("popup.generation.plan.reasoning.disabled.tooltip"))
       assertThat(controller.currentLaunchSettings().planReasoningEffort).isNull()
+      assertThat(launchSettingsPlanEffortSubmenuOrNull(controller)).isNull()
     }
   }
 
@@ -3327,7 +3346,6 @@ class AgentPromptProviderSelectorTest {
         generationSettingsPanel = fixture.view.generationSettingsPanel,
         modelSelectorLink = fixture.view.modelSelectorLink,
         reasoningEffortLink = fixture.view.reasoningEffortLink,
-        planReasoningEffortLink = fixture.view.planReasoningEffortLink,
         modelCatalogScope = testScope(),
         launcherProvider = { null },
         onDefaultSaved = { _ -> },
@@ -3336,8 +3354,7 @@ class AgentPromptProviderSelectorTest {
       controller.refreshPresentation()
 
       assertThat(fixture.selector.isPlanModeSelected()).isTrue()
-      assertThat(fixture.view.planReasoningEffortLink.isVisible).isFalse()
-      assertThat(controller.createPlanReasoningEffortActionGroupForTest()).isNull()
+      assertThat(launchSettingsPlanEffortSubmenuOrNull(controller)).isNull()
     }
   }
 
@@ -3371,7 +3388,6 @@ class AgentPromptProviderSelectorTest {
         generationSettingsPanel = fixture.view.generationSettingsPanel,
         modelSelectorLink = fixture.view.modelSelectorLink,
         reasoningEffortLink = fixture.view.reasoningEffortLink,
-        planReasoningEffortLink = fixture.view.planReasoningEffortLink,
         modelCatalogScope = testScope(),
         launcherProvider = { launcher },
         onDefaultSaved = { _ -> },
@@ -3380,17 +3396,15 @@ class AgentPromptProviderSelectorTest {
       controller.restoreLaunchProfiles(launcher.preferences)
 
       assertThat(fixture.selector.isPlanModeSelected()).isFalse()
-      assertThat(fixture.view.planReasoningEffortLink.isVisible).isFalse()
-      assertThat(fixture.view.planReasoningEffortLink.isEnabled).isFalse()
-      assertThat(fixture.view.planReasoningEffortLink.text).isEqualTo("Plan Effort Extra High")
+      assertThat(controller.currentSettings().planReasoningEffort).isEqualTo(AgentPromptReasoningEffort.XHIGH)
       assertThat(controller.currentLaunchSettings().planReasoningEffort).isNull()
+      assertThat(launchSettingsPlanEffortSubmenuOrNull(controller)).isNull()
 
       fixture.selector.setPlanModeSelected(true)
       controller.refreshPresentation()
 
-      assertThat(fixture.view.planReasoningEffortLink.isVisible).isFalse()
-      assertThat(fixture.view.planReasoningEffortLink.isEnabled).isTrue()
       assertThat(controller.currentLaunchSettings().planReasoningEffort).isEqualTo(AgentPromptReasoningEffort.XHIGH)
+      assertThat(launchSettingsPlanEffortSubmenu(controller).text).isEqualTo("Extra High")
     }
   }
 
@@ -3653,11 +3667,27 @@ class AgentPromptProviderSelectorTest {
   private fun launchSettingsModelSubmenu(controller: AgentPromptGenerationSettingsController): AgentPromptPopupRow.Command {
     return controller.createLaunchSettingsPopupRowsForTest()
       .filterIsInstance<AgentPromptPopupRow.Command>()
-      .single { row -> row.subRows.isNotEmpty() }
+      .single { row -> row.subRows.any { subRow -> subRow.text == "Default Model" } }
   }
 
   private fun launchSettingsWorkbenchModelSubmenu(controller: AgentPromptGenerationSettingsController): AgentWorkbenchPopupRow {
-    return controller.createLaunchSettingsWorkbenchPopupRowsForTest().single { row -> row.subRows.isNotEmpty() }
+    return controller.createLaunchSettingsWorkbenchPopupRowsForTest()
+      .single { row -> row.subRows.any { subRow -> subRow.text == "Default Model" } }
+  }
+
+  private fun launchSettingsPlanEffortSubmenu(controller: AgentPromptGenerationSettingsController): AgentPromptPopupRow.Command {
+    return checkNotNull(launchSettingsPlanEffortSubmenuOrNull(controller))
+  }
+
+  private fun launchSettingsPlanEffortSubmenuOrNull(controller: AgentPromptGenerationSettingsController): AgentPromptPopupRow.Command? {
+    return controller.createLaunchSettingsPopupRowsForTest()
+      .filterIsInstance<AgentPromptPopupRow.Command>()
+      .singleOrNull { row -> row.subRows.any { subRow -> subRow.text == "Same as Effort" } }
+  }
+
+  private fun launchSettingsWorkbenchPlanEffortSubmenu(controller: AgentPromptGenerationSettingsController): AgentWorkbenchPopupRow {
+    return controller.createLaunchSettingsWorkbenchPopupRowsForTest()
+      .single { row -> row.subRows.any { subRow -> subRow.text == "Same as Effort" } }
   }
 
   private fun popupCommand(rows: List<AgentPromptPopupRow>, text: String): AgentPromptPopupRow.Command {
