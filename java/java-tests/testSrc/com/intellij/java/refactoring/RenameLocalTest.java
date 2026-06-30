@@ -27,9 +27,8 @@ import java.util.HashSet;
 public class RenameLocalTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/refactoring/renameLocal/";
 
-  @NotNull
   @Override
-  protected String getTestDataPath() {
+  protected @NotNull String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
@@ -77,7 +76,7 @@ public class RenameLocalTest extends LightJavaCodeInsightTestCase {
     assertTrue(result.toString(), result.contains("window"));
   }
 
-  private void doTest(final String newName) {
+  private void doTest(String newName) {
     configureByFile();
     new RenameProcessor(getProject(), getTargetElement(), newName, true, true).run();
     checkResultByFile();
@@ -86,11 +85,11 @@ public class RenameLocalTest extends LightJavaCodeInsightTestCase {
   public void testRenameInPlaceQualifyFieldReference() {
     doTestInplaceRename("myI");
   }
-  
+
   public void testRenameInPlaceQualifyFieldReferenceInChild() {
     doTestInplaceRename("myI");
   }
-  
+
   public void testRenameInPlaceThisNeeded() {
     doTestInplaceRename("a");
   }
@@ -102,7 +101,7 @@ public class RenameLocalTest extends LightJavaCodeInsightTestCase {
   public void testRenameInPlaceParamInOverriderAutomaticRenamer() {
     doTestInplaceRename("pp");
   }
-  
+
   public void testRenameFieldWithConstructorParamAutomatic() {
     configureByFile();
     RenameProcessor processor = new RenameProcessor(getProject(), getTargetElement(), "pp", true, true);
@@ -112,19 +111,19 @@ public class RenameLocalTest extends LightJavaCodeInsightTestCase {
     processor.run();
     checkResultByFile();
   }
-  
+
   public void testConflictWithPattern() {
-    assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class, 
+    assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class,
                  "An existing pattern variable <b><code>s</code></b> has the same name",
                  () -> doTest("s"));
   }
 
   public void testConflictWithPatternInline() {
-    assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class, 
+    assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class,
                  "Variable 's' Already Exists",
                  () -> doTestInplaceRename("s"));
   }
-  
+
   public void testConflictInLambdaParameter() {
     assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class,
                  "Variable 'o' Already Exists",
@@ -132,7 +131,7 @@ public class RenameLocalTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testConflictWithFutureVar() {
-    assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class, 
+    assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class,
                  "An existing local variable <b><code>y</code></b> has the same name",
                  () -> doTest("y"));
   }
@@ -144,7 +143,7 @@ public class RenameLocalTest extends LightJavaCodeInsightTestCase {
   public void testRenameResource() {
     doTest("r1");
   }
-  
+
   public void testRecordCanonicalConstructor() {
     doTest("Bar");
   }
@@ -184,7 +183,7 @@ public class RenameLocalTest extends LightJavaCodeInsightTestCase {
     doRenameWrongRef("i");
   }
 
-  private void doRenameWrongRef(final String newName) {
+  private void doRenameWrongRef(String newName) {
     configureByFile();
 
     TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
@@ -203,7 +202,7 @@ public class RenameLocalTest extends LightJavaCodeInsightTestCase {
     checkResultByFile();
   }
 
-  private void doTestInplaceRename(final String newName) {
+  private void doTestInplaceRename(String newName) {
     configureByFile();
 
     PsiElement element = getTargetElement();
@@ -213,8 +212,7 @@ public class RenameLocalTest extends LightJavaCodeInsightTestCase {
     checkResultByFile();
   }
 
-  @NotNull
-  private PsiElement getTargetElement() {
+  private @NotNull PsiElement getTargetElement() {
     final PsiElement element = TargetElementUtil
       .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     assertNotNull(element);

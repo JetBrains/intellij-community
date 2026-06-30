@@ -170,7 +170,7 @@ public class RenameClassTest extends LightMultiFileTestCase {
     });
   }
 
-  private void rename(final String className, final String newName) {
+  private void rename(String className, String newName) {
     PsiClass aClass = myFixture.findClass(className);
     assertNotNull("Class XX not found", aClass);
 
@@ -181,13 +181,13 @@ public class RenameClassTest extends LightMultiFileTestCase {
     processor.run();
   }
 
-  private void doRenameClass(final String className, final String newName) {
+  private void doRenameClass(String className, String newName) {
     doTest(() -> {
       rename(className, newName);
     });
   }
 
-  private void doUndoRedoRenameClass(final String className, final String newName) {
+  private void doUndoRedoRenameClass(String className, String newName) {
     doTest(() -> {
       rename(className, newName);
       TestDialogManager.setTestDialog(message -> Messages.YES);
@@ -210,7 +210,7 @@ public class RenameClassTest extends LightMultiFileTestCase {
     doTest("XX", "Y");
   }
 
-  private void doTest(@NonNls final String qClassName, @NonNls final String newName) {
+  private void doTest(@NonNls String qClassName, @NonNls String newName) {
     doTest(() -> this.performAction(qClassName, newName));
   }
 
@@ -221,9 +221,8 @@ public class RenameClassTest extends LightMultiFileTestCase {
     new RenameProcessor(getProject(), aClass, newName, true, true).run();
   }
 
-  @NotNull
   @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
     return JAVA_23;
   }
 }
