@@ -1566,4 +1566,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.platform.instanceContainer.tests",
   "intellij.platform.jewel.decoratedWindow.tests",
   "intellij.platform.jewel.ideLafBridge.tests",
+  "intellij.platform.jewel.markdown.core.tests",
 )
