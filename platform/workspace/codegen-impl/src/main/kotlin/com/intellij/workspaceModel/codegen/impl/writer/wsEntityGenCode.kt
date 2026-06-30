@@ -29,7 +29,7 @@ import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
  * Перенести тесты идеи к нам или наоборрот <--
  */
 
-fun ObjClass<*>.implWsCode(): String? {
-  if (!openness.instantiatable) return null
-  return "${implWsEntityCode()}\n${implWsDataClassCode()}"
+fun implWsCode(objClass: ObjClass<*>): String? {
+  if (!objClass.openness.instantiatable) return null
+  return "${objClass.implWsEntityCode()}\n${objClass.implWsDataClassCode()}"
 }

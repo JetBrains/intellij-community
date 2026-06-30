@@ -3,15 +3,29 @@ package com.intellij.workspaceModel.codegen.impl.writer.classes
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
-import com.intellij.workspaceModel.codegen.impl.writer.*
-import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
-import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsBuilderFieldCode
+import com.intellij.workspaceModel.codegen.impl.writer.ConnectionId
+import com.intellij.workspaceModel.codegen.impl.writer.LibraryEntity
+import com.intellij.workspaceModel.codegen.impl.writer.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.codegen.impl.writer.MutableEntityStorage
+import com.intellij.workspaceModel.codegen.impl.writer.MutableWorkspaceList
+import com.intellij.workspaceModel.codegen.impl.writer.MutableWorkspaceSet
+import com.intellij.workspaceModel.codegen.impl.writer.SdkEntity
+import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntity
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.allFields
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.compatibleJavaBuilderName
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaFullName
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaName
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.vfuFields
+import com.intellij.workspaceModel.codegen.impl.writer.fields.getImplWsBuilderFieldCode
 import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsBuilderIsInitializedCode
+import com.intellij.workspaceModel.codegen.impl.writer.lines
+import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdFieldName
+import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdIsInitializedCode
 
-fun ObjClass<*>.implWsEntityBuilderCode(): String {
+fun implWsEntityBuilderCode(objClass: ObjClass<*>): String {
   return """
-internal class Builder(result: $javaDataName?): ${ModifiableWorkspaceEntityBase}<$javaFullName, $javaDataName>(result), $compatibleJavaBuilderName {
-internal constructor(): this($javaDataName())
+internal class Builder(result: ${objClass.javaDataName}?): ${ModifiableWorkspaceEntityBase}<${objClass.javaFullName}, ${objClass.javaDataName}>(result), ${objClass.compatibleJavaBuilderName} {
+internal constructor(): this(${objClass.javaDataName}())
 
 ${
     lines {
@@ -21,7 +35,7 @@ ${
             line("this.diff = builder")
             line("return")
           }) {
-            line("error(\"Entity $name is already created in a different builder\")")
+            line("error(\"Entity ${objClass.name} is already created in a different builder\")")
           }
         }
         line("this.diff = builder")
@@ -30,13 +44,13 @@ ${
         lineComment("After adding entity data to the builder, we need to unbind it and move the control over entity data to builder")
         lineComment("Builder may switch to snapshot at any moment and lock entity data to modification")
         line("this.currentEntityData = null")
-        list(vfuFields) {
+        list(objClass.vfuFields) {
           "index(this, \"$name\", this.$name)"
         }
-        if (name == LibraryEntity.simpleName) {
+        if (objClass.name == LibraryEntity.simpleName) {
           line("indexLibraryRoots(roots)")
         }
-        if (name == SdkEntity.simpleName) {
+        if (objClass.name == SdkEntity.simpleName) {
           line("indexSdkRoots(roots)")
         }
         lineComment("Process linked entities that are connected without a builder")
@@ -50,17 +64,17 @@ ${
 
       section("private fun checkInitialization()") {
         line("val _diff = diff")
-        list(allFields.noSymbolicId().noOptional().noDefaultValue()) { lineBuilder, field ->
+        list(objClass.allFields.noSymbolicId().noOptional().noDefaultValue()) { lineBuilder, field ->
           lineBuilder.implWsBuilderIsInitializedCode(field)
         }
-        symbolicIdIsInitializedCode(this@implWsEntityBuilderCode)
+        symbolicIdIsInitializedCode(objClass)
       }
 
-      section("override fun connectionIdList(): List<${ConnectionId}>") { 
+      section("override fun connectionIdList(): List<${ConnectionId}>") {
         line("return connections")
       }
 
-      val collectionFields = allFields.noRefs().filter { it.valueType is ValueType.Collection<*,*> }
+      val collectionFields = objClass.allFields.noRefs().filter { it.valueType is ValueType.Collection<*, *> }
       if (collectionFields.isNotEmpty()) {
         section("override fun afterModification()") {
           collectionFields.forEach { field ->
@@ -72,7 +86,7 @@ ${
             }
             if (field.valueType is ValueType.Set<*>) {
               `if`("collection_${field.javaName} is ${MutableWorkspaceSet}<*>") {
-              line("collection_${field.javaName}.cleanModificationUpdateAction()")
+                line("collection_${field.javaName}.cleanModificationUpdateAction()")
               }
             }
           }
@@ -81,8 +95,8 @@ ${
 
       lineComment("Relabeling code, move information from dataSource to this builder")
       section("override fun relabel(dataSource: ${WorkspaceEntity}, parents: Set<${WorkspaceEntity}>?)") {
-        line("dataSource as $javaFullName")
-        list(allFields.noSymbolicId().noRefs()) { lineBuilder, field ->
+        line("dataSource as ${objClass.javaFullName}")
+        list(objClass.allFields.noSymbolicId().noRefs()) { lineBuilder, field ->
           var type = field.valueType
           var qm = ""
           if (type is ValueType.Optional<*>) {
@@ -100,7 +114,7 @@ ${
         line("updateChildToParentReferences(parents)")
       }
 
-      if (name == LibraryEntity.simpleName) {
+      if (objClass.name == LibraryEntity.simpleName) {
         section("private fun indexLibraryRoots(libraryRoots: List<LibraryRoot>)") {
           line("val jarDirectories = mutableSetOf<VirtualFileUrl>()")
           line("val libraryRootList = libraryRoots.map {")
@@ -114,18 +128,18 @@ ${
         }
       }
 
-      if (name == SdkEntity.simpleName) {
+      if (objClass.name == SdkEntity.simpleName) {
         section("private fun indexSdkRoots(sdkRoots: List<SdkRoot>)") {
           line("val sdkRootList = sdkRoots.map { it.url }.toHashSet()")
           line("index(this, \"roots\", sdkRootList)")
         }
       }
     }
-}
+  }
         
-${allFields.filter { it.name != symbolicIdFieldName }.lines { implWsBuilderFieldCode }.trimEnd()}
+${objClass.allFields.filter { it.name != symbolicIdFieldName }.lines { getImplWsBuilderFieldCode(objClass, this) }.trimEnd()}
 
-override fun getEntityClass(): Class<$javaFullName> = $javaFullName::class.java
+override fun getEntityClass(): Class<${objClass.javaFullName}> = ${objClass.javaFullName}::class.java
 }
 """
 }

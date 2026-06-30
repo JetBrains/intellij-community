@@ -57,7 +57,7 @@ override fun connectionIdList(): List<${ConnectionId}> {
 return connections
 }
 
-${implWsEntityBuilderCode()}
+${implWsEntityBuilderCode(this)}
 }
 """
 }

@@ -44,11 +44,11 @@ class CodeGeneratorImpl : CodeGenerator {
         checkSymbolicId(type, reporter)
         checkReferences(type, reporter)
         if (reporter.hasErrors()) return failedGenerationResult(reporter)
-        val topLevelCode = type.generateTopLevelCode(reporter)
+        val topLevelCode = generateTopLevelCode(type, reporter)
         if (reporter.hasErrors()) return failedGenerationResult(reporter)
-        val compatibilityBuilder = type.generateCompatabilityBuilder()
-        val compatibilityCompanion = type.generateCompatibilityCompanion()
-        val implementationClass = type.implWsCode()
+        val compatibilityBuilder = generateCompatabilityBuilder(type)
+        val compatibilityCompanion = generateCompatibilityCompanion(type)
+        val implementationClass = implWsCode(type)
         if (reporter.hasErrors()) return failedGenerationResult(reporter)
         generatedCode.add(
           ObjClassGeneratedCode(
