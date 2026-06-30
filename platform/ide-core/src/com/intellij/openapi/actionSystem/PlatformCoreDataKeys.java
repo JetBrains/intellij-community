@@ -32,7 +32,7 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
    * {@link Boolean#FALSE} if action is executed not in modal context. If context
    * is unknown returns {@code null}.
    */
-  public static final DataKey<Boolean> IS_MODAL_CONTEXT = DataKey.create("isModalContext");
+  public static final DataKey<Boolean> IS_MODAL_CONTEXT = DataKey.create(Names.IS_MODAL_CONTEXT_KEY_NAME);
 
   /**
    * Returns help id.
@@ -49,7 +49,7 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
   /**
    * Returns {@link Component} currently in focus, DataContext should be retrieved for.
    */
-  public static final DataKey<Component> CONTEXT_COMPONENT = DataKey.create("contextComponent");
+  public static final DataKey<Component> CONTEXT_COMPONENT = DataKey.create(Names.CONTEXT_COMPONENT_KEY_NAME);
 
   /**
    * A key to use to split a data provider into fast EDT and potentially slow BGT parts,
@@ -105,5 +105,7 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
   @ApiStatus.Internal
   public interface Names {
     String FILE_EDITOR_KEY_NAME = "fileEditor";
+    String CONTEXT_COMPONENT_KEY_NAME = "contextComponent";
+    String IS_MODAL_CONTEXT_KEY_NAME = "isModalContext";
   }
 }

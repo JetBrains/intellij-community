@@ -199,11 +199,13 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
   @Suppress("DuplicatedCode")
   @Deprecated("Deprecated in Java")
   override fun getData(dataId: String): Any? {
-    if (PlatformCoreDataKeys.CONTEXT_COMPONENT.`is`(dataId)) return SoftReference.dereference(myComponentRef.ref)
-    if (PlatformCoreDataKeys.IS_MODAL_CONTEXT.`is`(dataId)) return myComponentRef.modalContext
-    if (PlatformDataKeys.MODALITY_STATE.`is`(dataId)) return myComponentRef.modalityState
-    if (PlatformDataKeys.SPEED_SEARCH_TEXT.`is`(dataId) && myComponentRef.speedSearchText != null) return myComponentRef.speedSearchText
-    if (PlatformDataKeys.SPEED_SEARCH_COMPONENT.`is`(dataId) && myComponentRef.speedSearchRef != null) return myComponentRef.speedSearchRef.get()
+    when (dataId) {
+      PlatformCoreDataKeys.Names.CONTEXT_COMPONENT_KEY_NAME -> return SoftReference.dereference(myComponentRef.ref)
+      PlatformCoreDataKeys.Names.IS_MODAL_CONTEXT_KEY_NAME -> return myComponentRef.modalContext
+      PlatformDataKeys.Names.MODALITY_STATE_KEY_NAME -> return myComponentRef.modalityState
+      PlatformDataKeys.Names.SPEED_SEARCH_TEXT_KEY_NAME -> if (myComponentRef.speedSearchText != null) return myComponentRef.speedSearchText
+      PlatformDataKeys.Names.SPEED_SEARCH_COMPONENT_KEY_NAME -> if (myComponentRef.speedSearchRef != null) return myComponentRef.speedSearchRef.get()
+    }
 
     val isEDT = EDT.isCurrentThreadEdt()
     if (isEDT && ourIsCapturingSnapshot) {
@@ -294,11 +296,11 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
   @Suppress("DuplicatedCode")
   fun getRawDataIfCached(dataId: String, uiOnly: Boolean): Any? {
     when (dataId) {
-      PlatformCoreDataKeys.CONTEXT_COMPONENT.name -> return SoftReference.dereference(myComponentRef.ref)
-      PlatformCoreDataKeys.IS_MODAL_CONTEXT.name -> return myComponentRef.modalContext
-      PlatformDataKeys.MODALITY_STATE.name -> return myComponentRef.modalityState
-      PlatformDataKeys.SPEED_SEARCH_TEXT.name -> if (myComponentRef.speedSearchText != null) return myComponentRef.speedSearchText
-      PlatformDataKeys.SPEED_SEARCH_COMPONENT.name -> if (myComponentRef.speedSearchRef != null) return myComponentRef.speedSearchRef.get()
+      PlatformCoreDataKeys.Names.CONTEXT_COMPONENT_KEY_NAME -> return SoftReference.dereference(myComponentRef.ref)
+      PlatformCoreDataKeys.Names.IS_MODAL_CONTEXT_KEY_NAME -> return myComponentRef.modalContext
+      PlatformDataKeys.Names.MODALITY_STATE_KEY_NAME -> return myComponentRef.modalityState
+      PlatformDataKeys.Names.SPEED_SEARCH_TEXT_KEY_NAME -> if (myComponentRef.speedSearchText != null) return myComponentRef.speedSearchText
+      PlatformDataKeys.Names.SPEED_SEARCH_COMPONENT_KEY_NAME -> if (myComponentRef.speedSearchRef != null) return myComponentRef.speedSearchRef.get()
     }
 
     val answer = myCachedData.uiData(dataId) ?: run {
@@ -592,19 +594,19 @@ private fun composeKeyedProvider(
   data: DataProvider,
   existing: DataProvider?,
   toFront: Boolean
-): DataProvider = when {
-  existing == null && lazyKey == null -> {
+): DataProvider = when (existing) {
+  null if lazyKey == null -> {
     data
   }
-  existing !is KeyedDataProvider && lazyKey != null -> {
+  !is KeyedDataProvider if lazyKey != null -> {
     KeyedDataProvider(persistentHashMapOf<String, DataProvider>().putting(lazyKey.name, data), existing)
   }
-  existing is KeyedDataProvider && lazyKey == null -> {
+  is KeyedDataProvider if lazyKey == null -> {
     val first = if (toFront) data else existing
     val second = if (toFront) existing else data
     KeyedDataProvider(existing.map, CompositeDataProvider.compose(first, second))
   }
-  existing is KeyedDataProvider && lazyKey != null -> {
+  is KeyedDataProvider if lazyKey != null -> {
     val existingByKey = existing.map[lazyKey.name]
     val first = if (toFront) data else existingByKey
     val second = if (toFront) existingByKey else data
@@ -640,7 +642,7 @@ private class MyLazy<T>(key: DataKey<T>, supplier: () -> T?) : MyLazyBase<T, () 
 }
 
 private class MyLazyValue<T>(key: DataKey<T>, supplier: (DataMap) -> T?) : MyLazyBase<T, (DataMap) -> T?>(key, supplier), ParametrizedDataProvider {
-  override fun getData(dataId: String): Any? = throw UnsupportedOperationException()
+  override fun getData(dataId: String): Any = throw UnsupportedOperationException()
   override fun getData(dataId: String, dataProvider: DataProvider): Any? = ifMyOrNull(dataId) {
     supplier.invoke(dataProvider.toDataMap())
   }
