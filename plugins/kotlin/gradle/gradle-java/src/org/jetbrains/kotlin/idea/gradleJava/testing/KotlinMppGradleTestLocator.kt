@@ -23,7 +23,9 @@ import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestLocationInfo
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestLocatorExtension
+import org.jetbrains.plugins.gradle.util.createTestFilterFrom
 
 internal class KotlinMppGradleTestLocator : GradleTestLocatorExtension, DumbAware {
     override fun getLocation(
@@ -131,10 +133,13 @@ internal class KotlinMppGradleTestLocator : GradleTestLocatorExtension, DumbAwar
 
     private class KotlinMppGradleClassLocation(
         project: Project,
-        sourceClass: KtClassOrObject,
-        psiClass: PsiClass,
-    ) : PsiLocation<PsiElement>(project, sourceClass) {
-        private val psiClassLocation = PsiLocation(project, psiClass)
+        override val sourceElement: KtClassOrObject,
+        override val testClass: PsiClass,
+    ) : PsiLocation<PsiElement>(project, sourceElement), GradleTestLocationInfo {
+        override val testMethod: PsiMethod? = null
+        override val testFilter: String = createTestFilterFrom(testClass)
+
+        private val psiClassLocation = PsiLocation(project, testClass)
 
         override fun <T : PsiElement> getAncestors(ancestorClass: Class<T>, strict: Boolean): Iterator<Location<T>> {
             val locations = mutableListOf<Location<T>>()
@@ -147,13 +152,15 @@ internal class KotlinMppGradleTestLocator : GradleTestLocatorExtension, DumbAwar
 
     private class KotlinMppGradleMethodLocation(
         project: Project,
-        sourceFunction: KtNamedFunction,
-        method: PsiMethod,
-        containingClass: PsiClass,
+        override val sourceElement: KtNamedFunction,
+        override val testMethod: PsiMethod,
+        override val testClass: PsiClass,
         paramName: String?,
-    ) : PsiMemberParameterizedLocation(project, sourceFunction, containingClass, paramName) {
-        private val methodLocation = MethodLocation.elementInClass(method, containingClass)
-        private val containingClassLocation = PsiLocation(project, containingClass)
+    ) : PsiMemberParameterizedLocation(project, sourceElement, testClass, paramName), GradleTestLocationInfo {
+        override val testFilter: String = createTestFilterFrom(testClass, testMethod.name)
+
+        private val methodLocation = MethodLocation.elementInClass(testMethod, testClass)
+        private val containingClassLocation = PsiLocation(project, testClass)
 
         override fun <T : PsiElement> getAncestors(ancestorClass: Class<T>, strict: Boolean): Iterator<Location<T>> {
             val locations = mutableListOf<Location<T>>()
