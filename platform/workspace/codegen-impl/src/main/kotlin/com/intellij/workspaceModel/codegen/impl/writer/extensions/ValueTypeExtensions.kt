@@ -9,7 +9,7 @@ internal val ValueType.JvmClass<*>.kotlinClassName: String
   get() = javaClassName.replace('$','.')
 
 internal fun ValueType<*>.isEntityRef(property: TypeProperty<*>): Boolean {
-  return isRefType() && property is ObjProperty<*, *> && !property.isComputable && !property.withDefault
+  return isReferenceType() && property is ObjProperty<*, *> && !property.isComputable && !property.withDefault
 }
 
 

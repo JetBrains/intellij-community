@@ -1,22 +1,26 @@
-package com.intellij.workspaceModel.codegen.impl.metadata
+package com.intellij.workspaceModel.codegen.impl.metadata.old
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
+import com.intellij.workspaceModel.codegen.impl.dsl.GeneratorContext
+import com.intellij.workspaceModel.codegen.impl.metadata.endHashComputing
+import com.intellij.workspaceModel.codegen.impl.metadata.startHashComputing
 
-
+// MetadataHashComputer ~ MetadataContext : GeneratorContext
 internal interface MetadataHashComputer<T> {
-  fun computeHash(obj: T): MetadataHash
+  fun computeHash(context: GeneratorContext, obj: T): MetadataHash
 }
 
 internal typealias MetadataHash = Int
 
 
+// BaseMetadataHashComputer : MetadataContext : GeneratorContext
 internal abstract class BaseMetadataHashComputer<T>(
   private val metadataBuilder: MetadataBuilder<T>
 ): MetadataHashComputer<T> {
-  override fun computeHash(obj: T): MetadataHash {
+  override fun computeHash(context: GeneratorContext, obj: T): MetadataHash {
     startHashComputing()
-    val metadata = metadataBuilder.buildMetadata(obj)
+    val metadata = metadataBuilder.buildMetadata(context, obj)
     endHashComputing()
     return metadata.hashCode()
   }
@@ -41,10 +45,10 @@ private object SpecialTestCase {
 internal class EntityMetadataHashComputer(
   builtPrimitiveTypes: MutableSet<BuiltPrimitiveType>
 ): BaseMetadataHashComputer<ObjClass<*>>(EntityMetadataBuilder(builtPrimitiveTypes)) {
-  override fun computeHash(obj: ObjClass<*>): MetadataHash {
+  override fun computeHash(context: GeneratorContext, obj: ObjClass<*>): MetadataHash {
     return if (SpecialTestCase.check(obj))
       SpecialTestCase.TEST_HASH_VALUE
-    else super.computeHash(obj)
+    else super.computeHash(context, obj)
   }
 }
 

@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.workspaceModel.codegen.impl.writer
+package com.intellij.workspaceModel.codegen.impl.writer.entityImplementation
 
-import com.intellij.workspaceModel.codegen.impl.writer.classes.implWsDataClassCode
-import com.intellij.workspaceModel.codegen.impl.writer.classes.implWsEntityCode
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
+import com.intellij.workspaceModel.codegen.impl.dsl.GeneratorContext
+import com.intellij.workspaceModel.codegen.impl.dsl.generateCode
 
 /**
  * TODO:
@@ -29,7 +29,10 @@ import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
  * Перенести тесты идеи к нам или наоборрот <--
  */
 
-fun implWsCode(objClass: ObjClass<*>): String? {
-  if (!objClass.openness.instantiatable) return null
-  return "${objClass.implWsEntityCode()}\n${objClass.implWsDataClassCode()}"
+fun GeneratorContext.generateImplementationFile(objClass: ObjClass<*>): String? {
+  return if (!objClass.openness.instantiatable) null
+  else generateCode {
+    entityImplementationClassCode(objClass)
+    entityDataClassCode(objClass)
+  }
 }
