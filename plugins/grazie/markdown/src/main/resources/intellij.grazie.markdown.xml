@@ -9,6 +9,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="grazie.specification.semantics.enabled" defaultValue="false" description="Whether to enable semantic agentic Markdown checks"/>
+    <registryKey key="grazie.specification.semantics.specification.pattern" defaultValue="(?i).*\/\.(agents|claude|codex|junie)\/.*"
+                 description="Regex pattern to define specification-like files"/>
 
     <localInspection bundle="messages.GrazieBundle" groupKey="specification.group.name" key="specification.inspection.contradiction.name"
                      shortName="SpecificationContradiction" level="WARNING" enabledByDefault="true" language="Markdown" isInternal="true"

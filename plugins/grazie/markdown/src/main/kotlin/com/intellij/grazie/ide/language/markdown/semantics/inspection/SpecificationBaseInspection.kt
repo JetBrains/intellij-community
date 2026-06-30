@@ -64,8 +64,8 @@ abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
         // We need to filter out HTML one otherwise it's going to be analyzed twice
         if (file !is MarkdownFile) return
 
-        if (!isAgentMarkdownFile(file)) {
-          thisLogger().info("${file.name} is not agent-like")
+        if (!isSpecificationLikeFile(file)) {
+          thisLogger().info("${file.name} is not specification-like")
           return
         }
         val analyzer = getAnalyzer(file) ?: return
@@ -75,7 +75,11 @@ abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
     }
   }
 
-  private fun isAgentMarkdownFile(file: PsiFile): Boolean = AGENT_MARKDOWN_FILE_NAME_PATTERN.matches(file.name)
+  private fun isSpecificationLikeFile(file: PsiFile): Boolean {
+    if (SPECIFICATION_LIKE_PATTERN.matches(file.name)) return true
+    val pattern = Regex(Registry.stringValue("grazie.specification.semantics.specification.pattern"))
+    return pattern.matches(file.virtualFile.path)
+  }
 
   private fun validateAndGetClient(isOnTheFly: Boolean): SuspendableAPIGatewayClient? {
     if (!isOnTheFly) return null
@@ -84,7 +88,7 @@ abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
   }
 
   companion object {
-    private val AGENT_MARKDOWN_FILE_NAME_PATTERN = Regex(
+    private val SPECIFICATION_LIKE_PATTERN = Regex(
       "(agents|agent|ai|claude|copilot-instructions|prompt|skill|system[-_]prompt|spec|architecture)\\.md",
       RegexOption.IGNORE_CASE,
     )
