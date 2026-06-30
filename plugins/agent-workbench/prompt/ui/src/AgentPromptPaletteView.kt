@@ -131,7 +131,6 @@ internal data class AgentPromptPaletteView(
   @JvmField val launchProfileLink: ActionLink,
   @JvmField val modelSelectorLink: ActionLink,
   @JvmField val reasoningEffortLink: ActionLink,
-  @JvmField val planReasoningEffortLink: ActionLink,
   @JvmField val launchTuningSummaryLink: ActionLink,
   @JvmField val defaultProfileActionControl: AgentPromptDefaultProfileActionControl,
   @JvmField val addContextButton: ActionLink,
@@ -705,13 +704,6 @@ internal fun createAgentPromptPaletteView(
     isVisible = false
   }
 
-  val planReasoningEffortLink = ActionLink(AgentPromptBundle.message("popup.generation.plan.reasoning.same")).apply {
-    setDropDownLinkIcon()
-    configureComposerTrayLink(isInlinePrompt)
-    setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.generation.plan.reasoning.tooltip")))
-    accessibleContext.accessibleName = AgentPromptBundle.message("popup.generation.plan.reasoning.accessible.name")
-    isVisible = false
-  }
   val defaultProfileActionControl = AgentPromptDefaultProfileActionControl()
 
   val contextChipsContainer = JPanel(BorderLayout()).apply {
@@ -848,7 +840,6 @@ internal fun createAgentPromptPaletteView(
     launchProfileLink = launchProfileLink,
     modelSelectorLink = modelSelectorLink,
     reasoningEffortLink = reasoningEffortLink,
-    planReasoningEffortLink = planReasoningEffortLink,
     launchTuningSummaryLink = launchTuningSummaryLink,
     defaultProfileActionControl = defaultProfileActionControl,
     addContextButton = addContextButton,

@@ -29,7 +29,7 @@ Date: 2026-06-09
 Ask Agent launch controls let users choose a provider, launch mode, model, and normal reasoning effort through task-cost profiles, while Plan mode remains an independent prompt option. The controls are scoped to `NEW_TASK` launches, use built-in provider/mode profiles unless explicitly changed, and persist custom profiles only through explicit profile management actions.
 
 ## Requirements
-- The prompt composer places one launch-settings affordance in the bottom tray location specified by `global-prompt-composer.spec.md`. The launch-settings affordance shows the selected provider icon plus a compact profile/model/reasoning summary and opens one popup containing profile choices, provider-backed model selection when available, normal reasoning-effort selection, Plan-mode reasoning-effort selection when available, and profile management. Profile default/save/update actions stay visible inline next to the launch-settings affordance.
+- The prompt composer places one launch-settings affordance in the bottom tray location specified by `global-prompt-composer.spec.md`. The launch-settings affordance shows the selected provider icon plus a compact profile/model/reasoning summary and opens one popup containing profile choices, provider-backed model selection when available, normal reasoning-effort selection, a Plan Effort submenu when available, and profile management. Profile default/save/update actions stay visible inline next to the launch-settings affordance.
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteViewStructureTest.kt
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
 
@@ -42,7 +42,7 @@ Ask Agent launch controls let users choose a provider, launch mode, model, and n
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
   [@test] ../../lib-agent/providers/claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
 
-- Plan-mode reasoning effort is distinct from normal effort and is exposed only for providers that support a dedicated Plan reasoning effort transport. The Plan effort control is visible for such providers, supports `Same as Effort`, `Provider Default`, and explicit efforts, is enabled and applied only while Plan mode is selected, and clears the Plan-only override when Plan mode is not selected.
+- Plan-mode reasoning effort is distinct from normal effort and is exposed only for providers that support a dedicated Plan reasoning effort transport. The Plan effort control appears as a launch-settings submenu for such providers, supports `Same as Effort`, `Provider Default`, and explicit efforts, is enabled and applied only while Plan mode is selected, and clears the Plan-only override when Plan mode is not selected.
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
 
 - Codex `NEW_TASK` prompt launches that prestart through the app-server must pass the selected model and normal reasoning effort into `thread/start` before opening the remote-resume TUI. Codex Plan mode still applies the selected model through the normal Codex model override because the Plan collaboration mask inherits the active model. A selected Plan-mode reasoning effort must also be passed through Codex's Plan-only `plan_mode_reasoning_effort` config so Plan turns do not fall back to the Codex Plan preset effort.
