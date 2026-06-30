@@ -130,6 +130,7 @@ The global prompt opens a project-scoped prompt surface for starting a new task 
 - The empty editor inline composer is a compact persistent empty-state affordance, not a full embedded popup.
 - Empty editor rendering must not steal focus; users focus the inline composer by clicking it or invoking the global prompt action while it is visible.
 - The inline prompt editor exposes localized accessible name and description metadata, while validation and status feedback continue to use the shared prompt status strip behavior.
+- The inline prompt starts compact, grows with longer prompt text up to a bounded height, then scrolls inside the editor.
 - The popup keep-open toggle is a secondary footer control, not part of the primary header action cluster.
 - Validation errors appear inline and keep the popup open.
 - Successful launches close the popup and clear the submitted draft.

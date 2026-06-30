@@ -85,6 +85,7 @@ private const val EXISTING_TASK_VISIBLE_ROWS = 3
 private val PROMPT_PANEL_MINIMUM_SIZE = JBUI.size(0, 120)
 private val INLINE_PROMPT_PANEL_MINIMUM_SIZE = JBUI.size(0, 96)
 private val INLINE_PROMPT_EDITOR_PREFERRED_SIZE = JBUI.size(0, 74)
+private const val INLINE_PROMPT_TEXT_EXTRA_HEIGHT_CAP = 108
 private const val COMPOSER_CONTENT_HORIZONTAL_INSET = 6
 
 private fun inlinePromptSize(baseSize: Dimension, additionalHeight: Int): Dimension {
@@ -146,6 +147,7 @@ internal data class AgentPromptPaletteView(
   @JvmField val containerModeAction: AgentPromptHeaderCheckBoxAction,
   @JvmField val footerPinToolbar: ActionToolbar,
   @JvmField val footerPinAction: AgentPromptToolbarIconToggleAction,
+  @JvmField val syncInlineSize: () -> Unit,
 )
 
 internal class AgentPromptHeaderCheckBoxAction(
@@ -799,10 +801,12 @@ internal fun createAgentPromptPaletteView(
     }
 
     val contextHeight = if (composerContextPanel.isVisible) composerContextPanel.preferredSize.height else 0
-    promptEditorPanel.preferredSize = inlinePromptSize(INLINE_PROMPT_EDITOR_PREFERRED_SIZE, contextHeight)
-    rootPanel.preferredSize = inlinePromptSize(AGENT_PROMPT_INLINE_EMPTY_STATE_PREFERRED_SIZE, contextHeight)
-    rootPanel.minimumSize = inlinePromptSize(AGENT_PROMPT_INLINE_EMPTY_STATE_MINIMUM_SIZE, contextHeight)
-    rootPanel.maximumSize = inlinePromptSize(AGENT_PROMPT_INLINE_EMPTY_STATE_MAXIMUM_SIZE, contextHeight)
+    val textExtraHeight = inlinePromptTextExtraHeight(promptArea)
+    val additionalHeight = contextHeight + textExtraHeight
+    promptEditorPanel.preferredSize = inlinePromptSize(INLINE_PROMPT_EDITOR_PREFERRED_SIZE, additionalHeight)
+    rootPanel.preferredSize = inlinePromptSize(AGENT_PROMPT_INLINE_EMPTY_STATE_PREFERRED_SIZE, additionalHeight)
+    rootPanel.minimumSize = inlinePromptSize(AGENT_PROMPT_INLINE_EMPTY_STATE_MINIMUM_SIZE, additionalHeight)
+    rootPanel.maximumSize = inlinePromptSize(AGENT_PROMPT_INLINE_EMPTY_STATE_MAXIMUM_SIZE, additionalHeight)
     promptEditorPanel.revalidate()
     rootPanel.revalidate()
     rootPanel.parent?.revalidate()
@@ -860,7 +864,23 @@ internal fun createAgentPromptPaletteView(
     containerModeAction = containerModeAction,
     footerPinToolbar = footerPinToolbar,
     footerPinAction = pinAction,
+    syncInlineSize = ::syncInlineRootSize,
   )
+}
+
+private fun inlinePromptTextExtraHeight(promptArea: EditorTextField): Int {
+  val document = promptArea.document
+  val editor = promptArea.editor
+  val hardLineCount = document.lineCount
+  val softWrapCount = editor?.let { activeEditor ->
+    val softWrapModel = activeEditor.softWrapModel
+    (0 until hardLineCount).sumOf { line ->
+      softWrapModel.getSoftWrapsForLine(line).count { softWrap -> softWrapModel.isVisible(softWrap) }
+    }
+  } ?: 0
+  val extraLineCount = (hardLineCount + softWrapCount - 1).coerceAtLeast(0)
+  val lineHeight = editor?.lineHeight ?: JBUI.scale(18)
+  return (extraLineCount * lineHeight).coerceIn(0, JBUI.scale(INLINE_PROMPT_TEXT_EXTRA_HEIGHT_CAP))
 }
 
 private fun updateToolbarActions(toolbar: ActionToolbar) {

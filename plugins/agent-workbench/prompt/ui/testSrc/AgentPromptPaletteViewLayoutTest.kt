@@ -11,6 +11,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptPayloadValue
 import com.intellij.agent.workbench.prompt.core.AgentPromptSuggestionCandidate
 import com.intellij.agent.workbench.prompt.ui.context.AgentPromptScreenshotContextItem
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.EditorTextField
@@ -354,6 +355,75 @@ class AgentPromptPaletteViewLayoutTest {
   }
 
   @Test
+  fun inlinePromptTextGrowthExpandsComposerWithoutHidingControls() {
+    runInEdtAndWait {
+      val promptArea = AgentPromptTextField(ProjectManager.getInstance().defaultProject)
+      val view = createPaletteView(
+        promptArea = promptArea,
+        hostMode = AgentPromptPaletteHostMode.INLINE_EMPTY_STATE,
+      )
+
+      layoutPopupRoot(view.rootPanel)
+      val compactPreferredHeight = view.rootPanel.preferredSize.height
+      val compactEditorPreferredHeight = view.promptEditorPanel.preferredSize.height
+
+      promptArea.text = promptText(lineCount = 6)
+      view.syncInlineSize()
+      layoutPopupRoot(view.rootPanel)
+
+      val promptAreaInRoot = checkNotNull(findPromptArea(view.rootPanel, promptArea))
+      assertThat(view.rootPanel.preferredSize.height).isGreaterThan(compactPreferredHeight)
+      assertThat(view.promptEditorPanel.preferredSize.height).isGreaterThan(compactEditorPreferredHeight)
+      assertThat(promptAreaInRoot.height).isGreaterThan(0)
+      assertThat(view.generationSettingsPanel.isVisible).isTrue()
+      assertThat(view.generationSettingsPanel.height).isGreaterThan(0)
+      assertThat(bottomInRoot(promptAreaInRoot, view.rootPanel))
+        .isLessThanOrEqualTo(yInRoot(view.generationSettingsPanel, view.rootPanel))
+    }
+  }
+
+  @Test
+  fun inlinePromptTextGrowthIsCappedAndUsesEditorScrollingAfterLimit() {
+    runInEdtAndWait {
+      val promptArea = AgentPromptTextField(ProjectManager.getInstance().defaultProject)
+      val view = createPaletteView(
+        promptArea = promptArea,
+        hostMode = AgentPromptPaletteHostMode.INLINE_EMPTY_STATE,
+      )
+
+      layoutPopupRoot(view.rootPanel)
+      val compactPreferredHeight = view.rootPanel.preferredSize.height
+      val compactEditorPreferredHeight = view.promptEditorPanel.preferredSize.height
+
+      promptArea.text = promptText(lineCount = 80)
+      view.syncInlineSize()
+      layoutPopupRoot(view.rootPanel)
+
+      val cappedExtraHeight = JBUI.scale(108)
+      assertThat(view.rootPanel.preferredSize.height).isEqualTo(compactPreferredHeight + cappedExtraHeight)
+      assertThat(view.promptEditorPanel.preferredSize.height).isEqualTo(compactEditorPreferredHeight + cappedExtraHeight)
+      assertThat(bottomInRoot(view.generationSettingsPanel, view.rootPanel)).isLessThanOrEqualTo(view.rootPanel.height)
+    }
+  }
+
+  @Test
+  fun popupPromptTextDoesNotAutoGrowRoot() {
+    runInEdtAndWait {
+      val promptArea = AgentPromptTextField(ProjectManager.getInstance().defaultProject)
+      val view = createPaletteView(promptArea = promptArea)
+
+      layoutPopupRoot(view.rootPanel)
+      val compactPreferredHeight = view.rootPanel.preferredSize.height
+
+      promptArea.text = promptText(lineCount = 80)
+      view.syncInlineSize()
+      layoutPopupRoot(view.rootPanel)
+
+      assertThat(view.rootPanel.preferredSize.height).isEqualTo(compactPreferredHeight)
+    }
+  }
+
+  @Test
   fun popupContextChipsRenderAllEntriesWithoutOverflowChip() {
     runInEdtAndWait {
       val promptArea = EditorTextField()
@@ -639,6 +709,10 @@ class AgentPromptPaletteViewLayoutTest {
         body = "community/plugins/agent-workbench/prompt/ui/src/context/VeryLongContextFileName$index.kt",
       )
     }
+  }
+
+  private fun promptText(lineCount: Int): String {
+    return (1..lineCount).joinToString("\n") { index -> "Line $index" }
   }
 
   private fun createPaletteView(
