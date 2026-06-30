@@ -113,6 +113,8 @@ export function defineWebViewViewConfig(options: WebViewViewConfigOptions): User
       outDir,
       emptyOutDir: true,
       copyPublicDir: false,
+      // Keep WebView resource URLs stable and inspectable instead of embedding small assets into JS/CSS.
+      assetsInlineLimit: 0,
       // Keep each WebView view with one predictable stylesheet. JS chunks may split by package,
       // but CSS is loaded directly from index.html and should stay as styles.css.
       cssCodeSplit: false,
