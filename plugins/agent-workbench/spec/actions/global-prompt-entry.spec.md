@@ -24,7 +24,7 @@ targets:
 # Global Prompt Entry
 
 Status: Draft
-Date: 2026-05-27
+Date: 2026-06-30
 
 ## Summary
 The global prompt opens a project-scoped prompt surface for starting a new task or sending a prompt to an existing loaded task. The surface is normally a popup, but the empty editor state may host a compact inline prompt composer instead of standard empty-state hints. This spec owns popup and inline lifecycle, target mode, validation, keyboard behavior, provider selection, and launcher handoff. Context collection and Add-to-Agent-Context routing are specified separately.
@@ -96,9 +96,11 @@ The global prompt opens a project-scoped prompt surface for starting a new task 
   [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
   [@test] ../../sessions/testSrc/AgentSessionLaunchServiceTest.kt
 
-- Plan mode is available as a compact header icon toggle only when the selected provider exposes the plan-mode option. Its last-used state is stored per provider as provider option preferences, restored on prompt open, sent in the launch payload, and forced off or rejected for busy existing tasks. A typed `/plan` prefix remains prompt text and does not toggle the option.
+- Plan mode is available as a compact header icon toggle only when the selected provider exposes the plan-mode option. Its last-used state is stored per provider as provider option preferences, restored on prompt open, sent in the launch payload, and forced off or rejected for busy existing tasks. The prompt UI filters selectable options before submit, but launch service preserves explicit launch-request option ids so providers can resolve capability-dependent behavior. A typed `/plan` prefix remains prompt text and does not toggle the option.
   [@test] ../../prompt/ui/testSrc/AgentPromptPlanModeDecisionsTest.kt
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
+  [@test] ../../lib-agent/providers/junie/sessions/testSrc/JunieExistingThreadPromptLaunchIntegrationTest.kt
+  [@test] ../../lib-agent/providers/junie/sessions/testSrc/JunieNewThreadPromptLaunchIntegrationTest.kt
 
 - Codex `NEW_TASK` prompts start through the Codex app-server remote-resume path. Standard prompts start plain app-server turns; Plan prompts do not type `/plan`, and the resumed TUI must visibly enter Plan mode before the prompt starts. An acknowledged no-op `thread/settings/update` without `thread/settings/updated` must not be treated as prompt-send failure.
   [@test] ../../lib-agent/providers/codex/sessions/testSrc/CodexPlanPromptRealAppServerIntegrationTest.kt
