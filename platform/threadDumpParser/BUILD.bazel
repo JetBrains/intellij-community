@@ -1,6 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "threadDumpParser-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":threadDumpParser-tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.threadDumpParser.tests`
+
 ### auto-generated section `build intellij.platform.threadDumpParser` start
 
 jvm_library(
@@ -135,11 +144,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.threadDumpParser.tests` end
-
-### auto-generated section `test intellij.platform.threadDumpParser.tests` start
-
-jps_test(
-    name = "threadDumpParser-tests_test",
-    runtime_deps = [":threadDumpParser-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.threadDumpParser.tests` end
