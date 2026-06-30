@@ -22,6 +22,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "//platform/util-ex",
         "@lib//:kotlin-stdlib",
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
@@ -32,6 +33,10 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//platform/code-style-api:codeStyle",
         "//platform/code-style-impl:codeStyle-impl",
+        "//platform/lang-api:lang",
+        "//platform/platform-impl:ide-impl",
+        "//platform/lang-impl",
+        "//platform/core-ui",
     ],
 )
 
@@ -47,6 +52,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":common",
+        "//platform/util-ex:util-ex_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/util:util_test_lib",
@@ -56,6 +62,10 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/code-style-api:codeStyle_test_lib",
         "//platform/code-style-impl:codeStyle-impl_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
     ],
 )
 ### auto-generated section `build intellij.editorconfig.common` end

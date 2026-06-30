@@ -27,12 +27,11 @@ jvm_library(
         "//platform/lang-api:lang",
         "//plugins/editorconfig/common",
         "//platform/util:util-ui",
-        "//platform/util-ex",
         "//platform/analysis-impl",
-        "//platform/platform-impl:ide-impl",
         "//platform/lang-impl",
         "//platform/core-ui",
         "//platform/platform-frontend:frontend",
+        "//platform/platform-api:ide",
     ],
 )
 
@@ -55,12 +54,11 @@ jvm_library(
         "//platform/lang-api:lang_test_lib",
         "//plugins/editorconfig/common:common_test_lib",
         "//platform/util:util-ui_test_lib",
-        "//platform/util-ex:util-ex_test_lib",
         "//platform/analysis-impl:analysis-impl_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/core-ui:core-ui_test_lib",
         "//platform/platform-frontend:frontend_test_lib",
+        "//platform/platform-api:ide_test_lib",
     ],
 )
 ### auto-generated section `build intellij.editorconfig.frontend` end
