@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.undo
 
 import com.intellij.openapi.application.ApplicationManager
@@ -6,17 +6,17 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.impl.UndoManagerImpl
-import com.intellij.openapi.command.impl.UndoProvider
-import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.executeSomeCoroutineTasksAndDispatchAllInvocationEvents
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.EmptyCoroutineContext
-
 
 class UndoReliabilityTestKt : EditorUndoTestCase() {
 
@@ -35,20 +35,24 @@ class UndoReliabilityTestKt : EditorUndoTestCase() {
     checkEditorText("")
   }
 
-  fun `test undo is valid if cancellation happens before command start`() {
-    forceCurrentEditorProviderService()
+  fun `test undo is valid if cancellation happens during command start`() {
     newCoroutineScope().launch(Dispatchers.EDT) {
-      val cancellationBeforeCommandStart = object : UndoProvider {
-        override fun commandStarted(project: Project?) = coroutineContext.cancel()
-        override fun commandFinished(project: Project?) = Unit
+      val cancellationInjected = AtomicBoolean(false)
+      val cancellationDuringCommandStart = object : CurrentEditorProvider {
+        override fun getCurrentEditor(project: Project?): FileEditor? {
+          if (cancellationInjected.compareAndSet(false, true)) {
+            coroutineContext.cancel()
+          }
+          ProgressManager.checkCanceled()
+          return getFileEditor(firstEditor)
+        }
       }
-      withUndoProvider(cancellationBeforeCommandStart) {
-        CommandProcessor.getInstance().runUndoTransparentAction {
-          // cancellation happens here inside the undo manager
-          runWriteActionWithoutCancellationCheckOnLockAcquiring {
+      withEditorProvider(cancellationDuringCommandStart) {
+        CommandProcessor.getInstance().executeCommand(myProject, {
+          runWriteActionAfterCancellationInjected(cancellationInjected) {
             firstEditor.document.insertString(0, "A")
           }
-        }
+        }, "test", null)
       }
     }
     executeSomeCoroutineTasksAndDispatchAllInvocationEvents()
@@ -58,50 +62,25 @@ class UndoReliabilityTestKt : EditorUndoTestCase() {
     checkEditorText("")
   }
 
-  /**
-   * Force running write action within a cancelled coroutine
-   */
-  private fun runWriteActionWithoutCancellationCheckOnLockAcquiring(alreadyCanceledTask: () -> Unit) {
-    require(isCancelableSection())
-    val suppressCancellationCheckInWriteLockAcquiring = Cancellation.withNonCancelableSection()
-    var cancellationTokenClosed = false
-    try {
-      ApplicationManager.getApplication().runWriteAction {
-        suppressCancellationCheckInWriteLockAcquiring.finish()
-        cancellationTokenClosed = true
-        check(isCancelableSection()) {
-          "non cancelable section is not finished as expected"
-        }
-        alreadyCanceledTask.invoke()
-      }
-    } finally {
-      if (!cancellationTokenClosed) {
-        suppressCancellationCheckInWriteLockAcquiring.finish()
-      }
+  private fun runWriteActionAfterCancellationInjected(cancellationInjected: AtomicBoolean, action: () -> Unit) {
+    check(cancellationInjected.get()) {
+      "cancellation was not injected during command start"
+    }
+    ProgressManager.getInstance().executeNonCancelableSection {
+      ApplicationManager.getApplication().runWriteAction { action.invoke() }
     }
   }
 
-  /**
-   * Force `CurrentEditorProvider.getInstance()` in order to match the production behavior
-   */
-  private fun forceCurrentEditorProviderService() {
-    (UndoManager.getGlobalInstance() as UndoManagerImpl).setOverriddenEditorProvider(null)
-    myManager.setOverriddenEditorProvider(null)
-  }
-
-  private fun withUndoProvider(undoProvider: UndoProvider, task: () -> Unit) {
-    val disposable = Disposer.newDisposable()
-    UndoProvider.EP_NAME.point.registerExtension(undoProvider, disposable)
-    UndoProvider.PROJECT_EP_NAME.getPoint(myProject).registerExtension(undoProvider, disposable)
+  private fun withEditorProvider(editorProvider: CurrentEditorProvider, task: () -> Unit) {
+    val globalUndoManager = UndoManager.getGlobalInstance() as UndoManagerImpl
+    globalUndoManager.setOverriddenEditorProvider(editorProvider)
+    myManager.setOverriddenEditorProvider(editorProvider)
     try {
       task.invoke()
     } finally {
-      Disposer.dispose(disposable)
+      globalUndoManager.setOverriddenEditorProvider(null)
+      myManager.setOverriddenEditorProvider(null)
     }
-  }
-
-  private fun isCancelableSection(): Boolean {
-    return !Cancellation.isInNonCancelableSection()
   }
 
   private fun newCoroutineScope(): CoroutineScope {

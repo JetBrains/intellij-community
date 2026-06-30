@@ -9,9 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-
 public final class CmdEventTransform {
-
   private static final @NotNull CmdEventTransform INSTANCE = new CmdEventTransform();
 
   public static @NotNull CmdEventTransform getInstance() {

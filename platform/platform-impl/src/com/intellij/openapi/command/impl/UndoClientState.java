@@ -189,15 +189,15 @@ final class UndoClientState {
         action instanceof NonUndoableAction,
         "Undoable actions allowed inside commands only (see com.intellij.openapi.command.CommandProcessor.executeCommand())"
       );
-      CmdEvent cmdEvent = ProgressManager.getInstance().computeInNonCancelableSection(
-        () -> CmdEventTransform.getInstance().createNonUndoable()
-      );
-      commandStarted(cmdEvent, editorProvider);
-      try {
-        commandBuilder.addUndoableAction(action);
-      } finally {
-        commandFinished(cmdEvent);
-      }
+      CmdEvent cmdEvent = CmdEventTransform.getInstance().createNonUndoable();
+      ProgressManager.getInstance().executeNonCancelableSection(() -> {
+        commandStarted(cmdEvent, editorProvider);
+        try {
+          commandBuilder.addUndoableAction(action);
+        } finally {
+          commandFinished(cmdEvent);
+        }
+      });
     }
   }
 

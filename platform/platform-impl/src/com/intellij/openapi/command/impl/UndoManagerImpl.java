@@ -16,7 +16,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -187,7 +186,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
     CurrentEditorProvider overriddenProvider = overriddenEditorProvider;
     CurrentEditorProvider editorProvider = overriddenProvider != null
         ? overriddenProvider
-        : ProgressManager.getInstance().computeInNonCancelableSection(CurrentEditorProvider::getInstance);
+        : CurrentEditorProvider.getInstance();
     return new StableEditorProvider(editorProvider);
   }
 
@@ -373,11 +372,9 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   }
 
   private @NotNull List<UndoProvider> getUndoProviders() {
-    return ProgressManager.getInstance().computeInNonCancelableSection(
-      () -> project == null
-            ? UndoProvider.EP_NAME.getExtensionList()
-            : UndoProvider.PROJECT_EP_NAME.getExtensionList(project)
-    );
+    return project == null
+           ? UndoProvider.EP_NAME.getExtensionList()
+           : UndoProvider.PROJECT_EP_NAME.getExtensionList(project);
   }
 
   @TestOnly
