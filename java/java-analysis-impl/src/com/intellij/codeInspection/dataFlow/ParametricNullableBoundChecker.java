@@ -9,20 +9,24 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind.NullabilityProblem;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -30,6 +34,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
@@ -46,20 +52,19 @@ import java.util.concurrent.ConcurrentMap;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
- * Detects {@code return null} (and known-null returns) from a method whose return type is a type variable with a
- * {@code @Nullable} upper bound (parametric nullness, e.g. {@code T extends @Nullable Object} in {@code @NullMarked} code).
- * Such {@code T} may be instantiated with a non-null type argument, so returning null is unsound.
+ * Detects problems with a {@code @Nullable} upper bound (parametric nullness, e.g. {@code T extends @Nullable Object} in {@code @NullMarked} code).
+ * Such {@code T} may be instantiated with a non-null type argument, so, for example, returning null from a {@code T}-returning
+ * method or assigning null to a {@code T}-typed field is unsound.
  * <p>
  * The standard data flow run treats such a return type as nullable and emits no problem, so this checker re-runs the
  * analysis on a clone of the file in which the type parameter's {@code @Nullable} bound is replaced by a not-null
- * annotation (making {@code T} non-null), then maps the resulting nullable-return problems back onto the original PSI and
- * hands them to {@link DataFlowInspectionBase#reportNullableReturnsProblems}.
+ * annotation (making {@code T} non-null), then maps the resulting nullable-return / null-assignment problems back onto the original PSI.
  */
-final class ParametricNullableReturnChecker {
+final class ParametricNullableBoundChecker {
   private final @NotNull DataFlowInspectionBase myInspection;
   private final @NotNull ProblemsHolder myHolder;
 
-  ParametricNullableReturnChecker(@NotNull DataFlowInspectionBase inspection, @NotNull ProblemsHolder holder) {
+  ParametricNullableBoundChecker(@NotNull DataFlowInspectionBase inspection, @NotNull ProblemsHolder holder) {
     myInspection = inspection;
     myHolder = holder;
   }
@@ -67,36 +72,11 @@ final class ParametricNullableReturnChecker {
   void analyzeParametricNullableReturn(@NotNull PsiMethod method) {
     PsiCodeBlock body = method.getBody();
     if (body == null) return;
-    PsiType returnType = method.getReturnType();
-    if (!(returnType instanceof PsiClassType classType) ||
-        !(classType.resolve() instanceof PsiTypeParameter typeParameter)) {
-      return;
-    }
-    NullabilityAnnotationInfo info = classType.getNullability().toNullabilityAnnotationInfo();
+    if (!(method.getReturnType() instanceof PsiClassType classType)) return;
+    BoundContext bound = getReportableBound(classType);
+    if (bound == null) return;
 
-    PsiAnnotation boundAnnotation;
-    boolean optInOnly;
-    if (info != null && info.isExtendedBounds()) {
-      //T extends @Nullable Something
-      //T extends @NullnessUnspecified Something
-      Nullability nullability = info.getNullability();
-      if (nullability == Nullability.NOT_NULL) return;
-      boundAnnotation = info.getAnnotation();
-      if (!boundAnnotation.isPhysical() || PsiTreeUtil.getParentOfType(boundAnnotation, PsiTypeParameter.class) == null) {
-        return;
-      }
-      optInOnly = nullability != Nullability.NULLABLE; //@NullnessUnspecified, only for option
-    }
-    else if (info == null) {
-      boundAnnotation = null;
-      optInOnly = true; //no annotations, only for option
-    }
-    else {
-      return;
-    }
-    if (optInOnly && !myInspection.REPORT_UNSPECIFIED_PARAMETRIC_RETURNS) return;
-
-    CloneFileContainer clone = getOrCreateNonNullBoundClone(boundAnnotation != null ? boundAnnotation : typeParameter);
+    CloneFileContainer clone = getOrCreateNonNullBoundClone(bound.cloneContext());
     if (clone == null) return;
     CloneMethodContainer methodContainer = clone.methods.get(method);
     if (methodContainer == null) return;
@@ -124,8 +104,150 @@ final class ParametricNullableReturnChecker {
     if (originalProblems.isEmpty()) return;
 
     myInspection.reportNullableReturnsProblems(new DataFlowInspectionBase.ProblemReporter(myHolder, body), originalProblems,
-                                               Nullability.NOT_NULL, true, boundAnnotation,
+                                               Nullability.NOT_NULL, true, bound.boundAnnotation(),
                                                NullableNotNullManager.getInstance(method.getProject()));
+  }
+
+  void analyzeParametricField(@NotNull PsiClass aClass) {
+    if (aClass instanceof PsiTypeParameter) return;
+    // Group candidate fields by the clone context: fields sharing a type parameter share one clone and one DFA run.
+    Map<PsiElement, BoundContext> contextsByCloneAnchor = new LinkedHashMap<>();
+    for (PsiField field : aClass.getFields()) {
+      if (!field.isPhysical() || !(field.getType() instanceof PsiClassType classType)) continue;
+      BoundContext bound = getReportableBound(classType);
+      if (bound != null) contextsByCloneAnchor.putIfAbsent(bound.cloneContext(), bound);
+    }
+    if (contextsByCloneAnchor.isEmpty()) return;
+
+    for (BoundContext bound : contextsByCloneAnchor.values()) {
+      CloneFileContainer clone = getOrCreateNonNullBoundClone(bound.cloneContext());
+      if (clone == null) continue;
+      PsiClass cloneClass = PsiTreeUtil.findSameElementInCopy(aClass, clone.cloneFile);
+
+      List<NullabilityProblem<?>> cloneProblems = collectAssigningToNotNullProblems(myInspection, cloneClass);
+      if (cloneProblems.isEmpty()) continue;
+
+      List<NullabilityProblem<?>> originalProblems = new ArrayList<>();
+      for (NullabilityProblem<?> cloneProblem : cloneProblems) {
+        NullabilityProblem<PsiExpression> assignProblem = NullabilityProblemKind.assigningToNotNull.asMyProblem(cloneProblem);
+        if (assignProblem == null) continue;
+        PsiExpression originalAnchor = tryCast(mapByPath(assignProblem.getAnchor(), cloneClass, aClass), PsiExpression.class);
+        boolean assigns = originalAnchor != null && assignsToFieldOfType(originalAnchor, bound.typeParameter());
+        if (originalAnchor == null) continue;
+        // Keep only assignments to a field of this type parameter
+        if (!assigns) continue;
+        PsiExpression cloneExpression = assignProblem.getDereferencedExpression();
+        PsiExpression originalExpression =
+          cloneExpression == null ? null : tryCast(mapByPath(cloneExpression, cloneClass, aClass), PsiExpression.class);
+        NullabilityProblem<PsiExpression> originalProblem =
+          NullabilityProblemKind.assigningToNotNull.problem(originalAnchor, originalExpression);
+        if (originalProblem != null) originalProblems.add(originalProblem);
+      }
+      if (originalProblems.isEmpty()) continue;
+
+      myInspection.reportParametricAssignmentProblems(new DataFlowInspectionBase.ProblemReporter(myHolder, aClass), originalProblems);
+    }
+  }
+
+  /**
+   * Detects whether the given type (a field type or a method return type) is a type variable that may be instantiated as
+   * non-null: a {@code @Nullable}/{@code @NullnessUnspecified} upper bound, or a plain unannotated type parameter.
+   * Returns {@code null} when there is nothing to report (a not-null bound, or an opt-in-only case while the option is off).
+   */
+  private @Nullable BoundContext getReportableBound(@NotNull PsiClassType classType) {
+    if (!(classType.resolve() instanceof PsiTypeParameter typeParameter)) return null;
+    NullabilityAnnotationInfo info = classType.getNullability().toNullabilityAnnotationInfo();
+
+    PsiAnnotation boundAnnotation;
+    boolean optInOnly;
+    if (info != null && info.isExtendedBounds()) {
+      //T extends @Nullable Something
+      //T extends @NullnessUnspecified Something
+      Nullability nullability = info.getNullability();
+      if (nullability == Nullability.NOT_NULL) return null;
+      boundAnnotation = info.getAnnotation();
+      if (!boundAnnotation.isPhysical() || PsiTreeUtil.getParentOfType(boundAnnotation, PsiTypeParameter.class) == null) {
+        return null;
+      }
+      optInOnly = nullability != Nullability.NULLABLE; //@NullnessUnspecified, only for option
+    }
+    else if (info == null) {
+      boundAnnotation = null;
+      optInOnly = true; //no annotations, only for option
+    }
+    else {
+      return null;
+    }
+    if (optInOnly && !myInspection.REPORT_UNSPECIFIED_PARAMETRIC_NULLNESS) return null;
+    return new BoundContext(typeParameter, boundAnnotation);
+  }
+
+  /**
+   * Runs data flow on the given (cloned) class over its class-initializer scope and each constructor, mirroring
+   * {@link DataFlowInspectionBase}'s {@code visitClass}, and returns only the {@code assigningToNotNull} problems,
+   * without reporting anything to a {@link ProblemsHolder}.
+   */
+  private static @NotNull List<NullabilityProblem<?>> collectAssigningToNotNullProblems(@NotNull DataFlowInspectionBase inspection,
+                                                                                        @NotNull PsiClass cloneClass) {
+    StandardDataFlowRunner runner =
+      new StandardDataFlowRunner(cloneClass.getProject(), ThreeState.fromBoolean(inspection.IGNORE_ASSERT_STATEMENTS));
+    List<NullabilityProblem<?>> result = new ArrayList<>();
+    DataFlowInstructionVisitor classVisitor =
+      collectFromScope(runner, cloneClass, Collections.singletonList(runner.createMemoryState()), result);
+    if (classVisitor == null) return result;
+    List<DfaMemoryState> endOfInitializerStates = classVisitor.getEndOfInitializerStates();
+    for (PsiMethod constructor : cloneClass.getConstructors()) {
+      PsiCodeBlock body = constructor.getBody();
+      if (body == null) continue;
+      List<DfaMemoryState> initialStates =
+        DataFlowInspectionBase.getConstructorInitialStates(cloneClass, constructor, runner, endOfInitializerStates);
+      collectFromScope(runner, body, initialStates, result);
+    }
+    return result;
+  }
+
+  /**
+   * Analyzes a single scope (the class-initializer scope or a constructor body) with the given runner and initial states,
+   * appending any {@code assigningToNotNull} problems to {@code sink}. Returns the visitor (whose end-of-initializer states
+   * the caller needs for constructor analysis) or {@code null} if the analysis did not succeed.
+   */
+  private static @Nullable DataFlowInstructionVisitor collectFromScope(@NotNull StandardDataFlowRunner runner,
+                                                                       @NotNull PsiElement scope,
+                                                                       @NotNull List<DfaMemoryState> initialStates,
+                                                                       @NotNull List<NullabilityProblem<?>> sink) {
+    DataFlowInstructionVisitor visitor = new DataFlowInstructionVisitor(false);
+    ControlFlow flow = runner.buildFlow(scope);
+    if (flow == null) return null;
+    visitor.initInstanceOf(flow.getInstructions());
+    RunnerResult result = runner.analyzeFlow(scope, visitor, initialStates, flow);
+    if (result != RunnerResult.OK) {
+      return null;
+    }
+    List<NullabilityProblem<?>> problems = NullabilityProblemKind.postprocessNullabilityProblems(visitor.problems().toList());
+    for (NullabilityProblem<?> problem : problems) {
+      if (problem.getKind() == NullabilityProblemKind.assigningToNotNull) sink.add(problem);
+    }
+    return visitor;
+  }
+
+  /**
+   * @return {@code true} if {@code anchor} is the value assigned to a field (a field initializer or an assignment to a
+   * field reference) whose declared type resolves exactly to {@code typeParameter}.
+   */
+  private static boolean assignsToFieldOfType(@NotNull PsiExpression anchor, @NotNull PsiTypeParameter typeParameter) {
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(anchor.getParent());
+    PsiField field = null;
+    if (parent instanceof PsiField initializedField) {
+      field = initializedField;
+    }
+    else if (parent instanceof PsiAssignmentExpression assignment &&
+             assignment.getLExpression() instanceof PsiReferenceExpression ref &&
+             ref.resolve() instanceof PsiField assignedField) {
+      field = assignedField;
+    }
+    if (field == null) return false;
+    PsiClass resolved = PsiUtil.resolveClassInClassTypeOnly(field.getType());
+    return resolved != null && resolved.getManager().areElementsEquivalent(resolved, typeParameter);
   }
 
   /**
@@ -222,11 +344,8 @@ final class ParametricNullableReturnChecker {
       String name = cloneTypeParameter.getName();
       if (name == null) return false;
       PsiClassType[] bounds = cloneTypeParameter.getExtendsListTypes();
-      StringBuilder text = new StringBuilder(name).append(" extends @").append(notNull).append(' ');
-      if (bounds.length == 0) {
-        text.append(CommonClassNames.JAVA_LANG_OBJECT);
-      }
-      else {
+      StringBuilder text = new StringBuilder().append(" extends java.lang. @").append(notNull).append(" Object");
+      if (bounds.length != 0) {
         text.append(bounds[0].getCanonicalText());
         if (bounds.length > 1) {
           for (int i = 1; i < bounds.length; i++) {
@@ -234,8 +353,9 @@ final class ParametricNullableReturnChecker {
           }
         }
       }
-      PsiTypeParameter replacement = factory.createTypeParameterFromText(text.toString(), cloneTypeParameter);
-      cloneTypeParameter.replace(replacement);
+      Document document = clone.getFileDocument();
+      document.insertString(cloneTypeParameter.getTextRange().getEndOffset(), text.toString());
+      PsiDocumentManager.getInstance(clone.getProject()).commitDocument(document);
       return true;
     }
     return false;
@@ -277,5 +397,13 @@ final class ParametricNullableReturnChecker {
   }
 
   private record CloneMethodContainer(@NotNull SmartPsiElementPointer<PsiMethod> cloneMethod) {
+  }
+
+  /** A type variable whose null assignment/return should be reported, together with the bound annotation (if any) to flip. */
+  private record BoundContext(@NotNull PsiTypeParameter typeParameter, @Nullable PsiAnnotation boundAnnotation) {
+    /** The element keying (and driving) the clone: the explicit bound annotation, or the plain type parameter itself. */
+    private @NotNull PsiElement cloneContext() {
+      return boundAnnotation != null ? boundAnnotation : typeParameter;
+    }
   }
 }

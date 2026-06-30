@@ -101,8 +101,6 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
                    33), // overriding method with @NotNull, original has @Nullable, but IDEA doesn't highlight the opposite example, see IDEA-377687
         new Pair<>("OverrideParameters.java", 66),  // see: IDEA-377687
 
-        new Pair<>("UninitializedField.java", 29), // see: IDEA-377695
-
         new Pair<>("ContainmentExtends.java", 27),  // see: IDEA-377696
         new Pair<>("ContainmentSuper.java", 36),  // see: IDEA-377696
         new Pair<>("ContainmentSuperVsExtends.java", 22),  // see: IDEA-377696
@@ -231,7 +229,7 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
       Map<PsiElement, String> actual = new LinkedHashMap<>();
       var dfaInspection = new JSpecifyDataFlowInspection(actual);
       dfaInspection.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true;
-      dfaInspection.REPORT_UNSPECIFIED_PARAMETRIC_RETURNS = true;
+      dfaInspection.REPORT_UNSPECIFIED_PARAMETRIC_NULLNESS = true;
       var nullableStuffInspection = new JSpecifyNullableStuffInspection(actual);
       nullableStuffInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
       nullableStuffInspection.REPORT_UNSPECIFIED_BOUND_CONFLICTS = true;

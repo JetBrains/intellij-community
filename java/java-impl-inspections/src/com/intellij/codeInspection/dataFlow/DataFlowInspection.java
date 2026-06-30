@@ -249,8 +249,8 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
                message("inspection.data.flow.report.match.exception.problem")),
       checkbox("REPORT_UNSOUND_WARNINGS",
                message("inspection.data.flow.report.problems.that.happen.only.on.some.code.paths")),
-      checkbox("REPORT_UNSPECIFIED_PARAMETRIC_RETURNS",
-               message("inspection.data.flow.report.unspecified.parametric.returns")),
+      checkbox("REPORT_UNSPECIFIED_PARAMETRIC_NULLNESS",
+               message("inspection.data.flow.report.unspecified.parametric.nullness")),
       JavaConfigurationDialogKind.NULLABILITY_ANNOTATIONS.button()
     );
   }

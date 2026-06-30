@@ -141,7 +141,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   public boolean REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = true;
   public boolean REPORT_UNSOUND_WARNINGS = true;
   public boolean REPORT_MATCHED_EXCEPTION = true;
-  public boolean REPORT_UNSPECIFIED_PARAMETRIC_RETURNS = false;
+  public boolean REPORT_UNSPECIFIED_PARAMETRIC_NULLNESS = false;
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
@@ -172,7 +172,8 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
 
-      private final ParametricNullableReturnChecker myParametricNullableReturnChecker = new ParametricNullableReturnChecker(DataFlowInspectionBase.this, holder);
+      private final ParametricNullableBoundChecker
+        myParametricNullableBoundChecker = new ParametricNullableBoundChecker(DataFlowInspectionBase.this, holder);
 
       @Override
       public void visitClass(@NotNull PsiClass aClass) {
@@ -189,15 +190,9 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
             // Constructor could be provided by, e.g. Lombok plugin: ignore it, we won't report any problems inside anyway
             continue;
           }
-          List<DfaMemoryState> initialStates;
-          PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
-          if (JavaPsiConstructorUtil.isChainedConstructorCall(call) || (call == null && DfaUtil.hasImplicitImpureSuperCall(aClass, method))) {
-            initialStates = Collections.singletonList(runner.createMemoryState());
-          } else {
-            initialStates = ContainerUtil.map(states, DfaMemoryState::createCopy);
-          }
-          analyzeMethod(method, runner, initialStates);
+          analyzeMethod(method, runner, getConstructorInitialStates(aClass, method, runner, states));
         }
+        myParametricNullableBoundChecker.analyzeParametricField(aClass);
       }
 
       @Override
@@ -215,7 +210,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
 
         analyzeDfaWithNestedClosures(scope, holder, runner, initialStates);
         analyzeNullLiteralMethodArguments(method, holder);
-        myParametricNullableReturnChecker.analyzeParametricNullableReturn(method);
+        myParametricNullableBoundChecker.analyzeParametricNullableReturn(method);
       }
 
       @Override
@@ -250,6 +245,23 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
         }
       }
     }
+  }
+
+  /**
+   * Computes the initial data flow states for analyzing a constructor body: a fresh state when the constructor delegates
+   * to another constructor (a chained {@code this(...)} call) or to an impure implicit super constructor, otherwise a copy
+   * of the states reached at the end of the class initializers.
+   */
+  static @NotNull List<DfaMemoryState> getConstructorInitialStates(@NotNull PsiClass aClass,
+                                                                   @NotNull PsiMethod constructor,
+                                                                   @NotNull StandardDataFlowRunner runner,
+                                                                   @NotNull List<DfaMemoryState> endOfInitializerStates) {
+    PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);
+    if (JavaPsiConstructorUtil.isChainedConstructorCall(call) ||
+        (call == null && DfaUtil.hasImplicitImpureSuperCall(aClass, constructor))) {
+      return Collections.singletonList(runner.createMemoryState());
+    }
+    return ContainerUtil.map(endOfInitializerStates, DfaMemoryState::createCopy);
   }
 
   private DataFlowInstructionVisitor analyzeDfaWithNestedClosures(PsiElement scope,
@@ -899,7 +911,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
 
     // When the dedicated parametric checker will report this nullable return (option on, type-variable return type),
     // skip the generic suggest-@Nullable path to avoid a duplicate warning on the same return
-    if (nullability != Nullability.NOT_NULL && REPORT_UNSPECIFIED_PARAMETRIC_RETURNS
+    if (nullability != Nullability.NOT_NULL && REPORT_UNSPECIFIED_PARAMETRIC_NULLNESS
         && PsiUtil.resolveClassInClassTypeOnly(returnType) instanceof PsiTypeParameter) {
       return;
     }
@@ -965,6 +977,21 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
           reporter.registerProblem(expr, text, LocalQuickFix.notNullElements(fix));
         }
       }
+    }
+  }
+
+  /**
+   * Reports {@code null} assignments to fields whose type is a type variable that may be instantiated as non-null
+   * (parametric nullness).
+   */
+  void reportParametricAssignmentProblems(@NotNull ProblemReporter reporter, @NotNull List<NullabilityProblem<?>> problems) {
+    for (NullabilityProblem<?> problem : problems) {
+      PsiExpression expression = problem.getDereferencedExpression();
+      if (expression == null) continue;
+      boolean alwaysNull = problem.isAlwaysNull(IGNORE_ASSERT_STATEMENTS);
+      if (!REPORT_UNSOUND_WARNINGS && !alwaysNull) continue;
+      LocalQuickFix[] fixes = createNPEFixes(expression, expression, reporter.isOnTheFly(), alwaysNull).toArray(LocalQuickFix.EMPTY_ARRAY);
+      reporter.registerProblem(expression, JavaAnalysisBundle.message("dataflow.message.assigning.null.parametric"), fixes);
     }
   }
 

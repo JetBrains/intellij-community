@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.Nullability;
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddVariableInitializerFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.InitializeFinalFieldInConstructorFix;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.JavaSuppressionUtil;
@@ -33,7 +34,9 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiThisExpression;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
@@ -69,7 +72,12 @@ public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalI
       public void visitField(@NotNull PsiField field) {
         NullableNotNullManager manager = NullableNotNullManager.getInstance(holder.getProject());
         NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(field);
-        if (info == null || info.getNullability() != Nullability.NOT_NULL) return;
+        if(info == null) return;
+        boolean isNotNull = info.getNullability() == Nullability.NOT_NULL;
+        boolean isExtendedNullable = info.getNullability() == Nullability.NULLABLE &&
+                                     info.isExtendedBounds() &&
+                                     PsiUtil.resolveClassInClassTypeOnly(field.getType()) instanceof PsiTypeParameter;
+        if (!isNotNull && !isExtendedNullable) return;
         
         if (ControlFlowUtil.isFieldInitializedAfterObjectConstruction(field) ||
             isWrittenIndirectly(field) || 
@@ -87,9 +95,11 @@ public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalI
         PsiAnnotation annotation = info.getAnnotation();
         PsiJavaCodeReferenceElement name = annotation.getNameReferenceElement();
         boolean ownAnnotation = annotation.isPhysical() && !byDefault;
-        PsiElement anchor = ownAnnotation ? annotation : field.getNameIdentifier();
-        String message = JavaBundle.message("inspection.notnull.field.not.initialized.message",
-                                            byDefault && name != null ? "@" + name.getReferenceName() : "Not-null");
+        PsiElement anchor = ownAnnotation && !isExtendedNullable ? annotation : field.getNameIdentifier();
+        String message = isExtendedNullable ?
+          JavaBundle.message("inspection.notnull.field.not.initialized.with.non.null.bound.message") :
+          (JavaBundle.message("inspection.notnull.field.not.initialized.message",
+                                            byDefault && name != null ? "@" + name.getReferenceName() : "Not-null"));
 
         List<LocalQuickFix> fixes = new ArrayList<>();
         if (implicitWrite) {
@@ -104,7 +114,10 @@ public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalI
             IGNORE_FIELDS_WRITTEN_IN_SETUP_NAME,
             JavaBundle.message("inspection.notnull.field.not.initialized.option.setup"), true)));
         }
-        if (ownAnnotation) {
+        if (isExtendedNullable) {
+          fixes.add(LocalQuickFix.from(AddAnnotationModCommandAction.createAddNullableFix(field)));
+        }
+        if (ownAnnotation && !isExtendedNullable) {
           fixes.add(QuickFixFactory.getInstance().createDeleteFix(annotation, JavaBundle.message("quickfix.text.remove.not.null.annotation")));
         }
         if (isOnTheFly) {

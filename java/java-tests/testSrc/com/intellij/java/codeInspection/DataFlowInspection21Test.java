@@ -317,7 +317,19 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testJSpecifyPlainTypeVariableReturnOptionOn() {
     addJSpecifyNullMarked(myFixture);
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
-    doTestWith((insp, _) -> insp.REPORT_UNSPECIFIED_PARAMETRIC_RETURNS = true);
+    doTestWith((insp, _) -> insp.REPORT_UNSPECIFIED_PARAMETRIC_NULLNESS = true);
+  }
+
+  public void testJSpecifyParametricNullableField() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyPlainTypeVariableFieldOptionOn() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTestWith((insp, _) -> insp.REPORT_UNSPECIFIED_PARAMETRIC_NULLNESS = true);
   }
 
   public void testFlowMethodTests() {
