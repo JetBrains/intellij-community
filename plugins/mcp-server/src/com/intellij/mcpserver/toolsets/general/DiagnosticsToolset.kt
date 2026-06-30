@@ -13,6 +13,7 @@ import com.intellij.mcpserver.annotations.McpToolHintValue.FALSE
 import com.intellij.mcpserver.annotations.McpToolHintValue.TRUE
 import com.intellij.mcpserver.annotations.McpToolHints
 import com.intellij.mcpserver.projectOrNull
+import com.intellij.mcpserver.util.getPathForMcp
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.currentCoroutineContext
@@ -327,7 +328,7 @@ private fun ideInfo(project: Project?): DiagnosticsToolset.IdeInfo {
   return DiagnosticsToolset.IdeInfo(
     fullApplicationName = ApplicationInfo.getInstance().fullApplicationName,
     projectName = project?.name,
-    projectBasePath = project?.basePath,
+    projectBasePath = project?.getPathForMcp(),
   )
 }
 

@@ -5,6 +5,7 @@ import com.intellij.mcpserver.impl.util.projectPathParameterName
 import com.intellij.mcpserver.noSuitableProjectError
 import com.intellij.mcpserver.util.findMostRelevantProject
 import com.intellij.mcpserver.util.findMostRelevantProjectForRoots
+import com.intellij.mcpserver.util.getPathForMcp
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
@@ -32,7 +33,7 @@ internal data class McpProjectLocationInputs(
       logger.trace { "Resolving project in strict mode by `${projectPathParameterName}`=$projectPathFromArgument..." }
       val project = findMostRelevantProject(projectPathFromArgument)
       if (project != null) {
-        logger.trace { "Resolved project ${project.basePath} from `${projectPathParameterName}`=$projectPathFromArgument" }
+        logger.trace { "Resolved project ${project.getPathForMcp()} from `${projectPathParameterName}`=$projectPathFromArgument" }
         return project
       }
 
@@ -46,7 +47,7 @@ internal data class McpProjectLocationInputs(
       logger.trace { "Trying call header project path: $projectPathFromCallHeader..." }
       val project = findMostRelevantProject(projectPathFromCallHeader)
       if (project != null) {
-        logger.trace { "Resolved project ${project.basePath} from call header project path: $projectPathFromCallHeader" }
+        logger.trace { "Resolved project ${project.getPathForMcp()} from call header project path: $projectPathFromCallHeader" }
         return project
       }
 
@@ -60,7 +61,7 @@ internal data class McpProjectLocationInputs(
       logger.trace { "Trying session header project path: $projectPathFromSessionHeader..." }
       val project = findMostRelevantProject(projectPathFromSessionHeader)
       if (project != null) {
-        logger.trace { "Resolved project ${project.basePath} from session header project path: $projectPathFromSessionHeader" }
+        logger.trace { "Resolved project ${project.getPathForMcp()} from session header project path: $projectPathFromSessionHeader" }
         return project
       }
 
@@ -74,7 +75,7 @@ internal data class McpProjectLocationInputs(
       logger.trace { "Trying roots project resolution: $roots..." }
       val project = findMostRelevantProjectForRoots(roots)
       if (project != null) {
-        logger.trace { "Resolved project ${project.basePath} from roots: $roots" }
+        logger.trace { "Resolved project ${project.getPathForMcp()} from roots: $roots" }
         return project
       }
 

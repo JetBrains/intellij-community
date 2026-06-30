@@ -16,6 +16,7 @@ import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.toolwindow.McpDiagnosticService
 import com.intellij.mcpserver.util.getConsentDialog
 import com.intellij.mcpserver.util.getHelpLink
+import com.intellij.mcpserver.util.getPathForMcp
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
@@ -110,13 +111,13 @@ internal class McpServerPopupModelImpl(
   }
 
   override fun copySseConfig(): Boolean =
-    copyToClipboard(McpClient.json.encodeToString(createSseServerJsonEntry(service.port, project.basePath)))
+    copyToClipboard(McpClient.json.encodeToString(createSseServerJsonEntry(service.port, project.getPathForMcp())))
 
   override fun copyStdioConfig(): Boolean =
-    copyToClipboard(McpClient.json.encodeToString(createStdioMcpServerJsonConfiguration(service.port, project.basePath)))
+    copyToClipboard(McpClient.json.encodeToString(createStdioMcpServerJsonConfiguration(service.port, project.getPathForMcp())))
 
   override fun copyStreamConfig(): Boolean =
-    copyToClipboard(McpClient.json.encodeToString(createStreamableServerJsonEntry(service.port, project.basePath)))
+    copyToClipboard(McpClient.json.encodeToString(createStreamableServerJsonEntry(service.port, project.getPathForMcp())))
 
   override fun browseUrl(url: String) {
     BrowserUtil.browse(url)

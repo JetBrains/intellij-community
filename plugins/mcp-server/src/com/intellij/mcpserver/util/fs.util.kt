@@ -1,12 +1,14 @@
 package com.intellij.mcpserver.util
 
 import com.intellij.mcpserver.mcpFail
+import com.intellij.openapi.components.DelegatingComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.StandardFileSystems
@@ -61,6 +63,10 @@ fun resolveInProject(pathInProject: String, projectDirectory: Path, throwWhenOut
   return filePath
 }
 
+fun Project.getPathForMcp(): String? {
+  return basePath
+}
+
 suspend fun findMostRelevantProjectForRoots(roots: Collection<String>): Project? {
   return roots.firstNotNullOfOrNull { findMostRelevantProject (it) }
 }
@@ -106,10 +112,10 @@ private suspend fun findMostRelevantProject(path: Path): Project? {
   // - frontend/common/src  <-- this path passed as `path`
   // here we will have 2 project matches: `frontend/common` and `frontend` and better to prefer `frontend/common`
   val pairs = openProjects.mapNotNull { project ->
-    val openProjectPath = if (project is ProjectStoreOwner) project.componentStore.projectBasePath.normalize() else return@mapNotNull null
+    val openProjectPath = if (project is ProjectStoreOwner) project.componentStore.projectBasePath.normalize() else project.getPathForMcp()?.toNioPathOrNull()?.normalize() ?: return@mapNotNull null
     if (targetNormalizedPath.startsWith(openProjectPath)) project to path else null
   }.sortedByDescending { it.second.nameCount }
-  logger.trace { "Found projects for path $path: ${pairs.joinToString { it.first.basePath ?: "null"}}" }
+  logger.trace { "Found projects for path $path: ${pairs.joinToString { it.first.getPathForMcp() ?: "null"}}" }
   return pairs.firstOrNull()?.first
 }
 
