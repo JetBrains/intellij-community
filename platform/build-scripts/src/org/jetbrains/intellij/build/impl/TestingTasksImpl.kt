@@ -1561,4 +1561,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.platform.ijent.tests",
   "intellij.platform.images.build.tests",
   "intellij.platform.images.tests",
+  "intellij.platform.indexing.tests",
 )
