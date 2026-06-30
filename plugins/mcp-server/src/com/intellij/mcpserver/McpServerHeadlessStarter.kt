@@ -48,7 +48,10 @@ private data object WildcardAllowedTools : AllowedToolsSpec
 private data class ExplicitAllowedTools(val names: Set<String>) : AllowedToolsSpec
 
 private val DEFAULT_ALLOWED_TOOLS: Set<String> = setOf(
-  "skill_search",
+  "search_file",
+  "search_text",
+  "search_regex",
+  "search_symbol",
 )
 
 private const val PROJECT_INIT_TIMEOUT_SECONDS_PROPERTY = "idea.mcp.server.project.init.timeout.seconds"
