@@ -128,7 +128,7 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
 
     val dictionaries: List<HunspellDictionary>
       get() = enabledLanguages
-        .filter { it.iso != LanguageISO.EN && it.jLanguage != null }
+        .filter { it.iso != LanguageISO.EN }
         .mapNotNull {
           ProgressManager.checkCanceled()
           it.dictionary
