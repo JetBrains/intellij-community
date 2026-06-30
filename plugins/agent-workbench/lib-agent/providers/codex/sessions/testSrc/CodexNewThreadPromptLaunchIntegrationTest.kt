@@ -19,7 +19,6 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessag
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryChannel
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryStatus
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
-import com.intellij.platform.ai.agent.sessions.core.providers.withProvider
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
@@ -257,7 +256,7 @@ private fun descriptor(
     executableResolver = { CodexCliUtils.CODEX_COMMAND },
     cliAvailableProbe = { true },
     themeLaunchConfigResolver = { null },
-  ).withProvider(CODEX_AGENT_SESSION_PROVIDER)
+  )
 }
 
 internal class RecordingThreadStartupBackend : CodexThreadStartupBackend {

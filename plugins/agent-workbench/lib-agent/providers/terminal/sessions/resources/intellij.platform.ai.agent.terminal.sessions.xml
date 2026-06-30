@@ -10,9 +10,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <agent.workbench.sessionProvider
-      id="agentWorkbenchTerminal"
-      providerId="terminal"
-      order="after agentWorkbenchPi"
+      id="terminal"
+      order="after pi"
       implementation="com.intellij.platform.ai.agent.terminal.sessions.TerminalAgentSessionProviderDescriptor"/>
     <agent.workbench.sessionLaunchContributor implementation="com.intellij.platform.ai.agent.terminal.sessions.TerminalSessionLaunchContributor"/>
     <applicationSettings service="com.intellij.platform.ai.agent.terminal.sessions.TerminalSessionStateService"/>

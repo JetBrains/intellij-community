@@ -5,8 +5,16 @@ entry point and source-level contracts that let shared services consume a provid
 
 ## Provider Entry Point
 
-A provider has one normal Agent Workbench registration: `com.intellij.agent.workbench.sessionProvider`. The registered descriptor owns the
-provider identity, display metadata, launch behavior, and one stable `sessionSource`:
+A provider has one normal Agent Workbench registration: `com.intellij.agent.workbench.sessionProvider`. The extension `id` should match the
+stable provider id and is used as the XML ordering anchor; runtime identity comes from the registered descriptor:
+
+```xml
+<agent.workbench.sessionProvider
+  id="example"
+  implementation="com.example.ExampleAgentSessionProviderDescriptor"/>
+```
+
+The registered descriptor owns the provider identity, display metadata, launch behavior, and one stable `sessionSource`:
 
 ```kotlin
 private class ExampleAgentSessionProviderDescriptor : AgentSessionProviderDescriptor {
@@ -66,7 +74,7 @@ its contract. Consumers discover support by type, so missing interfaces mean uns
 ## Why Capabilities Are Not Extension Points
 
 Core provider capabilities stay on the provider-owned source instead of becoming separate EPs. Separate capability EPs would repeat
-`providerId`, split caches and watchers across registrations, make provider lifetime unclear, and create partial-registration states that
+provider identity, split caches and watchers across registrations, make provider lifetime unclear, and create partial-registration states that
 consumers would have to reconcile.
 
 Use additional EPs only when the implementation is truly external or cross-cutting, such as UI contributors, feature settings, launch
@@ -118,7 +126,7 @@ than recomputing on every visibility refresh.
 
 ## Provider Checklist
 
-- Register one provider descriptor through `com.intellij.agent.workbench.sessionProvider`.
+- Register one provider descriptor through `com.intellij.agent.workbench.sessionProvider` and keep its extension `id` equal to the provider id.
 - Keep descriptor metadata localized through bundle keys and use stable provider ids.
 - Keep source constructors cheap and side-effect free.
 - Put source-owned capabilities on `sessionSource`; use contributor EPs only for external or cross-cutting additions.

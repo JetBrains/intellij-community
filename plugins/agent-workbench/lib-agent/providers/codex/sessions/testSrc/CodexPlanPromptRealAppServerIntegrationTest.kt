@@ -15,7 +15,6 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPrompt
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryStatus
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentPrestartNewSessionLaunchRequest
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
-import com.intellij.platform.ai.agent.sessions.core.providers.withProvider
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
@@ -225,7 +224,7 @@ private fun realCodexDescriptor(codexBinary: String, threadStartupBackend: Codex
     threadStartupBackend = threadStartupBackend,
     executableResolver = { codexBinary },
     cliAvailableProbe = { true },
-  ).withProvider(CODEX_AGENT_SESSION_PROVIDER)
+  )
 }
 
 private class RealCodexThreadStartupBackend(

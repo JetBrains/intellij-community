@@ -6,7 +6,7 @@ package com.intellij.platform.ai.agent.terminal.sessions
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderImplementation
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalRestoreContext
@@ -22,7 +22,9 @@ internal class TerminalAgentSessionProviderDescriptor(
   private val stateService: TerminalSessionStateService = service(),
   override val sessionSource: AgentSessionSource = TerminalSessionSource(stateService),
   private val sessionIdGenerator: () -> String = { UUID.randomUUID().toString() },
-) : AgentSessionProviderImplementation {
+) : AgentSessionProviderDescriptor {
+  override val provider = TERMINAL_AGENT_SESSION_PROVIDER
+
   override val displayPriority: Int
     get() = 4
 

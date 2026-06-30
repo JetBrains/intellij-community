@@ -8,7 +8,6 @@ import com.intellij.agent.workbench.sessions.assertExistingThreadLaunchUsesPostS
 import com.intellij.agent.workbench.sessions.existingThreadPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.thread
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
-import com.intellij.platform.ai.agent.sessions.core.providers.withProvider
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -72,7 +71,7 @@ private fun descriptor(
     executableResolver = { CodexCliUtils.CODEX_COMMAND },
     cliAvailableProbe = { true },
     themeLaunchConfigResolver = { null },
-  ).withProvider(CODEX_AGENT_SESSION_PROVIDER)
+  )
 }
 
 private const val PROJECT_PATH: String = "/work/project-a"

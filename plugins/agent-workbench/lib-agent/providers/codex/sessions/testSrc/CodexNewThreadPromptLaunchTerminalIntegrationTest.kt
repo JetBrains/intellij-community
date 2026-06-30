@@ -11,7 +11,6 @@ import com.intellij.agent.workbench.sessions.launchNewThreadPromptRequestWithDef
 import com.intellij.platform.ai.agent.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
-import com.intellij.platform.ai.agent.sessions.core.providers.withProvider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -109,7 +108,7 @@ private fun descriptor(threadStartupBackend: CodexThreadStartupBackend): AgentSe
     executableResolver = { CodexCliUtils.CODEX_COMMAND },
     cliAvailableProbe = { true },
     themeLaunchConfigResolver = { null },
-  ).withProvider(CODEX_AGENT_SESSION_PROVIDER)
+  )
 }
 
 private object NoopCodexThreadMutationBackend : CodexThreadMutationBackend {

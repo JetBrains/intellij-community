@@ -202,6 +202,8 @@ jvm_library(
         "//plugins/agent-workbench/lib-agent/core:core_test_lib",
         "//plugins/agent-workbench/lib-agent/sessions-core:ai-agent-sessions-core",
         "//plugins/agent-workbench/lib-agent/sessions-core:ai-agent-sessions-core_test_lib",
+        "//libraries/assertj-core",
+        "//libraries/assertj-core:assertj-core_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//libraries/junit5-suites",

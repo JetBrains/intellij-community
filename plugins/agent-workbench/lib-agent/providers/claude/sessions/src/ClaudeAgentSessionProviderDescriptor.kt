@@ -16,7 +16,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessag
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentPromptProviderOption
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderImplementation
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentThreadRenameAction
@@ -44,7 +44,9 @@ internal class ClaudeAgentSessionProviderDescriptor(
   ),
   private val cliAvailableProbe: suspend () -> Boolean = { ClaudeCliSupport.findExecutableViaTerminalResolver() != null },
   private val hookSettingsProvider: (String) -> String? = ClaudeHookBridge::createLaunchSettingsArgument,
-) : AgentSessionProviderImplementation {
+) : AgentSessionProviderDescriptor {
+  override val provider = CLAUDE_AGENT_SESSION_PROVIDER
+
   override val displayPriority: Int
     get() = 1
 

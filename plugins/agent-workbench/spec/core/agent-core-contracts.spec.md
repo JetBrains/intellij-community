@@ -4,12 +4,10 @@ description: Cross-cutting contracts shared by Sessions, Chat, provider bridges,
 targets:
   - ../../lib-agent/core/src/**/*.kt
   - ../../lib-agent/sessions-core/src/**/*.kt
-  - ../../lib-agent/providers/claude/sessions/src/**/*.kt
-  - ../../lib-agent/providers/claude/sessions/testSrc/*.kt
-  - ../../lib-agent/providers/codex/sessions/src/**/*.kt
-  - ../../lib-agent/providers/codex/sessions/testSrc/*.kt
-  - ../../lib-agent/providers/junie/sessions/src/**/*.kt
-  - ../../lib-agent/providers/junie/sessions/testSrc/*.kt
+  - ../../lib-agent/providers/*/sessions/src/**/*.kt
+  - ../../lib-agent/providers/*/sessions/resources/*.xml
+  - ../../lib-agent/providers/*/sessions/testSrc/*.kt
+  - ../../plugin/testSrc/*.kt
   - ../../sessions/src/**/*.kt
   - ../../sessions-actions/src/**/*.kt
   - ../../chat/src/**/*.kt
@@ -18,9 +16,6 @@ targets:
   - ../../sessions/testSrc/*.kt
   - ../../sessions-actions/testSrc/*.kt
   - ../../chat/testSrc/*.kt
-  - ../../lib-agent/providers/claude/sessions/testSrc/*.kt
-  - ../../lib-agent/providers/codex/sessions/testSrc/*.kt
-  - ../../lib-agent/providers/junie/sessions/testSrc/*.kt
 ---
 
 # Agent Workbench Core Contracts
@@ -32,9 +27,15 @@ Date: 2026-06-22
 These contracts keep shared identity, command mapping, provider capabilities, prompt handoff, and cross-surface actions consistent across Agent Threads and Agent Chat.
 
 ## Requirements
-- Canonical thread identity is `provider:threadId`. Stable provider ids are lowercase (`codex`, `claude`, `junie`); unknown ids remain valid identities and use fallback UI presentation.
+- Canonical thread identity is `provider:threadId`. Stable provider ids are lowercase (for example, `codex`, `claude`, `junie`); unknown ids remain valid identities and use fallback UI presentation.
   [@test] ../../sessions/testSrc/AgentSessionLoadAggregationTest.kt
   [@test] ../../chat/testSrc/AgentChatFileEditorProviderTest.kt
+
+- `AgentSessionProviderDescriptor.provider` is the authoritative runtime source of provider identity. The `sessionProvider` extension `id`
+  is non-authoritative platform metadata used only as the XML ordering anchor; it must match `descriptor.provider.value`, and provider
+  registrations must not duplicate identity with a separate `providerId` attribute.
+  [@test] ../../plugin/testSrc/AgentWorkbenchProviderStructureTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionProvidersTest.kt
 
 - Project/worktree keys used for visibility, warm snapshots, and deduplication must use normalized paths.
   [@test] ../../sessions/testSrc/AgentSessionTreeUiStateServiceTest.kt

@@ -55,13 +55,20 @@ data class AgentSessionActivityEvidence(
   @JvmField val canClearAttention: Boolean = true,
 ) {
   companion object {
-    @JvmField val PROVISIONAL: AgentSessionActivityEvidence = AgentSessionActivityEvidence(
+    @JvmField
+    val PROVISIONAL: AgentSessionActivityEvidence = AgentSessionActivityEvidence(
       authority = AgentSessionActivityAuthority.PROVISIONAL,
       canClearAttention = false,
     )
-    @JvmField val DERIVED: AgentSessionActivityEvidence = AgentSessionActivityEvidence(AgentSessionActivityAuthority.DERIVED)
-    @JvmField val SEMANTIC: AgentSessionActivityEvidence = AgentSessionActivityEvidence(AgentSessionActivityAuthority.SEMANTIC)
-    @JvmField val SNAPSHOT: AgentSessionActivityEvidence = AgentSessionActivityEvidence(AgentSessionActivityAuthority.SNAPSHOT)
+
+    @JvmField
+    val DERIVED: AgentSessionActivityEvidence = AgentSessionActivityEvidence(AgentSessionActivityAuthority.DERIVED)
+
+    @JvmField
+    val SEMANTIC: AgentSessionActivityEvidence = AgentSessionActivityEvidence(AgentSessionActivityAuthority.SEMANTIC)
+
+    @JvmField
+    val SNAPSHOT: AgentSessionActivityEvidence = AgentSessionActivityEvidence(AgentSessionActivityAuthority.SNAPSHOT)
   }
 }
 
@@ -160,6 +167,7 @@ fun Collection<String>.toAgentSessionRefreshThreadSeeds(): Set<AgentSessionRefre
 enum class AgentSessionSourceUpdate {
   /** Thread rows may have been added, removed, or changed; an authoritative provider refresh may be required. */
   THREADS_CHANGED,
+
   /** Only auxiliary hints or presentation may have changed; consumers should avoid a full row refresh when possible. */
   HINTS_CHANGED,
 }

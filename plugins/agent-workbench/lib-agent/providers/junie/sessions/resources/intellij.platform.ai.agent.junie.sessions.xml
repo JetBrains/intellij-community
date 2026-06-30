@@ -13,9 +13,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <agent.workbench.sessionProvider
-      id="agentWorkbenchJunie"
-      providerId="junie"
-      order="after agentWorkbenchClaude"
+      id="junie"
+      order="after claude"
       implementation="com.intellij.platform.ai.agent.junie.sessions.JunieAgentSessionProviderDescriptor"/>
     <agent.workbench.sessionLaunchContributor
       implementation="com.intellij.platform.ai.agent.junie.sessions.JunieAwbMcpLocationContributor"/>

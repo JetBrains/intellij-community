@@ -13,9 +13,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <agent.workbench.sessionProvider
-      id="agentWorkbenchCodex"
-      providerId="codex"
-      order="before agentWorkbenchClaude"
+      id="codex"
+      order="before claude"
       implementation="com.intellij.platform.ai.agent.codex.sessions.CodexAgentSessionProviderDescriptor"/>
     <agent.workbench.mcpConfigProviderContributor
       implementation="com.intellij.platform.ai.agent.codex.sessions.CodexAwbMcpConfigProviderContributor"/>

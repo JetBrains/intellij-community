@@ -12,7 +12,7 @@ import com.intellij.platform.ai.agent.sessions.core.launch.insertArgumentsBefore
 import com.intellij.platform.ai.agent.sessions.core.launch.removeOptions
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderCliVisibilityPolicy
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderImplementation
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentThreadRenameAction
@@ -24,7 +24,9 @@ internal class OpenCodeAgentSessionProviderDescriptor(
   override val sessionSource: AgentSessionSource = OpenCodeSessionSource(sessionStore),
   private val executableResolver: suspend () -> String = OpenCodeCliSupport::resolveExecutableOrDefaultViaTerminalResolver,
   private val cliAvailableProbe: suspend () -> Boolean = { OpenCodeCliSupport.findExecutableViaTerminalResolver() != null },
-) : AgentSessionProviderImplementation {
+) : AgentSessionProviderDescriptor {
+  override val provider = OPENCODE_AGENT_SESSION_PROVIDER
+
   override val displayPriority: Int
     get() = 4
 

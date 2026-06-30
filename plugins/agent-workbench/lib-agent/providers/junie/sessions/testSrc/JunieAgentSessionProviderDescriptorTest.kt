@@ -18,7 +18,6 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessag
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
-import com.intellij.platform.ai.agent.sessions.core.providers.withProvider
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -34,8 +33,6 @@ class JunieAgentSessionProviderDescriptorTest {
   @Test
   fun `descriptor exposes Junie provider metadata`() {
     val descriptor = JunieAgentSessionProviderDescriptor(executableResolver = { "junie-test" })
-      .withProvider(JUNIE_AGENT_SESSION_PROVIDER)
-      .withProvider(JUNIE_AGENT_SESSION_PROVIDER)
 
     assertThat(JUNIE_AGENT_SESSION_PROVIDER).isEqualTo(AgentSessionProvider.from("junie"))
     assertThat(descriptor.sessionSource.provider).isEqualTo(AgentSessionProvider.from("junie"))
@@ -729,7 +726,6 @@ class JunieAgentSessionProviderDescriptorTest {
   @Test
   fun `pending metadata is resolved only for Junie pending identities`() {
     val descriptor = JunieAgentSessionProviderDescriptor(executableResolver = { "junie-test" })
-      .withProvider(JUNIE_AGENT_SESSION_PROVIDER)
     val launchSpec = AgentSessionTerminalLaunchSpec(
       command = listOf("junie-test", "--skip-update-check"),
     )

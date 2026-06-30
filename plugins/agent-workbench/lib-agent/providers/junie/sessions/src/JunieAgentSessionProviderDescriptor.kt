@@ -18,7 +18,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessag
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentPromptProviderOption
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderImplementation
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentThreadRenameAction
@@ -35,7 +35,9 @@ internal class JunieAgentSessionProviderDescriptor(
   private val cliInfoResolver: suspend () -> JunieCliInfo? = JunieCliSupport::resolveCliInfoViaTerminalResolver,
   private val generationModelCatalogResolver: suspend (String, String) -> List<AgentPromptGenerationModel> =
     JunieAcpGenerationModelCatalog::listAvailableGenerationModels,
-) : AgentSessionProviderImplementation {
+) : AgentSessionProviderDescriptor {
+  override val provider = JUNIE_AGENT_SESSION_PROVIDER
+
   @Volatile
   private var latestCliInfo: JunieCliInfo? = null
 
