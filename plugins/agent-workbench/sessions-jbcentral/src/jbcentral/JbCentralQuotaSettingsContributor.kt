@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.jbcentral
 
-// @spec community/plugins/agent-workbench/spec/sessions/agent-sessions-cost-and-jbcentral-quota.spec.md
+// @spec plugins/ij-air/spec/sessions/agent-sessions-cost-and-jbcentral-quota.spec.md
 
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.settings.AGENT_WORKBENCH_STATUS_BAR_WIDGETS_SETTINGS_COMPONENT_ID

@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-// @spec community/plugins/agent-workbench/spec/thread-view/agent-thread-view.spec.md
+// @spec plugins/ij-air/spec/thread-view/agent-thread-view.spec.md
 package com.intellij.agent.workbench.thread.view
 
 import com.intellij.openapi.application.ApplicationManager

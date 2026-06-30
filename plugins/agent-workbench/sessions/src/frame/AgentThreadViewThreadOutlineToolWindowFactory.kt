@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.frame
 
-// @spec community/plugins/agent-workbench/spec/frame/agent-dedicated-frame.spec.md
+// @spec plugins/ij-air/spec/frame/agent-dedicated-frame.spec.md
 
 import com.intellij.agent.workbench.thread.view.AGENT_THREAD_VIEW_THREAD_OUTLINE_TOOL_WINDOW_ID
 import com.intellij.agent.workbench.thread.view.AgentThreadViewThreadOutlinePanel

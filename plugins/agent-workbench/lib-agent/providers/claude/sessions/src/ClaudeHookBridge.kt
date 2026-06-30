@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ai.agent.claude.sessions
 
-// @spec community/plugins/agent-workbench/spec/sessions/agent-sessions-claude-hooks.spec.md
+// @spec plugins/ij-air/spec/sessions/agent-sessions-claude-hooks.spec.md
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.AgentThreadActivityReport

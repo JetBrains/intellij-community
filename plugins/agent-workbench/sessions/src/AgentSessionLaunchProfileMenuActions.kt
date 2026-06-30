@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-// @spec community/plugins/agent-workbench/spec/sessions/agent-terminal-sessions.spec.md
-// @spec community/plugins/agent-workbench/spec/actions/global-prompt-task-cost-profiles.spec.md
+// @spec plugins/ij-air/spec/sessions/agent-terminal-sessions.spec.md
+// @spec plugins/ij-air/spec/actions/global-prompt-task-cost-profiles.spec.md
 
 import com.intellij.agent.workbench.ui.AgentWorkbenchActionIds
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode

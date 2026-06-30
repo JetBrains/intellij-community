@@ -3,8 +3,8 @@ package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.agent.workbench.prompt.core.AgentPromptPaletteInitialPrompt
 
-// @spec community/plugins/agent-workbench/spec/actions/global-prompt-entry.spec.md
-// @spec community/plugins/agent-workbench/spec/actions/global-prompt-suggestions.spec.md
+// @spec plugins/ij-air/spec/actions/global-prompt-entry.spec.md
+// @spec plugins/ij-air/spec/actions/global-prompt-suggestions.spec.md
 
 internal data class AgentPromptTaskDraftState(
   @JvmField val liveText: String = "",

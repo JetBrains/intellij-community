@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.toolwindow.ui
 
-// @spec community/plugins/agent-workbench/spec/sessions/agent-sessions.spec.md
-// @spec community/plugins/agent-workbench/spec/sessions/agent-sessions-thread-visibility.spec.md
-// @spec community/plugins/agent-workbench/spec/core/agent-workbench-telemetry.spec.md
+// @spec plugins/ij-air/spec/sessions/agent-sessions.spec.md
+// @spec plugins/ij-air/spec/sessions/agent-sessions-thread-visibility.spec.md
+// @spec plugins/ij-air/spec/core/agent-workbench-telemetry.spec.md
 
 import com.intellij.agent.workbench.thread.view.AgentThreadViewTabSelectionService
 import com.intellij.agent.workbench.thread.view.AgentThreadViewOpenTabsPresentationStateService
