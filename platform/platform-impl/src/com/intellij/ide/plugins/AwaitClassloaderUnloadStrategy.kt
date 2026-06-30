@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
@@ -104,9 +105,19 @@ internal class AwaitClassloaderUnloadAsyncPostReconfiguration : AwaitClassloader
       awaitUnload(classloaders)
     }
     if (!unloaded) {
+      val stillLoadedDescriptors = ArrayList<PluginDescriptor>().apply {
+        for (stillLoaded in classloaders.iterator()) { // WeakList throws on get(index) / size operations, here we make sure it won't throw
+          add(stillLoaded.pluginDescriptor)
+        }
+      }
+      val message = when {
+        stillLoadedDescriptors.size == 1 -> IdeBundle.message("notification.content.plugin.didnt.unload.cleanly", stillLoadedDescriptors[0].name)
+        else -> IdeBundle.message("notification.content.plugins.didnt.unload.cleanly")
+      }
+      LOG.warn("Plugins that were expected to unload but are still referenced:\n${stillLoadedDescriptors.joinToString("\n")}")
       val notification = UpdateCheckerFacade.getInstance().getNotificationGroupForPluginUpdateResults().createNotification(
         IdeBundle.message("notification.on.tool.window.title.restart.advised"),
-        IdeBundle.message("notification.content.plugins.didnt.unload.cleanly"),
+        message,
         NotificationType.WARNING
       )
       notification.addAction(object : AnAction(IdeBundle.message("ide.restart.action")), DumbAware {
