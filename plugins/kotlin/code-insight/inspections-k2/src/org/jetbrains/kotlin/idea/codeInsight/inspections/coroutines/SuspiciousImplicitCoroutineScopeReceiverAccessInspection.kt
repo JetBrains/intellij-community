@@ -162,7 +162,7 @@ internal class SuspiciousImplicitCoroutineScopeReceiverAccessInspection :
                     samConstructor?.samConstructorLambdaParameterType
                 } else {
                     parameterType
-                } ?: continue
+                } ?: return false
 
                 if (lambdaType.isSuspendFunctionType && !isAllowedSuspendingFunction(functionSymbol)) {
                     return true
