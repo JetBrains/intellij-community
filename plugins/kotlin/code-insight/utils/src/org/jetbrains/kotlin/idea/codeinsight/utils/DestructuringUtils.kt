@@ -109,8 +109,8 @@ fun KtDestructuringDeclaration.buildNameBasedDestructuringText(
     val originalKeyword = if (isVar) "var" else "val"
     val keyword = "".takeIf { positionBased || useShortForm } ?: originalKeyword
     val newEntries = names
-        .filter { it != "_" }
         .zip(destructuringNames) { entry, name ->
+            if (entry == "_") return@zip null
             buildString {
                 append(keyword)
                 if (keyword.isNotEmpty()) {
@@ -123,6 +123,7 @@ fun KtDestructuringDeclaration.buildNameBasedDestructuringText(
                 }
             }
         }
+        .filterNotNull()
         .takeIf { it.isNotEmpty() }
         ?.joinToString(", ")
         ?: return null
