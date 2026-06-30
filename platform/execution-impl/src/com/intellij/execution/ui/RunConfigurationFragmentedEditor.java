@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
+import com.intellij.diagnostic.logging.LogsGroupFragment;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configuration.RunConfigurationExtensionBase;
@@ -160,6 +161,10 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
    * @return a list of {@link SettingsEditorFragment} instances representing particular settings fragments that users can enable and configure.
    */
   protected abstract List<SettingsEditorFragment<Settings, ?>> createRunFragments();
+
+  protected final LogsGroupFragment<Settings> createLogGroupFragment() {
+    return new LogsGroupFragment<>(mySettings.getProject());
+  }
 
   @Override
   public void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s) {

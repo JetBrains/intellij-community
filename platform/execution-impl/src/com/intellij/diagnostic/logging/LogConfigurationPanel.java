@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.openapi.fileChooser.FileSaverDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
@@ -65,6 +66,7 @@ public final class LogConfigurationPanel<T extends RunConfigurationBase> extends
   private final JCheckBox myShowConsoleOnStdErrCb;
   private final Map<LogFileOptions, PredefinedLogFile> myLog2Predefined = new HashMap<>();
   private final List<PredefinedLogFile> myUnresolvedPredefined = new SmartList<>();
+  private Project myProject;
 
   public LogConfigurationPanel() {
     {
@@ -185,7 +187,8 @@ public final class LogConfigurationPanel<T extends RunConfigurationBase> extends
     var descriptor = FileSaverDescriptorFactory.createSingleFileNoJarsDescriptor()
       .withTitle(ExecutionBundle.message("choose.file.to.save.console.output"))
       .withDescription(ExecutionBundle.message("console.output.would.be.saved.to.the.specified.file"));
-    myOutputFile.addFileSaverDialog(null, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    descriptor.setEnvironmentRestricted(true);
+    myOutputFile.addFileSaverDialog(myProject, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     myRedirectOutputCb.addActionListener(e -> myOutputFile.setEnabled(myRedirectOutputCb.isSelected()));
   }
 
@@ -291,6 +294,7 @@ public final class LogConfigurationPanel<T extends RunConfigurationBase> extends
 
   @Override
   protected void resetEditorFrom(final @NotNull RunConfigurationBase configuration) {
+    myProject = configuration.getProject();
     List<LogFileOptions> list = new ArrayList<>();
     final List<LogFileOptions> logFiles = configuration.getLogFiles();
     for (LogFileOptions setting : logFiles) {
