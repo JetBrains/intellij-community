@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
-import com.intellij.agent.workbench.chat.AgentChatThreadCoordinates
+import com.intellij.agent.workbench.thread.view.AgentThreadViewEditorTabActionContext
+import com.intellij.agent.workbench.thread.view.AgentThreadViewThreadCoordinates
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
@@ -248,12 +248,12 @@ class AgentSessionRenameServiceTest {
 
     try {
       val target = threadTarget(AgentSessionProvider.from("claude"), "thread-1")
-      val matchedContext = AgentChatEditorTabActionContext(
+      val matchedContext = AgentThreadViewEditorTabActionContext(
         project = ProjectManager.getInstance().defaultProject,
         path = "/work/project",
         tabKey = "claude:thread-1",
         threadIdentity = "claude:thread-1",
-        threadCoordinates = AgentChatThreadCoordinates(
+        threadCoordinates = AgentThreadViewThreadCoordinates(
           provider = AgentSessionProvider.from("claude"),
           sessionId = "thread-1",
           isPending = false,

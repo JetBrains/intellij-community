@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
-import com.intellij.agent.workbench.chat.AgentChatThreadCoordinates
+import com.intellij.agent.workbench.thread.view.AgentThreadViewEditorTabActionContext
+import com.intellij.agent.workbench.thread.view.AgentThreadViewThreadCoordinates
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsCopyThreadIdFromEditorTabAction
@@ -213,7 +213,7 @@ class AgentSessionsEditorTabActionsTest {
       threadId = "sub-agent-1",
       subAgentId = "sub-agent-1",
     )
-    val contextTarget = context.sessionActionTarget as SessionActionTarget.Conversation
+    val contextTarget = context.sessionActionTarget as SessionActionTarget.ThreadTarget
     var ensuredPath: String? = null
     var ensuredProvider: AgentSessionProvider? = null
     var ensuredThreadId: String? = null
@@ -339,7 +339,7 @@ class AgentSessionsEditorTabActionsTest {
   }
 
   @Test
-  fun editorTabActionsAreHiddenForNonAgentChatFiles() {
+  fun editorTabActionsAreHiddenForNonAgentThreadViewFiles() {
     val action = AgentSessionsSelectThreadInToolWindowAction(
       resolveContext = { null },
       ensureThreadVisible = { _, _, _ -> },
@@ -363,12 +363,12 @@ private fun editorContext(
   sessionId: String = "thread-1",
   isPendingThread: Boolean = false,
   subAgentId: String? = null,
-): AgentChatEditorTabActionContext {
+): AgentThreadViewEditorTabActionContext {
   val normalizedPath = normalizeAgentWorkbenchPath(path)
   val threadCoordinates = provider
     ?.takeIf { sessionId.isNotBlank() }
     ?.let { resolvedProvider ->
-      AgentChatThreadCoordinates(
+      AgentThreadViewThreadCoordinates(
         provider = resolvedProvider,
         sessionId = sessionId,
         isPending = isPendingThread,
@@ -398,7 +398,7 @@ private fun editorContext(
       )
     }
   }
-  return AgentChatEditorTabActionContext(
+  return AgentThreadViewEditorTabActionContext(
     project = ProjectManager.getInstance().defaultProject,
     path = normalizedPath,
     tabKey = tabKey,

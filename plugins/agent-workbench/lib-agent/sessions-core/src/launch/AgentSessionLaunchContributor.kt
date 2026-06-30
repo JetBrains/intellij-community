@@ -12,7 +12,7 @@ import kotlinx.coroutines.ensureActive
 /**
  * Multi-extension hook for adding env variables / CLI args to a session's launch spec.
  * Fires for **both** new sessions (via `createNewSession`) and resumed ones (via
- * `resolveResume`), regardless of which open path the user took (chat tree click,
+ * `resolveResume`), regardless of which open path the user took (threadView tree click,
  * rename rebind, prompt-launch resume, etc.). All registered contributors are applied
  * in order; later ones see the result of earlier ones.
  *

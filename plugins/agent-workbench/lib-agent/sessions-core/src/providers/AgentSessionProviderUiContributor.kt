@@ -15,7 +15,7 @@ private class AgentSessionProviderUiContributorRegistryLog
 private val UI_CONTRIBUTOR_LOG = logger<AgentSessionProviderUiContributorRegistryLog>()
 
 interface AgentSessionProviderUiContributor {
-  fun onConversationOpened() {
+  fun onThreadViewOpened() {
   }
 
   fun createToolWindowNorthComponent(project: Project): JComponent? = null

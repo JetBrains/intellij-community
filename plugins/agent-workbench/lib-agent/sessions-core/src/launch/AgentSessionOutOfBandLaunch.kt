@@ -18,11 +18,11 @@ data class AgentSessionOutOfBandLaunchContext(
 
 /**
  * Delivers a new session's launch out of band — without a managed terminal. Used by non-terminal
- * runtimes (e.g. ACP): the chat tab renders custom content, and the chosen agent + initial prompt are
+ * runtimes (e.g. ACP): the threadView tab renders custom content, and the chosen agent + initial prompt are
  * applied by the implementation instead of being dispatched into a terminal.
  *
  * Looked up by resolved launch context; when one handles the context, the launch service skips
- * terminal dispatch and invokes [launch] once the chat tab has opened (so a real [Project] is available).
+ * terminal dispatch and invokes [launch] once the threadView tab has opened (so a real [Project] is available).
  */
 interface AgentSessionOutOfBandLaunch {
   fun handles(provider: AgentSessionProvider): Boolean
@@ -30,7 +30,7 @@ interface AgentSessionOutOfBandLaunch {
   fun handles(context: AgentSessionOutOfBandLaunchContext): Boolean = handles(context.provider)
 
   /**
-   * @param threadId the concrete session id the chat tab opened with (the provider's preallocated id)
+   * @param threadId the concrete session id the threadView tab opened with (the provider's preallocated id)
    * @param context the resolved launch context, including the optional launch target selected by the profile
    * @param prompt the initial prompt text, or `null`/blank when none
    */

@@ -182,7 +182,7 @@ data class ThreadConfigOption(
 /**
  * Reconnectable runtime binding for a structured thread (side state, not a transcript entry).
  * Seeded from `ThreadCreated` (`agentId`, `cwd`) and completed by `RuntimeSessionBound` once the
- * runtime returns a server session id. Used to decide whether a restored chat can reach its agent.
+ * runtime returns a server session id. Used to decide whether a restored threadView can reach its agent.
  */
 @Serializable
 data class ThreadRuntimeBinding(

@@ -5,9 +5,9 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 // @spec community/plugins/agent-workbench/spec/sessions/agent-sessions-thread-visibility.spec.md
 // @spec community/plugins/agent-workbench/spec/core/agent-workbench-telemetry.spec.md
 
-import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
-import com.intellij.agent.workbench.chat.AgentChatOpenTabsPresentationStateService
-import com.intellij.agent.workbench.chat.AgentChatPendingEditorLifecycleService
+import com.intellij.agent.workbench.thread.view.AgentThreadViewTabSelectionService
+import com.intellij.agent.workbench.thread.view.AgentThreadViewOpenTabsPresentationStateService
+import com.intellij.agent.workbench.thread.view.AgentThreadViewPendingEditorLifecycleService
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.AgentSessionCostHintBanner
 import com.intellij.agent.workbench.sessions.AgentSessionCostHintStateService
@@ -184,8 +184,8 @@ internal class AgentSessionsToolWindowPanel(
     sessionsStateFlow = service<AgentSessionReadService>().stateFlow(),
     archivedSessionsStateFlow = service<AgentArchivedSessionsService>().stateFlow(),
     threadViewStateFlow = service<AgentSessionThreadViewStateService>().state,
-    selectedChatTabFlow = project.service<AgentChatTabSelectionService>().selectedChatTab,
-    openChatTabsPresentationStateFlow = service<AgentChatOpenTabsPresentationStateService>().state,
+    selectedThreadViewTabFlow = project.service<AgentThreadViewTabSelectionService>().selectedThreadViewTab,
+    openThreadViewTabsPresentationStateFlow = service<AgentThreadViewOpenTabsPresentationStateService>().state,
     ensureArchivedSessionsLoaded = { service<AgentArchivedSessionsService>().ensureLoaded() },
     tree = tree,
     getSessionTreeModel = { sessionTreeModel },
@@ -213,8 +213,8 @@ internal class AgentSessionsToolWindowPanel(
   private val northPanel: JPanel = buildNorthPanel()
 
   init {
-    project.service<AgentChatPendingEditorLifecycleService>()
-    service<AgentChatOpenTabsPresentationStateService>().refreshOpenTabs()
+    project.service<AgentThreadViewPendingEditorLifecycleService>()
+    service<AgentThreadViewOpenTabsPresentationStateService>().refreshOpenTabs()
     dataContextProvider = AgentSessionsTreeDataContextProvider(
       project = project,
       tree = tree,

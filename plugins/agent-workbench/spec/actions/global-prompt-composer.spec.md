@@ -32,7 +32,7 @@ The global prompt composer is the task-preparation surface for Agent Workbench. 
 - The composer must treat editable prompt text as the user's instruction. Selected context must render as attachment cards outside the editable text and must not be inserted into the visible prompt message.
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteViewStructureTest.kt
 
-- Context attachment cards must appear above the editable prompt text. They represent task input context already selected for the launch, not suggestions, history, generation settings, or sent chat content.
+- Context attachment cards must appear above the editable prompt text. They represent task input context already selected for the launch, not suggestions, history, generation settings, or sent thread view content.
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteViewLayoutTest.kt
 
 - `Add Context` must live in the bottom tray as the left prompt-composition action. It belongs to the task input lane because it changes attached context, not launch configuration.

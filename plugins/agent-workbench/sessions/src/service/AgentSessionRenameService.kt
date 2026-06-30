@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.service
 
-import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
+import com.intellij.agent.workbench.thread.view.AgentThreadViewEditorTabActionContext
 import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
@@ -62,7 +62,7 @@ class AgentSessionRenameService internal constructor(
            findProviderDescriptor(target.provider)?.threadRenameAction != null
   }
 
-  fun canRenameThreadInEditorTab(context: AgentChatEditorTabActionContext, target: SessionActionTarget.Thread): Boolean {
+  fun canRenameThreadInEditorTab(context: AgentThreadViewEditorTabActionContext, target: SessionActionTarget.Thread): Boolean {
     return matchesConcreteEditorThread(context, target) &&
            findProviderDescriptor(target.provider)?.threadRenameAction != null
   }
@@ -76,7 +76,7 @@ class AgentSessionRenameService internal constructor(
   }
 
   fun renameThreadFromEditorTab(
-    context: AgentChatEditorTabActionContext,
+    context: AgentThreadViewEditorTabActionContext,
     target: SessionActionTarget.Thread,
     requestedName: String,
   ): Job? {
@@ -93,7 +93,7 @@ class AgentSessionRenameService internal constructor(
   private fun renameThread(
     target: SessionActionTarget.Thread,
     requestedName: String,
-    context: AgentChatEditorTabActionContext?,
+    context: AgentThreadViewEditorTabActionContext?,
   ): Job? {
     if (isAgentSessionNewSessionId(target.threadId)) {
       return null
@@ -171,7 +171,7 @@ class AgentSessionRenameService internal constructor(
   private fun updatePresentationAfterRename(
     target: SessionActionTarget.Thread,
     normalizedRequestedName: String,
-    context: AgentChatEditorTabActionContext?,
+    context: AgentThreadViewEditorTabActionContext?,
   ) {
     val activityReport = target.thread?.activityReport ?: context?.threadActivity?.let(::AgentThreadActivityReport)
     presentationModel.updateThread(
@@ -237,7 +237,7 @@ private fun List<AgentSessionThread>.withRenamedThread(
 }
 
 private fun matchesConcreteEditorThread(
-  context: AgentChatEditorTabActionContext,
+  context: AgentThreadViewEditorTabActionContext,
   target: SessionActionTarget.Thread,
 ): Boolean {
   val threadCoordinates = context.threadCoordinates ?: return false

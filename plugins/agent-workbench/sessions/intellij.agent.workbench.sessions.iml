@@ -57,7 +57,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.progress" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="module" module-name="intellij.platform.ai.agent.codex.common" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.chat" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.thread.view" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3" />
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />

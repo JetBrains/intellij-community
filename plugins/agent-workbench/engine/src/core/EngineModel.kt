@@ -29,7 +29,7 @@ enum class ThreadStatus {
 /** Kind of structured runtime adapter that produces a thread's event stream. */
 @Serializable
 enum class RuntimeKind {
-  /** Structured terminal content, debug mirrors, or migration experiments, not existing Agent Chat CLI providers. */
+  /** Structured terminal content, debug mirrors, or migration experiments, not existing Agent Thread View CLI providers. */
   Terminal,
   StructuredTerminal,
   Acp,

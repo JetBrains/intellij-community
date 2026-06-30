@@ -49,7 +49,7 @@ dependencies {
   implementation(project(":settings"))
   implementation(project(":sessions-core"))
   implementation(project(":ui"))
-  implementation(project(":chat"))
+  implementation(project(":thread-view"))
   implementation(project(":sessions"))
 }
 

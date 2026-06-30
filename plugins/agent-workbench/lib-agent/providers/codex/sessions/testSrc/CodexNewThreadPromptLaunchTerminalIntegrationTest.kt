@@ -2,12 +2,12 @@
 package com.intellij.platform.ai.agent.codex.sessions
 
 import com.intellij.platform.ai.agent.codex.common.CodexCliUtils
-import com.intellij.agent.workbench.chat.RecordingAgentChatTerminalHarness
-import com.intellij.agent.workbench.chat.disposeAgentChatLiveTerminalsForTest
+import com.intellij.agent.workbench.thread.view.RecordingAgentThreadViewTerminalHarness
+import com.intellij.agent.workbench.thread.view.disposeAgentThreadViewLiveTerminalsForTest
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.ui.captureNewTaskPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.ScriptedSessionSource
-import com.intellij.agent.workbench.sessions.launchNewThreadPromptRequestWithDefaultChatOpenExecutor
+import com.intellij.agent.workbench.sessions.launchNewThreadPromptRequestWithDefaultThreadViewOpenExecutor
 import com.intellij.platform.ai.agent.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
@@ -37,8 +37,8 @@ class CodexNewThreadPromptLaunchTerminalIntegrationTest {
     timeoutRunBlocking {
       val startupBackend = RecordingThreadStartupBackend()
       val descriptor = descriptor(startupBackend)
-      val terminalHarness = RecordingAgentChatTerminalHarness()
-      var openedChatActivated = false
+      val terminalHarness = RecordingAgentThreadViewTerminalHarness()
+      var openedThreadViewActivated = false
       runInUi {
         fileEditorManagerFixture.get()
         terminalHarness.registerEditorFactory(disposable)
@@ -58,12 +58,12 @@ class CodexNewThreadPromptLaunchTerminalIntegrationTest {
       assertThat(request.initialMessageRequest.providerOptionIds).containsExactly(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE)
       assertThat(request.targetThreadId).isNull()
 
-      launchNewThreadPromptRequestWithDefaultChatOpenExecutor(
+      launchNewThreadPromptRequestWithDefaultThreadViewOpenExecutor(
         descriptor = descriptor,
         request = request,
-        openedChatHandler = { openedProject, openedFile ->
-          check(terminalHarness.activateAgentChatEditor(project = openedProject, file = openedFile) == 1)
-          openedChatActivated = true
+        openedThreadViewHandler = { openedProject, openedFile ->
+          check(terminalHarness.activateAgentThreadViewEditor(project = openedProject, file = openedFile) == 1)
+          openedThreadViewActivated = true
         },
       ) {
         terminalHarness.awaitCreateCalls(1)
@@ -88,8 +88,8 @@ class CodexNewThreadPromptLaunchTerminalIntegrationTest {
         )
         // Close while the test Codex descriptor is still registered so terminal-close cleanup
         // does not route the fake preallocated UUID through the production app-server backend.
-        check(openedChatActivated)
-        disposeAgentChatLiveTerminalsForTest(project)
+        check(openedThreadViewActivated)
+        disposeAgentThreadViewLiveTerminalsForTest(project)
       }
     }
 }

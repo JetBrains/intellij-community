@@ -17,10 +17,10 @@ import com.intellij.agent.workbench.sessions.actions.AgentSessionsPreventSleepWh
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsRefreshAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsSelectThreadInToolWindowAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsShowArchivedThreadsAction
-import com.intellij.agent.workbench.sessions.actions.AgentSessionsSwitchSourceAndChatAction
+import com.intellij.agent.workbench.sessions.actions.AgentSessionsSwitchSourceAndAgentThreadViewAction
 import com.intellij.agent.workbench.sessions.actions.DumbAwareDefaultActionGroup
 import com.intellij.agent.workbench.settings.AgentWorkbenchSettings
-import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
+import com.intellij.agent.workbench.sessions.frame.AgentThreadViewOpenModeSettings
 import com.intellij.agent.workbench.sessions.model.AgentSessionThreadViewMode
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
@@ -176,12 +176,12 @@ class AgentSessionsGearActionsTest {
 
     assertThat(sessionsDescriptor())
       .contains("<advancedSetting")
-      .doesNotContain("id=\"agent.workbench.chat.open.in.dedicated.frame\"")
+      .doesNotContain("id=\"agent.workbench.threadView.open.in.dedicated.frame\"")
     assertThat(actionManager.getAction("AgentWorkbenchSessions.ToggleDedicatedFrame"))
       .isNotNull
       .isInstanceOf(AgentSessionsDedicatedFrameToggleAction::class.java)
 
-    AgentChatOpenModeSettings.setOpenInDedicatedFrame(true)
+    AgentThreadViewOpenModeSettings.setOpenInDedicatedFrame(true)
     val event = TestActionEvent.createTestEvent(action)
     assertThat(action.isSelected(event)).isTrue()
 
@@ -189,7 +189,7 @@ class AgentSessionsGearActionsTest {
       action.setSelected(event, false)
     }
 
-    assertThat(AgentChatOpenModeSettings.openInDedicatedFrame()).isFalse()
+    assertThat(AgentThreadViewOpenModeSettings.openInDedicatedFrame()).isFalse()
     assertThat(AgentWorkbenchSettings.getInstance().openInDedicatedFrame).isFalse()
     assertThat(AgentWorkbenchSettings.getInstance().openInDedicatedFrameOverride).isNull()
 
@@ -197,7 +197,7 @@ class AgentSessionsGearActionsTest {
       action.setSelected(event, true)
     }
 
-    assertThat(AgentChatOpenModeSettings.openInDedicatedFrame()).isTrue()
+    assertThat(AgentThreadViewOpenModeSettings.openInDedicatedFrame()).isTrue()
     assertThat(AgentWorkbenchSettings.getInstance().openInDedicatedFrame).isTrue()
     assertThat(AgentWorkbenchSettings.getInstance().openInDedicatedFrameOverride).isTrue()
   }
@@ -308,13 +308,13 @@ class AgentSessionsGearActionsTest {
   }
 
   @Test
-  fun switchSourceAndChatActionIsRegisteredWithoutDefaultShortcut() {
+  fun switchSourceAndThreadViewActionIsRegisteredWithoutDefaultShortcut() {
     val actionManager = ActionManager.getInstance()
-    val actionId = AgentWorkbenchActionIds.Sessions.SWITCH_SOURCE_AND_CHAT
+    val actionId = AgentWorkbenchActionIds.Sessions.SWITCH_SOURCE_AND_THREAD_VIEW
 
     assertThat(actionManager.getAction(actionId))
       .isNotNull
-      .isInstanceOf(AgentSessionsSwitchSourceAndChatAction::class.java)
+      .isInstanceOf(AgentSessionsSwitchSourceAndAgentThreadViewAction::class.java)
     assertThat(actionManager.getAction(actionId)?.actionUpdateThread)
       .isEqualTo(ActionUpdateThread.BGT)
 
@@ -323,7 +323,7 @@ class AgentSessionsGearActionsTest {
     val switchIndex = entries.requiredIndex(actionId)
     assertThat(switchIndex).isGreaterThan(openFrameIndex)
     val actionDescriptor = actionsDescriptor()
-      .substringAfter("id=\"AgentWorkbenchSessions.SwitchSourceAndChat\"")
+      .substringAfter("id=\"AgentWorkbenchSessions.SwitchSourceAndAgentThreadView\"")
       .substringBefore("</action>")
     assertThat(actionDescriptor).doesNotContain("keyboard-shortcut")
   }

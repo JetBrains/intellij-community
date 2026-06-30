@@ -343,7 +343,7 @@ interface AgentSessionProviderDescriptor {
     get() = false
 
   /**
-   * Whether [sessionSource] emits path/thread-scoped refresh events precise enough for active chat tabs and outlines.
+   * Whether [sessionSource] emits path/thread-scoped refresh events precise enough for active threadView tabs and outlines.
    */
   val emitsScopedRefreshSignals: Boolean
     get() = false
@@ -363,7 +363,7 @@ interface AgentSessionProviderDescriptor {
    * The required source contract is active-thread listing through [AgentSessionSource.listThreads]. Optional behaviors such as archived
    * rows, refresh events, cost hydration, and thread outlines are exposed by the focused `AgentSession*Source` capability interfaces.
    * Providers that support thread outlines must follow the role-aware [AgentSessionThreadOutlineSource.loadThreadOutline] contract so
-   * shared chat UI can render user prompts, assistant responses, and tool activity consistently across providers.
+   * shared threadView UI can render user prompts, assistant responses, and tool activity consistently across providers.
    */
   val sessionSource: AgentSessionSource
   val cliMissingMessageKey: String
@@ -383,17 +383,17 @@ interface AgentSessionProviderDescriptor {
     get() = false
 
   /**
-   * True when closing the last editor tab for a concrete chat should archive the provider thread.
+   * True when closing the last editor tab for a concrete threadView should archive the provider thread.
    * This is separate from [supportsArchiveThread], which also covers explicit user-initiated archive actions.
    */
   val archiveOnLastEditorClose: Boolean
     get() = false
 
   /**
-   * Close any open chat tab before invoking [archiveThread]. Use this for providers whose archive transport resumes
+   * Close any open threadView tab before invoking [archiveThread]. Use this for providers whose archive transport resumes
    * the session non-interactively and cannot safely run while the same session is open in a terminal.
    */
-  val closeOpenChatBeforeArchiveThread: Boolean
+  val closeOpenThreadViewBeforeArchiveThread: Boolean
     get() = false
 
   /**
@@ -523,7 +523,7 @@ interface AgentSessionProviderDescriptor {
     }
   }
 
-  fun onConversationOpened() {
+  fun onThreadViewOpened() {
   }
 
   fun recordNewSession(path: String, threadId: String, title: String, createdAtMs: Long) {
@@ -583,7 +583,7 @@ data class AgentSessionTerminalLaunchSpec(
   @JvmField val workingDirectory: String? = null,
   /**
    * Uses the IDE Terminal default shell instead of an explicit non-shell command.
-   * The embedded Agent Chat terminal passes no `shellCommand` to the Terminal tab builder in this mode.
+   * The embedded Agent Thread View terminal passes no `shellCommand` to the Terminal tab builder in this mode.
    */
   @JvmField val useTerminalDefaultShell: Boolean = false,
   /**
@@ -597,7 +597,7 @@ data class AgentSessionTerminalLaunchSpec(
   @JvmField val containerSessionId: String? = null,
   /**
    * Provider-allocated concrete session id for new-session launches.
-   * When set, Agent Chat opens the tab with the concrete identity immediately instead of a synthetic `new-*` id.
+   * When set, Agent Thread View opens the tab with the concrete identity immediately instead of a synthetic `new-*` id.
    */
   @JvmField val preallocatedSessionId: String? = null,
 )

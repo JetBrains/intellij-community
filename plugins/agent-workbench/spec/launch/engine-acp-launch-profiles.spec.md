@@ -30,7 +30,7 @@ a launch through its own runtime, with ACP being the first consumer.
 - Surface ACP catalog agents as Engine launch-profile **generation models**, so a user picks an ACP
   agent from the same New-Task profile UI used for terminal providers.
 - Launch the selected ACP agent without a terminal: prepare its ACP session against the same thread id
-  the chat tab opens with, then send the initial prompt.
+  the Thread View opens with, then send the initial prompt.
 - Keep terminal providers unchanged: the out-of-band path is engaged only for providers that register an
   `AgentSessionOutOfBandLaunch` and is otherwise inert.
 
@@ -48,16 +48,16 @@ a launch through its own runtime, with ACP being the first consumer.
 - When a matching out-of-band launcher exists for the requested provider,
   `AgentSessionLaunchService.createNewSession` must skip terminal initial-message dispatch by passing
   `AgentInitialMessageDispatchPlan.EMPTY`, and instead deliver the launch by composing
-  `AgentSessionOutOfBandLaunch.launch(...)` into the `openedChatHandler` so it runs against the opened
-  project once the chat tab is created. When no launcher matches, behavior is unchanged (terminal
-  dispatch and the original `openedChatHandler` are preserved).
+  `AgentSessionOutOfBandLaunch.launch(...)` into the `openedThread ViewHandler` so it runs against the opened
+  project once the Thread View is created. When no launcher matches, behavior is unchanged (terminal
+  dispatch and the original `openedThread ViewHandler` are preserved).
   [@test] ../../sessions/testSrc/AgentSessionLaunchServiceTest.kt
 - The out-of-band launcher receives the preallocated thread id, the normalized source path, the selected
   generation `modelId`, and the composed initial prompt, so the runtime prepares and prompts against the
-  same thread id the chat tab opened with.
+  same thread id the Thread View opened with.
 - `EngineSessionProviderDescriptor` sets `supportsPromptLaunch = true` and
   `supportsGenerationModelSelection = true`, and preallocates a concrete Engine thread id
-  (`acp:<short-uuid>`) in `buildNewSessionLaunchSpec` so the chat tab and the out-of-band launcher agree
+  (`acp:<short-uuid>`) in `buildNewSessionLaunchSpec` so the Thread View and the out-of-band launcher agree
   on the thread id.
 - `EngineSessionProviderDescriptor.listAvailableGenerationModels(project)` maps the agents reported by
   `EngineLaunchAgentProvider.availableAgents(project)` to `AgentPromptGenerationModel` entries; with no
@@ -75,7 +75,7 @@ a launch through its own runtime, with ACP being the first consumer.
 ## User Experience
 - ACP agents appear in the New-Task launch-profile generation-model picker under the Engine provider,
   labeled by their catalog display name.
-- Selecting an ACP agent and launching opens a chat tab rendering Engine custom content (no terminal),
+- Selecting an ACP agent and launching opens a Thread View rendering Engine custom content (no terminal),
   with the chosen agent prepared and the initial prompt sent.
 
 ## Data & Backend
@@ -105,8 +105,8 @@ a launch through its own runtime, with ACP being the first consumer.
 
 ## Open Questions / Risks
 - No dedicated test yet asserts the out-of-band branch end to end (it depends on a populated ACP catalog
-  and an opened chat tab). The branch is covered indirectly by `AgentSessionLaunchServiceTest`'s existing
-  prompt-launch coverage; a focused test for the EMPTY-dispatch + composed-`openedChatHandler` path should
+  and an opened Thread View). The branch is covered indirectly by `AgentSessionLaunchServiceTest`'s existing
+  prompt-launch coverage; a focused test for the EMPTY-dispatch + composed-`openedThread ViewHandler` path should
   be added.
 - `modelId` keys on catalog display name rather than a stable agent id; renaming a catalog entry would
   break a persisted profile selection. A stable agent id key is preferable once available.

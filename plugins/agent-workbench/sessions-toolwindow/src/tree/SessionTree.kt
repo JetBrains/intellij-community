@@ -3,8 +3,8 @@ package com.intellij.agent.workbench.sessions.toolwindow.tree
 // @spec community/plugins/agent-workbench/spec/sessions/agent-sessions.spec.md
 // @spec community/plugins/agent-workbench/spec/sessions/agent-sessions-thread-visibility.spec.md
 
-import com.intellij.agent.workbench.chat.AgentChatOpenTabsPresentationState
-import com.intellij.agent.workbench.chat.AgentChatTabSelection
+import com.intellij.agent.workbench.thread.view.AgentThreadViewOpenTabsPresentationState
+import com.intellij.agent.workbench.thread.view.AgentThreadViewTabSelection
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.core.parseAgentThreadIdentity
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
@@ -63,7 +63,7 @@ internal fun buildSessionTreeModel(
   visibleThreadCounts: Map<String, Int>,
   treeUiState: SessionTreeUiState,
   currentProjectScopeActive: Boolean = false,
-  openTabsPresentationState: AgentChatOpenTabsPresentationState = AgentChatOpenTabsPresentationState.EMPTY,
+  openTabsPresentationState: AgentThreadViewOpenTabsPresentationState = AgentThreadViewOpenTabsPresentationState.EMPTY,
   taskFolderSnapshot: AgentTaskFolderSnapshot = AgentTaskFolderSnapshot(),
 ): SessionTreeModel {
   val visibleProjectsResult = computeVisibleProjects(projects, visibleClosedProjectCount)
@@ -305,7 +305,7 @@ internal fun computeVisibleProjects(
 private class SessionTreeModelBuilder(
   private val visibleThreadCounts: Map<String, Int>,
   private val projectPathQualifiers: Map<String, @NlsSafe String>,
-  private val openTabsPresentationState: AgentChatOpenTabsPresentationState,
+  private val openTabsPresentationState: AgentThreadViewOpenTabsPresentationState,
   private val taskFolderSnapshot: AgentTaskFolderSnapshot,
 ) {
   private val entriesById = LinkedHashMap<SessionTreeId, SessionTreeModelEntry>()
@@ -876,7 +876,7 @@ internal sealed interface SessionTreeId {
 
 internal fun resolveSelectedSessionTreeId(
   projects: List<AgentProjectSessions>,
-  selection: AgentChatTabSelection?,
+  selection: AgentThreadViewTabSelection?,
 ): SessionTreeId? {
   if (selection == null) return null
   val identity = parseAgentThreadIdentity(selection.threadIdentity) ?: return null

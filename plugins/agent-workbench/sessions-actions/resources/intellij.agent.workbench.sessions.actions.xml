@@ -4,7 +4,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="org.jetbrains.plugins.terminal"/>
-    <module name="intellij.agent.workbench.chat"/>
+    <module name="intellij.agent.workbench.thread.view"/>
     <module name="intellij.agent.workbench.prompt.core"/>
     <module name="intellij.agent.workbench.prompt.ui"/>
     <module name="intellij.agent.workbench.sessions"/>
@@ -29,8 +29,8 @@
       <add-to-group group-id="OpenProjectWindows" anchor="after" relative-to-action="PreviousProjectWindow"/>
     </action>
     <action
-      id="AgentWorkbenchSessions.SwitchSourceAndChat"
-      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsSwitchSourceAndChatAction">
+      id="AgentWorkbenchSessions.SwitchSourceAndAgentThreadView"
+      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsSwitchSourceAndAgentThreadViewAction">
       <add-to-group group-id="OpenProjectWindows" anchor="after" relative-to-action="AgentWorkbenchSessions.OpenDedicatedFrame"/>
     </action>
     <group id="AgentWorkbenchSessions.ToolWindow.GearActions"

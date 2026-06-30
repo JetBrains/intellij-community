@@ -4,7 +4,7 @@ package com.intellij.agent.workbench.sessions.actions
 // @spec community/plugins/agent-workbench/spec/sessions/agent-terminal-sessions.spec.md
 // @spec community/plugins/agent-workbench/spec/actions/new-thread.spec.md
 
-import com.intellij.agent.workbench.chat.AgentChatDeferredStartContent
+import com.intellij.agent.workbench.thread.view.AgentThreadViewDeferredStartContent
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormatter
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextResolverService
@@ -257,7 +257,7 @@ internal class AgentSessionsInlineNewThreadPromptService internal constructor(
     entryPoint: AgentWorkbenchEntryPoint,
     handleDeferred: CompletableDeferred<AgentDeferredNewSessionHandle>,
     invocationData: AgentPromptInvocationData?,
-  ): AgentChatDeferredStartContent {
+  ): AgentThreadViewDeferredStartContent {
       val launcher = InlineNewThreadPromptLauncherBridge(projectPath = path, handleProvider = { handleDeferred.await() })
       val component = createAgentWorkbenchInlineNewThreadPromptComponent(
         project = project,
@@ -265,7 +265,7 @@ internal class AgentSessionsInlineNewThreadPromptService internal constructor(
         launcherProvider = { launcher },
         initialLaunchProfileId = profile.id,
       )
-    return AgentChatDeferredStartContent(
+    return AgentThreadViewDeferredStartContent(
       component = createAgentWorkbenchInlinePromptEditorHost(component),
       preferredFocusedComponent = component.preferredFocusedComponent,
       disposeContent = { Disposer.dispose(component) },

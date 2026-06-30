@@ -51,7 +51,7 @@ The Agent Threads tree follows IntelliJ tree conventions while adding provider-s
   available through tooltip and accessibility text.
   When the IDE is not active, a thread's first transition into `Needs attention` or `Done` after the initial loaded
   baseline emits a per-thread OS system notification through platform system notifications. On platform implementations
-  that support exact native activation callbacks, clicking the OS notification opens/focuses the matching chat tab by
+  that support exact native activation callbacks, clicking the OS notification opens/focuses the matching Thread View by
   stable path/provider/thread id. Initial loaded rows and `Running` transitions do not notify.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsActivitySummaryTest.kt
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreeStateControllerTest.kt
@@ -61,8 +61,8 @@ The Agent Threads tree follows IntelliJ tree conventions while adding provider-s
 - Selection and activation must match platform tree behavior: single-click selects, Enter/double-click opens openable rows, and double-click on openable parent rows prefers open/focus over expansion.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsSwingTreeInteractionTest.kt
 
-- Chat tab selection controls when `Done` is acknowledged. Selecting an already `Done` thread marks it read immediately.
-  If a selected thread transitions to `Done`, the tree keeps that state visible until selection leaves that chat tab,
+- Thread View tab selection controls when `Done` is acknowledged. Selecting an already `Done` thread marks it read immediately.
+  If a selected thread transitions to `Done`, the tree keeps that state visible until selection leaves that Thread View,
   including switching to another editor or closing the selected tab.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreeStateControllerTest.kt
 
@@ -81,7 +81,7 @@ The Agent Threads tree follows IntelliJ tree conventions while adding provider-s
 - Project/worktree rows expose hover-or-selection new-thread affordances and loading indicators without changing normal tree selection semantics.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
 
-- The active tree view overlays currently open pending Agent Chat tabs as ephemeral placeholders. The archived view ignores them, and placeholders are not archive, cost, or row-action targets.
+- The active tree view overlays currently open pending Agent Thread View tabs as ephemeral placeholders. The archived view ignores them, and placeholders are not archive, cost, or row-action targets.
 
 - Collapse/expand state must persist by normalized project path and must not store transient thread content.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsSwingTreeStatePersistenceTest.kt

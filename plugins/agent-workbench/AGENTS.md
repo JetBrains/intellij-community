@@ -34,7 +34,7 @@ Always pass fully-qualified test names (FQN). Simple class names do not match.
 - Single test class:
   `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionCliTest`
 - Plugin-wired editor/action test:
-  `./tests.cmd --module intellij.agent.workbench.plugin.tests --test com.intellij.agent.workbench.chat.AgentChatEditorServiceTest`
+  `./tests.cmd --module intellij.agent.workbench.plugin.tests --test com.intellij.agent.workbench.thread.view.AgentThreadViewEditorServiceTest`
 - Whole sessions package:
   `./tests.cmd --module intellij.agent.workbench.sessions.tests --test 'com.intellij.agent.workbench.sessions.*'`
 - Whole Agent Workbench test suite:

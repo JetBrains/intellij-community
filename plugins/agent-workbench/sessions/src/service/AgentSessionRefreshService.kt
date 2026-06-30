@@ -1,15 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.service
 
-import com.intellij.agent.workbench.chat.AgentChatConcreteTabSnapshot
-import com.intellij.agent.workbench.chat.AgentChatOpenTabsRefreshSnapshot
-import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindReport
-import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindRequest
-import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
-import com.intellij.agent.workbench.chat.agentChatScopedRefreshSignals
-import com.intellij.agent.workbench.chat.clearOpenConcreteAgentChatNewThreadRebindAnchors
-import com.intellij.agent.workbench.chat.collectOpenAgentChatRefreshSnapshot
-import com.intellij.agent.workbench.chat.rebindOpenPendingAgentChatTabs
+import com.intellij.agent.workbench.thread.view.AgentThreadViewConcreteTabSnapshot
+import com.intellij.agent.workbench.thread.view.AgentThreadViewOpenTabsRefreshSnapshot
+import com.intellij.agent.workbench.thread.view.AgentThreadViewPendingTabRebindReport
+import com.intellij.agent.workbench.thread.view.AgentThreadViewPendingTabRebindRequest
+import com.intellij.agent.workbench.thread.view.AgentThreadViewTabSelectionService
+import com.intellij.agent.workbench.thread.view.agentThreadViewScopedRefreshSignals
+import com.intellij.agent.workbench.thread.view.clearOpenConcreteAgentThreadViewNewThreadRebindAnchors
+import com.intellij.agent.workbench.thread.view.collectOpenAgentThreadViewRefreshSnapshot
+import com.intellij.agent.workbench.thread.view.rebindOpenPendingAgentThreadViewTabs
 import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.core.parseAgentWorkbenchPathOrNull
@@ -65,18 +65,18 @@ class AgentSessionRefreshService internal constructor(
   private val scheduleVfsRefresh: (Set<String>) -> Unit = ::scheduleAgentWorkbenchVfsRefresh,
   private val isVfsRefreshOnStatusUpdatesEnabled: (String) -> Boolean =
     AgentWorkbenchProjectRuntimeConfigs::isRefreshVfsOnStatusUpdatesEnabled,
-  private val openAgentChatSnapshotProvider: suspend () -> AgentChatOpenTabsRefreshSnapshot =
-    ::collectOpenAgentChatRefreshSnapshot,
-  private val openAgentChatPendingTabsBinder: suspend (
+  private val openAgentThreadViewSnapshotProvider: suspend () -> AgentThreadViewOpenTabsRefreshSnapshot =
+    ::collectOpenAgentThreadViewRefreshSnapshot,
+  private val openAgentThreadViewPendingTabsBinder: suspend (
     AgentSessionProvider,
-    Map<String, List<AgentChatPendingTabRebindRequest>>,
-  ) -> AgentChatPendingTabRebindReport = ::rebindOpenPendingAgentChatTabs,
+    Map<String, List<AgentThreadViewPendingTabRebindRequest>>,
+  ) -> AgentThreadViewPendingTabRebindReport = ::rebindOpenPendingAgentThreadViewTabs,
   private val clearOpenConcreteNewThreadRebindAnchors: (
     AgentSessionProvider,
-    Map<String, List<AgentChatConcreteTabSnapshot>>,
-  ) -> Int = ::clearOpenConcreteAgentChatNewThreadRebindAnchors,
+    Map<String, List<AgentThreadViewConcreteTabSnapshot>>,
+  ) -> Int = ::clearOpenConcreteAgentThreadViewNewThreadRebindAnchors,
   private val scopedRefreshSignalsProvider: (AgentSessionProvider) -> kotlinx.coroutines.flow.Flow<AgentSessionSourceUpdateEvent> = { provider ->
-    agentChatScopedRefreshSignals(provider)
+    agentThreadViewScopedRefreshSignals(provider)
   },
   private val providerDescriptorProvider: (AgentSessionProvider) -> AgentSessionProviderDescriptor? = AgentSessionProviders::find,
   private val toolWindowVisibleFlow: StateFlow<Boolean> = MutableStateFlow(true),
@@ -116,9 +116,9 @@ class AgentSessionRefreshService internal constructor(
     isRefreshGateActive = ::isSourceRefreshGateActive,
     scheduleVfsRefresh = scheduleVfsRefresh,
     isVfsRefreshOnStatusUpdatesEnabled = isVfsRefreshOnStatusUpdatesEnabled,
-    openAgentChatSnapshotProvider = openAgentChatSnapshotProvider,
+    openAgentThreadViewSnapshotProvider = openAgentThreadViewSnapshotProvider,
     scopedRefreshSignalsProvider = scopedRefreshSignalsProvider,
-    openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinder,
+    openAgentThreadViewPendingTabsBinder = openAgentThreadViewPendingTabsBinder,
     clearOpenConcreteNewThreadRebindAnchors = clearOpenConcreteNewThreadRebindAnchors,
     providerDescriptorProvider = providerDescriptorProvider,
     archiveTransitionSuppressions = archiveTransitionSuppressions,
@@ -181,7 +181,7 @@ class AgentSessionRefreshService internal constructor(
       val name: String,
       val dedicated: Boolean,
       val sessionsVisible: Boolean,
-      val chatActive: Boolean,
+      val threadViewActive: Boolean,
     )
 
     val signals = openProjects.map { project ->
@@ -189,18 +189,18 @@ class AgentSessionRefreshService internal constructor(
         name = project.name,
         dedicated = AgentWorkbenchDedicatedFrameProjectManager.isDedicatedProject(project),
         sessionsVisible = isSessionsToolWindowVisible(project),
-        chatActive = isAgentChatActive(project),
+        threadViewActive = isAgentThreadViewActive(project),
       )
     }
 
     val uiSignalActive = signals.any { signal ->
-      signal.sessionsVisible || signal.chatActive
+      signal.sessionsVisible || signal.threadViewActive
     }
     val decision = uiSignalActive || hasLoadedPaths
 
     LOG.debug {
       val signalText = signals.joinToString(separator = ";") { signal ->
-        "${signal.name}[dedicated=${signal.dedicated},sessionsVisible=${signal.sessionsVisible},chatActive=${signal.chatActive}]"
+        "${signal.name}[dedicated=${signal.dedicated},sessionsVisible=${signal.sessionsVisible},threadViewActive=${signal.threadViewActive}]"
       }
       "Source refresh gate decision=$decision (openProjects=${openProjects.size}, uiSignalActive=$uiSignalActive, hasLoadedPaths=$hasLoadedPaths, signals=$signalText)"
     }
@@ -223,10 +223,10 @@ class AgentSessionRefreshService internal constructor(
 
   fun rebindPendingTabsInBackground(
     provider: AgentSessionProvider,
-    requestsByProjectPath: Map<String, List<AgentChatPendingTabRebindRequest>>,
+    requestsByProjectPath: Map<String, List<AgentThreadViewPendingTabRebindRequest>>,
   ): Job {
     return serviceScope.launch(Dispatchers.IO) {
-      openAgentChatPendingTabsBinder(provider, requestsByProjectPath)
+      openAgentThreadViewPendingTabsBinder(provider, requestsByProjectPath)
       val scopedPaths = requestsByProjectPath.keys
         .asSequence()
         .map(::normalizeAgentWorkbenchPath)
@@ -300,9 +300,9 @@ private fun isSessionsToolWindowVisible(project: Project): Boolean {
     ?.isVisible == true
 }
 
-private suspend fun isAgentChatActive(project: Project): Boolean {
+private suspend fun isAgentThreadViewActive(project: Project): Boolean {
   return runCatching {
-    val selectionService = project.serviceAsync<AgentChatTabSelectionService>()
-    selectionService.selectedChatTab.value != null || selectionService.hasOpenChatTabs()
+    val selectionService = project.serviceAsync<AgentThreadViewTabSelectionService>()
+    selectionService.selectedThreadViewTab.value != null || selectionService.hasOpenThreadViewTabs()
   }.getOrDefault(false)
 }

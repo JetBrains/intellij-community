@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.service
 
-import com.intellij.agent.workbench.chat.addContextToOpenTopLevelAgentChat
-import com.intellij.agent.workbench.chat.collectOpenAgentChatAddContextTargetCandidates
+import com.intellij.agent.workbench.thread.view.addContextToOpenTopLevelAgentThreadView
+import com.intellij.agent.workbench.thread.view.collectOpenAgentThreadViewAddContextTargetCandidates
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextTargetCandidate
@@ -46,7 +46,7 @@ internal class AgentSessionPromptLauncherBridge internal constructor(
   private val openProjectPathResolver: (Project) -> String? = ::resolveOpenProjectIdentityPath,
   private val providerPreferencesLoader: () -> AgentPromptLauncherBridge.ProviderPreferences = { AgentPromptLauncherBridge.ProviderPreferences() },
   private val providerPreferencesSaver: (AgentPromptLauncherBridge.ProviderPreferences) -> Unit = {},
-  private val addContextToOpenChatTargetHandler: suspend (AgentPromptAddContextToTargetRequest) -> AgentPromptAddContextToTargetResult = ::addContextItemsToOpenChatTarget,
+  private val addContextToOpenThreadViewTargetHandler: suspend (AgentPromptAddContextToTargetRequest) -> AgentPromptAddContextToTargetResult = ::addContextItemsToOpenThreadViewTarget,
 ) : AgentPromptLauncherBridge {
 
   @Suppress("unused")
@@ -65,7 +65,7 @@ internal class AgentSessionPromptLauncherBridge internal constructor(
     providerPreferencesSaver = { prefs -> service<AgentSessionUiPreferencesStateService>().setProviderPreferences(prefs) },
     sourceProjectResolver = ::findOpenSourceProjectByPath,
     openProjectPathResolver = ::resolveOpenProjectIdentityPath,
-    addContextToOpenChatTargetHandler = ::addContextItemsToOpenChatTarget,
+    addContextToOpenThreadViewTargetHandler = ::addContextItemsToOpenThreadViewTarget,
   )
 
   internal constructor(
@@ -82,7 +82,7 @@ internal class AgentSessionPromptLauncherBridge internal constructor(
     openProjectPathResolver = ::resolveOpenProjectIdentityPath,
     providerPreferencesLoader = { AgentPromptLauncherBridge.ProviderPreferences() },
     providerPreferencesSaver = {},
-    addContextToOpenChatTargetHandler = ::addContextItemsToOpenChatTarget,
+    addContextToOpenThreadViewTargetHandler = ::addContextItemsToOpenThreadViewTarget,
   )
 
   internal constructor(
@@ -95,7 +95,7 @@ internal class AgentSessionPromptLauncherBridge internal constructor(
     openProjectPathResolver: (Project) -> String? = ::resolveOpenProjectIdentityPath,
     providerPreferencesLoader: () -> AgentPromptLauncherBridge.ProviderPreferences = { AgentPromptLauncherBridge.ProviderPreferences() },
     providerPreferencesSaver: (AgentPromptLauncherBridge.ProviderPreferences) -> Unit = {},
-    addContextToOpenChatTarget: suspend (AgentPromptAddContextToTargetRequest) -> AgentPromptAddContextToTargetResult = ::addContextItemsToOpenChatTarget,
+    addContextToOpenThreadViewTarget: suspend (AgentPromptAddContextToTargetRequest) -> AgentPromptAddContextToTargetResult = ::addContextItemsToOpenThreadViewTarget,
   ) : this(
     launchPromptRequest = { request, _ -> launchPromptRequest(request) },
     stateFlowProvider = stateFlowProvider,
@@ -106,7 +106,7 @@ internal class AgentSessionPromptLauncherBridge internal constructor(
     openProjectPathResolver = openProjectPathResolver,
     providerPreferencesLoader = providerPreferencesLoader,
     providerPreferencesSaver = providerPreferencesSaver,
-    addContextToOpenChatTargetHandler = addContextToOpenChatTarget,
+    addContextToOpenThreadViewTargetHandler = addContextToOpenThreadViewTarget,
   )
 
   override suspend fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
@@ -163,11 +163,11 @@ internal class AgentSessionPromptLauncherBridge internal constructor(
   }
 
   override suspend fun listAddContextTargetCandidates(projectPath: String): List<AgentPromptAddContextTargetCandidate> {
-    return collectOpenAgentChatAddContextTargetCandidates(projectPath)
+    return collectOpenAgentThreadViewAddContextTargetCandidates(projectPath)
   }
 
-  override suspend fun addContextToOpenChatTarget(request: AgentPromptAddContextToTargetRequest): AgentPromptAddContextToTargetResult {
-    return addContextToOpenChatTargetHandler.invoke(request)
+  override suspend fun addContextToOpenThreadViewTarget(request: AgentPromptAddContextToTargetRequest): AgentPromptAddContextToTargetResult {
+    return addContextToOpenThreadViewTargetHandler.invoke(request)
   }
 
   override suspend fun listReusablePromptSourceEntries(
@@ -246,7 +246,7 @@ private fun buildWorkingProjectPathCandidates(
   val promptProjectPathContext = getAgentPromptProjectPathContext(dataContext)
   addCandidate(path = promptProjectPathContext?.path, displayName = promptProjectPathContext?.displayName)
 
-  addCandidate(path = selectedChatSourceProjectPath(project), displayName = null)
+  addCandidate(path = selectedThreadViewSourceProjectPath(project), displayName = null)
 
   val recentProjectsManager = RecentProjectsManager.getInstance() as? RecentProjectsManagerBase
   recentProjectsManager
@@ -262,11 +262,11 @@ private fun buildWorkingProjectPathCandidates(
   return candidatesByPath.values.toList()
 }
 
-private suspend fun addContextItemsToOpenChatTarget(
+private suspend fun addContextItemsToOpenThreadViewTarget(
   request: AgentPromptAddContextToTargetRequest,
 ): AgentPromptAddContextToTargetResult {
   val target = request.target
-  return addContextToOpenTopLevelAgentChat(
+  return addContextToOpenTopLevelAgentThreadView(
     projectPath = target.projectPath,
     provider = target.provider,
     threadId = target.threadId,

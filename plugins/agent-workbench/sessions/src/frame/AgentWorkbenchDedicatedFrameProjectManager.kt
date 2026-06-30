@@ -22,7 +22,7 @@ import kotlin.io.path.invariantSeparatorsPathString
 
 object AgentWorkbenchDedicatedFrameProjectManager {
   private val projectPath: Path by lazy {
-    PathManager.getConfigDir().resolve("agent-workbench-chat-frame")
+    PathManager.getConfigDir().resolve("agent-workbench-thread-view-frame")
   }
 
   fun dedicatedProjectPath(): String {

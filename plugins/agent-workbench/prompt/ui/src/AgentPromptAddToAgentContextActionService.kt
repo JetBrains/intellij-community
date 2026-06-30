@@ -97,18 +97,18 @@ internal class AgentPromptAddToAgentContextActionService(
     target: AgentPromptAddContextTargetCandidate,
     popupService: AgentPromptPalettePopupService,
   ) {
-    val result = AgentPromptLaunchers.find()?.addContextToOpenChatTarget(
+    val result = AgentPromptLaunchers.find()?.addContextToOpenThreadViewTarget(
       AgentPromptAddContextToTargetRequest(
         target = target,
         contextItems = contextItems,
       )
     ) ?: AgentPromptAddContextToTargetResult.UNAVAILABLE
     when (result) {
-      AgentPromptAddContextToTargetResult.ADDED_TO_CHAT -> {
+      AgentPromptAddContextToTargetResult.ADDED_TO_THREAD_VIEW -> {
         showStatus(AgentPromptBundle.message("popup.status.context.added"))
         return
       }
-      AgentPromptAddContextToTargetResult.ALREADY_ADDED_TO_CHAT -> {
+      AgentPromptAddContextToTargetResult.ALREADY_ADDED_TO_THREAD_VIEW -> {
         showStatus(AgentPromptBundle.message("popup.status.context.already.added"))
         return
       }

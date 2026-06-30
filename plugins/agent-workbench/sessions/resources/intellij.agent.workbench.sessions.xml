@@ -2,13 +2,13 @@
   <resource-bundle>messages.AgentSessionsBundle</resource-bundle>
 
   <applicationListeners>
-    <listener class="com.intellij.agent.workbench.sessions.frame.AgentChatThreadOutlineAvailabilitySettingsListener"
+    <listener class="com.intellij.agent.workbench.sessions.frame.AgentThreadViewThreadOutlineAvailabilitySettingsListener"
               topic="com.intellij.agent.workbench.settings.AgentWorkbenchSettingsListener"/>
   </applicationListeners>
 
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.agent.workbench.chat"/>
+    <module name="intellij.agent.workbench.thread.view"/>
     <module name="intellij.platform.ai.agent.common"/>
     <module name="intellij.platform.ai.agent.core"/>
     <module name="intellij.agent.workbench.prompt.core"/>
@@ -25,7 +25,7 @@
     <statistics.validation.customValidationRule
       implementation="com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchProviderValidationRule"/>
     <postStartupActivity implementation="com.intellij.agent.workbench.sessions.sleep.AgentSessionSleepPreventionStartupActivity"/>
-    <postStartupActivity implementation="com.intellij.agent.workbench.sessions.service.AgentChatUnreadAcknowledgementStartupActivity"/>
+    <postStartupActivity implementation="com.intellij.agent.workbench.sessions.service.AgentThreadViewUnreadAcknowledgementStartupActivity"/>
     <notificationGroup id="Agent Workbench Sessions" displayType="BALLOON" bundle="messages.AgentSessionsBundle"
                        key="notification.group.agent.workbench.sessions"/>
     <applicationConfigurable
@@ -55,17 +55,17 @@
       visible="false"/>
     <projectFrameCapabilitiesProvider implementation="com.intellij.agent.workbench.sessions.frame.AgentWorkbenchProjectFrameCapabilitiesProvider"/>
     <toolWindow
-      id="agent.workbench.chat.thread.outline"
+      id="agent.workbench.thread.view.thread.outline"
       anchor="left"
       icon="com.intellij.agent.workbench.sessions.icons.AgentWorkbenchSessionsIcons.ThreadOutline"
       secondary="true"
       canCloseContents="false"
-      factoryClass="com.intellij.agent.workbench.sessions.frame.AgentChatThreadOutlineToolWindowFactory"/>
+      factoryClass="com.intellij.agent.workbench.sessions.frame.AgentThreadViewThreadOutlineToolWindowFactory"/>
     <projectFrameToolWindowLayout id="agent.workbench.dedicated" frameType="AGENT_DEDICATED" applyMode="forceOnce" migrationVersion="5">
       <toolWindow id="Project" register="false"/>
       <toolWindow id="Structure" register="false"/>
       <toolWindow id="agent.workbench.sessions" anchor="left" visible="true" showStripeButton="true" weight="0.25" split="false"/>
-      <toolWindow id="agent.workbench.chat.thread.outline" anchor="left" visible="true" showStripeButton="true" weight="0.25" split="true"/>
+      <toolWindow id="agent.workbench.thread.view.thread.outline" anchor="left" visible="true" showStripeButton="true" weight="0.25" split="true"/>
       <toolWindow id="Terminal" anchor="bottom" visible="false" showStripeButton="true"/>
     </projectFrameToolWindowLayout>
     <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="MainToolbarVCSGroup"/>

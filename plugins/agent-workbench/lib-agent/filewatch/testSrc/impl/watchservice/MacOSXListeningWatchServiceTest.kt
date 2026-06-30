@@ -75,7 +75,7 @@ class MacOSXListeningWatchServiceTest {
   @Test
   fun immediateFileChangeFlowDeliversLongLivedAppendFdBeforeClose(): Unit = runBlocking(Dispatchers.IO) {
     // Codex keeps the rollout JSONL fd open for the entire session lifetime. FSEvents alone
-    // withholds MODIFY events until the fd is closed, so active chat tabs subscribe to their
+    // withholds MODIFY events until the fd is closed, so active threadView tabs subscribe to their
     // concrete session file with kqueue vnode events.
     assumeMacOS()
     val file = tempDir.resolve("rollout-long-lived.jsonl")

@@ -792,7 +792,7 @@ class AgentPromptPaletteSubmitControllerTest {
       override val newSessionLabelKey: String = displayNameKey
       override val promptOptions: List<AgentPromptProviderOption> = promptOptions
       override val menuCommands: List<AgentSessionMenuCommand> = if (provider == AgentSessionProvider.from("claude")) {
-        listOf(AgentSessionMenuCommand("/rename", "[title]"))
+        listOf(AgentSessionMenuCommand("/mcp"), AgentSessionMenuCommand("/rename", "[title]"))
       }
       else {
         emptyList()

@@ -8,7 +8,7 @@ import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.TestAgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 import com.intellij.platform.ai.agent.sessions.core.providers.InMemoryAgentSessionProviderRegistry
-import com.intellij.agent.workbench.settings.AGENT_WORKBENCH_CHAT_SETTINGS_COMPONENT_ID
+import com.intellij.agent.workbench.settings.AGENT_WORKBENCH_THREAD_VIEW_SETTINGS_COMPONENT_ID
 import com.intellij.agent.workbench.settings.AgentWorkbenchCheckboxSetting
 import com.intellij.agent.workbench.settings.AgentWorkbenchSettings
 import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsComponent
@@ -82,7 +82,7 @@ class AgentWorkbenchSettingsConfigurableTest {
         configurable.reset()
 
         val dedicatedFrameCheckBox =
-          component.checkBox(AgentSessionsBundle.message("settings.agent.workbench.chat.open.in.dedicated.frame"))
+          component.checkBox(AgentSessionsBundle.message("settings.agent.workbench.thread.view.open.in.dedicated.frame"))
         val currentProjectOnlyCheckBox =
           component.checkBox(AgentSessionsBundle.message("settings.agent.workbench.agent.threads.current.project.only"))
         val mainToolbarActivityCheckBox =
@@ -178,7 +178,7 @@ class AgentWorkbenchSettingsConfigurableTest {
 
         assertThat(component.titledSeparatorTexts())
           .containsSubsequence(
-            AgentSessionsBundle.message("settings.agent.workbench.chat.group"),
+            AgentSessionsBundle.message("settings.agent.workbench.thread.view.group"),
             AgentSessionsBundle.message("settings.agent.workbench.general.group"),
             AgentSessionsBundle.message("settings.agent.workbench.status.bar.widgets.group"),
           )
@@ -200,8 +200,8 @@ class AgentWorkbenchSettingsConfigurableTest {
   }
 
   @Test
-  fun configurableGroupsRegisteredChatSettingsComponentWithDedicatedFrameSetting(@TestDisposable disposable: Disposable) {
-    AgentWorkbenchSettingsContributors.EP_NAME.point.registerExtension(TestChatSettingsComponentContributor(), disposable)
+  fun configurableGroupsRegisteredThreadViewSettingsComponentWithDedicatedFrameSetting(@TestDisposable disposable: Disposable) {
+    AgentWorkbenchSettingsContributors.EP_NAME.point.registerExtension(TestThreadViewSettingsComponentContributor(), disposable)
 
     runInEdtAndWait {
       val configurable = AgentWorkbenchSettingsConfigurable()
@@ -211,8 +211,8 @@ class AgentWorkbenchSettingsConfigurableTest {
 
         assertThat(component.componentsOfType(JBCheckBox::class.java).map { it.text })
           .containsSubsequence(
-            AgentSessionsBundle.message("settings.agent.workbench.chat.open.in.dedicated.frame"),
-            TEST_CHAT_COMPONENT_CHECKBOX_TEXT,
+            AgentSessionsBundle.message("settings.agent.workbench.thread.view.open.in.dedicated.frame"),
+            TEST_THREAD_VIEW_COMPONENT_CHECKBOX_TEXT,
             AgentSessionsBundle.message("settings.agent.workbench.show.activity.in.main.toolbar"),
             AgentSessionsBundle.message("advanced.setting.agent.workbench.prevent.system.sleep.while.working"),
           )
@@ -360,15 +360,15 @@ class AgentWorkbenchSettingsConfigurableTest {
     }
   }
 
-  private class TestChatSettingsComponentContributor : AgentWorkbenchSettingsContributor {
+  private class TestThreadViewSettingsComponentContributor : AgentWorkbenchSettingsContributor {
     override fun components(): List<AgentWorkbenchSettingsComponent> {
       return listOf(
         AgentWorkbenchSettingsComponent(
-          id = AGENT_WORKBENCH_CHAT_SETTINGS_COMPONENT_ID,
-          displayName = "Chat",
+          id = AGENT_WORKBENCH_THREAD_VIEW_SETTINGS_COMPONENT_ID,
+          displayName = "ThreadView",
           checkboxSettings = listOf(
             AgentWorkbenchCheckboxSetting(
-              text = TEST_CHAT_COMPONENT_CHECKBOX_TEXT,
+              text = TEST_THREAD_VIEW_COMPONENT_CHECKBOX_TEXT,
               description = null,
               isSelected = { false },
               setSelected = {},
@@ -403,7 +403,7 @@ class AgentWorkbenchSettingsConfigurableTest {
 
   companion object {
     private const val TEST_CONTRIBUTOR_CHECKBOX_TEXT = "Test provider setting"
-    private const val TEST_CHAT_COMPONENT_CHECKBOX_TEXT = "Test chat setting"
+    private const val TEST_THREAD_VIEW_COMPONENT_CHECKBOX_TEXT = "Test threadView setting"
     private const val TEST_STATUS_BAR_WIDGET_CHECKBOX_TEXT = "Test status bar widget"
     private const val TEST_PROVIDER_FEATURE_CHECKBOX_TEXT = "Test provider feature"
     private const val TEST_PROVIDER_FEATURE_CHECKBOX_DESCRIPTION = "Test provider feature description"

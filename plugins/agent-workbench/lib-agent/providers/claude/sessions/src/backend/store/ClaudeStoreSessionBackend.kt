@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ai.agent.claude.sessions.backend.store
 
-// @spec community/plugins/agent-workbench/spec/chat/agent-chat-structure-view.spec.md
+// @spec community/plugins/agent-workbench/spec/thread-view/agent-thread-view-structure.spec.md
 // @spec community/plugins/agent-workbench/spec/sessions/agent-sessions-refresh.spec.md
 // @spec community/plugins/agent-workbench/spec/sessions/agent-sessions-claude-hooks.spec.md
 

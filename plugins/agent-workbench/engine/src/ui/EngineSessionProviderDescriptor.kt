@@ -66,7 +66,7 @@ internal class EngineSessionProviderDescriptor(
     AgentSessionTerminalLaunchSpec(command = emptyList(), useTerminalDefaultShell = true)
 
   override suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec =
-  // Preallocate the concrete Engine thread id so the chat tab opens with it and the out-of-band ACP
+  // Preallocate the concrete Engine thread id so the threadView tab opens with it and the out-of-band ACP
     // launcher can prepare/send against the same id. No terminal: the tab renders custom content.
     AgentSessionTerminalLaunchSpec(
       command = emptyList(),

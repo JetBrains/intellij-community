@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.service
 
-import com.intellij.agent.workbench.chat.AgentChatConcreteTabSnapshot
-import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindReport
-import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindRequest
-import com.intellij.agent.workbench.chat.AgentChatPendingTabSnapshot
-import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
+import com.intellij.agent.workbench.thread.view.AgentThreadViewConcreteTabSnapshot
+import com.intellij.agent.workbench.thread.view.AgentThreadViewPendingTabRebindReport
+import com.intellij.agent.workbench.thread.view.AgentThreadViewPendingTabRebindRequest
+import com.intellij.agent.workbench.thread.view.AgentThreadViewPendingTabSnapshot
+import com.intellij.agent.workbench.thread.view.AgentThreadViewTabRebindTarget
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
@@ -30,15 +30,15 @@ private const val PROVIDER_REFRESH_HINT_MAX_LISTED_THREAD_IDS_PER_PATH = 200
 
 internal class AgentSessionThreadRebindSupport(
   private val provider: AgentSessionProvider,
-  internal val canBindPendingOpenChatTabs: Boolean,
+  internal val canBindPendingOpenThreadViewTabs: Boolean,
   private val canRebindConcreteNewThreads: Boolean,
-  private val openAgentChatPendingTabsBinder: suspend (
+  private val openAgentThreadViewPendingTabsBinder: suspend (
     AgentSessionProvider,
-    Map<String, List<AgentChatPendingTabRebindRequest>>,
-  ) -> AgentChatPendingTabRebindReport,
+    Map<String, List<AgentThreadViewPendingTabRebindRequest>>,
+  ) -> AgentThreadViewPendingTabRebindReport,
   private val clearOpenConcreteNewThreadRebindAnchors: (
     AgentSessionProvider,
-    Map<String, List<AgentChatConcreteTabSnapshot>>,
+    Map<String, List<AgentThreadViewConcreteTabSnapshot>>,
   ) -> Int,
 ) {
   private val pendingThreadAmbiguityLock = Any()
@@ -48,13 +48,13 @@ internal class AgentSessionThreadRebindSupport(
     targetPaths: Set<String>,
     outcomes: Map<String, ProviderRefreshOutcome>,
     knownThreadIdsByPath: Map<String, Set<String>>,
-    pendingTabsByPath: Map<String, List<AgentChatPendingTabSnapshot>>,
+    pendingTabsByPath: Map<String, List<AgentThreadViewPendingTabSnapshot>>,
     openConcreteThreadIdentitiesByPath: Map<String, Set<String>> = emptyMap(),
   ): Map<String, Set<String>> {
     if (targetPaths.isEmpty()) {
       return emptyMap()
     }
-    val effectivePendingTabsByPath = if (canBindPendingOpenChatTabs) pendingTabsByPath else emptyMap()
+    val effectivePendingTabsByPath = if (canBindPendingOpenThreadViewTabs) pendingTabsByPath else emptyMap()
 
     val hintThreadIdsByPath = LinkedHashMap<String, LinkedHashSet<String>>()
     for (path in targetPaths) {
@@ -156,15 +156,15 @@ internal class AgentSessionThreadRebindSupport(
     }
   }
 
-  suspend fun bindPendingOpenChatTabs(
+  suspend fun bindPendingOpenThreadViewTabs(
     outcomes: Map<String, ProviderRefreshOutcome>,
     refreshId: Long,
     allowedThreadIdsByPath: Map<String, Set<String>>? = null,
     refreshHintsByPath: Map<String, AgentSessionRefreshHints> = emptyMap(),
-    pendingTabsByPath: Map<String, List<AgentChatPendingTabSnapshot>> = emptyMap(),
+    pendingTabsByPath: Map<String, List<AgentThreadViewPendingTabSnapshot>> = emptyMap(),
     projectDirectoriesByPath: Map<String, String> = emptyMap(),
   ) {
-    if (!canBindPendingOpenChatTabs || pendingTabsByPath.isEmpty()) {
+    if (!canBindPendingOpenThreadViewTabs || pendingTabsByPath.isEmpty()) {
       clearPendingThreadAmbiguityState()
       return
     }
@@ -178,7 +178,7 @@ internal class AgentSessionThreadRebindSupport(
       return
     }
 
-    val candidatesByPath = LinkedHashMap<String, MutableList<AgentChatTabRebindTarget>>()
+    val candidatesByPath = LinkedHashMap<String, MutableList<AgentThreadViewTabRebindTarget>>()
     for ((path, outcome) in outcomes) {
       val threads = outcome.threads ?: continue
       val hasEligiblePendingTabs = eligiblePendingTabsByPath[path]?.isNotEmpty() == true
@@ -190,7 +190,7 @@ internal class AgentSessionThreadRebindSupport(
         if (thread.provider != provider) continue
         if (allowedThreadIds != null && thread.id !in allowedThreadIds) continue
         candidatesByPath.getOrPut(path) { ArrayList() }.add(
-          buildAgentSessionChatRebindTarget(
+          buildAgentSessionThreadViewRebindTarget(
             path = path,
             projectDirectory = projectDirectoriesByPath[path],
             provider = provider,
@@ -215,7 +215,7 @@ internal class AgentSessionThreadRebindSupport(
       val pathCandidates = candidatesByPath.getOrPut(path) { ArrayList(rebindCandidates.size) }
       for ((threadId, title, updatedAt, activity) in rebindCandidates) {
         pathCandidates.add(
-          buildAgentSessionChatRebindTarget(
+          buildAgentSessionThreadViewRebindTarget(
             path = path,
             projectDirectory = projectDirectoriesByPath[path],
             provider = provider,
@@ -232,7 +232,7 @@ internal class AgentSessionThreadRebindSupport(
       return
     }
 
-    val matchResult = PendingAgentChatTabMatcher.match(
+    val matchResult = PendingAgentThreadViewTabMatcher.match(
       pendingTabsByPath = eligiblePendingTabsByPath,
       candidatesByPath = candidatesByPath,
       preWindowMs = PENDING_THREAD_MATCH_PRE_WINDOW_MS,
@@ -250,10 +250,10 @@ internal class AgentSessionThreadRebindSupport(
       return
     }
 
-    val requestsByPath = LinkedHashMap<String, List<AgentChatPendingTabRebindRequest>>(bindingsByPath.size)
+    val requestsByPath = LinkedHashMap<String, List<AgentThreadViewPendingTabRebindRequest>>(bindingsByPath.size)
     for ((path, bindings) in bindingsByPath) {
       requestsByPath[path] = bindings.map { binding ->
-        AgentChatPendingTabRebindRequest(
+        AgentThreadViewPendingTabRebindRequest(
           pendingTabKey = binding.pendingTabKey,
           pendingThreadIdentity = binding.pendingThreadIdentity,
           target = binding.target,
@@ -261,10 +261,10 @@ internal class AgentSessionThreadRebindSupport(
       }
     }
 
-    val rebindReport = openAgentChatPendingTabsBinder(provider, requestsByPath)
+    val rebindReport = openAgentThreadViewPendingTabsBinder(provider, requestsByPath)
 
     LOG.debug {
-      "Provider refresh id=$refreshId provider=${provider.value} rebound pending chat tabs " +
+      "Provider refresh id=$refreshId provider=${provider.value} rebound pending threadView tabs " +
       "(reboundBindings=${rebindReport.reboundBindings}, reboundFiles=${rebindReport.reboundFiles}, " +
       "requestedBindings=${rebindReport.requestedBindings}, candidatePaths=${candidatesByPath.size}, matchedPaths=${bindingsByPath.size})"
     }
@@ -272,16 +272,16 @@ internal class AgentSessionThreadRebindSupport(
     return
   }
 
-  suspend fun clearStaleConcreteOpenChatNewThreadRebindAnchors(
+  suspend fun clearStaleConcreteOpenThreadViewNewThreadRebindAnchors(
     refreshId: Long,
-    concreteTabsByPath: Map<String, List<AgentChatConcreteTabSnapshot>> = emptyMap(),
+    concreteTabsByPath: Map<String, List<AgentThreadViewConcreteTabSnapshot>> = emptyMap(),
   ) {
     if (!canRebindConcreteNewThreads || concreteTabsByPath.isEmpty()) {
       return
     }
 
     val nowMs = System.currentTimeMillis()
-    val staleTabsByPath = LinkedHashMap<String, List<AgentChatConcreteTabSnapshot>>()
+    val staleTabsByPath = LinkedHashMap<String, List<AgentThreadViewConcreteTabSnapshot>>()
     for ((path, tabs) in concreteTabsByPath) {
       if (tabs.isEmpty()) {
         continue
@@ -310,10 +310,10 @@ internal class AgentSessionThreadRebindSupport(
   }
 
   private fun selectPendingTabsEligibleForRebind(
-    pendingTabsByPath: Map<String, List<AgentChatPendingTabSnapshot>>,
+    pendingTabsByPath: Map<String, List<AgentThreadViewPendingTabSnapshot>>,
     allowedThreadIdsByPath: Map<String, Set<String>>?,
     nowMs: Long,
-  ): Map<String, List<AgentChatPendingTabSnapshot>> {
+  ): Map<String, List<AgentThreadViewPendingTabSnapshot>> {
     if (pendingTabsByPath.isEmpty()) {
       return emptyMap()
     }
@@ -322,7 +322,7 @@ internal class AgentSessionThreadRebindSupport(
       return pendingTabsByPath.filterValues { pendingTabs -> pendingTabs.isNotEmpty() }
     }
 
-    val eligibleByPath = LinkedHashMap<String, List<AgentChatPendingTabSnapshot>>()
+    val eligibleByPath = LinkedHashMap<String, List<AgentThreadViewPendingTabSnapshot>>()
     for ((path, pendingTabs) in pendingTabsByPath) {
       if (pendingTabs.isEmpty()) {
         continue
@@ -412,14 +412,14 @@ private data class PendingThreadAmbiguityState(
   @JvmField val lastWarnedAtMs: Long?,
 )
 
-private fun AgentChatPendingTabSnapshot.isEligibleForNoBaselineAutoBind(nowMs: Long): Boolean {
+private fun AgentThreadViewPendingTabSnapshot.isEligibleForNoBaselineAutoBind(nowMs: Long): Boolean {
   val createdAtMs = pendingCreatedAtMs ?: return false
   return !pendingLaunchMode.isNullOrBlank() &&
          nowMs >= createdAtMs &&
          nowMs - createdAtMs <= PENDING_THREAD_NO_BASELINE_AUTO_BIND_MAX_AGE_MS
 }
 
-internal fun buildAgentSessionChatRebindTarget(
+internal fun buildAgentSessionThreadViewRebindTarget(
   path: String,
   projectDirectory: String? = null,
   provider: AgentSessionProvider,
@@ -427,8 +427,8 @@ internal fun buildAgentSessionChatRebindTarget(
   title: String,
   activity: AgentThreadActivity,
   updatedAt: Long,
-): AgentChatTabRebindTarget {
-  return AgentChatTabRebindTarget(
+): AgentThreadViewTabRebindTarget {
+  return AgentThreadViewTabRebindTarget(
     projectPath = normalizeAgentWorkbenchPath(path),
     projectDirectory = projectDirectory?.takeIf { it.isNotBlank() }?.let(::normalizeAgentWorkbenchPath),
     provider = provider,

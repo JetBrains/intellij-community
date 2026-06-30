@@ -5,8 +5,8 @@ targets:
   - ../../lib-agent/core/src/session/AgentSessionModels.kt
   - ../../lib-agent/providers/terminal/sessions/src/**/*.kt
   - ../../lib-agent/providers/terminal/sessions/testSrc/*.kt
-  - ../../chat/src/AgentChatTerminalTabSupport.kt
-  - ../../chat/testSrc/AgentChatTerminalTabBuilderConfigurationTest.kt
+  - ../../thread-view/src/AgentThreadViewTerminalTabSupport.kt
+  - ../../thread-view/testSrc/AgentThreadViewTerminalTabBuilderConfigurationTest.kt
   - ../../lib-agent/sessions-core/src/providers/AgentSessionProviderDescriptor.kt
   - ../../sessions/src/service/AgentSessionLaunchService.kt
   - ../../sessions/src/AgentSessionProviderMenuActions.kt
@@ -27,8 +27,8 @@ Agent Workbench can start a regular IDE Terminal shell from the same new-thread 
 - Terminal is a first-class `AgentSessionProvider.from("terminal")` provider shown after Codex, Claude, Junie, and Pi.
   [@test] ../../lib-agent/providers/terminal/sessions/testSrc/TerminalAgentSessionProviderDescriptorTest.kt
 
-- New terminal-session launches must use the IDE Terminal default shell. Agent Chat terminal setup must not force `TerminalProcessType.NON_SHELL` or pass an explicit shell command for these launches.
-  [@test] ../../chat/testSrc/AgentChatTerminalTabBuilderConfigurationTest.kt
+- New terminal-session launches must use the IDE Terminal default shell. Agent Thread View terminal setup must not force `TerminalProcessType.NON_SHELL` or pass an explicit shell command for these launches.
+  [@test] ../../thread-view/testSrc/AgentThreadViewTerminalTabBuilderConfigurationTest.kt
 
 - New terminal sessions must use provider-allocated concrete session ids so they appear immediately in the sessions tree instead of remaining pending `new-*` identities.
   [@test] ../../lib-agent/providers/terminal/sessions/testSrc/TerminalAgentSessionProviderDescriptorTest.kt
@@ -37,7 +37,7 @@ Agent Workbench can start a regular IDE Terminal shell from the same new-thread 
 - Terminal sessions must persist in app-level non-roamable state per normalized project path, with id, title, creation time, update time, and archived flag. Listed rows must use provider `TERMINAL`, activity `READY`, active/archived filtering, and newest-updated ordering.
   [@test] ../../lib-agent/providers/terminal/sessions/testSrc/TerminalSessionSourceTest.kt
 
-- Terminal sessions persist only the last working directory as restore context, captured periodically while the terminal tab is open and once more when the chat editor closes the tab. Recent commands and recent terminal output must not be persisted (security: they routinely contain secrets). Restored sessions reopen at the saved working directory.
+- Terminal sessions persist only the last working directory as restore context, captured periodically while the terminal tab is open and once more when the thread view editor closes the tab. Recent commands and recent terminal output must not be persisted (security: they routinely contain secrets). Restored sessions reopen at the saved working directory.
   [@test] ../../lib-agent/providers/terminal/sessions/testSrc/TerminalSessionSourceTest.kt
   [@test] ../../lib-agent/providers/terminal/sessions/testSrc/TerminalAgentSessionProviderDescriptorTest.kt
 
@@ -55,7 +55,7 @@ Agent Workbench can start a regular IDE Terminal shell from the same new-thread 
   [@test] ../../sessions/testSrc/AgentSessionLaunchServiceTest.kt
 
 - Closing the last open editor copy of a concrete terminal session must archive that terminal session. Pending terminal tabs, non-terminal providers, and project disposal must not be treated as terminal archive requests.
-  [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+  [@test] ../../thread-view/testSrc/AgentThreadViewFileEditorLifecycleTest.kt
 
 - New-thread UI and provider menus must remain provider-generic. Terminal-specific action text, tooltip text, menu description, and new-tab title must come from descriptor bundle keys.
   [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
@@ -64,11 +64,11 @@ Agent Workbench can start a regular IDE Terminal shell from the same new-thread 
 
 ## Testing / Local Run
 - `./tests.cmd --module intellij.platform.ai.agent.terminal.sessions.tests --test "com.intellij.platform.ai.agent.terminal.sessions.*Test"`
-- `./tests.cmd --module intellij.agent.workbench.chat.tests --test com.intellij.agent.workbench.chat.AgentChatTerminalTabBuilderConfigurationTest`
+- `./tests.cmd --module intellij.agent.workbench.thread.view.tests --test com.intellij.agent.workbench.thread.view.AgentThreadViewTerminalTabBuilderConfigurationTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.actions.tests --test "com.intellij.agent.workbench.sessions.*ActionsTest"`
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionLaunchServiceTest`
 
 ## References
 - `agent-sessions.spec.md`
 - `../actions/new-thread.spec.md`
-- `../chat/agent-chat-editor.spec.md`
+- `../thread-view/agent-thread-view.spec.md`

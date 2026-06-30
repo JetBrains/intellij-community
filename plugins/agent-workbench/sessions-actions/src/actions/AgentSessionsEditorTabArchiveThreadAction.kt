@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.actions
 
-import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
-import com.intellij.agent.workbench.chat.resolveAgentChatEditorTabActionContext
+import com.intellij.agent.workbench.thread.view.AgentThreadViewEditorTabActionContext
+import com.intellij.agent.workbench.thread.view.resolveAgentThreadViewEditorTabActionContext
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
@@ -17,7 +17,7 @@ internal class AgentSessionsEditorTabArchiveThreadAction @JvmOverloads construct
   private val archiveThreads: (List<ArchiveThreadTarget>, String?, AgentWorkbenchEntryPoint) -> Unit = { targets, preferredSingleArchivedLabel, entryPoint ->
     service<AgentSessionArchiveService>().archiveThreads(targets, entryPoint, preferredSingleArchivedLabel)
   },
-  resolveContext: (AnActionEvent) -> AgentChatEditorTabActionContext? = ::resolveAgentChatEditorTabActionContext,
+  resolveContext: (AnActionEvent) -> AgentThreadViewEditorTabActionContext? = ::resolveAgentThreadViewEditorTabActionContext,
 ) : AgentSessionsEditorTabActionBase(resolveContext) {
 
   override fun update(e: AnActionEvent) {

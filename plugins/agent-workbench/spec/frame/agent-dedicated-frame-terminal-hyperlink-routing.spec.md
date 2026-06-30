@@ -2,8 +2,8 @@
 name: Dedicated Frame Terminal Hyperlink Routing
 description: Requirements for opening terminal file hyperlinks in source projects when clicked from Agent Workbench dedicated frame.
 targets:
-  - ../../chat/src/AgentChatTerminalTabSupport.kt
-  - ../../chat/testSrc/AgentChatTerminalTabBuilderConfigurationTest.kt
+  - ../../thread-view/src/AgentThreadViewTerminalTabSupport.kt
+  - ../../thread-view/testSrc/AgentThreadViewTerminalTabBuilderConfigurationTest.kt
   - ../../../terminal/frontend/src/com/intellij/terminal/frontend/toolwindow/TerminalToolWindowTabBuilder.kt
   - ../../../terminal/frontend/src/com/intellij/terminal/frontend/toolwindow/impl/TerminalToolWindowTabsManagerImpl.kt
   - ../../../terminal/frontend/src/com/intellij/terminal/frontend/view/impl/TerminalViewImpl.kt
@@ -28,7 +28,7 @@ This spec owns:
 - fallback behavior for directories and non-openable files.
 
 ## Goals
-- Open terminal file hyperlinks in the source project associated with the Agent Workbench chat tab.
+- Open terminal file hyperlinks in the source project associated with the Agent Workbench Thread View.
 - Keep terminal behavior unchanged for tabs that do not declare alternate source-navigation metadata.
 - Keep terminal hyperlink models storing the original hyperlinks; no wrapper hyperlink types are introduced for dedicated frame routing.
 
@@ -39,7 +39,7 @@ This spec owns:
 
 ## Requirements
 - Terminal tool window tabs may declare an optional `sourceNavigationProjectPath`.
-  [@test] ../../chat/testSrc/AgentChatTerminalTabBuilderConfigurationTest.kt
+  [@test] ../../thread-view/testSrc/AgentThreadViewTerminalTabBuilderConfigurationTest.kt
 
 - Terminal view must stamp that path onto the live editors so click handling can resolve it from the active tab context.
 
@@ -61,11 +61,11 @@ This spec owns:
 - For file hyperlinks without editor providers, terminal must fall back to browser navigation.
   This behavior is provided by the existing file hyperlink implementation once the target-project descriptor is rebuilt.
 
-- Agent Workbench must contribute only the source-navigation project path when creating the detached chat terminal tab. It must not register a terminal hyperlink extension for this behavior.
-  [@test] ../../chat/testSrc/AgentChatTerminalTabBuilderConfigurationTest.kt
+- Agent Workbench must contribute only the source-navigation project path when creating the detached thread view terminal tab. It must not register a terminal hyperlink extension for this behavior.
+  [@test] ../../thread-view/testSrc/AgentThreadViewTerminalTabBuilderConfigurationTest.kt
 
 ## User Experience
-- Clicking a file-path hyperlink inside a dedicated-frame chat terminal opens the file in the source project.
+- Clicking a file-path hyperlink inside a dedicated-frame thread view terminal opens the file in the source project.
 - If the source project is closed, it opens before navigation.
 - If the hyperlink targets an external directory, the system file manager opens that directory.
 - In ordinary terminal tabs, hyperlink behavior remains unchanged.
@@ -82,7 +82,7 @@ This spec owns:
 
 ## Testing / Local Run
 - `./tests.cmd --module intellij.terminal.tests --test com.intellij.terminal.tests.reworked.backend.TerminalCrossProjectFileHyperlinkNavigatorTest`
-- `./tests.cmd --module intellij.agent.workbench.chat.tests --test com.intellij.agent.workbench.chat.AgentChatTerminalTabBuilderConfigurationTest`
+- `./tests.cmd --module intellij.agent.workbench.thread.view.tests --test com.intellij.agent.workbench.thread.view.AgentThreadViewTerminalTabBuilderConfigurationTest`
 
 ## References
 - `agent-dedicated-frame.spec.md`

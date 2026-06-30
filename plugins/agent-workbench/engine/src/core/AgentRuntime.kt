@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 /**
  * A runtime adapter that hosts agent threads and emits a canonical event stream.
  *
- * This is the structured-runtime boundary. Existing terminal-backed Agent Chat providers keep their
+ * This is the structured-runtime boundary. Existing terminal-backed Agent Thread View providers keep their
  * terminal lifecycle and are not expected to implement this interface.
  */
 interface AgentRuntime {

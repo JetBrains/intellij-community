@@ -91,7 +91,7 @@ behavior; refresh mechanics and detailed tree rendering/interaction contracts li
   [@test] ../../lib-agent/providers/junie/sessions/testSrc/JunieSessionSourceTest.kt
 
 - Agent Threads must support a current-project-only scope for both active and archived views. The automatic default is current project
-  because chat opens in the source project frame by default, and switches to all projects when chats open in the dedicated frame; an explicit user override must persist
+  because thread view opens in the source project frame by default, and switches to all projects when thread views open in the dedicated frame; an explicit user override must persist
   until the user returns to the current automatic default. Worktree projects keep the parent project row only as a container for the
   matching worktree.
   [@test] ../../sessions/testSrc/settings/AgentWorkbenchSettingsTest.kt
@@ -140,5 +140,5 @@ behavior; refresh mechanics and detailed tree rendering/interaction contracts li
 - `agent-sessions-refresh.spec.md`
 - `agent-task-folders.spec.md`
 - `../core/agent-core-contracts.spec.md`
-- `../chat/agent-chat-editor.spec.md`
+- `../thread-view/agent-thread-view.spec.md`
 - `../actions/new-thread.spec.md`

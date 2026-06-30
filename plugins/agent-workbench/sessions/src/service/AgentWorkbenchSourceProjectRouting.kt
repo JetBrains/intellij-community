@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.service
 
-import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
+import com.intellij.agent.workbench.thread.view.AgentThreadViewTabSelectionService
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.core.parseAgentWorkbenchPathOrNull
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
@@ -95,9 +95,9 @@ internal fun findOpenSourceProjectByPath(normalizedPath: String): Project? {
 }
 
 @ApiStatus.Internal
-fun selectedChatSourceProjectPath(project: Project): String? {
+fun selectedThreadViewSourceProjectPath(project: Project): String? {
     return runCatching {
-        project.service<AgentChatTabSelectionService>().selectedChatTab.value?.projectPath
+        project.service<AgentThreadViewTabSelectionService>().selectedThreadViewTab.value?.projectPath
     }.getOrNull()
 }
 

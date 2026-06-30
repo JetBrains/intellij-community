@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap
  * Tracks threads that produced agent output the user hasn't looked at yet, so the tree can show an
  * attention badge ("your turn"). State is in-memory only and seeded by live events: threads restored
  * from history on a fresh start are never unread (no badge), while a live agent reply marks its thread
- * unread until its chat is opened. See [EngineEvents].
+ * unread until its threadView is opened. See [EngineEvents].
  */
 @Service(Service.Level.PROJECT)
 class EngineUnreadTracker(private val project: Project, scope: CoroutineScope) {
@@ -39,7 +39,7 @@ class EngineUnreadTracker(private val project: Project, scope: CoroutineScope) {
 
   fun isUnread(threadId: ThreadId): Boolean = unread.contains(threadId.value)
 
-  /** Marks [threadId] as seen (e.g. its chat was opened/focused) and refreshes the tree if it changed. */
+  /** Marks [threadId] as seen (e.g. its threadView was opened/focused) and refreshes the tree if it changed. */
   fun markRead(threadId: ThreadId) {
     if (unread.remove(threadId.value)) {
       EngineChangeBus.fireChanged(project.basePath ?: project.locationHash, threadId)

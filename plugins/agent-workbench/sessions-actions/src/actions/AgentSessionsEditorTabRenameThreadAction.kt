@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.actions
 
-import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
-import com.intellij.agent.workbench.chat.resolveAgentChatEditorTabActionContext
+import com.intellij.agent.workbench.thread.view.AgentThreadViewEditorTabActionContext
+import com.intellij.agent.workbench.thread.view.resolveAgentThreadViewEditorTabActionContext
 import com.intellij.platform.ai.agent.sessions.core.SessionActionTarget
 import com.intellij.agent.workbench.sessions.service.AgentSessionRenameService
 import com.intellij.agent.workbench.sessions.service.showRenameThreadDialog
@@ -11,14 +11,14 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 
 internal class AgentSessionsEditorTabRenameThreadAction @JvmOverloads constructor(
-  private val canRenameThread: (AgentChatEditorTabActionContext, SessionActionTarget.Thread) -> Boolean = { context, target ->
+  private val canRenameThread: (AgentThreadViewEditorTabActionContext, SessionActionTarget.Thread) -> Boolean = { context, target ->
     service<AgentSessionRenameService>().canRenameThreadInEditorTab(context, target)
   },
-  private val renameThread: (AgentChatEditorTabActionContext, SessionActionTarget.Thread, String) -> Unit = { context, target, requestedName ->
+  private val renameThread: (AgentThreadViewEditorTabActionContext, SessionActionTarget.Thread, String) -> Unit = { context, target, requestedName ->
     service<AgentSessionRenameService>().renameThreadFromEditorTab(context, target, requestedName)
   },
   private val promptForName: (Project, String) -> String? = ::showRenameThreadDialog,
-  resolveContext: (AnActionEvent) -> AgentChatEditorTabActionContext? = ::resolveAgentChatEditorTabActionContext,
+  resolveContext: (AnActionEvent) -> AgentThreadViewEditorTabActionContext? = ::resolveAgentThreadViewEditorTabActionContext,
 ) : AgentSessionsEditorTabActionBase(resolveContext) {
 
   override fun update(e: AnActionEvent) {

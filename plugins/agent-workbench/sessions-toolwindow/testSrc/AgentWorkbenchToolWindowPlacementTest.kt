@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.toolwindow
 
-import com.intellij.agent.workbench.chat.AGENT_CHAT_THREAD_OUTLINE_TOOL_WINDOW_ID
+import com.intellij.agent.workbench.thread.view.AGENT_THREAD_VIEW_THREAD_OUTLINE_TOOL_WINDOW_ID
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsToolWindowDefaultLayoutExtension
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowEP
@@ -26,7 +26,7 @@ class AgentWorkbenchToolWindowPlacementTest {
     assertThat(agentSessions!!.anchor).isEqualTo(ToolWindowAnchor.LEFT.toString())
     assertThat(agentSessions.secondary).isTrue()
 
-    val threadOutline = toolWindows[AGENT_CHAT_THREAD_OUTLINE_TOOL_WINDOW_ID]
+    val threadOutline = toolWindows[AGENT_THREAD_VIEW_THREAD_OUTLINE_TOOL_WINDOW_ID]
     assertThat(threadOutline).isNotNull()
     assertThat(threadOutline!!.anchor).isEqualTo(ToolWindowAnchor.LEFT.toString())
     assertThat(threadOutline.secondary).isTrue()
@@ -44,7 +44,7 @@ class AgentWorkbenchToolWindowPlacementTest {
     buildLayout(builder)
 
     assertThat(builder.left.windows.map { it.id })
-      .containsExactly(AGENT_SESSIONS_TOOL_WINDOW_ID, AGENT_CHAT_THREAD_OUTLINE_TOOL_WINDOW_ID)
+      .containsExactly(AGENT_SESSIONS_TOOL_WINDOW_ID, AGENT_THREAD_VIEW_THREAD_OUTLINE_TOOL_WINDOW_ID)
     assertThat(builder.left.windows.map { it.isSplit })
       .containsExactly(true, true)
     assertThat(builder.left.windows.map { it.weight })
@@ -73,7 +73,7 @@ class AgentWorkbenchToolWindowPlacementTest {
         ToolWindowId.PROJECT_VIEW,
         ToolWindowId.COMMIT,
         AGENT_SESSIONS_TOOL_WINDOW_ID,
-        AGENT_CHAT_THREAD_OUTLINE_TOOL_WINDOW_ID,
+        AGENT_THREAD_VIEW_THREAD_OUTLINE_TOOL_WINDOW_ID,
         ToolWindowId.STRUCTURE_VIEW,
       )
     val structureView = builder.left.windows.last()
@@ -97,7 +97,7 @@ class AgentWorkbenchToolWindowPlacementTest {
     assertThat(leftSplitToolWindowIds)
       .containsSubsequence(
         AGENT_SESSIONS_TOOL_WINDOW_ID,
-        AGENT_CHAT_THREAD_OUTLINE_TOOL_WINDOW_ID,
+        AGENT_THREAD_VIEW_THREAD_OUTLINE_TOOL_WINDOW_ID,
         ToolWindowId.STRUCTURE_VIEW,
       )
   }

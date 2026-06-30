@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import javax.swing.JComponent
 
 internal class ClaudeQuotaSessionProviderUiContributor : AgentSessionProviderUiContributor {
-  override fun onConversationOpened() {
+  override fun onThreadViewOpened() {
     service<ClaudeQuotaHintStateService>().markEligible()
   }
 

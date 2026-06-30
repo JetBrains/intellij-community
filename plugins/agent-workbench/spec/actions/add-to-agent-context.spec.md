@@ -1,14 +1,14 @@
 ---
 name: Add to Agent Context
-description: Requirements for adding editor, project, test, console, and VCS context to the prompt or an open Agent Chat tab.
+description: Requirements for adding editor, project, test, console, and VCS context to the prompt or an open Agent Thread View tab.
 targets:
   - ../../prompt/ui/src/actions/AgentWorkbenchAddToAgentContextAction.kt
   - ../../prompt/ui/src/actions/AgentWorkbenchAddToAgentContextIntention.kt
   - ../../prompt/ui/src/AgentPromptAddToAgentContextActionService.kt
   - ../../prompt/ui/src/AgentPromptAddContext*.kt
   - ../../prompt/ui/src/AgentPromptContext*.kt
-  - ../../chat/src/AgentChatPendingContextPanel.kt
-  - ../../chat/src/AgentChatOpenTabsSnapshot.kt
+  - ../../thread-view/src/AgentThreadViewPendingContextPanel.kt
+  - ../../thread-view/src/AgentThreadViewOpenTabsSnapshot.kt
   - ../../prompt/vcs-ui/resources/intellij.agent.workbench.prompt.vcs.ui.xml
   - ../../prompt/ui/testSrc/actions/*.kt
   - ../../prompt/ui/testSrc/context/*.kt
@@ -21,7 +21,7 @@ Status: Draft
 Date: 2026-05-09
 
 ## Summary
-`Add to Agent Context` collects context from the invocation place and routes it either into the visible prompt popup or into an already-open top-level concrete Agent Chat tab for the same workspace.
+`Add to Agent Context` collects context from the invocation place and routes it either into the visible prompt popup or into an already-open top-level concrete Agent Thread View tab for the same workspace.
 
 ## Requirements
 - The action/intention must collect default prompt context from the invocation place. If no context is available, it shows the empty-context status and does not open a popup.
@@ -36,15 +36,15 @@ Date: 2026-05-09
 - If the prompt popup is visible for the project, invocation appends de-duplicated context to that popup, preserves selected tab/provider/task state, and focuses the composer.
   [@test] ../../prompt/ui/testSrc/AgentPromptPalettePopupServiceTest.kt
 
-- If the prompt popup is not visible, routing considers only open top-level concrete Agent Chat tabs for the same normalized project path. Pending tabs, sub-agent tabs, and catalog-only threads are not candidates.
-  [@test] ../../chat/testSrc/AgentChatOpenTopLevelDispatchTest.kt
+- If the prompt popup is not visible, routing considers only open top-level concrete Agent Thread View tabs for the same normalized project path. Pending tabs, sub-agent tabs, and catalog-only threads are not candidates.
+  [@test] ../../thread-view/testSrc/AgentThreadViewOpenTopLevelDispatchTest.kt
 
-- Fresh routing is deterministic: no candidate opens the prompt with context, one candidate adds pending context to that chat, selected candidate wins when multiple exist, and otherwise the user chooses a target; chooser cancellation opens nothing.
+- Fresh routing is deterministic: no candidate opens the prompt with context, one candidate adds pending context to that thread view, selected candidate wins when multiple exist, and otherwise the user chooses a target; chooser cancellation opens nothing.
   [@test] ../../prompt/ui/testSrc/AgentPromptPalettePopupServiceTest.kt
-  [@test] ../../chat/testSrc/AgentChatOpenTopLevelDispatchTest.kt
+  [@test] ../../thread-view/testSrc/AgentThreadViewOpenTopLevelDispatchTest.kt
 
-- Context added to an open chat is buffered as pending editor-local context and must not mutate terminal input until the user submits.
-  [@test] ../../chat/testSrc/AgentChatOpenTopLevelDispatchTest.kt
+- Context added to an open thread view is buffered as pending editor-local context and must not mutate terminal input until the user submits.
+  [@test] ../../thread-view/testSrc/AgentThreadViewOpenTopLevelDispatchTest.kt
 
 - Manual context is additive to auto context, source reruns replace the previous item from that source, and removing a parent context chip may remove descendant chips recursively.
   [@test] ../../prompt/ui/testSrc/AgentPromptContextRemovalDecisionsTest.kt
@@ -58,9 +58,9 @@ Date: 2026-05-09
 - `./tests.cmd --module intellij.agent.workbench.prompt.ui.tests --test "com.intellij.agent.workbench.prompt.ui.AgentPromptContext*Test"`
 - `./tests.cmd --module intellij.agent.workbench.prompt.core.tests --test com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormatterTest`
 - `./tests.cmd --module intellij.agent.workbench.plugin.tests --test com.intellij.agent.workbench.plugin.AgentWorkbenchAddToAgentContextActionRegistrationTest`
-- `./tests.cmd --module intellij.agent.workbench.chat.tests --test com.intellij.agent.workbench.chat.AgentChatOpenTopLevelDispatchTest`
+- `./tests.cmd --module intellij.agent.workbench.thread.view.tests --test com.intellij.agent.workbench.thread.view.AgentThreadViewOpenTopLevelDispatchTest`
 
 ## References
 - `global-prompt-entry.spec.md`
 - `../prompt-context/prompt-context-contracts.spec.md`
-- `../chat/agent-chat-editor.spec.md`
+- `../thread-view/agent-thread-view.spec.md`

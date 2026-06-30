@@ -86,7 +86,7 @@ internal class CodexIdeContextCollector(
     }
 
     private fun descriptorFor(file: VirtualFile, workspaceRoot: Path): CodexIdeFileDescriptor? {
-        if (file.isDirectory || isAgentWorkbenchChatVirtualFile(file)) {
+        if (file.isDirectory || isAgentWorkbenchThreadViewVirtualFile(file)) {
             return null
         }
         val filePath = file.toNioPathOrNull()?.toAbsolutePath()?.normalize() ?: return null
@@ -120,8 +120,8 @@ internal class CodexIdeContextCollector(
         return first == second || first.startsWith(second) || second.startsWith(first)
     }
 
-    private fun isAgentWorkbenchChatVirtualFile(file: VirtualFile): Boolean {
-        return file.javaClass.name == "com.intellij.agent.workbench.chat.AgentChatVirtualFile"
+    private fun isAgentWorkbenchThreadViewVirtualFile(file: VirtualFile): Boolean {
+        return file.javaClass.name == "com.intellij.agent.workbench.thread.view.AgentThreadViewVirtualFile"
     }
 }
 

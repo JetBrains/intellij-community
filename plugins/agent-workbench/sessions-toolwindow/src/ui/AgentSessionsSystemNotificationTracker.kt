@@ -99,7 +99,7 @@ internal fun openAgentSessionsSystemNotificationTarget(target: AgentSessionsSyst
     return
   }
 
-  service<AgentSessionLaunchService>().openChatThread(
+  service<AgentSessionLaunchService>().openThreadViewThread(
     path = normalizedTarget.path,
     thread = thread,
     entryPoint = AgentWorkbenchEntryPoint.SYSTEM_NOTIFICATION,

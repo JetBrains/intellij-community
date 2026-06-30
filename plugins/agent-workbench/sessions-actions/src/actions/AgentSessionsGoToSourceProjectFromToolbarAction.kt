@@ -6,7 +6,7 @@ import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.normalizeOpenableSourceProjectPath
-import com.intellij.agent.workbench.sessions.service.selectedChatSourceProjectPath
+import com.intellij.agent.workbench.sessions.service.selectedThreadViewSourceProjectPath
 import com.intellij.ide.ui.ProductIcons
 import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -28,7 +28,7 @@ internal class AgentSessionsGoToSourceProjectFromToolbarAction : DumbAwareAction
 
   @Suppress("unused")
   constructor() {
-    selectedSourcePath = ::selectedChatSourceProjectPath
+    selectedSourcePath = ::selectedThreadViewSourceProjectPath
     isDedicatedProject = AgentWorkbenchDedicatedFrameProjectManager::isDedicatedProject
     openProject = { path, entryPoint -> service<AgentSessionLaunchService>().openOrFocusProject(path, entryPoint) }
   }

@@ -43,7 +43,7 @@ jvm_library(
         "//plugins/agent-workbench/lib-agent/core",
         "//plugins/agent-workbench/prompt/core",
         "//plugins/agent-workbench/lib-agent/sessions-core:ai-agent-sessions-core",
-        "//plugins/agent-workbench/chat",
+        "//plugins/agent-workbench/thread-view:agent-workbench-thread-view",
     ],
 )
 
@@ -74,7 +74,7 @@ jvm_library(
         "//plugins/agent-workbench/lib-agent/core:core_test_lib",
         "//plugins/agent-workbench/prompt/core:core_test_lib",
         "//plugins/agent-workbench/lib-agent/sessions-core:ai-agent-sessions-core_test_lib",
-        "//plugins/agent-workbench/chat:chat_test_lib",
+        "//plugins/agent-workbench/thread-view:agent-workbench-thread-view_test_lib",
     ],
 )
 ### auto-generated section `build intellij.agent.workbench.engine` end

@@ -62,14 +62,14 @@ its contract. Consumers discover support by type, so missing interfaces mean uns
 | `AgentSessionPrefetchSource`                | The provider can batch-load complete active snapshots for several paths more cheaply than listing each path.        |
 | `AgentSessionArchivedSource`                | Archived rows are available separately and can be listed accurately for a path.                                     |
 | `AgentSessionUpdateSource`                  | The provider emits background path or thread updates for loaded rows or hints.                                      |
-| `AgentSessionActiveThreadUpdateSource`      | An active chat tab can watch one concrete thread with provider-specific filtering.                                  |
+| `AgentSessionActiveThreadUpdateSource`      | An active Thread View can watch one concrete thread with provider-specific filtering.                                  |
 | `AgentSessionRefreshSource`                 | The provider can refresh more precisely than full path listing, especially for thread-scoped updates.               |
 | `AgentSessionRefreshHintsSource`            | The provider can cheaply fetch non-authoritative hints for pending-tab rebinding or presentation patches.           |
 | `AgentSessionCostSource`                    | Visible and archived rows can hydrate cost after rows are known.                                                    |
 | `AgentSessionThreadOutlineSource`           | Persisted history can be exposed as a read-only outline without restoring a terminal.                               |
 | `AgentSessionThreadOutlineNavigationSource` | A live provider view can navigate to stable outline item anchors.                                                   |
 | `AgentSessionThreadOutlineForkSource`       | The provider can create a new thread from a specific outline item without mutating the source thread.               |
-| `AgentSessionReadStateSource`               | The provider tracks read/unread state relative to open chat tabs. `BaseAgentSessionSource` already implements this. |
+| `AgentSessionReadStateSource`               | The provider tracks read/unread state relative to open Thread Views. `BaseAgentSessionSource` already implements this. |
 
 ## Why Capabilities Are Not Extension Points
 
@@ -135,4 +135,4 @@ than recomputing on every visibility refresh.
 - Emit scoped update events, not raw watcher noise.
 - Preserve stable ids and epoch-millis timestamps.
 - Make outline item ids stable before enabling navigation or fork capabilities.
-- Run provider tests, session service tests, chat outline tests when applicable, and `ApiCheckTest` after changing provider APIs.
+- Run provider tests, session service tests, thread view outline tests when applicable, and `ApiCheckTest` after changing provider APIs.

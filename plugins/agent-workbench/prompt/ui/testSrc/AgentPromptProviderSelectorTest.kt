@@ -504,8 +504,8 @@ class AgentPromptProviderSelectorTest {
           promptOptions = emptyList(),
           availableGenerationModels = listOf(
             AgentPromptGenerationModel(
-              id = "chatgpt-5.5",
-              displayName = "ChatGPT 5.5",
+              id = "threadViewgpt-5.5",
+              displayName = "ThreadViewGPT 5.5",
               supportedReasoningEfforts = setOf(
                 AgentPromptReasoningEffort.HIGH,
                 AgentPromptReasoningEffort.XHIGH,
@@ -536,7 +536,7 @@ class AgentPromptProviderSelectorTest {
           fixture.view.reasoningEffortLink.isEnabled &&
           controller.createModelActionGroupForTest()
             ?.getChildren(TestActionEvent.createTestEvent())
-            ?.any { action -> action.templatePresentation.text == "ChatGPT 5.5" } == true
+            ?.any { action -> action.templatePresentation.text == "ThreadViewGPT 5.5" } == true
         }
       }
       withContext(Dispatchers.EDT) {
@@ -549,9 +549,9 @@ class AgentPromptProviderSelectorTest {
 
         assertThat(controller.currentSettings()).isEqualTo(AgentPromptGenerationSettings.AUTO)
         assertThat(modelActions.mapNotNull { action -> action.templatePresentation.text })
-          .containsExactly("Default Model", "ChatGPT 5.5")
+          .containsExactly("Default Model", "ThreadViewGPT 5.5")
         assertThat(isSelectedInPopup(modelActions.single { action -> action.templatePresentation.text == "Default Model" })).isTrue()
-        assertThat(isSelectedInPopup(modelActions.single { action -> action.templatePresentation.text == "ChatGPT 5.5" })).isFalse()
+        assertThat(isSelectedInPopup(modelActions.single { action -> action.templatePresentation.text == "ThreadViewGPT 5.5" })).isFalse()
         assertThat(actions.mapNotNull { action -> action.templatePresentation.text })
           .containsExactly("Default", "High", "Extra High")
         assertThat(isSelectedInPopup(actions.single { action -> action.templatePresentation.text == "Default" })).isTrue()
@@ -2704,7 +2704,7 @@ class AgentPromptProviderSelectorTest {
         provider = AgentSessionProvider.from("junie"),
         promptOptions = emptyList(),
         availableGenerationModels = listOf(
-          AgentPromptGenerationModel(id = "chatgpt-5.5", displayName = "ChatGPT 5.5"),
+          AgentPromptGenerationModel(id = "threadViewgpt-5.5", displayName = "ThreadViewGPT 5.5"),
         ),
         onListAvailableGenerationModels = modelCatalogRequests::incrementAndGet,
       )
@@ -2738,7 +2738,7 @@ class AgentPromptProviderSelectorTest {
           fixtureAndController.second.createModelActionGroupForTest()
             ?.getChildren(TestActionEvent.createTestEvent())
             ?.mapNotNull { action -> action.templatePresentation.text }
-            ?.contains("ChatGPT 5.5") == true
+            ?.contains("ThreadViewGPT 5.5") == true
         }
       }
       withContext(Dispatchers.EDT) {
@@ -2746,7 +2746,7 @@ class AgentPromptProviderSelectorTest {
           .getChildren(TestActionEvent.createTestEvent())
         assertThat(modelCatalogRequests.get()).isEqualTo(1)
         assertThat(actions.mapNotNull { action -> action.templatePresentation.text })
-          .containsExactly("Default Model", "ChatGPT 5.5")
+          .containsExactly("Default Model", "ThreadViewGPT 5.5")
       }
     }
     finally {
@@ -2770,7 +2770,7 @@ class AgentPromptProviderSelectorTest {
           modelCatalogRequests.incrementAndGet()
           refreshStarted.complete(Unit)
           finishRefresh.await()
-          listOf(AgentPromptGenerationModel(id = "chatgpt-5.5", displayName = "ChatGPT 5.5"))
+          listOf(AgentPromptGenerationModel(id = "threadViewgpt-5.5", displayName = "ThreadViewGPT 5.5"))
         },
       )
       val controller = withContext(Dispatchers.EDT) {
@@ -2801,7 +2801,7 @@ class AgentPromptProviderSelectorTest {
       finishRefresh.complete(Unit)
       waitForCondition {
         withContext(Dispatchers.EDT) {
-          modelActionTexts(controller) == listOf("Default Model", "ChatGPT 5.5")
+          modelActionTexts(controller) == listOf("Default Model", "ThreadViewGPT 5.5")
         }
       }
       assertThat(modelCatalogRequests.get()).isEqualTo(1)
@@ -2889,7 +2889,7 @@ class AgentPromptProviderSelectorTest {
         availableGenerationModelsResolver = {
           when (modelCatalogRequests.incrementAndGet()) {
             1 -> error("failed")
-            2 -> listOf(AgentPromptGenerationModel(id = "chatgpt-5.5", displayName = "ChatGPT 5.5"))
+            2 -> listOf(AgentPromptGenerationModel(id = "threadViewgpt-5.5", displayName = "ThreadViewGPT 5.5"))
             else -> error("Unexpected model catalog refresh")
           }
         },
@@ -2924,7 +2924,7 @@ class AgentPromptProviderSelectorTest {
       }
       waitForCondition {
         withContext(Dispatchers.EDT) {
-          modelActionTexts(controller) == listOf("Default Model", "ChatGPT 5.5")
+          modelActionTexts(controller) == listOf("Default Model", "ThreadViewGPT 5.5")
         }
       }
       assertThat(modelCatalogRequests.get()).isEqualTo(2)
@@ -2947,7 +2947,7 @@ class AgentPromptProviderSelectorTest {
         supportsGenerationModelSelection = true,
         availableGenerationModelsResolver = {
           when (modelCatalogRequests.incrementAndGet()) {
-            1 -> listOf(AgentPromptGenerationModel(id = "chatgpt-5.5", displayName = "ChatGPT 5.5"))
+            1 -> listOf(AgentPromptGenerationModel(id = "threadViewgpt-5.5", displayName = "ThreadViewGPT 5.5"))
             else -> error("Unexpected fresh cached model catalog refresh")
           }
         },
@@ -2971,7 +2971,7 @@ class AgentPromptProviderSelectorTest {
       }
       waitForCondition {
         withContext(Dispatchers.EDT) {
-          modelActionTexts(firstController) == listOf("Default Model", "ChatGPT 5.5")
+          modelActionTexts(firstController) == listOf("Default Model", "ThreadViewGPT 5.5")
         }
       }
       firstModelCatalogScope.cancel()
@@ -2992,7 +2992,7 @@ class AgentPromptProviderSelectorTest {
 
       withContext(Dispatchers.EDT) {
         assertThat(modelActionTexts(secondController, loadIfNeeded = true))
-          .containsExactly("Default Model", "ChatGPT 5.5")
+          .containsExactly("Default Model", "ThreadViewGPT 5.5")
       }
       assertThat(modelCatalogRequests.get()).isEqualTo(1)
     }
@@ -3017,11 +3017,11 @@ class AgentPromptProviderSelectorTest {
         supportsGenerationModelSelection = true,
         availableGenerationModelsResolver = {
           when (modelCatalogRequests.incrementAndGet()) {
-            1 -> listOf(AgentPromptGenerationModel(id = "chatgpt-5.5", displayName = "ChatGPT 5.5"))
+            1 -> listOf(AgentPromptGenerationModel(id = "threadViewgpt-5.5", displayName = "ThreadViewGPT 5.5"))
             else -> {
               secondRefreshStarted.complete(Unit)
               finishSecondRefresh.await()
-              listOf(AgentPromptGenerationModel(id = "chatgpt-5.6", displayName = "ChatGPT 5.6"))
+              listOf(AgentPromptGenerationModel(id = "threadViewgpt-5.6", displayName = "ThreadViewGPT 5.6"))
             }
           }
         },
@@ -3045,7 +3045,7 @@ class AgentPromptProviderSelectorTest {
       }
       waitForCondition {
         withContext(Dispatchers.EDT) {
-          modelActionTexts(firstController) == listOf("Default Model", "ChatGPT 5.5")
+          modelActionTexts(firstController) == listOf("Default Model", "ThreadViewGPT 5.5")
         }
       }
       firstModelCatalogScope.cancel()
@@ -3068,19 +3068,19 @@ class AgentPromptProviderSelectorTest {
 
       withContext(Dispatchers.EDT) {
         assertThat(modelActionTexts(secondController, loadIfNeeded = true))
-          .containsExactly("Default Model", "ChatGPT 5.5")
+          .containsExactly("Default Model", "ThreadViewGPT 5.5")
       }
       waitForCondition { secondRefreshStarted.isCompleted }
       assertThat(modelCatalogRequests.get()).isEqualTo(2)
       waitForCondition {
         withContext(Dispatchers.EDT) {
-          modelActionTexts(secondController) == listOf("Default Model", "ChatGPT 5.5", "Refreshing models...")
+          modelActionTexts(secondController) == listOf("Default Model", "ThreadViewGPT 5.5", "Refreshing models...")
         }
       }
       finishSecondRefresh.complete(Unit)
       waitForCondition {
         withContext(Dispatchers.EDT) {
-          modelActionTexts(secondController) == listOf("Default Model", "ChatGPT 5.6")
+          modelActionTexts(secondController) == listOf("Default Model", "ThreadViewGPT 5.6")
         }
       }
     }
@@ -3108,7 +3108,7 @@ class AgentPromptProviderSelectorTest {
         supportsGenerationModelSelection = true,
         availableGenerationModelsResolver = {
           when (modelCatalogRequests.incrementAndGet()) {
-            1 -> listOf(AgentPromptGenerationModel(id = "chatgpt-5.5", displayName = "ChatGPT 5.5"))
+            1 -> listOf(AgentPromptGenerationModel(id = "threadViewgpt-5.5", displayName = "ThreadViewGPT 5.5"))
             else -> {
               secondRefreshStarted.complete(Unit)
               failSecondRefresh.await()
@@ -3136,7 +3136,7 @@ class AgentPromptProviderSelectorTest {
       }
       waitForCondition {
         withContext(Dispatchers.EDT) {
-          modelActionTexts(firstController) == listOf("Default Model", "ChatGPT 5.5")
+          modelActionTexts(firstController) == listOf("Default Model", "ThreadViewGPT 5.5")
         }
       }
       firstModelCatalogScope.cancel()
@@ -3159,13 +3159,13 @@ class AgentPromptProviderSelectorTest {
 
       withContext(Dispatchers.EDT) {
         assertThat(modelActionTexts(secondController, loadIfNeeded = true))
-          .containsExactly("Default Model", "ChatGPT 5.5")
+          .containsExactly("Default Model", "ThreadViewGPT 5.5")
       }
       waitForCondition { secondRefreshStarted.isCompleted }
       failSecondRefresh.complete(Unit)
       waitForCondition {
         withContext(Dispatchers.EDT) {
-          modelActionTexts(secondController) == listOf("Default Model", "ChatGPT 5.5", "Unable to refresh models", "Retry Loading Models")
+          modelActionTexts(secondController) == listOf("Default Model", "ThreadViewGPT 5.5", "Unable to refresh models", "Retry Loading Models")
         }
       }
       assertThat(modelCatalogRequests.get()).isEqualTo(2)

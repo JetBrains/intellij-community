@@ -2,7 +2,7 @@
 
 package com.intellij.platform.ai.agent.codex.sessions.backend.rollout
 
-// @spec community/plugins/agent-workbench/spec/chat/agent-chat-structure-view.spec.md
+// @spec community/plugins/agent-workbench/spec/thread-view/agent-thread-view-structure.spec.md
 
 import tools.jackson.core.JsonParser
 import tools.jackson.core.JsonToken

@@ -19,7 +19,7 @@ Date: 2026-05-29
 ## Summary
 Source project frames can show a compact Agent activity group in the main toolbar when the user opts in. The dedicated Agent frame always shows the same compact group, backed by the Agent Threads chrome activity summary.
 
-The group is a lightweight global Agent activity switcher: it helps users notice and reopen actionable Agent chats from any loaded project while they stay in source-code flow. The full cross-project task browser remains Agent Threads and the dedicated Agent frame.
+The group is a lightweight global Agent activity switcher: it helps users notice and reopen actionable Agent thread views from any loaded project while they stay in source-code flow. The full cross-project task browser remains Agent Threads and the dedicated Agent frame.
 
 ## Goals
 - Let users opt in to Agent task attention close to existing project workflow chrome.
@@ -61,14 +61,14 @@ The group is a lightweight global Agent activity switcher: it helps users notice
 - Zero-count counters must remain visible and disabled with their bucket tooltip while the group is visible, so counter positions are stable for muscle memory.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsMainToolbarActivityGroupTest.kt
 
-- Clicking a non-empty counter must open the same bucket popup used by Agent Threads and let the user choose the chat tab to open or focus from the toolbar entry point.
+- Clicking a non-empty counter must open the same bucket popup used by Agent Threads and let the user choose the Thread View to open or focus from the toolbar entry point.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsMainToolbarActivityGroupTest.kt
 
 ## User Experience
 - The source project toolbar answers: did an Agent task become actionable during this IDE session?
 - The same global counts may appear in multiple source project frames so users can switch to finished or waiting Agent work without first finding the dedicated frame or Agent Threads stripe.
 - The dedicated Agent frame toolbar always shows the counters so users can inspect stripe activity without expanding Agent Threads.
-- Activating a counter may open a chat from another project. The popup row must expose the destination project/worktree before the user chooses it.
+- Activating a counter may open a thread view from another project. The popup row must expose the destination project/worktree before the user chooses it.
 - Users who need a full cross-project view use Agent Threads or the dedicated Agent frame.
 
 ## Data & Backend

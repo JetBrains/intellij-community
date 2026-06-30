@@ -3,7 +3,7 @@ package com.intellij.agent.workbench.sessions.settings
 
 import com.intellij.agent.workbench.settings.AgentWorkbenchSettings
 import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsListener
-import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
+import com.intellij.agent.workbench.sessions.frame.AgentThreadViewOpenModeSettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.junit5.TestApplication
@@ -33,7 +33,7 @@ class AgentWorkbenchSettingsTest {
 
   @Test
   fun openInDedicatedFrameIsDisabledByDefault() {
-    assertThat(AgentChatOpenModeSettings.openInDedicatedFrame()).isFalse()
+    assertThat(AgentThreadViewOpenModeSettings.openInDedicatedFrame()).isFalse()
     assertThat(settings.openInDedicatedFrame).isFalse()
     assertThat(settings.openInDedicatedFrameOverride).isNull()
   }
@@ -42,15 +42,15 @@ class AgentWorkbenchSettingsTest {
   fun openInDedicatedFrameStateRoundTrips() {
     settings.loadState(AgentWorkbenchSettings.SettingsState(openInDedicatedFrame = true))
 
-    assertThat(AgentChatOpenModeSettings.openInDedicatedFrame()).isTrue()
+    assertThat(AgentThreadViewOpenModeSettings.openInDedicatedFrame()).isTrue()
     assertThat(settings.openInDedicatedFrameOverride).isTrue()
 
-    AgentChatOpenModeSettings.setOpenInDedicatedFrame(false)
+    AgentThreadViewOpenModeSettings.setOpenInDedicatedFrame(false)
 
     assertThat(settings.openInDedicatedFrame).isFalse()
     assertThat(settings.openInDedicatedFrameOverride).isNull()
 
-    AgentChatOpenModeSettings.setOpenInDedicatedFrame(true)
+    AgentThreadViewOpenModeSettings.setOpenInDedicatedFrame(true)
 
     assertThat(settings.openInDedicatedFrame).isTrue()
     assertThat(settings.openInDedicatedFrameOverride).isTrue()
@@ -139,19 +139,19 @@ class AgentWorkbenchSettingsTest {
       },
     )
 
-    AgentChatOpenModeSettings.setOpenInDedicatedFrame(false)
+    AgentThreadViewOpenModeSettings.setOpenInDedicatedFrame(false)
     assertThat(events).isZero()
 
-    AgentChatOpenModeSettings.setOpenInDedicatedFrame(true)
+    AgentThreadViewOpenModeSettings.setOpenInDedicatedFrame(true)
     assertThat(events).isEqualTo(1)
 
-    AgentChatOpenModeSettings.setOpenInDedicatedFrame(true)
+    AgentThreadViewOpenModeSettings.setOpenInDedicatedFrame(true)
     assertThat(events).isEqualTo(1)
 
-    AgentChatOpenModeSettings.setOpenInDedicatedFrame(false)
+    AgentThreadViewOpenModeSettings.setOpenInDedicatedFrame(false)
     assertThat(events).isEqualTo(2)
 
-    AgentChatOpenModeSettings.setOpenInDedicatedFrame(false)
+    AgentThreadViewOpenModeSettings.setOpenInDedicatedFrame(false)
     assertThat(events).isEqualTo(2)
     assertThat(settings.openInDedicatedFrameOverride).isNull()
   }
@@ -161,7 +161,7 @@ class AgentWorkbenchSettingsTest {
     assertThat(AgentThreadsProjectScopeSettings.isCurrentProjectOnly()).isTrue()
     assertThat(settings.agentThreadsCurrentProjectOnlyOverride).isNull()
 
-    AgentChatOpenModeSettings.setOpenInDedicatedFrame(true)
+    AgentThreadViewOpenModeSettings.setOpenInDedicatedFrame(true)
 
     assertThat(AgentThreadsProjectScopeSettings.isCurrentProjectOnly()).isFalse()
     assertThat(settings.agentThreadsCurrentProjectOnlyOverride).isNull()
@@ -174,12 +174,12 @@ class AgentWorkbenchSettingsTest {
     assertThat(AgentThreadsProjectScopeSettings.isCurrentProjectOnly()).isFalse()
     assertThat(settings.agentThreadsCurrentProjectOnlyOverride).isFalse()
 
-    AgentChatOpenModeSettings.setOpenInDedicatedFrame(true)
+    AgentThreadViewOpenModeSettings.setOpenInDedicatedFrame(true)
 
     assertThat(AgentThreadsProjectScopeSettings.isCurrentProjectOnly()).isFalse()
     assertThat(settings.agentThreadsCurrentProjectOnlyOverride).isFalse()
 
-    AgentChatOpenModeSettings.setOpenInDedicatedFrame(false)
+    AgentThreadViewOpenModeSettings.setOpenInDedicatedFrame(false)
 
     assertThat(AgentThreadsProjectScopeSettings.isCurrentProjectOnly()).isFalse()
     assertThat(settings.agentThreadsCurrentProjectOnlyOverride).isFalse()
@@ -193,7 +193,7 @@ class AgentWorkbenchSettingsTest {
     AgentThreadsProjectScopeSettings.setCurrentProjectOnly(true)
     assertThat(settings.agentThreadsCurrentProjectOnlyOverride).isNull()
 
-    AgentChatOpenModeSettings.setOpenInDedicatedFrame(true)
+    AgentThreadViewOpenModeSettings.setOpenInDedicatedFrame(true)
     AgentThreadsProjectScopeSettings.setCurrentProjectOnly(true)
     assertThat(settings.agentThreadsCurrentProjectOnlyOverride).isTrue()
 

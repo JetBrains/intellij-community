@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-// @spec community/plugins/agent-workbench/spec/chat/agent-chat-editor.spec.md
+// @spec community/plugins/agent-workbench/spec/thread-view/agent-thread-view.spec.md
 package com.intellij.agent.workbench.sessions.service
 
-import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
-import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
+import com.intellij.agent.workbench.thread.view.AgentThreadViewEditorTabActionContext
+import com.intellij.agent.workbench.thread.view.AgentThreadViewTabRebindTarget
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
@@ -45,9 +45,9 @@ class AgentSessionReadService private constructor(
   fun stateFlow(): StateFlow<AgentSessionsState> = requiredStateStoreProvider().state
 
   fun resolvePendingThreadRebindTarget(
-    context: AgentChatEditorTabActionContext,
+    context: AgentThreadViewEditorTabActionContext,
     provider: AgentSessionProvider,
-  ): AgentChatTabRebindTarget? {
+  ): AgentThreadViewTabRebindTarget? {
     if (!isPendingEditorContext(context, provider)) {
       return null
     }
@@ -62,7 +62,7 @@ class AgentSessionReadService private constructor(
                    .maxByOrNull { thread -> thread.updatedAt }
                  ?: return null
 
-    return AgentChatTabRebindTarget(
+    return AgentThreadViewTabRebindTarget(
       projectPath = normalizedPath,
       projectDirectory = pathState.projectDirectory,
       provider = thread.provider,
@@ -117,7 +117,7 @@ internal fun resolveAgentSessionPathState(state: AgentSessionsState, normalizedP
   return null
 }
 
-fun isPendingEditorContext(context: AgentChatEditorTabActionContext, provider: AgentSessionProvider): Boolean {
+fun isPendingEditorContext(context: AgentThreadViewEditorTabActionContext, provider: AgentSessionProvider): Boolean {
   val threadCoordinates = context.threadCoordinates ?: return false
   return threadCoordinates.isPending &&
          threadCoordinates.participatesInPendingThreadLifecycle &&

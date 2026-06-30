@@ -391,12 +391,12 @@ private fun Map<*, *>.toJbCentralProfileAgent(availableAgents: Set<PiJbCentralAg
   }
   if (provider.equals("Anthropic", ignoreCase = true)) {
     return PiJbCentralAgent.CLAUDE_CODE.takeIf {
-      it in availableAgents && supportsFeature("Chat") && supportsToolCalling() && supportsSystemMessage()
+      it in availableAgents && supportsFeature("ThreadView") && supportsToolCalling() && supportsSystemMessage()
     }
   }
   if (provider.isGoogleVertexProfileProvider()) {
     return PiJbCentralAgent.GEMINI_CLI.takeIf {
-      it in availableAgents && supportsFeature("Chat") && supportsToolCalling() && supportsSystemMessage()
+      it in availableAgents && supportsFeature("ThreadView") && supportsToolCalling() && supportsSystemMessage()
     }
   }
   return null
@@ -414,23 +414,23 @@ private fun Map<*, *>.supportsFeature(featureName: String): Boolean {
 }
 
 private fun Map<*, *>.supportsToolCalling(): Boolean {
-  val chatDefinition = objectValue("chatDefinition") ?: return false
-  return chatDefinition.stringListValue("roles").any { role -> role.equals("tool", ignoreCase = true) } &&
-         chatDefinition.supportsParameter("llm.parameters.tools")
+  val threadViewDefinition = objectValue("threadViewDefinition") ?: return false
+  return threadViewDefinition.stringListValue("roles").any { role -> role.equals("tool", ignoreCase = true) } &&
+         threadViewDefinition.supportsParameter("llm.parameters.tools")
 }
 
 private fun Map<*, *>.supportsSystemMessage(): Boolean {
-  return objectValue("chatDefinition")
+  return objectValue("threadViewDefinition")
     ?.stringListValue("roles")
     ?.any { role -> role.equals("system", ignoreCase = true) } == true
 }
 
 private fun Map<*, *>.supportsReasoningEffort(): Boolean {
-  return objectValue("chatDefinition")?.supportsParameter("llm.parameters.reasoning-effort") == true
+  return objectValue("threadViewDefinition")?.supportsParameter("llm.parameters.reasoning-effort") == true
 }
 
 private fun Map<*, *>.supportsImageInput(): Boolean {
-  return objectValue("chatDefinition")
+  return objectValue("threadViewDefinition")
     ?.objectValue("multimediaDataDefinition")
     ?.stringListValue("supportedTypes")
     ?.any { type -> type.startsWith("image/", ignoreCase = true) } == true

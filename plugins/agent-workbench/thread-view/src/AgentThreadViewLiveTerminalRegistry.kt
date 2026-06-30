@@ -1,0 +1,425 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
+package com.intellij.agent.workbench.thread.view
+
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.FileOpenedSyncListener
+import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.milliseconds
+
+private val LOG = logger<AgentThreadViewLiveTerminalRegistryService>()
+
+/**
+ * Keeps the live terminal session bound to the logical threadView tab identified by [AgentThreadViewVirtualFile.tabKey].
+ *
+ * Editor widgets may be disposed and recreated by the IDE during drag-and-drop tab moves, split changes, or
+ * detach/reattach flows. Those UI transitions must not restart or interrupt the underlying agent session.
+ */
+internal interface AgentThreadViewLiveTerminalRegistry {
+  /**
+   * Returns the existing live terminal for [file], or creates it on first attachment.
+   */
+  fun acquireOrCreate(
+    file: AgentThreadViewVirtualFile,
+    terminalTabs: AgentThreadViewTerminalTabs,
+    startupLaunchSpec: AgentSessionTerminalLaunchSpec,
+  ): AgentThreadViewTerminalTab
+
+  /**
+   * Replaces the retained terminal for [file]'s logical tab with a newly launched session.
+   */
+  fun replace(
+    file: AgentThreadViewVirtualFile,
+    terminalTabs: AgentThreadViewTerminalTabs,
+    startupLaunchSpec: AgentSessionTerminalLaunchSpec,
+  ): AgentThreadViewTerminalTab
+}
+
+/**
+ * Project-scoped implementation that owns cleanup for retained threadView terminals.
+ *
+ * Terminals are released only when the last open copy of the threadView file closes, or when the project itself is disposed.
+ */
+@Service(Service.Level.PROJECT)
+internal class AgentThreadViewLiveTerminalRegistryService(
+  private val project: Project,
+  private val serviceScope: CoroutineScope,
+) : AgentThreadViewLiveTerminalRegistry, Disposable {
+  private val store = AgentThreadViewLiveTerminalApplicationStore.store
+  private val pendingCloseJobs = ConcurrentHashMap<String, Job>()
+
+  init {
+    project.messageBus.connect(this).apply {
+      subscribe(
+        FileEditorManagerListener.FILE_EDITOR_MANAGER,
+        object : FileEditorManagerListener {
+          override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+            val threadViewFile = file as? AgentThreadViewVirtualFile ?: return
+            when (store.handleFileClosed(project = project, source = source, file = threadViewFile)) {
+              AgentThreadViewLiveTerminalCloseResult.DEFERRED -> schedulePendingCloseConfirmation(source = source, file = threadViewFile)
+              AgentThreadViewLiveTerminalCloseResult.KEPT_OPEN -> cancelPendingCloseJob(threadViewFile.tabKey)
+              AgentThreadViewLiveTerminalCloseResult.CLOSED -> {
+                cancelPendingCloseJob(threadViewFile.tabKey)
+                archiveClosedTerminalSession(threadViewFile)
+              }
+            }
+          }
+        }
+      )
+      subscribe(
+        FileOpenedSyncListener.TOPIC,
+        object : FileOpenedSyncListener {
+          override fun fileOpenedSync(
+            source: FileEditorManager,
+            file: VirtualFile,
+            editorsWithProviders: List<FileEditorWithProvider>,
+          ) {
+            val threadViewFile = file as? AgentThreadViewVirtualFile ?: return
+            cancelPendingCloseJob(threadViewFile.tabKey)
+            store.handleFileOpened(threadViewFile)
+          }
+        }
+      )
+    }
+  }
+
+  override fun acquireOrCreate(
+    file: AgentThreadViewVirtualFile,
+    terminalTabs: AgentThreadViewTerminalTabs,
+    startupLaunchSpec: AgentSessionTerminalLaunchSpec,
+  ): AgentThreadViewTerminalTab {
+    cancelPendingCloseJob(file.tabKey)
+    return store.acquireOrCreate(project = project, file = file, terminalTabs = terminalTabs, startupLaunchSpec = startupLaunchSpec)
+  }
+
+  override fun replace(
+    file: AgentThreadViewVirtualFile,
+    terminalTabs: AgentThreadViewTerminalTabs,
+    startupLaunchSpec: AgentSessionTerminalLaunchSpec,
+  ): AgentThreadViewTerminalTab {
+    cancelPendingCloseJob(file.tabKey)
+    return store.replace(project = project, file = file, terminalTabs = terminalTabs, startupLaunchSpec = startupLaunchSpec)
+  }
+
+  override fun dispose() {
+    disposeLiveTerminals()
+  }
+
+  @TestOnly
+  fun disposeLiveTerminalsForTest() {
+    disposeLiveTerminals()
+  }
+
+  private fun disposeLiveTerminals() {
+    pendingCloseJobs.values.forEach(Job::cancel)
+    pendingCloseJobs.clear()
+    store.disposeProject(project)
+  }
+
+  private fun schedulePendingCloseConfirmation(source: FileEditorManager, file: AgentThreadViewVirtualFile) {
+    val tabKey = file.tabKey
+    val job = serviceScope.launch(start = CoroutineStart.LAZY) {
+      repeat(PENDING_CLOSE_CONFIRMATION_RECHECK_COUNT) {
+        delay(PENDING_CLOSE_CONFIRMATION_RECHECK_INTERVAL_MS.milliseconds)
+        val reopened = withContext(Dispatchers.EDT) {
+          !project.isDisposed && source.isFileOpen(file)
+        }
+        if (reopened) {
+          withContext(Dispatchers.EDT) {
+            store.handleFileOpened(file)
+          }
+          return@launch
+        }
+      }
+
+      withContext(Dispatchers.EDT) {
+        if (!project.isDisposed) {
+          if (store.confirmPendingClose(project = project, source = source, file = file) == AgentThreadViewLiveTerminalCloseResult.CLOSED) {
+            archiveClosedTerminalSession(file)
+          }
+        }
+      }
+    }
+    registerPendingCloseJob(tabKey = tabKey, job = job)
+    job.start()
+  }
+
+  private fun registerPendingCloseJob(tabKey: String, job: Job) {
+    pendingCloseJobs.put(tabKey, job)?.cancel()
+    job.invokeOnCompletion {
+      pendingCloseJobs.remove(tabKey, job)
+    }
+  }
+
+  private fun cancelPendingCloseJob(tabKey: String) {
+    pendingCloseJobs.remove(tabKey)?.cancel()
+  }
+
+  private fun archiveClosedTerminalSession(file: AgentThreadViewVirtualFile) {
+    if (!shouldArchiveTerminalSessionOnLastEditorClose(file)) {
+      return
+    }
+    serviceScope.launch {
+      val provider = file.provider ?: return@launch
+      val descriptor = AgentSessionProviders.find(provider)
+      if (descriptor == null || !descriptor.supportsArchiveThread || !descriptor.archiveOnLastEditorClose) {
+        return@launch
+      }
+      try {
+        descriptor.archiveThread(path = file.projectPath, threadId = file.threadId)
+      }
+      catch (t: Throwable) {
+        if (t is CancellationException) {
+          throw t
+        }
+        LOG.warn("Failed to archive closed terminal session ${file.threadId}", t)
+      }
+    }
+  }
+}
+
+internal fun shouldArchiveTerminalSessionOnLastEditorClose(file: AgentThreadViewVirtualFile): Boolean {
+  val provider = file.provider ?: return false
+  val descriptor = AgentSessionProviders.find(provider) ?: return false
+  return descriptor.archiveOnLastEditorClose &&
+         descriptor.supportsArchiveThread &&
+         !file.isPendingThread &&
+         file.subAgentId == null &&
+         file.projectPath.isNotBlank() &&
+         file.threadId.isNotBlank()
+}
+
+private object AgentThreadViewLiveTerminalApplicationStore {
+  val store: AgentThreadViewLiveTerminalStore = AgentThreadViewLiveTerminalStore(::findOpenProjectForFile)
+
+  private fun findOpenProjectForFile(file: AgentThreadViewVirtualFile, excludedProject: Project?): Project? {
+    for (project in ProjectManager.getInstance().openProjects) {
+      if (project.isDisposed || project == excludedProject) {
+        continue
+      }
+      val manager = project.serviceIfCreated<FileEditorManager>() ?: continue
+      if (manager.isFileOpen(file)) {
+        return project
+      }
+    }
+    return null
+  }
+}
+
+internal enum class AgentThreadViewLiveTerminalCloseResult {
+  KEPT_OPEN,
+  DEFERRED,
+  CLOSED,
+}
+
+/**
+ * Synchronized in-memory store used by the project service and lightweight lifecycle tests.
+ */
+internal class AgentThreadViewLiveTerminalStore(
+  private val findOpenProjectForFile: (AgentThreadViewVirtualFile, Project?) -> Project? = { _, _ -> null },
+) {
+  private data class LiveTerminalEntry(
+    var project: Project,
+    var file: AgentThreadViewVirtualFile,
+    val tab: AgentThreadViewTerminalTab,
+    val terminalTabs: AgentThreadViewTerminalTabs,
+  )
+
+  private val entries = LinkedHashMap<String, LiveTerminalEntry>()
+  private val pendingCloseTabKeys = LinkedHashSet<String>()
+
+  /**
+   * Reuses the retained terminal for the same logical tab, preserving the running session across editor recreation.
+   */
+  @Synchronized
+  fun acquireOrCreate(
+    project: Project,
+    file: AgentThreadViewVirtualFile,
+    terminalTabs: AgentThreadViewTerminalTabs,
+    startupLaunchSpec: AgentSessionTerminalLaunchSpec = AgentSessionTerminalLaunchSpec(command = emptyList()),
+  ): AgentThreadViewTerminalTab {
+    pendingCloseTabKeys.remove(file.tabKey)
+    val existing = entries.get(file.tabKey)
+    if (existing != null) {
+      existing.project = project
+      existing.file = file
+      return existing.tab
+    }
+
+    val createdTab = terminalTabs.createTab(project, file, startupLaunchSpec)
+    entries.put(file.tabKey, LiveTerminalEntry(project = project, file = file, tab = createdTab, terminalTabs = terminalTabs))
+    return createdTab
+  }
+
+  @Synchronized
+  fun replace(
+    project: Project,
+    file: AgentThreadViewVirtualFile,
+    terminalTabs: AgentThreadViewTerminalTabs,
+    startupLaunchSpec: AgentSessionTerminalLaunchSpec = AgentSessionTerminalLaunchSpec(command = emptyList()),
+  ): AgentThreadViewTerminalTab {
+    pendingCloseTabKeys.remove(file.tabKey)
+    closeAndRemove(tabKey = file.tabKey, recordClosed = false)
+    val createdTab = terminalTabs.createTab(project, file, startupLaunchSpec)
+    entries.put(file.tabKey, LiveTerminalEntry(project = project, file = file, tab = createdTab, terminalTabs = terminalTabs))
+    return createdTab
+  }
+
+  /**
+   * Closes the retained terminal only after the IDE reports that no copy of [file] remains open.
+   */
+  @Synchronized
+  fun handleFileClosed(
+    project: Project,
+    source: FileEditorManager,
+    file: AgentThreadViewVirtualFile,
+  ): AgentThreadViewLiveTerminalCloseResult {
+    if (source.isFileOpen(file)) {
+      retainOpenEntry(tabKey = file.tabKey, project = project)
+      return AgentThreadViewLiveTerminalCloseResult.KEPT_OPEN
+    }
+    val openProject = findOpenProjectForFile(file, project)
+    if (openProject != null) {
+      retainOpenEntry(tabKey = file.tabKey, project = openProject)
+      return AgentThreadViewLiveTerminalCloseResult.KEPT_OPEN
+    }
+
+    if (file.getUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN) == true) {
+      pendingCloseTabKeys.add(file.tabKey)
+      return AgentThreadViewLiveTerminalCloseResult.DEFERRED
+    }
+
+    pendingCloseTabKeys.remove(file.tabKey)
+    return closeAndRemove(tabKey = file.tabKey, recordClosed = true)
+  }
+
+  @Synchronized
+  fun handleFileOpened(file: AgentThreadViewVirtualFile) {
+    pendingCloseTabKeys.remove(file.tabKey)
+  }
+
+  @Synchronized
+  fun confirmPendingClose(
+    project: Project,
+    source: FileEditorManager,
+    file: AgentThreadViewVirtualFile,
+  ): AgentThreadViewLiveTerminalCloseResult {
+    if (!pendingCloseTabKeys.remove(file.tabKey)) {
+      return AgentThreadViewLiveTerminalCloseResult.KEPT_OPEN
+    }
+    if (source.isFileOpen(file)) {
+      retainOpenEntry(tabKey = file.tabKey, project = project)
+      return AgentThreadViewLiveTerminalCloseResult.KEPT_OPEN
+    }
+    val openProject = findOpenProjectForFile(file, project)
+    if (openProject != null) {
+      retainOpenEntry(tabKey = file.tabKey, project = openProject)
+      return AgentThreadViewLiveTerminalCloseResult.KEPT_OPEN
+    }
+    return closeAndRemove(tabKey = file.tabKey, recordClosed = true)
+  }
+
+  /**
+   * Releases every retained terminal during project shutdown.
+   */
+  @Suppress("UNUSED_PARAMETER")
+  @Synchronized
+  fun dispose(project: Project) {
+    val entriesToClose = entries.values.toList()
+    entries.clear()
+    pendingCloseTabKeys.clear()
+    for ((entryProject, file, tab, terminalTabs) in entriesToClose) {
+      terminalTabs.closeTab(entryProject, tab)
+      recordTerminalSessionClosed(file)
+    }
+  }
+
+  @Synchronized
+  fun disposeProject(project: Project) {
+    val entriesToProcess = entries.entries
+      .filter { entry -> entry.value.project == project }
+      .map { entry -> entry.key to entry.value }
+    val entriesToClose = mutableListOf<LiveTerminalEntry>()
+    for ((tabKey, entry) in entriesToProcess) {
+      val openProject = findOpenProjectForFile(entry.file, project)
+      if (openProject != null) {
+        entry.project = openProject
+        pendingCloseTabKeys.remove(tabKey)
+      }
+      else {
+        entries.remove(tabKey)
+        pendingCloseTabKeys.remove(tabKey)
+        entriesToClose.add(entry)
+      }
+    }
+    for ((entryProject, file, tab, terminalTabs) in entriesToClose) {
+      terminalTabs.closeTab(entryProject, tab)
+      recordTerminalSessionClosed(file)
+    }
+  }
+
+  @TestOnly
+  @Synchronized
+  fun isTracked(tabKey: String): Boolean {
+    return entries.containsKey(tabKey)
+  }
+
+  @TestOnly
+  @Synchronized
+  fun isPendingClose(tabKey: String): Boolean {
+    return pendingCloseTabKeys.contains(tabKey)
+  }
+
+  private fun closeAndRemove(tabKey: String, recordClosed: Boolean): AgentThreadViewLiveTerminalCloseResult {
+    val entry = entries.remove(tabKey) ?: return AgentThreadViewLiveTerminalCloseResult.KEPT_OPEN
+    entry.terminalTabs.closeTab(entry.project, entry.tab)
+    if (recordClosed) {
+      recordTerminalSessionClosed(entry.file)
+    }
+    return AgentThreadViewLiveTerminalCloseResult.CLOSED
+  }
+
+  private fun recordTerminalSessionClosed(file: AgentThreadViewVirtualFile) {
+    val provider = file.provider ?: return
+    val projectPath = file.projectPath.takeIf { it.isNotBlank() } ?: return
+    val threadId = file.threadId.takeIf { it.isNotBlank() } ?: return
+    val descriptor = AgentSessionProviders.find(provider) ?: return
+    try {
+      descriptor.recordTerminalSessionClosed(path = projectPath, threadId = threadId)
+    }
+    catch (t: Throwable) {
+      LOG.warn("Failed to record closed terminal session ${file.threadId}", t)
+    }
+  }
+
+  private fun retainOpenEntry(tabKey: String, project: Project) {
+    pendingCloseTabKeys.remove(tabKey)
+    entries.get(tabKey)?.project = project
+  }
+}
+
+private const val PENDING_CLOSE_CONFIRMATION_RECHECK_INTERVAL_MS = 50L
+private const val PENDING_CLOSE_CONFIRMATION_RECHECK_COUNT = 10

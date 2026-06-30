@@ -165,7 +165,7 @@ class AgentSessionsTreePopupActionsTest {
       nodeId = SessionTreeId.Thread(projectPath = "/work/project-a", provider = provider, threadId = thread.id),
       node = SessionTreeNode.Thread(project = projectSessions, thread = thread),
     )
-    val openedFile = LightVirtualFile("thread-pin.chat")
+    val openedFile = LightVirtualFile("thread-pin.threadView")
     var openedTarget: SessionActionTarget.Thread? = null
     var pinnedProject: Project? = null
     var pinnedFile: VirtualFile? = null
@@ -173,10 +173,10 @@ class AgentSessionsTreePopupActionsTest {
     val action = AgentSessionsTreePopupToggleThreadPinAction(
       resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
       isThreadPinned = { false },
-      openThread = { _, target, openedChatHandler ->
+      openThread = { _, target, openedThreadViewHandler ->
         openedTarget = target
         runBlocking {
-          openedChatHandler(context.project, openedFile)
+          openedThreadViewHandler(context.project, openedFile)
         }
       },
       setOpenTabsPinned = { _, _ -> error("Unpin handler must not be called") },

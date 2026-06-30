@@ -5,7 +5,7 @@ import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.Nls
 
-const val AGENT_WORKBENCH_CHAT_SETTINGS_COMPONENT_ID: String = "agent.workbench.chat"
+const val AGENT_WORKBENCH_THREAD_VIEW_SETTINGS_COMPONENT_ID: String = "agent.workbench.threadView"
 const val AGENT_WORKBENCH_STATUS_BAR_WIDGETS_SETTINGS_COMPONENT_ID: String = "agent.workbench.status.bar.widgets"
 const val AGENT_WORKBENCH_SETTINGS_CONFIGURABLE_ID: String = "com.intellij.agent.workbench.settings"
 const val AGENT_WORKBENCH_PROVIDERS_SETTINGS_CONFIGURABLE_ID: String = "com.intellij.agent.workbench.settings.providers"

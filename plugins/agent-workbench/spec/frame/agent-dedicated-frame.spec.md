@@ -1,21 +1,21 @@
 ---
-name: Agent Chat Dedicated Frame
-description: Requirements for dedicated-frame routing, lifecycle, and project filtering used by Agent Workbench chat opens.
+name: Agent Thread View Dedicated Frame
+description: Requirements for dedicated-frame routing, lifecycle, and project filtering used by Agent Workbench thread view opens.
 targets:
   - ../../sessions/src/*.kt
   - ../../sessions/resources/intellij.agent.workbench.sessions.xml
   - ../../sessions/resources/messages/AgentSessionsBundle.properties
-  - ../../chat/src/*.kt
+  - ../../thread-view/src/*.kt
   - ../../sessions/testSrc/*.kt
 ---
 
-# Agent Chat Dedicated Frame
+# Agent Thread View Dedicated Frame
 
 Status: Draft
 Date: 2026-03-01
 
 ## Summary
-Define dedicated-frame mode behavior for Agent chat routing. This spec owns frame policy, frame lifecycle, filtering, and shortcut semantics. Shared command mapping and action contracts are owned by `../core/agent-core-contracts.spec.md`.
+Define dedicated-frame mode behavior for Agent thread view routing. This spec owns frame policy, frame lifecycle, filtering, and shortcut semantics. Shared command mapping and action contracts are owned by `../core/agent-core-contracts.spec.md`.
 
 ## Goals
 - Support one reusable dedicated frame per IDE instance when the user enables dedicated-frame mode.
@@ -25,11 +25,11 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
 
 ## Non-goals
 - Multiple dedicated frames per project/thread/sub-agent.
-- Replacing terminal-backed editor with non-terminal chat UI.
+- Replacing terminal-backed editor with non-terminal thread view UI.
 - Defining shared command mapping or popup action contracts.
 
 ## Requirements
-- Dedicated-frame mode must be stored in Agent Workbench settings and exposed in the Agent Workbench Chat settings group.
+- Dedicated-frame mode must be stored in Agent Workbench settings and exposed in the Agent Workbench Thread View settings group.
   [@test] ../../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
 - Sessions gear menu must expose `AgentWorkbenchSessions.ToggleDedicatedFrame` and update the Agent Workbench settings value.
@@ -55,7 +55,7 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
 - Cmd+1 shortcut routing via `AgentWorkbenchSessions.ActivateWithProjectShortcut` must be dedicated-project-only; platform action id `ActivateProjectToolWindow` must not be redefined.
   [@test] ../../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
-- In current-project mode (`false`), chat opens must use source project frame; closed source projects must open first.
+- In current-project mode (`false`), thread view opens must use source project frame; closed source projects must open first.
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
 - Dedicated-frame project must be hidden from recent-project metadata.
@@ -69,23 +69,23 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
   [@test] ../../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
 
 - Dedicated-frame terminal hyperlink routing to source projects must follow `agent-dedicated-frame-terminal-hyperlink-routing.spec.md`.
-  [@test] ../../chat/testSrc/AgentChatTerminalTabBuilderConfigurationTest.kt
+  [@test] ../../thread-view/testSrc/AgentThreadViewTerminalTabBuilderConfigurationTest.kt
   [@test] ../../../terminal/tests/src/com/intellij/terminal/tests/reworked/backend/TerminalCrossProjectFileHyperlinkNavigatorTest.kt
   [@test] ../../../terminal/tests/src/com/intellij/terminal/tests/reworked/backend/TerminalCrossProjectFileHyperlinkNavigatorTest.kt
 
-- Chat terminal `cwd` must remain source project path regardless of frame mode.
+- Thread View terminal `cwd` must remain source project path regardless of frame mode.
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
-- Chat persistence and restore behavior must follow `../chat/agent-chat-editor.spec.md` in both modes.
-  [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
+- Thread View persistence and restore behavior must follow `../thread-view/agent-thread-view.spec.md` in both modes.
+  [@test] ../../thread-view/testSrc/AgentThreadViewEditorServiceTest.kt
 
 ## Architecture Decision — Welcome Screen Independence
 - Implementation must stay independent from `welcomeScreenProjectProvider` singleton model. Dedicated-frame lifecycle is self-contained and must not couple to welcome-screen project provider internals.
 
 ## User Experience
-- Default click behavior opens chat in the current source-project frame.
+- Default click behavior opens thread view in the current source-project frame.
 - Toggling dedicated-frame setting affects subsequent opens immediately.
-- Dedicated frame receives focus when chat opens there.
+- Dedicated frame receives focus when thread view opens there.
 - Dedicated frame can be reopened from explicit action entry points.
 - Sessions tree never shows dedicated frame as a project node.
 - In Rider with per-app toolwindows enabled, dedicated-frame toolwindow layout customization remains independent from normal Rider project frames.
@@ -110,7 +110,7 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
 
 ## References
 - `../core/agent-core-contracts.spec.md`
-- `../chat/agent-chat-editor.spec.md`
+- `../thread-view/agent-thread-view.spec.md`
 - `../sessions/agent-sessions.spec.md`
 - `agent-dedicated-frame-project-switching.spec.md`
 - `agent-dedicated-frame-terminal-hyperlink-routing.spec.md`
