@@ -1,6 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "testFramework-junit5-projectStructure-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":testFramework-junit5-projectStructure-tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.testFramework.junit5.projectStructure.tests`
+
 ### auto-generated section `build intellij.platform.testFramework.junit5.projectStructure` start
 
 jvm_library(
@@ -156,11 +165,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.testFramework.junit5.projectStructure.tests` end
-
-### auto-generated section `test intellij.platform.testFramework.junit5.projectStructure.tests` start
-
-jps_test(
-    name = "testFramework-junit5-projectStructure-tests_test",
-    runtime_deps = [":testFramework-junit5-projectStructure-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.testFramework.junit5.projectStructure.tests` end
