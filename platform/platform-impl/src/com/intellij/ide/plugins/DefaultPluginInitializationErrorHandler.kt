@@ -1,7 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.util.ui.RawSwingDispatcher
+import com.intellij.openapi.application.EDT
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -34,7 +35,7 @@ class DefaultPluginInitializationErrorHandler : PluginInitializationErrorHandler
   }
 
   override suspend fun enableDeferredPlugins() {
-    withContext(RawSwingDispatcher) {
+    withContext(Dispatchers.EDT) {
       if (pluginEnabler.enable(findDescriptors(pluginsToEnableDisable.first, markedForLoading = true))) {
         PluginManagerMain.notifyPluginsUpdated(null)
       }
@@ -42,7 +43,7 @@ class DefaultPluginInitializationErrorHandler : PluginInitializationErrorHandler
   }
 
   override suspend fun disableDeferredPlugins() {
-    withContext(RawSwingDispatcher) {
+    withContext(Dispatchers.EDT) {
       pluginEnabler.disable(findDescriptors(pluginsToEnableDisable.second, markedForLoading = false))
     }
   }
