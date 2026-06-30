@@ -1,6 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "inspect-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":inspect-tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.inspect.tests`
+
 ### auto-generated section `build intellij.platform.inspect` start
 
 jvm_library(
@@ -225,6 +234,8 @@ jvm_library(
         "//libraries/jackson3/databind:databind_test_lib",
         "//libraries/jsoup",
         "//libraries/jsoup:jsoup_test_lib",
+        "//libraries/misc/plugin",
+        "//libraries/misc/plugin:plugin_test_lib",
         "//libraries/jackson3/jackson:libraries-jackson3",
         "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
         "//platform/testFramework",
@@ -235,6 +246,10 @@ jvm_library(
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//platform/backend/observation",
         "//platform/backend/observation:observation_test_lib",
+        "//plugins/grazie",
+        "//plugins/grazie:grazie_test_lib",
+        "//platform/vcs/plugin",
+        "//platform/vcs/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.inspect.tests` end
@@ -247,11 +262,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.inspect.tests` end
-
-### auto-generated section `test intellij.platform.inspect.tests` start
-
-jps_test(
-    name = "inspect-tests_test",
-    runtime_deps = [":inspect-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.inspect.tests` end
