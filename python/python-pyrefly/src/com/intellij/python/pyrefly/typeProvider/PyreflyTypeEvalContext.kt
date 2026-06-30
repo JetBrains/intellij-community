@@ -129,8 +129,9 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     val virtualFile = VirtualFileManager.getInstance().findFileByUrl(tspNode.uri) ?: return null
     val file = psiFile.manager.findFile(virtualFile) ?: return null
     val document = FileDocumentManager.getInstance().getDocument(virtualFile) ?: return null
-    val offset = getOffsetInDocument(document, tspNode.range.start) ?: return null
-    return file.findElementAt(offset)
+    val startOffset = getOffsetInDocument(document, tspNode.range.start) ?: return null
+    val endOffset = getOffsetInDocument(document, tspNode.range.end) ?: return null
+    return PsiTreeUtil.findElementOfClassAtRange(file, startOffset, endOffset, PsiElement::class.java)
   }
 
   /**
