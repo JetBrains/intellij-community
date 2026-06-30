@@ -1,12 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.service
 
-// @spec community/plugins/agent-workbench/spec/sessions/agent-sessions.spec.md
-// @spec community/plugins/agent-workbench/spec/frame/agent-dedicated-frame.spec.md
-// @spec community/plugins/agent-workbench/spec/actions/new-thread.spec.md
-// @spec community/plugins/agent-workbench/spec/sessions/agent-terminal-sessions.spec.md
-// @spec community/plugins/agent-workbench/spec/actions/global-prompt-entry.spec.md
-// @spec community/plugins/agent-workbench/spec/core/agent-workbench-telemetry.spec.md
+// @spec plugins/ij-air/spec/sessions/agent-sessions.spec.md
+// @spec plugins/ij-air/spec/frame/agent-dedicated-frame.spec.md
+// @spec plugins/ij-air/spec/actions/new-thread.spec.md
+// @spec plugins/ij-air/spec/sessions/agent-terminal-sessions.spec.md
+// @spec plugins/ij-air/spec/actions/global-prompt-entry.spec.md
+// @spec plugins/ij-air/spec/core/agent-workbench-telemetry.spec.md
 
 import com.intellij.agent.workbench.thread.view.AgentThreadViewDeferredStartPhase
 import com.intellij.agent.workbench.thread.view.AgentThreadViewDeferredStartContent

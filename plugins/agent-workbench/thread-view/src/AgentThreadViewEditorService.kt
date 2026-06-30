@@ -3,7 +3,7 @@
 
 package com.intellij.agent.workbench.thread.view
 
-// @spec community/plugins/agent-workbench/spec/thread-view/agent-thread-view.spec.md
+// @spec plugins/ij-air/spec/thread-view/agent-thread-view.spec.md
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.AgentThreadActivityReport

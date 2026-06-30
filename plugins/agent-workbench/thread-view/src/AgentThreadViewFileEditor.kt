@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.thread.view
 
-// @spec community/plugins/agent-workbench/spec/thread-view/agent-thread-view.spec.md
+// @spec plugins/ij-air/spec/thread-view/agent-thread-view.spec.md
 
 import com.intellij.CommonBundle
 import com.intellij.agent.workbench.ui.AgentWorkbenchActionIds
