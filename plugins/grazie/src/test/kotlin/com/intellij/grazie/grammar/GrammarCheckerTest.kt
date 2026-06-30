@@ -94,6 +94,11 @@ class GrammarCheckerTest : GrazieTestBase() {
     assertIsEmpty(check(plain("Времено отключен, т.к. не работает.")))
   }
 
+  fun `test text with identifiers and call expression`() {
+    val token = plain("Using auto_cleanup is generally more eficient, in which case you shouldn't ever need to cleanup()")
+    assertIsEmpty(check(token))
+  }
+
   private fun plain(vararg texts: String) = plain(texts.toList())
 
   private fun plain(texts: List<String>): Collection<PsiElement> {
