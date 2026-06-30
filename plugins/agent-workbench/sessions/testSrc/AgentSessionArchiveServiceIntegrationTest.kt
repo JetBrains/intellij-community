@@ -355,11 +355,23 @@ class AgentSessionArchiveServiceIntegrationTest {
             service.state.value.projects.firstOrNull()?.threads?.any { it.id == "codex-1" } == true
           }
 
-          archiveService.archiveThreadsForTest(listOf(ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.from("codex"), "codex-1")))
+          archiveService.archiveThreadsForTest(listOf(ArchiveThreadTarget.Thread(PROJECT_PATH,
+                                                                                 AgentSessionProvider.from("codex"),
+                                                                                 "codex-1")))
           waitForCondition {
             service.state.value.projects.firstOrNull()?.threads.orEmpty().map { it.id } == listOf("codex-2")
           }
           assertThat(backgroundRunner.hasPendingTask()).isTrue()
+
+          val duplicateDropped = CompletableDeferred<Unit>()
+          archiveService.archiveThreads(
+            targets = listOf(ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.from("codex"), "codex-1")),
+            entryPoint = AgentWorkbenchEntryPoint.TREE_POPUP,
+            onDropped = { duplicateDropped.complete(Unit) },
+          )
+          waitForCondition {
+            duplicateDropped.isCompleted
+          }
 
           val callsBeforeArchive = listCalls.get()
           backgroundRunner.resume()
@@ -488,7 +500,9 @@ class AgentSessionArchiveServiceIntegrationTest {
             service.state.value.projects.firstOrNull()?.threads?.any { it.id == "codex-1" } == true
           }
 
-          archiveService.archiveThreadsForTest(listOf(ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.from("codex"), "codex-1")))
+          archiveService.archiveThreadsForTest(listOf(ArchiveThreadTarget.Thread(PROJECT_PATH,
+                                                                                 AgentSessionProvider.from("codex"),
+                                                                                 "codex-1")))
           waitForCondition {
             service.state.value.projects.firstOrNull()?.threads.orEmpty().none { it.id == "codex-1" }
           }

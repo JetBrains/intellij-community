@@ -184,7 +184,7 @@ internal object PiExtensionControlBridge {
 
     handler.handle(
       context = PiControlSessionContext(projectPath = connection.projectPath, sessionId = connection.sessionId),
-      request = PiControlExtensionRequest(operation = payload.operation, arguments = payload.arguments),
+      request = PiControlExtensionRequest(operation = payload.operation, argumentsJson = payload.argumentsJson),
       requestId = requestId,
       sendResponse = { response -> sendControlText(client = client, text = response) },
     )

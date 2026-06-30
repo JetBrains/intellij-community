@@ -94,14 +94,17 @@ Agent Workbench treats Pi as a first-class terminal-backed provider. Pi sessions
   [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiExtensionControlWebSocketHandlerTest.kt
 
 - The same authenticated control WebSocket may carry explicit Agent Workbench task-folder capability requests from the bundled Pi extension's task-folder tools
-  to the IDE using `taskFolderRequest` frames with an `operation` string and nested `arguments` object. The base Pi sessions module must own
-  only authenticated transport, shared parsing, and extension-request routing; the task-folder request handler lives in the AWB Pi module and
-  depends on the AWB task-folder service. Supported operations cover current-folder lookup, folder listing, thread assignment listing,
-  create-and-assign, current-thread assign/unassign, rename, metadata set/delete, mark done, and delete. These requests must use the bound
-  cwd/session id to resolve current-session context, use global folder id for explicit folder mutations, must not inject prompt context
-  automatically, and must return normal `response` frames with `ok`, `requestId`, and a `result` object containing the requested folder,
-  assignment, metadata, or mutation fields. Metadata is ordinary string key/value data; `issue` and `review` are conventional keys, not
-  separate protocol fields.
+  to the IDE using `taskFolderRequest` frames with an `operation` string and nested `arguments` JSON value. The base Pi sessions module must own
+  only authenticated transport, raw argument preservation, and extension-request routing; the task-folder request handler lives in the AWB Pi module and
+  owns task-folder argument parsing and depends on the AWB task-folder/session services. Supported operations cover current-folder lookup, folder listing,
+  thread assignment listing, loaded current-project thread listing, create with optional current-thread assignment, current-thread assign/unassign,
+  loaded active current-project thread move/remove, rename, metadata set/delete, mark done, and delete. Folder Admin operations for arbitrary thread ids
+  must be limited to loaded active threads in the bound cwd path; explicit paths must match that cwd. These requests must use the bound cwd/session id
+  to resolve current-session context, use global folder id for explicit folder mutations, must not inject prompt context automatically, and must return
+  normal `response` frames with `ok`, `requestId`, and a `result` object containing concrete folder ids/names/statuses, thread provider/id/title details,
+  assignment fields, metadata, or mutation fields. Mark-done must archive through `AgentSessionArchiveService`, not direct provider descriptor calls, and
+  automation callers must receive a terminal response when duplicate archive requests are dropped. Metadata is ordinary string key/value data; `issue` and
+  `review` are conventional keys, not separate protocol fields.
   [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiExtensionControlWebSocketHandlerTest.kt
   [@test] ../../lib-agent/providers/pi/sessions/testSrc/PiThemeSupportTest.kt
 

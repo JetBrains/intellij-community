@@ -22,6 +22,19 @@ type AgentWorkbenchTaskFolderThread = {
   assignedAt?: number;
 };
 
+type AgentWorkbenchProjectThread = {
+  path: string;
+  provider: string;
+  threadId: string;
+  title?: string;
+  updatedAt?: number;
+  activity?: string;
+  archived?: boolean;
+  folderId?: string | null;
+  folderName?: string | null;
+  folderStatus?: string | null;
+};
+
 type AgentWorkbenchTaskFolderToolDefinition = {
   name: string;
   label: string;
@@ -71,6 +84,7 @@ export function registerTaskFolderTools(
 }
 
 const TASK_FOLDER_METADATA_DESCRIPTION = "String metadata. Conventional keys are 'issue' and 'review'; custom keys are allowed.";
+const CURRENT_PATH_DESCRIPTION = "Project path for the thread; defaults to the current Pi cwd and must match it.";
 
 const TASK_FOLDER_TOOL_DEFINITIONS: AgentWorkbenchTaskFolderToolDefinition[] = [
   {
@@ -85,7 +99,7 @@ const TASK_FOLDER_TOOL_DEFINITIONS: AgentWorkbenchTaskFolderToolDefinition[] = [
     operation: "getCurrent",
     resultText: (result) => {
       const folder = resultFolder(result);
-      return folder === undefined ? "No task folder is assigned to this thread." : `Current task folder: '${folder.name}'.`;
+      return folder === undefined ? "No task folder is assigned to this thread." : `Current task folder: ${formatFolder(folder)}.`;
     },
   },
   {
@@ -100,7 +114,7 @@ const TASK_FOLDER_TOOL_DEFINITIONS: AgentWorkbenchTaskFolderToolDefinition[] = [
       includeDone: Type.Optional(Type.Boolean({description: "Whether to include done task folders"})),
     }),
     operation: "listFolders",
-    resultText: (result) => `Found ${resultFolders(result).length} task folder(s).`,
+    resultText: (result) => formatFolders(resultFolders(result)),
   },
   {
     name: "agent_workbench_list_task_folder_threads",
@@ -111,21 +125,35 @@ const TASK_FOLDER_TOOL_DEFINITIONS: AgentWorkbenchTaskFolderToolDefinition[] = [
       folderId: Type.Optional(Type.String({description: "Task folder id; defaults to the current task folder"})),
     }),
     operation: "listThreads",
-    resultText: (result) => `Found ${resultThreads(result).length} assigned thread(s).`,
+    resultText: (result) => formatAssignedThreads(resultAssignedThreads(result)),
+  },
+  {
+    name: "agent_workbench_list_project_threads",
+    label: "List Project Threads",
+    description: "List loaded active Agent Workbench threads in the current project path, including provider/thread ids and task-folder assignment.",
+    promptSnippet: "List loaded active Agent Workbench threads for this project path",
+    promptGuidelines: [
+      "Use agent_workbench_list_project_threads before moving or removing a thread when you need its provider and threadId.",
+      "Only loaded active threads from the current Pi cwd can be moved by task-folder tools.",
+    ],
+    parameters: Type.Object({}),
+    operation: "listProjectThreads",
+    resultText: (result) => formatProjectThreads(resultProjectThreads(result)),
   },
   {
     name: "agent_workbench_create_task_folder",
     label: "Create Task Folder",
-    description: "Create an Agent Workbench task folder for the current project and assign the current Pi session to it.",
+    description: "Create an Agent Workbench task folder for the current project and optionally assign the current Pi session to it.",
     promptSnippet: "Create an Agent Workbench task folder and assign this Pi thread to it",
     promptGuidelines: [
       "Use agent_workbench_create_task_folder when the user asks to create a task folder or start work in a new task folder.",
       "Use metadata key 'issue' for issue tracker ids and 'review' for review ids; do not use separate issue parameters.",
-      "If the current Pi thread already has a task folder, update it with metadata or rename tools instead of creating another folder.",
+      "If the current Pi thread already has a task folder, update it with metadata or rename tools instead of creating another assigned folder.",
     ],
     parameters: Type.Object({
       name: Type.String({description: "Task folder name"}),
       metadata: Type.Optional(Type.Record(Type.String(), Type.String({description: TASK_FOLDER_METADATA_DESCRIPTION}))),
+      assignCurrentThread: Type.Optional(Type.Boolean({description: "Whether to assign the current Pi thread; defaults to true"})),
     }),
     operation: "createAndAssign",
     resultText: (result) => {
@@ -133,9 +161,12 @@ const TASK_FOLDER_TOOL_DEFINITIONS: AgentWorkbenchTaskFolderToolDefinition[] = [
       if (folder === undefined) {
         return "Task folder request completed.";
       }
-      return resultBoolean(result, "created") === false
-        ? `This thread is already assigned to task folder '${folder.name}'. Use metadata or rename tools for updates.`
-        : `Created task folder '${folder.name}' and assigned this thread.`;
+      if (resultBoolean(result, "created") === false) {
+        return `This thread is already assigned to task folder ${formatFolder(folder)}. Use metadata or rename tools for updates.`;
+      }
+      return resultBoolean(result, "assigned") === true
+        ? `Created and assigned task folder: ${formatFolder(folder)}.`
+        : `Created unassigned task folder: ${formatFolder(folder)}.`;
     },
   },
   {
@@ -159,6 +190,41 @@ const TASK_FOLDER_TOOL_DEFINITIONS: AgentWorkbenchTaskFolderToolDefinition[] = [
     resultText: mutationResultText("Removed current thread from task folder."),
   },
   {
+    name: "agent_workbench_move_thread_to_task_folder",
+    label: "Move Thread",
+    description: "Move a loaded active Agent Workbench thread in the current project path to an in-progress task folder.",
+    promptSnippet: "Move a loaded active Agent Workbench thread to a task folder",
+    promptGuidelines: [
+      "Call agent_workbench_list_project_threads first if the provider or threadId is unknown.",
+      "This tool is limited to loaded active threads in the current Pi cwd.",
+    ],
+    parameters: Type.Object({
+      folderId: Type.String({description: "Target task folder id"}),
+      provider: Type.String({description: "Agent Workbench provider id, for example pi, codex, claude, or junie"}),
+      threadId: Type.String({description: "Agent Workbench thread id"}),
+      path: Type.Optional(Type.String({description: CURRENT_PATH_DESCRIPTION})),
+    }),
+    operation: "moveThreadToFolder",
+    resultText: threadMutationResultText("Moved thread to task folder."),
+  },
+  {
+    name: "agent_workbench_remove_thread_from_task_folder",
+    label: "Remove Thread",
+    description: "Remove a loaded active Agent Workbench thread in the current project path from its task folder.",
+    promptSnippet: "Remove a loaded active Agent Workbench thread from its task folder",
+    promptGuidelines: [
+      "Call agent_workbench_list_project_threads first if the provider or threadId is unknown.",
+      "This tool is limited to loaded active threads in the current Pi cwd.",
+    ],
+    parameters: Type.Object({
+      provider: Type.String({description: "Agent Workbench provider id, for example pi, codex, claude, or junie"}),
+      threadId: Type.String({description: "Agent Workbench thread id"}),
+      path: Type.Optional(Type.String({description: CURRENT_PATH_DESCRIPTION})),
+    }),
+    operation: "removeThreadFromFolder",
+    resultText: threadMutationResultText("Removed thread from task folder."),
+  },
+  {
     name: "agent_workbench_rename_task_folder",
     label: "Rename Task Folder",
     description: "Rename an Agent Workbench task folder. Defaults to the current task folder.",
@@ -170,7 +236,7 @@ const TASK_FOLDER_TOOL_DEFINITIONS: AgentWorkbenchTaskFolderToolDefinition[] = [
     operation: "rename",
     resultText: (result) => {
       const folder = resultFolder(result);
-      return folder === undefined ? "Task folder rename completed." : `Renamed task folder to '${folder.name}'.`;
+      return folder === undefined ? "Task folder rename completed." : `Renamed task folder: ${formatFolder(folder)}.`;
     },
   },
   {
@@ -205,7 +271,7 @@ const TASK_FOLDER_TOOL_DEFINITIONS: AgentWorkbenchTaskFolderToolDefinition[] = [
   {
     name: "agent_workbench_mark_task_folder_done",
     label: "Mark Task Folder Done",
-    description: "Mark an Agent Workbench task folder done after archiving assigned threads. Defaults to the current task folder.",
+    description: "Mark an Agent Workbench task folder done after archiving assigned threads through Agent Workbench. Defaults to the current task folder.",
     promptSnippet: "Mark a task folder done and archive assigned threads",
     parameters: Type.Object({
       folderId: Type.Optional(Type.String({description: "Task folder id; defaults to the current task folder"})),
@@ -213,9 +279,11 @@ const TASK_FOLDER_TOOL_DEFINITIONS: AgentWorkbenchTaskFolderToolDefinition[] = [
     operation: "markDone",
     confirm: (_params, ctx) => confirmTaskFolderOperation(ctx, "Mark Task Folder Done", "Archive assigned threads and mark this task folder done?"),
     resultText: (result) => {
+      const folder = resultFolder(result);
       const archived = resultNumber(result, "archivedCount");
       const requested = resultNumber(result, "requestedCount");
-      return `Marked task folder done. Archived ${archived} of ${requested} assigned thread(s).`;
+      const prefix = resultBoolean(result, "changed") ? "Marked task folder done." : "Task folder was not changed.";
+      return `${prefix} Archived ${archived} of ${requested} assigned thread(s).${folder === undefined ? "" : ` ${formatFolder(folder)}.`}`;
     },
   },
   {
@@ -239,7 +307,70 @@ async function confirmTaskFolderOperation(ctx: ExtensionContext, title: string, 
 }
 
 function mutationResultText(changedText: string): (result: unknown) => string {
-  return (result) => resultBoolean(result, "changed") ? changedText : "Task folder was already up to date.";
+  return (result) => {
+    const folder = resultFolder(result);
+    const suffix = folder === undefined ? "" : ` ${formatFolder(folder)}.`;
+    return resultBoolean(result, "changed") ? `${changedText}${suffix}` : `Task folder was already up to date.${suffix}`;
+  };
+}
+
+function threadMutationResultText(changedText: string): (result: unknown) => string {
+  return (result) => {
+    const thread = resultProjectThread(result);
+    const folder = resultFolder(result);
+    const status = resultBoolean(result, "changed") ? changedText : "Thread task-folder assignment was already up to date.";
+    const threadText = thread === undefined ? "" : ` ${formatProjectThread(thread)}.`;
+    const folderText = folder === undefined ? "" : ` Folder: ${formatFolder(folder)}.`;
+    return `${status}${threadText}${folderText}`;
+  };
+}
+
+function formatFolders(folders: AgentWorkbenchTaskFolder[]): string {
+  if (folders.length === 0) {
+    return "No task folders found.";
+  }
+  return [`Found ${folders.length} task folder(s):`, ...folders.map((folder, index) => `${index + 1}. ${formatFolder(folder)}`)].join("\n");
+}
+
+function formatAssignedThreads(threads: AgentWorkbenchTaskFolderThread[]): string {
+  if (threads.length === 0) {
+    return "No assigned threads found.";
+  }
+  return [`Found ${threads.length} assigned thread(s):`, ...threads.map((thread, index) => `${index + 1}. ${formatAssignedThread(thread)}`)].join("\n");
+}
+
+function formatProjectThreads(threads: AgentWorkbenchProjectThread[]): string {
+  if (threads.length === 0) {
+    return "No loaded active Agent Workbench threads found for this project path.";
+  }
+  return [`Found ${threads.length} loaded active thread(s):`, ...threads.map((thread, index) => `${index + 1}. ${formatProjectThread(thread)}`)].join("\n");
+}
+
+function formatFolder(folder: AgentWorkbenchTaskFolder): string {
+  return `'${folder.name}' (id=${folder.id}, status=${folder.status}, path=${folder.path}, metadata=${formatMetadata(folder.metadata)})`;
+}
+
+function formatAssignedThread(thread: AgentWorkbenchTaskFolderThread): string {
+  const assignedAt = thread.assignedAt === undefined ? "" : `, assignedAt=${thread.assignedAt}`;
+  return `${thread.provider}:${thread.threadId} (path=${thread.path}, folderId=${thread.folderId}${assignedAt})`;
+}
+
+function formatProjectThread(thread: AgentWorkbenchProjectThread): string {
+  const title = thread.title === undefined ? "" : `, title='${thread.title}'`;
+  const updatedAt = thread.updatedAt === undefined ? "" : `, updatedAt=${thread.updatedAt}`;
+  const activity = thread.activity === undefined ? "" : `, activity=${thread.activity}`;
+  const folder = typeof thread.folderId === "string" && thread.folderId.length > 0
+    ? `, folder='${thread.folderName ?? ""}'/id=${thread.folderId}/status=${thread.folderStatus ?? ""}`
+    : ", folder=none";
+  return `${thread.provider}:${thread.threadId} (path=${thread.path}${title}${updatedAt}${activity}${folder})`;
+}
+
+function formatMetadata(metadata: Record<string, string> | undefined): string {
+  const entries = Object.entries(metadata ?? {});
+  if (entries.length === 0) {
+    return "{}";
+  }
+  return `{${entries.map(([key, value]) => `${key}=${value}`).join(", ")}}`;
 }
 
 function resultFolder(result: unknown): AgentWorkbenchTaskFolder | undefined {
@@ -253,9 +384,22 @@ function resultFolders(result: unknown): AgentWorkbenchTaskFolder[] {
   return result.folders.filter(isRecord) as AgentWorkbenchTaskFolder[];
 }
 
-function resultThreads(result: unknown): AgentWorkbenchTaskFolderThread[] {
+function resultAssignedThreads(result: unknown): AgentWorkbenchTaskFolderThread[] {
   if (!isRecord(result) || !Array.isArray(result.threads)) return [];
-  return result.threads.filter(isRecord) as AgentWorkbenchTaskFolderThread[];
+  return result.threads.filter((thread) => isRecord(thread) && typeof thread.folderId === "string") as AgentWorkbenchTaskFolderThread[];
+}
+
+function resultProjectThreads(result: unknown): AgentWorkbenchProjectThread[] {
+  if (!isRecord(result) || !Array.isArray(result.threads)) return [];
+  return result.threads.filter((thread) => isRecord(thread) && typeof thread.provider === "string" && typeof thread.threadId === "string") as AgentWorkbenchProjectThread[];
+}
+
+function resultProjectThread(result: unknown): AgentWorkbenchProjectThread | undefined {
+  if (!isRecord(result)) return undefined;
+  const thread = result.thread;
+  return isRecord(thread) && typeof thread.provider === "string" && typeof thread.threadId === "string"
+    ? thread as AgentWorkbenchProjectThread
+    : undefined;
 }
 
 function resultBoolean(result: unknown, key: string): boolean | undefined {
