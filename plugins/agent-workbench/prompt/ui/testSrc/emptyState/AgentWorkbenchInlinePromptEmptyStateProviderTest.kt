@@ -47,8 +47,8 @@ import org.junit.jupiter.api.Timeout
 import java.awt.Component
 import java.awt.Container
 import java.awt.Dimension
-import java.awt.event.MouseEvent
 import java.util.concurrent.TimeUnit
+import javax.swing.AbstractButton
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -79,7 +79,7 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
   }
 
   @Test
-  fun providerCreatesShellWhenLauncherIsUnavailable() {
+  fun providerCreatesPromptContentWhenLauncherIsUnavailable() {
     val provider = AgentWorkbenchInlinePromptEmptyStateProvider()
 
     val component = AgentPromptLaunchers.withLauncherForTest(null) {
@@ -88,8 +88,8 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
 
     try {
       assertThat(component).isInstanceOf(AgentWorkbenchInlinePromptEmptyStateComponent::class.java)
-      assertThat(collectComponents(component!!, AgentPromptTextField::class.java)).isEmpty()
-      assertThat(collectComponents(component, JLabel::class.java)).hasSize(1)
+      assertThat(collectComponents(component!!, AgentPromptTextField::class.java)).hasSize(1)
+      assertNoVisibleAskAgentText(component)
     }
     finally {
       disposeComponent(component as AgentWorkbenchInlinePromptEmptyStateComponent)
@@ -97,12 +97,12 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
   }
 
   @Test
-  fun providerCreatesShellPromptContent() {
+  fun providerCreatesInitializedPromptContent() {
     val component = createProviderComponentWithLauncher()
     try {
       assertThat(component.name).isEqualTo(INLINE_PROMPT_COMPONENT_NAME)
-      assertThat(collectComponents(component, AgentPromptTextField::class.java)).isEmpty()
-      assertThat(collectComponents(component, JLabel::class.java)).hasSize(1)
+      assertThat(collectComponents(component, AgentPromptTextField::class.java)).hasSize(1)
+      assertNoVisibleAskAgentText(component)
     }
     finally {
       disposeComponent(component)
@@ -267,17 +267,12 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
   }
 
   @Test
-  fun clickingShellLabelInitializesPromptContent() {
+  fun directComponentDoesNotShowAskAgentShellBeforeInitialization() {
     runInEdtAndWait {
       val component = AgentWorkbenchInlinePromptEmptyStateComponent(ProjectManager.getInstance().defaultProject)
       try {
-        val label = collectComponents(component, JLabel::class.java).single()
-
-        label.mouseListeners.forEach { listener ->
-          listener.mouseClicked(MouseEvent(label, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 1, 1, 1, false))
-        }
-
-        assertThat(collectComponents(component, AgentPromptTextField::class.java)).hasSize(1)
+        assertThat(collectComponents(component, AgentPromptTextField::class.java)).isEmpty()
+        assertNoVisibleAskAgentText(component)
       }
       finally {
         disposeComponent(component)
@@ -286,11 +281,33 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
   }
 
   @Test
-  fun providerCreatesShellBeforeSwingHierarchy() {
+  fun providerCreatesInitializedPromptBeforeSwingHierarchy() {
     val component = createProviderComponentWithLauncher()
     try {
-      assertThat(collectComponents(component, AgentPromptTextField::class.java)).isEmpty()
-      assertThat(collectComponents(component, JLabel::class.java)).hasSize(1)
+      assertThat(collectComponents(component, AgentPromptTextField::class.java)).hasSize(1)
+      assertNoVisibleAskAgentText(component)
+    }
+    finally {
+      disposeComponent(component)
+    }
+  }
+
+  @Test
+  fun providerRestoresSavedPromptTextAfterStrictUiInitialization() {
+    val project = projectFixture.get()
+    project.service<AgentPromptUiSessionStateService>().saveDraft(
+      AgentPromptUiDraft(
+        promptText = "saved prompt",
+        targetMode = PromptTargetMode.NEW_TASK,
+      )
+    )
+
+    val component = createProviderComponentWithLauncher()
+    try {
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+
+      val promptArea = collectComponents(component, AgentPromptTextField::class.java).single()
+      assertThat(promptArea.text).isEqualTo("saved prompt")
     }
     finally {
       disposeComponent(component)
@@ -347,6 +364,11 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
     return component as AgentWorkbenchInlinePromptEmptyStateComponent
   }
 
+  private fun assertNoVisibleAskAgentText(component: Component) {
+    assertThat(collectVisibleTexts(component))
+      .doesNotContain(AgentPromptBundle.message("inline.empty.state.prompt.accessible.name"))
+  }
+
   private fun testInvocationData(project: com.intellij.openapi.project.Project): AgentPromptInvocationData {
     return AgentPromptInvocationData(
       project = project,
@@ -375,6 +397,20 @@ class AgentWorkbenchInlinePromptEmptyStateProviderTest {
       }
       if (component is Container) {
         component.components.forEach { child -> addAll(collectComponents(child, componentClass)) }
+      }
+    }
+  }
+
+  private fun collectVisibleTexts(component: Component): List<String> {
+    return buildList {
+      if (component.isVisible) {
+        when (component) {
+          is JLabel -> component.text?.let(::add)
+          is AbstractButton -> component.text?.let(::add)
+        }
+      }
+      if (component is Container) {
+        component.components.forEach { child -> addAll(collectVisibleTexts(child)) }
       }
     }
   }
