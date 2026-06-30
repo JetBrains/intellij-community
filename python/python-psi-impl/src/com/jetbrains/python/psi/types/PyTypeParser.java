@@ -85,7 +85,7 @@ public final class PyTypeParser {
     }
 
     public @Nullable PyType getType() {
-      if (this == EMPTY_RESULT) {
+      if (myType == null) {  // Includes 'this == EMPTY_RESULT'
         return PyAnyType.getUnknown();
       }
       return myType;

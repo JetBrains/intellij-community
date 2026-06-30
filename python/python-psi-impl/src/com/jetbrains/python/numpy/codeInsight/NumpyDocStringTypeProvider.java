@@ -47,6 +47,7 @@ import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
+import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
@@ -386,12 +387,24 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   private static @Nullable PyType parseSingleNumpyDocType(@NotNull PsiElement anchor, @NotNull String typeString) {
     final PyPsiFacade facade = getPsiFacade(anchor);
     final String realTypeName = getNumpyRealTypeName(typeString);
-    PyType type = facade.parseTypeAnnotation(realTypeName, anchor);
-    if (!isUnknown(type)) {
-      return type;
+
+    if (!realTypeName.equals(typeString) || typeString.contains(" or ")) {
+      PyType type = facade.parseTypeAnnotation(realTypeName, anchor);
+      if (!isUnknown(type)) {
+        return type;
+      }
     }
 
-    type = facade.parseTypeAnnotation(typeString, anchor);
+    final PyExpression expression = PyUtil.createExpressionFromFragment(typeString, anchor);
+    if (expression != null) {
+      PyType type = PyTypeUtil.derefOrUnknown(
+        PyTypingTypeProvider.getType(expression, TypeEvalContext.codeInsightFallback(anchor.getProject())));
+      if (!isUnknown(type)) {
+        return type;
+      }
+    }
+
+    PyType type = facade.parseTypeAnnotation(typeString, anchor);
     if (!isUnknown(type)) {
       return type;
     }
