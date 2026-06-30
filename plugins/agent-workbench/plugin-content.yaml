@@ -9,7 +9,7 @@
   - name: intellij.platform.ai.agent.claude.common
   - name: intellij.platform.ai.agent.claude.sessions
   - name: intellij.platform.ai.agent.codex.common
-  - name: intellij.agent.workbench.codex.ide
+  - name: intellij.air.providers.codex.ide
   - name: intellij.air.container
   - name: intellij.platform.ai.agent.filewatch
   - name: intellij.platform.ai.agent.codex.sessions

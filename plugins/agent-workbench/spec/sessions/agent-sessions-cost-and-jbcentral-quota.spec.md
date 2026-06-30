@@ -17,9 +17,9 @@ targets:
   - ../../lib-agent/providers/claude/sessions/testSrc/**/*.kt
   - ../../lib-agent/providers/pi/sessions/src/**/*.kt
   - ../../lib-agent/providers/pi/sessions/testSrc/**/*.kt
-  - ../../claude/awb/src/**/*.kt
-  - ../../claude/awb/testSrc/**/*.kt
-  - ../../claude/awb/resources/intellij.agent.workbench.claude.awb.xml
+  - ../../../../../plugins/ij-air/providers/claude/awb/src/**/*.kt
+  - ../../../../../plugins/ij-air/providers/claude/awb/testSrc/**/*.kt
+  - ../../../../../plugins/ij-air/providers/claude/awb/resources/intellij.air.providers.claude.awb.xml
   - ../../sessions-jbcentral/src/**/*.kt
   - ../../sessions-jbcentral/testSrc/**/*.kt
   - ../../sessions-jbcentral/resources/intellij.agent.workbench.sessions.jbcentral.xml
