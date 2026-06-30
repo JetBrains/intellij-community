@@ -81,8 +81,8 @@ public final class VcsLogUtil {
   public static final int MAX_SELECTED_COMMITS = 1000;
   public static final int FULL_HASH_LENGTH = 40;
   public static final int SHORT_HASH_LENGTH = com.intellij.platform.vcs.VcsUtil.SHORT_HASH_LENGTH;
-  public static final Pattern HASH_REGEX = Pattern.compile("[a-fA-F0-9]{7,40}");
-  public static final Pattern HASH_PREFIX_REGEX = Pattern.compile("[a-fA-F0-9]{4,40}");
+  public static final Pattern HASH_REGEX = Pattern.compile("[a-fA-F0-9]{7,64}");
+  public static final Pattern HASH_PREFIX_REGEX = Pattern.compile("[a-fA-F0-9]{4,64}");
   public static final @NlsSafe String HEAD = "HEAD";
 
   public static @NotNull Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<? extends VcsRef> refs) {
