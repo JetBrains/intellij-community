@@ -24,7 +24,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
-import com.intellij.platform.ai.agent.sessions.core.SessionActionTarget
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 import com.intellij.platform.ai.agent.sessions.core.providers.builtInLaunchProfileId
@@ -93,7 +92,7 @@ internal class AgentSessionsTreePopupTaskFolderAgentGroup @JvmOverloads construc
 
   private fun resolveTaskFolderAgentMenu(e: AnActionEvent): TaskFolderAgentMenu? {
     val context = resolveContext(e) ?: return null
-    val path = taskFolderAgentPathFromTarget(context.target) ?: return null
+    val path = sourcePathFromPopupContext(context) ?: return null
     val selection = resolveTaskFolderAgentLaunchProfileSelection(
       project = context.project,
       allBridges = allBridges(),
@@ -202,14 +201,6 @@ internal fun buildTaskFolderAgentPrompt(
     When you know the task folder name, call the agent_workbench_create_task_folder tool. If the user mentions an issue tracker id, store it in metadata key "issue".
     If the task details are missing, ask one concise follow-up before creating the folder.
   """.trimIndent()
-}
-
-private fun taskFolderAgentPathFromTarget(target: SessionActionTarget?): String? {
-  return when (target) {
-    is SessionActionTarget.Project -> target.path
-    is SessionActionTarget.Worktree -> target.path
-    else -> null
-  }
 }
 
 private val TASK_FOLDER_AGENT_PROVIDER: AgentSessionProvider = AgentSessionProvider.from("pi")

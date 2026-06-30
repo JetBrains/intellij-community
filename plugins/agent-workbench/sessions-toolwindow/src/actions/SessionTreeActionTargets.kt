@@ -38,6 +38,24 @@ internal fun createAgentSessionsTreePopupActionContext(
   )
 }
 
+internal fun createAgentSessionsTreeEmptyAreaPopupActionContext(
+  project: Project,
+  sourcePath: String?,
+  newThreadActionAvailable: Boolean = true,
+): AgentSessionsTreePopupActionContext? {
+  val normalizedSourcePath = sourcePath
+    ?.trim()
+    ?.takeIf { it.isNotEmpty() }
+    ?.let(::normalizeAgentWorkbenchPath)
+    ?: return null
+  return AgentSessionsTreePopupActionContext(
+    project = project,
+    sourcePath = normalizedSourcePath,
+    archiveTargets = emptyList(),
+    newThreadActionAvailable = newThreadActionAvailable,
+  )
+}
+
 internal fun resolveSessionActionTarget(nodeId: SessionTreeId, node: SessionTreeNode): SessionActionTarget? {
   return when (node) {
     is SessionTreeNode.PinnedSection,

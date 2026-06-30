@@ -25,6 +25,7 @@ object AgentWorkbenchActionIds {
 
     object TreePopup {
       const val GROUP: String = "AgentWorkbenchSessions.TreePopup"
+      const val EMPTY_AREA_GROUP: String = "AgentWorkbenchSessions.TreePopup.EmptyArea"
       const val NEW_THREAD: String = "AgentWorkbenchSessions.TreePopup.NewThread"
       const val ARCHIVE: String = "AgentWorkbenchSessions.TreePopup.Archive"
     }

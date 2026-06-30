@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -74,19 +75,20 @@ internal class AgentSessionsTreePopupCreateTaskFolderAction : DumbAwareAction {
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = createFolderPath(resolveContext(e)?.target) != null
+    e.presentation.isEnabledAndVisible = resolveContext(e)?.let(::taskFolderCreationPath) != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val context = resolveContext(e) ?: return
-    val path = createFolderPath(context.target) ?: return
-    val profile = taskFolderAgentProfile(context.project)
-    val request = promptForCreateRequest(context.project, profile != null) ?: return
-    val folder = createFolder(path, request.name) ?: return
-    if (request.createWithAgent) {
-      val effectiveProfile = profile ?: taskFolderAgentProfile(context.project) ?: return
-      openTaskFolderAgent(path, folder, effectiveProfile, context.project)
-    }
+    val path = taskFolderCreationPath(context) ?: return
+    createTaskFolderFromPrompt(
+      project = context.project,
+      path = path,
+      promptForCreateRequest = promptForCreateRequest,
+      createFolder = createFolder,
+      taskFolderAgentProfile = taskFolderAgentProfile,
+      openTaskFolderAgent = openTaskFolderAgent,
+    )
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -136,13 +138,14 @@ internal class AgentSessionsToolWindowCreateTaskFolderAction : DumbAwareAction {
   override fun actionPerformed(e: AnActionEvent) {
     val project = resolveProject(e) ?: return
     val path = currentSourcePath(project) ?: return
-    val profile = taskFolderAgentProfile(project)
-    val request = promptForCreateRequest(project, profile != null) ?: return
-    val folder = createFolder(path, request.name) ?: return
-    if (request.createWithAgent) {
-      val effectiveProfile = profile ?: taskFolderAgentProfile(project) ?: return
-      openTaskFolderAgent(path, folder, effectiveProfile, project)
-    }
+    createTaskFolderFromPrompt(
+      project = project,
+      path = path,
+      promptForCreateRequest = promptForCreateRequest,
+      createFolder = createFolder,
+      taskFolderAgentProfile = taskFolderAgentProfile,
+      openTaskFolderAgent = openTaskFolderAgent,
+    )
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -199,17 +202,37 @@ internal class AgentSessionsTreePopupMoveToTaskFolderGroup @JvmOverloads constru
   private val assignThread: (SessionActionTarget.Thread, AgentTaskFolder) -> Unit = { target, folder ->
     service<AgentTaskFolderService>().assignThread(target.path, target.provider, target.threadId, folder.id)
   },
+  private val promptForCreateRequest: (Project, Boolean) -> CreateTaskFolderRequest? = ::showCreateTaskFolderDialog,
+  private val createFolder: (String, String) -> AgentTaskFolder? = { path, name -> service<AgentTaskFolderService>().createFolder(path, name) },
+  private val taskFolderAgentProfile: (Project) -> AgentPromptLaunchProfile? = ::resolveTaskFolderAgentQuickStartProfile,
+  private val openTaskFolderAgent: (String, AgentTaskFolder, AgentPromptLaunchProfile, Project) -> Unit = { path, folder, profile, project ->
+    createTaskFolderAgentViaService(path, profile, project, AgentWorkbenchEntryPoint.TREE_POPUP, folder)
+  },
 ) : ActionGroup(), DumbAware {
   override fun update(e: AnActionEvent) {
     val menu = moveMenu(e)
-    e.presentation.isEnabledAndVisible = menu != null && menu.folders.isNotEmpty()
+    e.presentation.isEnabledAndVisible = menu != null
     e.presentation.isPopupGroup = true
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val menu = e?.let(::moveMenu) ?: return emptyArray()
-    return menu.folders.map { folder ->
-      MoveToTaskFolderAction(menu.move, folder, assignThread)
+    return buildList {
+      menu.folders.forEach { folder ->
+        add(MoveToTaskFolderAction(menu.move, folder, assignThread))
+      }
+      if (menu.folders.isNotEmpty()) {
+        add(Separator.getInstance())
+      }
+      add(CreateAndMoveToTaskFolderAction(
+        project = menu.context.project,
+        move = menu.move,
+        promptForCreateRequest = promptForCreateRequest,
+        createFolder = createFolder,
+        taskFolderAgentProfile = taskFolderAgentProfile,
+        openTaskFolderAgent = openTaskFolderAgent,
+        assignThread = assignThread,
+      ))
     }.toTypedArray()
   }
 
@@ -218,10 +241,12 @@ internal class AgentSessionsTreePopupMoveToTaskFolderGroup @JvmOverloads constru
   private fun moveMenu(e: AnActionEvent): MoveToTaskFolderMenu? {
     val context = resolveContext(e) ?: return null
     val move = resolveTaskFolderThreadMove(context.target, context.selectedThreadTargets) ?: return null
-    return MoveToTaskFolderMenu(move = move, folders = listFolders(move.path))
+    val folders = listFolders(move.path).filter { folder -> canMoveThreadsToTaskFolder(move, folder) }
+    return MoveToTaskFolderMenu(context = context, move = move, folders = folders)
   }
 
   private data class MoveToTaskFolderMenu(
+    @JvmField val context: AgentSessionsTreePopupActionContext,
     @JvmField val move: TaskFolderThreadMove,
     @JvmField val folders: List<AgentTaskFolder>,
   )
@@ -418,6 +443,30 @@ private class MoveToTaskFolderAction(
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
 
+private class CreateAndMoveToTaskFolderAction(
+  private val project: Project,
+  private val move: TaskFolderThreadMove,
+  private val promptForCreateRequest: (Project, Boolean) -> CreateTaskFolderRequest?,
+  private val createFolder: (String, String) -> AgentTaskFolder?,
+  private val taskFolderAgentProfile: (Project) -> AgentPromptLaunchProfile?,
+  private val openTaskFolderAgent: (String, AgentTaskFolder, AgentPromptLaunchProfile, Project) -> Unit,
+  private val assignThread: (SessionActionTarget.Thread, AgentTaskFolder) -> Unit,
+) : DumbAwareAction(AgentSessionsBundle.message("action.AgentWorkbenchSessions.TreePopup.MoveToTaskFolder.NewTaskFolder.text")) {
+  override fun actionPerformed(e: AnActionEvent) {
+    createTaskFolderFromPrompt(
+      project = project,
+      path = move.path,
+      promptForCreateRequest = promptForCreateRequest,
+      createFolder = createFolder,
+      taskFolderAgentProfile = taskFolderAgentProfile,
+      openTaskFolderAgent = openTaskFolderAgent,
+      afterCreate = { folder -> assignThreadsToTaskFolder(move, folder, assignThread) },
+    )
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+}
+
 internal data class TaskFolderThreadMove(
   @JvmField val path: String,
   @JvmField val targets: List<SessionActionTarget.Thread>,
@@ -453,17 +502,32 @@ private fun activeThreadTargets(context: AgentSessionsTreePopupActionContext): L
   }
 }
 
-private fun createFolderPath(target: SessionActionTarget?): String? {
-  return when (target) {
-    is SessionActionTarget.Project -> target.path
-    is SessionActionTarget.Worktree -> target.path
-    else -> null
-  }
+private fun taskFolderCreationPath(context: AgentSessionsTreePopupActionContext): String? {
+  return sourcePathFromPopupContext(context)
 }
 
-private fun resolveCurrentTaskFolderSourcePath(project: Project): String? {
+internal fun resolveCurrentTaskFolderSourcePath(project: Project): String? {
   return normalizeOpenableSourceProjectPath(selectedThreadViewSourceProjectPath(project))
          ?: openableSourceProjectPath(project)
+}
+
+private fun createTaskFolderFromPrompt(
+  project: Project,
+  path: String,
+  promptForCreateRequest: (Project, Boolean) -> CreateTaskFolderRequest?,
+  createFolder: (String, String) -> AgentTaskFolder?,
+  taskFolderAgentProfile: (Project) -> AgentPromptLaunchProfile?,
+  openTaskFolderAgent: (String, AgentTaskFolder, AgentPromptLaunchProfile, Project) -> Unit,
+  afterCreate: (AgentTaskFolder) -> Unit = {},
+) {
+  val profile = taskFolderAgentProfile(project)
+  val request = promptForCreateRequest(project, profile != null) ?: return
+  val folder = createFolder(path, request.name) ?: return
+  afterCreate(folder)
+  if (request.createWithAgent) {
+    val effectiveProfile = profile ?: taskFolderAgentProfile(project) ?: return
+    openTaskFolderAgent(path, folder, effectiveProfile, project)
+  }
 }
 
 private fun showCreateTaskFolderDialog(project: Project, canCreateWithAgent: Boolean): CreateTaskFolderRequest? {

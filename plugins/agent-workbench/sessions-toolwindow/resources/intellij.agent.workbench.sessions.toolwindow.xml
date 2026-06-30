@@ -123,5 +123,10 @@
       <reference ref="AgentWorkbenchSessions.TreePopup.CopyThreadId"/>
       <reference ref="CopyReferencePopupGroup"/>
     </group>
+    <group id="AgentWorkbenchSessions.TreePopup.EmptyArea" class="com.intellij.agent.workbench.sessions.actions.DumbAwareDefaultActionGroup">
+      <reference ref="AgentWorkbenchSessions.TreePopup.NewThread"/>
+      <reference ref="AgentWorkbenchSessions.TreePopup.CreateTaskFolder"/>
+      <reference ref="AgentWorkbenchSessions.TreePopup.TaskFolderAgent"/>
+    </group>
   </actions>
 </idea-plugin>

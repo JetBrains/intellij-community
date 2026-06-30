@@ -9,6 +9,7 @@ import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
 import com.intellij.agent.workbench.sessions.state.AgentSessionTreeUiStateService
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupActionContext
+import com.intellij.agent.workbench.sessions.toolwindow.actions.createAgentSessionsTreeEmptyAreaPopupActionContext
 import com.intellij.agent.workbench.sessions.toolwindow.actions.createAgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
@@ -34,6 +35,7 @@ import java.awt.Component
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
@@ -56,17 +58,18 @@ internal class AgentSessionsTreeInteractionController(
   private val showMoreProjects: () -> Unit,
   private val showMoreThreads: (String) -> Unit,
   private val isNewThreadPopupAvailable: () -> Boolean = { true },
+  private val currentSourcePath: () -> String? = { null },
 ) {
   var popupActionContext: AgentSessionsTreePopupActionContext? = null
     private set
 
-  fun install() {
+  fun install(emptyAreaPopupComponent: JComponent? = null) {
     TreeUtil.installActions(tree)
     installHoverListener()
     EditSourceOnDoubleClickHandler.install(tree) { activateSelectedNode() }
     installEnterKeyActivation()
     installTaskFolderDnD()
-    installMouseListeners()
+    installMouseListeners(emptyAreaPopupComponent)
     installTreeExpansionListener()
   }
 
@@ -117,7 +120,7 @@ internal class AgentSessionsTreeInteractionController(
                                 }, enter, 0)
   }
 
-  private fun installMouseListeners() {
+  private fun installMouseListeners(emptyAreaPopupComponent: JComponent?) {
     val mouseHandler = object : MouseAdapter() {
       override fun mouseClicked(e: MouseEvent) {
         if (!SwingUtilities.isLeftMouseButton(e) || e.clickCount != 1) return
@@ -148,6 +151,19 @@ internal class AgentSessionsTreeInteractionController(
     }
     tree.addMouseListener(mouseHandler)
     tree.addMouseMotionListener(mouseHandler)
+
+    if (emptyAreaPopupComponent != null) {
+      val emptyAreaMouseHandler = object : MouseAdapter() {
+        override fun mousePressed(e: MouseEvent) {
+          maybeShowEmptyAreaPopup(e)
+        }
+
+        override fun mouseReleased(e: MouseEvent) {
+          maybeShowEmptyAreaPopup(e)
+        }
+      }
+      emptyAreaPopupComponent.addMouseListener(emptyAreaMouseHandler)
+    }
   }
 
   private fun installTreeExpansionListener() {
@@ -182,7 +198,11 @@ internal class AgentSessionsTreeInteractionController(
 
   private fun maybeShowPopup(event: MouseEvent) {
     if (!event.isPopupTrigger) return
-    val path = pathForSessionTreeContextMenuRow(tree, event.y) ?: return
+    val path = pathForSessionTreeContextMenuRow(tree, event.y)
+    if (path == null) {
+      maybeShowEmptyAreaPopup(event)
+      return
+    }
     if (shouldRetargetSelectionForContextMenu(tree.selectionModel.isPathSelected(path))) {
       tree.selectionPath = path
     }
@@ -200,6 +220,22 @@ internal class AgentSessionsTreeInteractionController(
       taskFolderArchiveTargets = (id as? SessionTreeId.TaskFolder)?.let(taskFolderArchiveTargets).orEmpty(),
       newThreadActionAvailable = isNewThreadPopupAvailable(),
     ) ?: return
+    showActionPopupMenu(event, actionGroup)
+  }
+
+  private fun maybeShowEmptyAreaPopup(event: MouseEvent) {
+    if (!event.isPopupTrigger) return
+    val actionGroup = ActionManager.getInstance().getAction(AgentWorkbenchActionIds.Sessions.TreePopup.EMPTY_AREA_GROUP) as? ActionGroup
+                      ?: return
+    popupActionContext = createAgentSessionsTreeEmptyAreaPopupActionContext(
+      project = project,
+      sourcePath = currentSourcePath(),
+      newThreadActionAvailable = isNewThreadPopupAvailable(),
+    ) ?: return
+    showActionPopupMenu(event, actionGroup)
+  }
+
+  private fun showActionPopupMenu(event: MouseEvent, actionGroup: ActionGroup) {
     val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, actionGroup)
     popupMenu.setTargetComponent(tree)
     popupMenu.component.addPopupMenuListener(object : javax.swing.event.PopupMenuListener {
@@ -213,7 +249,7 @@ internal class AgentSessionsTreeInteractionController(
         clearPopupActionContext()
       }
     })
-    popupMenu.component.show(tree, event.x, event.y)
+    popupMenu.component.show(event.component, event.x, event.y)
   }
 
   private fun clearPopupActionContext() {

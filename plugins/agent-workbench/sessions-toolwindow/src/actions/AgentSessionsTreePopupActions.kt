@@ -51,10 +51,19 @@ internal data class AgentSessionsTreePopupActionContext(
   @JvmField val selectedThreadTargets: List<SessionActionTarget.Thread> = emptyList(),
   @JvmField val taskFolderArchiveTargets: List<ArchiveThreadTarget> = emptyList(),
   @JvmField val newThreadActionAvailable: Boolean = true,
+  @JvmField val sourcePath: String? = null,
 )
 
 internal fun resolveAgentSessionsTreePopupActionContext(event: AnActionEvent): AgentSessionsTreePopupActionContext? {
   return event.getData(AgentSessionsTreePopupDataKeys.CONTEXT)
+}
+
+internal fun sourcePathFromPopupContext(context: AgentSessionsTreePopupActionContext): String? {
+  return when (val target = context.target) {
+    is SessionActionTarget.Project -> target.path
+    is SessionActionTarget.Worktree -> target.path
+    else -> context.sourcePath
+  }
 }
 
 internal class AgentSessionsTreePopupOpenAction : DumbAwareAction {
@@ -241,7 +250,7 @@ internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
   private fun resolveNewThreadMenu(e: AnActionEvent): NewThreadMenu? {
     val context = resolveContext(e) ?: return null
     if (!context.newThreadActionAvailable) return null
-    val path = newThreadPathFromTarget(context.target) ?: return null
+    val path = sourcePathFromPopupContext(context) ?: return null
     val menuModel = buildAgentSessionLaunchProfileMenuModel(allBridges(), context.project)
     if (!menuModel.hasEntries()) return null
     val selection = resolveAgentSessionLaunchProfileSelection(menuModel, userLaunchProfiles(), defaultLaunchProfileId(), project = context.project)
@@ -263,14 +272,6 @@ internal data class AgentTaskFolderActionTarget(
   @JvmField val isDone: Boolean,
   @JvmField val metadata: Map<String, String> = emptyMap(),
 )
-
-private fun newThreadPathFromTarget(target: SessionActionTarget?): String? {
-  return when (target) {
-    is SessionActionTarget.Project -> target.path
-    is SessionActionTarget.Worktree -> target.path
-    else -> null
-  }
-}
 
 private fun morePopupLabel(target: SessionActionTarget?): @Nls String {
   return when (target) {
