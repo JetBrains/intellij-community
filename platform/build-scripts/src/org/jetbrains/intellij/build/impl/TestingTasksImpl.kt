@@ -1546,4 +1546,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.performanceTesting.ui.tests",
   "intellij.platform.debugger.impl.frontend.tests",
   "intellij.platform.debugger.impl.ui.tests",
+  "intellij.platform.diagnostic.freezeAnalyzer.tests",
 )
