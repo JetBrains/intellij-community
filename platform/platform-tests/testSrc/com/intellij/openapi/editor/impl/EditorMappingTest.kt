@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.ex.DocumentEx
+import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.DocumentUtil
 import javax.swing.BorderFactory
@@ -258,6 +259,116 @@ class EditorMappingTest : AbstractEditorTest() {
     assertEquals(foldStartOffset, editorImpl.visualLineStartOffset(1))
   }
 
+  fun `test visualLineStartOffset maps collapsed fold that does not include following line break`() {
+    initText("line 0\nline 1\nimport a\nimport b\nimport c\nclass C\nline 6")
+    val foldStartOffset = editor.document.getLineStartOffset(2)
+    val foldEndOffset = editor.document.getLineEndOffset(4)
+    addCollapsedFoldRegion(foldStartOffset, foldEndOffset, "...")
+
+    assertVisualLineStartOffsets(
+      editor.document.getLineStartOffset(0),
+      editor.document.getLineStartOffset(1),
+      foldStartOffset,
+      editor.document.getLineStartOffset(5),
+      editor.document.getLineStartOffset(6),
+      editor.document.textLength,
+    )
+  }
+
+  fun `test visualLineStartOffset maps collapsed fold that ends at following line start`() {
+    initText("line 0\nline 1\nline 2\nline 3\nline 4")
+    val foldStartOffset = editor.document.getLineStartOffset(1)
+    val foldEndOffset = editor.document.getLineStartOffset(3)
+    addCollapsedFoldRegion(foldStartOffset, foldEndOffset, "...")
+
+    assertEquals(1, editorImpl.offsetToVisualLine(foldStartOffset, false))
+    assertEquals(1, editorImpl.offsetToVisualLine(foldEndOffset, false))
+    assertVisualLineStartOffsets(
+      editor.document.getLineStartOffset(0),
+      foldStartOffset,
+      editor.document.getLineStartOffset(4),
+      editor.document.textLength,
+    )
+  }
+
+  fun `test visualLineStartOffset handles adjacent collapsed folds with the same visual start`() {
+    initText("line 0\nline 1\nline 2\nline 3\nline 4\nline 5\nline 6")
+    val firstFoldStartOffset = editor.document.getLineStartOffset(1)
+    val firstFoldEndOffset = editor.document.getLineStartOffset(3)
+    val secondFoldEndOffset = editor.document.getLineStartOffset(5)
+    addCollapsedFoldRegion(firstFoldStartOffset, firstFoldEndOffset, "...")
+    addCollapsedFoldRegion(firstFoldEndOffset, secondFoldEndOffset, "...")
+
+    assertEquals(1, editorImpl.offsetToVisualLine(firstFoldStartOffset, false))
+    assertEquals(1, editorImpl.offsetToVisualLine(firstFoldEndOffset, false))
+    assertEquals(1, editorImpl.offsetToVisualLine(secondFoldEndOffset, false))
+    assertVisualLineStartOffsets(
+      editor.document.getLineStartOffset(0),
+      firstFoldStartOffset,
+      editor.document.getLineStartOffset(6),
+      editor.document.textLength,
+    )
+  }
+
+  fun `test visualLineStartOffset maps mid-line collapsed fold to containing line start`() {
+    initText("header\nbefore hidden starts\nstill hidden after\nnext")
+    val foldStartOffset = editor.document.getLineStartOffset(1) + "before ".length
+    val foldEndOffset = editor.document.getLineEndOffset(2)
+    addCollapsedFoldRegion(foldStartOffset, foldEndOffset, "...")
+
+    assertVisualLineStartOffsets(
+      editor.document.getLineStartOffset(0),
+      editor.document.getLineStartOffset(1),
+      editor.document.getLineStartOffset(3),
+      editor.document.textLength,
+    )
+  }
+
+  fun `test visualLineStartOffset maps custom fold region`() {
+    initText("line 0\nline 1\nline 2\nline 3\nline 4")
+    assertNotNull(addCustomFoldRegion(1, 2, 30))
+
+    assertVisualLineStartOffsets(
+      editor.document.getLineStartOffset(0),
+      editor.document.getLineStartOffset(1),
+      editor.document.getLineStartOffset(3),
+      editor.document.getLineStartOffset(4),
+      editor.document.textLength,
+    )
+  }
+
+  fun `test visualLineStartOffset ignores collapsed folds when folding is disabled`() {
+    initText("line 0\nline 1\nline 2")
+    addCollapsedFoldRegion(editor.document.getLineStartOffset(1), editor.document.getLineEndOffset(2), "...")
+    val foldingModel = editor.foldingModel as FoldingModelEx
+
+    try {
+      foldingModel.setFoldingEnabled(false)
+
+      assertVisualLineStartOffsets(
+        editor.document.getLineStartOffset(0),
+        editor.document.getLineStartOffset(1),
+        editor.document.getLineStartOffset(2),
+        editor.document.textLength,
+      )
+    }
+    finally {
+      foldingModel.setFoldingEnabled(true)
+    }
+  }
+
+  fun `test visualLineStartOffset ignores single-line collapsed folds`() {
+    initText("line 0\nline 1\nline 2")
+    addCollapsedFoldRegion(editor.document.getLineStartOffset(1), editor.document.getLineEndOffset(1), "...")
+
+    assertVisualLineStartOffsets(
+      editor.document.getLineStartOffset(0),
+      editor.document.getLineStartOffset(1),
+      editor.document.getLineStartOffset(2),
+      editor.document.textLength,
+    )
+  }
+
   fun `test visualLineStartOffset returns whole-document collapsed fold boundaries`() {
     initText("aaa\nbbbb\ncccc")
     addCollapsedFoldRegion(0, editor.document.textLength, "...")
@@ -369,6 +480,12 @@ class EditorMappingTest : AbstractEditorTest() {
     assertEquals(1, editorImpl.offsetToVisualLine(4, false))
     assertEquals(1, editorImpl.offsetToVisualLine(7, true))
     assertEquals(2, editorImpl.offsetToVisualLine(7, false))
+  }
+
+  private fun assertVisualLineStartOffsets(vararg expectedOffsets: Int) {
+    expectedOffsets.forEachIndexed { visualLine, expectedOffset ->
+      assertEquals(expectedOffset, editorImpl.visualLineStartOffset(visualLine))
+    }
   }
 
   private val editorImpl: EditorImpl

@@ -284,6 +284,9 @@ final class EditorCoordinateMapper {
     int end = myDocument.getTextLength();
     if (visualLine <= 0) return start;
     if (visualLine >= myView.getVisibleLineCount()) return end;
+    if (mySoftWrapModel.getSoftWrapsIntroducedLinesNumber() == 0) {
+      return myDocument.getLineStartOffset(myFoldingModel.getLogicalLineForVisualLineWithoutSoftWraps(visualLine));
+    }
     int current = ObjectUtils.binarySearch(0, myDocument.getTextLength(), mid -> Integer.compare(offsetToVisualLine(mid, false), visualLine));
     if (current < 0) current = -current-1;
     return visualLineStartOffset(current, true);

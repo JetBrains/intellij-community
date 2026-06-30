@@ -402,6 +402,17 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     return myFoldTree.getTotalNumberOfFoldedLines();
   }
 
+  @ApiStatus.Internal
+  @Override
+  public int getLogicalLineForVisualLineWithoutSoftWraps(int visualLine) {
+    if (!myDocumentChangeProcessed && myDocument.isInEventsHandling()) {
+      // There is a possible case that this method is called on document update before fold regions are recalculated.
+      // We return the uncompressed line in such situations then.
+      return visualLine;
+    }
+    return myFoldTree.getLogicalLineForVisualLineWithoutSoftWraps(visualLine);
+  }
+
   /**
    * Returns (prevAdjustment, curAdjustment) pair.
    * Assuming the provided offset is at the start of a visual line, the first value gives adjustment to Y
