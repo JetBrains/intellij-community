@@ -1002,7 +1002,6 @@ plugins/agent-workbench/lib-agent/providers/pi/sessions-filewatch
 plugins/agent-workbench/lib-agent/providers/terminal/sessions
 plugins/agent-workbench/lib-agent/sessions-core
 plugins/agent-workbench/pi/awb
-plugins/agent-workbench/plugin
 plugins/agent-workbench/prompt/context
 plugins/agent-workbench/prompt/core
 plugins/agent-workbench/prompt/testrunner

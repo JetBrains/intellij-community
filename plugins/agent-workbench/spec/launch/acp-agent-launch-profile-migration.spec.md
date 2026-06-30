@@ -17,9 +17,9 @@ targets:
   - ../../thread-view/src/AgentThreadViewFileEditorState.kt
   - ../../engine/src/ui/EngineSessionProviderDescriptor.kt
   - ../../engine/src/platform/EngineLaunchAgents.kt
-  - ../../../../../plugins/agent-workbench/acp/src/AcpEngineLaunchAgentProvider.kt
-  - ../../../../../plugins/agent-workbench/acp/src/AcpOutOfBandLaunch.kt
-  - ../../../../../plugins/agent-workbench/acp/testSrc/**/*.kt
+  - ../../../../../plugins/ij-air/acp/src/AcpEngineLaunchAgentProvider.kt
+  - ../../../../../plugins/ij-air/acp/src/AcpOutOfBandLaunch.kt
+  - ../../../../../plugins/ij-air/acp/testSrc/**/*.kt
 ---
 
 # ACP Agent Launch Profile Migration
@@ -93,7 +93,7 @@ switch later.
 - Built-in launch-profile generation must include launchable ACP registry/local catalog entries next to the
   provider-derived terminal built-ins. ACP entries that are not installed or cannot resolve their binary must
   be omitted from the built-in profile list.
-  [@test] ../../../../../plugins/agent-workbench/acp/testSrc/AcpLaunchableAgentsTest.kt
+  [@test] ../../../../../plugins/ij-air/acp/testSrc/AcpLaunchableAgentsTest.kt
 - Built-in profile generation must be centralized. Palette UI, Manage Profiles, New Thread menu actions,
   scratch prompt actions, and `AgentSessionLaunchProfileResolverImpl` must all use the same effective built-in
   profile source; adding ACP target profiles in only one UI path is not acceptable.
@@ -207,7 +207,7 @@ would preserve the original modeling error.
 - Add launch-context coverage to session launch tests:
   `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionLaunchServiceTest`
 - Keep ACP availability coverage in:
-  `./tests.cmd --module intellij.agent.workbench.acp.tests --test com.intellij.agent.workbench.acp.AcpLaunchableAgentsTest`
+  `./tests.cmd --module intellij.air.acp.tests --test com.intellij.air.acp.AcpLaunchableAgentsTest`
 - Add an integration-style test or manual run configuration that verifies the New Task picker shows terminal
   profiles and installed ACP registry profiles side by side.
 

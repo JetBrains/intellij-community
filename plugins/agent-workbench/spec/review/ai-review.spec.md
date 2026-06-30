@@ -40,8 +40,8 @@ AI Review creates independent review sessions shown as Problems toolwindow tabs.
 - `./tests.cmd --module intellij.agent.workbench.ai.review.tests --test com.intellij.agent.workbench.ai.review.prompt.AIReviewPaletteExtensionTest`
 - `./tests.cmd --module intellij.agent.workbench.ai.review.tests --test com.intellij.agent.workbench.ai.review.model.AIReviewViewModelTest`
 - `./bazel.cmd build @community//plugins/agent-workbench/ai-review:agent-workbench-ai-review`
-- `./bazel.cmd build //plugins/agent-workbench/ai-review-agents:agent-workbench-ai-review-agents`
-- `./bazel.cmd build //plugins/agent-workbench/ai-review-space:agent-workbench-ai-review-space`
+- `./bazel.cmd build //plugins/ij-air/ai-review-agents:agent-workbench-ai-review-agents`
+- `./bazel.cmd build //plugins/ij-air/ai-review-space:agent-workbench-ai-review-space`
 
 ## References
 - `../actions/global-prompt-entry.spec.md`

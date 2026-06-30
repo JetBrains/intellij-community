@@ -123,7 +123,7 @@ Agent Workbench treats Pi as a first-class terminal-backed provider. Pi sessions
 ## Testing / Local Run
 - `./tests.cmd --module intellij.platform.ai.agent.pi.sessions.tests --test 'com.intellij.platform.ai.agent.pi.sessions.*Test'`
 - `./tests.cmd --module intellij.platform.ai.agent.pi.sessions.filewatch.tests --test 'com.intellij.platform.ai.agent.pi.sessions.*Test'`
-- `./tests.cmd --module intellij.agent.workbench.plugin.tests --test com.intellij.agent.workbench.plugin.AgentWorkbenchProviderRegistrationTest`
+- `./tests.cmd --module intellij.air.plugin.tests --test com.intellij.air.plugin.AgentWorkbenchProviderRegistrationTest`
 
 ## References
 - `agent-sessions.spec.md`

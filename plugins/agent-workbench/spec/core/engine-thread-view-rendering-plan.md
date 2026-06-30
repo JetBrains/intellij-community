@@ -4,8 +4,8 @@ description: Implementation plan for the minimal readable Engine/ACP thread view
 targets:
   - ../../engine/src/ui/AgentAcpThreadScreen.kt
   - ../../engine/resources/messages/EngineBundle.properties
-  - ../../../../../plugins/agent-workbench/acp/src/AcpThreadEventMapper.kt
-  - ../../../../../plugins/agent-workbench/acp/testSrc/AcpThreadEventMapperTest.kt
+  - ../../../../../plugins/ij-air/acp/src/AcpThreadEventMapper.kt
+  - ../../../../../plugins/ij-air/acp/testSrc/AcpThreadEventMapperTest.kt
 ---
 
 # Engine Thread View Rendering Plan
@@ -235,7 +235,7 @@ Add localized keys to `EngineBundle.properties` for any new visible text, for ex
 Run after implementation:
 
 ```bash
-./tests.cmd --module intellij.agent.workbench.acp.tests --test com.intellij.agent.workbench.acp.AcpThreadEventMapperTest
+./tests.cmd --module intellij.air.acp.tests --test com.intellij.air.acp.AcpThreadEventMapperTest
 ```
 
 Run Engine tests if reducer/projection code changes; this plan should avoid that:

@@ -60,8 +60,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/engine/intellij.agent.workbench.engine.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/engine/intellij.agent.workbench.engine.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/engine/intellij.agent.workbench.engine.tests.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/engine/intellij.agent.workbench.engine.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/pi/awb/intellij.agent.workbench.pi.awb.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/pi/awb/intellij.agent.workbench.pi.awb.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/plugin/intellij.agent.workbench.plugin.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/plugin/intellij.agent.workbench.plugin.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/plugin/intellij.agent.workbench.plugin.tests.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/plugin/intellij.agent.workbench.plugin.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/prompt/context/intellij.agent.workbench.prompt.context.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/prompt/context/intellij.agent.workbench.prompt.context.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/prompt/core/intellij.agent.workbench.prompt.core.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/prompt/core/intellij.agent.workbench.prompt.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/prompt/core/intellij.agent.workbench.prompt.core.tests.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/prompt/core/intellij.agent.workbench.prompt.core.tests.iml" />

@@ -83,7 +83,7 @@ Primary sources of truth:
 
 ```text
 com.intellij.agent.workbench
-`- intellij.agent.workbench.plugin          plugin wrapper; owns plugin.xml
+`- intellij.air.plugin          plugin wrapper; owns plugin.xml
    `- runtime content modules
       |- lib-agent/*                       provider/runtime contracts and implementations
        |- sessions, thread-view, prompt/*          app services and user workflows

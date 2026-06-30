@@ -7,9 +7,9 @@ targets:
   - ../../sessions/src/service/AgentSessionLaunchService.kt
   - ../../engine/src/ui/EngineSessionProviderDescriptor.kt
   - ../../engine/src/platform/EngineLaunchAgents.kt
-  - ../../../../../plugins/agent-workbench/acp/src/AcpOutOfBandLaunch.kt
-  - ../../../../../plugins/agent-workbench/acp/src/AcpEngineLaunchAgentProvider.kt
-  - ../../../../../plugins/agent-workbench/acp/resources/intellij.agent.workbench.acp.xml
+  - ../../../../../plugins/ij-air/acp/src/AcpOutOfBandLaunch.kt
+  - ../../../../../plugins/ij-air/acp/src/AcpEngineLaunchAgentProvider.kt
+  - ../../../../../plugins/ij-air/acp/resources/intellij.air.acp.xml
 ---
 
 # Engine ACP Out-of-Band Launch Profiles
@@ -70,7 +70,7 @@ a launch through its own runtime, with ACP being the first consumer.
 - `AcpOutOfBandLaunch.handles` matches only the `acp` provider; `launch` resolves the catalog
   entry whose display name equals the selected `modelId`, prepares the ACP session for the thread id, and
   sends the prompt only when it is non-blank. An unresolved `modelId` is a no-op.
-  [@test] ../../../../../plugins/agent-workbench/acp/testSrc/AcpThreadEventMapperTest.kt
+  [@test] ../../../../../plugins/ij-air/acp/testSrc/AcpThreadEventMapperTest.kt
 
 ## User Experience
 - ACP agents appear in the New-Task launch-profile generation-model picker under the Engine provider,
@@ -93,13 +93,13 @@ a launch through its own runtime, with ACP being the first consumer.
 - `acp` module absent (e.g. a product build without AI Assistant): neither EP has extensions, so the
   Engine provider lists no generation models and registers no out-of-band launcher; the shared pipeline
   falls back to its default (terminal) behavior.
-- `intellij.ml.llm.*` absent: Workbench ACP behavior must still work when `intellij.agent.workbench.acp`
-  and `intellij.agent.workbench.acp.runtime` are loaded. The LLM/AIA plugin must not be required for ACP
+- `intellij.ml.llm.*` absent: Workbench ACP behavior must still work when `intellij.air.acp`
+  and `intellij.air.acp.runtime` are loaded. The LLM/AIA plugin must not be required for ACP
   actions, catalog population, launch-profile visibility, or process launch.
 
 ## Testing / Local Run
 - `./tests.cmd --module intellij.agent.workbench.engine.tests --test com.intellij.agent.workbench.engine.platform.EngineEventStoreTest`
-- `./tests.cmd --module intellij.agent.workbench.acp.tests --test com.intellij.agent.workbench.acp.AcpThreadEventMapperTest`
+- `./tests.cmd --module intellij.air.acp.tests --test com.intellij.air.acp.AcpThreadEventMapperTest`
 - End-to-end launch verification uses the AIA-less `IDEA (agent workbench)` run configuration. ACP catalog
   population and launch must come from AWB modules, not from `intellij.ml.llm.agents.acp`.
 
