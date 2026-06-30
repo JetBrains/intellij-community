@@ -241,7 +241,8 @@ abstract class DeprecatedSymbolUsageFixBase(
 
                     val typeElement = typeReference?.typeElement as? KtUserType ?: return null
 
-                    return ClassUsageReplacementStrategy(typeElement, null, project)
+                    return ClassUsageReplacementStrategy(typeElement, null, project,
+                        replaceWith.imports.filter { !it.endsWith(".${typeElement.referencedName}") })
                 }
 
                 is KtCallableDeclaration -> {
