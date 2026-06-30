@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("RAW_RUN_BLOCKING")
+@file:OptIn(DelicateCoroutinesApi::class)
+
 package com.intellij.platform.eel.provider.utils
 
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelUserPosixInfo
@@ -18,7 +20,6 @@ import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
-import com.intellij.platform.eel.provider.utils.EelPathTransfer.FileTransferAttributesStrategy
 import com.intellij.platform.eel.provider.utils.EelPathTransfer.IncrementalWalkingTransferAbsoluteSymlinkHandler
 import com.intellij.platform.eel.provider.utils.EelPathTransfer.incrementalWalkingTransfer
 import com.intellij.platform.eel.provider.utils.EelPathUtils.UnixFilePermissionBranch.GROUP
@@ -26,6 +27,7 @@ import com.intellij.platform.eel.provider.utils.EelPathUtils.UnixFilePermissionB
 import com.intellij.platform.eel.provider.utils.EelPathUtils.UnixFilePermissionBranch.OWNER
 import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
@@ -39,7 +41,7 @@ import kotlin.io.path.Path
 import kotlin.io.path.isDirectory
 import kotlin.io.path.name
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 object EelPathUtils {
   /**
    * **Obsolete – avoid it in new code.**
@@ -60,13 +62,19 @@ object EelPathUtils {
     val userHome = runBlocking { eelDescriptor.toEelApi() }.userInfo.home
     val path = runCatching { Path(path).asEelPath().toString() }.getOrNull() ?: path // try to normalize path
 
-    return eelDescriptor.getPath(if (path == "~") {
-      userHome.toString()
-    } else if (path.startsWith("~/") || path.startsWith("~\\")) {
-      userHome.toString() + path.substring(1)
-    } else {
-      path
-    }).asNioPath()
+    return eelDescriptor.getPath(
+      when {
+        path == "~" -> {
+          userHome.toString()
+        }
+        path.startsWith("~/") || path.startsWith("~\\") -> {
+          userHome.toString() + path.substring(1)
+        }
+        else -> {
+          path
+        }
+      }
+    ).asNioPath()
   }
 
   private suspend fun createTemporaryDirectoryImpl(
@@ -174,9 +182,11 @@ object EelPathUtils {
     eel: EelApi,
     source: Path,
     sink: Path? = null,
-    fileAttributesStrategy: FileTransferAttributesStrategy = FileTransferAttributesStrategy.Copy,
+    fileAttributesStrategy: EelFileTransferAttributesStrategy = EelFileTransferAttributesStrategy.Copy,
   ): Path {
-    return transferLocalContentToRemote(source, if (sink != null) TransferTarget.Explicit(sink) else TransferTarget.Temporary(eel.descriptor), fileAttributesStrategy)
+    return transferLocalContentToRemote(source,
+                                        if (sink != null) TransferTarget.Explicit(sink) else TransferTarget.Temporary(eel.descriptor),
+                                        fileAttributesStrategy)
   }
 
   /**
@@ -191,7 +201,7 @@ object EelPathUtils {
    *
    * @param source the local source [Path] whose content is to be synchronized.
    * @param target the transfer target, which can be explicit ([TransferTarget.Explicit]) or temporary ([TransferTarget.Temporary]).
-   * @param fileAttributesStrategy strategy for handling file attributes during transfer (default is [FileTransferAttributesStrategy.Copy]).
+   * @param fileAttributesStrategy strategy for handling file attributes during transfer (default is [EelFileTransferAttributesStrategy.Copy]).
    * @return a [Path] pointing to the location of the synchronized content in the remote environment.
    */
   @JvmStatic
@@ -199,8 +209,19 @@ object EelPathUtils {
   fun transferLocalContentToRemote(
     source: Path,
     target: TransferTarget,
-    fileAttributesStrategy: FileTransferAttributesStrategy = FileTransferAttributesStrategy.Copy,
-    absoluteSymlinkHandler: IncrementalWalkingTransferAbsoluteSymlinkHandler? = null,
+    fileAttributesStrategy: EelFileTransferAttributesStrategy = EelFileTransferAttributesStrategy.Copy,
+  ): Path {
+    return transferLocalContentToRemote(source, target, fileAttributesStrategy, null)
+  }
+
+  @ApiStatus.Internal
+  @JvmStatic
+  @JvmOverloads
+  fun transferLocalContentToRemote(
+    source: Path,
+    target: TransferTarget,
+    fileAttributesStrategy: EelFileTransferAttributesStrategy = EelFileTransferAttributesStrategy.Copy,
+    absoluteSymlinkHandler: IncrementalWalkingTransferAbsoluteSymlinkHandler?,
   ): Path {
     if (source.getEelDescriptor() !== LocalEelDescriptor) {
       return source
@@ -237,7 +258,7 @@ object EelPathUtils {
 
     data class CacheKey(
       val sourcePathString: String,
-      val fileAttributesStrategy: FileTransferAttributesStrategy,
+      val fileAttributesStrategy: EelFileTransferAttributesStrategy,
       val absoluteSymlinkHandler: IncrementalWalkingTransferAbsoluteSymlinkHandler?,
     )
 
@@ -254,7 +275,7 @@ object EelPathUtils {
     suspend fun transferIfNeeded(
       eel: EelApi,
       source: Path,
-      fileAttributesStrategy: FileTransferAttributesStrategy,
+      fileAttributesStrategy: EelFileTransferAttributesStrategy,
       absoluteSymlinkHandler: IncrementalWalkingTransferAbsoluteSymlinkHandler?,
     ): Path {
       val cache = caches.computeIfAbsent(eel) { Cache() }
@@ -371,11 +392,6 @@ object EelPathUtils {
       }
     }
     return null
-  }
-
-  fun deleteRecursively(path: Path) {
-    // TODO optimize the remote FS case
-    FileUtilRt.deleteRecursively(path, null)
   }
 }
 
