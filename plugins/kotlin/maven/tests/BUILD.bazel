@@ -155,6 +155,10 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.maven.tests` end
