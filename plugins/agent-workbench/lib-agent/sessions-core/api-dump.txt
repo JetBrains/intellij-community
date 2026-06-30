@@ -274,10 +274,6 @@ f:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchSpecs
 - sf:INSTANCE:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchSpecs
 - f:augment-tFgkW8w(java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,kotlin.coroutines.Continuation):java.lang.Object
 - bs:augment-tFgkW8w$default(com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchSpecs,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-- f:resolveResume-ag9rIek(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,kotlin.jvm.functions.Function4,kotlin.coroutines.Continuation):java.lang.Object
-- bs:resolveResume-ag9rIek$default(com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchSpecs,java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,kotlin.jvm.functions.Function4,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-- f:resolveResume-rVRrr4o(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,kotlin.coroutines.Continuation):java.lang.Object
-- bs:resolveResume-rVRrr4o$default(com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchSpecs,java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 f:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchSpecsKt
 - sf:insertArgumentsBefore(java.util.List,java.util.List,java.util.Set):java.util.List
 - sf:removeOptions(java.util.List,java.util.Set,java.util.Set):java.util.List

@@ -15,6 +15,8 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessag
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderCliVisibilityPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
@@ -66,6 +68,52 @@ class PiAgentSessionProviderDescriptorTest {
     assertThat(descriptor.emitsScopedRefreshSignals).isTrue()
     assertThat(descriptor.refreshPathAfterCreateNewSession).isTrue()
     assertThat(descriptor.supportsGenerationModelSelection).isTrue()
+  }
+
+  @Test
+  fun buildLaunchSpecsResolveExtensionResourcesAndStatusEnvironmentOffEdt(): Unit = runBlocking(Dispatchers.EDT) {
+    val descriptor = PiAgentSessionProviderDescriptor(
+      executableResolver = { "pi" },
+      sessionIdGenerator = { "pi-session-1" },
+      cliAvailableProbe = { true },
+      extensionLaunchResourcesResolver = {
+        assertThat(ApplicationManager.getApplication().isDispatchThread).isFalse()
+        PiExtensionLaunchResources(
+          extensionPath = Path.of("/tmp/pi-extension/agent-workbench-extension.ts"),
+          stateFilePath = Path.of("/tmp/pi-extension/state/current-theme.txt"),
+        )
+      },
+      statusLaunchEnvironmentResolver = { sessionId ->
+        assertThat(ApplicationManager.getApplication().isDispatchThread).isFalse()
+        mapOf(
+          PI_STATUS_ENDPOINT_ENVIRONMENT_VARIABLE to "http://127.0.0.1:63342/agent-workbench/pi/status",
+          PI_STATUS_TOKEN_ENVIRONMENT_VARIABLE to "status-token-$sessionId",
+          PI_CONTROL_WS_ENDPOINT_ENVIRONMENT_VARIABLE to "ws://127.0.0.1:63342/agent-workbench/pi/control",
+        )
+      },
+      omlxSupportEnabledResolver = { true },
+      jbCentralSupportEnabledResolver = { false },
+    )
+
+    val newLaunchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+    assertThat(newLaunchSpec.command).containsExactly(
+      "pi",
+      "--extension",
+      "/tmp/pi-extension/agent-workbench-extension.ts",
+      "--session-id",
+      "pi-session-1",
+    )
+    assertThat(newLaunchSpec.envVariables).containsExactlyEntriesOf(
+      mapOf(
+        PI_THEME_STATE_ENVIRONMENT_VARIABLE to "/tmp/pi-extension/state/current-theme.txt",
+        PI_STATUS_ENDPOINT_ENVIRONMENT_VARIABLE to "http://127.0.0.1:63342/agent-workbench/pi/status",
+        PI_STATUS_TOKEN_ENVIRONMENT_VARIABLE to "status-token-pi-session-1",
+        PI_CONTROL_WS_ENDPOINT_ENVIRONMENT_VARIABLE to "ws://127.0.0.1:63342/agent-workbench/pi/control",
+      )
+    )
+
+    val resumeLaunchSpec = descriptor.buildResumeLaunchSpec("pi-session-2")
+    assertThat(resumeLaunchSpec.envVariables[PI_STATUS_TOKEN_ENVIRONMENT_VARIABLE]).isEqualTo("status-token-pi-session-2")
   }
 
   @Test

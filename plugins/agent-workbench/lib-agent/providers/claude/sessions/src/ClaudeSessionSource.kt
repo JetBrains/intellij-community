@@ -33,8 +33,10 @@ import com.intellij.platform.ai.agent.sessions.core.providers.BaseAgentSessionSo
 import com.intellij.platform.ai.agent.sessions.core.providers.resolveReadTrackedActivity
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.withContext
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -269,7 +271,7 @@ internal class ClaudeSessionSource internal constructor(
       sourceSessionId = threadId,
       forkSessionId = forkSessionId,
       executable = executableResolver(),
-      hookSettingsArgument = hookSettingsProvider(forkSessionId),
+      hookSettingsArgument = resolveHookSettingsArgument(forkSessionId),
     )
     return AgentSessionOutlineForkResult(
       thread = AgentSessionThread(
@@ -282,6 +284,12 @@ internal class ClaudeSessionSource internal constructor(
       ),
       launchSpecOverride = launchSpec,
     )
+  }
+
+  private suspend fun resolveHookSettingsArgument(sessionId: String): String? {
+    return withContext(Dispatchers.IO) {
+      hookSettingsProvider(sessionId)
+    }
   }
 
   private fun rememberActiveNonReadyThreadRead(threads: Iterable<ClaudeBackendThread>) {

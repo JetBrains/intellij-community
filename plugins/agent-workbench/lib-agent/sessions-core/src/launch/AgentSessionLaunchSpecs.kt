@@ -2,14 +2,7 @@
 package com.intellij.platform.ai.agent.sessions.core.launch
 
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
-import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
-import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
-import com.intellij.openapi.diagnostic.logger
-
-private class AgentSessionLaunchSpecsLogCategory
-
-private val LOG = logger<AgentSessionLaunchSpecsLogCategory>()
 
 object AgentSessionLaunchSpecs {
   suspend fun augment(
@@ -26,60 +19,6 @@ object AgentSessionLaunchSpecs {
     )
   }
 
-  suspend fun resolveResume(
-    projectPath: String,
-    projectDirectory: String? = null,
-    provider: AgentSessionProvider,
-    sessionId: String,
-    launchMode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
-  ): AgentSessionTerminalLaunchSpec {
-    return resolveResume(
-      projectPath = projectPath,
-      projectDirectory = projectDirectory,
-      provider = provider,
-      sessionId = sessionId,
-      launchMode = launchMode,
-      baseLaunchSpecProvider = ::buildDefaultResumeLaunchSpec,
-    )
-  }
-
-  suspend fun resolveResume(
-    projectPath: String,
-    projectDirectory: String? = null,
-    provider: AgentSessionProvider,
-    sessionId: String,
-    launchMode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
-    baseLaunchSpecProvider: suspend (AgentSessionProvider, String, AgentSessionLaunchMode) -> AgentSessionTerminalLaunchSpec,
-  ): AgentSessionTerminalLaunchSpec {
-    val baseLaunchSpec = runCatching {
-      baseLaunchSpecProvider(provider, sessionId, launchMode)
-    }.getOrElse { t ->
-      LOG.warn(
-        "Failed to build base resume launch spec for ${provider.value}:$sessionId; falling back to default command",
-        t,
-      )
-      fallbackResumeLaunchSpec(provider, sessionId)
-    }
-    val baseLaunchSpecWithWorkingDirectory = if (projectDirectory != null && baseLaunchSpec.workingDirectory == null) {
-      baseLaunchSpec.copy(workingDirectory = projectDirectory)
-    }
-    else {
-      baseLaunchSpec
-    }
-    val augmented = augment(
-      projectPath = projectPath,
-      projectDirectory = projectDirectory,
-      provider = provider,
-      launchSpec = baseLaunchSpecWithWorkingDirectory,
-    )
-    return AgentSessionLaunchContributors.applyAll(
-      projectPath = projectPath,
-      projectDirectory = projectDirectory,
-      provider = provider,
-      sessionId = sessionId,
-      launchSpec = augmented,
-    )
-  }
 }
 
 fun replaceOrAddOption(
@@ -151,20 +90,4 @@ fun insertArgumentsBefore(
 private fun findBoundaryIndex(command: List<String>, beforeTokens: Set<String>): Int {
   if (beforeTokens.isEmpty()) return command.size
   return command.indexOfFirst { token -> token in beforeTokens }.takeIf { index -> index >= 0 } ?: command.size
-}
-
-private suspend fun buildDefaultResumeLaunchSpec(
-  provider: AgentSessionProvider,
-  sessionId: String,
-  launchMode: AgentSessionLaunchMode,
-): AgentSessionTerminalLaunchSpec {
-  return AgentSessionProviders.find(provider)?.buildResumeLaunchSpec(sessionId, launchMode)
-         ?: fallbackResumeLaunchSpec(provider, sessionId)
-}
-
-private fun fallbackResumeLaunchSpec(
-  provider: AgentSessionProvider,
-  sessionId: String,
-): AgentSessionTerminalLaunchSpec {
-  return AgentSessionTerminalLaunchSpec(command = listOf(provider.value, "resume", sessionId))
 }

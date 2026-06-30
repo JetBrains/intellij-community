@@ -23,6 +23,8 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTermin
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentThreadRenameAction
 import com.intellij.platform.ai.agent.sessions.core.providers.buildPlanModeInitialMessagePlan
 import com.intellij.openapi.project.Project
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.UUID
 import javax.swing.Icon
 
@@ -144,12 +146,24 @@ internal class ClaudeAgentSessionProviderDescriptor(
       sessionId = sessionId,
       executable = executableResolver(),
       launchMode = launchMode,
-      hookSettingsArgument = hookSettingsProvider(sessionId),
+      hookSettingsArgument = resolveHookSettingsArgument(sessionId),
     )
   }
 
   override suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
-    return buildClaudeNewSessionLaunchSpec(mode, executableResolver(), hookSettingsProvider = hookSettingsProvider)
+    val sessionId = UUID.randomUUID().toString()
+    return buildClaudeNewSessionLaunchSpec(
+      mode = mode,
+      executable = executableResolver(),
+      sessionId = sessionId,
+      hookSettingsArgument = resolveHookSettingsArgument(sessionId),
+    )
+  }
+
+  private suspend fun resolveHookSettingsArgument(sessionId: String): String? {
+    return withContext(Dispatchers.IO) {
+      hookSettingsProvider(sessionId)
+    }
   }
 
   override suspend fun listAvailableGenerationModels(project: Project?): List<AgentPromptGenerationModel> {
@@ -283,9 +297,9 @@ internal fun buildClaudeForkResumeLaunchSpec(
 internal fun buildClaudeNewSessionLaunchSpec(
   mode: AgentSessionLaunchMode,
   executable: String = ClaudeCliSupport.CLAUDE_COMMAND,
-  hookSettingsProvider: (String) -> String? = { null },
+  sessionId: String = UUID.randomUUID().toString(),
+  hookSettingsArgument: String? = null,
 ): AgentSessionTerminalLaunchSpec {
-  val sessionId = UUID.randomUUID().toString()
   return AgentSessionTerminalLaunchSpec(
     command = addClaudeHookSettings(
       ClaudeCliSupport.buildNewSessionCommand(
@@ -293,7 +307,7 @@ internal fun buildClaudeNewSessionLaunchSpec(
         sessionId = sessionId,
         executable = executable,
       ),
-      hookSettingsProvider(sessionId),
+      hookSettingsArgument,
     ),
     envVariables = mapOf(CLAUDE_DISABLE_AUTO_UPDATER_ENV to CLAUDE_DISABLE_AUTO_UPDATER_VALUE),
     preallocatedSessionId = sessionId,
