@@ -219,8 +219,6 @@ jvm_library(
         "//libraries/assertj-core:assertj-core_test_lib",
         "//libraries/junit5-params",
         "//libraries/junit5-params:junit5-params_test_lib",
-        "//plugins/agent-workbench/plugin",
-        "//plugins/agent-workbench/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ai.agent.claude.sessions.tests` end

@@ -212,8 +212,6 @@ jvm_library(
         "//libraries/assertj-core:assertj-core_test_lib",
         "//plugins/terminal",
         "//plugins/terminal:terminal_test_lib",
-        "//plugins/agent-workbench/plugin",
-        "//plugins/agent-workbench/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.agent.workbench.thread.view.tests` end

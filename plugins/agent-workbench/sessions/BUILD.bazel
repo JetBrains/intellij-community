@@ -246,8 +246,6 @@ jvm_library(
         "//platform/projectModel-impl:projectModel-impl_test_lib",
         "//plugins/agent-workbench/sessions-jbcentral:agent-workbench-sessions-jbcentral",
         "//plugins/agent-workbench/sessions-jbcentral:agent-workbench-sessions-jbcentral_test_lib",
-        "//plugins/agent-workbench/plugin",
-        "//plugins/agent-workbench/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.agent.workbench.sessions.tests` end

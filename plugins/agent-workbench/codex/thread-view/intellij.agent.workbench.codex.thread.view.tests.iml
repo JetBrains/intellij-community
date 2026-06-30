@@ -20,7 +20,6 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.plugin" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.agent.workbench.codex.thread.view" />
 </module>

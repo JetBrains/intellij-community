@@ -18,10 +18,10 @@ targets:
   - ../../thread-view/src/AgentThreadViewVirtualFile.kt
   - ../../thread-view/src/AgentThreadViewTabsStateService.kt
   - ../../engine/src/ui/EngineSessionProviderDescriptor.kt
-  - ../../../../../plugins/agent-workbench/acp/src/AcpOutOfBandLaunch.kt
-  - ../../../../../plugins/agent-workbench/acp/src/AcpLaunchProfileContributor.kt
-  - ../../../../../plugins/agent-workbench/acp/src/AcpLauncherService.kt
-  - ../../../../../plugins/agent-workbench/acp/src/AcpSessionManager.kt
+  - ../../../../../plugins/ij-air/acp/src/AcpOutOfBandLaunch.kt
+  - ../../../../../plugins/ij-air/acp/src/AcpLaunchProfileContributor.kt
+  - ../../../../../plugins/ij-air/acp/src/AcpLauncherService.kt
+  - ../../../../../plugins/ij-air/acp/src/AcpSessionManager.kt
 ---
 
 # Agent Launch Surface Switching

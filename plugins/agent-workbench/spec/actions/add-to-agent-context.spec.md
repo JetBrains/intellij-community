@@ -57,7 +57,7 @@ Date: 2026-05-09
 - `./tests.cmd --module intellij.agent.workbench.prompt.ui.tests --test "com.intellij.agent.workbench.prompt.ui.actions.*"`
 - `./tests.cmd --module intellij.agent.workbench.prompt.ui.tests --test "com.intellij.agent.workbench.prompt.ui.AgentPromptContext*Test"`
 - `./tests.cmd --module intellij.agent.workbench.prompt.core.tests --test com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormatterTest`
-- `./tests.cmd --module intellij.agent.workbench.plugin.tests --test com.intellij.agent.workbench.plugin.AgentWorkbenchAddToAgentContextActionRegistrationTest`
+- `./tests.cmd --module intellij.air.plugin.tests --test com.intellij.air.plugin.AgentWorkbenchAddToAgentContextActionRegistrationTest`
 - `./tests.cmd --module intellij.agent.workbench.thread.view.tests --test com.intellij.agent.workbench.thread.view.AgentThreadViewOpenTopLevelDispatchTest`
 
 ## References

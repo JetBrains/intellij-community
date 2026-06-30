@@ -1,6 +1,6 @@
 - name: lib/agent-workbench-sessions.jar
   modules:
-  - name: intellij.agent.workbench.plugin
+  - name: intellij.air.plugin
   contentModules:
   - name: intellij.platform.ai.agent.cli
   - name: intellij.platform.ai.agent.core
@@ -10,7 +10,7 @@
   - name: intellij.platform.ai.agent.claude.sessions
   - name: intellij.platform.ai.agent.codex.common
   - name: intellij.agent.workbench.codex.ide
-  - name: intellij.agent.workbench.container
+  - name: intellij.air.container
   - name: intellij.platform.ai.agent.filewatch
   - name: intellij.platform.ai.agent.codex.sessions
   - name: intellij.platform.ai.agent.junie.sessions
@@ -32,12 +32,12 @@
   - name: intellij.agent.workbench.sessions.actions
   - name: intellij.agent.workbench.sessions.toolwindow
   - name: intellij.agent.workbench.engine
-  - name: intellij.agent.workbench.acp
-  - name: intellij.agent.workbench.acp.runtime
+  - name: intellij.air.acp
+  - name: intellij.air.acp.runtime
   - name: intellij.agent.workbench
-- name: lib/modules/intellij.agent.workbench.container.mcp.jar
+- name: lib/modules/intellij.air.container.mcp.jar
   contentModules:
-  - name: intellij.agent.workbench.container.mcp
-- name: lib/modules/intellij.agent.workbench.container.eel.jar
+  - name: intellij.air.container.mcp
+- name: lib/modules/intellij.air.container.eel.jar
   contentModules:
-  - name: intellij.agent.workbench.container.eel
+  - name: intellij.air.container.eel

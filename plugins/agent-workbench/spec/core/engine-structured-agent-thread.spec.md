@@ -8,8 +8,8 @@ targets:
   - ../../engine/resources/intellij.agent.workbench.engine.xml
   - ../../thread-view/src/AgentThreadViewCustomContent.kt
   - ../../thread-view/src/AgentThreadViewFileEditor.kt
-  - ../../../../../plugins/agent-workbench/acp/src/*.kt
-  - ../../../../../plugins/agent-workbench/acp/resources/intellij.agent.workbench.acp.xml
+  - ../../../../../plugins/ij-air/acp/src/*.kt
+  - ../../../../../plugins/ij-air/acp/resources/intellij.air.acp.xml
 ---
 
 # Engine Structured Agent Thread
@@ -103,7 +103,7 @@ history format, and not a contract that terminal-backed providers must implement
   attach `requested` approval state by `toolCallId`, and later replace it with `approved`, `rejected`, or
   `expired` resolution state without reordering the tool-call transcript entry.
   [@test] ../../engine/testSrc/EngineEventStoreTest.kt
-  [@test] ../../../../../plugins/agent-workbench/acp/testSrc/AcpThreadEventMapperTest.kt
+  [@test] ../../../../../plugins/ij-air/acp/testSrc/AcpThreadEventMapperTest.kt
 
 - Terminal command content inside structured threads is modeled as structured tool/command content, not as
   a separate Agent Thread View terminal tab. Output received before the corresponding terminal/tool entry is
@@ -123,10 +123,10 @@ history format, and not a contract that terminal-backed providers must implement
   [@test] ../../sessions/testSrc/AgentSessionLoadAggregationTest.kt
   [@test] ../../engine/testSrc/EngineEventStoreTest.kt
 
-- ACP support lives in the `plugins/agent-workbench/acp` adapter. It launches/prepares ACP sessions,
+- ACP support lives in the `plugins/ij-air/acp` adapter. It launches/prepares ACP sessions,
   receives `SessionUpdate`s and ACP client callbacks, and records canonical Engine events. It must not
   directly construct Swing rows or AUI events for Agent Workbench structured thread UI.
-  [@test] ../../../../../plugins/agent-workbench/acp/testSrc/AcpThreadEventMapperTest.kt
+  [@test] ../../../../../plugins/ij-air/acp/testSrc/AcpThreadEventMapperTest.kt
 
 - `Acp2ToAUIConverter` and related AUI converters may be used as references for protocol edge cases
   (streaming chunks, tool-call merging, permissions, diffs, MCP output, terminal metadata), but they must
@@ -311,10 +311,10 @@ and `RuntimeSessionBound` carries the *server-issued* `agentSessionId` once a se
    - ACP continuation-decision tests verify that a stored `agentSessionId` with `loadSession` support resumes via
      `loadSession`, that missing `loadSession` support refuses (no fallback to `resumeSession` or `newSession`), and that
      no stored session id creates a fresh session (brand-new thread view, or legacy restored thread view continued by the user).
-     [@test] ../../../../../plugins/agent-workbench/acp/testSrc/AcpContinuationTest.kt
+     [@test] ../../../../../plugins/ij-air/acp/testSrc/AcpContinuationTest.kt
    - ACP recovery tests verify `shouldRecoverDisconnectedAcpThread`: a `Disconnected` ACP thread (by thread or binding
      `runtimeKind`) is a recovery target, while connected or non-ACP threads are not.
-     [@test] ../../../../../plugins/agent-workbench/acp/testSrc/AcpSessionManagerTest.kt
+     [@test] ../../../../../plugins/ij-air/acp/testSrc/AcpSessionManagerTest.kt
    - Integration follow-ups (require a project + ACP catalog fixture, not yet implemented): the connector rehydrates
      ownership from persisted binding data so `handles(threadId)` flips true and input re-enables (incl. catalog
      warm-up), `sendPrompt(...)` records `ThreadDisconnected` instead of an undeliverable user message, and a
@@ -383,7 +383,7 @@ and `RuntimeSessionBound` carries the *server-issued* `agentSessionId` once a se
 ## Testing / Local Run
 
 - `./tests.cmd --module intellij.agent.workbench.engine.tests --test com.intellij.agent.workbench.engine.platform.EngineEventStoreTest`
-- `./tests.cmd --module intellij.agent.workbench.acp.tests --test com.intellij.agent.workbench.acp.AcpThreadEventMapperTest`
+- `./tests.cmd --module intellij.air.acp.tests --test com.intellij.air.acp.AcpThreadEventMapperTest`
 - `./tests.cmd --module intellij.agent.workbench.thread.view.tests --test com.intellij.agent.workbench.thread.view.AgentThreadViewFileEditorLifecycleTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionLaunchServiceTest`
 

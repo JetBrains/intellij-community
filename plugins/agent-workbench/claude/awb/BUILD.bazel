@@ -182,8 +182,6 @@ jvm_library(
         "//platform/testFramework/junit5:junit5_test_lib",
         "//libraries/assertj-core",
         "//libraries/assertj-core:assertj-core_test_lib",
-        "//plugins/agent-workbench/plugin",
-        "//plugins/agent-workbench/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.agent.workbench.claude.awb.tests` end

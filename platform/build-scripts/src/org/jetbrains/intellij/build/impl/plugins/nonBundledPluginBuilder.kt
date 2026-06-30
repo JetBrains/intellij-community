@@ -197,7 +197,7 @@ private suspend fun buildNonBundledPlugins(
           json = json,
         )
 
-        if (isPluginValidationEnabled && plugin.mainModule != "intellij.agent.workbench.plugin") {
+        if (isPluginValidationEnabled && plugin.mainModule != "intellij.air.plugin") {
           spanBuilder("plugin validation").use { span ->
             if (Files.notExists(destFile)) {
               span.addEvent("doesn't exist, skipped", Attributes.of(AttributeKey.stringKey("path"), destFile.invariantSeparatorsPathString))
