@@ -1,4 +1,4 @@
-const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./assets/mermaid.js","./assets/rolldown-runtime.js","./assets/braintree-sanitize-url.js","./assets/iconify-utils.js","./assets/chevrotain-allstar.js","./assets/chevrotain.js","./assets/cytoscape-cose-bilkent.js","./assets/cose-base.js","./assets/cytoscape-fcose.js","./assets/cytoscape.js","./assets/d3-array.js","./assets/d3-axis.js","./assets/d3.js","./assets/d3-format.js","./assets/d3-hierarchy.js","./assets/d3-interpolate.js","./assets/d3-color.js","./assets/d3-sankey.js","./assets/d3-path.js","./assets/d3-scale-chromatic.js","./assets/d3-scale.js","./assets/d3-selection.js","./assets/d3-shape.js","./assets/dagre-d3-es.js","./assets/dayjs.js","./assets/dompurify.js","./assets/khroma.js","./assets/langium.js","./assets/marked.js"])))=>i.map(i=>d[i]);
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./assets/mermaid.js","./assets/rolldown-runtime.js","./assets/braintree-sanitize-url.js","./assets/iconify-utils.js","./assets/chevrotain-allstar.js","./assets/chevrotain.js","./assets/cytoscape-cose-bilkent.js","./assets/cose-base.js","./assets/cytoscape-fcose.js","./assets/cytoscape.js","./assets/d3-array.js","./assets/d3-axis.js","./assets/d3.js","./assets/d3-format.js","./assets/d3-hierarchy.js","./assets/d3-interpolate.js","./assets/d3-color.js","./assets/d3-sankey.js","./assets/d3-path.js","./assets/d3-scale-chromatic.js","./assets/d3-scale.js","./assets/d3-shape.js","./assets/dagre-d3-es.js","./assets/dayjs.js","./assets/dompurify.js","./assets/khroma.js","./assets/langium.js","./assets/marked.js"])))=>i.map(i=>d[i]);
 import { o as __toESM } from "./assets/rolldown-runtime.js";
 import { P as useExternalStoreRuntime, V as require_jsx_runtime, it as require_react } from "./assets/assistant-ui-core.js";
 import { C as AssistantRuntimeProvider, S as useComposerRuntime, a as threadList_exports, c as useSmooth, d as useTriggerPopoverScopeContext, f as attachment_exports, i as threadListItem_exports, l as useMessagePartText, n as useMessagePartReasoning, o as thread_exports, r as selectionToolbar_exports, s as message_exports, t as unstable_useSlashCommandAdapter, u as composer_exports, x as useMessage } from "./assets/assistant-ui-react.js";
@@ -17,6 +17,7 @@ import { n as defaultSchema } from "./assets/hast-util-sanitize.js";
 import { t as rehypeSanitize } from "./assets/rehype-sanitize.js";
 import { t as remarkGfm } from "./assets/remark-gfm.js";
 import { t as remarkMath } from "./assets/remark-math.js";
+import { h as select_default, n as identity, t as zoom_default } from "./assets/d3.js";
 import { d as __vitePreload } from "./assets/mermaid.js";
 //#region \0vite/modulepreload-polyfill.js
 (function polyfill() {
@@ -515,6 +516,7 @@ var DefinedIconSet = class {
 		return `./__ij-icons/${this.id}/${webViewTheme.current}/${encodeIconResourcePath(resourcePath)}`;
 	}
 };
+var AllIcons = /* @__PURE__ */ IconSet.define("AllIcons");
 function validateIconSetId(id) {
 	if (!/^[A-Za-z][A-Za-z0-9._-]*$/.test(id)) throw new Error(`Invalid WebView icon set id: ${id}`);
 }
@@ -2695,6 +2697,16 @@ function TrashIcon() {
 var mermaidBlockId = 0;
 var mermaidRenderId = 0;
 var mermaidModule;
+var ZOOM_SCALE_EXTENT = [.25, 4];
+var ZOOM_BUTTON_FACTOR = 1.2;
+var PRESERVED_SVG_TAGS = new Set([
+	"defs",
+	"style",
+	"title",
+	"desc",
+	"metadata",
+	"marker"
+]);
 function MermaidBlock({ chart }) {
 	const hostId = (0, import_react.useRef)(`acp-chat-mermaid-${++mermaidBlockId}`);
 	const [state, setState] = (0, import_react.useState)({ kind: "rendering" });
@@ -2720,10 +2732,7 @@ function MermaidBlock({ chart }) {
 			cancelled = true;
 		};
 	}, [chart]);
-	if (state.kind === "rendered") return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-		className: "acpMermaidBlock",
-		dangerouslySetInnerHTML: { __html: state.svg }
-	});
+	if (state.kind === "rendered") return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RenderedMermaidDiagram, { svg: state.svg });
 	if (state.kind === "error") return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		className: "acpMermaidBlock acpMermaidBlock--error",
 		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
@@ -2736,8 +2745,142 @@ function MermaidBlock({ chart }) {
 		children: "Rendering diagram..."
 	});
 }
+function RenderedMermaidDiagram({ svg }) {
+	const hostRef = (0, import_react.useRef)(null);
+	const svgRef = (0, import_react.useRef)(null);
+	const zoomBehaviorRef = (0, import_react.useRef)(null);
+	(0, import_react.useEffect)(() => {
+		const host = hostRef.current;
+		if (!host) return;
+		host.innerHTML = svg;
+		const svgElement = host.querySelector("svg");
+		if (!svgElement) return () => {
+			host.innerHTML = "";
+		};
+		prepareSvg(svgElement, "acpMermaidSvg");
+		const panZoomGroup = wrapSvgContent(svgElement, "acpMermaidPanZoom");
+		fitSvgViewBoxToContent(svgElement, panZoomGroup);
+		svgRef.current = svgElement;
+		const zoomBehavior = zoom_default().filter(shouldHandleZoomEvent).scaleExtent(ZOOM_SCALE_EXTENT).on("zoom", (event) => {
+			panZoomGroup.setAttribute("transform", event.transform.toString());
+		});
+		zoomBehaviorRef.current = zoomBehavior;
+		const svgSelection = select_default(svgElement);
+		svgSelection.call(zoomBehavior);
+		svgSelection.call(zoomBehavior.transform, identity);
+		return () => {
+			svgSelection.on(".zoom", null);
+			host.innerHTML = "";
+			svgRef.current = null;
+			zoomBehaviorRef.current = null;
+		};
+	}, [svg]);
+	function zoomBy(factor) {
+		const svgElement = svgRef.current;
+		const zoomBehavior = zoomBehaviorRef.current;
+		if (!svgElement || !zoomBehavior) return;
+		select_default(svgElement).call(zoomBehavior.scaleBy, factor);
+	}
+	function resetZoom() {
+		const svgElement = svgRef.current;
+		const zoomBehavior = zoomBehaviorRef.current;
+		if (!svgElement || !zoomBehavior) return;
+		select_default(svgElement).call(zoomBehavior.transform, identity);
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "acpMermaidBlock acpMermaidBlock--interactive",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "acpMermaidViewport",
+			ref: hostRef
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "acpMermaidToolbar",
+			"aria-label": "Diagram zoom controls",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					className: "acpMermaidToolbarButton",
+					"aria-label": "Zoom out diagram",
+					title: "Zoom out",
+					onClick: () => zoomBy(1 / ZOOM_BUTTON_FACTOR),
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+						src: AllIcons.src("graph/zoomOut.svg"),
+						alt: "",
+						draggable: false
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					className: "acpMermaidToolbarButton",
+					"aria-label": "Reset diagram zoom",
+					title: "Reset zoom",
+					onClick: resetZoom,
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+						src: AllIcons.src("general/reset.svg"),
+						alt: "",
+						draggable: false
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					className: "acpMermaidToolbarButton",
+					"aria-label": "Zoom in diagram",
+					title: "Zoom in",
+					onClick: () => zoomBy(ZOOM_BUTTON_FACTOR),
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+						src: AllIcons.src("graph/zoomIn.svg"),
+						alt: "",
+						draggable: false
+					})
+				})
+			]
+		})]
+	});
+}
+function prepareSvg(svgElement, className) {
+	svgElement.classList.add(className);
+	svgElement.setAttribute("preserveAspectRatio", "xMidYMid meet");
+	if (!svgElement.hasAttribute("viewBox")) {
+		const width = svgDimension(svgElement.getAttribute("width"));
+		const height = svgDimension(svgElement.getAttribute("height"));
+		if (width && height) svgElement.setAttribute("viewBox", `0 0 ${width} ${height}`);
+	}
+	svgElement.removeAttribute("width");
+	svgElement.removeAttribute("height");
+	svgElement.style.removeProperty("width");
+	svgElement.style.removeProperty("height");
+	svgElement.style.removeProperty("max-width");
+}
+function wrapSvgContent(svgElement, className) {
+	for (const child of Array.from(svgElement.children)) if (child.tagName.toLowerCase() === "g" && child.classList.contains(className)) return child;
+	const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+	group.setAttribute("class", className);
+	for (const child of Array.from(svgElement.childNodes)) {
+		if (child.nodeType !== Node.ELEMENT_NODE) continue;
+		const element = child;
+		if (PRESERVED_SVG_TAGS.has(element.tagName.toLowerCase())) continue;
+		group.appendChild(element);
+	}
+	svgElement.appendChild(group);
+	return group;
+}
+function fitSvgViewBoxToContent(svgElement, contentElement) {
+	try {
+		const box = contentElement.getBBox();
+		if (box.width <= 0 || box.height <= 0) return;
+		const padding = 24;
+		svgElement.setAttribute("viewBox", `${box.x - padding} ${box.y - padding} ${box.width + padding * 2} ${box.height + padding * 2}`);
+	} catch {}
+}
+function shouldHandleZoomEvent(event) {
+	return event.type !== "wheel" || event.ctrlKey;
+}
+function svgDimension(value) {
+	if (!value) return void 0;
+	const dimension = Number.parseFloat(value);
+	return Number.isFinite(dimension) && dimension > 0 ? dimension : void 0;
+}
 function loadMermaid() {
-	mermaidModule ||= __vitePreload(() => import("./assets/mermaid.js").then((n) => n.t).then((module) => module.default), __vite__mapDeps([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28]), import.meta.url);
+	mermaidModule ||= __vitePreload(() => import("./assets/mermaid.js").then((n) => n.t).then((module) => module.default), __vite__mapDeps([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27]), import.meta.url);
 	return mermaidModule;
 }
 function configureMermaid(mermaid) {

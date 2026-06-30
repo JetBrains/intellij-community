@@ -4,5 +4,5 @@
     "allowImportingTsExtensions": true,
     "types": ["node"]
   },
-  "include": ["build.ts", "mock.vite.config.ts", "views/**/*.ts", "views/**/*.tsx", "views/**/*.d.ts"]
+  "include": ["build.ts", "mock.vite.config.ts", "playwright.config.ts", "views/**/*.ts", "views/**/*.tsx", "views/**/*.d.ts", "test/**/*.ts", "test/**/*.tsx"]
 }

@@ -244,8 +244,12 @@ export function MarkdownPreviewApp({
       }
       const sourcePosition = sourcePositionFromPreNode(node)
       const codeNode = codeNodeFromPreNode(node)
-      if (sourcePosition && codeNode) {
+      const isMermaidFence = codeNode ? isMermaidCodeNode(codeNode) : false
+      if (sourcePosition && codeNode && !isMermaidFence) {
         commandCandidates.push(...codeFenceCommandCandidates(sourcePosition, codeNode))
+      }
+      if (isMermaidFence) {
+        return <>{children}</>
       }
       const blockCommand = sourcePosition ? findBlockCommand(commandLookup, sourcePosition) : undefined
       const lineCommands = sourcePosition ? findLineCommands(commandLookup, sourcePosition, blockCommand?.firstLineCommandId) : []
@@ -473,6 +477,7 @@ function normalizeHeadingText(text: string): string {
 function codeFenceCommandCandidates(sourcePosition: SourcePositionRange, codeNode: HastNode): MarkdownCommandCandidate[] {
   const code = hastText(codeNode)
   const language = codeFenceLanguage(codeNode)
+  if (isMermaidLanguage(language)) return []
   const lineCommands = lineCommandCandidates(sourcePosition, code)
   const result: MarkdownCommandCandidate[] = []
   if (language) {
@@ -563,6 +568,14 @@ function codeFenceLanguage(codeNode: HastNode): string | undefined {
   const classNames = hastClassNames(codeNode)
   const languageClass = classNames.find(className => className.startsWith("language-"))
   return languageClass?.substring("language-".length)
+}
+
+function isMermaidCodeNode(codeNode: HastNode): boolean {
+  return isMermaidLanguage(codeFenceLanguage(codeNode))
+}
+
+function isMermaidLanguage(language: string | undefined): boolean {
+  return language?.toLowerCase() === "mermaid"
 }
 
 function hasLanguageClass(className: string | undefined): boolean {

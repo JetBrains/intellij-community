@@ -3,7 +3,7 @@
 import { expect, test } from "bun:test"
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { dirname, join } from "node:path"
 import { resolveWebViewMockIconSetAsset } from "./iconSetAssetResolver"
 
 const tempDirs: string[] = []
@@ -71,6 +71,25 @@ test("falls back to light icon when dark resource is missing", () => {
   }
 })
 
+test("resolves platform AllIcons resources from checkout roots", () => {
+  try {
+    const viewResourceRoot = createTempViewResourceRoot()
+    writeResource(viewResourceRoot, "../../../../community/platform/icons/src/graph/zoomIn.svg", "platform-zoom-in")
+
+    const response = resolveWebViewMockIconSetAsset(
+      "/__ij-icons/AllIcons/light/graph/zoomIn.svg",
+      { viewResourceRoot },
+    )
+
+    expect(response?.statusCode).toBe(200)
+    expect(response?.contentType).toBe("image/svg+xml")
+    expect(response?.body.toString()).toBe("platform-zoom-in")
+  }
+  finally {
+    cleanupTempDirs()
+  }
+})
+
 test("returns forbidden for malformed icon requests", () => {
   try {
     const viewResourceRoot = createTempViewResourceRoot()
@@ -117,7 +136,13 @@ function createTempViewResourceRoot(): string {
 }
 
 function writeIcon(viewResourceRoot: string, name: string, content: string): void {
-  writeFileSync(join(viewResourceRoot, "assets", name), content)
+  writeResource(viewResourceRoot, join("assets", name), content)
+}
+
+function writeResource(viewResourceRoot: string, resourcePath: string, content: string): void {
+  const path = join(viewResourceRoot, resourcePath)
+  mkdirSync(dirname(path), { recursive: true })
+  writeFileSync(path, content)
 }
 
 function cleanupTempDirs(): void {

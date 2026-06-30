@@ -1180,11 +1180,74 @@ body {
   background: var(--acp-bg-alt);
 }
 
-.acpMermaidBlock svg {
+.acpMermaidBlock--interactive {
+  position: relative;
+  height: clamp(180px, 32vw, 360px);
+  min-height: 160px;
+  max-height: min(80vh, 720px);
+  padding: 0;
+  overflow: hidden;
+  resize: vertical;
+  user-select: none;
+}
+
+.acpMermaidViewport {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+}
+
+.acpMermaidViewport:active {
+  cursor: grabbing;
+}
+
+.acpMermaidViewport svg {
   display: block;
-  max-width: 100%;
-  height: auto;
-  margin: 0 auto;
+  width: 100%;
+  height: 100%;
+}
+
+.acpMermaidToolbar {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--acp-border);
+  border-radius: 5px;
+  background: var(--acp-bg);
+  box-shadow: 0 2px 6px color-mix(in srgb, black 18%, transparent);
+}
+
+.acpMermaidToolbarButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  color: var(--acp-text);
+  background: transparent;
+  cursor: pointer;
+}
+
+.acpMermaidToolbarButton:hover {
+  background: var(--ij-bg-hover, #ffffff17);
+}
+
+.acpMermaidToolbarButton:active {
+  background: var(--ij-bg-pressed, #ffffff24);
+}
+
+.acpMermaidToolbarButton img {
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
 }
 
 .acpMermaidBlock--rendering {

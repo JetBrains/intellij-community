@@ -1,6 +1,6 @@
-import { c as tickStep, d as bisector, i as range, l as ticks, s as tickIncrement, u as bisectRight } from "./d3-array.js";
-import { n as number_default } from "./d3.js";
+import { i as number_default } from "./d3.js";
 import { n as round_default, r as value_default } from "./d3-interpolate.js";
+import { c as tickStep, d as bisector, i as range, l as ticks, s as tickIncrement, u as bisectRight } from "./d3-array.js";
 import { a as formatPrefix, i as format, n as precisionPrefix_default, o as formatSpecifier, r as precisionFixed_default, t as precisionRound_default } from "./d3-format.js";
 //#region node_modules/internmap/src/index.js
 var InternMap = class extends Map {

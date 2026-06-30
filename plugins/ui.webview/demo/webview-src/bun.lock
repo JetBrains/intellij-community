@@ -12,6 +12,8 @@
         "@jetbrains/intellij-webview-testkit": "file:../../webview-src/packages/testkit",
         "cytoscape": "^3.33.1",
         "cytoscape-fcose": "^2.2.0",
+        "d3-selection": "^3.0.0",
+        "d3-zoom": "^3.0.0",
         "katex": "^0.16.45",
         "marked": "^15.0.0",
         "mermaid": "^11.4.1",
@@ -29,6 +31,8 @@
       },
       "devDependencies": {
         "@playwright/test": "^1.56.0",
+        "@types/d3-selection": "^3.0.11",
+        "@types/d3-zoom": "^3.0.8",
         "@types/node": "^22.10.0",
         "@types/react": "^18.3.12",
         "@types/react-dom": "^18.3.1",

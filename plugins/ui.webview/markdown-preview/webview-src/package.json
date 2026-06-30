@@ -5,11 +5,14 @@
   "scripts": {
     "build": "bun run build.ts",
     "dev:mock": "vite --config mock.vite.config.ts --host 127.0.0.1 --port 5174",
+    "test:browser": "playwright test",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@jetbrains/intellij-webview": "file:../../webview-src",
     "@jetbrains/intellij-webview-controls": "file:../../webview-src/packages/controls",
+    "d3-selection": "^3.0.0",
+    "d3-zoom": "^3.0.0",
     "katex": "^0.16.45",
     "mermaid": "^11.4.1",
     "react": "^18.3.1",
@@ -24,6 +27,9 @@
   },
   "devDependencies": {
     "@jetbrains/intellij-webview-testkit": "file:../../webview-src/packages/testkit",
+    "@playwright/test": "^1.56.0",
+    "@types/d3-selection": "^3.0.11",
+    "@types/d3-zoom": "^3.0.8",
     "@types/node": "^22.10.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",

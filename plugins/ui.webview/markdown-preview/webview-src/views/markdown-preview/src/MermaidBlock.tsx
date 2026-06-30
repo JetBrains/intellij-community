@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import { useEffect, useRef, useState } from "react"
+import { AllIcons } from "@jetbrains/intellij-webview"
+import { select } from "d3-selection"
+import { zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior } from "d3-zoom"
 import type mermaidApi from "mermaid"
 
 interface MermaidBlockProps {
@@ -16,6 +19,9 @@ type RenderState =
 let mermaidBlockId = 0
 let mermaidRenderId = 0
 let mermaidModule: Promise<Mermaid> | undefined
+const ZOOM_SCALE_EXTENT: [number, number] = [0.25, 4]
+const ZOOM_BUTTON_FACTOR = 1.2
+const PRESERVED_SVG_TAGS = new Set(["defs", "style", "title", "desc", "metadata", "marker"])
 
 export function MermaidBlock({ chart, theme }: MermaidBlockProps) {
   const hostId = useRef(`markdown-preview-mermaid-${++mermaidBlockId}`)
@@ -48,7 +54,7 @@ export function MermaidBlock({ chart, theme }: MermaidBlockProps) {
   }, [chart, theme])
 
   if (state.kind === "rendered") {
-    return <div className="mermaidBlock" dangerouslySetInnerHTML={{ __html: state.svg }} />
+    return <RenderedMermaidDiagram svg={state.svg} />
   }
   if (state.kind === "error") {
     return (
@@ -59,6 +65,135 @@ export function MermaidBlock({ chart, theme }: MermaidBlockProps) {
     )
   }
   return <div className="mermaidBlock isRendering">Rendering diagram...</div>
+}
+
+function RenderedMermaidDiagram({ svg }: { svg: string }) {
+  const hostRef = useRef<HTMLDivElement>(null)
+  const svgRef = useRef<SVGSVGElement | null>(null)
+  const zoomBehaviorRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(null)
+
+  useEffect(() => {
+    const host = hostRef.current
+    if (!host) return
+
+    host.innerHTML = svg
+    const svgElement = host.querySelector<SVGSVGElement>("svg")
+    if (!svgElement) {
+      return () => {
+        host.innerHTML = ""
+      }
+    }
+
+    prepareSvg(svgElement, "mermaidSvg")
+    const panZoomGroup = wrapSvgContent(svgElement, "mermaidPanZoom")
+    fitSvgViewBoxToContent(svgElement, panZoomGroup)
+    svgRef.current = svgElement
+
+    const zoomBehavior = zoom<SVGSVGElement, unknown>()
+      .filter(shouldHandleZoomEvent)
+      .scaleExtent(ZOOM_SCALE_EXTENT)
+      .on("zoom", (event: D3ZoomEvent<SVGSVGElement, unknown>) => {
+        panZoomGroup.setAttribute("transform", event.transform.toString())
+      })
+    zoomBehaviorRef.current = zoomBehavior
+
+    const svgSelection = select<SVGSVGElement, unknown>(svgElement)
+    svgSelection.call(zoomBehavior)
+    svgSelection.call(zoomBehavior.transform, zoomIdentity)
+
+    return () => {
+      svgSelection.on(".zoom", null)
+      host.innerHTML = ""
+      svgRef.current = null
+      zoomBehaviorRef.current = null
+    }
+  }, [svg])
+
+  function zoomBy(factor: number): void {
+    const svgElement = svgRef.current
+    const zoomBehavior = zoomBehaviorRef.current
+    if (!svgElement || !zoomBehavior) return
+    select<SVGSVGElement, unknown>(svgElement).call(zoomBehavior.scaleBy, factor)
+  }
+
+  function resetZoom(): void {
+    const svgElement = svgRef.current
+    const zoomBehavior = zoomBehaviorRef.current
+    if (!svgElement || !zoomBehavior) return
+    select<SVGSVGElement, unknown>(svgElement).call(zoomBehavior.transform, zoomIdentity)
+  }
+
+  return (
+    <div className="mermaidBlock isInteractive">
+      <div className="mermaidViewport" ref={hostRef} />
+      <div className="mermaidToolbar" aria-label="Diagram zoom controls">
+        <button type="button" className="mermaidToolbarButton" aria-label="Zoom out diagram" title="Zoom out" onClick={() => zoomBy(1 / ZOOM_BUTTON_FACTOR)}>
+          <img src={AllIcons.src("graph/zoomOut.svg")} alt="" draggable={false} />
+        </button>
+        <button type="button" className="mermaidToolbarButton" aria-label="Reset diagram zoom" title="Reset zoom" onClick={resetZoom}>
+          <img src={AllIcons.src("general/reset.svg")} alt="" draggable={false} />
+        </button>
+        <button type="button" className="mermaidToolbarButton" aria-label="Zoom in diagram" title="Zoom in" onClick={() => zoomBy(ZOOM_BUTTON_FACTOR)}>
+          <img src={AllIcons.src("graph/zoomIn.svg")} alt="" draggable={false} />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function prepareSvg(svgElement: SVGSVGElement, className: string): void {
+  svgElement.classList.add(className)
+  svgElement.setAttribute("preserveAspectRatio", "xMidYMid meet")
+  if (!svgElement.hasAttribute("viewBox")) {
+    const width = svgDimension(svgElement.getAttribute("width"))
+    const height = svgDimension(svgElement.getAttribute("height"))
+    if (width && height) svgElement.setAttribute("viewBox", `0 0 ${width} ${height}`)
+  }
+  svgElement.removeAttribute("width")
+  svgElement.removeAttribute("height")
+  svgElement.style.removeProperty("width")
+  svgElement.style.removeProperty("height")
+  svgElement.style.removeProperty("max-width")
+}
+
+function wrapSvgContent(svgElement: SVGSVGElement, className: string): SVGGElement {
+  for (const child of Array.from(svgElement.children)) {
+    if (child.tagName.toLowerCase() === "g" && child.classList.contains(className)) return child as SVGGElement
+  }
+
+  const group = document.createElementNS("http://www.w3.org/2000/svg", "g")
+  group.setAttribute("class", className)
+  for (const child of Array.from(svgElement.childNodes)) {
+    if (child.nodeType !== Node.ELEMENT_NODE) continue
+    const element = child as Element
+    if (PRESERVED_SVG_TAGS.has(element.tagName.toLowerCase())) continue
+    group.appendChild(element)
+  }
+  svgElement.appendChild(group)
+  return group
+}
+
+function fitSvgViewBoxToContent(svgElement: SVGSVGElement, contentElement: SVGGraphicsElement): void {
+  try {
+    const box = contentElement.getBBox()
+    if (box.width <= 0 || box.height <= 0) return
+    const padding = 24
+    svgElement.setAttribute("viewBox", `${box.x - padding} ${box.y - padding} ${box.width + padding * 2} ${box.height + padding * 2}`)
+  }
+  catch {
+    // Some SVG fragments cannot be measured until attached; keep Mermaid's viewBox in that case.
+  }
+}
+
+function shouldHandleZoomEvent(event: Event): boolean {
+  // Chromium reports trackpad pinch as a ctrlKey wheel event; plain wheel must keep page scrolling.
+  return event.type !== "wheel" || (event as WheelEvent).ctrlKey
+}
+
+function svgDimension(value: string | null): number | undefined {
+  if (!value) return undefined
+  const dimension = Number.parseFloat(value)
+  return Number.isFinite(dimension) && dimension > 0 ? dimension : undefined
 }
 
 function loadMermaid(): Promise<Mermaid> {

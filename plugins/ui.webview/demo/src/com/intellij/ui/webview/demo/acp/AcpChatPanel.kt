@@ -72,6 +72,9 @@ internal class AcpChatPanel(
     private val LOG = logger<AcpChatPanel>()
     private val ASSET_ROOT = WebViewAssetRoot
       .fromClasspath(AcpChatPanel::class.java, WebViewAssetPath.of(RESOURCE_ROOT))
-      .withIconSets(WebViewIconSet.of("AcpChatIcons", AcpChatPanel::class.java))
+      .withIconSets(
+        WebViewIconSet.of("AcpChatIcons", AcpChatPanel::class.java),
+        WebViewIconSet.allIcons(),
+      )
   }
 }

@@ -1849,11 +1849,66 @@ html[data-theme="light"] .markdownPreview {
   color: var(--ij-text-secondary);
   background: var(--ij-bg-panel);
 }
-.mermaidBlock svg {
+.mermaidBlock.isInteractive {
+  position: relative;
+  height: clamp(200px, 34vw, 420px);
+  min-height: 160px;
+  max-height: min(80vh, 720px);
+  padding: 0;
+  overflow: hidden;
+  resize: vertical;
+  user-select: none;
+}
+.mermaidViewport {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+}
+.mermaidViewport:active {
+  cursor: grabbing;
+}
+.mermaidViewport svg {
   display: block;
-  max-width: 100%;
-  height: auto;
-  margin: 0 auto;
+  width: 100%;
+  height: 100%;
+}
+.mermaidToolbar {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--ij-border);
+  border-radius: 5px;
+  background: var(--ij-bg-panel);
+  box-shadow: 0 2px 6px color-mix(in srgb, black 18%, transparent);
+}
+.mermaidToolbarButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  color: var(--ij-text-primary);
+  background: transparent;
+  cursor: pointer;
+}
+.mermaidToolbarButton:hover {
+  background: var(--ij-bg-hover, #00000012);
+}
+.mermaidToolbarButton:active {
+  background: var(--ij-bg-pressed, #0000001f);
+}
+.mermaidToolbarButton img {
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
 }
 .mermaidBlock.isRendering {
   display: flex;

@@ -1,5 +1,7 @@
 const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./katex.js","./rolldown-runtime.js","./mermaid-js-parser.js"])))=>i.map(i=>d[i]);
 import { o as __toESM, r as __exportAll } from "./rolldown-runtime.js";
+import { h as select_default } from "./d3.js";
+import { t as hcl_default } from "./d3-interpolate.js";
 import { a as createDefaultSharedCoreModule, c as AbstractAstReflection, i as createDefaultCoreModule, n as EmptyFileSystem, o as DefaultValueConverter, r as inject, s as DefaultTokenBuilder, t as loadGrammarFromJson } from "./langium.js";
 import { O as memoize, r as isEmpty } from "./chevrotain-allstar.js";
 import { a as require_dayjs_min, i as require_isoWeek, n as require_advancedFormat, r as require_customParseFormat, t as require_duration } from "./dayjs.js";
@@ -8,9 +10,6 @@ import { t as purify } from "./dompurify.js";
 import { a as min, o as max } from "./d3-array.js";
 import { _ as band, a as timeMonday, c as timeThursday, d as timeDay, f as timeHour, g as linear, h as millisecond, i as timeFriday, l as timeTuesday, m as second, n as timeFormat, o as timeSaturday, p as timeMinute, r as timeMonth, s as timeSunday, t as time, u as timeWednesday, v as ordinal } from "./d3-scale.js";
 import { n as axisTop, t as axisBottom } from "./d3-axis.js";
-import "./d3.js";
-import { t as select_default } from "./d3-selection.js";
-import { t as hcl_default } from "./d3-interpolate.js";
 import { i as format$1 } from "./d3-format.js";
 import { n as hierarchy, t as treemap_default } from "./d3-hierarchy.js";
 import { t as Tableau10_default } from "./d3-scale-chromatic.js";

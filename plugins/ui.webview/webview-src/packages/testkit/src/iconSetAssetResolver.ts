@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import { existsSync, readFileSync } from "node:fs"
-import { isAbsolute, relative, resolve, sep } from "node:path"
+import { dirname, isAbsolute, relative, resolve, sep } from "node:path"
 
 export interface WebViewMockIconSetAssetResolverOptions {
   viewResourceRoot: string
@@ -65,7 +65,28 @@ function parseIconRoute(requestPath: string): IconRoute | undefined {
 
 function iconResourceRoots(viewResourceRoot: string): string[] {
   const resolvedViewResourceRoot = resolve(viewResourceRoot)
-  return Array.from(new Set([resolvedViewResourceRoot, resolve(resolvedViewResourceRoot, "../../..")]))
+  return Array.from(new Set([
+    resolvedViewResourceRoot,
+    resolve(resolvedViewResourceRoot, "../../.."),
+    ...platformIconResourceRoots(resolvedViewResourceRoot),
+  ]))
+}
+
+function platformIconResourceRoots(startPath: string): string[] {
+  const roots: string[] = []
+  let current = resolve(startPath)
+  while (true) {
+    addExistingRoot(roots, resolve(current, "platform/icons/src"))
+    addExistingRoot(roots, resolve(current, "community/platform/icons/src"))
+
+    const parent = dirname(current)
+    if (parent === current) return roots
+    current = parent
+  }
+}
+
+function addExistingRoot(roots: string[], candidate: string): void {
+  if (existsSync(candidate)) roots.push(candidate)
 }
 
 function decodeIconResourcePath(encodedPath: string): string | undefined {
