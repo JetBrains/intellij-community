@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.KtValueArgument
 
 internal class AddContextParameterToExistingContextFix(
     surroundingCall: KtCallExpression,
@@ -41,9 +42,16 @@ internal class AddContextParameterToExistingContextFix(
             } else {
                 val typeReference = psiFactory.createType(parameterTypeFqNameText)
                 val userType = shortenReferences(typeReference) as? KtUserType
-                psiFactory.createExpression("TODO(\"Provide $parameterTypeText\")${userType?.let { " as ${it.text}" } ?: ""}")
+                psiFactory.createArgument(
+                    psiFactory.createExpression("TODO(\"Provide $parameterTypeText\")${userType?.let { " as ${it.text}" } ?: ""}")
+                )
             }
-        argList.addBefore(newElement, rightParen)
+        val insertedElement = argList.addBefore(newElement, rightParen) as? KtValueArgument ?: return
+        if (candidateName == null) {
+            val insertedExpression = insertedElement.getArgumentExpression() ?: return
+            updater.moveCaretTo(insertedExpression)
+            updater.templateBuilder().field(insertedExpression, insertedExpression.text)
+        }
     }
 
     override fun getActionPresentation(context: ActionContext, element: KtCallExpression): Presentation =
