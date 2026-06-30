@@ -216,6 +216,7 @@ internal data class PersistedAgentChatTabState(
   @JvmField val launchMode: String? = null,
   @JvmField val launchProfileId: String? = null,
   @JvmField val launchTargetId: String? = null,
+  @JvmField val surfaceId: String? = null,
   @JvmField val newThreadRebindRequestedAtMs: Long? = null,
   @JvmField val updatedAt: Long,
 )
@@ -271,6 +272,7 @@ private fun PersistedAgentChatTabState.toSnapshot(tabKey: AgentChatTabKey): Agen
       launchMode = normalizeAgentChatLaunchMode(launchMode),
       launchProfileId = launchProfileId,
       launchTargetId = launchTargetId,
+      surfaceId = normalizeAgentChatSurfaceId(surfaceId),
       newThreadRebindRequestedAtMs = newThreadRebindRequestedAtMs,
       // Prompt text, tokens, delivery state, and dispatch queues are live-session metadata and are intentionally not restored.
       initialPromptRecord = null,
@@ -295,6 +297,7 @@ private fun AgentChatTabSnapshot.toPersisted(updatedAt: Long): PersistedAgentCha
     launchMode = runtime.launchMode,
     launchProfileId = runtime.launchProfileId,
     launchTargetId = runtime.launchTargetId,
+    surfaceId = runtime.surfaceId,
     newThreadRebindRequestedAtMs = runtime.newThreadRebindRequestedAtMs,
     updatedAt = updatedAt,
   )

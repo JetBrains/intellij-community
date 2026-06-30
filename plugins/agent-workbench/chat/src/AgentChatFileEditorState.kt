@@ -41,6 +41,7 @@ internal fun readAgentChatFileEditorState(sourceElement: Element, file: VirtualF
       launchMode = normalizeAgentChatLaunchMode(sourceElement.getAttributeValue(ATTR_LAUNCH_MODE)),
       launchProfileId = sourceElement.getAttributeValue(ATTR_LAUNCH_PROFILE_ID),
       launchTargetId = sourceElement.getAttributeValue(ATTR_LAUNCH_TARGET_ID),
+      surfaceId = normalizeAgentChatSurfaceId(sourceElement.getAttributeValue(ATTR_SURFACE_ID)),
       newThreadRebindRequestedAtMs = sourceElement.getAttributeLongValueOrNull(ATTR_NEW_THREAD_REBIND_REQUESTED_AT_MS),
       // Prompt text, tokens, delivery state, and dispatch queues are live-session metadata. Do not restore them from editor state:
       // persisted prompt data is a privacy risk, and restoring queued terminal input can duplicate prompts.
@@ -83,6 +84,7 @@ internal fun writeAgentChatFileEditorState(state: AgentChatFileEditorState, targ
   targetElement.setNullableAttribute(ATTR_LAUNCH_MODE, runtime.launchMode)
   targetElement.setNullableAttribute(ATTR_LAUNCH_PROFILE_ID, runtime.launchProfileId)
   targetElement.setNullableAttribute(ATTR_LAUNCH_TARGET_ID, runtime.launchTargetId)
+  targetElement.setNullableAttribute(ATTR_SURFACE_ID, runtime.surfaceId)
   targetElement.setNullableAttribute(ATTR_NEW_THREAD_REBIND_REQUESTED_AT_MS, runtime.newThreadRebindRequestedAtMs?.toString())
   // Prompt text, tokens, delivery state, and terminal dispatch metadata are live-session-only and must not be persisted.
   writeStartupIntent(state.startupIntent, targetElement)
@@ -106,6 +108,7 @@ private fun readStartupIntent(
     launchMode = parseEnum(sourceElement.getAttributeValue(ATTR_STARTUP_LAUNCH_MODE), parseAgentChatLaunchMode(pendingLaunchMode)),
     launchProfileId = sourceElement.getAttributeValue(ATTR_STARTUP_LAUNCH_PROFILE_ID),
     launchTargetId = sourceElement.getAttributeValue(ATTR_STARTUP_LAUNCH_TARGET_ID),
+    surfaceId = normalizeAgentChatSurfaceId(sourceElement.getAttributeValue(ATTR_STARTUP_SURFACE_ID)),
   )
 }
 
@@ -117,6 +120,7 @@ private fun writeStartupIntent(startupIntent: AgentChatStartupIntent?, targetEle
       targetElement.setAttribute(ATTR_STARTUP_LAUNCH_MODE, startupIntent.launchMode.name)
       targetElement.setNullableAttribute(ATTR_STARTUP_LAUNCH_PROFILE_ID, startupIntent.launchProfileId)
       targetElement.setNullableAttribute(ATTR_STARTUP_LAUNCH_TARGET_ID, startupIntent.launchTargetId)
+      targetElement.setNullableAttribute(ATTR_STARTUP_SURFACE_ID, startupIntent.surfaceId)
     }
     null -> Unit
   }
@@ -150,10 +154,12 @@ private const val ATTR_PENDING_LAUNCH_MODE = "pendingLaunchMode"
 private const val ATTR_LAUNCH_MODE = "launchMode"
 private const val ATTR_LAUNCH_PROFILE_ID = "launchProfileId"
 private const val ATTR_LAUNCH_TARGET_ID = "launchTargetId"
+private const val ATTR_SURFACE_ID = "surfaceId"
 private const val ATTR_NEW_THREAD_REBIND_REQUESTED_AT_MS = "newThreadRebindRequestedAtMs"
 private const val ATTR_STARTUP_KIND = "startupKind"
 private const val ATTR_STARTUP_PROVIDER = "startupProvider"
 private const val ATTR_STARTUP_LAUNCH_MODE = "startupLaunchMode"
 private const val ATTR_STARTUP_LAUNCH_PROFILE_ID = "startupLaunchProfileId"
 private const val ATTR_STARTUP_LAUNCH_TARGET_ID = "startupLaunchTargetId"
+private const val ATTR_STARTUP_SURFACE_ID = "startupSurfaceId"
 private const val STARTUP_KIND_NEW_SESSION = "newSession"

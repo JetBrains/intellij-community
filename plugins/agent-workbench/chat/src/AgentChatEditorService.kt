@@ -251,6 +251,7 @@ suspend fun openChat(
   launchMode: String? = null,
   launchProfileId: String? = null,
   launchTargetId: String? = null,
+  surfaceId: String? = null,
   newSessionProvider: AgentSessionProvider? = null,
   newSessionLaunchMode: AgentSessionLaunchMode? = null,
   initialMessageDispatchPlan: AgentInitialPromptDeliveryPlan = AgentInitialPromptDeliveryPlan.EMPTY,
@@ -283,6 +284,7 @@ suspend fun openChat(
   }
   val effectiveLaunchProfileId = launchProfileId?.trim()?.takeIf(String::isNotEmpty) ?: existing?.launchProfileId
   val effectiveLaunchTargetId = launchTargetId?.trim()?.takeIf(String::isNotEmpty) ?: existing?.launchTargetId
+  val effectiveSurfaceId = normalizeAgentChatSurfaceId(surfaceId) ?: existing?.surfaceId
   val startupOverrideForTab = if (isNewTab) {
     initialMessageDispatchPlan.startupLaunchSpecOverride ?: launchSpec.takeIf(::shouldUseStartupLaunchSpecOverride)
   }
@@ -295,11 +297,13 @@ suspend fun openChat(
       launchMode = newSessionLaunchMode,
       launchProfileId = effectiveLaunchProfileId,
       launchTargetId = effectiveLaunchTargetId,
+      surfaceId = effectiveSurfaceId,
     ) ?: pendingProviderForThreadIdentity(threadIdentity)?.let { provider ->
       AgentChatStartupIntent.NewSession(provider = provider,
                                         launchMode = parseAgentChatLaunchMode(pendingLaunchMode),
                                         launchProfileId = effectiveLaunchProfileId,
-                                        launchTargetId = effectiveLaunchTargetId)
+                                        launchTargetId = effectiveLaunchTargetId,
+                                        surfaceId = effectiveSurfaceId)
     }
   }
   else {
@@ -329,6 +333,7 @@ suspend fun openChat(
     launchMode = launchMode ?: existing?.launchMode,
     launchProfileId = effectiveLaunchProfileId,
     launchTargetId = effectiveLaunchTargetId,
+    surfaceId = effectiveSurfaceId,
     generationSettings = effectiveGenerationSettings,
     newThreadRebindRequestedAtMs = existing?.newThreadRebindRequestedAtMs,
     initialPromptRecord = snapshotInitialPromptRecord,
@@ -446,6 +451,7 @@ private fun buildNewSessionStartupIntent(
   launchMode: AgentSessionLaunchMode?,
   launchProfileId: String?,
   launchTargetId: String?,
+  surfaceId: String?,
 ): AgentChatStartupIntent.NewSession? {
   val resolvedProvider = provider ?: return null
   return AgentChatStartupIntent.NewSession(
@@ -453,6 +459,7 @@ private fun buildNewSessionStartupIntent(
     launchMode = launchMode ?: AgentSessionLaunchMode.STANDARD,
     launchProfileId = launchProfileId,
     launchTargetId = launchTargetId,
+    surfaceId = surfaceId,
   )
 }
 
@@ -487,6 +494,7 @@ suspend fun updateAgentChatDeferredStartState(
   newSessionLaunchMode: AgentSessionLaunchMode? = null,
   launchProfileId: String? = null,
   launchTargetId: String? = null,
+  surfaceId: String? = null,
   generationSettings: AgentPromptGenerationSettings? = null,
   persistSnapshot: Boolean = false,
   forgetPersistedSnapshot: Boolean = false,
@@ -525,6 +533,9 @@ suspend fun updateAgentChatDeferredStartState(
   launchTargetId?.let {
     chatFile.updateLaunchTargetId(it)
   }
+  surfaceId?.let {
+    chatFile.updateSurfaceId(it)
+  }
   generationSettings?.let {
     chatFile.updateGenerationSettings(it)
   }
@@ -543,6 +554,7 @@ suspend fun updateAgentChatDeferredStartState(
           launchMode = newSessionLaunchMode,
           launchProfileId = chatFile.launchProfileId,
           launchTargetId = chatFile.launchTargetId,
+          surfaceId = chatFile.surfaceId,
         ) ?: resolveAgentChatNewSessionStartupIntent(chatFile)
       )
     }

@@ -251,6 +251,7 @@ fun assertExistingThreadLaunchUsesStartupOverride(
           initialMessageToken = openRequest.initialMessageToken,
           launchProfileId = openRequest.launchProfileId,
           launchTargetId = openRequest.launchTargetId,
+          surfaceId = openRequest.surfaceId,
         )
       }
     }
@@ -306,6 +307,7 @@ fun assertNewThreadPromptLaunchOpensNewChat(
           initialPromptDeliveryChannel = openRequest.initialPromptDeliveryChannel,
           launchProfileId = openRequest.launchProfileId,
           launchTargetId = openRequest.launchTargetId,
+          surfaceId = openRequest.surfaceId,
           preferredDedicatedFrame = openRequest.preferredDedicatedFrame,
         )
       }
@@ -344,6 +346,9 @@ fun launchNewThreadPromptRequestWithDefaultChatOpenExecutor(
           path = request.projectPath,
           provider = request.provider,
           mode = request.launchMode,
+          launchProfileId = request.launchProfileId,
+          launchTargetId = request.launchTargetId,
+          surfaceId = request.surfaceId,
           entryPoint = AgentWorkbenchEntryPoint.PROMPT,
           initialMessageRequest = request.initialMessageRequest,
           preferredDedicatedFrame = request.preferredDedicatedFrame,
@@ -410,6 +415,7 @@ internal class RecordingChatOpenExecutor(
     launchMode: AgentSessionLaunchMode?,
     launchProfileId: String?,
     launchTargetId: String?,
+    surfaceId: String?,
     generationSettings: AgentPromptGenerationSettings,
     openedChatHandler: (suspend (Project, VirtualFile) -> Unit)?,
   ) {
@@ -428,6 +434,7 @@ internal class RecordingChatOpenExecutor(
       launchMode = launchMode,
       launchProfileId = launchProfileId,
       launchTargetId = launchTargetId,
+      surfaceId = surfaceId,
       generationSettings = generationSettings,
     )
     val callIndex = openChatCalls.incrementAndGet()
@@ -447,6 +454,7 @@ internal class RecordingChatOpenExecutor(
     launchMode: AgentSessionLaunchMode?,
     launchProfileId: String?,
     launchTargetId: String?,
+    surfaceId: String?,
     generationSettings: AgentPromptGenerationSettings,
     preferredDedicatedFrame: Boolean?,
     openedChatHandler: (suspend (Project, VirtualFile) -> Unit)?,
@@ -466,6 +474,7 @@ internal class RecordingChatOpenExecutor(
       launchMode = launchMode,
       launchProfileId = launchProfileId,
       launchTargetId = launchTargetId,
+      surfaceId = surfaceId,
       generationSettings = generationSettings,
       preferredDedicatedFrame = preferredDedicatedFrame,
     )
@@ -484,6 +493,7 @@ internal class RecordingChatOpenExecutor(
     launchMode: AgentSessionLaunchMode?,
     launchProfileId: String?,
     launchTargetId: String?,
+    surfaceId: String?,
     generationSettings: AgentPromptGenerationSettings,
     preferredDedicatedFrame: Boolean?,
     openedChatHandler: (suspend (Project, VirtualFile) -> Unit)?,
@@ -499,6 +509,7 @@ internal class RecordingChatOpenExecutor(
       launchMode = launchMode,
       launchProfileId = launchProfileId,
       launchTargetId = launchTargetId,
+      surfaceId = surfaceId,
       generationSettings = generationSettings,
       preferredDedicatedFrame = preferredDedicatedFrame,
       waitingState = waitingState,
@@ -522,6 +533,7 @@ internal class RecordingChatOpenExecutor(
     launchMode: AgentSessionLaunchMode?,
     launchProfileId: String?,
     launchTargetId: String?,
+    surfaceId: String?,
     generationSettings: AgentPromptGenerationSettings,
     preferredDedicatedFrame: Boolean?,
     initialMessageDispatchPlan: AgentInitialPromptDeliveryPlan,
@@ -537,6 +549,7 @@ internal class RecordingChatOpenExecutor(
       launchMode = launchMode,
       launchProfileId = launchProfileId,
       launchTargetId = launchTargetId,
+      surfaceId = surfaceId,
       generationSettings = generationSettings,
       preferredDedicatedFrame = preferredDedicatedFrame,
       openedChatHandler = null,
@@ -569,6 +582,7 @@ internal data class OpenChatRequest(
   @JvmField val launchMode: AgentSessionLaunchMode?,
   @JvmField val launchProfileId: String?,
   @JvmField val launchTargetId: String?,
+  @JvmField val surfaceId: String?,
   @JvmField val generationSettings: AgentPromptGenerationSettings,
 ) {
   val initialComposedMessage: String?
@@ -589,6 +603,7 @@ internal data class OpenNewChatRequest(
   @JvmField val launchMode: AgentSessionLaunchMode?,
   @JvmField val launchProfileId: String?,
   @JvmField val launchTargetId: String?,
+  @JvmField val surfaceId: String?,
   @JvmField val generationSettings: AgentPromptGenerationSettings,
   @JvmField val preferredDedicatedFrame: Boolean?,
 ) {
@@ -604,6 +619,7 @@ internal data class OpenPreparingNewChatRequest(
   @JvmField val launchMode: AgentSessionLaunchMode?,
   @JvmField val launchProfileId: String?,
   @JvmField val launchTargetId: String?,
+  @JvmField val surfaceId: String?,
   @JvmField val generationSettings: AgentPromptGenerationSettings,
   @JvmField val preferredDedicatedFrame: Boolean?,
   @JvmField val waitingState: AgentChatDeferredStartState,
@@ -623,6 +639,7 @@ data class NewThreadPromptLaunchObservation(
   @JvmField val initialPromptDeliveryChannel: AgentInitialPromptDeliveryChannel?,
   @JvmField val launchProfileId: String?,
   @JvmField val launchTargetId: String?,
+  @JvmField val surfaceId: String?,
   @JvmField val preferredDedicatedFrame: Boolean?,
 )
 
@@ -636,6 +653,7 @@ data class ExistingThreadPromptLaunchObservation(
   @JvmField val initialMessageToken: String?,
   @JvmField val launchProfileId: String?,
   @JvmField val launchTargetId: String?,
+  @JvmField val surfaceId: String?,
 )
 
 private const val PROMPT_LAUNCH_WAIT_TIMEOUT_MS: Long = 20_000

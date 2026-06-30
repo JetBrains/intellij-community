@@ -901,6 +901,7 @@ internal class AgentPromptLaunchProfileEditorDialog(
       providerId = provider.providerId,
       launchMode = launchMode,
       launchTargetId = launchTargetId,
+      surfaceId = existing?.surfaceId,
       generationSettings = AgentPromptGenerationSettings(
         modelId = modelId,
         reasoningEffort = reasoningEffort,

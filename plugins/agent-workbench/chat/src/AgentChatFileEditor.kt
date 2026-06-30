@@ -14,6 +14,7 @@ import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadRebindPoli
 import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchIntent
 import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchOperation
 import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchPlanner
+import com.intellij.platform.ai.agent.sessions.core.launch.effectiveAgentSessionSurfaceId
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryChannel
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionArchivedSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionLaunchProfileResolver
@@ -88,7 +89,7 @@ internal class AgentChatFileEditor(
   private val pendingScopedRefreshRetryIntervalMs: Long = AgentSessionThreadRebindPolicy.PENDING_THREAD_REFRESH_RETRY_INTERVAL_MS,
   editorCoroutineScope: CoroutineScope? = null,
   private val providerDescriptorResolver: (AgentSessionProvider) -> AgentSessionProviderDescriptor? = AgentSessionProviders::find,
-  private val customContentProviderResolver: (AgentSessionProvider) -> AgentChatCustomContentProvider? = AgentChatCustomContent::find,
+  private val customContentProviderResolver: (AgentChatContentContext) -> AgentChatCustomContentProvider? = AgentChatCustomContent::find,
   private val behaviorResolver: (AgentSessionProvider?) -> AgentChatProviderBehavior = ::resolveAgentChatProviderBehavior,
 ) : UserDataHolderBase(), FileEditor {
   private val ownedTerminalStartupJob = if (editorCoroutineScope == null) SupervisorJob() else null
@@ -287,8 +288,8 @@ internal class AgentChatFileEditor(
     if (customContentInstalled) {
       return true
     }
-    val provider = file.provider ?: return false
-    val contentProvider = customContentProviderResolver(provider) ?: return false
+    val contentContext = resolveCustomContentContext() ?: return false
+    val contentProvider = customContentProviderResolver(contentContext) ?: return false
     val deferredStartState = file.deferredStartState
     if (deferredStartState?.phase == AgentChatDeferredStartPhase.READY_TO_START) {
       file.updateDeferredStartState(null)
@@ -298,8 +299,7 @@ internal class AgentChatFileEditor(
     ensureCrossProjectDockTargetRegistration()
     val customComponent = contentProvider.createComponent(
       project = project,
-      threadIdentity = file.threadIdentity,
-      threadId = file.threadId.ifBlank { file.threadIdentity },
+      context = contentContext,
       parent = this,
     )
     customContentPreferredFocusedComponent = (customComponent as? AgentChatPreferredFocusableContent)?.preferredFocusedComponent
@@ -370,6 +370,7 @@ internal class AgentChatFileEditor(
         operation = AgentSessionLaunchOperation.NEW,
         launchMode = launchMode,
         launchTargetId = launchTargetId,
+        surfaceId = resolvedLaunchProfile?.surfaceId ?: startupIntent.surfaceId,
         generationSettings = generationSettings,
       ),
       project = project,
@@ -383,6 +384,7 @@ internal class AgentChatFileEditor(
       requiredProvider = provider,
     )
     val launchTargetId = resolvedLaunchProfile?.launchTargetId ?: file.launchTargetId
+    val surfaceId = resolvedLaunchProfile?.surfaceId ?: file.surfaceId
     return AgentSessionLaunchPlanner.plan(
       intent = AgentSessionLaunchIntent(
         projectPath = file.projectPath,
@@ -392,6 +394,7 @@ internal class AgentChatFileEditor(
         sessionId = file.threadId.ifBlank { file.sessionId },
         launchMode = resolvedLaunchProfile?.launchMode ?: parseAgentChatLaunchMode(file.launchMode),
         launchTargetId = launchTargetId,
+        surfaceId = surfaceId,
         generationSettings = resolvedLaunchProfile?.generationSettings ?: file.generationSettings,
       ),
       project = project,
@@ -405,6 +408,27 @@ internal class AgentChatFileEditor(
     return serviceOrNull<AgentSessionLaunchProfileResolver>()?.resolveLaunchProfile(
       launchProfileId = launchProfileId,
       requiredProvider = requiredProvider,
+    )
+  }
+
+  private fun resolveCustomContentContext(): AgentChatContentContext? {
+    val provider = file.provider ?: return null
+    val startupIntent = file.startupIntent() as? AgentChatStartupIntent.NewSession
+    val launchProfileId = startupIntent?.launchProfileId ?: file.launchProfileId
+    val resolvedLaunchProfile = resolveLaunchProfile(
+      launchProfileId = launchProfileId,
+      requiredProvider = provider,
+    )
+    val surfaceId = effectiveAgentSessionSurfaceId(
+      provider = provider,
+      surfaceId = resolvedLaunchProfile?.surfaceId ?: startupIntent?.surfaceId ?: file.surfaceId,
+    )
+    return AgentChatContentContext(
+      provider = provider,
+      surfaceId = surfaceId,
+      launchTargetId = resolvedLaunchProfile?.launchTargetId ?: startupIntent?.launchTargetId ?: file.launchTargetId,
+      threadIdentity = file.threadIdentity,
+      threadId = file.threadId.ifBlank { file.threadIdentity },
     )
   }
 

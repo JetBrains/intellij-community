@@ -1055,25 +1055,21 @@ internal class AgentPromptGenerationSettingsController(
     name: String,
   ): AgentPromptLaunchProfile? {
     val provider = providerSelector.selectedProvider?.bridge?.provider ?: return null
+    val launchMode = providerSelector.selectedLaunchMode
+    val selectedProfile = findProfile(draftSelectedLaunchProfileId)?.takeIf { profile ->
+      profile.providerId == provider.value && profile.launchMode == launchMode
+    }
     val currentSettings = currentSettings()
     return AgentPromptLaunchProfile(
       id = id,
       name = name,
       kind = AgentPromptLaunchProfileKind.USER,
       providerId = provider.value,
-      launchMode = providerSelector.selectedLaunchMode,
-      launchTargetId = selectedLaunchTargetIdForDraft(provider, providerSelector.selectedLaunchMode),
+      launchMode = launchMode,
+      launchTargetId = selectedProfile?.launchTargetId,
+      surfaceId = selectedProfile?.surfaceId,
       generationSettings = currentSettings,
     )
-  }
-
-  private fun selectedLaunchTargetIdForDraft(
-    provider: AgentSessionProvider,
-    launchMode: AgentSessionLaunchMode,
-  ): String? {
-    val selectedProfile = findProfile(draftSelectedLaunchProfileId) ?: return null
-    if (selectedProfile.providerId != provider.value || selectedProfile.launchMode != launchMode) return null
-    return selectedProfile.launchTargetId
   }
 
   private fun findProfile(profileId: String?): AgentPromptLaunchProfile? {

@@ -7,6 +7,9 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfileKind
+import com.intellij.platform.ai.agent.sessions.core.launch.AGENT_SESSION_SURFACE_ACP
+import com.intellij.platform.ai.agent.sessions.core.launch.effectiveAgentSessionSurfaceId
+import com.intellij.platform.ai.agent.sessions.core.launch.normalizeAgentSessionSurfaceId
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
@@ -24,6 +27,7 @@ data class AgentSessionBuiltInLaunchProfileContribution(
   val provider: AgentSessionProvider,
   @JvmField val launchMode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
   @JvmField val launchTargetId: String? = null,
+  @JvmField val surfaceId: String? = null,
   @JvmField val icon: Icon? = null,
 )
 
@@ -56,6 +60,7 @@ data class AgentSessionResolvedLaunchProfile(
   val provider: AgentSessionProvider,
   @JvmField val launchMode: AgentSessionLaunchMode,
   @JvmField val launchTargetId: String?,
+  @JvmField val surfaceId: String,
   @JvmField val generationSettings: AgentPromptGenerationSettings,
 )
 
@@ -91,6 +96,7 @@ fun resolveAgentSessionLaunchProfile(
       provider = provider,
       launchMode = normalizedProfile.launchMode,
       launchTargetId = normalizedProfile.launchTargetId,
+      surfaceId = effectiveAgentSessionSurfaceId(provider, normalizedProfile.surfaceId),
       generationSettings = descriptor.sanitizeGenerationSettings(normalizedProfile.generationSettings),
     )
   }
@@ -190,6 +196,7 @@ fun buildBuiltInLaunchProfiles(
       providerId = profile.provider.value,
       launchMode = profile.launchMode,
       launchTargetId = profile.launchTargetId,
+      surfaceId = profile.surfaceId,
     )
   }
   return (providerProfiles + contributedProfiles).distinctBy(AgentPromptLaunchProfile::id)
@@ -211,8 +218,12 @@ fun initialMessageRequestForLaunchProfile(@Suppress("UNUSED_PARAMETER") profile:
 
 private fun normalizeLaunchProfileForResolution(profile: AgentPromptLaunchProfile): AgentPromptLaunchProfile {
   val launchTargetId = profile.launchTargetId?.trim()?.takeIf(String::isNotEmpty)
+  val surfaceId = normalizeAgentSessionSurfaceId(profile.surfaceId)
   if (launchTargetId != null) {
-    return if (launchTargetId == profile.launchTargetId) profile else profile.copy(launchTargetId = launchTargetId)
+    return profile.copy(
+      launchTargetId = launchTargetId,
+      surfaceId = surfaceId,
+    )
   }
 
   if (profile.providerId == ACP_PROVIDER_ID) {
@@ -220,10 +231,17 @@ private fun normalizeLaunchProfileForResolution(profile: AgentPromptLaunchProfil
     if (legacyAgentKey != null) {
       return profile.copy(
         launchTargetId = legacyAgentKey,
+        surfaceId = surfaceId ?: AGENT_SESSION_SURFACE_ACP,
         generationSettings = profile.generationSettings.copy(modelId = null),
       )
     }
   }
 
-  return if (profile.launchTargetId == null) profile else profile.copy(launchTargetId = null)
+  if (profile.launchTargetId == null && profile.surfaceId == surfaceId) {
+    return profile
+  }
+  return profile.copy(
+    launchTargetId = null,
+    surfaceId = surfaceId,
+  )
 }

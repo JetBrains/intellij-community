@@ -12,6 +12,7 @@ data class AgentSessionOutOfBandLaunchContext(
   @JvmField val launchMode: AgentSessionLaunchMode,
   @JvmField val launchProfileId: String?,
   @JvmField val launchTargetId: String?,
+  @JvmField val surfaceId: String?,
   @JvmField val generationSettings: AgentPromptGenerationSettings,
 )
 
@@ -20,8 +21,8 @@ data class AgentSessionOutOfBandLaunchContext(
  * runtimes (e.g. ACP): the chat tab renders custom content, and the chosen agent + initial prompt are
  * applied by the implementation instead of being dispatched into a terminal.
  *
- * Looked up by [AgentSessionProvider]; when one handles a provider, the launch service skips terminal
- * dispatch and invokes [launch] once the chat tab has opened (so a real [Project] is available).
+ * Looked up by resolved launch context; when one handles the context, the launch service skips
+ * terminal dispatch and invokes [launch] once the chat tab has opened (so a real [Project] is available).
  */
 interface AgentSessionOutOfBandLaunch {
   fun handles(provider: AgentSessionProvider): Boolean

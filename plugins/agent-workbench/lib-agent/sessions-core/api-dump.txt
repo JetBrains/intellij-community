@@ -242,8 +242,8 @@ f:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionChatOpenPlan
 - equals(java.lang.Object):Z
 - hashCode():I
 f:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionChatOpenPlanKt
-- sf:resolveAgentSessionChatOpenPlan(java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionThread,com.intellij.platform.ai.agent.core.session.AgentSubAgent,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,java.lang.String,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function4,kotlin.coroutines.Continuation):java.lang.Object
-- bs:resolveAgentSessionChatOpenPlan$default(java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionThread,com.intellij.platform.ai.agent.core.session.AgentSubAgent,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,java.lang.String,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function4,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- sf:resolveAgentSessionChatOpenPlan(java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionThread,com.intellij.platform.ai.agent.core.session.AgentSubAgent,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,java.lang.String,java.lang.String,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function4,kotlin.coroutines.Continuation):java.lang.Object
+- bs:resolveAgentSessionChatOpenPlan$default(java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionThread,com.intellij.platform.ai.agent.core.session.AgentSubAgent,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,java.lang.String,java.lang.String,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function4,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchContributor
 - a:contribute-rVRrr4o(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchContributors
@@ -258,7 +258,8 @@ f:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchIntent
 - f:projectDirectory:java.lang.String
 - f:projectPath:java.lang.String
 - f:sessionId:java.lang.String
-- b:<init>(java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchOperation,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,java.lang.String,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:surfaceId:java.lang.String
+- b:<init>(java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchOperation,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,java.lang.String,java.lang.String,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:component1():java.lang.String
 - f:component2():java.lang.String
 - f:component3-dBzBBrw():java.lang.String
@@ -266,9 +267,10 @@ f:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchIntent
 - f:component5():java.lang.String
 - f:component6():com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 - f:component7():java.lang.String
-- f:component8():com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
-- f:copy-ThLM9K8(java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchOperation,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,java.lang.String,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings):com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchIntent
-- bs:copy-ThLM9K8$default(com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchIntent,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchOperation,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,java.lang.String,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchIntent
+- f:component8():java.lang.String
+- f:component9():com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
+- f:copy-PsroLXU(java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchOperation,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,java.lang.String,java.lang.String,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings):com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchIntent
+- bs:copy-PsroLXU$default(com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchIntent,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchOperation,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,java.lang.String,java.lang.String,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchIntent
 - equals(java.lang.Object):Z
 - f:getProvider-dBzBBrw():java.lang.String
 - hashCode():I
@@ -317,13 +319,15 @@ f:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionOutOfBandLaunc
 - f:launchMode:com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 - f:launchProfileId:java.lang.String
 - f:launchTargetId:java.lang.String
+- f:surfaceId:java.lang.String
 - f:component1-dBzBBrw():java.lang.String
 - f:component2():com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 - f:component3():java.lang.String
 - f:component4():java.lang.String
-- f:component5():com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
-- f:copy-fQRq96w(java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,java.lang.String,java.lang.String,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings):com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionOutOfBandLaunchContext
-- bs:copy-fQRq96w$default(com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionOutOfBandLaunchContext,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,java.lang.String,java.lang.String,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionOutOfBandLaunchContext
+- f:component5():java.lang.String
+- f:component6():com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
+- f:copy-1Cw6Ujo(java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,java.lang.String,java.lang.String,java.lang.String,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings):com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionOutOfBandLaunchContext
+- bs:copy-1Cw6Ujo$default(com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionOutOfBandLaunchContext,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,java.lang.String,java.lang.String,java.lang.String,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionOutOfBandLaunchContext
 - equals(java.lang.Object):Z
 - f:getProvider-dBzBBrw():java.lang.String
 - hashCode():I
