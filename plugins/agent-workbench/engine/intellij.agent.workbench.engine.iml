@@ -48,6 +48,6 @@
     <orderEntry type="module" module-name="intellij.platform.ai.agent.core" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core" />
     <orderEntry type="module" module-name="intellij.platform.ai.agent.sessions.core" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.chat" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.thread.view" />
   </component>
 </module>

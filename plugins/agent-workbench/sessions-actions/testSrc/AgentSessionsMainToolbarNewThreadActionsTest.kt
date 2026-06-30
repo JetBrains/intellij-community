@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
+import com.intellij.agent.workbench.thread.view.AgentThreadViewEditorTabActionContext
 import com.intellij.agent.workbench.ui.AgentWorkbenchActionIds
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
@@ -1122,22 +1122,22 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
   }
 
   @Test
-  fun projectMainToolbarContextPrefersSelectedChatSourcePathOverProjectBasePath() {
+  fun projectMainToolbarContextPrefersSelectedThreadViewSourcePathOverProjectBasePath() {
     val project = sourceProjectProxy()
     val event = eventWithProject(project)
 
     val context = resolveAgentSessionsMainToolbarNewThreadContext(
       event = event,
       isDedicatedProject = { false },
-      selectedSourcePath = { "/work/chat-repo" },
+      selectedSourcePath = { "/work/threadView-repo" },
     )
 
     val target = checkNotNull(context).target as AgentSessionsNewThreadTarget.Direct
-    assertThat(target.path).isEqualTo("/work/chat-repo")
+    assertThat(target.path).isEqualTo("/work/threadView-repo")
   }
 
   @Test
-  fun projectMainToolbarContextUsesProjectBasePathWhenNoSelectedChatSourcePathExists() {
+  fun projectMainToolbarContextUsesProjectBasePathWhenNoSelectedThreadViewSourcePathExists() {
     val project = sourceProjectProxy()
     val event = eventWithProject(project)
 
@@ -1152,19 +1152,19 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
   }
 
   @Test
-  fun projectMainToolbarContextPrefersEventChatContextWhenAvailable() {
+  fun projectMainToolbarContextPrefersEventThreadViewContextWhenAvailable() {
     val project = sourceProjectProxy()
     val event = eventWithProject(project)
 
     val context = resolveAgentSessionsMainToolbarNewThreadContext(
       event = event,
       isDedicatedProject = { false },
-      resolveChatContext = { editorContext() },
-      selectedSourcePath = { "/work/selected-chat-repo" },
+      resolveThreadViewContext = { editorContext() },
+      selectedSourcePath = { "/work/selected-threadView-repo" },
     )
 
     val target = checkNotNull(context).target as AgentSessionsNewThreadTarget.Direct
-    assertThat(target.path).isEqualTo("/work/event-chat-repo")
+    assertThat(target.path).isEqualTo("/work/event-threadView-repo")
   }
 
   @Test
@@ -1224,10 +1224,10 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
 
 private const val MANAGE_LAUNCH_PROFILES_TEXT: String = "Manage Launch Profiles…"
 
-private fun editorContext(): AgentChatEditorTabActionContext {
-  val path = "/work/event-chat-repo"
+private fun editorContext(): AgentThreadViewEditorTabActionContext {
+  val path = "/work/event-threadView-repo"
   val normalizedPath = normalizeAgentWorkbenchPath(path)
-  return AgentChatEditorTabActionContext(
+  return AgentThreadViewEditorTabActionContext(
     project = ProjectManager.getInstance().defaultProject,
     path = normalizedPath,
     tabKey = "codex:$normalizedPath:thread-1",
