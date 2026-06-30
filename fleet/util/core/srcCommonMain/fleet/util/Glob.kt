@@ -1,10 +1,19 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util
 
-// copied from org.ec4j.core.model.Glob
-// todo: the implementation is quite incorrect, fix and merge with one from FleetFileSearchProvider. See ignored tests in GlobTest.kt
-fun convertGlobToRegEx(globString: String, ranges: MutableList<IntArray>, result: StringBuilder) {
+// Converts a glob into a regex string. Copied from org.ec4j.core.model.Glob, then generalized to be
+// path-separator aware. This is the shared glob engine behind globToRegex, EditorConfig matching, and
+// buildPathGlobPattern (which only adds relativization, case-insensitivity, and dir-only filtering).
+//
+// [pathSeparator] is the path separator (default '/'). '*' and '?' match within a single segment and do
+// not cross it; only a standalone "**" component crosses separators, matching zero or more segments.
+// '[...]' classes and '{a,b}' / '{n..m}' brace expansions are supported. '\' is the escape character,
+// unless it is itself the separator (Windows), where escaping is disabled. See GlobTest for the cases.
+fun convertGlobToRegEx(globString: String, ranges: MutableList<IntArray>, result: StringBuilder, pathSeparator: Char = '/') {
   val length = globString.length
+  val sep = if (pathSeparator == '/') "/" else Regex.escape(pathSeparator.toString())
+  val notSep = "[^$sep]"
+  val backslashIsEscape = pathSeparator != '\\'
   var i = 0
   var braceLevel = 0
   val matchingBraces = globString.matchingBraces()
@@ -15,17 +24,34 @@ fun convertGlobToRegEx(globString: String, ranges: MutableList<IntArray>, result
     i++
     when {
       current == '*' -> {
-        if (i < length && globString[i] == '*') {
-          result.append(".*")
-          i++
-        }
-        else {
-          result.append("[^/]*")
+        val doubleAsterisk = i < length && globString[i] == '*'
+        val atComponentStart = (i - 1) == 0 || globString[i - 2] == pathSeparator
+        val atComponentEnd = (i + 1) >= length || globString[i + 1] == pathSeparator
+        when {
+          doubleAsterisk && atComponentStart && atComponentEnd -> {
+            // a standalone "**" path component matches across separators
+            if (globString.getOrNull(i + 1) == null || globString.getOrNull(i + 2) == null) {
+              // "**" at the end, or followed only by a trailing separator
+              result.append(".*")
+              i++
+            }
+            else {
+              // "**<sep>" in the middle: match any prefix path ending at a separator, or nothing.
+              // ".*" (not "[^sep]+") so it also crosses a leading separator on absolute paths (see FSD excludes).
+              result.append("(?:.*$sep)?")
+              i += 2
+            }
+          }
+          (i - 1) == 0 || globString[i - 2] != '*' -> {
+            // a single '*' (or the first '*' of a non-standalone "**") does not cross separators
+            result.append("$notSep*")
+          }
+          // a subsequent '*' of a non-standalone "**" run is collapsed into the previous "[^sep]*"
         }
       }
-      current == '?' -> result.append(".")
+      current == '?' -> result.append(notSep)
       current == '[' -> {
-        val seenSlash = findChar('/', ']', globString, length, i) >= 0
+        val seenSlash = findChar(pathSeparator, ']', globString, length, i) >= 0
         if (seenSlash || escaped) {
           result.append("\\[")
         }
@@ -70,20 +96,8 @@ fun convertGlobToRegEx(globString: String, ranges: MutableList<IntArray>, result
         }
       }
       current == ',' -> result.append(if (braceLevel > 0 && !escaped) "|" else ",")
-      current == '/' -> {
-        if (i < length && globString[i] == '*') {
-          if (i + 1 < length && globString[i + 1] == '*' && i + 2 < length && globString[i + 2] == '/') {
-            result.append("(?:/|/.*/)")
-            i += 3
-          }
-          else {
-            result.append(current)
-          }
-        }
-        else {
-          result.append(current)
-        }
-      }
+      // the separator is appended as-is; "**" handling (above) absorbs a trailing separator
+      current == pathSeparator -> result.append(sep)
       current == '}' -> {
         if (braceLevel > 0 && !escaped) {
           result.append(")")
@@ -96,7 +110,7 @@ fun convertGlobToRegEx(globString: String, ranges: MutableList<IntArray>, result
       current != '\\' -> result.escapeToRegex(current)
     }
 
-    if (current == '\\') {
+    if (backslashIsEscape && current == '\\') {
       if (escaped) result.append("\\\\")
       escaped = !escaped
     }
