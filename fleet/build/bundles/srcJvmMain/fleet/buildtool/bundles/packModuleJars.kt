@@ -4,7 +4,6 @@ import fleet.buildtool.codecache.ModulePacker
 import fleet.buildtool.codecache.ModuleToPack
 import fleet.buildtool.codecache.specs.NativeLibraryExtractor
 import fleet.buildtool.codecache.specs.MoveFileSpec
-import fleet.buildtool.codecache.specs.ShadowedJarSpec
 import fleet.bundles.LayerSelector
 import org.slf4j.Logger
 import java.nio.file.Path
@@ -22,7 +21,7 @@ fun Map<LayerSelector, Collection<Path>>.packModuleJars(
     nativeLibraryExtractor = NativeLibraryExtractor.Noop,
     version = null,
     logger = logger,
-    shadowedJarSpecs = listOf(licenseClientShadowedJarSpec),
+    shadowedJarSpecs = listOf(),
     moveFileSpecs = listOf(FleetPluginResourceMoveSpec)
   )
 
@@ -44,13 +43,6 @@ fun packModule(
     })
   return packedModule.jarFiles.map { it.path }
 }
-
-private val licenseClientShadowedJarSpec = ShadowedJarSpec(
-  allowedConsumerModule = "SHIP.common",
-  consumerJarPattern = Regex("fleet\\.common.*\\.jar"),
-  shadowedJarPattern = Regex("ls\\.client\\.api\\.jar"),
-  jpmsModuleName = "ls.client.api",
-)
 
 internal object FleetPluginResourceMoveSpec: MoveFileSpec {
   override val source: String = FLEET_KERNEL_PLUGIN_SERVICE
