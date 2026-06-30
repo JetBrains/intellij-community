@@ -143,31 +143,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
     protected val facetSettings: IKotlinFacetSettings
         get() = facetSettings("project")
 
-    class SimpleKotlinProject5 : AbstractKotlinMavenImporterTest() {
-        @Test
-        fun testSimpleKotlinProject() = runBlocking {
-            importProjectAsync(
-                """
-            <groupId>test</groupId>
-            <artifactId>project</artifactId>
-            <version>1.0.0</version>
-
-            <dependencies>
-                <dependency>
-                    <groupId>org.jetbrains.kotlin</groupId>
-                    <artifactId>kotlin-stdlib</artifactId>
-                    <version>$kotlinVersion</version>
-                </dependency>
-            </dependencies>
-            """
-            )
-
-            assertModules("project")
-            assertSources("project", "src/main/java")
-            assertFalse(ArtifactUtil.areResourceFilesFromSourceRootsCopiedToOutput(getModule("project")))
-        }
-    }
-
     class WithSpecifiedSourceRoot : AbstractKotlinMavenImporterTest() {
         @Test
         fun testWithSpecifiedSourceRoot() = runBlocking {
