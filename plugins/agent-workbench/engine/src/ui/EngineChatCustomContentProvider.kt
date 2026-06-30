@@ -6,7 +6,7 @@ import com.intellij.agent.workbench.chat.AgentChatContentContext
 import com.intellij.platform.ai.agent.core.parseAgentThreadIdentity
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.engine.core.ThreadId
-import com.intellij.platform.ai.agent.sessions.core.launch.AGENT_SESSION_SURFACE_ACP
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionSurfaces
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import javax.swing.JComponent
@@ -20,7 +20,7 @@ internal class EngineChatCustomContentProvider : AgentChatCustomContentProvider 
     get() = ACP_PROVIDER
 
   override fun handles(context: AgentChatContentContext): Boolean {
-    return context.provider == provider && context.surfaceId == AGENT_SESSION_SURFACE_ACP
+    return context.provider == provider && context.surfaceId == AgentSessionSurfaces.ACP
   }
 
   override fun createComponent(

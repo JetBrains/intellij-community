@@ -13,6 +13,8 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceEntry
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionSurfaceId
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionSurfaces
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
@@ -297,6 +299,12 @@ interface AgentSessionProviderImplementation {
 
   val supportedLaunchModes: Set<AgentSessionLaunchMode>
     get() = setOf(AgentSessionLaunchMode.STANDARD)
+
+  val defaultLaunchSurface: AgentSessionSurfaceId
+    get() = AgentSessionSurfaces.TERMINAL
+
+  val supportedLaunchSurfaces: Set<AgentSessionSurfaceId>
+    get() = setOf(defaultLaunchSurface)
 
   val supportsPromptTabQueueShortcut: Boolean
     get() = false

@@ -28,7 +28,7 @@ data class AgentSessionLaunchIntent(
   @JvmField val sessionId: String? = null,
   @JvmField val launchMode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
   @JvmField val launchTargetId: String? = null,
-  @JvmField val surfaceId: String? = null,
+  val surfaceId: AgentSessionSurfaceId? = null,
   @JvmField val generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
 )
 
@@ -58,6 +58,8 @@ object AgentSessionLaunchPlanner {
       baseLaunchSpec
     }
     val sanitizedIntent = intent.copy(
+      surfaceId = descriptor?.let { providerDescriptor -> effectiveAgentSessionSurfaceId(providerDescriptor, intent.surfaceId) }
+                  ?: intent.surfaceId,
       generationSettings = descriptor?.sanitizeGenerationSettings(intent.generationSettings) ?: AgentPromptGenerationSettings.AUTO,
     )
     val generationLaunchSpec = descriptor?.applyGenerationSettings(

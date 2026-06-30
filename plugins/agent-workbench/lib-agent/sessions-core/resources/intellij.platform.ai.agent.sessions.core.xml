@@ -35,6 +35,10 @@
       interface="com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionLaunchProfileContributor"
       dynamic="true"/>
     <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.sessionSurfaceContributor"
+      interface="com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionSurfaceContributor"
+      dynamic="true"/>
+    <extensionPoint
       qualifiedName="com.intellij.agent.workbench.mcpStreamUrlProvider"
       interface="com.intellij.platform.ai.agent.sessions.core.launch.McpStreamUrlProvider"
       dynamic="true"/>

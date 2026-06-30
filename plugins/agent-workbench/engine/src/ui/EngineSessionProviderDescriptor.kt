@@ -4,6 +4,8 @@ package com.intellij.agent.workbench.engine.ui
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionSurfaceId
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionSurfaces
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
@@ -49,6 +51,12 @@ internal class EngineSessionProviderDescriptor(
   override val supportsGenerationModelSelection: Boolean
     get() = false
 
+  override val defaultLaunchSurface: AgentSessionSurfaceId
+    get() = AgentSessionSurfaces.ACP
+
+  override val supportedLaunchSurfaces: Set<AgentSessionSurfaceId>
+    get() = setOf(AgentSessionSurfaces.ACP)
+
   override val resolvesGenerationModelCatalogForAutoSettings: Boolean
     get() = false
 
@@ -58,7 +66,7 @@ internal class EngineSessionProviderDescriptor(
     AgentSessionTerminalLaunchSpec(command = emptyList(), useTerminalDefaultShell = true)
 
   override suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec =
-    // Preallocate the concrete Engine thread id so the chat tab opens with it and the out-of-band ACP
+  // Preallocate the concrete Engine thread id so the chat tab opens with it and the out-of-band ACP
     // launcher can prepare/send against the same id. No terminal: the tab renders custom content.
     AgentSessionTerminalLaunchSpec(
       command = emptyList(),

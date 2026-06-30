@@ -13,6 +13,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadRebindPolicy
 import com.intellij.platform.ai.agent.sessions.core.launch.AGENT_SESSION_SURFACE_ACP
 import com.intellij.platform.ai.agent.sessions.core.launch.AGENT_SESSION_SURFACE_TERMINAL
+import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionSurfaces
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageMode
@@ -473,7 +474,7 @@ class AgentChatFileEditorLifecycleTest {
     )
     editor.refreshForFileStateChange()
 
-    assertThat(resolvedContexts.single().surfaceId).isEqualTo(AGENT_SESSION_SURFACE_TERMINAL)
+    assertThat(resolvedContexts.single().surfaceId).isEqualTo(AgentSessionSurfaces.TERMINAL)
     assertThat(createdThreadIds).containsExactly("new-thread")
     assertThat(editor.component.components).containsExactly(customContent)
     assertThat(file.deferredStartState).isNull()
@@ -539,7 +540,7 @@ class AgentChatFileEditorLifecycleTest {
       override val provider: AgentSessionProvider = provider
 
       override fun handles(context: AgentChatContentContext): Boolean {
-        return context.provider == provider && context.surfaceId == AGENT_SESSION_SURFACE_ACP
+        return context.provider == provider && context.surfaceId == AgentSessionSurfaces.ACP
       }
 
       override fun createComponent(project: Project, threadIdentity: String, threadId: String, parent: Disposable): JComponent {
