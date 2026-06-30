@@ -1569,4 +1569,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.platform.jewel.markdown.core.tests",
   "intellij.platform.jewel.markdown.extensions.autolink.tests",
   "intellij.platform.jewel.markdown.extensions.gfmAlerts.tests",
+  "intellij.platform.jewel.markdown.extensions.gfmTables.tests",
 )
