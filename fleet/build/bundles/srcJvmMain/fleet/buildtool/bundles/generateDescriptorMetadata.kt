@@ -2,6 +2,7 @@ package fleet.buildtool.bundles
 
 import fleet.buildtool.codecache.HashedJar
 import fleet.buildtool.codecache.findModuleDescriptor
+import fleet.buildtool.codecache.serialize
 import fleet.bundles.Coordinates
 import fleet.bundles.CoordinatesPlatform
 import fleet.bundles.KnownCoordinatesMeta
@@ -20,6 +21,7 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
 import org.slf4j.Logger
+import java.lang.module.ModuleDescriptor
 import java.nio.file.Path
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
@@ -123,13 +125,36 @@ private fun generatePluginParts(
     file.copyTo(resourcesUsedInDescriptor.resolve(file.name), overwrite = false)
   }
 
-  layerSelector to PluginLayer(modulePath = moduleJars.mapNotNull { it.toCoordinates(pluginName, pluginVersion, marketplaceUrl, it.name) }
-    .toSet(), modules = moduleJars.filter { jar ->
-    moduleIsRelevantToFleetRuntime(jar)
-  }.map { jar ->
-    findModuleDescriptor(jar).name()
-  }.toSet(), resources = resourcesCoordinates)
+  val analyzedModuleJars = moduleJars.mapNotNull { jar ->
+    when {
+      jar.exists() -> AnalyzedModuleJar(jar = jar, hash = CodeCacheHasher().hash(jar), descriptor = findModuleDescriptor(jar))
+      else -> null
+    }
+  }
+
+  layerSelector to PluginLayer(
+    modulePath = analyzedModuleJars.map { it.toModuleCoordinates(pluginName, pluginVersion, marketplaceUrl) }.toSet(),
+    modules = analyzedModuleJars.filter { it.isRelevantToFleetRuntime() }.map { it.descriptor.name() }.toSet(),
+    resources = resourcesCoordinates,
+  )
 }.toMap()).eliminateIntersections()
+
+private class AnalyzedModuleJar(
+  val jar: Path,
+  val hash: String,
+  val descriptor: ModuleDescriptor,
+)
+
+private fun AnalyzedModuleJar.toModuleCoordinates(
+  pluginName: PluginName,
+  pluginVersion: PluginVersion,
+  marketplaceUrl: String,
+): ModuleCoordinates {
+  val targetJdkVersionFeature = 21
+  val fileUrl = resourceUrl(marketplaceUrl, pluginName, pluginVersion, jar.name)
+  val coord = Coordinates.Remote(url = fileUrl, hash = hash, meta = emptyMap())
+  return ModuleCoordinates(coordinates = coord, serializedModuleDescriptor = descriptor.serialize(targetJdkVersionFeature))
+}
 
 private const val entityDescriptorFileHeuristic: String = "entityTypes.txt"
 
@@ -171,11 +196,10 @@ private fun Path.toCoordinates(
  *  2. for RhizomeDB entity registration reasons
  *  3. for documentation reasons
  */
-private fun moduleIsRelevantToFleetRuntime(jar: Path): Boolean {
+private fun AnalyzedModuleJar.isRelevantToFleetRuntime(): Boolean {
   fun ZipEntry.isDocumentationEntry(): Boolean = !isDirectory && name.endsWith(JSON_DOCUMENTATION_FILENAME_EXTENSION)
   fun ZipEntry.isRhizomeEntry(): Boolean = !isDirectory && name == entityDescriptorFileHeuristic
 
-  val descriptor = findModuleDescriptor(jar)
   return when { // modules that the Fleet runtime have interest upon, which are:
     descriptor.provides().any { it.service() == FLEET_KERNEL_PLUGIN_SERVICE } -> true // modules that provides fleet.kernel.plugins.Plugin
     ZipFile(jar.toFile()).use { zip ->
