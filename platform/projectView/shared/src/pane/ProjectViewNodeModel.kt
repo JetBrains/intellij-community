@@ -7,7 +7,7 @@ import com.intellij.ui.treeStructure.TreeNodePresentationBuilder
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-suspend fun <T> buildProjectViewNodeModel(id: Long, userObject: T, build: suspend (ProjectViewNodeModelBuilder) -> Unit): ProjectViewNodeModel {
+fun <T> buildProjectViewNodeModel(id: Long, userObject: T, build: (ProjectViewNodeModelBuilder) -> Unit): BackendProjectViewNodeModel<T> {
   val builder = ProjectViewNodeModelBuilderImpl(id, userObject)
   build(builder)
   return builder.build()

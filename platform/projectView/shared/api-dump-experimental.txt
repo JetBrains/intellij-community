@@ -15,7 +15,7 @@
 - a:setIncludedInExpandAll(Z):V
 - a:setIsDirectory(Z):V
 *f:com.intellij.platform.projectView.pane.ProjectViewNodeModelKt
-- *sf:buildProjectViewNodeModel(J,java.lang.Object,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- *sf:buildProjectViewNodeModel(J,java.lang.Object,kotlin.jvm.functions.Function1):com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
 *:com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 *:com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder
 - a:addSelectInTarget(java.lang.String,java.lang.String,F):V

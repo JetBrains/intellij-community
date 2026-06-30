@@ -474,11 +474,11 @@ private class AbstractProjectViewPaneStateManager(
   }
 
   private suspend fun createNodeModel(id: Long, node: Any): ProjectViewNodeModel {
-    return buildProjectViewNodeModel(id, node) { nodeBuilder ->
-      nodeBuilder.buildPresentation { presentationBuilder ->
-        buildNodePresentation(node, presentationBuilder)
-      }
-      readAction {
+    return readAction {
+      buildProjectViewNodeModel(id, node) { nodeBuilder ->
+        nodeBuilder.buildPresentation { presentationBuilder ->
+          buildNodePresentation(node, presentationBuilder)
+        }
         nodeBuilder.setCanNavigate(canNavigate(node))
         nodeBuilder.setCanNavigateToSource(canNavigateToSource(node))
         nodeBuilder.setIncludedInExpandAll(isIncludedInExpandAll(node))
