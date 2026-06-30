@@ -5,28 +5,16 @@ import com.intellij.application.options.CodeStyle
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder
-import com.intellij.jarRepository.JarRepositoryManager
-import com.intellij.jarRepository.RepositoryLibraryType
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.platform.backend.observation.launchTracked
-import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.backend.workspace.toVirtualFileUrl
-import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.workspace.jps.entities.LibraryEntityBuilder
-import com.intellij.platform.workspace.jps.entities.LibraryId
-import com.intellij.platform.workspace.jps.entities.LibraryRoot
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl.Companion.toLibraryRootType
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -39,11 +27,11 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.configuration.KotlinWithLibraryConfigurator.Companion.downloadAndConfigureKotlinStdlib
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.formatter.kotlinCodeStyleDefaults
 import org.jetbrains.kotlin.idea.projectConfiguration.JavaRuntimeLibraryDescription
-import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
 import org.jetbrains.kotlin.utils.PathUtil
 import java.io.File
 
@@ -132,9 +120,8 @@ internal class KotlinModuleBuilder(
         val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
         val libraryName = JavaRuntimeLibraryDescription.LIBRARY_NAME
         val kotlinJavaRuntime =
-            projectLibraryTable.getLibraryByName(libraryName) ?: projectLibraryTable.createLibrary(libraryName)
-        val libraryId: LibraryId = (kotlinJavaRuntime as? LibraryBridge)?.libraryId
-            ?: error("unable to obtain libraryId for '$libraryName'")
+            (projectLibraryTable.getLibraryByName(libraryName) ?: projectLibraryTable.createLibrary(libraryName)) as? LibraryEx
+                ?: error("unable to obtain libraryId for '$libraryName'")
 
         val repositoryProperties = RepositoryLibraryProperties(
             /* groupId = */ KotlinArtifactConstants.KOTLIN_MAVEN_GROUP_ID,
@@ -144,46 +131,12 @@ internal class KotlinModuleBuilder(
             /* excludedDependencies = */ emptyList()
         )
 
-        coroutineScope.launchTracked {
-            val dependencies =
-                withBackgroundProgress(
-                    project,
-                    KotlinNewProjectWizardUIBundle.message("progress.title.loading.kotlin.stdlib.library.0", repositoryProperties.version),
-                    cancellable = false
-                ) {
-                    JarRepositoryManager.loadDependenciesModal(
-                        /* project = */ project,
-                        /* libraryProps = */ repositoryProperties,
-                        /* loadSources = */ true,
-                        /* loadJavadoc = */ true,
-                        /* copyTo = */ null,
-                        /* repositories = */ null
-                    )
-                }
-
-            val workspaceModel = WorkspaceModel.getInstance(project)
-            val virtualFileUrlManager = workspaceModel.getVirtualFileUrlManager()
-            val libraryRoots = dependencies.map {
-                LibraryRoot(
-                    it.file.toVirtualFileUrl(virtualFileUrlManager),
-                    it.type.toLibraryRootType()
-                )
-            }
-
-            edtWriteAction {
-                workspaceModel.updateProjectModel("update roots of '$libraryName'") { storage: MutableEntityStorage ->
-                    val libraryEntity = libraryId.resolve(storage) ?: return@updateProjectModel
-                    storage.modifyEntity(LibraryEntityBuilder::class.java, libraryEntity) {
-                        this.roots.addAll(0, libraryRoots)
-                    }
-                }
-            }
-        }
-
-        kotlinJavaRuntime.modifiableModel.apply {
-            kind = RepositoryLibraryType.REPOSITORY_LIBRARY_KIND
-            properties = repositoryProperties
-        }.commit()
+        coroutineScope.downloadAndConfigureKotlinStdlib(
+            project,
+            kotlinJavaRuntime,
+            libraryName,
+            repositoryProperties
+        )
 
         return rootModel.addLibraryEntry(kotlinJavaRuntime)
     }

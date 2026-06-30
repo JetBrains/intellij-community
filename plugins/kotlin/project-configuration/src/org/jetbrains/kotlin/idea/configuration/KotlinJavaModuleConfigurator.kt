@@ -12,6 +12,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -29,7 +30,7 @@ import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
-open class KotlinJavaModuleConfigurator : KotlinWithLibraryConfigurator<RepositoryLibraryProperties>() {
+open class KotlinJavaModuleConfigurator(coroutineScope: CoroutineScope) : KotlinWithLibraryConfigurator<RepositoryLibraryProperties>(coroutineScope) {
     override fun isApplicable(module: Module): Boolean {
         return super.isApplicable(module) && !hasBrokenJsRuntime(module)
     }

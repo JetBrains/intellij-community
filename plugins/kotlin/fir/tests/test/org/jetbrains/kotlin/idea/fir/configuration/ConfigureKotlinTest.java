@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiRequiresStatement;
 import kotlin.KotlinVersion;
+import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments;
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments;
@@ -58,6 +59,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
+import static com.intellij.testFramework.EdtTestUtilKt.runInEdtAndGet;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.jetbrains.kotlin.idea.configuration.AddRequiresDirectiveFacilityKt.KOTLIN_STDLIB_MODULE_NAME;
@@ -324,7 +326,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
         Sdk moduleSdk = ModuleRootManager.getInstance(getModule()).getSdk();
         assertNotNull("Module SDK is not defined", moduleSdk);
 
-        PsiJavaModule javaModule = JavaIndicesUtils.findModuleInfoFile(myProject, module.getModuleScope());
+        PsiJavaModule javaModule = runInEdtAndGet(() -> JavaIndicesUtils.findModuleInfoFile(myProject, module.getModuleScope()));
         assertNotNull(javaModule);
 
         PsiRequiresStatement stdlibDirective = JavaPsiUtils.findRequireDirective(javaModule, KOTLIN_STDLIB_MODULE_NAME);
@@ -348,7 +350,13 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
             assertEquals(jvmTarget.getDescription(),
                          ((K2JVMCompilerArguments) facet.getConfiguration().getSettings().getCompilerArguments()).getJvmTarget());
         } finally {
-            modelsProvider.dispose();
+            runInEdtAndGet(new Function0<Void>() {
+                @Override
+                public Void invoke() {
+                    modelsProvider.dispose();
+                    return null;
+                }
+            });
         }
     }
 

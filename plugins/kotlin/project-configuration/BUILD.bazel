@@ -75,6 +75,7 @@ jvm_library(
         "//platform/backend/observation",
         "//platform/util/concurrency",
         "//platform/statistics",
+        "//jps/model-serialization",
     ],
 )
 
@@ -140,6 +141,7 @@ jvm_library(
         "//platform/backend/observation:observation_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
         "//platform/statistics:statistics_test_lib",
+        "//jps/model-serialization:model-serialization_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.projectConfiguration` end

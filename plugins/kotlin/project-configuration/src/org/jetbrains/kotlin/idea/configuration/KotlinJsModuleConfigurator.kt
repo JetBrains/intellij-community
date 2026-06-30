@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.DummyLibraryProperties
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryType
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptStdlibDetectorFacility
 import org.jetbrains.kotlin.idea.base.platforms.StdlibDetectorFacility
@@ -20,7 +21,7 @@ import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 
-open class KotlinJsModuleConfigurator : KotlinWithLibraryConfigurator<DummyLibraryProperties>() {
+open class KotlinJsModuleConfigurator(coroutineScope: CoroutineScope) : KotlinWithLibraryConfigurator<DummyLibraryProperties>(coroutineScope) {
     override val name: String
         get() = NAME
 
