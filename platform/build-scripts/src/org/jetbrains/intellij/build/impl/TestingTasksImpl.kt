@@ -1591,4 +1591,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.platform.ml.impl.tests",
   "intellij.platform.pluginGraph.tests",
   "intellij.platform.pluginSystem.parser.impl.tests",
+  "intellij.platform.polySymbols.tests",
 )
