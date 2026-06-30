@@ -166,6 +166,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
   private static final Logger LOG = Logger.getInstance(BuildTreeConsoleView.class);
   @ApiStatus.Internal
   public static final DataKey<BuildTreeConsoleView> COMPONENT_KEY = DataKey.create("BuildTreeConsoleView");
+  public static final DataKey<ExecutionNode> EXECUTION_NODE = DataKey.create("ExecutionNode");
 
   private static final @NonNls String TREE = "tree";
   @ApiStatus.Internal

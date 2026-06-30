@@ -4,6 +4,7 @@ package com.intellij.platform.buildView
 import com.intellij.build.BackendMultipleBuildsView
 import com.intellij.build.BuildId
 import com.intellij.build.BuildTreeConsoleView
+import com.intellij.build.BuildViewId
 import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
 import com.intellij.ide.CustomDataContextSerializer
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object BuildDataKeys {
   val BUILD_ID: DataKey<BuildId> = DataKey.create("BuildId")
+  val BUILD_VIEW_ID: DataKey<BuildViewId> = DataKey.create("BuildViewId")
 }
 
 internal abstract class CwmTailoredActionGroup : ActionGroup(), ActionRemoteBehaviorSpecification {
@@ -55,4 +57,9 @@ internal class BuildViewToolbarActionGroup : CwmTailoredActionGroup() {
 internal class BuildIdDataContextSerializer : CustomDataContextSerializer<BuildId> {
   override val key: DataKey<BuildId> = BuildDataKeys.BUILD_ID
   override val serializer: KSerializer<BuildId> = BuildId.serializer()
+}
+
+internal class BuildViewIdDataContextSerializer : CustomDataContextSerializer<BuildViewId> {
+  override val key: DataKey<BuildViewId> = BuildDataKeys.BUILD_VIEW_ID
+  override val serializer: KSerializer<BuildViewId> = BuildViewId.serializer()
 }

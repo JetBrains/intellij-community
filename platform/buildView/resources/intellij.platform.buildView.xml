@@ -21,6 +21,7 @@
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <remote.customDataContextSerializer implementation="com.intellij.platform.buildView.BuildIdDataContextSerializer"/>
+    <remote.customDataContextSerializer implementation="com.intellij.platform.buildView.BuildViewIdDataContextSerializer"/>
     <uiDataRule implementation="com.intellij.platform.buildView.BuildViewDataRule"/>
   </extensions>
 </idea-plugin>

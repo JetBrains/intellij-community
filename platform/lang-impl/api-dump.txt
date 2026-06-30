@@ -220,6 +220,7 @@ f:com.intellij.build.BuildTreeConsoleView
 - com.intellij.execution.ui.ConsoleView
 - com.intellij.ide.OccurenceNavigator
 - com.intellij.openapi.actionSystem.UiDataProvider
+- sf:EXECUTION_NODE:com.intellij.openapi.actionSystem.DataKey
 - attachToProcess(com.intellij.execution.process.ProcessHandler):V
 - getComponent():javax.swing.JComponent
 - getPreferredFocusableComponent():javax.swing.JComponent
