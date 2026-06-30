@@ -16,6 +16,8 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadActivityUpdate
 import com.intellij.platform.ai.agent.sessions.core.providers.toAgentSessionRefreshThreadSeeds
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
@@ -499,7 +501,10 @@ class ClaudeSessionSourceTest {
       backend = outlineBackend(outline),
       calculateCost = { AgentSessionCost(amountUsd = null, kind = AgentSessionCostKind.UNAVAILABLE) },
       executableResolver = { "claude-test" },
-      hookSettingsProvider = { sessionId -> "settings-$sessionId.json" },
+      hookSettingsProvider = { sessionId ->
+        assertThat(ApplicationManager.getApplication().isDispatchThread).isFalse()
+        "settings-$sessionId.json"
+      },
     )
 
     assertThat(source.canForkThreadFromOutlineItem(
@@ -510,7 +515,7 @@ class ClaudeSessionSourceTest {
       tabKey = "tab-1",
     )).isFalse()
 
-    val forkResult = runBlocking(Dispatchers.Default) {
+    val forkResult = runBlocking(Dispatchers.EDT) {
       assertThat(source.loadThreadOutline(path = "/any", threadId = "source-session", subAgentId = null)).isEqualTo(outline)
       assertThat(source.canForkThreadFromOutlineItem(
         path = "/any",

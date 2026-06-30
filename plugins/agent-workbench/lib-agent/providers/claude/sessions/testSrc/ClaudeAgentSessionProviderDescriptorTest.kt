@@ -18,6 +18,8 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessag
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPromptCommandCompletionKind
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
@@ -113,6 +115,26 @@ class ClaudeAgentSessionProviderDescriptorTest {
 
     assertThat(launchSpec.command)
       .containsExactly("claude", "--session-id", sessionId, "--settings", TEST_CLAUDE_HOOK_SETTINGS_ARGUMENT)
+  }
+
+  @Test
+  fun buildLaunchSpecsResolveHookSettingsOffEdt(): Unit = runBlocking(Dispatchers.EDT) {
+    val descriptor = ClaudeAgentSessionProviderDescriptor(
+      executableResolver = { ClaudeCliSupport.CLAUDE_COMMAND },
+      hookSettingsProvider = { sessionId ->
+        assertThat(ApplicationManager.getApplication().isDispatchThread).isFalse()
+        "settings-$sessionId.json"
+      },
+    )
+
+    val newLaunchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+    val newSessionId = assertValidUuid(newLaunchSpec.preallocatedSessionId)
+    assertThat(newLaunchSpec.command)
+      .containsExactly("claude", "--session-id", newSessionId, "--settings", "settings-$newSessionId.json")
+
+    val resumeLaunchSpec = descriptor.buildResumeLaunchSpec("session-1")
+    assertThat(resumeLaunchSpec.command)
+      .containsExactly("claude", "--resume", "session-1", "--settings", "settings-session-1.json")
   }
 
   @Test

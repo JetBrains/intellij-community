@@ -11,6 +11,8 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProvid
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.cancellation.CancellationException
 
 private val LOG = logger<AgentSessionLaunchPlanner>()
@@ -48,6 +50,28 @@ object AgentSessionLaunchPlanner {
     extraEnvVariables: Map<String, String> = emptyMap(),
     extraCommandArgs: List<String> = emptyList(),
     resumeLaunchSpecProvider: (suspend (AgentSessionProvider, String, AgentSessionLaunchMode) -> AgentSessionTerminalLaunchSpec)? = null,
+  ): AgentSessionPlannedLaunch {
+    return withContext(Dispatchers.Default) {
+      planInBackground(
+        intent = intent,
+        project = project,
+        initialMessagePlan = initialMessagePlan,
+        generationModelCatalog = generationModelCatalog,
+        extraEnvVariables = extraEnvVariables,
+        extraCommandArgs = extraCommandArgs,
+        resumeLaunchSpecProvider = resumeLaunchSpecProvider,
+      )
+    }
+  }
+
+  private suspend fun planInBackground(
+    intent: AgentSessionLaunchIntent,
+    project: Project?,
+    initialMessagePlan: AgentInitialMessagePlan,
+    generationModelCatalog: List<AgentPromptGenerationModel>,
+    extraEnvVariables: Map<String, String>,
+    extraCommandArgs: List<String>,
+    resumeLaunchSpecProvider: (suspend (AgentSessionProvider, String, AgentSessionLaunchMode) -> AgentSessionTerminalLaunchSpec)?,
   ): AgentSessionPlannedLaunch {
     val descriptor = AgentSessionProviders.find(intent.provider)
     val baseLaunchSpec = buildBaseLaunchSpec(intent, descriptor, resumeLaunchSpecProvider)

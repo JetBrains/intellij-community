@@ -22,6 +22,8 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentThreadRenameA
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import tools.jackson.core.json.JsonFactory
 import java.io.StringWriter
 import java.util.UUID
@@ -206,20 +208,31 @@ internal class PiAgentSessionProviderDescriptor(
       command.add(PI_EXTENSION_FLAG)
       command.add(resources.extensionPath.toString())
       envVariables[PI_THEME_STATE_ENVIRONMENT_VARIABLE] = resources.stateFilePath.toString()
-      envVariables.putAll(statusLaunchEnvironmentResolver(sessionId))
+      envVariables.putAll(resolveStatusLaunchEnvironment(sessionId))
     }
     command.add(sessionFlag)
     command.add(sessionId)
     return AgentSessionTerminalLaunchSpec(command = command, envVariables = envVariables)
   }
 
-  private fun resolveExtensionLaunchResources(): PiExtensionLaunchResources? {
+  private suspend fun resolveExtensionLaunchResources(): PiExtensionLaunchResources? {
     return try {
-      extensionLaunchResourcesResolver()
+      withContext(Dispatchers.IO) {
+        extensionLaunchResourcesResolver()
+      }
+    }
+    catch (e: CancellationException) {
+      throw e
     }
     catch (e: Exception) {
       LOG.warn("Failed to resolve Pi extension", e)
       null
+    }
+  }
+
+  private suspend fun resolveStatusLaunchEnvironment(sessionId: String): Map<String, String> {
+    return withContext(Dispatchers.IO) {
+      statusLaunchEnvironmentResolver(sessionId)
     }
   }
 

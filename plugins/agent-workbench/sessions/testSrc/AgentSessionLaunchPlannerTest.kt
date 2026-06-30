@@ -12,6 +12,8 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessag
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.platform.ai.agent.sessions.core.providers.InMemoryAgentSessionProviderRegistry
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
@@ -71,6 +73,34 @@ class AgentSessionLaunchPlannerTest {
     val plannedLaunch = planWithProvider(descriptor)
 
     assertThat(plannedLaunch.generationModelCatalog).isEmpty()
+    assertThat(plannedLaunch.launchSpec.command).containsExactly("test", "new", "STANDARD")
+  }
+
+  @Test
+  fun plannerBuildsProviderLaunchSpecOffEdt() {
+    val descriptor = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.from("codex"),
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+      newSessionLaunchSpecProvider = { mode ->
+        assertThat(ApplicationManager.getApplication().isDispatchThread).isFalse()
+        AgentSessionTerminalLaunchSpec(command = listOf("test", "new", mode.name))
+      },
+    )
+
+    val plannedLaunch = AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+      runBlocking(Dispatchers.EDT) {
+        AgentSessionLaunchPlanner.plan(
+          intent = AgentSessionLaunchIntent(
+            projectPath = "/tmp/project",
+            provider = AgentSessionProvider.from("codex"),
+            operation = AgentSessionLaunchOperation.NEW,
+          ),
+          initialMessagePlan = AgentInitialMessagePlan.EMPTY,
+        )
+      }
+    }
+
     assertThat(plannedLaunch.launchSpec.command).containsExactly("test", "new", "STANDARD")
   }
 
