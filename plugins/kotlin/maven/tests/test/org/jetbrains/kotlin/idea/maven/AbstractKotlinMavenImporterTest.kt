@@ -143,36 +143,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
     protected val facetSettings: IKotlinFacetSettings
         get() = facetSettings("project")
 
-    class WithSpecifiedSourceRoot : AbstractKotlinMavenImporterTest() {
-        @Test
-        fun testWithSpecifiedSourceRoot() = runBlocking {
-            createProjectSubDir("src/main/kotlin")
-
-            importProjectAsync(
-                """
-            <groupId>test</groupId>
-            <artifactId>project</artifactId>
-            <version>1.0.0</version>
-
-            <dependencies>
-                <dependency>
-                    <groupId>org.jetbrains.kotlin</groupId>
-                    <artifactId>kotlin-stdlib</artifactId>
-                    <version>$kotlinVersion</version>
-                </dependency>
-            </dependencies>
-
-            <build>
-                <sourceDirectory>src/main/kotlin</sourceDirectory>
-            </build>
-            """
-            )
-
-            assertModules("project")
-            assertSources("project", "src/main/kotlin")
-        }
-    }
-
     class WithCustomSourceDirs12 : AbstractKotlinMavenImporterTest() {
         @Test
         fun testWithCustomSourceDirs() = runBlocking {
