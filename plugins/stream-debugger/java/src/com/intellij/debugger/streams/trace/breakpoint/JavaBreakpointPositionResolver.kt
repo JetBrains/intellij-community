@@ -7,11 +7,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.JavaRecursiveElementVisitor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiMethodCallExpression
-import com.intellij.psi.PsiStatement
-import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.PsiUtilCore
 
 internal class JavaBreakpointPositionResolver : BreakpointPositionResolver {
   /**
@@ -103,7 +101,7 @@ internal class JavaBreakpointPositionResolver : BreakpointPositionResolver {
   }
 
   private fun findPsiMethodCall(psiFile: PsiFile, position: TextRange): PsiMethodCallExpression? {
-    val elementAt = psiFile.findElementAt(position.endOffset - 1) ?: return null
+    val elementAt = PsiUtilCore.getElementAtOffset(psiFile, position.endOffset - 1)
 
     var element: PsiElement? = elementAt
     while (element != null) {

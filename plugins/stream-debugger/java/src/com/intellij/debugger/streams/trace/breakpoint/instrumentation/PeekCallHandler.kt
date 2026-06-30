@@ -4,9 +4,12 @@ package com.intellij.debugger.streams.trace.breakpoint.instrumentation
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericType
-import com.intellij.debugger.streams.trace.breakpoint.ObjectStorage
 import com.intellij.debugger.streams.java.rt.collectors.UniversalCollector
-import com.sun.jdi.*
+import com.intellij.debugger.streams.trace.breakpoint.ObjectStorage
+import com.sun.jdi.ClassType
+import com.sun.jdi.Method
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.Value
 
 /**
  * Base handler that wraps streams via: `stream.peek(collector)` to collect values

@@ -6,6 +6,7 @@ import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.XValue
+import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -43,6 +44,9 @@ suspend fun interpretStreamResult(
           result.hasInnerExceptions
         )
         StreamTracer.Result.Evaluated(interpretedResult, result.evaluationContext)
+      }
+      catch (e: CancellationException) {
+        throw e
       }
       catch (t: Throwable) {
         StreamTracer.Result.EvaluationFailed(
