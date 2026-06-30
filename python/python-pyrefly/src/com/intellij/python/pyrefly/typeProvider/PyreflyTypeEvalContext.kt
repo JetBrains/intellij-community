@@ -367,15 +367,13 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     return resolveStringTypeImpl(element, stringType)
   }
 
-  private fun PyreflyLsp4jServer.TspType?.hasSourceLocation(): Boolean {
-    val type = this ?: return false
-    val decl = type.declaration
-    if (decl != null) {
-      val nodeUri = decl.node?.uri
-      if (!nodeUri.isNullOrEmpty() || !decl.uri.isNullOrEmpty()) return true
+  private fun PyreflyLsp4jServer.TspType.hasSourceLocation(): Boolean {
+    if (declaration != null) {
+      val nodeUri = declaration.node?.uri
+      if (!nodeUri.isNullOrEmpty() || !declaration.uri.isNullOrEmpty()) return true
     }
     // Class/type references wrapped in a Function envelope keep their real declaration on returnType.
-    return type.returnType?.hasSourceLocation() == true
+    return returnType?.hasSourceLocation() == true
   }
 
   companion object {
