@@ -3,6 +3,7 @@ package com.intellij.psi.impl.file.impl
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.codeInsight.multiverse.defaultContext
+import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -11,9 +12,11 @@ import com.intellij.openapi.util.removeUserData
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.AbstractFileViewProvider
 import com.intellij.psi.FileViewProvider
+import com.intellij.psi.PsiInvalidElementAccessException
 import com.intellij.psi.impl.file.impl.FileManagerImpl.markInvalidated
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.addIfNotNull
 import java.util.Collections
 import java.util.function.Consumer
 
@@ -122,10 +125,35 @@ internal class LightFileViewProviderCache(
 
   private fun checkLightFileHasNoOtherPsi(vFile: VirtualFile) {
     val viewProvider = FileDocumentManager.getInstance().findCachedPsiInAnyProject(vFile) ?: return
-    val project = viewProvider.getManager().getProject()
-    if (project === this.project) return
+    val otherProject = viewProvider.getManager().getProject()
+    if (otherProject === this.project) return
+
     val psiFiles = viewProvider.getAllFiles().joinToString(separator = ", ") { f -> "${f.javaClass} [${f.getLanguage()}]" }
-    LOG.error("Light files should have PSI only in one project, existing=$viewProvider in $project, requested in ${this.project}; psiFiles: $psiFiles")
+
+    val details = buildString {
+      appendLine("existing = $viewProvider")
+      appendLine("existing project  = $otherProject (disposed=${otherProject.isDisposed}, initialized=${otherProject.isInitialized})")
+      appendLine("requested project = ${this@LightFileViewProviderCache.project} (disposed=${project.isDisposed}, initialized=${project.isInitialized})")
+      appendLine("light file: class=${vFile.javaClass.name}, length=${vFile.length}, modStamp=${vFile.modificationStamp}, valid=${vFile.isValid}")
+      appendLine("existing provider possiblyInvalidated=${viewProvider.isPossiblyInvalidated()}")
+      appendLine("psiFiles: $psiFiles")
+    }
+
+    val conflictDetails = Attachment("lightFilePsiConflict.txt", details)
+    val attachments = mutableListOf(conflictDetails)
+
+    val creationTrace = when (val creationTrace = PsiInvalidElementAccessException.getCreationTrace(vFile)) {
+      is Throwable -> Attachment("lightFileCreationTrace.txt", creationTrace)
+      null -> null
+      else -> Attachment("lightFileCreationTrace.txt", creationTrace.toString())
+    }
+    attachments.addIfNotNull(creationTrace)
+
+    LOG.error(
+      "Light files should have PSI only in one project: lightFile=${vFile.javaClass.name}, " +
+      "existingProjectDisposed=${otherProject.isDisposed}, requestedProjectDisposed=${project.isDisposed}",
+      *attachments.toTypedArray(),
+    )
   }
 }
 
