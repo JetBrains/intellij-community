@@ -12,6 +12,7 @@ import com.intellij.analysis.problemsView.toolWindow.splitApi.HighlightingBasePr
 import com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemEvent
 import com.intellij.build.FlowWithHistory
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -178,26 +179,50 @@ class ProjectErrorsCollector(val project: Project, cs: CoroutineScope) : Problem
     }
 
     fun problemAppeared(problem: Problem) =
-      problemAppearedOrUpdated(problem, shouldAlreadyExist = false) { ProblemEvent.Appeared(it) }
+      problemAppearedOrUpdated(
+        problem,
+        "ProblemEvent.Appeared",
+        shouldAlreadyExist = false
+      ) { ProblemEvent.Appeared(it) }
 
     fun problemDisappeared(problem: Problem) = updateHistoryAndEmit {
-      if (removeProblem(problem)) ProblemEvent.Disappeared(problem) else null
+      if (removeProblem(problem)) {
+        ProblemEvent.Disappeared(problem)
+      }
+      else {
+        logDroppedEvent("ProblemEvent.Disappeared", problem, "the problem is not in history")
+        null
+      }
     }
 
     fun problemUpdated(problem: Problem) =
-      problemAppearedOrUpdated(problem, shouldAlreadyExist = true) { ProblemEvent.Updated(it) }
+      problemAppearedOrUpdated(
+        problem,
+        "ProblemEvent.Updated",
+        shouldAlreadyExist = true
+      ) { ProblemEvent.Updated(it) }
 
     private fun problemAppearedOrUpdated(
       problem: Problem,
+      eventName: String,
       shouldAlreadyExist: Boolean,
       eventFactory: (Problem) -> ProblemEvent,
     ) = updateHistoryAndEmit {
       if (containsProblem(problem) != shouldAlreadyExist) {
+        val reason = when (shouldAlreadyExist) {
+          true -> "the problem is not in history"
+          false -> "the problem is already in history"
+        }
+        logDroppedEvent(eventName, problem, reason)
         return@updateHistoryAndEmit null
       }
       removeProblem(problem)
       addProblem(problem)
       eventFactory(problem)
+    }
+
+    private fun logDroppedEvent(eventName: String, problem: Problem, reason: String) {
+      thisLogger().debug("Dropping $eventName event because $reason: $problem")
     }
 
     private fun containsProblem(problem: Problem): Boolean {
