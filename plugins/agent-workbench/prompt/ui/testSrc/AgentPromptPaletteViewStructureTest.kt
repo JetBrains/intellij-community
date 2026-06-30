@@ -460,8 +460,10 @@ class AgentPromptPaletteViewStructureTest {
       val promptAreaInRoot = checkNotNull(findPromptArea(view.rootPanel, promptArea))
 
       val profileActionComponent = view.profileAction.customComponent
-      assertThat(profileActionComponent).isSameAs(view.launchProfileLink)
+      assertThat(profileActionComponent).isNotSameAs(view.launchProfileLink)
       assertThat(SwingUtilities.isDescendingFrom(view.launchProfileLink, view.rootPanel)).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(view.launchProfileLink, profileActionComponent)).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(view.profileAction.iconLabel, profileActionComponent)).isTrue()
       assertThat(SwingUtilities.isDescendingFrom(profileActionComponent, view.rootPanel)).isTrue()
       assertThat(SwingUtilities.isDescendingFrom(profileActionComponent, view.rightHeaderPanel)).isFalse()
       assertThat(SwingUtilities.isDescendingFrom(profileActionComponent, view.headerControls.toolbarComponent)).isFalse()
@@ -500,18 +502,40 @@ class AgentPromptPaletteViewStructureTest {
       assertThat(view.generationSettingsPanel.isVisible).isTrue()
       assertThat(view.launchProfileLink.text).isEqualTo("Default")
       assertThat(view.profileAction.textForTest).isEqualTo("Default")
-      assertThat(view.launchProfileLink.icon).isNotNull()
+      assertThat(view.profileAction.iconLabel.icon).isNotNull()
+      assertThat(view.launchProfileLink.icon).isSameAs(view.addContextButton.icon)
       assertThat(view.launchProfileLink.font.isBold).isFalse()
-      assertThat((view.launchProfileLink as HeaderActionLink).trailingIcon).isSameAs(view.addContextButton.icon)
       assertThat(view.launchTuningSummaryLink.isVisible).isFalse()
       val launchTuningSummaryCenter = SwingUtilities.convertPoint(
-        view.launchProfileLink,
-        view.launchProfileLink.width / 2,
-        view.launchProfileLink.height / 2,
+        profileActionComponent,
+        profileActionComponent.width / 2,
+        profileActionComponent.height / 2,
         view.rootPanel,
       )
       val topComponent = SwingUtilities.getDeepestComponentAt(view.rootPanel, launchTuningSummaryCenter.x, launchTuningSummaryCenter.y)
       assertThat(isDescendantOrSame(topComponent, view.generationSettingsPanel)).isTrue()
+    }
+  }
+
+  @Test
+  fun launchSettingsProviderIconOpensSameControlAsDropdownLink() {
+    runInEdtAndWait {
+      val view = createAgentPromptPaletteView(
+        promptArea = EditorTextField(),
+        contextChipsPanel = JPanel(),
+        onExistingTaskSelected = {},
+      )
+      var popupAnchor: JComponent? = null
+      view.profileAction.setPopupHandler { _, anchor -> popupAnchor = anchor }
+
+      triggerMousePressed(view.profileAction.iconLabel)
+
+      assertThat(popupAnchor).isSameAs(view.launchProfileLink)
+
+      popupAnchor = null
+      view.launchProfileLink.doClick()
+
+      assertThat(popupAnchor).isSameAs(view.launchProfileLink)
     }
   }
 
