@@ -156,19 +156,29 @@ public final class ReadAction {
   }
 
   /**
-   * Runs the specified computation in a cancellable read action with a single attempt.
+   * Runs the specified computation in a single read action attempt that is canceled when it would otherwise block
+   * a write action.
    * <p>
-   * <h3>Semantics:</h3>
+   * This is a lower-level method for callers that are prepared for the read action attempt to fail with {@link CannotReadException}
+   * because a write action took priority.
+   * Prefer higher-level read action APIs unless custom retry, drop, or fallback logic is really needed.
+   * <p>
+   * <h3>Semantics</h3>
    * <ul>
-   *   <li>If this function is invoked while the read or write access is allowed (see {@link ThreadingAssertions#assertReadAccess()}),
-   *    then it calls {@code computable} directly.</li>
-   *    <li>Otherwise, if there is a pending or running write action, this function throws {@link CannotReadException}.</li>
-   *    <li>Otherwise, this function starts. It can throw {@link CannotReadException} on the next {@link ProgressManager#checkCanceled()}
-   *    if there is a pending write action.
+   *   <li>If this method is invoked while the read or write access is allowed (see {@link ThreadingAssertions#assertReadAccess()}),
+   *   then it calls {@code computable} directly.</li>
+   *   <li>Otherwise, if there is a pending or running write action, this method throws {@link CannotReadException}.</li>
+   *   <li>Otherwise, this method starts a read action attempt.
+   *   It can throw {@link CannotReadException} on the next {@link ProgressManager#checkCanceled()} if there is a pending write action.</li>
    * </ul>
    *
    * @throws CannotReadException if the read action cannot be started,
    *                             or if it was canceled by a requested write action during its execution
+   * @throws ProcessCanceledException if {@code computable} or the current progress is canceled for another reason
+   *
+   * @see #computeBlocking(ThrowableComputable)
+   * @see #nonBlocking(Callable)
+   * @see CoroutinesKt#readAction
    */
   @RequiresBackgroundThread
   public static <T, E extends Throwable> T computeCancellableUnsafe(
