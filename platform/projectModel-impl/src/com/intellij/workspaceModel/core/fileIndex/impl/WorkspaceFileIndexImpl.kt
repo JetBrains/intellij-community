@@ -209,12 +209,11 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
   ): Boolean {
     val visitor = object : VirtualFileVisitor<Void?>() {
       override fun visitFileEx(file: VirtualFile): Result {
-        val fileInfo = runReadActionBlocking {
-          getFileInfo(
-            file, honorExclusion = true, includeContentSets = true, includeContentNonIndexableSets = true, includeExternalSets = false,
-            includeExternalSourceSets = false, includeExternalNonIndexableSets = false, includeCustomKindSets = false
-          )
-        }
+        val fileInfo = getFileInfo(
+          file, honorExclusion = true, includeContentSets = true, includeContentNonIndexableSets = true, includeExternalSets = false,
+          includeExternalSourceSets = false, includeExternalNonIndexableSets = false, includeCustomKindSets = false
+        )
+
         if (file.isDirectory && fileInfo is NonWorkspace) {
           return when (fileInfo) {
             NonWorkspace.EXCLUDED, NonWorkspace.NOT_UNDER_ROOTS -> {
@@ -240,7 +239,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
       }
     }
     // wrap non-indexable files as CacheAvoiding to prevent them from loading into VFS
-    val isIndexable = runReadActionBlocking { isIndexable(fileOrDir) }
+    val isIndexable = isIndexable(fileOrDir)
     val cacheAvoidingIfNecessary = when {
       isIndexable -> fileOrDir
       else -> NewVirtualFile.asCacheAvoiding(fileOrDir)
