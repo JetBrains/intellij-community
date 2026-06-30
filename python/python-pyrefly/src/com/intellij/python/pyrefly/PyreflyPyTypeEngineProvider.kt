@@ -12,7 +12,7 @@ import com.intellij.python.pytools.ui.toSafeProperty
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProvider
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
 import com.intellij.python.pyrefly.lsp.PyreflyLspIntegrationProvider
-import com.intellij.python.pyrefly.typeProvider.PyreflyExternalPyTypeResolverProvider
+import com.intellij.python.pyrefly.typeProvider.PyreflyLspTypeEngineProvider
 import com.intellij.python.pytools.isEnabledOn
 import com.intellij.python.pytools.ui.PyToolsUiBundle
 import com.intellij.ui.dsl.builder.Panel
@@ -26,7 +26,7 @@ internal class PyreflyPyTypeEngineProvider : PyTypeEngineProvider {
     get() = PyTypeEngineType.PYREFLY
 
   override fun isSupported(project: Project): Boolean {
-    return PyreflyExternalPyTypeResolverProvider.Util.isAvailable(project)
+    return PyreflyLspTypeEngineProvider.Util.isAvailable(project)
   }
 
   override fun updateLspServers(project: Project) {

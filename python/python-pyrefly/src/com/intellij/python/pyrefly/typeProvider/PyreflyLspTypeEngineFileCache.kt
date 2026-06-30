@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentMap
  * as we do for the built-in resolver
  */
 @Service(Service.Level.PROJECT)
-internal class PyreflyTypeResolverFileCache(val project: Project) : Disposable.Default {
+internal class PyreflyLspTypeEngineFileCache(val project: Project) : Disposable.Default {
   private val lowMemoryModificationTracker = SimpleModificationTracker()
 
 
@@ -64,6 +64,6 @@ internal class PyreflyTypeResolverFileCache(val project: Project) : Disposable.D
   }
 
   companion object {
-    fun getInstance(project: Project): PyreflyTypeResolverFileCache = project.service()
+    fun getInstance(project: Project): PyreflyLspTypeEngineFileCache = project.service()
   }
 }

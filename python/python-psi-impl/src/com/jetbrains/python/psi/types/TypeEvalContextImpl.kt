@@ -49,7 +49,7 @@ open class TypeEvalContextImpl internal constructor(
   val typeEngine: PyTypeEngine? = constraints.myOrigin?.let {
     ModuleUtilCore.findModuleForFile(it)
   }?.let { module ->
-    PyTypeEngineProvider.createTypeResolver(module)
+    PyTypeEngineProvider.createTypeEngine(module)
   }
   protected val myEvaluated: MutableMap<PyTypedElement?, PyType?> = getConcurrentMapForCachingTypes()
   protected val myEvaluatedReturn: MutableMap<PyCallable?, PyType?> = getConcurrentMapForCachingTypes()

@@ -28,7 +28,7 @@ internal class TyPyTypeEngine : PyTypeEngineProvider {
     get() = PyTypeEngineType.TY
 
   override fun isSupported(project: Project): Boolean {
-    return isTyTypeProviderFeatureEnabled(project)
+    return isTyTypeEngineFeatureEnabled(project)
   }
 
   override fun updateLspServers(project: Project) {

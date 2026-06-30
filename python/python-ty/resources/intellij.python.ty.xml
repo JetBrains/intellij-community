@@ -21,6 +21,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
-    <typeEvalTypeEngineProvider implementation="com.intellij.python.ty.typeProvider.TyExternalPyTypeResolverProvider"/>
+    <typeEvalTypeEngineProvider implementation="com.intellij.python.ty.typeProvider.TyLspTypeEngineProvider"/>
   </extensions>
 </idea-plugin>

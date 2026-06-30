@@ -11,16 +11,15 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface PyTypeEngineProvider {
-  fun createResolver(module: Module): PyTypeEngine? = null
+  fun createTypeEngine(module: Module): PyTypeEngine? = null
 
   companion object {
     private val EP_NAME =
       ExtensionPointName.create<PyTypeEngineProvider>("Pythonid.typeEvalTypeEngineProvider")
 
-    @JvmStatic
     @ApiStatus.Internal
-    fun createTypeResolver(module: Module): PyTypeEngine? {
-      return EP_NAME.extensionList.firstNotNullOfOrNull { it.createResolver(module) }
+    fun createTypeEngine(module: Module): PyTypeEngine? {
+      return EP_NAME.extensionList.firstNotNullOfOrNull { it.createTypeEngine(module) }
     }
   }
 }

@@ -17,12 +17,12 @@ import com.jetbrains.python.psi.types.engine.PyTypeEngineProvider
 
 
 /**
- * External type provider that delegates to Pyrefly's LSP endpoint.
+ * External type engine provider that delegates to Pyrefly's LSP endpoint.
  * This provider is enabled when the Type Engine feature is enabled via registry.
- * The actual per-module check for Pyrefly configuration is done in PyreflyTypeResolver.isSupportedForResolve.
+ * The actual per-module check for Pyrefly configuration is done in [PyreflyLspTypeEngine.isSupportedForResolve].
  */
-class PyreflyExternalPyTypeResolverProvider : PyTypeEngineProvider {
-  override fun createResolver(module: Module): PyTypeEngine? {
+class PyreflyLspTypeEngineProvider : PyTypeEngineProvider {
+  override fun createTypeEngine(module: Module): PyTypeEngine? {
     // Check if type engine feature is enabled (via registry or unit tests)
     val isFeatureEnabled = Util.isAvailable(module.project)
 
@@ -37,7 +37,7 @@ class PyreflyExternalPyTypeResolverProvider : PyTypeEngineProvider {
     lspServerManager.ensureClientStarted<PyreflyLspIntegrationProvider>(PyreflyLspClientDescriptor(module))
     val server = lspServerManager.getClients<PyreflyLspIntegrationProvider>().firstOrNull() ?: return null
 
-    return PyreflyTypeResolver(module, server)
+    return PyreflyLspTypeEngine(module, server)
   }
 
   object Util {

@@ -27,6 +27,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
-    <typeEvalTypeEngineProvider implementation="com.intellij.python.pyrefly.typeProvider.PyreflyExternalPyTypeResolverProvider"/>
+    <typeEvalTypeEngineProvider implementation="com.intellij.python.pyrefly.typeProvider.PyreflyLspTypeEngineProvider"/>
   </extensions>
 </idea-plugin>

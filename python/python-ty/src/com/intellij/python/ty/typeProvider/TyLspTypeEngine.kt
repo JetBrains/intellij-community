@@ -1,13 +1,13 @@
 package com.intellij.python.ty.typeProvider
 
 import com.intellij.openapi.util.Ref
-import com.intellij.python.lsp.core.type.LspPyTypeResolver
+import com.intellij.python.lsp.core.type.PyLspTypeEngine
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProjectSettings
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.types.PyType
 
-internal class TyTypeResolver : LspPyTypeResolver {
+internal class TyLspTypeEngine : PyLspTypeEngine {
   override val name: String = PyTypeEngineType.TY.name
 
   override fun isSupportedForResolve(pyTypedElement: PyTypedElement): Boolean {

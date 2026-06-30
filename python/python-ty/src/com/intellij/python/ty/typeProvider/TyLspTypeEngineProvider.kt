@@ -13,12 +13,12 @@ import com.jetbrains.python.psi.types.engine.PyTypeEngineProvider
 /**
  * External type provider that delegates to ty's LSP endpoint.
  * This provider is enabled when the Type Engine feature is enabled via registry.
- * The actual per-module check for ty configuration is done in TyTypeResolver.isSupportedForResolve.
+ * The actual per-module check for ty configuration is done in [TyLspTypeEngine.isSupportedForResolve].
  */
-class TyExternalPyTypeResolverProvider : PyTypeEngineProvider {
-  override fun createResolver(module: Module): PyTypeEngine? {
+class TyLspTypeEngineProvider : PyTypeEngineProvider {
+  override fun createTypeEngine(module: Module): PyTypeEngine? {
     // Check if type engine feature is enabled (via registry or unit tests)
-    val isFeatureEnabled = isTyTypeProviderFeatureEnabled(module.project)
+    val isFeatureEnabled = isTyTypeEngineFeatureEnabled(module.project)
     if (!isFeatureEnabled) {
       return null
     }
@@ -28,12 +28,12 @@ class TyExternalPyTypeResolverProvider : PyTypeEngineProvider {
     if (!lspServerExists) {
       return null
     }
-    return TyTypeResolver()
+    return TyLspTypeEngine()
   }
 
 }
 
-internal fun isTyTypeProviderFeatureEnabled(project: Project): Boolean =
+internal fun isTyTypeEngineFeatureEnabled(project: Project): Boolean =
   ApplicationManager.getApplication().isUnitTestMode ||
   PyTypeEngineUtils.isExternalTypeEngineSupported(project) &&
   Registry.`is`("ty.type.engine.support")

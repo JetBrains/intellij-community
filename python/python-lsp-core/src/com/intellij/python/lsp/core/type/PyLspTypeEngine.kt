@@ -6,7 +6,7 @@ import com.jetbrains.python.psi.types.engine.PyTypeEngine
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-interface LspPyTypeResolver : PyTypeEngine {
+interface PyLspTypeEngine : PyTypeEngine {
   override fun isSupportedForResolve(pyTypedElement: PyTypedElement): Boolean {
     val realFile = pyTypedElement.containingFile?.originalFile ?: return false
     if (realFile is PyExpressionCodeFragment)
