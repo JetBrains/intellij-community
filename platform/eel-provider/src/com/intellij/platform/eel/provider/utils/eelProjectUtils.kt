@@ -16,7 +16,7 @@ import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 object EelProjectUtils {
   /**
    * **Obsolete – avoid it in new code.**

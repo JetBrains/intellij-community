@@ -1,5 +1,6 @@
 f:com.intellij.platform.eel.provider.EelProviderProjectUtilKt
 - *sf:getEelDescriptor(com.intellij.openapi.project.Project):com.intellij.platform.eel.EelDescriptor
+- *sf:getEelMachine(com.intellij.openapi.project.Project):com.intellij.platform.eel.EelMachine
 - *sf:toEelApiBlocking(com.intellij.platform.eel.EelDescriptor):com.intellij.platform.eel.EelApi
 - *sf:toEelApiBlocking(com.intellij.platform.eel.EelMachine,com.intellij.platform.eel.EelDescriptor):com.intellij.platform.eel.EelApi
 *f:com.intellij.platform.eel.provider.EelProviderUtil
@@ -9,12 +10,29 @@ f:com.intellij.platform.eel.provider.EelProviderProjectUtilKt
 - s:getLocalEel():com.intellij.platform.eel.LocalEelApi
 - s:getOsFamily(java.nio.file.Path):com.intellij.platform.eel.EelOsFamily
 - s:ownsPath(com.intellij.platform.eel.EelMachine,java.nio.file.Path):Z
-- s:setEelDescriptor(com.intellij.openapi.project.Project,com.intellij.platform.eel.EelDescriptor):V
-- s:setEelMachine(com.intellij.openapi.project.Project,com.intellij.platform.eel.EelMachine):V
 - s:toEelApiBlocking(com.intellij.platform.eel.EelDescriptor):com.intellij.platform.eel.EelApi
 - s:toEelApiBlocking(com.intellij.platform.eel.EelMachine,com.intellij.platform.eel.EelDescriptor):com.intellij.platform.eel.EelApi
+*f:com.intellij.platform.eel.provider.utils.EelProjectUtils
+- sf:INSTANCE:com.intellij.platform.eel.provider.utils.EelProjectUtils
+- sf:createTemporaryDirectory(com.intellij.openapi.project.Project):java.nio.file.Path
+- sf:createTemporaryDirectory(com.intellij.openapi.project.Project,java.lang.String):java.nio.file.Path
+- sf:createTemporaryDirectory(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):java.nio.file.Path
+- sf:createTemporaryDirectory(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,Z):java.nio.file.Path
+- bs:createTemporaryDirectory$default(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,Z,I,java.lang.Object):java.nio.file.Path
+- sf:createTemporaryFile(com.intellij.openapi.project.Project):java.nio.file.Path
+- sf:createTemporaryFile(com.intellij.openapi.project.Project,java.lang.String):java.nio.file.Path
+- sf:createTemporaryFile(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):java.nio.file.Path
+- sf:createTemporaryFile(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,Z):java.nio.file.Path
+- bs:createTemporaryFile$default(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,Z,I,java.lang.Object):java.nio.file.Path
+- sf:isProjectLocal(com.intellij.openapi.project.Project):Z
 *f:com.intellij.platform.eel.provider.utils.EelSystemFolderUtils
 - sf:INSTANCE:com.intellij.platform.eel.provider.utils.EelSystemFolderUtils
 - sf:getSystemFolder(com.intellij.openapi.project.Project):java.nio.file.Path
 - sf:getSystemFolder(com.intellij.platform.eel.EelApi):java.nio.file.Path
 - sf:getSystemFolder(com.intellij.platform.eel.EelDescriptor):java.nio.file.Path
+f:com.intellij.platform.eel.provider.utils.EelUtilsKt
+- *sf:fetchLoginShellEnvVariablesBlocking(com.intellij.platform.eel.EelExecApi):java.util.Map
+- *sf:systemOs(com.intellij.platform.eel.EelApi):com.intellij.util.system.OS
+- *sf:toCpuArch(com.intellij.platform.eel.EelPlatform$Arch):com.intellij.util.system.CpuArch
+- *sf:toEelArch(com.intellij.util.system.CpuArch):com.intellij.platform.eel.EelPlatform$Arch
+- *sf:toOs(com.intellij.platform.eel.EelPlatform):com.intellij.util.system.OS

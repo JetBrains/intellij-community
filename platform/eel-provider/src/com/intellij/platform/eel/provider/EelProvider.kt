@@ -26,6 +26,7 @@ private val EEL_DESCRIPTOR_KEY: Key<EelDescriptor> = Key.create("com.intellij.pl
  * project when it was opened. Unlike [resolveEelMachine] it does not perform resolution; it expects the project's environment to be
  * already initialized and throws if no machine can be determined.
  */
+@ApiStatus.Experimental
 fun Project.getEelMachine(): EelMachine {
   val descriptor = getEelDescriptor()
 
@@ -53,6 +54,7 @@ fun Project.getEelMachine(): EelMachine {
 /**
  * Associates [machine] with this project. Called by the platform during project initialization; not for general use.
  */
+@EelDelicateApi
 @ApiStatus.Internal
 fun Project.setEelMachine(machine: EelMachine) {
   putUserData(EEL_MACHINE_KEY, machine)
