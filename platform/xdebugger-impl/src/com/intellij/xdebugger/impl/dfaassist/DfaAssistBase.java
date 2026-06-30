@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -80,9 +81,10 @@ public abstract class DfaAssistBase implements Disposable {
     }
     if (!unreachable.isEmpty() && mode.displayGrayOut()) {
       MarkupModelEx model = editor.getMarkupModel();
+      TextAttributes unreachableAttributes = getUnreachableAttributes(editor);
       for (TextRange range : unreachable) {
-        RangeHighlighter highlighter = model.addRangeHighlighter(HighlightInfoType.UNUSED_SYMBOL.getAttributesKey(),
-                                                                 range.getStartOffset(), range.getEndOffset(), HighlighterLayer.ERROR + 1,
+        RangeHighlighter highlighter = model.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
+                                                                 HighlighterLayer.ERROR + 1, unreachableAttributes,
                                                                  HighlighterTargetArea.EXACT_RANGE);
         ranges.add(highlighter);
       }
@@ -90,6 +92,14 @@ public abstract class DfaAssistBase implements Disposable {
     if (!newInlays.isEmpty() || !ranges.isEmpty()) {
       myMarkup = new DfaAssistMarkup(editor, newInlays, ranges);
     }
+  }
+
+  private static @Nullable TextAttributes getUnreachableAttributes(@NotNull Editor editor) {
+    TextAttributes attributes = editor.getColorsScheme().getAttributes(HighlightInfoType.UNUSED_SYMBOL.getAttributesKey());
+    if (attributes == null) return null;
+    TextAttributes result = attributes.clone();
+    result.setErrorStripeColor(null);
+    return result;
   }
 
   protected @NotNull List<@NotNull AnAction> getInlayHintActions() {
