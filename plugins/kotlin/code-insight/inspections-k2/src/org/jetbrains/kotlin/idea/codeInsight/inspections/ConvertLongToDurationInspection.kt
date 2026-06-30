@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.imports.addImportFor
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
@@ -79,6 +81,9 @@ internal class ConvertLongToDurationInspection :
         val firstArgument = element.valueArguments.firstOrNull() ?: return false
         return firstArgument.getArgumentName() == null
     }
+
+    override fun getApplicableRanges(element: KtCallExpression): List<TextRange> =
+        ApplicabilityRanges.calleeExpression(element)
 
     override fun getProblemDescription(element: KtCallExpression, context: Unit): String = 
         KotlinBundle.message("inspection.convert.long.to.duration.descriptor")
