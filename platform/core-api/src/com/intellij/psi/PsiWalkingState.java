@@ -2,24 +2,32 @@
 
 package com.intellij.psi;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.PsiVersioningService;
 import com.intellij.util.Processor;
 import com.intellij.util.WalkingState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class PsiWalkingState extends WalkingState<PsiElement> {
   private static final Logger LOG = Logger.getInstance(PsiWalkingState.class);
   private final PsiElementVisitor myVisitor;
 
+
   public static boolean processAll(@NotNull PsiElement root, final @NotNull Processor<? super PsiElement> processor) {
-    return processAll(root, PsiWalkingState.PsiTreeGuide.instance, processor);
+    return processAll(root, new PsiWalkingState.PsiTreeGuide(), processor);
   }
 
   private static class PsiTreeGuide implements TreeGuide<PsiElement> {
+    private final @Nullable PsiVersioningService service = ApplicationManager.getApplication().getService(PsiVersioningService.class);
+    private final long version = service == null ? -1 : service.getCurrentVersion();
+
     @Override
     public PsiElement getNextSibling(@NotNull PsiElement element) {
-      return checkSanity(element, element.getNextSibling());
+      PsiElement nextSibling = service == null ? element.getNextSibling() : service.getNextSibling(element, version);
+      return checkSanity(element, nextSibling);
     }
 
     private static PsiElement checkSanity(PsiElement element, PsiElement sibling) {
@@ -29,25 +37,25 @@ public abstract class PsiWalkingState extends WalkingState<PsiElement> {
 
     @Override
     public PsiElement getPrevSibling(@NotNull PsiElement element) {
-      return checkSanity(element, element.getPrevSibling());
+      PsiElement prevSibling = service == null ? element.getPrevSibling() : service.getPrevSibling(element, version);
+      return checkSanity(element, prevSibling);
     }
 
     @Override
     public PsiElement getFirstChild(@NotNull PsiElement element) {
-      return element.getFirstChild();
+      return service == null ? element.getFirstChild() : service.getFirstChild(element, version);
     }
 
     @Override
     public PsiElement getParent(@NotNull PsiElement element) {
-      return element.getParent();
+      return service == null ? element.getParent() : service.getParent(element, version);
     }
-
-    private static final PsiTreeGuide instance = new PsiTreeGuide();
   }
 
   protected PsiWalkingState(@NotNull PsiElementVisitor delegate) {
-    this(delegate, PsiTreeGuide.instance);
+    this(delegate, new PsiTreeGuide());
   }
+
   protected PsiWalkingState(@NotNull PsiElementVisitor delegate, @NotNull TreeGuide<PsiElement> guide) {
     super(guide);
     myVisitor = delegate;

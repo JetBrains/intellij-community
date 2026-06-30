@@ -1102,7 +1102,7 @@ a:com.intellij.psi.impl.source.tree.CompositePsiElement
 - copy():com.intellij.psi.PsiElement
 - getChildren():com.intellij.psi.PsiElement[]
 - getContainingFile():com.intellij.psi.PsiFile
-- getFirstChild():com.intellij.psi.PsiElement
+- f:getFirstChild():com.intellij.psi.PsiElement
 - getLanguage():com.intellij.lang.Language
 - getLastChild():com.intellij.psi.PsiElement
 - getName():java.lang.String
@@ -1168,7 +1168,7 @@ c:com.intellij.psi.impl.source.tree.LeafPsiElement
 - getContext():com.intellij.psi.PsiElement
 - getLanguage():com.intellij.lang.Language
 - getName():java.lang.String
-- getNextSibling():com.intellij.psi.PsiElement
+- f:getNextSibling():com.intellij.psi.PsiElement
 - getNode():com.intellij.lang.ASTNode
 - getOriginalElement():com.intellij.psi.PsiElement
 - getParent():com.intellij.psi.PsiElement

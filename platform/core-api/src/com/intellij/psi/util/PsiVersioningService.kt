@@ -69,4 +69,21 @@ interface PsiVersioningService {
 
   @ApiStatus.Internal
   fun <T> runAndFreezePsiVersion(action: () -> T): T = action()
+
+  @ApiStatus.Internal
+  fun getCurrentVersion(): Long = -1
+
+  @ApiStatus.Internal
+  fun getNextSibling(element: PsiElement, version: Long): PsiElement? = element.nextSibling
+
+  @ApiStatus.Internal
+  fun getPrevSibling(element: PsiElement, version: Long): PsiElement? = element.prevSibling
+
+  @ApiStatus.Internal
+  fun getParent(element: PsiElement, version: Long): PsiElement? = element.parent
+
+  @ApiStatus.Internal
+  fun getFirstChild(element: PsiElement, version: Long): PsiElement? = element.firstChild
+
+
 }
