@@ -12,6 +12,7 @@ import com.intellij.workspaceModel.codegen.impl.metadata.getFullName
 import com.intellij.workspaceModel.codegen.impl.writer.EntityMetadata
 import com.intellij.workspaceModel.codegen.impl.writer.EntityStorageInstrumentation
 import com.intellij.workspaceModel.codegen.impl.writer.MetadataStorage
+import com.intellij.workspaceModel.codegen.impl.writer.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.codegen.impl.writer.MutableEntityStorage
 import com.intellij.workspaceModel.codegen.impl.writer.SoftLinkable
 import com.intellij.workspaceModel.codegen.impl.writer.StorageCollection
@@ -91,22 +92,10 @@ fun CodeContext.entityDataClassCode(objClass: ObjClass<*>) {
 
     softLinksCode(objClass, hasSoftLinks, referencesInSymbolicId)
 
-    section("override fun wrapAsModifiable(diff: ${MutableEntityStorage}): ${WorkspaceEntity.Builder}<${objClass.javaFullName}>") {
-      line("val modifiable = ${objClass.javaImplBuilderName}(null)")
-      line("modifiable.diff = diff")
-      line("modifiable.id = createEntityId()")
-      line("return modifiable")
-    }
-
-    section("override fun createEntity(snapshot: $EntityStorageInstrumentation): ${objClass.javaFullName}") {
-      line("val entityId = createEntityId()")
-      section("return snapshot.initializeEntity(entityId)") {
-        line("val entity = ${objClass.javaImplName}(this)")
-        line("entity.snapshot = snapshot")
-        line("entity.id = entityId")
-        line("entity")
-      }
-    }
+    // --- newInstance
+    line("override fun newInstance(): ${objClass.javaFullName} = ${objClass.javaImplName}(this)")
+    // --- newBuilderInstance
+    line("override fun newBuilderInstance(): ${ModifiableWorkspaceEntityBase}<${objClass.javaFullName}, *> = ${objClass.javaImplName}.Builder(null)")
 
     section("override fun getMetadata(): $EntityMetadata") {
       line("return ${MetadataStorage.IMPL_NAME}.${MetadataStorage.getMetadataByTypeFqn}(${getFullName(objClass)}) as $EntityMetadata")

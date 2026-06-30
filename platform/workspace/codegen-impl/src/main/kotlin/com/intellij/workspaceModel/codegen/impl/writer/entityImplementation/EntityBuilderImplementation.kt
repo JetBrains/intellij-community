@@ -7,7 +7,6 @@ import com.intellij.workspaceModel.codegen.impl.dsl.CodeContext
 import com.intellij.workspaceModel.codegen.impl.writer.ConnectionId
 import com.intellij.workspaceModel.codegen.impl.writer.LibraryEntity
 import com.intellij.workspaceModel.codegen.impl.writer.ModifiableWorkspaceEntityBase
-import com.intellij.workspaceModel.codegen.impl.writer.MutableEntityStorage
 import com.intellij.workspaceModel.codegen.impl.writer.MutableWorkspaceList
 import com.intellij.workspaceModel.codegen.impl.writer.MutableWorkspaceSet
 import com.intellij.workspaceModel.codegen.impl.writer.SdkEntity
@@ -23,37 +22,8 @@ import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdIsInitializedCo
 fun CodeContext.entityBuilderImplementationCode(objClass: ObjClass<*>, hasConnections: Boolean) {
   section("internal class Builder(result: ${objClass.javaDataName}?): ${ModifiableWorkspaceEntityBase}<${objClass.javaFullName}, ${objClass.javaDataName}>(result), ${objClass.compatibleJavaBuilderName}") {
     +"internal constructor(): this(${objClass.javaDataName}())"
-    section("override fun applyToBuilder(builder: ${MutableEntityStorage})") {
-      `if`("this.diff != null") {
-        ifElse("existsInBuilder(builder)", {
-          line("this.diff = builder")
-          line("return")
-        }) {
-          line("error(\"Entity ${objClass.name} is already created in a different builder\")")
-        }
-      }
-      line("this.diff = builder")
-      line("addToBuilder()")
-      line("this.id = getEntityData().createEntityId()")
-      lineComment("After adding entity data to the builder, we need to unbind it and move the control over entity data to builder")
-      lineComment("Builder may switch to snapshot at any moment and lock entity data to modification")
-      line("this.currentEntityData = null")
-      for (vfuProperty in objClass.vfuFields) {
-        val name = vfuProperty.name
-        +"index(this, \"$name\", this.$name)"
-      }
-      if (objClass.name == LibraryEntity.simpleName) {
-        line("indexLibraryRoots(roots)")
-      }
-      if (objClass.name == SdkEntity.simpleName) {
-        line("indexSdkRoots(roots)")
-      }
-      lineComment("Process linked entities that are connected without a builder")
-      line("processLinkedEntities(builder)")
-      line("checkInitialization()")
-    }
 
-    section("private fun checkInitialization()") {
+    section("override fun checkInitialization()") {
       line("val _diff = diff")
       listBuilder(getAllProperties(objClass, withSymbolicId = false, withOptional = false, withDefault = false)) { field ->
         implWsBuilderIsInitializedCode(field)
@@ -104,6 +74,23 @@ fun CodeContext.entityBuilderImplementationCode(objClass: ObjClass<*>, hasConnec
       }
 
       line("updateChildToParentReferences(parents)")
+    }
+
+    val isIndexFunRequired =
+      objClass.vfuFields.isNotEmpty() || objClass.name == LibraryEntity.simpleName || objClass.name == SdkEntity.simpleName
+    if (isIndexFunRequired) {
+      section("override fun index()") {
+        for (vfuProperty in objClass.vfuFields) {
+          val name = vfuProperty.name
+          +"index(this, \"$name\", this.$name)"
+        }
+        if (objClass.name == LibraryEntity.simpleName) {
+          +"indexLibraryRoots(roots)"
+        }
+        if (objClass.name == SdkEntity.simpleName) {
+         +"indexSdkRoots(roots)"
+        }
+      }
     }
 
     if (objClass.name == LibraryEntity.simpleName) {
