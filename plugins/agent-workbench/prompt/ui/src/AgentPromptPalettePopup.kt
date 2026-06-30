@@ -255,6 +255,7 @@ internal fun createAgentPromptPaletteContent(
     val contextChips = AgentPromptContextChipsComponent(
       maxVisibleRows = if (hostMode.isInlinePrompt) 2 else null,
       initialAvailableWidth = if (hostMode.isInlinePrompt) AGENT_PROMPT_INLINE_EMPTY_STATE_PREFERRED_SIZE.width else null,
+      onRemoveCompleted = { IdeFocusManager.getInstance(project).requestFocusInProject(promptArea, project) },
     ) { entry -> sessionControllerRef?.removeContextEntry(entry) }
     val view = createAgentPromptPaletteView(
       promptArea = promptArea,

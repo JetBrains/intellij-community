@@ -69,6 +69,9 @@ The global prompt opens a project-scoped prompt surface for starting a new task 
   [@test] ../../prompt/ui/testSrc/AgentPromptEnterHandlersTest.kt
   [@test] ../../prompt/ui/testSrc/AgentPromptFooterHintDecisionsTest.kt
 
+- Removing a context attachment card through its close control must return focus to the editable prompt text after the card is removed, in popup and inline prompt surfaces.
+  [@test] ../../prompt/ui/testSrc/AgentPromptContextChipsComponentTest.kt
+
 - Claude slash completion is available only for Claude provider prompts and only for explicit slash-token completion; it merges built-in Claude menu commands with project `.claude/commands` and `.claude/skills` definitions.
   [@test] ../../prompt/ui/testSrc/AgentPromptCommandCompletionProviderTest.kt
 

@@ -58,7 +58,7 @@ The global prompt composer is the task-preparation surface for Agent Workbench. 
 
 ## User Experience
 - Users should read the composer from top to bottom as: selected context, instruction, composition and launch controls.
-- Context cards should be inspectable and removable, but visually secondary to the instruction and launch action.
+- Context cards should be inspectable and removable, but visually secondary to the instruction and launch action. Removing a card should return the user to the editable instruction flow.
 - `Add Context` is intentionally placed at the start of the input lane because users commonly decide what to include before or while describing the task.
 - Launch settings are intentionally right-aligned because they tune execution rather than add content to the prompt.
 

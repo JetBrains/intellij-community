@@ -42,6 +42,7 @@ internal const val CONTEXT_ATTACHMENT_REMOVE_PROPERTY: String = "agentPromptCont
 internal class AgentPromptContextChipsComponent(
   private val maxVisibleRows: Int? = null,
   private val initialAvailableWidth: Int? = null,
+  private val onRemoveCompleted: () -> Unit = {},
   private val onRemove: (ContextEntry) -> Unit,
 ) {
   private var renderedEntries: List<ContextEntry> = emptyList()
@@ -137,7 +138,10 @@ internal class AgentPromptContextChipsComponent(
   }
 
   private fun createContextChip(entry: ContextEntry): JComponent {
-    return ContextAttachmentCard(entry = entry, icon = resolveContextChipIcon(entry.item)) { onRemove(entry) }
+    return ContextAttachmentCard(entry = entry, icon = resolveContextChipIcon(entry.item)) {
+      onRemove(entry)
+      onRemoveCompleted()
+    }
   }
 
   private fun createOverflowChip(hiddenCount: Int): JComponent {
