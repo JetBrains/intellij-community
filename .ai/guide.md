@@ -49,7 +49,7 @@ Preserve IDE-serialized .iml files in canonical form. Do not:
 
 ## Skills
 
-Never use the `search-tools-instructions` skill. See ijproxy for search tools.
+Never use the `code-search` skill. See ijproxy for search tools.
 
 ### ijproxy (required)
 <!-- IF_TOOL:CODEX -->
