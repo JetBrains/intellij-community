@@ -3,6 +3,7 @@ package com.intellij.mcpserver.impl
 import com.intellij.mcpserver.McpExpectedError
 import com.intellij.mcpserver.impl.util.projectPathParameterName
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -25,12 +26,12 @@ class McpProjectLocationInputsTest {
   @Test
   fun `projectPath argument wins over all other sources`() {
     runBlocking(Dispatchers.Default) {
-      val project = McpProjectLocationInputs(
+      val project = service<McpSessionProjectResolver>().resolveSessionProject(
         projectPathFromArgument = secondProject.basePath,
         projectPathFromCallHeader = firstProject.basePath,
         projectPathFromSessionHeader = firstProject.basePath,
         roots = setOf(projectRootUri(firstProject)),
-      ).resolveProject()
+      )
 
       assertThat(project).isEqualTo(secondProject)
     }
@@ -40,12 +41,12 @@ class McpProjectLocationInputsTest {
   fun `invalid projectPath argument throws without fallback`() {
     assertThatThrownBy {
       runBlocking(Dispatchers.Default) {
-        McpProjectLocationInputs(
+        service<McpSessionProjectResolver>().resolveSessionProject(
           projectPathFromArgument = "/tmp/not-an-open-project",
           projectPathFromCallHeader = firstProject.basePath,
           projectPathFromSessionHeader = secondProject.basePath,
           roots = setOf(projectRootUri(secondProject)),
-        ).resolveProject()
+        )
       }
     }
       .isInstanceOf(McpExpectedError::class.java)
@@ -55,12 +56,12 @@ class McpProjectLocationInputsTest {
   @Test
   fun `call header wins over session header`() {
     runBlocking(Dispatchers.Default) {
-      val project = McpProjectLocationInputs(
+      val project = service<McpSessionProjectResolver>().resolveSessionProject(
         projectPathFromArgument = null,
         projectPathFromCallHeader = secondProject.basePath,
         projectPathFromSessionHeader = firstProject.basePath,
         roots = setOf(projectRootUri(firstProject)),
-      ).resolveProject()
+      )
 
       assertThat(project).isEqualTo(secondProject)
     }
@@ -69,12 +70,12 @@ class McpProjectLocationInputsTest {
   @Test
   fun `session header wins over roots`() {
     runBlocking(Dispatchers.Default) {
-      val project = McpProjectLocationInputs(
+      val project = service<McpSessionProjectResolver>().resolveSessionProject(
         projectPathFromArgument = null,
         projectPathFromCallHeader = "/tmp/not-an-open-project",
         projectPathFromSessionHeader = secondProject.basePath,
         roots = setOf(projectRootUri(firstProject)),
-      ).resolveProject()
+      )
 
       assertThat(project).isEqualTo(secondProject)
     }
@@ -83,12 +84,12 @@ class McpProjectLocationInputsTest {
   @Test
   fun `roots are used as final fallback`() {
     runBlocking(Dispatchers.Default) {
-      val project = McpProjectLocationInputs(
+      val project = service<McpSessionProjectResolver>().resolveSessionProject(
         projectPathFromArgument = null,
         projectPathFromCallHeader = "/tmp/not-an-open-project",
         projectPathFromSessionHeader = "/tmp/also-not-an-open-project",
         roots = setOf(projectRootUri(secondProject)),
-      ).resolveProject()
+      )
 
       assertThat(project).isEqualTo(secondProject)
     }
@@ -98,12 +99,12 @@ class McpProjectLocationInputsTest {
   fun `chaining mode throws user-facing error without internal source details`() {
     assertThatThrownBy {
       runBlocking(Dispatchers.Default) {
-        McpProjectLocationInputs(
+        service<McpSessionProjectResolver>().resolveSessionProject(
           projectPathFromArgument = null,
           projectPathFromCallHeader = "/tmp/not-an-open-project",
           projectPathFromSessionHeader = "/tmp/also-not-an-open-project",
           roots = setOf("file:///tmp/missing-root"),
-        ).resolveProject()
+        )
       }
     }
       .isInstanceOf(McpExpectedError::class.java)

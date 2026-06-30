@@ -301,12 +301,12 @@ internal class McpSessionHandler(
     projectPathFromArgument: String? = null,
     projectPathFromCallHeader: String? = null,
   ): Project {
-    return McpProjectLocationInputs(
+    return service<McpSessionProjectResolver>().resolveSessionProject(
       projectPathFromArgument = projectPathFromArgument,
       projectPathFromCallHeader = projectPathFromCallHeader,
       projectPathFromSessionHeader = projectPathFromInitialRequest,
       roots = sessionRoots.get() ?: emptySet(),
-    ).resolveProject()
+    )
   }
 
   private fun mcpToolToRegisteredTool(mcpTool: McpTool, projectKnownUpfront: Boolean): RegisteredTool {

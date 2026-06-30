@@ -6,24 +6,19 @@ import com.intellij.mcpserver.noSuitableProjectError
 import com.intellij.mcpserver.util.findMostRelevantProject
 import com.intellij.mcpserver.util.findMostRelevantProjectForRoots
 import com.intellij.mcpserver.util.getPathForMcp
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 
-private val logger = logger<McpProjectLocationInputs>()
+private val logger = fileLogger()
 
-internal data class McpProjectLocationInputs(
-  val projectPathFromArgument: String?,
-  val projectPathFromCallHeader: String?,
-  val projectPathFromSessionHeader: String?,
-  val roots: Set<String>,
-) {
-  /**
-   * Resolves the target project using two modes:
-   * - strict mode when [projectPathParameterName] is provided into a tool call: match only by that value and fail immediately if it doesn't resolve.
-   * - chaining mode otherwise: try current-call header, then session header, then roots, logging every failed step.
-   */
-  suspend fun resolveProject(): Project {
+class McpSessionProjectResolverImpl: McpSessionProjectResolver {
+  override suspend fun resolveSessionProject(
+    projectPathFromArgument: String?,
+    projectPathFromCallHeader: String?,
+    projectPathFromSessionHeader: String?,
+    roots: Set<String>,
+  ): Project {
     logger.trace {
       "Resolving project... ${projectPathParameterName}: $projectPathFromArgument, callHeader: $projectPathFromCallHeader, " +
       "sessionHeader: $projectPathFromSessionHeader, roots: $roots"

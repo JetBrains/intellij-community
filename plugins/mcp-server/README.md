@@ -1041,7 +1041,7 @@ is captured automatically.
 ### 17.5 Project resolution
 
 Tool-call project resolution is performed in [`McpSessionHandler.kt`](src/com/intellij/mcpserver/impl/McpSessionHandler.kt) through
-[`McpProjectLocationInputs.kt`](src/com/intellij/mcpserver/impl/McpProjectLocationInputs.kt). The logic has two modes:
+[`McpSessionProjectResolverImpl.kt`](src/com/intellij/mcpserver/impl/McpSessionProjectResolverImpl.kt). The logic has two modes:
 
 1. Strict mode: if the tool call contains an explicit `projectPath` argument, MCP matches only by that value.
    If it doesn't resolve to an open project, the call fails immediately with `noSuitableProjectError`.

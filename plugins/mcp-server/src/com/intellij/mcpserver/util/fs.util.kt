@@ -1,7 +1,6 @@
 package com.intellij.mcpserver.util
 
 import com.intellij.mcpserver.mcpFail
-import com.intellij.openapi.components.DelegatingComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.trace
