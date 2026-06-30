@@ -53,6 +53,11 @@ public class K2SmartStepIntoTestGenerated extends AbstractK2SmartStepIntoTest {
         runTest("../testData/smartStepInto/constructor.kt");
     }
 
+    @TestMetadata("contextParameters.kt")
+    public void testContextParameters() throws Exception {
+        runTest("../testData/smartStepInto/contextParameters.kt");
+    }
+
     @TestMetadata("conventionMethod.kt")
     public void testConventionMethod() throws Exception {
         runTest("../testData/smartStepInto/conventionMethod.kt");
