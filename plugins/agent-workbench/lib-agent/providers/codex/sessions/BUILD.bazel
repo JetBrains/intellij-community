@@ -150,8 +150,6 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//plugins/agent-workbench/thread-view:agent-workbench-thread-view",
         "//plugins/agent-workbench/thread-view:agent-workbench-thread-view_test_lib",
-        "//plugins/agent-workbench/codex/thread-view:agent-workbench-codex-thread-view",
-        "//plugins/agent-workbench/codex/thread-view:agent-workbench-codex-thread-view_test_lib",
         "//plugins/agent-workbench/thread-view:agent-workbench-thread-view-tests",
         "//plugins/agent-workbench/thread-view:agent-workbench-thread-view-tests_test_lib",
         "//plugins/agent-workbench/lib-agent/filewatch",

@@ -980,10 +980,6 @@ plugins/IntelliLang
 plugins/IntelliLang/backend
 plugins/IntelliLang/tests
 plugins/agent-workbench/ai-review
-plugins/agent-workbench/claude/awb
-plugins/agent-workbench/codex/ide
-plugins/agent-workbench/codex/prompt-suggestions
-plugins/agent-workbench/codex/thread-view
 plugins/agent-workbench/engine
 plugins/agent-workbench/lib-agent/cli
 plugins/agent-workbench/lib-agent/common

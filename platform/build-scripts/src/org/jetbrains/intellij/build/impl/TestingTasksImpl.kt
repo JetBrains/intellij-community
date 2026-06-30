@@ -1490,7 +1490,6 @@ private suspend fun publishTestDiscovery(messages: BuildMessages, file: String?)
 private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.maven.server.eventListener.tests",
   "intellij.agent.workbench.chat.tests",
-  "intellij.agent.workbench.codex.prompt.suggestions.tests",
   "intellij.platform.ai.agent.cli.tests",
   "intellij.platform.ai.agent.common.tests",
   "intellij.platform.ai.agent.core.tests",
@@ -1508,9 +1507,6 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.agent.workbench.sessions.launch.config.backend.tests",
   "intellij.agent.workbench.settings.tests",
   "intellij.agent.workbench.ui.tests",
-  "intellij.agent.workbench.claude.awb.tests",
-  "intellij.agent.workbench.codex.chat.tests",
-  "intellij.agent.workbench.codex.ide.tests",
   "intellij.platform.ai.agent.claude.sessions.tests",
   "intellij.platform.ai.agent.junie.sessions.tests",
   "intellij.platform.ai.agent.pi.sessions.tests",

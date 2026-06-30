@@ -131,8 +131,8 @@ behavior; refresh mechanics and detailed tree rendering/interaction contracts li
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test "com.intellij.agent.workbench.sessions.AgentSession*IntegrationTest"`
 - `./tests.cmd --module intellij.agent.workbench.sessions.actions.tests --test "com.intellij.agent.workbench.sessions.AgentSessions*Test"`
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.settings.AgentWorkbenchSettingsConfigurableTest`
-- `./tests.cmd --module intellij.agent.workbench.claude.awb.tests --test "com.intellij.platform.ai.agent.claude.sessions.AgentSessionsSwingQuotaHintTest;com.intellij.platform.ai.agent.claude.sessions.AgentSessionsClaudeQuotaWidgetActionRegistrationTest"`
-- `./tests.cmd --module intellij.agent.workbench.claude.awb.tests --test "com.intellij.platform.ai.agent.claude.sessions.ClaudeQuotaHintStateServiceTest;com.intellij.platform.ai.agent.claude.sessions.ClaudeQuotaStatusBarWidgetTest"`
+- `./tests.cmd --module intellij.air.providers.claude.awb.tests --test "com.intellij.platform.ai.agent.claude.sessions.AgentSessionsSwingQuotaHintTest;com.intellij.platform.ai.agent.claude.sessions.AgentSessionsClaudeQuotaWidgetActionRegistrationTest"`
+- `./tests.cmd --module intellij.air.providers.claude.awb.tests --test "com.intellij.platform.ai.agent.claude.sessions.ClaudeQuotaHintStateServiceTest;com.intellij.platform.ai.agent.claude.sessions.ClaudeQuotaStatusBarWidgetTest"`
 
 ## References
 

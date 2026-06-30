@@ -36,7 +36,7 @@ The prompt popup can show context-aware suggestions before the user types. Sugge
   [@test] ../../prompt/ui/testSrc/AgentPromptDraftPersistenceDecisionsTest.kt
 
 - Codex-refined suggestions use app-server prompt-suggestion transport and map generated/refined candidates to the expected UI suggestion kind.
-  [@test] ../../codex/prompt-suggestions/testSrc/CodexAppServerPromptSuggestionBackendTest.kt
+  [@test] ../../../../../plugins/ij-air/providers/codex/prompt-suggestions/testSrc/CodexAppServerPromptSuggestionBackendTest.kt
   [@test] ../../lib-agent/providers/codex/common/testSrc/CodexAppServerProtocolTest.kt
 
 - Invalid AI responses are filtered candidate-by-candidate; duplicate/empty candidates are ignored without hiding valid fallback suggestions.
@@ -48,7 +48,7 @@ The prompt popup can show context-aware suggestions before the user types. Sugge
 ## Testing / Local Run
 - `./tests.cmd --module intellij.agent.workbench.prompt.core.tests --test "com.intellij.agent.workbench.prompt.core.AgentPrompt*Suggestion*Test"`
 - `./tests.cmd --module intellij.agent.workbench.prompt.ui.tests --test "com.intellij.agent.workbench.prompt.ui.AgentPrompt*Suggestion*Test"`
-- `./tests.cmd --module intellij.agent.workbench.codex.prompt.suggestions.tests --test "com.intellij.agent.workbench.codex.prompt.suggestions.Codex*Suggestion*Test"`
+- `./tests.cmd --module intellij.air.providers.codex.prompt.suggestions.tests --test "com.intellij.air.providers.codex.prompt.suggestions.Codex*Suggestion*Test"`
 - `./tests.cmd --module intellij.platform.ai.agent.codex.common.tests --test com.intellij.platform.ai.agent.codex.common.CodexAppServerProtocolTest`
 
 ## References
