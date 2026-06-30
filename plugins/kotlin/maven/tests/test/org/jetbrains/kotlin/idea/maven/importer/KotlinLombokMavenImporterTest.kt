@@ -1,25 +1,37 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.maven.importer
 
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertContain
+import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.createProjectSubDirs
+import com.intellij.maven.testFramework.fixtures.createProjectSubFile
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.testFramework.junit5.TestApplication
+import junit.framework.TestCase.assertEquals
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.maven.AbstractKotlinMavenImporterTest
-import org.junit.Ignore
-import org.junit.Test
-import org.junit.internal.runners.JUnit38ClassRunner
-import org.junit.runner.RunWith
+import org.jetbrains.kotlin.idea.maven.KotlinMavenImportingTestBase
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import kotlin.io.path.absolutePathString
 
-@RunWith(JUnit38ClassRunner::class)
-@Ignore("Test hangs on buildserver")
-class KotlinLombokMavenImporterTest : AbstractKotlinMavenImporterTest(false) {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+@Disabled("Test hangs on buildserver")
+class KotlinLombokMavenImporterTest(mavenVersion: String, modelVersion: String) :
+    KotlinMavenImportingTestBase(mavenVersion, modelVersion, createStdProjectFolders = false) {
     @Test
-    fun `test kotlin lombok with config import and check plugin classpath and options`() {
-        createProjectSubDirs("src/main/kotlin", "src/test/kotlin")
-        val absolutePath = createProjectSubFile("lombok.config", "lombok.getter.noisPrefix = true")
+    fun `test kotlin lombok with config import and check plugin classpath and options`() = runBlocking {
+        maven.createProjectSubDirs("src/main/kotlin", "src/test/kotlin")
+        val absolutePath = maven.createProjectSubFile("lombok.config", "lombok.getter.noisPrefix = true")
             .toNioPath()
             .absolutePathString()
 
-        importProject(
+        maven.importProjectAsync(
             """
             <groupId>test</groupId>
             <artifactId>project</artifactId>
@@ -84,7 +96,7 @@ class KotlinLombokMavenImporterTest : AbstractKotlinMavenImporterTest(false) {
             """
         )
 
-        assertModules("project")
+        maven.assertModules("project")
 
         with(facetSettings) {
             org.junit.Assert.assertEquals(
