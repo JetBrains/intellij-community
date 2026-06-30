@@ -251,12 +251,17 @@ object VcsLogNavigationUtil {
       }
       return row
     }
+
     val row = IntRef(VcsLogUiEx.COMMIT_NOT_FOUND)
     vcsLogData.storage.iterateCommits { candidate ->
       if (CommitIdByStringCondition.matches(candidate, partialHash)) {
         val candidateRow = getCommitRow(vcsLogData.storage, visiblePack, candidate.hash, candidate.root)
+        if (candidateRow >= 0) {
+          row.set(candidateRow)
+          return@iterateCommits false
+        }
+
         if (row.get() == VcsLogUiEx.COMMIT_NOT_FOUND) row.set(candidateRow)
-        return@iterateCommits candidateRow < 0
       }
       true
     }
