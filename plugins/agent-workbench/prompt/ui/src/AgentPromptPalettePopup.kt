@@ -236,8 +236,8 @@ internal fun createAgentPromptPaletteContent(
   try {
     val promptArea = AgentPromptTextField(
       project = project,
-      completionProvider = AgentPromptClaudeSlashCompletionProvider(
-        selectedProvider = { providerSelectorRef?.selectedProvider?.bridge?.provider },
+      completionProvider = AgentPromptCommandCompletionProvider(
+        selectedProvider = { providerSelectorRef?.selectedProvider?.bridge },
         resolveWorkingProjectPaths = {
           resolveWorkingProjectPathsForCompletion(
             project = project,
@@ -355,7 +355,7 @@ private fun resolveWorkingProjectPathsForCompletion(
                            ?: launcher
                              ?.resolveWorkingProjectPath(invocationData)
                              ?.takeIf { path -> path.isNotBlank() }
-  return resolveClaudeSlashCompletionProjectPaths(
+  return resolvePromptCommandCompletionProjectPaths(
     workingProjectPath = workingProjectPath,
     sourceProjectBasePath = sourceProjectBasePath,
     projectBasePath = project.basePath,
@@ -377,7 +377,7 @@ internal fun resolveProjectForComponent(component: Component?): Project? {
   return null
 }
 
-internal fun resolveClaudeSlashCompletionProjectPaths(
+internal fun resolvePromptCommandCompletionProjectPaths(
   workingProjectPath: String?,
   sourceProjectBasePath: String?,
   projectBasePath: String?,

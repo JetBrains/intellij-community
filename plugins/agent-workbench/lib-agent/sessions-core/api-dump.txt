@@ -617,6 +617,42 @@ f:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionLaunchProfi
 - sf:launchProfileEditablePayload(com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile):com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 - sf:launchProfileMatchesBuiltIn(com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile,com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile):Z
 - sf:normalizedUserLaunchProfile(com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile):com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
+f:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionMenuCommand
+- f:argumentHint:java.lang.String
+- f:command:java.lang.String
+- <init>(java.lang.String,java.lang.String):V
+- b:<init>(java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:copy(java.lang.String,java.lang.String):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionMenuCommand
+- bs:copy$default(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionMenuCommand,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionMenuCommand
+- equals(java.lang.Object):Z
+- hashCode():I
+f:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPromptCommandCompletionEntry
+- f:argumentHint:java.lang.String
+- f:command:java.lang.String
+- f:kind:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPromptCommandCompletionKind
+- f:sourceKey:java.lang.String
+- f:sourcePath:java.nio.file.Path
+- <init>(java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPromptCommandCompletionKind,java.lang.String,java.nio.file.Path,java.lang.String):V
+- b:<init>(java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPromptCommandCompletionKind,java.lang.String,java.nio.file.Path,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPromptCommandCompletionKind
+- f:component3():java.lang.String
+- f:component4():java.nio.file.Path
+- f:component5():java.lang.String
+- f:copy(java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPromptCommandCompletionKind,java.lang.String,java.nio.file.Path,java.lang.String):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPromptCommandCompletionEntry
+- bs:copy$default(com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPromptCommandCompletionEntry,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPromptCommandCompletionKind,java.lang.String,java.nio.file.Path,java.lang.String,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPromptCommandCompletionEntry
+- equals(java.lang.Object):Z
+- hashCode():I
+e:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPromptCommandCompletionKind
+- java.lang.Enum
+- sf:COMMAND:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPromptCommandCompletionKind
+- sf:MENU:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPromptCommandCompletionKind
+- sf:SKILL:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPromptCommandCompletionKind
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPromptCommandCompletionKind
+- s:values():com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPromptCommandCompletionKind[]
 e:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderCliVisibilityPolicy
 - java.lang.Enum
 - sf:DISCOVER_WHEN_AVAILABLE:com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderCliVisibilityPolicy

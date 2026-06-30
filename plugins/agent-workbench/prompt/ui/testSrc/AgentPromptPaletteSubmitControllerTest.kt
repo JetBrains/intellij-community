@@ -23,7 +23,6 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.ai.agent.common.session.isClaudeMenuCommandPrompt
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
@@ -34,6 +33,7 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AGENT_PROMPT_PROVI
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentPromptProviderOption
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionMenuCommand
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
@@ -791,6 +791,12 @@ class AgentPromptPaletteSubmitControllerTest {
       override val displayNameKey: String = if (provider == AgentSessionProvider.from("claude")) "provider.claude" else "provider.codex"
       override val newSessionLabelKey: String = displayNameKey
       override val promptOptions: List<AgentPromptProviderOption> = promptOptions
+      override val menuCommands: List<AgentSessionMenuCommand> = if (provider == AgentSessionProvider.from("claude")) {
+        listOf(AgentSessionMenuCommand("/rename", "[title]"))
+      }
+      else {
+        emptyList()
+      }
       override val sessionSource: AgentSessionSource
         get() = error("Not required for this test")
       override val cliMissingMessageKey: String = displayNameKey
@@ -808,10 +814,6 @@ class AgentPromptPaletteSubmitControllerTest {
 
       override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {
         return initialMessagePlanBuilder(request)
-      }
-
-      override fun shouldStripContextForPrompt(prompt: String): Boolean {
-        return this.provider == AgentSessionProvider.from("claude") && prompt.isClaudeMenuCommandPrompt()
       }
     }
   }

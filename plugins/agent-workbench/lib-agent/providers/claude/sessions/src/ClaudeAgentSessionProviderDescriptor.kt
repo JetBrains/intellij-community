@@ -3,7 +3,6 @@ package com.intellij.platform.ai.agent.claude.sessions
 
 import com.intellij.platform.ai.agent.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
-import com.intellij.platform.ai.agent.common.session.isClaudeMenuCommandPrompt
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModelGroup
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
@@ -16,6 +15,8 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessag
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentPromptProviderOption
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionMenuCommand
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPromptCommandCompletionEntry
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
@@ -155,8 +156,11 @@ internal class ClaudeAgentSessionProviderDescriptor(
     return CLAUDE_CODE_GENERATION_MODELS
   }
 
-  override fun shouldStripContextForPrompt(prompt: String): Boolean {
-    return prompt.isClaudeMenuCommandPrompt()
+  override val menuCommands: List<AgentSessionMenuCommand>
+    get() = CLAUDE_MENU_COMMANDS
+
+  override fun collectPromptCommandCompletionEntries(projectPaths: Iterable<String?>): List<AgentSessionPromptCommandCompletionEntry> {
+    return collectClaudePromptCommandCompletionEntries(projectPaths)
   }
 
   override fun applyGenerationSettings(
@@ -187,7 +191,7 @@ internal class ClaudeAgentSessionProviderDescriptor(
   }
 
   override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {
-    if (request.prompt.isClaudeMenuCommandPrompt()) {
+    if (isMenuCommandPrompt(request.prompt)) {
       return AgentInitialMessagePlan(
         message = request.prompt.trim(),
         startupPolicy = AgentInitialMessageStartupPolicy.POST_START_ONLY,

@@ -17,6 +17,7 @@ import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionSurfaceId
 import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionSurfaces
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 import javax.swing.Icon
 import javax.swing.JComponent
 
@@ -55,6 +56,25 @@ data class AgentInitialMessageProviderDispatchRequest(
 enum class AgentSessionProviderCliVisibilityPolicy {
   PROMINENT,
   DISCOVER_WHEN_AVAILABLE,
+}
+
+data class AgentSessionMenuCommand(
+  @JvmField val command: String,
+  @JvmField val argumentHint: String = "",
+)
+
+data class AgentSessionPromptCommandCompletionEntry(
+  @JvmField val command: String,
+  @JvmField val kind: AgentSessionPromptCommandCompletionKind,
+  @JvmField val sourceKey: String,
+  @JvmField val sourcePath: Path? = null,
+  @JvmField val argumentHint: String = "",
+)
+
+enum class AgentSessionPromptCommandCompletionKind {
+  MENU,
+  COMMAND,
+  SKILL,
 }
 
 typealias AgentThreadRenameAction = suspend (path: String, threadId: String, normalizedName: String) -> Boolean
@@ -484,6 +504,25 @@ interface AgentSessionProviderDescriptor {
     return emptyList()
   }
 
+  val menuCommands: List<AgentSessionMenuCommand>
+    get() = emptyList()
+
+  fun isMenuCommandPrompt(prompt: String): Boolean {
+    val token = prompt.leadingSlashCommandToken() ?: return false
+    return menuCommands.any { command -> command.command == token }
+  }
+
+  fun collectPromptCommandCompletionEntries(projectPaths: Iterable<String?>): List<AgentSessionPromptCommandCompletionEntry> {
+    return menuCommands.map { command ->
+      AgentSessionPromptCommandCompletionEntry(
+        command = command.command,
+        kind = AgentSessionPromptCommandCompletionKind.MENU,
+        sourceKey = command.command,
+        argumentHint = command.argumentHint,
+      )
+    }
+  }
+
   fun onConversationOpened() {
   }
 
@@ -513,7 +552,7 @@ interface AgentSessionProviderDescriptor {
 
   fun createToolWindowNorthComponent(project: Project): JComponent? = null
 
-  fun shouldStripContextForPrompt(prompt: String): Boolean = false
+  fun shouldStripContextForPrompt(prompt: String): Boolean = isMenuCommandPrompt(prompt)
 
   fun isCliMissingError(throwable: Throwable): Boolean = false
 
@@ -528,6 +567,14 @@ interface AgentSessionProviderDescriptor {
     val launchMode = if (yoloMarker != null && yoloMarker in launchSpec.command) "yolo" else "standard"
     return AgentPendingSessionMetadata(createdAtMs = System.currentTimeMillis(), launchMode = launchMode)
   }
+}
+
+private fun String.leadingSlashCommandToken(): String? {
+  val normalized = trimStart()
+  if (!normalized.startsWith('/')) {
+    return null
+  }
+  return normalized.takeWhile { char -> !char.isWhitespace() }
 }
 
 data class AgentSessionTerminalLaunchSpec(

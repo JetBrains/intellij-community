@@ -499,7 +499,7 @@ internal class AgentPromptPaletteSessionController(
     val sourceProjectBasePath = launcherProvider()
       ?.resolveSourceProject(invocationData)
       ?.basePath
-    return resolveClaudeSlashCompletionProjectPaths(
+    return resolvePromptCommandCompletionProjectPaths(
       workingProjectPath = submitController.resolveWorkingProjectPath(),
       sourceProjectBasePath = sourceProjectBasePath,
       projectBasePath = project.basePath,
@@ -531,14 +531,14 @@ internal class AgentPromptPaletteSessionController(
       return
     }
 
-    val selectedProvider = providerSelector.selectedProvider?.bridge?.provider
+    val selectedProvider = providerSelector.selectedProvider?.bridge
     val documentText = event.document.immutableCharSequence
     val sourceProjectBasePath = launcherProvider()
       ?.resolveSourceProject(invocationData)
       ?.basePath
-    if (shouldAutoPopupClaudeSlashCompletion(
+    if (shouldAutoPopupPromptCommandCompletion(
         selectedProvider = selectedProvider,
-        workingProjectPaths = resolveClaudeSlashCompletionProjectPaths(
+        workingProjectPaths = resolvePromptCommandCompletionProjectPaths(
           workingProjectPath = submitController.resolveWorkingProjectPath(),
           sourceProjectBasePath = sourceProjectBasePath,
           projectBasePath = project.basePath,
@@ -553,7 +553,7 @@ internal class AgentPromptPaletteSessionController(
     }
 
     if (!shouldAutoPopupCodexSkillCompletion(
-        selectedProvider = selectedProvider,
+        selectedProvider = selectedProvider?.provider,
         text = documentText,
         offsetAfterChange = event.offset + event.newLength,
         insertedFragment = event.newFragment,
@@ -597,7 +597,7 @@ internal class AgentPromptPaletteSessionController(
         val text = editor.document.immutableCharSequence
         val caretOffset = editor.caretModel.offset
         val currentPrefix = when (expectedPrefix) {
-          '/' -> findClaudeSlashCompletionPrefix(text, caretOffset)
+          '/' -> findPromptCommandCompletionPrefix(text, caretOffset)
           CODEX_SKILL_PREFIX -> findCodexSkillCompletionPrefix(text, caretOffset)
           else -> null
         }

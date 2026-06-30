@@ -139,7 +139,7 @@ class AgentPromptPalettePopupServiceTest {
       val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)
 
       assertThat(psiFile).isNotNull()
-      assertThat(TextCompletionUtil.getProvider(psiFile!!)).isInstanceOf(AgentPromptClaudeSlashCompletionProvider::class.java)
+      assertThat(TextCompletionUtil.getProvider(psiFile!!)).isInstanceOf(AgentPromptCommandCompletionProvider::class.java)
     }
     finally {
       withContext(Dispatchers.EDT) {
