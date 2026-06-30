@@ -494,6 +494,7 @@ private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins
   "intellij.spellchecker",
   "intellij.platform.structuralSearch",
   "intellij.xml.emmet",
+  "intellij.xml.dom.impl",
   "intellij.platform.ssh",
   "intellij.platform.ssh.core",
   "intellij.platform.ssh.core.ui",

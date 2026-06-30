@@ -214,7 +214,7 @@ object CommunityModuleSets {
    */
   fun xml(): ModuleSet = moduleSet("xml", alias = "com.intellij.modules.xml") {
     embeddedModule("intellij.xml.dom")
-    embeddedModule("intellij.xml.dom.impl")
+    module("intellij.xml.dom.impl")
     module("intellij.xml.structureView")
     module("intellij.xml.structureView.impl")
     embeddedModule("intellij.xml.psi")
@@ -241,7 +241,7 @@ object CommunityModuleSets {
    */
   fun xmlWithoutStructureView(): ModuleSet = moduleSet("xml.without.structureView", alias = "com.intellij.modules.xml") {
     embeddedModule("intellij.xml.dom")
-    embeddedModule("intellij.xml.dom.impl")
+    module("intellij.xml.dom.impl")
     embeddedModule("intellij.xml.psi")
     embeddedModule("intellij.xml.psi.impl")
     embeddedModule("intellij.xml.analysis")
