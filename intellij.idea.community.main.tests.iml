@@ -138,21 +138,16 @@
     <orderEntry type="module" module-name="intellij.java.rareRefactorings.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.lombok.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.concurrency.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.ai.review.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.thread.view.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.ai.agent.claude.sessions.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.ai.agent.codex.sessions.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.cli.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.codex.common.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ai.agent.common.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.core.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.filewatch.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ai.agent.json.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.opencode.sessions.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.pi.sessions.filewatch.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ai.agent.terminal.sessions.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.prompt.testrunner.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.prompt.ui.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.prompt.vcs.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.sessions.actions.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.sessions.jbcentral.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.sessions.launch.config.backend.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.sessions.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.sessions.toolwindow.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.ant.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.commander.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.community.wintools.tests" scope="TEST" />
