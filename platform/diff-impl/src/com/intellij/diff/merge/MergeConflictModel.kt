@@ -393,6 +393,7 @@ class MergeConflictModel(
 
   override fun dispose() {
     Disposer.dispose(resultModel)
+    mergeChanges = emptyList()
   }
 
   fun executeMergeCommand(
