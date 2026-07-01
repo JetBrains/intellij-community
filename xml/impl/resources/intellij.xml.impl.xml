@@ -223,23 +223,23 @@
 
     <localInspection language="XML" shortName="CheckValidXmlInScriptTagBody" enabledByDefault="true" level="ERROR"
                      bundle="messages.XmlBundle" key="html.inspections.check.valid.script.tag"
-                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     groupBundle="messages.XmlAnalysisBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.xml.util.CheckValidXmlInScriptBodyInspection"/>
     <localInspection language="XML" shortName="RequiredAttributes" enabledByDefault="true" level="WARNING"
                      bundle="messages.XmlBundle" key="xml.inspections.required.attributes.display.name"
-                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     groupBundle="messages.XmlAnalysisBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection"/>
     <localInspection language="HTML" shortName="HtmlUnknownTag" enabledByDefault="true" level="WARNING"
                      bundle="messages.XmlBundle" key="html.inspections.unknown.tag"
-                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     groupBundle="messages.XmlAnalysisBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection"/>
     <localInspection language="HTML" shortName="HtmlUnknownAttribute" enabledByDefault="true" level="WARNING"
                      bundle="messages.XmlBundle" key="html.inspections.unknown.attribute"
-                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     groupBundle="messages.XmlAnalysisBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection"/>
     <localInspection language="HTML" enabledByDefault="true" level="WARNING"
                      bundle="messages.XmlBundle" key="html.inspections.unknown.boolean.attribute"
-                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     groupBundle="messages.XmlAnalysisBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownBooleanAttributeInspection"/>
 
     <codeFoldingOptionsProvider instance="com.intellij.application.options.editor.XmlCodeFoldingOptionsProvider" id="XML" order="after Android,after C++,after General,after Go,after Handlebars,after JAVA,after JavaScript,after JPAQL,after JSON,after Kubernetes,after LinkerScript,after Markdown,after ObjectiveC,after PHP,after Python,after Ruby,after Rust,after SQL,after Swift"/>
