@@ -2,10 +2,11 @@
 
 Routing notes for AI coding agents working under `community/plugins/maven/`. Open the page you need; do not read everything. Repository-wide rules in the top-level `CLAUDE.md` always apply — this file adds Maven-specific overlays only.
 
+This plugin is indented to provide integration of Maven build tool into IntelliJ IDEA
+
 ## Module map
 
 The plugin is split across many JPS modules. Know which one you are touching before editing.
-
 ### IDE side (runs inside IntelliJ)
 
 | Module                          | Lives in                | Responsibility                                                              |
@@ -44,23 +45,22 @@ The plugin is split across many JPS modules. Know which one you are touching bef
 
 ## Subpages
 
+- [sync-process.md](sync-process.md) - Overview explanation how maven sync works
 - [server-process.md](server-process.md) — Maven server JVM: **process-boundary / RMI rules**, identity, startup path, lifecycle, what to change and where, common pitfalls. Read before editing anything under `src/main/java/org/jetbrains/idea/maven/server/`, `maven*-server-impl/`, `intellij.maven.model`, or any code that crosses the IDE↔server JVM boundary.
 
 ## Build & test
 
-- Compilation only: `./bazel.cmd build //community/plugins/maven/...`
-- Run IDE-side tests (FQN required — simple class names do not match):
-  - `./tests.cmd --module intellij.maven.tests --test org.jetbrains.idea.maven.<...>.SomeTest`
-  - Wildcards must be quoted: `./tests.cmd --module intellij.maven.tests --test 'org.jetbrains.idea.maven.importing.*'`
-- After editing any `*.iml`, `BUILD.bazel`, or `.idea/` file under this tree, run `./build/jpsModelToBazel.cmd` (repo-wide invariant — `*.iml` is the source of truth).
-- After writing code, run `lint_files` on edited files and fix warnings introduced by the change.
+Most Maven tests are parametrized. com.intellij.maven.testFramework.fixtures.MavenTestVersions.getMAVEN_VERSIONS used to get the parameters locally.
+Parameter consist of maven version and so-called pom model version(4.0.0 for maven 3, 4.1.0 for new maven 4). Maven 4 also supports 4.0.0 model version for backward compatibility
+Teamcity configuration uses other versions, defined in system property `maven.versions.to.run` which overrides hardcoded. Versions are separated by comma
+E.g. if one need to test the changes on very new maven release, they can run test with parameter -Dmaven.versions.to.run=4.1.0-SNAPSHOT/4.1.0,4.1.0-SNAPSHOT/4.0.0
+The test will be run on maven version 4.1.0-SNAPSHOT twice - with 4.0.0 and 4.1.0 model.
+
+All changes **MUST** be compatible with maven 3 and maven 4 with both models, unless the change explicitly for specific maven version. 
 
 ## House rules
 
-- User-visible strings go to the matching `*Bundle.properties` under `src/main/resources/messages/` (`MavenProjectBundle`, `MavenSyncBundle`, `MavenDomBundle`, `MavenConsoleBundle`, `MavenRunnerBundle`, `MavenIndicesBundle`, `MavenTasksBundle`, `MavenWizardBundle`, `MavenConfigurableBundle`). Never inline localizable text.
-- Preserve `*.iml` files in canonical form — no reformatting, comment additions, attribute reordering, or trailing-newline edits (see top-level `CLAUDE.md`).
 - Code ownership: `Java Build tools` (see `OWNERSHIP`).
-- When in doubt about the dynamic-sync module split (in progress), check the current memory entry before relocating files in `importing.workspaceModel/` or `importing.tree/`.
 - Avoid using String class to represent paths. When refactoring try to use java.nio.Path for paths in Intellij code, do not use java.io.File. java.io.File can be used in server code (see server-process.md)
 
 ## Routing
