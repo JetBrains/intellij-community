@@ -14,6 +14,7 @@ import com.intellij.driver.sdk.ui.components.elements.button
 import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.should
 import com.intellij.driver.sdk.ui.ui
+import com.intellij.ide.IdeBundle
 import javax.swing.JDialog
 import javax.swing.JFrame
 import javax.swing.JTextField
@@ -45,7 +46,7 @@ open class SettingsDialogUiComponent(data: ComponentData) : DialogUiComponent(da
     override fun collectExpandedPaths(): List<TreePathToRow> {
       return super.collectExpandedPaths().map {
         it.apply {
-          path = path.map { rowValue -> rowValue.substringBeforeLast(" New") } // remove "New" badge
+          path = path.map { rowValue -> rowValue.substringBeforeLast(" " + IdeBundle.message("badge.text.new")) } // remove "New" badge
         }
       }
     }

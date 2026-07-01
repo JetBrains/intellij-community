@@ -34,6 +34,7 @@ jvm_library(
         "//libraries/kotlinx/serialization/core",
         "//platform/remote-driver/model",
         "//platform/util",
+        "//platform/platform-api:ide",
     ],
 )
 
@@ -62,6 +63,7 @@ jvm_library(
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//platform/remote-driver/model:model_test_lib",
         "//platform/util:util_test_lib",
+        "//platform/platform-api:ide_test_lib",
     ],
 )
 ### auto-generated section `build intellij.driver.sdk` end
