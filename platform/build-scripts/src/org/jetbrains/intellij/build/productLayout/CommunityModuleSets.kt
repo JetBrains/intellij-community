@@ -228,7 +228,7 @@ object CommunityModuleSets {
     embeddedModule("intellij.xml.syntax")
     module("intellij.relaxng")
     module("intellij.xml.impl")
-    embeddedModule("intellij.xml.analysis.impl")
+    module("intellij.xml.analysis.impl")
     // embedded because intellij.xml.dom.impl which depends on it, is also embedded
     embeddedModule("intellij.libraries.cglib")
     embeddedModule("intellij.libraries.xerces")
@@ -253,7 +253,7 @@ object CommunityModuleSets {
     embeddedModule("intellij.xml.syntax")
     module("intellij.relaxng")
     module("intellij.xml.impl")
-    embeddedModule("intellij.xml.analysis.impl")
+    module("intellij.xml.analysis.impl")
     // embedded because intellij.xml.dom.impl which depends on it, is also embedded
     embeddedModule("intellij.libraries.cglib")
     embeddedModule("intellij.libraries.xerces")
