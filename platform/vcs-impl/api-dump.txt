@@ -26,6 +26,8 @@ c:com.intellij.diff.Block
 - s:tokenize(java.lang.String):java.lang.String[]
 f:com.intellij.diff.DiffVcsDataKeys
 - sf:INSTANCE:com.intellij.diff.DiffVcsDataKeys
+- sf:LOCAL_FILE:com.intellij.openapi.util.Key
+- sf:PATCH_BASE_INFO:com.intellij.openapi.util.Key
 - sf:REVISION_INFO:com.intellij.openapi.util.Key
 a:com.intellij.execution.ExecutableValidator
 - sf:TIMEOUT_MS:I
