@@ -275,9 +275,8 @@ object SpecifyRemainingArgumentsByNameUtil {
     }
 
     /**
-     * Given the list of [allCalls] that are possible, this function returns the minimum required arguments
-     * to complete any of the calls and the maximum arguments available (including context parameters).
-     * The largest overload is determined by value parameter count.
+     * Given the list of [allCalls] that are possible, this function returns the [RemainingArgumentsData] from the
+     * overload with the fewest required (not default) value parameters.
      */
     @OptIn(KaExperimentalApi::class)
     private fun KaSession.getRemainingArgumentsData(allCalls: List<KaCallCandidate>, existingArgumentsCount: Int): RemainingArgumentsData? {
@@ -288,19 +287,9 @@ object SpecifyRemainingArgumentsByNameUtil {
         val validPossibleCalls = allFunctionCalls.filter { it.symbol.hasStableParameterNames && isValidArgumentMapping(it.valueArgumentMapping) }
         if (validPossibleCalls.isEmpty()) return null
 
-        val smallestData = validPossibleCalls.minBy { call -> call.symbol.valueParameters.count { !it.hasDeclaredDefaultValue } }
-                .getRemainingArgumentsData(existingArgumentsCount) ?: return null
-        val largestData =
-            validPossibleCalls.maxBy { it.symbol.valueParameters.size }
-                .getRemainingArgumentsData(existingArgumentsCount) ?: return null
-
-        return RemainingArgumentsData(
-            smallestData.remainingRequiredArguments,
-            largestData.allValueRemainingArguments,
-            largestData.allContextRemainingArguments,
-            largestData.allContextParameterNames,
-            largestData.implicitContextArgumentNames
-        )
+        return validPossibleCalls
+            .minBy { call -> call.symbol.valueParameters.count { !it.hasDeclaredDefaultValue } }
+            .getRemainingArgumentsData(existingArgumentsCount)
     }
 
     /**
