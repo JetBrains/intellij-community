@@ -12,8 +12,8 @@ import com.intellij.platform.pluginGraph.PluginModuleId
 import com.intellij.platform.pluginGraph.TEST_DESCRIPTOR_SUFFIX
 import com.intellij.platform.pluginGraph.TargetDependencyScope
 import com.intellij.platform.pluginGraph.baseModuleName
-import com.intellij.platform.pluginGraph.contentName
 import com.intellij.platform.pluginGraph.containsEdge
+import com.intellij.platform.pluginGraph.contentName
 import com.intellij.platform.pluginGraph.isSlashNotation
 import com.intellij.platform.pluginGraph.isTestDescriptor
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
@@ -216,7 +216,7 @@ internal suspend fun computePluginContentFromDslSpec(
   }
 
   // Start with declared modules
-  for ((moduleId, _, _, allowedMissingPluginIds) in allModules) {
+  for ((moduleId, _, _, _, allowedMissingPluginIds) in allModules) {
     val moduleName = moduleId.contentName()
     queue.add(moduleName)
     parentByModule.put(moduleName, null)

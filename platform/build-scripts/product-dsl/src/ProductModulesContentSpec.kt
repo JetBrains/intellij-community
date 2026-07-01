@@ -329,12 +329,14 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
     name: String,
     namespace: String? = PluginModuleId.DEFAULT_NAMESPACE,
     loading: ModuleLoadingRuleValue = ModuleLoadingRuleValue.OPTIONAL,
+    requiredIfAvailable: String? = null,
     allowedMissingPluginIds: List<String> = emptyList(),
   ) {
     additionalModules.add(
       ContentModule(
         moduleId = PluginModuleId(name, namespace),
         loading = loading,
+        requiredIfAvailable = requiredIfAvailable?.let { PluginModuleId(it, PluginModuleId.DEFAULT_NAMESPACE) },
         allowedMissingPluginIds = allowedMissingPluginIds.map { PluginId(it) },
       )
     )
@@ -344,6 +346,13 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
       path = pathStack.toList(),
       sourceLocation = null,
     ))
+  }
+
+  /**
+   * Adds a module that is required when the IDE is running in the backend or monolith mode, and optional otherwise.
+   */
+  fun requiredModuleForBackend(name: String) {
+    module(name, requiredIfAvailable = "intellij.platform.backend")
   }
 
   /**
