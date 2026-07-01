@@ -35,6 +35,7 @@ import javax.swing.JFrame
 import javax.swing.JTextField
 import javax.swing.SwingUtilities
 import javax.swing.text.DefaultCaret
+import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -315,6 +316,87 @@ internal object WebViewFocusRobotTestSupport {
     }
   }
 
+  suspend fun runComboPopupClickScenario(
+    frame: JFrame,
+    scope: CoroutineScope,
+    engine: WebViewEngineBridge,
+    nativeHostPeer: NativeWebViewHostPeer,
+    tempDir: Path,
+  ) {
+    val robot = createRobotOrSkip()
+    val bus = WebViewMessageBusImpl(scope, engine)
+    val host = SwingWebViewHostPanel(scope, engine, bus.interop.createWebViewFocusEntrySink(), nativeHostPeer)
+    val focusRegistration = bus.interop.registerWebViewFocusExitHandler(host)
+    engine.connectMessageBus { rawJson -> bus.transferFromJs(rawJson) }
+    writeComboPopupPage(tempDir)
+
+    try {
+      SwingUtilities.invokeAndWait {
+        frame.contentPane.removeAll()
+        frame.contentPane.layout = BorderLayout()
+        frame.contentPane.add(host, BorderLayout.CENTER)
+        frame.toFront()
+        frame.revalidate()
+        frame.repaint()
+      }
+      assertTrue(waitUntilShowing(host, 5.seconds), "WebView host component did not become showing")
+
+      engine.loadAsset(WebViewAssetRoot.fromDirectory(tempDir), WebViewAssetPath.indexHtml())
+      waitForJavaScriptResult(
+        webView = engine,
+        script = "Boolean(window.__WVI__ && window['__wviComboPopupReady'])",
+        expected = "true",
+        description = "Combo popup Robot test page did not load WebView bridge and platform features",
+      )
+
+      clickWebElementCenter(robot, host, engine, "focus-input")
+      waitForJavaScriptResult(
+        webView = engine,
+        script = "document.activeElement && document.activeElement.id === 'focus-input'",
+        expected = "true",
+        description = "Robot preflight click did not focus the WebView input",
+      )
+      waitForJavaScriptResult(
+        webView = engine,
+        script = "Boolean(window.__wviResetComboPopupState?.())",
+        expected = "true",
+        description = "Combo popup Robot test page did not expose state reset hook",
+      )
+
+      clickWebElementCenter(robot, host, engine, "combo-trigger")
+      waitForJavaScriptResult(
+        webView = engine,
+        script = "window.__wviComboPopupState?.afterAnimationFrames === true",
+        expected = "true",
+        description = "Combo popup did not reach the post-click animation frame checkpoint",
+      )
+      val popupStayedOpen = engine.evaluateJavaScript("""
+        (() => {
+          const state = window.__wviComboPopupState;
+          return Boolean(state
+            && state.pointerDownCount === 1
+            && state.clickCount === 1
+            && state.blurCount === 0
+            && state.open === true
+            && state.openAfterAnimationFrames === true);
+        })()
+      """.trimIndent())
+      val comboState = engine.evaluateJavaScript("JSON.stringify(window.__wviComboPopupState)")
+      assertEquals(
+        "true",
+        popupStayedOpen,
+        "Combo popup closed or WebView window blurred after Robot mouse click, state=$comboState",
+      )
+    }
+    finally {
+      focusRegistration.close()
+      bus.close()
+      SwingUtilities.invokeAndWait {
+        frame.contentPane.removeAll()
+      }
+    }
+  }
+
   private fun createRobotOrSkip(): Robot {
     return runCatching {
       Robot().apply {
@@ -333,6 +415,10 @@ internal object WebViewFocusRobotTestSupport {
 
   private fun writeNonTabbableSelectionPage(root: Path) {
     Files.writeString(root.resolve("index.html"), nonTabbableSelectionHtml())
+  }
+
+  private fun writeComboPopupPage(root: Path) {
+    Files.writeString(root.resolve("index.html"), comboPopupHtml())
   }
 
   private fun focusInteropHtml(): String = """
@@ -406,6 +492,161 @@ internal object WebViewFocusRobotTestSupport {
     </body>
     </html>
   """.trimIndent()
+
+  private fun comboPopupHtml(): String {
+    @Language("HTML")
+    val html = """
+      <!doctype html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          html, body {
+            margin: 0;
+            width: 100vw;
+            height: 100vh;
+          }
+
+          body {
+            display: grid;
+            place-items: center;
+            font: 13px sans-serif;
+          }
+
+          #focus-input {
+            position: absolute;
+            left: 24px;
+            top: 24px;
+            width: 180px;
+            height: 28px;
+          }
+
+          #native-select {
+            position: absolute;
+            left: 24px;
+            top: 68px;
+            width: 180px;
+            height: 28px;
+          }
+
+          #combo-root {
+            position: relative;
+          }
+
+          #combo-trigger {
+            width: 220px;
+            height: 32px;
+          }
+
+          #combo-popup {
+            position: absolute;
+            left: 0;
+            top: 38px;
+            width: 220px;
+            border: 1px solid #777;
+            background: white;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+          }
+
+          #combo-popup[hidden] {
+            display: none;
+          }
+
+          .option {
+            padding: 6px 8px;
+          }
+        </style>
+        <script src="/__webview/wvi-bridge.js"></script>
+        <script src="/__webview/wvi-platform-features.js"></script>
+      </head>
+      <body>
+        <input id="focus-input" value="focus target">
+        <select id="native-select" aria-label="Native priority select">
+          <option>All priorities</option>
+          <option>High</option>
+          <option>Low</option>
+        </select>
+        <div id="combo-root">
+          <button id="combo-trigger" type="button" role="combobox" aria-expanded="false" aria-controls="combo-popup">Mock Agent</button>
+          <div id="combo-popup" role="listbox" hidden>
+            <div class="option" role="option">Mock Agent</div>
+            <div class="option" role="option">Open acp.json</div>
+          </div>
+        </div>
+        <script>
+          const state = {
+            pointerDownCount: 0,
+            clickCount: 0,
+            blurCount: 0,
+            open: false,
+            afterAnimationFrames: false,
+            openAfterAnimationFrames: false,
+            documentHasFocusAfterAnimationFrames: false,
+            activeElementAfterAnimationFrames: "",
+            events: [],
+          };
+          window.__wviComboPopupState = state;
+
+          const trigger = document.getElementById("combo-trigger");
+          const popup = document.getElementById("combo-popup");
+
+          function setOpen(open) {
+            state.open = open;
+            trigger.setAttribute("aria-expanded", String(open));
+            popup.hidden = !open;
+          }
+
+          window.__wviResetComboPopupState = () => {
+            state.pointerDownCount = 0;
+            state.clickCount = 0;
+            state.blurCount = 0;
+            state.afterAnimationFrames = false;
+            state.openAfterAnimationFrames = false;
+            state.documentHasFocusAfterAnimationFrames = false;
+            state.activeElementAfterAnimationFrames = "";
+            state.events.length = 0;
+            setOpen(false);
+            return true;
+          };
+
+          trigger.addEventListener("pointerdown", event => {
+            if (event.button !== 0) return;
+            event.preventDefault();
+            state.afterAnimationFrames = false;
+            state.events.push("pointerdown");
+            state.pointerDownCount++;
+            setOpen(true);
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+              state.afterAnimationFrames = true;
+              state.openAfterAnimationFrames = state.open;
+              state.documentHasFocusAfterAnimationFrames = document.hasFocus();
+              state.activeElementAfterAnimationFrames = document.activeElement?.id || document.activeElement?.tagName || "";
+              state.events.push("afterAnimationFrames");
+            }));
+          });
+
+          trigger.addEventListener("click", () => {
+            state.events.push("click");
+            state.clickCount++;
+          });
+
+          window.addEventListener("focus", () => {
+            state.events.push("window-focus");
+          });
+
+          window.addEventListener("blur", () => {
+            state.events.push("window-blur");
+            state.blurCount++;
+            setOpen(false);
+          });
+
+          window.__wviComboPopupReady = true;
+        </script>
+      </body>
+      </html>
+    """
+    return html.trimIndent()
+  }
 
   private suspend fun waitForJavaScriptResult(
     webView: WebViewEngineBridge,
@@ -559,6 +800,31 @@ internal object WebViewFocusRobotTestSupport {
     }
     val center = point[0]!!
     robot.mouseMove(center.x, center.y)
+    robot.mousePress(InputEvent.BUTTON1_DOWN_MASK)
+    robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK)
+    robot.waitForIdle()
+  }
+
+  private suspend fun clickWebElementCenter(robot: Robot, host: Component, webView: WebViewEngineBridge, elementId: String) {
+    val center = webView.evaluateJavaScript("""
+      (() => {
+        const element = document.getElementById('$elementId');
+        if (!element) return '';
+        const rect = element.getBoundingClientRect();
+        return (rect.left + rect.width / 2) + ',' + (rect.top + rect.height / 2);
+      })()
+    """.trimIndent())
+    val centerValue = center?.trim()?.removeSurrounding("\"").orEmpty()
+    val parts = centerValue.split(',')
+    assertEquals(2, parts.size, "Cannot resolve WebView element center for #$elementId, jsResult=$center")
+
+    val point = arrayOfNulls<Point>(1)
+    SwingUtilities.invokeAndWait {
+      val location = host.locationOnScreen
+      point[0] = Point(location.x + parts[0].toDouble().roundToInt(), location.y + parts[1].toDouble().roundToInt())
+    }
+    val target = point[0]!!
+    robot.mouseMove(target.x, target.y)
     robot.mousePress(InputEvent.BUTTON1_DOWN_MASK)
     robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK)
     robot.waitForIdle()

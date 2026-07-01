@@ -138,6 +138,28 @@ test("shows hardcoded Junie first and opens acp.json from the agent selector", a
   expect(openConfigCalls.length).toBeGreaterThan(0)
 })
 
+test("keeps the agent selector open after pointer click", async ({ page }) => {
+  if (!preview) {
+    throw new Error("ACP chat mock preview server was not started")
+  }
+  await page.goto(preview.url)
+
+  const trigger = page.locator(".acpAgentSelect")
+  await clickCenter(page, trigger)
+  await expect(page.getByRole("option", { name: "Mock Agent" })).toBeVisible()
+  await expect(page.getByRole("option", { name: "Open acp.json" })).toBeVisible()
+
+  await waitForTwoAnimationFrames(page)
+  await expect(page.getByRole("option", { name: "Mock Agent" })).toBeVisible()
+  await expect(page.getByRole("option", { name: "Open acp.json" })).toBeVisible()
+  const selectorStillOpen = await page.evaluate(() => {
+    const trigger = document.querySelector(".acpAgentSelect")
+    return trigger?.getAttribute("data-state") === "open"
+      && trigger?.getAttribute("aria-expanded") === "true"
+  })
+  expect(selectorStillOpen).toBe(true)
+})
+
 test("renders ACP chat in a real browser with a mock agent", async ({ page }) => {
   if (!preview) {
     throw new Error("ACP chat mock preview server was not started")
@@ -859,6 +881,20 @@ async function openPreview(page: Page): Promise<void> {
     throw new Error("ACP chat mock preview server was not started")
   }
   await page.goto(preview.url)
+}
+
+async function clickCenter(page: Page, locator: Locator): Promise<void> {
+  const box = await locator.boundingBox()
+  if (!box) throw new Error("Cannot click an element without a rendered bounding box")
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await page.mouse.down()
+  await page.mouse.up()
+}
+
+async function waitForTwoAnimationFrames(page: Page): Promise<void> {
+  await page.evaluate(() => new Promise<void>(resolve => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+  }))
 }
 
 async function startMockAgent(page: Page): Promise<void> {

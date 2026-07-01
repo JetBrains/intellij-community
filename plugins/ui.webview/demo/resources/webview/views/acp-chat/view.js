@@ -2272,7 +2272,7 @@ function AgentSelector(props) {
 		label: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AgentSelectItem, { agent }),
 		textValue: agent.name
 	}));
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		className: "acpAgentSelector",
 		children: [
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {

@@ -80,6 +80,7 @@ internal class SwingWebViewHostPanel(
 
   internal companion object {
     private const val PAGE_FOCUS_ENTRY_FALLBACK_DELAY_MS = 100
+    private const val HOST_MOUSE_NATIVE_FOCUS_SUPPRESSION_NANOS = 500_000_000L
 
     fun calculateNativeFrame(host: Component, anchor: Component): NativeFrame {
       val hostOrigin = SwingUtilities.convertPoint(host, 0, 0, anchor)
@@ -191,6 +192,7 @@ internal class SwingWebViewHostPanel(
   private var pendingExitDirection: WebViewFocusDirection? = null
   private var pageFocusHandledForCurrentActivation = false
   private var nativeFocusRestoreRequestedForCurrentActivation = false
+  private var hostMouseActivationNanos = 0L
   private var pageFocusFallbackTimer: Timer? = null
   private var nativePeerAttached = false
   private var heavyweightRegistration: Disposable? = null
@@ -198,14 +200,17 @@ internal class SwingWebViewHostPanel(
   private val webViewFocusListener = object : FocusAdapter() {
     override fun focusGained(e: FocusEvent) {
       if (e.isTemporary) return
+      val cause = e.cause
       val wasFocusInside = focusInsideHost
       focusInsideHost = true
       pendingExitDirection = null
-      requestWebViewFocus()
+      if (shouldRequestNativeFocusOnSwingFocusGained(cause)) {
+        requestWebViewFocus()
+      }
       if (wasFocusInside) return
 
-      val direction = e.cause.toWebViewFocusDirection() ?: return
-      WebViewLogger.LOG.debug("WebView focus entered host: direction=$direction, cause=${e.cause}")
+      val direction = cause.toWebViewFocusDirection() ?: return
+      WebViewLogger.LOG.debug("WebView focus entered host: direction=$direction, cause=$cause")
       enterWebViewFocus(direction)
     }
 
@@ -215,6 +220,7 @@ internal class SwingWebViewHostPanel(
       pendingExitDirection = null
       pageFocusHandledForCurrentActivation = false
       nativeFocusRestoreRequestedForCurrentActivation = false
+      hostMouseActivationNanos = 0L
       cancelPageFocusEntryFallback()
     }
   }
@@ -373,9 +379,12 @@ internal class SwingWebViewHostPanel(
 
   internal fun activateWebViewFocus() {
     runOnEdt {
+      // This is called from the page-side pointerdown focus interop handler. The native WebView
+      // already owns the mouse event, so avoid a programmatic native focus move in the same click.
+      rememberHostMouseActivation()
       pageFocusHandledForCurrentActivation = true
       cancelPageFocusEntryFallback()
-      activateWebViewFocusOnEdt(requestNativeFocus = true)
+      activateWebViewFocusOnEdt(requestNativeFocus = false)
     }
   }
 
@@ -385,11 +394,14 @@ internal class SwingWebViewHostPanel(
         WebViewLogger.LOG.debug("Ignoring native WebView focus gain because host is not showing")
         return@runOnEdt
       }
+      val restoreNativeFocus = !isHostMouseActivationInProgress()
       activateWebViewFocusOnEdt(requestNativeFocus = false)
       if (!pageFocusHandledForCurrentActivation) {
         schedulePageFocusEntryFallback()
       }
-      restoreNativeFocusAfterSwingActivation()
+      if (restoreNativeFocus) {
+        restoreNativeFocusAfterSwingActivation()
+      }
     }
   }
 
@@ -591,8 +603,46 @@ internal class SwingWebViewHostPanel(
 
   private fun activateWebViewFocusFromHostMouse() {
     if (!isShowing) return
-    activateWebViewFocusOnEdt(requestNativeFocus = true)
+    rememberHostMouseActivation()
+    activateWebViewFocusOnEdt(requestNativeFocus = false)
     schedulePageFocusEntryFallback()
+  }
+
+  private fun rememberHostMouseActivation() {
+    hostMouseActivationNanos = System.nanoTime()
+  }
+
+  /**
+   * Returns whether a Swing focus gain should be mirrored to the native WebView with an explicit
+   * native focus request.
+   *
+   * There are two different focus-entry paths and they must not be handled the same way:
+   *
+   * 1. Keyboard/traversal entry starts in Swing. In that case the Swing host becomes focused first,
+   *    while the browser/native child window may still not own native focus. We must call
+   *    [requestWebViewFocus] so the next keyboard event is delivered to the WebView rather than to
+   *    the surrounding IDE component.
+   *
+   * 2. Mouse entry starts in the native WebView window. The mouse event is already being processed by
+   *    WebView2 and the browser will perform its normal focus/default-action handling for that click.
+   *    Calling native focus again from Swing during the same pointer pipeline is observable by the
+   *    page as a transient `window.blur`/`window.focus` bounce on Windows WebView2. Browser popups and
+   *    Radix-style custom popups often close on `window.blur`, so that extra programmatic focus move
+   *    makes a click-opened popup flash and immediately close.
+   *
+   * [FocusEvent.Cause.MOUSE_EVENT] covers the direct Swing focus event. [isHostMouseActivationInProgress]
+   * covers the asynchronous case where the page-side pointerdown focus interop callback or native
+   * focus-gained callback reaches Swing before/around the Swing focus event. The short timestamp
+   * window lets us keep the whole mouse activation as one browser-owned operation without changing
+   * keyboard/traversal behavior after the click has settled.
+   */
+  private fun shouldRequestNativeFocusOnSwingFocusGained(cause: FocusEvent.Cause): Boolean {
+    return cause != FocusEvent.Cause.MOUSE_EVENT && !isHostMouseActivationInProgress()
+  }
+
+  private fun isHostMouseActivationInProgress(): Boolean {
+    val activationNanos = hostMouseActivationNanos
+    return activationNanos != 0L && System.nanoTime() - activationNanos <= HOST_MOUSE_NATIVE_FOCUS_SUPPRESSION_NANOS
   }
 
   private fun enterWebViewFocus(direction: WebViewFocusDirection) {
@@ -623,7 +673,7 @@ internal class SwingWebViewHostPanel(
     if (nativeFocusRestoreRequestedForCurrentActivation) return
     nativeFocusRestoreRequestedForCurrentActivation = true
     SwingUtilities.invokeLater {
-      if (isShowing && focusInsideHost) {
+      if (isShowing && focusInsideHost && !isHostMouseActivationInProgress()) {
         requestWebViewFocus()
       }
     }

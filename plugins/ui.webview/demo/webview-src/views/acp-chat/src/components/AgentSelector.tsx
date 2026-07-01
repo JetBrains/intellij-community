@@ -17,7 +17,7 @@ export function AgentSelector(props: {
   const selectedAgent = props.agents.find(agent => agent.id === props.selectedAgentId)
   const options = props.agents.map(agent => ({ value: agent.id, label: <AgentSelectItem agent={agent} />, textValue: agent.name }))
   return (
-    <label className="acpAgentSelector">
+    <div className="acpAgentSelector">
       <span className="acpAgentSelectorIcon" title="Agent" aria-hidden="true">
         <jb-icon src={acpIconSrc(AGENT_ICON_PATH)} />
       </span>
@@ -48,7 +48,7 @@ export function AgentSelector(props: {
         </SelectItem>
       </Select>
       {props.starting && <span className="acpAgentStarting">Starting…</span>}
-    </label>
+    </div>
   )
 }
 

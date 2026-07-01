@@ -370,7 +370,7 @@ class SwingWebViewHostPanelGeometryTest {
   }
 
   @Test
-  fun mouseFocusEntry_requestsWebViewFocusWithoutForcingPageBoundary() {
+  fun mouseFocusEntry_doesNotForceNativeWebViewFocusOrPageBoundary() {
     val engine = FakeComponentBackedEngine()
     val focusEntrySink = RecordingFocusEntrySink()
     @Suppress("RAW_SCOPE_CREATION") // Test scope has no parent in this pure Swing geometry test.
@@ -382,7 +382,7 @@ class SwingWebViewHostPanelGeometryTest {
         listener.focusGained(FocusEvent(host, FocusEvent.FOCUS_GAINED, false, null, FocusEvent.Cause.MOUSE_EVENT))
       }
 
-      assertEquals(1, engine.requestFocusCount)
+      assertEquals(0, engine.requestFocusCount)
       assertEquals(emptyList<WebViewFocusDirection>(), focusEntrySink.entries)
     }
     finally {
