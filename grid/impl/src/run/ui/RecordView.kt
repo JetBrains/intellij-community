@@ -49,8 +49,10 @@ class RecordView(
   private val grid: DataGrid,
   private val openValueEditorTab: () -> Unit
 ) : CellViewer, Disposable {
-  @Volatile var isTwoColumnsLayout = false
-  @Volatile var isValidPanel = true
+  @Volatile
+  internal var isTwoColumnsLayout = false
+  @Volatile
+  internal var isValidPanel = true
 
   private val dataModel = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS)
 
@@ -163,7 +165,6 @@ class RecordView(
       val vGroupColumn1 = layout.createSequentialGroup()
 
       uiElements.forEach { (field, nameLabel) ->
-
         val hGroupNameRow = layout.createSequentialGroup()
         hGroupNameRow.addGap(JBUIScale.scale(12))
         hGroupNameRow.addComponent(nameLabel)
@@ -175,11 +176,13 @@ class RecordView(
         hGroupValueRow.addComponent(field, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE.toInt())
         hGroupValueRow.addGap(JBUIScale.scale(9))
         hGroup.addGroup(hGroupValueRow)
+        val namePreferredHeight = nameLabel.preferredSize.height
         val fieldPreferredHeight = field.preferredSize.height
 
         vGroupColumn1.addContainerGap()
-        vGroupColumn1.addComponent(nameLabel, fieldPreferredHeight, fieldPreferredHeight, fieldPreferredHeight)
+        vGroupColumn1.addComponent(nameLabel, namePreferredHeight, namePreferredHeight, namePreferredHeight)
         vGroupColumn1.addComponent(field, fieldPreferredHeight, fieldPreferredHeight, fieldPreferredHeight)
+        vGroupColumn1.addGap(JBUIScale.scale(10))
       }
 
       vGroup.addGroup(vGroupColumn1)
@@ -331,10 +334,10 @@ class RecordView(
 
     }
 
-    fun updateColor(columnIdx: ModelIndex<GridColumn>) = textFields[columnIdx]?.let { textField ->
+    private fun updateColor(columnIdx: ModelIndex<GridColumn>) = textFields[columnIdx]?.let { textField ->
       textField.background = colorLayer.getCellBackground(rowIdx, columnIdx, grid, null) ?: textField.originalBackground
     }
-    fun updateText(columnIdx: ModelIndex<GridColumn>) = textFields[columnIdx]?.let { textField ->
+    private fun updateText(columnIdx: ModelIndex<GridColumn>) = textFields[columnIdx]?.let { textField ->
       textField.text = textConvertors[columnIdx]?.toText(dataModel.getValueAt(rowIdx, columnIdx))!!
       textField.caretPosition = 0
     }
@@ -346,7 +349,7 @@ class RecordView(
         (textField.parent as JComponent?)?.scrollRectToVisible(textField.bounds)
       }
     }
-    fun updateConvertor(columnIdx: ModelIndex<GridColumn>) {
+    private fun updateConvertor(columnIdx: ModelIndex<GridColumn>) {
       val currentConvertor = textConvertors[columnIdx]
       if (currentConvertor == null || currentConvertor.request.rowIdx != rowIdx || currentConvertor.request.columnIdx != columnIdx) {
         textConvertors[columnIdx] = Convertor(grid.request(rowIdx, columnIdx))
@@ -363,7 +366,7 @@ class RecordView(
         }
       )
     }
-    fun setSelectionInGrid(columnIdx: ModelIndex<GridColumn>) = textFields[columnIdx]?.let { textField ->
+    private fun setSelectionInGrid(columnIdx: ModelIndex<GridColumn>) = textFields[columnIdx]?.let { textField ->
       val resultView = grid.resultView
       if (resultView is TreeTableResultView) {
         resultView.tryExpand(rowIdx)
