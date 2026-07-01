@@ -103,7 +103,7 @@ class BacktickReference(element: MarkdownCodeSpan, range: TextRange) :
   }
 
   private fun shouldSearchInSymbols(elementName: String): Boolean =
-    elementName.length >= Registry.intValue("markdown.backtick.reference.symbol.length") || NameUtil.nameToWordList(elementName).size > 1
+    elementName.length >= Registry.intValue("markdown.backtick.reference.symbol.length") && NameUtil.nameToWordList(elementName).size > 1
 
   private fun isFile(): Boolean {
     val filetype = FileTypeRegistry.getInstance().getFileTypeByFileName(canonicalText)

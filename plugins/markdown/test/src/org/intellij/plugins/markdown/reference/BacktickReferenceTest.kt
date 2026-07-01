@@ -83,11 +83,11 @@ class BacktickReferenceTest : BasePlatformTestCase() {
       "JavaClass1.java",
       """
         class JavaClass1 {
-           public void longlonglong() {}
+           public void longLongLong() {}
         }
       """.trimIndent()
     )
-    assertResolvesToPsiMethod("some1.md", "There is an `longlo<caret>nglong` backtick")
+    assertResolvesToPsiMethod("some1.md", "There is an `longLong<caret>Long` backtick")
   }
 
   @Test
@@ -96,21 +96,21 @@ class BacktickReferenceTest : BasePlatformTestCase() {
       "JavaClass.java",
       """
         class JavaClass {
-           public void sho_test() {}
+           public void boundary_test() {}
         }
       """.trimIndent()
     )
-    assertResolvesToPsiMethod("some.md", "There is an `sho<caret>_test` backtick")
+    assertResolvesToPsiMethod("some.md", "There is an `boundary<caret>_test` backtick")
 
     createFile(
       "JavaClass1.java",
       """
         class JavaClass1 {
-           public void shoTest() {}
+           public void boundaryTest() {}
         }
       """.trimIndent()
     )
-    assertResolvesToPsiMethod("some1.md", "There is an `sho<caret>Test` backtick")
+    assertResolvesToPsiMethod("some1.md", "There is an `boundary<caret>Test` backtick")
   }
 
   @Test
