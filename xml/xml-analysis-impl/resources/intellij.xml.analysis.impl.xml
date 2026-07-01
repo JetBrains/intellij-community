@@ -149,13 +149,13 @@
     <intentionAction>
       <language>XML</language>
       <categoryKey>xml.category</categoryKey>
-      <bundleName>messages.XmlBundle</bundleName>
+      <bundleName>messages.XmlAnalysisBundle</bundleName>
       <className>com.intellij.xml.util.CollapseTagIntention</className>
     </intentionAction>
     <intentionAction>
       <language>XML</language>
       <categoryKey>xml.category</categoryKey>
-      <bundleName>messages.XmlBundle</bundleName>
+      <bundleName>messages.XmlAnalysisBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix</className>
     </intentionAction>
 
