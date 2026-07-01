@@ -17,7 +17,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.tuweni.toml.Toml
 import org.apache.tuweni.toml.TomlInvalidTypeException
-import org.apache.tuweni.toml.TomlParseError
 import org.apache.tuweni.toml.TomlParseResult
 import org.apache.tuweni.toml.TomlTable
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -123,10 +122,8 @@ data class PyProjectToml(
     }
 
     /**
-     * TODO: REDOC
-     * Attempts to parse [inputStream] and construct an instance of [PyProjectToml].
-     * On success, returns an instance of [Result.Success] with an instance of [PyProjectToml].
-     * On failure, returns an instance of [Result.Failure] with a list of [TomlParseError]s and [TomlTable] itself.
+     * Attempts to parse [tomlFileContent] and construct an instance of [PyProjectToml].
+     * In case of serious errors (e.g. no `project.name`) returns `null`. Otherwise, returns an object with data and issues.
      *
      * Example:
      *
