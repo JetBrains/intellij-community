@@ -170,6 +170,10 @@ final class GenerateMemberItemProvider extends JavaModCompletionItemProvider {
                                                                     PsiClass targetClass) {
 
     CommonCompletionItem.UpdateHandler handler = (int completionStart, ModPsiUpdater updater) -> {
+      PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(updater.getPsiFile().findElementAt(completionStart));
+      if (prev instanceof PsiAnnotation annotation && annotation.textMatches("@Override")) {
+        completionStart = annotation.getTextRange().getStartOffset();
+      }
       removeLookupString(completionStart, updater);
 
       PsiClass parent = PsiTreeUtil.findElementOfClassAtOffset(updater.getPsiFile(), completionStart, PsiClass.class, false);
