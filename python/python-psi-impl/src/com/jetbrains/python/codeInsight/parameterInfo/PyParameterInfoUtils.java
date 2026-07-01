@@ -42,6 +42,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isAnyOrUnknown;
+
 @ApiStatus.Internal
 public final class PyParameterInfoUtils {
 
@@ -143,7 +145,7 @@ public final class PyParameterInfoUtils {
               parameterDescription.setAnnotation(last ? annotationText : (annotationText + ", "));
             }
           }
-          stringBuilder.append(parameter.getPresentableText(true, context, type -> type == null || type instanceof PyStructuralType));
+          stringBuilder.append(parameter.getPresentableText(true, context, true, type -> isAnyOrUnknown(type) || type instanceof PyStructuralType));
           if (!last) stringBuilder.append(", ");
           final int hintIndex = parameterDescriptions.size();
           parameterToHintIndex.put(parameter, hintIndex);
