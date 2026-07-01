@@ -10,6 +10,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.instanceContainer.instantiation.InstantiationException
 import com.intellij.platform.instanceContainer.instantiation.instantiate
 import com.intellij.platform.instanceContainer.internal.InstanceInitializer
@@ -58,7 +59,7 @@ internal abstract class ServiceInstanceInitializer(
     }
 
     if (instance is Disposable) {
-      registerWithServiceParent(componentManager, instance, instanceClass)
+      Disposer.register(componentManager.serviceParentDisposable, instance)
     }
 
     // do not call Cancellation.withNonCancelableSection or perform any other setup if the service doesn't need to be initialized

@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "LeakingThis", "ReplaceJavaStaticMethodWithKotlinAnalog", "INVISIBLE_REFERENCE")
+@file:Suppress("ReplaceGetOrSet", "LeakingThis", "ReplaceJavaStaticMethodWithKotlinAnalog")
 @file:Internal
 package com.intellij.serviceContainer
 
@@ -69,7 +69,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.getLockPermitContext
 import com.intellij.openapi.progress.prepareThreadContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
@@ -96,20 +95,7 @@ import com.intellij.util.messages.impl.MessageDeliveryListener
 import com.intellij.util.messages.impl.PluginListenerDescriptor
 import com.intellij.util.messages.impl.listenerClassName
 import com.intellij.util.runSuppressing
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.EventLoopImplBase
-import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.ThreadLocalEventLoop
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -302,7 +288,7 @@ abstract class ComponentManagerImpl(
   }
 
   @JvmField
-  internal val serviceParentDisposable: CheckedDisposable = Disposer.newCheckedDisposable("services of ${debugString()}")
+  internal val serviceParentDisposable: Disposable = Disposer.newDisposable("services of ${debugString()}")
 
   protected open val isLightServiceSupported: Boolean
     get() = parent?.parent == null

@@ -4,6 +4,7 @@ package com.intellij.serviceContainer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.instanceContainer.internal.InstanceInitializer
 import kotlinx.coroutines.CoroutineScope
 
@@ -23,13 +24,12 @@ internal abstract class ComponentInstanceInitializer(
         instance.initComponent()
         if (instance !is Disposable) {
           @Suppress("ObjectLiteralToLambda")
-          val componentDisposer = object : Disposable {
+          (Disposer.register(componentManager.serviceParentDisposable, object : Disposable {
             override fun dispose() {
               @Suppress("DEPRECATION")
               instance.disposeComponent()
             }
-          }
-          registerWithServiceParent(componentManager, componentDisposer, interfaceClass)
+          }))
         }
       }
       return instance

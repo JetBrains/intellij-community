@@ -43,14 +43,6 @@ fun throwAlreadyDisposedError(serviceDescription: String, componentManager: Comp
   throw AlreadyDisposedException("Cannot create $serviceDescription because container is already disposed (container=${componentManager})")
 }
 
-@Internal
-fun registerWithServiceParent(componentManager: ComponentManagerImpl, disposable: Disposable, instanceClass: Class<*>) {
-  if (!Disposer.tryRegister(componentManager.serviceParentDisposable, disposable)) {
-    Disposer.dispose(disposable)
-    throwAlreadyDisposedError(instanceClass.name, componentManager)
-  }
-}
-
 internal fun doNotUseConstructorInjectionsMessage(where: String): String {
   return "Please, do not use constructor injection: it slows down initialization and may lead to performance problems ($where). " +
          "See https://plugins.jetbrains.com/docs/intellij/plugin-services.html for details."
@@ -58,7 +50,7 @@ internal fun doNotUseConstructorInjectionsMessage(where: String): String {
 
 internal suspend fun initializeComponentOrLightService(component: Any, pluginId: PluginId, componentManager: ComponentManagerImpl) {
   if (component is Disposable) {
-    registerWithServiceParent(componentManager, component, component.javaClass)
+    Disposer.register(componentManager.serviceParentDisposable, component)
   }
 
   @Suppress("DEPRECATION")
