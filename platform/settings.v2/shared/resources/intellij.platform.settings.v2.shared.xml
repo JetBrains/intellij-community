@@ -8,6 +8,10 @@
     <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.libraries.kotlinx.serialization.protobuf"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.lang.impl"/>
@@ -17,4 +21,24 @@
     <module name="intellij.platform.settings.v2"/>
   </dependencies>
   <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.settings.v2.keyPromoter"
+                    interface="com.intellij.platform.settings.v2.impl.SettingsKeyPromoter"
+                    dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.platform.settings.v2.SettingsVault"
+                        serviceImplementation="com.intellij.platform.settings.v2.impl.SettingsVaultImpl"/>
+    <settings.v2.layerProvider id="settings.v2.appDefaults" order="first"
+                               implementation="com.intellij.platform.settings.v2.impl.providers.AppDefaultsLayerProvider"/>
+    <settings.v2.layerProvider id="settings.v2.appProvider" order="after settings.v2.appDefaults"
+                               implementation="com.intellij.platform.settings.v2.impl.providers.AppLayerProvider"/>
+    <settings.v2.layerProvider id="settings.v2.projectProvider" order="after settings.v2.appProvider"
+                               implementation="com.intellij.platform.settings.v2.impl.providers.ProjectLayerProvider"/>
+    <cachesInvalidator implementation="com.intellij.platform.settings.v2.impl.SettingsCacheInvalidator"/>
+  </extensions>
+  <applicationListeners>
+    <listener class="com.intellij.platform.settings.v2.impl.SettingsAppLifecycleListener"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
 </idea-plugin>

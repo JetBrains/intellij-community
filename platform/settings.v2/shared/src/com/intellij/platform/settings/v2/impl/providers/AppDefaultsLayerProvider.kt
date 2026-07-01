@@ -1,0 +1,14 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.settings.v2.impl.providers
+
+// @spec ../../../../../../../../../spec/file-layers.spec.md
+
+import com.intellij.platform.settings.v2.LayerData
+import com.intellij.platform.settings.v2.SettingsContext
+
+/** Provides the base, read-only layer of the application defaults. [AppDefaultsLayerService] holds its state. */
+internal class AppDefaultsLayerProvider : BaseLayerProvider() {
+  override fun service(context: SettingsContext): BaseLayerService = AppDefaultsLayerService.getInstance()
+
+  override suspend fun requestData(scopeContext: SettingsContext): List<LayerData> = AppDefaultsLayerService.getInstance().requestData(scopeContext)
+}

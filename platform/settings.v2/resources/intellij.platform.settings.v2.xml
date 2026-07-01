@@ -7,4 +7,12 @@
     <module name="intellij.platform.core"/>
   </dependencies>
   <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.settings.v2.keyPrefix"
+                    beanClass="com.intellij.platform.settings.v2.SettingsKeyPrefixBean"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.settings.v2.layerProvider"
+                    interface="com.intellij.platform.settings.v2.LayerProvider"
+                    dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

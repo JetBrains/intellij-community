@@ -75,6 +75,8 @@ jvm_library(
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/editor-ui-api:editor-ui_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.settings.v2.test` end

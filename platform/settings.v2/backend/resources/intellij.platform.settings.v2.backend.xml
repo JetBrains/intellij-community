@@ -1,13 +1,34 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.progress"/>
-    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.ide.rpc"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.settings.v2"/>
     <module name="intellij.platform.settings.v2.shared"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.platform.settings.v2.ContextFactory"
+                        serviceImplementation="com.intellij.platform.settings.v2.impl.BackendSettingsContextFactory"/>
+    <postStartupActivity implementation="com.intellij.platform.settings.v2.impl.ProjectSettingsLoadActivity"/>
+    <settings.v2.layerProvider id="settings.v2.fileProvider" order="after settings.v2.projectProvider"
+                               implementation="com.intellij.platform.settings.v2.impl.providers.JsonFileLayerProvider"/>
+  </extensions>
+
+  <actions resource-bundle="messages.SettingsV2Bundle">
+    <action id="internal.settings.v2.DumpSettingsContext" internal="true"
+            class="com.intellij.platform.settings.v2.impl.DumpSettingsContextAction"/>
+  </actions>
+  <applicationListeners>
+    <listener class="com.intellij.platform.settings.v2.impl.SettingsProjectListener"
+              topic="com.intellij.openapi.project.ProjectCloseListener"/>
+  </applicationListeners>
 </idea-plugin>

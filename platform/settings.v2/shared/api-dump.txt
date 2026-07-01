@@ -64,6 +64,7 @@ a:com.intellij.platform.settings.v2.impl.providers.BaseLayerService
 - getLocalities():java.util.List
 - pa:getProviderClass():java.lang.Class
 - pf:load(com.intellij.platform.settings.v2.SettingsContext,kotlin.coroutines.Continuation):java.lang.Object
+- pf:logDroppedSave(com.intellij.platform.settings.v2.SettingsContext,com.intellij.platform.settings.v2.LayerLocality,java.util.Map,java.lang.String):V
 - pa:read(com.intellij.platform.settings.v2.SettingsContext,com.intellij.platform.settings.v2.LayerLocality,kotlin.coroutines.Continuation):java.lang.Object
 - pf:refresh(com.intellij.platform.settings.v2.SettingsContext):V
 - a:requestData(com.intellij.platform.settings.v2.SettingsContext,kotlin.coroutines.Continuation):java.lang.Object
@@ -79,4 +80,5 @@ f:com.intellij.platform.settings.v2.impl.providers.JsonConfigFile
 - f:toJson(com.intellij.platform.settings.v2.SettingsValue$MapValue):java.lang.String
 - f:write(java.nio.file.Path,com.intellij.platform.settings.v2.SettingsValue$MapValue):V
 f:com.intellij.platform.settings.v2.impl.providers.LocalityFilesKt
+- sf:JETBRAINS_CONFIG_NAME:java.lang.String
 - sf:localityFileName(java.lang.String,com.intellij.platform.settings.v2.LayerLocality):java.lang.String
