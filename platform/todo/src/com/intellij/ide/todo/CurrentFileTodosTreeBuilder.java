@@ -42,18 +42,6 @@ public final class CurrentFileTodosTreeBuilder extends TodoTreeBuilder {
     return psiFile == null ? null : psiFile.getVirtualFile();
   }
 
-  @Override
-  protected void collectFiles(@NotNull Consumer<? super @NotNull PsiFile> consumer) {
-    CurrentFileTodosTreeStructure treeStructure = (CurrentFileTodosTreeStructure)getTodoTreeStructure();
-    PsiFile psiFile = treeStructure.getFile();
-
-    if (psiFile != null) {
-      if (treeStructure.accept(psiFile)) {
-        consumer.accept(psiFile);
-      }
-    }
-  }
-
   /**
    * @see CurrentFileTodosTreeStructure#setFile
    */
