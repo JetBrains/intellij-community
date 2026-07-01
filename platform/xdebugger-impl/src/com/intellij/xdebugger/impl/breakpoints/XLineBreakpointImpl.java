@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.ProjectUtil;
@@ -10,13 +9,12 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.xdebugger.SplitDebuggerMode;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
-import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement;
 import com.intellij.xdebugger.impl.proxy.MonolithBreakpointManagerKt;
 import com.intellij.xdebugger.impl.proxy.MonolithBreakpointProxyKt;
 import org.jetbrains.annotations.ApiStatus;
@@ -29,8 +27,7 @@ import java.io.File;
 public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState>
   implements XLineBreakpoint<P> {
 
-  // for monolith compatibility only
-  private final XBreakpointVisualRepresentation myVisualRepresentation;
+  private final BreakpointDraggableObjectFactory myBreakpointDraggableObjectFactory;
 
   private final XLineBreakpointType<P> myType;
   private volatile XSourcePosition mySourcePosition;
@@ -40,10 +37,10 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
                              final @Nullable P properties, LineBreakpointState state) {
     super(type, breakpointManager, properties, state);
     myType = type;
-    myVisualRepresentation = new XBreakpointVisualRepresentation(getCoroutineScope(),
-                                                                 MonolithBreakpointProxyKt.asProxy(this),
-                                                                 !SplitDebuggerMode.isSplitDebugger(),
-                                                                 MonolithBreakpointManagerKt.asProxy(breakpointManager));
+    myBreakpointDraggableObjectFactory = new BreakpointDraggableObjectFactory(
+      MonolithBreakpointManagerKt.asProxy(breakpointManager),
+      MonolithBreakpointProxyKt.asProxy(this)
+    );
   }
 
   /**
@@ -51,7 +48,6 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
    */
   @Deprecated
   public void updateUI() {
-    myVisualRepresentation.updateUI();
   }
 
   public @Nullable VirtualFile getFile() {
@@ -101,8 +97,12 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     return new File(VfsUtilCore.urlToPath(getFileUrl())).getName();
   }
 
+  /**
+   * @deprecated This method always returns null, since the backend's breakpoint doesn't have a highlighter.
+   */
+  @Deprecated
   public @Nullable RangeHighlighter getHighlighter() {
-    return myVisualRepresentation.getHighlighter();
+    return null;
   }
 
   @Override
@@ -124,14 +124,12 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     return super.isValid();
   }
 
+  /**
+   * @deprecated This method does nothing, since the backend's breakpoint doesn't have a range marker used in the update position.
+   */
+  @Deprecated
   public void updatePosition() {
-    RangeMarker highlighter = myVisualRepresentation.getRangeMarker();
-    if (highlighter != null && highlighter.isValid()) {
-      resetSourcePosition(); // reset the source position even if the line number has not changed, as the offset may be cached inside
-      setLine(-1, highlighter.getDocument().getLineNumber(highlighter.getStartOffset()), false);
-    }
   }
-
 
   void resetSourcePosition() {
     resetSourcePosition(-1);
@@ -150,12 +148,8 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
   public void setFileUrl(long requestId, String newUrl) {
     updateStateIfNeededAndNotify(requestId, newUrl, this::getFileUrl, (url) -> {
-      var oldFile = getFile();
       myState.setFileUrl(url);
       resetSourcePosition();
-      myVisualRepresentation.removeHighlighter();
-      myVisualRepresentation.redrawInlineInlays(oldFile, getLine());
-      myVisualRepresentation.redrawInlineInlays(getFile(), getLine());
     });
   }
 
@@ -167,8 +161,6 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   public void setPlacement(long requestId, @NotNull XLineBreakpointVerticalPlacement placement) {
     updateStateIfNeededAndNotify(requestId, placement, this::getPlacement, (newPlacement) -> {
       myState.setPlacement(newPlacement);
-      myVisualRepresentation.removeHighlighter();
-      myVisualRepresentation.redrawInlineInlays(getFile(), getLine());
     });
   }
 
@@ -184,27 +176,20 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   private void setLine(long requestId, final int line, boolean visualLineMightBeChanged) {
 
     updateStateIfNeededAndNotify(requestId, line, this::getLine, (l) -> {
-      var oldLine = getLine();
       myState.setLine(line);
       resetSourcePosition();
-
-      if (visualLineMightBeChanged) {
-        myVisualRepresentation.removeHighlighter();
-      }
-
-      // We try to redraw inlays every time,
-      // due to lack of synchronization between inlay redrawing and breakpoint changes.
-      myVisualRepresentation.redrawInlineInlays(getFile(), oldLine);
-      myVisualRepresentation.redrawInlineInlays(getFile(), line);
     });
   }
 
+  /**
+   * @deprecated This method does nothing, since the backend's breakpoint doesn't have a UI.
+   */
+  @Deprecated
   public void doUpdateUI(Runnable callOnUpdate) {
-    myVisualRepresentation.doUpdateUI(callOnUpdate);
   }
 
   public @NotNull GutterDraggableObject createBreakpointDraggableObject() {
-    return myVisualRepresentation.createBreakpointDraggableObject();
+    return myBreakpointDraggableObjectFactory.create();
   }
 
   @Override

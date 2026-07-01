@@ -5,7 +5,6 @@ import com.intellij.ide.rpc.DocumentPatchVersion
 import com.intellij.ide.rpc.util.TextRangeDto
 import com.intellij.ide.rpc.util.textRange
 import com.intellij.ide.vfs.virtualFile
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
@@ -23,13 +22,12 @@ import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlight
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
+import com.intellij.xdebugger.impl.breakpoints.BreakpointDraggableObjectFactory
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointVisualRepresentation
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.consumeAsFlow
@@ -111,7 +109,8 @@ internal class FrontendXLineBreakpointProxy(
 
   private var lineSourcePosition: XSourcePosition? = null
 
-  private val visualRepresentation = XBreakpointVisualRepresentation(cs, this, SplitDebuggerMode.isSplitDebugger(), manager)
+  private val visualRepresentation = XBreakpointVisualRepresentation(cs, this, manager)
+  private val breakpointDraggableObjectFactory = BreakpointDraggableObjectFactory(manager, this)
 
   private val lineBreakpointInfo: XLineBreakpointInfo
     get() = currentState.lineBreakpointInfo!!
@@ -292,7 +291,7 @@ internal class FrontendXLineBreakpointProxy(
   }
 
   override fun createBreakpointDraggableObject(): GutterDraggableObject {
-    return visualRepresentation.createBreakpointDraggableObject()
+    return breakpointDraggableObjectFactory.create()
   }
 
   override fun updateIcon() {

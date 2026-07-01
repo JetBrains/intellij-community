@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.markup.GutterDraggableObject
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.MarkupEditorFilter
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -29,12 +28,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLightLineBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlighterRange
-import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.util.DocumentUtil
-import com.intellij.util.ThreeState
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
@@ -49,9 +45,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.awt.Cursor
-import java.awt.dnd.DnDConstants
-import java.awt.dnd.DragSource
 
 private data class UpdateUICallback(val callOnUpdate: Runnable)
 
@@ -59,14 +52,13 @@ private data class UpdateUICallback(val callOnUpdate: Runnable)
 class XBreakpointVisualRepresentation(
   cs: CoroutineScope,
   private val myBreakpoint: XLightLineBreakpointProxy,
-  private val isEnabled: Boolean,
   private val myBreakpointManager: XBreakpointManagerProxy,
 ) {
   private val myProject: Project = myBreakpoint.project
   private val channel = Channel<UpdateUICallback>(Channel.UNLIMITED)
 
   init {
-    if (isEnabled && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
       cs.launch(start = CoroutineStart.ATOMIC) {
         try {
           for (event in channel) {
@@ -255,67 +247,11 @@ class XBreakpointVisualRepresentation(
     if (file == null) return
     if (!XDebuggerUtil.areInlineBreakpointsEnabled(file)) return
 
-    if (!isEnabled) return
     val service = RedrawInlaysService.getInstance(myProject)
     service.launch {
       val document = readAction { findDocument(file, mayDecompile = true) } ?: return@launch
       InlineBreakpointInlayManager.getInstance(myProject).redrawLine(document, line)
     }
-  }
-
-  fun createBreakpointDraggableObject(): GutterDraggableObject {
-    return object : GutterDraggableObject {
-      override fun copy(line: Int, file: VirtualFile?, actionId: Int): Boolean {
-        if (canMoveTo(line, file)) {
-          // TODO IJPL-185322 implement DnD for light breakpoints?
-          if (myBreakpoint !is XLineBreakpointProxy) {
-            return false
-          }
-          val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(myProject)
-          if (isCopyAction(actionId)) {
-            breakpointManager.copyLineBreakpoint(myBreakpoint, file!!, line)
-          }
-          else {
-            myBreakpoint.setFileUrl(file!!.url)
-            myBreakpoint.setLine(line)
-            val sessionProxy = XDebugManagerProxy.getInstance().getCurrentSessionProxy(myProject)
-            if (sessionProxy != null) {
-              breakpointManager.onBreakpointRemoval(myBreakpoint, sessionProxy)
-            }
-            DebuggerUIUtil.notifyBreakpointAttachments(myBreakpoint)
-            return true
-          }
-        }
-        return false
-      }
-
-      override fun remove() {
-        // TODO IJPL-185322 implement DnD remove for light breakpoints?
-        if (myBreakpoint is XLineBreakpointProxy) {
-          XBreakpointUIUtil.removeBreakpointWithConfirmation(myBreakpoint)
-        }
-      }
-
-      override fun getCursor(line: Int, file: VirtualFile?, actionId: Int): Cursor? {
-        if (canMoveTo(line, file)) {
-          return if (isCopyAction(actionId)) DragSource.DefaultCopyDrop else DragSource.DefaultMoveDrop
-        }
-
-        return DragSource.DefaultMoveNoDrop
-      }
-
-      fun isCopyAction(actionId: Int): Boolean {
-        return (actionId and DnDConstants.ACTION_COPY) == DnDConstants.ACTION_COPY
-      }
-    }
-  }
-
-  private fun canMoveTo(line: Int, file: VirtualFile?): Boolean {
-    if (file != null && myBreakpoint.type.canPutAtFast(file, line, myProject) == ThreeState.YES) {
-      val existing = myBreakpointManager.findBreakpointAtLine(myBreakpoint.type, file, line, myBreakpoint.getPlacement())
-      return existing == null || existing == myBreakpoint
-    }
-    return false
   }
 
   @TestOnly
