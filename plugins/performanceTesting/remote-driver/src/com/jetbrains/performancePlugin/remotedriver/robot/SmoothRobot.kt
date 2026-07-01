@@ -2,7 +2,6 @@
 
 package com.jetbrains.performancePlugin.remotedriver.robot
 
-import com.intellij.driver.model.RemoteMouseButton
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
@@ -13,7 +12,6 @@ import org.assertj.swing.core.MouseButton
 import org.assertj.swing.core.Robot
 import org.assertj.swing.core.Scrolling.scrollToVisible
 import org.assertj.swing.timing.Pause.pause
-import org.assertj.swing.util.Modifiers
 import java.awt.AWTEvent
 import java.awt.Component
 import java.awt.MouseInfo
@@ -42,6 +40,21 @@ internal class SmoothRobot(
       timeoutToFindPopup(1000)
     }
     Toolkit.getDefaultToolkit().addAWTEventListener(KeyLoggerAWTEventListener, AWTEvent.KEY_EVENT_MASK)
+  }
+
+  override fun doubleKey(keyCode: Int) {
+    awtRobot.keyPress(keyCode)
+    awtRobot.keyRelease(keyCode)
+    Thread.sleep(10)
+    awtRobot.keyPress(keyCode)
+    awtRobot.keyRelease(keyCode)
+  }
+
+  override fun doublePressKeyAndHold(key: Int) {
+    awtRobot.keyPress(key)
+    awtRobot.keyRelease(key)
+    Thread.sleep(10)
+    awtRobot.keyPress(key)
   }
 
   override fun moveMouse(component: Component) {
@@ -194,19 +207,7 @@ internal class SmoothRobot(
   }
 
   override fun doPressAndReleaseKey(keyCode: Int, modifiers: Int) {
-    fastPressAndReleaseKey(keyCode, modifiers)
-  }
-
-  private fun fastPressAndReleaseKey(keyCode: Int, vararg modifiers: Int) {
-    val unifiedModifiers = unifyModifiers(*modifiers)
-    val updatedModifiers = Modifiers.updateModifierWithKeyCode(keyCode, unifiedModifiers)
-    val modifiersKeys = Modifiers.keysFor(updatedModifiers)
-    modifiersKeys.forEach { awtRobot.keyPress(it) }
-    if (updatedModifiers == unifiedModifiers) {
-      awtRobot.keyPress(keyCode)
-      awtRobot.keyRelease(keyCode)
-    }
-    modifiersKeys.reversed().forEach { awtRobot.keyRelease(it) }
+    basicRobot.pressAndReleaseKey(keyCode, modifiers)
   }
 
   private fun moveMouseAndClick(where: Point, button: MouseButton, times: Int) {
