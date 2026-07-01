@@ -9,7 +9,7 @@ import com.intellij.grazie.text.TextContentBuilder
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.grazie.utils.Text
 import com.intellij.grazie.utils.getNotSoDistantSimilarSiblings
-import com.intellij.grazie.utils.replaceBackslashEscapedWhitespace
+import com.intellij.grazie.utils.replaceBackslashEscapes
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -73,7 +73,7 @@ internal class KotlinTextExtractor : TextExtractor() {
             .withUnknown { it is KtStringTemplateEntryWithExpression }
             .removingIndents(" \t|").removingLineSuffixes(" \t")
             .build(root, LITERALS)
-        return if (root.isSingleQuoted()) text?.replaceBackslashEscapedWhitespace() else text
+        return if (root.isSingleQuoted()) text?.replaceBackslashEscapes() else text
     }
     return null
   }

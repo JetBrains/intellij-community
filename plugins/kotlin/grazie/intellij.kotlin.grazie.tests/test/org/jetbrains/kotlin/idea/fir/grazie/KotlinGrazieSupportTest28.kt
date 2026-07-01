@@ -58,6 +58,12 @@ class KotlinGrazieSupportTest28 : GrazieTestBase() {
         assertEquals("foo | bar", TextContentTest.unknownOffsets(content))
     }
 
+    fun `test text extraction in string literals with soft hyphen`() {
+        val file = myFixture.configureByText("a.kt", "val s = \"I just want to say \\u00ADhello to everyone.\"")
+        val content = TextExtractor.findTextAt(file, 10, TextContent.TextDomain.ALL)
+        assertEquals("I just want to say |hello to everyone.", TextContentTest.unknownOffsets(content))
+    }
+
     fun `test meaningful single suggestion in RenameTo action`() {
         myFixture.configureByText("a.kt", """
             class A {
