@@ -1113,7 +1113,7 @@ private class NativeFileHandlerImpl(private val context: BuildContext) : NativeF
   }
 }
 
-suspend fun buildJar(targetFile: Path, moduleNames: List<String>, context: CompilationContext, dryRun: Boolean = false) {
+suspend fun buildJar(targetFile: Path, moduleNames: List<String>, context: CompilationContext, dryRun: Boolean = false, forTests: Boolean = false) {
   if (dryRun) {
     return
   }
@@ -1123,7 +1123,7 @@ suspend fun buildJar(targetFile: Path, moduleNames: List<String>, context: Compi
       targetFile = targetFile,
       sources = moduleNames.flatMap { moduleName ->
         val module = context.outputProvider.findRequiredModule(moduleName)
-        context.outputProvider.getModuleOutputRoots(module).mapNotNull { output ->
+        context.outputProvider.getModuleOutputRoots(module, forTests).mapNotNull { output ->
           createModuleSource(module = module, outputDir = output, excludes = commonModuleExcludes)
         }
       },
