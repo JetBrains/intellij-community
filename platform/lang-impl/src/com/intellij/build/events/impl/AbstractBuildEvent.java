@@ -13,6 +13,18 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.util.ObjectUtils.notNull;
 
 /**
+ * Base mutable implementation of {@link BuildEvent}.
+ *
+ * <p>This class is internal. New event types should not extend it.
+ * See {@link BuildEvent} for the complete guide: {@code Defining New Events}.
+ *
+ * <p>The {@code set*} mutators (e.g., {@link AbstractBuildEvent#setParentId}) exist to support legacy call sites
+ * that modify an event after construction. For new code, supply all values through the {@link BuildEvent}'s builder.
+ *
+ * <p>For complex cases requiring post-construction mutation (e.g., overriding {@link #getParentId()}),
+ * prefer passing the value through the builder. When that is not feasible, use a dynamic proxy (invocation handler)
+ * to intercept the specific getter rather than subclassing {@link AbstractBuildEvent}.
+ *
  * @author Vladislav.Soroka
  */
 @Internal
