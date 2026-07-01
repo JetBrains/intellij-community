@@ -84,20 +84,17 @@ export function postSessionInfoChangedIfChanged(
   });
 }
 
-export function checkSessionInfoChanged(
+export function postInitialSessionInfoIfKnown(
   ctx: ExtensionContext,
   updateLastSessionInfoSignature: (signature: string) => void,
   lastSessionInfoSignature: string | undefined,
-  rememberSessionInfoLeafId: (ctx: ExtensionContext) => void,
 ): void {
   const name = ctx.sessionManager.getSessionName();
   if (lastSessionInfoSignature === undefined && name === undefined) {
     rememberSessionInfoSignature(ctx, name, updateLastSessionInfoSignature);
-    rememberSessionInfoLeafId(ctx);
     return;
   }
   postSessionInfoChangedIfChanged(ctx, name, updateLastSessionInfoSignature, lastSessionInfoSignature);
-  rememberSessionInfoLeafId(ctx);
 }
 
 function rememberSessionInfoSignature(
