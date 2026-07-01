@@ -85,6 +85,8 @@ import com.jetbrains.fus.reporting.jvm.JvmFileStorage
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import com.jetbrains.fus.reporting.model.lion3.ValidatedFusReport
 import com.jetbrains.fus.reporting.model.serialization.SerializationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.plus
 import org.jetbrains.annotations.ApiStatus
 import tools.jackson.core.JsonGenerator
 import tools.jackson.core.StreamReadFeature
@@ -209,8 +211,8 @@ object FusComponentProvider {
     // remote config / file storage). We capture it here so the same instance backs IntellijSensitiveDataValidator.
     var metadataStorageRef: MetadataStorage<EventLogBuild>? = null
 
-    val client = fusClient<LogEvent, ValidatedFusReport> {
-      parentScope = StatisticsServiceScope.getScope()
+    val client = fusClient {
+      parentScope = StatisticsServiceScope.getScope() + Dispatchers.IO // make sure all FUS schedulers run on Dispatchers.IO
 
       config {
         productName = ApplicationNamesInfo.getInstance().fullProductName
