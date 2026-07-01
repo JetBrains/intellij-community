@@ -60,7 +60,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.python.community.execService.asGeneralCommandLine
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.getExecutableWithBaseArgs
-import com.intellij.python.pytools.isEnabledOn
+import com.intellij.python.pytools.isActiveOn
 import com.intellij.python.pytools.lsp.PyLspTool
 import com.intellij.python.pytools.lsp.PyLspToolSettings
 import com.intellij.python.pytools.ui.configuration.PyExternalToolsConfigurable
@@ -92,7 +92,7 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
     val descriptor = getDescriptor(module)
     if (!descriptor.isSupportedFile(file))
       return
-    if (!descriptor.pyTool.isEnabledOn(project))
+    if (!descriptor.pyTool.isActiveOn(project))
       return
     descriptor.supportProvider = this
     if (listenerConnectedForProjects.add(project)) {
@@ -269,24 +269,24 @@ open class PyLspToolCustomization(
 
   override val completionCustomizer: LspCompletionCustomizer = object : LspCompletionSupport() {
     override fun shouldRunCodeCompletion(parameters: CompletionParameters): Boolean =
-      pyTool.isEnabledOn(project) && toolConfig.completions == true
+      pyTool.isActiveOn(project) && toolConfig.completions == true
   }
 
   protected open val diagnosticsSupport: PyLspToolDiagnosticsSupport = PyLspToolDiagnosticsSupport()
 
   // instead of using `shouldAskServerForDiagnostics` we also want to avoid `publishDiagnostics`
   final override val diagnosticsCustomizer: LspDiagnosticsCustomizer
-    get() = if (pyTool.isEnabledOn(project) && toolConfig.inspections) diagnosticsSupport else LspDiagnosticsDisabled
+    get() = if (pyTool.isActiveOn(project) && toolConfig.inspections) diagnosticsSupport else LspDiagnosticsDisabled
 
   override val optimizeImportsCustomizer: LspOptimizeImportsCustomizer = LspOptimizeImportsDisabled
 
   override val inlayHintCustomizer: LspInlayHintSupport = object : LspInlayHintSupport() {
     override fun shouldAskServerForInlayHints(file: VirtualFile): Boolean =
-      pyTool.isEnabledOn(project) && toolConfig.inlayHints == true
+      pyTool.isActiveOn(project) && toolConfig.inlayHints == true
   }
 
   override val hoverCustomizer: LspHoverCustomizer
-    get() = if (pyTool.isEnabledOn(project) && toolConfig.documentation == true) LspHoverSupport() else LspHoverDisabled
+    get() = if (pyTool.isActiveOn(project) && toolConfig.documentation == true) LspHoverSupport() else LspHoverDisabled
 
   override val codeLensCustomizer: LspCodeLensCustomizer = LspCodeLensDisabled
 

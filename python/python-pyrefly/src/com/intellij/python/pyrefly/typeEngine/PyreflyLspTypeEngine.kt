@@ -2,13 +2,11 @@ package com.intellij.python.pyrefly.typeEngine
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.psi.util.parents
 import com.intellij.python.lsp.core.type.PyLspTypeEngine
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
 import com.intellij.python.pyrefly.PyreflyPyTool
-import com.intellij.python.pytools.isEnabledOn
 import com.jetbrains.python.psi.PyFromImportStatement
 import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyTypedElement
@@ -30,7 +28,7 @@ internal class PyreflyLspTypeEngine(private val module: Module, val lspClient: L
     ) {
       return false
     }
-    return Registry.`is`("pyrefly.type.engine") || PyreflyPyTool.getInstance().isEnabledOn(module.project)
+    return PyreflyPyTool.getInstance().isSelectedAsTypeEngine(module.project)
   }
 
   override fun resolveType(pyTypedElement: PyTypedElement, isLibrary: Boolean, isUserInitiated: Boolean): Ref<PyType?>? {

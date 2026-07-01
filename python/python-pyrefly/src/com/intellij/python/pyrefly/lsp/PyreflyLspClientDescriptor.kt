@@ -102,8 +102,10 @@ class PyreflyLspClientDescriptor(module: Module) : PyLspToolDescriptor(module, P
     when (PyreflyPyTool.getInstance().getState(project).discoveryMode) {
       ExecutableDiscoveryMode.INTERPRETER -> {
         val pythonSdk = module.pythonSdk ?: error("Cannot find PythonSdk for module " + module.name)
-        if (!PyTypeEngineUtils.isExternalTypeEngineSupported(project)) {
-          error("Pyrefly type engine available only for local not read only interpreters. Current:$pythonSdk")
+        // Per-module check (not the single-module engine check): the Pyrefly tool runs against any
+        // local, non-read-only interpreter, including in multi-module projects (PY-89705).
+        if (!PyTypeEngineUtils.isLocalNonReadOnlySdk(module)) {
+          error("Pyrefly is available only for local, non read-only interpreters. Current:$pythonSdk")
         }
       }
       ExecutableDiscoveryMode.PATH -> error("Path for pyrefly executable is not setup")

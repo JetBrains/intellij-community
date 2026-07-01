@@ -4,11 +4,15 @@ package com.intellij.python.pyrefly
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.stopAndRestartClientsIfNeeded
 import com.intellij.platform.lsp.api.stopClients
+import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProjectSettings
+import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
 import com.intellij.python.pyrefly.lsp.PyreflyLspIntegrationProvider
 import com.intellij.python.pytools.PyTool
+import com.intellij.python.pytools.isActiveOn
 import com.intellij.python.pytools.lsp.PyLspTool
 import com.intellij.python.pytools.configuration.ConfigurablePyTool
 import com.intellij.python.pytools.ui.pyLspToolFeaturesSummary
@@ -35,10 +39,16 @@ class PyreflyPyTool : PyLspTool<PyreflyConfiguration>(), ConfigurablePyTool {
   override fun summaryFor(project: Project): String = pyLspToolFeaturesSummary(configuration(project))
 
   override fun onEnabledChanged(project: Project, enabled: Boolean) {
+    // Drive the shared LSP server off `isActiveOn` rather than the raw flag: when Pyrefly is the
+    // selected type engine the server must keep running even though the tool flag is off.
     val manager = LspClientManager.getInstance(project)
-    if (enabled) manager.stopAndRestartClientsIfNeeded<PyreflyLspIntegrationProvider>()
+    if (isActiveOn(project)) manager.stopAndRestartClientsIfNeeded<PyreflyLspIntegrationProvider>()
     else manager.stopClients<PyreflyLspIntegrationProvider>()
   }
+
+  override fun isSelectedAsTypeEngine(project: Project): Boolean =
+    Registry.`is`("pyrefly.type.engine") ||
+    PyTypeEngineProjectSettings.getInstance(project).typeEngine == PyTypeEngineType.PYREFLY
 
   @Suppress("CompanionObjectInExtension")
   companion object {

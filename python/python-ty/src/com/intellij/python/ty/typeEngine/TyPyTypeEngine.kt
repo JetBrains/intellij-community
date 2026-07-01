@@ -11,11 +11,12 @@ import com.intellij.platform.lsp.api.stopAndRestartClientsIfNeeded
 import com.intellij.platform.lsp.api.stopClients
 import com.intellij.platform.util.progress.createProgressPipe
 import com.intellij.python.lsp.core.PyLspCoreBundle
-import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProjectSettings
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProvider
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
+import com.intellij.python.pytools.isActiveOn
 import com.intellij.python.ty.TyBundle
 import com.intellij.python.ty.TyLspIntegrationProvider
+import com.intellij.python.ty.TyPyTool
 import com.intellij.python.ty.TyService
 import com.intellij.python.ty.TyUtil
 import com.intellij.ui.dsl.builder.Panel
@@ -42,7 +43,8 @@ internal class TyPyTypeEngine : PyTypeEngineProvider {
   }
 
   private fun shouldBeEnabled(project: Project): Boolean {
-    return isSupported(project) && project.service<PyTypeEngineProjectSettings>().typeEngine == PyTypeEngineType.TY
+    // Run the server whenever ty is active — selected as the type engine, or enabled as an LSP tool.
+    return TyPyTool.getInstance().isActiveOn(project)
   }
 
 

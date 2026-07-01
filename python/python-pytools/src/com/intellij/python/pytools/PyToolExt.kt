@@ -38,6 +38,14 @@ fun PyTool.getState(project: Project): PyToolsState.ToolEntry = PyToolsState.get
 
 fun PyTool.isEnabledOn(project: Project): Boolean = getState(project).enabled
 
+/**
+ * A tool is "active" when the user enabled it as an LSP tool, or it is the project's selected type
+ * engine. Server start/stop and LSP feature gating key off this (rather than the raw enabled flag)
+ * so that a tool acting as the type engine keeps its shared LSP server running and its features on,
+ * even though its External Tools enable toggle is locked. See [PyTool.isSelectedAsTypeEngine].
+ */
+fun PyTool.isActiveOn(project: Project): Boolean = isEnabledOn(project) || isSelectedAsTypeEngine(project)
+
 suspend fun PyTool.getExecutableWithBaseArgs(
   moduleOrProject: ModuleOrProject,
   executableName: String = packageName.name,
