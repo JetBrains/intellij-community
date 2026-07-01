@@ -14,12 +14,15 @@ import com.intellij.collaboration.util.map
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.GHReactionContent
@@ -46,7 +49,7 @@ class GHPRDetailsTimelineViewModel internal constructor(
     private val LOG = logger<GHPRDetailsTimelineViewModel>()
   }
 
-  private val cs = parentCs.childScope(this::class)
+  private val cs = parentCs.childScope(this::class, Dispatchers.Default)
 
   private val currentUser: GHUser = dataContext.securityService.currentUser
   private val reactionsService: GHReactionsService = dataContext.reactionsService
@@ -54,7 +57,7 @@ class GHPRDetailsTimelineViewModel internal constructor(
 
   val details: StateFlow<ComputedResult<GHPRDetailsFull>> =
     dataProvider.detailsData.detailsComputationFlow.map { it.map(::createDetails) }
-      .stateInNow(cs, ComputedResult.loading())
+      .stateIn(cs, SharingStarted.Eagerly, ComputedResult.loading())
 
   private val _descriptionEditVm = MutableStateFlow<GHPREditDescriptionViewModel?>(null)
   val descriptionEditVm: StateFlow<GHPREditDescriptionViewModel?> = _descriptionEditVm.asStateFlow()
