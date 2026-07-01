@@ -4,6 +4,7 @@ package com.intellij.dev.leakDetection
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
 
 class ProjectLeakDetectorTest : LightPlatformTestCase() {
   fun testBuildReportFormatsEntries() {
@@ -27,7 +28,7 @@ class ProjectLeakDetectorTest : LightPlatformTestCase() {
       leakedEditor = editor // hold via a static field so it is reachable from the loaded-classes-statics GC root
 
       // threshold 0: any disposed-but-retained editor qualifies, regardless of how recently it was released
-      val leaks = ProjectLeakDetector(editorStaleThresholdMs = 0).detect()
+      val leaks = timeoutRunBlocking { ProjectLeakDetector(editorStaleThresholdMs = 0).detect() }
       assertTrue("expected the leaked editor to be detected, got: $leaks",
                  leaks.any { it.kind == LeakKind.EDITOR && it.identityHashCode == editorHash })
     }

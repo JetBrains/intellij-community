@@ -3,7 +3,7 @@ package com.intellij.dev.leakDetection
 
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.ex.ProjectEx
@@ -14,10 +14,12 @@ import com.intellij.util.PairProcessor
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.ref.DebugReflectionUtil
 import com.jetbrains.JBR
+import kotlinx.coroutines.delay
 import org.jetbrains.annotations.ApiStatus
 import java.util.IdentityHashMap
 import java.util.Vector
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<ProjectLeakDetector>()
 
@@ -61,24 +63,24 @@ class ProjectLeakDetector(
   private val editorStaleThresholdMs: Long =
     Registry.intValue(EDITOR_STALE_THRESHOLD_KEY, DEFAULT_EDITOR_STALE_THRESHOLD_MS).toLong(),
 ) {
-  fun detect(): List<LeakInfo> {
+  suspend fun detect(): List<LeakInfo> {
     hardGc()
     // Give finalizers / soft references a chance to clear before the first scan.
-    pause(200)
+    delay(200.milliseconds)
     hardGc()
 
     var leaks = collect()
     if (leaks.isNotEmpty()) {
       // Re-scan after another GC: anything still reachable now is very unlikely to be a transient reference.
-      pause(SETTLE_DELAY_MS)
+      delay(SETTLE_DELAY_MS.milliseconds)
       hardGc()
       leaks = collect()
     }
     return leaks
   }
 
-  private fun collect(): List<LeakInfo> {
-    return ReadAction.computeBlocking<List<LeakInfo>, RuntimeException> {
+  private suspend fun collect(): List<LeakInfo> {
+    return readAction {
       val result = ArrayList<LeakInfo>()
       val roots = buildRoots()
 
@@ -165,14 +167,5 @@ class ProjectLeakDetector(
 
   private fun hardGc() {
     if (JBR.isSystemUtilsSupported()) JBR.getSystemUtils().fullGC() else System.gc()
-  }
-
-  private fun pause(ms: Long) {
-    try {
-      Thread.sleep(ms)
-    }
-    catch (_: InterruptedException) {
-      Thread.currentThread().interrupt()
-    }
   }
 }

@@ -11,13 +11,20 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.datatransfer.StringSelection
 import java.net.URLEncoder
@@ -96,21 +103,27 @@ object LeakReporter {
    */
   private fun createTicket(project: Project?, leaks: List<LeakInfo>, report: String) {
     copyToClipboard(report)
-    object : Task.Backgroundable(project, DevLeakDetectionBundle.message("progress.title.capturing.snapshot"), false) {
-      private var snapshot: Path? = null
-
-      override fun run(indicator: ProgressIndicator) {
-        snapshot = captureSnapshot()
-      }
-
-      override fun onFinished() {
-        val path = snapshot
-        BrowserUtil.browse(createTicketUrl(leaks, path))
-        if (path != null) {
-          RevealFileAction.openFile(path)
+    service<LeakDetectionCoroutineScopeHolder>().coroutineScope.launch {
+      val snapshot = if (project != null) {
+        withBackgroundProgress(project, DevLeakDetectionBundle.message("progress.title.capturing.snapshot"), cancellable = false) {
+          captureSnapshot()
         }
       }
-    }.queue()
+      else {
+        withModalProgress(ModalTaskOwner.guess(),
+                          DevLeakDetectionBundle.message("modal.progress.title.capturing.snapshot"),
+                          TaskCancellation.nonCancellable()) {
+          captureSnapshot()
+        }
+      }
+
+      withContext(Dispatchers.EDT) {
+        BrowserUtil.browse(createTicketUrl(leaks, snapshot))
+        if (snapshot != null) {
+          RevealFileAction.openFile(snapshot)
+        }
+      }
+    }
   }
 
   private fun captureSnapshot(): Path? {
