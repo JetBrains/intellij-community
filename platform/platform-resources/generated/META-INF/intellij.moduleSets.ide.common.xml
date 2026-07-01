@@ -405,7 +405,7 @@
     <module name="intellij.emojipicker"/>
     <module name="intellij.platform.ide.impl.wsl"/>
     <module name="intellij.platform.diagnostic.telemetry.agent.extension"/>
-    <module name="intellij.platform.polySymbols.backend" loading="embedded"/>
+    <module name="intellij.platform.polySymbols.backend"/>
     <module name="intellij.regexp" loading="embedded"/>
     <module name="intellij.platform.langInjection"/>
     <module name="intellij.platform.langInjection.backend"/>
