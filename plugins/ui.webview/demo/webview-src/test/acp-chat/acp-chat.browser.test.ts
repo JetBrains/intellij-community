@@ -388,6 +388,137 @@ test("shows unsupported auth inline with retry and acp.json actions", async ({pa
   expect(sessionNewCount > 1).toBe(true)
 })
 
+test("renders ACP tool calls as compact collapsed cards", async ({ page }) => {
+  await openPreview(page)
+  await startMockAgent(page)
+
+  await composerInput(page).fill("tool call compact probe")
+  await page.getByRole("button", { name: "Send" }).click()
+  await expect(page.getByText("Run compact tool probe", { exact: true })).toBeVisible()
+
+  const collapsedTool = await page.evaluate(() => {
+    const tool = Array.from(document.querySelectorAll<HTMLDetailsElement>("details.acpTool"))
+      .find(element => element.textContent?.includes("Run compact tool probe"))
+    const header = tool?.querySelector<HTMLElement>(".acpToolHeader")
+    const icon = tool?.querySelector<SVGElement>(".acpToolIcon svg")
+    const status = tool?.querySelector<HTMLElement>(".acpToolStatus")
+    const statusIcon = status?.querySelector<SVGElement>("svg")
+    const output = tool?.querySelector<HTMLElement>(".acpToolText")
+    const iconRect = icon?.getBoundingClientRect()
+    const toolRect = tool?.getBoundingClientRect()
+    const headerRect = header?.getBoundingClientRect()
+    return {
+      found: tool != null,
+      collapsed: tool?.open === false,
+      headerHasTitle: header?.textContent?.includes("Run compact tool probe") === true,
+      headerHidesKind: header?.textContent?.toLocaleLowerCase().includes("execute") === false,
+      iconSized: iconRect != null && iconRect.width === 16 && iconRect.height === 16,
+      statusIconOnly: status != null
+        && status.getAttribute("aria-label") === "completed"
+        && status.textContent?.trim() === ""
+        && statusIcon != null
+        && statusIcon.getClientRects().length > 0,
+      outputPresent: output != null,
+      detailsCollapsed: toolRect != null && headerRect != null && toolRect.height <= headerRect.height + 4,
+    }
+  })
+  expect(collapsedTool.found
+    && collapsedTool.collapsed
+    && collapsedTool.headerHasTitle
+    && collapsedTool.headerHidesKind
+    && collapsedTool.iconSized
+    && collapsedTool.statusIconOnly
+    && collapsedTool.outputPresent
+    && collapsedTool.detailsCollapsed).toBe(true)
+
+  await page.getByText("Run compact tool probe", { exact: true }).click()
+  const expandedTool = await page.evaluate(() => {
+    const tool = Array.from(document.querySelectorAll<HTMLDetailsElement>("details.acpTool"))
+      .find(element => element.textContent?.includes("Run compact tool probe"))
+    const output = tool?.querySelector<HTMLElement>(".acpToolText")
+    return {
+      expanded: tool?.open === true,
+      detailsVisible: output != null
+        && output.getClientRects().length > 0
+        && output.textContent?.includes("long compact tool output line 24") === true,
+    }
+  })
+  expect(expandedTool.expanded && expandedTool.detailsVisible).toBe(true)
+})
+
+test("renders ACP tool call statuses as icons", async ({ page }) => {
+  await openPreview(page)
+  await startMockAgent(page)
+
+  await composerInput(page).fill("tool status icons probe")
+  await page.getByRole("button", { name: "Send" }).click()
+  await expect(page.getByText("Completed status probe", { exact: true })).toBeVisible()
+  await expect(page.getByText("Running status probe", { exact: true })).toBeVisible()
+  await expect(page.getByText("Failed status probe", { exact: true })).toBeVisible()
+
+  const statusIcons = await page.evaluate(() => {
+    function statusFor(title: string): HTMLElement | null {
+      const tool = Array.from(document.querySelectorAll<HTMLElement>(".acpTool"))
+        .find(element => element.textContent?.includes(title))
+      return tool?.querySelector<HTMLElement>(".acpToolStatus") ?? null
+    }
+
+    const completed = statusFor("Completed status probe")
+    const running = statusFor("Running status probe")
+    const failed = statusFor("Failed status probe")
+    const runningIcon = running?.querySelector<SVGElement>(".acpToolStatusSpinner")
+    const runningAnimation = runningIcon ? getComputedStyle(runningIcon).animationName : null
+    return {
+      completedIcon: completed?.getAttribute("aria-label") === "completed"
+        && completed.classList.contains("acpToolStatus--completed")
+        && completed.textContent?.trim() === ""
+        && completed.querySelector("svg") != null,
+      runningIcon: running?.getAttribute("aria-label") === "in progress"
+        && running.classList.contains("acpToolStatus--in_progress")
+        && running.textContent?.trim() === ""
+        && runningAnimation === "acpToolStatusSpin",
+      failedIcon: failed?.getAttribute("aria-label") === "failed"
+        && failed.classList.contains("acpToolStatus--failed")
+        && failed.textContent?.trim() === ""
+        && failed.querySelector("svg") != null,
+    }
+  })
+  expect(statusIcons.completedIcon && statusIcons.runningIcon && statusIcons.failedIcon).toBe(true)
+})
+
+test("keeps ACP tool calls in the assistant event order", async ({ page }) => {
+  await openPreview(page)
+  await startMockAgent(page)
+
+  await composerInput(page).fill("tool call order probe")
+  await page.getByRole("button", { name: "Send" }).click()
+  await expect(page.getByText("Before interleaved tool.", { exact: true })).toBeVisible()
+  await expect(page.getByText("Run ordered tool probe", { exact: true })).toBeVisible()
+  await expect(page.getByText("After interleaved tool.", { exact: true })).toBeVisible()
+
+  const renderedInEventOrder = await page.evaluate(() => {
+    const assistantMessage = Array.from(document.querySelectorAll<HTMLElement>(".acpMsgAssistant"))
+      .find(message => {
+        const text = message.textContent ?? ""
+        return text.includes("Before interleaved tool.")
+          && text.includes("Run ordered tool probe")
+          && text.includes("After interleaved tool.")
+      })
+    if (!assistantMessage) return false
+    const before = Array.from(assistantMessage.querySelectorAll<HTMLElement>(".acpMarkdown"))
+      .find(element => element.textContent?.includes("Before interleaved tool."))
+    const tool = assistantMessage.querySelector<HTMLElement>(".acpTool")
+    const after = Array.from(assistantMessage.querySelectorAll<HTMLElement>(".acpMarkdown"))
+      .find(element => element.textContent?.includes("After interleaved tool."))
+    return before != null
+      && tool != null
+      && after != null
+      && (before.compareDocumentPosition(tool) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0
+      && (tool.compareDocumentPosition(after) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0
+  })
+  expect(renderedInEventOrder).toBe(true)
+})
+
 test("shows the ACP chat list as a sidebar on wide panels", async ({page}) => {
   await page.setViewportSize({width: 1000, height: 700})
   await openPreview(page)

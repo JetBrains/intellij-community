@@ -17,6 +17,9 @@ const repeatedPromptAuthProbePrompt = "repeat prompt auth probe"
 const envAuthVar = "JUNIE_TOKEN"
 const promptAuthVar = "PROMPT_AUTH_TOKEN"
 const repeatedPromptAuthVar = "REPEAT_PROMPT_AUTH_TOKEN"
+const toolCallCompactProbePrompt = "tool call compact probe"
+const toolCallOrderProbePrompt = "tool call order probe"
+const toolStatusIconsProbePrompt = "tool status icons probe"
 const modeConfigId = "mode"
 const modelConfigId = "model"
 const effortConfigId = "effort"
@@ -312,6 +315,18 @@ export default defineWebViewMock((context) => {
       await sendAssistantText(requestId, markdownFeatureResponse())
       return
     }
+    if (text.includes(toolCallCompactProbePrompt)) {
+      await sendToolCallCompactResponse(requestId)
+      return
+    }
+    if (text.includes(toolCallOrderProbePrompt)) {
+      await sendToolCallOrderResponse(requestId)
+      return
+    }
+    if (text.includes(toolStatusIconsProbePrompt)) {
+      await sendToolStatusIconsResponse(requestId)
+      return
+    }
     if (text.includes(streamingProbePrompt)) {
       await sendStreamingAssistantResponse(requestId, text)
       return
@@ -332,6 +347,79 @@ export default defineWebViewMock((context) => {
       },
     })
     await sendPageStdout(response(requestId, { stopReason: "end_turn" }))
+  }
+
+  async function sendToolCallCompactResponse(requestId: JsonRpcId): Promise<void> {
+    await sendSessionUpdate({
+      sessionUpdate: "tool_call",
+      toolCallId: "compact-tool-call",
+      title: "Run compact tool probe",
+      kind: "execute",
+      status: "completed",
+      content: [
+        {
+          type: "content",
+          content: {
+            type: "text",
+            text: compactToolOutput(),
+          },
+        },
+      ],
+    })
+    await sendAssistantText(requestId, "Tool call compact probe done.")
+  }
+
+  async function sendToolCallOrderResponse(requestId: JsonRpcId): Promise<void> {
+    await sendSessionUpdate({
+      sessionUpdate: "agent_message_chunk",
+      content: { type: "text", text: "Before interleaved tool." },
+    })
+    await sendSessionUpdate({
+      sessionUpdate: "tool_call",
+      toolCallId: "ordered-tool-call",
+      title: "Run ordered tool probe",
+      kind: "execute",
+      status: "completed",
+      content: [
+        {
+          type: "content",
+          content: {
+            type: "text",
+            text: "ordered tool output",
+          },
+        },
+      ],
+    })
+    await sendSessionUpdate({
+      sessionUpdate: "agent_message_chunk",
+      content: { type: "text", text: "After interleaved tool." },
+    })
+    await sendPageStdout(response(requestId, { stopReason: "end_turn" }))
+  }
+
+  async function sendToolStatusIconsResponse(requestId: JsonRpcId): Promise<void> {
+    await sendSessionUpdate({
+      sessionUpdate: "tool_call",
+      toolCallId: "status-completed-tool-call",
+      title: "Completed status probe",
+      kind: "execute",
+      status: "completed",
+    })
+    await sendSessionUpdate({
+      sessionUpdate: "tool_call",
+      toolCallId: "status-running-tool-call",
+      title: "Running status probe",
+      kind: "execute",
+      status: "in_progress",
+    })
+    await sendSessionUpdate({
+      sessionUpdate: "tool_call",
+      toolCallId: "status-failed-tool-call",
+      title: "Failed status probe",
+      kind: "execute",
+      status: "failed",
+    })
+    await sendAssistantText(requestId, "Tool status icons probe done.")
   }
 
   function updateConfigOption(params: any): void {
@@ -591,6 +679,14 @@ function defaultListedSessions() {
 
 function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+function compactToolOutput(): string {
+  return [
+    "tool output header",
+    ...Array.from({ length: 24 }, (_, index) => `long compact tool output line ${index + 1}`),
+    "tool output footer",
+  ].join("\n")
 }
 
 function promptText(prompt: unknown): string {

@@ -1326,28 +1326,68 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 5px 8px;
+  min-height: 30px;
+  padding: 4px 8px;
 }
 
-.acpToolKind {
-  font-family: var(--acp-mono), monospace;
-  font-size: 11px;
-  text-transform: uppercase;
+details.acpTool > .acpToolHeader {
+  cursor: pointer;
+  list-style: none;
+}
+
+details.acpTool > .acpToolHeader::-webkit-details-marker {
+  display: none;
+}
+
+details.acpTool > .acpToolHeader::after {
+  content: "";
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  color: var(--acp-text-muted);
+  transform: rotate(-45deg);
+}
+
+details.acpTool[open] > .acpToolHeader::after {
+  transform: rotate(45deg);
+}
+
+.acpToolHeader:focus-visible {
+  outline: 2px solid var(--acp-accent);
+  outline-offset: -2px;
+}
+
+.acpToolIcon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
   color: var(--acp-accent);
 }
 
 .acpToolTitle {
   flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .acpToolStatus {
-  font-size: 11px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
   color: var(--acp-text-muted);
 }
 
+.acpToolStatus--success,
 .acpToolStatus--completed {
   color: var(--acp-success);
 }
@@ -1356,11 +1396,35 @@ body {
   color: var(--acp-error);
 }
 
+.acpToolStatus--in_progress,
+.acpToolStatus--pending {
+  color: var(--acp-accent);
+}
+
+.acpToolStatusSpinner {
+  animation: acpToolStatusSpin 0.9s linear infinite;
+}
+
+@keyframes acpToolStatusSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.acpToolDetails {
+  max-height: 360px;
+  overflow: auto;
+  border-top: 1px solid var(--acp-border);
+  background: var(--acp-bg);
+}
+
 .acpToolText,
 .acpToolDiffBody {
   margin: 0;
   padding: 8px;
-  border-top: 1px solid var(--acp-border);
   font-family: var(--acp-mono), monospace;
   font-size: 12px;
   white-space: pre-wrap;
@@ -1373,6 +1437,10 @@ body {
   color: var(--acp-text-muted);
   font-family: var(--acp-mono), monospace;
   font-size: 11px;
+}
+
+.acpToolDetails > .acpToolDiff:first-child .acpToolDiffPath {
+  border-top: none;
 }
 
 .acpComposerShell {

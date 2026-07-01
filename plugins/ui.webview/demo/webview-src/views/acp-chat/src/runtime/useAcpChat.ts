@@ -35,10 +35,13 @@ const legacyPlanId = "legacy"
 const textAttachmentAccept = "text/*,.csv,.json,.jsonl,.md,.markdown,.txt,.xml,.yaml,.yml"
 let attachmentIdSeq = 0
 
+type TurnSegment =
+  | { type: "reasoning"; text: string }
+  | { type: "text"; text: string }
+  | { type: "tool"; tool: ToolCallView }
+
 interface Turn {
-  reasoning: string
-  text: string
-  tools: ToolCallView[]
+  segments: TurnSegment[]
 }
 
 interface QuoteInfoView {
@@ -129,23 +132,20 @@ export function useAcpChat(): AcpChat {
   const flushTurn = useCallback(() => {
     const turn = turnRef.current
     if (!turn) return
-    const parts: unknown[] = []
-    if (turn.reasoning) {
-      parts.push({ type: "reasoning", text: turn.reasoning })
-    }
-    for (const tool of turn.tools) {
-      parts.push({
+    const parts = turn.segments.map((segment): unknown => {
+      if (segment.type === "reasoning") return { type: "reasoning", text: segment.text }
+      if (segment.type === "text") return { type: "text", text: segment.text }
+      const tool = segment.tool
+      return {
         type: "tool-call",
         toolCallId: tool.toolCallId,
         toolName: tool.kind,
         args: {},
         argsText: tool.title,
         result: { status: tool.status, title: tool.title, kind: tool.kind, text: tool.text, diff: tool.diff },
-      })
-    }
-    if (turn.text || parts.length === 0) {
-      parts.push({ type: "text", text: turn.text })
-    }
+      }
+    })
+    if (parts.length === 0) parts.push({ type: "text", text: "" })
     setMessages(previous => {
       const next = previous.slice()
       for (let i = next.length - 1; i >= 0; i--) {
@@ -188,7 +188,7 @@ export function useAcpChat(): AcpChat {
   const ensureAssistantTurn = useCallback((): Turn => {
     let turn = turnRef.current
     if (!turn) {
-      turn = { reasoning: "", text: "", tools: [] }
+      turn = { segments: [] }
       turnRef.current = turn
       setMessages(previous => [
         ...previous,
@@ -302,29 +302,34 @@ export function useAcpChat(): AcpChat {
     },
     onMessageChunk(text) {
       const turn = ensureAssistantTurn()
-      turn.text += text
+      appendTurnText(turn, "text", text)
       flushTurn()
     },
     onThoughtChunk(text) {
       const turn = ensureAssistantTurn()
-      turn.reasoning += text
+      appendTurnText(turn, "reasoning", text)
       flushTurn()
     },
     onToolCall(view) {
       const turn = ensureAssistantTurn()
-      const index = turn.tools.findIndex(t => t.toolCallId === view.toolCallId)
+      const index = turn.segments.findIndex(segment => segment.type === "tool" && segment.tool.toolCallId === view.toolCallId)
       if (index >= 0) {
-        const existing = turn.tools[index]
-        turn.tools[index] = {
-          ...existing,
-          ...view,
-          title: view.title || existing.title,
-          text: view.text ?? existing.text,
-          diff: view.diff ?? existing.diff,
+        const segment = turn.segments[index]
+        if (segment.type !== "tool") return
+        const existing = segment.tool
+        turn.segments[index] = {
+          type: "tool",
+          tool: {
+            ...existing,
+            ...view,
+            title: view.title || existing.title,
+            text: view.text ?? existing.text,
+            diff: view.diff ?? existing.diff,
+          },
         }
       }
       else {
-        turn.tools.push(view)
+        turn.segments.push({ type: "tool", tool: view })
       }
       flushTurn()
     },
@@ -817,6 +822,15 @@ function authMessageContent(auth: PendingAuth): ThreadMessageLike["content"] {
     argsText: auth.message ?? "Authentication required",
     result: { status, title: "Authentication", kind: "auth", auth },
   }] as ThreadMessageLike["content"]
+}
+
+function appendTurnText(turn: Turn, type: "reasoning" | "text", text: string): void {
+  const last = turn.segments[turn.segments.length - 1]
+  if (last?.type === type) {
+    last.text += text
+    return
+  }
+  turn.segments.push({ type, text })
 }
 
 function appendTextToMessage(message: ThreadMessageLike, text: string): ThreadMessageLike {

@@ -1291,28 +1291,34 @@ function useAcpChat() {
 	const flushTurn = (0, import_react.useCallback)(() => {
 		const turn = turnRef.current;
 		if (!turn) return;
-		const parts = [];
-		if (turn.reasoning) parts.push({
-			type: "reasoning",
-			text: turn.reasoning
+		const parts = turn.segments.map((segment) => {
+			if (segment.type === "reasoning") return {
+				type: "reasoning",
+				text: segment.text
+			};
+			if (segment.type === "text") return {
+				type: "text",
+				text: segment.text
+			};
+			const tool = segment.tool;
+			return {
+				type: "tool-call",
+				toolCallId: tool.toolCallId,
+				toolName: tool.kind,
+				args: {},
+				argsText: tool.title,
+				result: {
+					status: tool.status,
+					title: tool.title,
+					kind: tool.kind,
+					text: tool.text,
+					diff: tool.diff
+				}
+			};
 		});
-		for (const tool of turn.tools) parts.push({
-			type: "tool-call",
-			toolCallId: tool.toolCallId,
-			toolName: tool.kind,
-			args: {},
-			argsText: tool.title,
-			result: {
-				status: tool.status,
-				title: tool.title,
-				kind: tool.kind,
-				text: tool.text,
-				diff: tool.diff
-			}
-		});
-		if (turn.text || parts.length === 0) parts.push({
+		if (parts.length === 0) parts.push({
 			type: "text",
-			text: turn.text
+			text: ""
 		});
 		setMessages((previous) => {
 			const next = previous.slice();
@@ -1352,11 +1358,7 @@ function useAcpChat() {
 	const ensureAssistantTurn = (0, import_react.useCallback)(() => {
 		let turn = turnRef.current;
 		if (!turn) {
-			turn = {
-				reasoning: "",
-				text: "",
-				tools: []
-			};
+			turn = { segments: [] };
 			turnRef.current = turn;
 			setMessages((previous) => [...previous, {
 				id: `assistant-${++assistantSeqRef.current}`,
@@ -1484,28 +1486,34 @@ function useAcpChat() {
 			appendUserChunk(text);
 		},
 		onMessageChunk(text) {
-			const turn = ensureAssistantTurn();
-			turn.text += text;
+			appendTurnText(ensureAssistantTurn(), "text", text);
 			flushTurn();
 		},
 		onThoughtChunk(text) {
-			const turn = ensureAssistantTurn();
-			turn.reasoning += text;
+			appendTurnText(ensureAssistantTurn(), "reasoning", text);
 			flushTurn();
 		},
 		onToolCall(view) {
 			const turn = ensureAssistantTurn();
-			const index = turn.tools.findIndex((t) => t.toolCallId === view.toolCallId);
+			const index = turn.segments.findIndex((segment) => segment.type === "tool" && segment.tool.toolCallId === view.toolCallId);
 			if (index >= 0) {
-				const existing = turn.tools[index];
-				turn.tools[index] = {
-					...existing,
-					...view,
-					title: view.title || existing.title,
-					text: view.text ?? existing.text,
-					diff: view.diff ?? existing.diff
+				const segment = turn.segments[index];
+				if (segment.type !== "tool") return;
+				const existing = segment.tool;
+				turn.segments[index] = {
+					type: "tool",
+					tool: {
+						...existing,
+						...view,
+						title: view.title || existing.title,
+						text: view.text ?? existing.text,
+						diff: view.diff ?? existing.diff
+					}
 				};
-			} else turn.tools.push(view);
+			} else turn.segments.push({
+				type: "tool",
+				tool: view
+			});
 			flushTurn();
 		},
 		onPlan(entries) {
@@ -2036,6 +2044,17 @@ function authMessageContent(auth) {
 			auth
 		}
 	}];
+}
+function appendTurnText(turn, type, text) {
+	const last = turn.segments[turn.segments.length - 1];
+	if (last?.type === type) {
+		last.text += text;
+		return;
+	}
+	turn.segments.push({
+		type,
+		text
+	});
 }
 function appendTextToMessage(message, text) {
 	const content = Array.isArray(message.content) ? [...message.content] : [];
@@ -4024,31 +4043,29 @@ function ToolCallCard(props) {
 	const status = result.status ?? "in_progress";
 	const text = result.text;
 	const diff = result.diff;
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-		className: `acpTool acpTool--${status}`,
-		children: [
-			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: "acpToolHeader",
-				children: [
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-						className: `acpToolKind acpToolKind--${kind}`,
-						children: kind
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-						className: "acpToolTitle",
-						children: title
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-						className: `acpToolStatus acpToolStatus--${status}`,
-						children: status.replace("_", " ")
-					})
-				]
-			}),
-			text ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("pre", {
+	const hasDetails = Boolean(text) || Boolean(diff);
+	const className = `acpTool acpTool--${status} acpTool--${kind}`;
+	if (!hasDetails) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		className: `${className} acpTool--empty`,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ToolHeader, {
+			kind,
+			title,
+			status
+		})
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("details", {
+		className,
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ToolHeader, {
+			kind,
+			title,
+			status,
+			expandable: true
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "acpToolDetails",
+			children: [text ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("pre", {
 				className: "acpToolText",
 				children: text
-			}) : null,
-			diff ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			}) : null, diff ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 				className: "acpToolDiff",
 				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 					className: "acpToolDiffPath",
@@ -4057,8 +4074,214 @@ function ToolCallCard(props) {
 					className: "acpToolDiffBody",
 					children: renderDiff(diff)
 				})]
-			}) : null
-		]
+			}) : null]
+		})]
+	});
+}
+function ToolHeader(props) {
+	const statusLabel = props.status.replace("_", " ");
+	const content = /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+			className: `acpToolIcon acpToolIcon--${props.kind}`,
+			"aria-hidden": "true",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ToolKindIcon, { kind: props.kind })
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+			className: "acpToolTitle",
+			title: props.title,
+			children: props.title
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+			className: `acpToolStatus acpToolStatus--${props.status}`,
+			role: "img",
+			"aria-label": statusLabel,
+			title: statusLabel,
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(StatusIcon, { status: props.status })
+		})
+	] });
+	if (props.expandable) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("summary", {
+		className: "acpToolHeader",
+		"aria-label": `${props.title}. ${statusLabel}. Show tool call details`,
+		children: content
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		className: "acpToolHeader",
+		children: content
+	});
+}
+function StatusIcon(props) {
+	switch (props.status) {
+		case "completed":
+		case "success": return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SuccessIcon, {});
+		case "failed": return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FailedIcon, {});
+		default: return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SpinnerIcon, {});
+	}
+}
+function ToolKindIcon(props) {
+	const kind = props.kind.toLocaleLowerCase();
+	if (kind.includes("read") || kind.includes("open")) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ReadIcon, {});
+	if (kind.includes("search") || kind.includes("find") || kind.includes("grep")) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SearchIcon, {});
+	if (kind.includes("execute") || kind.includes("shell") || kind.includes("terminal") || kind.includes("bash")) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ExecuteIcon, {});
+	if (kind.includes("write") || kind.includes("edit") || kind.includes("patch") || kind.includes("diff")) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(EditIcon, {});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(OtherIcon, {});
+}
+function SuccessIcon() {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+		width: "16",
+		height: "16",
+		viewBox: "0 0 16 16",
+		"aria-hidden": "true",
+		focusable: "false",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "m3.2 8.2 3.1 3.1 6.5-6.6",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: "1.6",
+			strokeLinecap: "round",
+			strokeLinejoin: "round"
+		})
+	});
+}
+function FailedIcon() {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+		width: "16",
+		height: "16",
+		viewBox: "0 0 16 16",
+		"aria-hidden": "true",
+		focusable: "false",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M4.4 4.4 11.6 11.6M11.6 4.4 4.4 11.6",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: "1.6",
+			strokeLinecap: "round"
+		})
+	});
+}
+function SpinnerIcon() {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", {
+		className: "acpToolStatusSpinner",
+		width: "16",
+		height: "16",
+		viewBox: "0 0 16 16",
+		"aria-hidden": "true",
+		focusable: "false",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", {
+			cx: "8",
+			cy: "8",
+			r: "5",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: "1.4",
+			strokeOpacity: "0.25"
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M13 8a5 5 0 0 0-5-5",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: "1.4",
+			strokeLinecap: "round"
+		})]
+	});
+}
+function ReadIcon() {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", {
+		width: "16",
+		height: "16",
+		viewBox: "0 0 16 16",
+		"aria-hidden": "true",
+		focusable: "false",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M4 2.7h5.4L12 5.3v8H4z",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: "1.2",
+			strokeLinejoin: "round"
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M9.4 2.8v2.6H12M6 8h4M6 10.5h4",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: "1.2",
+			strokeLinecap: "round"
+		})]
+	});
+}
+function SearchIcon() {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", {
+		width: "16",
+		height: "16",
+		viewBox: "0 0 16 16",
+		"aria-hidden": "true",
+		focusable: "false",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", {
+			cx: "7",
+			cy: "7",
+			r: "3.7",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: "1.3"
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "m9.8 9.8 3 3",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: "1.3",
+			strokeLinecap: "round"
+		})]
+	});
+}
+function ExecuteIcon() {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", {
+		width: "16",
+		height: "16",
+		viewBox: "0 0 16 16",
+		"aria-hidden": "true",
+		focusable: "false",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M2.8 4.2h10.4v7.6H2.8z",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: "1.2",
+			strokeLinejoin: "round"
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "m5.2 6.3 1.7 1.7-1.7 1.7M8.3 10h2.5",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: "1.2",
+			strokeLinecap: "round",
+			strokeLinejoin: "round"
+		})]
+	});
+}
+function EditIcon() {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+		width: "16",
+		height: "16",
+		viewBox: "0 0 16 16",
+		"aria-hidden": "true",
+		focusable: "false",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M3.5 12.5h2.3l6-6-2.3-2.3-6 6zM8.7 5l2.3 2.3",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: "1.2",
+			strokeLinecap: "round",
+			strokeLinejoin: "round"
+		})
+	});
+}
+function OtherIcon() {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+		width: "16",
+		height: "16",
+		viewBox: "0 0 16 16",
+		"aria-hidden": "true",
+		focusable: "false",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M3.5 4.5h9M3.5 8h9M3.5 11.5h9",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: "1.2",
+			strokeLinecap: "round"
+		})
 	});
 }
 function renderDiff(diff) {
