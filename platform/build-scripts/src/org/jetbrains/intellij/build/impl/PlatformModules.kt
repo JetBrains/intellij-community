@@ -106,6 +106,9 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     "jaxb-api",
   ))
 
+  // the library is put to a separate JAR due to IJPL-248591; it would be better to get rid of it completely, see IJPL-749
+  layout.withModuleLibrary(libraryName = "swingx", moduleName = "intellij.libraries.swingx")
+
   // platform-loader.jar is loaded by JVM classloader as part of loading our custom PathClassLoader class - reduce file size
   addModule(PLATFORM_LOADER_JAR, sequenceOf(
     "intellij.platform.util.rt.java8",
