@@ -4,8 +4,8 @@ import {registerJbCentralProvider} from "./jbcentral.ts";
 import {parseModelCatalogMetadata} from "./modelCatalog.ts";
 import {registerOmlxProviders} from "./omlx.ts";
 import {
-  checkSessionInfoChanged,
   type AgentWorkbenchSessionInfoChangedOn,
+  postInitialSessionInfoIfKnown,
   postSessionInfoChangedIfChanged,
   postStatusIfChanged,
   resolveStartupActivity,
@@ -17,7 +17,6 @@ import {applyCurrentTheme, startStateWatcher} from "./theme.ts";
 const MODEL_CATALOG_ENV = "AGENT_WORKBENCH_PI_MODEL_CATALOG";
 const MODEL_CATALOG_METADATA = process.env[MODEL_CATALOG_ENV];
 const DONE_STATUS_IDLE_RECHECK_MS = 150;
-const SESSION_INFO_LEAF_POLL_MS = 1000;
 
 export default async function agentWorkbenchTheme(pi: ExtensionAPI) {
   const modelCatalog = parseModelCatalogMetadata(MODEL_CATALOG_METADATA);
@@ -25,14 +24,12 @@ export default async function agentWorkbenchTheme(pi: ExtensionAPI) {
   await registerJbCentralProvider(pi, modelCatalog);
 
   let themeWatcher: ReturnType<typeof startStateWatcher> | undefined;
-  let sessionInfoPoll: ReturnType<typeof setInterval> | undefined;
   let scheduledApply: ReturnType<typeof setTimeout> | undefined;
   let scheduledDoneStatus: ReturnType<typeof setTimeout> | undefined;
   let terminalInputUnsubscribe: (() => void) | undefined;
   let controlBridge: ReturnType<typeof startControlBridge> | undefined;
   let lastStatusSignature: string | undefined;
   let lastSessionInfoSignature: string | undefined;
-  let lastSessionInfoLeafId: string | null | undefined;
 
   registerTaskFolderTools(pi, () => controlBridge);
 
@@ -54,17 +51,14 @@ export default async function agentWorkbenchTheme(pi: ExtensionAPI) {
   const postProcessingStatus = (ctx: ExtensionContext) => {
     clearScheduledDoneStatus();
     postStatusIfChanged(ctx, "processing", updateLastStatusSignature, lastStatusSignature);
-    checkSessionInfoChanged(ctx, updateLastSessionInfoSignature, lastSessionInfoSignature, rememberSessionInfoLeafId);
   };
 
   const postDoneStatus = (ctx: ExtensionContext) => {
     clearScheduledDoneStatus();
     postStatusIfChanged(ctx, "done", updateLastStatusSignature, lastStatusSignature);
-    checkSessionInfoChanged(ctx, updateLastSessionInfoSignature, lastSessionInfoSignature, rememberSessionInfoLeafId);
   };
 
   const scheduleDoneStatus = (ctx: ExtensionContext) => {
-    checkSessionInfoChanged(ctx, updateLastSessionInfoSignature, lastSessionInfoSignature, rememberSessionInfoLeafId);
     clearScheduledDoneStatus();
     scheduledDoneStatus = setTimeout(() => {
       scheduledDoneStatus = undefined;
@@ -82,23 +76,6 @@ export default async function agentWorkbenchTheme(pi: ExtensionAPI) {
       scheduledApply = undefined;
       void applyCurrentTheme(ctx);
     }, 100);
-  };
-
-  const ensureSessionInfoPolling = (ctx: ExtensionContext) => {
-    if (sessionInfoPoll !== undefined) {
-      return;
-    }
-    sessionInfoPoll = setInterval(() => {
-      const leafId = ctx.sessionManager.getLeafId();
-      if (leafId !== lastSessionInfoLeafId) {
-        lastSessionInfoLeafId = leafId;
-        checkSessionInfoChanged(ctx, updateLastSessionInfoSignature, lastSessionInfoSignature, rememberSessionInfoLeafId);
-      }
-    }, SESSION_INFO_LEAF_POLL_MS);
-  };
-
-  const rememberSessionInfoLeafId = (ctx: ExtensionContext) => {
-    lastSessionInfoLeafId = ctx.sessionManager.getLeafId();
   };
 
   const ensureTerminalInputMapping = (ctx: ExtensionContext) => {
@@ -119,8 +96,7 @@ export default async function agentWorkbenchTheme(pi: ExtensionAPI) {
     await applyCurrentTheme(ctx);
     clearScheduledDoneStatus();
     postStatusIfChanged(ctx, resolveStartupActivity(ctx), updateLastStatusSignature, lastStatusSignature);
-    checkSessionInfoChanged(ctx, updateLastSessionInfoSignature, lastSessionInfoSignature, rememberSessionInfoLeafId);
-    ensureSessionInfoPolling(ctx);
+    postInitialSessionInfoIfKnown(ctx, updateLastSessionInfoSignature, lastSessionInfoSignature);
     if (themeWatcher === undefined) {
       themeWatcher = startStateWatcher(scheduleApply, ctx);
     }
@@ -128,7 +104,6 @@ export default async function agentWorkbenchTheme(pi: ExtensionAPI) {
 
   (pi.on as AgentWorkbenchSessionInfoChangedOn)("session_info_changed", (event, ctx) => {
     postSessionInfoChangedIfChanged(ctx, event.name, updateLastSessionInfoSignature, lastSessionInfoSignature);
-    rememberSessionInfoLeafId(ctx);
     controlBridge?.setContext(ctx);
   });
 
@@ -164,12 +139,7 @@ export default async function agentWorkbenchTheme(pi: ExtensionAPI) {
       scheduledApply = undefined;
     }
     clearScheduledDoneStatus();
-    if (sessionInfoPoll !== undefined) {
-      clearInterval(sessionInfoPoll);
-      sessionInfoPoll = undefined;
-    }
     lastSessionInfoSignature = undefined;
-    lastSessionInfoLeafId = undefined;
     controlBridge?.close();
     controlBridge = undefined;
     themeWatcher?.close();

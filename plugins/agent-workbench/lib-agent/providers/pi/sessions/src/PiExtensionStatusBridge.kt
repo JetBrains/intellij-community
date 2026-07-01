@@ -3,6 +3,7 @@ package com.intellij.platform.ai.agent.pi.sessions
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
+import com.intellij.platform.ai.agent.core.normalizeAgentSessionTitle
 import com.intellij.platform.ai.agent.json.createJsonParser
 import com.intellij.platform.ai.agent.json.forEachJsonObjectField
 import com.intellij.platform.ai.agent.json.readJsonLongOrNull
@@ -10,6 +11,7 @@ import com.intellij.platform.ai.agent.json.readJsonStringOrNull
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionActivityEvidence
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadActivityUpdate
+import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionThreadPresentationUpdate
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.DigestUtil
 import kotlinx.coroutines.channels.BufferOverflow
@@ -129,10 +131,18 @@ internal object PiExtensionStatusBridge {
     val event = payload.event?.trim()?.lowercase()?.replace('-', '_')
     if (event != null) {
       return when (event) {
-        PI_SESSION_INFO_CHANGED_EVENT -> AgentSessionSourceUpdateEvent.threadsChanged(
-          scopedPaths = setOf(scopedPath),
-          threadIds = setOf(sessionId),
-        )
+        PI_SESSION_INFO_CHANGED_EVENT -> {
+          val title = normalizeAgentSessionTitle(payload.name) ?: return null
+          AgentSessionSourceUpdateEvent.presentationChanged(
+            scopedPaths = setOf(scopedPath),
+            presentationUpdatesByThreadId = mapOf(
+              sessionId to AgentSessionThreadPresentationUpdate(
+                title = title,
+                updatedAt = payload.updatedAt ?: receivedAtMs,
+              )
+            ),
+          )
+        }
         else -> null
       }
     }
@@ -180,6 +190,7 @@ private data class PiStatusPayload(
   @JvmField val sessionId: String? = null,
   @JvmField val cwd: String? = null,
   @JvmField val event: String? = null,
+  @JvmField val name: String? = null,
   @JvmField val activity: String? = null,
   @JvmField val updatedAt: Long? = null,
 )
@@ -188,6 +199,7 @@ private fun readStatusPayload(parser: JsonParser): PiStatusPayload {
   var sessionId: String? = null
   var cwd: String? = null
   var event: String? = null
+  var name: String? = null
   var activity: String? = null
   var updatedAt: Long? = null
   forEachJsonObjectField(parser) { fieldName ->
@@ -195,6 +207,7 @@ private fun readStatusPayload(parser: JsonParser): PiStatusPayload {
       "sessionId" -> sessionId = readJsonStringOrNull(parser)
       "cwd" -> cwd = readJsonStringOrNull(parser)
       "event" -> event = readJsonStringOrNull(parser)
+      "name" -> name = readJsonStringOrNull(parser)
       "activity" -> activity = readJsonStringOrNull(parser)
       "updatedAt" -> updatedAt = readJsonLongOrNull(parser)
       else -> parser.skipChildren()
@@ -205,6 +218,7 @@ private fun readStatusPayload(parser: JsonParser): PiStatusPayload {
     sessionId = sessionId,
     cwd = cwd,
     event = event,
+    name = name,
     activity = activity,
     updatedAt = updatedAt,
   )
