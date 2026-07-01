@@ -84,7 +84,6 @@ import com.jetbrains.python.psi.types.TypeEvalContextImpl;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
-import kotlin.sequences.SequencesKt;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -450,6 +449,18 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
                                                          @NotNull TypeEvalContext context) {
     if (qualifierType instanceof PyClassType classType) {
       final PyClass pyClass = classType.getPyClass();
+
+      // TODO PY-90645: This special-casing should be revisited and possibly removed once we handle data descriptors generically.
+      // on a class object, a property defined on the metaclass is a data descriptor and takes
+      // precedence over a member of the same name on the class itself. The class is an instance of its
+      // metaclass, so the metaclass property's getter is invoked with the class object as the receiver.
+      if (classType.isDefinition() && AccessDirection.of(refExpr) == AccessDirection.READ) {
+        final Ref<PyType> metaClassProperty = getMetaclassPropertyTypeForClassAccess(refExpr, classType, name, context);
+        if (metaClassProperty != null) {
+          return metaClassProperty;
+        }
+      }
+
       final Property property = pyClass.findProperty(name, true, context);
 
       if (property != null) {
@@ -489,6 +500,22 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
 
     return null;
+  }
+
+  private static @Nullable Ref<PyType> getMetaclassPropertyTypeForClassAccess(@NotNull PyReferenceExpression refExpr,
+                                                                              @NotNull PyClassType classType,
+                                                                              @NotNull String name,
+                                                                              @NotNull TypeEvalContext context) {
+    final PyClassLikeType metaClassType = classType.getMetaClassType(context, true);
+    if (!(metaClassType instanceof PyClassType metaPyClassType)) {
+      return null;
+    }
+    final Property metaProperty = metaPyClassType.getPyClass().findProperty(name, true, context);
+    if (metaProperty == null) {
+      return null;
+    }
+    final PyType type = metaProperty.getType(refExpr.getQualifier(), context);
+    return Ref.create(type);
   }
 
   private static @Nullable Ref<PyType> getTypeOfMember(@Nullable PyType type,
