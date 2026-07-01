@@ -1395,6 +1395,10 @@ fun <T : CommandChain> T.detectProjectLeaks(): T = apply {
   addCommand("${CMD_PREFIX}detectProjectLeaks")
 }
 
+fun <T : CommandChain> T.logProjectLibrariesAndSdks(): T = apply {
+  addCommand("${CMD_PREFIX}logProjectLibrariesAndSdks")
+}
+
 fun <T : CommandChain> T.hideAllToolWindows(): T = apply {
   addCommand("${CMD_PREFIX}takeScreenshot before_close_all_tabs")
   addCommand("${CMD_PREFIX}hideAllToolWindows")

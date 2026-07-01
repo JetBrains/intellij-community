@@ -58,6 +58,7 @@ import com.jetbrains.performancePlugin.commands.InspectionCommand;
 import com.jetbrains.performancePlugin.commands.InspectionCommandEx;
 import com.jetbrains.performancePlugin.commands.InstallCustomJBR;
 import com.jetbrains.performancePlugin.commands.JBRFullGCCommand;
+import com.jetbrains.performancePlugin.commands.LogProjectLibrariesAndSdksCommand;
 import com.jetbrains.performancePlugin.commands.MeasureVFSUpdateCommand;
 import com.jetbrains.performancePlugin.commands.MeasureVfsMassUpdateCommand;
 import com.jetbrains.performancePlugin.commands.MemoryDumpCommand;
@@ -194,6 +195,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(HideAllToolWindowsCommand.PREFIX, HideAllToolWindowsCommand::new),
       Map.entry(CollectAllFilesCommand.PREFIX, CollectAllFilesCommand::new),
       Map.entry(ExecuteEditorActionCommand.PREFIX, ExecuteEditorActionCommand::new),
+      Map.entry(LogProjectLibrariesAndSdksCommand.PREFIX, LogProjectLibrariesAndSdksCommand::new),
       Map.entry(AssertCompletionCommand.PREFIX, AssertCompletionCommand::new),
       Map.entry(ChooseCompletionCommand.PREFIX, ChooseCompletionCommand::new),
       Map.entry(SetBreakpointCommand.PREFIX, SetBreakpointCommand::new),
