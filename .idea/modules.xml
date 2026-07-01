@@ -46,8 +46,6 @@
       <module fileurl="file://$PROJECT_DIR$/fleet/util/logging/slf4j/fleet.util.logging.slf4j.iml" filepath="$PROJECT_DIR$/fleet/util/logging/slf4j/fleet.util.logging.slf4j.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/util/multiplatform/fleet.util.multiplatform.iml" filepath="$PROJECT_DIR$/fleet/util/multiplatform/fleet.util.multiplatform.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/util/serialization/fleet.util.serialization.iml" filepath="$PROJECT_DIR$/fleet/util/serialization/fleet.util.serialization.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/prompt/core/intellij.agent.workbench.prompt.core.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/prompt/core/intellij.agent.workbench.prompt.core.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/prompt/core/intellij.agent.workbench.prompt.core.tests.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/prompt/core/intellij.agent.workbench.prompt.core.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-adb/intellij.android.adb.iml" filepath="$PROJECT_DIR$/android/android-adb/intellij.android.adb.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-adb/intellij.android.adb.testUtil.iml" filepath="$PROJECT_DIR$/android/android-adb/intellij.android.adb.testUtil.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-adb/intellij.android.adb.tests.iml" filepath="$PROJECT_DIR$/android/android-adb/intellij.android.adb.tests.iml" />
@@ -1234,17 +1232,6 @@
       <module fileurl="file://$PROJECT_DIR$/platform/acp/intellij.platform.acp.iml" filepath="$PROJECT_DIR$/platform/acp/intellij.platform.acp.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/acp/plugin/intellij.platform.acp.plugin.iml" filepath="$PROJECT_DIR$/platform/acp/plugin/intellij.platform.acp.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/acp/tests/intellij.platform.acp.tests.iml" filepath="$PROJECT_DIR$/platform/acp/tests/intellij.platform.acp.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/lib-agent/cli/intellij.platform.ai.agent.cli.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/lib-agent/cli/intellij.platform.ai.agent.cli.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/lib-agent/cli/intellij.platform.ai.agent.cli.tests.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/lib-agent/cli/intellij.platform.ai.agent.cli.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/lib-agent/common/intellij.platform.ai.agent.common.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/lib-agent/common/intellij.platform.ai.agent.common.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/lib-agent/common/intellij.platform.ai.agent.common.tests.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/lib-agent/common/intellij.platform.ai.agent.common.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/lib-agent/core/intellij.platform.ai.agent.core.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/lib-agent/core/intellij.platform.ai.agent.core.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/lib-agent/core/intellij.platform.ai.agent.core.tests.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/lib-agent/core/intellij.platform.ai.agent.core.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/lib-agent/filewatch/intellij.platform.ai.agent.filewatch.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/lib-agent/filewatch/intellij.platform.ai.agent.filewatch.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/lib-agent/filewatch/intellij.platform.ai.agent.filewatch.tests.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/lib-agent/filewatch/intellij.platform.ai.agent.filewatch.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/lib-agent/json/intellij.platform.ai.agent.json.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/lib-agent/json/intellij.platform.ai.agent.json.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/lib-agent/json/intellij.platform.ai.agent.json.tests.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/lib-agent/json/intellij.platform.ai.agent.json.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/lib-agent/sessions-core/intellij.platform.ai.agent.sessions.core.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/lib-agent/sessions-core/intellij.platform.ai.agent.sessions.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/analysis-api/intellij.platform.analysis.iml" filepath="$PROJECT_DIR$/platform/analysis-api/intellij.platform.analysis.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/analysis-impl/intellij.platform.analysis.impl.iml" filepath="$PROJECT_DIR$/platform/analysis-impl/intellij.platform.analysis.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/backend/intellij.platform.backend.iml" filepath="$PROJECT_DIR$/platform/backend/intellij.platform.backend.iml" />

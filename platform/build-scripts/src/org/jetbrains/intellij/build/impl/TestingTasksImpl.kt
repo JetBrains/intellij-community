@@ -1489,12 +1489,6 @@ private suspend fun publishTestDiscovery(messages: BuildMessages, file: String?)
 private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.maven.server.eventListener.tests",
   "intellij.agent.workbench.chat.tests",
-  "intellij.platform.ai.agent.cli.tests",
-  "intellij.platform.ai.agent.common.tests",
-  "intellij.platform.ai.agent.core.tests",
-  "intellij.platform.ai.agent.filewatch.tests",
-  "intellij.platform.ai.agent.json.tests",
-  "intellij.agent.workbench.prompt.core.tests",
   "intellij.ant.tests",
   "intellij.commander.tests",
   "intellij.completionMlRanking.tests",
