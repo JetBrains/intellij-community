@@ -3,8 +3,8 @@ package com.intellij.python.junit5Tests.unit
 
 import com.intellij.configurationStore.deserialize
 import com.intellij.configurationStore.serialize
+import com.intellij.openapi.util.JDOMUtil
 import com.jetbrains.python.console.PyConsoleOptions
-import org.jdom.Element
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
@@ -12,11 +12,13 @@ import org.junit.jupiter.api.Test
 /**
  * Regression coverage for [PY-90067](https://youtrack.jetbrains.com/issue/PY-90067).
  *
- * Deserialization of `PyConsoleOptions.State` (and the nested `PyConsoleSettings` with `@Tag("console-settings")`)
- * goes through [com.intellij.serialization.xml.KotlinAwareBeanBinding]. For a Java [PyConsoleSettings] that
- * path could throw `NoSuchElementException` from `createUsingKotlin` when Kotlin reflection saw an empty
- * constructor list. Keeping the class Kotlin (with a primary constructor) ensures the fallback uses the
- * primary constructor and never reaches the empty-list throw.
+ * `PyConsoleSettings` used to serialize its `sdk` property, whose type [com.intellij.openapi.projectRoots.Sdk]
+ * is an interface. When a user had configured a console interpreter, the resolved `Sdk` object was written to
+ * `workspace.xml`; on the next load the serializer tried to instantiate the `Sdk` interface and failed
+ * (`NoSuchElementException: List is empty` from `createUsingKotlin`, i.e. `Sdk` has no constructors).
+ *
+ * The `sdk` object is transient runtime state — the persistent reference is the `sdk-home` path
+ * ([PyConsoleOptions.PyConsoleSettings.getSdkHome]). It is now `@Transient`, so it is neither written nor read.
  */
 class PyConsoleOptionsSerializationTest {
 
@@ -77,16 +79,40 @@ class PyConsoleOptionsSerializationTest {
   }
 
   /**
-   * Direct deserialization from an empty `<console-settings/>` element exercises the
-   * `KotlinAwareBeanBinding.newInstance` path for [PyConsoleOptions.PyConsoleSettings] —
-   * the exact spot where PY-90067 used to throw `NoSuchElementException`.
+   * The `sdk` property (type `Sdk`, an interface) must not be serialized: an interface cannot be instantiated
+   * during deserialization. Serializing settings that hold a resolved SDK must not emit any `sdk` element.
    */
   @Test
-  fun `empty console-settings element deserializes without NoSuchElementException`() {
-    val empty = Element("console-settings")
-    val settings = empty.deserialize(PyConsoleOptions.PyConsoleSettings::class.java)
-    // Defaults survive: just verify the instance was constructed.
-    assertEquals("", settings.myWorkingDirectory)
-    assertEquals(true, settings.myAddContentRoots)
+  fun `resolved sdk object is not serialized`() {
+    val element = serialize(PyConsoleOptions.PyConsoleSettings())
+    val xml = element?.let { JDOMUtil.write(it) } ?: ""
+    assert(!xml.contains("name=\"sdk\"") && !xml.contains("name=\"mySdk\"")) {
+      "PyConsoleSettings must not serialize the resolved Sdk object, but got:\n$xml"
+    }
+  }
+
+  /**
+   * The actual PY-90067 reproduction: a `workspace.xml` written when a console interpreter was configured
+   * contains a persisted `sdk`/`mySdk` element. Loading it must not fail trying to instantiate the `Sdk`
+   * interface; the stale element is ignored and the remaining settings load normally.
+   */
+  @Test
+  fun `legacy console-settings with persisted sdk element loads without failure`() {
+    val legacy = JDOMUtil.load(
+      """
+      <console-settings working-directory="/work" custom-start-script="import sys">
+        <option name="sdk">
+          <value />
+        </option>
+        <option name="mySdk">
+          <value />
+        </option>
+      </console-settings>
+      """.trimIndent()
+    )
+
+    val restored = legacy.deserialize(PyConsoleOptions.PyConsoleSettings::class.java)
+    assertEquals("/work", restored.myWorkingDirectory)
+    assertEquals("import sys", restored.myCustomStartScript)
   }
 }
