@@ -1272,7 +1272,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     @Override
     public String getAccessibleDescription() {
       String description = super.getAccessibleDescription();
-      if (description == null && StringUtil.isEmpty(getText())) {
+      if (description == null && editor.getDocument().getTextLength() == 0) {
         //noinspection HardCodedStringLiteral
         CharSequence emptyText = getEditor().getPlaceholder();
         if (emptyText != null && !emptyText.isEmpty()) {
