@@ -6,7 +6,6 @@ fun foo(a: Int) {}
 
 fun test() {
     foo(
-        a = TODO(),
-        b = TODO()
+        a = TODO()
     )
 }
