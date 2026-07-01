@@ -2,6 +2,7 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DefaultDebugEnvironment;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.impl.DebuggerManagerListener;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -542,6 +543,8 @@ public final class HotSwapUIImpl extends HotSwapUI {
         myConn = myProject.getMessageBus().connect();
         myConn.subscribe(ProjectTaskListener.TOPIC, new MyCompilationStatusListener(myProject));
       }
+      boolean dcevmEnabled = DefaultDebugEnvironment.hasEnhancedClassRedefinitionEnabled(session.getDebugEnvironment());
+      HotSwapStatistics.logSessionStarted(myProject, dcevmEnabled);
     }
 
     @Override

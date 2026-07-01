@@ -13,12 +13,21 @@ import org.jetbrains.annotations.ApiStatus
 object HotSwapStatistics : CounterUsagesCollector() {
   private val group = EventLogGroup("debugger.hotswap", 2)
 
+  private val dcevmEnabled = EventFields.Boolean("dcevm_enabled")
+
   private val hotSwapCalled = group.registerEvent("hotswap.called", EventFields.Enum<HotSwapSource>("source"))
   private val hotSwapStatus = group.registerEvent("hotswap.finished", EventFields.Enum<HotSwapStatus>("status"))
   private val hotSwapFailureReason = group.registerEvent("hotswap.failed", EventFields.Enum<HotSwapFailureReason>("reason"))
   private val hotSwapClassesNumber = group.registerEvent("hotswap.classes.reloaded", EventFields.Int("count"))
+  private val sessionStarted = group.registerEvent("session.started", dcevmEnabled)
+
 
   override fun getGroup(): EventLogGroup = group
+
+  @JvmStatic
+  fun logSessionStarted(project: Project, dcevmEnabled: Boolean) {
+    sessionStarted.log(project, dcevmEnabled)
+  }
 
   @JvmStatic
   fun logHotSwapCalled(project: Project, source: HotSwapSource) = hotSwapCalled.log(project, source)
