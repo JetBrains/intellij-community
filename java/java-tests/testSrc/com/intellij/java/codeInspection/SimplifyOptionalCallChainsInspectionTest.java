@@ -20,11 +20,8 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.SimplifyOptionalCallChainsInspection;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
-
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21;
 
 public class SimplifyOptionalCallChainsInspectionTest extends LightQuickFixParameterizedTestCase {
   @Override
