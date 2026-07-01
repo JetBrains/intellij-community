@@ -1,0 +1,14 @@
+f:com.intellij.platform.settings.v2.impl.KotlinxSerializerKt
+- *sf:kotlinxSerializer(kotlinx.serialization.KSerializer):com.intellij.platform.settings.v2.Serializer
+*:com.intellij.platform.settings.v2.impl.SettingsKeyPromoter
+- *sf:Companion:com.intellij.platform.settings.v2.impl.SettingsKeyPromoter$Companion
+- a:promote(kotlin.jvm.functions.Function1):V
+*f:com.intellij.platform.settings.v2.impl.SettingsKeyPromoter$Companion
+*f:com.intellij.platform.settings.v2.impl.SettingsKeyRegistry
+- *sf:Companion:com.intellij.platform.settings.v2.impl.SettingsKeyRegistry$Companion
+- <init>(kotlinx.coroutines.CoroutineScope):V
+- f:awaitReady(kotlin.coroutines.Continuation):java.lang.Object
+- f:get(java.lang.String):com.intellij.platform.settings.v2.SettingsKey
+- f:holds(com.intellij.platform.settings.v2.SettingsKey):Z
+*f:com.intellij.platform.settings.v2.impl.SettingsKeyRegistry$Companion
+- f:getInstance():com.intellij.platform.settings.v2.impl.SettingsKeyRegistry

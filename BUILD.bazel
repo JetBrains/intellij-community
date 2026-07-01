@@ -844,6 +844,8 @@ jvm_library(
         "//platform/completion/common:common-tests_test_lib",
         "//platform/settings-local:settings-local-tests",
         "//platform/settings-local:settings-local-tests_test_lib",
+        "//platform/settings.v2/test",
+        "//platform/settings.v2/test:test_test_lib",
         "//platform/vcs-impl/frontend:vcs-impl-frontend-tests",
         "//platform/vcs-impl/frontend:vcs-impl-frontend-tests_test_lib",
         "//platform/vcs-impl/shared:vcs-impl-shared-tests",

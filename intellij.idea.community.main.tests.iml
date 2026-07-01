@@ -151,6 +151,7 @@
     <orderEntry type="module" module-name="intellij.maven.server.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.completion.common.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.settings.local.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.settings.v2.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.frontend.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.tests" scope="TEST" />

@@ -1,0 +1,13 @@
+<idea-plugin>
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.settings.v2.shared"/>
+    <!-- endregion -->
+  </dependencies>
+</idea-plugin>

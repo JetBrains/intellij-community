@@ -1057,6 +1057,10 @@ platform/service-container
 platform/settings
 platform/settings-local
 platform/settings-sync-core
+platform/settings.v2
+platform/settings.v2/backend
+platform/settings.v2/shared
+platform/settings.v2/test
 platform/smRunner
 platform/smRunner/dashboard
 platform/smRunner/vcs

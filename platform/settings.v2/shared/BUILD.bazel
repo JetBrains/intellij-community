@@ -1,0 +1,63 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.settings.v2.shared` start
+content_module_jar(module = ":shared")
+### auto-generated section `dev intellij.platform.settings.v2.shared` end
+
+### auto-generated section `build intellij.platform.settings.v2.shared` start
+jvm_library(
+    name = "shared",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.settings.v2.shared",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/settings.v2",
+        "//libraries/jetbrains/annotations",
+        "//platform/core-api:core",
+        "//platform/util",
+    ],
+)
+
+jvm_library(
+    name = "shared_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.settings.v2.shared",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":shared",
+        "//platform/settings.v2:settings.v2_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.settings.v2.shared` end
+
+### auto-generated section `iml intellij.platform.settings.v2.shared` start
+exports_files(
+    [
+        "intellij.platform.settings.v2.shared.iml",
+        "resources/intellij.platform.settings.v2.shared.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.settings.v2.shared` end

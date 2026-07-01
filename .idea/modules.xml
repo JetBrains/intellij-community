@@ -1922,6 +1922,10 @@
       <module fileurl="file://$PROJECT_DIR$/platform/settings/intellij.platform.settings.iml" filepath="$PROJECT_DIR$/platform/settings/intellij.platform.settings.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/settings-local/intellij.platform.settings.local.iml" filepath="$PROJECT_DIR$/platform/settings-local/intellij.platform.settings.local.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/settings-local/intellij.platform.settings.local.tests.iml" filepath="$PROJECT_DIR$/platform/settings-local/intellij.platform.settings.local.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/settings.v2/intellij.platform.settings.v2.iml" filepath="$PROJECT_DIR$/platform/settings.v2/intellij.platform.settings.v2.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/settings.v2/backend/intellij.platform.settings.v2.backend.iml" filepath="$PROJECT_DIR$/platform/settings.v2/backend/intellij.platform.settings.v2.backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/settings.v2/shared/intellij.platform.settings.v2.shared.iml" filepath="$PROJECT_DIR$/platform/settings.v2/shared/intellij.platform.settings.v2.shared.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/settings.v2/test/intellij.platform.settings.v2.test.iml" filepath="$PROJECT_DIR$/platform/settings.v2/test/intellij.platform.settings.v2.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/smRunner/intellij.platform.smRunner.iml" filepath="$PROJECT_DIR$/platform/smRunner/intellij.platform.smRunner.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/smRunner/dashboard/intellij.platform.smRunner.dashboard.iml" filepath="$PROJECT_DIR$/platform/smRunner/dashboard/intellij.platform.smRunner.dashboard.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/smRunner/intellij.platform.smRunner.tests.iml" filepath="$PROJECT_DIR$/platform/smRunner/intellij.platform.smRunner.tests.iml" />

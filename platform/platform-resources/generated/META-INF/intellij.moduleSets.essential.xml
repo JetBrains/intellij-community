@@ -406,6 +406,9 @@
     <module name="intellij.remoteDev.frontendProcessLauncher"/>
     <module name="intellij.platform.buildScripts.downloader"/>
     <module name="intellij.platform.indexing.impl.backend"/>
+    <module name="intellij.platform.settings.v2"/>
+    <module name="intellij.platform.settings.v2.shared"/>
+    <module name="intellij.platform.settings.v2.backend"/>
     <module name="intellij.platform.inline.completion"/>
     <module name="intellij.platform.ml"/>
     <module name="intellij.platform.managed.cache"/>

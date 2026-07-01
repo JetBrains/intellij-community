@@ -72,6 +72,9 @@ object CommunityModuleSets {
 
     module("intellij.platform.buildScripts.downloader")
     module("intellij.platform.indexing.impl.backend")
+    module("intellij.platform.settings.v2")
+    module("intellij.platform.settings.v2.shared")
+    module("intellij.platform.settings.v2.backend")
     module("intellij.platform.inline.completion")
     module("intellij.platform.ml")
     module("intellij.platform.managed.cache")

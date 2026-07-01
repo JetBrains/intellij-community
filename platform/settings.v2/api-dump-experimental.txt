@@ -1,0 +1,376 @@
+*f:com.intellij.platform.settings.v2.BooleanSerializer
+- com.intellij.platform.settings.v2.Serializer
+- sf:INSTANCE:com.intellij.platform.settings.v2.BooleanSerializer
+- deserialize(com.intellij.platform.settings.v2.SettingsValue):java.lang.Boolean
+- serialize(Z):com.intellij.platform.settings.v2.SettingsValue
+*f:com.intellij.platform.settings.v2.DoubleSerializer
+- com.intellij.platform.settings.v2.Serializer
+- sf:INSTANCE:com.intellij.platform.settings.v2.DoubleSerializer
+- deserialize(com.intellij.platform.settings.v2.SettingsValue):java.lang.Double
+- serialize(D):com.intellij.platform.settings.v2.SettingsValue
+*f:com.intellij.platform.settings.v2.DumbMapValueSerializer
+- com.intellij.platform.settings.v2.Serializer
+- sf:INSTANCE:com.intellij.platform.settings.v2.DumbMapValueSerializer
+- deserialize(com.intellij.platform.settings.v2.SettingsValue):com.intellij.platform.settings.v2.SettingsValue$MapValue
+- serialize(com.intellij.platform.settings.v2.SettingsValue$MapValue):com.intellij.platform.settings.v2.SettingsValue
+*f:com.intellij.platform.settings.v2.IntSerializer
+- com.intellij.platform.settings.v2.Serializer
+- sf:INSTANCE:com.intellij.platform.settings.v2.IntSerializer
+- deserialize(com.intellij.platform.settings.v2.SettingsValue):java.lang.Integer
+- serialize(I):com.intellij.platform.settings.v2.SettingsValue
+*e:com.intellij.platform.settings.v2.KeyLocality
+- java.lang.Enum
+- sf:ENVIRONMENTAL:com.intellij.platform.settings.v2.KeyLocality
+- sf:SHAREABLE:com.intellij.platform.settings.v2.KeyLocality
+- f:accepts(com.intellij.platform.settings.v2.LayerLocality):Z
+- f:getDefaultLayer():com.intellij.platform.settings.v2.LayerLocality
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getWritePreference():java.util.List
+- s:valueOf(java.lang.String):com.intellij.platform.settings.v2.KeyLocality
+- s:values():com.intellij.platform.settings.v2.KeyLocality[]
+*f:com.intellij.platform.settings.v2.LayerData
+- *sf:Companion:com.intellij.platform.settings.v2.LayerData$Companion
+- f:getContext():com.intellij.platform.settings.v2.SettingsContext
+- f:getLocality():com.intellij.platform.settings.v2.LayerLocality
+- f:getMap():com.intellij.platform.settings.v2.SettingsValue$MapValue
+- f:getProvider():com.intellij.platform.settings.v2.LayerProvider
+- f:isEmpty():Z
+*f:com.intellij.platform.settings.v2.LayerData$Builder
+- <init>(com.intellij.platform.settings.v2.SettingsContext,com.intellij.platform.settings.v2.LayerProvider,com.intellij.platform.settings.v2.LayerLocality):V
+- f:build():com.intellij.platform.settings.v2.LayerData
+- f:getContext():com.intellij.platform.settings.v2.SettingsContext
+- f:getLocality():com.intellij.platform.settings.v2.LayerLocality
+- f:getProvider():com.intellij.platform.settings.v2.LayerProvider
+- f:set(com.intellij.platform.settings.v2.SettingsKey,java.lang.Object):V
+- f:set(java.lang.String,com.intellij.platform.settings.v2.SettingsValue):V
+*f:com.intellij.platform.settings.v2.LayerData$Companion
+- f:empty(com.intellij.platform.settings.v2.SettingsContext,com.intellij.platform.settings.v2.LayerProvider,com.intellij.platform.settings.v2.LayerLocality):com.intellij.platform.settings.v2.LayerData
+*e:com.intellij.platform.settings.v2.LayerLocality
+- java.lang.Enum
+- *sf:Companion:com.intellij.platform.settings.v2.LayerLocality$Companion
+- sf:ENVIRONMENTAL:com.intellij.platform.settings.v2.LayerLocality
+- sf:LOCAL:com.intellij.platform.settings.v2.LayerLocality
+- sf:TEAM:com.intellij.platform.settings.v2.LayerLocality
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.settings.v2.LayerLocality
+- s:values():com.intellij.platform.settings.v2.LayerLocality[]
+*f:com.intellij.platform.settings.v2.LayerLocality$Companion
+- f:getByResolutionPrecedence():java.util.List
+*:com.intellij.platform.settings.v2.LayerProvider
+- *sf:Companion:com.intellij.platform.settings.v2.LayerProvider$Companion
+- acceptsKey(com.intellij.platform.settings.v2.SettingsKey):Z
+- availableLocalities(com.intellij.platform.settings.v2.SettingsContext):java.util.Set
+- requestData(com.intellij.platform.settings.v2.SettingsContext,kotlin.coroutines.Continuation):java.lang.Object
+- storageContext(com.intellij.platform.settings.v2.SettingsContext):com.intellij.platform.settings.v2.SettingsContext
+- writeData(com.intellij.platform.settings.v2.SettingsContext,com.intellij.platform.settings.v2.LayerLocality,java.util.Map,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.settings.v2.LayerProvider$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+*f:com.intellij.platform.settings.v2.LocalityKt
+- *sf:getEDIT_TEAM_LAYER():com.intellij.platform.settings.v2.SettingsKey
+*f:com.intellij.platform.settings.v2.LongSerializer
+- com.intellij.platform.settings.v2.Serializer
+- sf:INSTANCE:com.intellij.platform.settings.v2.LongSerializer
+- deserialize(com.intellij.platform.settings.v2.SettingsValue):java.lang.Long
+- serialize(J):com.intellij.platform.settings.v2.SettingsValue
+*f:com.intellij.platform.settings.v2.ReadOnlySettingsException
+- java.lang.IllegalStateException
+- <init>(com.intellij.platform.settings.v2.SettingsKey):V
+- f:getKey():com.intellij.platform.settings.v2.SettingsKey
+*e:com.intellij.platform.settings.v2.SaveResult
+- java.lang.Enum
+- sf:DROPPED:com.intellij.platform.settings.v2.SaveResult
+- sf:SAVED:com.intellij.platform.settings.v2.SaveResult
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.settings.v2.SaveResult
+- s:values():com.intellij.platform.settings.v2.SaveResult[]
+*:com.intellij.platform.settings.v2.Serializer
+- a:deserialize(com.intellij.platform.settings.v2.SettingsValue):java.lang.Object
+- a:serialize(java.lang.Object):com.intellij.platform.settings.v2.SettingsValue
+*f:com.intellij.platform.settings.v2.SerializerKt
+- *sf:listOf(com.intellij.platform.settings.v2.Serializer):com.intellij.platform.settings.v2.Serializer
+- *sf:mapOf(com.intellij.platform.settings.v2.Serializer):com.intellij.platform.settings.v2.Serializer
+- *sf:nullable(com.intellij.platform.settings.v2.Serializer):com.intellij.platform.settings.v2.Serializer
+*f:com.intellij.platform.settings.v2.SettingsAccessContext
+- com.intellij.platform.settings.v2.SettingsContext
+- discriminator(com.intellij.platform.settings.v2.SettingsKey):java.lang.Object
+- equals(java.lang.Object):Z
+- getIdentity():java.lang.String
+- getKind():com.intellij.platform.settings.v2.SettingsContextKind
+- getParentContext():com.intellij.platform.settings.v2.SettingsContext
+- getRealContext():com.intellij.platform.settings.v2.SettingsContext
+- hashCode():I
+*f:com.intellij.platform.settings.v2.SettingsAccessContext$Builder
+- f:getDiscriminatorOverrides():java.util.Map
+- f:getLanguage():com.intellij.lang.Language
+- f:set(com.intellij.platform.settings.v2.SettingsKey,java.lang.Object):V
+- f:setLanguage(com.intellij.lang.Language):V
+*f:com.intellij.platform.settings.v2.SettingsAccessContextKt
+- *sf:access(com.intellij.platform.settings.v2.SettingsContext,kotlin.jvm.functions.Function1):com.intellij.platform.settings.v2.SettingsContext
+- *sf:access(com.intellij.platform.settings.v2.SettingsContext,com.intellij.platform.settings.v2.SettingsKey[]):com.intellij.platform.settings.v2.SettingsContext
+- *sf:accessFor(com.intellij.platform.settings.v2.SettingsContext,com.intellij.platform.settings.v2.SettingsKey):com.intellij.platform.settings.v2.SettingsContext
+*f:com.intellij.platform.settings.v2.SettingsApi
+- *sf:get(com.intellij.platform.settings.v2.SettingsContext,com.intellij.platform.settings.v2.SettingsKey):java.lang.Object
+- *sf:getValue(com.intellij.platform.settings.v2.SettingsKey):java.lang.Object
+- *sf:getValue(com.intellij.platform.settings.v2.SettingsKey,com.intellij.openapi.project.Project):java.lang.Object
+- *sf:getValue(com.intellij.platform.settings.v2.SettingsKey,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):java.lang.Object
+- *sf:getValue(com.intellij.platform.settings.v2.SettingsKey,com.intellij.psi.PsiFile):java.lang.Object
+- *sf:mutate(com.intellij.platform.settings.v2.SettingsContext):com.intellij.platform.settings.v2.SettingsMutationBuilder
+- *sf:readWhenReady(com.intellij.platform.settings.v2.SettingsContext,com.intellij.platform.settings.v2.SettingsKey,kotlin.coroutines.Continuation):java.lang.Object
+- *sf:set(com.intellij.platform.settings.v2.SettingsContext,com.intellij.platform.settings.v2.SettingsKey,java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
+- *sf:setValue(com.intellij.platform.settings.v2.SettingsKey,java.lang.Object,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
+- *sf:setValue(com.intellij.platform.settings.v2.SettingsKey,java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.settings.v2.SettingsChangeListener
+- a:onChanged(com.intellij.platform.settings.v2.SettingsKey,com.intellij.platform.settings.v2.SettingsContext):V
+*:com.intellij.platform.settings.v2.SettingsContext
+- *sf:Companion:com.intellij.platform.settings.v2.SettingsContext$Companion
+- awaitReady(kotlin.coroutines.Continuation):java.lang.Object
+- discriminator(com.intellij.platform.settings.v2.SettingsKey):java.lang.Object
+- a:getIdentity():java.lang.String
+- a:getKind():com.intellij.platform.settings.v2.SettingsContextKind
+- getLanguage():com.intellij.lang.Language
+- a:getParentContext():com.intellij.platform.settings.v2.SettingsContext
+- getRealContext():com.intellij.platform.settings.v2.SettingsContext
+- isAncestorOf(com.intellij.platform.settings.v2.SettingsContext,Z):Z
+- isDescendantOf(com.intellij.platform.settings.v2.SettingsContext,Z):Z
+- isDirty():Z
+- isReady():Z
+*f:com.intellij.platform.settings.v2.SettingsContext$Companion
+- f:app():com.intellij.platform.settings.v2.SettingsContext
+- f:file(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.platform.settings.v2.SettingsContext
+- f:file(com.intellij.psi.PsiFile):com.intellij.platform.settings.v2.SettingsContext
+- f:project(com.intellij.openapi.project.Project):com.intellij.platform.settings.v2.SettingsContext
+*e:com.intellij.platform.settings.v2.SettingsContextKind
+- java.lang.Enum
+- sf:APPLICATION:com.intellij.platform.settings.v2.SettingsContextKind
+- sf:FILE:com.intellij.platform.settings.v2.SettingsContextKind
+- sf:PROJECT:com.intellij.platform.settings.v2.SettingsContextKind
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.settings.v2.SettingsContextKind
+- s:values():com.intellij.platform.settings.v2.SettingsContextKind[]
+*f:com.intellij.platform.settings.v2.SettingsContextKt
+- *sf:getLANGUAGE():com.intellij.platform.settings.v2.SettingsKey
+*Fc:com.intellij.platform.settings.v2.SettingsKey
+- *sf:Companion:com.intellij.platform.settings.v2.SettingsKey$Companion
+- <init>(java.lang.String,com.intellij.platform.settings.v2.Serializer,Z,com.intellij.platform.settings.v2.SettingsMapKey,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,com.intellij.platform.settings.v2.KeyLocality,kotlin.jvm.functions.Function1):V
+- b:<init>(java.lang.String,com.intellij.platform.settings.v2.Serializer,Z,com.intellij.platform.settings.v2.SettingsMapKey,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,com.intellij.platform.settings.v2.KeyLocality,kotlin.jvm.functions.Function1,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,java.lang.Object,com.intellij.platform.settings.v2.Serializer,Z,com.intellij.platform.settings.v2.SettingsMapKey,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,com.intellij.platform.settings.v2.KeyLocality):V
+- b:<init>(java.lang.String,java.lang.Object,com.intellij.platform.settings.v2.Serializer,Z,com.intellij.platform.settings.v2.SettingsMapKey,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,com.intellij.platform.settings.v2.KeyLocality,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:addListener(com.intellij.openapi.Disposable,com.intellij.platform.settings.v2.SettingsChangeListener):V
+- f:addListener(com.intellij.openapi.Disposable,com.intellij.platform.settings.v2.SettingsContext,com.intellij.platform.settings.v2.SettingsChangeListener):V
+- f:default(com.intellij.platform.settings.v2.SettingsContext):java.lang.Object
+- f:equals(java.lang.Object):Z
+- f:get(com.intellij.platform.settings.v2.SettingsContext):java.lang.Object
+- f:getContextFilter():kotlin.jvm.functions.Function1
+- getIdentity():java.lang.String
+- f:getLayerFilter():kotlin.jvm.functions.Function1
+- f:getLocality():com.intellij.platform.settings.v2.KeyLocality
+- f:getName():java.lang.String
+- f:getPluginId():com.intellij.openapi.extensions.PluginId
+- f:getReadonly():Z
+- f:getSerializer():com.intellij.platform.settings.v2.Serializer
+- f:getStorageKey():com.intellij.platform.settings.v2.SettingsMapKey
+- f:getValidator():kotlin.jvm.functions.Function1
+- f:hashCode():I
+- f:set(com.intellij.platform.settings.v2.SettingsContext,java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
+- bs:storage$default(com.intellij.platform.settings.v2.SettingsKey,com.intellij.platform.settings.v2.SettingsContext,com.intellij.platform.settings.v2.SettingsKey,I,java.lang.Object):java.util.List
+- f:validate(java.lang.Object):java.lang.String
+- f:values(com.intellij.platform.settings.v2.SettingsContext):java.util.List
+- withTestPluginId(com.intellij.openapi.extensions.PluginId):com.intellij.platform.settings.v2.SettingsKey
+*f:com.intellij.platform.settings.v2.SettingsKey$Companion
+*f:com.intellij.platform.settings.v2.SettingsKeyPrefixBean
+- com.intellij.openapi.extensions.PluginAware
+- *sf:Companion:com.intellij.platform.settings.v2.SettingsKeyPrefixBean$Companion
+- <init>():V
+- f:getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
+- f:getPrefix():java.lang.String
+- setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
+- f:setPrefix(java.lang.String):V
+*f:com.intellij.platform.settings.v2.SettingsKeyPrefixBean$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+*f:com.intellij.platform.settings.v2.SettingsMapKey
+- com.intellij.platform.settings.v2.SettingsKey
+- <init>(java.lang.String,com.intellij.platform.settings.v2.SettingsKey,com.intellij.platform.settings.v2.SettingsMapKey):V
+- b:<init>(java.lang.String,com.intellij.platform.settings.v2.SettingsKey,com.intellij.platform.settings.v2.SettingsMapKey,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:copySlot(com.intellij.platform.settings.v2.SettingsContext,java.lang.String,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- f:dropSlot(com.intellij.platform.settings.v2.SettingsContext,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- f:getDiscriminatorKey():com.intellij.platform.settings.v2.SettingsKey
+- getIdentity():java.lang.String
+- f:renameSlot(com.intellij.platform.settings.v2.SettingsContext,java.lang.String,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- f:subStorage(com.intellij.platform.settings.v2.SettingsContext,com.intellij.platform.settings.v2.SettingsKey):java.util.List
+- withTestPluginId(com.intellij.openapi.extensions.PluginId):com.intellij.platform.settings.v2.SettingsMapKey
+*:com.intellij.platform.settings.v2.SettingsMutationBuilder
+- a:apply(kotlin.coroutines.Continuation):java.lang.Object
+- a:context(com.intellij.platform.settings.v2.SettingsContext):com.intellij.platform.settings.v2.SettingsMutationBuilder
+- a:copySlot(com.intellij.platform.settings.v2.SettingsMapKey,java.lang.String,java.lang.String,com.intellij.platform.settings.v2.SettingsContext):com.intellij.platform.settings.v2.SettingsMutationBuilder
+- bs:copySlot$default(com.intellij.platform.settings.v2.SettingsMutationBuilder,com.intellij.platform.settings.v2.SettingsMapKey,java.lang.String,java.lang.String,com.intellij.platform.settings.v2.SettingsContext,I,java.lang.Object):com.intellij.platform.settings.v2.SettingsMutationBuilder
+- a:dropSlot(com.intellij.platform.settings.v2.SettingsMapKey,java.lang.String,com.intellij.platform.settings.v2.SettingsContext):com.intellij.platform.settings.v2.SettingsMutationBuilder
+- bs:dropSlot$default(com.intellij.platform.settings.v2.SettingsMutationBuilder,com.intellij.platform.settings.v2.SettingsMapKey,java.lang.String,com.intellij.platform.settings.v2.SettingsContext,I,java.lang.Object):com.intellij.platform.settings.v2.SettingsMutationBuilder
+- a:renameSlot(com.intellij.platform.settings.v2.SettingsMapKey,java.lang.String,java.lang.String,com.intellij.platform.settings.v2.SettingsContext):com.intellij.platform.settings.v2.SettingsMutationBuilder
+- bs:renameSlot$default(com.intellij.platform.settings.v2.SettingsMutationBuilder,com.intellij.platform.settings.v2.SettingsMapKey,java.lang.String,java.lang.String,com.intellij.platform.settings.v2.SettingsContext,I,java.lang.Object):com.intellij.platform.settings.v2.SettingsMutationBuilder
+- a:set(com.intellij.platform.settings.v2.SettingsKey,java.lang.Object,com.intellij.platform.settings.v2.SettingsContext):com.intellij.platform.settings.v2.SettingsMutationBuilder
+- bs:set$default(com.intellij.platform.settings.v2.SettingsMutationBuilder,com.intellij.platform.settings.v2.SettingsKey,java.lang.Object,com.intellij.platform.settings.v2.SettingsContext,I,java.lang.Object):com.intellij.platform.settings.v2.SettingsMutationBuilder
+*f:com.intellij.platform.settings.v2.SettingsValidationException
+- java.lang.IllegalArgumentException
+- <init>(com.intellij.platform.settings.v2.SettingsKey,java.lang.Object,java.lang.String):V
+- f:getKey():com.intellij.platform.settings.v2.SettingsKey
+- f:getReason():java.lang.String
+- f:getValue():java.lang.Object
+*:com.intellij.platform.settings.v2.SettingsValue
+- *sf:Companion:com.intellij.platform.settings.v2.SettingsValue$Companion
+*f:com.intellij.platform.settings.v2.SettingsValue$BooleanValue
+- com.intellij.platform.settings.v2.SettingsValue
+- *sf:Companion:com.intellij.platform.settings.v2.SettingsValue$BooleanValue$Companion
+- <init>(Z):V
+- f:component1():Z
+- f:copy(Z):com.intellij.platform.settings.v2.SettingsValue$BooleanValue
+- bs:copy$default(com.intellij.platform.settings.v2.SettingsValue$BooleanValue,Z,I,java.lang.Object):com.intellij.platform.settings.v2.SettingsValue$BooleanValue
+- equals(java.lang.Object):Z
+- f:getValue():Z
+- hashCode():I
+*bf:com.intellij.platform.settings.v2.SettingsValue$BooleanValue$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.settings.v2.SettingsValue$BooleanValue$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.settings.v2.SettingsValue$BooleanValue
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.settings.v2.SettingsValue$BooleanValue):V
+*f:com.intellij.platform.settings.v2.SettingsValue$BooleanValue$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.platform.settings.v2.SettingsValue$Companion
+- f:getEMPTY_MAP():com.intellij.platform.settings.v2.SettingsValue$MapValue
+- f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.platform.settings.v2.SettingsValue$DoubleValue
+- com.intellij.platform.settings.v2.SettingsValue
+- *sf:Companion:com.intellij.platform.settings.v2.SettingsValue$DoubleValue$Companion
+- <init>(D):V
+- f:component1():D
+- f:copy(D):com.intellij.platform.settings.v2.SettingsValue$DoubleValue
+- bs:copy$default(com.intellij.platform.settings.v2.SettingsValue$DoubleValue,D,I,java.lang.Object):com.intellij.platform.settings.v2.SettingsValue$DoubleValue
+- equals(java.lang.Object):Z
+- f:getValue():D
+- hashCode():I
+*bf:com.intellij.platform.settings.v2.SettingsValue$DoubleValue$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.settings.v2.SettingsValue$DoubleValue$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.settings.v2.SettingsValue$DoubleValue
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.settings.v2.SettingsValue$DoubleValue):V
+*f:com.intellij.platform.settings.v2.SettingsValue$DoubleValue$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.platform.settings.v2.SettingsValue$IntValue
+- com.intellij.platform.settings.v2.SettingsValue
+- *sf:Companion:com.intellij.platform.settings.v2.SettingsValue$IntValue$Companion
+- <init>(I):V
+- f:component1():I
+- f:copy(I):com.intellij.platform.settings.v2.SettingsValue$IntValue
+- bs:copy$default(com.intellij.platform.settings.v2.SettingsValue$IntValue,I,I,java.lang.Object):com.intellij.platform.settings.v2.SettingsValue$IntValue
+- equals(java.lang.Object):Z
+- f:getValue():I
+- hashCode():I
+*bf:com.intellij.platform.settings.v2.SettingsValue$IntValue$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.settings.v2.SettingsValue$IntValue$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.settings.v2.SettingsValue$IntValue
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.settings.v2.SettingsValue$IntValue):V
+*f:com.intellij.platform.settings.v2.SettingsValue$IntValue$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.platform.settings.v2.SettingsValue$ListValue
+- com.intellij.platform.settings.v2.SettingsValue
+- *sf:Companion:com.intellij.platform.settings.v2.SettingsValue$ListValue$Companion
+- <init>(com.intellij.platform.settings.v2.SettingsValue[]):V
+- f:component1():java.util.List
+- equals(java.lang.Object):Z
+- f:getItems():java.util.List
+- hashCode():I
+*bf:com.intellij.platform.settings.v2.SettingsValue$ListValue$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.settings.v2.SettingsValue$ListValue$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.settings.v2.SettingsValue$ListValue
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.settings.v2.SettingsValue$ListValue):V
+*f:com.intellij.platform.settings.v2.SettingsValue$ListValue$Companion
+- f:invoke(java.util.List):com.intellij.platform.settings.v2.SettingsValue$ListValue
+- f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.platform.settings.v2.SettingsValue$LongValue
+- com.intellij.platform.settings.v2.SettingsValue
+- *sf:Companion:com.intellij.platform.settings.v2.SettingsValue$LongValue$Companion
+- <init>(J):V
+- f:component1():J
+- f:copy(J):com.intellij.platform.settings.v2.SettingsValue$LongValue
+- bs:copy$default(com.intellij.platform.settings.v2.SettingsValue$LongValue,J,I,java.lang.Object):com.intellij.platform.settings.v2.SettingsValue$LongValue
+- equals(java.lang.Object):Z
+- f:getValue():J
+- hashCode():I
+*bf:com.intellij.platform.settings.v2.SettingsValue$LongValue$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.settings.v2.SettingsValue$LongValue$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.settings.v2.SettingsValue$LongValue
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.settings.v2.SettingsValue$LongValue):V
+*f:com.intellij.platform.settings.v2.SettingsValue$LongValue$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.platform.settings.v2.SettingsValue$MapValue
+- com.intellij.platform.settings.v2.SettingsValue
+- *sf:Companion:com.intellij.platform.settings.v2.SettingsValue$MapValue$Companion
+- f:component1():java.util.Map
+- equals(java.lang.Object):Z
+- f:get(com.intellij.platform.settings.v2.SettingsKey):com.intellij.platform.settings.v2.SettingsValue
+- f:get(java.lang.String):com.intellij.platform.settings.v2.SettingsValue
+- f:getValues():java.util.Map
+- hashCode():I
+- f:isEmpty():Z
+*bf:com.intellij.platform.settings.v2.SettingsValue$MapValue$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.settings.v2.SettingsValue$MapValue$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.settings.v2.SettingsValue$MapValue
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.settings.v2.SettingsValue$MapValue):V
+*f:com.intellij.platform.settings.v2.SettingsValue$MapValue$Builder
+- <init>():V
+- f:build():com.intellij.platform.settings.v2.SettingsValue$MapValue
+- f:set(com.intellij.platform.settings.v2.SettingsKey,java.lang.Object):V
+- f:set(java.lang.String,com.intellij.platform.settings.v2.SettingsValue):V
+*f:com.intellij.platform.settings.v2.SettingsValue$MapValue$Companion
+- f:invoke(java.util.Map):com.intellij.platform.settings.v2.SettingsValue$MapValue
+- f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.platform.settings.v2.SettingsValue$NullValue
+- com.intellij.platform.settings.v2.SettingsValue
+- sf:INSTANCE:com.intellij.platform.settings.v2.SettingsValue$NullValue
+- equals(java.lang.Object):Z
+- hashCode():I
+- f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.platform.settings.v2.SettingsValue$StringValue
+- com.intellij.platform.settings.v2.SettingsValue
+- *sf:Companion:com.intellij.platform.settings.v2.SettingsValue$StringValue$Companion
+- <init>(java.lang.String):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.intellij.platform.settings.v2.SettingsValue$StringValue
+- bs:copy$default(com.intellij.platform.settings.v2.SettingsValue$StringValue,java.lang.String,I,java.lang.Object):com.intellij.platform.settings.v2.SettingsValue$StringValue
+- equals(java.lang.Object):Z
+- f:getValue():java.lang.String
+- hashCode():I
+*bf:com.intellij.platform.settings.v2.SettingsValue$StringValue$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.settings.v2.SettingsValue$StringValue$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.settings.v2.SettingsValue$StringValue
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.settings.v2.SettingsValue$StringValue):V
+*f:com.intellij.platform.settings.v2.SettingsValue$StringValue$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.platform.settings.v2.StringSerializer
+- com.intellij.platform.settings.v2.Serializer
+- sf:INSTANCE:com.intellij.platform.settings.v2.StringSerializer
+- deserialize(com.intellij.platform.settings.v2.SettingsValue):java.lang.String
+- serialize(java.lang.String):com.intellij.platform.settings.v2.SettingsValue
+*f:com.intellij.platform.settings.v2.UnpinnedDiscriminatorException
+- java.lang.IllegalArgumentException
+- <init>(com.intellij.platform.settings.v2.SettingsKey,com.intellij.platform.settings.v2.SettingsMapKey):V
+- f:getKey():com.intellij.platform.settings.v2.SettingsKey
+- f:getMapKey():com.intellij.platform.settings.v2.SettingsMapKey

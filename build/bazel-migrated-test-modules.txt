@@ -181,6 +181,7 @@ intellij.platform.searchEverywhere.backend.tests
 intellij.platform.searchEverywhere.frontend.tests
 intellij.platform.serviceContainer.tests
 intellij.platform.settings.local.tests
+intellij.platform.settings.v2.test
 intellij.platform.smRunner.tests
 intellij.platform.sqlite.tests
 intellij.platform.statistics.devkit.tests

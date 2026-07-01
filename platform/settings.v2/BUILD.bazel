@@ -1,0 +1,67 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.settings.v2` start
+content_module_jar(module = ":settings.v2")
+### auto-generated section `dev intellij.platform.settings.v2` end
+
+### auto-generated section `build intellij.platform.settings.v2` start
+jvm_library(
+    name = "settings.v2",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.settings.v2",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
+        "//platform/extensions",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/serialization/core",
+    ],
+)
+
+jvm_library(
+    name = "settings.v2_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.settings.v2",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":settings.v2",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//platform/extensions:extensions_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.settings.v2` end
+
+### auto-generated section `iml intellij.platform.settings.v2` start
+exports_files(
+    [
+        "intellij.platform.settings.v2.iml",
+        "resources/intellij.platform.settings.v2.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.settings.v2` end
