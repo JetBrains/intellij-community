@@ -30,7 +30,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//platform/threadDumpParser",
+        "@lib//:diogen-analysis",
+        "//libraries/fastutil",
         "@lib//:jetbrains-annotations",
     ],
 )
@@ -47,7 +48,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":freezeAnalyzer",
-        "//platform/threadDumpParser:threadDumpParser_test_lib",
+        "//libraries/fastutil:fastutil_test_lib",
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
         "//libraries/junit5",
@@ -100,8 +101,6 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//platform/threadDumpParser",
-        "//platform/threadDumpParser:threadDumpParser_test_lib",
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
         "//libraries/junit5",
