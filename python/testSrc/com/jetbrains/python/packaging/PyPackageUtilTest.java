@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.packaging;
 
+import com.jetbrains.python.allure.Subsystems;
+import com.jetbrains.python.allure.Layers;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
@@ -36,6 +38,8 @@ import java.util.Map;
 
 import static com.jetbrains.python.inspections.ModuleAssocToolKt.setAssociationToModuleAsync;
 
+@Subsystems.PackagingRequirements
+@Layers.Functional
 public class PyPackageUtilTest extends PyTestCase {
 
   @Override

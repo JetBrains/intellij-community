@@ -1,6 +1,9 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging;
 
+import com.jetbrains.python.allure.Subsystems;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Components;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,6 +32,9 @@ import static com.jetbrains.python.packaging.requirement.PyRequirementRelation.S
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
+@Subsystems.PackagingRequirements
+@Components.Requirements
+@Layers.Functional
 public class PyRequirementTest extends PyTestCase {
 
   // ARCHIVE URL

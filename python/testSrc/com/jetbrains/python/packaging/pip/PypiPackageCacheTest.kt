@@ -1,5 +1,8 @@
 package com.jetbrains.python.packaging.pip
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Components
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.testFramework.registerServiceInstance
@@ -15,6 +18,9 @@ import java.time.Duration
 import java.time.Instant
 import kotlin.io.path.setLastModifiedTime
 
+@Subsystems.PackagingRequirements
+@Components.Pip
+@Layers.Functional
 class PypiPackageCacheTest : PyTestCase() {
   fun testCacheShouldNotBeUpdatedIfLocalStorageIsntExpired() {
     withLocalStoredPackages(listOf("c-pkg", "a-pkg", "b-pkg"), Instant.now())
