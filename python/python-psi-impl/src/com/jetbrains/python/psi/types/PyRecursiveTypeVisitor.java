@@ -154,15 +154,6 @@ public final class PyRecursiveTypeVisitor extends PyTypeVisitorExt<PyRecursiveTy
       return classType.getTypeArguments();
     }
 
-    /**
-     * @deprecated use visitPyClassType instead
-     */
-    @Deprecated
-    @Override
-    public @NotNull List<@Nullable PyType> visitPyGenericType(@NotNull PyClassType genericType) {
-      return visitPyClassType(genericType);
-    }
-
     @Override
     public @NotNull List<@Nullable PyType> visitPyConcatenateType(@NotNull PyConcatenateType concatenateType) {
       return ContainerUtil.append(concatenateType.getFirstTypes(), concatenateType.getParamSpec());
