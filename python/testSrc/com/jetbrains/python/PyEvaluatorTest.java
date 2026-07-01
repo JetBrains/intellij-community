@@ -2,6 +2,7 @@
 package com.jetbrains.python;
 
 import com.google.common.collect.ImmutableMap;
+import com.intellij.idea.TestFor;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
@@ -328,6 +329,23 @@ public class PyEvaluatorTest extends PyTestCase {
   public void testTypingTypeChecking() {
     assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = typing.TYPE_CHECKING")));
     assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = TYPE_CHECKING")));
+  }
+
+  @TestFor(issues="PY-85200")
+  public void testBooleanShortCircuit() {
+    // `True or <unknown>` is True regardless of the unevaluable operand, like `multidict`'s
+    // `if TYPE_CHECKING or not USE_EXTENSIONS:`
+    assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = TYPE_CHECKING or undefined_flag")));
+    assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = undefined_flag or TYPE_CHECKING")));
+    assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = TYPE_CHECKING or not undefined_flag")));
+
+    // `False and <unknown>` is False regardless of the unevaluable operand
+    assertFalse(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = not TYPE_CHECKING and undefined_flag")));
+    assertFalse(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = undefined_flag and not TYPE_CHECKING")));
+
+    // truthiness of the result still cannot be determined when the deciding operand is unknown
+    assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = TYPE_CHECKING and undefined_flag")));
+    assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = not TYPE_CHECKING or undefined_flag")));
   }
 
   public void testSysVersionCheck() {
