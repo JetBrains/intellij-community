@@ -4,7 +4,7 @@ The `intellij.gradle.tests.benchmark.main` is a meta-module that aggregates all 
 
 It should not contain any test sources of its own — only module dependencies on `intellij.gradle.*.tests.benchmark` containing the tests.
 
-All the benchmark tests should have a package matching the test group pattern: `com.intellij.gradle.*tests.benchmark.*` (see [testGroups.properties](testResources/tests/testGroups.properties)), for being executed within the existing TeamCity configuration.
+All the benchmark tests should have a package matching the test group pattern: `com.intellij.gradle.*tests.benchmark.*` (see [testGroups.properties](../tests.benchmark.main/testResources/tests/testGroups.properties)), for being executed within the existing TeamCity configuration.
 
 ## Examples of existing benchmark modules
 
@@ -35,7 +35,7 @@ Rules:
 ### 2. Configure the `.iml`
 
 The `.iml` must:
-- Declare `test/` as a test source root with a `packagePrefix` that ends with `tests.benchmark`, so classes get the fully qualified prefix `com.intellij.gradle.<area>.tests.benchmark.*` and match the pattern in [testGroups.properties](testResources/tests/testGroups.properties).
+- Declare `test/` as a test source root with a `packagePrefix` that ends with `tests.benchmark`, so classes get the fully qualified prefix `com.intellij.gradle.<area>.tests.benchmark.*` and match the pattern in [testGroups.properties](../tests.benchmark.main/testResources/tests/testGroups.properties).
 - Depend on `intellij.tools.ide.metrics.benchmark` — the framework used to write benchmark tests.
 - Depend on the corresponding modules needed by the tests.
 
@@ -47,13 +47,13 @@ Such as mentioning the iml file in `.idea/modules.xml` and `community/.idea/modu
 
 ### 4. Wire the new module into the aggregator module
 
-Add a dependency on the new module to [`intellij.gradle.tests.benchmark.main.iml`](intellij.gradle.tests.benchmark.main.iml):
+Add a dependency on the new module to [`intellij.gradle.tests.benchmark.main.iml`](../tests.benchmark.main/intellij.gradle.tests.benchmark.main.iml):
 
 ```xml
 <orderEntry type="module" module-name="intellij.gradle.<area>.tests.benchmark" scope="TEST" />
 ```
 
-No changes to [testGroups.properties](testResources/tests/testGroups.properties) are required — as long as the module's package prefix ends with `tests.benchmark`, its tests are automatically picked up by the `[GRADLE_BENCHMARK_TESTS]` group.
+No changes to [testGroups.properties](../tests.benchmark.main/testResources/tests/testGroups.properties) are required — as long as the module's package prefix ends with `tests.benchmark`, its tests are automatically picked up by the `[GRADLE_BENCHMARK_TESTS]` group.
 
 ### 5. Write the benchmark tests
 
@@ -71,4 +71,4 @@ Before pushing the changes, it's worth running the tests that usually might fail
 ### 7. TeamCity
 
 All benchmark tests are executed by the single `[GRADLE_BENCHMARK_TESTS]` TeamCity configuration that runs this aggregator module — no new TeamCity configuration is required for a new `*.tests.benchmark` module.
-If a completely separate benchmark suite is needed, create a new test group in [testGroups.properties](testResources/tests/testGroups.properties) and a new TeamCity configuration for it in the [ultimate-teamcity-config](https://code.jetbrains.team/p/ij/repositories/ultimate-teamcity-config/files/master/README.md) repository.
+If a completely separate benchmark suite is needed, create a new test group in [testGroups.properties](../tests.benchmark.main/testResources/tests/testGroups.properties) and a new TeamCity configuration for it in the [ultimate-teamcity-config](https://code.jetbrains.team/p/ij/repositories/ultimate-teamcity-config/files/master/README.md) repository.
