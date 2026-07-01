@@ -2811,4 +2811,13 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
     f(g)
     """)
+
+  @Test
+  @TestFor(issues = ["PY-90658"])
+  fun `lambda parameter type inferred when expected type is a union`() = test("""
+    from typing import Callable
+    
+    _: Callable[[int], int] | None = lambda a: a
+    #                                       └ TYPE int
+    """)
 }

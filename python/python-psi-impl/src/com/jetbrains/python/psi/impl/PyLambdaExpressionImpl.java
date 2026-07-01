@@ -18,6 +18,7 @@ import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyExpectedTypeJudgement;
 import com.jetbrains.python.psi.types.PyFunctionTypeImpl;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +30,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.intellij.util.containers.ContainerUtil.map;
+import static com.jetbrains.python.psi.types.PyTypeUtil.toStream;
+import static kotlin.streams.jdk8.StreamsKt.asStream;
 
 
 public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExpression {
@@ -52,11 +55,16 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
 
     @Nullable PyType expected = PyExpectedTypeJudgement.getExpectedType(this, context);
 
-    if (expected instanceof PyCallableType expectedCallable) {
-      var params = new ArrayList<PyCallableParameter>();
-      var rawActualParams = getParameterList().getParameters();
-      var rawExpectedParams = expectedCallable.getParameters(context);
-      if (rawExpectedParams != null) {
+    List<PyType> result = toStream(expected).<PyType>map(item -> {
+        if (!(item instanceof PyCallableType expectedCallable)) {
+          return null;
+        }
+        var params = new ArrayList<PyCallableParameter>();
+        var rawActualParams = getParameterList().getParameters();
+        var rawExpectedParams = expectedCallable.getParameters(context);
+        if (rawExpectedParams == null) {
+          return null;
+        }
         // commence actual parameter to expected parameter mapping
         // currently we only map positional arguments TODO: PY-85576
         var actualParams = ContainerUtil.filter(rawActualParams, element -> !(element instanceof PySlashParameter));
@@ -85,11 +93,13 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
         if (supported) {
           return new PyFunctionTypeImpl(this, params);
         }
-      }
-    }
-    return new PyFunctionTypeImpl(
+        return null;
+      })
+      .nonNull()
+      .toList();
+    return result.isEmpty() ? new PyFunctionTypeImpl(
       this, map(getParameterList().getParameters(), param -> PyCallableParameterImpl.psi(param, PyAnyType.getUnknown()))
-    );
+    ) : PyUnionType.union(result);
   }
 
   @Override
