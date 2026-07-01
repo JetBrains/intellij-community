@@ -30,7 +30,7 @@ internal class PluginUpdateSourceServiceImpl : PluginUpdateSourceService,
     }
     val source = state.sources[pluginId.idString]
     thisLogger().debug { "Requested pluginSourceId for $pluginId: $source" }
-    return source
+    return source?.toPluginSourceId()
   }
 
   override fun setPluginUpdateSourceId(pluginId: PluginId, updateSourceId: PluginUpdateSourceId) {
@@ -38,7 +38,7 @@ internal class PluginUpdateSourceServiceImpl : PluginUpdateSourceService,
       return
     }
     thisLogger().info("Set PluginUpdateSourceId of $pluginId to $updateSourceId")
-    updateState({ copy(sources = state.sources + (pluginId.idString to updateSourceId.toRepository())) }) {
+    updateState({ copy(sources = state.sources + (pluginId.idString to updateSourceId.toXmlSerializableRepository())) }) {
       "Plugin source for $pluginId is set to $updateSourceId"
     }
   }
@@ -93,20 +93,25 @@ internal class PluginUpdateSourceServiceImpl : PluginUpdateSourceService,
 
   internal data class State(
     @JvmField @XMap(propertyElementName = "sources", entryTagName = "entry", keyAttributeName = "pluginId")
-    val sources: Map<String, Repository> = emptyMap(),
+    val sources: Map<String, XmlSerializableRepository> = emptyMap(),
   )
 }
 
 @Serializable
+private data class Repository(
+  override val host: @NlsSafe String,
+  override val isMarketplace: Boolean,
+) : PluginUpdateSourceId
+
 @Tag("updateSource")
-internal data class Repository(
+internal data class XmlSerializableRepository(
   @JvmField @Attribute("host") val hostToSerialize: @NlsSafe String,
   @JvmField @Attribute("isMarketplace") val isMarketplaceToSerialize: Boolean,
-) : PluginUpdateSourceId {
-  constructor() : this("", true)//for serialization
+) {
+  @Suppress("unused")
+  constructor() : this("", true) //for serialization
 
-  override val host: @NlsSafe String get() = hostToSerialize
-  override val isMarketplace: Boolean get() = isMarketplaceToSerialize
+  fun toPluginSourceId(): PluginUpdateSourceId = Repository(hostToSerialize, isMarketplaceToSerialize)
 }
 
 internal fun createRepository(initialHost: String?): PluginUpdateSourceId {
@@ -121,6 +126,6 @@ internal fun createRepository(model: PluginUiModel): PluginUpdateSourceId {
   return createRepository(model.repositoryName)
 }
 
-private fun PluginUpdateSourceId.toRepository(): Repository {
-  return Repository(host, isMarketplace)
+private fun PluginUpdateSourceId.toXmlSerializableRepository(): XmlSerializableRepository {
+  return XmlSerializableRepository(host, isMarketplace)
 }
