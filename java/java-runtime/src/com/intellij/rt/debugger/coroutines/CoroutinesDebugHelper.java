@@ -208,21 +208,25 @@ public final class CoroutinesDebugHelper {
    * If debugger-agent is not available, e.g. in attach, returns null
    */
   private static String[] getAsyncStackTracesForThreads(Object[] threads) throws Throwable {
-    Class<?> captureStorageClass = Class.forName(DEBUGGER_AGENT_CAPTURE_STORAGE_FQN, false, null);
-    Method getAllCapturedStacks = captureStorageClass.getMethod("getAllCapturedStacks", int.class);
+    try {
+      Class<?> captureStorageClass = Class.forName(DEBUGGER_AGENT_CAPTURE_STORAGE_FQN, false, null);
+      Method getAllCapturedStacks = captureStorageClass.getMethod("getAllCapturedStacks", int.class);
 
-    @SuppressWarnings("unchecked")
-    Map<Thread, String> threadToStackTrace = (Map<Thread, String>)invoke(null, getAllCapturedStacks, 500);
+      @SuppressWarnings("unchecked")
+      Map<Thread, String> threadToStackTrace = (Map<Thread, String>)invoke(null, getAllCapturedStacks, 500);
 
-    String[] asyncStackTraces = new String[threads.length];
+      String[] asyncStackTraces = new String[threads.length];
 
-    for (int i = 0; i < threads.length; i++) {
-      Object thread = threads[i];
-      if (thread != null) {
-        asyncStackTraces[i] = threadToStackTrace.get(thread);
+      for (int i = 0; i < threads.length; i++) {
+        Object thread = threads[i];
+        if (thread != null) {
+          asyncStackTraces[i] = threadToStackTrace.get(thread);
+        }
       }
+      return asyncStackTraces;
+    } catch (Throwable t) {
+      return null;
     }
-    return asyncStackTraces;
   }
 
   /**
