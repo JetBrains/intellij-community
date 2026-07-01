@@ -64,6 +64,7 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil.getCenterPoint
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.accessibility.ScreenReader
 import it.unimi.dsi.fastutil.ints.IntArrays
 import it.unimi.dsi.fastutil.ints.IntComparator
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
@@ -737,6 +738,12 @@ class InfoAndProgressPanel internal constructor(
       suspendButton = progressPanel.getSuspendButton()!!
       suspendUpdateRunnable = createSuspendUpdateRunnable(suspendButton)
       processNameValue = task.getTitle()
+
+      if (ScreenReader.isActive()) {
+        progress.isFocusable = true
+      }
+      cancelButton.isFocusable = true
+      suspendButton.isFocusable = true
 
       // TODO: update javadoc for ProgressIndicator
     }

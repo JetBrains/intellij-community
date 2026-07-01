@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.accessibility.AccessibilityUtils;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.LafManagerListener;
@@ -15,31 +16,47 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.system.OS;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
+import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
-import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.List;
+
+import org.jetbrains.annotations.Nullable;
+import sun.awt.AWTAccessor;
 
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
@@ -51,7 +68,7 @@ final class ProcessPopup {
   private static final String DIMENSION_SERVICE_KEY = "ProcessPopupWindow";
 
   private final InfoAndProgressPanel myProgressPanel;
-  private final JPanel myIndicatorPanel;
+  private final JBPanelWithEmptyText myIndicatorPanel;
   private final JScrollPane myContentPanel;
   private JBPopup myPopup;
   private boolean myPopupVisible;
@@ -62,8 +79,7 @@ final class ProcessPopup {
   ProcessPopup(@NotNull InfoAndProgressPanel progressPanel) {
     myProgressPanel = progressPanel;
 
-    myIndicatorPanel =
-      new JBPanelWithEmptyText(new VerticalLayout(0)).withEmptyText(IdeBundle.message("progress.window.empty.text")).andTransparent();
+    myIndicatorPanel = new MyJBPanelWithEmptyText().withEmptyText(IdeBundle.message("progress.window.empty.text")).andTransparent();
     myIndicatorPanel.setBorder(JBUI.Borders.empty(10, 0, 18, 0));
     myIndicatorPanel.setFocusable(true);
     if (ExperimentalUI.isNewUI()) {
@@ -78,6 +94,9 @@ final class ProcessPopup {
     mySeparatorDecorator = new SeparatorDecorator(myIndicatorPanel);
 
     myContentPanel = new JBScrollPane(myIndicatorPanel, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
+    myContentPanel.setFocusCycleRoot(true);
+    myContentPanel.setFocusTraversalPolicyProvider(true);
+    myContentPanel.setFocusTraversalPolicy(new ProcessPopupFocusTraversalPolicy());
     updateContentUI();
   }
   
@@ -245,6 +264,7 @@ final class ProcessPopup {
     builder.addListener(new JBPopupListener() {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
+        clearNativeAccessibleResourcesIfNeeded();
         myProgressPanel.hideProcessPopup();
       }
     });
@@ -272,5 +292,116 @@ final class ProcessPopup {
     ));
 
     myPopup = builder.createPopup();
+  }
+
+  private void clearNativeAccessibleResourcesIfNeeded() {
+    if (OS.CURRENT != OS.macOS || !ScreenReader.isActive()) {
+      return;
+    }
+    // Content panel's components are reused, but the popup window is recreated.
+    // On macOS, we have to clear the native accessible peers so that for the next popup show they are attached to the new window.
+    // Otherwise, VoiceOver doesn't read the components when the popup opens after the first time.
+    AWTAccessor.AccessibleContextAccessor accessor = AWTAccessor.getAccessibleContextAccessor();
+    for (Component component : UIUtil.uiTraverser(myContentPanel)) {
+      if (component instanceof Accessible) {
+        AccessibleContext context = component.getAccessibleContext();
+        if (context != null) {
+          accessor.setNativeAXResource(context, null);
+        }
+      }
+    }
+  }
+
+  private final class ProcessPopupFocusTraversalPolicy extends ComponentsListFocusTraversalPolicy {
+    ProcessPopupFocusTraversalPolicy() {
+      super(true);
+    }
+
+    @Override
+    protected @NotNull List<Component> getOrderedComponents() {
+      List<Component> result = new ArrayList<>();
+      boolean screenReaderActive = ScreenReader.isActive();
+      for (Component c : UIUtil.uiTraverser(myIndicatorPanel)) {
+        if (!c.isVisible()) {
+          continue;
+        }
+        if (c instanceof InplaceButton || c instanceof LinkLabel) {
+          result.add(c);
+        }
+        else if (screenReaderActive && c instanceof JProgressBar) {
+          result.add(c);
+        }
+      }
+      return result;
+    }
+
+    @Override
+    public Component getComponentAfter(Container container, Component component) {
+      Component after = super.getComponentAfter(container, component);
+      return after != null ? after : getFirstComponent(container);
+    }
+
+    @Override
+    public Component getComponentBefore(Container container, Component component) {
+      Component before = super.getComponentBefore(container, component);
+      return before != null ? before : getLastComponent(container);
+    }
+  }
+
+  private class MyJBPanelWithEmptyText extends JBPanelWithEmptyText {
+    private MyJBPanelWithEmptyText() { super(new VerticalLayout(0)); }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      if (accessibleContext == null) {
+        accessibleContext = new AccessibleIndicatorPanel();
+      }
+      return accessibleContext;
+    }
+
+    private class AccessibleIndicatorPanel extends AccessibleJPanel {
+      @Override
+      public AccessibleRole getAccessibleRole() {
+        return AccessibilityUtils.GROUPED_ELEMENTS;
+      }
+
+      @Override
+      @SuppressWarnings("HardCodedStringLiteral")
+      public String getAccessibleName() {
+        String emptyText = getVisibleEmptyText();
+        if (emptyText != null) {
+          return emptyText;
+        }
+
+        List<String> progressTexts = new ArrayList<>();
+        for (Component component : myIndicatorPanel.getComponents()) {
+          if (!component.isVisible()) {
+            continue;
+          }
+
+          ProgressPanel progressPanel = ClientProperty.get(component, KEY);
+          if (progressPanel == null) {
+            continue;
+          }
+
+          progressTexts.add(progressPanel.getLabelText());
+          progressTexts.add(progressPanel.getCommentText());
+        }
+
+        String progressText = AccessibleContextUtil.joinAccessibleStrings(". ", progressTexts.toArray(String[]::new));
+        return progressText != null ? progressText : super.getAccessibleName();
+      }
+
+      private @Nullable String getVisibleEmptyText() {
+        for (Component component : myIndicatorPanel.getComponents()) {
+          if (component.isVisible()) {
+            return null;
+          }
+        }
+
+        String emptyText = myIndicatorPanel.getEmptyText().getText();
+        return StringUtil.isEmptyOrSpaces(emptyText) ? null : emptyText;
+      }
+    }
   }
 }

@@ -6461,6 +6461,7 @@ c:com.intellij.ui.InplaceButton
 - setMouseDeadzone(com.intellij.util.ui.TimedDeadzone$Length):V
 - setPainting(Z):V
 - setTransform(I,I):V
+- p:shouldPaintHover():Z
 pc:com.intellij.ui.InplaceButton$AccessibleInplaceButton
 - javax.swing.JComponent$AccessibleJComponent
 - javax.accessibility.AccessibleAction

@@ -89,12 +89,12 @@ internal class AnalyzingBannerDecorator(private val panel: JPanel, private val p
   private fun createBanner(revalidatePanel: Runnable): Component {
     val banner = InlineBanner().apply {
       setMessage(IndexingBundle.message("progress.indexing.banner.text"))
-      addAction(IdeBundle.message("link.learn.more")) {
+      addAction(IdeBundle.message("link.learn.more"), null) {
         val url = HelpManagerImpl.getHelpUrl("Project-analysis")
         if (url != null) {
           BrowserUtil.browse(url)
         }
-      }
+      }.isFocusable = true
 
       if (ExperimentalUI.isNewUI()) {
         setOpaque(false)

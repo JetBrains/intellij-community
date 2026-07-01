@@ -13,6 +13,7 @@ import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.SeparatorOrientation;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -262,6 +263,20 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
       return commentEnabled ? " " : "";
     }
 
+    private void updateButtonAccessibleNames() {
+      if (myCancelButton != null) {
+        myCancelButton.getAccessibleContext().setAccessibleName(
+          AccessibleContextUtil.combineAccessibleStrings(cancelText, " ", label.getText()));
+      }
+      if (mySuspendButton != null) {
+        String actionText = state == State.PLAYING
+                            ? IdeBundle.message("comment.text.pause")
+                            : IdeBundle.message("comment.text.resume");
+        mySuspendButton.getAccessibleContext().setAccessibleName(
+          AccessibleContextUtil.combineAccessibleStrings(actionText, " ", label.getText()));
+      }
+    }
+
     @Override
     public String getLabelText() {
       return label.getText();
@@ -279,6 +294,8 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
           text2.setMinimumSize(size);
         }
       }
+
+      updateButtonAccessibleNames();
     }
 
     @Override
@@ -376,6 +393,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
         mySuspendButton.setIcons(resumeIcon);
         setCommentText(IdeBundle.message("comment.text.paused"), true);
       }
+      updateButtonAccessibleNames();
       mySuspendButton.revalidate();
       mySuspendButton.repaint();
     }
@@ -449,8 +467,11 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
             setCommentText(IdeBundle.message("comment.text.pause"), true);
             resumeAction.run();
           }
+          updateButtonAccessibleNames();
         }).setFillBg(false);
       }
+
+      updateButtonAccessibleNames();
 
       if (mySuspendButton != null) {
         addButton(panel, gc, mySuspendButton, false);
