@@ -32,10 +32,4 @@ class DriverOptions(
       "platform.experiment.ab.manual.option" to "control.option",
       "rpc.port" to webServerPort.toString()
     ) + additionalProperties
-
-  /**
-   * Returns all ports used by this driver configuration.
-   * This is useful for waiting for port release after the IDE process is killed.
-   */
-  fun getUsedPorts(): List<Int> = listOf(port, webServerPort)
 }
