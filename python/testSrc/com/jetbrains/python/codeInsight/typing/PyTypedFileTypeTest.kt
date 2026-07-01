@@ -1,11 +1,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.typing
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Components
+
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
+@Subsystems.Typing
+@Components.TypeInference
+@Layers.Functional
 class PyTypedFileTypeTest : BasePlatformTestCase() {
 
   fun testPyTypedUsesDedicatedFileType() {

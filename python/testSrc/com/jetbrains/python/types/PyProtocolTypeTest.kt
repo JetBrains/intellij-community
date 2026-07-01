@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.types
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
 import com.intellij.openapi.util.StackOverflowPreventedException
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
@@ -12,6 +15,9 @@ import org.junit.jupiter.api.Test
  * Type and type-checker tests for [typing.Protocol][https://docs.python.org/3/library/typing.html#typing.Protocol]:
  * structural conformance, protocol assignability/subtyping, generic protocols and protocol members.
  */
+@Subsystems.Typing
+@Components.TypeInference
+@Layers.Functional
 class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
   @Nested

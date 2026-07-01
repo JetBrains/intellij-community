@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.types
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.impl.PyClassImpl
@@ -14,6 +17,9 @@ import org.junit.jupiter.api.Test
  * `ClassVar`, `Final` type inference, `__slots__` typing, lazy/conditional attribute init,
  * attribute reassignment, and `Self`-returning properties/methods.
  */
+@Subsystems.Typing
+@Components.TypeInference
+@Layers.Functional
 class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
 
   override val defaultTestOptions =

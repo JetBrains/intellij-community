@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python.pyi;
 
+import com.jetbrains.python.allure.Subsystems;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Components;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
@@ -30,6 +33,9 @@ import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
+@Subsystems.Typing
+@Components.TypeInference
+@Layers.Functional
 public class LegacyPyiTypeTest extends PyTestCase {
 
   private Disposable myDisposable;

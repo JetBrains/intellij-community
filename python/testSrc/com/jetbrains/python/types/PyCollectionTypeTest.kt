@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.types
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import org.junit.jupiter.api.Nested
@@ -11,6 +14,9 @@ import org.junit.jupiter.api.Test
  * builtin-generic parameterization, indexing/`__getitem__`, slicing of list/str/bytes and
  * item lookup.
  */
+@Subsystems.Typing
+@Components.TypeInference
+@Layers.Functional
 class PyCollectionTypeTest : PyCodeInsightTestCase() {
 
   @Nested
