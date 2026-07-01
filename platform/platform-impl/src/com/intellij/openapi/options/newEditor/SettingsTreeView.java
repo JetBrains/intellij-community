@@ -923,17 +923,13 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
   private static boolean isBeta(Configurable c) {
     return c instanceof Configurable.Beta ||
-           (c instanceof ConfigurableWrapper w && w.getConfigurable() instanceof Configurable.Beta);
+           ConfigurableWrapper.cast(Configurable.Beta.class, c) != null;
   }
 
   private static @Nullable Configurable.Promo asPromo(Configurable c) {
     if (c instanceof Configurable.Promo) return (Configurable.Promo)c;
 
-    if (c instanceof ConfigurableWrapper w && w.getConfigurable() instanceof Configurable.Promo) {
-      return (Configurable.Promo)w.getConfigurable();
-    }
-
-    return null;
+    return ConfigurableWrapper.cast(Configurable.Promo.class, c);
   }
 
   private static boolean hasNewOptions(@NotNull Configurable configurable) {
@@ -952,7 +948,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
   private static boolean isNewOptions(Configurable configurable) {
     return configurable instanceof Configurable.NewOptions ||
-           (configurable instanceof ConfigurableWrapper w && w.getConfigurable() instanceof Configurable.NewOptions);
+           ConfigurableWrapper.cast(Configurable.NewOptions.class, configurable) != null;
   }
 
   @SuppressWarnings("unused")
