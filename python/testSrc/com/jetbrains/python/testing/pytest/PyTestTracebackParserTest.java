@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing.pytest;
 
+import com.jetbrains.python.allure.Subsystems;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Components;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.traceBackParsers.LinkInTrace;
@@ -28,6 +31,9 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Ilya.Kazakevich
  */
+@Subsystems.TestRunner
+@Components.Pytest
+@Layers.Functional
 public final class PyTestTracebackParserTest {
   private String myStringJunk;
   private String myStringJunkWithSpaces;

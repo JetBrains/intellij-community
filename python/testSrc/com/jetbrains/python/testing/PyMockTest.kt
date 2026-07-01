@@ -1,6 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.PyCallExpression
@@ -21,6 +24,9 @@ import com.jetbrains.python.testing.pyMock.getPatchObjectCall
  * navigation, type inference, and reference softness.
  */
 @TestFor(issues = ["PY-78622"])
+@Subsystems.TestRunner
+@Components.Unittest
+@Layers.Functional
 class PyMockTest : PyTestCase() {
 
   companion object {

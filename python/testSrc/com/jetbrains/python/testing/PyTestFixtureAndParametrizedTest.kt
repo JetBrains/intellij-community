@@ -1,6 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.jetbrains.python.fixtures.PyTestCase
@@ -11,6 +14,9 @@ import com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedInspect
 /**
  * Test py.test fixtures and parameterized completions and inspections
  */
+@Subsystems.TestRunner
+@Components.Pytest
+@Layers.Functional
 class PyTestFixtureAndParametrizedTest : PyTestCase() {
   companion object {
     const val testSubfolder = "/testCompletion"

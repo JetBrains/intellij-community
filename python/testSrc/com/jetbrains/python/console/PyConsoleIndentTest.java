@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
+import com.jetbrains.python.allure.Subsystems;
+import com.jetbrains.python.allure.Layers;
+
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
@@ -9,6 +12,8 @@ import com.jetbrains.python.PythonTestUtil;
 import java.io.File;
 import java.io.IOException;
 
+@Subsystems.PythonConsole
+@Layers.Functional
 public class PyConsoleIndentTest extends UsefulTestCase {
   public void testIndent1() {
     doTest();

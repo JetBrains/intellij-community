@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.run;
 
+import com.jetbrains.python.allure.Subsystems;
+import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.traceBackParsers.LinkInTrace;
 import junit.framework.TestCase;
 import org.junit.Assert;
@@ -24,6 +26,8 @@ import org.junit.Assert;
  *
  * @author Ilya.Kazakevich
  */
+@Subsystems.Run
+@Layers.Functional
 public class PyTracebackParserTest extends TestCase {
 
 
