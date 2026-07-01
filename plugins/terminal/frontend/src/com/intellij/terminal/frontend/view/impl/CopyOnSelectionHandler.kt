@@ -43,7 +43,7 @@ internal class CopyOnSelectionHandler private constructor(private val settings: 
       // Only perform copying if the editor is focused.
       // In most cases it is, but if the selection was updated through the API it may not be the case.
       if (!settings.copyOnSelect() || e.editor?.contentComponent?.isFocusOwner != true) return
-      val text = e.editor.selectionModel.selectedText ?: return
+      val text = e.editor.selectionModel.getSelectedText(true) ?: return
       copy(text)
     }
   }
