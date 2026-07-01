@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 internal class LspDocumentSyncManager(private val client: LspClientImpl) {
 
   private val openedFiles: MutableSet<VirtualFile> = Collections.synchronizedSet(HashSet())
-  private val closed = AtomicBoolean(false)
+  private val disposed = AtomicBoolean(false)
 
   val openedFileCount: Int get() = openedFiles.size
 
@@ -45,15 +45,20 @@ internal class LspDocumentSyncManager(private val client: LspClientImpl) {
 
   fun forEachOpenedFile(action: (VirtualFile) -> Unit) = openedFiles.forEach(action)
 
-  fun close() {
+  fun dispose() {
     openedFiles.clear()
-    closed.set(true)
+    disposed.set(true)
   }
 
   @RequiresWriteLock
   fun open(file: VirtualFile) {
     if (client.state != LspServerState.Running) {
-      client.logError("Server is not in the Running state. Ignoring open($file)")
+      // Error should not be logged if the sync manager is disposed of, as the server state
+      // and thus sync manager state might have changed just after entering `open` method
+      // and caller is not able to sync on the server state
+      if (!disposed.get()) {
+        client.logError("Server is not in the Running state. Ignoring open($file)")
+      }
       return
     }
 
@@ -76,11 +81,13 @@ internal class LspDocumentSyncManager(private val client: LspClientImpl) {
 
   @RequiresWriteLock
   fun close(file: VirtualFile) {
-    // Ignore any close requests once the document sync manager has been closed
-    if (closed.get()) return
-
     if (!openedFiles.remove(file)) {
-      client.logError("close() cannot be called for files that haven't been opened. Ignoring: $file")
+      // Error should not be logged if the sync manager is disposed of, as the server state
+      // and thus sync manager state might have changed just after entering `open` method
+      // and caller is not able to sync on the server state
+      if (!disposed.get()) {
+        client.logError("close() cannot be called for files that haven't been opened. Ignoring: $file")
+      }
       return
     }
 

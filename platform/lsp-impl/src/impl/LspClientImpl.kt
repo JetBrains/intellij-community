@@ -293,7 +293,7 @@ class LspClientImpl internal constructor(
           LspInlayApplier.getInstance(project).scheduleRefresh(file)
         }
       }
-      documentSyncManager.close()
+      documentSyncManager.dispose()
       requestExecutor.shutdownNow()
 
       highlightingCacheRegistry.clearCache()
