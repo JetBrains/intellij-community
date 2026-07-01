@@ -4,7 +4,7 @@
 
 package com.intellij.platform.ai.agent.codex.sessions.backend.rollout
 
-// @spec plugins/ij-air/spec/sessions/agent-sessions-codex-rollout-source.spec.md
+// @spec plugins/air/spec/sessions/agent-sessions-codex-rollout-source.spec.md
 
 import com.intellij.platform.ai.agent.codex.common.normalizeRootPath
 import com.intellij.platform.ai.agent.codex.sessions.normalizeProjectPath

@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ai.agent.sessions.core.providers
 
-// @spec plugins/ij-air/spec/sessions/agent-terminal-sessions.spec.md
+// @spec plugins/air/spec/sessions/agent-terminal-sessions.spec.md
 
 import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
