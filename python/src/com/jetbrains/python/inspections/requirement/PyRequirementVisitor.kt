@@ -7,12 +7,14 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.inspections.quickfix.IgnoreRequirementFix
 import com.jetbrains.python.inspections.quickfix.PyAddToDeclaredPackagesQuickFix
 import com.jetbrains.python.inspections.quickfix.SyncProjectQuickFix
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.listDeclaredPackagesAsync
@@ -43,6 +45,7 @@ class PyRequirementVisitor(
     node.importElements.mapNotNull { it.importReferenceExpression }.forEach { checkPackageNameInRequirements(it) }
   }
 
+  @RequiresBackgroundThread
   private fun checkPackageNameInRequirements(importedExpression: PyQualifiedExpression) {
     if (PyInspectionExtension.EP_NAME.extensionList.any { it.ignorePackageNameInRequirements(importedExpression) }) {
       return
@@ -60,7 +63,7 @@ class PyRequirementVisitor(
     val manager = PythonPackageManager.forSdk(module.project, sdk)
     val declared = manager.listDeclaredPackagesAsync() ?: return
 
-    val installedNotDeclaredChecker = InstalledButNotDeclaredChecker(ignoredPackages, declared)
+    val installedNotDeclaredChecker = InstalledButNotDeclaredChecker(ignoredPackages.mapTo(mutableSetOf()) { PyPackageName.from(it) }, declared)
     val packageName = installedNotDeclaredChecker.getUndeclaredPackageName(importedPyModule = importedPyModule) ?: return
 
 
