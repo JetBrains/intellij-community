@@ -160,6 +160,11 @@ public final class Disposer {
    * Registers {@code child} so it is disposed right before its {@code parent}. See {@link Disposer class JavaDoc} for more details.
    * This method overrides parent disposable for the {@code child}, i.e., if {@code child} is already registered with {@code oldParent},
    * then it's unregistered from {@code oldParent} before registering with {@code parent}.
+   * <p>
+   * If {@code parent} is already disposed, {@link IncorrectOperationException} is thrown. Before throwing, any subtree that
+   * {@code child}'s constructor may have attached to the disposer tree (e.g. via {@code Disposer.register(this, someInner)}) is
+   * detached and its {@code dispose()} is invoked, so callers do not need to (and should not) call {@code Disposer.dispose(child)}
+   * afterwards.
    *
    * @throws IncorrectOperationException If {@code child} has been registered with {@code parent} before;
    *                                     if {@code parent} is being disposed or already disposed, see {@link #isDisposed(Disposable)}.
