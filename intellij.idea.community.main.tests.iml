@@ -138,12 +138,6 @@
     <orderEntry type="module" module-name="intellij.java.rareRefactorings.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.lombok.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.concurrency.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.ai.agent.cli.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.ai.agent.common.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.ai.agent.core.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.ai.agent.filewatch.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.ai.agent.json.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.ant.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.commander.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.community.wintools.tests" scope="TEST" />

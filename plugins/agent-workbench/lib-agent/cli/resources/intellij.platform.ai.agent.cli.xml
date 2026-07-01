@@ -1,7 +1,0 @@
-<idea-plugin>
-  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-  <dependencies>
-    <plugin id="org.jetbrains.plugins.terminal"/>
-  </dependencies>
-  <!-- endregion -->
-</idea-plugin>

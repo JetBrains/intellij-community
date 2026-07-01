@@ -979,13 +979,6 @@ plugins/ByteCodeViewer
 plugins/IntelliLang
 plugins/IntelliLang/backend
 plugins/IntelliLang/tests
-plugins/agent-workbench/lib-agent/cli
-plugins/agent-workbench/lib-agent/common
-plugins/agent-workbench/lib-agent/core
-plugins/agent-workbench/lib-agent/filewatch
-plugins/agent-workbench/lib-agent/json
-plugins/agent-workbench/lib-agent/sessions-core
-plugins/agent-workbench/prompt/core
 plugins/ant
 plugins/ant/jps-plugin
 plugins/built-in-help

@@ -1,5 +1,0 @@
-com/intellij/agent/workbench/prompt/core/AgentPromptGenerationSettings
-com/intellij/agent/workbench/prompt/core/AgentPromptInitialMessageRequest
-com/intellij/agent/workbench/prompt/core/AgentPromptLaunchProfile
-java/math/BigDecimal
-kotlin/jvm/internal/DefaultConstructorMarker
