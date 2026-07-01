@@ -356,7 +356,7 @@
     <!-- endregion -->
 
     <!-- region nested: xml -->
-    <module name="intellij.xml.dom" loading="embedded"/>
+    <module name="intellij.xml.dom"/>
     <module name="intellij.xml.dom.impl"/>
     <module name="intellij.xml.structureView"/>
     <module name="intellij.xml.structureView.impl"/>

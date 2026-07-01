@@ -496,6 +496,7 @@ private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins
   "intellij.xml.emmet",
   "intellij.xml.impl",
   "intellij.xml.analysis.impl",
+  "intellij.xml.dom",
   "intellij.xml.dom.impl",
   "intellij.platform.ssh",
   "intellij.platform.ssh.core",

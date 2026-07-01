@@ -6,7 +6,7 @@
   <module value="com.intellij.modules.xml"/>
 
   <content namespace="jetbrains">
-    <module name="intellij.xml.dom" loading="embedded"/>
+    <module name="intellij.xml.dom"/>
     <module name="intellij.xml.dom.impl"/>
     <module name="intellij.xml.psi" loading="embedded"/>
     <module name="intellij.xml.psi.impl" loading="embedded"/>
