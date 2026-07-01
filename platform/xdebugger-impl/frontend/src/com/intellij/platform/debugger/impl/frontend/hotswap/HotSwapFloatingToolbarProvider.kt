@@ -30,7 +30,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.debugger.impl.rpc.HotSwapSource
 import com.intellij.platform.debugger.impl.rpc.HotSwapVisibleStatus
 import com.intellij.platform.debugger.impl.rpc.XDebugHotSwapCurrentSessionStatus
 import com.intellij.ui.AnimatedIcon
@@ -38,6 +37,7 @@ import com.intellij.ui.PopupHandler
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.XDebuggerBundle
+import com.intellij.xdebugger.hotswap.HotSwapSource
 import com.intellij.xdebugger.impl.hotswap.HotSwapUiExtension
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -100,7 +100,7 @@ internal class HotSwapWithRebuildAction : AnAction(), CustomComponentAction, Dum
     val status = getCurrentStatus(project) ?: return
     if (!status.hasChanges) return
     if (status.status is HotSwapVisibleStatus.ChangesNotHotSwappable) {
-      FrontendHotSwapManager.getInstance(project).performRestart(status.sessionId)
+      FrontendHotSwapManager.getInstance(project).performRestart(status.sessionId, HotSwapSource.RELOAD_MODIFIED_BUTTON)
     }
     else {
       FrontendHotSwapManager.getInstance(project).performHotSwap(status.sessionId, HotSwapSource.RELOAD_MODIFIED_BUTTON)

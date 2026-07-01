@@ -5,6 +5,7 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.UID
+import com.intellij.xdebugger.hotswap.HotSwapSource
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus
 interface XDebuggerHotSwapApi : RemoteApi<Unit> {
   suspend fun currentSessionStatus(projectId: ProjectId): Flow<XDebugHotSwapCurrentSessionStatus?>
   suspend fun performHotSwap(sessionId: XDebugHotSwapSessionId, source: HotSwapSource)
-  suspend fun restart(sessionId: XDebugHotSwapSessionId)
+  suspend fun restart(sessionId: XDebugHotSwapSessionId, source: HotSwapSource)
   suspend fun hide(projectId: ProjectId)
 
   companion object {
@@ -56,15 +57,4 @@ sealed interface HotSwapVisibleStatus {
 
   @Serializable
   object Hidden : HotSwapVisibleStatus
-}
-
-@ApiStatus.Internal
-@Serializable
-enum class HotSwapSource {
-  RELOAD_FILE,
-  RELOAD_ALL,
-  ON_REBUILD_AUTO,
-  ON_REBUILD_ASK,
-  RELOAD_MODIFIED_ACTION,
-  RELOAD_MODIFIED_BUTTON,
 }

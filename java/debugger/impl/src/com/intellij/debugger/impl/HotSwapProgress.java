@@ -2,10 +2,13 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.hotswap.HotSwapSource;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class HotSwapProgress {
   private final Project myProject;
+  private volatile HotSwapSource myHotSwapSource;
   private Runnable myCancelWorker;
   private volatile boolean myIsCancelled;
 
@@ -15,6 +18,14 @@ public abstract class HotSwapProgress {
 
   public Project getProject() {
     return myProject;
+  }
+
+  public @Nullable HotSwapSource getHotSwapSource() {
+    return myHotSwapSource;
+  }
+
+  public void setHotSwapSource(@Nullable HotSwapSource hotSwapSource) {
+    myHotSwapSource = hotSwapSource;
   }
 
   public abstract void addMessage(DebuggerSession session, final int type, final String text);

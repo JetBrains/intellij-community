@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebugProcess
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -17,6 +18,9 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.NonExtendable
 interface HotSwapSession<T> {
   val project: Project
+
+  @get:ApiStatus.Internal
+  val source: HotSwapSource
 
   /**
    * Get elements modified since the last hot swap.
@@ -110,6 +114,18 @@ interface HotSwapInDebugSessionEnabler {
       return EP_NAME.computeSafeIfAny { it.createProvider(process) }
     }
   }
+}
+
+@ApiStatus.Internal
+@Serializable
+enum class HotSwapSource {
+  RELOAD_FILE,
+  RELOAD_ALL,
+  ON_REBUILD_AUTO,
+  ON_REBUILD_ASK,
+  RELOAD_MODIFIED_ACTION,
+  RELOAD_MODIFIED_BUTTON,
+  UNKNOWN,
 }
 
 /**

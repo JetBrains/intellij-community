@@ -6,12 +6,12 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.durableWithStateReset
 import com.intellij.platform.debugger.impl.frontend.util.SequentialRpcRequestsExecutor
-import com.intellij.platform.debugger.impl.rpc.HotSwapSource
 import com.intellij.platform.debugger.impl.rpc.HotSwapVisibleStatus
 import com.intellij.platform.debugger.impl.rpc.XDebugHotSwapCurrentSessionStatus
 import com.intellij.platform.debugger.impl.rpc.XDebugHotSwapSessionId
 import com.intellij.platform.debugger.impl.rpc.XDebuggerHotSwapApi
 import com.intellij.platform.project.projectId
+import com.intellij.xdebugger.hotswap.HotSwapSource
 import com.intellij.xdebugger.impl.hotswap.NOTIFICATION_TIME_SECONDS
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -51,9 +51,9 @@ internal class FrontendHotSwapManager(private val project: Project, val coroutin
     }
   }
 
-  fun performRestart(sessionId: XDebugHotSwapSessionId) {
+  fun performRestart(sessionId: XDebugHotSwapSessionId, source: HotSwapSource) {
     sequentialExecutor.execute {
-      XDebuggerHotSwapApi.getInstance().restart(sessionId)
+      XDebuggerHotSwapApi.getInstance().restart(sessionId, source)
     }
   }
 

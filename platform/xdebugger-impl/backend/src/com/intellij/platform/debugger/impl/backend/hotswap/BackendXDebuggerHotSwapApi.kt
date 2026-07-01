@@ -1,12 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend.hotswap
 
-import com.intellij.platform.debugger.impl.rpc.HotSwapSource
 import com.intellij.platform.debugger.impl.rpc.XDebugHotSwapCurrentSessionStatus
 import com.intellij.platform.debugger.impl.rpc.XDebugHotSwapSessionId
 import com.intellij.platform.debugger.impl.rpc.XDebuggerHotSwapApi
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
+import com.intellij.xdebugger.hotswap.HotSwapSource
 import com.intellij.xdebugger.impl.hotswap.HotSwapSessionManagerImpl
 import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics
 import com.intellij.xdebugger.impl.hotswap.findHotSwapSession
@@ -25,12 +25,12 @@ internal class BackendXDebuggerHotSwapApi : XDebuggerHotSwapApi {
 
   override suspend fun performHotSwap(sessionId: XDebugHotSwapSessionId, source: HotSwapSource) {
     val session = sessionId.findHotSwapSession() ?: return
-    HotSwapStatistics.logHotSwapCalled(session.project, source)
-    session.performHotSwap()
+    session.performHotSwap(source)
   }
 
-  override suspend fun restart(sessionId: XDebugHotSwapSessionId) {
+  override suspend fun restart(sessionId: XDebugHotSwapSessionId, source: HotSwapSource) {
     val session = sessionId.findHotSwapSession() ?: return
+    HotSwapStatistics.logHotSwapResult(session.project, HotSwapStatistics.HotSwapStatus.RESTART, source)
     session.restart()
   }
 

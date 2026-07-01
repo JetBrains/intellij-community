@@ -17,6 +17,7 @@ import com.intellij.xdebugger.hotswap.HotSwapProvider
 import com.intellij.xdebugger.hotswap.HotSwapResultListener
 import com.intellij.xdebugger.hotswap.HotSwapSession
 import com.intellij.xdebugger.hotswap.HotSwapSessionManager
+import com.intellij.xdebugger.hotswap.HotSwapSource
 import com.intellij.xdebugger.hotswap.SourceFileChangesCollector
 import com.intellij.xdebugger.hotswap.SourceFileChangesListener
 import kotlinx.coroutines.CoroutineScope
@@ -132,6 +133,9 @@ class HotSwapSessionImpl<T> internal constructor(
   private lateinit var changesCollector: SourceFileChangesCollector<T>
 
   internal val currentStatus: HotSwapVisibleStatus get() = _currentStatus.get() ?: HotSwapVisibleStatus.NoChanges
+  private var currentSource: HotSwapSource? = null
+  override val source: HotSwapSource
+    get() = checkNotNull(currentSource) { "HotSwap source should be provided before performing HotSwap" }
   private val _currentStatus = AtomicReference(HotSwapVisibleStatus.NoChanges as HotSwapVisibleStatus?)
 
   private fun setStatus(status: HotSwapVisibleStatus?, fireUpdate: Boolean = true) {
@@ -160,7 +164,10 @@ class HotSwapSessionImpl<T> internal constructor(
     HotSwapSessionManagerImpl.getInstanceOrNull(project)?.onSessionDispose(this)
   }
 
-  fun performHotSwap(): Unit = provider.performHotSwap(this)
+  fun performHotSwap(source: HotSwapSource) {
+    currentSource = source
+    provider.performHotSwap(this)
+  }
   fun restart(): Unit = provider.restart()
 
   override fun getChanges(): Set<T> = changesCollector.getChanges()
