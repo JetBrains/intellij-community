@@ -246,7 +246,7 @@ abstract class BaseKotlinProjectConfigurator : KotlinProjectConfigurator {
                             // attempt to configure compiler plugin during the same step as kotlin configuration
                             // when module dependency is known
                             configureCompilerPluginsForModules(
-                                postConfigurationModules(project, applicableModules),
+                                postConfigurationModules(project, modules),
                                 resultBuilder
                             )
                         }
