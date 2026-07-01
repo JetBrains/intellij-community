@@ -33,8 +33,6 @@ abstract class EmptyTestPluginInitContext : PluginInitializationContext {
   override fun provideModuleExclusionsImposedByProductRules(pluginSet: UnambiguousPluginSet): Sequence<Pair<PluginModuleDescriptor, ProductRulesImposedExclusionReason>> =
     emptySequence()
 
-  override fun provideCustomRuntimeModuleGroupAffiliation(module: PluginModuleDescriptor, pluginSet: UnambiguousPluginSet): PluginModuleDescriptor? = null
-
   override fun shouldIncludeContentModulesForDependsEdgeTarget(resolvedTarget: PluginMainDescriptor): Boolean = true
 
   override fun runConfigurationDuringStartup(totalPluginSet: AmbiguousPluginSet) {}

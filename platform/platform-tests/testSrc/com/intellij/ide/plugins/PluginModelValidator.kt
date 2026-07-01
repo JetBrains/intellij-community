@@ -590,15 +590,13 @@ internal class PluginModelValidator(
                         |""".trimMargin())
               continue
             }
-            !isMainModule && loadingRule == ModuleLoadingRuleValue.OPTIONAL
-            && moduleName != "intellij.platform.backend" -> { // remove this check when IJPL-201428 is fixed
-
+            !isMainModule && loadingRule == ModuleLoadingRuleValue.OPTIONAL -> {
               val thisModuleName = referencingModuleInfo.name ?: error("Module name is not specified for $referencingModuleInfo")
               val thisLoadingRule = contentModuleNameFromThisPluginToLoadingRule.getValue(thisModuleName)
               val problemDescription = when (thisLoadingRule) {
                 ModuleLoadingRuleValue.EMBEDDED ->
                   "Since optional modules have implicit dependencies on the main module, this creates a circular dependency and the plugin won't load."
-                ModuleLoadingRuleValue.REQUIRED ->
+                ModuleLoadingRuleValue.REQUIRED if moduleName != "intellij.platform.backend" -> // remove this condition when IJPL-201428 is fixed
                   "This actually makes '${moduleName}' required as well (the plugin won't load if it's not available)."
                 else -> null
               }

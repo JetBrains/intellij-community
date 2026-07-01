@@ -506,12 +506,6 @@ private class PluginSetConstraintsResolver(
 
   /** finds a representative module for the runtime module group current [candidate] belongs to */
   private tailrec fun getRuntimeModuleGroupRepresentative(candidate: IdeaPluginDescriptorImpl): PluginModuleDescriptor {
-    if (candidate is PluginModuleDescriptor) {
-      val customized = initContext.provideCustomRuntimeModuleGroupAffiliation(candidate, pluginSet)
-      if (customized != null) {
-        return getRuntimeModuleGroupRepresentative(customized)
-      }
-    }
     return when (candidate) {
       is PluginMainDescriptor -> candidate
       is ContentModuleDescriptor -> {

@@ -68,11 +68,6 @@ interface PluginInitializationContext {
   fun provideModuleExclusionsImposedByProductRules(pluginSet: UnambiguousPluginSet): Sequence<Pair<PluginModuleDescriptor, ProductRulesImposedExclusionReason>>
 
   /**
-   * Tells the plugin set resolver that [module] should belong to the same [RuntimeModuleGroup] (the same classloader) as the returned result (if not null).
-   */
-  fun provideCustomRuntimeModuleGroupAffiliation(module: PluginModuleDescriptor, pluginSet: UnambiguousPluginSet): PluginModuleDescriptor?
-
-  /**
    * To preserve compatibility, all "active" `<depends>` dependencies imply extra dependencies on all "active" content modules of the target.
    * This method allows controlling this mechanism.
    * @return `false` if additional edges to content modules should not be generated when there is a `<depends>` edge to the [resolvedTarget].
