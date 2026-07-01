@@ -167,9 +167,9 @@ abstract class StatisticsEventLoggerProvider(
    * Event data fields excluded from merge equality (e.g. `start_time`), so successive events that differ only in
    * these fields still merge into a single counted event.
    *
-   * TODO(AP-7777): once the FUS reporting SDK's merger accepts ignored fields, forward this set to the dispatcher
-   *   (see [com.intellij.internal.statistic.eventLog.dispatcher.IntellijReportDispatcher]) and drop the IntelliJ-side
-   *   merger in [StatisticsFileEventLogger]. The SDK merger currently compares all data fields.
+   * TODO(AP-7777): once the FUS reporting SDK's merger accepts ignored fields, forward this set to the SDK dispatcher
+   *   built in `FusComponentProvider.createFusComponents` and drop the IntelliJ-side merger in [StatisticsFileEventLogger].
+   *   The SDK merger currently compares all data fields.
    */
   @get:Internal
   open val mergeIgnoredFields: Set<String>
@@ -193,8 +193,8 @@ abstract class StatisticsEventLoggerProvider(
       alternativeRecorderId = if (useDefaultRecorderId) "FUS" else null,
     )
 
-    val dispatcher = IntellijSensitiveDataValidator.getInstance(recorderId).reportDispatcher
-                     ?: error("FusComponents.reportDispatcher is null for recorder '$recorderId'; logger creation requires the production FusComponents path.")
+    val fusClient = IntellijSensitiveDataValidator.getInstance(recorderId).fusClient
+                    ?: error("FusComponents.fusClient is null for recorder '$recorderId'; logger creation requires the production FusComponents path.")
     val eventLogDir = eventLogConfiguration.getEventLogDataPath().resolve("logs").resolve(recorderId)
 
     val logger = StatisticsFileEventLogger(
@@ -204,10 +204,10 @@ abstract class StatisticsEventLoggerProvider(
       build = eventLogConfiguration.build,
       bucket = config.bucket.toString(),
       recorderVersion = version.toString(),
-      // Events flow straight to the dispatcher: merge + system-field injection here, then SDK validate/merge/throttle
+      // Events flow straight to the FusClient: merge + system-field injection here, then SDK validate/merge/throttle
       // and PersistentQueue file I/O. Throttling runs once, in the SDK EventThrottle (same 24k/12k/6k thresholds,
       // dynamic refresh via REMOTE_CONFIG_OPTIONS_UPDATED, and TOO_MANY_EVENTS markers in <recorder>.event.log).
-      dispatcher = dispatcher,
+      eventWriter = fusClient,
       eventLogDir = eventLogDir,
       systemEventIdProvider = UsageStatisticsPersistenceComponent.getInstance(),
       mergeStrategy = createEventsMergeStrategy(),

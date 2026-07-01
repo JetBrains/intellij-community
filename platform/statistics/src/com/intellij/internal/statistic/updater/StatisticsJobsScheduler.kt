@@ -8,8 +8,6 @@ import com.intellij.internal.statistic.eventLog.StatisticsEventLogProvidersHolde
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 import com.intellij.internal.statistic.eventLog.uploader.EventLogExternalUploader
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
-import com.intellij.internal.statistic.eventLog.validator.storage.FusComponentProvider.listenToMetadataEvents
-import com.intellij.internal.statistic.eventLog.validator.storage.FusComponentProvider.listenToOptionsChanges
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.Service
@@ -105,16 +103,16 @@ internal class StatisticsJobsScheduler : ApplicationActivity {
 
     val job = coroutineScope.launch {
       delay((5 * 60).seconds)
-      val dispatcher = IntellijSensitiveDataValidator.getInstance(provider.recorderId).reportDispatcher ?: return@launch
+      val fusClient = IntellijSensitiveDataValidator.getInstance(provider.recorderId).fusClient ?: return@launch
       // PersistentQueue paces itself based on the recorder's sendFrequencyMs (passed at construction time);
-      // a single scheduleSend kicks off the SDK's internal periodic loop.
-      dispatcher.scheduleSend()
+      // a single scheduleSend kicks off the SDK's internal periodic loop on the client's own scope.
+      fusClient.scheduleSend()
     }
     sendJobs[provider.recorderId] = job
   }
 }
 
-private suspend fun CoroutineScope.runValidationRulesUpdate() {
+private suspend fun runValidationRulesUpdate() {
   val providers = getEventLogProviders()
   for (provider in providers) {
     launchValidationRulesUpdate(provider)
@@ -122,17 +120,11 @@ private suspend fun CoroutineScope.runValidationRulesUpdate() {
   serviceAsync<StatisticsValidationUpdatedService>().updatedDeferred.complete(Unit)
 }
 
-private fun CoroutineScope.launchValidationRulesUpdate(provider: StatisticsEventLoggerProvider) {
+private fun launchValidationRulesUpdate(provider: StatisticsEventLoggerProvider) {
   if (provider.isLoggingEnabled()) {
-    val validator = IntellijSensitiveDataValidator.getInstance(provider.recorderId)
-    listenToOptionsChanges(provider.recorderId, validator.messageBus)
-    listenToMetadataEvents(provider.recorderId, validator.messageBus)
-    launch {
-      validator.remoteConfig.scheduleUpdate()
-    }
-    launch {
-      validator.validationRulesStorage.scheduleUpdate()
-    }
+    // Remote-config + metadata refresh loops. The SDK option/metadata message handlers are wired when the
+    // FusClient is built (see FusComponentProvider.createFusComponents), not here.
+    IntellijSensitiveDataValidator.getInstance(provider.recorderId).fusClient?.scheduleMetadataUpdate()
   }
 }
 

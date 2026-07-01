@@ -2,8 +2,6 @@
 package com.intellij.internal.statistics.logger
 
 import com.intellij.internal.statistic.eventLog.EventLogSystemEvents
-import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
-import com.intellij.internal.statistic.eventLog.dispatcher.IntellijReportDispatcher
 import com.intellij.internal.statistic.eventLog.dispatcher.IntellijReportValidator
 import com.intellij.internal.statistic.eventLog.validator.storage.FusComponentProvider
 import com.intellij.testFramework.HeavyPlatformTestCase
@@ -18,6 +16,7 @@ import com.jetbrains.fus.reporting.defaults.NoOpLoggerFactory
 import com.jetbrains.fus.reporting.defaults.dispatcher.EventQueue
 import com.jetbrains.fus.reporting.defaults.dispatcher.SendInformationAggregator
 import com.jetbrains.fus.reporting.defaults.dispatcher.SendResult
+import com.jetbrains.fus.reporting.defaults.dispatcher.SimpleLegacyReportDispatcher
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import com.jetbrains.fus.reporting.model.lion3.LogEventAction
 import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
@@ -28,35 +27,31 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
 import org.junit.Test
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 
 /**
- * End-to-end check that throttling is now enforced by the SDK [IntellijReportDispatcher] (the IntelliJ-side
+ * End-to-end check that throttling is enforced by the SDK [SimpleLegacyReportDispatcher] (the IntelliJ-side
  * `StatisticsEventLogThrottleWriter` was removed in AP-7777). Verifies that once the per-group quota is exceeded the
  * dispatcher emits a [EventLogSystemEvents.TOO_MANY_EVENTS] system event, exactly as the old throttle writer did.
  *
- * The dispatcher is built by hand because in unit-test mode `IntellijSensitiveDataValidator.getInstance` uses the blind
- * path (no real dispatcher). A fake [EventQueue] captures everything the dispatcher enqueues after merge → throttle →
- * validate, so no file I/O or serialization is involved. The blind validator passes events through unchanged, so the
- * synthetic `TOO_MANY_EVENTS` event keeps its id.
+ * The dispatcher is built by hand (production wiring goes through FusClient/FusComponentProvider). A fake [EventQueue]
+ * captures everything the dispatcher enqueues after merge → throttle → validate, so no file I/O or serialization is
+ * involved. In unit-test mode the blind validator passes events through unchanged, so the synthetic `TOO_MANY_EVENTS`
+ * event keeps its id.
  */
 class FusDispatcherThrottleTest : HeavyPlatformTestCase() {
   @Test
   fun testThrottleEmitsTooManyEventsWhenGroupQuotaExceeded() {
-    val previousHeadlessStats = System.getProperty(HEADLESS_STATS_PROPERTY)
-    // queueEvent() is gated on StatisticsUploadAssistant.isCollectAllowed(), which in a headless test honors this flag.
-    System.setProperty(HEADLESS_STATS_PROPERTY, "true")
     val scope = CoroutineScope(Dispatchers.Unconfined)
     try {
       val recorderId = "THROTTLE_TEST"
       val messageBus = MessageBus(scope)
       val eventQueue = RecordingEventQueue()
-      val dispatcher = IntellijReportDispatcher(
-        eventLogProvider = ThrottleTestLoggerProvider(recorderId),
-        messageBus = messageBus,
-        config = FusClientConfig(
+      // queueEvent gates on config.isLoggingEnabled() and enqueue on config.isRecordEnabled(); both default to { true }.
+      val dispatcher = SimpleLegacyReportDispatcher(
+        messageBus,
+        FusClientConfig(
           productName = "Test",
           productCode = "TST",
           recorderCode = recorderId,
@@ -68,15 +63,15 @@ class FusDispatcherThrottleTest : HeavyPlatformTestCase() {
           isTest = true,
           reduceInitialMetadataUpdateDelay = false,
         ),
-        remoteConfig = NoOptionsRemoteConfig(),
-        jsonSerializer = FusComponentProvider.FusJacksonSerializer(),
-        httpClient = NoOpHttpClient(),
-        fusLoggerFactory = NoOpLoggerFactory(),
-        validator = IntellijReportValidator(recorderId),
-        eventQueue = eventQueue,
-        device = "test-device",
-        isInternal = false,
-        mergeIgnoredFields = emptySet(),
+        NoOptionsRemoteConfig(),
+        FusComponentProvider.FusJacksonSerializer(),
+        NoOpHttpClient(),
+        NoOpLoggerFactory(),
+        IntellijReportValidator(recorderId),
+        eventQueue,
+        "test-device",
+        false,
+        "$recorderId.event.log".lowercase(),
       )
 
       runBlocking {
@@ -105,8 +100,6 @@ class FusDispatcherThrottleTest : HeavyPlatformTestCase() {
     }
     finally {
       scope.cancel()
-      if (previousHeadlessStats == null) System.clearProperty(HEADLESS_STATS_PROPERTY)
-      else System.setProperty(HEADLESS_STATS_PROPERTY, previousHeadlessStats)
     }
   }
 
@@ -121,20 +114,8 @@ class FusDispatcherThrottleTest : HeavyPlatformTestCase() {
   )
 }
 
-private const val HEADLESS_STATS_PROPERTY = "idea.headless.enable.statistics"
 private const val THROTTLED_GROUP = "throttle.test.group"
 private const val EVENT_COUNT = 40
-
-private class ThrottleTestLoggerProvider(recorderId: String) : StatisticsEventLoggerProvider(
-  recorderId = recorderId,
-  version = 1,
-  sendFrequencyMs = TimeUnit.HOURS.toMillis(1),
-  maxFileSizeInBytes = DEFAULT_MAX_FILE_SIZE_BYTES,
-  sendLogsOnIdeClose = false,
-) {
-  override fun isRecordEnabled(): Boolean = true
-  override fun isSendEnabled(): Boolean = false
-}
 
 private class NoOptionsRemoteConfig : RemoteConfig {
   override fun getSendUrl(): String = ""

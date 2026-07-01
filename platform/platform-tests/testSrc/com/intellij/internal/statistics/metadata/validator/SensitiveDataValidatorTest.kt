@@ -10,9 +10,6 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalEnumCu
 import com.intellij.internal.statistic.eventLog.validator.storage.FusComponentProvider
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.Disposer
-import com.jetbrains.fus.reporting.FileHandle
-import com.jetbrains.fus.reporting.FileStorage
-import com.jetbrains.fus.reporting.FileStorageMode
 import com.jetbrains.fus.reporting.MetadataStorage
 import com.jetbrains.fus.reporting.api.IEventContext
 import com.jetbrains.fus.reporting.api.IGroupValidators
@@ -582,17 +579,8 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
       override suspend fun update(): Boolean = false
     }
 
-    val components = createFusComponents(object : FileStorage {
-      override fun exists(path: String): Boolean = false
-      override fun list(path: String): List<String> = emptyList()
-      override fun delete(path: String) = Unit
-      override fun openFileHandle(path: String, mode: FileStorageMode): FileHandle = throw NotImplementedError()
-      override fun read(path: String): ByteArray = ByteArray(0)
-      override fun write(path: String, content: ByteArray) = throw NotImplementedError()
-    })
-
     return TestSensitiveDataValidator(
-      FusComponentProvider.FusComponents(unreachableStorage, components.messageBus, components.remoteConfig),
+      FusComponentProvider.FusComponents(unreachableStorage),
       "TEST"
     )
   }

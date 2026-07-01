@@ -29,20 +29,35 @@ import com.jetbrains.fus.reporting.DICTIONARY_UPDATE_FAILED_TOPIC
 import com.jetbrains.fus.reporting.FileHandle
 import com.jetbrains.fus.reporting.FileStorage
 import com.jetbrains.fus.reporting.FileStorageMode
-import com.jetbrains.fus.reporting.FusClientConfig
 import com.jetbrains.fus.reporting.FusJsonSerializer
+import com.jetbrains.fus.reporting.FusClient
+import com.jetbrains.fus.reporting.bundledFileStorage
+import com.jetbrains.fus.reporting.components
+import com.jetbrains.fus.reporting.config
+import com.jetbrains.fus.reporting.eventLogFileStorage
+import com.jetbrains.fus.reporting.fileStorage
+import com.jetbrains.fus.reporting.fusClient
+import com.jetbrains.fus.reporting.httpClient
+import com.jetbrains.fus.reporting.jsonSerializer
+import com.jetbrains.fus.reporting.loggerFactory
+import com.jetbrains.fus.reporting.loggingEnabled
+import com.jetbrains.fus.reporting.messageHandler
+import com.jetbrains.fus.reporting.metadataStorage
+import com.jetbrains.fus.reporting.recordEnabled
+import com.jetbrains.fus.reporting.remoteConfig
+import com.jetbrains.fus.reporting.reportAnonymizer
+import com.jetbrains.fus.reporting.reportDispatcher
+import com.jetbrains.fus.reporting.reportValidator
+import com.jetbrains.fus.reporting.sendEnabled
 import com.jetbrains.fus.reporting.LoadError
 import com.jetbrains.fus.reporting.LoadErrorType
 import com.jetbrains.fus.reporting.METADATA_LOADED_TOPIC
 import com.jetbrains.fus.reporting.METADATA_LOAD_FAILED_TOPIC
 import com.jetbrains.fus.reporting.METADATA_UPDATED_TOPIC
 import com.jetbrains.fus.reporting.METADATA_UPDATE_FAILED_TOPIC
-import com.jetbrains.fus.reporting.MessageBus
-import com.jetbrains.fus.reporting.MessageHandler
 import com.jetbrains.fus.reporting.MetadataStorage
 import com.jetbrains.fus.reporting.REMOTE_CONFIG_OPTIONS_UPDATED
 import com.jetbrains.fus.reporting.RegionCode
-import com.jetbrains.fus.reporting.RemoteConfig
 import com.jetbrains.fus.reporting.api.IEventGroupRules
 import com.jetbrains.fus.reporting.api.IEventGroupsFilterRules
 import com.jetbrains.fus.reporting.api.IGroupValidators
@@ -51,19 +66,21 @@ import com.jetbrains.fus.reporting.defaults.DefaultMetadataStorage
 import com.jetbrains.fus.reporting.defaults.DefaultRemoteConfig
 import com.jetbrains.fus.reporting.defaults.MetadataUpdateDelay
 import com.jetbrains.fus.reporting.defaults.NoOpLoggerFactory
+import com.jetbrains.fus.reporting.defaults.NoOpAnonymizer
+import com.jetbrains.fus.reporting.defaults.dispatcher.SimpleLegacyReportDispatcher
 import com.jetbrains.fus.reporting.defaults.dispatcher.EventLogBuildType
 import com.jetbrains.fus.reporting.defaults.dispatcher.PersistentQueue
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.eventLog.connection.metadata.createJvmHttpClient
 import com.intellij.internal.statistic.eventLog.dispatcher.IntellijFusJsonSerializer
-import com.intellij.internal.statistic.eventLog.dispatcher.IntellijReportDispatcher
+import com.intellij.internal.statistic.eventLog.dispatcher.ExternalUploadOrchestrator
 import com.intellij.internal.statistic.eventLog.dispatcher.IntellijReportValidator
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.jetbrains.fus.reporting.jvm.InMemoryJvmFileStorage
 import com.jetbrains.fus.reporting.jvm.JvmFileStorage
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
+import com.jetbrains.fus.reporting.model.lion3.ValidatedFusReport
 import com.jetbrains.fus.reporting.model.serialization.SerializationException
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import tools.jackson.core.JsonGenerator
 import tools.jackson.core.StreamReadFeature
@@ -76,6 +93,7 @@ import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.kotlinModule
 import java.io.IOException
 import java.nio.file.Path
+import java.util.Locale
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
@@ -130,66 +148,14 @@ object FusComponentProvider {
     }
   }
 
-  fun CoroutineScope.listenToOptionsChanges(recorderId: String, messageBus: MessageBus) {
-    MessageHandler(messageBus, this, REMOTE_CONFIG_OPTIONS_UPDATED) { options ->
-      updateOptions(recorderId, options)
-    }
-  }
-
-  fun CoroutineScope.listenToMetadataEvents(recorderId: String, messageBus: MessageBus) {
-    val systemCollector = getEventLogProvider(recorderId).eventLogSystemLogger
-
-    MessageHandler(messageBus, this, METADATA_LOADED_TOPIC) { version ->
-      systemCollector.logMetadataLoaded(version)
-    }
-
-    MessageHandler(messageBus, this, METADATA_LOAD_FAILED_TOPIC) { loadError ->
-      systemCollector.logMetadataLoadFailed(loadErrorToEventLogMetadataUpdateError(loadError))
-    }
-
-    MessageHandler(messageBus, this, METADATA_UPDATED_TOPIC) { version ->
-      systemCollector.logMetadataUpdated(version)
-    }
-
-    MessageHandler(messageBus, this, METADATA_UPDATE_FAILED_TOPIC) { loadError ->
-      systemCollector.logMetadataUpdateFailed(loadErrorToEventLogMetadataUpdateError(loadError))
-    }
-
-    MessageHandler(messageBus, this, DICTIONARY_LIST_LOAD_FAILED_TOPIC) { loadError ->
-      systemCollector.logDictionaryListLoadFailed(loadErrorToEventLogMetadataUpdateError(loadError))
-    }
-
-    MessageHandler(messageBus, this, DICTIONARY_LIST_UPDATE_FAILED_TOPIC) { loadError ->
-      systemCollector.logDictionaryListUpdateFailed(loadErrorToEventLogMetadataUpdateError(loadError))
-    }
-
-    MessageHandler(messageBus, this, DICTIONARY_LOADED_TOPIC) { update ->
-      systemCollector.logDictionaryLoaded(update.timestamp)
-    }
-
-    MessageHandler(messageBus, this, DICTIONARY_LOAD_FAILED_TOPIC) { loadError ->
-      systemCollector.logDictionaryLoadFailed(loadErrorToEventLogMetadataUpdateError(loadError))
-    }
-
-    MessageHandler(messageBus, this, DICTIONARY_UPDATED_TOPIC) { update ->
-      systemCollector.logDictionaryUpdated(update.timestamp)
-    }
-
-    MessageHandler(messageBus, this, DICTIONARY_UPDATE_FAILED_TOPIC) { loadError ->
-      systemCollector.logDictionaryUpdateFailed(loadErrorToEventLogMetadataUpdateError(loadError))
-    }
-  }
-
   data class FusComponents(
     val metadataStorage: MetadataStorage<EventLogBuild>,
-    val messageBus: MessageBus,
-    val remoteConfig: RemoteConfig,
     /**
      * Null only on the blind/test path ([createBlindFusComponents]) — production [createFusComponents] always builds a real
-     * dispatcher. Callers in the IDE's event pipeline can `!!` it; unit tests typically route through
+     * client. Callers in the IDE's event pipeline can `!!` it; unit tests typically route through
      * `TestStatisticsEventLoggerProvider` and never touch this field.
      */
-    val reportDispatcher: IntellijReportDispatcher? = null,
+    val fusClient: FusClient<LogEvent, ValidatedFusReport>? = null,
   )
 
   private class BlindMetadataStorage:  MetadataStorage<EventLogBuild> {
@@ -210,136 +176,141 @@ object FusComponentProvider {
     override fun getFieldsToAnonymize(groupId: String, eventId: String): Set<String> = emptySet()
   }
 
-  private class BlindRemoteConfig : RemoteConfig {
-    override fun getSendUrl(): String = ""
-    override fun provideOptions(): Map<String, String> = emptyMap()
-    override suspend fun update(): Boolean = true
-    override suspend fun scheduleUpdate() = Unit
-    override fun isUnreachable(): Boolean = false
-    override fun getMetadataUrl(): String = ""
-    override fun getDictionaryUrl(): String = ""
-  }
-
   @JvmStatic
   fun createBlindFusComponents(recorderId: String): FusComponents {
-    val coroutineScope = StatisticsServiceScope.getScope()
     return FusComponents(
       metadataStorage = CompositeValidationRulesStorage(
         metadataStorage = BlindMetadataStorage(),
         testRulesStorage = ValidationTestRulesPersistedStorage(recorderId)
-      ),
-      messageBus = MessageBus(coroutineScope),
-      remoteConfig = BlindRemoteConfig()
+      )
     )
   }
 
   @JvmStatic
   fun createFusComponents(recorderId: String): FusComponents {
-    val coroutineScope = StatisticsServiceScope.getScope()
     val applicationInfo = EventLogInternalApplicationInfo(
       StatisticsUploadAssistant.isUseTestStatisticsConfig(),
       StatisticsUploadAssistant.isUseTestStatisticsSendEndpoint()
     )
     val eventLogProvider = getEventLogProvider(recorderId)
-
-    val messageBus = MessageBus(coroutineScope)
-
-    val config = FusClientConfig(
-      productName = ApplicationNamesInfo.getInstance().fullProductName,
-      productCode = applicationInfo.productCode,
-      recorderCode = recorderId,
-      recorderVersion = eventLogProvider.version.toString(),
-      regionCode = if (applicationInfo.regionalCode == EventLogUploadSettingsClient.chinaRegion) RegionCode.CN else RegionCode.ALL,
-      productVersion = applicationInfo.productVersion,
-      baselineVersion = applicationInfo.baselineVersion,
-      anonymizationSalt = null, // IntelliJ doesn't use anonymization from reporting SDK
-      isTest = applicationInfo.isTestConfig,
-      reduceInitialMetadataUpdateDelay = System.getProperty("fus.internal.reduce.initial.delay").toBoolean()
-    )
-
-    val jsonSerializer = IntellijFusJsonSerializer(FusJacksonSerializer())
-
-    val httpClient = applicationInfo.connectionSettings.createJvmHttpClient()
-    val loggerFactory = NoOpLoggerFactory()
-
-    val remoteConfig = DefaultRemoteConfig(
-      config,
-      messageBus,
-      loggerFactory,
-      jsonSerializer,
-      httpClient
-    )
-
-    val metadataFileStorage = if (ApplicationManager.getApplication().isUnitTestMode()) {
-      InMemoryJvmFileStorage()
-    } else {
-      JvmFileStorage(getMetadataDir(recorderId))
-    }
-
-    val metadataStorage = DefaultMetadataStorage(
-      config,
-      messageBus,
-      loggerFactory,
-      remoteConfig,
-      httpClient,
-      jsonSerializer,
-      metadataFileStorage,
-      BundledJvmFileStorage(recorderId),
-      MetadataUpdateDelay.LONG,
-      { version -> EventLogBuild.fromString(version) },
-      excludedFields = FeatureUsageData.platformDataKeys,
-      utilRulesProducer = CustomRuleProducer(recorderId)
-    )
-
-    val effectiveMetadataStorage: MetadataStorage<EventLogBuild> =
-      if (ApplicationManager.getApplication().isInternal()) {
-        CompositeValidationRulesStorage(metadataStorage, ValidationTestRulesPersistedStorage(recorderId))
-      } else {
-        metadataStorage
-      }
-
-    val eventLogFileStorage = if (ApplicationManager.getApplication().isUnitTestMode()) {
-      InMemoryJvmFileStorage()
-    } else {
-      JvmFileStorage(getEventLogDir(recorderId))
-    }
-    val buildType = if (applicationInfo.isEAP) EventLogBuildType.EAP else EventLogBuildType.RELEASE
-    val persistentQueue = PersistentQueue(
-      messageBus = messageBus,
-      fileStorage = eventLogFileStorage,
-      jsonSerializer = jsonSerializer,
-      loggerFactory = loggerFactory,
-      defaultDelay = eventLogProvider.sendFrequencyMs.milliseconds,
-      eventClass = LogEvent::class,
-      buildType = buildType,
-      maxFileBytes = eventLogProvider.maxFileSizeInBytes.toLong(),
-      maxFileAge = MAX_LOG_FILE_AGE,
-    )
-    val validator = IntellijReportValidator(recorderId)
+    val isUnitTest = ApplicationManager.getApplication().isUnitTestMode()
+    val isInternal = applicationInfo.isInternal
+    val systemLogGroupId = "${recorderId.lowercase(Locale.ENGLISH)}.event.log"
+    val systemCollector = eventLogProvider.eventLogSystemLogger
     val device = EventLogConfiguration.getInstance()
       .getOrCreate(recorderId = recorderId, alternativeRecorderId = if (eventLogProvider.useDefaultRecorderId) "FUS" else null)
       .deviceId
-    val reportDispatcher = IntellijReportDispatcher(
-      eventLogProvider = eventLogProvider,
-      messageBus = messageBus,
-      config = config,
-      remoteConfig = remoteConfig,
-      jsonSerializer = jsonSerializer,
-      httpClient = httpClient,
-      fusLoggerFactory = loggerFactory,
-      validator = validator,
-      eventQueue = persistentQueue,
-      device = device,
-      isInternal = applicationInfo.isInternal,
-      mergeIgnoredFields = eventLogProvider.mergeIgnoredFields,
-    )
 
-    return FusComponents(
-      metadataStorage = effectiveMetadataStorage,
-      messageBus = messageBus,
-      remoteConfig = remoteConfig,
-      reportDispatcher = reportDispatcher,
-    )
+    // The metadata storage is built inside the DSL `metadataStorage { }` provider (it needs the SDK-built bus /
+    // remote config / file storage). We capture it here so the same instance backs IntellijSensitiveDataValidator.
+    var metadataStorageRef: MetadataStorage<EventLogBuild>? = null
+
+    val client = fusClient<LogEvent, ValidatedFusReport> {
+      parentScope = StatisticsServiceScope.getScope()
+
+      config {
+        productName = ApplicationNamesInfo.getInstance().fullProductName
+        productCode = applicationInfo.productCode
+        recorderCode = recorderId
+        recorderVersion = eventLogProvider.version.toString()
+        regionCode = if (applicationInfo.regionalCode == EventLogUploadSettingsClient.chinaRegion) RegionCode.CN else RegionCode.ALL
+        productVersion = applicationInfo.productVersion
+        baselineVersion = applicationInfo.baselineVersion
+        anonymizationSalt = null // IntelliJ doesn't use anonymization from reporting SDK
+        isTest = applicationInfo.isTestConfig
+        reduceInitialMetadataUpdateDelay = System.getProperty("fus.internal.reduce.initial.delay").toBoolean()
+        // Keep event enqueue synchronous and ordered, matching the legacy logger -> writer chain.
+        enableAsyncEventLogging = false
+        // Consent gates that IntellijReportDispatcher used to enforce by hand.
+        recordEnabled { eventLogProvider.isRecordEnabled() && StatisticsUploadAssistant.isCollectAllowed() }
+        loggingEnabled { eventLogProvider.isRecordEnabled() && StatisticsUploadAssistant.isCollectAllowed() }
+        sendEnabled { eventLogProvider.isSendEnabled() }
+      }
+
+      // Internal SDK topics, previously wired by StatisticsJobsScheduler via listenToOptionsChanges/listenToMetadataEvents.
+      messageHandler(REMOTE_CONFIG_OPTIONS_UPDATED) { updateOptions(recorderId, it) }
+      messageHandler(METADATA_LOADED_TOPIC) { systemCollector.logMetadataLoaded(it) }
+      messageHandler(METADATA_LOAD_FAILED_TOPIC) { systemCollector.logMetadataLoadFailed(loadErrorToEventLogMetadataUpdateError(it)) }
+      messageHandler(METADATA_UPDATED_TOPIC) { systemCollector.logMetadataUpdated(it) }
+      messageHandler(METADATA_UPDATE_FAILED_TOPIC) { systemCollector.logMetadataUpdateFailed(loadErrorToEventLogMetadataUpdateError(it)) }
+      messageHandler(DICTIONARY_LIST_LOAD_FAILED_TOPIC) { systemCollector.logDictionaryListLoadFailed(loadErrorToEventLogMetadataUpdateError(it)) }
+      messageHandler(DICTIONARY_LIST_UPDATE_FAILED_TOPIC) { systemCollector.logDictionaryListUpdateFailed(loadErrorToEventLogMetadataUpdateError(it)) }
+      messageHandler(DICTIONARY_LOADED_TOPIC) { systemCollector.logDictionaryLoaded(it.timestamp) }
+      messageHandler(DICTIONARY_LOAD_FAILED_TOPIC) { systemCollector.logDictionaryLoadFailed(loadErrorToEventLogMetadataUpdateError(it)) }
+      messageHandler(DICTIONARY_UPDATED_TOPIC) { systemCollector.logDictionaryUpdated(it.timestamp) }
+      messageHandler(DICTIONARY_UPDATE_FAILED_TOPIC) { systemCollector.logDictionaryUpdateFailed(loadErrorToEventLogMetadataUpdateError(it)) }
+
+      // Every component is injected explicitly (no `legacyBusinessLogic` convenience) so the wiring is
+      // independent of declaration order and each IntelliJ-specific choice is stated outright.
+      components {
+        loggerFactory { NoOpLoggerFactory() }
+        httpClient { _ -> applicationInfo.connectionSettings.createJvmHttpClient() }
+        fileStorage { if (isUnitTest) InMemoryJvmFileStorage() else JvmFileStorage(getMetadataDir(recorderId)) }
+        bundledFileStorage { BundledJvmFileStorage(recorderId) }
+        eventLogFileStorage { if (isUnitTest) InMemoryJvmFileStorage() else JvmFileStorage(getEventLogDir(recorderId)) }
+        jsonSerializer { IntellijFusJsonSerializer(FusJacksonSerializer()) }
+        remoteConfig { config, messageBus, loggerFactory, httpClient, jsonSerializer, _ ->
+          DefaultRemoteConfig(config, messageBus, loggerFactory, jsonSerializer, httpClient)
+        }
+        metadataStorage { config, messageBus, loggerFactory, remoteConfig, httpClient, fileStorage, jsonSerializer, bundledFileStorage ->
+          val storage = DefaultMetadataStorage(
+            config,
+            messageBus,
+            loggerFactory,
+            remoteConfig,
+            httpClient,
+            jsonSerializer,
+            fileStorage,
+            bundledFileStorage,
+            MetadataUpdateDelay.LONG,
+            { version -> EventLogBuild.fromString(version) },
+            excludedFields = FeatureUsageData.platformDataKeys,
+            utilRulesProducer = CustomRuleProducer(recorderId)
+          )
+          val effective: MetadataStorage<EventLogBuild> =
+            if (isInternal) CompositeValidationRulesStorage(storage, ValidationTestRulesPersistedStorage(recorderId)) else storage
+          metadataStorageRef = effective
+          effective
+        }
+        reportAnonymizer { _, _ -> NoOpAnonymizer() }
+        reportValidator { _ -> IntellijReportValidator(recorderId) }
+        reportDispatcher { config, messageBus, remoteConfig, httpClient, jsonSerializer, eventLogFileStorage, loggerFactory, _, validator ->
+          val buildType = if (applicationInfo.isEAP) EventLogBuildType.EAP else EventLogBuildType.RELEASE
+          val persistentQueue = PersistentQueue(
+            messageBus = messageBus,
+            fileStorage = eventLogFileStorage,
+            jsonSerializer = jsonSerializer,
+            loggerFactory = loggerFactory,
+            defaultDelay = eventLogProvider.sendFrequencyMs.milliseconds,
+            eventClass = LogEvent::class,
+            buildType = buildType,
+            maxFileBytes = eventLogProvider.maxFileSizeInBytes.toLong(),
+            maxFileAge = MAX_LOG_FILE_AGE,
+          )
+          SimpleLegacyReportDispatcher(
+            messageBus,
+            config,
+            remoteConfig,
+            jsonSerializer,
+            httpClient,
+            loggerFactory,
+            validator,
+            persistentQueue,
+            device,
+            isInternal,
+            systemLogGroupId,
+            eventLogProvider.sendFrequencyMs.milliseconds,
+            5000,
+            eventLogProvider.isCharsEscapingRequired,
+          ) {
+            // Start the out-of-process external uploader on IDE shutdown (was IntellijReportDispatcher.postClose).
+            postClose = { ExternalUploadOrchestrator.tryStartExternalUpload() }
+          }
+        }
+      }
+    }
+
+    return FusComponents(metadataStorage = metadataStorageRef!!, fusClient = client)
   }
 
   private fun getEventLogDir(recorderId: String): Path =

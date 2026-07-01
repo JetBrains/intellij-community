@@ -128,7 +128,8 @@ public final class StatisticsUploadAssistant {
 
   /**
    * In-process flush of the given recorder's queued events. The legacy implementation returned a long-lived
-   * {@link EventLogStatisticsService}; the new wiring dispatches through {@link com.intellij.internal.statistic.eventLog.dispatcher.IntellijReportDispatcher}
+   * {@link EventLogStatisticsService}; the new wiring dispatches through the recorder's
+   * {@link com.jetbrains.fus.reporting.FusClient} (see {@link com.intellij.internal.statistic.eventLog.dispatcher.DispatcherBackedStatisticsService}),
    * which is what {@link com.intellij.internal.statistic.updater.StatisticsJobsScheduler} also drives. The external
    * uploader (out-of-process JVM) still uses {@link EventLogStatisticsService} directly.
    */

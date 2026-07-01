@@ -22,9 +22,8 @@ import com.intellij.internal.statistics.StatisticsTestEventFactory.newStateEvent
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.UsefulTestCase
-import com.jetbrains.fus.reporting.FusReportDispatcher
+import com.jetbrains.fus.reporting.FeatureUsageLogWriter
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
-import com.jetbrains.fus.reporting.model.lion3.ValidatedFusReport
 import org.junit.Test
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
@@ -714,20 +713,15 @@ class TestFeatureUsageFileEventLogger(session: String = DEFAULT_SESSION_ID,
 }
 
 /**
- * Test seam capturing the events the logger forwards to the dispatcher. Keeps the `...EventWriter` name for continuity
- * with existing call sites; it is a [FusReportDispatcher] fake now that the logger talks to the dispatcher directly.
+ * Test seam capturing the events the logger forwards. Keeps the `...EventWriter` name for continuity with existing
+ * call sites; it is a [FeatureUsageLogWriter] fake (the logger now talks to a FusClient through that interface).
  */
-class TestFeatureUsageEventWriter : FusReportDispatcher<LogEvent, ValidatedFusReport> {
+class TestFeatureUsageEventWriter : FeatureUsageLogWriter<LogEvent> {
   val logged = ArrayList<LogEvent>()
 
-  override suspend fun queueEvent(event: LogEvent) {
+  override fun queueEvent(event: LogEvent) {
     logged.add(event)
   }
-
-  override suspend fun send(): Boolean = false
-  override suspend fun flush() = Unit
-  override suspend fun scheduleSend() = Unit
-  override suspend fun close() = Unit
 }
 
 class TestSystemEventIdProvider(var value: Long) : StatisticsSystemEventIdProvider {

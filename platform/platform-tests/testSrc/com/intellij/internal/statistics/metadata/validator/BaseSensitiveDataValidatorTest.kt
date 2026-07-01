@@ -159,8 +159,8 @@ abstract class BaseSensitiveDataValidatorTest  : UsefulTestCase() {
       excludedFields = FeatureUsageData.platformDataKeys
     )
 
-    val fusComponents = FusComponentProvider.FusComponents(metadataStorage, messageBus, remoteConfig)
-    return fusComponents
+    // The validator only needs the metadata storage; the FusClient handle is irrelevant for validation tests.
+    return FusComponentProvider.FusComponents(metadataStorage)
   }
 
   internal fun newValidator(content: String, customBuild: String? = null): TestSensitiveDataValidator {

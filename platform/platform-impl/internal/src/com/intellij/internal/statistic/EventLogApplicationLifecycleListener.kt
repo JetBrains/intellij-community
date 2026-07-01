@@ -16,7 +16,7 @@ internal class EventLogApplicationLifecycleListener : AppLifecycleListener {
       ExternalUploadOrchestrator.signalRestart()
     }
 
-    // Closing every recorder's dispatcher triggers its postClose hook, which in turn calls
+    // Closing every recorder's FusClient triggers its dispatcher postClose hook, which in turn calls
     // ExternalUploadOrchestrator.tryStartExternalUpload(). The orchestrator handles the legacy guards
     // (restart, run-from-sources, registry flag, enabled-recorder filter, update-in-progress) and is idempotent,
     // so we get exactly one external uploader JVM launch per IDE shutdown.
@@ -25,12 +25,12 @@ internal class EventLogApplicationLifecycleListener : AppLifecycleListener {
 
     runWithModalProgressBlocking(ModalTaskOwner.guess(), "Starting External Log Uploader") {
       for (provider in providers) {
-        val dispatcher = IntellijSensitiveDataValidator.getIfInitialized(provider.recorderId)?.reportDispatcher ?: continue
+        val client = IntellijSensitiveDataValidator.getIfInitialized(provider.recorderId)?.fusClient ?: continue
         try {
-          dispatcher.close()
+          client.close()
         }
         catch (e: Exception) {
-          LOG.warn("Statistics. Failed to close report dispatcher for recorder '${provider.recorderId}'", e)
+          LOG.warn("Statistics. Failed to close FusClient for recorder '${provider.recorderId}'", e)
         }
       }
     }

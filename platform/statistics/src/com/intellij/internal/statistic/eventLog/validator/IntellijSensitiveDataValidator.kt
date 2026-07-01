@@ -17,9 +17,7 @@ import com.intellij.internal.statistic.eventLog.validator.storage.IntellijValida
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.openapi.application.ApplicationManager
-import com.jetbrains.fus.reporting.MessageBus
 import com.jetbrains.fus.reporting.MetadataStorage
-import com.jetbrains.fus.reporting.RemoteConfig
 import com.jetbrains.fus.reporting.api.IEventContext
 import com.jetbrains.fus.reporting.api.IEventGroupRules
 import com.jetbrains.fus.reporting.api.IEventGroupsFilterRules
@@ -148,15 +146,9 @@ open class IntellijSensitiveDataValidator protected constructor(
   @Suppress("UNUSED_PARAMETER")
   protected constructor(storage: IntellijValidationRulesStorage, recorderId: String) : this(null, recorderId)
 
-  val messageBus: MessageBus
-    get() = fusComponents!!.messageBus
-
-  val remoteConfig: RemoteConfig
-    get() = fusComponents!!.remoteConfig
-
   @get:ApiStatus.Internal
-  val reportDispatcher: com.intellij.internal.statistic.eventLog.dispatcher.IntellijReportDispatcher?
-    get() = fusComponents?.reportDispatcher
+  val fusClient: com.jetbrains.fus.reporting.FusClient<com.jetbrains.fus.reporting.model.lion3.LogEvent, com.jetbrains.fus.reporting.model.lion3.ValidatedFusReport>?
+    get() = fusComponents?.fusClient
 
   open suspend fun isGroupAllowed(group: EventLogGroup): Boolean {
     if (StatisticsRecorderUtil.isTestModeEnabled(recorderId)) {

@@ -10,11 +10,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Key
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.jetbrains.fus.reporting.FusReportDispatcher
+import com.jetbrains.fus.reporting.FeatureUsageLogWriter
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import com.jetbrains.fus.reporting.model.lion3.LogEventAction
 import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
-import com.jetbrains.fus.reporting.model.lion3.ValidatedFusReport
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -41,7 +40,7 @@ open class StatisticsFileEventLogger(
   private val build: String,
   private val bucket: String,
   private val recorderVersion: String,
-  private val dispatcher: FusReportDispatcher<LogEvent, ValidatedFusReport>,
+  private val eventWriter: FeatureUsageLogWriter<LogEvent>,
   private val eventLogDir: Path,
   private val systemEventIdProvider: StatisticsSystemEventIdProvider,
   private val mergeStrategy: StatisticsEventMergeStrategy = FilteredEventMergeStrategy(emptySet()),
@@ -139,7 +138,6 @@ open class StatisticsFileEventLogger(
   }
 
   // TODO: move the event extension mechanism to dispatcher extension
-  @Suppress("RAW_RUN_BLOCKING")
   private fun logLastEvent() {
     lastEvent?.let {
       val event = it.validatedEvent.event
@@ -160,9 +158,9 @@ open class StatisticsFileEventLogger(
       application.getUserData(LICENSE_CODE_KEY)?.let {
         event.data["auto_license_type"] = it
       }
-      // The dispatcher's PersistentQueue does the file I/O on its own coroutine context; the brief runBlocking here
-      // (on the single-threaded logExecutor) preserves event order, exactly as the removed writer chain did.
-      runBlocking { dispatcher.queueEvent(it.validatedEvent) }
+      // queueEvent is synchronous (FusClient built with enableAsyncEventLogging=false), so events keep their order
+      // on the single-threaded logExecutor; the SDK's PersistentQueue does the file I/O on its own context.
+      eventWriter.queueEvent(it.validatedEvent)
       application.getService(EventLogListenersManager::class.java)
         .notifySubscribers(recorderId, it.validatedEvent, it.rawEventId, it.rawData, false)
     }
