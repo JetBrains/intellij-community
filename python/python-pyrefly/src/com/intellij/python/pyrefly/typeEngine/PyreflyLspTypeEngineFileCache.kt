@@ -1,4 +1,4 @@
-package com.intellij.python.pyrefly.typeProvider
+package com.intellij.python.pyrefly.typeEngine
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service

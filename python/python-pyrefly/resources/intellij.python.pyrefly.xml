@@ -27,6 +27,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
-    <typeEvalTypeEngineProvider implementation="com.intellij.python.pyrefly.typeProvider.PyreflyLspTypeEngineProvider"/>
+    <typeEvalTypeEngineProvider implementation="com.intellij.python.pyrefly.typeEngine.PyreflyLspTypeEngineProvider"/>
   </extensions>
 </idea-plugin>

@@ -15,12 +15,12 @@
     <registryKey key="ty.type.engine.support" defaultValue="false"
                  description="Support ty type engine"/>
 
-    <python.lsp.typeEngineConfigurable implementation="com.intellij.python.ty.typeProvider.TyPyTypeEngine"/>
+    <python.lsp.typeEngineConfigurable implementation="com.intellij.python.ty.typeEngine.TyPyTypeEngine"/>
     <projectSettings service="com.intellij.python.ty.TyConfiguration"/>
     <python.pytools.pyTool implementation="com.intellij.python.ty.TyPyTool"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
-    <typeEvalTypeEngineProvider implementation="com.intellij.python.ty.typeProvider.TyLspTypeEngineProvider"/>
+    <typeEvalTypeEngineProvider implementation="com.intellij.python.ty.typeEngine.TyLspTypeEngineProvider"/>
   </extensions>
 </idea-plugin>

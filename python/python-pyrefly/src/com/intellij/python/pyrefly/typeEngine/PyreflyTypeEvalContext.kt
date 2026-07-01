@@ -1,4 +1,4 @@
-package com.intellij.python.pyrefly.typeProvider
+package com.intellij.python.pyrefly.typeEngine
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document

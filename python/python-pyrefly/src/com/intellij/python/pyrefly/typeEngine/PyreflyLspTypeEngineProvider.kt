@@ -1,4 +1,4 @@
-package com.intellij.python.pyrefly.typeProvider
+package com.intellij.python.pyrefly.typeEngine
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module

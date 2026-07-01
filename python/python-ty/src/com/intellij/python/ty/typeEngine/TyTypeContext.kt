@@ -1,4 +1,4 @@
-package com.intellij.python.ty.typeProvider
+package com.intellij.python.ty.typeEngine
 
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.findDocument
