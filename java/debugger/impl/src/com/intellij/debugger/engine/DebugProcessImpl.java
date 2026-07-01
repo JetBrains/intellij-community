@@ -1914,6 +1914,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return loadClass(evaluationContext, exception.className(), classLoader);
   }
 
+  /**
+   * Loads and initializes a class by its qualified name in the given evaluation context and using the specified class loader.
+   */
   public ReferenceType loadClass(@NotNull EvaluationContextImpl evaluationContext, String qName, ClassLoaderReference classLoader)
     throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException, EvaluateException {
 

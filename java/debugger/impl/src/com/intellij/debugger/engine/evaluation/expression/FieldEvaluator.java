@@ -25,8 +25,10 @@ import com.sun.jdi.ArrayType;
 import com.sun.jdi.ClassNotLoadedException;
 import com.sun.jdi.ClassType;
 import com.sun.jdi.Field;
+import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.InterfaceType;
 import com.sun.jdi.InvalidTypeException;
+import com.sun.jdi.InvocationException;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Type;
@@ -113,6 +115,7 @@ public class FieldEvaluator implements ModifiableEvaluator {
       if (field == null || !field.isStatic()) {
         throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.no.static.field", myFieldName));
       }
+      initializeReferenceType(context, refType);
       MyModifier modifier = new MyModifier(refType, field);
       return new ModifiableValue(refType.getValue(field), modifier);
     }
@@ -147,6 +150,18 @@ public class FieldEvaluator implements ModifiableEvaluator {
     }
 
     throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.evaluating.field", myFieldName));
+  }
+
+  private static void initializeReferenceType(@NotNull EvaluationContextImpl context, @NotNull ReferenceType refType) throws EvaluateException {
+    if (refType.isInitialized()) {
+      return;
+    }
+    try {
+      context.getDebugProcess().loadClass(context, refType.name(), refType.classLoader());
+    }
+    catch (InvocationException | InvalidTypeException | IncompatibleThreadStateException | ClassNotLoadedException e) {
+      throw EvaluateExceptionUtil.createEvaluateException(e);
+    }
   }
 
   @Override
