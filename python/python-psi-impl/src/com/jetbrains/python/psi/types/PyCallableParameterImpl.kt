@@ -19,6 +19,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.documentation.PyTypeRenderer
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyNamedParameter
@@ -92,12 +93,13 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
     get() = parameter is PySingleStarParameter || myIsKeywordOnlySeparator
 
   override fun getPresentableText(includeDefaultValue: Boolean, context: TypeEvalContext?): String {
-    return getPresentableText(includeDefaultValue, context, { it.isAnyOrUnknown })
+    return getPresentableText(includeDefaultValue, context, false) { it.isAnyOrUnknown }
   }
 
   override fun getPresentableText(
     includeDefaultValue: Boolean,
     context: TypeEvalContext?,
+    renderTypeParameterBounds: Boolean,
     typeFilter: (PyType?) -> Boolean,
   ): String {
     if (parameter !is PyNamedParameter && parameter != null) {
@@ -111,7 +113,8 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
         val argumentType = getArgumentType(context)
         if (!typeFilter(argumentType)) {
           append(": ")
-          append(PythonDocumentationProvider.getTypeName(argumentType, context))
+          append(if (renderTypeParameterBounds) PythonDocumentationProvider.getTypeName(argumentType, context, PyTypeRenderer.Feature.TYPE_VAR_BOUNDS)
+                 else PythonDocumentationProvider.getTypeName(argumentType, context))
           renderedAsTyped = true
         }
       }

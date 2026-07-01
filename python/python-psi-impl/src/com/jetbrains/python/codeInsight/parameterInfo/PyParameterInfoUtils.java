@@ -154,7 +154,7 @@ public final class PyParameterInfoUtils {
               parameterDescription.setAnnotation(last ? annotationText : (annotationText + ", "));
             }
           }
-          stringBuilder.append(parameter.getPresentableText(true, context, type -> isAnyOrUnknown(type) || type instanceof PyStructuralType));
+          stringBuilder.append(parameter.getPresentableText(true, context, true, type -> isAnyOrUnknown(type) || type instanceof PyStructuralType));
           if (!last) stringBuilder.append(", ");
           final int hintIndex = parameterDescriptions.size();
           parameterToHintIndex.put(parameter, hintIndex);

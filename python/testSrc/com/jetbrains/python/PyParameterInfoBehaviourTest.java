@@ -175,19 +175,19 @@ public class PyParameterInfoBehaviourTest extends PyTestCase {
     configurePython("max(<caret>)");
     showParameterInfo();
     checkParameterInfos("""
-                          <html><b>arg1: SupportsRichComparisonT,</b> arg2, /, _args, key</html>
+                          <html><b>arg1: SupportsRichComparisonT ≤: SupportsDunderLT[Any] | SupportsDunderGT[Any],</b> arg2, /, _args, key</html>
                           -""");
     showParameterInfo();
     checkParameterInfos("""
-                          <html><b>arg1: SupportsRichComparisonT,</b> arg2, /, _args, key</html>
+                          <html><b>arg1: SupportsRichComparisonT ≤: SupportsDunderLT[Any] | SupportsDunderGT[Any],</b> arg2, /, _args, key</html>
                           -
                           <html><b>arg1: _T,</b> arg2, /, _args, key</html>
                           -
-                          <html><b>iterable: Iterable[SupportsRichComparisonT],</b> /, *, key</html>
+                          <html><b>iterable: Iterable[SupportsRichComparisonT ≤: SupportsDunderLT[Any] | SupportsDunderGT[Any]],</b> /, *, key</html>
                           -
                           <html><b>iterable: Iterable[_T],</b> /, *, key</html>
                           -
-                          <html><b>iterable: Iterable[SupportsRichComparisonT],</b> /, *, key, default</html>
+                          <html><b>iterable: Iterable[SupportsRichComparisonT ≤: SupportsDunderLT[Any] | SupportsDunderGT[Any]],</b> /, *, key, default</html>
                           -
                           <html><b>iterable: Iterable[_T1],</b> /, *, key, default</html>
                           """);
