@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.core
 
-// @spec plugins/ij-air/spec/prompt-context/prompt-context-contracts.spec.md
+// @spec plugins/air/spec/prompt-context/prompt-context-contracts.spec.md
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt

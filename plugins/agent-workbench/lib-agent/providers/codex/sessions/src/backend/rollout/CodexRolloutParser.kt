@@ -2,7 +2,7 @@
 
 package com.intellij.platform.ai.agent.codex.sessions.backend.rollout
 
-// @spec plugins/ij-air/spec/thread-view/agent-thread-view-structure.spec.md
+// @spec plugins/air/spec/thread-view/agent-thread-view-structure.spec.md
 
 import tools.jackson.core.JsonParser
 import tools.jackson.core.JsonToken

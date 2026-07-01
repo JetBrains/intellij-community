@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ai.agent.codex.common
 
-// @spec plugins/ij-air/spec/actions/global-prompt-suggestions.spec.md
+// @spec plugins/air/spec/actions/global-prompt-suggestions.spec.md
 
 import com.intellij.platform.ai.agent.json.createJsonGenerator
 import com.intellij.platform.ai.agent.json.createJsonParser

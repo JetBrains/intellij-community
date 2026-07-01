@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ai.agent.codex.sessions
 
-// @spec plugins/ij-air/spec/sessions/agent-sessions.spec.md
-// @spec plugins/ij-air/spec/sessions/agent-sessions-codex-rollout-source.spec.md
-// @spec plugins/ij-air/spec/thread-view/agent-thread-view-structure.spec.md
+// @spec plugins/air/spec/sessions/agent-sessions.spec.md
+// @spec plugins/air/spec/sessions/agent-sessions-codex-rollout-source.spec.md
+// @spec plugins/air/spec/thread-view/agent-thread-view-structure.spec.md
 
 import com.intellij.platform.ai.agent.codex.common.CodexThread
 import com.intellij.platform.ai.agent.codex.sessions.backend.CodexBackendThread
