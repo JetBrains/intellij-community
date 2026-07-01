@@ -657,6 +657,8 @@ class KotlinBuildScriptManipulator(
             if (existingPluginDefinition?.applyExpression != null || existingPluginDefinition?.versionExpression == null) {
                 it.addExpressionIfMissing(pluginExpression(pluginName, addVersion, version, applyFalse))
             }
+            val codeStyleManager = CodeStyleManager.getInstance(project)
+            codeStyleManager.reformat(this, true)
         }
     }
 
