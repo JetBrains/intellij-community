@@ -29,6 +29,7 @@ public class JavaPsiDocumentationTargetProvider: PsiDocumentationTargetProvider 
     originalElement: PsiElement?,
   ): DocumentationTarget? {
     if (element.language !is JavaLanguage) return null
+    if (element is PsiJavaFile) return null
 
     // list all candidates for `new Foo(<caret>)` / `foo.bar(<caret>)`
     val forceCandidatesTarget: PsiCallExpression? = when (element) {
