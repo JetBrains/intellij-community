@@ -18772,16 +18772,6 @@ jvm_import(
     source_jar = "@com_soywiz_korlibs_krypto-krypto-jvm-4_0_10-sources_http//file",
 )
 
-java_library(
-    name = "platform-ai-agent-codex-sessions-night-config-toml",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":com_electronwill_night-config-toml-3_8_4_http_import",
-        ":com_electronwill_night-config-core-3_8_4_http_import",
-    ],
-)
-
 copy_file(
     name = "com.guardsquare/proguard-base-7.8.2.jar_copy",
     src = "@com_guardsquare-proguard-base-7_8_2_http//file",

@@ -1,3 +1,0 @@
-f:com.intellij.platform.ai.agent.terminal.sessions.icons.AgentWorkbenchTerminalSessionsIcons
-- sf:Terminal:javax.swing.Icon
-- <init>():V

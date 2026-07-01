@@ -1,8 +1,0 @@
-<idea-plugin>
-  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-  <dependencies>
-    <module name="intellij.platform.ai.agent.cli"/>
-    <module name="intellij.platform.ai.agent.json"/>
-  </dependencies>
-  <!-- endregion -->
-</idea-plugin>

@@ -138,14 +138,10 @@
     <orderEntry type="module" module-name="intellij.lombok.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.concurrency.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ai.agent.cli.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.ai.agent.codex.common.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ai.agent.common.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ai.agent.core.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ai.agent.filewatch.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ai.agent.json.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.ai.agent.opencode.sessions.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.ai.agent.pi.sessions.filewatch.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.ai.agent.terminal.sessions.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.ant.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.commander.tests" scope="TEST" />
