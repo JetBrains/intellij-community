@@ -1,6 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.pyi
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Components
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.psi.util.descendantsOfType
@@ -8,6 +11,9 @@ import com.intellij.psi.util.parentOfType
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 
+@Subsystems.CodeInsight
+@Components.Stubs
+@Layers.Functional
 class PyiRelatedItemLineMarkerTest : PyTestCase() {
 
   fun testOverloadsAndImplementationInPyFile() {

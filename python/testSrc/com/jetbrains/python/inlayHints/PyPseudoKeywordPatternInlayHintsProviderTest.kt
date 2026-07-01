@@ -1,11 +1,18 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inlayHints
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Components
+
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
 import com.jetbrains.python.fixtures.PyLightProjectDescriptor
 import com.jetbrains.python.psi.LanguageLevel
 
+@Subsystems.CodeInsight
+@Components.InlayHints
+@Layers.Functional
 class PyPseudoKeywordPatternInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
   fun testSimplePositional() {
     doTest(

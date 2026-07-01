@@ -1,5 +1,9 @@
 package com.jetbrains.python.documentation.docstings
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Components
+
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.lang.Language
 import com.intellij.lang.injection.InjectedLanguageManager
@@ -18,6 +22,9 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyStringLiteralExpression
 
+@Subsystems.QuickDocumentation
+@Components.Docstrings
+@Layers.Functional
 class PyRestCodeBlockInjectionTest : PyTestCase() {
 
   fun `test rest code-block highlighting`() {

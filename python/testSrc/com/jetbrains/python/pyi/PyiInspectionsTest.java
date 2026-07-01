@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python.pyi;
 
+import com.jetbrains.python.allure.Subsystems;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Components;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.idea.TestFor;
 import com.intellij.openapi.Disposable;
@@ -37,6 +40,9 @@ import com.jetbrains.python.inspections.unusedLocal.PyUnusedParameterInspection;
 import com.jetbrains.python.psi.PythonVisitorFilter;
 import org.jetbrains.annotations.NotNull;
 
+@Subsystems.Inspections
+@Components.Stubs
+@Layers.Functional
 public class PyiInspectionsTest extends PyTestCase {
 
   private Disposable myRootsDisposable;

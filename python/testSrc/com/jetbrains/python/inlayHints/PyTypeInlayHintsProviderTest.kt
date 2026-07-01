@@ -1,6 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inlayHints
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Components
+
 import com.intellij.idea.TestFor
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
@@ -14,6 +18,9 @@ import com.jetbrains.python.inlayHints.PyTypeInlayHintsProvider.Companion.VARIAN
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyClass
 
+@Subsystems.CodeInsight
+@Components.InlayHints
+@Layers.Functional
 class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
 
   fun `test reveal type`() {
