@@ -11,12 +11,18 @@ enum class AgentPromptContextContributorPhase {
   FALLBACK,
 }
 
+enum class AgentPromptDefaultContextPolicy {
+  ALLOW_IMPLICIT_CONTEXT,
+  NO_IMPLICIT_CONTEXT,
+}
+
 data class AgentPromptInvocationData(
   @JvmField val project: Project,
   @JvmField val actionId: String?,
   @JvmField val actionText: String?,
   @JvmField val actionPlace: String?,
   @JvmField val invokedAtMs: Long,
+  @JvmField val defaultContextPolicy: AgentPromptDefaultContextPolicy,
   @JvmField val attributes: Map<String, Any?> = emptyMap(),
 )
 

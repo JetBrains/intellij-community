@@ -107,7 +107,28 @@ class AgentPromptContextResolverServiceTest {
     assertThat(resolved.map { it.rendererId }).containsExactly(AgentPromptContextRendererIds.FILE)
   }
 
-  private fun invocationData(dataContext: com.intellij.openapi.actionSystem.DataContext? = null): AgentPromptInvocationData {
+  @Test
+  fun noImplicitContextPolicySkipsContributors() {
+    var calls = 0
+    val service = AgentPromptContextResolverService(
+      contributorsProvider = {
+        listOf(testContributor(contributorPhase = AgentPromptContextContributorPhase.INVOCATION) {
+          calls++
+          listOf(contextItem(AgentPromptContextRendererIds.FILE))
+        })
+      }
+    )
+
+    val resolved = service.collectDefaultContext(invocationData(defaultContextPolicy = AgentPromptDefaultContextPolicy.NO_IMPLICIT_CONTEXT))
+
+    assertThat(resolved).isEmpty()
+    assertThat(calls).isZero()
+  }
+
+  private fun invocationData(
+    dataContext: com.intellij.openapi.actionSystem.DataContext? = null,
+    defaultContextPolicy: AgentPromptDefaultContextPolicy = AgentPromptDefaultContextPolicy.ALLOW_IMPLICIT_CONTEXT,
+  ): AgentPromptInvocationData {
     val project = ProjectManager.getInstance().defaultProject
     val effectiveDataContext = dataContext ?: SimpleDataContext.builder()
       .add(CommonDataKeys.PROJECT, project)
@@ -118,6 +139,7 @@ class AgentPromptContextResolverServiceTest {
       actionText = "Ask Agent",
       actionPlace = "MainMenu",
       invokedAtMs = 0L,
+      defaultContextPolicy = defaultContextPolicy,
       attributes = mapOf(
         AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY to effectiveDataContext,
       ),

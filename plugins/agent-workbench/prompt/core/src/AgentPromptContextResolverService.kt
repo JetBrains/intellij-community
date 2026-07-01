@@ -13,6 +13,10 @@ class AgentPromptContextResolverService(
   private val contributorsProvider: () -> List<AgentPromptContextContributorBridge> = AgentPromptContextContributors::allBridges,
 ) {
   fun collectDefaultContext(invocationData: AgentPromptInvocationData): List<AgentPromptContextItem> {
+    if (invocationData.defaultContextPolicy != AgentPromptDefaultContextPolicy.ALLOW_IMPLICIT_CONTEXT) {
+      return emptyList()
+    }
+
     val invocationItems = collectByPhase(
       phase = AgentPromptContextContributorPhase.INVOCATION,
       invocationData = invocationData,
