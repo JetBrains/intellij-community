@@ -437,7 +437,10 @@ private class TerminalOutputModelChangesTracker(
       return outputModel.endOffset
     }
 
-    return changesHistory.subList(nextChangeIndex, changesHistory.size).minOf { it.startOffset }
+    val offset = changesHistory.subList(nextChangeIndex, changesHistory.size).minOf { it.startOffset }
+    // Clamp to the current end offset. The recorded change offsets can become stale when the
+    // document shrinks (for example, `clear`) after a change was recorded but before the next flush updates the history.
+    return minOf(offset, outputModel.endOffset)
   }
 
   private fun recordChange(startLine: TerminalLineIndex) {
