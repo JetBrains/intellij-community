@@ -10,14 +10,16 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.json"/>
-    <module name="intellij.json.backend"/>
     <module name="intellij.markdown"/>
-    <module name="intellij.spellchecker"/>
     <module name="intellij.yaml"/>
   </dependencies>
   <!-- endregion -->
   <content>
     <module name="intellij.mermaid.markdown" loading="optional"/>
+    <module name="intellij.mermaid.json" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.mermaid.spellchecker"/>
+    <module name="intellij.mermaid.backend.split"/>
+    <module name="intellij.mermaid.frontend.split"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -137,8 +139,6 @@
                      editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      implementationClass="com.intellij.mermaid.lang.intention.GitGraphInspection"/>
 
-    <spellchecker.support language="Mermaid" implementationClass="com.intellij.mermaid.lang.MermaidSpellcheckingStrategy"/>
-
     <todoIndexer filetype="Mermaid" implementationClass="com.intellij.mermaid.lang.highlighting.MermaidTodoIndexer"/>
     <indexPatternBuilder implementation="com.intellij.mermaid.lang.highlighting.MermaidIndexPatternBuilder"/>
 
@@ -175,10 +175,5 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.mermaid.fus.MermaidCollector"/>
 
     <lang.ast.factory language="Mermaid" implementationClass="com.intellij.mermaid.lang.psi.MermaidAstFactory"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="JavaScript.JsonSchema">
-    <ProviderFactory implementation="com.intellij.mermaid.lang.injection.DirectiveJsonSchemaProviderFactory"/>
-    <ProviderFactory implementation="com.intellij.mermaid.lang.injection.FrontmatterYamlSchemaProviderFactory"/>
   </extensions>
 </idea-plugin>

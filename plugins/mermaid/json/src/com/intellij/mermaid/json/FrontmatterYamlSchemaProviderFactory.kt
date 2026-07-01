@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.mermaid.lang.injection
+package com.intellij.mermaid.json
 
 import com.intellij.openapi.project.Project
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider

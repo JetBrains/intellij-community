@@ -1213,7 +1213,9 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/mcp-server/tests/plugin/intellij.mcpserver.tests.plugin.iml" filepath="$PROJECT_DIR$/plugins/mcp-server/tests/plugin/intellij.mcpserver.tests.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/mcp-server/mcpserver.vcs/intellij.mcpserver.vcs.iml" filepath="$PROJECT_DIR$/plugins/mcp-server/mcpserver.vcs/intellij.mcpserver.vcs.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/mermaid/intellij.mermaid.iml" filepath="$PROJECT_DIR$/plugins/mermaid/intellij.mermaid.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/mermaid/json/intellij.mermaid.json.iml" filepath="$PROJECT_DIR$/plugins/mermaid/json/intellij.mermaid.json.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/mermaid/markdown/intellij.mermaid.markdown.iml" filepath="$PROJECT_DIR$/plugins/mermaid/markdown/intellij.mermaid.markdown.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/mermaid/spellchecker/intellij.mermaid.spellchecker.iml" filepath="$PROJECT_DIR$/plugins/mermaid/spellchecker/intellij.mermaid.spellchecker.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/mermaid/intellij.mermaid.tests.iml" filepath="$PROJECT_DIR$/plugins/mermaid/intellij.mermaid.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ml-local-models/intellij.ml.models.local.iml" filepath="$PROJECT_DIR$/plugins/ml-local-models/intellij.ml.models.local.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ml-local-models/java/intellij.ml.models.local.java.iml" filepath="$PROJECT_DIR$/plugins/ml-local-models/java/intellij.ml.models.local.java.iml" />

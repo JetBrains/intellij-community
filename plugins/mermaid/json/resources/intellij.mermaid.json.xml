@@ -1,0 +1,11 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="com.intellij.mermaid"/>
+    <module name="intellij.json.backend"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="JavaScript.JsonSchema">
+    <ProviderFactory implementation="com.intellij.mermaid.json.DirectiveJsonSchemaProviderFactory"/>
+    <ProviderFactory implementation="com.intellij.mermaid.json.FrontmatterYamlSchemaProviderFactory"/>
+  </extensions>
+</idea-plugin>

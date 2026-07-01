@@ -1481,7 +1481,9 @@ plugins/mcp-server/mcpserver.vcs
 plugins/mcp-server/tests
 plugins/mcp-server/tests/plugin
 plugins/mermaid
+plugins/mermaid/json
 plugins/mermaid/markdown
+plugins/mermaid/spellchecker
 plugins/ml-local-models
 plugins/ml-local-models/java
 plugins/performanceTesting/backend

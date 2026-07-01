@@ -41,9 +41,11 @@ import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import kotlin.time.Duration.Companion.milliseconds
+import org.jetbrains.annotations.ApiStatus
 
 @OptIn(FlowPreview::class)
-internal class MermaidPreviewEditor(
+@ApiStatus.Internal
+class MermaidPreviewEditor internal constructor(
   private val project: Project,
   file: VirtualFile
 ): FileEditor, UserDataHolder by UserDataHolderBase() {
