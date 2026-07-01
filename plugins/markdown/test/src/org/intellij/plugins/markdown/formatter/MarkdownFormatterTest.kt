@@ -85,6 +85,18 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
 
   fun `test reflow apostrophe as word boundary`() = doTest(rightMargin = 120)
 
+  fun `test admonitions`() = doTest()
+
+  fun `test admonitions with blank line`() = doTest()
+
+  fun `test admonitions with custom title`() = doTest()
+
+  fun `test admonitions multi paragraph`() = doTest()
+
+  fun `test admonitions collapsible`() = doTest()
+
+  fun `test admonitions followed by paragraph`() = doTest()
+
   override fun getTestDataPath(): String {
     return MarkdownTestingUtil.TEST_DATA_PATH + "/formatter/"
   }

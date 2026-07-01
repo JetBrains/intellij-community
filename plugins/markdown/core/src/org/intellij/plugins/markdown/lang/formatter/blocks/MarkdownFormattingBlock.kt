@@ -120,6 +120,7 @@ internal open class MarkdownFormattingBlock(
       // would treat blockquote as a part of code fence end token
       MarkdownElementTypes.CODE_FENCE, MarkdownElementTypes.CODE_SPAN -> emptyList()
       MarkdownElementTypes.FRONT_MATTER_HEADER -> emptyList()
+      MarkdownElementTypes.ADMONITION -> emptyList()
       MarkdownElementTypes.LIST_ITEM -> {
         val hasTableChild = node.children().any { it.elementType == MarkdownElementTypes.TABLE }
         val nonAlignable = if (hasTableChild) MarkdownTokenTypeSets.LIST_MARKERS else NON_ALIGNABLE_LIST_ELEMENTS
