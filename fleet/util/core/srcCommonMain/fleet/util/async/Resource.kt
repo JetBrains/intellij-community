@@ -484,7 +484,7 @@ private fun <T> sharedResource(
 /**
  * Initiates the final shutdown of a shared resource, immediately and regardless of any remaining stop timeout.
  */
-private fun <T> stopShared(store: StateStore<T>, graceful: Boolean, cause: ResourceStoppedException) {
+private fun <T> stopShared(store: StateStore<T>, graceful: Boolean, cause: Throwable) {
   store.update { state ->
     when (val current = state.value) {
       is SharedResourceState.NotRunning<T> -> state.value = SharedResourceState.Stopped()
@@ -514,7 +514,7 @@ private fun <T> initiateStop(
   state: StateStore.StateRef<T>,
   running: HotResource<T>,
   graceful: Boolean,
-  cause: ResourceStoppedException,
+  cause: Throwable,
 ) {
   val stopping = SharedResourceState.Stopping<T>(running.job, finalStop = true)
   // publish the final state before touching the resource: the eviction handler (and a consumer that resumes
@@ -652,11 +652,11 @@ class ResourceCache<K, R> internal constructor(
    * Stops every resource currently retained by this cache, immediately and regardless of any remaining stop timeout.
    * The configured [graceful] flag is respected (see [SharedResource.stop]).
    */
-  internal fun stopAll() {
+  internal fun stopAll(cause: Throwable?) {
     synchronized(lock) {
-      val cause = ResourceStoppedException()
+      val ex = cause ?: ResourceStoppedException()
       for (key in map.keys.toHashSet()) {
-        stopShared(keyStore(key), graceful, cause)
+        stopShared(keyStore(key), graceful, ex)
       }
     }
   }
@@ -707,13 +707,18 @@ fun <K, R> resourceCache(
         stopTimeout = stopTimeout,
         factory = f,
       )
+      var cause: Throwable? = null
       try {
         cc(cache)
+      }
+      catch (ex: Throwable) {
+        cause = ex
+        throw ex
       }
       finally {
         // the cache is being disposed: resources are no longer used, but some might still linger because of the stopTimeout.
         // shut all of them down explicitly, regardless of the remaining stopTimeout.
-        cache.stopAll()
+        cache.stopAll(cause)
       }
     }
   }
