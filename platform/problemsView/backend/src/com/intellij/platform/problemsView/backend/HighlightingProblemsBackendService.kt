@@ -78,7 +78,7 @@ class HighlightingProblemsBackendService(private val project: Project) : Disposa
       }
       .onCompletion { root.resetEventReplayCache() }
       .batchEvents()
-      .map { batch -> buildChangelistFromEventsBatch(batch, project, root.lifetime) }
+      .map { batch -> buildChangelistFromEventsBatch(batch, project, root.lifetime, sourceFlow = "file:${file.name}") }
   }
 
   private suspend fun getDocumentFromFile(file: VirtualFile) : Document? {

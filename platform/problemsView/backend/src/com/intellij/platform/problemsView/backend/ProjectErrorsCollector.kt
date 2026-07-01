@@ -53,7 +53,7 @@ internal class ProjectErrorsCollector(val project: Project, coroutineScope: Coro
         }
       }
       .batchEvents()
-      .map { batch -> buildChangelistFromEventsBatch(batch, project, lifetime) }
+      .map { batch -> buildChangelistFromEventsBatch(batch, project, lifetime, sourceFlow = "projectErrors") }
   }
 
   override fun getProblemCount(): Int = problemCount.get()

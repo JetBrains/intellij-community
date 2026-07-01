@@ -35,11 +35,7 @@ class IdValueStore<T : Any> {
     return valueToId.remove(value)
   }
 
-  fun getSize(): Int = valueToId.size
+  fun hasKey(value: T): Boolean = valueToId.containsKey(value)
 
-  fun getSample(count: Int): List<Pair<T, String>> {
-    return valueToId.entries
-      .take(count)
-      .map { (value, id) -> value to id }
-  }
+  fun getSize(): Int = valueToId.size
 }
