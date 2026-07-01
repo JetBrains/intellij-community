@@ -24,6 +24,8 @@ import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.UsefulTestCase
 import com.jetbrains.fus.reporting.FeatureUsageLogWriter
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
+import com.jetbrains.fus.reporting.model.lion3.LogEventAction
+import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
 import org.junit.Test
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
@@ -402,49 +404,6 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   }
 
   @Test
-  fun testLogSystemEventId() {
-    val logger = TestFeatureUsageFileEventLogger(DEFAULT_SESSION_ID, "999.999", "0", "1",
-                                                 TestFeatureUsageEventWriter(), TestSystemEventIdProvider(42L))
-    logger.logAsync(EventLogGroup("group.id.1", 1), "test.action.1", false)
-    logger.logAsync(EventLogGroup("group.id.2", 1), "test.action.2", false)
-    logger.dispose()
-    val logged = logger.testWriter.logged
-    UsefulTestCase.assertSize(2, logged)
-    //suppressed until https://youtrack.jetbrains.com/issue/KTIJ-21749 being fixed
-    @Suppress("AssertBetweenInconvertibleTypes")
-    assertEquals(logged[0].event.data["system_event_id"], 42.toLong())
-    //suppressed until https://youtrack.jetbrains.com/issue/KTIJ-21749 being fixed
-    @Suppress("AssertBetweenInconvertibleTypes")
-    assertEquals(logged[1].event.data["system_event_id"], 43.toLong())
-  }
-
-  @Test
-  fun testLogHeadlessModeEnabled() {
-    doTestHeadlessMode(true) {
-      //suppressed until https://youtrack.jetbrains.com/issue/KTIJ-21749 being fixed
-      @Suppress("AssertBetweenInconvertibleTypes")
-      assertEquals(it.event.data["system_headless"], true)
-    }
-  }
-
-  @Test
-  fun testLogHeadlessModeDisabled() {
-    doTestHeadlessMode(false) {
-      assertFalse(it.event.data.containsKey("system_headless"))
-    }
-  }
-
-  private fun doTestHeadlessMode(headless: Boolean, assertion: (LogEvent) -> Unit) {
-    val logger = TestFeatureUsageFileEventLogger(headless = headless)
-    logger.logAsync(EventLogGroup("group.id", 1), "test.action", false)
-    logger.dispose()
-
-    val loggedEvents = logger.testWriter.logged
-    UsefulTestCase.assertSize(1, loggedEvents)
-    assertion.invoke(loggedEvents[0])
-  }
-
-  @Test
   fun testObjectEvent() {
     /* {
       "intField" : 43
@@ -676,16 +635,17 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     assertEquals(expected.event.id, actual.event.id)
 
     assertTrue { actual.event.data.containsKey("created") }
-    assertTrue { actual.event.data.containsKey("system_event_id") }
     assertTrue { actual.time <= actual.event.data["created"] as Long }
 
     if (actual.event.isEventGroup()) {
-      assertEquals(expected.event.data.size, actual.event.data.size - 3)
+      // logger adds `created` + `last`; system_event_id etc. are now added downstream in preEventWrite.
+      assertEquals(expected.event.data.size, actual.event.data.size - 2)
       assertTrue { actual.event.data.containsKey("last") }
       assertTrue { actual.time <= actual.event.data["last"] as Long }
     }
     else {
-      assertEquals(expected.event.data.size, actual.event.data.size - 2)
+      // logger adds only `created`.
+      assertEquals(expected.event.data.size, actual.event.data.size - 1)
     }
     assertEquals(expected.event.state, actual.event.state)
     assertEquals(expected.event.count, actual.event.count)
@@ -699,11 +659,8 @@ class TestFeatureUsageFileEventLogger(session: String = DEFAULT_SESSION_ID,
                                       bucket: String = "0",
                                       recorderVersion: String = "1",
                                       writer: TestFeatureUsageEventWriter = TestFeatureUsageEventWriter(),
-                                      systemEventIdProvider: StatisticsSystemEventIdProvider = TestSystemEventIdProvider(0),
-                                      mergeStrategy: StatisticsEventMergeStrategy = FilteredEventMergeStrategy(emptySet()),
-                                      headless: Boolean = false,
                                       eventLogDir: Path = Path.of(System.getProperty("java.io.tmpdir"), "fus-test-event-logs")) :
-  StatisticsFileEventLogger(TEST_RECORDER, session, headless, build, bucket, recorderVersion, writer, eventLogDir, systemEventIdProvider, mergeStrategy) {
+  StatisticsFileEventLogger(TEST_RECORDER, session, build, bucket, recorderVersion, writer, eventLogDir) {
   val testWriter = writer
 
   override fun dispose() {
@@ -721,15 +678,5 @@ class TestFeatureUsageEventWriter : FeatureUsageLogWriter<LogEvent> {
 
   override fun queueEvent(event: LogEvent) {
     logged.add(event)
-  }
-}
-
-class TestSystemEventIdProvider(var value: Long) : StatisticsSystemEventIdProvider {
-  override fun getSystemEventId(recorderId: String): Long {
-    return value
-  }
-
-  override fun setSystemEventId(recorderId: String, eventId: Long) {
-    value = eventId
   }
 }

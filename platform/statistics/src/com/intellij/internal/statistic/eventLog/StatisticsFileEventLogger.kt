@@ -2,15 +2,14 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.concurrency.ExecutionInitiator
-import com.intellij.concurrency.resetThreadContext
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Key
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.jetbrains.fus.reporting.FeatureUsageLogWriter
+import com.jetbrains.fus.reporting.FusClient
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import com.jetbrains.fus.reporting.model.lion3.LogEventAction
 import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
@@ -19,6 +18,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -36,25 +36,13 @@ fun isFreeLicenseCodeSet(): Boolean = ApplicationManager.getApplication().getUse
 open class StatisticsFileEventLogger(
   private val recorderId: String,
   private val sessionId: String,
-  private val headless: Boolean,
   private val build: String,
   private val bucket: String,
   private val recorderVersion: String,
   private val eventWriter: FeatureUsageLogWriter<LogEvent>,
-  private val eventLogDir: Path,
-  private val systemEventIdProvider: StatisticsSystemEventIdProvider,
-  private val mergeStrategy: StatisticsEventMergeStrategy = FilteredEventMergeStrategy(emptySet()),
-  private val ideMode: String? = null,
-  private val productMode: String? = null,
+  private val eventLogDir: Path
 ) : StatisticsEventLogger, Disposable {
-  protected val logExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("StatisticsFileEventLogger", 1)
-
-  // TODO: lastEvent will never contain validatedEvent now
-  private var lastEvent: FusEvent? = null
-  private var lastEventTime: Long = 0
-  private var lastEventCreatedTime: Long = 0
-  private val eventMergeTimeoutMs: Long = if (StatisticsRecorderUtil.isTestModeEnabled(recorderId)) 500L else 10000L
-  private var lastEventFlushFuture: ScheduledFuture<CompletableFuture<Void>>? = null
+  protected val logExecutor: ExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("StatisticsFileEventLogger", 1)
   private val escapeCharsInData: Boolean = StatisticsRecorderUtil.isCharsEscapingRequired(recorderId)
 
   @Suppress("RAW_RUN_BLOCKING")
@@ -88,7 +76,7 @@ open class StatisticsFileEventLogger(
           .also { if (escapeCharsInData) it.escape() else it.escapeExceptData() }
         // Validation runs once, inside the dispatcher (IntellijReportValidator), after merge and
         // system-field injection. The isGroupAllowed check above stays as a cheap early-out.
-        log(event, System.currentTimeMillis(), eventId, data)
+        eventWriter.queueEvent(event)
       }, logExecutor)
     }
     catch (e: RejectedExecutionException) {
@@ -108,62 +96,6 @@ open class StatisticsFileEventLogger(
     isState: Boolean,
   ): CompletableFuture<Void> {
     return logAsync(group, eventId, { data }, isState)
-  }
-
-  private fun log(event: LogEvent, createdTime: Long, rawEventId: String, rawData: Map<String, Any>) {
-    if (lastEvent != null && event.time - lastEventTime <= eventMergeTimeoutMs && mergeStrategy.shouldMerge(lastEvent!!.validatedEvent,
-                                                                                                            event)) {
-      lastEventTime = event.time
-      lastEvent!!.validatedEvent.event.increment()
-    }
-    else {
-      logLastEvent()
-      val keepRawData = StatisticsRecorderUtil.isTestModeEnabled(recorderId) ||
-                        service<EventLogListenersManager>().hasJcpListener(recorderId)
-      lastEvent = if (keepRawData)
-        FusEvent(event, rawEventId, rawData)
-      else
-        FusEvent(event, null, null)
-      lastEventTime = event.time
-      lastEventCreatedTime = createdTime
-    }
-
-    if (StatisticsRecorderUtil.isTestModeEnabled(recorderId)) {
-      lastEventFlushFuture?.cancel(false)
-      // call flush() instead of logLastEvent() directly so that logLastEvent is executed on the logExecutor thread and not on scheduled executor pool thread
-      resetThreadContext {
-        lastEventFlushFuture =
-          AppExecutorUtil.getAppScheduledExecutorService().schedule(this::flush, eventMergeTimeoutMs, TimeUnit.MILLISECONDS)
-      }
-    }
-  }
-
-  // TODO: move the event extension mechanism to dispatcher extension
-  private fun logLastEvent() {
-    lastEvent?.let {
-      val event = it.validatedEvent.event
-      if (event.isEventGroup()) {
-        event.data["last"] = lastEventTime
-      }
-      event.data["created"] = lastEventCreatedTime
-      var systemEventId = systemEventIdProvider.getSystemEventId(recorderId)
-      event.data["system_event_id"] = systemEventId
-      systemEventIdProvider.setSystemEventId(recorderId, ++systemEventId)
-
-      if (headless) {
-        event.data["system_headless"] = true
-      }
-      ideMode?.let { event.data["ide_mode"] = ideMode }
-      productMode?.let { event.data["product_mode"] = productMode }
-      val application = ApplicationManager.getApplication()
-      application.getUserData(LICENSE_CODE_KEY)?.let {
-        event.data["auto_license_type"] = it
-      }
-      // queueEvent is synchronous (FusClient built with enableAsyncEventLogging=false), so events keep their order
-      // on the single-threaded logExecutor; the SDK's PersistentQueue does the file I/O on its own context.
-      eventWriter.queueEvent(it.validatedEvent)
-    }
-    lastEvent = null
   }
 
   override fun getActiveLogFile(): EventLogFile? {
@@ -187,7 +119,6 @@ open class StatisticsFileEventLogger(
     eventLogDir.toFile().listFiles()?.filter { it.name.endsWith(".log") }?.maxByOrNull { it.lastModified() }?.name
 
   override fun dispose() {
-    lastEventFlushFuture?.cancel(false)
     try {
       flush().get(1, TimeUnit.SECONDS)
     }
@@ -198,8 +129,10 @@ open class StatisticsFileEventLogger(
   }
 
   fun flush(): CompletableFuture<Void> {
-    return CompletableFuture.runAsync({ logLastEvent() }, logExecutor)
+    return CompletableFuture.runAsync({
+      if (eventWriter is FusClient<LogEvent, *>) {
+        eventWriter.flushEvents()
+      }
+    }, logExecutor)
   }
-
-  private data class FusEvent(val validatedEvent: LogEvent, val rawEventId: String?, val rawData: Map<String, Any>?)
 }

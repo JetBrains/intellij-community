@@ -1,17 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
-import com.intellij.ide.plugins.ProductLoadingStrategy
-import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.StatisticsServiceScope
+import com.intellij.internal.statistic.eventLog.events.EventFieldIds
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
-import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.runtime.product.ProductMode
-import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -166,27 +162,12 @@ abstract class StatisticsEventLoggerProvider(
   /**
    * Event data fields excluded from merge equality (e.g. `start_time`), so successive events that differ only in
    * these fields still merge into a single counted event.
-   *
-   * TODO(AP-7777): once the FUS reporting SDK's merger accepts ignored fields, forward this set to the SDK dispatcher
-   *   built in `FusComponentProvider.createFusComponents` and drop the IntelliJ-side merger in [StatisticsFileEventLogger].
-   *   The SDK merger currently compares all data fields.
    */
   @get:Internal
   open val mergeIgnoredFields: Set<String>
-    get() = emptySet()
+    get() = EventFieldIds.FieldsIgnoredByMerge.toSet()
 
   private fun createLogger(): StatisticsEventLogger {
-    val app = ApplicationManager.getApplication()
-    val isHeadless = app != null && app.isHeadlessEnvironment
-    // Use `String?` instead of boolean flag for future expansion with other IDE modes
-    val ideMode = if (AppMode.isRemoteDevHost()) "RDH" else null
-    val currentProductModeId = ProductLoadingStrategy.strategy.currentModeId
-    val productMode = when {
-      PlatformUtils.isQodana() -> null
-      currentProductModeId != ProductMode.MONOLITH.id -> currentProductModeId
-      detectClionNova() -> "nova"
-      else -> null
-    }
     val eventLogConfiguration = EventLogConfiguration.getInstance()
     val config = eventLogConfiguration.getOrCreate(
       recorderId = recorderId,
@@ -200,19 +181,13 @@ abstract class StatisticsEventLoggerProvider(
     val logger = StatisticsFileEventLogger(
       recorderId = recorderId,
       sessionId = config.sessionId,
-      headless = isHeadless,
       build = eventLogConfiguration.build,
       bucket = config.bucket.toString(),
       recorderVersion = version.toString(),
-      // Events flow straight to the FusClient: merge + system-field injection here, then SDK validate/merge/throttle
-      // and PersistentQueue file I/O. Throttling runs once, in the SDK EventThrottle (same 24k/12k/6k thresholds,
-      // dynamic refresh via REMOTE_CONFIG_OPTIONS_UPDATED, and TOO_MANY_EVENTS markers in <recorder>.event.log).
+      // Events flow to the FusClient; the SDK dispatcher's preEventWrite injects the system fields
+      // (system_event_id, system_headless, ide_mode, product_mode, auto_license_type). See FusComponentProvider.
       eventWriter = fusClient,
-      eventLogDir = eventLogDir,
-      systemEventIdProvider = UsageStatisticsPersistenceComponent.getInstance(),
-      mergeStrategy = createEventsMergeStrategy(),
-      ideMode = ideMode,
-      productMode = productMode,
+      eventLogDir = eventLogDir
     )
 
     coroutineScope.coroutineContext.job.invokeOnCompletion { Disposer.dispose(logger) }
@@ -232,15 +207,6 @@ abstract class StatisticsEventLoggerProvider(
     Disposer.register(ApplicationManager.getApplication(), logger)
     return logger
   }
-}
-
-/**
- * Taken from [CLionLanguagePluginKind]
- *
- * Remove once CLion Nova is deployed 100%
- */
-private fun detectClionNova(): Boolean {
-  return System.getProperty("idea.suppressed.plugins.set.selector") == "radler" && PlatformUtils.isCLion()
 }
 
 /**

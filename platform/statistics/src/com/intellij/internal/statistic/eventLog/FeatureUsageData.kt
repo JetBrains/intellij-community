@@ -68,7 +68,8 @@ class FeatureUsageData(val recorderId: String) {
     // don't list "version" as "platformDataKeys" because it's format depends a lot on the tool
     val platformDataKeys: List<String> = listOf("plugin", "project", "os", "plugin_type", "lang", "current_file", "input_event", "place",
                                                 "file_path", "anonymous_id", "client_id", "system_qdcld_project_id", "system_qdcld_org_id",
-                                                "auto_license_type", "automated_plugin_version", INITIATED_BY)
+                                                "auto_license_type", "automated_plugin_version", INITIATED_BY,
+                                                "last", "created", "system_event_id", "system_headless", "ide_mode" , "product_mode")
 
     /**
      * A sound but incomplete attribution marker. An absent value does not imply that an event was background-initiated.

@@ -19,6 +19,11 @@ import com.intellij.internal.statistic.eventLog.validator.rules.utils.CustomRule
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
+import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent
+import com.intellij.idea.AppMode
+import com.intellij.ide.plugins.ProductLoadingStrategy
+import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.util.PlatformUtils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.text.StringUtil
@@ -75,11 +80,17 @@ import com.jetbrains.fus.reporting.defaults.dispatcher.EventLogBuildType
 import com.jetbrains.fus.reporting.defaults.dispatcher.PersistentQueue
 import com.jetbrains.fus.reporting.defaults.dispatcher.SEND_INFORMATION_TOPIC
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
+import com.intellij.internal.statistic.eventLog.LICENSE_CODE_KEY
+import com.intellij.internal.statistic.eventLog.StatisticsFileEventLogger
+import com.intellij.internal.statistic.eventLog.StatisticsSystemEventIdProvider
 import com.intellij.internal.statistic.eventLog.connection.metadata.createJvmHttpClient
 import com.intellij.internal.statistic.eventLog.dispatcher.IntellijFusJsonSerializer
 import com.intellij.internal.statistic.eventLog.dispatcher.ExternalUploadOrchestrator
 import com.intellij.internal.statistic.eventLog.dispatcher.IntellijReportValidator
+import com.intellij.internal.statistic.eventLog.events.EventFieldIds
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.components.service
+import com.jetbrains.fus.reporting.REMOTE_CONFIG_OPTIONS_UPDATE_FAILED
 import com.jetbrains.fus.reporting.jvm.InMemoryJvmFileStorage
 import com.jetbrains.fus.reporting.jvm.JvmFileStorage
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
@@ -100,6 +111,7 @@ import tools.jackson.module.kotlin.kotlinModule
 import java.io.IOException
 import java.nio.file.Path
 import java.util.Locale
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
@@ -207,6 +219,18 @@ object FusComponentProvider {
       .getOrCreate(recorderId = recorderId, alternativeRecorderId = if (eventLogProvider.useDefaultRecorderId) "FUS" else null)
       .deviceId
 
+    // Inputs for the dispatcher's preEventWrite hook (system-field injection, moved out of StatisticsFileEventLogger).
+    val isHeadless = ApplicationManager.getApplication()?.isHeadlessEnvironment == true
+    val ideMode = if (AppMode.isRemoteDevHost()) "RDH" else null
+    val currentProductModeId = ProductLoadingStrategy.strategy.currentModeId
+    val productMode = when {
+      PlatformUtils.isQodana() -> null
+      currentProductModeId != ProductMode.MONOLITH.id -> currentProductModeId
+      detectClionNova() -> "nova"
+      else -> null
+    }
+    val systemEventIdProvider = UsageStatisticsPersistenceComponent.getInstance()
+
     // The metadata storage is built inside the DSL `metadataStorage { }` provider (it needs the SDK-built bus /
     // remote config / file storage). We capture it here so the same instance backs IntellijSensitiveDataValidator.
     var metadataStorageRef: MetadataStorage<EventLogBuild>? = null
@@ -251,13 +275,15 @@ object FusComponentProvider {
       // Raw events for in-IDE listeners (e.g. the statistics tool window). Was an inline notifySubscribers call in
       // StatisticsFileEventLogger.logLastEvent. rawEventId/rawData stay test-mode-only per the StatisticsEventLogListener contract.
       messageHandler(RAW_EVENT_TOPIC) { fusEvent ->
+        val recorderHasJcpListener = service<EventLogListenersManager>().hasJcpListener(recorderId)
+        val keepRawData = testMode || recorderHasJcpListener
         val event = fusEvent.event as? LogEvent ?: return@messageHandler
         listenersManager.notifySubscribers(
           recorderId,
           event,
-          if (testMode) fusEvent.rawEventId else null,
-          if (testMode) fusEvent.rawEventData else null,
-          /* isFromLocalRecorder = */ false,
+          if (keepRawData) fusEvent.rawEventId else null,
+          if (keepRawData) fusEvent.rawEventData else null,
+          false,
         )
       }
 
@@ -335,7 +361,30 @@ object FusComponentProvider {
             eventLogProvider.sendFrequencyMs.milliseconds,
             5000,
             eventLogProvider.isCharsEscapingRequired,
+            EventFieldIds.FieldsIgnoredByMerge.toSet()
           ) {
+            // System-field injection moved here from StatisticsFileEventLogger.logLastEvent (Story 8):
+            // every queued event (incl. throttle-generated ones) is augmented once, before validate/enqueue.
+            val lastEventTime = AtomicLong(0L)
+            val lastEventCreatedTime = AtomicLong(0L)
+            preEventWrite = { event ->
+              event.also {
+                applyFusEventExtensions(
+                  it,
+                  recorderId,
+                  systemEventIdProvider,
+                  isHeadless,
+                  ideMode,
+                  productMode,
+                  lastEventTime.get(),
+                  lastEventCreatedTime.get()
+                )
+                lastEventTime.set(event.time)
+                if (!event.event.isEventGroup()) {
+                  lastEventCreatedTime.set(System.currentTimeMillis())
+                }
+              }
+            }
             // Start the out-of-process external uploader on IDE shutdown (was IntellijReportDispatcher.postClose).
             postClose = { ExternalUploadOrchestrator.tryStartExternalUpload() }
           }
@@ -346,8 +395,41 @@ object FusComponentProvider {
     return FusComponents(metadataStorage = metadataStorageRef!!, fusClient = client)
   }
 
+  /**
+   * Injects the per-event "system" fields onto [event]. Formerly done inline in [StatisticsFileEventLogger];
+   * now invoked from the SDK dispatcher's `preEventWrite` hook (see `FusComponentProvider.createFusComponents`), so every
+   * queued event (including throttle-generated ones) is augmented exactly once.
+   */
+  private fun applyFusEventExtensions(
+    event: LogEvent,
+    recorderId: String,
+    systemEventIdProvider: StatisticsSystemEventIdProvider,
+    headless: Boolean,
+    ideMode: String?,
+    productMode: String?,
+    lastEventTime: Long,
+    lastEventCreatedTime: Long
+  ) {
+    val data = event.event.data
+    if (event.event.isEventGroup()) {
+      data["last"] = lastEventTime
+    }
+    data["created"] = lastEventCreatedTime
+    var systemEventId = systemEventIdProvider.getSystemEventId(recorderId)
+    data["system_event_id"] = systemEventId
+    systemEventIdProvider.setSystemEventId(recorderId, ++systemEventId)
+    if (headless) data["system_headless"] = true
+    if (ideMode != null) data["ide_mode"] = ideMode
+    if (productMode != null) data["product_mode"] = productMode
+    ApplicationManager.getApplication().getUserData(LICENSE_CODE_KEY)?.let { data["auto_license_type"] = it }
+  }
+
   private fun getEventLogDir(recorderId: String): Path =
     EventLogConfiguration.getInstance().getEventLogDataPath().resolve("logs").resolve(recorderId)
+
+  // Taken from CLionLanguagePluginKind; remove once CLion Nova is deployed 100%.
+  private fun detectClionNova(): Boolean =
+    System.getProperty("idea.suppressed.plugins.set.selector") == "radler" && PlatformUtils.isCLion()
 
   class BundledJvmFileStorage(private val recorderId: String) : FileStorage {
     private val bundledBasePath: String
