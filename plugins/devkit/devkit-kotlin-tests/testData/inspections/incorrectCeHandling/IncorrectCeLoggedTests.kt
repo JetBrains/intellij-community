@@ -153,4 +153,13 @@ class IncorrectCeLoggedTests {
     LOG.<error descr="'java.util.concurrent.CancellationException' must not be logged">error("something went wrong", e)</error>
   }
 
+  // IJPL-248976
+  fun testExceptionRethrownInParensNotFlagged() {
+    try {
+      // anything
+    } catch (e: CancellationException) {
+      throw (e)
+    }
+  }
+
 }

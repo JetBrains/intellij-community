@@ -118,4 +118,13 @@ class IncorrectPceHandlingTests {
     }
   }
 
+  // IJPL-248976
+  void testExceptionRethrownInParensNotFlagged() {
+    try {
+      // anything
+    } catch (ProcessCanceledException e) {
+      throw (e);
+    }
+  }
+
 }
