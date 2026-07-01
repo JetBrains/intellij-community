@@ -63,7 +63,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   public @NotNull ShellStartupOptions configureStartupOptions(@NotNull ShellStartupOptions baseOptions) {
     ShellStartupOptions updatedOptions = LocalOptionsConfigurer.configureStartupOptions(baseOptions, myProject);
 
-    if (IdeProductMode.isFrontend() && updatedOptions.getEelDescriptorNotNull() == LocalEelDescriptor.INSTANCE) {
+    if (IdeProductMode.isFrontend() && !IdeProductMode.isLight() && updatedOptions.getEelDescriptorNotNull() == LocalEelDescriptor.INSTANCE) {
       throw new IllegalStateException(("""
                                          It is prohibited to start a local process in RemDev mode. Something went wrong.
                                          Requested options: %s
