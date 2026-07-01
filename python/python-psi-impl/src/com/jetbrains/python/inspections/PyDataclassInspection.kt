@@ -374,6 +374,15 @@ class PyDataclassInspection : PyInspection() {
                         ProblemHighlightType.GENERIC_ERROR)
       }
 
+      if (dataclassParameters.validateByAlias == false && dataclassParameters.validateByName == false) {
+        registerProblem(dataclassParameters.validateByAliasArgument,
+                        PyPsiBundle.problemMessage("INSP.pydantic.validate.by.alias.and.name.false"),
+                        ProblemHighlightType.GENERIC_ERROR)
+        registerProblem(dataclassParameters.validateByNameArgument,
+                        PyPsiBundle.problemMessage("INSP.pydantic.validate.by.alias.and.name.false"),
+                        ProblemHighlightType.GENERIC_ERROR)
+      }
+
       var frozenInHierarchy: Boolean? = null
       for (current in StreamEx.of(cls).append(cls.getAncestorClasses(myTypeEvalContext))) {
         val currentFrozen = parseStdOrDataclassTransformDataclassParameters(current, myTypeEvalContext)?.frozen ?: continue
