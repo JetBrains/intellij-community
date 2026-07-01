@@ -6,7 +6,7 @@ fun foo(param: String) {
 
 context(c1: Int)
 fun bar() {
-    with("baz") {
+    context("baz") {
         foo("boo")
     }
 }

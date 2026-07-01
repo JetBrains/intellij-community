@@ -4,19 +4,19 @@ class MyClass {
     val value: Int = 42
 
     fun inside() {
-        with(42) {
+        context(42) {
             doSomething()
         }
     }
 
     fun inside1() {
-        with(42) {
+        context(42) {
             this@MyClass.doSomething()
         }
     }
 
     fun inside2(another: MyClass) {
-        with(42) {
+        context(42) {
             another.doSomething()
         }
     }
@@ -28,25 +28,25 @@ fun MyClass.doSomething() {
 }
 
 fun MyClass.foo() {
-    with(42) {
+    context(42) {
         doSomething()
     }
 }
 
 fun Int.bar(m: MyClass) {
-    with(42) {
+    context(42) {
         m.doSomething()
     }
 }
 
 fun usage() {
     val obj = MyClass()
-    with(42) {
+    context(42) {
         obj.doSomething()
     }
 
     with(obj) {
-        with(42) {
+        context(42) {
             doSomething()
         }
     }

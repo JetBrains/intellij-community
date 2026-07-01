@@ -230,6 +230,17 @@ class KotlinFirChangeSignatureTest :
         addParameter(newIntParameter)
     }
 
+    fun testAddMultipleContextParameters() = doTest {
+        val psiFactory = KtPsiFactory(project)
+        val newIntParameter = createKotlinIntParameter(defaultValueForCall = kotlinDefaultIntValue,
+                                                       defaultValueAsDefaultParameter = true)
+        newIntParameter.isContextParameter = true
+        val newStringParameter = createKotlinStringParameter("s", defaultValueForCall = psiFactory.createExpression("\"ctx\""))
+        newStringParameter.isContextParameter = true
+        addParameter(newIntParameter)
+        addParameter(newStringParameter)
+    }
+
     fun testToContextParameterExtensionTopLevelFunctionReceiver() = doTest {
         newParameters[0].isContextParameter = true
         receiverParameterInfo = null

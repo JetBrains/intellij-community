@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.asJava.toLightMethods
+import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -469,11 +470,26 @@ internal class KotlinFunctionCallUsage(
             }
         }
 
-        for (string in contextValues) {
-            val elementToWrap = (newElement.parent as? KtQualifiedExpression)?.takeIf { it.selectorExpression == newElement } ?: newElement
-            elementToWrap.qualifyNestedThisExpressions()
-            newElement = elementToWrap.replace(psiFactory.createExpression("with($string) {\n${elementToWrap.text}\n}")) as KtElement
+        fun wrapWithContextAndUpdate() {
+            val useContextFunctionForContextValues = newElement.languageVersionSettings.apiVersion >= ApiVersion.KOTLIN_2_2
+
+            fun getElementToWrap(): KtElement = (newElement.parent as? KtQualifiedExpression)?.takeIf { it.selectorExpression == newElement } ?: newElement
+
+            if (contextValues.isNotEmpty() && useContextFunctionForContextValues) {
+                val elementToWrap = getElementToWrap()
+                elementToWrap.qualifyNestedThisExpressions()
+                newElement =
+                    elementToWrap.replace(psiFactory.createExpression("context(${contextValues.joinToString()}) {\n${elementToWrap.text}\n}")) as KtElement
+            } else {
+                for (string in contextValues) {
+                    val elementToWrap = getElementToWrap()
+                    elementToWrap.qualifyNestedThisExpressions()
+                    newElement =
+                        elementToWrap.replace(psiFactory.createExpression("with($string) {\n${elementToWrap.text}\n}")) as KtElement
+                }
+            }
         }
+        wrapWithContextAndUpdate()
 
         val newCallExpression = newElement.safeAs<KtExpression>()?.getPossiblyQualifiedCallExpression()
         if (newCallExpression != null && allowAnalysisFromWriteAction {

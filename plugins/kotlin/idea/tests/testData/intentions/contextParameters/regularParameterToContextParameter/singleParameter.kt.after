@@ -11,7 +11,7 @@ fun foo() {
 context(c: String)
 fun String.bar() {
     foo()
-    with("baz") {
+    context("baz") {
         foo()
     }
     foo()

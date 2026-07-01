@@ -122,14 +122,14 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 context(p1: Int, p2: Any)
                 fun foo() {
                     with(1) {
-                        with(default0) {
+                        context(default0) {
                             foo()
                         }
                     }
                 }
                 context(p1: Int)
                 fun bar() {
-                    with(default0) {
+                    context(default0) {
                         foo()
                     }
                 }

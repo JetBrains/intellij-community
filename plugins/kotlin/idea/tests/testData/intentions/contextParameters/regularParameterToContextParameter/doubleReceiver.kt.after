@@ -6,14 +6,14 @@ interface Foo {
 }
 
 fun Foo.bar(a: Any) {
-    with(1) {
+    context(1) {
         a.toString().foo()
     }
 }
 
 fun baz(f: Foo) {
     with(f) {
-        with(2) {
+        context(2) {
             "baz".foo()
         }
     }

@@ -13,7 +13,7 @@ class MyClass {
     }
 
     fun inside2(param: String, another: MyClass) {
-        with(another) {
+        context(another) {
             doSomething(param)
         }
     }
@@ -29,14 +29,14 @@ fun MyClass.foo() {
 }
 
 fun String.bar(m: MyClass) {
-    with(m) {
+    context(m) {
         doSomething(this@bar)
     }
 }
 
 class Bar {
     fun String.bar(m: MyClass) {
-        with(m) {
+        context(m) {
             doSomething(this@bar)
         }
     }
@@ -44,7 +44,7 @@ class Bar {
 
 fun usage() {
     val obj = MyClass()
-    with(obj) {
+    context(obj) {
         doSomething("test")
     }
 

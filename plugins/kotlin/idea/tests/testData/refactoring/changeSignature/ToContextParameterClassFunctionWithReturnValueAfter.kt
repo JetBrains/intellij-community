@@ -6,38 +6,38 @@ class MyClass {
     context(param: String)
     fun getLength(): Int = param.length
 
-    fun inside(param: Int = with("abc") {
+    fun inside(param: Int = context("abc") {
         getLength()
-    }, param2: Int = with("abcd") {
+    }, param2: Int = context("abcd") {
         this@MyClass.getLength()
     }
     ) {
-        with(with("param") {
+        with(context("param") {
             getLength()
         }) {
             val p: Int = this + 1
         }
-        val sum = with("abc") {
+        val sum = context("abc") {
             getLength()
-        }.plus(with("abcd") {
+        }.plus(context("abcd") {
             getLength()
         })
-        println(with("abc") {
+        println(context("abc") {
             getLength()
         })
     }
 
-    fun inside2(another: MyClass, param: Int = with("abc") {
+    fun inside2(another: MyClass, param: Int = context("abc") {
         another.getLength()
     }
     ) {
-        with("param") {
+        context("param") {
             another.getLength()
         }
     }
 }
 
-fun MyClass.foo() = with("param1") {
+fun MyClass.foo() = context("param1") {
     getLength()
 }
 
