@@ -432,6 +432,7 @@
 
   <extensions defaultExtensionNs="org.intellij.markdown">
     <fenceLanguageProvider implementation="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeFenceLanguageProvider"/>
+    <fenceLanguageProvider id="default" implementation="org.intellij.plugins.markdown.injection.DefaultCodeFenceLanguageProvider" order="last"/>
     <!--suppress PluginXmlValidity -->
     <fenceGeneratingProvider implementation="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeGeneratingProvider"/>
 

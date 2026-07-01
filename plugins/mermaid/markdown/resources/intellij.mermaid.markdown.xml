@@ -15,7 +15,8 @@
     <!--suppress PluginXmlValidity -->
     <fenceGeneratingProvider implementation="com.intellij.mermaid.markdown.jcef.MermaidCodeGeneratingProviderExtension"
                              order="first"/>
-    <fenceLanguageProvider implementation="com.intellij.mermaid.markdown.jcef.AdditionalMermaidInfoStringValuesContributor" order="last"/>
+    <fenceLanguageProvider implementation="com.intellij.mermaid.markdown.jcef.AdditionalMermaidInfoStringValuesContributor"
+                           order="after DefaultMermaidCodeFenceLanguageProvider"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
     <fileEditorProvider implementation="com.intellij.mermaid.markdown.preview.MermaidEditorWithPreviewProvider"/>
