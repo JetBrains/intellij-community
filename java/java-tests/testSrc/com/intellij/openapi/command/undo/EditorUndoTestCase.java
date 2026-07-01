@@ -25,6 +25,7 @@ public abstract class EditorUndoTestCase extends UndoTestCase {
   protected Editor[] myEditors = new Editor[2];
   protected Editor myView;
   protected boolean mySecondEditorSelected;
+  private boolean myNoEditorFocused;
 
   @Override
   protected void setUp() throws Exception {
@@ -33,7 +34,10 @@ public abstract class EditorUndoTestCase extends UndoTestCase {
     super.setUp();
 
     selectFirstEditor();
-    var productionLikeEditorProvider = new FocusBasedCurrentEditorProvider.TestProvider(() -> mySecondEditorSelected ? getSecondEditor() : getFirstEditor());
+    var productionLikeEditorProvider = new FocusBasedCurrentEditorProvider.TestProvider(() -> {
+      if (myNoEditorFocused) return null;
+      return mySecondEditorSelected ? getSecondEditor() : getFirstEditor();
+    });
     myManager.setOverriddenEditorProvider(productionLikeEditorProvider);
 
     WriteAction.runAndWait(() -> initEditors());
@@ -143,10 +147,20 @@ public abstract class EditorUndoTestCase extends UndoTestCase {
 
   protected void selectFirstEditor() {
     mySecondEditorSelected = false;
+    myNoEditorFocused = false;
   }
 
   protected void selectSecondEditor() {
     mySecondEditorSelected = true;
+    myNoEditorFocused = false;
+  }
+
+  /**
+   * Models focus being outside any editor (e.g. in the Project View), so the current-editor provider reports no
+   * editor -- as when a file is created from the Project View rather than from within an editor.
+   */
+  protected void unfocusEditors() {
+    myNoEditorFocused = true;
   }
 
   protected void typeInTextToAllDocuments(final String s) {

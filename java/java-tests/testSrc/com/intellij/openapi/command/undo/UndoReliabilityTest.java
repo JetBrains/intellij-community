@@ -56,7 +56,7 @@ public class UndoReliabilityTest extends EditorUndoTestCase {
     // the document is in bulk mode, editor state retrieval fail is expected
     assertErrorLogged(
       UnexpectedBulkUpdateStateExceptionClass,
-      /* errorCount= */ 4,
+      /* errorCount= */ 3,
       inBulkMode(
         () -> {
           runUndoTransparentWriteAction(dummyDocumentChange());

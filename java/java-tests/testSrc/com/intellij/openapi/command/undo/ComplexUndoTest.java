@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.undo;
 
 import com.intellij.openapi.command.WriteCommandAction;
@@ -29,7 +29,9 @@ public class ComplexUndoTest extends EditorUndoTestCase {
   public void testChangeAnyDocumentAfterComplexAction() {
     typeInTextToAllDocuments("text");
 
+    selectSecondEditor();
     typeInText(getSecondEditor(), "ttt");
+    selectFirstEditor();
 
     try {
       undoFirstEditor();
@@ -41,11 +43,15 @@ public class ComplexUndoTest extends EditorUndoTestCase {
   }
 
   public void testDoesNotResetGlobalRedoOnDocumentChanges() {
+    // Files are usually created with focus outside an editor (e.g. in the Project View), so the creation command
+    // does not attach any editor document; a later local document change must not reset the global redo.
+    unfocusEditors();
     createFileInCommand("f.java");
 
     globalUndo();
     assertGlobalRedoIsAvailable();
 
+    selectFirstEditor();
     typeInText("hello");
 
     assertGlobalRedoIsAvailable();
@@ -57,6 +63,9 @@ public class ComplexUndoTest extends EditorUndoTestCase {
     undoFirstEditor();
     assertRedoInFirstEditorIsAvailable();
 
+    // Files are usually created with focus outside an editor (e.g. in the Project View), so the creation command
+    // does not attach the first editor's document and must not reset its local redo.
+    unfocusEditors();
     createFileInCommand("f.java");
 
     assertRedoInFirstEditorIsAvailable();
