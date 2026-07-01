@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.welcomeScreen
 
+import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.InitialConfigImportState
@@ -66,6 +67,13 @@ internal class PyWelcomeScreenFreeModeTracker : AppLifecycleListener, LicensingF
   }
 
   override fun licenseStateChanged(newState: LicensingFacade?) {
+    // Fires synchronously from LicensingFacade.setInstance(), which can run during early startup before
+    // the app component store is initialized; touching PropertiesComponent/AdvancedSettings then throws
+    // and aborts startup. The facade keeps its state, so appStarted() and any later fire (after the store
+    // is ready) still make the decision.
+    if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
+      return
+    }
     val properties = PropertiesComponent.getInstance()
     if (properties.getBoolean(MIGRATION_DONE, false)) return
     if (InitialConfigImportState.isNewUser()) return
