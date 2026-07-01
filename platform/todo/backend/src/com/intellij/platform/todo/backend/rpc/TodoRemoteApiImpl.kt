@@ -132,28 +132,6 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
     }
   }
 
-  override suspend fun getTodoCount(
-    projectId: ProjectId,
-    fileId: VirtualFileId,
-    filter: TodoFilterConfig?,
-  ): Int {
-    val project = projectId.findProjectOrNull() ?: return 0
-    val virtualFile = fileId.virtualFile() ?: return 0
-    val resolvedFilter = resolveFilter(project, filter)
-
-    return readAction {
-      val psiFile = PsiManager.getInstance(project).findFile(virtualFile) ?: return@readAction 0
-      val helper = PsiTodoSearchHelper.getInstance(project)
-
-      if (resolvedFilter != null) {
-        val items = helper.findTodoItems(psiFile)
-        items.count { item -> resolvedFilter.contains(item.pattern)}
-      } else {
-        helper.getTodoItemsCount(psiFile)
-      }
-    }
-  }
-
   override suspend fun fileMatchesFilter(
     projectId: ProjectId,
     fileId: VirtualFileId,

@@ -29,18 +29,6 @@ suspend fun collectWatchedTodoFiles(
 }
 
 @ApiStatus.Internal
-fun getTodoCount(
-  project: Project,
-  file: VirtualFile,
-  filter: TodoFilter?
-): Int = runBlockingCancellable {
-  durable {
-    val projectId: ProjectId = project.projectId()
-    TodoRemoteApi.getInstance().getTodoCount(projectId, file.rpcId(), filter?.toConfig())
-  }
-}
-
-@ApiStatus.Internal
 fun fileMatchesFilter(
   project: Project,
   file: VirtualFile,

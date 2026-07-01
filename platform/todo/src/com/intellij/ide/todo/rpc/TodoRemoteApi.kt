@@ -18,12 +18,6 @@ interface TodoRemoteApi : RemoteApi<Unit> {
     request: TodoFilesWatchRequest,
   ) : Flow<TodoEvent>
 
-  suspend fun getTodoCount(
-    projectId: ProjectId,
-    fileId: VirtualFileId,
-    filter: TodoFilterConfig?
-  ) : Int
-
   suspend fun fileMatchesFilter(
     projectId: ProjectId,
     fileId: VirtualFileId,

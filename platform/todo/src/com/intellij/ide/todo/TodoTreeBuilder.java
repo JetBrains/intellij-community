@@ -508,6 +508,16 @@ public abstract class TodoTreeBuilder implements Disposable {
     myFile2Highlighter.remove(file);
   }
 
+  @ApiStatus.Internal
+  public int getRemoteTodoFileCount() {
+    return myTodoModel.getFileCount();
+  }
+
+  @ApiStatus.Internal
+  public int getRemoteTodoItemCount() {
+    return myTodoModel.getTodoItemCount();
+  }
+
   /**
    * @return first {@code SmartTodoItemPointer} that is the children (in depth) of the specified {@code element}.
    * If {@code element} itself is a {@code TodoItem} then the method returns the {@code element}.

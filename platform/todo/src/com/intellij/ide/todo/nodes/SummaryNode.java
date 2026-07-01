@@ -122,6 +122,9 @@ public class SummaryNode extends BaseToDoNode<ToDoSummary> {
 
   @Override
   public int getFileCount(ToDoSummary summary) {
+    if (shouldUseSplitTodo()) {
+      return myBuilder.getRemoteTodoFileCount();
+    }
     int count = 0;
     for (Iterator i = myBuilder.getAllFiles(); i.hasNext();) {
       PsiFile psiFile = (PsiFile)i.next();
@@ -137,6 +140,9 @@ public class SummaryNode extends BaseToDoNode<ToDoSummary> {
 
   @Override
   public int getTodoItemCount(final ToDoSummary val) {
+    if (shouldUseSplitTodo()) {
+      return myBuilder.getRemoteTodoItemCount();
+    }
     int count = 0;
     for(final Iterator<PsiFile> i=myBuilder.getAllFiles();i.hasNext();){
       count += ReadAction.computeBlocking(() -> getTreeStructure().getTodoItemCount(i.next()));
