@@ -17,6 +17,7 @@ import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.asSafely
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -88,8 +89,15 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       // Because the session should be left active after the client disconnects.
       val clientId = ClientId.localId
       val scope = coroutineScope.childScope("TerminalSession#${tabId}", ClientIdContextElement(clientId))
-      val result = withContext(ClientIdContextElement(clientId)) {
-        TerminalSessionsManager.getInstance(project).startSession(options, scope)
+      val result = try {
+        withContext(ClientIdContextElement(clientId)) {
+          TerminalSessionsManager.getInstance(project).startSession(options, scope)
+        }
+      }
+      catch (t: Throwable) {
+        // Clean up allocated resources if session start failed or current coroutine was canceled externally.
+        scope.cancel()
+        throw t
       }
 
       val updatedTab = tab.copy(
