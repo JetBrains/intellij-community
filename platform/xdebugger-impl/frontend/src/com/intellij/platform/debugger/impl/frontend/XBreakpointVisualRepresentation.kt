@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl.breakpoints
+package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -33,6 +33,8 @@ import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlight
 import com.intellij.util.DocumentUtil
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
+import com.intellij.xdebugger.impl.breakpoints.InlineBreakpointInlayManager
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeWithDocumentDelegation
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.ui.DebuggerColors
 import kotlinx.coroutines.CancellationException
