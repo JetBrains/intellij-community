@@ -266,7 +266,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   private val myNoWriteActionCounter = ThreadLocal.withInitial { 0 }
 
   private val myReadActionsInThread = ThreadLocal.withInitial { 0 }
-  private val myLockingProhibited: ThreadLocal<String?> = ThreadLocal.withInitial { null }
+  private val myLockingProhibited: ThreadLocal<LockingProhibition?> = ThreadLocal.withInitial { null }
 
   // todo: reimplement with listeners in IJPL-177760
   private val myTopmostReadAction = ThreadLocal.withInitial { false }
@@ -839,9 +839,13 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   private fun handleLockAccess(culprit: String) {
-    val lockProhibition = myLockingProhibited.get()
-    if (lockProhibition != null) {
-      val exception = ThreadingSupport.LockAccessDisallowed("Attempt to take $culprit was prevented\n${lockProhibition}")
+    val lockProhibition = myLockingProhibited.get() ?: return
+    val action = if (lockProhibition.reportOnly) "reported" else "prevented"
+    val exception = ThreadingSupport.LockAccessDisallowed("Attempt to take $culprit was $action\n${lockProhibition.advice}")
+    if (lockProhibition.reportOnly) {
+      logger.error(exception)
+    }
+    else {
       throw exception
     }
   }
@@ -1474,8 +1478,16 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   override fun <T> withLocksProhibited(advice: String, action: () -> T): T {
+    return withLockProhibition(LockingProhibition(advice, reportOnly = false), action)
+  }
+
+  override fun <T> withLocksSoftlyProhibited(advice: String, action: () -> T): T {
+    return withLockProhibition(LockingProhibition(advice, reportOnly = true), action)
+  }
+
+  private fun <T> withLockProhibition(lockingProhibition: LockingProhibition, action: () -> T): T {
     val currentValue = myLockingProhibited.get()
-    myLockingProhibited.set(advice)
+    myLockingProhibited.set(lockingProhibition)
     try {
       return action()
     }
@@ -1485,7 +1497,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   override fun getLockingProhibitedAdvice(): String? {
-    return myLockingProhibited.get()
+    return myLockingProhibited.get()?.advice
   }
 
 
@@ -1811,6 +1823,8 @@ private class RunSuspend<T>(val job: Job?, val interceptor: PermitWaitingInterce
 
 private val logger = Logger.getInstance(NestedLocksThreadingSupport::class.java)
 
+private data class LockingProhibition(val advice: String, val reportOnly: Boolean)
+
 @OptIn(ExperimentalCoroutinesApi::class)
 private fun <T> Deferred<T>.getOrThrow(): T {
   getCompletionExceptionOrNull()?.let { throw it }
@@ -1820,4 +1834,3 @@ private fun <T> Deferred<T>.getOrThrow(): T {
 private data class PermitWaitingInterceptor(
   val consumer: (Deferred<*>) -> Unit,
 )
-

@@ -16,7 +16,7 @@ interface CoroutineSupport {
    */
   enum class UiDispatcherKind {
     /**
-     * This UI dispatcher **forbids** any attempt to access the RW lock.
+     * This UI dispatcher reports any attempt to access the RW lock as an error.
      * Use it if you are performing strictly UI-related computations.
      */
     STRICT,

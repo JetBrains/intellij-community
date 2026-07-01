@@ -1495,6 +1495,11 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @Override
+  public <T> T withLocksSoftlyProhibited(@NotNull String advice, @NotNull Supplier<T> action) {
+    return getThreadingSupport().withLocksSoftlyProhibited(advice, () -> action.get());
+  }
+
+  @Override
   public String getLockProhibitedAdvice() {
     return getThreadingSupport().getLockingProhibitedAdvice();
   }

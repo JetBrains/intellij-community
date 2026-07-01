@@ -262,6 +262,11 @@ public interface ApplicationEx extends Application {
     return action.get();
   }
 
+  @ApiStatus.Internal
+  default <T> T withLocksSoftlyProhibited(@NotNull @NlsSafe String advice, @NotNull Supplier<T> action) {
+    return withLocksProhibited(advice, action);
+  }
+
   /**
    * Similar to {@link #invokeAndWait(Runnable, ModalityState)}, but does not take the Write-Intent lock inside.
    * This is useful when you still need to schedule a computation with the required modality state, but don't want to acquire the WI lock inside.

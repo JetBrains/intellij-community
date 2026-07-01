@@ -65,9 +65,9 @@ internal sealed class EdtCoroutineDispatcher(
 
   private fun wrapWithLocking(runnable: Runnable): Runnable {
     return when (type.lockBehavior) {
-      EdtDispatcherKind.LockBehavior.LOCKS_DISALLOWED_FAIL_HARD -> {
+      EdtDispatcherKind.LockBehavior.LOCKS_DISALLOWED_REPORT -> {
         Runnable {
-          ApplicationManagerEx.getApplicationEx().withLocksProhibited(lockAccessViolationMessage) {
+          ApplicationManagerEx.getApplicationEx().withLocksSoftlyProhibited(lockAccessViolationMessage) {
             runnable.run()
           }
         }
@@ -114,11 +114,11 @@ private class ImmediateEdtCoroutineDispatcher(type: EdtDispatcherKind) : EdtCoro
         // Relaxed UI dispatcher is indifferent to locks, so it can run in-place.
         EdtDispatcherKind.MAIN -> false
         // Immediate relaxed dispatcher should do redispatch if it runs under Dispatchers.UI
-        // that's because the context of Dispatchers.UI forbids taking locks, so we need to get into an appropriate context
+        // that's because the context of Dispatchers.UI reports taking locks, so we need to get into an appropriate context
         EdtDispatcherKind.LAX_UI -> ApplicationManager.getApplication().lockProhibitedAdvice != null
         // `Dispatchers.EdtImmediate` must perform dispatch when invoked on a thread without locks, because it needs to get into correct context.
         EdtDispatcherKind.EDT -> !ApplicationManager.getApplication().isWriteIntentLockAcquired
-        // `Dispatchers.UIImmediate` must perform dispatch when invoked on a thread with locks, because it needs to escape locking and forbid using them inside.
+        // `Dispatchers.UIImmediate` must perform dispatch when invoked on a thread with locks, because it needs to escape locking and report their usage inside.
         EdtDispatcherKind.UI -> ApplicationManager.getApplication().isWriteIntentLockAcquired
       }
     } catch (e: Throwable) {
@@ -137,7 +137,7 @@ internal enum class EdtDispatcherKind(
    * Historically, all runnables executed on EDT were wrapped into a Write-Intent lock. We want to move away from this contract, so here
    * we operate with two versions of EDT-thread dispatcher. If [lockBehavior] == [LockBehavior.LOCKS_ALLOWED_MANDATORY_WRAPPING], then all runnables are
    * automatically wrapped into write-intent lock If [lockBehavior] != [LockBehavior.LOCKS_ALLOWED_MANDATORY_WRAPPING], then runnables are executed without the
-   * lock, and requesting lock is forbidden for them.
+   * lock, and requesting lock is either reported or allowed depending on the dispatcher.
    */
   val lockBehavior: LockBehavior,
   /**
@@ -157,7 +157,7 @@ internal enum class EdtDispatcherKind(
 
   LAX_UI(LockBehavior.LOCKS_ALLOWED_NO_WRAPPING, DefaultModality.NON_MODAL),
 
-  UI(LockBehavior.LOCKS_DISALLOWED_FAIL_HARD, DefaultModality.NON_MODAL),
+  UI(LockBehavior.LOCKS_DISALLOWED_REPORT, DefaultModality.NON_MODAL),
 
   MAIN(LockBehavior.LOCKS_ALLOWED_NO_WRAPPING, DefaultModality.ANY);
 
@@ -174,7 +174,7 @@ internal enum class EdtDispatcherKind(
   enum class LockBehavior {
     LOCKS_ALLOWED_MANDATORY_WRAPPING,
     LOCKS_ALLOWED_NO_WRAPPING,
-    LOCKS_DISALLOWED_FAIL_HARD,
+    LOCKS_DISALLOWED_REPORT,
   }
 
   fun presentableName(): String = when (this) {
