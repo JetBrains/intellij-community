@@ -131,15 +131,14 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
       }
     }
     catch (@Suppress("IncorrectCancellationExceptionHandling") e: CancellationException) {
-      @Suppress("IncorrectCancellationExceptionHandling")
       LOG.info("Request getBreakpointsInfo was cancelled: $e")
       return null
     }
   }
 
   override suspend fun addBreakpointThroughLux(projectId: ProjectId, typeId: XBreakpointTypeId): TimeoutSafeResult<XBreakpointDto?> {
-    val project = projectId.findProjectOrNull() ?: return CompletableDeferred<XBreakpointDto?>(value = null)
-    val type = XBreakpointUtil.findType(typeId.id) ?: return CompletableDeferred<XBreakpointDto?>(value = null)
+    val project = projectId.findProjectOrNull() ?: return CompletableDeferred(value = null)
+    val type = XBreakpointUtil.findType(typeId.id) ?: return CompletableDeferred(value = null)
     return project.service<BackendXBreakpointTypeApiProjectCoroutineScope>().cs.async(Dispatchers.EDT) {
       val requestId = requestCounter.getAndIncrement()
       val rawBreakpoint = type.addBreakpoint(project, null)

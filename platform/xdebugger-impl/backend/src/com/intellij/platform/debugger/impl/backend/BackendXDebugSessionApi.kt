@@ -45,6 +45,7 @@ import com.intellij.platform.debugger.impl.rpc.XSuspendContextDto
 import com.intellij.platform.debugger.impl.rpc.XSuspendContextId
 import com.intellij.platform.debugger.impl.rpc.toRpc
 import com.intellij.platform.debugger.impl.rpc.xExpression
+import com.intellij.platform.debugger.impl.shared.awaitCommited
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.platform.util.coroutines.attachAsChildTo

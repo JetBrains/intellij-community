@@ -7,6 +7,8 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.findDocument
+import com.intellij.platform.debugger.impl.shared.awaitCommited
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
@@ -31,6 +33,8 @@ abstract class JvmBaseSourceFileChangeCompatibilityChecker(
 
   final override suspend fun getCompatibility(change: SourceFileChange): HotSwapChangesCompatibility {
     if (change.file.fileType != fileType) return HotSwapChangesCompatibility.Irrelevant
+    val document = readAction { change.file.findDocument() }
+    document?.awaitCommited(project)
     return readAction { classify(project, change.file, change.oldContent) }
   }
 
