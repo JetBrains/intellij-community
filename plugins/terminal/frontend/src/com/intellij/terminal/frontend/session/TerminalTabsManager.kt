@@ -1,7 +1,5 @@
 package com.intellij.terminal.frontend.session
 
-import com.intellij.codeWithMe.ClientId
-import com.intellij.codeWithMe.ClientIdContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -21,7 +19,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab
@@ -85,14 +82,9 @@ internal class TerminalTabsManager(private val project: Project, private val cor
         return@updateTabsAndStore tab
       }
 
-      // Create and emulate the terminal session under the local client ID.
-      // Because the session should be left active after the client disconnects.
-      val clientId = ClientId.localId
-      val scope = coroutineScope.childScope("TerminalSession#${tabId}", ClientIdContextElement(clientId))
+      val scope = coroutineScope.childScope("TerminalSession#${tabId}")
       val result = try {
-        withContext(ClientIdContextElement(clientId)) {
-          TerminalSessionsManager.getInstance(project).startSession(options, scope)
-        }
+        TerminalSessionsManager.getInstance(project).startSession(options, scope)
       }
       catch (t: Throwable) {
         // Clean up allocated resources if session start failed or current coroutine was canceled externally.
