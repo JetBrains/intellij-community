@@ -25,7 +25,6 @@ internal class ChangeListImpl(private val storage: ChangeListStorage) : ChangeLi
   private var changeSetDepth = 0
   private var currentChangeSet: ChangeSet? = null
 
-  @Synchronized
   override fun nextId(): Long = storage.nextId()
 
   @Synchronized

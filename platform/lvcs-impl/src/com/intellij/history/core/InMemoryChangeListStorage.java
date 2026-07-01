@@ -9,10 +9,11 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.atomic.AtomicLong;
 
 @ApiStatus.Internal
 public final class InMemoryChangeListStorage implements ChangeListStorage {
-  private int myCurrentId;
+  private final AtomicLong myCurrentId = new AtomicLong(0);
   private final List<ChangeSet> mySets = new ArrayList<>();
 
   @Override
@@ -25,7 +26,7 @@ public final class InMemoryChangeListStorage implements ChangeListStorage {
 
   @Override
   public long nextId() {
-    return myCurrentId++;
+    return myCurrentId.incrementAndGet();
   }
 
   @Override
