@@ -4,17 +4,27 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.java.library.JavaLibraryUtil
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.util.isGradleModule
 import org.jetbrains.kotlin.idea.configuration.AbstractKotlinCompilerProjectPostConfigurator
 import org.jetbrains.kotlin.idea.configuration.ChangedConfiguratorFiles
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.getBuildScriptPsiFile
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.getTopLevelBuildScriptPsiFile
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtScriptInitializer
 
 private const val KAPT_PLUGIN_ID = "kapt"
 private const val KAPT_GRADLE_PLUGIN_NAME = "kotlin.kapt"
@@ -43,32 +53,86 @@ class KaptGradleKotlinCompilerPluginProjectConfigurator : AbstractGradleKotlinCo
 }
 
 private fun PsiFile.configureKaptDependenciesIfNeeded(changedFiles: ChangedConfiguratorFiles) {
-  if (this !is KtFile) return
+    if (this !is KtFile) return
 
-  val psiDocumentManager = PsiDocumentManager.getInstance(project)
-  val document = psiDocumentManager.getDocument(this) ?: return
-  psiDocumentManager.doPostponedOperationsAndUnblockDocument(document)
-  val fileText = document.text
-  val processorDependencyMatches = PROCESSOR_DEPENDENCY_REGEX.findAll(fileText)
-    .mapNotNull { it.toKaptProcessorDependency() }
-    .toList()
-  val kaptDependencies = KAPT_DEPENDENCY_REGEX.findAll(fileText)
-    .map { KaptDependency(it.groupValues[1], it.groupValues[2]) }
-    .toSet()
-  val dependenciesToAdd = processorDependencyMatches
-    .distinctBy { it.kaptConfiguration to it.notation }
-    .filterNot { KaptDependency(it.kaptConfiguration, it.notation) in kaptDependencies }
-  if (dependenciesToAdd.isEmpty()) return
+    val psiDocumentManager = PsiDocumentManager.getInstance(project)
+    val document = psiDocumentManager.getDocument(this)
+    val fileText = if (document != null) {
+        psiDocumentManager.doPostponedOperationsAndUnblockDocument(document)
+        document.text
+    } else {
+        text
+    }
+    val processorDependencyMatches = PROCESSOR_DEPENDENCY_REGEX.findAll(fileText)
+        .mapNotNull { it.toKaptProcessorDependency() }
+        .toList()
+    val kaptDependencies = KAPT_DEPENDENCY_REGEX.findAll(fileText)
+        .map { KaptDependency(it.groupValues[1], it.groupValues[2]) }
+        .toSet()
+    val dependenciesToAdd = processorDependencyMatches
+        .distinctBy { it.kaptConfiguration to it.notation }
+        .filterNot { KaptDependency(it.kaptConfiguration, it.notation) in kaptDependencies }
+    if (dependenciesToAdd.isEmpty()) return
 
-  val lastProcessorMatch = dependenciesToAdd.last().match
-  val insertOffset = fileText.indexOf('\n', lastProcessorMatch.range.last + 1).takeIf { it >= 0 } ?: fileText.length
-  val indent = lastProcessorMatch.groupValues[1]
-  val dependencyLines = dependenciesToAdd.joinToString(separator = "") { dependency ->
-    "\n$indent${kaptDependencyNotation(dependency.kaptConfiguration, dependency.notation)}"
-  }
-  changedFiles.storeOriginalFileContent(this)
-  document.insertString(insertOffset, dependencyLines)
-  psiDocumentManager.commitDocument(document)
+    if (document == null) {
+        changedFiles.storeOriginalFileContent(this)
+        addKaptDependenciesToPsi(dependenciesToAdd)
+        return
+    }
+
+    val lastProcessorMatch = dependenciesToAdd.last().match
+    val insertOffset = fileText.indexOf('\n', lastProcessorMatch.range.last + 1).takeIf { it >= 0 } ?: fileText.length
+    val indent = lastProcessorMatch.groupValues[1]
+    val dependencyLines = dependenciesToAdd.joinToString(separator = "") { dependency ->
+        "\n$indent${kaptDependencyNotation(dependency.kaptConfiguration, dependency.notation)}"
+    }
+    changedFiles.storeOriginalFileContent(this)
+    document.insertString(insertOffset, dependencyLines)
+    psiDocumentManager.commitDocument(document)
+}
+
+private fun KtFile.addKaptDependenciesToPsi(dependenciesToAdd: List<KaptProcessorDependency>) {
+    val dependenciesBlock = findTopLevelBlock("dependencies") ?: return
+    val sourceDependencyTexts = dependenciesToAdd.map { it.match.value.trim() }
+    val lastSourceDependency = dependenciesBlock.statements.lastOrNull { statement ->
+        sourceDependencyTexts.any { StringUtil.equalsIgnoreWhitespaces(statement.text, it) }
+    } ?: return
+    val psiFactory = KtPsiFactory(project)
+    var anchor: PsiElement = lastSourceDependency
+    val existingDependencyTexts = dependenciesBlock.statements.map { it.text }
+
+    for ((_, kaptConfiguration, notation) in dependenciesToAdd) {
+        val kaptDependencyText = kaptDependencyNotation(kaptConfiguration, notation)
+        if (existingDependencyTexts.any { StringUtil.equalsIgnoreWhitespaces(it, kaptDependencyText) }) continue
+
+        anchor = dependenciesBlock.addAfter(psiFactory.createExpression(kaptDependencyText), anchor)
+            .apply { addNewLinesIfNeeded() }
+    }
+
+    val codeStyleManager = CodeStyleManager.getInstance(project)
+    codeStyleManager.reformat(dependenciesBlock, true)
+}
+
+private fun KtFile.findTopLevelBlock(name: String): KtBlockExpression? =
+    PsiTreeUtil.findChildrenOfType(this, KtScriptInitializer::class.java)
+        .find { it.text.startsWith(name) }
+        ?.getBlock()
+
+private fun KtScriptInitializer.getBlock(): KtBlockExpression? =
+    PsiTreeUtil.findChildOfType(this, KtCallExpression::class.java)?.getBlock()
+
+private fun KtCallExpression.getBlock(): KtBlockExpression? =
+    (valueArguments.singleOrNull()?.getArgumentExpression() as? KtLambdaExpression)?.bodyExpression
+        ?: lambdaArguments.lastOrNull()?.getLambdaExpression()?.bodyExpression
+
+private fun PsiElement.addNewLinesIfNeeded() {
+    if (prevSibling != null && prevSibling !is PsiWhiteSpace) {
+        parent.addBefore(KtPsiFactory(project).createNewLine(), this)
+    }
+
+    if (nextSibling != null && nextSibling !is PsiWhiteSpace) {
+        parent.addAfter(KtPsiFactory(project).createNewLine(), this)
+    }
 }
 
 class KaptGradleProjectPostConfigurator : AbstractKotlinCompilerProjectPostConfigurator(KAPT_PLUGIN_ID) {

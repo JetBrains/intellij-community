@@ -190,6 +190,12 @@
 
     <configurationType implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationType"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer" id="kotlinMain"/>
+
+    <localInspection language="kotlin" implementationClass="org.jetbrains.kotlin.idea.configuration.inspections.KaptKotlinCompilerPluginInspection"
+                     shortName="KaptKotlinCompilerPlugin"
+                     key="kapt.kotlin.compiler.plugin.inspection.problem.display.name"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.kotlin"
+                     level="WARNING" enabledByDefault="true" bundle="messages.KotlinProjectConfigurationBundle"/>
   </extensions>
 
   <content namespace="jetbrains">
