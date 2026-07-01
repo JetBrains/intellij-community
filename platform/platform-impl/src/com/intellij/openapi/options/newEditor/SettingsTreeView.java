@@ -131,8 +131,6 @@ import java.util.concurrent.CancellationException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static com.intellij.openapi.options.newEditor.SettingsTreeViewNewBadgeKt.newBadgeIcon;
-
 @ApiStatus.Internal
 public class SettingsTreeView extends JComponent implements Accessible, Disposable, OptionsEditorColleague {
   private static final Logger LOG = Logger.getInstance(SettingsTreeView.class);
@@ -793,7 +791,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
       if (node != null && node.hasNewOptions() && (leaf || !expanded)) {
         if (shouldShowNewBadge(configurable)) {
-          setRightIcon(newBadgeIcon);
+          setRightIcon(Badge.newBadge);
           myAccessibleBadgeText = IdeBundle.message("badge.text.new");
         }
       }

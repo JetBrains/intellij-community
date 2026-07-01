@@ -8,6 +8,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.Badge.ColorType
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBFont
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Component
 import java.awt.Font
@@ -39,6 +40,11 @@ class Badge(
   companion object {
     @JvmField
     val new: Icon = ImmutableBadge(IdeBundle.message("badge.text.new"), ColorType.BLUE)
+
+    @JvmField
+    @ApiStatus.Internal
+    @Deprecated("For Java only, because `new` is a keyword. In Kotlin, use `Badge.new` instead.", level = DeprecationLevel.HIDDEN)
+    val newBadge: Icon = new
 
     @JvmField
     val newDisabled: Icon = ImmutableBadge(IdeBundle.message("badge.text.new"), ColorType.BLUE, false)
