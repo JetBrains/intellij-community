@@ -1178,6 +1178,12 @@ open class PyControlFlowBuilder(private val myLanguageLevel: LanguageLevel?) : P
       if (expression is PyPrefixExpression && expression.operator === PyTokenTypes.NOT_KEYWORD) {
         return isTypeCheckingCondition(expression.operand)
       }
+      // A compound condition such as `TYPE_CHECKING or not USE_EXTENSIONS` is type-checking related if any
+      // operand is, since the branch taken under a type checker then differs from the one taken at runtime.
+      if (expression is PyBinaryExpression &&
+          (expression.operator === PyTokenTypes.AND_KEYWORD || expression.operator === PyTokenTypes.OR_KEYWORD)) {
+        return isTypeCheckingCondition(expression.leftExpression) || isTypeCheckingCondition(expression.rightExpression)
+      }
       return PyEvaluator.isTypeCheckingExpression(expression)
     }
 

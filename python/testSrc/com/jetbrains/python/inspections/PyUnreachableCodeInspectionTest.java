@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.intellij.idea.TestFor;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
@@ -740,6 +741,26 @@ async def nosupAssertFalse(b):
             x: str = "ab"
         
         if not TYPE_CHECKING:
+            y: list[int] = [1, 2]
+        else:
+            y: list[str] = ['a', 'b']"""
+    );
+  }
+
+  @TestFor(issues="PY-85200")
+  public void testTypeCheckingCompoundCondition() {
+    doTestByText(
+      """
+        from typing import TYPE_CHECKING
+
+        def use_extensions() -> bool: ...
+
+        if TYPE_CHECKING or not use_extensions():
+            x: int = 1
+        else:
+            x: str = "ab"
+
+        if not TYPE_CHECKING and use_extensions():
             y: list[int] = [1, 2]
         else:
             y: list[str] = ['a', 'b']"""
