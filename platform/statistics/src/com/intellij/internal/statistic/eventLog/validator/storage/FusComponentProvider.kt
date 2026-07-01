@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.EventLogBuild
 import com.intellij.internal.statistic.eventLog.EventLogConfigOptionsListener
 import com.intellij.internal.statistic.eventLog.EventLogConfigOptionsService
 import com.intellij.internal.statistic.eventLog.EventLogInternalApplicationInfo
+import com.intellij.internal.statistic.eventLog.EventLogListenersManager
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.getEventLogProvider
 import com.intellij.internal.statistic.eventLog.connection.EventLogUploadSettingsClient
@@ -16,6 +17,7 @@ import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMeta
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUpdateStage
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.CustomRuleProducer
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence
+import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -57,6 +59,7 @@ import com.jetbrains.fus.reporting.METADATA_UPDATED_TOPIC
 import com.jetbrains.fus.reporting.METADATA_UPDATE_FAILED_TOPIC
 import com.jetbrains.fus.reporting.MetadataStorage
 import com.jetbrains.fus.reporting.REMOTE_CONFIG_OPTIONS_UPDATED
+import com.jetbrains.fus.reporting.RAW_EVENT_TOPIC
 import com.jetbrains.fus.reporting.RegionCode
 import com.jetbrains.fus.reporting.api.IEventGroupRules
 import com.jetbrains.fus.reporting.api.IEventGroupsFilterRules
@@ -70,6 +73,7 @@ import com.jetbrains.fus.reporting.defaults.NoOpAnonymizer
 import com.jetbrains.fus.reporting.defaults.dispatcher.SimpleLegacyReportDispatcher
 import com.jetbrains.fus.reporting.defaults.dispatcher.EventLogBuildType
 import com.jetbrains.fus.reporting.defaults.dispatcher.PersistentQueue
+import com.jetbrains.fus.reporting.defaults.dispatcher.SEND_INFORMATION_TOPIC
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.eventLog.connection.metadata.createJvmHttpClient
 import com.intellij.internal.statistic.eventLog.dispatcher.IntellijFusJsonSerializer
@@ -239,6 +243,33 @@ object FusComponentProvider {
       messageHandler(DICTIONARY_LOAD_FAILED_TOPIC) { systemCollector.logDictionaryLoadFailed(loadErrorToEventLogMetadataUpdateError(it)) }
       messageHandler(DICTIONARY_UPDATED_TOPIC) { systemCollector.logDictionaryUpdated(it.timestamp) }
       messageHandler(DICTIONARY_UPDATE_FAILED_TOPIC) { systemCollector.logDictionaryUpdateFailed(loadErrorToEventLogMetadataUpdateError(it)) }
+
+      val listenersManager = ApplicationManager.getApplication().getService(EventLogListenersManager::class.java)
+      val testMode = StatisticsRecorderUtil.isTestModeEnabled(recorderId)
+      // Raw events for in-IDE listeners (e.g. the statistics tool window). Was an inline notifySubscribers call in
+      // StatisticsFileEventLogger.logLastEvent. rawEventId/rawData stay test-mode-only per the StatisticsEventLogListener contract.
+      messageHandler(RAW_EVENT_TOPIC) { fusEvent ->
+        val event = fusEvent.event as? LogEvent ?: return@messageHandler
+        listenersManager.notifySubscribers(
+          recorderId,
+          event,
+          if (testMode) fusEvent.rawEventId else null,
+          if (testMode) fusEvent.rawEventData else null,
+          /* isFromLocalRecorder = */ false,
+        )
+      }
+
+      // In-process send statistics for the recorder's system collector (external uploader logs external=true itself).
+      messageHandler(SEND_INFORMATION_TOPIC) { info ->
+        systemCollector.logFilesSend(
+          total = info.totalAmountOfBatches ?: (info.successfulBatches + info.failedBatches),
+          succeed = info.successfulBatches,
+          failed = info.failedBatches,
+          external = false,
+          successfullySentFiles = info.paths.toList(),
+          errors = info.errorCodes.mapNotNull { it.toIntOrNull() },
+        )
+      }
 
       // Every component is injected explicitly (no `legacyBusinessLogic` convenience) so the wiring is
       // independent of declaration order and each IntelliJ-specific choice is stated outright.

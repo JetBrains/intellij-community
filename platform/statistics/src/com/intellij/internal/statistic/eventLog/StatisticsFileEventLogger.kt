@@ -49,6 +49,7 @@ open class StatisticsFileEventLogger(
 ) : StatisticsEventLogger, Disposable {
   protected val logExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("StatisticsFileEventLogger", 1)
 
+  // TODO: lastEvent will never contain validatedEvent now
   private var lastEvent: FusEvent? = null
   private var lastEventTime: Long = 0
   private var lastEventCreatedTime: Long = 0
@@ -161,8 +162,6 @@ open class StatisticsFileEventLogger(
       // queueEvent is synchronous (FusClient built with enableAsyncEventLogging=false), so events keep their order
       // on the single-threaded logExecutor; the SDK's PersistentQueue does the file I/O on its own context.
       eventWriter.queueEvent(it.validatedEvent)
-      application.getService(EventLogListenersManager::class.java)
-        .notifySubscribers(recorderId, it.validatedEvent, it.rawEventId, it.rawData, false)
     }
     lastEvent = null
   }

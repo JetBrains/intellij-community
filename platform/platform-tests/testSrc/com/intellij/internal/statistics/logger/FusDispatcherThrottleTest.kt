@@ -5,10 +5,12 @@ import com.intellij.internal.statistic.eventLog.EventLogSystemEvents
 import com.intellij.internal.statistic.eventLog.dispatcher.IntellijReportValidator
 import com.intellij.internal.statistic.eventLog.validator.storage.FusComponentProvider
 import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.junit5.TestApplication
 import com.jetbrains.fus.reporting.FusClientConfig
 import com.jetbrains.fus.reporting.FusHttpClient
 import com.jetbrains.fus.reporting.HttpResponse
 import com.jetbrains.fus.reporting.MessageBus
+import com.jetbrains.fus.reporting.RAW_EVENT_TOPIC
 import com.jetbrains.fus.reporting.REMOTE_CONFIG_OPTIONS_UPDATED
 import com.jetbrains.fus.reporting.RegionCode
 import com.jetbrains.fus.reporting.RemoteConfig
@@ -25,7 +27,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
@@ -40,10 +43,11 @@ import kotlin.time.Duration.Companion.hours
  * involved. In unit-test mode the blind validator passes events through unchanged, so the synthetic `TOO_MANY_EVENTS`
  * event keeps its id.
  */
-class FusDispatcherThrottleTest : HeavyPlatformTestCase() {
+@TestApplication
+class FusDispatcherThrottleTest {
   @Test
   fun testThrottleEmitsTooManyEventsWhenGroupQuotaExceeded() {
-    val scope = CoroutineScope(Dispatchers.Unconfined)
+    @Suppress("RAW_SCOPE_CREATION") val scope = CoroutineScope(Dispatchers.Unconfined)
     try {
       val recorderId = "THROTTLE_TEST"
       val messageBus = MessageBus(scope)
@@ -94,8 +98,8 @@ class FusDispatcherThrottleTest : HeavyPlatformTestCase() {
 
       val enqueuedIds = eventQueue.enqueued.map { it.event.id }
       assertTrue(
-        "Expected a '${EventLogSystemEvents.TOO_MANY_EVENTS}' event after exceeding the group quota, but enqueued ids were $enqueuedIds",
         enqueuedIds.contains(EventLogSystemEvents.TOO_MANY_EVENTS),
+        "Expected a '${EventLogSystemEvents.TOO_MANY_EVENTS}' event after exceeding the group quota, but enqueued ids were $enqueuedIds"
       )
     }
     finally {
@@ -112,6 +116,58 @@ class FusDispatcherThrottleTest : HeavyPlatformTestCase() {
     recorderVersion = "1",
     event = LogEventAction("test.action", false, hashMapOf("i" to index.toString())),
   )
+
+  @Test
+  fun testRawEventTopicPublishedOnQueue() {
+    // Guards Story 7's premise: the SDK publishes RAW_EVENT_TOPIC after an event is validated/queued, which the
+    // FusComponentProvider handler forwards to EventLogListenersManager (the statistics tool window etc.).
+    @Suppress("RAW_SCOPE_CREATION") val scope = CoroutineScope(Dispatchers.Unconfined)
+    try {
+      val recorderId = "RAW_EVENT_TEST"
+      val messageBus = MessageBus(scope)
+      val received = CopyOnWriteArrayList<String>()
+      messageBus.subscribe(RAW_EVENT_TOPIC) { fusEvent ->
+        (fusEvent.event as? LogEvent)?.let { received.add(it.event.id) }
+      }
+      val dispatcher = SimpleLegacyReportDispatcher(
+        messageBus,
+        FusClientConfig(
+          productName = "Test",
+          productCode = "TST",
+          recorderCode = recorderId,
+          recorderVersion = "1",
+          regionCode = RegionCode.ALL,
+          productVersion = "2025.2",
+          baselineVersion = 252,
+          anonymizationSalt = null,
+          isTest = true,
+          reduceInitialMetadataUpdateDelay = false,
+        ),
+        NoOptionsRemoteConfig(),
+        FusComponentProvider.FusJacksonSerializer(),
+        NoOpHttpClient(),
+        NoOpLoggerFactory(),
+        IntellijReportValidator(recorderId),
+        RecordingEventQueue(),
+        "test-device",
+        false,
+        "$recorderId.event.log".lowercase(),
+      )
+
+      runBlocking {
+        // Two distinct events so the merger flushes the first one through to RAW_EVENT_TOPIC; flush() pushes the second.
+        dispatcher.queueEvent(newEvent(0))
+        dispatcher.queueEvent(newEvent(1))
+        dispatcher.flush()
+        yield()
+      }
+
+      assertTrue(received.contains("test.action"), "Expected RAW_EVENT_TOPIC to carry 'test.action', but received $received")
+    }
+    finally {
+      scope.cancel()
+    }
+  }
 }
 
 private const val THROTTLED_GROUP = "throttle.test.group"
