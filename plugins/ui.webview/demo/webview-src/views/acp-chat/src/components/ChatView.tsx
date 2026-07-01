@@ -15,7 +15,6 @@ import {
 import { useAcpChat } from "../runtime/useAcpChat"
 import { AgentSelector } from "./AgentSelector"
 import { ApprovalPrompt } from "./ApprovalPrompt"
-import { AuthPrompt } from "./AuthPrompt"
 import { ChatList } from "./ChatList"
 import { acpIconSrc, SEND_ICON_PATH } from "./icons/AcpChatIconSet"
 import { MarkdownRenderer } from "./MarkdownRenderer"
@@ -100,7 +99,6 @@ export function ChatView() {
         </ThreadPrimitive.Root>
         </main>
         {chat.permission ? <ApprovalPrompt permission={chat.permission} /> : null}
-        {chat.auth ? <AuthPrompt auth={chat.auth} /> : null}
       </div>
     </AssistantRuntimeProvider>
   )

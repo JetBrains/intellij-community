@@ -49,6 +49,13 @@ export type StartOutcome =
   | { kind: "auth-required"; methods: AuthMethodView[]; message: string }
   | { kind: "error"; message: string }
 
+export class AcpAuthRequiredError extends Error {
+  constructor(readonly methods: AuthMethodView[], message: string) {
+    super(message)
+    this.name = "AcpAuthRequiredError"
+  }
+}
+
 export interface ListSessionsOutcome {
   sessions: AcpSessionInfoView[]
   nextCursor: string | null
@@ -141,14 +148,11 @@ export class AcpSession {
       return { kind: "ready" }
     }
     catch (error) {
-      if (!isAuthRequired(error)) {
+      const authError = this.toAuthRequiredError(error)
+      if (!authError) {
         return { kind: "error", message: messageOf(error) }
       }
-      const methods = this.authMethodViews((error as any)?.data)
-      if (methods.length === 0) {
-        return { kind: "error", message: `${authMessage(error)} Authenticate the agent's own CLI, then reselect it.` }
-      }
-      return { kind: "auth-required", methods, message: authMessage(error) }
+      return { kind: "auth-required", methods: authError.methods, message: authError.message }
     }
   }
 
@@ -167,7 +171,7 @@ export class AcpSession {
     if (!connection || !sessionId) {
       throw new Error("No active ACP session")
     }
-    await connection.prompt({ sessionId, prompt: blocks })
+    await this.callWithAuthClassification(() => connection.prompt({ sessionId, prompt: blocks }))
   }
 
   async promptText(text: string): Promise<void> {
@@ -180,7 +184,7 @@ export class AcpSession {
     if (!this.capabilities.list || typeof connection.listSessions !== "function") {
       throw new Error("The selected ACP agent does not support chat history.")
     }
-    const response = await connection.listSessions({ cwd: this.cwd, cursor: cursor ?? undefined })
+    const response = await this.callWithAuthClassification(() => connection.listSessions({ cwd: this.cwd, cursor: cursor ?? undefined }))
     return {
       sessions: Array.isArray(response?.sessions) ? response.sessions.map(session => toSessionInfoView(session, this.cwd)).filter(isSessionInfoView) : [],
       nextCursor: stringOrNull(response?.nextCursor),
@@ -199,12 +203,12 @@ export class AcpSession {
     this.sessionId = sessionInfo.sessionId
     this.cwd = cwd
     try {
-      const session = await connection.loadSession({
+      const session = await this.callWithAuthClassification(() => connection.loadSession({
         sessionId: sessionInfo.sessionId,
         cwd,
         additionalDirectories: sessionInfo.additionalDirectories ?? [],
         mcpServers: [],
-      })
+      }))
       this.sink?.onSessionModes(toSessionModeViews(session?.modes?.availableModes), stringOrNull(session?.modes?.currentModeId))
       this.sink?.onConfigOptions(toConfigOptionViews(session?.configOptions))
     }
@@ -221,7 +225,7 @@ export class AcpSession {
     if (!this.capabilities.delete || typeof connection.deleteSession !== "function") {
       throw new Error("The selected ACP agent does not support deleting chats.")
     }
-    await connection.deleteSession({ sessionId })
+    await this.callWithAuthClassification(() => connection.deleteSession({ sessionId }))
   }
 
   async setMode(modeId: string): Promise<void> {
@@ -233,7 +237,7 @@ export class AcpSession {
     if (typeof connection.setSessionMode !== "function") {
       throw new Error("The selected ACP agent does not support session modes.")
     }
-    await connection.setSessionMode({ sessionId, modeId })
+    await this.callWithAuthClassification(() => connection.setSessionMode({ sessionId, modeId }))
     this.sink?.onCurrentMode(modeId)
   }
 
@@ -246,9 +250,9 @@ export class AcpSession {
     if (typeof connection.setSessionConfigOption !== "function") {
       throw new Error("The selected ACP agent does not support session config options.")
     }
-    const response = type === "boolean"
-      ? await connection.setSessionConfigOption({ sessionId, configId, type, value: value === true })
-      : await connection.setSessionConfigOption({ sessionId, configId, value: String(value) })
+    const response = await this.callWithAuthClassification(() => type === "boolean"
+      ? connection.setSessionConfigOption({ sessionId, configId, type, value: value === true })
+      : connection.setSessionConfigOption({ sessionId, configId, value: String(value) }))
     this.sink?.onConfigOptions(toConfigOptionViews(response?.configOptions))
   }
 
@@ -317,10 +321,12 @@ export class AcpSession {
       },
       }
       const connection = new ClientSideConnection(() => client, io.stream)
-      const init: any = await connection.initialize({
+      const initializeRequest: any = {
         protocolVersion: PROTOCOL_VERSION,
-        clientCapabilities: { fs: { readTextFile: false, writeTextFile: false }, terminal: false },
-      })
+        clientInfo: { name: "IntelliJ ACP Chat WebView Demo", version: "1.0.0" },
+        clientCapabilities: { fs: { readTextFile: false, writeTextFile: false }, terminal: false, auth: {} },
+      }
+      const init: any = await connection.initialize(initializeRequest)
       if (this.generation !== generation) {
         throw new Error("ACP connection superseded")
       }
@@ -341,7 +347,21 @@ export class AcpSession {
   }
 
   private authMethodViews(errorData?: any): AuthMethodView[] {
-    return authMethodsOf(errorData, { authMethods: this.authMethods }).map(toAuthMethodView)
+    return authMethodsOf(errorData, { authMethods: this.authMethods }).map(toAuthMethodView).filter(method => method.id.length > 0)
+  }
+
+  private toAuthRequiredError(error: unknown): AcpAuthRequiredError | null {
+    if (!isAuthRequired(error)) return null
+    return new AcpAuthRequiredError(this.authMethodViews((error as any)?.data), authMessage(error))
+  }
+
+  private async callWithAuthClassification<T>(call: () => Promise<T>): Promise<T> {
+    try {
+      return await call()
+    }
+    catch (error) {
+      throw this.toAuthRequiredError(error) ?? error
+    }
   }
 }
 
@@ -630,9 +650,11 @@ function authMessage(error: unknown): string {
 
 /** Prefer auth methods carried in the error payload, falling back to those advertised at initialize. */
 function authMethodsOf(errorData: any, init: any): any[] {
-  const fromError = Array.isArray(errorData?.authMethods) ? errorData.authMethods : []
-  if (fromError.length > 0) return fromError
-  return Array.isArray(init?.authMethods) ? init.authMethods : []
+  for (const container of [errorData, errorData?.auth, errorData?._meta, init]) {
+    if (Array.isArray(container?.authMethods) && container.authMethods.length > 0) return container.authMethods
+    if (Array.isArray(container?.methods) && container.methods.length > 0) return container.methods
+  }
+  return []
 }
 
 function toAuthMethodView(method: any): AuthMethodView {
@@ -648,10 +670,18 @@ function toAuthMethodView(method: any): AuthMethodView {
     : []
   return {
     id: String(method?.id ?? ""),
-    name: typeof method?.name === "string" && method.name ? method.name : String(method?.id ?? "auth"),
+    name: stringOrDefault(method?.name, stringOrDefault(method?.label, String(method?.id ?? "auth"))),
+    label: stringOrUndefined(method?.label),
+    type: stringOrUndefined(method?.type),
     description: typeof method?.description === "string" ? method.description : undefined,
+    link: stringOrUndefined(method?.link),
     vars,
+    meta: objectOrUndefined(method?._meta),
   }
+}
+
+function objectOrUndefined(value: any): Record<string, unknown> | undefined {
+  return value != null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : undefined
 }
 
 function messageOf(error: unknown): string {

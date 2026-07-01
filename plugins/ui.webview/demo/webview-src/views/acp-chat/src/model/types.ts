@@ -137,8 +137,12 @@ export interface AuthEnvVarView {
 export interface AuthMethodView {
   id: string
   name: string
+  label?: string
+  type?: string
   description?: string
+  link?: string
   vars: AuthEnvVarView[]
+  meta?: Record<string, unknown>
 }
 
 export interface AuthChoice {
@@ -147,10 +151,11 @@ export interface AuthChoice {
   env?: Record<string, string>
 }
 
-export type AuthPhase = "select" | "authenticating"
+export type AuthPhase = "select" | "authenticating" | "complete"
 
 /** Drives the in-chat authorization UI; mirrors {@link PendingPermission}. */
 export interface PendingAuth {
+  requestId?: string
   methods: AuthMethodView[]
   message?: string
   phase: AuthPhase
@@ -158,4 +163,6 @@ export interface PendingAuth {
   authUri?: string
   error?: string
   onChoose: (choice: AuthChoice | null) => void
+  onRetry?: () => void
+  onOpenConfig?: () => void
 }

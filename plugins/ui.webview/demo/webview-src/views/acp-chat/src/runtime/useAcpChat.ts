@@ -13,7 +13,7 @@ import {
   type ThreadUserMessagePart,
 } from "@assistant-ui/react"
 import type { ContentBlock } from "@agentclientprotocol/sdk"
-import { AcpSession, type AcpEventSink, type StartOutcome } from "../acp/client"
+import { AcpAuthRequiredError, AcpSession, type AcpEventSink, type StartOutcome } from "../acp/client"
 import { acpBridgeHost } from "../bridge/webviewApi"
 import type {
   AcpSessionInfoUpdateView,
@@ -46,6 +46,8 @@ interface QuoteInfoView {
   messageId: string
 }
 
+type AuthRequestResult = { kind: "choice"; choice: AuthChoice } | { kind: "retry" } | null
+
 export interface AcpChat {
   runtime: ReturnType<typeof useExternalStoreRuntime>
   agents: AgentInfo[]
@@ -59,7 +61,6 @@ export interface AcpChat {
   currentModeId: string | null
   commands: CommandView[]
   permission: PendingPermission | null
-  auth: PendingAuth | null
   chatListSupported: boolean
   chatListLoading: boolean
   chatListHasMore: boolean
@@ -87,7 +88,6 @@ export function useAcpChat(): AcpChat {
   const [currentModeId, setCurrentModeId] = useState<string | null>(null)
   const [commands, setCommands] = useState<CommandView[]>([])
   const [permission, setPermission] = useState<PendingPermission | null>(null)
-  const [auth, setAuth] = useState<PendingAuth | null>(null)
   const [sessions, setSessions] = useState<AcpSessionInfoView[]>([])
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
   const [nextCursor, setNextCursor] = useState<string | null>(null)
@@ -101,9 +101,12 @@ export function useAcpChat(): AcpChat {
   const activeSessionIdRef = useRef<string | null>(null)
   const plansByIdRef = useRef(new Map<string, PlanEntryView[]>())
   const assistantSeqRef = useRef(0)
+  const authRequestSeqRef = useRef(0)
   const newThreadSwitchRef = useRef<Promise<void> | null>(null)
-  // Resolver for the select-phase auth prompt, so a dying agent (or unmount) can unblock the prompt instead of hanging.
-  const authResolveRef = useRef<((choice: AuthChoice | null) => void) | null>(null)
+  const activeAuthMessageIdRef = useRef<string | null>(null)
+  const activeAuthRef = useRef<PendingAuth | null>(null)
+  // Resolver for the select-phase auth card, so a dying agent (or unmount) can unblock the prompt instead of hanging.
+  const authResolveRef = useRef<((result: AuthRequestResult) => void) | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -176,6 +179,8 @@ export function useAcpChat(): AcpChat {
     setMessages([])
     turnRef.current = null
     lastChunkRoleRef.current = null
+    activeAuthMessageIdRef.current = null
+    activeAuthRef.current = null
     clearPlans()
     setIsRunning(false)
   }, [clearPlans])
@@ -193,6 +198,41 @@ export function useAcpChat(): AcpChat {
     lastChunkRoleRef.current = "assistant"
     return turn
   }, [])
+
+  const putAuthMessage = useCallback((auth: PendingAuth, messageId?: string, replaceMessageId?: string | null): string => {
+    const id = messageId ?? activeAuthMessageIdRef.current ?? `assistant-${++assistantSeqRef.current}`
+    const previousId = replaceMessageId && replaceMessageId !== id ? replaceMessageId : null
+    activeAuthMessageIdRef.current = id
+    activeAuthRef.current = auth
+    turnRef.current = null
+    lastChunkRoleRef.current = "assistant"
+    setMessages(previous => {
+      const content = authMessageContent(auth)
+      const next = previous.slice()
+      const index = next.findIndex(message => message.id === id)
+      if (index >= 0) {
+        next[index] = { ...next[index], role: "assistant", content }
+        return next
+      }
+      if (previousId) {
+        const replaceIndex = next.findIndex(message => message.id === previousId)
+        if (replaceIndex >= 0) {
+          next[replaceIndex] = { id, role: "assistant", content }
+          return next
+        }
+      }
+      next.push({ id, role: "assistant", content })
+      return next
+    })
+    return id
+  }, [])
+
+  const updateActiveAuthMessage = useCallback((patch: Partial<PendingAuth>) => {
+    const current = activeAuthRef.current
+    const id = activeAuthMessageIdRef.current
+    if (!current || !id) return
+    putAuthMessage({ ...current, ...patch }, id)
+  }, [putAuthMessage])
 
   const appendUserChunk = useCallback((text: string) => {
     if (!text) return
@@ -326,7 +366,7 @@ export function useAcpChat(): AcpChat {
       })
     },
     onAuthUpdate(authUri) {
-      setAuth(previous => (previous ? { ...previous, authUri } : previous))
+      updateActiveAuthMessage({ authUri })
     },
     onAgentExit(code) {
       setStatus(`Agent exited (code ${code ?? "unknown"})`)
@@ -334,7 +374,7 @@ export function useAcpChat(): AcpChat {
       // Unblock a pending auth prompt so the selection loop does not wait on a dead agent forever.
       authResolveRef.current?.(null)
     },
-  }), [appendUserChunk, ensureAssistantTurn, flushTurn, publishPlans, updateActiveSessionInfo])
+  }), [appendUserChunk, ensureAssistantTurn, flushTurn, publishPlans, updateActiveAuthMessage, updateActiveSessionInfo])
 
   const attachmentAdapter = useMemo(() => createAttachmentAdapter(promptCapabilities), [promptCapabilities])
 
@@ -445,6 +485,49 @@ export function useAcpChat(): AcpChat {
     })()
   }, [])
 
+  const requestAuth = useCallback((methods: PendingAuth["methods"], message: string, error?: string): Promise<AuthRequestResult> => {
+    return new Promise<AuthRequestResult>(resolve => {
+      let settled = false
+      const settle = (result: AuthRequestResult) => {
+        if (settled) return
+        settled = true
+        if (authResolveRef.current === settle) authResolveRef.current = null
+        if (result == null) {
+          activeAuthMessageIdRef.current = null
+          activeAuthRef.current = null
+        }
+        resolve(result)
+      }
+      authResolveRef.current = settle
+      const messageId = `assistant-${++assistantSeqRef.current}`
+      const replaceMessageId = activeAuthMessageIdRef.current
+      putAuthMessage({
+        requestId: `auth-request-${++authRequestSeqRef.current}`,
+        methods,
+        message,
+        phase: "select",
+        error,
+        onChoose: choice => settle(choice ? { kind: "choice", choice } : null),
+        onRetry: methods.length === 0 ? () => settle({ kind: "retry" }) : undefined,
+        onOpenConfig: methods.length === 0 ? openAcpConfig : undefined,
+      }, messageId, replaceMessageId)
+    })
+  }, [openAcpConfig, putAuthMessage])
+
+  const showAuthInProgress = useCallback((methods: PendingAuth["methods"], message: string, onCancel: () => void) => {
+    const requestId = activeAuthRef.current?.requestId ?? `auth-request-${++authRequestSeqRef.current}`
+    putAuthMessage({ requestId, methods, message, phase: "authenticating", onChoose: () => onCancel(), onOpenConfig: methods.length === 0 ? openAcpConfig : undefined })
+  }, [openAcpConfig, putAuthMessage])
+
+  const showAuthComplete = useCallback((message = "The agent is ready to continue.") => {
+    const current = activeAuthRef.current
+    const id = activeAuthMessageIdRef.current
+    if (!current || !id) return
+    putAuthMessage({ ...current, phase: "complete", message, error: undefined, authUri: undefined, onChoose: () => {} }, id)
+    activeAuthRef.current = null
+    activeAuthMessageIdRef.current = null
+  }, [putAuthMessage])
+
   const threadListAdapter = useMemo<ExternalStoreThreadListAdapter | undefined>(() => {
     if (!chatListSupported) return undefined
     return {
@@ -472,19 +555,63 @@ export function useAcpChat(): AcpChat {
       return
     }
     const text = textFromAppendMessage(message)
-    const assistantId = `assistant-${++assistantSeqRef.current}`
+    const userId = `user-${++assistantSeqRef.current}`
     setMessages(previous => [
       ...previous,
-      { id: `user-${assistantSeqRef.current}`, role: "user", content: text ? textMessageContent(text) : [], attachments: message.attachments, metadata: message.metadata },
-      { id: assistantId, role: "assistant", content: [] },
+      { id: userId, role: "user", content: text ? textMessageContent(text) : [], attachments: message.attachments, metadata: message.metadata },
     ])
-    turnRef.current = { reasoning: "", text: "", tools: [] }
-    lastChunkRoleRef.current = "assistant"
+    turnRef.current = null
+    lastChunkRoleRef.current = null
     clearPlans()
     setStatus("")
     setIsRunning(true)
     try {
-      await session.prompt(blocks)
+      let authError: string | undefined
+      let promptAuthenticated = false
+      for (;;) {
+        try {
+          await session.prompt(blocks)
+          if (promptAuthenticated) showAuthComplete("Authentication complete. Prompt retried.")
+          break
+        }
+        catch (error) {
+          if (!(error instanceof AcpAuthRequiredError)) throw error
+          const authResult = await requestAuth(error.methods, error.message, authError)
+          if (authResult?.kind === "retry") continue
+          if (!authResult) {
+            setStatus("Authentication cancelled.")
+            break
+          }
+          let cancelledDuringAuth = false
+          showAuthInProgress(error.methods, error.message, () => { cancelledDuringAuth = true; void session.stop() })
+          try {
+            if (authResult.choice.env) {
+              if (!selectedAgentId) throw new Error("Cannot reconnect the ACP agent for environment-based authentication.")
+              await session.reconnectWithEnv(selectedAgentId, authResult.choice.env, sink)
+            }
+            await session.authenticate(authResult.choice.methodId)
+            if (authResult.choice.env) {
+              const outcome = await session.openSession()
+              if (outcome.kind === "auth-required") throw new Error(outcome.message)
+              if (outcome.kind === "error") throw new Error(outcome.message)
+            }
+            showAuthInProgress(error.methods, "Authentication complete. Retrying the prompt.", () => { cancelledDuringAuth = true; void session.stop() })
+            promptAuthenticated = true
+            authError = undefined
+          }
+          catch (authFailure) {
+            if (cancelledDuringAuth) {
+              setStatus("Authentication cancelled.")
+              break
+            }
+            authError = errorText(authFailure)
+          }
+          if (cancelledDuringAuth) {
+            setStatus("Authentication cancelled.")
+            break
+          }
+        }
+      }
     }
     catch (error) {
       setStatus(errorText(error))
@@ -492,7 +619,7 @@ export function useAcpChat(): AcpChat {
     finally {
       setIsRunning(false)
     }
-  }, [clearPlans, promptCapabilities])
+  }, [clearPlans, promptCapabilities, requestAuth, selectedAgentId, showAuthComplete, showAuthInProgress, sink])
 
   const onCancel = useCallback(async () => {
     try {
@@ -527,7 +654,6 @@ export function useAcpChat(): AcpChat {
         resetActiveThreadUi()
         resetSessionMetadata()
         setPermission(null)
-        setAuth(null)
         setSessions([])
         activeSessionIdRef.current = null
         setActiveSessionId(null)
@@ -542,19 +668,19 @@ export function useAcpChat(): AcpChat {
         // Interactive authorization: keep prompting until the agent lets us open a session, the user cancels, or it fails.
         while (outcome.kind === "auth-required") {
           const { methods, message } = outcome
-          const choice = await new Promise<AuthChoice | null>(resolve => {
-            authResolveRef.current = resolve
-            setAuth({ methods, message, phase: "select", error: authError, onChoose: resolve })
-          })
-          authResolveRef.current = null
-          if (!choice) {
+          const authResult = await requestAuth(methods, message, authError)
+          if (authResult?.kind === "retry") {
+            outcome = await session.openSession()
+            continue
+          }
+          if (!authResult) {
             await session.stop()
-            setAuth(null)
             setStatus("Authentication cancelled.")
             return
           }
+          const choice = authResult.choice
           let cancelledDuringAuth = false
-          setAuth({ methods, message, phase: "authenticating", onChoose: () => { cancelledDuringAuth = true; void session.stop() } })
+          showAuthInProgress(methods, message, () => { cancelledDuringAuth = true; void session.stop() })
           try {
             // env_var methods need the credential present at spawn, so re-spawn with it before authenticating.
             if (choice.env) await session.reconnectWithEnv(agentId, choice.env, sink)
@@ -564,7 +690,6 @@ export function useAcpChat(): AcpChat {
           }
           catch (error) {
             if (cancelledDuringAuth) {
-              setAuth(null)
               setStatus("Authentication cancelled.")
               return
             }
@@ -572,16 +697,15 @@ export function useAcpChat(): AcpChat {
             outcome = { kind: "auth-required", methods, message }
           }
           if (cancelledDuringAuth) {
-            setAuth(null)
             setStatus("Authentication cancelled.")
             return
           }
         }
-        setAuth(null)
         if (outcome.kind === "error") {
           setStatus(outcome.message)
           return
         }
+        showAuthComplete()
         setSelectedAgentId(agentId)
         const capabilities = session.sessionCapabilities
         const supportsChatList = capabilities.list && capabilities.load
@@ -597,14 +721,13 @@ export function useAcpChat(): AcpChat {
         }
       }
       catch (error) {
-        setAuth(null)
         setStatus(errorText(error))
       }
       finally {
         setStarting(false)
       }
     })()
-  }, [loadSessionsPage, resetActiveThreadUi, resetSessionMetadata, sink])
+  }, [loadSessionsPage, requestAuth, resetActiveThreadUi, resetSessionMetadata, showAuthComplete, showAuthInProgress, sink])
 
   const selectMode = useCallback((modeId: string) => {
     const session = sessionRef.current
@@ -665,7 +788,6 @@ export function useAcpChat(): AcpChat {
     currentModeId,
     commands,
     permission,
-    auth,
     chatListSupported,
     chatListLoading,
     chatListHasMore: nextCursor != null,
@@ -682,6 +804,19 @@ export function useAcpChat(): AcpChat {
 
 function textMessageContent(text: string): ThreadMessageLike["content"] {
   return [{ type: "text", text }] as ThreadMessageLike["content"]
+}
+
+function authMessageContent(auth: PendingAuth): ThreadMessageLike["content"] {
+  const status = auth.phase === "complete" ? "completed" : auth.phase === "authenticating" ? "in_progress" : "pending"
+  const requestId = auth.requestId ?? "auth"
+  return [{
+    type: "tool-call",
+    toolCallId: requestId,
+    toolName: "auth",
+    args: {},
+    argsText: auth.message ?? "Authentication required",
+    result: { status, title: "Authentication", kind: "auth", auth },
+  }] as ThreadMessageLike["content"]
 }
 
 function appendTextToMessage(message: ThreadMessageLike, text: string): ThreadMessageLike {

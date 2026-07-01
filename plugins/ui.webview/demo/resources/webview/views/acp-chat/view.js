@@ -617,6 +617,14 @@ function createAgentStdioStream() {
 }
 //#endregion
 //#region views/acp-chat/src/acp/client.ts
+var AcpAuthRequiredError = class extends Error {
+	methods;
+	constructor(methods, message) {
+		super(message);
+		this.methods = methods;
+		this.name = "AcpAuthRequiredError";
+	}
+};
 /**
 * One ACP session over a spawned agent. The protocol is handled by the ACP TypeScript SDK; the transport is the
 * Kotlin-bridged process stdio. ACP wire objects are accessed defensively (`any`) so this stays resilient to minor
@@ -701,19 +709,15 @@ var AcpSession = class {
 			this.sink?.onConfigOptions(toConfigOptionViews(session.configOptions));
 			return { kind: "ready" };
 		} catch (error) {
-			if (!isAuthRequired(error)) return {
+			const authError = this.toAuthRequiredError(error);
+			if (!authError) return {
 				kind: "error",
 				message: messageOf(error)
 			};
-			const methods = this.authMethodViews(error?.data);
-			if (methods.length === 0) return {
-				kind: "error",
-				message: `${authMessage(error)} Authenticate the agent's own CLI, then reselect it.`
-			};
 			return {
 				kind: "auth-required",
-				methods,
-				message: authMessage(error)
+				methods: authError.methods,
+				message: authError.message
 			};
 		}
 	}
@@ -729,10 +733,10 @@ var AcpSession = class {
 		const connection = this.connection;
 		const sessionId = this.sessionId;
 		if (!connection || !sessionId) throw new Error("No active ACP session");
-		await connection.prompt({
+		await this.callWithAuthClassification(() => connection.prompt({
 			sessionId,
 			prompt: blocks
-		});
+		}));
 	}
 	async promptText(text) {
 		await this.prompt([{
@@ -744,10 +748,10 @@ var AcpSession = class {
 		const connection = this.connection;
 		if (!connection) throw new Error("No agent connection");
 		if (!this.capabilities.list || typeof connection.listSessions !== "function") throw new Error("The selected ACP agent does not support chat history.");
-		const response = await connection.listSessions({
+		const response = await this.callWithAuthClassification(() => connection.listSessions({
 			cwd: this.cwd,
 			cursor: cursor ?? void 0
-		});
+		}));
 		return {
 			sessions: Array.isArray(response?.sessions) ? response.sessions.map((session) => toSessionInfoView(session, this.cwd)).filter(isSessionInfoView) : [],
 			nextCursor: stringOrNull(response?.nextCursor)
@@ -763,12 +767,12 @@ var AcpSession = class {
 		this.sessionId = sessionInfo.sessionId;
 		this.cwd = cwd;
 		try {
-			const session = await connection.loadSession({
+			const session = await this.callWithAuthClassification(() => connection.loadSession({
 				sessionId: sessionInfo.sessionId,
 				cwd,
 				additionalDirectories: sessionInfo.additionalDirectories ?? [],
 				mcpServers: []
-			});
+			}));
 			this.sink?.onSessionModes(toSessionModeViews(session?.modes?.availableModes), stringOrNull(session?.modes?.currentModeId));
 			this.sink?.onConfigOptions(toConfigOptionViews(session?.configOptions));
 		} catch (error) {
@@ -781,17 +785,17 @@ var AcpSession = class {
 		const connection = this.connection;
 		if (!connection) throw new Error("No agent connection");
 		if (!this.capabilities.delete || typeof connection.deleteSession !== "function") throw new Error("The selected ACP agent does not support deleting chats.");
-		await connection.deleteSession({ sessionId });
+		await this.callWithAuthClassification(() => connection.deleteSession({ sessionId }));
 	}
 	async setMode(modeId) {
 		const connection = this.connection;
 		const sessionId = this.sessionId;
 		if (!connection || !sessionId) throw new Error("No active ACP session");
 		if (typeof connection.setSessionMode !== "function") throw new Error("The selected ACP agent does not support session modes.");
-		await connection.setSessionMode({
+		await this.callWithAuthClassification(() => connection.setSessionMode({
 			sessionId,
 			modeId
-		});
+		}));
 		this.sink?.onCurrentMode(modeId);
 	}
 	async setConfigOption(configId, type, value) {
@@ -799,16 +803,16 @@ var AcpSession = class {
 		const sessionId = this.sessionId;
 		if (!connection || !sessionId) throw new Error("No active ACP session");
 		if (typeof connection.setSessionConfigOption !== "function") throw new Error("The selected ACP agent does not support session config options.");
-		const response = type === "boolean" ? await connection.setSessionConfigOption({
+		const response = await this.callWithAuthClassification(() => type === "boolean" ? connection.setSessionConfigOption({
 			sessionId,
 			configId,
 			type,
 			value: value === true
-		}) : await connection.setSessionConfigOption({
+		}) : connection.setSessionConfigOption({
 			sessionId,
 			configId,
 			value: String(value)
-		});
+		}));
 		this.sink?.onConfigOptions(toConfigOptionViews(response?.configOptions));
 	}
 	async cancel() {
@@ -865,12 +869,17 @@ var AcpSession = class {
 			const connection = new ClientSideConnection(() => client, io.stream);
 			const init = await connection.initialize({
 				protocolVersion: 1,
+				clientInfo: {
+					name: "IntelliJ ACP Chat WebView Demo",
+					version: "1.0.0"
+				},
 				clientCapabilities: {
 					fs: {
 						readTextFile: false,
 						writeTextFile: false
 					},
-					terminal: false
+					terminal: false,
+					auth: {}
 				}
 			});
 			if (this.generation !== generation) throw new Error("ACP connection superseded");
@@ -888,7 +897,18 @@ var AcpSession = class {
 		}
 	}
 	authMethodViews(errorData) {
-		return authMethodsOf(errorData, { authMethods: this.authMethods }).map(toAuthMethodView);
+		return authMethodsOf(errorData, { authMethods: this.authMethods }).map(toAuthMethodView).filter((method) => method.id.length > 0);
+	}
+	toAuthRequiredError(error) {
+		if (!isAuthRequired(error)) return null;
+		return new AcpAuthRequiredError(this.authMethodViews(error?.data), authMessage(error));
+	}
+	async callWithAuthClassification(call) {
+		try {
+			return await call();
+		} catch (error) {
+			throw this.toAuthRequiredError(error) ?? error;
+		}
 	}
 };
 function handleUpdate(update, sink) {
@@ -1167,9 +1187,16 @@ function authMessage(error) {
 }
 /** Prefer auth methods carried in the error payload, falling back to those advertised at initialize. */
 function authMethodsOf(errorData, init) {
-	const fromError = Array.isArray(errorData?.authMethods) ? errorData.authMethods : [];
-	if (fromError.length > 0) return fromError;
-	return Array.isArray(init?.authMethods) ? init.authMethods : [];
+	for (const container of [
+		errorData,
+		errorData?.auth,
+		errorData?._meta,
+		init
+	]) {
+		if (Array.isArray(container?.authMethods) && container.authMethods.length > 0) return container.authMethods;
+		if (Array.isArray(container?.methods) && container.methods.length > 0) return container.methods;
+	}
+	return [];
 }
 function toAuthMethodView(method) {
 	const vars = Array.isArray(method?.vars) ? method.vars.map((v) => ({
@@ -1180,10 +1207,17 @@ function toAuthMethodView(method) {
 	})).filter((v) => v.name) : [];
 	return {
 		id: String(method?.id ?? ""),
-		name: typeof method?.name === "string" && method.name ? method.name : String(method?.id ?? "auth"),
+		name: stringOrDefault(method?.name, stringOrDefault(method?.label, String(method?.id ?? "auth"))),
+		label: stringOrUndefined(method?.label),
+		type: stringOrUndefined(method?.type),
 		description: typeof method?.description === "string" ? method.description : void 0,
-		vars
+		link: stringOrUndefined(method?.link),
+		vars,
+		meta: objectOrUndefined(method?._meta)
 	};
+}
+function objectOrUndefined(value) {
+	return value != null && typeof value === "object" && !Array.isArray(value) ? value : void 0;
 }
 function messageOf(error) {
 	return error instanceof Error ? error.message : String(error);
@@ -1212,7 +1246,6 @@ function useAcpChat() {
 	const [currentModeId, setCurrentModeId] = (0, import_react.useState)(null);
 	const [commands, setCommands] = (0, import_react.useState)([]);
 	const [permission, setPermission] = (0, import_react.useState)(null);
-	const [auth, setAuth] = (0, import_react.useState)(null);
 	const [sessions, setSessions] = (0, import_react.useState)([]);
 	const [activeSessionId, setActiveSessionId] = (0, import_react.useState)(null);
 	const [nextCursor, setNextCursor] = (0, import_react.useState)(null);
@@ -1225,7 +1258,10 @@ function useAcpChat() {
 	const activeSessionIdRef = (0, import_react.useRef)(null);
 	const plansByIdRef = (0, import_react.useRef)(/* @__PURE__ */ new Map());
 	const assistantSeqRef = (0, import_react.useRef)(0);
+	const authRequestSeqRef = (0, import_react.useRef)(0);
 	const newThreadSwitchRef = (0, import_react.useRef)(null);
+	const activeAuthMessageIdRef = (0, import_react.useRef)(null);
+	const activeAuthRef = (0, import_react.useRef)(null);
 	const authResolveRef = (0, import_react.useRef)(null);
 	(0, import_react.useEffect)(() => {
 		let cancelled = false;
@@ -1301,6 +1337,8 @@ function useAcpChat() {
 		setMessages([]);
 		turnRef.current = null;
 		lastChunkRoleRef.current = null;
+		activeAuthMessageIdRef.current = null;
+		activeAuthRef.current = null;
 		clearPlans();
 		setIsRunning(false);
 	}, [clearPlans]);
@@ -1322,6 +1360,54 @@ function useAcpChat() {
 		lastChunkRoleRef.current = "assistant";
 		return turn;
 	}, []);
+	const putAuthMessage = (0, import_react.useCallback)((auth, messageId, replaceMessageId) => {
+		const id = messageId ?? activeAuthMessageIdRef.current ?? `assistant-${++assistantSeqRef.current}`;
+		const previousId = replaceMessageId && replaceMessageId !== id ? replaceMessageId : null;
+		activeAuthMessageIdRef.current = id;
+		activeAuthRef.current = auth;
+		turnRef.current = null;
+		lastChunkRoleRef.current = "assistant";
+		setMessages((previous) => {
+			const content = authMessageContent(auth);
+			const next = previous.slice();
+			const index = next.findIndex((message) => message.id === id);
+			if (index >= 0) {
+				next[index] = {
+					...next[index],
+					role: "assistant",
+					content
+				};
+				return next;
+			}
+			if (previousId) {
+				const replaceIndex = next.findIndex((message) => message.id === previousId);
+				if (replaceIndex >= 0) {
+					next[replaceIndex] = {
+						id,
+						role: "assistant",
+						content
+					};
+					return next;
+				}
+			}
+			next.push({
+				id,
+				role: "assistant",
+				content
+			});
+			return next;
+		});
+		return id;
+	}, []);
+	const updateActiveAuthMessage = (0, import_react.useCallback)((patch) => {
+		const current = activeAuthRef.current;
+		const id = activeAuthMessageIdRef.current;
+		if (!current || !id) return;
+		putAuthMessage({
+			...current,
+			...patch
+		}, id);
+	}, [putAuthMessage]);
 	const appendUserChunk = (0, import_react.useCallback)((text) => {
 		if (!text) return;
 		turnRef.current = null;
@@ -1459,10 +1545,7 @@ function useAcpChat() {
 			});
 		},
 		onAuthUpdate(authUri) {
-			setAuth((previous) => previous ? {
-				...previous,
-				authUri
-			} : previous);
+			updateActiveAuthMessage({ authUri });
 		},
 		onAgentExit(code) {
 			setStatus(`Agent exited (code ${code ?? "unknown"})`);
@@ -1474,6 +1557,7 @@ function useAcpChat() {
 		ensureAssistantTurn,
 		flushTurn,
 		publishPlans,
+		updateActiveAuthMessage,
 		updateActiveSessionInfo
 	]);
 	const attachmentAdapter = (0, import_react.useMemo)(() => createAttachmentAdapter(promptCapabilities), [promptCapabilities]);
@@ -1585,6 +1669,62 @@ function useAcpChat() {
 			}
 		})();
 	}, []);
+	const requestAuth = (0, import_react.useCallback)((methods, message, error) => {
+		return new Promise((resolve) => {
+			let settled = false;
+			const settle = (result) => {
+				if (settled) return;
+				settled = true;
+				if (authResolveRef.current === settle) authResolveRef.current = null;
+				if (result == null) {
+					activeAuthMessageIdRef.current = null;
+					activeAuthRef.current = null;
+				}
+				resolve(result);
+			};
+			authResolveRef.current = settle;
+			const messageId = `assistant-${++assistantSeqRef.current}`;
+			const replaceMessageId = activeAuthMessageIdRef.current;
+			putAuthMessage({
+				requestId: `auth-request-${++authRequestSeqRef.current}`,
+				methods,
+				message,
+				phase: "select",
+				error,
+				onChoose: (choice) => settle(choice ? {
+					kind: "choice",
+					choice
+				} : null),
+				onRetry: methods.length === 0 ? () => settle({ kind: "retry" }) : void 0,
+				onOpenConfig: methods.length === 0 ? openAcpConfig : void 0
+			}, messageId, replaceMessageId);
+		});
+	}, [openAcpConfig, putAuthMessage]);
+	const showAuthInProgress = (0, import_react.useCallback)((methods, message, onCancel) => {
+		putAuthMessage({
+			requestId: activeAuthRef.current?.requestId ?? `auth-request-${++authRequestSeqRef.current}`,
+			methods,
+			message,
+			phase: "authenticating",
+			onChoose: () => onCancel(),
+			onOpenConfig: methods.length === 0 ? openAcpConfig : void 0
+		});
+	}, [openAcpConfig, putAuthMessage]);
+	const showAuthComplete = (0, import_react.useCallback)((message = "The agent is ready to continue.") => {
+		const current = activeAuthRef.current;
+		const id = activeAuthMessageIdRef.current;
+		if (!current || !id) return;
+		putAuthMessage({
+			...current,
+			phase: "complete",
+			message,
+			error: void 0,
+			authUri: void 0,
+			onChoose: () => {}
+		}, id);
+		activeAuthRef.current = null;
+		activeAuthMessageIdRef.current = null;
+	}, [putAuthMessage]);
 	const threadListAdapter = (0, import_react.useMemo)(() => {
 		if (!chatListSupported) return void 0;
 		return {
@@ -1619,39 +1759,82 @@ function useAcpChat() {
 			return;
 		}
 		const text = textFromAppendMessage(message);
-		const assistantId = `assistant-${++assistantSeqRef.current}`;
-		setMessages((previous) => [
-			...previous,
-			{
-				id: `user-${assistantSeqRef.current}`,
-				role: "user",
-				content: text ? textMessageContent(text) : [],
-				attachments: message.attachments,
-				metadata: message.metadata
-			},
-			{
-				id: assistantId,
-				role: "assistant",
-				content: []
-			}
-		]);
-		turnRef.current = {
-			reasoning: "",
-			text: "",
-			tools: []
-		};
-		lastChunkRoleRef.current = "assistant";
+		const userId = `user-${++assistantSeqRef.current}`;
+		setMessages((previous) => [...previous, {
+			id: userId,
+			role: "user",
+			content: text ? textMessageContent(text) : [],
+			attachments: message.attachments,
+			metadata: message.metadata
+		}]);
+		turnRef.current = null;
+		lastChunkRoleRef.current = null;
 		clearPlans();
 		setStatus("");
 		setIsRunning(true);
 		try {
-			await session.prompt(blocks);
+			let authError;
+			let promptAuthenticated = false;
+			for (;;) try {
+				await session.prompt(blocks);
+				if (promptAuthenticated) showAuthComplete("Authentication complete. Prompt retried.");
+				break;
+			} catch (error) {
+				if (!(error instanceof AcpAuthRequiredError)) throw error;
+				const authResult = await requestAuth(error.methods, error.message, authError);
+				if (authResult?.kind === "retry") continue;
+				if (!authResult) {
+					setStatus("Authentication cancelled.");
+					break;
+				}
+				let cancelledDuringAuth = false;
+				showAuthInProgress(error.methods, error.message, () => {
+					cancelledDuringAuth = true;
+					session.stop();
+				});
+				try {
+					if (authResult.choice.env) {
+						if (!selectedAgentId) throw new Error("Cannot reconnect the ACP agent for environment-based authentication.");
+						await session.reconnectWithEnv(selectedAgentId, authResult.choice.env, sink);
+					}
+					await session.authenticate(authResult.choice.methodId);
+					if (authResult.choice.env) {
+						const outcome = await session.openSession();
+						if (outcome.kind === "auth-required") throw new Error(outcome.message);
+						if (outcome.kind === "error") throw new Error(outcome.message);
+					}
+					showAuthInProgress(error.methods, "Authentication complete. Retrying the prompt.", () => {
+						cancelledDuringAuth = true;
+						session.stop();
+					});
+					promptAuthenticated = true;
+					authError = void 0;
+				} catch (authFailure) {
+					if (cancelledDuringAuth) {
+						setStatus("Authentication cancelled.");
+						break;
+					}
+					authError = errorText(authFailure);
+				}
+				if (cancelledDuringAuth) {
+					setStatus("Authentication cancelled.");
+					break;
+				}
+			}
 		} catch (error) {
 			setStatus(errorText(error));
 		} finally {
 			setIsRunning(false);
 		}
-	}, [clearPlans, promptCapabilities]);
+	}, [
+		clearPlans,
+		promptCapabilities,
+		requestAuth,
+		selectedAgentId,
+		showAuthComplete,
+		showAuthInProgress,
+		sink
+	]);
 	const onCancel = (0, import_react.useCallback)(async () => {
 		try {
 			await sessionRef.current?.cancel();
@@ -1685,7 +1868,6 @@ function useAcpChat() {
 				resetActiveThreadUi();
 				resetSessionMetadata();
 				setPermission(null);
-				setAuth(null);
 				setSessions([]);
 				activeSessionIdRef.current = null;
 				setActiveSessionId(null);
@@ -1698,32 +1880,21 @@ function useAcpChat() {
 				let authError;
 				while (outcome.kind === "auth-required") {
 					const { methods, message } = outcome;
-					const choice = await new Promise((resolve) => {
-						authResolveRef.current = resolve;
-						setAuth({
-							methods,
-							message,
-							phase: "select",
-							error: authError,
-							onChoose: resolve
-						});
-					});
-					authResolveRef.current = null;
-					if (!choice) {
+					const authResult = await requestAuth(methods, message, authError);
+					if (authResult?.kind === "retry") {
+						outcome = await session.openSession();
+						continue;
+					}
+					if (!authResult) {
 						await session.stop();
-						setAuth(null);
 						setStatus("Authentication cancelled.");
 						return;
 					}
+					const choice = authResult.choice;
 					let cancelledDuringAuth = false;
-					setAuth({
-						methods,
-						message,
-						phase: "authenticating",
-						onChoose: () => {
-							cancelledDuringAuth = true;
-							session.stop();
-						}
+					showAuthInProgress(methods, message, () => {
+						cancelledDuringAuth = true;
+						session.stop();
 					});
 					try {
 						if (choice.env) await session.reconnectWithEnv(agentId, choice.env, sink);
@@ -1732,7 +1903,6 @@ function useAcpChat() {
 						authError = void 0;
 					} catch (error) {
 						if (cancelledDuringAuth) {
-							setAuth(null);
 							setStatus("Authentication cancelled.");
 							return;
 						}
@@ -1744,16 +1914,15 @@ function useAcpChat() {
 						};
 					}
 					if (cancelledDuringAuth) {
-						setAuth(null);
 						setStatus("Authentication cancelled.");
 						return;
 					}
 				}
-				setAuth(null);
 				if (outcome.kind === "error") {
 					setStatus(outcome.message);
 					return;
 				}
+				showAuthComplete();
 				setSelectedAgentId(agentId);
 				const capabilities = session.sessionCapabilities;
 				const supportsChatList = capabilities.list && capabilities.load;
@@ -1764,7 +1933,6 @@ function useAcpChat() {
 				if (supportsChatList) await loadSessionsPage(session, null, false);
 				else setStatus("The selected ACP agent does not support chat history.");
 			} catch (error) {
-				setAuth(null);
 				setStatus(errorText(error));
 			} finally {
 				setStarting(false);
@@ -1772,8 +1940,11 @@ function useAcpChat() {
 		})();
 	}, [
 		loadSessionsPage,
+		requestAuth,
 		resetActiveThreadUi,
 		resetSessionMetadata,
+		showAuthComplete,
+		showAuthInProgress,
 		sink
 	]);
 	const selectMode = (0, import_react.useCallback)((modeId) => {
@@ -1824,7 +1995,6 @@ function useAcpChat() {
 		currentModeId,
 		commands,
 		permission,
-		auth,
 		chatListSupported,
 		chatListLoading,
 		chatListHasMore: nextCursor != null,
@@ -1842,6 +2012,22 @@ function textMessageContent(text) {
 	return [{
 		type: "text",
 		text
+	}];
+}
+function authMessageContent(auth) {
+	const status = auth.phase === "complete" ? "completed" : auth.phase === "authenticating" ? "in_progress" : "pending";
+	return [{
+		type: "tool-call",
+		toolCallId: auth.requestId ?? "auth",
+		toolName: "auth",
+		args: {},
+		argsText: auth.message ?? "Authentication required",
+		result: {
+			status,
+			title: "Authentication",
+			kind: "auth",
+			auth
+		}
 	}];
 }
 function appendTextToMessage(message, text) {
@@ -2358,177 +2544,6 @@ function ApprovalPrompt({ permission }) {
 			})]
 		})
 	});
-}
-//#endregion
-//#region views/acp-chat/src/components/AuthPrompt.tsx
-/**
-* In-chat authorization dialog. Mirrors {@link ApprovalPrompt}: the runtime resolves `auth.onChoose` with the chosen
-* method (and, for env_var methods, the entered credentials) or `null` to cancel. While the agent runs an OAuth device
-* flow the dialog switches to the `authenticating` phase and shows the verification URL pushed via `authenticate/update`.
-*/
-function AuthPrompt({ auth }) {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-		className: "acpApprovalOverlay",
-		role: "dialog",
-		"aria-modal": "true",
-		"aria-label": "Authentication",
-		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-			className: "acpApproval acpAuth",
-			children: auth.phase === "select" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AuthMethodPicker, { auth }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AuthInProgress, { auth })
-		})
-	});
-}
-function AuthMethodPicker({ auth }) {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-			className: "acpApprovalTitle",
-			children: auth.message || "Authentication required"
-		}),
-		auth.error ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-			className: "acpAuthError",
-			children: auth.error
-		}) : null,
-		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-			className: "acpAuthMethods",
-			children: auth.methods.map((method) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AuthMethod, {
-				method,
-				onChoose: auth.onChoose
-			}, method.id))
-		}),
-		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-			className: "acpApprovalOptions",
-			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-				type: "button",
-				className: "acpApprovalButton acpApprovalButton--cancel",
-				onClick: () => auth.onChoose(null),
-				children: "Cancel"
-			})
-		})
-	] });
-}
-/**
-* One auth method. Variables the agent declares (ACP `env_var` methods) are pre-listed; the user can add more (some
-* agents, e.g. qwen's "Use OpenAI API key", expect `OPENAI_API_KEY`/`OPENAI_BASE_URL`/`OPENAI_MODEL` in the env without
-* declaring them). On submit, entered variables are injected via re-spawn before `authenticate`; with none entered this
-* is a plain agent-driven sign-in / OAuth device flow.
-*/
-function AuthMethod({ method, onChoose }) {
-	const [rows, setRows] = (0, import_react.useState)(() => method.vars.map((variable) => ({
-		name: variable.name,
-		value: "",
-		secret: variable.secret,
-		fixed: true
-	})));
-	const env = collectEnv(rows);
-	const missingRequired = method.vars.some((variable) => !variable.optional && !env[variable.name]);
-	const update = (index, patch) => setRows((previous) => previous.map((row, i) => i === index ? {
-		...row,
-		...patch
-	} : row));
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
-		className: "acpAuthMethod",
-		onSubmit: (event) => {
-			event.preventDefault();
-			if (!missingRequired) onChoose({
-				methodId: method.id,
-				env: Object.keys(env).length > 0 ? env : void 0
-			});
-		},
-		children: [
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-				className: "acpAuthMethodName",
-				children: method.name
-			}),
-			method.description ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-				className: "acpAuthMethodDesc",
-				children: method.description
-			}) : null,
-			rows.map((row, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: "acpAuthVarRow",
-				children: [row.fixed ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-					className: "acpAuthVarLabel acpAuthVarName",
-					children: row.name
-				}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-					className: "acpAuthVarInput acpAuthVarName",
-					placeholder: "ENV_VAR",
-					autoComplete: "off",
-					spellCheck: false,
-					value: row.name,
-					onChange: (event) => update(index, { name: event.target.value })
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-					className: "acpAuthVarInput",
-					type: row.secret ? "password" : "text",
-					placeholder: "value",
-					autoComplete: "off",
-					spellCheck: false,
-					value: row.value,
-					onChange: (event) => update(index, { value: event.target.value })
-				})]
-			}, index)),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: "acpAuthActions",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-					type: "button",
-					className: "acpAuthAddVar",
-					onClick: () => setRows((previous) => [...previous, {
-						name: "",
-						value: "",
-						secret: false,
-						fixed: false
-					}]),
-					children: "+ Add variable"
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-					type: "submit",
-					className: "acpApprovalButton acpApprovalButton--allow_once",
-					disabled: missingRequired,
-					children: "Authenticate"
-				})]
-			})
-		]
-	});
-}
-function AuthInProgress({ auth }) {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-			className: "acpApprovalTitle",
-			children: "Authenticating…"
-		}),
-		auth.authUri ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-			className: "acpAuthUri",
-			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { children: "Open this URL in your browser to finish signing in:" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
-				href: auth.authUri,
-				target: "_blank",
-				rel: "noreferrer",
-				className: "acpAuthUriLink",
-				children: auth.authUri
-			})]
-		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-			className: "acpAuthHint",
-			children: "Waiting for the agent…"
-		}),
-		auth.authUri ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-			className: "acpAuthHint",
-			children: "If it doesn't continue after you approve, the agent's OAuth may be unavailable — Cancel and use an API key instead."
-		}) : null,
-		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-			className: "acpApprovalOptions",
-			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-				type: "button",
-				className: "acpApprovalButton acpApprovalButton--cancel",
-				onClick: () => auth.onChoose(null),
-				children: "Cancel"
-			})
-		})
-	] });
-}
-function collectEnv(rows) {
-	const env = {};
-	for (const row of rows) {
-		const name = row.name.trim();
-		const value = row.value.trim();
-		if (name && value) env[name] = value;
-	}
-	return env;
 }
 //#endregion
 //#region views/acp-chat/src/components/ChatList.tsx
@@ -3780,9 +3795,216 @@ function ThinkingBlock() {
 	});
 }
 //#endregion
+//#region views/acp-chat/src/components/AuthPrompt.tsx
+/**
+* In-chat authorization dialog. Mirrors {@link ApprovalPrompt}: the runtime resolves `auth.onChoose` with the chosen
+* method (and, for env_var methods, the entered credentials) or `null` to cancel. While the agent runs an OAuth device
+* flow the dialog switches to the `authenticating` phase and shows the verification URL pushed via `authenticate/update`.
+*/
+function AuthCard({ auth }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		className: "acpApproval acpAuth acpAuthCard",
+		role: "group",
+		"aria-label": "Authentication",
+		children: auth.phase === "select" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AuthMethodPicker, { auth }) : auth.phase === "complete" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AuthComplete, { auth }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AuthInProgress, { auth })
+	});
+}
+function AuthMethodPicker({ auth }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "acpApprovalTitle",
+			children: auth.message || "Authentication required"
+		}),
+		auth.error ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "acpAuthError",
+			children: auth.error
+		}) : null,
+		auth.methods.length > 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "acpAuthMethods",
+			children: auth.methods.map((method) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AuthMethod, {
+				method,
+				onChoose: auth.onChoose
+			}, `${auth.requestId ?? "auth"}-${method.id}`))
+		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(UnsupportedAuth, {}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "acpApprovalOptions",
+			children: [
+				auth.onRetry ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					className: "acpApprovalButton",
+					onClick: auth.onRetry,
+					children: "Retry"
+				}) : null,
+				auth.onOpenConfig ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					className: "acpApprovalButton",
+					onClick: auth.onOpenConfig,
+					children: "Open acp.json"
+				}) : null,
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					className: "acpApprovalButton acpApprovalButton--cancel",
+					onClick: () => auth.onChoose(null),
+					children: "Cancel"
+				})
+			]
+		})
+	] });
+}
+/**
+* One auth method. Variables the agent declares (ACP `env_var` methods) are pre-listed; the user can add more (some
+* agents, e.g. qwen's "Use OpenAI API key", expect `OPENAI_API_KEY`/`OPENAI_BASE_URL`/`OPENAI_MODEL` in the env without
+* declaring them). On submit, entered variables are injected via re-spawn before `authenticate`; with none entered this
+* is a plain agent-driven sign-in / OAuth device flow.
+*/
+function AuthMethod({ method, onChoose }) {
+	const supportsEnv = method.vars.length > 0 || method.type === "env_var" || method.type === "environment";
+	const [rows, setRows] = (0, import_react.useState)(() => method.vars.map((variable) => ({
+		name: variable.name,
+		value: "",
+		secret: variable.secret,
+		fixed: true
+	})));
+	const env = collectEnv(rows);
+	const missingRequired = method.vars.some((variable) => !variable.optional && !env[variable.name]);
+	const update = (index, patch) => setRows((previous) => previous.map((row, i) => i === index ? {
+		...row,
+		...patch
+	} : row));
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+		className: "acpAuthMethod",
+		onSubmit: (event) => {
+			event.preventDefault();
+			if (!missingRequired) onChoose({
+				methodId: method.id,
+				env: Object.keys(env).length > 0 ? env : void 0
+			});
+		},
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "acpAuthMethodName",
+				children: method.name
+			}),
+			method.type || method.link ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "acpAuthMethodMeta",
+				children: [method.type ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: method.type }) : null, method.link ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+					href: method.link,
+					target: "_blank",
+					rel: "noreferrer",
+					children: method.link
+				}) : null]
+			}) : null,
+			method.description ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "acpAuthMethodDesc",
+				children: method.description
+			}) : null,
+			supportsEnv ? rows.map((row, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "acpAuthVarRow",
+				children: [row.fixed ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					className: "acpAuthVarLabel acpAuthVarName",
+					children: row.name
+				}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+					className: "acpAuthVarInput acpAuthVarName",
+					placeholder: "ENV_VAR",
+					autoComplete: "off",
+					spellCheck: false,
+					value: row.name,
+					onChange: (event) => update(index, { name: event.target.value })
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+					className: "acpAuthVarInput",
+					type: row.secret ? "password" : "text",
+					placeholder: "value",
+					autoComplete: "off",
+					spellCheck: false,
+					value: row.value,
+					onChange: (event) => update(index, { value: event.target.value })
+				})]
+			}, index)) : null,
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "acpAuthActions",
+				children: [supportsEnv ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					className: "acpAuthAddVar",
+					onClick: () => setRows((previous) => [...previous, {
+						name: "",
+						value: "",
+						secret: false,
+						fixed: false
+					}]),
+					children: "+ Add variable"
+				}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "submit",
+					className: "acpApprovalButton acpApprovalButton--allow_once",
+					disabled: missingRequired,
+					children: "Authenticate"
+				})]
+			})
+		]
+	});
+}
+function UnsupportedAuth() {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		className: "acpAuthUnsupported",
+		children: "This ACP agent did not provide a supported local authentication method. Reconfigure the agent, sign in with its CLI, or retry after updating acp.json."
+	});
+}
+function AuthInProgress({ auth }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "acpApprovalTitle",
+			children: "Authenticating…"
+		}),
+		auth.authUri ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "acpAuthUri",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { children: "Open this URL in your browser to finish signing in:" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+				href: auth.authUri,
+				target: "_blank",
+				rel: "noreferrer",
+				className: "acpAuthUriLink",
+				children: auth.authUri
+			})]
+		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "acpAuthHint",
+			children: "Waiting for the agent…"
+		}),
+		auth.authUri ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "acpAuthHint",
+			children: "If it doesn't continue after you approve, the agent's OAuth may be unavailable — Cancel and use an API key instead."
+		}) : null,
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "acpApprovalOptions",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				type: "button",
+				className: "acpApprovalButton acpApprovalButton--cancel",
+				onClick: () => auth.onChoose(null),
+				children: "Cancel"
+			})
+		})
+	] });
+}
+function AuthComplete({ auth }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		className: "acpApprovalTitle",
+		children: "Authentication complete"
+	}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		className: "acpAuthHint",
+		children: auth.message || "The agent is ready to continue."
+	})] });
+}
+function collectEnv(rows) {
+	const env = {};
+	for (const row of rows) {
+		const name = row.name.trim();
+		const value = row.value.trim();
+		if (name && value) env[name] = value;
+	}
+	return env;
+}
+//#endregion
 //#region views/acp-chat/src/components/ToolCallCard.tsx
 function ToolCallCard(props) {
 	const result = props?.result ?? {};
+	if (result.kind === "auth" && result.auth) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AuthCard, { auth: result.auth });
 	const title = result.title ?? props?.toolName ?? "Tool call";
 	const kind = result.kind ?? props?.toolName ?? "other";
 	const status = result.status ?? "in_progress";
@@ -3952,8 +4174,7 @@ function ChatView() {
 						})
 					]
 				}),
-				chat.permission ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ApprovalPrompt, { permission: chat.permission }) : null,
-				chat.auth ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AuthPrompt, { auth: chat.auth }) : null
+				chat.permission ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ApprovalPrompt, { permission: chat.permission }) : null
 			]
 		})
 	});

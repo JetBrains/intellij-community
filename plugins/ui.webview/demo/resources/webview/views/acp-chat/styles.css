@@ -2748,6 +2748,11 @@ body {
 .acpAuth {
   max-width: 460px;
 }
+.acpAuthCard {
+  box-sizing: border-box;
+  max-width: min(560px, 100%);
+  margin: 4px 0;
+}
 .acpAuthError {
   margin-bottom: 10px;
   color: var(--acp-error);
@@ -2755,17 +2760,24 @@ body {
 .acpAuthMethods {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0;
   margin-bottom: 12px;
+  border: 1px solid var(--acp-border);
+  border-radius: 6px;
+  background: var(--acp-bg-alt);
+  overflow: hidden;
 }
 .acpAuthMethod {
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: 10px;
-  border: 1px solid var(--acp-border);
-  border-radius: 6px;
-  background: var(--acp-bg-alt);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.acpAuthMethod + .acpAuthMethod {
+  border-top: 1px solid var(--acp-border);
 }
 .acpAuthMethodHead {
   display: flex;
@@ -2776,7 +2788,23 @@ body {
 .acpAuthMethodName {
   font-weight: 600;
 }
+.acpAuthMethodMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: var(--acp-text-muted);
+  font-family: var(--acp-mono), monospace;
+  font-size: 12px;
+  word-break: break-all;
+}
+.acpAuthMethodMeta a {
+  color: var(--acp-accent);
+}
 .acpAuthMethodDesc {
+  color: var(--acp-text-muted);
+}
+.acpAuthUnsupported {
+  margin-bottom: 12px;
   color: var(--acp-text-muted);
 }
 .acpAuthVar {

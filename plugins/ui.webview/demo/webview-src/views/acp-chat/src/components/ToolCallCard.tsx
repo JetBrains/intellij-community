@@ -1,9 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
+import { AuthCard } from "./AuthPrompt"
+
 // Rendered by assistant-ui as the fallback for tool-call message parts. Reads the ACP tool details we packed into
 // the part's `result` field (see useAcpChat.flushTurn). Props are loosely typed to tolerate assistant-ui versions.
 export function ToolCallCard(props: any) {
   const result = props?.result ?? {}
+  if (result.kind === "auth" && result.auth) {
+    return <AuthCard auth={result.auth} />
+  }
   const title: string = result.title ?? props?.toolName ?? "Tool call"
   const kind: string = result.kind ?? props?.toolName ?? "other"
   const status: string = result.status ?? "in_progress"
