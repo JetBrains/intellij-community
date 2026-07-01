@@ -175,7 +175,7 @@ private fun MavenDomPlugin.createKaptExecution(): MavenDomPluginExecution {
 }
 
 private fun MavenDomPluginExecution.configureSourceDirs(xmlFile: XmlFile) {
-    val projectRoot = xmlFile.virtualFile.parent
+    val projectRoot = (xmlFile.takeIf { it.isPhysical } ?: xmlFile.originalFile).virtualFile?.parent ?: return
     val sourceDirs = listOf("src/main/kotlin", "src/main/java")
         .filter { projectRoot.findFileByRelativePath(it) != null }
         .ifEmpty { listOf("src/main/kotlin", "src/main/java") }
