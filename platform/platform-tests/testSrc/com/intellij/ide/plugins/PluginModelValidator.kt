@@ -596,7 +596,7 @@ internal class PluginModelValidator(
               val problemDescription = when (thisLoadingRule) {
                 ModuleLoadingRuleValue.EMBEDDED ->
                   "Since optional modules have implicit dependencies on the main module, this creates a circular dependency and the plugin won't load."
-                ModuleLoadingRuleValue.REQUIRED if moduleName != "intellij.platform.backend" -> // remove this condition when IJPL-201428 is fixed
+                ModuleLoadingRuleValue.REQUIRED ->
                   "This actually makes '${moduleName}' required as well (the plugin won't load if it's not available)."
                 else -> null
               }
