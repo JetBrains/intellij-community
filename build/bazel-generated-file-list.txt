@@ -984,16 +984,6 @@ plugins/agent-workbench/lib-agent/common
 plugins/agent-workbench/lib-agent/core
 plugins/agent-workbench/lib-agent/filewatch
 plugins/agent-workbench/lib-agent/json
-plugins/agent-workbench/lib-agent/providers/claude/common
-plugins/agent-workbench/lib-agent/providers/claude/sessions
-plugins/agent-workbench/lib-agent/providers/codex/common
-plugins/agent-workbench/lib-agent/providers/codex/sessions
-plugins/agent-workbench/lib-agent/providers/junie/common
-plugins/agent-workbench/lib-agent/providers/junie/sessions
-plugins/agent-workbench/lib-agent/providers/opencode/sessions
-plugins/agent-workbench/lib-agent/providers/pi/sessions
-plugins/agent-workbench/lib-agent/providers/pi/sessions-filewatch
-plugins/agent-workbench/lib-agent/providers/terminal/sessions
 plugins/agent-workbench/lib-agent/sessions-core
 plugins/agent-workbench/prompt/core
 plugins/ant

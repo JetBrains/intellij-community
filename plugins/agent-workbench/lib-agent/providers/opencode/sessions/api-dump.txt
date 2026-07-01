@@ -1,4 +1,0 @@
-f:com.intellij.platform.ai.agent.opencode.sessions.OpenCodeSessionSource$inlined$sam$i$java_util_function_BiFunction$0
-- java.util.function.BiFunction
-- <init>(kotlin.jvm.functions.Function2):V
-- bf:apply(java.lang.Object,java.lang.Object):java.lang.Object
