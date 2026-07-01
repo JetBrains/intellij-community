@@ -251,9 +251,10 @@ class KotlinHotSwapSourceChangeCompatibilityChecker(project: Project) :
 
     context(_: Context)
     private fun KtLambdaExpression.snapshot(index: Int): Pair<HotSwapMethodId, HotSwapMethodShape> {
-        val (parameters, returnType) = cached(this, "lambda", dependency = enclosingTopLevelMember()) {
+        val enclosingMember = enclosingTopLevelMember()
+        val (parameters, returnType) = cached(this, "lambda", dependency = enclosingMember) {
             val (declaredParameters, lambdaReturnType) = signature()
-            val capturedParameters = capturedVariables().map { it.capturedSignature() }
+            val capturedParameters = capturedVariables(enclosingMember).map { it.capturedSignature() }
             (capturedParameters + declaredParameters) to lambdaReturnType
         }
         val id = HotSwapMethodId("lambda$index", false, parameters)
@@ -263,8 +264,9 @@ class KotlinHotSwapSourceChangeCompatibilityChecker(project: Project) :
     context(_: Context)
     private fun KtClassOrObject.capturedFields(anonymous: Boolean): Map<String, HotSwapFieldShape> {
         if (!anonymous) return emptyMap()
-        return cached(this, "object", dependency = enclosingTopLevelMember()) {
-            capturedVariables().mapIndexed { index, declaration ->
+        val enclosingMember = enclosingTopLevelMember()
+        return cached(this, "object", dependency = enclosingMember) {
+            capturedVariables(enclosingMember).mapIndexed { index, declaration ->
                 val type = declaration.resolvedTypeSignature("type for captured Kotlin variable '${declaration.name.orEmpty()}'")
                 "capture$index${declaration.name.orEmpty()}" to HotSwapFieldShape(type, emptySet())
             }.toMap()
@@ -274,18 +276,26 @@ class KotlinHotSwapSourceChangeCompatibilityChecker(project: Project) :
     private fun KtCallableDeclaration.capturedSignature(): String =
         resolvedTypeSignature("type for captured Kotlin variable '${name.orEmpty()}'")
 
-    private fun KtElement.capturedVariables(): List<KtCallableDeclaration> {
+    private fun KtElement.capturedVariables(enclosingMember: PsiElement): List<KtCallableDeclaration> {
+        val capturableVariables = enclosingMember.capturableVariables()
+        if (capturableVariables.isEmpty()) return emptyList()
         val declarations = linkedSetOf<KtCallableDeclaration>()
         PsiTreeUtil.processElements(this) { element ->
-            if (element is KtNameReferenceExpression) {
-                val declaration = element.mainReference.resolve() as? KtCallableDeclaration
-                if (declaration != null && !PsiTreeUtil.isAncestor(this, declaration, false) && declaration.isCapturableVariable()) {
-                    declarations.add(declaration)
-                }
+            if (element !is KtNameReferenceExpression) return@processElements true
+            if (element.getReferencedName() !in capturableVariables) return@processElements true
+            val declaration = element.mainReference.resolve() as? KtCallableDeclaration
+            if (declaration != null && !PsiTreeUtil.isAncestor(this, declaration, false) && declaration.isCapturableVariable()) {
+                declarations.add(declaration)
             }
             true
         }
         return declarations.sortedBy { it.textOffset }
+    }
+
+    private fun PsiElement.capturableVariables(): Set<String> {
+        return PsiTreeUtil.collectElementsOfType(this, KtCallableDeclaration::class.java).asSequence()
+            .filter { it.isCapturableVariable() }
+            .mapNotNullTo(hashSetOf()) { it.name }
     }
 
     private fun KtCallableDeclaration.isCapturableVariable(): Boolean = when (this) {

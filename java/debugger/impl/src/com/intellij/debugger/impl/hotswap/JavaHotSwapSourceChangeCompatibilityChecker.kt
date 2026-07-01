@@ -151,8 +151,9 @@ class JavaHotSwapSourceChangeCompatibilityChecker(project: Project) :
 
   context(_: Context)
   private fun PsiLambdaExpression.snapshot(index: Int): Pair<HotSwapMethodId, HotSwapMethodShape> {
-    val (parameters, returnType) = cached(this, "lambda", dependency = enclosingTopLevelMember()) {
-      val capturedParameters = capturedVariables().map { it.type.signature() }
+    val enclosingMember = enclosingTopLevelMember()
+    val (parameters, returnType) = cached(this, "lambda", dependency = enclosingMember) {
+      val capturedParameters = capturedVariables(enclosingMember).map { it.type.signature() }
       val declaredParameters = parameterList.parameters.map { it.type.signature() }
       val returnType = functionalInterfaceType?.let { LambdaUtil.getFunctionalInterfaceReturnType(it)?.signature() }
       (capturedParameters + declaredParameters) to returnType
@@ -173,18 +174,22 @@ class JavaHotSwapSourceChangeCompatibilityChecker(project: Project) :
   context(_: Context)
   private fun PsiClass.capturedFields(): Map<String, HotSwapFieldShape> {
     if (this !is PsiAnonymousClass) return emptyMap()
-    return cached(this, "anonymousClass", dependency = enclosingTopLevelMember()) {
-      capturedVariables().mapIndexed { index, variable ->
+    val enclosingMember = enclosingTopLevelMember()
+    return cached(this, "anonymousClass", dependency = enclosingMember) {
+      capturedVariables(enclosingMember).mapIndexed { index, variable ->
         "capture$index${variable.name}" to HotSwapFieldShape(variable.type.signature(), emptySet())
       }.toMap()
     }
   }
 
-  private fun PsiElement.capturedVariables(): List<PsiVariable> {
+  private fun PsiElement.capturedVariables(enclosingMember: PsiElement): List<PsiVariable> {
+    val capturableVariableNames = enclosingMember.capturableVariableNames()
+    if (capturableVariableNames.isEmpty()) return emptyList()
     val variables = linkedSetOf<PsiVariable>()
     accept(object : JavaRecursiveElementWalkingVisitor() {
       override fun visitReferenceExpression(expression: PsiReferenceExpression) {
         super.visitReferenceExpression(expression)
+        if (expression.referenceName !in capturableVariableNames) return
         val variable = expression.resolve() as? PsiVariable ?: return
         if (variable is PsiField || PsiTreeUtil.isAncestor(this@capturedVariables, variable, false)) return
         variables.add(variable)
@@ -192,6 +197,12 @@ class JavaHotSwapSourceChangeCompatibilityChecker(project: Project) :
     })
     return variables.sortedBy { it.textOffset }
   }
+
+  private fun PsiElement.capturableVariableNames(): Set<String> =
+    PsiTreeUtil.collectElementsOfType(this, PsiVariable::class.java)
+      .asSequence()
+      .filterNot { it is PsiField }
+      .mapNotNullTo(hashSetOf()) { it.name }
 
   private fun PsiType.signature(): String = canonicalText
 
