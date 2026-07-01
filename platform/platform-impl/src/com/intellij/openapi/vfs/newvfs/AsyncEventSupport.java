@@ -54,7 +54,9 @@ public final class AsyncEventSupport {
   // that are supposed to be processed asynchronously.
   private static final @NotNull Set<List<? extends VFileEvent>> asyncProcessedEvents =
     CollectionFactory.createCustomHashingStrategySet(HashingStrategy.identity());
-  private static final @NotNull Map<List<? extends VFileEvent>, ChangeAppliers> appliers =
+  private static final @NotNull Map<List<? extends VFileEvent>, ChangeAppliers> earlyAppliers =
+    CollectionFactory.createSmallMemoryFootprintMap(1);
+  private static final @NotNull Map<List<? extends VFileEvent>, ChangeAppliers> lateAppliers =
     CollectionFactory.createSmallMemoryFootprintMap(1);
 
   public static void startListening() {
@@ -67,9 +69,11 @@ public final class AsyncEventSupport {
         if (asyncProcessedEvents.contains(events)) {
           return;
         }
-        var appliers = runAsyncListeners(events);
-        AsyncEventSupport.appliers.put(events, appliers);
-        beforeVfsChange(appliers);
+        var appliersPair = runAsyncListeners(events).split(applier -> applier instanceof AfterEventShouldBeFiredBeforeOtherListeners);
+        earlyAppliers.put(events, appliersPair.getFirst());
+        lateAppliers.put(events, appliersPair.getSecond());
+        beforeVfsChange(appliersPair.getFirst());
+        beforeVfsChange(appliersPair.getSecond());
       }
 
       @Override
@@ -77,18 +81,32 @@ public final class AsyncEventSupport {
         if (asyncProcessedEvents.contains(events)) {
           return;
         }
-        var appliers = AsyncEventSupport.appliers.remove(events);
-        if (appliers == null || (appliers.edtAppliers.isEmpty() && appliers.backgroundAppliers.isEmpty())) {
-          return;
-        }
-        afterVfsChange(appliers);
+        drainAppliers(earlyAppliers, events);
+        drainAppliers(lateAppliers, events);
       }
     });
   }
 
+  public static void drainEarlyAppliers(@NotNull List<? extends VFileEvent> events) {
+    if (asyncProcessedEvents.contains(events)) {
+      return;
+    }
+    drainAppliers(earlyAppliers, events);
+  }
+
+  private static void drainAppliers(@NotNull Map<List<? extends VFileEvent>, ChangeAppliers> appliers, @NotNull List<? extends VFileEvent> events) {
+    var actualAppliers = appliers.remove(events);
+
+    if (actualAppliers != null && !(actualAppliers.edtAppliers.isEmpty() && actualAppliers.backgroundAppliers.isEmpty())) {
+      afterVfsChange(actualAppliers);
+    }
+  }
+
+
   private static void ensureAllEventsProcessed() {
     LOG.assertTrue(asyncProcessedEvents.isEmpty(), "Some VFS events were not properly processed " + asyncProcessedEvents);
-    LOG.assertTrue(appliers.isEmpty(), "Some VFS events were not processed after VFS change performed " + appliers);
+    LOG.assertTrue(earlyAppliers.isEmpty(), "Some VFS events were not processed after VFS change performed " + earlyAppliers);
+    LOG.assertTrue(lateAppliers.isEmpty(), "Some VFS events were not processed after VFS change performed " + lateAppliers);
   }
 
   @ApiStatus.Internal
