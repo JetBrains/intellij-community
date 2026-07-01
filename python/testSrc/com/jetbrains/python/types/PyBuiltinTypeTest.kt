@@ -492,12 +492,14 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       #└ TYPE str
       """)
 
+    // For a class object, __class__ points to its metaclass, not an attribute defined on C itself.
+    // Here C is an instance of type[C], so C.__class__ has type type[C].
     @Test
     fun `dunder class on class object`() = test("""
       class C:
           pass
       expr = C.__class__
-      #└ TYPE property
+      #└ TYPE type[C]
       """)
   }
 
