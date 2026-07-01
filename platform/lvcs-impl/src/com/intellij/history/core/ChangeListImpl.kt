@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NlsContexts
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.days
 
 private const val DAYS_TO_KEEP_PROPERTY_KEY = "localHistory.daysToKeep"
@@ -84,27 +85,24 @@ internal class ChangeListImpl(private val storage: ChangeListStorage) : ChangeLi
   // todo synchronization issue: changeset may me modified while being iterated
   override fun iterChanges(): Iterable<ChangeSet> {
     return Iterable {
+      val currentSet = synchronized(this@ChangeListImpl) {
+        currentChangeSet
+      }
       object : Iterator<ChangeSet> {
-        private var starterCurrentSet = synchronized(this@ChangeListImpl) {
-          currentChangeSet
-        }
+        private val starterCurrentSet = AtomicReference(currentSet)
         private val storageIterator: Iterator<ChangeSet> by lazy {
           storage.iterate()
         }
 
-        override fun hasNext(): Boolean = synchronized(this@ChangeListImpl) {
-          starterCurrentSet != null || storageIterator.hasNext()
+        override fun hasNext(): Boolean {
+          return starterCurrentSet.get() != null || storageIterator.hasNext()
         }
 
-        override fun next(): ChangeSet = synchronized(this@ChangeListImpl) {
-          val current = starterCurrentSet
-          if (current != null) {
-            starterCurrentSet = null
-            current
-          }
-          else {
-            storageIterator.nextOrNull() ?: error("No more changesets available")
-          }
+        override fun next(): ChangeSet {
+          val current = starterCurrentSet.getAndSet(null)
+          return current
+                 ?: storageIterator.nextOrNull()
+                 ?: error("No more changesets available")
         }
       }
     }

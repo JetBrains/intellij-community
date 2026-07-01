@@ -209,7 +209,6 @@ internal class PersistentChangeListStorage(
     }
   }
 
-  @Synchronized
   override fun iterate(): Iterator<ChangeSet> {
     flushPending()
     return object : Iterator<ChangeSet> {
