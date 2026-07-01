@@ -9,8 +9,7 @@ fun foo(a: String, b: String, c: String) {}
 fun test() {
     foo(
         a = TODO(),
-        b = TODO(),
-        c = TODO()
+        b = TODO()
     )
 }
 
