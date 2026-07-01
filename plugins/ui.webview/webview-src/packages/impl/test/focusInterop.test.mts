@@ -133,8 +133,11 @@ class FakeDocument {
     return event
   }
 
-  dispatchPointerDown(target?: FakeElement): void {
-    this.dispatchToListeners("pointerdown", new FakeEvent(target) as unknown as Event)
+  dispatchPointerDown(target?: FakeElement, afterCapture?: (event: FakeEvent) => void): FakeEvent {
+    const event = new FakeEvent(target)
+    this.dispatchToListeners("pointerdown", event as unknown as Event)
+    afterCapture?.(event)
+    return event
   }
 
   dispatch(type: string): void {
@@ -172,7 +175,13 @@ class FakeKeyboardEvent {
 }
 
 class FakeEvent {
+  defaultPrevented = false
+
   constructor(readonly target: FakeElement | null = null) {
+  }
+
+  preventDefault(): void {
+    this.defaultPrevented = true
   }
 
   composedPath(): FakeElement[] {
@@ -326,6 +335,20 @@ describe("WebView focus interop", () => {
     await flushPointerFocus()
 
     expect(documentStub.activeElement).toBe(input)
+    expect(bridge.exits).toEqual([])
+    expect(bridge.activations).toEqual(["activated"])
+  })
+
+  test("does not force focus when pointer default action is prevented", async () => {
+    const bridge = new FakeBridge()
+    installWebViewFocusInterop(bridge as unknown as WebViewBridge)
+    const trigger = appendElement("button", "clicked")
+
+    const event = documentStub.dispatchPointerDown(trigger, (event) => event.preventDefault())
+    await flushPointerFocus()
+
+    expect(event.defaultPrevented).toBe(true)
+    expect(documentStub.activeElement).toBe(null)
     expect(bridge.exits).toEqual([])
     expect(bridge.activations).toEqual(["activated"])
   })

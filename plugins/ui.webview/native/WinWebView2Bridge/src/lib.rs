@@ -34,7 +34,7 @@ const MODIFIER_SHIFT: jint = 1;
 const MODIFIER_CONTROL: jint = 1 << 1;
 const MODIFIER_ALT: jint = 1 << 2;
 const MODIFIER_META: jint = 1 << 3;
-const NATIVE_ABI_VERSION: &str = "wvi-dedicated-thread-v3";
+const NATIVE_ABI_VERSION: &str = "wvi-dedicated-thread-v4";
 const WM_USER_INVOKE: u32 = WM_USER + 1;
 const WEBVIEW_ASSET_URL_FILTER: &str = "https://ij-webview-assets.local/*";
 const DIAGNOSTIC_TRACE: jint = 0;
@@ -155,6 +155,13 @@ impl JavaCallbacks {
     fn on_focus_gained(&self) {
         self.with_env(|env, object| {
             env.call_method(object, "onFocusGained", "()V", &[])?;
+            Ok(())
+        });
+    }
+
+    fn on_before_mouse_focus(&self) {
+        self.with_env(|env, object| {
+            env.call_method(object, "onBeforeMouseFocus", "()V", &[])?;
             Ok(())
         });
     }
@@ -966,7 +973,7 @@ fn create_native(
         object: env.new_global_ref(callbacks).map_err(format_jni_error)?,
     });
     let parent = HWND(parent_hwnd as *mut c_void);
-    let hwnd = create_container_hwnd(parent)?;
+    let hwnd = create_container_hwnd(parent, callbacks.clone())?;
     let user_data_dir = jstring_to_string(env, user_data_dir)?;
 
     let native = Rc::new(RefCell::new(NativeWebView {
@@ -2165,19 +2172,30 @@ fn remove_execute_script_handler(native: &NativeHandle, handler_id: u64) {
     }
 }
 
-fn create_container_hwnd(parent: HWND) -> BridgeResult<HWND> {
+fn create_container_hwnd(parent: HWND, callbacks: Rc<JavaCallbacks>) -> BridgeResult<HWND> {
     unsafe extern "system" fn window_proc(
         hwnd: HWND,
         msg: u32,
         wparam: WPARAM,
         lparam: LPARAM,
     ) -> LRESULT {
+        if is_mouse_focus_message(msg, wparam) {
+            unsafe {
+                notify_before_mouse_focus(hwnd);
+            }
+        }
         if msg == WM_SETFOCUS {
             if let Ok(child) = GetWindow(hwnd, GW_CHILD) {
                 let _ = SetFocus(Some(child));
             }
         }
-        DefWindowProcW(hwnd, msg, wparam, lparam)
+        let result = DefWindowProcW(hwnd, msg, wparam, lparam);
+        if msg == WM_NCDESTROY {
+            unsafe {
+                clear_container_callbacks(hwnd);
+            }
+        }
+        result
     }
 
     let class_name = w!("IJ_WEBVIEW2_BRIDGE");
@@ -2217,6 +2235,9 @@ fn create_container_hwnd(parent: HWND) -> BridgeResult<HWND> {
         .map_err(format_windows_error)?
     };
 
+    unsafe {
+        SetWindowLongPtrW(hwnd, GWLP_USERDATA, Rc::into_raw(callbacks) as isize);
+    }
     Ok(hwnd)
 }
 
@@ -2473,6 +2494,36 @@ where
     let mut value = COREWEBVIEW2_PERMISSION_KIND::default();
     read(&mut value).ok()?;
     Some(value)
+}
+
+fn is_mouse_focus_message(msg: u32, wparam: WPARAM) -> bool {
+    match msg {
+        WM_MOUSEACTIVATE | WM_LBUTTONDOWN | WM_RBUTTONDOWN | WM_MBUTTONDOWN | WM_XBUTTONDOWN => {
+            true
+        }
+        WM_PARENTNOTIFY => matches!(
+            (wparam.0 & 0xffff) as u32,
+            WM_LBUTTONDOWN | WM_RBUTTONDOWN | WM_MBUTTONDOWN | WM_XBUTTONDOWN
+        ),
+        _ => false,
+    }
+}
+
+unsafe fn notify_before_mouse_focus(hwnd: HWND) {
+    let callbacks_ptr = GetWindowLongPtrW(hwnd, GWLP_USERDATA) as *const JavaCallbacks;
+    if callbacks_ptr.is_null() {
+        return;
+    }
+    (*callbacks_ptr).on_before_mouse_focus();
+}
+
+unsafe fn clear_container_callbacks(hwnd: HWND) {
+    let callbacks_ptr = GetWindowLongPtrW(hwnd, GWLP_USERDATA) as *const JavaCallbacks;
+    if callbacks_ptr.is_null() {
+        return;
+    }
+    SetWindowLongPtrW(hwnd, GWLP_USERDATA, 0);
+    drop(Rc::from_raw(callbacks_ptr));
 }
 
 fn diagnostic_data(pairs: Vec<(&str, String)>) -> String {

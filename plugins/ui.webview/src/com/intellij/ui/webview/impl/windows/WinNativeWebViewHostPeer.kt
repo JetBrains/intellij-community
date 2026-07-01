@@ -17,8 +17,10 @@ internal class WinNativeWebViewHostPeer(
   private var lastAppliedFrame: AppliedFrame? = null
 
   override fun attach(host: Component): Boolean {
+    val hostPanel = host as SwingWebViewHostPanel
     engine.setShortcutTarget(host)
-    engine.setFocusGainedHandler { (host as SwingWebViewHostPanel).nativeWebViewFocusGained() }
+    engine.setBeforeMouseFocusHandler { hostPanel.activateWebViewFocusFromNativeMouse() }
+    engine.setFocusGainedHandler { hostPanel.nativeWebViewFocusGained() }
     attached = true
     hostHidden = true
     lastAppliedFrame = null
@@ -29,6 +31,7 @@ internal class WinNativeWebViewHostPeer(
       FrameUpdateResult.Failed -> {
         attached = false
         engine.setShortcutTarget(null)
+        engine.setBeforeMouseFocusHandler(null)
         engine.setFocusGainedHandler(null)
         return false
       }
@@ -40,6 +43,7 @@ internal class WinNativeWebViewHostPeer(
     if (!attached) return
     engine.detachFromParent()
     engine.setShortcutTarget(null)
+    engine.setBeforeMouseFocusHandler(null)
     engine.setFocusGainedHandler(null)
     attached = false
     hostHidden = true

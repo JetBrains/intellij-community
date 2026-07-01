@@ -21,7 +21,7 @@ private class WinWebView2BridgePluginAnchor
 
 @ApiStatus.Internal
 internal object WinWebView2Bridge {
-  private const val EXPECTED_NATIVE_ABI_VERSION = "wvi-dedicated-thread-v3"
+  private const val EXPECTED_NATIVE_ABI_VERSION = "wvi-dedicated-thread-v4"
 
   init {
     if (SystemInfo.isWindows) {
@@ -132,6 +132,7 @@ internal object WinWebView2Bridge {
     fun onEvaluationResult(evalId: Long, result: String?)
     fun onEvaluationError(evalId: Long, message: String)
     fun onAcceleratorKeyPressed(keyEventKind: Int, virtualKey: Int, modifiers: Int, keyEventLParam: Int): Boolean
+    fun onBeforeMouseFocus()
     fun onFocusGained()
     fun onLog(level: Int, message: String)
     fun onNativeDiagnostic(level: Int, event: String, message: String, data: String)

@@ -182,6 +182,10 @@ WebView2 focus crosses Win32 HWND focus, the WebView2 controller thread, and Swi
 
 Mitigation: keep `Tab` boundary exit in the typed JS protocol instead of the WebView2 accelerator bridge. Use `WinWebViewShortcutInterop` only for IDE shortcuts, and keep focus operations coalesced/idempotent on the WebView2 dispatcher.
 
+Mouse activation has one extra Windows-specific invariant. The container HWND can receive `WM_MOUSEACTIVATE` or a button-down notification before Swing observes a normal AWT focus event. The native bridge must notify `SwingWebViewHostPanel` before WebView2 dispatches the page pointer event, so the host panel becomes the Swing focus owner while the click is still being processed. That callback must only synchronize Swing focus to the host panel; it must not call WebView2 `MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC)`. The original mouse click is already activating the native WebView2 child, and an additional programmatic native focus move in the same pointer pipeline is observable by page code as a blur/focus bounce. Pointer-opened controls that call `preventDefault()` on `pointerdown` and close on `window.blur` (for example Radix-style comboboxes) will close immediately if this invariant is violated.
+
+The page-side pointer activation path has the matching rule: always notify the host that the WebView was activated, but do not force focus onto the pointer target after the event if the event's default action was prevented. Custom controls that intentionally prevent default must keep ownership of their open/focus behavior.
+
 ### Linux backend differences
 
 X11 native focus and Wayland snapshot rendering have different guarantees. Wayland snapshot mode is not a normal embedded native focus owner.
@@ -339,6 +343,7 @@ Automated tests:
 - Add protocol tests with a fake WebView bridge: Swing focus entry sends page `enter`, page `exit` causes next/previous Swing traversal.
 - Add TypeScript tests for tabbable boundary detection, including empty pages, disabled controls, hidden elements, negative tabindex, positive tabindex, contenteditable, and open shadow roots.
 - Keep Windows shortcut tests separate from focus boundary tests so shortcut routing does not become the generic `Tab` path.
+- Keep a Windows WebView2 Robot regression for pointer-opened comboboxes: focus an external Swing control, click a Radix-like combobox in the embedded WebView once, assert the popup remains open after animation frames, assert Swing focus moved to `SwingWebViewHostPanel`, then click the Swing control again and assert it takes focus back from the WebView.
 
 Smoke tests/manual checks:
 

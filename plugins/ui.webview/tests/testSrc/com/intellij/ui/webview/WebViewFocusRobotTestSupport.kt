@@ -325,6 +325,20 @@ internal object WebViewFocusRobotTestSupport {
   ) {
     val robot = createRobotOrSkip()
     val bus = WebViewMessageBusImpl(scope, engine)
+    val inputEvents = Collections.synchronizedList(mutableListOf<String>())
+    val field = JTextField().apply {
+      preferredSize = Dimension(1, 32)
+      caret = DefaultCaret().apply { blinkRate = 0 }
+      addFocusListener(object : FocusAdapter() {
+        override fun focusGained(e: FocusEvent) {
+          inputEvents.add("focusGained")
+        }
+
+        override fun focusLost(e: FocusEvent) {
+          inputEvents.add("focusLost")
+        }
+      })
+    }
     val host = SwingWebViewHostPanel(scope, engine, bus.interop.createWebViewFocusEntrySink(), nativeHostPeer)
     val focusRegistration = bus.interop.registerWebViewFocusExitHandler(host)
     engine.connectMessageBus { rawJson -> bus.transferFromJs(rawJson) }
@@ -334,12 +348,14 @@ internal object WebViewFocusRobotTestSupport {
       SwingUtilities.invokeAndWait {
         frame.contentPane.removeAll()
         frame.contentPane.layout = BorderLayout()
+        frame.contentPane.add(field, BorderLayout.SOUTH)
         frame.contentPane.add(host, BorderLayout.CENTER)
         frame.toFront()
         frame.revalidate()
         frame.repaint()
       }
       assertTrue(waitUntilShowing(host, 5.seconds), "WebView host component did not become showing")
+      assertTrue(waitUntilShowing(field, 5.seconds), "Swing text field did not become showing")
 
       engine.loadAsset(WebViewAssetRoot.fromDirectory(tempDir), WebViewAssetPath.indexHtml())
       waitForJavaScriptResult(
@@ -349,12 +365,12 @@ internal object WebViewFocusRobotTestSupport {
         description = "Combo popup Robot test page did not load WebView bridge and platform features",
       )
 
-      clickWebElementCenter(robot, host, engine, "focus-input")
-      waitForJavaScriptResult(
-        webView = engine,
-        script = "document.activeElement && document.activeElement.id === 'focus-input'",
-        expected = "true",
-        description = "Robot preflight click did not focus the WebView input",
+      focusSwingFieldWithRobot(
+        robot,
+        frame,
+        field,
+        "Swing field did not receive focus before combo popup click",
+        skipIfUnavailable = true,
       )
       waitForJavaScriptResult(
         webView = engine,
@@ -362,8 +378,15 @@ internal object WebViewFocusRobotTestSupport {
         expected = "true",
         description = "Combo popup Robot test page did not expose state reset hook",
       )
+      inputEvents.clear()
 
       clickWebElementCenter(robot, host, engine, "combo-trigger")
+      waitForSwingFocusTransferFromFieldToWebViewHost(
+        field,
+        host,
+        inputEvents,
+        "WebView combo click did not move Swing focus from the external field to the host panel",
+      )
       waitForJavaScriptResult(
         webView = engine,
         script = "window.__wviComboPopupState?.afterAnimationFrames === true",
@@ -377,6 +400,7 @@ internal object WebViewFocusRobotTestSupport {
             && state.pointerDownCount === 1
             && state.clickCount === 1
             && state.blurCount === 0
+            && state.triggerFocusAfterPointerDown === false
             && state.open === true
             && state.openAfterAnimationFrames === true);
         })()
@@ -387,11 +411,31 @@ internal object WebViewFocusRobotTestSupport {
         popupStayedOpen,
         "Combo popup closed or WebView window blurred after Robot mouse click, state=$comboState",
       )
+
+      inputEvents.clear()
+      clickCenter(robot, field)
+      waitForSwingFocusTransferFromWebViewHostToField(
+        frame,
+        field,
+        inputEvents,
+        "Swing field did not receive focus after clicking outside the WebView combo popup",
+      )
+      waitForJavaScriptResult(
+        webView = engine,
+        script = """
+          window.__wviComboPopupState?.blurCount === 1 &&
+          window.__wviComboPopupState?.open === false
+        """.trimIndent(),
+        expected = "true",
+        description = "Clicking the Swing field did not blur the WebView combo popup",
+      )
     }
     finally {
       focusRegistration.close()
       bus.close()
       SwingUtilities.invokeAndWait {
+        field.caret.blinkRate = 0
+        field.caret.deinstall(field)
         frame.contentPane.removeAll()
       }
     }
@@ -578,6 +622,8 @@ internal object WebViewFocusRobotTestSupport {
             pointerDownCount: 0,
             clickCount: 0,
             blurCount: 0,
+            triggerFocusCount: 0,
+            triggerFocusAfterPointerDown: false,
             open: false,
             afterAnimationFrames: false,
             openAfterAnimationFrames: false,
@@ -600,6 +646,8 @@ internal object WebViewFocusRobotTestSupport {
             state.pointerDownCount = 0;
             state.clickCount = 0;
             state.blurCount = 0;
+            state.triggerFocusCount = 0;
+            state.triggerFocusAfterPointerDown = false;
             state.afterAnimationFrames = false;
             state.openAfterAnimationFrames = false;
             state.documentHasFocusAfterAnimationFrames = false;
@@ -628,6 +676,12 @@ internal object WebViewFocusRobotTestSupport {
           trigger.addEventListener("click", () => {
             state.events.push("click");
             state.clickCount++;
+          });
+
+          trigger.addEventListener("focus", () => {
+            state.events.push("trigger-focus");
+            state.triggerFocusCount++;
+            state.triggerFocusAfterPointerDown ||= state.pointerDownCount > 0;
           });
 
           window.addEventListener("focus", () => {
@@ -752,6 +806,70 @@ internal object WebViewFocusRobotTestSupport {
       }
     } == true
     assertTrue(matched, description)
+  }
+
+  private suspend fun waitForSwingFocusTransferFromFieldToWebViewHost(
+    field: JTextField,
+    host: Component,
+    inputEvents: List<String>,
+    description: String,
+  ) {
+    var lastFocusOwner: Component? = null
+    var lastPermanentFocusOwner: Component? = null
+    var fieldFocusOwner = false
+    val matched = withTimeoutOrNull(5.seconds) {
+      while (true) {
+        val focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+        lastFocusOwner = focusManager.focusOwner
+        lastPermanentFocusOwner = focusManager.permanentFocusOwner
+        fieldFocusOwner = isFieldFocusOwner(field)
+        val fieldLostFocus = !fieldFocusOwner &&
+                             lastFocusOwner !== field &&
+                             lastPermanentFocusOwner !== field &&
+                             "focusLost" in inputEvents
+        val hostOwnsSwingFocus = lastFocusOwner === host || lastPermanentFocusOwner === host
+        if (fieldLostFocus && hostOwnsSwingFocus) {
+          return@withTimeoutOrNull true
+        }
+        delay(50.milliseconds)
+      }
+    } == true
+    val focusDiagnostics = "fieldFocusOwner=$fieldFocusOwner; inputEvents=$inputEvents; " +
+                           "focusOwner=${lastFocusOwner?.javaClass?.name}; " +
+                           "permanentFocusOwner=${lastPermanentFocusOwner?.javaClass?.name}; " +
+                           "host=${host.javaClass.name}"
+    assertTrue(matched, "$description; $focusDiagnostics")
+  }
+
+  private suspend fun waitForSwingFocusTransferFromWebViewHostToField(
+    frame: JFrame,
+    field: JTextField,
+    inputEvents: List<String>,
+    description: String,
+  ) {
+    var lastFocusDiagnostics = ""
+    val matched = withTimeoutOrNull(5.seconds) {
+      while (true) {
+        val focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+        val focusOwner = focusManager.focusOwner
+        val permanentFocusOwner = focusManager.permanentFocusOwner
+        val fieldOwnsSwingFocus = isFieldFocusOwner(field) ||
+                                  focusOwner === field ||
+                                  permanentFocusOwner === field
+        lastFocusDiagnostics = buildFocusDiagnostics(
+          frame,
+          field,
+          focusOwner,
+          permanentFocusOwner,
+          requestFocusInWindowResult = false,
+        )
+        if (fieldOwnsSwingFocus && "focusGained" in inputEvents) {
+          return@withTimeoutOrNull true
+        }
+        delay(50.milliseconds)
+      }
+    } == true
+    assertTrue(matched, "$description; inputEvents=$inputEvents; $lastFocusDiagnostics")
   }
 
   private suspend fun assertFocusOwnerStaysAwayFrom(component: Component, duration: Duration, inputEvents: List<String>, description: String) {

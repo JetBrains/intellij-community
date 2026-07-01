@@ -60,3 +60,7 @@ pwsh -File community/plugins/ui.webview/native/WinWebView2Bridge/build.ps1
 ```
 
 After changing the JNI boundary, update both native and Kotlin ABI constants before copying a new DLL.
+
+JNI callbacks from Rust to Kotlin are part of that boundary. When adding a callback method, for example `onBeforeMouseFocus()`, update `NATIVE_ABI_VERSION` in `src/lib.rs`, update `EXPECTED_NATIVE_ABI_VERSION` in `WinWebView2Bridge.kt`, rebuild with `build.ps1`, and commit the copied DLL.
+
+The mouse-focus callback is called from the container HWND mouse activation path before WebView2 dispatches the page pointer event. Keep that callback limited to synchronizing Swing focus to the host panel. Do not call WebView2 `MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC)` from this mouse path; the click already activates the native child window, and an extra programmatic focus move can blur pointer-opened browser popups.

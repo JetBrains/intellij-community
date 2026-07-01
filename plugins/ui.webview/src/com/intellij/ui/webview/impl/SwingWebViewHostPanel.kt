@@ -191,7 +191,6 @@ internal class SwingWebViewHostPanel(
   private var focusInsideHost = false
   private var pendingExitDirection: WebViewFocusDirection? = null
   private var pageFocusHandledForCurrentActivation = false
-  private var nativeFocusRestoreRequestedForCurrentActivation = false
   private var hostMouseActivationNanos = 0L
   private var pageFocusFallbackTimer: Timer? = null
   private var nativePeerAttached = false
@@ -219,7 +218,6 @@ internal class SwingWebViewHostPanel(
       focusInsideHost = false
       pendingExitDirection = null
       pageFocusHandledForCurrentActivation = false
-      nativeFocusRestoreRequestedForCurrentActivation = false
       hostMouseActivationNanos = 0L
       cancelPageFocusEntryFallback()
     }
@@ -354,6 +352,11 @@ internal class SwingWebViewHostPanel(
   }
 
   override fun requestWebViewFocus() {
+    requestSwingFocusForNativeWebViewFocusIfNeeded()
+    requestNativeWebViewFocus()
+  }
+
+  private fun requestNativeWebViewFocus() {
     componentBackedEngine?.requestWebViewFocus() ?: nativePeer?.requestFocus()
   }
 
@@ -394,13 +397,28 @@ internal class SwingWebViewHostPanel(
         WebViewLogger.LOG.debug("Ignoring native WebView focus gain because host is not showing")
         return@runOnEdt
       }
-      val restoreNativeFocus = !isHostMouseActivationInProgress()
+      // WebView2 has already reported native focus here. We still synchronize Swing's focus owner
+      // to the host panel, but we must not follow that with another native focus request: on Windows
+      // WebView2 observes the extra MoveFocus(PROGRAMMATIC) as a blur/focus bounce, which closes
+      // click-opened browser/Radix-style popups.
       activateWebViewFocusOnEdt(requestNativeFocus = false)
       if (!pageFocusHandledForCurrentActivation) {
         schedulePageFocusEntryFallback()
       }
-      if (restoreNativeFocus) {
-        restoreNativeFocusAfterSwingActivation()
+    }
+  }
+
+  internal fun activateWebViewFocusFromNativeMouse() {
+    // Windows sends mouse activation to the native WebView2 child before Swing sees a normal AWT
+    // focus event. Run the Swing host activation synchronously on EDT while the native window proc
+    // is still handling that mouse activation, so Swing's focus owner is correct before WebView2
+    // dispatches the page pointer event. This must not request native focus; the click already does.
+    if (EDT.isCurrentThreadEdt()) {
+      activateWebViewFocusFromMouseOnEdt()
+    }
+    else {
+      SwingUtilities.invokeAndWait {
+        activateWebViewFocusFromMouseOnEdt()
       }
     }
   }
@@ -442,14 +460,14 @@ internal class SwingWebViewHostPanel(
       if (requestNativeFocus) {
         SwingUtilities.invokeLater {
           if (isShowing && focusInsideHost) {
-            requestWebViewFocus()
+            requestNativeWebViewFocus()
           }
         }
       }
     }
     else {
       if (requestNativeFocus) {
-        requestWebViewFocus()
+        requestNativeWebViewFocus()
       }
     }
     WebViewLogger.LOG.debug("Applied WebView focus activation")
@@ -590,7 +608,6 @@ internal class SwingWebViewHostPanel(
     focusInsideHost = false
     pendingExitDirection = null
     pageFocusHandledForCurrentActivation = false
-    nativeFocusRestoreRequestedForCurrentActivation = false
     cancelPageFocusEntryFallback()
     clearWebViewFocusForSwingFocusTransfer()
   }
@@ -601,7 +618,24 @@ internal class SwingWebViewHostPanel(
     }
   }
 
+  private fun requestSwingFocusForNativeWebViewFocusIfNeeded() {
+    if (!isShowing || containsFocusComponent(KeyboardFocusManager.getCurrentKeyboardFocusManager().permanentFocusOwner)) return
+
+    // A native heavyweight WebView is not an AWT child component, so Windows can move focus into
+    // the WebView2 HWND while Swing still believes the previous editor/toolwindow component owns
+    // focus. That stale Swing focus owner breaks IDE-level focus traversal and shortcut routing.
+    // Keep the Swing host panel as the AWT focus owner before asking the native engine for focus.
+    // Mouse activation paths intentionally bypass the native request below: WebView2 is already
+    // processing that click, and an extra MoveFocus(PROGRAMMATIC) in the same pointer pipeline is
+    // observable by the page as a blur/focus bounce that closes browser/Radix-style popups.
+    requestSwingFocusForWebViewActivation()
+  }
+
   private fun activateWebViewFocusFromHostMouse() {
+    activateWebViewFocusFromMouseOnEdt()
+  }
+
+  private fun activateWebViewFocusFromMouseOnEdt() {
     if (!isShowing) return
     rememberHostMouseActivation()
     activateWebViewFocusOnEdt(requestNativeFocus = false)
@@ -667,16 +701,6 @@ internal class SwingWebViewHostPanel(
   private fun cancelPageFocusEntryFallback() {
     pageFocusFallbackTimer?.stop()
     pageFocusFallbackTimer = null
-  }
-
-  private fun restoreNativeFocusAfterSwingActivation() {
-    if (nativeFocusRestoreRequestedForCurrentActivation) return
-    nativeFocusRestoreRequestedForCurrentActivation = true
-    SwingUtilities.invokeLater {
-      if (isShowing && focusInsideHost && !isHostMouseActivationInProgress()) {
-        requestWebViewFocus()
-      }
-    }
   }
 
   private fun installComponentBackedFocusTraversal(component: Component) {

@@ -101,7 +101,7 @@
 	function handlePointerActivation(event, hostApi) {
 		const focusTarget = findPointerFocusTarget(event);
 		hostApi.activated();
-		if (focusTarget) schedulePointerFocus(focusTarget);
+		if (focusTarget) schedulePointerFocus(focusTarget, event);
 	}
 	function findPointerFocusTarget(event) {
 		const path = typeof event.composedPath === "function" ? event.composedPath() : [event.target];
@@ -113,8 +113,9 @@
 		}
 		return null;
 	}
-	function schedulePointerFocus(target) {
+	function schedulePointerFocus(target, event) {
 		const focusTarget = () => {
+			if (event.defaultPrevented) return;
 			if (isRendered(target) && !isInsideNativeFocusBoundary(target) && activeElementDeep(document) !== target) target.focus();
 		};
 		queueMicrotask(focusTarget);

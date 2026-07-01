@@ -33,7 +33,7 @@ if ($null -eq $PluginArch) {
 }
 
 $ArtifactPath = Join-Path $ScriptDir "target\$Target\release\win_webview2_bridge.dll"
-$CommittedPath = Join-Path $RepoRoot "community\platform\ui.webview\lib\webview-native\win\$PluginArch\win_webview2_bridge.dll"
+$CommittedPath = Join-Path $RepoRoot "community\plugins\ui.webview\lib\webview-native\win\$PluginArch\win_webview2_bridge.dll"
 
 Push-Location $RepoRoot
 try {

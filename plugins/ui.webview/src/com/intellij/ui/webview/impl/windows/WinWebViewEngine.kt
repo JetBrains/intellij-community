@@ -100,6 +100,9 @@ internal class WinWebViewEngine(
   private var focusGainedHandler: () -> Unit = {}
 
   @Volatile
+  private var beforeMouseFocusHandler: () -> Unit = {}
+
+  @Volatile
   private var hidden = false
 
   private var consecutiveRenderUnresponsiveCount = 0
@@ -142,6 +145,10 @@ internal class WinWebViewEngine(
 
     override fun onAcceleratorKeyPressed(keyEventKind: Int, virtualKey: Int, modifiers: Int, keyEventLParam: Int): Boolean {
       return WinWebViewShortcutInterop.handleAcceleratorKeyPressed(shortcutTarget, keyEventKind, virtualKey, modifiers, keyEventLParam)
+    }
+
+    override fun onBeforeMouseFocus() {
+      beforeMouseFocusHandler()
     }
 
     override fun onFocusGained() {
@@ -234,6 +241,10 @@ internal class WinWebViewEngine(
 
   internal fun setFocusGainedHandler(handler: (() -> Unit)?) {
     focusGainedHandler = handler ?: {}
+  }
+
+  internal fun setBeforeMouseFocusHandler(handler: (() -> Unit)?) {
+    beforeMouseFocusHandler = handler ?: {}
   }
 
   override suspend fun loadFile(file: Path) {

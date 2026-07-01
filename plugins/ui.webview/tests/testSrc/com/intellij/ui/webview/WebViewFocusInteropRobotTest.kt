@@ -152,7 +152,7 @@ class WebViewFocusInteropRobotTest {
 
   @Test
   @EnabledOnOs(OS.WINDOWS)
-  fun clickingComboPopupInFocusedWebViewKeepsPopupOpen(@TempDir tempDir: Path): Unit = runBlocking {
+  fun clickingBadComboPopupAfterSwingFocusKeepsPopupOpenAndAllowsSwingRefocus(@TempDir tempDir: Path): Unit = runBlocking {
     val facade = createPlatformEngine(scope!!)
     try {
       WebViewFocusRobotTestSupport.runComboPopupClickScenario(

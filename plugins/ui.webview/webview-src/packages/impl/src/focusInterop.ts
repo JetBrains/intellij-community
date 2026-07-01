@@ -44,11 +44,11 @@ function enterDocumentFocus(direction: WebViewFocusDirection, hostApi: WebViewFo
   target.focus()
 }
 
-function handlePointerActivation(event: Event, hostApi: WebViewFocusHostCallable): void {
+function handlePointerActivation(event: PointerEvent, hostApi: WebViewFocusHostCallable): void {
   const focusTarget = findPointerFocusTarget(event)
   hostApi.activated()
   if (focusTarget) {
-    schedulePointerFocus(focusTarget)
+    schedulePointerFocus(focusTarget, event)
   }
 }
 
@@ -67,8 +67,11 @@ function findPointerFocusTarget(event: Event): HTMLElement | null {
   return null
 }
 
-function schedulePointerFocus(target: HTMLElement): void {
+function schedulePointerFocus(target: HTMLElement, event: PointerEvent): void {
   const focusTarget = () => {
+    if (event.defaultPrevented) {
+      return
+    }
     if (isRendered(target) && !isInsideNativeFocusBoundary(target) && activeElementDeep(document) !== target) {
       target.focus()
     }
