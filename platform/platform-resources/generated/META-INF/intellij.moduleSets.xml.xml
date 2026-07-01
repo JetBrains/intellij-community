@@ -12,7 +12,7 @@
     <module name="intellij.xml.structureView.impl"/>
     <module name="intellij.xml.psi" loading="embedded"/>
     <module name="intellij.xml.psi.impl" loading="embedded"/>
-    <module name="intellij.xml.analysis" loading="embedded"/>
+    <module name="intellij.xml.analysis"/>
     <module name="intellij.xml.emmet"/>
     <module name="intellij.xml.emmet.backend"/>
     <module name="intellij.xml.emmet.frontend"/>

@@ -17,6 +17,7 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant</b>.
     <module name="intellij.java.psi"/>
     <module name="intellij.java.ui"/>
     <module name="intellij.platform.testRunner"/>
+    <module name="intellij.xml.analysis"/>
     <module name="intellij.xml.dom"/>
     <module name="intellij.xml.dom.impl"/>
     <module name="intellij.xml.impl"/>
