@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findDocument
 import com.intellij.platform.debugger.impl.shared.awaitCommited
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiManager
@@ -49,13 +50,13 @@ abstract class JvmBaseSourceFileChangeCompatibilityChecker(
     val currentClasses = when (val result = computeClassShapesBuildResult(currentFile)) {
       null -> return HotSwapChangesCompatibility.Unknown
       is ClassShapesBuildResult.Built -> result.classShapes
-      ClassShapesBuildResult.HasErrors -> return incompatible(HotSwapIncompatibilityReasons.compilationProblems())
+      is ClassShapesBuildResult.HasErrors -> return incompatible(HotSwapIncompatibilityReasons.compilationProblems(currentFile.name, result.line))
       ClassShapesBuildResult.Unknown -> return HotSwapChangesCompatibility.Unknown
     }
     val oldClasses = when (val result = oldClassShapes()) {
       null -> return HotSwapChangesCompatibility.Unknown
       is ClassShapesBuildResult.Built -> result.classShapes
-      ClassShapesBuildResult.HasErrors, ClassShapesBuildResult.Unknown -> return HotSwapChangesCompatibility.Unknown
+      is ClassShapesBuildResult.HasErrors, ClassShapesBuildResult.Unknown -> return HotSwapChangesCompatibility.Unknown
     }
     findHotSwapIncompatibleClassReason(oldClasses, currentClasses)?.let { return incompatible(it) }
     return HotSwapChangesCompatibility.Compatible
@@ -106,7 +107,7 @@ abstract class JvmBaseSourceFileChangeCompatibilityChecker(
   ): T = shapeCache.cached(element, (context as Token).token, type, dependency, compute)
 
   private fun computeClassShapesBuildResult(file: PsiFile): ClassShapesBuildResult? {
-    if (hasErrors(file)) return ClassShapesBuildResult.HasErrors
+    firstErrorLine(file)?.let { return ClassShapesBuildResult.HasErrors(it) }
     return try {
       val fingerprint = resolutionFingerprint(file)
       val token = shapeCache.fileToken(file, fingerprint)
@@ -125,13 +126,17 @@ abstract class JvmBaseSourceFileChangeCompatibilityChecker(
 
   private fun incompatible(reason: String): HotSwapChangesCompatibility = HotSwapChangesCompatibility.Incompatible(reason)
 
-  private fun hasErrors(file: PsiFile): Boolean = PsiTreeUtil.hasErrorElements(file)
+  private fun firstErrorLine(file: PsiFile): Int? {
+    val error = PsiTreeUtil.findChildOfType(file, PsiErrorElement::class.java) ?: return null
+    val offset = error.textOffset.coerceIn(0, file.textLength)
+    return file.fileDocument.getLineNumber(offset)
+  }
 
   private class CannotBuildClassShapesException(reason: String) : RuntimeException(reason)
 
   private sealed interface ClassShapesBuildResult {
     data class Built(val classShapes: Map<String, HotSwapClassShape>) : ClassShapesBuildResult
-    data object HasErrors : ClassShapesBuildResult
+    data class HasErrors(val line: Int) : ClassShapesBuildResult
     data object Unknown : ClassShapesBuildResult
   }
 
@@ -209,72 +214,91 @@ private fun findHotSwapIncompatibleClassReason(
 ): String? {
   for ((name, oldClass) in oldClasses) {
     val currentClass = currentClasses[name] ?: continue
-    findHotSwapIncompatibleClassReason(oldClass, currentClass)?.let { return it }
+    findHotSwapIncompatibleClassReason(name, oldClass, currentClass)?.let { return it }
   }
   return null
 }
 
-private fun findHotSwapIncompatibleClassReason(oldClass: HotSwapClassShape, currentClass: HotSwapClassShape): String? {
-  if (oldClass.kind != currentClass.kind || oldClass.supers != currentClass.supers) {
-    return HotSwapIncompatibilityReasons.structureModified()
+private fun findHotSwapIncompatibleClassReason(className: String, oldClass: HotSwapClassShape, currentClass: HotSwapClassShape): String? {
+  if (oldClass.kind != currentClass.kind) {
+    return HotSwapIncompatibilityReasons.classKindChanged(className, oldClass.kind, currentClass.kind)
+  }
+  if (oldClass.supers != currentClass.supers) {
+    return HotSwapIncompatibilityReasons.classSupertypesChanged(className, oldClass.supers, currentClass.supers)
   }
   if (oldClass.innerClasses != currentClass.innerClasses) {
-    return HotSwapIncompatibilityReasons.structureModified()
+    return HotSwapIncompatibilityReasons.classInnerClassesChanged(className, oldClass.innerClasses, currentClass.innerClasses)
   }
   if (oldClass.modifiers != currentClass.modifiers) {
-    return HotSwapIncompatibilityReasons.classModifiersChanged()
+    return HotSwapIncompatibilityReasons.classModifiersChanged(className, oldClass.modifiers, currentClass.modifiers)
   }
-  findHotSwapIncompatibleFieldReason(oldClass.fields, currentClass.fields)?.let { return it }
-  findHotSwapIncompatibleMethodReason(oldClass.methods, currentClass.methods)?.let { return it }
+  findHotSwapIncompatibleFieldReason(className, oldClass.fields, currentClass.fields)?.let { return it }
+  findHotSwapIncompatibleMethodReason(className, oldClass.methods, currentClass.methods)?.let { return it }
   return null
 }
 
 private fun findHotSwapIncompatibleFieldReason(
+  className: String,
   oldFields: Map<String, HotSwapFieldShape>,
   currentFields: Map<String, HotSwapFieldShape>,
 ): String? {
   for ((name, oldField) in oldFields) {
-    val currentField = currentFields[name] ?: return HotSwapIncompatibilityReasons.signatureModified()
+    val currentField = currentFields[name] ?: return HotSwapIncompatibilityReasons.fieldRemoved(className, name, oldField)
     if (oldField.type != currentField.type) {
-      return HotSwapIncompatibilityReasons.signatureModified()
+      return HotSwapIncompatibilityReasons.fieldTypeChanged(className, name, oldField, currentField)
     }
     if (oldField.modifiers != currentField.modifiers) {
-      return HotSwapIncompatibilityReasons.signatureModified()
+      return HotSwapIncompatibilityReasons.fieldModifiersChanged(className, name, oldField, currentField)
     }
   }
-  for (name in currentFields.keys) {
+  for ((name, currentField) in currentFields) {
     if (name !in oldFields) {
-      return HotSwapIncompatibilityReasons.signatureModified()
+      return HotSwapIncompatibilityReasons.fieldAdded(className, name, currentField)
     }
   }
   return null
 }
 
 private fun findHotSwapIncompatibleMethodReason(
+  className: String,
   oldMethods: Map<HotSwapMethodId, HotSwapMethodShape>,
   currentMethods: Map<HotSwapMethodId, HotSwapMethodShape>,
 ): String? {
   for ((id, oldMethod) in oldMethods) {
     val currentMethod = currentMethods[id]
     if (currentMethod == null) {
-      if (currentMethods.keys.any { it.name == id.name && it.isConstructor == id.isConstructor }) {
-        return HotSwapIncompatibilityReasons.signatureModified()
+      val currentMethodId = currentMethods.keys.firstOrNull { it.name == id.name && it.isConstructor == id.isConstructor }
+      if (currentMethodId != null) {
+        return HotSwapIncompatibilityReasons.methodSignatureChanged(
+          className,
+          id,
+          oldMethod,
+          currentMethodId,
+          currentMethods.getValue(currentMethodId),
+        )
       }
-      return HotSwapIncompatibilityReasons.methodRemoved()
+      return HotSwapIncompatibilityReasons.methodRemoved(className, id, oldMethod)
     }
     if (oldMethod.returnType != currentMethod.returnType) {
-      return HotSwapIncompatibilityReasons.signatureModified()
+      return HotSwapIncompatibilityReasons.methodReturnTypeChanged(className, id, oldMethod, currentMethod)
     }
     if (oldMethod.modifiers != currentMethod.modifiers) {
-      return HotSwapIncompatibilityReasons.methodModifiersChanged()
+      return HotSwapIncompatibilityReasons.methodModifiersChanged(className, id, oldMethod, currentMethod)
     }
   }
   for (id in currentMethods.keys) {
     if (id !in oldMethods) {
-      if (oldMethods.keys.any { it.name == id.name && it.isConstructor == id.isConstructor }) {
-        return HotSwapIncompatibilityReasons.signatureModified()
+      val oldMethodId = oldMethods.keys.firstOrNull { it.name == id.name && it.isConstructor == id.isConstructor }
+      if (oldMethodId != null) {
+        return HotSwapIncompatibilityReasons.methodSignatureChanged(
+          className,
+          oldMethodId,
+          oldMethods.getValue(oldMethodId),
+          id,
+          currentMethods.getValue(id),
+        )
       }
-      return HotSwapIncompatibilityReasons.methodAdded()
+      return HotSwapIncompatibilityReasons.methodAdded(className, id, currentMethods.getValue(id))
     }
   }
   return null

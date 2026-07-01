@@ -71,7 +71,7 @@ class JavaHotSwapSourceChangeCompatibilityChecker(project: Project) :
   private fun PsiClass.sourceInnerClasses(): List<SourceInnerClass> {
     val namedClasses = children.filterIsInstance<PsiClass>()
       .filterNot { it is PsiAnonymousClass }
-      .map { SourceInnerClass(it, it.className()) }
+      .map { SourceInnerClass(it, it.className(qualified = false)) }
     val anonymousClasses = PsiTreeUtil.collectElementsOfType(this, PsiAnonymousClass::class.java)
       .filter { it.enclosingSourceClass() == this }
       .mapIndexed { index, anonymousClass ->
@@ -80,8 +80,10 @@ class JavaHotSwapSourceChangeCompatibilityChecker(project: Project) :
     return namedClasses + anonymousClasses
   }
 
-  private fun PsiClass.className(): @NlsSafe String =
-    this.qualifiedName ?: this.name ?: unknownClassShapes("Cannot determine Java class name in ${this.containingFile.name}")
+  private fun PsiClass.className(qualified: Boolean = true): @NlsSafe String =
+    (if (qualified) this.qualifiedName else this.name)
+    ?: this.name
+    ?: unknownClassShapes("Cannot determine Java class name in ${this.containingFile.name}")
 
   private fun PsiClass.sourceLambdas(): List<PsiLambdaExpression> =
     PsiTreeUtil.collectElementsOfType(this, PsiLambdaExpression::class.java)

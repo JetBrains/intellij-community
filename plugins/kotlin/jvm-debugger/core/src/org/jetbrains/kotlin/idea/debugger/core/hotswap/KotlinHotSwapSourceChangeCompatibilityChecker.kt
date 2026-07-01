@@ -129,8 +129,10 @@ class KotlinHotSwapSourceChangeCompatibilityChecker(project: Project) :
         }
     }
 
-    private fun KtClassOrObject.className(): String =
-        fqName?.asString() ?: name ?: unknownClassShapes("Cannot determine Kotlin class name in ${containingKtFile.name}")
+    private fun KtClassOrObject.className(qualified: Boolean = true): String =
+        (if (qualified) fqName?.asString() else name)
+            ?: name
+            ?: unknownClassShapes("Cannot determine Kotlin class name in ${containingKtFile.name}")
 
     private fun KtDeclarationContainer.sourceFields(): List<KtProperty> = declarations.filterIsInstance<KtProperty>()
 
@@ -146,7 +148,7 @@ class KotlinHotSwapSourceChangeCompatibilityChecker(project: Project) :
 
     private fun KtClassOrObject.sourceInnerClasses(): List<SourceInnerClass> {
         val namedClasses = declarations.filterIsInstance<KtClassOrObject>()
-            .map { SourceInnerClass(it, it.className(), false) }
+            .map { SourceInnerClass(it, it.className(qualified = false), false) }
         return namedClasses + sourceAnonymousClasses()
     }
 

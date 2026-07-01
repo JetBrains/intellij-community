@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.k2.debugger.test
 
 import com.intellij.debugger.impl.hotswap.HotSwapClassShape
-import com.intellij.debugger.impl.hotswap.HotSwapIncompatibilityReasons
 import com.intellij.debugger.impl.hotswap.HotSwapSourceChangeCompatibilityCheckerTestUtil
 import com.intellij.debugger.impl.hotswap.JvmBaseSourceFileChangeCompatibilityChecker
 import com.intellij.openapi.project.IndexNotReadyException
@@ -105,7 +104,25 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { fun f(): Int = 1; fun g(): Int = 2 }
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.methodAdded(),
+      "Method was added: A.g(): kotlin.Int",
+    )
+  }
+
+  @Test
+  fun `package class message uses simple class name`() {
+    assertIncompatible(
+      "package class message uses simple class name",
+      """
+        package p
+
+        class A { fun f(): Int = 1 }
+      """.trimIndent(),
+      """
+        package p
+
+        class A { fun f(): Int = 1; fun g(): Int = 2 }
+      """.trimIndent(),
+      "Method was added: A.g(): kotlin.Int",
     )
   }
 
@@ -119,7 +136,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { fun f(): Int = 1 }
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.methodRemoved(),
+      "Method was removed: A.g(): kotlin.Int",
     )
   }
 
@@ -133,7 +150,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { fun f(value: Long): Int = 1 }
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.signatureModified(),
+      "Method signature was changed from A.f(kotlin.Int): kotlin.Int to A.f(kotlin.Long): kotlin.Int",
     )
   }
 
@@ -160,7 +177,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { fun f(): Long = 1 }
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.signatureModified(),
+      "Method return type was changed: A.f from kotlin.Int to kotlin.Long",
     )
   }
 
@@ -187,7 +204,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         open class A { open fun f(): Int = 1 }
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.methodModifiersChanged(),
+      "Method modifiers were changed: A.f: open added",
     )
   }
 
@@ -201,7 +218,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { val value: Int = 1; fun f(): Int = 1 }
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.signatureModified(),
+      "Field was added: A.value: kotlin.Int",
     )
   }
 
@@ -215,7 +232,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { fun f(): Int = 1 }
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.signatureModified(),
+      "Field was removed: A.value: kotlin.Int",
     )
   }
 
@@ -229,7 +246,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { val value: Long = 1 }
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.signatureModified(),
+      "Field type was changed: A.value from kotlin.Int to kotlin.Long",
     )
   }
 
@@ -256,7 +273,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { lateinit var value: String }
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.signatureModified(),
+      "Field modifiers were changed: A.value: lateinit added",
     )
   }
 
@@ -270,7 +287,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { var value: Int = 1 }
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.signatureModified(),
+      "Field modifiers were changed: A.value: val removed, var added",
     )
   }
 
@@ -284,7 +301,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         var value: Int = 1
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.signatureModified(),
+      "Field modifiers were changed: AKt.value: val removed, var added",
     )
   }
 
@@ -299,7 +316,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
         fun f(): Int = 1
         fun g(): Int = 2
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.methodAdded(),
+      "Method was added: AKt.g(): kotlin.Int",
     )
   }
 
@@ -313,7 +330,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         val value: Long = 1
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.signatureModified(),
+      "Field type was changed: AKt.value from kotlin.Int to kotlin.Long",
     )
   }
 
@@ -327,7 +344,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A(val value: Int)
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.signatureModified(),
+      "Field was added: A.value: kotlin.Int",
     )
   }
 
@@ -341,7 +358,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A(val value: Long)
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.signatureModified(),
+      "Field type was changed: A.value from kotlin.Int to kotlin.Long",
     )
   }
 
@@ -355,7 +372,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A(private val value: Int)
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.signatureModified(),
+      "Field modifiers were changed: A.value: private added",
     )
   }
 
@@ -369,7 +386,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A(var value: Int)
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.signatureModified(),
+      "Field modifiers were changed: A.value: val removed, var added",
     )
   }
 
@@ -383,7 +400,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A(value: Long)
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.signatureModified(),
+      "Method signature was changed from A(kotlin.Int) to A(kotlin.Long)",
     )
   }
 
@@ -397,7 +414,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { private constructor(value: Int) {} }
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.methodModifiersChanged(),
+      "Method modifiers were changed: A: private added",
     )
   }
 
@@ -411,7 +428,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         open class A { fun f(): Int = 1 }
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.classModifiersChanged(),
+      "Class modifiers were changed: A: open added",
     )
   }
 
@@ -427,7 +444,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
         interface C
         class A : C { fun f(): Int = 1 }
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.structureModified(),
+      "Class supertypes were changed: A from B to C",
     )
   }
 
@@ -460,7 +477,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         interface A { fun f(): Int }
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.structureModified(),
+      "Class kind was changed: A from class to interface",
     )
   }
 
@@ -474,7 +491,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { fun f(): Int = 1 }
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.structureModified(),
+      "Class kind was changed: A from object to class",
     )
   }
 
@@ -488,7 +505,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.structureModified(),
+      "Class kind was changed: A from enum to class",
     )
   }
 
@@ -502,7 +519,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.structureModified(),
+      "Class kind was changed: A from annotation to class",
     )
   }
 
@@ -516,7 +533,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         enum class A { ENTRY { fun f(): Int = 1; fun g(): Int = 2 } }
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.methodAdded(),
+      "Method was added: ENTRY.g(): kotlin.Int",
     )
   }
 
@@ -530,7 +547,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { class Inner { fun f(): Int = 1; fun g(): Int = 2 } }
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.methodAdded(),
+      "Method was added: Inner.g(): kotlin.Int",
     )
   }
 
@@ -544,7 +561,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { class Inner; fun f(): Int = 1 }
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.structureModified(),
+      "Inner classes were changed: A: Inner added",
     )
   }
 
@@ -558,7 +575,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { fun f(): Int = 1 }
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.structureModified(),
+      "Inner classes were changed: A: Inner removed",
     )
   }
 
@@ -589,7 +606,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
         interface IntFactory { fun get(): Int }
         class A { fun f(): IntFactory = object : IntFactory { override fun get(): Int = 1; fun extra(): Int = 2 } }
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.methodAdded(),
+      "Method was added: anonymous0.extra(): kotlin.Int",
     )
   }
 
@@ -605,7 +622,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
         interface IntFactory { fun get(): Int }
         class A { fun f(first: Int, second: Int): IntFactory = object : IntFactory { override fun get(): Int = second } }
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.signatureModified(),
+      "Field was removed: anonymous0.capture0first: kotlin.Int",
     )
   }
 
@@ -632,7 +649,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { fun f(): (() -> Int)? = { 1 } }
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.methodAdded(),
+      "Method was added: A.lambda0(): kotlin.Int",
     )
   }
 
@@ -659,7 +676,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         enum class A { FIRST, SECOND }
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.structureModified(),
+      "Inner classes were changed: A: SECOND added",
     )
   }
 
@@ -671,9 +688,11 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
         class A { fun f(): Int = 1 }
       """.trimIndent(),
       """
-        class A { fun f(): Int = 2
+        class A {
+          fun f(: Int = 2
+        }
       """.trimIndent(),
-      HotSwapIncompatibilityReasons.compilationProblems(),
+      "Source contains compilation problems at A.kt:2",
     )
   }
 
@@ -777,7 +796,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
 
   private fun assertIncompatible(name: String, before: String, after: String, reason: String) {
     val compatibility = classify(before, after)
-    assertTrue(name, compatibility is HotSwapChangesCompatibility.Incompatible)
+    assertTrue("$name: expected incompatible, got $compatibility", compatibility is HotSwapChangesCompatibility.Incompatible)
     assertEquals(name, reason, (compatibility as HotSwapChangesCompatibility.Incompatible).reason)
   }
 
