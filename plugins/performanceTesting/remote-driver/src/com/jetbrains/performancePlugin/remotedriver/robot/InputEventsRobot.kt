@@ -168,11 +168,11 @@ internal class InputEventsRobot(
     for (i in 1..clickCount) {
       postInputEvent(MouseEvent(window, MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(), keyboardModifiers or buttonDownMask or buttonLegacyMask,
                                 clickPoint.x, clickPoint.y, i, awtBtn == MouseEvent.BUTTON3, awtBtn))
-      pauseBetweenEvents()
       postInputEvent(MouseEvent(window, MouseEvent.MOUSE_RELEASED, System.currentTimeMillis(), keyboardModifiers or buttonLegacyMask,
                                 clickPoint.x, clickPoint.y, i, false, awtBtn))
       postInputEvent(MouseEvent(window, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), keyboardModifiers or buttonLegacyMask,
                                 clickPoint.x, clickPoint.y, i, false, awtBtn))
+      pauseBetweenEvents()
     }
   }
 
