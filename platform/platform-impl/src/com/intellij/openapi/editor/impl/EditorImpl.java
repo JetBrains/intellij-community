@@ -5690,14 +5690,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void layout() {
-      EditorThreading.run(() -> {
-        if (isInDistractionFreeMode()) {
-          // re-calc gutter extra size after editor size is set
-          // & layout once again to avoid blinking
-          myGutterComponent.updateSize(true, true);
-        }
-        super.layout();
-      });
+      if (isInDistractionFreeMode()) {
+        // re-calc gutter extra size after editor size is set
+        // & layout once again to avoid blinking
+        myGutterComponent.updateSize(true, true);
+      }
+      super.layout();
     }
 
     @Override
