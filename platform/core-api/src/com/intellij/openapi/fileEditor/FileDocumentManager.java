@@ -38,9 +38,9 @@ public abstract class FileDocumentManager implements SavingRequestor {
   }
 
   /**
-   * Returns the document for the specified virtual file.<p/>
+   * Returns the document for the specified virtual file.
    * <p>
-   * Documents are cached on weak or strong references, depending on the nature of the virtual file. If the document
+   * Documents are cached on weak references for real virtual files, or on strong references for light virtual files. If the document
    * for the given virtual file is not yet cached, the file's contents are read from VFS and loaded into heap memory.
    * An appropriate encoding is used. All line separators are converted to {@code \n}.<p/>
    * <p>
