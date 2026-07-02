@@ -2,8 +2,11 @@
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.framework.library.DownloadableLibraryType;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.libraries.LibraryPresentationProvider;
 import com.intellij.openapi.roots.libraries.LibraryType;
@@ -85,9 +88,13 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
   @Override
   public NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent, VirtualFile contextDirectory) {
     VirtualFile initial = findPathToGroovyHome();
+    if (initial == null) {
+      initial = contextDirectory;
+    }
 
-    final FileChooserDescriptor descriptor = createFileChooserDescriptor();
-    final VirtualFile dir = FileChooser.chooseFile(descriptor, parentComponent, null, initial);
+    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent));
+    final FileChooserDescriptor descriptor = createFileChooserDescriptor().withEnvironmentRestricted(true);
+    final VirtualFile dir = FileChooser.chooseFile(descriptor, parentComponent, project, initial);
     if (dir == null) {
       return null;
     }
