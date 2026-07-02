@@ -101,6 +101,7 @@ import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.RelativeFont;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.TableCell;
 import com.intellij.ui.TableExpandableItemsHandler;
@@ -2651,8 +2652,14 @@ public final class TableResultView extends JBTableWithResizableCells
         nameLabel.setBorder(IdeBorderFactory.createEmptyBorder(CellRenderingUtils.NAME_LABEL_INSETS));
         myNameLabels.add(nameLabel);
 
-        JLabel sortLabel = new LabelWithFallbackFont(myTable);
+        JLabel sortLabel = new LabelWithFallbackFont(myTable) {
+          @Override
+          public Font getFont() {
+            return RelativeFont.TINY.derive(super.getFont());
+          }
+        };
         sortLabel.setVerticalAlignment(SwingConstants.CENTER);
+        sortLabel.setIconTextGap(JBUI.scale(0));
         sortLabel.setBorder(IdeBorderFactory.createEmptyBorder(CellRenderingUtils.SORT_LABEL_INSETS));
         myIconLabels.add(sortLabel);
 
