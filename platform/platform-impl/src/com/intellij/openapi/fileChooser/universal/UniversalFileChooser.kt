@@ -612,7 +612,7 @@ object UniversalFileChooser {
       private val environmentRestricted: Boolean = descriptor.isEnvironmentRestricted
 
       var fileToSelect: Path? = null
-      private val pathTextField: NioPathTextField = NioPathTextField(scope)
+      private val pathTextField: NioPathTextField = NioPathTextField(scope, descriptor.isChooseFiles)
 
       @Volatile
       private var pathTextFieldInvalid: Boolean = false

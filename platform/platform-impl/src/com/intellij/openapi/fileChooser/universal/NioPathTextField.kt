@@ -20,7 +20,7 @@ import java.util.function.BooleanSupplier
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 
-internal class NioPathTextField(val scope: CoroutineScope) : JBTextField() {
+internal class NioPathTextField(val scope: CoroutineScope, val chooseFiles: Boolean) : JBTextField() {
 
   var showHiddenSupplier: BooleanSupplier = BooleanSupplier { false }
 
@@ -68,7 +68,7 @@ internal class NioPathTextField(val scope: CoroutineScope) : JBTextField() {
     val showHidden = showHiddenSupplier.asBoolean
     scope.launch {
       val children = withContext(Dispatchers.IO) {
-        NioFileChooserUtil.safeGetChildren(directory, showHidden, true)
+        NioFileChooserUtil.safeGetChildren(directory, showHidden, showFiles = chooseFiles)
       }
       if (children.isNotEmpty()) {
         @Suppress("ForbiddenInSuspectContextMethod") // ModalityState.any() is required.
