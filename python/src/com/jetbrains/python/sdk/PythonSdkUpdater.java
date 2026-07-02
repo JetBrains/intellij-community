@@ -532,21 +532,22 @@ public final class PythonSdkUpdater {
       Function.identity()
     );
 
+    // Safety net for PY-86494: no *sys.path-derived or user-added* CLASSES root should land under a
+    // project module's content/source root unless it's also under the SDK's own venv home. If
+    // splitIntoLibraryAndSourceRoots ever leaks a project-local path into a lib bucket (the original
+    // bug — empty moduleRoots, mis-classified user-added paths, …), drop it here so it never reaches
+    // ProjectJdkTable.
+    //
+    // Guard ONLY these two buckets. The SDK-owned skeletons and bundled typeshed roots that
+    // buildSdkPaths adds below are generated into ~/.cache and legitimately live under a content root
+    // when the project root is (an ancestor of) the user's home dir — common in remote dev, where the
+    // whole home directory is opened as the project. Filtering them here used to drop valid stdlib
+    // roots and spam LOG.error (PY-90400).
+    final List<VirtualFile> guardedSdkRoots = dropRootsUnderModuleRoots(sdkRoots.first, moduleRoots, pythonInterpreter, project);
+    final List<VirtualFile> guardedUserAddedRoots = dropRootsUnderModuleRoots(userAddedRoots.first, moduleRoots, pythonInterpreter, project);
+
     final boolean forceCommit = ensureBinarySkeletonsDirectoryExists(sdk);
-    final List<VirtualFile> suggestedSdkPaths = buildSdkPaths(sdk, sdkRoots.first, userAddedRoots.first);
-    // Final safety net for PY-86494: no SDK CLASSES root should land under a project module's
-    // content/source root *unless* it's also under the SDK's own venv home (e.g. the venv lives
-    // inside the module). If splitIntoLibraryAndSourceRoots ever leaks a project-local path into
-    // the lib bucket (the original bug — empty moduleRoots, mis-classified user-added paths, …),
-    // drop the offending entries here so they never reach ProjectJdkTable.
-    final List<VirtualFile> localSdkPaths = ContainerUtil.filter(suggestedSdkPaths, sdkPath -> {
-      if (isUnderModuleRootsButNotSdk(sdkPath, moduleRoots, pythonInterpreter)) {
-        LOG.error("Dropping SDK CLASSES root '%s' under module roots (outside the venv) of project '%s'."
-                    .formatted(sdkPath.getPath(), project != null ? project.getName() : "<no project>"));
-        return false;
-      }
-      return true;
-    });
+    final List<VirtualFile> localSdkPaths = buildSdkPaths(sdk, guardedSdkRoots, guardedUserAddedRoots);
 
     commitSdkPathsIfChanged(sdk, localSdkPaths, forceCommit);
 
@@ -668,6 +669,28 @@ public final class PythonSdkUpdater {
     final var envRoot = pythonHome != null ? LocalFileSystem.getInstance().findFileByNioFile(pythonHome) : null;
     // Under a module root but outside the interpreter's own home → treat as project-local, not an SDK root.
     return envRoot == null || !VfsUtilCore.isAncestor(envRoot, file, false);
+  }
+
+  /**
+   * Drops roots that sit under a project module's content/source root but outside the interpreter's
+   * venv home (see {@link #isUnderModuleRootsButNotSdk}), logging each drop. Apply only to
+   * sys.path-derived and user-added roots — never to the SDK's own skeletons/typeshed roots, which
+   * legitimately live under a content root when the project root contains {@code ~/.cache} (PY-90400).
+   */
+  private static @NotNull List<VirtualFile> dropRootsUnderModuleRoots(
+    @NotNull List<VirtualFile> roots,
+    @NotNull Set<VirtualFile> moduleRoots,
+    @NotNull PythonInterpreter pythonInterpreter,
+    @Nullable Project project
+  ) {
+    return ContainerUtil.filter(roots, root -> {
+      if (isUnderModuleRootsButNotSdk(root, moduleRoots, pythonInterpreter)) {
+        LOG.error("Dropping SDK CLASSES root '%s' under module roots (outside the venv) of project '%s'."
+                    .formatted(root.getPath(), project != null ? project.getName() : "<no project>"));
+        return false;
+      }
+      return true;
+    });
   }
 
   /**
