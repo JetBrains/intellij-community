@@ -103,7 +103,7 @@ public final class EditorFragmentComponent extends JPanel {
       int y1 = editor.visualLineToY(startVisualLine);
       // as endLine is exclusive (not shown), we should also exclude block inlays associated with it
       int y2 = editor.visualLineToY(endVisualLine) - EditorUtil.getInlaysHeight(editor, endVisualLine, true);
-      textImageHeight = y2 <= y1 ? editor.getLineHeight() : y2 - y1;
+      textImageHeight = y2 <= y1 ? editor.getLineHeight() : Math.min(y2 - y1, getHeightLimit(editor));
       LOG.assertTrue(textImageHeight > 0,
                      "Height: " + textImageHeight + "; startLine:" + startLine + "; endLine:" + endLine + "; y1:" + y1 + "; y2:" + y2);
 
@@ -187,6 +187,16 @@ public final class EditorFragmentComponent extends JPanel {
     return window == null ? Integer.MAX_VALUE : window.getWidth();
   }
 
+  private static int getHeightLimit(@NotNull Editor editor) {
+    Component component = editor.getComponent();
+    int screenHeight = ScreenUtil.getScreenRectangle(component).height;
+    if (screenHeight > 0) return screenHeight;
+    Window window = SwingUtilities.getWindowAncestor(component);
+    if (window != null && window.getHeight() > 0) return window.getHeight();
+    int componentHeight = component.getHeight();
+    return componentHeight > 0 ? componentHeight : Integer.MAX_VALUE;
+  }
+
   private void releaseImages() {
     FragmentImageComponent imageComponent = myImageComponent;
     if (imageComponent == null) return;
@@ -259,6 +269,7 @@ public final class EditorFragmentComponent extends JPanel {
     return hint;
   }
 
+  @ApiStatus.Internal
   @TestOnly
   public static @NotNull LightweightHint createEditorFragmentHintForTest(@NotNull EditorFragmentComponent fragmentComponent) {
     return new MyComponentHint(fragmentComponent);
