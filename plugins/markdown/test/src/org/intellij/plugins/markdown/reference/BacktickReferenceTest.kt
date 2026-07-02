@@ -10,7 +10,9 @@ import com.intellij.psi.PsiPolyVariantReference
 import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeSpan
 import org.intellij.plugins.markdown.lang.references.backtick.BacktickReference
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -221,6 +223,60 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     myFixture.configureByText("doc.md", "See `com.e<caret>`")
     myFixture.completeBasic()
     myFixture.checkResult("See `com.example`")
+  }
+
+  @Test
+  fun `test qualified name with trailing hash resolves class`() {
+    val sample = createSampleClass()
+    assertResolvesTo("See `com.example.Samp<caret>le#`", sample)
+  }
+
+  @Test
+  fun `test qualified name with trailing dot resolves class`() {
+    val sample = createSampleClass()
+    assertResolvesTo("See `com.example.Samp<caret>le.`", sample)
+  }
+
+  @Test
+  fun `test member completion after trailing dot suggests all members`() {
+    createSampleClass()
+    myFixture.configureByText("doc.md", "See `com.example.Sample.<caret>`")
+    val items = myFixture.completeBasic()
+    assertNotNull(items)
+    assertContainsElements(items!!.map { it.lookupString }, "doStuff", "varStuff")
+  }
+
+  @Test
+  fun `test member completion after bare class and dot suggests members`() {
+    createFile(
+      "JavaClass1.java",
+      """
+        class JavaClass1 {
+           public void doStuff() {}
+        }
+      """.trimIndent()
+    )
+    myFixture.configureByText("doc.md", "See `JavaClass1.<caret>`")
+    val items = myFixture.completeBasic()
+    assertNotNull(items)
+    assertContainsElements(items!!.map { it.lookupString }, "doStuff")
+  }
+
+  @Test
+  fun `test members are not suggested without a separator`() {
+    createSampleClass()
+    myFixture.configureByText("doc.md", "See `com.example.Sample<caret>` docs")
+    val strings = myFixture.completeBasic()?.map { it.lookupString } ?: emptyList()
+    assertDoesntContain(strings, "doStuff", "varStuff")
+  }
+
+  @Test
+  fun `test class part reference range accounts for multiple backticks`() {
+    createSampleClass()
+    myFixture.configureByText("doc.md", "See ``Sample.doStuff`` docs")
+    val codeSpan = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeSpan::class.java)!!
+    val classPart = codeSpan.references.filterIsInstance<BacktickReference>().minByOrNull { it.rangeInElement.length }!!
+    assertEquals("Sample", classPart.rangeInElement.substring(codeSpan.text))
   }
 
   @Test
