@@ -93,16 +93,7 @@ public final class IdeaPopupMenuUI extends BasicPopupMenuUI {
   }
 
   public static boolean isRoundBorder() {
-    if (WindowRoundedCornersManager.isAvailable()) {
-      if (StartupUiUtil.isWaylandToolkit()) {
-        UIThemeLookAndFeelInfo info = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
-        if (info != null && "JetBrainsHighContrastTheme".equals(info.getId())) {
-          return false;
-        }
-      }
-      return true;
-    }
-    return false;
+    return WindowRoundedCornersManager.isAvailable();
   }
 
   public static boolean hideEmptyIcon(Component c) {
