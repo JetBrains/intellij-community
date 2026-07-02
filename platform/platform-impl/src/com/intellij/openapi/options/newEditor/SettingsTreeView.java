@@ -109,6 +109,7 @@ import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -116,6 +117,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Ellipse2D;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -138,6 +140,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   private static final String NODE_ICON = "settings.tree.view.icon";
   private static final Color WRONG_CONTENT = JBColor.namedColor("Tree.errorForeground", JBColor.RED);
   private static final Color MODIFIED_CONTENT = JBColor.namedColor("Tree.modifiedItemForeground", JBColor.BLUE);
+  private static final Icon NEW_BADGE_DOT = new LargeBlueDotIcon();
 
   private final SimpleTree myTree;
 
@@ -793,7 +796,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
       if (node != null && node.hasNewOptions() && (leaf || !expanded)) {
         if (shouldShowNewBadge(configurable)) {
-          setRightIcon(Badge.newBadge);
+          setRightIcon(NEW_BADGE_DOT);
           myAccessibleBadgeText = IdeBundle.message("badge.text.new");
         }
       }
@@ -930,6 +933,39 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     if (c instanceof Configurable.Promo) return (Configurable.Promo)c;
 
     return ConfigurableWrapper.cast(Configurable.Promo.class, c);
+  }
+
+  private static final class LargeBlueDotIcon implements Icon {
+    private static final int ICON_HEIGHT = 16;
+    private static final int DOT_DIAMETER = 6;
+
+    @Override
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      Graphics2D g2 = (Graphics2D)g.create();
+      try {
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        float diameter = JBUIScale.scale((float)DOT_DIAMETER);
+        float dotX = x + (getIconWidth() - diameter) / 2.0f;
+        float dotY = y + (getIconHeight() - diameter) / 2.0f;
+
+        g2.setColor(JBUI.CurrentTheme.IconBadge.INFORMATION);
+        g2.fill(new Ellipse2D.Float(dotX, dotY, diameter, diameter));
+      }
+      finally {
+        g2.dispose();
+      }
+    }
+
+    @Override
+    public int getIconWidth() {
+      return JBUIScale.scale(DOT_DIAMETER);
+    }
+
+    @Override
+    public int getIconHeight() {
+      return JBUIScale.scale(ICON_HEIGHT);
+    }
   }
 
   private static boolean hasNewOptions(@NotNull Configurable configurable) {
