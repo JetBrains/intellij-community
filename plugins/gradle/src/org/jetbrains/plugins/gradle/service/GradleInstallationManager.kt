@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service
 
-import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager.Companion.getInstance
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
@@ -17,8 +17,8 @@ import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
@@ -70,7 +70,9 @@ open class GradleInstallationManager : Disposable.Default {
   @ApiStatus.Experimental
   fun guessBuildLayoutParameters(project: Project, projectPath: String?): BuildLayoutParameters {
     val cacheKey = projectPath ?: getDefaultProjectKey(project)
-    return myBuildLayoutParametersCache.computeIfAbsent(cacheKey) {
+    var justCreated = false
+    val params = myBuildLayoutParametersCache.computeIfAbsent(cacheKey) {
+      justCreated = true
       for (executionAware in getExtensions(GradleConstants.SYSTEM_ID)) {
         if (executionAware !is GradleExecutionAware) {
           continue
@@ -92,6 +94,13 @@ open class GradleInstallationManager : Disposable.Default {
         LocalGradleExecutionAware().getDefaultBuildLayoutParameters(project)
       }
     }
+    if (justCreated) {
+      if (project.isDisposed || !Disposer.tryRegister(project.service<BuildLayoutParametersCleanupService>(),
+                                                      Disposable { myBuildLayoutParametersCache.remove(cacheKey, params) })) {
+        myBuildLayoutParametersCache.remove(cacheKey, params)
+      }
+    }
+    return params
   }
 
   fun getGradleHomePath(project: Project?, linkedProjectPath: String): Path? {
@@ -177,7 +186,12 @@ open class GradleInstallationManager : Disposable.Default {
     }
     val path = System.getenv("PATH") ?: return null
     for (pathEntry in path.split(File.pathSeparator)) {
-      val dir = try { Path.of(pathEntry) } catch (_: InvalidPathException) { continue }
+      val dir = try {
+        Path.of(pathEntry)
+      }
+      catch (_: InvalidPathException) {
+        continue
+      }
       if (!dir.isDirectory()) {
         continue
       }
@@ -284,13 +298,6 @@ open class GradleInstallationManager : Disposable.Default {
       }
     }
     return result
-  }
-
-  @ApiStatus.Internal
-  internal class ProjectManagerLayoutParametersCacheCleanupListener : ProjectManagerListener {
-    override fun projectClosed(project: Project) {
-      getInstance().myBuildLayoutParametersCache.clear()
-    }
   }
 
   @ApiStatus.Internal
@@ -541,3 +548,6 @@ open class GradleInstallationManager : Disposable.Default {
     }
   }
 }
+
+@Service(Service.Level.PROJECT)
+private class BuildLayoutParametersCleanupService : Disposable.Default

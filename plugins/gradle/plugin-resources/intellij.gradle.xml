@@ -273,8 +273,6 @@
   </extensions>
 
   <applicationListeners>
-    <listener class="org.jetbrains.plugins.gradle.service.GradleInstallationManager$ProjectManagerLayoutParametersCacheCleanupListener"
-              topic="com.intellij.openapi.project.ProjectManagerListener"/>
     <listener class="org.jetbrains.plugins.gradle.service.GradleInstallationManager$DynamicPluginLayoutParametersCacheCleanupListener"
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
   </applicationListeners>
