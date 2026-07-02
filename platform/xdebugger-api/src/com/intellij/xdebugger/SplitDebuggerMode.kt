@@ -6,6 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object SplitDebuggerMode {
+  @Deprecated("Debugger split flag is enabled by default", replaceWith = ReplaceWith("true"))
   @JvmStatic
   fun isSplitDebugger(): Boolean = true
 
