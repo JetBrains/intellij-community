@@ -42,7 +42,7 @@ internal class TerminalCopyOnSelectionTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `copy on selection copies block selection from all selected lines`() {
+  fun `copy on selection works for single selection and does not clear clipboard when selection becomes empty`() {
     val editor = createTerminalEditor()
     editor.emitOnTerminal(
       """
@@ -52,11 +52,43 @@ internal class TerminalCopyOnSelectionTest : BasePlatformTestCase() {
       """.trimIndent()
     )
 
-    editor.selectionModel.setBlockSelection(LogicalPosition(0, 1), LogicalPosition(2, 4))
+    // Select "first"
+    editor.selectionModel.setSelection(0, 5)
+    val copied = copiedTransferable()
+    assertNotNull(copied)
+    assertEquals("first", copied!!.getTransferData(DataFlavor.stringFlavor))
 
-    val transferable = copiedTransferable()
-    assertNotNull(transferable)
-    assertEquals("irs\neco\nhir", transferable!!.getTransferData(DataFlavor.stringFlavor))
+    // Clearing the selection fires a selection change event with an empty selection.
+    editor.selectionModel.removeSelection()
+    val afterClear = copiedTransferable()
+    assertNotNull(afterClear)
+    assertEquals("first", afterClear!!.getTransferData(DataFlavor.stringFlavor))
+  }
+
+  @Test
+  fun `copy on selection works for block selection and does not clear clipboard when block selection is cleared`() {
+    val editor = createTerminalEditor()
+    editor.emitOnTerminal(
+      """
+      first
+      second
+      third
+      """.trimIndent()
+    )
+
+    // A vertical (block) selection is copied to the clipboard.
+    editor.selectionModel.setBlockSelection(LogicalPosition(0, 1), LogicalPosition(2, 4))
+    val copied = copiedTransferable()
+    assertNotNull(copied)
+    assertEquals("irs\neco\nhir", copied!!.getTransferData(DataFlavor.stringFlavor))
+
+    // Clearing the block selection collapses back to a single caret (as a click does) and fires a
+    // selection change event with an empty selection. It must not overwrite the clipboard.
+    editor.caretModel.removeSecondaryCarets()
+    editor.selectionModel.removeSelection(true)
+    val afterClear = copiedTransferable()
+    assertNotNull(afterClear)
+    assertEquals("irs\neco\nhir", afterClear!!.getTransferData(DataFlavor.stringFlavor))
   }
 
   private fun createTerminalEditor(): Editor {
@@ -85,6 +117,5 @@ internal class TerminalCopyOnSelectionTest : BasePlatformTestCase() {
     psiFile.charsSequence = this.document.immutableCharSequence
   }
 
-  private fun copiedTransferable() =
-    CopyPasteManager.getInstance().let { it.systemSelectionContents ?: it.contents }
+  private fun copiedTransferable() = CopyPasteManager.getInstance().let { it.systemSelectionContents ?: it.contents }
 }
