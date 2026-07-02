@@ -194,7 +194,7 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     PyClassType enumType = as(context.getType(qualifier), PyClassType.class);
     if (enumType == null || !isCustomEnum(enumType.getPyClass(), context)) return null;
     String memberName = enumType instanceof PyLiteralType literalType ? literalType.getEnumMemberName() : null;
-    return getEnumValueType(enumType.getPyClass(), memberName, context);
+    return getEnumMemberValueType(enumType.getPyClass(), memberName, context);
   }
 
   // Returns the type of enum attribute value transformed by 'EnumType' metaclass or null, if the attribute value is not transformed
@@ -429,10 +429,26 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  // Handle IntEnum/IntFlag, StrEnum, and fall back to assigned type or unknown
+  /**
+   * Returns the <em>nominal</em> value type of an enum, derived from its base classes: {@code int} for
+   * {@code IntEnum}/{@code IntFlag}/{@code Flag} (and plain {@code int} mixins), {@code str} for {@code StrEnum}
+   * (and plain {@code str} mixins), {@code bytes}/{@code float} for the respective mixins, and otherwise the union
+   * of the members' assigned value types. This is the type members are checked against (an {@code IntEnum} member
+   * must be an {@code int}), and the fallback for {@code .value} access on enums that declare no members.
+   */
   @ApiStatus.Internal
   public static @Nullable PyType getEnumValueType(@NotNull PyClass enumClass, @NotNull TypeEvalContext context) {
-    return getEnumValueType(enumClass, null, context);
+    PyType mixinValueType = getEnumMixinValueType(enumClass, context);
+    if (mixinValueType != null) {
+      return mixinValueType;
+    }
+    List<PyType> memberValueTypes = getEnumMemberValueTypes(enumClass, context);
+    if (memberValueTypes.isEmpty()) {
+      return PyBuiltinCache.getInstance(enumClass).getObjectType();
+    }
+    // The union collapses to the common type for homogeneous enums (e.g. 'int') and widens to e.g. 'int | str' for
+    // heterogeneous ones, instead of incorrectly reporting just the first member's type.
+    return PyUnionType.union(memberValueTypes);
   }
 
   /**
@@ -444,8 +460,18 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
   public static @Nullable PyType getEnumMixinValueType(@NotNull PyClass enumClass, @NotNull TypeEvalContext context) {
     PyBuiltinCache cache = PyBuiltinCache.getInstance(enumClass);
 
-    if (enumClass.isSubclass("enum.IntFlag", context) ||
+    if (enumClass.isSubclass("enum.IntEnum", context) ||
+        enumClass.isSubclass("enum.IntFlag", context) ||
         enumClass.isSubclass("enum.Flag", context)) {
+      return cache.getIntType();
+    }
+    if (enumClass.isSubclass("enum.StrEnum", context)) {
+      return cache.getStrType();
+    }
+    if (enumClass.isSubclass(PyNames.FQN.STR, context)) {
+      return cache.getStrType();
+    }
+    if (enumClass.isSubclass(PyNames.FQN.INT, context)) {
       return cache.getIntType();
     }
     if (enumClass.isSubclass(PyNames.FQN.BYTES, context)) {
@@ -458,37 +484,63 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   /**
-   * returns the type of the {@code value} attribute of an enum member, or the union of all members' value types
+   * Returns the type of the {@code value} attribute accessed on an enum member. A member that resolves to a specific
+   * declaration keeps its precise {@link PyLiteralType literal} value, e.g. {@code I.a.value} is {@code Literal[1]}.
+   * Without such a member, the "specific" enum types ({@code IntEnum}, {@code StrEnum}) and plain {@code Enum}s keep
+   * the union of all members' literals, e.g. {@code i.value} for a general {@code i: I} is {@code Literal[1, 2]}.
+   * {@code Flag}/{@code IntFlag} (whose values combine bitwise), enums pinned by a plain builtin mixin (e.g.
+   * {@code class C(str, Enum)}), and enums without members keep the nominal value type.
    */
-  private static @Nullable PyType getEnumValueType(@NotNull PyClass enumClass,
-                                                  @Nullable String memberName,
-                                                  @NotNull TypeEvalContext context) {
-    // Infer from the MEMBERS' assigned values (not non-members like helpers/descriptors).
-    List<PyType> memberValueTypes = new ArrayList<>();
-    for (PyTargetExpression targetExpr : enumClass.getClassAttributes()) {
-      EnumAttributeInfo attributeInfo = getEnumAttributeInfo(enumClass, targetExpr, context);
+  private static @Nullable PyType getEnumMemberValueType(@NotNull PyClass enumClass,
+                                                         @Nullable String memberName,
+                                                         @NotNull TypeEvalContext context) {
+    // For a specific member, prefer its own (possibly transformed) value type so literals are preserved,
+    // e.g. `MyIntChoices.OK.value` is `Literal[1]`, not the widened `int` from the data-type mixin.
+    PyTargetExpression memberExpr = memberName != null ? enumClass.findClassAttribute(memberName, false, context) : null;
+    if (memberExpr != null) {
+      EnumAttributeInfo attributeInfo = getEnumAttributeInfo(enumClass, memberExpr, context);
       if (attributeInfo != null && attributeInfo.attributeKind == EnumAttributeKind.MEMBER) {
-        // For a specific member, prefer its own (possibly transformed) value type so literals are preserved,
-        // e.g. `MyIntChoices.OK.value` is `Literal[1]`, not the widened `int` from the data-type mixin.
-        if (Objects.equals(memberName, targetExpr.getName())) {
-          return attributeInfo.assignedValueType;
-        }
-        memberValueTypes.add(attributeInfo.assignedValueType);
+        return attributeInfo.assignedValueType;
       }
     }
-
-    // The enum-wide value type (no specific member, or the member is inherited) is the data-type mixin's type when
-    // present, otherwise the union of all members' value types.
-    PyType mixinValueType = getEnumMixinValueType(enumClass, context);
-    if (mixinValueType != null) {
-      return mixinValueType;
+    if (hasNominalValueType(enumClass, context)) {
+      return getEnumValueType(enumClass, context);
     }
+    List<PyType> memberValueTypes = getEnumMemberValueTypes(enumClass, context);
     if (memberValueTypes.isEmpty()) {
-      return PyBuiltinCache.getInstance(enumClass).getObjectType();
+      return getEnumValueType(enumClass, context);
     }
     // The union collapses to the common type for homogeneous enums (e.g. 'int') and widens to e.g. 'int | str' for
     // heterogeneous ones, instead of incorrectly reporting just the first member's type.
     return PyUnionType.union(memberValueTypes);
+  }
+
+  /**
+   * Whether an enum member's {@code value} keeps its nominal type rather than the union of the members' literals:
+   * {@code Flag}/{@code IntFlag} (values combine bitwise) and enums with a plain builtin mixin base other than
+   * {@code IntEnum}/{@code StrEnum} (e.g. {@code class C(str, Enum)}, {@code bytes}/{@code float} mixins).
+   */
+  private static boolean hasNominalValueType(@NotNull PyClass enumClass, @NotNull TypeEvalContext context) {
+    return enumClass.isSubclass(PyNames.FQN.ENUM_FLAG, context) ||
+           enumClass.isSubclass(PyNames.FQN.BYTES, context) ||
+           enumClass.isSubclass(PyNames.FQN.FLOAT, context) ||
+           enumClass.isSubclass(PyNames.FQN.STR, context) && !enumClass.isSubclass("enum.StrEnum", context) ||
+           enumClass.isSubclass(PyNames.FQN.INT, context) && !enumClass.isSubclass("enum.IntEnum", context);
+  }
+
+  /**
+   * The value types of the enum's declared MEMBERS, in declaration order. Non-members such as helpers and descriptors
+   * are left out. The list is empty when the enum declares no member.
+   */
+  private static @NotNull List<PyType> getEnumMemberValueTypes(@NotNull PyClass enumClass, @NotNull TypeEvalContext context) {
+    List<PyType> memberValueTypes = new ArrayList<>();
+    for (PyTargetExpression targetExpr : enumClass.getClassAttributes()) {
+      EnumAttributeInfo attributeInfo = getEnumAttributeInfo(enumClass, targetExpr, context);
+      if (attributeInfo != null && attributeInfo.attributeKind == EnumAttributeKind.MEMBER) {
+        memberValueTypes.add(attributeInfo.assignedValueType);
+      }
+    }
+    return memberValueTypes;
   }
 
   private static @Nullable PyType getEnumNameType(@NotNull PsiElement referenceTarget,

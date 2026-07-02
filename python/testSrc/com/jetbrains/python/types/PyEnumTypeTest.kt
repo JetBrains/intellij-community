@@ -915,6 +915,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       class MyIntEnum(IntEnum):
           OK = 1
           BAD = "string"
+      #         ^^^^^^^^ WARNING Expected type 'int', got 'Literal["string"]' instead
       #         ^^^^^^^^ WARNING Type 'Literal["string"]' is not assignable to declared type 'int'
 
       class MyEnum(Enum):
