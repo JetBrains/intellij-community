@@ -22,7 +22,9 @@ internal class OpenWelcomeScreenAction : DumbAwareAction(), ActionRemoteBehavior
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     runWithModalProgressBlocking(project, NonModalWelcomeScreenBundle.message("welcome.screen.opening.progress.title")) {
-      WelcomeScreenRightTab.show(project)
+      // User-initiated open: focus the welcome tab content (unlike the passive startup open, which keeps focus on
+      // the recent-projects search field in the left project view — IJPL-248588).
+      WelcomeScreenRightTab.show(project, focusContent = true)
     }
   }
 }
