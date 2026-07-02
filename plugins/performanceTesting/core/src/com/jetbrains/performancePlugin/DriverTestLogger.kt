@@ -11,6 +11,7 @@ internal class DriverTestLogger {
     fun info(text: String) {
       LOG.info(text)
     }
+
     @JvmStatic
     fun warn(text: String) {
       LOG.warn(text)
@@ -19,6 +20,11 @@ internal class DriverTestLogger {
     @JvmStatic
     fun warn(t: Throwable) {
       LOG.warn(t)
+    }
+
+    @JvmStatic
+    fun error(text: String) {
+      LOG.error(text)
     }
   }
 }

@@ -191,6 +191,7 @@ interface FileEditorManager {
   fun setSelectedEditor(editor: FileEditor)
   fun getAllEditors(): Array<FileEditor>
   fun getCurrentFile(): VirtualFile
+  fun getOpenFiles(): Array<VirtualFile>
 }
 
 @Remote("com.intellij.openapi.editor.colors.EditorColorsScheme")

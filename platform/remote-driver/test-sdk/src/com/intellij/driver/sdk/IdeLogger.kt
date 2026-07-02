@@ -9,6 +9,7 @@ val Driver.ideLogger: DriverTestLogger
 
 @Remote("com.jetbrains.performancePlugin.DriverTestLogger", plugin = "com.jetbrains.performancePlugin")
 interface DriverTestLogger {
+  fun error(text: String)
   fun info(text: String)
   fun warn(text: String)
   fun warn(t: Throwable)

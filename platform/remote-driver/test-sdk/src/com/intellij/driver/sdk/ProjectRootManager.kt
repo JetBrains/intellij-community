@@ -46,6 +46,12 @@ interface Sdk {
   fun getHomePath(): String?
 }
 
+@Remote(value = "com.jetbrains.performancePlugin.commands.ReloadFilesCommand",
+        plugin = "com.jetbrains.performancePlugin")
+interface ReloadFromDiskCommand {
+  fun synchronizeFiles(filePaths: List<String>)
+}
+
 @Remote(value = "com.jetbrains.performancePlugin.commands.SetupProjectSdkUtil",
         plugin = "com.jetbrains.performancePlugin",
         rdTarget = RdTarget.BACKEND)

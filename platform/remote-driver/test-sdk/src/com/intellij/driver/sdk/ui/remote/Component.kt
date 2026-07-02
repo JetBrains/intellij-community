@@ -50,7 +50,9 @@ fun ColorRef.toHexString(): String {
 }
 
 @Remote("java.lang.Class")
-interface Class
+interface Class {
+  fun getName(): String
+}
 
 @Remote("javax.accessibility.AccessibleContext")
 interface AccessibleContextRef {
