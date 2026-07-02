@@ -25,17 +25,8 @@ public class TestsDurationBucketingScheme implements BucketingScheme {
     long start = System.nanoTime();
 
     String season = System.getProperty("idea.bucketing.season");
-    Map<String, Integer> seasonData = TestsDurationBucketingUtils.loadSeasonData(season);
-    if (seasonData == null) {
-      String fallbackSeason = System.getProperty("idea.bucketing.season.fallback");
-      seasonData = TestsDurationBucketingUtils.loadSeasonData(fallbackSeason);
-      if (seasonData != null) {
-        System.out.println("Tests duration bucketing with season fallback: " + fallbackSeason);
-      }
-    }
-    else {
-      System.out.println("Tests duration bucketing with season: " + season);
-    }
+    String fallbackSeason = System.getProperty("idea.bucketing.season.fallback");
+    Map<String, Integer> seasonData = TestsDurationBucketingUtils.loadSeasonData(season, fallbackSeason);
     if (seasonData != null) {
       myPutMissingToFirstBucket = true;
       myBucketFilters =
