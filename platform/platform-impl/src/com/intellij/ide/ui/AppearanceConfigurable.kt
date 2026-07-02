@@ -12,7 +12,6 @@ import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.actions.IdeScaleTransformer
 import com.intellij.ide.actions.QuickChangeLookAndFeel
-import com.intellij.accessibility.LinuxAccessibilitySupport
 import com.intellij.ide.isSupportScreenReadersOverridden
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.ui.laf.LafManagerImpl
@@ -723,10 +722,6 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
     if (uiSettingsChanged) {
       UISettings.getInstance().fireUISettingsChanged()
       EditorFactory.getInstance().refreshAllEditors()
-    }
-
-    if (oldIsSupportScreenReaders != generalSettings.isSupportScreenReaders) {
-      LinuxAccessibilitySupport.syncAtkWrapperVmOption(generalSettings.isSupportScreenReaders)
     }
 
     if (oldIsSupportScreenReaders != generalSettings.isSupportScreenReaders ||

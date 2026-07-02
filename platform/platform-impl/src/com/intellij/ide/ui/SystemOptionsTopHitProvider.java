@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
-import com.intellij.accessibility.LinuxAccessibilitySupport;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.GeneralSettingsConfigurableKt;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
@@ -48,7 +47,6 @@ final class SystemOptionsTopHitProvider implements OptionsTopHitProvider.Applica
 
         boolean newValue = isOptionEnabled();
         if (oldValue != newValue) {
-          LinuxAccessibilitySupport.syncAtkWrapperVmOption(newValue);
           if (!ApplicationManager.getApplication().isUnitTestMode()) {
             RegistryBooleanOptionDescriptor.suggestRestart(null);
           }
