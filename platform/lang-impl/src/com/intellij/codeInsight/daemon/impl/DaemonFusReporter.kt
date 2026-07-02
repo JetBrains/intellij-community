@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
@@ -105,7 +105,7 @@ internal open class DaemonFusReporter(private val project: Project) : DaemonCode
     }
 
     val analyzer = (editor.markupModel as? EditorMarkupModel)?.errorStripeRenderer as? TrafficLightRenderer
-    val errorCounts = analyzer?.errorCounts
+    val errorCounts = analyzer?.errorCountsForFus
     val registrar = SeverityRegistrar.getSeverityRegistrar(project)
     val errorIndex = registrar.getSeverityIdx(HighlightSeverity.ERROR)
     val warningIndex = registrar.getSeverityIdx(HighlightSeverity.WARNING)
