@@ -168,7 +168,6 @@
   - name: intellij.debugger.logpoints.kotlin
   - name: kotlin.plugin
   contentModules:
-  - name: intellij.kotlin.base.analysis.platform
   - name: intellij.kotlin.base.externalSystem
   - name: intellij.kotlin.codeInsight.base
   - name: intellij.kotlin.projectStructure
@@ -328,6 +327,9 @@
     libraries:
       ehcache.sizeof:
       - name: $MAVEN_REPOSITORY$/org/ehcache/sizeof/0/sizeof-0.jar
+- name: lib/modules/intellij.kotlin.base.analysis.platform.jar
+  contentModules:
+  - name: intellij.kotlin.base.analysis.platform
 - name: lib/modules/intellij.kotlin.completion.ml.jar
   contentModules:
   - name: intellij.kotlin.completion.ml

@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.base.analysisApiPlatform" visibility="internal">
+<idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.java.psi"/>
@@ -15,6 +15,7 @@
     <applicationService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.permissions.KotlinAnalysisPermissionOptions"
             serviceImplementation="org.jetbrains.kotlin.analysis.api.platform.permissions.KotlinDefaultAnalysisPermissionOptions"/>
+    <lang.parserDefinition language="kotlin" implementationClass="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IDEKotlinK2KotlinParserDefinition"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.KotlinPlatformSettings"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinPlatformSettings"/>
@@ -64,7 +65,12 @@
 
     <postStartupActivity
             implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinStatisticsStartupActivity"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker"
+            serviceImplementation="org.jetbrains.kotlin.idea.references.impl.ReadWriteAccessCheckerBaseImpl"
+    />
   </extensions>
+
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <kotlinContentScopeRefiner implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.projectStructure.scopes.IdeKotlinResolveScopeEnlargerBridge"/>
@@ -80,6 +86,17 @@
             order="first"/>
 
     <kotlinGlobalSearchScopeMergeStrategy implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.projectStructure.scopes.IdeKotlinCombinableSourceAndClassRootsScopeMergeStrategy"/>
+
+    <psiReferenceProvider implementation="org.jetbrains.kotlin.idea.references.impl.KaBaseForLoopInReference$Provider"/>
+    <psiReferenceProvider implementation="org.jetbrains.kotlin.idea.references.impl.KaBaseInvokeFunctionReference$Provider"/>
+    <psiReferenceProvider implementation="org.jetbrains.kotlin.idea.references.impl.KaBasePropertyDelegationMethodsReference$Provider"/>
+    <psiReferenceProvider implementation="org.jetbrains.kotlin.idea.references.impl.KaBaseDestructuringDeclarationReference$Provider"/>
+    <psiReferenceProvider implementation="org.jetbrains.kotlin.idea.references.impl.KaBaseArrayAccessReference$Provider"/>
+    <psiReferenceProvider implementation="org.jetbrains.kotlin.idea.references.impl.KaBaseConstructorDelegationReference$Provider"/>
+    <psiReferenceProvider implementation="org.jetbrains.kotlin.idea.references.impl.KaBaseCollectionLiteralReference$Provider"/>
+    <psiReferenceProvider implementation="org.jetbrains.kotlin.idea.references.impl.KaBaseKDocReference$Provider"/>
+    <psiReferenceProvider implementation="org.jetbrains.kotlin.idea.references.impl.KaBaseSimpleNameReference$Provider"/>
+    <psiReferenceProvider implementation="org.jetbrains.kotlin.idea.references.impl.KaBaseDefaultAnnotationArgumentReference$Provider"/>
   </extensions>
 
   <projectListeners>
