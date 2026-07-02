@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="kotlin-language" name="Kotlin">
+      <configuration version="5" platform="JVM 25" allPlatforms="JVM [25]" useProjectSettings="false">
+        <compilerSettings>
+          <option name="additionalArguments" value="-Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
+        </compilerSettings>
+        <compilerArguments>
+          <stringArguments>
+            <stringArg name="jvmTarget" arg="25" />
+            <stringArg name="apiVersion" arg="2.4" />
+            <stringArg name="languageVersion" arg="2.4" />
+          </stringArguments>
+          <arrayArguments>
+            <arrayArg name="pluginClasspaths">
+              <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
+            </arrayArg>
+            <arrayArg name="pluginOptions" />
+          </arrayArguments>
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
+    <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
+    <orderEntry type="module" module-name="intellij.libraries.jsoup" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
+    <orderEntry type="module" module-name="intellij.platform.ide.progress" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
+    <orderEntry type="module" module-name="intellij.platform.feedback" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" />
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library name="tips-idea-ce" type="repository">
+        <properties maven-id="com.jetbrains.intellij.documentation:tips-intellij-idea-community:241.62">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-intellij-idea-community/241.62/tips-intellij-idea-community-241.62.jar">
+              <sha256sum>e46de060e29f3d060de5a9dab21711ff4d376e4b2a7e96d332415df60b7d77c8</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-intellij-idea-community/241.62/tips-intellij-idea-community-241.62.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library name="tips-idea" type="repository">
+        <properties maven-id="com.jetbrains.intellij.documentation:tips-intellij-idea:241.73">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-intellij-idea/241.73/tips-intellij-idea-241.73.jar">
+              <sha256sum>0eeed767b8a8caf712f7fcfddff3fe7ec0efe9ae4089398c401e19b9bfa1a692</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-intellij-idea/241.73/tips-intellij-idea-241.73.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library name="tips-goland" type="repository">
+        <properties maven-id="com.jetbrains.intellij.documentation:tips-goland:241.63">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-goland/241.63/tips-goland-241.63.jar">
+              <sha256sum>89948354d75b212c6e9b7d121da4c57f7236522b4ed56c487d00543f489140c8</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-goland/241.63/tips-goland-241.63.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library name="tips-clion" type="repository">
+        <properties maven-id="com.jetbrains.intellij.documentation:tips-clion:241.61">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-clion/241.61/tips-clion-241.61.jar">
+              <sha256sum>3d36a69b7aff5c881c305cbcd430b000e70613424ff3eb8a87803d7ed17a496c</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-clion/241.61/tips-clion-241.61.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library name="tips-appcode" type="repository">
+        <properties maven-id="com.jetbrains.intellij.documentation:tips-appcode:222.33">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-appcode/222.33/tips-appcode-222.33.jar">
+              <sha256sum>82a3f17d4bc7e04baed675e7188b02183ac21f14e930eed78146154b431e282f</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-appcode/222.33/tips-appcode-222.33.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library name="tips-phpstorm" type="repository">
+        <properties maven-id="com.jetbrains.intellij.documentation:tips-phpstorm:241.67">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-phpstorm/241.67/tips-phpstorm-241.67.jar">
+              <sha256sum>39b96be28e800ba2e6554747c1ab31f5be3462ea8a3875de575eab081f005b42</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-phpstorm/241.67/tips-phpstorm-241.67.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library name="tips-webstorm" type="repository">
+        <properties maven-id="com.jetbrains.intellij.documentation:tips-webstorm:241.72">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-webstorm/241.72/tips-webstorm-241.72.jar">
+              <sha256sum>ad5067f70be670b07a22f6e403d51486370ae9d3e22fc8930b0abfdb3c02fae9</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-webstorm/241.72/tips-webstorm-241.72.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library name="tips-datagrip" type="repository">
+        <properties maven-id="com.jetbrains.intellij.documentation:tips-datagrip:241.59">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-datagrip/241.59/tips-datagrip-241.59.jar">
+              <sha256sum>c4e28b03d939d970e822f9a245a7022bb2c4dc3fb3e5a630d67dffab638d9e3a</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-datagrip/241.59/tips-datagrip-241.59.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library name="tips-database-plugin" type="repository">
+        <properties maven-id="com.jetbrains.intellij.documentation:tips-database-plugin:241.71">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-database-plugin/241.71/tips-database-plugin-241.71.jar">
+              <sha256sum>898b55af7f9fd3a3d56a520aa4d598a39bb3e955d5285ce0104c9d509c865f80</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-database-plugin/241.71/tips-database-plugin-241.71.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library name="tips-big-data-tools" type="repository">
+        <properties maven-id="com.jetbrains.intellij.documentation:tips-big-data-tools:241.60">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-big-data-tools/241.60/tips-big-data-tools-241.60.jar">
+              <sha256sum>11123033cc1c015c4b8f10a9edddeb16ad8bab5fd8545d6bf0294707c3536e43</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-big-data-tools/241.60/tips-big-data-tools-241.60.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library name="tips-rubymine" type="repository">
+        <properties maven-id="com.jetbrains.intellij.documentation:tips-rubymine:241.58">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-rubymine/241.58/tips-rubymine-241.58.jar">
+              <sha256sum>c4d85b0aa5690fdaa40c4f5c7a0ddddd646cf3f335dbc0c35db5dfc4fea963ff</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-rubymine/241.58/tips-rubymine-241.58.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library name="tips-pycharm-community" type="repository">
+        <properties maven-id="com.jetbrains.intellij.documentation:tips-pycharm-community:241.74">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-pycharm-community/241.74/tips-pycharm-community-241.74.jar">
+              <sha256sum>7f9fd8e37ec4dfdef7bfc3bc6a687fa5a322976fc588432fa46d2feb1fefc966</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-pycharm-community/241.74/tips-pycharm-community-241.74.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library name="tips-pycharm-pro" type="repository">
+        <properties maven-id="com.jetbrains.intellij.documentation:tips-pycharm:241.68">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-pycharm/241.68/tips-pycharm-241.68.jar">
+              <sha256sum>72011459844f5dc3490b1d69cc83554a917db2e6254896af3da979e10d8baede</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-pycharm/241.68/tips-pycharm-241.68.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+  </component>
+</module>

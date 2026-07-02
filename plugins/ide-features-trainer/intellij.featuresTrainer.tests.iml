@@ -71,7 +71,7 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ex" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lvcs.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.plugin" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.tips" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tips" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.todo.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testRunner" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testRunner.plugin" scope="TEST" />

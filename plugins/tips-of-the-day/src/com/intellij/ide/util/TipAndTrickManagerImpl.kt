@@ -15,7 +15,10 @@ import kotlinx.coroutines.withContext
 internal class TipAndTrickManagerImpl : TipAndTrickManager {
   private var openedDialog: TipDialog? = null
 
-  override suspend fun showTipDialog(project: Project?) = showTipDialog(project = project, tips = TipAndTrickBean.EP_NAME.extensionList)
+  override suspend fun showTipDialog(project: Project?) = showTipDialog(
+    project = project,
+    tips = TipProductFilter.getInstance().tips,
+  )
 
   override suspend fun showTipDialog(project: Project, tip: TipAndTrickBean) = showTipDialog(project = project, tips = listOf(tip))
 

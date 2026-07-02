@@ -471,6 +471,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/ide-features-trainer/intellij.featuresTrainer.iml" filepath="$PROJECT_DIR$/plugins/ide-features-trainer/intellij.featuresTrainer.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ide-features-trainer/onboarding/intellij.featuresTrainer.onboarding.iml" filepath="$PROJECT_DIR$/plugins/ide-features-trainer/onboarding/intellij.featuresTrainer.onboarding.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ide-features-trainer/intellij.featuresTrainer.tests.iml" filepath="$PROJECT_DIR$/plugins/ide-features-trainer/intellij.featuresTrainer.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/ide-features-trainer/tips/intellij.featuresTrainer.tips.iml" filepath="$PROJECT_DIR$/plugins/ide-features-trainer/tips/intellij.featuresTrainer.tips.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/filePrediction/intellij.filePrediction.iml" filepath="$PROJECT_DIR$/plugins/filePrediction/intellij.filePrediction.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/filePrediction/intellij.filePrediction.tests.iml" filepath="$PROJECT_DIR$/plugins/filePrediction/intellij.filePrediction.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/findUsagesMl/intellij.findUsagesMl.iml" filepath="$PROJECT_DIR$/plugins/findUsagesMl/intellij.findUsagesMl.iml" />
@@ -1676,7 +1677,6 @@
       <module fileurl="file://$PROJECT_DIR$/platform/platform-tests/intellij.platform.tests.iml" filepath="$PROJECT_DIR$/platform/platform-tests/intellij.platform.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/threadDumpParser/intellij.platform.threadDumpParser.iml" filepath="$PROJECT_DIR$/platform/threadDumpParser/intellij.platform.threadDumpParser.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/threadDumpParser/intellij.platform.threadDumpParser.tests.iml" filepath="$PROJECT_DIR$/platform/threadDumpParser/intellij.platform.threadDumpParser.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/tips-of-the-day/intellij.platform.tips.iml" filepath="$PROJECT_DIR$/platform/tips-of-the-day/intellij.platform.tips.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/todo/intellij.platform.todo.iml" filepath="$PROJECT_DIR$/platform/todo/intellij.platform.todo.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/todo/backend/intellij.platform.todo.backend.iml" filepath="$PROJECT_DIR$/platform/todo/backend/intellij.platform.todo.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/todo/plugin/intellij.platform.todo.plugin.iml" filepath="$PROJECT_DIR$/platform/todo/plugin/intellij.platform.todo.plugin.iml" />
@@ -1963,6 +1963,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/textmate/joni/intellij.textmate.joni.tests.iml" filepath="$PROJECT_DIR$/plugins/textmate/joni/intellij.textmate.joni.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/textmate/plugin/intellij.textmate.plugin.iml" filepath="$PROJECT_DIR$/plugins/textmate/plugin/intellij.textmate.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/textmate/tests/intellij.textmate.tests.iml" filepath="$PROJECT_DIR$/plugins/textmate/tests/intellij.textmate.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/tips-of-the-day/intellij.tips.iml" filepath="$PROJECT_DIR$/plugins/tips-of-the-day/intellij.tips.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/tips-of-the-day/plugin/intellij.tipsOfTheDay.plugin.iml" filepath="$PROJECT_DIR$/plugins/tips-of-the-day/plugin/intellij.tipsOfTheDay.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/toml/intellij.toml.iml" filepath="$PROJECT_DIR$/plugins/toml/intellij.toml.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/toml/backend/intellij.toml.backend.iml" filepath="$PROJECT_DIR$/plugins/toml/backend/intellij.toml.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/toml/core/intellij.toml.core.iml" filepath="$PROJECT_DIR$/plugins/toml/core/intellij.toml.core.iml" />

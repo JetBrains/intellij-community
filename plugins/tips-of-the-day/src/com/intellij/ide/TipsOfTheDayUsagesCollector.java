@@ -26,7 +26,7 @@ import static com.intellij.ide.util.TipOrderUtil.SORTING_ALGORITHM;
 
 @ApiStatus.Internal
 public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 13);
+  private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 14);
 
   public enum DialogType {automatically, manually}
 

@@ -6,7 +6,7 @@ package com.intellij.ide.util
 import com.intellij.CommonBundle
 import com.intellij.featureStatistics.FeatureDescriptor
 import com.intellij.featureStatistics.ProductivityFeaturesRegistry
-import com.intellij.ide.IdeBundle
+import com.intellij.ide.TipsOfTheDayBundle
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.text.paragraph.TextParagraph
 import com.intellij.ide.util.TipUiSettings.imageBorderColor
@@ -145,7 +145,7 @@ private data class LoadedTipInfo(val tipContent: @Nls String,
 
 private fun loadTip(tip: TipAndTrickBean?, isStrict: Boolean): LoadedTipInfo {
   if (tip == null) {
-    return LoadedTipInfo(IdeBundle.message("no.tip.of.the.day"))
+    return LoadedTipInfo(TipsOfTheDayBundle.message("no.tip.of.the.day"))
   }
 
   try {
@@ -319,11 +319,11 @@ private fun handleError(t: Throwable, isStrict: Boolean) {
 private fun getCantReadText(bean: TipAndTrickBean): @Nls String {
   val plugin = getPoweredByText(bean)
   val product: @Nls String = if (!plugin.isEmpty()) {
-    IdeBundle.message("product.and.plugin", ApplicationNamesInfo.getInstance().fullProductName, plugin)
+    TipsOfTheDayBundle.message("product.and.plugin", ApplicationNamesInfo.getInstance().fullProductName, plugin)
   } else {
     ApplicationNamesInfo.getInstance().fullProductName
   }
-  return IdeBundle.message("error.unable.to.read.tip.of.the.day", bean.fileName, product)
+  return TipsOfTheDayBundle.message("error.unable.to.read.tip.of.the.day", bean.fileName, product)
 }
 
 private fun getPoweredByText(tip: TipAndTrickBean): @NlsSafe String {

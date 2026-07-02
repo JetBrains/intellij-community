@@ -1,29 +1,25 @@
-<idea-plugin visibility="internal">
-  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-  <dependencies>
-    <module name="intellij.libraries.fastutil"/>
-    <module name="intellij.libraries.jackson"/>
-    <module name="intellij.libraries.jackson.databind"/>
-    <module name="intellij.libraries.jsoup"/>
-    <module name="intellij.libraries.kotlinx.coroutines.core"/>
-    <module name="intellij.libraries.kotlinx.datetime"/>
-    <module name="intellij.libraries.kotlinx.serialization.core"/>
-    <module name="intellij.libraries.kotlinx.serialization.json"/>
-    <module name="intellij.platform.analysis"/>
-    <module name="intellij.platform.analysis.impl"/>
-    <module name="intellij.platform.core"/>
-    <module name="intellij.platform.core.impl"/>
-    <module name="intellij.platform.core.ui"/>
-    <module name="intellij.platform.editor.ui"/>
-    <module name="intellij.platform.feedback"/>
-    <module name="intellij.platform.ide.core"/>
-    <module name="intellij.platform.ide.impl"/>
-    <module name="intellij.platform.projectModel"/>
-    <module name="intellij.platform.statistics"/>
-    <module name="intellij.platform.util.ex"/>
-    <module name="intellij.platform.util.ui"/>
-  </dependencies>
-  <!-- endregion -->
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" visibility="public">
+  <resource-bundle>messages.TipsOfTheDayBundle</resource-bundle>
+
+  <!-- Per-product tips content, contributed by product-specific tips-<product> library JARs
+       (tips-goland, tips-clion, tips-appcode, tips-phpstorm, tips-webstorm, tips-datagrip,
+       tips-database-plugin, tips-big-data-tools, tips-idea, tips-pycharm-community, tips-pycharm-pro,
+       tips-rubymine). Missing product library on a given product's classpath falls back to
+       no-op so the plugin still loads. -->
+  <xi:include href="/META-INF/tips-goland.xml"><xi:fallback/></xi:include>
+  <xi:include href="/META-INF/tips-clion.xml"><xi:fallback/></xi:include>
+  <xi:include href="/META-INF/tips-appcode.xml"><xi:fallback/></xi:include>
+  <xi:include href="/META-INF/tips-phpstorm.xml"><xi:fallback/></xi:include>
+  <xi:include href="/META-INF/tips-webstorm.xml"><xi:fallback/></xi:include>
+  <xi:include href="/META-INF/tips-datagrip.xml"><xi:fallback/></xi:include>
+  <xi:include href="/META-INF/tips-database-plugin.xml"><xi:fallback/></xi:include>
+  <xi:include href="/META-INF/tips-big-data-tools.xml"><xi:fallback/></xi:include>
+  <xi:include href="/META-INF/tips-intellij-idea.xml"><xi:fallback/></xi:include>
+  <xi:include href="/META-INF/tips-intellij-idea-community.xml"><xi:fallback/></xi:include>
+  <xi:include href="/META-INF/tips-pycharm.xml"><xi:fallback/></xi:include>
+  <xi:include href="/META-INF/tips-pycharm-community.xml"><xi:fallback/></xi:include>
+  <xi:include href="/META-INF/tips-rubymine.xml"><xi:fallback/></xi:include>
+
   <extensionPoints>
     <extensionPoint name="tipAndTrickPromotionFactory" interface="com.intellij.ide.util.TipAndTrickPromotionFactory" dynamic="true"/>
   </extensionPoints>
@@ -65,7 +61,7 @@
               topic="com.intellij.featureStatistics.FeaturesRegistryListener"/>
   </projectListeners>
 
-  <actions>
+  <actions resource-bundle="messages.TipsOfTheDayBundle">
     <action id="ShowTips" class="com.intellij.ide.actions.ShowTipsAction">
       <add-to-group group-id="WelcomeScreen.Documentation" relative-to-action="About" anchor="after"/>
       <add-to-group group-id="WelcomeScreen.LearnIdeHelp" relative-to-action="Help.KeymapReference" anchor="after"/>

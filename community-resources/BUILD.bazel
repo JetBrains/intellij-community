@@ -17,7 +17,6 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//java/ide-resources",
-        "@lib//:idea-community-customization-tips-idea-ce",
         "//platform/platform-impl:ide-impl",
         "//idea/customization/min",
         "//idea/customization/base",

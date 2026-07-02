@@ -2,7 +2,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.TipsOfTheDayBundle;
 import com.intellij.ide.TipsOfTheDayUsagesCollector;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -41,7 +41,7 @@ final class TipDialog extends DialogWrapper {
   TipDialog(final @Nullable Project project, final @NotNull TipsSortingResult sortingResult) {
     super(project, true);
     setModal(false);
-    setTitle(IdeBundle.message("title.tip.of.the.day"));
+    setTitle(TipsOfTheDayBundle.message("title.tip.of.the.day"));
     setCancelButtonText(CommonBundle.getCloseButtonText());
     myTipPanel = new TipPanel(project, sortingResult, getDisposable());
     myTipPanel.addPropertyChangeListener(TipPanel.CURRENT_TIP_KEY.toString(), event -> {
@@ -134,7 +134,7 @@ final class TipDialog extends DialogWrapper {
     private static final String LAST_OPENED_TIP_PATH = "last.opened.tip.path";
 
     OpenTipsAction() {
-      super(IdeBundle.message("action.open.tip"));
+      super(TipsOfTheDayBundle.message("action.open.tip"));
     }
 
     @Override

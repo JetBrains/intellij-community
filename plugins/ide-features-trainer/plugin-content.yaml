@@ -21,3 +21,6 @@
     libraries:
       assertJ:
       - name: $MAVEN_REPOSITORY$/org/assertj/assertj-core/4/assertj-core-4.jar
+- name: lib/modules/intellij.featuresTrainer.tips.jar
+  contentModules:
+  - name: intellij.featuresTrainer.tips

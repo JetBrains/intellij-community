@@ -10,7 +10,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.featureStatistics.GroupDescriptor;
 import com.intellij.featureStatistics.ProductivityFeaturesRegistry;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.TipsOfTheDayBundle;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.ui.text.StyledTextPane;
 import com.intellij.ide.ui.text.paragraph.TextParagraph;
@@ -186,12 +186,12 @@ final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
     if (stats.dayCount > 0 && stats.sparedCharacters > 0) {
       String total = formatCharacterCount(stats.sparedCharacters, true);
       String perDay = formatCharacterCount(stats.sparedCharacters / stats.dayCount, false);
-      labelText += "<br>" + IdeBundle.message("label.text.code.completion.saved", total, DateFormatUtil.formatDate(stats.startDate), perDay);
+      labelText += "<br>" + TipsOfTheDayBundle.message("label.text.code.completion.saved", total, DateFormatUtil.formatDate(stats.startDate), perDay);
     }
 
     CumulativeStatistics fstats = ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFixesStats();
     if (fstats.dayCount > 0 && fstats.invocations > 0) {
-      labelText += "<br>" + IdeBundle.message("label.text.quick.fixes.saved", fstats.invocations,DateFormatUtil.formatDate(fstats.startDate),fstats.invocations / fstats.dayCount);
+      labelText += "<br>" + TipsOfTheDayBundle.message("label.text.quick.fixes.saved", fstats.invocations,DateFormatUtil.formatDate(fstats.startDate),fstats.invocations / fstats.dayCount);
     }
 
     controlsPanel.add(new JLabel(XmlStringUtil.wrapInHtml(labelText)), BorderLayout.NORTH);
@@ -234,7 +234,7 @@ final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
                count > 1024 ? oneDigit.format((double)count / 1024) + "K" :
                String.valueOf(count);
     if (full) {
-      return IdeBundle.message("label.text.character.count", result);
+      return TipsOfTheDayBundle.message("label.text.character.count", result);
     }
     return result;
   }

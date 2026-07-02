@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.TipsOfTheDayUsagesCollector
+import com.intellij.ide.TipsOfTheDayBundle
 import com.intellij.ide.util.TipAndTrickManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -26,7 +26,7 @@ internal class ShowTipsAction : AnAction(), DumbAware, ActionRemoteBehaviorSpeci
         TipAndTrickManager.getInstance().showTipDialog(project)
       }
       if (project != null) {
-        withBackgroundProgress(project, IdeBundle.message("tip.of.the.day.progress.title"),
+        withBackgroundProgress(project, TipsOfTheDayBundle.message("tip.of.the.day.progress.title"),
                                TaskCancellation.nonCancellable(), openTipsDialog)
       }
       else openTipsDialog()  // invoked from Welcome Screen

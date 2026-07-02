@@ -6150,20 +6150,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "com.jetbrains.intellij.documentation/tips-intellij-idea-community-241.62.jar_copy",
-    src = "@com_jetbrains_intellij_documentation-tips-intellij-idea-community-241_62_http//file",
-    out = "com.jetbrains.intellij.documentation/tips-intellij-idea-community-241.62.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "idea-community-customization-tips-idea-ce",
-    jar = "@com_jetbrains_intellij_documentation-tips-intellij-idea-community-241_62_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "org.jetbrains.intellij.plugins/structure-intellij-3.331.jar_copy",
     src = "@org_jetbrains_intellij_plugins-structure-intellij-3_331_http//file",
     out = "org.jetbrains.intellij.plugins/structure-intellij-3.331.jar",
@@ -20486,6 +20472,132 @@ java_library(
 )
 
 copy_file(
+    name = "com.jetbrains.intellij.documentation/tips-appcode-222.33.jar_copy",
+    src = "@com_jetbrains_intellij_documentation-tips-appcode-222_33_http//file",
+    out = "com.jetbrains.intellij.documentation/tips-appcode-222.33.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "tips-tips-appcode",
+    jar = "@com_jetbrains_intellij_documentation-tips-appcode-222_33_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.jetbrains.intellij.documentation/tips-big-data-tools-241.60.jar_copy",
+    src = "@com_jetbrains_intellij_documentation-tips-big-data-tools-241_60_http//file",
+    out = "com.jetbrains.intellij.documentation/tips-big-data-tools-241.60.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "tips-tips-big-data-tools",
+    jar = "@com_jetbrains_intellij_documentation-tips-big-data-tools-241_60_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.jetbrains.intellij.documentation/tips-clion-241.61.jar_copy",
+    src = "@com_jetbrains_intellij_documentation-tips-clion-241_61_http//file",
+    out = "com.jetbrains.intellij.documentation/tips-clion-241.61.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "tips-tips-clion",
+    jar = "@com_jetbrains_intellij_documentation-tips-clion-241_61_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.jetbrains.intellij.documentation/tips-database-plugin-241.71.jar_copy",
+    src = "@com_jetbrains_intellij_documentation-tips-database-plugin-241_71_http//file",
+    out = "com.jetbrains.intellij.documentation/tips-database-plugin-241.71.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "tips-tips-database-plugin",
+    jar = "@com_jetbrains_intellij_documentation-tips-database-plugin-241_71_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.jetbrains.intellij.documentation/tips-datagrip-241.59.jar_copy",
+    src = "@com_jetbrains_intellij_documentation-tips-datagrip-241_59_http//file",
+    out = "com.jetbrains.intellij.documentation/tips-datagrip-241.59.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "tips-tips-datagrip",
+    jar = "@com_jetbrains_intellij_documentation-tips-datagrip-241_59_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.jetbrains.intellij.documentation/tips-goland-241.63.jar_copy",
+    src = "@com_jetbrains_intellij_documentation-tips-goland-241_63_http//file",
+    out = "com.jetbrains.intellij.documentation/tips-goland-241.63.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "tips-tips-goland",
+    jar = "@com_jetbrains_intellij_documentation-tips-goland-241_63_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.jetbrains.intellij.documentation/tips-intellij-idea-241.73.jar_copy",
+    src = "@com_jetbrains_intellij_documentation-tips-intellij-idea-241_73_http//file",
+    out = "com.jetbrains.intellij.documentation/tips-intellij-idea-241.73.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "tips-tips-idea",
+    jar = "@com_jetbrains_intellij_documentation-tips-intellij-idea-241_73_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.jetbrains.intellij.documentation/tips-intellij-idea-community-241.62.jar_copy",
+    src = "@com_jetbrains_intellij_documentation-tips-intellij-idea-community-241_62_http//file",
+    out = "com.jetbrains.intellij.documentation/tips-intellij-idea-community-241.62.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "tips-tips-idea-ce",
+    jar = "@com_jetbrains_intellij_documentation-tips-intellij-idea-community-241_62_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.jetbrains.intellij.documentation/tips-phpstorm-241.67.jar_copy",
+    src = "@com_jetbrains_intellij_documentation-tips-phpstorm-241_67_http//file",
+    out = "com.jetbrains.intellij.documentation/tips-phpstorm-241.67.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "tips-tips-phpstorm",
+    jar = "@com_jetbrains_intellij_documentation-tips-phpstorm-241_67_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "com.jetbrains.intellij.documentation/tips-pycharm-community-241.74.jar_copy",
     src = "@com_jetbrains_intellij_documentation-tips-pycharm-community-241_74_http//file",
     out = "com.jetbrains.intellij.documentation/tips-pycharm-community-241.74.jar",
@@ -20494,8 +20606,50 @@ copy_file(
 )
 
 jvm_import(
-    name = "tips-pycharm-community",
+    name = "tips-tips-pycharm-community",
     jar = "@com_jetbrains_intellij_documentation-tips-pycharm-community-241_74_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.jetbrains.intellij.documentation/tips-pycharm-241.68.jar_copy",
+    src = "@com_jetbrains_intellij_documentation-tips-pycharm-241_68_http//file",
+    out = "com.jetbrains.intellij.documentation/tips-pycharm-241.68.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "tips-tips-pycharm-pro",
+    jar = "@com_jetbrains_intellij_documentation-tips-pycharm-241_68_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.jetbrains.intellij.documentation/tips-rubymine-241.58.jar_copy",
+    src = "@com_jetbrains_intellij_documentation-tips-rubymine-241_58_http//file",
+    out = "com.jetbrains.intellij.documentation/tips-rubymine-241.58.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "tips-tips-rubymine",
+    jar = "@com_jetbrains_intellij_documentation-tips-rubymine-241_58_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.jetbrains.intellij.documentation/tips-webstorm-241.72.jar_copy",
+    src = "@com_jetbrains_intellij_documentation-tips-webstorm-241_72_http//file",
+    out = "com.jetbrains.intellij.documentation/tips-webstorm-241.72.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "tips-tips-webstorm",
+    jar = "@com_jetbrains_intellij_documentation-tips-webstorm-241_72_http//file",
     visibility = ["//visibility:public"],
 )
 

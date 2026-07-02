@@ -3,7 +3,7 @@ package com.intellij.ide.util;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.TipsOfTheDayBundle;
 import com.intellij.ide.TipsOfTheDayUsagesCollector;
 import com.intellij.ide.ui.text.StyledTextPane;
 import com.intellij.ide.ui.text.paragraph.TextParagraph;
@@ -151,7 +151,7 @@ final class TipPanel extends JPanel implements DoNotAskOption {
     panel.setBackground(TipUiSettings.getPanelBackground());
     panel.add(Box.createHorizontalGlue());
 
-    JLabel label = new JLabel(IdeBundle.message("tip.of.the.day.feedback.question"));
+    JLabel label = new JLabel(TipsOfTheDayBundle.message("tip.of.the.day.feedback.question"));
     panel.add(label);
     panel.add(Box.createRigidArea(new JBDimension(8, 0)));
 
@@ -161,9 +161,9 @@ final class TipPanel extends JPanel implements DoNotAskOption {
   }
 
   private ActionToolbarImpl createFeedbackActionsToolbar() {
-    AnAction likeAction = createFeedbackAction(IdeBundle.message("tip.of.the.day.feedback.like"),
+    AnAction likeAction = createFeedbackAction(TipsOfTheDayBundle.message("tip.of.the.day.feedback.like"),
                                                AllIcons.Ide.LikeDimmed, AllIcons.Ide.Like, AllIcons.Ide.LikeSelected, true);
-    AnAction dislikeAction = createFeedbackAction(IdeBundle.message("tip.of.the.day.feedback.dislike"),
+    AnAction dislikeAction = createFeedbackAction(TipsOfTheDayBundle.message("tip.of.the.day.feedback.dislike"),
                                                   AllIcons.Ide.DislikeDimmed, AllIcons.Ide.Dislike, AllIcons.Ide.DislikeSelected, false);
     AnAction[] actions = {likeAction, dislikeAction};
 
@@ -365,7 +365,7 @@ final class TipPanel extends JPanel implements DoNotAskOption {
   }
 
   private void setTipsNotFoundText() {
-    String text = IdeBundle.message("error.tips.not.found", ApplicationNamesInfo.getInstance().getFullProductName());
+    String text = TipsOfTheDayBundle.message("error.tips.not.found", ApplicationNamesInfo.getInstance().getFullProductName());
     List<TextPart> parts = List.of(new RegularTextPart(text, false));
     myTextPane.setParagraphs(List.of(new TextParagraph(parts)));
   }
@@ -429,7 +429,7 @@ final class TipPanel extends JPanel implements DoNotAskOption {
 
   @Override
   public @NotNull String getDoNotShowMessage() {
-    return IdeBundle.message("checkbox.show.tips.on.startup");
+    return TipsOfTheDayBundle.message("checkbox.show.tips.on.startup");
   }
 
   private static class MyTextPane extends StyledTextPane {
@@ -460,7 +460,7 @@ final class TipPanel extends JPanel implements DoNotAskOption {
 
   private class PreviousTipAction extends AbstractAction {
     PreviousTipAction() {
-      super(IdeBundle.message("action.previous.tip"));
+      super(TipsOfTheDayBundle.message("action.previous.tip"));
     }
 
     @Override
@@ -472,7 +472,7 @@ final class TipPanel extends JPanel implements DoNotAskOption {
 
   private class NextTipAction extends AbstractAction {
     NextTipAction() {
-      super(IdeBundle.message("action.next.tip"));
+      super(TipsOfTheDayBundle.message("action.next.tip"));
       putValue(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE);
       putValue(DialogWrapper.FOCUSED_ACTION, Boolean.TRUE); // myPreferredFocusedComponent
     }

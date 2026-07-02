@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.statistic
 
-import com.intellij.ide.TipsOfTheDayUsagesCollector.TipInfoValidationRule
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.ui.text.ShortcutsRenderingUtil
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -118,7 +117,7 @@ object StatisticBase : CounterUsagesCollector() {
   private val reasonField = EventFields.Enum<LessonStopReason>(REASON)
   private val newLessonsCount = EventFields.Int(NEW_LESSONS_COUNT)
   private val showNewLessonsState = EventFields.Boolean(SHOULD_SHOW_NEW_LESSONS)
-  private val tipIdField = EventFields.StringValidatedByCustomRule(TIP_ID, TipInfoValidationRule::class.java)
+  private val tipIdField = EventFields.StringValidatedByCustomRule(TIP_ID, TipIdValidationRule::class.java)
   private val lessonStartingWayField = EventFields.Enum<LessonStartingWay>(LESSON_STARTING_WAY)
   private val feedbackEntryPlace = EventFields.Enum<FeedbackEntryPlace>(FEEDBACK_ENTRY_PLACE)
   private val feedbackHasBeenSent = EventFields.Boolean(FEEDBACK_HAS_BEEN_SENT)

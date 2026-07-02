@@ -1,0 +1,33 @@
+- name: lib/modules/intellij.tips.jar
+  contentModules:
+  - name: intellij.tips
+    libraries:
+      tips-idea-ce:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-intellij-idea-community/241/tips-intellij-idea-community-241.jar
+      tips-idea:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-intellij-idea/241/tips-intellij-idea-241.jar
+      tips-goland:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-goland/241/tips-goland-241.jar
+      tips-clion:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-clion/241/tips-clion-241.jar
+      tips-appcode:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-appcode/222/tips-appcode-222.jar
+      tips-phpstorm:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-phpstorm/241/tips-phpstorm-241.jar
+      tips-webstorm:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-webstorm/241/tips-webstorm-241.jar
+      tips-datagrip:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-datagrip/241/tips-datagrip-241.jar
+      tips-database-plugin:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-database-plugin/241/tips-database-plugin-241.jar
+      tips-big-data-tools:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-big-data-tools/241/tips-big-data-tools-241.jar
+      tips-rubymine:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-rubymine/241/tips-rubymine-241.jar
+      tips-pycharm-community:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-pycharm-community/241/tips-pycharm-community-241.jar
+      tips-pycharm-pro:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-pycharm/241/tips-pycharm-241.jar
+- name: lib/tipsOfTheDay-plugin.jar
+  modules:
+  - name: intellij.tipsOfTheDay.plugin

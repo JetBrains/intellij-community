@@ -924,7 +924,6 @@ platform/testIntegration-ui
 platform/testRunner
 platform/testRunner/plugin
 platform/threadDumpParser
-platform/tips-of-the-day
 platform/todo
 platform/todo/backend
 platform/todo/plugin
@@ -1172,6 +1171,7 @@ plugins/hg4idea
 plugins/htmltools
 plugins/ide-features-trainer
 plugins/ide-features-trainer/onboarding
+plugins/ide-features-trainer/tips
 plugins/ide-startup/importSettings
 plugins/java-decompiler/engine
 plugins/java-decompiler/plugin
@@ -1565,6 +1565,8 @@ plugins/textmate/core/tests
 plugins/textmate/joni
 plugins/textmate/plugin
 plugins/textmate/tests
+plugins/tips-of-the-day
+plugins/tips-of-the-day/plugin
 plugins/toml
 plugins/toml/backend
 plugins/toml/core

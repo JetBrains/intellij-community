@@ -67,7 +67,6 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
     // Content modules
     module("intellij.platform.ide.newUiOnboarding")
     module("intellij.ide.startup.importSettings")
-    module("intellij.platform.tips")
 
     // Module sets
     moduleSet(CommunityModuleSets.ideCommon())

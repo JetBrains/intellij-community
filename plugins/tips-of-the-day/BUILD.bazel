@@ -1,6 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.platform.tips` start
+### auto-generated section `build intellij.tips` start
 
 jvm_library(
     name = "tips",
@@ -12,12 +12,28 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.platform.tips",
+    module_name = "intellij.tips",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:tips-tips-idea-ce",
+        "@lib//:tips-tips-idea",
+        "@lib//:tips-tips-goland",
+        "@lib//:tips-tips-clion",
+        "@lib//:tips-tips-appcode",
+        "@lib//:tips-tips-phpstorm",
+        "@lib//:tips-tips-webstorm",
+        "@lib//:tips-tips-datagrip",
+        "@lib//:tips-tips-database-plugin",
+        "@lib//:tips-tips-big-data-tools",
+        "@lib//:tips-tips-rubymine",
+        "@lib//:tips-tips-pycharm-community",
+        "@lib//:tips-tips-pycharm-pro",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -41,7 +57,6 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
-        "//libraries/kotlinx/datetime",
         "//platform/feedback",
         "//platform/util/concurrency",
     ],
@@ -54,7 +69,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    module_name = "intellij.platform.tips",
+    module_name = "intellij.tips",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -80,18 +95,17 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//libraries/kotlinx/datetime:datetime_test_lib",
         "//platform/feedback:feedback_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
     ],
 )
-### auto-generated section `build intellij.platform.tips` end
+### auto-generated section `build intellij.tips` end
 
-### auto-generated section `iml intellij.platform.tips` start
+### auto-generated section `iml intellij.tips` start
 exports_files(
     [
-        "intellij.platform.tips.iml",
+        "intellij.tips.iml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml intellij.platform.tips` end
+### auto-generated section `iml intellij.tips` end

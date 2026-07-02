@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.util.TipAndTrickBean
 import com.intellij.ide.util.TipAndTrickManager
 import com.intellij.ide.util.TipAndTrickPromotionFactory
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
@@ -92,7 +93,7 @@ internal class IftTipAndTrickPromoter : TipAndTrickPromotionFactory {
   }
 
   private fun openLesson(project: Project, lessonId: String, tip: TipAndTrickBean) {
-    TipAndTrickManager.getInstance().closeTipDialog()
+    ApplicationManager.getApplication().getService(TipAndTrickManager::class.java)?.closeTipDialog()
     if (project.isDisposed) return
 
     val courseManager = CourseManager.instance

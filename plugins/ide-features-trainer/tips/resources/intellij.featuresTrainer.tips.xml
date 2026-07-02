@@ -1,0 +1,12 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="com.intellij.tipsOfTheDay"/>
+    <plugin id="training"/>
+    <module name="intellij.tips"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <tipAndTrickPromotionFactory implementation="training.ui.IftTipAndTrickPromoter"/>
+  </extensions>
+</idea-plugin>
