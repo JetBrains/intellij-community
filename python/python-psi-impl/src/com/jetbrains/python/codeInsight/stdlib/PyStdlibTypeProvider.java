@@ -444,18 +444,8 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
   public static @Nullable PyType getEnumMixinValueType(@NotNull PyClass enumClass, @NotNull TypeEvalContext context) {
     PyBuiltinCache cache = PyBuiltinCache.getInstance(enumClass);
 
-    if (enumClass.isSubclass("enum.IntEnum", context) ||
-        enumClass.isSubclass("enum.IntFlag", context) ||
+    if (enumClass.isSubclass("enum.IntFlag", context) ||
         enumClass.isSubclass("enum.Flag", context)) {
-      return cache.getIntType();
-    }
-    if (enumClass.isSubclass("enum.StrEnum", context)) {
-      return cache.getStrType();
-    }
-    if (enumClass.isSubclass(PyNames.FQN.STR, context)) {
-      return cache.getStrType();
-    }
-    if (enumClass.isSubclass(PyNames.FQN.INT, context)) {
       return cache.getIntType();
     }
     if (enumClass.isSubclass(PyNames.FQN.BYTES, context)) {

@@ -915,7 +915,6 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       class MyIntEnum(IntEnum):
           OK = 1
           BAD = "string"
-      #         ^^^^^^^^ WARNING Expected type 'int', got 'Literal["string"]' instead
       #         ^^^^^^^^ WARNING Type 'Literal["string"]' is not assignable to declared type 'int'
 
       class MyEnum(Enum):
@@ -1021,4 +1020,36 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
         e.value
     #       └ TYPE object
     """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-90693"])
+  fun `IntEnum StrEnum literal type`() = test("""
+    from enum import IntEnum, StrEnum
+    
+    class I(IntEnum):
+        a = 1
+        b = 2
+    
+    I.a.value
+    #    └ TYPE Literal[1]
+    
+    def fi(i: I):
+        i.name
+    #     └ TYPE Literal["a", "b"]
+        i.value
+    #     └ TYPE Literal[1, 2]
+    
+    class S(StrEnum):
+        a = "x"
+        b = "y"
+    
+    S.a.value
+    #    └ TYPE Literal["x"]
+    
+    def fs(s: S):
+        s.name
+    #     └ TYPE Literal["a", "b"]
+        s.value
+    #     └ TYPE Literal["x", "y"]
+    """)
 }
