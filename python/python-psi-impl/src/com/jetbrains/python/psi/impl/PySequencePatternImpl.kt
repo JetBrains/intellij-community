@@ -16,7 +16,7 @@ import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyTypeUtil
-import com.jetbrains.python.psi.types.PyTypeUtil.components
+import com.jetbrains.python.psi.types.PyTypeUtil.compositeComponents
 import com.jetbrains.python.psi.types.PyTypeUtil.convertToType
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.PyUnpackedTupleType
@@ -46,7 +46,7 @@ class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySeque
     }
 
     if (sequenceCaptureType == null) return expectedType
-    return sequenceCaptureType.components
+    return sequenceCaptureType.compositeComponents
       .map { intersect(it, expectedType, context) }
       .let { PyUnionType.union(it) }
   }
@@ -56,7 +56,7 @@ class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySeque
     val allElementsExhaustive = elements.all { PyClassPatternImpl.isExhaustive(it, context) }
     if (!allElementsExhaustive) return false
     val captureType = getSequenceCaptureType(context) ?: return false
-    return captureType.components.all { type -> type.isHeterogeneousTuple() }
+    return captureType.compositeComponents.all { type -> type.isHeterogeneousTuple() }
   }
 
   override fun getCaptureTypeForChild(pattern: PyPattern, context: TypeEvalContext): PyType? {
@@ -65,7 +65,7 @@ class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySeque
     // This is done to skip group- and as-patterns
     val sequenceMember = pattern.findParentInFile(withSelf = true) { el -> this === el.parent }
     if (sequenceMember is PySingleStarPattern) {
-      return sequenceType.components
+      return sequenceType.compositeComponents
         .flatMap { sequenceMember.getCapturedTypesFromSequenceType(it, context) }
         .let { PyUnionType.union(it) }
         .let { wrapInListType(it) }
@@ -73,7 +73,7 @@ class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySeque
 
     val idx = elements.indexOf(sequenceMember)
 
-    return sequenceType.components
+    return sequenceType.compositeComponents
       .map { getElementTypeSkippingStar(it, idx, context) }
       .let { PyUnionType.union(it) }
   }
@@ -102,7 +102,7 @@ class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySeque
   private fun PySequencePattern.getSequenceCaptureType(context: TypeEvalContext): PyType? {
     val captureTypes: PyType? = PyCaptureContext.getCaptureType(this, context)
 
-    val potentialMatchingTypes = captureTypes.components
+    val potentialMatchingTypes = captureTypes.compositeComponents
       .filter { it !is PyClassType || it.classQName !in listOf(PyNames.FQN.STR, PyNames.FQN.BYTES, PyNames.FQN.BYTEARRAY) }
       .filter { it.convertToType("typing.Sequence", this, context) != null }
 

@@ -77,7 +77,7 @@ import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyTypeChecker.getSubstitutionsWithUnresolvedReturnGenerics
 import com.jetbrains.python.psi.types.PyTypeInferenceCspFactory
 import com.jetbrains.python.psi.types.PyTypeMember
-import com.jetbrains.python.psi.types.PyTypeUtil.components
+import com.jetbrains.python.psi.types.PyTypeUtil.compositeComponents
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.PyUnpackedTupleType
@@ -293,7 +293,7 @@ object PyCallExpressionHelper {
     val file = expression.containingFile
     if (file == null || !PythonRuntimeService.getInstance().isInPydevConsole(file)) return mutableListOf()
     val calleeType = getCalleeType(expression, resolveContext)
-    return calleeType.components.filterIsInstance<PyCallableType>()
+    return calleeType.compositeComponents.filterIsInstance<PyCallableType>()
   }
 
   private fun List<PsiElement>.selectCallableTypes(context: TypeEvalContext): List<PyCallableType> {
