@@ -11,6 +11,7 @@ import com.intellij.mcpserver.elicitation.ElicitationMessagePart.Text
 import com.intellij.mcpserver.elicitation.ElicitationMessagePart.TextColor.GREEN
 import com.intellij.mcpserver.elicitation.ElicitationMessagePart.TextColor.RED
 import com.intellij.mcpserver.elicitation.ElicitationMessagePart.TextColor.YELLOW
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsUtil
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
@@ -47,6 +48,7 @@ fun renderToAnsi(parts: List<ElicitationMessagePart>, project: Project? = null):
  * `null`; the CLI path still passes it in case some other language needs it.
  */
 private fun highlightToAnsi(language: Language, code: CharSequence, project: Project? = null): String {
+  if (EditorColorsManager.getInstance() == null) return code.toString()
   val scheme = EditorColorsUtil.getGlobalOrDefaultColorScheme()
   val highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, null)
   val lexer = highlighter.highlightingLexer
