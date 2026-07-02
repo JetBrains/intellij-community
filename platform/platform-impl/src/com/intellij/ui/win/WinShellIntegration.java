@@ -112,10 +112,6 @@ final class WinShellIntegration implements Disposable {
     private final ThreadPoolExecutor comExecutor = ConcurrencyUtil.newSingleThreadExecutor("Windows Shell integration");
     private boolean nativeIsInitialized = false;
 
-    // NB: does not require native to be initialized
-    @SuppressWarnings("unused")
-    private native void setAppUserModelIdNative(String appUserModelId);
-
     private native void initializeNative();
     private native void clearRecentTasksListNative();
     private native void setRecentTasksListNative(JumpTask[] recentTasks);

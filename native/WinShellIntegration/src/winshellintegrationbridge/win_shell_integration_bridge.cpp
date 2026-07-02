@@ -150,48 +150,6 @@ namespace intellij::ui::win::jni
     }
 
 
-    void WinShellIntegrationBridge::setAppUserModelId(
-        JNIEnv *jEnv,
-        [[maybe_unused]] jobject jThis,
-        jstring jAppUserModelId) noexcept
-    {
-        try
-        {
-            if (jAppUserModelId == nullptr)
-                throw std::logic_error{ "jAppUserModelId == nullptr" };
-
-            const auto appUserModelId = jStringToWideString(jEnv, jAppUserModelId).value();
-
-            if (Application::getInstance().obtainAppUserModelId() != appUserModelId)
-                Application::getInstance().setAppUserModelId(appUserModelId);
-        }
-        catch (const jthrowable& javaErrWillBeThrown)
-        {
-            jEnv->DeleteLocalRef(javaErrWillBeThrown);
-        }
-        catch (const std::system_error& err)
-        {
-            handleException(err, jEnv, __func__);
-        }
-        catch (const std::runtime_error& err)
-        {
-            handleException(err, jEnv, __func__);
-        }
-        catch (const std::logic_error& err)
-        {
-            handleException(err, jEnv, __func__);
-        }
-        catch (const std::exception& err)
-        {
-            handleException(err, jEnv, __func__);
-        }
-        catch (...)
-        {
-            handleUnknownException(jEnv, __func__);
-        }
-    }
-
-
     void WinShellIntegrationBridge::clearRecentTasksList(
         JNIEnv* jEnv,
         jobject jThis) noexcept
