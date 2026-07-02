@@ -314,11 +314,21 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
 
   @Override
   public boolean isEventSystemEnabled() {
+    return supportsSendingPsiEvents();
+  }
+
+  @Override
+  public boolean supportsSendingPsiEvents() {
     return myEventSystemEnabled;
   }
 
   @Override
   public boolean isPhysical() {
+    return correspondsToRealFile();
+  }
+
+  @Override
+  public boolean correspondsToRealFile() {
     return myPhysical;
   }
 

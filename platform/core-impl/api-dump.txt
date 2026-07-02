@@ -652,7 +652,9 @@ c:com.intellij.pom.tree.events.impl.ChangeInfoImpl
 a:com.intellij.psi.AbstractFileViewProvider
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.psi.FileViewProvider
+- correspondsToRealFile():Z
 - f:markInvalidated():V
+- supportsSendingPsiEvents():Z
 com.intellij.psi.CustomHighlighterTokenType
 - sf:CHARACTER:com.intellij.psi.tree.IElementType
 - sf:CUSTOM_CONTENT:com.intellij.psi.tree.IElementType

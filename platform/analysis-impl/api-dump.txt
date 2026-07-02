@@ -844,6 +844,7 @@ com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider
 - com.intellij.psi.FileViewProvider
 - com.intellij.psi.impl.FreeThreadedFileViewProvider
 - cloneImpl():com.intellij.psi.FileViewProvider
+- correspondsToRealFileImpl():Z
 - s:create(com.intellij.psi.impl.PsiManagerEx,com.intellij.psi.impl.source.tree.injected.VirtualFileWindowImpl,com.intellij.psi.impl.source.tree.injected.DocumentWindowImpl,com.intellij.lang.Language):com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider
 - a:forceCachedPsi(com.intellij.psi.PsiFile):V
 - a:getDocument():com.intellij.psi.impl.source.tree.injected.DocumentWindowImpl
@@ -851,13 +852,12 @@ com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider
 - a:getPatchingLeaves():Z
 - getShreds():com.intellij.psi.impl.source.tree.injected.Place
 - isDisposed():Z
-- isEventSystemEnabledImpl():Z
-- isPhysicalImpl():Z
 - isValid():Z
 - performNonPhysically(java.lang.Runnable):V
 - rootChangedImpl(com.intellij.psi.PsiFile):V
 - s:same(com.intellij.psi.impl.source.tree.injected.Place,com.intellij.psi.impl.source.tree.injected.Place):Z
 - setShreds(com.intellij.psi.impl.source.tree.injected.Place):Z
+- supportsSendingPsiEventsImpl():Z
 f:com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 - s:getDocumentWindow(com.intellij.psi.PsiElement):com.intellij.injected.editor.DocumentWindow
 - s:getTopLevelEditor(com.intellij.openapi.editor.Editor):com.intellij.openapi.editor.Editor
