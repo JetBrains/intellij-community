@@ -158,7 +158,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.kotlin.performanceExtendedPlugin",
       "intellij.kotlin.compilerPlugins.support.bundled",
       "kotlin.jsr223",
-      "intellij.kotlin.internal",
       "intellij.kotlin.base.serialization"
     )
 

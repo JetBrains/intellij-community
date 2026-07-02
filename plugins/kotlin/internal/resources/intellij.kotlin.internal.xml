@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.internal.actions">
+<idea-plugin>
   <resource-bundle>messages.KotlinInternalBundle</resource-bundle>
   <actions>
       <action id="InvalidateK2CachesInternalAction" class="org.jetbrains.kotlin.idea.internal.actions.InvalidateK2CachesInternalAction" internal="true">
