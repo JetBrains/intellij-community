@@ -11,12 +11,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
-import com.intellij.platform.debugger.impl.shared.proxy.XLightLineBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.util.containers.MultiMap
-import com.intellij.xdebugger.breakpoints.XBreakpoint
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
 private val log = logger<XLineBreakpointManager>()
@@ -24,17 +21,9 @@ private val log = logger<XLineBreakpointManager>()
 @ApiStatus.Internal
 class XLineBreakpointManager(
   internal val project: Project,
-  coroutineScope: CoroutineScope,
-  isEnabled: Boolean,
   private val manager: XBreakpointManagerProxy,
 ): XLineBreakpointManagerProxy {
   private val myBreakpoints = MultiMap.createConcurrent<String, XLineBreakpointProxy>()
-  private val visualizationManager: XLineBreakpointVisualizationManager? = if (isEnabled) {
-    XLineBreakpointVisualizationManager(project, coroutineScope, manager = this)
-  }
-  else {
-    null
-  }
 
   @ApiStatus.Internal
   fun onFileDeleted(url: String) {
@@ -51,10 +40,7 @@ class XLineBreakpointManager(
     }
   }
 
-  fun registerBreakpoint(breakpoint: XLineBreakpointProxy, initUI: Boolean) {
-    if (initUI) {
-      visualizationManager?.updateBreakpointNow(breakpoint)
-    }
+  fun registerBreakpoint(breakpoint: XLineBreakpointProxy) {
     val fileUrl = breakpoint.getFile()?.url ?: breakpoint.getFileUrl()
     log.debug { "Register line breakpoint ${breakpoint.id} ${breakpoint.javaClass.simpleName}: $fileUrl" }
     myBreakpoints.putValue(fileUrl, breakpoint)
@@ -75,31 +61,21 @@ class XLineBreakpointManager(
     return myBreakpoints.values()
   }
 
-  internal fun getBreakpointFileUrls(): Collection<String> {
+  @ApiStatus.Internal
+  fun getBreakpointFileUrls(): Collection<String> {
     return myBreakpoints.keySet()
   }
 
-  internal fun getFileBreakpoints(fileUrl: String): Collection<XLineBreakpointProxy> {
+  @ApiStatus.Internal
+  fun getFileBreakpoints(fileUrl: String): Collection<XLineBreakpointProxy> {
     return myBreakpoints[fileUrl]
   }
 
-  internal fun removeBreakpoints(toRemove: Collection<XBreakpointProxy>?) {
+  @ApiStatus.Internal
+  fun removeBreakpoints(toRemove: Collection<XBreakpointProxy>?) {
     for (breakpoint in toRemove.orEmpty()) {
       manager.removeBreakpoint(breakpoint)
     }
-  }
-
-  override fun breakpointChanged(breakpoint: XLightLineBreakpointProxy) {
-    visualizationManager?.breakpointChanged(breakpoint)
-  }
-
-  @JvmOverloads
-  fun queueBreakpointUpdate(slave: XBreakpoint<*>?, callOnUpdate: Runnable? = null) {
-    visualizationManager?.queueBreakpointUpdate(slave, callOnUpdate)
-  }
-
-  fun queueAllBreakpointsUpdate() {
-    visualizationManager?.queueAllBreakpointsUpdate()
   }
 
   companion object {

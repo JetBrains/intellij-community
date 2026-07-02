@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl.breakpoints
+package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.execution.impl.ConsoleViewUtil
 import com.intellij.ide.DataManager
@@ -59,12 +59,15 @@ import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
 import com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction
+import com.intellij.xdebugger.impl.breakpoints.InlineBreakpointInlayManager
+import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointListener
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.awt.event.MouseEvent
 
-internal class XLineBreakpointVisualizationManager(
+internal class FrontendXLineBreakpointVisualizationManager(
   private val project: Project,
   coroutineScope: CoroutineScope,
   private val manager: XLineBreakpointManager
@@ -286,8 +289,7 @@ internal class XLineBreakpointVisualizationManager(
     }
   }
 
-  @JvmOverloads
-  fun queueBreakpointUpdate(slave: XBreakpoint<*>?, callOnUpdate: Runnable? = null) {
+  private fun queueBreakpointUpdate(slave: XBreakpoint<*>?, callOnUpdate: Runnable? = null) {
     if (slave == null) return
     val proxy = XDebuggerEntityConverter.asProxy(slave) as? XLineBreakpointProxy ?: return
     queueBreakpointUpdate(proxy, callOnUpdate)

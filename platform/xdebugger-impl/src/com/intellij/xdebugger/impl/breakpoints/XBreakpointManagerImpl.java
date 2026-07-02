@@ -108,8 +108,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     myDebuggerManager = debuggerManager;
     myCoroutineScope = coroutineScope;
     myDependentBreakpointManager = new XDependentBreakpointManager(this);
-    myLineBreakpointManager = new XLineBreakpointManager(project, coroutineScope, !SplitDebuggerMode.isSplitDebugger(),
-                                                         MonolithBreakpointManagerKt.asProxy(this));
+    myLineBreakpointManager = new XLineBreakpointManager(project, MonolithBreakpointManagerKt.asProxy(this));
 
     XBreakpointType.EXTENSION_POINT_NAME.addExtensionPointListener(coroutineScope, new ExtensionPointListener<>() {
       @SuppressWarnings("unchecked")
@@ -263,7 +262,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
       }
       myAllBreakpoints.add(breakpoint);
       if (breakpoint instanceof XLineBreakpointImpl<?> lineBreakpoint) {
-        myLineBreakpointManager.registerBreakpoint(asProxy(lineBreakpoint), initUI);
+        myLineBreakpointManager.registerBreakpoint(asProxy(lineBreakpoint));
       }
     });
     sendBreakpointEvent(type, listener -> listener.breakpointAdded(breakpoint));
@@ -286,9 +285,6 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
 
   public void fireBreakpointChanged(XBreakpointBase<?, ?, ?> breakpoint) {
     if (isRegistered(breakpoint)) {
-      if (breakpoint instanceof XLineBreakpointImpl<?> lineBreakpoint) {
-        myLineBreakpointManager.breakpointChanged(asProxy(lineBreakpoint));
-      }
       sendBreakpointEvent(breakpoint.getType(), listener -> listener.breakpointChanged(breakpoint));
     }
   }

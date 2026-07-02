@@ -1011,15 +1011,9 @@ class XDebugSessionImpl @JvmOverloads constructor(
         reportBreakpointVerified(breakpoint, delay)
       }
     }
-    val debuggerManager = debuggerManager.breakpointManager
     if (breakpoint is XLineBreakpointImpl<*>) {
       // for useFeProxy we call update directly since visual presentation is disabled on the backend
       breakpoint.fireBreakpointPresentationUpdated(this)
-    }
-    else {
-      debuggerManager.lineBreakpointManager.queueBreakpointUpdate(breakpoint) {
-        (breakpoint as XBreakpointBase<*, *, *>).fireBreakpointPresentationUpdated(this)
-      }
     }
   }
 
@@ -1123,7 +1117,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
       val added = myInactiveSlaveBreakpoints.add(breakpoint)
       if (added) {
         processAllHandlers(breakpoint, false)
-        debuggerManager.breakpointManager.lineBreakpointManager.queueBreakpointUpdate(breakpoint)
       }
     }
   }
