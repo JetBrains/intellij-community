@@ -1786,6 +1786,7 @@ tools/intellij.tools.ide.starter.product.rider
 tools/intellij.tools.ide.starter.product.rubymine
 tools/intellij.tools.ide.starter.product.rustrover
 tools/intellij.tools.ide.starter.product.webstorm
+tools/intellij.tools.ide.starter/testSrc
 tools/intellij.tools.ide.util.common
 tools/launcher-generator
 tools/reproducibleBuilds.diff

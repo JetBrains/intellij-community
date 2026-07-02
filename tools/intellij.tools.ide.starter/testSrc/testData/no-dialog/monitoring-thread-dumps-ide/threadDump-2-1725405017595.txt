@@ -1,0 +1,79 @@
+2024-09-03 23:10:17
+Full thread dump OpenJDK 64-Bit Server VM (21.0.4+8-b589.3 mixed mode, sharing):
+
+"AWT-EventQueue-0" #66 [15340] prio=6 os_prio=0 cpu=5452.87ms elapsed=122.17s tid=0x00007f5b1802bea0 nid=15340 waiting on condition  [0x00007f5ab0cf8000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@21.0.4/Native Method)
+	- parking to wait for  <0x0000000080900428> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+	at java.util.concurrent.locks.LockSupport.park(java.base@21.0.4/LockSupport.java:371)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionNode.block(java.base@21.0.4/AbstractQueuedSynchronizer.java:519)
+	at java.util.concurrent.ForkJoinPool.unmanagedBlock(java.base@21.0.4/ForkJoinPool.java:4013)
+	at java.util.concurrent.ForkJoinPool.managedBlock(java.base@21.0.4/ForkJoinPool.java:3961)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(java.base@21.0.4/AbstractQueuedSynchronizer.java:1707)
+	at java.awt.EventQueue.getNextEvent(java.desktop/EventQueue.java:573)
+	at com.intellij.ide.IdeEventQueue.getNextEvent(IdeEventQueue.kt:469)
+	at java.awt.EventDispatchThread.pumpOneEventForFilters(java.desktop/EventDispatchThread.java:194)
+	at java.awt.EventDispatchThread.pumpEventsForFilter(java.desktop/EventDispatchThread.java:128)
+	at java.awt.EventDispatchThread.pumpEventsForHierarchy(java.desktop/EventDispatchThread.java:117)
+	at java.awt.EventDispatchThread.pumpEvents(java.desktop/EventDispatchThread.java:113)
+	at java.awt.EventDispatchThread.pumpEvents(java.desktop/EventDispatchThread.java:105)
+	at java.awt.EventDispatchThread.run(java.desktop/EventDispatchThread.java:92)
+
+   Locked ownable synchronizers:
+	- None
+
+"Java2D Disposer" #67 [15341] daemon prio=10 os_prio=0 cpu=2.75ms elapsed=122.17s tid=0x00007f5b400075d0 nid=15341 waiting on condition  [0x00007f5ab0bf7000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@21.0.4/Native Method)
+	- parking to wait for  <0x0000000080902af8> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+	at java.util.concurrent.locks.LockSupport.park(java.base@21.0.4/LockSupport.java:371)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionNode.block(java.base@21.0.4/AbstractQueuedSynchronizer.java:519)
+	at java.util.concurrent.ForkJoinPool.unmanagedBlock(java.base@21.0.4/ForkJoinPool.java:4013)
+	at java.util.concurrent.ForkJoinPool.managedBlock(java.base@21.0.4/ForkJoinPool.java:3961)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(java.base@21.0.4/AbstractQueuedSynchronizer.java:1707)
+	at java.lang.ref.ReferenceQueue.await(java.base@21.0.4/ReferenceQueue.java:67)
+	at java.lang.ref.ReferenceQueue.remove0(java.base@21.0.4/ReferenceQueue.java:158)
+	at java.lang.ref.ReferenceQueue.remove(java.base@21.0.4/ReferenceQueue.java:234)
+	at sun.java2d.Disposer.run(java.desktop/Disposer.java:145)
+	at java.lang.Thread.runWith(java.base@21.0.4/Thread.java:1596)
+	at java.lang.Thread.run(java.base@21.0.4/Thread.java:1583)
+
+   Locked ownable synchronizers:
+	- None
+
+"Coroutines Debugger Cleaner" #78 [15359] daemon prio=5 os_prio=0 cpu=8.23ms elapsed=121.96s tid=0x00007f5b580875f0 nid=15359 waiting on condition  [0x00007f5a58108000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@21.0.4/Native Method)
+	- parking to wait for  <0x0000000082cb63f8> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+	at java.util.concurrent.locks.LockSupport.park(java.base@21.0.4/LockSupport.java:371)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionNode.block(java.base@21.0.4/AbstractQueuedSynchronizer.java:519)
+	at java.util.concurrent.ForkJoinPool.unmanagedBlock(java.base@21.0.4/ForkJoinPool.java:4013)
+	at java.util.concurrent.ForkJoinPool.managedBlock(java.base@21.0.4/ForkJoinPool.java:3961)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(java.base@21.0.4/AbstractQueuedSynchronizer.java:1707)
+	at java.lang.ref.ReferenceQueue.await(java.base@21.0.4/ReferenceQueue.java:67)
+	at java.lang.ref.ReferenceQueue.remove0(java.base@21.0.4/ReferenceQueue.java:158)
+	at java.lang.ref.ReferenceQueue.remove(java.base@21.0.4/ReferenceQueue.java:234)
+	at kotlinx.coroutines.debug.internal.ConcurrentWeakMap.runWeakRefQueueCleaningLoopUntilInterrupted(ConcurrentWeakMap.kt:69)
+	at kotlinx.coroutines.debug.internal.DebugProbesImpl$startWeakRefCleanerThread$1.invoke(DebugProbesImpl.kt:92)
+	at kotlinx.coroutines.debug.internal.DebugProbesImpl$startWeakRefCleanerThread$1.invoke(DebugProbesImpl.kt:91)
+	at kotlin.concurrent.ThreadsKt$thread$thread$1.run(Thread.kt:30)
+
+   Locked ownable synchronizers:
+	- None
+
+"PeriodicMetricReader" #79 [15360] daemon prio=5 os_prio=0 cpu=119.44ms elapsed=121.95s tid=0x00007f5b1c007040 nid=15360 waiting on condition  [0x00007f5a4fceb000]
+   java.lang.Thread.State: TIMED_WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@21.0.4/Native Method)
+	- parking to wait for  <0x0000000082c0cb18> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+	at java.util.concurrent.locks.LockSupport.parkNanos(java.base@21.0.4/LockSupport.java:269)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(java.base@21.0.4/AbstractQueuedSynchronizer.java:1758)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(java.base@21.0.4/ScheduledThreadPoolExecutor.java:1182)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(java.base@21.0.4/ScheduledThreadPoolExecutor.java:899)
+	at java.util.concurrent.ThreadPoolExecutor.getTask(java.base@21.0.4/ThreadPoolExecutor.java:1070)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(java.base@21.0.4/ThreadPoolExecutor.java:1130)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(java.base@21.0.4/ThreadPoolExecutor.java:642)
+	at java.lang.Thread.runWith(java.base@21.0.4/Thread.java:1596)
+	at java.lang.Thread.run(java.base@21.0.4/Thread.java:1583)
+
+   Locked ownable synchronizers:
+	- None

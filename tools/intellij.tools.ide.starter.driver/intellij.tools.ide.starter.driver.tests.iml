@@ -18,45 +18,37 @@
   </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$MODULE_DIR$/testResources">
-      <sourceFolder url="file://$MODULE_DIR$/testResources" type="java-test-resource" />
-    </content>
     <content url="file://$MODULE_DIR$/testSrc">
       <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.driver.client" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.driver.model" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.driver.sdk" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kodein-di-jvm" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.tools.ide.starter" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.tools.ide.starter.build.server" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.tools.ide.starter.product.goland" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.tools.ide.starter.product.idea.community" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.tools.ide.starter.product.idea.ultimate" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.driver.model" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinTestAssertionsCoreJvm" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.mockito" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="mockito-junit-jupiter" level="project" />
-    <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.launcher" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.pioneer" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tools.ide.starter" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tools.ide.starter.driver" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tools.ide.starter.build.server" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tools.ide.starter.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.performanceTesting.commands" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.util.common" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.tools.ide.metrics.collector" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.tools.ide.metrics.collector.starter" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.opentelemetry" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tools.ide.starter.bus" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.images.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.regexp.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.debugger.impl.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.tools.ide.starter.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.teamCity" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter.tests" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="mockito-junit-jupiter" level="project" />
+    <orderEntry type="module" module-name="intellij.tools.ide.starter.product.idea.ultimate" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinTestAssertionsCoreJvm" scope="TEST" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.tools.ide.starter.junit5" />
+  <component name="TestModuleProperties" production-module="intellij.tools.ide.starter.driver" />
 </module>
