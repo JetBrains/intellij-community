@@ -6,16 +6,16 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * A plugin set with all constraints resolved. This includes dependencies, so dependency graph information and a [RuntimeModuleGroupGraph] is available.
  *
- * Methods that accept a descriptor throw [IllegalArgumentException] if that descriptor is not part of the [originalPluginSet].
+ * Methods that accept a descriptor throw [IllegalArgumentException] if that descriptor is not part of the [candidateSet].
  */
 @ApiStatus.Internal
 interface ResolvedPluginSet {
   /**
    * The input plugin set the constraint resolution was performed on.
-   * Every module/descriptor of every plugin from [originalPluginSet] is either contained in [sortedResolvedDescriptors] or is associated
+   * Every module/descriptor of every plugin from [candidateSet] is either contained in [sortedResolvedDescriptors] or is associated
    * with an [exclusion reason][getExclusionReason].
    */
-  val originalPluginSet: UnambiguousPluginSet
+  val candidateSet: UnambiguousPluginSet
 
   /**
    * The input initialization context.
@@ -26,7 +26,7 @@ interface ResolvedPluginSet {
    * A descriptor is resolved when all its loading constraints are satisfied,
    * e.g., the content module loading depends on the main plugin descriptor loading; all dependencies are resolved too; etc.
    *
-   * If a descriptor from the [originalPluginSet] is not resolved, [getExclusionReason] returns a non-null reason for such a descriptor.
+   * If a descriptor from the [candidateSet] is not resolved, [getExclusionReason] returns a non-null reason for such a descriptor.
    *
    * The rule of thumb for the ordering is that the descriptor's dependencies come before the descriptor.
    */
@@ -40,7 +40,7 @@ interface ResolvedPluginSet {
   /**
    * Returns an exclusion reason for a given descriptor (or module). If it's `null`, the descriptor is resolved.
    *
-   * @throws IllegalArgumentException if provided [descriptor] is not part of the [originalPluginSet]
+   * @throws IllegalArgumentException if provided [descriptor] is not part of the [candidateSet]
    */
   fun getExclusionReason(descriptor: IdeaPluginDescriptorImpl): DescriptorExclusionReason?
 
@@ -50,7 +50,7 @@ interface ResolvedPluginSet {
    *
    * Returned list can contain [DependsSubDescriptor] only if the [resolvedDescriptor] is [DependsSubDescriptor] itself (it implicitly depends on the parent).
    *
-   * @throws IllegalArgumentException if provided [resolvedDescriptor] is not resolved or is not part of the [originalPluginSet]
+   * @throws IllegalArgumentException if provided [resolvedDescriptor] is not resolved or is not part of the [candidateSet]
    */
   fun getDirectResolvedDependencies(resolvedDescriptor: IdeaPluginDescriptorImpl): List<IdeaPluginDescriptorImpl>
 

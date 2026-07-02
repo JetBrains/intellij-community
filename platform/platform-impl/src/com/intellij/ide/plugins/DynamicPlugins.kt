@@ -148,7 +148,7 @@ object DynamicPlugins {
     expectNotToLoad: List<PluginId> = emptyList(),
   ): PluginStateValidator = validator@{ state ->
     for (id in expectToLoad) {
-      val plugin = state.originalPluginSet.resolvePluginId(id)
+      val plugin = state.candidateSet.resolvePluginId(id)
       if (plugin == null) {
         return@validator "plugin $id was expected to be loaded but is not found in the target plugin state"
       }
@@ -158,7 +158,7 @@ object DynamicPlugins {
       }
     }
     for (id in expectNotToLoad) {
-      val plugin = state.originalPluginSet.resolvePluginId(id)
+      val plugin = state.candidateSet.resolvePluginId(id)
       if (plugin != null && state.isResolved(plugin)) {
         return@validator "${plugin.shortLogDescription} was expected not to be loaded but was included in the module graph"
       }
@@ -419,7 +419,7 @@ object DynamicPlugins {
         pretendDisabled = emptyList(),
       )
       val excludedCandidates: List<PluginId> = candidates.filter { candidateId ->
-        val candidate = newState.resolvedPluginSet!!.originalPluginSet.resolvePluginId(candidateId)
+        val candidate = newState.resolvedPluginSet!!.candidateSet.resolvePluginId(candidateId)
         candidate == null || !newState.resolvedPluginSet!!.isResolved(candidate)
       }
       if (excludedCandidates.isNotEmpty()) {

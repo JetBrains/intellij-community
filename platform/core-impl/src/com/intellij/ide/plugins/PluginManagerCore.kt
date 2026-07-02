@@ -655,15 +655,15 @@ object PluginManagerCore {
     val cycleErrors = ArrayList<PluginLoadingError>()
     val mostRecentExcludedPlugins = input.discoveryResult.pluginLists.asSequence()
       .flatMap { it.plugins }
-      .filter { resolvedPluginSet.originalPluginSet.resolvePluginId(it.pluginId) == null }
+      .filter { resolvedPluginSet.candidateSet.resolvePluginId(it.pluginId) == null }
       .groupBy { it.pluginId }
       .mapValues {
         if (it.value.size == 1) it.value.first()
         else it.value.maxWith { o1, o2 -> VersionComparatorUtil.compare(o1.version, o2.version) } // take the latest version among excluded disregarding compatibility
       }
-    val allPlugins = resolvedPluginSet.originalPluginSet.plugins + mostRecentExcludedPlugins.values
+    val allPlugins = resolvedPluginSet.candidateSet.plugins + mostRecentExcludedPlugins.values
     val broadResolveContext = lazy { AmbiguousPluginSet.build(allPlugins) }
-    for (plugin in resolvedPluginSet.originalPluginSet.plugins) {
+    for (plugin in resolvedPluginSet.candidateSet.plugins) {
       for (descriptor in plugin.sequenceAllDescriptors()) {
         descriptor.isMarkedForLoading = resolvedPluginSet.isResolved(descriptor)
         if (!descriptor.isMarkedForLoading) {
@@ -695,8 +695,8 @@ object PluginManagerCore {
       compareValues(resolvedModules[o1]!!, resolvedModules[o2]!!)
     })
     val enabledPluginAndV1ModuleMap = HashMap<PluginId, PluginModuleDescriptor>()
-    for (pluginId in resolvedPluginSet.originalPluginSet.sequenceAllPluginIds()) {
-      val module = resolvedPluginSet.originalPluginSet.resolvePluginId(pluginId)!!
+    for (pluginId in resolvedPluginSet.candidateSet.sequenceAllPluginIds()) {
+      val module = resolvedPluginSet.candidateSet.resolvePluginId(pluginId)!!
       if (resolvedPluginSet.isResolved(module)) {
         enabledPluginAndV1ModuleMap[pluginId] = module
       }
@@ -709,7 +709,7 @@ object PluginManagerCore {
         }
       ),
       allPlugins = allPlugins.toSet(),
-      enabledPlugins = resolvedPluginSet.originalPluginSet.plugins.filter { resolvedPluginSet.isResolved(it) },
+      enabledPlugins = resolvedPluginSet.candidateSet.plugins.filter { resolvedPluginSet.isResolved(it) },
       enabledModuleMap = resolvedModules.keys.asSequence().filterIsInstance<ContentModuleDescriptor>().associateBy { it.moduleId },
       enabledPluginAndV1ModuleMap = enabledPluginAndV1ModuleMap,
       enabledModules = resolvedModules.keys.toList(),
@@ -832,7 +832,7 @@ object PluginManagerCore {
     essentialPlugins: Set<PluginId>,
     pluginNonLoadReasons: Map<PluginId, PluginNonLoadReason>,
   ) {
-    val corePlugin = resolvedPluginSet.originalPluginSet.resolvePluginId(CORE_ID)
+    val corePlugin = resolvedPluginSet.candidateSet.resolvePluginId(CORE_ID)
     if (corePlugin != null) {
       @Suppress("DEPRECATION")
       val disabledModulesOfCorePlugin = corePlugin.contentModules.filter { it.moduleLoadingRule.required && !it.isMarkedForLoading }
@@ -842,7 +842,7 @@ object PluginManagerCore {
     }
     var missing: MutableList<Pair<String, PluginNonLoadReason?>>? = null
     for (id in essentialPlugins) {
-      val descriptor = resolvedPluginSet.originalPluginSet.resolvePluginId(id)
+      val descriptor = resolvedPluginSet.candidateSet.resolvePluginId(id)
       if (descriptor == null || resolvedPluginSet.isExcluded(descriptor)) {
         if (missing == null) {
           missing = ArrayList()

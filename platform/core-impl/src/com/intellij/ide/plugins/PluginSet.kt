@@ -174,7 +174,7 @@ class PluginSet internal constructor(
     return buildString {
       val resolvedPluginsCount = resolvedPluginSet?.sortedResolvedDescriptors?.filterIsInstance<PluginMainDescriptor>()?.count()
       val resolvedContentModulesCount = resolvedPluginSet?.sortedResolvedDescriptors?.filterIsInstance<ContentModuleDescriptor>()?.count()
-      val excludedModulesCount = resolvedPluginSet?.originalPluginSet?.plugins?.flatMap { it.sequenceAllDescriptors() }?.count { resolvedPluginSet.isExcluded(it) }
+      val excludedModulesCount = resolvedPluginSet?.candidateSet?.plugins?.flatMap { it.sequenceAllDescriptors() }?.count { resolvedPluginSet.isExcluded(it) }
       append("PluginSet(resolvedPlugins=${resolvedPluginsCount}, resolvedContentModules=${resolvedContentModulesCount}, excludedModules=${excludedModulesCount})")
     }
   }
