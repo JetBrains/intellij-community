@@ -271,12 +271,10 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
     val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager() as VirtualFileUrlManagerImpl
     val processed = virtualFileUrlManager.processChildrenRecursively(dir.url) { childUrl ->
       val childFile = childUrl.virtualFile ?: return@processChildrenRecursively TreeNodeProcessingResult.SKIP_CHILDREN
-      val isChildInContent = runReadActionBlocking {
-        findFileSet(
-          childFile, honorExclusion = true, includeContentSets = true, includeContentNonIndexableSets = true, includeExternalSets = false,
-          includeExternalSourceSets = false, includeExternalNonIndexableSets = false, includeCustomKindSets = false
-        ) != null
-      }
+      val isChildInContent = findFileSet(
+        childFile, honorExclusion = true, includeContentSets = true, includeContentNonIndexableSets = true, includeExternalSets = false,
+        includeExternalSourceSets = false, includeExternalNonIndexableSets = false, includeCustomKindSets = false
+      ) != null
       return@processChildrenRecursively if (isChildInContent) {
         if (processContentUnderDirectory(childFile, processor, customFilter, fileSetFilter, numberOfExcludedParentDirectories + 1)) {
           TreeNodeProcessingResult.SKIP_CHILDREN
