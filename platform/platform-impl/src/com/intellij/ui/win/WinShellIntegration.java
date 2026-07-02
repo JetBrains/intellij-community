@@ -11,7 +11,6 @@ import com.intellij.util.system.OS;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.Path;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -36,6 +35,7 @@ final class WinShellIntegration implements Disposable {
       parent.clearRecentTasksList();
     }
 
+    @SuppressWarnings("SSBasedInspection")
     void setRecentTasksList(@NotNull JumpTask @NotNull [] recentTasks) {
       parent.setRecentTasksList(recentTasks);
     }
@@ -122,7 +122,7 @@ final class WinShellIntegration implements Disposable {
 
     static {
       var lib = PathManager.findBinFile("WinShellIntegrationBridge.dll");
-      assert lib != null : "Shell Integration lib missing; bin=" + NioFiles.list(Path.of(PathManager.getBinPath()));
+      assert lib != null : "Shell Integration lib missing; bin=" + NioFiles.list(PathManager.getBinDir());
       System.load(lib.toString());
     }
   }
