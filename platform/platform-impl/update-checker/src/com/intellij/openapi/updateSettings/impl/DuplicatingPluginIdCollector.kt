@@ -25,9 +25,9 @@ import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.util.UriUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.XCollection
-import org.apache.http.client.utils.URIBuilder
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
@@ -135,7 +135,7 @@ internal class DuplicationPluginIdCachedValuesService : PersistentStateComponent
     )
 
     fun stripHost(host: String): String {
-      return URIBuilder(host).removeQuery().build().toString()
+      return UriUtil.trimParameters(host)
     }
 
     fun cleanupDownloadUrl(downloadUrl: String): String {

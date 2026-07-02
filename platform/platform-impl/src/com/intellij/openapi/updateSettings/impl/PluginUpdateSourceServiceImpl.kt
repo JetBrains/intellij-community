@@ -13,11 +13,11 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService.Companion.isFunctionalitySupported
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.UriUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
 import kotlinx.serialization.Serializable
-import org.apache.http.client.utils.URIBuilder
 import org.jetbrains.annotations.NonNls
 
 @State(name = "PluginUpdateSources", storages = [Storage("pluginUpdateSources.xml", roamingType = RoamingType.DISABLED)])
@@ -117,8 +117,7 @@ internal data class XmlSerializableRepository(
 internal fun createRepository(initialHost: String?): PluginUpdateSourceId {
   val isMarketplace = initialHost == null
   var host = initialHost ?: MarketplaceCustomizationService.getInstance().getPluginDownloadUrl()
-  host = URIBuilder(host).removeQuery().build().toString()
-  host = host.trimEnd('/')
+  host = UriUtil.trimParameters(host).trimEnd('/')
   return Repository(host, isMarketplace)
 }
 
