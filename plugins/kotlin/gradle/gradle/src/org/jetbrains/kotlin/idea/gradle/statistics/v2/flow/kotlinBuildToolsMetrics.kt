@@ -68,7 +68,17 @@ enum class KotlinBuildToolFusMetricName(val metric: KotlinBuildToolFusMetric<*>)
 
 
     WASM_IR_INCREMENTAL(KotlinBuildToolBooleanFusMetric("WASM_IR_INCREMENTAL")),
-    WASM_COMPILER_MODE(ConcatenatedAllowedListValuesStringFusMetric("WASM_COMPILER_MODE", listOf("monolith", "multimodule-open-world", "multimodule-closed-world"))),
+    WASM_COMPILER_MODE(
+        ConcatenatedAllowedListValuesStringFusMetric(
+            "WASM_COMPILER_MODE",
+            listOf(
+                "monolith",
+                "multimodule-open-world",
+                "multimodule-closed-world",
+                "multimodule-closed-world-only-in-dev",
+            )
+        )
+    ),
 
     //Garbage collector
     ENABLED_NOOP_GC(KotlinBuildToolBooleanFusMetric("ENABLED_NOOP_GC")),

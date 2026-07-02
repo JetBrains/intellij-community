@@ -11,7 +11,7 @@ object KotlinBuildToolFusFlowCollector : CounterUsagesCollector() {
      *
      * IMPORTANT: The group version has to be increased with every change of the events.
      */
-    private const val GROUP_VERSION: Int = 13
+    private const val GROUP_VERSION: Int = 14
 
     /**
      * The FUS backend uses the event version for event validation.
