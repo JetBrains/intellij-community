@@ -11,6 +11,7 @@ import com.intellij.ui.webview.impl.WebViewLogger
 import com.intellij.ui.webview.impl.resolveWebViewAssetUrl
 import com.intellij.ui.webview.impl.webViewAssetHttpsUrl
 import com.intellij.ui.webview.impl.WebViewJsMessageReceiver
+import com.intellij.ui.webview.impl.engine.WebViewScript
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
@@ -34,6 +35,7 @@ internal class WinWebViewEngine(
   parentScope: CoroutineScope,
   private val bridge: WinWebView2BridgeApi = NativeWinWebView2BridgeApi,
   private val debugName: String? = null,
+  documentStartScripts: List<WebViewScript> = emptyList(),
   private val webViewDispatcher: CoroutineDispatcher = WebView2Dispatcher.coroutineDispatcher,
 ) : WebViewEngineBridge {
   override val isHeavyweight: Boolean = true
@@ -65,6 +67,7 @@ internal class WinWebViewEngine(
   private val pendingEvals = ConcurrentHashMap<Long, (String?) -> Unit>()
   private val activeAssetResolver = AtomicReference<WebViewAssetResolver?>(null)
   private val recoveryAttempts = ArrayDeque<Long>()
+  private val documentStartScript = documentStartScripts.joinToString("\n;\n") { it.script }
 
   @Volatile
   private var nativeHandle: Long = 0
@@ -384,7 +387,7 @@ internal class WinWebViewEngine(
     if (parent == 0L || state.get() == State.Closed) return
     try {
       WebViewLogger.logLifecycle("win-webview2-create", "initializing WebView2${diagnosticContext()}")
-      nativeHandle = bridge.create(parent, userDataDir().toString(), callbacks)
+      nativeHandle = bridge.create(parent, userDataDir().toString(), documentStartScript, callbacks)
       applyAttachmentState(nativeHandle)
     }
     catch (t: Throwable) {
@@ -550,7 +553,7 @@ internal class WinWebViewEngine(
 
     try {
       WebViewLogger.logLifecycle("win-webview2-recovery", "recreating after $event${diagnosticContext()}")
-      nativeHandle = bridge.create(parentHwnd, userDataDir().toString(), callbacks)
+      nativeHandle = bridge.create(parentHwnd, userDataDir().toString(), documentStartScript, callbacks)
       bridge.setVisible(nativeHandle, !hidden)
     }
     catch (t: Throwable) {
@@ -656,6 +659,7 @@ internal class WinWebViewEngine(
 internal fun createWinWebViewEngine(
   parentScope: CoroutineScope,
   debugName: String? = null,
+  documentStartScripts: List<WebViewScript> = emptyList(),
 ): WinWebViewEngine {
-  return WinWebViewEngine(parentScope, debugName = debugName)
+  return WinWebViewEngine(parentScope, debugName = debugName, documentStartScripts = documentStartScripts)
 }

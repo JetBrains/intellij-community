@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.webview.impl.engine
 
+import com.intellij.ui.webview.impl.CONSOLE_LOG_CATEGORY
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -8,6 +9,7 @@ data class WebViewCreationOptions(
   val engineKind: WebViewEngineKind = WebViewEngineKind.System,
   val requirements: WebViewEngineRequirements = WebViewEngineRequirements(),
   val debugName: String? = null,
+  val consoleLogCategory: String = CONSOLE_LOG_CATEGORY,
 )
 
 @ApiStatus.Internal

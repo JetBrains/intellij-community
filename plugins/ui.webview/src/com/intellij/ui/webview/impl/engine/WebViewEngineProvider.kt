@@ -10,7 +10,9 @@ import com.intellij.ui.webview.api.WebViewAssetRoot
 import com.intellij.ui.webview.api.WebViewInterop
 import com.intellij.ui.webview.api.WebViewMessageRegistration
 import com.intellij.ui.webview.api.WebViewNotification
+import com.intellij.ui.webview.impl.CONSOLE_LOG_CATEGORY
 import com.intellij.ui.webview.impl.SwingWebViewHostPanel
+import com.intellij.ui.webview.impl.WebViewConsoleCapture
 import com.intellij.ui.webview.impl.WebViewEngineBridge
 import com.intellij.ui.webview.impl.WebViewLogger
 import com.intellij.ui.webview.impl.host.NativeWebViewHostPeer
@@ -22,6 +24,7 @@ import kotlinx.coroutines.job
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.MissingResourceException
@@ -46,10 +49,12 @@ interface WebViewEngineProvider {
     options: WebViewEngineCreationOptions,
   ): CreatedWebView {
     val provider = this
-    val engine = createEngine(webViewScope, options)
+    val consoleCapture = WebViewConsoleCapture(options.consoleLogCategory)
+    val engine = createEngine(webViewScope, options.withDocumentStartScript(WebViewConsoleCapture.DOCUMENT_START_SCRIPT))
     val runtimeInfoValue = runtimeInfo(engine)
     val bus = WebViewMessageBusImpl(webViewScope, engine)
     bus.registerRuntimeInfoHandler(runtimeInfoValue)
+    val consoleRegistration = consoleCapture.register(bus)
     val themeRegistration = bus.interop.registerThemeHandler()
     engine.connectMessageBus { rawJson -> bus.transferFromJs(rawJson) }
     val closed = AtomicBoolean(false)
@@ -80,15 +85,18 @@ interface WebViewEngineProvider {
       }
 
       override suspend fun loadFile(file: VirtualFile) {
+        consoleCapture.setViewId(null)
         val path = file.toNioPathOrNull() ?: error("WebView can load only local files: ${file.presentableUrl}")
         engine.loadFile(path)
       }
 
       override suspend fun loadAsset(root: WebViewAssetRoot, entry: WebViewAssetPath, query: String?) {
+        consoleCapture.setViewId(root.viewId)
         engine.loadAsset(root, entry, query.withWebViewTheme())
       }
 
       override suspend fun loadHtml(html: String) {
+        consoleCapture.setViewId(null)
         engine.loadHtml(html)
       }
 
@@ -101,6 +109,7 @@ interface WebViewEngineProvider {
         closeOnScopeCompletion.getAndSet(null)?.dispose()
         focusRegistration?.close()
         focusRegistration = null
+        consoleRegistration.close()
         themeRegistration.close()
         bus.close()
         engine.close()
@@ -153,6 +162,18 @@ data class WebViewEngineCreationOptions(
   val strictPreference: Boolean,
   val jcefNativeBundlePath: Path?,
   val debugName: String?,
+  val consoleLogCategory: String = CONSOLE_LOG_CATEGORY,
+  val documentStartScripts: List<WebViewScript> = emptyList(),
+) {
+  fun withDocumentStartScript(script: WebViewScript): WebViewEngineCreationOptions {
+    return copy(documentStartScripts = documentStartScripts + script)
+  }
+}
+
+@ApiStatus.Internal
+data class WebViewScript(
+  @Language("JavaScript")
+  val script: String,
 )
 
 private fun WebViewMessageBusImpl.registerRuntimeInfoHandler(runtimeInfo: WebViewRuntimeInfo) {

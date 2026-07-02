@@ -21,7 +21,7 @@ private class WinWebView2BridgePluginAnchor
 
 @ApiStatus.Internal
 internal object WinWebView2Bridge {
-  private const val EXPECTED_NATIVE_ABI_VERSION = "wvi-dedicated-thread-v4"
+  private const val EXPECTED_NATIVE_ABI_VERSION = "wvi-dedicated-thread-v5"
 
   init {
     if (SystemInfo.isWindows) {
@@ -33,7 +33,7 @@ internal object WinWebView2Bridge {
   private external fun abiVersionNative(): String
 
   @JvmStatic
-  private external fun createNative(parentHwnd: Long, userDataDir: String, callbacks: Callbacks): Long
+  private external fun createNative(parentHwnd: Long, userDataDir: String, documentStartScript: String, callbacks: Callbacks): Long
 
   @JvmStatic
   private external fun destroyNative(handle: Long)
@@ -80,7 +80,8 @@ internal object WinWebView2Bridge {
   @JvmStatic
   private external fun currentThreadIdNative(): Long
 
-  fun create(parentHwnd: Long, userDataDir: String, callbacks: Callbacks): Long = createNative(parentHwnd, userDataDir, callbacks)
+  fun create(parentHwnd: Long, userDataDir: String, documentStartScript: String, callbacks: Callbacks): Long =
+    createNative(parentHwnd, userDataDir, documentStartScript, callbacks)
   fun destroy(handle: Long) = destroyNative(handle)
   fun attachToParent(handle: Long, parentHwnd: Long) = attachToParentNative(handle, parentHwnd)
   fun detachFromParent(handle: Long) = detachFromParentNative(handle)
@@ -173,7 +174,7 @@ internal object WinWebView2Bridge {
 
 @ApiStatus.Internal
 internal interface WinWebView2BridgeApi {
-  fun create(parentHwnd: Long, userDataDir: String, callbacks: WinWebView2Bridge.Callbacks): Long
+  fun create(parentHwnd: Long, userDataDir: String, documentStartScript: String, callbacks: WinWebView2Bridge.Callbacks): Long
   fun destroy(handle: Long)
   fun attachToParent(handle: Long, parentHwnd: Long)
   fun detachFromParent(handle: Long)
@@ -189,8 +190,8 @@ internal interface WinWebView2BridgeApi {
 
 @ApiStatus.Internal
 internal object NativeWinWebView2BridgeApi : WinWebView2BridgeApi {
-  override fun create(parentHwnd: Long, userDataDir: String, callbacks: WinWebView2Bridge.Callbacks): Long =
-    WinWebView2Bridge.create(parentHwnd, userDataDir, callbacks)
+  override fun create(parentHwnd: Long, userDataDir: String, documentStartScript: String, callbacks: WinWebView2Bridge.Callbacks): Long =
+    WinWebView2Bridge.create(parentHwnd, userDataDir, documentStartScript, callbacks)
 
   override fun destroy(handle: Long) = WinWebView2Bridge.destroy(handle)
   override fun attachToParent(handle: Long, parentHwnd: Long) = WinWebView2Bridge.attachToParent(handle, parentHwnd)

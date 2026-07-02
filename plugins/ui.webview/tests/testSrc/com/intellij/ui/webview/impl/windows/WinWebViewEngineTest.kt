@@ -7,6 +7,7 @@ import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.webview.impl.WebViewLogger
+import com.intellij.ui.webview.impl.engine.WebViewScript
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -84,6 +85,30 @@ internal class WinWebViewEngineTest {
       assertTrue(bridge.htmlLoads.any { it.handle == 2L && it.html == "<html>last</html>" }, bridge.htmlLoads.toString())
       assertTrue(bridge.bounds.any { it.handle == 2L && it.bounds == Bounds(10, 20, 300, 200, 1.5) }, bridge.bounds.toString())
       assertTrue(bridge.visibility.any { it.handle == 2L && !it.visible }, bridge.visibility.toString())
+    }
+    finally {
+      closeEngine(engine, scope)
+    }
+  }
+
+  @Test
+  fun createPassesDocumentStartScriptToNativeBridge() {
+    val bridge = FakeWinWebView2Bridge()
+    val scope = testScope()
+    val engine = WinWebViewEngine(
+      scope,
+      bridge,
+      debugName = "test",
+      documentStartScripts = listOf(WebViewScript("first"), WebViewScript("second")),
+      webViewDispatcher = SyncDispatcher,
+    )
+    try {
+      runInEdtAndWait {
+        engine.attachToParent(100L, 10, 20, 300, 200, 1.5)
+      }
+
+      assertEquals(listOf("first\n;\nsecond"), bridge.documentStartScripts)
+      runInEdtAndWait { bridge.callbacks.onCreated(bridge.createdHandles.single()) }
     }
     finally {
       closeEngine(engine, scope)
@@ -402,6 +427,7 @@ internal class WinWebViewEngineTest {
     val visibility = mutableListOf<Visibility>()
     val htmlLoads = mutableListOf<HtmlLoad>()
     val jsTransfers = mutableListOf<JsTransfer>()
+    val documentStartScripts = mutableListOf<String>()
     val focusedHandles = mutableListOf<Long>()
     val clearFocusedHandles = mutableListOf<Long>()
     val callOrder = mutableListOf<String>()
@@ -409,8 +435,9 @@ internal class WinWebViewEngineTest {
     var clearFocusFailure: IllegalStateException? = null
     private var nextHandle = 1L
 
-    override fun create(parentHwnd: Long, userDataDir: String, callbacks: WinWebView2Bridge.Callbacks): Long {
+    override fun create(parentHwnd: Long, userDataDir: String, documentStartScript: String, callbacks: WinWebView2Bridge.Callbacks): Long {
       this.callbacks = callbacks
+      documentStartScripts.add(documentStartScript)
       createParentHwnds.add(parentHwnd)
       callOrder.add("create:$parentHwnd")
       return nextHandle++.also { createdHandles.add(it) }

@@ -32,7 +32,7 @@ internal class MacWkWebViewEngineProvider : WebViewEngineProvider {
 
   override fun createEngine(scope: CoroutineScope, options: WebViewEngineCreationOptions): WebViewEngineBridge {
     check(SystemInfo.isMac) { "System WebView is supported only on macOS" }
-    val engine = createMacWebViewEngine(scope)
+    val engine = createMacWebViewEngine(scope, options.documentStartScripts)
     engine.initialize()
     return engine
   }

@@ -13,6 +13,7 @@ import com.intellij.ui.webview.impl.WebViewLogger
 import com.intellij.ui.webview.impl.resolveWebViewAssetUrl
 import com.intellij.ui.webview.impl.webViewAssetCustomSchemeUrl
 import com.intellij.ui.webview.impl.WebViewJsMessageReceiver
+import com.intellij.ui.webview.impl.engine.WebViewScript
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -39,6 +40,7 @@ import java.util.concurrent.atomic.AtomicReference
 @ApiStatus.Internal
 internal class MacWebViewEngine(
   parentScope: CoroutineScope,
+  private val documentStartScripts: List<WebViewScript> = emptyList(),
 ) : WebViewEngineBridge {
   override val isHeavyweight: Boolean = true
 
@@ -85,6 +87,7 @@ internal class MacWebViewEngine(
               val createdHandles = WKWebViewBridge.createWKWebView(
                 onMessage = { message -> handleIncomingMessage(message) },
                 resolveAssetUrl = this@MacWebViewEngine::resolveAssetUrl,
+                documentStartScripts = documentStartScripts,
               )
               WebViewLogger.logPerf("wkwebview-create", System.currentTimeMillis() - t0)
 
@@ -395,8 +398,8 @@ internal class MacWebViewEngine(
  * Factory function for creating a macOS WebView engine.
  */
 @ApiStatus.Internal
-internal fun createMacWebViewEngine(parentScope: CoroutineScope): MacWebViewEngine {
-  return MacWebViewEngine(parentScope)
+internal fun createMacWebViewEngine(parentScope: CoroutineScope, documentStartScripts: List<WebViewScript> = emptyList()): MacWebViewEngine {
+  return MacWebViewEngine(parentScope, documentStartScripts)
 }
 
 @ApiStatus.Internal

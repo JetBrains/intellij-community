@@ -8,6 +8,7 @@
 
 - Add a WebView UI to a feature: [guides/WebView-UI-Authoring-Guide](guides/WebView-UI-Authoring-Guide.md)
 - Understand the runtime (engines, providers, asset loading): [architecture/WebView-Runtime-Architecture](architecture/WebView-Runtime-Architecture.md)
+- Configure browser console forwarding to IDE loggers: [guides/WebView-UI-Authoring-Guide § Use Browser Console Logging](guides/WebView-UI-Authoring-Guide.md#use-browser-console-logging)
 - Review the API surface and the 13-item cleanup state: [architecture/WebView-Architecture-Review](architecture/WebView-Architecture-Review.md)
 - Design a new JSON-RPC contract: [architecture/WebView-JsonRpc-Design](architecture/WebView-JsonRpc-Design.md) + [architecture/WebView-TS-RPC-API-Design](architecture/WebView-TS-RPC-API-Design.md)
 - Preview or browser-test a WebView UI without IDE/Kotlin: [guides/WebView-UI-Authoring-Guide](guides/WebView-UI-Authoring-Guide.md) and [frontend/WebView-Frontend-Testability](frontend/WebView-Frontend-Testability.md)
@@ -51,7 +52,7 @@ new mechanism ──┼─ one feature only? ───────────�
                 └─ native bridge? ──────────────── impl/<os>/ + community/native/<crate>
 ```
 
-Rule of thumb: anything a feature author should NOT have to remember to install (focus, theme, IME hooks, accessibility bootstrap) goes into common runtime. See [architecture/WebView-Common-Runtime-Injection-Proposal](architecture/WebView-Common-Runtime-Injection-Proposal.md).
+Rule of thumb: anything a feature author should NOT have to remember to install (focus, theme, browser console capture, IME hooks, accessibility bootstrap) goes into common runtime. See [architecture/WebView-Common-Runtime-Injection-Proposal](architecture/WebView-Common-Runtime-Injection-Proposal.md).
 
 ### 2.3 Level-1 bus or Level-2 interop?
 

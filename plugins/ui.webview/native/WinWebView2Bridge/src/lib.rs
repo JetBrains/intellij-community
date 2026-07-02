@@ -34,7 +34,7 @@ const MODIFIER_SHIFT: jint = 1;
 const MODIFIER_CONTROL: jint = 1 << 1;
 const MODIFIER_ALT: jint = 1 << 2;
 const MODIFIER_META: jint = 1 << 3;
-const NATIVE_ABI_VERSION: &str = "wvi-dedicated-thread-v4";
+const NATIVE_ABI_VERSION: &str = "wvi-dedicated-thread-v5";
 const WM_USER_INVOKE: u32 = WM_USER + 1;
 const WEBVIEW_ASSET_URL_FILTER: &str = "https://ij-webview-assets.local/*";
 const DIAGNOSTIC_TRACE: jint = 0;
@@ -435,8 +435,13 @@ struct NativeWebView {
     controller: Option<ICoreWebView2Controller>,
     webview: Option<ICoreWebView2>,
     controller_completed_handler: Option<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>,
+    add_script_handlers: Vec<(
+        u64,
+        ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler,
+    )>,
     execute_script_handlers: Vec<(u64, ICoreWebView2ExecuteScriptCompletedHandler)>,
     next_script_handler_id: u64,
+    document_start_scripts: Vec<String>,
     web_message_token: EventRegistrationToken,
     web_resource_requested_token: Option<EventRegistrationToken>,
     accelerator_key_pressed_token: Option<EventRegistrationToken>,
@@ -483,6 +488,7 @@ impl NativeWebView {
         self.webview = None;
         self.controller = None;
         self.controller_completed_handler = None;
+        self.add_script_handlers.clear();
         self.execute_script_handlers.clear();
         if !self.hwnd.0.is_null() {
             unsafe {
@@ -509,9 +515,16 @@ pub extern "system" fn Java_com_intellij_ui_webview_impl_windows_WinWebView2Brid
     _class: JClass<'_>,
     parent_hwnd: jlong,
     user_data_dir: JString<'_>,
+    document_start_script: JString<'_>,
     callbacks: JObject<'_>,
 ) -> jlong {
-    match create_native(&mut env, parent_hwnd, user_data_dir, callbacks) {
+    match create_native(
+        &mut env,
+        parent_hwnd,
+        user_data_dir,
+        document_start_script,
+        callbacks,
+    ) {
         Ok(handle) => handle,
         Err(message) => {
             let _ = env.throw_new("java/lang/IllegalStateException", message);
@@ -962,6 +975,7 @@ fn create_native(
     env: &mut JNIEnv<'_>,
     parent_hwnd: jlong,
     user_data_dir: JString<'_>,
+    document_start_script: JString<'_>,
     callbacks: JObject<'_>,
 ) -> BridgeResult<jlong> {
     unsafe {
@@ -975,6 +989,12 @@ fn create_native(
     let parent = HWND(parent_hwnd as *mut c_void);
     let hwnd = create_container_hwnd(parent, callbacks.clone())?;
     let user_data_dir = jstring_to_string(env, user_data_dir)?;
+    let document_start_script = jstring_to_string(env, document_start_script)?;
+    let document_start_scripts = if document_start_script.is_empty() {
+        Vec::new()
+    } else {
+        vec![document_start_script]
+    };
 
     let native = Rc::new(RefCell::new(NativeWebView {
         handle: 0,
@@ -983,8 +1003,10 @@ fn create_native(
         controller: None,
         webview: None,
         controller_completed_handler: None,
+        add_script_handlers: Vec::new(),
         execute_script_handlers: Vec::new(),
         next_script_handler_id: 0,
+        document_start_scripts,
         web_message_token: EventRegistrationToken::default(),
         web_resource_requested_token: None,
         accelerator_key_pressed_token: None,
@@ -1199,6 +1221,7 @@ fn finish_create(
 ) -> BridgeResult<()> {
     let webview = unsafe { controller.CoreWebView2().map_err(format_windows_error)? };
     configure_webview_application_settings(&webview)?;
+    install_document_start_scripts(&webview, native.clone())?;
     let token = attach_ipc_handler(&webview, native.clone())?;
     let web_resource_token =
         attach_web_resource_requested_handler(&environment, &webview, native.clone())?;
@@ -2169,6 +2192,56 @@ fn remove_execute_script_handler(native: &NativeHandle, handler_id: u64) {
     if let Ok(mut view) = native.try_borrow_mut() {
         view.execute_script_handlers
             .retain(|(id, _)| *id != handler_id);
+    }
+}
+
+fn install_document_start_scripts(
+    webview: &ICoreWebView2,
+    native: NativeHandle,
+) -> BridgeResult<()> {
+    let scripts = native
+        .try_borrow()
+        .map_err(|_| "WebView2 state is busy while reading document start scripts".to_string())?
+        .document_start_scripts
+        .clone();
+    for script in scripts {
+        install_document_start_script(webview, native.clone(), script)?;
+    }
+    Ok(())
+}
+
+fn install_document_start_script(
+    webview: &ICoreWebView2,
+    native: NativeHandle,
+    script: String,
+) -> BridgeResult<()> {
+    let (handler, handler_id) = {
+        let mut view = native.try_borrow_mut().map_err(|_| {
+            "WebView2 state is busy while installing document start script".to_string()
+        })?;
+        let handler_id = view.next_script_handler_id;
+        view.next_script_handler_id += 1;
+        let native_for_callback = native.clone();
+        let handler =
+            AddScriptToExecuteOnDocumentCreatedCompletedHandler::create(Box::new(move |_, _| {
+                remove_add_script_handler(&native_for_callback, handler_id);
+                Ok(())
+            }));
+        view.add_script_handlers.push((handler_id, handler.clone()));
+        (handler, handler_id)
+    };
+    let result =
+        unsafe { webview.AddScriptToExecuteOnDocumentCreated(&HSTRING::from(script), &handler) };
+    if let Err(error) = result {
+        remove_add_script_handler(&native, handler_id);
+        return Err(format_windows_error(error));
+    }
+    Ok(())
+}
+
+fn remove_add_script_handler(native: &NativeHandle, handler_id: u64) {
+    if let Ok(mut view) = native.try_borrow_mut() {
+        view.add_script_handlers.retain(|(id, _)| *id != handler_id);
     }
 }
 

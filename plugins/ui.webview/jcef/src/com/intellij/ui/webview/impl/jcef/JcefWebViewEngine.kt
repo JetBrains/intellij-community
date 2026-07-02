@@ -12,6 +12,7 @@ import com.intellij.ui.webview.impl.WebViewAssetResolver
 import com.intellij.ui.webview.impl.WebViewAssetResponse
 import com.intellij.ui.webview.impl.WebViewJsMessageReceiver
 import com.intellij.ui.webview.impl.WebViewLogger
+import com.intellij.ui.webview.impl.engine.WebViewScript
 import com.intellij.ui.webview.impl.resolveWebViewAssetUrl
 import com.intellij.ui.webview.impl.webViewAssetHttpsUrl
 import com.intellij.util.ui.EDT
@@ -58,6 +59,7 @@ import kotlin.time.Duration.Companion.milliseconds
 internal class JcefWebViewEngine(
   parentScope: CoroutineScope,
   jbCefApp: JBCefApp,
+  private val documentStartScripts: List<WebViewScript> = emptyList(),
 ) : ComponentBackedWebViewEngine {
   private companion object {
     private const val INITIAL_URL = "about:blank"
@@ -327,6 +329,7 @@ internal class JcefWebViewEngine(
   private fun createLoadHandler(): CefLoadHandlerAdapter {
     return object : CefLoadHandlerAdapter() {
       override fun onLoadStart(browser: CefBrowser?, frame: CefFrame?, transitionType: CefRequest.TransitionType?) {
+        injectDocumentStartScripts(browser, frame)
         resetDeliveryReadiness(browser, frame)
       }
 
@@ -370,6 +373,13 @@ internal class JcefWebViewEngine(
       runOnEdt {
         flushPendingNavigation()
       }
+    }
+  }
+
+  private fun injectDocumentStartScripts(browser: CefBrowser?, frame: CefFrame?) {
+    if (browser !== cefBrowser || frame == null || documentStartScripts.isEmpty()) return
+    for (script in documentStartScripts) {
+      frame.executeJavaScript(script.script, frame.url ?: INITIAL_URL, 0)
     }
   }
 
@@ -550,6 +560,7 @@ internal class JcefWebViewEngine(
 
 internal fun createJcefWebViewEngine(
   parentScope: CoroutineScope,
+  documentStartScripts: List<WebViewScript> = emptyList(),
 ): JcefWebViewEngine {
-  return JcefWebViewEngine(parentScope, JcefWebViewRuntime.getOrCreateJBCefApp())
+  return JcefWebViewEngine(parentScope, JcefWebViewRuntime.getOrCreateJBCefApp(), documentStartScripts)
 }

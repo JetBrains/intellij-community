@@ -20,6 +20,7 @@ import com.intellij.ui.webview.impl.WebViewAssetResponse
 import com.intellij.ui.webview.impl.WebViewApplicationModeScripts
 import com.intellij.ui.webview.impl.WebViewLogger
 import com.intellij.ui.webview.impl.WEBVIEW_ASSET_CUSTOM_SCHEME
+import com.intellij.ui.webview.impl.engine.WebViewScript
 import com.sun.jna.Callback
 import com.sun.jna.Memory
 import com.sun.jna.Pointer
@@ -177,6 +178,7 @@ internal object WKWebViewBridge {
   fun createWKWebView(
     onMessage: (String) -> Unit,
     resolveAssetUrl: (String) -> WebViewAssetResponse?,
+    documentStartScripts: List<WebViewScript> = emptyList(),
   ): WebViewHandles {
     // 1. Create WKWebViewConfiguration
     val configuration = invoke(invoke(getObjcClass(CLS_WKWEBVIEW_CONFIGURATION), SEL_ALLOC), SEL_INIT)
@@ -188,6 +190,9 @@ internal object WKWebViewBridge {
 
     // 3. Set up user content controller with message handler
     val userContentController = invoke(configuration, SEL_USER_CONTENT_CONTROLLER)
+    documentStartScripts.forEach { script ->
+      installDocumentStartUserScript(userContentController, script.script)
+    }
     installApplicationModeUserScript(userContentController)
     val handlerInstance = createAndRegisterMessageHandler(onMessage)
     invoke(userContentController, SEL_ADD_SCRIPT_MESSAGE_HANDLER, handlerInstance, nsString(IPC_HANDLER_NAME))
@@ -366,10 +371,14 @@ internal object WKWebViewBridge {
   // region Message handler class registration
 
   private fun installApplicationModeUserScript(userContentController: ID) {
+    installDocumentStartUserScript(userContentController, WebViewApplicationModeScripts.DOM_HARDENING_SCRIPT)
+  }
+
+  private fun installDocumentStartUserScript(userContentController: ID, @Language("JavaScript") source: String) {
     val userScript = invoke(
       invoke(getObjcClass(CLS_WKUSER_SCRIPT), SEL_ALLOC),
       SEL_INIT_WITH_SOURCE_INJECTION_TIME_FOR_MAIN_FRAME_ONLY,
-      nsString(WebViewApplicationModeScripts.DOM_HARDENING_SCRIPT),
+      nsString(source),
       WK_USER_SCRIPT_INJECTION_TIME_AT_DOCUMENT_START,
       false,
     )

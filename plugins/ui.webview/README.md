@@ -9,6 +9,7 @@ Plugin-facing main API (all `@ApiStatus.Experimental`):
 - `createWebViewPanel(...)` is the main entry point for bundled web UI. It creates the host component, the typed `interop` facade, the message bus, and the initial asset load. Configure it with `WebViewPanelOptions(assetRoot, debugName, ...)`.
 - `WebViewAssetRoot.forView(viewId)` describes assets bundled under `webview/views/<viewId>`, served through WebView asset handlers (not a local HTTP server); it captures the calling class automatically (use `forView(owner, viewId)` to anchor a different module or from Java). `WebViewAssetPath` addresses entries within a root, and `WebViewAssetProvider` serves dynamic entries. `WebViewAssetRoot.fromClasspath(...)`/`fromDirectory(...)` are low-level escape hatches for non-standard layouts.
 - Talk to the page through `WebViewPanel.interop` with typed `WebViewApi` / `WebViewApiId` contracts (`implement(...)` / `callable(...)`).
+- Browser `console.*` output is captured automatically for every runtime-created WebView and written to IDE loggers. Use `WebViewPanelOptions.consoleLogCategory` only when a feature needs a dedicated base logger category.
 
 Lower-level/internal surfaces are marked `@ApiStatus.Internal` and may change without notice — not part of the plugin-facing API: `WebViewRuntime.createWebView(...)` and the engine-neutral `WebView`, the raw `WebViewMessageBus`, `WebViewEngineFactory`, and the engine `WebViewEngine`.
 

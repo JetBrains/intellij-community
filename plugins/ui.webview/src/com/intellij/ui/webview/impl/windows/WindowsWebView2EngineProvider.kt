@@ -37,7 +37,7 @@ internal class WindowsWebView2EngineProvider : WebViewEngineProvider {
 
   override fun createEngine(scope: CoroutineScope, options: WebViewEngineCreationOptions): WebViewEngineBridge {
     check(SystemInfo.isWindows) { "System WebView is supported only on Windows" }
-    return createWinWebViewEngine(scope, options.debugName)
+    return createWinWebViewEngine(scope, options.debugName, options.documentStartScripts)
   }
 
   override fun createNativeHostPeer(scope: CoroutineScope, engine: WebViewEngineBridge): NativeWebViewHostPeer {

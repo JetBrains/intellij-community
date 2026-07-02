@@ -12,6 +12,7 @@ import com.intellij.ui.webview.impl.windows.WinNativeWebViewHostPeer
 import com.intellij.ui.webview.impl.windows.WinWebViewEngine
 import com.intellij.ui.webview.impl.windows.winWebView2BridgeLibrary
 import com.intellij.ui.webview.impl.rpc.WebViewMessageBusImpl
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,6 +40,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @EnabledOnOs(OS.WINDOWS)
 @DisabledIfSystemProperty(named = "java.awt.headless", matches = "true")
+@TestApplication
 @Suppress("JSUnresolvedVariable")
 class WindowsWebViewSmokeTest {
 
@@ -229,6 +231,7 @@ class WindowsWebViewSmokeTest {
       }
     }
     finally {
+      bus.close()
       facade.close()
     }
   }

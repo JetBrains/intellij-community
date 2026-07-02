@@ -3,6 +3,7 @@
 
 package com.intellij.ui.webview.api
 
+import com.intellij.ui.webview.impl.CONSOLE_LOG_CATEGORY
 import com.intellij.ui.webview.impl.engine.WebView
 import com.intellij.ui.webview.impl.engine.WebViewRuntime
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -34,6 +35,7 @@ data class WebViewPanelOptions(
   val indexPath: WebViewAssetPath = WebViewAssetPath.indexHtml(),
   val query: String? = null,
   val debugName: String? = null,
+  val consoleLogCategory: String = CONSOLE_LOG_CATEGORY,
 )
 
 /**

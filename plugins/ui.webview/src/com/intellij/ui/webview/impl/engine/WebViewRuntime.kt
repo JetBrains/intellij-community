@@ -41,6 +41,7 @@ class WebViewRuntime {
         strictPreference = true,
         jcefNativeBundlePath = null,
         debugName = options.debugName,
+        consoleLogCategory = options.consoleLogCategory,
       ),
     ).webView
   }
@@ -100,6 +101,7 @@ class WebViewRuntime {
           strictPreference = true,
           jcefNativeBundlePath = null,
           debugName = options.debugName,
+          consoleLogCategory = options.consoleLogCategory,
         ),
       )
       val webViewInstance = createdWebView.webView

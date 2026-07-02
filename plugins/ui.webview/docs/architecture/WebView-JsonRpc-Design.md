@@ -50,6 +50,8 @@ Supported flows:
 - Kotlin -> JS notification;
 - cancellation through `$/cancelRequest`.
 
+The runtime may also reserve `$/...` notification methods for infrastructure. `$/webview/console` is used by browser console capture and is registered by the WebView runtime itself; application protocols must not use or handle it.
+
 Protocol defaults:
 
 - JSON-RPC version: `2.0`;

@@ -2,7 +2,9 @@
 package com.intellij.ui.webview
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
@@ -19,6 +21,7 @@ import com.intellij.ui.webview.api.WebViewPanelOptions
 import com.intellij.ui.webview.impl.engine.WebViewRuntime
 import com.intellij.ui.webview.impl.engine.WebViewRuntimeInfo
 import com.intellij.ui.webview.impl.engine.WebViewScriptResult
+import com.intellij.ui.webview.impl.WebViewConsoleCapture
 import com.intellij.ui.webview.impl.WebViewEngineBridge
 import com.intellij.ui.webview.impl.WebViewJsMessageReceiver
 import com.intellij.ui.webview.impl.engine.WebViewEngineCreationOptions
@@ -30,6 +33,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.job
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -41,6 +45,7 @@ import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
+import java.time.Instant
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.time.Duration.Companion.seconds
@@ -189,6 +194,89 @@ internal class WebViewRuntimeTest {
   }
 
   @Test
+  fun createWebView_installsConsoleCaptureDocumentStartScript(): Unit = runBlocking {
+    val provider = FakeEngineProvider(
+      id = WebViewEngineId.JCEF,
+      displayName = "JCEF",
+      capabilities = capabilities(assetServing = true),
+    )
+    val runtime = WebViewRuntime().apply { providers = listOf(provider) }
+
+    val webView = runtime.createWebView(scope = this)
+
+    val script = provider.creationOptions.single().documentStartScripts.single().script
+    assertEquals(WebViewConsoleCapture.DOCUMENT_START_SCRIPT.script, script)
+    assertTrue(script.contains("$/webview/console"), script)
+    assertTrue(script.contains("Date.now"), script)
+    assertTrue(script.contains("window.chrome.webview.postMessage"), script)
+    assertTrue(script.contains("window.webkit.messageHandlers"), script)
+    assertTrue(script.contains("__wviJcefQuery"), script)
+    webView.close()
+  }
+
+  @Test
+  fun createWebView_propagatesConsoleLogCategory(): Unit = runBlocking {
+    val provider = FakeEngineProvider(
+      id = WebViewEngineId.JCEF,
+      displayName = "JCEF",
+      capabilities = capabilities(assetServing = true),
+    )
+    val runtime = WebViewRuntime().apply { providers = listOf(provider) }
+
+    val webView = runtime.createWebView(
+      scope = this,
+      options = WebViewCreationOptions(consoleLogCategory = "#custom.webview.console"),
+    )
+
+    assertEquals("#custom.webview.console", provider.creationOptions.single().consoleLogCategory)
+    webView.close()
+  }
+
+  @Test
+  fun createWebView_logsConsoleNotificationsThroughRuntimeLogger(): Unit = runBlocking {
+    val loggerFactory = Logger.getFactory() as? TestLoggerFactory
+    assertNotNull(loggerFactory, "WebViewRuntimeTest expects TestLoggerFactory")
+    val provider = FakeEngineProvider(
+      id = WebViewEngineId.JCEF,
+      displayName = "JCEF",
+      capabilities = capabilities(assetServing = true),
+    )
+    val runtime = WebViewRuntime().apply { providers = listOf(provider) }
+    val category = "#wvtest"
+    val viewId = "runtimeConsole"
+    val marker = "runtime-console-${System.nanoTime()}"
+    val jsTimeEpochMs = 1_782_995_696_789L
+
+    val webView = runtime.createWebView(
+      scope = this,
+      options = WebViewCreationOptions(consoleLogCategory = category),
+    )
+    try {
+      webView.loadAsset(WebViewAssetRoot.forView(WebViewRuntimeTest::class.java, viewId))
+      provider.engine.transferFromJs(
+        """
+          {
+            "jsonrpc": "2.0",
+            "method": "$CONSOLE_LOG_METHOD",
+            "params": {
+              "method": "log",
+              "jsTimeEpochMs": $jsTimeEpochMs,
+              "args": ["$marker", "payload"]
+            }
+          }
+        """.trimIndent(),
+      )
+
+      val log = awaitLog(loggerFactory!!, marker)
+      assertTrue(log.contains("$category.$viewId"), log)
+      assertTrue(log.contains("[js=${Instant.ofEpochMilli(jsTimeEpochMs)}] $marker payload"), log)
+    }
+    finally {
+      webView.close()
+    }
+  }
+
+  @Test
   fun createWebView_appendsThemeQueryToAssetLoads(): Unit = runBlocking {
     val provider = FakeEngineProvider(
       id = WebViewEngineId.JCEF,
@@ -332,6 +420,31 @@ internal class WebViewRuntimeTest {
     }
   }
 
+  @Test
+  fun createPanel_propagatesConsoleLogCategory(): Unit = runBlocking {
+    val testScope = this
+    val provider = FakeEngineProvider(
+      id = WebViewEngineId.JCEF,
+      displayName = "JCEF",
+      capabilities = capabilities(assetServing = true),
+    )
+    val runtime = WebViewRuntime().apply { providers = listOf(provider) }
+    val assetRoot = WebViewAssetRoot.fromClasspath(WebViewRuntimeTest::class.java, WebViewAssetPath.of("webview/views/smoke"))
+
+    val panel = withContext(Dispatchers.EDT) {
+      runtime.createWebViewPanel(
+        scope = testScope,
+        options = WebViewPanelOptions(
+          assetRoot = assetRoot,
+          consoleLogCategory = "#custom.panel.console",
+        ),
+      )
+    }
+
+    assertEquals("#custom.panel.console", provider.creationOptions.single().consoleLogCategory)
+    panel.close()
+  }
+
   private class FakeProvider(
     override val id: WebViewEngineId,
     override val displayName: String = id.value,
@@ -385,6 +498,7 @@ internal class WebViewRuntimeTest {
     isHeavyweight: Boolean = false,
   ) : WebViewEngineProvider {
     val engine = CapturingEngine(isHeavyweight)
+    val creationOptions = mutableListOf<WebViewEngineCreationOptions>()
 
     override fun selectionPriority(preference: WebViewEngineKind): Int? {
       return when (preference) {
@@ -395,7 +509,10 @@ internal class WebViewRuntimeTest {
 
     override fun availabilityBlocking(): WebViewEngineAvailability = WebViewEngineAvailability.Available
 
-    override fun createEngine(scope: CoroutineScope, options: WebViewEngineCreationOptions): WebViewEngineBridge = engine
+    override fun createEngine(scope: CoroutineScope, options: WebViewEngineCreationOptions): WebViewEngineBridge {
+      creationOptions.add(options)
+      return engine
+    }
   }
 
   private class FakeWebView(
@@ -457,6 +574,7 @@ internal class WebViewRuntimeTest {
     override val isHeavyweight: Boolean = false,
   ) : WebViewEngineBridge {
     val delivered = Channel<String>(Channel.UNLIMITED)
+    private var messageReceiver: WebViewJsMessageReceiver? = null
     var lastAssetQuery: String? = null
       private set
     var closeCount = 0
@@ -479,11 +597,27 @@ internal class WebViewRuntimeTest {
     }
 
     override fun connectMessageBus(receiver: WebViewJsMessageReceiver) {
+      messageReceiver = receiver
     }
 
     override suspend fun close() {
       closeCount++
       delivered.close()
+    }
+
+    fun transferFromJs(rawJson: String) {
+      checkNotNull(messageReceiver) { "WebView message bus is not connected" }.transferFromJs(rawJson)
+    }
+  }
+
+  private suspend fun awaitLog(loggerFactory: TestLoggerFactory, marker: String): String {
+    return withTimeout(5.seconds) {
+      var log = loggerFactory.toBuffer()
+      while (!log.contains(marker)) {
+        delay(10)
+        log = loggerFactory.toBuffer()
+      }
+      log
     }
   }
 
@@ -507,6 +641,7 @@ internal class WebViewRuntimeTest {
   private companion object {
     const val RUNTIME_INFO_REQUEST_METHOD: String = "$/webview/runtimeInfoRequest"
     const val RUNTIME_INFO_METHOD: String = "$/webview/runtimeInfo"
+    const val CONSOLE_LOG_METHOD: String = "$/webview/console"
     const val THEME_REQUEST_METHOD: String = "webview.theme/themeRequest"
     const val THEME_CHANGED_METHOD: String = "webview.theme/themeChanged"
   }
