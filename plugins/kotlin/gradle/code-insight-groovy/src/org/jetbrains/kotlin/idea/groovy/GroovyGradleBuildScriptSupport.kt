@@ -197,8 +197,20 @@ class GroovyBuildScriptManipulator(
             addMavenCentralIfMissing()
         }
 
-        scriptFile.getOrCreateDependenciesBlock().apply {
-            addLastExpressionInBlockIfNeeded(getKotlinTestLibraryDependencySnippet(useNewSyntax))
+        // Add test dependency - for KMP projects, add to commonTest source set; otherwise to top-level dependencies
+        if (usesNewMultiplatform()) {
+            scriptFile.getOrCreateKotlinBlock()
+                .getOrCreateSourceSetsBlock()
+                .addKotlinTestDependencyToCommonTest()
+        } else {
+            scriptFile.getOrCreateDependenciesBlock().apply {
+                val style = if (useNewSyntax) {
+                    KotlinDependencyStyle.LEGACY_WITHOUT_VERSION
+                } else {
+                    KotlinDependencyStyle.LEGACY_WITH_VERSION
+                }
+                addLastExpressionInBlockIfNeeded(getKotlinTestLibraryDependencySnippet(TEST_IMPLEMENTATION, style))
+            }
         }
 
         scriptFile.configureToolchainOrKotlinCompilerOptions(jvmTarget, version, gradleVersion, changedFiles)
@@ -781,18 +793,37 @@ class GroovyBuildScriptManipulator(
         }
     }
 
+    /** How to express a Kotlin ([KOTLIN_GROUP_ID]) dependency in the generated Groovy snippet. */
+    private enum class KotlinDependencyStyle {
+        /** KMP source set, e.g. `commonTest.dependencies { }`: `implementation kotlin("test")`. */
+        SOURCE_SET_ACCESSOR,
+
+        /** Legacy `apply plugin`, needs `ext.kotlin_version`: `testImplementation "...:kotlin-test:$kotlin_version"`. */
+        LEGACY_WITH_VERSION,
+
+        /** Modern `plugins {}`, non-multiplatform: `testImplementation 'org.jetbrains.kotlin:kotlin-test'`. */
+        LEGACY_WITHOUT_VERSION
+    }
+
     private fun getGroovyDependencySnippet(
         artifactName: String,
         scope: String,
-        withVersion: Boolean,
+        style: KotlinDependencyStyle,
         gradleVersion: GradleVersionInfo
     ): String {
         val configuration = gradleVersion.scope(scope)
-        return if (withVersion) {
-            // Double quotes are needed for $kotlin_version to be correctly interpolated and picked-up
-            $$"$$configuration \"org.jetbrains.kotlin:$$artifactName:$kotlin_version\""
-        } else {
-            "$configuration 'org.jetbrains.kotlin:$artifactName'"
+        return when (style) {
+            KotlinDependencyStyle.SOURCE_SET_ACCESSOR -> {
+                val moduleName = artifactName.removePrefix("kotlin-")
+                "$configuration kotlin(\"$moduleName\")"
+            }
+
+            KotlinDependencyStyle.LEGACY_WITH_VERSION ->
+                // Double quotes are needed for $kotlin_version to be correctly interpolated and picked-up
+                $$"$$configuration \"org.jetbrains.kotlin:$$artifactName:$kotlin_version\""
+
+            KotlinDependencyStyle.LEGACY_WITHOUT_VERSION ->
+                "$configuration 'org.jetbrains.kotlin:$artifactName'"
         }
     }
 
@@ -856,11 +887,55 @@ class GroovyBuildScriptManipulator(
 
     private fun GrStatementOwner.getOrCreateDependenciesBlock(): GrClosableBlock = getBlockOrCreate("dependencies")
 
-    private fun getKotlinTestLibraryDependencySnippet(useNewSyntax: Boolean): String =
+    private fun GrClosableBlock.addKotlinTestDependencyToCommonTest(): Boolean {
+        val dependencySnippet = getKotlinTestLibraryDependencySnippet(
+            scope = GradleBuildScriptSupport.IMPLEMENTATION,
+            style = KotlinDependencyStyle.SOURCE_SET_ACCESSOR,
+        )
+
+        // commonTest { }
+        getBlockByName("commonTest")?.let { commonTestBlock ->
+            return commonTestBlock.getOrCreateDependenciesBlock().addKotlinTestDependencyIfMissing(dependencySnippet)
+        }
+
+        // commonTest.dependencies { }
+        getQualifiedBlockByName("commonTest", "dependencies")?.let { commonTestDependenciesBlock ->
+            return commonTestDependenciesBlock.addKotlinTestDependencyIfMissing(dependencySnippet)
+        }
+
+        // Default: create commonTest { dependencies { } }
+        return getBlockOrCreate("commonTest")
+            .getOrCreateDependenciesBlock()
+            .addKotlinTestDependencyIfMissing(dependencySnippet)
+    }
+
+    private fun GrClosableBlock.addKotlinTestDependencyIfMissing(dependencySnippet: String): Boolean {
+        val alreadyPresent = statements.any { it.isKotlinTestDependency() }
+        return !alreadyPresent && addLastExpressionInBlockIfNeeded(dependencySnippet)
+    }
+
+    private fun GrStatement.isKotlinTestDependency(): Boolean {
+        // unwrap `implementation(...)` / `testImplementation(...)` etc. to the inner call/argument
+        val call = this as? GrMethodCall ?: return false
+        val arg = call.expressionArguments.singleOrNull() ?: return false
+
+        return when (arg) {
+            // kotlin("test") / kotlin('test') as the dependency notation
+            is GrMethodCallExpression -> {
+                val invoked = arg.invokedExpression as? GrReferenceExpression
+                invoked?.referenceName == "kotlin" &&
+                        arg.expressionArguments.singleOrNull()?.text?.extractTextFromQuotes() == "test"
+            }
+            // "org.jetbrains.kotlin:kotlin-test:..." / 'org.jetbrains.kotlin:kotlin-test'
+            else -> arg.text.extractTextFromQuotes().startsWith("$KOTLIN_GROUP_ID:$TEST_LIB_ID")
+        }
+    }
+
+    private fun getKotlinTestLibraryDependencySnippet(scope: String, style: KotlinDependencyStyle): String =
         getGroovyDependencySnippet(
             artifactName = TEST_LIB_ID,
-            scope = TEST_IMPLEMENTATION,
-            withVersion = !useNewSyntax,
+            scope = scope,
+            style = style,
             gradleVersion
         )
 
@@ -914,6 +989,17 @@ class GroovyBuildScriptManipulator(
             return getChildrenOfType<GrMethodCallExpression>()
                 .filter { it.closureArguments.isNotEmpty() }
                 .find { it.invokedExpression.text == name }
+                ?.let { it.closureArguments[0] }
+        }
+
+        private fun PsiElement.getQualifiedBlockByName(qualifierName: String, methodName: String): GrClosableBlock? {
+            return getChildrenOfType<GrMethodCallExpression>()
+                .filter { it.closureArguments.isNotEmpty() }
+                .find { methodCall ->
+                    val invokedExpression = methodCall.invokedExpression as? GrReferenceExpression ?: return@find false
+                    invokedExpression.referenceName == methodName &&
+                            invokedExpression.qualifierExpression?.text == qualifierName
+                }
                 ?.let { it.closureArguments[0] }
         }
 
