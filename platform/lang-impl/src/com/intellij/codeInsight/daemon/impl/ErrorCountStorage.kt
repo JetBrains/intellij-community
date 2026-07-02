@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext
@@ -30,6 +30,12 @@ class ErrorCountStorage {
       val oldVal = errorCount.getInt(highlightKey)
       val newVal = max(0, oldVal + delta)
       errorCount.put(highlightKey, newVal)
+    }
+  }
+
+  fun getErrorCountsForAllContexts(severity: HighlightSeverity): Int {
+    return synchronized(errorCount) {
+      errorCount.filterKeys { it.severity == severity }.values.sum()
     }
   }
 
