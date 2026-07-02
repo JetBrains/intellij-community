@@ -63,7 +63,7 @@ public final class LogsGroupFragment<T extends RunConfigurationBase<?>> extends 
       .createTag("logs.stderr", DiagnosticBundle.message("log.monitor.fragment.stderr"), null, t -> t.isShowConsoleOnStdErr(),
                  (t, value) -> t.setShowConsoleOnStdErr(value));
     stdErr.setActionHint(ExecutionBundle.message("activate.the.console.when.the.application.writes.to.the.standard.error.stream"));
-    return Arrays.asList(new LogsFragment<>(), fragment, stdOut, stdErr);
+    return Arrays.asList(new LogsFragment<>(myProject), fragment, stdOut, stdErr);
   }
 
   @Override

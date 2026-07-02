@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.PredefinedLogFile;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.ui.SettingsEditorFragment;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.TableUtil;
@@ -42,11 +43,19 @@ public final class LogsFragment<T extends RunConfigurationBase<?>> extends Setti
   private final List<PredefinedLogFile> myUnresolvedPredefined = new SmartList<>();
   private final TableView<LogFileOptions> myFilesTable;
   private final ListTableModel<LogFileOptions> myModel;
+  private final @Nullable Project myProject;
 
+  /// @deprecated Use {@link #LogsFragment(Project)} to provide project context for the file chooser.
+  @Deprecated
   public LogsFragment() {
+    this(null);
+  }
+
+  public LogsFragment(@Nullable Project project) {
     super("log.monitor",
           DiagnosticBundle.message("log.monitor.fragment.name"), null, null, null, null,
           t -> !t.getLogFiles().isEmpty());
+    myProject = project;
     setActionHint(ExecutionBundle.message("the.ide.will.display.the.selected.logs.in.the.run.tool.window"));
 
     ColumnInfo<LogFileOptions, String> TAB_NAME = new TabNameColumnInfo();
@@ -295,8 +304,8 @@ public final class LogsFragment<T extends RunConfigurationBase<?>> extends Setti
     }
   }
 
-  private static boolean showEditorDialog(@NotNull LogFileOptions options) {
-    EditLogPatternDialog dialog = new EditLogPatternDialog();
+  private boolean showEditorDialog(@NotNull LogFileOptions options) {
+    EditLogPatternDialog dialog = new EditLogPatternDialog(myProject);
     dialog.init(options.getName(), options.getPathPattern(), options.isShowAll());
     if (dialog.showAndGet()) {
       options.setName(dialog.getName());

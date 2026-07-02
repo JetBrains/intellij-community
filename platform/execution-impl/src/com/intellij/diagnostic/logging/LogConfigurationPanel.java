@@ -10,6 +10,7 @@ import com.intellij.openapi.fileChooser.FileSaverDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.FileSaverRunnable;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
@@ -188,7 +189,10 @@ public final class LogConfigurationPanel<T extends RunConfigurationBase> extends
       .withTitle(ExecutionBundle.message("choose.file.to.save.console.output"))
       .withDescription(ExecutionBundle.message("console.output.would.be.saved.to.the.specified.file"));
     descriptor.setEnvironmentRestricted(true);
-    myOutputFile.addFileSaverDialog(myProject, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    // Resolve the project lazily at click time: myProject is populated in resetEditorFrom(), not in the constructor.
+    myOutputFile.addActionListener(
+      e -> new FileSaverRunnable<>(myProject, descriptor, myOutputFile.getChildComponent(),
+                                   TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT).run());
     myRedirectOutputCb.addActionListener(e -> myOutputFile.setEnabled(myRedirectOutputCb.isSelected()));
   }
 
@@ -365,8 +369,8 @@ public final class LogConfigurationPanel<T extends RunConfigurationBase> extends
     return myWholePanel;
   }
 
-  private static boolean showEditorDialog(@NotNull LogFileOptions options) {
-    EditLogPatternDialog dialog = new EditLogPatternDialog();
+  private boolean showEditorDialog(@NotNull LogFileOptions options) {
+    EditLogPatternDialog dialog = new EditLogPatternDialog(myProject);
     dialog.init(options.getName(), options.getPathPattern(), options.isShowAll());
     if (dialog.showAndGet()) {
       options.setName(dialog.getName());
