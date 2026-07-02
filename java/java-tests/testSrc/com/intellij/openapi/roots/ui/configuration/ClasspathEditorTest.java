@@ -60,6 +60,7 @@ public class ClasspathEditorTest extends LightPlatformTestCase {
       if (e != null) {
         e.disposeUIResources();
       }
+      ProjectStructureConfigurable.getInstance(project).getContext().getModulesConfigurator().disposeUIResources();
       uiRootModel.dispose();
     }
   }
