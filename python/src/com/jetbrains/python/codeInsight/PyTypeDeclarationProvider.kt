@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.types.PyCallableType
 import com.jetbrains.python.psi.types.PyClassType
-import com.jetbrains.python.psi.types.PyTypeUtil.componentSequence
+import com.jetbrains.python.psi.types.PyTypeUtil.compositeComponentSequence
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyTypeDeclarationProvider : TypeDeclarationProvider {
@@ -22,7 +22,7 @@ class PyTypeDeclarationProvider : TypeDeclarationProvider {
         else -> type
       }
 
-      return type.componentSequence
+      return type.compositeComponentSequence
         .filterNotNull()
         .mapNotNull { it.declarationElement }
         .distinct()

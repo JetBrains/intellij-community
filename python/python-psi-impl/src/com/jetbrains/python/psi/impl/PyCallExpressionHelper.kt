@@ -74,7 +74,7 @@ import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions
 import com.jetbrains.python.psi.types.PyTypeMember
 import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyTypeUtil
-import com.jetbrains.python.psi.types.PyTypeUtil.components
+import com.jetbrains.python.psi.types.PyTypeUtil.compositeComponents
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.PyUnpackedTupleType
@@ -289,7 +289,7 @@ object PyCallExpressionHelper {
     val callee = expression.callee ?: return null
     val context = resolveContext.typeEvalContext
     if (callee !is PyReferenceExpression) {
-      val callables = context.getType(callee).components.filterIsInstance<PyCallableType>()
+      val callables = context.getType(callee).compositeComponents.filterIsInstance<PyCallableType>()
       return if (callables.isEmpty()) null else PyUnionType.union(callables)
     }
 
@@ -314,7 +314,7 @@ object PyCallExpressionHelper {
           callableTypes.add(adjustCallableType(it, expression, clarified, context))
         }
     }
-    val callables = PyUnionType.union(callableTypes).components.filterIsInstance<PyCallableType>()
+    val callables = PyUnionType.union(callableTypes).compositeComponents.filterIsInstance<PyCallableType>()
     return if (callables.isEmpty()) null else PyUnionType.union(callables)
   }
 
