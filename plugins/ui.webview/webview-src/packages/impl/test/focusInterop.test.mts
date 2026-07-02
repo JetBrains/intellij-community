@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 /// <reference path="./bun-test.d.ts" />
 
-import { beforeEach, describe, expect, test } from "bun:test"
+import {afterEach, beforeEach, describe, expect, test} from "bun:test"
 import type {
   WebViewBridge,
   WebViewFocusEntry,
@@ -218,7 +218,10 @@ class FakeBridge {
 
   implement(_id: unknown, implementation: FocusPageImplementation): WebViewMessageRegistration {
     this.pageApi = implementation
-    return { close() {} }
+    return {
+      close() {
+      }
+    }
   }
 
   enter(params: WebViewFocusEntry): void {
@@ -236,6 +239,7 @@ const windowStub = {
 }
 
 let documentStub = new FakeDocument()
+const originalConsoleDebug = console.debug
 
 Object.defineProperty(globalThis, "window", {
   configurable: true,
@@ -254,11 +258,17 @@ Object.defineProperty(globalThis, "ShadowRoot", {
   value: FakeShadowRoot,
 })
 
-const { collectTabbableElements, installWebViewFocusInterop } = await import("../src/focusInterop.ts")
+const {collectTabbableElements, installWebViewFocusInterop} = await import("../src/focusInterop.ts")
 
 describe("WebView focus interop", () => {
   beforeEach(() => {
     documentStub = new FakeDocument()
+    console.debug = () => {
+    }
+  })
+
+  afterEach(() => {
+    console.debug = originalConsoleDebug
   })
 
   test("collects boundary tabbables using browser-like order", () => {
@@ -291,14 +301,14 @@ describe("WebView focus interop", () => {
     const first = appendElement("button", "first")
     const last = appendElement("button", "last")
 
-    bridge.enter({ direction: "forward" })
+    bridge.enter({direction: "forward"})
     expect(documentStub.activeElement).toBe(first)
 
     last.focus()
-    const event = documentStub.dispatchKeyDown({ key: "Tab" })
+    const event = documentStub.dispatchKeyDown({key: "Tab"})
 
     expect(event.defaultPrevented).toBe(true)
-    expect(bridge.exits).toEqual([{ direction: "forward" }])
+    expect(bridge.exits).toEqual([{direction: "forward"}])
   })
 
   test("does not exit when active element opts out to native tab handling", () => {
@@ -308,7 +318,7 @@ describe("WebView focus interop", () => {
     editor.setAttribute("data-webview-focus-boundary", "native")
     editor.focus()
 
-    const event = documentStub.dispatchKeyDown({ key: "Tab" })
+    const event = documentStub.dispatchKeyDown({key: "Tab"})
 
     expect(event.defaultPrevented).toBe(false)
     expect(bridge.exits).toEqual([])

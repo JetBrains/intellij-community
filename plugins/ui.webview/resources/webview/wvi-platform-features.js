@@ -80,10 +80,13 @@
 	var webViewFocusPageApiId = { namespace: FOCUS_API_NAMESPACE };
 	var webViewFocusHostApiId = { namespace: FOCUS_API_NAMESPACE };
 	var installedBridges = /* @__PURE__ */ new WeakSet();
+	var focusTraceEventListenersInstalled = false;
 	function installWebViewFocusInterop(bridge) {
 		if (installedBridges.has(bridge)) return;
 		installedBridges.add(bridge);
 		const hostApi = bridge.callable(webViewFocusHostApiId);
+		logFocusEvent("install", () => ({ activeElement: summarizeElement(activeElementDeep(document)) }));
+		installFocusTraceEventLogging();
 		bridge.implement(webViewFocusPageApiId, { enter(params) {
 			enterDocumentFocus(params.direction, hostApi);
 		} });
@@ -92,15 +95,36 @@
 	}
 	function enterDocumentFocus(direction, hostApi) {
 		const tabbableElements = collectTabbableElements();
+		logFocusEvent(`enter(${direction})`, () => ({
+			tabbableCount: tabbableElements.length,
+			activeElementBefore: summarizeElement(activeElementDeep(document))
+		}));
 		if (tabbableElements.length === 0) {
+			logFocusEvent("enter exits empty page", () => ({ direction }));
 			hostApi.exit({ direction });
 			return;
 		}
-		(direction === "forward" ? tabbableElements[0] : tabbableElements[tabbableElements.length - 1]).focus();
+		const target = direction === "forward" ? tabbableElements[0] : tabbableElements[tabbableElements.length - 1];
+		target.focus();
+		logFocusEvent("enter applied", () => ({
+			direction,
+			target: summarizeElement(target),
+			activeElementAfter: summarizeElement(activeElementDeep(document))
+		}));
 	}
 	function handlePointerActivation(event, hostApi) {
 		const focusTarget = findPointerFocusTarget(event);
+		logFocusEvent("pointerdown", () => ({
+			defaultPrevented: event.defaultPrevented,
+			target: summarizeEventTarget(event),
+			focusTarget: summarizeElement(focusTarget),
+			activeElementBefore: summarizeElement(activeElementDeep(document))
+		}));
 		hostApi.activated();
+		logFocusEvent("host activated", () => ({
+			defaultPrevented: event.defaultPrevented,
+			activeElementAfter: summarizeElement(activeElementDeep(document))
+		}));
 		if (focusTarget) schedulePointerFocus(focusTarget, event);
 	}
 	function findPointerFocusTarget(event) {
@@ -115,30 +139,154 @@
 	}
 	function schedulePointerFocus(target, event) {
 		const focusTarget = () => {
-			if (event.defaultPrevented) return;
-			if (isRendered(target) && !isInsideNativeFocusBoundary(target) && activeElementDeep(document) !== target) target.focus();
+			if (event.defaultPrevented) {
+				logFocusEvent("pointer focus skipped: defaultPrevented", () => ({
+					target: summarizeElement(target),
+					activeElement: summarizeElement(activeElementDeep(document))
+				}));
+				return;
+			}
+			const activeBefore = activeElementDeep(document);
+			const targetIsRendered = isRendered(target);
+			const insideNativeBoundary = isInsideNativeFocusBoundary(target);
+			if (targetIsRendered && !insideNativeBoundary && activeBefore !== target) {
+				target.focus();
+				logFocusEvent("pointer focus applied", () => ({
+					target: summarizeElement(target),
+					activeElementBefore: summarizeElement(activeBefore),
+					activeElementAfter: summarizeElement(activeElementDeep(document))
+				}));
+				return;
+			}
+			logFocusEvent("pointer focus skipped", () => ({
+				target: summarizeElement(target),
+				targetIsRendered,
+				insideNativeBoundary,
+				activeElement: summarizeElement(activeBefore)
+			}));
 		};
 		queueMicrotask(focusTarget);
-		setTimeout(focusTarget, 0);
 	}
 	function asElement(value) {
 		if (typeof value !== "object" || value === null) return null;
 		return typeof value.tagName === "string" ? value : null;
 	}
 	function handleFocusBoundaryKey(event, hostApi) {
-		if (!isPlainTabEvent(event) || event.isComposing) return;
+		const isTab = event.key === "Tab";
+		if (isTab) logFocusEvent("keydown Tab", () => ({
+			shiftKey: event.shiftKey,
+			altKey: event.altKey,
+			ctrlKey: event.ctrlKey,
+			metaKey: event.metaKey,
+			isComposing: event.isComposing,
+			defaultPrevented: event.defaultPrevented,
+			activeElement: summarizeElement(activeElementDeep(document))
+		}));
+		if (!isPlainTabEvent(event) || event.isComposing) {
+			if (isTab) logFocusEvent("keydown Tab ignored", () => ({ reason: event.isComposing ? "composing" : "modified" }));
+			return;
+		}
 		const activeElement = activeElementDeep(document);
-		if (activeElement && isInsideNativeFocusBoundary(activeElement)) return;
+		if (activeElement && isInsideNativeFocusBoundary(activeElement)) {
+			logFocusEvent("keydown Tab stays in native boundary", () => ({ activeElement: summarizeElement(activeElement) }));
+			return;
+		}
 		const tabbableElements = collectTabbableElements();
 		const direction = event.shiftKey ? "backward" : "forward";
 		if (tabbableElements.length === 0) {
+			logFocusEvent("keydown Tab exits empty page", () => ({ direction }));
 			event.preventDefault();
 			hostApi.exit({ direction });
 			return;
 		}
-		if (activeElement !== (direction === "forward" ? tabbableElements[tabbableElements.length - 1] : tabbableElements[0])) return;
+		const boundary = direction === "forward" ? tabbableElements[tabbableElements.length - 1] : tabbableElements[0];
+		if (activeElement !== boundary) {
+			logFocusEvent("keydown Tab stays in page", () => ({
+				direction,
+				activeElement: summarizeElement(activeElement),
+				boundary: summarizeElement(boundary),
+				tabbableCount: tabbableElements.length
+			}));
+			return;
+		}
+		logFocusEvent("keydown Tab exits page", () => ({
+			direction,
+			boundary: summarizeElement(boundary),
+			tabbableCount: tabbableElements.length
+		}));
 		event.preventDefault();
 		hostApi.exit({ direction });
+	}
+	function installFocusTraceEventLogging() {
+		if (focusTraceEventListenersInstalled) return;
+		focusTraceEventListenersInstalled = true;
+		const win = typeof window === "undefined" ? null : window;
+		if (win && typeof win.addEventListener === "function") {
+			win.addEventListener("focus", (event) => {
+				logFocusEvent("window focus", () => ({
+					target: summarizeEventTarget(event),
+					activeElement: summarizeElement(activeElementDeep(document))
+				}));
+			}, true);
+			win.addEventListener("blur", (event) => {
+				logFocusEvent("window blur", () => ({
+					target: summarizeEventTarget(event),
+					activeElement: summarizeElement(activeElementDeep(document))
+				}));
+			}, true);
+		}
+		document.addEventListener("focusin", (event) => {
+			logFocusEvent("document focusin", () => ({
+				target: summarizeEventTarget(event),
+				activeElement: summarizeElement(activeElementDeep(document))
+			}));
+		}, true);
+		document.addEventListener("focusout", (event) => {
+			logFocusEvent("document focusout", () => ({
+				target: summarizeEventTarget(event),
+				activeElement: summarizeElement(activeElementDeep(document))
+			}));
+		}, true);
+	}
+	function logFocusEvent(eventName, details = () => ({})) {
+		if (typeof console === "undefined" || typeof console.debug !== "function") return;
+		const renderedDetails = formatFocusDetails(details());
+		const suffix = renderedDetails ? `; ${renderedDetails}` : "";
+		console.debug(`[wvi-focus] page ${eventName}${suffix}`);
+	}
+	function formatFocusDetails(details) {
+		return Object.entries(details).map(([key, value]) => `${key}=${formatFocusValue(value)}`).join(", ");
+	}
+	function formatFocusValue(value) {
+		if (value == null) return String(value);
+		if (typeof value === "string") return JSON.stringify(value);
+		if (typeof value === "number" || typeof value === "boolean" || typeof value === "bigint") return String(value);
+		try {
+			const json = JSON.stringify(value);
+			return json === void 0 ? String(value) : json;
+		} catch {
+			return String(value);
+		}
+	}
+	function summarizeEventTarget(event) {
+		const target = asElement(event.target);
+		if (target) return summarizeElement(target);
+		if (typeof event.composedPath === "function") for (const item of event.composedPath()) {
+			const element = asElement(item);
+			if (element) return summarizeElement(element);
+		}
+		return "null";
+	}
+	function summarizeElement(element) {
+		if (!element) return "null";
+		const htmlElement = element;
+		const id = htmlElement.id ? `#${htmlElement.id}` : "";
+		const className = typeof htmlElement.className === "string" && htmlElement.className.trim() ? `.${htmlElement.className.trim().split(/\s+/).join(".")}` : "";
+		const role = element.getAttribute("role");
+		const ariaLabel = element.getAttribute("aria-label");
+		const roleSummary = role ? `[role=${role}]` : "";
+		const ariaSummary = ariaLabel ? `[aria-label=${ariaLabel}]` : "";
+		return `${element.tagName.toLowerCase()}${id}${className}${roleSummary}${ariaSummary}`;
 	}
 	function isPlainTabEvent(event) {
 		return event.key === "Tab" && !event.altKey && !event.ctrlKey && !event.metaKey;

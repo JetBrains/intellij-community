@@ -11,11 +11,12 @@ import type {
 
 const FOCUS_API_NAMESPACE = "webview.focus"
 const FOCUS_BOUNDARY_ATTRIBUTE = "data-webview-focus-boundary"
-const webViewFocusPageApiId = { namespace: FOCUS_API_NAMESPACE } as WebViewApiId<WebViewFocusPageApi>
-const webViewFocusHostApiId = { namespace: FOCUS_API_NAMESPACE } as WebViewApiId<WebViewFocusHostApi>
+const webViewFocusPageApiId = {namespace: FOCUS_API_NAMESPACE} as WebViewApiId<WebViewFocusPageApi>
+const webViewFocusHostApiId = {namespace: FOCUS_API_NAMESPACE} as WebViewApiId<WebViewFocusHostApi>
 type WebViewFocusHostCallable = Callable<WebViewFocusHostApi>
 
 const installedBridges = new WeakSet<WebViewBridge>()
+let focusTraceEventListenersInstalled = false
 
 export function installWebViewFocusInterop(bridge: WebViewBridge): void {
   if (installedBridges.has(bridge)) {
@@ -24,6 +25,8 @@ export function installWebViewFocusInterop(bridge: WebViewBridge): void {
   installedBridges.add(bridge)
 
   const hostApi = bridge.callable(webViewFocusHostApiId)
+  logFocusEvent("install", () => ({activeElement: summarizeElement(activeElementDeep(document))}))
+  installFocusTraceEventLogging()
   bridge.implement(webViewFocusPageApiId, {
     enter(params) {
       enterDocumentFocus(params.direction, hostApi)
@@ -35,18 +38,38 @@ export function installWebViewFocusInterop(bridge: WebViewBridge): void {
 
 function enterDocumentFocus(direction: WebViewFocusDirection, hostApi: WebViewFocusHostCallable): void {
   const tabbableElements = collectTabbableElements()
+  logFocusEvent(`enter(${direction})`, () => ({
+    tabbableCount: tabbableElements.length,
+    activeElementBefore: summarizeElement(activeElementDeep(document)),
+  }))
   if (tabbableElements.length === 0) {
-    hostApi.exit({ direction })
+    logFocusEvent("enter exits empty page", () => ({direction}))
+    hostApi.exit({direction})
     return
   }
 
   const target = direction === "forward" ? tabbableElements[0] : tabbableElements[tabbableElements.length - 1]
   target.focus()
+  logFocusEvent("enter applied", () => ({
+    direction,
+    target: summarizeElement(target),
+    activeElementAfter: summarizeElement(activeElementDeep(document)),
+  }))
 }
 
 function handlePointerActivation(event: PointerEvent, hostApi: WebViewFocusHostCallable): void {
   const focusTarget = findPointerFocusTarget(event)
+  logFocusEvent("pointerdown", () => ({
+    defaultPrevented: event.defaultPrevented,
+    target: summarizeEventTarget(event),
+    focusTarget: summarizeElement(focusTarget),
+    activeElementBefore: summarizeElement(activeElementDeep(document)),
+  }))
   hostApi.activated()
+  logFocusEvent("host activated", () => ({
+    defaultPrevented: event.defaultPrevented,
+    activeElementAfter: summarizeElement(activeElementDeep(document)),
+  }))
   if (focusTarget) {
     schedulePointerFocus(focusTarget, event)
   }
@@ -70,14 +93,33 @@ function findPointerFocusTarget(event: Event): HTMLElement | null {
 function schedulePointerFocus(target: HTMLElement, event: PointerEvent): void {
   const focusTarget = () => {
     if (event.defaultPrevented) {
+      logFocusEvent("pointer focus skipped: defaultPrevented", () => ({
+        target: summarizeElement(target),
+        activeElement: summarizeElement(activeElementDeep(document)),
+      }))
       return
     }
-    if (isRendered(target) && !isInsideNativeFocusBoundary(target) && activeElementDeep(document) !== target) {
+    const activeBefore = activeElementDeep(document)
+    const targetIsRendered = isRendered(target)
+    const insideNativeBoundary = isInsideNativeFocusBoundary(target)
+    if (targetIsRendered && !insideNativeBoundary && activeBefore !== target) {
       target.focus()
+      logFocusEvent("pointer focus applied", () => ({
+        target: summarizeElement(target),
+        activeElementBefore: summarizeElement(activeBefore),
+        activeElementAfter: summarizeElement(activeElementDeep(document)),
+      }))
+      return
     }
+
+    logFocusEvent("pointer focus skipped", () => ({
+      target: summarizeElement(target),
+      targetIsRendered,
+      insideNativeBoundary,
+      activeElement: summarizeElement(activeBefore),
+    }))
   }
   queueMicrotask(focusTarget)
-  setTimeout(focusTarget, 0)
 }
 
 function asElement(value: unknown): Element | null {
@@ -88,30 +130,163 @@ function asElement(value: unknown): Element | null {
 }
 
 function handleFocusBoundaryKey(event: KeyboardEvent, hostApi: WebViewFocusHostCallable): void {
-  if (!isPlainTabEvent(event) || event.isComposing) {
+  const isTab = event.key === "Tab"
+  if (isTab) {
+    logFocusEvent("keydown Tab", () => ({
+      shiftKey: event.shiftKey,
+      altKey: event.altKey,
+      ctrlKey: event.ctrlKey,
+      metaKey: event.metaKey,
+      isComposing: event.isComposing,
+      defaultPrevented: event.defaultPrevented,
+      activeElement: summarizeElement(activeElementDeep(document)),
+    }))
+  }
+
+  const plainTab = isPlainTabEvent(event)
+  if (!plainTab || event.isComposing) {
+    if (isTab) {
+      logFocusEvent("keydown Tab ignored", () => ({reason: event.isComposing ? "composing" : "modified"}))
+    }
     return
   }
 
   const activeElement = activeElementDeep(document)
   if (activeElement && isInsideNativeFocusBoundary(activeElement)) {
+    logFocusEvent("keydown Tab stays in native boundary", () => ({activeElement: summarizeElement(activeElement)}))
     return
   }
 
   const tabbableElements = collectTabbableElements()
   const direction: WebViewFocusDirection = event.shiftKey ? "backward" : "forward"
   if (tabbableElements.length === 0) {
+    logFocusEvent("keydown Tab exits empty page", () => ({direction}))
     event.preventDefault()
-    hostApi.exit({ direction })
+    hostApi.exit({direction})
     return
   }
 
   const boundary = direction === "forward" ? tabbableElements[tabbableElements.length - 1] : tabbableElements[0]
   if (activeElement !== boundary) {
+    logFocusEvent("keydown Tab stays in page", () => ({
+      direction,
+      activeElement: summarizeElement(activeElement),
+      boundary: summarizeElement(boundary),
+      tabbableCount: tabbableElements.length,
+    }))
     return
   }
 
+  logFocusEvent("keydown Tab exits page", () => ({
+    direction,
+    boundary: summarizeElement(boundary),
+    tabbableCount: tabbableElements.length,
+  }))
   event.preventDefault()
-  hostApi.exit({ direction })
+  hostApi.exit({direction})
+}
+
+function installFocusTraceEventLogging(): void {
+  if (focusTraceEventListenersInstalled) {
+    return
+  }
+  focusTraceEventListenersInstalled = true
+
+  const win = typeof window === "undefined" ? null : window
+  if (win && typeof win.addEventListener === "function") {
+    win.addEventListener("focus", (event) => {
+      logFocusEvent("window focus", () => ({
+        target: summarizeEventTarget(event),
+        activeElement: summarizeElement(activeElementDeep(document)),
+      }))
+    }, true)
+    win.addEventListener("blur", (event) => {
+      logFocusEvent("window blur", () => ({
+        target: summarizeEventTarget(event),
+        activeElement: summarizeElement(activeElementDeep(document)),
+      }))
+    }, true)
+  }
+
+  document.addEventListener("focusin", (event) => {
+    logFocusEvent("document focusin", () => ({
+      target: summarizeEventTarget(event),
+      activeElement: summarizeElement(activeElementDeep(document)),
+    }))
+  }, true)
+  document.addEventListener("focusout", (event) => {
+    logFocusEvent("document focusout", () => ({
+      target: summarizeEventTarget(event),
+      activeElement: summarizeElement(activeElementDeep(document)),
+    }))
+  }, true)
+}
+
+function logFocusEvent(eventName: string, details: () => Record<string, unknown> = () => ({})): void {
+  if (typeof console === "undefined" || typeof console.debug !== "function") {
+    return
+  }
+  const renderedDetails = formatFocusDetails(details())
+  const suffix = renderedDetails ? `; ${renderedDetails}` : ""
+  console.debug(`[wvi-focus] page ${eventName}${suffix}`)
+}
+
+function formatFocusDetails(details: Record<string, unknown>): string {
+  return Object.entries(details)
+    .map(([key, value]) => `${key}=${formatFocusValue(value)}`)
+    .join(", ")
+}
+
+function formatFocusValue(value: unknown): string {
+  if (value == null) {
+    return String(value)
+  }
+  if (typeof value === "string") {
+    return JSON.stringify(value)
+  }
+  if (typeof value === "number" || typeof value === "boolean" || typeof value === "bigint") {
+    return String(value)
+  }
+  try {
+    const json = JSON.stringify(value)
+    return json === undefined ? String(value) : json
+  }
+  catch {
+    return String(value)
+  }
+}
+
+function summarizeEventTarget(event: Event): string {
+  const target = asElement(event.target)
+  if (target) {
+    return summarizeElement(target)
+  }
+  if (typeof event.composedPath === "function") {
+    for (const item of event.composedPath()) {
+      const element = asElement(item)
+      if (element) {
+        return summarizeElement(element)
+      }
+    }
+  }
+  return "null"
+}
+
+function summarizeElement(element: Element | null | undefined): string {
+  if (!element) {
+    return "null"
+  }
+
+  const htmlElement = element as HTMLElement
+  const id = htmlElement.id ? `#${htmlElement.id}` : ""
+  const className = typeof htmlElement.className === "string" && htmlElement.className.trim()
+    ? `.${htmlElement.className.trim().split(/\s+/).join(".")}`
+    : ""
+  const role = element.getAttribute("role")
+  const ariaLabel = element.getAttribute("aria-label")
+  const roleSummary = role ? `[role=${role}]` : ""
+  const ariaSummary = ariaLabel ? `[aria-label=${ariaLabel}]` : ""
+  return `${element.tagName.toLowerCase()}${id}${className}${roleSummary}${ariaSummary}`
 }
 
 function isPlainTabEvent(event: KeyboardEvent): boolean {
@@ -131,7 +306,7 @@ export function collectTabbableElements(root: ParentNode = document.body || docu
   function visitElement(element: Element): void {
     const tabIndex = sequentialTabIndex(element)
     if (tabIndex >= 0 && isRendered(element)) {
-      candidates.push({ element: element as HTMLElement, tabIndex, documentOrder })
+      candidates.push({element: element as HTMLElement, tabIndex, documentOrder})
     }
     documentOrder++
 

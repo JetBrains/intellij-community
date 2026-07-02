@@ -10,6 +10,7 @@ declare module "bun:test" {
     toEqual(expected: unknown): void
   }
 
+  export function afterEach(callback: () => void | Promise<void>): void
   export function beforeEach(callback: () => void | Promise<void>): void
   export function describe(name: string, callback: () => void): void
   export function expect<T = unknown>(actual: T): Matchers<T>
