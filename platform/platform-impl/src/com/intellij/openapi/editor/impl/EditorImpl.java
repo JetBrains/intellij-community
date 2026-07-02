@@ -2578,23 +2578,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    EditorThreading.run(() -> {
-      if (myUpdateCursor && !myPurePaintingMode) {
-        setCursorPosition();
-        myUpdateCursor = false;
-      }
+    if (myUpdateCursor && !myPurePaintingMode) {
+      setCursorPosition();
+      myUpdateCursor = false;
+    }
 
-      if (myProject != null && myProject.isDisposed()) {
-        return;
-      }
+    if (myProject != null && myProject.isDisposed()) {
+      return;
+    }
 
-      if (myAdView != null) {
-        myAdView.paint(g);
-      }
-      else {
-        myView.paint(g);
-      }
-    });
+    if (myAdView != null) {
+      myAdView.paint(g);
+    }
+    else {
+      myView.paint(g);
+    }
 
     boolean isBackgroundImageSet = IdeBackgroundUtil.isEditorBackgroundImageSet(myProject);
     if (myBackgroundImageSet != isBackgroundImageSet) {
