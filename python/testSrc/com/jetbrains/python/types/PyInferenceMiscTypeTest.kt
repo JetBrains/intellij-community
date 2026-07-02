@@ -850,7 +850,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       def dec[T](f: Callable[[T, bool], bool]) -> Callable[[T, bool], bool]:
           def a(b: bool) -> bool:
               return f(A(), b)
-      #          └ WARNING Expected type '(T, bool) -> bool', got '(b: bool) -> bool' instead
+      #                ^^^ WARNING FIXME Expected 'T', got 'A' instead
           return a
       #          └ WARNING Expected type '(T, bool) -> bool', got '(b: bool) -> bool' instead
 
@@ -1163,7 +1163,6 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     fun `structural type from attribute and call`() = test("""
       def f(x):
           x.foo + x.bar()
-      #         └ WARNING Cannot find reference '+' in 'Unknown'
           expr = x
       #   └ TYPE {foo, bar}
       """)
@@ -1194,7 +1193,6 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
       def f(x, y):
           x.foo + g(y)
-      #         └ WARNING Cannot find reference '+' in 'Unknown'
           expr = x
       #   └ TYPE {foo}
       """)

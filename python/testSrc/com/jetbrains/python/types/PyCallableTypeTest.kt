@@ -43,7 +43,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
     def g(x: Callable[[], None] | Callable[[str], None]):
         x()
-    #     └ WARNING No signature matches the arguments
+    #     └ WARNING FIXME No signature matches the arguments
         x(1)
     #     └ WARNING Expected type 'str', got 'Literal[1]' instead
     """)

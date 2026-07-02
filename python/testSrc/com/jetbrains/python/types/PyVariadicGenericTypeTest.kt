@@ -1317,7 +1317,6 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
       #          │   └ WARNING Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[1], Literal[1]]' instead
       #          ^^ WARNING Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[1], Literal[1]]' instead
       x: Any
-      #  ^^^ ERROR Unresolved reference 'Any'
       foo((), '', 42, x, b='')
       #       │   │   └ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[42], Any]' instead
       #       │   ^^ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[42], Any]' instead
@@ -1417,7 +1416,6 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
       #          │   └ WARNING Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[1], Literal[1]]' instead
       #          ^^ WARNING Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[1], Literal[1]]' instead
       x: Any
-      #  ^^^ ERROR Unresolved reference 'Any'
       foo((), '', 42, x, b='')
       #       │   │   └ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[42], Any]' instead
       #       │   ^^ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[42], Any]' instead

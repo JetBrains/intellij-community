@@ -46,6 +46,7 @@ import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.sk
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionType
 import com.jetbrains.python.documentation.PyTypeRenderer
 import com.jetbrains.python.documentation.PythonDocumentationProvider
+import com.jetbrains.python.fixtures.PyCodeInsightTestCase.Companion.myFixture
 import com.jetbrains.python.fixtures.PyTestAssertionInliner.findCounterparts
 import com.jetbrains.python.fixtures.PyTestAssertionParser.parseAssertions
 import com.jetbrains.python.inspections.PyAbstractClassInspection
@@ -800,8 +801,8 @@ private object PyTestAssertionInliner {
     val unmatchedAssertions = expectedAssertions - counterparts.values.toSet()
     val actualAndPlaceholderAssertions = actualAssertions + unmatchedAssertions.filter { it.content.isBlank() && it.hasFixme }
 
-    if (actualAndPlaceholderAssertions.isEmpty()) return
     removeAssertions(text, expectedAssertions)
+    if (actualAndPlaceholderAssertions.isEmpty()) return
 
     val sortedActualAssertions = actualAndPlaceholderAssertions.sortedWith(compareBy(
       { -it.codeColumnStart },
@@ -1402,6 +1403,29 @@ class PyCodeInsightTestCaseAssertionParserAndInlinerTest {
       actualText
     )
   }
+
+  @Test
+  fun `empty actual result is matched`() {
+    val code = """
+      a = 1 + ""
+      #       └ WARNING message1
+      a = 1
+      #   ^ WARNING message2
+      """.trimIndent()
+    val actualOutput = """
+      a = 1 + ""
+      #       └ WARNING message1
+      a = 1
+      """.trimIndent()
+
+    val expectedAssertions = parseAssertions(code)
+
+    val actualAssertions = listOf(expectedAssertions.first())
+
+    val actualText = PyTestAssertionInliner.generateActualText(code, expectedAssertions, actualAssertions)
+
+    Assertions.assertEquals(actualOutput, actualText)
+  }
 }
 
 
@@ -1473,4 +1497,5 @@ class PyCodeInsightTestCaseFixtureReuseTest : PyCodeInsightTestCase() {
     myFixture.configureByText("reuse_second.py", "z = 3\n")
     Assertions.assertNotNull(myFixture.file, "Fixture should still be usable in a subsequent test")
   }
+
 }
