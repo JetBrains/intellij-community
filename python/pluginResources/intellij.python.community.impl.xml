@@ -47,7 +47,8 @@
   <resource-bundle>messages.PyBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.jetbrains.python.errorProcessing.ErrorSink" serviceImplementation="com.jetbrains.python.impl.ShowingMessageErrorSink"/>
+    <applicationService serviceInterface="com.jetbrains.python.errorProcessing.ErrorSink"
+                        serviceImplementation="com.jetbrains.python.impl.ShowingMessageErrorSink"/>
     <statusBarWidgetFactory id="pythonDependencyFileWidget"
                             implementation="com.jetbrains.python.requirements.widget.PyDependenciesFileStatusBarWidgetFactory"
                             order="after pythonInterpreterWidget, before git, before hg, before Notifications"/>
@@ -56,10 +57,14 @@
                      implementationClass="com.jetbrains.python.sdk.poetry.PoetryPackageVersionsInspection"
                      key="INSP.poetry.package.versions.display.name" bundle="messages.PyBundle" groupKey="INSP.GROUP.python"
                      suppressId="PoetryPackageVersions" shortName="PoetryPackageVersionsInspection"/>
-    <registryKey defaultValue="20" description="How often conda environments cache must be refreshed (seconds)" key="python.conda.envs.refresh.seconds" restartRequired="true"/>
-    <registryKey defaultValue="60" description="TTL of conda environments cache (seconds)" key="python.conda.envs.cache.ttl.seconds" restartRequired="true"/>
+    <registryKey defaultValue="20" description="How often conda environments cache must be refreshed (seconds)"
+                 key="python.conda.envs.refresh.seconds" restartRequired="true"/>
+    <registryKey defaultValue="60" description="TTL of conda environments cache (seconds)" key="python.conda.envs.cache.ttl.seconds"
+                 restartRequired="true"/>
     <!-- Only modules with `baseDir` support Python SDKs -->
-    <registryKey defaultValue="true" description="Show non-python modules(different type, no python facet) in Python configurable when they have base dir" key="python.show.modules.with.base.dir" restartRequired="true"/>
+    <registryKey defaultValue="true"
+                 description="Show non-python modules(different type, no python facet) in Python configurable when they have base dir"
+                 key="python.show.modules.with.base.dir" restartRequired="true"/>
     <fileType name="Requirements.txt"
               implementationClass="com.jetbrains.python.requirements.RequirementsFileType"
               fieldName="INSTANCE"
@@ -82,9 +87,9 @@
     <multiHostInjector implementation="com.jetbrains.python.requirements.injection.TomlRequirementsLanguageInjector"/>
     <multiHostInjector implementation="com.jetbrains.python.requirements.injection.CondaRequirementsLanguageInjector"/>
     <platform.backend.documentation.psiTargetProvider
-        implementation="com.jetbrains.python.requirements.RequirementsDocumentationProvider"/>
+      implementation="com.jetbrains.python.requirements.RequirementsDocumentationProvider"/>
     <platform.backend.documentation.linkHandler
-        implementation="com.jetbrains.python.requirements.RequirementDocumentationLinkHandler"/>
+      implementation="com.jetbrains.python.requirements.RequirementDocumentationLinkHandler"/>
     <psi.referenceContributor language="Requirements"
                               implementation="com.jetbrains.python.requirements.RequirementsReferenceContributor"/>
 
@@ -251,7 +256,8 @@
     <projectService serviceImplementation="com.jetbrains.python.inspections.PyCompatibilityInspectionAdvertiserSettings"/>
     <projectService serviceImplementation="com.jetbrains.python.packaging.PyPackagingSettings"/>
 
-    <projectService serviceInterface="com.jetbrains.python.codeInsight.completion.runtime.patProvider.RemoteFilePathRetrievalService" open="true"
+    <projectService serviceInterface="com.jetbrains.python.codeInsight.completion.runtime.patProvider.RemoteFilePathRetrievalService"
+                    open="true"
                     serviceImplementation="com.jetbrains.python.codeInsight.completion.runtime.patProvider.DummyRemoteFilePathRetrievalService"
                     testServiceImplementation="com.jetbrains.python.codeInsight.completion.runtime.patProvider.DummyRemoteFilePathRetrievalService"/>
 
@@ -288,7 +294,8 @@
     <facetIgnorer implementation="com.jetbrains.python.run.DjangoFacetIgnorer"/>
 
     <programRunner implementation="com.jetbrains.python.run.PythonRunner" order="before defaultRunRunner"/>
-    <programRunner implementation="com.jetbrains.python.debugger.PythonDebugProgramRunner" order="before intellij.platform.dap.DapProgramRunner, before defaultDebugRunner"/>
+    <programRunner implementation="com.jetbrains.python.debugger.PythonDebugProgramRunner"
+                   order="before intellij.platform.dap.DapProgramRunner, before defaultDebugRunner"/>
     <runConfigurationProducer implementation="com.jetbrains.python.run.PythonRunConfigurationProducer"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyLineBreakpointType"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyExceptionBreakpointType"/>
@@ -608,7 +615,8 @@
                                implementationClass="com.jetbrains.python.refactoring.invertBoolean.PyInvertBooleanDelegate"/>
 
     <!--folding-->
-    <codeFoldingOptionsProvider instance="com.jetbrains.python.PythonFoldingOptionsProvider" id="Python" order="after Android,after C++,after General,after Go,after Handlebars,after JAVA,after JavaScript,after JPAQL,after JSON,after Kubernetes,after LinkerScript,after Markdown,after ObjectiveC,after PHP"/>
+    <codeFoldingOptionsProvider instance="com.jetbrains.python.PythonFoldingOptionsProvider" id="Python"
+                                order="after Android,after C++,after General,after Go,after Handlebars,after JAVA,after JavaScript,after JPAQL,after JSON,after Kubernetes,after LinkerScript,after Markdown,after ObjectiveC,after PHP"/>
 
     <!-- postfix templates!-->
     <codeInsight.template.postfixTemplateProvider language="Python"
@@ -730,8 +738,10 @@
     <statistics.notificationIdsHolder implementation="com.jetbrains.python.statistics.PythonInterpreterInstallationIdsHolder"/>
 
     <!-- Source root detection -->
-    <registryKey key="python.source.root.suggest.quickfix" defaultValue="true" description="Suggests to mark a detected source root via quick-fix for the red import"/>
-    <registryKey key="python.source.root.suggest.quickfix.auto.apply" defaultValue="true" description="Automatically applies suggested source root quick-fix"/>
+    <registryKey key="python.source.root.suggest.quickfix" defaultValue="true"
+                 description="Suggests to mark a detected source root via quick-fix for the red import"/>
+    <registryKey key="python.source.root.suggest.quickfix.auto.apply" defaultValue="true"
+                 description="Automatically applies suggested source root quick-fix"/>
     <notificationGroup id="Python source root detection" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
                        key="python.source.root.detection.confirm.notification.group"/>
 
@@ -793,7 +803,8 @@
     <!-- Debugger Show value tooltip -->
     <registryKey defaultValue="true" description="Show value tooltip" key="python.debugger.show.value.tooltip"/>
 
-    <registryKey defaultValue="3" description="Timeout to guess the best suitable SDK when adding new interpreter (seconds)" key="python.guess.sdk.timeout.seconds"/>
+    <registryKey defaultValue="3" description="Timeout to guess the best suitable SDK when adding new interpreter (seconds)"
+                 key="python.guess.sdk.timeout.seconds"/>
 
     <statistics.counterUsagesCollector
       implementationClass="com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector"/>
