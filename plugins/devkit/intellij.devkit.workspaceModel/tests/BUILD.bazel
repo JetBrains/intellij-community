@@ -39,6 +39,8 @@ jvm_library(
     testonly = True,
     srcs = glob(
         [
+            "testGen/**/*.kt",
+            "testGen/**/*.java",
             "testSrc/**/*.kt",
             "testSrc/**/*.java",
             "testSrc/**/*.form",

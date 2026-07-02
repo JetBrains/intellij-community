@@ -3,6 +3,7 @@ package com.intellij.platform.workspace.storage.impl
 
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.containers.Object2IntWithDefaultMap
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicReference
 
@@ -79,5 +80,6 @@ internal class ClassToIntConverterImpl : ClassToIntConverter {
 internal fun Class<*>.toClassId(): Int = ClassToIntConverter.getInstance().getInt(this)
 
 @Suppress("UNCHECKED_CAST")
-internal fun Int.findWorkspaceEntity(): Class<WorkspaceEntity> = ClassToIntConverter.getInstance().getClassOrDie(this) as Class<WorkspaceEntity>
+@ApiStatus.Internal
+public fun Int.findWorkspaceEntity(): Class<WorkspaceEntity> = ClassToIntConverter.getInstance().getClassOrDie(this) as Class<WorkspaceEntity>
 

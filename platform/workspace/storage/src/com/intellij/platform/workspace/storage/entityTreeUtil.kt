@@ -1,10 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.workspace.storage.impl.AbstractEntityStorage
+import com.intellij.platform.workspace.storage.impl.ChildEntityId
 import com.intellij.platform.workspace.storage.impl.EntityId
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.impl.arrayId
+import com.intellij.platform.workspace.storage.impl.asChild
 import com.intellij.platform.workspace.storage.impl.asParent
+import com.intellij.platform.workspace.storage.impl.clazz
+import com.intellij.platform.workspace.storage.impl.createEntityId
+import com.intellij.platform.workspace.storage.impl.findWorkspaceEntity
 import com.intellij.util.containers.FList
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -33,6 +41,13 @@ public fun <T : WorkspaceEntity> T.createEntityTreeCopy(requireTopLevelEntity: B
   require(deferred.isEmpty()) { "some elements weren't copied because their additional parents are located in a separate tree: $deferred" }
   @Suppress("UNCHECKED_CAST")
   return newEntity as WorkspaceEntity.Builder<T>
+}
+
+@WorkspaceEntityInternalApi
+@Experimental
+@ApiStatus.Internal
+public fun getChildrenConnections(entity: WorkspaceEntityBase, snapshot: AbstractEntityStorage): List<ConnectionId> {
+  return snapshot.refs.getChildrenConnections(entity.id.asParent(), snapshot)
 }
 
 private fun copyChildren(oldEntityId: EntityId,
