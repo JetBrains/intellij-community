@@ -265,10 +265,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
   public Document getDocumentForNonPhysicalLightFile(@NotNull PsiFile psiFile) {
     FileViewProvider viewProvider = psiFile.getViewProvider();
     VirtualFile virtualFile = viewProvider.getVirtualFile();
-    if (viewProvider.isPhysical() || !(virtualFile instanceof LightVirtualFile)) {
+    if (viewProvider.correspondsToRealFile() || !(virtualFile instanceof LightVirtualFile)) {
       throw new IllegalArgumentException("Expected non-physical light PSI file, got " + psiFile +
                                          "; virtualFile=" + virtualFile +
-                                         "; physical=" + viewProvider.isPhysical());
+                                         "; physical=" + viewProvider.correspondsToRealFile());
     }
     return getDocument(psiFile, true);
   }
@@ -276,7 +276,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
   private Document getDocument(@NotNull PsiFile psiFile, boolean forNonPhysicalLightFile) {
     Document document = getCachedDocument(psiFile);
     if (document != null) {
-      if (!psiFile.getViewProvider().isPhysical()) {
+      if (!psiFile.getViewProvider().correspondsToRealFile()) {
         PsiUtilCore.ensureValid(psiFile);
         associatePsi(document, psiFile);
       }
@@ -284,7 +284,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     }
 
     FileViewProvider viewProvider = psiFile.getViewProvider();
-    if (!viewProvider.isEventSystemEnabled()) {
+    if (!viewProvider.supportsSendingPsiEvents()) {
       return null;
     }
 
@@ -315,7 +315,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
                                                   new Attachment("psi.txt", fileText));
       }
 
-      if (!viewProvider.isPhysical()) {
+      if (!viewProvider.correspondsToRealFile()) {
         PsiUtilCore.ensureValid(psiFile);
         associatePsi(document, psiFile);
         psiFile.putUserData(HARD_REF_TO_DOCUMENT, document);

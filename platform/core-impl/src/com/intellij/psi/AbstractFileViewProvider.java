@@ -95,7 +95,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     if (isIgnored()) return false;
 
     VirtualFile vFile = getVirtualFile();
-    if (isPhysical() && vFile.isInLocalFileSystem()) { // check directories consistency
+    if (correspondsToRealFile() && vFile.isInLocalFileSystem()) { // check directories consistency
       VirtualFile parent = vFile.getParent();
       if (parent == null) return false;
 
@@ -111,7 +111,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   }
 
   public static boolean isFreeThreaded(@NotNull FileViewProvider provider) {
-    return provider.getVirtualFile() instanceof LightVirtualFile && !provider.isEventSystemEnabled();
+    return provider.getVirtualFile() instanceof LightVirtualFile && !provider.supportsSendingPsiEvents();
   }
 
   public @NotNull PsiLock getFilePsiLock() {
@@ -188,7 +188,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
 
   @Override
   public final @Nullable PsiFile getPsi(@NotNull Language target) {
-    if (!isPhysical()) {
+    if (!correspondsToRealFile()) {
       FileManager fileManager = getManager().getFileManager();
       VirtualFile virtualFile = getVirtualFile();
       // todo IJPL-339 check no real context is used here???
@@ -405,7 +405,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   public @NonNls String toString() {
     return getClass().getName() + "{vFile=" + myVirtualFile
            + (myVirtualFile instanceof VirtualFileWithId ? ", vFileId=" + ((VirtualFileWithId)myVirtualFile).getId() : "")
-           + ", content=" + getContent() + ", eventSystemEnabled=" + isEventSystemEnabled() + '}';
+           + ", content=" + getContent() + ", eventSystemEnabled=" + supportsSendingPsiEvents() + '}';
   }
 
   public abstract @Nullable PsiFile getCachedPsi(@NotNull Language target);

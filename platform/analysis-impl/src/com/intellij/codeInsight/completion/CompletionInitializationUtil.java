@@ -266,7 +266,7 @@ public final class CompletionInitializationUtil {
     }
 
     final PsiFile copy = (PsiFile)file.copy();
-    if (copy.isPhysical() || copy.getViewProvider().isEventSystemEnabled()) {
+    if (copy.isPhysical() || copy.getViewProvider().supportsSendingPsiEvents()) {
       LOG.error("File copy should be non-physical and non-event-system-enabled! Language=" +
                 file.getLanguage() +
                 "; file=" +

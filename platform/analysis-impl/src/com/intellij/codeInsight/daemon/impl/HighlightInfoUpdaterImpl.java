@@ -1015,7 +1015,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
    */
   @ApiStatus.Internal
   public synchronized void saveLatencies(@NotNull PsiFile psiFile, @NotNull @Unmodifiable Map<Object, ToolLatencies> latencies) {
-    if (!psiFile.getViewProvider().isPhysical()) {
+    if (!psiFile.getViewProvider().correspondsToRealFile()) {
       // ignore editor text fields/consoles etc.
       return;
     }

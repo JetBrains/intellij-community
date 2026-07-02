@@ -577,7 +577,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
             val contextCall = findDescendantOfType<KtVariableDeclaration> { it.name == "x" }
 
             val codeFragment = KtExpressionCodeFragment(project, "fragment.kt", "secondary()", imports = null, contextCall)
-            assert(codeFragment.viewProvider.isEventSystemEnabled)
+            assert(codeFragment.viewProvider.supportsSendingPsiEvents())
 
             val codeFragmentModule = KotlinProjectStructureProvider.getModule(project, codeFragment, useSiteModule = null)
             val codeFragmentTracker = createTracker(
@@ -642,7 +642,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
             val contextCall = findDescendantOfType<KtVariableDeclaration> { it.name == "x" }
 
             val codeFragment = KtExpressionCodeFragment(project, "fragment.kt", "File(\"\")", imports = null, contextCall)
-            assert(codeFragment.viewProvider.isEventSystemEnabled)
+            assert(codeFragment.viewProvider.supportsSendingPsiEvents())
 
             val codeFragmentTracker = createTracker(codeFragment, "code fragment")
 

@@ -278,8 +278,8 @@ public final class BlockSupportImpl extends BlockSupport {
     lightFile.setOriginalFile(virtualFile);
 
     FileViewProvider providerCopy = PsiVersioningService.createVersionedPsiElements(oldFileNode, () -> viewProvider.createCopy(lightFile));
-    if (providerCopy.isEventSystemEnabled()) {
-      throw new AssertionError("Copied view provider must be non-physical for reparse to deliver correct events: " + viewProvider);
+    if (providerCopy.supportsSendingPsiEvents()) {
+      throw new AssertionError("Copied view provider must not corerspond to real file for reparse to deliver correct events: " + viewProvider);
     }
     providerCopy.getLanguages();
     SingleRootFileViewProvider.doNotCheckFileSizeLimit(lightFile); // optimization: do not convert file contents to bytes to determine if we should codeinsight it

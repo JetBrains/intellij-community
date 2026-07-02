@@ -51,7 +51,7 @@ private val PsiTreeChangeEvent.isIgnorable: Boolean
     val file = this.file ?: (this.child as? PsiFile)
     // Spurious events from the IDE doing internal things, such as the formatter using a light
     // virtual filesystem to process text formatting chunks etc.
-    return file != null && (file.parent == null || !file.viewProvider.isPhysical)
+    return file != null && (file.parent == null || !file.viewProvider.correspondsToRealFile())
   }
 
 class ComposeResourcesPsiChangesListener(private val project: Project) : PsiTreeChangeAdapter() {

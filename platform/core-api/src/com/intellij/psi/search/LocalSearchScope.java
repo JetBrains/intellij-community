@@ -169,7 +169,7 @@ public class LocalSearchScope extends SearchScope {
     for (PsiElement element : myScope) {
       PsiFile containingFile = element.getContainingFile();
       if (containingFile == null) continue;
-      if (containingFile.getViewProvider().isPhysical()) return null;
+      if (containingFile.getViewProvider().correspondsToRealFile()) return null;
       if (project != null && project != containingFile.getProject()) {
         return EMPTY;
       }

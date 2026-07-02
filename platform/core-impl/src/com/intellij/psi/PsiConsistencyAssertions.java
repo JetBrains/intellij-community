@@ -57,7 +57,7 @@ public final class PsiConsistencyAssertions {
     message += "\nfile class=" + psiFile.getClass();
     message += "\nfile.valid=" + psiFile.isValid();
     message += "\nfile.physical=" + psiFile.isPhysical();
-    message += "\nfile.eventSystemEnabled=" + viewProvider.isEventSystemEnabled();
+    message += "\nfile.eventSystemEnabled=" + viewProvider.supportsSendingPsiEvents();
     message += "\nlanguage=" + psiFile.getLanguage();
     message += "\ndoc.length=" + docLength;
     message += "\npsiFile.length=" + psiLength;

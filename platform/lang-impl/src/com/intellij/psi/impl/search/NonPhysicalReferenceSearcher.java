@@ -78,7 +78,7 @@ public final class NonPhysicalReferenceSearcher extends QueryExecutorBase<PsiRef
     if (file == null) {
       return false;
     }
-    return (!file.getViewProvider().isPhysical() && !(file instanceof PsiCodeFragment)) ||
+    return (!file.getViewProvider().correspondsToRealFile() && !(file instanceof PsiCodeFragment)) ||
            ScratchUtil.isScratch(file.getVirtualFile());
   }
 }

@@ -69,7 +69,7 @@ open class ShowTypeDefinitionAction : ShowRelatedElementsActionBase() {
       val element = lookupItemObject as? PsiElement ?: DocumentationManager.getInstance(project).getElementFromLookup(editor, psiFile)
       if (element == null) return null
       val containingFile = element.containingFile
-      if (containingFile == null || !containingFile.viewProvider.isPhysical) return null
+      if (containingFile == null || !containingFile.viewProvider.correspondsToRealFile()) return null
       return TypeDefinitionViewSession(project, editor, file, element)
     }
   }

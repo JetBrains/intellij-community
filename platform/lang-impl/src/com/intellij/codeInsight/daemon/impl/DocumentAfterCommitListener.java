@@ -41,7 +41,7 @@ public final class DocumentAfterCommitListener {
         }
 
         PsiFile psi = documentManager.getCachedPsiFile(document);
-        if (psi == null || !psi.getViewProvider().isEventSystemEnabled()) {
+        if (psi == null || !psi.getViewProvider().supportsSendingPsiEvents()) {
           return;
         }
 

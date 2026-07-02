@@ -112,7 +112,7 @@ public final class PsiSuperMethodUtil {
     }
 
     PsiFile file = psiClass.getContainingFile();
-    if (file == null || !file.getViewProvider().isPhysical()) {
+    if (file == null || !file.getViewProvider().correspondsToRealFile()) {
       return psiClass;
     }
     //it shouldn't be corrected because it is not inside indexes and doesn't have FQN

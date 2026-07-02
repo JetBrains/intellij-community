@@ -299,7 +299,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
       return false;
     }
 
-    if (!psiFile.getViewProvider().isPhysical()) {
+    if (!psiFile.getViewProvider().correspondsToRealFile()) {
       return myFileStatusMap.markWholeFileScopeDirty(document, "Non-physical file update: " + psiFile);
     }
 

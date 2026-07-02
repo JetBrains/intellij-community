@@ -434,7 +434,7 @@ public final class FileManagerImpl implements FileManagerEx {
       FileViewProvider viewProvider = entry.getProvider();
       LOG.assertTrue(vFile.isValid());
       PsiFile psiFile1 = findFile(vFile, context);
-      if (psiFile1 != null && viewProvider.isPhysical()) {
+      if (psiFile1 != null && viewProvider.correspondsToRealFile()) {
         PsiFile psi = viewProvider.getPsi(viewProvider.getBaseLanguage());
         assert psi != null : viewProvider + "; " + viewProvider.getBaseLanguage() + "; " + psiFile1;
         assert psiFile1.getClass().equals(psi.getClass()) : psiFile1 + "; " + psi + "; " + psiFile1.getClass() + "; " + psi.getClass();

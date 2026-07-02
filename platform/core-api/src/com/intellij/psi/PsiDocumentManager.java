@@ -118,7 +118,7 @@ public abstract class PsiDocumentManager {
    * Before a modified document is committed, accessing its PSI may return elements corresponding to the original (unmodified) state of
    * the document.<p/>
    * <p>
-   * For documents with event-system-enabled PSI ({@link FileViewProvider#isEventSystemEnabled()}), should be called on EDT in
+   * For documents with event-system-enabled PSI ({@link FileViewProvider#supportsSendingPsiEvents()}), should be called on EDT in
    * a write-safe context (see {@link com.intellij.openapi.application.TransactionGuard}).
    * For other documents, it can be called in background thread with read access. It's the responsibility of the caller to properly
    * synchronize that PSI and ensure no other threads are reading or modifying it concurrently.
@@ -182,7 +182,7 @@ public abstract class PsiDocumentManager {
 
   /**
    * @return if any modified documents with event-system-enabled PSI have not been committed.
-   * @see FileViewProvider#isEventSystemEnabled()
+   * @see FileViewProvider#supportsSendingPsiEvents()
    */
   @ApiStatus.Experimental
   public boolean hasEventSystemEnabledUncommittedDocuments() {

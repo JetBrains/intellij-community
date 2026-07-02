@@ -59,7 +59,7 @@ public final class PsiFileImplUtil {
       throw new IncorrectOperationException(e);
     }
 
-    return file.getViewProvider().isPhysical() ? manager.findFile(vFile) : file;
+    return file.getViewProvider().correspondsToRealFile() ? manager.findFile(vFile) : file;
   }
 
   public static void checkSetName(@NotNull PsiFile file, @NotNull String name) throws IncorrectOperationException {

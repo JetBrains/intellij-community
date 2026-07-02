@@ -21,7 +21,6 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -179,7 +178,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     FileElement node = derefTreeElement();
     if (node != null) return node;
 
-    if (!getViewProvider().isPhysical()) {
+    if (!getViewProvider().correspondsToRealFile()) {
       return loadTreeElement();
     }
 
@@ -194,7 +193,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   public VirtualFile getVirtualFile() {
     VirtualFile indexingFile = IndexingDataKeys.VIRTUAL_FILE.get(this);
     if (indexingFile != null) return indexingFile;
-    return getViewProvider().isEventSystemEnabled() ? getViewProvider().getVirtualFile() : null;
+    return getViewProvider().supportsSendingPsiEvents() ? getViewProvider().getVirtualFile() : null;
   }
 
   @Override
@@ -251,7 +250,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
 
     FileViewProvider viewProvider = getViewProvider();
-    if (viewProvider.isPhysical()) {
+    if (viewProvider.correspondsToRealFile()) {
       VirtualFile vFile = viewProvider.getVirtualFile();
       AstLoadingFilter.assertTreeLoadingAllowed(vFile);
       if (myManager.isAssertOnFileLoading(vFile)) {
@@ -263,8 +262,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       synchronized (myPsiLock) {
         FileElement treeElement = derefTreeElement();
         if (treeElement != null) {
-          if (InternalPsiVersioning.isVersionedSyntaxTreeEnabled() && viewProvider.isPhysical() && !treeElement.isVersioned()) {
-            VersionedPsiConsistencyException exception = new VersionedPsiConsistencyException.ViewProvider("Illegal state: attempted to attach a versioned=" + treeElement.isVersioned() + " tree to a physical=" + viewProvider.isPhysical() + " file.");
+          if (InternalPsiVersioning.isVersionedSyntaxTreeEnabled() && viewProvider.correspondsToRealFile() && !treeElement.isVersioned()) {
+            VersionedPsiConsistencyException exception = new VersionedPsiConsistencyException.ViewProvider("Illegal state: attempted to attach a versioned=" + treeElement.isVersioned() + " tree to a physical=" + viewProvider.correspondsToRealFile() + " file.");
             LOG.error(exception);
           }
           return treeElement;
@@ -277,7 +276,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         // but if there is an explicit non-versioned environment, then we create a collapsed tree no matter what.
         boolean canUseVersioned =
           InternalPsiVersioning.isVersionedComputation() ||
-          (viewProvider.isPhysical());
+          (viewProvider.correspondsToRealFile());
 
         treeElement = InternalPsiVersioning.inVersionedEnvironment(canUseVersioned, () -> {
           if (canUseVersioned) {
@@ -297,7 +296,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
           myLoadingAst = false;
         }
 
-        if (LOG.isDebugEnabled() && viewProvider.isPhysical()) {
+        if (LOG.isDebugEnabled() && viewProvider.correspondsToRealFile()) {
           LOG.debug("Loaded text for file " + viewProvider.getVirtualFile().getPresentableUrl());
         }
 
@@ -471,7 +470,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     if (getTreeElement() != null) {
       // this is basically always collapsed environment, as by contract `providerCopy` is not physical
       // alternatively, for a non-physical view provider, we could have a persistent tree
-      boolean runInVersionedEnv = providerCopy.isPhysical() || InternalPsiVersioning.isVersionedComputation();
+      boolean runInVersionedEnv = providerCopy.correspondsToRealFile() || InternalPsiVersioning.isVersionedComputation();
       FileElement treeClone = InternalPsiVersioning.inVersionedEnvironment(runInVersionedEnv, () -> (FileElement)calcTreeElement().clone());
       // not set by provider in clone
       clone.setTreeElementPointer(treeClone); // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
@@ -481,7 +480,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       clone.setTreeElementPointer(null);
     }
 
-    if (viewProvider.isEventSystemEnabled()) {
+    if (viewProvider.supportsSendingPsiEvents()) {
       clone.myOriginalFile = this;
     }
     else if (myOriginalFile != null) {
@@ -506,7 +505,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public void checkSetName(String name) {
-    if (!getViewProvider().isEventSystemEnabled()) return;
+    if (!getViewProvider().supportsSendingPsiEvents()) return;
     PsiFileImplUtil.checkSetName(this, name);
   }
 
@@ -545,7 +544,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public void checkDelete() throws IncorrectOperationException {
-    if (!getViewProvider().isEventSystemEnabled()) {
+    if (!getViewProvider().supportsSendingPsiEvents()) {
       if (PsiFileImplUtil.canDeleteNonPhysicalFile(this)) return;
       throw new IncorrectOperationException();
     }
@@ -587,7 +586,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public boolean isPhysical() {
-    return getViewProvider().isEventSystemEnabled();
+    return getViewProvider().supportsSendingPsiEvents();
   }
 
   @Override
@@ -884,7 +883,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   private void updateTrees(@NotNull FileTrees trees) {
     TreeElement treeElement = trees.derefTreeElement();
-    if (InternalPsiVersioning.isVersionedSyntaxTreeEnabled() && treeElement != null && getViewProvider().isPhysical() && !treeElement.isVersioned()) {
+    if (InternalPsiVersioning.isVersionedSyntaxTreeEnabled() && treeElement != null && getViewProvider().correspondsToRealFile() && !treeElement.isVersioned()) {
       VersionedPsiConsistencyException exception = new VersionedPsiConsistencyException.ViewProvider("Attempt to set non-versioned tree to a physical view provider");
       LOG.error(exception);
     }
@@ -906,7 +905,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   private boolean isKeepTreeElementByHardReference() {
-    return !getViewProvider().isEventSystemEnabled();
+    return !getViewProvider().supportsSendingPsiEvents();
   }
 
   private @NotNull Supplier<FileElement> createTreeElementPointer(@NotNull FileElement treeElement) {

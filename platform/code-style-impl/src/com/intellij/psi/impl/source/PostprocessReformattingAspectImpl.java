@@ -12,7 +12,6 @@ import com.intellij.lang.FileASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteActionListener;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -227,7 +226,7 @@ public final class PostprocessReformattingAspectImpl extends PostprocessReformat
   }
 
   private boolean noWriteIsNecessary() {
-    return ContainerUtil.all(getContext().myUpdatedProviders.keySet(), vp -> !vp.isEventSystemEnabled());
+    return ContainerUtil.all(getContext().myUpdatedProviders.keySet(), vp -> !vp.supportsSendingPsiEvents());
   }
 
   private static @NotNull PsiFile getContainingFile(@NotNull PsiElement psiElement) {
@@ -250,7 +249,7 @@ public final class PostprocessReformattingAspectImpl extends PostprocessReformat
     final PsiFile containingFile = getContainingFile(psiElement);
     final FileViewProvider viewProvider = containingFile.getViewProvider();
 
-    if (!viewProvider.isEventSystemEnabled() &&
+    if (!viewProvider.supportsSendingPsiEvents() &&
         !IntentionPreviewUtils.isPreviewElement(containingFile) &&
         !FORCE_POSTPROCESS_FORMAT.isIn(viewProvider)) return;
     getContext().myUpdatedProviders.putValue(viewProvider, (FileElement)containingFile.getNode());
