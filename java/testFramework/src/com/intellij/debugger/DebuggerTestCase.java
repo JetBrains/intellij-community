@@ -59,9 +59,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiImplicitClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.ImplicitClassSearch;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCase;
@@ -417,18 +415,8 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   protected void createBreakpoints(final String className) {
     final PsiFile psiFile = ReadAction.compute(() -> {
       PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject));
-      if (psiClass != null) {
-        return psiClass.getContainingFile();
-      }
-
-      // else try to find a compact source file with the same name
-      var implicitClass = findImplicitClass(className);
-      if (implicitClass != null) {
-        return implicitClass.getContainingFile();
-      }
-
-      fail("Class for breakpoint installation not found " + className);
-      return null;
+      assertNotNull("Class for breakpoint installation not found " + className, psiClass);
+      return psiClass.getContainingFile();
     });
 
     createBreakpoints(psiFile);
@@ -735,12 +723,5 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
         throw new RuntimeException(e);
       }
     }
-  }
-
-  protected @Nullable PsiImplicitClass findImplicitClass(@NotNull String className) {
-    return ReadAction.computeCancellable(() -> {
-      return ImplicitClassSearch.search(className, myProject, GlobalSearchScope.projectScope(myProject))
-        .findFirst();
-    });
   }
 }

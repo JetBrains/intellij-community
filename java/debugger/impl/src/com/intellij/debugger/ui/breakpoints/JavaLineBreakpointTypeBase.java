@@ -121,10 +121,6 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
               element = element.getParent();
               continue;
             }
-            if (element instanceof PsiImplicitClass) {
-              // don't go up, nothing interesting there, stop at main method
-              break;
-            }
 
             final int offset = element.getTextOffset();
             if (!DocumentUtil.isValidOffset(offset, document) || document.getLineNumber(offset) != line) {
@@ -132,6 +128,10 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
             }
             parent = element;
             element = element.getParent();
+          }
+          if (element instanceof PsiImplicitClass) {
+            // don't go up, nothing interesting there, stop at main method
+            break;
           }
 
           if (processor.apply(parent, document)) {
