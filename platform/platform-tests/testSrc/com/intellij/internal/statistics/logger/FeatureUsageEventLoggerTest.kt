@@ -1,13 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics.logger
 
 import com.intellij.internal.statistic.FUCollectorTestCase
+import com.intellij.internal.statistic.TestStatisticsEventLoggerProvider
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.FilteredEventMergeStrategy
+import com.intellij.internal.statistic.eventLog.EventLogListenersManager
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogListener
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
-import com.intellij.internal.statistic.eventLog.StatisticsEventMergeStrategy
 import com.intellij.internal.statistic.eventLog.StatisticsFileEventLogger
-import com.intellij.internal.statistic.eventLog.StatisticsSystemEventIdProvider
 import com.intellij.internal.statistic.eventLog.events.EnumEventField
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -15,392 +15,285 @@ import com.intellij.internal.statistic.eventLog.events.ObjectDescription
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.internal.statistic.eventLog.events.ObjectEventField
 import com.intellij.internal.statistic.eventLog.events.ObjectListEventField
+import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
+import com.intellij.internal.statistic.eventLog.validator.storage.FusComponentProvider
 import com.intellij.internal.statistics.StatisticsTestEventFactory.DEFAULT_SESSION_ID
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newStateEvent
+import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.UsefulTestCase
-import com.jetbrains.fus.reporting.FeatureUsageLogWriter
+import com.jetbrains.fus.reporting.FusHttpClient
+import com.jetbrains.fus.reporting.HttpResponse
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
-import com.jetbrains.fus.reporting.model.lion3.LogEventAction
-import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
 import org.junit.Test
-import java.nio.file.Path
+import java.nio.file.Files
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertTrue
 
+/**
+ * Exercises [StatisticsFileEventLogger] against a real [com.jetbrains.fus.reporting.FusClient] built by
+ * [FusComponentProvider.createFusComponents] (with a mock HTTP client, so nothing leaves the process). Merging,
+ * throttling, validation and system-field injection all happen inside the SDK dispatcher now, so events are verified
+ * as they emerge from the pipeline: the dispatcher republishes each queued event on `RAW_EVENT_TOPIC`, which
+ * [FusComponentProvider] forwards to [EventLogListenersManager]. The test subscribes there to capture them.
+ */
 class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
 
   @Test
   fun testSingleEvent() {
-    testLogger(
-      { logger -> logger.logAsync(EventLogGroup("group.id", 2), "test-action", false) },
-      newEvent("group.id", "test-action", groupVersion = "2")
-    )
+    val events = collectViaFusClient(expectedEventCount = 1) { logger ->
+      logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
+    }
+    assertEquals(1, events.size)
+    assertEvent(events[0], newEvent("group.id", "test-action", groupVersion = "2"))
   }
 
   @Test
   fun testTwoEvents() {
-    testLogger(
-      { logger ->
-        logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
-        logger.logAsync(EventLogGroup("group.id", 2), "second-action", false)
-      },
-      newEvent("group.id", "test-action", groupVersion = "2"),
-      newEvent("group.id", "second-action", groupVersion = "2")
-    )
+    val events = collectViaFusClient(expectedEventCount = 2) { logger ->
+      logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
+      logger.logAsync(EventLogGroup("group.id", 2), "second-action", false)
+    }
+    assertEquals(2, events.size)
+    assertEvent(events[0], newEvent("group.id", "test-action", groupVersion = "2"))
+    assertEvent(events[1], newEvent("group.id", "second-action", groupVersion = "2"))
   }
 
   @Test
   fun testMergedEvents() {
-    testLogger(
-      { logger ->
-        logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
-        logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
-      },
-      newEvent("group.id", "test-action", groupVersion = "2", count = 2)
-    )
+    val events = collectViaFusClient(expectedEventCount = 1) { logger ->
+      logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
+      logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
+    }
+    assertEquals(1, events.size)
+    assertEvent(events[0], newEvent("group.id", "test-action", groupVersion = "2", count = 2))
   }
 
   @Test
   fun testTwoMergedEvents() {
-    testLogger(
-      { logger ->
-        logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
-        logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
-        logger.logAsync(EventLogGroup("group.id", 2), "second-action", false)
-      },
-      newEvent("group.id", "test-action", groupVersion = "2", count = 2),
-      newEvent("group.id", "second-action", groupVersion = "2", count = 1)
-    )
+    val events = collectViaFusClient(expectedEventCount = 2) { logger ->
+      logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
+      logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
+      logger.logAsync(EventLogGroup("group.id", 2), "second-action", false)
+    }
+    assertEquals(2, events.size)
+    assertEvent(events[0], newEvent("group.id", "test-action", groupVersion = "2", count = 2))
+    assertEvent(events[1], newEvent("group.id", "second-action", groupVersion = "2", count = 1))
   }
 
   @Test
   fun testNotMergedEvents() {
-    testLogger(
-      { logger ->
-        logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
-        logger.logAsync(EventLogGroup("group.id", 2), "second-action", false)
-        logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
-      },
-      newEvent("group.id", "test-action", groupVersion = "2"),
-      newEvent("group.id", "second-action", groupVersion = "2"),
-      newEvent("group.id", "test-action", groupVersion = "2")
-    )
+    // Only consecutive equal events merge; A, B, A stays three events.
+    val events = collectViaFusClient(expectedEventCount = 3) { logger ->
+      logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
+      logger.logAsync(EventLogGroup("group.id", 2), "second-action", false)
+      logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
+    }
+    assertEquals(3, events.size)
+    assertEvent(events[0], newEvent("group.id", "test-action", groupVersion = "2"))
+    assertEvent(events[1], newEvent("group.id", "second-action", groupVersion = "2"))
+    assertEvent(events[2], newEvent("group.id", "test-action", groupVersion = "2"))
   }
 
   @Test
   fun testStateEvent() {
-    testLogger(
-      { logger -> logger.logAsync(EventLogGroup("group.id", 2), "state", true) },
-      newStateEvent("group.id", "state", groupVersion = "2")
-    )
+    val events = collectViaFusClient(expectedEventCount = 1) { logger ->
+      logger.logAsync(EventLogGroup("group.id", 2), "state", true)
+    }
+    assertEquals(1, events.size)
+    assertEvent(events[0], newStateEvent("group.id", "state", groupVersion = "2"))
   }
 
   @Test
   fun testEventWithData() {
-    val data = HashMap<String, Any>()
-    data["type"] = "close"
-    data["state"] = 1
-
-    val expected = newEvent("group.id", "dialog-id", groupVersion = "2",
-      data = hashMapOf("type" to "close", "state" to 1))
-
-    testLogger({ logger -> logger.logAsync(EventLogGroup("group.id", 2), "dialog-id", data, false) }, expected)
+    val data = hashMapOf<String, Any>("type" to "close", "state" to 1)
+    val events = collectViaFusClient(expectedEventCount = 1) { logger ->
+      logger.logAsync(EventLogGroup("group.id", 2), "dialog-id", data, false)
+    }
+    assertEquals(1, events.size)
+    assertEvent(events[0], newEvent("group.id", "dialog-id", groupVersion = "2", data = hashMapOf("type" to "close", "state" to 1)))
   }
 
   @Test
   fun testMergeEventWithData() {
-    val data = HashMap<String, Any>()
-    data["type"] = "close"
-    data["state"] = 1
-
-    val expected = newEvent("group.id", "dialog-id", groupVersion = "2", data = hashMapOf("type" to "close", "state" to 1))
-    expected.event.increment()
-
-    testLogger(
-      { logger ->
-        logger.logAsync(EventLogGroup("group.id", 2), "dialog-id", data, false)
-        logger.logAsync(EventLogGroup("group.id", 2), "dialog-id", data, false)
-      }, expected)
+    val data = hashMapOf<String, Any>("type" to "close", "state" to 1)
+    val events = collectViaFusClient(expectedEventCount = 1) { logger ->
+      logger.logAsync(EventLogGroup("group.id", 2), "dialog-id", data, false)
+      logger.logAsync(EventLogGroup("group.id", 2), "dialog-id", data, false)
+    }
+    assertEquals(1, events.size)
+    assertEvent(events[0], newEvent("group.id", "dialog-id", groupVersion = "2", count = 2,
+                                    data = hashMapOf("type" to "close", "state" to 1)))
   }
 
   @Test
-  fun testMergeEventWithoutFilteredData() {
+  fun testDontMergeStateEvents() {
+    // State events are never merged by the SDK merger.
+    val events = collectViaFusClient(expectedEventCount = 2) { logger ->
+      logger.logAsync(EventLogGroup("settings", 5), "ui", true)
+      logger.logAsync(EventLogGroup("settings", 5), "ui", true)
+    }
+    assertEquals(2, events.size)
+    assertEvent(events[0], newStateEvent("settings", "ui", groupVersion = "5"))
+    assertEvent(events[1], newStateEvent("settings", "ui", groupVersion = "5"))
+  }
+
+  @Test
+  fun testEventsDifferingOnlyInStartTimeAreMerged() {
+    // `start_time` is in EventFieldIds.FieldsIgnoredByMerge, which FusComponentProvider forwards to the SDK merger,
+    // so successive events differing only in start_time collapse into one counted event.
     val ts = System.currentTimeMillis()
-    val first = newEvent("group.id", "dialog-id", count = 1, data = hashMapOf("start_time" to ts))
-    val second = newEvent("group.id", "dialog-id", count = 1, data = hashMapOf("start_time" to 100 + ts))
-    val third = newEvent("group.id", "dialog-id", count = 1, data = hashMapOf("start_time" to 4202 + ts))
-
-    testLogger(
-      { logger ->
-        val group = EventLogGroup("group.id", 99)
-        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to ts), false)
-        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to 100 + ts), false)
-        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to 4202 + ts), false)
-      }, first, second, third)
+    val events = collectViaFusClient(expectedEventCount = 1) { logger ->
+      val group = EventLogGroup("group.id", 99)
+      logger.logAsync(group, "dialog-id", hashMapOf<String, Any>("start_time" to ts), false)
+      logger.logAsync(group, "dialog-id", hashMapOf<String, Any>("start_time" to ts + 100), false)
+      logger.logAsync(group, "dialog-id", hashMapOf<String, Any>("start_time" to ts + 4202), false)
+    }
+    assertEquals(1, events.size)
+    assertEquals("dialog-id", events[0].event.id)
+    assertEquals(3, events[0].event.count)
   }
 
   @Test
-  fun testMergeEventWithMultipleNotFilteredData() {
-    val ts = System.currentTimeMillis()
-    val first = newEvent("group.id", "dialog-id", count = 1, data = hashMapOf("start_time" to ts, "type" to "open"))
-    val second = newEvent("group.id", "dialog-id", count = 1, data = hashMapOf("start_time" to 1000 + ts, "type" to "open"))
-    val third = newEvent("group.id", "dialog-id", count = 1, data = hashMapOf("start_time" to 402 + ts, "type" to "open"))
-
-    testLogger(
-      { logger ->
-        val group = EventLogGroup("group.id", 99)
-        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to ts, "type" to "open"), false)
-        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to 1000 + ts, "type" to "open"), false)
-        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to 402 + ts, "type" to "open"), false)
-      }, first, second, third)
-  }
-
-
-  @Test
-  fun testMergeEventWithFilteredData() {
-    val ts = System.currentTimeMillis()
-    val expected = newEvent("group.id", "dialog-id", count = 3, data = hashMapOf("start_time" to ts))
-
-    val loggerWithMergeStrategy = TestFeatureUsageFileEventLogger(mergeStrategy = FilteredEventMergeStrategy(hashSetOf("start_time")))
-    testLoggerInternal(
-      loggerWithMergeStrategy,
-      { logger ->
-        val group = EventLogGroup("group.id", 99)
-        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to ts), false)
-        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to 100 + ts), false)
-        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to 4202 + ts), false)
-      }, expected)
+  fun testCustomLoggerConfigurationPropagates() {
+    // The logger's session/build/bucket/recorderVersion survive the pipeline untouched.
+    val events = collectViaFusClient(
+      session = "my-test.session",
+      build = "123.00.1",
+      bucket = "128",
+      recorderVersion = "29",
+      expectedEventCount = 1,
+    ) { logger ->
+      logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+    }
+    assertEquals(1, events.size)
+    assertEvent(events[0], newEvent(recorderVersion = "29", groupId = "group.id", groupVersion = "2",
+                                    session = "my-test.session", build = "123.00.1", bucket = "128",
+                                    eventId = "test.action"))
   }
 
   @Test
-  fun testMergeEventWithFilteredDataAndOtherFields() {
-    val ts = System.currentTimeMillis()
-    val expected = newEvent("group.id", "dialog-id", count = 3, data = hashMapOf("start_time" to ts, "type" to "open"))
-
-    val loggerWithMergeStrategy = TestFeatureUsageFileEventLogger(mergeStrategy = FilteredEventMergeStrategy(hashSetOf("start_time")))
-    testLoggerInternal(
-      loggerWithMergeStrategy,
-      { logger ->
-        val group = EventLogGroup("group.id", 99)
-        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to ts, "type" to "open"), false)
-        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to 1000 + ts, "type" to "open"), false)
-        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to 402 + ts, "type" to "open"), false)
-      }, expected)
-  }
-
-  @Test
-  fun testMergeEventWithFilteredDataAndOtherDifferentFields() {
-    val startTimeMs1 = System.currentTimeMillis()
-    val startTimeMs2 = 1000 + System.currentTimeMillis()
-    val startTimeMs3 = 402 + System.currentTimeMillis()
-
-    val first = newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to startTimeMs1, "type" to "open"))
-    val second = newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to startTimeMs2, "type" to "close"))
-    val third = newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to startTimeMs3, "type" to "open"))
-
-    val loggerWithMergeStrategy = TestFeatureUsageFileEventLogger(mergeStrategy = FilteredEventMergeStrategy(hashSetOf("start_time")))
-    testLoggerInternal(
-      loggerWithMergeStrategy,
-      { logger ->
-        val group = EventLogGroup("group.id", 99)
-        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs1, "type" to "open"), false)
-        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs2, "type" to "close"), false)
-        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs3, "type" to "open"), false)
-      }, first, second, third)
-  }
-
-  @Test
-  fun testMergeEventWithFilteredDataAndOtherDifferentFieldsSize() {
-    val startTimeMs1 = System.currentTimeMillis()
-    val startTimeMs2 = 1000 + System.currentTimeMillis()
-    val startTimeMs3 = 402 + System.currentTimeMillis()
-
-    val first = newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to startTimeMs1, "type" to "open"))
-    val second = newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to startTimeMs2))
-    val third = newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to startTimeMs3, "type" to "open"))
-
-    val loggerWithMergeStrategy = TestFeatureUsageFileEventLogger(mergeStrategy = FilteredEventMergeStrategy(hashSetOf("start_time")))
-    testLoggerInternal(
-      loggerWithMergeStrategy,
-      { logger ->
-        val group = EventLogGroup("group.id", 99)
-        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs1, "type" to "open"), false)
-        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs2), false)
-        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs3, "type" to "open"), false)
-      }, first, second, third)
-  }
-
-  @Test
-  fun testMergeEventWithFilteredDataAndOtherDifferentFieldsSize2() {
-    val startTimeMs1 = System.currentTimeMillis()
-    val startTimeMs2 = 1000 + System.currentTimeMillis()
-    val startTimeMs3 = 402 + System.currentTimeMillis()
-
-    val first = newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to startTimeMs1, "type" to "open"))
-    val second = newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to startTimeMs2, "value" to 13, "result" to "succeed"))
-    val third = newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to startTimeMs3, "type" to "open"))
-
-    val loggerWithMergeStrategy = TestFeatureUsageFileEventLogger(mergeStrategy = FilteredEventMergeStrategy(hashSetOf("start_time")))
-    testLoggerInternal(
-      loggerWithMergeStrategy,
-      { logger ->
-        val group = EventLogGroup("group.id", 99)
-        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs1, "type" to "open"), false)
-        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs2, "value" to 13, "result" to "succeed"), false)
-        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs3, "type" to "open"), false)
-      }, first, second, third)
+  fun testSystemFieldsInjectedByDispatcher() {
+    // preEventWrite (see FusComponentProvider) injects an incrementing system_event_id and `created` on every queued
+    // event. This replaces the old fake-writer assertions that read those fields out of the logger directly.
+    val events = collectViaFusClient(expectedEventCount = 2) { logger ->
+      logger.logAsync(EventLogGroup("group.id.1", 1), "test.action.1", false)
+      logger.logAsync(EventLogGroup("group.id.2", 1), "test.action.2", false)
+    }
+    assertEquals(2, events.size)
+    val firstId = events[0].event.data["system_event_id"] as Long
+    val secondId = events[1].event.data["system_event_id"] as Long
+    assertEquals(firstId + 1, secondId)
+    assertTrue { events.all { it.event.data.containsKey("created") } }
+    // Tests run headless, so preEventWrite stamps system_headless = true (was testLogHeadlessMode* on the old logger).
+    assertTrue { events.all { it.event.data["system_headless"] == true } }
   }
 
   @Test
   fun testStateEventWithData() {
-    val data = HashMap<String, Any>()
-    data["name"] = "myOption"
-    data["value"] = true
-    data["default"] = false
-
-    val expected = newStateEvent("settings", "ui", groupVersion = "3",
-      data = hashMapOf("name" to "myOption", "value" to true, "default" to false))
-
-    testLogger({ logger -> logger.logAsync(EventLogGroup("settings", 3), "ui", data, true) }, expected)
-  }
-
-  @Test
-  fun testDontMergeStateEventWithData() {
-    val data = HashMap<String, Any>()
-    data["name"] = "myOption"
-    data["value"] = true
-    data["default"] = false
-
-    val expected = newStateEvent("settings", "ui", groupVersion = "5",
-      data = hashMapOf("name" to "myOption", "value" to true, "default" to false))
-
-    testLogger(
-      { logger ->
-        logger.logAsync(EventLogGroup("settings", 5), "ui", data, true)
-        logger.logAsync(EventLogGroup("settings", 5), "ui", data, true)
-      },
-      expected, expected
-    )
+    val data = hashMapOf<String, Any>("name" to "myOption", "value" to true, "default" to false)
+    val events = collectViaFusClient(expectedEventCount = 1) { logger ->
+      logger.logAsync(EventLogGroup("settings", 3), "ui", data, true)
+    }
+    assertEquals(1, events.size)
+    assertEvent(events[0], newStateEvent("settings", "ui", groupVersion = "3",
+                                         data = hashMapOf("name" to "myOption", "value" to true, "default" to false)))
   }
 
   @Test
   fun testDontMergeEventsWithDifferentGroupIds() {
-    testLogger(
-      { logger ->
-        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
-        logger.logAsync(EventLogGroup("group", 2), "test.action", false)
-        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
-      },
-      newEvent("group.id", "test.action", groupVersion = "2"),
-      newEvent("group", "test.action", groupVersion = "2"),
-      newEvent("group.id", "test.action", groupVersion = "2")
-    )
+    val events = collectViaFusClient(expectedEventCount = 3) { logger ->
+      logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+      logger.logAsync(EventLogGroup("group", 2), "test.action", false)
+      logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+    }
+    assertEquals(3, events.size)
+    assertEvent(events[0], newEvent("group.id", "test.action", groupVersion = "2"))
+    assertEvent(events[1], newEvent("group", "test.action", groupVersion = "2"))
+    assertEvent(events[2], newEvent("group.id", "test.action", groupVersion = "2"))
   }
 
   @Test
   fun testDontMergeEventsWithDifferentGroupVersions() {
-    testLogger(
-      { logger ->
-        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
-        logger.logAsync(EventLogGroup("group.id", 3), "test.action", false)
-        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
-      },
-      newEvent("group.id", "test.action", groupVersion = "2"),
-      newEvent("group.id", "test.action", groupVersion = "3"),
-      newEvent("group.id", "test.action", groupVersion = "2")
-    )
+    val events = collectViaFusClient(expectedEventCount = 3) { logger ->
+      logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+      logger.logAsync(EventLogGroup("group.id", 3), "test.action", false)
+      logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+    }
+    assertEquals(3, events.size)
+    assertEvent(events[0], newEvent("group.id", "test.action", groupVersion = "2"))
+    assertEvent(events[1], newEvent("group.id", "test.action", groupVersion = "3"))
+    assertEvent(events[2], newEvent("group.id", "test.action", groupVersion = "2"))
   }
 
   @Test
   fun testDontMergeEventsWithDifferentActions() {
-    testLogger(
-      { logger ->
-        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
-        logger.logAsync(EventLogGroup("group.id", 2), "test.action.1", false)
-        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
-      },
-      newEvent("group.id", "test.action", groupVersion = "2"),
-      newEvent("group.id", "test.action.1", groupVersion = "2"),
-      newEvent("group.id", "test.action", groupVersion = "2")
-    )
+    val events = collectViaFusClient(expectedEventCount = 3) { logger ->
+      logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+      logger.logAsync(EventLogGroup("group.id", 2), "test.action.1", false)
+      logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+    }
+    assertEquals(3, events.size)
+    assertEvent(events[0], newEvent("group.id", "test.action", groupVersion = "2"))
+    assertEvent(events[1], newEvent("group.id", "test.action.1", groupVersion = "2"))
+    assertEvent(events[2], newEvent("group.id", "test.action", groupVersion = "2"))
   }
 
   @Test
-  fun testLoggerWithCustomRecorderVersion() {
-    val custom = TestFeatureUsageFileEventLogger(DEFAULT_SESSION_ID, "999.999", "0", "99", TestFeatureUsageEventWriter())
-    testLoggerInternal(
-      custom,
-      { logger ->
-        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
-        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
-        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
-      },
-      newEvent("group.id", "test.action", groupVersion = "2", count = 3, recorderVersion = "99")
-    )
+  fun testMergeEventWithIgnoredStartTimeAndSameOtherFields() {
+    // start_time is ignored and every other field matches, so the three events merge into one count=3 event
+    // (the merged event keeps the first occurrence's data).
+    val ts = System.currentTimeMillis()
+    val events = collectViaFusClient(expectedEventCount = 1) { logger ->
+      val group = EventLogGroup("group.id", 99)
+      logger.logAsync(group, "dialog-id", hashMapOf<String, Any>("start_time" to ts, "type" to "open"), false)
+      logger.logAsync(group, "dialog-id", hashMapOf<String, Any>("start_time" to ts + 1000, "type" to "open"), false)
+      logger.logAsync(group, "dialog-id", hashMapOf<String, Any>("start_time" to ts + 402, "type" to "open"), false)
+    }
+    assertEquals(1, events.size)
+    assertEvent(events[0], newEvent("group.id", "dialog-id", count = 3, data = hashMapOf("start_time" to ts, "type" to "open")))
   }
 
   @Test
-  fun testLoggerWithCustomSessionId() {
-    val custom = TestFeatureUsageFileEventLogger("test.session", "999.999", "0", "1", TestFeatureUsageEventWriter())
-    testLoggerInternal(
-      custom,
-      { logger ->
-        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
-        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
-        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
-      },
-      newEvent("group.id", "test.action", groupVersion = "2", count = 3, session = "test.session")
-    )
+  fun testDontMergeEventsWithDifferentNonIgnoredField() {
+    // start_time is ignored, but `type` differs, so the events do NOT merge.
+    val t1 = System.currentTimeMillis()
+    val t2 = t1 + 1000
+    val t3 = t1 + 402
+    val events = collectViaFusClient(expectedEventCount = 3) { logger ->
+      val group = EventLogGroup("group.id", 99)
+      logger.logAsync(group, "dialog-id", hashMapOf<String, Any>("start_time" to t1, "type" to "open"), false)
+      logger.logAsync(group, "dialog-id", hashMapOf<String, Any>("start_time" to t2, "type" to "close"), false)
+      logger.logAsync(group, "dialog-id", hashMapOf<String, Any>("start_time" to t3, "type" to "open"), false)
+    }
+    assertEquals(3, events.size)
+    assertEvent(events[0], newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to t1, "type" to "open")))
+    assertEvent(events[1], newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to t2, "type" to "close")))
+    assertEvent(events[2], newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to t3, "type" to "open")))
   }
 
   @Test
-  fun testLoggerWithCustomBuildNumber() {
-    val custom = TestFeatureUsageFileEventLogger(DEFAULT_SESSION_ID, "123.456", "0", "1", TestFeatureUsageEventWriter())
-    testLoggerInternal(
-      custom,
-      { logger ->
-        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
-        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
-        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
-      },
-      newEvent("group.id", "test.action", groupVersion = "2", count = 3, build = "123.456")
-    )
-  }
-
-  @Test
-  fun testLoggerWithCustomBucket() {
-    val custom = TestFeatureUsageFileEventLogger(DEFAULT_SESSION_ID, "999.999", "215", "1", TestFeatureUsageEventWriter())
-    testLoggerInternal(
-      custom,
-      { logger ->
-        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
-        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
-        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
-      },
-      newEvent("group.id", "test.action", groupVersion = "2", count = 3, bucket = "215")
-    )
-  }
-
-  @Test
-  fun testCustomLogger() {
-    val custom = TestFeatureUsageFileEventLogger("my-test.session", "123.00.1", "128", "29", TestFeatureUsageEventWriter())
-    testLoggerInternal(
-      custom,
-      { logger ->
-        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
-        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
-        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
-      },
-      newEvent(
-        recorderVersion = "29", groupId = "group.id", groupVersion = "2",
-        session = "my-test.session", build = "123.00.1", bucket = "128",
-        eventId = "test.action", count = 3
-      )
-    )
+  fun testDontMergeEventsWithDifferentDataSize() {
+    // Differing data-map sizes prevent a merge even when the ignored field matches.
+    val t1 = System.currentTimeMillis()
+    val t2 = t1 + 1000
+    val t3 = t1 + 402
+    val events = collectViaFusClient(expectedEventCount = 3) { logger ->
+      val group = EventLogGroup("group.id", 99)
+      logger.logAsync(group, "dialog-id", hashMapOf<String, Any>("start_time" to t1, "type" to "open"), false)
+      logger.logAsync(group, "dialog-id", hashMapOf<String, Any>("start_time" to t2), false)
+      logger.logAsync(group, "dialog-id", hashMapOf<String, Any>("start_time" to t3, "type" to "open"), false)
+    }
+    assertEquals(3, events.size)
+    assertEvent(events[0], newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to t1, "type" to "open")))
+    assertEvent(events[1], newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to t2)))
+    assertEvent(events[2], newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to t3, "type" to "open")))
   }
 
   @Test
@@ -579,7 +472,6 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     val first = newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to ts))
     val second = newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to ts + 100))
 
-    // A provider that excludes start_time must merge events differing only in start_time...
     val ignoringProvider = object : StatisticsEventLoggerProvider(
       recorderId = "TEST_MERGE_IGNORED",
       version = 1,
@@ -593,7 +485,6 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     }
     assertTrue(ignoringProvider.createEventsMergeStrategy().shouldMerge(first, second))
 
-    // ...while the default provider (no ignored fields) must not.
     val defaultProvider = object : StatisticsEventLoggerProvider(
       recorderId = "TEST_MERGE_DEFAULT",
       version = 1,
@@ -603,80 +494,82 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     ) {
       override fun isRecordEnabled(): Boolean = false
       override fun isSendEnabled(): Boolean = false
+      override val mergeIgnoredFields: Set<String> get() = emptySet()
     }
     assertFalse(defaultProvider.createEventsMergeStrategy().shouldMerge(first, second))
   }
 
-  private fun testLogger(callback: (TestFeatureUsageFileEventLogger) -> Unit, vararg expected: LogEvent) {
-    val logger = TestFeatureUsageFileEventLogger(DEFAULT_SESSION_ID, "999.999", "0", "1", TestFeatureUsageEventWriter())
-    testLoggerInternal(logger, callback, *expected)
+  /**
+   * Registers a test recorder, builds a real FusClient (mock HTTP) via [FusComponentProvider.createFusComponents],
+   * wires [StatisticsFileEventLogger] to it, runs [action], flushes, and returns the events captured through an
+   * [EventLogListenersManager] subscriber (the dispatcher republishes them on RAW_EVENT_TOPIC).
+   */
+  private fun collectViaFusClient(
+    session: String = DEFAULT_SESSION_ID,
+    build: String = "999.999",
+    bucket: String = "0",
+    recorderVersion: String = "1",
+    expectedEventCount: Int,
+    action: (StatisticsFileEventLogger) -> Unit,
+  ): List<LogEvent> {
+    // A recording recorder so createFusComponents builds a real (record-enabled) client for it.
+    @Suppress("UNCHECKED_CAST")
+    (StatisticsEventLoggerProvider.EP_NAME.point as ExtensionPointImpl<StatisticsEventLoggerProvider>)
+      .maskAll(listOf(TestStatisticsEventLoggerProvider(TEST_RECORDER, escapeChars = true)), testRootDisposable, true)
+    IntellijSensitiveDataValidator.clearInstances()
+
+    val client = FusComponentProvider.createFusComponents(TEST_RECORDER).fusClient
+                 ?: error("FusComponents.fusClient must be built for '$TEST_RECORDER'")
+    val received = CopyOnWriteArrayList<LogEvent>()
+    val listener = object : StatisticsEventLogListener {
+      override fun onLogEvent(validatedEvent: LogEvent, rawEventId: String?, rawData: Map<String, Any>?) {
+        received.add(validatedEvent)
+      }
+    }
+    val listenersManager = service<EventLogListenersManager>()
+    listenersManager.subscribe(listener, TEST_RECORDER)
+
+    val eventLogDir = Files.createTempDirectory("fus-event-logger-test")
+    val logger = StatisticsFileEventLogger(TEST_RECORDER, session, build, bucket, recorderVersion, client, eventLogDir)
+    try {
+      action(logger)
+      // flush() is queued on the logger's single-threaded executor after every logAsync, so it forces the merger to
+      // emit and the queue to publish. Delivery to the subscriber is async, so poll for it afterwards.
+      logger.flush().get(10, TimeUnit.SECONDS)
+      awaitEventCount(received, expectedEventCount)
+      return received.toList()
+    } finally {
+      Disposer.dispose(logger)
+      listenersManager.unsubscribe(listener, TEST_RECORDER)
+      client.close()
+      IntellijSensitiveDataValidator.clearInstances()
+      eventLogDir.toFile().deleteRecursively()
+    }
   }
 
-  private fun testLoggerInternal(logger: TestFeatureUsageFileEventLogger,
-                                 callback: (TestFeatureUsageFileEventLogger) -> Unit,
-                                 vararg expected: LogEvent) {
-    callback(logger)
-    logger.dispose()
-
-    val actual = logger.testWriter.logged
-    assertEquals(expected.size, actual.size)
-    for (i in expected.indices) {
-      assertEvent(actual[i], expected[i])
+  private fun awaitEventCount(received: List<LogEvent>, expected: Int) {
+    val deadline = System.currentTimeMillis() + 10_000
+    while (received.size < expected && System.currentTimeMillis() < deadline) {
+      Thread.sleep(20)
     }
   }
 
   private fun assertEvent(actual: LogEvent, expected: LogEvent) {
-    // Compare events but skip event time
     assertEquals(expected.recorderVersion, actual.recorderVersion)
     assertEquals(expected.session, actual.session)
     assertEquals(expected.bucket, actual.bucket)
     assertEquals(expected.build, actual.build)
     assertEquals(expected.group, actual.group)
     assertEquals(expected.event.id, actual.event.id)
-
-    assertTrue { actual.event.data.containsKey("created") }
-    assertTrue { actual.time <= actual.event.data["created"] as Long }
-
-    if (actual.event.isEventGroup()) {
-      // logger adds `created` + `last`; system_event_id etc. are now added downstream in preEventWrite.
-      assertEquals(expected.event.data.size, actual.event.data.size - 2)
-      assertTrue { actual.event.data.containsKey("last") }
-      assertTrue { actual.time <= actual.event.data["last"] as Long }
-    }
-    else {
-      // logger adds only `created`.
-      assertEquals(expected.event.data.size, actual.event.data.size - 1)
-    }
     assertEquals(expected.event.state, actual.event.state)
     assertEquals(expected.event.count, actual.event.count)
+    for ((key, value) in expected.event.data) {
+      assertEquals("data[$key]", value, actual.event.data[key])
+    }
+    // Injected by the dispatcher's preEventWrite.
+    assertTrue { actual.event.data.containsKey("system_event_id") }
+    assertTrue { actual.event.data.containsKey("created") }
   }
 }
 
 private const val TEST_RECORDER = "TEST"
-
-class TestFeatureUsageFileEventLogger(session: String = DEFAULT_SESSION_ID,
-                                      build: String = "999.999",
-                                      bucket: String = "0",
-                                      recorderVersion: String = "1",
-                                      writer: TestFeatureUsageEventWriter = TestFeatureUsageEventWriter(),
-                                      eventLogDir: Path = Path.of(System.getProperty("java.io.tmpdir"), "fus-test-event-logs")) :
-  StatisticsFileEventLogger(TEST_RECORDER, session, build, bucket, recorderVersion, writer, eventLogDir) {
-  val testWriter = writer
-
-  override fun dispose() {
-    super.dispose()
-    logExecutor.awaitTermination(10, TimeUnit.SECONDS)
-  }
-}
-
-/**
- * Test seam capturing the events the logger forwards. Keeps the `...EventWriter` name for continuity with existing
- * call sites; it is a [FeatureUsageLogWriter] fake (the logger now talks to a FusClient through that interface).
- */
-class TestFeatureUsageEventWriter : FeatureUsageLogWriter<LogEvent> {
-  val logged = ArrayList<LogEvent>()
-
-  override fun queueEvent(event: LogEvent) {
-    logged.add(event)
-  }
-}

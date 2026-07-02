@@ -90,6 +90,7 @@ import com.intellij.internal.statistic.eventLog.dispatcher.IntellijReportValidat
 import com.intellij.internal.statistic.eventLog.events.EventFieldIds
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.service
+import com.jetbrains.fus.reporting.FusHttpClient
 import com.jetbrains.fus.reporting.REMOTE_CONFIG_OPTIONS_UPDATE_FAILED
 import com.jetbrains.fus.reporting.jvm.InMemoryJvmFileStorage
 import com.jetbrains.fus.reporting.jvm.JvmFileStorage
@@ -205,7 +206,9 @@ object FusComponentProvider {
   }
 
   @JvmStatic
-  fun createFusComponents(recorderId: String): FusComponents {
+  fun createFusComponents(
+    recorderId: String
+  ): FusComponents {
     val applicationInfo = EventLogInternalApplicationInfo(
       StatisticsUploadAssistant.isUseTestStatisticsConfig(),
       StatisticsUploadAssistant.isUseTestStatisticsSendEndpoint()
@@ -232,7 +235,7 @@ object FusComponentProvider {
     val systemEventIdProvider = UsageStatisticsPersistenceComponent.getInstance()
 
     // The metadata storage is built inside the DSL `metadataStorage { }` provider (it needs the SDK-built bus /
-    // remote config / file storage). We capture it here so the same instance backs IntellijSensitiveDataValidator.
+    // remote config / file storage). We capture it here so the same instance can back IntellijSensitiveDataValidator.
     var metadataStorageRef: MetadataStorage<EventLogBuild>? = null
 
     val client = fusClient {
@@ -251,13 +254,12 @@ object FusComponentProvider {
         reduceInitialMetadataUpdateDelay = System.getProperty("fus.internal.reduce.initial.delay").toBoolean()
         // Keep event enqueue synchronous and ordered, matching the legacy logger -> writer chain.
         enableAsyncEventLogging = false
-        // Consent gates that IntellijReportDispatcher used to enforce by hand.
-        recordEnabled { eventLogProvider.isRecordEnabled() && StatisticsUploadAssistant.isCollectAllowed() }
-        loggingEnabled { eventLogProvider.isRecordEnabled() && StatisticsUploadAssistant.isCollectAllowed() }
+
+        loggingEnabled { eventLogProvider.isLoggingEnabled() }
+        recordEnabled { eventLogProvider.isRecordEnabled() }
         sendEnabled { eventLogProvider.isSendEnabled() }
       }
 
-      // Internal SDK topics, previously wired by StatisticsJobsScheduler via listenToOptionsChanges/listenToMetadataEvents.
       messageHandler(REMOTE_CONFIG_OPTIONS_UPDATED) { updateOptions(recorderId, it) }
       messageHandler(METADATA_LOADED_TOPIC) { systemCollector.logMetadataLoaded(it) }
       messageHandler(METADATA_LOAD_FAILED_TOPIC) { systemCollector.logMetadataLoadFailed(loadErrorToEventLogMetadataUpdateError(it)) }
@@ -272,8 +274,6 @@ object FusComponentProvider {
 
       val listenersManager = ApplicationManager.getApplication().getService(EventLogListenersManager::class.java)
       val testMode = StatisticsRecorderUtil.isTestModeEnabled(recorderId)
-      // Raw events for in-IDE listeners (e.g. the statistics tool window). Was an inline notifySubscribers call in
-      // StatisticsFileEventLogger.logLastEvent. rawEventId/rawData stay test-mode-only per the StatisticsEventLogListener contract.
       messageHandler(RAW_EVENT_TOPIC) { fusEvent ->
         val recorderHasJcpListener = service<EventLogListenersManager>().hasJcpListener(recorderId)
         val keepRawData = testMode || recorderHasJcpListener
@@ -287,7 +287,6 @@ object FusComponentProvider {
         )
       }
 
-      // In-process send statistics for the recorder's system collector (external uploader logs external=true itself).
       messageHandler(SEND_INFORMATION_TOPIC) { info ->
         systemCollector.logFilesSend(
           total = info.totalAmountOfBatches ?: (info.successfulBatches + info.failedBatches),
@@ -299,8 +298,6 @@ object FusComponentProvider {
         )
       }
 
-      // Every component is injected explicitly (no `legacyBusinessLogic` convenience) so the wiring is
-      // independent of declaration order and each IntelliJ-specific choice is stated outright.
       components {
         loggerFactory { NoOpLoggerFactory() }
         httpClient { _ -> applicationInfo.connectionSettings.createJvmHttpClient() }
@@ -363,7 +360,7 @@ object FusComponentProvider {
             eventLogProvider.isCharsEscapingRequired,
             EventFieldIds.FieldsIgnoredByMerge.toSet()
           ) {
-            // System-field injection moved here from StatisticsFileEventLogger.logLastEvent (Story 8):
+            // System-field injection moved here from StatisticsFileEventLogger:
             // every queued event (incl. throttle-generated ones) is augmented once, before validate/enqueue.
             val lastEventTime = AtomicLong(0L)
             val lastEventCreatedTime = AtomicLong(0L)

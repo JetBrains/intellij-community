@@ -34,7 +34,7 @@ object ExternalUploadOrchestrator {
   /**
    * Launch the external uploader process for all eligible recorders.
    *
-   * Idempotent: invoked from every dispatcher's `postClose` hook but spawns the uploader at most once per IDE shutdown.
+   * Idempotent: invoked from every recorder's `postClose` hook but spawns the uploader at most once per IDE shutdown.
    * Mirrors the legacy behaviour of `EventLogApplicationLifecycleListener.appWillBeClosed` so users do not notice the switch.
    */
   fun tryStartExternalUpload() {
