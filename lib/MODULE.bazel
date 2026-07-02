@@ -5328,6 +5328,20 @@ http_file(
 )
 
 http_file(
+    name = "org_jetbrains_intellij_deps-jb-jdi-2_45_http",
+    downloaded_file_path = "jb-jdi-2.45.jar",
+    sha256 = "f31793446f372ee33659fc7a4ce93a079fa520ae89ddf6f6280ea50425c408d4",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/jb-jdi/2.45/jb-jdi-2.45.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps-jb-jdi-2_45-sources_http",
+    downloaded_file_path = "jb-jdi-2.45-sources.jar",
+    sha256 = "63b3530031093bb1eea1f82a730a8114ebaeeff62e44f35d5e1e88f28a653bd6",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/jb-jdi/2.45/jb-jdi-2.45-sources.jar",
+)
+
+http_file(
     name = "org_jetbrains_intellij_deps-debugger-memory-agent-1_0_51_http",
     downloaded_file_path = "debugger-memory-agent-1.0.51.jar",
     sha256 = "1408ae6528102c098971bde601f99c791cd1c57cc2485516f75f4ccbb45202ef",
@@ -5458,20 +5472,6 @@ http_file(
     downloaded_file_path = "istack-commons-runtime-3.0.12-sources.jar",
     sha256 = "6671fc2f26744067b7bdfda9d8112c02ae72fd298963a24addaca27587d07591",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/sun/istack/istack-commons-runtime/3.0.12/istack-commons-runtime-3.0.12-sources.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps-jb-jdi-2_45_http",
-    downloaded_file_path = "jb-jdi-2.45.jar",
-    sha256 = "f31793446f372ee33659fc7a4ce93a079fa520ae89ddf6f6280ea50425c408d4",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/jb-jdi/2.45/jb-jdi-2.45.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps-jb-jdi-2_45-sources_http",
-    downloaded_file_path = "jb-jdi-2.45-sources.jar",
-    sha256 = "63b3530031093bb1eea1f82a730a8114ebaeeff62e44f35d5e1e88f28a653bd6",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/jb-jdi/2.45/jb-jdi-2.45-sources.jar",
 )
 
 http_file(

@@ -293,6 +293,7 @@ java/debugger/backend
 java/debugger/debugger-agent
 java/debugger/frontend
 java/debugger/impl
+java/debugger/jb-jdi
 java/debugger/memory-agent
 java/debugger/openapi
 java/debugger/shared

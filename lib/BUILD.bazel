@@ -6731,6 +6731,21 @@ jvm_import(
 )
 
 copy_file(
+    name = "org.jetbrains.intellij.deps/jb-jdi-2.45.jar_copy",
+    src = "@org_jetbrains_intellij_deps-jb-jdi-2_45_http//file",
+    out = "org.jetbrains.intellij.deps/jb-jdi-2.45.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "java-debugger-libraries-jb-jdi-jb-jdi",
+    jar = "@org_jetbrains_intellij_deps-jb-jdi-2_45_http//file",
+    source_jar = "@org_jetbrains_intellij_deps-jb-jdi-2_45-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "org.jetbrains.intellij.deps/debugger-memory-agent-1.0.51.jar_copy",
     src = "@org_jetbrains_intellij_deps-debugger-memory-agent-1_0_51_http//file",
     out = "org.jetbrains.intellij.deps/debugger-memory-agent-1.0.51.jar",
@@ -6942,21 +6957,6 @@ jvm_import(
     name = "com_sun_istack-istack-commons-runtime-3_0_12_http_import",
     jar = "@com_sun_istack-istack-commons-runtime-3_0_12_http//file",
     source_jar = "@com_sun_istack-istack-commons-runtime-3_0_12-sources_http//file",
-)
-
-copy_file(
-    name = "org.jetbrains.intellij.deps/jb-jdi-2.45.jar_copy",
-    src = "@org_jetbrains_intellij_deps-jb-jdi-2_45_http//file",
-    out = "org.jetbrains.intellij.deps/jb-jdi-2.45.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "jb-jdi",
-    jar = "@org_jetbrains_intellij_deps-jb-jdi-2_45_http//file",
-    source_jar = "@org_jetbrains_intellij_deps-jb-jdi-2_45-sources_http//file",
-    visibility = ["//visibility:public"],
 )
 
 copy_file(

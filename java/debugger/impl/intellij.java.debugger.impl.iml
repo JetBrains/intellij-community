@@ -79,7 +79,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" name="jb-jdi" level="project" />
+    <orderEntry type="module" module-name="intellij.java.debugger.libraries.jb.jdi" />
     <orderEntry type="module" module-name="intellij.libraries.stream" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
