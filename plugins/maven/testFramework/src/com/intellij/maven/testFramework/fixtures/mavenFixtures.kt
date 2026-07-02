@@ -157,16 +157,10 @@ private fun mavenCodeInsightFixture(
   val tempDir = tempDirFixture.init()
   val projectTestFixture = object : IdeaProjectTestFixture {
     override fun getProject(): Project = project
-    override fun getModule(): Module {
+    override fun getModule(): Module? {
       project.modules.firstOrNull()?.let { return it }
-      // The legacy heavy test fixture always provided a module, so code-insight could configure files even when a test
-      // does not import a Maven project (e.g. parent/resolution highlighting tests on a not-yet-imported pom). Create a
-      // throwaway non-persistent module on demand to match that. Tests that assert on the module set import a Maven
-      // project first, so project.modules is already non-empty and this fallback never adds an unexpected module.
       MavenLog.LOG.warn("Cannot find module in ${project.name}")
-      return runWriteAction {
-        ModuleManager.getInstance(project).newNonPersistentModule("light", "")
-      }
+      return null
     }
     override fun setUp() {
     }
