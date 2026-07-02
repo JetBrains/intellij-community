@@ -1,7 +1,7 @@
 package com.intellij.lambda.testFramework.junit
 
 import com.intellij.ide.starter.coroutine.CommonScope.perTestSupervisorScope
-import com.intellij.lambda.testFramework.starter.IdeInstance
+import com.intellij.lambda.testFramework.starter.LambdaIdeSession
 import com.intellij.lambda.testFramework.utils.IdeWithLambda
 import com.intellij.remoteDev.tests.impl.utils.SerializedLambdaHelper
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestActionParameters
@@ -24,27 +24,34 @@ open class MonolithAndSplitModeInvocationInterceptor : InvocationInterceptor {
     invocationContext: ReflectiveInvocationContext<Method>,
     extensionContext: ExtensionContext,
   ) {
-    intercept<Void?>(invocation, invocationContext)
+    intercept(invocation, invocationContext, extensionContext)
   }
 
   override fun interceptTestMethod(
     invocation: InvocationInterceptor.Invocation<Void?>, invocationContext: ReflectiveInvocationContext<Method>,
     extensionContext: ExtensionContext,
   ) {
-    intercept<Void?>(invocation, invocationContext)
+    intercept(invocation, invocationContext, extensionContext)
   }
 
   override fun <T> interceptTestFactoryMethod(
     invocation: InvocationInterceptor.Invocation<T>, invocationContext: ReflectiveInvocationContext<Method>,
     extensionContext: ExtensionContext,
   ): T {
-    return Preconditions.notNull(intercept(invocation, invocationContext), "@TestFactory is not supported in split mode by ${javaClass.name}")
+    return Preconditions.notNull(
+      intercept(invocation, invocationContext, extensionContext),
+      "@TestFactory is not supported in split mode by ${javaClass.name}",
+    )
   }
 
-  private fun <T> intercept(invocation: InvocationInterceptor.Invocation<T>, invocationContext: ReflectiveInvocationContext<Method>): T? {
+  private fun <T> intercept(
+    invocation: InvocationInterceptor.Invocation<T>,
+    invocationContext: ReflectiveInvocationContext<Method>,
+    extensionContext: ExtensionContext,
+  ): T? {
     val fullMethodName = "${invocationContext.targetClass.name}.${invocationContext.executable.name}"
 
-    logOutput("Executing test method \"$fullMethodName\" inside IDE in mode ${IdeInstance.currentIdeMode} with arguments: ${
+    logOutput("Executing test method \"$fullMethodName\" inside IDE in mode ${getCurrentRunMode(extensionContext)} with arguments: ${
       argumentsToString(invocationContext.arguments)
     }")
 
@@ -58,9 +65,9 @@ open class MonolithAndSplitModeInvocationInterceptor : InvocationInterceptor {
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking(perTestSupervisorScope.coroutineContext) {
       // TODO: use serialized lambda invocation
-      IdeInstance.ide.runNamedLambda(LambdaRdTestActionParameters(
+      LambdaIdeSession.current(extensionContext).runNamedLambda(LambdaRdTestActionParameters(
         reference = InjectedLambda::class.java.canonicalName,
-        testClass = invocationContext.targetClass.name ?: "",
+        testClass = invocationContext.targetClass.name,
         testMethod = invocationContext.executable.name,
         methodArgumentssBase64 = invocationContext.arguments.map {
           SerializedLambdaHelper().serialize(it as? Serializable
@@ -80,10 +87,6 @@ internal suspend fun IdeWithLambda.runNamedLambda(params: LambdaRdTestActionPara
   return rdSession.runNamedLambda(params)
 }
 
-internal suspend fun IdeWithLambda.runNamedLambdaInBackend(params: LambdaRdTestActionParameters) {
-  return (backendIdeWithLambda ?: this).runNamedLambda(params)
-}
-
 internal suspend fun LambdaRdTestSession.runNamedLambda(params: LambdaRdTestActionParameters) {
   val protocol = this.protocol
                  ?: error("RD Protocol is not initialized for session. Make sure the IDE connection is established before running tests.")
@@ -94,5 +97,3 @@ internal const val ARGUMENTS_SEPARATOR = "], ["
 
 internal fun argumentsToString(arguments: List<Any>): String =
   arguments.joinToString(ARGUMENTS_SEPARATOR, prefix = "[", postfix = "]") { it.toString() }
-
-

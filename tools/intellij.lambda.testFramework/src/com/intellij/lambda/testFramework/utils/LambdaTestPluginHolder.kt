@@ -1,5 +1,7 @@
 package com.intellij.lambda.testFramework.utils
 
+import com.intellij.tools.ide.util.common.logOutput
+
 object LambdaTestPluginHolder {
   enum class LoadingInSplitMode {
     OnlyFrontend,
@@ -14,33 +16,91 @@ object LambdaTestPluginHolder {
     val splitMode: LoadingInSplitMode,
   )
 
-  private var additionalLambdaPlugins: List<AdditionalLambdaPlugin> = emptyList()
-  private var mainTestModuleId: String? = null
-  val defaultLambdaPlugin: AdditionalLambdaPlugin = AdditionalLambdaPlugin(
+  data class LambdaTestSetup(
+    val testModuleId: String?,
+    private val additionalLambdaPlugins: List<AdditionalLambdaPlugin>,
+  ) {
+    fun additionalDevBuildModuleIds(vararg loadingMode: LoadingInSplitMode): List<String> =
+      getAdditionalPlugins(*loadingMode).map { it.devBuildModuleId }
+
+    fun additionalPluginDirNames(vararg loadingMode: LoadingInSplitMode): List<String> =
+      getAdditionalPlugins(*loadingMode).map { it.pluginDirName }
+
+    private fun getAdditionalPlugins(vararg loadingMode: LoadingInSplitMode): List<AdditionalLambdaPlugin> =
+      additionalLambdaPlugins.filter { it.splitMode in loadingMode }
+
+    internal fun additionalDevBuildPlugins(): List<AdditionalLambdaPlugin> = additionalLambdaPlugins
+  }
+
+  private val defaultLambdaPlugin: AdditionalLambdaPlugin = AdditionalLambdaPlugin(
     devBuildModuleId = "intellij.lambda.test.plugin",
     pluginDirName = "lambda-test-plugin",
     splitMode = LoadingInSplitMode.All,
   )
 
-
-  fun testModuleId(): String? = mainTestModuleId
-  fun additionalDevBuildModuleIds(vararg ideTarget: LoadingInSplitMode): List<String> =
-    getAdditionalPlugins(*ideTarget).map { it.devBuildModuleId }
-
-  fun additionalPluginDirNames(vararg ideTarget: LoadingInSplitMode): List<String> =
-    getAdditionalPlugins(*ideTarget).map { it.pluginDirName }
-
-  private fun getAdditionalPlugins(vararg ideTarget: LoadingInSplitMode): List<AdditionalLambdaPlugin> =
-    additionalLambdaPlugins.filter { it.splitMode in ideTarget || it.splitMode == LoadingInSplitMode.All }
-
-  fun setupAdditionalLambdaPlugins(mainTestModuleId: String, additionalLambdaPlugins: List<AdditionalLambdaPlugin>) {
-    this.mainTestModuleId = mainTestModuleId
-    this.additionalLambdaPlugins = additionalLambdaPlugins
+  /**
+   * The plugins a lambda IDE launches with, for the test class that asked for it.
+   *
+   * The default resolution, and the one every product uses that has not declared a setup of its own. A product
+   * declares its own by overriding `LambdaReusedSessionStrategy.lambdaTestSetup` and naming that strategy in its
+   * `@ReusedRun`, which is what makes the declaration part of the session that reads it rather than process-wide
+   * state a later host in the same JVM can inherit. That override is the only way in for a product whose test
+   * classes are generated and therefore cannot be named below.
+   *
+   * The table below is knowledge of ultimate products living in community code, which is the wrong direction and
+   * is known debt: the entries belong with the products, expressed as their own strategies. Moving them is a
+   * migration across nine product test modules, each of which launches a real IDE and none of which this change
+   * can verify, so it is deliberately not done here -- but a *new* product should override the strategy rather
+   * than add a line here, and every line removed from here is progress.
+   *
+   * The fall-through is a real configuration, not a failure: a test whose in-IDE lambdas only touch platform
+   * classes needs no plugin of its own. It cannot be told apart from a test that needed one and was never
+   * declared, which is why the resolved setup is logged -- an unresolved class inside the IDE is then one grep
+   * away from the setup its launch was given.
+   */
+  fun setupFor(testClass: Class<*>): LambdaTestSetup {
+    val className = testClass.name
+    return setupForClassName(className).also { setup ->
+      logOutput("Lambda test setup for $className: test module ${setup.testModuleId ?: "none"}, " +
+                "plugins ${setup.additionalDevBuildPlugins().joinToString { it.devBuildModuleId }}")
+    }
   }
 
-  fun cleanUpAdditionalLambdaPlugin() {
-    this.mainTestModuleId = null
-    this.additionalLambdaPlugins = emptyList()
+  private fun setupForClassName(className: String): LambdaTestSetup {
+    return when {
+      className.startsWith("com.intellij.lambda.sampleTestsWithFixtures.") ->
+        allModesPlugin("intellij.lambda.sampleTestsWithFixtures")
+
+      className.startsWith("com.intellij.lambda.sampleTestsWithPlugin.") ->
+        allModesPlugin("intellij.lambda.sampleTestsWithPlugin")
+
+      className.startsWith("com.intellij.platform.daemon.lambdaTests.") ->
+        allModesPlugin("intellij.platform.daemon.lambdaTests")
+
+      className.startsWith("com.intellij.lambdaDebuggerTests.java.") ->
+        allModesPlugin("intellij.debugger.lambdaDebuggerTests.java")
+
+      className.startsWith("com.intellij.figma.lambdaTests.") ->
+        allModesPlugin("intellij.figma.lambdaTests")
+
+      className.startsWith("com.jetbrains.rdct.lambdaTestsUi.") ->
+        allModesPlugin("intellij.rdct.lambdaTestsUi")
+
+      className.startsWith("com.jetbrains.rdct.lambdaTests.") ->
+        modeSplitPlugins("intellij.rdct.lambdaTests")
+
+      className.startsWith("com.jetbrains.webstorm.lambda.") ->
+        allModesPlugin("intellij.webstorm.lambdaTests")
+
+      className.startsWith("com.jetbrains.php.frontend.split.lambda.") ->
+        allModesPlugin("intellij.php.frontend.split.lambdaTests")
+
+      else ->
+        LambdaTestSetup(
+          testModuleId = null,
+          additionalLambdaPlugins = listOf(defaultLambdaPlugin),
+        )
+    }
   }
 
   /**
@@ -51,32 +111,20 @@ object LambdaTestPluginHolder {
    * convention as the wrapper generator: `<base>.plugin` for the module, and the module with `intellij.`
    * stripped and dots replaced by dashes for the Bazel target.
    *
-   * ```kotlin
-   * override fun beforeAll(context: ExtensionContext) {
-   *   LambdaTestPluginHolder.setupAllModesPlugin("intellij.myFeature.lambdaTests")
-   * }
-   * ```
-   *
-   * @param mainTestModuleId JPS module id of the test module (e.g. `intellij.myFeature.lambdaTests`)
-   * @param pluginModuleBaseName Base for the plugin module name. Defaults to [mainTestModuleId].
-   * @param pluginDirName Name of the plugin's directory inside the IDE distribution's `plugins/`
-   *   folder. Defaults to the plugin module id with `intellij.` stripped and dots replaced by
-   *   dashes — the convention used by `jpsModelToBazel`. Override when the module id doesn't
-   *   start with `intellij.` or when the packager uses a different naming scheme.
-   * @param additionalPlugins production or helper plugins needed by the test plugin. They are
-   *   bundled for, and loaded in, the modes declared by each entry.
+   * Public because a product with generated test classes cannot be listed in [setupFor] and builds its setup
+   * itself; [additionalPlugins] is where its own plugin goes, in the same list as the lambda test plugins
+   * because the dev build caches an installation per set of additional modules.
    */
-  fun setupAllModesPlugin(
+  fun allModesPlugin(
     mainTestModuleId: String,
-    pluginModuleBaseName: String = mainTestModuleId,
-    pluginDirName: String = "$pluginModuleBaseName.plugin".removePrefix("intellij.").replace('.', '-'),
+    pluginDirName: String = "$mainTestModuleId.plugin".removePrefix("intellij.").replace('.', '-'),
     additionalPlugins: List<AdditionalLambdaPlugin> = emptyList(),
-  ) {
-    setupAdditionalLambdaPlugins(
-      mainTestModuleId,
-      listOf(
+  ): LambdaTestSetup {
+    return LambdaTestSetup(
+      testModuleId = mainTestModuleId,
+      additionalLambdaPlugins = listOf(
         AdditionalLambdaPlugin(
-          devBuildModuleId = "$pluginModuleBaseName.plugin",
+          devBuildModuleId = "$mainTestModuleId.plugin",
           pluginDirName = pluginDirName,
           splitMode = LoadingInSplitMode.All,
         ),
@@ -91,34 +139,15 @@ object LambdaTestPluginHolder {
    * naming convention used by the generated wrappers:
    * - module name: `<wrapperModuleBaseName>.<modeSuffix>`
    * - Bazel target name: module name with `intellij.` stripped and dots replaced by dashes
-   *
-   * Replaces the boilerplate of declaring three [AdditionalLambdaPlugin] objects manually. Use this
-   * in `SetLambdaPluginCallback.beforeAll` instead of calling [setupAdditionalLambdaPlugins]
-   * directly:
-   *
-   * ```kotlin
-   * override fun beforeAll(context: ExtensionContext) {
-   *   LambdaTestPluginHolder.setupModeSplitPlugins("intellij.myFeature.lambdaTests")
-   * }
-   * ```
-   *
-   * @param mainTestModuleId JPS module id of the test module (e.g. `intellij.myFeature.lambdaTests`)
-   * @param wrapperModuleBaseName Base of the generated wrapper module names. Defaults to [mainTestModuleId],
-   *   which matches the lambda test plugin naming convention.
-   * @param pluginDirNameBase Base for the per-mode plugin directory names inside the IDE
-   *   distribution's `plugins/` folder. The mode suffix is appended automatically
-   *   (e.g. base `"myFeature"` → `"myFeature-backend-split-plugin"`). Defaults to
-   *   [wrapperModuleBaseName] with `intellij.` stripped and dots replaced by dashes.
-   *   Override when the module id doesn't start with `intellij.` or the packager differs.
    */
-  fun setupModeSplitPlugins(
+  private fun modeSplitPlugins(
     mainTestModuleId: String,
-    wrapperModuleBaseName: String = mainTestModuleId,
+    wrapperModuleBaseName: String = mainTestModuleId.removeSuffix("._test"),
     pluginDirNameBase: String = wrapperModuleBaseName.removePrefix("intellij.").replace('.', '-'),
-  ) {
-    setupAdditionalLambdaPlugins(
-      mainTestModuleId,
-      listOf(defaultLambdaPlugin) + MODE_SPLIT_SUFFIXES.map { (suffix, loadingMode) ->
+  ): LambdaTestSetup {
+    return LambdaTestSetup(
+      testModuleId = mainTestModuleId,
+      additionalLambdaPlugins = listOf(defaultLambdaPlugin) + MODE_SPLIT_SUFFIXES.map { (suffix, loadingMode) ->
         AdditionalLambdaPlugin(
           devBuildModuleId = "$wrapperModuleBaseName.$suffix",
           pluginDirName = "$pluginDirNameBase-${suffix.replace('.', '-')}",
@@ -127,27 +156,6 @@ object LambdaTestPluginHolder {
       },
     )
   }
-
-  fun setupSampleTestsWithFixturesPlugin(): Unit =
-    setupAllModesPlugin("intellij.lambda.sampleTestsWithFixtures")
-
-  fun setupSampleTestsWithPluginPlugin(): Unit =
-    setupAllModesPlugin("intellij.lambda.sampleTestsWithPlugin")
-
-  fun setupDaemonLambdaTestsPlugin(): Unit =
-    setupAllModesPlugin("intellij.platform.daemon.lambdaTests")
-
-  fun setupJavaLambdaDebuggerPlugin(): Unit =
-    setupAllModesPlugin("intellij.debugger.lambdaDebuggerTests.java")
-
-  fun setupPhpFrontendSplitLambdaTestsPlugin(): Unit =
-    setupAllModesPlugin("intellij.php.frontend.split.lambdaTests")
-
-  fun setupRdctLambdaTestsUiPlugin(): Unit =
-    setupAllModesPlugin("intellij.rdct.lambdaTestsUi")
-
-  fun setupRdctLambdaTestsPlugin(): Unit =
-    setupModeSplitPlugins("intellij.rdct.lambdaTests")
 
   private val MODE_SPLIT_SUFFIXES = listOf(
     "monolith.plugin" to LoadingInSplitMode.Monolith,

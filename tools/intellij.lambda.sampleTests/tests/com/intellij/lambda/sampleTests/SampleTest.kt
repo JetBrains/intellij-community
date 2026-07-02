@@ -1,17 +1,24 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lambda.sampleTests
 
+import com.intellij.ide.starter.driver.reused.ReusedProject
 import com.intellij.lambda.testFramework.junit.RunInMonolithAndSplitMode
+import com.intellij.lambda.testFramework.starter.lambdaNoProjectConfiguration
 import com.intellij.lambda.testFramework.utils.IdeWithLambda
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.TestTemplate
+import org.junit.jupiter.api.Test
 
 @RunInMonolithAndSplitMode
 class SampleTest {
-  @TestTemplate
+  companion object {
+    @ReusedProject
+    private val project = lambdaNoProjectConfiguration
+  }
+
+  @Test
   fun `serialized test`(ide: IdeWithLambda) = runBlocking {
     ide {
       runInFrontend {
@@ -24,7 +31,7 @@ class SampleTest {
     }
   }
 
-  @TestTemplate
+  @Test
   fun `serialized test failure`(ide: IdeWithLambda) = runBlocking {
     ide {
       val result = runCatching {
@@ -44,7 +51,7 @@ class SampleTest {
     }
   }
 
-  @TestTemplate
+  @Test
   fun `serialized test with parameter`(ide: IdeWithLambda) = runBlocking {
     ide {
       val text = "Text from backend"
@@ -62,7 +69,7 @@ class SampleTest {
     }
   }
 
-  @TestTemplate // AT-3662
+  @Test // AT-3662
   fun `serialized test with shared context`(ide: IdeWithLambda) = runBlocking {
     ide {
       runInBackend("Store some non serializable value to the test context") { arguments ->

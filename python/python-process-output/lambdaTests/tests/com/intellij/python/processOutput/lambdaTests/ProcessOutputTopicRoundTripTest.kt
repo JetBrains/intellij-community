@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.processOutput.lambdaTests
 
+import com.intellij.ide.starter.driver.reused.ReusedProject
+import com.intellij.ide.starter.driver.reused.ReusedRun
 import com.intellij.idea.AppMode
 import com.intellij.lambda.testFramework.junit.RunInMonolithAndSplitMode
 import com.intellij.lambda.testFramework.junit.SetErrorIgnorerExtension
@@ -19,8 +21,8 @@ import com.intellij.python.processOutput.common.ProcessWeightDto
 import com.intellij.python.processOutput.common.TraceContextDto
 import com.intellij.python.processOutput.common.TraceContextKind
 import com.intellij.python.processOutput.common.TraceContextUuid
-import com.intellij.python.processOutput.lambdaTests.util.IdeConfigSetup
-import com.intellij.python.processOutput.lambdaTests.util.SetLambdaPluginCallback
+import com.intellij.python.processOutput.lambdaTests.util.PythonProcessOutputLambdaStrategy
+import com.intellij.python.processOutput.lambdaTests.util.pythonProcessOutputLambdaConfiguration
 import com.intellij.remoteDev.tests.impl.utils.waitSuspendingForOne
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.CompletableDeferred
@@ -31,7 +33,7 @@ import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.TestTemplate
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -53,10 +55,16 @@ import kotlin.time.Instant
  * claim, and lives at unit level in `ProcessOutputControllerImplTest`.
  */
 @RunInMonolithAndSplitMode
-@ExtendWith(IdeConfigSetup::class, SetLambdaPluginCallback::class, SetErrorIgnorerExtension::class)
+@ExtendWith(SetErrorIgnorerExtension::class)
+@ReusedRun(sessionStrategy = PythonProcessOutputLambdaStrategy::class)
 internal class ProcessOutputTopicRoundTripTest {
 
-  @TestTemplate
+  companion object {
+    @ReusedProject
+    private val project = pythonProcessOutputLambdaConfiguration
+  }
+
+  @Test
   fun `a new-process event keeps every field when it reaches the frontend`(ide: IdeWithLambda) =
     timeoutRunBlocking(TEST_TIMEOUT) {
       ide {
@@ -71,7 +79,7 @@ internal class ProcessOutputTopicRoundTripTest {
       }
     }
 
-  @TestTemplate
+  @Test
   fun `an exec error keeps the associated process id and every other field when it reaches the frontend`(ide: IdeWithLambda) =
     timeoutRunBlocking(TEST_TIMEOUT) {
       ide {
@@ -88,7 +96,7 @@ internal class ProcessOutputTopicRoundTripTest {
     }
 
   /** `Timeout` is a `data object`, so it serializes through a different path than the other two reasons. */
-  @TestTemplate
+  @Test
   fun `an exec error with a data-object reason and no associated process keeps both`(ide: IdeWithLambda) =
     timeoutRunBlocking(TEST_TIMEOUT) {
       ide {

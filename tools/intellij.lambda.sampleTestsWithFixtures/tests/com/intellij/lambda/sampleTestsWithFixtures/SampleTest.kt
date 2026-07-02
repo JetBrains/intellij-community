@@ -1,9 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lambda.sampleTestsWithFixtures
 
+import com.intellij.ide.starter.driver.reused.ReusedProject
+import com.intellij.ide.starter.driver.reused.ReusedRun
 import com.intellij.lambda.sampleTestsWithFixtures.fixtures.codeInsightFixture
 import com.intellij.lambda.sampleTestsWithFixtures.fixtures.openNewProjectAndEditor
+import com.intellij.lambda.sampleTestsWithFixtures.util.FixturesLambdaSessionStrategy
 import com.intellij.lambda.testFramework.junit.RunInMonolithAndSplitMode
+import com.intellij.lambda.testFramework.starter.lambdaUnitTestModeNoProjectConfiguration
 import com.intellij.lambda.testFramework.testApi.editor.editorImplOrThrow
 import com.intellij.lambda.testFramework.testApi.editor.moveTo
 import com.intellij.lambda.testFramework.testApi.editor.typeWithLatency
@@ -14,12 +18,18 @@ import com.intellij.lambda.testFramework.testApi.waitForProject
 import com.intellij.lambda.testFramework.utils.IdeWithLambda
 import com.intellij.openapi.diagnostic.Logger
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.TestTemplate
+import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.seconds
 
 @RunInMonolithAndSplitMode
+@ReusedRun(sessionStrategy = FixturesLambdaSessionStrategy::class)
 class SampleTest {
-  @TestTemplate
+  companion object {
+    @ReusedProject
+    private val project = lambdaUnitTestModeNoProjectConfiguration
+  }
+
+  @Test
   fun `serialized test`(ide: IdeWithLambda) = runBlocking {
     ide {
       val projectName = "Test"
@@ -60,7 +70,7 @@ class SampleTest {
     }
   }
 
-  @TestTemplate
+  @Test
   fun serialized(ide: IdeWithLambda) = runBlocking {
     ide {
       runInBackend("get projects") {

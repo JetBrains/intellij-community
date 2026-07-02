@@ -1,9 +1,11 @@
 package com.intellij.lambda.sampleTestsWithPlugin
 
+import com.intellij.ide.starter.driver.reused.ReusedProject
 import com.intellij.lambda.testFramework.junit.RunInMonolithAndSplitMode
+import com.intellij.lambda.testFramework.starter.lambdaNoProjectConfiguration
 import com.intellij.openapi.application.ApplicationManager
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.TestTemplate
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -15,12 +17,17 @@ import java.util.stream.Stream
 
 @RunInMonolithAndSplitMode
 class UnitSplitExampleTest {
-  @TestTemplate
+  companion object {
+    @delegate:ReusedProject
+    private val project by lazy { lambdaNoProjectConfiguration }
+  }
+
+  @Test
   fun simpleUnitTest() {
     println("${Date.from(Instant.now())} Hello from simpleUnitTest!")
   }
 
-  @TestTemplate
+  @Test
   fun anotherTest() {
     println("${Date.from(Instant.now())} Hello from anotherTest!")
   }

@@ -1,6 +1,6 @@
 package com.intellij.lambda.testFramework.junit
 
-import com.intellij.lambda.testFramework.starter.IdeInstance
+import com.intellij.lambda.testFramework.starter.LambdaIdeSession
 import com.intellij.lambda.testFramework.utils.IdeWithLambda
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.ParameterContext
@@ -11,6 +11,6 @@ class IdeWithLambdaParameterResolver : ParameterResolver {
     parameterContext.parameter.type.isAssignableFrom(IdeWithLambda::class.java)
 
   override fun resolveParameter(parameterContext: ParameterContext, extensionContext: ExtensionContext): Any {
-    return IdeInstance.ide
+    return LambdaIdeSession.current(extensionContext)
   }
 }

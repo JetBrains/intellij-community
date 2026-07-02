@@ -6,6 +6,7 @@ import com.intellij.driver.sdk.ui.syncVfs
 import com.intellij.driver.sdk.waitFor
 import com.intellij.ide.starter.driver.nextRestartLaunchNameOf
 import com.intellij.ide.starter.models.IDEStartResult
+import com.intellij.ide.starter.process.collectJavaThreadDumpSuspendable
 import com.intellij.ide.starter.report.DetailsOnCI
 import com.intellij.ide.starter.testContextCache.TestContextCache
 import com.intellij.ide.starter.runner.IDEHandle
@@ -135,6 +136,15 @@ open class BackgroundRun(
                     ?: error("This ${this::class.simpleName} cannot restart. Only a run that runIdeWithDriver started can restart.")
     close()
     return restarter(launchName ?: nextRestartLaunchNameOf(runContext.launchName))
+  }
+
+  @ApiStatus.Internal
+  suspend fun collectJavaThreadDump(artifactFileName: String) {
+    val ideReportingData = runContext.lastIdeReportingData
+    collectJavaThreadDumpSuspendable(runContext.testContext.ide.resolveAndDownloadTheSameJDKOrFallback(),
+                                     ideReportingData.logsDir,
+                                     process.id.toLong(),
+                                     ideReportingData.logsDir.resolve(artifactFileName))
   }
 
   protected fun Driver.closeIdeAndWait(closeIdeTimeout: Duration, takeScreenshot: Boolean = true): IDEStartResult {
