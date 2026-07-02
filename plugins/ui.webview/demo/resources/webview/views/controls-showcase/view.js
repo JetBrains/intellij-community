@@ -582,6 +582,23 @@ var JbCheckbox = class extends i$1 {
 	}
 };
 //#endregion
+//#region ../../webview-src/packages/controls/src/foundation/focus.ts
+var WEBVIEW_FOCUS_LEAVE_EVENT = "wvi-focus-leave";
+var WebViewFocusLeaveController = class {
+	onFocusLeave;
+	listener = () => this.onFocusLeave();
+	constructor(host, onFocusLeave) {
+		this.onFocusLeave = onFocusLeave;
+		host.addController(this);
+	}
+	hostConnected() {
+		window.addEventListener(WEBVIEW_FOCUS_LEAVE_EVENT, this.listener);
+	}
+	hostDisconnected() {
+		window.removeEventListener(WEBVIEW_FOCUS_LEAVE_EVENT, this.listener);
+	}
+};
+//#endregion
 //#region ../../webview-src/packages/controls/src/foundation/options.ts
 function normalizeOptions(options) {
 	return Array.isArray(options) ? options : [];
@@ -692,6 +709,10 @@ var JbCombobox = class extends TextInputBase {
 		items: { attribute: false }
 	};
 	items = [];
+	constructor() {
+		super();
+		new WebViewFocusLeaveController(this, () => this.renderRoot.querySelector("input")?.blur());
+	}
 	render() {
 		const listId = `${this.localName}-${Math.random().toString(36).slice(2)}`;
 		return b`
@@ -844,6 +865,12 @@ var JbMenuButton = class extends i$1 {
 	open = false;
 	value = "";
 	variant = "default";
+	constructor() {
+		super();
+		new WebViewFocusLeaveController(this, () => {
+			this.open = false;
+		});
+	}
 	render() {
 		const options = normalizeOptions(this.items);
 		return b`
@@ -1464,6 +1491,10 @@ var JbSelect = class extends i$1 {
 	placeholder = "";
 	required = false;
 	value = "";
+	constructor() {
+		super();
+		new WebViewFocusLeaveController(this, () => this.renderRoot.querySelector("select")?.blur());
+	}
 	render() {
 		const options = normalizeOptions(this.items);
 		return b`

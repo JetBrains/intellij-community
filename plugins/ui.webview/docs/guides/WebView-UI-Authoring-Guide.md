@@ -309,6 +309,34 @@ Kotlin domain state -> serializable DTOs -> frontend store -> pure view models -
 
 Keep frontend stores and projections plain. Components should subscribe to store state, call typed protocol functions, and render UI. Do not hide RPC calls inside projection functions or view-model getters.
 
+## Close Transient UI When Focus Leaves The WebView
+
+Swing focus can move from the embedded WebView to an IDE component such as an editor, text field, or tool window while the page is still running. Do not emulate that transition by focusing an invisible page element: that creates a fake DOM focus owner and makes keyboard traversal and accessibility harder to reason about.
+
+The common WebView runtime sends `wvi-focus-leave` when host focus leaves the page for Swing. For custom popups, menus, comboboxes, search panels, and other transient UI, close or blur the control through the helper exported by `@jetbrains/intellij-webview`:
+
+```ts
+import { addWebViewFocusLeaveListener } from "@jetbrains/intellij-webview"
+
+const removeFocusLeaveListener = addWebViewFocusLeaveListener(() => {
+  closePopup()
+})
+
+// Call removeFocusLeaveListener() from the component/view disposal hook.
+```
+
+For React components, install the listener from the component effect that owns the open state:
+
+```tsx
+useEffect(() => {
+  return addWebViewFocusLeaveListener(() => setOpen(false))
+}, [])
+```
+
+The shared controls package handles this by default for its own controls: native-input controls blur their internal input/select, and menu-like controls close. When adding a new `@jetbrains/intellij-webview-controls` element that owns transient UI, use the foundation `WebViewFocusLeaveController` instead of wiring `window.addEventListener("wvi-focus-leave", ...)` by hand.
+
+Do not rely only on `window.blur` for custom browser UI. Some third-party libraries close correctly on their own, but WebView focus can cross the Swing/browser boundary in ways that do not look exactly like a normal browser tab blur to every custom widget.
+
 ## Browser-Like Behavior
 
 Treat embedded WebView pages as application UI, not browser tabs. Feature pages should not depend on browser chrome behavior such as default context menus, page zoom, browser accelerator keys, status UI, autofill prompts, password-save prompts, swipe navigation, or elastic overscroll effects. Platform backends may disable those behaviors by default.

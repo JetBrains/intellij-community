@@ -3,6 +3,7 @@
 import { LitElement, html, nothing, type TemplateResult } from "lit"
 import { defineControl, type CustomElementRegistryLike } from "../../foundation/define"
 import { emitStandardEvent, emitValueEvent } from "../../foundation/events"
+import { WebViewFocusLeaveController } from "../../foundation/focus"
 import { normalizeOptions } from "../../foundation/options"
 import { hostStyles, inputStyles } from "../../foundation/styles"
 import type { JbControlOption } from "../../foundation/types"
@@ -27,6 +28,11 @@ export class JbSelect extends LitElement {
   placeholder = ""
   required = false
   value = ""
+
+  constructor() {
+    super()
+    new WebViewFocusLeaveController(this, () => this.renderRoot.querySelector<HTMLSelectElement>("select")?.blur())
+  }
 
   render(): TemplateResult {
     const options = normalizeOptions(this.items)

@@ -11,11 +11,21 @@ private val LOG = fileLogger()
 
 internal fun WebViewInterop.createWebViewFocusEntrySink(): WebViewFocusEntrySink {
   val pageApi = callable(WebViewFocusPageApi.ID)
-  return WebViewFocusEntrySink { direction ->
-    runCatching {
-      pageApi.enter(WebViewFocusEntry(direction))
-    }.onFailure { error ->
-      LOG.debug("[wvi-focus] host page.enter.failed; direction=$direction", error)
+  return object : WebViewFocusEntrySink {
+    override fun enterWebViewFocus(direction: WebViewFocusDirection) {
+      runCatching {
+        pageApi.enter(WebViewFocusEntry(direction))
+      }.onFailure { error ->
+        LOG.debug("[wvi-focus] host page.enter.failed; direction=$direction", error)
+      }
+    }
+
+    override fun leaveWebViewFocus() {
+      runCatching {
+        pageApi.leave()
+      }.onFailure { error ->
+        LOG.debug("[wvi-focus] host page.leave.failed", error)
+      }
     }
   }
 }

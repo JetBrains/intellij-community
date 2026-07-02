@@ -5,6 +5,8 @@ import com.intellij.ui.webview.impl.engine.WebViewFocusDirection
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-internal fun interface WebViewFocusEntrySink {
+internal interface WebViewFocusEntrySink {
   fun enterWebViewFocus(direction: WebViewFocusDirection)
+
+  fun leaveWebViewFocus()
 }

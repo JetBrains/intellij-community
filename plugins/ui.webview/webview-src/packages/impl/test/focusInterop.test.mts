@@ -11,6 +11,7 @@ import type {
 
 interface FocusPageImplementation {
   enter(params: WebViewFocusEntry): void
+  leave(): void
 }
 
 class FakeElement {
@@ -22,6 +23,7 @@ class FakeElement {
   shadowRoot: FakeShadowRoot | null = null
   offsetWidth = 10
   offsetHeight = 10
+  blurCount = 0
   private root: FakeDocument | FakeShadowRoot
 
   constructor(tagName: string, readonly ownerDocument: FakeDocument) {
@@ -70,6 +72,23 @@ class FakeElement {
     }
     else {
       this.ownerDocument.activeElement = this as unknown as Element
+    }
+  }
+
+  blur(): void {
+    this.blurCount++
+    const root = this.getRootNode()
+    const element = this as unknown as Element
+    if (root instanceof FakeShadowRoot) {
+      if (root.activeElement === element) {
+        root.activeElement = null
+      }
+      if (this.ownerDocument.activeElement === root.host as unknown as Element) {
+        this.ownerDocument.activeElement = null
+      }
+    }
+    else if (this.ownerDocument.activeElement === element) {
+      this.ownerDocument.activeElement = null
     }
   }
 
@@ -151,6 +170,56 @@ class FakeDocument {
   }
 }
 
+class FakeWindow {
+  private readonly listeners = new Map<string, Array<(event: Event) => void>>()
+  private readonly dispatchedCounts = new Map<string, number>()
+
+  getComputedStyle(element: FakeElement): { display: string, visibility: string } {
+    return {
+      display: element.style.display ?? "block",
+      visibility: element.style.visibility ?? "visible",
+    }
+  }
+
+  addEventListener(type: string, listener: (event: Event) => void): void {
+    let listeners = this.listeners.get(type)
+    if (!listeners) {
+      listeners = []
+      this.listeners.set(type, listeners)
+    }
+    listeners.push(listener)
+  }
+
+  removeEventListener(type: string, listener: (event: Event) => void): void {
+    const listeners = this.listeners.get(type)
+    if (!listeners) return
+    const index = listeners.indexOf(listener)
+    if (index >= 0) {
+      listeners.splice(index, 1)
+    }
+  }
+
+  dispatchEvent(event: Event): boolean {
+    this.dispatch(event.type, event)
+    return true
+  }
+
+  dispatch(type: string, event: Event = new Event(type)): void {
+    this.dispatchedCounts.set(type, this.dispatchedCount(type) + 1)
+    for (const listener of this.listeners.get(type) ?? []) {
+      listener(event)
+    }
+  }
+
+  dispatchedCount(type: string): number {
+    return this.dispatchedCounts.get(type) ?? 0
+  }
+
+  resetDispatchedCounts(): void {
+    this.dispatchedCounts.clear()
+  }
+}
+
 class FakeKeyboardEvent {
   readonly key: string
   readonly shiftKey: boolean
@@ -227,16 +296,13 @@ class FakeBridge {
   enter(params: WebViewFocusEntry): void {
     this.pageApi?.enter(params)
   }
+
+  leave(): void {
+    this.pageApi?.leave()
+  }
 }
 
-const windowStub = {
-  getComputedStyle(element: FakeElement) {
-    return {
-      display: element.style.display ?? "block",
-      visibility: element.style.visibility ?? "visible",
-    }
-  },
-}
+const windowStub = new FakeWindow()
 
 let documentStub = new FakeDocument()
 const originalConsoleDebug = console.debug
@@ -265,6 +331,8 @@ describe("WebView focus interop", () => {
     documentStub = new FakeDocument()
     console.debug = () => {
     }
+    windowStub.dispatch("blur")
+    windowStub.resetDispatchedCounts()
   })
 
   afterEach(() => {
@@ -375,6 +443,55 @@ describe("WebView focus interop", () => {
     expect(documentStub.activeElement).toBe(null)
     expect(bridge.exits).toEqual([])
     expect(bridge.activations).toEqual(["activated"])
+  })
+
+  test("synthesizes window blur when host focus leaves the page", () => {
+    const bridge = new FakeBridge()
+    installWebViewFocusInterop(bridge as unknown as WebViewBridge)
+    const first = appendElement("button", "first")
+
+    bridge.enter({direction: "forward"})
+    bridge.leave()
+
+    expect(documentStub.activeElement).toBeNull()
+    expect(windowStub.dispatchedCount("blur")).toBe(1)
+
+    bridge.leave()
+
+    expect(windowStub.dispatchedCount("blur")).toBe(1)
+    expect(bridge.exits).toEqual([])
+    expect(first.id).toBe("first")
+  })
+
+  test("blurs native controls inside shadow roots when host focus leaves the page", () => {
+    const bridge = new FakeBridge()
+    installWebViewFocusInterop(bridge as unknown as WebViewBridge)
+    const first = appendElement("button", "first")
+    const selectHost = appendElement("jb-select", "status-filter")
+    const shadowSelect = selectHost.attachShadow().appendChild(documentStub.createElement("select"))
+
+    bridge.enter({direction: "forward"})
+    expect(documentStub.activeElement).toBe(first)
+
+    bridge.leave()
+
+    expect(first.blurCount).toBe(1)
+    expect(shadowSelect.blurCount).toBe(1)
+    expect(windowStub.dispatchedCount("blur")).toBe(1)
+  })
+
+  test("does not synthesize duplicate window blur after native blur", () => {
+    const bridge = new FakeBridge()
+    installWebViewFocusInterop(bridge as unknown as WebViewBridge)
+    appendElement("button", "first")
+
+    bridge.enter({direction: "forward"})
+    windowStub.dispatch("blur")
+    windowStub.resetDispatchedCounts()
+    bridge.leave()
+
+    expect(windowStub.dispatchedCount("blur")).toBe(0)
+    expect(bridge.exits).toEqual([])
   })
 })
 

@@ -160,6 +160,49 @@ test("keeps the agent selector open after pointer click", async ({page}) => {
   expect(selectorStillOpen).toBe(true)
 })
 
+test("keeps config option selectors out of label activation wrappers", async ({page}) => {
+  await openPreview(page)
+  await startMockAgent(page)
+
+  const configControlsUseNeutralContainers = await page.evaluate(() => {
+    return Array.from(document.querySelectorAll<HTMLElement>(".acpControlWithHint"))
+      .every(control => control.tagName.toLowerCase() !== "label"
+        && control.querySelector("button, input, select, [role='combobox']")?.closest("label") == null)
+  })
+  expect(configControlsUseNeutralContainers).toBe(true)
+
+  const trigger = page.locator('[data-config-id="mode"] .acpConfigOptionSelect')
+  await clickCenter(page, trigger)
+  await expect(page.getByRole("option", {name: "Auto"})).toBeVisible()
+  await expect(page.getByRole("option", {name: /Code/})).toBeVisible()
+
+  await waitForTwoAnimationFrames(page)
+  await expect(page.getByRole("option", {name: "Auto"})).toBeVisible()
+  await expect(page.getByRole("option", {name: /Code/})).toBeVisible()
+  const selectorStillOpen = await page.evaluate(() => {
+    const trigger = document.querySelector('[data-config-id="mode"] .acpConfigOptionSelect')
+    return trigger?.getAttribute("data-state") === "open"
+      && trigger?.getAttribute("aria-expanded") === "true"
+  })
+  expect(selectorStillOpen).toBe(true)
+})
+
+test("closes the model selector when WebView focus leaves", async ({page}) => {
+  await openPreview(page)
+  await startMockAgent(page)
+
+  await page.locator('[data-config-id="model"] .acpModelSelectorTrigger').click()
+  await expect(page.getByPlaceholder("Search models...")).toBeVisible()
+
+  await page.evaluate(() => window.dispatchEvent(new Event("wvi-focus-leave")))
+  await waitForTwoAnimationFrames(page)
+  const modelSelectorClosed = await page.evaluate(() => {
+    return document.querySelector(".acpModelSelectorContent") == null
+      && document.querySelector('[data-config-id="model"] .acpModelSelectorTrigger')?.getAttribute("data-state") !== "open"
+  })
+  expect(modelSelectorClosed).toBe(true)
+})
+
 test("renders ACP chat in a real browser with a mock agent", async ({page}) => {
   if (!preview) {
     throw new Error("ACP chat mock preview server was not started")

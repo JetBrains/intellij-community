@@ -30,6 +30,8 @@ data class WebViewFocusExit(val direction: WebViewFocusDirection)
 interface WebViewFocusPageApi : WebViewCallable {
   fun enter(params: WebViewFocusEntry)
 
+  fun leave()
+
   companion object {
     val ID: WebViewApiId<WebViewFocusPageApi> = WebViewApiId.of("webview.focus")
   }

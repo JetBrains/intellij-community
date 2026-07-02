@@ -1,12 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import type {
-  Callable,
-  WebViewApiId,
-  WebViewBridge,
-  WebViewFocusDirection,
-  WebViewFocusHostApi,
-  WebViewFocusPageApi,
+import {
+  WEBVIEW_FOCUS_LEAVE_EVENT,
+  type Callable,
+  type WebViewApiId,
+  type WebViewBridge,
+  type WebViewFocusDirection,
+  type WebViewFocusHostApi,
+  type WebViewFocusPageApi,
 } from "@jetbrains/intellij-webview"
 
 const FOCUS_API_NAMESPACE = "webview.focus"
@@ -17,6 +18,7 @@ type WebViewFocusHostCallable = Callable<WebViewFocusHostApi>
 
 const installedBridges = new WeakSet<WebViewBridge>()
 let focusTraceEventListenersInstalled = false
+let hostFocusInsidePage = false
 
 export function installWebViewFocusInterop(bridge: WebViewBridge): void {
   if (installedBridges.has(bridge)) {
@@ -31,12 +33,16 @@ export function installWebViewFocusInterop(bridge: WebViewBridge): void {
     enter(params) {
       enterDocumentFocus(params.direction, hostApi)
     },
+    leave() {
+      leaveDocumentFocus()
+    },
   })
   document.addEventListener("pointerdown", (event) => handlePointerActivation(event, hostApi), true)
   document.addEventListener("keydown", (event) => handleFocusBoundaryKey(event, hostApi), true)
 }
 
 function enterDocumentFocus(direction: WebViewFocusDirection, hostApi: WebViewFocusHostCallable): void {
+  hostFocusInsidePage = true
   const tabbableElements = collectTabbableElements()
   logFocusEvent(`enter(${direction})`, () => ({
     tabbableCount: tabbableElements.length,
@@ -57,8 +63,87 @@ function enterDocumentFocus(direction: WebViewFocusDirection, hostApi: WebViewFo
   }))
 }
 
+function leaveDocumentFocus(): void {
+  const activeBefore = activeElementDeep(document)
+  const shouldDispatchWindowBlur = hostFocusInsidePage
+  hostFocusInsidePage = false
+  const blurredTargets = blurDocumentFocusTargets(activeBefore)
+  logFocusEvent("leave", () => ({
+    syntheticWindowBlur: shouldDispatchWindowBlur,
+    activeElementBefore: summarizeElement(activeBefore),
+    activeElementAfter: summarizeElement(activeElementDeep(document)),
+    blurredTargets: blurredTargets.map(summarizeElement),
+  }))
+  dispatchFocusLeaveEvent()
+  if (shouldDispatchWindowBlur && typeof window.dispatchEvent === "function") {
+    window.dispatchEvent(createWindowBlurEvent())
+  }
+}
+
+function dispatchFocusLeaveEvent(): void {
+  if (typeof window.dispatchEvent === "function") {
+    window.dispatchEvent(createFocusLeaveEvent())
+  }
+}
+
+function createFocusLeaveEvent(): Event {
+  return typeof CustomEvent === "function"
+    ? new CustomEvent(WEBVIEW_FOCUS_LEAVE_EVENT)
+    : new Event(WEBVIEW_FOCUS_LEAVE_EVENT)
+}
+
+function createWindowBlurEvent(): Event {
+  return typeof FocusEvent === "function"
+    ? new FocusEvent("blur", {relatedTarget: null})
+    : new Event("blur")
+}
+
+function blurActiveElement(element: Element | null): void {
+  if (!element || element === document.body || element === document.documentElement) {
+    return
+  }
+  const blur = (element as HTMLElement).blur
+  if (typeof blur === "function") {
+    blur.call(element)
+  }
+}
+
+function blurDocumentFocusTargets(activeElement: Element | null): Element[] {
+  const targets = new Set<Element>()
+  if (activeElement) {
+    targets.add(activeElement)
+  }
+  collectFocusLeaveBlurTargets(document.body || document.documentElement, targets)
+
+  const blurredTargets: Element[] = []
+  for (const target of targets) {
+    blurActiveElement(target)
+    blurredTargets.push(target)
+  }
+  return blurredTargets
+}
+
+function collectFocusLeaveBlurTargets(root: ParentNode, targets: Set<Element>): void {
+  for (const child of Array.from(root.children)) {
+    if (isFocusLeaveBlurTarget(child)) {
+      targets.add(child)
+    }
+    const shadowRoot = (child as HTMLElement).shadowRoot
+    if (shadowRoot) {
+      collectFocusLeaveBlurTargets(shadowRoot, targets)
+    }
+    collectFocusLeaveBlurTargets(child, targets)
+  }
+}
+
+function isFocusLeaveBlurTarget(element: Element): boolean {
+  const tagName = element.tagName.toLowerCase()
+  return tagName === "select" || tagName === "input" || tagName === "textarea" || tagName === "button" || element.hasAttribute("tabindex")
+}
+
 function handlePointerActivation(event: PointerEvent, hostApi: WebViewFocusHostCallable): void {
   const focusTarget = findPointerFocusTarget(event)
+  hostFocusInsidePage = true
   logFocusEvent("pointerdown", () => ({
     defaultPrevented: event.defaultPrevented,
     target: summarizeEventTarget(event),
@@ -195,12 +280,14 @@ function installFocusTraceEventLogging(): void {
   const win = typeof window === "undefined" ? null : window
   if (win && typeof win.addEventListener === "function") {
     win.addEventListener("focus", (event) => {
+      hostFocusInsidePage = true
       logFocusEvent("window focus", () => ({
         target: summarizeEventTarget(event),
         activeElement: summarizeElement(activeElementDeep(document)),
       }))
     }, true)
     win.addEventListener("blur", (event) => {
+      hostFocusInsidePage = false
       logFocusEvent("window blur", () => ({
         target: summarizeEventTarget(event),
         activeElement: summarizeElement(activeElementDeep(document)),

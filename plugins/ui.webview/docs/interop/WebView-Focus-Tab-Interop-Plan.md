@@ -1,6 +1,6 @@
 # WebView Focus and Tab Order Interop Plan
 
-Status: **IMPLEMENTED**. Stages 1-6 and 8 landed (`api/WebViewFocusApi.kt`, `impl/SwingWebViewHostPanel.kt`, `impl/engine/WebViewFocusInterop.kt`, `webview-src/.../focusInterop.ts`); robot test coverage in `WebViewFocusInteropRobotTest.kt`. Stage 7 has focused diagnostics for the WebView focus path: host-side `[wvi-focus]` `LOG.debug` entries in `SwingWebViewHostPanel`/`WebViewFocusInterop` and page-side `[wvi-focus]` `console.debug` entries captured by `WebViewConsoleCapture`. The plan is kept as design rationale + verification checklist for v2 work (accessibility traversal parity, advanced opt-out markers).
+Status: **IMPLEMENTED**. Stages 1-6 and 8 landed (`api/WebViewFocusApi.kt`, `impl/SwingWebViewHostPanel.kt`, `impl/engine/WebViewFocusInterop.kt`, `webview-src/.../focusInterop.ts`); robot test coverage in `WebViewFocusInteropRobotTest.kt`. Stage 7 has focused diagnostics for the WebView focus path: host-side `[wvi-focus]` `LOG.debug` entries in `SwingWebViewHostPanel`/`WebViewFocusInterop` and page-side `[wvi-focus]` `console.debug` entries captured by `WebViewConsoleCapture`. The implemented protocol also includes page-side `leave()` notification so host-to-Swing focus transfers can close transient page UI through `wvi-focus-leave`. The plan is kept as design rationale + verification checklist for v2 work (accessibility traversal parity, advanced opt-out markers).
 
 Stage-level legend: ✅ done · ⏳ partial · ⬜ todo · 🚫 blocked · 🗑️ dropped.
 
@@ -79,7 +79,7 @@ Add an internal typed WebView protocol under namespace `webview.focus`.
 
 Kotlin side:
 
-- `WebViewFocusPageApi : WebViewCallable` with `fun enter(params: WebViewFocusEntry)`.
+- `WebViewFocusPageApi : WebViewCallable` with `fun enter(params: WebViewFocusEntry)` and `fun leave()`.
 - `WebViewFocusHostApi : WebViewImplementable` with `fun activated()` and `fun exit(params: WebViewFocusExit)`.
 - DTO direction values: `forward`, `backward`.
 
@@ -101,6 +101,7 @@ Install a platform feature in `wvi-platform-features.js`:
 - If focus is at the first element and the user presses `Shift+Tab`, prevent default and notify host `exit(backward)`.
 - If focus is at the last element and the user presses `Tab`, prevent default and notify host `exit(forward)`.
 - If there are no tabbable elements, do not create a trap. Notify host exit in the requested direction.
+- On host-reported `leave()`, blur native focus targets and dispatch `wvi-focus-leave` so page-owned popups can close when Swing takes focus.
 
 The tabbable scanner must be conservative and browser-like enough for IDE UI controls. It should include standard form controls, anchors with `href`, buttons, selects, textareas, `[tabindex]`, `[contenteditable]`, and open shadow roots where possible. It must exclude disabled, hidden, inert, non-rendered, and negative-tabindex elements from sequential traversal.
 
@@ -177,6 +178,8 @@ Mitigation: use a JBCef-style focus traversal policy provider around component-b
 
 Mitigation: handle only explicit page-side boundary `exit` as traversal. Treat blur/focus-lost as state only, not as a request to move to the next Swing component.
 
+Page-owned transient UI needs the opposite direction as well: when Swing focus leaves the WebView host, the host sends page `leave()`. The page runtime blurs native controls, dispatches `wvi-focus-leave`, and synthesizes a window blur for libraries that already close on browser blur. Custom controls should subscribe to `wvi-focus-leave` or use the shared controls foundation controller instead of keeping invisible focus sinks inside the page.
+
 ### Windows WebView2 focus threading
 
 WebView2 focus crosses Win32 HWND focus, the WebView2 controller thread, and Swing EDT. Existing off-EDT work already calls out `AttachThreadInput` as the risky stabilization stage. The accelerator callback is synchronous, while Swing focus traversal is EDT-bound.
@@ -211,14 +214,14 @@ Kotlin files:
 
 - Add `WebViewFocusDirection` as a serializable enum or sealed string-backed DTO with values `forward` and `backward`.
 - Add `WebViewFocusEntry` and `WebViewFocusExit` serializable data classes.
-- Add `WebViewFocusPageApi : WebViewCallable` with `suspend fun enter(params: WebViewFocusEntry)`.
+- Add `WebViewFocusPageApi : WebViewCallable` with `suspend fun enter(params: WebViewFocusEntry)` and `suspend fun leave()`.
 - Add `WebViewFocusHostApi : WebViewImplementable` with `fun activated()` and `fun exit(params: WebViewFocusExit)`.
 - Put the API id in one place: `WebViewApiId.of<WebViewFocusPageApi>("webview.focus")` and `WebViewApiId.of<WebViewFocusHostApi>("webview.focus")`.
 
 TypeScript files:
 
 - Add matching types under `webview-src/packages/api/src/` and export them from the package entry point.
-- Use the same namespace literal, `webview.focus`, and the same method names: `enter`, `activated`, and `exit`.
+- Use the same namespace literal, `webview.focus`, and the same method names: `enter`, `leave`, `activated`, and `exit`.
 
 Do not add public options to `WebViewPanelOptions` in this stage. The v1 behavior is always installed for panels created by `createWebViewPanel(...)`.
 
@@ -283,6 +286,7 @@ Implementation shape:
 
 - Add a focused module, for example `focusInterop.ts`, under `webview-src/packages/impl/src/`.
 - It registers the page implementation for `WebViewFocusPageApi.enter`.
+- It registers the page implementation for `WebViewFocusPageApi.leave` and dispatches `wvi-focus-leave` from that path.
 - It creates a callable host proxy for `WebViewFocusHostApi.exit`.
 - It notifies `WebViewFocusHostApi.activated` from a capture-phase pointer event so clicks on empty page regions still transfer Swing focus to the WebView host.
 - It listens for `keydown` in capture phase so application code cannot accidentally create a boundary trap before the common runtime sees the event.

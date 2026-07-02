@@ -529,6 +529,13 @@ function validateIconResourcePath(resourcePath) {
 function encodeIconResourcePath(resourcePath) {
 	return resourcePath.split("/").map((segment) => encodeURIComponent(segment)).join("/");
 }
+//#endregion
+//#region ../../webview-src/packages/api/src/focus.ts
+var WEBVIEW_FOCUS_LEAVE_EVENT = "wvi-focus-leave";
+function addWebViewFocusLeaveListener(listener) {
+	window.addEventListener(WEBVIEW_FOCUS_LEAVE_EVENT, listener);
+	return () => window.removeEventListener(WEBVIEW_FOCUS_LEAVE_EVENT, listener);
+}
 apiId()("webview.focus");
 apiId()("webview.focus");
 //#endregion
@@ -3245,6 +3252,13 @@ function useModelSelectorContext() {
 function Root({ value, disabled, children, onValueChange }) {
 	const [open, setOpen] = (0, import_react.useState)(false);
 	const [query, setQuery] = (0, import_react.useState)("");
+	(0, import_react.useEffect)(() => {
+		function closeOnWebViewFocusLeave() {
+			setOpen(false);
+			setQuery("");
+		}
+		return addWebViewFocusLeaveListener(closeOnWebViewFocusLeave);
+	}, []);
 	const context = (0, import_react.useMemo)(() => ({
 		value,
 		disabled: disabled === true,
@@ -3538,7 +3552,7 @@ function ConfigToggleControl(props) {
 	});
 }
 function ControlHint(props) {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 		className: props.className,
 		"data-hint": props.hint,
 		"data-config-id": props.configId,

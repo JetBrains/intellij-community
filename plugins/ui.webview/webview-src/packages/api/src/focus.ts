@@ -14,11 +14,19 @@ export interface WebViewFocusExit {
 
 export interface WebViewFocusPageApi extends WebViewImplementable {
   enter(params: WebViewFocusEntry): void
+  leave(): void
 }
 
 export interface WebViewFocusHostApi extends WebViewCallable {
   activated(): void
   exit(params: WebViewFocusExit): void
+}
+
+export const WEBVIEW_FOCUS_LEAVE_EVENT = "wvi-focus-leave"
+
+export function addWebViewFocusLeaveListener(listener: EventListener): () => void {
+  window.addEventListener(WEBVIEW_FOCUS_LEAVE_EVENT, listener)
+  return () => window.removeEventListener(WEBVIEW_FOCUS_LEAVE_EVENT, listener)
 }
 
 export const webViewFocusPageApiId = apiId<WebViewFocusPageApi>()("webview.focus")

@@ -3,6 +3,7 @@
 export * from "./aria"
 export * from "./define"
 export * from "./events"
+export * from "./focus"
 export * from "./options"
 export * from "./styles"
 export * from "./types"

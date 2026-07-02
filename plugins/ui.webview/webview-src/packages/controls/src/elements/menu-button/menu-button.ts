@@ -3,6 +3,7 @@
 import { LitElement, html, nothing, type TemplateResult } from "lit"
 import { defineControl, type CustomElementRegistryLike } from "../../foundation/define"
 import { emitStandardEvent, emitValueEvent } from "../../foundation/events"
+import { WebViewFocusLeaveController } from "../../foundation/focus"
 import { normalizeOptions, optionLabel } from "../../foundation/options"
 import { buttonStyles, hostStyles, popupStyles } from "../../foundation/styles"
 import type { JbControlOption } from "../../foundation/types"
@@ -25,6 +26,13 @@ export class JbMenuButton extends LitElement {
   open = false
   value = ""
   variant = "default"
+
+  constructor() {
+    super()
+    new WebViewFocusLeaveController(this, () => {
+      this.open = false
+    })
+  }
 
   render(): TemplateResult {
     const options = normalizeOptions(this.items)

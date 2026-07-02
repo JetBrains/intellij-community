@@ -2,6 +2,7 @@
 
 import { html, nothing, type TemplateResult } from "lit"
 import { defineControl, type CustomElementRegistryLike } from "../../foundation/define"
+import { WebViewFocusLeaveController } from "../../foundation/focus"
 import { normalizeOptions } from "../../foundation/options"
 import type { JbControlOption } from "../../foundation/types"
 import { TextInputBase } from "../text-field/text-input-base"
@@ -13,6 +14,11 @@ export class JbCombobox extends TextInputBase {
   }
 
   items: JbControlOption[] = []
+
+  constructor() {
+    super()
+    new WebViewFocusLeaveController(this, () => this.renderRoot.querySelector<HTMLInputElement>("input")?.blur())
+  }
 
   render(): TemplateResult {
     const listId = `${this.localName}-${Math.random().toString(36).slice(2)}`

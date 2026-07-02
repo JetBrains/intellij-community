@@ -317,7 +317,7 @@ internal object WebViewFocusRobotTestSupport {
     }
   }
 
-  suspend fun runComboPopupClickScenario(
+  suspend fun runBadComboPopupThenSwingRefocusScenario(
     frame: JFrame,
     scope: CoroutineScope,
     engine: WebViewEngineBridge,
@@ -387,6 +387,7 @@ internal object WebViewFocusRobotTestSupport {
       inactiveNativePeer.reset()
       inputEvents.clear()
 
+      // Step 1: focus starts in Swing, then one real Robot click opens the bad combo inside WebView.
       clickWebElementCenter(robot, host, engine, "combo-trigger")
       waitForSwingFocusTransferFromFieldToWebViewHost(
         field,
@@ -427,6 +428,7 @@ internal object WebViewFocusRobotTestSupport {
       )
 
       inputEvents.clear()
+      // Step 2: a real Robot click on the external Swing field must take focus back and close it.
       clickCenter(robot, field)
       waitForSwingFocusTransferFromWebViewHostToField(
         frame,
@@ -437,11 +439,43 @@ internal object WebViewFocusRobotTestSupport {
       waitForJavaScriptResult(
         webView = engine,
         script = """
-          window.__wviComboPopupState?.blurCount === 1 &&
+          window.__wviComboPopupState?.blurCount >= 1 &&
           window.__wviComboPopupState?.open === false
         """.trimIndent(),
         expected = "true",
         description = "Clicking the Swing field did not blur the WebView combo popup",
+      )
+
+      waitForJavaScriptResult(
+        webView = engine,
+        script = "Boolean(window.__wviResetComboPopupState?.())",
+        expected = "true",
+        description = "Combo popup Robot test page did not expose state reset hook before native select scenario",
+      )
+      inputEvents.clear()
+
+      // Step 3: reproduce sample-panel style jb-select/native select, then click Swing once.
+      clickWebElementCenter(robot, host, engine, "native-select")
+      waitForSwingFocusTransferFromFieldToWebViewHost(
+        field,
+        host,
+        inputEvents,
+        "Native WebView select click did not move Swing focus from the external field to the host panel",
+      )
+
+      inputEvents.clear()
+      clickCenter(robot, field)
+      waitForSwingFocusTransferFromWebViewHostToField(
+        frame,
+        field,
+        inputEvents,
+        "Swing field did not receive focus after clicking outside the native WebView select",
+      )
+      waitForJavaScriptResult(
+        webView = engine,
+        script = "window.__wviComboPopupState?.nativeSelectBlurCount >= 1",
+        expected = "true",
+        description = "Clicking the Swing field did not blur the native WebView select",
       )
     }
     finally {
@@ -636,6 +670,8 @@ internal object WebViewFocusRobotTestSupport {
             pointerDownCount: 0,
             clickCount: 0,
             blurCount: 0,
+            nativeSelectFocusCount: 0,
+            nativeSelectBlurCount: 0,
             focusInputFocusCount: 0,
             triggerFocusCount: 0,
             triggerFocusAfterPointerDown: false,
@@ -649,6 +685,7 @@ internal object WebViewFocusRobotTestSupport {
           window.__wviComboPopupState = state;
 
           const focusInput = document.getElementById("focus-input");
+          const nativeSelect = document.getElementById("native-select");
           const trigger = document.getElementById("combo-trigger");
           const popup = document.getElementById("combo-popup");
 
@@ -662,6 +699,8 @@ internal object WebViewFocusRobotTestSupport {
             state.pointerDownCount = 0;
             state.clickCount = 0;
             state.blurCount = 0;
+            state.nativeSelectFocusCount = 0;
+            state.nativeSelectBlurCount = 0;
             state.focusInputFocusCount = 0;
             state.triggerFocusCount = 0;
             state.triggerFocusAfterPointerDown = false;
@@ -704,6 +743,16 @@ internal object WebViewFocusRobotTestSupport {
           focusInput.addEventListener("focus", () => {
             state.events.push("focus-input-focus");
             state.focusInputFocusCount++;
+          });
+
+          nativeSelect.addEventListener("focus", () => {
+            state.events.push("native-select-focus");
+            state.nativeSelectFocusCount++;
+          });
+
+          nativeSelect.addEventListener("blur", () => {
+            state.events.push("native-select-blur");
+            state.nativeSelectBlurCount++;
           });
 
           window.addEventListener("focus", () => {

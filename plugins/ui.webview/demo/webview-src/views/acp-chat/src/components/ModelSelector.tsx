@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import { createContext, useContext, useMemo, useState, type ComponentPropsWithoutRef, type ReactNode } from "react"
+import { addWebViewFocusLeaveListener } from "@jetbrains/intellij-webview"
+import { createContext, useContext, useEffect, useMemo, useState, type ComponentPropsWithoutRef, type ReactNode } from "react"
 import { Popover } from "radix-ui"
 
 interface ModelSelectorContextValue {
@@ -29,6 +30,16 @@ interface ModelSelectorRootProps {
 function Root({ value, disabled, children, onValueChange }: ModelSelectorRootProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
+
+  useEffect(() => {
+    function closeOnWebViewFocusLeave(): void {
+      setOpen(false)
+      setQuery("")
+    }
+
+    return addWebViewFocusLeaveListener(closeOnWebViewFocusLeave)
+  }, [])
+
   const context = useMemo<ModelSelectorContextValue>(() => ({
     value,
     disabled: disabled === true,

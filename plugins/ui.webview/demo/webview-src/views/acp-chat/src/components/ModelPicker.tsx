@@ -180,9 +180,9 @@ function ControlHint(props: {
   controlId?: string
 }) {
   return (
-    <label className={props.className} data-hint={props.hint} data-config-id={props.configId} data-control-id={props.controlId}>
+    <div className={props.className} data-hint={props.hint} data-config-id={props.configId} data-control-id={props.controlId}>
       {props.children}
-    </label>
+    </div>
   )
 }
 

@@ -640,7 +640,13 @@ internal class SwingWebViewHostPanel(
     pendingExitDirection = null
     pageFocusHandledForCurrentActivation = false
     hostMouseActivationNanos = 0L
+    leaveWebViewFocus()
     clearWebViewFocusForSwingFocusTransfer()
+  }
+
+  private fun leaveWebViewFocus() {
+    logFocus("page.leave", focusDiagnostics())
+    focusEntrySink?.leaveWebViewFocus()
   }
 
   private fun requestSwingFocusForWebViewActivation() {
