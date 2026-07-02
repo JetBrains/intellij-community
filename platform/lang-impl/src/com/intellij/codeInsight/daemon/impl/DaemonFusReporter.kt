@@ -34,18 +34,19 @@ internal class DaemonFusReporter(private val project: Project, val coroutineScop
   private val sessions = ContainerUtil.createConcurrentWeakMap<FileEditor, SessionData>()
 
   private data class SessionData(
-    @JvmField val daemonStartTime: Long = -1L,
-    @JvmField val documentStartedHash: Int = 0,
-    @JvmField val isDumbMode: Boolean = false,
-    @JvmField var sessionSegmentTotalDurationMs: Long = 0,
-    @JvmField var docPreviousStamp: Long
+    val daemonStartTime: Long = -1L,
+    val documentStartedHash: Int = 0,
+    val isDumbMode: Boolean = false,
+    var sessionSegmentTotalDurationMs: Long = 0,
+    var docPreviousStamp: Long
   )
 
   init {
     coroutineScope.launch {
       fusEvents.collect {
-        if (it != null) {
-          doReport(it.project, it.fileEditor, it.sessionData)
+        // skip nulls emitted by drain()/by DaemonFusReporter from the other opened project
+        if (it != null && it.project == project) {
+          report(it.project, it.fileEditor, it.sessionData)
         }
       }
     }
@@ -91,7 +92,7 @@ internal class DaemonFusReporter(private val project: Project, val coroutineScop
       return
     }
 
-    if (sessionData.docPreviousStamp == document.modificationStamp) {
+    if (sessionData.docPreviousStamp == document.modificationStamp && sessionData.isDumbMode == DumbService.isDumb(project)) {
       sessionData.sessionSegmentTotalDurationMs = 0
       // Don't report 'finished' event in case of no changes in the document and dumb mode status was not changed
       // since such sessions are always fast to perform.
@@ -104,6 +105,9 @@ internal class DaemonFusReporter(private val project: Project, val coroutineScop
   companion object {
     private data class FUSData(val project: Project, val fileEditor: TextEditor, val sessionData: SessionData)
     private val fusEvents: MutableSharedFlow<FUSData?> = MutableSharedFlow(extraBufferCapacity = 1000, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    /**
+     * makes sure all events emitted to [fusEvents] are processed by [report]
+     */
     @TestOnly
     fun drain() {
       assert(ApplicationManager.getApplication().isUnitTestMode)
@@ -116,7 +120,14 @@ internal class DaemonFusReporter(private val project: Project, val coroutineScop
       }
     }
 
-    private fun doReport(project: Project, fileEditor: TextEditor, sessionData: SessionData) {
+    private fun roundToOneSignificantDigit(lines: Int): Int {
+      if (lines == 0) return 0
+      val l = log10(lines.toDouble()).toInt()          // 623 -> 2
+      val p = 10.0.pow(l.toDouble()).toInt()     // 623 -> 100
+      return (lines - lines % p).coerceAtLeast(10) // 623 -> 623 - (623 % 100) = 600
+    }
+
+    private fun report(project: Project, fileEditor: TextEditor, sessionData: SessionData) {
       if (!fileEditor.isValid || project.isDisposed) return
       val document = fileEditor.editor.document
       val analyzer = (fileEditor.editor.markupModel as? EditorMarkupModel)?.errorStripeRenderer as? TrafficLightRenderer
@@ -126,7 +137,7 @@ internal class DaemonFusReporter(private val project: Project, val coroutineScop
       val warningIndex = registrar.getSeverityIdx(HighlightSeverity.WARNING)
       val errorCount = errorCounts?.getOrNull(errorIndex) ?: -1
       val warningCount = errorCounts?.getOrNull(warningIndex) ?: -1
-      val lines = document.lineCount.roundToOneSignificantDigit()
+      val lines = roundToOneSignificantDigit(document.lineCount)
       val segmentElapsedTime = System.currentTimeMillis() - sessionData.daemonStartTime
       val virtualFile = FileDocumentManager.getInstance().getFile(document)
       val fileType = virtualFile?.fileType
@@ -153,13 +164,6 @@ internal class DaemonFusReporter(private val project: Project, val coroutineScop
       }
     }
   }
-}
-
-private fun Int.roundToOneSignificantDigit(): Int {
-  if (this == 0) return 0
-  val l = log10(toDouble()).toInt()          // 623 -> 2
-  val p = 10.0.pow(l.toDouble()).toInt()     // 623 -> 100
-  return (this - this % p).coerceAtLeast(10) // 623 -> 623 - (623 % 100) = 600
 }
 
 internal object DaemonFusCollector : CounterUsagesCollector() {
