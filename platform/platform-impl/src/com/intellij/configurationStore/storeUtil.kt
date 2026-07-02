@@ -21,8 +21,10 @@ import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getOpenedProjects
+import com.intellij.openapi.project.impl.shared.SharedConfigFolderUtil
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ManagingFS
@@ -38,6 +40,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.CalledInAny
+import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import kotlin.time.Duration.Companion.nanoseconds
@@ -62,6 +65,24 @@ object StoreUtil {
       runUnderModalProgressIfIsEdt {
         com.intellij.configurationStore.saveSettings(componentManager, forceSavingAllSettings)
       }
+    }
+  }
+
+  @JvmStatic
+  @CalledInAny
+  @Internal
+  @TestOnly
+  fun reloadChangedSettings(componentManager: ComponentManager, changedFileSpecs: List<String>, deletedFileSpecs: List<String>) {
+    if (changedFileSpecs.isEmpty() && deletedFileSpecs.isEmpty()) {
+      return
+    }
+
+    runBlockingMaybeCancellable {
+      SharedConfigFolderUtil.reloadComponents(
+        changedFileSpecs = changedFileSpecs.toSet(),
+        deletedFileSpecs = deletedFileSpecs.toSet(),
+        componentStore = componentManager.stateStore,
+      )
     }
   }
 

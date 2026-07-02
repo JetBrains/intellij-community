@@ -4,7 +4,7 @@ import com.intellij.driver.client.ProjectRef
 import com.intellij.driver.client.Remote
 
 @Remote("com.intellij.openapi.project.Project")
-interface Project : ProjectRef {
+interface Project : ProjectRef, ComponentManager {
   fun isOpen(): Boolean
   fun isInitialized(): Boolean
 
