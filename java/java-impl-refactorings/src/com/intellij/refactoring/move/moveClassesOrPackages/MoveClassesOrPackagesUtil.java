@@ -69,6 +69,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -325,13 +326,17 @@ public final class MoveClassesOrPackagesUtil {
   /**
    * Result of {@link #moveElements}.
    *
-   * @param movedElements           the moved elements, one per index of the input {@code elementsToMove}.
-   * @param movedElementPointers    pointers to the moved elements, in the same order as {@code movedElements}.
+   * @param movedElementPointers    pointers to the moved elements.
    * @param oldToNewElementsMapping mapping from old elements (and old directories of moved packages) to their new counterparts.
    */
-  public record MoveElementsResult(PsiElement @NotNull [] movedElements,
-                                   @NotNull List<@NotNull SmartPsiElementPointer<?>> movedElementPointers,
+  public record MoveElementsResult(@NotNull List<@NotNull SmartPsiElementPointer<?>> movedElementPointers,
                                    @NotNull Map<PsiElement, PsiElement> oldToNewElementsMapping) {
+    /**
+     * Resolves each of the {@link #movedElementPointers()} to its current {@link PsiElement}.
+     */
+    public @NotNull List<@NotNull PsiElement> movedElements() {
+      return ContainerUtil.mapNotNull(movedElementPointers, SmartPsiElementPointer::getElement);
+    }
   }
 
   /**
@@ -362,7 +367,6 @@ public final class MoveClassesOrPackagesUtil {
     }
 
     final Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<>();
-    PsiElement[] movedElements = new PsiElement[elementsToMove.length];
     List<SmartPsiElementPointer<?>> movedElementPointers = new ArrayList<>(elementsToMove.length);
 
     for (int idx = 0; idx < elementsToMove.length; idx++) {
@@ -418,12 +422,11 @@ public final class MoveClassesOrPackagesUtil {
         LOG.error("Unexpected element to move: " + element);
       }
       movedElementPointers.add(SmartPointerManager.createPointer(element));
-      movedElements[idx] = element;
     }
 
     DumbService.getInstance(project).completeJustSubmittedTasks();
 
-    return new MoveElementsResult(movedElements, movedElementPointers, oldToNewElementsMapping);
+    return new MoveElementsResult(movedElementPointers, oldToNewElementsMapping);
   }
 
   /**
