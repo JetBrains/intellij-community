@@ -15,7 +15,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbService
@@ -114,7 +113,7 @@ object CodeWriter {
         reportRawProgress { reporter ->
           reporter.text(DevKitWorkspaceModelBundle.message("progress.text.collecting.classes.metadata"))
           val (objModules, metaProblems) = readAction {
-            service<WorkspaceMetaModelProvider>().loadObjModules(ktClasses, module, processAbstractTypes, isTestSourceFolder)
+            WorkspaceMetaModelProvider().loadObjModules(ktClasses, module, processAbstractTypes, isTestSourceFolder)
           }
           if (metaProblems.isNotEmpty()) {
             WorkspaceCodegenProblemsProvider.getInstance(project).reportMetaProblem(metaProblems)

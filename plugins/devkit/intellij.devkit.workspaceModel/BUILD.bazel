@@ -32,6 +32,8 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "//java/java-indexing-api:indexing",
+        "@lib//:kotlinc-analysis-api-provided",
         "@lib//:kotlin-stdlib",
         "//plugins/kotlin/references",
         "@lib//:kotlinc-kotlin-compiler-common-provided",
@@ -96,6 +98,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":workspaceModel",
+        "//java/java-indexing-api:indexing_test_lib",
+        "@lib//:kotlinc-analysis-api-provided",
         "//plugins/kotlin/references:references_test_lib",
         "@lib//:kotlinc-kotlin-compiler-common-provided",
         "@lib//:kotlinc-kotlin-jps-common-provided",
