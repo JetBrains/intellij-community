@@ -128,7 +128,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         pathResolver = classpathPathResolver,
         useCoreClassLoader = useCoreClassLoader,
         classLoader = mainClassLoader,
-        jarFileForModule = { moduleId, _ -> findProductContentModuleClassesRoot(moduleId) },
+        jarFileForModule = { moduleId, moduleDir -> findProductContentModuleClassesRoot(moduleId, moduleDir) },
         pool = zipPool,
       )
     }
@@ -299,10 +299,6 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
   }
 
   override fun findProductContentModuleClassesRoot(moduleId: PluginModuleId, moduleDir: Path): Path? {
-    return findProductContentModuleClassesRoot(moduleId)
-  }
-
-  private fun findProductContentModuleClassesRoot(moduleId: PluginModuleId): Path? {
     var resolvedModule = moduleRepository.resolveModule(RuntimeModuleId.contentModule(moduleId.name, moduleId.namespace)).resolvedModule
     if (resolvedModule == null && moduleId.namespace == PluginModuleId.JETBRAINS_NAMESPACE) {
       /* until IJPL-241655 is implemented, we may not detect proper namespace for some modules, e.g. `intellij.cwm.connection.frontend.split`,
@@ -318,11 +314,15 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
 
     val paths = resolvedModule.resourceRootPaths
     val singlePath = paths.singleOrNull()
-    if (singlePath == null) {
-      error("Content modules are supposed to have only one resource root, but $moduleId have multiple: $paths")
+    if (singlePath != null) {
+      return singlePath
     }
 
-    return singlePath
+    val defaultPath = moduleDir.resolve("${moduleId.name}.jar")
+    if (defaultPath in paths) {
+      return defaultPath
+    }
+    error("Cannot determine the main classes root for $moduleId among $paths")
   }
 }
 
