@@ -269,6 +269,15 @@ open class TabLabel @Internal constructor(
           }
         }
       }
+
+      override fun getAccessibleContext(): AccessibleContext {
+        if (accessibleContext == null) {
+          accessibleContext = object : AccessibleSimpleColoredComponent() {
+            override fun getAccessibleName(): String? = accessibleNameWithoutIconTooltip
+          }
+        }
+        return accessibleContext
+      }
     }
     label.isOpaque = false
     label.border = null
