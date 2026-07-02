@@ -2050,10 +2050,15 @@ object PyTypeChecker {
         // (see PyTypingTest.testMatchSelfUnionType)
         val result = qualifierType.toStream()
           .map<PyType?> { qType: PyType? ->
-            if (qType is PyInstantiableType<*>) {
-              return@map if (selfScopeClassType.isDefinition) qType.toClass() else qType.toInstance()
+            // An enum member has a value-refined literal type (`Literal[E.a]`), but `Self` denotes the enum class itself
+            val normalizedQType = if (qType is PyLiteralType && qType.enumMemberName != null)
+              PyClassTypeImpl(qType.pyClass, false)
+            else
+              qType
+            if (normalizedQType is PyInstantiableType<*>) {
+              return@map if (selfScopeClassType.isDefinition) normalizedQType.toClass() else normalizedQType.toInstance()
             }
-            qType
+            normalizedQType
           }
           .filter { normalizedQType: PyType? -> match(selfScopeClassType, normalizedQType, context) }
           .collect(PyTypeUtil.toUnion(qualifierType))
