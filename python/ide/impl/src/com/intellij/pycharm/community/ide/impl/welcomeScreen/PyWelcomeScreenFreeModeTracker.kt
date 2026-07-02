@@ -30,6 +30,11 @@ internal class PyWelcomeScreenFreeModeTracker : AppLifecycleListener, LicensingF
       return
     }
 
+    // PY-82074 already turned the non-modal screen on for this user and it's still on: keep it.
+    if (keepNonModalEnabledByPy82074(properties)) {
+      return
+    }
+
     // New user: non-modal. Doesn't depend on the license, so decide immediately.
     if (InitialConfigImportState.isNewUser()) {
       finish(enabled = true)
@@ -78,6 +83,10 @@ internal class PyWelcomeScreenFreeModeTracker : AppLifecycleListener, LicensingF
     if (properties.getBoolean(MIGRATION_DONE, false)) return
     if (InitialConfigImportState.isNewUser()) return
 
+    // PY-82074 already turned the non-modal screen on for this user and it's still on: keep it,
+    // even if a paying license only settles now (mid-session).
+    if (keepNonModalEnabledByPy82074(properties)) return
+
     // License appeared => paying => modal.
     if (hasPlatformLicense(newState)) {
       finish(enabled = false)
@@ -101,6 +110,22 @@ internal class PyWelcomeScreenFreeModeTracker : AppLifecycleListener, LicensingF
     PropertiesComponent.getInstance().setValue(MIGRATION_DONE, true)
   }
 
+  /**
+   * PY-82074 explicitly enabled the non-modal screen for this user (they were a new user then) and it
+   * is still on. Keep it — don't force them back to modal now just because they've since started
+   * paying. Requires the explicit PY-82074 flag, not merely the setting's value, so the platform's
+   * default `true` isn't mistaken for a real choice.
+   */
+  private fun keepNonModalEnabledByPy82074(properties: PropertiesComponent): Boolean {
+    if (properties.getBoolean(IS_ADVANCED_SETTING_WAS_OVERRIDDEN, false)
+        && AdvancedSettings.getBoolean(NON_MODAL_WELCOME_SCREEN_SETTING_ID)
+    ) {
+      finish(enabled = true)
+      return true
+    }
+    return false
+  }
+
   /** Falls back to modal, but only if the user hasn't already chosen a value (don't override that). */
   private fun applyModalBaseline() {
     val settings = AdvancedSettings.getInstance() as? AdvancedSettingsImpl ?: return
@@ -117,10 +142,15 @@ internal class PyWelcomeScreenFreeModeTracker : AppLifecycleListener, LicensingF
 
   companion object {
     // Reuses the PY-89419 key on purpose: the broken revisions only shipped to EAP/nightly, so released
-    // users don't have it and the fixed decision still runs once for them. Note it differs from PY-82074's
-    // `pycharm.welcome.overridden`, so users from that earlier new-users rollout are re-evaluated here too.
+    // users don't have it and the fixed decision still runs once for them. It differs from PY-82074's
+    // `pycharm.welcome.overridden`, so that earlier rollout's users are re-evaluated here — except those
+    // who already have the non-modal screen on, which [keepNonModalEnabledByPy82074] preserves.
     private const val MIGRATION_DONE = "pycharm.welcome.free.mode.override"
     private const val MODAL_BASELINE_APPLIED = "pycharm.welcome.non.modal.baseline.applied"
+
+    // PY-82074's one-shot key: set for every user who ran that rollout; new users also got non-modal ON.
+    // Used to preserve those already-enabled non-modal screens instead of re-deciding them here.
+    private const val IS_ADVANCED_SETTING_WAS_OVERRIDDEN = "pycharm.welcome.overridden"
 
     // Set only on the launch that applies the modal baseline; lets the next launch (not this one)
     // conclude "free". Static so both listener instances (two topics) share it.
