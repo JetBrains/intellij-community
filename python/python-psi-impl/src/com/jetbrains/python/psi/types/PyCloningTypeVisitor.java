@@ -183,6 +183,13 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
     if (!classType.isParameterized()) {
       return classType;
     }
+    if (classType instanceof PyClassTypeImpl impl) {
+      return impl.createInstance(
+        classType.getPyClass(),
+        classType.isDefinition(),
+        ContainerUtil.map(classType.getTypeArguments(), type -> clone(type))
+      );
+    }
     return new PyCollectionTypeImpl(
       classType.getPyClass(),
       classType.isDefinition(),
