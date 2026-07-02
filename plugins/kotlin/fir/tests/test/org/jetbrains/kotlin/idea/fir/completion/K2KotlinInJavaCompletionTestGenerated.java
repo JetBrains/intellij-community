@@ -287,6 +287,76 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
             runTest("../../completion/testData/inJava/extensions/JvmName.java");
         }
 
+        @TestMetadata("JvmNameAlongsidePlainExtension.java")
+        public void testJvmNameAlongsidePlainExtension() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNameAlongsidePlainExtension.java");
+        }
+
+        @TestMetadata("JvmNameCamelHumpMatch.java")
+        public void testJvmNameCamelHumpMatch() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNameCamelHumpMatch.java");
+        }
+
+        @TestMetadata("JvmNameDuplicateAccessorsDeduped.java")
+        public void testJvmNameDuplicateAccessorsDeduped() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNameDuplicateAccessorsDeduped.java");
+        }
+
+        @TestMetadata("JvmNameFunctionRenamed.java")
+        public void testJvmNameFunctionRenamed() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNameFunctionRenamed.java");
+        }
+
+        @TestMetadata("JvmNameGetterRenamed.java")
+        public void testJvmNameGetterRenamed() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNameGetterRenamed.java");
+        }
+
+        @TestMetadata("JvmNameNestedExtensionHidden.java")
+        public void testJvmNameNestedExtensionHidden() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNameNestedExtensionHidden.java");
+        }
+
+        @TestMetadata("JvmNameNoUnrelatedMatch.java")
+        public void testJvmNameNoUnrelatedMatch() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNameNoUnrelatedMatch.java");
+        }
+
+        @TestMetadata("JvmNameOnAccessorBlock.java")
+        public void testJvmNameOnAccessorBlock() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNameOnAccessorBlock.java");
+        }
+
+        @TestMetadata("JvmNameOriginalNameHidden.java")
+        public void testJvmNameOriginalNameHidden() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNameOriginalNameHidden.java");
+        }
+
+        @TestMetadata("JvmNamePrivateHidden.java")
+        public void testJvmNamePrivateHidden() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNamePrivateHidden.java");
+        }
+
+        @TestMetadata("JvmNameRedundantSameName.java")
+        public void testJvmNameRedundantSameName() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNameRedundantSameName.java");
+        }
+
+        @TestMetadata("JvmNameSetterRenamed.java")
+        public void testJvmNameSetterRenamed() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNameSetterRenamed.java");
+        }
+
+        @TestMetadata("JvmNameSetterRenamedGetterDefault.java")
+        public void testJvmNameSetterRenamedGetterDefault() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNameSetterRenamedGetterDefault.java");
+        }
+
+        @TestMetadata("JvmNameSuspendHidden.java")
+        public void testJvmNameSuspendHidden() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNameSuspendHidden.java");
+        }
+
         @TestMetadata("LambdaParameter.java")
         public void testLambdaParameter() throws Exception {
             runTest("../../completion/testData/inJava/extensions/LambdaParameter.java");

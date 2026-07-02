@@ -84,6 +84,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//plugins/kotlin/project-configuration",
         "//platform/refactoring",
+        "//plugins/kotlin/base/indices",
     ],
 )
 
@@ -144,6 +145,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//plugins/kotlin/project-configuration:project-configuration_test_lib",
         "//platform/refactoring:refactoring_test_lib",
+        "//plugins/kotlin/base/indices:indices_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.completion.impl` end

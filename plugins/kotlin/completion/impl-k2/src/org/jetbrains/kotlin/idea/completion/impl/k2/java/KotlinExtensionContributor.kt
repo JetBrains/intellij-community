@@ -45,6 +45,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaUnificationSubstitutorPolicy
+import org.jetbrains.kotlin.analysis.api.components.analysisScope
 import org.jetbrains.kotlin.analysis.api.components.asSignature
 import org.jetbrains.kotlin.analysis.api.components.canBeAnalysed
 import org.jetbrains.kotlin.analysis.api.components.createSubtypingUnificationSubstitutor
@@ -54,6 +55,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.useSiteModule
 import org.jetbrains.kotlin.asJava.LightClassUtil
@@ -67,13 +69,17 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CompletionShortNames
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TailTextProvider
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TypeTextProvider.getTypeTextForCallable
 import org.jetbrains.kotlin.idea.configuration.hasKotlinPluginEnabled
+import org.jetbrains.kotlin.idea.stubindex.KotlinJvmNameAnnotationIndex
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import javax.swing.Icon
 
 /**
@@ -272,26 +278,57 @@ private object KotlinExtensionCompletionProvider : CompletionProvider<Completion
     }
 
     context(_: KaSession)
+    private fun KtCallableDeclaration.isRelevantExtension(): Boolean {
+        // We only support top-level extensions
+        if (containingClassOrObject != null) return false
+        // We do not want to show suspend methods
+        if (hasModifier(KtTokens.SUSPEND_KEYWORD)) return false
+
+        // Hide non-visible extensions or ones that cannot be analyzed in the current session
+        return isVisibleIgnoringProtected(useSiteModule) && canBeAnalysed()
+    }
+
+    private fun KtAnnotationEntry.getContainingExtension(): KtCallableDeclaration? {
+        // The first parent is the annotation entry list
+        val annotationParent = parent?.parent ?: return null
+
+        // For property accessors, we return the associated property
+        val callable = if (annotationParent is KtPropertyAccessor) {
+            annotationParent.parent as? KtCallableDeclaration
+        } else annotationParent as? KtCallableDeclaration
+
+        return callable?.takeIf { it.isExtensionDeclaration() }
+    }
+
+    context(_: KaSession)
+    private fun getExtensionsFromIndex(receiverType: KaType, prefixMatcher: PrefixMatcher): Sequence<KaCallableSymbol> {
+        // Note that the index does not return the correct names for extensions annotated with `JvmName`.
+        // This special case is handled below.
+        val extensionsFromIndex = KtSymbolFromIndexProvider(file = null).getExtensionCallableSymbolsByNameFilter(
+            { prefixMatcher.mightMatchExtensionName(it) },
+            listOf(receiverType)
+        ) { prefixMatcher.matchesDeclaration(it) && it.isRelevantExtension() }
+
+        // Note that for properties this might emit the same property twice if both `JvmName` names match.
+        // However, the duplicates (and the ones duplicating results from above) will be filtered out below.
+        val extensionsFromJvmNameAnnotations = KotlinJvmNameAnnotationIndex.getAllElements(
+            useSiteModule.project,
+            analysisScope,
+            { prefixMatcher.prefixMatches(it) }
+        ) { entry: KtAnnotationEntry ->
+            entry.getContainingExtension()?.isRelevantExtension() == true
+        }.mapNotNull { it.getContainingExtension()?.symbol }
+            .filterIsInstance<KaCallableSymbol>()
+
+        return (extensionsFromIndex + extensionsFromJvmNameAnnotations).distinct()
+    }
+
+    context(_: KaSession)
     private fun KaType.processApplicableExtensions(
         prefixMatcher: PrefixMatcher,
         processor: (extension: KaCallableSymbol, methodWrapper: PsiMethod) -> Unit
     ) {
-        val extensionsFromIndex = KtSymbolFromIndexProvider(file = null).getExtensionCallableSymbolsByNameFilter(
-            { prefixMatcher.mightMatchExtensionName(it) },
-            listOf(this)
-        ) psiFilter@{ extension ->
-            // We only support top-level extensions
-            if (extension.containingClassOrObject != null) return@psiFilter false
-            // We do not want to show suspend methods
-            if (extension.hasModifier(KtTokens.SUSPEND_KEYWORD)) return@psiFilter false
-            // Ensure that the prefix matches the declaration definitively
-            if (!prefixMatcher.matchesDeclaration(extension)) return@psiFilter false
-
-            // Hide non-visible extensions or ones that cannot be analyzed in the current session
-            extension.isVisibleIgnoringProtected(useSiteModule) && extension.canBeAnalysed()
-        }
-
-        extensionsFromIndex.forEach { extension ->
+        getExtensionsFromIndex(this, prefixMatcher).forEach { extension ->
             // Getting matching extensions from the index does not check for generics inside the type properly,
             // which means false positive matches could be included. We filter them out manually.
             val receiverType = extension.receiverType ?: return@forEach
