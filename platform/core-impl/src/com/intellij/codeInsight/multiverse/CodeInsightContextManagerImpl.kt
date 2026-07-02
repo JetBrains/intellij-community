@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.impl.PsiManagerEx
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.AtomicMapCache
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.ThreadingAssertions.assertWriteAccess
@@ -87,11 +88,9 @@ class CodeInsightContextManagerImpl(
   @RequiresReadLock
   @RequiresBackgroundThread
   override fun getCodeInsightContexts(file: VirtualFile): List<CodeInsightContext> {
-    // FIXME: the assert had never worked due to IJPL-221633, but when it is enabled some tests fail
-    // ThreadingAssertions.softAssertBackgroundThread()
-    ThreadingAssertions.softAssertReadAccess()
-
     if (!isSharedSourceSupportEnabled(project)) return listOf(defaultContext())
+
+    ensureReadAccess(file)
 
     return allContexts.getOrPut(file) {
       log.trace { "requested all contexts of file ${file.path}" }
@@ -116,9 +115,7 @@ class CodeInsightContextManagerImpl(
   override fun getPreferredContext(file: VirtualFile): CodeInsightContext {
     if (!isSharedSourceSupportEnabled(project)) return defaultContext()
 
-    // FIXME: the assert had never worked due to IJPL-221633, but when it is enabled some tests fail
-    // ThreadingAssertions.softAssertBackgroundThread()
-    ThreadingAssertions.softAssertReadAccess()
+    ensureReadAccess(file)
 
     log.trace { "requested preferred context of file ${file.path}" }
 
@@ -136,9 +133,7 @@ class CodeInsightContextManagerImpl(
 
     log.trace { "requested context of FileViewProvider ${fileViewProvider.virtualFile.path}" }
 
-    // FIXME: the assert had never worked due to IJPL-221633, but when it is enabled some tests fail
-    // ThreadingAssertions.softAssertBackgroundThread()
-    ThreadingAssertions.softAssertReadAccess()
+    ensureReadAccess(fileViewProvider.virtualFile)
 
     val context = getCodeInsightContextRaw(fileViewProvider)
 
@@ -290,4 +285,12 @@ private fun Sequence<CodeInsightContext>.toContextOrArray(): ContextOrArray {
     arrayList.add(iterator.next())
   }
   return arrayList.toTypedArray()
+}
+
+private fun ensureReadAccess(file: VirtualFile) {
+  if (file !is LightVirtualFile) {
+    // FIXME: the assert had never worked due to IJPL-221633, but when it is enabled some tests fail
+    // ThreadingAssertions.softAssertBackgroundThread()
+    ThreadingAssertions.softAssertReadAccess()
+  }
 }

@@ -7,8 +7,11 @@ import com.intellij.codeInsight.multiverse.ModuleContext
 import com.intellij.codeInsight.multiverse.ProjectModelContextBridge
 import com.intellij.codeInsight.multiverse.anyContext
 import com.intellij.codeInsight.multiverse.codeInsightContext
+import com.intellij.codeInsight.multiverse.defaultContext
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -16,6 +19,7 @@ import com.intellij.platform.testFramework.junit5.projectStructure.fixture.withS
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.PsiManagerEx
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.EnableTracingFor
 import com.intellij.testFramework.junit5.TestApplication
@@ -28,6 +32,7 @@ import com.intellij.testFramework.junit5.fixture.virtualFileFixture
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.seconds
@@ -148,6 +153,19 @@ internal class FileContextTest {
       assertContextsEqual(context1, rawContext1)
       assertContextsEqual(context2, rawContext2)
     }
+  }
+
+  @Test
+  fun testEventSystemDisabledFileHasSingleContextWithoutReadLock() = timeoutRunBlocking {
+    // IJPL-247497: non-physical, event-system-disabled files must be queryable without a read lock
+    // and are treated as single (default) context, even when shared-source support is enabled.
+    val lightFile = LightVirtualFile("terminalLike.txt", PlainTextFileType.INSTANCE, "")
+
+    // sanity: we hold no read access here, so the previous soft-assert would have thrown
+    assertFalse(ApplicationManager.getApplication().isReadAccessAllowed)
+
+    assertContextsEqual(defaultContext(), contextManager.getPreferredContext(lightFile))
+    assertContextsEqual(defaultContext(), contextManager.getCodeInsightContexts(lightFile).single())
   }
 }
 
