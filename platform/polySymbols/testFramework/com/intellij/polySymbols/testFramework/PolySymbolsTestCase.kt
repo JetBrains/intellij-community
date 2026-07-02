@@ -78,6 +78,12 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
   protected open fun getGoldFileName(forcedGoldFileName: String?, testFileExt: String): String =
     forcedGoldFileName ?: "${testName}_after.$testFileExt"
 
+  protected open fun getCodeCompletionExpectedItemsFileNameInfix(prefix: String, suffix: String): String =
+    ""
+
+  protected open fun getCodeCompletionExpectedItemsLocation(dir: Boolean, dirName: String): String =
+    getExpectedDataLocation(dir, dirName)
+
   open val testName: String get() = getTestName(true)
 
   @Throws(Exception::class)
@@ -106,9 +112,6 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
 
   protected open val directoriesCompareFileFilter: VirtualFileFilter
     get() = { true }
-
-  protected open fun getExpectedItemsLocation(dir: Boolean): String =
-    getExpectedDataLocation(dir)
 
   protected fun withTempCodeStyleSettings(test: CodeInsightTestFixture.(settings: CodeStyleSettings) -> Unit) {
     myFixture.testWithTempCodeStyleSettings { t: CodeStyleSettings ->
@@ -346,7 +349,7 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
                 assertLookupShown()
                 tester.joinCompletion()
 
-                val expectedFile = getExpectedItemsLocation(dir) +
+                val expectedFile = getCodeCompletionExpectedItemsLocation(dir, dirName) +
                                    (if (dir) "/items" else "$testName.items") +
                                    ".${++checkLookupCount}.txt"
 
@@ -429,8 +432,8 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
     }
   }
 
-  private fun getExpectedDataLocation(dir: Boolean): String =
-    if (dir) defaultDirName else ""
+  private fun getExpectedDataLocation(dir: Boolean, dirName: String): String =
+    if (dir) dirName else ""
 
   protected fun doLookupTest(
     fileContents: String? = null,
@@ -481,8 +484,9 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
         containsCheck = containsCheck,
         locations = locations,
         namedLocations = namedLocations,
-        expectedDataLocation = getExpectedDataLocation(dir),
-        expectedItemsLocation = getExpectedItemsLocation(dir),
+        expectedDataLocation = getExpectedDataLocation(dir, dirName),
+        expectedItemsLocation = getCodeCompletionExpectedItemsLocation(dir, dirName),
+        expectedItemsFileNameInfixProvider = ::getCodeCompletionExpectedItemsFileNameInfix,
         lookupItemFilter = lookupItemFilter,
       )
       if (typeToFinishLookup != null) {
