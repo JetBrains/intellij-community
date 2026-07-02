@@ -183,6 +183,8 @@
                  key="ide.exceptions.show.interactive"/>
     <registryKey key="ide.settings.external.change.conflict.show.notification" defaultValue="false" restartRequired="false"
                  description="Show a warning notification for external change conflicts in non-modal settings dialog"/>
+    <registryKey key="psi.assert.wl.for.exposed.light.files" defaultValue="true" restartRequired="false"
+                 description="Require the write lock to modify a non-physical (light) PSI file once it has been opened in a real editor (IJPL-249128). Disable to suppress the threading assertion for exposed light files."/>
     <registryKey defaultValue="true" description="Refresh VFS periodically while there is no user activity in the IDE instead of when window is not focused.
 The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | System Settings -> Periodically when IDE is inactive (experimental)"
                  restartRequired="true"
