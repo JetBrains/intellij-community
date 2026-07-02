@@ -139,6 +139,7 @@ fun CodeInsightTestFixture.checkLookupItems(
   fileName: String = InjectedLanguageManager.getInstance(project).getTopLevelFile(file).virtualFile.nameWithoutExtension,
   expectedDataLocation: String = "",
   expectedItemsLocation: String = expectedDataLocation,
+  expectedItemsFileNameInfixProvider: (prefix: String, suffix: String) -> String = { _,_ -> "" },
   lookupItemFilter: (item: LookupElementInfo) -> Boolean = { true },
 ) {
   val hasDir = expectedItemsLocation.isNotEmpty()
@@ -161,11 +162,13 @@ fun CodeInsightTestFixture.checkLookupItems(
       val doc = targets.firstOrNull()?.let { computeDocumentationBlocking(it.createPointer()) }?.html?.trim()
 
       val sanitizedLookupString = lookupString.replace(Regex("[*\"?<>/\\[\\]:;|,#]"), "_")
-      checkDocumentation(doc ?: "<no documentation>", "$fileSuffix#$sanitizedLookupString", expectedDataLocation)
+      val fullPrefix = "$expectedDataLocation${InjectedLanguageManager.getInstance(project).getTopLevelFile(file).virtualFile.nameWithoutExtension}$fileSuffix#$sanitizedLookupString"
+      checkDocumentation(doc ?: "<no documentation>", "$fileSuffix#$sanitizedLookupString${expectedItemsFileNameInfixProvider(fullPrefix, ".html")}", expectedDataLocation)
     }
   }
 
   noAutoComplete {
+    val prefix = expectedItemsLocation + (if (hasDir) "/items" else "$fileName.items")
     if (locations.isEmpty() && namedLocations.isEmpty()) {
       completeBasic()
       checkListByFile(
@@ -178,7 +181,7 @@ fun CodeInsightTestFixture.checkLookupItems(
           renderDisplayEffects = renderDisplayEffects,
           lookupFilter = lookupItemFilter,
         ),
-        expectedFile = expectedItemsLocation + (if (hasDir) "/items" else "$fileName.items") + ".txt",
+        expectedFile = "${prefix}${expectedItemsFileNameInfixProvider(prefix, ".txt")}.txt",
         containsCheck = containsCheck,
       )
       checkLookupDocumentation()
@@ -201,7 +204,7 @@ fun CodeInsightTestFixture.checkLookupItems(
                 renderDisplayEffects = renderDisplayEffects,
                 lookupFilter = lookupItemFilter,
               ),
-              expectedFile = expectedItemsLocation + (if (hasDir) "/items" else "$fileName.items") + ".$index.txt",
+              expectedFile = "${prefix}${expectedItemsFileNameInfixProvider(prefix, ".$index.txt")}.$index.txt",
               containsCheck = containsCheck
             )
           }
