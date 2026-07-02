@@ -852,6 +852,11 @@ public abstract class K2FormatterTestGenerated extends AbstractK2FormatterTest {
                 runTest("../../idea/tests/testData/formatter/ContextParameterSpaceAfterListInFunctionType.after.kt");
             }
 
+            @TestMetadata("ContextParameterSpacesInFunctionType.after.kt")
+            public void testContextParameterSpacesInFunctionType() throws Exception {
+                runTest("../../idea/tests/testData/formatter/ContextParameterSpacesInFunctionType.after.kt");
+            }
+
             @TestMetadata("ContinuationIndentInAssigments.after.kt")
             public void testContinuationIndentInAssigments() throws Exception {
                 runTest("../../idea/tests/testData/formatter/ContinuationIndentInAssigments.after.kt");
