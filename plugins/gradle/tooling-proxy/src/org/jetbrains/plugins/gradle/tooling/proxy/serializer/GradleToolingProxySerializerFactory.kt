@@ -6,6 +6,9 @@ import com.esotericsoftware.kryo.kryo5.Serializer
 import com.esotericsoftware.kryo.kryo5.io.Input
 import com.esotericsoftware.kryo.kryo5.io.Output
 import com.intellij.gradle.toolingExtension.impl.model.dslBaseScriptModel.GradleDslBaseScriptModelHolder
+import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchFailure
+import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchFailureResult
+import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchFailureState
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelHolderState
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelId
 import com.intellij.gradle.toolingExtension.modelAction.GradleBaseScriptModelFetchPhase
@@ -40,6 +43,7 @@ object GradleToolingProxySerializerFactory {
     kryo.registerGradleDslBaseScriptModelClasses()
     kryo.registerModelHolderClasses()
     kryo.registerBuildEnvironmentClasses()
+    kryo.registerModelFetchClasses()
     return KryoGradleToolingProxySerializer(kryo)
   }
 
@@ -81,6 +85,12 @@ object GradleToolingProxySerializerFactory {
     register(InternalBuildIdentifier::class.java)
     register(InternalGradleEnvironment::class.java)
     register(InternalJavaEnvironment::class.java)
+  }
+
+  private fun Kryo.registerModelFetchClasses() {
+    register(GradleModelFetchFailureResult::class.java)
+    register(GradleModelFetchFailure::class.java)
+    register(GradleModelFetchFailureState::class.java)
   }
 
   internal object InternalBuildEnvironmentSerializer : Serializer<InternalBuildEnvironment>(false) {
