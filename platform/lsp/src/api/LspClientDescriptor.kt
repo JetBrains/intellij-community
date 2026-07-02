@@ -144,7 +144,11 @@ abstract class LspClientDescriptor protected constructor(
    * The default implementation simply calls [getFilePath] and converts it to `file://...` URI.
    */
   open fun getFileUri(file: VirtualFile): String {
-    val escapedPath = URLUtil.encodePath(getFilePath(file))
+    return getFilePathUri(getFilePath(file))
+  }
+
+  fun getFilePathUri(path: String): String {
+    val escapedPath = URLUtil.encodePath(path)
     val url = VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, escapedPath)
     val uri = VfsUtil.toUri(url)?.toString() ?: url
     return lowercaseWindowsDriveAndEscapeColon(uri)
