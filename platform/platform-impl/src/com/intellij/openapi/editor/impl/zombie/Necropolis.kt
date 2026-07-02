@@ -40,7 +40,7 @@ import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 
 /**
@@ -188,7 +188,7 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
     if (zombies.isNotEmpty()) {
       coroutineScope.launch {
         withContext(NonCancellable) {
-          withTimeout(1.minutes) {
+          withTimeout(8.seconds) {
             buryZombies(zombies, recipe)
           }
         }
