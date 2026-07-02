@@ -96,6 +96,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.CellRendererPanel;
 import com.intellij.ui.ClientProperty;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.ExpandableItemsHandler;
@@ -129,7 +130,6 @@ import javax.swing.ActionMap;
 import javax.swing.BoxLayout;
 import javax.swing.CellRendererPane;
 import javax.swing.DefaultRowSorter;
-import javax.swing.GroupLayout;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -161,9 +161,11 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
+import java.awt.LayoutManager;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
@@ -190,6 +192,7 @@ import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.IntUnaryOperator;
+import java.util.function.Supplier;
 import static com.intellij.database.datagrid.GridUtilKt.isArrayCell;
 import static com.intellij.database.datagrid.GridUtilKt.setupDynamicRowHeight;
 import static com.intellij.database.run.ui.DataAccessType.DATA_WITH_MUTATIONS;
@@ -208,7 +211,6 @@ import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static com.intellij.util.containers.ContainerUtil.exists;
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
-import static com.intellij.util.ui.SwingTextTrimmer.ELLIPSIS_AT_RIGHT;
 import static com.intellij.util.ui.UIUtil.getFontWithFallback;
 import static java.awt.event.InputEvent.ALT_DOWN_MASK;
 
@@ -2415,6 +2417,138 @@ public final class TableResultView extends JBTableWithResizableCells
       return myCurrentColumn.getModelIndex();
     }
 
+    /** Roughly four visible column-name characters. */
+    private int headerNameMinWidth() {
+      var fm = myTable.getFontMetrics(myTable.getFont());
+      return fm.charWidth('W') * 4 + JBUI.scale(6);
+    }
+
+    /** Label that fades overflowing content into the header background. */
+    private static class FadingLabel extends LabelWithFallbackFont {
+      private static final SwingTextTrimmer NO_TRIM =
+        SwingTextTrimmer.createCustomTrimmer((text, _, _) -> text);
+
+      private final Supplier<Color> myBackground;
+
+      FadingLabel(@NotNull TableResultView table, @NotNull Supplier<Color> background) {
+        super(table);
+        myBackground = background;
+        putClientProperty(SwingTextTrimmer.KEY, NO_TRIM);
+      }
+
+      /** Icon and text width, excluding insets. */
+      private int contentWidth() {
+        int width = 0;
+        Icon icon = getIcon();
+        if (icon != null) width += icon.getIconWidth();
+        String text = getText();
+        if (text != null && !text.isEmpty() && !text.startsWith("<html")) {
+          if (icon != null) width += getIconTextGap();
+          width += getFontMetrics(getFont()).stringWidth(text);
+        }
+        return width;
+      }
+
+      @Override
+      protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        String text = getText();
+        if (text != null && text.startsWith("<html")) return;
+        Insets insets = getInsets();
+        int available = getWidth() - insets.left - insets.right;
+        // Avoid premature blur on tiny overflows.
+        if (available <= 0 || contentWidth() <= available + JBUI.scale(4)) return;
+        // Keep hover highlights crisp.
+        if (isOpaque()) return;
+        Color bg = myBackground.get();
+        if (bg == null) return;
+        // Fade to the true right edge; JLabel icons may paint into the right inset.
+        int fadeWidth = Math.min(JBUI.scale(12), getWidth() - insets.left);
+        int x = getWidth() - fadeWidth;
+        Graphics2D g2 = (Graphics2D)g.create();
+        try {
+          g2.setPaint(new GradientPaint(x, 0, ColorUtil.withAlpha(bg, 0), x + fadeWidth, 0, bg));
+          g2.fillRect(x, insets.top, fadeWidth, getHeight() - insets.top - insets.bottom);
+        }
+        finally {
+          g2.dispose();
+        }
+      }
+    }
+
+    /** Lays out one header line, shrinking sort first, then filter, to preserve the name. */
+    private final class HeaderLineLayout implements LayoutManager {
+      private final JLabel myName;
+      private final JLabel mySort;
+      private final @Nullable JLabel myFilter;
+
+      private HeaderLineLayout(@NotNull JLabel name, @NotNull JLabel sort, @Nullable JLabel filter) {
+        myName = name;
+        mySort = sort;
+        myFilter = filter;
+      }
+
+      @Override public void addLayoutComponent(String name, Component comp) { }
+      @Override public void removeLayoutComponent(Component comp) { }
+
+      private boolean hasSort() { return mySort.getIcon() != null || !StringUtil.isEmpty(mySort.getText()); }
+      private boolean hasFilter() { return myFilter != null && myFilter.getIcon() != null; }
+
+      private int sortPrefWidth() { return hasSort() ? mySort.getPreferredSize().width : 0; }
+      private int filterPrefWidth() { return myFilter != null && myFilter.getIcon() != null ? myFilter.getPreferredSize().width : 0; }
+      private int nameFilterGap() { return hasFilter() ? JBUI.scale(2) : 0; }
+
+      @Override
+      public Dimension preferredLayoutSize(Container parent) {
+        int width = myName.getPreferredSize().width + JBUI.scale(6) + sortPrefWidth();
+        if (hasFilter()) width += nameFilterGap() + filterPrefWidth();
+        return new Dimension(width, myTable.getRowHeight());
+      }
+
+      @Override
+      public Dimension minimumLayoutSize(Container parent) {
+        return new Dimension(JBUI.scale(10), myTable.getRowHeight());
+      }
+
+      @Override
+      public void layoutContainer(Container parent) {
+        int total = parent.getWidth();
+        int height = parent.getHeight();
+        int[] d = distribute(total);
+        int sortW = d[0], filterW = d[1], trail = d[2];
+        int gap = nameFilterGap();
+        int nameW = Math.max(0, total - gap - filterW - sortW - trail);
+
+        myName.setBounds(0, 0, nameW, height);
+        if (myFilter != null) myFilter.setBounds(nameW + gap, 0, filterW, height);
+        // Pin the sort by its kept width (the flexible space sits to its left), so its slot never overlaps the filter.
+        mySort.setBounds(total - trail - sortW, 0, sortW, height);
+      }
+
+      /** Name slot left after trailing gap and icon slots. */
+      int nameWidth(int total) {
+        int[] d = distribute(total);
+        return Math.max(0, total - nameFilterGap() - d[1] - d[0] - d[2]);
+      }
+
+      /** {sortWidth, filterWidth, trailingGap}, shrunk in priority order. */
+      private int[] distribute(int total) {
+        int gap = nameFilterGap();
+        int sortW = sortPrefWidth();
+        int filterW = filterPrefWidth();
+        int trail = JBUI.scale(6);
+
+        // Remove trailing padding first, so sort can sit flush right.
+        int trailDeficit = myName.getPreferredSize().width + gap + filterW + sortW + trail - total;
+        if (trailDeficit > 0) trail -= Math.min(trailDeficit, trail);
+
+        int deficit = headerNameMinWidth() - (total - gap - filterW - sortW - trail);
+        if (deficit > 0) { int d = Math.min(deficit, sortW); sortW -= d; deficit -= d; }
+        if (deficit > 0) { int d = Math.min(deficit, filterW); filterW -= d; }
+        return new int[]{sortW, filterW, trail};
+      }
+    }
+
     private static int getHeaderLineNum(@Nullable HierarchicalReader reader) {
       return reader == null ? 1 : reader.getDepthOfHierarchy();
     }
@@ -2640,57 +2774,36 @@ public final class TableResultView extends JBTableWithResizableCells
     }
 
     private void initializeLabelsForEachHeaderLine(int headerLineNum) {
-      filterLabel = new LabelWithFallbackFont(myTable);
+      filterLabel = new FadingLabel(myTable, this::getHeaderCellBackground);
       filterLabel.setVerticalAlignment(SwingConstants.CENTER);
       filterLabel.setHorizontalAlignment(SwingConstants.LEFT);
       filterLabel.setBorder(JBUI.Borders.empty(0, 5));
 
       for (int i = 0; i < headerLineNum; ++i) {
-        JLabel nameLabel = new LabelWithFallbackFont(myTable);
-        nameLabel.putClientProperty(SwingTextTrimmer.KEY, ELLIPSIS_AT_RIGHT);
+        JLabel nameLabel = new FadingLabel(myTable, this::getHeaderCellBackground);
         nameLabel.setHorizontalAlignment(SwingConstants.LEFT);
         nameLabel.setBorder(IdeBorderFactory.createEmptyBorder(CellRenderingUtils.NAME_LABEL_INSETS));
         myNameLabels.add(nameLabel);
 
-        JLabel sortLabel = new LabelWithFallbackFont(myTable) {
+        JLabel sortLabel = new FadingLabel(myTable, this::getHeaderCellBackground) {
           @Override
           public Font getFont() {
             return RelativeFont.TINY.derive(super.getFont());
           }
         };
         sortLabel.setVerticalAlignment(SwingConstants.CENTER);
+        sortLabel.setHorizontalAlignment(SwingConstants.LEFT);
         sortLabel.setIconTextGap(JBUI.scale(0));
         sortLabel.setBorder(IdeBorderFactory.createEmptyBorder(CellRenderingUtils.SORT_LABEL_INSETS));
         myIconLabels.add(sortLabel);
 
-        var panel = new JPanel();
-        var layout = new GroupLayout(panel);
-        var tableRowHeight = myTable.getRowHeight();
-
-        var hGroup = layout.createSequentialGroup();
-        hGroup.addComponent(nameLabel, 0, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE);
-        if (i + 1 == headerLineNum) {
-          hGroup.addGap(JBUI.scale(2), JBUI.scale(2), JBUI.scale(2));
-          hGroup.addComponent(filterLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE);
-        }
-        hGroup
-          .addGap(0, 0, Short.MAX_VALUE)
-          .addComponent(sortLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
-          .addGap(0, JBUI.scale(6), JBUI.scale(6));
-
-        var vGroup = layout.createParallelGroup();
-        vGroup.addComponent(nameLabel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE);
-        if (i + 1 == headerLineNum) {
-          vGroup.addComponent(filterLabel, tableRowHeight, tableRowHeight, Short.MAX_VALUE);
-        }
-        vGroup.addComponent(sortLabel, tableRowHeight, tableRowHeight, Short.MAX_VALUE);
-
-        layout.setHorizontalGroup(hGroup);
-        layout.setVerticalGroup(vGroup);
-        panel.setLayout(layout);
+        JLabel filterForLine = i + 1 == headerLineNum ? filterLabel : null;
+        JPanel panel = new JPanel(new HeaderLineLayout(nameLabel, sortLabel, filterForLine));
+        panel.add(nameLabel);
+        panel.add(sortLabel);
+        if (filterForLine != null) panel.add(filterForLine);
 
         myHeaderLinePanels.add(panel);
-
         myCompositeLabel.add(panel);
       }
     }
@@ -2711,7 +2824,8 @@ public final class TableResultView extends JBTableWithResizableCells
       JLabel nameLabel = myNameLabels.get(lineIdx);
       JLabel sortLabel = myIconLabels.get(lineIdx);
 
-      nameLabel.setIcon(myCurrentColumn.getIcon(forDisplay));
+      Icon columnIcon = myCurrentColumn.getIcon(forDisplay);
+      nameLabel.setIcon(columnIcon);
       nameLabel.setForeground(getHeaderCellForeground());
       nameLabel.setText(myTable.myAllowMultilineColumnLabel && StringUtil.containsLineBreak(value)
                         ? "<html>" + StringUtil.replace(value, "\n", "<br>") + "</html>"
@@ -2732,9 +2846,9 @@ public final class TableResultView extends JBTableWithResizableCells
             }
           }
 
-          myTable.myResultPanel.getLocalFilterState();
-          if (myTable.myResultPanel.getLocalFilterState().isEnabled()) {
-            if (myTable.myResultPanel.getLocalFilterState().columnFilterEnabled(columnIdx)) {
+          LocalFilterState localFilterState = myTable.myResultPanel.getLocalFilterState();
+          if (localFilterState.isEnabled()) {
+            if (localFilterState.columnFilterEnabled(columnIdx)) {
               filterLabelIcon = filterIconEnabled;
             }
             else {
@@ -2760,9 +2874,9 @@ public final class TableResultView extends JBTableWithResizableCells
       }
 
       boolean filterLabelNeeded = !(column instanceof HierarchicalGridColumn) && (filterLabelIcon != null);
+      filterLabel.setVisible(filterLabelNeeded);
       if (filterLabelNeeded) {
         filterLabel.setIcon(filterLabelIcon);
-        filterLabel.setVisible(true);
         if (myTable.tableHeader instanceof MyTableHeader tableHeader &&
             columnDataIdx == (tableHeader.hoveredFilterLabelIdx != null ? tableHeader.hoveredFilterLabelIdx.value : -1)) {
           filterLabel.setOpaque(true);
@@ -2773,7 +2887,13 @@ public final class TableResultView extends JBTableWithResizableCells
         }
       }
       else {
-        filterLabel.setVisible(false);
+        filterLabel.setIcon(null);
+      }
+
+      // Drop the type icon once the name slot falls below its minimum width.
+      if (forDisplay && columnIcon != null &&
+          ((HeaderLineLayout)myHeaderLinePanels.get(lineIdx).getLayout()).nameWidth(myCurrentColumn.getWidth()) < headerNameMinWidth()) {
+        nameLabel.setIcon(null);
       }
     }
 
