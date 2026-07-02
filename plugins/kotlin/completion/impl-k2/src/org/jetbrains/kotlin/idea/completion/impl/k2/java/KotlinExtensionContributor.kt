@@ -18,6 +18,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.TypedLookupItem
 import com.intellij.java.library.JavaLibraryModificationTracker
+import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -305,13 +306,13 @@ private object KotlinExtensionCompletionProvider : CompletionProvider<Completion
                 val psi = extension.psi as? KtProperty ?: return@forEach
                 val methods = LightClassUtil.getLightClassPropertyMethods(psi)
                 val getter = methods.getter
-                val setter = methods.setter
-
-                if (getter != null) {
-                    processor(extension, getter)
+                // Only show the setter if it is not declared as private
+                val setter = methods.setter?.takeIf {
+                    !it.hasModifier(JvmModifier.PRIVATE)
                 }
-                if (setter != null) {
-                    processor(extension, setter)
+
+                listOfNotNull(getter, setter).forEach { accessor ->
+                    processor(extension, accessor)
                 }
             } else if (extension is KaNamedFunctionSymbol) {
                 val psi = extension.psi as? KtFunction ?: return@forEach

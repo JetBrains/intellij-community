@@ -342,6 +342,16 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
             runTest("../../completion/testData/inJava/extensions/PrivateExtension.java");
         }
 
+        @TestMetadata("PrivateSetterGetterStillShown.java")
+        public void testPrivateSetterGetterStillShown() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/PrivateSetterGetterStillShown.java");
+        }
+
+        @TestMetadata("PrivateSetterHidden.java")
+        public void testPrivateSetterHidden() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/PrivateSetterHidden.java");
+        }
+
         @TestMetadata("SetterPartialAccessorPrefix.java")
         public void testSetterPartialAccessorPrefix() throws Exception {
             runTest("../../completion/testData/inJava/extensions/SetterPartialAccessorPrefix.java");
