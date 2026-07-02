@@ -1,72 +1,39 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.util.io.URLUtil;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.TestIdentifier;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.Opcodes;
 
-import java.io.InputStream;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.security.CodeSource;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import java.util.logging.Logger;
 
 /**
- * Runtime component that records test execution locations to support code ownership resolution.
+ * Runtime component that records executed tests to support code ownership resolution.
  *
- * <p>This class is invoked during test execution by JUnit Platform listeners to capture metadata
- * about each test's location in the codebase. It extracts the test's module name, package path,
- * and source file name.</p>
- *
- * <h2>Output Format</h2>
- * <p>Test locations are written to an NDJSON file (one JSON object per line) at
- * {@code out/test-artifacts/test-locations.ndjson}. Each entry contains:</p>
+ * <p>This class is invoked during test execution by test listeners (JUnit Platform, Rider's TestNG) to capture
+ * the identity of each executed test. It writes one NDJSON record (one JSON object per line) per test to
+ * {@code out/test-artifacts/test-locations.ndjson}:</p>
  * <ul>
- *   <li>Test name (fully qualified)</li>
- *   <li>Module name (from JAR location)</li>
- *   <li>Package path (from bytecode)</li>
- *   <li>Source file name (from bytecode)</li>
+ *   <li>Test name as reported to TeamCity</li>
+ *   <li>Test class's fully qualified name</li>
  *   <li>Failure status (boolean)</li>
  * </ul>
  *
- * <h2>Integration Points</h2>
- * <p>This class works together with the build-time artifact generators and test owner resolver:</p>
- * <ul>
- *   <li>{@link FileLocationsPaths} - Generates file location mappings at build time</li>
- *   <li>{@link ModulePaths} - Generates module path mappings at build time</li>
- *   <li>{@link CodeOwners} - Generates code ownership index at build time</li>
- *   <li>{@link ResolveTestOwners} - Consumes this output to determine test owners</li>
- * </ul>
- *
- * @see ResolveTestOwners
- * @see FileLocationsPaths
- * @see ModulePaths
- * @see CodeOwners
+ * <p>Test class FQNs are unique across the monorepo (enforced by {@code IntelliJProjectTestNamesUniquenessTest}),
+ * so the FQN alone identifies the test's source file and therefore its code owner. After the test run, the
+ * {@code ResolveTestOwners} build step (in {@code intellij.idea.ultimate.build}) joins these records with the
+ * build-time FQN-to-owner artifact {@code test-class-owners.ndjson} and emits TeamCity test metadata with the
+ * owner of each test.</p>
  */
 public final class TestLocationStorage {
 
   public static final Logger LOG = Logger.getLogger(TestLocationStorage.class.getName());
-
-  /**
-   * Holds extracted location information for a test class.
-   *
-   * @param moduleName  the module name derived from the JAR path
-   * @param packagePath the package path extracted from bytecode
-   * @param fileName    the source file name extracted from bytecode
-   */
-  public record TestLocationInfo(String moduleName, String packagePath, String fileName) {}
 
   /**
    * Path to the test location artifact file (NDJSON format)
@@ -109,121 +76,6 @@ public final class TestLocationStorage {
     return null;
   }
 
-  public static String getPackagePath(Class<?> testClass) {
-    if (testClass == null) return "";
-
-    try {
-      String resourcePath = "/" + testClass.getName().replace('.', '/') + ".class";
-      InputStream is = testClass.getResourceAsStream(resourcePath);
-
-      if (is == null) {
-        return "";
-      }
-
-      try (is) {
-        ClassReader classReader = new ClassReader(is);
-        PackageExtractor extractor = new PackageExtractor();
-        classReader.accept(extractor, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-        return extractor.packagePath;
-      }
-    }
-    catch (Exception e) {
-      return "";
-    }
-  }
-
-  private static class PackageExtractor extends ClassVisitor {
-    String packagePath = "";
-
-    PackageExtractor() {
-      super(Opcodes.ASM9);
-    }
-    @Override
-    public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-      if (name != null) {
-        int lastSlash = name.lastIndexOf('/');
-        if (lastSlash > 0) {
-          packagePath = name.substring(0, lastSlash);
-        }
-      }
-    }
-  }
-
-  private static String getModuleName(Path jarPath) {
-    if (jarPath == null || !Files.exists(jarPath) || !jarPath.toString().endsWith(".jar")) {
-      return null;
-    }
-    Path parent = jarPath.getParent();
-    if (parent != null) {
-      return parent.getFileName().toString();
-    }
-    return null;
-  }
-
-  private static final String META_INF_PREFIX = "META-INF/";
-  private static final String KOTLIN_MODULE_SUFFIX = ".kotlin_module";
-
-  /**
-   * Extracts module name from META-INF/*.kotlin_module file in the JAR containing the test class.
-   */
-  private static String getModuleNameFromKotlinModule(Class<?> testClass) {
-    String fileName = testClass.getName().substring(testClass.getName().lastIndexOf('.') + 1) + ".class";
-    URL classUrl = testClass.getResource(fileName);
-    if (classUrl == null || !"jar".equals(classUrl.getProtocol())) {
-      return null;
-    }
-
-    Pair<String, String> jarUrl = URLUtil.splitJarUrl(classUrl.toString());
-    if (jarUrl == null) {
-      return null;
-    }
-
-    try (JarFile jarFile = new JarFile(jarUrl.first)) {
-      return jarFile.stream()
-        .map(JarEntry::getName)
-        .filter(name -> name.startsWith(META_INF_PREFIX) && name.endsWith(KOTLIN_MODULE_SUFFIX))
-        .findFirst()
-        .map(name -> name.substring(META_INF_PREFIX.length(), name.length() - KOTLIN_MODULE_SUFFIX.length()))
-        .orElse(null);
-    }
-    catch (Exception e) {
-      LOG.info("Could not extract module from kotlin_module: " + e.getMessage());
-    }
-    return null;
-  }
-
-  public static String getFileName(Class<?> testClass) {
-    try {
-      String resourcePath = "/" + testClass.getName().replace('.', '/') + ".class";
-      InputStream is = testClass.getResourceAsStream(resourcePath);
-      if (is == null) {
-        return null;
-      }
-      try (is) {
-        ClassReader classReader = new ClassReader(is);
-        SourceFileExtractor extractor = new SourceFileExtractor();
-        classReader.accept(extractor, 0);
-        return extractor.sourceFile;
-      }
-    }
-    catch (Exception e) {
-      return null;
-    }
-  }
-
-  private static class SourceFileExtractor extends ClassVisitor {
-    String sourceFile;
-
-    SourceFileExtractor() {
-      super(Opcodes.ASM9);
-    }
-
-    @Override
-    public void visitSource(String source, String debug) {
-      this.sourceFile = source;
-    }
-  }
-
   private static String escapeJson(String str) {
     if (str == null) return "";
     return str.replace("\\", "\\\\")
@@ -233,112 +85,30 @@ public final class TestLocationStorage {
       .replace("\t", "\\t");
   }
 
-  /**
-   * Extracts location information for a test identified by its {@link TestIdentifier}.
-   *
-   * <p>This method resolves the test class from the identifier, loads it using the context
-   * class loader, and extracts module name, package path, and source file name.</p>
-   *
-   * @param testIdentifier the JUnit Platform test identifier
-   * @return location info, or {@code null} if resolution fails (failures are logged)
-   */
-  public static TestLocationInfo getTestLocationInfo(TestIdentifier testIdentifier) {
-    TestSource source = testIdentifier.getSource().orElse(null);
-    String className = getClassNameFromTestSource(source);
-
-    if (className == null) {
-      LOG.info("Cannot find class name for " + testIdentifier.getDisplayName());
-      return null;
-    }
-
-    try {
-      ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-      if (classLoader == null) {
-        LOG.info("Could not find class loader for test " + testIdentifier.getDisplayName());
-        return null;
-      }
-
-      Class<?> testClass = Class.forName(className, false, classLoader);
-      return getTestLocationInfo(testClass);
-    }
-    catch (Exception e) {
-      LOG.info(e.getMessage());
-      return null;
-    }
-  }
-
-  /**
-   * Extracts location information for a test class.
-   *
-   * <p>This method extracts module name, package path, and source file name from
-   * the class's code source location and bytecode.</p>
-   *
-   * @param testClass the test class
-   * @return location info, or {@code null} if resolution fails (failures are logged)
-   */
-  public static TestLocationInfo getTestLocationInfo(Class<?> testClass) {
-    try {
-      CodeSource codeSource = testClass.getProtectionDomain().getCodeSource();
-      String moduleName;
-
-      if (codeSource != null && codeSource.getLocation() != null) {
-        Path jarPath = Paths.get(codeSource.getLocation().toURI());
-        moduleName = getModuleName(jarPath);
-      }
-      else {
-        // Fallback for local run (it works only if tests are written in Kotlin):
-        moduleName = getModuleNameFromKotlinModule(testClass);
-      }
-
-      if (moduleName == null) {
-        LOG.info("No module found for " + testClass.getName());
-        return null;
-      }
-
-      String packagePath = getPackagePath(testClass);
-      String fileName = getFileName(testClass);
-      if (fileName == null) {
-        LOG.info("No file found for " + testClass.getName());
-        return null;
-      }
-
-      return new TestLocationInfo(moduleName, packagePath, fileName);
-    }
-    catch (Exception e) {
-      LOG.info(e.getMessage());
-      return null;
-    }
-  }
-
   public static void recordTestLocation(String testName, Class<?> testClass, boolean failed) {
     if (testClass == null) {
       return;
     }
 
-    TestLocationInfo info = getTestLocationInfo(testClass);
-    if (info == null) {
-      return;
-    }
-
-    recordTestLocation(testName, info, failed);
+    recordTestLocation(testName, testClass.getName(), failed);
   }
 
   public static void recordTestLocation(TestIdentifier testIdentifier, TestExecutionResult.Status status, String testName) {
-    TestLocationInfo info = getTestLocationInfo(testIdentifier);
-    if (info == null) {
+    TestSource source = testIdentifier.getSource().orElse(null);
+    String className = getClassNameFromTestSource(source);
+    if (className == null) {
+      LOG.info("Cannot find class name for " + testIdentifier.getDisplayName());
       return;
     }
 
-    recordTestLocation(testName, info, status == TestExecutionResult.Status.FAILED);
+    recordTestLocation(testName, className, status == TestExecutionResult.Status.FAILED);
   }
 
-  private static void recordTestLocation(String testName, TestLocationInfo info, boolean failed) {
+  private static void recordTestLocation(String testName, String className, boolean failed) {
     String json = String.format(
-      "{\"test\":\"%s\",\"module\":\"%s\",\"package\":\"%s\",\"file\":\"%s\",\"failed\":%s}%n",
+      "{\"test\":\"%s\",\"class\":\"%s\",\"failed\":%s}%n",
       escapeJson(testName),
-      escapeJson(info.moduleName()),
-      escapeJson(info.packagePath()),
-      escapeJson(info.fileName()),
+      escapeJson(className),
       failed
     );
 
