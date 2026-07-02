@@ -755,4 +755,19 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
     EmptyInt.__members__
     #         └ TYPE MappingProxyType[str, int]
     """)
+
+  @Test
+  fun `empty enum name and value`() = test(
+    """
+    from enum import Enum
+
+    class Empty(Enum):
+        pass
+
+    def f(e: Empty):
+        e.name
+    #       └ TYPE str
+        e.value
+    #       └ TYPE object
+    """)
 }

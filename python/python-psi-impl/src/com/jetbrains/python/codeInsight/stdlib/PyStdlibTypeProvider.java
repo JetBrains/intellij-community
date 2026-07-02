@@ -453,7 +453,7 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
       }
     }
     if (memberValueTypes.isEmpty()) {
-      return PyAnyType.getUnknown();
+      return PyBuiltinCache.getInstance(enumClass).getObjectType();
     }
     // The union collapses to the common type for homogeneous enums (e.g. 'int') and widens to e.g. 'int | str' for
     // heterogeneous ones, instead of incorrectly reporting just the first member's type.
