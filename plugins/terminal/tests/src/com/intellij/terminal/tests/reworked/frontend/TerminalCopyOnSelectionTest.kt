@@ -12,7 +12,9 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.cancel
 import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputPsiFile
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
+import org.junit.Assume
 import org.junit.Test
+import org.junit.jupiter.api.condition.OS
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.awt.Component
@@ -27,6 +29,7 @@ internal class TerminalCopyOnSelectionTest : BasePlatformTestCase() {
   override fun setUp() {
     super.setUp()
     defaultFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+    Assume.assumeTrue("Can't run this test on Linux because non-headless mode is required to access system selection content", OS.current() != OS.LINUX)
   }
 
   override fun tearDown() {
