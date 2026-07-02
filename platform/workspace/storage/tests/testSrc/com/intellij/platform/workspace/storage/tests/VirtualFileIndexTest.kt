@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
+import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.ListVFUEntity
@@ -118,6 +119,35 @@ class VirtualFileIndexTest {
 
     assertEquals(entityA.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles(entityA.id).first())
     assertEquals(entityB.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles(entityB.id).first())
+  }
+
+  @Test
+  fun `mutating a builder does not change the index of the snapshot it was created from`() {
+    // `vfu2EntityId` is copied shallowly in `startWrite`, so a builder and the snapshot it came from share
+    // the inner per-url maps until the builder copies one on write. Entities sharing a single url exercise
+    // that sharing: both records live in the same inner map.
+    val sharedVfu = virtualFileManager.storeAndGet("/user/opt/app/shared.txt")
+    val builder = createEmptyBuilder()
+    builder addEntity VFUEntity("first", sharedVfu, SampleEntitySource("test"))
+    builder addEntity VFUEntity("second", sharedVfu, SampleEntitySource("test"))
+
+    val snapshot = builder.toSnapshot() as ImmutableEntityStorageImpl
+    assertEquals(2, snapshot.getVirtualFileUrlIndex().findEntitiesByUrl(sharedVfu).count())
+
+    val diff = createBuilderFrom(snapshot)
+    diff.removeEntity(diff.entities(VFUEntity::class.java).single { it.data == "first" })
+
+    assertEquals(1, diff.getVirtualFileUrlIndex().findEntitiesByUrl(sharedVfu).count())
+    assertEquals(2, snapshot.getVirtualFileUrlIndex().findEntitiesByUrl(sharedVfu).count())
+    snapshot.indexes.virtualFileIndex.assertConsistency()
+
+    // The other direction: adding a record for a url the snapshot already indexes.
+    val addingDiff = createBuilderFrom(snapshot)
+    addingDiff addEntity VFUEntity("third", sharedVfu, SampleEntitySource("test"))
+
+    assertEquals(3, addingDiff.getVirtualFileUrlIndex().findEntitiesByUrl(sharedVfu).count())
+    assertEquals(2, snapshot.getVirtualFileUrlIndex().findEntitiesByUrl(sharedVfu).count())
+    snapshot.indexes.virtualFileIndex.assertConsistency()
   }
 
   @Test

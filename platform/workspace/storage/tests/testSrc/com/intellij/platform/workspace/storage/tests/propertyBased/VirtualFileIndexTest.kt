@@ -112,11 +112,14 @@ class VirtualFileIndexTest {
       env.generate(Generator.sampledFrom(existingPaths))
     }
     else {
-      existingPaths.add(tempdir)
+      // Distinct paths, so that the index is exercised with more than one key: `vfu2EntityId` keeps a
+      // separate inner map per url and copies them on write independently.
+      val fresh = tempdir.resolve("file${env.generate(Generator.integers(0, 30))}.txt")
+      existingPaths.add(fresh)
       if (existingPaths.size > 30) {
         existingPaths.removeFirst()
       }
-      tempdir
+      fresh
     }
 
     file.toVirtualFileUrl(manager)

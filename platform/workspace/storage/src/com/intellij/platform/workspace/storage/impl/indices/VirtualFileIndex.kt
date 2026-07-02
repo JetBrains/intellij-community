@@ -19,6 +19,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.mutate
@@ -154,6 +155,12 @@ public open class VirtualFileIndex internal constructor(
 
     private var freezed = true
 
+    /**
+     * URLs whose inner [Object2LongWithDefaultMap] has already been copied for the current write session
+     * and is therefore safe to mutate in place.
+     */
+    private lateinit var urlsWithMutableInnerMap: ObjectOpenCustomHashSet<VirtualFileUrl>
+
     @Synchronized
     override fun index(entity: WorkspaceEntity.Builder<out WorkspaceEntity>, propertyName: String, virtualFileUrl: VirtualFileUrl?) {
       index(entity.asBase().id, propertyName, virtualFileUrl)
@@ -270,6 +277,7 @@ public open class VirtualFileIndex internal constructor(
       startWrite()
       entityId2VirtualFileUrl = entityId2VirtualFileUrl.cleared()
       vfu2EntityId.clear()
+      urlsWithMutableInnerMap.clear()
       entityId2JarDir.clear()
     }
 
@@ -278,13 +286,15 @@ public open class VirtualFileIndex internal constructor(
       startWrite()
       entityId2VirtualFileUrl = another.entityId2VirtualFileUrl
       vfu2EntityId.putAll(another.vfu2EntityId)
+      urlsWithMutableInnerMap.clear()
       entityId2JarDir.putAll(another.entityId2JarDir)
     }
 
     private fun startWrite() {
       if (!freezed) return
       freezed = false
-      vfu2EntityId = copyVfuMap(vfu2EntityId)
+      vfu2EntityId = vfu2EntityId.clone()
+      urlsWithMutableInnerMap = ObjectOpenCustomHashSet(vfu2EntityId.strategy())
       entityId2JarDir = entityId2JarDir.copy()
     }
 
@@ -339,9 +349,7 @@ public open class VirtualFileIndex internal constructor(
         entityId2VirtualFileUrl = entityId2VirtualFileUrl.putting(id, Pair(propertyName, virtualFileUrl))
       }
 
-      val property2EntityId = vfu2EntityId.getOrDefault(virtualFileUrl, Object2LongWithDefaultMap())
-      property2EntityId.put(getCompositeKey(id, propertyName), id)
-      vfu2EntityId[virtualFileUrl] = property2EntityId
+      getOrCreateMutableInnerMap(virtualFileUrl).put(getCompositeKey(id, propertyName), id)
     }
 
     private fun removeByPropertyFromIndexes(id: EntityId, propertyName: String) {
@@ -377,19 +385,38 @@ public open class VirtualFileIndex internal constructor(
     }
 
     private fun removeFromVfu2EntityIdMap(id: EntityId, propertyName: String, vfu: VirtualFileUrl) {
-      val property2EntityId = vfu2EntityId[vfu]
-      if (property2EntityId == null) {
+      val existing = vfu2EntityId[vfu]
+      if (existing == null) {
         LOG.error("The record for $id <=> ${vfu} should be available in both maps")
         return
       }
+      val property2EntityId = makeInnerMapMutable(vfu, existing)
       property2EntityId.removeLong(getCompositeKey(id, propertyName))
-      if (property2EntityId.isEmpty()) vfu2EntityId.remove(vfu)
+      if (property2EntityId.isEmpty()) {
+        vfu2EntityId.remove(vfu)
+        urlsWithMutableInnerMap.remove(vfu)
+      }
     }
 
-    private fun copyVfuMap(originMap: Vfu2EntityId): Vfu2EntityId {
-      val copiedMap = Vfu2EntityId(getHashingStrategy())
-      originMap.forEach { (key, value) -> copiedMap[key] = Object2LongWithDefaultMap.from(value) }
-      return copiedMap
+    private fun getOrCreateMutableInnerMap(vfu: VirtualFileUrl): Object2LongWithDefaultMap<EntityIdWithProperty> {
+      val existing = vfu2EntityId[vfu]
+      if (existing == null) {
+        val fresh = Object2LongWithDefaultMap<EntityIdWithProperty>()
+        vfu2EntityId[vfu] = fresh
+        urlsWithMutableInnerMap.add(vfu)
+        return fresh
+      }
+      return makeInnerMapMutable(vfu, existing)
+    }
+
+    private fun makeInnerMapMutable(
+      vfu: VirtualFileUrl,
+      existing: Object2LongWithDefaultMap<EntityIdWithProperty>,
+    ): Object2LongWithDefaultMap<EntityIdWithProperty> {
+      if (!urlsWithMutableInnerMap.add(vfu)) return existing
+      val copy = Object2LongWithDefaultMap.from(existing)
+      vfu2EntityId[vfu] = copy
+      return copy
     }
 
     public companion object {
