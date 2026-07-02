@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionResult
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -65,10 +64,8 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
-import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.XBreakpoint
-import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
 import com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction
 import kotlinx.coroutines.CoroutineScope
@@ -161,14 +158,6 @@ class XLineBreakpointManager(
     }
 
     StartupManager.getInstance(project).runAfterOpened { queueAllBreakpointsUpdate() }
-  }
-
-  @Deprecated("Use {@link #registerBreakpoint(XLineBreakpointProxy, boolean)} instead")
-  fun registerBreakpoint(breakpoint: XLineBreakpoint<*>, initUI: Boolean) {
-    val proxy = XDebuggerEntityConverter.asProxy(breakpoint) as? XLineBreakpointProxy
-    if (proxy != null) {
-      registerBreakpoint(proxy, initUI)
-    }
   }
 
   fun registerBreakpoint(breakpoint: XLineBreakpointProxy, initUI: Boolean) {
@@ -370,23 +359,6 @@ class XLineBreakpointManager(
     if (slave == null) return
     val proxy = XDebuggerEntityConverter.asProxy(slave) as? XLineBreakpointProxy ?: return
     queueBreakpointUpdate(proxy, callOnUpdate)
-  }
-
-  @Deprecated("Use queueBreakpointUpdateCallback(XLightLineBreakpointProxy, Runnable)")
-  fun queueBreakpointUpdateCallback(breakpoint: XLineBreakpoint<*>?, callback: Runnable) {
-    breakpointUpdateQueue.queue(object : Update(breakpoint) {
-      override fun run() {
-        callback.run()
-      }
-    })
-  }
-
-  override fun queueBreakpointUpdateCallback(breakpoint: XLightLineBreakpointProxy, callback: Runnable) {
-    breakpointUpdateQueue.queue(object : Update(breakpoint) {
-      override fun run() {
-        callback.run()
-      }
-    })
   }
 
   // Skip waiting 300ms in myBreakpointsUpdateQueue (good for sync updates like enable/disable or create new breakpoint)

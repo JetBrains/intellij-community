@@ -346,7 +346,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   }
 
   private void onActiveSessionChanged(@Nullable XDebugSession previousSession, @Nullable XDebugSession currentSession) {
-    myBreakpointManager.getLineBreakpointManager().queueAllBreakpointsUpdate();
     if (!myProject.isDisposed()) {
       myProject.getMessageBus().syncPublisher(TOPIC).currentSessionChanged(previousSession, currentSession);
       if (currentSession != null && previousSession != null) {

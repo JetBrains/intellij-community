@@ -693,7 +693,6 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
         }
 
         myDependentBreakpointManager.loadState();
-        myLineBreakpointManager.updateBreakpointsUI();
         myDefaultGroup = state.getDefaultGroup();
         myFirstLoadDone = true;
       });

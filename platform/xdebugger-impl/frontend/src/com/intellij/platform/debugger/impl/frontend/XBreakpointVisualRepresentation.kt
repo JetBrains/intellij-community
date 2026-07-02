@@ -94,12 +94,6 @@ class XBreakpointVisualRepresentation(
     get() = rangeMarker as? RangeHighlighter
 
 
-  fun updateUI() {
-    myBreakpointManager.getLineBreakpointManager().queueBreakpointUpdateCallback(myBreakpoint) {
-      doUpdateUI {}
-    }
-  }
-
   fun doUpdateUI(callOnUpdate: Runnable) {
     channel.trySend(UpdateUICallback(callOnUpdate))
   }

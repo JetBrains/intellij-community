@@ -820,7 +820,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
     if (!areBreakpointDisabled()) {
       processAllBreakpoints(!muted, muted)
     }
-    debuggerManager.breakpointManager.lineBreakpointManager.queueAllBreakpointsUpdate()
     myDispatcher.getMulticaster().breakpointsMuted(muted)
   }
 
