@@ -1975,12 +1975,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public int offsetToVisualColumnInFoldRegion(@NotNull FoldRegion region, int offset, boolean leanTowardsLargerOffsets) {
     assertIsDispatchThread();
-    return EditorThreading.compute(() -> myView.offsetToVisualColumnInFoldRegion(region, offset, leanTowardsLargerOffsets));
+    return myView.offsetToVisualColumnInFoldRegion(region, offset, leanTowardsLargerOffsets);
   }
 
   public int visualColumnToOffsetInFoldRegion(@NotNull FoldRegion region, int visualColumn, boolean leansRight) {
     assertIsDispatchThread();
-    return EditorThreading.compute(() -> myView.visualColumnToOffsetInFoldRegion(region, visualColumn, leansRight));
+    return myView.visualColumnToOffsetInFoldRegion(region, visualColumn, leansRight);
   }
 
   @Override
@@ -2098,40 +2098,38 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
     assertIsDispatchThread();
-    EditorThreading.run(() -> {
-      int minEndOffset = Math.min(endOffset, getEditorModel().getDocument().getTextLength());
+    int minEndOffset = Math.min(endOffset, getEditorModel().getDocument().getTextLength());
 
-      if (invalidateTextLayout) {
-        myView.invalidateRange(startOffset, minEndOffset, true);
-        if (myAdView != null) myAdView.invalidateRange(startOffset, minEndOffset, true);
-      }
+    if (invalidateTextLayout) {
+      myView.invalidateRange(startOffset, minEndOffset, true);
+      if (myAdView != null) myAdView.invalidateRange(startOffset, minEndOffset, true);
+    }
 
-      if (!isShowing()) {
-        return;
-      }
+    if (!isShowing()) {
+      return;
+    }
 
-      if (myDocumentChangeInProgress) {
-        // at this point soft wrap model might be in an invalid state, so the following calculations cannot be performed correctly
-        if (startOffset < myRangeToRepaintStart) myRangeToRepaintStart = startOffset;
-        if (minEndOffset > myRangeToRepaintEnd) myRangeToRepaintEnd = minEndOffset;
-        return;
-      }
+    if (myDocumentChangeInProgress) {
+      // at this point soft wrap model might be in an invalid state, so the following calculations cannot be performed correctly
+      if (startOffset < myRangeToRepaintStart) myRangeToRepaintStart = startOffset;
+      if (minEndOffset > myRangeToRepaintEnd) myRangeToRepaintEnd = minEndOffset;
+      return;
+    }
 
-      // We do repaint in case of equal offsets. There is a possible case that there is a soft wrap at the same offset,
-      // and it does occupy a particular amount of visual space that may be necessary to repaint.
-      if (startOffset <= minEndOffset) {
-        int startLine; int endLine;
-        if (myAdView != null) {
-          startLine = myAdView.offsetToVisualLine(startOffset, false);
-          endLine = myAdView.offsetToVisualLine(minEndOffset, true);
-        }
-        else {
-          startLine = myView.offsetToVisualLine(startOffset, false);
-          endLine = myView.offsetToVisualLine(minEndOffset, true);
-        }
-        doRepaint(startLine, endLine);
+    // We do repaint in case of equal offsets. There is a possible case that there is a soft wrap at the same offset,
+    // and it does occupy a particular amount of visual space that may be necessary to repaint.
+    if (startOffset <= minEndOffset) {
+      int startLine; int endLine;
+      if (myAdView != null) {
+        startLine = myAdView.offsetToVisualLine(startOffset, false);
+        endLine = myAdView.offsetToVisualLine(minEndOffset, true);
       }
-    });
+      else {
+        startLine = myView.offsetToVisualLine(startOffset, false);
+        endLine = myView.offsetToVisualLine(minEndOffset, true);
+      }
+      doRepaint(startLine, endLine);
+    }
   }
 
   private boolean isDocumentInBulkUpdate() {
@@ -3597,7 +3595,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setEmbeddedIntoDialogWrapper(boolean b) {
     assertIsDispatchThread();
-    EditorThreading.run(() -> myState.setEmbeddedIntoDialogWrapper(b));
+    myState.setEmbeddedIntoDialogWrapper(b);
   }
 
   private void isEmbeddedIntoDialogWrapperChanged(ObservableStateListener.PropertyChangeEvent event) {
@@ -4058,20 +4056,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setColorsScheme(final @NotNull EditorColorsScheme scheme) {
     assertIsDispatchThread();
-    EditorThreading.run(() -> {
-      final EditorColorsManager colorsManager = ApplicationManager.getApplication().getServiceIfCreated(EditorColorsManager.class);
-      if (colorsManager == null) {
-        LOG.info("Skipping attempt to set color scheme without EditorColorsManager");
-        return;
-      }
-      if (scheme instanceof EditorColorSchemeDelegate) {
-        myScheme = (EditorColorSchemeDelegate)scheme;
-      }
-      else {
-        myScheme = new EditorColorSchemeDelegate(this, scheme);
-      }
-      reinitSettings();
-    });
+    final EditorColorsManager colorsManager = ApplicationManager.getApplication().getServiceIfCreated(EditorColorsManager.class);
+    if (colorsManager == null) {
+      LOG.info("Skipping attempt to set color scheme without EditorColorsManager");
+      return;
+    }
+    if (scheme instanceof EditorColorSchemeDelegate) {
+      myScheme = (EditorColorSchemeDelegate)scheme;
+    }
+    else {
+      myScheme = new EditorColorSchemeDelegate(this, scheme);
+    }
+    reinitSettings();
   }
 
   @Override
@@ -4086,7 +4082,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setVerticalScrollbarOrientation(int type) {
     assertIsDispatchThread();
-    EditorThreading.run(() -> myState.setVerticalScrollBarOrientation(type));
+    myState.setVerticalScrollBarOrientation(type);
   }
 
   private void verticalScrollBarOrientationChanged(ObservableStateListener.PropertyChangeEvent event) {
