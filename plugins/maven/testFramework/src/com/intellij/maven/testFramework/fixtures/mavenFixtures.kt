@@ -17,6 +17,7 @@ import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.model.MavenConstants
+import org.jetbrains.idea.maven.utils.MavenLog
 import java.nio.file.Path
 
 /**
@@ -162,6 +163,7 @@ private fun mavenCodeInsightFixture(
       // does not import a Maven project (e.g. parent/resolution highlighting tests on a not-yet-imported pom). Create a
       // throwaway non-persistent module on demand to match that. Tests that assert on the module set import a Maven
       // project first, so project.modules is already non-empty and this fallback never adds an unexpected module.
+      MavenLog.LOG.warn("Cannot find module in ${project.name}")
       return runWriteAction {
         ModuleManager.getInstance(project).newNonPersistentModule("light", "")
       }
