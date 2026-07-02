@@ -578,7 +578,6 @@
       <reference ref="ChangesView.SetDefault"/>
       <reference ref="ChangesView.Move"/>
       <reference ref="Diff.ShowDiff"/>
-      <reference ref="ChangesView.SingleClickPreview"/>
       <reference ref="$Delete"/>
       <reference ref="ChangesView.AddUnversioned"/>
       <reference ref="ChangesView.RemoveDeleted"/>

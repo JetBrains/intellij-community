@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
@@ -221,7 +220,6 @@ abstract class TreeHandlerEditorDiffPreview(
   init {
     tree.doubleClickHandler = Processor { e -> handleDoubleClick(e) }
     tree.enterKeyHandler = Processor { _ -> handleEnterKey() }
-    tree.addSelectionListener { handleSingleClick() }
     PreviewOnNextDiffAction().registerCustomShortcutSet(targetComponent, this)
 
     UIUtil.putClientProperty(tree, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
@@ -238,21 +236,6 @@ abstract class TreeHandlerEditorDiffPreview(
   open fun handleEnterKey(): Boolean {
     if (!isPreviewOnEnter()) return false
     return performDiffAction()
-  }
-
-  protected open fun isOpenPreviewWithSingleClickEnabled(): Boolean = false
-  protected open fun isOpenPreviewWithSingleClick(): Boolean {
-    if (!isOpenPreviewWithSingleClickEnabled()) return false
-    if (!VcsConfiguration.getInstance(project).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) return false
-    return true
-  }
-
-  protected open fun handleSingleClick() {
-    if (!isOpenPreviewWithSingleClick()) return
-    val opened = openPreview(false)
-    if (!opened) {
-      closePreview() // auto-close editor tab if nothing to preview
-    }
   }
 
   protected open fun isOpenPreviewWithNextDiffShortcut(): Boolean = true

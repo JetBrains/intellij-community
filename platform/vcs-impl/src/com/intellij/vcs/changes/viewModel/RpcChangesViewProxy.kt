@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
-import com.intellij.openapi.vcs.changes.ChangesViewDiffAction
 import com.intellij.openapi.vcs.changes.ChangesViewI
 import com.intellij.openapi.vcs.changes.ChangesViewId
 import com.intellij.openapi.vcs.changes.ChangesViewManager
@@ -69,7 +68,7 @@ internal class RpcChangesViewProxy(project: Project, scope: CoroutineScope) : Ch
 
   override val inclusionChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-  override val diffRequests = MutableSharedFlow<Pair<ChangesViewDiffAction, ClientId>>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  override val diffRequests = MutableSharedFlow<ClientId>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   override fun setInclusionModel(model: InclusionModel?) {
     inclusionModel.value = model

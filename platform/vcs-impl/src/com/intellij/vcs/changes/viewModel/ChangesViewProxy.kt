@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
-import com.intellij.openapi.vcs.changes.ChangesViewDiffAction
 import com.intellij.openapi.vcs.changes.ChangesViewSplitComponentBinding
 import com.intellij.openapi.vcs.changes.CommitChangesViewWithToolbarPanel
 import com.intellij.openapi.vcs.changes.InclusionModel
@@ -34,7 +33,7 @@ import javax.swing.JComponent
 abstract class ChangesViewProxy(val project: Project, val scope: CoroutineScope) : Disposable {
   abstract val inclusionChanged: SharedFlow<Unit>
 
-  abstract val diffRequests: SharedFlow<Pair<ChangesViewDiffAction, ClientId>>
+  abstract val diffRequests: SharedFlow<ClientId>
 
   /**
    * [initPanel] should be called before [panel] is accessed

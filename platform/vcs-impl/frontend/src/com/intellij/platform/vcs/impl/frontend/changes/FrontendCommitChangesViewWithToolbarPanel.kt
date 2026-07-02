@@ -111,8 +111,8 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
   }
 
   private suspend fun forwardDiffActionsToBackend() {
-    diffRequests.collectLatest { (action, _) ->
-      ChangesViewDiffApi.getInstance().performDiffAction(project.projectId(), action)
+    diffRequests.collectLatest {
+      ChangesViewDiffApi.getInstance().performDiffAction(project.projectId())
     }
   }
 

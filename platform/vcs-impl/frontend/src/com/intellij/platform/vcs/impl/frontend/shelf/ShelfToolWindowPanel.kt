@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
@@ -141,7 +140,7 @@ class ShelfToolWindowPanel(private val project: Project, tree: ShelfTree, cs: Co
 
     override fun update(e: AnActionEvent) {
       super.update(e)
-      e.presentation.isEnabledAndVisible = isOpenEditorDiffPreviewWithSingleClick.asBoolean() || !isPanelVertical()
+      e.presentation.isEnabledAndVisible = !isPanelVertical()
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread {
@@ -151,7 +150,6 @@ class ShelfToolWindowPanel(private val project: Project, tree: ShelfTree, cs: Co
 
   companion object {
     private const val SHELVED_CHANGES_TOOLBAR_ID = "ShelvedChangesToolbarFrontend"
-    private val isOpenEditorDiffPreviewWithSingleClick = Registry.get("show.diff.preview.as.editor.tab.with.single.click");
 
     @NonNls
     const val SHELF_CONTEXT_MENU: String = "Frontend.Vcs.Shelf.ContextMenu"
