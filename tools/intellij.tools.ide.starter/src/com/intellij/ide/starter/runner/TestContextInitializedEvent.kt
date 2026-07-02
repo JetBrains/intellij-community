@@ -39,3 +39,31 @@ fun EventsBus.subscribeForTestContextInitializedEvent(
     }
   },
 )
+
+/**
+ * Subscribe once for [TestContextInitializedEvent] that belongs to the given [container].
+ * The callback fires on the first matching event, then the subscription is automatically removed.
+ * Invoked only for rem dev backend in case of rem dev.
+ */
+fun EventsBus.subscribeOnceForTestContextInitializedEvent(
+  subscriber: Any,
+  container: TestContainer,
+  timeout: Duration = 2.minutes,
+  ignoreExceptions: Boolean = true,
+  sequential: Boolean = false,
+  callback: suspend (event: TestContextInitializedEvent) -> Unit,
+): EventsBus = subscribeOnce<TestContextInitializedEvent>(
+  subscriber = Pair(subscriber, container),
+  timeout = timeout,
+  ignoreExceptions = ignoreExceptions,
+  sequential = sequential,
+  callback = { event ->
+    if (event.container === container
+        // not rem dev or rem dev backend
+        && (container !is RemDevTestContainer || event.testContext.isRemDevContext())
+    ) {
+      logOutput("TestContextInitializedEvent for container: ${container.javaClass.simpleName}, subscriber: $subscriber")
+      callback.invoke(event)
+    }
+  },
+)
