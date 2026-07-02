@@ -37,6 +37,10 @@ public class DataFlowInspectionPrimitivesInPatternsTest extends DataFlowInspecti
     doTest();
   }
 
+  public void testSwitchBoxedFloatRepresentation() {
+    doTest();
+  }
+
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/";
