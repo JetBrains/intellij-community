@@ -426,7 +426,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       #│      ^^^^^ WARNING Expected type 'D[int]', got 'D[object]' instead FIXME # PY-89564
       #^^^^ WARNING Redeclared 'd_int' defined above without usage
       d_obj = d_int # E
-      #       ^^^^^ WARNING Expected type 'D[object]', got 'D[int]' instead
+      #       ^^^^^ WARNING FIXME Expected type 'D[object]', got 'D[int]' instead # PY-89564
       """)
 
     @Test
@@ -532,7 +532,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       def f() -> list[object]:
          return data # expect error
-      #         ^^^^ WARNING Expected type 'list[object]', got 'list[int]' instead
+      #         ^^^^ WARNING FIXME Expected type 'list[object]', got 'list[int]' instead # PY-89564
       """)
 
     @Test

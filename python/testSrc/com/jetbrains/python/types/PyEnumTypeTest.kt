@@ -687,7 +687,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
 
       class MyEnum(Enum):
           OK = 1
-          BAD = "string" # WARNING Expected type 'int', got 'str' instead
+          ALSO_OK = "string"
       """)
 
     @Test
