@@ -3,15 +3,13 @@ package com.intellij.ide.rpc
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import fleet.openmap.SerializedValue
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
-import java.awt.BorderLayout
-import java.awt.Component
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 /**
  * Prepares the transmission of the graphical representation of the component over the network to the frontend with input events
@@ -64,18 +62,3 @@ data class ComponentDirectTransferId(val serializedValue: SerializedValue?, @Tra
 
 @ApiStatus.Internal
 class ComponentWithDisposable(val component: JComponent, val disposable: Disposable)
-
-private class Wrapper : JPanel(BorderLayout()) {
-  init {
-    isOpaque = false
-  }
-
-  fun setContent(content: Component?) {
-    removeAll()
-    if (content != null) {
-      add(content, BorderLayout.CENTER)
-    }
-    revalidate()
-    repaint()
-  }
-}

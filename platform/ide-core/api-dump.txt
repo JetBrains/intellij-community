@@ -1396,6 +1396,28 @@ c:com.intellij.ui.UserActivityWatcher
 - <init>():V
 - addUserActivityListener(com.intellij.ui.UserActivityListener):V
 - removeUserActivityListener(com.intellij.ui.UserActivityListener):V
+c:com.intellij.ui.components.panels.Wrapper
+- javax.swing.JPanel
+- com.intellij.openapi.ui.NullableComponent
+- <init>():V
+- <init>(java.awt.LayoutManager):V
+- <init>(java.awt.LayoutManager,javax.swing.JComponent):V
+- <init>(java.awt.LayoutManager,Z):V
+- <init>(javax.swing.JComponent):V
+- <init>(Z):V
+- getPreferredSize():java.awt.Dimension
+- getTargetComponent():javax.swing.JComponent
+- isNull():Z
+- requestFocus():V
+- f:requestFocus(Z):Z
+- requestFocusInWindow():Z
+- requestFocusInternal():V
+- setContent(javax.swing.JComponent):V
+- f:setHorizontalSizeReferent(javax.swing.JComponent):com.intellij.ui.components.panels.Wrapper
+- f:setVerticalSizeReferent(javax.swing.JComponent):com.intellij.ui.components.panels.Wrapper
+f:com.intellij.ui.components.panels.Wrapper$North
+- com.intellij.ui.components.panels.Wrapper
+- <init>(javax.swing.JComponent):V
 c:com.intellij.ui.content.AlertIcon
 - com.intellij.ui.RetrievableIcon
 - javax.swing.Icon

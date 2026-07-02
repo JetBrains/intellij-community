@@ -134,6 +134,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":testRunner-tests",
+        "//platform/ide-core:ide-core_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
@@ -150,6 +151,7 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/platform-api:ide",
         "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core",
         "//platform/lang-core",
         "//platform/lang-core:lang-core_test_lib",
         "//platform/lang-impl",
