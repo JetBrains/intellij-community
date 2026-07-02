@@ -23,7 +23,7 @@ import kotlin.io.path.div
 
 typealias IDEDataPathsProvider = (testDirectoryName: String, testDirectory: Path, useInMemoryFileSystem: Boolean) -> IDEDataPaths
 
-internal fun IDEDataPathsProvider.asFrontendDataPathsProvider(): IDEDataPathsProvider = { testDirectoryName, testDirectory, useInMemoryFileSystem ->
+fun IDEDataPathsProvider.asFrontendDataPathsProvider(): IDEDataPathsProvider = { testDirectoryName, testDirectory, useInMemoryFileSystem ->
   when (val paths = this(testDirectoryName, testDirectory, useInMemoryFileSystem)) {
     is FrontendIDEDataPaths -> paths
     // Converting rather than calling `createPaths` once more: the second call would wipe and re-create `testHome`
