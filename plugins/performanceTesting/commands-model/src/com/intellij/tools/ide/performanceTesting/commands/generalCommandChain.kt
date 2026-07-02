@@ -33,6 +33,10 @@ fun <T : CommandChain> T.waitForSmartMode(): T = apply {
   addCommand("${CMD_PREFIX}waitForSmart")
 }
 
+fun <T : CommandChain> T.waitForFirstScanningToFinish(): T = apply {
+  addCommand("${CMD_PREFIX}waitForFirstScanningToFinish")
+}
+
 fun <T : CommandChain> T.replaceBrowser(): T = apply {
   addCommand("${CMD_PREFIX}replaceBrowser")
 }
