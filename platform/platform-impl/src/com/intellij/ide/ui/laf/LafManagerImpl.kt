@@ -1283,9 +1283,8 @@ private class OurPopupFactory(private val delegate: PopupFactory) : PopupFactory
         DialogWrapper.cleanupWindowListeners(window)
       }
     })
-    if ((IdeaPopupMenuUI.isUnderPopup(contents) || (SystemInfoRt.isWindows || IdeaPopupMenuUI.isUnderMainMenu(contents)))
-        && WindowRoundedCornersManager.isAvailable()) {
-      if ((SystemInfoRt.isMac && StartupUiUtil.isDarkTheme) || SystemInfoRt.isWindows) {
+    if (contents is JPopupMenu && IdeaPopupMenuUI.isRoundBorder()) {
+      if ((SystemInfoRt.isMac && StartupUiUtil.isDarkTheme) || SystemInfoRt.isWindows || StartupUiUtil.isWaylandToolkit()) {
         WindowRoundedCornersManager.setRoundedCorners(window, JBUI.CurrentTheme.Popup.borderColor(true))
       }
       else {
