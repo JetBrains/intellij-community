@@ -68,4 +68,6 @@ public class LightPrimitivePatternsHighlightingWithTightenedDominanceTest extend
   public void testSwitchPrimitivePatternListTightened() { doTest(); }
 
   public void testMixFloatingPointWithIntegralLiterals() { doTest(); }
+
+  public void testBoxedFloatLiterals() { doTest(); }
 }
