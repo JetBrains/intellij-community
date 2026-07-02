@@ -53,8 +53,8 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
 
   @Override
   public @NotNull PsiFile createFileFromText(@NotNull String name, @NotNull FileType fileType, @NotNull CharSequence text,
-                                             long modificationStamp, boolean eventSystemEnabled) {
-    return createFileFromText(name, fileType, text, modificationStamp, eventSystemEnabled, true);
+                                             long modificationStamp, boolean supportsSendingPsiEvents) {
+    return createFileFromText(name, fileType, text, modificationStamp, supportsSendingPsiEvents, true);
   }
 
   @Override
@@ -64,19 +64,19 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
 
   @Override
   public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text,
-                                    boolean eventSystemEnabled, boolean markAsCopy) {
-    return createFileFromText(name, language, text, eventSystemEnabled, markAsCopy, false);
+                                    boolean supportsSendingPsiEvents, boolean markAsCopy) {
+    return createFileFromText(name, language, text, supportsSendingPsiEvents, markAsCopy, false);
   }
 
   @Override
   public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text,
-                                    boolean eventSystemEnabled, boolean markAsCopy, boolean noSizeLimit) {
-    return createFileFromText(name, language, text, eventSystemEnabled, markAsCopy, noSizeLimit, null);
+                                    boolean supportsSendingPsiEvents, boolean markAsCopy, boolean noSizeLimit) {
+    return createFileFromText(name, language, text, supportsSendingPsiEvents, markAsCopy, noSizeLimit, null);
   }
 
   @Override
   public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text,
-                                    boolean eventSystemEnabled, boolean markAsCopy, boolean noSizeLimit,
+                                    boolean supportsSendingPsiEvents, boolean markAsCopy, boolean noSizeLimit,
                                     @Nullable VirtualFile original) {
     LightVirtualFile virtualFile = new LightVirtualFile(name, language, text);
     if (original != null) {
@@ -86,7 +86,7 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
     if (noSizeLimit) {
       SingleRootFileViewProvider.doNotCheckFileSizeLimit(virtualFile);
     }
-    return trySetupPsiForFile(virtualFile, language, eventSystemEnabled, markAsCopy);
+    return trySetupPsiForFile(virtualFile, language, supportsSendingPsiEvents, markAsCopy);
   }
 
   @Override
@@ -94,17 +94,17 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
                                              @NotNull FileType fileType,
                                              @NotNull CharSequence text,
                                              long modificationStamp,
-                                             boolean eventSystemEnabled,
+                                             boolean supportsSendingPsiEvents,
                                              boolean markAsCopy) {
     LightVirtualFile lightVirtualFile = new LightVirtualFile(name, fileType, text, modificationStamp);
     try (AccessToken ignored = ProjectLocator.withPreferredProject(lightVirtualFile, myManager.getProject())) {
       Language language = LanguageUtil.getLanguageForPsi(myManager.getProject(), lightVirtualFile, fileType);
       if (language != null) {
-        PsiFile file = trySetupPsiForFile(lightVirtualFile, language, eventSystemEnabled, markAsCopy);
+        PsiFile file = trySetupPsiForFile(lightVirtualFile, language, supportsSendingPsiEvents, markAsCopy);
         if (file != null) return file;
       }
       SingleRootFileViewProvider singleRootFileViewProvider =
-        new SingleRootFileViewProvider(myManager, lightVirtualFile, eventSystemEnabled);
+        new SingleRootFileViewProvider(myManager, lightVirtualFile, supportsSendingPsiEvents);
       PsiPlainTextFileImpl plainTextFile = new PsiPlainTextFileImpl(singleRootFileViewProvider);
       if(markAsCopy) CodeEditUtil.setNodeGenerated(plainTextFile.getNode(), true);
       return plainTextFile;
@@ -113,11 +113,11 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
 
   public @Nullable PsiFile trySetupPsiForFile(@NotNull LightVirtualFile lightVirtualFile,
                                               @NotNull Language language,
-                                              boolean physical, boolean markAsCopy) {
+                                              boolean supportsSendingPsiEvents, boolean markAsCopy) {
     try (AccessToken ignored = ProjectLocator.withPreferredProject(lightVirtualFile, myManager.getProject())) {
       FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
-      FileViewProvider viewProvider = factory != null ? factory.createFileViewProvider(lightVirtualFile, language, myManager, physical) : null;
-      if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, lightVirtualFile, physical);
+      FileViewProvider viewProvider = factory != null ? factory.createFileViewProvider(lightVirtualFile, language, myManager, supportsSendingPsiEvents) : null;
+      if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, lightVirtualFile, supportsSendingPsiEvents);
 
       language = viewProvider.getBaseLanguage();
       ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
